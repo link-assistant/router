@@ -78,6 +78,59 @@ destruction, type checking or later body refusals.
 | `json_index_usize(&Json, usize) -> &Json` | Shared canonical Value array indexing | Actual by-value source `usize`, including checked contextual and explicit literals; absent positions and wrong kinds return Null. Other integer identities remain refused. |
 | `json_map_index(&Map<String, Json>, &Str) -> &Json` | Shared canonical object-map indexing | Existing node identity; an absent entry panics without insertion. Value indexing retains its different missing-key behavior. |
 | `f64_inclusive_contains` | Same-type `Into<f64> + Copy` arguments, widened once before ordered comparisons | Checked `f64` inputs only; IEEE NaN, infinity and signed-zero behavior with once-only left-to-right arguments. Native Rust also accepts `f32`; that does not admit translated `f32` callers. |
+
+### Concrete Base64 operations
+
+The `base64_*` family delegates to the existing locked `base64` 0.23.1 library.
+Its thirteen concrete functions cover the three existing GeneralPurpose
+configurations, with distinct borrowed bytes, borrowed scalar text, owned byte
+vectors, owned text and the by-value 32-byte array contracts. `Base64Error` is an
+alias of the native DecodeError, including all four variants, their fields and
+native Display/Debug text. Native Rust library internals remain untranslated.
+
+The JavaScript ABI accepts primitive scalar strings and snapshots dense ordinary
+own-data arrays of BigInt bytes. It does not inspect input-array frozenness or
+model a Rust move at a public JavaScript call. Compiler-bound calls independently
+check the source ownership, primitive identities and a finite affine whole-body
+flow; unresolved calls, mutation, loops, closures, aggregate loans and other
+unknown flow stay refused. Input UTF-8/byte length is bounded by 1MiB, and existing
+target value/collection bounds still apply. Lone UTF-16 surrogates, malformed ABI
+values and resource-domain failures throw; native decode failures return the
+complete tagged native error. The current target uses 64-bit usize error fields.
+Allocation/OOM, allocator and native Drop implementation effects are outside the
+successful-resource projection.
+
+The codec captures operations at stock primordial initialization. Its public
+runtime ABI resists late replacement of those operations, but does not claim
+hostile cold-import qualification. Compiler source issuers use their separate
+current native-operation guards, never the runtime functions' source text.
+Native error formatting is available inside a genuine owned-call function via
+the original source-backed captured format template. General Debug format syntax,
+arbitrary Display implementations, From conversions and generic Engine/AsRef
+dispatch are not admitted by this adapter.
+
+`--sequence base64` is proposal-only. It retains complete sources, lossless CST
+roundtrips, every substitution, full inverses and skipped binding/operand reasons.
+Its explicit normal-dependency-library ABI can select a genuine qualified UFCS
+call or a closed sole-Engine method candidate set. Unknown import/attribute/macro
+producers and competing dispatch remain refused. Engine imports are retained;
+removal needs a separate complete consumer-closure proof. Four digest/GenericArray
+temporaries and other unproved operand constructions are not guessed to be byte
+arrays. Source spelling counts are potential candidates, never application
+coverage. The original external-trait/default-context owner frontier, including
+unknown dependency test cfg, remains independent and open.
+
+Fresh source, Cargo, native CST, whole-function and layout joins are required at
+emission after semantic serialization. Transport metadata identifies only a
+private custody record. There are at most 1024 live records/tombstones; dead
+WeakRefs are retired without evicting live records. Actual checker frames retain
+their completed records and native WeakRef job lifetime covers synchronous
+JavaScript/TypeScript emission. A deferred consumer after custody expires must
+perform a fresh genuine check. These records are not source, owner, hash or
+verdict caches. New whole-file tests and shared vectors must receive under both
+engines and strict TypeScript; the Rust oracle is CI-only. Reverse mappings, full
+application proposal review, generation, bank/export freshness and the complete
+gate remain separate required work.
 | `unicode_scalar_count` | Borrowed `str::chars().count()` | Validated Unicode scalar text to the existing 64-bit `usize` BigInt ABI; one input evaluation, with no general iterator admission. |
 
 Owned JSON retains the existing runtime's 4,096-node and depth-32 limits for the

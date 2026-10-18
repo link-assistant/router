@@ -25,6 +25,7 @@ export function hostRuntimeAssets() {
   files.set('json-update-runtime.d.mts',readFileSync(new URL('./json-update-runtime.d.mts',import.meta.url),'utf8'));
   files.set('json-collections-runtime.mjs',readFileSync(new URL('./json-collections-runtime.mjs',import.meta.url),'utf8').replace("'./extensions/iterator-runtime.mjs'","'./iterator-runtime.mjs'"));
   files.set('json-collections-runtime.d.mts',readFileSync(new URL('./json-collections-runtime.d.mts',import.meta.url),'utf8'));
+  for(const file of ['base64-runtime.mjs','base64-runtime.d.mts'])files.set(file,readFileSync(new URL('./'+file,import.meta.url),'utf8'));
   for(const file of ['slice-membership-runtime.mjs','slice-membership-runtime.d.mts'])files.set(file,readFileSync(new URL('./extensions/'+file,import.meta.url),'utf8'));
   for(const file of ['json-roundtrip-numbers.mjs','json-roundtrip-numbers.d.mts','json-roundtrip-runtime.mjs','json-roundtrip-runtime.d.mts'])files.set(file,readFileSync(new URL('./extensions/'+file,import.meta.url),'utf8'));
   for(const file of ['exact-binary64.mjs','exact-binary64.d.mts'])files.set(file,readFileSync(new URL('./extensions/'+file,import.meta.url),'utf8'));

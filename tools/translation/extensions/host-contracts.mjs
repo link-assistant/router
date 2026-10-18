@@ -91,8 +91,8 @@ import {parseRouterCoreAlgebraicType,parseRouterCoreAlgebraicExpression,parseRou
 import {parseRouterCoreScalarCall,checkRouterCoreScalarCall,captureRouterCoreScalarCalls,ROUTER_CORE_SCALAR_CONTRACT} from '../router-core-scalars.mjs';
 import {parseRouterCoreJson,captureRouterCoreJsonCalls,checkRouterCoreJson} from '../router-core-json.mjs';
 import {checkOriginalOwnedJsonLetElse,parseRouterCoreJsonUpdate,captureRouterCoreJsonUpdates,checkRouterCoreJsonUpdate,visitOriginalJsonCollectionTextMatch,observeOriginalJsonErrorFormat,finalizeOriginalJsonErrorFlow,visitRouterCoreJsonUpdateFunction,checkRouterCoreJsonMutableLet,prepareOriginalJsonProjectionEmission,requireOriginalJsonProjectionEmission,ROUTER_CORE_JSON_UPDATE_CONTRACTS} from '../router-core-json-updates.mjs';
-import {originalDataFreezeIntrinsicsUnchanged} from '../original-json-intrinsics.mjs';
-export const HOST_CONTRACTS=[...ROUTER_CORE_JSON_UPDATE_CONTRACTS,ROUTER_CORE_SCALAR_CONTRACT,ROUTER_CORE_RANGE_CONTRACT,...FLOAT_CONTRACTS,...JSON_CONTRACTS.map(contract=>({...contract,family:'json',pure:true,constEligible:false})),...TIME_CONTRACTS.map(contract=>({...contract,family:'time'})),...INTEGER_ERROR_CONTRACTS.map(contract=>({...contract,family:'integer',assumptions:['Registered standard ParseIntError layout and source-derived diagnostic behavior.']}))];
+import {originalDataFreezeIntrinsicsUnchanged} from '../original-json-intrinsics.mjs'; import {ROUTER_CORE_BASE64_CONTRACTS,ROUTER_CORE_BASE64_DATA,parseRouterCoreBase64Type,parseRouterCoreBase64Call,captureRouterCoreBase64Calls,checkRouterCoreBase64Call,visitRouterCoreBase64Function,prepareRouterCoreBase64Emission,requireRouterCoreBase64Emission,originalBase64ErrorDisplay,finalizeRouterCoreBase64Program} from '../router-core-base64.mjs';
+export const HOST_CONTRACTS=[...ROUTER_CORE_BASE64_CONTRACTS,...ROUTER_CORE_JSON_UPDATE_CONTRACTS,ROUTER_CORE_SCALAR_CONTRACT,ROUTER_CORE_RANGE_CONTRACT,...FLOAT_CONTRACTS,...JSON_CONTRACTS.map(contract=>({...contract,family:'json',pure:true,constEligible:false})),...TIME_CONTRACTS.map(contract=>({...contract,family:'time'})),...INTEGER_ERROR_CONTRACTS.map(contract=>({...contract,family:'integer',assumptions:['Registered standard ParseIntError layout and source-derived diagnostic behavior.']}))];
 const pathKey=path=>path.filter((part,index)=>index!==0||part!=='crate').join('::'); const jsonCheckerOriginQualified=originalDataFreezeIntrinsicsUnchanged(),jsonCheckerOrigins=jsonCheckerOriginQualified?new WeakSet():null,jsonCheckerHas=jsonCheckerOriginQualified?WeakSet.prototype.has:null,jsonCheckerAdd=jsonCheckerOriginQualified?WeakSet.prototype.add:null,jsonCheckerApply=jsonCheckerOriginQualified?Reflect.apply:null;
 const span=(start,end)=>({start:start.start,end:end.end});
 const runtimeValueType=type=>type.kind==='fixed'?{kind:'fixed',bits:type.bits,signed:type.signed}:type.kind==='array'?{kind:'array',element:runtimeValueType(type.element),...(type.rustFixedArray?{rustFixedArray:{length:type.rustFixedArray.length}}:{})}:type.kind==='named'?{kind:'data',name:(type.path[0]==='crate'?type.path.slice(1):type.path).join('.')}:type.kind==='data'?{kind:'data',name:type.name}:{kind:type.kind};
@@ -154,7 +154,7 @@ export function hostData() {
       merge(module.items,item.items,[...path,item.name]);
     } else if(!existing)target.push({...item,hostTypePath:[...path,item.name],generated:item.generated??'router-host-contract'});
   }};
-  merge(result,effectData());merge(result,JSON_DATA);merge(result,TIME_DATA);merge(result,INTEGER_DATA);return result;
+  merge(result,effectData());merge(result,ROUTER_CORE_BASE64_DATA);merge(result,JSON_DATA);merge(result,TIME_DATA);merge(result,INTEGER_DATA);return result;
 }
 const builtins=()=>new Set([...HOST_CONTRACTS,...EFFECT_CONTRACTS].flatMap(contract=>contract.rustPath.map((_,index)=>pathKey(contract.rustPath.slice(0,index+1)))).concat(Object.values(JSON_TYPES).map(type=>pathKey(type.path)),['serde_json::json','std::str::FromStr','std::option::Option','std::result::Result']));
 export class HostRustParser extends withOriginalFormatDisplayParser(withJsonMacroParser(withNamedLifetimeParser(withCapturedSourceParser(withSourceNamespaceParser(withNestedMatchPatternsParser(withSourceOwnershipParser(withFixedArrayParser(MethodRustParser)))))))) {
@@ -270,7 +270,7 @@ export class HostRustParser extends withOriginalFormatDisplayParser(withJsonMacr
     return this.qualifyOwnershipType?.(type,c.tokens.slice(start,c.index))??type;
   }
   hostTypeSyntax(){
-    const algebraic=parseRouterCoreAlgebraicType(this);if(algebraic)return algebraic;
+    const base64=parseRouterCoreBase64Type(this);if(base64)return base64;const algebraic=parseRouterCoreAlgebraicType(this);if(algebraic)return algebraic;
     const coreText=parseRouterCoreText(this);if(coreText)return coreText;
     const coreStr=parseRouterCoreStrReference(this);if(coreStr)return coreStr;
     const character=parseCharacterType(this);if(character)return character;
@@ -337,7 +337,7 @@ export class HostRustParser extends withOriginalFormatDisplayParser(withJsonMacr
   primary(path,options) {
     const algebraic=parseRouterCoreAlgebraicExpression(this,path);if(algebraic)return algebraic;
     const coreScalar=parseRouterCoreScalarCall(this,path);if(coreScalar)return coreScalar;
-    const coreRange=parseRouterCoreRangeCall(this,path);if(coreRange)return coreRange;
+    const coreBase64=parseRouterCoreBase64Call(this,path);if(coreBase64)return coreBase64;const coreRange=parseRouterCoreRangeCall(this,path);if(coreRange)return coreRange;
     const coreFormat=parseRouterCoreFormatting(this,path);if(coreFormat)return coreFormat;
     const coreJson=parseRouterCoreJson(this,path);if(coreJson)return coreJson;
     const coreJsonUpdate=parseRouterCoreJsonUpdate(this,path);if(coreJsonUpdate)return coreJsonUpdate;
@@ -419,7 +419,7 @@ export function originalHostParserIdentitySnapshot(){return originalHostParserId
 const sourcePatterns=createOriginalSharedPatternAdapter();
 export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroChecker(withDeclarationRefusalCollection(withSharedNullaryEnumChecker(withCheckedSourceLinks(withCheckedMethodCopyReceivers(withFloatZeroSignChecker(withSourceLifetimeChecker(withSharedArrayBorrowChecker(withNestedMatchPatternsChecker(withSourceOwnershipChecker(withFixedArrayChecker(withOriginalStandardTupleChecker(MethodChecker))))))))))))) {
   constructor(language,externals){super(language,externals);this.instantiations=new HostInstantiations(this);this.sourceLifetimeHostContracts=HOST_CONTRACTS;if(jsonCheckerOriginQualified&&new.target===HostChecker)jsonCheckerApply(jsonCheckerAdd,jsonCheckerOrigins,[this]);}
-  visitDeclaration(item,path,entry,visit,phase){return super.visitDeclaration(item,path,entry,visitRouterCoreJsonUpdateFunction(this,item,path,entry,visit,phase),phase);}
+  originalFormatDisplayValue(node,piece,value,env,path,bind,closures){return originalBase64ErrorDisplay(this,node,piece,value,bind)??super.originalFormatDisplayValue(node,piece,value,env,path,bind,closures);} visitDeclaration(item,path,entry,visit,phase){return super.visitDeclaration(item,path,entry,visitRouterCoreBase64Function(this,item,path,entry,visitRouterCoreJsonUpdateFunction(this,item,path,entry,visit,phase),phase),phase);}
   resolveType(type,path,range){if(type?.kind==='char')return checkedCharacterType(type,range);const resolved=super.resolveType(type,path,range);return {...resolved,...(type?.rustTupleLifetimeFields?{rustTupleLifetimeFields:type.rustTupleLifetimeFields.map(field=>this.resolveType(field,path,range))}:{}),...(type?.patternOwnershipRefusal?{patternOwnershipRefusal:type.patternOwnershipRefusal}:{}),...(type?.rustReference?{rustReference:{...type.rustReference,...(type.rustReference.pointee?{pointee:this.resolveType(type.rustReference.pointee,path,range)}:{})}}:{}),...(type?.rustGenericIdentityUnresolved?{rustGenericIdentityUnresolved:true}:{}),...(type?.rustStandardGeneric?{rustStandardGeneric:{kind:type.rustStandardGeneric.kind,arguments:type.rustStandardGeneric.arguments.map(argument=>this.resolveType(argument,path,range))}}:{})};}
   normalisePattern(pattern,type,span) {
     if(pattern.registeredGenericOwner){
@@ -607,7 +607,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
     if(node.k==='routerOrderedMatch')return visitOriginalJsonCollectionTextMatch(this,node,()=>super.expr(node,env,path,expected,allowLiteral));
     if(node.k==='routerCoreJsonUpdateCall')return checkRouterCoreJsonUpdate(this,node,env,path,expected);
     if(node.k==='routerCoreScalarCountCall')return checkRouterCoreScalarCall(this,node,env,path,expected);
-    if(node.k==='routerCoreF64InclusiveCall')return checkRouterCoreRangeCall(this,node,env,path,expected);
+    if(node.k==='routerCoreBase64Call')return checkRouterCoreBase64Call(this,node,env,path,expected);if(node.k==='routerCoreF64InclusiveCall')return checkRouterCoreRangeCall(this,node,env,path,expected);
     if(node.k==='routerPrimitiveFloatConstant')return checkedPrimitiveFloatConstant(node);
     if(node.k==='routerPrimitiveFloatCall') {
       const contract=primitiveFloatContract(node.method);
@@ -757,7 +757,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
     captureRouterCoreScalarCalls(this,surface);
     captureRouterCoreJsonCalls(this,surface);
     captureRouterCoreJsonUpdates(this,surface);
-    captureRouterCoreRangeCalls(this,surface);
+    captureRouterCoreBase64Calls(this,surface);captureRouterCoreRangeCalls(this,surface);
     captureConstMatchSources(this,surface);
     sourcePatterns.captureOriginalSharedPatterns(this,surface);
     captureOriginalMoveTuples(this,surface);
@@ -793,7 +793,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
       if(result.status!=='value'||!result.proof.sourceLinksVerified)throw unsupported('constant evaluation',result.diagnostic?.reason??'requires fresh original parser source association',entry.span);
       entry.constantEvaluationProof=result.proof;
     }
-    finalizeStaticArrays(this,program);
+    finalizeStaticArrays(this,program);finalizeRouterCoreBase64Program(this,program,sourceLinks);
     return program;
   }
 }
@@ -836,7 +836,7 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
     const schemaName='ml_host_value_schema_'+key,refinementsName='ml_host_value_refinements_'+key;this.state.reserved.add(schemaName).add(refinementsName);
     return `ml_validate_rust_value(${value}, ${JSON.stringify(runtimeValueType(type))}, ${schemaName}, { refinements: ${refinementsName} })`;
   }
-  fn(entry){const restoreJsonProjection=prepareOriginalJsonProjectionEmission(this,entry,HostChecker),restore=preparePinnedStandardFunction(this,entry,HostRustParser,HostChecker),restoreShared=prepareOriginalSharedBodies(this,entry,HostRustParser,HostChecker),restoreMapped=prepareOriginalMappedBodies(this,entry,HostRustParser,HostChecker),restoreCallbacks=prepareOriginalOptionCallbacks(this,entry,HostRustParser,HostChecker),restoreFrames=prepareOriginalSourceFrames(this,entry),restoreConversions=prepareOriginalConversionFunction(this,entry),restoreTryFrom=prepareOriginalPrimitiveTryFrom(this,entry),restorePatterns=sourcePatterns.prepareOriginalSharedPatterns(this,entry),restoreClones=prepareOriginalCloneEmission(this,entry),prior=this.constMatchFunction;this.constMatchFunction=this.state.localName(entry.fullName);try{return super.fn(entry);}finally{this.constMatchFunction=prior;restoreClones?.();restorePatterns?.();restoreTryFrom?.();restoreConversions?.();restoreFrames?.();restoreCallbacks?.();restoreMapped?.();restoreShared?.();restore?.();restoreJsonProjection?.();}}
+  fn(entry){const restoreBase64=prepareRouterCoreBase64Emission(this,entry,HostChecker),restoreJsonProjection=prepareOriginalJsonProjectionEmission(this,entry,HostChecker),restore=preparePinnedStandardFunction(this,entry,HostRustParser,HostChecker),restoreShared=prepareOriginalSharedBodies(this,entry,HostRustParser,HostChecker),restoreMapped=prepareOriginalMappedBodies(this,entry,HostRustParser,HostChecker),restoreCallbacks=prepareOriginalOptionCallbacks(this,entry,HostRustParser,HostChecker),restoreFrames=prepareOriginalSourceFrames(this,entry),restoreConversions=prepareOriginalConversionFunction(this,entry),restoreTryFrom=prepareOriginalPrimitiveTryFrom(this,entry),restorePatterns=sourcePatterns.prepareOriginalSharedPatterns(this,entry),restoreClones=prepareOriginalCloneEmission(this,entry),prior=this.constMatchFunction;this.constMatchFunction=this.state.localName(entry.fullName);try{return super.fn(entry);}finally{this.constMatchFunction=prior;restoreClones?.();restorePatterns?.();restoreTryFrom?.();restoreConversions?.();restoreFrames?.();restoreCallbacks?.();restoreMapped?.();restoreShared?.();restore?.();restoreJsonProjection?.();restoreBase64?.();}}
   statements(node,...args){
     if(node.k==='routerOriginalSharedPatternMatch'&&node.sourceSharedPatternProof?.functionTail===true)return sourcePatterns.withOriginalSharedPatternEmission(this,node,body=>this.statements(body,...args));
     if(node.k==='routerOrderedMatchArms'&&node.functionTail===true)sourcePatterns.requireOriginalSharedPatternNodeEmission(this,node);
@@ -920,7 +920,7 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
     if(node.k==='routerCoreJsonCollection'){requireOriginalJsonProjectionEmission(this,node);this.jsonCollections=true;return `ml_host_${node.id}(${this.expr(node.args[0])}, ${this.expr(node.args[1])})`;}
     if(node.k==='routerOptionCallback'){this.optionCallbacks=true;return `ml_host_option_bind(${this.expr(node.value)}, ${this.expr(node.callback)}, ${JSON.stringify(node.op)})`;}
     if(node.k!=='routerHostCall')return super.expr(node);
-    requireOriginalJsonProjectionEmission(this,node);
+    requireRouterCoreBase64Emission(this,node);requireOriginalJsonProjectionEmission(this,node);
     const contract=node.contract??HOST_CONTRACTS.find(contract=>contract.id===node.id);if(!contract)throw new Error('missing checked host contract');
     if(contract.family==='vector') {
       const guard=this.valueGuard('values',contract.runtimeInstantiation.validatorType);
@@ -948,7 +948,7 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
     if([...this.instantiations.keys()].some(id=>id.startsWith('rust_fixed_')))preludes.unshift(`import { createFixedIntegerRuntime as ml_create_fixed_integer_runtime } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'fixed-integer-runtime.mjs'))};`);
     if([...this.instantiations.keys()].some(id=>id.startsWith('rust_integer_')))preludes.unshift(`import { createIntegerRuntime as ml_create_integer_runtime } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'integer-runtime.mjs'))};`);
     if([...this.instantiations.keys()].some(id=>id.startsWith('rust_vec_')))preludes.unshift(`import { createVectorRuntime as ml_create_vector_runtime } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'vector-runtime.mjs'))};`);
-    for(const family of ['json','json-update','time','integer','float','string-iterator']) {
+    for(const family of ['base64','json','json-update','time','integer','float','string-iterator']) {
       const used=HOST_CONTRACTS.filter(contract=>contract.family===family&&this.hosts.has(contract.id));
       if(used.length)preludes.unshift(`import { ${used.map(contract=>`${contract.jsExport} as ml_host_${contract.id}`).join(', ')} } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,`${family}-runtime.mjs`))};`);
     }

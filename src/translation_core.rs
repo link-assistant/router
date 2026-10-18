@@ -16,6 +16,16 @@ pub use self::json_collections::{json_map, json_filter_map};
 mod ranges;
 pub use self::ranges::f64_inclusive_contains;
 
+mod base64;
+pub use self::base64::{
+    Base64Error, base64_standard_decode_owned_text, base64_standard_decode_text,
+    base64_standard_encode_bytes, base64_standard_encode_owned_bytes, base64_standard_encode_text,
+    base64_standard_no_pad_decode_text, base64_standard_no_pad_encode_text,
+    base64_url_no_pad_decode_owned_text, base64_url_no_pad_decode_text,
+    base64_url_no_pad_encode_array32, base64_url_no_pad_encode_bytes,
+    base64_url_no_pad_encode_owned_bytes, base64_url_no_pad_encode_owned_text,
+};
+
 /// Owned UTF-8 text returned by the compatibility formatting operation.
 pub type Text = ::std::string::String;
 
