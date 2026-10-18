@@ -180,7 +180,8 @@ test('complete actual parent evidence and ordinary JS strict TypeScript behavior
 test('the finite lazy-import evolution preserves complete historical source and refuses any extra body change',async(t,retain)=>{
  const source=fs.readFileSync(script,'utf8'),proof=proveActualSequenceSourceEvolution(source);
  assert.equal(proof.expectedSha256,OLD_SEQUENCE_FUNCTION_SHA);assert.equal(proof.historicalSha256,ORIGINAL_FUNCTIONS.sequence.sha256);assert.equal(proof.inverse,proof.original);
- const functionChange=source.replace(proof.actual,proof.actual.replace('  const requested=options(input);','  const requested=options(input);void 0;'));assert.notEqual(functionChange,source);
+ const opening=/^export async function proposeCoreAdoptionSequence\([^\n]*\)\{\n/u.exec(proof.actual);assert.ok(opening,'complete current function opening');assert.equal(source.split(proof.actual).length,2,'unique complete current function');
+ const extraBody=proof.actual.slice(0,opening[0].length)+'  void 0;\n'+proof.actual.slice(opening[0].length),functionChange=source.replace(proof.actual,extraBody);assert.notEqual(functionChange,source);
  const functionCallMissing=source.replace('(await loadJsonReaderModule()).proposeCoreJsonReadersCorpus','(await missingReader()).proposeCoreJsonReadersCorpus');assert.notEqual(functionCallMissing,source);
  const functionCallRepeated=source.replace('(await loadJsonReaderModule()).proposeCoreJsonReadersCorpus','(await loadJsonReaderModule()).proposeCoreJsonReadersCorpus+(await loadJsonReaderModule()).proposeCoreJsonReadersCorpus');assert.notEqual(functionCallRepeated,source);
  const mutations=[['extra complete function body',functionChange],['missing evolved call',functionCallMissing],['repeated evolved call',functionCallRepeated]];
