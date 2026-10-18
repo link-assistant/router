@@ -21,9 +21,11 @@ function exact(source,before,after,id){return exactSubstitutionRule(id,before,af
  */
 export function legacyProofConsumerSource(source,retain=()=>{}){
  if(typeof source!=='string')fail('complete source text required');
- let selected=null;for(const row of RULES)if(source.includes(row.after)){if(selected)fail('multiple format imports');selected=row;}
+ let selected=null;for(const row of RULES)if(source.includes(row.after)&&(!selected||row.after.length>selected.after.length))selected=row;
  if(!selected)return source;
- const legacy=exact(source,selected.after,selected.before,'legacy-comparison-import'),replay=exact(legacy,selected.before,selected.after,'selected-format-roundtrip');
+ const legacy=exact(source,selected.after,selected.before,'legacy-comparison-import');
+ if(RULES.some(row=>legacy.includes(row.after)))fail('multiple format imports');
+ const replay=exact(legacy,selected.before,selected.after,'selected-format-roundtrip');
  if(replay!==source)fail('complete literal inverse differs');
  retain('explicit-selected-format-and-legacy-comparison-source',{path:selected.path,actualSource:source,legacySource:legacy,replayedSource:replay,rules:[{phase:'language',before:selected.before,after:selected.intermediate},{phase:'repository',before:selected.intermediate,after:selected.after}],scope:'Literal test DATA only. Both historical storage comparison subjects explicitly select legacy; actual new-mode production is exercised independently.',authority:{source:false,owner:false,type:false,executable:false}});
  return legacy;
