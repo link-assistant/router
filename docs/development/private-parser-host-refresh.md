@@ -61,3 +61,22 @@ two historical data helpers. Their complete test callbacks and deadlines remain
 unchanged. Independently review and install both proposals together; the Python
 proposal itself runs no JavaScript, Rust or source-admission check. It is scoped
 to this explicitly reviewed append and refuses a different historical prefix.
+
+For a reviewed correction inside an already registered appended helper, pass
+`--host-edits /absolute/path/to/reviewed-host-substitutions.json` after the other
+profile-tool arguments. Its `private-parser-host-substitutions-v1` record must
+name the exact baseline/current heads, registered host path and complete
+`before`/`after` source strings. Declare `language` then `repository` phases;
+each rule has a stable `id`, nonempty literal `expected` and `replacement`.
+Full-source rules are useful when a shorter identifier appears several times.
+The tool replays each uniquely anchored substitution and its inverse, checks
+every intermediate original 53,873-byte guard/bootstrap prefix against its
+actual retained Git source and requires the final complete current Git bytes.
+It preserves ordinary dollar characters literally and changes no parser checks.
+The default mode continues to require an append to the complete registered host.
+
+The fixed 645 Python data tool also checks a previously installed inverse
+against the complete registered before-source and manifest. It proposes the
+updated complete append and pins while leaving both historical consumer files
+byte-identical. It refuses an unexpected prior inverse or changed original
+prefix. Neither tool treats a supplied rule record as semantic approval.

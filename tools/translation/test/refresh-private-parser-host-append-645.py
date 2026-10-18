@@ -34,6 +34,17 @@ def change(path,before,after):
 def replace_once(source,before,after):
     check(source.count(before)==1,'test-data anchor is absent or ambiguous');return source.replace(before,after)
 
+def host_helper_source(original,after,pins):
+    check(after.startswith(original),'test-data original prefix changed')
+    append=after[len(original):];helper="// Generated fixed645 test DATA inverse only; no parser or semantic authority.\nimport assert from 'node:assert/strict';\n"
+    helper+='const completeAppend='+json.dumps(append,ensure_ascii=False)+';\n'
+    helper+='export const currentPrivateParserPacketPins645='+json.dumps(pins,separators=(',',':'))+';\n'
+    helper+='export function undoPrivateParserHostAppend645(source){\n'
+    helper+=' assert.equal(typeof source,\'string\');assert.equal(source.length,'+str(units(after))+');\n'
+    helper+=' assert.equal(source.slice('+str(units(original))+'),completeAppend);\n'
+    helper+=' return source.slice(0,'+str(units(original))+');\n}\n'
+    return helper
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--root',required=True);parser.add_argument('--profile-proposal',required=True);parser.add_argument('--output',required=True)
@@ -54,39 +65,45 @@ def main():
         check(isinstance(row['path'],str)and not Path(row['path']).is_absolute()and all(part not in ['','.','..']for part in row['path'].split('/'))and '\\'not in row['path'],'unsafe registered path')
         path='tools/translation/'+row['path'];raw=complete(root/path);check(raw==git(root,head,path)and len(raw)==row['bytes']and digest(raw)==row['sha256'],'full source/Git proposal join differs')
     host=proposal['hostEvolution'][0];check(host['path']=='original-json-intrinsics.mjs','wrong host')
-    before=host['before'].encode();after=host['after'].encode();check(len(before)==53873 and digest(before)=='1e0ca597de42bdc9af8c0385257cfacb9ec4ceb883ebda53c5d9a48c9b056930','fixed645 before source differs')
-    check(before==git(root,baseline,'tools/translation/'+host['path'])and after==git(root,head,'tools/translation/'+host['path'])and after.startswith(before)and len(after)>len(before),'complete host evolution differs')
+    before=host['before'].encode();after=host['after'].encode()
+    original=git(root,'6493a6e050fed6ecc699595273dbeebd63c7fadf','tools/translation/'+host['path'])
+    check(len(original)==53873 and digest(original)=='1e0ca597de42bdc9af8c0385257cfacb9ec4ceb883ebda53c5d9a48c9b056930','fixed645 original prefix differs')
+    check(before==git(root,baseline,'tools/translation/'+host['path'])and after==git(root,head,'tools/translation/'+host['path'])and before.startswith(original)and after.startswith(original)and len(after)>len(original),'complete host evolution differs')
     expected_manifest=json.loads(current_manifest);expected_manifest['hostInputs'][0]['bytes']=len(after);expected_manifest['hostInputs'][0]['sha256']=digest(after)
     manifest_after=canonical(expected_manifest).encode();executor_before=git(root,head,'tools/translation/private-parser-execution.mjs')
     old_pin="const manifestSha256='"+digest(current_manifest)+"';";new_pin="const manifestSha256='"+digest(manifest_after)+"';"
     executor_after=replace_once(executor_before.decode(),old_pin,new_pin).encode()
     expected={'source-profiles/private-parser-execution/manifest.json':(current_manifest,manifest_after),'private-parser-execution.mjs':(executor_before,executor_after)}
+    check([row['path']for row in proposal['changes']]==[manifest_path,'private-parser-execution.mjs'],'profile proposal paths must be the exact ordered pair')
     for row in [host,*proposal['changes']]:
         left,right=(before,after)if row is host else expected[row['path']]
         check(row['before'].encode()==left and row['after'].encode()==right,'full proposed source differs')
         check(row['forward']=={'expected':row['before'],'replacement':row['after']}and row['inverse']=={'expected':row['after'],'replacement':row['before']},'full inverse differs')
     pins=[{'path':'source-profiles/private-parser-execution/manifest.json','bytes':len(manifest_after),'sha256':digest(manifest_after)},*expected_manifest['hostInputs']]
-    append=host['after'][len(host['before']):];helper="// Generated fixed645 test DATA inverse only; no parser or semantic authority.\nimport assert from 'node:assert/strict';\n"
-    helper+='const completeAppend='+json.dumps(append,ensure_ascii=False)+';\n'
-    helper+='export const currentPrivateParserPacketPins645='+json.dumps(pins,separators=(',',':'))+';\n'
-    helper+='export function undoPrivateParserHostAppend645(source){\n'
-    helper+=' assert.equal(typeof source,\'string\');assert.equal(source.length,'+str(units(host['after']))+');\n'
-    helper+=' assert.equal(source.slice('+str(units(host['before']))+'),completeAppend);\n'
-    helper+=' return source.slice(0,'+str(units(host['before']))+');\n}\n'
-    helper_path='tools/translation/test/private-parser-host-append-645.mjs';check(not(root/helper_path).exists(),'test DATA helper must be absent')
-    edits=[change(helper_path,None,helper)]
+    helper=host_helper_source(original.decode(),host['after'],pins)
+    helper_path='tools/translation/test/private-parser-host-append-645.mjs';helper_exists=(root/helper_path).exists();helper_before=None
+    if helper_exists:
+        helper_before=complete(root/helper_path).decode();check(helper_before.encode()==git(root,head,helper_path),'prior test-data helper/source Git differs')
+        old_pins=[{'path':manifest_path,'bytes':len(current_manifest),'sha256':digest(current_manifest)},*registered['hostInputs']]
+        check(helper_before==host_helper_source(original.decode(),host['before'],old_pins),'prior complete test-data inverse differs')
+    edits=[change(helper_path,helper_before,helper)]
     for name in ['private-parser-historical-packet.mjs','private-parser-batched-descriptors.test.mjs']:
         path='tools/translation/test/'+name;old=complete(root/path).decode();check(old.encode()==git(root,head,path),'test source/Git differs')
         imported='undoPrivateParserHostAppend645'+(',currentPrivateParserPacketPins645'if name.startswith('private-parser-historical')else'')
-        new="import {"+imported+"} from './private-parser-host-append-645.mjs';\n"+old
-        new=replace_once(new,'function beforeStandardRuns339(source){\n','function beforeStandardRuns339(source){\n source=undoPrivateParserHostAppend645(source);\n')
-        if name.startswith('private-parser-historical'):
-            lines=[line for line in old.splitlines()if line.startswith('const currentPacketPins=')];check(len(lines)==1,'current packet DATA declaration differs')
-            new=replace_once(new,lines[0],'const currentPacketPins=currentPrivateParserPacketPins645;')
+        import_line="import {"+imported+"} from './private-parser-host-append-645.mjs';\n"
+        if helper_exists:
+            check(old.startswith(import_line)and old.count(' source=undoPrivateParserHostAppend645(source);\n')==1,'prior data helper association differs');new=old
+            if name.startswith('private-parser-historical'):check(old.count('const currentPacketPins=currentPrivateParserPacketPins645;')==1,'prior packet pins association differs')
+        else:
+            new=import_line+old
+            new=replace_once(new,'function beforeStandardRuns339(source){\n','function beforeStandardRuns339(source){\n source=undoPrivateParserHostAppend645(source);\n')
+            if name.startswith('private-parser-historical'):
+                lines=[line for line in old.splitlines()if line.startswith('const currentPacketPins=')];check(len(lines)==1,'current packet DATA declaration differs')
+                new=replace_once(new,lines[0],'const currentPacketPins=currentPrivateParserPacketPins645;')
         edits.append(change(path,old,new))
     # The generated adapter strips one exact complete append. The original
     # consumers still check their complete historical prefix and original hash.
-    record={'schema':'private-parser-host-test-data-proposal-645-v1','head':head,'baseline':baseline,'authority':proposal['authority'],'installApproved':False,'hostEvolution':host,'currentPins':pins,'changes':edits,'rules':[{'phase':'language','rules':['complete-fixed645-host-prefix-and-inverse']},{'phase':'repository','rules':['emit-exact-test-data-append','adapt-historical-data-helpers-only']}],'caseBodiesEdited':False,'enginesRun':False}
+    record={'schema':'private-parser-host-test-data-proposal-645-v1','head':head,'baseline':baseline,'authority':proposal['authority'],'installApproved':False,'hostEvolution':host,'originalHostPrefix':original.decode(),'currentPins':pins,'changes':edits,'rules':[{'phase':'language','rules':['complete-fixed645-host-prefix-and-inverse']},{'phase':'repository','rules':['emit-exact-test-data-append','adapt-historical-data-helpers-only']}],'caseBodiesEdited':False,'enginesRun':False}
     raw=canonical(record).encode();check(len(raw)<=LIMIT,'test-data proposal exceeds8MiB');check_time();output.mkdir();(output/'proposal.json').write_bytes(raw);check(complete(output/'proposal.json')==raw,'full proposal readback differs')
     print(json.dumps({'status':'TEST_DATA_PROPOSAL_ONLY','changes':[{'path':row['path'],'bytes':len(row['after'].encode()),'sha256':digest(row['after'].encode())}for row in edits],'installApproved':False}))
 
