@@ -12,6 +12,8 @@ import {encodeWord,writeLink} from './vendor/lino.mjs';
 import {createRulePipeline} from '../rule-pipeline.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const WITNESS='tests/translation_core_reverse_owned_oracle.rs';
+const BASE64_LEAF='src/translation_core/base64.rs',BASE64_WITNESS='tests/translation_core_base64_reverse_oracle.rs';
+function hasBase64Leaf(root){try{lstatSync(join(root,BASE64_LEAF));return true;}catch(error){if(error.code==='ENOENT')return false;throw error;}}
 const ROOT='packages/javascript/generated/rust-project',TYPED='packages/typescript/generated/rust-project';
 function strictSource(path){const bytes=readFileSync(path),source=bytes.toString('utf8');if(!Buffer.from(source,'utf8').equals(bytes))throw TypeError('Owned receiving source is not strict UTF8');return source;}
 const MAX_BYTES=256*1024*1024,MAX_FILE=32*1024*1024,MAX_PATHS=32768;
@@ -37,8 +39,9 @@ export function captureOwnedCoreCorpus(root){
  }
  visit(ROOT);visit(TYPED);
  if(files.length)for(const path of ['src/lib.rs','src/translation_core.rs','src/translation_core/primitives.rs','Cargo.toml','Cargo.lock'])add(path);
+ const base64Present=hasBase64Leaf(root);if(files.length&&base64Present)add(BASE64_LEAF);
  const rows=files.sort((a,b)=>a.path.localeCompare(b.path));
- return {files:rows,bytes,requireCurrent(){for(const row of rows)if(strictSource(physical(root,row.path))!==row.source)throw TypeError('Owned receiving complete input changed: '+row.path);}};
+ return {files:rows,bytes,requireCurrent(){if(hasBase64Leaf(root)!==base64Present)throw TypeError('Owned receiving base64 source presence changed');for(const row of rows)if(strictSource(physical(root,row.path))!==row.source)throw TypeError('Owned receiving complete input changed: '+row.path);}};
 }
 /** Language/source checks run independently for every original application item. */
 export function buildOwnedCoreArtifacts(root){
@@ -73,7 +76,7 @@ export function buildOwnedCoreArtifacts(root){
    return {schema:'owned-core-reverse-corpus-v1',profile:'router-owned-core-reverse-v1',discoveryRoot:ROOT,modules:rows,inputs:capture.files.map(row=>({path:row.path,bytes:Buffer.byteLength(row.source),sha256:hash(row.source)})),diagnostics,totals:{modules:rows.length,sourceItems:rows.reduce((n,row)=>n+row.sourceItems,0),translatedItems:rows.reduce((n,row)=>n+row.translatedItems,0),unsupportedItems:rows.reduce((n,row)=>n+row.unsupportedItems,0)},sourceAvailable:modules.length!==0,runtimeParity:false,rustExecuted:false,wholeSourceSynchronization:false};
   }}]},
  ]);
- const result=pipeline.run(undefined);capture.requireCurrent();const witness=ownedCoreWitnessArtifacts(root);for(const [path,content]of witness.artifacts)artifacts.set(path,content);const manifest={...result.value,trace:result.trace,witness:witness.manifest};
+ const result=pipeline.run(undefined);capture.requireCurrent();const witness=ownedCoreWitnessArtifacts(root);for(const [path,content]of witness.artifacts)artifacts.set(path,content);const base64=ownedCoreBase64WitnessArtifacts(root);for(const [path,content]of base64.artifacts)artifacts.set(path,content);const manifest={...result.value,trace:result.trace,witness:witness.manifest,...(base64.manifest.available?{base64Witness:base64.manifest}:{})};
  artifacts.set('parity/js-owned-core-reverse-draft.json',JSON.stringify(manifest)+'\n');
  let outputBytes=0;for(const content of artifacts.values()){outputBytes+=Buffer.byteLength(content);if(outputBytes>MAX_BYTES)throw TypeError('Owned receiving artifact budget');}
  return {artifacts,manifest};
@@ -136,8 +139,23 @@ export function buildOwnedCoreDocumentArtifacts(root){
    return {schema:'owned-core-reverse-corpus-v1',profile:'router-owned-core-source-document-v1',discoveryRoot:ROOT,modules:rows,inputs:capture.files.map(row=>({path:row.path,bytes:Buffer.byteLength(row.source),sha256:hash(row.source)})),diagnostics,totals:{modules:rows.length,sourceItems:rows.reduce((n,row)=>n+row.sourceItems,0),translatedItems:rows.reduce((n,row)=>n+row.translatedItems,0),unsupportedItems:rows.reduce((n,row)=>n+row.unsupportedItems,0)},sourceAvailable:modules.length!==0,runtimeParity:false,rustExecuted:false,wholeSourceSynchronization:false};
   }}]},
  ]);
- const result=pipeline.run(undefined);capture.requireCurrent();const witness=ownedCoreWitnessArtifacts(root);for(const [path,content]of witness.artifacts)artifacts.set(path,content);const manifest={...result.value,trace:result.trace,witness:witness.manifest};
+ const result=pipeline.run(undefined);capture.requireCurrent();const witness=ownedCoreWitnessArtifacts(root);for(const [path,content]of witness.artifacts)artifacts.set(path,content);const base64=ownedCoreBase64WitnessArtifacts(root);for(const [path,content]of base64.artifacts)artifacts.set(path,content);const manifest={...result.value,trace:result.trace,witness:witness.manifest,...(base64.manifest.available?{base64Witness:base64.manifest}:{})};
  artifacts.set('parity/js-owned-core-reverse-draft.json',JSON.stringify(manifest)+'\n');
  let outputBytes=0;for(const content of artifacts.values()){outputBytes+=Buffer.byteLength(content);if(outputBytes>MAX_BYTES)throw TypeError('Owned receiving artifact budget');}
  return {artifacts,manifest};
+}
+
+// Separate actual base64 CI witness; never counted as application translation.
+function ownedCoreBase64WitnessArtifacts(root){
+ const artifacts=new Map();if(!existsSync(join(root,BASE64_WITNESS)))return {artifacts,manifest:{available:false,applicationItems:0}};
+ const original=strictSource(physical(root,BASE64_WITNESS)),matches=[...original.matchAll(/const REVERSE_BASE64_JS_WITNESS: &str = r###"([\s\S]*?)"###;/gu)];
+ if(matches.length!==1||!original.includes('use link_assistant_router::translation_core;'))throw TypeError('Actual authored base64 witness and library alias required');
+ const prefix='tools/translation/js-to-rust/generated/owned-base64-witness',header='// GENERATED: actual checked reverse base64 receiving witness.\n',source=header+matches[0][1],files=ownedCoreRuntimeSources(prefix+'/runtime',prefix+'/runtime'),originals=[];
+ for(const path of ['src/lib.rs','src/translation_core.rs','src/translation_core/primitives.rs',BASE64_LEAF,'Cargo.toml','Cargo.lock'])originals.push({path,source:strictSource(physical(root,path))});
+ const data={runtimeRoot:prefix+'/runtime',declarationRoot:prefix+'/runtime',files:[...files,...originals.map(row=>row.path==='src/lib.rs'?{path:row.path,source:'pub mod translation_core;\n'}:row),{path:prefix+'/witness.mjs',source}]};
+ const context=createOwnedCoreSourceContext(data),result=translateOwnedCoreJavaScript(source,{sourcePath:prefix+'/witness.mjs',context,typescriptOutputPath:prefix+'/witness.mts'});
+ artifacts.set(prefix+'.rs',header+result.rust);artifacts.set(prefix+'.lino',result.meta);artifacts.set(prefix+'/witness.mts',result.typescript);artifacts.set(prefix+'/witness.mjs',source);for(const row of files)artifacts.set(row.path,row.source);
+ artifacts.set(prefix+'-inputs.json',JSON.stringify({schema:'owned-base64-reverse-ci-witness-v1',oracle:{path:BASE64_WITNESS,source:original,sha256:hash(original)},originalLibraryInputs:originals,stagedReceivingInputs:data,sourceRecipe:{kind:'prepend-one-generated-comment',before:matches[0][1],after:source,prefix:header,wholeUndo:source.slice(header.length)===matches[0][1]},concreteSyntax:result.concreteSyntax,trace:result.trace,applicationItems:0,rustExecuted:false})+'\n');
+ if(strictSource(physical(root,BASE64_WITNESS))!==original)throw TypeError('Original base64 witness changed');for(const row of originals)if(strictSource(physical(root,row.path))!==row.source)throw TypeError('Original base64 witness library changed');
+ return {artifacts,manifest:{available:true,applicationItems:0,functions:result.program.length,rust:prefix+'.rs',oracle:BASE64_WITNESS,sourceSha256:hash(source),rustExecuted:false}};
 }

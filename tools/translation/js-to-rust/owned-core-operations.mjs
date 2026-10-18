@@ -4,6 +4,7 @@ import {isDeepStrictEqual,types} from 'node:util';
 import {posix} from 'node:path';
 import {analyzeOriginalOwnedCoreSource,requireOwnedCoreSourceCurrent,ownedPlainData,ownedCoreSourceData} from './owned-core-source.mjs';
 import {originalNamespaceTraversalIntrinsicsUnchanged,originalStaticSourceIntrinsicsUnchanged} from '../original-json-intrinsics.mjs';
+import {ownedBase64Operation,ownedBase64RustCall,ownedBase64RustTypes,ownedBase64TypeScriptTypes} from './owned-base64-source.mjs';
 const issued=new WeakMap(),runtimes=new WeakMap();
 const fail=message=>{throw new TypeError('Owned reverse operation: '+message);};
 const OPS=Object.freeze({
@@ -150,8 +151,8 @@ export function checkOwnedCoreProgram(program,context){
 }
 export function ownedCoreContext(item){return issued.get(checkOwnedCoreItem(item))?.context;}
 const rustString=value=>'"'+value.replace(/[\\"\x00-\x1f\x7f]/gu,c=>({'\\':'\\\\','"':'\\"','\n':'\\n','\r':'\\r','\t':'\\t'}[c]??'\\u{'+c.codePointAt(0).toString(16)+'}'))+'"';
-const TS_TYPES={json:'JsonValue','json-ref':'JsonValue','map-ref':"Extract<JsonValue,{readonly $:'Object'}>['field0']",str:'string',bool:'boolean',usize:'bigint'};
-const RUST_TYPES={json:'crate::translation_core::Json','json-ref':"&'a crate::translation_core::Json",'map-ref':"&'a ::serde_json::Map<::std::string::String,crate::translation_core::Json>",str:"&'a str",bool:'bool',usize:'u64'};
+const TS_TYPES={...ownedBase64TypeScriptTypes,json:'JsonValue','json-ref':'JsonValue','map-ref':"Extract<JsonValue,{readonly $:'Object'}>['field0']",str:'string',bool:'boolean',usize:'bigint'};
+const RUST_TYPES={...ownedBase64RustTypes,json:'crate::translation_core::Json','json-ref':"&'a crate::translation_core::Json",'map-ref':"&'a ::serde_json::Map<::std::string::String,crate::translation_core::Json>",str:"&'a str",bool:'bool',usize:'u64'};
 export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  const program=checkOwnedCoreProgram(input),rust=target==='rust';if(!rust&&target!=='typescript')fail('unknown target');if(!program.length)return '';
  const context=issued.get(program[0]).context;requireOwnedCoreSourceCurrent(context);const sourceData=ownedCoreSourceData(context);
@@ -159,7 +160,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  let sequence=0;const imports=new Set();
  function expr(value,borrowOwned=false){
   switch(value.kind){
-   case 'variable':return rust?(value.type==='json'?(borrowOwned?'&'+rustName(value.name):'__ro_copy(&'+rustName(value.name)+')'):rustName(value.name)):value.name;
+   case 'variable':if(rust&&value.type==='text-owned')return borrowOwned?'&'+rustName(value.name):rustName(value.name)+'.to_owned()';return rust?(value.type==='json'?(borrowOwned?'&'+rustName(value.name):'__ro_copy(&'+rustName(value.name)+')'):rustName(value.name)):value.name;
    case 'string':return rust?rustString(value.value):JSON.stringify(value.value);
    case 'bool':return String(value.value);
    case 'integer':return rust?value.value+'_u64':value.value+'n';
@@ -173,6 +174,13 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
     const names=children.map(()=> '__ro_json_'+sequence++),bindings=children.map((child,index)=>'let '+names[index]+' = '+expr(child)+';');
     const literal=value.kind==='json-array'?'['+names.join(', ')+']':'{'+value.entries.map((entry,index)=>rustString(entry.key)+': '+names[index]).join(', ')+'}';
     return '{ '+bindings.join(' ')+' let __ro_result = crate::translation_core::json!('+literal+'); __ro_domain(&__ro_result); __ro_result }';
+   }
+   case 'base64-call':{
+    const op=ownedBase64Operation(value.name);if(!op||value.args.length!==1||value.copy!==op.copy||value.type!==op.ret)fail('checked base64 contract differs');imports.add(value.name);
+    if(!rust)return '__ro_'+value.name+'('+expr(value.args[0])+')';
+    const argument=value.args[0],name='__ro_arg_'+sequence++;
+    const source=argument.type==='text-owned'?(argument.kind==='variable'?expr(argument,true):'&'+expr(argument)):expr(argument);
+    return '{ let '+name+' = '+source+'; '+ownedBase64RustCall(value.name,name)+' }';
    }
    case 'owned-call':{
     const op=OPS[value.name];imports.add(value.name);
@@ -206,7 +214,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
   return pad+'if '+(rust?'':'(')+expr(statement.cond)+(rust?'':')')+' {\n'+body(statement.then,indent+4)+'\n'+pad+'} else {\n'+body(statement.else,indent+4)+'\n'+pad+'}';
  }).join('\n');}
  const code=program.map(item=>{
-  const borrowed=type=>['json-ref','map-ref','str'].includes(type),loan=borrowed(item.returns),explicit=loan&&item.resultRoot!==null&&item.params.filter(param=>borrowed(param.type)).length>1;
+  const borrowed=type=>['json-ref','map-ref','str','bytes-ref','base64-error-ref'].includes(type),loan=borrowed(item.returns),explicit=loan&&item.resultRoot!==null&&item.params.filter(param=>borrowed(param.type)).length>1;
   const parameters=item.params.map(param=>{
    const type=rust?RUST_TYPES[param.type].replace("'a ",explicit&&param.name===item.resultRoot?"'a ":''):TS_TYPES[param.type];
    return (rust?param.rust:param.name)+': '+type;
@@ -219,8 +227,9 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  if(rust)return RUST_SUPPORT+'\n\n'+code+'\n';
  const output=outputPath??program[0].source.path,relative=name=>{const path=posix.relative(posix.dirname(output),sourceData.runtimeRoot+'/'+name);return path.startsWith('.')?path:'./'+path;};
  const lines=['import type {JsonValue} from '+JSON.stringify(relative('json-macro-runtime.mjs'))+';'];
- for(const family of ['json-update','json-macro']){
-  const names=[...imports].filter(name=>(name.startsWith('json_macro_')?'json-macro':'json-update')===family);
+ if([...imports].some(name=>ownedBase64Operation(name)))lines.push('import type {Base64Error,Base64Result} from '+JSON.stringify(relative('base64-runtime.mjs'))+';');
+ for(const family of ['json-update','json-macro','base64']){
+  const names=[...imports].filter(name=>(ownedBase64Operation(name)?'base64':name.startsWith('json_macro_')?'json-macro':'json-update')===family);
   if(names.length)lines.push('import { '+names.map(name=>name+' as __ro_'+name).join(', ')+' } from '+JSON.stringify(relative(family+'-runtime.mjs'))+';');
  }
  return lines.join('\n')+'\n\n'+code+'\n';
@@ -266,6 +275,7 @@ fn __ro_with_field(base: &crate::translation_core::Json, key: &str, value: &crat
 /** Prepare only the actual registered module, after fresh complete source joins. */
 export async function prepareOwnedCoreRuntime(input){
  const program=checkOwnedCoreProgram(input),modules={update:await import('../json-update-runtime.mjs'),macro:await import('../json-macro-runtime.mjs')};
+ if(program.some(item=>item.hostCalls.some(call=>ownedBase64Operation(call.name))))modules.base64=await import('../base64-runtime.mjs');
  checkOwnedCoreProgram(program);const token=Object.freeze({schema:'owned-core-runtime-v1'});runtimes.set(token,{program,modules});return token;
 }
 export function evaluateOwnedCoreProgram(input,name,args,token){
@@ -282,6 +292,7 @@ export function evaluateOwnedCoreProgram(input,name,args,token){
    case 'binary':{const left=get(value.left,scope);if(value.op==='&&')return left&&get(value.right,scope);if(value.op==='||')return left||get(value.right,scope);const right=get(value.right,scope);return value.op==='==='?left===right:left!==right;}
    case 'json-array':return state.modules.macro.json_macro_array(value.items.map(child=>get(child,scope)));
    case 'json-object':return state.modules.macro.json_macro_object(value.entries.map(entry=>[entry.key,get(entry.value,scope)]));
+   case 'base64-call':{const op=ownedBase64Operation(value.name);if(!op||!state.modules.base64)fail('unissued base64 runtime');return Reflect.apply(state.modules.base64[value.name],undefined,value.args.map(value=>get(value,scope)));}
    case 'owned-call':{const module=value.name.startsWith('json_macro_')?state.modules.macro:state.modules.update;return Reflect.apply(module[value.name],undefined,value.args.map(value=>get(value,scope)));}
    default:fail('unknown evaluated expression');
   }

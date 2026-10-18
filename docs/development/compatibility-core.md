@@ -556,3 +556,45 @@ reverse outputs. If reverse generation changes a Rust witness, refresh the bank
 and dependent exports again. Retain all historical sources, callbacks, oracles,
 failed runs and original limits; obtain the complete current gate before claiming
 completion. Qualification is tied to the recorded source checkpoint; rerun the complete application and receiving suites after relevant changes. No local Rust execution is authorized.
+
+### Reverse base64 uses the public byte and text ABI
+
+The owned reverse source path recognizes the thirteen fixed base64-runtime
+imports and its native error formatter through the actual native TypeScript
+symbol and registered runtime source closure. It reconstructs the full original
+module, lossless serialized/reparsed CST, written/paired types and checked body
+again when reading source documents or emitting targets. Public operation rows,
+import names, hashes and similarly shaped types cannot issue executable items.
+Selecting a base64 call also freshly checks the actual owned Rust leaf, locked
+Cargo profile and the complete original base64 package source capture. This is
+an explicit native library-unit ABI boundary; it does not establish permission
+for the original imported Engine trait route or close its unknown-cfg namespace.
+
+JavaScript string and readonly BigInt-octet inputs do not encode original Rust
+ownership. Reverse inputs therefore use `&str` and `&[u8]`. Operations whose
+native core parameter is owned emit explicit `.to_owned()` or `.to_vec()` at
+the fixed call boundary. The array32 operation checks length by an exact native
+`TryInto<[u8; 32]>` conversion. Inputs retain the runtime's 1 MiB successful-resource
+bound. These conversions preserve reusable JavaScript inputs; they do not claim
+recovery of an original `String`, `Vec<u8>` or array parameter identity. Native
+allocation failure and panic recovery remain outside this successful-resource
+projection, as with the existing reverse JSON ABI.
+
+Newly encoded text is an owned Rust String. Decoding returns the native
+`Result<Vec<u8>, Base64Error>` with exact native errors. Native result locals have
+a finite affine flow check; result parameters, projections, general Result
+control, loops, closures, mutation and arbitrary tagged result constructors
+remain unsupported. The fixed error formatter borrows a genuine native error;
+it gives no general Display, Debug, Clone or user-type permission. Actual
+operation imports can establish `Parameters<typeof imported>[0]` and
+`ReturnType<typeof imported>` domains. A written `readonly bigint[]` parameter
+is an octet refinement only if its complete checked uses reach fixed base64
+operands. A general array domain is not admitted.
+
+Actual canonical and profile corpus capture includes the base64 leaf when it is
+present, checks its presence and full bytes again, and still reports every
+original body refusal. The separate authored reverse Rust witness is generated
+through the real source pipeline and has zero application items. Its CI-only
+oracle uses the same complete 15 encode and 252 decode vectors. Local Rust is
+unrun. Source drafting, focused receiving, actual generated output installation,
+current bank/export freshness and complete parity remain distinct obligations.

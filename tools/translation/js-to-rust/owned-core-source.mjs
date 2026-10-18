@@ -13,6 +13,11 @@ import {captureSourceModuleViews,originalModuleViewItems} from '../source-module
 import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE} from '../router-core-source-data.mjs';
 import {assertReverseConcreteSourceHost} from './concrete-source.mjs';
 import {ownedCorePairedTypePath,prepareOwnedCorePairedTypes} from './owned-core-paired-types.mjs';
+import {ownedBase64Operation,ownedBase64Compatible,ownedBase64ReadonlyOctets,ownedBase64Result} from './owned-base64-source.mjs';
+import {ROUTER_CORE_BASE64_SOURCE} from '../router-core-source-data.mjs';
+import {deriveDependencyProfile} from '../derive-dependencies.mjs';
+import {captureOriginalExternalTraitPackage,originalExternalTraitPackageInputs} from '../extensions/external-trait-sources.mjs';
+import {transportConcreteSyntaxSource} from '../concrete-syntax-meta.mjs';
 
 const contexts=new WeakMap(),traversals=new WeakMap();
 const fail=message=>{throw new TypeError('Owned reverse source: '+message);};
@@ -60,7 +65,7 @@ export function ownedCoreRuntimeSources(runtimeRoot='runtime',declarationRoot=ru
    const target=relative(path,specifier);if(posix.dirname(target)!==base)fail('runtime closure escape');visit(posix.basename(target));
   }
  }
- for(const name of ['json-update-runtime.mjs','json-update-runtime.d.mts','json-macro-runtime.mjs','json-macro-runtime.d.mts'])visit(name);
+ for(const name of ['json-update-runtime.mjs','json-update-runtime.d.mts','json-macro-runtime.mjs','json-macro-runtime.d.mts','base64-runtime.mjs','base64-runtime.d.mts'])visit(name);
  for(const [name,source]of assets)if(/LICENSE|NOTICE/iu.test(name))rows.push({path:runtimeRoot+'/'+name,source});
  assertReverseConcreteSourceHost();return rows.sort((a,b)=>a.path.localeCompare(b.path));
 }
@@ -82,6 +87,20 @@ function rustEdge(files){
  const evidence=resolveModuleBindings({modules}),selected=selectOriginalRouterCoreFacade({modules,sourceScopes:evidence.scopes,compilationProfile:evidence.compilationProfile});
  return {path:selected.rootFile,span:[...selected.span],dependencyDigest:dependencies.digest,features:[...features.features],bindingDiagnostics:evidence.diagnostics};
 }
+// Full fixed native library sources are rejoined for every selected base64 use.
+// These bytes establish the explicit library-unit ABI, not Engine permission.
+function base64Source(files){
+ if(files.get('src/translation_core/base64.rs')!==ROUTER_CORE_BASE64_SOURCE)fail('complete owned base64 leaf required');
+ const concrete=transportConcreteSyntaxSource(files.get('src/translation_core/base64.rs'),{language:'Rust'});
+ if(concrete.source!==ROUTER_CORE_BASE64_SOURCE)fail('complete base64 native CST source differs');
+ const capture=captureSourceModuleViews({source:concrete.source,sourcePath:'src/translation_core/base64.rs'}),functions=originalModuleViewItems(capture.views[0],concrete.source).filter(item=>item.term==='fn');
+ if(functions.length!==13||functions.some(item=>!ownedBase64Operation('router_core_'+item.name)))fail('actual complete base64 source operations differ');
+ const proof=deriveDependencyProfile({manifest:files.get('Cargo.toml'),lock:files.get('Cargo.lock')}).proof;
+ if(!proof)fail('actual locked base64 dependency required');
+ const actual=originalExternalTraitPackageInputs(captureOriginalExternalTraitPackage(proof,'base64'));
+ if(actual.dependency.package!=='base64'||actual.dependency.version!=='0.23.1')fail('actual base64 package source required');
+ return actual;
+}
 /** Fresh source selection; no source/owner/verdict is shared across calls. */
 export function createOwnedCoreSourceContext(input){
  assertReverseConcreteSourceHost();const data=ownedPlainData(input);exactKeys(data,['files','runtimeRoot','declarationRoot']);ownedSourcePath(data.runtimeRoot);ownedSourcePath(data.declarationRoot);
@@ -99,7 +118,7 @@ export function requireOwnedCoreSourceCurrent(handle){
  assertReverseConcreteSourceHost();const state=contexts.get(handle);if(!state)fail('unissued source context');
  for(const row of state.receipts)if(digest(row.source)!==row.sha256||state.files.get(row.path)!==row.source)fail('source receipt differs');
  for(const row of ownedCoreRuntimeSources(state.data.runtimeRoot,state.data.declarationRoot))if(state.files.get(row.path)!==row.source)fail('current runtime differs');
- rustEdge(state.files);assertReverseConcreteSourceHost();
+ rustEdge(state.files);if(state.files.has('src/translation_core/base64.rs')&&state.files.get('src/translation_core/base64.rs')!==ROUTER_CORE_BASE64_SOURCE)fail('current base64 leaf differs');assertReverseConcreteSourceHost();
 }
 /** Detached full original data, used to reconstruct private authority on read. */
 export function ownedCoreSourceData(handle){requireOwnedCoreSourceCurrent(handle);return ownedPlainData(contexts.get(handle).data);}
@@ -140,7 +159,7 @@ function originalImportTarget(from,specifier,analysis,state){
  const target=relative(from,specifier);
  // A paired TS import resolves its genuine .d.mts in declarationRoot. Its
  // fixed runtime counterpart remains the independently checked JS callee.
- if(traversals.get(analysis)?.paired&&posix.dirname(target)===state.data.declarationRoot&&['json-update-runtime.mjs','json-macro-runtime.mjs'].includes(posix.basename(target))){
+ if(traversals.get(analysis)?.paired&&posix.dirname(target)===state.data.declarationRoot&&['json-update-runtime.mjs','json-macro-runtime.mjs','base64-runtime.mjs'].includes(posix.basename(target))){
   const runtime=state.data.runtimeRoot+'/'+posix.basename(target);
   if(state.files.has(target)&&state.files.get(target)!==state.files.get(runtime))fail('paired runtime counterpart differs');return runtime;
  }
@@ -158,7 +177,7 @@ function originalOwnedCoreImport(handle,path,node,analysis){
  let target=originalImportTarget(path,declaration.moduleSpecifier.text,analysis,state),name=(spec.propertyName??spec.name).text,ownerFile=file,ownerDeclaration=declaration;const links=[];
  for(let depth=0;depth<32;depth++){
   const source=state.files.get(target);if(source===undefined)fail('import target missing');links.push({path:target,name,source,from:{path:ownerFile.fileName,span:[ownerDeclaration.getStart(ownerFile),ownerDeclaration.end]}});
-  if(target===state.data.runtimeRoot+'/json-update-runtime.mjs'||target===state.data.runtimeRoot+'/json-macro-runtime.mjs'){
+  if(target===state.data.runtimeRoot+'/json-update-runtime.mjs'||target===state.data.runtimeRoot+'/json-macro-runtime.mjs'||target===state.data.runtimeRoot+'/base64-runtime.mjs'){
    const typesOnly=spec.isTypeOnly||declaration.importClause?.isTypeOnly;
    const actual=typesOnly?syntax.get(state.data.declarationRoot+'/'+posix.basename(target).replace(/\.mjs$/u,'.d.mts')):syntax.get(target);
    const exported=actual?.statements.some(item=>item.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword)&&((item.name?.text===name)||(ts.isVariableStatement(item)&&item.declarationList.declarations.some(node=>ts.isIdentifier(node.name)&&node.name.text===name))));
@@ -179,13 +198,22 @@ function originalOwnedCoreType(handle,path,type,analysis){
  if(!type)fail('written input domain required');
  if(type.kind===ts.SyntaxKind.StringKeyword)return 'str';
  if(type.kind===ts.SyntaxKind.BooleanKeyword)return 'bool';
+ if(ownedBase64ReadonlyOctets(ts,type))return 'bytes-ref';
 
- if(ts.isTypeReferenceNode(type)&&ts.isIdentifier(type.typeName)){
+ if(ts.isTypeReferenceNode(type)&&ts.isIdentifier(type.typeName)&&type.typeName.text!=='ReturnType'){
   const binding=originalOwnedCoreImport(handle,path,type.typeName,analysis);
   if(binding.target===state.data.runtimeRoot+'/json-macro-runtime.mjs'&&binding.name==='JsonValue'&&!type.typeArguments)return 'json-ref';
+  if(binding.target===state.data.runtimeRoot+'/base64-runtime.mjs'&&!type.typeArguments){if(binding.name==='Base64Error')return 'base64-error-ref';if(binding.name==='Base64Result')return 'base64-result';}
  }
  if(ts.isImportTypeNode(type)&&!type.isTypeOf&&ts.isLiteralTypeNode(type.argument)&&ts.isStringLiteral(type.argument.literal)&&type.qualifier?.text==='JsonValue'&&!type.typeArguments){
   if(originalImportTarget(path,type.argument.literal.text,analysis,state)!==state.data.runtimeRoot+'/json-macro-runtime.mjs')fail('unregistered type import');return 'json-ref';
+ }
+ if(ts.isTypeReferenceNode(type)&&ts.isIdentifier(type.typeName)&&type.typeName.text==='ReturnType'&&type.typeArguments?.length===1){
+  if(analysis.checker.getSymbolAtLocation(type.typeName)?.declarations?.length)fail('shadowed ReturnType type');
+  const query=type.typeArguments[0];if(ts.isTypeQueryNode(query)&&ts.isIdentifier(query.exprName)){
+   const binding=originalOwnedCoreImport(handle,path,query.exprName,analysis),op=ownedBase64Operation(binding.name);
+   if(binding.target===state.data.runtimeRoot+'/base64-runtime.mjs'&&op)return op.ret;
+  }
  }
  // Map and byte domains must be written through the actual imported operation,
  // not a caller's similarly-shaped object/array declaration.
@@ -194,6 +222,7 @@ function originalOwnedCoreType(handle,path,type,analysis){
   const query=type.objectType.typeArguments[0];
   if(ts.isTypeQueryNode(query)&&ts.isIdentifier(query.exprName)){
    const binding=originalOwnedCoreImport(handle,path,query.exprName,analysis);
+   const base64=ownedBase64Operation(binding.name);if(binding.target===state.data.runtimeRoot+'/base64-runtime.mjs'&&base64&&type.indexType.literal.text==='0')return base64.input;
    if(binding.target===state.data.runtimeRoot+'/json-update-runtime.mjs'&&binding.name==='router_core_json_map_index'&&type.indexType.literal.text==='0')return 'map-ref';
    if(binding.target===state.data.runtimeRoot+'/json-update-runtime.mjs'&&binding.name==='router_core_json_index_usize'&&type.indexType.literal.text==='1')return 'usize';
   }
@@ -263,12 +292,16 @@ function checkFunction(context,path,declaration,analysis){
    paired??=pairedFunction(context,path,declaration,analysis);
    type=paired?originalOwnedCoreType(context,paired.pair.typescript.path,paired.declaration.parameters[index].type,paired.analysis):originalOwnedCoreType(context,path,undefined,analysis);
   }
+  if(type==='base64-result')fail('native base64 result input control is not implemented');
+  if(type==='text-owned')type='str';
   const identifier=param.name;
-  const sourceName=bind(identifier,{type,root:['json-ref','map-ref','str'].includes(type)?identifier.text:null,input:true},environment);
+  const sourceName=bind(identifier,{type,root:['json-ref','map-ref','str','bytes-ref','base64-error-ref'].includes(type)?identifier.text:null,input:true},environment);
   params.push({name:sourceName,rust:rustName(sourceName),type});
  }
  if(declaration.parameters.length===0)paired=pairedFunction(context,path,declaration,analysis);
- const hostCalls=[];
+ const hostCalls=[],byteInputs=new Set();
+ const branchScope=scope=>new Map([...scope].map(([key,value])=>[key,ownedBase64Result(value.type)?{...value}:value]));
+ const mergeMoves=(scope,yes,no)=>{for(const [key,value]of scope)if(ownedBase64Result(value.type))value.moved=!!yes.get(key)?.moved||!!no.get(key)?.moved;};
  function expression(node,scope,depth){
   tick(depth);if(ts.isParenthesizedExpression(node))return expression(node.expression,scope,depth+1);
   if(ts.isStringLiteral(node)||ts.isNoSubstitutionTemplateLiteral(node)){
@@ -281,11 +314,22 @@ function checkFunction(context,path,declaration,analysis){
   }
   if(ts.isIdentifier(node)){
    const value=scope.get(node.text);if(!value||checker.getSymbolAtLocation(node)!==value.symbol)fail('unknown, shadowed or moved binding');
+   if(ownedBase64Result(value.type)){if(value.moved)fail('native base64 result used after move');value.moved=true;}
    return {kind:'variable',name:node.text,type:value.type,root:value.root};
   }
   if(ts.isCallExpression(node)){
    if(node.questionDotToken||node.typeArguments?.length||node.arguments.some(ts.isSpreadElement))fail('optional/generic/spread call');
    const binding=originalOwnedCoreImport(context,path,node.expression,analysis),op=OPS[binding.name];
+   const base64=ownedBase64Operation(binding.name);
+   if(base64&&binding.target===analysis.runtimeRoot+'/base64-runtime.mjs'){
+    base64Source(traversals.get(analysis).state.files);
+    if(node.arguments.length!==1)fail('fixed base64 arity');const argument=expression(node.arguments[0],scope,depth+1);
+    if(!ownedBase64Compatible(argument.type,base64.input))fail('actual base64 argument domain differs');
+    if(base64.input==='bytes-ref'){if(!argument.root||!params.some(param=>param.name===argument.root&&param.type==='bytes-ref'))fail('base64 octets require a live original input');byteInputs.add(argument.root);}
+    if(base64.input==='base64-error-ref'&&!argument.root)fail('native error requires a live original input');
+    hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});
+    return {kind:'base64-call',name:binding.name,args:[argument],type:base64.ret,root:null,copy:base64.copy};
+   }
    const expected=analysis.runtimeRoot+'/'+(binding.name.startsWith('json_macro_')?'json-macro-runtime.mjs':'json-update-runtime.mjs');
    if(['json_macro_array','json_macro_object'].includes(binding.name)&&binding.target===expected){
     if(node.arguments.length!==1||!ts.isArrayLiteralExpression(node.arguments[0])||node.arguments[0].elements.length>4096)fail('literal dense JSON constructor required');
@@ -313,8 +357,8 @@ function checkFunction(context,path,declaration,analysis){
    return {kind:'owned-call',name:binding.name,args,type:op.ret,root};
   }
   if(ts.isConditionalExpression(node)){
-   const cond=expression(node.condition,scope,depth+1),yes=expression(node.whenTrue,scope,depth+1),no=expression(node.whenFalse,scope,depth+1);
-   if(cond.type!=='bool'||yes.type!==no.type||yes.root!==no.root)fail('conditional result or loan differs');return {kind:'choose',cond,then:yes,else:no,type:yes.type,root:yes.root};
+   const cond=expression(node.condition,scope,depth+1),a=branchScope(scope),b=branchScope(scope),yes=expression(node.whenTrue,a,depth+1),no=expression(node.whenFalse,b,depth+1);
+   if(cond.type!=='bool'||yes.type!==no.type||yes.root!==no.root)fail('conditional result or loan differs');mergeMoves(scope,a,b);return {kind:'choose',cond,then:yes,else:no,type:yes.type,root:yes.root};
   }
   if(ts.isPrefixUnaryExpression(node)&&node.operator===ts.SyntaxKind.ExclamationToken){const value=expression(node.operand,scope,depth+1);if(value.type!=='bool')fail('boolean negation only');return {kind:'not',value,type:'bool',root:null};}
   if(ts.isBinaryExpression(node)&&[ts.SyntaxKind.AmpersandAmpersandToken,ts.SyntaxKind.BarBarToken,ts.SyntaxKind.EqualsEqualsEqualsToken,ts.SyntaxKind.ExclamationEqualsEqualsToken].includes(node.operatorToken.kind)){
@@ -340,20 +384,20 @@ function checkFunction(context,path,declaration,analysis){
        let actual;const find=node=>{if(ts.isVariableDeclaration(node)&&node.getStart(paired.analysis.file)===evidence[0].typescriptSpan[0]&&node.end===evidence[0].typescriptSpan[1])actual=node;ts.forEachChild(node,find);};find(paired.declaration.body);
        if(!actual?.type||actual.type.getStart(paired.analysis.file)!==span[0]||actual.type.end!==span[1])fail('actual paired local type differs');
        const written=originalOwnedCoreType(context,paired.pair.typescript.path,actual.type,paired.analysis);
-       if(written==='json-ref'?!json(value.type):written!==value.type)fail('paired written local ABI differs');
+       if(written==='json-ref'?!json(value.type):!ownedBase64Compatible(value.type,written))fail('paired written local ABI differs');
       }
      }
      const name=bind(declaration.name,{type:value.type,root:value.root},scope);body.push({kind:'let',name,value});
     }
    }else if(ts.isReturnStatement(statement)&&statement.expression){
     const value=expression(statement.expression,scope,depth+1);
-    if(!['json','json-ref','bool','str','usize'].includes(value.type))fail('unsupported owned result');
+    if(!['json','json-ref','bool','str','usize','text-owned','base64-result'].includes(value.type))fail('unsupported owned result');
     if(value.type==='json-ref'&&!params.some(param=>param.name===value.root&&['json-ref','map-ref'].includes(param.type)))fail('returned local loan');
     if(resultType!==null&&(resultType!==value.type||resultRoot!==value.root))fail('return domains differ');resultType=value.type;resultRoot=value.root;body.push({kind:'return',value});terminated=true;
    }else if(ts.isIfStatement(statement)&&ts.isBlock(statement.thenStatement)&&statement.elseStatement&&ts.isBlock(statement.elseStatement)){
     const cond=expression(statement.expression,scope,depth+1);if(cond.type!=='bool')fail('nonboolean condition');
-    const yes=block(statement.thenStatement.statements,new Map(scope),depth+1),no=block(statement.elseStatement.statements,new Map(scope),depth+1);
-    if(!yes.terminated||!no.terminated)fail('partial branch flow');body.push({kind:'if',cond,then:yes.body,else:no.body});terminated=true;
+    const a=branchScope(scope),b=branchScope(scope),yes=block(statement.thenStatement.statements,a,depth+1),no=block(statement.elseStatement.statements,b,depth+1);
+    if(!yes.terminated||!no.terminated)fail('partial branch flow');mergeMoves(scope,a,b);body.push({kind:'if',cond,then:yes.body,else:no.body});terminated=true;
    }else fail('statement/effects outside owned profile');
   }
   return {body,terminated};
@@ -361,19 +405,20 @@ function checkFunction(context,path,declaration,analysis){
  const checked=block(declaration.body.statements,environment,0);if(!checked.terminated)fail('missing return');
  if(paired)for(let index=0;index<params.length;index++){
   const actual=originalOwnedCoreType(context,paired.pair.typescript.path,paired.declaration.parameters[index].type,paired.analysis);
-  if(actual!==params[index].type)fail('paired written parameter ABI differs');
+  if((actual==='text-owned'?'str':actual)!==params[index].type)fail('paired written parameter ABI differs');
  }
  const writtenReturn=declaration.type??ts.getJSDocReturnType(declaration);
  if(writtenReturn){
   const written=originalOwnedCoreType(context,path,writtenReturn,analysis);
-  if(written==='json-ref'?!json(resultType):written!==resultType)fail('written return ABI differs from original checked body');
+  if(written==='json-ref'?!json(resultType):!ownedBase64Compatible(resultType,written))fail('written return ABI differs from original checked body');
   // A written Value domain accepts owned or borrowed results; it never
   // supplies or changes the independently checked loan/root identity.
  }
  if(paired?.declaration.type){
   const written=originalOwnedCoreType(context,paired.pair.typescript.path,paired.declaration.type,paired.analysis);
-  if(written==='json-ref'?!json(resultType):written!==resultType)fail('paired written return ABI differs');
+  if(written==='json-ref'?!json(resultType):!ownedBase64Compatible(resultType,written))fail('paired written return ABI differs');
  }
+ if(params.some(param=>param.type==='bytes-ref'&&!byteInputs.has(param.name)))fail('octet input requires an actual fixed base64 operand');
  if(!hostCalls.length)fail('no actual owned-core call');
  const item={kind:'owned-function',name,javascript:declaration.name.text,exported:!!declaration.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword),params,returns:resultType,resultRoot,body:checked.body,source:{path,source,span:[declaration.getStart(file),declaration.end]},hostCalls};
  if(paired)item.pairedSource={path:paired.pair.typescript.path,source:paired.pair.typescript.source,span:paired.evidence.typescriptSpan,parameters:paired.evidence.parameters,locals:paired.evidence.locals,returnSpan:paired.evidence.returnSpan,erasure:paired.pair.erasure.edits};
