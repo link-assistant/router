@@ -47,7 +47,7 @@ function withinNativeBudget(value){
  const unaryArgs=[null],binaryArgs=[null,null];
  // Fresh scalar measurements only; neither this map nor a record escapes the
  // callback-free scan. Logical occurrence costs are always charged again.
- const active=new setOwner(),completed=new weakOwner();
+ const costs=new weakOwner(),unitBase=UNITS+1,heightBase=DEPTH+1;
  // Exact short-string costs only, bounded and discarded with this scan. Every
  // occurrence still pays its complete cost; no input/source verdict is stored.
  const quotedCosts=new mapOwner();let quotedEntries=0;
@@ -84,11 +84,13 @@ function withinNativeBudget(value){
   // charged, and root undefined still selects the original composer.
   if(kind==='undefined')return depth>0&&charge(4);
   if(kind==='number')return charge(32);
-  if(kind!=='object'||isProxy(value)||(unaryArgs[0]=value,apply(boxedField.value,typeOwner,unaryArgs))||(unaryArgs[0]=value,apply(isViewField.value,bufferOwner,unaryArgs))||(unaryArgs[0]=value,apply(setHas,active,unaryArgs)))return false;
-  const known=(unaryArgs[0]=value,apply(weakGet,completed,unaryArgs));
-  if(known){
-   if(known.cells-1>CELLS-cells||known.units>UNITS-units||known.height>DEPTH-depth)return false;
-   cells+=known.cells-1;units+=known.units;resultHeight=known.height;return true;
+  if(kind!=='object'||isProxy(value)||(unaryArgs[0]=value,apply(boxedField.value,typeOwner,unaryArgs))||(unaryArgs[0]=value,apply(isViewField.value,bufferOwner,unaryArgs)))return false;
+  const known=(unaryArgs[0]=value,apply(weakGet,costs,unaryArgs));
+  if(known===0)return false;
+  if(known!==undefined){
+   const packed=known-1,height=packed%heightBase,quotient=(packed-height)/heightBase,knownUnits=quotient%unitBase,knownCells=(quotient-knownUnits)/unitBase;
+   if(knownCells-1>CELLS-cells||knownUnits>UNITS-units||height>DEPTH-depth)return false;
+   cells+=knownCells-1;units+=knownUnits;resultHeight=height;return true;
   }
   const cellsBefore=cells-1,unitsBefore=units;
   const array=isArray(value),owner=parent(value);
@@ -106,13 +108,12 @@ function withinNativeBudget(value){
    if(!field||!has(field,'value')||!field.enumerable||!array&&(!quoted(name)||!charge(1)))return false;
    names[at]=field.value;
   }
-  (unaryArgs[0]=value,apply(setAdd,active,unaryArgs));let height=0;
+  (binaryArgs[0]=value,binaryArgs[1]=0,apply(weakSet,costs,binaryArgs));let height=0;
   for(let at=0;at<length;at++){
    if(!visit(names[at],depth+1))return false;
    if(resultHeight+1>height)height=resultHeight+1;
   }
-  (unaryArgs[0]=value,apply(setDelete,active,unaryArgs));
-  (binaryArgs[0]=value,binaryArgs[1]={cells:cells-cellsBefore,units:units-unitsBefore,height},apply(weakSet,completed,binaryArgs));
+  (binaryArgs[0]=value,binaryArgs[1]=((cells-cellsBefore)*unitBase+(units-unitsBefore))*heightBase+height+1,apply(weakSet,costs,binaryArgs));
   resultHeight=height;return true;
  }
  return visit(value,0);
