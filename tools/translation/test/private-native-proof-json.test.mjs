@@ -133,10 +133,10 @@ test('new measurement operations retain late and cold native refusal without exp
 test('native regex matches and own result slots cannot expose measurements through prototype hooks',async(t,retain)=>{
  const {module}=await fixture(t,retain),value={['"'+'\\'+'\ud800']:'\x00\udc00😀'},expected=json(value);
  for(const [owner,key]of [[RegExp.prototype,Symbol.match],[RegExp.prototype,'lastIndex'],[Array.prototype,'index'],[Array.prototype,'0']]){
-  const field=descriptor(owner,key),events={first:null,last:null};let captured;
+  const field=descriptor(owner,key),lengthField=owner===Array.prototype&&key==='0'?descriptor(Array.prototype,'length'):null,events={first:null,last:null};let captured;
   const note=(operation,value)=>{const row={operation,key:String(key),value,next:null};if(events.last)events.last.next=row;else events.first=row;events.last=row;};
   try{define(owner,key,{configurable:true,enumerable:false,get(){note('get',undefined);return undefined;},set(value){note('set',value);}});captured=outcome(()=>module.createPrivateNativeProofJsonSerializer()(value));}
-  finally{if(field)define(owner,key,field);else delete owner[key];}
+  finally{if(field)define(owner,key,field);else delete owner[key];if(lengthField)define(Array.prototype,'length',lengthField);}
   const current=materialize(captured),tape=[];for(let row=events.first;row;row=row.next)tape.push({operation:row.operation,key:row.key,value:row.value});retain('complete-private-native-match-hook-control',{owner:owner===RegExp.prototype?'RegExp.prototype':'Array.prototype',key:String(key),value,current,tape});assert.deepEqual(current,{value:expected});assert.deepEqual(tape,[]);
  }
 });
