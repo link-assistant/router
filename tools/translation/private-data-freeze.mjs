@@ -79,14 +79,14 @@ function plan(value,lookup){
 // No completed weak record is issued until the entire packed plan succeeds.
 const RETRY_ORIGINAL_PLAN={};
 function packedPlan(value,lookup){
- const states=new Map(),records=[],order=[];let uniqueCells=0;
+ const states=new Map(),records=[],order=[];let uniqueCells=0,resultCells=0,resultHeight=0,resultFlags=0;
  function visit(value,depth){
-  if(value===null||typeof value!=='object')return typeof value==='function'?null:0;
+  if(value===null||typeof value!=='object'){resultCells=0;resultHeight=0;resultFlags=0;return typeof value==='function'?null:0;}
   if(types.isProxy(value))return null;
   const previous=states.get(value);
-  if(previous!==undefined){const known=records[previous+1];return known===0||depth+(((known>>>2)/RECORD_BASE)|0)>DEPTH_LIMIT?null:known;}
+  if(previous!==undefined){const known=records[previous+1];if(known===0)return null;const packed=known>>>2,height=(packed/RECORD_BASE)|0;if(depth+height>DEPTH_LIMIT)return null;resultCells=packed%RECORD_BASE;resultHeight=height;resultFlags=typeof known==='number'?known&3:0;return known;}
   const known=lookup(value);
-  if(known)return typeof known!=='number'||depth+(((known>>>2)/RECORD_BASE)|0)>DEPTH_LIMIT?null:known;
+  if(known){if(typeof known!=='number')return null;const packed=known>>>2,height=(packed/RECORD_BASE)|0;if(depth+height>DEPTH_LIMIT)return null;resultCells=packed%RECORD_BASE;resultHeight=height;resultFlags=known&3;return known;}
   if(depth>=DEPTH_LIMIT||states.size>=NODE_LIMIT)return null;
   const array=Array.isArray(value),prototype=Object.getPrototypeOf(value);
   if(prototype!==(array?Array.prototype:Object.prototype)&&!(prototype===null&&!array))return null;
@@ -128,15 +128,23 @@ function packedPlan(value,lookup){
   if(!allCompleted&&objectChildren!==0){
    for(let index=0;index<children.length;index++){
     const cost=visit(children[index],depth+1);if(cost===null||cost===RETRY_ORIGINAL_PLAN)return cost;
-    const packed=cost>>>2;cells+=packed%RECORD_BASE;
-    if(cells>CELL_LIMIT)cells=CELL_LIMIT+1;
-    const nextHeight=1+((packed/RECORD_BASE)|0);if(nextHeight>height)height=nextHeight;
-    flags&=cost&3;
+    if(typeof cost==='number'){
+     cells+=resultCells;if(cells>CELL_LIMIT)cells=CELL_LIMIT+1;
+     const nextHeight=1+resultHeight;if(nextHeight>height)height=nextHeight;
+     flags&=resultFlags;
+    }else{
+     // A late collection observer can replace a private stored cost. Preserve
+     // every legacy numeric coercion for that uncertain nonnumber result.
+     const packed=cost>>>2;cells+=packed%RECORD_BASE;
+     if(cells>CELL_LIMIT)cells=CELL_LIMIT+1;
+     const nextHeight=1+((packed/RECORD_BASE)|0);if(nextHeight>height)height=nextHeight;
+     flags&=cost&3;
+    }
    }
    if(depth+height>DEPTH_LIMIT)return null;
   }
   const encoded=(height*RECORD_BASE+cells)*4+flags;records[selected+1]=encoded;
-  order.push(selected);return encoded;
+  order.push(selected);resultCells=cells;resultHeight=height;resultFlags=flags;return encoded;
  }
  const selected=visit(value,0);if(selected===null||selected===RETRY_ORIGINAL_PLAN)return selected;
  const root=lookup(value)??selected;
