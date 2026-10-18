@@ -32,7 +32,7 @@ function historicalReaderSource(source){
   {phase:'language',rules:[{id:'named-host-history:undo-complete-reader-source-evolution',apply:()=>{
    let value=source;
    for(const row of [...READER_SOURCE_EVOLUTION].reverse()){assert.equal(value.split(row.after).length,2,'unique complete689 source step');const at=value.indexOf(row.after),before=value;value=value.slice(0,at)+row.before+value.slice(at+row.after.length);stages.push({before,after:value,span:[at,at+row.after.length],expected:row.after,replacement:row.before});}
-   let inverse=value;for(const row of READER_SOURCE_EVOLUTION){assert.equal(inverse.split(row.before).length,2);inverse=inverse.replace(row.before,row.after);}assert.equal(inverse,source,'whole689 source inverse');
+   let inverse=value;for(const row of READER_SOURCE_EVOLUTION){assert.equal(inverse.split(row.before).length,2);inverse=inverse.replace(row.before,()=>row.after);}assert.equal(inverse,source,'whole689 source inverse');
    return {source:value,actual:source,inverse,stages};
   }}]},
   {phase:'repository',rules:[{id:'named-host-history:retain-full-current-and-historical-CST',apply:row=>{
