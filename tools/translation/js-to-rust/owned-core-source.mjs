@@ -6,7 +6,7 @@ import {posix} from 'node:path';
 import {ownershipCompiler} from './vendor/module-syntax.mjs';
 import {jsonMacroDependencyProfile} from '../json-macro-inputs.mjs';
 import {proveJsonMacroFeatures} from '../json-macro-features.mjs';
-import {hostRuntimeAssets} from '../host-assets.mjs';
+import {hostRuntimeAssetsNamedDataAliases as hostRuntimeAssets} from '../host-assets.mjs';
 import {resolveModuleBindings} from '../module-bindings.mjs';
 import {selectOriginalRouterCoreFacade} from '../router-core-facade-source.mjs';
 import {captureSourceModuleViews,originalModuleViewItems} from '../source-module-views.mjs';
