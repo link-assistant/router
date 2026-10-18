@@ -117,7 +117,7 @@ const RETAINED_CREATOR_RULES=[{"before":"import {withPrivateNativeProofCostScope
 export function proposeRetainedCreatorSource(source,retain=()=>{}){
  if(typeof source!=='string')fail('complete creator source text required');
  const before=source,stages=[];
- for(const row of RETAINED_CREATOR_RULES){const prior=source;source=exact(source,row.before,row.after,row.id);stages.push({phase:row.phase,before:prior,after:source,rule:row});}
+ for(const row of RETAINED_CREATOR_RULES){if(source.split(row.before).length!==2)fail('incomplete or duplicate default creator format');const prior=source;source=exact(source,row.before,row.after,row.id);stages.push({phase:row.phase,before:prior,after:source,rule:row});}
  retain('complete706-retained-creator-forward-DATA',{before,after:source,stages,authority:{source:false,owner:false,type:false,executable:false}});return source;
 }
 export function restoreRetainedCreatorSource(source,retain=()=>{}){
