@@ -3,6 +3,8 @@ import {createHash} from 'node:crypto';
 import {JSON_DATA} from './extensions/json-contracts.mjs';
 import {HostRustParser,HostChecker} from './extensions/host-contracts.mjs';
 import {requirePinnedStandardBody} from './extensions/standard-body-checker.mjs';
+import {SOURCE_STR,hasSourceBorrowedStrSignature} from './extensions/source-contract-types.mjs';
+import {functionLifetimeSignature} from './extensions/source-lifetimes.mjs';
 import {valueSchema} from './type-layout.mjs';
 import {annotateRuntimeTypes} from './translate.mjs';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
@@ -53,6 +55,23 @@ function sameScalarType(left,right){
  }
  const a=semantic(left),b=semantic(right);return a!==null&&b!==null&&same(a,b);
 }
+// A distinct role, never a relaxation of the existing bool/i64 classifier.
+function borrowedStr(type){
+ return !!(type?.kind==='string'&&!type.rustReference&&!type.patternOwnershipRefusal&&!type.rustGenericIdentityUnresolved&&!type.rustBorrowingUnresolved&&same(type.rustOwnership,{kind:'borrowed',source:'str'}));
+}
+const foldRole=type=>scalar(type)??(borrowedStr(type)?'str':null);
+function sameFoldResultType(type,result,literalType){
+ if(scalar(result))return sameScalarType(type,result);
+ if(!borrowedStr(result))return false;
+ return literalType?same(type,literalType):hasSourceBorrowedStrSignature(type)&&same(type,SOURCE_STR);
+}
+function stringResultSignature(fn,program){
+ if(fn.ret.rustSourceType!==true||fn.ret.rustBorrowLifetime?.kind!=='elided'||fn.ret.rustBorrowLifetime.source!=='borrowed-str-type')fail('actual single-input elided str result required');
+ // Recompute from actual source-qualified types after complete body reissue;
+ // a saved sourceLifetimeProof row never grants a result origin.
+ const signature=functionLifetimeSignature(fn,{declarations:program.declarations});
+ if(signature.params.length!==1||signature.params[0].length!==1||signature.params[0][0].path.length||signature.params[0][0].kind!=='elided'||signature.params[0][0].identity!=='input:0:[]'||signature.outputs.length!==1||signature.outputs[0].path.length||signature.outputs[0].kind!=='elided'||signature.outputs[0].identity!==signature.params[0][0].identity)fail('one genuine input lifetime must own the str result');
+}
 function optional(type,program,names){
  if(type?.kind!=='data'||type.rustReference||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)fail('actual by-value Option required');
  const row=program.declarations.get(type.name),source=type.rustStandardGeneric??row?.standardGeneric;
@@ -63,7 +82,7 @@ function optional(type,program,names){
   if(value?.rustGenericIdentityUnresolved||value?.rustBorrowingUnresolved)return null;
   const nominal=value?.name??(value?.kind==='named'?value.path?.filter((part,at)=>at!==0||part!=='crate').join('.'):null),pointee=value?.rustReference?.pointee;
   const target=pointee?.name??(pointee?.kind==='named'?pointee.path?.filter((part,at)=>at!==0||part!=='crate').join('.'):null);
-  return names.get(nominal)==='serde_json.Value'&&value.rustReference?.kind==='shared'&&names.get(target)==='serde_json.Value'?'json':scalar(value);
+  return names.get(nominal)==='serde_json.Value'&&value.rustReference?.kind==='shared'&&names.get(target)==='serde_json.Value'?'json':foldRole(value);
  };
  const role=domain(payload);if(!role||domain(source.arguments[0])!==role||domain(row.standardGeneric.arguments[0])!==role)fail('actual Option payload identities differ');return {role,payload};
 }
@@ -74,18 +93,19 @@ function i64Literal(text){
  return text.length<19||text<='9223372036854775807';
 }
 function project(fn,program,names){
- const role=scalar(fn?.ret);if(fn?.k!=='fn'||fn.async||fn.params.length!==1||!role||!sharedJson(fn.params[0].type,names)||fn.body?.k!=='routerPinnedStandardBody')return null;
+ const role=foldRole(fn?.ret);if(fn?.k!=='fn'||fn.async||fn.params.length!==1||!role||!sharedJson(fn.params[0].type,names)||fn.body?.k!=='routerPinnedStandardBody')return null;
  // These are genuine imported constructors, dispatch hints to the unchanged
  // complete private/source verifier; no public callback field selects them.
  requirePinnedStandardBody(fn.body,HostRustParser,{Checker:HostChecker,program});
+ if(role==='str')stringResultSignature(fn,program);
  const proof=fn.body.pinnedStandardBodyProof;if(proof.method!=='unwrap_or')return null;
  const self=fn.body.body,fallback=self?.body,match=fallback?.body;
- if(self?.k!=='let'||fallback?.k!=='let'||self.mutable===true||fallback.mutable===true||typeof self.name!=='string'||typeof fallback.name!=='string'||self.name===fallback.name||!sameScalarType(fn.body.type,fn.ret)||!sameScalarType(self.type,fn.ret)||!sameScalarType(fallback.type,fn.ret))fail('exact eager original parameter bindings required');
- const owner=optional(self.value?.type,program,names);if(owner.role!==role||!same(owner.payload,fallback.value?.type)||scalar(fallback.value?.type)!==role)fail('actual eager scalar argument differs');
- const literal=fallback.value;if(literal.k!=='lit'||role==='bool'&&typeof literal.value!=='boolean'||role==='i64'&&(!i64Literal(literal.value)))fail('eager primitive literal default required');
- if(match?.k!=='match'||match.cases?.length!==2||match.scrutinee?.k!=='var'||match.scrutinee.name!==self.name||!same(match.scrutinee.type,self.value.type)||!sameScalarType(match.type,fn.ret))fail('complete original unwrap_or match required');
+ if(self?.k!=='let'||fallback?.k!=='let'||self.mutable===true||fallback.mutable===true||typeof self.name!=='string'||typeof fallback.name!=='string'||self.name===fallback.name||!sameFoldResultType(fn.body.type,fn.ret)||!sameFoldResultType(self.type,fn.ret)||!sameFoldResultType(fallback.type,fn.ret))fail('exact eager original parameter bindings required');
+ const owner=optional(self.value?.type,program,names);if(owner.role!==role||foldRole(fallback.value?.type)!==role||(role==='str'?!same(owner.payload,SOURCE_STR)||fallback.value.type.rustBorrowLifetime?.kind!=='static'||fallback.value.type.rustBorrowLifetime.source!=='string-literal':!same(owner.payload,fallback.value?.type)))fail('actual eager scalar argument differs');
+ const literal=fallback.value;if(literal.k!=='lit'||role==='bool'&&typeof literal.value!=='boolean'||role==='i64'&&(!i64Literal(literal.value))||role==='str'&&(typeof literal.value!=='string'||/\p{Surrogate}/u.test(literal.value)))fail('eager primitive literal default required');
+ if(match?.k!=='match'||match.cases?.length!==2||match.scrutinee?.k!=='var'||match.scrutinee.name!==self.name||!same(match.scrutinee.type,self.value.type)||!sameFoldResultType(match.type,fn.ret))fail('complete original unwrap_or match required');
  const branches=new Map();for(const branch of match.cases){const pattern=branch.pattern;if(pattern?.k!=='ctor'||pattern.data!==self.value.type.name||!['None','Some'].includes(pattern.ctor)||branches.has(pattern.ctor)||pattern.binds?.length!==(pattern.ctor==='Some'?1:0))fail('complete actual unwrap_or constructors required');branches.set(pattern.ctor,branch);}
- const absent=branches.get('None'),present=branches.get('Some');if(!absent||!present||absent.body?.k!=='var'||absent.body.name!==fallback.name||!sameScalarType(absent.body.type,fn.ret)||present.body?.k!=='var'||present.body.name!==present.pattern.binds[0]||!sameScalarType(present.body.type,fn.ret))fail('actual unwrap_or payload/default result differs');
+ const absent=branches.get('None'),present=branches.get('Some');if(!absent||!present||absent.body?.k!=='var'||absent.body.name!==fallback.name||!sameFoldResultType(absent.body.type,fn.ret,role==='str'?literal.type:undefined)||present.body?.k!=='var'||present.body.name!==present.pattern.binds[0]||!sameFoldResultType(present.body.type,fn.ret))fail('actual unwrap_or payload/default result differs');
  let cells=0;const tick=depth=>{if(++cells>4096||depth>64)fail('finite reader fold budget');};
  const variable=(node,name,type)=>node?.k==='var'&&node.name===name&&same(node.type,type);
  function argument(node,id){
@@ -108,16 +128,16 @@ function project(fn,program,names){
   if(call.id==='serde_json_value_get_string'){
    if(output.role!=='json')fail('lookup callback output must retain its actual Json loan');return {path:get(call,local.name,local.value.type,input.path,depth+1),role:'json',type:node.type};
   }
-  const wanted=role==='bool'?'serde_json_value_as_bool':'serde_json_value_as_i64';
+  const wanted=role==='str'?'serde_json_value_as_str':role==='bool'?'serde_json_value_as_bool':'serde_json_value_as_i64';
   if(call.id!==wanted||input.role!=='json'||output.role!==role||call.args?.length!==1||!variable(argument(call.args[0],call.id),local.name,local.value.type)||!same(call.type,node.type))fail('complete own-input scalar reader required');
   return {path:input.path,role,type:node.type};
  }
  const chain=bind(self.value,0);if(chain.role!==role||!chain.path.length)fail('one scalar reader must finish the chain');
- return {kind:'checked-json-scalar-fold',parameter:'input0',role,path:chain.path,default:role==='i64'?String(literal.value):literal.value,standard:{profile:proof.profile,method:proof.method,owner:proof.owner,selection:proof.selection,syntaxSha256:proof.syntaxSha256,evaluationOrder:proof.evaluationOrder},Some:'exact checked payload',None:'exact eager primitive literal',semanticAuthority:false};
+ return {kind:'checked-json-scalar-fold',parameter:'input0',role,path:chain.path,default:role==='i64'?String(literal.value):literal.value,...(role==='str'?{loan:{Some:'input0',None:'static literal',result:'input0'}}:{}),standard:{profile:proof.profile,method:proof.method,owner:proof.owner,selection:proof.selection,syntaxSha256:proof.syntaxSha256,evaluationOrder:proof.evaluationOrder},Some:'exact checked payload',None:'exact eager primitive literal',semanticAuthority:false};
 }
 function render(model,typed){
- const operation=model.role==='bool'?'serde_json_value_as_bool':'serde_json_value_as_i64',imports='import {serde_json_value_get_string as get_field,'+operation+' as read_scalar} from "../runtime/json-runtime.mjs";\n';
- const fallback=model.role==='bool'?String(model.default):model.default+'n';
+ const operation=model.role==='str'?'serde_json_value_as_str':model.role==='bool'?'serde_json_value_as_bool':'serde_json_value_as_i64',imports='import {serde_json_value_get_string as get_field,'+operation+' as read_scalar} from "../runtime/json-runtime.mjs";\n';
+ const fallback=model.role==='str'?JSON.stringify(model.default):model.role==='bool'?String(model.default):model.default+'n';
  function lookup(at,input,indent){
   const pad=' '.repeat(indent),field='field'+at,head=pad+'const '+field+' = get_field('+input+', '+JSON.stringify(model.path[at])+');\n'+pad+'if ('+field+'.$ === "Some") {\n';
   let selected;
@@ -125,12 +145,12 @@ function render(model,typed){
   else selected=pad+'  const scalar = read_scalar('+field+'.field0);\n'+pad+'  if (scalar.$ === "Some") {\n'+pad+'    return scalar.field0;\n'+pad+'  } else {\n'+pad+'    return '+fallback+';\n'+pad+'  }\n';
   return head+selected+pad+'} else {\n'+pad+'  return '+fallback+';\n'+pad+'}\n';
  }
- return imports+'function core_definition(input0'+(typed?':Parameters<typeof get_field>[0]':'')+')'+(typed&&model.role==='bool'?':boolean':'')+'{\n'+lookup(0,'input0',2)+'}\n';
+ return imports+'function core_definition(input0'+(typed?':Parameters<typeof get_field>[0]':'')+')'+(typed&&model.role==='str'?':string':typed&&model.role==='bool'?':boolean':'')+'{\n'+lookup(0,'input0',2)+'}\n';
 }
 /** Called only on the compiler's genuine current checked project branch. */
 export function prepareForwardJsonScalarFoldDefinition({project:projectName,entry,checked,target,sourceModules,lower,index,transform,format}){
  if(format!=='core-reader')return null;
- const original=checked.declarations.get(entry.name),current=target.program.declarations.get(target.names.get(entry.name));if(entry.term!=='fn'||!original||!current||!scalar(original.ret)||original.body?.k!=='routerPinnedStandardBody'||current.body?.k!=='routerPinnedStandardBody')return null;
+ const original=checked.declarations.get(entry.name),current=target.program.declarations.get(target.names.get(entry.name));if(entry.term!=='fn'||!original||!current||!foldRole(original.ret)||original.body?.k!=='routerPinnedStandardBody'||current.body?.k!=='routerPinnedStandardBody')return null;
  const receiver=original.params[0]?.type,receiverOwner=checked.declarations.get(receiver?.name);
  if(original.async||original.params.length!==1||receiverOwner?.k!=='data'||receiverOwner.generated!=='router-json-contract'||receiverOwner.hostTypePath?.join('::')!=='serde_json::Value'||!sharedJson(receiver,new Map([[receiverOwner.fullName,'serde_json.Value']])))return null;
  const lowered=lower(entry),{sourceNames,targetNames}=layouts(checked,target,lowered),models=[project(original,checked,sourceNames),project(current,target.program,targetNames),project(lowered.own,lowered.program,targetNames)];

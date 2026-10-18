@@ -326,6 +326,22 @@ function checkFunction(context,path,declaration,analysis){
   const value=expression(left.expression,scope,depth+1);return {kind:'option-test',value,some:(right.text==='Some')===(op===ts.SyntaxKind.EqualsEqualsEqualsToken),type:'bool',root:null};
  }
 
+  // Fresh analyzed expressions only. Null is not a static-loan proof: only
+  // an actual literal (or both independently checked literal alternatives) is.
+  function stringLoan(value){
+   if(value.type!=='str')return undefined;
+   if(value.root!==null)return params.some(param=>param.name===value.root&&(['json-ref','map-ref','str','json-option-input'].includes(param.type)||ownedJsonBorrowed(param.type)))?{root:value.root}:undefined;
+   if(value.kind==='string')return {root:null};
+   if(value.kind==='choose')return meetStringLoans(stringLoan(value.then),stringLoan(value.else));
+   return undefined;
+  }
+  function meetStringLoans(left,right){
+   if(!left||!right)return undefined;
+   if(left.root===null)return right;
+   if(right.root===null||left.root===right.root)return left;
+   return undefined;
+  }
+
  function expression(node,scope,depth,opaqueOperand=false){
   tick(depth);if(ts.isParenthesizedExpression(node))return expression(node.expression,scope,depth+1);
   if(ts.isStringLiteral(node)||ts.isNoSubstitutionTemplateLiteral(node)){
@@ -417,7 +433,8 @@ function checkFunction(context,path,declaration,analysis){
   }
   if(ts.isConditionalExpression(node)){
    const cond=expression(node.condition,scope,depth+1),a=refine(branchScope(scope),cond,true),b=refine(branchScope(scope),cond,false),yes=expression(node.whenTrue,a,depth+1),no=expression(node.whenFalse,b,depth+1);
-   if(cond.type!=='bool'||yes.type!==no.type||yes.root!==no.root&&yes.kind!=='option-none'&&no.kind!=='option-none')fail('conditional result or loan differs');mergeMoves(scope,a,b);return {kind:'choose',cond,then:yes,else:no,type:yes.type,root:yes.kind==='option-none'?no.root:yes.root};
+   const loan=yes.type==='str'&&no.type==='str'?meetStringLoans(stringLoan(yes),stringLoan(no)):undefined;
+   if(cond.type!=='bool'||yes.type!==no.type||yes.type==='str'&&!loan||yes.root!==no.root&&!loan&&yes.kind!=='option-none'&&no.kind!=='option-none')fail('conditional result or loan differs');mergeMoves(scope,a,b);return {kind:'choose',cond,then:yes,else:no,type:yes.type,root:loan?loan.root:yes.kind==='option-none'?no.root:yes.root};
   }
   if(ts.isPrefixUnaryExpression(node)&&node.operator===ts.SyntaxKind.ExclamationToken){const value=expression(node.operand,scope,depth+1);if(value.type!=='bool')fail('boolean negation only');return {kind:'not',value,type:'bool',root:null};}
   if(ts.isBinaryExpression(node)&&[ts.SyntaxKind.AmpersandAmpersandToken,ts.SyntaxKind.BarBarToken,ts.SyntaxKind.EqualsEqualsEqualsToken,ts.SyntaxKind.ExclamationEqualsEqualsToken].includes(node.operatorToken.kind)){
@@ -428,7 +445,7 @@ function checkFunction(context,path,declaration,analysis){
   }
   fail('unimplemented expression '+ts.SyntaxKind[node.kind]);
  }
- let resultType=null,resultRoot=null,resultOnlyAbsent=true;
+ let resultType=null,resultRoot=null,resultOnlyAbsent=true,stringResultLoan=null;
  // A literal supplies a value, never a signed-domain permit. Only a genuine
  // Some payload from the existing i64 reader can establish this local join.
  const scalarReturnValues=[];
@@ -473,7 +490,9 @@ function checkFunction(context,path,declaration,analysis){
     if(value.type==='json-ref'&&!params.some(param=>param.name===value.root&&['json-ref','map-ref','json-option-ref'].includes(param.type)))fail('returned local loan');
     if(ownedJsonBorrowed(value.type)&&value.root&&!params.some(param=>param.name===value.root&&(['json-ref','map-ref','str','json-option-input'].includes(param.type)||ownedJsonBorrowed(param.type))))fail('returned local optional loan');
     joinI64LiteralReturn(value);
-    if(resultType!==null&&(resultType!==value.type||resultRoot!==value.root&&!(ownedJsonOptionalPayload(value.type)&&(value.kind==='option-none'||resultOnlyAbsent))))fail('return domains differ');resultType=value.type;if(value.kind!=='option-none'){resultRoot=value.root;resultOnlyAbsent=false;}scalarReturnValues.push(value);body.push({kind:'return',value});terminated=true;
+    const loan=value.type==='str'?(stringResultLoan===null?stringLoan(value):meetStringLoans(stringResultLoan,stringLoan(value))):undefined,effectiveRoot=loan?loan.root:value.root;
+    if(value.type==='str'&&!loan)fail('returned str requires an actual literal or live input origin');
+    if(resultType!==null&&(resultType!==value.type||resultRoot!==effectiveRoot&&!(value.type==='str'&&loan)&&!(ownedJsonOptionalPayload(value.type)&&(value.kind==='option-none'||resultOnlyAbsent))))fail('return domains differ');resultType=value.type;if(value.kind!=='option-none'){resultRoot=effectiveRoot;resultOnlyAbsent=false;}if(value.type==='str')stringResultLoan=loan;scalarReturnValues.push(value);body.push({kind:'return',value});terminated=true;
    }else if(ts.isIfStatement(statement)&&ts.isBlock(statement.thenStatement)&&statement.elseStatement&&ts.isBlock(statement.elseStatement)){
     const cond=expression(statement.expression,scope,depth+1);if(cond.type!=='bool')fail('nonboolean condition');
     const a=refine(branchScope(scope),cond,true),b=refine(branchScope(scope),cond,false),yes=block(statement.thenStatement.statements,a,depth+1),no=block(statement.elseStatement.statements,b,depth+1);

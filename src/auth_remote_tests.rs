@@ -777,3 +777,35 @@ fn both_modes_print_the_same_columns() {
         );
     }
 }
+
+#[test]
+fn status_of_preserves_input_strings_and_the_static_default() {
+    let cases = [
+        (serde_json::Value::Null, "unknown"),
+        (serde_json::json!([]), "unknown"),
+        (serde_json::json!({}), "unknown"),
+        (serde_json::json!({"status": null}), "unknown"),
+        (serde_json::json!({"status": false}), "unknown"),
+        (serde_json::json!({"status": 0}), "unknown"),
+        (serde_json::json!({"status": -1}), "unknown"),
+        (serde_json::json!({"status": 1.5}), "unknown"),
+        (serde_json::json!({"status": []}), "unknown"),
+        (serde_json::json!({"status": {}}), "unknown"),
+        (serde_json::json!({"status": ""}), ""),
+        (serde_json::json!({"status": "unknown"}), "unknown"),
+        (serde_json::json!({"status": "ready"}), "ready"),
+        (serde_json::json!({"status": "猫😀"}), "猫😀"),
+        (serde_json::json!({"status": "a\0b"}), "a\0b"),
+        (serde_json::json!({"status": "\"\\"}), "\"\\"),
+    ];
+
+    for (input, expected) in cases {
+        let actual = status_of(&input);
+        assert_eq!(actual, expected);
+        if let Some(original) = input.get("status").and_then(serde_json::Value::as_str) {
+            if !original.is_empty() {
+                assert!(std::ptr::eq(actual, original));
+            }
+        }
+    }
+}
