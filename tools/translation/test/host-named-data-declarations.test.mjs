@@ -125,6 +125,12 @@ test('fixed complete source rules retain language repository CST inverses and re
  const descriptors=Object.getOwnPropertyDescriptor(Object,'getOwnPropertyDescriptors'),mutable={...before};let mutations=0;
  try{Object.defineProperty(Object,'getOwnPropertyDescriptors',{...descriptors,value:function(value){const fields=Reflect.apply(descriptors.value,this,[value]);if(value===mutable){mutations++;mutable[HOST]+='\n// mutation after complete source snapshot\n';Object.defineProperty(Object,'getOwnPropertyDescriptors',descriptors);}return fields;}});assert.throws(()=>proposeNamedHostDeclarationSources(mutable),/source fields changed/);}finally{Object.defineProperty(Object,'getOwnPropertyDescriptors',descriptors);}
  assert.equal(mutations,1);retain('complete-source-between-capture-and-final-check',{before,mutated:mutable,mutations});
+ const lazy=new Error('rejected native lazy stack source input');Object.setPrototypeOf(lazy,Object.prototype);lazy[HOST]=before[HOST];lazy[OWNED]=before[OWNED];
+ const prepare=Object.getOwnPropertyDescriptor(Error,'prepareStackTrace');let prepared=0,rejected;
+ try{Object.defineProperty(Error,'prepareStackTrace',{value:function(){prepared++;return 'unexpected native lazy stack materialization';},configurable:true,writable:true});try{proposeNamedHostDeclarationSources(lazy);}catch(error){rejected=error;}}
+ finally{if(prepare)Object.defineProperty(Error,'prepareStackTrace',prepare);else delete Error.prepareStackTrace;}
+ const lazyObservation=retain('rejected-native-lazy-stack',{prepared,inputKeys:Reflect.ownKeys(lazy),inputDescriptors:Object.getOwnPropertyDescriptors(lazy),rejection:rejected?{name:rejected.name,message:rejected.message,stack:rejected.stack}:null});
+ assert.equal(lazyObservation.prepared,0);assert.ok(rejected instanceof TypeError);assert.match(rejected.message,/exact two source paths/);
 });
 
 test('genuine owned source issuance and strict emitted targets keep all fresh source and semantic fences',t=>{

@@ -17,8 +17,9 @@ function exact(source,before,after,id){
 }
 function ownSources(input){
  if(!input||typeof input!=='object'||types.isProxy(input)||![Object.prototype,null].includes(Object.getPrototypeOf(input)))fail('two complete own source strings required');
- const prototype=Object.getPrototypeOf(input),keys=Reflect.ownKeys(input),descriptors=Object.getOwnPropertyDescriptors(input),value=Object.create(null);let total=0;
+ const prototype=Object.getPrototypeOf(input),keys=Reflect.ownKeys(input);
  if(keys.length!==2||keys.some(key=>typeof key!=='string'||!NAMED_HOST_DECLARATION_SOURCE_PATHS.includes(key)))fail('exact two source paths required');
+ const descriptors=Object.getOwnPropertyDescriptors(input),value=Object.create(null);let total=0;
  for(const path of NAMED_HOST_DECLARATION_SOURCE_PATHS){const field=descriptors[path];if(!field||!Object.hasOwn(field,'value')||!field.enumerable||typeof field.value!=='string'||field.value.length>262144)fail('bounded own source data required');total+=field.value.length;value[path]=field.value;}
  if(total>524288)fail('whole source budget');
  return {value,verify(){if(Object.getPrototypeOf(input)!==prototype)fail('source prototype changed');const now=Reflect.ownKeys(input);if(now.length!==keys.length||now.some((key,index)=>key!==keys[index]))fail('source key order changed');for(const key of keys){const a=descriptors[key],b=Object.getOwnPropertyDescriptor(input,key);if(!b||!Object.hasOwn(b,'value')||a.value!==b.value||a.enumerable!==b.enumerable||a.configurable!==b.configurable||a.writable!==b.writable)fail('source fields changed');}}};
