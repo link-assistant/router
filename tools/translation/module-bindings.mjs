@@ -188,7 +188,7 @@ function collapse(candidates) {
   }).sort((a,b)=>a.namespace===b.namespace?(a.name<b.name?-1:a.name>b.name?1:0):(a.namespace<b.namespace?-1:1));
 }
 
-export function resolveModuleBindings({modules,externalModules=new Map(),compilationProfile:profileInput=null,deriveContext=null,deriveBangContext=null,toolContext=null}={}) {
+export function resolveUnscopedModuleBindings({modules,externalModules=new Map(),compilationProfile:profileInput=null,deriveContext=null,deriveBangContext=null,toolContext=null}={}) {
   if(!Array.isArray(modules) || !(externalModules instanceof Map))throw new TypeError('Binding resolution requires tracked modules and explicit external tables');
   if(deriveContext&&!isDeriveFootprintContext(deriveContext))throw new TypeError('Unsealed derive footprint context');
   if(deriveBangContext){if(!isDeriveBangContext(deriveBangContext))throw new TypeError('Unsealed derive bang output context');modules=deriveBangModules(deriveBangContext,{deriveContext,modules,externalModules,compilationProfile:profileInput});}
@@ -474,4 +474,11 @@ export function resolveModuleBindings({modules,externalModules=new Map(),compila
   resolvedSourceScopeSets.add(result.scopes);
   resolvedSourceScopeOrigins.set(result.scopes,frozen({compilationProfile:profile,modules:modules.map(module=>({file:module.file,path:[...module.path],source:module.source,hasSourceView:Object.hasOwn(module,'sourceView'),sourceView:module.sourceView,hasCompilationProfile:Object.hasOwn(module,'compilationProfile'),moduleCompilationProfile:compilationProfile(module.compilationProfile),hasConfigurationCondition:Object.hasOwn(module,'configurationCondition'),configurationCondition:module.configurationCondition}))}));
   return result;
+}
+
+import {withCurrentRetainedPrivateNativeProofCostScope} from './private-native-proof-json.mjs';
+
+// Default binder selection retains the original pre-body parameter evaluation.
+export function resolveModuleBindings({modules,externalModules=new Map(),compilationProfile:profileInput=null,deriveContext=null,deriveBangContext=null,toolContext=null}={}) {
+ return withCurrentRetainedPrivateNativeProofCostScope(()=>resolveUnscopedModuleBindings({modules,externalModules,compilationProfile:profileInput,deriveContext,deriveBangContext,toolContext}));
 }

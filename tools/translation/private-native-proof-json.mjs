@@ -292,3 +292,12 @@ export function withRetainedPrivateNativeProofCostScope(run){
   finally{retainedPrivateProofCostPolicy=prior;policy.scope=null;policy.parent=null;}
  });
 }
+
+/** Internal operation-local selection: reuse only the current registered retained
+ * frame; an ordinary parent gets a new retained child. No scope escapes. */
+export function withCurrentRetainedPrivateNativeProofCostScope(run){
+ if(typeof run!=='function')throw new TypeError('Private proof cost scope requires a synchronous callback');
+ const current=nativeProofCostScope,policy=retainedPrivateProofCostPolicy;
+ if(current&&current.open&&policy&&policy.scope===current)return run();
+ return withRetainedPrivateNativeProofCostScope(run);
+}
