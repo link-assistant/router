@@ -585,6 +585,56 @@ export function createOriginalDigestMetadataCopierForInternalSources(fallback,or
  };
 }
 
+// Private fixed-native-output siblings; original guards and captures stay exact.
+function kindBatchedExpectedSamePrototype(owner,entries,rows){
+ if(!(owner===arrayPrototype&&entries===arrayDescriptors&&rows===privateExpectedPlans[0]||owner===mapPrototype&&entries===mapDescriptors&&rows===privateExpectedPlans[1]||owner===setPrototype&&entries===setDescriptors&&rows===privateExpectedPlans[2]||owner===weakSetPrototype&&entries===weakSetDescriptors&&rows===privateExpectedPlans[3]||owner===syntaxStringPrototype&&entries===syntaxStrings&&rows===privateExpectedPlans[4]||owner===syntaxRegExpPrototype&&entries===syntaxRegexps&&rows===privateExpectedPlans[5]))return false;
+ const names=keys(owner);if(names.length!==rows.length)return expectedSamePrototype(owner,entries,rows);
+ // Unknown/reordered keys keep the complete old helper. This preflight never
+ // obtains the descriptor of any newly attached native lazy stack field.
+ for(let index=0;index<names.length;index++)if(names[index]!==rows[index][0])return expectedSamePrototype(owner,entries,rows);
+ // The caller freshly qualified this captured native and all six fixed owners.
+ // All keys are now the immutable expected set (which excludes stack).
+ const fields=apply(traversalDescriptors.value,originalObject,[owner]);
+ // Optional direct classification uses only THIS genuine native output.
+ // Foreign output realms or any inherited writable cell retain the old loop.
+ if(prototype(fields)===objectPrototype&&prototype(objectPrototype)===null&&!descriptor(objectPrototype,'writable')){
+  for(let index=0;index<names.length;index++){
+   const row=rows[index],key=row[0],actual=fields[key];if(!actual)return false;
+   const writable=actual.writable;
+   if((writable!==undefined)!==row[1])return false;
+   if(actual.enumerable!==row[2]||actual.configurable!==row[3])return false;
+   if(row[1]){if(actual.value!==row[4]||writable!==row[5])return false;}
+   else if(actual.get!==row[4]||actual.set!==row[5])return false;
+  }
+  return true;
+ }
+ for(let index=0;index<names.length;index++){
+  const row=rows[index],key=row[0];
+  const actual=fields[key];if(!actual||hasOwn(actual,'value')!==row[1])return false;
+  if(actual.enumerable!==row[2]||actual.configurable!==row[3])return false;
+  if(row[1]){if(actual.value!==row[4]||actual.writable!==row[5])return false;}
+  else if(!hasOwn(actual,'get')||!hasOwn(actual,'set')||actual.get!==row[4]||actual.set!==row[5])return false;
+ }
+ return true;
+}
+
+function kindBatchedExpectedJsonIntrinsicsUnchanged(){
+ if(!ordinaryNative)return false;for(let index=0;index<iteratorPins.length;index++){const pin=iteratorPins[index];if(!same(descriptor(pin.owner,'next'),pin.field))return false;}for(let index=0;index<objectPins.length;index++){const name=objectPins[index][0],field=objectPins[index][1];if(!same(descriptor(originalObject,name),field))return false;}
+ return same(descriptor(originalArray,Symbol.species),species)&&same(descriptor(globalThis,'WeakSet'),globalWeakSet)&&kindBatchedExpectedSamePrototype(weakSetPrototype,weakSetDescriptors,privateExpectedPlans[3])&&same(descriptor(globalThis,'JSON'),globalJson)&&same(descriptor(globalThis,'Object'),globalObject)&&same(descriptor(globalThis,'Array'),globalArray)&&same(descriptor(globalThis,'Map'),globalMap)&&same(descriptor(globalThis,'Set'),globalSet)&&same(descriptor(originalObject,'hasOwn'),objectHasOwn)&&same(descriptor(originalObject,'getOwnPropertyDescriptor'),objectDescriptor)&&same(descriptor(originalJson,'stringify'),stringify)&&originalObject.prototype===objectPrototype&&originalArray.prototype===arrayPrototype&&prototype(objectPrototype)===null&&prototype(arrayPrototype)===objectPrototype&&!descriptor(objectPrototype,'toJSON')&&!descriptor(arrayPrototype,'toJSON')&&kindBatchedExpectedSamePrototype(arrayPrototype,arrayDescriptors,privateExpectedPlans[0])&&kindBatchedExpectedSamePrototype(mapPrototype,mapDescriptors,privateExpectedPlans[1])&&kindBatchedExpectedSamePrototype(setPrototype,setDescriptors,privateExpectedPlans[2]);
+}
+
+function kindBatchedExpectedPathMembershipIntrinsicsUnchanged(){
+ return !!(pathNative&&kindBatchedExpectedJsonIntrinsicsUnchanged()&&same(descriptor(originalObject,'getPrototypeOf'),pathGetPrototypeOf)&&same(descriptor(globalThis,'Reflect'),pathReflect)&&same(descriptor(pathReflect.value,'ownKeys'),pathOwnKeys)&&same(descriptor(originalArray,'isArray'),pathIsArray)&&same(descriptor(types,'isProxy'),pathIsProxy)&&same(descriptor(globalThis,'WeakMap'),pathWeakMap)&&pathWeakMap.value.prototype===pathWeakPrototype&&same(descriptor(pathWeakPrototype,'has'),pathWeakHas));
+}
+
+function kindBatchedExpectedNamespaceTraversalIntrinsicsUnchanged(){
+ if(!traversalNative||!kindBatchedExpectedPathMembershipIntrinsicsUnchanged()||!same(descriptor(traversalFunctionPrototype,'call'),traversalCall)||!same(descriptor(originalObject,'getOwnPropertyDescriptors'),traversalDescriptors)||!same(descriptor(pathReflect.value,'apply'),traversalApply)||!same(descriptor(mapPrototype,'entries'),traversalEntries)||prototype(traversalMapIterator.owner)!==traversalIteratorPrototype||descriptor(traversalMapIterator.owner,Symbol.iterator)||prototype(traversalIteratorPrototype)!==traversalIteratorParent||!same(descriptor(traversalIteratorPrototype,Symbol.iterator),traversalIteratorMethod))return false;
+ // The old route calls entries.call; a function's own call hook or changed
+ // prototype is also observable and therefore keeps the collected fallback.
+ return prototype(traversalEntries.value)===traversalFunctionPrototype&&!descriptor(traversalEntries.value,'call')&&prototype(traversalMapIterator.field.value)===traversalFunctionPrototype&&!descriptor(traversalMapIterator.field.value,'call');
+}
+
+
 // Optional fresh fixed-owner descriptor collection. Reuse only the existing
 // immutable expected plans; this API never initializes or warms parser state.
 // Every global lookup and every original guard boundary remains independent.
@@ -594,10 +644,10 @@ function descriptorBatchingReady(){
  return true;
 }
 export function originalBatchedJsonIntrinsicsUnchanged(){
- return descriptorBatchingReady()?batchedExpectedJsonIntrinsicsUnchanged():originalJsonIntrinsicsUnchanged();
+ return descriptorBatchingReady()?kindBatchedExpectedJsonIntrinsicsUnchanged():originalJsonIntrinsicsUnchanged();
 }
 export function originalBatchedNamespaceTraversalIntrinsicsUnchanged(){
- return descriptorBatchingReady()?batchedExpectedNamespaceTraversalIntrinsicsUnchanged():originalNamespaceTraversalIntrinsicsUnchanged();
+ return descriptorBatchingReady()?kindBatchedExpectedNamespaceTraversalIntrinsicsUnchanged():originalNamespaceTraversalIntrinsicsUnchanged();
 }
 export function originalBatchedDataFreezeIntrinsicsUnchanged(){
  return !!(dataFreezeNative&&originalBatchedNamespaceTraversalIntrinsicsUnchanged()&&same(descriptor(originalObject,'freeze'),dataFreeze)&&same(descriptor(originalObject,'isFrozen'),dataIsFrozen)&&same(descriptor(pathWeakPrototype,'get'),dataWeakGet)&&same(descriptor(pathWeakPrototype,'set'),dataWeakSet)&&dataFreezeNumericSafe());
