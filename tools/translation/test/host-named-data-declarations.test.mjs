@@ -6,6 +6,7 @@ import {join,dirname,posix} from 'node:path';
 import {tmpdir} from 'node:os';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
+import {originalDataFreezeIntrinsicsUnchanged} from '../original-json-intrinsics.mjs';
 import {hostRuntimeAssets,hostRuntimeAssetsNamedDataAliases} from '../host-assets.mjs';
 import {HostChecker,hostData,HOST_CONTRACTS} from '../extensions/host-contracts.mjs';
 import {dataAliasName,typeScriptType,typeScriptAliases,valueSchema} from '../type-layout.mjs';
@@ -37,6 +38,19 @@ function strict(directory,file,positive){
  if(positive)assert.equal(status,0,stdout+'\n'+stderr);else assert.notEqual(status,0,'negative complete consumer unexpectedly compiled');return row;
 }
 function families(){return HOST_CONTRACTS.filter(contract=>['json','time','integer','float'].includes(contract.family));}
+function declarationCensus(assets){
+ const ts=ownershipCompiler(),rows=[];
+ for(const family of ['json','time','integer','float']){
+  const path=family+'-runtime.d.mts',source=assets.get(path),file=ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);assert.equal(file.parseDiagnostics.length,0);
+  const names=new Set(),functions=[];
+  for(const node of file.statements)if(ts.isFunctionDeclaration(node)&&node.modifiers?.some(item=>item.kind===ts.SyntaxKind.ExportKeyword)){
+   assert.ok(node.name&&ts.isIdentifier(node.name));const name=node.name.text;assert.equal(names.has(name),false,'duplicate actual declaration export '+family+':'+name);names.add(name);
+   functions.push({name,span:[node.getStart(file),node.end],source:source.slice(node.getStart(file),node.end),parameters:node.parameters.map(parameter=>({span:[parameter.getStart(file),parameter.end],source:parameter.getText(file)})),returnSource:node.type?.getText(file)??null});
+  }
+  rows.push({family,path,source,functions});
+ }
+ return rows;
+}
 function checked(){const checker=new HostChecker('Rust',[]);return {checker,declarations:checker.program({language:'Rust',items:hostData(),main:null}).declarations};}
 function closure(assets,runtimeRoot='runtime',declarationRoot=runtimeRoot){
  assertReverseConcreteSourceHost();const ts=ownershipCompiler(),seen=new Set(),rows=[],stages=[];
@@ -65,14 +79,18 @@ test('legacy assets stay exact while the explicit format changes only unused fam
 
 test('all complete old and named host declarations satisfy independent strict bidirectional signature consumers',t=>{
  const directory=temporary(t),old=hostRuntimeAssets(),named=hostRuntimeAssetsNamedDataAliases();materialize(join(directory,'old'),old);materialize(join(directory,'named'),named);
- const contracts=families();assert.equal(contracts.length,98);assert.equal(contracts.reduce((total,contract)=>total+contract.params.length,0),126);
+ const contracts=families(),oldCensus=declarationCensus(old),namedCensus=declarationCensus(named),contractKeys=new Set();
+ for(const contract of contracts){const key=contract.family+':'+contract.jsExport;assert.equal(contractKeys.has(key),false,'duplicate current contract key '+key);contractKeys.add(key);}
+ const exported=[];for(const row of oldCensus){const counterpart=namedCensus.find(item=>item.family===row.family);assert.deepEqual(counterpart.functions.map(item=>item.name),row.functions.map(item=>item.name));for(const declaration of row.functions){const other=counterpart.functions.find(item=>item.name===declaration.name);assert.equal(other.parameters.length,declaration.parameters.length);exported.push({family:row.family,...declaration});}}
+ for(const contract of contracts){const matches=exported.filter(row=>row.family===contract.family&&row.name===contract.jsExport);assert.equal(matches.length,1,'actual complete declaration missing contract '+contract.id);assert.equal(matches[0].parameters.length,contract.params.length);}
+ const extras=exported.filter(row=>!contractKeys.has(row.family+':'+row.name));assert.deepEqual(extras.map(row=>row.family+':'+row.name),['integer:createIntegerRuntime']);
+ retain('complete-independent-declaration-export-census',{contracts,contractKeys:[...contractKeys],oldCensus,namedCensus,exported,extras});
  let source='type Assert<T extends true> = T;\ntype Assignable<A,B> = [A] extends [B] ? true : false;\n';
  for(const family of ['json','time','integer','float'])source+=`import * as Old_${family} from './old/${family}-runtime.mjs';\nimport * as Named_${family} from './named/${family}-runtime.mjs';\n`;
- for(const [index,contract]of contracts.entries()){
-  const a='typeof Old_'+contract.family+'.'+contract.jsExport,b='typeof Named_'+contract.family+'.'+contract.jsExport;
+ for(const [index,declaration]of exported.entries()){
+  const a='typeof Old_'+declaration.family+'.'+declaration.name,b='typeof Named_'+declaration.family+'.'+declaration.name;
   source+=`type Forward_${index}=Assert<Assignable<${a},${b}>>;\ntype Reverse_${index}=Assert<Assignable<${b},${a}>>;\ntype Params_${index}=Assert<Assignable<Parameters<${a}>,Parameters<${b}>>>;\ntype Return_${index}=Assert<Assignable<ReturnType<${b}>,ReturnType<${a}>>>;\n`;
  }
- source+="import type {createIntegerRuntime as OldInteger} from './old/integer-runtime.mjs';\nimport type {createIntegerRuntime as NamedInteger} from './named/integer-runtime.mjs';\ntype IntegerFactory=Assert<Assignable<typeof OldInteger,typeof NamedInteger>>;\n";
  write(directory,'all-signatures.mts',source);strict(directory,'all-signatures.mts',true);retain('all-signature-subjects',{contracts,old:[...old],named:[...named],source});
 });
 
@@ -101,17 +119,27 @@ test('fresh receiving contexts refuse changed selected JS declarations licenses 
 });
 
 test('new format reentrancy retains explicit raw JSON and Math observations without claiming old schedule equality',()=>{
- const json=Object.getOwnPropertyDescriptor(JSON,'stringify'),math=Object.getOwnPropertyDescriptor(Math,'min'),rows=[];
- for(const [mode,producer]of [['legacy',hostRuntimeAssets],['named',hostRuntimeAssetsNamedDataAliases]]){
-  const jsonCalls=[],mathCalls=[];let reentered=false,nested;
-  try{
-   Object.defineProperty(JSON,'stringify',{...json,value:function(...args){jsonCalls.push({receiver:this===JSON,arguments:args});if(!reentered){reentered=true;nested=hostRuntimeAssetsNamedDataAliases();}return Reflect.apply(json.value,this,args);}});
-   Object.defineProperty(Math,'min',{...math,value:function(...args){mathCalls.push(args);return Reflect.apply(math.value,this,args);}});
-   const assets=producer();rows.push({mode,jsonCalls,mathCalls,assets:[...assets],nested:[...nested]});
-  }finally{Object.defineProperty(JSON,'stringify',json);Object.defineProperty(Math,'min',math);}
+ const json=Object.getOwnPropertyDescriptor(JSON,'stringify'),math=Object.getOwnPropertyDescriptor(Math,'min'),jsonRows=[],mathRows=[];
+ const modes=[['legacy',hostRuntimeAssets],['named',hostRuntimeAssetsNamedDataAliases]],clean=Object.fromEntries(modes.map(([mode,producer])=>[mode,[...producer()]]));
+ for(const [mode,producer]of modes){
+  const jsonCalls=[];let error,guardBefore;
+  try{Object.defineProperty(JSON,'stringify',{...json,value:function(...args){jsonCalls.push({receiver:this===JSON,arguments:args});return Reflect.apply(json.value,this,args);}});guardBefore=originalDataFreezeIntrinsicsUnchanged();try{producer();}catch(caught){error=caught;}}
+  finally{Object.defineProperty(JSON,'stringify',json);}
+  const row=retain('explicit-json-guard-refusal-'+mode,{mode,guardBefore,jsonCalls,error:error?{name:error.name,message:error.message,stack:error.stack}:null});jsonRows.push(row);
+  assert.equal(guardBefore,false);assert.ok(error instanceof TypeError);assert.equal(error.message,'Owned JSON original checker native operations changed');
  }
- retain('complete-explicit-mode-observer-tapes',rows);assert.ok(rows[0].mathCalls.length>rows[1].mathCalls.length);assert.ok(rows[0].jsonCalls.length>rows[1].jsonCalls.length);for(const row of rows){assert.equal(row.nested.find(([path])=>path==='base64-runtime.mjs')[1],row.assets.find(([path])=>path==='base64-runtime.mjs')[1]);assert.ok(row.jsonCalls.length>0);}
- assert.deepEqual([...hostRuntimeAssetsNamedDataAliases()],[...hostRuntimeAssetsNamedDataAliases()]);
+ for(const [mode,producer]of modes){
+  const mathCalls=[];let error,nestedError,assets,nested,reentered=false,guardBefore;
+  try{
+   Object.defineProperty(Math,'min',{...math,value:function(...args){mathCalls.push({arguments:args,frame:new Error('actual Math.min observation')});if(!reentered){reentered=true;try{nested=hostRuntimeAssetsNamedDataAliases();}catch(caught){nestedError=caught;}}return Reflect.apply(math.value,this,args);}});
+   guardBefore=originalDataFreezeIntrinsicsUnchanged();try{assets=producer();}catch(caught){error=caught;}
+  }finally{Object.defineProperty(Math,'min',math);}
+  const row=retain('explicit-math-only-reentry-'+mode,{mode,guardBefore,reentered,mathCalls:mathCalls.map(item=>({arguments:item.arguments,stack:item.frame.stack})),assets:assets?[...assets]:null,nested:nested?[...nested]:null,error:error?{name:error.name,message:error.message,stack:error.stack}:null,nestedError:nestedError?{name:nestedError.name,message:nestedError.message,stack:nestedError.stack}:null});mathRows.push(row);
+  if(guardBefore){assert.equal(error,undefined);assert.deepEqual(row.assets,clean[mode]);if(mode==='legacy'){assert.ok(mathCalls.length>0);assert.equal(reentered,true);}if(reentered){assert.equal(nestedError,undefined);assert.deepEqual(row.nested,clean.named);}}
+  else{assert.ok(error instanceof TypeError);assert.equal(error.message,'Owned JSON original checker native operations changed');}
+  if(assets){const actual=closure(assets),expected=closure(new Map(clean[mode]));assert.deepEqual(actual.rows,expected.rows);retain('complete-math-only-selected-source-'+mode,{actual,expected});}
+ }
+ retain('complete-explicit-mode-observer-tapes',{jsonRows,mathRows});assert.deepEqual([...hostRuntimeAssetsNamedDataAliases()],clean.named);
 });
 
 test('fixed complete source rules retain language repository CST inverses and reject stale or hostile source data',()=>{
