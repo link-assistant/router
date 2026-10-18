@@ -156,3 +156,20 @@ export function createCoreAdoptionSelfAliasSelector({modules,compilationProfile:
   return true;
  };
 }
+
+// Explicit whole-operation cost format; old producer APIs above stay exact.
+import {createUnscopedDeriveBangContext as createWholeProducerDeriveBangContext} from './derive-bang-context.mjs';
+import {withRetainedPrivateNativeProofCostScope} from './private-native-proof-json.mjs';
+export function createWholeScopedCoreAdoptionProducerContext({modules,compilationProfile:inputProfile,dependencyInputs}){
+ return withRetainedPrivateNativeProofCostScope(()=>{
+ const inputs=dependencySources(dependencyInputs);if(!inputs)return null;
+ // No dependency-archive reads or proof construction are added to an operation with no
+ // actual derive invocation. Ordinary callers without Cargo retain old refusal.
+ const profile=compilationProfile(inputProfile),hasDerive=modules.some(module=>originalSourceModuleItems(module).some(item=>itemConfiguration(item.tokens,profile).attributes.some(attribute=>attribute.name==='derive')));
+ if(!hasDerive)return null;
+ const dependencies=deriveDependencyProfile(inputs).proof;if(!dependencies)return null;
+ const derive=createDeriveFootprintContext({modules,dependencies,externalModules:registeredStandardHostBindings(),compilationProfile:profile}),bang=createWholeProducerDeriveBangContext({deriveContext:derive}),original=deriveFootprintSourceContext(derive),selected=new Map();
+ const binding=resolveModuleBindings({modules,deriveContext:derive,deriveBangContext:bang,externalModules:deriveFootprintExternalModules(derive),compilationProfile:profile});
+ const token=Object.freeze({schema:'private-core-adoption-producer-context-v1'});contexts.set(token,{modules,profile,dependencies,derive,bang,original,binding,selected});return token;
+ });
+}
