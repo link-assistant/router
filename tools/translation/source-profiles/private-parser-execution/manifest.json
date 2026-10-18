@@ -722,8 +722,8 @@
   "hostInputs": [
     {
       "path": "original-json-intrinsics.mjs",
-      "bytes": 64404,
-      "sha256": "a07d100d681ea597140eee88b06db58dad0c1765596ecbd9e73f183dd6c5e3c7"
+      "bytes": 70112,
+      "sha256": "9c5255ac206087959f2cf2e2c3bd9eb9ad096a2d04648ff7bbdbaefee8cda219"
     },
     {
       "path": "private-parser-sha256.mjs",
