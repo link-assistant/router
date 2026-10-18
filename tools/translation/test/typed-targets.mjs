@@ -4,7 +4,7 @@ import {tmpdir} from 'node:os';
 import {join,dirname} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {createRequire} from 'node:module';
-import {writeRuntimeAssets} from './artifact-loader.mjs';
+import {writeNamedRuntimeAssets as writeRuntimeAssets} from './artifact-loader.mjs';
 
 // Execute the emitted JavaScript and the separately strict-compiled TypeScript.
 export async function verifyTypedTargets(result,verify,{childTimeoutMs}={}) {
