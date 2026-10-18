@@ -2,7 +2,7 @@
 // a caller-supplied file checksum. Private contexts are not semantic IR nodes.
 import {createHash} from 'node:crypto';
 import {types} from 'node:util';
-import {originalFlatTokenIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged,copyOriginalDigestMetadata} from '../original-json-intrinsics.mjs';
+import {originalFlatTokenIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged,copyOriginalDigestMetadata,createOriginalDigestMetadataCopierForInternalSources} from '../original-json-intrinsics.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {capturedRustTokenSource} from './lexical.mjs';
 
@@ -289,7 +289,7 @@ export function linkedSourceContext(surface) {
 // The digest is integrity after issuance, never a caller authority mechanism.
 export function originalParsedDeclarationEvidence(entry) {
   const evidence=linked.get(entry);if(!evidence)return null;
-  if(evidence.parsedSurfaceSha256!==metadataDigest(entry))fail('original parsed declaration changed after source capture');
+  if(evidence.parsedSurfaceSha256!==metadataDigestForInternalSources(entry))fail('original parsed declaration changed after source capture');
   return evidence;
 }
 // Recover a node only through an existing genuine, unchanged parent link.
@@ -334,3 +334,10 @@ export function checkedSourceEvidence(token,entry) {
   if(evidence.checkedSignatureSha256!==metadataDigest(signature(entry))||evidence.checkedBodySha256!==metadataDigest(entry.body??entry.ctors)||entry.span?.start!==evidence.checkedSpan.start||entry.span?.end!==evidence.checkedSpan.end)fail('checked source association became stale');
   return evidence;
 }
+
+// Internal-source sibling: the old JSON call expression and Hash frame name remain literal.
+const internalSourcesMetadataFallback=copyMetadata;
+export const metadataDigestForInternalSources = function metadataDigest(value) {
+  const copyMetadata=createOriginalDigestMetadataCopierForInternalSources(internalSourcesMetadataFallback,ordinal);
+  return hash(JSON.stringify(copyMetadata(value),(_,item)=>typeof item==='bigint'?{$integer:item.toString()}:item));
+};

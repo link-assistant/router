@@ -8,7 +8,7 @@ import {requireCloneOnlyRecordNoDrop} from '../clone-record-no-drop.mjs';
 import {assertBuiltinScalarSourceOutput} from '../builtin-scalar-ast-route.mjs';
 import {assertOriginalPrimitiveCloneExpansion} from './primitive-clone-source.mjs';
 import {assertOriginalUnitCloneSource} from '../clone-unit-source.mjs';
-import {metadataDigest,copyMetadata} from './source-links.mjs';
+import {metadataDigestForInternalSources as metadataDigest,copyMetadata} from './source-links.mjs';
 import {rustFixedType,sameType} from '../checked-types.mjs';
 import {renameFunction} from '../vendor/meta-language/translation/ir.js';
 import {unsupported,typeError} from '../vendor/meta-language/translation/diagnostics.js';

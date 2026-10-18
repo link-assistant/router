@@ -515,3 +515,72 @@ export function copyOriginalDigestMetadata(value,fallback,ordinal){
  }
  return copyMetadata(value);
 }
+
+
+// Private internal-source digest copy; derived from the complete 645 kernel.
+export function createOriginalDigestMetadataCopierForInternalSources(fallback,ordinal){
+ if(!pathNative||!syntaxNative)return fallback;
+ return function copyMetadata(value){
+ const fail=reason=>{throw new TypeError('source links: '+reason);};
+ let qualifiedCreate=null;
+ function privateCreate(object){
+  if(object!==originalObject)return false;
+  const create=descriptor(originalObject,'create');
+  if(!create||!hasOwn(create,'value')||typeof create.value!=='function')return false;
+  if(create.value===qualifiedCreate)return true;
+  if(pathIsProxy.value(create.value)||apply(functionText,create.value,[])!=='function create() { [native code] }')return false;
+  qualifiedCreate=create.value;return true;
+ }
+ function nativeDefine(object){
+  if(object!==originalObject)return false;
+  const define=descriptor(originalObject,'defineProperty');
+  return !!(define&&hasOwn(define,'value')&&define.value===syntaxDefine.value);
+ }
+ function copyMetadata(value,{cells=200000,bytes=4194304,preserveKeyOrder=false}={},depth=0,active=new Set(),budget=null){
+  budget??={cells,bytes};if(--budget.cells<0||depth>160)fail('metadata budget exhausted');
+  if(value===null||value===undefined||typeof value==='boolean'||typeof value==='bigint')return value;
+  if(typeof value==='number'){if(!Number.isSafeInteger(value))fail('non-integer metadata number');return value;}
+  if(typeof value==='string'){budget.bytes-=Buffer.byteLength(value);if(budget.bytes<0)fail('metadata byte budget exhausted');return value;}
+  if(!value||typeof value!=='object'||types.isProxy(value)||active.has(value))fail('metadata must be acyclic data');
+  const prototype=Object.getPrototypeOf(value);
+  if(prototype!==Object.prototype&&prototype!==null&&prototype!==Array.prototype)fail('unexpected metadata prototype');
+  const descriptors=Object.getOwnPropertyDescriptors(value),keys=Reflect.ownKeys(descriptors),array=Array.isArray(value),ownIndexes=array?{__proto__:null}:null;
+  for(const key of keys){const descriptor=descriptors[key];if(typeof key!=='string'||!Object.hasOwn(descriptor,'value')||(!descriptor.enumerable&&!(array&&key==='length')))fail('accessor, symbol or hidden metadata');if(array)ownIndexes[key]=true;}
+  active.add(value);let result;
+  if(array){
+   const length=descriptors.length.value;if(!Number.isSafeInteger(length)||length<0||length>budget.cells)fail('array metadata budget exhausted');
+   if(keys.length!==length+1)fail('array metadata holes or extra properties');
+   result=[];for(let index=0;index<length;index++){const key=String(index);if(ownIndexes[index]!==true)fail('array metadata hole');const descriptor=descriptors[key];if(!descriptor)fail('array metadata hole');result.push(copyMetadata(descriptor.value,{preserveKeyOrder},depth+1,active,budget));}
+  }else{
+   // The actual legacy Object lookup happens once at its original position.
+   // A foreign/proxy receiver is never inspected by optional qualification.
+   const createReceiver=Object;let privateTarget;
+   {const Object=createReceiver;privateTarget=privateCreate(Object);result=Object.create(null);}
+   for(const key of preserveKeyOrder?keys:keys.sort(ordinal)){
+    const objectReceiver=Object;
+    {const Object=objectReceiver;
+    if(privateTarget&&typeof key==='string'&&nativeDefine(Object)){
+     // Select the actual old receiver/callee BEFORE any child callback.
+     const receiver=Object,selected=receiver.defineProperty;
+     const child=copyMetadata(descriptors[key].value,{preserveKeyOrder:preserveKeyOrder||key==='copyCertificate'},depth+1,active,budget);
+     if(!descriptor(objectPrototype,'get')&&!descriptor(objectPrototype,'set'))result[key]=child;
+     else{
+      // Descriptor conversion can observe inherited get/set after the child.
+      // Keep the selected callee even if that child rebound global Object.
+      privateTarget=false;
+      apply(selected,receiver,[result,key,{value:child,enumerable:true,writable:true,configurable:true}]);
+     }
+    }else{
+     // A caller operation can retain this output, even if native identities
+     // are restored before a later field. Privacy is never reacquired.
+     privateTarget=false;
+     Object.defineProperty(result,key,{value:copyMetadata(descriptors[key].value,{preserveKeyOrder:preserveKeyOrder||key==='copyCertificate'},depth+1,active,budget),enumerable:true,writable:true,configurable:true});
+    }
+    }
+   }
+  }
+  active.delete(value);return result;
+ }
+ return copyMetadata(value);
+ };
+}
