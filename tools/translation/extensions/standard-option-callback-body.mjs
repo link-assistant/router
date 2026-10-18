@@ -102,3 +102,26 @@ export function prepareOriginalOptionCallbacks(emitter,entry,Parser,Checker){con
  frameParents.set(emitter,parents);
  return ()=>{if(previous)functions.set(emitter,previous);else functions.delete(emitter);if(previousParents)frameParents.set(emitter,previousParents);else frameParents.delete(emitter);};}
 export function requireOriginalOptionCallbackEmission(emitter,node){if(!functions.get(emitter)?.includes(metadataDigest(alphaTree(node))))throw new Error('Option callback changed from its exact privately validated source function rename');return node.body;}
+
+// NEW read-only projection DATA, not an issuer/guard exception. The complete
+// existing private verifier executes first, even for a nonmatching callback.
+// No private callback record is copied, returned or passed to a caller hook.
+const NONEMPTY_FILTER_DEFINITION="pub fn filter<P>(self, predicate: P) -> Self\n    where\n        P: FnOnce(&T) -> bool,\n    {\n        if let Some(x) = self {\n            if predicate(&x) {\n                return Some(x);\n            }\n        }\n        None\n    }";
+const NONEMPTY_FILTER_SELECTED_DEFINITION="fn filter<P>(self, predicate: P) -> Self\n    where\n        P: FnOnce(&T) -> bool,\n    {\n        if let Some(x) = self {\n            if predicate(&x) {\n                return Some(x);\n            }\n        }\n        None\n    }";
+export function readOriginalNonemptyStrFilter(node,program){
+ if(node?.k!=='routerPinnedOptionCallbackBody')return null;
+ requirePinnedOptionCallbackBody(node,program);
+ const state=originalReflectApply(originalMapGet,issued,[node.originalCallbackProof.key]);
+ if(state.proof.method!=='filter'||state.proof.owner!=='&str'||state.callbacks.length!==1||state.proof.selection.method.definitionSource!==NONEMPTY_FILTER_SELECTED_DEFINITION)return null;
+ const payload=state.payload;if(payload.kind!=='string'||payload.rustOwnership?.kind!=='borrowed'||payload.rustOwnership.source!=='str')return null;
+ const callback=state.callbacks[0];if(callback.k!=='routerLambda'||callback.arity!==1||callback.type.result.kind!=='bool')return null;
+ const binding=callback.binding;if(binding.k!=='let'||binding.value.k!=='routerLambdaInput'||binding.value.position!==0||binding.type!==callback.type.result)return null;
+ const argument=binding.value.type;if(argument.kind!=='string'||argument.rustReference?.kind!=='shared'||argument.rustReference.pointee.kind!=='string'||argument.rustReference.pointee.rustOwnership?.kind!=='borrowed'||argument.rustReference.pointee.rustOwnership.source!=='str')return null;
+ const predicate=binding.body;if(predicate.k!=='unary'||predicate.op!=='not'||predicate.type!==binding.type)return null;
+ const measure=predicate.arg;if(measure.k!=='routerStringOperation'||measure.op!=='is_empty'||measure.args.length!==0||measure.type!==binding.type)return null;
+ const input=measure.string;if(input.k!=='var'||input.name!==binding.name||metadataDigest(input.type)!==metadataDigest(argument))return null;
+ // str has no aggregate-domain guard. Any other receiver wrapper is refused,
+ // rather than erased. The returned receiver was already supplied by caller.
+ if(node.body.value.k==='routerOriginalSharedDomainGuard')return null;
+ return {receiver:node.body.value,originalMethodSource:NONEMPTY_FILTER_DEFINITION,selectionEquation:'remove only the original pub visibility prefix (4 UTF16 units)',methodSource:state.proof.selection.method.definitionSource,methodBody:state.proof.selection.method.bodySource,sourceProfile:state.proof.selection.profile,equation:'filter(Some(x), |s| !s.is_empty()) = if x != "" { Some(x) } else { None }; filter(None,p) = None',predicate:'same-checked-shared-str-input-not-is-empty',callbackEvaluations:{None:0,Some:1},semanticAuthority:false};
+}
