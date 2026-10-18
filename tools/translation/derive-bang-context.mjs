@@ -139,12 +139,17 @@ export function originalDeriveBangEnclosingOutputs(context,deriveContext,module,
 
 // Explicit production opt-in; the original creator and all private issuers above
 // stay unchanged. Closing is synchronous, including return/throw/reentrant paths.
-import {withPrivateNativeProofCostScope} from './private-native-proof-json.mjs';
+import {withPrivateNativeProofCostScope,withRetainedPrivateNativeProofCostScope} from './private-native-proof-json.mjs';
 export function createScopedProofDeriveBangContext(options){
  return withPrivateNativeProofCostScope(()=>createUnscopedDeriveBangContext(options));
 }
 
 // Default selection scopes only the genuine synchronous creator body.
 export function createDeriveBangContext({deriveContext}={}){
- return withPrivateNativeProofCostScope(()=>createUnscopedDeriveBangContext({deriveContext}));
+ return withRetainedPrivateNativeProofCostScope(()=>createUnscopedDeriveBangContext({deriveContext}));
+}
+
+// Explicit core format selection; options retain the original in-scope getter.
+export function createRetainedProofDeriveBangContext(options){
+ return withRetainedPrivateNativeProofCostScope(()=>createUnscopedDeriveBangContext(options));
 }

@@ -101,6 +101,7 @@ export function restoreScopedProofConsumerFormats(input){
 // Default creator selection is explicit format DATA, not source/owner authority.
 const DEFAULT_CREATOR_HEADER={"before":"export function createDeriveBangContext({deriveContext}={}){","after":"export function createUnscopedDeriveBangContext({deriveContext}={}){"},EXPLICIT_CREATOR_CALL={"before":" return withPrivateNativeProofCostScope(()=>createDeriveBangContext(options));","after":" return withPrivateNativeProofCostScope(()=>createUnscopedDeriveBangContext(options));"},DEFAULT_CREATOR_APPEND="\n// Default selection scopes only the genuine synchronous creator body.\nexport function createDeriveBangContext({deriveContext}={}){\n return withPrivateNativeProofCostScope(()=>createUnscopedDeriveBangContext({deriveContext}));\n}\n";
 export function unscopedCreatorSource(source,retain=()=>{}){
+ source=restoreRetainedCreatorSource(source,retain);
  if(typeof source!=='string')fail('complete creator source text required');
  if(!source.includes(DEFAULT_CREATOR_HEADER.after)&&!source.includes(EXPLICIT_CREATOR_CALL.after)&&!source.includes(DEFAULT_CREATOR_APPEND))return source;
  if(source.split(DEFAULT_CREATOR_HEADER.after).length!==2||source.split(EXPLICIT_CREATOR_CALL.after).length!==2||source.split(DEFAULT_CREATOR_APPEND).length!==2||!source.endsWith(DEFAULT_CREATOR_APPEND))fail('incomplete or duplicate default creator format');
@@ -109,4 +110,21 @@ export function unscopedCreatorSource(source,retain=()=>{}){
  if(replayed!==source)fail('complete default creator source inverse differs');
  retain('complete-default-creator-format-and-unscoped-history',{actualSource:source,unscopedSource:unscoped,replayedSource:replayed,stages:[{phase:'language',before:unscoped,after:reheaded,rule:DEFAULT_CREATOR_HEADER},{phase:'repository',before:reheaded,after:recalled,rule:EXPLICIT_CREATOR_CALL},{phase:'repository',before:recalled,after:source,fullRootAppend:{before:recalled,after:source}}],authority:{source:false,owner:false,type:false,executable:false}});
  return unscoped;
+}
+
+// Complete706 creator DATA, separate from all existing703 and native/scoped rules.
+const RETAINED_CREATOR_RULES=[{"before":"import {withPrivateNativeProofCostScope} from './private-native-proof-json.mjs';","after":"import {withPrivateNativeProofCostScope,withRetainedPrivateNativeProofCostScope} from './private-native-proof-json.mjs';","phase":"language","id":"javascript:extend-one-existing-scope-import"},{"before":" return withPrivateNativeProofCostScope(()=>createUnscopedDeriveBangContext({deriveContext}));","after":" return withRetainedPrivateNativeProofCostScope(()=>createUnscopedDeriveBangContext({deriveContext}));","phase":"repository","id":"router:default-retains-immutable-arithmetic-only"},{"before":"// Default selection scopes only the genuine synchronous creator body.\nexport function createDeriveBangContext({deriveContext}={}){\n return withRetainedPrivateNativeProofCostScope(()=>createUnscopedDeriveBangContext({deriveContext}));\n}\n","after":"// Default selection scopes only the genuine synchronous creator body.\nexport function createDeriveBangContext({deriveContext}={}){\n return withRetainedPrivateNativeProofCostScope(()=>createUnscopedDeriveBangContext({deriveContext}));\n}\n\n// Explicit core format selection; options retain the original in-scope getter.\nexport function createRetainedProofDeriveBangContext(options){\n return withRetainedPrivateNativeProofCostScope(()=>createUnscopedDeriveBangContext(options));\n}\n","phase":"repository","id":"router:explicit-retained-core-creator"}];
+export function proposeRetainedCreatorSource(source,retain=()=>{}){
+ if(typeof source!=='string')fail('complete creator source text required');
+ const before=source,stages=[];
+ for(const row of RETAINED_CREATOR_RULES){const prior=source;source=exact(source,row.before,row.after,row.id);stages.push({phase:row.phase,before:prior,after:source,rule:row});}
+ retain('complete706-retained-creator-forward-DATA',{before,after:source,stages,authority:{source:false,owner:false,type:false,executable:false}});return source;
+}
+export function restoreRetainedCreatorSource(source,retain=()=>{}){
+ if(typeof source!=='string')fail('complete creator source text required');
+ if(!source.includes('withRetainedPrivateNativeProofCostScope')&&!source.includes('createRetainedProofDeriveBangContext'))return source;
+ const current=source,stages=[];
+ for(let at=RETAINED_CREATOR_RULES.length-1;at>=0;at--){const row=RETAINED_CREATOR_RULES[at];if(source.split(row.after).length!==2)fail('incomplete or duplicate default creator format');const prior=source;source=exact(source,row.after,row.before,row.id+'-inverse');stages.push({phase:row.phase,before:prior,after:source,rule:row});}
+ const replay=proposeRetainedCreatorSource(source);if(replay!==current)fail('complete retained creator source inverse differs');
+ retain('complete706-retained-creator-inverse-DATA',{actualSource:current,source703:source,replayedSource:replay,stages,authority:{source:false,owner:false,type:false,executable:false}});return source;
 }

@@ -143,8 +143,15 @@ export function createPrivateNativeProofJsonSerializer(){
 const scopedFrozenField=qualified?get(objectOwner,'isFrozen'):null;
 const scopedFrozenQualified=!!(qualified&&native(scopedFrozenField,'isFrozen'));
 let nativeProofCostScope=null;
+let retainedPrivateProofCostPolicy=null;
 function invalidatePrivateProofCostScopes(){
- for(let scope=nativeProofCostScope;scope;scope=scope.parent)scope.memo=null;
+ // Registered policy frames form an ordered subsequence of the scope chain.
+ // No collection or inherited property is inspected when native guards fail.
+ let policy=retainedPrivateProofCostPolicy;
+ for(let scope=nativeProofCostScope;scope;scope=scope.parent){
+  if(policy&&policy.scope===scope)policy=policy.parent;
+  else scope.memo=null;
+ }
 }
 /** NEW internal byte-format scope, synchronous even for Promise/thenable returns.
  * The callback receives no scope/permit. Nested maps share one nonrefundable
@@ -268,4 +275,20 @@ export function createScopedPrivateNativeProofJsonSerializer(){
   invalidatePrivateProofCostScopes();
   return scopedFallback(value);
  };
+}
+
+/** Explicit retained arithmetic-only policy. All old scopes still clear before
+ * legacy callbacks unless registered by this synchronous wrapper. Completed
+ * recursively frozen DATA costs survive; every use keeps fresh native guards
+ * and logical recharge. No source, owner, verdict or encoded result is retained.
+ */
+export function withRetainedPrivateNativeProofCostScope(run){
+ if(typeof run!=='function')throw new TypeError('Private proof cost scope requires a synchronous callback');
+ return withPrivateNativeProofCostScope(()=>{
+  const prior=retainedPrivateProofCostPolicy;
+  const policy={scope:nativeProofCostScope,parent:prior};
+  retainedPrivateProofCostPolicy=policy;
+  try{return run();}
+  finally{retainedPrivateProofCostPolicy=prior;policy.scope=null;policy.parent=null;}
+ });
 }
