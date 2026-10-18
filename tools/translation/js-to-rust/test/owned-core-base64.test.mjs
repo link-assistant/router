@@ -51,7 +51,7 @@ test('reverse original JS evaluator and strict targets consume complete shared e
 
 test('reverse base64 preserves reusable inputs local aliases array32 bounds and once-only calls',async()=>{
  const js="import {router_core_base64_standard_encode_owned_bytes as encode,router_core_base64_url_no_pad_encode_array32 as fixed} from './runtime/base64-runtime.mjs';\n/** @param {Parameters<typeof encode>[0]} value */\nexport function twice(value){const first=encode(value);return encode(value);}\n/** @param {Parameters<typeof fixed>[0]} value */\nexport function array(value){const alias=value;return fixed(alias);}";
- const row=receive(js),token=await prepareOwnedCoreRuntime(row.result.program),bytes=octets([102]);assert.equal(evaluate(row.result.program,'twice',[bytes],token),'Zg==');assert.deepEqual(bytes,[102n]);assert.equal(evaluate(row.result.program,'array',[octets(Array(32).fill(0))],token),'A'.repeat(43));for(const length of [31,33])assert.throws(()=>evaluate(row.result.program,'array',[octets(Array(length).fill(0))],token),/array32|32/);
+ const row=receive(js),token=await prepareOwnedCoreRuntime(row.result.program),bytes=octets([102]);assert.equal(evaluate(row.result.program,'twice',[bytes],token),'Zg==');assert.deepEqual(bytes,[102n]);assert.equal(evaluate(row.result.program,'array',[octets(Array(32).fill(0))],token),'A'.repeat(43));for(const length of [31,33])assert.throws(()=>evaluate(row.result.program,'array',[octets(Array(length).fill(0))],token),{name:'TypeError',message:'Owned base64 value domain: byte array length'});
  const twice=row.result.program.find(item=>item.name==='twice');assert.equal(twice.body[0].value.kind,'base64-call');assert.equal(twice.body[1].value.kind,'base64-call');assert.equal(twice.body[0].value.copy,'to_vec');
 });
 
