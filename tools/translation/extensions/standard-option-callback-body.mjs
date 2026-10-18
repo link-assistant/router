@@ -110,8 +110,13 @@ const NONEMPTY_FILTER_DEFINITION="pub fn filter<P>(self, predicate: P) -> Self\n
 const NONEMPTY_FILTER_SELECTED_DEFINITION="fn filter<P>(self, predicate: P) -> Self\n    where\n        P: FnOnce(&T) -> bool,\n    {\n        if let Some(x) = self {\n            if predicate(&x) {\n                return Some(x);\n            }\n        }\n        None\n    }";
 export function readOriginalNonemptyStrFilter(node,program){
  if(node?.k!=='routerPinnedOptionCallbackBody')return null;
- requirePinnedOptionCallbackBody(node,program);
+ // Constructor hints come only from the private issued entry. No predicate or
+ // callback facts are inspected before the unchanged full verifier succeeds.
+ const dispatch=originalReflectApply(originalMapGet,issued,[node.originalCallbackProof?.key]);
+ if(!dispatch||typeof dispatch.Parser!=='function'||typeof dispatch.Checker!=='function')throw new Error('Option callback requires its actual privately checked original source');
+ requirePinnedOptionCallbackBody(node,program,dispatch.Parser,dispatch.Checker);
  const state=originalReflectApply(originalMapGet,issued,[node.originalCallbackProof.key]);
+ if(state!==dispatch)throw new Error('Option callback private dispatch changed during verification');
  if(state.proof.method!=='filter'||state.proof.owner!=='&str'||state.callbacks.length!==1||state.proof.selection.method.definitionSource!==NONEMPTY_FILTER_SELECTED_DEFINITION)return null;
  const payload=state.payload;if(payload.kind!=='string'||payload.rustOwnership?.kind!=='borrowed'||payload.rustOwnership.source!=='str')return null;
  const callback=state.callbacks[0];if(callback.k!=='routerLambda'||callback.arity!==1||callback.type.result.kind!=='bool')return null;

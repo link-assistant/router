@@ -22,6 +22,7 @@ import {readOriginalNonemptyStrFilter} from '../../extensions/standard-option-ca
 import {json_macro_null,json_macro_bool,json_macro_string,json_macro_u64,json_macro_object,json_macro_array} from '../../json-macro-runtime.mjs';
 import {writeJsonTextGzip} from '../../../evidence/write-json-gzip.mjs';
 import {transportConcreteSyntaxMeta} from '../../concrete-syntax-meta.mjs';
+import {parseProgram} from '../../semantic-meta.mjs';
 const root=fileURLToPath(new URL('../../../../',import.meta.url)),C='crate::translation_core::',nativeJSON=JSON.stringify;
 let vectors=[];
 function retain(kind,value){vectors.push({kind,value});return value;}
@@ -68,6 +69,9 @@ test('hostile data retains the existing reader ABI outcomes and full callback ta
 });
 test('only the genuinely reissued exact nonempty predicate is selected and all alternate predicate effects refuse',()=>{
  const observations=[];for(const [label,predicate]of [['empty','text.is_empty()'],['constant','true'],['prefix','!text.starts_with("x")'],['captured','!key.is_empty()'],['combined','!text.is_empty() || key.is_empty()']]){const source=declaration('refused').replace('!text.is_empty()',predicate),result=forward(source);assert.equal(rows(result).length,0);assert.ok(result.ownedDefinitions.unsupported.some(row=>row.name==='refused'));observations.push({label,source,result});}for(const node of [{k:'routerPinnedOptionCallbackBody'},JSON.parse(nativeJSON({k:'routerPinnedOptionCallbackBody',originalCallbackProof:{key:'forged'}}))])assert.throws(()=>readOriginalNonemptyStrFilter(node,{declarations:new Map()}));retain('all-finite-predicate-and-forged-private-state-refusals',observations);
+ const dispatched=forward(declaration('actual_dispatch'));assert.equal(rows(dispatched).length,1,nativeJSON(dispatched.ownedDefinitions.unsupported));const reissued=[];
+ for(const [label,meta]of [['original',dispatched.meta.checkedSemanticProgram],['renamed',dispatched.meta.targetSemanticProgram]]){const program=parseProgram(nativeJSON(meta)),matches=[...program.declarations.values()].filter(entry=>entry.k==='fn'&&entry.body?.k==='routerPinnedOptionCallbackBody');assert.equal(matches.length,1);const node=matches[0].body,actual=readOriginalNonemptyStrFilter(node,program);assert.equal(actual.predicate,'same-checked-shared-str-input-not-is-empty');const forged=structuredClone(node);forged.originalCallbackProof={...forged.originalCallbackProof,Parser:'caller-supplied-Parser',Checker:'caller-supplied-Checker'};assert.throws(()=>readOriginalNonemptyStrFilter(forged,program),/privately checked|callback|changed/u);reissued.push({label,program,node,actual,forged});}
+ retain('complete-original-and-renamed-private-constructor-dispatch',{dispatched,reissued,callerConstructorsAccepted:false});
 });
 test('no public optional parameter or copied metadata can issue a borrower or bypass Some dominance',()=>{
  const row=rows(forward(declaration('field')))[0];assert.ok(row);const reverse=receivingRows([row]);assert.throws(()=>emitRust(JSON.parse(nativeJSON(reverse.program))),/unissued/u);

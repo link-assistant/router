@@ -9,3 +9,8 @@
   reverse checks, hostile/refusal controls and CI-only native edge goldens.
   The changed Rust parent requires an actual source-bank refresh before
   receiving; source authoring establishes no executable gain or performance pass.
+
+- Pass the original privately captured Parser and Checker as dispatch hints to
+  the unchanged full Option callback reissuer before inspecting the nonempty
+  predicate. Retain original/renamed semantic reparse controls and reject forged
+  public constructor fields; no source or callback authority is added.
