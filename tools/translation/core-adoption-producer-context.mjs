@@ -3,7 +3,7 @@
 import {types} from 'node:util';
 import {deriveDependencyProfile,deriveDependencyOriginalInputs} from './derive-dependencies.mjs';
 import {createDeriveFootprintContext,deriveFootprintAt,deriveFootprintSourceContext,deriveFootprintExternalModules} from './derive-footprints.mjs';
-import {createDeriveBangContext} from './derive-bang-context.mjs';
+import {createScopedProofDeriveBangContext as createDeriveBangContext} from './derive-bang-context.mjs';
 import {proveDeriveEmptyEnclosingEffect,deriveEmptyEnclosingEffectFacts} from './derive-output-effects.mjs';
 import {originalSourceModuleItems} from './source-module-views.mjs';
 import {resolveModuleBindings,originalDeclarationHeader,originalUseDeclarationLeaves} from './module-bindings.mjs';

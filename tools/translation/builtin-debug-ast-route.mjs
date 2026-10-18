@@ -1,7 +1,7 @@
 // Positive original compiler AST output grammar; no formatting/runtime grant.
 import {createHash} from 'node:crypto';
 import {createCompletedDataFreezer} from './private-data-freeze.mjs';
-import {createPrivateNativeProofJsonSerializer as createPrivateFrozenJsonComposer} from './private-native-proof-json.mjs';
+import {createScopedPrivateNativeProofJsonSerializer as createPrivateFrozenJsonComposer} from './private-native-proof-json.mjs';
 import {builtinDebugDataInputs} from './builtin-derive-data-inputs.mjs';
 import {inventoryDeriveQuoteMeta,createQuoteFragmentCompiler} from './derive-quote-meta.mjs';
 import {originalAstFunction,originalAstDefinition,astStructLiteral,astSyntaxText,astFragmentText,astEnumVariant,originalAstPositiveConstructors} from './builtin-derive-ast-meta.mjs';

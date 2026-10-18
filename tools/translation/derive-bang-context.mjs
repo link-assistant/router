@@ -136,3 +136,10 @@ export function originalDeriveBangEnclosingOutputs(context,deriveContext,module,
  }
  return Object.freeze({certificate,input:state.input,outputs:Object.freeze(outputs.map(row=>Object.freeze(row)))});
 }
+
+// Explicit production opt-in; the original creator and all private issuers above
+// stay unchanged. Closing is synchronous, including return/throw/reentrant paths.
+import {withPrivateNativeProofCostScope} from './private-native-proof-json.mjs';
+export function createScopedProofDeriveBangContext(options){
+ return withPrivateNativeProofCostScope(()=>createDeriveBangContext(options));
+}

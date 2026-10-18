@@ -20,6 +20,7 @@ function exact(source,before,after,id){return exactSubstitutionRule(id,before,af
  * actual selected-mode source and complete inverse stay separate test DATA.
  */
 export function legacyProofConsumerSource(source,retain=()=>{}){
+ source=statelessProofConsumerSource(source,retain);
  if(typeof source!=='string')fail('complete source text required');
  let selected=null;for(const row of RULES)if(source.includes(row.after)&&(!selected||row.after.length>selected.after.length))selected=row;
  if(!selected)return source;
@@ -62,3 +63,36 @@ export function proposeNativeProofConsumerFormats(input){
  captured.verify();return {schema:'private-native-proof-json-source-format-v1',rows,authority:{source:false,owner:false,type:false,executable:false},semanticChecksPassed:false,installApproved:false,obligations:['Independent fresh physical/NativeGit complete sources remain mandatory.','Current private owner/source/parser/CST/reissue/Hash operations stay exact.','Compare full genuinely issued old/new proof bytes and Hash payloads under both engines.','Native format intentionally changes internal global lookup/JSON/measurement/warming observations; legacy default composer contracts stay exact.','No result/verdict/source cache or performance/coverage completion follows from this DATA.']};
 }
 export function restoreNativeProofConsumerFormats(input){const captured=ownSources(input),restored=Object.create(null);for(const row of RULES){const source=captured.value[row.path],pin=PROOF_JSON_FORMAT_SOURCE_PINS[row.path].after;if(source.length!==pin.utf16Units||hash(source)!==pin.sha256)fail('complete selected consumer afterimage differs');const before=exact(source,row.after,row.before,'restore-native-format');if(exact(before,row.before,row.after,'restore-forward')!==source)fail('whole restore inverse');restored[row.path]=before;}captured.verify();return restored;}
+
+// Additive scoped-format DATA. Old RULES/pins/proposal/restore keep their original
+// stateless-native meaning; actual current sources and full inverses are separate.
+const SCOPED_RULES=Object.freeze(RULES.map(row=>Object.freeze({path:row.path,before:row.after,intermediate:row.after.replace('createPrivateNativeProofJsonSerializer as','createScopedPrivateNativeProofJsonSerializer as').replace("'./private-native-proof-json.mjs'","'./private-frozen-json.mjs'"),after:row.after.replace('createPrivateNativeProofJsonSerializer as','createScopedPrivateNativeProofJsonSerializer as')})));
+const scopedSourcePins={"tools/translation/builtin-debug-ast-route.mjs":{"before":{"bytes":39444,"utf16Units":39444,"sha256":"a1d3655d8de9b6628b4a83014b5d0bb2eb67cf7a77a6f5a2846bc39854ec4e5a"},"after":{"bytes":39450,"utf16Units":39450,"sha256":"7ded8d6f0653255e6fdb4749b39f62abb14e86bbc98b41449783ee3e929e932a"}},"tools/translation/builtin-derive-bang-footprints.mjs":{"before":{"bytes":39105,"utf16Units":39105,"sha256":"6fab80c5f6ad1428215f12820efc20779ea6496c1a446bc80d925f44c62f7613"},"after":{"bytes":39111,"utf16Units":39111,"sha256":"2da70566c2c4b6d822bd7fc730d8ee07e952554bf3f19f43f345e8d25bdd00bb"}}};
+for(const path of PROOF_JSON_FORMAT_PATHS){Object.freeze(scopedSourcePins[path].before);Object.freeze(scopedSourcePins[path].after);Object.freeze(scopedSourcePins[path]);}
+export const SCOPED_PROOF_JSON_FORMAT_SOURCE_PINS=Object.freeze(scopedSourcePins);
+export function statelessProofConsumerSource(source,retain=()=>{}){
+ if(typeof source!=='string')fail('complete source text required');
+ let selected=null;for(const row of SCOPED_RULES)if(source.includes(row.after)&&(!selected||row.after.length>selected.after.length))selected=row;
+ if(!selected)return source;
+ const stateless=exact(source,selected.after,selected.before,'stateless-comparison-import');
+ if(SCOPED_RULES.some(row=>stateless.includes(row.after)))fail('multiple scoped format imports');
+ const replay=exact(stateless,selected.before,selected.after,'scoped-format-roundtrip');if(replay!==source)fail('whole scoped literal inverse differs');
+ retain('explicit-scoped-and-stateless-comparison-source',{path:selected.path,actualSource:source,statelessSource:stateless,replayedSource:replay,rules:[{phase:'language',before:selected.before,after:selected.intermediate},{phase:'repository',before:selected.intermediate,after:selected.after}],authority:{source:false,owner:false,type:false,executable:false}});
+ return stateless;
+}
+export function proposeScopedProofConsumerFormats(input){
+ const captured=ownSources(input),rows=[];
+ for(const row of SCOPED_RULES){const source=captured.value[row.path],pin=SCOPED_PROOF_JSON_FORMAT_SOURCE_PINS[row.path].before;if(source.length!==pin.utf16Units||hash(source)!==pin.sha256)fail('complete scoped consumer beforeimage differs');
+  const pipeline=createRulePipeline([
+   {phase:'language',rules:[{id:'javascript:scoped-proof-cost-factory',apply:source=>stage(source,exact(source,row.before,row.intermediate,'scoped-factory-binding'),'language','javascript:scoped-proof-cost-factory')}]},
+   {phase:'repository',rules:[{id:'router:select-scoped-proof-byte-format',apply:first=>({first,second:stage(first.after.source,exact(first.after.source,row.intermediate,row.after,'scoped-module-import'),'repository','router:select-scoped-proof-byte-format')})}]},
+  ]),run=pipeline.run(source),{first,second}=run.value;
+  rows.push({file:row.path,before:first.before,intermediate:first.after,after:second.after,stages:[first,second],trace:run.trace,completeInverse:true});
+ }
+ captured.verify();return {schema:'private-scoped-proof-json-source-format-v1',rows,authority:{source:false,owner:false,type:false,executable:false},semanticChecksPassed:false,installApproved:false,obligations:['All actual source/owner/parser/reissue/JSON/Hash fences remain fresh.','Scoped costs are invocation-local immutable DATA only; every occurrence is charged.','New internal measurement/warming/RegExp scratch observations are explicit.','No performance qualification follows from this DATA.']};
+}
+export function restoreScopedProofConsumerFormats(input){
+ const captured=ownSources(input),restored=Object.create(null);
+ for(const row of SCOPED_RULES){const source=captured.value[row.path],pin=SCOPED_PROOF_JSON_FORMAT_SOURCE_PINS[row.path].after;if(source.length!==pin.utf16Units||hash(source)!==pin.sha256)fail('complete scoped consumer afterimage differs');const before=statelessProofConsumerSource(source);if(exact(before,row.before,row.after,'scoped-restore-forward')!==source)fail('whole scoped restore inverse');restored[row.path]=before;}
+ captured.verify();return restored;
+}

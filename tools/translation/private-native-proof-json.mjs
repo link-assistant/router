@@ -137,3 +137,135 @@ export function createPrivateNativeProofJsonSerializer(){
   return fallback(value);
  };
 }
+
+// Explicit synchronous cost scope for proof DATA. No source/owner verdict or
+// encoded result is stored, and no serializer closure captures a scope.
+const scopedFrozenField=qualified?get(objectOwner,'isFrozen'):null;
+const scopedFrozenQualified=!!(qualified&&native(scopedFrozenField,'isFrozen'));
+let nativeProofCostScope=null;
+function invalidatePrivateProofCostScopes(){
+ for(let scope=nativeProofCostScope;scope;scope=scope.parent)scope.memo=null;
+}
+/** NEW internal byte-format scope, synchronous even for Promise/thenable returns.
+ * The callback receives no scope/permit. Nested maps share one nonrefundable
+ * 4096-admission budget; all maps disappear on close or before legacy callbacks.
+ */
+export function withPrivateNativeProofCostScope(run){
+ if(typeof run!=='function')throw new TypeError('Private proof cost scope requires a synchronous callback');
+ const prior=nativeProofCostScope,scope={parent:prior,memo:null,open:true,budget:prior?prior.budget:{admissions:0}};
+ nativeProofCostScope=scope;
+ try{return run();}finally{scope.open=false;scope.memo=null;scope.parent=null;nativeProofCostScope=prior;}
+}
+function withinScopedNativeBudget(value,scope){
+ let scopeCells=0,scopeUnits=0,scopeResultHeight=0,scopeResultReusable=true;
+ const scopeShared=scope.memo??(scope.memo=new weakOwner());
+ const scopeNativeDescriptorData=parent(objectPrototypeField)===objectPrototype&&!get(objectPrototype,'writable');
+ // Private dense native-call argument storage; both arrays have existing own
+ // writable slots. Only slot values reach qualified natives, never the arrays.
+ const scopeUnaryArgs=[null],scopeBinaryArgs=[null,null];
+ // Fresh scalar measurements only; neither this map nor a record escapes the
+ // callback-free scan. Logical occurrence costs are always charged again.
+ const scopeCosts=new weakOwner(),scopeUnitBase=UNITS+1,scopeHeightBase=DEPTH+1;
+ // Exact short-string costs only, bounded and discarded with this scan. Every
+ // occurrence still pays its complete cost; no input/source verdict is stored.
+ const scopeQuotedCosts=new mapOwner();let scopeQuotedEntries=0;
+ const scopeCharge=count=>{if(count>UNITS-scopeUnits)return false;scopeUnits+=count;return true;};
+ function scopeQuoted(value){
+  if(value.length>UNITS-scopeUnits-2)return false;
+  const short=value.length<=128;
+  if(short){const known=(scopeUnaryArgs[0]=value,apply(mapGet,scopeQuotedCosts,scopeUnaryArgs));if(known!==undefined)return scopeCharge(known);}
+  // Native exec scans ordinary spans without a JS call per source unit.
+  // Each fresh literal owns lastIndex; no regex or match array can escape.
+  const scopeSpecial=/["\\\u0000-\u001f\ud800-\udfff]/g;let count=value.length+2,match;
+  while((match=(scopeUnaryArgs[0]=value,apply(exec,scopeSpecial,scopeUnaryArgs)))!==null){
+   const at=match.index,code=(scopeUnaryArgs[0]=at,apply(charCode,value,scopeUnaryArgs));
+   if(code===34||code===92||code===8||code===9||code===10||code===12||code===13)count++;
+   else if(code<32)count+=5;
+   else if(code>=55296&&code<=56319){
+    const next=at+1<value.length?(scopeUnaryArgs[0]=at+1,apply(charCode,value,scopeUnaryArgs)):-1;
+    if(next>=56320&&next<=57343)scopeSpecial.lastIndex=at+2;else count+=5;
+   }else count+=5;
+   if(count>UNITS-scopeUnits)return false;
+  }
+  if(!scopeCharge(count))return false;
+  if(short&&scopeQuotedEntries<4096){(scopeBinaryArgs[0]=value,scopeBinaryArgs[1]=count,apply(mapSet,scopeQuotedCosts,scopeBinaryArgs));scopeQuotedEntries++;}
+  return true;
+ }
+ function scopeVisit(value,depth){
+  scopeResultHeight=0;scopeResultReusable=true;
+  if(++scopeCells>CELLS||depth>DEPTH)return false;
+  if(value===null)return scopeCharge(4);
+  const kind=typeof value;
+  if(kind==='string')return scopeQuoted(value);
+  if(kind==='boolean')return scopeCharge(5);
+  // Undefined object properties/dense-array slots remain conservatively
+  // charged, and root undefined still selects the original composer.
+  if(kind==='undefined')return depth>0&&scopeCharge(4);
+  if(kind==='number')return scopeCharge(32);
+  if(kind!=='object'||isProxy(value)||(scopeUnaryArgs[0]=value,apply(boxedField.value,typeOwner,scopeUnaryArgs))||(scopeUnaryArgs[0]=value,apply(isViewField.value,bufferOwner,scopeUnaryArgs)))return false;
+  let known=(scopeUnaryArgs[0]=value,apply(weakGet,scopeCosts,scopeUnaryArgs));
+  if(known===0)return false;
+  if(known===undefined){const reusable=(scopeUnaryArgs[0]=value,apply(weakGet,scopeShared,scopeUnaryArgs));if(reusable!==undefined)known=2*reusable+1;}
+  if(known!==undefined){
+   const reusable=known%2,cost=(known-reusable)/2,packed=cost-1,height=packed%scopeHeightBase,quotient=(packed-height)/scopeHeightBase,knownUnits=quotient%scopeUnitBase,knownCells=(quotient-knownUnits)/scopeUnitBase;
+   if(knownCells-1>CELLS-scopeCells||knownUnits>UNITS-scopeUnits||height>DEPTH-depth)return false;
+   scopeCells+=knownCells-1;scopeUnits+=knownUnits;scopeResultHeight=height;scopeResultReusable=reusable===1;return true;
+  }
+  const cellsBefore=scopeCells-1,unitsBefore=scopeUnits;
+  const array=isArray(value),owner=parent(value);
+  if(owner!==(array?arrayPrototype:objectPrototype)&&!(owner===null&&!array))return false;
+  const names=ownKeys(value);if(names.length>CELLS+1)return false;
+  // A native lazy stack must be rejected before ANY descriptor materializes it.
+  for(let at=0;at<names.length;at++)if(typeof names[at]!=='string'||names[at]==='stack'||names[at]==='toJSON'||names[at]==='rawJSON')return false;
+  let length=names.length,reusable=true;
+  if(array){const field=get(value,'length');if(!field||(scopeNativeDescriptorData?field.writable===undefined:!has(field,'value'))||field.enumerable||field.value<0||field.value%1||field.value>CELLS||names.length!==field.value+1||names[names.length-1]!=='length')return false;if(field.writable||field.configurable)reusable=false;length=field.value;for(let at=0;at<length;at++)if(names[at]!==''+at)return false;}
+  if(!scopeCharge(2+(length?length-1:0)))return false;
+  // Every descriptor precedes descent. Captured native ownKeys supplies a
+  // fresh private array whose existing own slots can safely hold child values.
+  for(let at=0;at<length;at++){
+   const name=names[at],field=get(value,name);
+   if(!field||(scopeNativeDescriptorData?field.writable===undefined:!has(field,'value'))||!field.enumerable||!array&&(!scopeQuoted(name)||!scopeCharge(1)))return false;
+   if(field.writable||field.configurable)reusable=false;
+   names[at]=field.value;
+  }
+  (scopeBinaryArgs[0]=value,scopeBinaryArgs[1]=0,apply(weakSet,scopeCosts,scopeBinaryArgs));let height=0;
+  for(let at=0;at<length;at++){
+   if(!scopeVisit(names[at],depth+1))return false;
+   if(!scopeResultReusable)reusable=false;
+   if(scopeResultHeight+1>height)height=scopeResultHeight+1;
+  }
+  if(reusable)reusable=(scopeUnaryArgs[0]=value,apply(scopedFrozenField.value,objectOwner,scopeUnaryArgs));
+  const cost=((scopeCells-cellsBefore)*scopeUnitBase+(scopeUnits-unitsBefore))*scopeHeightBase+height+1;
+  (scopeBinaryArgs[0]=value,scopeBinaryArgs[1]=2*cost+(reusable?1:0),apply(weakSet,scopeCosts,scopeBinaryArgs));
+  if(reusable&&scopeCells-cellsBefore>=64&&scope.budget.admissions<4096){
+   (scopeBinaryArgs[0]=value,scopeBinaryArgs[1]=cost,apply(weakSet,scopeShared,scopeBinaryArgs));scope.budget.admissions++;
+  }
+  scopeResultHeight=height;scopeResultReusable=reusable;return true;
+ }
+ return scopeVisit(value,0);
+}
+/** NEW scoped byte-format contract. Every call retains fresh original guards
+ * and full native encoding; hits only replace arithmetic/census of recursively
+ * frozen own DATA and recharge every logical occurrence. RegExp match scratch,
+ * internal reflection and private warming may differ. Outside an explicit
+ * scope this runs the original stateless scan. All public old APIs stay exact.
+ */
+export function createScopedPrivateNativeProofJsonSerializer(){
+ const scopedFallback=createPrivateFrozenJsonComposer();
+ return function serializeProofData(value){
+  const scope=nativeProofCostScope;
+  if(nativeReady()){
+   let selected=false;
+   try{
+    if(scope&&scope.open&&scopedFrozenQualified&&sameField(get(objectOwner,'isFrozen'),scopedFrozenField))selected=withinScopedNativeBudget(value,scope);
+    else{if(scope)invalidatePrivateProofCostScopes();selected=withinNativeBudget(value);}
+   }catch{}
+   if(selected){
+    try{return apply(stringifyField.value,jsonOwner,[value]);}
+    catch(caught){invalidatePrivateProofCostScopes();throw caught;}
+   }
+  }
+  invalidatePrivateProofCostScopes();
+  return scopedFallback(value);
+ };
+}
