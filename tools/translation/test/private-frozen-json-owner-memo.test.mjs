@@ -14,7 +14,14 @@ after(()=>rmSync(directory,{recursive:true,force:true}));
 function retain(name,value){const output=process.env.ROUTER_PRIVATE_JSON_OWNER_VECTOR_DIR;if(output){mkdirSync(output,{recursive:true});writeFileSync(join(output,name+'.json'),JSON.stringify(value)+'\n',{flag:'wx'});}}
 
 test('complete previous helper is pinned and storage exports and logical budgets stay unchanged',{timeout:5000},()=>{
- assert.deepEqual(Object.keys(old),['createPrivateFrozenJsonCache','privateFrozenJsonCacheFacts']);assert.deepEqual(Object.keys(current),['createPrivateFrozenJsonCache','createPrivateFrozenJsonComposer','privateFrozenJsonCacheFacts']);assert.equal(current.privateFrozenJsonCacheFacts().available,true);
+ assert.deepEqual(Object.keys(old),['createPrivateFrozenJsonCache','privateFrozenJsonCacheFacts']);assert.deepEqual(Object.keys(current),['createPrivateFrozenJsonCache','createPrivateFrozenJsonComposer','privateFrozenJsonCacheFacts','privateFrozenJsonEqualHint']);
+ for(const name of ['createPrivateFrozenJsonCache','createPrivateFrozenJsonComposer','privateFrozenJsonCacheFacts'])assert.equal(typeof current[name],'function');
+ assert.equal(typeof current.privateFrozenJsonEqualHint,'function');
+ let hintReads=0;const mutableHintInput={value:1},getterHintInput=Object.freeze(Object.defineProperty({},'value',{enumerable:true,get(){hintReads++;return 1;}})),proxyHintInput=new Proxy(Object.freeze({value:1}),{get(){hintReads++;throw Error('hint proxy read');},ownKeys(){hintReads++;throw Error('hint proxy keys');},getOwnPropertyDescriptor(){hintReads++;throw Error('hint proxy descriptor');},getPrototypeOf(){hintReads++;throw Error('hint proxy prototype');}});
+ const beforeHint=current.privateFrozenJsonCacheFacts(),hintRefusals=[current.privateFrozenJsonEqualHint(Object.freeze({value:1}),Object.freeze({value:2})),current.privateFrozenJsonEqualHint(mutableHintInput,mutableHintInput),current.privateFrozenJsonEqualHint(getterHintInput,getterHintInput),current.privateFrozenJsonEqualHint(proxyHintInput,proxyHintInput)],afterHint=current.privateFrozenJsonCacheFacts();
+ assert.deepEqual(hintRefusals,[null,null,null,null]);assert.equal(hintReads,0);assert.deepEqual(afterHint,beforeHint);
+ retain('01-additive-equality-hint-refusals',{namespace:Object.keys(current),oldStorageExportsCallable:true,equalityHintCallable:typeof current.privateFrozenJsonEqualHint,subjects:['unequal-frozen','mutable','accessor','proxy'],hintRefusals,hintReads,beforeHint,afterHint});
+ assert.equal(current.privateFrozenJsonCacheFacts().available,true);
  const compose=current.createPrivateFrozenJsonComposer(),input={recipes:Object.freeze({syntax:'Ω😀'}),fresh:1};assert.equal(typeof compose,'function');assert.equal(compose(input),JSON.stringify(input));input.fresh=2;assert.equal(compose(input),JSON.stringify(input));assert.equal(typeof compose(input),'string');
  assert.deepEqual(current.privateFrozenJsonCacheFacts().limits,old.privateFrozenJsonCacheFacts().limits);
  assert.equal(current.privateFrozenJsonCacheFacts().eligibilityMemo.maximumEntries,old.privateFrozenJsonCacheFacts().eligibilityMemo.maximumEntries);
