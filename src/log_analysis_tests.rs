@@ -862,8 +862,22 @@ fn a_store_holding_both_names_is_read_as_one() {
 
 #[test]
 fn stream_request_flag_requires_every_json_level_and_a_real_boolean() {
-    for record in [json!(null), json!([]), json!({}), json!({"body":null}), json!({"body":[]}), json!({"body":{}}), json!({"body":{"json":null}}), json!({"body":{"json":[]}}), json!({"body":{"json":{}}}), json!({"body":{"json":{"stream":null}}}), json!({"body":{"json":{"stream":"true"}}}), json!({"body":{"json":{"stream":1}}}), json!({"body":{"json":{"stream":false}}})] {
+    for record in [
+        json!(null),
+        json!([]),
+        json!({}),
+        json!({"body": null}),
+        json!({"body": []}),
+        json!({"body": {}}),
+        json!({"body": {"json": null}}),
+        json!({"body": {"json": []}}),
+        json!({"body": {"json": {}}}),
+        json!({"body": {"json": {"stream": null}}}),
+        json!({"body": {"json": {"stream": "true"}}}),
+        json!({"body": {"json": {"stream": 1}}}),
+        json!({"body": {"json": {"stream": false}}}),
+    ] {
         assert!(!request_asks_for_a_stream(&record), "{record}");
     }
-    assert!(request_asks_for_a_stream(&json!({"body":{"json":{"stream":true}}})));
+    assert!(request_asks_for_a_stream(&json!({"body": {"json": {"stream": true}}})));
 }

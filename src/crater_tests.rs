@@ -478,8 +478,19 @@ fn crater_errors_map_onto_status_codes_and_messages() {
 
 #[test]
 fn resolution_flag_wrong_json_domains_remain_false() {
-    for task in [json!(null), json!([]), json!(1), json!({}), json!({"isResolved":null}), json!({"isResolved":[]}), json!({"isResolved":{}}), json!({"isResolved":1}), json!({"isResolved":"true"}), json!({"isResolved":false})] {
+    for task in [
+        json!(null),
+        json!([]),
+        json!(1),
+        json!({}),
+        json!({"isResolved": null}),
+        json!({"isResolved": []}),
+        json!({"isResolved": {}}),
+        json!({"isResolved": 1}),
+        json!({"isResolved": "true"}),
+        json!({"isResolved": false}),
+    ] {
         assert!(!is_resolved(&task), "{task}");
     }
-    assert!(is_resolved(&json!({"isResolved":true})));
+    assert!(is_resolved(&json!({"isResolved": true})));
 }
