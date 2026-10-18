@@ -214,23 +214,23 @@ function withinScopedNativeBudget(value,scope){
   const cellsBefore=scopeCells-1,unitsBefore=scopeUnits;
   const array=isArray(value),owner=parent(value);
   if(owner!==(array?arrayPrototype:objectPrototype)&&!(owner===null&&!array))return false;
-  const names=ownKeys(value);if(names.length>CELLS+1)return false;
+  const scopeNames=ownKeys(value);if(scopeNames.length>CELLS+1)return false;
   // A native lazy stack must be rejected before ANY descriptor materializes it.
-  for(let at=0;at<names.length;at++)if(typeof names[at]!=='string'||names[at]==='stack'||names[at]==='toJSON'||names[at]==='rawJSON')return false;
-  let length=names.length,reusable=true;
-  if(array){const field=get(value,'length');if(!field||(scopeNativeDescriptorData?field.writable===undefined:!has(field,'value'))||field.enumerable||field.value<0||field.value%1||field.value>CELLS||names.length!==field.value+1||names[names.length-1]!=='length')return false;if(field.writable||field.configurable)reusable=false;length=field.value;for(let at=0;at<length;at++)if(names[at]!==''+at)return false;}
+  for(let at=0;at<scopeNames.length;at++)if(typeof scopeNames[at]!=='string'||scopeNames[at]==='stack'||scopeNames[at]==='toJSON'||scopeNames[at]==='rawJSON')return false;
+  let length=scopeNames.length,reusable=true;
+  if(array){const field=get(value,'length');if(!field||(scopeNativeDescriptorData?field.writable===undefined:!has(field,'value'))||field.enumerable||field.value<0||field.value%1||field.value>CELLS||scopeNames.length!==field.value+1||scopeNames[scopeNames.length-1]!=='length')return false;if(field.writable||field.configurable)reusable=false;length=field.value;for(let at=0;at<length;at++)if(scopeNames[at]!==''+at)return false;}
   if(!scopeCharge(2+(length?length-1:0)))return false;
   // Every descriptor precedes descent. Captured native ownKeys supplies a
   // fresh private array whose existing own slots can safely hold child values.
   for(let at=0;at<length;at++){
-   const name=names[at],field=get(value,name);
+   const name=scopeNames[at],field=get(value,name);
    if(!field||(scopeNativeDescriptorData?field.writable===undefined:!has(field,'value'))||!field.enumerable||!array&&(!scopeQuoted(name)||!scopeCharge(1)))return false;
    if(field.writable||field.configurable)reusable=false;
-   names[at]=field.value;
+   scopeNames[at]=field.value;
   }
   (scopeBinaryArgs[0]=value,scopeBinaryArgs[1]=0,apply(weakSet,scopeCosts,scopeBinaryArgs));let height=0;
   for(let at=0;at<length;at++){
-   if(!scopeVisit(names[at],depth+1))return false;
+   if(!scopeVisit(scopeNames[at],depth+1))return false;
    if(!scopeResultReusable)reusable=false;
    if(scopeResultHeight+1>height)height=scopeResultHeight+1;
   }
