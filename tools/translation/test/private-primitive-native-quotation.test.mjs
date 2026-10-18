@@ -42,7 +42,7 @@ function orderedOwnerRestoration(owner,before,ready){const restored=ownerSnapsho
  if(restored.prototype!==before.prototype||restored.names.length!==before.names.length){report.error='unexpected owner shape or prototype change';return report;}
  for(let index=0;index<before.names.length;index++)if(!sameOwnerField(before.fields[index],descriptor(owner,before.names[index]))){report.error='unexpected owner descriptor change';return report;}
  let ordered=true;for(let index=0;index<before.names.length;index++)if(restored.names[index]!==before.names[index])ordered=false;
- if(!ordered){const expected=before.names.filter(key=>key!=='charCodeAt');expected.push('charCodeAt');for(let index=0;index<expected.length;index++)if(restored.names[index]!==expected[index]){report.error='key change is not the deliberate charCodeAt relocation';return report;}
+ if(!ordered){const expected=before.names.filter(key=>typeof key==='string'&&key!=='charCodeAt');expected.push('charCodeAt');for(const key of before.names)if(typeof key==='symbol')expected.push(key);for(let index=0;index<expected.length;index++)if(restored.names[index]!==expected[index]){report.error='key change is not the deliberate charCodeAt relocation';return report;}
   // Recheck the entire suffix before the FIRST cleanup deletion. The earlier
   // readiness check also ran before the control's original deletion itself.
   for(let index=at;index<before.names.length;index++)if(descriptor(owner,before.names[index])?.configurable!==true){report.error='owner suffix ceased to be configurable';return report;}
