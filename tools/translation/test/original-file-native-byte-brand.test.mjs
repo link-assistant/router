@@ -16,19 +16,22 @@ function brand(value){let actualBrand,actualLength,error;try{actualBrand=apply(t
 async function lateModes(modes,retain){
  const rows=[];
  for(const key of [Symbol.toStringTag,'length'])for(const mode of modes){
-  const before=get(owner,key);let calls=0,error,caughtError,callsAtRestore;const changed={...before};
+  const before=get(owner,key);let calls=0,error,caughtError,callsAtReturn,callsAtRestore,pending;const changed={...before};
   if(mode==='wrapper')changed.get=function(){calls++;return apply(before.get,this,[]);};
   else if(mode==='proxy')changed.get=new Proxy(before.get,{apply(target,receiver,args){calls++;return apply(target,receiver,args);}});
   else if(mode==='foreign-native')changed.get=key==='length'?tag.get:length.get;
   else if(mode==='enumerable')changed.enumerable=!before.enumerable;
   else changed.set=function(){calls++;};
-  try{define(owner,key,changed);try{await originalFileTokenContextFacts({});}catch(caught){caughtError=caught;}}
+  try{define(owner,key,changed);pending=originalFileTokenContextFacts({});callsAtReturn=calls;}catch(caught){caughtError=caught;}
   finally{callsAtRestore=calls;define(owner,key,before);}
+  // The async API executes this private guard before returning its rejection.
+  // Restore before awaiting: Node async hooks also consult TypedArray.length.
+  try{if(pending)await pending;}catch(caught){caughtError=caught;}
   // Formatting a native stack can itself consult Buffer.length. The deliberate
   // hook is restored before any diagnostic Error property is materialized.
   if(caughtError)error={name:caughtError.name,message:caughtError.message,stack:caughtError.stack};
-  const row={key:typeof key==='symbol'?'Symbol.toStringTag':key,mode,calls,callsAtRestore,error,phase:'genuine-private-api-before-diagnostic-formatting'};rows.push(row);retain('complete-late-accessor-'+rows.length,row);
-  assert.equal(error?.name,'TypeError');assert.equal(error.message,key==='length'?'Private parser execution: live native operation changed':'Original file token context: private fact native byte accessors changed');assert.equal(calls,0);assert.equal(callsAtRestore,0);
+  const row={key:typeof key==='symbol'?'Symbol.toStringTag':key,mode,calls,callsAtReturn,callsAtRestore,error,phase:'genuine-private-call-before-await-and-diagnostic-formatting'};rows.push(row);retain('complete-late-accessor-'+rows.length,row);
+  assert.equal(error?.name,'TypeError');assert.equal(error.message,key==='length'?'Private parser execution: live native operation changed':'Original file token context: private fact native byte accessors changed');assert.equal(calls,0);assert.equal(callsAtReturn,0);assert.equal(callsAtRestore,0);
  }
  let restored;try{await originalFileTokenContextFacts({});}catch(error){restored={name:error.name,message:error.message};}retain('restored-private-foreign-refusal',restored);assert.equal(restored.name,'TypeError');assert.match(restored.message,/copied or foreign original-token receipt/);
  return rows;
