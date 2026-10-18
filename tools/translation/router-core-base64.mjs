@@ -51,6 +51,19 @@ function same(a,b,budget={cells:200000},depth=0){
  const x=keys(a),y=keys(b);if(x.length!==y.length)return false;
  for(let at=0;at<x.length;at++){if(x[at]!==y[at]||typeof x[at]!=='string'||x[at]==='stack')return false;const p=desc(a,x[at]),q=desc(b,y[at]);if(!p||!q||!own(p,'value')||!own(q,'value')||p.enumerable!==q.enumerable||!same(p.value,q.value,budget,depth+1))return false;}return true;
 }
+// Genuine source-link relocation and bound source evidence use canonical
+// copyMetadata key ordering. Compare every own data field only at those joins;
+// array indices, values, spans and enumerability remain exact. No issuance here.
+function sameSourceRelocation(a,b,budget={cells:200000},depth=0){
+ if(--budget.cells<0||depth>160)return false;
+ if(a===null||b===null||typeof a!=='object'||typeof b!=='object')return a===b;
+ if(proxy(a)||proxy(b)||array(a)!==array(b))return false;
+ const indexed=array(a),left=proto(a),right=proto(b);
+ if(indexed?left!==arr||right!==arr:left!==plain&&left!==null||right!==plain&&right!==null)return false;
+ const names=keys(a),wanted=keys(b);if(names.length!==wanted.length)return false;
+ for(let at=0;at<names.length;at++)if(typeof names[at]!=='string'||names[at]==='stack'||!own(b,names[at]))return false;
+ for(let at=0;at<wanted.length;at++){const key=wanted[at],x=desc(a,key),y=desc(b,key);if(typeof key!=='string'||key==='stack'||!x||!y||!own(x,'value')||!own(y,'value')||x.enumerable!==y.enumerable||!sameSourceRelocation(x.value,y.value,budget,depth+1))return false;}return true;
+}
 const byte=freeze({kind:'fixed',bits:8,signed:false,rustSourceType:true,rustPrimitiveName:'u8'}),usize=freeze({kind:'fixed',bits:64,signed:false,rustSourceType:true,rustPrimitiveName:'usize'});
 const vector=sourceVector(byte),errorType={kind:'named',path:['router_core_base64','Base64Error']};
 const result={kind:'named',path:[monomorphicTypeName('Result',[vector,errorType])],rustStandardGeneric:{kind:'Result',arguments:[vector,errorType]}};
@@ -120,7 +133,7 @@ export function captureRouterCoreBase64Calls(checker,surface){
  const frames=new WeakMap();const visit=list=>{for(const entry of list)if(entry.k==='module')visit(entry.items);else if(entry.k==='fn'){
   const selected=nodes(entry);if(!selected.length)continue;guard();requireOriginalPrimitiveTryFromChecker(checker);const evidence=originalParsedDeclarationEvidence(entry);if(!evidence)fail('original function association required');
   const captured=new WeakMap();for(const node of selected){const origin=originalParsedSyntaxNode(entry,node),direct=origin&&get(calls,origin.original),tail=origin&&get(rawArgs,origin.original.args),receipt=direct??(origin?.original.block===true&&tail&&same(origin.original,snapshot({...tail.syntax,block:true}))?tail:null);
-   if(!origin||origin.actual!==node||origin.parser!==receipt?.parser||!same(origin.original,direct?receipt.syntax:snapshot({...receipt.syntax,block:true}))||!same(node,snapshot(origin.relocated)))fail('original syntax association required');put(captured,node,{receipt,syntax:snapshot(node)});
+   if(!origin||origin.actual!==node||origin.parser!==receipt?.parser||!same(origin.original,direct?receipt.syntax:snapshot({...receipt.syntax,block:true}))||!sameSourceRelocation(node,origin.relocated))fail('original syntax association required');put(captured,node,{receipt,syntax:snapshot(node)});
   }const formats=new WeakMap();for(const node of nodes(entry,[],{cells:200000},0,'format'))put(formats,node,snapshot(node));put(frames,entry,{syntax:snapshot(entry),evidence:snapshot(evidence),captured,formats,calls:[]});
  }};visit(surface.items);put(checkerFrames,checker,frames);put(completedFrames,checker,[]);
 }
@@ -192,7 +205,7 @@ export function finalizeRouterCoreBase64Program(checker,program,sourceLinks){
  if(program.declarations!==checker.items||!checkedSourceContext(program))fail('requires the actual complete checked parser program');
  // Failed/partial declaration passes never publish transport envelopes. Only
  // the actual complete Host program can hand off its original checked frames.
- const pending=[];for(const row of completed){const evidence=checkedSourceEvidence(sourceLinks,row.entry);if(!evidence)fail('requires genuine complete checked source links');for(const key of keys(row.frame.evidence))if(!same(evidence[key],row.frame.evidence[key]))fail('checked source context differs from the original parsed function');if(program.declarations.get(row.entry.fullName)!==row.entry||!same(row.body,snapshot({name:row.entry.fullName,params:row.entry.params,ret:row.entry.ret,body:row.entry.body})))fail('complete checked function changed before transport');for(const call of row.frame.calls){current(call.receipt);pending.push(call);}}
+ const pending=[];for(const row of completed){const evidence=checkedSourceEvidence(sourceLinks,row.entry);if(!evidence)fail('requires genuine complete checked source links');for(const key of keys(row.frame.evidence))if(!sameSourceRelocation(evidence[key],row.frame.evidence[key]))fail('checked source context differs from the original parsed function');if(program.declarations.get(row.entry.fullName)!==row.entry||!same(row.body,snapshot({name:row.entry.fullName,params:row.entry.params,ret:row.entry.ret,body:row.entry.body})))fail('complete checked function changed before transport');for(const call of row.frame.calls){current(call.receipt);pending.push(call);}}
  // All callback-capable joins finish before this complete final readback and
  // bounded publication. A failed/partial pass publishes no new envelope.
  guard();for(const row of completed)if(!same(row.body,snapshot({name:row.entry.fullName,params:row.entry.params,ret:row.entry.ret,body:row.entry.body})))fail('checked function changed across final source rejoin');
