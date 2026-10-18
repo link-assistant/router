@@ -25,13 +25,14 @@ function test(name,run){testCase(name,{timeout:60_000},async t=>{const vectors=[
 function outcome(run){try{return {value:run()};}catch(error){return {caught:error};}}
 function materialize(row){if(!row.caught)return {value:row.value};const error=row.caught,fields={name:error.name,message:error.message};if(retainError)retainError('complete-raw-error-after-restoration',{...fields,stack:error.stack});return {error:fields};}
 function equal(retain,label,before,current){retain(label,{before,current});assert.deepEqual(current,before);return current;}
-async function fixture(t,retain){
+async function fixture(t,retain,countCensus=false){
  const folder=mkdtempSync(join(tmpdir(),'router-native-proof-json-'));t.after(()=>rmSync(folder,{recursive:true,force:true}));
  const before=readFileSync(sourceURL,'utf8');let source=before;
  for(const name of ['private-frozen-json.mjs','original-json-intrinsics.mjs','original-lexing-intrinsics.mjs'])source=once(source,"from './"+name+"'","from '"+new URL('../'+name,import.meta.url).href+"'");
  const branch='   if(selected)return apply(stringifyField.value,jsonOwner,[value]);';source=once(source,branch,'   if(selected){nativeCalls++;return apply(stringifyField.value,jsonOwner,[value]);}');
  source=once(source,'  return fallback(value);','  fallbackCalls++;return fallback(value);');
  source+='\nlet nativeCalls=0,fallbackCalls=0;export function receivingFacts(){return {initiallyNative,qualified,ready:nativeReady(),nativeCalls,fallbackCalls};}\n';
+ if(countCensus){source=once(source,'  const names=ownKeys(value);','  receivingCensuses++;const names=ownKeys(value);');source+='\nlet receivingCensuses=0;export function receivingCensus(){return receivingCensuses;}\n';}
  const path=join(folder,'receiving.mjs');writeFileSync(path,source);assert.equal(readFileSync(path,'utf8'),source);retain('complete-source-and-instrumentation',{before,source,branch,path});return {module:await import(pathToFileURL(path).href),folder};
 }
 function pair(retain,label,module,build){const run=factory=>{const {value,tape=[]}=build();return {result:materialize(outcome(()=>factory()(value))),tape};};return equal(retain,label,run(createPrivateFrozenJsonComposer),run(module.createPrivateNativeProofJsonSerializer));}
@@ -51,7 +52,7 @@ test('full scalar escapes surrogates numbers integer keys and null prototypes ma
 });
 
 test('whole occurrence cell depth conservative output boundaries and unknown values preserve legacy fallback results',async(t,retain)=>{
- const {module}=await fixture(t,retain);for(const [label,value,eligible]of [['depth160',chain(160),true],['depth161',chain(161),false],['cells200000',Array.from({length:199999},()=>null),true],['cells200001',Array.from({length:200000},()=>null),false],['worst-case-units', 'x'.repeat(1398101),true],['worst-case-units-plus-one','x'.repeat(1398102),false]]){const start=module.receivingFacts(),old=createPrivateFrozenJsonComposer()(value),current=module.createPrivateNativeProofJsonSerializer()(value),end=module.receivingFacts();equal(retain,label,old,current);assert.equal(current,json(value));assert.equal(end.nativeCalls-start.nativeCalls,start.ready&&eligible?1:0);retain('bounded-selection-'+label,{start,end,eligible});}
+ const {module}=await fixture(t,retain);for(const [label,value,eligible]of [['depth160',chain(160),true],['depth161',chain(161),false],['cells200000',Array.from({length:199999},()=>null),true],['cells200001',Array.from({length:200000},()=>null),false],['worst-case-units', 'x'.repeat(1398101),true],['worst-case-units-plus-one','x'.repeat(1398102),true]]){const start=module.receivingFacts(),old=createPrivateFrozenJsonComposer()(value),current=module.createPrivateNativeProofJsonSerializer()(value),end=module.receivingFacts();equal(retain,label,old,current);assert.equal(current,json(value));assert.equal(end.nativeCalls-start.nativeCalls,start.ready&&eligible?1:0);retain('bounded-selection-'+label,{start,end,eligible});}
  const hidden={visible:1};define(hidden,'hidden',{value:undefined});for(const [label,value,eligible]of [['optional-own-data',{missing:undefined,last:1},true],['optional-dense-array',[undefined,1],true],['hidden-optional',hidden,false],['array-hole',[,1],false]]){const start=module.receivingFacts(),old=createPrivateFrozenJsonComposer()(value),current=module.createPrivateNativeProofJsonSerializer()(value),final=module.receivingFacts();equal(retain,label,old,current);assert.equal(current,json(value));assert.equal(final.nativeCalls-start.nativeCalls,start.ready&&eligible?1:0);retain('complete-optional-selection-'+label,{start,final,eligible});}
  for(const value of [undefined,1n,()=>1,Symbol('value'),{missing:undefined},[,1],new Date(0),new Map([['x',1]])]){equal(retain,'unknown-native-tail',materialize(outcome(()=>createPrivateFrozenJsonComposer()(value))),materialize(outcome(()=>module.createPrivateNativeProofJsonSerializer()(value))));}
  const cycle={};cycle.self=cycle;const old=materialize(outcome(()=>createPrivateFrozenJsonComposer()(cycle))),current=materialize(outcome(()=>module.createPrivateNativeProofJsonSerializer()(cycle)));assert.equal(old.error.name,'TypeError');equal(retain,'cyclic-complete-native-error',old,current);
@@ -86,4 +87,56 @@ test('genuine private Copy source proof bytes reissues forgeries and strict emit
  for(const name of ['Copy','Debug']){const invocation={path:[name],attributeSpan:attribute.span},proof=proveBuiltinDeriveBangFootprint({context,certificate,invocation});retain('full-genuine-proof-'+name,{invocation,proof});assertBuiltinDeriveBangFootprint(proof,context,certificate,invocation);assert.throws(()=>assertBuiltinDeriveBangFootprint(structuredClone(proof),context,certificate,invocation));const start=module.receivingFacts(),before=createPrivateFrozenJsonComposer()(proof),current=module.createPrivateNativeProofJsonSerializer()(proof),final=module.receivingFacts();equal(retain,'full-genuine-proof-serialization-'+name,before,current);assert.equal(current,json(proof));equal(retain,'full-source-proof-sha-'+name,createHash('sha256').update(before).digest('hex'),createHash('sha256').update(current).digest('hex'));retain('actual-full-proof-selection-'+name,{start,final,nativeSelected:final.nativeCalls===start.nativeCalls+1,scope:'Receiving observations only; no invented fit or gain from metadata.'});}
 
  const translated=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});retain('complete-current-translation',{source,result:translated});await verifyTypedTargets(translated,api=>{assert.deepEqual([api.keep(0n),api.keep(1n),api.keep(255n)],[0n,1n,255n]);assert.throws(()=>api.keep(256n),RangeError);},{childTimeoutMs:20_000});
+});
+
+// The explicit native format now measures complete DAG nodes once PER CALL,
+// recharging logical occurrences, and uses actual JSON quotation units. This
+// intentionally changes eligibility at the old conservative bound, not bytes.
+test('precise string and key quotation stays within the same eight MiB limit with exact native bytes',async(t,retain)=>{
+ const {module}=await fixture(t,retain),limit=8388608;
+ for(const [label,value,eligible]of [['ASCII-exact-units','x'.repeat(limit-2),true],['ASCII-over-units','x'.repeat(limit-1),false],['key-exact-units',{['x'.repeat(limit-9)]:null},true],['key-over-units',{['x'.repeat(limit-8)]:null},false]]){
+  const start=module.receivingFacts(),before=createPrivateFrozenJsonComposer()(value),current=module.createPrivateNativeProofJsonSerializer()(value),final=module.receivingFacts();
+  equal(retain,label,{value,before},{value,before:current});assert.equal(current,json(value));assert.equal(final.nativeCalls-start.nativeCalls,start.ready&&eligible?1:0);retain(label+'-actual-selection',{start,final,eligible,nativeUnits:current.length});
+ }
+ for(const value of ['"','\\','\b\t\n\f\r\x00\x1f','\ud800','\udc00','\ud800x\udc00','😀','\ud800\udc00','\ud800\ud800\udc00\udc00',{['"'+'\\'+'\x00\ud800😀']:'\n\udc00'}]){
+  const before=createPrivateFrozenJsonComposer()(value),current=module.createPrivateNativeProofJsonSerializer()(value);equal(retain,'complete-escape-and-surrogate-cost',{value,before},{value,before:current});assert.equal(current,json(value));
+ }
+});
+
+test('invocation-local DAG measurements avoid repeated censuses but recharge every occurrence depth and cycle',async(t,retain)=>{
+ const {module}=await fixture(t,retain,true),serialize=module.createPrivateNativeProofJsonSerializer();
+ for(const [label,length,eligible]of [['shared-cells-within',99999,true],['shared-cells-exceed',100000,false]]){
+  const leaf={value:null},value=Array.from({length},()=>leaf),start=module.receivingFacts(),censuses=module.receivingCensus(),before=createPrivateFrozenJsonComposer()(value),current=serialize(value),final=module.receivingFacts();
+  equal(retain,label,{value,before},{value,before:current});assert.equal(current,json(value));assert.equal(final.nativeCalls-start.nativeCalls,start.ready&&eligible?1:0);assert.equal(module.receivingCensus()-censuses,start.ready?2:0);retain(label+'-complete-cost-observation',{start,final,logicalCells:1+length*2,censuses:module.receivingCensus()-censuses});
+ }
+ const leaf={value:null};for(const [label,levels,eligible]of [['alias-depth160',158,true],['alias-depth161',159,false]]){
+  let deeper=leaf;for(let at=0;at<levels;at++)deeper={child:deeper};const value={first:leaf,deeper},start=module.receivingFacts(),before=createPrivateFrozenJsonComposer()(value),current=serialize(value),final=module.receivingFacts();equal(retain,label,{value,before},{value,before:current});assert.equal(final.nativeCalls-start.nativeCalls,start.ready&&eligible?1:0);
+ }
+ const first={value:1},value={left:first,right:first};assert.equal(serialize(value),json(value));first.value=2;assert.equal(serialize(value),json(value));retain('mutable-next-call-is-fresh',{value,result:serialize(value)});
+ const cycle={};cycle.back=cycle;equal(retain,'DAG-table-never-closes-active-cycle',materialize(outcome(()=>createPrivateFrozenJsonComposer()(cycle))),materialize(outcome(()=>serialize(cycle))));
+ const poisonous={shared:leaf};define(poisonous,'late',{enumerable:true,get(){throw new Error('actual fallback getter');}});equal(retain,'failed-partial-scan-never-warms-next-call',materialize(outcome(()=>createPrivateFrozenJsonComposer()(poisonous))),materialize(outcome(()=>serialize(poisonous))));delete poisonous.shared;assert.equal(serialize(value),json(value));
+});
+
+test('new measurement operations retain late and cold native refusal without exposing private tables',async(t,retain)=>{
+ const {module,folder}=await fixture(t,retain);
+ for(const [owner,key]of [[WeakMap.prototype,'get'],[WeakMap.prototype,'set'],[String.prototype,'charCodeAt'],[RegExp.prototype,'exec']]){
+  const run=factory=>{const field=descriptor(owner,key),tape=[];return {result:armed(owner,key,()=>({...field,value:function(...args){tape.push({key,args});return apply(field.value,this,args);}}),()=>factory()({first:'"\ud800',second:{value:1}})),tape};};
+  equal(retain,'complete-late-measurement-operation-'+key,run(createPrivateFrozenJsonComposer),run(module.createPrivateNativeProofJsonSerializer));
+ }
+ for(const mode of ['weak-get','weak-set','char-code','regexp-exec']){
+  const script=`const get=Object.getOwnPropertyDescriptor,define=Object.defineProperty,apply=Reflect.apply,json=JSON.stringify,tape=[];\nconst legacy=await import(${json(new URL('../private-frozen-json.mjs',import.meta.url).href)});\nconst owner=${mode==='char-code'?'String.prototype':mode==='regexp-exec'?'RegExp.prototype':'WeakMap.prototype'},key=${json(mode==='weak-get'?'get':mode==='weak-set'?'set':mode==='regexp-exec'?'exec':'charCodeAt')},field=get(owner,key);let candidate;try{define(owner,key,{...field,value:function(...args){tape.push(key);return apply(field.value,this,args);}});candidate=await import(${json(sourceURL.href)});}finally{define(owner,key,field);}\nconst value={left:{value:'😀'},right:'\\ud800'},before=legacy.createPrivateFrozenJsonComposer()(value),current=candidate.createPrivateNativeProofJsonSerializer()(value);console.log(json({before,current,tape,sourceAuthority:false}));\n`;
+  const path=join(folder,'cold-measurement-'+mode+'.mjs');writeFileSync(path,script);const child=spawnSync(process.execPath,[path],{encoding:'utf8',timeout:20_000,maxBuffer:4*1024*1024});retain('complete-cold-measurement-'+mode,{script,path,status:child.status,signal:child.signal,stdout:child.stdout,stderr:child.stderr,error:child.error?{name:child.error.name,message:child.error.message}:null});assert.equal(child.error,undefined);assert.equal(child.status,0);const row=JSON.parse(child.stdout);assert.equal(row.before,row.current);assert.equal(row.sourceAuthority,false);
+ }
+});
+
+
+test('native regex matches and own result slots cannot expose measurements through prototype hooks',async(t,retain)=>{
+ const {module}=await fixture(t,retain),value={['"'+'\\'+'\ud800']:'\x00\udc00😀'},expected=json(value);
+ for(const [owner,key]of [[RegExp.prototype,Symbol.match],[RegExp.prototype,'lastIndex'],[Array.prototype,'index'],[Array.prototype,'0']]){
+  const field=descriptor(owner,key),events={first:null,last:null};let captured;
+  const note=(operation,value)=>{const row={operation,key:String(key),value,next:null};if(events.last)events.last.next=row;else events.first=row;events.last=row;};
+  try{define(owner,key,{configurable:true,enumerable:false,get(){note('get',undefined);return undefined;},set(value){note('set',value);}});captured=outcome(()=>module.createPrivateNativeProofJsonSerializer()(value));}
+  finally{if(field)define(owner,key,field);else delete owner[key];}
+  const current=materialize(captured),tape=[];for(let row=events.first;row;row=row.next)tape.push({operation:row.operation,key:row.key,value:row.value});retain('complete-private-native-match-hook-control',{owner:owner===RegExp.prototype?'RegExp.prototype':'Array.prototype',key:String(key),value,current,tape});assert.deepEqual(current,{value:expected});assert.deepEqual(tape,[]);
+ }
 });

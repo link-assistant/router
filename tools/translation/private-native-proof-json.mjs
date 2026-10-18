@@ -10,18 +10,21 @@ import {originalBatchedLexingIntrinsicsUnchanged} from './original-lexing-intrin
 // Bootstrap remains conservative; no captured owner or native function escapes.
 const initiallyNative=originalBatchedNamespaceTraversalIntrinsicsUnchanged()&&originalBatchedLexingIntrinsicsUnchanged();
 const get=initiallyNative?Object.getOwnPropertyDescriptor:null,has=initiallyNative?Object.hasOwn:null,ownKeys=initiallyNative?Reflect.ownKeys:null,apply=initiallyNative?Reflect.apply:null,parent=initiallyNative?Object.getPrototypeOf:null;
-const objectOwner=initiallyNative?Object:null,arrayOwner=initiallyNative?Array:null,jsonOwner=initiallyNative?JSON:null,bufferOwner=initiallyNative?ArrayBuffer:null,setOwner=initiallyNative?Set:null,typeOwner=initiallyNative?types:null;
+const objectOwner=initiallyNative?Object:null,arrayOwner=initiallyNative?Array:null,jsonOwner=initiallyNative?JSON:null,bufferOwner=initiallyNative?ArrayBuffer:null,setOwner=initiallyNative?Set:null,weakOwner=initiallyNative?WeakMap:null,typeOwner=initiallyNative?types:null;
 const isProxy=initiallyNative?types.isProxy:null,isArray=initiallyNative?Array.isArray:null;
-const ownersOrdinary=!!(initiallyNative&&objectOwner&&arrayOwner&&jsonOwner&&bufferOwner&&setOwner&&typeOwner&&!isProxy(typeOwner)&&!isProxy(objectOwner)&&!isProxy(arrayOwner)&&!isProxy(jsonOwner)&&!isProxy(bufferOwner)&&!isProxy(setOwner));
+const ownersOrdinary=!!(initiallyNative&&objectOwner&&arrayOwner&&jsonOwner&&bufferOwner&&setOwner&&weakOwner&&typeOwner&&!isProxy(weakOwner)&&!isProxy(typeOwner)&&!isProxy(objectOwner)&&!isProxy(arrayOwner)&&!isProxy(jsonOwner)&&!isProxy(bufferOwner)&&!isProxy(setOwner));
 const data=field=>field&&has(field,'value')?field.value:undefined;
 const objectPrototypeField=ownersOrdinary?get(objectOwner,'prototype'):null,arrayPrototypeField=ownersOrdinary?get(arrayOwner,'prototype'):null,setPrototypeField=ownersOrdinary?get(setOwner,'prototype'):null;
 const objectPrototype=data(objectPrototypeField),arrayPrototype=data(arrayPrototypeField),setPrototype=data(setPrototypeField),functionPrototype=ownersOrdinary?parent(function(){}):null;
 const textField=ownersOrdinary?get(functionPrototype,'toString'):null,boxedField=ownersOrdinary?get(typeOwner,'isBoxedPrimitive'):null,isViewField=ownersOrdinary?get(bufferOwner,'isView'):null;
 const stringifyField=ownersOrdinary?get(jsonOwner,'stringify'):null,isArrayField=ownersOrdinary?get(arrayOwner,'isArray'):null,proxyField=ownersOrdinary?get(typeOwner,'isProxy'):null;
 const native=(field,name)=>!!(field&&has(field,'value')&&typeof field.value==='function'&&!isProxy(field.value)&&parent(field.value)===functionPrototype&&apply(textField.value,field.value,[])===`function ${name}() { [native code] }`);
+const weakPrototypeField=ownersOrdinary?get(weakOwner,'prototype'):null,weakPrototype=data(weakPrototypeField),stringPrototype=ownersOrdinary?parent(''):null,regexpPrototype=ownersOrdinary?parent(/(?:)/):null;
+const weakGetField=weakPrototype&&!isProxy(weakPrototype)?get(weakPrototype,'get'):null,weakSetField=weakPrototype&&!isProxy(weakPrototype)?get(weakPrototype,'set'):null,charCodeField=stringPrototype&&!isProxy(stringPrototype)?get(stringPrototype,'charCodeAt'):null;
+const execField=regexpPrototype&&!isProxy(regexpPrototype)?get(regexpPrototype,'exec'):null;
 const setHasField=setPrototype&&!isProxy(setPrototype)?get(setPrototype,'has'):null,setAddField=setPrototype&&!isProxy(setPrototype)?get(setPrototype,'add'):null,setDeleteField=setPrototype&&!isProxy(setPrototype)?get(setPrototype,'delete'):null;
-const qualified=!!(ownersOrdinary&&objectPrototype&&arrayPrototype&&setPrototype&&!isProxy(objectPrototype)&&!isProxy(arrayPrototype)&&!isProxy(setPrototype)&&textField&&has(textField,'value')&&native({value:get},'getOwnPropertyDescriptor')&&native({value:has},'hasOwn')&&native({value:ownKeys},'ownKeys')&&native({value:apply},'apply')&&native({value:parent},'getPrototypeOf')&&native({value:setOwner},'Set')&&native(boxedField,'isBoxedPrimitive')&&native(isViewField,'isView')&&native(stringifyField,'stringify')&&native(isArrayField,'isArray')&&native(proxyField,'isProxy')&&native(setHasField,'has')&&native(setAddField,'add')&&native(setDeleteField,'delete'));
-const setHas=data(setHasField),setAdd=data(setAddField),setDelete=data(setDeleteField);
+const qualified=!!(ownersOrdinary&&objectPrototype&&arrayPrototype&&setPrototype&&!isProxy(objectPrototype)&&!isProxy(arrayPrototype)&&!isProxy(setPrototype)&&textField&&has(textField,'value')&&native({value:get},'getOwnPropertyDescriptor')&&native({value:has},'hasOwn')&&native({value:ownKeys},'ownKeys')&&native({value:apply},'apply')&&native({value:parent},'getPrototypeOf')&&native({value:setOwner},'Set')&&native(boxedField,'isBoxedPrimitive')&&native(isViewField,'isView')&&native(stringifyField,'stringify')&&native(isArrayField,'isArray')&&native(proxyField,'isProxy')&&native(setHasField,'has')&&native(setAddField,'add')&&native(setDeleteField,'delete')&&native({value:weakOwner},'WeakMap')&&native(weakGetField,'get')&&native(weakSetField,'set')&&native(charCodeField,'charCodeAt')&&native(execField,'exec'));
+const setHas=data(setHasField),setAdd=data(setAddField),setDelete=data(setDeleteField),weakGet=data(weakGetField),weakSet=data(weakSetField),charCode=data(charCodeField),exec=data(execField);
 const CELLS=200000,DEPTH=160,UNITS=8388608;
 function sameField(actual,expected){return !!(actual&&expected&&has(actual,'value')&&has(expected,'value')&&actual.value===expected.value&&actual.writable===expected.writable&&actual.enumerable===expected.enumerable&&actual.configurable===expected.configurable);}
 function nativeReady(){
@@ -31,27 +34,50 @@ function nativeReady(){
  if(!sameField(get(typeOwner,'isProxy'),proxyField)||!sameField(get(typeOwner,'isBoxedPrimitive'),boxedField)||!sameField(get(bufferOwner,'isView'),isViewField)||!sameField(get(jsonOwner,'stringify'),stringifyField)||!sameField(get(arrayOwner,'isArray'),isArrayField))return false;
  if(!sameField(get(objectOwner,'prototype'),objectPrototypeField)||!sameField(get(arrayOwner,'prototype'),arrayPrototypeField)||!sameField(get(setOwner,'prototype'),setPrototypeField))return false;
  if(parent(objectPrototype)!==null||parent(arrayPrototype)!==objectPrototype||get(objectPrototype,'toJSON')||get(arrayPrototype,'toJSON'))return false;
+ if(!sameField(get(weakOwner,'prototype'),weakPrototypeField)||!sameField(get(weakPrototype,'get'),weakGetField)||!sameField(get(weakPrototype,'set'),weakSetField)||!sameField(get(stringPrototype,'charCodeAt'),charCodeField)||parent(regexpPrototype)!==objectPrototype||!sameField(get(regexpPrototype,'exec'),execField))return false;
  return sameField(get(setPrototype,'has'),setHasField)&&sameField(get(setPrototype,'add'),setAddField)&&sameField(get(setPrototype,'delete'),setDeleteField);
 }
 function withinNativeBudget(value){
- let cells=0,units=0;
- const active=new setOwner();
- const charge=count=>{units+=count;return units<=UNITS;};
+ let cells=0,units=0,resultHeight=0;
+ // Fresh scalar measurements only; neither this map nor a record escapes the
+ // callback-free scan. Logical occurrence costs are always charged again.
+ const active=new setOwner(),completed=new weakOwner();
+ const charge=count=>{if(count>UNITS-units)return false;units+=count;return true;};
+ function quoted(value){
+  if(value.length>UNITS-units-2)return false;
+  // Native exec scans ordinary spans without a JS call per source unit.
+  // Each fresh literal owns lastIndex; no regex or match array can escape.
+  const special=/["\\\u0000-\u001f\ud800-\udfff]/g;let count=value.length+2,match;
+  while((match=apply(exec,special,[value]))!==null){
+   const at=match.index,code=apply(charCode,value,[at]);
+   if(code===34||code===92||code===8||code===9||code===10||code===12||code===13)count++;
+   else if(code<32)count+=5;
+   else if(code>=55296&&code<=56319){
+    const next=at+1<value.length?apply(charCode,value,[at+1]):-1;
+    if(next>=56320&&next<=57343)special.lastIndex=at+2;else count+=5;
+   }else count+=5;
+   if(count>UNITS-units)return false;
+  }
+  return charge(count);
+ }
  function visit(value,depth){
+  resultHeight=0;
   if(++cells>CELLS||depth>DEPTH)return false;
   if(value===null)return charge(4);
   const kind=typeof value;
-  // Worst-case JSON escaping costs six UTF16 units per input code unit. No
-  // character scan, replacement string or native scalar quotation is needed.
-  if(kind==='string')return charge(value.length*6+2);
+  if(kind==='string')return quoted(value);
   if(kind==='boolean')return charge(5);
-  // Nested optional DATA uses native object omission / dense-array null.
-  // Four units conservatively covers either result; root undefined stays old.
+  // Undefined object properties/dense-array slots remain conservatively
+  // charged, and root undefined still selects the original composer.
   if(kind==='undefined')return depth>0&&charge(4);
-  // Every finite binary64 JSON spelling fits this conservative bound; NaN and
-  // infinities are null. Primitive -0 remains the native spelling 0.
   if(kind==='number')return charge(32);
   if(kind!=='object'||isProxy(value)||apply(boxedField.value,typeOwner,[value])||apply(isViewField.value,bufferOwner,[value])||apply(setHas,active,[value]))return false;
+  const known=apply(weakGet,completed,[value]);
+  if(known){
+   if(known.cells-1>CELLS-cells||known.units>UNITS-units||known.height>DEPTH-depth)return false;
+   cells+=known.cells-1;units+=known.units;resultHeight=known.height;return true;
+  }
+  const cellsBefore=cells-1,unitsBefore=units;
   const array=isArray(value),owner=parent(value);
   if(owner!==(array?arrayPrototype:objectPrototype)&&!(owner===null&&!array))return false;
   const names=ownKeys(value);if(names.length>CELLS+1)return false;
@@ -60,18 +86,21 @@ function withinNativeBudget(value){
   let length=names.length;
   if(array){const field=get(value,'length');if(!field||!has(field,'value')||field.enumerable||field.value<0||field.value%1||field.value>CELLS||names.length!==field.value+1||names[names.length-1]!=='length')return false;length=field.value;for(let at=0;at<length;at++)if(names[at]!==''+at)return false;}
   if(!charge(2+(length?length-1:0)))return false;
-  // Finish the whole own-data census before descending. ownKeys returned a
-  // fresh private native array: its existing indexed slots are own writable
-  // data, never exposed to callbacks. Reuse those slots for child values; no
-  // second descriptor lookup or separately allocated field/child plan is needed.
+  // Every descriptor precedes descent. Captured native ownKeys supplies a
+  // fresh private array whose existing own slots can safely hold child values.
   for(let at=0;at<length;at++){
    const name=names[at],field=get(value,name);
-   if(!field||!has(field,'value')||!field.enumerable||!array&&!charge(name.length*6+3))return false;
+   if(!field||!has(field,'value')||!field.enumerable||!array&&(!quoted(name)||!charge(1)))return false;
    names[at]=field.value;
   }
-  apply(setAdd,active,[value]);
-  for(let at=0;at<length;at++)if(!visit(names[at],depth+1))return false;
-  apply(setDelete,active,[value]);return true;
+  apply(setAdd,active,[value]);let height=0;
+  for(let at=0;at<length;at++){
+   if(!visit(names[at],depth+1))return false;
+   if(resultHeight+1>height)height=resultHeight+1;
+  }
+  apply(setDelete,active,[value]);
+  apply(weakSet,completed,[value,{cells:cells-cellsBefore,units:units-unitsBefore,height}]);
+  resultHeight=height;return true;
  }
  return visit(value,0);
 }
