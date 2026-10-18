@@ -1,5 +1,8 @@
 // Bounded primitive quotation; private counters grant no source or owner authority.
 import testCase from 'node:test';
+import {types} from 'node:util';
+import {originalNamespaceTraversalIntrinsicsUnchanged} from '../original-json-intrinsics.mjs';
+import {originalLexingIntrinsicsUnchanged} from '../original-lexing-intrinsics.mjs';
 import assert from 'node:assert/strict';
 import {Hash,createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
@@ -16,7 +19,18 @@ import {verifyTypedTargets} from './typed-targets.mjs';
 const base=new URL('../',import.meta.url),json=JSON.stringify,apply=Reflect.apply,descriptor=Object.getOwnPropertyDescriptor,define=Object.defineProperty;
 const sha=value=>createHash('sha256').update(value).digest('hex');
 const QUOTATION_EDIT={"before":"   const saved=apply(mapGet,quotedSizes,[value]);if(saved!==undefined&&saved<=limit)return saved;\n","after":"   const saved=apply(mapGet,quotedSizes,[value]);if(saved!==undefined&&saved<=limit)return saved;\n   if(typeof value==='string'&&value.length>256&&value.length<=65536){\n    const nativeUnits=apply(compositionStringify,compositionReceiver,[value]).length;\n    return nativeUnits<=limit?nativeUnits:-1;\n   }\n"};
-// Complete existing test-only measurement extraction, unchanged.
+// Complete actual measurement extraction with673 native-capture data plumbing.
+// Reproduce the complete actual native capture initializer for partial private
+// counters; do not disable the new lane or invent test-only native authority.
+function shortQuotationBindings(source){
+ const marker='// Primitive property lookup uses the realm intrinsic String prototype, not\n',start=source.indexOf(marker);
+ if(start<0)return {};
+ const prefixStart=source.indexOf('const enabled='),prefixEnd=source.indexOf('function intrinsics(){'),end=source.indexOf('// One existing bounded byte-store instance',start);
+ assert.ok(prefixStart>=0&&prefixEnd>prefixStart&&end>start);
+ const prefix=source.slice(prefixStart,prefixEnd),captures=source.slice(start,end),suffix='return {descriptor,own,shortQuotationStringPrototype,shortQuotationChar,shortQuotationNative};';
+ const run=new Function('types','originalNamespaceTraversalIntrinsicsUnchanged','originalLexingIntrinsicsUnchanged',prefix+captures+suffix);
+ return run(types,originalNamespaceTraversalIntrinsicsUnchanged,originalLexingIntrinsicsUnchanged);
+}
 function measurementSequence(source,requests,details=false){
  const start=source.indexOf('  function quotedUnits('),end=source.indexOf('  function planUnits(',start);assert.ok(start>=0&&end>start);
  const signature=source.includes('  function frozenUnits(value,limit,depth,descendant=false){\n')?'  function frozenUnits(value,limit,depth,descendant=false){\n':'  function frozenUnits(value,limit,depth){\n';
@@ -26,11 +40,11 @@ function measurementSequence(source,requests,details=false){
  let body=original;for(const edit of edits){assert.equal(body.split(edit.before).length,2);body=body.replace(edit.before,edit.after);}let inverse=body;for(const edit of [...edits].reverse()){assert.equal(inverse.split(edit.after).length,2);inverse=inverse.replace(edit.after,edit.before);}assert.equal(inverse,original);
  const primitive='  const quotedSizes=new Map();let quotedEntries=0,quotedKeyUnits=0;\n',shared='  const sharedMeasurements=new weakConstructor();let sharedMeasurementRecords=0;\n',descendantShared='  const sharedMeasurements=new weakConstructor();let sharedMeasurementRecords=0,measurementDeepest=0;\n';assert.equal(source.split(primitive).length,2);
  const declaration=primitive+(source.includes(descendantShared)?descendantShared:source.includes(shared)?shared:'');
- const prefix='"use strict";const CELLS=200000,DEPTH=160,COMPOSITION_UNITS=8388608;let measureCells=CELLS,measureText=COMPOSITION_UNITS,measurementRecords=0,frozenEntries=0;const issued=[],nodes=new Map();\n';
+ const prefix='"use strict";const {descriptor,own,shortQuotationStringPrototype,shortQuotationChar,shortQuotationNative}=shortQuotationBindings;const CELLS=200000,DEPTH=160,COMPOSITION_UNITS=8388608;let measureCells=CELLS,measureText=COMPOSITION_UNITS,measurementRecords=0,frozenEntries=0;const issued=[],nodes=new Map();\n';
  const suffix='\nconst rows=[];for(let at=0;at<requests.length;at++){const request=requests[at],key=request.node??at;let node=nodes.get(key);if(!node){node={value:request.value,measurement:null};nodes.set(key,node);}else if(node.value!==request.value)throw Error("test node identity changed");if(request.cells!==undefined)measureCells=request.cells;if(request.text!==undefined)measureText=request.text;const cells=measureCells,text=measureText,walks=frozenEntries,units=measuredFrozenUnits(node,request.limit??8388608,request.depth??0);rows.push({units,cells:cells-measureCells,text:text-measureText,walks:frozenEntries-walks});}return {rows,issued,measurementRecords,measureCells,measureText,quotedEntries,quotedKeyUnits,sharedRecords:typeof sharedMeasurementRecords==="undefined"?null:sharedMeasurementRecords};';
- const run=new Function('apply','weakConstructor','weakGet','weakSet','mapGet','mapSet','isArray','enumerableKeys','compositionStringify','compositionReceiver','requests',prefix+declaration+body+suffix);
+ const run=new Function('apply','weakConstructor','weakGet','weakSet','mapGet','mapSet','isArray','enumerableKeys','compositionStringify','compositionReceiver','requests','shortQuotationBindings',prefix+declaration+body+suffix);
  const quotedWrites=[],sharedWrites=[],setQuoted=function(key,units){quotedWrites.push({key,units});return apply(Map.prototype.set,this,[key,units]);},setShared=function(value,record){sharedWrites.push({request:requests.findIndex(row=>row.value===value),record:{...record}});return apply(WeakMap.prototype.set,this,[value,record]);};
- const observation=run(apply,WeakMap,WeakMap.prototype.get,details?setShared:WeakMap.prototype.set,Map.prototype.get,details?setQuoted:Map.prototype.set,Array.isArray,Object.keys,json,JSON,requests);
+ const observation=run(apply,WeakMap,WeakMap.prototype.get,details?setShared:WeakMap.prototype.set,Map.prototype.get,details?setQuoted:Map.prototype.set,Array.isArray,Object.keys,json,JSON,requests,shortQuotationBindings(source));
  return {observation,recipe:{original,body,edits,inverse,declaration},...(details?{details:{quotedWrites,sharedWrites}}:{})};
 }
 function test(name,run){testCase(name,{timeout:60000},async t=>{
@@ -55,9 +69,9 @@ async function copies(t,retain){
 function quoteSequence(source,requests,textBudget=8388608){
  const start=source.indexOf('  function quotedUnits('),end=source.indexOf('  function scalarUnits(',start);assert.ok(start>=0&&end>start);
  const body=source.slice(start,end),declaration='  const quotedSizes=new Map();let quotedEntries=0,quotedKeyUnits=0;\n';assert.equal(source.split(declaration).length,2);
- const prefix='"use strict";let measureText=textBudget;\n',suffix='\nconst results=[];for(const row of requests){const before=measureText,units=quotedUnits(row.value,row.limit);results.push({units,textCharge:before-measureText});}return {results,measureText,entries:quotedEntries,keyUnits:quotedKeyUnits};';
- const run=new Function('apply','mapGet','mapSet','compositionStringify','compositionReceiver','requests','textBudget',prefix+declaration+body+suffix);
- return {observation:run(apply,Map.prototype.get,Map.prototype.set,json,JSON,requests,textBudget),recipe:{body,declaration,prefix,suffix}};
+ const prefix='"use strict";const {descriptor,own,shortQuotationStringPrototype,shortQuotationChar,shortQuotationNative}=shortQuotationBindings;const COMPOSITION_UNITS=8388608;let measureText=textBudget;\n',suffix='\nconst results=[];for(const row of requests){const before=measureText,units=quotedUnits(row.value,row.limit);results.push({units,textCharge:before-measureText});}return {results,measureText,entries:quotedEntries,keyUnits:quotedKeyUnits};';
+ const run=new Function('apply','mapGet','mapSet','compositionStringify','compositionReceiver','requests','textBudget','shortQuotationBindings',prefix+declaration+body+suffix);
+ return {observation:run(apply,Map.prototype.get,Map.prototype.set,json,JSON,requests,textBudget,shortQuotationBindings(source)),recipe:{body,declaration,prefix,suffix}};
 }
 function compareQuotes(retain,label,sides,requests,budget=8388608){
  const before=quoteSequence(sides.before.source,requests,budget),current=quoteSequence(sides.current.source,requests,budget);
