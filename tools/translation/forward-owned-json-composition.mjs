@@ -1,5 +1,8 @@
 // Internal NEW definition format. Public proposal DATA never issues an item.
 import {createHash} from 'node:crypto';
+import {readFileSync} from 'node:fs';
+import {BOOL} from './checked-types.mjs';
+import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
 import {JSON_DATA} from './extensions/json-contracts.mjs';
 import {valueSchema} from './type-layout.mjs';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
@@ -50,9 +53,36 @@ function optional(type,declarations,names){
  };
  const kind=domain(payload);if(domain(provenance.arguments[0])!==kind||domain(entry.standardGeneric.arguments[0])!==kind)fail('actual source generic payload domain differs');return {kind,payload};
 }
+// Complete reviewed predicate DATA is a premise of this finite new-format
+// theorem. It cannot issue a declaration or replace any checked product.
+const IMMUTABLE_COPY_SOURCE="// Immutable guards run before typed layout guards, rejecting proxies and\n// accessors before any record inspection in the derived-Copy profile.\nimport {types} from 'node:util';\nexport function assertImmutableCopy(value){\n  const active=new Set(),done=new Set();\n  function visit(value){\n    if(value===null||typeof value!=='object')return;\n    if(types.isProxy(value)||!Object.isFrozen(value))throw new TypeError('Copy receiver requires immutable checked records and sized arrays');\n    if(Array.isArray(value)) {\n      if(Object.getPrototypeOf(value)!==Array.prototype)throw new TypeError('Copy array has an unsupported prototype');\n      const length=Object.getOwnPropertyDescriptor(value,'length')?.value,keys=Reflect.ownKeys(value);\n      if(!Number.isSafeInteger(length)||length>4096||keys.length!==length+1||keys.some(key=>key!=='length'&&(typeof key!=='string'||!/^(?:0|[1-9][0-9]*)$/u.test(key)||Number(key)>=length)))throw new TypeError('Copy array requires a dense checked layout');\n    }\n    if(active.has(value))throw new TypeError('Copy receiver cannot contain a cycle');\n    if(done.has(value))return;\n    active.add(value);\n    for(const key of Reflect.ownKeys(value)){\n      const descriptor=Object.getOwnPropertyDescriptor(value,key);\n      if(typeof key!=='string'||!descriptor||!Object.hasOwn(descriptor,'value'))throw new TypeError('Copy receiver requires own data fields');\n      visit(descriptor.value);\n    }\n    active.delete(value);done.add(value);\n  }\n  visit(value);return true;\n}\n";
+const GUARDED_OPTIONAL_EQUATION='let N=R(x); discard G(N); N == guarded_optional_value(R(x))';
+function freshOptionalGuardPredicate(){
+ assertReverseConcreteSourceHost();const source=readFileSync(new URL('./extensions/copy-runtime.mjs',import.meta.url),'utf8');assertReverseConcreteSourceHost();
+ const pipeline=createRulePipeline([
+  {phase:'language',rules:[{id:'javascript:complete-immutable-predicate-cst',apply:source=>{const first=transportConcreteSyntaxSource(source,{language:'JavaScript'}),meta=serializeConcreteSyntaxMeta(first.document),reparsed=transportConcreteSyntaxMeta(meta);if(reparsed.source!==source)fail('complete predicate CST source differs');return {source,meta,sourceEncoding:reparsed.document.sourceEncoding};}}]},
+  {phase:'repository',rules:[{id:'router:closed-optional-result-predicate-equation',apply:value=>{if(value.source!==IMMUTABLE_COPY_SOURCE)fail('complete immutable predicate source changed');return {...value,profile:{id:'controlled-frozen-optional-string-immutable-copy-v1',predicateSource:value.source,predicateSha256:hash(value.source),predicate:'assertImmutableCopy',equation:GUARDED_OPTIONAL_EQUATION,resultCases:[{tag:'None',ownDataKeys:['$'],primitiveFields:['$']},{tag:'Some',ownDataKeys:['$','field0'],primitiveFields:['$','field0']}],premises:['Actual fixed optional as_str result uses captured create/define/freeze.','Result is a nonProxy ordinary frozen record with primitive string fields only.','The complete native predicate visits one record and one or two primitive fields.'],oldGuardObservationEquivalent:false,semanticAuthority:false}};}}]},
+ ]),result=pipeline.run(source);
+ return {profile:result.value.profile,receipt:{...result.value,trace:result.trace},verify(){assertReverseConcreteSourceHost();const current=readFileSync(new URL('./extensions/copy-runtime.mjs',import.meta.url),'utf8');assertReverseConcreteSourceHost();if(current!==source)fail('complete immutable predicate source changed during projection');}};
+}
+// Pure finite grammar recognizer, separately exercised as source DATA in tests.
+// All wrapper checks precede the sole operand projection. No generic let or
+// discarded guard is admitted by this helper.
+function guardedOptionalValue(node,env,project,equal,booleanType){
+ const reject=()=>{throw TypeError('Forward optional Json composition: exact guarded optional value required');};
+ const fields=(value,allowed)=>value&&typeof value==='object'&&!Array.isArray(value)&&Reflect.ownKeys(value).every(key=>typeof key==='string'&&allowed.includes(key));
+ if(!fields(node,['k','name','value','body','type','span','mutable'])||node.k!=='let'||node.mutable!==undefined&&node.mutable!==false||typeof node.name!=='string'||!node.name||env.has(node.name))reject();
+ const operand=node.value,discard=node.body,guard=discard?.value,returned=discard?.body;
+ if(operand?.k!=='routerOptionCallback'||!node.type||!operand.type||!equal(node.type,operand.type)||!fields(discard,['k','value','body','type','span'])||discard.k!=='routerDiscard'||!equal(discard.type,operand.type))reject();
+ if(!fields(guard,['k','object','type','span'])||guard.k!=='routerPatternImmutable'||!equal(guard.type,booleanType))reject();
+ for(const variable of [guard.object,returned])if(!fields(variable,['k','name','type','span'])||variable.k!=='var'||variable.name!==node.name||!equal(variable.type,operand.type))reject();
+ const value=project(operand);
+ if(value?.kind!=='optional-reader'||value.role!=='optional-str'||value.root!=='input0')reject();
+ return value;
+}
 // This vocabulary is projected independently from all three genuine checked
 // products. Variable correspondence is lexical; public IR shape is no permit.
-function projectFunction(fn,declarations,names){
+function projectFunction(fn,declarations,names,guardPredicate){
  if(fn?.k!=='fn'||fn.async||fn.params.length!==1||optional(fn.params[0].type,declarations,names).kind!=='optional-json'||optional(fn.ret,declarations,names).kind!=='optional-str')return null;
  let cells=0,sequence=0,operations=0;const tick=depth=>{if(++cells>4096||depth>64)fail('finite semantic projection budget');};
  const fresh=()=> 'local'+sequence++;
@@ -60,6 +90,7 @@ function projectFunction(fn,declarations,names){
  const text=node=>node?.type?.kind==='string'&&!node.type.rustReference&&!node.type.rustBorrowingUnresolved;
  function value(node,env,depth){
   tick(depth);if(!node||typeof node!=='object')fail('checked expression required');
+  if(node.k==='let'){const projected=guardedOptionalValue(node,env,operand=>value(operand,env,depth+1),same,BOOL);if(optional(node.type,declarations,names).kind!=='optional-str')fail('guarded optional string domain differs');return {kind:'guarded-optional-value',value:projected,guard:guardPredicate().profile,role:'optional-str',root:projected.root};}
   if(node.k==='var'){const row=binding(env,node);if(row.role==='input')fail('opaque input must remain inside the actual optional operation');return {kind:'var',name:row.name,role:row.role,root:row.root};}
   if(node.k==='lit'&&text(node)&&typeof node.value==='string')return {kind:'string',value:node.value,role:'str',root:null};
   if(node.k==='lit'&&node.type?.kind==='bool'&&typeof node.value==='boolean')return {kind:'bool',value:node.value,role:'bool',root:null};
@@ -120,6 +151,7 @@ function render(model){
   if(value.kind==='none')return "({$:'None'})";
   if(value.kind==='some')return "({$:'Some',field0:"+expression(value.value)+'})';
   if(value.kind==='optional-reader')return 'optional_as_str('+value.name+')';
+  if(value.kind==='guarded-optional-value')return expression(value.value);
   if(value.kind==='binary')return '('+expression(value.left)+' '+({eq:'===',ne:'!==',and:'&&',or:'||'}[value.op])+' '+expression(value.right)+')';
   fail('unknown projected expression');
  };
@@ -145,7 +177,8 @@ export function prepareForwardJsonCompositionDefinition({project,entry,checked,t
   const normalize=before===original?value=>renamed(value,renames):value=>value;
   if(before.params.length!==after.params.length||before.params.some((param,at)=>!same(normalize(param.type),after.params[at].type))||!same(normalize(before.ret),after.ret))fail('complete current original target lower signature differs');
  }
- const originalModel=projectFunction(original,checked.declarations,sourceNames),targetModel=projectFunction(current,target.program.declarations,targetNames),lowerModel=projectFunction(lowered.own,lowered.program.declarations,targetNames);
+ let predicate=null;const guardPredicate=()=>predicate??(predicate=freshOptionalGuardPredicate());
+ const originalModel=projectFunction(original,checked.declarations,sourceNames,guardPredicate),targetModel=projectFunction(current,target.program.declarations,targetNames,guardPredicate),lowerModel=projectFunction(lowered.own,lowered.program.declarations,targetNames,guardPredicate);
  if(!originalModel||!targetModel||!lowerModel||!same(originalModel,targetModel)||!same(targetModel,lowerModel))fail('three independently checked semantic projections differ');
  const mappings=lowered.emitted.mappings.filter(row=>row.source===lowered.own.fullName);if(mappings.length!==1)fail('unique actual emitted mapping required');const mapping=mappings[0];
  const parents=sourceModules.filter(module=>module.file===entry.file&&same(module.path,entry.path));if(parents.length!==1)fail('unique actual physical parent required');const parent=parents[0];
@@ -163,5 +196,6 @@ export function prepareForwardJsonCompositionDefinition({project,entry,checked,t
   {phase:'language',rules:[{id:'checked-optional-json:three-genuine-semantic-products',apply:()=>({javascript,typescript,originalModel,targetModel,lowerModel})}]},
   {phase:'repository',rules:[{id:'router-optional-json:real-import-and-target-cst',apply:value=>({...value,javascript:bind(value.javascript,javascriptPath,ts.ScriptKind.JS,'JavaScript'),typescript:bind(value.typescript,typescriptPath,ts.ScriptKind.TS,'TypeScript')})}]},
  ]),result=pipeline.run(null),pair=prepareOwnedCorePairedTypes(javascriptPath,result.value.javascript.after.source,typescriptPath,result.value.typescript.after.source);
- assertReverseConcreteSourceHost();return {parent:{id:parentId,file:entry.file,source:parent.source,sha256:sourceHash},row:{identity:Buffer.from(JSON.stringify([project,entry.file,sourceHash,entry.name,entry.span,'optional-json-as-str-v1']),'utf8').toString('hex'),name:entry.name,source:entry.file,sourceSha256:sourceHash,span:entry.span,original:{parent:parentId,source,sha256:hash(source)},javascriptPath,typescriptPath,target:mapping.target,canonicalAbi:'registered-optional-json-as-str-definition-v1',targetFormat:'checked-optional-json-composition-v1',parameterCorrespondence:[{original:original.params[0].name,target:'input0',index:0}],signature:{original:{params:original.params,ret:original.ret},target:{params:current.params,ret:current.ret},lowered:{params:lowered.own.params,ret:lowered.own.ret}},semanticProjection:{original:originalModel,target:targetModel,lowered:lowerModel},javascript:result.value.javascript,typescript:result.value.typescript,pair,trace:result.trace,retainedGuardedEmission:lowered.emitted,oldGuardObservationEquivalent:false,newSourceRequiresIndependentReverseAdmission:true,semanticAuthority:false,moduleStartupEquivalent:false,applicationEffectCompleteness:false}};
+ assertReverseConcreteSourceHost();const candidate={parent:{id:parentId,file:entry.file,source:parent.source,sha256:sourceHash},row:{identity:Buffer.from(JSON.stringify([project,entry.file,sourceHash,entry.name,entry.span,'optional-json-as-str-v1']),'utf8').toString('hex'),name:entry.name,source:entry.file,sourceSha256:sourceHash,span:entry.span,original:{parent:parentId,source,sha256:hash(source)},javascriptPath,typescriptPath,target:mapping.target,canonicalAbi:'registered-optional-json-as-str-definition-v1',targetFormat:'checked-optional-json-composition-v1',parameterCorrespondence:[{original:original.params[0].name,target:'input0',index:0}],signature:{original:{params:original.params,ret:original.ret},target:{params:current.params,ret:current.ret},lowered:{params:lowered.own.params,ret:lowered.own.ret}},semanticProjection:{original:originalModel,target:targetModel,lowered:lowerModel},guardedOptionalPredicate:predicate?.receipt??null,javascript:result.value.javascript,typescript:result.value.typescript,pair,trace:result.trace,retainedGuardedEmission:lowered.emitted,oldGuardObservationEquivalent:false,newSourceRequiresIndependentReverseAdmission:true,semanticAuthority:false,moduleStartupEquivalent:false,applicationEffectCompleteness:false}};
+ if(predicate)predicate.verify();assertReverseConcreteSourceHost();return candidate;
 }

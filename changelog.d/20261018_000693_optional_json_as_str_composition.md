@@ -14,3 +14,8 @@
   reverse and strict-target checks distinguish its input-rooted return from the
   service-tier function's static literal results; the other seven cases remain
   unchanged.
+- Recognize only the actual nested-match immutable guard around the fixed
+  optional text callback, independently in all three checked products. Retain
+  the complete current predicate source/CST and the finite frozen-result equation;
+  other let/discard forms remain refused. The new format does not claim the
+  legacy dynamic guard observer schedule is equivalent.
