@@ -78,6 +78,13 @@ export const ROUTER_CORE_BASE64_CONTRACTS=snapshot([...operationsData.map(([name
 const contracts=new Map(ROUTER_CORE_BASE64_CONTRACTS.filter(row=>row.kind==='function').map(row=>[row.rustPath[2],row]));
 export const ROUTER_CORE_BASE64_DATA=snapshot([{k:'module',name:'router_core_base64',items:[{k:'data',name:'Base64Error',generated:'router-owned-base64-error',ctors:[{name:'InvalidByte',fields:[{name:'field0',type:usize},{name:'field1',type:byte}]},{name:'InvalidLength',fields:[{name:'field0',type:usize}]},{name:'InvalidLastSymbol',fields:[{name:'offset',type:usize},{name:'symbol',type:byte},{name:'symbol_value',type:byte}]},{name:'InvalidPadding',fields:[]}]}]}]);
 const calls=new WeakMap(),rawArgs=new WeakMap(),checkerFrames=new WeakMap(),activeFrames=new WeakMap(),completedFrames=new WeakMap(),issued=new WeakMap(),emitting=new WeakMap();
+// The real Host ownership qualifier shallow-copies an owned result. Its
+// original carrier identity survives; copied public carrier data does not.
+// Retain the complete expected call, including every type/argument/span field.
+function rememberCall(frame,key,receipt,call,error,borrow=false){
+ const row={call,key,receipt,error,...(borrow?{borrow:true}:{})},proof={frame,row,syntax:snapshot(call)};
+ put(issued,call.compatibilityCore,proof);frame.calls.push(row);return call;
+}
 // Transport custody, not a source/verdict memo: each value is a WeakRef to a
 // genuine current parser/checker frame. Fresh source and full body/layout joins
 // are mandatory at every emission; copied ids alone are never certificates.
@@ -111,13 +118,14 @@ function source(parser){
  return {parser,state,facade,leaf,inputs,library,trace:stage.trace};
 }
 function current(receipt){const fresh=source(receipt.parser);if(fresh.state!==receipt.state||fresh.leaf!==receipt.leaf||fresh.inputs!==receipt.inputs||!same(snapshot(fresh.library),snapshot(receipt.library)))fail('current source differs');guard();}
+function sourceContract(run,span){try{return run();}catch(error){if(!(error instanceof TypeError))throw error;throw unsupported('Router owned base64 source',error.message,span);}}
 export function parseRouterCoreBase64Type(parser){
  const c=parser.cursor;if(!['crate','::','translation_core','::','Base64Error'].every((word,at)=>c.is(word,at)))return null;
- const proof=source(parser);if(c.is('<',5)||c.is('::',5))fail('complete concrete error alias required');c.index+=5;requireRouterCoreFacadeCurrent(parser,proof.facade);guard();return snapshot(errorType);
+ const proof=sourceContract(()=>source(parser),{start:c.peek().start,end:c.peek(4).end});if(c.is('<',5)||c.is('::',5))fail('complete concrete error alias required');c.index+=5;requireRouterCoreFacadeCurrent(parser,proof.facade);guard();return snapshot(errorType);
 }
 export function parseRouterCoreBase64Call(parser,path){
  const c=parser.cursor;if(!['crate','::','translation_core','::'].every((word,at)=>c.is(word,at))||!contracts.has(c.peek(4).value))return null;
- const first=c.peek(),operation=c.peek(4).value,start=c.index,tokens=c.tokens,proof=source(parser);if(parser.cursor!==c||c.index!==start||c.tokens!==tokens)fail('cursor changed');c.index+=5;c.expect('(','owned base64');const args=[];
+ const first=c.peek(),operation=c.peek(4).value,start=c.index,tokens=c.tokens,proof=sourceContract(()=>source(parser),{start:first.start,end:c.peek(4).end});if(parser.cursor!==c||c.index!==start||c.tokens!==tokens)fail('cursor changed');c.index+=5;c.expect('(','owned base64');const args=[];
  while(!c.is(')')){args.push(parser.expr(path));if(!c.eat(','))break;}const last=c.expect(')','owned base64');requireRouterCoreFacadeCurrent(parser,proof.facade);guard();
  const node={k:'routerCoreBase64Call',operation,args,span:{start:first.start,end:last.end}},receipt={...proof,syntax:snapshot(node)};put(calls,node,receipt);put(rawArgs,args,receipt);return node;
 }
@@ -149,9 +157,11 @@ function inputKind(type){
   const p=type.rustReference?.pointee;if(type.rustReference?.kind==='shared'&&type.patternOwnershipRefusal==='shared source reference'&&type.rustOwnership?.kind==='borrowed'&&type.rustOwnership.source==='slice'&&type.rustSourceType===true&&!type.rustFixedArray&&type.rustReference.tokens?.[0]?.value==='&'&&p?.kind==='array'&&p.rustSourceType===true&&!p.rustReference&&!p.rustFixedArray&&!p.patternOwnershipRefusal&&p.rustOwnership?.kind==='borrowed'&&p.rustOwnership.source==='slice'&&actualByte(p.element))return 'bytes';
  }return null;
 }
-function errorLayout(checker,span){
- const type=checker.hostType(errorType,[],span),entry=checker.items.get(type.name),wanted=ROUTER_CORE_BASE64_DATA[0].items[0];
- if(entry?.hostTypePath?.join('::')!=='router_core_base64::Base64Error'||entry.generated!=='router-owned-base64-error'||entry.ctors.length!==4)fail('native error layout changed');
+function errorLayout(checker,span,program=null){
+ const selected=program?retargetCheckedCallback(errorType,program):errorType,type=checker.hostType(selected,[],span),entry=checker.items.get(type.name),wanted=ROUTER_CORE_BASE64_DATA[0].items[0];
+ const original=entry?.generated==='router-owned-base64-error'&&type.name==='router_core_base64.Base64Error',mapped='rp_'+Buffer.from('router_core_base64.Base64Error').toString('hex');
+ const flattened=program&&!program.declarations.has('router_core_base64.Base64Error')&&type.name===mapped&&program.declarations.get(mapped)?.fullName===mapped&&program.declarations.get(mapped)?.generated==='router-project-flattened'&&entry?.generated==='router-project-flattened';
+ if(entry?.hostTypePath?.join('::')!=='router_core_base64::Base64Error'||!original&&!flattened||entry.ctors.length!==4)fail('native error layout changed');
  for(let at=0;at<4;at++){const a=entry.ctors[at],b=wanted.ctors[at];if(a.name!==b.name||a.fields.length!==b.fields.length)fail('native error constructors changed');for(let n=0;n<b.fields.length;n++){const actual=checker.resolveType(a.fields[n].type,entry.modulePath,span),expected=checker.hostType(b.fields[n].type,[],span);if(a.fields[n].name!==b.fields[n].name||!sameType(actual,expected))fail('native error fields changed');checker.expectedPrimitiveIdentity(actual,expected,[],span);}}return type;
 }
 export function checkRouterCoreBase64Call(checker,node,env,path,expected){
@@ -164,7 +174,7 @@ export function checkRouterCoreBase64Call(checker,node,env,path,expected){
  if(expected){if(!sameType(ret,expected))throw typeError('owned base64 result type differs',node.span);checker.expectedOwnership(ret,expected,path,node.span);checker.expectedPrimitiveIdentity(ret,expected,path,node.span);}
  current(capture.receipt);guard();if(!same(node,capture.syntax)||!same(value,valueBefore))fail('call or checked operand changed during checking');
  const key='owned-base64-transport-'+(++serial),call={k:'routerHostCall',id:contract.id,args:[value],type:ret,constEligible:false,span:node.span,compatibilityCore:{id:'owned-base64-v1',sourceTransport:key,sourceSha256:ROUTER_CORE_BASE64_SHA256,libraryImplementation:'untranslated-base64-0.23.1'}};
- put(issued,call,{frame,key,receipt:capture.receipt});frame.calls.push({call,key,receipt:capture.receipt});return call;
+ return rememberCall(frame,key,capture.receipt,call,error);
 }
 // Closed affine source projection. Unknown calls, loans, mutation, loops,
 // closures and patterns remain refused rather than silently treating Vec/Text
@@ -180,11 +190,11 @@ function flow(checker,entry,frame){
  for(const param of entry.params)domain(param.type);domain(entry.ret);
  const scope=new Map(entry.params.map(row=>[row.name,{linear:owned(row.type),type:snapshot(row.type),used:false}]));let cells=100000;
  const run=(node,env,depth=0)=>{if(--cells<0||depth>128)fail('owned flow bound');if(!node||typeof node!=='object')fail('checked expression required');
-  if(node.k==='var'){const value=env.get(node.name);if(!value||!same(node.type,value.type))fail('unknown or retyped source binding');if(value.linear){if(value.used)fail('owned value used after move');value.used=true;}return;}
+  if(node.k==='var'){const value=env.get(node.name);if(!value||!same(node.type,value.type))fail('unknown or retyped source binding');if(value.linear){if(value.used)throw unsupported('owned base64 move','owned value used after move',node.span);value.used=true;}return;}
   if(node.k==='lit'||node.k==='num'||node.k==='unit')return;
-  if(node.k==='let'){run(node.value,env,depth+1);const inner=new Map([...env].map(([key,value])=>[key,{...value}]));if(inner.has(node.name))fail('shadowed owned flow binding');inner.set(node.name,{linear:owned(node.value.type),type:snapshot(node.value.type),used:false});run(node.body,inner,depth+1);for(const [key,value]of env)value.used=inner.get(key).used;return;}
+  if(node.k==='let'){run(node.value,env,depth+1);const inner=new Map([...env].map(([key,value])=>[key,{...value}]));if(inner.has(node.name))throw unsupported('owned base64 binding','shadowed owned flow binding',node.span);inner.set(node.name,{linear:owned(node.value.type),type:snapshot(node.value.type),used:false});run(node.body,inner,depth+1);for(const [key,value]of env)value.used=inner.get(key).used;return;}
   if(node.k==='if'){run(node.cond,env,depth+1);const clone=()=>new Map([...env].map(([key,value])=>[key,{...value}])),a=clone(),b=clone();run(node.then,a,depth+1);run(node.else,b,depth+1);for(const [key,value]of env)value.used=a.get(key).used||b.get(key).used;return;}
-  if(node.k==='routerHostCall'){const row=frame.calls.find(row=>row.call===node);if(!row)fail('unknown host call in owned flow');for(const arg of node.args){if(row.borrow){if(arg.k!=='var'||!env.has(arg.name)||env.get(arg.name).used)fail('native error borrow requires a live source local');}else run(arg,env,depth+1);}return;}
+  if(node.k==='routerHostCall'){const carrier=!proxy(node)&&desc(node,'compatibilityCore')?.value,proof=carrier&&get(issued,carrier),row=proof?.frame===frame&&frame.calls.includes(proof.row)?proof.row:null;if(!row||carrier!==row.call.compatibilityCore||!same(row.call,proof.syntax)||!same(node,proof.syntax))fail('unknown host call in owned flow');for(const arg of node.args){if(row.borrow){if(arg.k!=='var'||!env.has(arg.name)||env.get(arg.name).used)throw unsupported('owned base64 error borrow','requires a live source local',arg.span??node.span);}else run(arg,env,depth+1);}return;}
   if(node.k==='binary'&&['concat','eq','ne','and','or'].includes(node.op)){run(node.left,env,depth+1);run(node.right,env,depth+1);return;}
   if(node.k==='toString'){run(node.arg,env,depth+1);return;}
   if(node.k==='routerConstObligation'&&node.sourceFeature==='router-core-format'&&node.constEligible===false){run(node.value,env,depth+1);return;}
@@ -197,7 +207,7 @@ export function visitRouterCoreBase64Function(checker,item,path,entry,visit,phas
  return (...args)=>{guard();requireOriginalPrimitiveTryFromChecker(checker);if(!same(item,frame.syntax)||!originalParsedDeclarationEvidence(item)||entry!==checker.items.get([...path,item.name].join('.')))fail('source function changed');
   const signature=snapshot({params:entry.params,ret:entry.ret});const signatureCurrent=()=>{guard();if(!same(item,frame.syntax)||!same(signature,snapshot({params:entry.params,ret:entry.ret})))fail('original function signature changed');
    if(signature.params.length!==frame.syntax.params.length)fail('source parameter count');for(let at=0;at<signature.params.length;at++){const source=frame.syntax.params[at],actual=signature.params[at],expected=checker.resolveType(source.type,path,item.span);if(actual.name!==source.name||!same(actual.type,snapshot(expected)))fail('source parameter type changed');}if(!same(signature.ret,snapshot(checker.resolveType(frame.syntax.ret,path,item.span))))fail('source return type changed');guard();};signatureCurrent();put(activeFrames,checker,frame);
-  try{const value=visit(...args);signatureCurrent();flow(checker,entry,frame);const body=snapshot({name:entry.fullName,params:entry.params,ret:entry.ret,body:entry.body}),roots=snapshot([...entry.params.map(row=>row.type),entry.ret]),layouts=snapshot(captureBorrowedLayouts(checker,roots));for(const row of frame.calls){current(row.receipt);signatureCurrent();if(!same(body,snapshot({name:entry.fullName,params:entry.params,ret:entry.ret,body:entry.body})))fail('checked function changed across source callbacks');row.record={function:body,call:snapshot(row.call),receipt:row.receipt,roots,layouts};}get(completedFrames,checker).push({entry,body,frame});guard();return value;}finally{put(activeFrames,checker,null);}
+  try{const value=visit(...args);signatureCurrent();flow(checker,entry,frame);const body=snapshot({name:entry.fullName,params:entry.params,ret:entry.ret,body:entry.body}),roots=snapshot([...entry.params.map(row=>row.type),entry.ret,...frame.calls.map(row=>row.error)]),layouts=snapshot(captureBorrowedLayouts(checker,roots));for(const row of frame.calls){current(row.receipt);signatureCurrent();if(!same(body,snapshot({name:entry.fullName,params:entry.params,ret:entry.ret,body:entry.body})))fail('checked function changed across source callbacks');row.record={function:body,call:snapshot(row.call),receipt:row.receipt,roots,layouts};}get(completedFrames,checker).push({entry,body,frame});guard();return value;}finally{put(activeFrames,checker,null);}
  };
 }
 export function finalizeRouterCoreBase64Program(checker,program,sourceLinks){
@@ -216,7 +226,7 @@ export function prepareRouterCoreBase64Emission(emitter,entry,Checker){
  const selected=nodes(entry.body);if(!selected.length)return null;guard();const baseline=snapshot({name:entry.fullName,params:entry.params,ret:entry.ret,body:entry.body}),data=()=>snapshot([...emitter.program.declarations.values()].filter(row=>row.k==='data')),layoutsBefore=data(),verifier=new Checker('Rust',[]);requireOriginalPrimitiveTryFromChecker(verifier);
  verifier.program({language:'Rust',items:layoutsBefore.map(row=>({...row,name:row.fullName})),main:null});
  for(const call of selected){const reference=apply(mapGet,transport,[call.compatibilityCore?.sourceTransport]),record=reference&&apply(deref,reference,[]);if(!record)fail('copied or expired transport receipt');current(record.receipt);const wanted=snapshot(retargetCheckedCallback(record.function,emitter.program)),actual=snapshot({name:entry.fullName,params:entry.params,ret:entry.ret,body:entry.body});
-  if(entry.fullName!==record.function.name&&entry.fullName!=='rp_'+Buffer.from(record.function.name).toString('hex')||!same(snapshot(alphaTree({params:actual.params,ret:actual.ret,body:actual.body})),snapshot(alphaTree({params:wanted.params,ret:wanted.ret,body:wanted.body})))||!spanSame(actual,wanted))fail('complete original function or spans changed');errorLayout(verifier,call.span);requireBorrowedLayouts(record.layouts,verifier,emitter.program,snapshot(retargetCheckedCallback(record.roots,emitter.program)));guard();
+  if(entry.fullName!==record.function.name&&entry.fullName!=='rp_'+Buffer.from(record.function.name).toString('hex')||!same(snapshot(alphaTree({params:actual.params,ret:actual.ret,body:actual.body})),snapshot(alphaTree({params:wanted.params,ret:wanted.ret,body:wanted.body})))||!spanSame(actual,wanted))fail('complete original function or spans changed');errorLayout(verifier,call.span,emitter.program);requireBorrowedLayouts(record.layouts,verifier,emitter.program,snapshot(retargetCheckedCallback(record.roots,emitter.program)));guard();
  }
  const rejoin=()=>{guard();if(!same(baseline,snapshot({name:entry.fullName,params:entry.params,ret:entry.ret,body:entry.body}))||!same(layoutsBefore,data()))fail('emission inputs changed across source/layout callbacks');};rejoin();
  const renamed=snapshot(renameFunction(entry,emitter.state.ident,emitter.state.localReserved()));rejoin();const prior=get(emitting,emitter);put(emitting,emitter,nodes(renamed.body).map(snapshotNode=>snapshot(snapshotNode)));return ()=>put(emitting,emitter,prior);
@@ -229,7 +239,7 @@ export function originalBase64ErrorDisplay(checker,node,piece,value,bind){
  const error=errorLayout(checker,node.span);if(!sameType(value.type,error)||value.type.rustReference||value.type.rustOwnership||value.type.patternOwnershipRefusal||!clean(value.type))return null;
  const receipt=frame.calls[0]?.receipt;if(!receipt)fail('formatter requires an actual owned call in its original source function');current(receipt);requireOriginalPrimitiveTryFromChecker(checker);guard();if(!same(node,syntax))fail('original formatter changed during source checking');
  const key='owned-base64-transport-'+(++serial),call={k:'routerHostCall',id:displayContract.id,args:[value],type:checker.hostType(SOURCE_STRING,[],node.span),constEligible:false,span:node.span,compatibilityCore:{id:'owned-base64-v1',sourceTransport:key,sourceSha256:ROUTER_CORE_BASE64_SHA256,libraryImplementation:'untranslated-base64-0.23.1'}};
- frame.calls.push({call,key,receipt,borrow:true});return bind(call);
+ rememberCall(frame,key,receipt,call,error,true);return bind(call);
 }
 // Reproducible source-DATA rendering; not admission or a manually repinned
 // generated asset. Root receiving must invoke this API and compare full bytes.
