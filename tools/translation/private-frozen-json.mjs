@@ -199,10 +199,16 @@ export function createPrivateFrozenJsonComposer(){
    const units=value===undefined?4:apply(compositionStringify,compositionReceiver,[value]).length;return units<=limit?units:-1;
   }
   function frozenUnits(value,limit,depth,descendant=false){
-   if(descendant&&value!==null&&typeof value==='object'){const saved=apply(weakGet,sharedMeasurements,[value]);if(saved&&depth+saved.height<=DEPTH&&saved.units<=limit&&saved.cells<=measureCells&&saved.text<=measureText){if(depth+saved.height>measurementDeepest)measurementDeepest=depth+saved.height;measureCells-=saved.cells;measureText-=saved.text;return saved.units;}}
+   let descendantMeasurement=null;
+   if(descendant&&value!==null&&typeof value==='object'){const saved=apply(weakGet,sharedMeasurements,[value]);descendantMeasurement=saved;if(saved&&depth+saved.height<=DEPTH&&saved.units<=limit&&saved.cells<=measureCells&&saved.text<=measureText){if(depth+saved.height>measurementDeepest)measurementDeepest=depth+saved.height;measureCells-=saved.cells;measureText-=saved.text;return saved.units;}}
    if(--measureCells<0||depth>DEPTH||limit<0)return -1;
    if(depth>measurementDeepest)measurementDeepest=depth;
    if(value===null||typeof value!=='object')return scalarUnits(value,limit);
+   // Each completed object gets its own relative peak before the ancestor's
+   // peak is restored. Failed walks keep every prior cell/text debit.
+   const cellsBefore=measureCells+1,textBefore=measureText,ancestorDeepest=measurementDeepest;
+   measurementDeepest=depth;
+   try{
    // Private immutable/noStack eligibility already proved every own field
    // enumerable, except the dense array's immutable own data length. This
    // native enumeration still covers the complete logical key domain.
@@ -214,7 +220,11 @@ export function createPrivateFrozenJsonComposer(){
     if(!array&&childValue===undefined)continue;
     if(count++)units++;if(!array){const quoted=quotedUnits(name,limit-units-1);if(quoted<0)return -1;units+=quoted+1;}
     const child=frozenUnits(childValue,limit-units,depth+1,true);if(child<0)return -1;units+=child;
-   }return units<=limit?units:-1;
+   }
+   if(!(units<=limit))return -1;
+   if(descendant&&!descendantMeasurement&&sharedMeasurementRecords<1024&&cellsBefore-measureCells>=64){apply(weakSet,sharedMeasurements,[value,{depth,units,cells:cellsBefore-measureCells,text:textBefore-measureText,height:measurementDeepest-depth}]);sharedMeasurementRecords++;}
+   return units;
+   }finally{if(ancestorDeepest>measurementDeepest)measurementDeepest=ancestorDeepest;}
   }
   // Successful measurements belong only to these fresh private plan nodes.
   // Equal depth and exact logical charges preserve every old partial failure.
