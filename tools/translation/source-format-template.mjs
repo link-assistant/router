@@ -595,11 +595,14 @@ function asciiProjectFunctions(packet,prefix,ops){
     if(row[0]==='group'){
       if(row[1]!=='paren')fail('ASCII predicate has an unsupported nested group');const nested=[],list=children.get(id);for(let at=0;at<list.length;at++)nested.push(project(list[at]));return {kind:'group',delimiter:'(',children:nested,span};
     }
-    const spelling=raw(id),type=row[1]==='identifier'?'ident':row[1];
+    const spelling=raw(id);let type=row[1]==='identifier'?'ident':row[1];
+    // The native Rust CST keeps written characters in its string class. Refine
+    // only this independent control projection; original nodes/spans stay exact.
+    if(type==='string'&&spelling[0]==="'")type='char';
     if(type==='ident'){
       if(!['c','self','char','true','false','unicode_xid','UnicodeXID','is_xid_start','is_xid_continue','derived_property','XID_Start','XID_Continue'].includes(spelling))fail('ASCII predicate identifier requires another rule');
     }else if(type==='char'){
-      if(!(spelling.length===3&&spelling[0]==="'"&&spelling[2]==="'"&&spelling.charCodeAt(1)<=127&&spelling[1]!=='\\')&&spelling!=="'\\x7f'")fail('ASCII predicate char requires another rule');
+      if(!(spelling.length===3&&spelling[0]==="'"&&spelling[2]==="'"&&spelling.charCodeAt(1)<=127&&spelling[1]!=="'"&&spelling[1]!=='\\'&&spelling[1]!=='\n'&&spelling[1]!=='\r'&&spelling[1]!=='\t')&&spelling!=="'\\x7f'")fail('ASCII predicate char requires another rule');
     }else if(type!=='punct'||!['::',':','==','<','<=','>','>=','&&','||',','].includes(spelling))fail('ASCII predicate token requires another rule');
     return {kind:'token',type,text:spelling,span};
   }
