@@ -16,3 +16,8 @@ retain the separate guarded reverse-admission frontier.
 Restore historical reader source through a literal replacement callback so
 `$'` in genuine JavaScript source stays data rather than a replacement suffix.
 Keep all nineteen unique source equations, whole inverse and baseline checks.
+
+Keep the direct-reader source fixture's mutable Null view as a valid None
+observation: its actual layout guard does not require frozen containers.
+Descriptor/proxy and numeric-range refusal controls remain separate and exact.
+Keep the new case title precise about descriptor/layout and numeric guards.
