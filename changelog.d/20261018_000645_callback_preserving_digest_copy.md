@@ -1,3 +1,5 @@
 ### Changed
 
 - Add an explicit metadata digest sibling that replaces property definition only on a still-private native-created null-prototype output, retaining the callee selected before child callbacks and descriptor conversion after them. Select it at three original-method validation fallback sites while preserving public metadata copying, digests, guards, limits and fresh hashes. Add eight complete data, observer, mutation, source and strict TypeScript regressions. This source draft is unreceived; it makes no performance, deadline or coverage qualification claim.
+
+- Qualify the actual legacy `Object` reference at its original create/define position, without reading a captured global root. Foreign or proxy receivers retain the original literal call; native receiver selection remains before child evaluation. Keep full old/current cold-root copy and callback observations, and add actual Object proxy, nonfunction and mutating getter controls. Stock Bun eligibility and performance remain unqualified until receiving.

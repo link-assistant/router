@@ -456,17 +456,15 @@ function privateExpectedStandardRunEnd(entries,start){
 // the copy still performs every dynamic input/Buffer/descriptor operation.
 // The returned data carries no source, type, owner or proof authority.
 export function copyOriginalDigestMetadata(value,fallback,ordinal){
- if(!pathNative||!syntaxNative||!parserIngressNative||pathIsProxy.value(parserIngressRoot))return fallback(value);
+ if(!pathNative||!syntaxNative)return fallback(value);
  const fail=reason=>{throw new TypeError('source links: '+reason);};
- function privateCreate(){
-  const object=descriptor(parserIngressRoot,'Object');
-  if(!object||!hasOwn(object,'value')||object.value!==originalObject)return false;
+ function privateCreate(object){
+  if(object!==originalObject)return false;
   const create=descriptor(originalObject,'create');
   return !!(create&&hasOwn(create,'value')&&typeof create.value==='function'&&!pathIsProxy.value(create.value)&&apply(functionText,create.value,[])==='function create() { [native code] }');
  }
- function nativeDefine(){
-  const object=descriptor(parserIngressRoot,'Object');
-  if(!object||!hasOwn(object,'value')||object.value!==originalObject)return false;
+ function nativeDefine(object){
+  if(object!==originalObject)return false;
   const define=descriptor(originalObject,'defineProperty');
   return !!(define&&hasOwn(define,'value')&&define.value===syntaxDefine.value);
  }
@@ -486,9 +484,14 @@ export function copyOriginalDigestMetadata(value,fallback,ordinal){
    if(keys.length!==length+1)fail('array metadata holes or extra properties');
    result=[];for(let index=0;index<length;index++){const key=String(index);if(ownIndexes[index]!==true)fail('array metadata hole');const descriptor=descriptors[key];if(!descriptor)fail('array metadata hole');result.push(copy(descriptor.value,{preserveKeyOrder},depth+1,active,budget));}
   }else{
-   let privateTarget=privateCreate();result=Object.create(null);
+   // The actual legacy Object lookup happens once at its original position.
+   // A foreign/proxy receiver is never inspected by optional qualification.
+   const createReceiver=Object;let privateTarget;
+   {const Object=createReceiver;privateTarget=privateCreate(Object);result=Object.create(null);}
    for(const key of preserveKeyOrder?keys:keys.sort(ordinal)){
-    if(privateTarget&&typeof key==='string'&&nativeDefine()){
+    const objectReceiver=Object;
+    {const Object=objectReceiver;
+    if(privateTarget&&typeof key==='string'&&nativeDefine(Object)){
      // Select the actual old receiver/callee BEFORE any child callback.
      const receiver=Object,selected=receiver.defineProperty;
      const child=copy(descriptors[key].value,{preserveKeyOrder:preserveKeyOrder||key==='copyCertificate'},depth+1,active,budget);
@@ -504,6 +507,7 @@ export function copyOriginalDigestMetadata(value,fallback,ordinal){
      // are restored before a later field. Privacy is never reacquired.
      privateTarget=false;
      Object.defineProperty(result,key,{value:copy(descriptors[key].value,{preserveKeyOrder:preserveKeyOrder||key==='copyCertificate'},depth+1,active,budget),enumerable:true,writable:true,configurable:true});
+    }
     }
    }
   }
