@@ -589,7 +589,7 @@ export function createOriginalDigestMetadataCopierForInternalSources(fallback,or
 // immutable expected plans; this API never initializes or warms parser state.
 // Every global lookup and every original guard boundary remains independent.
 function descriptorBatchingReady(){
- if(!privateExpectedPlans||!traversalNative||!same(descriptor(originalObject,'getOwnPropertyDescriptors'),traversalDescriptors)||!same(descriptor(types,'isProxy'),pathIsProxy))return false;
+ if(!privateExpectedPlans||!traversalNative||!parserUint32Storage||types!==parserUint32Storage.typeOwner||pathIsProxy.value(types)||!same(descriptor(originalObject,'getOwnPropertyDescriptors'),traversalDescriptors)||!same(descriptor(types,'isProxy'),pathIsProxy))return false;
  for(let slot=0;slot<batchedDescriptorOwners.length;slot++)if(pathIsProxy.value(batchedDescriptorOwners[slot]))return false;
  return true;
 }
