@@ -1,0 +1,4 @@
+### Changed
+- Select explicit grouped-token siblings during genuine original-method parsing, field/semantic issuance, relocation, source-range capture and checked facade construction. Existing public producers/readers and all source, namespace, Copy, field, parser and independent semantic checks remain intact.
+- Reuse only the existing guarded per-call token grouping contract. Old/new hash tapes remain separate; Host association and macro rechecks remain independent. No across-call source or verdict cache is introduced, and the real source-capture frame retains its established diagnostic name.
+- Add eight complete receiving cases, including both original derive parents and unchanged strict child bounds. Source-only checkpoint: runtime behavior and the original Bun five-second/whole13 deadlines remain unqualified until Root receiving; no performance gain is claimed.

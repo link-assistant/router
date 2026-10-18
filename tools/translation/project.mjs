@@ -31,8 +31,8 @@ import { roundTripProgram, serializeProgram } from './semantic-meta.mjs';
 import { sha256, tsType, annotateRuntimeTypes, typeParameterName } from './translate.mjs';
 import {linkProjectDeclaration,linkProjectMethodDeclaration,originalParsedDeclarationEvidence,copyMetadata,metadataDigest} from './extensions/source-links.mjs';
 import {createOriginalMethodTokenTransform,originalMethodTransformFacts} from './source-method-transforms.mjs';
-import {parseOriginalMethodTransform,originalMethodParsedFacts,originalMethodParsedFactsGrouped} from './source-method-parser.mjs';
-import {originalMethodSemantic,relocateOriginalMethodSemantic,originalMethodRefusalRange,originalMethodRefusalRangeGrouped,isOriginalMethodSemanticSource} from './source-method-admission.mjs';
+import {parseOriginalMethodTransform,parseOriginalMethodTransformGrouped,originalMethodParsedFacts,originalMethodParsedFactsGrouped} from './source-method-parser.mjs';
+import {originalMethodSemantic,originalMethodSemanticGrouped,relocateOriginalMethodSemantic,relocateOriginalMethodSemanticGrouped,originalMethodRefusalRange,originalMethodRefusalRangeGrouped,isOriginalMethodSemanticSource} from './source-method-admission.mjs';
 import {originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
 import {freezeMacroTree} from './macro-token-trees.mjs';
 import {createDeriveFootprintContext,deriveFootprintAt,deriveFootprintExternalModules} from './derive-footprints.mjs';
@@ -403,8 +403,8 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
           // its unconfigured original macro route still refuses explicitly.
           try{transform=createOriginalMethodTokenTransform(matchesMacroContext,method,lowered);}catch(error){if(!(error instanceof OriginalMethodOwnerUnproved))throw error;}
           let originalParsed=null;
-          if(transform){try{originalParsed=parseOriginalMethodTransform(transform,{immutableNamespaceTargets:true});}catch(error){if(error instanceof TypeError)throw new TranslationError('unsupported','original method source contract: '+error.message,method.span);throw error;}}
-          const parser = originalParsed?originalMethodParsedFacts(originalParsed).parser:new MethodRustParser(copyMetadata(lowered.tokens));
+          if(transform){try{originalParsed=parseOriginalMethodTransformGrouped(transform,{immutableNamespaceTargets:true});}catch(error){if(error instanceof TypeError)throw new TranslationError('unsupported','original method source contract: '+error.message,method.span);throw error;}}
+          const parser = originalParsed?originalMethodParsedFactsGrouped(originalParsed).parser:new MethodRustParser(copyMetadata(lowered.tokens));
           if(!originalParsed){
           parser.modulePath = module.path;
           configureSourceScope(parser,module);
@@ -414,8 +414,8 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
           parser.attributes(); parser.visibility();
           }
           const qualifier=!originalParsed&&parser.cursor.is('const')?parser.cursor.next():null,fn=originalParsed?.entry??parser.fn(module.path);
-          const fieldEvidence=originalParsed?issueMethodFieldEvidence(originalParsed,lowered.sharedReceiverSource?copyEvidence.fieldCertificates?.(qualifiedType,module,method.receiverSpan)??[]:[]):null;
-          const surface = originalParsed?originalMethodSemantic(originalParsed,{fieldEvidence}):{...fn,...(qualifier?{constFunction:true,span:{...fn.span,start:qualifier.start}}:{})};
+          const fieldEvidence=originalParsed?issueMethodFieldEvidenceGrouped(originalParsed,lowered.sharedReceiverSource?copyEvidence.fieldCertificates?.(qualifiedType,module,method.receiverSpan)??[]:[]):null;
+          const surface = originalParsed?originalMethodSemanticGrouped(originalParsed,{fieldEvidence}):{...fn,...(qualifier?{constFunction:true,span:{...fn.span,start:qualifier.start}}:{})};
           if (!parser.cursor.atEnd()) throw new TranslationError('syntax','unconsumed inherent method tokens',parser.cursor.peek());
           if(!originalParsed){
           surface.name = `ml_impl_${Buffer.from(qualifiedType.join('.')).toString('hex')}_${Buffer.from(method.name).toString('hex')}`;
@@ -429,11 +429,11 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
           }
           if(defaultProof&&!originalParsed)surface.impl.defaultSourceProof=defaultProof;
           const globalSpan = {start:module.offset+method.span.start,end:module.offset+method.span.end};
-          const semantic=originalParsed?relocateOriginalMethodSemantic(surface,module.offset):relocate(surface,module.offset);
+          const semantic=originalParsed?relocateOriginalMethodSemanticGrouped(surface,module.offset):relocate(surface,module.offset);
           if(fieldEvidence)fieldEvidenceBySurface.set(semantic,fieldEvidence);
           if(!originalParsed&&certificate)semantic.impl.copyCertificate=certificate;
           if(originalParsed)linkProjectMethodDeclaration(parser,originalParsed.entry,surface,semantic,{source:module.source,sourcePath:module.file,memberSpan:method.span,bodySpan:method.bodySpan,globalOffset:module.offset,scope:{bindingEvidence:scopes.get(moduleScopeKey(module)),compilationProfile:graph.compilationProfile,configurationCondition:module.configurationCondition}});
-          if(originalParsed)captureDeclarationRange(semantic,module,globalSpan);
+          if(originalParsed)captureDeclarationRangeGroupedTokens(semantic,module,globalSpan);
           else captureStructuralMethodRange(semantic,method,lowered,module,globalSpan);
           declarations.push({file:module.file,path:module.path,name:[...module.path,surface.name].join('.'),displayName:display,term:'method',span:method.span,globalSpan,surface:semantic,...(defaultProof?{defaultSourceAdmission:defaultProof}:{})});
           captureGenericDeclarations(declarations,parser,module,globalSpan,module.offset,semantic);
@@ -554,7 +554,7 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
   const checkedMethodDeclarations=methods.map(entry=>{
     const own=checked.declarations.get(entry.name),name=entry.surface.impl.method;
     const facade=Object.freeze({source:entry.file,sourceSha256:sha256(graph.modules.find(module=>module.file===entry.file).source),name,term:'method',span:Object.freeze({...entry.span}),project:options.entry,qualifiedName:entry.name,displayName:entry.displayName,receiver:entry.surface.impl.receiver,compilationProfile:graph.compilationProfile,signature:freezeMacroTree(structuredClone({params:own.params,ret:own.ret})),lower:lowerDeclaration(entry,name)});
-    const token=fieldEvidenceBySurface.get(entry.surface);if(token)checkedMethodFieldOrigins.set(facade,originalProjectMethodFieldEvidence(token,methodFieldEvidence.get(token).transform));
+    const token=fieldEvidenceBySurface.get(entry.surface);if(token)checkedMethodFieldOrigins.set(facade,originalProjectMethodFieldEvidenceGrouped(token,methodFieldEvidence.get(token).transform));
     return facade;
   });
   progress({stage:'project-serialize',state:'end',entry:options.entry});
@@ -617,3 +617,33 @@ export function originalProjectDeclarationRefusalRangesGroupedTokens(surface,pat
   if(!actual||actual.start!==state.range.start||actual.end!==state.range.end||metadataDigest(surface)!==state.digest)throw new TypeError('Original project refusal source/layout changed after parser capture');
   return {methodRange:actual,projectRange:state.range};
 }
+
+// Explicit grouped-token producer contract; the original body remains exact.
+function issueMethodFieldEvidenceGrouped(parsed,fields) {
+  const capture=originalMethodParsedFactsGrouped(parsed),transform=capture.transform;
+  originalMethodTransformFacts(transform);copyMetadata(fields);
+  const clone=node=>{
+    if(!node||typeof node!=='object')return node;
+    const descriptors=Object.getOwnPropertyDescriptors(node);
+    if(Array.isArray(node))return Array.from({length:descriptors.length.value},(_,index)=>clone(descriptors[String(index)].value));
+    return Object.fromEntries(Object.keys(descriptors).map(key=>[key,clone(descriptors[key].value)]));
+  };
+  const frozenFields=freezeMacroTree(clone(fields)),token=Object.freeze({schema:'original-project-method-field-evidence-v1'});
+  const facts=Object.freeze({token,transform,fields:frozenFields});
+  methodFieldEvidence.set(token,Object.freeze({parsed,transform,facts,fieldDigest:metadataDigest(frozenFields),parsedDigest:capture.digest}));return token;
+}
+
+// Explicit grouped-token producer contract; the original body remains exact.
+function originalParentRangeGroupedTokens(surface,path){
+  const method=originalMethodRefusalRangeGrouped(surface,path);if(method)return method;
+  const source=originalParsedDeclarationEvidence(surface);if(!source)return null;
+  return {start:source.declarationSpan.start+source.sourceOffset,end:source.declarationSpan.end+source.sourceOffset};
+}
+
+// Explicit grouped-token producer contract; the original body remains exact.
+const captureDeclarationRangeGroupedTokens = function captureDeclarationRange(surface,module,range){
+  const actual=originalParentRangeGroupedTokens(surface,module.path);
+  if(!actual||actual.start!==range.start||actual.end!==range.end)return null;
+  const state=Object.freeze({parent:surface,parentPath:Object.freeze([...module.path]),path:Object.freeze([...module.path]),range:Object.freeze({...actual}),digest:metadataDigest(surface)});
+  declarationRanges.set(surface,state);return state;
+};

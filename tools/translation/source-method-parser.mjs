@@ -6,7 +6,7 @@ import {originalTextCursorGuard} from './extensions/text.mjs';
 import {copyMetadata,metadataDigest} from './extensions/source-links.mjs';
 import {assertOriginalParserIdentity} from './original-parser-identity.mjs';
 import {originalMethodTransformFacts,originalMethodTokenTransformSnapshot,originalMethodParserTokens,originalMethodParserTokenFacts,originalMethodParserTokenFactsGrouped} from './source-method-transforms.mjs';
-import {originalMethodParserNamespace,configureMatchesMethodParser} from './matches-macro-context.mjs';
+import {originalMethodParserNamespace,configureMatchesMethodParser,configureMatchesMethodParserGrouped} from './matches-macro-context.mjs';
 import {freezeMacroTree} from './macro-token-trees.mjs';
 import {captureOriginalMethodValidation,originalMethodValidationDigest} from './source-method-validation.mjs';
 import {requestImmutableNamespaceTargets} from './source-scopes.mjs';
@@ -50,4 +50,23 @@ export function originalMethodParsedFactsGrouped(result) {
   originalMethodParserNamespace(source.context,source.method);
   if(result.entry!==state.entry||result.proof!==state.proof||originalMethodValidationDigest(state.entry,state.validation)!==state.digest||originalMethodValidationDigest(state.parser.sourceNamespaceEvidence,state.namespaceValidation)!==state.namespaceDigest)throw new TypeError('Original method parsed body/signature/source namespace changed');
   return state;
+}
+
+// Explicit grouped-token producer contract; the original body remains exact.
+export function parseOriginalMethodTransformGrouped(transform,{immutableNamespaceTargets=false}={}) {
+  const state=originalMethodTransformFacts(transform),namespace=originalMethodParserNamespace(state.context,state.method),tokens=originalMethodParserTokens(transform);
+  const parser=new HostRustParser(tokens);identity(parser);
+  if(immutableNamespaceTargets)requestImmutableNamespaceTargets(parser);
+  configureMatchesMethodParserGrouped(parser,state.context,state.method);
+  parser.shadowedEffectRoots=new Set(namespace.shadowedEffectRoots);
+  const namespaceValidation=captureOriginalMethodValidation(parser.sourceNamespaceEvidence),namespaceDigest=namespaceValidation.digest,attributes=parser.attributes(),visibility=parser.visibility();
+  const qualifier=parser.cursor.is('const')?parser.cursor.next():null;
+  const entry=parser.fn(namespace.modulePath);
+  if(qualifier)entry.constFunction=true;
+  if(!parser.cursor.atEnd())throw new TypeError('Original method parser did not consume the complete original member');
+  identity(parser);originalMethodParserTokenFactsGrouped(parser.cursor.tokens);originalMethodTransformFacts(transform);
+  if(metadataDigest(parser.sourceNamespaceEvidence)!==namespaceDigest)throw new TypeError('Original method source namespace evidence changed during parsing');
+  const proof=freezeMacroTree({schema:'original-method-host-parse-v1',transform:originalMethodTokenTransformSnapshot(transform),parsedSurfaceSha256:metadataDigest(entry),attributes:copyMetadata(attributes),visibility:copyMetadata(visibility),parsedTokenTransformVerified:true,checkedSourceAssociation:false,namespaceAuthority:false,copyAuthority:false,applicationEffectCompleteness:false,runtimeParity:false});
+  const validation=captureOriginalMethodValidation(entry);
+  const result=Object.freeze({entry,proof});parses.set(result,Object.freeze({transform,parser,entry,proof,digest:validation.digest,validation:validation.capture,namespaceValidation:namespaceValidation.capture,namespaceDigest}));return result;
 }

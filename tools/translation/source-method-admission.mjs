@@ -128,3 +128,36 @@ export function originalMethodRefusalRangeGrouped(surface,path) {
   if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||end<=start)throw new TypeError('Original method refusal range exceeds its actual source coordinates');
   return Object.freeze({start,end});
 }
+
+// Explicit grouped-token producer contract; the original body remains exact.
+export function originalMethodSemanticGrouped(parsed,options={}) {
+  if(!options||typeof options!=='object'||types.isProxy(options)||![Object.prototype,null].includes(Object.getPrototypeOf(options)))throw new TypeError('Original method semantic options require non-proxy ordinary metadata');
+  const descriptors=Object.getOwnPropertyDescriptors(options);
+  for(const key of Reflect.ownKeys(descriptors))if(typeof key!=='string'||!Object.hasOwn(descriptors[key],'value')||!descriptors[key].enumerable)throw new TypeError('Original method semantic options cannot contain accessors, hidden or symbol properties');
+  if(Object.keys(descriptors).some(key=>key!=='fieldEvidence'))throw new TypeError('Original method semantic options do not accept caller fieldCertificates or ownership authority');
+  const capture=originalMethodParsedFactsGrouped(parsed),state=originalMethodTransformFacts(capture.transform),lowering=originalMethodLowering(state.lowered),surface=copyMetadata(capture.entry);
+  const fieldEvidence=descriptors.fieldEvidence?.value;
+  const fieldCertificates=fieldEvidence===undefined?[]:originalProjectMethodFieldEvidenceGrouped(fieldEvidence,capture.transform).fields;
+  const qualifiedType=state.lowered.typePath;
+  surface.name=`ml_impl_${Buffer.from(qualifiedType.join('.')).toString('hex')}_${Buffer.from(state.method.name).toString('hex')}`;
+  surface.generated='router-checked-inherent-method';
+  if(state.lowered.sharedReceiverSource) {
+    const type=surface.params[0]?.type;
+    if(type?.rustReference?.kind!=='shared'||!type.rustReference.pointee)throw new TypeError('Original shared method requires its actual parsed pointee');
+    // These annotations carry the existing separate Copy/layout proof. They
+    // cannot alter the parsed body, source signature or grant Copy here.
+    const fields=fieldCertificates;
+    surface.params[0].type={...type,rustReference:{...type.rustReference,pointee:{...type.rustReference.pointee,rustSharedReceiverSource:copyMetadata(state.lowered.sharedReceiverSource),rustSharedFieldCopies:fields}}};
+  }else if(fieldCertificates.length)throw new TypeError('Original static/consuming method has no shared receiver field annotations');
+  surface.impl={type:{kind:'named',path:[...qualifiedType]},method:state.method.name,receiver:state.method.receiver,receiverName:state.lowered.receiverName,...(state.lowered.sharedReceiverSource?{sharedReceiverSource:copyMetadata(state.lowered.sharedReceiverSource)}:{}),...(lowering.copyCertificate?{copyCertificate:originalMetadataCopy(lowering.copyCertificate)}:{}),rewrites:copyMetadata(state.lowered.rewrites),assumptions:copyMetadata(state.lowered.assumptions)};
+  surface.sourceMethodProof=freezeMacroTree({schema:'original-method-semantic-source-v1',parse:parsed.proof,originalTokenTransformVerified:true,originalHostParseVerified:true,checkedSourceAssociation:false,copyAuthority:false,namespaceAuthority:false,applicationEffectCompleteness:false,runtimeParity:false});
+  const validation=captureOriginalMethodValidation(surface);semantics.set(surface,Object.freeze({parsed,transform:capture.transform,fieldEvidence,offset:0,relocated:false,digest:validation.digest,validation:validation.capture}));return surface;
+}
+
+// Explicit grouped-token producer contract; the original body remains exact.
+export function relocateOriginalMethodSemanticGrouped(surface,offset) {
+  const state=originalMethodSemanticFactsGrouped(surface);
+  if(!Number.isSafeInteger(offset)||offset<0||state.relocated)throw new TypeError('Original method source relocation requires one exact nonnegative module offset');
+  const semantic=relocate(surface,offset);
+  const validation=captureOriginalMethodValidation(semantic);semantics.set(semantic,Object.freeze({...state,offset,relocated:true,digest:validation.digest,validation:validation.capture}));return semantic;
+}

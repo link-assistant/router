@@ -17,7 +17,7 @@ import {loadStandardMatchesSourceProfile,isStandardMatchesSourceProfile} from '.
 import {freezeMacroTree,originalMacroInvocation} from './macro-token-trees.mjs';
 import {macroProvenance} from './macro-provenance.mjs';
 import {originalMethodMember} from './impl-resolver.mjs';
-import {originalMethodTransformFacts,originalMethodParserTokenFacts} from './source-method-transforms.mjs';
+import {originalMethodTransformFacts,originalMethodParserTokenFacts,originalMethodParserTokenFactsGrouped} from './source-method-transforms.mjs';
 import {configureParserSourceScope} from './source-scopes.mjs';
 import {itemConfiguration,compilationProfile as normalizeProfile} from './cfg-profile.mjs';
 import {originalCargoEditionEvidence,configureRustEditionParser} from './cargo-edition-context.mjs';
@@ -351,6 +351,19 @@ export function originalMethodParserNamespace(context,method) {
 
 export function configureMatchesMethodParser(parser,context,method) {
   const captured=originalMethodParserTokenFacts(parser.cursor.tokens),transform=originalMethodTransformFacts(captured.proof),namespace=originalMethodParserNamespace(context,method),facts=contexts.get(context),issued=immutableContext(context,facts);
+  if(transform.context!==context||transform.method!==method)throw new TypeError('Matches method parser has another original source transform/member context');
+  const module=mapGet.call(issued.moduleByKey,JSON.stringify([captured.sourcePath,captured.modulePath]));
+  if(!module||module.source!==captured.source||module.sourceView!==captured.sourceView||JSON.stringify(normalizeProfile(captured.compilationProfile))!==JSON.stringify(facts.compilationProfile))throw new TypeError('Matches method parser changed its full original view/profile');
+  configureParserSourceScope(parser,namespace.scope,namespace.scopes,namespace.modulePath);parser.modulePath=[...namespace.modulePath];
+  parser.aliases=new Map(nativeEntries(parser.sourceNamespaceAliases.type).map(([path,map])=>[path,new Map(nativeEntries(map))]));
+  configureRustEditionParser(parser,facts.cargoEditionContext);
+  recordParserFrame(parser,{context,facts,module,offset:0,sourceLength:module.source.length,captured,tokens:parser.cursor.tokens,methodTransform:captured.proof,namespaceDigest:initialNamespaceDigest(parser,issued,module,namespace.scope)});
+  return parser;
+}
+
+// Explicit grouped-token producer contract; the original body remains exact.
+export function configureMatchesMethodParserGrouped(parser,context,method) {
+  const captured=originalMethodParserTokenFactsGrouped(parser.cursor.tokens),transform=originalMethodTransformFacts(captured.proof),namespace=originalMethodParserNamespace(context,method),facts=contexts.get(context),issued=immutableContext(context,facts);
   if(transform.context!==context||transform.method!==method)throw new TypeError('Matches method parser has another original source transform/member context');
   const module=mapGet.call(issued.moduleByKey,JSON.stringify([captured.sourcePath,captured.modulePath]));
   if(!module||module.source!==captured.source||module.sourceView!==captured.sourceView||JSON.stringify(normalizeProfile(captured.compilationProfile))!==JSON.stringify(facts.compilationProfile))throw new TypeError('Matches method parser changed its full original view/profile');
