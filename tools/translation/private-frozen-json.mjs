@@ -32,44 +32,56 @@ function intrinsics(){
  const actual=descriptor(Object,'isFrozen');return !!actual&&own(actual,'value')&&actual.value===frozenField.value&&actual.writable===frozenField.writable&&actual.enumerable===frozenField.enumerable&&actual.configurable===frozenField.configurable;
 }
 function immutableJson(value,noStack=false){
- let stack={value,depth:0,exit:false,parent:null,next:null},cells=CELLS;const active=new setConstructor();
+ let depth=0,parent=null,stack=null,cells=CELLS;const active=new setConstructor();
  const charge=(parent,count,height)=>{if(parent){parent.cells+=count;if(height+1>parent.height)parent.height=height+1;}};
- while(stack){const frame=stack;stack=frame.next;const value=frame.value;
-  if(frame.exit){
-   apply(setDelete,active,[value]);
+ while(true){
+  if(--cells<0||depth>DEPTH)return false;
+  if(value===null||value===undefined||typeof value==='string'||typeof value==='number'||typeof value==='boolean')charge(parent,1,0);
+  else{
+   if(typeof value!=='object'||isProxy(value)||apply(setHas,active,[value]))return false;
+   if(noStack&&apply(compositionBoxedField.value,compositionTypes,[value]))return false;
+   const owner=apply(weakGet,owners,[value]),large=owner?null:apply(weakGet,largeSubtrees,[value]),saved=owner||large||apply(weakGet,subtrees,[value]);
+   if(saved&&(!noStack||(saved&1)===1)){const cost=saved>>>1,savedCells=cost%(CELLS+1),savedHeight=(cost/(CELLS+1))|0;if(savedCells-1>cells||savedHeight>DEPTH-depth){if(subtreeBudgetRefusals<9007199254740991)subtreeBudgetRefusals++;return false;}cells-=savedCells-1;charge(parent,savedCells,savedHeight);if(subtreeHits<9007199254740991)subtreeHits++;if(owner){if(ownerHits<9007199254740991)ownerHits++;}else if(large){if(largeHits<9007199254740991)largeHits++;}else if(smallHits<9007199254740991)smallHits++;}
+   else{
+    if(subtreeMisses<9007199254740991)subtreeMisses++;
+    let earlyNames=null;
+    if(noStack){const parent=prototype(value),array=isArray(value);if(parent!==objectPrototype&&parent!==null&&!(array&&parent===arrayPrototype))return false;if(array){const length=descriptor(value,'length');if(!length||!own(length,'value')||length.value>CELLS)return false;}earlyNames=keys(value);for(let at=0;at<earlyNames.length;at++)if(earlyNames[at]==='stack')return false;}
+    if(!apply(frozenField.value,Object,[value]))return false;
+    const proto=prototype(value),array=isArray(value);if(proto!==objectPrototype&&proto!==null&&!(array&&proto===arrayPrototype))return false;
+    const names=earlyNames??keys(value);if(own(value,'toJSON'))return false;
+    if(array){const field=descriptor(value,'length');if(!field||!own(field,'value'))return false;const length=field.value;if(length<0||length>cells||names.length!==length+1)return false;for(let at=0;at<length;at++)if(!own(value,at))return false;}
+    const total={cells:1,height:0};let length=0;
+    // Native ownKeys returns a fresh private dense array. Replace only existing
+    // own writable slots, after reading each original key. No slot is added,
+    // no inherited numeric setter runs, and every descriptor precedes descent.
+    for(let at=0;at<names.length;at++){const key=names[at];if(typeof key!=='string')return false;const field=descriptor(value,key);if(!field||!own(field,'value')||!field.enumerable&&!(array&&key==='length'))return false;if(!(array&&key==='length'))names[length++]=field.value;}
+    apply(setAdd,active,[value]);stack={value,depth,parent,total,children:names,length,at:0,next:stack};
+   }
+  }
+  // Only object continuations remain pending; scalar and saved-cost children
+  // use locals. Keep the same postorder weak records and partial warming.
+  let pending=false;
+  while(stack){
+   const frame=stack;
+   if(frame.at<frame.length){value=frame.children[frame.at++];depth=frame.depth+1;parent=frame.total;pending=true;break;}
+   stack=frame.next;
+   apply(setDelete,active,[frame.value]);
    const record=(frame.total.height*(CELLS+1)+frame.total.cells)*2+(noStack?1:0);
    if(frame.parent===null){
     if(ownerEntries>=OWNERS){owners=new weakConstructor();ownerEntries=0;if(subtreeRotations<9007199254740991)subtreeRotations++;}
-    apply(weakSet,owners,[value,record]);ownerEntries++;
+    apply(weakSet,owners,[frame.value,record]);ownerEntries++;
    }else if(frame.total.cells>=LARGE_CELLS){
     if(largeEntries>=LARGE_SUBTREES){largeSubtrees=new weakConstructor();largeEntries=0;if(subtreeRotations<9007199254740991)subtreeRotations++;}
-    apply(weakSet,largeSubtrees,[value,record]);largeEntries++;
+    apply(weakSet,largeSubtrees,[frame.value,record]);largeEntries++;
    }else{
     if(subtreeEntries>=SUBTREES){subtrees=new weakConstructor();subtreeEntries=0;if(subtreeRotations<9007199254740991)subtreeRotations++;}
-    apply(weakSet,subtrees,[value,record]);subtreeEntries++;
+    apply(weakSet,subtrees,[frame.value,record]);subtreeEntries++;
    }
    if(subtreeCaptures<9007199254740991)subtreeCaptures++;
-   charge(frame.parent,frame.total.cells,frame.total.height);continue;
+   charge(frame.parent,frame.total.cells,frame.total.height);
   }
-  if(--cells<0||frame.depth>DEPTH)return false;
-  if(value===null||value===undefined||typeof value==='string'||typeof value==='number'||typeof value==='boolean'){charge(frame.parent,1,0);continue;}
-  if(typeof value!=='object'||isProxy(value)||apply(setHas,active,[value]))return false;
-  if(noStack&&apply(compositionBoxedField.value,compositionTypes,[value]))return false;
-  const owner=apply(weakGet,owners,[value]),large=owner?null:apply(weakGet,largeSubtrees,[value]),saved=owner||large||apply(weakGet,subtrees,[value]);
-  if(saved&&(!noStack||(saved&1)===1)){const cost=saved>>>1,savedCells=cost%(CELLS+1),savedHeight=(cost/(CELLS+1))|0;if(savedCells-1>cells||savedHeight>DEPTH-frame.depth){if(subtreeBudgetRefusals<9007199254740991)subtreeBudgetRefusals++;return false;}cells-=savedCells-1;charge(frame.parent,savedCells,savedHeight);if(subtreeHits<9007199254740991)subtreeHits++;if(owner){if(ownerHits<9007199254740991)ownerHits++;}else if(large){if(largeHits<9007199254740991)largeHits++;}else if(smallHits<9007199254740991)smallHits++;continue;}
-  if(subtreeMisses<9007199254740991)subtreeMisses++;
-  let earlyNames=null;
-  if(noStack){const parent=prototype(value),array=isArray(value);if(parent!==objectPrototype&&parent!==null&&!(array&&parent===arrayPrototype))return false;if(array){const length=descriptor(value,'length');if(!length||!own(length,'value')||length.value>CELLS)return false;}earlyNames=keys(value);for(let at=0;at<earlyNames.length;at++)if(earlyNames[at]==='stack')return false;}
-  if(!apply(frozenField.value,Object,[value]))return false;
-  const proto=prototype(value),array=isArray(value);if(proto!==objectPrototype&&proto!==null&&!(array&&proto===arrayPrototype))return false;
-  const names=earlyNames??keys(value);if(own(value,'toJSON'))return false;
-  if(array){const field=descriptor(value,'length');if(!field||!own(field,'value'))return false;const length=field.value;if(length<0||length>cells||names.length!==length+1)return false;for(let at=0;at<length;at++)if(!own(value,at))return false;}
-  const total={cells:1,height:0};let first=null,last=null;
-  for(let at=0;at<names.length;at++){const key=names[at];if(typeof key!=='string')return false;const field=descriptor(value,key);if(!field||!own(field,'value')||!field.enumerable&&!(array&&key==='length'))return false;if(!(array&&key==='length')){const child={value:field.value,depth:frame.depth+1,exit:false,parent:total,next:null};if(last)last.next=child;else first=child;last=child;}}
-  apply(setAdd,active,[value]);const exit={value,depth:frame.depth,exit:true,parent:frame.parent,total,next:stack};
-  if(last){last.next=exit;stack=first;}else stack=exit;
+  if(!pending)return true;
  }
- return true;
 }
 function retire(state){if(!state.active)return;apply(mapDelete,storage,[state]);retainedBytes-=state.bytes;entries--;state.active=false;state.encoded=null;if(evictions<9007199254740991)evictions++;}
 function remember(state){apply(mapSet,storage,[state,state]);retainedBytes+=state.bytes;entries++;}
