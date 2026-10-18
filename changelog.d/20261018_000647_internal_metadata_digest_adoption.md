@@ -5,3 +5,6 @@
 - Add eight complete receiving cases with source/CST inverses, callback and native-error comparisons, budgets, private Clone refusals and full original provider/affinity parents. This source candidate is unrun; no performance or deadline repair is claimed.
 - Add an independent native Hash frame observation in case 6, retaining complete old/new raw stacks before assertions. Check only hash → metadataDigest → observeHashFrames, or the documented native-inlining form hash → observeHashFrames; existing tapes, comparisons, eight titles and deadlines remain unchanged. Runtime remains unrun.
 - Keep every frame-looking raw line, including opaque alias/malformed frames, in the same parser used by actual stack capture and additive case-6 regression examples. Unsupported intermediate frames refuse instead of being mistaken for native inlining; no full-stack normalization or runtime claim is added.
+### Fixed
+
+- Move the misplaced closing parenthesis after the JSON-error control's value factory so all eight receiving cases can parse. Preserve every subject, assertion and deadline; JavaScript syntax checking and whole-file receiving remain required.

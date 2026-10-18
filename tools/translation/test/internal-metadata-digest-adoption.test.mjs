@@ -224,7 +224,7 @@ test('complete JSON bigint Buffer and native hash observations remain fresh exac
   const before=get(JSON,'stringify'),create=get(Object,'create');append(restore,()=>{define(JSON,'stringify',{__proto__:null,...before});define(Object,'create',{__proto__:null,...create});});
   if(mode==='three'||mode==='undefined')define(JSON,'stringify',{__proto__:null,...before,value:mode==='three'?3:undefined});
   else define(JSON,'stringify',{__proto__:null,configurable:true,get(){record({operation:'stringify-get'});if(mode==='getter-throws')throw new TypeError('caller JSON getter refuses');if(mode==='getter-three')return 3;if(mode==='getter-replaces-create')define(Object,'create',{__proto__:null,...create,value(...args){record({operation:'JSON-getter-create',receiver:this===Object});return apply(create.value,this,args);}});return before.value;}});
- }),()=>({a:'λ',b:3n})});
+ },()=>({a:'λ',b:3n}))});
  retain('complete-JSON-noncallable-native-diagnostics',{jsonErrors});for(const row of jsonErrors)assert.deepEqual(row.pair.current,row.pair.old);
  retain('complete-serialization-hashes',{rows,dynamic,stringKeys,toJSON,first,second,ordered});for(const row of rows)assert.deepEqual(row.current,row.old);assert.deepEqual(dynamic.current,dynamic.old);assert.deepEqual(stringKeys.current,stringKeys.old);for(const row of toJSON)assert.deepEqual(row.pair.current,row.pair.old);same(second);same(ordered);assert.notEqual(first,second.current.value);assert.notEqual(second.current.value,ordered.current.value);assert.equal(rows[0].current.tape.filter(row=>row.operation==='update').length,2);
  // Existing byte/callback comparisons above remain unchanged. Check only the
