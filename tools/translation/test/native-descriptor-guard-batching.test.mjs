@@ -62,25 +62,30 @@ function legacyFreeze(value){if(value&&typeof value==='object'){Object.values(va
 function valueModel(value){let cells=0,height=0;const active=new Set();function visit(input,depth){cells++;height=Math.max(height,depth);if(input&&typeof input==='object'){assert.equal(active.has(input),false);active.add(input);for(const key of ownKeys(input)){if(Array.isArray(input)&&key==='length')continue;const field=get(input,key);assert.ok(field&&Object.hasOwn(field,'value'));visit(field.value,depth+1);}active.delete(input);}}visit(value,0);return {cells,height};}
 function hashTrial(run){const update=get(Hash.prototype,'update'),digest=get(Hash.prototype,'digest'),tape=[];let result;try{define(Hash.prototype,'update',{...update,value:function(...args){tape.push({op:'update',args:args.map(value=>Buffer.isBuffer(value)?{base64:value.toString('base64')}:value),sameReceiver:this instanceof Hash});return apply(update.value,this,args);}});define(Hash.prototype,'digest',{...digest,value:function(...args){const value=apply(digest.value,this,args);tape.push({op:'digest',args,value:Buffer.isBuffer(value)?{base64:value.toString('base64')}:value});return value;}});result=outcome(run);}finally{define(Hash.prototype,'update',update);define(Hash.prototype,'digest',digest);}return {result:finish(result),tape};}
 
-function typeOwnerRebinding(f,retain){
- const sync=builtinModule.syncBuiltinESMExports,savedTypes=get(util,'types'),root=globalThis,savedGlobal=get(root,'globalThis');
+function typeOwnerRebinding(f,retain,control=null){
+ const syntheticInstallNoop=control!==null,sync=control===null?builtinModule.syncBuiltinESMExports:control.sync,savedTypes=get(util,'types'),root=globalThis,savedGlobal=get(root,'globalThis');
  assert.equal(Object.hasOwn(savedTypes,'value'),true);assert.equal(savedTypes.value,types);
- if(typeof sync!=='function'){retain('actual-types-owner-rebinding-unavailable',{reason:'syncBuiltinESMExports is unavailable',qualified:false,authority:false});return;}
+ if(typeof sync!=='function'){retain('actual-types-owner-rebinding-unavailable',{reason:'syncBuiltinESMExports is unavailable',qualified:false,authority:false});typeOwnerRebinding(f,retain,{install(){},sync(){}});return;}
  for(const mode of ['proxy','null','undefined','foreign'])for(const [name,old,current]of f.pairs){
   const run=guard=>{const tape=[],baseline=f.common.testSnapshot().collections;let replacement,rebound=false,result;
    if(mode==='proxy')replacement=new Proxy(savedTypes.value,{getOwnPropertyDescriptor(target,key){tape.push({op:'types-descriptor',key:typeof key==='symbol'?String(key):key,sameTarget:target===savedTypes.value});return get(target,key);},get(target,key,receiver){tape.push({op:'types-get',key:typeof key==='symbol'?String(key):key,sameTarget:target===savedTypes.value,sameReceiver:receiver===replacement});return Reflect.get(target,key,receiver);}});
    else if(mode==='null')replacement=null;else if(mode==='undefined')replacement=undefined;else{replacement=Object.create(null);define(replacement,'isProxy',get(savedTypes.value,'isProxy'));}
-   try{define(util,'types',{...savedTypes,value:replacement});apply(sync,builtinModule,[]);rebound=types===replacement;
+   try{if(control===null)define(util,'types',{...savedTypes,value:replacement});else control.install();apply(sync,builtinModule,[]);rebound=types===replacement;
     define(root,'globalThis',{...savedGlobal,value:new Proxy(root,{getOwnPropertyDescriptor(target,key){tape.push({op:'root-descriptor',key:typeof key==='symbol'?String(key):key,sameTarget:target===root});return get(target,key);}})});
     result=outcome(guard);
-   }finally{define(root,'globalThis',savedGlobal);define(util,'types',savedTypes);apply(sync,builtinModule,[]);}
+   }finally{define(root,'globalThis',savedGlobal);define(util,'types',savedTypes);if(typeof builtinModule.syncBuiltinESMExports==='function')apply(builtinModule.syncBuiltinESMExports,builtinModule,[]);}
    assert.equal(types,savedTypes.value);assert.equal(fieldsEqual(get(util,'types'),savedTypes),true);assert.equal(fieldsEqual(get(root,'globalThis'),savedGlobal),true);
-   const after=f.common.testSnapshot().collections,actual={mode,rebound,qualified:rebound,result:finish(result),tape,collections:after-baseline,typeOwnerAfterRestore:f.common.testTypeOwnerFacts()};
-   if(rebound)assert.equal(actual.collections,0);return actual;
+   const after=f.common.testSnapshot().collections,actual={mode,rebound,qualified:rebound&&!syntheticInstallNoop,syntheticInstallNoop,result:finish(result),tape,collections:after-baseline,typeOwnerAfterRestore:f.common.testTypeOwnerFacts()};
+   return actual;
   };
-  const before=run(old),actual=run(current);same(retain,'actual-types-owner-'+mode+'-'+name,before,actual);
+  const before=run(old),actual=run(current);retain('actual-types-owner-'+mode+'-'+name,{before,current:actual});
+  if(syntheticInstallNoop){for(const row of [before,actual]){assert.equal(row.rebound,false);assert.equal(row.qualified,false);}}
+  const observable=row=>({mode:row.mode,rebound:row.rebound,qualified:row.qualified,syntheticInstallNoop:row.syntheticInstallNoop,result:row.result,tape:row.tape,typeOwnerAfterRestore:row.typeOwnerAfterRestore});
+  assert.deepEqual(observable(actual),observable(before));assert.equal(before.collections,0);
+  assert.equal(actual.collections,actual.rebound?0:actual.typeOwnerAfterRestore.captureAvailable&&actual.typeOwnerAfterRestore.sameOwner?4:0);
  }
  compareGuards(f,retain,'after-complete-types-owner-restoration');
+ if(!syntheticInstallNoop)typeOwnerRebinding(f,retain,{install(){},sync(){}});
 }
 
 test('fresh fixed-owner collections preserve old booleans and never initialize expected plans',async(t,retain)=>{
