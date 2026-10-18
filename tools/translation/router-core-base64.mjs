@@ -70,7 +70,7 @@ const result={kind:'named',path:[monomorphicTypeName('Result',[vector,errorType]
 const slice=JSON_CONTRACTS.find(row=>row.id==='serde_json_from_slice').params[0];
 const operationsData=[
  ['standard_encode_bytes',slice],['standard_encode_text',SOURCE_STR],['standard_encode_owned_bytes',vector],['standard_no_pad_encode_text',SOURCE_STR],
- ['url_no_pad_encode_bytes',slice],['url_no_pad_encode_owned_bytes',vector],['url_no_pad_encode_owned_text',SOURCE_STRING],['url_no_pad_encode_array32',{kind:'array',element:byte,rustFixedArray:{length:32},rustSourceType:true}],
+ ['url_no_pad_encode_bytes',slice],['url_no_pad_encode_owned_bytes',vector],['url_no_pad_encode_owned_text',SOURCE_STRING],['url_no_pad_encode_array32',{kind:'array',element:byte,rustFixedArray:{length:32},rustOwnership:{kind:'value',source:'array'},rustSourceType:true}],
  ['standard_decode_text',SOURCE_STR],['standard_decode_owned_text',SOURCE_STRING],['standard_no_pad_decode_text',SOURCE_STR],['url_no_pad_decode_text',SOURCE_STR],['url_no_pad_decode_owned_text',SOURCE_STRING],
 ];
 const displayContract={id:'router_core_base64_error_display',jsExport:'base64ErrorText',rustPath:[],kind:'private-formatter',family:'base64',params:[errorType],ret:SOURCE_STRING,async:false,pure:true,constEligible:false,requiresRefinement:'private-native-base64-error-display',assumptions:['Borrow the actual native Base64Error only inside a genuine source-checked owned function and original source-backed format template.','Native Display and Debug text coincide, but general Rust Debug format syntax remains independently refused.']};
@@ -152,7 +152,7 @@ function inputKind(type){
  if(type.kind==='string'&&!type.rustReference&&type.rustOwnership?.source==='str'&&type.rustOwnership.kind==='borrowed'&&!type.patternOwnershipRefusal)return 'text';
  if(type.kind==='string'&&!type.rustReference&&type.rustOwnership?.source==='String'&&type.rustOwnership.kind==='owned'&&['owned String source type','ownership-bearing String type','owned String formatting',undefined].includes(type.patternOwnershipRefusal))return 'owned-text';
  if(type.kind==='array'&&actualByte(type.element)){
-  if(type.rustFixedArray?.length===32&&!type.rustReference&&!type.rustOwnership&&!type.patternOwnershipRefusal&&type.rustSourceType===true)return 'array32';
+  if(type.rustFixedArray?.length===32&&!type.rustReference&&same(type.rustOwnership,{kind:'value',source:'array'})&&!type.patternOwnershipRefusal&&type.rustSourceType===true)return 'array32';
   if(!type.rustReference&&!type.rustFixedArray&&type.rustOwnership?.kind==='owned'&&type.rustOwnership.source==='Vec')return 'owned-bytes';
   const p=type.rustReference?.pointee;if(type.rustReference?.kind==='shared'&&type.patternOwnershipRefusal==='shared source reference'&&type.rustOwnership?.kind==='borrowed'&&type.rustOwnership.source==='slice'&&type.rustSourceType===true&&!type.rustFixedArray&&type.rustReference.tokens?.[0]?.value==='&'&&p?.kind==='array'&&p.rustSourceType===true&&!p.rustReference&&!p.rustFixedArray&&!p.patternOwnershipRefusal&&p.rustOwnership?.kind==='borrowed'&&p.rustOwnership.source==='slice'&&actualByte(p.element))return 'bytes';
  }return null;
@@ -225,6 +225,10 @@ function spanSame(a,b){if(!a||!b||typeof a!=='object'||typeof b!=='object')retur
 export function prepareRouterCoreBase64Emission(emitter,entry,Checker){
  const selected=nodes(entry.body);if(!selected.length)return null;guard();const baseline=snapshot({name:entry.fullName,params:entry.params,ret:entry.ret,body:entry.body}),data=()=>snapshot([...emitter.program.declarations.values()].filter(row=>row.k==='data')),layoutsBefore=data(),verifier=new Checker('Rust',[]);requireOriginalPrimitiveTryFromChecker(verifier);
  verifier.program({language:'Rust',items:layoutsBefore.map(row=>({...row,name:row.fullName})),main:null});
+ // Layout validity is independent of transport custody. Refuse a changed
+ // native schema even if an earlier await allowed its weak receipt to expire;
+ // successful calls still repeat all original private/source/layout joins.
+ errorLayout(verifier,selected[0].span,emitter.program);
  for(const call of selected){const reference=apply(mapGet,transport,[call.compatibilityCore?.sourceTransport]),record=reference&&apply(deref,reference,[]);if(!record)fail('copied or expired transport receipt');current(record.receipt);const wanted=snapshot(retargetCheckedCallback(record.function,emitter.program)),actual=snapshot({name:entry.fullName,params:entry.params,ret:entry.ret,body:entry.body});
   if(entry.fullName!==record.function.name&&entry.fullName!=='rp_'+Buffer.from(record.function.name).toString('hex')||!same(snapshot(alphaTree({params:actual.params,ret:actual.ret,body:actual.body})),snapshot(alphaTree({params:wanted.params,ret:wanted.ret,body:wanted.body})))||!spanSame(actual,wanted))fail('complete original function or spans changed');errorLayout(verifier,call.span,emitter.program);requireBorrowedLayouts(record.layouts,verifier,emitter.program,snapshot(retargetCheckedCallback(record.roots,emitter.program)));guard();
  }
