@@ -44,3 +44,20 @@ authority. Actual source/CST authentication, serialized and reparsed meta,
 independent semantic checks, original deadlines, generation freshness and the
 complete same-head JavaScript gate remain required. Rust runs in CI only after
 every required JavaScript stage passes for that same SHA.
+
+For the fixed 645 append, generate the historical test-data inverse before
+installing either proposal:
+
+```sh
+python3 tools/translation/test/refresh-private-parser-host-append-645.py \
+  --root /absolute/path/to/router \
+  --profile-proposal /private/tmp/new-host-profile-proposal/proposal.json \
+  --output /private/tmp/new-host-test-data-proposal
+```
+
+This second proposal joins complete current Git/source bytes, checks the exact
+original host prefix and emits one complete append inverse plus changes to the
+two historical data helpers. Their complete test callbacks and deadlines remain
+unchanged. Independently review and install both proposals together; the Python
+proposal itself runs no JavaScript, Rust or source-admission check. It is scoped
+to this explicitly reviewed append and refuses a different historical prefix.
