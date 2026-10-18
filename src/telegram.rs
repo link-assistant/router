@@ -246,4 +246,14 @@ mod tests {
         assert_eq!(update_id(&json!({"update_id": 41})) + 1, 42);
         assert_eq!(update_id(&json!({})), 0);
     }
+
+    #[test]
+    fn update_ids_preserve_signed_domain_and_refuse_other_json_numbers() {
+        for expected in [i64::MIN, -1, 0, 1, i64::MAX] {
+            assert_eq!(update_id(&json!({"update_id":expected})), expected);
+        }
+        for update in [json!(null), json!([]), json!({}), json!({"update_id":null}), json!({"update_id":true}), json!({"update_id":"1"}), json!({"update_id":[]}), json!({"update_id":1.0}), json!({"update_id":u64::MAX})] {
+            assert_eq!(update_id(&update), 0, "{update}");
+        }
+    }
 }

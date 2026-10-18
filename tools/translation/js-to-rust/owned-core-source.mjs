@@ -429,6 +429,24 @@ function checkFunction(context,path,declaration,analysis){
   fail('unimplemented expression '+ts.SyntaxKind[node.kind]);
  }
  let resultType=null,resultRoot=null,resultOnlyAbsent=true;
+ // A literal supplies a value, never a signed-domain permit. Only a genuine
+ // Some payload from the existing i64 reader can establish this local join.
+ const scalarReturnValues=[];
+ const i64Payload=value=>value.kind==='option-field'&&value.type==='i64'&&value.value.type==='i64-option';
+ const fittingLiteral=value=>{
+  if(value.kind!=='integer'||value.type!=='usize'||typeof value.value!=='string')return false;
+  const text=value.value;if(!text.length||text.length>19||text.length>1&&text[0]==='0')return false;
+  for(let at=0;at<text.length;at++)if(text[at]<'0'||text[at]>'9')return false;
+  return text.length<19||text<='9223372036854775807';
+ };
+ function joinI64LiteralReturn(value){
+  if(resultRoot!==null||value.root!==null)return;
+  if(resultType==='i64'&&fittingLiteral(value)&&scalarReturnValues.some(i64Payload)){value.type='i64';return;}
+  if(resultType==='usize'&&i64Payload(value)&&scalarReturnValues.length&&scalarReturnValues.every(fittingLiteral)){
+   for(const literal of scalarReturnValues)literal.type='i64';resultType='i64';
+  }
+ }
+
  function block(statements,scope,depth){
   const body=[];let terminated=false;
   for(const statement of statements){
@@ -454,7 +472,8 @@ function checkFunction(context,path,declaration,analysis){
     if(!['json','json-ref','bool','str','usize','text-owned','base64-result','u64','i64'].includes(value.type)&&!ownedJsonOptionalPayload(value.type))fail('unsupported owned result');
     if(value.type==='json-ref'&&!params.some(param=>param.name===value.root&&['json-ref','map-ref','json-option-ref'].includes(param.type)))fail('returned local loan');
     if(ownedJsonBorrowed(value.type)&&value.root&&!params.some(param=>param.name===value.root&&(['json-ref','map-ref','str','json-option-input'].includes(param.type)||ownedJsonBorrowed(param.type))))fail('returned local optional loan');
-    if(resultType!==null&&(resultType!==value.type||resultRoot!==value.root&&!(ownedJsonOptionalPayload(value.type)&&(value.kind==='option-none'||resultOnlyAbsent))))fail('return domains differ');resultType=value.type;if(value.kind!=='option-none'){resultRoot=value.root;resultOnlyAbsent=false;}body.push({kind:'return',value});terminated=true;
+    joinI64LiteralReturn(value);
+    if(resultType!==null&&(resultType!==value.type||resultRoot!==value.root&&!(ownedJsonOptionalPayload(value.type)&&(value.kind==='option-none'||resultOnlyAbsent))))fail('return domains differ');resultType=value.type;if(value.kind!=='option-none'){resultRoot=value.root;resultOnlyAbsent=false;}scalarReturnValues.push(value);body.push({kind:'return',value});terminated=true;
    }else if(ts.isIfStatement(statement)&&ts.isBlock(statement.thenStatement)&&statement.elseStatement&&ts.isBlock(statement.elseStatement)){
     const cond=expression(statement.expression,scope,depth+1);if(cond.type!=='bool')fail('nonboolean condition');
     const a=refine(branchScope(scope),cond,true),b=refine(branchScope(scope),cond,false),yes=block(statement.thenStatement.statements,a,depth+1),no=block(statement.elseStatement.statements,b,depth+1);

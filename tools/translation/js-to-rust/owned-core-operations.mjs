@@ -165,7 +165,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
    case 'variable':if(rust&&value.type==='text-owned')return borrowOwned?'&'+rustName(value.name):rustName(value.name)+'.to_owned()';return rust?(value.type==='json'?(borrowOwned?'&'+rustName(value.name):'__ro_copy(&'+rustName(value.name)+')'):rustName(value.name)):value.name;
    case 'string':return rust?rustString(value.value):JSON.stringify(value.value);
    case 'bool':return String(value.value);
-   case 'integer':return rust?value.value+'_u64':value.value+'n';
+   case 'integer':return rust?value.value+(value.type==='i64'?'_i64':'_u64'):value.value+'n';
    case 'not':return '(!'+expr(value.value)+')';
    case 'binary':return '('+expr(value.left)+' '+(rust?({'===':'==','!==':'!='}[value.op]??value.op):value.op)+' '+expr(value.right)+')';
    case 'choose':return rust?'(if '+expr(value.cond)+' { '+expr(value.then)+' } else { '+expr(value.else)+' })':'('+expr(value.cond)+' ? '+expr(value.then)+' : '+expr(value.else)+')';
