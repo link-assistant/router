@@ -138,6 +138,11 @@ function compositionIntrinsics(){
 }
 const compositionReceiver=qualified?JSON:null;
 const compositionStringify=qualified?descriptor(compositionReceiver,'stringify').value:null;
+// Primitive property lookup uses the realm intrinsic String prototype, not
+// the mutable global String binding. These private native captures never escape.
+const shortQuotationStringPrototype=qualified?prototype(''):null;
+const shortQuotationChar=qualified?descriptor(shortQuotationStringPrototype,'charCodeAt'):null;
+const shortQuotationNative=!!(qualified&&shortQuotationChar&&own(shortQuotationChar,'value')&&native(shortQuotationChar.value,'charCodeAt'));
 // One existing bounded byte-store instance serves both proof consumers.
 // Separate per-factory stores would duplicate shared chunks and evict them.
 const encodeSyntaxSubstrate=createPrivateFrozenJsonCache();
@@ -194,7 +199,16 @@ export function createPrivateFrozenJsonComposer(){
     const nativeUnits=apply(compositionStringify,compositionReceiver,[value]).length;
     return nativeUnits<=limit?nativeUnits:-1;
    }
-   for(let at=0;at<value.length;at++){
+   let nativeShort=false;
+   if(shortQuotationNative&&typeof value==='string'&&value.length>0&&value.length<=256&&typeof limit==='number'&&limit>=0&&limit<=COMPOSITION_UNITS){
+    // Recheck the actual primitive owner after all earlier observed work.
+    // Native stringify of a primitive has no toJSON/property callbacks and
+    // at most 256*6+2 temporary UTF16 units; retain the old warming tail.
+    const field=descriptor(shortQuotationStringPrototype,'charCodeAt');
+    nativeShort=!!(field&&own(field,'value')&&field.value===shortQuotationChar.value&&field.writable===shortQuotationChar.writable&&field.enumerable===shortQuotationChar.enumerable&&field.configurable===shortQuotationChar.configurable);
+   }
+   if(nativeShort){units=apply(compositionStringify,compositionReceiver,[value]).length;if(units>limit)return -1;}
+   else for(let at=0;at<value.length;at++){
     // charCodeAt is already pinned by the fresh lexical intrinsic guard.
     const code=value.charCodeAt(at);
     if(code===34||code===92)units+=2;
