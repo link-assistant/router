@@ -9,6 +9,7 @@ import {assertReverseConcreteSourceHost} from './js-to-rust/concrete-source.mjs'
 import {transportConcreteSyntaxSources} from './concrete-syntax-meta.mjs';
 import {createRulePipeline} from './rule-pipeline.mjs';
 import {ownedJsonReaderOperation} from './js-to-rust/owned-json-source.mjs';
+import {prepareOwnedCorePairedTypes} from './js-to-rust/owned-core-paired-types.mjs';
 const fail=message=>{throw TypeError('Forward JSON reader definition: '+message);};
 const hash=value=>{assertReverseConcreteSourceHost();const result=createHash('sha256').update(value).digest('hex');assertReverseConcreteSourceHost();return result;};
 const roles=['Value','Number','MapEntry','Map_String_Value'];
@@ -102,7 +103,8 @@ export function prepareForwardJsonReaderPair(javascriptPath,javascript,typescrip
  assertReverseConcreteSourceHost();return {schema:'forward-json-reader-paired-source-data-v1',javascript:{path:javascriptPath,source:javascript,meta:batch.rows[0].meta},typescript:{path:typescriptPath,source:typescript,meta:batch.rows[1].meta},erasure:{source:erased,edits,wholeUndo:true},semanticAuthority:false,guardedReverseAdmission:false};
 }
 /** Called by the existing real checked project branch, never an issuer API. */
-export function prepareForwardJsonReaderDefinition({project,entry,checked,target,sourceModules,lower,index,transform}){
+export function prepareForwardJsonReaderDefinition({project,entry,checked,target,sourceModules,lower,index,transform,format}){
+ if(format!==undefined&&format!=='core-reader')fail('unknown explicit reader target format');
  const original=checked.declarations.get(entry.name),current=target.program.declarations.get(target.names.get(entry.name));
  const selected=entry.term==='fn'&&directReader(original),actual=directReader(current);if(!selected||!actual||selected.call.id!==actual.call.id)return null;
  const lowered=lower(entry),emittedReader=directReader(lowered.own);if(!emittedReader||emittedReader.call.id!==selected.call.id)fail('fresh lowered direct reader differs');
@@ -120,5 +122,30 @@ export function prepareForwardJsonReaderDefinition({project,entry,checked,target
  if(js.fn.parameters.length!==original.params.length||typed.fn.parameters.length!==original.params.length||!typed.fn.type||typed.fn.parameters.some(param=>!param.type))fail('complete checked parameter annotations absent');
  const pipeline=createRulePipeline([{phase:'language',rules:[{id:'forward-json-reader:complete-current-emitted-cst',apply:()=>({javascript,typescript})}]},{phase:'repository',rules:[{id:'forward-json-reader:export-only-whole-guarded-definition',apply:value=>({javascript:transform(value.javascript,[{start:js.fn.getStart(js.file),end:js.fn.getStart(js.file),replacement:'export '}],'JavaScript'),typescript:transform(value.typescript,[{start:typed.fn.getStart(typed.file),end:typed.fn.getStart(typed.file),replacement:'export '}],'TypeScript')})}]}]),result=pipeline.run(null),pair=prepareForwardJsonReaderPair(javascriptPath,result.value.javascript.after.source,typescriptPath,result.value.typescript.after.source);
  const source=parent.source.slice(entry.span.start,entry.span.end),identity=Buffer.from(JSON.stringify([project,entry.file,sourceHash,entry.name,entry.span]),'utf8').toString('hex');
- assertReverseConcreteSourceHost();return {row:{identity,name:entry.name,source:entry.file,sourceSha256:sourceHash,span:entry.span,original:{parent:parentId,source,sha256:hash(source)},javascriptPath,typescriptPath,target:mapping.target,canonicalAbi:'registered-json-reader-definition-v1',reader:selected.call.id,signature:{original:{params:original.params,ret:original.ret},target:{params:current.params,ret:current.ret},lowered:{params:lowered.own.params,ret:lowered.own.ret}},canonicalNames:{source:[...sourceNames],target:[...targetNames]},javascript:result.value.javascript,typescript:result.value.typescript,pair,trace:result.trace,semanticAuthority:false,guardedReverseAdmission:false,applicationEffectCompleteness:false,moduleStartupEquivalent:false},parent:{id:parentId,file:entry.file,source:parent.source,sha256:sourceHash}};
+ assertReverseConcreteSourceHost();const candidate={row:{identity,name:entry.name,source:entry.file,sourceSha256:sourceHash,span:entry.span,original:{parent:parentId,source,sha256:hash(source)},javascriptPath,typescriptPath,target:mapping.target,canonicalAbi:'registered-json-reader-definition-v1',reader:selected.call.id,signature:{original:{params:original.params,ret:original.ret},target:{params:current.params,ret:current.ret},lowered:{params:lowered.own.params,ret:lowered.own.ret}},canonicalNames:{source:[...sourceNames],target:[...targetNames]},javascript:result.value.javascript,typescript:result.value.typescript,pair,trace:result.trace,semanticAuthority:false,guardedReverseAdmission:false,applicationEffectCompleteness:false,moduleStartupEquivalent:false},parent:{id:parentId,file:entry.file,source:parent.source,sha256:sourceHash}};
+ return format==='core-reader'?directCoreReaderTarget(candidate,transform):candidate;
+}
+
+// A NEW repository representation, not deletion of checks from old JS. This
+// private function is reached only after the genuine fresh source/target/lower
+// checks above. Its output receives no authority from any public DATA field.
+function directCoreReaderTarget(candidate,transform){
+ const guarded=candidate.row,operation=ownedJsonReaderOperation(guarded.reader),arity=guarded.signature.original.params.length;
+ if(!operation||operation.args.length!==arity||arity<1||arity>2)fail('checked core reader signature changed');
+ const args=Array.from({length:arity},(_,at)=>'input'+at),preamble='import {__core_operation as core_reader} from "../runtime/json-runtime.mjs";\n';
+ const javascript=preamble+'function core_definition('+args.join(', ')+'){return core_reader('+args.join(', ')+');}\n';
+ const typescript=preamble+'function core_definition('+args.map((name,at)=>name+': Parameters<typeof core_reader>['+at+']').join(', ')+'): ReturnType<typeof core_reader>{return core_reader('+args.join(', ')+');}\n';
+ const ts=ownershipCompiler();
+ function bind(source,path,kind,language){
+  const file=ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,kind);if(file.parseDiagnostics.length||file.statements.length!==2)fail('new core reader template syntax');
+  const [imported,fn]=file.statements,leaf=ts.isImportDeclaration(imported)&&imported.importClause?.namedBindings&&ts.isNamedImports(imported.importClause.namedBindings)&&imported.importClause.namedBindings.elements;
+  if(!leaf||leaf.length!==1||leaf[0].propertyName?.text!=='__core_operation'||leaf[0].name.text!=='core_reader'||!ts.isFunctionDeclaration(fn)||fn.name?.text!=='core_definition'||fn.parameters.length!==arity||!fn.body||fn.body.statements.length!==1||!ts.isReturnStatement(fn.body.statements[0]))fail('new complete core reader template changed');
+  return transform(source,[{start:leaf[0].propertyName.getStart(file),end:leaf[0].propertyName.end,replacement:operation.name},{start:fn.getStart(file),end:fn.getStart(file),replacement:'export '},{start:fn.name.getStart(file),end:fn.name.end,replacement:guarded.target}],language);
+ }
+ const pipeline=createRulePipeline([
+  {phase:'language',rules:[{id:'checked-json-reader:complete-new-ABI-template',apply:()=>({javascript,typescript,operation:operation.name,arity,signature:guarded.signature,parameterCorrespondence:args.map((target,index)=>({source:guarded.signature.original.params[index].name,target,index}))})}]},
+  {phase:'repository',rules:[{id:'router-json-reader:bind-actual-core-import-and-definition',apply:value=>({...value,javascript:bind(value.javascript,guarded.javascriptPath,ts.ScriptKind.JS,'JavaScript'),typescript:bind(value.typescript,guarded.typescriptPath,ts.ScriptKind.TS,'TypeScript')})}]},
+ ]),result=pipeline.run(null),pair=prepareOwnedCorePairedTypes(guarded.javascriptPath,result.value.javascript.after.source,guarded.typescriptPath,result.value.typescript.after.source);
+ const identity=Buffer.from(JSON.stringify([guarded.identity,'direct-core-json-reader-definition-v1']),'utf8').toString('hex');
+ assertReverseConcreteSourceHost();return {parent:candidate.parent,row:{...guarded,identity,canonicalAbi:'registered-json-reader-core-definition-v1',targetFormat:'direct-shared-core-reader-v1',javascript:result.value.javascript,typescript:result.value.typescript,pair,trace:result.trace,parameterCorrespondence:result.value.parameterCorrespondence,retainedGuardedEmission:{javascript:guarded.javascript,typescript:guarded.typescript,pair:guarded.pair,trace:guarded.trace,signature:guarded.signature},oldGuardObservationEquivalent:false,newSourceRequiresIndependentReverseAdmission:true,semanticAuthority:false,moduleStartupEquivalent:false}};
 }

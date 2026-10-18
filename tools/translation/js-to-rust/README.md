@@ -658,3 +658,30 @@ module schema setup and guard statements. Parameterized guarded reverse
 admission, complete application coverage, startup equivalence and current
 generated freshness remain open. No public capability field, pair receipt or
 schema hash grants source, type, ownership or executable authority.
+
+### Explicit direct-core reader definition format
+
+`translateProjectOwnedCoreReaderDefinitions` is a separate fresh project
+transaction. It creates new definition-only wrappers for the eight directly
+checked reader calls using the actual shared-core import and its written
+`Parameters`/`ReturnType` domains. Source, target and lowered Rust signatures
+and complete canonical JSON layouts retain the same independent checks.
+Old default project outputs, literal definitions and the guarded-definition
+API remain unchanged.
+
+This format retains complete old guarded JS/TS, aliases, CST stages, signatures
+and mappings as separate data evidence. It does not strip guards from that
+program or claim the new wrappers preserve the old invalid-JS, guard or global
+observer contract. New wrappers use the existing registered JSON runtime's own
+validators and successful-resource ABI. Both source formats remain explicit.
+The current reverse checker must independently resolve every actual imported
+reader, paired type, input loan and complete body again after CST/meta
+serialization; descriptive target fields and saved evidence grant no permission.
+
+The actual owned-definition producer source generator now selects this explicit
+API. Its four generated modules must be produced, independently reviewed and
+installed through the existing source-proposal workflow before full generation;
+they are not patched by hand. A declaration count or isolated source proposal
+is not application coverage, current corpus freshness or startup equivalence.
+Optional public inputs, callback chains, arbitrary guarded modules and parsing
+remain separate open capabilities.

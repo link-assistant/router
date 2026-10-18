@@ -21,3 +21,8 @@ Keep the direct-reader source fixture's mutable Null view as a valid None
 observation: its actual layout guard does not require frozen containers.
 Descriptor/proxy and numeric-range refusal controls remain separate and exact.
 Keep the new case title precise about descriptor/layout and numeric guards.
+
+Add a separate checked direct-core reader definition target format, retaining
+complete guarded emissions as evidence. New source wrappers use the actual
+shared-core reader ABI and independently re-enter the existing reverse checker;
+old guarded/default outputs and their distinct observer contract stay intact.

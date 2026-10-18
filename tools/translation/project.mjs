@@ -568,8 +568,8 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
   });
   progress({stage:'project-serialize',state:'end',entry:options.entry});
   const checkedGeneratedMethodDeclarations=generatedMethods.map(entry=>{const own=checked.declarations.get(entry.name);return Object.freeze({source:entry.file,sourceSha256:sha256(graph.modules.find(module=>module.file===entry.file).source),name:entry.surface.impl.method,term:'generated-method',origin:'derive-invocation',originalDeclarationTerm:entry.originalDeclarationTerm,generator:entry.surface.impl.cloneSourceProof?'core::clone::Clone':'core::default::Default',span:Object.freeze({...entry.span}),project:options.entry,qualifiedName:entry.name,displayName:entry.displayName,receiver:entry.surface.impl.receiver,compilationProfile:graph.compilationProfile,signature:freezeMacroTree(structuredClone({params:own.params,ret:own.ret})),lower:lowerDeclaration(entry,entry.surface.impl.method)});});
-  if(ownedDefinitionMode===true){
-    const definitions=prepareForwardOwnedDefinitions({project:graph.entry,entries,checked,target,sourceModules:graph.modules,lower:entry=>lowerDeclaration(entry,entry.name.split('.').at(-1))({runtimeModule:'../runtime/effects.mjs'})});
+  if(ownedDefinitionMode===true||ownedDefinitionMode==='core-json-readers'){
+    const definitions=prepareForwardOwnedDefinitions({project:graph.entry,entries,checked,target,sourceModules:graph.modules,readerFormat:ownedDefinitionMode==='core-json-readers'?'core-reader':undefined,lower:entry=>lowerDeclaration(entry,entry.name.split('.').at(-1))({runtimeModule:'../runtime/effects.mjs'})});
     return {meta,javascript,typescript,executableDeclarations,checkedMethodDeclarations,checkedGeneratedMethodDeclarations,sourceScopes,ownedDefinitions:definitions};
   }
   return { meta, javascript, typescript, executableDeclarations, checkedMethodDeclarations, checkedGeneratedMethodDeclarations, sourceScopes };
@@ -656,3 +656,11 @@ const captureDeclarationRangeGroupedTokens = function captureDeclarationRange(su
   const state=Object.freeze({parent:surface,parentPath:Object.freeze([...module.path]),path:Object.freeze([...module.path]),range:Object.freeze({...actual}),digest:metadataDigest(surface)});
   declarationRanges.set(surface,state);return state;
 };
+
+// Explicit NEW definition-only shared-core target format. The existing project
+// and guarded owned-definition APIs retain their original output contracts.
+const coreReaderDefinitionRules=createRulePipeline([
+ {phase:'language',rules:[{id:'rust-project-core-readers:fresh-checked-language',apply:options=>compileProjectLanguage(options,'core-json-readers')}]},
+ {phase:'repository',rules:[{id:'rust-project-core-readers:explicit-owned-library-wrappers',apply:finalize=>finalize()}]},
+]);
+export function translateProjectOwnedCoreReaderDefinitions(options){return coreReaderDefinitionRules.run(options).value;}
