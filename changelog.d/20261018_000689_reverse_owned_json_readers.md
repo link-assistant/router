@@ -26,3 +26,5 @@ Add a separate checked direct-core reader definition target format, retaining
 complete guarded emissions as evidence. New source wrappers use the actual
 shared-core reader ABI and independently re-enter the existing reverse checker;
 old guarded/default outputs and their distinct observer contract stay intact.
+
+The guarded and direct-core identity fixtures now compare strict borrowed-node identity against the actual child stored in the input object. They explicitly retain the constructor-copy witness: json_macro_object copies the standalone String seed, while Null uses the shared singleton. This corrects fixture expectations without changing production readers, weakening alias checks, or qualifying the prior failed runs.
