@@ -1,7 +1,8 @@
 // Bounded actual builtin generator routes. Copy and Eq close source-selected associated
 // list; callback-valued routes remain source-bearing obligations, not guesses.
 import {createHash} from 'node:crypto';
-import {createPrivateFrozenJsonCache,createPrivateFrozenJsonComposer,privateFrozenJsonEqualHint} from './private-frozen-json.mjs';
+import {createPrivateFrozenJsonCache,privateFrozenJsonEqualHint} from './private-frozen-json.mjs';
+import {createPrivateNativeProofJsonSerializer as createPrivateFrozenJsonComposer} from './private-native-proof-json.mjs';
 import {createCompletedDataFreezer} from './private-data-freeze.mjs';
 import {originalBuiltinCopyOutputSyntax} from './builtin-copy-output-syntax.mjs';
 import {deriveFootprintOriginalContext,deriveFootprintOriginalModule,deriveFootprintHelperAttributeAt,isDeriveFootprintHelperAttributeProof} from './derive-footprints.mjs';

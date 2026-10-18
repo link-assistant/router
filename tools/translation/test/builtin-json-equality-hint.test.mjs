@@ -2,6 +2,7 @@
 import {translateProject} from '../project.mjs';
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
+import {legacyProofConsumerSource} from './fixtures/native-proof-json-format.mjs';
 import {readFileSync,writeFileSync,mkdtempSync,mkdirSync,rmSync} from 'node:fs';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
@@ -41,7 +42,7 @@ function originalEqualityStage(helper,retain){
  receipt.recovered=source;assert.equal(Buffer.byteLength(source),26923);assert.equal(hash(source),'50b2caa385c4234838b383d1106ee8bf23789f1d111cc6ecaacad836248ea16d');let replay=source;for(const rule of EQUALITY_LATER_SOURCE_EDITS)replay=once(replay,rule.before,rule.after);receipt.replayed=replay;assert.equal(replay,helper);return source;
 }
 async function modules(t,retain,{instrument=false}={}){
- const helper=readFileSync(new URL('private-frozen-json.mjs',base),'utf8'),consumer=readFileSync(new URL('builtin-derive-bang-footprints.mjs',base),'utf8');
+ const helper=readFileSync(new URL('private-frozen-json.mjs',base),'utf8'),consumer=legacyProofConsumerSource(readFileSync(new URL('builtin-derive-bang-footprints.mjs',base),'utf8'),retain);
  assert.equal(helper.split(marker).length,2);const historical=originalEqualityStage(helper,retain),beforeHelper=once(historical.slice(0,historical.indexOf(marker)),newImport,oldImport);
  assert.equal(Buffer.byteLength(beforeHelper),23438);assert.equal(hash(beforeHelper),'c6e2096b6f28e400265a5b5499419e60fb095148a2b0f8f90183af605c4a7544');
  const currentConsumerImport="import {createPrivateFrozenJsonCache,createPrivateFrozenJsonComposer,privateFrozenJsonEqualHint} from './private-frozen-json.mjs';";

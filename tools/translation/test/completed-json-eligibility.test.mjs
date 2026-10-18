@@ -1,6 +1,7 @@
 // Completed native freezing proves storage eligibility, never source authority.
 import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
+import {legacyProofConsumerSource} from './fixtures/native-proof-json-format.mjs';
 import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
@@ -21,6 +22,7 @@ const vectorDirectory=process.env.ROUTER_COMPLETED_JSON_ELIGIBILITY_VECTOR_DIR??
 function retain(name,value){mkdirSync(vectorDirectory,{recursive:true});writeFileSync(join(vectorDirectory,name+'.json.gz'),gzipSync(json(value)+String.fromCharCode(10)),{flag:'wx'});}
 const sourceRecords=[];
 function copy(source,origin,path,redirect=new Map()){
+ let formatData=null;if(origin.href===new URL('builtin-derive-bang-footprints.mjs',base).href||origin.href===new URL('builtin-debug-ast-route.mjs',base).href)source=legacyProofConsumerSource(source,(_kind,value)=>{formatData=value;});
  const changes=[];for(const match of source.matchAll(/^import\b[^\n]*?\bfrom\s+(['"])([^'"\n]+)\1;/gmu)){if(!match[2].startsWith('.'))continue;const original=match[1]+match[2]+match[1],start=match.index+match[0].lastIndexOf(original),resolved=new URL(match[2],origin).href;changes.push({start,end:start+original.length,original,replacement:json(redirect.get(resolved)??resolved)});}
  assert.equal([...source.matchAll(/^import\b/gmu)].length,[...source.matchAll(/^import\b[^\n]*?\bfrom\s+(['"])([^'"\n]+)\1;/gmu)].length);
  for(const match of source.matchAll(/\bimport\.meta\.url\b/gu))changes.push({start:match.index,end:match.index+match[0].length,original:match[0],replacement:json(origin.href)});
@@ -34,7 +36,7 @@ function copy(source,origin,path,redirect=new Map()){
  changes.sort((a,b)=>a.start-b.start);let result='',cursor=0;const relocations=[];
  for(const change of changes){assert.ok(change.start>=cursor);assert.equal(source.slice(change.start,change.end),change.original);result+=source.slice(cursor,change.start);const copiedStart=result.length;result+=change.replacement;relocations.push({...change,copiedStart,copiedEnd:result.length});cursor=change.end;}result+=source.slice(cursor);
  let reversed=result;for(const row of [...relocations].reverse()){assert.equal(reversed.slice(row.copiedStart,row.copiedEnd),row.replacement);reversed=reversed.slice(0,row.copiedStart)+row.original+reversed.slice(row.copiedEnd);}assert.equal(reversed,source);
- writeFileSync(path,result,{flag:'wx'});assert.equal(readFileSync(path,'utf8'),result);sourceRecords.push({origin:origin.href,target:pathToFileURL(path).href,source,copied:result,relocations,completeReverseReadback:true});return pathToFileURL(path).href;
+ writeFileSync(path,result,{flag:'wx'});assert.equal(readFileSync(path,'utf8'),result);sourceRecords.push({origin:origin.href,target:pathToFileURL(path).href,source,copied:result,relocations,completeReverseReadback:true,formatData});return pathToFileURL(path).href;
 }
 const pairs={};
 for(const which of ['old','current']){
