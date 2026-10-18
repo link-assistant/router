@@ -1,9 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {translateSource} from '../translate.mjs';
+import {translateProject} from '../project.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 
-const fixture=()=>translateSource('pub fn choose(value:bool)->u32{if value{3}else{7}}');
+const fixture=()=>{
+ const source='pub fn choose(value:bool)->u32{if value{3}else{7}}';
+ const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});
+ assert.deepEqual(result.meta.executable.filter(row=>row.term==='fn').map(row=>row.name),['choose']);
+ return result;
+};
 test('repository compiler strictly emits an independent target and preserves its original behavior',async()=>{
  const result=fixture();let executions=0;
  await verifyTypedTargets(result,api=>{assert.equal(api.choose(true),3n);assert.equal(api.choose(false),7n);executions++;},{childTimeoutMs:20000});
