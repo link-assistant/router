@@ -184,6 +184,19 @@ function hashTrial(implementation,mode){
 }
 // Complete native stacks stay separate. Derived frame names are checks only;
 // source locations and raw stack strings are never normalized or compared.
+// Unknown frame syntax remains an opaque frame; it cannot disappear and
+// falsely make hash/caller adjacent. Full raw strings and lines stay unchanged.
+function observedHashFrameOrder(rawStack){
+ const orderedFrames=[];
+ if(typeof rawStack==='string')for(const rawLine of rawStack.split('\n')){
+  if(!/^\s*at(?:\s|$)/u.test(rawLine))continue;
+  const match=/^\s*at ([^ (]+)(?: \(|$)/u.exec(rawLine);
+  append(orderedFrames,{name:match?match[1]:null,rawLine,parsed:match!==null});
+ }
+ const hashIndex=orderedFrames.findIndex(frame=>frame.name==='hash'),next=orderedFrames[hashIndex+1],after=orderedFrames[hashIndex+2];
+ const observedMode=hashIndex<0?'missing-hash':next?.name==='metadataDigest'&&after?.name==='observeHashFrames'?'metadataDigest-frame':next?.name==='observeHashFrames'?'native-inlined-metadataDigest':'unexpected-frame-order';
+ return {orderedFrames,hashIndex,observedMode};
+}
 function observeHashFrames(implementation){
  const before=get(Hash.prototype,'update'),observations=[];let result;
  try{
@@ -195,16 +208,7 @@ function observeHashFrames(implementation){
   result={value:implementation({a:{text:'λ😀'},b:7n})};
  }catch(error){result={error:{name:error?.name,message:error?.message,rawStack:error?.stack}};}
  finally{define(Hash.prototype,'update',{__proto__:null,...before});}
- const frames=observations.map(observation=>{
-  const orderedFrames=[];
-  if(typeof observation.rawStack==='string')for(const rawLine of observation.rawStack.split('\n')){
-   const match=/^\s*at ([^ (]+)(?: \(|$)/u.exec(rawLine);
-   if(match)append(orderedFrames,{name:match[1],rawLine});
-  }
-  const hashIndex=orderedFrames.findIndex(frame=>frame.name==='hash'),next=orderedFrames[hashIndex+1],after=orderedFrames[hashIndex+2];
-  const observedMode=hashIndex<0?'missing-hash':next?.name==='metadataDigest'&&after?.name==='observeHashFrames'?'metadataDigest-frame':next?.name==='observeHashFrames'?'native-inlined-metadataDigest':'unexpected-frame-order';
-  return {...observation,orderedFrames,hashIndex,observedMode};
- });
+ const frames=observations.map(observation=>({...observation,...observedHashFrameOrder(observation.rawStack)}));
  return {implementationName:implementation.name,result,observations:frames};
 }
 test('complete JSON bigint Buffer and native hash observations remain fresh exact and ordered',(_t,retain)=>{
@@ -235,6 +239,23 @@ test('complete JSON bigint Buffer and native hash observations remain fresh exac
   }
  }
  assert.equal(hashFrameObservations.current.result.value,hashFrameObservations.old.result.value);
+ // The actual capture and these independent source examples use one parser.
+ // No frame-looking line may vanish merely because its syntax is unfamiliar.
+ const frameExamples=[
+  {label:'native',rawStack:'Error: example\n    at hash (/source-links.mjs:13:39)\n    at metadataDigest (/source-links.mjs:53:10)\n    at observeHashFrames (/test.mjs:1:1)',mode:'metadataDigest-frame',frames:3},
+  {label:'native-inline',rawStack:'Error: example\n    at hash (/source-links.mjs:13:39)\n    at observeHashFrames (/test.mjs:1:1)',mode:'native-inlined-metadataDigest',frames:2},
+  {label:'alias-intermediate',rawStack:'Error: example\n    at hash (/source-links.mjs:13:39)\n    at unexpected [as wrapper] (/test.mjs:2:1)\n    at observeHashFrames (/test.mjs:1:1)',mode:'unexpected-frame-order',frames:3},
+  {label:'aliased-metadataDigest',rawStack:'Error: example\n    at hash (/source-links.mjs:13:39)\n    at metadataDigest [as wrapper] (/test.mjs:2:1)\n    at observeHashFrames (/test.mjs:1:1)',mode:'unexpected-frame-order',frames:3},
+  {label:'opaque-intermediate',rawStack:'Error: example\n    at hash (/source-links.mjs:13:39)\n    at <opaque runtime frame>\n    at observeHashFrames (/test.mjs:1:1)',mode:'unexpected-frame-order',frames:3},
+  {label:'empty-intermediate',rawStack:'Error: example\n    at hash (/source-links.mjs:13:39)\n    at\n    at observeHashFrames (/test.mjs:1:1)',mode:'unexpected-frame-order',frames:3},
+  {label:'duplicate-intermediate',rawStack:'Error: example\n    at hash (/source-links.mjs:13:39)\n    at metadataDigest (/source-links.mjs:53:10)\n    at metadataDigest (/source-links.mjs:54:10)\n    at observeHashFrames (/test.mjs:1:1)',mode:'unexpected-frame-order',frames:4},
+ ].map(example=>({...example,observation:observedHashFrameOrder(example.rawStack)}));
+ retain('complete-frame-parser-source-examples',frameExamples);
+ for(const example of frameExamples){
+  assert.equal(example.observation.observedMode,example.mode);assert.equal(example.observation.orderedFrames.length,example.frames);
+  assert.deepEqual(example.observation.orderedFrames.map(frame=>frame.rawLine),example.rawStack.split('\n').filter(line=>/^\s*at(?:\s|$)/u.test(line)));
+  if(['alias-intermediate','aliased-metadataDigest','opaque-intermediate','empty-intermediate'].includes(example.label)){assert.equal(example.observation.orderedFrames[1].name,null);assert.equal(example.observation.orderedFrames[1].parsed,false);}
+ }
 });
 
 function dependencyInputs(){const base=new URL('../../../',import.meta.url);return {manifest:readFileSync(new URL('Cargo.toml',base),'utf8'),lock:readFileSync(new URL('Cargo.lock',base),'utf8')};}
