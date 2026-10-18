@@ -10,7 +10,7 @@ import { translateSource, json, PIN, sha256 } from './translate.mjs';
 import {translateProjectOwnedCoreReaderDefinitions as translateProject} from './project.mjs';
 import {PRODUCTION_PROFILE,compilationProfile} from './cfg-profile.mjs';
 import { effectRuntimeAssets } from './effect-assets.mjs';
-import {hostRuntimeAssets} from './host-assets.mjs';
+import {hostRuntimeAssets,hostRuntimeAssetsNamedDataAliases} from './host-assets.mjs';
 import {deriveDependencyProfile} from './derive-dependencies.mjs';
 import {actualJsonCapabilityProfile} from './json-capabilities.mjs';
 import {trackedSource,sourceCorpusPaths,sourceCorpusText,assertSourceCorpusSelection} from './source-corpus.mjs';
@@ -99,7 +99,7 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
     expected.set(targets.meta, storage.text);for(const component of storage.components)expected.set(component.path,component.text);
     expected.set(targets.javascript, result.javascript); expected.set(targets.typescript, result.typescript);
     projects.push({ entry, status: 'partial', runtimeParity: false, sources: result.meta.sources.length, moduleEdges: result.meta.moduleEdges.length, moduleDiagnostics: result.meta.moduleDiagnostics.length, executableFunctions: result.meta.executable.filter(item => item.term === 'fn').length, executableConstants: result.meta.executable.filter(item => item.term === 'const').length, checkedMethods: result.meta.checkedMethods?.length ?? 0, checkedGeneratedMethods: result.meta.checkedGeneratedMethods?.length ?? 0, refused: result.meta.refused.length, unloweredItems: result.meta.unloweredItems.length, targets });
-    ownedProjects.push(packageOwnedDefinitions({result:result.ownedDefinitions,entry,expected,outputRoots,prefix,profile,inputs:ownedInputs,assets,hostAssets}));
+    ownedProjects.push(packageOwnedDefinitions({result:result.ownedDefinitions,entry,expected,outputRoots,prefix,profile,inputs:ownedInputs,assets,hostAssets:hostRuntimeAssetsNamedDataAliases()}));
     progress({stage:'project',state:'end',entry});
   }
   progress({stage:'standalone',state:'start',total:paths.length});
