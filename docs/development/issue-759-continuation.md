@@ -110,7 +110,19 @@ function/method denominators and all 17 Model refusal identities remain fixed.
 Both complete affected reviewer files then passed all 220 Node cases, including
 the six variant runtime goldens and strict TypeScript, within original case
 deadlines. The other two complete files passed all 54 cases in the initial run.
-The complete four-file Bun receiving run is still pending.
+The complete four-file shared-process Bun receiving run failed the unchanged
+3 GiB aggregate memory cap after 137.64 seconds (sampled peak 3.33 GB).
+A separate `--isolate` diagnostic also failed that cap after 187.39 seconds
+(sampled peak 3.23 GB). Neither result is a pass. Both retained complete raw
+reports; no test-name filter, reduced corpus, deadline increase or memory flag
+was adopted. A generated reverse-stage coordinator now copies the existing
+whole-file forward coordinator through explicit language/repository CST rules,
+retaining fresh sequential complete-file invocations, exact original arguments,
+all mandatory failures and full input/resource/raw receipts. Its receiving
+controls passed all 50 cases under Node, followed by 75 complete cases under
+Bun including the latest context, storage and language-layout regressions.
+The same 25 latest context/storage/layout cases passed the independent Node
+duration audit. The complete reverse corpus and full gate remain open.
 
 ## Work required in the next pull request
 

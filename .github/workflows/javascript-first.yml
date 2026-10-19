@@ -34,7 +34,9 @@ jobs:
       - run: npm ci --prefix scripts/ci --ignore-scripts
       - run: npm ci --prefix js --ignore-scripts
       - run: node scripts/sync-rust-assets.mjs --check
+      - run: node scripts/prepare-bun-reverse-files.mjs --check
       - run: node scripts/lint-js-first.mjs
+      - run: node --test --test-concurrency=1 scripts/test/run-bun-forward-files.test.mjs scripts/test/run-bun-reverse-files.test.mjs scripts/test/bun-reverse-inputs.test.mjs
       - run: node --test scripts/test/check-js-first-workflows.test.mjs
       - run: node --test scripts/test/check-js-first-local.test.mjs
       - run: node scripts/check-js-first-workflows.mjs
@@ -242,16 +244,18 @@ jobs:
           bun-version: '1.4.3'
       - run: npm ci --prefix js --ignore-scripts
       - run: node scripts/run-node-tests.mjs --outer-timeout-ms=900000 --test-concurrency=2 tools/translation/js-to-rust/test/*.test.mjs
-      - run: bun test tools/translation/js-to-rust/test/*.test.mjs
+      - run: node scripts/run-bun-reverse-files.mjs --output-root js/node_modules/.bun-reverse-files
       - run: node scripts/regenerate-js-first.mjs --check
       - run: node scripts/regenerate-js-first.mjs --owned-core-definitions --check
       - run: node scripts/regenerate-js-first.mjs --owned-core-definitions --profile-matrix --check
-      - name: Preserve complete Node deadline audit and raw streams
+      - name: Preserve complete Node deadline audit and Bun file receipts and raw streams
         if: ${{ always() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: node-case-deadlines-${{ github.job }}-${{ inputs.sha }}
-          path: js/node_modules/.node-case-deadlines/
+          path: |
+            js/node_modules/.node-case-deadlines/
+            js/node_modules/.bun-reverse-files/
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 7

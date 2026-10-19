@@ -181,7 +181,7 @@ test('both reverse translator engines must discover every current and future tes
       'node --test tools/translation/js-to-rust/test/translator.test.mjs',
       `node --test --test-concurrency=2 --test-name-pattern=one ${glob}`,
     ]],
-    [`bun test ${glob}`, ['bun test tools/translation/js-to-rust/test/translator.test.mjs', `bun test --test-name-pattern=one ${glob}`]],
+    ['node scripts/run-bun-reverse-files.mjs --output-root js/node_modules/.bun-reverse-files', ['bun test tools/translation/js-to-rust/test/translator.test.mjs', `bun test --test-name-pattern=one ${glob}`, 'node scripts/run-bun-reverse-files.mjs --test-name-pattern=one --output-root js/node_modules/.bun-reverse-files']],
   ]) {
     assert.ok(parse(baseline['javascript-first.yml']).jobs['reverse-translation'].steps.some(step => step.run === command));
     fails('javascript-first.yml', workflow => {

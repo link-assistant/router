@@ -74,7 +74,7 @@ test('corpus review requires complete Rust discovery and bounded ordinary output
 });
 function installDeadlineFixture(directory) {
   fs.mkdirSync(path.join(directory, 'scripts'), { recursive: true });
-  for (const name of ['run-node-tests.mjs', 'node-case-deadlines.mjs', 'node-case-deadline-reporter.mjs']) fs.copyFileSync(new URL(`../${name}`, import.meta.url), path.join(directory, 'scripts', name));
+  for (const name of ['run-node-tests.mjs', 'node-case-deadlines.mjs', 'node-case-deadline-reporter.mjs', 'run-bun-reverse-files.mjs', 'bun-file-resource.py']) fs.copyFileSync(new URL(`../${name}`, import.meta.url), path.join(directory, 'scripts', name));
   const dependencyDirectory = path.join(directory, 'js/node_modules');
   fs.mkdirSync(dependencyDirectory, { recursive: true });
   fs.symlinkSync(fs.realpathSync(new URL('../../js/node_modules/typescript', import.meta.url)), path.join(dependencyDirectory, 'typescript'), 'dir');
@@ -83,7 +83,7 @@ test('local reverse stage discovers a new failing test under both engines before
   const commands = stages.find(([id]) => id === 'reverse-translation')[1];
   assert.deepEqual(commands, [
     'node scripts/run-node-tests.mjs --outer-timeout-ms=900000 --test-concurrency=2 tools/translation/js-to-rust/test/*.test.mjs',
-    'bun test tools/translation/js-to-rust/test/*.test.mjs',
+    'node scripts/run-bun-reverse-files.mjs --output-root js/node_modules/.bun-reverse-files',
     'node scripts/regenerate-js-first.mjs --check',
     'node scripts/regenerate-js-first.mjs --owned-core-definitions --check',
     'node scripts/regenerate-js-first.mjs --owned-core-definitions --profile-matrix --check',
@@ -109,7 +109,9 @@ test('local reverse stage discovers a new failing test under both engines before
       const result = spawnSync(command, { cwd: directory, env: environment, shell: true, encoding: 'utf8', timeout: 10_000 });
       assert.ok(!result.error, result.error?.message);
       assert.notEqual(result.status, 0);
-      assert.match(result.stdout + result.stderr, /future test was discovered/);
+      const evidenceRoot = path.join(directory, 'js/node_modules/.bun-reverse-files');
+      const bunRaw = fs.existsSync(evidenceRoot) ? fs.readdirSync(evidenceRoot).flatMap(run => fs.readdirSync(path.join(evidenceRoot, run, 'evidence')).filter(name => name.endsWith('.raw.log')).map(name => fs.readFileSync(path.join(evidenceRoot, run, 'evidence', name), 'utf8'))).join('\n') : '';
+      assert.match(result.stdout + result.stderr + bunRaw, /future test was discovered/);
     }
   } finally { fs.rmSync(directory, { recursive: true, force: true }); }
 });
