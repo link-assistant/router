@@ -73,6 +73,8 @@ Assign work to isolated worktrees, keep ownership explicit and send draft commit
 
 For active issue #759, the user has given standing authorization for the designated push owner to push the coordinated repair batch and update its draft pull request without another approval request. Wait for the published head's entire CI cycle to finish, collect and handle every failure, and then publish the reviewed fixes promptly for fresh feedback. This authorization preserves the single publisher, honest failed/unrun evidence and same-SHA JavaScript gate before Rust execution.
 
+The user explicitly requested the 2026-10-19 checkpoint push and merge of PR #761, followed by a new continuation pull request. Record the remaining work in [the continuation ledger](issue-759-continuation.md), keep issue #759 open, and use normal repository merge protections. This checkpoint rollover does not certify complete translation or parity and does not unlock Rust CI before all required JavaScript stages pass for the same SHA.
+
 Every CI job or step that invokes Rust tools, including rustfmt, Clippy and rust-script, must depend on every required JavaScript stage for the same SHA. It must check the current head and strict parity, not accept an inventory-only result or a stamp from another SHA. Workflow structure checks guard bypass paths; they complement the behavioral tests. Publication belongs to the push gate owner, including PR updates. Preserve draft or blocked status when complete parity is unavailable.
 
 ## Keep local Rust exceptions bounded
