@@ -113,8 +113,10 @@ function role(type){
 function canonicalJson(type,names){return type?.kind==='data'&&names.get(type.name)==='serde_json.Value'&&!type.rustReference&&!type.rustOwnership&&!type.patternOwnershipRefusal&&!type.rustBorrowingUnresolved&&!type.rustGenericIdentityUnresolved;}
 function shifted(value,offset){return isArray(value)?value.map(child=>shifted(child,offset)):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).map(([name,child])=>[name,name==='span'?{start:child.start+offset,end:child.end+offset}:shifted(child,offset)])):value;}
 function sourceCalls(entry,parent){
- const evidence=originalParsedDeclarationEvidence(entry.surface);
- if(!evidence||evidence.sourcePath!==entry.file||evidence.sourceSha256!==hash(parent.source)||evidence.declarationSha256!==hash(parent.source.slice(entry.span.start,entry.span.end))||!same(evidence.declarationSpan,entry.span)||!same(evidence.checkedSpan,entry.globalSpan))fail('genuine full original parent association required');
+ const evidence=originalParsedDeclarationEvidence(entry.surface),checkedSpan=snapshot(ownData(entry.surface,'span'));
+ // Item spans include visibility/attributes; the parser's fn span starts only
+ // after those tokens. Both coordinate frames retain their actual private join.
+ if(!evidence||evidence.sourcePath!==entry.file||evidence.sourceSha256!==hash(parent.source)||evidence.declarationSha256!==hash(parent.source.slice(entry.span.start,entry.span.end))||!same(evidence.declarationSpan,entry.span)||!same(evidence.checkedSpan,checkedSpan)||evidence.sourceOffset!==entry.globalSpan.start-entry.span.start||evidence.sourceOffset!==entry.globalSpan.end-entry.span.end||checkedSpan.start<entry.globalSpan.start||checkedSpan.end>entry.globalSpan.end||checkedSpan.end<checkedSpan.start)fail('genuine full original parent association required');
  const calls=[];let cells=200000;
  function visit(node,depth=0){
   if(--cells<0||depth>160)fail('original call census budget');if(!node||typeof node!=='object')return;
