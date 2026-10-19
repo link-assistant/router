@@ -147,6 +147,15 @@ chunk, so retained ropes cannot keep every temporary row string alive. All
 original metadata, measured decoder code, malformed-input errors and limits
 remain fixed; these source changes need fresh complete receiving results.
 
+The flat-chunk source checkpoint passed all 17 JSON/codec Node cases, while the
+complete Bun lifecycle attempt still exceeded the unchanged memory cap. The
+follow-up emits complete source-map JSON rows into fixed byte/digest sinks,
+avoiding another whole 71 MB logical JSON string and buffer during restoration
+and inverse comparisons. The new whole helper file passed all three cases under
+Node; its independent native oracle retains every byte, property order, Unicode
+value and late-byte refusal. Full lifecycle, portable export and producer
+qualification remain pending for this source checkpoint.
+
 Both frozen historical fixture bodies are restored to their original pins.
 Receiving-only ordered CST substitutions adapt the TypeScript comparison
 loader, while the original native baseline keeps its logical filenames for

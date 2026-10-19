@@ -252,6 +252,7 @@ function staticCapture(root,rev,{nestedPackage=false}={}){
   if(at!==raw.length)staticFail('extra source batch bytes');return {files:rows,sources,sourceSetSha256:staticRowsDigest(rows)};
 }
 import {encodeStaticSourceStorage,decodeStaticSourceStorage} from './static-source-layout-storage.mjs';
+import {serializeSourceMapJson} from './source-map-json.mjs';
 function staticReadArchive(folder){
   const index=JSON.parse(decode(readFileSync(resolve(folder,'manifest.json'))));
   if(index.schema!=='router-static-source-lifecycle-v1'||index.archive!=='originals.json.gz'||!Number.isSafeInteger(index.rawBytes)||index.rawBytes<0||index.rawBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticFail('reviewed index differs');
@@ -302,7 +303,7 @@ export function prepareStaticSourceLifecycleProposal({root=resolve(dirname(fileU
       return {lineage};
     }}]},
     {phase:'repository',rules:[{id:'static-fixture.fixed-historical-universes-and-reversible-current-parents',apply:state=>({schema:'router-static-source-lifecycle-v1',cases:STATIC_SOURCE_LIFECYCLE_CASES,profiles,current:{producerRevision:provenanceRevision,files:fresh.files,sourceSetSha256:fresh.sourceSetSha256},lineage:state.lineage,sources:Object.fromEntries([...sources].map(([id,row])=>[id,{source:row.source,bytes:row.bytes,gitBlob:row.gitBlob,...(row.canonical?{canonical:row.canonical}:{})}])),authority:{namespace:false,dispatch:false,ownership:false,semantic:false,executable:false}})}]},
-  ]),result=pipeline.run(null),bundle={...result.value,trace:result.trace},raw=Buffer.from(JSON.stringify(bundle)+'\n');
+  ]),result=pipeline.run(null),bundle={...result.value,trace:result.trace},raw=serializeSourceMapJson(bundle);
   if(raw.length>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticFail('complete output byte bound');
   const stored=encodeStaticSourceStorage(bundle,raw),packed=gzipSync(stored.raw,{level:9,mtime:0}),index={schema:bundle.schema,archive:'originals.json.gz',rawBytes:stored.raw.length,rawSha256:hash(stored.raw),bytes:packed.length,sha256:hash(packed),...(stored.storage?{storage:stored.storage}:{}),profiles:profiles.map(({revision,files,sourceSetSha256})=>({revision,files:files.length,sourceSetSha256})),current:bundle.current.sourceSetSha256,trace:result.trace},notice='# Complete static source lifecycle fixtures\n\nTwo complete original Router Rust/Cargo source universes and separately captured current source parents. All original LICENSE terms apply. Historical revisions: '+revisions.join(', ')+'. Full source/Git blob/CST joins and reversible actual source evolution are data only: no namespace, dispatch, ownership, trait, semantic or execution authority. Current producer revision is provenance; exact full source rows determine freshness across compiler/asset-only commits.\n';
   const files=[{path:STATIC_SOURCE_PREFIX+'originals.json.gz',encoding:'base64',content:packed.toString('base64')},{path:STATIC_SOURCE_PREFIX+'manifest.json',encoding:'utf8',content:JSON.stringify(index,null,2)+'\n'},{path:STATIC_SOURCE_PREFIX+'NOTICE.md',encoding:'utf8',content:notice}].map(row=>({...row,bytes:Buffer.byteLength(row.content,row.encoding),sha256:hash(Buffer.from(row.content,row.encoding))}));
