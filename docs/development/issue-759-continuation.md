@@ -136,6 +136,17 @@ uncommitted compiler bytes. Current receiving qualification and complete
 regeneration remain open until rerun after the source checkpoint and export
 refresh. No original case, deadline or memory bound was changed.
 
+The next complete Node lifecycle run executed all eight cases successfully but
+remained red in the independent duration audit: its two-producer case took
+60,660.646 ms against the original 60,000 ms limit. A further full Bun lifecycle
+attempt remained red at the unchanged aggregate memory cap. The follow-up
+keeps syntax-only JSON validation distinct from canonicalization, avoiding
+unneeded numeric conversions, key sets and temporary scalar strings. Canonical
+node chunks now verify a complete UTF-16 inverse while flattening each bounded
+chunk, so retained ropes cannot keep every temporary row string alive. All
+original metadata, measured decoder code, malformed-input errors and limits
+remain fixed; these source changes need fresh complete receiving results.
+
 Both frozen historical fixture bodies are restored to their original pins.
 Receiving-only ordered CST substitutions adapt the TypeScript comparison
 loader, while the original native baseline keeps its logical filenames for

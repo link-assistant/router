@@ -92,7 +92,12 @@ function decodeCanonicalText(row){
  assert(safe(count)&&count>0&&count<=MAX_NODES&&Array.isArray(dictionary)&&dictionary.length>0&&dictionary.length<=count,'node/dictionary census bound');
  const pairs=new Set();for(const pair of dictionary){assert(Array.isArray(pair)&&pair.length===2&&pair.every(x=>typeof x==='string'&&x.length<=40),'exact bounded dictionary pair');const key=json(pair);assert(!pairs.has(key),'duplicate dictionary pair');pairs.add(key);}
  const reads=columnVarints(columns,count),nodeParts=[],bytes=Buffer.byteLength(row.source);let s16=0,s8=0,nextID=0,firstNode=null,pending='[';
- const emit=text=>{if(pending.length+text.length>65536){nodeParts.push(pending);pending='';}pending+=text;};
+ const flush=()=>{
+  // JSON string literals contain escaped lone surrogates. Verify the complete
+  // UTF-16 inverse before retaining a flat chunk rather than a long string rope.
+  const flat=Buffer.from(pending,'utf8').toString('utf8');assert(flat===pending,'complete literal node chunk differs');nodeParts.push(flat);pending='';
+ };
+ const emit=text=>{if(pending.length+text.length>65536)flush();pending+=text;};
  for(let at=0;at<count;at++){
   const id=reads[0].read(),d16=reads[1].read(),len16=reads[2].read(),extraStart=reads[3].read(),extraLength=reads[4].read(),distance=reads[5].read();
   assert(id<dictionary.length&&id<=nextID&&distance>0,'actual dictionary/parent reference');if(id===nextID)nextID++;
@@ -101,7 +106,7 @@ function decodeCanonicalText(row){
  }
  for(const read of reads)read.end();assert(nextID===dictionary.length,'all first-seen dictionary entries consumed');
  assert(json(firstNode)===json(['root','file',0,row.source.length,0,bytes,-1]),'exact root required');
- emit(']');nodeParts.push(pending);
+ emit(']');flush();
  // Emit every validated node in order without retaining a second full forest.
  // Header property order matches the original spread-and-overwrite serializer.
  const parts=['{'];let first=true;

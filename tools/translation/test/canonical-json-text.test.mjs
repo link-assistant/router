@@ -4,7 +4,8 @@ import {isCanonicalJsonText,assertJsonSyntax} from '../canonical-json-text.mjs';
 
 function native(source){try{return {value:JSON.stringify(JSON.parse(source))===source};}catch(error){return {error:{name:error.name,message:error.message}};}}
 function actual(source){try{return {value:isCanonicalJsonText(source)};}catch(error){return {error:{name:error.name,message:error.message}};}}
-function compare(sources){for(const source of sources)assert.deepEqual(actual(source),native(source),JSON.stringify(source));}
+function syntax(callback,source){try{callback(source);return {ok:true};}catch(error){return {name:error.name,message:error.message};}}
+function compare(sources){for(const source of sources){assert.deepEqual(actual(source),native(source),JSON.stringify(source));assert.deepEqual(syntax(assertJsonSyntax,source),syntax(JSON.parse,source),JSON.stringify(source));}}
 
 test('canonical primitive and nested data match the independent native JSON operation',()=>{
  const values=[null,true,false,0,-0,1,-1,1.5,1e-7,1e21,Number.MAX_VALUE,Number.MIN_VALUE,'','λ😀','\u0000\b\t\r\n"\\/','\ud800','\udfff',[],{},[1,true,null],{a:{b:[1,'x']}}];
@@ -64,7 +65,7 @@ test('deterministic generated values and lexical mutations match independent nat
 
 test('syntax-only validation retains native parsing of noncanonical and deeply nested data',()=>{
  const sources=['0','-0','1e0','1e400',' 1\n','{"a":1,"a":2}','{"2":1,"1":2}','"\\u0061"',
-  '"\ud800"','[1,]','{"a":}','"\\x20"','','nullx'];
+  '"\ud800"','[1,]','{"a":}','"\\x20"','','nullx','[ 01]','[true,\ufefffalse]','[1 2]','-.1','0.1e+1','1e-02','0E-0','-0.0e+0','\u00a0null','\u2028null','"\u2028\u2029"',' \n\t\r'];
  for(const depth of [512,513,1500,12000])sources.push('['.repeat(depth)+'0'+']'.repeat(depth));
  function observation(callback,source){try{callback(source);return {ok:true};}catch(error){return {name:error.name,message:error.message};}}
  for(const source of sources){assert.deepEqual(observation(assertJsonSyntax,source),observation(JSON.parse,source),JSON.stringify(source));if(observation(JSON.parse,source).ok)assert.equal(assertJsonSyntax(source),undefined);}
