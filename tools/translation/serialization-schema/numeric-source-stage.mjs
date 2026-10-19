@@ -1,5 +1,6 @@
 // Complete locked Rust crates -> original module graph -> existing checked
 // semantic IR and JS/TS. A source stage never issues a formatting capability.
+import {cargoLayoutManifestMatches} from '../cargo-layout-input-compatibility.mjs';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
@@ -49,7 +50,7 @@ function methodEvidence(source,term,name,method) {
 }
 export function captureNumericFormatterSources({manifest,lock,consumerArchive,formatterArchive}={}) {
   const p=NUMERIC_SOURCE_STAGE_PROFILE;
-  if(typeof manifest!=='string'||typeof lock!=='string'||hash(manifest)!==p.manifestSha256||hash(lock)!==p.lockSha256)throw new TypeError('Numeric stage requires the exact original Cargo inputs');
+  if(typeof manifest!=='string'||typeof lock!=='string'||(hash(manifest)!==p.manifestSha256&&!cargoLayoutManifestMatches(manifest,p.manifestSha256))||hash(lock)!==p.lockSha256)throw new TypeError('Numeric stage requires the exact original Cargo inputs');
   const dependencies=loadJsonMacroSourceProof({manifest,lock});if(!isJsonMacroSourceProof(dependencies))throw new TypeError('Actual Cargo source proof is unavailable');
   const features=proveJsonMacroFeatures(dependencies);if(!isJsonMacroFeatureProof(features))throw new TypeError('Actual consumer feature proof is unavailable');
   const consumer=archiveMembers(consumerArchive,p.consumer),formatter=archiveMembers(formatterArchive,p.formatter),selection=methodEvidence(consumer.get(p.consumerCallPath.source).source,'trait',p.consumerCallPath.trait,p.consumerCallPath.method);
@@ -63,7 +64,7 @@ export function captureNumericFormatterSources({manifest,lock,consumerArchive,fo
   const formatterFeaturesClosed=!!optional&&!/^\[features\]/m.test(formatterCargo.source)&&!selected('no-panic').length&&!selected(p.formatter.name)[0].includes('"no-panic"')&&!consumerCargo.source.includes('zmij/');
   if(!formatterFeaturesClosed)throw new TypeError('Original formatter optional feature closure requires further Cargo evidence');
   const formatterFeatureSelection=freeze({features:[],closedKeys:['feature'],formatterCargoSha256:formatterCargo.sha256,consumerCargoSha256:consumerCargo.sha256,lockSha256:p.lockSha256,optionalDependency:'no-panic',optionalDependencyAbsentFromLock:true,targetBuildConfiguration:false});
-  const evidence=freeze({schema:'original-locked-numeric-source-inputs-v1',profileSha256:hash(profileBytes),manifestSha256:p.manifestSha256,lockSha256:p.lockSha256,packages:[p.consumer,p.formatter].map(({name,version,sha256,bytes,members})=>({name,version,archiveSha256:sha256,archiveBytes:bytes,members})),consumerMethod:selection,consumerFeatures:features,formatterAlgorithm:'Schubfach/yy-derived original Rust implementation; no target implementation substituted',buildScript:{...formatter.get('build.rs'),executionAvailable:false,configurationAuthority:false},...authority()});
+  const evidence=freeze({schema:'original-locked-numeric-source-inputs-v1',profileSha256:hash(profileBytes),manifestSha256:hash(manifest),lockSha256:p.lockSha256,packages:[p.consumer,p.formatter].map(({name,version,sha256,bytes,members})=>({name,version,archiveSha256:sha256,archiveBytes:bytes,members})),consumerMethod:selection,consumerFeatures:features,formatterAlgorithm:'Schubfach/yy-derived original Rust implementation; no target implementation substituted',buildScript:{...formatter.get('build.rs'),executionAvailable:false,configurationAuthority:false},...authority()});
   sourceContexts.set(evidence,{consumer,formatter,formatterFeatureSelection});return evidence;
 }
 export function numericSourceInputsFromFiles({manifest,lock,consumerArchiveURL,formatterArchiveURL}={}) {

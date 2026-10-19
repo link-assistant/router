@@ -1,6 +1,7 @@
+import {rustPackageSourcePath} from '../repository-layout.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync, mkdirSync, rmSync, renameSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -15,14 +16,14 @@ const repository=resolve(fileURLToPath(new URL('../../../',import.meta.url)));
 const profile={flags:{test:false,unix:true,windows:false}};
 const roots=['crate::response_affinity::AffinityFile'];
 const plain=value=>JSON.parse(JSON.stringify(value));
-const corpusPaths=()=>execFileSync('git',['ls-files','-z','--','src/*.rs'],{cwd:repository,encoding:'utf8'}).split('\0').filter(Boolean);
+const corpusPaths=()=>execFileSync('git',['ls-files','-z','--',rustPackageSourcePath(repository,'src/*.rs')],{cwd:repository,encoding:'utf8'}).split('\0').filter(Boolean);
 let original;
-function originalContext(){return original ??= captureSerializationContext({root:repository,paths:corpusPaths(),entry:'src/lib.rs',compilationProfile:profile});}
+function originalContext(){return original ??= captureSerializationContext({root:repository,paths:corpusPaths(),entry:rustPackageSourcePath(repository,'src/lib.rs'),compilationProfile:profile});}
 function fixture(source,run,extra={}) {
   const root=mkdtempSync(join(tmpdir(),'router-schema-fixture-'));
   try {
     mkdirSync(join(root,'src'));writeFileSync(join(root,'src/lib.rs'),source);
-    for(const path of ['Cargo.toml','Cargo.lock'])writeFileSync(join(root,path),readFileSync(join(repository,path)));
+    for(const path of ['Cargo.toml','Cargo.lock'])writeFileSync(join(root,path),readFileSync(join(repository,rustPackageSourcePath(repository,path))));
     for(const [path,text]of Object.entries(extra)){mkdirSync(resolve(root,path,'..'),{recursive:true});writeFileSync(join(root,path),text);}
     const options={root,paths:['src/lib.rs',...Object.keys(extra)],entry:'src/lib.rs',compilationProfile:profile};
     return run(options);
@@ -95,7 +96,7 @@ test('checked grammar refuses duplicate metadata keys and unbounded nesting',()=
   assert.throws(()=>parseSerializationMeta('{"schema":"original-serialization-meta-v1","roots":'+ '['.repeat(70)+'0'+']'.repeat(70)+'}',context),/budget/);
 });
 test('generation compares the actual projection before offering any native replacement artifact',{timeout:30000},()=>{
-  const options={root:repository,paths:corpusPaths(),entry:'src/lib.rs',roots,compilationProfile:profile,expectedDescriptor:affinitySchema,exportName:'affinitySchema'};
+  const options={root:repository,paths:corpusPaths(),entry:rustPackageSourcePath(repository,'src/lib.rs'),roots,compilationProfile:profile,expectedDescriptor:affinitySchema,exportName:'affinitySchema'};
   const generated=generateSerializationSchema(options);assert.equal(generated.comparedExistingProjection,true);assert.equal(generated.runtimeAuthority,false);assert.match(generated.javascript,/export const affinitySchema/);
   assert.throws(()=>generateSerializationSchema({...options,expectedDescriptor:{}}),/differs from the actual existing manual/);
 });
@@ -137,4 +138,23 @@ test('serialization joins complete original sibling outputs without erasing unkn
     if(!(error instanceof SerializationRefusal)){retain();assert.fail('Original namespace obligation was not refused: '+prefix);}
   }
   retain();
+});
+
+test('physical nested Rust package retains both manifests and exact shared codec behavior',{timeout:30000},async()=>{
+  let javascript;
+  fixture(record('enabled:bool,value:u64'),options=>{
+    const before=generateSerializationSchema({...options,roots:['crate::Record']}),original=readFileSync(join(options.root,'src/lib.rs'));
+    mkdirSync(join(options.root,'rust'));
+    renameSync(join(options.root,'src'),join(options.root,'rust/src'));
+    renameSync(join(options.root,'Cargo.toml'),join(options.root,'rust/Cargo.toml'));
+    writeFileSync(join(options.root,'Cargo.toml'),'[workspace]\nmembers = ["rust"]\nresolver = "2"\n');
+    const input={root:options.root,paths:['rust/src/lib.rs'],compilationProfile:profile},captured=captureSerializationContext(input);
+    assert.deepEqual(captured.cargo.map(row=>row.source).sort(),['Cargo.lock','Cargo.toml','rust/Cargo.toml']);
+    assert.equal(captured.entry,'rust/src/lib.rs');assert.ok(readFileSync(join(options.root,'rust/src/lib.rs')).equals(original));
+    assert.throws(()=>captureSerializationContext({...input,entry:'src/lib.rs'}),/entrypoint is not tracked/);
+    const after=generateSerializationSchema({...input,roots:['crate::Record'],expectedDescriptor:before.descriptor});
+    assert.equal(after.comparedExistingProjection,true);assert.deepEqual(after.descriptor,before.descriptor);javascript=after.javascript;
+  });
+  const module=await import('data:text/javascript;base64,'+Buffer.from(javascript).toString('base64'));
+  assert.deepEqual(module.serializationSchema.Record.fields.map(row=>[row.name,row.type]),[['enabled','bool'],['value','u64']]);
 });

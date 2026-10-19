@@ -1,5 +1,6 @@
 // Byte-pinned source facts only. A package checksum does not resolve a caller
 // macro, its generated trait methods, or Cargo's transitive feature selection.
+import {cargoLayoutManifestMatches} from './cargo-layout-input-compatibility.mjs';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
@@ -60,7 +61,7 @@ function archiveMembers(bytes) {
 }
 export function createJsonMacroSourceProof({ manifest, lock, archives } = {}) {
     const profile = JSON_MACRO_SOURCE_PROFILE;
-    if (typeof manifest !== 'string' || typeof lock !== 'string' || hash(manifest) !== profile.manifestSha256 || hash(lock) !== profile.lockSha256)
+    if (typeof manifest !== 'string' || typeof lock !== 'string' || (hash(manifest) !== profile.manifestSha256 && !cargoLayoutManifestMatches(manifest,profile.manifestSha256)) || hash(lock) !== profile.lockSha256)
         throw new TypeError('JSON macro dependencies differ from the original audited manifest/lock');
     if (!(archives instanceof Map))
         throw new TypeError('JSON macro source proof requires original archive bytes');
@@ -117,7 +118,7 @@ export function jsonMacroOriginalSource(proof, packageName, path) {
     return source;
 }
 export function jsonMacroDependencyProfile({ manifest, lock }) {
-    if (typeof manifest !== 'string' || typeof lock !== 'string' || hash(manifest) !== JSON_MACRO_SOURCE_PROFILE.manifestSha256 || hash(lock) !== JSON_MACRO_SOURCE_PROFILE.lockSha256)
+    if (typeof manifest !== 'string' || typeof lock !== 'string' || (hash(manifest) !== JSON_MACRO_SOURCE_PROFILE.manifestSha256 && !cargoLayoutManifestMatches(manifest,JSON_MACRO_SOURCE_PROFILE.manifestSha256)) || hash(lock) !== JSON_MACRO_SOURCE_PROFILE.lockSha256)
         return { proof: null, diagnostics: [{ kind: 'unsupported-profile', message: 'JSON macro owner and features remain unresolved outside the audited manifest/lock' }] };
     return { proof: loadJsonMacroSourceProof({ manifest, lock }), diagnostics: [] };
 }

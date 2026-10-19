@@ -1,3 +1,4 @@
+import {cargoLayoutManifestMatches} from './cargo-layout-input-compatibility.mjs';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
@@ -38,7 +39,7 @@ function members(archive) {
 export function createDeriveDependencyProof({manifest,lock,archives,standardCore}={}) {
   if(typeof manifest!=='string'||typeof lock!=='string'||!(archives instanceof Map))throw new TypeError('Derive proof requires actual manifest, lock and archive bytes');
   const profile=DERIVE_SOURCE_PROFILE;
-  if(hash(manifest)!==profile.manifestSha256||hash(lock)!==profile.lockSha256)throw new TypeError('Derive dependency manifest or lock does not match the audited source profile');
+  if((hash(manifest)!==profile.manifestSha256&&!cargoLayoutManifestMatches(manifest,profile.manifestSha256))||hash(lock)!==profile.lockSha256)throw new TypeError('Derive dependency manifest or lock does not match the audited source profile');
   const packages=[],sources=new Map();
   for(const entry of profile.packages) {
     const sections=lock.split('[[package]]').filter(section=>new RegExp('^\\s*name = "'+entry.name+'"\\nversion = "'+entry.version.replaceAll('.','\\.')+'"','m').test(section));
@@ -77,7 +78,7 @@ export function deriveDependencyProfile({manifest,lock}) {
   // Unsupported Cargo inputs have no certificate authority. Other language
   // profiles can still run; corrupted consumed archive bytes remain fatal.
   const actualManifest=typeof manifest==='string'?hash(manifest):null,actualLock=typeof lock==='string'?hash(lock):null;
-  if(actualManifest!==DERIVE_SOURCE_PROFILE.manifestSha256||actualLock!==DERIVE_SOURCE_PROFILE.lockSha256)return {proof:null,diagnostics:[{kind:'unsupported-profile',profile:'locked-derive-source-profile-v1',message:'Derive namespaces remain unresolved: manifest or lock is outside the audited dependency profile',manifestSha256:actualManifest,lockSha256:actualLock}]};
+  if((actualManifest!==DERIVE_SOURCE_PROFILE.manifestSha256&&!cargoLayoutManifestMatches(manifest,DERIVE_SOURCE_PROFILE.manifestSha256))||actualLock!==DERIVE_SOURCE_PROFILE.lockSha256)return {proof:null,diagnostics:[{kind:'unsupported-profile',profile:'locked-derive-source-profile-v1',message:'Derive namespaces remain unresolved: manifest or lock is outside the audited dependency profile',manifestSha256:actualManifest,lockSha256:actualLock}]};
   return {proof:loadDeriveDependencyProof({manifest,lock}),diagnostics:[]};
 }
 export function deriveExternalModules(proof) {

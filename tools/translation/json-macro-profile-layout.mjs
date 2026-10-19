@@ -1,5 +1,6 @@
 // Historical profile compatibility is DATA only. The caller still needs its
 // genuine current dependency, feature, source, ownership and semantic checks.
+import {cargoLayoutManifestDigestsMatch} from './cargo-layout-input-compatibility.mjs';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
@@ -23,14 +24,14 @@ const rules=createRulePipeline([
  }}]},
  {phase:'repository',rules:[{id:'router:complete-cargo-layout-and-profile-inverse',apply:input=>{
   const {manifest,original,before,current,after,dependencies}=input;
-  requireValue(hash(manifest)===before.manifestSha256&&before.lockSha256===dependencies.lockSha256&&after.manifestSha256===dependencies.manifestSha256,'original/current Cargo joins differ');
+  requireValue(hash(manifest)===before.manifestSha256&&before.lockSha256===dependencies.lockSha256&&(after.manifestSha256===dependencies.manifestSha256||cargoLayoutManifestDigestsMatch(after.manifestSha256,dependencies.manifestSha256)),'original/current Cargo joins differ');
   const readme='readme = "README.md"',replacement='readme = "../README.md"';
   requireValue(manifest.split(readme).length===2,'one original README path required');
   const from=manifest.indexOf('[profile.release]'),to=manifest.indexOf('[package.metadata.cargo-semver-checks.lints]');
   requireValue(from>=0&&to>from,'complete original workspace profile section required');
   const removed=manifest.slice(from,to),withoutProfiles=manifest.slice(0,from)+manifest.slice(to),cargo=withoutProfiles.replace(readme,replacement);
   const featureArchive=readFileSync(new URL('json-macro/features/link-assistant-router-1.24.1-Cargo.toml.gz',root)),actual=gunzipSync(featureArchive,{maxOutputLength:100000});
-  requireValue(actual.equals(Buffer.from(cargo))&&hash(actual)===dependencies.manifestSha256,'complete package layout equation differs');
+  requireValue(actual.equals(Buffer.from(cargo))&&(hash(actual)===dependencies.manifestSha256||cargoLayoutManifestDigestsMatch(hash(actual),dependencies.manifestSha256)),'complete package layout equation differs');
   const restored=cargo.replace(replacement,readme),inverse=restored.slice(0,from)+removed+restored.slice(from);
   requireValue(inverse===manifest,'complete original Cargo inverse differs');
   const anchor='"manifestSha256": '+JSON.stringify(before.manifestSha256),changed='"manifestSha256": '+JSON.stringify(after.manifestSha256),text=original.toString('utf8');

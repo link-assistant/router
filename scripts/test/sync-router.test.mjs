@@ -359,3 +359,37 @@ test('actual owned witness projections stay generated while authored Rust and ne
   assert.equal(fs.readFileSync(path.join(root,witness),'utf8'),emitted+'// deliberate generated-artifact drift\n');
   for(const name of [oracle,neighbor]){const original=fs.readFileSync(path.join(root,name),'utf8');put(root,name,original+'// actual authored Rust mutation\n');assert.notDeepEqual(captureSyncInputs(root),before);put(root,name,original);assert.deepEqual(captureSyncInputs(root),before);}
 });
+
+test('actual base64 witness synchronization and retirement preserve original Rust and neighbors', {timeout:60_000},t=>{
+  const root=fixture(t),witness='tools/translation/js-to-rust/generated/owned-base64-witness.rs',oracle='tests/translation_core_base64_reverse_oracle.rs';
+  const neighbor='tools/translation/js-to-rust/generated/owned-base64-witness-manual.rs';
+  for(const name of ['src/translation_core.rs','src/translation_core/primitives.rs','src/translation_core/base64.rs','Cargo.toml','Cargo.lock',oracle])put(root,name,originalText(name));
+  put(root,'src/lib.rs','pub mod translation_core;\n');put(root,neighbor,'pub fn handwritten_neighbor() -> bool { true }\n');
+  const before=captureSyncInputs(root);
+  for(const name of [oracle,neighbor,'src/original.rs','src/generated_js_first/manual.rs','src/translation_core.rs','src/translation_core/primitives.rs'])assert.ok(before.files.some(row=>row.path===name),name);
+  const written=run(root,'base64-witness-write');assert.equal(written.exitCode,0,JSON.stringify(written));assert.equal(written.originalInputsUnchanged,true);assert.deepEqual(captureSyncInputs(root),before);
+  const emitted=fs.readFileSync(path.join(root,witness),'utf8');assert.ok(emitted.startsWith('// GENERATED: actual checked reverse base64 receiving witness.\n'));
+  const manifest=JSON.parse(fs.readFileSync(path.join(root,'parity/js-first-translation.json'),'utf8')),registered=manifest.outputs.find(row=>row.path===witness);
+  assert.equal(registered.bytes,Buffer.byteLength(emitted));assert.equal(registered.sha256,createHash('sha256').update(emitted).digest('hex'));
+  const inputs=JSON.parse(fs.readFileSync(path.join(root,'tools/translation/js-to-rust/generated/owned-base64-witness-inputs.json'),'utf8'));
+  assert.equal(inputs.oracle.path,oracle);assert.equal(inputs.oracle.source,originalText(oracle));assert.equal(inputs.applicationItems,0);assert.equal(inputs.sourceRecipe.wholeUndo,true);
+  assert.equal(before.files.some(row=>row.path===witness),false);assert.equal(captureSyncInputs(root).files.some(row=>row.path===witness),false);
+  put(root,witness,emitted+'// deliberate generated-artifact drift\n');assert.deepEqual(captureSyncInputs(root),before);
+  const stale=run(root,'base64-witness-drift',true);assert.equal(stale.exitCode,1);assert.equal(stale.artifactsCurrent,false);assert.equal(stale.originalInputsUnchanged,true);
+  assert.equal(stale.records[0].status,'failed');assert.equal(stale.records[1].status,'unrun-prerequisite-failure');assert.ok(stale.records[0].logs.every(row=>fs.statSync(path.join(stale.directory,row.path)).size===row.bytes));
+  assert.equal(fs.readFileSync(path.join(root,witness),'utf8'),emitted+'// deliberate generated-artifact drift\n');
+  for(const name of [oracle,neighbor]){const original=fs.readFileSync(path.join(root,name),'utf8');put(root,name,original+'// actual authored Rust mutation\n');assert.notDeepEqual(captureSyncInputs(root),before);put(root,name,original);assert.deepEqual(captureSyncInputs(root),before);}
+  assert.equal(inputs.schema,'owned-base64-reverse-ci-witness-v1');
+  assert.equal(inputs.witnessTypeScript.path,witness.slice(0,-3)+'/witness.mts');assert.equal(inputs.witnessTypeScript.source,fs.readFileSync(path.join(root,inputs.witnessTypeScript.path),'utf8'));
+  put(root,witness,emitted);fs.unlinkSync(path.join(root,oracle));
+  const afterRemoval=captureSyncInputs(root),prefix=witness.slice(0,-3);
+  const obsolete=run(root,'base64-witness-obsolete-check',true);assert.equal(obsolete.exitCode,1);assert.equal(obsolete.originalInputsUnchanged,true);assert.equal(fs.readFileSync(path.join(root,witness),'utf8'),emitted);
+  const typed=prefix+'/witness.mts',typedOriginal=fs.readFileSync(path.join(root,typed),'utf8');put(root,typed,typedOriginal+'// authored typed edit\n');
+  const typedRefusal=run(root,'base64-witness-edited-typed-check',true);assert.equal(typedRefusal.exitCode,1);assert.equal(fs.readFileSync(path.join(root,typed),'utf8'),typedOriginal+'// authored typed edit\n');put(root,typed,typedOriginal);
+  const unknown=prefix+'/manual.mjs';put(root,unknown,'export const authored = true;\n');
+  const refusal=run(root,'base64-witness-unknown-check',true);assert.equal(refusal.exitCode,1);assert.equal(fs.readFileSync(path.join(root,unknown),'utf8'),'export const authored = true;\n');
+  fs.unlinkSync(path.join(root,unknown));
+  const removed=run(root,'base64-witness-retire-write');assert.equal(removed.exitCode,0,JSON.stringify(removed));assert.equal(removed.originalInputsUnchanged,true);assert.deepEqual(captureSyncInputs(root),afterRemoval);
+  for(const name of [witness,prefix+'.lino',prefix+'-inputs.json',prefix+'/witness.mjs',prefix+'/witness.mts'])assert.equal(fs.existsSync(path.join(root,name)),false,name);
+  assert.equal(fs.readFileSync(path.join(root,neighbor),'utf8'),'pub fn handwritten_neighbor() -> bool { true }\n');
+});

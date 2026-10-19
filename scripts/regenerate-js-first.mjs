@@ -132,17 +132,28 @@ export function buildArtifacts(root = ROOT){return buildArtifactsSelected(root);
 export async function buildArtifactsWithOwnedDefinitions(root = ROOT,{matrix=false}={}){const [owned,profiles]=await Promise.all([import('../tools/translation/js-to-rust/owned-core-definition-corpus.mjs'),import('../tools/translation/compilation-matrix.mjs')]);return buildArtifactsSelected(root,true,matrix?profiles.createCompilationMatrix({profiles:profiles.DECLARED_FAMILY_PROFILES}):undefined,owned.buildOwnedCoreDefinitionArtifacts);}
 function applyArtifactsSelected(root,{check=false}={},artifacts,definitionCleanup,matrix=false){
   const changed = [];
-  const witnessPrefix='tools/translation/js-to-rust/generated/owned-core-witness';
-  const witnessIndex=join(root,witnessPrefix+'-inputs.json'),previousWitness=new Map();
+  const witnessFamilies=[
+    {prefix:'tools/translation/js-to-rust/generated/owned-core-witness',schema:'owned-core-reverse-ci-witness-v1',header:'// GENERATED: actual checked reverse owned-core receiving witness.'},
+    {prefix:'tools/translation/js-to-rust/generated/owned-base64-witness',schema:'owned-base64-reverse-ci-witness-v1',header:'// GENERATED: actual checked reverse base64 receiving witness.'},
+  ];
+  const previousWitness=new Map();
+  for(const family of witnessFamilies){
+  const witnessPrefix=family.prefix;
+  const witnessIndex=join(root,witnessPrefix+'-inputs.json');
   if(existsSync(witnessIndex)){
     if(lstatSync(witnessIndex).isSymbolicLink()||lstatSync(witnessIndex).size>32*1024*1024)throw Error('Invalid old owned witness index');
     const previous=JSON.parse(readFileSync(witnessIndex,'utf8'));
-    if(previous.schema!=='owned-core-reverse-ci-witness-v1'||!Array.isArray(previous.stagedReceivingInputs?.files))throw Error('Unknown old owned witness index');
+    if(previous.schema!==family.schema||!Array.isArray(previous.stagedReceivingInputs?.files))throw Error('Unknown old owned witness index');
     for(const row of previous.stagedReceivingInputs.files)if(typeof row.path==='string'&&row.path.startsWith(witnessPrefix+'/')&&typeof row.source==='string')previousWitness.set(row.path,row.source);
+    if(previous.witnessTypeScript!==undefined){
+      const row=previous.witnessTypeScript;if(!row||row.path!==witnessPrefix+'/witness.mts'||typeof row.source!=='string')throw Error('Unknown old owned witness TypeScript index');
+      previousWitness.set(row.path,row.source);
+    }
+  }
   }
   // Empty current programs are emitted too, so a newly refused body cannot
   // survive. Removed source modules also remove only recognized owned drafts.
-  for (const directory of ['tools/translation/js-to-rust/generated/native-portable', 'ts/src/portable-draft','tools/translation/js-to-rust/generated/owned-core','ts/generated/reverse-owned-core',witnessPrefix]) {
+  for (const directory of ['tools/translation/js-to-rust/generated/native-portable', 'ts/src/portable-draft','tools/translation/js-to-rust/generated/owned-core','ts/generated/reverse-owned-core',...witnessFamilies.map(row=>row.prefix)]) {
     const visit = (path) => {
       if (!existsSync(join(root, path))) return;
       if (lstatSync(join(root, path)).isSymbolicLink()) throw new Error(`linked generated draft: ${path}`);
@@ -161,12 +172,12 @@ function applyArtifactsSelected(root,{check=false}={},artifacts,definitionCleanu
     };
     visit(directory);
   }
-  for(const path of [witnessPrefix+'.rs',witnessPrefix+'.lino',witnessPrefix+'-inputs.json']){
+  for(const family of witnessFamilies)for(const path of [family.prefix+'.rs',family.prefix+'.lino',family.prefix+'-inputs.json']){
     const absolute=join(root,path);if(!existsSync(absolute)||artifacts.has(path))continue;
     if(lstatSync(absolute).isSymbolicLink())throw Error('Linked old owned witness output');
     const content=readFileSync(absolute,'utf8');
-    if(path.endsWith('.rs')?!content.startsWith('// GENERATED: actual checked reverse owned-core receiving witness.'):
-       path.endsWith('.lino')?!(content.startsWith('(owned-core-context ')||content.startsWith('(owned-source-document ')&&content.startsWith('(owned-source-document '+encodeWord('{"profile":"router-owned-core-source-document-v1","context":'))):JSON.parse(content).schema!=='owned-core-reverse-ci-witness-v1')throw Error('Unknown old owned witness output');
+    if(path.endsWith('.rs')?!content.startsWith(family.header):
+       path.endsWith('.lino')?!(content.startsWith('(owned-core-context ')||content.startsWith('(owned-source-document ')&&content.startsWith('(owned-source-document '+encodeWord('{"profile":"router-owned-core-source-document-v1","context":'))):JSON.parse(content).schema!==family.schema)throw Error('Unknown old owned witness output');
     changed.push(path);if(!check)rmSync(absolute);
   }
   if(definitionCleanup)definitionCleanup(root,artifacts,changed,{check,matrix});

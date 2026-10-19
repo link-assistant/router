@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from '../repository-layout.mjs';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync, renameSync, mkdirSync, existsSync } from 'node:fs';
@@ -29,8 +30,8 @@ export async function produceNativeAffinityDescriptor({root,write=false,applyImp
   const body=before.toString('utf8'),bodyStart=body.indexOf('function freezeSchema');
   if(bodyStart<0||hash(Buffer.from(body.slice(bodyStart)))!==plan.interpreter_body_sha256)fail('Native schema interpreter differs from the reviewed unchanged body');
   const baseline=await import(pathToFileURL(join(root,sourceModule)).href+'?serializationBaseline='+hash(before));
-  const paths=execFileSync('git',['ls-files','-z','--','src/*.rs'],{cwd:root,encoding:'utf8'}).split('\0').filter(Boolean);
-  const generated=generateSerializationSchema({root,paths,entry:'src/lib.rs',roots:['crate::response_affinity::AffinityFile'],compilationProfile:{flags:{test:false,unix:true,windows:false}},expectedDescriptor:baseline.affinitySchema,exportName:'affinitySchema'});
+  const paths=execFileSync('git',['ls-files','-z','--',rustPackageSourcePath(root,'src/*.rs')],{cwd:root,encoding:'utf8'}).split('\0').filter(Boolean);
+  const generated=generateSerializationSchema({root,paths,entry:rustPackageSourcePath(root,'src/lib.rs'),roots:['crate::response_affinity::AffinityFile'],compilationProfile:{flags:{test:false,unix:true,windows:false}},expectedDescriptor:baseline.affinitySchema,exportName:'affinitySchema'});
   if(!readFileSync(join(root,sourceModule)).equals(before))fail('Native baseline changed during descriptor comparison');
   const meta=JSON.parse(generated.meta),owners=meta.types.map(type=>({owner:type.owner,source:type.source,sourceSha256:type.sourceSha256,itemSha256:type.itemSha256,span:type.span}));
   if(owners.length!==7)fail('Actual original affinity source no longer has the reviewed seven reachable owners');

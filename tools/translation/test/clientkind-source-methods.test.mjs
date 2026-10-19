@@ -1,3 +1,4 @@
+import {repositoryCratePaths,repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -15,7 +16,7 @@ const tag=($,fields={})=>Object.freeze({$,...fields});
 
 test('untouched whole ClientKind source checks its Copy receiver and actual function-name shadowing',{timeout:60_000},async()=>{
   const source=read('src/clients.rs');assert.equal(hash(source),'2f12c5aa34a65ec62b793902cdefe8f36c1b6c414c673e6499ef40c7dbfb8c2d');
-  const deriveDependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')}),paths=execFileSync('git',['ls-tree','-r','--name-only','HEAD','--','src'],{cwd:root,encoding:'utf8'}).trim().split('\n');
+  const deriveDependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')}),paths=repositoryCratePaths(execFileSync('git',['ls-tree','-r','--name-only','HEAD','--',repositorySourcePath('src',root)],{cwd:root,encoding:'utf8'}).trim().split('\n'),root);
   const result=translateProject({entry:'src/clients.rs',paths,readSource:read,deriveDependencies,compilationProfile:PRODUCTION_PROFILE});
   assert.equal(result.meta.sources.find(entry=>entry.source==='src/clients.rs').sha256,hash(source));
   const program=parseProgram(JSON.stringify(result.meta.targetSemanticProgram)),aliases=[];

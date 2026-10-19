@@ -1,5 +1,6 @@
 // Feature activation uses the checksum-locked incoming dependency subgraph.
 // Cargo targets are unioned conservatively; no platform is guessed or executed.
+import {cargoLayoutManifestMatches} from './cargo-layout-input-compatibility.mjs';
 import {readFileSync} from 'node:fs';
 import {activateCargoFeatureRecords} from './cargo-feature-worklist.mjs';
 import {gunzipSync} from 'node:zlib';
@@ -12,7 +13,7 @@ if(hash(bytes)!=='b31b059ad69822aebe097347a55dfbf590aa209085750f3821b5bd0cf8ff94
 const INPUTS=freezeMacroTree(JSON.parse(bytes));
 
 function actualFeatures(manifest,lock) {
-  if(typeof manifest!=='string'||typeof lock!=='string'||hash(manifest)!==INPUTS.manifestSha256||hash(lock)!==INPUTS.lockSha256)throw new TypeError('JSON parser lacks its exact original Cargo manifest/lock profile');
+  if(typeof manifest!=='string'||typeof lock!=='string'||(hash(manifest)!==INPUTS.manifestSha256&&!cargoLayoutManifestMatches(manifest,INPUTS.manifestSha256))||hash(lock)!==INPUTS.lockSha256)throw new TypeError('JSON parser lacks its exact original Cargo manifest/lock profile');
   const packages=new Map(),sources=[];
   for(const entry of INPUTS.packages) {
     if(entry.lockedArchiveSha256){const sections=lock.split('[[package]]').filter(section=>section.includes('name = '+JSON.stringify(entry.name)+'\nversion = '+JSON.stringify(entry.version)+'\n'));if(sections.length!==1||!sections[0].includes('checksum = '+JSON.stringify(entry.lockedArchiveSha256))||!sections[0].includes('source = "registry+https://github.com/rust-lang/crates.io-index"'))throw new TypeError('JSON feature package lacks its actual locked registry source');}

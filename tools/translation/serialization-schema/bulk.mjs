@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from '../repository-layout.mjs';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync, mkdirSync, renameSync, existsSync } from 'node:fs';
@@ -59,14 +60,14 @@ export function emitBulkSerializationRegistry(bulk,{language='javascript'}={}) {
   const text=fragments.join('\n')+'\nexport const serializationSchemas = {'+entries.join(',')+'}'+(language==='typescript'?' as const':'')+';\n';
   if(Buffer.byteLength(text)>BULK_LIMITS.outputBytes)throw new SerializationRefusal('Bulk schema registry exceeds bounded output size');return text;
 }
-export function buildBulkSerialization({root,paths,entry='src/lib.rs',compilationProfile}={}) {
+export function buildBulkSerialization({root,paths,entry=rustPackageSourcePath(root,'src/lib.rs'),compilationProfile}={}) {
   const context=captureSerializationContext({root,paths,entry,compilationProfile}),bulk=draftBulkSerialization(context);
   return {context,bulk,meta:canonicalSerializationMeta(bulk)+'\n',javascript:emitBulkSerializationRegistry(bulk),typescript:emitBulkSerializationRegistry(bulk,{language:'typescript'})};
 }
 const paths={meta:'tools/translation/serialization-schema/bulk-generated/router-serialization.meta.json',javascript:'tools/translation/serialization-schema/bulk-generated/router-serialization.mjs',typescript:'tools/translation/serialization-schema/bulk-generated/router-serialization.ts',inventory:'tools/translation/serialization-schema/bulk-generated/router-serialization-inventory.json'};
 export function produceBulkSerialization({root,write=false}={}) {
   root=resolve(root);
-  const sources=execFileSync('git',['ls-files','-z','--','src/*.rs'],{cwd:root,encoding:'utf8'}).split('\0').filter(Boolean);
+  const sources=execFileSync('git',['ls-files','-z','--',rustPackageSourcePath(root,'src/*.rs')],{cwd:root,encoding:'utf8'}).split('\0').filter(Boolean);
   const result=buildBulkSerialization({root,paths:sources,compilationProfile:{flags:{test:false,unix:true,windows:false}}});
   const inventory={schema:'bulk-original-serialization-inventory-v1',sourceSetSha256:result.bulk.sourceSetSha256,dependenciesDigest:result.bulk.dependenciesDigest,supported:result.bulk.supported.map(({meta,...entry})=>entry),refused:result.bulk.refused,excluded:result.bulk.excluded,manualTraitImplementations:result.bulk.discovery.manualTraitImplementations,sourceCoverage:result.bulk.discovery.sourceCoverage,graphDiagnostics:result.bulk.discovery.graphDiagnostics,artifacts:{metaSha256:hash(result.meta),javascriptSha256:hash(result.javascript),typescriptSha256:hash(result.typescript)},runtimeAuthority:false,generatedTraitBehavior:false};
   const artifacts={meta:result.meta,javascript:result.javascript,typescript:result.typescript,inventory:canonicalSerializationMeta(inventory)+'\n'};

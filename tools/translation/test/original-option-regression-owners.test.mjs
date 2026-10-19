@@ -1,10 +1,11 @@
+import {repositoryCratePaths} from "./fixtures/repository-paths.mjs";
 import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {execFileSync} from 'node:child_process';import {createHash} from 'node:crypto';
 import {translateProject} from '../project.mjs';import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';import {parseProgram} from '../semantic-meta.mjs';import {sourceItems} from '../rust-structure.mjs';import {serde_json_from_str} from '../extensions/json-runtime.mjs';import {verifyTypedTargets} from './typed-targets.mjs';
 const root=new URL('../../../',import.meta.url),hash=text=>createHash('sha256').update(text).digest('hex'),tag=($,fields={})=>Object.freeze({$,...fields}),some=field0=>tag('Some',{field0}),none=tag('None');
 const read=path=>{try{return readFileSync(repositorySourceURL(path,root),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;return execFileSync('git',['show','HEAD:'+repositorySourcePath(path,root)],{cwd:root,encoding:'utf8',maxBuffer:10000000});}};
-const compile=(entry,readSource=read)=>{const paths=execFileSync('git',['ls-tree','-r','--name-only','HEAD','--','src'],{cwd:root,encoding:'utf8'}).trim().split('\n');return translateProject({entry,paths,readSource,deriveDependencies:loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')}),compilationProfile:PRODUCTION_PROFILE});};
+const compile=(entry,readSource=read)=>{const paths=repositoryCratePaths(execFileSync('git',['ls-tree','-r','--name-only','HEAD','--',repositorySourcePath('src',root)],{cwd:root,encoding:'utf8'}).trim().split('\n'),root);return translateProject({entry,paths,readSource,deriveDependencies:loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')}),compilationProfile:PRODUCTION_PROFILE});};
 const original=entry=>{const result=compile(entry);assert.equal(result.meta.sources.find(item=>item.source===entry).sha256,hash(read(entry)));return result;};
 const canonical=value=>{const parsed=serde_json_from_str(JSON.stringify(value));assert.equal(parsed.$,'Ok');return parsed.field0;};
 const token=(access,expiry)=>tag('SubscriptionToken',{access_token:access,refresh_token:none,expires_at_ms:expiry,account_id:none,resource_url:none});

@@ -570,6 +570,33 @@ make the earlier forward compiler fingerprint stale; full canonical/profile
 regeneration, actual reverse freshness, performance and the complete gate remain
 open. No Rust tool was invoked.
 
+The next source checkpoint copies the complete existing Cargo-layout equation
+into a stateless comparison for the two exact reviewed manifests. Every original
+dependency, lock, archive, feature and private proof check remains in its caller;
+evidence retains the actual raw input manifest hash. All nine complete behavioral
+and refusal cases passed under Node and Bun. The first combined Bun run remains
+red: its two producer cases incorrectly used Node's `--check` flags with Bun.
+The repaired producer uses Bun's native JavaScript scanner and independently
+checks duplicate lexical declarations and the absence of proposed-code execution
+or dependency resolution. The whole corrected file passed in each engine.
+
+The witness producer now records the complete emitted TypeScript bytes alongside
+its receiving inputs. Synchronization recognizes both exact witness families
+and refuses edited typed outputs and handwritten neighbors. All 13 complete
+synchronization cases passed under each engine. The combined 21-case Node run
+also passed with zero independent deadline breaches. Two earlier complete runs
+correctly failed the new retirement case because its emitted TypeScript had no
+previous index entry; full child output was retained by the second reproduction.
+
+Parser-selected proposals also repair all six affected serialization files,
+their two actual discovery commands and seven current Git-query test files.
+Complete source/CST inverses and native syntax checks passed before installation.
+These groups have not yet completed behavioral qualification. Shared original
+source-capture helpers still require physical-to-logical adapters, and all 269
+distinct failures observed across nine cancelled forward jobs remain tracked
+until their complete affected files pass. This checkpoint does not establish
+forward freshness, full coverage, the complete gate or a green CI cycle.
+
 Continue with the coordinator alone, using partial complete JavaScript files
 for feedback while preparing one coherent batch. Preserve the whole tests,
 strict child deadlines, independent Node duration audit, and existing memory,

@@ -1,5 +1,6 @@
 // Source provenance for the initial audited package. This registry is not
 // macro-call resolution, platform selection or namespace-completeness proof.
+import {cargoLayoutManifestMatches} from './cargo-layout-input-compatibility.mjs';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
@@ -33,7 +34,7 @@ function readMembers(archive) {
 
 export function createDeclarativeSourceProof({manifest,lock,tokioArchive,standardArchives,standardCfgIfArchive,rustLicense}={}) {
   const profile=DECLARATIVE_SOURCE_PROFILE;
-  if(typeof manifest!=='string'||typeof lock!=='string'||hash(manifest)!==profile.manifestSha256||hash(lock)!==profile.lockSha256)throw new TypeError('Declarative source dependencies differ from the audited manifest/lock');
+  if(typeof manifest!=='string'||typeof lock!=='string'||(hash(manifest)!==profile.manifestSha256&&!cargoLayoutManifestMatches(manifest,profile.manifestSha256))||hash(lock)!==profile.lockSha256)throw new TypeError('Declarative source dependencies differ from the audited manifest/lock');
   const entry=profile.tokio,sections=lock.split('[[package]]').filter(section=>section.includes('name = "tokio"\nversion = "'+entry.version+'"'));
   if(sections.length!==1||!sections[0].includes('source = "registry+https://github.com/rust-lang/crates.io-index"')||!sections[0].includes('checksum = "'+entry.sha256+'"'))throw new TypeError('Declarative macro source lacks exact locked registry owner');
   if(!Buffer.isBuffer(tokioArchive)||tokioArchive.length!==entry.bytes||hash(tokioArchive)!==entry.sha256)throw new TypeError('Declarative Tokio archive checksum mismatch');

@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from '../repository-layout.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
@@ -12,13 +13,13 @@ import { affinitySchema } from '../../../js/src/affinity-schema.mjs';
 
 const repository=resolve(fileURLToPath(new URL('../../../',import.meta.url))),profile={flags:{test:false,unix:true,windows:false}};
 let original;
-function context(){return original??=captureSerializationContext({root:repository,paths:execFileSync('git',['ls-files','-z','--','src/*.rs'],{cwd:repository,encoding:'utf8'}).split('\0').filter(Boolean),entry:'src/lib.rs',compilationProfile:profile});}
+function context(){return original??=captureSerializationContext({root:repository,paths:execFileSync('git',['ls-files','-z','--',rustPackageSourcePath(repository,'src/*.rs')],{cwd:repository,encoding:'utf8'}).split('\0').filter(Boolean),entry:rustPackageSourcePath(repository,'src/lib.rs'),compilationProfile:profile});}
 const plain=value=>JSON.parse(JSON.stringify(value));
 function fixture(source,run,files={}) {
   const root=mkdtempSync(join(tmpdir(),'router-bulk-schema-'));
   try {
     mkdirSync(join(root,'src'));writeFileSync(join(root,'src/lib.rs'),source);
-    for(const path of ['Cargo.toml','Cargo.lock'])writeFileSync(join(root,path),readFileSync(join(repository,path)));
+    for(const path of ['Cargo.toml','Cargo.lock'])writeFileSync(join(root,path),readFileSync(join(repository,rustPackageSourcePath(repository,path))));
     for(const [path,text]of Object.entries(files)){mkdirSync(resolve(root,path,'..'),{recursive:true});writeFileSync(join(root,path),text);}
     return run(captureSerializationContext({root,paths:['src/lib.rs',...Object.keys(files)],entry:'src/lib.rs',compilationProfile:profile}),root);
   } finally {rmSync(root,{recursive:true,force:true});}

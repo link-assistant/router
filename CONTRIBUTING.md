@@ -90,6 +90,10 @@ native syntax check over each complete proposed module. A TypeScript parser's
 empty syntax diagnostics do not catch every JavaScript early error, including
 duplicate lexical declarations. Keep the complete source/CST inverse and the
 independent behavioral checks; a native syntax pass does not replace either.
+Node uses `--input-type=module --check`; Bun's `--check` selects a different
+command. Use its [native JavaScript scanner](https://bun.com/docs/runtime/transpiler)
+for complete module syntax, and qualify duplicate-binding rejection and the
+absence of proposed-module execution or dependency resolution in both engines.
 
 Track every requested requirement through its source changes, generated artifacts, checks and remaining gaps. While remote CI runs, continue source review and independent draft work in assigned worktrees without changing the published head or starting a second expensive workload. Collect the complete CI results before integrating the next repair batch. A bulk draft or an unexecuted test remains a draft until the corresponding checks pass.
 
@@ -102,6 +106,16 @@ with the parser, apply ordered CST substitutions and verify complete source
 inverses. Preserve frozen historical source bytes, hashes and logical source
 identities. Adapt their receiving loaders explicitly; embedded child sources
 and immutable historical revisions must keep their own paths and contracts.
+
+The two reviewed Router Cargo layouts use a stateless exact comparison copied
+from the complete historical layout equation. Regenerate its source proposal
+with `node tools/translation/prepare-cargo-layout-input-compatibility.mjs --emit`
+and check installed freshness with `--check`. Review full source/CST inverses
+before installation. Keep raw manifest hashes in evidence, exact lock and
+archive checks, and genuine private dependency proofs at every semantic join.
+This compatibility does not permit arbitrary TOML normalization or dependency
+changes. Its complete behavioral and refusal file belongs to both engines'
+mandatory compiler discovery.
 
 Within one project invocation, compose genuine source contexts explicitly when
 several consumers need the same original graph. Each consumer must retain its
