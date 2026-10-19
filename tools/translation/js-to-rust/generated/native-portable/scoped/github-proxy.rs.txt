@@ -1,5 +1,5 @@
 // GENERATED: node scripts/regenerate-js-first.mjs
-// Independently checked scoped bodies from js/src/github-proxy.mjs; source sha256=3e4fbfa5c8eb7ac8140beb47c150726e774e620a1334eb7a4e3c45f7dc838db8; IR sha256=be72172536d67b0238055a2cb46ffbd99a1046c8bcd039567398baeab2d48004.
+// Independently checked scoped bodies from js/src/github-proxy.mjs; source sha256=3e4fbfa5c8eb7ac8140beb47c150726e774e620a1334eb7a4e3c45f7dc838db8; IR sha256=17b29a97db1172182b0bb2fe2828a784a7d511b3f3d24b74cfa9361d976d7532.
 // Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
 #[rustfmt::skip]
 fn js_sequence_test<I: Iterator<Item = u32>>(input: I, states: &[(bool, &[(u32, u32)], Option<usize>, Option<usize>)]) -> bool {
@@ -122,31 +122,31 @@ impl<'a> JsValue<'a> {
 }
 
 #[rustfmt::skip]
-fn scoped_src38db8cde9674d040_at1761<'a>(name: JsPayload<'a>) -> bool {
+fn scoped_srce7285cceffb702d4_at1761<'a>(name: JsPayload<'a>) -> bool {
     return ({ let observed = name; JsPayload::String(&[116, 114, 97, 110, 115, 102, 101, 114, 114, 101, 112, 111, 115, 105, 116, 111, 114, 121]).same_primitive(observed) || JsPayload::String(&[117, 112, 100, 97, 116, 101, 114, 101, 112, 111, 115, 105, 116, 111, 114, 121, 114, 117, 108, 101, 115, 101, 116]).same_primitive(observed) || JsPayload::String(&[99, 114, 101, 97, 116, 101, 114, 101, 112, 111, 115, 105, 116, 111, 114, 121, 114, 117, 108, 101, 115, 101, 116]).same_primitive(observed) || JsPayload::String(&[117, 112, 100, 97, 116, 101, 111, 114, 103, 97, 110, 105, 122, 97, 116, 105, 111, 110, 114, 117, 108, 101, 115, 101, 116]).same_primitive(observed) || JsPayload::String(&[99, 114, 101, 97, 116, 101, 111, 114, 103, 97, 110, 105, 122, 97, 116, 105, 111, 110, 114, 117, 108, 101, 115, 101, 116]).same_primitive(observed) || JsPayload::String(&[117, 112, 100, 97, 116, 101, 98, 114, 97, 110, 99, 104, 112, 114, 111, 116, 101, 99, 116, 105, 111, 110, 114, 117, 108, 101]).same_primitive(observed) || JsPayload::String(&[99, 114, 101, 97, 116, 101, 98, 114, 97, 110, 99, 104, 112, 114, 111, 116, 101, 99, 116, 105, 111, 110, 114, 117, 108, 101]).same_primitive(observed) });
 }
 
 #[rustfmt::skip]
-fn scoped_src38db8cde9674d040_at2097<'a>(name: JsPayload<'a>) -> bool {
+fn scoped_srce7285cceffb702d4_at2097<'a>(name: JsPayload<'a>) -> bool {
     return ({ let observed = name; JsPayload::String(&[117, 112, 100, 97, 116, 101, 114, 101, 102]).same_primitive(observed) || JsPayload::String(&[117, 112, 100, 97, 116, 101, 114, 101, 102, 115]).same_primitive(observed) });
 }
 
 #[rustfmt::skip]
-fn scoped_src38db8cde9674d040_at2207<'a>(key: JsPayload<'a>, v: JsPayload<'a>) -> bool {
+fn scoped_srce7285cceffb702d4_at2207<'a>(key: JsPayload<'a>, v: JsPayload<'a>) -> bool {
     return (key.strict_primitive(JsPayload::String(&[102, 111, 114, 99, 101])) && v.strict_primitive(JsPayload::Boolean(true)));
 }
 
 #[rustfmt::skip]
-fn scoped_src38db8cde9674d040_at2346<'a>(key: JsPayload<'a>, v: JsPayload<'a>) -> bool {
+fn scoped_srce7285cceffb702d4_at2346<'a>(key: JsPayload<'a>, v: JsPayload<'a>) -> bool {
     return ((key.strict_primitive(JsPayload::String(&[97, 102, 116, 101, 114, 111, 105, 100])) && (v.type_name().to_string() == "string".to_string())) && ({ let observed = v.as_utf16(); js_sequence_test(observed.iter().map(|unit| *unit as u32), &[(false, &[(48, 48)], Some(1), None), (false, &[(48, 48)], Some(2), None), (false, &[(48, 48)], Some(3), None), (false, &[(48, 48)], Some(4), None), (false, &[(48, 48)], Some(5), None), (false, &[(48, 48)], Some(6), None), (false, &[(48, 48)], Some(7), None), (false, &[(48, 48)], Some(8), None), (false, &[(48, 48)], Some(9), None), (false, &[(48, 48)], Some(10), None), (false, &[(48, 48)], Some(11), None), (false, &[(48, 48)], Some(12), None), (false, &[(48, 48)], Some(13), None), (false, &[(48, 48)], Some(14), None), (false, &[(48, 48)], Some(15), None), (false, &[(48, 48)], Some(16), None), (false, &[(48, 48)], Some(17), None), (false, &[(48, 48)], Some(18), None), (false, &[(48, 48)], Some(19), None), (false, &[(48, 48)], Some(20), None), (false, &[(48, 48)], Some(21), None), (false, &[(48, 48)], Some(22), None), (false, &[(48, 48)], Some(23), None), (false, &[(48, 48)], Some(24), None), (false, &[(48, 48)], Some(25), None), (false, &[(48, 48)], Some(26), None), (false, &[(48, 48)], Some(27), None), (false, &[(48, 48)], Some(28), None), (false, &[(48, 48)], Some(29), None), (false, &[(48, 48)], Some(30), None), (false, &[(48, 48)], Some(31), None), (false, &[(48, 48)], Some(32), None), (false, &[(48, 48)], Some(33), None), (false, &[(48, 48)], Some(34), None), (false, &[(48, 48)], Some(35), None), (false, &[(48, 48)], Some(36), None), (false, &[(48, 48)], Some(37), None), (false, &[(48, 48)], Some(38), None), (false, &[(48, 48)], Some(39), None), (false, &[(48, 48)], Some(40), None), (false, &[(48, 48)], Some(40), Some(41)), (false, &[], None, None)]) }));
 }
 
 #[rustfmt::skip]
-fn scoped_src38db8cde9674d040_at3721<'a>(key: JsPayload<'a>) -> bool {
+fn scoped_srce7285cceffb702d4_at3721<'a>(key: JsPayload<'a>) -> bool {
     return !key.strict_primitive(JsPayload::String(&[114, 117, 108, 101, 115]));
 }
 
 #[rustfmt::skip]
-fn scoped_src38db8cde9674d040_at3929<'a>(key: JsPayload<'a>) -> bool {
+fn scoped_srce7285cceffb702d4_at3929<'a>(key: JsPayload<'a>) -> bool {
     return (!({ let observed = key; JsPayload::String(&[101, 102, 102, 101, 99, 116]).same_primitive(observed) || JsPayload::String(&[109, 101, 116, 104, 111, 100]).same_primitive(observed) || JsPayload::String(&[112, 97, 116, 104]).same_primitive(observed) || JsPayload::String(&[98, 111, 100, 121, 95, 99, 111, 110, 116, 97, 105, 110, 115]).same_primitive(observed) }));
 }

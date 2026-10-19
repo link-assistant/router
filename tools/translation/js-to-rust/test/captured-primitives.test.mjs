@@ -1,3 +1,4 @@
+import {historicalNativeSourcePath} from '../../test/fixtures/historical-language-layout.mjs';
 import {rustPackageSourcePath} from "../../repository-layout.mjs";
 import assert from 'node:assert/strict';
 import test from 'node:test';
@@ -118,7 +119,7 @@ test('every old 136 definition and 301 capture origin survives within the comple
   const intended=new Map([['js/src/config.mjs','client => !canonical.has(client)'],['js/src/provider-manifest.mjs','([key])=>fields.has(key)'],['js/src/client-status.mjs','key=>!modelKeys.includes(key)']]);
   for(const path of sourceModules(ROOT).filter(path=>path.startsWith('js/src/')&&path.endsWith('.mjs'))){
     const source=readFileSync(join(ROOT,rustPackageSourcePath(ROOT,path)),'utf8'),current=analyzeJavaScript(source,{sourcePath:path}),previous=old.discoverScopedHelpers(source,current.items,analyzeJavaScript,path),sourceSha256=hash(source),oldCaptureOrigins=previous.items.filter(row=>row.diagnostic?.message==='a scoped lexical capture');
-    const originalPin=originalPins.find(row=>row.path===path);assert.ok(originalPin);assert.equal(Buffer.byteLength(source),originalPin.originalSourceBytes);assert.equal(sourceSha256,originalPin.sourceSha256);assert.deepEqual(current.program,originalPin.topLevelProgram);
+    const originalPin=originalPins.find(row=>historicalNativeSourcePath(row.path)===path);assert.ok(originalPin);assert.equal(Buffer.byteLength(source),originalPin.originalSourceBytes);assert.equal(sourceSha256,originalPin.sourceSha256);assert.deepEqual(current.program,originalPin.topLevelProgram);
     assert.equal(current.scopedFunctions.sourceItems,previous.sourceItems);
     for(const fn of previous.program)assert.deepEqual(current.scopedFunctions.program.find(row=>row.name===fn.name),fn,path+':'+fn.name);
     for(const row of previous.items){const after=current.scopedFunctions.items.find(value=>value.start===row.start);assert.ok(after);if(intended.has(path)&&source.slice(row.start,row.end)===intended.get(path)){assert.equal(row.status,'unsupported');assert.equal(after.status,'translated');assert.equal(after.coverageContract,'conditional-private-body-draft');assert.equal(after.end,row.end);assert.deepEqual(after.sourceScope,row.sourceScope);assert.deepEqual(after.captures,row.captures);changes.push({path,before:row,after});}else assert.deepEqual(after,row,path+':'+row.start);}

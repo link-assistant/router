@@ -1,5 +1,5 @@
 // GENERATED: node scripts/regenerate-js-first.mjs
-// Independently checked scoped bodies from js/src/tokens.mjs; source sha256=7c1488138ed098852d6f00054385683d746d0fa67fff9a50ee722593e7490cca; IR sha256=7dad2a40e5b8233d403d616a0ee06f308816ff757738cd5ed2629b752e52eb21.
+// Independently checked scoped bodies from js/src/tokens.mjs; source sha256=7c1488138ed098852d6f00054385683d746d0fa67fff9a50ee722593e7490cca; IR sha256=88f6424a4b86d703512cc3b56f135f0f6172b7d84c11694b231bc351b7f3cb82.
 // Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
 #[rustfmt::skip]
 fn js_sequence_test<I: Iterator<Item = u32>>(input: I, states: &[(bool, &[(u32, u32)], Option<usize>, Option<usize>)]) -> bool {
@@ -130,16 +130,16 @@ fn js_trim(value: &str) -> String {
 }
 
 #[rustfmt::skip]
-fn scoped_srcd5b89cec18e0c4bb_at1846<'a>(model: JsPayload<'a>) -> bool {
+fn scoped_srcfbf0f446ce33cc23_at1846<'a>(model: JsPayload<'a>) -> bool {
     return ((model.type_name().to_string() != "string".to_string()) || (!!(js_payload_trim(model.as_utf16())).is_empty()));
 }
 
 #[rustfmt::skip]
-fn scoped_srcd5b89cec18e0c4bb_at4090<'a>(repo: JsPayload<'a>) -> bool {
+fn scoped_srcfbf0f446ce33cc23_at4090<'a>(repo: JsPayload<'a>) -> bool {
     return ((repo.type_name().to_string() != "string".to_string()) || (!({ let observed = repo.as_utf16(); js_sequence_test(observed.iter().map(|unit| *unit as u32), &[(true, &[(9, 13), (32, 32), (160, 160), (5760, 5760), (8192, 8202), (8232, 8232), (8233, 8233), (8239, 8239), (8287, 8287), (12288, 12288), (65279, 65279), (47, 47)], Some(1), None), (true, &[(9, 13), (32, 32), (160, 160), (5760, 5760), (8192, 8202), (8232, 8232), (8233, 8233), (8239, 8239), (8287, 8287), (12288, 12288), (65279, 65279), (47, 47)], Some(1), Some(2)), (false, &[(47, 47)], Some(3), None), (false, &[(47, 47)], None, Some(4)), (true, &[(9, 13), (32, 32), (160, 160), (5760, 5760), (8192, 8202), (8232, 8232), (8233, 8233), (8239, 8239), (8287, 8287), (12288, 12288), (65279, 65279), (47, 47)], Some(5), None), (true, &[(9, 13), (32, 32), (160, 160), (5760, 5760), (8192, 8202), (8232, 8232), (8233, 8233), (8239, 8239), (8287, 8287), (12288, 12288), (65279, 65279), (47, 47)], Some(5), Some(6)), (false, &[], None, None)]) })));
 }
 
 #[rustfmt::skip]
-fn scoped_srcd5b89cec18e0c4bb_at7933<'a>(repo: JsPayload<'a>) -> bool {
+fn scoped_srcfbf0f446ce33cc23_at7933<'a>(repo: JsPayload<'a>) -> bool {
     return (repo.type_name().to_string() != "string".to_string());
 }

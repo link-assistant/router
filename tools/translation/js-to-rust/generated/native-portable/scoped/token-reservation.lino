@@ -1,2 +1,2 @@
 # GENERATED: checked portable-router-v1 bodies; no source envelopes.
-(function scoped_src890bbba6f95d7588_at677 (lossless) (parameters (value value)) (returns boolean) (body (return (binary and (builtin safe-integer (variable value)) (binary greater-equal (variable value) (number 0))))))
+(function scoped_srcd05102516b6bb4ce_at677 (lossless) (parameters (value value)) (returns boolean) (body (return (binary and (builtin safe-integer (variable value)) (binary greater-equal (variable value) (number 0))))))

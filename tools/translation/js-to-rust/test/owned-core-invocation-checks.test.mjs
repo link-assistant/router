@@ -1,3 +1,4 @@
+import {ownershipCompiler} from '../vendor/module-syntax.mjs';
 import {rustPackageSourcePath} from "../../repository-layout.mjs";
 import nativeTest from 'node:test';
 import assert from 'node:assert/strict';
@@ -227,7 +228,20 @@ const OLD_OPERATIONS=[
  "",
 ] .join('\n');
 
-function relocated(source,base,overrides={}){const edits=[];const after=source.replace(/(from\s+)(['"])(\.\.?\/[^'"\n]+)\2/gu,(whole,prefix,quote,path)=>{const next=prefix+quote+(overrides[path]??new URL(path,base).href)+quote;edits.push({before:whole,after:next});return next;});let inverse=after;for(const edit of [...edits].reverse()){assert.equal(inverse.split(edit.after).length,2);inverse=inverse.replace(edit.after,edit.before);}assert.equal(inverse,source);return {source,after,edits,inverse};}
+function relocated(source,base,overrides={}){
+ const ts=ownershipCompiler(),file=ts.createSourceFile('owned-invocation-fixture.mjs',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS),edits=[];assert.equal(file.parseDiagnostics.length,0);
+ for(const statement of file.statements){
+  if(!ts.isImportDeclaration(statement)&&!ts.isExportDeclaration(statement))continue;
+  const spec=statement.moduleSpecifier;if(!spec||!ts.isStringLiteral(spec)||!/^\.{1,2}\//u.test(spec.text))continue;
+  const start=spec.getStart(file),end=spec.end,before=source.slice(start,end),quote=before[0],target=overrides[spec.text]??new URL(spec.text,base).href;
+  assert.equal(typeof target,'string');assert.equal(target.includes(quote)||/[\\\r\n]/u.test(target),false);
+  edits.push({span:[start,end],before,after:quote+target+quote});
+ }
+ let after=source;for(const edit of [...edits].reverse()){assert.equal(after.slice(...edit.span),edit.before);after=after.slice(0,edit.span[0])+edit.after+after.slice(edit.span[1]);}
+ let delta=0;for(const edit of edits){edit.afterSpan=[edit.span[0]+delta,edit.span[0]+delta+edit.after.length];delta+=edit.after.length-edit.before.length;}
+ let inverse=after;for(const edit of [...edits].reverse()){assert.equal(inverse.slice(...edit.afterSpan),edit.after);inverse=inverse.slice(0,edit.afterSpan[0])+edit.before+inverse.slice(edit.afterSpan[1]);}
+ assert.equal(inverse,source);assert.equal(ts.createSourceFile('owned-invocation-fixture.mjs',after,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS).parseDiagnostics.length,0);return {source,after,edits,inverse};
+}
 async function copies(keep){
  const sourcePath='tools/translation/js-to-rust/owned-core-source.mjs',source=read(sourcePath),sourceExtra="\nexport function testMutation(context,path,source){const state=contexts.get(context);if(!state)throw TypeError('test requires genuine context');state.files.set(path,source);}\n";
  const sourceStage=relocated(source,new URL('../owned-core-source.mjs',import.meta.url)),sourceText=sourceStage.after+sourceExtra+'\n// fixture '+(++serial),sourceURL='data:text/javascript;base64,'+Buffer.from(sourceText).toString('base64'),sourceAPI=await import(sourceURL);
@@ -410,3 +424,5 @@ test('bounded saturation reconstructs instead of rejecting and document bounds r
  reset(pairs.current);pairs.current.api.checkOwnedCoreProgram(program,context);pairs.current.api.checkOwnedCoreProgram(program,context);assert.equal(pairs.current.probe.analyses.length,2);
  keep('complete-storage-and-document-boundaries',{data,program,outcomes,meta,roundtrip,changed});
 });
+
+test('duplicate actual module specifiers keep independent spans and preserve embedded source data',(_t,keep)=>{const source="import {a} from './same.mjs';\nexport {b} from './same.mjs';\nconst data=\"from './same.mjs'\";\n",result=relocated(source,new URL('../owned-core-source.mjs',import.meta.url));assert.equal(result.edits.length,2);assert.equal(result.inverse,source);assert.ok(result.after.includes("const data=\"from './same.mjs'\";"));assert.notDeepEqual(result.edits[0].span,result.edits[1].span);keep('complete-duplicate-module-site-inverse',result);});

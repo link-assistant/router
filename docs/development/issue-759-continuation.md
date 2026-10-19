@@ -331,6 +331,42 @@ scalar/byte time comparison remains the preserved initial Node observation.
 Current compiler exports, complete project generation, profile and reverse
 freshness, strict TypeScript, parity and full CI qualification remain open.
 
+The actual ordinary reverse producer subsequently generated a complete
+396-output proposal, changing 209 artifacts. Review compared all original and
+edited bytes, all 191 original inputs, changed Rust/TypeScript CST transports
+and full source inverses. The actual `regenerate-js-first.mjs --write` command
+installed those exact bytes; an independent post-install comparison found no
+extra managed files or removals. Fresh `--check` passed, and all 164 native
+TypeScript files compiled strictly with TypeScript 5.9.3. The added 121-line
+Rust base64 witness is generated source and remains uncompiled locally.
+
+An initial 28-file Node diagnostic was stopped as red after 443.146 seconds
+when a source-declared 60-second test entered the complete physical Router
+translation. It retained 38 observed passes and three failures, but its final
+deadline receipt was incomplete. Do not treat that interrupted batch as a
+qualified cohort. Five files with full physical-project compilation remain
+separate unresolved performance obligations; four earlier observed files also
+retain their missing final-audit obligation.
+
+The remaining 19 complete files finished 130 cases with 122 passes and eight
+failures, and no independent duration breaches. Actual regeneration fixed
+current manifests still naming the removed package paths. All 52 current
+native JavaScript files independently matched the immutable baseline bytes and
+hashes. Parser-selected receiving lookups preserve those historical labels and
+the original baseline hash. A fixture relocation helper now selects each
+actual import/export specifier by its syntax span, handles repeated specifiers
+independently, and preserves embedded source text with a full inverse. The
+complete two affected files then passed all 14 cases under Node and Bun,
+including the added duplicate-specifier control. The other 122 passing cases
+remain recorded against their original complete-file run.
+
+The new tracked Rust witness requires an actual source-bank refresh before
+full-corpus qualification; the byte codec also requires a current compiler
+registry and portable export. Ordinary reverse freshness is now checked;
+owned-definition/profile reverse freshness and the full forward/gate/parity
+obligations remain open. No operation status was promoted by these data and
+receiving repairs.
+
 Four specialized workflow path filters now watch the physical Rust sources and
 tests. Native YAML CST scalar selection, complete text inverses and independent
 parsed comparison preserved every other workflow field, including all jobs,

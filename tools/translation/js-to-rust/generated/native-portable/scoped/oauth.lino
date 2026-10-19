@@ -1,4 +1,4 @@
 # GENERATED: checked portable-router-v1 bodies; no source envelopes.
-(function scoped_srcf321079af6a138d9_at6404 (lossless) (parameters (value value)) (returns boolean) (body (return (binary not-equal (typeof (variable value)) (string string)))))
-(function scoped_srcf321079af6a138d9_at21967 (lossless) (parameters) (returns record%3A%5B%5D) (body (return (record))))
-(function scoped_srcf321079af6a138d9_at29478 (lossless) (parameters (model value)) (returns boolean) (body (return (binary or (binary not-equal (typeof (variable model)) (string string)) (unary not (truthy (variable model)))))))
+(function scoped_src9aceb36467fea412_at6404 (lossless) (parameters (value value)) (returns boolean) (body (return (binary not-equal (typeof (variable value)) (string string)))))
+(function scoped_src9aceb36467fea412_at21967 (lossless) (parameters) (returns record%3A%5B%5D) (body (return (record))))
+(function scoped_src9aceb36467fea412_at29478 (lossless) (parameters (model value)) (returns boolean) (body (return (binary or (binary not-equal (typeof (variable model)) (string string)) (unary not (truthy (variable model)))))))

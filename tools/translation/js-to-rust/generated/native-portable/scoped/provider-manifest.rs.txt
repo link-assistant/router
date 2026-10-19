@@ -1,5 +1,5 @@
 // GENERATED: node scripts/regenerate-js-first.mjs
-// Independently checked scoped bodies from js/src/provider-manifest.mjs; source sha256=e2202d46ff724740d8250ecfad06df4c980b658aa2162f89143cd72caa4fca5e; IR sha256=9e3125e3979418525ee7ccb76d50d7c0e37f5be267fb97a2f6d2e5ea1da6c920.
+// Independently checked scoped bodies from js/src/provider-manifest.mjs; source sha256=e2202d46ff724740d8250ecfad06df4c980b658aa2162f89143cd72caa4fca5e; IR sha256=79767ce7485966c53192a87553f76c8e654438ad68a1e3734589ca7964b97189.
 // Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
 #[derive(Clone, Copy)]
 pub enum JsPayload<'a> {
@@ -115,7 +115,7 @@ fn js_trim(value: &str) -> String {
 // Conditional private body draft: original standard collection intrinsics required.
 // Original has/includes lookup stability and parent execution are unproved.
 pub struct JsClosureEnvironment0 {}
-fn scoped_src98be18dc03f1b299_at737() -> JsClosureEnvironment0 {
+fn scoped_src6859656fec332c89_at737() -> JsClosureEnvironment0 {
     JsClosureEnvironment0 {}
 }
 impl JsClosureEnvironment0 {
@@ -126,32 +126,32 @@ impl JsClosureEnvironment0 {
 }
 
 #[rustfmt::skip]
-fn scoped_src39c3556e9adc7692_at1141<'a>(value: JsPayload<'a>) -> bool {
+fn scoped_src92f8d12e5ef44c05_at1141<'a>(value: JsPayload<'a>) -> bool {
     return (value.type_name().to_string() != "string".to_string());
 }
 
 // Conditional private body draft: genuine unchanged producer/callback intrinsics required.
 // Producer lookup stability and original signature full-domain parity are unproved; runtimeParity: false.
 #[rustfmt::skip]
-fn scoped_src39c3556e9adc7692_at2021(line: &[u16]) -> bool {
+fn scoped_src92f8d12e5ef44c05_at2021(line: &[u16]) -> bool {
     return line.starts_with(&[80, 82, 79, 86, 73, 68, 69, 82, 58, 32]);
 }
 
 // Conditional private body draft: genuine unchanged producer/callback intrinsics required.
 // Producer lookup stability and original signature full-domain parity are unproved; runtimeParity: false.
 #[rustfmt::skip]
-fn scoped_src39c3556e9adc7692_at2096(line: &[u16]) -> Vec<u16> {
+fn scoped_src92f8d12e5ef44c05_at2096(line: &[u16]) -> Vec<u16> {
     return js_payload_trim(line).to_vec();
 }
 
 // Conditional private body draft: genuine unchanged producer/callback intrinsics required.
 // Producer lookup stability and original signature full-domain parity are unproved; runtimeParity: false.
 #[rustfmt::skip]
-fn scoped_src39c3556e9adc7692_at2122(line: &[u16]) -> bool {
+fn scoped_src92f8d12e5ef44c05_at2122(line: &[u16]) -> bool {
     return line.starts_with(&[80, 82, 79, 86, 73, 68, 69, 82, 58, 32]);
 }
 
 #[rustfmt::skip]
-fn scoped_src39c3556e9adc7692_at4377<'a>(value: JsPayload<'a>) -> bool {
+fn scoped_src92f8d12e5ef44c05_at4377<'a>(value: JsPayload<'a>) -> bool {
     return (value.type_name().to_string() != "string".to_string());
 }

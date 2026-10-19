@@ -1,5 +1,5 @@
 // GENERATED: node scripts/regenerate-js-first.mjs
-// Independently checked top-level bodies from packages/javascript/native/managed-server.mjs; source sha256=e75adfc79b0ef607e789f98f996f69580e0ecde3ea9fd80ceae10df1d79c3bdf; IR sha256=cfc83b940a258c11b70689594946bbb037f559d01c3d462d3eeac528675bea2c.
+// Independently checked top-level bodies from js/src/managed-server.mjs; source sha256=e75adfc79b0ef607e789f98f996f69580e0ecde3ea9fd80ceae10df1d79c3bdf; IR sha256=cfc83b940a258c11b70689594946bbb037f559d01c3d462d3eeac528675bea2c.
 // Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
 export {};
 const ENGINE: string = "link-assistant-router/native-managed/v1";

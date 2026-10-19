@@ -1,5 +1,5 @@
 // GENERATED: node scripts/regenerate-js-first.mjs
-// Independently checked top-level bodies from packages/javascript/native/response-contracts.mjs; source sha256=09feb4c2763d15abcd6c7a630ca7bb708dc13150469d0106a20d40ad91b9d40e; IR sha256=7bafac23e281281c357cb010bad372a757a6679720074b0022249045d5c47124.
+// Independently checked top-level bodies from js/src/response-contracts.mjs; source sha256=09feb4c2763d15abcd6c7a630ca7bb708dc13150469d0106a20d40ad91b9d40e; IR sha256=7bafac23e281281c357cb010bad372a757a6679720074b0022249045d5c47124.
 // Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
 export {};
 export function responseNotFound(): Response {

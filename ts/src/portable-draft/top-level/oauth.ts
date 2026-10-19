@@ -1,5 +1,5 @@
 // GENERATED: node scripts/regenerate-js-first.mjs
-// Independently checked top-level bodies from packages/javascript/native/oauth.mjs; source sha256=b8a1f59bd7bc38a903d1e074f04fff0f8ffd13bc7987732f7311889e6b90669f; IR sha256=ae7dcc013e003b0fbc0d4b087a54a142c4ee16f6c730557c760dd5d8bc59ae3b.
+// Independently checked top-level bodies from js/src/oauth.mjs; source sha256=b8a1f59bd7bc38a903d1e074f04fff0f8ffd13bc7987732f7311889e6b90669f; IR sha256=ae7dcc013e003b0fbc0d4b087a54a142c4ee16f6c730557c760dd5d8bc59ae3b.
 // Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
 export {};
 export const CLAUDE_CLIENT_ID: string = "9d1c250a-e61b-44d9-88ed-5944d1962f5e";

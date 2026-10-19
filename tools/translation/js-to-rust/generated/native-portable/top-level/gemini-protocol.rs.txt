@@ -1,5 +1,5 @@
 // GENERATED: node scripts/regenerate-js-first.mjs
-// Independently checked top-level bodies from js/src/gemini-protocol.mjs; source sha256=0c15dfd433d8a354b5c66a6c88d9edc66db1796b56e1aa46e8045756632626e9; IR sha256=b5027a564e31f3d6fcec344f75bf0d74044aeff723dc61d1dc7eb35322230e66.
+// Independently checked top-level bodies from js/src/gemini-protocol.mjs; source sha256=0c15dfd433d8a354b5c66a6c88d9edc66db1796b56e1aa46e8045756632626e9; IR sha256=554904678c3155503bf7a2e3df4f0f3384471c7c70ef48087a988579b7482f97.
 // Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
 #[derive(Clone, Copy)]
 pub enum JsPayload<'a> {

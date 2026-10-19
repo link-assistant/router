@@ -1,5 +1,5 @@
 // GENERATED: node scripts/regenerate-js-first.mjs
-// Independently checked scoped bodies from js/src/oauth.mjs; source sha256=b8a1f59bd7bc38a903d1e074f04fff0f8ffd13bc7987732f7311889e6b90669f; IR sha256=a10c077e043d7aa70ca4aedc26e1035d10d30150fe412c5b5e29484c5d5c379c.
+// Independently checked scoped bodies from js/src/oauth.mjs; source sha256=b8a1f59bd7bc38a903d1e074f04fff0f8ffd13bc7987732f7311889e6b90669f; IR sha256=419901ddc9e483b43468dc8d5949ee073ed820a3a9e620bcccc7c6918d662a70.
 // Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
 #[derive(Clone, Copy)]
 pub enum JsPayload<'a> {
@@ -106,16 +106,16 @@ pub struct JsRecord0 {
 }
 
 #[rustfmt::skip]
-fn scoped_srcf321079af6a138d9_at6404<'a>(value: JsPayload<'a>) -> bool {
+fn scoped_src9aceb36467fea412_at6404<'a>(value: JsPayload<'a>) -> bool {
     return (value.type_name().to_string() != "string".to_string());
 }
 
 #[rustfmt::skip]
-fn scoped_srcf321079af6a138d9_at21967() -> std::rc::Rc<std::cell::RefCell<JsRecord0>> {
+fn scoped_src9aceb36467fea412_at21967() -> std::rc::Rc<std::cell::RefCell<JsRecord0>> {
     return std::rc::Rc::new(std::cell::RefCell::new(JsRecord0 {  }));
 }
 
 #[rustfmt::skip]
-fn scoped_srcf321079af6a138d9_at29478<'a>(model: JsPayload<'a>) -> bool {
+fn scoped_src9aceb36467fea412_at29478<'a>(model: JsPayload<'a>) -> bool {
     return ((model.type_name().to_string() != "string".to_string()) || (!!(model.as_utf16()).is_empty()));
 }

@@ -1,5 +1,5 @@
 // GENERATED: node scripts/regenerate-js-first.mjs
-// Independently checked scoped bodies from js/src/operations.mjs; source sha256=b796dd42092e3d8c03ce9a96ddb8b34c64b83fb53076347eaf4227b24e5322f9; IR sha256=6890b28f8cb770f1104d3b798161731be2d54d73fb024521e8745b799e4fd4f5.
+// Independently checked scoped bodies from js/src/operations.mjs; source sha256=b796dd42092e3d8c03ce9a96ddb8b34c64b83fb53076347eaf4227b24e5322f9; IR sha256=a530d1997c113beeb486158d2fa8f39c1a438fd27eaca171edc1b7199fb86058.
 // Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
 #[derive(Clone, Copy)]
 pub enum JsPayload<'a> {
@@ -101,11 +101,11 @@ impl<'a> JsValue<'a> {
 }
 
 #[rustfmt::skip]
-fn scoped_src7676d813dfaab9af_at3429<'a>(name: JsPayload<'a>) -> std::rc::Rc<std::cell::RefCell<Vec<JsPayload<'a>>>> {
+fn scoped_srcc61900483b5bad6f_at3429<'a>(name: JsPayload<'a>) -> std::rc::Rc<std::cell::RefCell<Vec<JsPayload<'a>>>> {
     return std::rc::Rc::new(std::cell::RefCell::new(vec![name, JsPayload::String(&[112, 97, 114, 116, 105, 97, 108])]));
 }
 
 #[rustfmt::skip]
-fn scoped_src7676d813dfaab9af_at20868<'a>(name: JsPayload<'a>) -> bool {
+fn scoped_srcc61900483b5bad6f_at20868<'a>(name: JsPayload<'a>) -> bool {
     return (name.type_name().to_string() == "string".to_string());
 }
