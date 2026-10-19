@@ -1,5 +1,5 @@
-import {relocatedRustSourcePath} from './repository-layout.mjs';
 #!/usr/bin/env node
+import {relocatedRustSourcePath} from './repository-layout.mjs';
 // Reviewed source-fixture producer. Git/CST history is data, never an issuer
 // of namespace, method-dispatch, ownership or executable authority.
 // Enter through the ordinary project bootstrap before structural extraction
