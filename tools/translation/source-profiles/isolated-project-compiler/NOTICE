@@ -1,9 +1,9 @@
 Original project compiler isolation registration (ID 300)
 
-The current complete registered original compiler sourceHead is d3f42e661a7ae4cfb9c86f92de28aa93f3f1b69e.
-Actual reviewed preparation proposal: 1305 files, 47068170 raw source bytes.
-Registry raw: 322647 B, SHA256 9c0424a3b2e07b2d4cea7e5b85f05c643d1967912e096567ba3bcadf423f8d1c.
-Registry gzip: 322690 B, SHA256 b3c7a24fc9d874df49df93c897361dd09adb7e3fa89f1f4dc1ccea7619d3e8b5.
+The current complete registered original compiler sourceHead is 22f54c1e7050c4a8c9a93471e50d3f926ab5f74a.
+Actual reviewed preparation proposal: 1306 files, 47082522 raw source bytes.
+Registry raw: 322884 B, SHA256 13f29f2c04bc2818324a986f2028e3563c04dec217343a1e200aa2d07848828a.
+Registry gzip: 322927 B, SHA256 307b69d5f1df255799ceeb859c73f6555ea969bd65df7854cb7b3082a4e94004.
 The sourceHead identifies captured originals; the receiving Git head may later include registry/metadata-only commits.
 The initial and previous complete source candidates remain retained separately.
 
