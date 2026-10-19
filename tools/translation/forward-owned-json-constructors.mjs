@@ -141,7 +141,7 @@ function sourceCalls(entry,parent){
  visit(entry.surface.body);if(calls.length!==1)fail('one complete source-bound constructor call required');return calls;
 }
 function project(fn,names){
- if(fn.k!=='fn'||fn.async||!canonicalJson(fn.ret,names)||!fn.params.length||fn.params.length>8)fail('ordinary scalar parameters and owned canonical Json return required');
+ if(fn.k!=='fn'||fn.async||fn.constant||fn.constFunction||!canonicalJson(fn.ret,names)||!fn.params.length||fn.params.length>8)fail('ordinary scalar parameters and owned canonical Json return required');
  const scope=new Map(),parameters=fn.params.map((parameter,at)=>{const kind=role(parameter.type);if(!kind||parameter.type.rustSourceType!==true||scope.has(parameter.name))fail('actual primitive source parameter required');scope.set(parameter.name,{name:'input'+at,role:kind,type:parameter.type});return {name:'input'+at,role:kind};});
  let cells=0,locals=0,macros=0;const tick=depth=>{if(++cells>4096||depth>64)fail('finite normal body budget');};
  function expression(node,bindings,depth){
@@ -151,11 +151,20 @@ function project(fn,names){
    if(kind==='str'&&(typeof node.value!=='string'||node.type.rustBorrowLifetime?.kind!=='static'||node.type.rustBorrowLifetime.source!=='string-literal')||kind==='bool'&&typeof node.value!=='boolean')fail('actual standard scalar literal required');return {kind:'literal',value:node.value,role:kind};
   }
   if(node.k==='if'){const cond=expression(node.cond,bindings,depth+1),yes=expression(node.then,bindings,depth+1),no=expression(node.else,bindings,depth+1);if(cond.role!=='bool'||yes.role!==kind||no.role!==kind)fail('complete conditional scalar domains differ');return {kind:'choose',condition:cond,then:yes,else:no,role:kind};}
-  if(node.k==='binary'&&['eq','ne'].includes(node.op)){const left=expression(node.left,bindings,depth+1),right=expression(node.right,bindings,depth+1);if(kind!=='bool'||left.role!==right.role||role(node.domain)!==left.role)fail('actual equality primitive domains differ');return {kind:'compare',op:node.op,left,right,role:'bool'};}
+  if(node.k==='binary'&&['eq','ne'].includes(node.op)){const left=expression(node.left,bindings,depth+1),right=expression(node.right,bindings,depth+1);if(kind!=='bool'||left.role!==right.role)fail('actual equality primitive domains differ');
+   // The genuine standard checker preserves both borrowed operand types but
+   // records a portable STRING domain, not either operand's loan provenance.
+   const domain=left.role==='str'?same(node.domain,{kind:'string'})&&same(node.standardStringEquality,{profile:'rust-1.89-standard-string-partial-eq',left:'&str',right:'&str'}):role(node.domain)==='bool'&&node.standardStringEquality===undefined;
+   if(!domain)fail('actual equality primitive domains differ');return {kind:'compare',op:node.op,left,right,role:'bool'};}
   fail('effect, unresolved operation or unsupported scalar node');
  }
  function body(node,bindings,depth){
   tick(depth);if(!canonicalJson(node?.type,names))fail('complete body canonical Json result required');
+  if(node.k==='routerConstObligation'){
+   const fields=keys(node),expected=['k','value','constEligible','sourceFeature','span','type'];
+   if(fields.length!==expected.length||fields.some(name=>!expected.includes(name))||node.constEligible!==false||node.sourceFeature!=='serde_json::json!'||node.value?.k!=='routerJsonMacro'||!same(node.type,node.value.type)||!same(node.span,node.value.span))fail('exact checked nonconst JSON obligation required');
+   return body(node.value,bindings,depth+1);
+  }
   if(node.k==='let'){
    if(node.mutable===true||typeof node.name!=='string'||bindings.has(node.name)||locals>=64)fail('fresh immutable lexical local required');
    const value=expression(node.value,bindings,depth+1),name='local'+locals++,inner=new Map(bindings);inner.set(node.name,{name,role:value.role,type:node.value.type});return {kind:'let',name,value,body:body(node.body,inner,depth+1)};
