@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from "../../repository-layout.mjs";
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import vm from 'node:vm';
@@ -73,7 +74,7 @@ test('thirteen original private factories and all 192 source calls prove UTF16 m
       assert.match(rust,/message: &\[u16\]/u);assert.match(rust,/pub message: Vec<u16>/u);assert.match(rust,/JsErrorProjection/u);assert.doesNotMatch(rust,/pub stack|pub prototype|impl std::error::Error/u);
     }
     assert.equal(calls,192);
-    const publicSource=readFileSync(join(ROOT,'js/src/client-files.mjs'),'utf8');assert.equal(analyzeJavaScript(publicSource).program.some(fn=>fn.name==='client_failure'),false);
+    const publicSource=readFileSync(join(ROOT,rustPackageSourcePath(ROOT,'js/src/client-files.mjs')),'utf8');assert.equal(analyzeJavaScript(publicSource).program.some(fn=>fn.name==='client_failure'),false);
   } finally {rmSync(directory,{recursive:true,force:true});}
 });
 

@@ -93,6 +93,22 @@ profile metadata is refreshed separately by
 baseline, a complete manifest substitution equation, unchanged dependencies
 and lockfile, and identical workspace build profiles.
 
+After the layout checkpoint, the complete nine-case native TypeScript receiving
+file passed strict compilation and its shared runtime expectations in Node and
+Bun. The complete layout, source-corpus, translation-acceptance and owned
+namespace files passed 22 cases under each engine. The latter compare genuine
+Default/Clone generated methods and checked targets against the ordinary
+project API. Complete application generation, inverse regeneration and strict
+parity are still open.
+
+The expanded six-file receiving group passed all 39 cases under both Node and
+Bun. It includes the complete original derived-source binding controls and
+physical deployment-module discovery. Parsed layout substitution covered the
+complete 511-file compiler-fixture census in four sequential bounded cohorts:
+134 files required 287 substitutions, each retaining complete CST equations and
+an inverse. This is source-layout repair evidence, not executable application
+coverage.
+
 The actual source-bank producer captured all 849 current Rust/workspace input files,
 including `rust/Cargo.toml`, and passed independent complete Git and physical-byte
 comparison within its original shared 60-second budget. Both fixed historical

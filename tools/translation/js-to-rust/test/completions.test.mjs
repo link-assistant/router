@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from "../../repository-layout.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,rmSync,realpathSync} from 'node:fs';
@@ -236,7 +237,7 @@ test('actual TypeScript class import aliases avoid all legal parameter local and
 test('complete original imageMedia body independently preserves all-input throw/return and actual native class identity',{timeout:60000},async t=>{
   const inventory=spawnSync('git',['ls-files','-z','--','js/src'],{cwd:root,encoding:'utf8',timeout:10000});assert.equal(inventory.status,0);
   const paths=inventory.stdout.split('\0').filter(path=>path.endsWith('.mjs')).sort();assert.equal(paths.length,52);
-  const sources=paths.map(path=>({path,source:readFileSync(join(root,path),'utf8')})),graph=createConstructorSourceGraph(sources),path='js/src/gemini-protocol.mjs',source=sources.find(row=>row.path===path).source;
+  const sources=paths.map(path=>({path,source:readFileSync(join(root,rustPackageSourcePath(root,path)),'utf8')})),graph=createConstructorSourceGraph(sources),path='js/src/gemini-protocol.mjs',source=sources.find(row=>row.path===path).source;
   const analysis=analyzeJavaScript(source,{sourcePath:path,constructorGraph:graph}),item=analysis.program.find(row=>row.name==='image_media');
   assert.ok(item,'unchanged whole original imageMedia must check through its qualified constructor source graph');assert.equal(item.params[0].type,'value');assert.equal(item.returns,'value');assert.equal(item.conditionalConstructors,true);
   const meta=toLino(item)+'\n',program=parseMeta(meta,{constructorGraph:graph}),owner=item.sourceConstructors.owner,originalBody=source.slice(owner.start,owner.end);

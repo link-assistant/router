@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -9,7 +10,7 @@ import {serde_json_roundtrip_from_str} from '../extensions/json-roundtrip-runtim
 const root=new URL('../../../',import.meta.url);
 function bits(value){const view=new DataView(new ArrayBuffer(8));view.setFloat64(0,value);return view.getBigUint64(0);}
 test('runtime cache input is the whole exact pinned original source, never manually copied constants',()=>{
-  const input=loadJsonMacroSourceProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')}),original=jsonMacroOriginalSource(input,'serde_json','src/lexical/cached_float80.rs');
+  const input=loadJsonMacroSourceProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')}),original=jsonMacroOriginalSource(input,'serde_json','src/lexical/cached_float80.rs');
   assert.equal(JSON_LEXICAL_CACHE_SOURCE,original.source);assert.equal(JSON_LEXICAL_CACHE_SOURCE_SHA256,original.sha256);assert.equal(createHash('sha256').update(JSON_LEXICAL_CACHE_SOURCE).digest('hex'),original.sha256);
 });
 test('original concise/truncated branch selection retains normal halfways and the truncated-prefix multiply-ten exception',()=>{

@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -9,7 +10,7 @@ import {compilePinnedJsonSliceReferenceFragments,pinnedJsonSliceReferenceProgram
 import {isArithmeticReferenceSource} from '../arithmetic-reference-source.mjs';
 import {compileArithmeticSourceFragments,bindArithmeticSourceData,bindArithmeticReferenceSource,extendArithmeticSourceData,projectArithmeticSource} from '../arithmetic-source-fragments.mjs';
 import {compileArithmeticSourceData} from '../arithmetic-source-data.mjs';
-const root=new URL('../../../',import.meta.url),dependencies=()=>loadJsonMacroSourceProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')}),path='impl::AsRef::shared_T::as_ref';
+const root=new URL('../../../',import.meta.url),dependencies=()=>loadJsonMacroSourceProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')}),path='impl::AsRef::shared_T::as_ref';
 function compiled(){const candidate=compilePinnedJsonSliceReferenceFragments(dependencies(),{sharedForwarding:true}),state=pinnedJsonSliceReferencePrograms(candidate),program=bindArithmeticReferenceSource(bindArithmeticSourceData(state.program,state.modulePath,[state.data]),state.referenceSource);return {candidate,state,program};}
 test('original full core shared-reference header, where predicate and UFCS keep source identity and both receiver levels',()=>{
   const {candidate,state}=compiled(),original=gunzipSync(readFileSync(new URL('../source-profiles/json-macro/standard/library-core-src-convert-mod.rs.gz',import.meta.url))).toString('utf8'),fn=state.program.functions.find(fn=>fn.name===path),predicate=fn.context.wherePredicates[0];

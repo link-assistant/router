@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import nodeTest from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync} from 'node:fs';
@@ -16,7 +17,7 @@ import {proposeCoreBase64Corpus} from '../migrate-core-base64.mjs';
 import * as runtime from '../base64-runtime.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const nativeJson=JSON.stringify,root=new URL('../../../',import.meta.url),C='crate::translation_core::',S='&'+C+'Str',T=C+'Text',E=C+'Base64Error',R=C+'Outcome<Vec<u8>,'+E+'>';
-const manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock});
+const manifest=readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock=readFileSync(repositorySourceURL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock});
 const vectors=JSON.parse(readFileSync(new URL('./fixtures/router-core-base64-vectors.json',import.meta.url),'utf8')),vectorRoot=process.env.ROUTER_CORE_BASE64_VECTOR_DIR;let retained=[];
 const retain=(kind,value)=>{retained.push({kind,value});return value;};
 const test=(name,run)=>nodeTest(name,{timeout:60000},async()=>{retained=[];try{await run();}finally{if(vectorRoot){mkdirSync(vectorRoot,{recursive:true});const encoded=nativeJson({name,vectors:retained},(_,value)=>typeof value==='bigint'?{$integer:String(value)}:value);writeJsonTextGzip(join(vectorRoot,Buffer.from(name).toString('hex')+'.json.gz'),encoded);}}});
@@ -35,7 +36,7 @@ const wrappers=[
 ];
 
 test('owned base64 binds all thirteen real facade functions through full native CST checked meta and strict targets',async()=>{
- const physical=readFileSync(new URL('src/translation_core/base64.rs',root),'utf8');assert.equal(physical,ROUTER_CORE_BASE64_SOURCE);assert.equal(createHash('sha256').update(physical).digest('hex'),ROUTER_CORE_BASE64_SHA256);
+ const physical=readFileSync(repositorySourceURL('src/translation_core/base64.rs',root),'utf8');assert.equal(physical,ROUTER_CORE_BASE64_SOURCE);assert.equal(createHash('sha256').update(physical).digest('hex'),ROUTER_CORE_BASE64_SHA256);
  const prepared=retain('actual-source-data-replay',prepareCoreBase64SourceData());assert.equal(prepared.leaf.source,physical);assert.equal(prepared.facade.source,ROUTER_FORMATTING_FACADE_SOURCE);assert.equal(prepared.sourceData.source,readFileSync(new URL('../router-core-source-data.mjs',import.meta.url),'utf8'));
  const cst=transportConcreteSyntaxSource(physical,{language:'Rust'});retain('complete-leaf-CST',cst);assert.equal(transportConcreteSyntaxMeta(cst.meta).source,physical);
  assert.equal(ROUTER_CORE_BASE64_CONTRACTS.filter(row=>row.kind==='function').length,13);

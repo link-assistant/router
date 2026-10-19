@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from "../../repository-layout.mjs";
 // Actual source and independent reversal; no row/declaration supplies authority.
 import nodeTest from 'node:test';
 import assert from 'node:assert/strict';
@@ -26,13 +27,13 @@ const root=fileURLToPath(new URL('../../../../',import.meta.url)),C='crate::tran
 let vectors=[];
 function retain(kind,value){vectors.push({kind,value});return value;}
 function test(name,run){return nodeTest(name,{timeout:60000},async t=>{vectors=[];try{await run(t);}finally{const directory=process.env.ROUTER_OPTIONAL_JSON_COMPOSITION_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeJsonTextGzip(join(directory,Buffer.from(name).toString('hex')+'.json.gz'),nativeJSON({name,vectors,rustExecuted:false},(_,value)=>typeof value==='bigint'?{$integer:String(value)}:value));}}});}
-const original=path=>readFileSync(join(root,path),'utf8');
+const original=path=>readFileSync(join(root,rustPackageSourcePath(root,path)),'utf8');
 const hash=text=>createHash('sha256').update(text).digest('hex');
 const some=value=>({$:'Some',field0:value}),none={$:'None'};
 function dependencies(){const manifest=original('Cargo.toml'),lock=original('Cargo.lock'),input={manifest,lock};return {manifest,lock,jsonMacroDependencies:loadJsonMacroSourceProof(input),deriveDependencies:loadDeriveDependencyProof(input)};}
 function sourceOptions(files,dependency){return {entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path],compilationProfile:PRODUCTION_PROFILE,cargoManifest:dependency.manifest,jsonMacroDependencies:dependency.jsonMacroDependencies,deriveDependencies:dependency.deriveDependencies};}
 function small(source){return {'src/lib.rs':'pub mod translation_core;\n'+source,'src/translation_core.rs':facade,'src/translation_core/primitives.rs':primitives,'src/translation_core/ranges.rs':ranges,'src/translation_core/json_collections.rs':collections};}
-function physicalSources(){const files={};function visit(path){for(const name of readdirSync(join(root,path)).sort()){const local=path+'/'+name,stat=lstatSync(join(root,local));assert.equal(stat.isSymbolicLink(),false);if(stat.isDirectory())visit(local);else if(name.endsWith('.rs')){assert.equal(stat.isFile(),true);files[local]=original(local);}}}visit('src');return files;}
+function physicalSources(){const files={};function visit(path){for(const name of readdirSync(join(root,rustPackageSourcePath(root,path))).sort()){const local=path+'/'+name,stat=lstatSync(join(root,rustPackageSourcePath(root,local)));assert.equal(stat.isSymbolicLink(),false);if(stat.isDirectory())visit(local);else if(name.endsWith('.rs')){assert.equal(stat.isFile(),true);files[local]=original(local);}}}visit('src');return files;}
 function realDefinition(){
  const files=physicalSources(),dependency=dependencies(),result=translateProjectOwnedCoreReaderDefinitions(sourceOptions(files,dependency));retain('actual-complete-physical-project',{files,result,manifest:dependency.manifest,lock:dependency.lock});
  const rows=result.ownedDefinitions.definitions.filter(row=>row.source==='src/bridge_response.rs'&&row.name==='bridge_response.anthropic_service_tier_from_openai');assert.equal(rows.length,1,nativeJSON(result.ownedDefinitions.unsupported));const row=rows[0],parent=files[row.source];

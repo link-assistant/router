@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from "../../repository-layout.mjs";
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createHash } from 'node:crypto';
@@ -17,7 +18,7 @@ const SOURCE = process.env.ROUTER_NATIVE_TS_SOURCE_ROOT ? resolve(process.env.RO
 // additional work; the original four regeneration builds below remain intact.
 async function lexicalThisBuildControls(ts,directory) {
   const root=join(directory,'lexical-this-build'),javascript=join(root,'js'),sourcePath='js/src/lexical.mjs';
-  mkdirSync(join(javascript,'native'),{recursive:true});
+  mkdirSync(join(javascript,'src'),{recursive:true});
   symlinkSync(join(SOURCE,'js/node_modules'),join(javascript,'node_modules'),'dir');
   writeFileSync(join(javascript,'package.json'),JSON.stringify({name:'lexical-this-fixture',version:'0.0.0',type:'module'}));
   writeFileSync(join(javascript,'catalog.json'),'{}\n');
@@ -53,7 +54,7 @@ export function outerGenerator() { const value = function* nestedGenerator(){yie
   writeFileSync(join(root,sourcePath),source);
   const paths=sourceModules(root),artifacts=buildNativeTypeScript(root),fresh=inferenceProgram(ts,root,paths),expectedFlags=new Map([['lexical',true],['nested',false],['child',true],['asyncLexical',true],['generatorLexical',true],['asyncGeneratorLexical',true],['defaults',true],['objectBoundary',false],['computedKey',true],['classBoundary',false],['classExpressionBoundary',false],['namedExpression',true],['dataOnly',false],['propertyArrow',true],['outerGenerator',false],['nestedGenerator',true]]);
   for(const path of paths) {
-    const text=readFileSync(join(root,path),'utf8'),file=fresh.program.getSourceFile(join(root,path)),legacy=parseNativeJavaScript(ts,path,text,{file,checker:fresh.checker}),metaPath='tools/translation/js-to-rust/generated/native-typescript/'+path.slice('js/'.length)+'.meta.json',wire=artifacts.get(metaPath);
+    const text=readFileSync(join(root,rustPackageSourcePath(root,path)),'utf8'),file=fresh.program.getSourceFile(join(root,path)),legacy=parseNativeJavaScript(ts,path,text,{file,checker:fresh.checker}),metaPath='tools/translation/js-to-rust/generated/native-typescript/'+path.slice('js/'.length)+'.meta.json',wire=artifacts.get(metaPath);
     assert.equal(wire,JSON.stringify(legacy)+'\n',path+': complete private/public meta byte equality');
     const meta=JSON.parse(wire),output=emitNativeTypeScript(ts,legacy),target=path.replace('js/','ts/').replace(/\.(?:mjs|js)$/u,'.ts'),header='// GENERATED JavaScript -> structured syntax AST -> TypeScript draft.\n// Meta sha256='+createHash('sha256').update(wire).digest('hex')+'; dynamic any annotations are explicit draft gaps.\n';
     assert.equal(artifacts.get(target),header+output.text,path+': complete target byte equality');
@@ -69,7 +70,7 @@ export function outerGenerator() { const value = function* nestedGenerator(){yie
   symlinkSync(join(javascript,'node_modules'),join(root,'ts/node_modules'),'dir');
   const strict=join(directory,'lexical-this-strict'),targets=paths.map(path=>join(root,path.replace('js/','ts/').replace(/\.(?:mjs|js)$/u,'.ts')));
   execFileSync(process.execPath,[join(SOURCE,'js/node_modules/typescript/lib/tsc.js'),'--strict','--skipLibCheck','--target','ES2022','--module','commonjs','--outDir',strict,...targets],{encoding:'utf8',timeout:20_000,maxBuffer:1024*1024,stdio:'pipe'});
-  const compiled=await import(pathToFileURL(join(strict,'native/lexical.js')).href),original=await import(pathToFileURL(join(root,sourcePath)).href);
+  const compiled=await import(pathToFileURL(join(strict,'src/lexical.js')).href),original=await import(pathToFileURL(join(root,sourcePath)).href);
   const verify=async runtime=>{assert.equal(runtime.lexical.call({value:11}),11);assert.equal(runtime.nested(),7);assert.equal(await runtime.asyncLexical.call({value:12}),12);assert.deepEqual([...runtime.generatorLexical.call({value:13})],[13,13]);assert.equal(runtime.defaults.call({value:14}),14);const generated=[];for await(const value of runtime.asyncGeneratorLexical.call({value:18}))generated.push(value);assert.deepEqual(generated,[18,18]);assert.equal(runtime.objectBoundary(),15);assert.equal(runtime.classBoundary(),17);assert.equal(runtime.classExpressionBoundary(),6);assert.equal(runtime.named.call({value:15}),15);assert.deepEqual(runtime.dataOnly(),['猫😀','this',true]);assert.equal(runtime.propertyArrow.call({value:16}),16);assert.equal(runtime.outerGenerator(),9);};await verify(original);await verify(compiled);
 }
 
@@ -203,7 +204,7 @@ test('structured dynamic gap plans preserve extra arguments, comma calls, coerci
 });
 
 test('every native JavaScript module has a structured syntax AST and executable TS draft', () => {
-  const manifest = JSON.parse(readFileSync(join(ROOT, 'tools/translation/js-to-rust/generated/native-typescript/manifest.json'), 'utf8'));
+  const manifest = JSON.parse(readFileSync(join(ROOT, rustPackageSourcePath(ROOT,'tools/translation/js-to-rust/generated/native-typescript/manifest.json')), 'utf8'));
   assert.deepEqual(manifest.modules.map((row) => row.source), sourceModules(SOURCE));
   assert.deepEqual(manifest.inferenceInputs.map(row=>row.path), ['js/package.json', ...readdirSync(join(SOURCE,'js')).filter(name=>name.endsWith('.d.ts')).sort().map(name=>`js/${name}`)]);
   for(const row of manifest.inferenceInputs) { assert.equal(row.sha256,createHash('sha256').update(readFileSync(join(SOURCE,row.path))).digest('hex')); assert.equal(typeof row.resolvedByCompiler,'boolean'); }
@@ -263,11 +264,11 @@ test('compiled TypeScript executes the shared native runtime fixture suite in No
     // Canonical filesystem aliases preserve fixture imports, spawned module
     // URLs and public browser paths without duplicate module cache identities.
     const aliases=folder=>{for(const entry of readdirSync(folder,{withFileTypes:true})) {
-      const path=join(folder,entry.name);if(entry.isDirectory()){if(path!==join(outDir,'native/assets'))aliases(path);continue;}if(!path.endsWith('.js'))continue;
+      const path=join(folder,entry.name);if(entry.isDirectory()){if(path!==join(outDir,'src/assets'))aliases(path);continue;}if(!path.endsWith('.js'))continue;
       const alias=path.replace(/\.js$/u,'.mjs');symlinkSync(entry.name,alias);
       assert.equal(realpathSync(alias),realpathSync(path));
     }};
-    aliases(join(outDir,'native'));aliases(join(outDir,'portable'));
+    aliases(join(outDir,'src'));aliases(join(outDir,'portable'));
     // Exercise Node's canonical module cache under Node even when Bun hosts
     // this test. Bun's shared runtime fixtures run independently below.
     execFileSync('node', ['--input-type=module', '-e', `
@@ -275,8 +276,8 @@ test('compiled TypeScript executes the shared native runtime fixture suite in No
       import {join} from 'node:path';
       import {pathToFileURL} from 'node:url';
       const root=process.argv[1];
-      const canonical=await import(pathToFileURL(join(root,'native/oauth.js')).href);
-      assert.equal(await import(pathToFileURL(join(root,'native/oauth.mjs')).href),canonical);
+      const canonical=await import(pathToFileURL(join(root,'src/oauth.js')).href);
+      assert.equal(await import(pathToFileURL(join(root,'src/oauth.mjs')).href),canonical);
     `, outDir], { encoding: 'utf8', timeout: 10_000, stdio: 'pipe' });
     const original = tests.map((path) => join(SOURCE, 'js/test', path.slice(path.lastIndexOf('/') + 1)));
     const nodeArgs = ['--test', '--test-reporter=tap'];

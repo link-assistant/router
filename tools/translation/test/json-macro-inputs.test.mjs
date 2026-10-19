@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
@@ -10,7 +11,7 @@ import { proveJsonMacroFeatures, isJsonMacroFeatureProof } from '../json-macro-f
 import { originalStandardSharedPatternLayout } from '../extensions/standard-shared-pattern-source.mjs';
 const root = new URL('../../../', import.meta.url);
 test('existing JSON source API and pure inputs share genuine original seals and reject cloned/refrozen certificates', () => {
-    const manifest = readFileSync(new URL('Cargo.toml', root), 'utf8'), lock = readFileSync(new URL('Cargo.lock', root), 'utf8');
+    const manifest = readFileSync(repositorySourceURL('Cargo.toml',root), 'utf8'), lock = readFileSync(repositorySourceURL('Cargo.lock',root), 'utf8');
     for (const name of ['JSON_MACRO_SOURCE_PROFILE', 'createJsonMacroSourceProof', 'loadJsonMacroSourceProof', 'isJsonMacroSourceProof', 'jsonMacroOriginalSource', 'jsonMacroDependencyProfile'])
         assert.equal(definitions[name], inputs[name], name);
     const proof = definitions.loadJsonMacroSourceProof({ manifest, lock }), features = proveJsonMacroFeatures(proof);

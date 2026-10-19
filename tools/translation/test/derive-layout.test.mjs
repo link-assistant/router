@@ -1,4 +1,4 @@
-import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
+import {repositorySourceURL,repositoryCratePaths} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -13,7 +13,7 @@ import {configureDeriveLayout} from '../derive-layout.mjs';
 import {HostRustParser} from '../extensions/host-contracts.mjs';
 import {tokenizeRust} from '../extensions/lexical.mjs';
 const root=new URL('../../../',import.meta.url);
-const dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+const dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
 const project=files=>translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path],compilationProfile:PRODUCTION_PROFILE,deriveDependencies:dependencies});
 
 test('written string borrow and allocation chains retain the actual outer operation',async()=>{
@@ -50,9 +50,9 @@ test('sealed actual derive attributes retain layout source and do not implement 
 });
 
 test('unchanged whole tracked thinking file retains unproved task-local and Copy provenance',()=>{
-  const source=readFileSync(new URL('src/thinking/mod.rs',root),'utf8');
+  const source=readFileSync(repositorySourceURL('src/thinking/mod.rs',root),'utf8');
   assert.equal(createHash('sha256').update(source).digest('hex'),'26a39c5916007a8fd5ca6c65b25e2135b788ba6831d9ba77674b7b80da1e1b3b');
-  const paths=execFileSync('git',['ls-files','-z','--','src/thinking'],{cwd:root,encoding:'utf8'}).split('\0').filter(path=>path.endsWith('.rs'));
+  const paths=repositoryCratePaths(execFileSync('git',['ls-files','-z','--','rust/src/thinking'],{cwd:root,encoding:'utf8'}).split('\0').filter(path=>path.endsWith('.rs')),root);
   const result=translateProject({entry:'src/thinking/mod.rs',paths,readSource:path=>readFileSync(repositorySourceURL(path,root),'utf8'),compilationProfile:PRODUCTION_PROFILE,deriveDependencies:dependencies});
   assert.equal(result.meta.deriveNamespaceFootprints.certificates.some(certificate=>certificate.source==='src/thinking/mod.rs'),false);
   assert.ok(result.meta.deriveNamespaceFootprints.diagnostics.some(diagnostic=>diagnostic.source==='src/thinking/mod.rs'&&diagnostic.name==='ThinkingLevel'));

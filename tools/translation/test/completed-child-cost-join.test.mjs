@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,rmSync,realpathSync} from 'node:fs';
@@ -214,7 +215,7 @@ test('full original callback tapes survive lazy stack parents descendants reentr
  for(const kind of ['proxy','getter','stack-getter','last-hidden','late-guard','mutating-getter','error-parent','error-capture','error-reenter','error-hook','error-enumerable-hook']){const expected=hostile(kind,'old'),actual=hostile(kind,'current');retain(kind+'-hostile-comparison',{expected,actual});assert.deepEqual(actual,expected);assert.equal(actual.result.same,true);if(kind.startsWith('error-')){const originalLegacy=hostile(kind,'old',true);retain(kind+'-original-legacy-separate',{originalLegacy,currentBefore:expected,currentAfter:actual,scope:'Existing helper lazy-stack behavior is compared exactly; original recursive closure may differ and is preserved separately, not claimed equivalent.'});}}
 });
 test('actual builtin full source crypto proof reissue refusals and independent strict targets remain unchanged',{timeout:60000},async()=>{
- const cargo={manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')};
+ const cargo={manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')};
  const leafOrigin=new URL('../builtin-derive-bang-footprints.mjs',import.meta.url),leafSource=readFileSync(leafOrigin,'utf8'),leaves={};
  for(const which of ['old','current']){
   const changes=[],compiled=leafSource.replace(/\bfrom (['"])(\.\.?\/[^'"]+)\1/g,(before,quote,path)=>{const actual=new URL(path,leafOrigin).href,target=actual===origin.href?subjects[which].url:actual,after='from '+quote+target+quote;changes.push({before,after});return after;}).replace(/\bimport\.meta\.url\b/g,before=>{const after=json(leafOrigin.href);changes.push({before,after});return after;});let reverse=compiled;for(const change of [...changes].reverse()){assert.equal(reverse.split(change.after).length,2);reverse=reverse.replace(change.after,change.before);}assert.equal(reverse,leafSource);const path=join(directory,'builtin-'+which+'.mjs');writeFileSync(path,compiled,{flag:'wx'});leaves[which]={path,url:pathToFileURL(realpathSync(path)).href,compiled,changes};

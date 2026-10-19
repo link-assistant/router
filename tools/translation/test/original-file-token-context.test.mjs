@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // Positive original-token equations; actual generated/namespace owners stay separate.
 import nodeTest from 'node:test';
 import assert from 'node:assert/strict';
@@ -18,7 +19,7 @@ import {PRODUCTION_PROFILE,compilationProfile} from '../cfg-profile.mjs';
 import {translateProject} from '../project.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const test=(name,body)=>nodeTest(name,{timeout:60000},body),nativeJson=JSON.stringify,hash=value=>createHash('sha256').update(value).digest('hex');
-const root=new URL('../../../',import.meta.url),profileRoot=new URL('../source-profiles/original-file-context/',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+const root=new URL('../../../',import.meta.url),profileRoot=new URL('../source-profiles/original-file-context/',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
 let serial=0;
 function retain(name,value){const folder=process.env.ROUTER_ORIGINAL_FILE_TOKEN_CONTEXT_VECTOR_DIR;if(!folder)return value;mkdirSync(folder,{recursive:true});const source=nativeJson({name,value},(_key,item)=>typeof item==='bigint'?item.toString():item);writeJsonTextGzip(folder+'/'+String(++serial).padStart(3,'0')+'-'+name+'.json.gz',source);return value;}
 function module(source,file='src/lib.rs',path=[],profile=PRODUCTION_PROFILE){const result=captureSourceModuleViews({source,sourcePath:file,compilationProfile:profile}),view=result.views.find(row=>JSON.stringify(row.modulePath)===JSON.stringify(path));assert.ok(view);return {file,path,source,sourceView:view,compilationProfile:profile};}

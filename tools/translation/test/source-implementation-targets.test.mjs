@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
@@ -11,7 +12,7 @@ import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {HostRustParser} from '../extensions/host-contracts.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
 function retain(name,value){const directory=process.env.ROUTER_IMPLEMENTATION_TARGET_VECTORS;if(directory){mkdirSync(directory,{recursive:true});writeFileSync(directory+'/'+name+'.json.gz',gzipSync(JSON.stringify(value)));}}
 function original(source,entry='src/lib.rs'){
  const graph=resolveModuleGraph({entry,paths:[entry],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE}),binding=resolveModuleBindings({modules:graph.modules,externalModules:registeredStandardHostBindings(),compilationProfile:PRODUCTION_PROFILE}),module=graph.modules[0],implementations=extractImplDeclarations(source,{sourcePath:entry,modulePath:module.path,sourceView:module.sourceView,compilationProfile:PRODUCTION_PROFILE}).implementations;

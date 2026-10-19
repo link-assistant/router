@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from "../../repository-layout.mjs";
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -14,10 +15,10 @@ import { evaluate } from '../interpreter.mjs';
 import { toLino } from '../vendor/ir.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../../../..');
-const source = readFileSync(join(ROOT, 'js/portable/policy.mjs'), 'utf8');
+const source = readFileSync(join(ROOT, rustPackageSourcePath(ROOT,'js/portable/policy.mjs')), 'utf8');
 const translation = translateJavaScript(source);
-const fixtures = JSON.parse(readFileSync(join(ROOT, 'parity/fixtures/js-first/policy.json'), 'utf8'));
-const unsupported = JSON.parse(readFileSync(join(ROOT, 'parity/fixtures/js-first/unsupported.json'), 'utf8'));
+const fixtures = JSON.parse(readFileSync(join(ROOT, rustPackageSourcePath(ROOT,'parity/fixtures/js-first/policy.json')), 'utf8'));
+const unsupported = JSON.parse(readFileSync(join(ROOT, rustPackageSourcePath(ROOT,'parity/fixtures/js-first/unsupported.json')), 'utf8'));
 
 test('every independently authored fixture matches authoritative JavaScript and the IR evaluator', () => {
   const names = new Map(translation.program.map((item) => [item.name.replace(/_([a-z])/gu, (_, char) => char.toUpperCase()), item.name]));
@@ -117,7 +118,7 @@ test('unsupported dependencies are removed transitively from executable coverage
 test('regeneration is deterministic and the committed artifacts are current', () => {
   const artifacts = buildArtifacts(ROOT);
   assert.deepEqual([...artifacts], [...buildArtifacts(ROOT)]);
-  assert.match(artifacts.get('src/generated_js_first/policy.rs'), /\(-0\.0_f64\)\.to_bits\(\)/u);
+  assert.match(artifacts.get('rust/src/generated_js_first/policy.rs'), /\(-0\.0_f64\)\.to_bits\(\)/u);
   assert.deepEqual(regenerate(ROOT, { check: true }).changed, []);
 });
 
@@ -126,7 +127,7 @@ test('regenerate-and-diff rejects modified source and modified generated artifac
   try {
     for (const path of ['js/portable/policy.mjs', 'parity/fixtures/js-first/policy.json', 'parity/fixtures/js-first/unsupported.json']) {
       mkdirSync(dirname(join(root, path)), { recursive: true });
-      writeFileSync(join(root, path), readFileSync(join(ROOT, path)));
+      writeFileSync(join(root, path), readFileSync(join(ROOT, rustPackageSourcePath(ROOT,path))));
     }
     regenerate(root);
     assert.deepEqual(regenerate(root, { check: true }).changed, []);
@@ -142,9 +143,14 @@ test('regenerate-and-diff rejects modified source and modified generated artifac
 });
 
 test('unchanged reused frontend support files match the pinned original hashes', () => {
-  const provenance = JSON.parse(readFileSync(join(ROOT, 'tools/translation/js-to-rust/provenance.json'), 'utf8'));
+  const provenance = JSON.parse(readFileSync(join(ROOT, rustPackageSourcePath(ROOT,'tools/translation/js-to-rust/provenance.json')), 'utf8'));
   for (const file of provenance.files.filter((file) => file.adaptations.length === 0)) {
     const bytes = readFileSync(join(ROOT, 'tools/translation/js-to-rust', file.local));
     assert.equal(createHash('sha256').update(bytes).digest('hex'), file.originalSha256);
   }
+  const lino=provenance.files.find(file=>file.local==='vendor/lino.mjs');
+  const source=readFileSync(join(ROOT,'tools/translation/js-to-rust',lino.local),'utf8');
+  const marker='\n// Explicit writer-storage siblings.';
+  assert.equal(source.split(marker).length,2,'one appended helper section');
+  assert.equal(createHash('sha256').update(source.slice(0,source.indexOf(marker))).digest('hex'),lino.originalSha256,'complete original frontend bytes remain exact');
 });

@@ -9,14 +9,14 @@ import {compileDeclarativeMacro,expandDeclarativeMacro} from './declarative-toke
 import {deriveFootprintSourceContext} from './derive-footprints.mjs';
 import {builtinDeriveAstSourceProfile,builtinAstOriginal} from './builtin-derive-ast-meta.mjs';
 import {originalPrimitiveCloneExpansion} from './extensions/primitive-clone-source.mjs';
-import {resolveDerivedSourceBindings} from './derived-source-bindings.mjs';
+import {resolveDerivedSourceBindings,resolveDerivedEnclosingSourceBindings} from './derived-source-bindings.mjs';
 import {registeredStandardHostBindings} from './standard-host-bindings.mjs';
 import {moduleScopeKey,originalSourceModuleItems} from './source-module-views.mjs';
 import {macroBindingAffects} from './macro-subnamespaces.mjs';
 import {MODULE_PATH_PROFILE} from './module-paths.mjs';
 import {COPY_TRAIT_OWNER_PROFILE} from './copy-trait-owners.mjs';
 import {originalCorePreludeRootSource} from './extensions/core-prelude-source.mjs';
-import {createDefaultSourceContext} from './default-trait-source.mjs';
+import {createDefaultSourceContext,createDefaultEnclosingSourceContext} from './default-trait-source.mjs';
 const root=new URL('./source-profiles/source-clone/',import.meta.url),manifestBytes=readFileSync(new URL('manifest.json',root)),manifest=JSON.parse(manifestBytes);
 const hash=value=>createHash('sha256').update(value).digest('hex'),contexts=new WeakMap(),standards=new WeakMap();
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
@@ -76,10 +76,16 @@ function standardClone(dependencies,defaultContext){
   const result=freeze({profile,trait:sourceRef(origin,trait),method:{source:origin.path,sourceSha256:origin.sha256,span:{start:tb.offset+clones[0].start,end:tb.offset+clones[0].end},original:tb.source.slice(clones[0].start,clones[0].end),signature:'fn clone ( & self ) -> Self ;'},assertion:sourceRef(origin,assertion),routes,builtins,symbols,defaultIdentity:defaultContext.trait,namespaceAuthority:false,wholeTraitTranslated:false});standards.set(dependencies,result);return result;
 }
 export function createCloneSourceContext(deriveContext){
-  const original=deriveFootprintSourceContext(deriveContext),defaultContext=createDefaultSourceContext(deriveContext),standard=standardClone(original.dependencies,defaultContext);
+  return createCloneContext(deriveContext,createDefaultSourceContext,resolveDerivedSourceBindings);
+}
+export function createCloneEnclosingSourceContext(deriveContext){
+  return createCloneContext(deriveContext,createDefaultEnclosingSourceContext,resolveDerivedEnclosingSourceBindings);
+}
+function createCloneContext(deriveContext,createDefault,resolveBindings){
+  const original=deriveFootprintSourceContext(deriveContext),defaultContext=createDefault(deriveContext),standard=standardClone(original.dependencies,defaultContext);
   const descriptors=['std','core'].flatMap(root=>[{name:'Clone',namespace:'type',kind:'trait',target:[root,'clone','Clone'],source:'original-core-clone-trait',originalSourceSha256:standard.trait.sourceSha256},{name:'Default',namespace:'type',kind:'trait',target:[root,'default','Default'],source:'original-core-default-trait',originalSourceSha256:defaultContext.trait.sha256}]);
   const external=registeredStandardHostBindings(descriptors);for(const [key,table]of original.externalModules)if(!external.has(key))external.set(key,table);
-  const binding=resolveDerivedSourceBindings({modules:original.modules,externalModules:external,deriveContext,compilationProfile:original.compilationProfile}),evidence={schema:'original-clone-source-context-v1',dependenciesDigest:original.dependencies.digest,profileSha256:hash(manifestBytes),standard,sources:original.modules.map(module=>({source:module.file,module:module.path,sha256:hash(module.source)})),namespaceAuthority:false,generatedImplBehavior:false};
+  const binding=resolveBindings({modules:original.modules,externalModules:external,deriveContext,compilationProfile:original.compilationProfile}),evidence={schema:'original-clone-source-context-v1',dependenciesDigest:original.dependencies.digest,profileSha256:hash(manifestBytes),standard,sources:original.modules.map(module=>({source:module.file,module:module.path,sha256:hash(module.source)})),namespaceAuthority:false,generatedImplBehavior:false};
   const context=freeze({...evidence,digest:hash(JSON.stringify(evidence))});contexts.set(context,{...original,deriveContext,defaultContext,binding:freeze(binding),standard});return context;
 }
 export function cloneSourceContextFacts(context){const state=contexts.get(context);if(!state)fail('context is copied or unsealed');return state;}

@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -8,7 +9,7 @@ import {serde_json_from_str as defaultParse} from '../extensions/json-runtime.mj
 import {loadJsonMacroSourceProof} from '../json-macro-sources.mjs';
 import {jsonRoundtripCandidateProfile,isJsonRoundtripCandidateProfile} from '../json-roundtrip-capabilities.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),dependency=()=>loadJsonMacroSourceProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+const root=new URL('../../../',import.meta.url),dependency=()=>loadJsonMacroSourceProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
 function bits(value){const view=new DataView(new ArrayBuffer(8));view.setFloat64(0,value);return view.getBigUint64(0);}
 const number=source=>{const result=parse(source);assert.equal(result.$,'Ok',source);assert.equal(result.field0.$,'Number');return result.field0.field0;};
 

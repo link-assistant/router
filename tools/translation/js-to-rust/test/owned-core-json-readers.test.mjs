@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from "../../repository-layout.mjs";
 import nodeTest from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
@@ -16,7 +17,7 @@ import {json_macro_null,json_macro_bool,json_macro_string,json_macro_u64,json_ma
 const root=fileURLToPath(new URL('../../../../',import.meta.url)),nativeJson=JSON.stringify,vectorRoot=process.env.ROUTER_OWNED_JSON_READERS_VECTOR_DIR;let vectors=[];
 const retain=(kind,value)=>{vectors.push({kind,value});return value;};
 const test=(name,run)=>nodeTest(name,{timeout:60000},async t=>{vectors=[];try{await run(t);}finally{if(vectorRoot){mkdirSync(vectorRoot,{recursive:true});writeJsonTextGzip(join(vectorRoot,Buffer.from(name).toString('hex')+'.json.gz'),nativeJson({name,vectors},(_,value)=>typeof value==='bigint'?{$integer:String(value)}:value));}}});
-function original(path){return existsSync(join(root,path))?readFileSync(join(root,path),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:5000,maxBuffer:16777216});}
+function original(path){return existsSync(join(root,rustPackageSourcePath(root,path)))?readFileSync(join(root,rustPackageSourcePath(root,path)),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:5000,maxBuffer:16777216});}
 const oracle=original('tests/reverse_owned_json_readers_oracle.rs'),source=/const REVERSE_JSON_READER_JS_WITNESS: &str = r###"([\s\S]*?)"###;/u.exec(oracle)[1],imports=source.slice(0,source.indexOf('\n')+1);
 const contract=[['read_key','getKey',['value','key']],['read_index','getIndex',['value','index']],['read_pointer','pointer',['value','key']],['read_text','asText',['value']],['read_bool','asBool',['value']],['read_u64','asU64',['value']],['read_i64','asI64',['value']],['read_null','isNull',['value']]];
 function typed(js=source,extra=[]){let result=js;for(const [name,op,args]of [...contract,...extra])result=result.replace('function '+name+'('+args.join(',')+')','function '+name+'('+args.map((arg,at)=>arg+':Parameters<typeof '+op+'>['+at+']').join(',')+'):ReturnType<typeof '+op+'>');return result;}

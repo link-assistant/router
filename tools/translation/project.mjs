@@ -19,8 +19,8 @@ import { HostRustParser as MethodRustParser, checkProjectProgram, emitJavaScript
 import {declarationRefusals} from './extensions/declaration-refusals.mjs';
 import { extractImplDeclarations, lowerSharedMethodTokens, lowerCopyMethodTokens,originalMethodMember,originalMethodLowering } from './impl-resolver.mjs';
 import {projectCopyEvidence,originalOptionCopyPayload} from './project-copy.mjs';
-import {createDefaultSourceContext} from './default-trait-source.mjs';
-import {createCloneSourceContext} from './clone-trait-source.mjs';
+import {createDefaultSourceContext,createDefaultEnclosingSourceContext} from './default-trait-source.mjs';
+import {createCloneSourceContext,createCloneEnclosingSourceContext} from './clone-trait-source.mjs';
 import {originalCloneGeneratedMethods,assertOriginalCloneGeneratedMethod} from './clone-source-ir.mjs';
 import {linkOriginalCloneSemantic} from './extensions/clone-source-body.mjs';
 import {originalDefaultGeneratedMethods,assertOriginalDefaultGeneratedMethod} from './default-source-ir.mjs';
@@ -321,10 +321,10 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
   const deriveContext=options.deriveDependencies?createDeriveFootprintContext({modules:graph.modules,dependencies:options.deriveDependencies,externalModules,compilationProfile:graph.compilationProfile}):null;
   namespaceProgress('default-source');
   const hasDefaultDeclarations=graph.modules.some(module=>module.items.some(item=>['struct','enum','impl'].includes(item.term)&&item.tokens.some(token=>token.text==='Default')));
-  const defaultContext=deriveContext&&hasDefaultDeclarations?createDefaultSourceContext(deriveContext):null;
+  const defaultContext=deriveContext&&hasDefaultDeclarations?(enclosingNamespace?createDefaultEnclosingSourceContext:createDefaultSourceContext)(deriveContext):null;
   namespaceProgress('clone-source');
   const hasCloneDeclarations=graph.modules.some(module=>module.items.some(item=>['struct','enum'].includes(item.term)&&item.tokens.some(token=>token.text==='Clone')));
-  const cloneContext=deriveContext&&hasCloneDeclarations?createCloneSourceContext(deriveContext):null;
+  const cloneContext=deriveContext&&hasCloneDeclarations?(enclosingNamespace?createCloneEnclosingSourceContext:createCloneSourceContext)(deriveContext):null;
   namespaceProgress('tool-attributes');
   const resolvedExternal=deriveContext?deriveFootprintExternalModules(deriveContext):externalModules;
   const toolContext=createToolAttributeContext({modules:graph.modules,externalModules:resolvedExternal,deriveContext,compilationProfile:graph.compilationProfile});

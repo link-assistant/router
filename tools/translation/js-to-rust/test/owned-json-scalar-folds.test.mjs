@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from "../../repository-layout.mjs";
 // Three complete source declarations; current checked products, not names, select this NEW format.
 import nodeTest from 'node:test';
 import assert from 'node:assert/strict';
@@ -28,7 +29,7 @@ const root=fileURLToPath(new URL('../../../../',import.meta.url)),C='crate::tran
 let vectors=[];
 function retain(kind,value){vectors.push({kind,value});return value;}
 function test(name,run){return nodeTest(name,{timeout:60000},async t=>{vectors=[];try{await run(t);}finally{const directory=process.env.ROUTER_JSON_SCALAR_FOLD_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeJsonTextGzip(join(directory,Buffer.from(name).toString('hex')+'.json.gz'),nativeJSON({name,vectors,rustExecuted:false},(_,value)=>typeof value==='bigint'?{$integer:String(value)}:value));}}});}
-const original=path=>readFileSync(join(root,path),'utf8');
+const original=path=>readFileSync(join(root,rustPackageSourcePath(root,path)),'utf8');
 const hash=text=>createHash('sha256').update(text).digest('hex');
 const some=value=>({$:'Some',field0:value}),none={$:'None'};
 function dependencies(){const manifest=original('Cargo.toml'),lock=original('Cargo.lock'),input={manifest,lock};return {manifest,lock,jsonMacroDependencies:loadJsonMacroSourceProof(input),deriveDependencies:loadDeriveDependencyProof(input)};}

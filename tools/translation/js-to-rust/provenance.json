@@ -75,7 +75,9 @@
       "local": "vendor/lino.mjs",
       "gitBlob": "bed89a65f14ab2219a95fcda009257a1735facba",
       "originalSha256": "b82b27064c1fb4c91f50ad45ceefde472e69239b0cd26d94e36b11c5ebd6a7ba",
-      "adaptations": []
+      "adaptations": [
+        "Append independently guarded writer-storage helpers while retaining the complete original frontend prefix unchanged"
+      ]
     },
     {
       "source": "data/meta/self-translation/constructs.lino",

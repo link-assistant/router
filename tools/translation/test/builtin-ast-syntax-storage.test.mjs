@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // Storage identity is separate from fresh source hashes and private fragments.
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
@@ -13,7 +14,7 @@ const BEFORE='Ly8gT3JpZ2luYWwgUnVzdCBjb21waWxlciBBU1QgY29uc3RydWN0aW9uIHJlY2lwZX
 const BEFORE_SHA256='2fb2795122448fe9609e81429198cf98c501e83caedf43df08ca1ca6299d1270';
 const json=JSON.stringify,parse=JSON.parse,descriptor=Object.getOwnPropertyDescriptor,define=Object.defineProperty,apply=Reflect.apply,keys=Reflect.ownKeys,prototype=Object.getPrototypeOf;
 const base=new URL('../',import.meta.url),root=new URL('../../../',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
-const dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+const dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
 const AST='compiler/rustc_ast/src/ast.rs';
 function test(name,run){testCase(name,{timeout:60_000},async t=>{const vectors=[],retain=(kind,value)=>{vectors.push({kind,value});return value;};try{await run(t,retain);}finally{const directory=process.env.ROUTER_AST_SYNTAX_STORAGE_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeFileSync(join(directory,Buffer.from(name).toString('hex')+'.json'),json({name,vectors},(_key,value)=>typeof value==='bigint'?{$integer:String(value)}:value)+'\n');}}});}
 function outcome(run){try{return {value:run()};}catch(error){const field=descriptor(error,'message');return {error:{type:error instanceof TypeError?'TypeError':typeof error,message:field&&Object.hasOwn(field,'value')?field.value:null}};}}

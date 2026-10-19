@@ -150,7 +150,7 @@ export function hostData() {
   const merge=(target,items,path=[])=>{for(const item of items){
     const existing=target.find(entry=>entry.name===item.name && entry.k===item.k);
     if(item.k==='module') {
-      const module=existing??{...item,items:[]};if(!existing)target.push(module);
+      const module=existing??{...item,generated:item.generated??'router-host-contract',items:[]};if(!existing)target.push(module);
       merge(module.items,item.items,[...path,item.name]);
     } else if(!existing)target.push({...item,hostTypePath:[...path,item.name],generated:item.generated??'router-host-contract'});
   }};

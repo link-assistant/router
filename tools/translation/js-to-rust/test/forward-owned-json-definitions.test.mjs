@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from "../../repository-layout.mjs";
 // Definition-only receiving, with full original parents and module refusals.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -18,7 +19,7 @@ import {createOwnedCoreSourceContext,translateOwnedCoreJavaScript,parseOwnedCore
 import {ownedCoreRuntimeSources} from '../owned-core-source.mjs';
 import {prepareOwnedCoreRuntime,evaluate} from '../interpreter.mjs';
 const root=fileURLToPath(new URL('../../../../',import.meta.url)),limits={timeout:60000},C='crate::translation_core::',hash=value=>createHash('sha256').update(value).digest('hex');
-const original=path=>existsSync(join(root,path))?readFileSync(join(root,path),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:30000,maxBuffer:16777216});
+const original=path=>existsSync(join(root,rustPackageSourcePath(root,path)))?readFileSync(join(root,rustPackageSourcePath(root,path)),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:30000,maxBuffer:16777216});
 const dependencyInputs={manifest:original('Cargo.toml'),lock:original('Cargo.lock')},jsonMacroDependencies=loadJsonMacroSourceProof(dependencyInputs),deriveDependencies=loadDeriveDependencyProof(dependencyInputs);
 const files=source=>({'src/lib.rs':'pub mod translation_core;\n'+source,'src/translation_core.rs':facade,'src/translation_core/primitives.rs':primitives,'src/translation_core/ranges.rs':ranges,'src/translation_core/json_collections.rs':collections});
 const options=input=>({entry:'src/lib.rs',paths:Object.keys(input),readSource:path=>input[path],compilationProfile:PRODUCTION_PROFILE,cargoManifest:dependencyInputs.manifest,jsonMacroDependencies,deriveDependencies});

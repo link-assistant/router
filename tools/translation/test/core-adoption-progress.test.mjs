@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import nodeTest from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,readdirSync,lstatSync,existsSync,rmSync} from 'node:fs';
@@ -14,7 +15,7 @@ import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE,ROUTER_CORE_RANGES_SOURCE,ROUTER_CORE_JSON_COLLECTIONS_SOURCE,ROUTER_CORE_BASE64_SOURCE} from '../router-core-source-data.mjs';
 import {writeJsonTextGzip} from '../../evidence/write-json-gzip.mjs';
 const root=new URL('../../../',import.meta.url),base=new URL('../',import.meta.url),cli=fileURLToPath(new URL('../propose-core-adoption-corpus.mjs',import.meta.url));
-const manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8');
+const manifest=readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock=readFileSync(repositorySourceURL('Cargo.lock',root),'utf8');
 const nativeJson=JSON.stringify,vectorRoot=process.env.ROUTER_CORE_ADOPTION_PROGRESS_VECTOR_DIR,hash=value=>createHash('sha256').update(value).digest('hex');
 let retained=[];const retain=(kind,value)=>{retained.push({kind,value});return value;};
 const test=(name,run)=>nodeTest(name,{timeout:60000},async t=>{retained=[];try{await run(t);}finally{if(vectorRoot){mkdirSync(vectorRoot,{recursive:true});writeJsonTextGzip(join(vectorRoot,Buffer.from(name).toString('hex')+'.json.gz'),nativeJson({name,vectors:retained}));}}});

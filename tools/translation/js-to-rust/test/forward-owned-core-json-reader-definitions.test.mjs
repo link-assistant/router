@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from "../../repository-layout.mjs";
 // Explicit new ABI wrappers, never old guarded-JS observation equivalence.
 import nodeTest from 'node:test';
 import assert from 'node:assert/strict';
@@ -25,7 +26,7 @@ import {writeJsonTextGzip} from '../../../evidence/write-json-gzip.mjs';
 const root=fileURLToPath(new URL('../../../../',import.meta.url)),C='crate::translation_core::',nativeJson=JSON.stringify,vectorRoot=process.env.ROUTER_FORWARD_CORE_JSON_READER_VECTOR_DIR;let vectors=[];
 const retain=(kind,value)=>{vectors.push({kind,value});return value;};
 const test=(name,run)=>nodeTest(name,{timeout:60000},async t=>{vectors=[];try{await run(t);}finally{if(vectorRoot){mkdirSync(vectorRoot,{recursive:true});writeJsonTextGzip(join(vectorRoot,Buffer.from(name).toString('hex')+'.json.gz'),nativeJson({name,vectors},(_,value)=>typeof value==='bigint'?{$integer:String(value)}:value));}}});
-const original=path=>existsSync(join(root,path))?readFileSync(join(root,path),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:5000,maxBuffer:16777216});
+const original=path=>existsSync(join(root,rustPackageSourcePath(root,path)))?readFileSync(join(root,rustPackageSourcePath(root,path)),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:5000,maxBuffer:16777216});
 const dependencyInputs={manifest:original('Cargo.toml'),lock:original('Cargo.lock')},jsonMacroDependencies=loadJsonMacroSourceProof(dependencyInputs),deriveDependencies=loadDeriveDependencyProof(dependencyInputs);
 const specs=[['read_key','value_get_string',"<'a>(input:&'a "+C+'Json,key:&'+C+"Str)->"+C+"Maybe<&'a "+C+'Json>{input.get(key)}'],['read_index','value_get_usize','(input:&'+C+'Json,index:usize)->'+C+'Maybe<&'+C+'Json>{input.get(index)}'],['read_pointer','value_pointer',"<'a>(input:&'a "+C+'Json,key:&'+C+"Str)->"+C+"Maybe<&'a "+C+'Json>{input.pointer(key)}'],['read_text','value_as_str','(input:&'+C+'Json)->'+C+'Maybe<&'+C+'Str>{input.as_str()}'],['read_bool','value_as_bool','(input:&'+C+'Json)->'+C+'Maybe<bool>{input.as_bool()}'],['read_u64','value_as_u64','(input:&'+C+'Json)->'+C+'Maybe<u64>{input.as_u64()}'],['read_i64','value_as_i64','(input:&'+C+'Json)->'+C+'Maybe<i64>{input.as_i64()}'],['read_null','value_is_null','(input:&'+C+'Json)->bool{input.is_null()}']];
 const body=specs.map(([name,,source])=>'pub fn '+name+source).join('\n'),one=index=>'pub fn '+specs[index][0]+specs[index][2];

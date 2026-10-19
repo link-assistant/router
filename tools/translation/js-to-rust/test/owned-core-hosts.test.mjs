@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from "../../repository-layout.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
@@ -16,7 +17,7 @@ const limits={timeout:60000};
 const imports="import {router_core_json_copy as copy,router_core_json_with_field as update,router_core_json_index_str as index,router_core_json_index_usize as at} from './runtime/json-update-runtime.mjs';\n";
 const param='/** @param {import("./runtime/json-macro-runtime.mjs").JsonValue} value */\n';
 function corpus(source){return {runtimeRoot:'runtime',declarationRoot:'runtime',files:[...ownedCoreRuntimeSources(),{path:'src/lib.rs',source:'pub mod translation_core;\n'},{path:'src/translation_core.rs',source:ROUTER_FORMATTING_FACADE_SOURCE},{path:'src/translation_core/primitives.rs',source:ROUTER_CORE_PRIMITIVES_SOURCE},{path:'Cargo.toml',source:original('Cargo.toml')},{path:'Cargo.lock',source:original('Cargo.lock')},{path:'caller.mjs',source}]};}
-function original(path){return existsSync(join(root,path))?readFileSync(join(root,path),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:30000,maxBuffer:16777216});}
+function original(path){return existsSync(join(root,rustPackageSourcePath(root,path)))?readFileSync(join(root,rustPackageSourcePath(root,path)),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:30000,maxBuffer:16777216});}
 function translate(source){const data=corpus(source),context=createOwnedCoreSourceContext(data);return {data,context,result:translateOwnedCoreJavaScript(source,{sourcePath:'caller.mjs',context})};}
 async function targets(t,source){
  const {data,context,result}=translate(source),directory=mkdtempSync(join(tmpdir(),'owned-reverse-ts-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));

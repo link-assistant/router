@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdtempSync,mkdirSync,rmSync} from 'node:fs';
@@ -65,7 +66,7 @@ test('stateful root reads retain both original reads after collection constructi
 });
 
 test('complete original JSON issuers preserve every proof source profile refusal and cryptographic byte',{timeout:30000},()=>{
- const inputs={manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')},dependencies=loadJsonMacroSourceProof(inputs),observations=[];
+ const inputs={manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')},dependencies=loadJsonMacroSourceProof(inputs),observations=[];
  const pairs=[{id:'macro',original:old['json-macro-features.mjs'].proveJsonMacroFeatures,current:proveJsonMacroFeatures,args:[dependencies]},{id:'parser',original:old['json-capabilities.mjs'].actualJsonCapabilityProfile,current:actualJsonCapabilityProfile,args:[inputs]}];
  function run(fn,args){const prior=descriptor(Hash.prototype,'update'),tape=[];let result;try{define(Hash.prototype,'update',{...prior,value(value,...rest){tape.push({input:Buffer.from(value,typeof rest[0]==='string'?rest[0]:undefined).toString('base64'),encoding:rest[0]??null});return apply(prior.value,this,[value,...rest]);}});result=observe(()=>fn(...args));}finally{define(Hash.prototype,'update',prior);}return {result,tape};}
  for(const pair of pairs){const expected=run(pair.original,pair.args),actual=run(pair.current,pair.args);retain('06-'+pair.id,{manifest,originals:[...originals],relocations,inputs,dependencies,expected,actual});assert.deepEqual(actual,expected);assert.equal(json(actual),json(expected));assert.ok(actual.tape.length>0);observations.push({id:pair.id,expected,actual});}
@@ -77,7 +78,7 @@ test('complete original JSON issuers preserve every proof source profile refusal
 });
 
 test('late array and collection callbacks retain complete original worklist function text and operation order',{timeout:30000},()=>{
- const input={manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')},dependencies=loadJsonMacroSourceProof(input),observations=[],text=Function.prototype.toString;
+ const input={manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')},dependencies=loadJsonMacroSourceProof(input),observations=[],text=Function.prototype.toString;
  for(const key of ['filter','find']){
   function run(fn){const prior=descriptor(Array.prototype,key),tape=[];let result;try{define(Array.prototype,key,{...prior,value(callback,...rest){tape.push({callback:apply(text,callback,[]),length:this.length});return apply(prior.value,this,[callback,...rest]);}});result=observe(()=>fn(dependencies));}finally{define(Array.prototype,key,prior);}return {result,tape};}
   const expected=run(old['json-macro-features.mjs'].proveJsonMacroFeatures),actual=run(proveJsonMacroFeatures);assert.deepEqual(actual,expected);assert.ok(actual.tape.length>0);observations.push({key,expected,actual});

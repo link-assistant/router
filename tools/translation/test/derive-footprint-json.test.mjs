@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // Full pristine leaf oracle with real shared dependencies; storage bytes grant no authority.
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
@@ -34,7 +35,7 @@ async function fixture(t,retain,source=unit){
  const relocated=beforeText.replace(/(from\s+)(['"])(\.\.?\/[^'"\n]+)\2/g,(whole,prefix,quote,spec)=>{const replacement=prefix+quote+new URL(spec,new URL('../derive-footprints.mjs',import.meta.url)).href+quote;relocation.push({before:whole,after:replacement});return replacement;});let restored=relocated;
  for(const edit of [...relocation].reverse()){assert.equal(restored.split(edit.after).length,2);restored=restored.replace(edit.after,edit.before);}assert.equal(restored,beforeText);
  const file=join(directory,'before.mjs');writeFileSync(file,relocated);assert.equal(readFileSync(file,'utf8'),relocated);const original=await import(pathToFileURL(file));
- const dependencyInputs={manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')},dependencies=loadDeriveDependencyProof(dependencyInputs),files={'src/lib.rs':'mod model;','src/model.rs':source},graph=resolveModuleGraph({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path],compilationProfile:PRODUCTION_PROFILE});
+ const dependencyInputs={manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')},dependencies=loadDeriveDependencyProof(dependencyInputs),files={'src/lib.rs':'mod model;','src/model.rs':source},graph=resolveModuleGraph({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path],compilationProfile:PRODUCTION_PROFILE});
  const input={modules:graph.modules,dependencies,compilationProfile:PRODUCTION_PROFILE},left=original.createDeriveFootprintContext(input),right=current.createDeriveFootprintContext(input);
  equal(retain,'complete-authenticated-contexts',left,right);const module=graph.modules.find(row=>row.file==='src/model.rs'),item=originalSourceModuleItems(module).find(row=>['struct','enum'].includes(row.term));assert.ok(item);assert.ok(right.certificates.length);
  retain('complete-leaf-import-recipe',{beforeText,actual,relocated,relocation,substitutions:SUBSTITUTIONS});retain('complete-source-graph-dependencies',{dependencyInputs,files,graph});return {original,left,right,input,module,item,files,dependencies};

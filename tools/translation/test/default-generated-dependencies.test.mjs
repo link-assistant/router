@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
@@ -19,7 +20,7 @@ import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {HostRustParser} from '../extensions/host-contracts.mjs';
 import {translateProject} from '../project.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),inputs={manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')};
+const root=new URL('../../../',import.meta.url),inputs={manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')};
 const dependencies=loadDeriveDependencyProof(inputs),jsonMacroDependencies=loadJsonMacroSourceProof(inputs),hash=value=>createHash('sha256').update(value).digest('hex');
 const compile=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,deriveDependencies:dependencies,jsonMacroDependencies,compilationProfile:PRODUCTION_PROFILE});
 function vector(name,value){if(!process.env.ROUTER_DEFAULT_DEPENDENCY_VECTORS)return;mkdirSync(process.env.ROUTER_DEFAULT_DEPENDENCY_VECTORS,{recursive:true});writeFileSync(process.env.ROUTER_DEFAULT_DEPENDENCY_VECTORS+'/'+name+'.json.gz',gzipSync(JSON.stringify(value)));}

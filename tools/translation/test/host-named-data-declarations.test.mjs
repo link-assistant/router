@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from "../repository-layout.mjs";
 import nodeTest from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
@@ -46,7 +47,7 @@ function retain(label,value){receipts.push({label,value});const directory=proces
 function test(title,body){return nodeTest(title,{timeout:60000},body);}
 function original(path){const source=execFileSync('git',['show',BASELINE+':'+path],{cwd:root,encoding:'utf8',timeout:5000,maxBuffer:1048576});if(path!==HOST)return source;
  const before="for(const file of ['base64-runtime.mjs','base64-runtime.d.mts'])",after="for(const file of ['base64-runtime.mjs','base64-runtime.d.mts','json-option-runtime.mjs','json-option-runtime.d.mts'])";assert.equal(source.split(before).length,2);const evolved=source.replace(before,()=>after);assert.equal(evolved.replace(after,()=>before),source);retain('complete693-legacy-asset-addition-history',{path,original:source,evolved,inverse:evolved.replace(after,()=>before),authority:{source:false,owner:false,type:false,executable:false}});return evolved;}
-function current(){return Object.fromEntries(NAMED_HOST_DECLARATION_SOURCE_PATHS.map(path=>[path,readFileSync(join(root,path),'utf8')]));}
+function current(){return Object.fromEntries(NAMED_HOST_DECLARATION_SOURCE_PATHS.map(path=>[path,readFileSync(join(root,rustPackageSourcePath(root,path)),'utf8')]));}
 function temporary(t){const directory=mkdtempSync(join(tmpdir(),'router-named-declarations-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));return directory;}
 function write(directory,path,source){mkdirSync(dirname(join(directory,path)),{recursive:true});writeFileSync(join(directory,path),source);}
 function materialize(directory,assets){for(const [path,source]of assets)write(directory,path,source);}
@@ -84,7 +85,7 @@ function closure(assets,runtimeRoot='runtime',declarationRoot=runtimeRoot,roots=
  assertReverseConcreteSourceHost();return {rows:rows.sort((a,b)=>a.path.localeCompare(b.path)),stages};
 }
 const CALLER='import {router_core_json_copy as copy} from "./runtime/json-update-runtime.mjs";\n/** @param {import("./runtime/json-macro-runtime.mjs").JsonValue} value */\nexport function copied(value){return copy(value);}\n';
-function input(source=CALLER){return {runtimeRoot:'runtime',declarationRoot:'runtime',files:[...ownedCoreRuntimeSources(),{path:'src/lib.rs',source:'pub mod translation_core;\n'},{path:'src/translation_core.rs',source:ROUTER_FORMATTING_FACADE_SOURCE},{path:'src/translation_core/primitives.rs',source:ROUTER_CORE_PRIMITIVES_SOURCE},{path:'Cargo.toml',source:readFileSync(join(root,'Cargo.toml'),'utf8')},{path:'Cargo.lock',source:readFileSync(join(root,'Cargo.lock'),'utf8')},{path:'caller.mjs',source}]};}
+function input(source=CALLER){return {runtimeRoot:'runtime',declarationRoot:'runtime',files:[...ownedCoreRuntimeSources(),{path:'src/lib.rs',source:'pub mod translation_core;\n'},{path:'src/translation_core.rs',source:ROUTER_FORMATTING_FACADE_SOURCE},{path:'src/translation_core/primitives.rs',source:ROUTER_CORE_PRIMITIVES_SOURCE},{path:'Cargo.toml',source:readFileSync(join(root,rustPackageSourcePath(root,'Cargo.toml')),'utf8')},{path:'Cargo.lock',source:readFileSync(join(root,rustPackageSourcePath(root,'Cargo.lock')),'utf8')},{path:'caller.mjs',source}]};}
 function outcome(action){try{return {mode:'return',value:action()};}catch(error){return {mode:'throw',name:error.name,message:error.message};}}
 
 test('legacy assets stay exact while the explicit format changes only unused family declaration spelling',()=>{

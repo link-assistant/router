@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -7,7 +8,7 @@ import {compilePinnedJsonStorageFragments,isPinnedJsonStorageFragments,projectPi
 import {compileArithmeticSourceFragments,bindArithmeticSourceData,bindArithmeticRecordSource,extendArithmeticSourceData,extendArithmeticCalleeSource,projectArithmeticSource} from '../arithmetic-source-fragments.mjs';
 import {compileArithmeticSourceData} from '../arithmetic-source-data.mjs';
 import {compileArithmeticRecordSource,isArithmeticRecordSource} from '../arithmetic-record-source.mjs';
-const root=new URL('../../../',import.meta.url),dependencies=()=>loadJsonMacroSourceProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')}),project=(proof,path,args,bits=32)=>projectPinnedJsonStorageFragment(proof,path,args,bits);
+const root=new URL('../../../',import.meta.url),dependencies=()=>loadJsonMacroSourceProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')}),project=(proof,path,args,bits=32)=>projectPinnedJsonStorageFragment(proof,path,args,bits);
 test('whole original Bigint source retains exact class/receiver/body spans and original Default allocation IR',()=>{
   const input=dependencies(),proof=compilePinnedJsonStorageFragments(input),original=jsonMacroOriginalSource(input,'serde_json','src/lexical/bignum.rs');assert.equal(original.sha256,'db688e8112389998d0f91906f6857e28f9b510a8b4065ad476c8e8be2f77becf');assert.equal(proof.recordSource.layouts.length,1);assert.equal(proof.recordSource.layouts[0].attributes.length,2);
   for(const fn of proof.sourceProgram.functions)assert.equal(createHash('sha256').update(original.source.slice(fn.span.start,fn.span.end)).digest('hex'),fn.sha256);

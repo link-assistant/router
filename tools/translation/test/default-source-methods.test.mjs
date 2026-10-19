@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -12,7 +13,7 @@ import {captureSourceModuleViews,originalSourceModuleItems} from '../source-modu
 import {extractImplDeclarations,proveDefaultMethodAdmission,lowerDefaultMethodTokens} from '../impl-resolver.mjs';
 import {HostRustParser} from '../extensions/host-contracts.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock});
+const root=new URL('../../../',import.meta.url),manifest=readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock=readFileSync(repositorySourceURL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock});
 const compile=(source,entry='src/lib.rs')=>translateProject({entry,paths:[entry],readSource:()=>source,cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
 function alias(result,type,name='originalDefault'){
   const program=parseProgram(JSON.stringify(result.meta.targetSemanticProgram)),entries=[...program.declarations.values()].filter(item=>item.impl?.method==='default'),entry=entries.length===1?entries[0]:entries.find(item=>item.impl.defaultSourceProof?.typePath?.at(-1)===type);

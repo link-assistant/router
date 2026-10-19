@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import {gzipSync} from 'node:zlib';
 import assert from 'node:assert/strict';
@@ -14,7 +15,7 @@ import {requireOriginalCloneEmission,requireOriginalCloneFieldEmission,checkOrig
 import {functionLifetimeSignature} from '../extensions/source-lifetimes.mjs';
 import {parseProgram} from '../semantic-meta.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock});
+const root=new URL('../../../',import.meta.url),manifest=readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock=readFileSync(repositorySourceURL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock});
 const compile=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
 const retain=(name,value)=>{if(process.env.ROUTER_CLONE_EVIDENCE_DIR){mkdirSync(process.env.ROUTER_CLONE_EVIDENCE_DIR,{recursive:true});writeFileSync(process.env.ROUTER_CLONE_EVIDENCE_DIR+'/'+name+'.json.gz',gzipSync(JSON.stringify(value,null,2)+'\n'));}};
 function setup(source){const capture=captureSourceModuleViews({source,sourcePath:'src/lib.rs',compilationProfile:PRODUCTION_PROFILE}),modules=capture.views.map(sourceView=>({file:'src/lib.rs',path:sourceView.modulePath,source,sourceView,compilationProfile:PRODUCTION_PROFILE,configurationCondition:sourceView.configurationCondition})),derive=createDeriveFootprintContext({modules,dependencies,compilationProfile:PRODUCTION_PROFILE}),context=createCloneSourceContext(derive);return {context,module:cloneSourceContextFacts(context).modules[0]};}

@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -49,7 +50,7 @@ test('Option map_or joins actual owned strings across distinct checked construct
 });
 
 test('valid borrowed parse signatures retain missing and actual float_roundtrip profile refusals independently of ownership',()=>{
-  const root=new URL('../../../',import.meta.url),manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8');
+  const root=new URL('../../../',import.meta.url),manifest=readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock=readFileSync(repositorySourceURL('Cargo.lock',root),'utf8');
   const actual=actualJsonCapabilityProfile({manifest,lock,compilationProfile:PRODUCTION_PROFILE});assert.equal(actual.kind,'actual-locked-Cargo-profile');assert.equal(actual.features.includes('float_roundtrip'),true);assert.equal(actual.parseAvailable,false);
   const source='pub fn reader(v:&serde_json::Value)->Option<&str>{v.as_str()} pub fn parse_text(v:&str)->Result<serde_json::Value,serde_json::Error>{serde_json::from_str(v)} pub fn parse_bytes(v:&[u8])->Result<serde_json::Value,serde_json::Error>{serde_json::from_slice(v)}';
   for(const profile of [undefined,actual]){

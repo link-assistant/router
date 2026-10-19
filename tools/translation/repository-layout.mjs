@@ -7,7 +7,7 @@ export const LANGUAGE_ROOTS = Object.freeze({javascript: 'js', typescript: 'ts',
 // Existing crate-relative APIs retain their logical source names. Resolve only
 // their physical reads; inventories continue to use full repository paths.
 export function rustPackageSourcePath(root, path) {
-  if (path !== 'Cargo.toml' && path !== 'Cargo.lock' && !/^(?:src|tests|benches|examples|fixtures)\//u.test(path)) return path;
+  if (path !== 'Cargo.toml' && path !== 'Cargo.lock' && !/^(?:src|tests|benches|examples|fixtures)(?:\/|$)/u.test(path)) return path;
   const layout = repositoryRustLayout(root);
   if (path === 'Cargo.toml') return layout.manifest;
   if (path === 'Cargo.lock') return layout.lock;

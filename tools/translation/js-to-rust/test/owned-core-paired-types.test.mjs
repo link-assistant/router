@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from "../../repository-layout.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
@@ -17,7 +18,7 @@ const JS='app/src/caller.mjs',TS='typed/src/caller.mts';
 const imports="import {router_core_json_copy as copy,router_core_json_index_str as index} from '../runtime/json-update-runtime.mjs';\n";
 const types="import type {JsonValue} from '../runtime/json-macro-runtime.mjs';\n";
 const copied=imports+'export function copied(value){return copy(value);}',copiedTyped=imports+types+'export function copied(value:JsonValue):JsonValue{return copy(value);}';
-function original(path){return existsSync(join(root,path))?readFileSync(join(root,path),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:30000,maxBuffer:16777216});}
+function original(path){return existsSync(join(root,rustPackageSourcePath(root,path)))?readFileSync(join(root,rustPackageSourcePath(root,path)),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:30000,maxBuffer:16777216});}
 function input(source,typed){
  return {runtimeRoot:'app/runtime',declarationRoot:'typed/runtime',files:[...ownedCoreRuntimeSources('app/runtime','typed/runtime'),{path:'src/lib.rs',source:'pub mod translation_core;\n'},{path:'src/translation_core.rs',source:ROUTER_FORMATTING_FACADE_SOURCE},{path:'src/translation_core/primitives.rs',source:ROUTER_CORE_PRIMITIVES_SOURCE},{path:'Cargo.toml',source:original('Cargo.toml')},{path:'Cargo.lock',source:original('Cargo.lock')},{path:JS,source},...(typed===undefined?[]:[{path:TS,source:typed}])]};
 }

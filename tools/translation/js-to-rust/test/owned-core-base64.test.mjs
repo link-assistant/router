@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from "../../repository-layout.mjs";
 import nodeTest from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
@@ -16,7 +17,7 @@ import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE,ROUTER_COR
 const root=fileURLToPath(new URL('../../../../',import.meta.url)),nativeJson=JSON.stringify,vectorRoot=process.env.ROUTER_OWNED_BASE64_VECTOR_DIR;let vectors=[];
 const retain=(kind,value)=>{vectors.push({kind,value});return value;};
 const test=(name,run)=>nodeTest(name,{timeout:60000},async t=>{vectors=[];try{await run(t);}finally{if(vectorRoot){mkdirSync(vectorRoot,{recursive:true});const text=nativeJson({name,vectors},(_,value)=>typeof value==='bigint'?{$integer:String(value)}:value);writeJsonTextGzip(join(vectorRoot,Buffer.from(name).toString('hex')+'.json.gz'),text);}}});
-function original(path){return existsSync(join(root,path))?readFileSync(join(root,path),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:5000,maxBuffer:16777216});}
+function original(path){return existsSync(join(root,rustPackageSourcePath(root,path)))?readFileSync(join(root,rustPackageSourcePath(root,path)),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:5000,maxBuffer:16777216});}
 const oracle=original('tests/translation_core_base64_reverse_oracle.rs'),source=/const REVERSE_BASE64_JS_WITNESS: &str = r###"([\s\S]*?)"###;/u.exec(oracle)[1];
 const names=['standard_encode_bytes','standard_encode_text','standard_encode_owned_bytes','standard_no_pad_encode_text','url_no_pad_encode_bytes','url_no_pad_encode_owned_bytes','url_no_pad_encode_owned_text','url_no_pad_encode_array32','standard_decode_text','standard_decode_owned_text','standard_no_pad_decode_text','url_no_pad_decode_text','url_no_pad_decode_owned_text'];
 const fixture=JSON.parse(original('tools/translation/test/fixtures/router-core-base64-vectors.json'));

@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
@@ -16,7 +17,7 @@ import {builtinDeriveDataInputs} from '../builtin-derive-data-inputs.mjs';
 import {translateProject} from '../project.mjs';
 import {parseProgram,serializeProgram} from '../semantic-meta.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8');
+const root=new URL('../../../',import.meta.url),manifest=readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock=readFileSync(repositorySourceURL('Cargo.lock',root),'utf8');
 const dependencies=loadDeriveDependencyProof({manifest,lock}),profile=builtinDeriveAstSourceProfile(dependencies);
 const sha=source=>createHash('sha256').update(source).digest('hex');
 function retain(name,value){if(!process.env.ROUTER_DEFAULT_STATIC_VECTOR_DIR)return;mkdirSync(process.env.ROUTER_DEFAULT_STATIC_VECTOR_DIR,{recursive:true});writeFileSync(join(process.env.ROUTER_DEFAULT_STATIC_VECTOR_DIR,name+'.json.gz'),gzipSync(JSON.stringify(value)));}

@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from "../../repository-layout.mjs";
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {createHash} from 'node:crypto';
@@ -33,7 +34,7 @@ test('two genuine guarded native bodies independently preserve every public valu
   const zeroes=[...unknown.map(value=>[value,false]),['',false],['0'.repeat(39),false],['0'.repeat(40),true],['0'.repeat(41),true],['0'.repeat(8192),true],['0'.repeat(40)+'\n',false],['0'.repeat(40)+'\r\n',false],['0'.repeat(40)+'\r',false],['0'.repeat(40)+'\u2029',false],['0'.repeat(40)+'\u2028',false],['0'.repeat(40)+'\ud800',false],['1'+'0'.repeat(40),false]];
   try {
     for(const fixture of [{file:'tokens.mjs',start:4090,cases:repository,arity:1},{file:'github-proxy.mjs',start:2346,cases:zeroes,arity:2}]) {
-      const path='js/src/'+fixture.file,source=readFileSync(join(ROOT,path),'utf8'),analysis=analyzeJavaScript(source,{sourcePath:path}),row=analysis.scopedFunctions.items.find(row=>row.start===fixture.start),fn=analysis.scopedFunctions.program.find(fn=>fn.name===row?.name);
+      const path='js/src/'+fixture.file,source=readFileSync(join(ROOT,rustPackageSourcePath(ROOT,path)),'utf8'),analysis=analyzeJavaScript(source,{sourcePath:path}),row=analysis.scopedFunctions.items.find(row=>row.start===fixture.start),fn=analysis.scopedFunctions.program.find(fn=>fn.name===row?.name);
       assert.equal(row.status,'translated');assert.equal(row.coverageContract,'full-domain-body');assert.equal(row.owner.status,'unsupported');assert.deepEqual(row.captures,[]);assert.equal(fn.conditionalInputs,undefined);assert.equal(fn.lossless,true);assert.deepEqual(fn.params.map(param=>param.type),Array(fixture.arity).fill('value'));
       const meta=toLino(fn),program=parseMeta(meta);assert.deepEqual(program,[fn]);const name=fn.name.replace(/_([a-z])/gu,(_,letter)=>letter.toUpperCase()),originalSource='export const '+name+'=('+source.slice(row.start,row.end)+');',runtime=await runtimes(originalSource,program,directory,fixture.file),observations=[];
       const observation={path,sourceSha256:hash(source),fullOriginalBody:source.slice(row.start,row.end),row,program,meta,typescript:runtime.typescript,rust:runtime.rust,observations};vectors.originalBodies.push(observation);save();
@@ -89,7 +90,7 @@ test('coercion unsupported regexp operators mutations and malformed or oversized
 
 
 test('every old complete program survives within unchanged 788 and 705 source censuses',{timeout:60000},()=>{
-  const baselineBytes=readFileSync(join(ROOT,'tools/translation/fixtures/sequence-patterns/native-program-baseline.json'));assert.equal(hash(baselineBytes),'d3b55956cc6eb290f5c9ebbab4c12a5c2635e94dbffb637a37badd6f85ce147b');
+  const baselineBytes=readFileSync(join(ROOT,rustPackageSourcePath(ROOT,'tools/translation/fixtures/sequence-patterns/native-program-baseline.json')));assert.equal(hash(baselineBytes),'d3b55956cc6eb290f5c9ebbab4c12a5c2635e94dbffb637a37badd6f85ce147b');
   const baseline=JSON.parse(baselineBytes),totals={modules:0,top:0,topDefinitions:0,scoped:0,full:0,conditional:0},gains=[];
   assert.equal(baseline.modules.length,52);assert.deepEqual(baseline.counts,{modules:52,topLevelSourceItems:788,topLevelDefinitions:73,topLevelConstants:38,topLevelFunctions:35,scopedSourceItems:705,scopedFunctions:61,fullDomainScopedFunctions:52,conditionalScopedFunctions:9});
   for(const previous of baseline.modules) {

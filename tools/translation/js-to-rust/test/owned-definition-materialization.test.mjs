@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from "../../repository-layout.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
@@ -14,7 +15,7 @@ import {buildOwnedCoreDocumentArtifacts} from '../owned-core-corpus.mjs';
 import {createCompilationMatrix,DECLARED_FAMILY_PROFILES,compilationMatrixDescription} from '../../compilation-matrix.mjs';
 import {ROUTER_FORMATTING_FACADE_SOURCE as facade,ROUTER_CORE_PRIMITIVES_SOURCE as primitives,ROUTER_CORE_RANGES_SOURCE as ranges,ROUTER_CORE_JSON_COLLECTIONS_SOURCE as collections} from '../../router-core-source-data.mjs';
 const root=fileURLToPath(new URL('../../../../',import.meta.url)),limits={timeout:60000},C='crate::translation_core::',sha=ownedDefinitionHash;
-const original=path=>existsSync(join(root,path))?readFileSync(join(root,path),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:30000,maxBuffer:32*1024*1024});
+const original=path=>existsSync(join(root,rustPackageSourcePath(root,path)))?readFileSync(join(root,rustPackageSourcePath(root,path)),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:30000,maxBuffer:32*1024*1024});
 function write(root,path,text){mkdirSync(dirname(join(root,path)),{recursive:true});writeFileSync(join(root,path),text);}
 function fixture(t,{two=false}={}){
  const directory=mkdtempSync(join(tmpdir(),'owned-definition-materialization-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));

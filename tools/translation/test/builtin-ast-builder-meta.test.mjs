@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // Source-only callback foundation: all cases UNRUN, no namespace activation.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -12,7 +13,7 @@ import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {originalCsvContext} from './original-csv-context.mjs';
 import {encodeBuiltinSourceMeta,decodeBuiltinSourceMeta,sealBuiltinSourceMeta} from '../builtin-source-meta.mjs';
 const root=new URL('../../../',import.meta.url);
-const dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+const dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
 const profile=builtinDeriveAstSourceProfile(dependencies),compiler=createBuiltinAstBuilderMetaCompiler(profile);
 function walk(node,visit){if(!node||typeof node!=='object')return;visit(node);for(const [key,value] of Object.entries(node))if(!['syntax','recipe','positiveSchemas','variantSchema','import','binding','fieldSchema'].includes(key))if(Array.isArray(value))value.forEach(value=>walk(value,visit));else walk(value,visit);}
 

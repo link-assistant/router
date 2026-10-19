@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -5,7 +6,7 @@ import {createHash} from 'node:crypto';
 import * as actual from '../derive-clap-value-enum.mjs';
 import {DERIVE_SOURCE_PROFILE,loadDeriveDependencyProof,deriveDependencySource} from '../derive-dependencies.mjs';
 import {originalMacroTrees} from '../macro-token-trees.mjs';
-const hash=value=>createHash('sha256').update(value).digest('hex'),root=new URL('../../../',import.meta.url),dependencies=()=>loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+const hash=value=>createHash('sha256').update(value).digest('hex'),root=new URL('../../../',import.meta.url),dependencies=()=>loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
 const previousBytes=readFileSync(new URL('../fixtures/static-source-performance/derive-clap-value-enum.mjs.txt',import.meta.url));
 assert.equal(hash(previousBytes),'d9a0c0c3d9162775b8202f9b221497d938ba0f32c91dbc79dd9fd0396d3d069d');
 const previousSource=previousBytes.toString().replace(/from '(\.\/[^']+)'/g,(_all,path)=>'from '+JSON.stringify(new URL('../'+path.slice(2),import.meta.url).href));
@@ -58,5 +59,5 @@ test('one source inventory is parsed inside each genuine dependency identity whi
   measured.originalClapSourceRule(first,'clap_derive',path,'Kebab => s.to_kebab_case(),','kebab',2);assert.equal(measured.parseCounts().tokenParses,2);measured.originalClapSourceRule(first,'clap_derive',path,'Kebab => s.to_kebab_case(),','kebab',2);assert.equal(measured.parseCounts().tokenParses,3,'the untrusted written pattern still receives its own fresh scan');
   const second=dependencies();measured.originalClapSourceFunction(second,path,'field_methods');assert.equal(measured.parseCounts().itemParses,declarations*2);measured.originalClapSourceRule(second,'clap_derive',path,'Kebab => s.to_kebab_case(),','kebab',2);assert.equal(measured.parseCounts().tokenParses,5);
   assert.throws(()=>measured.originalClapSourceFunction({...first},path,'field_methods'),/Unsealed/);assert.equal(measured.parseCounts().itemParses,declarations*2);
-  assert.throws(()=>loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8')+' ',lock:readFileSync(new URL('Cargo.lock',root),'utf8')}),/manifest|lock/);
+  assert.throws(()=>loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8')+' ',lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')}),/manifest|lock/);
 });

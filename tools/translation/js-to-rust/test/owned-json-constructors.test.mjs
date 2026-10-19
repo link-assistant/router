@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from "../../repository-layout.mjs";
 // Complete normal bodies; original declarations are source demand, not coverage.
 import nodeTest from 'node:test';
 import assert from 'node:assert/strict';
@@ -29,7 +30,7 @@ import {writeJsonTextGzip} from '../../../evidence/write-json-gzip.mjs';
 import {transportConcreteSyntaxMeta} from '../../concrete-syntax-meta.mjs';
 import {parseProgram,serializeProgram} from '../../semantic-meta.mjs';
 const root=fileURLToPath(new URL('../../../../',import.meta.url)),C='crate::translation_core::',nativeJSON=JSON.stringify;
-const hash=text=>createHash('sha256').update(text).digest('hex'),original=path=>readFileSync(join(root,path),'utf8');
+const hash=text=>createHash('sha256').update(text).digest('hex'),original=path=>readFileSync(join(root,rustPackageSourcePath(root,path)),'utf8');
 let vectors=[];const retain=(kind,value)=>{vectors.push({kind,value});return value;};
 function test(name,run){return nodeTest(name,{timeout:60000},async t=>{vectors=[];try{await run(t);}finally{const directory=process.env.ROUTER_JSON_CONSTRUCTOR_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeJsonTextGzip(join(directory,hash(name)+'.json.gz'),nativeJSON({name,vectors,rustExecuted:false},(_,value)=>typeof value==='bigint'?{$integer:String(value)}:value));}}});}
 function dependencies(){const manifest=original('Cargo.toml'),lock=original('Cargo.lock'),input={manifest,lock};return {manifest,lock,jsonMacroDependencies:loadJsonMacroSourceProof(input),deriveDependencies:loadDeriveDependencyProof(input)};}

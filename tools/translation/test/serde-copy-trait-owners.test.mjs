@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -12,7 +13,7 @@ import {bindNonCopyTraitOwner,nonCopyTraitOwner} from '../copy-trait-owners.mjs'
 import {captureSourceModuleViews,moduleScopeKey} from '../source-module-views.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 import {parseProgram} from '../semantic-meta.mjs';
-const root=new URL('../../../',import.meta.url),input={manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')},deriveDependencies=loadDeriveDependencyProof(input),jsonMacroDependencies=loadJsonMacroSourceProof(input),deps={deriveDependencies,jsonMacroDependencies};
+const root=new URL('../../../',import.meta.url),input={manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')},deriveDependencies=loadDeriveDependencyProof(input),jsonMacroDependencies=loadJsonMacroSourceProof(input),deps={deriveDependencies,jsonMacroDependencies};
 const tag=$=>Object.freeze({$}),some=field0=>Object.freeze({$:'Some',field0}),none=tag('None');
 const definition='#[derive(Copy,Clone)]enum Choice{A,B}',implementation="impl<'de> Deserialize<'de> for Choice{fn deserialize<D:serde::Deserializer<'de>>(deserializer:D)->Result<Self,D::Error>{Ok(Self::A)}}",run='pub fn chosen(value:Option<u8>)->Choice{value.map_or(Choice::B,|n|Choice::A)}';
 const project=(source,extra={})=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,...deps,...extra});

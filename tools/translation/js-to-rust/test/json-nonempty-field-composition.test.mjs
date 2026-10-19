@@ -23,17 +23,20 @@ import {json_macro_null,json_macro_bool,json_macro_string,json_macro_u64,json_ma
 import {writeJsonTextGzip} from '../../../evidence/write-json-gzip.mjs';
 import {transportConcreteSyntaxMeta} from '../../concrete-syntax-meta.mjs';
 import {parseProgram} from '../../semantic-meta.mjs';
+import {rustPackageSourcePath} from '../../repository-layout.mjs';
 const root=fileURLToPath(new URL('../../../../',import.meta.url)),C='crate::translation_core::',nativeJSON=JSON.stringify;
 let vectors=[];
 function retain(kind,value){vectors.push({kind,value});return value;}
 function test(name,run){return nodeTest(name,{timeout:60000},async t=>{vectors=[];try{await run(t);}finally{const directory=process.env.ROUTER_NONEMPTY_JSON_FIELD_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeJsonTextGzip(join(directory,Buffer.from(name).toString('hex')+'.json.gz'),nativeJSON({name,vectors,rustExecuted:false},(_,value)=>typeof value==='bigint'?{$integer:String(value)}:value));}}});}
-const original=path=>readFileSync(join(root,path),'utf8');
+// Preserve crate-relative carrier labels while reading the physical package.
+const physical=path=>join(root,rustPackageSourcePath(root,path));
+const original=path=>readFileSync(physical(path),'utf8');
 const hash=text=>createHash('sha256').update(text).digest('hex');
 const some=value=>({$:'Some',field0:value}),none={$:'None'};
 function dependencies(){const manifest=original('Cargo.toml'),lock=original('Cargo.lock'),input={manifest,lock};return {manifest,lock,jsonMacroDependencies:loadJsonMacroSourceProof(input),deriveDependencies:loadDeriveDependencyProof(input)};}
 function sourceOptions(files,dependency){return {entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path],compilationProfile:PRODUCTION_PROFILE,cargoManifest:dependency.manifest,jsonMacroDependencies:dependency.jsonMacroDependencies,deriveDependencies:dependency.deriveDependencies};}
 function small(source){return {'src/lib.rs':'pub mod translation_core;\n'+source,'src/translation_core.rs':facade,'src/translation_core/primitives.rs':primitives,'src/translation_core/ranges.rs':ranges,'src/translation_core/json_collections.rs':collections};}
-function physicalSources(){const files={};function visit(path){for(const name of readdirSync(join(root,path)).sort()){const local=path+'/'+name,stat=lstatSync(join(root,local));assert.equal(stat.isSymbolicLink(),false);if(stat.isDirectory())visit(local);else if(name.endsWith('.rs')){assert.equal(stat.isFile(),true);files[local]=original(local);}}}visit('src');return files;}
+function physicalSources(){const files={};function visit(path){for(const name of readdirSync(physical(path)).sort()){const local=path+'/'+name,stat=lstatSync(physical(local));assert.equal(stat.isSymbolicLink(),false);if(stat.isDirectory())visit(local);else if(name.endsWith('.rs')){assert.equal(stat.isFile(),true);files[local]=original(local);}}}visit('src');return files;}
 function receivingRows(rows){
  const dependency=dependencies(),data=retain('complete-fresh-receiving-inputs',{runtimeRoot:'app/runtime',declarationRoot:'typed/runtime',files:[...ownedCoreRuntimeSources('app/runtime','typed/runtime'),{path:'src/lib.rs',source:'pub mod translation_core;\n'},{path:'src/translation_core.rs',source:facade},{path:'src/translation_core/primitives.rs',source:primitives},{path:'Cargo.toml',source:dependency.manifest},{path:'Cargo.lock',source:dependency.lock},...rows.flatMap(row=>[{path:row.javascriptPath,source:row.javascript.after.source},{path:row.typescriptPath,source:row.typescript.after.source}])]}),context=createOwnedCoreSourceContext(data),parts=rows.map(row=>translateOwnedCoreDocumentJavaScript(row.javascript.after.source,{context,sourcePath:row.javascriptPath,typescriptOutputPath:'typed/owned-definitions/reverse.mts'})),first=parts.flatMap(part=>part.program),meta=serializeOwnedCoreDocument(first,{context}),program=parseOwnedCoreDocumentMeta(meta,{context});assert.deepEqual(program,first);
  const result={data,context,parts,program,meta,rust:emitRust(program),typescript:emitTypeScript(program,{outputPath:'typed/owned-definitions/reverse.mts'})};retain('complete-independent-CST-meta-and-reissued-targets',result);return result;

@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -14,7 +15,7 @@ const staticOriginal=staticSourceLifecycleContext("slice-membership-originals.te
 const root=new URL('../../../',import.meta.url);
 const fixture=JSON.parse(readFileSync(new URL('../fixtures/slice-membership-originals.json',import.meta.url),'utf8'));
 const hash=value=>createHash('sha256').update(value).digest('hex');
-const dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+const dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
 
 // These expectations are written independently of the new runtime helper.
 // Read whole original files, retaining every attribute, import and carried body.

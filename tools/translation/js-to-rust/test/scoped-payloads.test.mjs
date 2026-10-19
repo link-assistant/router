@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from "../../repository-layout.mjs";
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {readFileSync,writeFileSync,mkdtempSync,rmSync} from 'node:fs';
@@ -72,9 +73,9 @@ function golden(actual,expected) {
 
 test('complete 705 scoped census separately retains all prior 34 full-domain bodies and unchanged top-level owners',{timeout:60000},async()=>{
   const paths=[...new Set(fixtures.map(([path])=>path))],directory=mkdtempSync(join(tmpdir(),'router-scoped-bodies-'));let supported=0;
-  const censusPaths=JSON.parse(readFileSync(join(ROOT,'parity/js-first-translation.json'),'utf8')).nativeCoverage.map(row=>row.path);const analyses=new Map();let total=0,top=0,topItems=0;
+  const censusPaths=JSON.parse(readFileSync(join(ROOT,rustPackageSourcePath(ROOT,'parity/js-first-translation.json')),'utf8')).nativeCoverage.map(row=>row.path);const analyses=new Map();let total=0,top=0,topItems=0;
   try {
-    for(const path of censusPaths){const source=readFileSync(join(ROOT,path),'utf8'),analysis=analyzeJavaScript(source,{sourcePath:path});assert.equal(analysis.scopedFunctions.complete,true,path);total+=analysis.scopedFunctions.sourceItems;top+=analysis.program.length;topItems+=analysis.items.length;assert.deepEqual(analysis.program,analyzeJavaScript(source,{includeScoped:false}).program);for(const item of analysis.scopedFunctions.items){assert.ok(item.owner);assert.ok(item.start>=item.owner.start&&item.end<=item.owner.end);assert.equal(item.sourcePath,path);assert.equal(item.status==='translated',analysis.scopedFunctions.program.some(fn=>fn.name===item.name));}analyses.set(path,{source,analysis});vectors.census.push({path,source,topLevelItems:analysis.items,scopedFunctions:analysis.scopedFunctions});}
+    for(const path of censusPaths){const source=readFileSync(join(ROOT,rustPackageSourcePath(ROOT,path)),'utf8'),analysis=analyzeJavaScript(source,{sourcePath:path});assert.equal(analysis.scopedFunctions.complete,true,path);total+=analysis.scopedFunctions.sourceItems;top+=analysis.program.length;topItems+=analysis.items.length;assert.deepEqual(analysis.program,analyzeJavaScript(source,{includeScoped:false}).program);for(const item of analysis.scopedFunctions.items){assert.ok(item.owner);assert.ok(item.start>=item.owner.start&&item.end<=item.owner.end);assert.equal(item.sourcePath,path);assert.equal(item.status==='translated',analysis.scopedFunctions.program.some(fn=>fn.name===item.name));}analyses.set(path,{source,analysis});vectors.census.push({path,source,topLevelItems:analysis.items,scopedFunctions:analysis.scopedFunctions});}
     assert.equal(total,705);assert.equal(top,73);assert.equal(topItems,788);
     assert.equal([...analyses.values()].reduce((n,{analysis})=>n+analysis.scopedFunctions.translatedItems,0),fixtures.length+9+18+2+3);
     for(const [path,start,kind]of fixtures) {

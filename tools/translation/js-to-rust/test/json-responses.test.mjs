@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from "../../repository-layout.mjs";
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {readFileSync,writeFileSync,mkdtempSync,rmSync} from 'node:fs';
@@ -39,7 +40,7 @@ function rustBytes(rust) {
 }
 
 test('five original closed JSON Response bodies retain real Response behavior and explicit Rust projections',async()=>{
-  const source=readFileSync(join(ROOT,'js/src/response-contracts.mjs'),'utf8');assert.equal(jsonResponseOwnership(source).owned,true);
+  const source=readFileSync(join(ROOT,rustPackageSourcePath(ROOT,'js/src/response-contracts.mjs')),'utf8');assert.equal(jsonResponseOwnership(source).owned,true);
   const analyzed=analyzeJavaScript(source),directory=mkdtempSync(join(tmpdir(),'router-json-responses-'));
   const fixtures=[
     ['responseNotFound',404,'{"error":{"message":"Response not found","type":"invalid_request_error","param":null,"code":"response_not_found"}}'],

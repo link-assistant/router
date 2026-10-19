@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
@@ -10,7 +11,7 @@ import { loadJsonMacroSourceProof, isJsonMacroSourceProof } from '../json-macro-
 import { originalStringSharedViewSource } from '../extensions/string-shared-view-source.mjs';
 import { serde_json_from_str } from '../extensions/json-runtime.mjs';
 import { verifyTypedTargets } from './typed-targets.mjs';
-const root = new URL('../../../', import.meta.url), deps = () => loadJsonMacroSourceProof({ manifest: readFileSync(new URL('Cargo.toml', root), 'utf8'), lock: readFileSync(new URL('Cargo.lock', root), 'utf8') }), tag = ($, fields = {}) => Object.freeze({ $, ...fields }), some = field0 => tag('Some', { field0 }), none = tag('None');
+const root = new URL('../../../', import.meta.url), deps = () => loadJsonMacroSourceProof({ manifest: readFileSync(repositorySourceURL('Cargo.toml',root), 'utf8'), lock: readFileSync(repositorySourceURL('Cargo.lock',root), 'utf8') }), tag = ($, fields = {}) => Object.freeze({ $, ...fields }), some = field0 => tag('Some', { field0 }), none = tag('None');
 const project = (source, extra = {}) => translateProject({ entry: 'src/lib.rs', paths: ['src/lib.rs'], readSource: () => source, ...extra });
 const find = (node, kind) => node && typeof node === 'object' ? (node.k === kind ? node : (node instanceof Map ? [...node.values()] : Object.values(node)).map(value => find(value, kind)).find(Boolean)) : null;
 const canonical = value => serde_json_from_str(JSON.stringify(value)).field0;

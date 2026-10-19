@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from "../../repository-layout.mjs";
 import nativeTest from 'node:test';
 import assert from 'node:assert/strict';
 import {Hash,createHash} from 'node:crypto';
@@ -23,7 +24,7 @@ function test(name,run){const index=++caseIndex;nativeTest(name,{timeout:60000},
  mkdirSync(folder,{recursive:true});const raw=nativeJSON(value,(_key,item)=>typeof item==='bigint'?{$integer:String(item)}:item),bytes=Buffer.from(raw+'\n'),packed=gzipSync(bytes);
  const path=join(folder,String(index).padStart(2,'0')+'-'+String(++event).padStart(3,'0')+'-'+label+'.json.gz');writeFileSync(path,packed,{flag:'wx'});assert.deepEqual(gunzipSync(readFileSync(path)),bytes);
  };try{await run(t,keep);}catch(error){keep('failure',{name:error?.name,message:error?.message});throw error;}});}
-function read(path){return readFileSync(join(ROOT,path),'utf8');}
+function read(path){return readFileSync(join(ROOT,rustPackageSourcePath(ROOT,path)),'utf8');}
 function files(count=2,padding=''){
  const bodies=Array.from({length:count},(_,at)=>({js:'export function copied_'+at+'(value){return copy(value);}',ts:'export function copied_'+at+'(value:JsonValue):JsonValue{return copy(value);}'}));
  const js=imports+padding+bodies.map(row=>row.js).join('\n'),ts=imports+types+padding+bodies.map(row=>row.ts).join('\n');

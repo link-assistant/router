@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import nodeTest from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
@@ -14,7 +15,7 @@ import {originalSourceModuleItems} from '../source-module-views.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 const root=new URL('../../../',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
 const test=(name,body)=>nodeTest(name,{timeout:5000},body);
-const dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')}),inputs=loadAsyncTraitSourceInputs(dependencies),plan=originalAsyncTraitEffectPlan(inputs);
+const dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')}),inputs=loadAsyncTraitSourceInputs(dependencies),plan=originalAsyncTraitEffectPlan(inputs);
 function retain(name,value){const directory=process.env.ROUTER_ASYNC_TRAIT_VECTORS;if(directory){mkdirSync(directory,{recursive:true});writeFileSync(directory+'/'+name+'.json.gz',gzipSync(JSON.stringify(value)));}}
 function context(source,entry='src/lib.rs'){
  const graph=resolveModuleGraph({entry,paths:[entry],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE}),binding=resolveModuleBindings({modules:graph.modules,externalModules:registeredStandardHostBindings(),compilationProfile:PRODUCTION_PROFILE});return {source,graph,binding,module:graph.modules[0]};

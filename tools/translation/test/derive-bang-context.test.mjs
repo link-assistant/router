@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // Authored future namespace-consumer cases. All UNRUN; no runtime trait claim.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -11,7 +12,7 @@ import {compilationProfile,PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {resolveModuleGraph} from '../project.mjs';
 import {originalCsvContext} from './original-csv-context.mjs';
 const root=new URL('../../../',import.meta.url);
-const dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+const dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
 function setup(source,rootSource='mod model;',profile=PRODUCTION_PROFILE){
   const modules=[{file:'src/lib.rs',path:[],source:rootSource},{file:'src/model.rs',path:['model'],source}];
   const deriveContext=createDeriveFootprintContext({modules,dependencies,compilationProfile:profile});

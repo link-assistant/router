@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import nodeTest from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync} from 'node:fs';
@@ -12,7 +13,7 @@ import {ROUTER_CORE_BASE64_SOURCE,ROUTER_CORE_BASE64_CONTRACTS} from '../router-
 import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE,ROUTER_CORE_RANGES_SOURCE,ROUTER_CORE_JSON_COLLECTIONS_SOURCE} from '../router-core-source-data.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const nativeJson=JSON.stringify,root=new URL('../../../',import.meta.url),C='crate::translation_core::',T=C+'Text',call=value=>C+'base64_url_no_pad_encode_array32('+value+')';
-const manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock});
+const manifest=readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock=readFileSync(repositorySourceURL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock});
 const vectorRoot=process.env.ROUTER_CORE_BASE64_ARRAY32_VECTOR_DIR;let retained=[];
 const retain=(kind,value)=>{retained.push({kind,value});return value;};
 const test=(name,run)=>nodeTest(name,{timeout:60000},async()=>{retained=[];try{await run();}finally{if(vectorRoot){mkdirSync(vectorRoot,{recursive:true});const encoded=nativeJson({name,vectors:retained},(_,value)=>typeof value==='bigint'?{$integer:String(value)}:value);writeJsonTextGzip(join(vectorRoot,Buffer.from(name).toString('hex')+'.json.gz'),encoded);}}});

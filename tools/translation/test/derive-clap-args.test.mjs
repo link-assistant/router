@@ -14,7 +14,7 @@ import {translateProject} from '../project.mjs';
 import {parseProgram} from '../semantic-meta.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock});
+const root=new URL('../../../',import.meta.url),manifest=readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock=readFileSync(repositorySourceURL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock});
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const declaration=source=>{const item=sourceItems(source).find(item=>item.term==='struct');return {source,span:{start:item.start,end:item.end}};};
 const context=source=>createDeriveFootprintContext({modules:[{file:'src/lib.rs',path:[],source}],dependencies,compilationProfile:PRODUCTION_PROFILE});
@@ -59,7 +59,7 @@ test('qualified and imported Args owners carry original source proofs while bang
 });
 
 test('complete unchanged verification source retains associated docs helper metadata and seven executable owners in JS and strict TS',{timeout:60000},async()=>{
-  const source=readFileSync(new URL('src/verification.rs',root),'utf8');assert.equal(hash(source),'839dc354baff84b057fd6ec5c84d1f52d9dd4e0ed657843626a500425ef2ffa4');
+  const source=readFileSync(repositorySourceURL('src/verification.rs',root),'utf8');assert.equal(hash(source),'839dc354baff84b057fd6ec5c84d1f52d9dd4e0ed657843626a500425ef2ffa4');
   const paths=currentOriginalRustPaths(root);
   const result=translateProject({entry:'src/verification.rs',paths,readSource:path=>readFileSync(repositorySourceURL(path,root),'utf8'),cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
   assert.deepEqual(result.meta.sources.map(row=>[row.source,row.sha256]),[['src/verification.rs',hash(source)]]);assert.equal(result.meta.runtimeParity,false);

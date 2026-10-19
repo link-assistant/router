@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -15,7 +16,7 @@ import {serde_json_to_string} from '../extensions/json-runtime.mjs';
 import {staticSourceLifecycleContext} from './real-source-fixtures.mjs';
 const staticOriginal=staticSourceLifecycleContext("json-macro-arrays.test.mjs");
 const root=new URL('../../../',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
-const dependencies=()=>loadJsonMacroSourceProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+const dependencies=()=>loadJsonMacroSourceProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
 const project=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE,jsonMacroDependencies:dependencies()});
 const collect=(node,predicate,result=[])=>{if(node&&typeof node==='object'){if(predicate(node))result.push(node);for(const [key,value]of Object.entries(node))if(!['type','jsonMacroProof','contract'].includes(key)){if(Array.isArray(value))value.forEach(item=>collect(item,predicate,result));else collect(value,predicate,result);}}return result;};
 const native=value=>{const encoded=serde_json_to_string(value);assert.equal(encoded.$,'Ok');return JSON.parse(encoded.field0);};

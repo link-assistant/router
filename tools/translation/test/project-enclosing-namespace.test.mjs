@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -6,7 +7,7 @@ import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const root=new URL('../../../',import.meta.url);
-const manifest=readFileSync(new URL('rust/Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8');
+const manifest=readFileSync(new URL('rust/Cargo.toml',root),'utf8'),lock=readFileSync(repositorySourceURL('Cargo.lock',root),'utf8');
 const deriveDependencies=loadDeriveDependencyProof({manifest,lock});
 function options(source,progress){return {entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,cargoManifest:manifest,deriveDependencies,compilationProfile:PRODUCTION_PROFILE,progress};}
 
@@ -33,4 +34,20 @@ test('unknown producer and configuration obligations remain explicit in owned na
 test('ordinary project API retains its original namespace progress contract',{timeout:60000},()=>{
  const events=[];translateProject(options('pub fn keep(value:u8)->u8{value}',event=>events.push(event)));
  assert.equal(events.some(event=>event.stage==='namespace'&&event.state==='advance'),false);
+});
+
+test('owned Default and Clone keep genuine generated methods and their complete original namespace results',{timeout:60000},async()=>{
+ const source='#[derive(Default,Clone,Debug)]pub struct Record{value:u8}pub fn make()->Record{Record::default().clone()}';
+ const original=translateProject(options(source)),current=translateProjectOwnedDefinitions(options(source));
+ assert.deepEqual(current.meta.bindingEvidence.scopes,original.meta.bindingEvidence.scopes);
+ assert.deepEqual(current.meta.checkedGeneratedMethods,original.meta.checkedGeneratedMethods);
+ assert.deepEqual(current.meta.checkedSemanticProgram,original.meta.checkedSemanticProgram);
+ assert.deepEqual(current.meta.refused,original.meta.refused);
+ await verifyTypedTargets(current,api=>{const a=api.make(),b=api.make();assert.deepEqual(a,{$:'Record',value:0n});assert.deepEqual(b,a);assert.notStrictEqual(a,b);},{childTimeoutMs:20000});
+ for(const source of ['use missing::*;#[derive(Default,Clone)]pub struct Record{value:u8}pub fn make()->Record{Record::default().clone()}','#[derive(Default,Clone,Unknown)]pub struct Record{value:u8}pub fn make()->Record{Record::default().clone()}']){
+  const original=translateProject(options(source)),current=translateProjectOwnedDefinitions(options(source));
+  assert.deepEqual(current.meta.bindingEvidence.scopes,original.meta.bindingEvidence.scopes);
+  assert.deepEqual(current.meta.executable,original.meta.executable);
+  assert.ok(current.meta.refused.length);
+ }
 });

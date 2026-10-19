@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import '../project.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -16,7 +17,7 @@ import {captureOriginalNamespaceAttributeInputs,originalNamespaceAttributeInputs
 import {createDeriveFootprintContext,deriveFootprintAt} from '../derive-footprints.mjs';
 import {proveBuiltinDeriveEmptyEnclosingEffect,builtinDeriveEmptyEnclosingEffectFacts} from '../derive-output-effects.mjs';
 
-const root=new URL('../../../',import.meta.url),cargo={manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')},dependencies=loadDeriveDependencyProof(cargo);
+const root=new URL('../../../',import.meta.url),cargo={manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')},dependencies=loadDeriveDependencyProof(cargo);
 const path=['base64','Engine'],request=()=>({schema:'modeled-external-ordinary-library-v1',package:'base64',injectedCfg:[]});
 function retain(name,value){const directory=process.env.ROUTER_EXTERNAL_LIBRARY_NAMESPACE_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeJsonGzip(join(directory,name+'.json.gz'),value);}}
 function modules(source,profile=null){const file='src/lib.rs',capture=captureSourceModuleViews({source,sourcePath:file,compilationProfile:profile});return capture.views.map(sourceView=>({file,path:[...sourceView.modulePath],source,sourceView,compilationProfile:profile,configurationCondition:sourceView.configurationCondition}));}

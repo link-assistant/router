@@ -17,7 +17,7 @@ import {translateProject} from '../project.mjs';
 import {parseProgram} from '../semantic-meta.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock:readFileSync(new URL('Cargo.lock',root),'utf8')}),hash=value=>createHash('sha256').update(value).digest('hex');
+const root=new URL('../../../',import.meta.url),manifest=readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')}),hash=value=>createHash('sha256').update(value).digest('hex');
 const input=(source,owner)=>{const item=sourceItems(source).find(row=>row.term==='struct');return {dependencies,source,owner,span:{start:item.start,end:item.end}};};
 const setup=(source,extra=[])=>{const modules=[{file:'src/lib.rs',path:[],source},...extra],context=createDeriveFootprintContext({modules,dependencies,compilationProfile:PRODUCTION_PROFILE});return {modules,context};};
 

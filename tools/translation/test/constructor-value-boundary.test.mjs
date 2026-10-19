@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
@@ -20,7 +21,7 @@ const compile=(source,path='src/fixture.rs')=>{
 const typed=(result,verify)=>verifyTypedTargets(result,verify,{childTimeoutMs:20000});
 
 test('original DeploySection namespace refusal remains and authored owned fields isolate caller values',{timeout:60000},async()=>{
-  const original=readFileSync(new URL('src/deploy_config.rs',root),'utf8'),standalone=compile(original,'src/deploy_config.rs');
+  const original=readFileSync(repositorySourceURL('src/deploy_config.rs',root),'utf8'),standalone=compile(original,'src/deploy_config.rs');
   const item=standalone.ir.items.find(row=>row.name==='DeploySection');assert.equal(item?.status,'carried');
   assert.equal(item.diagnostic.message,'shadowed Option generic: the standard prelude type requires actual resolution');assert.deepEqual(item.diagnostic.span,{start:14155,end:14169});
   retain('original-deploy-context',{original,standalone,runtimeAdmissionClaim:false});
@@ -38,7 +39,7 @@ test('original DeploySection namespace refusal remains and authored owned fields
   });
 });
 test('original verification namespace refusals remain and authored slice constructors snapshot caller arrays',{timeout:60000},async()=>{
-  const original=readFileSync(new URL('src/verification.rs',root),'utf8'),standalone=compile(original,'src/verification.rs');
+  const original=readFileSync(repositorySourceURL('src/verification.rs',root),'utf8'),standalone=compile(original,'src/verification.rs');
   for(const name of ['Run','Area']){const item=standalone.ir.items.find(row=>row.name===name);assert.equal(item?.status,'carried');assert.match(item.diagnostic.message,/shadowed borrowed str type: requires actual standard primitive identity/u);}
   retain('original-verification-context',{original,standalone,runtimeAdmissionClaim:false});
   const source="pub struct Run{targets:&'static [&'static str],unit:&'static [&'static str],filter:Option<&'static str>,serial:bool} pub struct Area{name:&'static str,covers:&'static str,enable:&'static str,runs:&'static [Run]}";

@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
@@ -19,7 +20,7 @@ import {originalMethodSemantic,relocateOriginalMethodSemantic} from '../source-m
 import {compileFormatSourceControlBodies,executeFormatSourceControlBodies,evaluateFormatSourceScalarExpression} from '../source-format-template.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock});
+const root=new URL('../../../',import.meta.url),manifest=readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock=readFileSync(repositorySourceURL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock});
 const retain=(name,value)=>{if(process.env.ROUTER_DISPLAY_VECTOR_DIR){mkdirSync(process.env.ROUTER_DISPLAY_VECTOR_DIR,{recursive:true});writeFileSync(process.env.ROUTER_DISPLAY_VECTOR_DIR+'/'+name+'.json.gz',gzipSync(JSON.stringify(value,(_,item)=>typeof item==='bigint'?{$integer:item.toString()}:item)+'\n',{mtime:0}));}};
 const compile=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
 const declaration='#[derive(Clone,Copy)]pub enum Provider{First,Second}impl Provider{pub const fn as_str(self)->&\'static str{match self{Self::First=>"first",Self::Second=>"second"}}}';

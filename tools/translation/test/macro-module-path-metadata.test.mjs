@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
@@ -15,7 +16,7 @@ import {captureOriginalMacroModules,originalMacroModules} from '../original-macr
 import {createMatchesMacroContext,originalMatchesNamespaceBindings,configureMatchesMacroParser,matchesParserFacts} from '../matches-macro-context.mjs';
 import {HostRustParser} from '../extensions/host-contracts.mjs';
 import {tokenizeRust} from '../extensions/lexical.mjs';
-const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
 function retain(name,value){const directory=process.env.ROUTER_MACRO_PATH_VECTORS;if(directory){mkdirSync(directory,{recursive:true});writeFileSync(directory+'/'+name+'.json.gz',gzipSync(JSON.stringify(value)));}}
 const defaultModel='#[derive(Default,serde::Deserialize)]pub struct Payload{#[serde(default)]pub value:String}pub fn probe()->u32{7u32}';
 function fixture(model=defaultModel){
@@ -35,7 +36,7 @@ test('independent conditional helper resolution preserves every complete project
  const value=fixture(),result=independentScopes(value);assert.deepEqual(result.independent.scopes,result.project.scopes);const model=result.project.scopes.find(row=>row.path.join('.')==='model');assert.equal(model.unresolvedBangMacroScope,false);assert.deepEqual(model.unresolvedImports,[]);assert.equal(result.project.scopes.find(row=>row.path.length===0).unresolvedBangMacroScope,true);retain('02-complete-independent-scopes',{value,result});
 });
 test('complete original vendor limit source retains the same independently reconstructed scopes',()=>{
- const source=readFileSync(new URL('src/account_limits.rs',root),'utf8'),value=fixture(source),result=independentScopes(value);assert.deepEqual(result.independent.scopes,result.project.scopes);assert.equal(value.graph.modules.find(row=>row.path.join('.')==='model').source,source);retain('03-complete-original-account-limits',{source,value,result});
+ const source=readFileSync(repositorySourceURL('src/account_limits.rs',root),'utf8'),value=fixture(source),result=independentScopes(value);assert.deepEqual(result.independent.scopes,result.project.scopes);assert.equal(value.graph.modules.find(row=>row.path.join('.')==='model').source,source);retain('03-complete-original-account-limits',{source,value,result});
 });
 test('omitted path evidence stays omitted and cannot close a conditional helper output',()=>{
  const value=fixture();value.graph={...value.graph,modules:value.graph.modules.map(module=>{const {directory,pathDirectory,...rest}=module;return rest;})};const capture=captureOriginalMacroModules({modules:value.graph.modules,compilationProfile:PRODUCTION_PROFILE}),original=originalMacroModules(capture);assert.equal(original.modules.some(module=>Object.hasOwn(module,'directory')||Object.hasOwn(module,'pathDirectory')),false);const result=independentScopes(value);assert.deepEqual(result.independent.scopes,result.project.scopes);assert.equal(result.project.scopes.find(row=>row.path.join('.')==='model').unresolvedBangMacroScope,true);retain('04-omitted-path-obligations',{value,capture,original,result});

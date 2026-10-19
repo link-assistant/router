@@ -13,16 +13,19 @@ function roundtrip(source) {
 
 export function substituteRepositorySourceURLs(source,helperImport) {
   if(typeof source!=='string'||Buffer.byteLength(source)>1024*1024||typeof helperImport!=='string'||!helperImport.startsWith('.')||helperImport.includes('\n'))throw TypeError('Bounded source and relative helper import required');
-  const ts=ownershipCompiler(),before=roundtrip(source);
+  const ts=ownershipCompiler();
   const file=ts.createSourceFile('migration.mjs',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
   if(file.parseDiagnostics.length)throw Error('Original migration source syntax is invalid');
+  const helperPresent=file.statements.some(node=>ts.isImportDeclaration(node)&&node.moduleSpecifier.text===helperImport&&node.importClause?.namedBindings&&ts.isNamedImports(node.importClause.namedBindings)&&node.importClause.namedBindings.elements.some(entry=>entry.name.text==='repositorySourceURL'&&(entry.propertyName?.text??entry.name.text)==='repositorySourceURL'));
   const edits=[];
   function visit(node) {
     if(ts.isNewExpression(node)&&ts.isIdentifier(node.expression)&&node.expression.text==='URL'&&node.arguments?.length===2) {
       const [path,root]=node.arguments;
-      if(ts.isIdentifier(path)&&['path','name','p'].includes(path.text)&&ts.isIdentifier(root)&&['root','ROOT'].includes(root.text)) {
+      const variable=ts.isIdentifier(path)&&['path','name','p'].includes(path.text);
+      const literal=ts.isStringLiteral(path)&&(path.text==='Cargo.toml'||path.text==='Cargo.lock'||/^(?:src|tests|benches|examples|fixtures)(?:\/|$)/u.test(path.text));
+      if((variable||literal)&&ts.isIdentifier(root)&&['root','ROOT'].includes(root.text)) {
         const span=[node.getStart(file),node.end];
-        edits.push({span,expected:source.slice(...span),replacement:`repositorySourceURL(${path.text},${root.text})`});
+        edits.push({span,expected:source.slice(...span),replacement:`repositorySourceURL(${source.slice(path.getStart(file),path.end)},${root.text})`});
       }
     }
     // Template contents are source DATA, not child executable syntax nodes.
@@ -31,6 +34,7 @@ export function substituteRepositorySourceURLs(source,helperImport) {
   visit(file);
   if(edits.length>512)throw Error('Migration candidate bound');
   if(!edits.length)return {source,edits:[],changed:false};
+  const before=roundtrip(source);
   let languageWire,afterWire;
   const pipeline=createRulePipeline([
     {phase:'language',rules:[{id:'javascript:parsed-url-constructor-locations',apply:()=>{
@@ -46,7 +50,7 @@ export function substituteRepositorySourceURLs(source,helperImport) {
       return transportConcreteSyntaxMeta(languageWire);
     }}]},
     {phase:'repository',rules:[{id:'repository:physical-rust-source-url-import',apply:language=>{
-      const text=`import {repositorySourceURL} from ${JSON.stringify(helperImport)};\n`;
+      const text=helperPresent?'':`import {repositorySourceURL} from ${JSON.stringify(helperImport)};\n`;
       const at=language.source.startsWith('#!')?language.source.indexOf('\n')+1:0;
       const input=roundtrip(language.source);
       const result=applyConcreteSyntaxSubstitutions(input.document,{languageRules:[],repositoryRules:[{id:'repository:source-url-helper',edits:[{span:[at,at],expected:'',replacement:text}]}]});
@@ -64,7 +68,7 @@ export function substituteRepositorySourceURLs(source,helperImport) {
 // Local adapter initialization only; historical source records remain intact.
 export function substituteTypeScriptPackageLayout(source) {
   if(typeof source!=='string'||Buffer.byteLength(source)>1024*1024)throw TypeError('Bounded adapter source required');
-  const ts=ownershipCompiler(),initial=roundtrip(source),file=ts.createSourceFile('adapter.mjs',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
+  const ts=ownershipCompiler(),file=ts.createSourceFile('adapter.mjs',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
   if(file.parseDiagnostics.length)throw Error('Original adapter source syntax is invalid');
   const edits=[];
   function visit(node){
@@ -77,6 +81,7 @@ export function substituteTypeScriptPackageLayout(source) {
   }
   visit(file);if(!edits.length)return {source,changed:false,edits:[]};
   if(edits.length!==1)throw Error('One complete local TypeScript package initialization required');
+  const initial=roundtrip(source);
   let languageWire,afterWire;
   const result=createRulePipeline([
     {phase:'language',rules:[{id:'javascript:parsed-require-package-literal',apply:()=>{languageWire=initial.wire;return transportConcreteSyntaxMeta(languageWire);}}]},
@@ -91,4 +96,42 @@ export function substituteTypeScriptPackageLayout(source) {
   const inverse=applyConcreteSyntaxSubstitutions(roundtrip(after).document,{languageRules:[],repositoryRules:[{id:'router:complete-package-layout-inverse',edits:[{span:[0,after.length],expected:after,replacement:source}]}]});
   if(transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(inverse.value)).source!==source)throw Error('Complete adapter source inverse differs');
   return {source:after,changed:true,edits,beforeWire:initial.wire,languageWire,afterWire,trace:result.trace,wholeInverse:true};
+}
+
+// Crate-relative labels in receiving fixtures stay logical. Select executable
+// filesystem reads with the JavaScript parser; never rewrite embedded sources.
+export function substituteRustPackageReads(source,helperImport) {
+  if(typeof source!=='string'||Buffer.byteLength(source)>1024*1024||typeof helperImport!=='string'||!helperImport.startsWith('.')||helperImport.includes('\n'))throw TypeError('Bounded source and relative layout import required');
+  const ts=ownershipCompiler(),file=ts.createSourceFile('reads.mjs',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS),edits=[];
+  if(file.parseDiagnostics.length)throw Error('Original source read syntax is invalid');
+  function visit(node){
+    if(ts.isCallExpression(node)&&ts.isIdentifier(node.expression)&&node.expression.text==='join'&&node.arguments.length===2){
+      const [root,path]=node.arguments,reader=node.parent;
+      const name=ts.isCallExpression(reader)?(ts.isIdentifier(reader.expression)?reader.expression.text:ts.isPropertyAccessExpression(reader.expression)?reader.expression.name.text:null):null;
+      if(['readFileSync','readdirSync','lstatSync','existsSync'].includes(name)&&reader.arguments[0]===node&&ts.isIdentifier(root)&&['root','ROOT'].includes(root.text)&&(ts.isIdentifier(path)||ts.isStringLiteral(path))){
+        const span=[path.getStart(file),path.end],expected=source.slice(...span);
+        edits.push({span,expected,replacement:`rustPackageSourcePath(${root.text},${expected})`});
+      }
+    }
+    ts.forEachChild(node,visit);
+  }
+  visit(file);if(!edits.length)return {source,changed:false,edits:[]};
+  if(edits.length>512)throw Error('Source read substitution bound');
+  const before=roundtrip(source);
+  let languageWire,afterWire;
+  const result=createRulePipeline([
+    {phase:'language',rules:[{id:'javascript:parsed-filesystem-read-paths',apply:()=>{languageWire=before.wire;return transportConcreteSyntaxMeta(languageWire);}}]},
+    {phase:'repository',rules:[{id:'router:physical-rust-package-reads',apply:input=>{
+      let after=source;
+      for(const edit of [...edits].sort((a,b)=>b.span[0]-a.span[0]))after=after.slice(0,edit.span[0])+edit.replacement+after.slice(edit.span[1]);
+      const at=after.startsWith('#!')?after.indexOf('\n')+1:0;
+      after=after.slice(0,at)+`import {rustPackageSourcePath} from ${JSON.stringify(helperImport)};\n`+after.slice(at);
+      const applied=applyConcreteSyntaxSubstitutions(input.document,{languageRules:[],repositoryRules:[{id:'router:complete-physical-read-substitution',edits:[{span:[0,source.length],expected:source,replacement:after}]}]});
+      afterWire=serializeConcreteSyntaxMeta(applied.value);return transportConcreteSyntaxMeta(afterWire).source;
+    }}]},
+  ]).run(source),after=result.value;
+  if(ts.createSourceFile('reads.mjs',after,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS).parseDiagnostics.length)throw Error('Translated source read syntax is invalid');
+  const inverse=applyConcreteSyntaxSubstitutions(roundtrip(after).document,{languageRules:[],repositoryRules:[{id:'router:complete-read-layout-inverse',edits:[{span:[0,after.length],expected:after,replacement:source}]}]});
+  if(transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(inverse.value)).source!==source)throw Error('Complete source read inverse differs');
+  return {source:after,changed:true,edits,beforeWire:before.wire,languageWire,afterWire,trace:result.trace,wholeInverse:true};
 }

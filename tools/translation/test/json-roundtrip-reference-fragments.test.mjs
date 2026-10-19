@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -7,7 +8,7 @@ import {loadJsonMacroSourceProof} from '../json-macro-sources.mjs';
 import {compilePinnedJsonSliceReferenceFragments,pinnedJsonSliceReferencePrograms} from '../json-roundtrip-reference-fragments.mjs';
 import {compileArithmeticSourceFragments,bindArithmeticSourceData,projectArithmeticSource} from '../arithmetic-source-fragments.mjs';
 import {compilePinnedJsonLimbFragments,projectPinnedJsonLimbFragment} from '../json-roundtrip-limb-fragments.mjs';
-const root=new URL('../../../',import.meta.url),dependencies=()=>loadJsonMacroSourceProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+const root=new URL('../../../',import.meta.url),dependencies=()=>loadJsonMacroSourceProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
 test('actual full pinned core slice AsRef body and generic receiver header survive source IR serialization',()=>{
   const proof=compilePinnedJsonSliceReferenceFragments(dependencies()),original=gunzipSync(readFileSync(new URL('../source-profiles/json-macro/standard/library-core-src-convert-mod.rs.gz',import.meta.url))).toString('utf8'),fn=proof.program.functions[0];
   assert.equal(createHash('sha256').update(original).digest('hex'),proof.source.sha256);assert.equal(createHash('sha256').update(original.slice(fn.span.start,fn.span.end)).digest('hex'),fn.sha256);assert.equal(original.slice(fn.params[0].receiverSource.span.start,fn.params[0].receiverSource.span.end),'&self');assert.equal(fn.name,'impl::AsRef::slice_T::as_ref');assert.equal(fn.generics[0].name,'T');assert.equal(fn.ir.tail.kind,'name');assert.deepEqual(fn.ir.tail.path,['self']);assert.equal(proof.program.privateMetaRoundtrip,true);

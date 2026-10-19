@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -7,7 +8,7 @@ import {originalMacroTrees} from '../macro-token-trees.mjs';
 import {inspectDeclarativeExpansionClosure} from '../declarative-closure.mjs';
 import {extractDeclarativeOwnerFrontier,isDeclarativeOwnerFrontier} from '../declarative-owner-frontier.mjs';
 const root=new URL('../../../',import.meta.url);
-function dependencies(){return loadDeclarativeSourceProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});}
+function dependencies(){return loadDeclarativeSourceProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});}
 function nestedPath(expansion,name){const index=expansion.trees.findIndex((tree,index)=>tree.text===name&&expansion.trees[index+1]?.text==='!');assert.ok(index>=0);return [index+2];}
 
 test('original macro headers retain custom attributes without self-authorizing their export or hygiene',()=>{

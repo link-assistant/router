@@ -24,12 +24,33 @@ been refreshed through `b4a9a2d89fd6419c9e71003bf2cd61e7208c8e7f`.
 ## Language-layout continuation
 
 PR #761 merged at `07901ad24576e7f045270fe62ac56f8a72446c53`; work continues
-in PR #771. The latest user requirement is implemented in the local layout draft
+in PR #771. The latest user requirement is pushed at
+`657169fb8c4ea9dffff292b91ac49a030a49b4cf`
 with real `js/src`, `ts/src` and `rust/src` directories. See the
 [language layout](language-layout.md) for commands and focused qualification.
 The source bank, compiler registration and portable Git metadata are refreshed
 for this layout. Whole-file receiving qualification and full generated-corpus
 freshness remain open.
+
+The repair draft uses parsed, ordered CST substitutions for local TypeScript
+loader paths and crate-relative fixture reads. Logical carrier labels and
+embedded source data remain unchanged. The complete nine-case native
+TypeScript file passed, including strict compilation and shared native runtime
+execution in Node and Bun. A separate complete four-file group passed all 22
+cases under each engine, covering both translation directions, nested physical
+layout, source capture, generated support declarations and owned Default/Clone
+namespace selection. These results do not qualify the full application corpus.
+
+The expanded complete six-file group subsequently passed all 39 cases under
+each engine, including original Default/Clone controls and physical deployment
+module discovery. The automated source-layout batch covered all 511 compiler
+fixture files in four sequential cohorts; 134 files required 287 substitutions.
+Complete CST equations and inverses were retained for every changed file.
+
+The published layout head's CI cycle is still running. Retain all finished
+failure logs and do not replace that head until the entire cycle finishes.
+Current bulk inventories retain old paths until their actual producers complete;
+the bounded forward diagnostic still requires a new whole-corpus result.
 
 ## Work required in the next pull request
 

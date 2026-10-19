@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from "../../repository-layout.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
@@ -16,7 +17,7 @@ import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE} from '../
 const root=fileURLToPath(new URL('../../../../',import.meta.url)),limits={timeout:60000};
 const imports="import {router_core_json_copy as copy,router_core_json_with_field as update,router_core_json_index_str as index} from './runtime/json-update-runtime.mjs';\n",types="import type {JsonValue} from './runtime/json-macro-runtime.mjs';\n";
 const source=imports+'export function copied(value){return copy(value);}',typed=imports+types+'export function copied(value:JsonValue):JsonValue{return copy(value);}';
-function original(path){return existsSync(join(root,path))?readFileSync(join(root,path),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:30000,maxBuffer:16777216});}
+function original(path){return existsSync(join(root,rustPackageSourcePath(root,path)))?readFileSync(join(root,rustPackageSourcePath(root,path)),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:30000,maxBuffer:16777216});}
 function input(js=source,ts=typed){return {runtimeRoot:'runtime',declarationRoot:'runtime',files:[...ownedCoreRuntimeSources(),{path:'src/lib.rs',source:'pub mod translation_core;\n'},{path:'src/translation_core.rs',source:ROUTER_FORMATTING_FACADE_SOURCE},{path:'src/translation_core/primitives.rs',source:ROUTER_CORE_PRIMITIVES_SOURCE},{path:'Cargo.toml',source:original('Cargo.toml')},{path:'Cargo.lock',source:original('Cargo.lock')},{path:'caller.mjs',source:js},{path:'caller.mts',source:ts}]};}
 function receive(js=source,ts=typed){const data=input(js,ts),context=createOwnedCoreSourceContext(data),options={sourcePath:'caller.mjs',context,typescriptOutputPath:'reverse.mts'},old=translateOwnedCoreJavaScript(js,options),result=translateOwnedCoreDocumentJavaScript(js,options);return {data,context,old,result,options};}
 function rows(meta){return parseLinks(meta).map(row=>({head:row[0],value:JSON.parse(textOf(row[1]))}));}

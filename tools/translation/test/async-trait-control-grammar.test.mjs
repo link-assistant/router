@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import nodeTest from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
@@ -11,7 +12,7 @@ import {originalAsyncTraitSynSchema,originalAsyncTraitSynSchemaEvidence,original
 import {compileDeclarativeMacro,expandDeclarativeMacro} from '../declarative-token-macros.mjs';
 import {originalMacroTrees} from '../macro-token-trees.mjs';
 const root=new URL('../../../',import.meta.url),test=(name,body)=>nodeTest(name,{timeout:5000},body);
-const dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')}),inputs=loadAsyncTraitSourceInputs(dependencies),plan=originalAsyncTraitEffectPlan(inputs);
+const dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')}),inputs=loadAsyncTraitSourceInputs(dependencies),plan=originalAsyncTraitEffectPlan(inputs);
 function retain(name,value){const directory=process.env.ROUTER_ASYNC_CONTROL_VECTORS;if(directory){mkdirSync(directory,{recursive:true});writeFileSync(directory+'/'+name+'.json.gz',gzipSync(JSON.stringify(value)));}}
 function find(value,kind){if(!value||typeof value!=='object')return [];return [...(value.kind===kind?[value]:[]),...Object.values(value).flatMap(child=>find(child,kind))];}
 function bodyOf(record){requireAsyncTraitFunction(plan,record);return record.original.slice(record.bodySpan.start-record.span.start,record.bodySpan.end-record.span.start);}

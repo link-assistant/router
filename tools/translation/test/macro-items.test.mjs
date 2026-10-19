@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -36,7 +37,7 @@ test('unproved item forms malformed imports attributes and terminators remain re
 });
 
 test('original locked Tokio cfg_rt transcribes complete task module items with both docsrs possibilities retained',()=>{
-  const proof=loadDeclarativeSourceProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+  const proof=loadDeclarativeSourceProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
   const definition=tokioConfigurationSourceDefinition(proof,'cfg_rt');
   const invocations=declarativeSourceInvocations(proof,'tokio/src/task/mod.rs').filter(entry=>entry.path.join('::')==='cfg_rt');assert.equal(invocations.length,1);
   const expansion=expandDeclarativeMacro(definition,invocations[0].trees);

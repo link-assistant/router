@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
@@ -20,7 +21,7 @@ import {functionLifetimeSignature} from '../extensions/source-lifetimes.mjs';
 import {parseProgram} from '../semantic-meta.mjs';
 import {requireOriginalCloneEmission,requireOriginalCloneFieldEmission} from '../extensions/clone-source-body.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock});
+const root=new URL('../../../',import.meta.url),manifest=readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock=readFileSync(repositorySourceURL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock});
 const compile=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
 function retain(name,value){if(process.env.ROUTER_OPTION_CLONE_EVIDENCE_DIR){mkdirSync(process.env.ROUTER_OPTION_CLONE_EVIDENCE_DIR,{recursive:true});writeFileSync(process.env.ROUTER_OPTION_CLONE_EVIDENCE_DIR+'/'+name+'.json.gz',gzipSync(JSON.stringify(value)+'\n'));}}
 test('complete original Option Clone source selects the match while clone_from remains uncompiled',()=>{

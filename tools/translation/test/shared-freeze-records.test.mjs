@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // Complete original/current cross-consumer freeze observations; no proof cache.
 import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
@@ -19,7 +20,7 @@ for(const which of ['old','current']){
  for(const name of names){const source=which==='old'?originals.get('tools/translation/'+name):readFileSync(new URL(name,base),'utf8'),origin=new URL(name,base),extra=name==='private-data-freeze.mjs'?'export {plan as planForObservation};':'export {freeze as originalFreezeForObservation'+(source.includes('const freezeCompleted=')?',freezeCompleted as completedFreezeForObservation':'')+'};',copied=source.replace(/\bfrom (['"])(\.\.?\/[^'"]+)\1/g,(_all,quote,path)=>{const original=new URL(path,origin).href,target=urls[original]??original;relocations.push({which,name,path,original,target});return 'from '+quote+target+quote;}).replace(/\bimport\.meta\.url\b/g,()=>{relocations.push({which,name,kind:'original-module-url',target:origin.href});return json(origin.href);})+String.fromCharCode(10)+extra+String.fromCharCode(10);writeFileSync(paths[name],copied,{flag:'wx'});members[name]={source,copied,url:pathToFileURL(paths[name]).href,extra};}
  sets[which]={members,helper:members[names[0]].url,bang:members[names[1]].url,debug:members[names[2]].url,partial:members[names[3]].url};
 }
-const inputs={manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')},common=new URL('original-json-intrinsics.mjs',base).href;
+const inputs={manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')},common=new URL('original-json-intrinsics.mjs',base).href;
 function retain(name,value){const output=process.env.ROUTER_SHARED_FREEZE_VECTOR_DIR;if(output){mkdirSync(output,{recursive:true});writeFileSync(join(output,name+'.json.gz'),gzipSync(json(value)+String.fromCharCode(10)),{flag:'wx'});}}
 function graph(roots){
  const ids=new Map(),queue=[],nodes=[];function value(item){if(item===null||typeof item!=='object'){if(typeof item==='function')return {type:'function',name:item.name,source:Function.prototype.toString.call(item)};if(typeof item==='symbol')return {type:'symbol',value:String(item)};return {type:typeof item,value:item};}if(!ids.has(item)){ids.set(item,queue.length);queue.push(item);}return {node:ids.get(item)};}

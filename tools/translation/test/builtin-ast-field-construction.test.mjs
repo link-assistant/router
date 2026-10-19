@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // Eight source-only authored cases; ALL UNRUN, no generated trait execution.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -10,7 +11,7 @@ import {createBuiltinDeriveFieldAstBridge,assertBuiltinDeriveFieldAstBridge,isBu
 import {resolveModuleGraph} from '../project.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {originalCsvContext} from './original-csv-context.mjs';
-const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
 const profile=builtinDeriveAstSourceProfile(dependencies),generic='compiler/rustc_builtin_macros/src/deriving/generic/mod.rs';
 function route(name){const stage=createBuiltinAstSourceSubstitution(profile),fragment=originalAstFunction(profile,generic,name),program=stage.compile(fragment);return {stage,fragment,program,result:stage.substitute(program)};}
 function collect(node,predicate,output=[]){

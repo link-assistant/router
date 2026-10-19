@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -10,7 +11,7 @@ import {inspectDeriveInput} from '../derive-inputs.mjs';
 import {translateProject} from '../project.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8');
+const root=new URL('../../../',import.meta.url),manifest=readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock=readFileSync(repositorySourceURL('Cargo.lock',root),'utf8');
 const dependencies=loadDeriveDependencyProof({manifest,lock});
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const context=source=>createDeriveFootprintContext({modules:[{file:'src/lib.rs',path:[],source}],dependencies,compilationProfile:PRODUCTION_PROFILE});
@@ -73,7 +74,7 @@ test('type override removes bounded attribute uncertainty for executable borrowe
 });
 
 test('unchanged whole original ClientKind helper proves String confinement while full JsonSchema remains unresolved',()=>{
-  const source=readFileSync(new URL('src/clients.rs',root),'utf8');assert.equal(hash(source),'2f12c5aa34a65ec62b793902cdefe8f36c1b6c414c673e6499ef40c7dbfb8c2d');
+  const source=readFileSync(repositorySourceURL('src/clients.rs',root),'utf8');assert.equal(hash(source),'2f12c5aa34a65ec62b793902cdefe8f36c1b6c414c673e6499ef40c7dbfb8c2d');
   const item=sourceItems(source).find(item=>item.name==='ClientKind'),tokens=item.tokens,at=tokens.findIndex((token,index)=>token.text==='schemars'&&tokens[index+1]?.text==='(');
   assert.ok(at>=0);assert.deepEqual(tokens.slice(at,at+6).map(token=>token.text),['schemars','(','with','=','"String"',')']);
   const literal=tokens[at+4],value=JSON.parse(literal.text),proof=proveSchemarsWithTypeConfinement({dependencies,value,position:'container'});

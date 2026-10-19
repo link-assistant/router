@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
@@ -12,8 +13,8 @@ import {originalSourceModuleItems} from '../source-module-views.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {deriveExternalModules} from '../derive-dependencies.mjs';
 import {createOriginalAncestorAttributeScopeContext,proveOriginalConditionalSiblingScope,assertOriginalConditionalSiblingScope,originalConditionalAncestorSourcePlan,requireOriginalConditionalAncestorSourcePlan,originalConditionalSiblingScopeEvidence} from '../derive-ancestor-attribute-scope.mjs';
-const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
-const originalRoot=readFileSync(new URL('src/lib.rs',root),'utf8'),alias=originalRoot.slice(442,485);
+const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
+const originalRoot=readFileSync(repositorySourceURL('src/lib.rs',root),'utf8'),alias=originalRoot.slice(442,485);
 const model='#[derive(Clone,Default,serde::Deserialize)] pub struct Payload { #[serde(default)] value:u32 }';
 function fixture(rootSource,modelSource=model){
  const sources=new Map([['src/lib.rs',rootSource],['src/model.rs',modelSource]]),graph=resolveModuleGraph({entry:'src/lib.rs',paths:[...sources.keys()],readSource:path=>sources.get(path),compilationProfile:PRODUCTION_PROFILE});

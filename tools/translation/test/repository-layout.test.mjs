@@ -7,7 +7,7 @@ import {repositoryRustLayout,rustPackageSourcePath} from '../repository-layout.m
 import {captureSourceCorpus,sourceCorpusText} from '../source-corpus.mjs';
 import {translateProject} from '../project.mjs';
 import {parseProgram,serializeProgram} from '../semantic-meta.mjs';
-import {substituteRepositorySourceURLs,substituteTypeScriptPackageLayout} from '../repository-path-substitutions.mjs';
+import {substituteRepositorySourceURLs,substituteTypeScriptPackageLayout,substituteRustPackageReads} from '../repository-path-substitutions.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 import {buildArtifacts} from '../../../scripts/regenerate-js-first.mjs';
 import {parseMeta} from '../js-to-rust/translator.mjs';
@@ -34,6 +34,8 @@ test('nested Rust package captures its own manifest and the complete shared work
   for(const row of corpus.cargo)assert.equal(sourceCorpusText(corpus,root,row.source),readFileSync(join(root,row.source),'utf8'));
   assert.equal(sourceCorpusText(corpus,root,'rust/src/lib.rs'),source);
   assert.equal(rustPackageSourcePath(root,'src/lib.rs'),'rust/src/lib.rs');
+  assert.equal(rustPackageSourcePath(root,'src'),'rust/src');
+  assert.equal(rustPackageSourcePath(root,'src-other'),'src-other');
   assert.equal(rustPackageSourcePath(root,'js/src/index.mjs'),'js/src/index.mjs');
 });
 
@@ -83,6 +85,10 @@ test('parsed source URL substitutions preserve child templates through both CST 
   assert.equal(transportConcreteSyntaxMeta(result.beforeWire).source,source);
   assert.equal(transportConcreteSyntaxMeta(result.afterWire).source,result.source);
   assert.deepEqual(substituteRepositorySourceURLs('const child=`new URL(path,root)`;','./helper.mjs'),{source:'const child=`new URL(path,root)`;',edits:[],changed:false});
+  const literal='import {repositorySourceURL} from "./helper.mjs";\nconst cargo=new URL("Cargo.toml",root);\n';
+  const moved=substituteRepositorySourceURLs(literal,'./helper.mjs');
+  assert.equal(moved.edits.length,1);assert.equal(moved.wholeInverse,true);
+  assert.equal(moved.source,'import {repositorySourceURL} from "./helper.mjs";\nconst cargo=repositorySourceURL("Cargo.toml",root);\n');
 });
 
 
@@ -116,4 +122,17 @@ test('TypeScript package path substitution preserves adapter bodies and embedded
  assert.equal(result.source.slice(result.source.indexOf('export function')),source.slice(source.indexOf('export function')));
  assert.equal(transportConcreteSyntaxMeta(result.afterWire).source,result.source);
  assert.equal(substituteTypeScriptPackageLayout(result.source).changed,false);
+});
+
+test('crate-relative read substitutions preserve fixture labels embedded sources and write targets',{timeout:5000},()=>{
+ const source='const child=`readFileSync(join(root,"src/lib.rs"))`;\nconst path="src/lib.rs";\nconst source=readFileSync(join(root,path),"utf8");\nconst entries=fs.readdirSync(join(ROOT,"src"));\nwriteFileSync(join(root,path),source);\n';
+ const result=substituteRustPackageReads(source,'../repository-layout.mjs');
+ assert.equal(result.edits.length,2);assert.equal(result.wholeInverse,true);
+ assert.deepEqual(result.trace.map(row=>row.phase),['language','repository']);
+ assert.ok(result.source.includes('`readFileSync(join(root,"src/lib.rs"))`'));
+ assert.ok(result.source.includes('const path="src/lib.rs";'));
+ assert.ok(result.source.includes('readFileSync(join(root,rustPackageSourcePath(root,path)),"utf8")'));
+ assert.ok(result.source.includes('writeFileSync(join(root,path),source)'));
+ assert.equal(transportConcreteSyntaxMeta(result.afterWire).source,result.source);
+ assert.equal(substituteRustPackageReads(result.source,'../repository-layout.mjs').changed,false);
 });

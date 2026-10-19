@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -7,7 +8,7 @@ import {compileDeclarativeMacro,expandDeclarativeMacro,declarativeSubInput,decla
 import {originalMacroTrees,originalMacroInvocation} from '../macro-token-trees.mjs';
 import {inspectDeclarativeExpansionClosure,isDeclarativeClosureEvidence,proveDeclarativeBranchPartition,isDeclarativeBranchPartition} from '../declarative-closure.mjs';
 const root=new URL('../../../',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
-const dependencies=()=>loadDeclarativeSourceProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+const dependencies=()=>loadDeclarativeSourceProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
 function calls(expansion,name) {
   const result=[];
   function walk(trees,path=[]) {

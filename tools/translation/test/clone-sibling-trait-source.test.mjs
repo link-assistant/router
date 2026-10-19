@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
@@ -17,7 +18,7 @@ import {originalSchemarsDataMacroExpansions} from '../schemars-macro-inputs.mjs'
 import {inspectQuoteFragment} from '../derive-quote-meta.mjs';
 import {parseProgram} from '../semantic-meta.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock}),jsonMacroDependencies=loadJsonMacroSourceProof({manifest,lock});
+const root=new URL('../../../',import.meta.url),manifest=readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock=readFileSync(repositorySourceURL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock}),jsonMacroDependencies=loadJsonMacroSourceProof({manifest,lock});
 function retain(name,value){if(process.env.ROUTER_SIBLING_CLONE_EVIDENCE_DIR){mkdirSync(process.env.ROUTER_SIBLING_CLONE_EVIDENCE_DIR,{recursive:true});writeFileSync(process.env.ROUTER_SIBLING_CLONE_EVIDENCE_DIR+'/'+name+'.json.gz',gzipSync(JSON.stringify(value)+'\n'));}}
 function setup(source,file='src/lib.rs',name='Payload'){
  const graph=resolveModuleGraph({entry:file,paths:[file],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE}),context=createDeriveFootprintContext({...graph,dependencies}),module=deriveFootprintSourceContext(context).modules[0],item=originalSourceModuleItems(module).find(row=>row.name===name),certificate=deriveFootprintAt(context,module,item);return {source,file,context,module,item,certificate};
