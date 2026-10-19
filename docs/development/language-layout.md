@@ -80,7 +80,7 @@ eight-case enclosing-namespace translator file passed under Node and Bun,
 including its strict 20-second TypeScript child and cold source checks. All 12 complete synchronization cases also passed under each engine against the committed physical layout, preserving authored Rust inputs while regenerating checked meta, Rust projections and executable strict TypeScript.
 
 These focused results do not establish full Router translation or a green
-complete gate. Source-bank and compiler-export refresh, full canonical/profile
+complete gate. Compiler-export refresh, full canonical/profile
 outputs, independent reverse regeneration, the original producer deadlines and
 strict parity remain open. See [the continuation ledger](issue-759-continuation.md).
 
@@ -92,3 +92,9 @@ profile metadata is refreshed separately by
 `scripts/refresh-cargo-layout-profiles.py --check`, using a retained full source
 baseline, a complete manifest substitution equation, unchanged dependencies
 and lockfile, and identical workspace build profiles.
+
+The actual source-bank producer captured all 849 current Rust/workspace input files,
+including `rust/Cargo.toml`, and passed independent complete Git and physical-byte
+comparison within its original shared 60-second budget. Both fixed historical
+source universes retain their original complete bytes. Compiler export
+registration and the full generated application inventories remain open.
