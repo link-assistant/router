@@ -77,7 +77,7 @@ passed nine cases under each engine, including independently strict-compiled
 TypeScript and executable JavaScript output from `rust/src` fixtures. All 30
 JavaScript-first workflow/local-gate controls passed under Node. The complete
 eight-case enclosing-namespace translator file passed under Node and Bun,
-including its strict 20-second TypeScript child and cold source checks.
+including its strict 20-second TypeScript child and cold source checks. All 12 complete synchronization cases also passed under each engine against the committed physical layout, preserving authored Rust inputs while regenerating checked meta, Rust projections and executable strict TypeScript.
 
 These focused results do not establish full Router translation or a green
 complete gate. Source-bank and compiler-export refresh, full canonical/profile

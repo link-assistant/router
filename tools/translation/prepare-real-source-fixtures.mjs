@@ -232,10 +232,10 @@ function staticDelta(before,after){
   ]).run(null);
   return {...operation.value,trace:operation.trace,afterCanonicalSha256:hash(after.canonical),completeInverse:true,meaning:'Exact reviewed Git adoption source delta; not a new semantic or dispatch proof.'};
 }
-function staticCapture(root,rev){
+function staticCapture(root,rev,{nestedPackage=false}={}){
   const listing=staticGit(root,['ls-tree','-r','-l','-z',rev]).toString('utf8').split('\0').filter(Boolean),rows=[];
   for(const record of listing){const tab=record.indexOf('\t'),path=record.slice(tab+1),fields=record.slice(0,tab).trim().split(/\s+/u);
-    if(!path.endsWith('.rs')&&!['Cargo.toml','Cargo.lock'].includes(path))continue;
+    if(!path.endsWith('.rs')&&!['Cargo.toml','Cargo.lock',...(nestedPackage?['rust/Cargo.toml']:[])].includes(path))continue;
     if(tab<0||fields.length!==4||fields[1]!=='blob'||path.startsWith('/')||path.includes('\\')||path.split('/').some(value=>!value||value==='.'||value==='..'))staticFail('complete tracked source row required');
     const bytes=Number(fields[3]);if(!Number.isSafeInteger(bytes)||bytes<0||bytes>STATIC_SOURCE_LIFECYCLE_LIMITS.fileBytes)staticFail('individual source byte bound');
     rows.push({path,gitBlob:fields[2],bytes});
@@ -272,7 +272,9 @@ export function prepareStaticSourceLifecycleProposal({root=resolve(dirname(fileU
     const expected=STATIC_SOURCE_LIFECYCLE_PROFILES[rev];if(captured.files.length!==expected.files||captured.files.reduce((sum,row)=>sum+row.bytes,0)!==expected.bytes||captured.sourceSetSha256!==expected.sourceSetSha256)staticFail('fixed complete historical universe differs');
     profiles.push({revision:rev,files:captured.files,sourceSetSha256:captured.sourceSetSha256});for(const [id,row]of captured.sources)add(id,row);
   }
-  const fresh=staticCapture(root,subjectRevision);for(const [id,row]of fresh.sources)add(id,row);
+  // Preserve the fixed historical universes. Current Router captures include
+  // both workspace and nested package manifests plus the shared lockfile.
+  const fresh=staticCapture(root,subjectRevision,{nestedPackage:true});for(const [id,row]of fresh.sources)add(id,row);
   const actual=()=>fresh.files.map(row=>{let bytes;try{bytes=readFileSync(resolve(root,row.path));}catch(error){if(error.code!=='ENOENT')throw error;bytes=staticGit(root,['show',subjectRevision+':'+row.path]);}if(bytes.length!==row.bytes||hash(bytes)!==row.sourceId||staticBlob(bytes)!==row.gitBlob)staticFail('current physical/Git source differs: '+row.path);return row;});
   const before=actual(),provenanceRevision=history?.bundle.current.sourceSetSha256===fresh.sourceSetSha256?history.bundle.current.producerRevision:subjectRevision;
   const frontier=JSON.parse(decode(staticGit(root,['show',subjectRevision+':tools/translation/fixtures/formatting-owner-frontier.json'])));
