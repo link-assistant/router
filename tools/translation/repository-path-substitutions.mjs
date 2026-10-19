@@ -60,3 +60,35 @@ export function substituteRepositorySourceURLs(source,helperImport) {
   if(transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(inverse.value)).source!==source)throw Error('Complete migration source inverse differs');
   return {source:after,edits,changed:true,beforeWire:before.wire,languageWire,afterWire,trace:result.trace,wholeInverse:true};
 }
+
+// Local adapter initialization only; historical source records remain intact.
+export function substituteTypeScriptPackageLayout(source) {
+  if(typeof source!=='string'||Buffer.byteLength(source)>1024*1024)throw TypeError('Bounded adapter source required');
+  const ts=ownershipCompiler(),initial=roundtrip(source),file=ts.createSourceFile('adapter.mjs',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
+  if(file.parseDiagnostics.length)throw Error('Original adapter source syntax is invalid');
+  const edits=[];
+  function visit(node){
+    const join=node.parent,require=join?.parent;
+    if(ts.isStringLiteral(node)&&node.text==='packages/javascript/package.json'&&ts.isCallExpression(join)&&ts.isIdentifier(join.expression)&&join.expression.text==='join'&&join.arguments.length===2&&join.arguments[1]===node&&ts.isCallExpression(require)&&ts.isIdentifier(require.expression)&&require.expression.text==='createRequire'&&require.arguments.length===1&&require.arguments[0]===join){
+      const span=[node.getStart(file),node.end],quote=source[span[0]];
+      edits.push({span,expected:source.slice(...span),replacement:quote+'js/package.json'+quote});
+    }
+    ts.forEachChild(node,visit);
+  }
+  visit(file);if(!edits.length)return {source,changed:false,edits:[]};
+  if(edits.length!==1)throw Error('One complete local TypeScript package initialization required');
+  let languageWire,afterWire;
+  const result=createRulePipeline([
+    {phase:'language',rules:[{id:'javascript:parsed-require-package-literal',apply:()=>{languageWire=initial.wire;return transportConcreteSyntaxMeta(languageWire);}}]},
+    {phase:'repository',rules:[{id:'router:physical-javascript-package',apply:input=>{
+      const edit=edits[0],after=source.slice(0,edit.span[0])+edit.replacement+source.slice(edit.span[1]);
+      const applied=applyConcreteSyntaxSubstitutions(input.document,{languageRules:[],repositoryRules:[{id:'router:require-package-path',edits:[{span:[0,source.length],expected:source,replacement:after}]}]});
+      afterWire=serializeConcreteSyntaxMeta(applied.value);return transportConcreteSyntaxMeta(afterWire).source;
+    }}]},
+  ]).run(source);
+  const after=result.value;
+  if(ts.createSourceFile('adapter.mjs',after,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS).parseDiagnostics.length)throw Error('Translated adapter syntax is invalid');
+  const inverse=applyConcreteSyntaxSubstitutions(roundtrip(after).document,{languageRules:[],repositoryRules:[{id:'router:complete-package-layout-inverse',edits:[{span:[0,after.length],expected:after,replacement:source}]}]});
+  if(transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(inverse.value)).source!==source)throw Error('Complete adapter source inverse differs');
+  return {source:after,changed:true,edits,beforeWire:initial.wire,languageWire,afterWire,trace:result.trace,wholeInverse:true};
+}

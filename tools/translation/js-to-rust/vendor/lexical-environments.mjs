@@ -8,7 +8,7 @@ import {fileURLToPath} from 'node:url';
 import {readCapturedPrimitives,reissueCapturedPrimitives} from './captured-primitives.mjs';
 const issued=new WeakMap(),issuers=new WeakMap();
 const sourceRoot=process.env.ROUTER_NATIVE_TS_SOURCE_ROOT??resolve(dirname(fileURLToPath(import.meta.url)),'../../../..');
-const require=createRequire(join(sourceRoot,'packages/javascript/package.json'));
+const require=createRequire(join(sourceRoot,'js/package.json'));
 const fail=message=>{throw Object.assign(new Error(message),{slug:'collection'});};
 const hash=source=>createHash('sha256').update(Buffer.from(source,'utf16le')).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};

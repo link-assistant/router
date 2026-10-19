@@ -7,7 +7,7 @@ import {repositoryRustLayout,rustPackageSourcePath} from '../repository-layout.m
 import {captureSourceCorpus,sourceCorpusText} from '../source-corpus.mjs';
 import {translateProject} from '../project.mjs';
 import {parseProgram,serializeProgram} from '../semantic-meta.mjs';
-import {substituteRepositorySourceURLs} from '../repository-path-substitutions.mjs';
+import {substituteRepositorySourceURLs,substituteTypeScriptPackageLayout} from '../repository-path-substitutions.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 import {buildArtifacts} from '../../../scripts/regenerate-js-first.mjs';
 import {parseMeta} from '../js-to-rust/translator.mjs';
@@ -103,4 +103,17 @@ test('JavaScript edits project through checked meta into the nested Rust package
   assert.equal(evaluate(parseMeta(updated),'adjust',[0]),-1);
   assert.notEqual(after.get('rust/src/generated_js_first/policy.rs'),before.get('rust/src/generated_js_first/policy.rs'));
   assert.equal(readFileSync(join(root,'rust/src/lib.rs'),'utf8'),original);
+});
+
+
+test('TypeScript package path substitution preserves adapter bodies and embedded source',{timeout:5000},()=>{
+ const source='const child=`createRequire(join(sourceRoot,"packages/javascript/package.json"))`;\nconst require=createRequire(join(sourceRoot,\'packages/javascript/package.json\'));\nexport function value(){return 7;}\n';
+ const result=substituteTypeScriptPackageLayout(source);
+ assert.equal(result.edits.length,1);assert.equal(result.wholeInverse,true);
+ assert.deepEqual(result.trace.map(row=>row.phase),['language','repository']);
+ assert.ok(result.source.includes("createRequire(join(sourceRoot,'js/package.json'))"));
+ assert.ok(result.source.includes('`createRequire(join(sourceRoot,"packages/javascript/package.json"))`'));
+ assert.equal(result.source.slice(result.source.indexOf('export function')),source.slice(source.indexOf('export function')));
+ assert.equal(transportConcreteSyntaxMeta(result.afterWire).source,result.source);
+ assert.equal(substituteTypeScriptPackageLayout(result.source).changed,false);
 });
