@@ -47,6 +47,21 @@ module discovery. The automated source-layout batch covered all 511 compiler
 fixture files in four sequential cohorts; 134 files required 287 substitutions.
 Complete CST equations and inverses were retained for every changed file.
 
+The repaired compiler registration is pinned to
+`1fb501813af67585f23716596666c9b302cb5240`. Its actual producer and independent
+review compared all 1,171 compiler and 132 TypeScript files. The matching
+portable fixture retained all four original historical bodies and passed a
+complete 390-object Git comparison. Both complete receiving files then passed
+all 16 cases under Node and Bun. Application inventories and the full gate
+remain separate open obligations.
+
+A subsequent complete eight-file receiving group passed all 55 cases under
+each engine after enclosing-context creation adopted the existing bounded
+per-invocation data-cost scope. The actual 396-module diagnostic still needs a
+new result; earlier 120-second runs stopped in Default namespace analysis.
+Compiler registration and portable fixtures must be refreshed again after
+this source change before claiming current export freshness.
+
 The published layout head's CI cycle is still running. Retain all finished
 failure logs and do not replace that head until the entire cycle finishes.
 Current bulk inventories retain old paths until their actual producers complete;

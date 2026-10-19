@@ -109,6 +109,24 @@ complete 511-file compiler-fixture census in four sequential bounded cohorts:
 an inverse. This is source-layout repair evidence, not executable application
 coverage.
 
+After the repair batch, all 16 complete isolated-compiler and portable-Git
+receiving cases passed under Node and Bun with their original deadlines.
+The actual registration producer and independent full-byte review covered
+1,171 compiler files and all 132 TypeScript files (47,038,503 raw bytes), pinned
+to `1fb501813af67585f23716596666c9b302cb5240`. The matching portable producer
+and independent review compared all 390 Git objects and preserved all four
+historical source bodies. These receiving results still do not establish full
+application generation or strict parity.
+
+The expanded eight-file group passed all 55 cases under Node and Bun after
+applying the existing per-invocation data-cost scope to the enclosing-context
+creator. Original proof bytes, callback controls, refusals, strict target checks
+and historical source hashes remain checked. The historical-format test now
+layers the existing complete enclosing-source inverse before its unchanged
+scoped-format pins and retains a CST equation for the full current parent.
+Whole-corpus performance remains a separate diagnostic; the registration pin
+above predates this additional scope change and requires a producer refresh.
+
 The actual source-bank producer captured all 849 current Rust/workspace input files,
 including `rust/Cargo.toml`, and passed independent complete Git and physical-byte
 comparison within its original shared 60-second budget. Both fixed historical

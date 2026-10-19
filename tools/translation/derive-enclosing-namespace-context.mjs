@@ -13,6 +13,7 @@ import {proveClapValueEnumBangFootprint,assertClapValueEnumBangFootprint,origina
 import {proveSchemarsBangFootprint,assertSchemarsBangFootprint,originalSchemarsOutput} from './schemars-bang-footprints.mjs';
 import {types} from 'node:util';
 import {originalDataFreezeIntrinsicsUnchanged,originalCapturedFunctionSource} from './original-json-intrinsics.mjs';
+import {withRetainedPrivateNativeProofCostScope} from './private-native-proof-json.mjs';
 const contextTypeOwner=types;
 let nativeContextOperations=null;
 function contextReady(){
@@ -55,6 +56,11 @@ function enclosingRoutes(){return routes??=new Map([
 let routes=null;
 
 export function createDeriveEnclosingNamespaceContext({deriveContext}={}){
+  return withRetainedPrivateNativeProofCostScope(()=>createUnscopedDeriveEnclosingNamespaceContext({deriveContext}));
+}
+// Use the same fresh, bounded DATA-cost scope as the legacy complete creator.
+// It closes before return; source, owner and semantic checks still run afresh.
+function createUnscopedDeriveEnclosingNamespaceContext({deriveContext}={}){
   requireContextNative();
   if(!isDeriveFootprintContext(deriveContext))throw new TypeError('Bang output requires an original sealed derive context');
   originalJson??=createPrivateFrozenJsonCache();contexts??=new WeakMap();certificates??=new WeakMap();
