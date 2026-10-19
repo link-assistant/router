@@ -544,6 +544,32 @@ those preimages while optimizing the complete operation before reusing it.
 
 ## Continuation workflow
 
+The complete owned forward checkpoint at `9466f1ad5510bac2b6d74120a4eb67cbaeca11aa`
+contains all 847 original Rust files and 3,188 generated outputs. Its producer
+completed in 1,237.382 seconds under the unchanged 2 GiB Node heap and 3 GiB
+aggregate RSS bounds. Independent complete input/output and item-partition
+review passed. This preserves unsupported code; only 155 of 2,567 production
+top-level functions have executable translations, and native parity still
+reports 2 implemented, 151 partial and 290 unsupported features.
+
+The following reverse attempt refused two of the eight actual owned definitions
+before writing outputs. Their JSDoc parameters prevented the checker from
+consulting the available paired TypeScript. Pair selection now also checks
+those complete pairs, and written `ReturnType` domains for the registered JSON
+constructors are resolved through their actual imported runtime symbols.
+Source ownership and body checks remain independent. All 19 affected cases
+passed under Node and Bun; the complete Node deadline audit found zero breaches.
+Earlier fixture, syntax and unregistered-type failures remain recorded.
+
+An independent receiving tree then checked all eight actual definitions and
+36 behavioral vectors across forward JavaScript, strict forward TypeScript,
+strict reverse TypeScript and the checked meta interpreter under both engines.
+TypeScript 5.9.3 compiled every receiving file, and every original input byte
+remained equal. This establishes those receiving cases only. The checker changes
+make the earlier forward compiler fingerprint stale; full canonical/profile
+regeneration, actual reverse freshness, performance and the complete gate remain
+open. No Rust tool was invoked.
+
 Continue with the coordinator alone, using partial complete JavaScript files
 for feedback while preparing one coherent batch. Preserve the whole tests,
 strict child deadlines, independent Node duration audit, and existing memory,

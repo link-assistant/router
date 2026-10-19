@@ -104,7 +104,7 @@ test('module preflight, malformed pairs and forged source data retain complete r
  const foreign=input(copied,copiedTyped);foreign.files.push({path:'typed/runtime/json-macro-runtime.mjs',source:'export const forged=true;'});const foreignContext=createOwnedCoreSourceContext(foreign);assert.throws(()=>translateOwnedCoreJavaScript(copied,{sourcePath:JS,context:foreignContext}),/paired runtime counterpart differs/u);
  const {result}=translate();const detached=JSON.parse(JSON.stringify(result.program));assert.throws(()=>emitRust(detached),/unissued/u);
  const fields=input(copied,copiedTyped);fields.pairedTypesProved=true;assert.throws(()=>createOwnedCoreSourceContext(fields),/unknown source record field/u);
- const written=imports+'/** @param {import("../runtime/json-macro-runtime.mjs").JsonValue} value */\nexport function copied(value){return copy(value);}';const legacy=translate(written,undefined);assert.equal(Object.hasOwn(legacy.result.program[0],'pairedSource'),false);
+ const written=imports+'/** @param {import("../runtime/json-macro-runtime.mjs").JsonValue} value */\nexport function copied(value){return copy(value);}';const legacyContext=createOwnedCoreSourceContext(input(written,undefined)),legacy=translateOwnedCoreJavaScript(written,{sourcePath:JS,context:legacyContext,typescriptOutputPath:'typed/src/reverse.mts'});assert.equal(Object.hasOwn(legacy.program[0],'pairedSource'),false);
 });
 test('the actual corpus captures matching application TS and consumes it before packaging',limits,t=>{
  const directory=mkdtempSync(join(tmpdir(),'owned-paired-corpus-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));const base='js/generated/rust-project',typed='ts/generated/rust-project';
@@ -118,10 +118,32 @@ test('the actual corpus captures matching application TS and consumes it before 
  write(directory,typed+'/src/lib.mts',copiedTyped.replace('copy(value)','index(value,"changed")'));assert.throws(()=>captured.requireCurrent(),/complete input changed/u);const changed=buildOwnedCoreArtifacts(directory);assert.equal(changed.manifest.totals.translatedItems,0);assert.match(changed.manifest.diagnostics[0].message,/complete executable tokens differ/u);
 });
 test('full real forward parents and every independent refusal remain in the actual input census',limits,()=>{
- const captured=captureOwnedCoreCorpus(root),js='js/generated/rust-project/src/lib.mjs',typed='ts/generated/rust-project/src/lib.ts';
+ const captured=captureOwnedCoreCorpus(root),stem=rustPackageSourcePath(root,'src/lib.rs').slice(0,-3),js='js/generated/rust-project/'+stem+'.mjs',typed='ts/generated/rust-project/'+stem+'.ts';
  assert.equal(captured.files.find(row=>row.path===js).source,original(js));assert.equal(captured.files.find(row=>row.path===typed).source,original(typed));
  const result=buildOwnedCoreArtifacts(root),stored=JSON.parse(result.artifacts.get('tools/translation/js-to-rust/generated/owned-core/inputs.json'));
  for(const path of [js,typed])assert.equal(stored.files.find(row=>row.path===path).source,original(path));
  for(const row of result.manifest.modules){assert.equal(row.sourceItems,row.translatedItems+row.unsupportedItems);assert.equal(stored.files.find(file=>file.path===row.path).source,original(row.path));}
  assert.equal(result.manifest.runtimeParity,false);assert.equal(result.manifest.wholeSourceSynchronization,false);assert.equal(result.manifest.witness.applicationItems,0);
+});
+
+test('written JSDoc retains an available complete TypeScript pair and rejects every mismatched domain',limits,async t=>{
+ const documentation="/** @param {import(\"../runtime/json-macro-runtime.mjs\").JsonValue} value */\n",documented=imports+documentation+'export function copied(value){return copy(value);}',documentedTyped=copiedTyped.replace('export function',documentation+'export function');
+ const api=await targets(t,documented,documentedTyped),value=json_macro_object([['text',json_macro_string('猫😀')]]),expected=json_macro_object([['text',json_macro_string('猫😀')]]);
+ for(const actual of [api.javascript.copied(value),api.typedOriginal.copied(value),api.typedReverse.copied(value),api.run('copied',[value])]){assert.deepEqual(actual,expected);assert.notStrictEqual(actual,value);}
+ assert.equal(api.result.program[0].pairedSource.path,TS);assert.equal(api.result.program[0].source.source,documented);assert.equal(api.result.program[0].pairedSource.source,documentedTyped);
+ assert.equal(parseOwnedCoreMeta(api.result.meta,{context:api.context})[0].pairedSource.source,documentedTyped);
+ assert.throws(()=>translate(documented,documentedTyped.replace('value:JsonValue','value:boolean')),/paired written parameter ABI differs/);
+ assert.throws(()=>translate(documented,documentedTyped.replace('):JsonValue','):boolean')),/paired written return ABI differs/);
+ const local=documented.replace('return copy(value);','const actual=copy(value);return actual;'),typed=documentedTyped.replace('return copy(value);','const actual:boolean=copy(value);return actual;');
+ assert.throws(()=>translate(local,typed),/paired written local ABI differs/);
+ const context=createOwnedCoreSourceContext(input(documented,undefined)),legacy=translateOwnedCoreJavaScript(documented,{sourcePath:JS,context,typescriptOutputPath:'typed/src/reverse.mts'});assert.equal(Object.hasOwn(legacy.program[0],'pairedSource'),false);
+});
+
+test('source-bound JSON macro ReturnType validates written constructors and retains independent targets',limits,async t=>{
+ const macroImports="import {json_macro_object as object,json_macro_string as string} from '../runtime/json-macro-runtime.mjs';\n",documentation="/** @param {string} value */\n",body="return object([[\"text\",string(value)]]);";
+ const source=imports+macroImports+documentation+'export function build(value){'+body+'}',typed=imports+macroImports+documentation+'export function build(value:string):ReturnType<typeof object>{'+body+'}';
+ const api=await targets(t,source,typed);assert.equal(api.result.program[0].pairedSource.source,typed);
+ for(const value of ['', '猫😀', 'line\nnext']){const expected=json_macro_object([['text',json_macro_string(value)]]);for(const actual of [api.javascript.build(value),api.typedOriginal.build(value),api.typedReverse.build(value),api.run('build',[value])])assert.deepEqual(actual,expected);}
+ assert.throws(()=>translate(source,typed.replace('ReturnType<typeof object>','ReturnType<typeof index>')),/unregistered written type domain/);
+ assert.throws(()=>translate(source,typed.replace('ReturnType<typeof object>','boolean')),/paired written return ABI differs/);
 });

@@ -217,6 +217,8 @@ function originalOwnedCoreType(handle,path,type,analysis){
    if(binding.target===state.data.runtimeRoot+'/base64-runtime.mjs'&&op)return op.ret;
    const reader=ownedJsonReaderOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/json-runtime.mjs'&&reader)return reader.ret;
    const optional=ownedJsonOptionalReaderOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/json-option-runtime.mjs'&&optional)return optional.ret;
+   // Written output domain only; source-symbol and whole-body checks stay independent.
+   if(binding.target===state.data.runtimeRoot+'/json-macro-runtime.mjs'&&['json_macro_value','json_macro_null','json_macro_bool','json_macro_string','json_macro_u64','json_macro_i64','json_macro_array','json_macro_object'].includes(binding.name))return 'json-ref';
   }
  }
  // Map and byte domains must be written through the actual imported operation,
@@ -282,7 +284,7 @@ export function analyzeOriginalOwnedCoreSource(context,path){
 function checkFunction(context,path,declaration,analysis){
  const {ts,file,source,checker}=analysis;
  if(!declaration.name||!declaration.body||declaration.asteriskToken||declaration.typeParameters||declaration.modifiers?.some(mod=>mod.kind!==ts.SyntaxKind.ExportKeyword))fail('ordinary original named function required');
- const name=rustName(declaration.name.text),params=[],environment=new Map();let cells=0,paired=null;
+ const name=rustName(declaration.name.text),params=[],environment=new Map();let cells=0,paired=pairedFunction(context,path,declaration,analysis);
  const tick=depth=>{if(++cells>100000||depth>160)fail('whole function flow budget');};
  function bind(identifier,value,scope){
   if(!ts.isIdentifier(identifier)||scope.has(identifier.text)||identifier.text.startsWith('__ro'))fail('duplicate, reserved or nonidentifier binding');
@@ -305,7 +307,7 @@ function checkFunction(context,path,declaration,analysis){
   const sourceName=bind(identifier,{type,root:['json-ref','map-ref','str','bytes-ref','base64-error-ref'].includes(type)||ownedJsonBorrowed(type)||type==='json-option-input'?identifier.text:null,input:true},environment);
   params.push({name:sourceName,rust:rustName(sourceName),type});
  }
- if(declaration.parameters.length===0)paired=pairedFunction(context,path,declaration,analysis);
+ // The complete available pair was selected before parameter domains.
  const hostCalls=[],byteInputs=new Set();
  const branchScope=scope=>new Map([...scope].map(([key,value])=>[key,ownedBase64Result(value.type)?{...value}:value]));
  const mergeMoves=(scope,yes,no)=>{for(const [key,value]of scope)if(ownedBase64Result(value.type))value.moved=!!yes.get(key)?.moved||!!no.get(key)?.moved;};
