@@ -57,10 +57,13 @@ remain separate open obligations.
 
 A subsequent complete eight-file receiving group passed all 55 cases under
 each engine after enclosing-context creation adopted the existing bounded
-per-invocation data-cost scope. The actual 396-module diagnostic still needs a
-new result; earlier 120-second runs stopped in Default namespace analysis.
-Compiler registration and portable fixtures must be refreshed again after
-this source change before claiming current export freshness.
+per-invocation data-cost scope. The subsequent actual 396-module diagnostic
+again reached its unchanged
+120-second limit in Default namespace analysis, so whole-producer performance
+remains unqualified. Registration and portable fixtures were refreshed by their
+actual producers against `d8365a84e3d4c2bfb1b93e83c5258d1d19e1f6a2`,
+with complete independent byte review; all 16 receiving cases then passed
+under both engines. This does not refresh the missing application inventories.
 
 The published layout head's CI cycle is still running. Retain all finished
 failure logs and do not replace that head until the entire cycle finishes.

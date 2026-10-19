@@ -112,8 +112,8 @@ coverage.
 After the repair batch, all 16 complete isolated-compiler and portable-Git
 receiving cases passed under Node and Bun with their original deadlines.
 The actual registration producer and independent full-byte review covered
-1,171 compiler files and all 132 TypeScript files (47,038,503 raw bytes), pinned
-to `1fb501813af67585f23716596666c9b302cb5240`. The matching portable producer
+1,171 compiler files and all 132 TypeScript files (47,038,947 raw bytes), pinned
+to `d8365a84e3d4c2bfb1b93e83c5258d1d19e1f6a2`. The matching portable producer
 and independent review compared all 390 Git objects and preserved all four
 historical source bodies. These receiving results still do not establish full
 application generation or strict parity.
@@ -124,8 +124,11 @@ creator. Original proof bytes, callback controls, refusals, strict target checks
 and historical source hashes remain checked. The historical-format test now
 layers the existing complete enclosing-source inverse before its unchanged
 scoped-format pins and retains a CST equation for the full current parent.
-Whole-corpus performance remains a separate diagnostic; the registration pin
-above predates this additional scope change and requires a producer refresh.
+The registration and portable fixtures were then refreshed by their actual
+producers and independently reviewed again. All 16 complete receiving cases
+passed under each engine against this refreshed compiler. The full-corpus
+120-second diagnostic still stops during Default namespace analysis; no
+whole-producer speed improvement or complete generation is established.
 
 The actual source-bank producer captured all 849 current Rust/workspace input files,
 including `rust/Cargo.toml`, and passed independent complete Git and physical-byte
