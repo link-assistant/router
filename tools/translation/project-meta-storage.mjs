@@ -2,6 +2,7 @@
 // its existing source/IR checks; a matching storage hash grants no authority.
 import {createHash} from 'node:crypto';
 import {posix} from 'node:path';
+import {types} from 'node:util';
 import {isCanonicalJsonText} from './canonical-json-text.mjs';
 const schema='bounded-project-meta-storage-v1';
 export const PROJECT_META_STORAGE_LIMITS=Object.freeze({fileBytes:64*1024*1024,totalBytes:512*1024*1024});
@@ -89,6 +90,59 @@ export function planProjectMetaStorage(metaPath,serialized,{storageLimits}={}){
   // Preserve each actual value as complete JSON, without string-escaping or
   // normalizing its evidence. The root never duplicates the program values.
   const descriptors=rows.map(({field,path,bytes,sha256})=>({field,path,bytes,sha256}));
+  const stored='{"schema":'+JSON.stringify(schema)+',"logical":'+JSON.stringify(logical)+',"root":'+rootRaw+',"components":'+JSON.stringify(descriptors)+'}\n';
+  budget(stored,bound.fileBytes);if(size(stored)+rows.reduce((sum,row)=>sum+row.bytes,0)>bound.totalBytes)throw new RangeError('Project metadata storage aggregate byte budget');
+  return {text:stored,components:rows,targets:Object.fromEntries(rows.map(row=>[row.target,row.path]))};
+}
+
+/** Explicit owned-data producer. Serialize complete top-level fields separately
+ * so a live compiler need not also retain and flatten the whole project wire.
+ * serialize is the producer's fixed canonical field JSON serializer, including
+ * its Map/BigInt representation. This is not arbitrary replacer/observer
+ * equivalence and grants no semantic, source or ownership authority. */
+export function planProjectMetaObjectStorage(metaPath,meta,{storageLimits,serialize}={}){
+  path(metaPath);const bound=limits(storageLimits);
+  if(!meta||typeof meta!=='object'||types.isProxy(meta)||![null,Object.prototype].includes(Object.getPrototypeOf(meta))||'toJSON'in meta||typeof serialize!=='function')fail('owned ordinary metadata and fixed field serializer required');
+  const names=Object.keys(meta);if(names.length>4096)fail('owned top-level field bound');
+  const fields=[];let bytes=3;
+  for(const name of names){
+    const descriptor=Object.getOwnPropertyDescriptor(meta,name);if(!descriptor||!Object.hasOwn(descriptor,'value'))fail('own data metadata fields required');
+    // Keep a nested value's original native toJSON key argument. The actual
+    // producer's value-only Map/BigInt replacer ignores this ordinary wrapper.
+    const wrapped=serialize({[name]:descriptor.value});if(typeof wrapped!=='string')fail('canonical complete field JSON required');
+    if(wrapped==='{}\n')continue;
+    const prefix='{'+JSON.stringify(name)+':';
+    if(!wrapped.startsWith(prefix)||!wrapped.endsWith('}\n'))fail('exact complete field wrapper required');
+    const raw=wrapped.slice(prefix.length,-2);if(size(raw)+1>bound.fileBytes)throw new RangeError('Project metadata storage file byte budget');canonicalValue(raw);
+    const key=JSON.stringify(name);bytes+=size(key)+1+size(raw)+(fields.length?1:0);
+    if(bytes>bound.totalBytes)throw new RangeError('Project metadata storage aggregate byte budget');
+    // Retain one flat complete value, rather than each large keyed wrapper
+    // alongside a later flattened component. JSON canonicalization above
+    // excludes unescaped lone surrogates; compare every UTF16 unit anyway.
+    const fieldBuffer=Buffer.from(wrapped,'utf8'),start=size(prefix);fieldBuffer[fieldBuffer.length-2]=10;
+    const text=fieldBuffer.subarray(start,fieldBuffer.length-1).toString('utf8'),ownedRaw=text.slice(0,-1);
+    if(ownedRaw!==raw)fail('complete field UTF16/UTF8 inverse differs');
+    fields.push({name,key,raw:ownedRaw,text});
+  }
+  const selected=new Map(fields.filter(row=>components.some(component=>component.field===row.name)).map(row=>[row.name,row]));
+  // Object.keys supplies native integer-key order. Check the actual complete
+  // key projection independently without joining the potentially huge values.
+  canonicalValue('{'+fields.map(row=>row.key+':null').join(',')+'}');
+  const digest=createHash('sha256');digest.update('{');
+  for(let at=0;at<fields.length;at++){if(at)digest.update(',');digest.update(fields[at].key).update(':').update(fields[at].raw);}
+  digest.update('}\n');const sha256=digest.digest('hex');
+  if(bytes<=bound.fileBytes){
+    const inline='{'+fields.map(row=>row.key+':'+row.raw).join(',')+'}\n';
+    if(size(inline)!==bytes||hash(inline)!==sha256)fail('complete inline field inverse differs');
+    return {text:inline,components:[],targets:{}};
+  }
+  if(!selected.has('checkedSemanticProgram')||!selected.has('targetSemanticProgram'))fail('both complete semantic programs required');
+  const rows=components.filter(component=>selected.has(component.field)).map(component=>{
+    const text=selected.get(component.field).text;return {...component,path:componentPath(metaPath,component.field),bytes:size(text),sha256:hash(text),text};
+  });
+  const rootRaw='{'+fields.filter(row=>!selected.has(row.name)).map(row=>row.key+':'+row.raw).join(',')+'}';
+  budget(rootRaw,bound.fileBytes);canonicalValue(rootRaw);
+  const logical={bytes,sha256,keys:fields.map(row=>row.name)},descriptors=rows.map(({field,path,bytes,sha256})=>({field,path,bytes,sha256}));
   const stored='{"schema":'+JSON.stringify(schema)+',"logical":'+JSON.stringify(logical)+',"root":'+rootRaw+',"components":'+JSON.stringify(descriptors)+'}\n';
   budget(stored,bound.fileBytes);if(size(stored)+rows.reduce((sum,row)=>sum+row.bytes,0)>bound.totalBytes)throw new RangeError('Project metadata storage aggregate byte budget');
   return {text:stored,components:rows,targets:Object.fromEntries(rows.map(row=>[row.target,row.path]))};

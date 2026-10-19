@@ -16,7 +16,8 @@ const language=[
  ['collect','  const projects = [], projectDeclarations = [], projectSourceScopes=[];','  const projects = [], projectDeclarations = [], projectSourceScopes=[];\n  const ownedProjects=[];'],
 ];
 const repository=[
- ['helper',"import {planProjectMetaStorage} from './project-meta-storage.mjs';","import {planProjectMetaStorage} from './project-meta-storage.mjs';\nimport {captureOwnedDefinitionInputs,packageOwnedDefinitions,finishOwnedDefinitionOutput,validateOwnedDefinitionOutput} from './owned-definition-output.mjs';"],
+ ['helper',"import {planProjectMetaStorage} from './project-meta-storage.mjs';","import {planProjectMetaObjectStorage} from './project-meta-storage.mjs';\nimport {captureOwnedDefinitionInputs,packageOwnedDefinitions,finishOwnedDefinitionOutput,validateOwnedDefinitionOutput} from './owned-definition-output.mjs';"],
+ ['component-wise-metadata','const storage=planProjectMetaStorage(targets.meta,json(result.meta),{storageLimits:projectMetaStorageLimits});','const storage=planProjectMetaObjectStorage(targets.meta,result.meta,{serialize:json,storageLimits:projectMetaStorageLimits});'],
  ['roots',roots,roots.slice(0,-2)+", 'tools/translation/generated/owned-definitions', 'js/generated/rust-owned-definitions', 'ts/generated/rust-owned-definitions'];"],
  ['package',"    progress({stage:'project',state:'end',entry});","    ownedProjects.push(packageOwnedDefinitions({result:result.ownedDefinitions,entry,expected,outputRoots,prefix,profile,inputs:ownedInputs,assets,hostAssets:hostRuntimeAssetsNamedDataAliases()}));\n    progress({stage:'project',state:'end',entry});"],
  ['inventory',"  expected.set(`${prefix?prefix+'/':''}parity/rust-source-inventory.json`, json(manifest));","  expected.set(`${prefix?prefix+'/':''}parity/rust-source-inventory.json`, json(manifest));\n  finishOwnedDefinitionOutput(expected,{projects:ownedProjects,outputRoots,prefix,profile,inputs:ownedInputs});"],

@@ -21,7 +21,7 @@ import {jsonMacroDependencyProfile} from './json-macro-sources.mjs';
 import {translationProgressReporter} from './translation-progress.mjs';
 import {discoverSourceProfileInputs} from './source-profile-inputs.mjs';
 import {discoverCompilerSourceInputs} from './compiler-source-inputs.mjs';
-import {planProjectMetaStorage} from './project-meta-storage.mjs';
+import {planProjectMetaObjectStorage} from './project-meta-storage.mjs';
 import {captureOwnedDefinitionInputs,packageOwnedDefinitions,finishOwnedDefinitionOutput,validateOwnedDefinitionOutput} from './owned-definition-output.mjs';
 import {createPrivateOutputPlanStore,createPrivateOutputTextMap} from './private-output-text.mjs';
 
@@ -97,7 +97,7 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
     projectDeclarations.push(...result.executableDeclarations);projectSourceScopes.push(...result.sourceScopes);
     const stem = entry.replace(/\.rs$/u, '');
     const targets = { meta: `${outputRoots[3]}/${stem}.meta.json`, javascript: `${outputRoots[4]}/${stem}.mjs`, typescript: `${outputRoots[5]}/${stem}.ts` };
-    const storage=planProjectMetaStorage(targets.meta,json(result.meta),{storageLimits:projectMetaStorageLimits});Object.assign(targets,storage.targets);
+    const storage=planProjectMetaObjectStorage(targets.meta,result.meta,{serialize:json,storageLimits:projectMetaStorageLimits});Object.assign(targets,storage.targets);
     expected.set(targets.meta, storage.text);for(const component of storage.components)expected.set(component.path,component.text);
     expected.set(targets.javascript, result.javascript); expected.set(targets.typescript, result.typescript);
     projects.push({ entry, status: 'partial', runtimeParity: false, sources: result.meta.sources.length, moduleEdges: result.meta.moduleEdges.length, moduleDiagnostics: result.meta.moduleDiagnostics.length, executableFunctions: result.meta.executable.filter(item => item.term === 'fn').length, executableConstants: result.meta.executable.filter(item => item.term === 'const').length, checkedMethods: result.meta.checkedMethods?.length ?? 0, checkedGeneratedMethods: result.meta.checkedGeneratedMethods?.length ?? 0, refused: result.meta.refused.length, unloweredItems: result.meta.unloweredItems.length, targets });

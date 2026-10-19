@@ -256,6 +256,32 @@ All ten complete historical packet-stream cases then passed under Node and Bun,
 including the original native Hash tapes, callback mutations and full source
 refusal controls. Current compiler exports, full canonical/profile/reverse
 generation and the complete gate remain open.
+The owned metadata producer now serializes complete top-level data fields
+separately and preserves the original logical byte count, hash, native key order
+and two/three-component storage format. It retains one flat value per component
+instead of the whole project wire alongside live compiler programs. The actual
+ordered source producer generated both changed modules; complete original and
+edited CST, serialization/reparsing and inverses were independently reviewed
+before installing those bytes. Ordinary default generation is unchanged.
+
+All 30 complete Node receiving cases passed in 118.425 seconds, including
+materialization, matrix and reverse checks. Bun passed the eight producer cases
+in 54.788 seconds and the separate 22 storage controls in 5.515 seconds. Original
+case deadlines and storage limits remain unchanged. Controls compare native
+serialization and every reconstructed byte, exercise all 65,536 UTF-16 units,
+and refuse malformed serializers, root accessors, proxies and root `toJSON`.
+
+A storage-only diagnostic reused the complete captured 58,700,590-byte real CST
+array in three values, independently comparing all component bytes and the
+176,102,097-byte logical digest. It passed under the existing resource bounds;
+its repeated data is not the actual checked or target semantic program. The
+initial component candidate retained more memory, and the final flat-value
+observation does not establish a full-producer memory or speed improvement.
+Three complete project attempts remain failed, most recently after
+`project-serialize:end` at 996.949 seconds with a native substring allocation
+failure. A fresh complete run with the qualified component planner and refreshed
+compiler export remains required.
+
 Four specialized workflow path filters now watch the physical Rust sources and
 tests. Native YAML CST scalar selection, complete text inverses and independent
 parsed comparison preserved every other workflow field, including all jobs,
@@ -295,7 +321,10 @@ strict child deadlines, independent Node duration audit, and existing memory,
 disk and output limits. Do not compile or invoke any Rust tools locally.
 
 Regenerate owned-definition producer modules with
-`node tools/translation/prepare-owned-definition-bulk.mjs --emit`. Use
+`node tools/translation/prepare-owned-definition-bulk.mjs --emit`. This emits a
+complete source proposal; it does not install files. Review every original
+source, ordered rule and complete inverse, install the exact producer bytes,
+then run the same command with `--check` before using the modules. Use
 `node scripts/translate-router.mjs --retain-output-text --owned-core-definitions`
 and its `--profile-matrix` variant for forward outputs, then
 `node scripts/regenerate-js-first.mjs --owned-core-definitions --write` and its

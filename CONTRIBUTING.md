@@ -105,6 +105,14 @@ fragments while preserving every byte comparison, existing component and
 aggregate limits, and independent reconstruction. A storage optimization or a
 focused pass still requires a fresh complete producer and gate result.
 
+The explicit owned-definition producers may serialize complete top-level data
+fields separately with their fixed Map/BigInt serializer. Preserve native member
+keys, omissions, ordered logical bytes, every component and the original storage
+limits. Flatten a field only with a complete UTF-16/UTF-8 inverse; retaining both
+large wrappers and their component copies can defeat the memory optimization.
+This data-storage contract does not establish arbitrary replacer/observer
+equivalence or cache any source or semantic verdict.
+
 Canonical JSON storage validation must also avoid retaining a second complete
 object tree beside the live compiler. Preserve native parse/stringify decisions,
 including integer-key ordering, duplicate rejection, Unicode and exact malformed
