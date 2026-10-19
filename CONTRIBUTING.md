@@ -105,6 +105,13 @@ fragments while preserving every byte comparison, existing component and
 aggregate limits, and independent reconstruction. A storage optimization or a
 focused pass still requires a fresh complete producer and gate result.
 
+Canonical JSON storage validation must also avoid retaining a second complete
+object tree beside the live compiler. Preserve native parse/stringify decisions,
+including integer-key ordering, duplicate rejection, Unicode and exact malformed
+input errors. Deep or malformed inputs retain the original native fallback;
+bounded validation grants no semantic or source authority. Compare complete real
+inputs in separate fresh processes and report sampled memory and time separately.
+
 For issue #759, the user's 2026-10-19 instruction supersedes the earlier two-worker limit: existing assignments have finished and the coordinator continues alone, including publication. Do not spawn or resume subagents. Reuse the assigned worktrees; do not clone more repositories. The current owner is recorded in [AGENTS.md](AGENTS.md). Keep the case study below its fixed 500,000,000-byte filesystem allocation and measure allocation without counting shared inodes twice. Preserve complete recovery and continuity evidence before retiring an archive. The user authorized removal of this task's own inactive Rust caches and build directories regardless of age; identify each owned path, check that no worker uses it, and record reclaimed space. Never remove another worker's active directory or lock. Freed space does not authorize a local Rust build.
 
 Use [the reusable translation guidance](docs/development/reusable-translation-guidance/README.md) when copying this workflow to another repository. Copy its contribution and agent guidance separately from the compiler export, preserve the receiving repository's conventions and stricter user constraints, and qualify the receiving project independently. Reused upstream implementations must retain pinned source bytes, notices and licenses; a copied approach or successful export is not evidence of complete translation.

@@ -89,6 +89,37 @@ now checks every code unit in bounded slices instead of flattening a second
 complete project JSON string. File, aggregate, heap and test limits are
 unchanged; a new whole-producer result is still required.
 
+The complete retry at `f598748b88` remained red after 950.274 seconds, with
+2,363,097,088 bytes sampled aggregate RSS. It completed target emission and
+owned-definition packaging (two admitted definitions from 375 entries), then
+exhausted the unchanged 2 GiB heap in native JSON parsing during storage
+validation. No outputs were installed. The 961 surviving declarations remain
+an intermediate count, not application coverage or completion.
+
+The next storage repair validates canonical JSON without a second complete
+object tree. Native parse/stringify remains the fallback for malformed or deep
+input, preserving exact native errors. All three complete receiving files
+passed 23 cases under each engine before the final independent fuzz case was
+added; the expanded seven-case JSON file then passed under both engines.
+Independent comparison with the original storage implementation preserved all
+outputs and native errors for 24 complete inputs, including a large metadata
+document, and retained complete source CST equations and a whole-source inverse.
+On the identical 58,700,590-byte real CST component (390 documents from all 396
+library modules), separate fresh Node processes observed 515,538,944 versus
+319,815,680 bytes peak sampled aggregate RSS. Validation took 520.333 versus
+867.493 milliseconds. These are component measurements; the bounded validator
+uses less sampled memory and more time in this comparison, and a new complete
+producer result is still required. Original storage, heap and case limits remain
+unchanged.
+
+The delivery script now selects the package manifest from the actual Git tree,
+preferring `rust/Cargo.toml` when the root is a workspace. Two Rust edge-case
+test sources cover both layouts, absence and similarly named files; they remain
+unrun locally and are already included in gated CI's script test list. README
+now shows the physical three-language layout and the source-only commit-hook
+policy. Any changed Rust source still requires the actual source-bank refresh
+and dependent compiler/portable exports before full regeneration.
+
 Both frozen historical fixture bodies are restored to their original pins.
 Receiving-only ordered CST substitutions adapt the TypeScript comparison
 loader, while the original native baseline keeps its logical filenames for

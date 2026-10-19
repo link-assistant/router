@@ -2,6 +2,7 @@
 // its existing source/IR checks; a matching storage hash grants no authority.
 import {createHash} from 'node:crypto';
 import {posix} from 'node:path';
+import {isCanonicalJsonText} from './canonical-json-text.mjs';
 const schema='bounded-project-meta-storage-v1';
 export const PROJECT_META_STORAGE_LIMITS=Object.freeze({fileBytes:64*1024*1024,totalBytes:512*1024*1024});
 const components=Object.freeze([
@@ -49,7 +50,7 @@ function topFields(source){
   }
   at++;white();if(at!==source.length)fail('trailing original JSON');return fields;
 }
-function canonicalValue(raw){const value=JSON.parse(raw);if(JSON.stringify(value)!==raw)fail('noncanonical component JSON');return value;}
+function canonicalValue(raw){if(!isCanonicalJsonText(raw))fail('noncanonical component JSON');}
 // Compare every code unit without constructing another complete project wire.
 // A large joined rope would need flattening beside the original metadata and
 // live checked programs. Only bounded comparison slices are temporary here.
