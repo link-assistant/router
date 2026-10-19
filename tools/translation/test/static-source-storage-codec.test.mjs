@@ -1,3 +1,4 @@
+import {encodeStaticSourceStorage as encodeLayoutStorage,decodeStaticSourceStorage as decodeLayoutStorage} from '../static-source-layout-storage.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,rmSync} from 'node:fs';
