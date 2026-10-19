@@ -1,0 +1,5 @@
+A separate test-data reader authenticates the complete current Git/physical source bank, both full historical source universes, every source hash and source-lineage inverse, then returns only the original parent and Cargo strings used by source-only fixture projections. The complete/default bank reader and its native CST validation remain unchanged. Ordinary compilation still rebuilds all source, namespace, lifetime and semantic proofs.
+
+This source-only change preserves the six Copy and four derive-helper test callbacks and their original deadlines. The additional eight tests distinguish text-data authentication from full CST validation and cover stale storage, physical/Git mismatches, late mutation and fresh calls. Node/Bun receiving and performance remain pending; no deadline gain is claimed.
+
+Negative test evidence stores the complete actual mutated manifest bytes and archive bytes before temporary cleanup, including the late-mutation outcome. Temporary paths are diagnostic locations and are not claimed to remain available.

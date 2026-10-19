@@ -1,0 +1,4 @@
+### Changed
+
+- Regenerate every tracked original Rust source into 2,653 canonical artifacts with the automated translator. The complete review restores all six lost functions and both lost methods in the actual whole library and standalone corpus, adds five further original functions and loses no executable items or checked methods.
+- Actual totals are 688 executable items (131 functions, 381 constants, 176 types), 11,987 carried items and 13,279 preserved items. The library has 127 executable functions and 60 checked original methods. All 804 Rust sources and Cargo remain unchanged, complete compiler/source vectors remain stable, and canonical strict TypeScript passes. Complete runtime parity and the strict gate remain unproved; the bounded local validate_default_detail case still retains its original format! refusal in the corpus.

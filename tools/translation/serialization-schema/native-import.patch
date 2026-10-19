@@ -1,0 +1,31 @@
+--- a/packages/javascript/native/affinity-schema.mjs
++++ b/packages/javascript/native/affinity-schema.mjs
+@@ -1,25 +1,8 @@
+ import { decodeLino } from './storage.mjs';
+ 
+-// Declarative projection of the pinned Rust derives, rather than a validator
+-// written separately for each row. Source identities are in affinity-file-source-receipt.json.
+-const field = (name, type, optional = false) => ({ name, type, optional });
+-const structure = (source, fields) => ({ kind: 'struct', source, fields });
+-export const affinitySchema = {
+-  AffinityFile: structure('response_affinity.rs::AffinityFile', [field('version','u32'),field('records',{kind:'vec',type:'ResponseAffinity'})]),
+-  ResponseOwner: structure('response_affinity.rs::ResponseOwner', [field('client_kind','String'),field('principal_id','String')]),
+-  ResponseAffinity: structure('response_affinity.rs::ResponseAffinity', [field('namespace','ResponseNamespace'),field('response_id','String'),field('owner','ResponseOwner'),field('destination','AffinityDestination'),field('parent_id','String',true),field('created_at','i64'),field('expires_at','i64')]),
+-  ResponseNamespace: {kind:'enum',source:'response_affinity.rs::ResponseNamespace',variants:[
+-    'open_ai_responses','codex_responses','qwen_responses','open_ai_chat','codex_chat','qwen_chat',
+-    'open_ai_conversations','codex_conversations','qwen_conversations','open_ai_conversation_items','codex_conversation_items','qwen_conversation_items',
+-    'open_ai_realtime_calls','codex_realtime_calls','anthropic_files','anthropic_batches','anthropic_skills','anthropic_skill_versions',
+-    'codex_files','codex_mcp_sessions','codex_plugin_installs','codex_plugin_uploads','codex_workspace_plugins']},
+-  ProviderKind: {kind:'enum',source:'providers.rs::ProviderKind',variants:['openai-compatible','lefine','zai-coding-plan'],aliases:{'open-a-i-compatible':'openai-compatible'}},
+-  SubscriptionProvider: {kind:'enum',source:'subscription/types.rs::SubscriptionProvider',variants:['claude','codex','gemini','qwen']},
+-  AffinityDestination: {kind:'tagged',source:'response_affinity.rs::AffinityDestination',tag:'kind',variants:{
+-    stored_provider:structure('response_affinity.rs::AffinityDestination::StoredProvider',[field('name','String'),field('provider_kind','ProviderKind'),field('base_url','String')]),
+-    subscription:structure('response_affinity.rs::AffinityDestination::Subscription',[field('provider','SubscriptionProvider'),field('account','String'),field('upstream_account_id','String',true),field('base_url','String')]),
+-  }},
+-};
++// Data comes from the shared source-checked Rust serialization metadata.
++import { affinitySchema } from './affinity-schema-descriptor.mjs';
++export { affinitySchema };
+ function freezeSchema(node) {
+   if(node && typeof node==='object') {for(const child of Object.values(node))freezeSchema(child);Object.freeze(node);}
+ }

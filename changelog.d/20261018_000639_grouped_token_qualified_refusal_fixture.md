@@ -1,0 +1,3 @@
+### Fixed
+- Join the complete fixture module path with the genuine local method name when checking grouped-token refusal rows. Root, external-file and inline-module subjects now require one exact qualified refusal, matching owner file, source-derived span and full parent hash, plus the exact checked survivor.
+- Preserve all original subjects, observations, remaining profile/typed work and deadlines. The failed unqualified-name receiving evidence remains retained; this test-only correction grants no compiler permission or performance qualification. Engines remain unrun for this source checkpoint.

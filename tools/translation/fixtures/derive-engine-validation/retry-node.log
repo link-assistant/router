@@ -1,0 +1,176 @@
+TAP version 13
+# Subtest: bounded declarative rules retain source order groups repetitions and definition-site owner
+ok 1 - bounded declarative rules retain source order groups repetitions and definition-site owner
+  ---
+  duration_ms: 2.936875
+  ...
+# Subtest: forwarded type fragments remain opaque to literal matching
+ok 2 - forwarded type fragments remain opaque to literal matching
+  ---
+  duration_ms: 0.930584
+  ...
+# Subtest: ambiguity capture arity unsupported fragments and recursive resource excess remain explicit
+ok 3 - ambiguity capture arity unsupported fragments and recursive resource excess remain explicit
+  ---
+  duration_ms: 2.618042
+  ...
+# Subtest: nested source repetition shapes retain empty rows and reject unequal transcription axes
+ok 4 - nested source repetition shapes retain empty rows and reject unequal transcription axes
+  ---
+  duration_ms: 0.587791
+  ...
+# Subtest: source metadata keeps nested conditional grammar opaque when forwarded
+ok 5 - source metadata keeps nested conditional grammar opaque when forwarded
+  ---
+  duration_ms: 0.548625
+  ...
+# Subtest: actual pinned cfg_if transcribes every original std branch without selecting a platform or closing its owner
+ok 6 - actual pinned cfg_if transcribes every original std branch without selecting a platform or closing its owner
+  ---
+  duration_ms: 26.054292
+  ...
+# Subtest: checked block expressions retain opacity and refuse unsupported statements or expression grammar
+ok 7 - checked block expressions retain opacity and refuse unsupported statements or expression grammar
+  ---
+  duration_ms: 0.502125
+  ...
+# Subtest: original std transcribers forward actual nested key expressions across every pinned leaf without a closure claim
+not ok 8 - original std transcribers forward actual nested key expressions across every pinned leaf without a closure claim
+  ---
+  duration_ms: 22.635
+  location: '/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-full-protocols/tools/translation/test/declarative-macros.test.mjs:136:1'
+  failureType: 'testCodeFailure'
+  error: 'Opaque declarative fragments require the same checked fragment kind when forwarded'
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    fragmentEnd (file:///Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-full-protocols/tools/translation/declarative-macros.mjs:150:11)
+    matchSequence (file:///Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-full-protocols/tools/translation/declarative-macros.mjs:192:17)
+    matchSequence (file:///Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-full-protocols/tools/translation/declarative-macros.mjs:212:19)
+    expandDeclarativeMacro (file:///Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-full-protocols/tools/translation/declarative-macros.mjs:279:63)
+    TestContext.<anonymous> (file:///Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-full-protocols/tools/translation/test/declarative-macros.test.mjs:146:25)
+    Test.runInAsyncScope (node:async_hooks:206:9)
+    Test.run (node:internal/test_runner/test:796:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:526:18)
+    Test.postRun (node:internal/test_runner/test:889:19)
+    Test.run (node:internal/test_runner/test:835:12)
+  ...
+# Subtest: all original pinned task-local invocations use actual locked transcribers without runtime or namespace admission
+ok 9 - all original pinned task-local invocations use actual locked transcribers without runtime or namespace admission
+  ---
+  duration_ms: 29.459375
+  ...
+# Subtest: builtin Default original compiler and core sources have sealed versioned evidence
+ok 10 - builtin Default original compiler and core sources have sealed versioned evidence
+  ---
+  duration_ms: 2.4785
+  ...
+# Subtest: standard-only and actual external derives retain unit default helper without implementing traits
+ok 11 - standard-only and actual external derives retain unit default helper without implementing traits
+  ---
+  duration_ms: 8.04225
+  ...
+# Subtest: Default helpers retain actual owner and original input refusal boundaries
+ok 12 - Default helpers retain actual owner and original input refusal boundaries
+  ---
+  duration_ms: 7.850333
+  ...
+# Subtest: certified unit default layout executes existing selectors and retains Default call refusal
+ok 13 - certified unit default layout executes existing selectors and retains Default call refusal
+  ---
+  duration_ms: 824.909333
+  ...
+# Subtest: actual locked archives and all audited members are verified before dependency branding
+ok 14 - actual locked archives and all audited members are verified before dependency branding
+  ---
+  duration_ms: 17.137334
+  ...
+# Subtest: actual qualified and imported derive owners certify independent namespace dimensions
+ok 15 - actual qualified and imported derive owners certify independent namespace dimensions
+  ---
+  duration_ms: 5.716125
+  ...
+# Subtest: literal default and skip metadata remain original attributes and generated trait obligations
+ok 16 - literal default and skip metadata remain original attributes and generated trait obligations
+  ---
+  duration_ms: 1.159
+  ...
+# Subtest: binder narrows only sealed declaration dimensions and keeps exported bang uncertainty
+ok 17 - binder narrows only sealed declaration dimensions and keeps exported bang uncertainty
+  ---
+  duration_ms: 0.925625
+  ...
+# Subtest: unknown helpers generic inputs and macro-bearing fragments retain namespace uncertainty
+ok 18 - unknown helpers generic inputs and macro-bearing fragments retain namespace uncertainty
+  ---
+  duration_ms: 6.963917
+  ...
+# Subtest: actual local packages unknown macro imports and custom core owners cannot forge standard derives
+ok 19 - actual local packages unknown macro imports and custom core owners cannot forge standard derives
+  ---
+  duration_ms: 1.935958
+  ...
+# Subtest: whole original provider acceptance getter retains exact checked Copy field behavior
+ok 20 - whole original provider acceptance getter retains exact checked Copy field behavior
+  ---
+  duration_ms: 931.447541
+  ...
+# Subtest: whole original response affinity retains unresolved inner lint attributes and selector provenance
+ok 21 - whole original response affinity retains unresolved inner lint attributes and selector provenance
+  ---
+  duration_ms: 72.718458
+  ...
+# Subtest: whole original standard-default-helper selectors retain bodies and unit layout
+ok 22 - whole original standard-default-helper selectors retain bodies and unit layout
+  ---
+  duration_ms: 1618.520625
+  ...
+# Subtest: bounded Serde helper ExprPath grammar retains original source paths and unimplemented behavior
+ok 23 - bounded Serde helper ExprPath grammar retains original source paths and unimplemented behavior
+  ---
+  duration_ms: 1.450208
+  ...
+# Subtest: actual locked derive owners certify literal path and tag inputs without granting helper execution
+ok 24 - actual locked derive owners certify literal path and tag inputs without granting helper execution
+  ---
+  duration_ms: 7.55475
+  ...
+# Subtest: helper expressions owners positions and unrelated procedural uncertainty remain closed
+ok 25 - helper expressions owners positions and unrelated procedural uncertainty remain closed
+  ---
+  duration_ms: 8.509042
+  ...
+# Subtest: written string borrow and allocation chains retain the actual outer operation
+ok 26 - written string borrow and allocation chains retain the actual outer operation
+  ---
+  duration_ms: 910.067875
+  ...
+# Subtest: sealed actual derive attributes retain layout source and do not implement serialization
+ok 27 - sealed actual derive attributes retain layout source and do not implement serialization
+  ---
+  duration_ms: 846.943208
+  ...
+# Subtest: unchanged whole tracked thinking file retains unproved task-local and Copy provenance
+ok 28 - unchanged whole tracked thinking file retains unproved task-local and Copy provenance
+  ---
+  duration_ms: 272.487291
+  ...
+# Subtest: unchanged whole subscription file checks only proven original shared expiry behavior
+ok 29 - unchanged whole subscription file checks only proven original shared expiry behavior
+  ---
+  duration_ms: 985.694708
+  ...
+# Subtest: source-only relocated bulk translator regenerates a separate tracked repository and executes both targets
+ok 30 - source-only relocated bulk translator regenerates a separate tracked repository and executes both targets
+  ---
+  duration_ms: 3360.715125
+  ...
+1..30
+# tests 30
+# suites 0
+# pass 29
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 10543.972833

@@ -1,0 +1,3 @@
+### Added
+- Draft a bounded archive byte-range resolver that verifies the complete regular archive's length and SHA256 before writing an exact range to a fresh, unlinked file. It preserves source identity, rejects invalid ranges and linked paths, retains failed fresh outputs, and does not change packet admission or decode archives.
+- Prepare negative controls and an optional evidence plan for recovering the complete failed archive from its byte-for-byte verified prefix of the final archive. Both originals remain intact. Focused tests, fresh actual-file recovery, continuity checks and final allocation measurements remain unrun; no storage savings or final fit is claimed.

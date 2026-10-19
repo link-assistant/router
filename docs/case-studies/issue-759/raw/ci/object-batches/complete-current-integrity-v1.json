@@ -1,0 +1,28 @@
+{
+  "verified_at": "2026-10-13T16:42:19.203700+00:00",
+  "scope": "complete-current-archive",
+  "scope_manifests": 2341,
+  "complete_manifest_receipt_references": 19964,
+  "excluded_receipt_references": 0,
+  "counts": {
+    "receipt_references": 19964,
+    "unique_receipt_files": 18174,
+    "indexed_objects": 100,
+    "physical_batch_archives": 1,
+    ".gz": 12683,
+    ".xz": 5491,
+    "metadata_migration_receipts": 1997,
+    "superseded_derived_metadata_receipts": 1
+  },
+  "decoded_bytes_streamed": 2916309416,
+  "ci_logical_bytes": 300226089,
+  "case_allocated_bytes": 474210304,
+  "physical_storage": {
+    "distinctPhysicalFiles": 27873,
+    "physicalStoredBytes": 399053864,
+    "physicalAllocatedBytes": 474210304
+  },
+  "hard_cap_bytes": 500000000,
+  "errors": [],
+  "method": "Exact immutable Git container identity/length/SHA and original current receipt facts; complete decoded batch members stream with exact sizes/SHA and unchanged credential screening. Logical original bytes are separate from distinct physical archive allocation."
+}

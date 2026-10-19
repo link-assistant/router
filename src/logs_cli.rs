@@ -19,7 +19,7 @@ const SHOWN: usize = 5;
 /// confident wrong answers in both directions (issue #234).
 pub fn run(
     config: &Config,
-    configured_path: Option<&std::path::Path>,
+    configured_path: crate::translation_core::Maybe<&std::path::Path>,
     op: &link_assistant_router::cli::LogsOp,
 ) -> ExitCode {
     use link_assistant_router::cli::LogsOp;

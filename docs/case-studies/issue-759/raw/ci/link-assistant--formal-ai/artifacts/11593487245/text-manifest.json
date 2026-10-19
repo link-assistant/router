@@ -1,0 +1,22 @@
+[
+  {
+    "path": "text-objects/64/6403203dd5a0867eb14d104ee8a73730bd72dd9ad92e78d996a6dba0a5dcfc01.gz",
+    "artifact_member_name": "formal-ai-issue-922-evidence/promotion-branch.txt",
+    "scrubbed_content_sha256": "6403203dd5a0867eb14d104ee8a73730bd72dd9ad92e78d996a6dba0a5dcfc01",
+    "sha256": "4e9afaf21526765a7ef4495b9255557fb92c9e39d159a4c7fa2982099be983d4",
+    "compressed_bytes": 31,
+    "original_bytes": 5,
+    "redacted": false,
+    "compression": "gzip"
+  },
+  {
+    "path": "text-objects/c3/c3cb10cf2f4254cf456c867922ee17d8683d6a7095b344df16406a6d55d97416.gz",
+    "artifact_member_name": "formal-ai-issue-922-evidence/promotion-run.log",
+    "scrubbed_content_sha256": "c3cb10cf2f4254cf456c867922ee17d8683d6a7095b344df16406a6d55d97416",
+    "sha256": "44506f377c749065a2a2a100ed3e71245db6ae8e0411e4e91a876412e3d6d5dc",
+    "compressed_bytes": 311,
+    "original_bytes": 449,
+    "redacted": false,
+    "compression": "gzip"
+  }
+]

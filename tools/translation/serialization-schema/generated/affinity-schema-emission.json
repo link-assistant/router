@@ -1,0 +1,96 @@
+{
+  "schema": "original-affinity-descriptor-emission-v1",
+  "roots": [
+    "crate::response_affinity::AffinityFile"
+  ],
+  "sourceSetSha256": "fa621da9bcd8761bb07654e54df0288fac75f024100e5829931d19066411f8d9",
+  "dependenciesDigest": "b5cd51de398c8286b9ef0454d13eeed6ebefcab7fddef8ad392a793e9bf9aa6d",
+  "owners": [
+    {
+      "owner": "crate::providers::ProviderKind",
+      "source": "src/providers.rs",
+      "sourceSha256": "80e6c02411fd9473c2704a49130b29edd122ddc66d233b0d586f44e61f8dbdf8",
+      "itemSha256": "97eb4e1f5c61adeabc8e5309120a6f5a33aa176825fc80e8af869c1267213779",
+      "span": {
+        "end": 1398,
+        "start": 876,
+        "unit": "utf16"
+      }
+    },
+    {
+      "owner": "crate::response_affinity::AffinityDestination",
+      "source": "src/response_affinity.rs",
+      "sourceSha256": "e8aa97145a2df74e399c3c1bc648075f0b72266ed2def6dcc6e17291579dbf41",
+      "itemSha256": "9ca75d6b2596b81e11e55c909acdd246a014a8a82c0148b770b8ff35dbebbb19",
+      "span": {
+        "end": 3729,
+        "start": 3196,
+        "unit": "utf16"
+      }
+    },
+    {
+      "owner": "crate::response_affinity::AffinityFile",
+      "source": "src/response_affinity.rs",
+      "sourceSha256": "e8aa97145a2df74e399c3c1bc648075f0b72266ed2def6dcc6e17291579dbf41",
+      "itemSha256": "18c569a409cb409890352b3796473f945a5b7ea93c9c4b4e7a94c383d07bd13a",
+      "span": {
+        "end": 5418,
+        "start": 5291,
+        "unit": "utf16"
+      }
+    },
+    {
+      "owner": "crate::response_affinity::ResponseAffinity",
+      "source": "src/response_affinity.rs",
+      "sourceSha256": "e8aa97145a2df74e399c3c1bc648075f0b72266ed2def6dcc6e17291579dbf41",
+      "itemSha256": "c23414efa03f27a2335518ae4233fe17a1945cc3966cd5b06e74a8b672a9273a",
+      "span": {
+        "end": 4168,
+        "start": 3731,
+        "unit": "utf16"
+      }
+    },
+    {
+      "owner": "crate::response_affinity::ResponseNamespace",
+      "source": "src/response_affinity.rs",
+      "sourceSha256": "e8aa97145a2df74e399c3c1bc648075f0b72266ed2def6dcc6e17291579dbf41",
+      "itemSha256": "6f49bfa04452faa8f8aa07d02ca85a98374452a54e7032a50e7287e5aa488b1e",
+      "span": {
+        "end": 1148,
+        "start": 485,
+        "unit": "utf16"
+      }
+    },
+    {
+      "owner": "crate::response_affinity::ResponseOwner",
+      "source": "src/response_affinity.rs",
+      "sourceSha256": "e8aa97145a2df74e399c3c1bc648075f0b72266ed2def6dcc6e17291579dbf41",
+      "itemSha256": "072a99453fb3267e5aceb58287eae7fadd3c4961a51685e71e50c3e1329e8f61",
+      "span": {
+        "end": 2714,
+        "start": 2537,
+        "unit": "utf16"
+      }
+    },
+    {
+      "owner": "crate::subscription::types::SubscriptionProvider",
+      "source": "src/subscription/types.rs",
+      "sourceSha256": "74996ec0b4a32cb6e8d8c6a5e4cf2057a09238acff6d141ad58b592184c12c26",
+      "itemSha256": "09c856cbd3b8c3b18b2215b9759acf347aad5ecd81ba3d0ba6e1bc3c837b04dd",
+      "span": {
+        "end": 639,
+        "start": 105,
+        "unit": "utf16"
+      }
+    }
+  ],
+  "comparedActualNativeProjection": true,
+  "parsedValueEqualityAllOwners": true,
+  "descriptorSha256": "2cb95d3651c8a57ae45afc9c44f8d12952f812f84687ca25b9a379053c59cfe2",
+  "metadataSha256": "0a58f7ac8179d6085274b3e7e09fbda5874a29b7e8abe7a34f2687acd91d6bd6",
+  "javascriptSha256": "2fd934d7a25e5d34f14807d89c021422f3b05336d3da450833c9b32d01441aa0",
+  "typescriptSha256": "b804c12e73c56dd29cf70f5d73a6689f9c1605e16fecc93849c0f61ac279fa65",
+  "nativeInterpreterUnchanged": true,
+  "runtimeAuthority": false,
+  "generatedTraitBehavior": false
+}

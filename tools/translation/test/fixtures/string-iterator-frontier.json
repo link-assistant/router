@@ -1,0 +1,54 @@
+{
+  "schema": "string-iterator-pre-draft-frontier-v1",
+  "status": "READ_ONLY_BASELINE_NOT_DRAFT_VERIFICATION",
+  "sourceHead": "d66268f68a2be984b321ebddc180b779d7dadebf",
+  "entry": "src/lib.rs",
+  "sourceDiagnosticArchiveSha256": "b22fb401924b834adf328b6711ff035677e00fafb506afb5ddce26120ed5062e",
+  "records": [
+    {
+      "file": "src/deploy.rs",
+      "name": "deploy.first_line",
+      "term": "fn",
+      "kind": "unsupported",
+      "message": "method lines: outside the portable core",
+      "span": {
+        "start": 1410967,
+        "end": 1410976
+      }
+    },
+    {
+      "file": "src/output_limit.rs",
+      "name": "output_limit.data_payload",
+      "term": "fn",
+      "kind": "unsupported",
+      "message": "method lines: outside the portable core",
+      "span": {
+        "start": 2369708,
+        "end": 2369726
+      }
+    },
+    {
+      "file": "src/responses.rs",
+      "name": "responses.extract_sse_data",
+      "term": "fn",
+      "kind": "unsupported",
+      "message": "method lines: outside the portable core",
+      "span": {
+        "start": 2755658,
+        "end": 2755676
+      }
+    },
+    {
+      "file": "src/storage.rs",
+      "name": "storage.sanitize_codec_error",
+      "term": "fn",
+      "kind": "unsupported",
+      "message": "method lines: outside the portable core",
+      "span": {
+        "start": 2937486,
+        "end": 2937504
+      }
+    }
+  ],
+  "note": "These diagnostic spans belong to the complete checked project coordinate space, not original per-file declaration spans. The draft fixture separately pins UTF16 source item spans/hash; no repinning is inferred."
+}

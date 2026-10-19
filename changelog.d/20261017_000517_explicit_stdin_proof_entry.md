@@ -1,0 +1,3 @@
+Add an explicit stdin entry dash to the five complete proof-child transports and the test comparator. The prior bare flag-only invocation printed Bun help without executing its input. Give the two retained native failure controls distinct syntax/runtime names so both complete observations survive exclusive writes.
+
+Complete code, source artifacts, streams, raw argv/module-URL differences, original workloads and all child/case/output limits remain. Official Bun/Node syntax supports an explicit stdin entry; actual installed-runtime qualification is pending. Source-only repair; no engines run and no performance claim.

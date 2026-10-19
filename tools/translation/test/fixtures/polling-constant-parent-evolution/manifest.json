@@ -1,0 +1,504 @@
+{
+  "schema": "polling-constant-parent-evolution-data-v1",
+  "sourceChangeCommit": "eeb05407b75f32ee46a55913cbf3731760b76d15",
+  "sourceBeforeCommit": "437d6dc61d7920ffa4c45b162c888bf6b550810b",
+  "sourceAuthority": false,
+  "namespaceAuthority": false,
+  "runtimeParity": false,
+  "originalTest": {
+    "file": "source-links.original.mjs.txt.gz",
+    "bytes": 20338,
+    "sha256": "065dbb447aed3e3e1f2d14845270b8ac9e5932472d822f1d151fc4e32ab2583a",
+    "archiveBytes": 5993,
+    "archiveSha256": "5f514f75f09844e78822b2a5756f3c8ad937df03e05478fc1bb80dbacd59806a",
+    "commit": "d21eb5b8806782254680825450a1a0e34f000bd9"
+  },
+  "rows": [
+    {
+      "path": "src/login_pty.rs",
+      "priorPin": {
+        "path": "src/login_pty.rs",
+        "name": "POLL_INTERVAL",
+        "sourceSha": "ce27eba647479e2a4f909b90f05de08cd212284797706fe7220e8c56d19ebe22",
+        "span": [
+          1991,
+          2049
+        ],
+        "declarationSha": "029a611a5d2eed5caf9a66114e45d465bba6bc8d61c0034f3370ad750c96044f",
+        "bodySha": "1d54ee699ce08f5572f1e35f770f92de0ca974308cff0babbb48c111c47ca5f5",
+        "nanos": "50000000"
+      },
+      "before": {
+        "file": "login_pty.before.rs.txt.gz",
+        "bytes": 17879,
+        "sha256": "ce27eba647479e2a4f909b90f05de08cd212284797706fe7220e8c56d19ebe22",
+        "archiveBytes": 5683,
+        "archiveSha256": "8ae6c722ea6992972dff823a6778927ad10d1658e5ef2c1c26aae0aec83f32cb",
+        "gitBlobSha": "3e4353075b207fd53645c3edc42e05843bee9719"
+      },
+      "after": {
+        "file": "login_pty.after.rs.txt.gz",
+        "bytes": 18079,
+        "sha256": "85f8e6be2b3a9c43b300d8e5205c4adbb2473fb1f8fb0aec11c886d8c795c31d",
+        "archiveBytes": 5714,
+        "archiveSha256": "f1f52a0f8f08249ec4b5ae00dc26870ece1cc902ff71fe82ffdb79706709194e",
+        "gitBlobSha": "d6cf4cc745552ae5ef43b5e3c52de121bfbb04a2"
+      },
+      "edits": [
+        {
+          "span": [
+            10014,
+            10094
+          ],
+          "expected": "pub fn wait_for_exit(&self, timeout: Duration) -> Result<Option<u32>, WaitError>",
+          "replacement": "pub fn wait_for_exit(&self, timeout: Duration) -> crate::translation_core::Outcome<crate::translation_core::Maybe<u32>, WaitError>"
+        },
+        {
+          "span": [
+            10711,
+            10794
+          ],
+          "expected": "pub fn wait_idle(&self, idle: Duration, timeout: Duration) -> Result<(), WaitError>",
+          "replacement": "pub fn wait_idle(&self, idle: Duration, timeout: Duration) -> crate::translation_core::Outcome<(), WaitError>"
+        },
+        {
+          "span": [
+            11688,
+            11726
+          ],
+          "expected": "pub fn exit_code(&self) -> Option<u32>",
+          "replacement": "pub fn exit_code(&self) -> crate::translation_core::Maybe<u32>"
+        },
+        {
+          "span": [
+            12115,
+            12173
+          ],
+          "expected": "pub fn send_text(&self, text: &str) -> std::io::Result<()>",
+          "replacement": "pub fn send_text(&self, text: &crate::translation_core::Str) -> std::io::Result<()>"
+        },
+        {
+          "span": [
+            12696,
+            12765
+          ],
+          "expected": "pub fn send_bracketed_paste(&self, text: &str) -> std::io::Result<()>",
+          "replacement": "pub fn send_bracketed_paste(&self, text: &crate::translation_core::Str) -> std::io::Result<()>"
+        },
+        {
+          "span": [
+            14405,
+            14448
+          ],
+          "expected": "pub const fn sequence(self) -> &'static str",
+          "replacement": "pub const fn sequence(self) -> &'static crate::translation_core::Str"
+        },
+        {
+          "span": [
+            14966,
+            15006
+          ],
+          "expected": "pub fn strip_ansi(input: &str) -> String",
+          "replacement": "pub fn strip_ansi(input: &crate::translation_core::Str) -> String"
+        }
+      ],
+      "inverse": [
+        {
+          "span": [
+            10014,
+            10144
+          ],
+          "expected": "pub fn wait_for_exit(&self, timeout: Duration) -> crate::translation_core::Outcome<crate::translation_core::Maybe<u32>, WaitError>",
+          "replacement": "pub fn wait_for_exit(&self, timeout: Duration) -> Result<Option<u32>, WaitError>"
+        },
+        {
+          "span": [
+            10761,
+            10870
+          ],
+          "expected": "pub fn wait_idle(&self, idle: Duration, timeout: Duration) -> crate::translation_core::Outcome<(), WaitError>",
+          "replacement": "pub fn wait_idle(&self, idle: Duration, timeout: Duration) -> Result<(), WaitError>"
+        },
+        {
+          "span": [
+            11764,
+            11826
+          ],
+          "expected": "pub fn exit_code(&self) -> crate::translation_core::Maybe<u32>",
+          "replacement": "pub fn exit_code(&self) -> Option<u32>"
+        },
+        {
+          "span": [
+            12215,
+            12298
+          ],
+          "expected": "pub fn send_text(&self, text: &crate::translation_core::Str) -> std::io::Result<()>",
+          "replacement": "pub fn send_text(&self, text: &str) -> std::io::Result<()>"
+        },
+        {
+          "span": [
+            12821,
+            12915
+          ],
+          "expected": "pub fn send_bracketed_paste(&self, text: &crate::translation_core::Str) -> std::io::Result<()>",
+          "replacement": "pub fn send_bracketed_paste(&self, text: &str) -> std::io::Result<()>"
+        },
+        {
+          "span": [
+            14555,
+            14623
+          ],
+          "expected": "pub const fn sequence(self) -> &'static crate::translation_core::Str",
+          "replacement": "pub const fn sequence(self) -> &'static str"
+        },
+        {
+          "span": [
+            15141,
+            15206
+          ],
+          "expected": "pub fn strip_ansi(input: &crate::translation_core::Str) -> String",
+          "replacement": "pub fn strip_ansi(input: &str) -> String"
+        }
+      ],
+      "partitions": [
+        {
+          "kind": "unchanged",
+          "before": [
+            0,
+            10014
+          ],
+          "after": [
+            0,
+            10014
+          ]
+        },
+        {
+          "kind": "substitution",
+          "before": [
+            10014,
+            10094
+          ],
+          "after": [
+            10014,
+            10144
+          ]
+        },
+        {
+          "kind": "unchanged",
+          "before": [
+            10094,
+            10711
+          ],
+          "after": [
+            10144,
+            10761
+          ]
+        },
+        {
+          "kind": "substitution",
+          "before": [
+            10711,
+            10794
+          ],
+          "after": [
+            10761,
+            10870
+          ]
+        },
+        {
+          "kind": "unchanged",
+          "before": [
+            10794,
+            11688
+          ],
+          "after": [
+            10870,
+            11764
+          ]
+        },
+        {
+          "kind": "substitution",
+          "before": [
+            11688,
+            11726
+          ],
+          "after": [
+            11764,
+            11826
+          ]
+        },
+        {
+          "kind": "unchanged",
+          "before": [
+            11726,
+            12115
+          ],
+          "after": [
+            11826,
+            12215
+          ]
+        },
+        {
+          "kind": "substitution",
+          "before": [
+            12115,
+            12173
+          ],
+          "after": [
+            12215,
+            12298
+          ]
+        },
+        {
+          "kind": "unchanged",
+          "before": [
+            12173,
+            12696
+          ],
+          "after": [
+            12298,
+            12821
+          ]
+        },
+        {
+          "kind": "substitution",
+          "before": [
+            12696,
+            12765
+          ],
+          "after": [
+            12821,
+            12915
+          ]
+        },
+        {
+          "kind": "unchanged",
+          "before": [
+            12765,
+            14405
+          ],
+          "after": [
+            12915,
+            14555
+          ]
+        },
+        {
+          "kind": "substitution",
+          "before": [
+            14405,
+            14448
+          ],
+          "after": [
+            14555,
+            14623
+          ]
+        },
+        {
+          "kind": "unchanged",
+          "before": [
+            14448,
+            14966
+          ],
+          "after": [
+            14623,
+            15141
+          ]
+        },
+        {
+          "kind": "substitution",
+          "before": [
+            14966,
+            15006
+          ],
+          "after": [
+            15141,
+            15206
+          ]
+        },
+        {
+          "kind": "unchanged",
+          "before": [
+            15006,
+            17861
+          ],
+          "after": [
+            15206,
+            18061
+          ]
+        }
+      ],
+      "afterSpan": [
+        1991,
+        2049
+      ],
+      "unchangedDeclaration": "const POLL_INTERVAL: Duration = Duration::from_millis(50);"
+    },
+    {
+      "path": "src/durable_file.rs",
+      "priorPin": {
+        "path": "src/durable_file.rs",
+        "name": "LOCK_POLL_INTERVAL",
+        "sourceSha": "970eae37d4f282547bdcc178ce08eb119ce87ed0e593a6bad6aa5444433de6f0",
+        "span": [
+          13448,
+          13533
+        ],
+        "declarationSha": "2a432a643307b6540395ad3ffe7b52bf091fe32b359f3d62735d5d725060ac0d",
+        "bodySha": "9a4f0e5f1fda452e1e25755fc85437ae882627728e16b632159c370dd49c1198",
+        "nanos": "20000000"
+      },
+      "before": {
+        "file": "durable_file.before.rs.txt.gz",
+        "bytes": 27300,
+        "sha256": "970eae37d4f282547bdcc178ce08eb119ce87ed0e593a6bad6aa5444433de6f0",
+        "archiveBytes": 6759,
+        "archiveSha256": "cda75ed5c0ebef8ad57d83aee781257c78af77fe3b8b54d1dc9227710a144c14",
+        "gitBlobSha": "7240da8fa81c7d158c17e00b2c0d56c5db12b594"
+      },
+      "after": {
+        "file": "durable_file.after.rs.txt.gz",
+        "bytes": 27375,
+        "sha256": "edf2a314cf2797071a5c247124a9b4a3df1beb82665034bb77b3b611ae24e8e6",
+        "archiveBytes": 6774,
+        "archiveSha256": "07f90adf772e30056b29100691551d35e0e61e389b30b3c09b1e8d10a47e2e22",
+        "gitBlobSha": "4e310001c28a75c52893e6d3b682d7cf9514754a"
+      },
+      "edits": [
+        {
+          "span": [
+            173,
+            222
+          ],
+          "expected": "const ROLLBACK_SUFFIX: &str = \".router-rollback\";",
+          "replacement": "const ROLLBACK_SUFFIX: &crate::translation_core::Str = \".router-rollback\";"
+        },
+        {
+          "span": [
+            223,
+            268
+          ],
+          "expected": "const COMMIT_SUFFIX: &str = \".router-commit\";",
+          "replacement": "const COMMIT_SUFFIX: &crate::translation_core::Str = \".router-commit\";"
+        },
+        {
+          "span": [
+            270,
+            353
+          ],
+          "expected": "fn sibling_with_suffix(path: &Path, suffix: &str) -> io::Result<std::path::PathBuf>",
+          "replacement": "fn sibling_with_suffix(path: &Path, suffix: &crate::translation_core::Str) -> io::Result<std::path::PathBuf>"
+        }
+      ],
+      "inverse": [
+        {
+          "span": [
+            173,
+            247
+          ],
+          "expected": "const ROLLBACK_SUFFIX: &crate::translation_core::Str = \".router-rollback\";",
+          "replacement": "const ROLLBACK_SUFFIX: &str = \".router-rollback\";"
+        },
+        {
+          "span": [
+            248,
+            318
+          ],
+          "expected": "const COMMIT_SUFFIX: &crate::translation_core::Str = \".router-commit\";",
+          "replacement": "const COMMIT_SUFFIX: &str = \".router-commit\";"
+        },
+        {
+          "span": [
+            320,
+            428
+          ],
+          "expected": "fn sibling_with_suffix(path: &Path, suffix: &crate::translation_core::Str) -> io::Result<std::path::PathBuf>",
+          "replacement": "fn sibling_with_suffix(path: &Path, suffix: &str) -> io::Result<std::path::PathBuf>"
+        }
+      ],
+      "partitions": [
+        {
+          "kind": "unchanged",
+          "before": [
+            0,
+            173
+          ],
+          "after": [
+            0,
+            173
+          ]
+        },
+        {
+          "kind": "substitution",
+          "before": [
+            173,
+            222
+          ],
+          "after": [
+            173,
+            247
+          ]
+        },
+        {
+          "kind": "unchanged",
+          "before": [
+            222,
+            223
+          ],
+          "after": [
+            247,
+            248
+          ]
+        },
+        {
+          "kind": "substitution",
+          "before": [
+            223,
+            268
+          ],
+          "after": [
+            248,
+            318
+          ]
+        },
+        {
+          "kind": "unchanged",
+          "before": [
+            268,
+            270
+          ],
+          "after": [
+            318,
+            320
+          ]
+        },
+        {
+          "kind": "substitution",
+          "before": [
+            270,
+            353
+          ],
+          "after": [
+            320,
+            428
+          ]
+        },
+        {
+          "kind": "unchanged",
+          "before": [
+            353,
+            27286
+          ],
+          "after": [
+            428,
+            27361
+          ]
+        }
+      ],
+      "afterSpan": [
+        13523,
+        13608
+      ],
+      "unchangedDeclaration": "const LOCK_POLL_INTERVAL: std::time::Duration = std::time::Duration::from_millis(20);"
+    }
+  ]
+}

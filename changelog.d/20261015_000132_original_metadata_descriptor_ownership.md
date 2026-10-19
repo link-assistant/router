@@ -1,0 +1,1 @@
+Require metadata data descriptors to contain their own `value` field before reading it. Inherited descriptor values cannot disguise accessors in source links or namespace validation. This preserves the existing metadata budgets and original-source checks.

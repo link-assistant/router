@@ -1,0 +1,1 @@
+Preserve complete canonical recovery and verification evidence, including all recorded full-suite failures and exact source vectors. Keep fourth log compaction continuity, complete measurements and byte-verified immutable Git witnesses; store the four migration JSON records as lossless GZip with unchanged decoded bytes. Translation and strict runtime parity remain incomplete.

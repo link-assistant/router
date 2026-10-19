@@ -1,0 +1,796 @@
+name: JavaScript CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+  schedule:
+    # Keep weekly Rust dependency/CodeQL security checks behind the same gate.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      release_mode:
+        description: 'Manual release mode'
+        required: true
+        type: choice
+        default: 'instant'
+        options:
+          - instant
+          - changeset-pr
+      bump_type:
+        description: 'Manual release type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      description:
+        description: 'Manual release description (optional)'
+        required: false
+        type: string
+
+# Least-privilege default; jobs that publish or push to main opt back in to
+# `contents: write` individually.
+permissions:
+  contents: read
+
+# Force JavaScript-based actions to use the Node 24 runtime that the runner
+# already ships with. Silences the "Node.js 20 actions are deprecated"
+# annotation that GitHub started emitting in October 2025 and ahead of the
+# 2026-06-02 hard cutover. Adopted from `link-assistant/hive-mind`.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # Silence the `hint: Using 'master' as the name for the initial branch`
+  # block that `actions/checkout` printed 15 times in run 31380353470.
+  GIT_CONFIG_COUNT: '1'
+  GIT_CONFIG_KEY_0: init.defaultBranch
+  GIT_CONFIG_VALUE_0: main
+
+jobs:
+  # === SYNTAX PRE-CHECK ===
+  # ~7 s sanity check that catches broken merge resolutions before the
+  # slow lint / test matrix has to spin up. See
+  # docs/case-studies/issue-118/comparison-with-templates.md.
+  syntax-check:
+    concurrency:
+      group: check-${{ github.workflow }}-${{ github.ref }}-syntax-check
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+    name: Syntax Pre-Check (.mjs)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24.x'
+
+      - name: Run syntax check on all .mjs files
+        run: bash scripts/check-mjs-syntax.sh
+
+      - name: Simulate merge with main (PRs only)
+        if: github.event_name == 'pull_request'
+        env:
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+        run: bash scripts/simulate-fresh-merge.sh --base-ref "origin/$GITHUB_BASE_REF"
+
+  # === DETECT CHANGES ===
+  detect-changes:
+    concurrency:
+      group: check-${{ github.workflow }}-${{ github.ref }}-detect-changes
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: github.event_name != 'workflow_dispatch'
+    outputs:
+      js-changed: ${{ steps.changes.outputs.js-changed }}
+      mjs-changed: ${{ steps.changes.outputs.mjs-changed }}
+      package-changed: ${{ steps.changes.outputs.package-changed }}
+      docs-changed: ${{ steps.changes.outputs.docs-changed }}
+      workflow-changed: ${{ steps.changes.outputs.workflow-changed }}
+      any-js-code-changed: ${{ steps.changes.outputs.any-js-code-changed }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24.x'
+
+      - name: Detect changes
+        id: changes
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/detect-code-changes.mjs
+
+  # === VERSION CHANGE CHECK ===
+  # Prohibit manual version changes in package.json - versions should only be changed by CI/CD
+  version-check:
+    concurrency:
+      group: check-${{ github.workflow }}-${{ github.ref }}-version-check
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+    name: Check for Manual Version Changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Check for version changes in package.json
+        env:
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+          GITHUB_HEAD_REF: ${{ github.head_ref }}
+        run: |
+          # Skip check for automated release PRs
+          if [[ "$GITHUB_HEAD_REF" == "changeset-release/"* ]] || [[ "$GITHUB_HEAD_REF" == "changeset-js-"* ]]; then
+            echo "Skipping version check for automated release PR"
+            exit 0
+          fi
+
+          # Get the diff for package.json
+          VERSION_DIFF=$(git diff "origin/$GITHUB_BASE_REF...HEAD" -- js/package.json | grep -E '^\+.*"version"' || true)
+
+          if [ -n "$VERSION_DIFF" ]; then
+            echo "::error::Manual version change detected in js/package.json"
+            echo ""
+            echo "Version changes in package.json are prohibited in pull requests."
+            echo "Versions are managed automatically by the CI/CD pipeline using changesets."
+            echo ""
+            echo "To request a release:"
+            echo "  1. Add a changeset file describing your changes"
+            echo "  2. The release workflow will automatically bump the version when merged"
+            echo ""
+            echo "Detected change:"
+            echo "$VERSION_DIFF"
+            exit 1
+          fi
+
+          echo "No manual version changes detected - check passed"
+
+  # === CHANGESET CHECK ===
+  changeset-check:
+    concurrency:
+      group: check-${{ github.workflow }}-${{ github.ref }}-changeset-check
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+    name: Check for Changesets
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [detect-changes]
+    if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-js-code-changed == 'true'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        working-directory: js
+        run: bun install
+
+      - name: Check for changesets
+        env:
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          GITHUB_HEAD_REF: ${{ github.head_ref }}
+          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          # Skip changeset check for automated version PRs
+          if [[ "$GITHUB_HEAD_REF" == "changeset-release/"* ]]; then
+            echo "Skipping changeset check for automated release PR"
+            exit 0
+          fi
+
+          # Run changeset validation script
+          node scripts/validate-changeset.mjs
+
+  # === LINT AND FORMAT CHECK ===
+  lint:
+    concurrency:
+      group: check-${{ github.workflow }}-${{ github.ref }}-lint
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+    name: Lint and Format Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [detect-changes]
+    if: ${{ !cancelled() }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        working-directory: js
+        run: bun install
+
+      - name: Run ESLint
+        working-directory: js
+        run: bun run lint
+
+      # The js/ config has js/ as its base path, so the repository-level
+      # scripts/ directory - the release automation - was never linted
+      # (issue #168). eslint.config.mjs at the root closes that gap.
+      - name: Run ESLint on repository scripts
+        working-directory: js
+        run: bun run lint:scripts
+
+      - name: Check formatting
+        working-directory: js
+        run: bun run format:check
+
+      - name: Check formatting of repository scripts
+        working-directory: js
+        run: bun run format:check:scripts
+
+      - name: Check file size limit
+        run: node scripts/check-file-size.mjs
+
+  # === TEST ===
+  test:
+    concurrency:
+      group: check-${{ github.workflow }}-${{ github.ref }}-test-${{ matrix.os }}
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+    name: Test (Bun on ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    needs: [detect-changes, changeset-check]
+    if: ${{ !cancelled() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || needs.changeset-check.result == 'success' || needs.changeset-check.result == 'skipped') }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: latest
+
+      - name: Install screen and tmux (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y screen tmux
+
+      - name: Install screen and tmux (macOS)
+        if: runner.os == 'macOS'
+        run: brew install screen tmux
+
+      - name: Setup .NET for clink (Linux)
+        if: runner.os == 'Linux'
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install clink (Linux)
+        if: runner.os == 'Linux'
+        run: dotnet tool install --global clink
+
+      - name: Setup .NET for clink (macOS)
+        if: runner.os == 'macOS'
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install clink (macOS)
+        if: runner.os == 'macOS'
+        run: dotnet tool install --global clink
+
+      - name: Add .NET tools to PATH
+        if: runner.os != 'Windows'
+        run: echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+
+      - name: Install dependencies
+        working-directory: js
+        run: bun install
+
+      - name: Prepare Docker integration images (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          python3 experiments/issue-195-ci-image-preparation.py
+          python3 experiments/issue-195-ci-docker-capability.py
+          bash scripts/prepare-docker-test-images.sh
+
+      - name: Run tests
+        working-directory: js
+        run: bun run test
+
+      - name: Check documented examples (JavaScript)
+        if: runner.os == 'Linux'
+        run: bun scripts/check-doc-examples.mjs --implementation js
+
+      # Test both execution modes (default and command-stream)
+      - name: Test default execution mode
+        working-directory: js
+        run: |
+          bun run src/bin/cli.js echo "Testing default mode"
+          echo "Default mode test passed"
+
+      - name: Test command-stream execution mode
+        working-directory: js
+        run: |
+          bun run src/bin/cli.js --use-command-stream echo "Testing command-stream mode"
+          echo "Command-stream mode test passed"
+
+      - name: Test command-stream via env variable
+        working-directory: js
+        env:
+          START_USE_COMMAND_STREAM: '1'
+        run: |
+          bun run src/bin/cli.js echo "Testing env var mode"
+          echo "Env var mode test passed"
+
+      # Test execution tracking (Linux/macOS)
+      - name: Test execution tracking (Unix)
+        if: runner.os != 'Windows'
+        working-directory: js
+        env:
+          START_VERBOSE: '1'
+        run: |
+          bun run src/bin/cli.js echo "Testing execution tracking"
+          ls -la ~/.start-command/
+          cat ~/.start-command/executions.lino
+          echo "Execution tracking test passed"
+
+      # Test execution tracking (Windows)
+      - name: Test execution tracking (Windows)
+        if: runner.os == 'Windows'
+        working-directory: js
+        env:
+          START_VERBOSE: '1'
+        shell: bash
+        run: |
+          bun run src/bin/cli.js echo "Testing execution tracking"
+          ls -la "$USERPROFILE/.start-command/"
+          cat "$USERPROFILE/.start-command/executions.lino"
+          echo "Execution tracking test passed"
+
+      # Integration tests for isolation modes - Linux only
+      - name: Test screen isolation mode (Linux)
+        if: runner.os == 'Linux'
+        working-directory: js
+        run: |
+          bun run src/bin/cli.js --isolated screen -- echo "Testing screen isolation"
+          echo "Screen isolation test passed"
+
+      - name: Test tmux isolation mode (Linux)
+        if: runner.os == 'Linux'
+        working-directory: js
+        run: |
+          bun run src/bin/cli.js --isolated tmux -d -- echo "Testing tmux isolation"
+          echo "Tmux isolation test passed"
+
+      - name: Test docker isolation mode (Linux)
+        if: runner.os == 'Linux'
+        working-directory: js
+        run: |
+          bun run src/bin/cli.js --isolated docker -d --image alpine:latest -- echo "Testing docker isolation"
+          echo "Docker isolation test passed"
+
+      # SSH Integration Tests - Linux only
+      - name: Setup SSH server for integration tests (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y openssh-server
+          sudo systemctl start ssh
+          ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519 -N "" -C "ci-test-key"
+          cat ~/.ssh/id_ed25519.pub >> ~/.ssh/authorized_keys
+          chmod 600 ~/.ssh/authorized_keys
+          mkdir -p ~/.ssh
+          cat >> ~/.ssh/config << 'EOF'
+          Host localhost
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
+            LogLevel ERROR
+          EOF
+          chmod 600 ~/.ssh/config
+          ssh localhost "echo 'SSH connection successful'"
+
+      - name: Run SSH integration tests (Linux)
+        if: runner.os == 'Linux'
+        working-directory: js
+        run: bun run test test/ssh-integration.js
+
+  # === CODE COVERAGE ===
+  # Fail if JavaScript test coverage drops below the configured threshold
+  coverage:
+    concurrency:
+      group: check-${{ github.workflow }}-${{ github.ref }}-coverage
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+    name: Code Coverage (JavaScript)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [detect-changes, changeset-check]
+    if: ${{ !cancelled() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || needs.changeset-check.result == 'success' || needs.changeset-check.result == 'skipped') }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        working-directory: js
+        run: bun install
+
+      - name: Prepare Docker integration images
+        run: |
+          python3 experiments/issue-195-ci-image-preparation.py
+          python3 experiments/issue-195-ci-docker-capability.py
+          bash scripts/prepare-docker-test-images.sh
+
+      - name: Run tests with coverage
+        id: coverage
+        working-directory: js
+        # `set -o pipefail` keeps a failing test run from being hidden by `tee`;
+        # the previous `|| true` swallowed it (issue #158).
+        run: |
+          set -o pipefail
+          bun run test --coverage --coverage-reporter=text 2>&1 | tee coverage.txt
+
+      - name: Enforce coverage threshold
+        # Runs even when tests failed above, so the report is still evaluated.
+        if: ${{ !cancelled() && steps.coverage.outcome != 'skipped' }}
+        working-directory: js
+        run: node ../scripts/check-js-coverage.mjs coverage.txt --threshold 45
+
+  # === RELEASE ===
+  release:
+    # Shared with every other job that writes to main, including
+    # jobs in the other workflow file, so releases never race.
+    concurrency:
+      group: main-writer-${{ github.repository }}-main
+      cancel-in-progress: false
+    name: Release
+    needs: [lint, test]
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.lint.result == 'success' && needs.test.result == 'success' }}
+    environment: release-main
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
+    steps:
+      # Writer job: the checkout credentials are what pushes the version
+      # commit/tag back to main, so `persist-credentials: false` (applied to
+      # every read-only checkout in this file) must not be set here.
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ssh-key: ${{ secrets.START_RELEASE_SSH_KEY }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: latest
+
+      - name: Setup Node.js for npm publishing
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24.x'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Preflight credential checks
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node scripts/preflight-credentials.mjs \
+            --require gh-token \
+            --require npm-oidc
+
+      - name: Install dependencies
+        working-directory: js
+        run: bun install
+
+      - name: Update npm for OIDC trusted publishing
+        run: node scripts/setup-npm.mjs
+
+      - name: Check for changesets
+        id: check_changesets
+        run: |
+          CHANGESET_COUNT=$(find js/.changeset -name "*.md" ! -name "README.md" | wc -l)
+          echo "Found $CHANGESET_COUNT changeset file(s)"
+          echo "has_changesets=$([[ $CHANGESET_COUNT -gt 0 ]] && echo 'true' || echo 'false')" >> "$GITHUB_OUTPUT"
+          echo "changeset_count=$CHANGESET_COUNT" >> "$GITHUB_OUTPUT"
+
+      - name: Check if a release is needed (self-healing vs. npm registry)
+        id: release_needed
+        env:
+          HAS_FRAGMENTS: ${{ steps.check_changesets.outputs.has_changesets }}
+        run: node scripts/check-release-needed.mjs --working-dir js --registry npm
+
+      - name: Merge multiple changesets
+        if: steps.check_changesets.outputs.has_changesets == 'true' && steps.check_changesets.outputs.changeset_count > 1
+        run: node scripts/merge-changesets.mjs --working-dir js
+
+      - name: Version packages and commit to main
+        if: steps.check_changesets.outputs.has_changesets == 'true'
+        id: version
+        run: node scripts/version-and-commit.mjs --mode changeset --working-dir js
+
+      - name: Publish to npm
+        if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true' || steps.release_needed.outputs.skip_bump == 'true'
+        id: publish
+        run: node scripts/publish-to-npm.mjs --should-pull --working-dir js
+
+      - name: Create GitHub Release
+        if: steps.publish.outputs.published == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/create-github-release.mjs --release-version "${{ steps.publish.outputs.published_version }}" --repository "${{ github.repository }}" --prefix "js-" --changelog-file "js/CHANGELOG.md" --badge-type "npm" --package-name "start-command"
+
+      - name: Verify release contains the npm badge (false-positive guard)
+        if: steps.publish.outputs.published == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node scripts/verify-release-badge.mjs \
+            --repository "${{ github.repository }}" \
+            --tag "js-v${{ steps.publish.outputs.published_version }}" \
+            --badge-type npm \
+            --package-name start-command \
+            --release-version "${{ steps.publish.outputs.published_version }}"
+
+      - name: Format GitHub release notes
+        if: steps.publish.outputs.published == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/format-github-release.mjs --release-version "${{ steps.publish.outputs.published_version }}" --repository "${{ github.repository }}" --commit-sha "${{ github.sha }}" --prefix "js-"
+
+  # === MANUAL INSTANT RELEASE ===
+  instant-release:
+    # Shared with every other job that writes to main, including
+    # jobs in the other workflow file, so releases never race.
+    concurrency:
+      group: main-writer-${{ github.repository }}-main
+      cancel-in-progress: false
+    name: Instant Release
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.event.inputs.release_mode == 'instant'
+    environment: release-main
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
+    steps:
+      # Writer job: the checkout credentials are what pushes the version
+      # commit/tag back to main, so `persist-credentials: false` (applied to
+      # every read-only checkout in this file) must not be set here.
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ssh-key: ${{ secrets.START_RELEASE_SSH_KEY }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: latest
+
+      - name: Setup Node.js for npm publishing
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24.x'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Preflight credential checks
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node scripts/preflight-credentials.mjs \
+            --require gh-token \
+            --require npm-oidc
+
+      - name: Install dependencies
+        working-directory: js
+        run: bun install
+
+      - name: Update npm for OIDC trusted publishing
+        run: node scripts/setup-npm.mjs
+
+      - name: Version packages and commit to main
+        id: version
+        env:
+          BUMP_TYPE: ${{ github.event.inputs.bump_type }}
+          DESCRIPTION: ${{ github.event.inputs.description }}
+        run: node scripts/version-and-commit.mjs --mode instant --bump-type "$BUMP_TYPE" --description "$DESCRIPTION" --working-dir js
+
+      - name: Publish to npm
+        if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
+        id: publish
+        run: node scripts/publish-to-npm.mjs --working-dir js
+
+      - name: Create GitHub Release
+        if: steps.publish.outputs.published == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/create-github-release.mjs --release-version "${{ steps.publish.outputs.published_version }}" --repository "${{ github.repository }}" --prefix "js-" --changelog-file "js/CHANGELOG.md" --badge-type "npm" --package-name "start-command"
+
+      - name: Verify release contains the npm badge (false-positive guard)
+        if: steps.publish.outputs.published == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node scripts/verify-release-badge.mjs \
+            --repository "${{ github.repository }}" \
+            --tag "js-v${{ steps.publish.outputs.published_version }}" \
+            --badge-type npm \
+            --package-name start-command \
+            --release-version "${{ steps.publish.outputs.published_version }}"
+
+      - name: Format GitHub release notes
+        if: steps.publish.outputs.published == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/format-github-release.mjs --release-version "${{ steps.publish.outputs.published_version }}" --repository "${{ github.repository }}" --commit-sha "${{ github.sha }}" --prefix "js-"
+
+  # === MANUAL CHANGESET PR ===
+  changeset-pr:
+    # Shared with every other job that writes to main, including
+    # jobs in the other workflow file, so releases never race.
+    concurrency:
+      group: main-writer-${{ github.repository }}-main
+      cancel-in-progress: false
+    name: Create Changeset PR
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.release_mode == 'changeset-pr'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      # Writer job: the checkout credentials are what pushes the version
+      # commit/tag back to main, so `persist-credentials: false` (applied to
+      # every read-only checkout in this file) must not be set here.
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24.x'
+
+      - name: Create changeset file
+        env:
+          BUMP_TYPE: ${{ github.event.inputs.bump_type }}
+          DESCRIPTION: ${{ github.event.inputs.description }}
+        run: node scripts/create-manual-changeset.mjs --bump-type "$BUMP_TYPE" --description "$DESCRIPTION" --working-dir js
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore(js): add changeset for manual ${{ github.event.inputs.bump_type }} release'
+          branch: changeset-js-manual-release-${{ github.run_id }}
+          delete-branch: true
+          title: 'chore(js): manual ${{ github.event.inputs.bump_type }} release'
+          body: |
+            ## Manual JavaScript Release Request
+
+            This PR was created by a manual workflow trigger to prepare a **${{ github.event.inputs.bump_type }}** release.
+
+            ### Release Details
+            - **Type:** ${{ github.event.inputs.bump_type }}
+            - **Description:** ${{ github.event.inputs.description || 'Manual release' }}
+            - **Triggered by:** @${{ github.actor }}
+
+            ### Next Steps
+            1. Review the changeset in this PR
+            2. Merge this PR to main
+            3. The automated release workflow will publish to npm and create a GitHub release
+
+  # Behavioral parity and generated Rust are checked before any Rust tooling.
+  parity:
+    name: Behavioral Parity and Translation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: check-js-parity-${{ github.ref }}
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24.x'
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+      - name: Check the JavaScript gate across every workflow
+        run: bun scripts/check-javascript-first.mjs
+      - name: Verify per-feature evidence and changes in both languages
+        env:
+          PARITY_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: node scripts/check-feature-parity.mjs
+      - name: Prepare pinned meta-language translation tooling
+        run: node scripts/setup-translation.mjs
+      - name: Regenerate Rust and compare exact output
+        run: node scripts/generate-rust.mjs --check
+      - name: Check shared JavaScript golden contracts
+        run: bun test ./js/test/shared-golden.js ./js/test/javascript-first-ci.js
+      - name: Verify local argument forwarding without compiling
+        run: node experiments/issue-197-argument-forwarding.mjs
+
+  # === PIPELINE STATUS ===
+  # Aggregates every job so a run cannot look green while a job failed or was
+  # silently cancelled. A job killed by `timeout-minutes` is reported as
+  # `cancelled`, which would otherwise hide the failure (issue #158).
+  pipeline-status:
+    name: JavaScript Stage
+    needs:
+      - syntax-check
+      - detect-changes
+      - version-check
+      - changeset-check
+      - lint
+      - test
+      - coverage
+      - parity
+      - release
+      - instant-release
+      - changeset-pr
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Check aggregate pipeline status
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+          IS_MAIN: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+        run: node scripts/check-stage-status.mjs --required syntax-check,lint,test,coverage,parity
+
+  # Same checkout SHA and event context; skipped/failed/cancelled JS never calls Rust.
+  rust-stage:
+    name: Rust CI/CD
+    needs: [pipeline-status]
+    if: ${{ !cancelled() && needs.pipeline-status.result == 'success' }}
+    uses: ./.github/workflows/rust.yml # zizmor: ignore[self-repository] -- Relative same-commit call is required and validated by our gate.
+    permissions:
+      contents: write
+      actions: read
+      security-events: write
+    secrets:
+      CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+      CARGO_TOKEN: ${{ secrets.CARGO_TOKEN }}
+    concurrency:
+      group: check-rust-stage-${{ github.ref }}
+      cancel-in-progress: false
+    with:
+      release_mode: ${{ inputs.release_mode || 'instant' }}
+      bump_type: ${{ inputs.bump_type || 'patch' }}
+      description: ${{ inputs.description || '' }}

@@ -1,0 +1,5 @@
+Retain the complete original lexical-receiver fixture as explicit public-parser coverage, including all eight initialized class fields, three property-initializer arrows, and two static blocks. The unchanged TypeScript assignment-style class-field erasure changes runtime AST structure, so the executable build carrier derives two exact class-line substitutions with a complete inverse: constructor assignments and static methods preserve its independently expected results while keeping class, constructor, accessor, arrow, and static-receiver boundaries.
+
+The production runtime AST identity checker, compiler, all nine original whole-file cases and deadlines, four independent regeneration builds, full private/public metadata comparisons, custom-parser observer tape, and strict TypeScript cap remain unchanged. The previous observed mismatch receipt is retained; no exact erased-AST difference was captured in that run.
+
+Source-only test repair. Node, Bun, TypeScript, and Rust checks are unrun; no speed gain is claimed.

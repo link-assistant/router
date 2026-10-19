@@ -1,0 +1,3 @@
+# GENERATED: checked portable-router-v1 bodies; no source envelopes.
+(function fail (parameters (message utf16-string)) (returns error%3A%5B%5B%22code%22%2C%22string%22%5D%2C%5B%22exitCode%22%2C%22number%22%5D%5D) (body (return (error (message (variable message)) (field code (string provider_import)) (field exitCode (number 2))))))
+(constant fields (type table-set) (value (table-set (string name) (string kind) (string base_url) (string default_model) (string models) (string supported_clients) (string api_key) (string api_key_env) (string encrypted_api_key) (string enabled) (string subscriber_id) (string acknowledge_intermediary_risk) (string acknowledge_unsupported_clients) (string if_absent))))

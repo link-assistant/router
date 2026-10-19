@@ -1,0 +1,5 @@
+Static-source bank production now compares an explicit serialization of every first complete CST document with each freshly rebuilt second document, retaining only whole-token/group boundary data after equality. The reader validates every complete leaf partition before retaining those boundaries. The existing Map-returning helper and all native source/untrusted-metadata batch arguments, rebuilds and checks remain intact.
+
+The new explicit data-only visitor releases full document graphs after each batch. First-document JSON observation moves into the first source pass; this does not claim arbitrary callback equivalence. No cross-call cache, semantic authority, asynchronous scheduling, forced GC or limit change is introduced. The original producer prefix and all eight test cases/deadlines remain. Tests add full installed-byte comparisons and independent visitor/default-Map checks.
+
+Source-reviewed draft only: runtime memory benefit, exact three-asset replay and complete Node/standard-Bun receiving are UNRUN here. Earlier memory-limit failures remain retained.

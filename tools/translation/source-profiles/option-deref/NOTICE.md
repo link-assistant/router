@@ -1,0 +1,1 @@
+Full original Rust 1.89 Option source and unchanged pinned alloc String source, licensed MIT OR Apache-2.0. Only existing checked shared Option<String> places may produce borrowed str; custom Deref, owned/local borrow creation, as_deref_mut and const evaluation are not granted. Source-only draft, unrun.

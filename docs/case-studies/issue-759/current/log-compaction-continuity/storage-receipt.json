@@ -1,0 +1,14 @@
+{
+  "schema": "log-compaction-continuity-storage-v1",
+  "originalReceiptBytes": 15702,
+  "originalReceiptSha256": "4d890e946f9ed8d569d14fcd41b4d4cb3f06e67bcdc3f56039f711a204cef4a4",
+  "storedReceiptBytes": 3317,
+  "storedReceiptSha256": "a844144331cf2c4b4c6f1bad00b91f429d567ef06ebd9d48492b345f4178a3ea",
+  "completeReceiptBytesEqual": true,
+  "archiveSha256": "4841fd01e51d285951ae80c4b6574e8e917efae0839760449fd5d2630adef06a",
+  "completeMembers": 49,
+  "completeOriginalBytes": 81331427,
+  "fullGatePass": false,
+  "runtimeParity": false,
+  "rustExecuted": false
+}

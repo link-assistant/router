@@ -1,0 +1,674 @@
+// Hoisted undefined slots do not add a module lexical TDZ. Never overwritten.
+var __routerOriginalBirth286_PatternControlRustParser,__routerOriginalFactoryCalls286_PatternControlRustParser,__routerOriginalBirth286_PatternControlChecker,__routerOriginalFactoryCalls286_PatternControlChecker;
+// Structural if-let lowering over checked Rust layouts. Vendor source, bodies
+// and shared frontend integration are unchanged; Data may adopt these classes.
+import {ControlRustParser,ControlChecker,ControlEmitter,checkingStatementMatch} from './control.mjs';
+import {emitWith} from './core.mjs';
+import {tokenizeRust} from './lexical.mjs';
+import {parseBindingPattern} from '../pattern-syntax.mjs';
+import {planPattern} from '../pattern-bindings.mjs';
+import {BOOL,UNIT,sameType} from '../checked-types.mjs';
+import {coerce} from '../checked-coercions.mjs';
+import {TranslationError,typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
+import {TokenCursor} from '../vendor/meta-language/translation/lexer.js';
+import {isDeepStrictEqual} from 'node:util';
+import {sourceWhileLetCondition,requireSourceWhileLet} from './while-let-source.mjs';
+import {hasSourceLetChain,parseSourceLetChain,requireSourceLetChain} from './let-chain-source.mjs';
+import {hasOriginalStandardCall,requireOriginalStandardCall} from './original-standard-calls.mjs';
+const range=(start,end)=>({start:start.start,end:end.end});
+const containsExit=node=>node&&typeof node==='object'&&node.k!=='routerLambda'&&(['routerReturn','routerBreak','routerContinue'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(containsExit):containsExit(value))));
+const scalar=type=>['fixed','bool','string','unit'].includes(type?.kind);
+const KNOWN_CONSTRUCTORS=Symbol('checked immutable constructor locals');
+export function immutableBinding(type,checker,active=new Set()) {
+  if(type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved||active.size>=32)return false;
+  if(type.rustReference)return type.rustReference.kind==='shared'&&Boolean(type.rustReference.pointee);
+  if(scalar(type))return !type.patternOwnershipRefusal&&type.rustOwnership?.kind!=='owned';
+  const entry=type.kind==='data'?checker.items.get(type.name):null,profile=type.rustStandardGeneric??entry?.standardGeneric;
+  if(entry?.tuple&&entry.generated==='router-tuple-type'&&entry.ctors.length===1&&!active.has(type.name)) {
+    active.add(type.name);
+    const result=entry.ctors[0].fields.every(field=>immutableBinding(checker.resolveType(field.type,entry.modulePath,entry.span),checker,active));
+    active.delete(type.name);return result;
+  }
+  if(!entry||!['Option','Result'].includes(entry.standardGeneric?.kind)||profile?.kind!==entry.standardGeneric.kind||active.has(type.name))return false;
+  active.add(type.name);const result=profile.arguments.every(argument=>immutableBinding(checker.resolveType(argument,entry.modulePath,entry.span),checker,active));active.delete(type.name);return result;
+}
+// Copy the shared reference in an actual canonical Option, never its pointee.
+// The normal pattern owner/layout and source lifetime checks still run. A
+// standalone pattern checker without the registered host proof stays scalar.
+function sharedJsonLetElse(node,type,plan,checker,path,span) {
+  if(type.rustReference||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved||!hasOriginalStandardCall(checker,node))return null;
+  if(plan.bindings.length!==1||plan.test.kind!=='ctor'||plan.test.data!==type.name||plan.test.ctor!=='Some'||plan.test.projection.length)return null;
+  const binding=plan.bindings[0];
+  if(binding.projection.length!==1||binding.projection[0]!=='field0')return null;
+  const copy=checker.sourceStandardFieldCopy({type},span),payload=copy?.payload,reference=payload?.rustReference,pointee=reference?.pointee;
+  if(copy?.kind!=='source-standard-option-payload-copy'||copy.referenceDepth!==1||!copy.referenceSource||reference?.kind!=='shared'||payload.kind!=='data'||pointee?.kind!=='data'||pointee.rustReference||payload.name!==pointee.name||payload.rustGenericIdentityUnresolved||payload.rustBorrowingUnresolved||pointee.rustGenericIdentityUnresolved||pointee.rustBorrowingUnresolved)return null;
+  // These are the two existing closed JSON ABI declarations, resolved through
+  // the actual checker table. A user-defined same-named record is insufficient.
+  const candidate=['Value','Map_String_Value'].map(name=>({path:['serde_json',name],type:checker.hostType({kind:'named',path:['serde_json',name]},path,span)})).find(candidate=>sameType(candidate.type,pointee));
+  const canonical=candidate?.type,entry=canonical&&checker.items.get(canonical.name);
+  if(!entry||entry.generated!=='router-json-contract'||!isDeepStrictEqual(entry.hostTypePath,candidate.path))return null;
+  if(!sameType(binding.type,payload)||!isDeepStrictEqual(binding.type.rustReference,reference))return null;
+  checker.expectedOwnership(binding.type,payload,path,span);
+  requireOriginalStandardCall(checker,node);
+  return {profile:'canonical-option-shared-json-let-else-v1',copy,pointee:canonical,pointeeMoveAuthority:false,pointeeDropAuthority:false,lifetimeAuthority:false};
+}
+const owned=new Set(['Box','Vec','String','Arc','Rc','Cell','RefCell','UnsafeCell','Mutex','RwLock','Pin','ManuallyDrop','MaybeUninit']);
+function checkCallbackCaptures(node,env,bound,span) {
+  if(!node||typeof node!=='object')return;
+  if(node.k==='routerSet'||node.k==='let'&&node.mutable)throw unsupported('tuple callback mutation','requires a separate checked closure mutation and borrowing contract',node.span??span);
+  if(node.k==='var'&&!bound.has(node.name)&&env.has(node.name)) {
+    const type=env.get(node.name);
+    if(!scalar(type)||type.patternOwnershipRefusal)throw unsupported('tuple callback capture ownership','only immutable scalar capture views have a checked contract',node.span??span);
+  }
+  if(node.k==='let') {
+    checkCallbackCaptures(node.value,env,bound,span);
+    checkCallbackCaptures(node.body,env,new Set([...bound,node.name]),span);return;
+  }
+  for(const [key,value]of Object.entries(node))if(!['type','span','patternControl'].includes(key)) {
+    if(Array.isArray(value))for(const child of value)checkCallbackCaptures(child,env,bound,span);
+    else checkCallbackCaptures(value,env,bound,span);
+  }
+}
+// A proof about this block's own exits, never an exit hidden in a nested loop
+// or a value expression. Calls/loops with an unproven never type stay refused.
+function diverges(node) {
+  if(!node)return false;
+  if(['routerReturn','routerBreak','routerContinue'].includes(node.k))return true;
+  if(['if','routerIf'].includes(node.k))return diverges(node.then)&&diverges(node.else)||node.k==='routerIf'&&diverges(node.body);
+  if(['let','routerSet','routerDiscard','routerWhile'].includes(node.k))return diverges(node.body);
+  return false;
+}
+// Preserve provenance erased by the portable Box<T>/&T type encoding. Owned
+// String uses the same portable primitive as &str, but owned String moves
+// require a separate contract; shared string views are the supported scalar.
+function ownershipRefusal(tokens) {
+  for(let index=0;index<tokens.length;index++) {
+    const value=tokens[index].value;
+    if(owned.has(value))return `ownership-bearing ${value} type`;
+    if(value==='&') {
+      let next=index+1;
+      if(tokens[next]?.value==="'"){next+=2;}
+      if(tokens[next]?.value!=='str')return 'non-string reference type';
+    }
+  }
+  return null;
+}
+export function withPatternControlParser(Base=ControlRustParser) {
+  __routerOriginalFactoryCalls286_PatternControlRustParser=__routerOriginalFactoryCalls286_PatternControlRustParser===undefined?1:2;
+
+  const __routerOriginalReturned286_PatternControlRustParser=(function(item){return item;})(class extends Base {
+    type() {
+      const first=this.cursor.index,type=super.type(),tokens=this.cursor.tokens.slice(first,this.cursor.index),reason=ownershipRefusal(tokens);
+      return reason?{...type,patternOwnershipRefusal:reason}:type;
+    }
+    registeredPatternOwner(written,resolved,path,location) {
+      if(typeof this.registeredGenericKind!=='function')return null;
+      if(this.unresolvedImportScope&&resolved.length===written.length&&resolved.every((name,index)=>name===written[index])&&(['Some','None','Ok','Err'].includes(written[0])||['Option','Result'].includes(written[0])))throw unsupported('unproven standard if-let owner','requires actual source namespace resolution',location);
+      const kind=this.registeredGenericKind(resolved.slice(0,-1),path,written[0]);
+      return (kind==='Option'?['Some','None']:kind==='Result'?['Ok','Err']:[]).includes(resolved.at(-1))?kind:null;
+    }
+    controlPattern(path,first) {
+      const c=this.cursor;
+      let pattern;const owners=[];
+      try {pattern=parseBindingPattern(c,{resolvePath:(written,location)=>{
+        const resolved=this.sourcePatternPath?this.sourcePatternPath(written,path):this.resolve(written,path),kind=this.registeredPatternOwner(written,resolved,path,location);
+        owners.push({resolved,kind,span:location});return resolved;
+      }});}
+      catch(error){if(error instanceof TranslationError&&c.is('<'))throw unsupported('generic if-let pattern','generic pattern arguments require checked monomorphization',range(first,c.peek()));throw error;}
+      const annotate=node=>{
+        if(['ctor','bindOrCtor','routerRecordPattern'].includes(node.k)) {
+          const names=node.k==='bindOrCtor'?[node.name]:node.path;
+          // The earliest matching source path is this node's own owner, even
+          // through parentheses. Never borrow a nested constructor's proof.
+          const owner=owners.find(owner=>owner.span.start>=node.span.start&&owner.span.end<=node.span.end&&owner.resolved.length===names.length&&owner.resolved.every((name,index)=>name===names[index]));
+          if(owner?.kind)node={...node,registeredGenericOwner:owner.kind};
+        }
+        if(node.args)node={...node,args:node.args.map(annotate)};
+        if(node.alternatives)node={...node,alternatives:node.alternatives.map(annotate)};
+        if(node.items)node={...node,items:node.items.map(annotate)};
+        if(node.fields)node={...node,fields:node.fields.map(field=>({...field,pattern:annotate(field.pattern)}))};
+        return node;
+      };
+      return annotate(pattern);
+    }
+    callbackPatternParameter(path) {
+      const c=this.cursor,first=c.peek();
+      if(c.is('&')&&c.is('(',1))throw unsupported('reference tuple callback pattern','requires actual checked borrowing, not portable reference erasure',first);
+      if(!c.is('('))return null;
+      let depth=0,stop=c.index;
+      for(;stop<c.tokens.length;stop++) {
+        const token=c.tokens[stop];
+        if(token.kind==='punct'&&depth===0&&['|',',',':'].includes(token.value))break;
+        if(token.kind==='punct'&&['(','[','{'].includes(token.value))depth++;
+        if(token.kind==='punct'&&[')',']','}'].includes(token.value))depth--;
+        if(depth<0||token.kind==='eof')throw unsupported('tuple callback parameter syntax','requires a bounded actual parameter pattern',first);
+      }
+      // The closing closure bar is not a top-level or-pattern separator. This
+      // cursor view bounds the original tokens; no source text is substituted.
+      const end=c.tokens[stop];
+      class ParameterCursor extends TokenCursor {
+        peek(offset=0){return this.index+offset>=stop?{kind:'eof',value:'',start:end.start,end:end.start}:super.peek(offset);}
+      }
+      const bounded=new ParameterCursor(c.tokens,c.language);bounded.index=c.index;
+      this.cursor=bounded;
+      let pattern;
+      try {pattern=this.controlPattern(path,first);if(bounded.index!==stop)throw unsupported('tuple callback pattern suffix','requires a completely checked parameter pattern',bounded.peek());}
+      finally {this.cursor=c;c.index=bounded.index;}
+      return {pattern,span:pattern.span};
+    }
+    primary(path,options) {
+      const c=this.cursor;
+      if(!c.is('return'))return super.primary(path,options);
+      const first=c.next(),value=[';',',','}',')',']'].some(token=>c.is(token))?{k:'unit',span:range(first,first)}:this.expr(path);
+      return {k:'routerReturn',value,body:{k:'unit',span:range(first,c.peek())},expressionReturn:true,span:range(first,c.peek())};
+    }
+    letStatement(path) {
+      const c=this.cursor,checkpoint=c.index;
+      // Look only for a structural statement-level else. Ordinary let parsing
+      // remains with the enclosing frontend, including its mutable bindings.
+      let depth=0,hasElse=false;
+      for(let offset=1;offset<c.tokens.length-c.index;offset++) {
+        const token=c.peek(offset);if(!['punct','identifier'].includes(token.kind))continue;
+        const value=token.value;
+        if(value===';'&&depth===0)break;
+        if(value==='}'&&depth===0)break;
+        if(value==='else'&&depth===0){hasElse=true;break;}
+        if(['(','[','{'].includes(value))depth++;
+        if([')',']','}'].includes(value))depth--;
+      }
+      if(!hasElse&&!c.is('(',1))return super.letStatement(path);
+      if(c.is('mut',1))return super.letStatement(path);
+      const first=c.next(),pattern=this.controlPattern(path,first);
+      const annotation=c.eat(':')?this.type():undefined;
+      c.expect('=','let-else initializer');
+      const begin=c.index,subject=this.expr(path);
+      if(!c.is('else')) {
+        if(!c.tokens[checkpoint+1]||c.tokens[checkpoint+1].value!=='('){c.index=checkpoint;return super.letStatement(path);}
+        if(annotation)throw unsupported('tuple binding annotation','requires a separately checked annotated pattern contract',range(first,c.peek()));
+        c.expect(';','tuple binding');
+        return {k:'routerLetPattern',pattern,subject,span:range(first,c.peek())};
+      }
+      if(annotation)throw unsupported('let-else type annotation','requires a separate checked pattern annotation contract',range(first,c.peek()));
+      const initializer=c.tokens.slice(begin,c.index);
+      if(initializer.at(-1)?.kind==='punct'&&initializer.at(-1)?.value==='}')throw unsupported('let-else brace initializer','Rust requires parentheses around an initializer ending in a brace',subject.span);
+      depth=0;
+      for(const token of initializer) {
+        if(token.kind!=='punct')continue;
+        if(['&&','||'].includes(token.value)&&depth===0)throw unsupported('let-else lazy boolean initializer','Rust requires parentheses around a lazy boolean initializer',subject.span);
+        if(['(','[','{'].includes(token.value))depth++;
+        if([')',']','}'].includes(token.value))depth--;
+      }
+      // LetStatement uses PatternNoTopAlt: parentheses are required around an
+      // or-pattern, unlike the if-let grammar handled by controlIf.
+      const syntax=c.tokens.slice(checkpoint+1,begin-1);depth=0;
+      for(const token of syntax) {
+        if(token.kind!=='punct')continue;
+        if(token.value==='|'&&depth===0)throw unsupported('let-else top-level or-pattern','requires source parentheses',pattern.span);
+        if(['(','[','{'].includes(token.value))depth++;
+        if([')',']','}'].includes(token.value))depth--;
+      }
+      c.next();const otherwise=this.block(path,true);c.expect(';','let-else statement');
+      return {k:'routerLetElse',pattern,subject,else:otherwise,span:range(first,c.peek())};
+    }
+    controlIf(path) {
+      const c=this.cursor;
+      if(c.is('if')&&hasSourceLetChain(c)){
+        const cond=parseSourceLetChain(this,path,'if'),first={start:cond.span.start};
+        const then=this.block(path,true);
+        const otherwise=c.eat('else')?c.is('if')?this.controlIf(path):this.block(path,true):{k:'unit',span:range(first,c.peek())};
+        return {k:'if',cond,then,else:otherwise,span:range(first,c.peek())};
+      }
+      if(!c.is('if')||!c.is('let',1))return super.controlIf(path);
+      const first=c.next();c.next();
+      const pattern=this.controlPattern(path,first);
+      c.expect('=','if-let condition');
+      let depth=0;
+      for(let offset=0;offset<c.tokens.length-c.index;offset++) {
+        const token=c.peek(offset);
+        if(!['punct','identifier'].includes(token.kind))continue;
+        if(token.value==='{'&&depth===0)break;
+        if(token.value==='&&'&&depth===0)throw unsupported('if-let chain or guard','guard bindings and let chains require separate control lowering',range(first,token));
+        if(['(','['].includes(token.value))depth++;
+        if([')',']'].includes(token.value))depth--;
+      }
+      const subject=this.expr(path,{noStruct:true});
+      const then=this.block(path,true);
+      const otherwise=c.eat('else')?c.is('if')?this.controlIf(path):this.block(path,true):{k:'unit',span:range(first,c.peek())};
+      return {k:'if',cond:{k:'routerPatternCondition',subject,pattern,span:range(first,c.peek())},then,else:otherwise,span:range(first,c.peek())};
+    }
+    whileStatement(path) {
+      const c=this.cursor;
+      if(c.is('while')&&hasSourceLetChain(c)){
+        const cond=parseSourceLetChain(this,path,'while'),first={start:cond.span.start};
+        const then=this.block(path,true),span=range(first,c.peek()),unit=()=>({k:'unit',span:{...span}});
+        const loopBody={k:'routerIf',cond,then,else:{k:'routerBreak',body:unit(),span},body:unit(),span};
+        return {k:'routerWhile',cond:{k:'bool',value:true,span:{start:first.start,end:first.start+5}},loopBody,span};
+      }
+      if(!c.is('while')||!c.is('let',1))return super.whileStatement(path);
+      const begin=c.index,first=c.next();c.next();
+      const pattern=this.controlPattern(path,first);
+      c.expect('=','while-let condition');
+      let depth=0;
+      for(let offset=0;offset<c.tokens.length-c.index;offset++) {
+        const token=c.peek(offset);
+        if(!['punct','identifier'].includes(token.kind))continue;
+        if(token.value==='{'&&depth===0)break;
+        if(token.value==='&&'&&depth===0)throw unsupported('while-let chain or guard','requires separate checked let-chain scope and short-circuit control',range(first,token));
+        if(['(','['].includes(token.value))depth++;
+        if([')',']'].includes(token.value))depth--;
+      }
+      const subject=this.expr(path,{noStruct:true}),conditionSpan={start:first.start,end:c.peek().start};
+      const sourceCondition=sourceWhileLetCondition(c.tokens.slice(begin,c.index),pattern,subject,conditionSpan);
+      const then=this.block(path,true),span=range(first,c.peek());
+      const unit=()=>({k:'unit',span:{...span}});
+      const loopBody={k:'routerIf',cond:{k:'routerPatternCondition',subject,pattern,sourceWhileLet:sourceCondition,span:conditionSpan},then,else:{k:'routerBreak',body:unit(),span},body:unit(),span};
+      return {k:'routerWhile',cond:{k:'bool',value:true,span:range(first,first)},loopBody,span};
+    }
+    ifExpr(path) {return this.controlIf(path);}
+  });
+  if(__routerOriginalBirth286_PatternControlRustParser===undefined)__routerOriginalBirth286_PatternControlRustParser=[__routerOriginalReturned286_PatternControlRustParser,__routerOriginalReturned286_PatternControlRustParser.prototype,Base,[["constructor",__routerOriginalReturned286_PatternControlRustParser],["type",__routerOriginalReturned286_PatternControlRustParser.prototype["type"]],["registeredPatternOwner",__routerOriginalReturned286_PatternControlRustParser.prototype["registeredPatternOwner"]],["controlPattern",__routerOriginalReturned286_PatternControlRustParser.prototype["controlPattern"]],["callbackPatternParameter",__routerOriginalReturned286_PatternControlRustParser.prototype["callbackPatternParameter"]],["primary",__routerOriginalReturned286_PatternControlRustParser.prototype["primary"]],["letStatement",__routerOriginalReturned286_PatternControlRustParser.prototype["letStatement"]],["controlIf",__routerOriginalReturned286_PatternControlRustParser.prototype["controlIf"]],["whileStatement",__routerOriginalReturned286_PatternControlRustParser.prototype["whileStatement"]],["ifExpr",__routerOriginalReturned286_PatternControlRustParser.prototype["ifExpr"]]]];
+  return __routerOriginalReturned286_PatternControlRustParser;
+}
+
+export function withPatternControlChecker(Base=ControlChecker) {
+  __routerOriginalFactoryCalls286_PatternControlChecker=__routerOriginalFactoryCalls286_PatternControlChecker===undefined?1:2;
+
+  const __routerOriginalReturned286_PatternControlChecker=(function(item){return item;})(class extends Base {
+    bindingConstructorEnvironment(env,name,value,mutable){
+      const facts=new Map(env.get(KNOWN_CONSTRUCTORS)??[]);facts.delete(name);
+      if(!mutable&&value.k==='ctor')facts.set(name,{data:value.data,ctor:value.ctor});
+      return new Map(env).set(KNOWN_CONSTRUCTORS,facts);
+    }
+    #checkedLetChain(node,env,path,expected,allowLiteral){
+      env=this.contextEnvironment(node,env,expected);
+      if(node.k!=='routerIf'&&!sameType(expected??{},UNIT))throw unsupported('value-producing let chain','requires a separately checked result join; only unit statement chains are admitted',node.span);
+      const unit=()=>({k:'unit',type:UNIT,span:node.span});
+      const reserved=new Set([...env.keys()].filter(key=>typeof key==='string')),pending=[node];let fuel=100000;
+      while(pending.length){
+        if(!fuel--)throw unsupported('let-chain binding budget','requires bounded original lexical names',node.span);
+        const current=pending.pop();if(!current||typeof current!=='object')continue;
+        if(typeof current.name==='string')reserved.add(current.name);
+        if(Array.isArray(current.path))for(const name of current.path)if(typeof name==='string')reserved.add(name);
+        for(const [key,value]of Object.entries(current))if(!['type','span','sourceCondition','patternControl'].includes(key)){
+          if(Array.isArray(value))pending.push(...value);else if(value&&typeof value==='object')pending.push(value);
+        }
+      }
+      const fresh=prefix=>{let name;do{name=this.freshName(prefix);}while(reserved.has(name));reserved.add(name);return name;};
+      const flag=fresh('ml_let_chain_'),flagValue=()=>({k:'var',name:flag,type:BOOL,span:node.span});
+      const otherwise=coerce(this.expr(node.else,new Map(env),path,UNIT,allowLiteral),UNIT,this.language,node.span);
+      const next=node.k==='routerIf'?this.expr(node.body,new Map(env),path,expected,allowLiteral):unit();
+      const fallback={k:'routerIf',cond:{k:'unary',op:'not',arg:flagValue(),type:BOOL,span:node.span},then:otherwise,else:unit(),body:next,type:next.type,span:node.span};
+      const lower=(index,inner,continuation)=>{
+        if(index===node.cond.clauses.length){
+          const then=coerce(this.expr(node.then,inner,path,UNIT,allowLiteral),UNIT,this.language,node.span);
+          return {k:'routerSet',target:flagValue(),value:{k:'lit',value:true,type:BOOL,span:node.span},body:then,type:UNIT,span:node.span};
+        }
+        const clause=node.cond.clauses[index];
+        if(containsExit(clause.subject))throw unsupported('let-chain subject control','nonlocal exits require their own statement lowering',clause.subject.span);
+        if(clause.kind==='bool'){
+          const cond=coerce(this.expr(clause.subject,inner,path,BOOL),BOOL,this.language,clause.span);
+          return {k:'routerIf',cond,then:lower(index+1,new Map(inner),unit()),else:unit(),body:continuation,type:continuation.type,span:clause.span};
+        }
+        const subject=this.expr(clause.subject,inner,path);this.patternDomain(subject.type,clause.span);
+        const pattern=this.patternOwner(clause.pattern,subject.type,path,inner);
+        const plan=planPattern(pattern,subject.type,{declarations:this.items,resolveType:type=>this.resolveType(type,path,clause.span),span:clause.span});
+        for(const binding of plan.bindings)if(!immutableBinding(binding.type,this))throw unsupported('let-chain aggregate binding','requires checked immutable scalar/shared-reference or standard Copy algebraic bindings',binding.span??clause.span);
+        const temporary=fresh('ml_pattern_chain_'),variable={k:'var',name:temporary,type:subject.type,span:clause.span};
+        let bound=new Map(inner);for(const binding of plan.bindings)bound=this.bindingEnvironment(bound,binding.name,binding.type,false);
+        let then=lower(index+1,bound,unit());
+        // Check the complete continuation above even when its source pattern
+        // cannot match a genuinely checked immutable constructor initializer.
+        const known=clause.subject.k==='name'&&clause.subject.path.length===1?inner.get(KNOWN_CONSTRUCTORS)?.get(clause.subject.path[0]):null;
+        if(known?.data===subject.type.name&&pattern.k==='ctor'&&known.ctor!==pattern.ctor)return {k:'let',name:temporary,value:subject,body:continuation,mutable:false,type:continuation.type,span:clause.span,patternControl:{plan,subjectType:subject.type,kind:'let-chain-clause',impossibleKnownConstructor:known.ctor}};
+        then=plan.bindings.reduceRight((body,binding)=>({k:'let',name:binding.name,value:this.patternProjection(variable,binding.projection,binding.type,plan.projectionPaths),body,mutable:false,type:body.type,span:binding.span??clause.span}),then);
+        let cond=this.patternTest(plan.test,variable,plan.projectionPaths);
+        if(subject.type.kind==='data')cond={k:'binary',op:'and',left:{k:'routerPatternImmutable',object:variable,type:BOOL,borrowedAggregate:this.sharedPatternView(subject.type)},right:cond,type:BOOL};
+        const conditional={k:'routerIf',cond,then,else:unit(),body:continuation,type:continuation.type,span:clause.span};
+        return {k:'let',name:temporary,value:subject,body:conditional,mutable:false,type:conditional.type,span:clause.span,patternControl:{plan,subjectType:subject.type,kind:'let-chain-clause'}};
+      };
+      const body=lower(0,new Map(env),fallback);
+      return {k:'let',name:flag,value:{k:'lit',value:false,type:BOOL,span:node.cond.span},body,mutable:true,type:body.type,span:node.span,constEligible:false,patternControl:{kind:'let-chain',sourceCondition:structuredClone(node.cond.sourceCondition),subjectType:BOOL}};
+    }
+    resolveType(type,path,span) {
+      const resolved=super.resolveType(type,path,span);
+      return type?.patternOwnershipRefusal?{...resolved,patternOwnershipRefusal:type.patternOwnershipRefusal}:resolved;
+    }
+    patternOwner(node,type,path,env) {
+      const source=this.sourceSharedPatternOwner?.(node,type,path,env);if(source)return source;
+      if(['bind','bindOrCtor'].includes(node.k)&&this.lookup([node.name],path,node.span)?.constant)throw unsupported('constant binding pattern','requires its actual checked value and irrefutability; a source constant cannot become a fresh binding',node.span);
+      if(type.rustReference) {
+        if(node.k==='wild'||node.k==='bind')return node;
+        const nullary=this.sharedNullaryPatternOwner?.(node,type,path,env);
+        if(nullary)return nullary;
+        if(node.k==='bindOrCtor') {const actual=this.lookup([node.name],path,node.span);if(!actual||actual.k==='fn')return {k:'bind',name:node.name,span:node.span};}
+        throw unsupported('shared aggregate pattern','only a checked reference binder or wildcard is lowered; nested borrowed destructuring requires another profile',node.span);
+      }
+      const location=node.span,entry=type.kind==='data'?this.items.get(type.name):null;
+      if(node.k==='or')return {...node,alternatives:node.alternatives.map(child=>this.patternOwner(child,type,path,env))};
+      if(node.k==='routerTuplePattern') {
+        if(!entry?.tuple||entry.ctors.length!==1)throw unsupported('if-let tuple pattern','only an actual checked anonymous tuple has tuple ownership',location);
+        return {...node,items:node.items.map((child,index)=>this.patternOwner(child,entry.ctors[0].fields[index]?.type??UNIT,path,env))};
+      }
+      if(!['ctor','bindOrCtor','routerRecordPattern'].includes(node.k))return node;
+      const names=node.k==='bindOrCtor'?[node.name]:node.path;
+      const actual=names?this.lookup(names,path,location):null;
+      const registered=node.registeredGenericOwner;
+      if(registered&&(!['Option','Result'].includes(registered)||entry?.standardGeneric?.kind!==registered||!(registered==='Option'?['Some','None']:['Ok','Err']).includes(names?.at(-1))))throw typeError('registered if-let owner differs from its actual checked generic layout',location);
+      const standard=Boolean(registered)||names&&typeof this.standardConstructor==='function'&&this.standardConstructor(names,type,path,env,location);
+      const record=actual?.k==='data'&&actual.record&&actual.ctors.length===1?actual:null;
+      const owner=actual?.k==='ctor'?actual.data:record?.fullName??(standard?type.name:null);
+      const name=actual?.k==='ctor'?actual.name:record?.ctors[0].name??names?.at(-1);
+      if(!owner) {
+        if(node.k==='bindOrCtor'&&(!actual||actual.k==='fn'))return {k:'bind',name:node.name,span:location};
+        throw typeError(`if-let pattern ${names?.join('::')} has no checked constructor owner`,location);
+      }
+      if(owner!==type.name)throw typeError(`if-let constructor belongs to ${owner}, not ${type.name}`,location);
+      const ctor=entry?.ctors.find(ctor=>ctor.name===name);
+      if(!ctor)throw typeError('if-let constructor requires an actual checked layout',location);
+      const named=ctor.ctorStyle==='named';
+      if(node.k==='routerRecordPattern'&&!named)throw unsupported('if-let source record pattern','portable tuple ABI fields are not actual Rust named fields',location);
+      if(node.k!=='routerRecordPattern'&&named)throw unsupported('if-let source tuple pattern','an actual named constructor requires record pattern syntax',location);
+      const normalized={...node,k:node.k==='bindOrCtor'?'ctor':node.k,path:[type.name,name],data:type.name,ctor:name};
+      if(node.k==='routerRecordPattern') {
+        normalized.fields=node.fields.map(field=>{
+          const declared=ctor.fields.find(candidate=>candidate.name===field.name);
+          if(!declared)throw typeError(`unknown pattern field ${field.name}`,field.span);
+          return {...field,pattern:this.patternOwner(field.pattern,declared.type,path,env)};
+        });
+      } else normalized.args=(node.args??[]).map((child,index)=>this.patternOwner(child,ctor.fields[index]?.type??UNIT,path,env));
+      return normalized;
+    }
+    patternDomain(type,span,active=new Set()) {
+      if(this.sourceSharedPatternDomain?.(type,span))return;
+      if(type.rustReference) {
+        const reference=type.rustReference,pointee=reference.pointee;
+        if(reference.kind!=='shared'||!pointee||type.rustGenericIdentityUnresolved||pointee.kind==='data'&&!this.items.has(pointee.name))throw unsupported('shared pattern reference','requires its actual checked immutable source pointee',span);
+        return;
+      }
+      if(type.patternOwnershipRefusal&&!this.sourceStandardFramePatternRead?.(type))throw unsupported('if-let ownership',type.patternOwnershipRefusal,span);
+      if(type.kind!=='data')return;
+      if(active.has(type.name))throw unsupported('recursive if-let layout','recursive ownership requires a separate contract',span);
+      const entry=this.items.get(type.name);
+      if(!entry||entry.k!=='data')throw typeError('if-let subject needs its actual checked declaration',span);
+      active.add(type.name);
+      for(const ctor of entry.ctors)for(const field of ctor.fields) {
+        if(field.rustTypeSyntax&&ownershipRefusal(field.rustTypeSyntax.map(value=>({value})))&&!this.sourceStandardFramePatternRead?.(field.type))throw unsupported('if-let ownership','the original field syntax carries unresolved ownership',span);
+        this.patternDomain(field.type,span,active);
+      }
+      active.delete(type.name);
+    }
+    sharedPatternView(type,active=new Set()) {
+      if(type.rustReference&&['data','array'].includes(type.rustReference.pointee?.kind))return true;
+      if(type.kind!=='data'||active.has(type.name))return false;
+      active.add(type.name);const entry=this.items.get(type.name),result=entry?.ctors.some(ctor=>ctor.fields.some(field=>this.sharedPatternView(field.type,active)))??false;active.delete(type.name);return result;
+    }
+    patternProjection(subject,projection,targetType,projectionPaths) {
+      const source=this.sourceSharedPatternProjection?.(subject,projection,targetType,projectionPaths);if(source)return source;
+      let value=subject;
+      for(const [index,field] of projection.entries()) {
+        const entry=this.items.get(value.type.name),fields=entry?.ctors.flatMap(ctor=>ctor.fields.filter(candidate=>candidate.name===field))??[];
+        const final=index===projection.length-1;
+        const paths=projectionPaths?.filter(path=>path.field===field&&isDeepStrictEqual(path.projection,projection.slice(0,index)));
+        const selected=paths?.map(path=>{
+          const actual=entry?.ctors.find(ctor=>ctor.name===path.ctor)?.fields.find(candidate=>candidate.name===field);
+          if(path.data!==value.type.name||!actual||!sameType(actual.type,path.type))throw typeError('pattern projection path differs from its actual selected constructor',subject.span);
+          return actual;
+        });
+        const wanted=final&&targetType?targetType:selected?.[0]?.type??fields[0]?.type;
+        if(!wanted||!fields.some(candidate=>sameType(candidate.type,wanted))||(selected?(!selected.length||selected.some(candidate=>!sameType(candidate.type,wanted))):!final&&fields.some(candidate=>!sameType(candidate.type,wanted))))throw unsupported('conditional field projection','different intermediate layouts require case-specific projections',subject.span);
+        // Each path comes from the planner's actual selected constructor. Its
+        // ordered tag tests precede projections; unrelated variants do not
+        // supply intermediate types, and divergent or-paths stay refused.
+        value={k:'routerPatternProjection',object:value,field,type:wanted,span:subject.span};
+      }
+      return value;
+    }
+    patternTest(test,subject,projectionPaths) {
+      if(test.kind==='always')return {k:'lit',value:true,type:BOOL};
+      if(test.kind==='ctor')return {k:'routerPatternTag',object:this.patternProjection(subject,test.projection,{kind:'data',name:test.data},projectionPaths),data:test.data,ctor:test.ctor,type:BOOL};
+      if(test.kind==='literal')return {k:'binary',op:'eq',left:this.patternProjection(subject,test.projection,test.type,projectionPaths),right:{k:'lit',value:test.value,type:test.type},type:BOOL};
+      if(test.kind==='integerRange') {
+        const left=this.patternProjection(subject,test.projection,test.type,projectionPaths),bound=value=>({k:'lit',value,type:test.type});
+        return {k:'binary',op:'and',left:{k:'binary',op:'ge',left,right:bound(test.lower),type:BOOL},right:{k:'binary',op:'le',left,right:bound(test.upper),type:BOOL},type:BOOL};
+      }
+      if(['and','or'].includes(test.kind)) {
+        // Plans inspect only a checked immutable subject. Idempotent duplicate
+        // tests can be removed without changing observable evaluation; keeping
+        // them makes TS's narrowed discriminant reject valid duplicate arms.
+        const seen=new Set(),tests=test.tests.filter(test=>{const key=JSON.stringify(test,(_,value)=>typeof value==='bigint'?{$bigint:String(value)}:value);if(seen.has(key))return false;seen.add(key);return true;});
+        return tests.map(test=>this.patternTest(test,subject,projectionPaths)).reduce((left,right)=>({k:'binary',op:test.kind,left,right,type:BOOL}));
+      }
+      throw typeError('unchecked pattern test plan',subject.span);
+    }
+    patternLambda(node,argumentTypes,env,path,expected,context) {
+      const iterator=context?.source==='iterator';
+      if(!['standard-option','iterator'].includes(context?.source)||context.receiverType?.patternOwnershipRefusal||context.receiverType?.rustReference)throw unsupported('tuple callback argument ownership','requires an actual by-value standard Option payload or checked scalar-product Iterator Item; erased reference inputs are unproven',node.span);
+      if(iterator) {
+        if(context.receiverType?.kind!=='routerIterator'||argumentTypes.length!==1||!isDeepStrictEqual(context.receiverType.element,argumentTypes[0]))throw typeError('tuple callback argument differs from the actual checked Iterator Item',node.span);
+        if(typeof this.inferredTupleField!=='function')throw unsupported('tuple Iterator callback','requires the actual bounded anonymous-product checker',node.span);
+        this.inferredTupleField(argumentTypes[0],node.span,0,new Set(),new Set(),{cells:16000});
+      } else {
+        const receiver=context.receiverType?.kind==='data'?this.items.get(context.receiverType.name):null;
+        if(receiver?.standardGeneric?.kind!=='Option'||argumentTypes.length!==1||!sameType(this.resolveType(receiver.standardGeneric.arguments[0],receiver.modulePath,node.span),argumentTypes[0]))throw typeError('tuple callback argument differs from the actual checked Option payload',node.span);
+      }
+      const payload=argumentTypes[0].kind==='data'?this.items.get(argumentTypes[0].name):null;
+      if(!payload?.tuple||payload.generated!=='router-tuple-type')throw unsupported('tuple callback payload','requires an actual anonymous tuple product, not a named aggregate or erased array',node.span);
+      let inner=new Map(env),parameters=[],bindings=[],names=new Set();
+      for(const [index,param] of node.params.entries()) {
+        if(!param.pattern)throw unsupported('mixed tuple callback parameters','requires a separate checked multi-argument callback context',param.span);
+        if(param.type)throw unsupported('tuple callback annotation','requires a separately checked annotated pattern contract',param.span);
+        const type=argumentTypes[index];this.patternDomain(type,param.span);
+        const pattern=this.patternOwner(param.pattern,type,path,env),plan=planPattern(pattern,type,{declarations:this.items,resolveType:type=>this.resolveType(type,path,param.span),span:param.span});
+        if(plan.refutable)throw typeError('callback parameters require irrefutable checked patterns',param.span);
+        for(const binding of plan.bindings) {
+          if(!scalar(binding.type)||binding.type.patternOwnershipRefusal)throw unsupported('tuple callback binding ownership','only immutable scalar bindings have a checked contract',binding.span??param.span);
+          if(names.has(binding.name))throw typeError('duplicate callback pattern binding',binding.span??param.span);
+          names.add(binding.name);inner=this.bindingEnvironment(inner,binding.name,binding.type,false);
+        }
+        let name;do{name=this.freshName('ml_pattern_callback_');}while(env.has(name)||names.has(name));
+        parameters.push({name,type,plan,span:param.span});
+        const variable={k:'var',name,type,span:param.span};
+        bindings.push(...plan.bindings.map(binding=>({name:binding.name,value:this.patternProjection(variable,binding.projection,binding.type,plan.projectionPaths),span:binding.span??param.span})));
+      }
+      let body=this.expr(node.body,inner,path,expected);if(expected)body=coerce(body,expected,this.language,node.span);
+      checkCallbackCaptures(body,env,names,node.span);
+      if(iterator)this.inferredTupleField(body.type,node.span,0,new Set(),new Set(),{cells:16000});
+      else if(!scalar(body.type)||body.type.patternOwnershipRefusal)throw unsupported('tuple callback result ownership','only immutable scalar callback results have a checked contract',node.span);
+      const result=body.type;
+      body=bindings.reduceRight((body,binding)=>({k:'let',...binding,body,mutable:false,type:result}),body);
+      for(const param of parameters.toReversed()) {
+        body={k:'routerDiscard',value:{k:'routerPatternImmutable',object:{k:'var',name:param.name,type:param.type,span:param.span},type:BOOL},body,type:result,span:param.span};
+        body={k:'let',name:param.name,value:{k:'routerLambdaInput',position:parameters.indexOf(param),type:param.type},body,mutable:false,type:result,span:param.span};
+      }
+      return {k:'routerLambda',binding:body,arity:parameters.length,type:{kind:'routerCallback',result},span:node.span,patternControl:{kind:'tuple-callback',parameters:parameters.map(param=>({type:param.type,plan:param.plan})),ownership:iterator?'checked-by-value-scalar-product-iterator':'checked-by-value-option'}};
+    }
+    expr(node,env,path,expected,allowLiteral=false) {
+      if(node.k==='match'&&containsExit(node)) {
+        env=this.contextEnvironment(node,env,expected);
+        if(node.scrutinees.length!==1||containsExit(node.scrutinees[0]))throw unsupported('return-valued match subject','requires one ordinary once-evaluated subject',node.span);
+        if(checkingStatementMatch(node)&&(expected&&sameType(expected,UNIT)||node.rows.some(row=>containsExit(row.body)&&row.body.k!=='routerReturn')))return super.expr(node,env,path,expected??UNIT,allowLiteral);
+        if(node.rows.some(row=>containsExit(row.body)&&row.body.k!=='routerReturn'))throw unsupported('nested match-arm control','only direct function-return arms have a checked join contract',node.span);
+        const subject=this.expr(node.scrutinees[0],env,path);this.patternDomain(subject.type,node.span);
+        let join=expected;
+        if(!join) {
+          const seed=node.rows.find(row=>row.body.k!=='routerReturn');
+          if(!seed)throw unsupported('all-return match join','requires an explicit contextual result type',node.span);
+          const value=this.expr(seed.body,env,path,undefined,true);
+          join=value.type.kind==='literal'?this.defaultNumber():value.type;
+        }
+        const value=super.expr(node,env,path,join,allowLiteral);
+        return {k:'routerControlInitializer',value,type:value.type,span:node.span,patternControl:{kind:'match-return',initializerType:value.type}};
+      }
+      if(node.k==='let'&&containsExit(node.value)) {
+        env=this.contextEnvironment(node,env,expected);
+        if(node.value.k!=='match')throw unsupported('return-valued let initializer','requires an ordinary match with direct function-return arms',node.span);
+        const declared=node.type?this.resolveType(node.type,path,node.span):undefined;
+        let value=this.expr(node.value,env,path,declared);
+        if(value.k!=='routerControlInitializer'||!scalar(value.type)||value.type.patternOwnershipRefusal||node.mutable)throw unsupported('match initializer binding ownership','only immutable scalar joins have a checked contract',node.span);
+        if(declared)value=coerce(value,declared,this.language,node.span);
+        const body=this.expr(node.body,this.bindingEnvironment(env,node.name,value.type,false),path,expected,allowLiteral);
+        return {k:'let',name:node.name,value,body,mutable:false,type:body.type,span:node.span};
+      }
+      if(node.k==='routerLetPattern') {
+        env=this.contextEnvironment(node,env,expected);
+        if(containsExit(node.subject))throw unsupported('tuple binding subject control','nonlocal exits cannot be emitted through a subject value',node.subject.span);
+        const subject=this.expr(node.subject,env,path);
+        this.patternDomain(subject.type,node.span);
+        const pattern=this.patternOwner(node.pattern,subject.type,path,env);
+        const plan=planPattern(pattern,subject.type,{declarations:this.items,resolveType:type=>this.resolveType(type,path,node.span),span:node.span});
+        if(plan.refutable)throw typeError('ordinary tuple let requires an irrefutable checked pattern',node.span);
+        for(const binding of plan.bindings)if(!immutableBinding(binding.type,this))throw unsupported('tuple aggregate binding','requires immutable scalar/shared-reference or actual standard Copy algebraic bindings',binding.span??node.span);
+        let temporary;do{temporary=this.freshName('ml_pattern_');}while(env.has(temporary));
+        const variable={k:'var',name:temporary,type:subject.type,span:node.span};
+        let inner=new Map(env);
+        for(const binding of plan.bindings)inner=this.bindingEnvironment(inner,binding.name,binding.type,false);
+        let body=this.expr(node.body,inner,path,expected,allowLiteral);
+        body=plan.bindings.reduceRight((body,binding)=>({k:'let',name:binding.name,value:this.patternProjection(variable,binding.projection,binding.type,plan.projectionPaths),body,mutable:false,type:body.type,span:binding.span??node.span}),body);
+        if(subject.type.kind==='data')body={k:'routerDiscard',value:{k:'routerPatternImmutable',object:variable,type:BOOL,borrowedAggregate:this.sharedPatternView(subject.type)},body,type:body.type,span:node.span};
+        return {k:'let',name:temporary,value:subject,body,mutable:false,type:body.type,span:node.span,patternControl:{plan,subjectType:subject.type,kind:'tuple-let'}};
+      }
+      if(node.k==='routerLetElse') {
+        env=this.contextEnvironment(node,env,expected);
+        if(!diverges(node.else))throw unsupported('let-else divergence','the failure block must have a checked unconditional return, break or continue',node.else.span??node.span);
+        if(containsExit(node.subject))throw unsupported('let-else subject control','nonlocal exits cannot be emitted through a subject value',node.subject.span);
+        const subject=this.expr(node.subject,env,path);
+        this.patternDomain(subject.type,node.span);
+        const pattern=this.patternOwner(node.pattern,subject.type,path,env);
+        const plan=planPattern(pattern,subject.type,{declarations:this.items,resolveType:type=>this.resolveType(type,path,node.span),span:node.span});
+        const sharedCopy=plan.bindings.some(binding=>!scalar(binding.type))?sharedJsonLetElse(node,subject.type,plan,this,path,node.span):null;
+        for(const binding of plan.bindings)if(!scalar(binding.type)&&!sharedCopy)throw unsupported('let-else aggregate binding','requires immutable scalars or one checked canonical Option shared JSON payload',binding.span??node.span);
+        let temporary;do{temporary=this.freshName('ml_pattern_');}while(env.has(temporary));
+        const variable={k:'var',name:temporary,type:subject.type,span:node.span};
+        const otherwise=this.expr(node.else,new Map(env),path,UNIT);
+        if(!sameType(otherwise.type,UNIT))throw typeError('let-else failure block must be a diverging statement block',node.span);
+        let inner=new Map(env);
+        for(const binding of plan.bindings)inner=this.bindingEnvironment(inner,binding.name,binding.type,false);
+        let body=this.expr(node.body,inner,path,expected,allowLiteral);
+        body=plan.bindings.reduceRight((body,binding)=>({k:'let',name:binding.name,value:this.patternProjection(variable,binding.projection,binding.type,plan.projectionPaths),body,mutable:false,type:body.type,span:binding.span??node.span}),body);
+        let condition=this.patternTest(plan.test,variable,plan.projectionPaths);
+        if(subject.type.kind==='data')condition={k:'binary',op:'and',left:{k:'routerPatternImmutable',object:variable,type:BOOL,...(sharedCopy?{borrowedAggregate:true}:{})},right:condition,type:BOOL};
+        const conditional={k:'routerIf',cond:condition,then:{k:'unit',type:UNIT},else:otherwise,body,type:body.type,span:node.span};
+        if(sharedCopy)requireOriginalStandardCall(this,node);
+        return {k:'let',name:temporary,value:subject,body:conditional,mutable:false,type:body.type,span:node.span,patternControl:{plan,subjectType:subject.type,kind:'let-else',divergence:'checked-exit',...(sharedCopy?{sharedCopy}:{})}};
+      }
+      if(node.k==='let'&&node.type?.patternOwnershipRefusal) {
+        env=this.contextEnvironment(node,env,expected);
+        if(containsExit(node.value))throw unsupported('control in binding value','nonlocal exits require statement lowering',node.value.span);
+        const declared=this.resolveType(node.type,path,node.span);
+        const value=coerce(this.expr(node.value,env,path,declared),declared,this.language,node.span);
+        if(node.mutable&&!scalar(value.type))throw unsupported('mutable aggregate','aggregate ownership needs a separate contract',node.span);
+        const retained={...value,type:{...value.type,patternOwnershipRefusal:declared.patternOwnershipRefusal}};
+        const body=this.expr(node.body,this.bindingEnvironment(env,node.name,retained.type,node.mutable??false),path,expected,allowLiteral);
+        return {k:'let',name:node.name,value:retained,body,mutable:node.mutable??false,type:body.type,span:node.span};
+      }
+      if(['if','routerIf'].includes(node.k)&&node.cond?.k==='routerLetChainCondition')return this.#checkedLetChain(node,env,path,expected,allowLiteral);
+      if(!['if','routerIf'].includes(node.k)||node.cond?.k!=='routerPatternCondition') {
+        const value=super.expr(node,env,path,expected,allowLiteral);
+        if(value.type.kind==='string'&&(node.k==='toString'||node.k==='routerStringOperation'&&['to_ascii_lowercase','to_ascii_uppercase'].includes(node.op)))return {...value,type:{...value.type,patternOwnershipRefusal:'owned String conversion'}};
+        return value;
+      }
+      env=this.contextEnvironment(node,env,expected);
+      if(containsExit(node.cond.subject))throw unsupported('if-let subject control','a nonlocal exit cannot be emitted through a subject value expression',node.cond.subject.span);
+      const subject=this.expr(node.cond.subject,env,path);
+      this.patternDomain(subject.type,node.span);
+      const pattern=this.patternOwner(node.cond.pattern,subject.type,path,env);
+      const plan=planPattern(pattern,subject.type,{declarations:this.items,resolveType:type=>this.resolveType(type,path,node.span),span:node.span});
+      for(const binding of plan.bindings)if(!immutableBinding(binding.type,this))throw unsupported('if-let aggregate binding','requires immutable scalar/shared-reference or actual standard Copy algebraic bindings',binding.span??node.span);
+      let temporary;do{temporary=this.freshName('ml_pattern_');}while(env.has(temporary));
+      const variable={k:'var',name:temporary,type:subject.type,span:node.span};
+      let inner=new Map(env);
+      for(const binding of plan.bindings)inner=this.bindingEnvironment(inner,binding.name,binding.type,false);
+      const statement=node.k==='routerIf';
+      let then=this.expr(node.then,inner,path,statement?UNIT:expected,allowLiteral);
+      let otherwise=this.expr(node.else,new Map(env),path,statement?UNIT:then.type.kind==='literal'?expected:then.type,allowLiteral);
+      if(then.type.kind==='literal')then=this.expr(node.then,inner,path,otherwise.type.kind==='literal'?this.defaultNumber():otherwise.type);
+      if(otherwise.type.kind==='literal')otherwise=this.expr(node.else,new Map(env),path,then.type);
+      const resultType=statement?UNIT:expected??then.type;
+      then=coerce(then,resultType,this.language,node.span);otherwise=coerce(otherwise,resultType,this.language,node.span);
+      then=plan.bindings.reduceRight((body,binding)=>({k:'let',name:binding.name,value:this.patternProjection(variable,binding.projection,binding.type,plan.projectionPaths),body,mutable:false,type:body.type,span:binding.span??node.span}),then);
+      let condition=this.patternTest(plan.test,variable,plan.projectionPaths);
+      if(subject.type.kind==='data')condition={k:'binary',op:'and',left:{k:'routerPatternImmutable',object:variable,type:BOOL,borrowedAggregate:this.sharedPatternView(subject.type)},right:condition,type:BOOL};
+      const conditional={k:node.k,cond:condition,then,else:otherwise,type:resultType,span:node.span};
+      if(statement){conditional.body=this.expr(node.body,env,path,expected,allowLiteral);conditional.type=conditional.body.type;}
+      return {k:'let',name:temporary,value:subject,body:conditional,mutable:false,type:conditional.type,span:node.span,patternControl:{plan,subjectType:subject.type,...(node.cond.sourceWhileLet?{kind:'while-let',sourceCondition:structuredClone(node.cond.sourceWhileLet)}:{})}};
+    }
+  });
+  if(__routerOriginalBirth286_PatternControlChecker===undefined)__routerOriginalBirth286_PatternControlChecker=[__routerOriginalReturned286_PatternControlChecker,__routerOriginalReturned286_PatternControlChecker.prototype,Base,[["constructor",__routerOriginalReturned286_PatternControlChecker],["bindingConstructorEnvironment",__routerOriginalReturned286_PatternControlChecker.prototype["bindingConstructorEnvironment"]],["resolveType",__routerOriginalReturned286_PatternControlChecker.prototype["resolveType"]],["patternOwner",__routerOriginalReturned286_PatternControlChecker.prototype["patternOwner"]],["patternDomain",__routerOriginalReturned286_PatternControlChecker.prototype["patternDomain"]],["sharedPatternView",__routerOriginalReturned286_PatternControlChecker.prototype["sharedPatternView"]],["patternProjection",__routerOriginalReturned286_PatternControlChecker.prototype["patternProjection"]],["patternTest",__routerOriginalReturned286_PatternControlChecker.prototype["patternTest"]],["patternLambda",__routerOriginalReturned286_PatternControlChecker.prototype["patternLambda"]],["expr",__routerOriginalReturned286_PatternControlChecker.prototype["expr"]]]];
+  return __routerOriginalReturned286_PatternControlChecker;
+}
+export function withPatternControlEmitter(Base=ControlEmitter) {
+  return class extends Base {
+    constructor(program,state) {
+      super(program,state);state.reserved.add('ml_pattern_immutable').add('ml_pattern_immutable_view');
+    }
+    fn(entry) {
+      const previous=this.patternFunction,previousView=this.patternViewFunction;
+      const contains=node=>node&&typeof node==='object'&&(node.patternControl||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(contains):contains(value))));
+      this.patternFunction=Boolean(contains(entry.body));
+      const view=node=>node&&typeof node==='object'&&(node.k==='routerPatternImmutable'&&node.borrowedAggregate||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(view):view(value))));
+      this.patternViewFunction=Boolean(view(entry.body));
+      try{return super.fn(entry);}finally{this.patternFunction=previous;this.patternViewFunction=previousView;}
+    }
+    patternParameterGuards(param) {
+      if(!this.patternFunction||param.type.kind!=='data')return [];
+      // An unrelated shared aggregate parameter is a borrowed view even when
+      // this function destructures a different, by-value Copy tuple. Its
+      // legitimate immutable arrays do not become a Rust Copy receiver.
+      if(this.patternViewFunction||param.type.rustReference?.kind==='shared'){
+        this.patternViewImmutability=true;return [`ml_pattern_immutable_view(${param.name});`];
+      }
+      this.patternImmutability=true;
+      return [`ml_pattern_immutable(${param.name});`];
+    }
+    parameterGuard(param) {
+      return [...this.patternParameterGuards(param),...super.parameterGuard(param)];
+    }
+    file() {
+      const result=super.file();
+      const dependencies=[];
+      if(this.patternImmutability)dependencies.push(`import { assertImmutableCopy as ml_pattern_immutable } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'copy-runtime.mjs'))};`);
+      if(this.patternViewImmutability)dependencies.push(`import { assertImmutableIterator as ml_pattern_immutable_view } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'iterator-runtime.mjs'))};`);
+      const fresh=dependencies.filter(dependency=>!result.preludes.includes(dependency));
+      return {...result,preludes:[...fresh,...result.preludes],text:[...fresh,result.text].join('\n')};
+    }
+    statements(node,unit=false) {
+      if(node.patternControl?.kind==='while-let')requireSourceWhileLet(node);
+      if(node.patternControl?.kind==='let-chain')requireSourceLetChain(node);
+      if(node.k==='let'&&node.value.k==='routerControlInitializer') {
+        const label=`ml_control_exit_${this.controlLabels=(this.controlLabels??0)+1}`,previous=this.controlValueTarget;
+        this.controlValueTarget={name:node.name,label};
+        let initializer;
+        try{initializer=this.statements(node.value.value);}finally{this.controlValueTarget=previous;}
+        return [`let ${node.name};`,`${label}: {`,...initializer.map(line=>'  '+line),'}',...this.statements(node.body,unit)];
+      }
+      if(node.k==='routerControlInitializer')return this.statements(node.value,unit);
+      if(this.controlValueTarget&&!['let','if','match','routerReturn','routerIf','routerDiscard','routerSet','routerWhile','routerBreak','routerContinue'].includes(node.k)) {
+        return [`${this.controlValueTarget.name} = ${this.expr(node)};`,`break ${this.controlValueTarget.label};`];
+      }
+      return super.statements(node,unit);
+    }
+    expr(node) {
+      // An expression helper may emit its own local statements (for example a
+      // guarded match subject). It cannot jump to a surrounding Rust join.
+      const previous=this.controlValueTarget;this.controlValueTarget=null;
+      try{return this.#patternExpression(node);}finally{this.controlValueTarget=previous;}
+    }
+    // Each applied mixin owns this dispatch. A virtual helper would re-enter
+    // the outer adapter when an already-adapted base delegates to super.expr.
+    #patternExpression(node) {
+      if(node.k==='routerControlInitializer')throw unsupported('return-valued match emission','requires statement lowering; a value IIFE would erase the function return',node.span);
+      if(node.k==='routerPatternImmutable'){if(node.borrowedAggregate){this.patternViewImmutability=true;return `ml_pattern_immutable_view(${this.expr(node.object)})`;}this.patternImmutability=true;return `ml_pattern_immutable(${this.expr(node.object)})`;}
+      if(node.k==='routerPatternTag')return `(${this.expr(node.object)}.$ === ${JSON.stringify(node.ctor)})`;
+      if(node.k==='routerPatternProjection')return `(${this.expr(node.object)})[${JSON.stringify(node.field)}]`;
+      return super.expr(node);
+    }
+  };
+}
+export const PatternControlRustParser=withPatternControlParser();
+export const PatternControlChecker=withPatternControlChecker();
+export const PatternControlEmitter=withPatternControlEmitter();
+export const parseRust=source=>new PatternControlRustParser(tokenizeRust(source)).file();
+export const checkProgram=surface=>new PatternControlChecker(surface.language,surface.externals??[]).program(surface);
+export const emitJavaScript=program=>emitWith(program,PatternControlEmitter);
+
+export function originalClassDefinitionBirths(){return {records:[__routerOriginalBirth286_PatternControlRustParser?[__routerOriginalBirth286_PatternControlRustParser[0],__routerOriginalBirth286_PatternControlRustParser[1],__routerOriginalBirth286_PatternControlRustParser[2],[[__routerOriginalBirth286_PatternControlRustParser[3][0][0],__routerOriginalBirth286_PatternControlRustParser[3][0][1]],[__routerOriginalBirth286_PatternControlRustParser[3][1][0],__routerOriginalBirth286_PatternControlRustParser[3][1][1]],[__routerOriginalBirth286_PatternControlRustParser[3][2][0],__routerOriginalBirth286_PatternControlRustParser[3][2][1]],[__routerOriginalBirth286_PatternControlRustParser[3][3][0],__routerOriginalBirth286_PatternControlRustParser[3][3][1]],[__routerOriginalBirth286_PatternControlRustParser[3][4][0],__routerOriginalBirth286_PatternControlRustParser[3][4][1]],[__routerOriginalBirth286_PatternControlRustParser[3][5][0],__routerOriginalBirth286_PatternControlRustParser[3][5][1]],[__routerOriginalBirth286_PatternControlRustParser[3][6][0],__routerOriginalBirth286_PatternControlRustParser[3][6][1]],[__routerOriginalBirth286_PatternControlRustParser[3][7][0],__routerOriginalBirth286_PatternControlRustParser[3][7][1]],[__routerOriginalBirth286_PatternControlRustParser[3][8][0],__routerOriginalBirth286_PatternControlRustParser[3][8][1]],[__routerOriginalBirth286_PatternControlRustParser[3][9][0],__routerOriginalBirth286_PatternControlRustParser[3][9][1]]]]:null,__routerOriginalBirth286_PatternControlChecker?[__routerOriginalBirth286_PatternControlChecker[0],__routerOriginalBirth286_PatternControlChecker[1],__routerOriginalBirth286_PatternControlChecker[2],[[__routerOriginalBirth286_PatternControlChecker[3][0][0],__routerOriginalBirth286_PatternControlChecker[3][0][1]],[__routerOriginalBirth286_PatternControlChecker[3][1][0],__routerOriginalBirth286_PatternControlChecker[3][1][1]],[__routerOriginalBirth286_PatternControlChecker[3][2][0],__routerOriginalBirth286_PatternControlChecker[3][2][1]],[__routerOriginalBirth286_PatternControlChecker[3][3][0],__routerOriginalBirth286_PatternControlChecker[3][3][1]],[__routerOriginalBirth286_PatternControlChecker[3][4][0],__routerOriginalBirth286_PatternControlChecker[3][4][1]],[__routerOriginalBirth286_PatternControlChecker[3][5][0],__routerOriginalBirth286_PatternControlChecker[3][5][1]],[__routerOriginalBirth286_PatternControlChecker[3][6][0],__routerOriginalBirth286_PatternControlChecker[3][6][1]],[__routerOriginalBirth286_PatternControlChecker[3][7][0],__routerOriginalBirth286_PatternControlChecker[3][7][1]],[__routerOriginalBirth286_PatternControlChecker[3][8][0],__routerOriginalBirth286_PatternControlChecker[3][8][1]],[__routerOriginalBirth286_PatternControlChecker[3][9][0],__routerOriginalBirth286_PatternControlChecker[3][9][1]]]]:null],bindings:[],factoryCalls:[(__routerOriginalFactoryCalls286_PatternControlRustParser===undefined?0:__routerOriginalFactoryCalls286_PatternControlRustParser),(__routerOriginalFactoryCalls286_PatternControlChecker===undefined?0:__routerOriginalFactoryCalls286_PatternControlChecker)]};}

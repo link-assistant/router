@@ -1,0 +1,139 @@
+// GENERATED: node scripts/regenerate-js-first.mjs
+// Independently checked scoped bodies from packages/javascript/native/protocols.mjs; source sha256=b9ace0e7c7cd08872b60cd44bdfc12db0de3c17d2d633a77d4770ead6ad1fff8; IR sha256=54dbf9c83e05c3ebe4c0a69737aa8993279db38342bd7553cd5bf8285a652093.
+// Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
+#[derive(Clone, Copy)]
+pub enum JsPayload<'a> {
+    String(&'a [u16]), Number(f64), Boolean(bool), Null, Undefined,
+    Object(&'a dyn std::any::Any), Function(&'a dyn std::any::Any),
+    BigInt(&'a dyn std::any::Any), Symbol(&'a dyn std::any::Any),
+}
+#[rustfmt::skip]
+impl<'a> JsPayload<'a> {
+    fn strict_primitive(self, other: Self) -> bool {
+        match (self, other) {
+            (Self::String(left), Self::String(right)) => left == right,
+            (Self::Boolean(left), Self::Boolean(right)) => left == right,
+            (Self::Number(left), Self::Number(right)) => left == right,
+            (Self::Null, Self::Null) | (Self::Undefined, Self::Undefined) => true,
+            _ => false,
+        }
+    }
+}
+
+#[rustfmt::skip]
+impl<'a> JsPayload<'a> {
+    fn type_name(self) -> &'static str {
+        match self {
+            Self::String(_) => "string", Self::Number(_) => "number", Self::Boolean(_) => "boolean",
+            Self::Null | Self::Object(_) => "object", Self::Undefined => "undefined",
+            Self::Function(_) => "function", Self::BigInt(_) => "bigint", Self::Symbol(_) => "symbol",
+        }
+    }
+    fn as_utf16(self) -> &'a [u16] { if let Self::String(value) = self { value } else { unreachable!("checked typeof guard") } }
+    fn as_number(self) -> f64 { if let Self::Number(value) = self { value } else { unreachable!("checked number guard") } }
+    fn as_boolean(self) -> bool { if let Self::Boolean(value) = self { value } else { unreachable!("checked typeof guard") } }
+    fn is_finite(self) -> bool { matches!(self, Self::Number(value) if value.is_finite()) }
+    fn is_nan(self) -> bool { matches!(self, Self::Number(value) if value.is_nan()) }
+    fn is_safe_integer(self) -> bool { matches!(self, Self::Number(value) if value.is_finite() && value.fract() == 0.0 && value.abs() <= 9007199254740991.0) }
+    fn same_primitive(self, other: Self) -> bool {
+        match (self, other) {
+            (Self::Number(left), Self::Number(right)) => left == right || left.is_nan() && right.is_nan(),
+            _ => self.strict_primitive(other),
+        }
+    }
+}
+#[rustfmt::skip]
+fn js_payload_trim(value: &[u16]) -> &[u16] {
+    let space = |unit: u16| matches!(unit, 0x0009..=0x000d | 0x0020 | 0x00a0 | 0x1680 | 0x2000..=0x200a | 0x2028 | 0x2029 | 0x202f | 0x205f | 0x3000 | 0xfeff);
+    let mut start = 0; let mut end = value.len();
+    while start < end && space(value[start]) { start += 1; }
+    while end > start && space(value[end-1]) { end -= 1; }
+    &value[start..end]
+}
+#[rustfmt::skip]
+fn js_payload_points(value: &[u16]) -> Vec<u32> {
+    let mut result = Vec::new(); let mut index = 0;
+    while index < value.len() {
+        let high = value[index] as u32; index += 1;
+        if (0xd800..=0xdbff).contains(&high) && index < value.len() && (0xdc00..=0xdfff).contains(&value[index]) {
+            result.push(0x10000 + ((high-0xd800)<<10) + (value[index] as u32-0xdc00)); index += 1;
+        } else { result.push(high); }
+    }
+    result
+}
+#[rustfmt::skip]
+fn js_payload_utf8_length(value: &[u16]) -> f64 {
+    js_payload_points(value).iter().map(|point| if *point <= 0x7f { 1.0 } else if *point <= 0x7ff { 2.0 } else if *point <= 0xffff { 3.0 } else { 4.0 }).sum()
+}
+
+#[derive(Clone, Copy)]
+pub struct JsEntry<'a> { pub key: &'a [u16], pub value: JsPayload<'a> }
+
+#[derive(Clone, Copy)]
+pub enum JsValue<'a> {
+    String(&'a str), Number(f64), Boolean(bool), Undefined,
+    Object, Function, BigInt, Symbol,
+}
+
+#[rustfmt::skip]
+impl<'a> JsValue<'a> {
+    fn type_name(self) -> &'static str {
+        match self {
+            Self::String(_) => "string", Self::Number(_) => "number",
+            Self::Boolean(_) => "boolean", Self::Undefined => "undefined",
+            Self::Object => "object", Self::Function => "function",
+            Self::BigInt => "bigint", Self::Symbol => "symbol",
+        }
+    }
+    fn as_string(self) -> &'a str { if let Self::String(value) = self { value } else { unreachable!("checked typeof guard") } }
+    fn as_number(self) -> f64 { if let Self::Number(value) = self { value } else { unreachable!("checked typeof guard") } }
+    fn as_boolean(self) -> bool { if let Self::Boolean(value) = self { value } else { unreachable!("checked typeof guard") } }
+    fn is_finite(self) -> bool { matches!(self, Self::Number(value) if value.is_finite()) }
+    fn is_nan(self) -> bool { matches!(self, Self::Number(value) if value.is_nan()) }
+    fn is_safe_integer(self) -> bool {
+        matches!(self, Self::Number(value) if value.is_finite() && value.fract() == 0.0 && value.abs() <= 9007199254740991.0)
+    }
+    fn same_primitive(self, other: Self) -> bool {
+        match (self, other) {
+            (Self::String(left), Self::String(right)) => left == right,
+            (Self::Boolean(left), Self::Boolean(right)) => left == right,
+            (Self::Number(left), Self::Number(right)) => left == right || left.is_nan() && right.is_nan(),
+            _ => false,
+        }
+    }
+}
+
+#[rustfmt::skip]
+fn js_safe_integer(value: f64) -> bool {
+    value.is_finite() && value.fract() == 0.0 && value.abs() <= 9007199254740991.0
+}
+
+#[derive(Clone, Copy, PartialEq)]
+pub struct JsNull;
+#[derive(Clone, Copy, PartialEq)]
+pub struct JsUndefined;
+#[derive(Clone, Copy, PartialEq)]
+pub enum JsNullable<T> { Null, Value(T) }
+#[derive(Clone, Copy, PartialEq)]
+pub enum JsOptional<T> { Undefined, Value(T) }
+
+#[rustfmt::skip]
+fn scoped_src4f369c860effa56f_at11662<'a>(value: JsPayload<'a>) -> bool {
+    return ((!value.is_safe_integer()) || (value.as_number() < 0.0));
+}
+
+// Conditional private body draft: genuine unchanged producer/callback intrinsics required.
+// Producer lookup stability and original signature full-domain parity are unproved; runtimeParity: false.
+#[rustfmt::skip]
+fn scoped_src4f369c860effa56f_at18036<'a>(scoped_entry_at18037: JsEntry<'a>) -> bool {
+    let value = scoped_entry_at18037.value;
+    return !value.strict_primitive(JsPayload::Undefined);
+}
+
+// Conditional private body draft: genuine unchanged producer/callback intrinsics required.
+// Producer lookup stability and original signature full-domain parity are unproved; runtimeParity: false.
+#[rustfmt::skip]
+fn scoped_src4f369c860effa56f_at18303<'a>(scoped_entry_at18304: JsEntry<'a>) -> bool {
+    let value = scoped_entry_at18304.value;
+    return !value.strict_primitive(JsPayload::Undefined);
+}

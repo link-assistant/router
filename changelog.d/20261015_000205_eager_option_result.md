@@ -1,0 +1,4 @@
+### Changed
+
+- Add an explicitly unverified language-rule draft for the complete pinned core `Option::ok_or` body. Genuine canonical Option/Result layouts and original caller syntax are checked before ordinary let/match specialization; receiver and eager error bindings are privately retained and freshly reconstructed through serialized meta. Both arguments evaluate once in order, including the unused error for `Some`.
+- Add whole JavaScript/strict-TypeScript source tests for original ActivityPub `require_string` and dependent `validate_activity`, scalar/borrowed-string boundaries, eager effects and errors, custom owners and copied/mutated proofs. Independent Rust edge source is added for gated CI only. No tests or Rust tools have been run for this draft, no generated outputs are edited, and no executable gain or complete parity is claimed.

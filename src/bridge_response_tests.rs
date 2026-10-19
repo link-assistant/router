@@ -339,3 +339,118 @@ fn service_tier_maps_on_buffered_and_streamed_response_shapes() {
     assert_eq!(chat["usage"]["cache_read_input_tokens"], 3);
     assert_eq!(chat["usage"]["service_tier"], "standard");
 }
+
+#[test]
+fn source_translation_stop_edges_share_independent_semantic_expectations() {
+    let cases: Vec<Value> = serde_json::from_str(include_str!(
+        "../parity/fixtures/translation/bridge-stop-edge-cases.json"
+    ))
+    .expect("valid shared stop edge fixtures");
+    assert_eq!(cases.len(), 12);
+    for case in cases {
+        let actual = crate::bridge_response::stop_semantics(case["reason"].as_str());
+        assert_eq!(
+            Some(actual.chat_finish_reason),
+            case["chat_finish_reason"].as_str()
+        );
+        assert_eq!(Some(actual.response_status), case["response_status"].as_str());
+        assert_eq!(actual.incomplete_reason, case["incomplete_reason"].as_str());
+        assert_eq!(Some(actual.refusal), case["refusal"].as_bool());
+    }
+}
+
+#[test]
+fn usage_defaults_and_malformed_updates_preserve_prior_valid_fields() {
+    use crate::bridge_response::AnthropicUsage;
+
+    let mut usage = AnthropicUsage::from_value(None);
+    assert_eq!(usage, AnthropicUsage::default());
+    assert_eq!(usage.chat()["total_tokens"], 0);
+    assert!(usage.responses().get("server_tool_use").is_none());
+    usage.absorb(Some(&json!({
+        "input_tokens": 5, "cache_creation_input_tokens": 7,
+        "cache_read_input_tokens": 11, "output_tokens": 3,
+        "service_tier": "priority", "server_tool_use": {"web_search_requests": 2}
+    })));
+    usage.absorb(None);
+    usage.absorb(Some(&Value::Null));
+    usage.absorb(Some(&json!({
+        "input_tokens": -1, "cache_creation_input_tokens": "99",
+        "cache_read_input_tokens": 1.5, "output_tokens": null, "service_tier": false
+    })));
+    assert_eq!(usage.total_input(), 23);
+    assert_eq!(usage.chat()["total_tokens"], 26);
+    assert_eq!(usage.openai_service_tier(), Some("priority"));
+    assert_eq!(
+        usage.responses()["server_tool_use"],
+        json!({"web_search_requests": 2})
+    );
+    usage.absorb(Some(&json!({
+        "input_tokens": 0, "output_tokens": 0, "server_tool_use": null
+    })));
+    assert_eq!(usage.total_input(), 18);
+    assert_eq!(usage.chat()["completion_tokens"], 0);
+    assert_eq!(usage.responses().get("server_tool_use"), Some(&Value::Null));
+}
+
+#[test]
+fn usage_totals_saturate_and_reverse_cache_never_exceeds_input() {
+    use crate::bridge_response::{AnthropicUsage, openai_usage_to_anthropic};
+
+    let usage = AnthropicUsage::from_value(Some(&json!({
+        "input_tokens": u64::MAX, "cache_creation_input_tokens": 1,
+        "cache_read_input_tokens": u64::MAX, "output_tokens": u64::MAX
+    })));
+    assert_eq!(usage.total_input(), u64::MAX);
+    assert_eq!(usage.chat()["total_tokens"].as_u64(), Some(u64::MAX));
+    assert_eq!(usage.responses()["total_tokens"].as_u64(), Some(u64::MAX));
+    let reversed = openai_usage_to_anthropic(Some(&json!({
+        "input_tokens": 2, "prompt_tokens": 99, "output_tokens": 0,
+        "completion_tokens": 9, "input_tokens_details": {"cached_tokens": u64::MAX}
+    })));
+    assert_eq!(reversed, json!({
+        "input_tokens": 0, "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2, "output_tokens": 0
+    }));
+}
+
+#[test]
+fn citation_offsets_count_unicode_scalars_and_repeated_matches_advance() {
+    let content = json!([{"type": "text", "text": "😀e\u{301}🦀e\u{301}", "citations": [
+        {
+            "type": "web_search_result_location", "url": "https://example.test/a",
+            "cited_text": "e\u{301}"
+        },
+        {
+            "type": "web_search_result_location", "url": "https://example.test/b",
+            "cited_text": "e\u{301}"
+        }
+    ]}]);
+    let (text, annotations) =
+        crate::bridge_response::anthropic_text_and_annotations(Some(&content));
+    assert_eq!(text, "😀e\u{301}🦀e\u{301}");
+    assert_eq!(annotations.len(), 2);
+    assert_eq!(annotations[0]["start_index"], 1);
+    assert_eq!(annotations[0]["end_index"], 3);
+    assert_eq!(annotations[1]["start_index"], 4);
+    assert_eq!(annotations[1]["end_index"], 6);
+}
+
+#[test]
+fn optional_json_service_tier_uses_actual_bridge_function() {
+    use crate::bridge_response::anthropic_service_tier_from_openai;
+    assert_eq!(anthropic_service_tier_from_openai(None), None);
+    for (value, expected) in [
+        (json!("default"), Some("standard")),
+        (json!("auto"), Some("standard")),
+        (json!("priority"), Some("priority")),
+        (json!("unknown"), None),
+        (json!(null), None),
+        (json!(true), None),
+        (json!(0), None),
+        (json!([]), None),
+        (json!({}), None),
+    ] {
+        assert_eq!(anthropic_service_tier_from_openai(Some(&value)), expected);
+    }
+}

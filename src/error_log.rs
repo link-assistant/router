@@ -35,7 +35,7 @@ impl ErrorLog {
 
     /// Enable capture only for a nonempty `ERROR_LOG_DIR`.
     #[must_use]
-    pub fn from_env() -> Option<Arc<Self>> {
+    pub fn from_env() -> crate::translation_core::Maybe<Arc<Self>> {
         let root = crate::operation_context::var_os("ERROR_LOG_DIR").filter(|v| !v.is_empty())?;
         let max_bytes = crate::operation_context::var("ERROR_LOG_MAX_BYTES")
             .ok()
@@ -45,7 +45,7 @@ impl ErrorLog {
     }
 
     /// Enumerate only Router-owned regular files, oldest first.
-    pub fn list(&self) -> io::Result<Vec<Value>> {
+    pub fn list(&self) -> io::Result<Vec<crate::translation_core::Json>> {
         let _guard = self
             .generation
             .lock()
@@ -59,7 +59,7 @@ impl ErrorLog {
     }
 
     /// Read a named capture without accepting paths or symlinks.
-    pub fn read(&self, name: &str) -> io::Result<Vec<u8>> {
+    pub fn read(&self, name: &crate::translation_core::Str) -> io::Result<Vec<u8>> {
         let _guard = self
             .generation
             .lock()
@@ -170,7 +170,7 @@ impl ErrorLog {
     /// Tee an error stream without eager reads, extra requests, or response changes.
     pub(crate) fn wrap(
         self: &Arc<Self>,
-        id: &str,
+        id: &crate::translation_core::Str,
         response: reqwest::Response,
     ) -> reqwest::Response {
         if !response.status().is_client_error() && !response.status().is_server_error() {
@@ -251,7 +251,7 @@ impl Drop for Capture {
     }
 }
 
-fn valid_name(name: &str) -> bool {
+fn valid_name(name: &crate::translation_core::Str) -> bool {
     name.strip_prefix("error-")
         .and_then(|v| v.strip_suffix(".json"))
         .and_then(|v| v.split_once('-'))

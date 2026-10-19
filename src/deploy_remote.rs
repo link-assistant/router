@@ -61,7 +61,7 @@ enum RemoteMode {
 }
 
 impl RemoteMode {
-    const fn as_str(self) -> &'static str {
+    const fn as_str(self) -> &'static crate::translation_core::Str {
         match self {
             Self::Deploy => "deploy",
             Self::Status => "status",
@@ -70,7 +70,7 @@ impl RemoteMode {
     }
 }
 
-fn mode(args: &DeployArgs) -> Result<RemoteMode, String> {
+fn mode(args: &DeployArgs) -> crate::translation_core::Outcome<RemoteMode, String> {
     if args.down {
         if !args.yes {
             return Err(
@@ -92,11 +92,11 @@ fn default_image() -> String {
     )
 }
 
-fn shell_quote(value: &str) -> String {
+fn shell_quote(value: &crate::translation_core::Str) -> String {
     format!("'{}'", value.replace('\'', "'\"'\"'"))
 }
 
-fn public_name(target: &str) -> String {
+fn public_name(target: &crate::translation_core::Str) -> String {
     let target = target.strip_prefix("ssh://").unwrap_or(target);
     let host = target.rsplit_once('@').map_or(target, |(_, host)| host);
     if let Some(host) = host
@@ -142,7 +142,7 @@ fn remote_command(arguments: &[String], with_payload: bool) -> String {
     command
 }
 
-fn agent_arguments(args: &DeployArgs, mode: RemoteMode, cookie: &str) -> Vec<String> {
+fn agent_arguments(args: &DeployArgs, mode: RemoteMode, cookie: &crate::translation_core::Str) -> Vec<String> {
     let (build_mode, build_value) = args.build.as_ref().map_or_else(
         || {
             if args.image.is_some() {
@@ -168,7 +168,7 @@ fn agent_arguments(args: &DeployArgs, mode: RemoteMode, cookie: &str) -> Vec<Str
     ]
 }
 
-fn mapped_exit_code(code: Option<i32>) -> ExitCode {
+fn mapped_exit_code(code: crate::translation_core::Maybe<i32>) -> ExitCode {
     match code {
         Some(0) => ExitCode::SUCCESS,
         Some(255) | None => ExitCode::from(TRANSPORT_EXIT),
@@ -181,7 +181,7 @@ fn mapped_exit(status: std::process::ExitStatus) -> ExitCode {
     mapped_exit_code(status.code())
 }
 
-const fn transported_secret(mode: RemoteMode, token_secret: &str) -> &str {
+const fn transported_secret(mode: RemoteMode, token_secret: &crate::translation_core::Str) -> &crate::translation_core::Str {
     if matches!(mode, RemoteMode::Deploy) {
         token_secret
     } else {
@@ -189,7 +189,7 @@ const fn transported_secret(mode: RemoteMode, token_secret: &str) -> &str {
     }
 }
 
-fn validate(args: &DeployArgs, mode: RemoteMode) -> Result<(), String> {
+fn validate(args: &DeployArgs, mode: RemoteMode) -> crate::translation_core::Outcome<(), String> {
     let target = args
         .server
         .as_deref()
@@ -228,9 +228,9 @@ struct Prepared {
 fn prepare(
     args: &DeployArgs,
     mode: RemoteMode,
-    token_secret: &str,
+    token_secret: &crate::translation_core::Str,
     merged: &Merged,
-) -> Result<Prepared, String> {
+) -> crate::translation_core::Outcome<Prepared, String> {
     // Only a deploy reads values: `--status` and `--down` must work even
     // when a variable the deploy passes through is unset here.
     let values = if mode == RemoteMode::Deploy {
@@ -265,7 +265,7 @@ fn prepare(
 
 /// Run the target-side deployment agent and preserve transport/lease identity.
 #[allow(clippy::too_many_lines)]
-fn run_with_ssh(args: &DeployArgs, token_secret: &str, ssh: &OsStr, merged: &Merged) -> ExitCode {
+fn run_with_ssh(args: &DeployArgs, token_secret: &crate::translation_core::Str, ssh: &OsStr, merged: &Merged) -> ExitCode {
     let mode = match mode(args).and_then(|mode| {
         validate(args, mode)?;
         Ok(mode)
@@ -448,7 +448,7 @@ fn exit_number(code: ExitCode) -> u8 {
 
 /// Run the target-side deployment agent and preserve transport/lease identity.
 #[must_use]
-pub fn run(args: &DeployArgs, token_secret: &str, merged: &Merged) -> ExitCode {
+pub fn run(args: &DeployArgs, token_secret: &crate::translation_core::Str, merged: &Merged) -> ExitCode {
     run_with_ssh(args, token_secret, OsStr::new("ssh"), merged)
 }
 

@@ -1,0 +1,1 @@
+Preserve sized-array snapshots when checked guarded match and shared receiver emission compose with the array emitter; verify both emitted JavaScript and strict-compiled TypeScript outcomes and immutable output boundaries.

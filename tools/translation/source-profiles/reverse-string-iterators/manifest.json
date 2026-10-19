@@ -1,0 +1,53 @@
+{
+  "profile": "rust-1.89-reverse-scalar-character-split",
+  "rust": "1.89.0",
+  "constEligible": false,
+  "sources": [
+    {
+      "file": "core-double-ended.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/iter/traits/double_ended.rs",
+      "bytes": 14668,
+      "sha256": "ef0e09aba6af7a799527719edf9856dabd623490fd04a963a748faa360d792e1",
+      "compressedSha256": "2d510cac672407ee20244b439a2c0cddba40b540c674419c683e612e37bca4a9",
+      "lines": [
+        356,
+        370
+      ]
+    },
+    {
+      "file": "core-map.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/iter/adapters/map.rs",
+      "bytes": 6839,
+      "sha256": "2a9cb86b5110b292f271ec1cd8904a9bad27f8d553af0141837f41e753fe83d3",
+      "compressedSha256": "26711a590b05efc5a433c152d434fa0f8350171bad728bd3976b9452597348b2",
+      "lines": [
+        143,
+        159
+      ]
+    },
+    {
+      "file": "../csv-strings/core-pattern.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/str/pattern.rs",
+      "bytes": 72547,
+      "sha256": "22d0e4e3e51a3a55dfaf16a5559117899bbeb4a53dc8ed8b6837b38dd4cf518a",
+      "compressedSha256": "529f33f71c3c16546d25ee78ddbcb13a87b8349f0e470895bd8be3897898e0e6",
+      "lines": [
+        552,
+        553
+      ]
+    },
+    {
+      "file": "../utf16-fixed-f64/core-str-iter.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/str/iter.rs",
+      "bytes": 48918,
+      "sha256": "07f8dd0655c57a3da5b620fae00ba06b2957d17d119a870253b762b9e51e7122",
+      "compressedSha256": "39ce57a49956bc3ff6edf3008da87050e92a957e4c38f4d59ac182cf720a5665",
+      "lines": [
+        585,
+        604,
+        698,
+        732
+      ]
+    }
+  ]
+}

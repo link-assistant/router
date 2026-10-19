@@ -1,0 +1,65 @@
+{
+  "schema": "retained-focus-evidence-v1",
+  "status": "FOCUSED_PASS_NOT_FULL_GATE",
+  "pack": "cycle-8-core.tar.gz",
+  "bytes": 9639,
+  "sha256": "7a68891ccf62ca3c150becac53fbc8ad4033e28d78731850c2cc0be30c8ebdc7",
+  "members": [
+    {
+      "path": "router-759-cycle-8-core-source-cohort.json",
+      "bytes": 2260,
+      "sha256": "039fd445c0f1bf610e1f0ad1ff1c82adf89d844de767f4ed1f43c79821e03f73"
+    },
+    {
+      "path": "router-759-cycle8-core-complete-focus-receipt.json",
+      "bytes": 8519,
+      "sha256": "b9938087dd606447b953b5950659724f49aaf913cf74263225f92f671a000241"
+    },
+    {
+      "path": "router-759-cycle8-core-focused-bun.log",
+      "bytes": 9575,
+      "sha256": "a22ab8f8cc5b3c417b0734276d1533ad427257031cbd01aeba12aaec2325df45"
+    },
+    {
+      "path": "router-759-cycle8-core-focused-node.log",
+      "bytes": 15977,
+      "sha256": "daeeec289d00db9500571e4960e4f4a12302edcdc8856b09838e85d440fa4635"
+    },
+    {
+      "path": "router-759-cycle8-core-focused.json",
+      "bytes": 2203,
+      "sha256": "ea79f5a636d2c240ae7256f6e6c764db1aece8a5a98c9aa83e8bae3c16827043"
+    },
+    {
+      "path": "router-759-cycle8-core-repeat-corrected-bun.log",
+      "bytes": 1507,
+      "sha256": "df4212330094696bb3bb02a0f1e074e6c276ad5799b75601742822b2b1f8fe3c"
+    },
+    {
+      "path": "router-759-cycle8-core-repeat-corrected-node.log",
+      "bytes": 2912,
+      "sha256": "4e5b37b48301f7b5776e8bef9720a5f94fa2453b837e1ecfe2746d9967f2fb1e"
+    },
+    {
+      "path": "router-759-cycle8-core-repeat-corrected.json",
+      "bytes": 1392,
+      "sha256": "b2aa02c9c6791237fbb78221327de77f757d55e27cf4db6ef20f0aff57d85869"
+    },
+    {
+      "path": "router-759-cycle8-core-repeat-focused-bun.log",
+      "bytes": 2831,
+      "sha256": "88b2ba88cb2ef1b33b46195a6302a70d439aa607a83a8b63c552a731a5e649c3"
+    },
+    {
+      "path": "router-759-cycle8-core-repeat-focused-node.log",
+      "bytes": 3812,
+      "sha256": "1ccdf7be94357e3ff2bb5ddd47b9e7468aeeacf98f55335afab23a2b713d11e1"
+    },
+    {
+      "path": "router-759-cycle8-core-repeat-focused.json",
+      "bytes": 1517,
+      "sha256": "052533c445ff771bfe1fa498da6163c5f8007fb9d1f70c385ec483c5587a0806"
+    }
+  ],
+  "receiptSha256": "b9938087dd606447b953b5950659724f49aaf913cf74263225f92f671a000241"
+}

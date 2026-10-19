@@ -1,0 +1,86 @@
+{
+  "total_count": 3,
+  "jobs": [
+    {
+      "id": 113319155368,
+      "run_id": 37779626187,
+      "workflow_name": "Issue 1028 Agent CLI binary-tree ladder",
+      "head_branch": "qa-reasoning-coding-bulk-fixes",
+      "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37779626187",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSbOoU88AAAAaYlkWqA",
+      "head_sha": "a48ae5720e679b568fa5906b2403c61688739522",
+      "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/113319155368",
+      "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37779626187/job/113319155368",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "created_at": "2026-10-08T12:49:20Z",
+      "started_at": "2026-10-08T12:49:20Z",
+      "completed_at": "2026-10-08T12:52:58Z",
+      "name": "Plan the Agent CLI ladder",
+      "steps": [],
+      "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/113319155368",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 0,
+      "runner_name": "",
+      "runner_group_id": 0,
+      "runner_group_name": ""
+    },
+    {
+      "id": 113320666415,
+      "run_id": 37779626187,
+      "workflow_name": "Issue 1028 Agent CLI binary-tree ladder",
+      "head_branch": "qa-reasoning-coding-bulk-fixes",
+      "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37779626187",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSbOoU88AAAAaYnAlLw",
+      "head_sha": "a48ae5720e679b568fa5906b2403c61688739522",
+      "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/113320666415",
+      "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37779626187/job/113320666415",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "created_at": "2026-10-08T12:52:59Z",
+      "started_at": "2026-10-08T12:52:59Z",
+      "completed_at": "2026-10-08T12:52:58Z",
+      "name": "Agent CLI ladder ${{ (matrix.leg.filter || 'tree') }}",
+      "steps": [],
+      "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/113320666415",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": null,
+      "runner_name": null,
+      "runner_group_id": null,
+      "runner_group_name": null
+    },
+    {
+      "id": 113320668081,
+      "run_id": 37779626187,
+      "workflow_name": "Issue 1028 Agent CLI binary-tree ladder",
+      "head_branch": "qa-reasoning-coding-bulk-fixes",
+      "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37779626187",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSbOoU88AAAAaYnArsQ",
+      "head_sha": "a48ae5720e679b568fa5906b2403c61688739522",
+      "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/113320668081",
+      "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37779626187/job/113320668081",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "created_at": "2026-10-08T12:52:59Z",
+      "started_at": "2026-10-08T12:52:59Z",
+      "completed_at": "2026-10-08T12:52:58Z",
+      "name": "Compare the measured ladder with the record",
+      "steps": [],
+      "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/113320668081",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": null,
+      "runner_name": null,
+      "runner_group_id": null,
+      "runner_group_name": null
+    }
+  ]
+}

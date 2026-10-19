@@ -1,0 +1,86 @@
+{
+  "schema": "original-primitive-bool-from-source-v1",
+  "rust": "1.89.0",
+  "sources": [
+    {
+      "path": "library/core/src/convert/num.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/convert/num.rs",
+      "file": "library-core-src-convert-num.rs.gz",
+      "bytes": 25540,
+      "sha256": "270e0801e5e23cba89fec51eed416be60743034a6f02c5fe64be2e8f2e8ca958",
+      "gitBlobSha": "50616732b777628c25fc28e476bb89676b65bfad",
+      "compressedBytes": 4150,
+      "compressedSha256": "932c8683b17f39d4e2a47b3ea7ed7635eb7f98a2c760e7de8935f5b9924c1cef"
+    },
+    {
+      "path": "library/core/src/convert/mod.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/convert/mod.rs",
+      "file": "../json-macro/standard/library-core-src-convert-mod.rs.gz",
+      "bytes": 34637,
+      "sha256": "0b05be0bc9c7d92d788abd6817d648b4479ed6e29ffe24cfd6879e09ee9fbdab",
+      "gitBlobSha": "7132e712ec52f189f38be3a67a9482418e2724bd",
+      "compressedBytes": 9450,
+      "compressedSha256": "2fcdfa9f977fe3ac1f2657e8bc047934d41d227445641e89999e97cbbacbade9",
+      "reusedOriginalOwnHeadPin": true
+    },
+    {
+      "path": "library/core/src/prelude/v1.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/prelude/v1.rs",
+      "file": "../json-macro/standard/library-core-src-prelude-v1.rs.gz",
+      "bytes": 3914,
+      "sha256": "2bcd2c3059bfaf026bba86f44dd9698371cedd416e1e60eab02218fa1b8b3349",
+      "gitBlobSha": "8f1b5275871e6b5b0a94b8174593d801f6988c22",
+      "compressedBytes": 1141,
+      "compressedSha256": "34630a30100fccf3fdba54db4560b1ba5e2cb722b74ebd9a662e4397b06d2eb9",
+      "reusedOriginalOwnHeadPin": true
+    },
+    {
+      "path": "library/core/src/prelude/mod.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/prelude/mod.rs",
+      "file": "../json-macro/standard/library-core-src-prelude-mod.rs.gz",
+      "bytes": 2868,
+      "sha256": "3db82d282c4ac980659183842d446e13d28b0bab609f3dc37e2036d9fefceb4c",
+      "gitBlobSha": "8d867a269a21accf5ef1d7f31a3656c6bafbb675",
+      "compressedBytes": 576,
+      "compressedSha256": "f41b433ac9346d277dda41c7cde5d804ea0e67f60dcbe3393571d75810da2de2",
+      "reusedOriginalOwnHeadPin": true
+    },
+    {
+      "path": "library/std/src/prelude/mod.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/std/src/prelude/mod.rs",
+      "file": "../json-macro/standard/library-std-src-prelude-mod.rs.gz",
+      "bytes": 7269,
+      "sha256": "37789af3a1c5be890479f847f0a6831a40d7305f9f865a685bdaabaef1db7618",
+      "gitBlobSha": "5f7097c26e228495da9b01b32dd6d5cd2911cf28",
+      "compressedBytes": 2227,
+      "compressedSha256": "c87bef3e23a727c8ac801086dca648c983d846547fcfca21191471fc96edba71",
+      "reusedOriginalOwnHeadPin": true
+    },
+    {
+      "path": "library/std/src/prelude/v1.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/std/src/prelude/v1.rs",
+      "file": "../json-macro/standard/library-std-src-prelude-v1.rs.gz",
+      "bytes": 4246,
+      "sha256": "8db0d69ae9539ec53440b11c45473271d3c22762f12ecd951d89089aaef0af53",
+      "gitBlobSha": "c15d8c40085a5264a804da83da24a657e7224a3e",
+      "compressedBytes": 1314,
+      "compressedSha256": "6c807ef253a39ccd60bee180988a19328a5723bba9ccfa185faacda29e235658",
+      "reusedOriginalOwnHeadPin": true
+    },
+    {
+      "path": "library/std/src/lib.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/std/src/lib.rs",
+      "file": "../namespace-standard/rust-std-lib-1.89.0.rs.gz",
+      "bytes": 28184,
+      "sha256": "d070a5abc5138536e274e483181db929cc56d7a4b7a1947a11149f92b2cdc1ea",
+      "gitBlobSha": "2bb7a63772d68d99a8ee743a4b694315cb0f79c8",
+      "compressedBytes": 8934,
+      "compressedSha256": "d0216701dd8c129fb80a7c32ddd025de22d1420090a9fc7219384f06eecce065",
+      "reusedOriginalOwnHeadPin": true
+    }
+  ],
+  "licenses": "../fixed-wrapping/LICENSE-MIT.gz and LICENSE-APACHE.gz, unchanged complete original1.89 licenses",
+  "sourceAuthority": false,
+  "runtimeParity": false,
+  "scope": "Only original From<bool> primitive instantiations, non-const trait call and common core/std prelude trait across2015/2018/2021/2024; no caller Cargo edition or whole trait authority"
+}

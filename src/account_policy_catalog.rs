@@ -36,11 +36,11 @@ pub fn project(
                     if id != record.canonical_id {
                         projected.raw.insert(
                             "_router_policy_upstream".into(),
-                            Value::String(record.canonical_id.clone()),
+                            crate::translation_core::Json::String(record.canonical_id.clone()),
                         );
                         projected.raw.insert(
                             "selector_kind".into(),
-                            Value::String("operator_alias".into()),
+                            crate::translation_core::Json::String("operator_alias".into()),
                         );
                     }
                     projected.canonical_id = id;
@@ -52,18 +52,18 @@ pub fn project(
 }
 
 /// Durable grants always refer to the vendor identity, including projected catalogs.
-pub fn native_id(record: &CatalogRecord) -> &str {
+pub fn native_id(record: &CatalogRecord) -> &crate::translation_core::Str {
     record
         .raw
         .get("_router_policy_upstream")
-        .and_then(Value::as_str)
+        .and_then(crate::translation_core::Json::as_str)
         .unwrap_or(&record.canonical_id)
 }
 
 pub fn permitted(
     policy: &crate::model_contract::ModelAccessPolicy,
     provider: SubscriptionProvider,
-    native: &str,
+    native: &crate::translation_core::Str,
 ) -> bool {
     policy.permits(native)
         || (provider == SubscriptionProvider::Gemini

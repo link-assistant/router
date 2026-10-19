@@ -1,0 +1,169 @@
+{
+  "schema": "canonical-and-independent-profile-producer-evidence-v1",
+  "sourceHead": "e0b405361ed24f9eedb035b1dec84a6047e845c1",
+  "pack": "producer-evidence.tar.gz",
+  "packBytes": 323038,
+  "packSha256": "bb02cf87514fa607c4c1e57fe591030edbb5b747b7715dbbac19ee904490957f",
+  "members": [
+    {
+      "path": "canonical-gap-metadata-inputs.json",
+      "bytes": 79956,
+      "sha256": "7847330e878511b737ca69fe18ff4748b5f59cebe6ec19d0d33fa9d58d511882"
+    },
+    {
+      "path": "router-759-census-current-fdee.py",
+      "bytes": 4429,
+      "sha256": "d8f5e7e3db2ae603870306f53b5deaed681cf8b0e23542720d743419789f195b"
+    },
+    {
+      "path": "router-759-census-e0b405361.json",
+      "bytes": 141041,
+      "sha256": "0765f7f2c69826dd9dd622d05750584af877742309fc9ded3caa23c34da07685"
+    },
+    {
+      "path": "router-759-census-last-canonical.py",
+      "bytes": 4447,
+      "sha256": "c1202b4dfc30cd4a61693f97886768fc7777f5c8bd253d56771d4c71865ad410"
+    },
+    {
+      "path": "router-759-census-vs-last-canonical-e0b405361.json",
+      "bytes": 110004,
+      "sha256": "9f5766395499e77e82e32c9d591ee85d2876f0ac745554b9e0f223cac5ae04a8"
+    },
+    {
+      "path": "router-759-compact-historical-evidence.py",
+      "bytes": 3528,
+      "sha256": "d4691c6f4672458c35d93e4a194ba22f5d6be60f5d4ec7ed0e59b7602d12e5bd"
+    },
+    {
+      "path": "router-759-complete-gaps-e0b405361-receipt.json",
+      "bytes": 1210,
+      "sha256": "515056ec73e9ea008d8522387785786fc73d8e083586d6764bc815ce104d2ecf"
+    },
+    {
+      "path": "router-759-current-complete-gaps.py",
+      "bytes": 3000,
+      "sha256": "e1cce0304a4478ec8e0b416b90de2c4ac6eb358d04b07862393377c6ef93fa85"
+    },
+    {
+      "path": "router-759-current-project-losses-e0b405361.json",
+      "bytes": 33011,
+      "sha256": "ed490adfe03ad262c1b4075ad42629dfbbb014e099bd190b56a2c3a99423a56d"
+    },
+    {
+      "path": "router-759-generated-e0b405361-integrity.json",
+      "bytes": 4272,
+      "sha256": "e38a270eecf97e85bbcbeb74c6863fd39e96676d5a57b3a973e9cf8c7f5118d1"
+    },
+    {
+      "path": "router-759-generation-e0b405361-time.log",
+      "bytes": 777,
+      "sha256": "ece7ddb667b81a6e414d890370dada34039287ed86acae5773b32b34a78e8ed9"
+    },
+    {
+      "path": "router-759-generation-e0b405361.json",
+      "bytes": 775,
+      "sha256": "856c008771305fa45670ce95896a45fbd54304fe2fc8dc24b358a2f2868bf4eb"
+    },
+    {
+      "path": "router-759-generation-e0b405361.log",
+      "bytes": 1072,
+      "sha256": "70b70dc0a242649ad7bd8af6f2d8237832ab25da54eff70841c7db65390ad818"
+    },
+    {
+      "path": "router-759-profile-canonical-before-e0b405361.json.gz",
+      "bytes": 122063,
+      "sha256": "16ddf87270c612ca4a25c7cb6b2ca426628e77d4af8fc18d035992a802a39d60"
+    },
+    {
+      "path": "router-759-profile-integrity-e0b405361.json",
+      "bytes": 9307,
+      "sha256": "6e682b31bfdbd8b659b7b014395f6c7d1a18b3bd801d6aeb589278cc08610d45"
+    },
+    {
+      "path": "router-759-profile-integrity.py",
+      "bytes": 4306,
+      "sha256": "d60bf8894e8709a8fbd85a4c629607d0eaae839b142927b4beae92c21e40fdc6"
+    },
+    {
+      "path": "router-759-profile-item-diff-e0b405361.py",
+      "bytes": 3858,
+      "sha256": "5a32369eb420fe2cf0702aa7410c99f46f96f8ecdd15da917d3d871e9858a552"
+    },
+    {
+      "path": "router-759-profile-items-against-neutral-e0b405361.json",
+      "bytes": 729067,
+      "sha256": "8037770801a45dfd3ee8aab4ca6eb5938105bef22c49b1a33954aa8dc4a07d2e"
+    },
+    {
+      "path": "router-759-profile-write-e0b405361-time.log",
+      "bytes": 777,
+      "sha256": "4db8c673a98980c2586f2e63c29d6d45b5a96251083ef0c4331d08cf45942cc1"
+    },
+    {
+      "path": "router-759-profile-write-e0b405361.json",
+      "bytes": 186175,
+      "sha256": "50326a1f55d69fb7d918568efe613995c441347e62fa0c409a972ac5613f1b2d"
+    },
+    {
+      "path": "router-759-profile-write-e0b405361.log",
+      "bytes": 5319,
+      "sha256": "7b7be42773e53d9f1f77f98d7b229f7c490482b69a8fa89993f96dda51e40d81"
+    },
+    {
+      "path": "router-759-timed-producer.py",
+      "bytes": 1976,
+      "sha256": "11afc4930f751d27855414ce324f336bdf0898fe573b595ba1c98f1fd1b3a69b"
+    },
+    {
+      "path": "router-759-timed-profile-producer.py",
+      "bytes": 2823,
+      "sha256": "ece5f45bb238f715f056efa935a4b98aebf95d237d12c3b6b6491f0b72812495"
+    },
+    {
+      "path": "router-759-verify-current-integrity.py",
+      "bytes": 1878,
+      "sha256": "bb7293f52e01f7087d129015735349a417ceabed1ff93746cfd416c257bf3216"
+    }
+  ],
+  "gapConvenienceDataset": {
+    "sourceHead": "e0b405361ed24f9eedb035b1dec84a6047e845c1",
+    "path": "/tmp/router-759-complete-gaps-e0b405361.json.gz",
+    "files": 558,
+    "nonExecutableRows": 18234,
+    "rowStatuses": {
+      "preserved": 9667,
+      "carried": 8567
+    },
+    "decodedBytes": 19579768,
+    "compressedBytes": 3091507,
+    "compressedSha256": "b30d29646d5bd07915221524e3e9852a146f33240cc662bc378f305ecc5ec9c7",
+    "projects": [
+      {
+        "entry": "src/lib.rs",
+        "metadataFile": "tools/translation/projects/src/lib.meta.json",
+        "metadataSha256": "02713b5f6f976e4c36195ef59002033b188d4963f5decca2e141f8681bcd03ce",
+        "refused": 5770,
+        "unloweredItems": 559,
+        "moduleDiagnostics": 1,
+        "bindingDiagnostics": 1718
+      },
+      {
+        "entry": "src/main.rs",
+        "metadataFile": "tools/translation/projects/src/main.meta.json",
+        "metadataSha256": "36d9b74fb309f542b3ba58c9aa987fe9cf7dfcf45d0130435f8310d35724c6b5",
+        "refused": 1,
+        "unloweredItems": 1,
+        "moduleDiagnostics": 0,
+        "bindingDiagnostics": 1
+      }
+    ],
+    "durableSource": "All original per-file and project metadata are generated repository artifacts; raw convenience dataset is temporary pending measured archive capacity."
+  },
+  "lossClassification": "Borrowed str now applies the existing primitive type-namespace uncertainty guard; retain 58 exact first str refusals and one dependent missing TOKEN_PREFIX refusal, all unchanged originals. No restored parser bypass.",
+  "gapReconstruction": "The compressed convenience gap dataset is not duplicated here: run the retained current-complete-gaps.py against the committed canonical artifacts, supplying this sourceHead and the checked-out artifact HEAD. Every per-source metadata hash is retained in canonical-gap-metadata-inputs.json. Exact sourceFile and original item text remain separate.",
+  "runtimeParity": false,
+  "fullSevenStageGate": "pending",
+  "rustExecuted": false,
+  "reopenedMemberErrors": 0
+}

@@ -1,0 +1,4 @@
+### Changed
+
+- Drafted a generic private census of source-written trait methods, associated values/types, exact receiver signatures and every conditional member alternative. It binds the complete original source/view/module/profile and exact item identity, and retains supertrait/generic, attribute-owner, documentation and nested/global output obligations instead of selecting a target or trusting a public digest.
+- Added eight whole source/identity/refusal and JS/strict TypeScript cases, including the complete retained original `RangeBounds` and `PartialOrd` files. A closed own-trait member absence is not caller namespace closure, receiver applicability, method selection, type/Copy authority or runtime admission. Actual floating range membership remains refused pending complete method-scope and source-body proofs. All new cases are UNRUN; no executable or performance gain is claimed.

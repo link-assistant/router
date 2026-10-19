@@ -1,0 +1,224 @@
+// Bounded source patterns reuse the checked planner. Guarded alternatives are
+// separate ordered attempts: a false guard retries the next alternative, even
+// when it belongs to the same source arm. No guard contributes exhaustiveness.
+import {parseOriginalMatchesCandidate} from '../matches-source-bridge.mjs';
+import {planPattern} from '../pattern-bindings.mjs';
+import {BOOL,UNIT,sameType} from '../checked-types.mjs';
+import {checkingStatementMatch} from './control.mjs';
+import {coerce} from '../checked-coercions.mjs';
+import {renameExpr,Scope} from '../vendor/meta-language/translation/ir.js';
+import {typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
+import {containsIntegerRange,proveIntegerCoverage} from './integer-range-patterns.mjs';
+import {originalConstMatchSource} from './const-match-source-context.mjs';
+import {originalPrimitiveCopySource} from '../shared-reference-copy-source.mjs';
+import {checkedOptionNominal} from './option-nominal-proof.mjs';
+const LIMIT=256;
+const exits=node=>node&&typeof node==='object'&&(['routerReturn','routerBreak','routerContinue','routerTry','routerAwait'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(exits):exits(value))));
+const nonReturnExit=node=>node&&typeof node==='object'&&node.k!=='routerLambda'&&(['routerBreak','routerContinue','routerTry','routerAwait'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(nonReturnExit):nonReturnExit(value))));
+const scalar=type=>['fixed','bool','string','unit'].includes(type.kind)&&!type.patternOwnershipRefusal&&!type.rustGenericIdentityUnresolved&&!type.rustReference&&type.rustOwnership?.kind!=='owned'&&(type.kind!=='string'||type.rustOwnership?.kind==='borrowed'&&type.rustOwnership.source==='str');
+export const ORDERED_MATCH_PROFILE=Object.freeze({id:'rust-1.89-ordered-scalar-match',rust:'1.89.0',reference:'https://doc.rust-lang.org/reference/expressions/match-expr.html#match-guards',macroSource:'https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/macros/mod.rs',macroSourceSha256:'9a950cfa3735eef653b7f9a6a4701e7b218f9876141701dac72ccb8b8e8d3862',macroSourceLines:Object.freeze([444,453]),alternativeLimit:LIMIT,guards:'checked-bool-no-nonlocal-control',exhaustiveness:'unguarded-source-patterns-only'});
+const tokens=(cursor,start)=>cursor.tokens.slice(start,cursor.index).map(token=>({kind:token.kind,value:token.value,...(token.raw?{raw:token.raw}:{}),span:{start:token.start,end:token.end}}));
+export function hasOrderedMatchGuard(cursor) {
+  let depth=0,body=false,head=true;
+  for(let at=cursor.index;at<cursor.tokens.length;at++) {
+    const token=cursor.tokens[at];
+    if(token.kind==='punct'&&token.value==='{'&&!body){body=true;depth=1;continue;}
+    if(!body)continue;
+    if(head&&(depth===1&&token.kind==='identifier'&&token.value==='if'||token.kind==='punct'&&['..','..='].includes(token.value)))return true;
+    if(token.kind!=='punct')continue;
+    if(depth===1&&token.value==='=>')head=false;
+    if(depth===1&&token.value===',')head=true;
+    if(['(','[','{'].includes(token.value))depth++;
+    if([')',']','}'].includes(token.value)) {
+      if(--depth===0)return false;
+      // Rust permits an ExpressionWithBlock arm to omit its trailing comma.
+      // A following source pattern starts another arm; `else` and postfix or
+      // operator continuations still belong to the current block expression.
+      if(depth===1&&!head&&token.value==='}') {
+        const next=cursor.tokens[at+1];
+        if(next&&next.value!=='else'&&next.value!==','&&(next.kind==='identifier'||next.kind==='string'||next.kind==='number'||['_','&','-'].includes(next.value)))head=true;
+      }
+    }
+  }
+  return false;
+}
+function sourcePattern(parser,path) {
+  const c=parser.cursor,start=c.index;
+  const pattern=parser.controlPattern(path,c.peek());
+  if(c.index-start>4096)throw unsupported('ordered match pattern','exceeds the checked source token bound',pattern.span);
+  return {pattern,sourcePattern:{pattern,tokens:tokens(c,start),span:pattern.span}};
+}
+export function parseOrderedMatch(parser,path) {
+  const c=parser.cursor,start=c.expect('match','ordered match'),subject=parser.expr(path,{noStruct:true});
+  c.expect('{','ordered match');const rows=[];
+  while(!c.is('}')) {
+    const first=c.peek(),parsed=sourcePattern(parser,path),guard=c.eat('if')?parser.expr(path):null;
+    c.expect('=>','ordered match arm');const body=parser.expr(path);
+    if(body.block||['if','match','routerOrderedMatch','routerIf'].includes(body.k))c.eat(',');
+    else if(!c.is('}'))c.expect(',','ordered match arm');
+    rows.push({...parsed,guard,body,span:{start:first.start,end:c.peek().start}});
+    if(rows.length>LIMIT)throw unsupported('ordered match rows','exceeds the checked row bound',first);
+  }
+  const end=c.expect('}','ordered match');
+  if(!rows.length)throw unsupported('empty ordered match','uninhabited layouts require another profile',start);
+  return {k:'routerOrderedMatch',subject,rows,span:{start:start.start,end:end.end}};
+}
+export function parseStandardMatchesManual(parser,token,path) {
+  // This is only reached after the highest source resolver proves the ordinary
+  // unshadowed standard macro. Qualified/custom/macro-expanded owners refuse.
+  const c=parser.cursor,open=c.next(),close={'(':')','[':']','{':'}'}[open.value];
+  if(!close)throw typeError('matches! requires an original delimited token group',open);
+  const subject=parser.expr(path);c.expect(',','matches! pattern');
+  const parsed=sourcePattern(parser,path),guard=c.eat('if')?parser.expr(path):null;
+  c.eat(',');const end=c.expect(close,'matches!');
+  const span={start:token.start,end:end.end},literal=value=>({k:'bool',value,span});
+  return {k:'routerOrderedMatch',subject,rows:[{...parsed,guard,body:literal(true),span},{pattern:{k:'wild',span},sourcePattern:{pattern:{k:'wild',span},tokens:[],span},guard:null,body:literal(false),span}],sourceMacro:{name:'matches',owner:'standard-prelude',profile:ORDERED_MATCH_PROFILE.id,span},span};
+}
+export function parseStandardMatches(parser,token,path) {
+  const c=parser.cursor,at=c.tokens.indexOf(token),previous=c.index;
+  if(at<0)throw typeError('matches! token lost original source association',token);
+  c.index=at;
+  try {const parsed=parseOriginalMatchesCandidate(parser,path);if(!parsed)throw unsupported('matches! owner','requires its actual original source macro context',token);return parsed;}
+  catch(error){c.index=previous;throw error;}
+}
+function alternatives(pattern,checker,type,path,depth=0) {
+  if(depth>128)throw unsupported('ordered match pattern','exceeds the checked pattern depth',pattern.span);
+  if(pattern.k==='or') {
+    const result=[];for(const child of pattern.alternatives){result.push(...alternatives(child,checker,type,path,depth+1));if(result.length>LIMIT)throw unsupported('ordered match alternatives','exceeds the checked expansion bound',pattern.span);}return result;
+  }
+  if(pattern.k==='routerRecordPattern'){if(!checker.sourceSharedPatternRecord?.(pattern,type))throw unsupported('ordered match source record','requires the active original shared source pattern profile',pattern.span);const entry=checker.items.get(type.name),ctor=entry?.ctors.find(ctor=>ctor.name===pattern.ctor);if(!ctor)throw typeError('Shared record expansion lost its actual source owner',pattern.span);let products=[[]];for(const field of pattern.fields){const declared=ctor.fields.find(candidate=>candidate.name===field.name);if(!declared)throw typeError('Shared record expansion lost its source field',field.span);const fieldType=checker.sourceSharedPatternFieldType(declared,type,ctor,pattern.span),parts=alternatives(field.pattern,checker,fieldType,path,depth+1);if(products.length*parts.length>LIMIT)throw unsupported('ordered match alternatives','exceeds the checked product bound',pattern.span);products=products.flatMap(prefix=>parts.map(part=>[...prefix,{...field,pattern:part} ]));}return products.map(fields=>({...pattern,fields}));}
+  if(pattern.k==='ctor'||pattern.k==='routerTuplePattern') {
+    const entry=type.kind==='data'?checker.items.get(type.name):null,tuple=pattern.k==='routerTuplePattern';
+    if(tuple&&(!entry?.tuple||entry.ctors.length!==1||entry.ctors[0].ctorStyle!=='tuple'))throw unsupported('ordered tuple pattern','requires its actual checked anonymous tuple constructor',pattern.span);
+    const ctor=tuple?entry.ctors[0]:entry?.ctors.find(ctor=>ctor.name===pattern.ctor),children=tuple?pattern.items:pattern.args;
+    if(!ctor||!Array.isArray(children)||ctor.fields.length!==children.length||!tuple&&pattern.data!==type.name)throw typeError('ordered constructor expansion differs from its checked source layout',pattern.span);
+    let products=[[]];for(const [index,child]of children.entries()) {
+      const field=ctor.fields[index],fieldType=checker.sourceSharedPatternFieldType?.(field,type,ctor,pattern.span)??checker.resolveType(field.type,path,pattern.span),parts=alternatives(child,checker,fieldType,path,depth+1);
+      if(products.length*parts.length>LIMIT)throw unsupported('ordered match alternatives','exceeds the checked product bound',pattern.span);
+      products=products.flatMap(prefix=>parts.map(part=>[...prefix,part]));
+    }
+    // Vendor exhaustiveness consumes constructor rows. This checked meta
+    // projection uses only the planner-verified actual anonymous tuple layout;
+    // original tuple syntax remains intact in sourcePattern/shared plan evidence.
+    const owner=tuple?{...pattern,k:'ctor',path:[type.name,ctor.name],data:type.name,ctor:ctor.name}:pattern;
+    return products.map(args=>({...owner,args}));
+  }
+  if(!['wild','bind','numLit','boolLit','strLit','routerIntegerRangePattern'].includes(pattern.k))throw unsupported('ordered match source pattern',`${pattern.k} requires another checked pattern profile`,pattern.span);
+  return [pattern];
+}
+function coveragePattern(pattern,type,checker,path){if(pattern.k==='routerRecordPattern'){const entry=checker.items.get(type.name),ctor=entry?.ctors.find(ctor=>ctor.name===pattern.ctor);if(!ctor||ctor.ctorStyle!=='named')throw typeError('Shared record coverage lost its original named layout',pattern.span);return {...pattern,k:'ctor',args:ctor.fields.map(field=>coveragePattern(pattern.fields.find(candidate=>candidate.name===field.name)?.pattern??{k:'wild'},checker.sourceSharedPatternFieldType(field,type,ctor,pattern.span),checker,path))};}if(pattern.k==='ctor'){const entry=checker.items.get(type.name),ctor=entry?.ctors.find(ctor=>ctor.name===pattern.ctor);return {...pattern,args:pattern.args.map((child,index)=>coveragePattern(child,checker.sourceSharedPatternFieldType?.(ctor.fields[index],type,ctor,pattern.span)??ctor.fields[index].type,checker,path))};}return pattern;}
+function plan(checker,pattern,type,path,span) {return planPattern(pattern,type,{declarations:checker.items,resolveType:type=>checker.resolveType(type,path,span),span,projectFieldType:checker.sourceSharedPatternFieldType?((field,parent,ctor,range)=>checker.sourceSharedPatternFieldType(field,parent,ctor,range)):undefined});}
+function literalIdentities(pattern,type,checker,path,range) {
+  if(pattern.k==='or'){for(const child of pattern.alternatives)literalIdentities(child,type,checker,path,range);return;}
+  if(pattern.k==='numLit'&&pattern.suffix&&pattern.suffix!==type.rustPrimitiveName)throw typeError('ordered match literal requires its actual Rust primitive identity',pattern.span);
+  if(pattern.k==='ctor') {
+    const ctor=checker.items.get(type.name)?.ctors.find(ctor=>ctor.name===pattern.ctor);
+    for(const [index,child]of pattern.args.entries())literalIdentities(child,checker.resolveType(ctor.fields[index].type,path,range),checker,path,range);
+  }
+}
+function constUnitCase(test,data,ctor){
+  if(test.kind==='always')return true;
+  if(test.kind==='ctor'&&test.data===data&&test.projection.length===0)return test.ctor===ctor;
+  if(test.kind==='and')return test.tests.every(child=>constUnitCase(child,data,ctor));
+  if(test.kind==='or')return test.tests.some(child=>constUnitCase(child,data,ctor));
+  throw new TypeError('Const unit match requires its exact zero-field constructor tests');
+}
+function originalConstBody(checker,node,subject,variable,attempts,branches,type,evidence){
+  if(!originalConstMatchSource(checker,node)||attempts.some(attempt=>attempt.guard))return null;
+  let result;
+  const ordinary=arm=>arm.k==='routerOrderedArm'?arm.body:arm.k==='let'?{...arm,body:ordinary(arm.body)}:arm;
+  if(['fixed','bool'].includes(subject.type.kind)&&originalPrimitiveCopySource(subject.type)){
+    result=ordinary(branches.at(-1).body);
+    for(let index=branches.length-2;index>=0;index--)result={k:'if',cond:branches[index].cond,then:ordinary(branches[index].body),else:result,type,span:branches[index].span};
+  }else if(subject.type.kind==='data'){
+    const entry=checker.items.get(subject.type.name);
+    if(!entry||entry.record||entry.tuple||entry.standardGeneric||!entry.ctors.length||entry.ctors.length>256||entry.ctors.some(ctor=>ctor.ctorStyle!=='unit'||ctor.fields.length)||attempts.some(attempt=>attempt.plan.bindings.length))return null;
+    checkedOptionNominal(checker,subject.type,node.span);
+    result={k:'match',scrutinee:variable,cases:entry.ctors.map(ctor=>{
+      const index=attempts.findIndex(attempt=>constUnitCase(attempt.plan.test,subject.type.name,ctor.name));
+      if(index<0)throw typeError('Const unit match lost checked exhaustiveness',node.span);
+      return {pattern:{k:'ctor',data:subject.type.name,ctor:ctor.name,binds:[]},body:ordinary(branches[index].body)};
+    }),type,span:node.span};
+  }else return null;
+  // Keep the complete original expansion and pattern records in source JSON.
+  // Source evidence is data; its conservative constEligible:false flags do
+  // not become executable operands or permission for another computation.
+  return {k:'let',name:variable.name,value:subject,body:result,type,mutable:false,span:node.span,
+    constMatchSourceEvidence:JSON.stringify({schema:'original-unguarded-const-match-source-v1',sourceMacro:node.sourceMacro,rows:evidence,subjectEvaluatedOnce:true,exhaustiveness:'unguarded-source-patterns-only',runtimeParity:false})};
+}
+export function checkOrderedMatch(checker,node,env,path,expected,allowLiteral=false) {
+  env=checker.contextEnvironment(node,env,expected);
+  const statement=checkingStatementMatch(node),functionTail=checker.sourceSharedPatternFunctionTail?.(node)===true;
+  if(functionTail&&(!expected||!checker.functionResult(env)||!sameType(expected,checker.functionResult(env))))throw unsupported('function-tail ordered match result','requires the actual enclosing function result type',node.span);
+  if(exits(node.subject)||node.rows.some(row=>exits(row.guard)||!statement&&(!functionTail&&exits(row.body)||functionTail&&nonReturnExit(row.body))))throw unsupported('ordered match control','nonlocal control needs a separately checked statement join',node.span);
+  if(statement&&node.rows.some(row=>exits(row.body)))expected??=UNIT;
+  const subject=checker.expr(node.subject,env,path);checker.patternDomain(subject.type,node.span);
+  const integerRange=node.rows.some(row=>containsIntegerRange(row.pattern));
+  if(integerRange&&subject.type.kind!=='fixed')throw unsupported('nested integer range match','this profile requires a primitive integer subject',node.span);
+  let name;do{name=checker.freshName('ml_ordered_match_');}while(env.has(name));
+  const variable={k:'var',name,type:subject.type,span:node.span},attempts=[],coverage=[],evidence=[];
+  for(const row of node.rows) {
+    const pattern=checker.patternOwner(row.pattern,subject.type,path,env),shared=plan(checker,pattern,subject.type,path,row.span);
+    literalIdentities(pattern,subject.type,checker,path,row.span);
+    for(const binding of shared.bindings)if(!scalar(binding.type)&&!checker.sourceSharedPatternBinding?.(binding)||binding.type.kind==='fixed'&&!binding.type.rustPrimitiveName)throw unsupported('ordered match binding ownership','requires actual immutable scalar source identities',binding.span??row.span);
+    const parts=alternatives(pattern,checker,subject.type,path);
+    if(attempts.length+parts.length>LIMIT)throw unsupported('ordered match alternatives','exceeds the checked whole-match bound',row.span);
+    for(const part of parts) {
+      const bindingPlan=plan(checker,part,subject.type,path,row.span);let inner=new Map(env);
+      for(const binding of bindingPlan.bindings)inner=checker.bindingEnvironment(inner,binding.name,binding.type,false);
+      const names=new Map([...env.keys()].filter(name=>typeof name==='string').map(name=>[name,name]));
+      const bound=bindingPlan.bindings.map(binding=>{let name;do{name=checker.freshName('ml_guard_binding_');}while(env.has(name));names.set(binding.name,name);return {...binding,name};});
+      const scope=new Scope(name=>checker.freshName('ml_arm_'+name+'_'));
+      const guard=row.guard?renameExpr(coerce(checker.expr(row.guard,inner,path,BOOL),BOOL,checker.language,row.span),names,scope):null;
+      const body=renameExpr(checker.expr(row.body,inner,path,expected,allowLiteral),names,scope);
+      attempts.push({plan:{...bindingPlan,bindings:bound},guard,body,span:row.span});
+      if(!row.guard)coverage.push({patterns:[coveragePattern(part,subject.type,checker,path)],binds:[],body:{k:'unit'},span:row.span});
+    }
+    evidence.push({sourcePattern:row.sourcePattern,plan:shared,alternatives:parts.length,guarded:Boolean(row.guard),span:row.span});
+  }
+  // Use the existing constructor/literal matrix solely for its checked
+  // coverage proof; guards and effects are never run during compilation.
+  const intervalProof=integerRange?proveIntegerCoverage(coverage.map(row=>row.patterns[0]),subject.type,node.span):null;
+  if(!intervalProof)checker.compileRows([{name,type:subject.type}],coverage,node.span);
+  let type=expected??attempts.find(attempt=>attempt.body.type.kind!=='literal')?.body.type;
+  type??=checker.defaultNumber();
+  const bind=(plan,body)=>plan.bindings.reduceRight((body,binding)=>({k:'let',name:binding.name,value:checker.patternProjection(variable,binding.projection,binding.type,plan.projectionPaths),body,type:body.type,mutable:false,span:binding.span??node.span}),body);
+  const branches=[];
+  for(const attempt of attempts) {
+    const body=coerce(attempt.body,type,checker.language,attempt.span);
+    if(!sameType(body.type,type))throw typeError('ordered match arms have different checked result types',attempt.span);
+    const selected={k:'routerOrderedArm',guard:attempt.guard,body,type,span:attempt.span};
+    branches.push({cond:checker.patternTest(attempt.plan.test,variable,attempt.plan.projectionPaths),body:bind(attempt.plan,selected),span:attempt.span});
+  }
+  if(intervalProof&&attempts.every(attempt=>!attempt.guard)) {
+    // Coverage proves that the last remaining row always selects if preceding
+    // tests fail. Ordinary checked if/let IR preserves runtime and selected
+    // path CTFE semantics, without granting a new const trait or guard rule.
+    let result=branches.at(-1).body;
+    const ordinary=arm=>arm.k==='routerOrderedArm'?arm.body:arm.k==='let'?{...arm,body:ordinary(arm.body)}:arm;
+    result=ordinary(result);
+    for(let index=branches.length-2;index>=0;index--)result={k:'if',cond:branches[index].cond,then:ordinary(branches[index].body),else:result,type,span:branches[index].span};
+    return {k:'let',name,value:subject,body:result,type,mutable:false,span:node.span,integerRangeMatchProof:{...intervalProof,rows:evidence,subjectEvaluatedOnce:true}};
+  }
+  const constBody=originalConstBody(checker,node,subject,variable,attempts,branches,type,evidence);
+  if(constBody)return constBody;
+  // A linear list avoids copying all following attempts into both paths of
+  // every guarded alternative. Each branch's ordinary let tree owns binders.
+  let result={k:'routerOrderedMatchArms',branches,type,span:node.span,...(functionTail?{functionTail:true}:{})};
+  if(subject.type.kind==='data')result={k:'routerDiscard',value:{k:'routerPatternImmutable',object:variable,type:BOOL,borrowedAggregate:checker.sharedPatternView(subject.type),span:node.span},body:result,type,span:node.span};
+  return {k:'let',name,value:subject,body:result,type,mutable:false,span:node.span,constEligible:false,patternControl:{kind:'ordered-scalar-match',profile:ORDERED_MATCH_PROFILE.id,subjectType:subject.type,rows:evidence,expandedRows:attempts.length,exhaustiveness:'unguarded-source-patterns-only',...(intervalProof?{intervalProof}:{}),...(node.sourceMacro?{sourceMacro:node.sourceMacro}:{})}};
+}
+export function emitOrderedMatch(emitter,node) {
+  const lines=['(() => {'];
+  for(const branch of node.branches) {
+    lines.push(`  if (${emitter.expr(branch.cond)}) {`);
+    let arm=branch.body;
+    while(arm.k==='let'){lines.push(`    const ${arm.name} = ${emitter.expr(arm.value)};`);arm=arm.body;}
+    if(arm.k!=='routerOrderedArm')throw new Error('Ordered match has an unchecked branch shape');
+    if(arm.guard)lines.push(`    if (${emitter.expr(arm.guard)}) return ${emitter.expr(arm.body)};`);
+    else lines.push(`    return ${emitter.expr(arm.body)};`);
+    lines.push('  }');
+  }
+  lines.push('  throw new Error("unreachable exhaustive ordered match");','})()');
+  return lines.join('\n');
+}

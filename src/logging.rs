@@ -16,7 +16,7 @@ pub(crate) use process::{
 #[must_use]
 pub fn request_log(
     data_dir: &std::path::Path,
-    configured_path: Option<&std::path::Path>,
+    configured_path: crate::translation_core::Maybe<&std::path::Path>,
     max_bytes: u64,
     max_total_bytes: u64,
 ) -> std::sync::Arc<crate::request_log::RequestLog> {
@@ -63,7 +63,7 @@ pub fn build_lazy(_verbose: bool) -> log_lazy::LogLazy {
 /// Build the tracing filter, treating `RUST_LOG` as an override and the CLI
 /// verbosity as a fallback only.
 #[must_use]
-pub fn env_filter(verbose: bool, rust_log: Option<&str>) -> EnvFilter {
+pub fn env_filter(verbose: bool, rust_log: crate::translation_core::Maybe<&crate::translation_core::Str>) -> EnvFilter {
     let fallback = if verbose { "debug" } else { "info" };
     rust_log
         .filter(|value| !value.trim().is_empty())
@@ -72,7 +72,7 @@ pub fn env_filter(verbose: bool, rust_log: Option<&str>) -> EnvFilter {
 }
 
 /// Safe HTTP failure context without response body or headers.
-pub(crate) const fn http_failure(status: u16) -> &'static str {
+pub(crate) const fn http_failure(status: u16) -> &'static crate::translation_core::Str {
     match status {
         401 | 403 | 407 => "authentication_or_authorization",
         402 => "billing",

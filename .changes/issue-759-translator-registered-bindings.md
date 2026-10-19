@@ -1,0 +1,1 @@
+Added reusable external module tables from explicitly registered Rust source bindings and free-function contracts. Private adapter layouts and associated methods never grant source constructor or module permission; external glob completeness remains unproven.

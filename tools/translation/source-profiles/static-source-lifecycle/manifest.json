@@ -1,0 +1,37 @@
+{
+  "schema": "router-static-source-lifecycle-v1",
+  "archive": "originals.json.gz",
+  "rawBytes": 18112995,
+  "rawSha256": "f3565935f1f12a77df4ccb1c00cf71d4224bbed667efde2f2743f3086f114513",
+  "bytes": 4190990,
+  "sha256": "1097ae845219d5dd3e99683a78961c94917042f5848d5aaa9eab227f80b70afc",
+  "storage": {
+    "schema": "router-static-source-lifecycle-storage-v1",
+    "codec": "router-static-cst-global-column-table-storage-v1",
+    "logicalRawBytes": 66440642,
+    "logicalRawSha256": "fdb989680ba90233f32ec6ccb5664e321fe0f1ebd7833c1104580a509d8ecae9"
+  },
+  "profiles": [
+    {
+      "revision": "5de1dea8b777dcd6e637758efc2c260150735af5",
+      "files": 806,
+      "sourceSetSha256": "fa513c50ae94c3ccba510ddd5a954451bedf63a2a823805c62eb8fee08b4affa"
+    },
+    {
+      "revision": "e4561e76506ed25a7e638fb1e00a965f8479e1db",
+      "files": 808,
+      "sourceSetSha256": "8683ed8c1f78d91f109d9c3f41151fa54e605833e03caac2bb821f00aa8f6d16"
+    }
+  ],
+  "current": "91e2528380fc70a65c62939c61eb0b7889f5324dd36f2eb6603daceb6365ae19",
+  "trace": [
+    {
+      "phase": "language",
+      "id": "static-fixture.complete-original-cst-and-current-source-joins"
+    },
+    {
+      "phase": "repository",
+      "id": "static-fixture.fixed-historical-universes-and-reversible-current-parents"
+    }
+  ]
+}

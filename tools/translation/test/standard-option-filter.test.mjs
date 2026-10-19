@@ -1,0 +1,87 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {execFileSync} from 'node:child_process';
+import {translateProject} from '../project.mjs';import {parseProgram} from '../semantic-meta.mjs';import {parseRust,checkProgram,emitJavaScript} from '../extensions/host-contracts.mjs';import {originalSourceFramePatternRead} from '../extensions/standard-source-frame.mjs';import {verifyTypedTargets} from './typed-targets.mjs';
+import {HostChecker} from '../extensions/host-contracts.mjs';
+import {withSourceLifetimeChecker,sourceBorrowRegions} from '../extensions/source-lifetimes.mjs';
+const project=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source}),tag=($,fields={})=>Object.freeze({$,...fields}),some=field0=>tag('Some',{field0}),none=tag('None');
+const find=(node,kind)=>node&&typeof node==='object'?(node.k===kind?node:Object.values(node).map(value=>find(value,kind)).find(Boolean)):null;
+
+test('original filter predicate loan and early return stay lazy and local in JS and strict TS',{timeout:60000},async()=>{
+ const source='fn fail(value:&u8)->bool{panic!("predicate invoked")}fn receiver()->Option<u8>{panic!("receiver first")}pub fn keep(value:Option<u8>)->Option<u8>{value.filter(|v|*v>2u8)}pub fn text<\'a>(value:Option<&\'a str>)->Option<&\'a str>{value.filter(|v|!v.is_empty())}pub fn isolated(value:Option<u8>)->u8{value.filter(|v|*v>2u8).unwrap_or(9u8)}pub fn lazy(value:Option<u8>)->Option<u8>{value.filter(fail)}pub fn order()->Option<u8>{receiver().filter(fail)}pub fn captures(value:Option<u8>,x:u8)->Option<u8>{value.filter(|v|*v>x)}pub fn scratch(value:Option<u8>)->Option<u8>{value.filter(|v|{let mut n=0u8;n=*v;n>0u8})}';
+ const result=project(source);assert.deepEqual(result.meta.refused,[]);const body=find(result.meta.checkedSemanticProgram,'routerOriginalStandardFrame');assert.equal(body.sourceFrameProof.returnScope,'selected-original-method-only');assert.ok(body.sourceFrameProof.selection.method.bodySource.includes('return Some(x)'));assert.equal(find(body,'routerOriginalCallbackLoan').originalLoanProof.escapes,false);
+ await verifyTypedTargets(result,api=>{assert.deepEqual(api.keep(some(3n)),some(3n));assert.deepEqual(api.keep(some(2n)),none);assert.deepEqual(api.keep(none),none);assert.equal(api.isolated(some(3n)),3n);assert.equal(api.isolated(some(1n)),9n);assert.deepEqual(api.lazy(none),none);assert.throws(()=>api.lazy(some(1n)),/predicate invoked/);assert.throws(()=>api.order(),/receiver first/);assert.deepEqual(api.captures(some(3n),2n),some(3n));assert.deepEqual(api.captures(some(3n),4n),none);assert.deepEqual(api.scratch(some(1n)),some(1n));assert.deepEqual(api.scratch(some(0n)),none);for(const text of ['É😀','\u0085','\uFEFF','\0'])assert.deepEqual(api.text(some(text)),some(text));assert.deepEqual(api.text(some('')),none);assert.throws(()=>api.keep(some(256n)),TypeError);assert.throws(()=>api.text(some('\ud800')),TypeError);},{childTimeoutMs:20000});
+ const dynamic="pub fn dynamic(value:Option<&str>)->Option<&str>{value.filter(|text|!text.is_empty())}",frozen="pub fn frozen(value:Option<&'static str>)->Option<&'static str>{value.filter(|text|!text.is_empty())}";
+ for(const bodies of [[frozen,dynamic],[dynamic,frozen]]){
+  const files={'src/lib.rs':'mod current;','src/current.rs':bodies.join(' ')},current=translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path]});assert.deepEqual(current.meta.refused,[]);
+  await verifyTypedTargets(current,api=>{for(const name of ['current.dynamic','current.frozen']){for(const value of ['猫😀','\0','Ω'])assert.deepEqual(api[name](some(value)),some(value));assert.deepEqual(api[name](some('')),none);assert.deepEqual(api[name](none),none);}},{childTimeoutMs:20000});
+ }
+});
+
+test('private Copy values and shared owned pointees retain exact layouts without mutable alias or Drop authority',{timeout:60000},async()=>{
+ const copied=project('#[derive(Clone,Copy)]pub struct Item{n:u8}pub fn cell(value:Option<Item>)->Option<Item>{value.filter(|v|v.n>0u8)}');assert.ok(copied.meta.refused.some(item=>item.name==='cell'&&/if-let aggregate binding/.test(item.message)));
+ const borrowed=project('pub struct Owner{text:String}impl Drop for Owner{fn drop(&mut self){}}pub fn borrow<\'a>(value:Option<&\'a Owner>)->Option<&\'a Owner>{value.filter(|_|true)}pub fn nested<\'a>(value:Option<&\'a Owner>)->Option<&\'a Owner>{value.filter(|_|true).filter(|_|true)}');assert.deepEqual(borrowed.meta.refused.map(item=>item.name),['Owner.drop']);
+ await verifyTypedTargets(borrowed,api=>{const owner=tag('Owner',{text:'É😀'});assert.equal(api.borrow(some(owner)).field0,owner);assert.equal(api.nested(some(owner)).field0,owner);assert.deepEqual(api.borrow(none),none);assert.throws(()=>api.borrow(some({$:'Owner',text:'mutable'})),TypeError);},{childTimeoutMs:20000});
+});
+
+test('qualified nominal imports preserve identity through original if-let tag flattening',{timeout:60000},async()=>{
+ const source='mod left{pub struct Owner{n:u8}}mod right{pub struct Owner{n:u16}}use crate::left::Owner as A;use crate::right::Owner as B;pub fn left<\'a>(v:Option<&\'a A>)->Option<&\'a A>{v.filter(|_|true)}pub fn right<\'a>(v:Option<&\'a B>)->Option<&\'a B>{v.filter(|_|true)}pub fn wrong<\'a>(v:Option<&\'a A>)->Option<&\'a B>{v.filter(|_|true)}';const result=project(source);assert.ok(result.meta.refused.some(x=>x.name==='wrong'));const program=parseProgram(JSON.stringify(result.meta.targetSemanticProgram)),pattern=find([...program.declarations.values()],'routerPatternTag');assert.equal(pattern.data,pattern.object.type.name);assert.ok(program.declarations.has(pattern.data));
+ await verifyTypedTargets(result,api=>{assert.equal(api.left(some(tag('Owner',{n:255n}))).field0.n,255n);assert.equal(api.right(some(tag('Owner',{n:256n}))).field0.n,256n);assert.throws(()=>api.left(some(tag('Owner',{n:256n}))),TypeError);},{childTimeoutMs:20000});
+});
+
+test('caller if-let and inactive or failed source frames receive no filter loan authority',()=>{
+ assert.equal(originalSourceFramePatternRead({}, {kind:'data',name:'Owner',rustReference:{kind:'shared',pointee:{kind:'data',name:'Owner'}}}),false);
+ const source='pub struct Owner{n:u8}pub fn good<\'a>(v:Option<&\'a Owner>)->Option<&\'a Owner>{v.filter(|_|true)}pub fn bad<\'a>(v:Option<&\'a Owner>)->bool{if let Some(owner)=v{true}else{false}}pub fn captured<\'a>(v:Option<&\'a Owner>,other:Option<&\'a Owner>)->Option<&\'a Owner>{v.filter(|_|if let Some(owner)=other{true}else{false})}pub fn failed<\'a>(v:Option<&\'a Owner>)->Option<&\'a Owner>{v.filter(|_|unknown())}';const result=project(source);assert.ok(result.meta.executable.some(x=>x.name==='good'));for(const name of ['bad','captured','failed'])assert.ok(result.meta.refused.some(x=>x.name===name),name);
+});
+
+test('owned payloads, escaped loans, mutable captures and const filter remain refused',()=>{
+ for(const source of ['pub fn bad(v:Option<String>)->Option<String>{v.filter(|_|true)}','pub struct Owner{n:u8}pub fn bad(v:Option<Owner>)->Option<Owner>{v.filter(|_|true)}','#[derive(Copy,Clone)]pub struct Owner{n:u8}impl Drop for Owner{fn drop(&mut self){}}pub fn bad(v:Option<Owner>)->Option<Owner>{v.filter(|_|true)}','pub fn bad(v:Option<u8>)->Option<u8>{let mut n=0u8;v.filter(|x|{n=*x;n>0u8})}','pub fn bad(v:Option<u8>)->Option<u8>{let mut n=0u8;v.filter(|x|n>0u8)}','pub fn bad(v:Option<u8>)->Option<u8>{v.filter(|x|{let escaped:&\'static u8=x;true})}','pub fn bad(v:Option<u8>)->Option<u8>{v.filter(|x|{let alias:&mut u8=x;true})}','pub const fn bad(v:Option<u8>)->Option<u8>{v.filter(|_|true)}']){const result=project(source);assert.ok(result.meta.refused.some(x=>x.name==='bad'),source);assert.equal(result.meta.executable.some(x=>x.name==='bad'),false);}
+ const dynamic="pub fn current(value:Option<&str>)->Option<&str>{value.filter(|_|true)}",frozen="pub fn frozen(value:Option<&'static str>)->Option<&'static str>{value.filter(|_|true)}";
+ for(const prefix of [frozen+' '+dynamic,dynamic+' '+frozen])for(const source of ["pub fn bad(value:Option<&str>)->Option<&'static str>{value.filter(|_|true)}","fn needs(value:Option<&'static str>)->u8{1u8}pub fn bad(value:Option<&str>)->u8{needs(value.filter(|_|true))}"]){const result=project(prefix+' '+source),failure=result.meta.refused.find(row=>row.name==='bad');assert.ok(failure,source);assert.match(failure.message,/static source parameter|escaping source borrow/);assert.equal(result.meta.executable.some(row=>row.name==='bad'),false);}
+});
+
+test('public source callers and changed original frame/loan snapshots cannot issue authority',()=>{
+ assert.throws(()=>checkProgram(structuredClone(parseRust('pub fn keep(v:Option<u8>)->Option<u8>{v.filter(|_|true)}fn main(){}'))),/privately captured source-call/);
+ const result=project('pub fn keep(v:Option<u8>,other:u8)->Option<u8>{v.filter(|x|*x>other)}');assert.deepEqual(result.meta.refused,[]);
+ for(const mutate of [program=>{find([...program.declarations.values()],'routerOriginalStandardFrame').sourceFrameProof.returnScope='caller';},program=>{find([...program.declarations.values()],'routerOriginalCallbackLoan').originalLoanProof.escapes=true;},program=>{find([...program.declarations.values()],'routerOriginalCallbackLoan').type.rustReference.kind='mutable';},program=>{find([...program.declarations.values()],'routerOriginalStandardFrame').type={kind:'bool'};},program=>{find([...program.declarations.values()],'routerReturn').value.ctor='None';}]){const program=parseProgram(JSON.stringify(result.meta.targetSemanticProgram));mutate(program);assert.throws(()=>emitJavaScript(program),/changed|private|captured/);}
+ const shared=project('pub fn current(value:Option<&str>)->Option<&str>{value.filter(|_|true)}');assert.deepEqual(shared.meta.refused,[]);
+ for(const mutation of ['static','erase','kind','arity','payload']){
+  const program=parseProgram(JSON.stringify(shared.meta.targetSemanticProgram)),frame=find([...program.declarations.values()],'routerOriginalStandardFrame'),ctor=find(frame.body,'routerReturn').value;
+  assert.equal(ctor.k,'ctor');assert.equal(ctor.ctor,'Some');assert.equal(ctor.type.rustStandardGeneric.kind,'Option');assert.equal(ctor.type.rustStandardGeneric.arguments.length,1);
+  if(mutation==='static')ctor.type.rustStandardGeneric.arguments[0].rustBorrowLifetime={kind:'static',source:'forged-static-upgrade'};
+  if(mutation==='erase')delete ctor.type.rustStandardGeneric;
+  if(mutation==='kind')ctor.type.rustStandardGeneric.kind='Result';
+  if(mutation==='arity')ctor.type.rustStandardGeneric.arguments=[];
+  if(mutation==='payload')ctor.type.rustStandardGeneric.arguments[0]={kind:'bool'};
+  assert.throws(()=>emitJavaScript(program),/changed|private|captured|source|body/,mutation);
+ }
+ // Bookkeeping observation only: this base never checks/emits a function or
+ // issues source authority. Layouts and type comparisons come from the real
+ // checker; it records only whether dispatch received a temporary field view.
+ const real=new HostChecker('Rust',[]),program=real.program(parseRust("pub fn frozen(v:&'static str)->Option<Option<&'static str>>{Some(Some(v))}pub fn current(v:&str)->Option<Option<&str>>{Some(Some(v))}fn main(){}")),expected=program.declarations.get('current').ret,declaration=program.declarations.get(expected.name),ctor=declaration.ctors.find(row=>row.name==='Some'),observations=[];
+ class ObservationOnlyBase{
+  constructor(){this.language='Rust';this.items=real.items;}
+  resolveType(...args){return real.resolveType(...args);}
+  expectedOwnership(...args){return real.expectedOwnership(...args);}
+  expectedPrimitiveIdentity(...args){return real.expectedPrimitiveIdentity(...args);}
+  application(head,args,env,path,type,range){
+   if(head.mode==='nested'||head.mode==='nested-null')assert.throws(()=>this.application({mode:'throw'},[...args],env,path,head.mode==='nested'?undefined:expected,range),/observation-only throw/);
+   const value=this.construct(declaration,ctor,head.mode==='args'?[...args]:args,head.mode==='env'?new Map(env):env,head.mode==='path'?[...path]:path,head.mode==='range'?{...range}:range);
+   if(head.mode==='throw')throw new Error('observation-only throw');return value;
+  }
+  construct(owner,current,args,env,path,range){observations.push({original:current===ctor,fields:current.fields.map(field=>field.type),args,env,path,range});return {type:{kind:'data',name:owner.fullName}};}
+ }
+ const observed=new (withSourceLifetimeChecker(ObservationOnlyBase))(),args=[{k:'name',path:['raw_argument']}],env=new Map(),path=[],range={start:1,end:2};
+ const regions=type=>sourceBorrowRegions(type,{declarations:real.items,resolveType:(...args)=>real.resolveType(...args)});assert.ok(regions(ctor.fields[0].type).some(region=>region.kind==='static'));
+ observed.application({mode:'same'},args,env,path,expected,range);assert.equal(observations.at(-1).original,false);const currentRegions=regions(observations.at(-1).fields[0]);assert.ok(currentRegions.length>0);assert.ok(currentRegions.every(region=>region.kind!=='static'));
+ for(const mode of ['args','env','path','range']){observed.application({mode},args,env,path,expected,range);assert.equal(observations.at(-1).original,true,mode);}
+ assert.throws(()=>observed.application({mode:'throw'},args,env,path,expected,range),/observation-only throw/);observed.construct(declaration,ctor,args,env,path,range);assert.equal(observations.at(-1).original,true);
+ observed.application({mode:'nested'},args,env,path,expected,range);assert.equal(observations.at(-1).original,false);observed.application({mode:'nested-null'},args,env,path,undefined,range);assert.equal(observations.at(-1).original,true);
+ observed.construct(declaration,ctor,args,env,path,range);assert.equal(observations.at(-1).original,true);
+});
+
+test('fresh serialized frames need genuine original source recompilation',()=>{
+ const result=project('pub fn keep(v:Option<u8>)->Option<u8>{v.filter(|_|true)}'),code=`import {readFileSync} from 'node:fs';import {parseProgram} from ${JSON.stringify(new URL('../semantic-meta.mjs',import.meta.url).href)};import {emitJavaScript} from ${JSON.stringify(new URL('../extensions/host-contracts.mjs',import.meta.url).href)};emitJavaScript(parseProgram(readFileSync(0,'utf8')));`;assert.throws(()=>execFileSync(process.execPath,['--input-type=module','-e',code],{input:JSON.stringify(result.meta.targetSemanticProgram),encoding:'utf8',timeout:15000,stdio:'pipe'}),/privately checked original source|private source authority/);
+});
+
+test('iterator filter keeps its existing lazy borrowed item route',{timeout:60000},async()=>{
+ const result=project('pub fn count(values:&[u8])->usize{values.iter().filter(|v|**v>2u8).count()}pub fn words(value:&str)->usize{value.split(\',\').filter(|v|!v.is_empty()).count()}');assert.deepEqual(result.meta.refused,[]);assert.equal(Boolean(find(result.meta.checkedSemanticProgram,'routerOriginalStandardFrame')),false);await verifyTypedTargets(result,api=>{assert.equal(api.count(Object.freeze([1n,3n,4n])),2n);assert.equal(api.words(',É😀,,a,'),2n);},{childTimeoutMs:20000});
+});

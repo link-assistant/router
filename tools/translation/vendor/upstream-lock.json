@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "files": {
+    "formal-ai/LICENSE": "6b0382b16279f26ff69014300541967a356a666eb0b91b422f6862f6b7dad17e",
+    "formal-ai/lexer.mjs": "de63554d12ba030a9a8cf82b3d950d8baa07f55dd20623e711b4a292a6d8f94d",
+    "meta-language/LICENSE": "6b0382b16279f26ff69014300541967a356a666eb0b91b422f6862f6b7dad17e",
+    "meta-language/language-support.js": "e2729b15e6ab42a914c643366ea75ece4873a87a7844589253e572a04aa35f55",
+    "meta-language/program-translation.js": "9917b100b0898b1bf22007d07893b1af437478899908e6285afc553ef49a8d60",
+    "meta-language/self-translation.js": "cd3c5a93ea2d4cc431831310fb1029dfee449469615a00525e006235ce33b032",
+    "meta-language/translation/aborts.js": "27d6594367c1197b31de2d40479f4238dc31372e31ba50f0c7cdb8c8de84ec04",
+    "meta-language/translation/check.js": "14544917cda1bd3c6c129629c7a99710d1d8b72194bcd8116a373f66721c2232",
+    "meta-language/translation/diagnostics.js": "a5d8ddf02252f016b8568373248b67165b37ce747442a21a7bef3c63e2a385ab",
+    "meta-language/translation/emit-common.js": "ef47281989c92a80c6b153862f8aec5f948b5bb9e15d86624537618eed426e74",
+    "meta-language/translation/emit-javascript.js": "8af569ed4f08b81ddf38b1d3120fc55b41f67c2249cf226e52ef94ba52aed06a",
+    "meta-language/translation/emit-lean.js": "88b08f6226809b5cb679dc9c57efa533b0d222f022c230279bbb1869d1595a50",
+    "meta-language/translation/emit-rocq.js": "3876068e49d6389e72fdf6659078268adddef5e4d5895ba28ec33c2e69f68428",
+    "meta-language/translation/emit-rust.js": "ee28ebe00583ae18d4f65a3c54a57d97210321e38d7b23f4fef95bc43045199a",
+    "meta-language/translation/frontend-rules.js": "8b4a1a0f3a6180d4b98591206946fb05422f65869c939f3b263da1f8bfded1ed",
+    "meta-language/translation/ir.js": "a54f47fc4056bbff205051c366fe0a7b406f14c23d62164aa6fda3d1677ea77e",
+    "meta-language/translation/javascript-infer.js": "7cadb84613a6d0d69d0b838b185f884aaf75bbffc1209d051180179452d0e187",
+    "meta-language/translation/javascript-lower.js": "cfa4f6315fb2c699f944d75d911af7696cb70e1c2b92e40ffc11870ebcd85132",
+    "meta-language/translation/javascript.js": "565b397e65accb4207d42c95cabeb3eafe7b9a83ae7e0302819ef7c463dbc734",
+    "meta-language/translation/lean-root-names.js": "3ee4a2b5242dc22cc3f3301d3c59092104986e22f46a5ccdcdf937f98e548a05",
+    "meta-language/translation/lean.js": "194c5b36ff9e12fc71bdf56be1dee7c8e26dfc7386cdf6d87ff869ceb38f7730",
+    "meta-language/translation/lexer.js": "70dbe490cd5162661a665bdffd5b506093bebc5a515f6fc1d36ecc347b705fdc",
+    "meta-language/translation/output.js": "6d9e6b49a58f9ab575a194c31ed4c640964177546bf465a9696d61804b7ac53e",
+    "meta-language/translation/proof.js": "db7e1d966a7aab8eba534135071aab8c73f2d6cf829a8f1a61a1d473571f1eae",
+    "meta-language/translation/rocq.js": "72afe2a7f81606d88a6c7bae9888219573a8cf20f3567e34b5d93c501576dd2f",
+    "meta-language/translation/rust.js": "46775f6787eea0e89faccaf1bbc55a21912410682fc7d93dce1583e690d7d332",
+    "meta-language/translation/types.js": "84690186d2fbfdd0ddc6267d43dfb4b899f47cd7a9b1d2bf608ce89b179bbc58"
+  }
+}

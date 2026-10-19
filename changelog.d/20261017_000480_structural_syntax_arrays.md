@@ -1,0 +1,7 @@
+Keep named syntax arrays structural in private JSON composition, including after they become frozen or acquire an existing immutable eligibility record. Their independently frozen object children can use the existing bounded byte store even when the complete array exceeds its entry cap. Every call still preflights the whole logical graph and counts repeated edges against the same cell, depth and output bounds.
+
+The byte-cache implementation, 4 MiB entry / 8 MiB total / 16 entry quotas, eviction policy, immutable eligibility storage and all source/checker and native hash call sites are unchanged. No new cache or owner authority is introduced. Uncertain descriptors, hooks, density, cycles and exceeded bounds retain the complete native JSON fallback.
+
+The existing eight-case whole-file oracle keeps its complete historical sources, original cases, deadlines and strict TypeScript cap. Added controls cover mutable-to-frozen arrays, existing nested eligibility, oversized arrays with bounded child reuse, quota eviction, frozen-array fallback behavior and full original Debug plus existing PartialEq/Eq/Copy native hash and private-source refusal tapes. The historical source recipe has two explicit reversible additions for this helper; its embedded originals remain unchanged.
+
+Source-reviewed only; JavaScript, TypeScript and Rust checks are UNRUN by the worker. Speed and memory effects are unmeasured. The original thirteen-case performance suite remains RED from its previously retained unchanged-deadline failures.

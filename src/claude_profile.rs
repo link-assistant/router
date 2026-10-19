@@ -13,7 +13,7 @@ pub struct ProfileSession {
 }
 
 impl ProfileSession {
-    pub async fn prepare(profile: PathBuf, reset: bool) -> Result<Self, AnyError> {
+    pub async fn prepare(profile: PathBuf, reset: bool) -> crate::translation_core::Outcome<Self, AnyError> {
         if reset {
             return Err("direct Claude profile replacement is retired; use router clients reset for a verified settings reset".into());
         }
@@ -45,7 +45,7 @@ impl ProfileSession {
         &self.profile
     }
 
-    pub fn commit_launch(&self, child_pid: u32) -> Result<(), AnyError> {
+    pub fn commit_launch(&self, child_pid: u32) -> crate::translation_core::Outcome<(), AnyError> {
         crate::durable_file::atomic_write_owner_only(
             &self.marker,
             format!("{}\n{child_pid}\n", std::process::id()).as_bytes(),

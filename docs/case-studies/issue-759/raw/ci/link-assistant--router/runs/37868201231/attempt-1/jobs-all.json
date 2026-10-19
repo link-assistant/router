@@ -1,0 +1,29 @@
+[
+  {
+    "id": 113619887181,
+    "run_id": 37868201231,
+    "workflow_name": "Docker Runtime Build",
+    "head_branch": "issue-724-878028a21e67",
+    "run_url": "https://api.github.com/repos/link-assistant/router/actions/runs/37868201231",
+    "run_attempt": 1,
+    "node_id": "CR_kwDORq-Bqc8AAAAadEXkTQ",
+    "head_sha": "6a9e3de2dc4f41db43d926ad383ce3c432a24664",
+    "url": "https://api.github.com/repos/link-assistant/router/actions/jobs/113619887181",
+    "html_url": "https://github.com/link-assistant/router/actions/runs/37868201231/job/113619887181",
+    "status": "completed",
+    "conclusion": "cancelled",
+    "created_at": "2026-10-09T01:07:15Z",
+    "started_at": "2026-10-09T01:07:15Z",
+    "completed_at": "2026-10-09T01:21:41Z",
+    "name": "Build amd64 runtime (no push)",
+    "steps": [],
+    "check_run_url": "https://api.github.com/repos/link-assistant/router/check-runs/113619887181",
+    "labels": [
+      "ubuntu-24.04"
+    ],
+    "runner_id": 0,
+    "runner_name": "",
+    "runner_group_id": 0,
+    "runner_group_name": ""
+  }
+]

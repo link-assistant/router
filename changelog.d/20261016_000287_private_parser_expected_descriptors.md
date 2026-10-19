@@ -1,0 +1,5 @@
+### Store only expected private parser descriptor shape
+
+The private parser guard stores frozen tuples derived from its six private bootstrap descriptor snapshots. Every current descriptor is still read individually in the original key order, and both numeric scans and every source/hash/read checkpoint remain. A failed current check is never stored; unsupported expected shape uses the complete original guard. All previous guard exports and their complete source prefix remain unchanged.
+
+The new eight-case draft retains the complete original issuer and actual token/CST and JS/strict-TypeScript controls, including BigInt integer results and source-bearing carried output with no export. Native stack controls restore the complete ordered target state, including Bun's observed originalLine/originalColumn fields. The rejected bulk-metadata experiment and failed reports remain preserved separately. Receiving, deadlines and allocation effects of this source draft are unrun by the worker; no speed, memory or owner-authority gain is claimed.

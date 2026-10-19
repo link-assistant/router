@@ -1,0 +1,170 @@
+{
+  "captured_at": "2026-10-10T19:40:33.836107+00:00",
+  "publisher_metadata": [
+    {
+      "repo": "link-foundation/rust-ai-driven-development-pipeline-template",
+      "baseSha": "265219d098ec1c6acbe6749562c2f3dc057f0df8",
+      "headSha": "c3c1855da422622b2d158bd1320436af6ff66d34",
+      "branch": "issue-759-js-first-standard",
+      "pr": "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/pull/197",
+      "number": 197,
+      "ciSkipped": true
+    },
+    {
+      "repo": "link-foundation/js-ai-driven-development-pipeline-template",
+      "baseSha": "0a62b80544ad0a01e97feb800cf7494c190abc8d",
+      "headSha": "2e62b9568061f0b38f97f3a306e3cef4c2f3f8de",
+      "branch": "issue-759-js-first-standard",
+      "pr": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template/pull/231",
+      "number": 231,
+      "ciSkipped": true
+    },
+    {
+      "repo": "link-assistant/hive-mind",
+      "baseSha": "4b32bc12ceb8c0810bce57cc66160b4d60f8f4a6",
+      "headSha": "0f497abc289aad95f62fd2ac34724c972b703520",
+      "branch": "issue-759-js-first-standard",
+      "pr": "https://github.com/link-assistant/hive-mind/pull/3044",
+      "number": 3044,
+      "ciSkipped": true
+    }
+  ],
+  "publisher_metadata_provenance": {
+    "path": "/tmp/router-759-external-publication.json",
+    "sha256": "53d74124fb13d7c3ac712da8ddac9458913f2b649ee063a27458eaf8d0a5a0cc"
+  },
+  "pull_request_captures": [
+    {
+      "kind": "github-pull-request-snapshot",
+      "endpoint": "repos/link-foundation/rust-ai-driven-development-pipeline-template/pulls/197",
+      "url": "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/pull/197",
+      "local_path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/rust-ai-driven-development-pipeline-template-pr-197-metadata.json",
+      "sha256": "9e60d0d459920332c14a8973e02ece72ef5e02e16247cd8a4e30ed64339d73f5",
+      "captured_at": "2026-10-10T19:40:33.206225+00:00"
+    },
+    {
+      "kind": "github-pull-request-snapshot",
+      "endpoint": "repos/link-foundation/rust-ai-driven-development-pipeline-template/pulls/197/files?per_page=100",
+      "url": "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/pull/197",
+      "local_path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/rust-ai-driven-development-pipeline-template-pr-197-files.json",
+      "sha256": "e4833a985cb1737acf0db72b33be3ee5b30cf8ce2005d401975283d67d007311",
+      "captured_at": "2026-10-10T19:40:33.834532+00:00"
+    },
+    {
+      "kind": "github-pull-request-snapshot",
+      "endpoint": "repos/link-foundation/js-ai-driven-development-pipeline-template/pulls/231",
+      "url": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template/pull/231",
+      "local_path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/js-ai-driven-development-pipeline-template-pr-231-metadata.json",
+      "sha256": "c2d821b8281e0b4c5ac6a6227e29fb86a451f8013e5808b7e5ca0c57dface675",
+      "captured_at": "2026-10-10T19:40:33.196149+00:00"
+    },
+    {
+      "kind": "github-pull-request-snapshot",
+      "endpoint": "repos/link-foundation/js-ai-driven-development-pipeline-template/pulls/231/files?per_page=100",
+      "url": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template/pull/231",
+      "local_path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/js-ai-driven-development-pipeline-template-pr-231-files.json",
+      "sha256": "4e828c202b8a4e38830d2c0889bbc3d350695f79c03e7cf9562ed68d0feb8f89",
+      "captured_at": "2026-10-10T19:40:33.790676+00:00"
+    },
+    {
+      "kind": "github-pull-request-snapshot",
+      "endpoint": "repos/link-assistant/hive-mind/pulls/3044",
+      "url": "https://github.com/link-assistant/hive-mind/pull/3044",
+      "local_path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/hive-mind-pr-3044-metadata.json",
+      "sha256": "b2ac67877b07cc8b7290e80f3bc6bc834fb5fda1515147b8fbe2d8933aef27b7",
+      "captured_at": "2026-10-10T19:40:33.161337+00:00"
+    },
+    {
+      "kind": "github-pull-request-snapshot",
+      "endpoint": "repos/link-assistant/hive-mind/pulls/3044/files?per_page=100",
+      "url": "https://github.com/link-assistant/hive-mind/pull/3044",
+      "local_path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/hive-mind-pr-3044-files.json",
+      "sha256": "e738c57e19fcb6463413246bf2b5dc13fdad74549d220f1e21c76aba37536717",
+      "captured_at": "2026-10-10T19:40:33.758890+00:00"
+    }
+  ],
+  "status": "Draft additive proposals; project-specific adoption remains incomplete; publisher used [skip ci] to avoid executing legacy ungated Rust workflows; no green remote CI claim",
+  "published_source_files": [
+    {
+      "repository": "link-foundation/rust-ai-driven-development-pipeline-template",
+      "commit": "c3c1855da422622b2d158bd1320436af6ff66d34",
+      "path": ".github/workflows/javascript-first-gate.yml",
+      "url": "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/blob/c3c1855da422622b2d158bd1320436af6ff66d34/.github/workflows/javascript-first-gate.yml",
+      "local_path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/published-heads/rust-ai-driven-development-pipeline-template/.github/workflows/javascript-first-gate.yml",
+      "sha256": "5df6481d8fd5b06d0cc5bb9869578aa861b9bd3c3dcf667cbb7d82add5d16750",
+      "capture_source": "published draft PR197"
+    },
+    {
+      "repository": "link-foundation/rust-ai-driven-development-pipeline-template",
+      "commit": "c3c1855da422622b2d158bd1320436af6ff66d34",
+      "path": "AGENTS.md",
+      "url": "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/blob/c3c1855da422622b2d158bd1320436af6ff66d34/AGENTS.md",
+      "local_path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/published-heads/rust-ai-driven-development-pipeline-template/AGENTS.md",
+      "sha256": "fecb095857b6d94d31c6e4d3b0efd2c4060929511b9a8b5cff54e82bfe95ab07",
+      "capture_source": "published draft PR197"
+    },
+    {
+      "repository": "link-foundation/rust-ai-driven-development-pipeline-template",
+      "commit": "c3c1855da422622b2d158bd1320436af6ff66d34",
+      "path": "CONTRIBUTING.md",
+      "url": "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/blob/c3c1855da422622b2d158bd1320436af6ff66d34/CONTRIBUTING.md",
+      "local_path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/published-heads/rust-ai-driven-development-pipeline-template/CONTRIBUTING.md",
+      "sha256": "d3be2187a5ce27159ae29882baa4248bb838e76d2bde41f239256b6a97c45ece",
+      "capture_source": "published draft PR197"
+    },
+    {
+      "repository": "link-foundation/rust-ai-driven-development-pipeline-template",
+      "commit": "c3c1855da422622b2d158bd1320436af6ff66d34",
+      "path": "docs/javascript-first.md",
+      "url": "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/blob/c3c1855da422622b2d158bd1320436af6ff66d34/docs/javascript-first.md",
+      "local_path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/published-heads/rust-ai-driven-development-pipeline-template/docs/javascript-first.md",
+      "sha256": "2bc2d21e51eeb41b292566cdfdaefc8fb0389ccbb1a1a39ad4553b0db18539b3",
+      "capture_source": "published draft PR197"
+    },
+    {
+      "repository": "link-assistant/hive-mind",
+      "commit": "0f497abc289aad95f62fd2ac34724c972b703520",
+      "path": "docs/CI-CD-BEST-PRACTICES.md",
+      "url": "https://github.com/link-assistant/hive-mind/blob/0f497abc289aad95f62fd2ac34724c972b703520/docs/CI-CD-BEST-PRACTICES.md",
+      "local_path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/published-heads/hive-mind/docs/CI-CD-BEST-PRACTICES.md",
+      "sha256": "c65321b3fb23a11eae01ec16b4fe2608ea22277c322333985de70a923b833a1b",
+      "capture_source": "published draft PR3044"
+    },
+    {
+      "repository": "link-foundation/js-ai-driven-development-pipeline-template",
+      "commit": "2e62b9568061f0b38f97f3a306e3cef4c2f3f8de",
+      "path": ".github/workflows/javascript-first-gate.yml",
+      "url": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template/blob/2e62b9568061f0b38f97f3a306e3cef4c2f3f8de/.github/workflows/javascript-first-gate.yml",
+      "local_path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/published-heads/js-ai-driven-development-pipeline-template/.github/workflows/javascript-first-gate.yml",
+      "sha256": "5df6481d8fd5b06d0cc5bb9869578aa861b9bd3c3dcf667cbb7d82add5d16750",
+      "capture_source": "published draft PR231"
+    },
+    {
+      "repository": "link-foundation/js-ai-driven-development-pipeline-template",
+      "commit": "2e62b9568061f0b38f97f3a306e3cef4c2f3f8de",
+      "path": "AGENTS.md",
+      "url": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template/blob/2e62b9568061f0b38f97f3a306e3cef4c2f3f8de/AGENTS.md",
+      "local_path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/published-heads/js-ai-driven-development-pipeline-template/AGENTS.md",
+      "sha256": "fecb095857b6d94d31c6e4d3b0efd2c4060929511b9a8b5cff54e82bfe95ab07",
+      "capture_source": "published draft PR231"
+    },
+    {
+      "repository": "link-foundation/js-ai-driven-development-pipeline-template",
+      "commit": "2e62b9568061f0b38f97f3a306e3cef4c2f3f8de",
+      "path": "docs/CONTRIBUTING.md",
+      "url": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template/blob/2e62b9568061f0b38f97f3a306e3cef4c2f3f8de/docs/CONTRIBUTING.md",
+      "local_path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/published-heads/js-ai-driven-development-pipeline-template/docs/CONTRIBUTING.md",
+      "sha256": "c32b5b871816ff577e7ceba248c32afd046ad5f82951702c92c5afd9b1534d9c",
+      "capture_source": "published draft PR231"
+    },
+    {
+      "repository": "link-foundation/js-ai-driven-development-pipeline-template",
+      "commit": "2e62b9568061f0b38f97f3a306e3cef4c2f3f8de",
+      "path": "docs/javascript-first.md",
+      "url": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template/blob/2e62b9568061f0b38f97f3a306e3cef4c2f3f8de/docs/javascript-first.md",
+      "local_path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/published-heads/js-ai-driven-development-pipeline-template/docs/javascript-first.md",
+      "sha256": "2bc2d21e51eeb41b292566cdfdaefc8fb0389ccbb1a1a39ad4553b0db18539b3",
+      "capture_source": "published draft PR231"
+    }
+  ]
+}

@@ -4,11 +4,11 @@ use axum::body::Bytes;
 use serde_json::{Value, json};
 
 /// The exact identity line Claude Code sends as its first system block.
-pub const CLAUDE_CODE_SYSTEM_PROMPT: &str =
+pub const CLAUDE_CODE_SYSTEM_PROMPT: &crate::translation_core::Str =
     "You are Claude Code, Anthropic's official CLI for Claude.";
 
 /// Claude Code version installed by the real-client release gate.
-pub const DEFAULT_CLIENT_VERSION: &str = "2.1.265";
+pub const DEFAULT_CLIENT_VERSION: &crate::translation_core::Str = "2.1.265";
 
 /// The supported Claude Code version, with an operator override for staged
 /// client upgrades.
@@ -26,7 +26,7 @@ pub fn oauth_user_agent() -> String {
 
 /// Whether an upstream credential is a Claude subscription OAuth access token.
 #[must_use]
-pub fn is_oauth_credential(token: &str) -> bool {
+pub fn is_oauth_credential(token: &crate::translation_core::Str) -> bool {
     token.starts_with("sk-ant-oat")
 }
 
@@ -57,17 +57,17 @@ pub fn ensure_claude_code_system(body: &mut Value) {
     }
 }
 
-fn first_block_is_identity(blocks: &[Value]) -> bool {
+fn first_block_is_identity(blocks: &[crate::translation_core::Json]) -> bool {
     blocks
         .first()
         .and_then(|block| block.get("text"))
-        .and_then(Value::as_str)
+        .and_then(crate::translation_core::Json::as_str)
         .is_some_and(|text| text.starts_with(CLAUDE_CODE_SYSTEM_PROMPT))
 }
 
 /// Apply [`ensure_claude_code_system`] to a body forwarded as raw bytes.
 #[must_use]
-pub fn ensure_claude_code_system_bytes(parsed: &Value, raw: Bytes) -> Bytes {
+pub fn ensure_claude_code_system_bytes(parsed: &crate::translation_core::Json, raw: Bytes) -> Bytes {
     if !parsed.is_object() {
         return raw;
     }

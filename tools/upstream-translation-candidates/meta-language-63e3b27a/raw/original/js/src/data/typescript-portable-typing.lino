@@ -1,0 +1,2 @@
+(typing-rule function_declaration function)
+(typing-rule type_alias_declaration alias)

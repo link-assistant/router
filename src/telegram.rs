@@ -33,7 +33,7 @@ const POLL_TIMEOUT_SECS: u64 = 30;
 const ERROR_BACKOFF: Duration = Duration::from_secs(5);
 
 /// Only these update kinds are requested; anything else never reaches us.
-const ALLOWED_UPDATES: &str = r#"["message"]"#;
+const ALLOWED_UPDATES: &crate::translation_core::Str = r#"["message"]"#;
 
 /// Run the Telegram polling loop until the process ends.
 ///
@@ -69,7 +69,7 @@ pub async fn run(chat: Arc<ChatAdmin>, client: Client) {
 }
 
 /// Process one update, dropping everything that is not a private message.
-async fn handle_update(chat: &Arc<ChatAdmin>, bot: &TelegramBot, update: &Value) {
+async fn handle_update(chat: &Arc<ChatAdmin>, bot: &TelegramBot, update: &crate::translation_core::Json) {
     let Some(message) = update.get("message") else {
         return;
     };
@@ -125,12 +125,12 @@ async fn deliver(chat: &Arc<ChatAdmin>, bot: &TelegramBot, chat_id: i64, reply: 
 /// including an absent or unrecognised type, because "unknown" must not fall
 /// through to "administer this router".
 #[must_use]
-pub fn is_private(message: &Value) -> bool {
-    message.pointer("/chat/type").and_then(Value::as_str) == Some("private")
+pub fn is_private(message: &crate::translation_core::Json) -> bool {
+    message.pointer("/chat/type").and_then(crate::translation_core::Json::as_str) == crate::translation_core::Maybe::Some("private")
 }
 
-fn update_id(update: &Value) -> i64 {
-    update.get("update_id").and_then(Value::as_i64).unwrap_or(0)
+fn update_id(update: &crate::translation_core::Json) -> i64 {
+    update.get("update_id").and_then(crate::translation_core::Json::as_i64).unwrap_or(0)
 }
 
 /// Minimal Bot API client: the four calls this channel needs.
@@ -142,7 +142,7 @@ struct TelegramBot {
 
 impl TelegramBot {
     /// `getMe` — used once at startup to log the bot identity.
-    async fn me(&self) -> Result<String, String> {
+    async fn me(&self) -> crate::translation_core::Outcome<String, String> {
         let body = self.call("getMe", &json!({})).await?;
         Ok(body
             .pointer("/result/username")
@@ -152,7 +152,7 @@ impl TelegramBot {
     }
 
     /// `getUpdates` with a long timeout, returning the raw update objects.
-    async fn updates(&self, offset: i64) -> Result<Vec<Value>, String> {
+    async fn updates(&self, offset: i64) -> crate::translation_core::Outcome<Vec<crate::translation_core::Json>, String> {
         let body = self
             .call(
                 "getUpdates",
@@ -172,7 +172,7 @@ impl TelegramBot {
     }
 
     /// `sendMessage`, returning the new message id so secrets can be deleted.
-    async fn send(&self, chat_id: i64, text: &str) -> Result<i64, String> {
+    async fn send(&self, chat_id: i64, text: &crate::translation_core::Str) -> crate::translation_core::Outcome<i64, String> {
         let body = self
             .call(
                 "sendMessage",
@@ -187,7 +187,7 @@ impl TelegramBot {
 
     /// `deleteMessage` — best effort; Telegram only lets a bot delete its own
     /// recent messages, and the user may have deleted it already.
-    async fn delete(&self, chat_id: i64, message_id: i64) -> Result<(), String> {
+    async fn delete(&self, chat_id: i64, message_id: i64) -> crate::translation_core::Outcome<(), String> {
         self.call(
             "deleteMessage",
             &json!({"chat_id": chat_id, "message_id": message_id}),
@@ -196,7 +196,7 @@ impl TelegramBot {
         .map(|_| ())
     }
 
-    async fn call(&self, method: &str, body: &Value) -> Result<Value, String> {
+    async fn call(&self, method: &crate::translation_core::Str, body: &crate::translation_core::Json) -> crate::translation_core::Outcome<crate::translation_core::Json, String> {
         let response = self
             .client
             .post(format!("{}/{method}", self.base_url))
@@ -245,5 +245,25 @@ mod tests {
     fn the_update_offset_advances_past_the_last_update() {
         assert_eq!(update_id(&json!({"update_id": 41})) + 1, 42);
         assert_eq!(update_id(&json!({})), 0);
+    }
+
+    #[test]
+    fn update_ids_preserve_signed_domain_and_refuse_other_json_numbers() {
+        for expected in [i64::MIN, -1, 0, 1, i64::MAX] {
+            assert_eq!(update_id(&json!({"update_id": expected})), expected);
+        }
+        for update in [
+            json!(null),
+            json!([]),
+            json!({}),
+            json!({"update_id": null}),
+            json!({"update_id": true}),
+            json!({"update_id": "1"}),
+            json!({"update_id": []}),
+            json!({"update_id": 1.0}),
+            json!({"update_id": u64::MAX}),
+        ] {
+            assert_eq!(update_id(&update), 0, "{update}");
+        }
     }
 }

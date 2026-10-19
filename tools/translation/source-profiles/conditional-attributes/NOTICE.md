@@ -1,0 +1,1 @@
+Original Rust 1.89.0 compiler sources are distributed under the accompanying MIT and Apache 2.0 licenses. Full original byte and archive digests are recorded in manifest.json. The checked subset establishes conditional attribute absence only.

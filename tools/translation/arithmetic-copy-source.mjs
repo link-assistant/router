@@ -1,0 +1,26 @@
+// Actual original primitive Copy macro output syntax, not trait admission.
+import {readFileSync} from 'node:fs';
+import {gunzipSync} from 'node:zlib';
+import {createHash} from 'node:crypto';
+import {originalTopLevelMacroInvocations,freezeMacroTree} from './macro-token-trees.mjs';
+import {compileDeclarativeMacro,expandDeclarativeMacro,declarativeSubInput,declarativeExpansionLineage,declarativeDefinitionHeader} from './declarative-token-macros.mjs';
+const states=new WeakMap(),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
+function transparent(tree){for(let depth=0;tree?.kind==='fragment'&&['ident','tt'].includes(tree.fragment)&&tree.trees.length===1;depth++){if(depth>=64)throw new RangeError('Original Copy transparent capture depth');tree=tree.trees[0];}return tree;}
+const word=tree=>transparent(tree)?.kind==='token'?transparent(tree).text:null;
+function output(expansion){
+  const rows=[],calls=[],trees=expansion.trees;for(let at=0;at<trees.length;at++){
+    if(word(trees[at])==='#'){if(trees[at+1]?.kind!=='group'||trees[at+1].delimiter!=='[')throw new TypeError('Original Copy attribute output shape differs');at++;continue;}
+    if(word(trees[at])==='impl'){let end=at+1;while(end<trees.length&&trees[end]?.delimiter!=='{')end++;if(end===trees.length||trees[end].children.length)throw new TypeError('Original Copy output is not an empty trait implementation');const header=trees.slice(at,end),forAt=header.findIndex(tree=>word(tree)==='for'),trait=forAt>0?word(header[forAt-1]):null,target=header[forAt+1];if(word(header[1])!=='<'||forAt<3||word(header[forAt-2])!=='>'||header.length!==forAt+2||target?.kind!=='fragment'||target.fragment!=='ty')throw new TypeError('Original Copy impl does not preserve its opaque type capture');rows.push({trait,header,target,body:trees[end],expansionDigest:expansion.digest,traitOwnerVerified:false,typeOwnerVerified:false});at=end;continue;}
+    if(word(trees[at])==='marker_impls'&&word(trees[at+1])==='!'&&trees[at+2]?.kind==='group'){calls.push({path:[at+2],sourceSyntax:trees[at].sourceSyntax??null,ownerVerified:false});at+=2;continue;}
+    throw new TypeError('Original Copy output contains an unsupported item/call');
+  }if(calls.length>1)throw new TypeError('Original Copy source recursion is ambiguous');return {rows,calls};
+}
+export function compilePinnedArithmeticCopySource(){
+  const compressed=readFileSync(new URL('./source-profiles/copy-standard/rust-marker-1.89.0.rs.gz',import.meta.url));if(hash(compressed)!=='6ae1b7b6a432b0ef19a5502cacd88181261f32fda6fed1a9db9c197fbfc5d821')throw new TypeError('Original Copy source archive differs');const bytes=gunzipSync(compressed,{maxOutputLength:65536});if(bytes.length!==53066||hash(bytes)!=='db5d413946a48f816af89e83f99741693d1aaf088633db60c8d372a555ff8809')throw new TypeError('Original Copy source bytes differ');const source=bytes.toString('utf8'),definition=compileDeclarativeMacro(source,{name:'marker_impls',owner:['core','marker']}),invocations=originalTopLevelMacroInvocations(source).filter(row=>row.path.join('::')==='marker_impls'&&row.trees.some((tree,index)=>word(tree)==='Copy'&&word(row.trees[index+1])==='for'));
+  if(invocations.length!==1)throw new TypeError('Actual original Copy invocation is absent or ambiguous');const invocation=invocations[0],expansions=[],implementations=[];let input=invocation.trees;
+  for(let depth=0;;depth++){if(depth>=32)throw new RangeError('Original Copy recursive expansion budget');const expansion=expandDeclarativeMacro(definition,input),inspected=output(expansion);expansions.push(expansion);implementations.push(...inspected.rows);if(!inspected.calls.length)break;input=declarativeSubInput(expansion,inspected.calls[0].path);}
+  const issued={schema:'original-copy-macro-impl-syntax-v1',source:{path:'library/core/src/marker.rs',sha256:hash(bytes),bytes:bytes.length},definition:declarativeDefinitionHeader(definition),invocation:{span:invocation.sourceSpan,sha256:invocation.sourceSha256},expansions,implementations,sourceInputsVerified:true,generatedImplSyntaxVerified:true,primitiveTypeOwnerVerified:false,callerMacroOwnerVerified:false,traitOwnerVerified:false,attributeOwnerVerified:false,copyContractVerified:false,namespaceAuthority:false,parseAdmission:false,applicationEffectCompleteness:false,runtimeParity:false,remainingObligations:['Copy/Clone/lang item and primitive type ownership/trait selection','original attribute and recursive macro mixed-site owner phases','opaque type captures remain AST evidence, never literal matcher inputs','original shared-reference Copy implementation and mutable exclusion require separate checked shape/owner proof','whole reader/allocator/platform/effects remain unclosed']};const candidate=freezeMacroTree(issued);states.set(candidate,{expansions});return candidate;
+}
+export const isArithmeticCopySource=proof=>!!proof&&states.has(proof);
+export function arithmeticCopyExpansionProofs(proof){const state=states.get(proof);if(!state)throw new TypeError('Unsealed original Copy output candidate');for(const expansion of state.expansions)declarativeExpansionLineage(expansion);return Object.freeze([...state.expansions]);}
+export const arithmeticCopyExpansionLineage=declarativeExpansionLineage;

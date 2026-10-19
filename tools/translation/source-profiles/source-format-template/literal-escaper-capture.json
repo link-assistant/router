@@ -1,0 +1,39 @@
+{
+  "existingCrate": "../cooked-byte-char/rustc-literal-escaper-0.0.2.crate",
+  "crateBytes": 11073,
+  "crateSha256": "0041b6238913c41fe704213a4a9329e2f685a156d1781998128b4149c230ad04",
+  "members": [
+    {
+      "path": "rustc-literal-escaper-0.0.2/src/lib.rs",
+      "archive": "rustc-literal-escaper-0.0.2_src_lib.rs.gz",
+      "bytes": 15244,
+      "sha256": "28673f5d4b45c0fb78d6b6b7294c398511bc2a6bee9b97aec531e2a1ea4979f0",
+      "archiveBytes": 4164,
+      "archiveSha256": "d13f89228ab710c023ae87ade23fd962a12d9d44341cfebe9bea61c11add7d44"
+    },
+    {
+      "path": "rustc-literal-escaper-0.0.2/Cargo.toml",
+      "archive": "rustc-literal-escaper-0.0.2_Cargo.toml.gz",
+      "bytes": 1009,
+      "sha256": "62b6e0fb923d611b7cf61d831883adab2a7b25c4aad2d4c80b2cc260f138ed05",
+      "archiveBytes": 590,
+      "archiveSha256": "ba3101d12853791253c1606c5bcfa9ecd9e4c31abcf9bde5fbd3c7b969ffe7c8"
+    },
+    {
+      "path": "rustc-literal-escaper-0.0.2/LICENSE-MIT",
+      "archive": "rustc-literal-escaper-0.0.2_LICENSE-MIT.gz",
+      "bytes": 1023,
+      "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+      "archiveBytes": 619,
+      "archiveSha256": "8a5eddda9f93808335b34a03abef4968118f82a872cd3f7b52cc43d3cf41b497"
+    },
+    {
+      "path": "rustc-literal-escaper-0.0.2/LICENSE-APACHE",
+      "archive": "rustc-literal-escaper-0.0.2_LICENSE-APACHE.gz",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+      "archiveBytes": 3554,
+      "archiveSha256": "743f15542c6a31637b66b952a6d7da62ac00374b5caae6530e8d7317c29b0fd6"
+    }
+  ]
+}

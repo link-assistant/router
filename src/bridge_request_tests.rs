@@ -449,3 +449,37 @@ fn anthropic_top_level_cache_control_is_explicitly_rejected_on_bridges() {
         assert!(error.contains("cache_control"), "{error}");
     }
 }
+
+// CI-only native oracle for the four finite constructor source patterns. The
+// public bridge route reaches its genuine private text_part implementation.
+#[test]
+fn checked_json_constructor_scalar_and_conditional_edges() {
+    for role in ["user", "assistant"] {
+        for text in ["", "猫😀", "quote\"\\\n"] {
+            let body = json!({
+                "messages": [{"role": role, "content": text}],
+                "max_tokens": 32
+            });
+            let actual = anthropic_to_responses_request(&body, "gpt-test").unwrap();
+            let inline = json!({
+                "type": if role == "assistant" { "output_text" } else { "input_text" },
+                "text": text
+            });
+            assert_eq!(actual["input"][0]["content"][0], inline);
+            assert_eq!(inline["text"], text);
+        }
+    }
+    for forceable in [false, true] {
+        let name = "猫😀";
+        let reason = "quote\"\\\n";
+        let blocker = crate::translation_core::json!({
+            "name": name, "reason": reason, "forceable": forceable
+        });
+        assert_eq!(
+            blocker,
+            json!({"name": name, "reason": reason, "forceable": forceable})
+        );
+        let failure = crate::translation_core::json!({"recovered": false, "error": reason});
+        assert_eq!(failure, json!({"recovered": false, "error": reason}));
+    }
+}

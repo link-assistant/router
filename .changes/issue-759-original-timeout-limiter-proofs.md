@@ -1,0 +1,1 @@
+- Prove unchanged upstream timeout parsers and the output-limiter constructor in emitted JavaScript and strict compiled TypeScript on Node and Bun, including Rust whitespace, exact u64 boundaries and saturating budgets. Preserve original Default derive/layout metadata without claiming generated Default behavior or mutable streaming parity.

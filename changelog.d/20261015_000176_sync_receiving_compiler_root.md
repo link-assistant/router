@@ -1,0 +1,3 @@
+Synchronization planning loads its native import-scanner TypeScript compiler lazily from the explicit receiving root. An unrelated inherited `ROUTER_NATIVE_TS_SOURCE_ROOT` no longer selects the scanner's dependencies before producer children start. Complete-source syntax validation, ownership/link/byte limits, child environment binding and `ROUTER_TRANSLATION_TSC` handling remain intact.
+
+Source-only draft, unverified: the complete synchronization test file gains receiving-root, missing-receiving-dependency, malformed-source and environment-preservation controls. The existing exported offline CLI receiving/strict-TypeScript test is unchanged. Node, Bun and strict TypeScript checks have not run for this draft; no Rust, generation, runtime-parity or full-gate claim.

@@ -1,0 +1,41 @@
+{
+  "file": "src/activitypub.rs",
+  "fileSha256": "1eec701e38326ba002bea83922b861fb8c4cae773384fe8c27d7a6a6adba0645",
+  "function": "activitypub_context",
+  "span": {
+    "start": 5805,
+    "end": 6051,
+    "unit": "utf16-ascii-prefix"
+  },
+  "functionSha256": "c86b3bd5bdffa343f82446b741a8c36eddd5225fa995957938705976feed0d06",
+  "expectedValue": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://forgefed.org/ns",
+    {
+      "fep": "https://w3id.org/fep/ef61#",
+      "aliases": "fep:aliases"
+    }
+  ],
+  "wholeFileNamespaceStatus": "retained refusal: unproved axum imports and crate proxy/route_contract owners, including mixed-site Into candidate trait closure",
+  "originalFunctionExecuted": false,
+  "sourceBodyRewritten": false,
+  "runtimeParity": false,
+  "additionalOriginals": [
+    {
+      "file": "src/codex_catalog.rs",
+      "fileSha256": "5ef5779f43a22c7f0abc79896449fc9f628542b568ea4cb15b95e1ae19fe37b2",
+      "function": "model_info",
+      "span": {
+        "start": 676,
+        "end": 1541,
+        "unit": "utf16-ascii-prefix"
+      },
+      "functionSha256": "ffc133032c76f4c600eba1bcbdbc6644cac14aa7ea5f9b5356f5c99d6f58f558",
+      "emptyLiteralField": "experimental_supported_tools",
+      "wholeFileNamespaceStatus": "retained prerequisite refusal: original ModelDescription named lifetime/generic layout, borrowed field ownership, format owner and i32 Serialize/conversion; an empty literal alone does not resolve these obligations",
+      "originalFunctionExecuted": false,
+      "sourceBodyRewritten": false,
+      "runtimeParity": false
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "inventoryRoots": [
+    {
+      "path": "javascript",
+      "extensions": [
+        ".js",
+        ".mjs"
+      ]
+    },
+    {
+      "path": "rust",
+      "extensions": [
+        ".rs"
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "id": "synthetic-answer",
+      "state": "ported",
+      "inputs": [
+        "javascript/example.js"
+      ],
+      "outputs": [
+        "rust/example.rs"
+      ],
+      "fixtures": [
+        "tests/example.json"
+      ]
+    }
+  ],
+  "exclusions": []
+}

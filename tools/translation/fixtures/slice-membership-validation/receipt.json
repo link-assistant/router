@@ -1,0 +1,174 @@
+{
+  "scope": "Complete focused evidence; no bulk or whole-Router parity claim",
+  "verifiedSourceHead": "86cf154cc46fbfb351ce5a1992d133c3bab35eb3",
+  "trackedStatusDuringFinalRunners": "clean",
+  "finalTranslationTrackedFilesSha256": "757da389ef41414dd10eeed3d651435c6e9055c75ce657e54dd8c8992b42c64f",
+  "finalCoherentCasesPerEngine": 58,
+  "finalFailedCasesPerEngine": 0,
+  "finalSkippedCasesPerEngine": 0,
+  "nodeWallSeconds": 38.13915566704236,
+  "bunWallSeconds": 23.757061416981742,
+  "originalWholeFiles": 3,
+  "originalFunctionsVerified": 4,
+  "literalOutcomesPerTarget": 55,
+  "domainRejectionsPerTarget": 24,
+  "targets": [
+    "emitted JavaScript",
+    "strict compiled TypeScript"
+  ],
+  "executionEngines": [
+    "Node v20.19.4",
+    "Bun 1.4.3"
+  ],
+  "earlierAttempts": [
+    {
+      "scope": "initial",
+      "runner": "node",
+      "total": 9,
+      "passed": 7,
+      "failed": 2,
+      "skipped": 0
+    },
+    {
+      "scope": "initial",
+      "runner": "bun",
+      "total": 9,
+      "passed": 7,
+      "failed": 2,
+      "skipped": 0
+    },
+    {
+      "scope": "corrected",
+      "runner": "node",
+      "total": 9,
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "scope": "corrected",
+      "runner": "bun",
+      "total": 9,
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "scope": "final",
+      "runner": "node",
+      "total": 58,
+      "passed": 57,
+      "failed": 1,
+      "skipped": 0
+    },
+    {
+      "scope": "final",
+      "runner": "bun",
+      "total": 58,
+      "passed": 57,
+      "failed": 1,
+      "skipped": 0
+    },
+    {
+      "scope": "prerequisite-corrected",
+      "runner": "node",
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "scope": "prerequisite-corrected",
+      "runner": "bun",
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0
+    }
+  ],
+  "evidenceArchive": {
+    "path": "tools/translation/fixtures/slice-membership-validation/complete-focused-evidence.json.gz",
+    "compressedBytes": 20387,
+    "compressedSha256": "b6bd4bf1055e0e5645ef5e8f4fae69c0eef6da5e528646b4a951e957cd219b8e",
+    "decodedBytes": 130364,
+    "decodedSha256": "a912bc58f3be344ff9a6aaf21b56161b47ab26cccd10e26c5303ff1e35c40522",
+    "reopenedByteEquality": true
+  },
+  "sourceProfileManifestSha256": "c56fafc7c0af725d984425439b2a03c7378fadc36e4331d81cad19694b769aa8",
+  "compressedSourceInputBytes": 95996,
+  "sourceInputHashesVerified": true,
+  "testedInputs": [
+    {
+      "path": "tools/translation/extensions/slice-membership.mjs",
+      "sha256": "d788f8d8fdf190c3056cb8b09da5b0951b53638f01b6e6190123e443b6accdc8",
+      "bytes": 6399
+    },
+    {
+      "path": "tools/translation/extensions/slice-membership-runtime.mjs",
+      "sha256": "431046c340620715c457fe90131938b8f30215c98db08409dfc311bf432f5b37",
+      "bytes": 1544
+    },
+    {
+      "path": "tools/translation/extensions/slice-membership-runtime.d.mts",
+      "sha256": "e1d27aa74531fbf5ee1e035f2af281414782ad02d15a8cd957f1f8b58a97f261",
+      "bytes": 226
+    },
+    {
+      "path": "tools/translation/extensions/text.mjs",
+      "sha256": "eba2d19d1871915db05ed296d4edfbc8eb8f5709197eadf2a9cea9f16b40ed69",
+      "bytes": 15434
+    },
+    {
+      "path": "tools/translation/host-assets.mjs",
+      "sha256": "b5e6a7bb0032a1c57a338f3211cc3a54735e8e1152a48ce31cd42ea4993956c5",
+      "bytes": 4752
+    },
+    {
+      "path": "tools/translation/bulk.mjs",
+      "sha256": "cece0f0b57760ca4e6e3ef0e3bd5d3fbec547f2ac9d657d9cc2d8165919cad88",
+      "bytes": 13150
+    },
+    {
+      "path": "tools/translation/test/slice-membership.test.mjs",
+      "sha256": "58fa286b94e702b882735a35ad4e08dbe2c9b325df6e202b763c38a564594c02",
+      "bytes": 12579
+    },
+    {
+      "path": "tools/translation/test/slice-membership-originals.test.mjs",
+      "sha256": "c7b2a27de9aee59300b7598c072bb0526fb847ef873ffe4e55131edc45158ec1",
+      "bytes": 3526
+    },
+    {
+      "path": "tools/translation/test/slice-membership-runtime.test.mjs",
+      "sha256": "c82921464a62ef66c981ed1cfb0b2c36c201f3210111a74b81fd4320afb4b996",
+      "bytes": 2564
+    },
+    {
+      "path": "tools/translation/test/typed-targets.mjs",
+      "sha256": "e349e1f6c9260c28ea59de904b60a8eb75b1e6f89fac835660b1b301f7473923",
+      "bytes": 1962
+    },
+    {
+      "path": "tools/translation/fixtures/slice-membership-originals.json",
+      "sha256": "837c4635c83a71c8ba9509d8ec6142da9630bd6c9186627686b9d9e1d8cf9a12",
+      "bytes": 6509
+    },
+    {
+      "path": "tools/translation/fixtures/slice-membership-prerequisites.json",
+      "sha256": "ae9543decb8dd8bd78ebdaff839640108be147ca663af5621127ff0b118cf170",
+      "bytes": 1880
+    },
+    {
+      "path": "tools/translation/source-profiles/slice-membership/manifest.json",
+      "sha256": "c56fafc7c0af725d984425439b2a03c7378fadc36e4331d81cad19694b769aa8",
+      "bytes": 4328
+    }
+  ],
+  "sharedFixedArrayStatus": "explicit prerequisite refusal; initial and current exact diagnostics retained on original synthetic source",
+  "historicalDraftReceipt": "tools/translation/fixtures/slice-membership-draft-receipt.json records the earlier unrun draft only",
+  "bulkProductionGainMeasured": false,
+  "runtimeParity": false,
+  "namespaceAuthority": false,
+  "generatedTraitBehavior": false,
+  "rustExecution": false
+}

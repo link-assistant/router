@@ -18,7 +18,7 @@ use serde_json::Value;
 use crate::chat_admin::{ChatAdmin, ChatChannel, Reply};
 
 /// VK API version this channel is written against.
-const API_VERSION: &str = "5.199";
+const API_VERSION: &crate::translation_core::Str = "5.199";
 
 /// Seconds the long-poll request is allowed to wait for an event.
 const WAIT_SECS: u64 = 25;
@@ -84,7 +84,7 @@ struct VkBot {
 }
 
 impl VkBot {
-    async fn long_poll_server(&self) -> Result<LongPollServer, String> {
+    async fn long_poll_server(&self) -> crate::translation_core::Outcome<LongPollServer, String> {
         let body = self
             .api(
                 "groups.getLongPollServer",
@@ -104,7 +104,7 @@ impl VkBot {
     }
 
     /// Poll until VK invalidates the server credentials.
-    async fn poll(&self, chat: &Arc<ChatAdmin>, mut server: LongPollServer) -> Result<(), String> {
+    async fn poll(&self, chat: &Arc<ChatAdmin>, mut server: LongPollServer) -> crate::translation_core::Outcome<(), String> {
         loop {
             let body = self
                 .client
@@ -149,7 +149,7 @@ impl VkBot {
     }
 
     /// Process one update, dropping everything that is not a private message.
-    async fn handle_update(&self, chat: &Arc<ChatAdmin>, update: &Value) {
+    async fn handle_update(&self, chat: &Arc<ChatAdmin>, update: &crate::translation_core::Json) {
         if update.get("type").and_then(Value::as_str) != Some("message_new") {
             return;
         }
@@ -191,7 +191,7 @@ impl VkBot {
         }
     }
 
-    async fn send(&self, peer_id: i64, text: &str) -> Result<i64, String> {
+    async fn send(&self, peer_id: i64, text: &crate::translation_core::Str) -> crate::translation_core::Outcome<i64, String> {
         let body = self
             .api(
                 "messages.send",
@@ -210,7 +210,7 @@ impl VkBot {
 
     /// `messages.delete` with `delete_for_all`, so the secret leaves the user's
     /// history too. Best effort: VK refuses beyond its own time window.
-    async fn delete(&self, peer_id: i64, message_id: i64) -> Result<(), String> {
+    async fn delete(&self, peer_id: i64, message_id: i64) -> crate::translation_core::Outcome<(), String> {
         self.api(
             "messages.delete",
             &[
@@ -223,7 +223,7 @@ impl VkBot {
         .map(|_| ())
     }
 
-    async fn api(&self, method: &str, params: &[(&str, String)]) -> Result<Value, String> {
+    async fn api(&self, method: &crate::translation_core::Str, params: &[(&crate::translation_core::Str, String)]) -> crate::translation_core::Outcome<crate::translation_core::Json, String> {
         let mut form: Vec<(&str, String)> = params.to_vec();
         form.push(("access_token", self.token.clone()));
         form.push(("v", API_VERSION.to_string()));
@@ -260,7 +260,7 @@ pub const fn is_private(peer_id: i64, from_id: i64) -> bool {
 }
 
 /// VK sends `ts` as a string in some responses and a number in others.
-fn json_ts(value: &Value) -> Option<String> {
+fn json_ts(value: &crate::translation_core::Json) -> crate::translation_core::Maybe<String> {
     value
         .as_str()
         .map(ToString::to_string)

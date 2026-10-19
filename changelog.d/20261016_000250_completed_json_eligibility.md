@@ -1,0 +1,5 @@
+### Changed
+
+Completed native data-freeze records retain descendant safe-scalar and no-own-toJSON flags in their existing bounded scalar storage. The private JSON byte cache may use those flags with the same cell/depth bounds after both live native qualifications; all unknown inputs retain the full prior eligibility walk and every JSON serialization, hash, private source join and output reissue remains required. The old negative budget shortcut keeps its meaning. Eligibility telemetry explicitly distinguishes the skipped walk and its different descendant warming.
+
+The complete previous helper sources/license and a new whole eight-case equivalence/refusal file are retained. BigInt/symbols, own noncallable toJSON, hostile objects, cycles, repeated DAG costs, depth, saturation, cohort eviction and native hooks remain conservative. Fresh process proof observations keep their actual parent engine and full source/hash/sharing reports under the existing 10-second, 8 MiB wire, 64 MiB decoded envelope and 60-second case limits. All new checks are SOURCE ONLY UNRUN; original whole files and full-gate qualification remain mandatory, with no performance or parity claim.

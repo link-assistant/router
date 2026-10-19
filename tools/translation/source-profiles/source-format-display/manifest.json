@@ -1,0 +1,18 @@
+{
+  "schema": "source-display-string-sink-v1",
+  "rust": "1.89.0",
+  "members": [
+    {
+      "path": "library/alloc/src/string.rs",
+      "archive": "alloc-string.rs.gz",
+      "bytes": 111988,
+      "sha256": "46dadb69bbe909b50146366020dc23d4fa88f53b93435b7e0f70c6692d0ba629",
+      "archiveBytes": 23442,
+      "archiveSha256": "3f9bb719280924aa34b9f3693879b5a65e45eecc78f4fa8dea84219bf1105523",
+      "copiedFromExistingSourceProfile": "tools/translation/source-profiles/utf16-fixed-f64/alloc-string.rs.gz"
+    }
+  ],
+  "originalCoreFormatSourceProfile": "../format-arguments/manifest.json",
+  "namespaceAuthority": false,
+  "runtimeParity": false
+}

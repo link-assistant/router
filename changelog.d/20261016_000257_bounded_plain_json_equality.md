@@ -1,0 +1,4 @@
+### Changed
+
+- Draft a bounded, invocation-local equality check for complete deeply frozen JSON data after existing private owner checks and fresh full source/hash reissue. Exact key order, native frozen status, descriptor values, safe primitives and alias-expanded serialized size are checked without retaining proof roots. Mutable data and every uncertain input use the original serializer expression in its original order.
+- Keep existing small operand-cache warming and all storage limits. Complete equal operands that cannot fit that cache avoid allocating two discarded JSON strings. Accessors, proxies, exotic error/buffer views, namespaces, cycles and changed native operations retain the fallback. Whole behavioral and refusal qualification remains unrun; no translation, memory or speed gain is claimed.

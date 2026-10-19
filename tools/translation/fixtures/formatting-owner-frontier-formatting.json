@@ -1,0 +1,15 @@
+{
+  "schema": "unchanged-receipt-json-formatting-v1",
+  "path": "tools/translation/fixtures/formatting-owner-frontier.json",
+  "testedSourceHead": "e1f10dd8d1e78100824f7c9b18ed9802d867354d",
+  "originalGitBlob": "ced07bea373ee361279e5aafad1a7da5b3f77ca4",
+  "originalSha256": "cc48336ea9e2b69e1dc52a972fbbe6ab53a59bec47ba5789e8e0e90e346860d4",
+  "originalBytes": 317742,
+  "originalLines": 10386,
+  "formattedSha256": "5f0c516d57ef660a987461ec0d17f23f3b2c4583c0980a26edc14ab6dca74f47",
+  "formattedBytes": 232969,
+  "formattedLines": 1,
+  "parsedValuesEqual": true,
+  "compilerSourceChanged": false,
+  "runtimeAuthorityGranted": false
+}

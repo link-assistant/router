@@ -1,0 +1,19 @@
+{
+  "schema": "original-inherent-method-source-final-validation-v1",
+  "verifiedSourceHead": "bc2dca51f0c619e1c51276f298e593eceec6df8d",
+  "archive": "final-100.json.gz",
+  "compressedBytes": 90236,
+  "compressedSha256": "17bafeee6d49a37012bb2f7b8d53d95d724ffee79d4a03e22cea6ac38c516e30",
+  "decompressedBytes": 358002,
+  "decompressedSha256": "e7f2dfa5fa0dcb070166c8175f8805eb4dbe8193850875fea17af42fb4958c73",
+  "entryCount": 7,
+  "everyEntryIndependentlyReopened": true,
+  "nodePassed": 100,
+  "bunPassed": 100,
+  "failures": 0,
+  "skips": 0,
+  "sourceBytesUnchanged": true,
+  "wholeVerificationAdmission": false,
+  "formatterAdmission": false,
+  "runtimeParity": false
+}

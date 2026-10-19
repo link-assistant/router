@@ -1,0 +1,1 @@
+Retain the complete original String Clone storage and allocator/slice source chain as a private source-only prerequisite. Both ConvertVec backends and original UFCS, nested-trait and unsafe parser refusals remain intact. Separate selectors preserve existing standard-body dispatch and confer no storage, loan or runtime authority; no generated body gain is claimed.

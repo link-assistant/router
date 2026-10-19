@@ -1,0 +1,1 @@
+Retain written local static lifetime constraints in checked meta-language bindings and validate initializer origins independently of a function's return type. Literal static origins and genuinely empty array literals remain admitted; input borrows cannot gain a static lifetime through an unused annotated local.

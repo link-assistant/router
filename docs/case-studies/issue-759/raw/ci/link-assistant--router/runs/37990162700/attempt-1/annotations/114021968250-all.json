@@ -1,0 +1,14 @@
+[
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/router/blob/0f79a7d87e08d23e271ecf02527aed3d3a5b0b80/.github",
+    "start_line": 226,
+    "start_column": null,
+    "end_line": 226,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "buildx failed with: failed to build: failed to solve: rust:1.99.0-slim-trixie@sha256:24e632c09342c20abf8312cf4f61430a911c01ed3a5e4c02b87292b1c39c5273: failed to resolve source metadata for docker.io/library/rust:1.99.0-slim-trixie@sha256:24e632c09342c20abf8312cf4f61430a911c01ed3a5e4c02b87292b1c39c5273: unexpected status from HEAD request to https://registry-1.docker.io/v2/library/rust/manifests/sha256:24e632c09342c20abf8312cf4f61430a911c01ed3a5e4c02b87292b1c39c5273: 429 Too Many Requests",
+    "raw_details": ""
+  }
+]

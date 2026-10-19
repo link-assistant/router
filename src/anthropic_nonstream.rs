@@ -48,7 +48,7 @@ pub async fn collect_response(response: Response, surface: crate::metrics::Surfa
     Response::from_parts(parts, Body::from(body))
 }
 
-fn upstream_error(surface: crate::metrics::Surface, message: &str) -> Response {
+fn upstream_error(surface: crate::metrics::Surface, message: &crate::translation_core::Str) -> Response {
     crate::api_error::error_response_for_surface(
         surface,
         StatusCode::BAD_GATEWAY,
@@ -57,14 +57,14 @@ fn upstream_error(surface: crate::metrics::Surface, message: &str) -> Response {
     )
 }
 
-fn is_event_stream(content_type: Option<&HeaderValue>) -> bool {
+fn is_event_stream(content_type: crate::translation_core::Maybe<&HeaderValue>) -> bool {
     content_type
         .and_then(|value| value.to_str().ok())
         .and_then(|value| value.split(';').next())
         .is_some_and(|value| value.trim().eq_ignore_ascii_case("text/event-stream"))
 }
 
-fn assemble(body: &[u8]) -> Result<Value, String> {
+fn assemble(body: &[u8]) -> crate::translation_core::Outcome<crate::translation_core::Json, String> {
     let mut buffer = Vec::new();
     let mut message = None;
     let mut blocks = BTreeMap::<u64, Value>::new();
@@ -149,10 +149,10 @@ fn assemble(body: &[u8]) -> Result<Value, String> {
     Ok(message)
 }
 
-fn event_index(event: &Value) -> Result<u64, String> {
+fn event_index(event: &crate::translation_core::Json) -> crate::translation_core::Outcome<u64, String> {
     event
         .get("index")
-        .and_then(Value::as_u64)
+        .and_then(crate::translation_core::Json::as_u64)
         .ok_or_else(|| "content event omitted index".to_string())
 }
 
@@ -296,5 +296,37 @@ mod tests {
     fn malformed_upstream_content_is_rejected_without_indexing_panics() {
         let sse = b"event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"content\":[null]}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"bad\"}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n";
         assert_eq!(assemble(sse).unwrap_err(), "content block is not an object");
+    }
+
+    #[test]
+    fn content_event_index_preserves_unsigned_boundaries_and_unrelated_fields() {
+        for index in [0, 1, u64::MAX] {
+            let event = json!({"index": index, "unrelated": "Ω😀\u{0}"});
+            assert_eq!(event_index(&event), Ok(index));
+        }
+    }
+
+    #[test]
+    fn content_event_index_requires_an_actual_unsigned_integer_member() {
+        for event in [
+            json!({}),
+            json!({"index": null}),
+            json!({"index": false}),
+            json!({"index": -1}),
+            json!({"index": 0.5}),
+            json!({"index": 1.0}),
+            json!({"index": "0"}),
+            json!({"index": ""}),
+            json!({"index": []}),
+            json!({"index": {}}),
+            json!({"índex": 1}),
+            json!(null),
+            json!([]),
+        ] {
+            assert_eq!(
+                event_index(&event),
+                Err("content event omitted index".to_string())
+            );
+        }
     }
 }

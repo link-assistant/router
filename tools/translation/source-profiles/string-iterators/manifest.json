@@ -1,0 +1,61 @@
+{
+  "profile": "rust-1.89-borrowed-string-iterators",
+  "rust": "1.89.0",
+  "sources": [
+    {
+      "file": "alloc-slice.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/alloc/src/slice.rs",
+      "bytes": 33675,
+      "sha256": "3f31367d3d827a397653618120d2326d96f60e9149bde3991a7d06e2518f0a68",
+      "compressedSha256": "2e3d016cebadbfbfea33f65d0eea304ab20573535f7538f85f4825d83ec9424a",
+      "lines": [
+        596,
+        601
+      ]
+    },
+    {
+      "file": "alloc-str.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/alloc/src/str.rs",
+      "bytes": 25558,
+      "sha256": "e30b3af75028c3d95f7cee87199c59d83b80d95957ba6a24033b064681d74741",
+      "compressedSha256": "ebb1951b2b37622355840137ba092a599b359bb62891f408c1b52bad1cc885ae",
+      "lines": [
+        72,
+        78
+      ]
+    },
+    {
+      "file": "core-borrow.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/borrow.rs",
+      "bytes": 8714,
+      "sha256": "3e74910a9c9902ce069f9c837149b407a676f9a153bbc7eccb57a0901f66d442",
+      "compressedSha256": "58294ae8fbd07d5cbc5255eb7762d4353ecda481ad5c13b0c21dcea1b04db6c3",
+      "lines": [
+        223,
+        228
+      ]
+    }
+  ],
+  "reusedSources": [
+    {
+      "file": "../utf16-fixed-f64/core-str-mod.rs.gz",
+      "sha256": "c4d2f7564389d6007eb62f287a0efdda865a7133ec0a7d47d66be581794ac416",
+      "lines": [
+        1271,
+        1273,
+        2161,
+        2163,
+        3090,
+        3094
+      ]
+    },
+    {
+      "file": "../utf16-fixed-f64/core-str-iter.rs.gz",
+      "sha256": "07f8dd0655c57a3da5b620fae00ba06b2957d17d119a870253b762b9e51e7122",
+      "lines": [
+        1165,
+        1174
+      ]
+    }
+  ]
+}

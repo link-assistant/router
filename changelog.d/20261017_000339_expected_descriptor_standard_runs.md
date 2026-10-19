@@ -1,0 +1,3 @@
+The private parser's native guard specializes consecutive immutable expected data-descriptor flags while retaining every fresh key census, descriptor read, own-value check and original comparison order. Accessors, irregular flags and unsupported captured shapes retain their existing checks and fallbacks. Historical fixture source comparisons use an exact reversible recipe; original registered sources and archives are retained.
+
+This is an unmeasured source experiment. No deadline or resource limit changed, and no runtime, CI or performance improvement is claimed. Complete Node/Bun guard files and the original reverse regeneration workload remain required before qualification.

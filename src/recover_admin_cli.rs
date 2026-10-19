@@ -16,8 +16,8 @@ use link_assistant_router::token::TokenManager;
 /// token is present deliberately — `--json` exists so deployment tooling can
 /// capture the credential without scraping a banner — and that is the only place
 /// it appears.
-fn success_envelope(recovery: &Recovery) -> serde_json::Value {
-    serde_json::json!({
+fn success_envelope(recovery: &Recovery) -> crate::translation_core::Json {
+    crate::translation_core::json!({
         "recovered": true,
         "token": recovery.token,
         "token_id": recovery.token_id,
@@ -30,8 +30,8 @@ fn success_envelope(recovery: &Recovery) -> serde_json::Value {
 ///
 /// Same envelope with `recovered: false`, so a caller reads one shape and never
 /// has to distinguish "failed" from "printed something else entirely".
-fn failure_envelope(error: &str) -> serde_json::Value {
-    serde_json::json!({ "recovered": false, "error": error })
+fn failure_envelope(error: &crate::translation_core::Str) -> crate::translation_core::Json {
+    crate::translation_core::json!({ "recovered": false, "error": error })
 }
 
 /// Mint a replacement administrator for a store this machine owns (issue #573).
@@ -40,7 +40,7 @@ pub fn run(
     manager: &TokenManager,
     revoke_others: bool,
     ttl_hours: i64,
-    label: &str,
+    label: &crate::translation_core::Str,
     json: bool,
 ) -> ExitCode {
     let store = manager.store();

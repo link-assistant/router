@@ -16,7 +16,7 @@ pub enum ListenerTransport {
 impl ListenerTransport {
     /// URL scheme exposed by this transport.
     #[must_use]
-    pub const fn scheme(self) -> &'static str {
+    pub const fn scheme(self) -> &'static crate::translation_core::Str {
         match self {
             Self::Http => "http",
             Self::Tls => "https",
@@ -130,7 +130,7 @@ impl BoundPrimaryListener {
 pub async fn bind_all(
     listeners: &[PrimaryListenerConfig],
     tls_setup: &TlsSetup,
-) -> Result<Vec<BoundPrimaryListener>, String> {
+) -> crate::translation_core::Outcome<Vec<BoundPrimaryListener>, String> {
     let mut bound = Vec::with_capacity(listeners.len());
     for config in listeners {
         let tls = match (config.transport, tls_setup) {

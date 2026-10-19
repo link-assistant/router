@@ -1,0 +1,5 @@
+Stable identities for source ancestor directories
+
+Compares authenticated ancestor directories by device, inode and full mode, retaining every path and non-symlink directory check. Unrelated sibling entries may change directory size and timestamps while all source files remain unchanged. Full file size/timestamp/FD/name/byte/hash checks are preserved, with no source memo or filesystem atomicity claim.
+
+The existing eighth-case suite keeps all cases and deadlines. Its source-identity case retains complete old/current executor copies, reversible observation instrumentation, actual directory paths/scalars, full file inventories and hash tapes. A genuine hash callback changes only an unrelated fixture sibling directory and its parent timestamp; the old comparator must refuse and the new comparator must preserve full output. Ancestor symlinks and timestamp-only source-file changes remain refusals. The earlier receiving report did not identify the failing path or writer; this source repair does not attribute that unobserved event. All new controls remain unrun until Root verification; no engines, Rust or push ran here.

@@ -1,0 +1,63 @@
+{
+  "verifiedAt": "2026-10-11",
+  "rustDocumentationVersion": "1.99.0 (b940084d7 2026-09-28)",
+  "sources": [
+    {
+      "url": "https://doc.rust-lang.org/std/primitive.str.html#method.trim",
+      "observation": "Trimming uses Unicode White_Space, including NEL and excluding BOM."
+    },
+    {
+      "url": "https://doc.rust-lang.org/std/primitive.str.html#method.len",
+      "observation": "String length measures UTF-8 bytes."
+    },
+    {
+      "url": "https://doc.rust-lang.org/std/primitive.str.html#method.chars",
+      "observation": "chars iterates Unicode scalar values."
+    },
+    {
+      "url": "https://doc.rust-lang.org/std/primitive.str.html#method.eq_ignore_ascii_case",
+      "observation": "ASCII case comparison preserves non-ASCII values."
+    },
+    {
+      "url": "https://doc.rust-lang.org/std/string/struct.String.html#method.new",
+      "observation": "String::new constructs an empty string."
+    },
+    {
+      "url": "https://doc.rust-lang.org/std/option/enum.Option.html#method.unwrap_or",
+      "observation": "unwrap_or evaluates its fallback eagerly."
+    },
+    {
+      "url": "https://doc.rust-lang.org/std/result/enum.Result.html",
+      "observation": "Results distinguish Ok from Err and retain the associated payload."
+    },
+    {
+      "url": "https://doc.rust-lang.org/reference/expressions/literal-expr.html#string-continuation-escapes",
+      "observation": "Rust string continuation escapes remove the following ASCII whitespace."
+    },
+    {
+      "url": "https://doc.rust-lang.org/reference/input-format.html#r-input.crlf-normalization",
+      "observation": "CRLF input normalizes to LF before literal interpretation."
+    },
+    {
+      "url": "https://doc.rust-lang.org/reference/expressions/loop-expr.html",
+      "observation": "while evaluates its condition before each iteration; unlabelled break and continue affect the innermost loop."
+    },
+    {
+      "url": "https://doc.rust-lang.org/reference/expressions/operator-expr.html#compound-assignment-expressions",
+      "observation": "Primitive scalar compound assignment performs the corresponding checked integer arithmetic and stores the result."
+    },
+    {
+      "url": "https://doc.rust-lang.org/std/primitive.slice.html",
+      "observation": "Indexing a slice outside its bounds panics."
+    },
+    {
+      "url": "https://doc.rust-lang.org/std/iter/trait.Iterator.html",
+      "observation": "Iterator map and filter are lazy; take(0) does not advance the source; any and all stop as soon as the result is established; fold consumes in order."
+    },
+    {
+      "url": "https://doc.rust-lang.org/std/ops/struct.RangeInclusive.html",
+      "observation": "Inclusive integer ranges yield both endpoints, are empty when start exceeds end and can include the maximum integer without stepping past it."
+    }
+  ],
+  "verification": "Node/Bun executable fixture outcomes and strict TypeScript checks; no local Rust compilation. Expected Rust outcomes follow these documented contracts and independently authored literals."
+}

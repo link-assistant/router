@@ -1,0 +1,37 @@
+{
+  "schema": "locked-dependency-namespace-acquisition-v1",
+  "sourceHead": "3c4857c715486836416956322d507008ddd2a29f",
+  "newManifest": {
+    "path": "tools/translation/source-profiles/dependency-namespaces/manifest.json",
+    "sha256": "45dc1fe73f180403338e0f8c0c4ad65c2753f51beb546cdcd4a99a1e3308879a"
+  },
+  "newArchive": {
+    "path": "tools/translation/source-profiles/dependency-namespaces/toml_datetime-1.1.1-spec-1.1.0.crate",
+    "bytes": 17982,
+    "sha256": "3165f65f62e28e0115a00b2ebdd37eb6f3b641855f9d636d3cd4103767159ad7"
+  },
+  "attempts": [
+    {
+      "url": "https://static.crates.io/crates/toml_datetime/toml_datetime-1.1.1%2Bspec-1.1.0.crate",
+      "tool": "web.open",
+      "result": "Binary crate URL inaccessible through browser tool"
+    },
+    {
+      "url": "https://static.crates.io/crates/toml_datetime/toml_datetime-1.1.1%2Bspec-1.1.0.crate",
+      "tool": "sandbox curl",
+      "exitCode": 6,
+      "message": "Could not resolve host: static.crates.io"
+    },
+    {
+      "url": "https://static.crates.io/crates/toml_datetime/toml_datetime-1.1.1%2Bspec-1.1.0.crate",
+      "tool": "authorized network curl",
+      "exitCode": 0,
+      "bytes": 17982,
+      "checksumVerified": true
+    }
+  ],
+  "existingTomlEditProfileUnchanged": true,
+  "sourceOnly": true,
+  "enginesRun": false,
+  "newCompression": false
+}

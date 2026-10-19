@@ -1,0 +1,3 @@
+### Changed
+- Refresh the complete portable Git source fixture through its actual proposal producer after the current compiler registration. Independently review every required Git tree, commit and original blob, all registered compiler sources, and all 132 installed TypeScript 5.9.3 files before installing the three assets.
+- The actual producer and independent review passed their original limits. The fixture remains source data; bulk translation, generated freshness, runtime parity and the complete JavaScript gate remain separate obligations. Existing Bun derive deadline failures remain open.

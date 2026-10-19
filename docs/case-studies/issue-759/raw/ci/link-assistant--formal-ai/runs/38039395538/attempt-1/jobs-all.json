@@ -1,0 +1,110 @@
+[
+  {
+    "id": 114176448467,
+    "run_id": 38039395538,
+    "workflow_name": "Summarization Ratchet",
+    "head_branch": "qa-reasoning-coding-bulk-fixes",
+    "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38039395538",
+    "run_attempt": 1,
+    "node_id": "CR_kwDOSbOoU88AAAAalXJX0w",
+    "head_sha": "7852a6270f03fd14de7021ff94af390da19ce47b",
+    "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/114176448467",
+    "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/38039395538/job/114176448467",
+    "status": "completed",
+    "conclusion": "failure",
+    "created_at": "2026-10-10T08:52:32Z",
+    "started_at": "2026-10-10T08:55:31Z",
+    "completed_at": "2026-10-10T08:59:39Z",
+    "name": "Summarization quality ratchet (issue #893)",
+    "steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 1,
+        "started_at": "2026-10-10T08:55:32Z",
+        "completed_at": "2026-10-10T08:55:33Z"
+      },
+      {
+        "name": "Run actions/checkout@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 2,
+        "started_at": "2026-10-10T08:55:33Z",
+        "completed_at": "2026-10-10T08:56:16Z"
+      },
+      {
+        "name": "Run ./.github/actions/formal-ai-binary",
+        "status": "completed",
+        "conclusion": "failure",
+        "number": 3,
+        "started_at": "2026-10-10T08:56:16Z",
+        "completed_at": "2026-10-10T08:59:35Z"
+      },
+      {
+        "name": "Show the published criteria",
+        "status": "completed",
+        "conclusion": "skipped",
+        "number": 4,
+        "started_at": "2026-10-10T08:59:35Z",
+        "completed_at": "2026-10-10T08:59:35Z"
+      },
+      {
+        "name": "Enforce the ratchet against the committed baseline",
+        "status": "completed",
+        "conclusion": "skipped",
+        "number": 5,
+        "started_at": "2026-10-10T08:59:35Z",
+        "completed_at": "2026-10-10T08:59:35Z"
+      },
+      {
+        "name": "Record the score in the run summary",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 6,
+        "started_at": "2026-10-10T08:59:35Z",
+        "completed_at": "2026-10-10T08:59:35Z"
+      },
+      {
+        "name": "Retain the measured run",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 7,
+        "started_at": "2026-10-10T08:59:35Z",
+        "completed_at": "2026-10-10T08:59:35Z"
+      },
+      {
+        "name": "Post Run ./.github/actions/formal-ai-binary",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 13,
+        "started_at": "2026-10-10T08:59:35Z",
+        "completed_at": "2026-10-10T08:59:35Z"
+      },
+      {
+        "name": "Post Run actions/checkout@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 14,
+        "started_at": "2026-10-10T08:59:35Z",
+        "completed_at": "2026-10-10T08:59:35Z"
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 15,
+        "started_at": "2026-10-10T08:59:35Z",
+        "completed_at": "2026-10-10T08:59:35Z"
+      }
+    ],
+    "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/114176448467",
+    "labels": [
+      "ubuntu-latest"
+    ],
+    "runner_id": 1000161814,
+    "runner_name": "GitHub Actions 1000161814",
+    "runner_group_id": 0,
+    "runner_group_name": "GitHub Actions"
+  }
+]

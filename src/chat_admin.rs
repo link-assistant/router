@@ -108,7 +108,7 @@ pub enum ChatChannel {
 impl ChatChannel {
     /// Short name used in logs and session keys.
     #[must_use]
-    pub const fn as_str(self) -> &'static str {
+    pub const fn as_str(self) -> &'static crate::translation_core::Str {
         match self {
             Self::Telegram => "telegram",
             Self::Vk => "vk",
@@ -217,7 +217,7 @@ impl ChatAdmin {
     pub fn new(
         admin: Arc<AdminClaim>,
         tokens: TokenManager,
-        admin_key: Option<String>,
+        admin_key: crate::translation_core::Maybe<String>,
         config: ChatAdminConfig,
     ) -> Self {
         Self {
@@ -254,7 +254,7 @@ impl ChatAdmin {
     /// Callers must have established that the message came from a 1:1
     /// conversation — group traffic is dropped by the transports before it ever
     /// reaches this function.
-    pub fn handle(&self, channel: ChatChannel, user_id: &str, text: &str) -> Reply {
+    pub fn handle(&self, channel: ChatChannel, user_id: &crate::translation_core::Str, text: &crate::translation_core::Str) -> Reply {
         self.prune(channel, user_id);
         let text = text.trim();
         if text.is_empty() {
@@ -276,10 +276,10 @@ impl ChatAdmin {
     fn dispatch(
         &self,
         channel: ChatChannel,
-        user_id: &str,
-        text: &str,
-        command: &str,
-        rest: &str,
+        user_id: &crate::translation_core::Str,
+        text: &crate::translation_core::Str,
+        command: &crate::translation_core::Str,
+        rest: &crate::translation_core::Str,
     ) -> Reply {
         // A bare credential is accepted as if it were `/auth` (and as `/confirm`
         // while a candidate is outstanding), because "send the token back" is
@@ -336,7 +336,7 @@ impl ChatAdmin {
     }
 
     /// `/start` — open, or refuse to reopen, the system-wide bootstrap claim.
-    fn start(&self, channel: ChatChannel, user_id: &str) -> Reply {
+    fn start(&self, channel: ChatChannel, user_id: &crate::translation_core::Str) -> Reply {
         if self.authorised_credential(channel, user_id).is_some() {
             return Reply::plain(format!("You are signed in as admin.\n\n{HELP}"));
         }
@@ -369,7 +369,7 @@ impl ChatAdmin {
     }
 
     /// `/confirm <token>` — phase two of the shared two-phase claim.
-    fn confirm(&self, channel: ChatChannel, user_id: &str, token: &str) -> Reply {
+    fn confirm(&self, channel: ChatChannel, user_id: &crate::translation_core::Str, token: &crate::translation_core::Str) -> Reply {
         if !self.allow(channel, user_id) {
             return Reply::plain(RATE_LIMITED);
         }
@@ -408,7 +408,7 @@ impl ChatAdmin {
     }
 
     /// `/auth <token>` — bind an existing admin credential to this chat user.
-    fn authenticate(&self, channel: ChatChannel, user_id: &str, token: &str) -> Reply {
+    fn authenticate(&self, channel: ChatChannel, user_id: &crate::translation_core::Str, token: &crate::translation_core::Str) -> Reply {
         if !self.allow(channel, user_id) {
             return Reply::plain(RATE_LIMITED);
         }
@@ -427,7 +427,7 @@ impl ChatAdmin {
     }
 
     /// `/logout` — drop the cached credential for this conversation.
-    fn logout(&self, channel: ChatChannel, user_id: &str) -> Reply {
+    fn logout(&self, channel: ChatChannel, user_id: &crate::translation_core::Str) -> Reply {
         self.locked().remove(&(channel, user_id.to_string()));
         Reply::plain("Signed out. Send /auth <admin token> to sign in again.")
     }
@@ -437,7 +437,7 @@ impl ChatAdmin {
     /// Re-validating on every command is what keeps the platform user id from
     /// becoming an authorisation factor: revoke or rotate the credential and
     /// the binding stops working on the next message.
-    fn authorised_credential(&self, channel: ChatChannel, user_id: &str) -> Option<String> {
+    fn authorised_credential(&self, channel: ChatChannel, user_id: &crate::translation_core::Str) -> crate::translation_core::Maybe<String> {
         let cached = self
             .locked()
             .get(&(channel, user_id.to_string()))
@@ -456,7 +456,7 @@ impl ChatAdmin {
     /// Mirrors the HTTP rule minus the anonymous escape hatch:
     /// `--allow-anonymous-admin` opens the proxy port's admin endpoints, and
     /// deliberately does **not** open a chat channel.
-    fn credential_valid(&self, token: &str) -> bool {
+    fn credential_valid(&self, token: &crate::translation_core::Str) -> bool {
         if token.is_empty() {
             return false;
         }
@@ -471,13 +471,13 @@ impl ChatAdmin {
             .is_some_and(|key| constant_time_eq(token, key))
     }
 
-    fn has_pending_claim(&self, channel: ChatChannel, user_id: &str) -> bool {
+    fn has_pending_claim(&self, channel: ChatChannel, user_id: &crate::translation_core::Str) -> bool {
         self.locked()
             .get(&(channel, user_id.to_string()))
             .is_some_and(|session| session.pending_claim.is_some())
     }
 
-    fn forget_claim(&self, channel: ChatChannel, user_id: &str) {
+    fn forget_claim(&self, channel: ChatChannel, user_id: &crate::translation_core::Str) {
         if let Some(session) = self.locked().get_mut(&(channel, user_id.to_string())) {
             session.pending_claim = None;
         }
@@ -498,7 +498,7 @@ impl ChatAdmin {
     }
 
     /// Record one sensitive attempt, and report whether it is within budget.
-    fn allow(&self, channel: ChatChannel, user_id: &str) -> bool {
+    fn allow(&self, channel: ChatChannel, user_id: &crate::translation_core::Str) -> bool {
         let limit = self.config.rate_limit_per_minute;
         if limit == 0 {
             return true;
@@ -522,7 +522,7 @@ impl ChatAdmin {
     /// Called on every inbound message, because every inbound message is what
     /// creates entries in the first place: the key is a platform user id, which
     /// nobody has had to authenticate to own.
-    fn prune(&self, channel: ChatChannel, user_id: &str) {
+    fn prune(&self, channel: ChatChannel, user_id: &crate::translation_core::Str) {
         let now = Instant::now();
         let mut sessions = self.locked();
         sessions.retain(|_, session| now.duration_since(session.last_seen) < SESSION_IDLE_TTL);
@@ -560,7 +560,7 @@ impl ChatAdmin {
 }
 
 /// Split a message into its first word and the remainder.
-fn split_command(text: &str) -> (&str, &str) {
+fn split_command(text: &crate::translation_core::Str) -> (&crate::translation_core::Str, &crate::translation_core::Str) {
     match text.split_once(char::is_whitespace) {
         Some((word, rest)) => (word, rest.trim()),
         None => (text, ""),
@@ -569,29 +569,29 @@ fn split_command(text: &str) -> (&str, &str) {
 
 /// Normalise a command word: drop the leading slash, drop a `@botname` suffix
 /// (Telegram appends it), and lowercase.
-fn normalise(word: &str) -> String {
+fn normalise(word: &crate::translation_core::Str) -> String {
     let word = word.strip_prefix('/').unwrap_or(word);
     let word = word.split_once('@').map_or(word, |(name, _)| name);
     word.to_lowercase()
 }
 
 /// Whether a message body is a bare router credential rather than a command.
-fn looks_like_credential(text: &str) -> bool {
+fn looks_like_credential(text: &crate::translation_core::Str) -> bool {
     !text.contains(char::is_whitespace)
         && (text.starts_with(crate::admin::ADMIN_TOKEN_PREFIX)
             || text.starts_with(crate::token::TOKEN_PREFIX))
 }
 
 /// Message shown when the bootstrap claim is closed.
-const ALREADY_CLAIMED: &str = "Administration of this router is already claimed \
+const ALREADY_CLAIMED: &crate::translation_core::Str = "Administration of this router is already claimed \
     (here, through the web UI, or by deployment configuration). Send \
     `/auth <admin token>` with an admin credential.";
 
 /// Message shown when a user exceeds the sensitive-command budget.
-const RATE_LIMITED: &str = "Too many attempts. Wait a minute and try again.";
+const RATE_LIMITED: &crate::translation_core::Str = "Too many attempts. Wait a minute and try again.";
 
 /// Command list, appended to most replies so the channel is self-documenting.
-pub const HELP: &str = "Commands:\n\
+pub const HELP: &crate::translation_core::Str = "Commands:\n\
     /status — credential state, accounts and usage\n\
     /tokens — list issued tokens (ids, labels and limits, never values)\n\
     /issue [label] [ttl_hours] [max_requests] [key=value …] — issue a token;\n\

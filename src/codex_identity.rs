@@ -2,8 +2,8 @@
 
 use axum::http::{HeaderMap, HeaderValue};
 
-pub const DEFAULT_CLIENT_VERSION: &str = "0.154.0";
-pub const ORIGINATOR: &str = "codex_cli_rs";
+pub const DEFAULT_CLIENT_VERSION: &crate::translation_core::Str = "0.154.0";
+pub const ORIGINATOR: &crate::translation_core::Str = "codex_cli_rs";
 
 /// The supported Codex version, with the same operator override used by model
 /// discovery and inference.
@@ -13,7 +13,7 @@ pub fn client_version() -> String {
         .unwrap_or_else(|_| DEFAULT_CLIENT_VERSION.to_string())
 }
 
-fn sanitized_token(value: &str) -> String {
+fn sanitized_token(value: &crate::translation_core::Str) -> String {
     value.replace(
         |character: char| {
             !(character.is_ascii_alphanumeric() || matches!(character, '-' | '_' | '.' | '/'))
@@ -35,13 +35,13 @@ where
     read(name).filter(|value| !value.trim().is_empty())
 }
 
-fn versioned(name: &str, version: Option<String>) -> String {
+fn versioned(name: &crate::translation_core::Str, version: crate::translation_core::Maybe<String>) -> String {
     sanitized_token(
         &version.map_or_else(|| name.to_string(), |version| format!("{name}/{version}")),
     )
 }
 
-fn tmux_value(format: &str) -> Option<String> {
+fn tmux_value(format: &crate::translation_core::Str) -> crate::translation_core::Maybe<String> {
     let output =
         crate::operation_context::process_output(crate::operation_context::command("tmux").args([
             "display-message",
@@ -129,7 +129,7 @@ fn terminal_user_agent() -> String {
     )
 }
 
-fn user_agent_for(os_type: &str, os_version: &str, architecture: &str, terminal: &str) -> String {
+fn user_agent_for(os_type: &crate::translation_core::Str, os_version: &crate::translation_core::Str, architecture: &crate::translation_core::Str, terminal: &crate::translation_core::Str) -> String {
     format!(
         "{ORIGINATOR}/{} ({os_type} {os_version}; {architecture}) {terminal}",
         client_version()
@@ -151,7 +151,7 @@ pub fn user_agent() -> String {
 
 /// Build the default headers attached by Codex's shared HTTP client.
 #[must_use]
-pub fn headers(account_id: Option<&str>) -> HeaderMap {
+pub fn headers(account_id: crate::translation_core::Maybe<&crate::translation_core::Str>) -> HeaderMap {
     let mut headers = HeaderMap::new();
     if let Ok(value) = HeaderValue::from_str(&user_agent()) {
         headers.insert("user-agent", value);

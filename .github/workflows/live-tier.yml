@@ -29,7 +29,17 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  javascript:
+    name: JavaScript first (same commit)
+    uses: ./.github/workflows/javascript-first.yml
+    with:
+      sha: ${{ github.sha }}
+    permissions:
+      contents: read
+
   live-tier:
+    if: needs.javascript.result == 'success'
+    needs: [javascript]
     name: Real providers through real clients
     runs-on: ubuntu-24.04
     timeout-minutes: 45
@@ -122,6 +132,7 @@ jobs:
           {
             echo '### Live tier'
             echo
+            # shellcheck disable=SC2016
             echo 'Skips are printed inline as `SKIP [tier4-live-credentialed] …`.'
             echo 'A run whose log is all SKIP lines proved nothing; see docs/testing-tiers.md.'
           } >> "$GITHUB_STEP_SUMMARY"

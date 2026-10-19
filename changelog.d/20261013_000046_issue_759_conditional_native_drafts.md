@@ -1,0 +1,1 @@
+Bulk regenerate all 52 native module draft sets through serialized and reparsed meta-language. Preserve 73/788 top-level drafts and split the 705 scoped bodies into 34 full-domain drafts, nine explicit conditional drafts and 662 refusals. Strict native TypeScript compilation passes for all 164 files; emitted Rust projections remain uncompiled and runtime parity remains unproved.

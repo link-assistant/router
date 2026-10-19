@@ -19,7 +19,7 @@ use serde_json::Value;
 /// the token in `authorization` is already redacted to a mask that a freshly
 /// minted token would not reproduce. Comparing them would make every replay
 /// fail for reasons that have nothing to do with the exchange under test.
-const IGNORED_HEADERS: &[&str] = &[
+const IGNORED_HEADERS: &[&crate::translation_core::Str] = &[
     "authorization",
     "content-length",
     "host",
@@ -35,11 +35,11 @@ const IGNORED_HEADERS: &[&str] = &[
 ///
 /// `uri` and `method` identify the endpoint; `body` is the conversation. The
 /// header map is compared separately so the report can name the header.
-const COMPARED_FIELDS: &[&str] = &["method", "uri"];
+const COMPARED_FIELDS: &[&crate::translation_core::Str] = &["method", "uri"];
 
 /// Whether a header name takes part in matching.
 #[must_use]
-pub fn header_is_compared(name: &str) -> bool {
+pub fn header_is_compared(name: &crate::translation_core::Str) -> bool {
     !IGNORED_HEADERS.contains(&name.to_ascii_lowercase().as_str())
 }
 
@@ -49,7 +49,7 @@ pub fn header_is_compared(name: &str) -> bool {
 /// body — `body.messages[1].content[0].text` — so the turn that failed points
 /// at the field that moved rather than at the whole request.
 #[must_use]
-pub fn describe_difference(recorded: &Value, incoming: &Value) -> Option<String> {
+pub fn describe_difference(recorded: &crate::translation_core::Json, incoming: &crate::translation_core::Json) -> crate::translation_core::Maybe<String> {
     for field in COMPARED_FIELDS {
         let expected = recorded.get(*field);
         let actual = incoming.get(*field);
@@ -72,7 +72,7 @@ pub fn describe_difference(recorded: &Value, incoming: &Value) -> Option<String>
 }
 
 /// The first compared header that differs.
-fn header_difference(recorded: &Value, incoming: &Value) -> Option<String> {
+fn header_difference(recorded: &crate::translation_core::Json, incoming: &crate::translation_core::Json) -> crate::translation_core::Maybe<String> {
     let expected = recorded.get("headers").and_then(Value::as_object)?;
     let actual = incoming.get("headers").and_then(Value::as_object);
     for (name, value) in expected {
@@ -104,7 +104,7 @@ fn header_difference(recorded: &Value, incoming: &Value) -> Option<String> {
 }
 
 /// Walk two values in parallel and describe the first divergence at `path`.
-fn compare(path: &str, recorded: &Value, incoming: &Value) -> Option<String> {
+fn compare(path: &crate::translation_core::Str, recorded: &crate::translation_core::Json, incoming: &crate::translation_core::Json) -> crate::translation_core::Maybe<String> {
     match (recorded, incoming) {
         (Value::Object(expected), Value::Object(actual)) => {
             for (key, value) in expected {
@@ -152,7 +152,7 @@ fn compare(path: &str, recorded: &Value, incoming: &Value) -> Option<String> {
 const RENDERED_LIMIT: usize = 120;
 
 /// Render a value for a mismatch report, abbreviated but never elided entirely.
-fn render(value: Option<&Value>) -> String {
+fn render(value: crate::translation_core::Maybe<&crate::translation_core::Json>) -> String {
     let Some(value) = value else {
         return "nothing".to_string();
     };

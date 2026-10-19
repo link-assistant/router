@@ -21,7 +21,7 @@ enum Operation {
 }
 
 impl Operation {
-    fn suffix(self) -> &'static str {
+    fn suffix(self) -> &'static crate::translation_core::Str {
         if self == Self::Messages {
             "/messages"
         } else {
@@ -262,9 +262,9 @@ async fn forward(
 fn authorize_provider(
     claims: &crate::token::TokenClaims,
     headers: &HeaderMap,
-    path: &str,
+    path: &crate::translation_core::Str,
     provider: &crate::providers::ResolvedProvider,
-) -> Result<(), Response> {
+) -> crate::translation_core::Outcome<(), Response> {
     let (client, _) = crate::client_policy::bound_client(claims)
         .map_err(|error| openai_error(StatusCode::FORBIDDEN, "permission_error", &error))?;
     if provider.supports_client(client)
@@ -291,7 +291,7 @@ async fn relay_resource(
     operation: Operation,
     upstream: reqwest::Response,
     bytes_sent: u64,
-    correlation_id: &str,
+    correlation_id: &crate::translation_core::Str,
 ) -> Response {
     let status = status(&upstream);
     let headers = crate::proxy::relay_response_headers(upstream.headers());
@@ -323,7 +323,7 @@ async fn relay_list(
     state: &AppState,
     upstream: reqwest::Response,
     allowed: &HashSet<String>,
-    correlation_id: &str,
+    correlation_id: &crate::translation_core::Str,
 ) -> Response {
     let status = status(&upstream);
     let headers = crate::proxy::relay_response_headers(upstream.headers());
@@ -370,7 +370,7 @@ async fn relay_list(
     )
 }
 
-fn record(state: &AppState, status: StatusCode, sent: u64, body: &[u8], correlation_id: &str) {
+fn record(state: &AppState, status: StatusCode, sent: u64, body: &[u8], correlation_id: &crate::translation_core::Str) {
     state.request_log.record_upstream_body(correlation_id, body);
     state
         .metrics
@@ -378,7 +378,7 @@ fn record(state: &AppState, status: StatusCode, sent: u64, body: &[u8], correlat
     state.metrics.record_bytes(sent, body.len() as u64);
 }
 
-fn resource_path(completion_id: &str, operation: Operation, query: Option<&str>) -> String {
+fn resource_path(completion_id: &crate::translation_core::Str, operation: Operation, query: crate::translation_core::Maybe<&crate::translation_core::Str>) -> String {
     let query = query.map_or(String::new(), |query| format!("?{query}"));
     format!(
         "/v1/chat/completions/{}{}{query}",
@@ -390,12 +390,12 @@ fn resource_path(completion_id: &str, operation: Operation, query: Option<&str>)
 fn authenticate(
     state: &AppState,
     headers: &HeaderMap,
-) -> Result<crate::token::TokenClaims, Response> {
+) -> crate::translation_core::Outcome<crate::token::TokenClaims, Response> {
     crate::proxy::authenticate_client_error(state, headers)
         .map_err(|error| error.render(crate::api_error::ApiDialect::OpenAi))
 }
 
-fn owner(claims: &crate::token::TokenClaims) -> Result<ResponseOwner, Response> {
+fn owner(claims: &crate::token::TokenClaims) -> crate::translation_core::Outcome<ResponseOwner, Response> {
     ResponseOwner::from_claims(claims)
         .map_err(|error| openai_error(StatusCode::FORBIDDEN, "permission_error", &error))
 }
@@ -412,7 +412,7 @@ fn response(status: StatusCode, headers: HeaderMap, body: Bytes) -> Response {
 }
 
 fn not_found() -> Response {
-    let body = serde_json::json!({
+    let body = crate::translation_core::json!({
         "error": {
             "message": "Chat completion not found",
             "type": "invalid_request_error",
@@ -423,15 +423,15 @@ fn not_found() -> Response {
     (StatusCode::NOT_FOUND, axum::Json(body)).into_response()
 }
 
-fn unavailable(message: &str) -> Response {
+fn unavailable(message: &crate::translation_core::Str) -> Response {
     openai_error(StatusCode::SERVICE_UNAVAILABLE, "api_error", message)
 }
 
-fn bad_gateway(message: &str) -> Response {
+fn bad_gateway(message: &crate::translation_core::Str) -> Response {
     openai_error(StatusCode::BAD_GATEWAY, "api_error", message)
 }
 
-fn openai_error(status: StatusCode, error_type: &str, message: &str) -> Response {
+fn openai_error(status: StatusCode, error_type: &crate::translation_core::Str, message: &crate::translation_core::Str) -> Response {
     crate::api_error::PresentedError {
         status,
         error_type,

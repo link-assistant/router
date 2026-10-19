@@ -40,7 +40,7 @@ impl BridgeModelPolicy {
     /// # Errors
     ///
     /// Returns the accepted names when `value` is not one of them.
-    pub fn parse(value: &str) -> Result<Self, String> {
+    pub fn parse(value: &crate::translation_core::Str) -> crate::translation_core::Outcome<Self, String> {
         match value.trim().to_ascii_lowercase().replace('_', "-").as_str() {
             "" | "first" | "first-advertised" => Ok(Self::FirstAdvertised),
             "last" | "last-advertised" => Ok(Self::LastAdvertised),
@@ -52,7 +52,7 @@ impl BridgeModelPolicy {
 
     /// The operator-facing name of this policy.
     #[must_use]
-    pub const fn name(self) -> &'static str {
+    pub const fn name(self) -> &'static crate::translation_core::Str {
         match self {
             Self::FirstAdvertised => "first-advertised",
             Self::LastAdvertised => "last-advertised",
@@ -64,7 +64,7 @@ impl BridgeModelPolicy {
     /// `catalog` is sorted before selection so the result depends only on the
     /// set of advertised models, not on the order the provider returned them.
     #[must_use]
-    pub fn choose(self, catalog: &[String]) -> Option<String> {
+    pub fn choose(self, catalog: &[String]) -> crate::translation_core::Maybe<String> {
         let mut sorted: Vec<&String> = catalog.iter().filter(|id| !id.is_empty()).collect();
         sorted.sort();
         match self {
@@ -129,7 +129,7 @@ impl fmt::Display for ModelSelectionRequired {
 }
 
 /// The error code clients receive when selection fails.
-pub const MODEL_SELECTION_REQUIRED: &str = "model_selection_required";
+pub const MODEL_SELECTION_REQUIRED: &crate::translation_core::Str = "model_selection_required";
 
 #[cfg(test)]
 mod tests {

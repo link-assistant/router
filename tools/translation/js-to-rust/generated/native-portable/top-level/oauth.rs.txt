@@ -1,0 +1,101 @@
+// GENERATED: node scripts/regenerate-js-first.mjs
+// Independently checked top-level bodies from packages/javascript/native/oauth.mjs; source sha256=b8a1f59bd7bc38a903d1e074f04fff0f8ffd13bc7987732f7311889e6b90669f; IR sha256=ae7dcc013e003b0fbc0d4b087a54a142c4ee16f6c730557c760dd5d8bc59ae3b.
+// Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
+#[derive(Clone, Copy)]
+pub enum JsValue<'a> {
+    String(&'a str), Number(f64), Boolean(bool), Undefined,
+    Object, Function, BigInt, Symbol,
+}
+
+#[rustfmt::skip]
+impl<'a> JsValue<'a> {
+    fn type_name(self) -> &'static str {
+        match self {
+            Self::String(_) => "string", Self::Number(_) => "number",
+            Self::Boolean(_) => "boolean", Self::Undefined => "undefined",
+            Self::Object => "object", Self::Function => "function",
+            Self::BigInt => "bigint", Self::Symbol => "symbol",
+        }
+    }
+    fn as_string(self) -> &'a str { if let Self::String(value) = self { value } else { unreachable!("checked typeof guard") } }
+    fn as_number(self) -> f64 { if let Self::Number(value) = self { value } else { unreachable!("checked typeof guard") } }
+    fn as_boolean(self) -> bool { if let Self::Boolean(value) = self { value } else { unreachable!("checked typeof guard") } }
+    fn is_finite(self) -> bool { matches!(self, Self::Number(value) if value.is_finite()) }
+    fn is_nan(self) -> bool { matches!(self, Self::Number(value) if value.is_nan()) }
+    fn is_safe_integer(self) -> bool {
+        matches!(self, Self::Number(value) if value.is_finite() && value.fract() == 0.0 && value.abs() <= 9007199254740991.0)
+    }
+    fn same_primitive(self, other: Self) -> bool {
+        match (self, other) {
+            (Self::String(left), Self::String(right)) => left == right,
+            (Self::Boolean(left), Self::Boolean(right)) => left == right,
+            (Self::Number(left), Self::Number(right)) => left == right || left.is_nan() && right.is_nan(),
+            _ => false,
+        }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq)]
+pub struct JsNull;
+#[derive(Clone, Copy, PartialEq)]
+pub struct JsUndefined;
+#[derive(Clone, Copy, PartialEq)]
+pub enum JsNullable<T> { Null, Value(T) }
+#[derive(Clone, Copy, PartialEq)]
+pub enum JsOptional<T> { Undefined, Value(T) }
+
+#[rustfmt::skip]
+pub const CLAUDE_CLIENT_ID: &str = "9d1c250a-e61b-44d9-88ed-5944d1962f5e";
+
+#[rustfmt::skip]
+pub const CODEX_CLIENT_ID: &str = "app_EMoamEEZ73f0CkXaXp7hrann";
+
+#[rustfmt::skip]
+pub const CLAUDE_TOKEN_URL: &str = "https://platform.claude.com/v1/oauth/token";
+
+#[rustfmt::skip]
+pub const CODEX_TOKEN_URL: &str = "https://auth.openai.com/oauth/token";
+
+#[rustfmt::skip]
+pub const GEMINI_TOKEN_URL: &str = "https://oauth2.googleapis.com/token";
+
+#[rustfmt::skip]
+pub const QWEN_TOKEN_URL: &str = "https://chat.qwen.ai/api/v1/oauth2/token";
+
+#[rustfmt::skip]
+pub const GEMINI_CLIENT_ID: &str = "681255809395-oo8ft2oprdrnp9e3aqf6av3hmdib135j.apps.googleusercontent.com";
+
+#[rustfmt::skip]
+pub const GEMINI_CLIENT_SECRET: &str = "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";
+
+#[rustfmt::skip]
+pub const QWEN_CLIENT_ID: &str = "f0304373b74a44d2b584a3fb70ca9e56";
+
+#[rustfmt::skip]
+pub const CLAUDE_AUTHORIZE_URL: &str = "https://claude.com/cai/oauth/authorize";
+
+#[rustfmt::skip]
+pub const CLAUDE_REDIRECT_URI: &str = "https://platform.claude.com/oauth/code/callback";
+
+#[rustfmt::skip]
+pub const CLAUDE_SCOPES: &str = "org:create_api_key user:profile user:inference user:sessions:claude_code user:mcp_servers user:file_upload";
+
+#[rustfmt::skip]
+pub const CLAUDE_INFERENCE_SCOPE: &str = "user:inference";
+
+#[rustfmt::skip]
+pub const CLAUDE_OAUTH_USER_AGENT: &str = "anthropic-sdk-typescript/0.112.1 userOAuthProvider";
+
+#[rustfmt::skip]
+const PENDING_FILE: &str = ".link-assistant-router-claude-login.json";
+
+#[rustfmt::skip]
+fn nonempty(value: JsValue<'_>) -> JsNullable<String> {
+    return (if ((value.type_name().to_string() == "string".to_string()) && ({ let observed = (value.as_string().to_string().encode_utf16().count() as f64); observed != 0.0 && !observed.is_nan() })) { JsNullable::Value(value.as_string().to_string()) } else { JsNullable::Null });
+}
+
+#[rustfmt::skip]
+const CREDENTIAL_FILE_LIMIT: f64 = 4194304.0;
+
+#[rustfmt::skip]
+const PENDING_FILE_LIMIT: f64 = 16384.0;

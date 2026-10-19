@@ -1,0 +1,55 @@
+{
+  "schema": "original-standard-source-conversions-v1",
+  "rust": "1.89.0",
+  "sources": [
+    {
+      "file": "../json-macro/standard/library-core-src-convert-mod.rs.gz",
+      "path": "library/core/src/convert/mod.rs",
+      "bytes": 34637,
+      "sha256": "0b05be0bc9c7d92d788abd6817d648b4479ed6e29ffe24cfd6879e09ee9fbdab",
+      "archiveBytes": 9450,
+      "archiveSha256": "2fcdfa9f977fe3ac1f2657e8bc047934d41d227445641e89999e97cbbacbade9"
+    },
+    {
+      "file": "../utf16-fixed-f64/alloc-string.rs.gz",
+      "path": "library/alloc/src/string.rs",
+      "bytes": 111988,
+      "sha256": "46dadb69bbe909b50146366020dc23d4fa88f53b93435b7e0f70c6692d0ba629",
+      "archiveBytes": 23442,
+      "archiveSha256": "3f9bb719280924aa34b9f3693879b5a65e45eecc78f4fa8dea84219bf1105523"
+    },
+    {
+      "file": "../string-iterators/alloc-str.rs.gz",
+      "path": "library/alloc/src/str.rs",
+      "bytes": 25558,
+      "sha256": "e30b3af75028c3d95f7cee87199c59d83b80d95957ba6a24033b064681d74741",
+      "archiveBytes": 6984,
+      "archiveSha256": "ebb1951b2b37622355840137ba092a599b359bb62891f408c1b52bad1cc885ae"
+    },
+    {
+      "file": "../string-iterators/alloc-slice.rs.gz",
+      "path": "library/alloc/src/slice.rs",
+      "bytes": 33675,
+      "sha256": "3f31367d3d827a397653618120d2326d96f60e9149bde3991a7d06e2518f0a68",
+      "archiveBytes": 7578,
+      "archiveSha256": "2e3d016cebadbfbfea33f65d0eea304ab20573535f7538f85f4825d83ec9424a"
+    },
+    {
+      "file": "../string-iterators/core-borrow.rs.gz",
+      "path": "library/core/src/borrow.rs",
+      "bytes": 8714,
+      "sha256": "3e74910a9c9902ce069f9c837149b407a676f9a153bbc7eccb57a0901f66d442",
+      "archiveBytes": 2953,
+      "archiveSha256": "58294ae8fbd07d5cbc5255eb7762d4353ecda481ad5c13b0c21dcea1b04db6c3"
+    }
+  ],
+  "selectedRoutes": [
+    "core::convert::Into<U> for T where U: From<T>",
+    "core::convert::From<T> for T",
+    "alloc::string::From<&str> for String"
+  ],
+  "executionBoundary": "Original Into delegation and From<&str> member checked through existing to_owned capability. Allocator, unsafe UTF-8, OOM and specialized Vec operations retained as uncompiled original inputs.",
+  "wholeTraitTranslated": false,
+  "wholeAllocTranslated": false,
+  "runtimeParity": false
+}

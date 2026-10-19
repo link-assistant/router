@@ -18,7 +18,7 @@ impl PoolResponse {
     pub(crate) async fn prepare(
         response: reqwest::Response,
         probe: bool,
-    ) -> Result<(Self, Bytes), String> {
+    ) -> crate::translation_core::Outcome<(Self, Bytes), String> {
         let status = response.status();
         let headers = response.headers().clone();
         let mut body = response.bytes_stream().boxed();

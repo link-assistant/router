@@ -1,0 +1,488 @@
+{
+  "schemaVersion": 1,
+  "kind": "original-free-function-body-refusal-and-unchanged-original-graph-evidence",
+  "status": "FOCUSED_PASS_WITH_NODE_ORIGINAL_RECEIPT_NORMALIZATION_NOT_FULL_GATE",
+  "testedSourceHead": "ed3ab766967053d9436e58dfd46ba4608197a77c",
+  "frozenCompilerInputSha256": "43d773472a5c6b8d063e6b2c9327885549602eb09022e846e622ad8e3977f262",
+  "frozenCompilerInputs": 1421,
+  "countsPerEngine": {
+    "focused": 182,
+    "original": 9
+  },
+  "attempts": [
+    {
+      "schemaVersion": 1,
+      "scope": "independent original declaration type and opted-in free-function body refusal phases, complete survivor and transitive caller rechecking; not a corpus producer or full parity gate",
+      "evidenceStatus": "FOCUSED_PASS_NOT_FULL_GATE",
+      "phase": "initial1",
+      "engine": "node",
+      "engineVersion": "v20.19.4",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "tools/translation/test/project-refusal-batches.test.mjs",
+        "tools/translation/test/project-body-refusals.test.mjs",
+        "tools/translation/test/project.test.mjs",
+        "tools/translation/test/project-copy-context.test.mjs",
+        "tools/translation/test/public-reexports.test.mjs",
+        "tools/translation/test/module-bindings.test.mjs",
+        "tools/translation/test/source-namespaces.test.mjs",
+        "tools/translation/test/source-namespace-bindings.test.mjs",
+        "tools/translation/test/module-path-project.test.mjs",
+        "tools/translation/test/module-paths.test.mjs",
+        "tools/translation/test/source-links.test.mjs",
+        "tools/translation/test/constant-evaluation.test.mjs",
+        "tools/translation/test/const-qualification.test.mjs",
+        "tools/translation/test/local-lifetime-constraints.test.mjs",
+        "tools/translation/test/ownership.test.mjs",
+        "tools/translation/test/generated-type-owners.test.mjs",
+        "tools/translation/test/copy-methods.test.mjs",
+        "tools/translation/test/host-instantiations.test.mjs",
+        "tools/translation/test/conditional-attributes.test.mjs",
+        "tools/translation/test/source-lifetimes.test.mjs",
+        "tools/translation/test/methods-translation.test.mjs"
+      ],
+      "testFiles": 21,
+      "timeoutSeconds": 360,
+      "testStageTimeoutSeconds": 360,
+      "sourceTableCheckTimeoutSeconds": null,
+      "maximumTestAndTableWallSeconds": 360,
+      "startedUtc": "2026-10-12T02:22:18.363297+00:00",
+      "finishedUtc": "2026-10-12T02:22:57.485304+00:00",
+      "elapsedSeconds": 39.122,
+      "exitCode": 0,
+      "timedOut": false,
+      "sourceHeadBefore": "ed3ab766967053d9436e58dfd46ba4608197a77c",
+      "sourceHeadAfter": "ed3ab766967053d9436e58dfd46ba4608197a77c",
+      "trackedStatusBefore": "",
+      "trackedStatusAfter": "",
+      "sourceHeadUnchanged": true,
+      "sourceInputSha256Before": "43d773472a5c6b8d063e6b2c9327885549602eb09022e846e622ad8e3977f262",
+      "sourceInputSha256After": "43d773472a5c6b8d063e6b2c9327885549602eb09022e846e622ad8e3977f262",
+      "sourceInputsUnchanged": true,
+      "inputManifest": "/tmp/router-759-core-body-refusals-initial1-node.inputs.json",
+      "inputManifestBytes": 252911,
+      "inputManifestSha256": "1aa88d5968f49cf954af87752ee11b20226aba033b40a374df2f82fa2c95ecd9",
+      "inputFiles": 1421,
+      "log": "/tmp/router-759-core-body-refusals-initial1-node.log",
+      "logBytes": 41571,
+      "logSha256": "88c19e836374028b72c5e6a92e7c85d4d944eb4691715a47a438215dde22f89f",
+      "counts": {
+        "tests": 182,
+        "pass": 182,
+        "fail": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "sourceTableCheckCommand": null,
+      "sourceTableCheckExitCode": null,
+      "sourceTableCheckRuns": 0,
+      "producerRuns": 0,
+      "rustBuilds": 0,
+      "fullGateRuns": 0,
+      "measurement": {
+        "timeFormat": "posix",
+        "ownedChildrenMaxRssBytes": 205783040,
+        "rssScope": "all terminated harness child processes, including git and engine version; not process-tree peak or peak footprint"
+      },
+      "sourceTableCheckTimedOut": false,
+      "sourceTableCheckElapsedSeconds": null
+    },
+    {
+      "schemaVersion": 1,
+      "scope": "independent original declaration type and opted-in free-function body refusal phases, complete survivor and transitive caller rechecking; not a corpus producer or full parity gate",
+      "evidenceStatus": "FOCUSED_PASS_NOT_FULL_GATE",
+      "phase": "initial1",
+      "engine": "bun",
+      "engineVersion": "1.4.3",
+      "command": [
+        "bun",
+        "test",
+        "--max-concurrency",
+        "1",
+        "tools/translation/test/project-refusal-batches.test.mjs",
+        "tools/translation/test/project-body-refusals.test.mjs",
+        "tools/translation/test/project.test.mjs",
+        "tools/translation/test/project-copy-context.test.mjs",
+        "tools/translation/test/public-reexports.test.mjs",
+        "tools/translation/test/module-bindings.test.mjs",
+        "tools/translation/test/source-namespaces.test.mjs",
+        "tools/translation/test/source-namespace-bindings.test.mjs",
+        "tools/translation/test/module-path-project.test.mjs",
+        "tools/translation/test/module-paths.test.mjs",
+        "tools/translation/test/source-links.test.mjs",
+        "tools/translation/test/constant-evaluation.test.mjs",
+        "tools/translation/test/const-qualification.test.mjs",
+        "tools/translation/test/local-lifetime-constraints.test.mjs",
+        "tools/translation/test/ownership.test.mjs",
+        "tools/translation/test/generated-type-owners.test.mjs",
+        "tools/translation/test/copy-methods.test.mjs",
+        "tools/translation/test/host-instantiations.test.mjs",
+        "tools/translation/test/conditional-attributes.test.mjs",
+        "tools/translation/test/source-lifetimes.test.mjs",
+        "tools/translation/test/methods-translation.test.mjs"
+      ],
+      "testFiles": 21,
+      "timeoutSeconds": 360,
+      "testStageTimeoutSeconds": 360,
+      "sourceTableCheckTimeoutSeconds": null,
+      "maximumTestAndTableWallSeconds": 360,
+      "startedUtc": "2026-10-12T02:23:07.863045+00:00",
+      "finishedUtc": "2026-10-12T02:23:33.804055+00:00",
+      "elapsedSeconds": 25.941,
+      "exitCode": 0,
+      "timedOut": false,
+      "sourceHeadBefore": "ed3ab766967053d9436e58dfd46ba4608197a77c",
+      "sourceHeadAfter": "ed3ab766967053d9436e58dfd46ba4608197a77c",
+      "trackedStatusBefore": "",
+      "trackedStatusAfter": "",
+      "sourceHeadUnchanged": true,
+      "sourceInputSha256Before": "43d773472a5c6b8d063e6b2c9327885549602eb09022e846e622ad8e3977f262",
+      "sourceInputSha256After": "43d773472a5c6b8d063e6b2c9327885549602eb09022e846e622ad8e3977f262",
+      "sourceInputsUnchanged": true,
+      "inputManifest": "/tmp/router-759-core-body-refusals-initial1-bun.inputs.json",
+      "inputManifestBytes": 252911,
+      "inputManifestSha256": "1aa88d5968f49cf954af87752ee11b20226aba033b40a374df2f82fa2c95ecd9",
+      "inputFiles": 1421,
+      "log": "/tmp/router-759-core-body-refusals-initial1-bun.log",
+      "logBytes": 19885,
+      "logSha256": "6943a595b83576d5b78fe8e9fa7d959f14f4f8a849bb04ade71eb97b90380c7d",
+      "counts": {
+        "tests": 182,
+        "pass": 182,
+        "fail": 0,
+        "skipped": 0,
+        "todo": null
+      },
+      "sourceTableCheckCommand": null,
+      "sourceTableCheckExitCode": null,
+      "sourceTableCheckRuns": 0,
+      "producerRuns": 0,
+      "rustBuilds": 0,
+      "fullGateRuns": 0,
+      "measurement": {
+        "timeFormat": "posix",
+        "ownedChildrenMaxRssBytes": 345227264,
+        "rssScope": "all terminated harness child processes, including git and engine version; not process-tree peak or peak footprint"
+      },
+      "sourceTableCheckTimedOut": false,
+      "sourceTableCheckElapsedSeconds": null
+    },
+    {
+      "schemaVersion": 1,
+      "scope": "complete unchanged original library/Cargo/profile graph: original CSV functions, reverse iterator method, shared-reference method closures and deliberate effect/frontier refusals after body batching; not a corpus producer or full parity gate",
+      "evidenceStatus": "FOCUSED_FAIL_NOT_FULL_GATE",
+      "phase": "initial1",
+      "engine": "node",
+      "engineVersion": "v20.19.4",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "tools/translation/test/csv-original-source.test.mjs"
+      ],
+      "testFiles": 1,
+      "timeoutSeconds": 1200,
+      "testStageTimeoutSeconds": 1200,
+      "sourceTableCheckTimeoutSeconds": null,
+      "maximumTestAndTableWallSeconds": 1200,
+      "startedUtc": "2026-10-12T02:26:35.214216+00:00",
+      "finishedUtc": "2026-10-12T02:31:26.973731+00:00",
+      "elapsedSeconds": 291.733,
+      "exitCode": 0,
+      "timedOut": false,
+      "sourceHeadBefore": "ed3ab766967053d9436e58dfd46ba4608197a77c",
+      "sourceHeadAfter": "ed3ab766967053d9436e58dfd46ba4608197a77c",
+      "trackedStatusBefore": "",
+      "trackedStatusAfter": "",
+      "sourceHeadUnchanged": true,
+      "sourceInputSha256Before": "43d773472a5c6b8d063e6b2c9327885549602eb09022e846e622ad8e3977f262",
+      "sourceInputSha256After": "43d773472a5c6b8d063e6b2c9327885549602eb09022e846e622ad8e3977f262",
+      "sourceInputsUnchanged": true,
+      "inputManifest": "/tmp/router-759-core-body-csv-original-initial1-node.inputs.json",
+      "inputManifestBytes": 252911,
+      "inputManifestSha256": "1aa88d5968f49cf954af87752ee11b20226aba033b40a374df2f82fa2c95ecd9",
+      "inputFiles": 1421,
+      "log": "/tmp/router-759-core-body-csv-original-initial1-node.log",
+      "logBytes": 132204,
+      "logSha256": "ad59fbf26953c3b80bb33fb3db879d08f8301ec35c35944ba797eca29d12c63e",
+      "counts": {
+        "tests": 9,
+        "pass": 9,
+        "fail": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "sourceTableCheckCommand": null,
+      "sourceTableCheckExitCode": null,
+      "sourceTableCheckRuns": 0,
+      "producerRuns": 0,
+      "rustBuilds": 0,
+      "fullGateRuns": 0,
+      "measurement": {
+        "timeFormat": "posix",
+        "ownedChildrenMaxRssBytes": 2588131328,
+        "rssScope": "all terminated harness child processes, including git and engine version; not process-tree peak or peak footprint"
+      },
+      "originalCorpus": null,
+      "originalInputReceiptValid": false,
+      "originalGraphAttempts": 1,
+      "caseTimeoutSeconds": 900,
+      "strictTargetChildTimeoutSeconds": 30,
+      "sourceTableCheckTimedOut": false,
+      "sourceTableCheckElapsedSeconds": null
+    },
+    {
+      "schemaVersion": 1,
+      "scope": "complete unchanged original library/Cargo/profile graph: original CSV functions, reverse iterator method, shared-reference method closures and deliberate effect/frontier refusals after body batching; not a corpus producer or full parity gate",
+      "evidenceStatus": "FOCUSED_PASS_NOT_FULL_GATE",
+      "phase": "initial1",
+      "engine": "bun",
+      "engineVersion": "1.4.3",
+      "command": [
+        "bun",
+        "test",
+        "--max-concurrency",
+        "1",
+        "tools/translation/test/csv-original-source.test.mjs"
+      ],
+      "testFiles": 1,
+      "timeoutSeconds": 1200,
+      "testStageTimeoutSeconds": 1200,
+      "sourceTableCheckTimeoutSeconds": null,
+      "maximumTestAndTableWallSeconds": 1200,
+      "startedUtc": "2026-10-12T02:32:09.989479+00:00",
+      "finishedUtc": "2026-10-12T02:34:21.104619+00:00",
+      "elapsedSeconds": 131.114,
+      "exitCode": 0,
+      "timedOut": false,
+      "sourceHeadBefore": "ed3ab766967053d9436e58dfd46ba4608197a77c",
+      "sourceHeadAfter": "ed3ab766967053d9436e58dfd46ba4608197a77c",
+      "trackedStatusBefore": "",
+      "trackedStatusAfter": "",
+      "sourceHeadUnchanged": true,
+      "sourceInputSha256Before": "43d773472a5c6b8d063e6b2c9327885549602eb09022e846e622ad8e3977f262",
+      "sourceInputSha256After": "43d773472a5c6b8d063e6b2c9327885549602eb09022e846e622ad8e3977f262",
+      "sourceInputsUnchanged": true,
+      "inputManifest": "/tmp/router-759-core-body-csv-original-initial1-bun.inputs.json",
+      "inputManifestBytes": 252911,
+      "inputManifestSha256": "1aa88d5968f49cf954af87752ee11b20226aba033b40a374df2f82fa2c95ecd9",
+      "inputFiles": 1421,
+      "log": "/tmp/router-759-core-body-csv-original-initial1-bun.log",
+      "logBytes": 130972,
+      "logSha256": "71ff5a180fc313c1745a4ba2e01db31fdbdf113c68cd43ec8ffb03520a9ce64d",
+      "counts": {
+        "tests": 9,
+        "pass": 9,
+        "fail": 0,
+        "skipped": 0,
+        "todo": null
+      },
+      "sourceTableCheckCommand": null,
+      "sourceTableCheckExitCode": null,
+      "sourceTableCheckRuns": 0,
+      "producerRuns": 0,
+      "rustBuilds": 0,
+      "fullGateRuns": 0,
+      "measurement": {
+        "timeFormat": "posix",
+        "ownedChildrenMaxRssBytes": 2512568320,
+        "rssScope": "all terminated harness child processes, including git and engine version; not process-tree peak or peak footprint"
+      },
+      "originalCorpus": {
+        "entry": "src/lib.rs",
+        "sourceHead": "ed3ab766967053d9436e58dfd46ba4608197a77c",
+        "sourceCount": 806,
+        "rustFiles": 804,
+        "cargoFiles": 2,
+        "originalBytes": 9952429,
+        "receiptDigest": "06ee5b670cd37f5fdb773a3dd289ec3b4ee3b8ab3740a1c14ca4624083f54f84",
+        "contentDigest": "4da078145948bce72d776d17e61f1086a0102e69174be28aceb46649c9624862",
+        "compilationProfile": {
+          "schemaVersion": 1,
+          "flags": {
+            "test": false
+          },
+          "values": {},
+          "closedKeys": []
+        },
+        "capturedCommitFallbacks": 42,
+        "originalInputReceiptLocation": "complete ORIGINAL_CSV_INPUTS JSON in raw log"
+      },
+      "originalInputReceiptValid": true,
+      "originalGraphAttempts": 1,
+      "caseTimeoutSeconds": 900,
+      "strictTargetChildTimeoutSeconds": 30,
+      "sourceTableCheckTimedOut": false,
+      "sourceTableCheckElapsedSeconds": null
+    }
+  ],
+  "normalizations": [
+    {
+      "engine": "node",
+      "tapFragments": 16,
+      "rawLogChanged": false,
+      "originalContentDigest": "4da078145948bce72d776d17e61f1086a0102e69174be28aceb46649c9624862",
+      "runtimeStatus": "RUNTIME_PASS_ORIGINAL_INPUT_METADATA_VALIDATED"
+    },
+    {
+      "engine": "bun",
+      "tapFragments": 1,
+      "rawLogChanged": false,
+      "originalContentDigest": "4da078145948bce72d776d17e61f1086a0102e69174be28aceb46649c9624862",
+      "runtimeStatus": "RUNTIME_PASS_ORIGINAL_INPUT_METADATA_VALIDATED"
+    }
+  ],
+  "baselineComparison": {
+    "baselineArchivePath": "dev/log/issues/759/translator-csv-verification/csv-verification.tar.xz",
+    "baselineArchiveSha256": "3d03ec6b8da85f60d9a0d26d04edbb7b3172c98b87b169ebfd272bd5d1a144cb",
+    "baselineOriginalInputMember": "original-source-inputs.json",
+    "baselineOriginalInputMemberSha256": "1c0e46426da50cad6e3f9092ae12c84b99ebac653d364f4b8fe013154718c49b",
+    "originalCorpusContentDigest": "4da078145948bce72d776d17e61f1086a0102e69174be28aceb46649c9624862",
+    "identicalOriginalFileContents": 806,
+    "identicalOriginalBytes": 9952429,
+    "identicalCompilationProfile": true,
+    "timings": [
+      {
+        "engine": "node",
+        "baselineReceiptMember": "router-759-csv-c513-original-node-retry1-receipt.json",
+        "baselineReceiptMemberSha256": "640cad2d5f3e0b9d554dae70552640d50d8127c9ab0c6884fe2b6697d7aadc53",
+        "baselineSourceHead": "4bc5de345d79e599b9888f6df8815d02aab440af",
+        "baselineElapsedSeconds": 340.3652538328897,
+        "currentSourceHead": "ed3ab766967053d9436e58dfd46ba4608197a77c",
+        "currentElapsedSeconds": 291.733,
+        "baselineOwnedChildrenMaxRssBytes": 2231173120,
+        "currentOwnedChildrenMaxRssBytes": 2588131328
+      },
+      {
+        "engine": "bun",
+        "baselineReceiptMember": "router-759-csv-c513-original-bun-retry1-receipt.json",
+        "baselineReceiptMemberSha256": "66e1f6bb829cf2a6c1535638d331ce5b9934b5d52553c32b89cb0772658d7850",
+        "baselineSourceHead": "4bc5de345d79e599b9888f6df8815d02aab440af",
+        "baselineElapsedSeconds": 159.5081295000855,
+        "currentSourceHead": "ed3ab766967053d9436e58dfd46ba4608197a77c",
+        "currentElapsedSeconds": 131.114,
+        "baselineOwnedChildrenMaxRssBytes": 2603630592,
+        "currentOwnedChildrenMaxRssBytes": 2512568320
+      }
+    ],
+    "interpretation": "Separate descriptive runs with uncontrolled host load/caches; no controlled speedup, aggregate peak or full parity claim"
+  },
+  "archive": {
+    "path": "router-759-current-body-combined-ed3ab766.tar.gz",
+    "bytes": 274376,
+    "sha256": "f5d5584ad468e844b3d6f72a207af5d24751c459f6394d1224365ddf6be83899",
+    "members": [
+      {
+        "name": "router-759-core-body-refusals-focused.py",
+        "bytes": 7135,
+        "sha256": "47d8ba1051659536e16a77d8ee04d235ea97900e5d02a90b86343a48872d1afc"
+      },
+      {
+        "name": "router-759-core-body-refusals-archive.py",
+        "bytes": 5433,
+        "sha256": "7ef985d6bcb005276e739640e0d71387ada5767b06fb8d865c390b923a94833f"
+      },
+      {
+        "name": "router-759-core-body-csv-original-focused.py",
+        "bytes": 8161,
+        "sha256": "1057ec2d12fdfa0f443057b957b982b14f7937e794a94d7ca18f98c8ace79e0c"
+      },
+      {
+        "name": "router-759-core-body-combined-archive.py",
+        "bytes": 9963,
+        "sha256": "cb8ae8e62a215e76576815e955392180d4bd5e3e6a73d2c87dfe531d5591ad2e"
+      },
+      {
+        "name": "router-759-core-body-refusals-initial1-node.json",
+        "bytes": 3368,
+        "sha256": "57bba4106b57c173715ee67e7dcbbac9d9179ee11982e4466ed36cafdf86652e"
+      },
+      {
+        "name": "router-759-core-body-refusals-initial1-node.log",
+        "bytes": 41571,
+        "sha256": "88c19e836374028b72c5e6a92e7c85d4d944eb4691715a47a438215dde22f89f"
+      },
+      {
+        "name": "router-759-core-body-refusals-initial1-node.inputs.json",
+        "bytes": 252911,
+        "sha256": "1aa88d5968f49cf954af87752ee11b20226aba033b40a374df2f82fa2c95ecd9"
+      },
+      {
+        "name": "router-759-core-body-refusals-initial1-bun.json",
+        "bytes": 3368,
+        "sha256": "51b7c769621ab55f2a75490673c6c21d8b079d71fb60976ade5fa5b4ca5913e0"
+      },
+      {
+        "name": "router-759-core-body-refusals-initial1-bun.log",
+        "bytes": 19885,
+        "sha256": "6943a595b83576d5b78fe8e9fa7d959f14f4f8a849bb04ade71eb97b90380c7d"
+      },
+      {
+        "name": "router-759-core-body-refusals-initial1-bun.inputs.json",
+        "bytes": 252911,
+        "sha256": "1aa88d5968f49cf954af87752ee11b20226aba033b40a374df2f82fa2c95ecd9"
+      },
+      {
+        "name": "router-759-core-body-csv-original-initial1-node.json",
+        "bytes": 2453,
+        "sha256": "955eee8725e220b42ad167fe7cfd0b40482af628d4d2eba6e427417aafa28d69"
+      },
+      {
+        "name": "router-759-core-body-csv-original-initial1-node.log",
+        "bytes": 132204,
+        "sha256": "ad59fbf26953c3b80bb33fb3db879d08f8301ec35c35944ba797eca29d12c63e"
+      },
+      {
+        "name": "router-759-core-body-csv-original-initial1-node.inputs.json",
+        "bytes": 252911,
+        "sha256": "1aa88d5968f49cf954af87752ee11b20226aba033b40a374df2f82fa2c95ecd9"
+      },
+      {
+        "name": "router-759-core-body-csv-original-initial1-node-normalized-original.json",
+        "bytes": 174344,
+        "sha256": "61519f0d91e1cbcef2d85387e86903f87b4a4ac42412a60b214b368fd829262c"
+      },
+      {
+        "name": "router-759-core-body-csv-original-initial1-bun.json",
+        "bytes": 3087,
+        "sha256": "42821262a37bc1de68fc9bd15538da6ab37ed37414729434a879d0c5db3310f7"
+      },
+      {
+        "name": "router-759-core-body-csv-original-initial1-bun.log",
+        "bytes": 130972,
+        "sha256": "71ff5a180fc313c1745a4ba2e01db31fdbdf113c68cd43ec8ffb03520a9ce64d"
+      },
+      {
+        "name": "router-759-core-body-csv-original-initial1-bun.inputs.json",
+        "bytes": 252911,
+        "sha256": "1aa88d5968f49cf954af87752ee11b20226aba033b40a374df2f82fa2c95ecd9"
+      },
+      {
+        "name": "router-759-core-body-csv-original-initial1-bun-normalized-original.json",
+        "bytes": 174343,
+        "sha256": "33c159bab27254044bd283f3efe31e2abeaaa7615d34c2fed72e0e4f75c5905b"
+      },
+      {
+        "name": "body-original-baseline-comparison.json",
+        "bytes": 1886,
+        "sha256": "3d49873fc06c7e1e78b7c34e557907d5611c33a6fbb00b6602697288a1cfd8fd"
+      }
+    ],
+    "reopenedMembers": 19,
+    "reopenErrors": 0,
+    "identicalContentHardlinks": 3,
+    "hardlinkExtractionVerified": true
+  },
+  "limits": {
+    "canonicalProducerRuns": 0,
+    "profileProducerRuns": 0,
+    "fullGateRuns": 0,
+    "rustBuilds": 0,
+    "newCorpusCensusClaim": false,
+    "runtimeParity": false,
+    "controlledSpeedupClaim": false,
+    "measurementScope": "Owned terminated-child maximum RSS includes git/version/time children; not aggregate process-tree peak or physical footprint"
+  }
+}

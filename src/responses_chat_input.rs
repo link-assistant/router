@@ -578,3 +578,32 @@ mod tests {
         }
     }
 }
+
+#[cfg(test)]
+mod nonempty_core_projection_goldens {
+    use super::{nonempty_string, Value};
+
+    #[test]
+    fn complete_json_field_nonempty_edges_keep_the_borrowed_input() {
+        let cases = [
+            (serde_json::json!({}), "x", None),
+            (serde_json::json!({"x": null}), "x", None),
+            (serde_json::json!({"x": false}), "x", None),
+            (serde_json::json!({"x": 0}), "x", None),
+            (serde_json::json!({"x": []}), "x", None),
+            (serde_json::json!({"x": ""}), "x", None),
+            (serde_json::json!({"x": " "}), "x", Some(" ")),
+            (serde_json::json!({"x": "猫😀"}), "x", Some("猫😀")),
+            (serde_json::json!({"": "\u{0}"}), "", Some("\u{0}")),
+        ];
+        for (value, key, expected) in cases {
+            let actual = nonempty_string(&value, key);
+            assert_eq!(actual, expected);
+            if let Some(text) = actual {
+                let original = Value::as_str(value.get(key).expect("present source field"))
+                    .expect("source field is text");
+                assert_eq!(text.as_ptr(), original.as_ptr());
+            }
+        }
+    }
+}

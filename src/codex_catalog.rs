@@ -1,6 +1,6 @@
 //! Codex model-catalog projection shared by process-local and HTTP discovery.
 
-use serde_json::{Value, json};
+use serde_json::Value;
 
 /// Inputs retained from one authorized live catalog row.
 pub struct ModelDescription<'a> {
@@ -17,10 +17,10 @@ pub struct ModelDescription<'a> {
 /// serializer includes it for older clients. Empty instructions ask the client
 /// to use its built-in fallback without inventing model-specific behavior.
 pub fn model_info(model: &ModelDescription<'_>, priority: usize) -> Value {
-    json!({
+    crate::translation_core::json!({
         "slug": model.id,
         "display_name": model.display_name,
-        "description": format!("{} via Link.Assistant.Router", model.owner),
+        "description": crate::translation_core::format!("{} via Link.Assistant.Router", model.owner),
         "default_reasoning_level": model.default_reasoning_level,
         "supported_reasoning_levels": model.supported_reasoning_levels,
         "shell_type": "unified_exec",

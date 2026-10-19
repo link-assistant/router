@@ -84,6 +84,7 @@ pub mod env_paths;
 pub mod error_log;
 pub mod gemini;
 pub mod gemini_bridge;
+pub mod generated_js_first;
 pub mod git_proxy;
 pub mod github_proxy;
 pub mod gonka;
@@ -118,6 +119,8 @@ pub mod oauth;
 pub mod observability_api;
 pub mod on_demand_cli;
 pub mod openai;
+#[cfg(test)]
+mod openai_tools_translation_tests;
 pub mod operation_context;
 pub mod operation_reports;
 mod operational_log;
@@ -176,6 +179,7 @@ pub mod token_report;
 pub mod token_reservation;
 pub mod token_secret;
 pub mod tokens_remote;
+pub mod translation_core;
 pub mod verification;
 // Unix domain sockets do not exist on Windows, and `tokio::net::UnixListener`
 // is gated accordingly.
@@ -229,7 +233,7 @@ mod token_admin_tests;
 mod zai_coding_plan_tests;
 
 /// Package version (matches Cargo.toml version).
-pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const VERSION: &crate::translation_core::Str = env!("CARGO_PKG_VERSION");
 
 /// Shared operational implementation for `auth_cli`.
 pub mod auth_cli;
@@ -262,7 +266,7 @@ pub mod recover_admin_cli;
 pub mod shutdown;
 
 /// Source commit embedded at build time.
-pub const SOURCE_COMMIT: &str = env!("ROUTER_SOURCE_COMMIT");
+pub const SOURCE_COMMIT: &crate::translation_core::Str = env!("ROUTER_SOURCE_COMMIT");
 
 /// Importable request-log operations.
 pub mod logs;

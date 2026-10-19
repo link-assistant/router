@@ -1,0 +1,30 @@
+[
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37982698938/attempt-1/logs/0_Lean orientation and consequence proofs.txt.gz",
+    "sha256": "2d930bf20c22ee68774e0afa65a4011bf681d5efb63c1d0c35fcc332fd95db57",
+    "bytes": 6208,
+    "uncompressed_bytes": 24914,
+    "redacted": false
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37982698938/attempt-1/logs/Lean orientation and consequence proofs/system.txt.gz",
+    "sha256": "c46274a78c32dbcd703e0a5d200a733c867500cbf9f02f64a47c61ed538e59b8",
+    "bytes": 317,
+    "uncompressed_bytes": 603,
+    "redacted": false
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37982698938/attempt-1/logs/1_Rocq orientation and consequence proofs.txt.gz",
+    "sha256": "ae50daa8da832f5536452af3303f4b5be75554d2e11f16df003a75bd1cea5aa0",
+    "bytes": 5641,
+    "uncompressed_bytes": 22087,
+    "redacted": false
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37982698938/attempt-1/logs/Rocq orientation and consequence proofs/system.txt.gz",
+    "sha256": "6b3b30129242a1d5492971983400b8a9f07ed5f35f195a6387c63c8347342cd8",
+    "bytes": 328,
+    "uncompressed_bytes": 603,
+    "redacted": false
+  }
+]

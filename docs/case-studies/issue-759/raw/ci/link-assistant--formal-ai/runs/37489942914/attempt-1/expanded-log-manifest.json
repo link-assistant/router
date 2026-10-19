@@ -1,0 +1,50 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37489942914/attempt-1/logs/0_Browser Code Coverage.txt.gz",
+    "sha256": "d0f63d001a169ac4fbff5a93ae1e6c3eeb2b1b5a50ea17bc614efaeefb06c2ac",
+    "bytes": 20180,
+    "uncompressed_bytes": 75976,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37489942914/attempt-1/logs/Browser Code Coverage/system.txt.gz",
+    "sha256": "454445b9d67c10e2a68545c0e03e59edd28f047dbcd080b02fdcd8f9c6d74c38",
+    "bytes": 504,
+    "uncompressed_bytes": 1103,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37489942914/attempt-1/logs/1_Code Coverage.txt.xz",
+    "sha256": "d88d1a4a6fb9509ed94954881a3eb4ffb9d3619e86a1d2cfc0e6a378eb712b3f",
+    "bytes": 20668,
+    "uncompressed_bytes": 118074,
+    "redacted": false,
+    "original_gzip_sha256": "5a12008fc3c9177560a29e7fe1a6d258b0755c370348782a022053a3f398b7f1",
+    "compression": "xz",
+    "decoded_sha256": "6b448d2ae16cc9a558c0d04b02ac25a276958bcfc4efc9efa62c7dbfe84f785c"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37489942914/attempt-1/logs/Code Coverage/system.txt.gz",
+    "sha256": "f447af23a6ec8386f1e01c92839b5268c7fb46284f5cb1ecd1d93cdb96ee387b",
+    "bytes": 497,
+    "uncompressed_bytes": 1081,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37489942914/attempt-1/logs/2_Detect Changes.txt.xz",
+    "sha256": "3ece43a99c5651c400fa305932f53ee7fb1e3fbe6f165673871b55dae3e41999",
+    "bytes": 27548,
+    "uncompressed_bytes": 246033,
+    "redacted": false,
+    "original_gzip_sha256": "f2d865cc1f974efc24c66a745429887daec9056930e0a3b2bf2d73a38b970480",
+    "compression": "xz",
+    "decoded_sha256": "2dec1b4a11308ca955c162c952650058680f684c77cc8d8d10e942e5b100f481"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37489942914/attempt-1/logs/Detect Changes/system.txt.gz",
+    "sha256": "9fd6619e16830bc2aedc7e4477749fabf219a9473d810d899c0e4ba02428c13f",
+    "bytes": 457,
+    "uncompressed_bytes": 887,
+    "redacted": false
+  }
+]

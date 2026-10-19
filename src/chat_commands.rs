@@ -122,7 +122,7 @@ fn list(context: &CommandContext<'_>) -> Reply {
 }
 
 /// Lifecycle state of a token, shared by `/tokens` and `/show`.
-fn token_state(record: &TokenRecord) -> &'static str {
+fn token_state(record: &TokenRecord) -> &'static crate::translation_core::Str {
     if record.revoked {
         "revoked"
     } else if record.expires_at <= crate::operation_context::now().timestamp() {
@@ -188,7 +188,7 @@ pub(crate) struct IssueOptions {
 }
 
 /// Keys accepted in the `key=value` form, with their documented aliases.
-const ISSUE_KEYS: &[(&str, &[&str])] = &[
+const ISSUE_KEYS: &[(&crate::translation_core::Str, &[&crate::translation_core::Str])] = &[
     ("label", &["label", "name"]),
     ("ttl_hours", &["ttl_hours", "ttl"]),
     ("max_requests", &["max_requests", "requests"]),
@@ -200,7 +200,7 @@ const ISSUE_KEYS: &[(&str, &[&str])] = &[
     ("account", &["account", "pin"]),
 ];
 
-fn canonical_issue_key(key: &str) -> Option<&'static str> {
+fn canonical_issue_key(key: &crate::translation_core::Str) -> crate::translation_core::Maybe<&'static crate::translation_core::Str> {
     let key = key.to_ascii_lowercase();
     ISSUE_KEYS
         .iter()
@@ -209,7 +209,7 @@ fn canonical_issue_key(key: &str) -> Option<&'static str> {
 }
 
 /// Parse the shared `/issue` and `/rotate-token` argument grammar.
-pub(crate) fn parse_issue_options(rest: &str) -> Result<IssueOptions, String> {
+pub(crate) fn parse_issue_options(rest: &crate::translation_core::Str) -> crate::translation_core::Outcome<IssueOptions, String> {
     let mut options = IssueOptions::default();
     let mut positional = 0;
     for part in rest.split_whitespace() {
@@ -513,7 +513,7 @@ impl RouterStatus for crate::app_state::AppState {
     }
 }
 
-const fn yes_no(value: bool) -> &'static str {
+const fn yes_no(value: bool) -> &'static crate::translation_core::Str {
     if value { "yes" } else { "no" }
 }
 

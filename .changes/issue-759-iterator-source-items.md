@@ -1,0 +1,3 @@
+Retain actual shared scalar iterator items and `filter` callback reference depth in checked meta. Prove bounded scalar Copy/Clone and fixed-integer shared `Sum` using pinned standard-library sources; qualify collection ownership only from an actual standard owned Vec target. Preserve lazy evaluation and runtime integer overflow checks in both targets.
+
+Correct synthetic iterator fixtures to use valid explicit dereferences or Copy operations, and retain invalid reference erasure, assignments, collection boundaries, and ambiguous lifetimes as refusals. The combined matrix passes 115 Node and 115 Bun tests; original production Rust source is unchanged and full parity remains incomplete.

@@ -1,0 +1,39 @@
+{
+  "schema": "original-format-source-stage-next-fixture-v1",
+  "status": "SOURCE-ONLY5new tests UNRUN; no runtime formatter admission",
+  "source": {
+    "path": "src/account_http.rs",
+    "sha256": "876e7e38985d93f896c9d191f9d7591abb66697f93504a202d4fd208217bdd09",
+    "bytes": 17892
+  },
+  "anchor": {
+    "span": {
+      "start": 7878,
+      "end": 7909
+    },
+    "sha256": "47306be737d8e25270d3ebd2e6707e026132461ab8ca73d9008d2009ca07a8e3",
+    "source": "format!(\"{what} needs a value\")",
+    "coordinateSystem": "UTF-16 code-unit offsets in exact original source"
+  },
+  "originalContext": "Complete original file is captured; non_empty body unchanged. Env/fs/http/Display/traits and format macro namespace remain unsupported. No selected body replacement.",
+  "profile": "source-profiles/format-arguments/manifest.json",
+  "newCompressedSourceBytes": 32563,
+  "requiredUnintegratedInput": "source-profiles/builtin-derive-bang/rust-1.89-compiler_rustc_builtin_macros_src_lib.rs.gz",
+  "knownExistingFormatter": "extensions/formatting.mjs already implements checked bounded primitive formatting; new stages do not replace or duplicate that runtime.",
+  "newTests": 5,
+  "callerMacroOwnerResolved": false,
+  "builtinBuilderOwnerResolved": false,
+  "sourceSemanticClosureVerified": false,
+  "traitSelectionVerified": false,
+  "allocatorEffectsVerified": false,
+  "ioEffectsVerified": false,
+  "namespaceAuthority": false,
+  "runtimeParity": false,
+  "remaining": [
+    "actual std/alloc macro exports and caller bang namespace",
+    "builtin attributes/registration/ExtCtxt AST argument parser and char/iterator parser operations",
+    "fmt::Arguments/Argument runtime function pointer ABI and lifetime/cfg optimizer lowering",
+    "std formatting trait selection and actual primitive/string formatter profiles",
+    "owned String allocator/OOM/Drop and std output locks/panics/I/O"
+  ]
+}

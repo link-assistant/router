@@ -1,0 +1,3 @@
+Refuse competing original declarations before retaining an unknown external module source candidate, and record the pinned original core architecture reexport bridge in nontrait import evidence. Add bounded original declaration and refusal-phase fields to translation progress diagnostics so bulk-generation stalls can be investigated without exposing source bodies or private proofs.
+
+The preceding source batch passed the complete 75-file, 682-case regression suite independently under Node and Bun with unchanged inputs and no skips or timeouts. The ambiguity and diagnostic changes require successor verification. Complete Router parity remains unfinished and Rust stays gated.

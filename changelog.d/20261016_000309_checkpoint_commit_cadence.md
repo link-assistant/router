@@ -1,0 +1,1 @@
+Documented reviewable checkpoint commits at least every six hours during active issue #759 development, with accurate passed, failed and unrun check status. Coherent draft commits can proceed while broader translation work remains unfinished; existing publication and JavaScript-first Rust CI gates still apply.

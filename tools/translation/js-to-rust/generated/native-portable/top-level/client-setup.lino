@@ -1,0 +1,2 @@
+# GENERATED: checked portable-router-v1 bodies; no source envelopes.
+(constant implemented_clients (type table-set) (value (table-set (string opencode) (string agent) (string qwen) (string grok))))

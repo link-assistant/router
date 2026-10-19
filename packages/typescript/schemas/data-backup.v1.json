@@ -1,0 +1,32 @@
+{
+  "$id": "link-assistant-router/data-backup/v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "excluded": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "files": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "schema": {
+      "const": "link-assistant-router/data-backup/v1"
+    },
+    "signing_secret_sha256": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "signing_secret_sha256",
+    "files",
+    "excluded"
+  ],
+  "type": "object"
+}

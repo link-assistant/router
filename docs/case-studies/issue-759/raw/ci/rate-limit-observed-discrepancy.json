@@ -1,0 +1,18 @@
+{
+  "observed_at": "2026-10-10T20:08:04Z",
+  "generic_rate_limit_endpoint": {
+    "http_status": 200,
+    "remaining": 4771,
+    "limit": 5000,
+    "reset_unix": 1791665013
+  },
+  "run_log_endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37978703298/attempts/1/logs",
+  "run_log_response": {
+    "http_status": 403,
+    "remaining": 0,
+    "limit": 5000,
+    "reset_unix": 1791663022,
+    "reset_utc": "2026-10-10T20:10:22Z"
+  },
+  "method": "gh api -i response headers from main repository working directory; token values not recorded. Actual resource endpoint headers determine retry scheduling."
+}

@@ -75,7 +75,7 @@ fn carries_a_prompt(client: ClientKind, forwarded: &[OsString]) -> bool {
 
 /// Current native command inventory. The explicit `--` boundary below is the
 /// future-proof escape hatch for commands added after this Router release.
-const fn native_commands(client: ClientKind) -> &'static [&'static str] {
+const fn native_commands(client: ClientKind) -> &'static [&'static crate::translation_core::Str] {
     match client {
         ClientKind::Codex => &[
             "agents",
@@ -174,11 +174,11 @@ const fn native_commands(client: ClientKind) -> &'static [&'static str] {
     }
 }
 
-fn is_native_command(client: ClientKind, argument: &str) -> bool {
+fn is_native_command(client: ClientKind, argument: &crate::translation_core::Str) -> bool {
     native_commands(client).contains(&argument)
 }
 
-fn codex_root_option_takes_value(argument: &str) -> bool {
+fn codex_root_option_takes_value(argument: &crate::translation_core::Str) -> bool {
     matches!(
         argument,
         "-c" | "--config"
@@ -200,7 +200,7 @@ fn codex_root_option_takes_value(argument: &str) -> bool {
     )
 }
 
-fn codex_root_boolean_option(argument: &str) -> bool {
+fn codex_root_boolean_option(argument: &crate::translation_core::Str) -> bool {
     matches!(
         argument,
         "--oss"
@@ -215,7 +215,7 @@ fn codex_root_boolean_option(argument: &str) -> bool {
     )
 }
 
-fn codex_subcommand(arguments: &[OsString]) -> Option<&str> {
+fn codex_subcommand(arguments: &[OsString]) -> crate::translation_core::Maybe<&crate::translation_core::Str> {
     let mut index = 0;
     while let Some(argument) = arguments.get(index).and_then(|value| value.to_str()) {
         if argument == "--" {
@@ -263,7 +263,7 @@ fn codex_subcommand(arguments: &[OsString]) -> Option<&str> {
 /// Keep this concrete. "Some native features" made a launch look healthier
 /// than it was and left the user to discover each loss inside Claude (issue
 /// #520).
-pub const CLAUDE_NATIVE_SERVICES_LIMITATION: &str = "released Claude Code (checked through 2.1.283) has no supported split-auth mechanism: Router inference and /v1/models discovery use only the Router token, while the stored Claude.ai login remains untouched; Claude.ai connectors, Remote Control and /remote-control, /schedule, notification preferences, cloud sessions (--cloud, --environment, --teleport, and ultrareview), remote managed settings, and organization policy are unavailable in this Router-directed process";
+pub const CLAUDE_NATIVE_SERVICES_LIMITATION: &crate::translation_core::Str = "released Claude Code (checked through 2.1.283) has no supported split-auth mechanism: Router inference and /v1/models discovery use only the Router token, while the stored Claude.ai login remains untouched; Claude.ai connectors, Remote Control and /remote-control, /schedule, notification preferences, cloud sessions (--cloud, --environment, --teleport, and ultrareview), remote managed settings, and organization policy are unavailable in this Router-directed process";
 
 /// Report the boundary anywhere Router creates, repairs, or checks a Claude
 /// gateway configuration. Ordinary supported launches stay quiet; setup and
@@ -274,7 +274,7 @@ pub fn report_claude_native_services_limitation(client: ClientKind) {
     }
 }
 
-const CLAUDE_NATIVE_SERVICE_REQUEST_ERROR: &str = "this Claude.ai operation cannot be routed because released Claude Code (checked through 2.1.283) has no supported split-auth mechanism; run it directly with Claude.ai authentication instead; no Router token was minted and no client was launched";
+const CLAUDE_NATIVE_SERVICE_REQUEST_ERROR: &crate::translation_core::Str = "this Claude.ai operation cannot be routed because released Claude Code (checked through 2.1.283) has no supported split-auth mechanism; run it directly with Claude.ai authentication instead; no Router token was minted and no client was launched";
 
 fn claude_native_service_request(arguments: &[OsString]) -> bool {
     let arguments = arguments
@@ -299,7 +299,7 @@ fn claude_native_service_request(arguments: &[OsString]) -> bool {
 /// Commands whose vendor control plane cannot be routed through a supported
 /// split-auth boundary. Detect these before server lookup or token mint.
 #[must_use]
-pub fn unsupported_native_command(args: &WithArgs) -> Option<&'static str> {
+pub fn unsupported_native_command(args: &WithArgs) -> crate::translation_core::Maybe<&'static crate::translation_core::Str> {
     if args.client == ClientKind::ClaudeCode && claude_native_service_request(&args.client_args) {
         return Some(CLAUDE_NATIVE_SERVICE_REQUEST_ERROR);
     }
@@ -331,7 +331,7 @@ pub fn attached_to_a_terminal() -> bool {
 /// `resolved_model` is `None` unless the user asked for a model or the client
 /// cannot start without one; the router no longer picks one by catalog order
 /// on the user's behalf (issue #295).
-pub fn plan(args: &WithArgs, resolved_model: Option<&str>, attached_to_a_terminal: bool) -> Launch {
+pub fn plan(args: &WithArgs, resolved_model: crate::translation_core::Maybe<&crate::translation_core::Str>, attached_to_a_terminal: bool) -> Launch {
     let integration = args.client.integration();
     let mut forwarded = args.client_args.clone();
     let exact_argv = forwarded.first().is_some_and(|value| value == "--");
@@ -450,7 +450,7 @@ fn contains_model_argument(arguments: &[OsString]) -> bool {
 ///
 /// This is inspected before server discovery or token minting so two model
 /// authorities cannot disagree after a credential already exists.
-pub fn forwarded_model(arguments: &[OsString]) -> Result<Option<String>, String> {
+pub fn forwarded_model(arguments: &[OsString]) -> crate::translation_core::Outcome<crate::translation_core::Maybe<String>, String> {
     let mut found: Option<String> = None;
     let mut index = 0;
     while index < arguments.len() {
@@ -485,7 +485,7 @@ pub fn forwarded_model(arguments: &[OsString]) -> Result<Option<String>, String>
     Ok(found)
 }
 
-fn model_selector(client: ClientKind, model: &str) -> String {
+fn model_selector(client: ClientKind, model: &crate::translation_core::Str) -> String {
     if matches!(client, ClientKind::Opencode | ClientKind::Agent) && !model.contains('/') {
         format!("link-assistant/{model}")
     } else {

@@ -42,7 +42,7 @@ impl Encoding {
     /// keeps "not verifiable" meaning "genuinely unreadable" rather than
     /// "not attempted".
     #[must_use]
-    pub fn parse(header: &str) -> Option<Self> {
+    pub fn parse(header: &crate::translation_core::Str) -> crate::translation_core::Maybe<Self> {
         // A comma-separated list applies its encodings in order, so the last
         // one is the outermost and the only one a single pass can remove.
         let last = header
@@ -73,7 +73,7 @@ impl Encoding {
 /// cut mid-frame still yields the frames that arrived — which is the case the
 /// inspection exists for.
 #[must_use]
-pub fn decode(body: &[u8], encoding: Encoding) -> Option<String> {
+pub fn decode(body: &[u8], encoding: Encoding) -> crate::translation_core::Maybe<String> {
     if body.is_empty() {
         return None;
     }

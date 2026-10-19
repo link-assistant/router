@@ -1,0 +1,4 @@
+### Changed
+
+- Regenerate all 804 original Rust sources through the integrated Rust → meta-language → JavaScript/TypeScript translator. The finite 2,400-second producer completed in 912.525 seconds with all 1,873 compiler/source inputs and the source commit unchanged. Every original Rust/Cargo input and all 2,653 output hashes passed the reusable complete draft review; the emitted canonical TypeScript passes strict compilation.
+- Preserve the actual incomplete result rather than claiming a gain from focused fixtures: 677 executable and 11,998 carried items. Compared with the previous complete generation, two original functions and two methods become executable while six functions and two methods lose admission. Their complete source/refusal evidence is retained for correction. Strict runtime parity, profile regeneration and the complete JavaScript gate remain unfinished; no Rust build or publication ran.

@@ -1,0 +1,3 @@
+### Fixed
+- Validate explicit TypeScript and JSDoc return domains through the same private original-source resolver used for parameters, then compare the checked body ABI. Canonical JsonValue annotations preserve independently inferred ownership and loan roots; unsupported, custom, Promise and mismatched domains refuse.
+- Extend the existing complete eight-case receiving file with original TypeScript CST, strict original/emitted TypeScript and independent golden behavior plus negative return-domain controls. Worker checks remain UNRUN; no generated sources, previous sealed482 bytes, deadlines or native/publication claims are changed.

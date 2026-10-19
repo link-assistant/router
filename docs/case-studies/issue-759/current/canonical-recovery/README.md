@@ -1,0 +1,11 @@
+# Complete canonical recovery and verification evidence
+
+[The archive](complete-evidence.tar.xz) contains 2,626 complete pinned originals, totaling 402,308,943 bytes before compression. [The capture receipt](capture-receipt.json.gz) preserves its complete original JSON bytes under lossless GZip; [the storage receipt](storage-receipt.json) pins both containers. The original temporary paths remain unchanged in the receipt. Capture used source commit `50b3cb43b790a57be255a54b6c7d4cf8a43f75c7`; every selected original and every decoded archive member was verified.
+
+The actual canonical run at `3c96a4bddee9a729bc710b3ce4867dde940c4aa3` generated all 2,653 outputs: 688 executable and 11,987 carried items. Its complete review recovered all six recorded function losses and both method losses, added five other original functions and reported zero losses. Strict compilation of all 164 native TypeScript files passed. The archive includes direct Git comparisons of all canonical outputs and all 317 native draft targets, complete source vectors, compiler repairs, worker proofs and every selected failed/passed stream.
+
+The full forward Node suite at the capture head passed 1,656 of 1,658 tests, with one exporter Git timeout and one cancelled whole-library fixture. Bun reached its 1,800-second bound after 1,607 observed passes and one reported failure; remaining tests are unexecuted. These complete streams and input vectors are preserved. Bounded source setup candidate checks pass 16/16 on both engines, while its raw complete-graph benchmark timed out; no whole-corpus performance claim follows.
+
+The prior complete packet remains in [coherent-source-successor](../coherent-source-successor/README.md). Complete older originals and unchanged compressed candidates referenced by this packet remain pinned there or in named immutable Git blobs; the archive includes full storage witnesses. Compiler cache experiments and the recorded temporary worker edit are qualified by their exact evidence and limits. This packet excludes later shared-pattern/Into/performance source successors and the fourth log migration; those require separate evidence.
+
+Storage, uncompiled Rust projections and bounded checks confer no runtime parity, strict green gate, Rust execution or publication authority. Strict parity still reports missing, partial and carried behavior.

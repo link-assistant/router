@@ -1,0 +1,3 @@
+### Fixed
+
+- Defer frozen-data JSON equality whenever either operand or field container has an own `stack` key, before integrity or property-descriptor queries. Captured stacks can belong to ordinary, non-Error branded objects; plain stack metadata also conservatively uses the original serializer comparison. Complete prior helper source and native/direct-descriptor controls retain runtime-specific capture, freeze and action phases without claiming an unexecuted cross-engine reproduction. Existing native guards, limits, source/hash reissues and all eight deadlines remain unchanged. Source-only repair; receiving checks are pending.

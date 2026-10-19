@@ -8,7 +8,7 @@ use std::time::{Duration, Instant};
 use crate::management_config::ManagementConfig;
 
 const MAX_CLIENTS: usize = 4096;
-const SNAPSHOT: &str = "management-lockouts.lenv";
+const SNAPSHOT: &crate::translation_core::Str = "management-lockouts.lenv";
 
 /// An active ban's diagnostic view. No credential material is retained.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -28,7 +28,7 @@ struct Attempt {
 }
 
 impl Attempt {
-    fn remaining(&self, now: Instant, window: Duration) -> Option<u64> {
+    fn remaining(&self, now: Instant, window: Duration) -> crate::translation_core::Maybe<u64> {
         let elapsed = now.saturating_duration_since(self.banned_at?);
         let remaining = window.checked_sub(elapsed)?;
         (!remaining.is_zero()).then(|| {
@@ -96,11 +96,11 @@ impl ManagementAccess {
     }
 
     /// Remaining ban seconds, or a capacity backoff for a new untracked IP.
-    pub fn check(&self, ip: IpAddr) -> Option<u64> {
+    pub fn check(&self, ip: IpAddr) -> crate::translation_core::Maybe<u64> {
         self.check_at(normalize_ip(ip), Instant::now())
     }
 
-    fn check_at(&self, ip: IpAddr, now: Instant) -> Option<u64> {
+    fn check_at(&self, ip: IpAddr, now: Instant) -> crate::translation_core::Maybe<u64> {
         if self.exempt(ip) {
             return None;
         }
@@ -137,11 +137,11 @@ impl ManagementAccess {
     }
 
     /// Record a failed credential. Returns a newly-created ban for auditing.
-    pub fn failure(&self, ip: IpAddr) -> Option<ManagementBan> {
+    pub fn failure(&self, ip: IpAddr) -> crate::translation_core::Maybe<ManagementBan> {
         self.failure_at(normalize_ip(ip), Instant::now())
     }
 
-    fn failure_at(&self, ip: IpAddr, now: Instant) -> Option<ManagementBan> {
+    fn failure_at(&self, ip: IpAddr, now: Instant) -> crate::translation_core::Maybe<ManagementBan> {
         if self.exempt(ip) {
             return None;
         }

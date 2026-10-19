@@ -1,0 +1,9 @@
+// GENERATED: node scripts/regenerate-js-first.mjs
+// Independently checked top-level bodies from packages/javascript/native/activitypub.mjs; source sha256=a5cad0b38b510e897c590a39da4461a77e187d6a9e4615fac8b8fa811b4be7c1; IR sha256=60f242947ca9307bbd56aee77327ca16c3d5351d833559f24babe736afb9048f.
+// Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
+#[rustfmt::skip]
+const ROOT: &str = "/api/services/activitypub";
+
+#[rustfmt::skip]
+#[allow(non_upper_case_globals)]
+pub const default_activity_public_key: &str = "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA0000000000000000000000000000000000000000000=\n-----END PUBLIC KEY-----";

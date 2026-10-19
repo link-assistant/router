@@ -26,7 +26,7 @@ use std::fmt;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 
 /// Environment variable naming the address classes a provider may use.
-pub const ALLOW_PRIVATE_NETWORKS_ENV: &str = "UPSTREAM_ALLOW_PRIVATE_NETWORKS";
+pub const ALLOW_PRIVATE_NETWORKS_ENV: &crate::translation_core::Str = "UPSTREAM_ALLOW_PRIVATE_NETWORKS";
 
 /// The class of a refused address.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -44,7 +44,7 @@ pub enum AddressClass {
 impl AddressClass {
     /// Stable lowercase name used in errors and in the allow option.
     #[must_use]
-    pub const fn as_str(self) -> &'static str {
+    pub const fn as_str(self) -> &'static crate::translation_core::Str {
         match self {
             Self::Loopback => "loopback",
             Self::Private => "private",
@@ -56,7 +56,7 @@ impl AddressClass {
 
 /// Classify an address, or `None` for an ordinary public unicast address.
 #[must_use]
-pub fn classify(ip: IpAddr) -> Option<AddressClass> {
+pub fn classify(ip: IpAddr) -> crate::translation_core::Maybe<AddressClass> {
     match ip {
         IpAddr::V4(v4) => classify_v4(v4),
         IpAddr::V6(v6) => embedded_v4(v6).map_or_else(|| classify_v6(v6), classify_v4),
@@ -66,7 +66,7 @@ pub fn classify(ip: IpAddr) -> Option<AddressClass> {
 /// The IPv4 address an IPv6 address reaches: IPv4-mapped (`::ffff:a.b.c.d`),
 /// IPv4-compatible (`::a.b.c.d`) or well-known-prefix NAT64
 /// (`64:ff9b::a.b.c.d`), which a DNS64 network routes to that IPv4 host.
-fn embedded_v4(ip: Ipv6Addr) -> Option<Ipv4Addr> {
+fn embedded_v4(ip: Ipv6Addr) -> crate::translation_core::Maybe<Ipv4Addr> {
     if let Some(v4) = ip.to_ipv4_mapped() {
         return Some(v4);
     }
@@ -83,7 +83,7 @@ fn embedded_v4(ip: Ipv6Addr) -> Option<Ipv4Addr> {
     (nat64 || compatible).then_some(tail)
 }
 
-fn classify_v4(ip: Ipv4Addr) -> Option<AddressClass> {
+fn classify_v4(ip: Ipv4Addr) -> crate::translation_core::Maybe<AddressClass> {
     let [a, b, ..] = ip.octets();
     if ip.is_loopback() {
         Some(AddressClass::Loopback)
@@ -98,7 +98,7 @@ fn classify_v4(ip: Ipv4Addr) -> Option<AddressClass> {
     }
 }
 
-const fn classify_v6(ip: Ipv6Addr) -> Option<AddressClass> {
+const fn classify_v6(ip: Ipv6Addr) -> crate::translation_core::Maybe<AddressClass> {
     let first = ip.segments()[0];
     if ip.is_loopback() {
         Some(AddressClass::Loopback)
@@ -160,7 +160,7 @@ impl NetworkPolicy {
     /// (`1`/`true` also mean `all`). Unknown words are ignored rather than
     /// widening the policy; an unset or empty value refuses every class.
     #[must_use]
-    pub fn parse(value: Option<&str>) -> Self {
+    pub fn parse(value: crate::translation_core::Maybe<&crate::translation_core::Str>) -> Self {
         let mut policy = Self::default();
         for word in value.unwrap_or_default().split(',') {
             match word.trim().to_ascii_lowercase().as_str() {
@@ -212,7 +212,7 @@ impl NetworkPolicy {
     ///
     /// # Errors
     /// Returns the refused class when the policy does not allow it.
-    pub fn check_ip(self, ip: IpAddr) -> Result<(), BlockedAddress> {
+    pub fn check_ip(self, ip: IpAddr) -> crate::translation_core::Outcome<(), BlockedAddress> {
         match classify(ip) {
             Some(class) if !self.allows(class) => Err(BlockedAddress {
                 host: ip.to_string(),
@@ -230,7 +230,7 @@ impl NetworkPolicy {
     ///
     /// # Errors
     /// Returns the refused host and class, or an unparsable URL.
-    pub fn check_base_url(self, base_url: &str) -> Result<(), BlockedAddress> {
+    pub fn check_base_url(self, base_url: &crate::translation_core::Str) -> crate::translation_core::Outcome<(), BlockedAddress> {
         let url = url::Url::parse(base_url).map_err(|_| BlockedAddress {
             host: base_url.to_string(),
             class: AddressClass::NonUnicast,
@@ -266,9 +266,9 @@ impl NetworkPolicy {
     /// When every address was refused, names the first refused one.
     pub fn filter(
         self,
-        host: &str,
+        host: &crate::translation_core::Str,
         addrs: Vec<SocketAddr>,
-    ) -> Result<Vec<SocketAddr>, BlockedAddress> {
+    ) -> crate::translation_core::Outcome<Vec<SocketAddr>, BlockedAddress> {
         let mut first_refused = None;
         let allowed: Vec<SocketAddr> = addrs
             .into_iter()
@@ -295,14 +295,14 @@ impl NetworkPolicy {
 ///
 /// # Errors
 /// A resolution failure, or every address being refused.
-pub async fn resolve_allowed(host: &str, port: u16) -> std::io::Result<Vec<SocketAddr>> {
+pub async fn resolve_allowed(host: &crate::translation_core::Str, port: u16) -> std::io::Result<Vec<SocketAddr>> {
     let policy = NetworkPolicy::from_env();
     let addrs: Vec<SocketAddr> = tokio::net::lookup_host((host, port)).await?.collect();
     policy.filter(host, addrs).map_err(std::io::Error::other)
 }
 
 /// Host names that only ever name a cloud metadata service.
-const METADATA_NAMES: &[&str] = &["metadata.google.internal", "metadata", "instance-data"];
+const METADATA_NAMES: &[&crate::translation_core::Str] = &["metadata.google.internal", "metadata", "instance-data"];
 
 /// A base URL or address refused by the [`NetworkPolicy`].
 #[derive(Debug, Clone, PartialEq, Eq)]

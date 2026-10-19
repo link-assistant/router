@@ -1,0 +1,20 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37529112847/attempt-1/logs/0_Matrix summary.txt.gz",
+    "sha256": "2c5088ee976bd23c840ce5e712f991897662121b1cb243312d38394a6b7b39af",
+    "bytes": 1412,
+    "uncompressed_bytes": 4122,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "dcd2ad6c4fbff8d3e54233b604bdc7b5f91a1e50ef9790c09bef85f722283b46"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37529112847/attempt-1/logs/Matrix summary/system.txt.gz",
+    "sha256": "20ce84f75bca309b132df201040815217069f127bcc8fd7e5c3e9b3394d03865",
+    "bytes": 396,
+    "uncompressed_bytes": 750,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "b30f6b59a9e00f1d1cd24e1fcff00283a675bdc6fa4a8e7c9d798bb6087f2cc9"
+  }
+]

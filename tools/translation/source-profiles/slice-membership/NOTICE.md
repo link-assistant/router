@@ -1,0 +1,1 @@
+These unchanged Rust 1.89.0 source archives are from rust-lang/rust under MIT OR Apache-2.0. Exact official paths, source and archive SHA-256 values and relevant ranges are in manifest.json. The compiler verifies the portable source inputs before consuming this narrow borrowed-string membership profile; no source is installed or executed as Rust.

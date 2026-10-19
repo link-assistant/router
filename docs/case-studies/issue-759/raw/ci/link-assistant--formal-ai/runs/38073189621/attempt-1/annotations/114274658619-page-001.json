@@ -1,0 +1,74 @@
+[
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/e9f057c8300cab787f746afbcc0133cef80e2948/.github",
+    "start_line": 51,
+    "start_column": null,
+    "end_line": 51,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "sccache stats - corpus-build",
+    "message": "41% - 417 hits, 595 misses, 1 error",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/e9f057c8300cab787f746afbcc0133cef80e2948/.github",
+    "start_line": 1011,
+    "start_column": null,
+    "end_line": 1011,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "Process completed with exit code 101.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/e9f057c8300cab787f746afbcc0133cef80e2948/.github",
+    "start_line": 1010,
+    "start_column": null,
+    "end_line": 1010,
+    "end_column": null,
+    "annotation_level": "warning",
+    "title": "Corpus gate binary build: Compiler cache rejected 100% of its writes",
+    "message": "sccache offered 595 compiled artifacts to the GitHub Actions Cache and 595 were refused (0 stored). Every refused write is a crate the next run compiles again, so this is build time the cache is not saving. Set the FORMAL_AI_CI_VERBOSE repository variable to true and rerun to capture the backend's own response (SCCACHE_LOG=debug), which is what separates rate limiting from concurrent writers of the same key -- see scripts/check-sccache-write-health.sh.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/e9f057c8300cab787f746afbcc0133cef80e2948/.github",
+    "start_line": 45,
+    "start_column": null,
+    "end_line": 45,
+    "end_column": null,
+    "annotation_level": "warning",
+    "title": "",
+    "message": "Failed to restore: Failed to GetCacheEntryDownloadURL: Rate limited: Failed request: (429) Too Many Requests: rate limit exceeded",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/e9f057c8300cab787f746afbcc0133cef80e2948/.github",
+    "start_line": 44,
+    "start_column": null,
+    "end_line": 44,
+    "end_column": null,
+    "annotation_level": "warning",
+    "title": "",
+    "message": "You've hit a rate limit, your rate limit will reset in 16 seconds",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/e9f057c8300cab787f746afbcc0133cef80e2948/.github",
+    "start_line": 1,
+    "start_column": null,
+    "end_line": 1,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "",
+    "message": "\"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748\"",
+    "raw_details": ""
+  }
+]

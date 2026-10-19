@@ -1,0 +1,28 @@
+{
+  "schema": "completed-json-eligibility-before-v1",
+  "commit": "6d9146996d6ca3d2fb1501b8364457905519bc55",
+  "sources": [
+    {
+      "path": "tools/translation/private-data-freeze.mjs",
+      "storedPath": "raw/private-data-freeze.mjs",
+      "bytes": 5344,
+      "sha256": "86f7a14ef3707d2725c5e0f1d08bd66b7020712e8164fd070eefa5f54a0809ab",
+      "gitBlob": "051231501fb0ea511f2dfa4c6c1cf14f8c8da891"
+    },
+    {
+      "path": "tools/translation/private-frozen-json.mjs",
+      "storedPath": "raw/private-frozen-json.mjs",
+      "bytes": 9490,
+      "sha256": "6eb9b81763d5c06c8db3fa6e939b2cc8f0a47c28a9c9cf6d688ad18f4867c761",
+      "gitBlob": "9966d9fb3a1c474854487549da7bc361b9ce0c21"
+    },
+    {
+      "path": "LICENSE",
+      "storedPath": "raw/LICENSE",
+      "bytes": 1211,
+      "sha256": "6b0382b16279f26ff69014300541967a356a666eb0b91b422f6862f6b7dad17e",
+      "gitBlob": "fdddb29aa445bf3d6a5d843d6dd77e10a9f99657"
+    }
+  ],
+  "scope": "Complete before freezer/JSON and original project license. Whole old modules are mechanically relocated with full source/import/original-URL/reverse/readback witnesses; old JSON uses the matching old freezer. No source behavior is minified or projected."
+}

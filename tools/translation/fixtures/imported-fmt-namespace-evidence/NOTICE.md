@@ -1,0 +1,1 @@
+Complete whole-file Node/Bun source, proof, refusal and output evidence for original imported fmt type joins. Every archive is checked against its decoded and compressed length/hash in receipt.json. These fixture bytes are excluded from compiler/export inputs. Original ClientKind derive outputs and integration-table body remain unproved. Earlier sealed packets remain unchanged.

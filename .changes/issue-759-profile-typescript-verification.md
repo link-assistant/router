@@ -1,0 +1,1 @@
+Require independent strict TypeScript verification for every explicitly declared neutral, Unix-family and Windows-family bulk profile. The checker selects the exact digest-named matrix members and reports each compiler result without emitting files. These profiles do not establish complete platform coverage, a common executable or native parity.

@@ -1,0 +1,7 @@
+### Added
+
+- Draft complete pinned Cargo 0.90.0/Rust 1.89.0 unit-source evidence and a private composition with the genuine modeled invocation issuer. Three complete original bodies retain conditional mode transfer and session projection; all 39 package originals and development dependencies remain inputs.
+- Manifest deserialization, schema Option/default ownership and normalized constructor forwarding remain explicit open obligations. The strong unit consumer refuses: no child cfg profile, dev-dependency exclusion, namespace, runtime, actual-environment or native-parity authority is issued. A root Test request can describe a conditional dependency Build transfer without inheriting its root test flag.
+- All eight complete JavaScript/strict-TypeScript controls are source-only and UNRUN; original 60-second case and 20-second TypeScript child deadlines remain. No consumer integration, Rust execution or admission gain is claimed.
+- Reauthenticate complete well-formed decoded source strings against raw length/SHA pins, including all 39 predecessor package texts; check live parsing/reflection guards immediately after callback-capable work. Independent source/package decode forgeries and cold/late parser controls remain within the same eight unrun cases and deadlines.
+- Keep the original raw parser profile in a descriptor-only snapshot for final freshness, while the genuine existing issuer validates normalized profile meaning. Raw, canonical, reordered-key and stale/array-order controls preserve every original case deadline.

@@ -1,0 +1,50 @@
+[
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/1ce772e13cfbfc955df48f02e21e59f41a89e380/.github",
+    "start_line": 50,
+    "start_column": null,
+    "end_line": 50,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "sccache stats - agent-cli-failure-report",
+    "message": "40% - 406 hits, 605 misses, 1 error",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/1ce772e13cfbfc955df48f02e21e59f41a89e380/.github",
+    "start_line": 23,
+    "start_column": null,
+    "end_line": 23,
+    "end_column": null,
+    "annotation_level": "warning",
+    "title": "",
+    "message": "No files were found with the provided path: /tmp/formal-ai-issue-864-evidence. No artifacts will be uploaded.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/1ce772e13cfbfc955df48f02e21e59f41a89e380/.github",
+    "start_line": 989,
+    "start_column": null,
+    "end_line": 989,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "Process completed with exit code 101.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/1ce772e13cfbfc955df48f02e21e59f41a89e380/.github",
+    "start_line": 1,
+    "start_column": null,
+    "end_line": 1,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "",
+    "message": "\"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748\"",
+    "raw_details": ""
+  }
+]

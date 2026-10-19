@@ -22,7 +22,7 @@ use crate::login_url::{extract_login_url, extract_token};
 /// Spawn the login CLI and block until its authorization URL has settled.
 pub fn spawn_and_wait_for_url(
     config: &LoginConfig,
-) -> Result<(Arc<PtySession>, String), LoginError> {
+) -> crate::translation_core::Outcome<(Arc<PtySession>, String), LoginError> {
     let mut command = CommandBuilder::new(&config.command);
     for arg in &config.args {
         command.arg(arg);
@@ -82,7 +82,7 @@ enum TuiAction {
     SelectLoginMethod,
 }
 
-fn next_tui_action(text: &str, progress: &TuiProgress) -> Option<TuiAction> {
+fn next_tui_action(text: &crate::translation_core::Str, progress: &TuiProgress) -> crate::translation_core::Maybe<TuiAction> {
     // Ink-based TUIs position words with cursor escapes instead of printing
     // literal spaces. `strip_ansi` intentionally removes those escapes, so a
     // rendered "Select login method:" may arrive as "Selectloginmethod:".
@@ -105,17 +105,17 @@ fn next_tui_action(text: &str, progress: &TuiProgress) -> Option<TuiAction> {
 
 /// Match terminal text independently of whether a TUI printed spaces or used
 /// cursor-positioning escapes that disappeared during ANSI stripping.
-fn compact_terminal_text(text: &str) -> String {
+fn compact_terminal_text(text: &crate::translation_core::Str) -> String {
     text.chars().filter(|ch| !ch.is_whitespace()).collect()
 }
 
-fn contains_marker(compact: &str, markers: &[&str]) -> bool {
+fn contains_marker(compact: &crate::translation_core::Str, markers: &[&crate::translation_core::Str]) -> bool {
     markers.iter().any(|marker| compact.contains(marker))
 }
 
 /// Drive bare `claude` to the full-scope OAuth URL exposed by its `/login`
 /// command. The one timeout covers the whole startup sequence, not each screen.
-fn drive_tui_to_login_url(session: &PtySession, config: &LoginConfig) -> Result<String, String> {
+fn drive_tui_to_login_url(session: &PtySession, config: &LoginConfig) -> crate::translation_core::Outcome<String, String> {
     let deadline = Instant::now() + config.url_timeout;
     let mut progress = TuiProgress::default();
     loop {
@@ -176,7 +176,7 @@ fn drive_tui_to_login_url(session: &PtySession, config: &LoginConfig) -> Result<
 
 /// Preserve the existing custom-argument behaviour: wait for whichever login
 /// URL the configured command prints without sending TUI input first.
-fn wait_for_login_url(session: &PtySession, config: &LoginConfig) -> Result<String, String> {
+fn wait_for_login_url(session: &PtySession, config: &LoginConfig) -> crate::translation_core::Outcome<String, String> {
     let text = session
         .wait_for(
             |text| extract_login_url(text).is_some(),
@@ -202,7 +202,7 @@ fn wait_error_detail(session: &PtySession, err: &WaitError) -> String {
 }
 
 /// Type the code into the live session and decide what happened.
-pub fn submit_and_finalize(config: &LoginConfig, pty: &PtySession, code: &str) -> Outcome {
+pub fn submit_and_finalize(config: &LoginConfig, pty: &PtySession, code: &crate::translation_core::Str) -> Outcome {
     // The default flow is an Ink TUI. A real terminal wraps pasted text so the
     // controlled input receives it as one transaction instead of racing its
     // repaint one keypress at a time. Preserve raw input for the explicit
@@ -276,7 +276,7 @@ pub fn submit_and_finalize(config: &LoginConfig, pty: &PtySession, code: &str) -
 }
 
 /// Turn the CLI's known compacted verdicts back into readable API text.
-fn rejection_verdict(compact: &str) -> String {
+fn rejection_verdict(compact: &crate::translation_core::Str) -> String {
     const STATUS_PREFIX: &str = "OAutherror:Requestfailedwithstatuscode";
 
     if compact.contains("OAutherror:Invalidcode") {

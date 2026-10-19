@@ -1,0 +1,100 @@
+TAP version 13
+# Subtest: bounded declarative rules retain source order groups repetitions and definition-site owner
+ok 1 - bounded declarative rules retain source order groups repetitions and definition-site owner
+  ---
+  duration_ms: 2.451125
+  ...
+# Subtest: forwarded type fragments remain opaque to literal matching
+ok 2 - forwarded type fragments remain opaque to literal matching
+  ---
+  duration_ms: 0.819708
+  ...
+# Subtest: ambiguity capture arity unsupported fragments and recursive resource excess remain explicit
+ok 3 - ambiguity capture arity unsupported fragments and recursive resource excess remain explicit
+  ---
+  duration_ms: 2.309917
+  ...
+# Subtest: nested source repetition shapes retain empty rows and reject unequal transcription axes
+ok 4 - nested source repetition shapes retain empty rows and reject unequal transcription axes
+  ---
+  duration_ms: 0.501
+  ...
+# Subtest: source metadata keeps nested conditional grammar opaque when forwarded
+ok 5 - source metadata keeps nested conditional grammar opaque when forwarded
+  ---
+  duration_ms: 0.509792
+  ...
+# Subtest: actual pinned cfg_if transcribes every original std branch without selecting a platform or closing its owner
+ok 6 - actual pinned cfg_if transcribes every original std branch without selecting a platform or closing its owner
+  ---
+  duration_ms: 22.871125
+  ...
+# Subtest: checked block expressions retain opacity and refuse unsupported statements or expression grammar
+ok 7 - checked block expressions retain opacity and refuse unsupported statements or expression grammar
+  ---
+  duration_ms: 0.461583
+  ...
+# Subtest: original std transcribers forward actual nested key expressions across every pinned leaf without a closure claim
+ok 8 - original std transcribers forward actual nested key expressions across every pinned leaf without a closure claim
+  ---
+  duration_ms: 21.021166
+  ...
+# Subtest: all original pinned task-local invocations use actual locked transcribers without runtime or namespace admission
+ok 9 - all original pinned task-local invocations use actual locked transcribers without runtime or namespace admission
+  ---
+  duration_ms: 22.97275
+  ...
+# Subtest: actual locked archives and all audited members are verified before dependency branding
+ok 10 - actual locked archives and all audited members are verified before dependency branding
+  ---
+  duration_ms: 17.211791
+  ...
+# Subtest: actual qualified and imported derive owners certify independent namespace dimensions
+ok 11 - actual qualified and imported derive owners certify independent namespace dimensions
+  ---
+  duration_ms: 5.319792
+  ...
+# Subtest: literal default and skip metadata remain original attributes and generated trait obligations
+ok 12 - literal default and skip metadata remain original attributes and generated trait obligations
+  ---
+  duration_ms: 0.802875
+  ...
+# Subtest: binder narrows only sealed declaration dimensions and keeps exported bang uncertainty
+ok 13 - binder narrows only sealed declaration dimensions and keeps exported bang uncertainty
+  ---
+  duration_ms: 0.865375
+  ...
+# Subtest: unknown helpers generic inputs and macro-bearing fragments retain namespace uncertainty
+ok 14 - unknown helpers generic inputs and macro-bearing fragments retain namespace uncertainty
+  ---
+  duration_ms: 4.393917
+  ...
+# Subtest: actual local packages unknown macro imports and custom core owners cannot forge standard derives
+ok 15 - actual local packages unknown macro imports and custom core owners cannot forge standard derives
+  ---
+  duration_ms: 1.590625
+  ...
+# Subtest: pinned unit enum candidate inventories unchanged generator templates without branch or owner authority
+ok 16 - pinned unit enum candidate inventories unchanged generator templates without branch or owner authority
+  ---
+  duration_ms: 73.717166
+  ...
+# Subtest: frontier excludes payloads, helper behavior and unsupported derive owners while retaining their existing certificates
+ok 17 - frontier excludes payloads, helper behavior and unsupported derive owners while retaining their existing certificates
+  ---
+  duration_ms: 4.706583
+  ...
+# Subtest: source cloning stale bytes unknown archive paths and caller closed-scope assertions cannot mint frontier evidence
+ok 18 - source cloning stale bytes unknown archive paths and caller closed-scope assertions cannot mint frontier evidence
+  ---
+  duration_ms: 1.078833
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 18
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 351.671792

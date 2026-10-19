@@ -1,0 +1,194 @@
+{
+  "$defs": {
+    "ClientStatus": {
+      "additionalProperties": false,
+      "description": "Secret-free state returned by `clients list` and `clients show`.",
+      "properties": {
+        "base_url": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "client": {
+          "type": "string"
+        },
+        "config_path": {
+          "type": "string"
+        },
+        "configured": {
+          "type": "boolean"
+        },
+        "conflicts": {
+          "description": "Routing-critical key names which disagree; values are never retained.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "dialect": {
+          "type": "string"
+        },
+        "effective_source": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ClientStatus_ConfigSource"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Highest-precedence source which currently selects the endpoint."
+        },
+        "installed": {
+          "type": "boolean"
+        },
+        "ownership_state": {
+          "$ref": "#/$defs/ClientStatus_OwnershipState",
+          "description": "Router ownership of the effective routing configuration."
+        },
+        "token_env": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "token_env_set": {
+          "type": "boolean"
+        },
+        "unreadable": {
+          "description": "Why this client's configuration could not be read, if it could not.\n\nA damaged file is a property of one row, not of the listing: propagating\nit ended the table at that client and silently hid every client after\nit, while the error named a *different* client than the one missing\n(issue #304).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "unsupported": {
+          "description": "Why the router cannot manage this client at all, if it cannot.\n\n`configured: false` is indistinguishable from a real answer for a\nclient whose reader is a hardcoded `None` (issue #303).",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "client",
+        "installed",
+        "configured",
+        "config_path",
+        "dialect",
+        "token_env_set",
+        "ownership_state",
+        "conflicts"
+      ],
+      "title": "ClientStatus",
+      "type": "object"
+    },
+    "ClientStatus_ConfigSource": {
+      "description": "Highest-precedence source selecting the endpoint.",
+      "enum": [
+        "ambient-environment",
+        "public-config",
+        "managed-environment",
+        "ownership-metadata"
+      ],
+      "type": "string"
+    },
+    "ClientStatus_OwnershipState": {
+      "description": "Who owns the routing configuration currently effective for a client.",
+      "enum": [
+        "unconfigured",
+        "foreign",
+        "managed-intact",
+        "managed-drifted",
+        "ambiguous"
+      ],
+      "type": "string"
+    }
+  },
+  "$id": "link-assistant-router/clients-list/v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "else": {
+        "properties": {
+          "exit_code": {
+            "minimum": 1,
+            "type": "integer"
+          }
+        }
+      },
+      "if": {
+        "properties": {
+          "success": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "exit_code": {
+            "const": 0
+          }
+        }
+      }
+    }
+  ],
+  "properties": {
+    "data": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/ClientStatus"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "output": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "output"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "diagnostics": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "exit_code": {
+      "maximum": 255,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "operation": {
+      "const": "clients.list"
+    },
+    "schema": {
+      "const": "link-assistant-router/clients-list/v1"
+    },
+    "success": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schema",
+    "operation",
+    "success",
+    "exit_code",
+    "data",
+    "diagnostics"
+  ],
+  "type": "object"
+}

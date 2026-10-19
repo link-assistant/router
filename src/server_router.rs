@@ -606,7 +606,7 @@ async fn authenticate_inference_route(
     authenticate_client_route(State(state), request, next).await
 }
 
-fn is_openai_payment_path(path: &str) -> bool {
+fn is_openai_payment_path(path: &crate::translation_core::Str) -> bool {
     route_for_path(&axum::http::Method::POST, path).is_some_and(|spec| {
         matches!(
             spec.id,

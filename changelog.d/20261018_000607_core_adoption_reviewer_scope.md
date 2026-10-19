@@ -1,0 +1,3 @@
+Fixed the independent core-adoption review controller's captured reviewer-source variable scope. Its before/after joins now compare freshly read reviewer bytes against the snapshot captured by the same invocation, instead of failing with `NameError` before the review starts. All source reads, guards, resource limits and existing workflow test assertions remain unchanged.
+
+The complete Node and Bun core-adoption files each exposed this failure in their checked-in workflow case. Receiving for the corrected controller remains pending; this change grants no translation, installation or Rust execution authority.

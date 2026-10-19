@@ -1,0 +1,7 @@
+# Keep the deliberately collected, scrubbed case-study evidence.
+!**/logs/
+!**/logs/**
+!**/*.log
+.disk-budget.lock
+.disk-budget-state.json
+__pycache__/

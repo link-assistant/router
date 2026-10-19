@@ -1,0 +1,130 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
+import {loadJsonMacroSourceProof} from '../json-macro-inputs.mjs';
+import {createDeriveFootprintContext} from '../derive-footprints.mjs';
+import {proveBuiltinDeriveBangFootprint,isBuiltinDeriveBangFootprint,assertBuiltinDeriveBangFootprint} from '../builtin-derive-bang-footprints.mjs';
+import {createDeriveBangContext} from '../derive-bang-context.mjs';
+import {builtinDeriveDataInputs} from '../builtin-derive-data-inputs.mjs';
+import {builtinDeriveAstSourceProfile,originalAstFunction} from '../builtin-derive-ast-meta.mjs';
+import {liftBuiltinDebugAstRoute} from '../builtin-debug-ast-route.mjs';
+import {translateProject} from '../project.mjs';
+import {PRODUCTION_PROFILE,compilationProfile} from '../cfg-profile.mjs';
+import {verifyTypedTargets} from './typed-targets.mjs';
+const root=new URL('../../../',import.meta.url),read=path=>readFileSync(new URL(path,root),'utf8'),dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')}),hash=s=>createHash('sha256').update(s).digest('hex');
+function setup(source,profile=PRODUCTION_PROFILE){const modules=[{file:'src/lib.rs',path:[],source}],context=createDeriveFootprintContext({modules,dependencies,compilationProfile:profile}),certificate=context.certificates[0],attribute=certificate?.attributes.find(a=>a.derives?.some(p=>p.join('::')==='Debug'));return{context,certificate,invocation:attribute&&{path:['Debug'],attributeSpan:attribute.span},modules};}
+const record=count=>'#[derive(Debug,serde::Serialize)]pub struct Record{'+Array.from({length:count},(_,i)=>'pub value'+i+':String').join(',')+'}';
+const prove=source=>proveBuiltinDeriveBangFootprint(setup(source));
+const collect=tree=>{const result=[];function visit(value){if(value&&typeof value==='object'){if(value.kind==='Expr')result.push(value);for(const[key,child]of Object.entries(value))if(key!=='constructor')visit(child);}}visit(tree);return result;};
+for(const count of [0,1,5,6,9,128])test('original Debug '+count+' fields: None Shallow and Full recursively close source constructors',()=>{
+  const source=record(count),proof=prove(source),route=proof.route;assert.equal(proof.schema,'builtin-debug-data-bang-output-v1');assert.equal(route.typedSource.fields.length,count);assert.equal(route.positiveOutputGrammarComplete,true);assert.equal(route.branches.length,3);assert.deepEqual(route.sourceControls.fmtDebug,['None','Shallow','Full']);assert.deepEqual(proof.slotProofs.constness.outcomes,['Const::Yes','Const::No']);
+  const none=route.branches[0],shallow=route.branches[1],full=route.branches[2];assert.equal(none.body.constructor.variant.name,'Call');assert.equal(none.body.slots.args[0].constructor.variant.name,'Tup');assert.deepEqual(none.body.slots.args[0].slots.exprs,[]);assert.equal(shallow.body.slots.expr.slots.path.segments.at(-1),'write_str');assert.equal(full.statements.length,count>5?2:0);assert.equal(full.recursiveNamespaceClosure.localInitializers,count>5?2:0);assert.ok(route.branches.every(b=>b.recursiveNamespaceClosure.sourceConstructorsOnly));
+  for(const expr of collect(route.branches)){assert.equal(expr.tokens,null);assert.deepEqual(expr.attrs,[]);assert.ok(['Path','Call','AddrOf','Field','Lit','Array','Tup','Match'].includes(expr.constructor.variant.name));}
+  assert.equal(proof.generatedImplBehavior,false);for(const key of ['copyAuthority','noDropAuthority','constAuthority'])assert.equal(proof[key],false);assert.equal(route.namespaceAuthority,false);assert.ok(route.compilerMeta.some(row=>row.sourceMetaRefusal),'Uncompiled source helpers stay explicit');assert.throws(()=>{full.statements.push({kind:'StmtKind::Item'});},TypeError);
+});
+test('Debug projection budget refuses 129 original fields',()=>assert.throws(()=>prove(record(129)),/budget/));
+test('wide record initializers retain field order shared depth exact spans and typed array views',()=>{
+ const source=record(9),route=prove(source).route,full=route.branches[2],[names,values]=full.statements.map(s=>s.local);assert.deepEqual([names.pattern.ident,values.pattern.ident],['names','values']);assert.equal(names.kind,'LocalKind::Init');assert.equal(values.kind,'LocalKind::Init');assert.equal(names.mutable,false);assert.equal(values.mutable,false);
+ assert.equal(names.ty.kind,'TyKind::Ref');assert.equal(names.ty.lifetime.symbol,'StaticLifetime');assert.equal(names.ty.ty.kind,'TyKind::Infer');assert.equal(values.ty.ty.kind,'TyKind::Slice');assert.equal(values.ty.ty.ty.ty.kind,'TyKind::TraitObject');assert.equal(values.ty.ty.ty.ty.bounds[0].constness,'Never');
+ const nameElements=names.initializer.slots.e.slots.exprs,valueElements=values.initializer.slots.e.slots.exprs;assert.deepEqual(nameElements.map(e=>e.slots.s.value),Array.from({length:9},(_,i)=>'value'+i));assert.equal(valueElements.length,9);
+ for(const [i,expr]of valueElements.entries()){const projection=i<8?expr.slots.e:expr.slots.e.slots.e;assert.equal(projection.constructor.variant.name,'Field');assert.equal(projection.slots.struct_field_ident,'value'+i);assert.equal(source.slice(projection.slots.sourceSpan.start,projection.slots.sourceSpan.end),'pub value'+i+':String');assert.deepEqual(projection.slots.sourceSpan,route.typedSource.fields[i].fieldDefinitionSpan);}
+ assert.equal(valueElements[8].constructor.variant.name,'AddrOf');assert.equal(valueElements[8].slots.e.constructor.variant.name,'AddrOf');assert.equal(full.body.slots.expr.slots.path.segments.at(-1),'debug_struct_fields_finish');assert.deepEqual(full.body.slots.args.slice(2).map(e=>e.slots.path.segments[0]),['names','values']);
+ assert.ok(route.parserFieldSpans.recipes.every(r=>r.semanticSyntaxRoundTrip));assert.ok(route.typedSource.fields.every(f=>f.semanticSyntaxRoundTrip));
+});
+test('unit and nonempty fieldless enums preserve actual generic dispatch including the single variant outcome',()=>{
+ const unit=prove('#[derive(Debug,serde::Serialize)]pub struct Record;').route;assert.equal(unit.branches[2].body.slots.expr.slots.path.segments.at(-1),'write_str');
+ const single=prove('#[derive(Debug,serde::Serialize)]pub enum Record{Only}').route;assert.equal(single.branches.length,3);assert.equal(single.branches[2].body.slots.args[1].slots.s.value,'Only');
+ const many=prove('#[derive(Debug,Default,serde::Serialize)]pub enum Record{One,Two,#[default]Three}').route;assert.equal(many.branches.length,2);assert.match(many.branches[1].condition,/bypasses shallow/);const match=many.branches[1].body.slots.args[1];assert.equal(match.constructor.variant.name,'Match');assert.deepEqual(match.slots.arms.map(a=>a.pattern.path),[['Record','One'],['Record','Two'],['Record','Three']]);assert.deepEqual(match.slots.arms.map(a=>a.body.slots.s.value),['One','Two','Three']);assert.ok(match.slots.arms.every(a=>a.guard===null&&a.attrs.length===0));assert.equal(many.recipes.some(r=>r.source.endsWith('debug.rs')&&r.syntax.some(n=>n.text==='show_fieldless_enum')),true);
+});
+test('Debug real helper joins preserve docs exact visibility spans and unchanged source field types',()=>{
+ const source='#[derive(Debug,serde::Serialize)]pub struct Record{/// λ😀 docs\n#[serde(default,skip_serializing_if="Vec::is_empty")]pub(crate) value:Vec<String>}';const proof=prove(source),field=proof.route.typedSource.fields[0];assert.equal(proof.originalHelperOwners.length,1);assert.equal(proof.originalHelperOwners[0].exactNestedHelperInert,true);assert.equal(source.slice(field.fieldDefinitionSpan.start,field.fieldDefinitionSpan.end),'pub(crate) value:Vec<String>');assert.equal(source.slice(field.nameSpan.start,field.nameSpan.end),'value');assert.equal(source.slice(field.typeSpan.start,field.typeSpan.end),'Vec<String>');assert.equal(field.sourceSha256,hash('Vec<String>'));
+  const sourceCopy='#[derive(Clone,Debug,Copy,PartialEq,Eq,Hash,serde::Serialize)]pub enum Record{A,B}',output=createDeriveBangContext({deriveContext:setup(sourceCopy).context}),certificate=output.certificates[0];assert.equal(certificate.dimensions.bangMacroComplete,true);assert.deepEqual(certificate.residualOwners,[]);for(const name of ['Clone','Debug','Copy','PartialEq','Eq','Hash'])assert.ok(certificate.selectedOwners.some(r=>r.target.join('::')==='core::'+name));assert.ok(certificate.selectedOwners.some(r=>r.target.join('::')==='serde::Serialize'));assert.equal(certificate.generatedImplBehavior,false);
+});
+test('private caller source profiles attributes and detached recipe/proof metadata cannot issue Debug closure',()=>{
+ const source=record(6),args=setup(source),proof=proveBuiltinDeriveBangFootprint(args);for(const fake of [structuredClone(proof),Object.freeze(structuredClone(proof))]){assert.equal(isBuiltinDeriveBangFootprint(fake),false);assert.throws(()=>assertBuiltinDeriveBangFootprint(fake,args.context,args.certificate,args.invocation),/original invocation/);}
+ for(const change of [{certificate:structuredClone(args.certificate)},{context:structuredClone(args.context)},{context:setup(source+' ').context},{context:setup(source,compilationProfile({flags:{test:true}})).context},{invocation:{path:['Debug'],attributeSpan:{start:0,end:1}}}])assert.throws(()=>proveBuiltinDeriveBangFootprint({...args,...change}));
+ let calls=0;assert.throws(()=>proveBuiltinDeriveBangFootprint({...args,certificate:{get attributes(){calls++;return args.certificate.attributes;}}}));assert.equal(calls,0);
+ const profile=builtinDeriveAstSourceProfile(dependencies),entry=originalAstFunction(profile,'compiler/rustc_builtin_macros/src/deriving/debug.rs','expand_deriving_debug'),input=builtinDeriveDataInputs({source,span:args.certificate.span}),original={dependencies,module:{source}};
+ for(const syntax of [[],entry.syntax.slice(1),[...entry.syntax,{kind:'token',text:'macro_rules!',type:'ident'}]])assert.throws(()=>liftBuiltinDebugAstRoute({profile,original,certificate:args.certificate,input,entry:{...structuredClone(entry),syntax}}),/Unsealed|private profile/);
+ assert.throws(()=>liftBuiltinDebugAstRoute({profile:structuredClone(profile),original,certificate:args.certificate,input,entry}),/Unsealed|sealed original source profile/);assert.throws(()=>liftBuiltinDebugAstRoute({profile,original,certificate:args.certificate,input:{...input,fields:input.fields.slice(1)},entry}),/syntax/);assert.throws(()=>liftBuiltinDebugAstRoute({profile,original,certificate:args.certificate,input:{...input,fields:input.fields.map(f=>({...f,fieldDefinitionSpan:{start:0,end:1}}))},entry}),/syntax/);
+ assert.equal(proveBuiltinDeriveBangFootprint({...args,input:{...input,fields:[]}}).route.typedSource.fields.length,6,'Public candidate replacement cannot override original issuer reads');
+});
+test('unsupported source layouts helpers shadows inactive ancestors and macro insertions stay refused',()=>{
+ const sources=['#[derive(Debug)]pub struct Record<T>{value:T}','#[derive(Debug)]pub union Record{value:u8}','#[derive(Debug)]pub enum Record{A(u8)}','#[derive(Debug)]pub enum Record{A=1,B}','#[derive(Debug)]pub enum Record{}','#[repr(packed)]#[derive(Debug)]pub struct Record{value:u8}','#[derive(Debug)]pub struct Record{#[cfg(flag)]value:u8}','#[derive(Debug)]pub struct Record{value:generated!()}','#[derive(Debug)]pub struct Record{value:u8=1}','#[derive(Debug)]pub struct Record{#[serde(default)]value:u8}','use custom::Debug;'+record(6),'use custom::doc;#[derive(Debug)]pub struct Record{/// doc\nv:String}','use custom::serde;#[derive(Debug,serde::Serialize)]pub struct Record{#[serde(default)]value:String}','use custom::default;#[derive(Debug,Default)]pub enum Record{A,#[default]B}','#[cfg(test)]'+record(6),'#[cfg(feature="unknown")]'+record(6),'#[unknown]pub mod parent{'+record(6)+'}',record(6)+'unknown!();'];
+ for(const source of sources){const context=setup(source).context,output=createDeriveBangContext({deriveContext:context}),payload=source==='#[derive(Debug)]pub enum Record{A(u8)}';assert.equal(output.certificates.some(c=>c.selectedOwners.some(o=>o.target.join('::')==='core::Debug')),payload,source);if(payload){const proof=prove(source);assert.equal(proof.route.schema,'original-debug-payload-enum-ast-bridge-v1');assert.equal(proof.generatedImplBehavior,false);assert.equal(proof.copyAuthority,false);}}
+});
+test('fresh processes reject serialized Debug authority and rebuild only actual original source joins',()=>{
+ const source=record(6),proof=prove(source),script=`import{readFileSync}from'node:fs';import{loadDeriveDependencyProof}from${JSON.stringify(new URL('../derive-dependencies.mjs',import.meta.url).href)};import{createDeriveFootprintContext}from${JSON.stringify(new URL('../derive-footprints.mjs',import.meta.url).href)};import{proveBuiltinDeriveBangFootprint,isBuiltinDeriveBangFootprint}from${JSON.stringify(new URL('../builtin-derive-bang-footprints.mjs',import.meta.url).href)};import{PRODUCTION_PROFILE}from${JSON.stringify(new URL('../cfg-profile.mjs',import.meta.url).href)};const{source,fake}=JSON.parse(readFileSync(0,'utf8'));if(isBuiltinDeriveBangFootprint(fake)||isBuiltinDeriveBangFootprint(Object.freeze(fake)))throw Error('serialized authority');const dependencies=loadDeriveDependencyProof({manifest:readFileSync(${JSON.stringify(new URL('Cargo.toml',root).pathname)},'utf8'),lock:readFileSync(${JSON.stringify(new URL('Cargo.lock',root).pathname)},'utf8')}),context=createDeriveFootprintContext({modules:[{file:'src/lib.rs',path:[],source}],dependencies,compilationProfile:PRODUCTION_PROFILE}),certificate=context.certificates[0],attribute=certificate.attributes.find(a=>a.derives?.some(p=>p[0]==='Debug')),actual=proveBuiltinDeriveBangFootprint({context,certificate,invocation:{path:['Debug'],attributeSpan:attribute.span}});if(!isBuiltinDeriveBangFootprint(actual)||actual.itemSha256!==fake.itemSha256)throw Error('source reconstruction');console.log('genuine');`;
+ assert.equal(execFileSync(process.execPath,['--input-type=module','-e',script],{encoding:'utf8',input:JSON.stringify({source,fake:proof}),timeout:15000}).trim(),'genuine');
+});
+test('genuine Debug namespace outputs permit independent ordinary matches in JS and strict TS',{timeout:60000},async()=>{
+ for(const prefix of [record(0),record(6),record(9),'#[derive(Debug,serde::Serialize)]pub enum Record{#[serde(rename="λ😀#[macro_export]")]A,B}','#[derive(Debug,serde::Serialize)]pub struct Record{/// λ😀\n#[serde(rename="literal")]value:String}']){
+  const source=prefix+'pub fn accepted(v:Option<u8>)->bool{matches!(v,Some(n) if n>2)}',result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});assert.ok(result.meta.executable.some(r=>r.name==='accepted'));assert.equal(result.meta.checkedMethods.some(r=>r.name.endsWith('.fmt')),false);
+  await verifyTypedTargets(result,api=>{assert.equal(api.accepted(Object.freeze({$:'None'})),false);for(const[n,want]of[[0n,false],[2n,false],[3n,true],[255n,true]])assert.equal(api.accepted(Object.freeze({$:'Some',field0:n})),want);assert.throws(()=>api.accepted({$:'Some',field0:3n}),TypeError);assert.throws(()=>api.accepted(Object.freeze({$:'Some',field0:256n})),TypeError);},{childTimeoutMs:20000});
+ }
+ const source=record(6)+'pub const fn f(v:u8)->bool{matches!(v,1)}',result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});assert.ok(result.meta.executable.some(r=>r.name==='f'));assert.equal(result.meta.refused.some(r=>r.name==='f'),false);await verifyTypedTargets(result,api=>{assert.equal(api.f(0n),false);assert.equal(api.f(1n),true);assert.equal(api.f(255n),false);assert.throws(()=>api.f(256n),RangeError);},{childTimeoutMs:20000});
+});
+test('unchanged complete model source proves all six Debug owners but preserves independent original methods and refusals',{timeout:60000},()=>{
+ const source=read('src/model_contract.rs');assert.equal(hash(source),'98bcf7cc0d91d5b0a4f2b30f6f79aebf6d8e761e9cb54372cd135379e5c3e11b');const args=setup(source),output=createDeriveBangContext({deriveContext:args.context});assert.equal(output.certificates.reduce((n,r)=>n+r.actualOwners.length,0),46);assert.equal(output.certificates.reduce((n,r)=>n+r.selectedOwners.length,0),46);assert.equal(output.certificates.reduce((n,r)=>n+r.residualOwners.length,0),0);assert.ok(output.certificates.every(r=>r.selectedOwners.some(o=>o.target.join('::')==='core::Debug')));assert.ok(output.certificates.every(r=>r.dimensions.bangMacroComplete));
+ const policy=args.context.certificates.find(c=>c.name==='ModelAccessPolicy'),truth=args.context.certificates.find(c=>c.name==='ModelTruthDescriptor');for(const certificate of [policy,truth]){const attribute=certificate.attributes.find(a=>a.derives?.some(p=>p[0]==='Debug')),proof=proveBuiltinDeriveBangFootprint({...args,certificate,invocation:{path:['Debug'],attributeSpan:attribute.span}});assert.equal(proof.originalHelperOwners.length,certificate===policy?3:0);if(certificate===truth){assert.equal(proof.route.typedSource.fields.length,9);assert.equal(proof.route.branches[2].statements.length,2);}}
+ const jsonMacroDependencies=loadJsonMacroSourceProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')}),result=translateProject({entry:'src/model_contract.rs',paths:['src/model_contract.rs'],readSource:()=>source,deriveDependencies:dependencies,jsonMacroDependencies,compilationProfile:PRODUCTION_PROFILE});assert.equal(result.meta.executable.length,2);assert.equal(result.meta.checkedMethods.length,5);assert.equal(result.meta.refused.length,17);const generatedCloneRefusals=result.meta.refused.filter(row=>row.term==='generated-method'&&row.name.endsWith('.clone'));assert.deepEqual(generatedCloneRefusals.map(row=>row.name),['ModelRouteScope.clone','ModelTruthDescriptor.clone','ModelAccessPolicy.clone','ModelAccessError.clone','ServedModelError.clone']);assert.deepEqual(generatedCloneRefusals.map(({file,name,term,kind,span,message})=>({file,name,term,kind,span,message})),[
+  {
+    "file": "src/model_contract.rs",
+    "name": "ModelRouteScope.clone",
+    "term": "generated-method",
+    "kind": "unsupported",
+    "span": {
+      "start": 3161,
+      "end": 3418
+    },
+    "message": "Original Option Clone fields: requires actual primitive Clone/Copy payload: Option<String>"
+  },
+  {
+    "file": "src/model_contract.rs",
+    "name": "ModelTruthDescriptor.clone",
+    "term": "generated-method",
+    "kind": "unsupported",
+    "span": {
+      "start": 3636,
+      "end": 4148
+    },
+    "message": "Original Option Clone fields: requires actual primitive Clone/Copy payload: Option<String>"
+  },
+  {
+    "file": "src/model_contract.rs",
+    "name": "ModelAccessPolicy.clone",
+    "term": "generated-method",
+    "kind": "unsupported",
+    "span": {
+      "start": 4598,
+      "end": 5231
+    },
+    "message": "Original Option Clone fields: requires actual primitive Clone/Copy payload: Vec<String>"
+  },
+  {
+    "file": "src/model_contract.rs",
+    "name": "ModelAccessError.clone",
+    "term": "generated-method",
+    "kind": "unsupported",
+    "span": {
+      "start": 7059,
+      "end": 7267
+    },
+    "message": "Original Option Clone fields: requires actual primitive Clone/Copy payload: String"
+  },
+  {
+    "file": "src/model_contract.rs",
+    "name": "ServedModelError.clone",
+    "term": "generated-method",
+    "kind": "unsupported",
+    "span": {
+      "start": 8584,
+      "end": 8793
+    },
+    "message": "Original Option Clone fields: requires actual primitive Clone/Copy payload: String"
+  }
+]);assert.equal(result.meta.refused.filter(row=>!generatedCloneRefusals.includes(row)).length,12);assert.ok(result.meta.checkedMethods.some(row=>row.name==='ModelSelectorKind.permits_resolution'));assert.match(result.meta.refused.find(r=>r.name==='ModelSelectorKind.deserialize').message,/generic/);assert.match(result.meta.refused.find(r=>r.name==='validate_served_model_for_selector').message,/ok_or_else/);assert.equal(result.meta.checkedMethods.some(r=>r.name.endsWith('.fmt')),false);
+});

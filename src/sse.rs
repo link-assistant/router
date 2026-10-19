@@ -17,7 +17,7 @@ pub fn push_blocks(buffer: &mut Vec<u8>, chunk: &[u8]) -> Vec<String> {
     blocks
 }
 
-fn find_separator(buffer: &[u8]) -> Option<(usize, usize)> {
+fn find_separator(buffer: &[u8]) -> crate::translation_core::Maybe<(usize, usize)> {
     let crlf = buffer.windows(4).position(|window| window == b"\r\n\r\n");
     let lf = buffer.windows(2).position(|window| window == b"\n\n");
     match (crlf, lf) {

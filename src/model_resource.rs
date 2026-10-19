@@ -95,10 +95,10 @@ async fn retrieve_openai_native(
     state: &AppState,
     client: crate::clients::ClientKind,
     headers: &HeaderMap,
-    model_id: &str,
-    entry: &serde_json::Value,
+    model_id: &crate::translation_core::Str,
+    entry: &crate::translation_core::Json,
     uri: &Uri,
-) -> Option<Response> {
+) -> crate::translation_core::Maybe<Response> {
     let owner = entry.get("owned_by").and_then(serde_json::Value::as_str)?;
     let provider = state.provider_store.resolve(owner).ok().flatten()?;
     if provider.kind != crate::providers::ProviderKind::OpenAICompatible
@@ -155,8 +155,8 @@ async fn retrieve_openai_native(
 async fn bounded_native_response(
     state: &AppState,
     upstream: reqwest::Response,
-    correlation_id: &str,
-) -> Result<Response, String> {
+    correlation_id: &crate::translation_core::Str,
+) -> crate::translation_core::Outcome<Response, String> {
     let status = StatusCode::from_u16(upstream.status().as_u16())
         .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
     let headers = crate::proxy::relay_response_headers(upstream.headers());
@@ -184,7 +184,7 @@ async fn bounded_native_response(
     Ok(response)
 }
 
-fn project_catalog_entry(dialect: ApiDialect, mut entry: serde_json::Value) -> Response {
+fn project_catalog_entry(dialect: ApiDialect, mut entry: crate::translation_core::Json) -> Response {
     let Some(model) = entry.as_object_mut() else {
         return error_response(
             dialect,
@@ -201,20 +201,20 @@ fn project_catalog_entry(dialect: ApiDialect, mut entry: serde_json::Value) -> R
         model.remove("owned_by");
         model
             .entry("type")
-            .or_insert_with(|| serde_json::Value::String("model".into()));
+            .or_insert_with(|| crate::translation_core::Json::String("model".into()));
         if let Some(id) = model
             .get("id")
-            .and_then(serde_json::Value::as_str)
+            .and_then(crate::translation_core::Json::as_str)
             .map(str::to_string)
         {
             model
                 .entry("display_name")
-                .or_insert_with(|| serde_json::Value::String(id));
+                .or_insert_with(|| crate::translation_core::Json::String(id));
         }
     } else {
         model
             .entry("object")
-            .or_insert_with(|| serde_json::Value::String("model".into()));
+            .or_insert_with(|| crate::translation_core::Json::String("model".into()));
     }
     let mut response = axum::Json(entry).into_response();
     response
@@ -223,14 +223,14 @@ fn project_catalog_entry(dialect: ApiDialect, mut entry: serde_json::Value) -> R
     response
 }
 
-fn valid_model_id(model_id: &str) -> bool {
+fn valid_model_id(model_id: &crate::translation_core::Str) -> bool {
     !model_id.is_empty()
         && model_id.len() <= 512
         && !model_id.contains('/')
         && !model_id.chars().any(char::is_control)
 }
 
-fn model_not_found(dialect: ApiDialect, model_id: &str) -> Response {
+fn model_not_found(dialect: ApiDialect, model_id: &crate::translation_core::Str) -> Response {
     error_response(
         dialect,
         StatusCode::NOT_FOUND,
@@ -246,8 +246,8 @@ fn model_not_found(dialect: ApiDialect, model_id: &str) -> Response {
 fn error_response(
     dialect: ApiDialect,
     status: StatusCode,
-    error_type: &str,
-    message: &str,
+    error_type: &crate::translation_core::Str,
+    message: &crate::translation_core::Str,
 ) -> Response {
     crate::api_error::PresentedError {
         status,

@@ -1,0 +1,38 @@
+[
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/1cd24513f5a2860c1528b7b9f271cc724fcbd97c/.github",
+    "start_line": 61,
+    "start_column": null,
+    "end_line": 61,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "Process completed with exit code 1.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/1cd24513f5a2860c1528b7b9f271cc724fcbd97c/.github",
+    "start_line": 60,
+    "start_column": null,
+    "end_line": 60,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "15 of 32 leaves passed; the record is 16 (data/meta/ladder-ratchet.lino). A leaf Formal AI could change no longer changes.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/1cd24513f5a2860c1528b7b9f271cc724fcbd97c/.github",
+    "start_line": 1,
+    "start_column": null,
+    "end_line": 1,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "",
+    "message": "\"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748\"",
+    "raw_details": ""
+  }
+]

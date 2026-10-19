@@ -1,0 +1,19 @@
+{
+  "schema": "locked-toml-value-function-namespace-source-v1",
+  "package": "toml_edit",
+  "version": "0.25.15+spec-1.1.0",
+  "url": "https://static.crates.io/crates/toml_edit/toml_edit-0.25.15%2Bspec-1.1.0.crate",
+  "archive": "toml_edit-0.25.15.crate",
+  "bytes": 68207,
+  "sha256": "1340ea94a5856333492c9064b02c778b191dd2c853778d9609debdcdfea3a614",
+  "members": {
+    "src/lib.rs": "9e576fa0b4639b272c9f33928085a2e1790edee0e1382f4acdf5ff043adc6e0e",
+    "src/item.rs": "cc831f4fff5a4631b23b2a1251b30f42a56d6b358ac962705133f96510a61683"
+  },
+  "cargoManifestSha256": "328a6026c740f42468d0752d9cea4cb4930304b45c979b03d3f3db9ce658d476",
+  "cargoLockSha256": "c1cb53b3b73c3a547d362c88c400d0a81457876f4c3e5537acb2fbd3e4aececa",
+  "namespaceComplete": false,
+  "callAuthority": false,
+  "layoutAuthority": false,
+  "runtimeAuthority": false
+}

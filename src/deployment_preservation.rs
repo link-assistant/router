@@ -17,7 +17,7 @@ pub struct Catalog {
 }
 
 /// Check every previous token separately. Extra candidate authority is allowed.
-pub fn compare(previous: &[Catalog], candidate: &[Catalog]) -> Result<(), String> {
+pub fn compare(previous: &[Catalog], candidate: &[Catalog]) -> crate::translation_core::Outcome<(), String> {
     let candidate: BTreeMap<_, _> = candidate
         .iter()
         .map(|row| ((&row.token_id, &row.client_kind), &row.models))
@@ -46,7 +46,7 @@ pub fn compare(previous: &[Catalog], candidate: &[Catalog]) -> Result<(), String
 ///
 /// The original binding, expiry, privileges and id remain unchanged; its
 /// durable record still supplies revocation, budgets and model restrictions.
-pub fn probe_token(record: &TokenRecord, secret: &str) -> Result<String, String> {
+pub fn probe_token(record: &TokenRecord, secret: &crate::translation_core::Str) -> crate::translation_core::Outcome<String, String> {
     let claims = TokenClaims {
         sub: record.id.clone(),
         iat: record.issued_at,

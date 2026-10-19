@@ -1,0 +1,30 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/36742616007/attempt-1/logs/0_Zizmor.txt.gz",
+    "sha256": "0dc1e48a7aeadedaa30e3aa8628cf92b6c67061934703cba4cd8b155428a1f13",
+    "bytes": 8221,
+    "uncompressed_bytes": 43760,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/36742616007/attempt-1/logs/Zizmor/system.txt.gz",
+    "sha256": "3c662e29ff534dacd2db2f724488e5c325f3d61184ebbbebb2bb1e1890958e4f",
+    "bytes": 391,
+    "uncompressed_bytes": 741,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/36742616007/attempt-1/logs/1_Actionlint.txt.gz",
+    "sha256": "6912e5d502cd00c79e884694ae3db1360bb0ae9a8cf5ce55f75e6dac6a636d42",
+    "bytes": 8330,
+    "uncompressed_bytes": 41685,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/36742616007/attempt-1/logs/Actionlint/system.txt.gz",
+    "sha256": "0f1c7b5d1117c0ee841f9a68981af897a4ff6a9fa1d6cb61df6d2f51f1b527ca",
+    "bytes": 382,
+    "uncompressed_bytes": 745,
+    "redacted": false
+  }
+]

@@ -1,0 +1,3 @@
+Send five complete test-only proof programs through module stdin instead of a single --eval argument. This avoids the Linux per-argument size boundary that prevented twelve historical CI cases from launching. Full code artifacts, observations, native error streams, hash tapes, original workloads and child/case/output limits are retained.
+
+The existing eight-case report suite gains small legacy-versus-stdin observations, complete controlled failure streams, raw anonymous-module URL/argv differences and a larger-than-128KiB UTF-8 proof roundtrip. All checks are UNRUN in this source-only checkpoint; no current CI or performance qualification is claimed.

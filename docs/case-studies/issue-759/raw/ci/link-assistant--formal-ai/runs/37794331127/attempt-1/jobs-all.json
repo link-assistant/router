@@ -1,0 +1,126 @@
+[
+  {
+    "id": 113369726078,
+    "run_id": 37794331127,
+    "workflow_name": "Proactive failure report Agent CLI E2E",
+    "head_branch": "qa-reasoning-coding-bulk-fixes",
+    "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37794331127",
+    "run_attempt": 1,
+    "node_id": "CR_kwDOSbOoU88AAAAaZVy8fg",
+    "head_sha": "c6a2cd61de181a88039300bee9c228386617226e",
+    "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/113369726078",
+    "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37794331127/job/113369726078",
+    "status": "completed",
+    "conclusion": "cancelled",
+    "created_at": "2026-10-08T14:40:04Z",
+    "started_at": "2026-10-08T14:41:05Z",
+    "completed_at": "2026-10-08T14:43:51Z",
+    "name": "agent-cli-failure-report",
+    "steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 1,
+        "started_at": "2026-10-08T14:41:06Z",
+        "completed_at": "2026-10-08T14:41:07Z"
+      },
+      {
+        "name": "Run actions/checkout@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 2,
+        "started_at": "2026-10-08T14:41:07Z",
+        "completed_at": "2026-10-08T14:41:23Z"
+      },
+      {
+        "name": "Run oven-sh/setup-bun@v2",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 3,
+        "started_at": "2026-10-08T14:41:23Z",
+        "completed_at": "2026-10-08T14:41:24Z"
+      },
+      {
+        "name": "Install the real Agent CLI",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 4,
+        "started_at": "2026-10-08T14:41:24Z",
+        "completed_at": "2026-10-08T14:41:26Z"
+      },
+      {
+        "name": "Run ./.github/actions/formal-ai-binary",
+        "status": "completed",
+        "conclusion": "cancelled",
+        "number": 5,
+        "started_at": "2026-10-08T14:41:26Z",
+        "completed_at": "2026-10-08T14:43:48Z"
+      },
+      {
+        "name": "Failed command proactively offers an issue report",
+        "status": "completed",
+        "conclusion": "skipped",
+        "number": 6,
+        "started_at": "2026-10-08T14:43:48Z",
+        "completed_at": "2026-10-08T14:43:48Z"
+      },
+      {
+        "name": "Show the Agent CLI evidence",
+        "status": "completed",
+        "conclusion": "skipped",
+        "number": 7,
+        "started_at": "2026-10-08T14:43:48Z",
+        "completed_at": "2026-10-08T14:43:48Z"
+      },
+      {
+        "name": "Upload failure evidence",
+        "status": "completed",
+        "conclusion": "skipped",
+        "number": 8,
+        "started_at": "2026-10-08T14:43:48Z",
+        "completed_at": "2026-10-08T14:43:48Z"
+      },
+      {
+        "name": "Post Run ./.github/actions/formal-ai-binary",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 14,
+        "started_at": "2026-10-08T14:43:48Z",
+        "completed_at": "2026-10-08T14:43:48Z"
+      },
+      {
+        "name": "Post Run oven-sh/setup-bun@v2",
+        "status": "completed",
+        "conclusion": "skipped",
+        "number": 15,
+        "started_at": "2026-10-08T14:43:48Z",
+        "completed_at": "2026-10-08T14:43:48Z"
+      },
+      {
+        "name": "Post Run actions/checkout@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 16,
+        "started_at": "2026-10-08T14:43:48Z",
+        "completed_at": "2026-10-08T14:43:48Z"
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 17,
+        "started_at": "2026-10-08T14:43:48Z",
+        "completed_at": "2026-10-08T14:43:48Z"
+      }
+    ],
+    "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/113369726078",
+    "labels": [
+      "ubuntu-latest"
+    ],
+    "runner_id": 1000153445,
+    "runner_name": "GitHub Actions 1000153445",
+    "runner_group_id": 0,
+    "runner_group_name": "GitHub Actions"
+  }
+]

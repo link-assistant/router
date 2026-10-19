@@ -1,0 +1,44 @@
+[
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37744692823/attempt-1/logs/0_Linked semantic-source parity.txt.gz",
+    "sha256": "2d7dce74f677a78d86a3780a0d3eeba26ecce2f0bc8f214093a205d75f9003f9",
+    "bytes": 7372,
+    "uncompressed_bytes": 41658,
+    "redacted": false
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37744692823/attempt-1/logs/Linked semantic-source parity/system.txt.gz",
+    "sha256": "c38872559cf7af150b28ec60165ed5b5ccf13d7d71afc951c3d1b796bf0cfa9f",
+    "bytes": 408,
+    "uncompressed_bytes": 764,
+    "redacted": false
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37744692823/attempt-1/logs/1_Rocq build.txt.gz",
+    "sha256": "84683afe2f21e718506c150c9eca08565f2bacdde9f600dbe748b85db77cf718",
+    "bytes": 7419,
+    "uncompressed_bytes": 41814,
+    "redacted": false
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37744692823/attempt-1/logs/Rocq build/system.txt.gz",
+    "sha256": "be1a2ffb9b914d494e6384eb56594e101a94be4f4076d417d9822711dbfd9aad",
+    "bytes": 406,
+    "uncompressed_bytes": 753,
+    "redacted": false
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37744692823/attempt-1/logs/2_Lean build.txt.gz",
+    "sha256": "84dc67d195442809e34e802232bd7eb11268cd0225e77a26662bb9abc350418c",
+    "bytes": 7418,
+    "uncompressed_bytes": 42041,
+    "redacted": false
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37744692823/attempt-1/logs/Lean build/system.txt.gz",
+    "sha256": "ac6c306d4851a1b34f3743c4f846e4098acbc06ec355b81fd41a20293e612983",
+    "bytes": 406,
+    "uncompressed_bytes": 753,
+    "redacted": false
+  }
+]

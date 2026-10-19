@@ -1,0 +1,26 @@
+[
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/router/blob/a978d4378816b1e465e9fa61e4abf1f9ecc1b64d/.github",
+    "start_line": 27,
+    "start_column": null,
+    "end_line": 27,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "Process completed with exit code 1.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/router/blob/a978d4378816b1e465e9fa61e4abf1f9ecc1b64d/.github",
+    "start_line": 26,
+    "start_column": null,
+    "end_line": 26,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "Coverage changed the baseline. Commit coverage-baseline.txt so the ratchet update is reviewable.",
+    "raw_details": ""
+  }
+]

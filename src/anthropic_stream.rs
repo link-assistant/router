@@ -22,13 +22,13 @@ pub use crate::stream_termination::INCOMPLETE_STREAM_MESSAGE;
 
 /// Render one Anthropic SSE frame (named event plus JSON payload).
 #[must_use]
-pub fn anthropic_frame(event: &str, payload: &Value) -> String {
+pub fn anthropic_frame(event: &crate::translation_core::Str, payload: &crate::translation_core::Json) -> String {
     format!("event: {event}\ndata: {payload}\n\n")
 }
 
 /// Map an `OpenAI` `finish_reason` onto an Anthropic `stop_reason`.
 #[must_use]
-pub fn map_stop_reason(finish_reason: &str) -> &'static str {
+pub fn map_stop_reason(finish_reason: &crate::translation_core::Str) -> &'static crate::translation_core::Str {
     match finish_reason {
         "length" | "max_tokens" | "max_output_tokens" => "max_tokens",
         "tool_calls" | "function_call" | "tool_use" => "tool_use",
@@ -77,7 +77,7 @@ pub struct AnthropicStreamTranslator {
 impl AnthropicStreamTranslator {
     /// Create a translator for one bridged request.
     #[must_use]
-    pub fn new(requested_model: &str) -> Self {
+    pub fn new(requested_model: &crate::translation_core::Str) -> Self {
         Self {
             model: requested_model.to_string(),
             id: format!("msg_{}", uuid::Uuid::new_v4().simple()),
@@ -183,7 +183,7 @@ impl AnthropicStreamTranslator {
         vec![String::from_utf8_lossy(&frame).into_owned()]
     }
 
-    fn translate_block(&mut self, block: &str) -> Vec<String> {
+    fn translate_block(&mut self, block: &crate::translation_core::Str) -> Vec<String> {
         let data = extract_sse_data(block);
         if data.is_empty() {
             return Vec::new();
@@ -211,7 +211,7 @@ impl AnthropicStreamTranslator {
 
     // ---- OpenAI Chat Completions chunks -------------------------------
 
-    fn translate_chat_event(&mut self, event: &Value) -> Vec<String> {
+    fn translate_chat_event(&mut self, event: &crate::translation_core::Json) -> Vec<String> {
         if self.finished {
             return Vec::new();
         }
@@ -259,7 +259,7 @@ impl AnthropicStreamTranslator {
         frames
     }
 
-    fn tool_call_delta(&mut self, call: &Value) -> Vec<String> {
+    fn tool_call_delta(&mut self, call: &crate::translation_core::Json) -> Vec<String> {
         let key = call.get("index").and_then(Value::as_i64).unwrap_or(0);
         let mut frames = Vec::new();
         if !self.tool_indices.contains_key(&key) {
@@ -310,7 +310,7 @@ impl AnthropicStreamTranslator {
 
     // ---- OpenAI Responses events --------------------------------------
 
-    fn translate_response_event(&mut self, event: &Value) -> Vec<String> {
+    fn translate_response_event(&mut self, event: &crate::translation_core::Json) -> Vec<String> {
         if self.finished {
             return Vec::new();
         }
@@ -451,7 +451,7 @@ impl AnthropicStreamTranslator {
         frames
     }
 
-    fn server_tool_start(&mut self, key: i64, item: &Value) -> Vec<String> {
+    fn server_tool_start(&mut self, key: i64, item: &crate::translation_core::Json) -> Vec<String> {
         if self.server_tool_indices.contains_key(&key) {
             return Vec::new();
         }
@@ -483,7 +483,7 @@ impl AnthropicStreamTranslator {
         frames
     }
 
-    fn server_tool_result(&mut self, key: i64, item: &Value) -> Vec<String> {
+    fn server_tool_result(&mut self, key: i64, item: &crate::translation_core::Json) -> Vec<String> {
         let mut frames = Vec::new();
         if !self.server_tool_indices.contains_key(&key) {
             frames.extend(self.server_tool_start(key, item));
@@ -516,7 +516,7 @@ impl AnthropicStreamTranslator {
 
     // ---- shared -------------------------------------------------------
 
-    fn absorb_usage(&mut self, usage: Option<&Value>) {
+    fn absorb_usage(&mut self, usage: crate::translation_core::Maybe<&crate::translation_core::Json>) {
         let Some(usage) = usage else { return };
         for key in ["input_tokens", "prompt_tokens"] {
             if let Some(v) = usage.get(key).and_then(Value::as_u64) {
@@ -536,7 +536,7 @@ impl AnthropicStreamTranslator {
             .min(self.input_tokens);
     }
 
-    fn absorb_service_tier(&mut self, tier: Option<&Value>) {
+    fn absorb_service_tier(&mut self, tier: crate::translation_core::Maybe<&crate::translation_core::Json>) {
         if let Some(tier) = crate::bridge_response::anthropic_service_tier_from_openai(tier) {
             self.service_tier = Some(tier.into());
         }
@@ -571,7 +571,7 @@ impl AnthropicStreamTranslator {
         )]
     }
 
-    fn text_delta(&mut self, text: &str) -> Vec<String> {
+    fn text_delta(&mut self, text: &crate::translation_core::Str) -> Vec<String> {
         let (visible, matched) = self.stop_filter.push(text);
         let mut frames = self.emit_text_delta(&visible);
         if let Some(sequence) = matched {
@@ -582,7 +582,7 @@ impl AnthropicStreamTranslator {
         frames
     }
 
-    fn emit_text_delta(&mut self, text: &str) -> Vec<String> {
+    fn emit_text_delta(&mut self, text: &crate::translation_core::Str) -> Vec<String> {
         if text.is_empty() {
             return Vec::new();
         }
@@ -670,7 +670,7 @@ impl AnthropicStreamTranslator {
         frames
     }
 
-    fn citation_deltas(&self, citations: Vec<Value>) -> Vec<String> {
+    fn citation_deltas(&self, citations: Vec<crate::translation_core::Json>) -> Vec<String> {
         let Some(index) = self.open_block else {
             return Vec::new();
         };
@@ -689,7 +689,7 @@ impl AnthropicStreamTranslator {
             .collect()
     }
 
-    fn fail_citation(&mut self, error: &str) -> Vec<String> {
+    fn fail_citation(&mut self, error: &crate::translation_core::Str) -> Vec<String> {
         self.finished = true;
         vec![anthropic_frame(
             "error",
@@ -703,7 +703,7 @@ impl AnthropicStreamTranslator {
         )]
     }
 
-    fn fail_output_item(&mut self, kind: &str) -> Vec<String> {
+    fn fail_output_item(&mut self, kind: &crate::translation_core::Str) -> Vec<String> {
         self.finished = true;
         let reason = if kind.is_empty() {
             "Responses output item type must be a non-empty string".to_string()
@@ -720,15 +720,15 @@ impl AnthropicStreamTranslator {
     }
 }
 
-fn response_content_key(event: &Value) -> (u64, u64) {
+fn response_content_key(event: &crate::translation_core::Json) -> (u64, u64) {
     (
         event
             .get("output_index")
-            .and_then(Value::as_u64)
+            .and_then(crate::translation_core::Json::as_u64)
             .unwrap_or(0),
         event
             .get("content_index")
-            .and_then(Value::as_u64)
+            .and_then(crate::translation_core::Json::as_u64)
             .unwrap_or(0),
     )
 }

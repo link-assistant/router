@@ -1,0 +1,158 @@
+{
+  "schema": "locked-serde-json-binary64-roundtrip-source-candidate-v1",
+  "package": "serde_json",
+  "version": "1.0.151",
+  "lockedArchiveSha256": "c841b55ecdae098c80dcae9cf767f6f8a0c2cdb3416bbef72181df4d0fe73f14",
+  "jsonMacroSourceProfileSha256": "101f9e042d3c4665f531017082115d209a390940732532cef1b08a1420f8cfab",
+  "sources": [
+    {
+      "path": "src/de.rs",
+      "bytes": 86840,
+      "sha256": "4998d7e252eb513be85b298e287048b4fb283882e9ba7df905f572f07200f3f3"
+    },
+    {
+      "path": "src/lexical/algorithm.rs",
+      "bytes": 6117,
+      "sha256": "54d599033e5a182a3076a0ba23a3550bf8680c99399b0313166b3c42c85b35b9"
+    },
+    {
+      "path": "src/lexical/bhcomp.rs",
+      "bytes": 7035,
+      "sha256": "26f39d52008225a6b377d7246d326940d44200e160a7b4652733e712e1a45a04"
+    },
+    {
+      "path": "src/lexical/bignum.rs",
+      "bytes": 679,
+      "sha256": "db688e8112389998d0f91906f6857e28f9b510a8b4065ad476c8e8be2f77becf"
+    },
+    {
+      "path": "src/lexical/cached.rs",
+      "bytes": 2156,
+      "sha256": "0e127398691f8042c19cde209e7f4b0161f0f3150342430145929f711e6fdac8"
+    },
+    {
+      "path": "src/lexical/cached_float80.rs",
+      "bytes": 5782,
+      "sha256": "0f8f74a22cb7d871322a9893bffd0255ca10bf9dffd13afb2462dd3d7f51805f"
+    },
+    {
+      "path": "src/lexical/digit.rs",
+      "bytes": 444,
+      "sha256": "9502805adbc3da059131d1fac0a802e17065b36cd7472606b3af24e3241d5cb8"
+    },
+    {
+      "path": "src/lexical/errors.rs",
+      "bytes": 5082,
+      "sha256": "3d9f6de6245533bcb101dfd718cfed61d59dc293f6768cedae28aa13ace164f5"
+    },
+    {
+      "path": "src/lexical/exponent.rs",
+      "bytes": 1562,
+      "sha256": "51f19443008e8884b15c7d5d4b1f1cfbd5673a9d1da02f1af39fcf20e315f01f"
+    },
+    {
+      "path": "src/lexical/float.rs",
+      "bytes": 5482,
+      "sha256": "fe356213c92a049f4bef2f58bc0e3a26866ca06b8c1d74d0f961c5b883852cad"
+    },
+    {
+      "path": "src/lexical/large_powers.rs",
+      "bytes": 250,
+      "sha256": "18d697b846b44ecb61bfaaa3b881e0696f9b7bb6be582623e9d3a8a176a48d2f"
+    },
+    {
+      "path": "src/lexical/large_powers32.rs",
+      "bytes": 15362,
+      "sha256": "c70b57a727960beec258758a4d4a1050f8eaf3b4e60027c663a2bfb0246e0153"
+    },
+    {
+      "path": "src/lexical/large_powers64.rs",
+      "bytes": 15879,
+      "sha256": "e7af83ce3159b5fc4669fc5a231e767d8af21bacaece52a0a48951198965b197"
+    },
+    {
+      "path": "src/lexical/math.rs",
+      "bytes": 26327,
+      "sha256": "c5452d3ef9cc9ebd74a99f22dcabf74f4f062bbaeade46301260b79e4662d5df"
+    },
+    {
+      "path": "src/lexical/mod.rs",
+      "bytes": 1059,
+      "sha256": "ace2ccea2cd541f019a84b9eeb3b9ecd88daf6bccbe9edf0eac00b62704f47c4"
+    },
+    {
+      "path": "src/lexical/num.rs",
+      "bytes": 11179,
+      "sha256": "2d06111d28616221995f7b4d4f13625b8d902884921268b0e02e544f871a5339"
+    },
+    {
+      "path": "src/lexical/parse.rs",
+      "bytes": 2241,
+      "sha256": "c2bfac4c70a19938ced61e991f4ec606764887cf12bac1a0978b5b5318a56aac"
+    },
+    {
+      "path": "src/lexical/rounding.rs",
+      "bytes": 7388,
+      "sha256": "4762af3612880b17468ff2a1bb800c8e99f08330ae439699dd53d8dc5463ad13"
+    },
+    {
+      "path": "src/lexical/shift.rs",
+      "bytes": 1235,
+      "sha256": "bc1ed053dd63d45ac9c35302f18de9f00d94027f28af4ab749c9248439de832a"
+    },
+    {
+      "path": "src/lexical/small_powers.rs",
+      "bytes": 1345,
+      "sha256": "73c56b7b83310c6fefa898fb94771c65bdc251c1579ab105151da43935ea02be"
+    },
+    {
+      "path": "build.rs",
+      "bytes": 1206,
+      "sha256": "a681e754be844c7dbef957f5d2d00b01f37c5dca160ef1055a8d8f975697a881"
+    },
+    {
+      "path": "src/read.rs",
+      "bytes": 33041,
+      "sha256": "17a2efe49e5a6937c8d7d4a5c0b9eac84453de0f86bf8e7ee421387e82341bb3"
+    },
+    {
+      "path": "src/error.rs",
+      "bytes": 17221,
+      "sha256": "a13add05a63adf53d89e37effa03221d897a60486cfe360a5a958c0dd2a7e90d"
+    }
+  ],
+  "domain": {
+    "target": "serde_json::Value f64 deserialization (not f32)",
+    "rounding": "direct original lexical branch execution; separate ideal exact rational operation",
+    "maxMantissaDigits": 769,
+    "maxExponentDigits": 4096,
+    "maxInputBytes": 1048576,
+    "resourceBoundFailure": "explicit unsupported adapter-domain RangeError, never fabricated Rust Error",
+    "exactStandaloneDecimalOperationMaxDigits": 4096,
+    "maxMantissaDigitsSource": "actual Float<f64>::MAX_DIGITS; parse_mantissa retains MAX_DIGITS-1 then its original synthetic-tail digit"
+  },
+  "sourceBranchObligations": [
+    "de.rs concise/long lexical dispatch, finite range and exponent overflow",
+    "lexical parse.rs fast/moderate/fallback fidelity to original retained-prefix/sticky behavior, not universal equivalence to ideal rounding",
+    "num.rs binary64 layout and bhcomp.rs half-way comparison",
+    "rounding.rs tie-even including subnormal carry and exponent overflow"
+  ],
+  "remainingSemanticObligations": [
+    "Source-derived769-digit counterexample reader fix is UNRUN; larger raw input domains remain unsupported until explicit resource/control proof. Original zero-tail discrepancy remains source behavior, not ideal rounding.",
+    "focused mathematical/runtime/default-regression checks are unrun",
+    "direct lexical source fidelity and bounded32/64 limb/power arithmetic remain unverified; no complete ideal-rounding theorem substituted",
+    "parser scratch allocation, BigInt and linked allocator/OOM behavior are not a complete application effect contract",
+    "complete scalar/callee f32 deserialization and arbitrary_precision/preserve_order remain unsupported",
+    "actual checker guard remains authoritative until separately reviewed private feature-directed dispatch is integrated"
+  ],
+  "namespaceAuthority": false,
+  "expansionAuthority": false,
+  "parseAdmission": false,
+  "algorithmEquivalenceVerified": false,
+  "applicationEffectCompleteness": false,
+  "runtimeParity": false,
+  "rustExecution": false,
+  "buildCfgFacts": "original build.rs chooses32 or64 fast_arithmetic exhaustively; both limb math paths require proof, external cfg overrides remain uncertified",
+  "implementationMode": "direct pinned fast/moderate/fallback plus native hi64/sticky rounding; UNRUN",
+  "sourceBehaviorFidelityVerified": false
+}

@@ -1,0 +1,50 @@
+[
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/7852a6270f03fd14de7021ff94af390da19ce47b/.github",
+    "start_line": 50,
+    "start_column": null,
+    "end_line": 50,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "sccache stats - corpus-build",
+    "message": "26% - 265 hits, 747 misses, 1 error",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/7852a6270f03fd14de7021ff94af390da19ce47b/.github",
+    "start_line": 535,
+    "start_column": null,
+    "end_line": 535,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "Process completed with exit code 101.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/7852a6270f03fd14de7021ff94af390da19ce47b/.github",
+    "start_line": 534,
+    "start_column": null,
+    "end_line": 534,
+    "end_column": null,
+    "annotation_level": "warning",
+    "title": "Corpus gate binary build: Compiler cache rejected 74% of its writes",
+    "message": "sccache offered 747 compiled artifacts to the GitHub Actions Cache and 557 were refused (190 stored). Every refused write is a crate the next run compiles again, so this is build time the cache is not saving. Set the FORMAL_AI_CI_VERBOSE repository variable to true and rerun to capture the backend's own response (SCCACHE_LOG=debug), which is what separates rate limiting from concurrent writers of the same key -- see scripts/check-sccache-write-health.sh.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/7852a6270f03fd14de7021ff94af390da19ce47b/.github",
+    "start_line": 1,
+    "start_column": null,
+    "end_line": 1,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "",
+    "message": "\"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748\"",
+    "raw_details": ""
+  }
+]

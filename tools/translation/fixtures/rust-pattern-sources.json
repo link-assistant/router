@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "retrievedDate": "2026-10-11",
+  "source": "https://doc.rust-lang.org/reference/patterns.html",
+  "scope": "Constructor, struct, tuple, grouped, literal, identifier and or-pattern syntax",
+  "obligations": [
+    "Single identifiers remain ambiguous between a binding and a constant or constructor until actual source name resolution.",
+    "Bare tuple patterns require a checked tuple layout. Positional fields on a tuple-struct do not turn that struct into a tuple.",
+    "Constructor record-versus-positional style is a source layout obligation; JavaScript field names alone do not prove Rust constructor syntax.",
+    "A pattern projection plan does not establish copy, move, borrow, alias or drop behavior. The source frontend must establish those obligations before emission.",
+    "Irrefutability must be proved for function parameter and plain let-binding contexts before body lowering."
+  ],
+  "implementedSyntax": ["wildcard", "nested constructor", "named record fields and final rest", "tuple with checked layout", "grouping", "unit", "or", "integer, string and boolean literals", "qualified source-resolved paths"],
+  "explicitRefusals": ["references", "ref or mut binding", "slices", "ranges", "positional rest", "whole-value aliases", "pattern macros", "unresolved absolute namespaces"],
+  "validation": "Node and Bun validate independent syntax spans, actual checked projection layouts, literal domains, exhaustiveness and source refusals without Rust execution.",
+  "runtimeParity": false
+}

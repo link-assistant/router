@@ -1,0 +1,80 @@
+// GENERATED: node scripts/regenerate-js-first.mjs
+// Independently checked top-level bodies from packages/javascript/native/native-service.mjs; source sha256=36ece5d3f3d097c6c1a5d2d4b7a441c7b4e314175535c7ed553891f2291f7b88; IR sha256=ee46fc9345eb53edd1bdfa27448a7d84c734fee476f6665d8d44d947831e234f.
+// Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
+#[derive(Clone, Copy)]
+pub enum JsValue<'a> {
+    String(&'a str), Number(f64), Boolean(bool), Undefined,
+    Object, Function, BigInt, Symbol,
+}
+
+#[rustfmt::skip]
+impl<'a> JsValue<'a> {
+    fn type_name(self) -> &'static str {
+        match self {
+            Self::String(_) => "string", Self::Number(_) => "number",
+            Self::Boolean(_) => "boolean", Self::Undefined => "undefined",
+            Self::Object => "object", Self::Function => "function",
+            Self::BigInt => "bigint", Self::Symbol => "symbol",
+        }
+    }
+    fn as_string(self) -> &'a str { if let Self::String(value) = self { value } else { unreachable!("checked typeof guard") } }
+    fn as_number(self) -> f64 { if let Self::Number(value) = self { value } else { unreachable!("checked typeof guard") } }
+    fn as_boolean(self) -> bool { if let Self::Boolean(value) = self { value } else { unreachable!("checked typeof guard") } }
+    fn is_finite(self) -> bool { matches!(self, Self::Number(value) if value.is_finite()) }
+    fn is_nan(self) -> bool { matches!(self, Self::Number(value) if value.is_nan()) }
+    fn is_safe_integer(self) -> bool {
+        matches!(self, Self::Number(value) if value.is_finite() && value.fract() == 0.0 && value.abs() <= 9007199254740991.0)
+    }
+    fn same_primitive(self, other: Self) -> bool {
+        match (self, other) {
+            (Self::String(left), Self::String(right)) => left == right,
+            (Self::Boolean(left), Self::Boolean(right)) => left == right,
+            (Self::Number(left), Self::Number(right)) => left == right || left.is_nan() && right.is_nan(),
+            _ => false,
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+pub enum JsLiteral { String(&'static str), Number(f64), Boolean(bool) }
+#[rustfmt::skip]
+impl JsLiteral {
+    fn matches(self, value: JsValue<'_>) -> bool {
+        match (self, value) {
+            (Self::String(left), JsValue::String(right)) => left == right,
+            (Self::Boolean(left), JsValue::Boolean(right)) => left == right,
+            (Self::Number(left), JsValue::Number(right)) => left == right || left.is_nan() && right.is_nan(),
+            _ => false,
+        }
+    }
+    fn same_key(self, other: Self) -> bool {
+        match other { Self::String(value) => self.matches(JsValue::String(value)), Self::Number(value) => self.matches(JsValue::Number(value)), Self::Boolean(value) => self.matches(JsValue::Boolean(value)) }
+    }
+}
+#[derive(Clone, Copy)]
+pub struct JsStaticSet { values: &'static [JsLiteral] }
+#[rustfmt::skip]
+impl JsStaticSet {
+    fn has(&self, key: JsValue<'_>) -> bool { self.values.iter().any(|value| value.matches(key)) }
+    fn size(&self) -> f64 { self.values.iter().enumerate().filter(|(index, value)| !self.values[..*index].iter().any(|earlier| earlier.same_key(**value))).count() as f64 }
+}
+#[derive(Clone, Copy)]
+pub struct JsStaticMap<T: Copy + 'static> { entries: &'static [(JsLiteral, T)] }
+#[rustfmt::skip]
+impl<T: Copy + 'static> JsStaticMap<T> {
+    fn has(&self, key: JsValue<'_>) -> bool { self.entries.iter().any(|entry| entry.0.matches(key)) }
+    fn get(&self, key: JsValue<'_>) -> Option<T> { self.entries.iter().rev().find(|entry| entry.0.matches(key)).map(|entry| entry.1) }
+    fn size(&self) -> f64 { self.entries.iter().enumerate().filter(|(index, entry)| !self.entries[..*index].iter().any(|earlier| earlier.0.same_key(entry.0))).count() as f64 }
+}
+
+#[rustfmt::skip]
+#[allow(non_upper_case_globals)]
+const transport: JsStaticSet = JsStaticSet { values: &[JsLiteral::String("authorization"), JsLiteral::String("x-api-key"), JsLiteral::String("x-goog-api-key"), JsLiteral::String("anthropic-auth-token"), JsLiteral::String("proxy-authorization"), JsLiteral::String("proxy-authenticate"), JsLiteral::String("host"), JsLiteral::String("connection"), JsLiteral::String("proxy-connection"), JsLiteral::String("keep-alive"), JsLiteral::String("transfer-encoding"), JsLiteral::String("upgrade"), JsLiteral::String("te"), JsLiteral::String("trailer"), JsLiteral::String("content-length"), JsLiteral::String("accept-encoding"), JsLiteral::String("cookie"), JsLiteral::String("chatgpt-account-id"), JsLiteral::String("sec-websocket-key"), JsLiteral::String("sec-websocket-version"), JsLiteral::String("sec-websocket-extensions"), JsLiteral::String("sec-websocket-accept")] };
+
+#[rustfmt::skip]
+#[allow(non_upper_case_globals)]
+const ingress: JsStaticSet = JsStaticSet { values: &[JsLiteral::String("forwarded"), JsLiteral::String("x-real-ip"), JsLiteral::String("x-client-ip"), JsLiteral::String("x-cluster-client-ip"), JsLiteral::String("cf-connecting-ip"), JsLiteral::String("true-client-ip"), JsLiteral::String("fastly-client-ip"), JsLiteral::String("fly-client-ip"), JsLiteral::String("x-envoy-external-address"), JsLiteral::String("x-azure-clientip"), JsLiteral::String("x-appengine-user-ip"), JsLiteral::String("cloudfront-viewer-address")] };
+
+#[rustfmt::skip]
+#[allow(non_upper_case_globals)]
+const response_credentials: JsStaticSet = JsStaticSet { values: &[JsLiteral::String("authorization"), JsLiteral::String("x-api-key"), JsLiteral::String("x-goog-api-key"), JsLiteral::String("anthropic-auth-token"), JsLiteral::String("set-cookie"), JsLiteral::String("cookie"), JsLiteral::String("chatgpt-account-id")] };

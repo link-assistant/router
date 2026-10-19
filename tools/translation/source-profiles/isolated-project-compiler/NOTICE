@@ -1,0 +1,50 @@
+Original project compiler isolation registration (ID 300)
+
+The current complete registered original compiler sourceHead is 9f204f8d4c57477f6c71dcec6b74297bcf3d683c.
+Actual reviewed preparation proposal: 1296 files, 46869291 raw source bytes.
+Registry raw: 322758 B, SHA256 ccfe4a30c1e42e3fad4b56fac6c5933a469cf93d672b6db2dd80013d28a21b12.
+Registry gzip: 322801 B, SHA256 5bff6ba366af30162a1df73f732366deec7ab6c657f9f2ebc6ef59872f52a8ac.
+The sourceHead identifies captured originals; the receiving Git head may later include registry/metadata-only commits.
+The initial and previous complete source candidates remain retained separately.
+
+The registry contains raw byte length, SHA-256, regular-file mode and original
+Git blob for the committed export/compiler closure, all existing original-source
+profiles and assets, root LICENSE, receiving JavaScript package and lock, plus
+the complete installed TypeScript 5.9.3 package. The upstream source files are
+not duplicated here. Existing upstream notices/licenses remain at their exact
+registered original paths and are copied in full into each private snapshot.
+TypeScript LICENSE.txt and ThirdPartyNoticeText.txt are registered in full.
+
+manifest.json.gz uses deterministic RFC1952 framing and RFC1951 stored blocks.
+prepare-isolated-project-compiler.mjs rederives the complete committed selection
+and installed package, then proposes the registry and full bootstrap pin edits
+outside the repository. Runtime never trusts expected hashes from current files.
+New registrations require review; the initial compiler does not silently advance
+with the receiving repository's HEAD. The parent, driver and preparation tool
+are outside this fixed original universe, avoiding circular source hashes.
+
+This is an explicit fresh-process contract for qualified Darwin/Linux POSIX hosts. Other platforms refuse before task creation. Parent qualification retains exact Uint8Array/shared TypedArray constructor/prototype tables, complete key preflight, getter/setter flags and ancestry identities without invoking accessors. Trusted stock same-engine launch,
+Git/OS/stdio bootstrap and an exclusive task-owned snapshot lifetime are required.
+Before/after hashes do not defeat arbitrary hostile same-UID filesystem writers,
+debuggers, engine replacement or transient mutate/restore races. Original cold
+ESM/TDZ errors remain failures. Parent callback identities/timing are not claimed
+equivalent to old same-process APIs. Snapshot/receipt JSON grants no ownership,
+type, namespace, effect or executable evidence in the parent. All actual checked
+source/type/body gates run in the original compiler inside the fresh child.
+
+Request: canonical JSON with schema original-project-child-request-v1, sourceFiles
+exact {path,source} rows and entries owned .rs paths. At most 1024 source files,
+8 entries, 2 MiB/file, 16 MiB source UTF8 and 32 MiB request wire. Root Cargo.toml
+and Cargo.lock are optional data, never caller-owned compiler/environment flags.
+The initial compilation profile is null, preserving conditional uncertainty.
+Artifact text and protocol wire each have separate 512 MiB bounds, 8 MiB frames,
+65536 UTF16-unit chunks, 8 MiB stderr and 1.5 GiB sampled task disk. Disk sums max(logical size, own POSIX blocks*512 when available), includes directories, and bounds 40000 entries; missing blocks uses logical fallback. Aggregate parent+
+child/helper RSS is sampled against 3 GiB; sampling is not an exact peak theorem.
+Node child heap is 2304 MiB; the new full-canonical wall bound is 2400 seconds.
+These bounds do not change any old API, exporter limit or existing test deadline.
+
+Each output is checked in two bounded 64KiB UTF8-boundary passes: complete digest/chunk census, then complete digest and frame emission. Parent spools until child completion, then returns detached artifact text only.
+The original producer retains its plan and private expected output graph during
+planning; streaming does not prove its whole-corpus peak fits 3 GiB. Whole-corpus
+resource qualification and actual Node/Bun cold ESM/argv support remain receiving
+obligations. The eight small tests retain 60-second cases and strict TS 20 seconds.

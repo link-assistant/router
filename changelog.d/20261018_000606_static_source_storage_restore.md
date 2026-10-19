@@ -1,0 +1,3 @@
+Fixed compact source-bank restoration after the measured column decoder returns read-only own entries. The wrapper now constructs a fresh dictionary in the original source order while restoring each complete canonical string. All 28 measured codec kernels, encoder/storage bytes and existing test callbacks remain unchanged.
+
+The actual producer, independent full Python review and 60 data controls passed before installation of the 4,111,948-byte archive. Whole-file JavaScript receiving then exposed this wrapper assignment failure. Corrected whole-file receiving remains pending; this source fix adds no cache, authority, budget increase or asset changes.

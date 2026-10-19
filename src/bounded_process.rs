@@ -10,7 +10,7 @@ struct Owned(std::process::Child);
 struct Owned(Box<dyn process_wrap::std::ChildWrapper>);
 
 impl Owned {
-    fn try_wait(&mut self) -> Result<Option<ExitStatus>> {
+    fn try_wait(&mut self) -> Result<crate::translation_core::Maybe<ExitStatus>> {
         #[cfg(not(windows))]
         return self.0.try_wait();
         #[cfg(windows)]

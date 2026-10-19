@@ -1,0 +1,1 @@
+Validate generated scalar Default methods against original source spans, genuine compiler derivation, canonical checked bodies and flattened targets. Record generated counts, gains, losses and body changes separately from original function and method coverage; retain all semantic and runtime authority limits.

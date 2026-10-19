@@ -1,0 +1,5 @@
+### Changed
+
+Select the existing internal digest copier at three method-validation fallback expressions and five method-transform digest expressions. Two import substitutions preserve all existing method bodies, direct-copy calls, native guards, complete canonical bytes and actual Hash calls. A separate fixed two-module source proposal retains ordered language/repository CST transport and complete inverses without changing the old three-source API.
+
+The validation binding intentionally changes its internal 645 frame/JSON-expression contract to the documented 647 contract; full old/new observations remain separate. Eight receiving cases cover actual fallback and issued methods, malformed streams, callback and descriptor drift, source/CST inverses, full Hash observations and complete original parents with strict targets. Source draft only: runtime, performance, current generation and full-gate qualification remain unrun. Original derive4 and original13 deadlines are unchanged, with no speed or coverage claim.

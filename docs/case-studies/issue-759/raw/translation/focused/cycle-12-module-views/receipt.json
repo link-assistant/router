@@ -1,0 +1,47 @@
+{
+  "schema": "focused-original-module-view-validation-v1",
+  "sourceCommit": "0cc9009dd",
+  "status": "FOCUSED_PASS_NOT_FULL_GATE",
+  "scope": [
+    "tools/translation/test/source-module-views.test.mjs"
+  ],
+  "engines": [
+    {
+      "engine": "node",
+      "archive": "node.log.gz",
+      "rawBytes": 1995,
+      "rawSha256": "500e9c11bfe440c928f36796aea8cfb92e6059b2035762cc95baa5db6b7ae4f6",
+      "archiveBytes": 638,
+      "archiveSha256": "91346f3e3691fcd524019094c812e82c5e8d5390335275161345b9b4134d3b8e",
+      "tests": 8,
+      "pass": 8,
+      "fail": 0,
+      "skip": 0,
+      "durationMilliseconds": 178.912791
+    },
+    {
+      "engine": "bun",
+      "archive": "bun.log.gz",
+      "rawBytes": 989,
+      "rawSha256": "b5163c96721307038db4d6b654c701b321ccb3484a393ee69eddd05edfdf3ab5",
+      "archiveBytes": 543,
+      "archiveSha256": "d8340b0b33a4dafbfb006c04dc83eca922d4cc355fad3d7baa98474a6272062c",
+      "tests": 8,
+      "pass": 8,
+      "fail": 0,
+      "skip": 0,
+      "durationMilliseconds": 106
+    }
+  ],
+  "namespaceAuthority": false,
+  "attributeOwnerAuthority": false,
+  "runtimeAuthority": false,
+  "originalRustEdits": 0,
+  "producerRuns": 0,
+  "fullGateRuns": 0,
+  "localRustBuilds": 0,
+  "originalSources": {
+    "src/auth_diagnostics.rs": "4adfdd83495f6cadeb33c3c17658134c4e6a3a7947cb1c733f92bde63dd9690a",
+    "src/deploy.rs": "0acc07b144b6b63a32e337d38c4d74685b04c83d0f202b193ba999f160f9435a"
+  }
+}

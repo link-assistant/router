@@ -9,15 +9,15 @@ use serde_json::json;
 use super::claude_share::Provision;
 use super::{Coordinator, Existing, LEGACY};
 
-const CATALOG_ENV: &str = "ROUTER_PRESERVATION_TOKEN";
-const CATALOG_SCRIPT: &str = "const r=await fetch('http://127.0.0.1:8080/api/models',{signal:AbortSignal.timeout(5000),headers:{authorization:'Bearer '+process.env.ROUTER_PRESERVATION_TOKEN}});if(r.status!==200)process.exit(2);const b=await r.json();if(!Array.isArray(b.data))process.exit(3);console.log(JSON.stringify(b.data.map(m=>String(m.owned_by||'')+'/'+m.id).sort()))";
+const CATALOG_ENV: &crate::translation_core::Str = "ROUTER_PRESERVATION_TOKEN";
+const CATALOG_SCRIPT: &crate::translation_core::Str = "const r=await fetch('http://127.0.0.1:8080/api/models',{signal:AbortSignal.timeout(5000),headers:{authorization:'Bearer '+process.env.ROUTER_PRESERVATION_TOKEN}});if(r.status!==200)process.exit(2);const b=await r.json();if(!Array.isArray(b.data))process.exit(3);console.log(JSON.stringify(b.data.map(m=>String(m.owned_by||'')+'/'+m.id).sort()))";
 
 pub(super) struct Baseline {
     pub records: Vec<TokenRecord>,
     pub catalogs: Vec<Catalog>,
 }
 
-fn same_directory(actual: &str, expected: &Path) -> bool {
+fn same_directory(actual: &crate::translation_core::Str, expected: &Path) -> bool {
     let actual = Path::new(actual);
     match (actual.canonicalize(), expected.canonicalize()) {
         (Ok(actual), Ok(expected)) => actual == expected,

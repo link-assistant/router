@@ -1,0 +1,1 @@
+Preserve the exact compressed receipt for authorized Router build-directory cleanup, including allocated file bytes and immediate free-space observations, without attributing later unrelated free-space changes to the task.

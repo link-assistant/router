@@ -1,0 +1,3 @@
+Repair the optional JSON adoption dependency-negative fixture: float_roundtrip is activated through the registered incoming dependency graph and is absent from the direct Cargo declaration, so replacing its spelling in Cargo.toml was a no-op. The fixture now uniquely changes the actual serde_json declaration to enable arbitrary_precision, retains complete original/changed Cargo sources and lock, and proves the full inverse before requiring the unchanged audited-dependency refusal.
+
+No production profile, numeric behavior or authority changes. All eight case titles, original workloads, deadlines and strict child limits remain. This source-only repair is UNRUN; the full-parent case timeout remains unresolved.

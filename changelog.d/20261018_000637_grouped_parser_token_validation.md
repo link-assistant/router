@@ -1,0 +1,4 @@
+### Changed
+- Add an explicit grouped observation contract for genuine original-method parser token validation, selected by the actual refusal collector through additive private-proof readers. Existing standalone readers and whole-array bounds remain unchanged; every source, parser, namespace, field and semantic proof is still freshly validated.
+- Plan all finite token groups before their first hash, with exact legacy-prefix fallback on unavailable native eligibility or unsupported shapes. The new contract changes token-comparison hash framing/counts and late-drift refusal timing; complete old/new tapes remain distinct. No across-call source or verdict storage is added.
+- Add eight receiving cases with full source/CST/semantic boundaries, hostile-observer controls and complete original derive parents. Source-only draft: engines, strict TypeScript, original five-second Bun cases and original13 performance remain unqualified until receiving.

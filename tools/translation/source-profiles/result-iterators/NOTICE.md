@@ -1,0 +1,1 @@
+Full original Rust 1.89.0 core Result and iterator adapter sources, licensed MIT OR Apache-2.0. The profile transfers the first Err and never advances upstream afterward; partial successes are restricted to checked standard scalar/String destruction domains. No arbitrary FromIterator, custom Result, destructor or const authority is granted. Source-only draft; all new cases unrun.

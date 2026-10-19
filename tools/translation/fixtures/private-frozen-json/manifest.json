@@ -1,0 +1,24 @@
+{
+  "schema": "complete-original-private-json-comparisons-v1",
+  "sources": [
+    {
+      "commit": "934326341fcff3848b465c1d619fdfa253c58882",
+      "path": "tools/translation/derive-bang-context.mjs",
+      "mode": "100644",
+      "blob": "5ee6b0364ec10b0668f1176c69201744e63ab398",
+      "storedPath": "derive-bang-context.mjs.original.txt",
+      "bytes": 14998,
+      "sha256": "18a40fde9c28c5868214118add2ad6fc2a6d4efdd44adbcfd7f2b8c03e0c454c"
+    },
+    {
+      "commit": "934326341fcff3848b465c1d619fdfa253c58882",
+      "path": "tools/translation/builtin-derive-bang-footprints.mjs",
+      "mode": "100644",
+      "blob": "1712be2f19e40543ca425a2f693455c30dd2b896",
+      "storedPath": "builtin-derive-bang-footprints.mjs.original.txt",
+      "bytes": 38005,
+      "sha256": "1152bffa1a74881ba32c3c97a44b81efb0119b1392b229ad1728fd3f566190cd"
+    }
+  ],
+  "execution": "Complete original/current cold leaf copies relocate only exact relative import specifiers to SAME active dependency/private issuers. No private owner function is exported by the test."
+}

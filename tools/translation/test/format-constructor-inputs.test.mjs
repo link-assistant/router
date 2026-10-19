@@ -1,0 +1,29 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {loadPinnedFormatSourceStages} from '../format-source-profiles.mjs';
+import {loadFormatRegisteredInputs,expandRegisteredFormatWrapper} from '../format-registered-inputs.mjs';
+import {loadFormatConstructorInputs,isFormatConstructorInputs,formatConstructorOriginalInput,sourceLiteralFormatConstructorCandidate,isSourceLiteralFormatConstructorCandidate} from '../format-constructor-inputs.mjs';
+const root=new URL('../source-profiles/format-constructors/',import.meta.url),profile=JSON.parse(readFileSync(new URL('manifest.json',root))),hash=value=>createHash('sha256').update(value).digest('hex');
+const flags=['callerMacroOwnerResolved','callbackModuleOwnerResolved','compilerAstClosureVerified','templateParserExecuted','resultSlotsDefaultVerified','namespaceAuthority','copyAuthority','noDropAuthority','constAuthority','runtimeAuthority','runtimeParity'];
+const denied=value=>flags.forEach(key=>assert.equal(value[key],false,key));
+test('full constructor/parser/error/visitor and AST schema sources are retained without closure authority',()=>{
+ const proof=loadPinnedFormatSourceStages(),inputs=loadFormatRegisteredInputs(proof),plan=loadFormatConstructorInputs(inputs,proof);assert.equal(isFormatConstructorInputs(plan),true);assert.equal(loadFormatConstructorInputs(inputs,proof),plan);assert.equal(plan.recipes.length,29);assert.equal(plan.resultConstructor.expansion.trees.length,13);denied(plan);assert.equal(plan.registeredCallback.target.function.name,'expand_format_args_impl');
+ for(const pin of profile.sources){const bytes=readFileSync(new URL(pin.archive,root)),original=formatConstructorOriginalInput(pin.path,bytes);assert.equal(hash(original.source),pin.sha256);denied(original);for(const recipe of plan.recipes.filter(row=>row.sourcePath===pin.path)){assert.equal(original.source.slice(recipe.span.start,recipe.span.end),recipe.original);assert.equal(hash(recipe.original),recipe.sha256);assert.ok(recipe.syntax.length);}}
+ const callback=plan.recipes.find(row=>row.name==='make_format_args');assert.match(callback.original,/FormatArgumentKind::Captured\(ident\)/);assert.match(callback.original,/ecx\.expr_ident\(span, ident\)/);assert.ok(plan.retainedObligations.includes('MacEager derived Default and every other result slot'));assert.ok(plan.retainedObligations.includes('source visitor recursion into argument expressions'));
+});
+test('genuine literal-only wrapper candidates retain complete source plans and unexecuted template/capture obligations',()=>{
+ const proof=loadPinnedFormatSourceStages(),inputs=loadFormatRegisteredInputs(proof),plan=loadFormatConstructorInputs(inputs,proof);
+ for(const source of ['format!("{block}\\n\\n")','format!("event: error\\ndata: {event}\\n\\ndata: [DONE]\\n\\n")','format!(r#"{capture:?}"#)','format!("literal")']){const wrapper=expandRegisteredFormatWrapper(inputs,proof,'format',source),candidate=sourceLiteralFormatConstructorCandidate(plan,inputs,proof,wrapper);assert.equal(isSourceLiteralFormatConstructorCandidate(candidate),true);denied(candidate);assert.equal(candidate.explicitArgumentCount,0);assert.equal(candidate.templateValueDecoded,false);assert.equal(candidate.templateLexicallyVerified,false);assert.equal(candidate.implicitCaptureNamesResolved,false);assert.equal(candidate.completeArgumentAstVerified,false);assert.equal(candidate.sourceWrapper.originalSource,source);assert.equal(candidate.implicitCaptureSourceRecipe.sha256,plan.recipes.find(row=>row.name==='make_format_args').sha256);}
+});
+test('explicit/custom/block/macro/non-string arguments remain independently refused',()=>{
+ const proof=loadPinnedFormatSourceStages(),inputs=loadFormatRegisteredInputs(proof),plan=loadFormatConstructorInputs(inputs,proof);
+ for(const source of ['format!("{}",value)','format!("{}",owned_string)','format!("{}",{impl Drop for T{fn drop(&mut self){}};value})','format!(concat!("x"))','format!("{}",call!())','format!(1)','format!("x",)']){const stage=expandRegisteredFormatWrapper(inputs,proof,'format',source);assert.throws(()=>sourceLiteralFormatConstructorCandidate(plan,inputs,proof,stage),/direct literal template only/);}
+});
+test('archive changes cannot become a source plan and copied/foreign/getter carriers cannot borrow private frames',()=>{
+ const proof=loadPinnedFormatSourceStages(),inputs=loadFormatRegisteredInputs(proof),plan=loadFormatConstructorInputs(inputs,proof),stage=expandRegisteredFormatWrapper(inputs,proof,'format','format!("{block}")'),foreignProof=loadPinnedFormatSourceStages();let reads=0;
+ for(const pin of profile.sources){const original=readFileSync(new URL(pin.archive,root)),changed=Buffer.from(original);changed[changed.length-1]^=1;assert.throws(()=>formatConstructorOriginalInput(pin.path,changed),/full archive changed/);}
+ const hostile=Object.defineProperty({},'schema',{get(){reads++;return plan.schema;}});for(const fake of [structuredClone(plan),Object.freeze({...plan}),new Proxy(plan,{}),hostile]){assert.equal(isFormatConstructorInputs(fake),false);assert.throws(()=>sourceLiteralFormatConstructorCandidate(fake,inputs,proof,stage),/copied or foreign/);}
+ assert.throws(()=>loadFormatConstructorInputs(structuredClone(inputs),proof),/copied or foreign/);assert.throws(()=>loadFormatConstructorInputs(inputs,foreignProof),/copied or foreign/);assert.throws(()=>sourceLiteralFormatConstructorCandidate(plan,inputs,foreignProof,stage),/copied or foreign/);assert.throws(()=>sourceLiteralFormatConstructorCandidate(plan,inputs,proof,structuredClone(stage)),/copied or foreign/);assert.equal(reads,0);const candidate=sourceLiteralFormatConstructorCandidate(plan,inputs,proof,stage);assert.equal(isSourceLiteralFormatConstructorCandidate(structuredClone(candidate)),false);
+});

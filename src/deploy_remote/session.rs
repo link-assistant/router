@@ -21,14 +21,14 @@ use serde_json::{Value, json};
 /// Exit code when `--deadline` (or `deadline_secs`) expires.
 pub const DEADLINE_EXIT: u8 = 12;
 /// Prefix of a structured progress line the agent writes to stderr.
-pub const EVENT_PREFIX: &str = "ROUTER_DEPLOY_EVENT ";
+pub const EVENT_PREFIX: &crate::translation_core::Str = "ROUTER_DEPLOY_EVENT ";
 
-fn encode(value: &str) -> String {
+fn encode(value: &crate::translation_core::Str) -> String {
     base64::engine::general_purpose::STANDARD.encode(value)
 }
 
 /// Extra OpenSSH options, inserted before `--`. Empty without settings.
-pub fn ssh_options(ssh: &SshSettings, known_hosts: Option<&Path>) -> Vec<OsString> {
+pub fn ssh_options(ssh: &SshSettings, known_hosts: crate::translation_core::Maybe<&Path>) -> Vec<OsString> {
     let mut options: Vec<OsString> = Vec::new();
     let mut option = |text: String| {
         options.push("-o".into());
@@ -62,7 +62,7 @@ pub fn ssh_options(ssh: &SshSettings, known_hosts: Option<&Path>) -> Vec<OsStrin
 }
 
 /// Write the pinned `known_hosts` lines to a private temporary file.
-pub fn pinned_known_hosts(text: &str) -> std::io::Result<tempfile::NamedTempFile> {
+pub fn pinned_known_hosts(text: &crate::translation_core::Str) -> std::io::Result<tempfile::NamedTempFile> {
     // `tempfile` creates the file 0600, so the pin is not world-writable.
     let mut file = tempfile::Builder::new()
         .prefix("router-deploy-known-hosts-")
@@ -78,11 +78,11 @@ pub fn pinned_known_hosts(text: &str) -> std::io::Result<tempfile::NamedTempFile
 /// no value can start a record of its own. `None` keeps stdin unchanged.
 pub fn payload(
     merged: &Merged,
-    values: Option<&ResolvedDeploy>,
+    values: crate::translation_core::Maybe<&ResolvedDeploy>,
     json: bool,
-    token_secret: &str,
+    token_secret: &crate::translation_core::Str,
     seeds: &[link_assistant_router::deploy_seed::Seed],
-) -> Option<String> {
+) -> crate::translation_core::Maybe<String> {
     let mut lines: Vec<String> = Vec::new();
     if let Some(instance) = &merged.instance {
         lines.push(format!("instance {instance}"));
@@ -231,7 +231,7 @@ fn by_event<'a>(events: &'a [Value], kind: &'a str) -> impl Iterator<Item = &'a 
         .filter(move |event| event.get("event").and_then(Value::as_str) == Some(kind))
 }
 
-fn steps(events: &[Value]) -> Vec<Value> {
+fn steps(events: &[crate::translation_core::Json]) -> Vec<crate::translation_core::Json> {
     let marks: Vec<(String, i64)> = by_event(events, "step")
         .filter_map(|event| {
             Some((
@@ -245,7 +245,7 @@ fn steps(events: &[Value]) -> Vec<Value> {
         .enumerate()
         .map(|(index, (name, at))| {
             let duration = marks.get(index + 1).map(|(_, next)| next - at);
-            json!({"name": name, "started_ms": at, "duration_ms": duration})
+            crate::translation_core::json!({"name": name, "started_ms": at, "duration_ms": duration})
         })
         .collect()
 }
@@ -270,7 +270,7 @@ pub fn document(
         .collect();
     subprocesses.insert(
         0,
-        json!({"program": "ssh", "duration_ms": outcome.ssh_ms, "exit_code": outcome.ssh_exit}),
+        crate::translation_core::json!({"program": "ssh", "duration_ms": outcome.ssh_ms, "exit_code": outcome.ssh_exit}),
     );
     let provider_keys: Vec<Value> = values
         .map(|values| values.provider_keys.as_slice())
@@ -280,7 +280,7 @@ pub fn document(
             let reported = by_event(events, "provider_key")
                 .filter(|event| event.get("name").and_then(Value::as_str) == Some(&key.name))
                 .last();
-            json!({
+            crate::translation_core::json!({
                 "name": key.name,
                 "mode": key.mode.as_str(),
                 "fingerprint": value_fingerprint(token_secret, &key.value),
@@ -302,7 +302,7 @@ pub fn document(
         .and_then(|event| event.get("action"))
         .cloned()
         .unwrap_or(Value::Null);
-    json!({
+    crate::translation_core::json!({
         "schema": "link-assistant-router/deploy/v1",
         "target": "remote",
         "server": outcome.server,

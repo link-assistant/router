@@ -1,0 +1,295 @@
+{
+  "schema": "router-759-original-ci-artifact-api-json-lossless-compaction-v1",
+  "sourceHead": "007be69e38b9de8b6c3b4b668ba06ddf5619e11a",
+  "combinedEvidenceCapBytes": 500000000,
+  "allocatedBytesBefore": 498253824,
+  "allOriginalGitBytesVerified": true,
+  "allDecodedOriginalsByteIdentical": true,
+  "scope": "Complete original repository artifact-list API responses only; log payloads, downloaded artifacts, original source snapshots and historical receipt vectors remain unchanged",
+  "semanticAuthority": false,
+  "appliedSourceHead": "007be69e38b9de8b6c3b4b668ba06ddf5619e11a",
+  "entries": [
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/artifacts/repository-artifacts-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/artifacts/repository-artifacts-page-001.json.gz",
+      "originalBytes": 86948,
+      "originalSha256": "eea4cd369c9227a2019320db873eeeeeac86aff8fa3747b467cad98fffb12a50",
+      "originalGitBlob": "18a51bbaa29fe46a886ac8b528e399e549699fc7",
+      "archiveBytes": 9683,
+      "archiveSha256": "11d4d1c80b05cf4e68ad5c7b94a7808dc5b3823a08ec546d4a88f84706cba95f",
+      "originalAllocatedBytes": 90112
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/artifacts/repository-artifacts-page-002.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/artifacts/repository-artifacts-page-002.json.gz",
+      "originalBytes": 87532,
+      "originalSha256": "583b66f1bdea30e9a62d8465c47283de96909fb9c0872f23ab19c141e33fe16a",
+      "originalGitBlob": "8bc3d512289834bce1c656e25ec655da621871a5",
+      "archiveBytes": 9579,
+      "archiveSha256": "3925f5895043455d5fc7150df9f56d5da2d549b5c8f20a83767a6f434e4e6b9b",
+      "originalAllocatedBytes": 90112
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/artifacts/repository-artifacts-page-003.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/artifacts/repository-artifacts-page-003.json.gz",
+      "originalBytes": 87758,
+      "originalSha256": "e33df7c8da1b847937fa94d828700c0e527e0650010f7a99c021434ef1df365b",
+      "originalGitBlob": "69e05f854b6e354e940dcc5b116e08d3a94841e3",
+      "archiveBytes": 10198,
+      "archiveSha256": "3c7469f8c3ef336844a15edf4f0918ec43b1b7cc0a064e3c02e4b2bd6225c3bc",
+      "originalAllocatedBytes": 90112
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/artifacts/repository-artifacts-page-004.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/artifacts/repository-artifacts-page-004.json.gz",
+      "originalBytes": 87854,
+      "originalSha256": "51fc8c6754cedad805397e6a8194bbee6da32f208e933a7e27de133f7e83b1c7",
+      "originalGitBlob": "a7ec907643e007cde9819fda84f1e731e5ff0a6a",
+      "archiveBytes": 10213,
+      "archiveSha256": "e7fba687e4bc3078335ef6ed87f884532c0729345cb5357d504b7ae53e87d5d1",
+      "originalAllocatedBytes": 90112
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/artifacts/repository-artifacts-page-005.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/artifacts/repository-artifacts-page-005.json.gz",
+      "originalBytes": 87596,
+      "originalSha256": "f50f131064e79d110f739f1f5a6e10e9330bb1533c66c566c86d2e0cd73ecb74",
+      "originalGitBlob": "db65fd381cbb41f62335e473a98b51635d3893d3",
+      "archiveBytes": 9635,
+      "archiveSha256": "336f5c4feca225a4123894bb1320dbaba526daca5b06d5f60e87e4440649851a",
+      "originalAllocatedBytes": 90112
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/artifacts/repository-artifacts-page-006.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/artifacts/repository-artifacts-page-006.json.gz",
+      "originalBytes": 87628,
+      "originalSha256": "1b90a8e0a8a9575ad267ea4e7fa52cb2d729170d34722b951f2b3526205a416a",
+      "originalGitBlob": "c13eb1e9e4bf69647bc7ca3382772a2cad106799",
+      "archiveBytes": 9857,
+      "archiveSha256": "f18b28a08355ec45e37c14c677088b636f348bf921720a877e97c8379f8909fc",
+      "originalAllocatedBytes": 90112
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/artifacts/repository-artifacts-page-007.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/artifacts/repository-artifacts-page-007.json.gz",
+      "originalBytes": 87639,
+      "originalSha256": "34620afd5a1213878d22d8264b1ea6286fc1dd11bb9b79b8f118eebf2af69cd0",
+      "originalGitBlob": "d8fee558f0843f325640f294bf6facef49919be3",
+      "archiveBytes": 9876,
+      "archiveSha256": "c2237a722a6a602ab27fa4f1df9b3f09163ef6ac49f906cdc0fbfd6dce4388f6",
+      "originalAllocatedBytes": 90112
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/artifacts/repository-artifacts-page-008.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/artifacts/repository-artifacts-page-008.json.gz",
+      "originalBytes": 87650,
+      "originalSha256": "e244b3435789d33c7eea1636ecfc4d75dd750de2ddc71ae70cfdfadd46b98e34",
+      "originalGitBlob": "922e8359ecf47c46763169419b889ab950d52eee",
+      "archiveBytes": 9821,
+      "archiveSha256": "078781ceb79814ccedb916f58104081f63b6f22760ac668c8e2d0fcf27ae00ca",
+      "originalAllocatedBytes": 90112
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/artifacts/repository-artifacts-page-009.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/artifacts/repository-artifacts-page-009.json.gz",
+      "originalBytes": 87367,
+      "originalSha256": "f3c20909abb84198a46edeeb93cf79f0e2d50f95ca97640a984fe4e1f9d0c2f9",
+      "originalGitBlob": "80b8751a23ffd5d65f37c0c08641de2b940d532c",
+      "archiveBytes": 9756,
+      "archiveSha256": "e8c19898729eb368f4127e4f9bcc40d84c43d2cb56da282ff6237ae4bc9ac42a",
+      "originalAllocatedBytes": 90112
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/repository-artifacts-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/repository-artifacts-page-001.json.gz",
+      "originalBytes": 92741,
+      "originalSha256": "db1747e3774767f284f740afe5cd5204b8a983b841798554938bb19d75a6bbc4",
+      "originalGitBlob": "240e37b575a51fd1c47d9b16e4dc98093734df47",
+      "archiveBytes": 9790,
+      "archiveSha256": "fd0e780956ef0a38ffb5251fa65b12dfb71d49387cfe5d570d145a5f184231a2",
+      "originalAllocatedBytes": 94208
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/repository-artifacts-page-002.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/repository-artifacts-page-002.json.gz",
+      "originalBytes": 92474,
+      "originalSha256": "ea3624bfecf97a02a574e14783fc64cd30ac92966c520b5949ba02e6d940bd87",
+      "originalGitBlob": "6288c45c503782196fd703270f1e8c89313fd4e9",
+      "archiveBytes": 10078,
+      "archiveSha256": "7ec04481e96eacf770f3aaf5f9145023c1c982b90c2f399800ca6d2268506ee0",
+      "originalAllocatedBytes": 94208
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/repository-artifacts-page-003.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/repository-artifacts-page-003.json.gz",
+      "originalBytes": 93677,
+      "originalSha256": "f4464576eb2668984cc6cf302cfff9642b5a71f77102170c2f60ed0b939cfc4e",
+      "originalGitBlob": "6c9242413a21569bdefe532053fa0f3926e47525",
+      "archiveBytes": 10010,
+      "archiveSha256": "0195694afea0e036cfdc781b5f9b5104c10ff88000fac436a0fe7faa8a6c206b",
+      "originalAllocatedBytes": 94208
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/repository-artifacts-page-004.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/repository-artifacts-page-004.json.gz",
+      "originalBytes": 93112,
+      "originalSha256": "1dd9c9a4b2e42393f7add57404a7896105e62ed1a60fac8ca28819ae9068f618",
+      "originalGitBlob": "34047169444510e8a7c2da0a1f40a8b379a49ba4",
+      "archiveBytes": 9992,
+      "archiveSha256": "a290d0cb5450490d730b748a654894c83e8e6bdd97182119a574c5e814572926",
+      "originalAllocatedBytes": 94208
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/repository-artifacts-page-005.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/repository-artifacts-page-005.json.gz",
+      "originalBytes": 93652,
+      "originalSha256": "75e7f62e49f14d1fda3ea4ff354818dc98d307fcbd02e9095629c893d1307347",
+      "originalGitBlob": "56110bf53e1000388c5b6a6a0016347dd87e5da5",
+      "archiveBytes": 10071,
+      "archiveSha256": "e593ba608a1a30b832a3392e61978737bc3f6d1d37be2018494e75b71b065710",
+      "originalAllocatedBytes": 94208
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/repository-artifacts-page-006.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/repository-artifacts-page-006.json.gz",
+      "originalBytes": 94176,
+      "originalSha256": "3d6a13744449ca6e4d52187d86d57b0ef52b7dde2af89648ab74e03d88e67824",
+      "originalGitBlob": "601f18ca02ded0b8954bfecb37d25dbd34971f7b",
+      "archiveBytes": 10073,
+      "archiveSha256": "db4895b45955bc8e12c1ae2393d501ab11779a80a7eb4f567cd9efd9e74f43b3",
+      "originalAllocatedBytes": 94208
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/repository-artifacts-page-007.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/repository-artifacts-page-007.json.gz",
+      "originalBytes": 94048,
+      "originalSha256": "e34a117fc20997943ce7c9c29bb541b5e1ac3803181d48112c02828c1750be18",
+      "originalGitBlob": "6a75c9ca30abde8d3b59da3a20a83f53141b5004",
+      "archiveBytes": 9863,
+      "archiveSha256": "fd16b6118e5fbbe57f462720492c234eb5cdcfb56a2e3971c960a3ddcee81f2e",
+      "originalAllocatedBytes": 94208
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/repository-artifacts-page-008.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/repository-artifacts-page-008.json.gz",
+      "originalBytes": 93192,
+      "originalSha256": "fc4b94d93f5101e750b1b35c74c37a2d7dd49b124b4beff824ffc3c884f7e78d",
+      "originalGitBlob": "dfa2b508f176936571929eb9b3ebbbeb3595c0f0",
+      "archiveBytes": 10046,
+      "archiveSha256": "ac0d2c8638e2eb49b6806d62e59952824e17dfe838a7cc04d9d7b11449d4aa22",
+      "originalAllocatedBytes": 94208
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/repository-artifacts-page-009.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/repository-artifacts-page-009.json.gz",
+      "originalBytes": 93253,
+      "originalSha256": "52d7f675ac35af3f1aa96460ea5c5ef50737cd3a0fd78e44dff6d877aad9fad7",
+      "originalGitBlob": "acc1b28b93ff77da345493f3b7e27c1ca8ae549f",
+      "archiveBytes": 10029,
+      "archiveSha256": "74fad30f8cf17ab82fe1a60b060742fbcf1eb3e5a8d047b4186bd12f46232c61",
+      "originalAllocatedBytes": 94208
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/repository-artifacts-page-010.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/repository-artifacts-page-010.json.gz",
+      "originalBytes": 93097,
+      "originalSha256": "02509bf9ecd39c7fa90124d33c4071c40aad2e7f93c9c100be2040070b381559",
+      "originalGitBlob": "5d77dbce17980b53e21460542f6d198e89748d47",
+      "archiveBytes": 9909,
+      "archiveSha256": "2cc9fd19d1309cd7300a57bf235491910ee85b09a8551e9e58239cb83155dc98",
+      "originalAllocatedBytes": 94208
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/repository-artifacts-page-011.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/repository-artifacts-page-011.json.gz",
+      "originalBytes": 93344,
+      "originalSha256": "ef17a7f9b7896b99b9def936fdcdd03086fba4934d242090ee027802bef884c2",
+      "originalGitBlob": "98d6b7e54bdff8b31c8ac99b79a6c3dd43d71141",
+      "archiveBytes": 9825,
+      "archiveSha256": "cb9b60fb721b581eacaa7a340902eade91147eba7d970f172e9cb99a0b73f72c",
+      "originalAllocatedBytes": 94208
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/repository-artifacts-page-012.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/repository-artifacts-page-012.json.gz",
+      "originalBytes": 92992,
+      "originalSha256": "1ccc55d0c14f929f6a79081b05af6531fb3364b0c2a53de30ce629fa5f85d962",
+      "originalGitBlob": "3b447f51007ccc426737973ae1910c2b4a46258e",
+      "archiveBytes": 10107,
+      "archiveSha256": "7eadd6afb4d57cd90eb8afc94430bcc8c93e80f4770bd80a3d6867e01f661228",
+      "originalAllocatedBytes": 94208
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/repository-artifacts-page-013.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/repository-artifacts-page-013.json.gz",
+      "originalBytes": 93293,
+      "originalSha256": "cd1402778ede7dd0ebaa5a067daf9a7e6fdedb1d75c7bc6da24cf16530e3d8c1",
+      "originalGitBlob": "49451635394653217992bfbbb34c8ac96e6df39f",
+      "archiveBytes": 9847,
+      "archiveSha256": "2ed82edc9287517221b6399017a1b6da081f08fcdfb7cf212107b06239fc09ad",
+      "originalAllocatedBytes": 94208
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/artifacts/repository-artifacts-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/artifacts/repository-artifacts-page-001.json.gz",
+      "originalBytes": 91336,
+      "originalSha256": "d06c5eae79ca7d19b84f61c41c717c56b50263e067836cbe06c903013e83c31c",
+      "originalGitBlob": "3dd4f36ea4bdb03d8f40d42fddbaf9517c5ee5b7",
+      "archiveBytes": 9826,
+      "archiveSha256": "a9a9206809529d6490de817b2b69a1e9c20ec8c1bedf205076d2ed4669616525",
+      "originalAllocatedBytes": 94208
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/artifacts/repository-artifacts-page-002.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/artifacts/repository-artifacts-page-002.json.gz",
+      "originalBytes": 91344,
+      "originalSha256": "d51195a5d045842dbb2f34d6f3c24eef7784a3f16e4cc75e487ce54d3a4892ea",
+      "originalGitBlob": "cf8924f7789c2678c04ed177bb7469bd4a73a1a5",
+      "archiveBytes": 9901,
+      "archiveSha256": "f61dc6124132cd9a3afcebdf05f76795db9067ab4a4ae0176cc99d615ba6db59",
+      "originalAllocatedBytes": 94208
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/artifacts/repository-artifacts-page-003.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/artifacts/repository-artifacts-page-003.json.gz",
+      "originalBytes": 91432,
+      "originalSha256": "cca1e5d9274bb5cdc3f05beb62818531b7a2cb7666ca049a6984cb828b5b9063",
+      "originalGitBlob": "e3f6de81944048a479b103d36ced0e9f6f3491ab",
+      "archiveBytes": 9785,
+      "archiveSha256": "6d0490ac6b3b8c972657950bb333ab402d4fe6b978c0c4b3e378937717f6039f",
+      "originalAllocatedBytes": 94208
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/artifacts/repository-artifacts-page-004.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/artifacts/repository-artifacts-page-004.json.gz",
+      "originalBytes": 91378,
+      "originalSha256": "64959e71efedc928e7ec32984128e5868c305e546b106a79537f0f0027d245a6",
+      "originalGitBlob": "2cefe68a784c68c2bb4e8ec8385302df87f6db83",
+      "archiveBytes": 9681,
+      "archiveSha256": "9a021c1e1ed657e869313a7bd3e6e705454c0f909b9de1ad0c65d73d4f28193a",
+      "originalAllocatedBytes": 94208
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/artifacts/repository-artifacts-page-005.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/artifacts/repository-artifacts-page-005.json.gz",
+      "originalBytes": 92496,
+      "originalSha256": "c75470551226a31dae5f52040b4fa944bdc6ff13c2506cd805c2d41de8acfe26",
+      "originalGitBlob": "37837bbfca3f23a996657e15cfa1e3573eee3144",
+      "archiveBytes": 11031,
+      "archiveSha256": "2bd4a63e9938614742e497e7f8445885e7080e5407e5ad6e7a504121dfc02b56",
+      "originalAllocatedBytes": 94208
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/artifacts/repository-artifacts-page-006.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/artifacts/repository-artifacts-page-006.json.gz",
+      "originalBytes": 75619,
+      "originalSha256": "59c89e7afdf4a63aa052fba2dadd71b1959504ab125b321f38044726e0f10898",
+      "originalGitBlob": "7d0c75b59038a55769de4a7154798a505e2b4d5f",
+      "archiveBytes": 9423,
+      "archiveSha256": "ad8a2c65d5081983e215bcf2ed07d9b7ab5c0cec8e44a1aa39513f554d6c0cf6",
+      "originalAllocatedBytes": 77824
+    }
+  ],
+  "citationUpdates": [],
+  "decode": "gzip -dc ARCHIVE.json.gz; verify complete decoded length and SHA256 against entries"
+}

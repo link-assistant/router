@@ -61,22 +61,22 @@ use crate::request_log::{redacted_body, redacted_headers};
 pub use store::{LoadError, Provenance, Recording, Turn};
 
 /// Environment variable that turns recording on and says where to write.
-pub const RECORD_ENV: &str = "CONVERSATION_RECORD";
+pub const RECORD_ENV: &crate::translation_core::Str = "CONVERSATION_RECORD";
 /// Environment variable that turns replay on and says what to replay.
-pub const REPLAY_ENV: &str = "CONVERSATION_REPLAY";
+pub const REPLAY_ENV: &crate::translation_core::Str = "CONVERSATION_REPLAY";
 
 /// Response header naming the turn a replayed answer came from.
 ///
 /// A replay test that passes should still be able to prove *what* it exercised;
 /// without this the only evidence is that some 200 came back.
-pub const REPLAY_TURN_HEADER: &str = "x-router-replay-turn";
+pub const REPLAY_TURN_HEADER: &crate::translation_core::Str = "x-router-replay-turn";
 
 /// Headers a replayed response must not repeat from the recording.
 ///
 /// The recorded body is re-framed by this server, so the recorded framing would
 /// contradict the bytes actually sent — a stale `content-length` truncates the
 /// answer and a recorded `transfer-encoding` collides with the one Axum writes.
-const REFRAMED_HEADERS: &[&str] = &["content-length", "transfer-encoding", "connection", "date"];
+const REFRAMED_HEADERS: &[&crate::translation_core::Str] = &["content-length", "transfer-encoding", "connection", "date"];
 
 /// Whether either mode is on, and with which file.
 #[derive(Clone, Debug)]
@@ -104,7 +104,7 @@ impl Mode {
 
     /// Resolve the mode from the two variables' values.
     #[must_use]
-    pub fn from_values(record: Option<&str>, replay: Option<&str>) -> Self {
+    pub fn from_values(record: crate::translation_core::Maybe<&crate::translation_core::Str>, replay: crate::translation_core::Maybe<&crate::translation_core::Str>) -> Self {
         let record = record.map(str::trim).filter(|value| !value.is_empty());
         let replay = replay.map(str::trim).filter(|value| !value.is_empty());
         match (record, replay) {
@@ -126,7 +126,7 @@ impl Mode {
     /// deployment answering from a file instead of a provider is a fact an
     /// operator reading the log must be told, not one they have to deduce.
     #[must_use]
-    pub fn announcement(&self) -> Option<String> {
+    pub fn announcement(&self) -> crate::translation_core::Maybe<String> {
         match self {
             Self::Off => None,
             Self::Record(path) => Some(format!(
@@ -181,7 +181,7 @@ impl Session {
     ///
     /// # Errors
     /// Propagates [`LoadError`] when the file is unreadable or has no header.
-    pub fn replaying(path: PathBuf) -> Result<Self, LoadError> {
+    pub fn replaying(path: PathBuf) -> crate::translation_core::Outcome<Self, LoadError> {
         let recording = store::load(&path)?;
         Ok(Self {
             path,
@@ -198,7 +198,7 @@ impl Session {
     /// # Errors
     /// Propagates a replay load failure; recording cannot fail here because the
     /// file is created on the first exchange.
-    pub fn from_mode(mode: &Mode, provider: &str) -> Result<Option<Self>, LoadError> {
+    pub fn from_mode(mode: &Mode, provider: &crate::translation_core::Str) -> crate::translation_core::Outcome<crate::translation_core::Maybe<Self>, LoadError> {
         match mode {
             Mode::Off => Ok(None),
             Mode::Record(path) => Ok(Some(Self::recording(
@@ -276,8 +276,8 @@ fn recorded_request(
     headers: &HeaderMap,
     body: &[u8],
     declared_body: bool,
-) -> Value {
-    json!({
+) -> crate::translation_core::Json {
+    crate::translation_core::json!({
         "method": method.as_str(),
         "uri": crate::request_log::safe_http_uri(method, uri),
         "headers": redacted_headers(headers),
@@ -316,7 +316,7 @@ const MAX_RECORDED_BODY: usize = 10 * 1024 * 1024;
 /// Outermost, deliberately. A replayed turn must not reach routing, provider
 /// selection, credential loading or the upstream client — that is what lets a
 /// machine holding no subscription at all serve a replay.
-pub fn layer(app: axum::Router, session: Option<Arc<Session>>) -> axum::Router {
+pub fn layer(app: axum::Router, session: crate::translation_core::Maybe<Arc<Session>>) -> axum::Router {
     match session {
         None => app,
         Some(session) => app.layer(axum::middleware::from_fn_with_state(
@@ -357,7 +357,7 @@ pub async fn record_or_replay(
 }
 
 /// Serve turn `position` from the recording, or fail naming the divergence.
-fn replay_turn(session: &Arc<Session>, position: usize, incoming: &Value) -> Response {
+fn replay_turn(session: &Arc<Session>, position: usize, incoming: &crate::translation_core::Json) -> Response {
     let Some(turn) = session.turns.get(position - 1) else {
         return replay_failure(&format!(
             "replay exhausted: the recording {} holds {} turn(s) and the client asked for turn {}",
@@ -411,7 +411,7 @@ fn served_response(turn: &Turn, position: usize) -> Response {
 /// A distinct status, not a plausible answer: a replay is a test, and the one
 /// outcome worse than failing is passing with an invented response. The message
 /// is the whole diagnosis, so it goes in the body *and* the router's log.
-fn replay_failure(message: &str) -> Response {
+fn replay_failure(message: &crate::translation_core::Str) -> Response {
     tracing::error!("{message}");
     crate::api_error::error_response(
         StatusCode::BAD_GATEWAY,
@@ -428,7 +428,7 @@ fn replay_failure(message: &str) -> Response {
 fn record_turn(
     session: Arc<Session>,
     position: usize,
-    request: Value,
+    request: crate::translation_core::Json,
     response: Response,
 ) -> Response {
     let (parts, body) = response.into_parts();

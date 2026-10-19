@@ -1,0 +1,38 @@
+[
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/21f925a6351220ab4fde8f8a223b4b22a839a6ad/.github",
+    "start_line": 47,
+    "start_column": null,
+    "end_line": 47,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "sccache stats - cli",
+    "message": "74% - 743 hits, 257 misses, 0 errors",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/21f925a6351220ab4fde8f8a223b4b22a839a6ad/.github",
+    "start_line": 25,
+    "start_column": null,
+    "end_line": 25,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "Process completed with exit code 127.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/21f925a6351220ab4fde8f8a223b4b22a839a6ad/.github",
+    "start_line": 1,
+    "start_column": null,
+    "end_line": 1,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "",
+    "message": "Due to capacity constraints, jobs targeting macOS arm64 runners may experience longer queue times.",
+    "raw_details": ""
+  }
+]

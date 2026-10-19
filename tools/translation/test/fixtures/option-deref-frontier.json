@@ -1,0 +1,133 @@
+{
+  "schema": "historical-source-frontier",
+  "sourceHead": "5eb88d4721683d44cc3ec620d68bbc93d6d326e9",
+  "archiveSha256": "67f4adfe0cd4b7fdab62ec0299a709ccd90c4f4923466d0701ee00b58a33edb3",
+  "scope": "all src/ per-file carried items; complete project refusal/unlowered/module/binding diagnostics",
+  "pins": [
+    {
+      "file": "src/credential_acceptance.rs",
+      "owner": "AcceptanceFailure",
+      "name": "transaction_id",
+      "fileSha256": "4a10a1e016936d2f4dd8fddc21ed400f8ed72794343b09d5bc2e779525231b10",
+      "span": {
+        "start": 3532,
+        "end": 3619
+      },
+      "fnTokenSha256": "625668b3950f18bf5b3bd2e0834423312bee2062306f496464b4d76ef7cbc9a8"
+    },
+    {
+      "file": "src/output_limit.rs",
+      "owner": "ResponsesStreamRewriter",
+      "name": "upstream_model",
+      "fileSha256": "b165be6e33444a5811b33e52567de74ca144e7208a24c161b231bd332cf899e0",
+      "span": {
+        "start": 7293,
+        "end": 7380
+      },
+      "fnTokenSha256": "60b0e70426efbf82f9c6248f7f441b0085e6736be992e7deb488423b479783df"
+    },
+    {
+      "file": "src/github_proxy.rs",
+      "owner": "GitHubProxyConfig",
+      "name": "credential",
+      "fileSha256": "3c65440f41bef37e9f55641ae298a8083884a42cffa9797e6c8ab40e81ef4e37",
+      "span": {
+        "start": 4438,
+        "end": 4512
+      },
+      "fnTokenSha256": "52b5b8c5ed46d066c24be47b34541efc924ccc024c1104bbcfd4e104b22057e2"
+    },
+    {
+      "file": "src/bridge_response.rs",
+      "owner": "AnthropicUsage",
+      "name": "openai_service_tier",
+      "fileSha256": "5dc06a1b9326f20e357391fc3aae75ef06ec8c151835b4b257011c3cf0136340",
+      "span": {
+        "start": 3837,
+        "end": 4075
+      },
+      "fnTokenSha256": "b08683eab2c3725fb3124c1c37ae94f00f1875fa37bf1d00cb9a6cb2bf46cba0"
+    }
+  ],
+  "records": [
+    {
+      "file": "src/bridge_response.rs",
+      "name": "bridge_response.ml_impl_63726174652e6272696467655f726573706f6e73652e416e7468726f7069635573616765_6f70656e61695f736572766963655f74696572",
+      "term": "method",
+      "kind": "unsupported",
+      "message": "method as_deref: outside the portable core",
+      "span": {
+        "start": 464023,
+        "end": 464036
+      }
+    },
+    {
+      "file": "src/credential_acceptance.rs",
+      "name": "credential_acceptance.ml_impl_63726174652e63726564656e7469616c5f616363657074616e63652e416363657074616e63654661696c757265_7472616e73616374696f6e5f6964",
+      "term": "method",
+      "kind": "unsupported",
+      "message": "method as_deref: outside the portable core",
+      "span": {
+        "start": 1380290,
+        "end": 1380307
+      }
+    },
+    {
+      "file": "src/github_proxy.rs",
+      "name": "github_proxy.ml_impl_63726174652e6769746875625f70726f78792e47697448756250726f7879436f6e666967_63726564656e7469616c",
+      "term": "method",
+      "kind": "unsupported",
+      "message": "method as_deref: outside the portable core",
+      "span": {
+        "start": 1895118,
+        "end": 1895135
+      }
+    },
+    {
+      "file": "src/github_proxy.rs",
+      "name": "github_proxy.ml_impl_63726174652e6769746875625f70726f78792e506f6c69637952756c65_6d617463686573",
+      "term": "method",
+      "kind": "unsupported",
+      "message": "method as_deref: outside the portable core",
+      "span": {
+        "start": 1903347,
+        "end": 1903372
+      }
+    },
+    {
+      "file": "src/managed_server/selection.rs",
+      "name": "managed_server.selection.remove_imported_certificates",
+      "term": "fn",
+      "kind": "unsupported",
+      "message": "method as_deref: outside the portable core",
+      "span": {
+        "start": 2212333,
+        "end": 2212347
+      }
+    },
+    {
+      "file": "src/managed_server/selection.rs",
+      "name": "managed_server.selection.remove_unreferenced_certificates",
+      "term": "fn",
+      "kind": "unsupported",
+      "message": "method as_deref: outside the portable core",
+      "span": {
+        "start": 2214404,
+        "end": 2214416
+      }
+    },
+    {
+      "file": "src/output_limit.rs",
+      "name": "output_limit.ml_impl_63726174652e6f75747075745f6c696d69742e526573706f6e73657353747265616d5265777269746572_757073747265616d5f6d6f64656c",
+      "term": "method",
+      "kind": "unsupported",
+      "message": "method as_deref: outside the portable core",
+      "span": {
+        "start": 2703960,
+        "end": 2703977
+      }
+    }
+  ],
+  "draftStatus": "unrun",
+  "runtimeParity": false
+}

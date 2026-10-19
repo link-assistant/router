@@ -1,0 +1,3 @@
+Repair the pre-import observer fixture by retaining the complete historical JSON guard and explicitly re-exporting the genuine current path-membership guard, with an exact identity check. The fixture compares a current derive leaf under historical JSON qualification; it does not claim an old complete module. All original hooks, callbacks, hashes, bodies and child limits remain.
+
+Pass explicit empty options through the format-template test wrapper so the independent deadline audit can identify the unchanged default deadline. No timeout is added or raised. Source-only; receiving is pending and no engines ran.

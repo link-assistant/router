@@ -1,0 +1,2 @@
+### Added
+- Add explicit owned `json_parse` and `json_parse_bytes` compatibility APIs and a proposal-only CST adoption sequence for canonical JSON calls whose errors are already discarded. The JavaScript adapter reuses the locked roundtrip runtime and preserves syntax failure separately from adapter-domain exceptions. Native library internals remain untranslated. Source draft only: JavaScript, strict TypeScript, native Rust, original caller admission and reverse synchronization are unrun or pending receiving; no executable coverage gain is claimed.

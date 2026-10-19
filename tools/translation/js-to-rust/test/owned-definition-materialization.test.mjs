@@ -1,0 +1,73 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
+import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,rmSync,existsSync} from 'node:fs';
+import {join,dirname} from 'node:path';
+import {tmpdir} from 'node:os';
+import {fileURLToPath,pathToFileURL} from 'node:url';
+import {gunzipSync} from 'node:zlib';
+import '../../project.mjs';
+import {deriveOwnedDefinitionBulkSources} from '../../prepare-owned-definition-bulk.mjs';
+import {captureOwnedDefinitionInputs,requireOwnedDefinitionInputs,decodeOwnedDefinitionPacket,encodeOwnedDefinitionPacket,ownedDefinitionHash} from '../../owned-definition-output.mjs';
+import {buildOwnedCoreDefinitionArtifacts,captureOwnedDefinitionCorpus,cleanOwnedDefinitionDrafts} from '../owned-core-definition-corpus.mjs';
+import {buildOwnedCoreDocumentArtifacts} from '../owned-core-corpus.mjs';
+import {createCompilationMatrix,DECLARED_FAMILY_PROFILES,compilationMatrixDescription} from '../../compilation-matrix.mjs';
+import {ROUTER_FORMATTING_FACADE_SOURCE as facade,ROUTER_CORE_PRIMITIVES_SOURCE as primitives,ROUTER_CORE_RANGES_SOURCE as ranges,ROUTER_CORE_JSON_COLLECTIONS_SOURCE as collections} from '../../router-core-source-data.mjs';
+const root=fileURLToPath(new URL('../../../../',import.meta.url)),limits={timeout:60000},C='crate::translation_core::',sha=ownedDefinitionHash;
+const original=path=>existsSync(join(root,path))?readFileSync(join(root,path),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:30000,maxBuffer:32*1024*1024});
+function write(root,path,text){mkdirSync(dirname(join(root,path)),{recursive:true});writeFileSync(join(root,path),text);}
+function fixture(t,{two=false}={}){
+ const directory=mkdtempSync(join(tmpdir(),'owned-definition-materialization-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));
+ const body='fn value()->'+C+'Json{'+C+'json!({"a":[null,"猫😀",true]})}',files={'src/lib.rs':'pub mod translation_core;\n'+(two?'mod shared;':body),'src/translation_core.rs':facade,'src/translation_core/primitives.rs':primitives,'src/translation_core/ranges.rs':ranges,'src/translation_core/json_collections.rs':collections,'Cargo.toml':original('Cargo.toml'),'Cargo.lock':original('Cargo.lock')};
+ if(two){files['src/main.rs']='pub mod translation_core;mod shared;';files['src/shared.rs']=body;}
+ for(const [path,text]of Object.entries(files))write(directory,path,text);
+ const git=(...args)=>execFileSync('git',args,{cwd:directory,encoding:'utf8',timeout:30000,stdio:['pipe','pipe','pipe']});git('init','-q');git('config','user.name','Owned definitions fixture');git('config','user.email','fixture@example.invalid');git('add','.');git('-c','core.hooksPath=/dev/null','commit','-qm','complete source inputs');
+ return {directory,files,body};
+}
+const owned=()=>import('../../retained-owned-definitions-bulk.mjs'),raw=()=>import('../../owned-definitions-bulk.mjs');
+async function materialize(t,options={}){const value=fixture(t,options),bulk=await owned(),plan=bulk.planRegeneration({root:value.directory,entries:options.two?['src/lib.rs','src/main.rs']:['src/lib.rs']});assert.deepEqual(bulk.applyRegenerationPlan(plan).failures,[]);return {...value,bulk,plan};}
+const value=()=>({$:'Object',field0:{$:'Map',entries:[{$:'MapEntry',key:'a',value:{$:'Array',field0:[{$:'Null'},{$:'String',field0:'猫😀'},{$:'Bool',field0:true}]}}]}});
+function strict(directory,files){const temporary=mkdtempSync(join(tmpdir(),'owned-definition-strict-'));try{const config=join(temporary,'tsconfig.json');writeFileSync(config,JSON.stringify({compilerOptions:{strict:true,skipLibCheck:true,target:'ES2022',module:'NodeNext',moduleResolution:'NodeNext',outDir:join(directory,'out'),rootDir:directory},files:files.map(path=>join(directory,path))}));execFileSync(process.execPath,[join(root,'packages/javascript/node_modules/typescript/bin/tsc'),'-p',config],{cwd:root,encoding:'utf8',timeout:20000,stdio:'pipe'});}finally{rmSync(temporary,{recursive:true,force:true});}}
+function retained(name,object){if(!process.env.ROUTER_OWNED_DEFINITION_MATERIALIZATION_VECTORS)return;const directory=process.env.ROUTER_OWNED_DEFINITION_MATERIALIZATION_VECTORS;mkdirSync(directory,{recursive:true});const packet=encodeOwnedDefinitionPacket(object);writeFileSync(join(directory,name+'.json.gz.b64'),packet.text);writeFileSync(join(directory,name+'.index.json'),JSON.stringify({...packet,text:undefined})+'\n');}
+test('complete original producers derive four modules with independent full inverses',limits,()=>{
+ const bulk=original('tools/translation/bulk.mjs'),matrix=original('tools/translation/matrix-bulk.mjs'),proposal=deriveOwnedDefinitionBulkSources({bulk,matrix});assert.equal(proposal.files.length,4);
+ for(const row of proposal.files){assert.equal(original(row.path),row.text);let text=row.text.slice(row.text.indexOf('\n',row.text.indexOf('\n')+1)+1);for(const edit of [...row.edits].reverse()){assert.equal(text.split(edit.after).length,2);text=text.replace(edit.after,edit.before);}const expected=row.path.includes('matrix')?matrix:row.path.includes('retained')?proposal.retainedOriginal.bulk.text:bulk;assert.equal(text,expected);assert.equal(row.wholeUndo,true);}
+ assert.throws(()=>deriveOwnedDefinitionBulkSources({bulk:bulk.replace('const plans=new WeakMap();','const plans=new Map();'),matrix}),/anchor|changed/u);retained('complete-producer-recipes',proposal);
+});
+test('actual materialized definitions execute independently in JS forward strict TS and reverse strict TS',limits,async t=>{
+ const actual=await materialize(t),capture=captureOwnedDefinitionCorpus(actual.directory),result=buildOwnedCoreDefinitionArtifacts(actual.directory);assert.equal(result.definitions[0].totals.uniquePhysicalOriginals,1);for(const [path,text]of result.artifacts)write(actual.directory,path,text);
+ const occurrence=result.definitions[0].occurrences[0],file=capture.projects[0].definitions[0],forward=await import(pathToFileURL(join(actual.directory,file.javascript)).href);assert.deepEqual(forward[file.packet.target](),value());
+ strict(actual.directory,[file.typescript,occurrence.reverseTypescript]);for(const [path,source]of capture.files)if(path.endsWith('.mjs'))write(actual.directory,'out/'+path,source);
+ const typed=await import(pathToFileURL(join(actual.directory,'out',file.typescript.replace(/\.mts$/u,'.mjs'))).href);assert.deepEqual(typed[file.packet.target](),value());const reverse=await import(pathToFileURL(join(actual.directory,'out',occurrence.reverseTypescript.replace(/\.mts$/u,'.mjs'))).href);const functions=Object.values(reverse).filter(row=>typeof row==='function');assert.equal(functions.length,1);assert.deepEqual(functions[0](),value());
+ const main=buildOwnedCoreDocumentArtifacts(actual.directory);for(const [path,text]of main.artifacts)assert.equal(result.artifacts.get(path),text);assert.equal(result.definitions[0].totals.wholeModules,0);retained('full-materialized-and-reverse',{plan:actual.plan,capture:capture.index,result:result.definitions});
+});
+test('raw retained and unchanged default plans preserve every legacy artifact and freshness refusal',limits,async t=>{
+ const actual=fixture(t),normal=await import('../../bulk.mjs'),rawBulk=await raw(),retainedBulk=await owned(),options={root:actual.directory,entries:['src/lib.rs']},old=normal.planRegeneration(options),next=rawBulk.planRegeneration(options),packed=retainedBulk.planRegeneration(options);
+ const names=new Set(old.outputs.map(row=>row.path));assert.deepEqual(next.outputs.filter(row=>names.has(row.path)),old.outputs);assert.deepEqual(packed.outputs,next.outputs);rawBulk.applyRegenerationPlan(next);assert.deepEqual(normal.applyRegenerationPlan(old,{check:true}).failures,[]);assert.deepEqual(rawBulk.applyRegenerationPlan(next,{check:true}).failures,[]);
+ write(actual.directory,'src/lib.rs',actual.files['src/lib.rs']+'\n// changed');assert.throws(()=>rawBulk.applyRegenerationPlan(next,{check:true}),/changed/u);write(actual.directory,'src/lib.rs',actual.files['src/lib.rs']);const path=next.outputs.find(row=>row.path.endsWith('/definition_0.mjs')).path;write(actual.directory,path,'// stale');assert.ok(rawBulk.applyRegenerationPlan(next,{check:true}).failures.includes('stale: '+path));write(actual.directory,path+'unexpected','// arbitrary');assert.ok(rawBulk.applyRegenerationPlan(next,{check:true}).failures.includes('unexpected: '+path+'unexpected'));
+});
+test('complete packets CST inverse actual source and independent TS closure remain mandatory',limits,async t=>{
+ const actual=await materialize(t),capture=captureOwnedDefinitionCorpus(actual.directory),project=capture.projects[0],row=project.definitions[0],indexPath=project.index,index=JSON.parse(readFileSync(join(actual.directory,indexPath),'utf8'));const packet=index.packets.find(value=>value.path===row.packetEvidencePath);
+ const text=readFileSync(join(actual.directory,packet.path),'utf8');assert.equal(decodeOwnedDefinitionPacket(text,packet).original.source,actual.body);assert.throws(()=>decodeOwnedDefinitionPacket(text+'x',packet),/changed/u);
+ const typed=readFileSync(join(actual.directory,row.typescript),'utf8');write(actual.directory,row.typescript,typed.replace('JsonValue','boolean'));assert.throws(()=>buildOwnedCoreDefinitionArtifacts(actual.directory),/changed/u);write(actual.directory,row.typescript,typed);write(actual.directory,row.typescript.replace(/\.mts$/u,'.ts'),typed);assert.throws(()=>captureOwnedDefinitionCorpus(actual.directory),/unexpected/u);
+ retained('all-forward-fields',index);
+});
+test('current source Cargo compiler and typed inputs rejoin before any genuine plan writes',limits,async t=>{
+ const actual=fixture(t),bulk=await owned(),plan=bulk.planRegeneration({root:actual.directory,entries:['src/lib.rs']}),input=captureOwnedDefinitionInputs(actual.directory);write(actual.directory,'Cargo.toml',actual.files['Cargo.toml']+'\n# changed');assert.throws(()=>requireOwnedDefinitionInputs(input),/changed/u);assert.throws(()=>bulk.applyRegenerationPlan(plan),/changed/u);assert.equal(existsSync(join(actual.directory,'packages/javascript/generated')),false);write(actual.directory,'Cargo.toml',actual.files['Cargo.toml']);write(actual.directory,'new.rs','fn new(){}');execFileSync('git',['add','new.rs'],{cwd:actual.directory});assert.throws(()=>requireOwnedDefinitionInputs(input),/changed|census/u);
+});
+test('two genuine projects retain both checked occurrences but deduplicate the physical original',limits,async t=>{
+ const actual=await materialize(t,{two:true}),result=buildOwnedCoreDefinitionArtifacts(actual.directory),summary=result.definitions[0];assert.equal(summary.totals.occurrences,2);assert.equal(summary.totals.uniquePhysicalOriginals,1);assert.equal(summary.originals[0].occurrences.length,2);assert.equal(summary.witnessApplicationItems,0);assert.ok(summary.occurrences.every(row=>row.mainOverlap==='unknown'&&row.status==='definition-only'));retained('full-two-project-result',summary);
+});
+test('independent full matrix retains legacy inventories and strict profile identities before writes',limits,async t=>{
+ const actual=fixture(t),matrix=createCompilationMatrix({profiles:DECLARED_FAMILY_PROFILES}),normal=await import('../../matrix-bulk.mjs'),ownedMatrix=await import('../../retained-owned-definitions-matrix-bulk.mjs');
+ const late=fixture(t);assert.throws(()=>ownedMatrix.regenerateCompilationMatrix({root:late.directory,matrix,entries:['src/lib.rs'],progress:record=>{if(record.stage==='profile'&&record.state==='start'&&record.profile==='unix-family')throw Error('late profile failure');}}),/late profile failure/u);assert.equal(existsSync(join(late.directory,'profiles')),false);
+ const old=normal.regenerateCompilationMatrix({root:actual.directory,matrix,entries:['src/lib.rs']}),before=readFileSync(join(actual.directory,'profiles/matrix-'+matrix.sha256+'.json'),'utf8');const next=ownedMatrix.regenerateCompilationMatrix({root:actual.directory,matrix,entries:['src/lib.rs']});assert.deepEqual(next.manifest,old.manifest);assert.equal(readFileSync(join(actual.directory,'profiles/matrix-'+matrix.sha256+'.json'),'utf8'),before);
+ const extra=JSON.parse(readFileSync(join(actual.directory,'profiles/owned-definitions-matrix-'+matrix.sha256+'.json'),'utf8'));assert.equal(extra.profiles.length,3);for(const member of compilationMatrixDescription(matrix).profiles){const capture=captureOwnedDefinitionCorpus(actual.directory,member.directory);assert.equal(capture.index.prefix,member.directory);assert.deepEqual(capture.index.compilationProfile,member.compilationProfile);}assert.deepEqual(ownedMatrix.regenerateCompilationMatrix({root:actual.directory,matrix,entries:['src/lib.rs'],check:true}).failures,[]);
+});
+test('cold explicit CLI and stale draft cleanup preserve refusal and exact installed source scope',limits,async t=>{
+ const actual=await materialize(t),result=buildOwnedCoreDefinitionArtifacts(actual.directory);for(const [path,text]of result.artifacts)write(actual.directory,path,text);
+ const path='tools/translation/js-to-rust/generated/owned-core-definitions/removed.rs.txt';write(actual.directory,path,'// GENERATED: definition-only reverse draft; CI Rust unrun.\nfn removed(){}\n');const changed=[];cleanOwnedDefinitionDrafts(actual.directory,result.artifacts,changed,{check:true});assert.ok(changed.includes(path));assert.equal(existsSync(join(actual.directory,path)),true);cleanOwnedDefinitionDrafts(actual.directory,result.artifacts,[],{});assert.equal(existsSync(join(actual.directory,path)),false);write(actual.directory,path,'unrecognized user content');assert.throws(()=>cleanOwnedDefinitionDrafts(actual.directory,result.artifacts,[],{}),/unrecognized/u);assert.equal(readFileSync(join(actual.directory,path),'utf8'),'unrecognized user content');
+ const command=[join(root,'scripts/translate-router.mjs'),'--root',actual.directory,'--retain-output-text','--owned-core-definitions','--entry','src/lib.rs','--check'];execFileSync(process.execPath,command,{cwd:root,encoding:'utf8',timeout:30000,maxBuffer:4*1024*1024});
+ // Both full actual525 original parents remain independent evidence, not synthetic coverage.
+ const historical=original('tools/translation/js-to-rust/test/forward-owned-json-definitions.test.mjs'),start=historical.indexOf('const PARENTS=');assert.ok(start>0);const parents=JSON.parse(historical.slice(start+'const PARENTS='.length).trim().slice(0,-1));for(const row of parents){const source=gunzipSync(Buffer.from(row.parentGzip,'base64')).toString('utf8');assert.equal(sha(source),row.parentSha256);assert.equal(source.slice(...row.span),row.source);retained(row.name+'-complete-parent',{...row,parent:source,current:original(row.file)});}
+});

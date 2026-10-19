@@ -1,0 +1,14 @@
+[
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/aabf6d4ea012d9b67843ee7bb4e33b7e0730ecc6/.github",
+    "start_line": 1057,
+    "start_column": null,
+    "end_line": 1057,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "Process completed with exit code 101.",
+    "raw_details": ""
+  }
+]

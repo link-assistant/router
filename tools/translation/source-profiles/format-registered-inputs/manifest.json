@@ -1,0 +1,82 @@
+{
+  "schema": "original-format-registered-inputs-source-v1",
+  "rust": "1.89.0",
+  "license": "MIT OR Apache-2.0",
+  "sources": [
+    {
+      "path": "library/std/src/lib.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/std/src/lib.rs",
+      "bytes": 28184,
+      "sha256": "d070a5abc5138536e274e483181db929cc56d7a4b7a1947a11149f92b2cdc1ea",
+      "archive": "../builtin-derive-standard-inputs/../namespace-standard/rust-std-lib-1.89.0.rs.gz",
+      "archiveBytes": 8934,
+      "archiveSha256": "d0216701dd8c129fb80a7c32ddd025de22d1420090a9fc7219384f06eecce065"
+    },
+    {
+      "path": "compiler/rustc_span/src/symbol.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_span/src/symbol.rs",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "archive": "../builtin-derive-standard-inputs/../module-paths/rustc-symbol.rs.gz",
+      "bytes": 77781,
+      "sha256": "35b84de01138877958228c55fcfbbff7749f7b97dd4e089fc3e4cad1733196b2",
+      "archiveBytes": 19825,
+      "archiveSha256": "0fe76fef2e6a0d434b6a4a2baaae292705ded8b6aa1c172d1e0028a8ee1454f9",
+      "provenance": "exact existing licensed original archive reused byte-for-byte"
+    },
+    {
+      "path": "compiler/rustc_macros/src/symbols.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_macros/src/symbols.rs",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "archive": "../builtin-derive-standard-inputs/../source-clone/rust-1.89-symbols.rs.gz",
+      "bytes": 10125,
+      "sha256": "cf66817df78fb44e38f3aa456835fae0e317a82b43819ae70d35fb3dc0136cef",
+      "archiveBytes": 3150,
+      "archiveSha256": "d6c227023bb135b7f12eb7ec0a2ac7e821999cb67b81b8ed5b53d4d7434a506e",
+      "provenance": "exact existing licensed original archive reused byte-for-byte"
+    },
+    {
+      "path": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/LICENSE-MIT",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "archive": "../builtin-derive-standard-inputs/../builtin-derive-bang/rust-1.89-LICENSE-MIT.gz",
+      "bytes": 1068,
+      "sha256": "b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1",
+      "archiveBytes": 646,
+      "archiveSha256": "e675109f90bf15b2d8120a8bd7a7d062a8f62a7efa9b09a2c25e030dae5de841",
+      "provenance": "exact existing licensed original archive reused byte-for-byte"
+    },
+    {
+      "path": "LICENSE-APACHE",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/LICENSE-APACHE",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "archive": "../builtin-derive-standard-inputs/../builtin-derive-bang/rust-1.89-LICENSE-APACHE.gz",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+      "archiveBytes": 3554,
+      "archiveSha256": "743f15542c6a31637b66b952a6d7da62ac00374b5caae6530e8d7317c29b0fd6",
+      "provenance": "exact existing licensed original archive reused byte-for-byte"
+    },
+    {
+      "path": "library/alloc/src/lib.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/alloc/src/lib.rs",
+      "archive": "../namespace-standard/rust-alloc-lib-1.89.0.rs.gz",
+      "bytes": 7849,
+      "sha256": "1db66400d82c953ea5300568e5fe7734edee3e60e633a42758a4ed5497b0e4c9",
+      "archiveBytes": 2936,
+      "archiveSha256": "1919fc3dae67328239368b55a46c44e232ad6d3741bc6801b14529bd085587c2",
+      "provenance": "existing complete licensed1.89 source, unchanged bytes"
+    },
+    {
+      "path": "library/core/src/lib.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/lib.rs",
+      "archive": "../primitive-bool-from/library-core-src-lib.rs.gz",
+      "bytes": 12944,
+      "sha256": "77f88730f9698a9942dd06069f75fc8e015a98662e74fc1cf4f589df05e78b2c",
+      "archiveBytes": 4089,
+      "archiveSha256": "22b7044f6f7b8d57ed2485a004e344f398d57ba60bc8cdf9c523064b411fa95c",
+      "provenance": "existing complete licensed1.89 source, unchanged bytes"
+    }
+  ],
+  "namespaceAuthority": false,
+  "runtimeAuthority": false
+}

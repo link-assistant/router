@@ -1,0 +1,2 @@
+### Changed
+- Regenerate the original class-source program with the actual producer for borrowed JSON let-else rules and guarded Host dispatch. Independently review all 13 complete module substitutions, UTF-16 inverses and 24 class/member selections before installing the exact generated leaf. Other module outputs and method censuses remain byte-identical. Receiving checks and complete coverage regeneration remain pending; no Rust ran locally.

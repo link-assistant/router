@@ -1,0 +1,5 @@
+### Added
+
+- Draft an actual serialized/reparsed concrete-syntax meta stage for JavaScript and TypeScript reverse inputs before the existing native syntax, checked semantic meta and Rust/TypeScript emitters. The explicit canonical-CST entry consumes its reconstructed source; lexical/opaque/error fidelity never supplies grammar, owner, type or executable authority. Native TypeScript keeps its original source/ASI checks. Eight complete integration controls are UNRUN, including strict TypeScript 5.9.3; unsupported typed source, existing class/owner obligations and all original limits remain. No local Rust, generation-freshness, parity or publication qualification is claimed.
+
+- Preserve the original four analysis-option getter reads before the added concrete/native stages, and the later emission option re-reads in their existing phases. Same-case controls retain ordered getter tapes and a restored native JSON parser; the original eight cases and deadlines stay unchanged. This source repair is UNRUN.

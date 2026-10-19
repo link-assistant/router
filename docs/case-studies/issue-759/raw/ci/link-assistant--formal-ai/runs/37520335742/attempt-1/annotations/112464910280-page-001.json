@@ -1,0 +1,26 @@
+[
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/5a56705b55400796bf830e56ba26de520744b1f2/.github",
+    "start_line": 47,
+    "start_column": null,
+    "end_line": 47,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "sccache stats - cli",
+    "message": "90% - 895 hits, 105 misses, 0 errors",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/5a56705b55400796bf830e56ba26de520744b1f2/.github",
+    "start_line": 25,
+    "start_column": null,
+    "end_line": 25,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "Process completed with exit code 127.",
+    "raw_details": ""
+  }
+]

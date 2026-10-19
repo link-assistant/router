@@ -1,0 +1,57 @@
+{
+  "schema": "original-core-reference-forwarding-source-only-plan-v1",
+  "status": "SOURCE-ONLY authored4cases UNRUN; existing39 regressions required",
+  "sourcePath": "library/core/src/convert/mod.rs",
+  "sourceSha256": "0b05be0bc9c7d92d788abd6817d648b4479ed6e29ffe24cfd6879e09ee9fbdab",
+  "profileSha256": "4d71ed0cce3a2bbf144dd314362d0b474fa0eb26329231e1be1b369f5c388db6",
+  "compressedInputReused": true,
+  "anchors": [
+    {
+      "declaration": "AsRef",
+      "span": {
+        "start": 8088,
+        "end": 8305
+      },
+      "bytes": 217,
+      "sha256": "f4d360a8d2b6506287c39742403ed9b54e6253ddcd791612e1c30aefa6f72bc8"
+    },
+    {
+      "declaration": "AsRefShared",
+      "span": {
+        "start": 27181,
+        "end": 27350
+      },
+      "bytes": 169,
+      "sha256": "fb8559a5ba1992d502a3f58ede776d5494f02dafe7aaa5f98ec300c364e915d1"
+    },
+    {
+      "declaration": "AsRefSlice",
+      "span": {
+        "start": 30342,
+        "end": 30444
+      },
+      "bytes": 102,
+      "sha256": "7beff9caa1d453f5eca7faebe2c0cd3c59ab05ab671a31a2763b12b4d4b71d8d"
+    }
+  ],
+  "nextScope": {
+    "files": 8,
+    "authoredCases": 43,
+    "newUnrun": 4,
+    "priorVerified": 39
+  },
+  "sourceIdentitySealOnly": true,
+  "callerTraitOwnerVerified": false,
+  "attributeOwnerVerified": false,
+  "copyContractVerified": false,
+  "namespaceAuthority": false,
+  "parseAdmission": false,
+  "applicationEffectCompleteness": false,
+  "runtimeParity": false,
+  "limitations": [
+    "Only matching original shared generic reference impl with one actual where trait predicate and verified core declaration/member origin",
+    "Projection inputs are plain own-data shared slice views; actual Rust borrow/pointer/platform owners still unresolved",
+    "Mutable, arbitrary aggregate/reference UFCS, allocator/default and whole-reader dispatch remain unsupported",
+    "Primitive Copy marker output expansion/selection is next, not certified by this unit"
+  ]
+}
