@@ -22,6 +22,7 @@ type MLData_526f75746572526573756c745f31375f727573745f6f776e65645f7665635f75385f
 type MLData_526f75746572526573756c745f33375f6e616d65645f37333635373236343635356636613733366636655f353636313663373536355f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": MLData_73657264655f6a736f6e2e56616c7565 }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
 type MLData_526f75746572526573756c745f33385f6e616d65645f3733373436345f37343639366436355f343437353732363137343639366636655f36345f6e616d65645f3733373436345f37343639366436355f353437323739343637323666366434363663366636313734353336353633373334353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": MLData_7374642e74696d652e4475726174696f6e }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 }>;
 type MLData_526f75746572526573756c745f345f756e69745f32385f6e616d65645f3733373436345f363936665f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": null }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_7374642e696f2e4572726f72 }>;
+type MLData_726f757465725f636f72655f6261736536342e4261736536344572726f72 = Readonly<{ readonly "$": "InvalidByte"; readonly "field0": bigint; readonly "field1": bigint }> | Readonly<{ readonly "$": "InvalidLength"; readonly "field0": bigint }> | Readonly<{ readonly "$": "InvalidLastSymbol"; readonly "offset": bigint; readonly "symbol": bigint; readonly "symbol_value": bigint }> | Readonly<{ readonly "$": "InvalidPadding" }>;
 type MLData_73657264655f6a736f6e2e4572726f72 = Readonly<{ readonly "$": "JsonError"; readonly "category": MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279; readonly "line": bigint; readonly "column": bigint; readonly "message": string }>;
 type MLData_73657264655f6a736f6e2e4d6170456e747279 = Readonly<{ readonly "$": "MapEntry"; readonly "key": string; readonly "value": MLData_73657264655f6a736f6e2e56616c7565 }>;
 type MLData_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565 = Readonly<{ readonly "$": "Map"; readonly "entries": ReadonlyArray<MLData_73657264655f6a736f6e2e4d6170456e747279> }>;
@@ -36,7 +37,7 @@ type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$"
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
-// Generated draft from scripts/bump-version.rs; sha256=1c0ca091123e298f6e5cc02b6b9a01a0172088c252dbaf9e9ce9348a412fe723
+// Generated draft from scripts/bump-version.rs; sha256=bde768df410dbd458795061b35bcf29415125041db1672efcea296d4778161c0
 // Carried constructs are data, never runtime parity evidence.
 function ml_make_BumpType_Major(): Readonly<{ readonly "$": "Major" }> | Readonly<{ readonly "$": "Minor" }> | Readonly<{ readonly "$": "Patch" }> {
   return Object.freeze({ $: 'Major' });
@@ -68,6 +69,10 @@ const std = {
   },
 };
 
+const router_core_base64 = {
+
+};
+
 const serde_json = {
   error: {
 
@@ -75,4 +80,4 @@ const serde_json = {
 };
 
 export const translated: { "BumpType": Readonly<{ "Major": () => Readonly<{ readonly "$": "Major" }> | Readonly<{ readonly "$": "Minor" }> | Readonly<{ readonly "$": "Patch" }>; "Minor": () => Readonly<{ readonly "$": "Major" }> | Readonly<{ readonly "$": "Minor" }> | Readonly<{ readonly "$": "Patch" }>; "Patch": () => Readonly<{ readonly "$": "Major" }> | Readonly<{ readonly "$": "Minor" }> | Readonly<{ readonly "$": "Patch" }> }> } = { ["BumpType"]: Object.freeze({ ["Major"]: ml_make_BumpType_Major, ["Minor"]: ml_make_BumpType_Minor, ["Patch"]: ml_make_BumpType_Patch }) };
-export const provenance = {"sourcePath":"scripts/bump-version.rs","sourceSha256":"1c0ca091123e298f6e5cc02b6b9a01a0172088c252dbaf9e9ce9348a412fe723","executable":1,"executableFunctions":0,"executableConstants":0,"executableTypes":1,"executableConstructors":3,"carried":15,"preserved":16,"runtimeParity":false};
+export const provenance = {"sourcePath":"scripts/bump-version.rs","sourceSha256":"bde768df410dbd458795061b35bcf29415125041db1672efcea296d4778161c0","executable":1,"executableFunctions":0,"executableConstants":0,"executableTypes":1,"executableConstructors":3,"carried":15,"preserved":16,"runtimeParity":false};

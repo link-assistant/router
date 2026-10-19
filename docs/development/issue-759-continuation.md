@@ -4,6 +4,42 @@ The 2026-10-19 checkpoint is an explicitly requested PR rollover. Issue #759
 remains open. Merging the checkpoint does not establish complete Router runtime
 translation, bidirectional synchronization, strict parity, or release readiness.
 
+## Latest full forward receiving result, 2026-10-20
+
+The actual retained owned-definition command completed at compiler source
+`3a2d8b4ca8cc62889498682a5e9c4ad63e7598b3`: 847 original Rust files,
+3,188 outputs and 361,053,860 bytes in 1,237.382 seconds. Sampled aggregate
+RSS peaked at 2,942,976,000 bytes, within the unchanged 3 GiB bound and 2 GiB
+Node heap. No Rust tool ran. This is a complete forward producer result,
+not a JavaScript gate, profile-matrix or runtime-parity pass.
+
+Independent review compared every output, all tracked Rust input bytes,
+complete original item partitions and hashes, and every compiler fingerprint.
+The complete forward TypeScript configuration and all 72 canonical
+owned-definition type files passed strict TypeScript 5.9.3. The generated
+inventory reports 157 executable top-level functions out of 6,645 tracked
+functions, including 155 of 2,567 production functions; 12,345 items remain
+carried. The project additionally records generated methods separately.
+These denominators do not measure overall task completion or native runtime
+feature parity.
+
+Eight actual owned definitions were produced. Independent reverse generation
+failed before installing any outputs. Reading every definition separately
+found that all eight source bodies were admitted, but the two constructor
+definitions with written JSDoc parameter types lacked the required paired
+TypeScript evidence. The other six retained that evidence. Repair the shared
+pairing path and run its complete receiving files before reverse regeneration.
+Keep this failed reverse result explicit; body admission alone does not prove
+bidirectional synchronization.
+
+The new forward outputs are a checkpoint. Ordinary versus owned full-corpus
+freshness, all three profiles, reverse materialization, the complete local
+gate, strict native parity and final same-SHA CI remain open. Cancelled CI
+logs also contain forward test failures, including physical-path and Cargo
+manifest mistakes after the language-folder move. Preserve those complete
+logs alongside completed failures when preparing the next coordinated repair
+batch; cancelled jobs are not successful verification.
+
 ## Retained implementation and evidence
 
 The translator uses ordered reusable language rules followed by repository

@@ -1,0 +1,35 @@
+type MLData_72705f353236663735373436353732346637303734363936663665356633313337356637323735373337343566366637373665363536343566373337343732363936653637 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
+type MLData_72705f37303732366637363639363436353732356636333666366536363639363732653466373036353665343134393433366636643730363137343639363236633635343336663665363636393637 = Readonly<{ readonly "$": "OpenAICompatibleConfig"; readonly "provider_name": string; readonly "base_url": string; readonly "api_key": MLData_72705f353236663735373436353732346637303734363936663665356633313337356637323735373337343566366637373665363536343566373337343732363936653637; readonly "api_key_env": MLData_72705f353236663735373436353732346637303734363936663665356633313337356637323735373337343566366637373665363536343566373337343732363936653637; readonly "default_model": MLData_72705f353236663735373436353732346637303734363936663665356633313337356637323735373337343566366637373665363536343566373337343732363936653637; readonly "models": ReadonlyArray<string>; readonly "supported_clients": ReadonlyArray<string> }>;
+// Generated draft from rust/src/config_defaults.rs; sha256=258a351d04721bf4b092a38c874afba1cf70a852a63e3bec82b43cca162e2eaf
+// Carried constructs are data, never runtime parity evidence.
+import { snapshotConstructorValue as ml_snapshot_constructor_value, assertConstructorInput as ml_assert_constructor_input } from "../../runtime/constructor-value-runtime.mjs";
+
+const ml_constructor_value_schema_b9a9dfd8195e48213739dea9557c778ca9bbc8764d98ae9fc080919a94a95c44 = {"schemaVersion":1,"types":{"rp_70726f76696465725f636f6e6669672e4f70656e4149436f6d70617469626c65436f6e666967":{"kind":"data","name":"rp_70726f76696465725f636f6e6669672e4f70656e4149436f6d70617469626c65436f6e666967","ctors":[{"name":"OpenAICompatibleConfig","fields":[{"name":"provider_name","type":{"kind":"string"}},{"name":"base_url","type":{"kind":"string"}},{"name":"api_key","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"api_key_env","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"default_model","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"models","type":{"kind":"array","element":{"kind":"string"}}},{"name":"supported_clients","type":{"kind":"array","element":{"kind":"string"}}}]}]},"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
+
+function rp_636f6e6669675f64656661756c74732e64656661756c745f676f6e6b615f6d6f64656c(): string {
+  return "";
+}
+
+function rp_636f6e6669675f64656661756c74732e64656661756c745f6f70656e61695f636f6d70617469626c655f626173655f75726c(): string {
+  return (() => {
+    const ml_fmt_1 = "http://localhost:4000/v1";
+    return ml_fmt_1;
+  })();
+}
+
+function rp_636f6e6669675f64656661756c74732e64656661756c745f6f70656e61695f636f6d70617469626c655f636f6e666967(): Readonly<{ readonly "$": "OpenAICompatibleConfig"; readonly "provider_name": string; readonly "base_url": string; readonly "api_key": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "api_key_env": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "default_model": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "models": ReadonlyArray<string>; readonly "supported_clients": ReadonlyArray<string> }> {
+  const ml_record1 = (() => {
+    const ml_fmt_2 = "litellm";
+    return ml_fmt_2;
+  })();
+  const ml_record3 = rp_636f6e6669675f64656661756c74732e64656661756c745f6f70656e61695f636f6d70617469626c655f626173655f75726c();
+  const ml_record4 = Object.freeze({ $: 'None' }) as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
+  const ml_record5 = Object.freeze({ $: 'None' }) as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
+  const ml_record6 = Object.freeze({ $: 'None' }) as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
+  const ml_record7 = Object.freeze([]);
+  const ml_record8 = Object.freeze([]);
+  return ml_snapshot_constructor_value(Object.freeze({ $: "OpenAICompatibleConfig", ["provider_name"]: ml_record1, ["base_url"]: ml_record3, ["api_key"]: ml_record4, ["api_key_env"]: ml_record5, ["default_model"]: ml_record6, ["models"]: ml_record7, ["supported_clients"]: ml_record8 }), {"kind":"data","name":"rp_70726f76696465725f636f6e6669672e4f70656e4149436f6d70617469626c65436f6e666967"}, ml_constructor_value_schema_b9a9dfd8195e48213739dea9557c778ca9bbc8764d98ae9fc080919a94a95c44);
+}
+
+export const translated: { "default_gonka_model": () => string; "default_openai_compatible_base_url": () => string; "default_openai_compatible_config": () => Readonly<{ readonly "$": "OpenAICompatibleConfig"; readonly "provider_name": string; readonly "base_url": string; readonly "api_key": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "api_key_env": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "default_model": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "models": ReadonlyArray<string>; readonly "supported_clients": ReadonlyArray<string> }> } = { ["default_gonka_model"]: rp_636f6e6669675f64656661756c74732e64656661756c745f676f6e6b615f6d6f64656c, ["default_openai_compatible_base_url"]: rp_636f6e6669675f64656661756c74732e64656661756c745f6f70656e61695f636f6d70617469626c655f626173655f75726c, ["default_openai_compatible_config"]: rp_636f6e6669675f64656661756c74732e64656661756c745f6f70656e61695f636f6d70617469626c655f636f6e666967 };
+export const provenance = {"sourcePath":"rust/src/config_defaults.rs","sourceSha256":"258a351d04721bf4b092a38c874afba1cf70a852a63e3bec82b43cca162e2eaf","executable":3,"executableFunctions":3,"executableConstants":0,"executableTypes":0,"executableConstructors":0,"carried":2,"preserved":6,"runtimeParity":false};

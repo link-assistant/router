@@ -64,3 +64,17 @@ export function stringJoin(values,separator) {
   }
   return result;
 }
+
+// Owned library contract: scalar count only, without exposing an iterator.
+export function router_core_unicode_scalar_count(value) {
+  requireScalarString(value);
+  // Each scalar uses at least one UTF-16 unit. Primitive string length is an
+  // exact integer <= Number.MAX_SAFE_INTEGER, so one final conversion is exact.
+  let count=0;
+  for(let at=0;at<value.length;at++) {
+    count++;
+    // Validation above proved each leading surrogate has its low partner.
+    if(codeUnit(value,at)>=0xd800&&codeUnit(value,at)<=0xdbff)at++;
+  }
+  return BigInt(count);
+}

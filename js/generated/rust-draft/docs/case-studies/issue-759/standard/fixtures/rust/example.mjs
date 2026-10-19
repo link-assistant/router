@@ -22,6 +22,10 @@ const std = {
   },
 };
 
+const router_core_base64 = {
+
+};
+
 const serde_json = {
   error: {
 

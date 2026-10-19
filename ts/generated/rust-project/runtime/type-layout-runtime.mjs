@@ -21,6 +21,7 @@ export function validateRustValue(value,type,schema,{refinements=new Map()}={}) 
       case 'unit':if(current !== null)failure(path,'expected unit null');return;
       case 'bool':if(typeof current !== 'boolean')failure(path,'expected boolean');return;
       case 'string':if(!scalar(current))failure(path,'expected Unicode scalar string');return;
+      case 'char':if(!scalar(current)||!(current.length===1||current.length===2&&current.codePointAt(0)>0xffff))failure(path,'expected exactly one Unicode scalar character');return;
       case 'float':if(typeof current !== 'number')failure(path,'expected IEEE754 binary64');return;
       case 'nat':if(typeof current !== 'bigint' || current < 0n)failure(path,'expected natural BigInt');return;
       case 'int':if(typeof current !== 'bigint')failure(path,'expected integer BigInt');return;

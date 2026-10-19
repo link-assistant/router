@@ -14,3 +14,9 @@ function nonNaN(value) {
 }
 export function rust_f64_is_sign_negative(value) {nonNaN(value);return value<0||Object.is(value,-0);}
 export function rust_f64_is_sign_positive(value) {return !rust_f64_is_sign_negative(value);}
+
+// Explicit Router compatibility operation; the Rust library remains untranslated.
+export function router_core_f64_inclusive_contains(lower,upper,value) {
+  number(lower);number(upper);number(value);
+  return lower<=value&&value<=upper;
+}
