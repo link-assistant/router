@@ -490,14 +490,14 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
   progress({stage:'method-parse',state:'end',entry:options.entry,completed:completedMethods});
   const duplicateNames = new Set(declarations.filter((entry, index) => declarations.findIndex(candidate => candidate.name === entry.name) !== index).map(entry => entry.name));
   for (const entry of declarations.filter(entry => duplicateNames.has(entry.name))) refused.push({ file: entry.file, name: entry.name, term: entry.term, kind: 'ambiguous', message: 'duplicate module-scoped declaration', span: entry.span });
-  let active = declarations.filter(entry => !duplicateNames.has(entry.name)), checked;
+  let active = declarations.filter(entry => !duplicateNames.has(entry.name)), checked, genuineOrigin;
   // Discard a failed declaration phase and remove its attributed original
   // owners. Opt-in body collection does not return partial IR. Every survivor
   // and caller is checked afresh; post-check proof failures remain ordinary.
   progress({stage:'semantic-check',state:'start',entry:options.entry,remaining:active.length});
   for (let attempts = 0; attempts <= declarations.length; attempts++) {
     progress({stage:'semantic-check',state:'advance',entry:options.entry,attempt:attempts,remaining:active.length});
-    try { const surface={ language: 'Rust', items: [...tree(active), ...admittedHostData(effectData(),tree(active))], main: null };associateOriginalSharedPatternDependencies(surface,options.jsonMacroDependencies);checked = roundTripProgram(checkProjectProgram(surface,{jsonParserProfile,collectIndependentBodies:options.collectIndependentBodies??true})); break; }
+    try { const surface={ language: 'Rust', items: [...tree(active), ...admittedHostData(effectData(),tree(active))], main: null };associateOriginalSharedPatternDependencies(surface,options.jsonMacroDependencies);const nativeChecked=checkProjectProgram(surface,{jsonParserProfile,collectIndependentBodies:options.collectIndependentBodies??true});checked=roundTripProgram(nativeChecked);if(ownedDefinitionMode==='core-json-readers')genuineOrigin=nativeChecked;break; }
     catch (error) {
       const failures=declarationRefusals(error)??(error instanceof TranslationError?[{error}]:null);
       if(!failures)throw error;
@@ -569,7 +569,7 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
   progress({stage:'project-serialize',state:'end',entry:options.entry});
   const checkedGeneratedMethodDeclarations=generatedMethods.map(entry=>{const own=checked.declarations.get(entry.name);return Object.freeze({source:entry.file,sourceSha256:sha256(graph.modules.find(module=>module.file===entry.file).source),name:entry.surface.impl.method,term:'generated-method',origin:'derive-invocation',originalDeclarationTerm:entry.originalDeclarationTerm,generator:entry.surface.impl.cloneSourceProof?'core::clone::Clone':'core::default::Default',span:Object.freeze({...entry.span}),project:options.entry,qualifiedName:entry.name,displayName:entry.displayName,receiver:entry.surface.impl.receiver,compilationProfile:graph.compilationProfile,signature:freezeMacroTree(structuredClone({params:own.params,ret:own.ret})),lower:lowerDeclaration(entry,entry.surface.impl.method)});});
   if(ownedDefinitionMode===true||ownedDefinitionMode==='core-json-readers'){
-    const definitions=prepareForwardOwnedDefinitions({project:graph.entry,entries,checked,target,sourceModules:graph.modules,readerFormat:ownedDefinitionMode==='core-json-readers'?'core-reader':undefined,lower:entry=>lowerDeclaration(entry,entry.name.split('.').at(-1))({runtimeModule:'../runtime/effects.mjs'})});
+    let definitions;try {definitions=prepareForwardOwnedDefinitions({project:graph.entry,entries,checked,genuineOrigin,target,sourceModules:graph.modules,readerFormat:ownedDefinitionMode==='core-json-readers'?'core-reader':undefined,lower:entry=>lowerDeclaration(entry,entry.name.split('.').at(-1))({runtimeModule:'../runtime/effects.mjs'})});}finally {genuineOrigin=undefined;}
     return {meta,javascript,typescript,executableDeclarations,checkedMethodDeclarations,checkedGeneratedMethodDeclarations,sourceScopes,ownedDefinitions:definitions};
   }
   return { meta, javascript, typescript, executableDeclarations, checkedMethodDeclarations, checkedGeneratedMethodDeclarations, sourceScopes };

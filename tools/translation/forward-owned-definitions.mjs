@@ -12,6 +12,7 @@ import {createRulePipeline} from './rule-pipeline.mjs';
 import {prepareForwardJsonReaderDefinition} from './forward-owned-json-reader-definitions.mjs';
 import {prepareForwardJsonCompositionDefinition,prepareForwardJsonNonemptyFieldDefinition} from './forward-owned-json-composition.mjs';
 import {prepareForwardJsonScalarFoldDefinition} from './forward-owned-json-scalar-folds.mjs';
+import {prepareForwardJsonConstructorDefinition} from './forward-owned-json-constructors.mjs';
 const hash=value=>{assertReverseConcreteSourceHost();const result=createHash('sha256').update(value).digest('hex');assertReverseConcreteSourceHost();return result;};
 const fail=message=>{throw TypeError('Forward owned definition: '+message);};
 const roles=['Value','Number','MapEntry','Map_String_Value'];
@@ -69,7 +70,7 @@ function literalTree(tree,budget={nodes:0},depth=0){
  return false;
 }
 /** Internal repository phase; inputs are supplied by the private compiler. */
-export function prepareForwardOwnedDefinitions({project,entries,checked,target,sourceModules,lower,readerFormat}){
+export function prepareForwardOwnedDefinitions({project,entries,checked,genuineOrigin,target,sourceModules,lower,readerFormat}){
  assertReverseConcreteSourceHost();
  const definitions=[],unsupported=[],parents=new Map();let bytes=0;
  if(entries.length>4096)fail('definition count bound');
@@ -78,7 +79,7 @@ export function prepareForwardOwnedDefinitions({project,entries,checked,target,s
   // Candidate filtering only. The actual lower() rechecks original source/calls.
   if(entry.term!=='fn'||!current||current.params.length||current.async||current.body.k!=='routerJsonMacro'||current.body.args.length||!literalTree(current.body.jsonTree)){
    try{
-    const candidate=prepareForwardJsonReaderDefinition({project,entry,checked,target,sourceModules,lower,index:definitions.length,transform,format:readerFormat})??prepareForwardJsonCompositionDefinition({project,entry,checked,target,sourceModules,lower,index:definitions.length,transform,format:readerFormat})??prepareForwardJsonNonemptyFieldDefinition({project,entry,checked,target,sourceModules,lower,index:definitions.length,transform,format:readerFormat})??prepareForwardJsonScalarFoldDefinition({project,entry,checked,target,sourceModules,lower,index:definitions.length,transform,format:readerFormat});
+    const candidate=prepareForwardJsonReaderDefinition({project,entry,checked,target,sourceModules,lower,index:definitions.length,transform,format:readerFormat})??prepareForwardJsonCompositionDefinition({project,entry,checked,target,sourceModules,lower,index:definitions.length,transform,format:readerFormat})??prepareForwardJsonNonemptyFieldDefinition({project,entry,checked,target,sourceModules,lower,index:definitions.length,transform,format:readerFormat})??prepareForwardJsonScalarFoldDefinition({project,entry,checked,target,sourceModules,lower,index:definitions.length,transform,format:readerFormat})??prepareForwardJsonConstructorDefinition({project,entry,checked,genuineOrigin,target,sourceModules,lower,index:definitions.length,transform,format:readerFormat});
     if(candidate){const {row,parent}=candidate,freshParent=!parents.has(parent.id),retained=Buffer.byteLength(JSON.stringify(row))+(freshParent?Buffer.byteLength(parent.source):0);if(bytes+retained>16*1024*1024)fail('definition evidence byte bound');bytes+=retained;if(freshParent)parents.set(parent.id,parent);definitions.push(row);continue;}
     unsupported.push({name:entry.name,source:entry.file,reason:'outside zero-parameter literal JSON definition domain'});
    }catch(error){if(!(error instanceof TypeError))throw error;unsupported.push({name:entry.name,source:entry.file,reason:error.message});}

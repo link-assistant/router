@@ -31,11 +31,26 @@ export function parseJsonMacroSyntax(source,{maxBytes=65536,maxDepth=16,maxNodes
       if(token.type==='string')return {kind:'string',value:literal(token),span};
     }
     let requiresQuestionMarkFlow=false;
-    const inspect=items=>{
+    // Braces are admitted only as the two complete single-expression arms
+    // of an actual if expression. Conditions/arms remain opaque operands for
+    // the unchanged real parser, purity, type and original owner checks.
+    const inspect=(items,conditionalDepth=0)=>{
       let operand=true,prefix=true;
       for(let at=0;at<items.length;at++){
         const tree=items[at];
-        if(tree.kind==='group'){if(tree.delimiter!=='(')fail('interpolation block, array/index or record syntax requires another checked profile');inspect(tree.children);operand=false;prefix=false;continue;}
+        if(tree.kind==='token'&&tree.text==='if'){
+          if(!operand||++nodes>maxNodes||depth+conditionalDepth+1>maxDepth)fail('conditional expression or nesting budget exceeded');
+          let arm=at+1;while(arm<items.length&&!(items[arm].kind==='group'&&items[arm].delimiter==='{'))arm++;
+          const condition=items.slice(at+1,arm),yes=items[arm],otherwise=items[arm+1],no=items[arm+2];
+          if(!condition.length||!yes||otherwise?.kind!=='token'||otherwise.text!=='else'||no?.kind!=='group'||no.delimiter!=='{'||!yes.children.length||!no.children.length)fail('complete if condition and two nonempty expression arms required');
+          // A comma at this brace level is not a single branch expression.
+          // Parenthesized forms are independently inspected below as before.
+          if(yes.children.some(child=>child.kind==='token'&&child.text===',')||no.children.some(child=>child.kind==='token'&&child.text===','))fail('conditional arm requires one complete expression');
+          inspect(condition,conditionalDepth+1);inspect(yes.children,conditionalDepth+1);inspect(no.children,conditionalDepth+1);
+          at=arm+2;operand=false;prefix=false;continue;
+        }
+        if(tree.kind==='token'&&tree.text==='else')fail('else requires its complete checked conditional');
+        if(tree.kind==='group'){if(tree.delimiter!=='(')fail('interpolation block, array/index or record syntax requires another checked profile');inspect(tree.children,conditionalDepth);operand=false;prefix=false;continue;}
         if(tree.kind!=='token'||['#',';','=','+=','-=','|','&mut'].includes(tree.text)||['unsafe','async','await','return','break','continue','loop','while','for','move','mut','let','fn','impl','use','yield'].includes(tree.text))fail('macro, mutation, closure or effectful interpolation requires separate checking');
         // Prefix ! is ordinary Rust syntax; a bang after a completed path,
         // member or operand is not. Leading || still denotes a closure.
