@@ -1,0 +1,54 @@
+{
+  "schema": "lossless-evidence-metadata-containers-v1",
+  "originalSourceHead": "5cf7c1b85d71d872eab67b2ab79c98c94ba255d9",
+  "rows": [
+    {
+      "source": "docs/case-studies/issue-759/current/complete-originals-git-backed/immutable-part-1-capture-receipt.json",
+      "sourceBytes": 1109341,
+      "sourceSha256": "f9b9845e21dc9bb5b7824d49dddc889252d1ba8cbfb76ef7c0c2a86593947d78",
+      "sourceGitBlob": "7d2501ba1a835b022bf078bc22a739cb3b5f5802",
+      "container": "docs/case-studies/issue-759/current/complete-originals-git-backed/immutable-part-1-capture-receipt.json.gz",
+      "containerBytes": 18252,
+      "containerSha256": "3890d5d4ed8e120c331baec60122f8bbe157353270b91536630def1020215214",
+      "sourceAllocated": 1110016,
+      "containerAllocatedEstimate": 20480,
+      "decodedWholeBytesVerified": true,
+      "containerInstalled": true,
+      "originalRetired": true,
+      "actualContainerAllocatedBytes": 20480
+    },
+    {
+      "source": "docs/case-studies/issue-759/current/verified-container-review-20261014/capture-receipt.json",
+      "sourceBytes": 702614,
+      "sourceSha256": "f4269e31f663e31e980d5947be008d5ad986e1ff91461b13f3ebd1d64fb34b46",
+      "sourceGitBlob": "12db32dea760cb98b01dcbff4a19b7d934fea28a",
+      "container": "docs/case-studies/issue-759/current/verified-container-review-20261014/capture-receipt.json.gz",
+      "containerBytes": 70022,
+      "containerSha256": "f8d02c9894a28c291be8e320a3e6bdae0187960f2e711fa78a40620e05ccc011",
+      "sourceAllocated": 704512,
+      "containerAllocatedEstimate": 73728,
+      "decodedWholeBytesVerified": true,
+      "containerInstalled": true,
+      "originalRetired": true,
+      "actualContainerAllocatedBytes": 73728
+    },
+    {
+      "source": "docs/case-studies/issue-759/raw/current-task/coherent-source-batch-v7/capture-receipt.json",
+      "sourceBytes": 491595,
+      "sourceSha256": "d43188e74fd166878a5b609e84a261ced26a678e48a3c8229f2da030af7580f4",
+      "sourceGitBlob": "80f58c8985de81f18fdf7caa0d9d82be57e1a20d",
+      "container": "docs/case-studies/issue-759/raw/current-task/coherent-source-batch-v7/capture-receipt.json.gz",
+      "containerBytes": 79562,
+      "containerSha256": "fb4c817a8ba158dee3bfd5c14d0e244c8177924ba3b9c8549342678da3df971c",
+      "sourceAllocated": 495616,
+      "containerAllocatedEstimate": 81920,
+      "decodedWholeBytesVerified": true,
+      "containerInstalled": true,
+      "originalRetired": true,
+      "actualContainerAllocatedBytes": 81920
+    }
+  ],
+  "allDecodedWholeBytesAndOriginalGitBytesCompared": true,
+  "sourceCodeChanged": false,
+  "rustExecuted": false
+}

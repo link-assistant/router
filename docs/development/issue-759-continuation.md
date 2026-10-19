@@ -156,6 +156,20 @@ Node; its independent native oracle retains every byte, property order, Unicode
 value and late-byte refusal. Full lifecycle, portable export and producer
 qualification remain pending for this source checkpoint.
 
+The complete current Node lifecycle file then passed all eight cases and the
+independent deadline audit in 168.626 seconds. Its two-producer case took
+57,453.694 ms within the original 60,000 ms bound. The helper's complete three
+cases passed under Bun too. Full Bun lifecycle receiving remains red at the
+unchanged local memory cap. Current compiler/portable exports and full project
+generation still need refresh for the new source-map helper.
+
+Three historical capture receipts now use lossless gzip containers, recovering
+2,134,016 bytes within the fixed case-study allocation. Every decoded byte and
+original Git blob was compared before retiring the plain duplicates. Their
+original logical paths and full source witnesses remain in
+`current/language-layout-20261019/metadata-containers.json`. No compiler input
+or historical observation changed.
+
 Both frozen historical fixture bodies are restored to their original pins.
 Receiving-only ordered CST substitutions adapt the TypeScript comparison
 loader, while the original native baseline keeps its logical filenames for
