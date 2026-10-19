@@ -415,6 +415,22 @@ failure logs were collected before preparing the next coordinated feedback
 checkpoint. The focused receiving repairs above do not establish that every
 CI failure, full-producer memory limit or source-declared deadline is resolved.
 
+The current compiler registry is pinned to source
+`018d92d5cdf75774c0b7bdb4dd5415e9e3470d09` and includes all 1,179 compiler and
+132 TypeScript files. Complete Git/physical-byte review, bootstrap CST transports
+and inverse substitutions passed. The actual portable producer preserved all
+four historical bodies and passed the complete 391-object Git comparison.
+Both complete receiving files passed all 16 cases under Node and Bun. Ordinary
+reverse freshness and strict compilation of all 164 native TypeScript files
+also passed after the metadata change.
+
+The [language-layout evidence](../case-studies/issue-759/current/language-layout-20261019/README.md)
+now retains every prior CI failure log and all declared metadata source
+derivations, whole-file logs and independent Node deadline audits. Both packets
+were fully reopened and compared before installation within the fixed case-study
+allocation. The separate large CST observation input and older full-producer
+failure evidence remain local; no full live-project or parity pass is claimed.
+
 | Requirement | Current state and next verification |
 | --- | --- |
 | Complete JavaScript and TypeScript generation | Open. Run preparation, affinity, canonical and all three profile producers; independently review and install every output. |

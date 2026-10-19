@@ -1,0 +1,17 @@
+{
+  "schema": "complete-ci657-evidence-install-v1",
+  "archive": "docs/case-studies/issue-759/current/language-layout-20261019/complete-ci-657-feedback.tar.xz",
+  "archiveBytes": 1024784,
+  "archiveSha256": "6e233acfa39504ca69bafe5190933bfb1b980c0b451c5947f4dfa0e229881009",
+  "receipt": "docs/case-studies/issue-759/current/language-layout-20261019/complete-ci-657-feedback-capture.json.gz",
+  "completeMembers": 88,
+  "oldCiHead": "657169fb8c4ea9dffff292b91ac49a030a49b4cf",
+  "captureSourceHead": "018d92d5cdf75774c0b7bdb4dd5415e9e3470d09",
+  "allMemberBytesReopened": true,
+  "fixedCaseStudyCapBytes": 500000000,
+  "allocatedBefore": 497070080,
+  "allocatedAfter": 498102272,
+  "originalsRetained": true,
+  "rustExecuted": false,
+  "fullGatePass": false
+}
