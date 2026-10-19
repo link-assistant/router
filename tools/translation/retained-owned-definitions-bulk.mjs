@@ -23,7 +23,8 @@ import {discoverSourceProfileInputs} from './source-profile-inputs.mjs';
 import {discoverCompilerSourceInputs} from './compiler-source-inputs.mjs';
 import {planProjectMetaObjectStorage} from './project-meta-storage.mjs';
 import {captureOwnedDefinitionInputs,packageOwnedDefinitions,finishOwnedDefinitionOutput,validateOwnedDefinitionOutput} from './owned-definition-output.mjs';
-import {createPrivateOutputPlanStore,createPrivateOutputTextMap} from './private-output-text.mjs';
+import {createPrivateOutputPlanStore} from './private-output-text.mjs';
+import {createPrivateByteOutputTextMap as createPrivateOutputTextMap} from './private-byte-output-text.mjs';
 
 export const OUTPUT_ROOTS = ['tools/translation/meta', 'js/generated/rust-draft', 'ts/generated/rust-draft', 'tools/translation/projects', 'js/generated/rust-project', 'ts/generated/rust-project', 'tools/translation/generated/owned-definitions', 'js/generated/rust-owned-definitions', 'ts/generated/rust-owned-definitions'];
 const plans=createPrivateOutputPlanStore();

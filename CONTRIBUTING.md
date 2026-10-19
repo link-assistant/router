@@ -113,6 +113,17 @@ large wrappers and their component copies can defeat the memory optimization.
 This data-storage contract does not establish arbitrary replacer/observer
 equivalence or cache any source or semantic verdict.
 
+The explicit retained owned-definition lane uses a separately generated UTF-16
+byte-retention format. Derive it with
+`node tools/translation/prepare-byte-output-text.mjs --emit`, review its complete
+original/edited CST and inverse, install the exact proposal and run `--check`.
+It assumes stock Buffer/zlib operations at module birth and refuses later
+operation changes. Private immutable compressed strings retain every UTF-16
+unit, including lone surrogates; the original chunk and retention budgets stay
+fixed. Keep the scalar-cell API and ordinary producer intact. Whole-wire storage
+timings do not establish live-project memory fit, observer equivalence, source
+authority or a full-gate pass.
+
 Canonical JSON storage validation must also avoid retaining a second complete
 object tree beside the live compiler. Preserve native parse/stringify decisions,
 including integer-key ordering, duplicate rejection, Unicode and exact malformed

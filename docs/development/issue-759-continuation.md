@@ -277,10 +277,59 @@ array in three values, independently comparing all component bytes and the
 its repeated data is not the actual checked or target semantic program. The
 initial component candidate retained more memory, and the final flat-value
 observation does not establish a full-producer memory or speed improvement.
-Three complete project attempts remain failed, most recently after
+The first three complete project attempts failed, most recently after
 `project-serialize:end` at 996.949 seconds with a native substring allocation
 failure. A fresh complete run with the qualified component planner and refreshed
 compiler export remains required.
+
+The fourth complete owned canonical attempt also failed, after 1,333.906
+seconds with a sampled aggregate peak of 2,509,799,424 bytes. It completed
+library semantic checking and serialization, retained eight owned definitions,
+then exhausted the unchanged 2 GiB heap in string flattening/substring work.
+No outputs were installed. The complete report is retained separately from
+the successful receiving checks.
+
+An additive byte-retention module is now source-generated from the complete
+original scalar-cell implementation through language/repository substitutions,
+with complete original/edited CST transports and inverses. Only the retained
+owned-definition lane selects it; the ordinary producer and original retention
+API remain intact. It uses private immutable UTF-16/deflate/base64 chunks under
+the original chunk and retention budgets, assuming stock Buffer/zlib at birth
+and fencing later operation changes. It grants no source or semantic authority.
+
+In separate fresh storage-only processes using the same complete captured
+58,700,590-byte CST wire, scalar retention/restoration took 12,395.164/12,229.413
+ms; byte retention/restoration took 485.848/127.256 ms. Both compared every
+restored UTF-16 unit and UTF-8 byte. Sampled peaks were 589,447,168 and
+575,455,232 bytes respectively. These single observations support a storage
+speed improvement, while full live-project memory fit remains unproved.
+
+The new codec and all eight owned materialization cases passed Node receiving
+checks under the original source deadlines. The same run exposed an existing
+scalar-suite historical fixture whose embedded original source was changed by
+the folder migration despite its unchanged original hash pin. Restore that
+complete original literal and derive its receiving layout with fresh hash,
+CST and full inverse checks; keep every original control and pin. Receiving
+repair, Bun checks, compiler export refresh and another full run remain open.
+
+The complete historical scalar file now passes all nine cases under Node and
+Bun, with both original bulk/matrix pins unchanged. The byte codec and owned
+producer's complete 13-case pair also pass both engines. The Node runs retained
+the independent source-declared deadline audit. All 22 cases are receiving
+qualification; they do not replace the full gate or full producer.
+
+The initial byte codec's two Bun Unicode cases failed because the expanded
+native compressed trial exceeded the fixed chunk guard. Fresh host diagnostics
+preserved all 131,072 input bytes while observing 138,242 compressed bytes from
+Bun versus 118,960 from Node. The revised producer retains the original raw
+fallback whenever compression does not reduce storage; its raw sentinel is
+bounded and every original UTF-16 unit is still independently checked. No
+compression, chunk, retention, test or process limit was raised. Fresh current
+codec diagnostics then restored the complete real CST wire under both engines,
+with sampled aggregate peaks of 554,844,160 and 647,659,520 bytes. The earlier
+scalar/byte time comparison remains the preserved initial Node observation.
+Current compiler exports, complete project generation, profile and reverse
+freshness, strict TypeScript, parity and full CI qualification remain open.
 
 Four specialized workflow path filters now watch the physical Rust sources and
 tests. Native YAML CST scalar selection, complete text inverses and independent
