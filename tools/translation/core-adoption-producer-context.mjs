@@ -50,17 +50,17 @@ export function coreAdoptionDeriveAttributeClosed(context,source,file,localPath,
  const key=module.file+':'+JSON.stringify(module.path)+':'+actual.start+':'+actual.end;
  let row=state.selected.get(key);
  if(!row){
-  try{row={module,item:actual,input,effect:proveDeriveEmptyEnclosingEffect(state.bang,state.derive,module,actual)};}catch(error){if(!(error instanceof TypeError))throw error;return false;}
+  const backend=enclosingCoreBackend(state);try{row={module,item:actual,input,effect:backend?backend.prove(state.bang,state.derive,module,actual):proveDeriveEmptyEnclosingEffect(state.bang,state.derive,module,actual)};}catch(error){if(!(error instanceof TypeError))throw error;return false;}
   state.selected.set(key,row);
  }
- const facts=deriveEmptyEnclosingEffectFacts(row.effect,state.bang,state.derive,module,actual);
+ const backend=enclosingCoreBackend(state),facts=backend?backend.facts(row.effect,state.bang,state.derive,module,actual):deriveEmptyEnclosingEffectFacts(row.effect,state.bang,state.derive,module,actual);
  return facts.enclosingTypeBindings.length===0&&facts.enclosingUsableValueBindings.length===0;
 }
 export function coreAdoptionProducerBindings(context){return context===null?null:stateOf(context).binding;}
 export function finishCoreAdoptionProducerContext(context){
  if(context===null)return null;const state=stateOf(context),selections=[];
  for(const row of state.selected.values()){
-  const facts=deriveEmptyEnclosingEffectFacts(row.effect,state.bang,state.derive,row.module,row.item);
+  const backend=enclosingCoreBackend(state),facts=backend?backend.facts(row.effect,state.bang,state.derive,row.module,row.item):deriveEmptyEnclosingEffectFacts(row.effect,state.bang,state.derive,row.module,row.item);
   if(facts.enclosingTypeBindings.length||facts.enclosingUsableValueBindings.length)fail('original enclosing effect changed');
   selections.push({file:row.module.file,module:row.module.path,sourceSha256:row.input.sourceSha256,span:row.input.span,itemSha256:row.input.itemSha256,inputDigest:row.input.digest,languageRule:facts.rule.id,completeInvocationDigest:facts.certificate.digest,retainedAlternatives:facts.alternatives.map(alternative=>({invocation:alternative.invocation,kind:alternative.kind??null,rootKinds:alternative.roots?.map(root=>root.kind)??null})),enclosingTypeBindings:[],enclosingUsableValueBindings:[],runtimeAuthority:false,generatedImplBehavior:false});
  }
@@ -171,5 +171,44 @@ export function createWholeScopedCoreAdoptionProducerContext({modules,compilatio
  const derive=createDeriveFootprintContext({modules,dependencies,externalModules:registeredStandardHostBindings(),compilationProfile:profile}),bang=createWholeProducerDeriveBangContext({deriveContext:derive}),original=deriveFootprintSourceContext(derive),selected=new Map();
  const binding=resolveModuleBindings({modules,deriveContext:derive,deriveBangContext:bang,externalModules:deriveFootprintExternalModules(derive),compilationProfile:profile});
  const token=Object.freeze({schema:'private-core-adoption-producer-context-v1'});contexts.set(token,{modules,profile,dependencies,derive,bang,original,binding,selected});return token;
+ });
+}
+
+// Explicit dimension-specific format; existing creators retain their full proof API.
+import {createDeriveEnclosingNamespaceContext,isDeriveEnclosingNamespaceContext,proveDeriveEnclosingNamespaceEffect,deriveEnclosingNamespaceEffectFacts} from './derive-enclosing-namespace-context.mjs';
+import {resolveEnclosingNamespaceModuleBindings} from './module-bindings.mjs';
+// Dispatch DATA are private per-context format associations, not source facts.
+// Old calls perform no reflection or mutable-method dispatch at this boundary.
+import {originalCapturedFunctionSource,originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
+let enclosingCoreDispatch=null;
+function enclosingCoreBackend(state){
+ const ops=enclosingCoreDispatch;
+ return ops?ops.apply(ops.get,ops.map,[state]):undefined;
+}
+function publishEnclosingCoreContext(token,state,bang){
+ if(!isDeriveEnclosingNamespaceContext(bang)||!originalDataFreezeIntrinsicsUnchanged())fail('enclosing dispatch native operations changed');
+ if(!enclosingCoreDispatch){
+  const constructor=WeakMap,owner=constructor.prototype,applyOwner=Reflect;
+  const getField=Object.getOwnPropertyDescriptor(owner,'get'),setField=Object.getOwnPropertyDescriptor(owner,'set'),applyField=Object.getOwnPropertyDescriptor(applyOwner,'apply');
+  const native=(field,name)=>!!field&&Object.hasOwn(field,'value')&&field.writable===true&&field.enumerable===false&&field.configurable===true&&originalCapturedFunctionSource(field.value)==='function '+name+'() { [native code] }';
+  if(originalCapturedFunctionSource(constructor)!=='function WeakMap() { [native code] }'||!native(getField,'get')||!native(setField,'set')||!native(applyField,'apply'))fail('qualified enclosing dispatch primitives required');
+  if(!isDeriveEnclosingNamespaceContext(bang)||!originalDataFreezeIntrinsicsUnchanged()||WeakMap!==constructor||Reflect!==applyOwner||Object.getOwnPropertyDescriptor(owner,'get').value!==getField.value||Object.getOwnPropertyDescriptor(owner,'set').value!==setField.value||Object.getOwnPropertyDescriptor(applyOwner,'apply').value!==applyField.value)fail('enclosing dispatch primitives changed during qualification');
+  enclosingCoreDispatch={map:new constructor(),get:getField.value,set:setField.value,apply:applyField.value};
+ }
+ const ops=enclosingCoreDispatch,backend={prove:proveDeriveEnclosingNamespaceEffect,facts:deriveEnclosingNamespaceEffectFacts};
+ ops.apply(ops.set,ops.map,[state,backend]);
+ ops.apply(ops.set,contexts,[token,state]);
+}
+export function createEnclosingCoreAdoptionProducerContext({modules,compilationProfile:inputProfile,dependencyInputs}){
+ return withRetainedPrivateNativeProofCostScope(()=>{
+ const inputs=dependencySources(dependencyInputs);if(!inputs)return null;
+ // No dependency-archive reads or proof construction are added to an operation with no
+ // actual derive invocation. Ordinary callers without Cargo retain old refusal.
+ const profile=compilationProfile(inputProfile),hasDerive=modules.some(module=>originalSourceModuleItems(module).some(item=>itemConfiguration(item.tokens,profile).attributes.some(attribute=>attribute.name==='derive')));
+ if(!hasDerive)return null;
+ const dependencies=deriveDependencyProfile(inputs).proof;if(!dependencies)return null;
+ const derive=createDeriveFootprintContext({modules,dependencies,externalModules:registeredStandardHostBindings(),compilationProfile:profile}),bang=createDeriveEnclosingNamespaceContext({deriveContext:derive}),original=deriveFootprintSourceContext(derive),selected=new Map();
+ const binding=resolveEnclosingNamespaceModuleBindings({modules,deriveContext:derive,deriveBangContext:bang,externalModules:deriveFootprintExternalModules(derive),compilationProfile:profile});
+ const token=Object.freeze({schema:'private-core-adoption-producer-context-v1'});publishEnclosingCoreContext(token,{modules,profile,dependencies,derive,bang,original,binding,selected},bang);return token;
  });
 }

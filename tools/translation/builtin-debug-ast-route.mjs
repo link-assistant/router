@@ -179,3 +179,34 @@ function closePayloadBranches(plan,branches,input,variants){
  }
  if(branches.length!==(allFieldless&&variants.length>1?2:3))fail();return branches.map((branch,index)=>{exact(branch,['condition','statements','body']);if(branch.statements.length)fail();const before=nodes,mode=index===0?'None':index===1?'Shallow':'Full';visit(branch.body,variants[0],mode);return {...branch,recursiveNamespaceClosure:{schema:'source-original-debug-payload-enum-positive-tree-v1',nodes:nodes-before,variantCount:variants.length,sourceConstructorsOnly:true,allOriginalFieldsRetained:true,bodyExpressionComplete:true,namespaceAuthority:false}};});
 }
+
+// Explicit enclosing-only format: legacy full route above is unchanged.
+export function compileBuiltinDebugEnclosingNamespaceModel({profile,entry,original,certificate,input}={}){
+ const plan=sourcePlan(profile,entry),fresh=builtinDebugDataInputs({source:original.module.source,span:certificate.span});if(JSON.stringify(fresh)!==JSON.stringify(input)||input.wholeSourceSha256!==certificate.sourceSha256||input.itemSha256!==certificate.itemSha256||input.name!==certificate.name||input.kind!==certificate.kind)throw new TypeError('Original Debug source syntax differs from its private invocation');if(input.attributes.some(a=>a.name==='repr'))throw new TypeError('Original Debug packed/repr field view remains outside this source route');
+ if(input.style==='payload-enum')return null;
+ const fields=typeLeaves(original,certificate,input),node=(builder,slots)=>({kind:'Expr',constructor:plan.constructors.get(builder),attrs:[],tokens:null,slots}),root={kind:'Ident',symbol:'kw::DollarCrate',hygiene:'original std_path with_def_site_ctxt(DUMMY_SP)'},path=segments=>node('expr_path',{path:{kind:'Path',segments}}),call=(segments,args)=>node('expr_call',{expr:path(segments),args}),string=value=>node('expr_str',{s:{kind:'Symbol',value}}),self=path(['self']),fmt=path(['f']);
+ const ok=()=>call([root,'result','Result','Ok'],[node('expr_tuple',{exprs:[]})]),write=name=>call([root,'fmt','Formatter','write_str'],[fmt,name]);
+ const fieldExpressions=fields.map(field=>node('expr_addr_of',{e:node('source_field',{selflike_arg:self,struct_field_ident:field.name,sourceSpan:field.fieldDefinitionSpan,hygiene:'original FieldDef span with trait ctxt'})}));
+ const last=(expr,index)=>index<fieldExpressions.length-1?expr:node('expr_addr_of',{e:expr,sourceSpan:fields[index].fieldDefinitionSpan,hygiene:'original expr_for_field last-field span'});
+ let branches=[{condition:'FmtDebug::None',statements:[],body:ok()}];
+ if(input.style==='unit-enum'&&input.variants.length>1){const arms=input.variants.map(variant=>({kind:'Arm',attrs:[],guard:null,body:string(variant.name),pattern:{kind:'PatKind::Path',qself:null,path:[input.name,variant.name],sourceNameSpan:variant.span},isPlaceholder:false}));branches.push({condition:'FmtDebug::Shallow or Full; AllFieldlessEnum bypasses shallow branch',statements:[],body:write(node('expr_match',{arg:self,arms,matchKind:'Prefix'}))});}
+ else{
+  const name=string(input.style==='unit-enum'?input.variants[0].name:input.name);branches.push({condition:'FmtDebug::Shallow',statements:[],body:write(name)});
+  if(!fields.length)branches.push({condition:'FmtDebug::Full; empty fields',statements:[],body:write(name)});
+  else if(fields.length<=5)branches.push({condition:'FmtDebug::Full; fields<=original CUTOFF',statements:[],body:call([root,'fmt','Formatter',{kind:'Symbol',originalFormat:'debug_struct_field{}_finish',argument:fields.length}],[fmt,name,...fields.flatMap((field,index)=>[string(field.name),last(fieldExpressions[index],index)])])});
+  else{
+   const names=node('expr_addr_of',{e:node('expr_array',{exprs:fields.map(f=>string(f.name))})}),values=node('expr_addr_of',{e:node('expr_array',{exprs:fieldExpressions.map(last)})}),ref=(ty,lifetime=null)=>({kind:'TyKind::Ref',lifetime,mutability:'Not',ty}),namesTy=ref({kind:'TyKind::Infer'},{kind:'Lifetime',symbol:'StaticLifetime'}),valuesTy=ref({kind:'TyKind::Slice',ty:ref({kind:'TyKind::TraitObject',bounds:[{kind:'GenericBound::Trait',path:[root,'fmt','Debug'],constness:'Never'}],syntax:'Dyn'})});
+   const local=(ident,ty,initializer)=>({kind:'StmtKind::Let',local:{kind:'LocalKind::Init',pattern:{kind:'PatKind::Ident',bindingMode:'NONE',ident,subpattern:null},ty,initializer,attrs:[],tokens:null,mutable:false}});
+   branches.push({condition:'FmtDebug::Full; fields>original CUTOFF',statements:[local('names',namesTy,names),local('values',valuesTy,values)],body:call([root,'fmt','Formatter','debug_struct_fields_finish'],[fmt,name,path(['names']),path(['values'])])});
+  }
+ }
+ const closed=closeBranches(plan,branches,input,fields);
+ // The candidate is DATA only. The private invocation issuer independently
+ // joins current input/owner/source and the original resolver rule.
+ return {schema:'original-debug-enclosing-grammar-candidate-v1',inputStyle:input.style,
+  sources:plan.recipes.map(recipe=>({source:recipe.source,sourceSha256:recipe.sourceSha256,span:recipe.span,syntaxSha256:recipe.syntaxSha256,digest:recipe.digest})),
+  branches:closed.map(branch=>({condition:branch.condition,statements:branch.statements.length,closure:branch.recursiveNamespaceClosure})),
+  sourceControls:plan.sourceControls,generatedAttributes:['automatically_derived','inline'],
+  sourceTypeRoundtrips:fields.map(field=>({name:field.name,typeSpan:field.typeSpan,sourceSha256:field.sourceSha256,semanticSyntaxRoundTrip:field.semanticSyntaxRoundTrip})),
+  methodBehavior:'opaque-untranslated',namespaceAuthority:false,runtimeAuthority:false};
+}
