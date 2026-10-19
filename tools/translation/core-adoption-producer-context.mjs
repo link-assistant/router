@@ -176,7 +176,7 @@ export function createWholeScopedCoreAdoptionProducerContext({modules,compilatio
 
 // Explicit dimension-specific format; existing creators retain their full proof API.
 import {createDeriveEnclosingNamespaceContext,isDeriveEnclosingNamespaceContext,proveDeriveEnclosingNamespaceEffect,deriveEnclosingNamespaceEffectFacts} from './derive-enclosing-namespace-context.mjs';
-import {resolveEnclosingNamespaceModuleBindings} from './module-bindings.mjs';
+import {resolveOwnedEnclosingNamespaceModuleBindings as resolveEnclosingNamespaceModuleBindings} from './owned-enclosing-module-bindings.mjs';
 // Dispatch DATA are private per-context format associations, not source facts.
 // Old calls perform no reflection or mutable-method dispatch at this boundary.
 import {originalCapturedFunctionSource,originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';

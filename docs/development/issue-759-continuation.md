@@ -403,6 +403,28 @@ file then passed, while the two unchanged complete files retain their 14 passes
 and successful original-deadline audit. No CST boundary or deadline was relaxed.
 This fixes an observed unnecessary restoration; full producer fit remains open.
 
+The following source batch copies the actual scoped resolver wrapper into an
+explicit owned adapter and parser-selects its three consumers: project, derived
+source and core-adoption contexts. The old resolver module remains byte-for-byte
+unchanged and continues to issue every genuine scope. Complete source/CST
+inverses and installed-source fixed-point checks passed. The first five-file
+Node receiving run passed 31 of 32 cases; its old rule-history fixture had an
+ambiguous whole-file tail anchor shared by the legacy and additive resolver
+implementations. Parser-selected legacy partitioning preserves the complete
+additive suffix, compares every function body and retains all original recipes,
+pins, cases and deadlines. The whole corrected eight-case file then passed;
+the other four unchanged complete files retain their 24 passes and successful
+deadline audit. All 32 cases subsequently passed together under Bun.
+
+Separate fresh processes resolved identical complete five-module, twelve-type
+synthetic inputs three times. Every original input and result matched in full.
+Legacy durations were 541.2, 532.3 and 547.3 milliseconds; owned durations were
+377.3, 366.8 and 365.8 milliseconds. This receiving observation does not qualify
+the physical Router project or its original deadlines. The complete captured
+58,700,590-byte CST also produced the exact original UTF-8 length and hash from
+descriptions without requesting restoration; all 396 original input-module
+bytes/hashes matched. Full-project memory and performance remain open.
+
 The current source-bank refresh includes all 850 Rust/Cargo inputs and preserves
 both historical universes and complete CST inverses. Its complete eight-case
 Node receiving file passed in 155.415 seconds, including the original two-producer

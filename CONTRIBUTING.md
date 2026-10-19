@@ -105,6 +105,17 @@ fragments while preserving every byte comparison, existing component and
 aggregate limits, and independent reconstruction. A storage optimization or a
 focused pass still requires a fresh complete producer and gate result.
 
+The owned enclosing resolver is a source-derived wrapper around the existing
+genuine resolver inside its existing synchronous retained DATA-cost scope.
+Derive it and its parser-selected consumer imports with
+`node tools/translation/prepare-owned-enclosing-bindings.mjs --emit`, review
+complete source/CST inverses, install the exact proposals and run `--check`.
+Keep the legacy resolver body intact and independently compare all binding,
+diagnostic, source/profile-refusal and original argument-default behavior.
+The scope reuses frozen DATA arithmetic only; it closes before return and
+stores no source/owner verdict or encoded result. A synthetic timing comparison
+does not qualify the full project or extend any original case deadline.
+
 The explicit owned-definition producers may serialize complete top-level data
 fields separately with their fixed Map/BigInt serializer. Preserve native member
 keys, omissions, ordered logical bytes, every component and the original storage

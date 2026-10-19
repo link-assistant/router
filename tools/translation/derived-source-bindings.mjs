@@ -1,5 +1,6 @@
 // Compose existing resolver/output rules without merging public scope flags.
-import {resolveModuleBindings,resolveEnclosingNamespaceModuleBindings,assertResolvedSourceScopeOrigin} from './module-bindings.mjs';
+import {resolveModuleBindings,assertResolvedSourceScopeOrigin} from './module-bindings.mjs';
+import {resolveOwnedEnclosingNamespaceModuleBindings as resolveEnclosingNamespaceModuleBindings} from './owned-enclosing-module-bindings.mjs';
 import {deriveFootprintSourceContext} from './derive-footprints.mjs';
 import {createDeriveBangContext} from './derive-bang-context.mjs';
 import {createDeriveEnclosingNamespaceContext} from './derive-enclosing-namespace-context.mjs';
