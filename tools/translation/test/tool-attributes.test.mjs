@@ -96,7 +96,7 @@ test('inner lint scope uses original bounded builtin syntax and retains conflict
 
 test('actual builtin root lints retain independently locked derive namespace evidence',async()=>{
   const source='#![allow(clippy::redundant_pub_crate)]\n#[derive(serde::Serialize)] pub struct Entry{value:u8} pub fn valid(value:u8)->u8{value}';
-  const dependencies=deriveDependencyProfile({manifest:readFileSync(new URL('../../../Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')}).proof;
+  const dependencies=deriveDependencyProfile({manifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')}).proof;
   const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
   assert.equal(result.meta.deriveNamespaceFootprints.certificates.length,1);assert.equal(result.meta.bindingEvidence.scopes[0].unresolvedTypeScope,false);assert.equal(result.meta.bindingEvidence.scopes[0].unresolvedBangMacroScope,false);
   const certificate=result.meta.deriveNamespaceFootprints.certificates[0];assert.equal(certificate.sourceSha256,hash(source));assert.ok(result.meta.executable.some(entry=>entry.name==='valid'));

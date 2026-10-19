@@ -1,0 +1,47 @@
+{
+  "$id": "link-assistant-router/preservation/v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "access_loss_explicitly_accepted": {},
+    "active_port_owners": {},
+    "blocker": {},
+    "catalog_comparison": {},
+    "catalogs": {},
+    "checkpoint": {},
+    "checkpoint_scope": {},
+    "cleanup_scope": {},
+    "control_health": {},
+    "credential_source": {},
+    "credentials_copied": {},
+    "data_restore_proven": {},
+    "data_retained": {},
+    "global_atomic_snapshot": {},
+    "issued_bound_tokens": {},
+    "mode": {},
+    "namespace": {},
+    "oauth_copied": {},
+    "oauth_ownership": {},
+    "oauth_restored": {},
+    "origin": {},
+    "parity": {},
+    "port_ownership": {},
+    "previous_checkpoint": {},
+    "primary_preservation": {},
+    "profiles_projects_sessions": {},
+    "real_claude_models_and_picker": {},
+    "reason": {},
+    "resource_limits": {},
+    "rollback_scope": {},
+    "root": {},
+    "schema": {
+      "const": "link-assistant-router/preservation/v1"
+    },
+    "serving_health": {},
+    "status": {}
+  },
+  "required": [
+    "schema"
+  ],
+  "type": "object"
+}

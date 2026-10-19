@@ -4,7 +4,7 @@ import { readFile, writeFile, stat, access } from 'node:fs/promises';
 import { join } from 'node:path';
 import { load, temporary } from './helpers.mjs';
 
-const { NativeRouter } = await load('packages/javascript/native/operations.mjs');
+const { NativeRouter } = await load('js/src/operations.mjs');
 const config = data_dir => ({ data_dir, token_secret: 'independent-local-secret', storage_policy: 'memory', providers: [], accounts: [] });
 
 test('managed operation envelopes preserve claimed authority across restart and reject counterfeit control identity', async t => {

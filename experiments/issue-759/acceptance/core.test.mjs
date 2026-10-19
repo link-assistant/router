@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { load, temporary, upstream } from './helpers.mjs';
 
-const { createRouterCore } = await load('packages/javascript/native/core.mjs');
-const { createNativeRouter } = await load('packages/javascript/native/server.mjs');
+const { createRouterCore } = await load('js/src/core.mjs');
+const { createNativeRouter } = await load('js/src/server.mjs');
 const configuration = directory => ({ token_secret: 'core-acceptance-secret', storage_policy: 'memory', data_dir: directory,
   providers: [{ name: 'fixture', base_url: 'http://127.0.0.1:1', models: ['one', 'two'], supported_clients: ['codex'] }],
   accounts: [{ name: 'primary', provider: 'fixture', policy: { prefix: 'fixture' } }, { name: 'secondary', provider: 'fixture' }] });

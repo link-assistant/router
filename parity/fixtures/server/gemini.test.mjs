@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
-import {translateRequest,translateResponse} from '../../../packages/javascript/native/protocols.mjs';
-import {translateStream,decodeSSE} from '../../../packages/javascript/native/streams.mjs';
-import {createNativeRouter} from '../../../packages/javascript/native/server.mjs';
+import {translateRequest,translateResponse} from '../../../js/src/protocols.mjs';
+import {translateStream,decodeSSE} from '../../../js/src/streams.mjs';
+import {createNativeRouter} from '../../../js/src/server.mjs';
 const chat={model:'m',messages:[{role:'system',content:'Be terse'},{role:'user',content:'weather?'},{role:'assistant',content:null,tool_calls:[{id:'c',type:'function',function:{name:'weather',arguments:'{"city":"Hanoi"}'}}]},{role:'tool',tool_call_id:'c',content:'{"degrees":29}'}],tools:[{type:'function',function:{name:'weather',parameters:{type:'object',properties:{city:{type:'string'}}}}}],tool_choice:'required',max_tokens:12,temperature:0.2};
 const native={candidates:[{index:0,content:{role:'model',parts:[{text:'Hello'},{functionCall:{id:'c',name:'weather',args:{city:'Hanoi'}}}]},finishReason:'STOP'}],usageMetadata:{promptTokenCount:4,candidatesTokenCount:3,totalTokenCount:7,cachedContentTokenCount:2},modelVersion:'vendor'};
 const frame=p=>`data: ${JSON.stringify(p)}\n\n`;

@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {NUMERIC_SOURCE_STAGE_PROFILE as profile,captureNumericFormatterSources,numericSourceInputsFromFiles,compileNumericSourceStages,compileOriginalRustSourceStages,emitNumericSourceStage,requireNumericFormatterAuthority} from './numeric-source-stage.mjs';
 import {loadJavaScript} from '../test/artifact-loader.mjs';
 import {verifyTypedTargets} from '../test/typed-targets.mjs';
-const manifest=()=>readFileSync(new URL('../../../Cargo.toml',import.meta.url),'utf8'),lock=()=>readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8');
+const manifest=()=>readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock=()=>readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8');
 let captured;
 function actual(){return captured??=numericSourceInputsFromFiles({manifest:manifest(),lock:lock()});}
 function generic(source,extra={}){return compileOriginalRustSourceStages({entry:'src/lib.rs',sources:{'src/lib.rs':source},...extra});}

@@ -21,8 +21,8 @@ test('locked repository dependencies are installed before every consuming stage,
   const jobs = parse(baseline['javascript-first.yml']).jobs;
   const installations = [
     ['lint', 'npm ci --prefix scripts/ci --ignore-scripts'],
-    ['lint', 'npm ci --prefix packages/javascript --ignore-scripts'],
-    ...['node-tests', 'bun-tests', 'typescript', 'parity', 'translation', 'profile-matrix', 'reverse-translation'].map(id => [id, 'npm ci --prefix packages/javascript --ignore-scripts']),
+    ['lint', 'npm ci --prefix js --ignore-scripts'],
+    ...['node-tests', 'bun-tests', 'typescript', 'parity', 'translation', 'profile-matrix', 'reverse-translation'].map(id => [id, 'npm ci --prefix js --ignore-scripts']),
     ['typescript', 'npm ci --prefix ui --ignore-scripts'],
   ];
   for (const [id, command] of installations) {
@@ -43,7 +43,7 @@ test('locked repository dependencies are installed before every consuming stage,
   // still too late, even though it precedes the last command in that stage.
   fails('javascript-first.yml', workflow => {
     const steps = workflow.jobs.translation.steps;
-    const index = steps.findIndex(step => step.run === 'npm ci --prefix packages/javascript --ignore-scripts');
+    const index = steps.findIndex(step => step.run === 'npm ci --prefix js --ignore-scripts');
     const [install] = steps.splice(index, 1);
     steps.splice(steps.findIndex(step => step.run === 'node scripts/translate-router.mjs --check'), 0, install);
   }, 'locked dependency install must precede');
@@ -132,7 +132,7 @@ test('aggregate rejects partial green, skipped and cancelled stages', () => {
 test('independent profile freshness and strict TypeScript cannot be removed or replaced by canonical checks', () => {
   for (const [stage, command, substitute] of [
     ['profile-matrix', 'node scripts/translate-router.mjs --profile-matrix --check', 'node scripts/translate-router.mjs --check'],
-    ['typescript', 'node scripts/check-profile-typescript.mjs', 'node packages/javascript/node_modules/typescript/bin/tsc -p tools/translation/tsconfig.json'],
+    ['typescript', 'node scripts/check-profile-typescript.mjs', 'node js/node_modules/typescript/bin/tsc -p tools/translation/tsconfig.json'],
   ]) {
     assert.ok(parse(baseline['javascript-first.yml']).jobs[stage].steps.some(step => step.run === command));
     fails('javascript-first.yml', workflow => {

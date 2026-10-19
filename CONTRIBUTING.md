@@ -7,7 +7,7 @@ Thank you for your interest in contributing! This document provides guidelines a
 Clone `https://github.com/link-assistant/router.git`, then install Node 20 or newer and Bun for the JavaScript development gate. Install package dependencies with:
 
 ```bash
-npm ci --prefix packages/javascript
+npm ci --prefix js
 ```
 
 Rust, rustfmt, Clippy and rust-script remain tools for the Rust implementation and its CI checks. Install them when working on that surface, rather than compiling the project as the first setup step. Optional pre-commit hooks use `pip install pre-commit` and `pre-commit install`. Local hooks must remain free of Rust execution and automatic build-cache cleanup; obtain Rust results through the gated workflow below and perform authorized cleanup separately.
@@ -24,7 +24,7 @@ Run the complete local gate:
 node scripts/check-js-first-local.mjs --stamp /tmp/router-js-first-gate.json
 ```
 
-It runs the actual JavaScript lint, native Node and Bun tests, type checks, strict parity, forward translation and reverse regeneration checks. A missing or partial parity entry keeps the gate red. Fix all reported failures together. Individual diagnostics include `npm run native:test --prefix packages/javascript`, `npm run native:test:bun --prefix packages/javascript`, `npm run typecheck --prefix packages/javascript`, `node scripts/check-router-parity.mjs` and `node --test scripts/test/*.test.mjs`. These help locate failures but do not replace the complete gate.
+It runs the actual JavaScript lint, native Node and Bun tests, type checks, strict parity, forward translation and reverse regeneration checks. A missing or partial parity entry keeps the gate red. Fix all reported failures together. Individual diagnostics include `npm run native:test --prefix js`, `npm run native:test:bun --prefix js`, `npm run typecheck --prefix js`, `node scripts/check-router-parity.mjs` and `node --test scripts/test/*.test.mjs`. These help locate failures but do not replace the complete gate.
 
 Use CI for broader Rust verification after the JavaScript gate. Do not run full local Cargo builds, test suites or Clippy. Only an explicitly necessary targeted exception can use the bounded shared build wrapper after a green stamp for the current SHA and file contents:
 
@@ -329,3 +329,17 @@ Releases are managed through GitHub releases. To trigger a release:
 Thank you for contributing!
 
 For the explicit checked-definition receiving lane, prepare and review the complete source-derived bulk modules with `node tools/translation/prepare-owned-definition-bulk.mjs --emit`, then run actual canonical and `--profile-matrix` generation using `node scripts/translate-router.mjs --retain-output-text --owned-core-definitions`. Review and install only actual producer outputs. Generate their independent reverse counterparts with `node scripts/regenerate-js-first.mjs --owned-core-definitions --write` and its `--profile-matrix` variant. Every command's `--check` variant and `node scripts/check-owned-definition-typescript.mjs` are mandatory in the existing complete local and same-SHA CI gates. Preserve all ordinary commands, seven local/eight CI stages, strict TypeScript 5.9.3, original deadlines and the requirement for green JavaScript stages before Rust CI. Definition-only sidecars and witnesses do not count as full-module or crate equivalence; retain all original source and main-module refusal accounting. Keep new observed evidence within the 384 MiB monitor bound, using complete verified lossless terminal compression rather than truncation or waived workloads. See the [workflow](docs/development/javascript-first.md) for exact paths, materialization prerequisites and the separate unresolved parity obligations.
+
+### Language source layout
+
+Maintain physical `js/src`, `ts/src` and `rust/src` directories; see
+[the language layout and commands](docs/development/language-layout.md).
+JavaScript changes and checks run first. Generate TypeScript with the checked
+CST/meta producer; keep forward and reverse translation rules in separate
+ordered language and repository sequences. Do not hand edit generated files.
+The root Cargo manifest is a workspace; package metadata lives in
+`rust/Cargo.toml`, and the workspace lockfile remains at root. Refresh shared
+Rust assets with `node scripts/sync-rust-assets.mjs --write` and check them
+before CI. No Rust tool runs locally during issue #759; every required
+JavaScript stage must pass for the same SHA before Rust CI starts, and Rust
+failures remain fatal.

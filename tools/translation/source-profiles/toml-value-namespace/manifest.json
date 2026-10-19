@@ -10,7 +10,7 @@
     "src/lib.rs": "9e576fa0b4639b272c9f33928085a2e1790edee0e1382f4acdf5ff043adc6e0e",
     "src/item.rs": "cc831f4fff5a4631b23b2a1251b30f42a56d6b358ac962705133f96510a61683"
   },
-  "cargoManifestSha256": "328a6026c740f42468d0752d9cea4cb4930304b45c979b03d3f3db9ce658d476",
+  "cargoManifestSha256": "564ff6c847a421e8e751185facd37c3e21f76c6429bae44c1bdcf8312d103661",
   "cargoLockSha256": "c1cb53b3b73c3a547d362c88c400d0a81457876f4c3e5537acb2fbd3e4aececa",
   "namespaceComplete": false,
   "callAuthority": false,

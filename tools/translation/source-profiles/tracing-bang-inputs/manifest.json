@@ -1,11 +1,11 @@
 {
   "schema": "locked-tracing-macro-source-inputs-v1",
-  "cargoManifestSha256": "328a6026c740f42468d0752d9cea4cb4930304b45c979b03d3f3db9ce658d476",
+  "cargoManifestSha256": "564ff6c847a421e8e751185facd37c3e21f76c6429bae44c1bdcf8312d103661",
   "cargoLockSha256": "c1cb53b3b73c3a547d362c88c400d0a81457876f4c3e5537acb2fbd3e4aececa",
   "memberInventory": {
     "path": "members.json",
     "bytes": 36602,
-    "sha256": "f0fa536e1e54e8c8557286dca6f4eb65986f6fa09433e9a4dae1977597519667"
+    "sha256": "337e38246b860035674024e97373fb9e5f21e5336a3015b3ef8deb24ab3ce719"
   },
   "bounds": {
     "archives": 2,

@@ -38,14 +38,14 @@ test('source-only relocated bulk translator regenerates a separate tracked repos
     assert.equal(projectMeta.deriveDependencyProfile.available,false);assert.equal(projectMeta.deriveDependencyProfile.digest,null);assert.equal(projectMeta.deriveDependencyProfile.diagnostics[0].kind,'unsupported-profile');
     const meta=JSON.parse(readFileSync(join(repository,'tools/translation/meta/src/lib.meta.json'),'utf8'));
     assert.equal(meta.items.map(item=>item.source).join(''),source);
-    const javascript=join(repository,'packages/javascript/generated/rust-draft/src/lib.mjs');
+    const javascript=join(repository,'js/generated/rust-draft/src/lib.mjs');
     const text=readFileSync(javascript,'utf8');assert.equal(text.includes(bundle),false);assert.equal(text.includes(root),false);
     const js=await import(pathToFileURL(javascript));
-    const generated=join(repository,'packages/typescript/generated'),draft=join(generated,'rust-draft'),project=join(generated,'rust-project'),compiled=join(repository,'compiled');
+    const generated=join(repository,'ts/generated'),draft=join(generated,'rust-draft'),project=join(generated,'rust-project'),compiled=join(repository,'compiled');
     const args=['--strict','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--skipLibCheck','--rootDir',generated,'--outDir',compiled,...['lib','values','relay'].map(name=>join(draft,'src/'+name+'.ts')),join(project,'src/lib.ts')];
     if(process.env.ROUTER_TRANSLATION_TSC)execFileSync(process.env.ROUTER_TRANSLATION_TSC,args,{timeout:30000,stdio:'pipe'});
     else {
-      const require=createRequire(join(root,'packages/javascript/package.json'));
+      const require=createRequire(join(root,'js/package.json'));
       let compiler;
       try {compiler=require.resolve('typescript/bin/tsc');}
       catch(error){if(error.code!=='MODULE_NOT_FOUND')throw error;}
@@ -67,7 +67,7 @@ test('source-only relocated bulk translator regenerates a separate tracked repos
       assert.throws(()=>target.translated.normalize(256n),RangeError);
       assert.equal(target.provenance.runtimeParity,false);
     }
-    for(const path of [join(repository,'packages/javascript/generated/rust-project/src/lib.mjs'),join(compiled,'rust-project/src/lib.js')]) {
+    for(const path of [join(repository,'js/generated/rust-project/src/lib.mjs'),join(compiled,'rust-project/src/lib.js')]) {
       const target=await import(pathToFileURL(path));
       assert.equal(target.translated.normalize(2n),2n);assert.equal(target.translated['relay.normalize'](20n),9n);
       assert.equal(target.translated['values.allowed'](8n),true);assert.equal(target.translated['values.allowed'](9n),false);

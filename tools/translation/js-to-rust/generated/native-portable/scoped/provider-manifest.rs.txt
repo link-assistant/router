@@ -1,5 +1,5 @@
 // GENERATED: node scripts/regenerate-js-first.mjs
-// Independently checked scoped bodies from packages/javascript/native/provider-manifest.mjs; source sha256=e2202d46ff724740d8250ecfad06df4c980b658aa2162f89143cd72caa4fca5e; IR sha256=9e3125e3979418525ee7ccb76d50d7c0e37f5be267fb97a2f6d2e5ea1da6c920.
+// Independently checked scoped bodies from js/src/provider-manifest.mjs; source sha256=e2202d46ff724740d8250ecfad06df4c980b658aa2162f89143cd72caa4fca5e; IR sha256=9e3125e3979418525ee7ccb76d50d7c0e37f5be267fb97a2f6d2e5ea1da6c920.
 // Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
 #[derive(Clone, Copy)]
 pub enum JsPayload<'a> {

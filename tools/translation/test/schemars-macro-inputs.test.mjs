@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -5,7 +6,7 @@ import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {SCHEMARS_NAMESPACE_MACRO_PROFILE,originalSchemarsStringMacroSourcePlan,proveSchemarsStringMacroNamespace,isSchemarsStringMacroNamespace,assertSchemarsStringMacroNamespace} from '../schemars-macro-inputs.mjs';
-const root=new URL('../../../',import.meta.url),read=path=>readFileSync(new URL(path,root),'utf8'),dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')}),hash=value=>createHash('sha256').update(value).digest('hex');
+const root=new URL('../../../',import.meta.url),read=path=>readFileSync(repositorySourceURL(path,root),'utf8'),dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')}),hash=value=>createHash('sha256').update(value).digest('hex');
 test('complete pinned module_path source and original reused constructor/parser sources retain exact bytes and licenses',()=>{
  for(const row of SCHEMARS_NAMESPACE_MACRO_PROFILE.sources){const archive=readFileSync(new URL('../source-profiles/schemars-namespace/'+row.archive,import.meta.url));assert.equal(archive.length,row.archiveBytes);assert.equal(hash(archive),row.archiveSha256);const raw=gunzipSync(archive);assert.equal(raw.length,row.bytes);assert.equal(hash(raw),row.sha256);}
  for(const name of['LICENSE-APACHE','LICENSE-MIT'])assert.ok(read('tools/translation/source-profiles/schemars-namespace/'+name).length>1000);const plan=originalSchemarsStringMacroSourcePlan(dependencies);assert.equal(plan.rules.length,16);assert.ok(plan.rules.some(row=>row.role==='full original module_path positive expression lineage'));assert.ok(plan.definitions.some(row=>row.name==='expand_mod'));assert.equal(plan.outputKind,'ExprKind::Lit(token::Str)');assert.deepEqual(plan.outputAttributes,[]);assert.equal(plan.outputTokens,null);assert.equal(plan.generatedImplBehavior,false);assert.equal(plan.namespaceAuthority,false);assert.equal(plan.stringValueAuthority,false);

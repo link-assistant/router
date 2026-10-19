@@ -1,6 +1,6 @@
 {
   "schema": "locked-declarative-source-profile-v1",
-  "manifestSha256": "328a6026c740f42468d0752d9cea4cb4930304b45c979b03d3f3db9ce658d476",
+  "manifestSha256": "564ff6c847a421e8e751185facd37c3e21f76c6429bae44c1bdcf8312d103661",
   "lockSha256": "c1cb53b3b73c3a547d362c88c400d0a81457876f4c3e5537acb2fbd3e4aececa",
   "tokio": {
     "name": "tokio",

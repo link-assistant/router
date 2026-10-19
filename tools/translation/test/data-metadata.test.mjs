@@ -9,7 +9,7 @@ import {translateSource} from '../translate.mjs';
 import {loadJavaScript} from './artifact-loader.mjs';
 
 test('actual output limiter declaration keeps its Default derive and original field layout',()=>{
-  const source=readFileSync(new URL('../../../src/output_limit.rs',import.meta.url),'utf8');
+  const source=readFileSync(new URL('../../../rust/src/output_limit.rs',import.meta.url),'utf8');
   const item=sourceItems(source).find(item=>item.term==='struct' && item.name==='OutputTokenLimiter');
   assert.ok(item);const text=source.slice(item.start,item.end);
   assert.match(text,/#\[derive\(Clone, Debug, Default\)\]/u);

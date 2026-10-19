@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
@@ -18,7 +19,7 @@ import {observeOriginalCapturedOutput,originalCapturedOutputFacts} from '../orig
 import {originalStandardBangOutputSourcePlan,requireOriginalStandardBangOutputSourcePlan} from '../standard-bang-output-source.mjs';
 import {captureOriginalStandardVecOutput,originalStandardVecOutputFacts} from '../standard-vec-source-output.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),read=path=>readFileSync(new URL(path,root),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex');
+const root=new URL('../../../',import.meta.url),read=path=>readFileSync(repositorySourceURL(path,root),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex');
 const dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')});
 const retain=(name,value)=>{const directory=process.env.ROUTER_STANDARD_VEC_OUTPUT_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeFileSync(join(directory,name+'.json'),JSON.stringify(value)+'\n',{flag:'wx'});}};
 function moduleSource(source){const captured=captureSourceModuleViews({source,sourcePath:'src/lib.rs',compilationProfile:PRODUCTION_PROFILE});return {source,file:'src/lib.rs',path:[],sourceView:captured.views[0],compilationProfile:PRODUCTION_PROFILE};}

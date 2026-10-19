@@ -4,7 +4,7 @@ import {mkdtemp,rm,readFile,realpath} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {get} from 'node:https';
-import {createNativeRouter} from '../../../packages/javascript/native/server.mjs';
+import {createNativeRouter} from '../../../js/src/server.mjs';
 test('native self-signed HTTPS binds localhost with a verified generated certificate',async t=>{
   const data_dir=await mkdtemp(join(await realpath(tmpdir()),'router-native-https-'));t.after(()=>rm(data_dir,{recursive:true,force:true}));
   const router=createNativeRouter({core:{config:{data_dir,tls_self_signed:true}}});await router.listen({host:'127.0.0.1',port:0});t.after(()=>router.close());

@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
-import {createNativeRouter} from '../../../packages/javascript/native/server.mjs';
-import {NativeAffinityStore,nativeURL,nativeRequestHeaders,nativeResponseHeaders} from '../../../packages/javascript/native/native-service.mjs';
-import {HTTP_ROUTES,matchHTTPRoute} from '../../../packages/javascript/native/http-route-contract.mjs';
-import {AffinityStore} from '../../../packages/javascript/native/affinities.mjs';
+import {createNativeRouter} from '../../../js/src/server.mjs';
+import {NativeAffinityStore,nativeURL,nativeRequestHeaders,nativeResponseHeaders} from '../../../js/src/native-service.mjs';
+import {HTTP_ROUTES,matchHTTPRoute} from '../../../js/src/http-route-contract.mjs';
+import {AffinityStore} from '../../../js/src/affinities.mjs';
 
 const req = (path,method='GET',body,token='alice',headers={}) => new Request(`http://router${path}`,{method,headers:{authorization:`Bearer ${token}`,...headers},...(body === undefined ? {} : {body:typeof body === 'string' ? body : JSON.stringify(body)})});
 const candidate = {provider:'vendor',account:'primary',protocol:'chat',provider_kind:'openai-compatible',base_url:'http://localhost:1/v1',api_key:'vendor-secret'};

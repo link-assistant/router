@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from './repository-layout.mjs';
 // Propose an explicit repository adoption of the owned compatibility facade.
 // This changes application source; it is not standard-library owner inference.
 import {readFileSync,writeFileSync,mkdirSync,realpathSync,lstatSync,rmdirSync} from 'node:fs';
@@ -110,7 +111,7 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   const args=process.argv.slice(2);
   if(args.length!==4||args[0]!=='--root'||args[2]!=='--output')fail('usage: --root SOURCE_ROOT --output FRESH_PROPOSAL_DIRECTORY');
   const root=resolve(args[1]),output=resolve(args[3]);if(output===root||output.startsWith(root+'/'))fail('proposal must be outside source root');
-  const source=readFileSync(join(root,'src/accounts_cli.rs'),'utf8'),rootSource=readFileSync(join(root,'src/lib.rs'),'utf8'),operation=readFileSync(join(root,'src/operation_output.rs'),'utf8');
+  const source=readFileSync(join(root,rustPackageSourcePath(root,'src/accounts_cli.rs')),'utf8'),rootSource=readFileSync(join(root,rustPackageSourcePath(root,'src/lib.rs')),'utf8'),operation=readFileSync(join(root,rustPackageSourcePath(root,'src/operation_output.rs')),'utf8');
   const proposal=migrateCoreFormatting(source,{rootSource,macroUseSources:{operation_output:operation}});
   freshOutput(root,output);writeFileSync(join(output,'accounts_cli.rs'),proposal.after.source,{flag:'wx'});writeFileSync(join(output,'proposal.json'),JSON.stringify(proposal,null,2)+'\n',{flag:'wx'});
 }

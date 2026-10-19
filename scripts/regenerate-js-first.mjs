@@ -7,6 +7,7 @@ import { analyzeJavaScriptIndependentCorpus, translateJavaScript, parseMeta, emi
 import { camelFromSnake } from '../tools/translation/js-to-rust/vendor/ir.mjs';
 import { buildNativePortableArtifacts, buildNativePortableArtifactsCorpusBulk } from '../tools/translation/js-to-rust/native-portable-artifacts.mjs';
 
+import {repositoryRustLayout} from '../tools/translation/repository-layout.mjs';
 import {buildOwnedCoreDocumentArtifacts} from '../tools/translation/js-to-rust/owned-core-corpus.mjs';
 import {encodeWord} from '../tools/translation/js-to-rust/vendor/lino.mjs';
 
@@ -53,7 +54,7 @@ function rustFixtures(fixtures, program) {
 }
 
 function buildArtifactsSelected(root = ROOT, definitions=false, matrix,ownedBuilder) {
-  const sources = modules(root, 'packages/javascript/portable');
+  const sources = modules(root, 'js/portable');
   if (!sources.length) throw new Error('no authoritative portable JavaScript modules found');
   const sourceRows = [];
   const metas = [];
@@ -70,7 +71,7 @@ function buildArtifactsSelected(root = ROOT, definitions=false, matrix,ownedBuil
   const fixtureSource = readFileSync(join(root, fixturesPath), 'utf8');
   const fixtures = JSON.parse(fixtureSource);
   const header = `// GENERATED: node scripts/regenerate-js-first.mjs\n// JavaScript -> portable-router-v1 Links IR -> target; IR sha256=${sha256(meta)}\n`;
-  const nativeSources = modules(root, 'packages/javascript/native').map((path) => {
+  const nativeSources = modules(root, 'js/src').map((path) => {
     if (lstatSync(join(root, path)).isSymbolicLink()) throw new Error(`linked native source: ${path}`);
     const source = readFileSync(join(root, path), 'utf8');
     return { path, source };
@@ -89,11 +90,12 @@ function buildArtifactsSelected(root = ROOT, definitions=false, matrix,ownedBuil
     if (!diagnostic || diagnostic.kind !== fixture.kind) throw new Error(`unsupported fixture diagnostic changed: ${fixture.kind}`);
     return { ...fixture, message: diagnostic.message };
   });
+  const rustSource=repositoryRustLayout(root).productionPrefix;
   const artifacts = new Map([
     ['tools/translation/js-to-rust/generated/policy.lino', `# GENERATED: executable portable-router-v1 IR, no source envelopes.\n${meta}`],
-    ['src/generated_js_first/policy.rs', `${header}#![allow(unused_parens, clippy::needless_return, clippy::float_cmp)]\n\n${emitRust(program)}${rustFixtures(fixtures, program)}`],
-    ['src/generated_js_first/mod.rs', '// Generated from authoritative JavaScript policy kernels.\npub mod policy;\n'],
-    ['packages/typescript/native/js-first-policy.ts', `${header}${emitTypeScript(program)}`],
+    [`${rustSource}generated_js_first/policy.rs`, `${header}#![allow(unused_parens, clippy::needless_return, clippy::float_cmp)]\n\n${emitRust(program)}${rustFixtures(fixtures, program)}`],
+    [`${rustSource}generated_js_first/mod.rs`, '// Generated from authoritative JavaScript policy kernels.\npub mod policy;\n'],
+    ['ts/src/js-first-policy.ts', `${header}${emitTypeScript(program)}`],
   ]);
   for (const [path, content] of nativeDraft.artifacts) artifacts.set(path, content);
   const ownedDraft=definitions?ownedBuilder(root,{matrix}):buildOwnedCoreDocumentArtifacts(root);
@@ -140,7 +142,7 @@ function applyArtifactsSelected(root,{check=false}={},artifacts,definitionCleanu
   }
   // Empty current programs are emitted too, so a newly refused body cannot
   // survive. Removed source modules also remove only recognized owned drafts.
-  for (const directory of ['tools/translation/js-to-rust/generated/native-portable', 'packages/typescript/native/portable-draft','tools/translation/js-to-rust/generated/owned-core','packages/typescript/generated/reverse-owned-core',witnessPrefix]) {
+  for (const directory of ['tools/translation/js-to-rust/generated/native-portable', 'ts/src/portable-draft','tools/translation/js-to-rust/generated/owned-core','ts/generated/reverse-owned-core',witnessPrefix]) {
     const visit = (path) => {
       if (!existsSync(join(root, path))) return;
       if (lstatSync(join(root, path)).isSymbolicLink()) throw new Error(`linked generated draft: ${path}`);

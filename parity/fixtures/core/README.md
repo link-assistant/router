@@ -6,7 +6,7 @@ fixed-subject JWT. `tokens.lino` is the corresponding Rust `lino-objects-codec`
 0.7 readable `RouterState` / `TokenStore` projection. These files are data; no
 production secrets or live network endpoints are present.
 
-JavaScript adapter: `node --test packages/javascript/test/native-core.test.mjs`.
+JavaScript adapter: `node --test js/test/native-core.test.mjs`.
 Rust adapter: `cargo test --test native_core_parity_test` in a Rust-enabled CI
 worker. The Rust adapter validates the native JWT and text projection through
 Rust's real TokenManager/TextTokenStore and exercises the same budget cases.

@@ -40,7 +40,7 @@ test('actual owned sources are mandatory and copied source spelling grants no al
   const source=`pub fn f(v:&${J})->bool{${J}::is_null(v)}`;
   for(const input of [files(source,{'src/translation_core/primitives.rs':ROUTER_CORE_PRIMITIVES_SOURCE.replace('::serde_json::Value','bool')}),files(source,{'src/translation_core.rs':ROUTER_FORMATTING_FACADE_SOURCE.replace('Json, Maybe','Maybe')}),files(source,{'src/lib.rs':'mod translation_core;\n'+source})]){const result=project(input);assert.equal(has(result,'f'),false);}
   for(const source of [`pub fn f()->${M}<bool>{${M}::None()}`,`pub fn f()->${M}<bool>{${M}::Some}`,`pub fn f(v:&mut ${J})->bool{true}`,`pub fn f(v:${C}NotRegistered<bool>)->bool{true}`])assert.equal(has(project(files(source)),'f'),false);
-  const leaf=readFileSync(new URL('../../../src/translation_core/primitives.rs',import.meta.url),'utf8');retain('complete-physical-and-registered-primitives',{leaf,registered:ROUTER_CORE_PRIMITIVES_SOURCE,sha256:sha(leaf)});assert.equal(leaf,ROUTER_CORE_PRIMITIVES_SOURCE);
+  const leaf=readFileSync(new URL('../../../rust/src/translation_core/primitives.rs',import.meta.url),'utf8');retain('complete-physical-and-registered-primitives',{leaf,registered:ROUTER_CORE_PRIMITIVES_SOURCE,sha256:sha(leaf)});assert.equal(leaf,ROUTER_CORE_PRIMITIVES_SOURCE);
 });
 
 test('payload mutation borrowing and destruction retain existing refusal boundaries',()=>{

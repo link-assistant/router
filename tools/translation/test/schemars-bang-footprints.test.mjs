@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -13,7 +14,7 @@ import {loadJsonMacroSourceProof} from '../json-macro-inputs.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 import {parseProgram} from '../semantic-meta.mjs';
-const root=new URL('../../../',import.meta.url),read=p=>readFileSync(new URL(p,root),'utf8'),dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')});
+const root=new URL('../../../',import.meta.url),read=p=>readFileSync(repositorySourceURL(p,root),'utf8'),dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')});
 function setup(source,name='Payload'){const context=createDeriveFootprintContext({modules:[{file:'src/lib.rs',path:[],source}],dependencies}),certificate=context.certificates.find(row=>row.name===name);return{context,certificate};}
 const unit='#[derive(schemars::JsonSchema)]pub enum Payload{AlphaBeta,Other}';
 test('source unit enum keeps exact Map insertion and source-owned core expression macro outputs without generated methods',()=>{

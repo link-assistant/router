@@ -11,7 +11,7 @@ const manifest=edition=>`[package]\nname="fixture"\nversion="0.1.0"\nedition="${
 const parserFor=source=>configureRustEditionParser({},captureOriginalCargoEdition(source));
 
 test('the complete actual Router Cargo input supplies its explicit source edition',()=>{
-  const source=readFileSync(new URL('../../../Cargo.toml',import.meta.url),'utf8'),token=captureOriginalCargoEdition(source),evidence=originalCargoEditionEvidence(token);
+  const source=readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),token=captureOriginalCargoEdition(source),evidence=originalCargoEditionEvidence(token);
   assert.equal(evidence.status,'explicit-package-edition');assert.equal(evidence.edition,'2024');
   assert.equal(evidence.sourceSha256,hash(source));assert.equal(evidence.sourceBytes,Buffer.byteLength(source));assert.equal(evidence.sourceCoordinateUnit,'utf16');
   assert.equal(evidence.declaration.sha256,hash(source.slice(evidence.declaration.originalSpan.start,evidence.declaration.originalSpan.end)));

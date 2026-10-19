@@ -24,7 +24,7 @@ import {proposeCoreJsonReadersCorpus} from '../migrate-core-json-readers.mjs';
 import {proposeCoreAdoptionSequence,CORE_ADOPTION_PACKET_LIMITS} from '../propose-core-adoption-corpus.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const C='crate::translation_core::',T=C+'Json',M=C+'Maybe',S=C+'Str',hash=value=>createHash('sha256').update(value).digest('hex');
-const dependencyInputs={manifest:readFileSync(new URL('../../../Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')};
+const dependencyInputs={manifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')};
 const jsonMacroDependencies=loadJsonMacroSourceProof(dependencyInputs),deriveDependencies=loadDeriveDependencyProof(dependencyInputs);
 const nativeJson=JSON.stringify,integer=(_key,value)=>typeof value==='bigint'?{$integer:String(value)}:value;
 let vectors=[];

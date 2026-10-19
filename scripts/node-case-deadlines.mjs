@@ -29,7 +29,7 @@ export function readCaseSource(filename,maximum=MAX_FILE){
  }finally{fs.closeSync(fd);}
 }
 export function installedDeadlineCompiler(root){
- const require=createRequire(path.join(root,'packages/javascript/package.json'));
+ const require=createRequire(path.join(root,'js/package.json'));
  const resolved=require.resolve('typescript'),ts=require(resolved);
  if(ts.version!=='5.9.3')throw Error('Deadline source audit requires installed TypeScript5.9.3');
  return {ts,observation:{version:ts.version,resolved}};

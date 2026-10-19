@@ -59,7 +59,7 @@ All other mandatory gate commands and the Bun commands remain independent.
 A wrapper success does not replace the same-SHA full gate or strict parity.
 
 Each invocation creates a fresh ignored directory under
-`packages/javascript/node_modules/.node-case-deadlines/`. It streams complete
+`js/node_modules/.node-case-deadlines/`. It streams complete
 stdout TAP and stderr into exclusive raw files while forwarding them unchanged,
 then retains command, full source audit and terminal receipts. The signal and
 finite enclosing timer terminate the owned process group, escalate after one

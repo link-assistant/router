@@ -135,7 +135,7 @@ test('original lifetime binders stay sealed before source linking and after sema
 });
 
 test('original OpenAI model function retains its complete named lifetime syntax',()=>{
-  const source=readFileSync(new URL('../../../src/proxy_openai_resource.rs',import.meta.url),'utf8');
+  const source=readFileSync(new URL('../../../rust/src/proxy_openai_resource.rs',import.meta.url),'utf8');
   assert.equal(createHash('sha256').update(source).digest('hex'),ORIGINAL_SOURCE_SHA);
   const original=sourceItems(source).find(item=>item.term==='fn'&&item.name==='canonical_openai_model');
   const text=source.slice(original.start,original.end),parser=new HostRustParser(tokenizeRust(text));

@@ -7,7 +7,7 @@ import {assertPrivateParserExecution} from '../private-parser-execution.mjs';
 
 const hash = (value) => createHash('sha256').update(value).digest('hex');
 const json = (value) => `${JSON.stringify(value)}\n`;
-const safeSource = /^packages\/javascript\/native\/(?:[a-z0-9]+(?:-[a-z0-9]+)*\/)*[a-z0-9]+(?:-[a-z0-9]+)*\.mjs$/u;
+const safeSource = /^js\/src\/(?:[a-z0-9]+(?:-[a-z0-9]+)*\/)*[a-z0-9]+(?:-[a-z0-9]+)*\.mjs$/u;
 
 /** Assemble independently checked native bodies; refused owners remain refused. */
 export function buildNativePortableArtifacts(sources) {
@@ -47,7 +47,7 @@ export function buildNativePortableArtifacts(sources) {
     if (topLevel.sourceItems !== topLevel.translatedItems + topLevel.unsupportedItems) {
       throw new Error(`incomplete top-level native discovery: ${path}`);
     }
-    const stem = path.slice('packages/javascript/native/'.length, -4);
+    const stem = path.slice('js/src/'.length, -4);
     const outputs = [];
     for (const [scope, program] of [['top-level', analyzed.program], ['scoped', scoped.program]]) {
       const meta = `${program.map(toLino).join('\n')}\n`;
@@ -57,7 +57,7 @@ export function buildNativePortableArtifacts(sources) {
       for (const [outputPath, content] of [
         [`tools/translation/js-to-rust/generated/native-portable/${scope}/${stem}.lino`, `# GENERATED: checked portable-router-v1 bodies; no source envelopes.\n${meta}`],
         [`tools/translation/js-to-rust/generated/native-portable/${scope}/${stem}.rs.txt`, `${header}${emitRust(decoded)}`],
-        [`packages/typescript/native/portable-draft/${scope}/${stem}.ts`, `${header}export {};\n${emitTypeScript(decoded,{outputPath:`packages/typescript/native/portable-draft/${scope}/${stem}.ts`})}`],
+        [`ts/src/portable-draft/${scope}/${stem}.ts`, `${header}export {};\n${emitTypeScript(decoded,{outputPath:`ts/src/portable-draft/${scope}/${stem}.ts`})}`],
       ]) {
         if (artifacts.has(outputPath)) throw new Error(`duplicate native portable output: ${outputPath}`);
         artifacts.set(outputPath, content);
@@ -166,7 +166,7 @@ export function buildNativePortableArtifactsBulk(input) {
     if (topLevel.sourceItems !== topLevel.translatedItems + topLevel.unsupportedItems) {
       throw new Error(`incomplete top-level native discovery: ${path}`);
     }
-    const stem = path.slice('packages/javascript/native/'.length, -4);
+    const stem = path.slice('js/src/'.length, -4);
     const outputs = [];
     for (const [scope, program] of [['top-level', analyzed.program], ['scoped', scoped.program]]) {
       const meta = `${program.map(toLino).join('\n')}\n`;
@@ -176,7 +176,7 @@ export function buildNativePortableArtifactsBulk(input) {
       for (const [outputPath, content] of [
         [`tools/translation/js-to-rust/generated/native-portable/${scope}/${stem}.lino`, `# GENERATED: checked portable-router-v1 bodies; no source envelopes.\n${meta}`],
         [`tools/translation/js-to-rust/generated/native-portable/${scope}/${stem}.rs.txt`, `${header}${emitRust(decoded)}`],
-        [`packages/typescript/native/portable-draft/${scope}/${stem}.ts`, `${header}export {};\n${emitTypeScript(decoded,{outputPath:`packages/typescript/native/portable-draft/${scope}/${stem}.ts`})}`],
+        [`ts/src/portable-draft/${scope}/${stem}.ts`, `${header}export {};\n${emitTypeScript(decoded,{outputPath:`ts/src/portable-draft/${scope}/${stem}.ts`})}`],
       ]) {
         if (artifacts.has(outputPath)) throw new Error(`duplicate native portable output: ${outputPath}`);
         artifacts.set(outputPath, content);
@@ -251,7 +251,7 @@ export function buildNativePortableArtifactsCorpusBulk(input) {
     if (topLevel.sourceItems !== topLevel.translatedItems + topLevel.unsupportedItems) {
       throw new Error(`incomplete top-level native discovery: ${path}`);
     }
-    const stem = path.slice('packages/javascript/native/'.length, -4);
+    const stem = path.slice('js/src/'.length, -4);
     const outputs = [];
     for (const [scope, program] of [['top-level', analyzed.program], ['scoped', scoped.program]]) {
       const meta = `${program.map(toLino).join('\n')}\n`;
@@ -261,7 +261,7 @@ export function buildNativePortableArtifactsCorpusBulk(input) {
       for (const [outputPath, content] of [
         [`tools/translation/js-to-rust/generated/native-portable/${scope}/${stem}.lino`, `# GENERATED: checked portable-router-v1 bodies; no source envelopes.\n${meta}`],
         [`tools/translation/js-to-rust/generated/native-portable/${scope}/${stem}.rs.txt`, `${header}${emitRust(decoded)}`],
-        [`packages/typescript/native/portable-draft/${scope}/${stem}.ts`, `${header}export {};\n${emitTypeScript(decoded,{outputPath:`packages/typescript/native/portable-draft/${scope}/${stem}.ts`})}`],
+        [`ts/src/portable-draft/${scope}/${stem}.ts`, `${header}export {};\n${emitTypeScript(decoded,{outputPath:`ts/src/portable-draft/${scope}/${stem}.ts`})}`],
       ]) {
         if (artifacts.has(outputPath)) throw new Error(`duplicate native portable output: ${outputPath}`);
         artifacts.set(outputPath, content);

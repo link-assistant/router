@@ -34,7 +34,7 @@ test('genuine Host expression AST intervals retain nested commas, written argume
  retain('03-original-expression-association',row.plan);
 });
 test('complete original endpoint_base arguments join their full original source without granting macro or borrowing authority',()=>{
- const source=readFileSync(new URL('../../../src/route_contract.rs',import.meta.url),'utf8'),start=source.indexOf('pub fn endpoint_base('),next=source.indexOf('\n#[must_use]',start),body=source.slice(start,next),macroStart=source.indexOf('format!(',start),macroEnd=source.indexOf('\n    )',macroStart)+'\n    )'.length;
+ const source=readFileSync(new URL('../../../rust/src/route_contract.rs',import.meta.url),'utf8'),start=source.indexOf('pub fn endpoint_base('),next=source.indexOf('\n#[must_use]',start),body=source.slice(start,next),macroStart=source.indexOf('format!(',start),macroEnd=source.indexOf('\n    )',macroStart)+'\n    )'.length;
  assert.ok(start>=0&&next>start&&macroStart>start&&macroEnd<next);const parser=new HostRustParser(tokenizeRust(source)),before=parser.cursor.index,plan=captureOriginalFormatExplicitArguments(parser,{start:macroStart,end:macroEnd});
  assert.deepEqual(plan.arguments.map(arg=>arg.original),["origin.trim_end_matches('/')",'service_base_path(service)']);
  assert.equal(originalFormatExplicitArgumentAst(plan,parser,0),plan.arguments[0].ast);assert.equal(originalFormatExplicitArgumentAst(plan,parser,1),plan.arguments[1].ast);assert.equal(parser.cursor.index,before);

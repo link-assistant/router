@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
@@ -10,7 +11,7 @@ import {captureOriginalNamespaceSourceSuperset,originalNamespaceSourceSupersetFa
 import {captureOriginalExternalTraitPackage,originalExternalTraitPackageInputs} from '../extensions/external-trait-sources.mjs';
 import {resolveModuleGraph,translateProject} from '../project.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),read=path=>readFileSync(new URL(path,root),'utf8');
+const root=new URL('../../../',import.meta.url),read=path=>readFileSync(repositorySourceURL(path,root),'utf8');
 const dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')});
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const retain=(name,value)=>{const directory=process.env.ROUTER_CONDITIONAL_NAMESPACE_SUPERSET_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeFileSync(join(directory,name+'.json'),JSON.stringify(value)+'\n',{flag:'wx'});}};

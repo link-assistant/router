@@ -60,8 +60,8 @@ test('all four derive whole parents preserve exact original method spans with no
 test('unknown associations nonparents and source URL escapes stay explicit refusals',(_t,retain)=>{
  for(const value of ['unknown','copy-translation.test.mjs:copy',{id:'copy-translation.test.mjs'}])assert.throws(()=>staticSourceAssociatedTextData(value),TypeError);
  const data=staticSourceAssociatedTextData('copy-translation.test.mjs');for(const path of ['src/config.rs','../Cargo.toml','/tmp/Cargo.toml'])assert.throws(()=>data.source(path),TypeError);
- const read=associatedOriginalFileReader('copy-translation.test.mjs');assert.throws(()=>read('/tmp/not-original','utf8'),TypeError);assert.throws(()=>read(new URL('../../../src/stream_termination.rs',import.meta.url),'binary'),TypeError);assert.throws(()=>read(new URL('file:///tmp/stream_termination.rs'),'utf8'),TypeError);
- assert.equal(read(new URL('../../../src/stream_termination.rs',import.meta.url),'utf8'),data.source('src/stream_termination.rs'));retain('closed-input-domain',{association:data.association,authentication:data.authentication,noMetadataPermit:true});
+ const read=associatedOriginalFileReader('copy-translation.test.mjs');assert.throws(()=>read('/tmp/not-original','utf8'),TypeError);assert.throws(()=>read(new URL('../../../rust/src/stream_termination.rs',import.meta.url),'binary'),TypeError);assert.throws(()=>read(new URL('file:///tmp/stream_termination.rs'),'utf8'),TypeError);
+ assert.equal(read(new URL('../../../rust/src/stream_termination.rs',import.meta.url),'utf8'),data.source('src/stream_termination.rs'));retain('closed-input-domain',{association:data.association,authentication:data.authentication,noMetadataPermit:true});
 });
 
 test('recomputed archive hashes cannot authenticate mutations outside actual current Git', (t,retain)=>{

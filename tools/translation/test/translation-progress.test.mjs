@@ -57,7 +57,7 @@ test('project diagnostics preserve exact Rust meta JavaScript and strict TypeScr
   await verifyTypedTargets(traced,api=>{assert.equal(api.plus(0n),0n);assert.equal(api.plus(255n),255n);assert.throws(()=>api.plus(256n),RangeError);assert.equal('bad'in api,false);},{childTimeoutMs:30_000});
 });
 test('generated Default and Clone diagnostics delimit every original module without changing target bytes',()=>{
-  const cargoManifest=readFileSync(new URL('../../../Cargo.toml',import.meta.url),'utf8'),lock=readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8'),deriveDependencies=loadDeriveDependencyProof({manifest:cargoManifest,lock});
+  const cargoManifest=readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock=readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8'),deriveDependencies=loadDeriveDependencyProof({manifest:cargoManifest,lock});
   const sources=new Map([['src/lib.rs','mod model;pub fn value(v:u8)->u8{v}'],['src/model.rs','#[derive(Clone,Default)]pub enum Flag{#[default]Off,On}']]),options={entry:'src/lib.rs',paths:[...sources.keys()],readSource:path=>sources.get(path),cargoManifest,deriveDependencies,compilationProfile:PRODUCTION_PROFILE};
   const plain=translateProject(options),records=[],traced=translateProject({...options,progress:row=>records.push(row)});assertRecords(records);assert.deepEqual(traced.meta,plain.meta);assert.equal(traced.javascript,plain.javascript);assert.equal(traced.typescript,plain.typescript);
   for(const stage of ['generated-default','generated-clone']){

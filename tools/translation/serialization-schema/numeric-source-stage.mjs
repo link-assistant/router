@@ -14,7 +14,7 @@ import {proveJsonMacroFeatures,isJsonMacroFeatureProof} from '../json-macro-feat
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
 const profileBytes=readFileSync(new URL('./numeric-source-profile.json',import.meta.url));
-if(hash(profileBytes)!=='61eca5f104f707b28422aaa2cd423831a05d0240ef47f7391781a0d16ecfedf1')throw new TypeError('Numeric source profile differs from its original source audit');
+if(hash(profileBytes)!=='22069799622656854873a2e91f825fb4780c41db688aff1f464393acc4ad1baf')throw new TypeError('Numeric source profile differs from its original source audit');
 export const NUMERIC_SOURCE_STAGE_PROFILE=freeze(JSON.parse(profileBytes));
 const sourceContexts=new WeakMap(),stages=new WeakMap();
 const authority=()=>({formatterEquivalence:false,targetBuildConfiguration:false,unsafeMemory:false,traitCompleteness:false,runtimeParity:false,parseAdmission:false});

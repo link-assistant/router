@@ -4,8 +4,8 @@ import {createServer} from 'node:http';
 import {mkdtemp,writeFile,mkdir,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {createNativeRouter} from '../../../packages/javascript/native/server.mjs';
-import {githubConfiguration,githubDecision,destructiveGraphql} from '../../../packages/javascript/native/github-proxy.mjs';
+import {createNativeRouter} from '../../../js/src/server.mjs';
+import {githubConfiguration,githubDecision,destructiveGraphql} from '../../../js/src/github-proxy.mjs';
 const activity='/api/services/activitypub';
 const req=(path,method='GET',body,headers={})=>new Request(`http://router${path}`,{method,headers,...(body===undefined?{}:{body:JSON.stringify(body)})});
 test('ActivityPub documents and inbound validation match source contracts including HEAD and private listener isolation',async()=>{

@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -68,7 +69,7 @@ test('shadowed and unknown trait owners, Drop and conditional or unsafe implemen
 });
 
 test('unchanged whole subscription Copy methods retain actual source and standard Display ownership',{timeout:30_000},async()=>{
-  const path='src/subscription/types.rs',source=readFileSync(new URL(path,root),'utf8');assert.equal(hash(source),'74996ec0b4a32cb6e8d8c6a5e4cf2057a09238acff6d141ad58b592184c12c26');
+  const path='src/subscription/types.rs',source=readFileSync(repositorySourceURL(path,root),'utf8');assert.equal(hash(source),'74996ec0b4a32cb6e8d8c6a5e4cf2057a09238acff6d141ad58b592184c12c26');
   const dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
   const result=translateProject({entry:path,paths:[path],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE,deriveDependencies:dependencies});
   const originals=[['as_str',893,1135,'9b8833487bac3ef42338552374ee0ab7aca4d65925763668da851ab7143126cc'],['home_subdir',1783,2034,'50cba53a550fddae23c789aba4ed038a1bf51e24d7fb5c3f3571340d2220cae8']];

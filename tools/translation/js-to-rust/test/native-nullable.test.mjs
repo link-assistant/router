@@ -32,7 +32,7 @@ test('four original native functions retain independent nullable and integer gol
   ];
   try {
     for (const fixture of fixtures) {
-      const source = readFileSync(join(ROOT,'packages/javascript/native',fixture.path),'utf8');
+      const source = readFileSync(join(ROOT,'js/src',fixture.path),'utf8');
       const result = analyzeJavaScript(source), fn = result.program.find(item=>item.name===fixture.name);
       assert.equal(fn?.returns,fixture.type,fixture.path);
       assert.equal(fn.params[0].type,'value');

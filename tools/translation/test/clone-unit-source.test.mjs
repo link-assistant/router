@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
@@ -8,7 +9,7 @@ import {createDeriveFootprintContext} from '../derive-footprints.mjs';
 import {createCloneSourceContext,cloneSourceContextFacts} from '../clone-trait-source.mjs';
 import {originalUnitCloneSource,assertOriginalUnitCloneSource} from '../clone-unit-source.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
-const root=new URL('../../../',import.meta.url),read=path=>readFileSync(new URL(path,root),'utf8');
+const root=new URL('../../../',import.meta.url),read=path=>readFileSync(repositorySourceURL(path,root),'utf8');
 const dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')});
 function retain(name,value){const directory=process.env.ROUTER_CLONE_UNIT_EVIDENCE_DIR;if(directory){mkdirSync(directory,{recursive:true});writeFileSync(directory+'/'+name+'.json.gz',gzipSync(JSON.stringify(value,null,2)+'\n'));}}
 function setup(source,file='src/lib.rs'){

@@ -46,7 +46,7 @@ test('full profile drafts execute independent original families through meta int
     assert.deepEqual(regenerateCompilationMatrix({root:directory,matrix:selection,sourceCorpus:corpus,check:true}).failures,[]);
     const unix=result.manifest.profiles.find(member=>member.name==='unix-family'),windows=result.manifest.profiles.find(member=>member.name==='windows-family');
     rmSync(join(directory,unix.projects[0].targets.javascript));writeFileSync(join(directory,windows.projects[0].targets.typescript),'stale');
-    const extra=unix.directory+'/packages/javascript/generated/rust-project/extra.mjs';writeFileSync(join(directory,extra),'extra');
+    const extra=unix.directory+'/js/generated/rust-project/extra.mjs';writeFileSync(join(directory,extra),'extra');
     const failed=regenerateCompilationMatrix({root:directory,matrix:selection,sourceCorpus:corpus,check:true}).failures;
     assert.ok(failed.includes('missing: '+unix.projects[0].targets.javascript));assert.ok(failed.includes('stale: '+windows.projects[0].targets.typescript));assert.ok(failed.includes('unexpected: '+extra));
     regenerateCompilationMatrix({root:directory,matrix:selection,sourceCorpus:corpus});assert.equal(existsSync(join(directory,extra)),false);assert.deepEqual(snapshot(directory),baseline);

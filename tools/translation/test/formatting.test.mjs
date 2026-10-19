@@ -96,7 +96,7 @@ test('actual empty String construction retains owning provenance without removin
 });
 
 test('original humanize_minutes retains source spans, early returns and literal formatted i64 results in both targets',async()=>{
-  const original=readFileSync(new URL('../../../src/auth_import.rs',import.meta.url),'utf8');
+  const original=readFileSync(new URL('../../../rust/src/auth_import.rs',import.meta.url),'utf8');
   const item=sourceItems(original).find(item=>item.term==='fn'&&item.name==='humanize_minutes');
   assert.ok(item);const body=original.slice(item.start,item.end),result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>body});
   assert.deepEqual(result.meta.refused,[]);const executable=result.meta.executable.find(entry=>entry.name===item.name);
@@ -105,7 +105,7 @@ test('original humanize_minutes retains source spans, early returns and literal 
 });
 
 test('actual accounts header translates through its source-bound formatting interface',async()=>{
-  const original=readFileSync(new URL('../../../src/accounts_cli.rs',import.meta.url),'utf8'),item=sourceItems(original).find(item=>item.name==='header');
+  const original=readFileSync(new URL('../../../rust/src/accounts_cli.rs',import.meta.url),'utf8'),item=sourceItems(original).find(item=>item.name==='header');
   assert.ok(item);const body=original.slice(item.start,item.end),files=currentCoreFiles('src/accounts_cli.rs','header',body),result=translateProject(currentCoreOptions(files));
   assertCurrentCoreRefusals(result,'src/accounts_cli.rs','header',body);const executable=result.meta.executable.find(entry=>entry.name==='accounts_cli.header');
   assert.equal(executable.source,'src/accounts_cli.rs');assert.deepEqual(executable.span,{start:0,end:body.length});assert.equal(sha256(files['src/accounts_cli.rs'].slice(executable.span.start,executable.span.end)),sha256(body));

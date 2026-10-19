@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -36,7 +37,7 @@ test('unchanged scalar and nominal unwrap preserve eager fallback and checked Co
 });
 
 test('retained original login-provider semantic meta reemits both typed targets without body replacement',async()=>{
-  const path='src/login_api.rs',source=readFileSync(new URL(path,root),'utf8');
+  const path='src/login_api.rs',source=readFileSync(repositorySourceURL(path,root),'utf8');
   assert.equal(hash(source),'b60b17c7777dc6c3fc6bfea570baed1f8d7adf40737f431a4cf7d04697ca55b0');
   const original=sourceItems(source).find(item=>item.term==='fn'&&item.name==='requested_provider');
   assert.deepEqual([original.start,original.end],[3154,3482]);assert.equal(hash(source.slice(original.start,original.end)),'32d5d1d8e9593906ae0e02ecf7c52227e3813bb6a46197f19b5e286ad9df729e');

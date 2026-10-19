@@ -21,6 +21,14 @@ earlier complete focused run. These are focused results, not a full gate pass.
 The source bank, isolated compiler registration and portable Git fixtures have
 been refreshed through `b4a9a2d89fd6419c9e71003bf2cd61e7208c8e7f`.
 
+## Language-layout continuation
+
+PR #761 merged at `07901ad24576e7f045270fe62ac56f8a72446c53`; work continues
+in PR #771. The latest user requirement is implemented in the local layout draft
+with real `js/src`, `ts/src` and `rust/src` directories. See the
+[language layout](language-layout.md) for commands and focused qualification.
+Full source-bank/export refresh and generated-corpus freshness remain open.
+
 ## Work required in the next pull request
 
 | Requirement | Current state and next verification |
@@ -28,8 +36,8 @@ been refreshed through `b4a9a2d89fd6419c9e71003bf2cd61e7208c8e7f`.
 | Complete JavaScript and TypeScript generation | Open. Run preparation, affinity, canonical and all three profile producers; independently review and install every output. |
 | Rust to CST/meta to JavaScript/TypeScript | Implemented for declared subsets; full application coverage remains unproved. Preserve all retained refusals and measure actual executable function coverage. |
 | Independent JavaScript to CST/meta to Rust synchronization | Open for the complete generated corpus. Run owned-definition reverse regeneration after forward output is installed. |
-| Strict TypeScript and deterministic freshness | Open for the complete current corpus. Keep TypeScript 5.9.3, all 132 installed files, strictness and original deadlines. |
-| Producer performance | Open. The original default derive case, full base64 producer, and some original whole-file cases exceed their limits. A new opt-in enclosing-namespace source draft still requires runtime qualification. |
+| Strict TypeScript and deterministic freshness | Open for the complete current corpus. Keep TypeScript 5.9.3, all 164 native files, strictness and original deadlines. |
+| Producer performance | Open. The original default derive case, full base64 producer, and some original whole-file cases exceed their limits. The complete opt-in enclosing-namespace file passed eight cases under each engine; full producer performance remains unqualified. |
 | External procedural macro owners | Open. Unknown owners and configurations retain uncertainty; source spellings and public metadata confer no authority. |
 | Full local JavaScript gate and all CI failures | Open. Focused successes do not replace these requirements. |
 | Rust edge cases and broader Rust checks | Test source added; execution remains CI-only after all required JavaScript stages pass for the same SHA. |

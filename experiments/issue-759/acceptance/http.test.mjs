@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { load, upstream } from './helpers.mjs';
 
-const { createNativeRouter } = await load('packages/javascript/native/server.mjs');
-const { TokenManager } = await load('packages/javascript/native/tokens.mjs');
+const { createNativeRouter } = await load('js/src/server.mjs');
+const { TokenManager } = await load('js/src/tokens.mjs');
 const message = { model: 'fixture/model', messages: [{ role: 'user', content: 'What is 7+5?' }], max_tokens: 20 };
 const chatReply = { id: 'reply-acceptance', model: 'actual-model', choices: [{ message: { role: 'assistant', content: '12' }, finish_reason: 'stop' }], usage: { prompt_tokens: 3, completion_tokens: 2, total_tokens: 5 } };
 async function router(t, candidates, issue = {}) {

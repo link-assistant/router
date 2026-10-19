@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -41,7 +42,7 @@ test('concat retains literal-kind eager-expression escape and owner boundaries',
 });
 
 for(const [path,name,types,parserTypes,concatCount]of [['src/cli/management_args.rs','ManagementArgs',['bool','u32','u64','bool'],['u32','u64'],8],['src/cli/emergency_args.rs','EmergencyArgs',['bool','bool','u64'],['u64'],6]])test('whole unchanged '+path+' retains complete scalar output and independently closes original caller namespace',()=>{
-  const source=readFileSync(new URL(path,root),'utf8'),input=original(source),proof=proveClapArgsSourceOutput(input);assert.equal(proof.sourceSha256,hash(source));assert.equal(proof.input.name,name);assert.deepEqual(proof.input.fields.map(field=>field.typeSource),types);assert.deepEqual(proof.valueParserExpansions.map(row=>row.type),parserTypes);assert.ok(proof.originalRules.some(row=>row.role==='typed-default-selected-branch'));assert.ok(proof.originalRules.some(row=>row.role==='scalar-action-branch'));
+  const source=readFileSync(repositorySourceURL(path,root),'utf8'),input=original(source),proof=proveClapArgsSourceOutput(input);assert.equal(proof.sourceSha256,hash(source));assert.equal(proof.input.name,name);assert.deepEqual(proof.input.fields.map(field=>field.typeSource),types);assert.deepEqual(proof.valueParserExpansions.map(row=>row.type),parserTypes);assert.ok(proof.originalRules.some(row=>row.role==='typed-default-selected-branch'));assert.ok(proof.originalRules.some(row=>row.role==='scalar-action-branch'));
   for(const branch of proof.outputs){assert.equal(branch.concatExpansions.length,concatCount);assert.equal(branch.semanticSyntaxRoundTrip,true);assert.deepEqual(branch.observation.definitions,[]);assert.deepEqual(branch.observation.macroExports,[]);for(const expansion of branch.concatExpansions){assert.equal(expansion.meta.expression.kind,'Lit');assert.equal(expansion.callerMacroOwnerResolved,false);}}
   const context=createDeriveFootprintContext({modules:[{file:path,path:[],source}],dependencies,compilationProfile:PRODUCTION_PROFILE});assert.equal(context.certificates.length,1);assert.deepEqual(context.diagnostics,[]);assert.equal(context.certificates[0].clapConcatCaller.macroOwnerResolved,true);assert.equal(context.certificates[0].dimensions.bangMacroComplete,false);assert.equal(proof.generatedImplBehavior,false);assert.equal(proof.errorBranchComplete,false);
 });

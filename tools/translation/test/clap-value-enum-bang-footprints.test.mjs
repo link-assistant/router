@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
@@ -12,7 +13,7 @@ import {captureSourceModuleViews,originalSourceModuleItems} from '../source-modu
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {translateProject} from '../project.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),read=path=>readFileSync(new URL(path,root),'utf8'),manifest=read('Cargo.toml'),lock=read('Cargo.lock'),dependencies=loadDeriveDependencyProof({manifest,lock}),hash=value=>createHash('sha256').update(value).digest('hex');
+const root=new URL('../../../',import.meta.url),read=path=>readFileSync(repositorySourceURL(path,root),'utf8'),manifest=read('Cargo.toml'),lock=read('Cargo.lock'),dependencies=loadDeriveDependencyProof({manifest,lock}),hash=value=>createHash('sha256').update(value).digest('hex');
 const retain=(name,value)=>{if(process.env.ROUTER_VALUE_ENUM_VECTOR_DIR){mkdirSync(process.env.ROUTER_VALUE_ENUM_VECTOR_DIR,{recursive:true});writeFileSync(process.env.ROUTER_VALUE_ENUM_VECTOR_DIR+'/'+name+'.json.gz',gzipSync(JSON.stringify(value,(_,item)=>typeof item==='bigint'?{$integer:item.toString()}:item)+'\n',{mtime:0}));}};
 function setup(source,file='src/lib.rs'){
  const captured=captureSourceModuleViews({source,sourcePath:file,compilationProfile:PRODUCTION_PROFILE}),modules=captured.views.map(sourceView=>({file,path:sourceView.modulePath,source,sourceView,compilationProfile:PRODUCTION_PROFILE,configurationCondition:sourceView.configurationCondition})),context=createDeriveFootprintContext({modules,dependencies,compilationProfile:PRODUCTION_PROFILE});return {source,modules,context,certificate:context.certificates.find(row=>row.name==='Choice')??context.certificates.find(row=>row.name==='ClientKind')};

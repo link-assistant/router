@@ -14,7 +14,7 @@ own credential terms.
 [![crates.io](https://img.shields.io/crates/v/link-assistant-router.svg?label=crates.io)](https://crates.io/crates/link-assistant-router)
 [![Docker Hub](https://img.shields.io/docker/v/konard/link-assistant-router?label=docker%20hub)](https://hub.docker.com/r/konard/link-assistant-router)
 [![docs.rs](https://img.shields.io/docsrs/link-assistant-router?label=docs.rs)](https://docs.rs/link-assistant-router)
-[![Rust Version](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Flink-assistant%2Frouter%2Fmain%2FCargo.toml&query=%24.package.rust-version&label=rust&prefix=v&suffix=%2B&color=blue)](https://www.rust-lang.org/)
+[![Rust Version](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Flink-assistant%2Frouter%2Fmain%2Frust%2FCargo.toml&query=%24.package.rust-version&label=rust&prefix=v&suffix=%2B&color=blue)](https://www.rust-lang.org/)
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](http://unlicense.org/)
 
 ## Integration packages
@@ -22,6 +22,15 @@ own credential terms.
 Import operational logic from the Rust crate, `@link-assistant/router` for JavaScript/TypeScript on Node 20+ and Bun, or `link-assistant-router` for Python 3.10+. Each official package exposes the same operation catalog and validates versioned JSON contracts. PHP, Go and Java HTTP clients are generated and tested from the complete OpenAPI description in CI.
 
 See the [downstream integration guide](docs/integration/downstream.md), [operation × language matrix](docs/integration/operations.md), [JSON Schemas](schemas), and [OpenAPI 3.1](openapi/router.yaml). All official packages share Router's version and exact-tag release gate.
+
+## Language source trees
+
+Native JavaScript lives in [`js/src`](js/src), generated TypeScript in
+[`ts/src`](ts/src), and the Rust crate in [`rust/src`](rust/src). Develop covered
+behavior in JavaScript first and regenerate through the checked CST/meta
+pipelines. The root Cargo manifest is a workspace; the package manifest is
+[`rust/Cargo.toml`](rust/Cargo.toml). Full Router translation and synchronization
+remain in progress. See [the layout and commands](docs/development/language-layout.md).
 
 ## Overview
 

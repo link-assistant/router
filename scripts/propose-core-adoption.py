@@ -109,10 +109,10 @@ def capture():
   if child.wait()!=0:fail('Git stream exit')
  finally:
   if child.poll()is None:child.kill();child.wait()
- compiler=(ROOT/'packages/javascript/node_modules/typescript').resolve();paths=sorted(p for p in compiler.rglob('*')if p.is_file())
+ compiler=(ROOT/'js/node_modules/typescript').resolve();paths=sorted(p for p in compiler.rglob('*')if p.is_file())
  if len(paths)!=132 or any(p.is_symlink()for p in compiler.rglob('*'))or json.loads(regular(compiler/'package.json'))['version']!='5.9.3':fail('complete installed132 TypeScript5.9.3')
  for path in paths:
-  name='packages/javascript/node_modules/typescript/'+path.relative_to(compiler).as_posix();row=retain(name,regular(path));snapshots.append({**row,'physicalPresent':True});rows.append({key:row[key]for key in ['path','bytes','sha256']})
+  name='js/node_modules/typescript/'+path.relative_to(compiler).as_posix();row=retain(name,regular(path));snapshots.append({**row,'physicalPresent':True});rows.append({key:row[key]for key in ['path','bytes','sha256']})
  rust=[r for r in snapshots if r['path'].endswith('.rs')or r['path']in ['Cargo.toml','Cargo.lock']]
  if {r['path']for r in rust}!={p for p in git('ls-files','-z','--','*.rs','Cargo.toml','Cargo.lock').decode().split('\0')if p}:fail('all-current Rust/Cargo census')
  return dict(sourceHead=HEAD,inputs=rows),snapshots,rust
@@ -123,14 +123,14 @@ SOURCE_FREEZE=None
 
 def source_freeze(captured,snapshots,rust):
  paths=sorted(row['path']for row in rust if row['path'].startswith('src/'))
- return dict(schema='captured-producer-source-freeze-v1',sourceHead=HEAD,root=str(ROOT),inputs=captured['inputs'],allTrackedRustCargoPaths=sorted(row['path']for row in rust),physicalSrcPaths=paths,census=dict(trackedCompilerScriptRustCargo=sum(not row['path'].startswith('packages/javascript/node_modules/typescript/')for row in snapshots),allTrackedRustCargo=len(rust),physicalSrcRust=len(paths),installedTypeScript=132,totalCapturedInputs=len(snapshots)))
+ return dict(schema='captured-producer-source-freeze-v1',sourceHead=HEAD,root=str(ROOT),inputs=captured['inputs'],allTrackedRustCargoPaths=sorted(row['path']for row in rust),physicalSrcPaths=paths,census=dict(trackedCompilerScriptRustCargo=sum(not row['path'].startswith('js/node_modules/typescript/')for row in snapshots),allTrackedRustCargo=len(rust),physicalSrcRust=len(paths),installedTypeScript=132,totalCapturedInputs=len(snapshots)))
 
 def require_current_capture(captured,snapshots,rust):
  if captured!=dict(sourceHead=HEAD,inputs=SOURCE_FREEZE['inputs']):fail('complete original compiler/Rust/Cargo/132TS source capture')
  expected=SOURCE_FREEZE['census']
  if len(captured['inputs'])!=expected['totalCapturedInputs'] or len(rust)!=expected['allTrackedRustCargo']:fail('original all-input/Rust-Cargo field count')
  if sorted(row['path']for row in rust)!=SOURCE_FREEZE['allTrackedRustCargoPaths']:fail('original full all-tracked Rust/Cargo paths')
- if len([row for row in snapshots if row['path'].startswith('packages/javascript/node_modules/typescript/')])!=expected['installedTypeScript']:fail('original complete TypeScript132 count')
+ if len([row for row in snapshots if row['path'].startswith('js/node_modules/typescript/')])!=expected['installedTypeScript']:fail('original complete TypeScript132 count')
  paths=[];entries=0
  for base,dirs,files in os.walk(ROOT/'src',followlinks=False):
   entries+=1+len(dirs)+len(files)
@@ -208,7 +208,7 @@ def main():
  executable=shutil.which('node')
  if not executable:fail('Node absent')
  version=subprocess.run([executable,'--version'],capture_output=True,timeout=10,check=True);write_json(OUT/'engine-version.json',dict(path=executable,stdout=version.stdout.decode('utf8'),stderr=version.stderr.decode('utf8')))
- env={**os.environ};env.update({key:str(ACTIVE_TEMP)for key in ['TMPDIR','TMP','TEMP']});env['ROUTER_TRANSLATION_TSC']=str(ROOT/'packages/javascript/node_modules/typescript/bin/tsc')
+ env={**os.environ};env.update({key:str(ACTIVE_TEMP)for key in ['TMPDIR','TMP','TEMP']});env['ROUTER_TRANSLATION_TSC']=str(ROOT/'js/node_modules/typescript/bin/tsc')
  command=[executable,'--max-old-space-size=1792','tools/translation/propose-core-adoption-corpus.mjs','--root',str(ROOT),'--output',str(PAYLOAD),'--sequence','json-readers','--packet-storage','gzip']
  write_json(OUT/'proposal.command.json',dict(command=command,cwd=str(ROOT),capSeconds=CAP,sourceHead=HEAD,proposalOnly=True,packetStorage='gzip',RustExecuted=False,temporaryEnvironment={key:env[key]for key in ['TMPDIR','TMP','TEMP']}));budget()
  start=time.monotonic();peak=0;reason=None;reaped=False

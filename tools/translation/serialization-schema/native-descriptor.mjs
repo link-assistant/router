@@ -8,8 +8,8 @@ import { generateSerializationSchema } from './generate.mjs';
 import { canonicalSerializationMeta } from './meta.mjs';
 import { SerializationRefusal } from './extract.mjs';
 
-const sourceModule='packages/javascript/native/affinity-schema.mjs';
-const outputs={meta:'tools/translation/serialization-schema/generated/affinity-schema.meta.json',javascript:'packages/javascript/native/affinity-schema-descriptor.mjs',typescript:'tools/translation/serialization-schema/generated/affinity-schema-descriptor.ts',receipt:'tools/translation/serialization-schema/generated/affinity-schema-emission.json'};
+const sourceModule='js/src/affinity-schema.mjs';
+const outputs={meta:'tools/translation/serialization-schema/generated/affinity-schema.meta.json',javascript:'js/src/affinity-schema-descriptor.mjs',typescript:'tools/translation/serialization-schema/generated/affinity-schema-descriptor.ts',receipt:'tools/translation/serialization-schema/generated/affinity-schema-emission.json'};
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const plain=value=>JSON.parse(JSON.stringify(value));
 const fail=message=>{throw new SerializationRefusal(message);};

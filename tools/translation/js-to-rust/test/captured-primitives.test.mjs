@@ -38,7 +38,7 @@ test('three unchanged original native bodies retain closed data and explicit con
     {file:'client-status.mjs',body:'key=>!modelKeys.includes(key)',keys:['ANTHROPIC_MODEL','ANTHROPIC_DEFAULT_OPUS_MODEL','ANTHROPIC_DEFAULT_SONNET_MODEL','ANTHROPIC_DEFAULT_HAIKU_MODEL','CLAUDE_CODE_SUBAGENT_MODEL'],negate:true},
   ];
   try{for(const fixture of fixtures){
-    const path='packages/javascript/native/'+fixture.file,source=readFileSync(join(ROOT,path),'utf8'),fn=lower(source,fixture.body,path),analysis=analyzeJavaScript(source,{sourcePath:path}),row=analysis.scopedFunctions.items.find(row=>row.start===fn.environment.start);
+    const path='js/src/'+fixture.file,source=readFileSync(join(ROOT,path),'utf8'),fn=lower(source,fixture.body,path),analysis=analyzeJavaScript(source,{sourcePath:path}),row=analysis.scopedFunctions.items.find(row=>row.start===fn.environment.start);
     assert.equal(row.status,'translated');assert.equal(row.coverageContract,'conditional-private-body-draft');assert.equal(row.owner.status,'unsupported');assert.deepEqual(analysis.scopedFunctions.program.find(row=>row.name===fn.name),fn);assert.deepEqual(fn.captures,[]);assert.equal(fn.conditionalCaptures,true);assert.equal(fn.environment.originalSignatureFullDomainPreserved,false);assert.equal(fn.environment.collectionLookupStabilityProved,false);
     const runtime=await compile(fn,directory,fixture.file),ir=evaluate(runtime.program,fn.name,[]),target=runtime.typed();assert.equal(runtime.typed.length,0);assert.notEqual(target,runtime.typed());assert.notEqual(ir,evaluate(runtime.program,fn.name,[]));
     const data=fn.environment.collections.map(row=>Function('return ('+row.initializerSource+');')()),original=Function(...fn.environment.collections.map(row=>row.name),'return ('+source.slice(row.start,row.end)+');')(...data),observations=[];
@@ -114,8 +114,8 @@ async function oldModule(name){
 test('every old 136 definition and 301 capture origin survives within the complete unchanged source censuses',{timeout:60000},async()=>{
   const old=(await oldModule('scoped-helpers')).module,totals={modules:0,top:0,scoped:0,topDefinitions:0,oldScoped:0,oldFull:0,oldConditional:0,captureRefusals:0,newFull:0,newConditional:0},changes=[];
   const originalPins=JSON.parse(readFileSync(join(ROOT,'tools/translation/fixtures/sequence-patterns/native-program-baseline.json'))).modules;
-  const intended=new Map([['packages/javascript/native/config.mjs','client => !canonical.has(client)'],['packages/javascript/native/provider-manifest.mjs','([key])=>fields.has(key)'],['packages/javascript/native/client-status.mjs','key=>!modelKeys.includes(key)']]);
-  for(const path of sourceModules(ROOT).filter(path=>path.startsWith('packages/javascript/native/')&&path.endsWith('.mjs'))){
+  const intended=new Map([['js/src/config.mjs','client => !canonical.has(client)'],['js/src/provider-manifest.mjs','([key])=>fields.has(key)'],['js/src/client-status.mjs','key=>!modelKeys.includes(key)']]);
+  for(const path of sourceModules(ROOT).filter(path=>path.startsWith('js/src/')&&path.endsWith('.mjs'))){
     const source=readFileSync(join(ROOT,path),'utf8'),current=analyzeJavaScript(source,{sourcePath:path}),previous=old.discoverScopedHelpers(source,current.items,analyzeJavaScript,path),sourceSha256=hash(source),oldCaptureOrigins=previous.items.filter(row=>row.diagnostic?.message==='a scoped lexical capture');
     const originalPin=originalPins.find(row=>row.path===path);assert.ok(originalPin);assert.equal(Buffer.byteLength(source),originalPin.originalSourceBytes);assert.equal(sourceSha256,originalPin.sourceSha256);assert.deepEqual(current.program,originalPin.topLevelProgram);
     assert.equal(current.scopedFunctions.sourceItems,previous.sourceItems);

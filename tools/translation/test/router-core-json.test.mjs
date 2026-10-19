@@ -18,7 +18,7 @@ import {verifyTypedTargets} from './typed-targets.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex'),C='crate::translation_core::',J=C+'json!',T=C+'Json',S='&'+C+'Str',M=C+'Maybe',R=C+'Outcome';
-const dependencyInputs={manifest:readFileSync(new URL('../../../Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')};
+const dependencyInputs={manifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')};
 const dependencies=loadJsonMacroSourceProof(dependencyInputs);
 let vectors=[];const retain=(kind,value)=>{vectors.push({kind,value});return value;};
 const test=(name,run)=>testCase(name,{timeout:60_000},async()=>{vectors=[];try{await run();}finally{if(process.env.ROUTER_OWNED_JSON_VECTOR_DIR){const dir=process.env.ROUTER_OWNED_JSON_VECTOR_DIR;mkdirSync(dir,{recursive:true});writeFileSync(join(dir,Buffer.from(name).toString('hex')+'.json'),JSON.stringify({name,vectors},(_key,value)=>typeof value==='bigint'?{$integer:String(value)}:value)+'\n');}}});
@@ -31,7 +31,7 @@ const canonical=value=>{const output=serde_json_from_str(JSON.stringify(value));
 function inverse(row){assert.equal(transportConcreteSyntaxMeta(row.before.meta).source,row.before.source);assert.equal(transportConcreteSyntaxMeta(row.after.meta).source,row.after.source);let source=row.after.source;for(const map of [...row.mapping].reverse())if(map.kind==='substitution'){assert.equal(source.slice(...map.after),map.replacement);source=source.slice(0,map.after[0])+map.expected+source.slice(map.after[1]);}assert.equal(source,row.before.source);assert.deepEqual(row.trace.map(row=>row.phase),['language','repository']);assert.equal(row.executableAdmission,false);}
 
 test('genuine owned JSON facade delegates Rust library and checked literal grammar in both targets',async()=>{
-  const physical=readFileSync(new URL('../../../src/translation_core.rs',import.meta.url),'utf8');assert.equal(physical,ROUTER_FORMATTING_FACADE_SOURCE);assert.equal(hash(physical),ROUTER_FORMATTING_FACADE_SHA256);
+  const physical=readFileSync(new URL('../../../rust/src/translation_core.rs',import.meta.url),'utf8');assert.equal(physical,ROUTER_FORMATTING_FACADE_SOURCE);assert.equal(hash(physical),ROUTER_FORMATTING_FACADE_SHA256);
   const original=jsonMacroOriginalSource(dependencies,'serde_json','src/macros.rs'),definition=jsonMacroSourceDefinition(dependencies);retain('complete-original-macro-and-owned-facade',{physical,original,definition:jsonMacroDefinitionSource(definition)});
   const source=`pub fn value()->${T}{${J}({"β":{"flag":true,"empty":null,"text":"猫😀"},"a":{},"array":[]})}`,result=project(files(source));assert.equal(has(result,'value'),true);await targets(result,api=>assert.deepEqual(native(api.value()),{a:{},array:[],β:{empty:null,flag:true,text:'猫😀'}}));
 });

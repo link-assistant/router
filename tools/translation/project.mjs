@@ -304,7 +304,7 @@ function declarationProgram(program, root) {
 function compileProjectLanguage(options, ownedDefinitionMode=false) {
   const progress=translationProgressReporter(options.progress);
   progress({stage:'project-graph',state:'start',entry:options.entry});
-  const cargoEditionContext=options.cargoManifest===undefined||options.cargoManifest===null?null:captureOriginalCargoEdition(options.cargoManifest);
+  const cargoEditionContext=options.cargoManifest===undefined||options.cargoManifest===null?null:captureOriginalCargoEdition(options.cargoManifest,{sourcePath:options.cargoManifestPath??'Cargo.toml'});
   const graph = resolveModuleGraph(options);
   progress({stage:'project-graph',state:'end',entry:options.entry,total:graph.modules.length});
   progress({stage:'namespace',state:'start',entry:options.entry});

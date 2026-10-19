@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { load, upstream, temporary } from './helpers.mjs';
 import { owner, request, fixture } from './provider-resource-helpers.mjs';
 
-const { AffinityStore } = await load('packages/javascript/native/affinities.mjs');
-const { NativeAffinityStore } = await load('packages/javascript/native/native-service.mjs');
+const { AffinityStore } = await load('js/src/affinities.mjs');
+const { NativeAffinityStore } = await load('js/src/native-service.mjs');
 const namespace = '/api/services/openai/v1/responses';
 const body = { model: 'm', input: 'capture', stream: true, background: true };
 const capturedError = message => ({ error: { message, type: 'api_error', param: null, code: null } });

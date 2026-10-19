@@ -77,14 +77,14 @@ fn get_rust_root() -> String {
         return root;
     }
 
-    if Path::new("./Cargo.toml").exists() {
-        eprintln!("Detected single-language repository (Cargo.toml in root)");
-        return ".".to_string();
-    }
-
     if Path::new("./rust/Cargo.toml").exists() {
         eprintln!("Detected multi-language repository (Cargo.toml in rust/)");
         return "rust".to_string();
+    }
+
+    if Path::new("./Cargo.toml").exists() {
+        eprintln!("Detected single-language repository (Cargo.toml in root)");
+        return ".".to_string();
     }
 
     eprintln!("Error: Could not find Cargo.toml in expected locations");

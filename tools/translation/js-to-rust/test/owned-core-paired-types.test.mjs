@@ -32,7 +32,7 @@ async function targets(t,source=copied,typed=copiedTyped){
  // these are the complete same registered declarations captured by the input.
  for(const file of row.data.files.filter(file=>file.path.startsWith('typed/runtime/')&&file.path.endsWith('.mts')))write(directory,'app/runtime/'+file.path.slice('typed/runtime/'.length),file.source);
  write(directory,'typed/src/reverse.mts',row.result.typescript);
- try{execFileSync(process.execPath,[join(root,'packages/javascript/node_modules/typescript/bin/tsc'),'--strict','--skipLibCheck','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--rootDir',directory,'--outDir',join(directory,'out'),join(directory,TS),join(directory,'typed/src/reverse.mts')],{cwd:root,encoding:'utf8',timeout:20000,stdio:'pipe'});}catch(error){assert.fail('strict paired original/reverse TypeScript failed\n'+String(error.stdout??'')+'\n'+String(error.stderr??''));}
+ try{execFileSync(process.execPath,[join(root,'js/node_modules/typescript/bin/tsc'),'--strict','--skipLibCheck','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--rootDir',directory,'--outDir',join(directory,'out'),join(directory,TS),join(directory,'typed/src/reverse.mts')],{cwd:root,encoding:'utf8',timeout:20000,stdio:'pipe'});}catch(error){assert.fail('strict paired original/reverse TypeScript failed\n'+String(error.stdout??'')+'\n'+String(error.stderr??''));}
  for(const file of row.data.files.filter(file=>file.path.startsWith('app/runtime/'))){
   write(directory,'out/'+file.path,file.source);
   // Both emitted TS modules import the same complete actual runtime bytes.
@@ -106,7 +106,7 @@ test('module preflight, malformed pairs and forged source data retain complete r
  const written=imports+'/** @param {import("../runtime/json-macro-runtime.mjs").JsonValue} value */\nexport function copied(value){return copy(value);}';const legacy=translate(written,undefined);assert.equal(Object.hasOwn(legacy.result.program[0],'pairedSource'),false);
 });
 test('the actual corpus captures matching application TS and consumes it before packaging',limits,t=>{
- const directory=mkdtempSync(join(tmpdir(),'owned-paired-corpus-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));const base='packages/javascript/generated/rust-project',typed='packages/typescript/generated/rust-project';
+ const directory=mkdtempSync(join(tmpdir(),'owned-paired-corpus-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));const base='js/generated/rust-project',typed='ts/generated/rust-project';
  for(const row of input(copied,copiedTyped).files){
   const path=row.path===JS?base+'/src/lib.mjs':row.path===TS?typed+'/src/lib.mts':row.path.startsWith('app/runtime/')?base+'/runtime/'+row.path.slice('app/runtime/'.length):row.path.startsWith('typed/runtime/')?typed+'/runtime/'+row.path.slice('typed/runtime/'.length):row.path;
   write(directory,path,row.source);
@@ -117,7 +117,7 @@ test('the actual corpus captures matching application TS and consumes it before 
  write(directory,typed+'/src/lib.mts',copiedTyped.replace('copy(value)','index(value,"changed")'));assert.throws(()=>captured.requireCurrent(),/complete input changed/u);const changed=buildOwnedCoreArtifacts(directory);assert.equal(changed.manifest.totals.translatedItems,0);assert.match(changed.manifest.diagnostics[0].message,/complete executable tokens differ/u);
 });
 test('full real forward parents and every independent refusal remain in the actual input census',limits,()=>{
- const captured=captureOwnedCoreCorpus(root),js='packages/javascript/generated/rust-project/src/lib.mjs',typed='packages/typescript/generated/rust-project/src/lib.ts';
+ const captured=captureOwnedCoreCorpus(root),js='js/generated/rust-project/src/lib.mjs',typed='ts/generated/rust-project/src/lib.ts';
  assert.equal(captured.files.find(row=>row.path===js).source,original(js));assert.equal(captured.files.find(row=>row.path===typed).source,original(typed));
  const result=buildOwnedCoreArtifacts(root),stored=JSON.parse(result.artifacts.get('tools/translation/js-to-rust/generated/owned-core/inputs.json'));
  for(const path of [js,typed])assert.equal(stored.files.find(row=>row.path===path).source,original(path));

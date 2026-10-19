@@ -51,7 +51,7 @@ function temporary(t){const directory=mkdtempSync(join(tmpdir(),'router-named-de
 function write(directory,path,source){mkdirSync(dirname(join(directory,path)),{recursive:true});writeFileSync(join(directory,path),source);}
 function materialize(directory,assets){for(const [path,source]of assets)write(directory,path,source);}
 function strict(directory,file,positive){
- const args=[join(root,'packages/javascript/node_modules/typescript/bin/tsc'),'--strict','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--noEmit',join(directory,file)];
+ const args=[join(root,'js/node_modules/typescript/bin/tsc'),'--strict','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--noEmit',join(directory,file)];
  let status=0,stdout='',stderr='';try{stdout=execFileSync(process.execPath,args,{cwd:root,encoding:'utf8',timeout:20000,maxBuffer:4194304,stdio:'pipe'});}catch(error){if(error.signal||!Number.isInteger(error.status))throw error;status=error.status;stdout=String(error.stdout??'');stderr=String(error.stderr??'');}
  const row=retain('strict-'+file.replace(/[^a-z0-9]+/giu,'-'),{command:[process.execPath,...args],status,stdout,stderr,source:readFileSync(join(directory,file),'utf8')});
  if(positive)assert.equal(status,0,stdout+'\n'+stderr);else assert.notEqual(status,0,'negative complete consumer unexpectedly compiled');return row;

@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -5,7 +6,7 @@ import {types} from 'node:util';
 import {sourceItems} from '../rust-structure.mjs';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {schemarsDeriveDataInputs,originalSchemarsDataSourcePlan} from '../schemars-data-inputs.mjs';
-const root=new URL('../../../',import.meta.url),read=p=>readFileSync(new URL(p,root),'utf8');
+const root=new URL('../../../',import.meta.url),read=p=>readFileSync(repositorySourceURL(p,root),'utf8');
 const dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')});
 function input(source){const item=sourceItems(source).find(row=>row.name==='Record');return schemarsDeriveDataInputs({source,span:{start:item.start,end:item.end}});}
 test('outer docs attach only after the preceding actual item, preserving original comment and field token spans',()=>{

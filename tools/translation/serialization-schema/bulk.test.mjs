@@ -8,7 +8,7 @@ import { execFileSync } from 'node:child_process';
 import { captureSerializationContext, discoverSerializationCorpus } from './extract.mjs';
 import { draftBulkSerialization, parseBulkSerialization, serializeBulkSerialization, emitBulkSerializationRegistry } from './bulk.mjs';
 import { canonicalSerializationMeta } from './meta.mjs';
-import { affinitySchema } from '../../../packages/javascript/native/affinity-schema.mjs';
+import { affinitySchema } from '../../../js/src/affinity-schema.mjs';
 
 const repository=resolve(fileURLToPath(new URL('../../../',import.meta.url))),profile={flags:{test:false,unix:true,windows:false}};
 let original;

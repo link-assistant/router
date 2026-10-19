@@ -5,8 +5,8 @@ import { join } from 'node:path';
 import { load, temporary } from './helpers.mjs';
 import { fixture, owner, request } from './provider-resource-helpers.mjs';
 
-const { AffinityStore, createRouterCore } = await load('packages/javascript/native/core.mjs');
-const { encodeLino, decodeLino } = await load('packages/javascript/native/storage.mjs');
+const { AffinityStore, createRouterCore } = await load('js/src/core.mjs');
+const { encodeLino, decodeLino } = await load('js/src/storage.mjs');
 const namespace='/api/services/openai/v1/responses';
 const canonical={kind:'stored_provider',name:'vendor',provider_kind:'openai-compatible',base_url:'https://vendor.test/v1'};
 const row=(extra={})=>({namespace:'open_ai_responses',response_id:'response_1',owner:{...owner},destination:{...canonical},created_at:1,expires_at:100,...extra});

@@ -52,7 +52,7 @@ test('thirteen original private factories and all 192 source calls prove UTF16 m
   const ts=loadTypeScript(ROOT),directory=mkdtempSync(join(tmpdir(),'router-private-errors-'));let calls=0;
   try {
     for(const [path,name,messageIndex,callCount,dynamicKey,defaultKey,fallback,constantFields]of fixtures) {
-      const source=readFileSync(join(ROOT,'packages/javascript/native',path),'utf8'),contracts=privateErrorContracts(source),analyzed=analyzeJavaScript(source);
+      const source=readFileSync(join(ROOT,'js/src',path),'utf8'),contracts=privateErrorContracts(source),analyzed=analyzeJavaScript(source);
       assert.equal(contracts.owned,true,path);const item=analyzed.items.find(item=>item.name===name&&item.status==='translated'),fn=analyzed.program.find(item=>item.name===name);
       assert.ok(item,`${path}:${name}`);assert.equal(fn.params[messageIndex].type,'utf16-string');assert.equal(fn.exported,false);
       const plan=[...contracts.bindings.values()].find(plan=>plan.message===messageIndex&&plan.calls.length===callCount&&!plan.reason);
@@ -73,7 +73,7 @@ test('thirteen original private factories and all 192 source calls prove UTF16 m
       assert.match(rust,/message: &\[u16\]/u);assert.match(rust,/pub message: Vec<u16>/u);assert.match(rust,/JsErrorProjection/u);assert.doesNotMatch(rust,/pub stack|pub prototype|impl std::error::Error/u);
     }
     assert.equal(calls,192);
-    const publicSource=readFileSync(join(ROOT,'packages/javascript/native/client-files.mjs'),'utf8');assert.equal(analyzeJavaScript(publicSource).program.some(fn=>fn.name==='client_failure'),false);
+    const publicSource=readFileSync(join(ROOT,'js/src/client-files.mjs'),'utf8');assert.equal(analyzeJavaScript(publicSource).program.some(fn=>fn.name==='client_failure'),false);
   } finally {rmSync(directory,{recursive:true,force:true});}
 });
 

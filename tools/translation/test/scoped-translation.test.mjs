@@ -43,6 +43,6 @@ test('complete tracked repository generation consumes local bindings and repeats
     execFileSync('git',['init','--quiet'],{cwd:directory});execFileSync('git',['add','src'],{cwd:directory});
     regenerate({root:directory});const checked=regenerate({root:directory,check:true});assert.deepEqual(checked.failures,[]);
     const meta=JSON.parse(readFileSync(join(directory,'tools/translation/meta/src/lib.meta.json'),'utf8'));assert.equal(meta.counts.executableFunctions,1);
-    const javascript=readFileSync(join(directory,'packages/javascript/generated/rust-draft/src/lib.mjs'),'utf8');assert.equal((await loadJavaScript(javascript)).translated.run(7n),8n);
+    const javascript=readFileSync(join(directory,'js/generated/rust-draft/src/lib.mjs'),'utf8');assert.equal((await loadJavaScript(javascript)).translated.run(7n),8n);
   }finally{rmSync(directory,{recursive:true,force:true});}
 });

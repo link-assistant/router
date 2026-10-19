@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from './repository-layout.mjs';
 // Explicit source adoption of Router's owned API. This does not prove the
 // implementation or candidate ordering of arbitrary standard Range methods.
 import {createHash} from 'node:crypto';
@@ -102,11 +103,11 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   const args=process.argv.slice(2);if(args[0]!=='--root'||args[2]!=='--output'||args.length<6||args.length%2!==0)fail('usage: --root ROOT --output FRESH_OUTSIDE --file src/file.rs [--file ...]');
   const root=resolve(args[1]),output=resolve(args[3]),paths=[];
   for(let at=4;at<args.length;at+=2){const path=args[at+1];if(args[at]!=='--file'||!/^src\/(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_-]+\.rs$/u.test(path)||paths.includes(path))fail('unique canonical source file required');paths.push(path);}
-  const rootSource=readFileSync(join(root,'src/lib.rs'),'utf8'),coreEdges=sourceItems(rootSource).filter(item=>item.term==='mod'&&item.name==='translation_core');
+  const rootSource=readFileSync(join(root,rustPackageSourcePath(root,'src/lib.rs')),'utf8'),coreEdges=sourceItems(rootSource).filter(item=>item.term==='mod'&&item.name==='translation_core');
   if(coreEdges.length!==1||rootSource.slice(coreEdges[0].start,coreEdges[0].end).trim()!=='pub mod translation_core;')fail('actual public core edge required');
-  if(readFileSync(join(root,'src/translation_core.rs'),'utf8')!==ROUTER_FORMATTING_FACADE_SOURCE||readFileSync(join(root,'src/translation_core/ranges.rs'),'utf8')!==ROUTER_CORE_RANGES_SOURCE)fail('complete actual owned interface required');
-  const inputs=paths.map(path=>({path,source:readFileSync(join(root,path),'utf8')})),proposals=inputs.map(row=>({path:row.path,proposal:migrateCoreRanges(row.source)}));
-  for(const row of inputs)if(readFileSync(join(root,row.path),'utf8')!==row.source)fail('source changed while proposing');
+  if(readFileSync(join(root,rustPackageSourcePath(root,'src/translation_core.rs')),'utf8')!==ROUTER_FORMATTING_FACADE_SOURCE||readFileSync(join(root,rustPackageSourcePath(root,'src/translation_core/ranges.rs')),'utf8')!==ROUTER_CORE_RANGES_SOURCE)fail('complete actual owned interface required');
+  const inputs=paths.map(path=>({path,source:readFileSync(join(root,rustPackageSourcePath(root,path)),'utf8')})),proposals=inputs.map(row=>({path:row.path,proposal:migrateCoreRanges(row.source)}));
+  for(const row of inputs)if(readFileSync(join(root,rustPackageSourcePath(root,row.path)),'utf8')!==row.source)fail('source changed while proposing');
   freshOutput(root,output);for(const row of proposals){const file=join(output,row.path);mkdirSync(dirname(file),{recursive:true});writeFileSync(file,row.proposal.after.source,{flag:'wx'});}
   writeFileSync(join(output,'proposal.json'),JSON.stringify({inputs,proposals},null,2)+'\n',{flag:'wx'});
 }

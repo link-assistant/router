@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,rmSync} from 'node:fs';
@@ -17,7 +18,7 @@ import {resolveModuleGraph,translateProject} from '../project.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 
-const root=new URL('../../../',import.meta.url),read=path=>readFileSync(new URL(path,root),'utf8'),dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')}),hash=value=>createHash('sha256').update(value).digest('hex');
+const root=new URL('../../../',import.meta.url),read=path=>readFileSync(repositorySourceURL(path,root),'utf8'),dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')}),hash=value=>createHash('sha256').update(value).digest('hex');
 const directory=mkdtempSync(join(tmpdir(),'router-standard-bang-effects-'));after(()=>rmSync(directory,{recursive:true,force:true}));
 function retain(name,value){const output=process.env.ROUTER_STANDARD_BANG_EFFECT_VECTOR_DIR;if(output){mkdirSync(output,{recursive:true});writeFileSync(join(output,name+'.json.gz'),gzipSync(JSON.stringify(value)+'\n'),{flag:'wx'});}}
 function authored(source,index=0,profile=PRODUCTION_PROFILE){const captured=captureSourceModuleViews({source,sourcePath:'src/lib.rs',compilationProfile:profile}),module={source,file:'src/lib.rs',path:[],sourceView:captured.views[0],compilationProfile:profile},items=originalSourceModuleItems(module).filter(item=>originalDeclarationHeader(item)?.name==='caller');assert.equal(items.length,1);const scope={module,item:items[0],memberIndex:null},frame=captureOriginalNamespaceFunction(scope),position=originalNamespaceFunctionInvocationPosition(frame,scope,index),superset=captureOriginalNamespaceSourceSuperset({module,dependencies});return {dependencies,source:scope,frame,position,superset};}

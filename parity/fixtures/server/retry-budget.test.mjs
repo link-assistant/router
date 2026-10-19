@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
-import {AccountRouter,requestErrorAction,retryableStatus,validateAccountPolicy} from '../../../packages/javascript/native/accounts.mjs';
-import {estimateRequestBudget} from '../../../packages/javascript/native/token-reservation.mjs';
-import {createNativeRouter} from '../../../packages/javascript/native/server.mjs';
+import {AccountRouter,requestErrorAction,retryableStatus,validateAccountPolicy} from '../../../js/src/accounts.mjs';
+import {estimateRequestBudget} from '../../../js/src/token-reservation.mjs';
+import {createNativeRouter} from '../../../js/src/server.mjs';
 const accountConfig=policy=>({accounts:[{name:'a',provider:'p',policy},{name:'b',provider:'p'}],providers:[],account_strategy:'priority',storage_policy:'memory',account_cooldown_seconds:60,account_max_cooldown_seconds:120,session_affinity_ttl_seconds:0});
 const body={model:'m',messages:[{role:'user',content:'hi'}],max_tokens:20};
 const request=()=>new Request('http://router/v1/chat/completions',{method:'POST',headers:{authorization:'Bearer fixture-client','x-request-id':'copied-id','cookie':'private-cookie'},body:JSON.stringify(body)});

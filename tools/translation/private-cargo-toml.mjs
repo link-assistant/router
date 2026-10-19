@@ -17,7 +17,7 @@ const hostRoot=globalThis; // Existing trusted initial host root; Bun exposes th
 const descriptor=initialQualified?Object.getOwnPropertyDescriptor:null,prototype=initialQualified?Object.getPrototypeOf:null,own=initialQualified?Object.hasOwn:null,keys=initialQualified?Reflect.ownKeys:null,apply=initialQualified?Reflect.apply:null,isProxy=initialQualified?types.isProxy:null;
 const functionPrototype=initialQualified?prototype(function(){}):null,Failure=initialQualified?descriptor(hostRoot,'TypeError')?.value:null;
 let base=null,profilePath=null;
-const profileHash='d6b391594e58f0639235fbd2b7008e189d8b65ae2f76e1b43a8b176168cffba5';
+const profileHash='e52dd81d35984bcdfc279563dca465c8bccd0569384312bccfd82a1132f2d88c';
 const dependencies={
   'parse-string.js':['./lib/toml-parser.js','./parse-pretty-error.js'],
   'lib/toml-parser.js':['./parser.js','./create-datetime.js','./create-datetime-float.js','./create-date.js','./create-time.js','util'],

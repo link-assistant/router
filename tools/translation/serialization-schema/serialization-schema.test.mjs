@@ -9,7 +9,7 @@ import { captureSerializationContext, extractSerializationSchema, SerializationR
 import { serializeSerializationMeta, parseSerializationMeta, canonicalSerializationMeta } from './meta.mjs';
 import { projectSerializationDescriptor, emitSerializationDescriptor } from './descriptor.mjs';
 import { generateSerializationSchema } from './generate.mjs';
-import { affinitySchema } from '../../../packages/javascript/native/affinity-schema.mjs';
+import { affinitySchema } from '../../../js/src/affinity-schema.mjs';
 
 const repository=resolve(fileURLToPath(new URL('../../../',import.meta.url)));
 const profile={flags:{test:false,unix:true,windows:false}};

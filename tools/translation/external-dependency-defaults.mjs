@@ -26,7 +26,7 @@ const fail=message=>throwOriginalCapturedTypeError('Original external dependency
 function originalRegistry(){
   assertPrivateOriginalCargoTomlExecution();
   if(!initialQualified)fail('native source operations unavailable at import');
-  if(!registry){bytes=readFileSync(new URL('./source-profiles/external-dependency-defaults/manifest.json',import.meta.url));if(hash(bytes)!=='d6b391594e58f0639235fbd2b7008e189d8b65ae2f76e1b43a8b176168cffba5')fail('source domain changed');assertPrivateOriginalCargoTomlExecution();registry=JSON.parse(bytes);assertPrivateOriginalCargoTomlExecution();}
+  if(!registry){bytes=readFileSync(new URL('./source-profiles/external-dependency-defaults/manifest.json',import.meta.url));if(hash(bytes)!=='e52dd81d35984bcdfc279563dca465c8bccd0569384312bccfd82a1132f2d88c')fail('source domain changed');assertPrivateOriginalCargoTomlExecution();registry=JSON.parse(bytes);assertPrivateOriginalCargoTomlExecution();}
   return registry;
 }
 function freeze(value){

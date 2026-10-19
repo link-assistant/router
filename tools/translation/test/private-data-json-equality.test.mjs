@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
 import {types} from 'node:util';
@@ -141,7 +142,7 @@ test('unique pair descriptor string and logical expansion bounds decline without
 });
 
 test('complete original source operands and deterministic independent JSON corpus preserve exact native results and lengths',{timeout:60000},()=>{
- const root=new URL('../../../',import.meta.url),originals=['Cargo.toml','Cargo.lock','src/lib.rs'].map(path=>({path,source:readFileSync(new URL(path,root),'utf8')}));pair('08-entire-original-source-records',originals,structuredClone(originals),{positive:true});
+ const root=new URL('../../../',import.meta.url),originals=['Cargo.toml','Cargo.lock','src/lib.rs'].map(path=>({path,source:readFileSync(repositorySourceURL(path,root),'utf8')}));pair('08-entire-original-source-records',originals,structuredClone(originals),{positive:true});
  let seed=759;const next=()=>{seed=(seed*1664525+1013904223)>>>0;return seed;},observations=[];
  for(let at=0;at<256;at++){const scalar=[null,undefined,true,false,-0,NaN,Infinity,-Infinity,1e-23,'Ω😀\ud800','"\n\\'][next()%11],left={index:at,scalar,values:[scalar,next()/4294967296],nested:{key:'original-'+next()}},right=structuredClone(left);if(at%3===1)right.nested.key+=' changed';if(at%3===2){delete right.index;right.index=at;}freezeAuthoredData(left);freezeAuthoredData(right);const expected=baseline(left,right),fast=privateDataJsonEquality(left,right),actual=current(left,right),encoded=JSON.stringify(left);observations.push({left,right,expected,fast,actual,encoded});}
  retain('08-complete-corpus-before-assertions',{originals,initialSeed:759,observations,finalSeed:seed,facts:privateDataJsonEqualityFacts(),translationAuthority:false});for(const row of observations){assert.equal(row.actual,row.expected);if(row.fast){assert.equal(row.expected,true);assert.equal(row.fast.logicalJsonCodeUnits,row.encoded.length);}}

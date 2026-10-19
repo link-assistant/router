@@ -4,13 +4,14 @@ on:
   pull_request:
     paths:
       - 'Cargo.toml'
+      - 'rust/Cargo.toml'
       - 'Cargo.lock'
       - 'Dockerfile'
       - '.dockerignore'
-      - 'benches/**'
-      - 'tests/**'
-      - 'examples/**'
-      - 'src/**'
+      - 'rust/benches/**'
+      - 'rust/tests/**'
+      - 'rust/examples/**'
+      - 'rust/src/**'
       - '**/*.rs'
       - 'ui/dist/**'
       - 'docs/provider-evidence/**'

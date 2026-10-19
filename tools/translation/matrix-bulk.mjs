@@ -1,3 +1,4 @@
+import {repositoryRustLayout} from './repository-layout.mjs';
 // Independent full-corpus compilation for explicitly selected profiles. The
 // neutral baseline keeps its ordinary outputs; no common executable is minted.
 import {execFileSync} from 'node:child_process';
@@ -40,7 +41,7 @@ export function regenerateCompilationMatrix({root,matrix,check=false,sources,ent
   const corpus=sourceCorpus??captureSourceCorpus({root,paths:sources??execFileSync('git',['ls-files','-z','--','*.rs'],{cwd:root,encoding:'utf8'}).split('\0').filter(Boolean)});
   const paths=sourceCorpusPaths(corpus,root),tracked=new Set(paths);
   if(sourceCorpus&&sources!==undefined)assertSourceCorpusSelection(corpus,root,sources);
-  entries=entryPaths(entries??['src/lib.rs','src/main.rs'].filter(path=>tracked.has(path)),tracked);
+  entries=entryPaths(entries??repositoryRustLayout(root).entries.filter(path=>tracked.has(path)),tracked);
   const outputPlans=[];let expectedBytes=0;
   // Every profile constructs fresh invocation, binding, type and effect
   // contexts. All plans finish and all output paths validate before any write.

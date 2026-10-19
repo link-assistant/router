@@ -148,7 +148,7 @@ function completeOriginalOpenAiInput(){
 }
 
 test('complete original twenty-six-field request preserves both storage outputs without claiming whole-parent admission',async t=>{
- const before=await historical(t),physical=readFileSync(new URL('../../../src/openai.rs',import.meta.url),'utf8');assert.equal(hash(ORIGINAL_OPENAI),ORIGINAL_OPENAI_SHA);
+ const before=await historical(t),physical=readFileSync(new URL('../../../rust/src/openai.rs',import.meta.url),'utf8');assert.equal(hash(ORIGINAL_OPENAI),ORIGINAL_OPENAI_SHA);
  const incomplete=input(ORIGINAL_OPENAI,'OpenAIChatCompletionRequest'),missingBefore=observed(()=>before.consumer.proveSerdeDeserializeBangFootprint(incomplete)),missingCurrent=observed(()=>proveSerdeDeserializeBangFootprint(incomplete));retain('complete-original-incomplete-carrier-refusal',{incomplete,missingBefore,missingCurrent});assert.match(missingBefore.error?.message??'',/Original Serde field helper requires its genuine active declaring owner/);assert.deepEqual(missingCurrent.error,missingBefore.error);
  const setup=completeOriginalOpenAiInput();retain('complete-original-active-source-and-field-helper-closure',setup);assert.equal(setup.certificate.sourceSha256,ORIGINAL_OPENAI_SHA);assert.deepEqual(setup.certificate.span,{start:1922,end:4431});
  const old=observed(()=>before.consumer.proveSerdeDeserializeBangFootprint(setup));retain('complete-old-request-refusal',{source:ORIGINAL_OPENAI,setup,old});assert.match(old.error?.message??'',/Generator fragment metadata-byte budget exceeded/);

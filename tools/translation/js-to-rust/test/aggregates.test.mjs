@@ -27,7 +27,7 @@ test('six original native helper bodies retain arbitrary payloads and fresh aggr
   const fixtures=[['affinities.mjs','persisted_provider_kind','persistedProviderKind','identity'],['remote-operations.mjs','nullish','nullish','nullish'],['credential-operations.mjs','output','output','record'],['managed-server.mjs','out','out','rest'],['remote-operations.mjs','out','out','rest'],['operations.mjs','output','output','rest']];
   try {
     for(const [path,name,binding,kind]of fixtures) {
-      const source=readFileSync(join(ROOT,'packages/javascript/native',path),'utf8'),analyzed=analyzeJavaScript(source),item=analyzed.items.find(item=>item.name===name&&item.status==='translated');
+      const source=readFileSync(join(ROOT,'js/src',path),'utf8'),analyzed=analyzeJavaScript(source),item=analyzed.items.find(item=>item.name===name&&item.status==='translated');
       assert.ok(item,`${path}:${name}`);assert.equal(analyzed.program.find(item=>item.name===name).kind,'function');
       const span=source.slice(item.start,item.end),kernel=span.startsWith('export ')?span:'export '+span,result=translateJavaScript(kernel);
       assert.deepEqual(parseMeta(result.meta),result.program);

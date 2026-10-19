@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createNativeRouter } from '../../../packages/javascript/native/server.mjs';
-import { ResponsesStore, normalizeResponseInput } from '../../../packages/javascript/native/responses.mjs';
+import { createNativeRouter } from '../../../js/src/server.mjs';
+import { ResponsesStore, normalizeResponseInput } from '../../../js/src/responses.mjs';
 
 const response = { id: 'resp_one', object: 'response', status: 'completed', model: 'alias', output: [{ id: 'msg_one', type: 'message', role: 'assistant', content: [{ type: 'output_text', text: 'Hello', annotations: [] }] }], usage: { input_tokens: 2, output_tokens: 1, total_tokens: 3 } };
 const config = { token_secret: 'secret' };

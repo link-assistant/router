@@ -24,7 +24,7 @@ export async function verifyTypedTargets(result,verify,{childTimeoutMs}={}) {
     const compiled=join(directory,'compiled');
     let compiler=process.env.ROUTER_TRANSLATION_TSC,prefix=[];
     if(compiler===undefined){
-      try{const require=createRequire(new URL('../../../packages/javascript/package.json',import.meta.url));prefix=[require.resolve('typescript/bin/tsc')];compiler=process.execPath;}
+      try{const require=createRequire(new URL('../../../js/package.json',import.meta.url));prefix=[require.resolve('typescript/bin/tsc')];compiler=process.execPath;}
       catch(error){if(error.code!=='MODULE_NOT_FOUND')throw error;compiler='tsc';}
     }
     execFileSync(compiler,[...prefix,'--strict','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--skipLibCheck','--rootDir',directory,'--outDir',compiled,typescript],childOptions);

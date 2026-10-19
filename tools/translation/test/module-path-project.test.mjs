@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -101,9 +102,9 @@ test('combined inline and external depth has a bound independent of file and mod
 });
 
 test('whole unchanged deployment graph follows all five original literal-file edges and facade views',()=>{
-  const path='src/deploy.rs',source=readFileSync(new URL(path,root),'utf8');assert.equal(hash(source),'0acc07b144b6b63a32e337d38c4d74685b04c83d0f202b193ba999f160f9435a');
+  const path='src/deploy.rs',source=readFileSync(repositorySourceURL(path,root),'utf8');assert.equal(hash(source),'0acc07b144b6b63a32e337d38c4d74685b04c83d0f202b193ba999f160f9435a');
   const paths=execFileSync('git',['ls-files','-z','--','src'],{cwd:root,encoding:'utf8'}).split('\0').filter(path=>path.endsWith('.rs'));
-  const graph=resolveModuleGraph({entry:path,paths,compilationProfile:PRODUCTION_PROFILE,readSource:path=>readFileSync(new URL(path,root),'utf8')});
+  const graph=resolveModuleGraph({entry:path,paths,compilationProfile:PRODUCTION_PROFILE,readSource:path=>readFileSync(repositorySourceURL(path,root),'utf8')});
   for(const name of ['instance','registry','runtime','step','operations']){
     const target=`src/deploy/${name}.rs`,edge=graph.edges.find(edge=>edge.from===path&&edge.to===target);assert.ok(edge,name);
     const module=graph.modules.find(module=>module.file===target&&module.path.join('.')===name);assert.ok(module);assert.equal(module.source,readFileSync(new URL(target,root),'utf8'));

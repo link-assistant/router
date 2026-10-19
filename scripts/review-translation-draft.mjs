@@ -48,7 +48,7 @@ import {HostChecker} from '../tools/translation/extensions/host-contracts.mjs';
 
 const MAX_FILE_BYTES=64*1024*1024,MAX_TOTAL_BYTES=512*1024*1024,MAX_FILES=32768;
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
-const outputRoots=['tools/translation/meta','tools/translation/projects','packages/javascript/generated/rust-draft','packages/typescript/generated/rust-draft','packages/javascript/generated/rust-project','packages/typescript/generated/rust-project'];
+const outputRoots=['tools/translation/meta','tools/translation/projects','js/generated/rust-draft','ts/generated/rust-draft','js/generated/rust-project','ts/generated/rust-project'];
 const statusNames=['executable','carried','preserved'];
 const identity=item=>JSON.stringify([item.term,item.name??null,item.span.start,item.span.end,item.sha256]);
 function git(root,args,input) {

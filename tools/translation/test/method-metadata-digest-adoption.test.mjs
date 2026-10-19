@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // Complete method digest adoption receiving; source DATA never grants authority.
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
@@ -29,7 +30,7 @@ const rules=[
 const hash=value=>createHash('sha256').update(value).digest('hex');
 function test(name,run){testCase(name,{timeout:60000},async t=>{const vectors=[],retain=(label,value)=>{vectors.push({label,value});return value;};try{await run(t,retain);}finally{const folder=process.env.ROUTER_METHOD_DIGEST_ADOPTION_VECTOR_DIR;if(folder){mkdirSync(folder,{recursive:true});writeJsonGzip(join(folder,Buffer.from(name).toString('hex')+'.json.gz'),{name,vectors},(_key,item)=>typeof item==='bigint'?{$integer:item.toString()}:item);}}});}
 function outcome(run){try{return {value:run()};}catch(error){return {error:{name:error.name,message:error.message}};}}
-function sources(){return Object.fromEntries(METHOD_METADATA_DIGEST_SOURCE_PATHS.map(path=>[path,readFileSync(new URL(path,root),'utf8')]));}
+function sources(){return Object.fromEntries(METHOD_METADATA_DIGEST_SOURCE_PATHS.map(path=>[path,readFileSync(repositorySourceURL(path,root),'utf8')]));}
 function originalSources(current){return Object.fromEntries(rules.map(rule=>{const source=current[rule.path];assert.equal(source.split(rule.after).length,2);return [rule.path,source.replace(rule.after,rule.before)];}));}
 async function copies(t,retain){
  const current=sources(),before=originalSources(current),proposal=proposeMethodMetadataDigestSources(before);assert.deepEqual(Object.fromEntries(proposal.rows.map(row=>[row.file,row.after.source])),current);assert.deepEqual({...restoreMethodMetadataDigestSources(current)},before);

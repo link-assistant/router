@@ -219,6 +219,7 @@ export function originalBuiltinDefaultBangOutput({context,certificate,invocation
 
 // Explicit dimension-specific issuer. These lazy private tables and ordinary
 // function declarations add no probe or constructor to legacy bootstrap.
+import {types} from 'node:util';
 import {compileBuiltinDebugEnclosingNamespaceModel} from './builtin-debug-ast-route.mjs';
 import {originalDataFreezeIntrinsicsUnchanged as enclosingNativeUnchanged,originalCapturedFunctionSource} from './original-json-intrinsics.mjs';
 import {originalImplNamespaceSourcePlan,requireOriginalImplNamespaceSourcePlan} from './derive-ancestor-attribute-scope.mjs';

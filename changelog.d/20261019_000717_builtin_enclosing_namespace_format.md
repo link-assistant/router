@@ -1,3 +1,7 @@
+---
+bump: minor
+---
+
 ### Changed
 
 - Add an explicit private enclosing-namespace format for source-checked Debug named structs and unit enums. It retains the actual generated-tree closure, original source/type/owner checks, all branch alternatives, resolver-source relation, and fresh private reissue fences; generated method behavior remains opaque.

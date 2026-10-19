@@ -1,3 +1,4 @@
+import {repositoryRustLayout,rustPackageSourcePath} from './repository-layout.mjs';
 // Explicit repository storage: packets and hashes are evidence, never permits.
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
@@ -11,7 +12,7 @@ import {discoverSourceProfileInputs} from './source-profile-inputs.mjs';
 import {transportConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
 import {prepareOwnedCorePairedTypes} from './js-to-rust/owned-core-paired-types.mjs';
 import {prepareForwardJsonReaderPair} from './forward-owned-json-reader-definitions.mjs';
-export const OWNED_DEFINITION_ROOTS=Object.freeze(['tools/translation/generated/owned-definitions','packages/javascript/generated/rust-owned-definitions','packages/typescript/generated/rust-owned-definitions']);
+export const OWNED_DEFINITION_ROOTS=Object.freeze(['tools/translation/generated/owned-definitions','js/generated/rust-owned-definitions','ts/generated/rust-owned-definitions']);
 export const OWNED_DEFINITION_LIMITS=Object.freeze({packetBytes:16*1024*1024,evidenceBytes:384*1024*1024,paths:32768,filesBytes:256*1024*1024});
 const freeze=value=>{if(value&&typeof value==='object'&&!Object.isFrozen(value)){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;};
 const compilerRoot=resolve(dirname(fileURLToPath(import.meta.url)),'../..'),states=new WeakMap(),fail=message=>{throw TypeError('Owned definition output: '+message);};
@@ -23,9 +24,9 @@ export function ownedDefinitionPhysical(root,path,missing=false){
  return current;
 }
 function strict(bytes){const source=bytes.toString('utf8');if(!Buffer.from(source).equals(bytes))fail('source is not strict UTF8');return source;}
-export function ownedDefinitionRead(root,path,max=32*1024*1024){const absolute=ownedDefinitionPhysical(root,path),stat=lstatSync(absolute);if(!stat.isFile()||stat.size>max)fail('regular-file byte bound');const bytes=readFileSync(absolute);if(bytes.length>max)fail('read byte bound');return strict(bytes);}
+export function ownedDefinitionRead(root,path,max=32*1024*1024){const absolute=ownedDefinitionPhysical(root,rustPackageSourcePath(root,path)),stat=lstatSync(absolute);if(!stat.isFile()||stat.size>max)fail('regular-file byte bound');const bytes=readFileSync(absolute);if(bytes.length>max)fail('read byte bound');return strict(bytes);}
 function installedTypes(){
- const base=realpathSync(join(compilerRoot,'packages/javascript/node_modules/typescript')),rows=[];let total=0;
+ const base=realpathSync(join(compilerRoot,'js/node_modules/typescript')),rows=[];let total=0;
  function visit(dir){for(const name of readdirSync(join(base,dir)).sort()){const path=dir?dir+'/'+name:name,absolute=join(base,path),stat=lstatSync(absolute);if(stat.isSymbolicLink())fail('linked installed compiler');if(stat.isDirectory())visit(path);else{if(!stat.isFile()||stat.size>32*1024*1024||rows.length>=512)fail('installed compiler bound');const bytes=readFileSync(absolute);total+=bytes.length;if(total>64*1024*1024)fail('installed compiler total bound');rows.push({path,bytes:bytes.length,sha256:ownedDefinitionHash(bytes)});}}}
  visit('');const pkg=JSON.parse(readFileSync(join(base,'package.json'),'utf8'));if(pkg.version!=='5.9.3')fail('requires installed TypeScript 5.9.3');return {base,version:pkg.version,rows};
 }
@@ -34,9 +35,9 @@ function sourceState(root,sources,corpus){
  const trackedPaths=git('ls-files','-z','--','*.rs').split('\0').filter(Boolean).sort();
  const paths=corpus?sourceCorpusPaths(corpus,root):(sources??trackedPaths).slice().sort();
  if(!paths.length||paths.length>20000||new Set(paths).size!==paths.length)fail('source census bound');
- const trackedCargo=git('ls-files','-z','--','Cargo.toml','Cargo.lock').split('\0').filter(Boolean);
+ const cargoPaths=repositoryRustLayout(root).cargoInputs,trackedCargo=git('ls-files','-z','--',...cargoPaths).split('\0').filter(Boolean);
  const inputs=[];let total=0;
- for(const path of [...paths,'Cargo.toml','Cargo.lock']){
+ for(const path of [...paths,...cargoPaths]){
   ownedDefinitionPath(path);if(!path.endsWith('.rs')&&!existsSync(join(root,path))&&!trackedCargo.includes(path))continue;
   if(existsSync(join(root,path)))ownedDefinitionPhysical(root,path);
   const bytes=trackedSourceBytes(root,path,{maxBytes:8*1024*1024});total+=bytes.length;if(total>80*1024*1024)fail('source corpus bytes');inputs.push({path,source:strict(bytes),bytes:bytes.length,sha256:ownedDefinitionHash(bytes)});

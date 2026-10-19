@@ -11,7 +11,7 @@ import {createHash} from 'node:crypto';
 function draftFixture() {
   const directory=fs.mkdtempSync(path.join(os.tmpdir(),'router-draft-review-'));
   const original='pub fn label()->&\'static str{"Ω"}\n',sha=value=>createHash('sha256').update(value).digest('hex');
-  const targets={meta:'tools/translation/meta/src/lib.meta.json',javascript:'packages/javascript/generated/rust-draft/src/lib.mjs',typescript:'packages/typescript/generated/rust-draft/src/lib.ts'};
+  const targets={meta:'tools/translation/meta/src/lib.meta.json',javascript:'js/generated/rust-draft/src/lib.mjs',typescript:'ts/generated/rust-draft/src/lib.ts'};
   const compiler='tools/translation/review-fixture.mjs';
   const put=(name,value)=>{fs.mkdirSync(path.dirname(path.join(directory,name)),{recursive:true});fs.writeFileSync(path.join(directory,name),value);};
   put('src/lib.rs',original);put('Cargo.toml','[package]\nname="review_fixture"\nversion="0.1.0"\n');put(compiler,'// original compiler fixture\n');
@@ -19,7 +19,7 @@ function draftFixture() {
   function write(status='executable') {
     const counts={executable:status==='executable'?1:0,executableFunctions:status==='executable'?1:0,executableConstants:0,executableTypes:0,executableConstructors:0,carried:status==='carried'?1:0,preserved:0};
     const meta={sourcePath:'src/lib.rs',sourceBytes:Buffer.byteLength(original),sourceSha256:sha(original),counts,items:[{term:'fn',name:'label',source:original,sha256:sha(original),span:{start:0,end:original.length},status,diagnostic:null}]};
-    const projectTargets={meta:'tools/translation/projects/src/lib.meta.json',javascript:'packages/javascript/generated/rust-project/src/lib.mjs',typescript:'packages/typescript/generated/rust-project/src/lib.ts'};
+    const projectTargets={meta:'tools/translation/projects/src/lib.meta.json',javascript:'js/generated/rust-project/src/lib.mjs',typescript:'ts/generated/rust-project/src/lib.ts'};
     const entry={source:'src/lib.rs',name:'label',term:'fn',span:{start:0,end:original.length}};
     const project={sources:[{source:'src/lib.rs',sha256:sha(original),module:[]}],refused:status==='carried'?[{kind:'unsupported',message:'fixture body'}]:[],unloweredItems:[],checkedMethods:[],executable:status==='executable'?[entry]:[],moduleDiagnostics:[]};
     put(projectTargets.meta,JSON.stringify(project));put(projectTargets.javascript,'export const draftOnly=true;\n');put(projectTargets.typescript,'export const draftOnly=true;\n');
@@ -66,7 +66,7 @@ test('corpus review requires complete Rust discovery and bounded ordinary output
     fixture.put('extra.rs','fn extra(){}\n');execFileSync('git',['add','extra.rs'],{cwd:fixture.directory});assert.throws(fixture.review,/every tracked Rust source/);
     execFileSync('git',['rm','-f','extra.rs'],{cwd:fixture.directory});
     const {inventory}=fixture.write();inventory.sources[0].targets.javascript='../outside.mjs';fixture.put('parity/rust-source-inventory.json',JSON.stringify(inventory));assert.throws(fixture.review,/outside generated roots/);
-    fixture.write();const alias=path.join(fixture.directory,'packages/javascript/generated/rust-draft/linked.mjs');fs.symlinkSync(path.join(fixture.directory,'src/lib.rs'),alias);assert.throws(fixture.review,/linked inputs/);fs.unlinkSync(alias);
+    fixture.write();const alias=path.join(fixture.directory,'js/generated/rust-draft/linked.mjs');fs.symlinkSync(path.join(fixture.directory,'src/lib.rs'),alias);assert.throws(fixture.review,/linked inputs/);fs.unlinkSync(alias);
     fs.unlinkSync(path.join(fixture.directory,fixture.targets.meta));assert.throws(fixture.review,/ENOENT/);
     assert.throws(()=>reviewTranslationDraft({root:fixture.directory,baselineSha:'main'}),/immutable full Git SHA/);
     assert.throws(()=>reviewTranslationDraft({root:fixture.directory,inventoryPath:'../inventory.json'}),/bounded relative paths/);
@@ -75,9 +75,9 @@ test('corpus review requires complete Rust discovery and bounded ordinary output
 function installDeadlineFixture(directory) {
   fs.mkdirSync(path.join(directory, 'scripts'), { recursive: true });
   for (const name of ['run-node-tests.mjs', 'node-case-deadlines.mjs', 'node-case-deadline-reporter.mjs']) fs.copyFileSync(new URL(`../${name}`, import.meta.url), path.join(directory, 'scripts', name));
-  const dependencyDirectory = path.join(directory, 'packages/javascript/node_modules');
+  const dependencyDirectory = path.join(directory, 'js/node_modules');
   fs.mkdirSync(dependencyDirectory, { recursive: true });
-  fs.symlinkSync(fs.realpathSync(new URL('../../packages/javascript/node_modules/typescript', import.meta.url)), path.join(dependencyDirectory, 'typescript'), 'dir');
+  fs.symlinkSync(fs.realpathSync(new URL('../../js/node_modules/typescript', import.meta.url)), path.join(dependencyDirectory, 'typescript'), 'dir');
 }
 test('local reverse stage discovers a new failing test under both engines before freshness', { timeout: 30_000 }, () => {
   const commands = stages.find(([id]) => id === 'reverse-translation')[1];

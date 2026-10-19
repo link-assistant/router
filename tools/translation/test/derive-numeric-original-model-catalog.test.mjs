@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -17,7 +18,7 @@ const pins=new Map([
 const hash=text=>createHash('sha256').update(text).digest('hex');
 
 test('whole original model catalog retains numeric helpers and source-backed public limits in JS and TS',{timeout:60000},async()=>{
-  const sources=new Map([...pins].map(([path,digest])=>{const source=readFileSync(new URL(path,root),'utf8');assert.equal(hash(source),digest);return [path,source];}));
+  const sources=new Map([...pins].map(([path,digest])=>{const source=readFileSync(repositorySourceURL(path,root),'utf8');assert.equal(hash(source),digest);return [path,source];}));
   const result=translateProject({entry:'src/model_catalog_sources.rs',paths:[...sources.keys()],readSource:path=>sources.get(path),cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
   assert.equal(result.meta.sources.length,4);for(const entry of result.meta.sources)assert.equal(entry.sha256,pins.get(entry.source));
   assert.equal(result.meta.runtimeParity,false);assert.ok(result.meta.refused.some(entry=>entry.name==='document_schema'),'JsonSchema execution and catalog I/O remain unimplemented');

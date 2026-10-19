@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,statSync,mkdirSync,writeFileSync} from 'node:fs';
@@ -28,7 +29,7 @@ const project=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],
 const some=field0=>Object.freeze({$:'Some',field0}),none=Object.freeze({$:'None'});
 function find(node,predicate){if(!node||typeof node!=='object')return null;if(predicate(node))return node;for(const [key,value]of Object.entries(node))if(!['type','span','sourceFrameProof','originalLoanProof','sourceSharedPatternProof','sourcePatternProjectionProof'].includes(key))for(const child of Array.isArray(value)?value:[value]){const found=find(child,predicate);if(found)return found;}return null;}
 const retain=(name,value)=>{const directory=process.env.ROUTER_OPTION_PARTIAL_EQ_VECTOR_DIR;if(!directory)return;mkdirSync(directory,{recursive:true});writeFileSync(join(directory,name+'.json'),JSON.stringify(value,(_key,item)=>typeof item==='bigint'?{$bigint:item.toString()}:item instanceof Map?{$map:[...item]}:item)+'\n');};
-const readCurrent=path=>{const url=new URL(path,root);try{assert.ok(statSync(url).size<16*1024*1024);return readFileSync(url,'utf8');}catch(error){if(error.code!=='ENOENT')throw error;return execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',maxBuffer:16*1024*1024});}};
+const readCurrent=path=>{const url=repositorySourceURL(path,root);try{assert.ok(statSync(url).size<16*1024*1024);return readFileSync(url,'utf8');}catch(error){if(error.code!=='ENOENT')throw error;return execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',maxBuffer:16*1024*1024});}};
 const telegramSource=associatedOriginalSourceReader('option-borrowed-str-equality.test.mjs::telegram-case4');
 const read=path=>path==='src/telegram.rs'?telegramSource(path):readCurrent(path);
 function originalProject(entry){if(entry==='src/telegram.rs')return associatedOriginalProject('option-borrowed-str-equality.test.mjs::telegram-case4',entry);const paths=execFileSync('git',['ls-tree','-r','--name-only','HEAD','--','src'],{cwd:root,encoding:'utf8',maxBuffer:1024*1024}).trim().split('\n'),manifest=readCurrent('Cargo.toml'),lock=readCurrent('Cargo.lock');return {paths,manifest,lock,result:translateProject({entry,paths,readSource:readCurrent,cargoManifest:manifest,deriveDependencies:loadDeriveDependencyProof({manifest,lock}),jsonMacroDependencies:loadJsonMacroSourceProof({manifest,lock}),compilationProfile:PRODUCTION_PROFILE})};}

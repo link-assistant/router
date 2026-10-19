@@ -25,7 +25,7 @@ function changed(meta,change){const selected=rows(meta);change(selected);return 
 const item=rows=>rows.find(row=>row.head==='owned-source-item').value;
 function write(directory,path,text){mkdirSync(dirname(join(directory,path)),{recursive:true});writeFileSync(join(directory,path),text);}
 function temporary(t,prefix){const directory=mkdtempSync(join(tmpdir(),prefix));t.after(()=>rmSync(directory,{recursive:true,force:true}));return directory;}
-function strict(directory,paths){try{execFileSync(process.execPath,[join(root,'packages/javascript/node_modules/typescript/bin/tsc'),'--strict','--skipLibCheck','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--rootDir',directory,'--outDir',join(directory,'out'),...paths.map(path=>join(directory,path))],{cwd:root,encoding:'utf8',timeout:20000,stdio:'pipe'});}catch(error){assert.fail('strict document TypeScript failed\n'+String(error.stdout??'')+'\n'+String(error.stderr??''));}}
+function strict(directory,paths){try{execFileSync(process.execPath,[join(root,'js/node_modules/typescript/bin/tsc'),'--strict','--skipLibCheck','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--rootDir',directory,'--outDir',join(directory,'out'),...paths.map(path=>join(directory,path))],{cwd:root,encoding:'utf8',timeout:20000,stdio:'pipe'});}catch(error){assert.fail('strict document TypeScript failed\n'+String(error.stdout??'')+'\n'+String(error.stderr??''));}}
 async function targets(t,js=source,ts=typed){
  const row=receive(js,ts),directory=temporary(t,'owned-source-doc-');for(const file of row.data.files.filter(row=>/\.(?:mjs|mts|ts)$/u.test(row.path)))write(directory,file.path,file.source);
  write(directory,'reverse.mts',row.result.typescript);strict(directory,['caller.mts','reverse.mts']);for(const file of row.data.files.filter(row=>row.path.startsWith('runtime/')))write(directory,'out/'+file.path,file.source);
@@ -33,7 +33,7 @@ async function targets(t,js=source,ts=typed){
  return {...row,javascript,typedOriginal,typedReverse,run:(name,args)=>evaluate(row.result.program,name,args,runtime)};
 }
 function physical(t,{witness=false}={}){
- const directory=temporary(t,'owned-document-corpus-'),js='packages/javascript/generated/rust-project',ts='packages/typescript/generated/rust-project';
+ const directory=temporary(t,'owned-document-corpus-'),js='js/generated/rust-project',ts='ts/generated/rust-project';
  for(const row of input().files){const path=row.path==='caller.mjs'?js+'/caller.mjs':row.path==='caller.mts'?ts+'/caller.mts':row.path.startsWith('runtime/')?(row.path.endsWith('.mts')?ts:js)+'/'+row.path:row.path;write(directory,path,row.source);}
  if(witness)write(directory,'tests/translation_core_reverse_owned_oracle.rs',original('tests/translation_core_reverse_owned_oracle.rs'));return {directory,js,ts};
 }

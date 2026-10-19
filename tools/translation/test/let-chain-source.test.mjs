@@ -163,11 +163,11 @@ test('known original Some and None clauses check unreachable bodies and omit imp
 });
 
 test('the unchanged original upstream URL caller translates through meta and both typed targets',async()=>{
-  const complete=readFileSync(new URL('../../../src/github_proxy.rs',import.meta.url),'utf8'),item=sourceItems(complete).find(item=>item.name==='upstream_url');assert.ok(item);
+  const complete=readFileSync(new URL('../../../rust/src/github_proxy.rs',import.meta.url),'utf8'),item=sourceItems(complete).find(item=>item.name==='upstream_url');assert.ok(item);
   const original=complete.slice(item.start,item.end);assert.match(original,/&& let Some\(root\)/u);
-  const result=translateSource(original,'src/github_proxy.rs',{cargoManifest:readFileSync(new URL('../../../Cargo.toml',import.meta.url),'utf8')});assert.equal(result.ir.items.map(entry=>entry.source).join(''),original);assert.equal(result.ir.sourceSha256,hash(original));
+  const result=translateSource(original,'src/github_proxy.rs',{cargoManifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8')});assert.equal(result.ir.items.map(entry=>entry.source).join(''),original);assert.equal(result.ir.sourceSha256,hash(original));
   const retained=result.ir.items.find(entry=>entry.name==='upstream_url');assert.equal(retained.status,'executable');assert.equal(retained.source,original);
-  const checked=translateProject({entry:'src/github_proxy.rs',paths:['src/github_proxy.rs'],readSource:()=>original,cargoManifest:readFileSync(new URL('../../../Cargo.toml',import.meta.url),'utf8')});assert.deepEqual(checked.meta.refused,[]);
+  const checked=translateProject({entry:'src/github_proxy.rs',paths:['src/github_proxy.rs'],readSource:()=>original,cargoManifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8')});assert.deepEqual(checked.meta.refused,[]);
   await verifyTypedTargets(checked,api=>{
     assert.equal(api.upstream_url('https://enterprise.example/api/v3','/graphql'),'https://enterprise.example/api/graphql');
     assert.equal(api.upstream_url('https://api.github.com','/graphql'),'https://api.github.com/graphql');

@@ -10,7 +10,7 @@
 //! process-wrap = { version = "10.0.1", default-features = false, features = ["std", "job-object"] }
 //! ```
 
-#[path = "../src/bounded_process.rs"]
+#[path = "../rust/src/bounded_process.rs"]
 mod bounded_process;
 #[path = "release-status.rs"]
 mod release_status;

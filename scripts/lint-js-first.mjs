@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-const roots = ['packages/javascript', 'tools/translation', 'scripts'];
+const roots = ['js', 'tools/translation', 'scripts'];
 let count = 0;
 function walk(directory) {
   if (!fs.existsSync(directory)) return;

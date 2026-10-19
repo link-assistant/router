@@ -130,7 +130,7 @@ function coreRepositoryEdits(ts,text){
   filtered.push({start:text.length,end:text.length,expected:'',replacement:exportBody});filtered.sort((a,b)=>a.start-b.start);return filtered;
 }
 export function prepareOriginalClassBirthPlan({sourceRoot=resolve(fileURLToPath(new URL('../../',import.meta.url)))}={}){
-  checked();const root=resolve(sourceRoot),require=createRequire(join(process.env.ROUTER_NATIVE_TS_SOURCE_ROOT??root,'packages/javascript/package.json')),ts=require('typescript');if(ts.version!=='5.9.3')fail('installed TypeScript5.9.3 required');checked();
+  checked();const root=resolve(sourceRoot),require=createRequire(join(process.env.ROUTER_NATIVE_TS_SOURCE_ROOT??root,'js/package.json')),ts=require('typescript');if(ts.version!=='5.9.3')fail('installed TypeScript5.9.3 required');checked();
   const installedText=originalClassDefinitionProgram(),installed=installedText?JSON.parse(installedText):null;checked();const originals={};
   for(let at=0;at<INPUTS.length;at++){const row=INPUTS[at];let source=readFileSync(join(root,row.path),'utf8');checked();let digest=hash(source);
     if(digest!==row.sha256&&installed){const old=installed.files.find(x=>'tools/translation/'+x.path===row.path);if(old&&digest===old.after.sha256){for(let index=old.reverse.length-1;index>=0;index--){const edit=old.reverse[index];if(source.slice(edit.start,edit.end)!==edit.expected)fail('installed source reverse differs');source=source.slice(0,edit.start)+edit.replacement+source.slice(edit.end);}digest=hash(source);}}

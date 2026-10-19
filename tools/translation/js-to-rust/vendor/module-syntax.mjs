@@ -3,7 +3,7 @@ import { dirname,resolve,join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const sourceRoot=process.env.ROUTER_NATIVE_TS_SOURCE_ROOT??resolve(dirname(fileURLToPath(import.meta.url)),'../../../..');
-const require=createRequire(join(sourceRoot,'packages/javascript/package.json'));
+const require=createRequire(join(sourceRoot,'js/package.json'));
 let compiler,latest;
 // Loading the pinned compiler does not imply parsing a source under a dummy
 // filename. Graph producers perform their own actual-path parse and guards.

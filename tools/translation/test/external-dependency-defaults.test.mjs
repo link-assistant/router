@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync,mkdtempSync,rmSync,realpathSync} from 'node:fs';
@@ -14,7 +15,7 @@ import {PRODUCTION_PROFILE,compilationProfile} from '../cfg-profile.mjs';
 import {registerOriginalExternalDefaultProfile,captureOriginalExternalDependencyDefaults,originalExternalDependencyDefaultsFacts,observeOriginalExternalDefaultConditions} from '../external-dependency-defaults.mjs';
 import {translateProject} from '../project.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),read=path=>readFileSync(new URL(path,root),'utf8');
+const root=new URL('../../../',import.meta.url),read=path=>readFileSync(repositorySourceURL(path,root),'utf8');
 const manifest=read('Cargo.toml'),lock=read('Cargo.lock'),source=read('src/lib.rs'),dependencies=loadDeriveDependencyProof({manifest,lock}),packageToken=captureOriginalExternalTraitPackage(dependencies,'base64');
 function retain(name,value){const output=process.env.ROUTER_EXTERNAL_DEFAULT_VECTOR_DIR;if(output){mkdirSync(output,{recursive:true});writeFileSync(join(output,name+'.json'),JSON.stringify(value)+'\n',{flag:'wx'});}}
 function context(profile=PRODUCTION_PROFILE){const capture=captureSourceModuleViews({source,sourcePath:'src/lib.rs',compilationProfile:profile});return {module:{source,file:'src/lib.rs',path:[],sourceView:capture.views[0],compilationProfile:profile},dependencies,packageToken};}

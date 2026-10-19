@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -9,7 +10,7 @@ import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {parseProgram} from '../semantic-meta.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const root=new URL('../../../',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
-const read=path=>readFileSync(new URL(path,root),'utf8');
+const read=path=>readFileSync(repositorySourceURL(path,root),'utf8');
 const tag=($,fields={})=>Object.freeze({$,...fields});
 
 test('untouched whole ClientKind source checks its Copy receiver and actual function-name shadowing',{timeout:60_000},async()=>{

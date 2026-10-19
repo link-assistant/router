@@ -8,12 +8,13 @@ import {createRequire} from 'node:module';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
 import {captureSyncInputs,syncRouter,synchronizationSteps,runSynchronizationProducer} from '../sync-router.mjs';
+import {rustPackageSourcePath} from '../../tools/translation/repository-layout.mjs';
 import {parseMeta} from '../../tools/translation/js-to-rust/translator.mjs';
 import {evaluate} from '../../tools/translation/js-to-rust/interpreter.mjs';
 import {compileNativeTypeScript} from '../../tools/translation/js-to-rust/native-typescript.mjs';
 
 const repository=fileURLToPath(new URL('../../',import.meta.url));
-const require=createRequire(path.join(repository,'packages/javascript/package.json'));
+const require=createRequire(path.join(repository,'js/package.json'));
 const compilerPath=require.resolve('typescript/package.json');
 const dependencies=path.dirname(path.dirname(compilerPath));
 const source='/** @param {number} x @returns {number} */ export function adjust(x) { return x + 1; }\n';
@@ -30,27 +31,27 @@ function fixture(t,{isolated=false}={}) {
       fs.cpSync(root,copy,{recursive:true,dereference:false,verbatimSymlinks:true,errorOnExist:true,force:false});
     });
   }
-  put(root,'packages/javascript/package.json',JSON.stringify({name:'sync-fixture',version:'1.0.0',type:'module'}));
-  put(root,'packages/javascript/portable/policy.mjs',source);
-  put(root,'packages/javascript/native/core.mjs','export function observed() { return 5; }\n');
-  put(root,'packages/javascript/index.js','export const fixture = true;\n');
-  put(root,'packages/javascript/testing.js','export const testing = true;\n');
-  put(root,'packages/javascript/catalog.json','{"operations":[]}\n');
+  put(root,'js/package.json',JSON.stringify({name:'sync-fixture',version:'1.0.0',type:'module'}));
+  put(root,'js/portable/policy.mjs',source);
+  put(root,'js/src/core.mjs','export function observed() { return 5; }\n');
+  put(root,'js/index.js','export const fixture = true;\n');
+  put(root,'js/testing.js','export const testing = true;\n');
+  put(root,'js/catalog.json','{"operations":[]}\n');
   put(root,'parity/fixtures/js-first/policy.json',JSON.stringify({cases:[{id:'adjust-seven',function:'adjust',args:[7],expected:8}]}));
   put(root,'parity/fixtures/js-first/unsupported.json','[]\n');
   put(root,'src/original.rs','pub fn original() -> bool { true }\n');
   put(root,'src/generated_js_first/manual.rs','pub fn handwritten() -> bool { true }\n');
-  fs.symlinkSync(dependencies,path.join(root,'packages/javascript/node_modules'),'dir');
+  fs.symlinkSync(dependencies,path.join(root,'js/node_modules'),'dir');
   execFileSync('git',['init','-q'],{cwd:root});put(root,'.git/info/exclude','node_modules/\n');
   execFileSync('git',['add','.'],{cwd:root});execFileSync('git',['-c','user.name=Sync Fixture','-c','user.email=fixture@example.invalid','commit','-qm','original inputs'],{cwd:root});
   return root;
 }
 function run(root,name,check=false,extra={}){return syncRouter({root,direction:'javascript-to-rust',check,outputDirectory:path.join(root,name),...extra});}
-const originalText=name=>execFileSync('git',['show','HEAD:'+name],{cwd:repository,encoding:'utf8',maxBuffer:16*1024*1024});
+const originalText=name=>execFileSync('git',['show','HEAD:'+rustPackageSourcePath(repository,name)],{cwd:repository,encoding:'utf8',maxBuffer:16*1024*1024});
 function affinityFixture(t) {
   const root=fixture(t),meta=JSON.parse(originalText('tools/translation/serialization-schema/generated/affinity-schema.meta.json'));
-  fs.unlinkSync(path.join(root,'packages/javascript/native/core.mjs'));
-  const native=execFileSync('git',['ls-files','-z','--','packages/javascript/native'],{cwd:repository,encoding:'utf8'}).split('\0').filter(name=>name.endsWith('.mjs'));
+  fs.unlinkSync(path.join(root,'js/src/core.mjs'));
+  const native=execFileSync('git',['ls-files','-z','--','js/src'],{cwd:repository,encoding:'utf8'}).split('\0').filter(name=>name.endsWith('.mjs'));
   for(const name of native)put(root,name,originalText(name));
   for(const name of ['Cargo.toml','Cargo.lock'])put(root,name,originalText(name));
   const declarations=new Map();
@@ -75,8 +76,8 @@ test('actual JavaScript edits synchronize reparsed meta, Rust and executable str
   assert.equal(evaluate(parseMeta(oldMeta),'adjust',[7]),8);
   assert.equal(compileNativeTypeScript(root,{sourceRoot:root}).compiler,'5.9.3');
   const fresh=run(root,'fresh',true);assert.equal(fresh.exitCode,0);assert.equal(fresh.artifactsCurrent,true);
-  put(root,'packages/javascript/portable/policy.mjs',source.replace('x + 1','x - 1'));
-  put(root,'packages/javascript/native/core.mjs','export function observed() { return 9; }\n');
+  put(root,'js/portable/policy.mjs',source.replace('x + 1','x - 1'));
+  put(root,'js/src/core.mjs','export function observed() { return 9; }\n');
   put(root,'parity/fixtures/js-first/policy.json',JSON.stringify({cases:[{id:'adjust-seven',function:'adjust',args:[7],expected:6}]}));
   const changed=run(root,'changed');assert.equal(changed.exitCode,0,JSON.stringify(changed));
   const newRust=fs.readFileSync(path.join(root,'src/generated_js_first/policy.rs'),'utf8');
@@ -84,9 +85,9 @@ test('actual JavaScript edits synchronize reparsed meta, Rust and executable str
   assert.notEqual(newRust,oldRust);assert.notEqual(newMeta,oldMeta);assert.equal(evaluate(parseMeta(newMeta),'adjust',[7]),6);
   assert.deepEqual(fs.readFileSync(path.join(root,'src/original.rs')),original);
   assert.ok(captureSyncInputs(root).files.some(row=>row.path==='src/generated_js_first/manual.rs'));
-  for(const name of ['packages/javascript/index.js','packages/javascript/testing.js'])assert.ok(captureSyncInputs(root).files.some(row=>row.path===name));
+  for(const name of ['js/index.js','js/testing.js'])assert.ok(captureSyncInputs(root).files.some(row=>row.path===name));
   assert.equal(fs.readFileSync(path.join(root,'src/generated_js_first/manual.rs'),'utf8'),'pub fn handwritten() -> bool { true }\n');
-  const ts=require('typescript');const target=fs.readFileSync(path.join(root,'packages/typescript/native/core.ts'),'utf8');
+  const ts=require('typescript');const target=fs.readFileSync(path.join(root,'ts/src/core.ts'),'utf8');
   const erased=ts.transpileModule(target,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
   const observed=await import('data:text/javascript;base64,'+Buffer.from(erased).toString('base64'));assert.equal(observed.observed(),9);
   assert.equal(changed.originalInputsUnchanged,true);assert.equal(changed.wholeSourceSynchronization,false);assert.equal(changed.rustExecuted,false);
@@ -103,7 +104,7 @@ try {
   const {synchronizationSteps}=await import(${JSON.stringify(pathToFileURL(path.join(repository,'scripts/sync-router.mjs')).href)});
   const steps=synchronizationSteps({root,direction:'javascript-to-rust'});
   stage='compiler-observation';
-  const require=createRequire(root+'/packages/javascript/package.json'),ts=require('typescript');
+  const require=createRequire(root+'/js/package.json'),ts=require('typescript');
   console.log(JSON.stringify({ok:true,stage,steps:steps.map(step=>step.id),compiler:ts.version,compilerPath:require.resolve('typescript'),before,after:process.env.ROUTER_NATIVE_TS_SOURCE_ROOT,override,overrideAfter:process.env.ROUTER_TRANSLATION_TSC}));
 } catch(error) {
   console.log(JSON.stringify({ok:false,stage,error:{name:error.name,code:error.code,message:error.message,stack:error.stack},before,after:process.env.ROUTER_NATIVE_TS_SOURCE_ROOT,override,overrideAfter:process.env.ROUTER_TRANSLATION_TSC}));
@@ -127,12 +128,12 @@ try {
   assert.equal(positive.result.status,0,positive.result.stderr);assert.equal(positive.observation.compiler,'5.9.3');
   assert.deepEqual(positive.observation.steps,['javascript-meta-rust','javascript-meta-typescript']);
   // A valid unrelated compiler cannot substitute missing receiving dependencies.
-  put(unrelated,'packages/javascript/package.json','{"type":"module"}\n');
-  fs.symlinkSync(dependencies,path.join(unrelated,'packages/javascript/node_modules'),'dir');
-  fs.unlinkSync(path.join(root,'packages/javascript/node_modules'));
+  put(unrelated,'js/package.json','{"type":"module"}\n');
+  fs.symlinkSync(dependencies,path.join(unrelated,'js/node_modules'),'dir');
+  fs.unlinkSync(path.join(root,'js/node_modules'));
   // Retaining a fixture below the repository's node_modules would let ordinary
   // Node resolution find an ancestor compiler after removing the local link.
-  const receivingRequire=createRequire(path.join(root,'packages/javascript/package.json'));
+  const receivingRequire=createRequire(path.join(root,'js/package.json'));
   const candidates=receivingRequire.resolve.paths('typescript');
   assert.ok(Array.isArray(candidates));
   for(const candidate of candidates)assert.equal(fs.existsSync(path.join(candidate,'typescript')),false,'isolated receiving fixture has an ancestor compiler: '+candidate);
@@ -140,35 +141,35 @@ try {
   const missing=child('missing-receiving-dependencies');
   assert.equal(missing.result.status,1);assert.equal(missing.observation.stage,'plan');
   assert.match(missing.observation.error.message,/typescript/u);
-  assert.ok(missing.observation.error.stack.includes(path.join(root,'packages/javascript/package.json')),missing.observation.error.stack);
+  assert.ok(missing.observation.error.stack.includes(path.join(root,'js/package.json')),missing.observation.error.stack);
   assert.equal(missing.observation.error.code,'MODULE_NOT_FOUND');
   // A package entry that escapes its installed package must be refused BEFORE
   // its body can execute, including a Bun automatic-cache resolution result.
   const marker=path.join(root,'foreign-compiler-executed.txt');
-  put(root,'packages/javascript/node_modules/typescript/package.json','{"name":"typescript","main":"../../foreign-compiler.cjs"}\n');
-  put(root,'packages/javascript/foreign-compiler.cjs','require("node:fs").writeFileSync('+JSON.stringify(marker)+',"executed");module.exports={};\n');
+  put(root,'js/node_modules/typescript/package.json','{"name":"typescript","main":"../../foreign-compiler.cjs"}\n');
+  put(root,'js/foreign-compiler.cjs','require("node:fs").writeFileSync('+JSON.stringify(marker)+',"executed");module.exports={};\n');
   const escaped=child('escaped-installed-compiler-entry');
   assert.equal(escaped.result.status,1);assert.equal(escaped.observation.stage,'plan');
   assert.equal(escaped.observation.error.code,'MODULE_NOT_FOUND');assert.match(escaped.observation.error.message,/typescript/u);
   assert.equal(fs.existsSync(marker),false,'outside-package compiler must not execute');
   // Absolute directory resolution must not silently ignore a package's exports.
-  put(root,'packages/javascript/node_modules/typescript/package.json','{"name":"typescript","main":"index.cjs","exports":"./index.cjs"}\n');
-  put(root,'packages/javascript/node_modules/typescript/index.cjs','require("node:fs").writeFileSync('+JSON.stringify(marker)+',"executed");module.exports={};\n');
+  put(root,'js/node_modules/typescript/package.json','{"name":"typescript","main":"index.cjs","exports":"./index.cjs"}\n');
+  put(root,'js/node_modules/typescript/index.cjs','require("node:fs").writeFileSync('+JSON.stringify(marker)+',"executed");module.exports={};\n');
   const exported=child('declared-package-exports');
   assert.equal(exported.result.status,1);assert.equal(exported.observation.stage,'plan');
   assert.match(exported.observation.error.message,/receiving TypeScript package exports/u);
   assert.equal(fs.existsSync(marker),false,'unsupported package exports must not execute');
-  fs.rmSync(path.join(root,'packages/javascript/node_modules'),{recursive:true});
-  fs.symlinkSync(dependencies,path.join(root,'packages/javascript/node_modules'),'dir');
+  fs.rmSync(path.join(root,'js/node_modules'),{recursive:true});
+  fs.symlinkSync(dependencies,path.join(root,'js/node_modules'),'dir');
   // The normal ancestor search remains supported; only Bun's unrelated cache
   // fallback lacks an installed package in this receiving search list.
-  const nested=path.join(root,'packages/javascript/nested/receiving');
-  put(nested,'packages/javascript/package.json','{"type":"module"}\n');
-  put(nested,'packages/javascript/native/core.mjs','export function observed() { return 5; }\n');
+  const nested=path.join(root,'js/nested/receiving');
+  put(nested,'js/package.json','{"type":"module"}\n');
+  put(nested,'js/src/core.mjs','export function observed() { return 5; }\n');
   const ancestor=child('installed-ancestor-compiler',nested);
   assert.equal(ancestor.result.status,0,ancestor.result.stderr);assert.equal(ancestor.observation.compiler,'5.9.3');
   assert.equal(fs.realpathSync(ancestor.observation.compilerPath),fs.realpathSync(positive.observation.compilerPath));
-  put(root,'packages/javascript/native/core.mjs','export function broken() { const = ; }\n');
+  put(root,'js/src/core.mjs','export function broken() { const = ; }\n');
   const malformed=child('invalid-receiving-native-syntax');
   assert.equal(malformed.result.status,1);assert.equal(malformed.observation.stage,'plan');
   assert.equal(malformed.observation.error.message,'invalid module ownership syntax');
@@ -186,7 +187,7 @@ test('freshness rejects an edited Rust projection and retains the complete faile
 });
 
 test('real native and public source mutations between capture and producer execution are rejected before any projection is written',t=>{
- for(const name of ['packages/javascript/native/core.mjs','packages/javascript/index.js','packages/javascript/testing.js','packages/javascript/schemas/new.json']){
+ for(const name of ['js/src/core.mjs','js/index.js','js/testing.js','js/schemas/new.json']){
   const root=fixture(t);
   const result=run(root,'mutation',false,{onProgress:record=>{if(record.state==='start')put(root,name,name.endsWith('.json')?'{}\n':'export const changed = true;\n');}});
   assert.equal(result.exitCode,1);assert.equal(result.originalInputsUnchanged,false);
@@ -198,11 +199,11 @@ test('real native and public source mutations between capture and producer execu
 test('original sparse Git bytes remain visible and linked native source cannot substitute an outside file',t=>{
   const root=fixture(t);fs.unlinkSync(path.join(root,'src/original.rs'));
   const captured=captureSyncInputs(root),row=captured.files.find(row=>row.path==='src/original.rs');assert.ok(row.bytes>0);assert.equal(row.storage,'original-HEAD-sparse-fallback');
-  const target=path.join(root,'packages/javascript/native/core.mjs');fs.unlinkSync(target);fs.symlinkSync(path.join(root,'packages/javascript/portable/policy.mjs'),target);
+  const target=path.join(root,'js/src/core.mjs');fs.unlinkSync(target);fs.symlinkSync(path.join(root,'js/portable/policy.mjs'),target);
   assert.throws(()=>captureSyncInputs(root),/Linked original/);
   fs.unlinkSync(target);fs.symlinkSync(path.join(root,'absent-source.mjs'),target);
   assert.throws(()=>captureSyncInputs(root),/Linked original/);
-  fs.unlinkSync(target);fs.rmSync(path.join(root,'packages/javascript/native'),{recursive:true});put(root,'packages/javascript/native','blocked ancestor\n');
+  fs.unlinkSync(target);fs.rmSync(path.join(root,'js/src'),{recursive:true});put(root,'js/src','blocked ancestor\n');
   assert.throws(()=>captureSyncInputs(root),/ancestor must be a directory/);
 });
 
@@ -248,9 +249,9 @@ test('producer dependency order preserves full reverse passes and makes affinity
   assert.deepEqual(ids({direction:'rust-to-javascript',profiles:false}),['original-affinity-schema','rust-meta-javascript-typescript','original-serialization-registry']);
   for(const scenario of ['descriptor-only','source-only','import-only']) {
     const receiving=fixture(t);
-    if(scenario==='descriptor-only')put(receiving,'packages/javascript/native/affinity-schema-descriptor.mjs','export const affinitySchema = {};\n');
-    if(scenario==='source-only')put(receiving,'packages/javascript/native/affinity-schema.mjs','export {affinitySchema} from "./affinity-schema-descriptor.mjs";\n');
-    if(scenario==='import-only')put(receiving,'packages/javascript/native/core.mjs','import {affinitySchema} from "./affinity-schema-descriptor.mjs";export const observed = affinitySchema;\n');
+    if(scenario==='descriptor-only')put(receiving,'js/src/affinity-schema-descriptor.mjs','export const affinitySchema = {};\n');
+    if(scenario==='source-only')put(receiving,'js/src/affinity-schema.mjs','export {affinitySchema} from "./affinity-schema-descriptor.mjs";\n');
+    if(scenario==='import-only')put(receiving,'js/src/core.mjs','import {affinitySchema} from "./affinity-schema-descriptor.mjs";export const observed = affinitySchema;\n');
     const steps=synchronizationSteps({root:receiving,direction:'javascript-to-rust',check:false});
     assert.deepEqual(steps.map(step=>step.id),['javascript-meta-rust-preparation','original-affinity-schema','javascript-meta-rust','javascript-meta-typescript'],scenario);
     assert.equal(steps[1].args.at(-1),'true','partial direction must check the schema, never repair it');
@@ -266,9 +267,9 @@ test('producer dependency order preserves full reverse passes and makes affinity
 });
 
 test('owned descriptor links and oversized native sources refuse before producer or planner reads', {timeout:60_000},t=>{
-  const root=fixture(t),descriptor=path.join(root,'packages/javascript/native/affinity-schema-descriptor.mjs');
+  const root=fixture(t),descriptor=path.join(root,'js/src/affinity-schema-descriptor.mjs');
   for(const target of ['core.mjs','absent.mjs']) {
-    fs.symlinkSync(path.join(root,'packages/javascript/native',target),descriptor);
+    fs.symlinkSync(path.join(root,'js/src',target),descriptor);
     assert.throws(()=>captureSyncInputs(root),/Linked original/);
     assert.throws(()=>synchronizationSteps({root,direction:'javascript-to-rust'}),/Linked original/);
     const output=path.join(root,target+'-blocked');fs.mkdirSync(output);
@@ -276,21 +277,21 @@ test('owned descriptor links and oversized native sources refuse before producer
     assert.equal(blocked.status,'failed');assert.match(blocked.error,/Linked original/);assert.deepEqual(blocked.logs,[]);
     fs.unlinkSync(descriptor);
   }
-  const oversized=path.join(root,'packages/javascript/native/oversized.mjs');fs.writeFileSync(oversized,'');fs.truncateSync(oversized,32*1024*1024+1);
+  const oversized=path.join(root,'js/src/oversized.mjs');fs.writeFileSync(oversized,'');fs.truncateSync(oversized,32*1024*1024+1);
   assert.throws(()=>synchronizationSteps({root,direction:'javascript-to-rust'}),/bounded capture/);
   assert.throws(()=>captureSyncInputs(root),/bounded capture/);fs.unlinkSync(oversized);
-  const native=path.join(root,'packages/javascript/native'),original=path.join(root,'native-original');fs.renameSync(native,original);fs.symlinkSync(original,native,'dir');
+  const native=path.join(root,'js/src'),original=path.join(root,'native-original');fs.renameSync(native,original);fs.symlinkSync(original,native,'dir');
   assert.throws(()=>captureSyncInputs(root),/Linked original/);
   assert.throws(()=>synchronizationSteps({root,direction:'javascript-to-rust'}),/Linked original/);
 });
 
 test('owned descriptor canonicalization after genuine Rust provenance change leaves final selected producers fresh', {timeout:60_000},async t=>{
-  const root=affinityFixture(t),descriptor='packages/javascript/native/affinity-schema-descriptor.mjs';
+  const root=affinityFixture(t),descriptor='js/src/affinity-schema-descriptor.mjs';
   const originalDescriptor=fs.readFileSync(path.join(root,descriptor),'utf8');
   put(root,descriptor,originalDescriptor+'\n// stale generated formatting retained as the regression input\n');
   const rustPath='src/response_affinity.rs',rustOriginal=fs.readFileSync(path.join(root,rustPath),'utf8');
   put(root,rustPath,'// A genuine supported source provenance change.\n'+rustOriginal);
-  put(root,'packages/javascript/portable/policy.mjs',source.replace('x + 1','x - 1'));
+  put(root,'js/portable/policy.mjs',source.replace('x + 1','x - 1'));
   put(root,'parity/fixtures/js-first/policy.json',JSON.stringify({cases:[
     {id:'adjust-seven',function:'adjust',args:[7],expected:6},
     {id:'adjust-nan',function:'adjust',args:[{$number:'NaN'}],expected:{$number:'NaN'}},
@@ -300,7 +301,7 @@ test('owned descriptor canonicalization after genuine Rust provenance change lea
   const output=path.join(root,'schema-synchronization');fs.mkdirSync(output);
   const before=captureSyncInputs(root),steps=synchronizationSteps({root,direction:'both'});let preparedRust;
   assert.equal(before.files.some(row=>row.path===descriptor),false);
-  assert.equal(before.files.some(row=>row.path==='packages/javascript/native/affinity-schema.mjs'),true);
+  assert.equal(before.files.some(row=>row.path==='js/src/affinity-schema.mjs'),true);
   for(const [index,step]of steps.slice(0,4).entries()) {
     const record=runSynchronizationProducer({root,step,outputDirectory:output,index});
     assert.equal(record.status,'passed',JSON.stringify(record));assert.deepEqual(captureSyncInputs(root),before);
@@ -319,13 +320,13 @@ test('owned descriptor canonicalization after genuine Rust provenance change lea
   }
   const ts=require('typescript');assert.equal(ts.version,'5.9.3');
   const typed=path.join(root,'tools/translation/serialization-schema/generated/affinity-schema-descriptor.ts');
-  const compiled=spawnSync(process.execPath,[require.resolve('typescript/lib/tsc.js'),'--strict','--noEmit','--target','ES2022','--module','ESNext','--skipLibCheck',typed,path.join(root,'packages/typescript/native/js-first-policy.ts')],{cwd:root,encoding:'utf8',timeout:20_000,maxBuffer:1024*1024});
+  const compiled=spawnSync(process.execPath,[require.resolve('typescript/lib/tsc.js'),'--strict','--noEmit','--target','ES2022','--module','ESNext','--skipLibCheck',typed,path.join(root,'ts/src/js-first-policy.ts')],{cwd:root,encoding:'utf8',timeout:20_000,maxBuffer:1024*1024});
   assert.equal(compiled.status,0,compiled.stdout+compiled.stderr);
   const js=await import('data:text/javascript;base64,'+Buffer.from(originalDescriptor).toString('base64'));
   const erased=ts.transpileModule(fs.readFileSync(typed,'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
   const emitted=await import('data:text/javascript;base64,'+Buffer.from(erased).toString('base64'));
   assert.deepEqual(emitted.affinitySchema,js.affinitySchema);
-  const neighbor='packages/javascript/native/affinity-schema-descriptor-neighbor.mjs';put(root,neighbor,'export const handwritten = 1;\n');
+  const neighbor='js/src/affinity-schema-descriptor-neighbor.mjs';put(root,neighbor,'export const handwritten = 1;\n');
   const protectedBefore=captureSyncInputs(root);put(root,neighbor,'export const handwritten = 2;\n');assert.notDeepEqual(captureSyncInputs(root),protectedBefore);
   const policyPath=path.join(root,'src/generated_js_first/policy.rs');fs.writeFileSync(policyPath,'stale projection retained by check mode\n');
   const prepass=synchronizationSteps({root,direction:'both',check:true})[0];

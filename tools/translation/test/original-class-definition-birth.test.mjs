@@ -323,7 +323,7 @@ test('original parse check emit behavior and strictTS stay independent of identi
   const folder=mkdtempSync(join(tmpdir(),'router-birth-strict-ts-'));let result;try{
     const leaf=fileURLToPath(new URL('../extensions/original-class-definition-birth.mjs',import.meta.url)),file=join(folder,'contract.mts');
     const source="import {captureOriginalClassDefinitionContext,requireOriginalClassDefinitionContext,originalClassDefinitionProgram} from "+stringify(leaf)+";\nconst context=await captureOriginalClassDefinitionContext();\nconst facts=requireOriginalClassDefinitionContext(context);\nconst owner:boolean=facts.owner;\nconst source:string|null=originalClassDefinitionProgram();\n// @ts-expect-error no caller-supplied observer argument\ncaptureOriginalClassDefinitionContext(()=>true);\n// @ts-expect-error a genuine context argument is required\nrequireOriginalClassDefinitionContext();\nvoid [owner,source];\n";
-    writeFileSync(file,source);const sourceRoot=process.env.ROUTER_NATIVE_TS_SOURCE_ROOT??ROOT,require=createRequire(join(sourceRoot,'packages/javascript/package.json')),tsc=require.resolve('typescript/bin/tsc');
+    writeFileSync(file,source);const sourceRoot=process.env.ROUTER_NATIVE_TS_SOURCE_ROOT??ROOT,require=createRequire(join(sourceRoot,'js/package.json')),tsc=require.resolve('typescript/bin/tsc');
     result=spawnSync(process.execPath,[tsc,'--noEmit','--strict','--allowJs','--checkJs','false','--skipLibCheck','--module','NodeNext','--moduleResolution','NodeNext','--target','ES2022',file],{encoding:'utf8',timeout:20000,maxBuffer:1048576});retain('08-strict-typescript',{source,result});
   }finally{rmSync(folder,{recursive:true,force:true});}
   retain('08-complete-old-current',{rows});

@@ -49,7 +49,7 @@ test('named source fields use own data properties even for JavaScript prototype 
 });
 
 test('original production ThresholdDecision declaration translates unchanged without inventing trait methods',async()=>{
-  const source=readFileSync(new URL('../../../src/account_limits.rs',import.meta.url),'utf8');
+  const source=readFileSync(new URL('../../../rust/src/account_limits.rs',import.meta.url),'utf8');
   const selected=sourceItems(source).find(item=>item.term==='enum'&&item.name==='ThresholdDecision');
   assert.ok(selected);const original=source.slice(selected.start,selected.end);
   await targets(original,(api,result)=>{

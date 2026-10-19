@@ -7,14 +7,14 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import * as javascript from '../../../../packages/javascript/portable/policy.mjs';
+import * as javascript from '../../../../js/portable/policy.mjs';
 import { buildArtifacts, regenerate, decodeFixture } from '../../../../scripts/regenerate-js-first.mjs';
 import { analyzeJavaScript, translateJavaScript, TranslationError, parseMeta, emitRust, emitTypeScript } from '../translator.mjs';
 import { evaluate } from '../interpreter.mjs';
 import { toLino } from '../vendor/ir.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../../../..');
-const source = readFileSync(join(ROOT, 'packages/javascript/portable/policy.mjs'), 'utf8');
+const source = readFileSync(join(ROOT, 'js/portable/policy.mjs'), 'utf8');
 const translation = translateJavaScript(source);
 const fixtures = JSON.parse(readFileSync(join(ROOT, 'parity/fixtures/js-first/policy.json'), 'utf8'));
 const unsupported = JSON.parse(readFileSync(join(ROOT, 'parity/fixtures/js-first/unsupported.json'), 'utf8'));
@@ -35,10 +35,10 @@ test('every independently authored fixture matches authoritative JavaScript and 
 test('strict generated TypeScript compiles and executes all the same authored fixtures', () => {
   const output = mkdtempSync(join(tmpdir(), 'router-js-first-ts-'));
   try {
-    const localCompiler = join(ROOT, 'packages/javascript/node_modules/.bin/tsc');
+    const localCompiler = join(ROOT, 'js/node_modules/.bin/tsc');
     execFileSync(existsSync(localCompiler) ? localCompiler : 'tsc', [
       '--strict', '--skipLibCheck', '--target', 'ES2022', '--module', 'commonjs', '--outDir', output,
-      join(ROOT, 'packages/typescript/native/js-first-policy.ts'),
+      join(ROOT, 'ts/src/js-first-policy.ts'),
     ], { cwd: ROOT, encoding: 'utf8', stdio: 'pipe' });
     const generated = createRequire(import.meta.url)(join(output, 'js-first-policy.js'));
     for (const fixture of fixtures.cases) assert.ok(Object.is(generated[fixture.function](...fixture.args.map(decodeFixture)), decodeFixture(fixture.expected)), `TypeScript: ${fixture.id}`);
@@ -124,19 +124,19 @@ test('regeneration is deterministic and the committed artifacts are current', ()
 test('regenerate-and-diff rejects modified source and modified generated artifacts', () => {
   const root = mkdtempSync(join(tmpdir(), 'router-js-first-drift-'));
   try {
-    for (const path of ['packages/javascript/portable/policy.mjs', 'parity/fixtures/js-first/policy.json', 'parity/fixtures/js-first/unsupported.json']) {
+    for (const path of ['js/portable/policy.mjs', 'parity/fixtures/js-first/policy.json', 'parity/fixtures/js-first/unsupported.json']) {
       mkdirSync(dirname(join(root, path)), { recursive: true });
       writeFileSync(join(root, path), readFileSync(join(ROOT, path)));
     }
     regenerate(root);
     assert.deepEqual(regenerate(root, { check: true }).changed, []);
-    writeFileSync(join(root, 'packages/typescript/native/js-first-policy.ts'), 'stale target\n');
-    assert.ok(regenerate(root, { check: true }).changed.includes('packages/typescript/native/js-first-policy.ts'));
+    writeFileSync(join(root, 'ts/src/js-first-policy.ts'), 'stale target\n');
+    assert.ok(regenerate(root, { check: true }).changed.includes('ts/src/js-first-policy.ts'));
     regenerate(root);
-    writeFileSync(join(root, 'packages/javascript/portable/policy.mjs'), source.replace('expires + skew', 'expires - skew'));
+    writeFileSync(join(root, 'js/portable/policy.mjs'), source.replace('expires + skew', 'expires - skew'));
     const changed = regenerate(root, { check: true }).changed;
     assert.ok(changed.includes('src/generated_js_first/policy.rs'));
-    assert.ok(changed.includes('packages/typescript/native/js-first-policy.ts'));
+    assert.ok(changed.includes('ts/src/js-first-policy.ts'));
     assert.ok(changed.includes('parity/js-first-translation.json'));
   } finally { rmSync(root, { recursive: true, force: true }); }
 });

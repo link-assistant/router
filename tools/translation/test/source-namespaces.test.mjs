@@ -49,7 +49,7 @@ test('actual type shadows unknown imports and procedural expansion never acquire
 });
 
 test('unchanged tracked non_empty body is a pinned namespace regression rather than a whole-module recovery',async()=>{
-  const original=readFileSync(new URL('../../../src/account_http.rs',import.meta.url),'utf8');assert.equal(hash(original),'876e7e38985d93f896c9d191f9d7591abb66697f93504a202d4fd208217bdd09');
+  const original=readFileSync(new URL('../../../rust/src/account_http.rs',import.meta.url),'utf8');assert.equal(hash(original),'876e7e38985d93f896c9d191f9d7591abb66697f93504a202d4fd208217bdd09');
   const item=sourceItems(original).find(item=>item.name==='non_empty'),body=original.slice(item.start,item.end);assert.equal(hash(body),'4c1bb4cb6df8b811efb497fc5266ca0ae5cc6da15e216231283c009fe89b12b4');
   const result=project('fn Result()->u8{7}\n'+body);assert.deepEqual(result.meta.refused,[]);assert.equal(result.meta.runtimeParity,false);
   const entry=result.executableDeclarations.find(entry=>entry.name==='non_empty');assert.ok(entry);assert.equal(hash(('fn Result()->u8{7}\n'+body).slice(entry.span.start,entry.span.end)),hash(body));
@@ -83,7 +83,7 @@ test('lexical callable erasure and unchecked pattern activation remain explicit 
 
 
 test('unchanged verification Run Area helpers and AREAS preserve field and lexical namespaces in both targets',async()=>{
-  const source=readFileSync(new URL('../../../src/verification.rs',import.meta.url),'utf8');
+  const source=readFileSync(new URL('../../../rust/src/verification.rs',import.meta.url),'utf8');
   assert.equal(hash(source),'839dc354baff84b057fd6ec5c84d1f52d9dd4e0ed657843626a500425ef2ffa4');
   const pins={Run:'10d003eb79e8bbc05829dafe0b06c6d0d2d9005cfa50ee8346eeee28004da9ef',Area:'37a0ff6e05a6449fd0defe819cd1c6ef55f95b325792b2272f96b6b17214d82e',tests:'14f0e1f4a6111faa1ecb4032d9be28c5ee872cde1b7f237812a594b1228404eb',unit:'4ed0ef7ea0423e468281f1bfd3e3932589d47406a815434d7130fb4e4bf08732',AREAS:'183095f1a2687fd6d2e084b465f9dee667f7a77ea86189b49c8b92abf97295d3'};
   const selected=sourceItems(source).filter(item=>['struct','fn','const'].includes(item.term)&&Object.hasOwn(pins,item.name));

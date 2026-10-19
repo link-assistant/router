@@ -89,7 +89,7 @@ test('historical Telegram stays separate from the current qwen root and neither 
 test('unknown copied associations paths and a changed current source universe remain refusals',()=>{
  for(const id of ['unknown',ids[0]+':copy',{id:ids[0],authority:{executable:true}},...Object.keys(STATIC_SOURCE_LIFECYCLE_CASES)])assert.throws(()=>staticSourceAssociatedContext(id),/unknown explicit outside association/u);
  const source=associatedOriginalSourceReader(ids[0]);assert.throws(()=>source('src/config.rs'),/outside the explicit old parent association/u);assert.throws(()=>source('../Cargo.toml'),/outside the explicit old parent association/u);
- const file=associatedOriginalFileReader(ids[0]);assert.throws(()=>file('/tmp/not-an-original','utf8'),/one original source URL/u);assert.throws(()=>file(new URL('../../../src/output_limit.rs',import.meta.url),'binary'),/one original source URL/u);
+ const file=associatedOriginalFileReader(ids[0]);assert.throws(()=>file('/tmp/not-an-original','utf8'),/one original source URL/u);assert.throws(()=>file(new URL('../../../rust/src/output_limit.rs',import.meta.url),'binary'),/one original source URL/u);
  const directory=mkdtempSync(join(tmpdir(),'router-outside-source-universe-'));try{execFileSync('/usr/bin/git',['init','--quiet',directory],{encoding:'utf8',timeout:20_000});assert.throws(()=>staticSourceAssociatedContext(ids[0],{root:directory}),/actual current source set differs/u);}finally{rmSync(directory,{recursive:true,force:true});}
  retain('no-compiler-authority',{authority:manifest.authority,unknownAndCopiedRefused:true,currentSourceSetMustJoin:true});
 });

@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from '../repository-layout.mjs';
 // Actual receiving forward application outputs, not a fixture-only directory.
 import {existsSync,lstatSync,readdirSync,readFileSync} from 'node:fs';
 import {join,posix} from 'node:path';
@@ -13,11 +14,12 @@ import {createRulePipeline} from '../rule-pipeline.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const WITNESS='tests/translation_core_reverse_owned_oracle.rs';
 const BASE64_LEAF='src/translation_core/base64.rs',BASE64_WITNESS='tests/translation_core_base64_reverse_oracle.rs';
-function hasBase64Leaf(root){try{lstatSync(join(root,BASE64_LEAF));return true;}catch(error){if(error.code==='ENOENT')return false;throw error;}}
-const ROOT='packages/javascript/generated/rust-project',TYPED='packages/typescript/generated/rust-project';
+function hasBase64Leaf(root){try{lstatSync(join(root,rustPackageSourcePath(root,BASE64_LEAF)));return true;}catch(error){if(error.code==='ENOENT')return false;throw error;}}
+const ROOT='js/generated/rust-project',TYPED='ts/generated/rust-project';
 function strictSource(path){const bytes=readFileSync(path),source=bytes.toString('utf8');if(!Buffer.from(source,'utf8').equals(bytes))throw TypeError('Owned receiving source is not strict UTF8');return source;}
 const MAX_BYTES=256*1024*1024,MAX_FILE=32*1024*1024,MAX_PATHS=32768;
 function physical(root,path){
+ path=rustPackageSourcePath(root,path);
  let current=root;for(const part of path.split('/')){current=join(current,part);const stat=lstatSync(current);if(stat.isSymbolicLink())throw TypeError('Owned receiving linked input: '+path);}
  return current;
 }
@@ -58,7 +60,7 @@ export function buildOwnedCoreArtifacts(root){
     try{if(contextError)throw TypeError(contextError);analysis=analyzeOwnedCoreJavaScript(row.source,{sourcePath:row.path,context});}
     catch(error){if(!(error instanceof TypeError))throw error;analysis={program:[],items:functions.map(node=>({name:node.name?.text??null,span:[node.getStart(file),node.end],status:'unsupported'})),diagnostics:[{kind:'owned-core',message:error.message}]};}
     const stem=row.path.slice(ROOT.length+1,-4),prefix='tools/translation/js-to-rust/generated/owned-core/'+stem;
-    const output='packages/typescript/generated/reverse-owned-core/'+stem+'.ts';
+    const output='ts/generated/reverse-owned-core/'+stem+'.ts';
     if(analysis.program.length){
      const meta=writeLink(['owned-core-context',encodeWord(JSON.stringify(ownedCoreSourceData(context)))])+'\n'+analysis.program.map(toLino).join('\n')+'\n',program=parseOwnedCoreMeta(meta,{context});
      artifacts.set(prefix+'.lino','# GENERATED: owned-core source/checked Links.\n'+meta);
@@ -86,7 +88,7 @@ export function buildOwnedCoreArtifacts(root){
 // Its explicit staged module interface is retained in full. The actual CI test
 // aliases the real library core; native compilation validates that linkage.
 function ownedCoreWitnessArtifacts(root){
- const artifacts=new Map();if(!existsSync(join(root,WITNESS)))return {artifacts,manifest:{available:false,applicationItems:0}};
+ const artifacts=new Map();if(!existsSync(join(root,rustPackageSourcePath(root,WITNESS))))return {artifacts,manifest:{available:false,applicationItems:0}};
  const original=strictSource(physical(root,WITNESS)),matches=[...original.matchAll(/const REVERSE_OWNED_JS_WITNESS: &str = r###"([\s\S]*?)"###;/gu)];
  if(matches.length!==1||!original.includes('use link_assistant_router::translation_core;'))throw TypeError('Actual authored reverse witness and library alias required');
  const prefix='tools/translation/js-to-rust/generated/owned-core-witness',header='// GENERATED: actual checked reverse owned-core receiving witness.\n',authored=matches[0][1],source=header+authored,files=ownedCoreRuntimeSources(prefix+'/runtime',prefix+'/runtime');
@@ -121,7 +123,7 @@ export function buildOwnedCoreDocumentArtifacts(root){
     try{if(contextError)throw TypeError(contextError);analysis=analyzeOwnedCoreJavaScript(row.source,{sourcePath:row.path,context});}
     catch(error){if(!(error instanceof TypeError))throw error;analysis={program:[],items:functions.map(node=>({name:node.name?.text??null,span:[node.getStart(file),node.end],status:'unsupported'})),diagnostics:[{kind:'owned-core',message:error.message}]};}
     const stem=row.path.slice(ROOT.length+1,-4),prefix='tools/translation/js-to-rust/generated/owned-core/'+stem;
-    const output='packages/typescript/generated/reverse-owned-core/'+stem+'.ts';
+    const output='ts/generated/reverse-owned-core/'+stem+'.ts';
     if(analysis.program.length){
      const meta=serializeOwnedCoreDocument(analysis.program,{context}),program=parseOwnedCoreDocumentMeta(meta,{context});
      artifacts.set(prefix+'.lino','# GENERATED: owned-core source/checked Links.\n'+meta);
@@ -147,7 +149,7 @@ export function buildOwnedCoreDocumentArtifacts(root){
 
 // Separate actual base64 CI witness; never counted as application translation.
 function ownedCoreBase64WitnessArtifacts(root){
- const artifacts=new Map();if(!existsSync(join(root,BASE64_WITNESS)))return {artifacts,manifest:{available:false,applicationItems:0}};
+ const artifacts=new Map();if(!existsSync(join(root,rustPackageSourcePath(root,BASE64_WITNESS))))return {artifacts,manifest:{available:false,applicationItems:0}};
  const original=strictSource(physical(root,BASE64_WITNESS)),matches=[...original.matchAll(/const REVERSE_BASE64_JS_WITNESS: &str = r###"([\s\S]*?)"###;/gu)];
  if(matches.length!==1||!original.includes('use link_assistant_router::translation_core;'))throw TypeError('Actual authored base64 witness and library alias required');
  const prefix='tools/translation/js-to-rust/generated/owned-base64-witness',header='// GENERATED: actual checked reverse base64 receiving witness.\n',source=header+matches[0][1],files=ownedCoreRuntimeSources(prefix+'/runtime',prefix+'/runtime'),originals=[];

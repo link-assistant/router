@@ -65,8 +65,8 @@ test('copied, proxy, changed source and foreign span issuers cannot provide lexi
 });
 test('every original native module retains complete top/scoped programs and all705 source refusal identities', {timeout:60000},async()=>{
  const old=(await oracle('scoped-helpers')).module,rows=[];let scoped=0,top=0,modules=0,translatedTop=0,translatedScoped=0,full=0,conditional=0,currentTranslatedScoped=0,currentFull=0,currentConditional=0;
- for(const path of sourceModules(sourceRoot).filter(path=>path.startsWith('packages/javascript/native/'))){const source=readFileSync(resolve(sourceRoot,path),'utf8'),current=analyzeJavaScript(source,{sourcePath:path}),previous=old.discoverScopedHelpers(source,current.items,analyzeJavaScript,path);
-  const gains=new Map([['packages/javascript/native/client-status.mjs',2581],['packages/javascript/native/config.mjs',15324],['packages/javascript/native/github-proxy.mjs',2346],['packages/javascript/native/provider-manifest.mjs',737],['packages/javascript/native/tokens.mjs',4090]]);
+ for(const path of sourceModules(sourceRoot).filter(path=>path.startsWith('js/src/'))){const source=readFileSync(resolve(sourceRoot,path),'utf8'),current=analyzeJavaScript(source,{sourcePath:path}),previous=old.discoverScopedHelpers(source,current.items,analyzeJavaScript,path);
+  const gains=new Map([['js/src/client-status.mjs',2581],['js/src/config.mjs',15324],['js/src/github-proxy.mjs',2346],['js/src/provider-manifest.mjs',737],['js/src/tokens.mjs',4090]]);
   assert.equal(current.scopedFunctions.sourceItems,previous.sourceItems);
   for(const fn of previous.program)assert.deepEqual(current.scopedFunctions.program.find(row=>row.name===fn.name),fn,path+':'+fn.name);
   for(const before of previous.items){const after=current.scopedFunctions.items.find(row=>row.start===before.start);if(before.start===gains.get(path)){assert.equal(before.status,'unsupported');assert.equal(after.status,'translated');assert.equal(after.end,before.end);assert.deepEqual(after.sourceScope,before.sourceScope);assert.deepEqual(after.captures,before.captures);}else assert.deepEqual(after,before,path+':'+before.start);}

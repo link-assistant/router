@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,copyFileSync} from 'node:fs';
@@ -54,7 +55,7 @@ test('the same source grammar supports other macro names without granting visito
 
 test('a changed complete source archive is refused before any parser or runtime authority is issued',()=>{
  const dir=mkdtempSync(join(tmpdir(),'router-759-metavar-tamper-')),root=new URL('../',import.meta.url),profileRoot=new URL('../source-profiles/macro-metavar/',import.meta.url),manifest=JSON.parse(readFileSync(new URL('manifest.json',profileRoot))),base=join(dir,'source-profiles/macro-metavar');mkdirSync(base,{recursive:true});
- for(const name of ['macro-metavar-source.mjs','macro-token-trees.mjs','rust-structure.mjs','rust-item-boundaries.mjs','vendor/formal-ai/lexer.mjs']){const destination=join(dir,name);mkdirSync(dirname(destination),{recursive:true});copyFileSync(new URL(name,root),destination);}
+ for(const name of ['macro-metavar-source.mjs','macro-token-trees.mjs','rust-structure.mjs','rust-item-boundaries.mjs','vendor/formal-ai/lexer.mjs']){const destination=join(dir,name);mkdirSync(dirname(destination),{recursive:true});copyFileSync(repositorySourceURL(name,root),destination);}
  writeFileSync(join(base,'manifest.json'),JSON.stringify(manifest));for(const row of manifest.sources){const destination=join(base,row.archive);mkdirSync(dirname(destination),{recursive:true});copyFileSync(new URL(row.archive,profileRoot),destination);}const altered=join(base,manifest.sources[0].archive);writeFileSync(altered,Buffer.concat([readFileSync(altered),Buffer.from('changed')]));
  const result=spawnSync(process.execPath,['--input-type=module','-e',"import {originalMacroMetavarRules} from './macro-metavar-source.mjs';originalMacroMetavarRules();"],{cwd:dir,encoding:'utf8',timeout:10000});assert.notEqual(result.status,0);assert.match(result.stderr,/Original macro metavariable archive changed/);retain('changed-original-archive',{dir,manifest,status:result.status,stdout:result.stdout,stderr:result.stderr});
 });

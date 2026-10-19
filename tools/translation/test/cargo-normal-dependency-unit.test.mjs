@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,rmSync,copyFileSync,realpathSync,renameSync,symlinkSync,unlinkSync,lstatSync} from 'node:fs';
@@ -19,7 +20,7 @@ import {originalCargoUnitSourceProgram,assertOriginalCargoUnitSourceProgram,reva
 import {translateProject} from '../project.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 
-const root=new URL('../../../',import.meta.url),read=path=>readFileSync(new URL(path,root),'utf8'),cargo={manifest:read('Cargo.toml'),lock:read('Cargo.lock')},dependencies=loadDeriveDependencyProof(cargo),packageToken=captureOriginalExternalTraitPackage(dependencies,'base64');
+const root=new URL('../../../',import.meta.url),read=path=>readFileSync(repositorySourceURL(path,root),'utf8'),cargo={manifest:read('Cargo.toml'),lock:read('Cargo.lock')},dependencies=loadDeriveDependencyProof(cargo),packageToken=captureOriginalExternalTraitPackage(dependencies,'base64');
 const temporary=realpathSync(mkdtempSync(join(tmpdir(),'router-cargo-normal-unit-')));after(()=>rmSync(temporary,{recursive:true,force:true}));
 function retain(name,value){const directory=process.env.ROUTER_CARGO_NORMAL_UNIT_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeFileSync(join(directory,name+'.json.gz'),gzipSync(JSON.stringify(value)+'\n'),{flag:'wx'});}}
 function frame(profile=PRODUCTION_PROFILE){const source='pub fn choose(value:bool)->i32{if value{23}else{-6}}',capture=captureSourceModuleViews({source,sourcePath:'src/lib.rs',compilationProfile:profile}),modules=[{source,file:'src/lib.rs',path:[],sourceView:capture.views[0],compilationProfile:profile}],context=createMatchesMacroContext({modules,deriveDependencies:dependencies,compilationProfile:profile}),parser=new HostRustParser(tokenizeRust(source));parser.compilationProfile=profile;configureMatchesMacroParser(parser,context,{file:'src/lib.rs'});return {source,capture,modules,context,parser,state:matchesParserFacts(parser)};}

@@ -27,7 +27,7 @@ else rows.push(local);
 }return rows;
 }
 function snapshot(root,run,head){const names=git(root,'ls-files','-z','--','*.rs','Cargo.toml','Cargo.lock','tools/translation','scripts').split('\0').filter(Boolean).sort();
-const prefix='packages/javascript/node_modules/typescript/';
+const prefix='js/node_modules/typescript/';
 for(const name of walk(join(root,prefix)))names.push(prefix+name);
 const inputs=[],retained=[];
 for(const path of names){const raw=fs.readFileSync(join(root,path)),sha256=digest(raw),row={path,bytes:raw.length,sha256};
@@ -120,14 +120,14 @@ async function fixture(callback,configuration={}){const home=fs.realpathSync(fs.
 try{fs.mkdirSync(root);
 fs.mkdirSync(run);
 fs.mkdirSync(temporary);
-write(join(root,'.gitignore'),'packages/javascript/node_modules/\n');
+write(join(root,'.gitignore'),'js/node_modules/\n');
 for(const path of ['src/translation_core.rs','src/translation_core/primitives.rs','src/translation_core/ranges.rs','src/translation_core/json_collections.rs','Cargo.toml','Cargo.lock'])write(join(root,path),fs.readFileSync(join(ROOT,path),'utf8'));
 write(join(root,'src/lib.rs'),ORIGINAL+(configuration.twoTargets?'mod second;\n':''));
 if(configuration.twoTargets)write(join(root,'src/second.rs'),ORIGINAL.replace('pub mod translation_core;\n','').replace('fn picked(','fn second_picked('));
-const compiler=process.env.ROUTER_TRANSLATION_TSC?dirname(dirname(resolve(process.env.ROUTER_TRANSLATION_TSC))):join(ROOT,'packages/javascript/node_modules/typescript');
+const compiler=process.env.ROUTER_TRANSLATION_TSC?dirname(dirname(resolve(process.env.ROUTER_TRANSLATION_TSC))):join(ROOT,'js/node_modules/typescript');
 assert.equal(JSON.parse(fs.readFileSync(join(compiler,'package.json'))).version,'5.9.3');
-fs.cpSync(compiler,join(root,'packages/javascript/node_modules/typescript'),{recursive:true,dereference:true});
-assert.equal(walk(join(root,'packages/javascript/node_modules/typescript')).length,132);
+fs.cpSync(compiler,join(root,'js/node_modules/typescript'),{recursive:true,dereference:true});
+assert.equal(walk(join(root,'js/node_modules/typescript')).length,132);
 git(root,'init','-q');
 git(root,'-c','core.hooksPath=/dev/null','add','.');
 git(root,'-c','core.hooksPath=/dev/null','-c','gc.auto=0','-c','maintenance.auto=false','-c','commit.gpgsign=false','-c','user.name=Source fixture','-c','user.email=source-fixture@example.invalid','commit','-qm','complete fixture originals');

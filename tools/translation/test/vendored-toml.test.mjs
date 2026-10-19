@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync,readdirSync} from 'node:fs';
@@ -6,8 +7,8 @@ import {join} from 'node:path';
 import parse from '../vendor/iarna-toml/parse-string.js';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {captureOriginalExternalTraitPackage,originalExternalTraitPackageInputs} from '../extensions/external-trait-sources.mjs';
-const root=new URL('../../../',import.meta.url),vendor=new URL('../vendor/iarna-toml/',import.meta.url),installed=new URL('../../../packages/javascript/node_modules/@iarna/toml/',import.meta.url);
-const hash=value=>createHash('sha256').update(value).digest('hex'),read=path=>readFileSync(new URL(path,root),'utf8');
+const root=new URL('../../../',import.meta.url),vendor=new URL('../vendor/iarna-toml/',import.meta.url),installed=new URL('../../../js/node_modules/@iarna/toml/',import.meta.url);
+const hash=value=>createHash('sha256').update(value).digest('hex'),read=path=>readFileSync(repositorySourceURL(path,root),'utf8');
 const profile=JSON.parse(readFileSync(new URL('../source-profiles/external-dependency-defaults/manifest.json',import.meta.url),'utf8'));
 function retain(name,value){const output=process.env.ROUTER_VENDORED_TOML_VECTOR_DIR;if(output){mkdirSync(output,{recursive:true});writeFileSync(join(output,name+'.json'),JSON.stringify(value)+'\n',{flag:'wx'});}}
 // Independent authored TOML values omit the parser's internal Symbol marks;
@@ -19,7 +20,7 @@ test('complete unmodified installed TOML3 source and ISC notice remain independe
   assert.deepEqual(paths.sort(),profile.parser.files.map(row=>row.path).sort());assert.equal(paths.length,20);let total=0;const originals=[];
   for(const row of profile.parser.files){const copied=readFileSync(new URL(row.path,vendor)),actual=readFileSync(new URL(row.path,installed));assert.equal(copied.length,row.bytes);assert.equal(hash(copied),row.sha256);assert.deepEqual(copied,actual);total+=copied.length;originals.push({...row,source:copied.toString('utf8')});}
   assert.equal(total,99960);assert.equal(total,profile.parser.totalBytes);assert.equal(JSON.parse(readFileSync(new URL('package.json',vendor),'utf8')).version,'3.0.0');assert.match(readFileSync(new URL('LICENSE',vendor),'utf8'),/Copyright \(c\) 2016, Rebecca Turner/);
-  const lock=JSON.parse(read('packages/javascript/package-lock.json'));assert.deepEqual(lock.packages['node_modules/@iarna/toml'],profile.parser.lockEntry);
+  const lock=JSON.parse(read('js/package-lock.json'));assert.deepEqual(lock.packages['node_modules/@iarna/toml'],profile.parser.lockEntry);
   assert.equal(profile.parser.upstreamLineLimitException.lines,1421);assert.match(profile.parser.sourceWitnessKind,/not independently acquired or verified/);retain('01-complete-parser-originals',{profile,originals,scope:'Complete installed source witness; no npm archive verification asserted.'});
 });
 

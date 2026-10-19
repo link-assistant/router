@@ -269,7 +269,7 @@ test('complete twelve-function originals keep both target and independent Unicod
  const directory=mkdtempSync(join(tmpdir(),'owned-invocation-targets-'));
  try{
   for(const file of data.files.filter(row=>/\.(?:mjs|mts|ts)$/u.test(row.path)))write(directory,file.path,file.source);write(directory,'reverse.mts',result.typescript);
-  const compiler=process.env.ROUTER_TRANSLATION_TSC??process.execPath,prefix=process.env.ROUTER_TRANSLATION_TSC===undefined?[join(ROOT,'packages/javascript/node_modules/typescript/bin/tsc')]:[];
+  const compiler=process.env.ROUTER_TRANSLATION_TSC??process.execPath,prefix=process.env.ROUTER_TRANSLATION_TSC===undefined?[join(ROOT,'js/node_modules/typescript/bin/tsc')]:[];
   let child;try{child=execFileSync(compiler,[...prefix,'--strict','--skipLibCheck','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--rootDir',directory,'--outDir',join(directory,'out'),join(directory,'caller.mts'),join(directory,'reverse.mts')],{cwd:ROOT,encoding:'utf8',timeout:20000,maxBuffer:16777216,stdio:'pipe'});}catch(error){keep('strict-failure',{stdout:String(error.stdout??''),stderr:String(error.stderr??''),status:error.status,signal:error.signal});throw error;}
   keep('strict-complete-output',{stdout:child});for(const file of data.files.filter(row=>row.path.startsWith('runtime/')))write(directory,'out/'+file.path,file.source);
   const original=await import(pathToFileURL(join(directory,'caller.mjs')).href),typed=await import(pathToFileURL(join(directory,'out/caller.mjs')).href),reverse=await import(pathToFileURL(join(directory,'out/reverse.mjs')).href),runtime=await prepareOwnedCoreRuntime(result.program),value=json_macro_object([['é🦀',json_macro_array([json_macro_string('漢字'),json_macro_null()])]]),observed=[];

@@ -425,7 +425,7 @@ def main():
     require(Path(__file__).resolve()==root/'tools/translation/core_adoption_json_readers_review.py' and Path(source_review.__file__).resolve()==root/'tools/translation/core_adoption_review.py','executing fixed reviewer closure belongs to the captured source checkout')
     for name in critical_source_paths:
         require(name in pins,'complete captured selector/controller/reviewer source input '+name)
-    prefix = 'packages/javascript/node_modules/typescript/'
+    prefix = 'js/node_modules/typescript/'
     expected_git = {p for p in git('ls-files', '-z', '--', '*.rs', 'Cargo.toml', 'Cargo.lock', 'tools/translation', 'scripts').decode().split('\0') if p and (p.endswith('.rs') or not p.startswith(('tools/translation/meta/', 'tools/translation/projects/', 'tools/translation/js-to-rust/generated/')))}
     require({p for p in pins if not p.startswith(prefix)} == expected_git, 'complete tracked compiler/Rust/Cargo census')
     compiler = (root / prefix.rstrip('/')).resolve()

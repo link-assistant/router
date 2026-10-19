@@ -15,7 +15,7 @@ import * as core from '../extensions/primitive-trait-closure.mjs';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {translateProject} from '../project.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const base=new URL('../',import.meta.url),root=new URL('../../../',import.meta.url),fixtures=new URL('../test/fixtures/static-source-items/',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
+const base=new URL('../',import.meta.url),root=new URL('../../../',import.meta.url),fixtures=new URL('./fixtures/static-source-items/',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
 const manifest=JSON.parse(readFileSync(new URL('manifest.json',fixtures),'utf8')),json=JSON.stringify,apply=Reflect.apply,descriptor=Object.getOwnPropertyDescriptor,nativeRegExp=RegExp;
 const directory=mkdtempSync(join(tmpdir(),'router-static-source-'));after(()=>rmSync(directory,{recursive:true,force:true}));
 const originals=new Map(),relocations=[];

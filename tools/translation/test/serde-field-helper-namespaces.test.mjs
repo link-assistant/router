@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -12,7 +13,7 @@ import {proveSerdeDeserializeBangFootprint,isSerdeDeserializeBangFootprint,asser
 import {translateProject} from '../project.mjs';
 import {PRODUCTION_PROFILE,compilationProfile} from '../cfg-profile.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),read=path=>readFileSync(new URL(path,root),'utf8'),dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')}),hash=value=>createHash('sha256').update(value).digest('hex');
+const root=new URL('../../../',import.meta.url),read=path=>readFileSync(repositorySourceURL(path,root),'utf8'),dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')}),hash=value=>createHash('sha256').update(value).digest('hex');
 function setup(source,profile=PRODUCTION_PROFILE){const modules=[{file:'src/lib.rs',path:[],source}],context=createDeriveFootprintContext({modules,dependencies,compilationProfile:profile});return{context,certificate:context.certificates.find(row=>row.name==='Payload'),modules};}
 const source='#[derive(serde::Serialize,serde::Deserialize)]pub struct Payload{#[serde(default,skip_serializing_if="Vec::is_empty")]list:Vec<String>,#[serde(default,skip_serializing_if="is_false")]flag:bool,#[serde(default,skip_serializing_if="Option::is_none")]label:Option<String>}';
 

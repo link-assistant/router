@@ -71,7 +71,7 @@ before(async()=>{
   compilerEvidence=compilerPaths.map(path=>{const bytes=originals?.get(path)??read(path);assert.equal(hash(bytes),inventory.implementationHashes[path],'generation compiler input '+path);return pin(path,bytes);});
   coverage=[];directory=mkdtempSync(join(tmpdir(),'router-actual-gain-families-'));writeFileSync(join(directory,'package.json'),'{"type":"module"}\n');mkdirSync(join(directory,'runtime'),{recursive:true});runtimeEvidence=[];
   const runtimeCopies=new Map();
-  for(const runtimeRoot of ['packages/javascript/generated/rust-draft/runtime','packages/typescript/generated/rust-draft/runtime']){
+  for(const runtimeRoot of ['js/generated/rust-draft/runtime','ts/generated/rust-draft/runtime']){
     const names=readdirSync(join(SOURCE,runtimeRoot)).sort(),paths=names.map(name=>runtimeRoot+'/'+name),originalRuntime=generation?git(paths):null;
     for(const name of names){
       const path=runtimeRoot+'/'+name,bytes=read(path);assert.ok(!name.includes('/')&&!name.includes('\\'));
@@ -97,7 +97,7 @@ before(async()=>{
   }
   assert.equal(coverage.length,37);assert.equal(coverage.filter(row=>row.term==='fn').length,7);assert.equal(coverage.filter(row=>row.term==='const').length,26);assert.equal(coverage.filter(row=>row.term==='struct').length,4);
   let compiler=process.env.ROUTER_TRANSLATION_TSC,prefix=[];
-  if(compiler===undefined){prefix=[createRequire(join(SOURCE,'packages/javascript/package.json')).resolve('typescript/bin/tsc')];compiler=process.execPath;}
+  if(compiler===undefined){prefix=[createRequire(join(SOURCE,'js/package.json')).resolve('typescript/bin/tsc')];compiler=process.execPath;}
   const version=execFileSync(compiler,[...prefix,'--version'],{encoding:'utf8',timeout:30_000}).trim();assert.equal(version,'Version 5.9.3');
   const compiled=join(directory,'compiled');execFileSync(compiler,[...prefix,'--strict','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--skipLibCheck','--rootDir',directory,'--outDir',compiled,...rows.map(row=>join(directory,row.relative+'.ts'))],{stdio:'pipe',timeout:30_000});
   cpSync(join(directory,'runtime'),join(compiled,'runtime'),{recursive:true});

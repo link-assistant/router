@@ -20,7 +20,7 @@ import {verifyTypedTargets} from './typed-targets.mjs';
 const C='crate::translation_core::',T=C+'Json',J=C+'json!';
 const BODY='pub fn payload(flag:bool)->'+T+'{let mut doc='+J+'({"initial":true});if flag{doc["flag"]='+J+'([false,"猫😀"]);}doc["last"]='+J+'(null);doc}\n';
 const script=fileURLToPath(new URL('../propose-core-adoption-corpus.mjs',import.meta.url)),hash=value=>createHash('sha256').update(value).digest('hex');
-const cargo={manifest:fs.readFileSync(new URL('../../../Cargo.toml',import.meta.url),'utf8'),lock:fs.readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')};
+const cargo={manifest:fs.readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:fs.readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')};
 let vectors=[];
 const retain=(kind,value)=>{vectors.push({kind,value});return value;};
 const test=(name,run)=>testCase(name,{timeout:60_000},async()=>{vectors=[];try{await run();}finally{if(process.env.ROUTER_CORE_JSON_UPDATE_SEQUENCE_VECTOR_DIR){fs.mkdirSync(process.env.ROUTER_CORE_JSON_UPDATE_SEQUENCE_VECTOR_DIR,{recursive:true});fs.writeFileSync(join(process.env.ROUTER_CORE_JSON_UPDATE_SEQUENCE_VECTOR_DIR,Buffer.from(name).toString('hex')+'.json'),JSON.stringify({name,vectors},(_key,value)=>typeof value==='bigint'?{$integer:String(value)}:value)+'\n');}}});

@@ -9,7 +9,7 @@ args += ['tools/translation/test/'+name+'.test.mjs' for name in files]
 log=Path('/tmp/router-759-arithmetic-e3cef-39-final-'+engine+'.log')
 head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip()
 status=subprocess.check_output(['git','status','--porcelain'],cwd=root,text=True)
-if head!='e3cef044239bdbbc8c17d15948704504a2e3f65c' or any(row!='?? packages/javascript/node_modules' for row in status.splitlines()): raise SystemExit('Frozen source head/status changed before run')
+if head!='e3cef044239bdbbc8c17d15948704504a2e3f65c' or any(row!='?? js/node_modules' for row in status.splitlines()): raise SystemExit('Frozen source head/status changed before run')
 inputs=[root/'Cargo.toml',root/'Cargo.lock']
 inputs += list((root/'tools/translation').glob('*.mjs'))
 inputs += list((root/'tools/translation/source-profiles/json-macro').rglob('*'))

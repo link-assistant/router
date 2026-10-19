@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // Whole source-flow prerequisite controls. No Rust generator execution claim.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -20,7 +21,7 @@ import {captureOriginalNamespaceFunction,originalNamespaceFunctionMembers,origin
 import {captureOriginalNamespaceSourceSuperset} from '../conditional-namespace-superset.mjs';
 import {resolveModuleGraph,translateProject} from '../project.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),read=path=>readFileSync(new URL(path,root),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex');
+const root=new URL('../../../',import.meta.url),read=path=>readFileSync(repositorySourceURL(path,root),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex');
 const dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')}),profile=builtinDeriveAstSourceProfile(dependencies),plan=originalStandardBangOutputSourcePlan();
 const edition='compiler/rustc_builtin_macros/src/edition_panic.rs';
 const retain=(name,value)=>{const dir=process.env.ROUTER_EDITION_PANIC_FLOW_VECTOR_DIR;if(dir){mkdirSync(dir,{recursive:true});writeFileSync(join(dir,name+'.json'),JSON.stringify(value)+'\n',{flag:'wx'});}};

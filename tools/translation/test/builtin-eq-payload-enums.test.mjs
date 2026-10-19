@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
@@ -16,7 +17,7 @@ import {verifyTypedTargets} from './typed-targets.mjs';
 import {originalPayloadDeriveSelection} from './original-payload-derive-context.mjs';
 
 const root=new URL('../../../',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
-function read(path){try{return readFileSync(new URL(path,root),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;return execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',maxBuffer:16*1024*1024});}}
+function read(path){try{return readFileSync(repositorySourceURL(path,root),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;return execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',maxBuffer:16*1024*1024});}}
 const dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')});
 function retain(name,value){const directory=process.env.ROUTER_EQ_PAYLOAD_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeFileSync(join(directory,name+'.json'),JSON.stringify(value),{flag:'wx'});}}
 function setup(source,{name='Payload',file='src/lib.rs',profile=PRODUCTION_PROFILE}={}){const context=createDeriveFootprintContext({modules:[{file,path:[],source}],dependencies,compilationProfile:profile}),certificate=context.certificates.find(row=>row.name===name),attribute=certificate?.attributes.find(row=>row.derives?.some(path=>path.join('::')==='Eq'));return {context,certificate,invocation:attribute&&{path:['Eq'],attributeSpan:attribute.span}};}

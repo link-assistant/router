@@ -78,7 +78,7 @@ test('all804 immutable original Rust files plus current Rust inputs and locked d
     const pin=historical.get(path);if(!pin)currentChanges.added.push(path);else if(row.gitBlob!==pin.gitBlob||row.sha256!==pin.sha256||row.bytes.length!==pin.bytes)currentChanges.changed.push(path);
     currentRows.push({...compare(row.bytes.toString('utf8'),path),gitBlob:row.gitBlob,physicalSourcePresent:row.physicalSourcePresent,historical:pin??null});
   }
-  const dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('../../../Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')});
+  const dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')});
   let members=0;
   for(const entry of DERIVE_SOURCE_PROFILE.packages)for(const path of Object.keys(entry.members)){
     const origin=deriveDependencySource(dependencies,entry.name,path);assert.equal(hash(origin.source),entry.members[path]);rows.push({...compare(origin.source,entry.name+'/'+path),archiveSha256:origin.archiveSha256,sourceSha256:origin.sha256});members++;

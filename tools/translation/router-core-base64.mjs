@@ -248,7 +248,7 @@ export function originalBase64ErrorDisplay(checker,node,piece,value,bind){
 // Reproducible source-DATA rendering; not admission or a manually repinned
 // generated asset. Root receiving must invoke this API and compare full bytes.
 export function prepareCoreBase64SourceData(){
- const facade=readFileSync(new URL('../../src/translation_core.rs',import.meta.url),'utf8'),leaf=readFileSync(new URL('../../src/translation_core/base64.rs',import.meta.url),'utf8');
+ const facade=readFileSync(new URL('../../rust/src/translation_core.rs',import.meta.url),'utf8'),leaf=readFileSync(new URL('../../rust/src/translation_core/base64.rs',import.meta.url),'utf8');
  if(facade!==ROUTER_FORMATTING_FACADE_SOURCE||leaf!==ROUTER_CORE_BASE64_SOURCE)fail('physical facade/leaf differ from complete source data');
  const hash=value=>createHash('sha256').update(value).digest('hex'),before=readFileSync(new URL('./router-core-source-data.mjs',import.meta.url),'utf8'),edits=[];let rendered=before;
  for(const [name,value]of [['ROUTER_FORMATTING_FACADE_SOURCE',facade],['ROUTER_FORMATTING_FACADE_SHA256',hash(facade)],['ROUTER_CORE_BASE64_SOURCE',leaf],['ROUTER_CORE_BASE64_SHA256',hash(leaf)]]){

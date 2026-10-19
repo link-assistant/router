@@ -14,7 +14,9 @@ RECORD = Path(".docker-cache-targets.json")
 
 
 def targets():
-    manifest = tomllib.loads(Path("Cargo.toml").read_text())
+    manifest_path = Path("rust/Cargo.toml") if Path("rust/Cargo.toml").is_file() else Path("Cargo.toml")
+    package_root = manifest_path.parent
+    manifest = tomllib.loads(manifest_path.read_text())
     declared = [(manifest.get("lib", {}), ["src/lib.rs"], "")]
     for kind, directory in [("bin", "src/bin"), ("bench", "benches"),
                             ("test", "tests"), ("example", "examples")]:
@@ -29,8 +31,8 @@ def targets():
     for target, defaults, content in declared:
         # Empty cache stages use the first valid default. After copying the
         # real sources, resolve Cargo's alternate name/main.rs layout as well.
-        candidates = [Path(default) for default in defaults]
-        path = Path(target["path"]) if "path" in target else next(
+        candidates = [package_root / default for default in defaults]
+        path = package_root / target["path"] if "path" in target else next(
             (candidate for candidate in candidates if candidate.is_file()), candidates[0]
         )
         if path.is_absolute() or ".." in path.parts:

@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { load, upstream } from './helpers.mjs';
 
-const { createNativeRouter } = await load('packages/javascript/native/server.mjs');
-const { TokenManager } = await load('packages/javascript/native/tokens.mjs');
+const { createNativeRouter } = await load('js/src/server.mjs');
+const { TokenManager } = await load('js/src/tokens.mjs');
 const completed = id => ({ id, object: 'response', status: 'completed', model: 'upstream-model',
   output: [{ id: 'message-exact', type: 'message', role: 'assistant', content: [{ type: 'output_text', text: 'retained answer', annotations: [] }] }],
   usage: { input_tokens: 2, output_tokens: 1, total_tokens: 3 } });

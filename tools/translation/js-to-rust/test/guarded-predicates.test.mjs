@@ -103,7 +103,7 @@ test('emitted Rust trim character ranges match ECMAScript over all Unicode scala
 
 test('real native predicate declarations are admitted without removing neighboring refusals', () => {
   for (const [path,name] of [['accounts.mjs','retryable_status'],['codex-login.mjs','nonempty'],['emergency-auth.mjs','is_synthetic_token_id']]) {
-    const result = analyzeJavaScript(readFileSync(join(ROOT,'packages/javascript/native',path),'utf8'));
+    const result = analyzeJavaScript(readFileSync(join(ROOT,'js/src',path),'utf8'));
     const fn = result.program.find(item=>item.name===name);
     assert.equal(fn?.kind,'function');
     assert.equal(fn.params[0].type,'value');

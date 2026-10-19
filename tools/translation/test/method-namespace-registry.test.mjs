@@ -48,7 +48,7 @@ test('import aliases and reexports retain actual original matches bodies in Java
   }
 });
 test('full unchanged output limiter selectors with imported json preserve actual source spans and execute both targets',{timeout:30000},async()=>{
-  const source=readFileSync(new URL('../../../src/output_limit.rs',import.meta.url),'utf8');assert.equal(hash(source),'b165be6e33444a5811b33e52567de74ca144e7208a24c161b231bd332cf899e0');
+  const source=readFileSync(new URL('../../../rust/src/output_limit.rs',import.meta.url),'utf8');assert.equal(hash(source),'b165be6e33444a5811b33e52567de74ca144e7208a24c161b231bd332cf899e0');
   const result=translateProject({entry:'src/output_limit.rs',paths:['src/output_limit.rs'],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE});
   const pins=[['enabled',1823,1915,'6bb8ce48f8bf04239125d9b8c97f3fa4b63b37fce5bad7d15c5cf21e06f9bc86'],['stopped',1976,2056,'9d994a646a6c30f823325bb81a3a8a788005d5305fcbaa4479eff892d3590651']];
   const target=parseProgram(JSON.stringify(result.meta.targetSemanticProgram)),exports=[];

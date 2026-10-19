@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -60,7 +61,7 @@ test('qualified and imported Args owners carry original source proofs while bang
 test('complete unchanged verification source retains associated docs helper metadata and seven executable owners in JS and strict TS',{timeout:60000},async()=>{
   const source=readFileSync(new URL('src/verification.rs',root),'utf8');assert.equal(hash(source),'839dc354baff84b057fd6ec5c84d1f52d9dd4e0ed657843626a500425ef2ffa4');
   const paths=currentOriginalRustPaths(root);
-  const result=translateProject({entry:'src/verification.rs',paths,readSource:path=>readFileSync(new URL(path,root),'utf8'),cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
+  const result=translateProject({entry:'src/verification.rs',paths,readSource:path=>readFileSync(repositorySourceURL(path,root),'utf8'),cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
   assert.deepEqual(result.meta.sources.map(row=>[row.source,row.sha256]),[['src/verification.rs',hash(source)]]);assert.equal(result.meta.runtimeParity,false);
   const certificate=result.meta.deriveNamespaceFootprints.certificates.find(row=>row.name==='VerificationArgs');assert.ok(certificate);assert.deepEqual(certificate.span,{start:129,end:339});assert.deepEqual(certificate.clapArgsOutput.input.containerDocs.map(doc=>[doc.value,doc.span]),[['Arguments accepted by the verification command',{start:77,end:128}]]);
   assert.deepEqual(certificate.clapArgsOutput.input.fields[0].helpers,[{key:'trailing_var_arg',value:true},{key:'allow_hyphen_values',value:true}]);assert.equal(certificate.generatedImplBehavior,false);assert.equal(certificate.dimensions.bangMacroComplete,false);

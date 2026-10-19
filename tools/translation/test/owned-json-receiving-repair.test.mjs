@@ -18,7 +18,7 @@ import {sourceItems} from '../rust-structure.mjs';
 import {serde_json_from_str,serde_json_to_string} from '../extensions/json-runtime.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const C='crate::translation_core::',T=C+'Json',M=C+'Maybe',J=C+'json!',P=C+'json_copy',U=C+'json_with_field';
-const dependencyInputs={manifest:readFileSync(new URL('../../../Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')};
+const dependencyInputs={manifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')};
 const jsonMacroDependencies=loadJsonMacroSourceProof(dependencyInputs),deriveDependencies=loadDeriveDependencyProof(dependencyInputs),hash=source=>createHash('sha256').update(source).digest('hex');
 let vectors=[];const retain=(kind,value)=>{vectors.push({kind,value});return value;};
 const test=(name,run)=>testCase(name,{timeout:60_000},async()=>{vectors=[];try{await run();}finally{if(process.env.ROUTER_OWNED_JSON_REPAIR_VECTOR_DIR){mkdirSync(process.env.ROUTER_OWNED_JSON_REPAIR_VECTOR_DIR,{recursive:true});writeFileSync(join(process.env.ROUTER_OWNED_JSON_REPAIR_VECTOR_DIR,Buffer.from(name).toString('hex')+'.json'),JSON.stringify({name,vectors},(_key,value)=>typeof value==='bigint'?{$integer:String(value)}:value)+'\n');}}});

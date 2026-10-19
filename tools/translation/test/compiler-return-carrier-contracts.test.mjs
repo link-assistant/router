@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // Original source-body theorems remain separate from ownership and execution.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -16,7 +17,7 @@ import {createCompilerReturnCarrierCompiler,captureOriginalCompilerReturnFrame,o
 import {translateProject} from '../project.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),read=path=>readFileSync(new URL(path,root),'utf8'),dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')}),profile=builtinDeriveAstSourceProfile(dependencies),plan=originalStandardBangOutputSourcePlan(),base='compiler/rustc_expand/src/base.rs',build='compiler/rustc_expand/src/build.rs',ptr='compiler/rustc_ast/src/ptr.rs';
+const root=new URL('../../../',import.meta.url),read=path=>readFileSync(repositorySourceURL(path,root),'utf8'),dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')}),profile=builtinDeriveAstSourceProfile(dependencies),plan=originalStandardBangOutputSourcePlan(),base='compiler/rustc_expand/src/base.rs',build='compiler/rustc_expand/src/build.rs',ptr='compiler/rustc_ast/src/ptr.rs';
 function retain(name,value){const output=process.env.ROUTER_RETURN_CARRIER_VECTOR_DIR;if(output){mkdirSync(output,{recursive:true});writeFileSync(join(output,name+'.json.gz'),gzipSync(JSON.stringify(value)+'\n'),{flag:'wx'});}}
 function noAuthority(facts){for(const name of ['configurationSelected','sourceTypeChecked','globalBangComplete','typeAuthority','normalRuntimeExecutionProved','callerDispatchResolved','nominalOwnerResolved','wrapperMeaningProved','updateEffectsProved','attributeOwnersResolved','completeDimensionalTheorem','namespaceAuthority','runtimeAuthority'])assert.equal(facts[name],false,name);}
 function authoredFrame(source,name,profile=null){const capture=captureSourceModuleViews({source,sourcePath:'src/lib.rs',compilationProfile:profile}),view=capture.views[0],module={source,file:'src/lib.rs',path:[...view.modulePath],sourceView:view,compilationProfile:profile},items=originalSourceModuleItems(module),selected=items.filter(item=>{const header=originalDeclarationHeader(item,module.path);return header?.kind==='fn'&&header.name===name;});assert.equal(selected.length,1);const options={module,item:selected[0],memberIndex:null},frame=captureOriginalNamespaceFunction(options);return {source,capture,options,frame,facts:originalNamespaceFunctionFacts(frame,options)};}

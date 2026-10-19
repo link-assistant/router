@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // Exact stored-source evolution only. CST span joins issue no owner/dispatch fact.
 import {translateProject} from '../project.mjs';
 import testCase from 'node:test';
@@ -64,7 +65,7 @@ test('empty roots full replacements unchanged sources and disjoint edits retain 
 test('complete actual two-parent and three latent-row sources retain both independent CSTs',async(t,retain)=>{
  const api=await modules(t,retain),bank=readStaticSourceLifecycle();
  for(const path of ['src/bridge_response.rs','src/structured_output.rs']){
-  const source=readFileSync(new URL(path,root),'utf8'),after=cst(source);for(const profile of bank.bundle.profiles){const input=profile.files.find(row=>row.path===path);assert.ok(input);const sourceRow=bank.bundle.sources[input.sourceId];assert.equal(hash(sourceRow.source),input.sourceId);const before=cst(sourceRow.source),old=api.before.testStaticDelta(before,after),row=api.current.testStaticDelta(before,after);retain('complete-real-parent-'+path+'-'+profile.revision,{path,revision:profile.revision,input,old,oldInverseBoundariesValid:old.inverse.span.every(at=>after.boundaries.includes(at)),checked:verify(row,before,after),scope:'Full actual source parents and complete CST data; no whole-parent executable claim.'});}
+  const source=readFileSync(repositorySourceURL(path,root),'utf8'),after=cst(source);for(const profile of bank.bundle.profiles){const input=profile.files.find(row=>row.path===path);assert.ok(input);const sourceRow=bank.bundle.sources[input.sourceId];assert.equal(hash(sourceRow.source),input.sourceId);const before=cst(sourceRow.source),old=api.before.testStaticDelta(before,after),row=api.current.testStaticDelta(before,after);retain('complete-real-parent-'+path+'-'+profile.revision,{path,revision:profile.revision,input,old,oldInverseBoundariesValid:old.inverse.span.every(at=>after.boundaries.includes(at)),checked:verify(row,before,after),scope:'Full actual source parents and complete CST data; no whole-parent executable claim.'});}
  }
  // Independent complete native sources for all3 observed non-target defects.
  for(const pin of LATENT_BOUNDARY_ROWS.rows){

@@ -36,7 +36,7 @@ test('twelve original private tables admit generic readers and preserve exact so
   ];
   try {
     for(const [path,name,binding,size,present,mapped]of fixtures) {
-      const source=readFileSync(join(ROOT,'packages/javascript/native',path),'utf8'),analyzed=analyzeJavaScript(source);
+      const source=readFileSync(join(ROOT,'js/src',path),'utf8'),analyzed=analyzeJavaScript(source);
       const table=analyzed.program.find(item=>item.name===name);
       assert.equal(table?.kind,'constant',`${path}:${name}`);assert.equal(table.exported,false);
       const item=analyzed.items.find(item=>item.name===name&&item.status==='translated');

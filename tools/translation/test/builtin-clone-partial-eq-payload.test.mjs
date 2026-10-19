@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
@@ -16,7 +17,7 @@ import {PRODUCTION_PROFILE,compilationProfile} from '../cfg-profile.mjs';
 import {translateProject} from '../project.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 import {originalPayloadDeriveSelection} from './original-payload-derive-context.mjs';
-const root=new URL('../../../',import.meta.url),read=path=>readFileSync(new URL(path,root),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex'),dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')});
+const root=new URL('../../../',import.meta.url),read=path=>readFileSync(repositorySourceURL(path,root),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex'),dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')});
 function retain(name,value){const directory=process.env.ROUTER_PAYLOAD_DERIVE_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeFileSync(join(directory,name+'.json'),JSON.stringify(value),{flag:'wx'});}}
 function setup(source,{name='Payload',owner='Clone',file='src/lib.rs',profile=PRODUCTION_PROFILE}={}){const context=createDeriveFootprintContext({modules:[{file,path:[],source}],dependencies,compilationProfile:profile}),certificate=context.certificates.find(row=>row.name===name),attribute=certificate?.attributes.find(row=>row.derives?.some(path=>path.join('::')===owner));return {context,certificate,invocation:attribute&&{path:[owner],attributeSpan:attribute.span}};}
 let sequence=0;

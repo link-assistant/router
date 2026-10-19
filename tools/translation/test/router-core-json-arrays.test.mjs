@@ -14,7 +14,7 @@ import {serde_json_from_str,serde_json_to_string} from '../extensions/json-runti
 import {verifyTypedTargets} from './typed-targets.mjs';
 
 const C='crate::translation_core::',J=C+'json!',T=C+'Json',S='&'+C+'Str',M=C+'Maybe';
-const dependencyInputs={manifest:readFileSync(new URL('../../../Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')};
+const dependencyInputs={manifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')};
 const dependencies=loadJsonMacroSourceProof(dependencyInputs),hash=value=>createHash('sha256').update(value).digest('hex');
 let vectors=[];const retain=(kind,value)=>{vectors.push({kind,value});return value;};
 const test=(name,run)=>testCase(name,{timeout:60_000},async()=>{vectors=[];try{await run();}finally{if(process.env.ROUTER_OWNED_JSON_ARRAY_VECTOR_DIR){const dir=process.env.ROUTER_OWNED_JSON_ARRAY_VECTOR_DIR;mkdirSync(dir,{recursive:true});writeFileSync(join(dir,Buffer.from(name).toString('hex')+'.json'),JSON.stringify({name,vectors},(_key,value)=>typeof value==='bigint'?{$integer:String(value)}:value)+'\n');}}});
@@ -63,7 +63,7 @@ test('syntax and aggregate runtime node and depth budgets retain their original 
   for(const value of ['['+Array(256).fill('true').join(',')+']','['.repeat(17)+'true'+']'.repeat(17)]){const refused=project(files('pub fn bad()->'+T+'{'+J+'('+value+')}'));assert.equal(has(refused,'bad'),false);assert.ok(refused.meta.refused.some(row=>row.name==='bad'&&/budget/.test(row.message)));}
 });
 test('the complete physical ActivityPub module retains its checked literal context array',async()=>{
-  const source=readFileSync(new URL('../../../src/activitypub.rs',import.meta.url),'utf8'),cst=transportConcreteSyntaxSource(source,{language:'Rust'});assert.equal(cst.source,source);assert.equal(transportConcreteSyntaxMeta(cst.meta).source,source);retain('complete-original-module-and-CST',{source,sha256:hash(source),cst,scope:'complete original module under explicit fixture root; no full original crate admission claim'});
+  const source=readFileSync(new URL('../../../rust/src/activitypub.rs',import.meta.url),'utf8'),cst=transportConcreteSyntaxSource(source,{language:'Rust'});assert.equal(cst.source,source);assert.equal(transportConcreteSyntaxMeta(cst.meta).source,source);retain('complete-original-module-and-CST',{source,sha256:hash(source),cst,scope:'complete original module under explicit fixture root; no full original crate admission claim'});
   const result=project(files('pub mod activitypub;',{'src/activitypub.rs':source}));functions(result,['activitypub.activitypub_context']);await targets(result,api=>assert.deepEqual(native(api['activitypub.activitypub_context']()),['https://www.w3.org/ns/activitystreams','https://forgefed.org/ns',{fep:'https://w3id.org/fep/ef61#',aliases:'fep:aliases'}]));
 });
 test('copied array nodes and changed owned facades grant no source permission',async()=>{

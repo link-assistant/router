@@ -17,7 +17,7 @@ import { STANDARD_BODY_SOURCE_PROFILE } from '../extensions/standard-body-source
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const frozen=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(frozen);Object.freeze(value);}return value;};
 const encoded=readFileSync(new URL('./json-source-profile.json',import.meta.url));
-if(hash(encoded)!=='98cf9dcf44b5d152049af129beec019be9cbbfe1c0a56b3a450bdff7138deca5')throw new TypeError('JSON schema source profile differs from its audited pins');
+if(hash(encoded)!=='147deb834d920e56f8df48454e359488afb4526e729df8b19b92ad9e9b7d9ec5')throw new TypeError('JSON schema source profile differs from its audited pins');
 const profile=frozen(JSON.parse(encoded)),contexts=new WeakMap();let original;
 function sources() {
   if(original)return original;

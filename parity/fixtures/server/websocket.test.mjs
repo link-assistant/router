@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createServer,request as httpRequest} from 'node:http';
 import {createHash,randomBytes} from 'node:crypto';
-import {createNativeRouter} from '../../../packages/javascript/native/server.mjs';
-import {WebSocketInspector} from '../../../packages/javascript/native/websocket-relay.mjs';
+import {createNativeRouter} from '../../../js/src/server.mjs';
+import {WebSocketInspector} from '../../../js/src/websocket-relay.mjs';
 const frame = (text,masked=false,fin=true,opcode=1) => {
   const payload=Buffer.from(text),size=payload.length,header=Buffer.alloc(size < 126?2:4);header[0]=(fin?128:0)|opcode;header[1]=(masked?128:0)|(size < 126?size:126);if(size>=126)header.writeUInt16BE(size,2);
   if(!masked)return Buffer.concat([header,payload]);const mask=randomBytes(4);for(let i=0;i<payload.length;i++)payload[i]^=mask[i%4];return Buffer.concat([header,mask,payload]);

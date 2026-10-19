@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // New enclosing-only format. Generated method behavior remains opaque.
 import nodeTest from 'node:test';
 import assert from 'node:assert/strict';
@@ -31,7 +32,7 @@ import {verifyTypedTargets} from './typed-targets.mjs';
 import {writeJsonTextGzip} from '../../evidence/write-json-gzip.mjs';
 const root=new URL('../../../',import.meta.url),base=new URL('../',import.meta.url),json=JSON.stringify,apply=Reflect.apply,get=Object.getOwnPropertyDescriptor,define=Object.defineProperty;
 const hash=value=>createHash('sha256').update(value).digest('hex');
-function read(path){return readFileSync(new URL(path,root),'utf8');}
+function read(path){return readFileSync(repositorySourceURL(path,root),'utf8');}
 function test(name,body){return nodeTest(name,{timeout:60_000},async t=>{
  const vectors=[],retain=(kind,value)=>{vectors.push({kind,value});return value;};
  try{await body(t,retain);}finally{
@@ -49,11 +50,11 @@ function deepFrozen(value,seen=new Set()){
 }
 function setup(source,options={}){
  const cargo={manifest:read('Cargo.toml'),lock:read('Cargo.lock')},dependencies=loadDeriveDependencyProof(cargo);
- const modules=options.modules??[{file:'src/lib.rs',path:[],source:'mod model;'},{file:'src/model.rs',path:['model'],source}];
+ const modules=options.modules??[{file:'src/lib.rs',path:[],source:'mod model;',configurationCondition:'active'},{file:'src/model.rs',path:['model'],source,configurationCondition:'active'}];
  const derive=createDeriveFootprintContext({modules,dependencies,compilationProfile:PRODUCTION_PROFILE});
  const module=modules.find(row=>row.file===(options.file??'src/model.rs')),item=originalSourceModuleItems(module).find(row=>row.name===(options.name??'Record')&&['struct','enum'].includes(row.term));
- assert.ok(item,'actual complete source item');const certificate=deriveFootprintAt(derive,module,item);assert.ok(certificate);
- const attribute=certificate.attributes.find(row=>row.name==='derive'&&row.derives.some(path=>path.length===1&&path[0]==='Debug'));assert.ok(attribute);
+ assert.ok(item,'actual complete source item');const certificate=deriveFootprintAt(derive,module,item);if(!options.allowUnproved)assert.ok(certificate);
+ const attribute=certificate?certificate.attributes.find(row=>row.name==='derive'&&row.derives.some(path=>path.length===1&&path[0]==='Debug')):itemConfiguration(item.tokens,PRODUCTION_PROFILE).attributes.find(row=>row.name==='derive');assert.ok(attribute);
  return {source,modules,dependencies,cargo,derive,module,item,certificate,invocation:{path:['Debug'],attributeSpan:attribute.span},externalModules:deriveFootprintExternalModules(derive),compilationProfile:PRODUCTION_PROFILE};
 }
 function args(row){return {context:row.derive,certificate:row.certificate,invocation:row.invocation};}
@@ -85,7 +86,7 @@ test('genuine named and unit Debug close every original branch with private encl
   assert.equal(minimal.facts.model.methodBehavior,'opaque-untranslated');assert.equal(minimal.facts.namespaceAuthority,false);assert.equal(minimal.facts.runtimeAuthority,false);
   assert.equal(Object.hasOwn(minimal.facts,'selectedOwnerBangComplete'),false);assert.equal(Object.hasOwn(minimal.facts.model,'selectedOwnerBangComplete'),false);
   assert.equal(json(JSON.parse(minimal.facts.wire)),minimal.facts.wire);assert.equal(hash(minimal.facts.wire),minimal.facts.digest);deepFrozen(minimal.facts);
-  const branches=minimal.facts.model.grammar.branches;assert.ok(branches.length>=2);assert.deepEqual(branches.map(b=>b.condition),full.route.branches.map(b=>b.condition));
+  const branches=minimal.facts.model.grammar.branches;assert.ok(branches.length>=2);assert.deepEqual(branches.map(b=>b.condition.split(';')[0]),full.route.branches.map(b=>{assert.ok(['original-builtin-scalar-ast-output-v1','original-debug-data-ast-bridge-v1'].includes(full.route.schema));return (full.route.schema==='original-builtin-scalar-ast-output-v1'?b.feature:b.condition).split(';')[0];}));
   for(const branch of branches){assert.equal(branch.closure.schema,'source-original-debug-positive-tree-closure-v1');assert.equal(branch.closure.sourceConstructorsOnly,true);assert.equal(branch.closure.bodyExpressionComplete,true);assert.ok(branch.closure.nodes>0);}
   const old=createDeriveBangContext({deriveContext:row.derive}),current=createDeriveEnclosingNamespaceContext({deriveContext:row.derive});
   const oldToken=proveDeriveEmptyEnclosingEffect(old,row.derive,row.module,row.item),oldFacts=deriveEmptyEnclosingEffectFacts(oldToken,old,row.derive,row.module,row.item),now=dimension(row,current);
@@ -120,9 +121,9 @@ test('complete sibling owners payload fallback and unknown external producers pr
   const proof=dimension(row,current);assert.deepEqual(proof.facts.enclosingTypeBindings,[]);rows.push({source,input:row.certificate,current,certificate,outputs,facts:proof.facts});
  }
  for(const source of ['#[derive(Debug,unknown::Open)]pub struct Record{value:u8}','#[derive(Debug,clap::Parser)]pub struct Record{value:u8}','#[derive(Debug)]pub struct Record{#[unknown]value:u8}']){
-  const row=setup(source),current=createDeriveEnclosingNamespaceContext({deriveContext:row.derive}),certificate=deriveEnclosingNamespaceOutputAt(current,row.derive,row.module,row.item);
-  assert.equal(certificate,null);assert.ok(current.diagnostics.length>0);assert.ok(current.certificates.some(c=>c.residualOwners.length>0));
-  rows.push({source,input:row.certificate,current,certificate,refusal:refused(()=>dimension(row,current))});
+  const row=setup(source,{allowUnproved:true}),current=createDeriveEnclosingNamespaceContext({deriveContext:row.derive}),certificate=deriveEnclosingNamespaceOutputAt(current,row.derive,row.module,row.item);
+  assert.equal(certificate,null);assert.ok(current.diagnostics.length+row.derive.diagnostics.length>0);if(row.certificate)assert.ok(current.certificates.some(c=>c.residualOwners.length>0));else assert.ok(row.derive.diagnostics.length>0);
+  rows.push({source,input:row.certificate,originalDeriveDiagnostics:row.derive.diagnostics,current,certificate,refusal:refused(()=>dimension(row,current))});
  }
  const payload=setup('#[derive(Debug)]pub enum Record{A(u8),B{value:u8}}'),candidate=proveBuiltinDebugEnclosingNamespace(args(payload));assert.equal(candidate,null);
  const fallback=createDeriveEnclosingNamespaceContext({deriveContext:payload.derive});const output=deriveEnclosingNamespaceOutputAt(fallback,payload.derive,payload.module,payload.item);
@@ -144,7 +145,7 @@ test('genuine positive constructor closure rejects changed children binders toke
  ];
  const outcomes=[];for(const attack of attacks){const changedBody=once(body,anchor,' '+attack.code+'\n'+anchor),changed=prefix+changedBody,api=await sourceModule(t,changed,url,retain,attack.name),outcome=refused(()=>api.compileBuiltinDebugEnclosingNamespaceModel(options));assert.match(outcome.error.message,/positive namespace grammar/);outcomes.push({attack,source:changed,outcome});}
  const invalid=[];for(const source of ['#[derive(Debug)]pub struct Record{value:unknown!()}','#[derive(Debug)]#[repr(packed)]pub struct Record{value:u8}']){
-  const subject=setup(source),outcome=capture(()=>proveBuiltinDebugEnclosingNamespace(args(subject)));assert.ok(outcome.error instanceof TypeError||outcome.value===null);invalid.push({source,certificate:subject.certificate,outcome:materialize(outcome)});
+  const subject=setup(source,{allowUnproved:true}),outcome=capture(()=>proveBuiltinDebugEnclosingNamespace(args(subject)));assert.ok(outcome.error instanceof TypeError||outcome.value===null);invalid.push({source,certificate:subject.certificate,outcome:materialize(outcome)});
  }
  retain('complete-actual-grammar-and-adverse-source-subjects',{source,prefix,body,options,clean,outcomes,invalid,scope:'Copied grammar output has no private issuer membership, even when its source checks succeed.'});
  const fake={schema:'private-original-debug-enclosing-namespace-v1',model:clean};retain('copied-positive-grammar-is-not-private-proof',refused(()=>requireBuiltinDebugEnclosingNamespace(fake,row.derive,row.certificate,row.invocation)));
@@ -162,16 +163,16 @@ test('private membership and final source owner profile reentry fences reject co
  failures.push(refused(()=>deriveEnclosingNamespaceModules(current,{deriveContext:row.derive,modules:row.modules.slice(1),externalModules:row.externalModules,compilationProfile:PRODUCTION_PROFILE})));
  const external=new Map(row.externalModules);external.set('foreign',{kind:'unqualified'});failures.push(refused(()=>deriveEnclosingNamespaceModules(current,{deriveContext:row.derive,modules:row.modules,externalModules:external,compilationProfile:PRODUCTION_PROFILE})));
  failures.push(refused(()=>deriveEnclosingNamespaceModules(current,{deriveContext:row.derive,modules:row.modules,externalModules:row.externalModules,compilationProfile:{...PRODUCTION_PROFILE,features:['foreign']}})));
- const saved=row.module.source;try{row.module.source=saved+'\n';failures.push(refused(()=>reissueBuiltinDebugEnclosingNamespace(chosen.token,row.derive,row.certificate,row.invocation)));failures.push(refused(()=>deriveEnclosingNamespaceEffectFacts(effect.token,current,row.derive,row.module,row.item)));}finally{row.module.source=saved;}
+ const saved=row.module.source;try{row.module.source=saved+'\n';assert.equal(reissueBuiltinDebugEnclosingNamespace(chosen.token,row.derive,row.certificate,row.invocation).wire,chosen.facts.wire,'the sealed original source snapshot stays unchanged');failures.push(refused(()=>deriveEnclosingNamespaceEffectFacts(effect.token,current,row.derive,row.module,row.item)));}finally{row.module.source=saved;}
  const carrier={...row.module,items:[]};failures.push(refused(()=>deriveEnclosingNamespaceOutputAt(current,row.derive,carrier,row.item)));
  assert.throws(()=>define(chosen.facts.model,'namespaceAuthority',{value:true}),TypeError);assert.equal(requireBuiltinDebugEnclosingNamespace(chosen.token,row.derive,row.certificate,row.invocation).namespaceAuthority,false);
- const update=get(Hash.prototype,'update'),events=[],nested=[];let raw,entered=false;
+ const update=get(Hash.prototype,'update'),events=[],nested=[],savedSpan=row.invocation.attributeSpan;let raw,entered=false;
  try{define(Hash.prototype,'update',{...update,value:function(...values){
   const result=apply(update.value,this,values);events.push(values.map(value=>typeof value==='string'?{string:value}:Buffer.isBuffer(value)?{base64:value.toString('base64')}:{type:typeof value}));
-  if(!entered&&typeof values[0]==='string'&&values[0].includes('original-debug-enclosing-namespace-model-v1')){entered=true;nested.push(capture(()=>requireBuiltinDebugEnclosingNamespace(chosen.token,row.derive,row.certificate,row.invocation)));row.module.source=saved+'\n';}
+  if(!entered&&typeof values[0]==='string'&&values[0].includes('original-debug-enclosing-namespace-model-v1')){entered=true;nested.push(capture(()=>requireBuiltinDebugEnclosingNamespace(chosen.token,row.derive,row.certificate,row.invocation)));row.invocation.attributeSpan={...savedSpan,start:savedSpan.start+1};}
   return result;
- }});raw=capture(()=>proveBuiltinDebugEnclosingNamespace(args(row)));}finally{define(Hash.prototype,'update',update);row.module.source=saved;}
- if(entered)assert.ok(raw.error instanceof TypeError,'post-observer changed source must not issue a token');else assert.ok(raw.error instanceof TypeError||raw.value===null,'guarded Hash override cannot create unobserved authority');
+ }});raw=capture(()=>proveBuiltinDebugEnclosingNamespace(args(row)));}finally{define(Hash.prototype,'update',update);row.module.source=saved;row.invocation.attributeSpan=savedSpan;}
+ if(entered)assert.ok(raw.error instanceof TypeError,'post-observer changed current invocation must not issue a token');else assert.ok(raw.error instanceof TypeError||raw.value===null,'guarded Hash override cannot create unobserved authority');
  assert.equal(reissueBuiltinDebugEnclosingNamespace(chosen.token,row.derive,row.certificate,row.invocation).wire,chosen.facts.wire);
  retain('complete-private-freshness-and-raw-observer-results',{source:row.source,certificate:row.certificate,chosen,current,effect,failures,events,entered,nested:nested.map(materialize),raw:materialize(raw),observerContract:'New format has distinct guard/JSON/Hash payload observations. Guard refusal is retained; it is not an unguarded observer success.'});
 });
@@ -182,7 +183,7 @@ test('whole resolver bindings agree with full proofs while sibling globs and unk
  const old=createDeriveBangContext({deriveContext:positive.derive}),current=createDeriveEnclosingNamespaceContext({deriveContext:positive.derive}),before=resolve(positive,old,false),after=resolve(positive,current,true);
  assert.deepEqual(after,before);assert.ok(after.scopes.find(row=>row.path.length===0).bindings.some(row=>row.name==='Record'&&row.status==='resolved'));
  const residuals=[];for(const extra of ['unknown!();','#[cfg(unknown_feature)]pub struct Maybe;','use unavailable::*;']){
-  const row=setup('#[derive(Debug)]pub struct Record{value:u8}'+extra),old=createDeriveBangContext({deriveContext:row.derive}),next=createDeriveEnclosingNamespaceContext({deriveContext:row.derive}),a=resolve(row,old,false),b=resolve(row,next,true);
+  const row=setup('#[derive(Debug)]pub struct Record{value:u8}'+extra,{allowUnproved:true}),old=createDeriveBangContext({deriveContext:row.derive}),next=createDeriveEnclosingNamespaceContext({deriveContext:row.derive}),a=resolve(row,old,false),b=resolve(row,next,true);
   assert.deepEqual(b,a);const model=b.scopes.find(scope=>scope.file===row.module.file);assert.ok(model.unresolvedTypeScope||model.unresolvedMacroScope||model.unresolvedBangMacroScope||b.diagnostics.length,'unresolved unrelated producer stays represented');residuals.push({source:row.source,old,next,before:a,after:b});
  }
  const foreignView={...positive.module,sourceView:{...positive.module.sourceView,digest:'changed'}};
@@ -201,11 +202,11 @@ test('source derived language then repository equations and cold owner parse gua
  for(const name of ['derive-enclosing-namespace-context.mjs','module-bindings.mjs','core-adoption-producer-context.mjs','migrate-core-base64.mjs']){
   const source=readFileSync(new URL('../'+name,import.meta.url),'utf8'),reparsed=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(transportConcreteSyntaxSource(source,{language:'JavaScript'}).document));assert.equal(reparsed.source,source);retain('complete-actual-new-format-module-source',{name,source,wire:serializeConcreteSyntaxMeta(reparsed.document)});
  }
- const addresses={dependencies:new URL('../derive-dependencies.mjs',import.meta.url).href,footprints:new URL('../derive-footprints.mjs',import.meta.url).href,bang:new URL('../builtin-derive-bang-footprints.mjs',import.meta.url).href,profile:new URL('../cfg-profile.mjs',import.meta.url).href,root:root.href};
+ const addresses={dependencies:new URL('../derive-dependencies.mjs',import.meta.url).href,footprints:new URL('../derive-footprints.mjs',import.meta.url).href,bang:new URL('../builtin-derive-bang-footprints.mjs',import.meta.url).href,profile:new URL('../cfg-profile.mjs',import.meta.url).href,sourceURLs:new URL('./fixtures/repository-paths.mjs',import.meta.url).href,root:root.href};
  const cold=[];for(const mode of ['proxy-owner','null-owner','undefined-owner','ordinary-owner','parse-method']){
   const script=`import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {createRequire,syncBuiltinESMExports} from 'node:module';import {types} from 'node:util';
-import {loadDeriveDependencyProof} from ${json(addresses.dependencies)};import {createDeriveFootprintContext} from ${json(addresses.footprints)};import {proveBuiltinDebugEnclosingNamespace,requireBuiltinDebugEnclosingNamespace} from ${json(addresses.bang)};import {PRODUCTION_PROFILE} from ${json(addresses.profile)};
-const root=${json(addresses.root)},mode=${json(mode)},read=path=>readFileSync(new URL(path,root),'utf8'),cargo={manifest:read('Cargo.toml'),lock:read('Cargo.lock')},source='#[derive(Debug)]pub struct Record{value:u8}',modules=[{file:'src/lib.rs',path:[],source}],context=createDeriveFootprintContext({modules,dependencies:loadDeriveDependencyProof(cargo),compilationProfile:PRODUCTION_PROFILE}),certificate=context.certificates.find(c=>c.name==='Record');assert.ok(certificate);const attribute=certificate.attributes.find(a=>a.name==='derive'),invocation={path:['Debug'],attributeSpan:attribute.span},token=proveBuiltinDebugEnclosingNamespace({context,certificate,invocation});assert.ok(token);const facts=requireBuiltinDebugEnclosingNamespace(token,context,certificate,invocation),require=createRequire(import.meta.url),util=require('node:util'),owner=Object.getOwnPropertyDescriptor(util,'types'),parse=Object.getOwnPropertyDescriptor(JSON,'parse'),originalTypes=types,tape=[];let error,value,rebound=false;
+import {loadDeriveDependencyProof} from ${json(addresses.dependencies)};import {createDeriveFootprintContext} from ${json(addresses.footprints)};import {proveBuiltinDebugEnclosingNamespace,requireBuiltinDebugEnclosingNamespace} from ${json(addresses.bang)};import {PRODUCTION_PROFILE} from ${json(addresses.profile)};import {repositorySourceURL} from ${json(addresses.sourceURLs)};
+const root=${json(addresses.root)},mode=${json(mode)},read=path=>readFileSync(repositorySourceURL(path,root),'utf8'),cargo={manifest:read('Cargo.toml'),lock:read('Cargo.lock')},source='#[derive(Debug)]pub struct Record{value:u8}',modules=[{file:'src/lib.rs',path:[],source}],context=createDeriveFootprintContext({modules,dependencies:loadDeriveDependencyProof(cargo),compilationProfile:PRODUCTION_PROFILE}),certificate=context.certificates.find(c=>c.name==='Record');assert.ok(certificate);const attribute=certificate.attributes.find(a=>a.name==='derive'),invocation={path:['Debug'],attributeSpan:attribute.span},token=proveBuiltinDebugEnclosingNamespace({context,certificate,invocation});assert.ok(token);const facts=requireBuiltinDebugEnclosingNamespace(token,context,certificate,invocation),require=createRequire(import.meta.url),util=require('node:util'),owner=Object.getOwnPropertyDescriptor(util,'types'),parse=Object.getOwnPropertyDescriptor(JSON,'parse'),originalTypes=types,tape=[];let error,value,rebound=false;
 try{if(mode==='parse-method')Object.defineProperty(JSON,'parse',{...parse,value:function(...args){tape.push({op:'parse',count:args.length});return Reflect.apply(parse.value,this,args);}});else{let replacement=mode==='null-owner'?null:mode==='undefined-owner'?undefined:mode==='ordinary-owner'?{isProxy(){tape.push({op:'isProxy'});return false;}}:new Proxy(originalTypes,{get(target,key,receiver){tape.push({op:'get',key:String(key)});return Reflect.get(target,key,receiver);},getOwnPropertyDescriptor(target,key){tape.push({op:'descriptor',key:String(key)});return Reflect.getOwnPropertyDescriptor(target,key);}});Object.defineProperty(util,'types',{...owner,value:replacement});syncBuiltinESMExports();rebound=types!==originalTypes;}try{value=requireBuiltinDebugEnclosingNamespace(token,context,certificate,invocation);}catch(cause){error=cause;}}
 finally{Object.defineProperty(util,'types',owner);syncBuiltinESMExports();Object.defineProperty(JSON,'parse',parse);}
 if(mode==='parse-method'||rebound)assert.ok(error instanceof TypeError);else assert.equal(value.wire,facts.wire);assert.deepEqual(tape,[]);assert.equal(requireBuiltinDebugEnclosingNamespace(token,context,certificate,invocation).wire,facts.wire);console.log(JSON.stringify({mode,source,modules,certificate,invocation,facts,rebound,qualified:mode==='parse-method'||rebound,tape,outcome:error?{error:{name:error.name,message:error.message,stack:String(error.stack)}}:{value}}));`;

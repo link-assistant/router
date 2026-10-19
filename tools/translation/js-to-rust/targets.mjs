@@ -197,7 +197,7 @@ function emitter(program, target,{outputPath}={}) {
     const key=proof.import.target+'#'+proof.import.exported;
     if(!constructorImports.has(key)) {
       if(typeof outputPath!=='string'||! /^(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_-]+\.ts$/u.test(outputPath))throw Error('conditional constructor TypeScript requires its exact output module path');
-      const targetPath=proof.import.target.replace(/^packages\/javascript\//u,'packages/typescript/').replace(/\.mjs$/u,'.js');
+      const targetPath=proof.import.target.replace(/^js\//u,'ts/').replace(/\.mjs$/u,'.js');
       let relative=posix.relative(posix.dirname(outputPath),targetPath);if(!relative.startsWith('.'))relative='./'+relative;
       let alias;do{alias='routerOriginalError'+constructorAlias++;}while(emittedIdentifiers.has(alias));
       emittedIdentifiers.add(alias);

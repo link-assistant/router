@@ -1,6 +1,6 @@
 # JavaScript-first executable translation
 
-`packages/javascript/portable/**/*.mjs` is authoritative. Regenerate with
+`js/portable/**/*.mjs` is authoritative. Regenerate with
 `node scripts/regenerate-js-first.mjs`; verify with the same command and
 `--check`. Both Rust and strict TypeScript are emitted after serializing and
 reparsing the checked AST as a Links Notation document. The generated IR is
@@ -37,7 +37,7 @@ the source's termination behavior.
 
 The manifest `parity/js-first-translation.json` records source/target hashes,
 the supported subset, independent fixture provenance and refusals for every
-top-level item discovered in `packages/javascript/native/**/*.mjs`. That census
+top-level item discovered in `js/src/**/*.mjs`. That census
 updates on regeneration as native source evolves. The manifest explicitly
 states that the whole native implementation is not translated. Native I/O,
 stateful services and protocol glue remain separate code.
@@ -359,7 +359,7 @@ node scripts/regenerate-native-typescript.mjs
 node scripts/regenerate-native-typescript.mjs --check
 node scripts/check-native-typescript.mjs
 node --test tools/translation/js-to-rust/test/native-typescript.test.mjs
-node scripts/check-native-typescript.mjs --out-dir packages/typescript/dist
+node scripts/check-native-typescript.mjs --out-dir ts/dist
 ```
 
 The existing JavaScript package's TypeScript/Ajv dependencies are reused during

@@ -49,8 +49,8 @@ through the frontend and semantic checker.
 
 Each source produces source-bearing structural meta JSON in
 `tools/translation/meta`, a JavaScript draft in
-`packages/javascript/generated/rust-draft`, and a TypeScript draft in
-`packages/typescript/generated/rust-draft`. Source text appears in the meta JSON;
+`js/generated/rust-draft`, and a TypeScript draft in
+`ts/generated/rust-draft`. Source text appears in the meta JSON;
 source and item hashes, UTF-16 and UTF-8 spans, diagnostics, checked semantic IR,
 encodings and assumptions remain inspectable there.
 

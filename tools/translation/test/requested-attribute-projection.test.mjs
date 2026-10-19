@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // Query-local candidate storage; complete old leaf and genuine shared issuers.
 import nodeTest from 'node:test';
 import assert from 'node:assert/strict';
@@ -22,7 +23,7 @@ const SOURCE_EDITS=[{"expected":"import {originalJsonIntrinsicsUnchanged,origina
 const ITEM_SCAN_NATIVE_EVOLUTION=[["const itemScanNative=originalJsonIntrinsicsUnchanged()&&","const itemScanNative=originalDataFreezeIntrinsicsUnchanged()&&"]];
 SOURCE_EDITS.push(...ITEM_SCAN_NATIVE_EVOLUTION.map(([expected,replacement])=>({expected,replacement})));
 
-const root=new URL('../../../',import.meta.url),base=new URL('../',import.meta.url),read=path=>readFileSync(new URL(path,root),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex');
+const root=new URL('../../../',import.meta.url),base=new URL('../',import.meta.url),read=path=>readFileSync(repositorySourceURL(path,root),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex');
 const json=JSON.stringify,apply=Reflect.apply,descriptor=Object.getOwnPropertyDescriptor,define=Object.defineProperty,isArray=Array.isArray,isFrozen=Object.isFrozen;
 const cargo={manifest:read('Cargo.toml'),lock:read('Cargo.lock')},dependencies=loadDeriveDependencyProof(cargo);
 function test(name,run){nodeTest(name,{timeout:60000},async t=>{const vectors=[],retain=(label,value)=>{vectors.push({label,value});return value;};try{await run(t,retain);}finally{const output=process.env.ROUTER_ATTRIBUTE_PROJECTION_VECTOR_DIR;if(output){const wire=json({name,vectors},(_key,value)=>typeof value==='bigint'?{$integer:String(value)}:value instanceof Map?{$map:[...value]}:value)+'\n';assert.ok(Buffer.byteLength(wire)<=67108864,'bounded complete case evidence');mkdirSync(output,{recursive:true});writeFileSync(join(output,Buffer.from(name).toString('hex')+'.json.gz'),gzipSync(wire),{flag:'wx'});}}});}

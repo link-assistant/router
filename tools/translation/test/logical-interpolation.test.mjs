@@ -15,7 +15,7 @@ import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {serde_json_to_string} from '../extensions/json-runtime.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const C='crate::translation_core::',T=C+'Json',J=C+'json!',hash=value=>createHash('sha256').update(value).digest('hex');
-const dependencyInputs={manifest:readFileSync(new URL('../../../Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')};
+const dependencyInputs={manifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')};
 const jsonMacroDependencies=loadJsonMacroSourceProof(dependencyInputs),deriveDependencies=loadDeriveDependencyProof(dependencyInputs);
 let vectors=[];const retain=(kind,value)=>{vectors.push({kind,value});return value;};
 const test=(name,run)=>testCase(name,{timeout:60_000},async()=>{vectors=[];try{await run();}finally{const root=process.env.ROUTER_LOGICAL_INTERPOLATION_VECTOR_DIR;if(root){mkdirSync(root,{recursive:true});writeFileSync(join(root,Buffer.from(name).toString('hex')+'.json'),JSON.stringify({name,vectors},(_key,value)=>typeof value==='bigint'?{$integer:String(value)}:value)+'\n');}}});

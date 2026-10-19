@@ -1,10 +1,11 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {loadDeriveDependencyProof,deriveDependencySource} from '../derive-dependencies.mjs';
 import {inventoryDeriveQuoteMeta,isDeriveQuoteMeta,quoteMetaOriginal,createQuoteFragmentCompiler,inspectQuoteFragment} from '../derive-quote-meta.mjs';
-const root=new URL('../../../',import.meta.url),read=path=>readFileSync(new URL(path,root),'utf8'),dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')}),hash=value=>createHash('sha256').update(value).digest('hex');
+const root=new URL('../../../',import.meta.url),read=path=>readFileSync(repositorySourceURL(path,root),'utf8'),dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')}),hash=value=>createHash('sha256').update(value).digest('hex');
 test('opt-in typed quote source inventory preserves exact default Serde and Clap metadata',()=>{
  for(const[p,count]of[['serde_derive',330],['clap_derive',170]]){const a=inventoryDeriveQuoteMeta(dependencies,p),b=inventoryDeriveQuoteMeta(dependencies,p,false);assert.equal(a.quoteCount,count);assert.deepEqual(a,b);assert.equal(a.digest,b.digest);assert.equal(Object.hasOwn(a,'parseQuoteSources'),false);assert.ok(a.members.every(row=>row.quotes.every(template=>!template.macro.startsWith('parse_quote'))));}
 });

@@ -25,7 +25,7 @@ async function both(result,assertions) {
     writeRuntimeAssets(folder);const js=join(folder,'src/module.mjs'),ts=join(folder,'src/module.ts');writeFileSync(js,result.javascript);writeFileSync(ts,result.typescript);
     execFileSync(process.execPath,['--check',js],{timeout:30000});
     let command=process.env.ROUTER_TRANSLATION_TSC,prefix=[];
-    if(!command){try{prefix=[createRequire(new URL('../../../packages/javascript/package.json',import.meta.url)).resolve('typescript/bin/tsc')];command=process.execPath;}catch(error){if(error.code!=='MODULE_NOT_FOUND')throw error;command='tsc';}}
+    if(!command){try{prefix=[createRequire(new URL('../../../js/package.json',import.meta.url)).resolve('typescript/bin/tsc')];command=process.execPath;}catch(error){if(error.code!=='MODULE_NOT_FOUND')throw error;command='tsc';}}
     execFileSync(command,[...prefix,'--strict','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext',ts],{encoding:'utf8',timeout:30000});
     for(const path of [js,join(folder,'src/module.js')])await assertions((await import(pathToFileURL(path).href)).translated);
   }finally{rmSync(folder,{recursive:true,force:true});}

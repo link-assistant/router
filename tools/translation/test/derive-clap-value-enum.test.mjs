@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
@@ -64,7 +65,7 @@ test('complete unchanged original ClientKind eight variants preserve exact names
 
 test('whole original clients module admits its data declaration and source constants in emitted JS and strict TS',{timeout:60000},async()=>{
   const paths=currentOriginalRustPaths(root);
-  const result=translateProject({entry:'src/clients.rs',paths,readSource:path=>readFileSync(new URL(path,root),'utf8'),cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
+  const result=translateProject({entry:'src/clients.rs',paths,readSource:path=>readFileSync(repositorySourceURL(path,root),'utf8'),cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
   retain('06-complete-original-client-production',{paths,result});
   const program=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram)),type=program.declarations.get('ClientKind');assert.equal(type.k,'data');assert.equal(type.ctors.length,8);assert.equal(result.meta.runtimeParity,false);
   assert.ok(result.meta.executable.some(row=>row.name==='CODEX_PROVIDER'));assert.ok(result.meta.executable.some(row=>row.name==='CLAUDE_TOKEN_ENV'));

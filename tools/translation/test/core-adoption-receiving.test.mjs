@@ -51,10 +51,10 @@ assert.equal(child.signal,null);
 assert.equal(child.status,0,child.stderr);
 return JSON.parse(child.stdout);
 }
-function compiler(root){const actual=process.env.ROUTER_TRANSLATION_TSC?dirname(dirname(resolve(process.env.ROUTER_TRANSLATION_TSC))):join(ROOT,'packages/javascript/node_modules/typescript');
+function compiler(root){const actual=process.env.ROUTER_TRANSLATION_TSC?dirname(dirname(resolve(process.env.ROUTER_TRANSLATION_TSC))):join(ROOT,'js/node_modules/typescript');
 assert.equal(JSON.parse(fs.readFileSync(join(actual,'package.json'))).version,'5.9.3');
-fs.cpSync(actual,join(root,'packages/javascript/node_modules/typescript'),{recursive:true,dereference:true});
-write(join(root,'.gitignore'),'packages/javascript/node_modules/\n');
+fs.cpSync(actual,join(root,'js/node_modules/typescript'),{recursive:true,dereference:true});
+write(join(root,'.gitignore'),'js/node_modules/\n');
 }
 function archive(label,root){const output=process.env.ROUTER_CORE_RECEIVING_VECTOR_DIR;
 if(!output)return;
@@ -135,7 +135,7 @@ compiler(root);
 const head=commit(root);
  const actual=python(`import importlib.util\nfrom pathlib import Path\nspec=importlib.util.spec_from_file_location('capture',${JSON.stringify(join(ROOT,'scripts/propose-core-adoption.py'))});module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)\nmodule.ROOT=Path(payload['root']);module.OUT=Path(payload['run']);module.HEAD=payload['head'];module.ACTIVE_TEMP=None\nbefore,snapshots,rust=module.capture_prechild_sources();module.SOURCE_FREEZE=module.source_freeze(before,snapshots,rust);module.require_current_capture(before,snapshots,rust)\nafter,other,again=module.capture();module.require_current_capture(after,other,again)\nassert before==after and snapshots==other and rust==again\nprint(json.dumps({'before':before,'snapshots':snapshots,'rust':rust,'sourceFreeze':module.SOURCE_FREEZE,'same':True}))\n`,{root,run,head});
  assert.equal(actual.same,true);
-assert.equal(actual.snapshots.filter(row=>row.path.startsWith('packages/javascript/node_modules/typescript/')).length,132);
+assert.equal(actual.snapshots.filter(row=>row.path.startsWith('js/node_modules/typescript/')).length,132);
 assert.ok(actual.rust.some(row=>row.path==='tests/owned-witness.rs'));
 assert.equal(actual.sourceFreeze.census.physicalSrcRust,1);
 assert.equal(actual.sourceFreeze.census.allTrackedRustCargo,4);

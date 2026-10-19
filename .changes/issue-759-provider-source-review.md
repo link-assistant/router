@@ -12,7 +12,7 @@ Existing cases were strengthened; counts remain 16 Responses, 16 Conversations,
 
 Packaging/dependencies, verified by source inspection:
 
-- `packages/javascript/package.json` requires Node >=20, is ESM, and includes the
+- `js/package.json` requires Node >=20, is ESM, and includes the
   entire `native` and `portable` directories in package files. The new internal
   `native/response-contracts.mjs` requires no new dependency or package export.
 - Imports are native module → response contracts → existing protocol module.

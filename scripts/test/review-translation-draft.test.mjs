@@ -88,7 +88,7 @@ test('generated comparisons keep source identities separate and report byte-chan
   assert.equal(compareGeneratedMethods([],after).newlyCheckedGeneratedMethods.length,1);assert.equal(compareGeneratedMethods(before,[]).lostCheckedGeneratedMethods.length,1);
   vectors.observations.push({label:'changed-body-comparison',before,after,comparison});save();
 });
-function projectRow(meta,count){return {entry:'src/lib.rs',sources:meta.sources.length,refused:meta.refused.length,unloweredItems:meta.unloweredItems.length,checkedMethods:meta.checkedMethods.length,checkedGeneratedMethods:count,moduleDiagnostics:meta.moduleDiagnostics.length,executableFunctions:meta.executable.filter(item=>item.term==='fn').length,executableConstants:0,targets:{meta:'tools/translation/projects/src/lib.meta.json',javascript:'packages/javascript/generated/rust-project/src/lib.mjs',typescript:'packages/typescript/generated/rust-project/src/lib.ts'}};}
+function projectRow(meta,count){return {entry:'src/lib.rs',sources:meta.sources.length,refused:meta.refused.length,unloweredItems:meta.unloweredItems.length,checkedMethods:meta.checkedMethods.length,checkedGeneratedMethods:count,moduleDiagnostics:meta.moduleDiagnostics.length,executableFunctions:meta.executable.filter(item=>item.term==='fn').length,executableConstants:0,targets:{meta:'tools/translation/projects/src/lib.meta.json',javascript:'js/generated/rust-project/src/lib.mjs',typescript:'ts/generated/rust-project/src/lib.ts'}};}
 function repository(meta,{legacy=false}={}){
   const directory=mkdtempSync(join(tmpdir(),'router-generated-review-'));
   const write=(name,value)=>{const path=join(directory,name);mkdirSync(dirname(path),{recursive:true});writeFileSync(path,value);};
@@ -96,7 +96,7 @@ function repository(meta,{legacy=false}={}){
   const install=current=>{
     const items=sourceItems(source).filter(item=>!item.comment).map(item=>({term:item.term,name:item.name,span:{start:item.start,end:item.end},source:source.slice(item.start,item.end),sha256:hash(source.slice(item.start,item.end)),status:item.term==='fn'&&current.executable.length?'executable':'carried'}));
     const counts={executable:items.filter(item=>item.status==='executable').length,carried:items.filter(item=>item.status==='carried').length,preserved:0};
-    const targets={meta:'tools/translation/meta/src/lib.meta.json',javascript:'packages/javascript/generated/rust-draft/src/lib.mjs',typescript:'packages/typescript/generated/rust-draft/src/lib.ts'};
+    const targets={meta:'tools/translation/meta/src/lib.meta.json',javascript:'js/generated/rust-draft/src/lib.mjs',typescript:'ts/generated/rust-draft/src/lib.ts'};
     write(targets.meta,JSON.stringify({sourcePath:'src/lib.rs',sourceBytes:Buffer.byteLength(source),sourceSha256:hash(source),items,counts}));write(targets.javascript,'export {};\n');write(targets.typescript,'export {};\n');
     const project=projectRow(current,current.checkedGeneratedMethods?.length??0);if(legacy)delete project.checkedGeneratedMethods;
     write(project.targets.meta,JSON.stringify(current));write(project.targets.javascript,'export {};\n');write(project.targets.typescript,'export {};\n');

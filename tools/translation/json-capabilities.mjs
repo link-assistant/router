@@ -8,7 +8,7 @@ import {unsupported} from './vendor/meta-language/translation/diagnostics.js';
 import {freezeMacroTree} from './macro-token-trees.mjs';
 const root=new URL('./source-profiles/json-capabilities/',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
 const bytes=readFileSync(new URL('manifest.json',root));
-if(hash(bytes)!=='4b329929001961cd6cdb221ba83f97698ccad8ca1de2b43d73641027e018f02d')throw new TypeError('JSON feature source profile changed');
+if(hash(bytes)!=='b31b059ad69822aebe097347a55dfbf590aa209085750f3821b5bd0cf8ff94cd')throw new TypeError('JSON feature source profile changed');
 const INPUTS=freezeMacroTree(JSON.parse(bytes));
 
 function actualFeatures(manifest,lock) {

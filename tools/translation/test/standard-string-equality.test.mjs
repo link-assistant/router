@@ -12,7 +12,7 @@ const hash=source=>createHash('sha256').update(source).digest('hex');
 const find=(value,predicate)=>value&&typeof value==='object'?(predicate(value)?value:Object.entries(value).filter(([key])=>!['type','copyCertificate'].includes(key)).map(([,child])=>Array.isArray(child)?child.map(item=>find(item,predicate)).find(Boolean):find(child,predicate)).find(Boolean)):null;
 
 test('unchanged production RefUpdate create/delete bodies consume standard String-place equality',async()=>{
-  const source=readFileSync(new URL('../../../src/git_proxy.rs',import.meta.url),'utf8');
+  const source=readFileSync(new URL('../../../rust/src/git_proxy.rs',import.meta.url),'utf8');
   assert.equal(hash(source),'ed47b0f287dcf7cc1d03672ed1abd924bebb5862929af06f714ccdff42409f22');
   const pins=[['const','ZERO_OID',1299,1365,'53cd2719fed634701423b50bb15c35d990c10ff0c22a4cb8c6edd726d78bc961'],['struct','RefUpdate',1426,1553,'2768451b4d5c3269ba735025323a70750cd62bad5d38ab5c012de64916ae4875'],['impl','RefUpdate',1555,1859,'b2acf1c1a0586cd8458cfafb5ece73065ed27cfd151bfc8c45786ada41c6e442']];
   const declarations=pins.map(([term,name,start,end,digest])=>{assert.ok(sourceItems(source).some(item=>item.term===term&&item.name===name&&item.start===start&&item.end===end));const text=source.slice(start,end);assert.equal(hash(text),digest);return text;});

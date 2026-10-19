@@ -78,7 +78,7 @@ test('complete 705 scoped census separately retains all prior 34 full-domain bod
     assert.equal(total,705);assert.equal(top,73);assert.equal(topItems,788);
     assert.equal([...analyses.values()].reduce((n,{analysis})=>n+analysis.scopedFunctions.translatedItems,0),fixtures.length+9+18+2+3);
     for(const [path,start,kind]of fixtures) {
-      const {source,analysis}=analyses.get('packages/javascript/native/'+path),item=analysis.scopedFunctions.items.find(item=>item.start===start),fn=analysis.scopedFunctions.program.find(fn=>fn.name===item.name);assert.equal(item.status,'translated',path+':'+start);assert.deepEqual(item.captures,[]);assert.equal(item.owner.status,'unsupported');
+      const {source,analysis}=analyses.get('js/src/'+path),item=analysis.scopedFunctions.items.find(item=>item.start===start),fn=analysis.scopedFunctions.program.find(fn=>fn.name===item.name);assert.equal(item.status,'translated',path+':'+start);assert.deepEqual(item.captures,[]);assert.equal(item.owner.status,'unsupported');
       const meta=toLino(fn),program=parseMeta(meta);assert.deepEqual(program,[fn]);const typescript=emitTypeScript(program),rust=emitRust(program),camel=fn.name.replace(/_([a-z])/g,(_,c)=>c.toUpperCase());
       const [original,typed]=await runtime('export const original=('+source.slice(item.start,item.end)+');',typescript+`\nexport {${camel} as original};`,directory,path+'-'+start);
       const invocations=[original,typed,(...args)=>evaluate(program,fn.name,args)],observations=[];

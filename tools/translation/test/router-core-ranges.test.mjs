@@ -46,7 +46,7 @@ const cases=[
 ];
 
 test('owned range facade leaf and checked primitive operation retain complete source and semantic boundaries',async()=>{
-  const physical=readFileSync(new URL('../../../src/translation_core/ranges.rs',import.meta.url),'utf8');
+  const physical=readFileSync(new URL('../../../rust/src/translation_core/ranges.rs',import.meta.url),'utf8');
   retain('complete-owned-leaf',{physical,registered:ROUTER_CORE_RANGES_SOURCE,sha256:ROUTER_CORE_RANGES_SHA256,contract:ROUTER_CORE_RANGE_CONTRACT});
   assert.equal(physical,ROUTER_CORE_RANGES_SOURCE);assert.equal(hash(physical),ROUTER_CORE_RANGES_SHA256);
   const stage=transportConcreteSyntaxSource(physical,{language:'Rust'});assert.equal(transportConcreteSyntaxMeta(stage.meta).source,physical);

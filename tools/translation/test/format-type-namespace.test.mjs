@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
@@ -13,7 +14,7 @@ import {sourceItems} from '../rust-structure.mjs';
 import {captureOriginalFmtTypeNamespace,resolveOriginalFmtTypePath,originalFmtTypePathFacts,resolveOriginalDisplaySignature,proveOriginalDisjointDisplayTrait} from '../format-type-namespace.mjs';
 import {sourceNominalDisplayClosure,sourceNominalDisplayClosureFacts} from '../format-display-source.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),read=path=>readFileSync(new URL(path,root),'utf8'),manifest=read('Cargo.toml'),lock=read('Cargo.lock'),dependencies=loadDeriveDependencyProof({manifest,lock});
+const root=new URL('../../../',import.meta.url),read=path=>readFileSync(repositorySourceURL(path,root),'utf8'),manifest=read('Cargo.toml'),lock=read('Cargo.lock'),dependencies=loadDeriveDependencyProof({manifest,lock});
 const retain=(name,value)=>{if(process.env.ROUTER_FMT_NAMESPACE_VECTOR_DIR){mkdirSync(process.env.ROUTER_FMT_NAMESPACE_VECTOR_DIR,{recursive:true});writeFileSync(process.env.ROUTER_FMT_NAMESPACE_VECTOR_DIR+'/'+name+'.json.gz',gzipSync(JSON.stringify(value,(_,item)=>typeof item==='bigint'?{$integer:item.toString()}:item)+'\n',{mtime:0}));}};
 const declaration='#[derive(Clone,Copy)]pub enum Provider{First,Second}impl Provider{pub const fn as_str(self)->&\'static str{match self{Self::First=>"first",Self::Second=>"second"}}}';
 const display='impl fmt::Display for Provider{fn fmt(&self,f:&mut fmt::Formatter<\'_>)->fmt::Result{f.pad(self.as_str())}}',caller='pub fn show(provider:Provider)->String{format!("{provider};{provider}")}',source='use std::fmt;'+declaration+display+caller;

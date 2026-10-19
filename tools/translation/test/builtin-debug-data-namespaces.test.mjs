@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -14,7 +15,7 @@ import {liftBuiltinDebugAstRoute} from '../builtin-debug-ast-route.mjs';
 import {translateProject} from '../project.mjs';
 import {PRODUCTION_PROFILE,compilationProfile} from '../cfg-profile.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),read=path=>readFileSync(new URL(path,root),'utf8'),dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')}),hash=s=>createHash('sha256').update(s).digest('hex');
+const root=new URL('../../../',import.meta.url),read=path=>readFileSync(repositorySourceURL(path,root),'utf8'),dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')}),hash=s=>createHash('sha256').update(s).digest('hex');
 function setup(source,profile=PRODUCTION_PROFILE){const modules=[{file:'src/lib.rs',path:[],source}],context=createDeriveFootprintContext({modules,dependencies,compilationProfile:profile}),certificate=context.certificates[0],attribute=certificate?.attributes.find(a=>a.derives?.some(p=>p.join('::')==='Debug'));return{context,certificate,invocation:attribute&&{path:['Debug'],attributeSpan:attribute.span},modules};}
 const record=count=>'#[derive(Debug,serde::Serialize)]pub struct Record{'+Array.from({length:count},(_,i)=>'pub value'+i+':String').join(',')+'}';
 const prove=source=>proveBuiltinDeriveBangFootprint(setup(source));

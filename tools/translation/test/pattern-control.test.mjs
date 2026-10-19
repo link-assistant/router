@@ -181,7 +181,7 @@ test('aggregate moves, aliases, references, generic patterns and value-producing
 });
 
 test('original upstream-path function translates unchanged through the independent pattern pipeline',async()=>{
-  const source=readFileSync(new URL('../../../src/proxy/upstream_path.rs',import.meta.url),'utf8');
+  const source=readFileSync(new URL('../../../rust/src/proxy/upstream_path.rs',import.meta.url),'utf8');
   assert.equal(hash(source),'bd1cf836b23868fdc92750d17c0548c8318930314eef81196fd9768d46ccb898');
   const item=sourceItems(source).find(item=>item.name==='resolve_upstream_path');
   assert.equal(item.start,687);assert.equal(item.end,1472);
