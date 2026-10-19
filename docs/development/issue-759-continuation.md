@@ -374,6 +374,47 @@ deadlines and JavaScript-before-Rust dependencies.
 
 ## Work required in the next pull request
 
+The current source-bank refresh includes all 850 Rust/Cargo inputs and preserves
+both historical universes and complete CST inverses. Its complete eight-case
+Node receiving file passed in 155.415 seconds, including the original two-producer
+case in 52.038 seconds within its unchanged 60-second deadline. The compiler
+registry and portable receiving fixture were also refreshed through their actual
+producers; all 16 receiving cases passed under Node and Bun. The separate earlier
+Bun source-bank resource failures remain open.
+
+The owned metadata producer now has an explicit rule-generated UTF-8 field
+format. It copies the complete original planner and actual fixed Map/BigInt
+serializer, preserving the original string APIs, field order, omissions, nested
+`toJSON` key arguments, storage bytes and limits. Bounded progress distinguishes
+metadata planning from output retention. All 22 complete receiving cases passed
+under Node and Bun, including every UTF-16 unit, malformed UTF-8/JSON, independent
+strict targets and callback failures before writes. The first Node draft run
+remains red: the new compiler files had not yet been staged for the mandatory
+tracked-input census, and a new assertion expected a storage error instead of
+the original native malformed-JSON `SyntaxError`. Neither repair changed an
+existing case or deadline. Live full-project qualification remains open.
+
+Separate fresh Node processes compared the complete captured 58,700,590-byte
+CST field under both planners. All three component descriptors and complete
+root bytes matched. Planning took 1.659 and 1.661 seconds respectively; this
+does not establish a speed gain. The UTF-8 observation used about 118.5 MB less
+JavaScript heap after planning and about 117.0 MB more external memory, with
+similar observed RSS. This isolates storage lifetime and leaves the full live
+compiler's unchanged heap/RSS bounds to be tested independently.
+
+An intentionally partial CPU profile of the actual 396-module project stopped
+before Default resolution. It took 81.316 seconds including profiling overhead;
+the enclosing derive namespace creator accounted for about 57.658 sampled
+inclusive seconds. Complete samples and original inputs are retained locally.
+These observations identify remaining work; they do not establish a speed gain,
+an original full-project test pass or runtime parity.
+
+The published `657169fb8c4ea9dffff292b91ac49a030a49b4cf` cycle is complete:
+30 successful, 41 failed, 19 cancelled and 42 skipped checks. All 41 complete
+failure logs were collected before preparing the next coordinated feedback
+checkpoint. The focused receiving repairs above do not establish that every
+CI failure, full-producer memory limit or source-declared deadline is resolved.
+
 | Requirement | Current state and next verification |
 | --- | --- |
 | Complete JavaScript and TypeScript generation | Open. Run preparation, affinity, canonical and all three profile producers; independently review and install every output. |

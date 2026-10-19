@@ -113,6 +113,17 @@ large wrappers and their component copies can defeat the memory optimization.
 This data-storage contract does not establish arbitrary replacer/observer
 equivalence or cache any source or semantic verdict.
 
+For the owned UTF-8 field format, derive both complete source copies with
+`node tools/translation/prepare-project-meta-utf8-storage.mjs --emit`, review
+their serialized/reparsed CST and full inverses, install the exact proposals
+and run `--check`. Its fixed serializer copies the actual Map/BigInt JSON
+expression and converts the keyed wrapper directly to bytes before returning.
+Preserve every field byte, native key argument, omission and original storage
+bound. The original string API remains independently checked. The owned bulk
+producer reports bounded storage and retention progress before and after each
+operation; callback failures must propagate before any generated file is written.
+Passing storage fixtures does not establish live-project memory fit or parity.
+
 The explicit retained owned-definition lane uses a separately generated UTF-16
 byte-retention format. Derive it with
 `node tools/translation/prepare-byte-output-text.mjs --emit`, review its complete

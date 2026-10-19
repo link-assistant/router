@@ -72,3 +72,13 @@ test('cold explicit CLI and stale draft cleanup preserve refusal and exact insta
  // Both full actual525 original parents remain independent evidence, not synthetic coverage.
  const historical=original('tools/translation/js-to-rust/test/forward-owned-json-definitions.test.mjs'),start=historical.indexOf('const PARENTS=');assert.ok(start>0);const parents=JSON.parse(historical.slice(start+'const PARENTS='.length).trim().slice(0,-1));for(const row of parents){const source=gunzipSync(Buffer.from(row.parentGzip,'base64')).toString('utf8');assert.equal(sha(source),row.parentSha256);assert.equal(source.slice(...row.span),row.source);retained(row.name+'-complete-parent',{...row,parent:source,current:original(row.file)});}
 });
+
+test('owned metadata storage and retention diagnostics preserve complete output and callback refusal',limits,async t=>{
+ const actual=fixture(t),bulk=await owned(),options={root:actual.directory,entries:['src/lib.rs']},plain=bulk.planRegeneration(options),records=[],traced=bulk.planRegeneration({...options,progress:record=>records.push(record)});
+ assert.deepEqual(traced.outputs,plain.outputs);assert.deepEqual(traced.manifest,plain.manifest);
+ const phases=['owned-meta-storage-start','owned-meta-storage-end','owned-meta-retain-start','owned-meta-retain-end'];
+ assert.deepEqual(records.filter(record=>phases.includes(record.phase)).map(record=>record.phase),phases);
+ for(const phase of phases){const sentinel=new Error(phase);assert.throws(()=>bulk.planRegeneration({...options,progress:record=>{if(record.phase===phase)throw sentinel;}}),error=>error===sentinel);}
+ assert.equal(existsSync(join(actual.directory,'tools/translation/projects')),false);
+ assert.equal(existsSync(join(actual.directory,'js/generated')),false);
+});
