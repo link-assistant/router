@@ -1,3 +1,4 @@
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import {translateProject} from '../project.mjs';
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
@@ -20,7 +21,7 @@ import {json_macro_object,json_macro_string,json_macro_bool} from '../json-macro
 const root=fileURLToPath(new URL('../../../',import.meta.url)),core='src/translation_core.rs',primitive='src/translation_core/primitives.rs';
 let vectors=[];const retain=(kind,value)=>{vectors.push({kind,value});return value;};
 const test=(name,run)=>testCase(name,{timeout:60000},async t=>{vectors=[];try{await run(t);}finally{if(process.env.ROUTER_CORE_FACADE_SOURCE_VECTOR_DIR){const directory=process.env.ROUTER_CORE_FACADE_SOURCE_VECTOR_DIR;mkdirSync(directory,{recursive:true});writeFileSync(join(directory,Buffer.from(name).toString('hex')+'.json'),JSON.stringify({name,vectors},(_key,value)=>typeof value==='bigint'?{$integer:String(value)}:value)+'\n');}}});
-function original(path){return existsSync(join(root,path))?readFileSync(join(root,path),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:30000,maxBuffer:16777216});}
+function original(path){return existsSync(join(root,path))?readFileSync(join(root,path),'utf8'):execFileSync('git',['show','HEAD:'+repositorySourcePath(path,root)],{cwd:root,encoding:'utf8',timeout:30000,maxBuffer:16777216});}
 function selected(rootSource='pub mod translation_core;\n',options={}){
  const files={'src/lib.rs':rootSource,[core]:ROUTER_FORMATTING_FACADE_SOURCE,[primitive]:ROUTER_CORE_PRIMITIVES_SOURCE,...options.files},profile=Object.hasOwn(options,'profile')?options.profile:PRODUCTION_PROFILE,modules=[];
  for(const [file,prefix]of [['src/lib.rs',[]],[core,['translation_core']],[primitive,['translation_core','primitives']]]){

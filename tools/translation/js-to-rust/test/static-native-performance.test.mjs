@@ -1,3 +1,4 @@
+import {adaptHistoricalTypeScriptLayout} from '../../test/fixtures/historical-language-layout.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
@@ -15,11 +16,12 @@ function retain(name,value){if(!process.env.ROUTER_STATIC_NATIVE_VECTORS)return;
 async function oracle(name){
  if(oracles.has(name))return oracles.get(name);const row=pins.members.find(row=>row.sourceFile===name+'.source.txt');assert.ok(row);const bytes=readFileSync(new URL(row.sourceFile,fixtures));assert.equal(bytes.length,row.bytes);assert.equal(hash(bytes),row.sha256);assert.equal(createHash('sha1').update('blob '+bytes.length+'\0').update(bytes).digest('hex'),row.gitBlob);
  // Full pinned implementation, with only its module specifiers relocated.
- const original=bytes.toString(),parent=new URL(row.originalPath,pathToFileURL(root+'/'));
+ const original=bytes.toString(),adaptation=name==='native-typescript'?adaptHistoricalTypeScriptLayout(original):null,parent=new URL(row.originalPath,pathToFileURL(root+'/'));
+ if(adaptation)retain('complete-historical-typescript-layout',{original,adaptation,originalSha256:row.sha256});
  const dependencies=new Map();
  if(name==='scoped-helpers'||name==='ir')dependencies.set('./lexical-environments.mjs',(await oracle('lexical-environments')).url);
  if(name==='scoped-helpers')dependencies.set('./ir.mjs',(await oracle('ir')).url);
- const source=original.replace(/(from\s+)(['"])(\.[^'"]+)\2/g,(_all,prefix,quote,path)=>prefix+quote+(dependencies.get(path)??new URL(path,parent).href)+quote);
+ const source=(adaptation?.source??original).replace(/(from\s+)(['"])(\.[^'"]+)\2/g,(_all,prefix,quote,path)=>prefix+quote+(dependencies.get(path)??new URL(path,parent).href)+quote);
  // A separate complete old IR module reads only its matching old private
  // lexical issuer. No old handle crosses into the current private WeakMap.
  const url='data:text/javascript;base64,'+Buffer.from(source).toString('base64'),module=await import(url);const value={module,url,originalSha256:row.sha256};oracles.set(name,value);return value;

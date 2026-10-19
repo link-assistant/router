@@ -28,6 +28,16 @@ test('complete components roundtrip original Map BigInt undefined Unicode key or
  assert.equal(loadProjectMetaStorage(f.plan.text,{metaPath,targets:f.targets,read:name=>f.files.get(name)}).text,f.original);
  retain('02-complete-special-json-roundtrip',{...f,files:Object.fromEntries(f.files),loaded});
 });
+test('large Unicode components preserve complete bytes and reject noncanonical parent separators',()=>{
+ const payload='Ω😀\\\"{}\n'.repeat(17000),original=json({schema:'tracked-rust-project-semantic-meta-v1',checkedSemanticProgram:{payload},middle:{payload},targetSemanticProgram:{payload}});
+ const storageLimits={fileBytes:Buffer.byteLength(json({payload}))+2048,totalBytes:8*1024*1024};
+ const plan=planProjectMetaStorage(metaPath,original,{storageLimits}),files=new Map(plan.components.map(row=>[row.path,row.text]));
+ assert.ok(original.length>65536);assert.equal(plan.components.length,2);
+ const loaded=loadProjectMetaStorage(plan.text,{metaPath,targets:{meta:metaPath,javascript:'out.mjs',typescript:'out.ts',...plan.targets},read:name=>files.get(name),storageLimits});
+ assert.equal(loaded.text,original);assert.deepEqual(loaded.meta,JSON.parse(original));
+ for(const changed of [' '+original,original.replace(',"middle":',', "middle":'),original.slice(0,-1)])assert.throws(()=>planProjectMetaStorage(metaPath,changed,{storageLimits}),/complete canonical json\(meta\) required/);
+ retain('02-large-complete-unicode-parent-comparison',{original,plan,loaded});
+});
 test('complete storage bytes hash logical digest field ordering and component roles reject tampering',()=>{
  const f=fixture(),failures=[];for(const change of [root=>{root.logical.sha256='0'.repeat(64);},root=>{root.logical.bytes++;},root=>{root.logical.keys.reverse();},root=>{delete root.root.last;},root=>{root.root.extra='forged';},root=>{root.components.reverse();},root=>{root.components[0].bytes++;},root=>{root.components[0].sha256='f'.repeat(64);},root=>{root.components.push(root.components[0]);}]){
   const root=JSON.parse(f.plan.text);change(root);failures.push({root,failure:failure(()=>load(f,json(root)))});

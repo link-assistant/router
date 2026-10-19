@@ -1,3 +1,4 @@
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -12,7 +13,7 @@ import {serde_json_from_str} from '../extensions/json-runtime.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 const root=new URL('../../../',import.meta.url);
-const read=path=>{try{return readFileSync(repositorySourceURL(path,root),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;return execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',maxBuffer:10000000});}};
+const read=path=>{try{return readFileSync(repositorySourceURL(path,root),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;return execFileSync('git',['show','HEAD:'+repositorySourcePath(path,root)],{cwd:root,encoding:'utf8',maxBuffer:10000000});}};
 test('unchanged whole model contract executes source-certified catalog and wire methods while owned Result barriers remain refused',{timeout:60000},async()=>{
  const entry='src/model_contract.rs',source=read(entry),paths=execFileSync('git',['ls-tree','-r','--name-only','HEAD','--','src'],{cwd:root,encoding:'utf8'}).trim().split('\n'),dependency={manifest:read('Cargo.toml'),lock:read('Cargo.lock')},result=translateProject({entry,paths,readSource:read,deriveDependencies:loadDeriveDependencyProof(dependency),jsonMacroDependencies:loadJsonMacroSourceProof(dependency),compilationProfile:PRODUCTION_PROFILE});
  assert.equal(result.meta.sources.find(item=>item.source===entry).sha256,createHash('sha256').update(source).digest('hex'));

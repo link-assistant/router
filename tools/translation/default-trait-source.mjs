@@ -77,8 +77,8 @@ function originalStandardDefault(dependencies){
 export function createDefaultSourceContext(deriveContext){
   return createDefaultContext(deriveContext,resolveDerivedSourceBindings);
 }
-export function createDefaultEnclosingSourceContext(deriveContext){
-  return createDefaultContext(deriveContext,resolveDerivedEnclosingSourceBindings);
+export function createDefaultEnclosingSourceContext(deriveContext,{deriveBangContext}={}){
+  return createDefaultContext(deriveContext,input=>resolveDerivedEnclosingSourceBindings({...input,deriveBangContext}));
 }
 function createDefaultContext(deriveContext,resolveBindings){
   const original=deriveFootprintSourceContext(deriveContext),{dependency,profile,pin,source,trait,syntax,routes,descriptors,keywordSymbols}=originalStandardDefault(original.dependencies);

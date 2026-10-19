@@ -70,11 +70,14 @@ function literalTree(tree,budget={nodes:0},depth=0){
  return false;
 }
 /** Internal repository phase; inputs are supplied by the private compiler. */
-export function prepareForwardOwnedDefinitions({project,entries,checked,genuineOrigin,target,sourceModules,lower,readerFormat}){
+export function prepareForwardOwnedDefinitions({project,entries,checked,genuineOrigin,target,sourceModules,lower,readerFormat,progress}){
  assertReverseConcreteSourceHost();
  const definitions=[],unsupported=[],parents=new Map();let bytes=0;
  if(entries.length>4096)fail('definition count bound');
+ let completed=0;
  for(const entry of entries){
+  if(completed%32===0)progress?.({stage:'project-serialize',state:'advance',entry:project,phase:'owned-definitions',source:entry.file,completed,total:entries.length});
+  completed++;
   const current=target.program.declarations.get(target.names.get(entry.name));
   // Candidate filtering only. The actual lower() rechecks original source/calls.
   if(entry.term!=='fn'||!current||current.params.length||current.async||current.body.k!=='routerJsonMacro'||current.body.args.length||!literalTree(current.body.jsonTree)){

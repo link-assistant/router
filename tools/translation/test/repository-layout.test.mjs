@@ -7,7 +7,7 @@ import {repositoryRustLayout,rustPackageSourcePath} from '../repository-layout.m
 import {captureSourceCorpus,sourceCorpusText} from '../source-corpus.mjs';
 import {translateProject} from '../project.mjs';
 import {parseProgram,serializeProgram} from '../semantic-meta.mjs';
-import {substituteRepositorySourceURLs,substituteTypeScriptPackageLayout,substituteRustPackageReads} from '../repository-path-substitutions.mjs';
+import {substituteRepositorySourceURLs,substituteTypeScriptPackageLayout,substituteRustPackageReads,substituteRepositoryGitSourceReads} from '../repository-path-substitutions.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 import {buildArtifacts} from '../../../scripts/regenerate-js-first.mjs';
 import {parseMeta} from '../js-to-rust/translator.mjs';
@@ -89,6 +89,8 @@ test('parsed source URL substitutions preserve child templates through both CST 
   const moved=substituteRepositorySourceURLs(literal,'./helper.mjs');
   assert.equal(moved.edits.length,1);assert.equal(moved.wholeInverse,true);
   assert.equal(moved.source,'import {repositorySourceURL} from "./helper.mjs";\nconst cargo=repositorySourceURL("Cargo.toml",root);\n');
+  const variableFile=substituteRepositorySourceURLs('const source=readFileSync(new URL(file,root),"utf8");','./helper.mjs');
+  assert.equal(variableFile.edits.length,1);assert.equal(variableFile.wholeInverse,true);assert.ok(variableFile.source.includes('repositorySourceURL(file,root)'));
 });
 
 
@@ -135,4 +137,12 @@ test('crate-relative read substitutions preserve fixture labels embedded sources
  assert.ok(result.source.includes('writeFileSync(join(root,path),source)'));
  assert.equal(transportConcreteSyntaxMeta(result.afterWire).source,result.source);
  assert.equal(substituteRustPackageReads(result.source,'../repository-layout.mjs').changed,false);
+});
+test('current Git source read substitutions preserve historical revisions and embedded child sources',{timeout:5000},()=>{
+ const source='const child=`execFileSync("git",["show","HEAD:"+name],{cwd:root})`;\nconst current=execFileSync("git",["show","HEAD:"+name],{cwd:root,encoding:"utf8"});\nconst manifest=execFileSync("git",["show","HEAD:Cargo.toml"],{cwd:ROOT});\nconst historical=execFileSync("git",["show","1234567:"+name],{cwd:root});\n';
+ const result=substituteRepositoryGitSourceReads(source,'./fixtures/repository-paths.mjs');
+ assert.equal(result.edits.length,2);assert.equal(result.wholeInverse,true);assert.deepEqual(result.trace.map(row=>row.phase),['language','repository']);
+ assert.ok(result.source.includes("'HEAD:'+repositorySourcePath(name,root)"));assert.ok(result.source.includes("'HEAD:'+repositorySourcePath(\"Cargo.toml\",ROOT)"));
+ assert.ok(result.source.includes('`execFileSync("git",["show","HEAD:"+name],{cwd:root})`'));assert.ok(result.source.includes('["show","1234567:"+name]'));
+ assert.equal(transportConcreteSyntaxMeta(result.afterWire).source,result.source);assert.equal(substituteRepositoryGitSourceReads(result.source,'./fixtures/repository-paths.mjs').changed,false);
 });

@@ -1,3 +1,4 @@
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -19,7 +20,7 @@ import {translateProject} from '../project.mjs';
 import {PRODUCTION_PROFILE,compilationProfile} from '../cfg-profile.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const root=new URL('../../../',import.meta.url),hash=s=>createHash('sha256').update(s).digest('hex');
-const read=path=>{try{return readFileSync(repositorySourceURL(path,root),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;return execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',maxBuffer:10000000});}};
+const read=path=>{try{return readFileSync(repositorySourceURL(path,root),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;return execFileSync('git',['show','HEAD:'+repositorySourcePath(path,root)],{cwd:root,encoding:'utf8',maxBuffer:10000000});}};
 const dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')});
 const jsonMacroDependencies=loadJsonMacroSourceProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')});
 function setup(source,{file='src/lib.rs',profile=PRODUCTION_PROFILE}={}){

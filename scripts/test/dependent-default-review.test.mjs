@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "../../tools/translation/test/fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
@@ -8,7 +9,7 @@ import {loadDeriveDependencyProof} from '../../tools/translation/derive-dependen
 import {loadJsonMacroSourceProof} from '../../tools/translation/json-macro-inputs.mjs';
 import {PRODUCTION_PROFILE} from '../../tools/translation/cfg-profile.mjs';
 import {verifyTypedTargets} from '../../tools/translation/test/typed-targets.mjs';
-const root=new URL('../../',import.meta.url),inputs={manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')},dependencies=loadDeriveDependencyProof(inputs),jsonMacroDependencies=loadJsonMacroSourceProof(inputs);
+const root=new URL('../../',import.meta.url),inputs={manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')},dependencies=loadDeriveDependencyProof(inputs),jsonMacroDependencies=loadJsonMacroSourceProof(inputs);
 const source='#[derive(Default)]pub struct Leaf{flag:bool}#[derive(Default)]pub enum Choice{A,#[default]B}#[derive(Default)]pub struct Child{leaf:Leaf,choice:Choice,values:Vec<u8>}#[derive(Default)]pub struct Payload{first:Child,second:Child}pub fn make()->Payload{Payload::default()}';
 let original;
 function fixture(){original??=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,deriveDependencies:dependencies,jsonMacroDependencies,compilationProfile:PRODUCTION_PROFILE});return original;}

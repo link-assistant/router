@@ -23,7 +23,7 @@ for(const [target,kind]of [['String','owned-standard-string'],['&str','shared-pr
  const source='pub struct Other; impl PartialEq<Other> for '+target+' {fn eq(&self,_other:&Other)->bool{false}}',input=original(source),selected=bind(input),proof=originalStandardImplementationTarget(selected);assert.ok(proof);assert.equal(proof.kind,kind);assert.equal(proof.targetOriginal,target);assert.equal(proof.traitBodyExecuted,false);assert.equal(proof.copyAuthority,false);assert.equal(proof.noDropAuthority,false);assert.equal(proof.conditionalAvailabilitySelected,false);assert.deepEqual(selected.diagnostics,input.implementations[0].diagnostics);assert.ok(proof.parsedType.rustOwnership);retain('canonical-'+kind,{source,implementation:input.implementations[0],selected,proof});
 });
 test('complete unchanged InstanceName original String and shared str impl headers retain all independent body refusals',()=>{
- const file='src/deploy/instance.rs',source=readFileSync(new URL(file,root),'utf8'),input=original(source,file),rows=[];
+ const file='src/deploy/instance.rs',source=readFileSync(repositorySourceURL(file,root),'utf8'),input=original(source,file),rows=[];
  for(const [start,end,kind]of [[6296,6335,'owned-standard-string'],[6427,6464,'shared-primitive-str']]){
   const implementation=input.implementations.find(row=>row.headerSpan.start===start&&row.headerSpan.end===end);assert.ok(implementation);const selected=bind(input,implementation),proof=originalStandardImplementationTarget(selected);assert.ok(proof);assert.equal(proof.kind,kind);assert.deepEqual(proof.headerSpan,{start,end});assert.deepEqual(selected.diagnostics,implementation.diagnostics);assert.equal(proof.traitBodyExecuted,false);rows.push({implementation,selected,proof});
  }

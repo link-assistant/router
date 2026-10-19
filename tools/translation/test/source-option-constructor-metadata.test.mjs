@@ -1,3 +1,4 @@
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import nativeTest from 'node:test';
 import assert from 'node:assert/strict';
 import {isDeepStrictEqual} from 'node:util';
@@ -25,7 +26,7 @@ import {completeCoreSourceFixture} from './complete-core-source-fixture.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const root=fileURLToPath(new URL('../../../',import.meta.url)),nativeJSON=JSON.stringify;
-const read=path=>{try{return readFileSync(join(root,path),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;return execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:20000,maxBuffer:16777216});}};
+const read=path=>{try{return readFileSync(join(root,path),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;return execFileSync('git',['show','HEAD:'+repositorySourcePath(path,root)],{cwd:root,encoding:'utf8',timeout:20000,maxBuffer:16777216});}};
 let number=0;
 function test(name,run){const index=++number;nativeTest(name,{timeout:60000},async()=>{const vectors=[];try{await run(vectors);}finally{const directory=process.env.ROUTER_OPTION_CONSTRUCTOR_METADATA_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});const source=nativeJSON({name,vectors},(_key,value)=>typeof value==='bigint'?{$integer:String(value)}:value instanceof Map?{$map:[...value]}:value);writeJsonTextGzip(join(directory,String(index).padStart(2,'0')+'-complete.json.gz'),source);}}});}
 const project=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});

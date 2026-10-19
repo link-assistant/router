@@ -91,6 +91,20 @@ Prioritize common translation blockers using actual project diagnostics. A [shar
 
 Keep work bounded: run one expensive compiler, test or compression workload at a time, reuse existing worktrees and dependencies, check disk space and retain complete failure evidence with lossless compression. Assign that workload explicitly before a worker starts it. Retain actual source versions, full vectors, commands, compiler identities, logs and resource receipts; a digest alone does not preserve the original evidence. When a command becomes slow, measure it before optimizing shared rules; preserve semantics, complete test cases and deadlines. Do not filter failures, raise limits or weaken refusals to obtain a pass. Report executable coverage separately from source preservation, and retain explicit parity limitations until the full checks prove them resolved.
 
+For source-layout changes, select executable filesystem and current Git reads
+with the parser, apply ordered CST substitutions and verify complete source
+inverses. Preserve frozen historical source bytes, hashes and logical source
+identities. Adapt their receiving loaders explicitly; embedded child sources
+and immutable historical revisions must keep their own paths and contracts.
+
+Within one project invocation, compose genuine source contexts explicitly when
+several consumers need the same original graph. Each consumer must retain its
+complete source, profile and private-issuer checks. Do not memoize namespace
+verdicts across invocations. Compare large serialized metadata in bounded
+fragments while preserving every byte comparison, existing component and
+aggregate limits, and independent reconstruction. A storage optimization or a
+focused pass still requires a fresh complete producer and gate result.
+
 For issue #759, the user's 2026-10-19 instruction supersedes the earlier two-worker limit: existing assignments have finished and the coordinator continues alone, including publication. Do not spawn or resume subagents. Reuse the assigned worktrees; do not clone more repositories. The current owner is recorded in [AGENTS.md](AGENTS.md). Keep the case study below its fixed 500,000,000-byte filesystem allocation and measure allocation without counting shared inodes twice. Preserve complete recovery and continuity evidence before retiring an archive. The user authorized removal of this task's own inactive Rust caches and build directories regardless of age; identify each owned path, check that no worker uses it, and record reclaimed space. Never remove another worker's active directory or lock. Freed space does not authorize a local Rust build.
 
 Use [the reusable translation guidance](docs/development/reusable-translation-guidance/README.md) when copying this workflow to another repository. Copy its contribution and agent guidance separately from the compiler export, preserve the receiving repository's conventions and stricter user constraints, and qualify the receiving project independently. Reused upstream implementations must retain pinned source bytes, notices and licenses; a copied approach or successful export is not evidence of complete translation.

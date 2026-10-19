@@ -50,6 +50,21 @@ function topFields(source){
   at++;white();if(at!==source.length)fail('trailing original JSON');return fields;
 }
 function canonicalValue(raw){const value=JSON.parse(raw);if(JSON.stringify(value)!==raw)fail('noncanonical component JSON');return value;}
+// Compare every code unit without constructing another complete project wire.
+// A large joined rope would need flattening beside the original metadata and
+// live checked programs. Only bounded comparison slices are temporary here.
+function sameFragments(source,fragments){
+  let cursor=0;
+  for(const fragment of fragments){
+    if(cursor+fragment.length>source.length)return false;
+    for(let at=0;at<fragment.length;at+=65536){
+      const end=Math.min(fragment.length,at+65536);
+      if(source.slice(cursor+at,cursor+end)!==fragment.slice(at,end))return false;
+    }
+    cursor+=fragment.length;
+  }
+  return cursor===source.length;
+}
 /** Accept the already serialized json(meta), preserving its Map/BigInt/undefined
  * and property-order semantics rather than visiting the original object twice. */
 export function planProjectMetaStorage(metaPath,serialized,{storageLimits}={}){
@@ -57,7 +72,11 @@ export function planProjectMetaStorage(metaPath,serialized,{storageLimits}={}){
   if(bytes>bound.totalBytes)throw new RangeError('Project metadata storage aggregate byte budget');
   if(bytes<=bound.fileBytes)return {text:serialized,components:[],targets:{}};
   const fields=topFields(serialized),selected=new Map(fields.filter(row=>components.some(component=>component.field===row.name)).map(row=>[row.name,row.raw]));
-  if('{'+fields.map(row=>JSON.stringify(row.name)+':'+row.raw).join(',')+'}\n'!==serialized)fail('complete canonical json(meta) required');
+  const canonicalNames=fields.map(row=>JSON.stringify(row.name));
+  const fragments=['{'];
+  for(let at=0;at<fields.length;at++){if(at)fragments.push(',');fragments.push(canonicalNames[at],':',fields[at].raw);}
+  fragments.push('}\n');
+  if(!sameFragments(serialized,fragments))fail('complete canonical json(meta) required');
   if(!selected.has('checkedSemanticProgram')||!selected.has('targetSemanticProgram'))fail('both complete semantic programs required');
   const rows=components.filter(component=>selected.has(component.field)).map(component=>{
     const content=selected.get(component.field)+'\n';budget(content,bound.fileBytes);canonicalValue(selected.get(component.field));

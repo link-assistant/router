@@ -49,7 +49,7 @@ function noBehavior(joined){for(const key of ['namespaceAuthority','runtimeAutho
 function staticTokens(value){const found=[];function visit(node){if(!node||typeof node!=='object')return;if(node.tokenType==='lifetime')found.push(node.text);for(const value of Object.values(node))if(value&&typeof value==='object')visit(value);}visit(value);return found;}
 
 test('complete unchanged EmergencyAuthConfig original Default executes JS and strict TS',{timeout:60000},async()=>{
-  const file='src/emergency_auth.rs',source=readFileSync(new URL(file,root),'utf8'),result=compile(source,file);
+  const file='src/emergency_auth.rs',source=readFileSync(repositorySourceURL(file,root),'utf8'),result=compile(source,file);
   retain('01-complete-emergency',{source,sha256:sha(source),result});
   assert.ok(result.meta.checkedMethods.some(row=>row.name==='EmergencyAuthConfig.default'));
   const wire=JSON.stringify(result.meta.targetSemanticProgram),program=parseProgram(wire);assert.equal(serializeProgram(program),wire);
@@ -59,7 +59,7 @@ test('complete unchanged EmergencyAuthConfig original Default executes JS and st
   await verifyTypedTargets(exported,(_api,_result,module)=>{assert.deepEqual(module.originalDefault(),{$:'EmergencyAuthConfig',enabled:false,allow_non_loopback:false,duration_minutes:60n});assert.notStrictEqual(module.originalDefault(),module.originalDefault());},{childTimeoutMs:20000});
 });
 test('both actual Emergency siblings close complete Default name effects without collection behavior',{timeout:60000},()=>{
-  const file='src/emergency_auth.rs',source=readFileSync(new URL(file,root),'utf8'),args=setup(source,'EmergencyAuth',file),bang=createDeriveBangContext({deriveContext:args.context});
+  const file='src/emergency_auth.rs',source=readFileSync(repositorySourceURL(file,root),'utf8'),args=setup(source,'EmergencyAuth',file),bang=createDeriveBangContext({deriveContext:args.context});
   const selected=bang.certificates.filter(row=>['EmergencyAuth','EmergencyAuthStatus'].some(name=>args.context.certificates.find(input=>input.digest===row.inputCertificateDigest)?.name===name));
   retain('02-complete-emergency-owner-set',{source,context:args.context,bang});assert.equal(selected.length,2);
   for(const row of selected){assert.deepEqual(row.residualOwners,[]);assert.equal(row.dimensions.bangMacroComplete,true);assert.equal(row.generatedImplBehavior,false);}

@@ -60,13 +60,16 @@ const enclosingPipeline=createRulePipeline([
     }},
     {id:'rust.derived-enclosing-source-binding.original-enclosing-effects.v1',apply(state){
       if(!state.original)return state;
-      const deriveBangContext=createDeriveEnclosingNamespaceContext({deriveContext:state.input.deriveContext});
+      const deriveBangContext=state.deriveBangContext??createDeriveEnclosingNamespaceContext({deriveContext:state.input.deriveContext});
       state.binding=resolveEnclosingNamespaceModuleBindings({...state.original,deriveBangContext});
       return state;
     }},
   ]},
   {phase:'repository',rules:[]},
 ]);
-export function resolveDerivedEnclosingSourceBindings({modules,externalModules,deriveContext,compilationProfile}){
-  return enclosingPipeline.run({input:{modules,externalModules,deriveContext,compilationProfile}}).value.binding;
+export function resolveDerivedEnclosingSourceBindings({modules,externalModules,deriveContext,compilationProfile,deriveBangContext}){
+  // Explicit composition of a genuine context inside one project invocation.
+  // The resolver rechecks its complete original source/profile on consumption;
+  // no result is memoized and the ordinary equivalence check stays first.
+  return enclosingPipeline.run({input:{modules,externalModules,deriveContext,compilationProfile},deriveBangContext}).value.binding;
 }

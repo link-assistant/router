@@ -1,3 +1,4 @@
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -29,7 +30,7 @@ test('actual Option fixed payload constrains parse without changing explicit par
 });
 
 test('complete unchanged original thinking parent and child sources execute numeric suffix edges',{timeout:60_000},async()=>{
- const read=path=>{const url=repositorySourceURL(path,root);try{assert.ok(statSync(url).size<4*1024*1024);return readFileSync(url,'utf8');}catch(error){if(error.code!=='ENOENT')throw error;return execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',maxBuffer:4*1024*1024});}};
+ const read=path=>{const url=repositorySourceURL(path,root);try{assert.ok(statSync(url).size<4*1024*1024);return readFileSync(url,'utf8');}catch(error){if(error.code!=='ENOENT')throw error;return execFileSync('git',['show','HEAD:'+repositorySourcePath(path,root)],{cwd:root,encoding:'utf8',maxBuffer:4*1024*1024});}};
  const paths=execFileSync('git',['ls-tree','-r','--name-only','HEAD','--','src'],{cwd:root,encoding:'utf8'}).trim().split('\n'),manifest=read('Cargo.toml'),lock=read('Cargo.lock');
  const originals={};const readSource=path=>originals[path]??=(read(path));
  const result=translateProject({entry:'src/thinking/mod.rs',paths,readSource,cargoManifest:manifest,deriveDependencies:loadDeriveDependencyProof({manifest,lock}),compilationProfile:PRODUCTION_PROFILE});

@@ -4,6 +4,9 @@ import {rustPackageSourcePath,repositoryRustLayout} from '../../repository-layou
 export function repositorySourceURL(path, root) {
   return new URL(rustPackageSourcePath(fileURLToPath(root),path),root);
 }
+export function repositorySourcePath(path,root){
+  return rustPackageSourcePath(typeof root==='string'?root:fileURLToPath(root),path);
+}
 
 // Explicit logical carrier labels for original test oracles. Operational
 // inventories keep their physical paths and do not use this test-only mapping.

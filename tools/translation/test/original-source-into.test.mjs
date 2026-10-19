@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
@@ -9,7 +10,7 @@ import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from '../concrete-syntax-meta.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';import {compileCurrentBridgeControls} from './original-core-bridge-fixture.mjs';
-const root=new URL('../../../',import.meta.url),hash=text=>createHash('sha256').update(text).digest('hex'),read=file=>readFileSync(new URL(file,root),'utf8');
+const root=new URL('../../../',import.meta.url),hash=text=>createHash('sha256').update(text).digest('hex'),read=file=>readFileSync(repositorySourceURL(file,root),'utf8');
 const dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')});
 const original=file=>{const source=read(file),result=translateProject({entry:file,paths:[file],readSource:()=>source,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});assert.equal(result.meta.sources.find(row=>row.source===file).sha256,hash(source));return result;};
 let retainedBytes=0;

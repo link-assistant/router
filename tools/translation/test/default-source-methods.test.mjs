@@ -35,11 +35,11 @@ test('actual manual static Default body and ordinary static dispatch preserve cu
   }
 });
 for(const [file,type,golden]of [['src/management_config.rs','ManagementConfig',{$:'ManagementConfig',allow_remote:false,lockout_failures:5n,lockout_secs:1800n,exempt_loopback:true}],['src/emergency_auth.rs','EmergencyAuthConfig',{$:'EmergencyAuthConfig',enabled:false,allow_non_loopback:false,duration_minutes:60n}]])test('complete unchanged '+file+' original Default body executes without a Rust wrapper',async()=>{
-  const source=readFileSync(new URL(file,root),'utf8'),result=alias(compile(source,file),type);assert.ok(result.meta.checkedMethods.some(method=>method.name===type+'.default'));assert.equal(result.meta.runtimeParity,false);
+  const source=readFileSync(repositorySourceURL(file,root),'utf8'),result=alias(compile(source,file),type);assert.ok(result.meta.checkedMethods.some(method=>method.name===type+'.default'));assert.equal(result.meta.runtimeParity,false);
   await verifyTypedTargets(result,(_api,_result,module)=>{assert.deepEqual(module.originalDefault(),golden);assert.notStrictEqual(module.originalDefault(),module.originalDefault());},{childTimeoutMs:30000});
 });
 test('complete unchanged EmergencyArgs derived Default duration is zero while Clap source default remains sixty',async()=>{
-  const file='src/cli/emergency_args.rs',source=readFileSync(new URL(file,root),'utf8'),result=alias(compile(source,file),'EmergencyArgs');
+  const file='src/cli/emergency_args.rs',source=readFileSync(repositorySourceURL(file,root),'utf8'),result=alias(compile(source,file),'EmergencyArgs');
   assert.ok(source.includes('default_value_t = DEFAULT_DURATION_MINUTES'));assert.ok(result.meta.checkedGeneratedMethods.some(method=>method.name==='EmergencyArgs.default'));assert.equal(result.meta.checkedMethods.length,0);assert.equal(result.checkedMethodDeclarations.length,0);assert.equal(result.checkedGeneratedMethodDeclarations[0].term,'generated-method');assert.equal(result.checkedGeneratedMethodDeclarations[0].originalDeclarationTerm,'struct');assert.equal(result.meta.deriveNamespaceFootprints.certificates[0].generatedImplBehavior,false);
   await verifyTypedTargets(result,(_api,_result,module)=>assert.deepEqual(module.originalDefault(),{$:'EmergencyArgs',emergency_accept_any_token:false,emergency_allow_non_loopback:false,emergency_duration_minutes:0n}),{childTimeoutMs:30000});
 });

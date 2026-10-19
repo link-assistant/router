@@ -1,8 +1,9 @@
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {execFileSync} from 'node:child_process';import {createHash} from 'node:crypto';
 import {translateProject} from '../project.mjs';import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';import {parseProgram} from '../semantic-meta.mjs';import {verifyTypedTargets} from './typed-targets.mjs';
 const root=new URL('../../../',import.meta.url),hash=s=>createHash('sha256').update(s).digest('hex'),tag=($,fields={})=>Object.freeze({$,...fields}),some=field0=>tag('Some',{field0}),none=tag('None');
-const read=path=>{try{return readFileSync(repositorySourceURL(path,root),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;return execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',maxBuffer:10000000});}};
+const read=path=>{try{return readFileSync(repositorySourceURL(path,root),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;return execFileSync('git',['show','HEAD:'+repositorySourcePath(path,root)],{cwd:root,encoding:'utf8',maxBuffer:10000000});}};
 const original=entry=>{const paths=execFileSync('git',['ls-tree','-r','--name-only','HEAD','--','src'],{cwd:root,encoding:'utf8'}).trim().split('\n'),result=translateProject({entry,paths,readSource:read,deriveDependencies:loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')}),compilationProfile:PRODUCTION_PROFILE});assert.equal(result.meta.sources.find(item=>item.source===entry).sha256,hash(read(entry)));return result;};
 
 test('unchanged whole stream_outcome source executes original absent/header media-type policy in both targets',{timeout:60000},async()=>{

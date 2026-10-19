@@ -21,7 +21,7 @@ export function substituteRepositorySourceURLs(source,helperImport) {
   function visit(node) {
     if(ts.isNewExpression(node)&&ts.isIdentifier(node.expression)&&node.expression.text==='URL'&&node.arguments?.length===2) {
       const [path,root]=node.arguments;
-      const variable=ts.isIdentifier(path)&&['path','name','p'].includes(path.text);
+      const variable=ts.isIdentifier(path)&&['path','name','p','file'].includes(path.text);
       const literal=ts.isStringLiteral(path)&&(path.text==='Cargo.toml'||path.text==='Cargo.lock'||/^(?:src|tests|benches|examples|fixtures)(?:\/|$)/u.test(path.text));
       if((variable||literal)&&ts.isIdentifier(root)&&['root','ROOT'].includes(root.text)) {
         const span=[node.getStart(file),node.end];
@@ -133,5 +133,43 @@ export function substituteRustPackageReads(source,helperImport) {
   if(ts.createSourceFile('reads.mjs',after,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS).parseDiagnostics.length)throw Error('Translated source read syntax is invalid');
   const inverse=applyConcreteSyntaxSubstitutions(roundtrip(after).document,{languageRules:[],repositoryRules:[{id:'router:complete-read-layout-inverse',edits:[{span:[0,after.length],expected:after,replacement:source}]}]});
   if(transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(inverse.value)).source!==source)throw Error('Complete source read inverse differs');
+  return {source:after,changed:true,edits,beforeWire:before.wire,languageWire,afterWire,trace:result.trace,wholeInverse:true};
+}
+
+// Current committed-source reads in receiving tests retain logical labels.
+// Historical immutable revisions and embedded child source stay untouched.
+export function substituteRepositoryGitSourceReads(source,helperImport){
+  if(typeof source!=='string'||Buffer.byteLength(source)>1024*1024||typeof helperImport!=='string'||!helperImport.startsWith('.')||helperImport.includes('\n'))throw TypeError('Bounded Git source and relative helper import required');
+  const ts=ownershipCompiler(),file=ts.createSourceFile('git-reads.mjs',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS),edits=[];
+  if(file.parseDiagnostics.length)throw Error('Original Git source read syntax is invalid');
+  function visit(node){
+    if(ts.isCallExpression(node)&&ts.isIdentifier(node.expression)&&node.expression.text==='execFileSync'&&node.arguments.length===3){
+      const [command,args,options]=node.arguments;
+      const cwd=ts.isObjectLiteralExpression(options)&&options.properties.find(row=>ts.isPropertyAssignment(row)&&row.name.getText(file)==='cwd');
+      if(ts.isStringLiteral(command)&&command.text==='git'&&ts.isArrayLiteralExpression(args)&&args.elements.length===2&&ts.isStringLiteral(args.elements[0])&&args.elements[0].text==='show'&&cwd&&ts.isIdentifier(cwd.initializer)&&['root','ROOT'].includes(cwd.initializer.text)){
+        const value=args.elements[1];let selected;
+        if(ts.isBinaryExpression(value)&&value.operatorToken.kind===ts.SyntaxKind.PlusToken&&ts.isStringLiteral(value.left)&&value.left.text==='HEAD:'&&ts.isIdentifier(value.right))selected=source.slice(value.right.getStart(file),value.right.end);
+        else if(ts.isStringLiteral(value)&&value.text.startsWith('HEAD:'))selected=JSON.stringify(value.text.slice(5));
+        if(selected!==undefined){const span=[value.getStart(file),value.end];edits.push({span,expected:source.slice(...span),replacement:`'HEAD:'+repositorySourcePath(${selected},${cwd.initializer.text})`});}
+      }
+    }
+    ts.forEachChild(node,visit);
+  }
+  visit(file);if(!edits.length)return {source,changed:false,edits:[]};
+  if(edits.length>512)throw Error('Git read substitution bound');
+  const before=roundtrip(source);let languageWire,afterWire;
+  const result=createRulePipeline([
+    {phase:'language',rules:[{id:'javascript:parsed-current-git-source-reads',apply:()=>{languageWire=before.wire;return transportConcreteSyntaxMeta(languageWire);}}]},
+    {phase:'repository',rules:[{id:'router:physical-current-git-source-reads',apply:input=>{
+      let after=source;for(const edit of [...edits].sort((a,b)=>b.span[0]-a.span[0]))after=after.slice(0,edit.span[0])+edit.replacement+after.slice(edit.span[1]);
+      const at=after.startsWith('#!')?after.indexOf('\n')+1:0;
+      after=after.slice(0,at)+`import {repositorySourcePath} from ${JSON.stringify(helperImport)};\n`+after.slice(at);
+      const applied=applyConcreteSyntaxSubstitutions(input.document,{languageRules:[],repositoryRules:[{id:'router:complete-git-read-parent-substitution',edits:[{span:[0,source.length],expected:source,replacement:after}]}]});
+      afterWire=serializeConcreteSyntaxMeta(applied.value);return transportConcreteSyntaxMeta(afterWire).source;
+    }}]},
+  ]).run(source),after=result.value;
+  if(ts.createSourceFile('git-reads.mjs',after,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS).parseDiagnostics.length)throw Error('Translated Git source read syntax is invalid');
+  const inverse=applyConcreteSyntaxSubstitutions(roundtrip(after).document,{languageRules:[],repositoryRules:[{id:'router:complete-git-read-inverse',edits:[{span:[0,after.length],expected:after,replacement:source}]}]});
+  if(transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(inverse.value)).source!==source)throw Error('Complete Git source read inverse differs');
   return {source:after,changed:true,edits,beforeWire:before.wire,languageWire,afterWire,trace:result.trace,wholeInverse:true};
 }

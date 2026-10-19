@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // Full historical helper and actual complete source evolution, never a size oracle.
 import {translateProject} from '../project.mjs';
 import testCase from 'node:test';
@@ -239,7 +240,7 @@ test('caller-shaped size records cannot supply measurements or survive a new cal
  const before=observe('before'),current=observe('current');retain('caller-accessor-remains-native',{before,current});assert.deepEqual(current,before);assert.deepEqual(current.tape,['caller-measurement']);
 });
 test('complete source checked meta and strict targets retain independent native behavior',async(t,retain)=>{
- const pairs=await copies(t,retain),root=new URL('../../../',import.meta.url),read=file=>readFileSync(new URL(file,root),'utf8'),dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')}),profile=builtinDeriveAstSourceProfile(dependencies);
+ const pairs=await copies(t,retain),root=new URL('../../../',import.meta.url),read=file=>readFileSync(repositorySourceURL(file,root),'utf8'),dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')}),profile=builtinDeriveAstSourceProfile(dependencies);
  for(const [file,name,sha]of [['src/response_affinity.rs','StoreError','e8aa97145a2df74e399c3c1bc648075f0b72266ed2def6dcc6e17291579dbf41'],['src/oauth.rs','OAuthError','c0461d7898c3ce3469387c732d2efacd785cdee7295276dc67f85be18ddb38ba']]){
   const original=read(file);assert.equal(hash(original),sha);const context=createDeriveFootprintContext({modules:[{file,path:[],source:original}],dependencies,compilationProfile:PRODUCTION_PROFILE}),certificate=context.certificates.find(row=>row.name===name),attribute=certificate?.attributes.find(row=>row.derives?.some(path=>path.join('::')==='Debug'));assert.ok(attribute);
   const invocation={path:['Debug'],attributeSpan:attribute.span},proof=proveBuiltinDeriveBangFootprint({context,certificate,invocation}),output=originalBuiltinDeriveEnclosingOutput(proof,context,certificate,invocation),recipes=proof.route.recipes;
@@ -283,7 +284,7 @@ test('descendant-only successful costs preserve independent old562 bounds and ob
 });
 
 test('descendant costs retain genuine original recipe identities full Hash tapes and strict targets',async(t,retain)=>{
- const pairs=await copies(t,retain),root=new URL('../../../',import.meta.url),read=file=>readFileSync(new URL(file,root),'utf8'),dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')}),profile=builtinDeriveAstSourceProfile(dependencies);
+ const pairs=await copies(t,retain),root=new URL('../../../',import.meta.url),read=file=>readFileSync(repositorySourceURL(file,root),'utf8'),dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')}),profile=builtinDeriveAstSourceProfile(dependencies);
  for(const [file,name,sha]of [['src/response_affinity.rs','StoreError','e8aa97145a2df74e399c3c1bc648075f0b72266ed2def6dcc6e17291579dbf41'],['src/oauth.rs','OAuthError','c0461d7898c3ce3469387c732d2efacd785cdee7295276dc67f85be18ddb38ba']]){
   const original=read(file);retain('574-complete-actual-parent-source-'+name,{file,source:original});assert.equal(hash(original),sha);
   const context=createDeriveFootprintContext({modules:[{file,path:[],source:original}],dependencies,compilationProfile:PRODUCTION_PROFILE}),certificate=context.certificates.find(row=>row.name===name),attribute=certificate?.attributes.find(row=>row.derives?.some(path=>path.join('::')==='Debug'));assert.ok(attribute);

@@ -16,7 +16,7 @@ import {macroBindingAffects} from './macro-subnamespaces.mjs';
 import {MODULE_PATH_PROFILE} from './module-paths.mjs';
 import {COPY_TRAIT_OWNER_PROFILE} from './copy-trait-owners.mjs';
 import {originalCorePreludeRootSource} from './extensions/core-prelude-source.mjs';
-import {createDefaultSourceContext,createDefaultEnclosingSourceContext} from './default-trait-source.mjs';
+import {createDefaultSourceContext,createDefaultEnclosingSourceContext,defaultSourceContextFacts} from './default-trait-source.mjs';
 const root=new URL('./source-profiles/source-clone/',import.meta.url),manifestBytes=readFileSync(new URL('manifest.json',root)),manifest=JSON.parse(manifestBytes);
 const hash=value=>createHash('sha256').update(value).digest('hex'),contexts=new WeakMap(),standards=new WeakMap();
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
@@ -78,8 +78,10 @@ function standardClone(dependencies,defaultContext){
 export function createCloneSourceContext(deriveContext){
   return createCloneContext(deriveContext,createDefaultSourceContext,resolveDerivedSourceBindings);
 }
-export function createCloneEnclosingSourceContext(deriveContext){
-  return createCloneContext(deriveContext,createDefaultEnclosingSourceContext,resolveDerivedEnclosingSourceBindings);
+export function createCloneEnclosingSourceContext(deriveContext,{defaultContext,deriveBangContext}={}){
+  if(defaultContext!==undefined&&defaultSourceContextFacts(defaultContext).deriveContext!==deriveContext)fail('Default context belongs to a different original derive invocation');
+  const createDefault=defaultContext===undefined?value=>createDefaultEnclosingSourceContext(value,{deriveBangContext}):()=>defaultContext;
+  return createCloneContext(deriveContext,createDefault,input=>resolveDerivedEnclosingSourceBindings({...input,deriveBangContext}));
 }
 function createCloneContext(deriveContext,createDefault,resolveBindings){
   const original=deriveFootprintSourceContext(deriveContext),defaultContext=createDefault(deriveContext),standard=standardClone(original.dependencies,defaultContext);

@@ -319,19 +319,25 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
   const externalModules=registeredStandardHostBindings([...originalMatchesNamespaceBindings(),...lockedTomlValueNamespaceBindings(options.deriveDependencies)]);
   namespaceProgress('derive-inputs');
   const deriveContext=options.deriveDependencies?createDeriveFootprintContext({modules:graph.modules,dependencies:options.deriveDependencies,externalModules,compilationProfile:graph.compilationProfile}):null;
+  // Construct the genuine enclosing issuer once for this project and pass it
+  // explicitly through the independent Default/Clone and binding consumers.
+  let deriveBangContext=null;
+  if(enclosingNamespace){
+    namespaceProgress('derive-namespace-context');
+    deriveBangContext=deriveContext?createDeriveEnclosingNamespaceContext({deriveContext}):null;
+  }
   namespaceProgress('default-source');
   const hasDefaultDeclarations=graph.modules.some(module=>module.items.some(item=>['struct','enum','impl'].includes(item.term)&&item.tokens.some(token=>token.text==='Default')));
-  const defaultContext=deriveContext&&hasDefaultDeclarations?(enclosingNamespace?createDefaultEnclosingSourceContext:createDefaultSourceContext)(deriveContext):null;
+  const defaultContext=deriveContext&&hasDefaultDeclarations?(enclosingNamespace?createDefaultEnclosingSourceContext(deriveContext,{deriveBangContext}):createDefaultSourceContext(deriveContext)):null;
   namespaceProgress('clone-source');
   const hasCloneDeclarations=graph.modules.some(module=>module.items.some(item=>['struct','enum'].includes(item.term)&&item.tokens.some(token=>token.text==='Clone')));
-  const cloneContext=deriveContext&&hasCloneDeclarations?(enclosingNamespace?createCloneEnclosingSourceContext:createCloneSourceContext)(deriveContext):null;
+  const cloneContext=deriveContext&&hasCloneDeclarations?(enclosingNamespace?createCloneEnclosingSourceContext(deriveContext,{deriveBangContext,defaultContext:defaultContext??undefined}):createCloneSourceContext(deriveContext)):null;
   namespaceProgress('tool-attributes');
   const resolvedExternal=deriveContext?deriveFootprintExternalModules(deriveContext):externalModules;
   const toolContext=createToolAttributeContext({modules:graph.modules,externalModules:resolvedExternal,deriveContext,compilationProfile:graph.compilationProfile});
   // This consumer needs enclosing bindings. Runtime/ownership and generated
   // Default/Clone checking retain their separate original source contexts.
-  namespaceProgress('derive-namespace-context');
-  const deriveBangContext=deriveContext?(enclosingNamespace?createDeriveEnclosingNamespaceContext({deriveContext}):createDeriveBangContext({deriveContext})):null;
+  if(!enclosingNamespace)deriveBangContext=deriveContext?createDeriveBangContext({deriveContext}):null;
   namespaceProgress(enclosingNamespace?'enclosing-bindings':'complete-bindings');
   const bindingEvidence=(enclosingNamespace?resolveEnclosingNamespaceModuleBindings:resolveModuleBindings)({modules:graph.modules,externalModules:resolvedExternal,deriveContext,deriveBangContext,toolContext,compilationProfile:graph.compilationProfile});
   const scopes=new Map(bindingEvidence.scopes.map(scope=>[moduleScopeKey(scope),scope]));
@@ -579,10 +585,12 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
     const token=fieldEvidenceBySurface.get(entry.surface);if(token)checkedMethodFieldOrigins.set(facade,originalProjectMethodFieldEvidenceGrouped(token,methodFieldEvidence.get(token).transform));
     return facade;
   });
-  progress({stage:'project-serialize',state:'end',entry:options.entry});
+  if(ownedDefinitionMode!==true&&ownedDefinitionMode!=='core-json-readers')progress({stage:'project-serialize',state:'end',entry:options.entry});
   const checkedGeneratedMethodDeclarations=generatedMethods.map(entry=>{const own=checked.declarations.get(entry.name);return Object.freeze({source:entry.file,sourceSha256:sha256(graph.modules.find(module=>module.file===entry.file).source),name:entry.surface.impl.method,term:'generated-method',origin:'derive-invocation',originalDeclarationTerm:entry.originalDeclarationTerm,generator:entry.surface.impl.cloneSourceProof?'core::clone::Clone':'core::default::Default',span:Object.freeze({...entry.span}),project:options.entry,qualifiedName:entry.name,displayName:entry.displayName,receiver:entry.surface.impl.receiver,compilationProfile:graph.compilationProfile,signature:freezeMacroTree(structuredClone({params:own.params,ret:own.ret})),lower:lowerDeclaration(entry,entry.surface.impl.method)});});
   if(ownedDefinitionMode===true||ownedDefinitionMode==='core-json-readers'){
-    let definitions;try {definitions=prepareForwardOwnedDefinitions({project:graph.entry,entries,checked,genuineOrigin,target,sourceModules:graph.modules,readerFormat:ownedDefinitionMode==='core-json-readers'?'core-reader':undefined,lower:entry=>lowerDeclaration(entry,entry.name.split('.').at(-1))({runtimeModule:'../runtime/effects.mjs'})});}finally {genuineOrigin=undefined;}
+    let definitions;try {definitions=prepareForwardOwnedDefinitions({project:graph.entry,entries,checked,genuineOrigin,target,sourceModules:graph.modules,readerFormat:ownedDefinitionMode==='core-json-readers'?'core-reader':undefined,progress,lower:entry=>lowerDeclaration(entry,entry.name.split('.').at(-1))({runtimeModule:'../runtime/effects.mjs'})});}finally {genuineOrigin=undefined;}
+    progress({stage:'project-serialize',state:'advance',entry:options.entry,phase:'owned-definitions-complete',completed:definitions.definitions.length,total:entries.length});
+    progress({stage:'project-serialize',state:'end',entry:options.entry});
     return {meta,javascript,typescript,executableDeclarations,checkedMethodDeclarations,checkedGeneratedMethodDeclarations,sourceScopes,ownedDefinitions:definitions};
   }
   return { meta, javascript, typescript, executableDeclarations, checkedMethodDeclarations, checkedGeneratedMethodDeclarations, sourceScopes };

@@ -1,3 +1,4 @@
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -43,7 +44,7 @@ test('retained original login-provider semantic meta reemits both typed targets 
   assert.deepEqual([original.start,original.end],[3154,3482]);assert.equal(hash(source.slice(original.start,original.end)),'32d5d1d8e9593906ae0e02ecf7c52227e3813bb6a46197f19b5e286ad9df729e');
   // Reemit committed semantic meta produced from the complete original crate.
   // This regression exercises target typing, not a new source-proof admission.
-  const inventory=JSON.parse(execFileSync('git',['show','HEAD:tools/translation/meta/src/login_api.meta.json'],{cwd:root,encoding:'utf8',maxBuffer:2_000_000}));
+  const inventory=JSON.parse(execFileSync('git',['show','HEAD:'+repositorySourcePath("tools/translation/meta/src/login_api.meta.json",root)],{cwd:root,encoding:'utf8',maxBuffer:2_000_000}));
   assert.equal(inventory.sourceSha256,hash(source));const retained=inventory.items.find(item=>item.name==='requested_provider');
   assert.equal(retained.status,'executable');assert.equal(retained.sha256,hash(source.slice(original.start,original.end)));
   const semantic=retained.semantic,entries=[...semantic.dataTypes,semantic.checkedIR],declarations=new Map(entries.map(entry=>[entry.fullName??entry.name,entry]));

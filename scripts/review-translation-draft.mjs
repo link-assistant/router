@@ -2,6 +2,7 @@
 // Review original inputs and every generated output. This does not certify
 // target behavior, replace regeneration checks or grant a green gate stamp.
 import fs from 'node:fs';
+import {repositoryRustLayout} from '../tools/translation/repository-layout.mjs';
 import {createHistoricalTranslationReview} from './historical-translation-review.mjs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
@@ -281,7 +282,7 @@ function reviewCloneMethod(meta,item,{checked,target,entries,names,used,context}
   used.add(entry);return {...item,sourceSha256,itemSha256,qualifiedName:entry.fullName,targetName:flattened.fullName,checkedSignatureSha256:digest(JSON.stringify({params:entry.params,ret:entry.ret})),checkedBodySha256:digest(JSON.stringify(entry.body)),targetBodySha256:digest(JSON.stringify(flattened.body)),semanticAuthority:false,runtimeParity:false};
 }
 
-function originalUnitDefaultReviewContext(meta,row,{readSource,dependencies,jsonMacroDependencies,cargoManifest}) {
+function originalUnitDefaultReviewContext(meta,row,{readSource,dependencies,jsonMacroDependencies,cargoManifest,cargoManifestPath='Cargo.toml'}) {
   const proof=typeof dependencies==='function'?dependencies():dependencies;
   if(!Array.isArray(meta.sources)||!meta.sources.length)throw new Error('Unit Default review requires complete original source modules');
   const paths=[...new Set(meta.sources.map(item=>{relativeName(item.source);return item.source;}))],sources=new Map(paths.map(name=>[name,readSource(name)]));
@@ -293,7 +294,7 @@ function originalUnitDefaultReviewContext(meta,row,{readSource,dependencies,json
     deriveDependencies:proof,
     // The review caller supplies the producer's actual manifest explicitly.
     // A null producer input stays null even when dependency Cargo bytes exist.
-    cargoManifest:cargoManifest??null,
+    cargoManifest:cargoManifest??null,cargoManifestPath,
     expectedCargoEdition:meta.originalCargoEditionInput??null,
     jsonMacroDependencies:jsonMacroDependencies??null,
     expectedJsonContext:meta.jsonMacroContext??null,
@@ -433,7 +434,7 @@ function assertGeneratedReviewData(value) {
 // brands; source namespace, runtime and whole-trait authority remain false.
 // Direct callers must supply the actual cargoManifest when the producer used
 // one. The CLI supplies its verified original input; metadata is no substitute.
-export function reviewGeneratedMethods(meta,row,{readSource,dependencies,jsonMacroDependencies,cargoManifest}={}) {
+export function reviewGeneratedMethods(meta,row,{readSource,dependencies,jsonMacroDependencies,cargoManifest,cargoManifestPath='Cargo.toml'}={}) {
   assertGeneratedReviewData(meta);assertGeneratedReviewData(row);
   if(meta.runtimeParity===true||meta.semanticAuthority===true)throw new Error('Generated review cannot accept semantic or runtime authority');
   const rows=generatedArray(meta),count=Object.hasOwn(row,'checkedGeneratedMethods')?row.checkedGeneratedMethods:0;
@@ -446,12 +447,12 @@ export function reviewGeneratedMethods(meta,row,{readSource,dependencies,jsonMac
   const used=new Set(),identities=new Set(),result=[];let cloneContext=null,unitDefaultContext=null,containerDefaultContext=null;
   for(const item of rows){
     if(['original-generated-container-default-ir-v1','original-generated-dependent-default-ir-v1'].includes(item?.defaultSourceProof?.schema)){
-      containerDefaultContext??=originalUnitDefaultReviewContext(meta,row,{readSource,dependencies,jsonMacroDependencies,cargoManifest});
+      containerDefaultContext??=originalUnitDefaultReviewContext(meta,row,{readSource,dependencies,jsonMacroDependencies,cargoManifest,cargoManifestPath});
       const reviewed=reviewContainerDefaultMethod(meta,item,{checked,target,entries,names,used,context:containerDefaultContext});
       const identity=generatedIdentity(reviewed);if(identities.has(identity))throw new Error('Duplicate generated method identity');identities.add(identity);result.push(reviewed);continue;
     }
     if(item?.generator==='core::default::Default'&&item.originalDeclarationTerm==='enum'){
-      unitDefaultContext??=originalUnitDefaultReviewContext(meta,row,{readSource,dependencies,jsonMacroDependencies,cargoManifest});
+      unitDefaultContext??=originalUnitDefaultReviewContext(meta,row,{readSource,dependencies,jsonMacroDependencies,cargoManifest,cargoManifestPath});
       const reviewed=reviewUnitDefaultMethod(meta,item,{checked,target,entries,names,used,context:unitDefaultContext});
       const identity=generatedIdentity(reviewed);if(identities.has(identity))throw new Error('Duplicate generated method identity');identities.add(identity);result.push(reviewed);continue;
     }
@@ -515,6 +516,7 @@ export function compareGeneratedMethods(before,after) {
 
 export function reviewTranslationDraft({root=process.cwd(),baselineSha=null,inventoryPath='parity/rust-source-inventory.json',projectMetaStorageLimits}={}) {
   root=fs.realpathSync(root);
+  const rustLayout=repositoryRustLayout(root);
   if(baselineSha!==null&&!/^[a-f0-9]{40}$/u.test(baselineSha))throw new TypeError('Baseline must be an immutable full Git SHA');
   relativeName(inventoryPath);
   const profile=/^(profiles\/[A-Za-z0-9_-]+\/)?parity\/rust-source-inventory\.json$/u.exec(inventoryPath);
@@ -635,11 +637,11 @@ export function reviewTranslationDraft({root=process.cwd(),baselineSha=null,inve
   for(const [key,count] of Object.entries(totals))if(inventory.totals[key]!==count)throw new Error('Invalid complete inventory total: '+key);
   if(oldInventory)for(const [key,count] of Object.entries(previousTotals))if(oldInventory.totals[key]!==count)throw new Error('Invalid baseline inventory total: '+key);
   const cargo=[];
-  for(const name of git(root,['ls-files','-z','--','Cargo.toml','Cargo.lock']).toString().split('\0').filter(Boolean)){
+  for(const name of git(root,['ls-files','-z','--',...rustLayout.cargoInputs]).toString().split('\0').filter(Boolean)){
     const bytes=read(name);if(baselineSha&&digest(git(root,['show',baselineSha+':'+name]))!==digest(bytes))throw new Error('Original Cargo input changed since baseline: '+name);cargo.push(inputs.get(name));
   }
-  let generatedDependencies;const dependencies=()=>generatedDependencies??=loadDeriveDependencyProof({manifest:read('Cargo.toml').toString('utf8'),lock:read('Cargo.lock').toString('utf8')});
-  let generatedJsonDependencies;const jsonMacroDependencies=()=>generatedJsonDependencies??=loadJsonMacroSourceProof({manifest:read('Cargo.toml').toString('utf8'),lock:read('Cargo.lock').toString('utf8')});
+  let generatedDependencies;const dependencies=()=>generatedDependencies??=loadDeriveDependencyProof({manifest:read(rustLayout.manifest).toString('utf8'),lock:read(rustLayout.lock).toString('utf8')});
+  let generatedJsonDependencies;const jsonMacroDependencies=()=>generatedJsonDependencies??=loadJsonMacroSourceProof({manifest:read(rustLayout.manifest).toString('utf8'),lock:read(rustLayout.lock).toString('utf8')});
   const projectIdentity=item=>JSON.stringify([item.source,item.name,item.term??null,item.span.start,item.span.end]);
   function projectMeta(meta,row,historical=null,bytes=null) {
     if(!Array.isArray(meta.sources)||!Array.isArray(meta.refused)||!Array.isArray(meta.unloweredItems)||!Array.isArray(meta.checkedMethods)||!Array.isArray(meta.executable)||!Array.isArray(meta.moduleDiagnostics))throw new Error('Incomplete project metadata: '+row.entry);
@@ -648,7 +650,7 @@ export function reviewTranslationDraft({root=process.cwd(),baselineSha=null,inve
     for(const item of [...meta.executable,...meta.checkedMethods]){
       if(!tracked.includes(item.source)||!Number.isSafeInteger(item.span?.start)||!Number.isSafeInteger(item.span?.end)||item.span.start<0||item.span.end<item.span.start||item.span.end>new TextDecoder('utf-8',{fatal:true}).decode(read(item.source)).length)throw new Error('Invalid project original item: '+row.entry);
     }
-    return {...meta,reviewedGeneratedMethods:historical?historical.reviewProject(bytes,row):reviewGeneratedMethods(meta,row,{readSource:name=>new TextDecoder('utf-8',{fatal:true}).decode(read(name)),dependencies,jsonMacroDependencies,cargoManifest:cargo.some(input=>input.path==='Cargo.toml')?read('Cargo.toml').toString('utf8'):null})};
+    return {...meta,reviewedGeneratedMethods:historical?historical.reviewProject(bytes,row):reviewGeneratedMethods(meta,row,{readSource:name=>new TextDecoder('utf-8',{fatal:true}).decode(read(name)),dependencies,jsonMacroDependencies,cargoManifest:cargo.some(input=>input.path===rustLayout.manifest)?read(rustLayout.manifest).toString('utf8'):null,cargoManifestPath:rustLayout.manifest})};
   }
   const historical=baselineSha?createHistoricalTranslationReview({root,baselineSha,inventoryPath,readSource:read}):null;
   let historicalBaselineReview=null,projects;

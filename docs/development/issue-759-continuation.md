@@ -65,10 +65,52 @@ actual producers against `d8365a84e3d4c2bfb1b93e83c5258d1d19e1f6a2`,
 with complete independent byte review; all 16 receiving cases then passed
 under both engines. This does not refresh the missing application inventories.
 
-The published layout head's CI cycle is still running. Retain all finished
-failure logs and do not replace that head until the entire cycle finishes.
-Current bulk inventories retain old paths until their actual producers complete;
-the bounded forward diagnostic still requires a new whole-corpus result.
+The published layout head `657169fb8c4ea9dffff292b91ac49a030a49b4cf`
+has completed its entire CI cycle: 30 successful, 41 failed, 19 cancelled and
+42 skipped checks. Complete logs from all 41 failures are retained locally.
+The coordinator did not cancel those checks. Cancellation and skipped Rust
+checks are not successful verification. Repeated reusable-workflow jobs expose
+the same TypeScript, reverse, profile freshness and parity failure families.
+The local receiving results above cover the repaired loader and fixture paths;
+generated manifests and complete reverse receiving checks still need fresh
+producer output. Current bulk inventories retain old paths until their actual
+producers complete. The complete owned forward producer ran for 1,270.113
+seconds under the existing 60-minute bound and reached 961 checked survivor
+declarations after parsing all 396 modules and processing 1,564 original
+methods. It then exhausted Node's unchanged 2 GiB heap during packaging,
+with 2,519,678,976 bytes sampled aggregate RSS. No outputs were written.
+These intermediate counts are not executable function coverage or a pass.
+
+The next repair composes one genuine enclosing context explicitly within each
+owned project invocation. Each consumer still validates its complete source,
+profile and private issuer; no resolver verdict is memoized across invocations.
+The original ordinary-project API remains separate. The storage comparison
+now checks every code unit in bounded slices instead of flattening a second
+complete project JSON string. File, aggregate, heap and test limits are
+unchanged; a new whole-producer result is still required.
+
+Both frozen historical fixture bodies are restored to their original pins.
+Receiving-only ordered CST substitutions adapt the TypeScript comparison
+loader, while the original native baseline keeps its logical filenames for
+source-issued identities. All ten complete historical comparison cases passed
+under Node and Bun, including every one of the 197 TypeScript output artifacts.
+The complete four-file context, nested Cargo review, storage and
+path-rule group passed all 25 cases under Node and Bun. The script fixture
+census reviewed all 15 files and applied nine parsed substitutions in four
+files, retaining complete CST equations and inverses. These focused results
+do not refresh the application inventories or qualify the complete gate.
+
+The expanded source-fixture audit covered all 527 compiler and script test
+files, repairing 31 further parsed reads in 26 files. The complete four-file
+independent reviewer initially passed 268 of 274 Node cases. Its six failures
+were repaired together: two remaining physical reads, a missing actual Cargo
+manifest in a receiving fixture, the already checked six-variant unit Clone,
+and three more precise checked Option refusal reasons. Original source spans,
+function/method denominators and all 17 Model refusal identities remain fixed.
+Both complete affected reviewer files then passed all 220 Node cases, including
+the six variant runtime goldens and strict TypeScript, within original case
+deadlines. The other two complete files passed all 54 cases in the initial run.
+The complete four-file Bun receiving run is still pending.
 
 ## Work required in the next pull request
 
