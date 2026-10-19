@@ -77,3 +77,14 @@ Keep checkpoint commits at least every six hours, collect the whole published
 CI cycle before the next repair push, and report failed and unrun checks against
 the exact SHA. No overall completion percentage is supported by current
 application coverage evidence.
+
+## Layout feedback checkpoint
+
+The published `7509ff0f3dd8aa649786d635f8bdfb330f8198f4` cycle finished
+with 21 failed, six successful and 31 skipped checks across all three completed
+workflows. All 18 direct failures reported the missing native `types` import;
+the three aggregate JavaScript gate jobs failed as a consequence. The import is
+fixed in the language-layout checkpoint. No Rust job was unlocked by those
+failed JavaScript stages. The new checkpoint still requires fresh CI feedback;
+full canonical/profile/reverse outputs, strict parity and the complete gate
+remain open.
