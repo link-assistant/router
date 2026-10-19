@@ -1,15 +1,15 @@
 {
   "schema": "router-static-source-lifecycle-v1",
   "archive": "originals.json.gz",
-  "rawBytes": 17966987,
-  "rawSha256": "6311881684249b7eaf57984e91f0958df1123a19cf8bd7bdd7a24c2075c29875",
-  "bytes": 4167353,
-  "sha256": "7708f7300cb277a403804aeb3621a4dc2802d24797d0f99f0e1c6802d938a12f",
+  "rawBytes": 18047059,
+  "rawSha256": "2555ae6810e473ef1f21b618f2b70f4ea54290637cb60dcdd970409681039b85",
+  "bytes": 4180497,
+  "sha256": "ff19602d2754371b8451ee29b6638b3e43716a045b1386006ab725bbf45b0e2c",
   "storage": {
     "schema": "router-static-source-lifecycle-storage-v1",
     "codec": "router-static-cst-global-column-table-storage-v1",
-    "logicalRawBytes": 65001774,
-    "logicalRawSha256": "dcee28fda6987d42c7caf79b39d09164592a4ed3dccbb00fe7f7fa6670d0b4ad"
+    "logicalRawBytes": 65808865,
+    "logicalRawSha256": "a608b5d860abaac9eaec154f74523004018d9dc7d2ae4c48ff90de37f39da832"
   },
   "profiles": [
     {
@@ -23,7 +23,7 @@
       "sourceSetSha256": "8683ed8c1f78d91f109d9c3f41151fa54e605833e03caac2bb821f00aa8f6d16"
     }
   ],
-  "current": "1786dfa22a836bd703e6bcd2904c5167fcdb939a033245c298de0fe88aa51804",
+  "current": "f6aabe74137d31635d290bd68b78654c1bb37edd5ede312334ea821530df1dab",
   "trace": [
     {
       "phase": "language",
