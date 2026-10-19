@@ -4,8 +4,9 @@ import {createHash} from 'node:crypto';
 import {encodeStaticSourceStorage as coreEncode,decodeStaticSourceStorage as coreDecode,decodeStaticSourceTextData as coreText} from './static-source-storage-codec.mjs';
 import {relocatedRustSourcePath} from './repository-layout.mjs';
 import {createRulePipeline} from './rule-pipeline.mjs';
+import {packStaticStorageTransport,unpackStaticStorageTransport} from './static-storage-transport.mjs';
 
-const CODEC='router-static-cst-repository-layout-storage-v1',MAX=256*1024*1024,MAX_EDGES=16384;
+const LEGACY='router-static-cst-repository-layout-storage-v1',CODEC='router-static-cst-repository-layout-storage-v2',MAX=256*1024*1024,MAX_EDGES=16384;
 const json=JSON.stringify,hash=value=>createHash('sha256').update(value).digest('hex');
 const record=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const safe=value=>Number.isSafeInteger(value)&&value>=0&&!Object.is(value,-0);
@@ -48,13 +49,15 @@ function restore(bundle,substitutions){
  }
  return {...bundle,lineage};
 }
-function unwrap(raw,index){
+function unwrap(raw,index,{textOnly=false}={}){
  requireValue(Buffer.isBuffer(raw)&&raw.length<=MAX,'bounded stored raw bytes required');
  const descriptor=index.storage;
- requireValue(keys(descriptor,['schema','codec','logicalRawBytes','logicalRawSha256'])&&descriptor.schema==='router-static-source-lifecycle-storage-v1'&&descriptor.codec===CODEC&&safe(descriptor.logicalRawBytes)&&descriptor.logicalRawBytes<=MAX&&/^[a-f0-9]{64}$/u.test(descriptor.logicalRawSha256),'complete versioned descriptor required');
+ requireValue(keys(descriptor,['schema','codec','logicalRawBytes','logicalRawSha256'])&&descriptor.schema==='router-static-source-lifecycle-storage-v1'&&[CODEC,LEGACY].includes(descriptor.codec)&&safe(descriptor.logicalRawBytes)&&descriptor.logicalRawBytes<=MAX&&/^[a-f0-9]{64}$/u.test(descriptor.logicalRawSha256),'complete versioned descriptor required');
  const text=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(raw),container=JSON.parse(text);
- requireValue(keys(container,['schema','logicalRawBytes','logicalRawSha256','pathSubstitutions','innerStorage','payload'])&&container.schema===CODEC&&container.logicalRawBytes===descriptor.logicalRawBytes&&container.logicalRawSha256===descriptor.logicalRawSha256,'complete layout container join required');
- const innerRaw=bytes(container.payload);
+ const fields=descriptor.codec===LEGACY?['schema','logicalRawBytes','logicalRawSha256','pathSubstitutions','innerStorage','payload']:['schema','logicalRawBytes','logicalRawSha256','pathSubstitutions','innerStorage','columnEncoding','metadataEncoding','payload'];
+ requireValue(keys(container,fields)&&container.schema===descriptor.codec&&container.logicalRawBytes===descriptor.logicalRawBytes&&container.logicalRawSha256===descriptor.logicalRawSha256,'complete layout container join required');
+ const payload=descriptor.codec===LEGACY?container.payload:unpackStaticStorageTransport(container.payload,container.columnEncoding,container.metadataEncoding,{columns:!textOnly});
+ const innerRaw=bytes(payload);
  requireValue(innerRaw.length<=MAX,'original inner storage bound');
  return {container,descriptor,innerRaw,innerIndex:{schema:index.schema,...(container.innerStorage===null?{}:{storage:container.innerStorage})}};
 }
@@ -74,7 +77,8 @@ export function encodeStaticSourceStorage(bundle,raw){
    if(!projected.substitutions.length)return input.baseline;
    const normalizedRaw=bytes(projected.bundle),inner=coreEncode(projected.bundle,normalizedRaw);
    const descriptor={schema:'router-static-source-lifecycle-storage-v1',codec:CODEC,logicalRawBytes:raw.length,logicalRawSha256:hash(raw)};
-   const container={schema:CODEC,logicalRawBytes:raw.length,logicalRawSha256:descriptor.logicalRawSha256,pathSubstitutions:projected.substitutions,innerStorage:inner.storage??null,payload:JSON.parse(inner.raw)};
+   const transport=packStaticStorageTransport(JSON.parse(inner.raw));
+   const container={schema:CODEC,logicalRawBytes:raw.length,logicalRawSha256:descriptor.logicalRawSha256,pathSubstitutions:projected.substitutions,innerStorage:inner.storage??null,columnEncoding:transport.columnEncoding,metadataEncoding:transport.metadataEncoding,payload:transport.payload};
    const stored=bytes(container);requireValue(stored.length<=MAX,'original complete storage bound');
    const decoded=decodeStaticSourceStorage(stored,{schema:bundle.schema,storage:descriptor});
    requireValue(bytes(decoded).equals(raw),'complete path/source/CST storage inverse differs');
@@ -84,7 +88,7 @@ export function encodeStaticSourceStorage(bundle,raw){
  return pipeline.run(null).value;
 }
 export function decodeStaticSourceStorage(raw,index){
- if(index.storage?.codec!==CODEC)return coreDecode(raw,index);
+ if(![CODEC,LEGACY].includes(index.storage?.codec))return coreDecode(raw,index);
  const {container,descriptor,innerRaw,innerIndex}=unwrap(raw,index);
  const bundle=restore(coreDecode(innerRaw,innerIndex),container.pathSubstitutions),logical=bytes(bundle);
  requireValue(logical.length===descriptor.logicalRawBytes&&hash(logical)===descriptor.logicalRawSha256,'complete restored logical length/SHA differs');
@@ -93,7 +97,7 @@ export function decodeStaticSourceStorage(raw,index){
 // Explicit source-text DATA projection retains the old false validation flags.
 // Its caller still authenticates every supplied archive byte against current Git.
 export function decodeStaticSourceTextData(raw,index){
- if(index.storage?.codec!==CODEC)return coreText(raw,index);
- const {container,innerRaw,innerIndex}=unwrap(raw,index),projection=coreText(innerRaw,innerIndex);
+ if(![CODEC,LEGACY].includes(index.storage?.codec))return coreText(raw,index);
+ const {container,innerRaw,innerIndex}=unwrap(raw,index,{textOnly:true}),projection=coreText(innerRaw,innerIndex);
  return {...projection,bundle:restore(projection.bundle,container.pathSubstitutions)};
 }

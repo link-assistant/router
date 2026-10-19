@@ -17,7 +17,7 @@ function encode(bundle){const raw=Buffer.from(json(bundle)+'\n'),stored=encodeSt
 
 test('captured Rust path substitutions retain every original logical and CST byte',{timeout:60000},()=>{
  const bundle=fixture(),before=json(bundle),{raw,stored,index}=encode(bundle);
- assert.equal(stored.storage.codec,'router-static-cst-repository-layout-storage-v1');
+ assert.equal(stored.storage.codec,'router-static-cst-repository-layout-storage-v2');
  assert.deepEqual(decodeStaticSourceStorage(stored.raw,index),bundle);
  assert.equal(json(bundle),before,'owned input remains unchanged');
  assert.equal(stored.storage.logicalRawBytes,raw.length);assert.equal(stored.storage.logicalRawSha256,hash(raw));
@@ -29,10 +29,10 @@ test('captured Rust path substitutions retain every original logical and CST byt
 
 test('foreign repeated missing or changed path descriptors refuse without changing old literal storage',{timeout:60000},()=>{
  const bundle=fixture(),{stored,index}=encode(bundle);
- const mutations=[wire=>wire.pathSubstitutions[0][2]='rust/src/foreign.rs',wire=>wire.pathSubstitutions.push(wire.pathSubstitutions[0]),wire=>wire.pathSubstitutions=[],wire=>wire.logicalRawBytes++,wire=>wire.payload.payload.current.files[0].path='foreign.rs'];
+ const mutations=[wire=>wire.pathSubstitutions[0][2]='rust/src/foreign.rs',wire=>wire.pathSubstitutions.push(wire.pathSubstitutions[0]),wire=>wire.pathSubstitutions=[],wire=>wire.logicalRawBytes++,wire=>wire.payload.payload.current.files[0].path='foreign.rs',wire=>wire.metadataEncoding='foreign',wire=>wire.columnEncoding='foreign',wire=>wire.payload.payload.current.files[0].sourceId=99999,wire=>wire.payload.columnTables[0][0]='not hex'];
  for(const mutate of mutations){const wire=JSON.parse(stored.raw);mutate(wire);assert.throws(()=>decodeStaticSourceStorage(Buffer.from(json(wire)+'\n'),index),TypeError);}
  const foreign=fixture();foreign.lineage[0].files[0].after.path='other.rs';const encoded=encode(foreign);
- assert.notEqual(encoded.stored.storage?.codec,'router-static-cst-repository-layout-storage-v1');
+ assert.notEqual(encoded.stored.storage?.codec,'router-static-cst-repository-layout-storage-v2');
  assert.deepEqual(decodeStaticSourceStorage(encoded.stored.raw,encoded.index),foreign);
 });
 
