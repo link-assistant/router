@@ -18,9 +18,9 @@ import {originalPrivateParserExpectedCommonIntrinsicsUnchanged,throwOriginalCapt
 import {independentParserSha256} from './private-parser-sha256.mjs';
 import {createRulePipeline,exactSubstitutionRule} from './rule-pipeline.mjs';
 
-const SOURCE_HEAD = "1fb501813af67585f23716596666c9b302cb5240";
-const REGISTRY_RAW_SHA256 = "3ffada45e4ff0f407b713023951cc457385beb13faf52607333347cae94571a6";
-const DRIVER_SHA256 = "327539a26c7e7b90e566fa812f78749c273c52933660745295acfcf452e0bf34";
+const SOURCE_HEAD = "d8365a84e3d4c2bfb1b93e83c5258d1d19e1f6a2";
+const REGISTRY_RAW_SHA256 = "6a60484ab4bc342ac691359475f6374371e289721ed8b93f4baffea453d8302e";
+const DRIVER_SHA256 = "4191a2b180c07d552b1a4685ed643956f6de7fe13e12cea15e593ad88bfb1155";
 const LIMIT={input:33554432,wire:536870912,output:536870912,frame:8388608,artifacts:16384,
   chunk:65536,stderr:8388608,rss:3221225472,disk:1610612736,milliseconds:2400000};
 const initial=originalPrivateParserExpectedCommonIntrinsicsUnchanged();
