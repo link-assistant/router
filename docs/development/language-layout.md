@@ -107,6 +107,6 @@ bytes). A separate versioned repository layer restores physical path labels
 around the unchanged general codec. Bounded source metadata references and
 reversible numeric-column text encoding reduce storage without dropping source,
 CST, historical data or inverse checks. Its three focused cases pass under Node
-and Bun. Complete storage/export controls are being requalified. The malformed
+and Bun. All 11 complete storage/export cases pass under Node and Bun with their original deadlines and budgets. The malformed
 source refusal case now completes in 22 seconds against its unchanged 60-second
 limit by validating complete metadata and source equations before CST parsing.

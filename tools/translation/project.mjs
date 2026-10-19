@@ -8,8 +8,9 @@ import {translationProgressReporter} from './translation-progress.mjs';
 import { posix } from 'node:path';
 import {captureSourceModuleViews,originalSourceModuleItems,moduleScopeKey} from './source-module-views.mjs';
 import {planTrackedModulePath,planConditionalModuleSourcePath,isTrackedModulePathPlan,MODULE_PATH_PROFILE} from './module-paths.mjs';
-import {resolveModuleBindings} from './module-bindings.mjs';
+import {resolveModuleBindings,resolveEnclosingNamespaceModuleBindings} from './module-bindings.mjs';
 import {createDeriveBangContext} from './derive-bang-context.mjs';
+import {createDeriveEnclosingNamespaceContext} from './derive-enclosing-namespace-context.mjs';
 import {lockedTomlValueNamespaceBindings} from './toml-value-namespace.mjs';
 import {registeredStandardHostBindings} from './standard-host-bindings.mjs';
 import {STANDARD_NAMESPACE_EVIDENCE} from './namespace-standard.mjs';
@@ -308,19 +309,31 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
   const graph = resolveModuleGraph(options);
   progress({stage:'project-graph',state:'end',entry:options.entry,total:graph.modules.length});
   progress({stage:'namespace',state:'start',entry:options.entry});
+  const enclosingNamespace=ownedDefinitionMode===true||ownedDefinitionMode==='core-json-readers';
+  const namespaceProgress=phase=>{if(enclosingNamespace)progress({stage:'namespace',state:'advance',entry:options.entry,phase});};
+  namespaceProgress('json-context');
   const jsonParserProfile=options.jsonParserProfile??actualJsonCapabilityProfile();
   let jsonMacroContext=null,jsonMacroDiagnostic=null;
   if(options.jsonMacroDependencies)try{jsonMacroContext=createJsonMacroContext({modules:graph.modules,dependencies:options.jsonMacroDependencies,compilationProfile:graph.compilationProfile});}catch(error){if(!(error instanceof TypeError))throw error;jsonMacroDiagnostic={kind:'unsupported-profile',message:error.message};}
+  namespaceProgress('external-bindings');
   const externalModules=registeredStandardHostBindings([...originalMatchesNamespaceBindings(),...lockedTomlValueNamespaceBindings(options.deriveDependencies)]);
+  namespaceProgress('derive-inputs');
   const deriveContext=options.deriveDependencies?createDeriveFootprintContext({modules:graph.modules,dependencies:options.deriveDependencies,externalModules,compilationProfile:graph.compilationProfile}):null;
+  namespaceProgress('default-source');
   const hasDefaultDeclarations=graph.modules.some(module=>module.items.some(item=>['struct','enum','impl'].includes(item.term)&&item.tokens.some(token=>token.text==='Default')));
   const defaultContext=deriveContext&&hasDefaultDeclarations?createDefaultSourceContext(deriveContext):null;
+  namespaceProgress('clone-source');
   const hasCloneDeclarations=graph.modules.some(module=>module.items.some(item=>['struct','enum'].includes(item.term)&&item.tokens.some(token=>token.text==='Clone')));
   const cloneContext=deriveContext&&hasCloneDeclarations?createCloneSourceContext(deriveContext):null;
+  namespaceProgress('tool-attributes');
   const resolvedExternal=deriveContext?deriveFootprintExternalModules(deriveContext):externalModules;
   const toolContext=createToolAttributeContext({modules:graph.modules,externalModules:resolvedExternal,deriveContext,compilationProfile:graph.compilationProfile});
-  const deriveBangContext=deriveContext?createDeriveBangContext({deriveContext}):null;
-  const bindingEvidence=resolveModuleBindings({modules:graph.modules,externalModules:resolvedExternal,deriveContext,deriveBangContext,toolContext,compilationProfile:graph.compilationProfile});
+  // This consumer needs enclosing bindings. Runtime/ownership and generated
+  // Default/Clone checking retain their separate original source contexts.
+  namespaceProgress('derive-namespace-context');
+  const deriveBangContext=deriveContext?(enclosingNamespace?createDeriveEnclosingNamespaceContext({deriveContext}):createDeriveBangContext({deriveContext})):null;
+  namespaceProgress(enclosingNamespace?'enclosing-bindings':'complete-bindings');
+  const bindingEvidence=(enclosingNamespace?resolveEnclosingNamespaceModuleBindings:resolveModuleBindings)({modules:graph.modules,externalModules:resolvedExternal,deriveContext,deriveBangContext,toolContext,compilationProfile:graph.compilationProfile});
   const scopes=new Map(bindingEvidence.scopes.map(scope=>[moduleScopeKey(scope),scope]));
   const configureSourceScope=(parser,module)=>configureParserSourceScope(requestImmutableNamespaceTargets(parser),scopes.get(moduleScopeKey(module)),bindingEvidence.scopes,module.path);
   const matchesMacroContext=createMatchesMacroContext({modules:graph.modules,compilationProfile:graph.compilationProfile,deriveDependencies:options.deriveDependencies??null,cargoEditionContext});
