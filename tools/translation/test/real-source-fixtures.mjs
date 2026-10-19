@@ -87,7 +87,7 @@ function staticCst(source,doc){
 }
 // Release packed/raw archive backing before complete native CST validation.
 // The full index and decoded bundle remain fresh ordinary return data.
-import {decodeStaticSourceStorage} from '../static-source-storage-codec.mjs';
+import {decodeStaticSourceStorage} from '../static-source-layout-storage.mjs';
 function readStaticArchiveData(folder){
   const index=JSON.parse(text(readFileSync(resolve(folder,'manifest.json'))));
   if(index.schema!=='router-static-source-lifecycle-v1'||index.archive!=='originals.json.gz'||!Number.isSafeInteger(index.rawBytes)||index.rawBytes<0||index.rawBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticError('fixed complete index required');
@@ -182,7 +182,7 @@ export function staticSourceAssociatedContext(caseId,{folder=STATIC_FOLDER,root=
 // A separately authenticated plain-source TEST DATA API. It intentionally
 // validates no canonical CST and cannot replace the complete/default readers.
 import {openSync as textOpen,readSync as textRead,fstatSync as textFstat,lstatSync as textLstat,closeSync as textClose,constants as textFsConstants} from 'node:fs';
-import {decodeStaticSourceTextData} from '../static-source-storage-codec.mjs';
+import {decodeStaticSourceTextData} from '../static-source-layout-storage.mjs';
 const TEXT_DATA_ASSETS=['tools/translation/source-profiles/static-source-lifecycle/manifest.json','tools/translation/source-profiles/static-source-lifecycle/originals.json.gz'];
 const textDataIdentity=info=>[info.dev,info.ino,info.mode,info.nlink,info.uid,info.gid,info.size,info.mtimeMs,info.ctimeMs];
 const textDataSameIdentity=(left,right)=>left.length===right.length&&left.every((value,index)=>value===right[index]);

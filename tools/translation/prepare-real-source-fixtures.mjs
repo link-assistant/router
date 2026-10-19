@@ -251,7 +251,7 @@ function staticCapture(root,rev,{nestedPackage=false}={}){
   }
   if(at!==raw.length)staticFail('extra source batch bytes');return {files:rows,sources,sourceSetSha256:staticRowsDigest(rows)};
 }
-import {encodeStaticSourceStorage,decodeStaticSourceStorage} from './static-source-storage-codec.mjs';
+import {encodeStaticSourceStorage,decodeStaticSourceStorage} from './static-source-layout-storage.mjs';
 function staticReadArchive(folder){
   const index=JSON.parse(decode(readFileSync(resolve(folder,'manifest.json'))));
   if(index.schema!=='router-static-source-lifecycle-v1'||index.archive!=='originals.json.gz'||!Number.isSafeInteger(index.rawBytes)||index.rawBytes<0||index.rawBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticFail('reviewed index differs');
