@@ -1,3 +1,4 @@
+import {crateModuleSourcePath} from './repository-layout.mjs';
 // Explicit owned optional decoding, not general serde Deserialize admission.
 // Source qualification selects the existing locked float_roundtrip adapter.
 import {JSON_TYPES,JSON_CONTRACTS,JSON_DATA} from './extensions/json-contracts.mjs';
@@ -37,7 +38,7 @@ export function parseRouterCoreJsonParse(parser,path){
  const state=matchesParserFacts(parser),facade=requireRouterCoreFacade(parser),inputProof=originalMatchesDependencyProof(state.facts),inputs=deriveDependencyOriginalInputs(inputProof),dependencies=jsonMacroDependencyProfile(inputs).proof;
  if(!dependencies)fail();const profile=jsonRoundtripCandidateProfile({dependencies,compilationProfile:state.facts.compilationProfile});if(!isJsonRoundtripCandidateProfile(profile))fail();
  const leaves=state.facts.modules.filter(module=>module.path.join('::')==='translation_core::primitives'),leaf=leaves[0];
- if(leaves.length!==1||leaf.file!=='src/translation_core/primitives.rs'||leaf.source!==ROUTER_CORE_PRIMITIVES_SOURCE||leaf.configurationCondition!=='active'||!leaf.sourceView)fail();const declarations=originalSourceModuleItems(leaf),selected=declarations.filter(item=>item.term==='fn'&&item.name===c.peek(4).value);
+ if(leaves.length!==1||leaf.file!==crateModuleSourcePath(state.facts.modules,'src/translation_core/primitives.rs')||leaf.source!==ROUTER_CORE_PRIMITIVES_SOURCE||leaf.configurationCondition!=='active'||!leaf.sourceView)fail();const declarations=originalSourceModuleItems(leaf),selected=declarations.filter(item=>item.term==='fn'&&item.name===c.peek(4).value);
  const definition=c.peek(4).value==='json_parse'?'pub fn json_parse(value: &Str) -> Maybe<Json> {\n    ::serde_json::from_str::<Json>(value).ok()\n}':'pub fn json_parse_bytes(value: &[u8]) -> Maybe<Json> {\n    ::serde_json::from_slice::<Json>(value).ok()\n}';
  const source=selected[0]?.tokens.filter(token=>token.type!=='comment'),fn=source?.findIndex(token=>token.text==='fn');
  if(selected.length!==1||fn<1||source[fn-1].text!=='pub'||leaf.source.slice(source[fn-1].start,selected[0].end)!==definition||!state.facts.modules.find(module=>module.path.join('::')==='translation_core')?.source.includes('pub use self::primitives::{json_parse, json_parse_bytes};'))fail();

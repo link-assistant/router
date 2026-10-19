@@ -12,14 +12,14 @@ name: macOS Keychain
 on:
   pull_request:
     paths:
-      - 'src/platform_keychain*.rs'
-      - 'src/subscription.rs'
-      - 'src/subscription/**'
-      - 'src/deploy_local/claude_share.rs'
-      - 'src/deploy_local/host_runtime.rs'
-      - 'src/deploy_local/host_login_tests.rs'
-      - 'src/auth_cli.rs'
-      - 'tests/macos_keychain_test.rs'
+      - 'rust/src/platform_keychain*.rs'
+      - 'rust/src/subscription.rs'
+      - 'rust/src/subscription/**'
+      - 'rust/src/deploy_local/claude_share.rs'
+      - 'rust/src/deploy_local/host_runtime.rs'
+      - 'rust/src/deploy_local/host_login_tests.rs'
+      - 'rust/src/auth_cli.rs'
+      - 'rust/tests/macos_keychain_test.rs'
       - '.github/workflows/macos-keychain.yml'
   schedule:
     - cron: '9 5 * * 1'

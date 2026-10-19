@@ -13,7 +13,9 @@ function canonicalSyntax(source,syntaxOnly=false){
   while(at<source.length){
    const code=source.charCodeAt(at++);
    if(code===34){
-    if(escaped&&!syntaxOnly){const raw=source.slice(begin,at),value=JSON.parse(raw);if(JSON.stringify(value)!==raw)stop();return key?value:undefined;}
+    // Values need no decoded copy. Only object keys need strings for native
+    // duplicate/integer-key ordering; validate every escape directly below.
+    if(escaped&&key)return JSON.parse(source.slice(begin,at));
     return key?source.slice(begin+1,at-1):undefined;
    }
    if(code<32)stop();
@@ -22,6 +24,23 @@ function canonicalSyntax(source,syntaxOnly=false){
     if(syntaxOnly){
      if(next===117){for(let count=0;count<4;count++){const hex=source.charCodeAt(at++);if(!(hex>=48&&hex<=57||hex>=65&&hex<=70||hex>=97&&hex<=102))stop();}}
      else if(next!==34&&next!==92&&next!==47&&next!==98&&next!==102&&next!==110&&next!==114&&next!==116)stop();
+    }else if(next===117){
+     let value=0;
+     for(let count=0;count<4;count++){
+      const hex=source.charCodeAt(at++),digit=hex>=48&&hex<=57?hex-48:hex>=97&&hex<=102?hex-87:-1;
+      if(digit<0)stop();value=value*16+digit;
+     }
+     // Native stringify uses short escapes where available, literal ordinary
+     // characters and paired surrogates, and lowercase escapes for lone ones.
+     if(value<32){if(value===8||value===9||value===10||value===12||value===13)stop();}
+     else if(value>=0xd800&&value<=0xdfff){
+      if(value<=0xdbff){
+       const following=source.charCodeAt(at),lowHex=source.charCodeAt(at+3);
+       if(following>=0xdc00&&following<=0xdfff||following===92&&source.charCodeAt(at+1)===117&&source.charCodeAt(at+2)===100&&lowHex>=99&&lowHex<=102)stop();
+      }
+     }else stop();
+    }else if(next!==34&&next!==92&&next!==98&&next!==102&&next!==110&&next!==114&&next!==116){
+     stop();
     }
     continue;
    }

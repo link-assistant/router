@@ -70,3 +70,23 @@ test('syntax-only validation retains native parsing of noncanonical and deeply n
  function observation(callback,source){try{callback(source);return {ok:true};}catch(error){return {name:error.name,message:error.message};}}
  for(const source of sources){assert.deepEqual(observation(assertJsonSyntax,source),observation(JSON.parse,source),JSON.stringify(source));if(observation(JSON.parse,source).ok)assert.equal(assertJsonSyntax(source),undefined);}
 });
+
+test('every UTF16 code unit and written Unicode escape retain the independent native canonical decision',{timeout:60000},()=>{
+ for(let unit=0;unit<65536;unit++){
+  const character=String.fromCharCode(unit),escaped='"\\u'+unit.toString(16).padStart(4,'0')+'"';
+  assert.equal(isCanonicalJsonText(JSON.stringify(character)),true,'native unit '+unit);
+  assert.deepEqual(actual(escaped),native(escaped),'written unit '+unit);
+ }
+ const parts=['a','\\\\','\\"','\\b','\\t','\\n','\\f','\\r','\\u0000','\\u000b','\\u001f','\\ud800','\\udbff','\\udc00','\\udfff','\ud800','\udbff','\udc00','\udfff','\\uD800','\\uDC00','\\u0020','\\/'];
+ for(const left of parts)for(const right of parts)compare(['"'+left+right+'"','{"'+left+right+'":0}']);
+});
+
+test('complete large escaped values preserve every byte and late canonical or malformed differences',{timeout:60000},()=>{
+ const value=('quote" backslash\\ controls\u0000\b\t\n\f\r lone\ud800\udfff paired😀\n').repeat(30000),source=JSON.stringify({value,late:[true,null,'tail']});
+ assert.equal(isCanonicalJsonText(source),true);assert.deepEqual(actual(source),native(source));
+ const at=source.lastIndexOf('\\n');assert.ok(at>source.length/2);
+ for(const replacement of ['\\u000a','\\q','\\u00xz']){
+  const changed=source.slice(0,at)+replacement+source.slice(at+2);compare([changed]);
+ }
+ const ended=source.slice(0,-1);assert.deepEqual(actual(ended),native(ended));
+});

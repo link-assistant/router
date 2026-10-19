@@ -39,3 +39,15 @@ export function repositoryRustLayout(root) {
 export function relocatedRustSourcePath(path) {
   return path === 'Cargo.toml' || path === 'build.rs' || /^(?:src|tests|benches|examples|fuzz|fixtures|proptest-regressions)\//u.test(path) ? `rust/${path}` : path;
 }
+
+// Pure repository labels. The actual source graph, complete bytes, namespace,
+// ownership and semantic checks remain the caller's independent obligations.
+// Only the two declared physical Router crate entries select the rust/ prefix.
+export function crateEntrySourcePath(entry,path) {
+  return entry==='rust/src/lib.rs'||entry==='rust/src/main.rs' ? 'rust/'+path : path;
+}
+export function crateModuleSourcePath(modules,path) {
+  let entry=null,count=0;
+  for(const module of modules)if(module.path.length===0){entry=module.file;count++;}
+  return crateEntrySourcePath(count===1?entry:null,path);
+}

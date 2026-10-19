@@ -1,3 +1,4 @@
+import {crateModuleSourcePath} from './repository-layout.mjs';
 // Only source-bound owned JSON operations enter this language rule. The Rust
 // library bodies remain untranslated; no general Clone/IndexMut is admitted.
 import {types} from 'node:util';
@@ -48,7 +49,7 @@ const projectionDefinitions={"json_index_str":"pub fn json_index_str<'a>(value: 
 const projectionId=id=>typeof id==='string'&&id.startsWith('router_core_')&&(projectionNames.has(id.replace(/^router_core_/u,''))||isRouterCoreJsonCollection(id.replace(/^router_core_/u,'')));
 const fail=()=>{throw new TypeError('Owned JSON update requires its actual complete source binding');};
 function sourceContract(run,span){try{return run();}catch(error){if(!(error instanceof TypeError))throw error;throw unsupported('Router owned JSON update source',error.message,span);}}
-function leaf(state){const rows=state.facts.modules.filter(module=>module.path.join('::')==='translation_core::primitives');if(rows.length!==1||rows[0].file!=='src/translation_core/primitives.rs'||rows[0].source!==ROUTER_CORE_PRIMITIVES_SOURCE||rows[0].configurationCondition!=='active'||!rows[0].sourceView)fail();originalSourceModuleItems(rows[0]);return rows[0];}
+function leaf(state){const rows=state.facts.modules.filter(module=>module.path.join('::')==='translation_core::primitives');if(rows.length!==1||rows[0].file!==crateModuleSourcePath(state.facts.modules,'src/translation_core/primitives.rs')||rows[0].source!==ROUTER_CORE_PRIMITIVES_SOURCE||rows[0].configurationCondition!=='active'||!rows[0].sourceView)fail();originalSourceModuleItems(rows[0]);return rows[0];}
 function same(a,b,budget={cells:200000},depth=0){
  if(--budget.cells<0||depth>160)return false;if(a===b)return true;if(!a||!b||typeof a!=='object'||typeof b!=='object'||isProxy(a)||isProxy(b))return false;
  if(isArray(a)!==isArray(b)||(prototype(a)!==plainPrototype&&prototype(a)!==null&&prototype(a)!==arrayPrototype))return false;

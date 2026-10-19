@@ -221,6 +221,46 @@ and edited CST wires and a whole-source inverse; independent parsed comparison
 confirmed all 443 feature statuses, evidence, gaps and every non-path field
 unchanged. This repairs physical references and makes no new parity claim.
 
+The third complete owned canonical producer attempt remained red after
+996.949 seconds at the original 2 GiB Node heap limit (sampled aggregate RSS
+2,479,996,928 bytes). It reached project serialization and failed in a native
+substring allocation. No outputs were installed. The follow-up validates
+escaped JSON scalar values directly, retaining native fallback errors and
+canonical rules without decoding and re-encoding each complete value. The
+complete four-file receiving cohort passed all 30 cases under Node and Bun,
+including every UTF-16 code unit and complete large escaped-value controls.
+This does not establish that the full producer now fits its unchanged bound.
+The same complete 58,700,590-byte CST diagnostic did not demonstrate a gain:
+the candidate took 887.367 ms with sampled aggregate RSS 334,184,448 bytes,
+versus 852.519 ms and 298,942,464 bytes for the preserved prior validator.
+Both complete input hashes matched. These single observations remain separate
+from the failed full producer; component-wise metadata production still needs
+implementation and qualification before another full attempt.
+
+A parser-selected source batch repaired 60 owned-core path literals across
+22 compiler/adoption modules, added crate-root path helpers, and retained full
+original/edited CST transports and inverses. Both logical `src` fixtures and
+physical `rust/src` inputs now pass the complete 15-case receiving pair under
+Node and Bun, with independent JavaScript and strict TypeScript goldens for
+eleven owned operations. The historical JSON profile pins remain unchanged:
+a separate language/repository pipeline checks the complete original/current
+Cargo and source-profile byte equations against the archived originals. Copied
+dependency proofs, changed complete sources and unrelated profile hashes refuse.
+
+The complete seven-case translation acceptance file passed under Node. Further
+historical controls exposed unbound root references in both packet writers and
+one remaining physical test read. Those references now select the captured
+original root. Full source equations preserve the historical function bodies
+and pins, including explicit checked derivations of the expected path changes.
+All ten complete historical packet-stream cases then passed under Node and Bun,
+including the original native Hash tapes, callback mutations and full source
+refusal controls. Current compiler exports, full canonical/profile/reverse
+generation and the complete gate remain open.
+Four specialized workflow path filters now watch the physical Rust sources and
+tests. Native YAML CST scalar selection, complete text inverses and independent
+parsed comparison preserved every other workflow field, including all jobs,
+deadlines and JavaScript-before-Rust dependencies.
+
 ## Work required in the next pull request
 
 | Requirement | Current state and next verification |

@@ -1,3 +1,4 @@
+import {crateModuleSourcePath} from './repository-layout.mjs';
 // Explicit owned-API source adoption, not implicit standard-library inference.
 // Every proposal retains complete inputs and inverses; executable permission
 // comes only from independently checking the newly reconstructed source.
@@ -270,7 +271,7 @@ export function proposeCorePrimitivesCorpus({entry='src/lib.rs',files:input,comp
   const graph=resolveModuleGraph({entry,paths:Object.keys(files),readSource:path=>files[path],compilationProfile:profile}),proposals=[],skipped=[],after={...files};
   const samePath=(module,path)=>module.path.length===path.length&&module.path.every((name,index)=>name===path[index]);
   const roots=graph.modules.filter(module=>samePath(module,[])),cores=graph.modules.filter(module=>samePath(module,['translation_core'])),leaves=graph.modules.filter(module=>samePath(module,['translation_core','primitives']));
-  if(roots.length!==1||cores.length!==1||leaves.length!==1||cores[0].file!=='src/translation_core.rs'||cores[0].source!==ROUTER_FORMATTING_FACADE_SOURCE||leaves[0].file!=='src/translation_core/primitives.rs'||leaves[0].source!==ROUTER_CORE_PRIMITIVES_SOURCE||cores[0].configurationCondition!=='active'||leaves[0].configurationCondition!=='active')fail('actual complete owned facade and primitive leaf required before corpus adoption');
+  if(roots.length!==1||cores.length!==1||leaves.length!==1||cores[0].file!==crateModuleSourcePath(graph.modules,'src/translation_core.rs')||cores[0].source!==ROUTER_FORMATTING_FACADE_SOURCE||leaves[0].file!==crateModuleSourcePath(graph.modules,'src/translation_core/primitives.rs')||leaves[0].source!==ROUTER_CORE_PRIMITIVES_SOURCE||cores[0].configurationCondition!=='active'||leaves[0].configurationCondition!=='active')fail('actual complete owned facade and primitive leaf required before corpus adoption');
   const declarations=originalSourceModuleItems(roots[0]).filter(item=>item.term==='mod'&&item.name==='translation_core');
   if(declarations.length!==1||roots[0].source.slice(declarations[0].start,declarations[0].end).trim()!=='pub mod translation_core;')fail('actual unadorned public core declaration required');
   if(originalSourceModuleItems(roots[0]).some(item=>item.term==='use'&&item.tokens.some(token=>token.text==='translation_core')))fail('competing root core alias is unsupported');

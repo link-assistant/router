@@ -1,3 +1,4 @@
+import {crateModuleSourcePath} from './repository-layout.mjs';
 // Fixed owned eager collection contract. Private caller/call issuance stays in
 // router-core-json-updates; public IR tags and array shapes grant no admission.
 import {sameType} from './checked-types.mjs';
@@ -18,7 +19,7 @@ const qualified=originalDataFreezeIntrinsicsUnchanged();
 const fail=()=>{throw new TypeError('Owned JSON collection requires its actual complete leaf and facade');};
 function leaf(state){
  const rows=state.facts.modules.filter(module=>module.path.join('::')==='translation_core::json_collections');
- if(rows.length!==1||rows[0].file!=='src/translation_core/json_collections.rs'||rows[0].source!==ROUTER_CORE_JSON_COLLECTIONS_SOURCE||rows[0].configurationCondition!=='active'||!rows[0].sourceView)fail();
+ if(rows.length!==1||rows[0].file!==crateModuleSourcePath(state.facts.modules,'src/translation_core/json_collections.rs')||rows[0].source!==ROUTER_CORE_JSON_COLLECTIONS_SOURCE||rows[0].configurationCondition!=='active'||!rows[0].sourceView)fail();
  originalSourceModuleItems(rows[0]);return rows[0];
 }
 export function parseRouterCoreJsonCollection(parser,path){

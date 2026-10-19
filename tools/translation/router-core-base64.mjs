@@ -1,3 +1,4 @@
+import {crateModuleSourcePath} from './repository-layout.mjs';
 // Concrete owned-library boundary. Complete source is data until a genuine
 // parser, checked operands, whole-function flow and emission all rejoin it.
 import {types} from 'node:util';
@@ -110,7 +111,7 @@ function freshLibrary(library){
 }
 function source(parser){
  guard();const state=matchesParserFacts(parser),facade=requireRouterCoreFacade(parser),rows=state.facts.modules.filter(row=>row.path.join('::')==='translation_core::base64'),leaf=rows[0];
- if(rows.length!==1||leaf.file!=='src/translation_core/base64.rs'||leaf.source!==ROUTER_CORE_BASE64_SOURCE||leaf.configurationCondition!=='active'||!leaf.sourceView)fail('complete active owned leaf required');originalSourceModuleItems(leaf);
+ if(rows.length!==1||leaf.file!==crateModuleSourcePath(state.facts.modules,'src/translation_core/base64.rs')||leaf.source!==ROUTER_CORE_BASE64_SOURCE||leaf.configurationCondition!=='active'||!leaf.sourceView)fail('complete active owned leaf required');originalSourceModuleItems(leaf);
  const dependencies=originalMatchesDependencyProof(state.facts),inputs=deriveDependencyOriginalInputs(dependencies),capture=captureOriginalExternalTraitPackage(dependencies,'base64'),library=originalExternalTraitPackageInputs(capture);
  freshLibrary(library);
  const stage=createRulePipeline([{phase:'language',rules:[{id:'owned-base64:lossless-concrete-library-contract',apply:()=>{const actual=transportConcreteSyntaxSource(leaf.source,{language:'Rust'});if(actual.source!==ROUTER_CORE_BASE64_SOURCE)fail('leaf CST');return actual;}}]},{phase:'repository',rules:[{id:'router-core:bind-fixed-owned-base64-interface',apply:value=>value}]}]).run(null);

@@ -5,13 +5,14 @@ import {createHash} from 'node:crypto';
 import {freezeMacroTree} from './macro-token-trees.mjs';
 import {isJsonMacroSourceProof,jsonMacroOriginalSource} from './json-macro-sources.mjs';
 import {proveJsonMacroFeatures,isJsonMacroFeatureProof} from './json-macro-features.mjs';
+import {jsonMacroProfileMatches} from './json-macro-profile-layout.mjs';
 const root=new URL('./source-profiles/json-roundtrip/',import.meta.url),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const bytes=readFileSync(new URL('manifest.json',root));
 if(hash(bytes)!=='987bee1ca3b251e46619321a5ef28b057db8a996174cdbe7fb7d1e65d388c9d7')throw new TypeError('JSON roundtrip source candidate changed');
 const profile=freezeMacroTree(JSON.parse(bytes)),candidates=new WeakSet();
 export function jsonRoundtripCandidateProfile({dependencies,compilationProfile=null}={}) {
   if(!isJsonMacroSourceProof(dependencies))throw new TypeError('JSON roundtrip needs sealed exact Cargo/source dependencies');
-  if(dependencies.profileSha256!==profile.jsonMacroSourceProfileSha256||!dependencies.packages.some(entry=>entry.name==='serde_json'&&entry.version===profile.version&&entry.archiveSha256===profile.lockedArchiveSha256))throw new TypeError('JSON roundtrip needs its exact original source profile and locked archive identity');
+  if(!jsonMacroProfileMatches(dependencies,profile.jsonMacroSourceProfileSha256)||!dependencies.packages.some(entry=>entry.name==='serde_json'&&entry.version===profile.version&&entry.archiveSha256===profile.lockedArchiveSha256))throw new TypeError('JSON roundtrip needs its exact original source profile and locked archive identity');
   if(compilationProfile?.values?.feature?.length)throw new TypeError('JSON roundtrip has no command-line Cargo feature override proof');
   if(compilationProfile?.values?.fast_arithmetic?.length)throw new TypeError('JSON roundtrip has no externally injected fast_arithmetic cfg proof');
   const features=proveJsonMacroFeatures(dependencies);

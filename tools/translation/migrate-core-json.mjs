@@ -1,3 +1,4 @@
+import {crateModuleSourcePath} from './repository-layout.mjs';
 // Explicit owned JSON macro adoption, not general macro or Serialize authority.
 import {types} from 'node:util';
 import {createHash} from 'node:crypto';
@@ -53,7 +54,7 @@ export function proposeCoreJsonCorpus(options={}){
   const snapshot=snapshotOptions(options),{entry='src/lib.rs',files:input,compilationProfile=PRODUCTION_PROFILE,dependencyInputs}=snapshot.copy,files=sourceMap(input),profile=normalizeProfile(compilationProfile);
   if(!Object.hasOwn(files,entry))fail('entry source missing');
   const graph=resolveModuleGraph({entry,paths:Object.keys(files),readSource:path=>files[path],compilationProfile:profile}),root=graph.modules.filter(row=>!row.path.length),core=graph.modules.filter(row=>same(row.path,['translation_core']));
-  if(root.length!==1||core.length!==1||core[0].file!=='src/translation_core.rs'||core[0].source!==ROUTER_FORMATTING_FACADE_SOURCE||core[0].configurationCondition!=='active')fail('complete actual owned facade required');
+  if(root.length!==1||core.length!==1||core[0].file!==crateModuleSourcePath(graph.modules,'src/translation_core.rs')||core[0].source!==ROUTER_FORMATTING_FACADE_SOURCE||core[0].configurationCondition!=='active')fail('complete actual owned facade required');
   const edges=originalSourceModuleItems(root[0]).filter(item=>item.term==='mod'&&item.name==='translation_core');if(edges.length!==1||root[0].source.slice(edges[0].start,edges[0].end).trim()!=='pub mod translation_core;')fail('actual public core edge required');
   const roleFor=createLiteralTextImportRoles(graph.modules,profile,dependencyInputs),dependency=dependencyInputs===undefined?null:jsonMacroDependencyProfile(dependencyInputs),proof=dependency?.proof??null;
   let macroSource=null,definition=null;
@@ -61,7 +62,7 @@ export function proposeCoreJsonCorpus(options={}){
   const producerContext=createCoreAdoptionProducerContext({modules:graph.modules,compilationProfile:profile,dependencyInputs});
   const proposals=[],skipped=[],after={...files};
   for(const file of Object.keys(files)){
-    if(file==='src/translation_core.rs'||file.startsWith('src/translation_core/'))continue;
+    if(file===crateModuleSourcePath(graph.modules,'src/translation_core.rs')||file.startsWith(crateModuleSourcePath(graph.modules,'src/translation_core/')))continue;
     const modules=graph.modules.filter(module=>module.file===file),origins=modules.filter(module=>!module.sourceView.modulePath.length),edits=[],selections=[],preserved=[],imports=[];
     if(origins.length!==1){skipped.push({file,reason:'missing or multiple physical source origins'});continue;}
     for(const module of modules){

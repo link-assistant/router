@@ -1,3 +1,4 @@
+import {crateEntrySourcePath} from './repository-layout.mjs';
 import {repositoryRustLayout} from './repository-layout.mjs';
 // A bounded, proposal-only source producer. Existing adoption APIs remain
 // unchanged. Packets retain all returned evidence without one corpus-sized JSON.
@@ -211,10 +212,10 @@ function fixedAdoptionStage(name,files,propose,original,write,dependencies,produ
   // primitive source map and packet references, never the live proposal.
   return createRulePipeline([
     {phase:'language',rules:[{id:'core-adoption:complete-'+name+'-corpus',apply:()=>{
-      if(progress)progress({stage:'project',state:'start',entry:rootEntry(root),phase:name+'-analysis'});
-      const request={entry:rootEntry(root),files,compilationProfile:PRODUCTION_PROFILE,...((name==='literal'||name==='scalar-count'||name==='json'||producerDependencies)&&dependencies.inputs?{dependencyInputs:dependencies.inputs}:{})};
+      if(progress)progress({stage:'project',state:'start',entry:rootEntry(original.root),phase:name+'-analysis'});
+      const request={entry:rootEntry(original.root),files,compilationProfile:PRODUCTION_PROFILE,...((name==='literal'||name==='scalar-count'||name==='json'||producerDependencies)&&dependencies.inputs?{dependencyInputs:dependencies.inputs}:{})};
       const result=name==='base64'&&progress?propose(request,progressInput):propose(request);
-      if(progress)progress({stage:'project',state:'end',entry:rootEntry(root),phase:name+'-analysis'});
+      if(progress)progress({stage:'project',state:'end',entry:rootEntry(original.root),phase:name+'-analysis'});
       return result;
     }}]},
     {phase:'repository',rules:[{id:'core-adoption:'+name+'-complete-packets',apply:proposal=>{
@@ -278,7 +279,7 @@ function adoptionStreamEvent(value){
 }
 function fixedAdoptionStreamStage(name,files,createStream,original,write,dependencies){
  return createRulePipeline([
-  {phase:'language',rules:[{id:'core-adoption:prepare-'+name+'-corpus-stream',apply:()=>createStream({entry:rootEntry(root),files,compilationProfile:PRODUCTION_PROFILE,...(dependencies.inputs?{dependencyInputs:dependencies.inputs}:{})})}]},
+  {phase:'language',rules:[{id:'core-adoption:prepare-'+name+'-corpus-stream',apply:()=>createStream({entry:rootEntry(original.root),files,compilationProfile:PRODUCTION_PROFILE,...(dependencies.inputs?{dependencyInputs:dependencies.inputs}:{})})}]},
   {phase:'repository',rules:[{id:'core-adoption:'+name+'-stream-complete-packets',apply:stream=>{
    const packets={metadata:null,before:[],after:[],inputs:[],proposals:[],moduleGraph:{metadata:null,modules:[],edges:null,diagnostics:null,concreteSyntaxMeta:[]}},paths=Object.keys(files),ordinals=new Map(paths.map((path,at)=>[path,at])),proposed=new Map(),seen=new Set();
    const arrays=new Map([['before',packets.before],['after',packets.after],['inputs',packets.inputs],['proposals',packets.proposals],['graph-modules',packets.moduleGraph.modules],['graph-concrete',packets.moduleGraph.concreteSyntaxMeta]]),singles=new Map([['metadata','metadata'],['graph-metadata','metadata'],['graph-edges','edges'],['graph-diagnostics','diagnostics']]);
@@ -298,12 +299,12 @@ function fixedAdoptionStreamStage(name,files,createStream,original,write,depende
     }else if(event.section==='inputs'){
      if(event.ordinal>=paths.length||value.file!==paths[event.ordinal]||value.source!==files[value.file]||typeof value.sha256!=='string'||!/^[a-f0-9]{64}$/u.test(value.sha256))fail('stream input association differs');
     }else if(event.section==='proposals'){
-     const at=ordinals.get(value.file);if(at===undefined||at<=lastProposal||value.file==='src/translation_core.rs'||value.file.startsWith('src/translation_core/')||proposed.has(value.file)||value.before?.source!==files[value.file]||typeof value.after?.source!=='string'||!Array.isArray(value.selections)||!Array.isArray(value.edits)||!Array.isArray(value.stages)||value.stages.length!==2)fail('per-file stream proposal differs');
+     const at=ordinals.get(value.file);if(at===undefined||at<=lastProposal||value.file===crateEntrySourcePath(rootEntry(original.root),'src/translation_core.rs')||value.file.startsWith(crateEntrySourcePath(rootEntry(original.root),'src/translation_core/'))||proposed.has(value.file)||value.before?.source!==files[value.file]||typeof value.after?.source!=='string'||!Array.isArray(value.selections)||!Array.isArray(value.edits)||!Array.isArray(value.stages)||value.stages.length!==2)fail('per-file stream proposal differs');
      assertAdoptionInverse(value);for(const stage of value.stages)assertAdoptionInverse(stage);
      proposed.set(value.file,value.after.source);lastProposal=at;actual.proposals++;actual.selections+=value.selections.length;actual.edits+=value.edits.length;if(value.before.source!==value.after.source)actual.changedFiles++;
     }else if(event.section==='metadata'){
      const excluded=['before','after','inputs','moduleGraph','proposals'],keys=['schema','entry','compilationProfile','dependencyInputs','inputs','before','after','proposals','skipped',...(Object.hasOwn(value.values??{},'producerEffects')?['producerEffects']:[]),'moduleGraph','migrationSemantics','executableAdmission'];
-     if(JSON.stringify(value.keys)!==JSON.stringify(keys)||JSON.stringify(Object.keys(value.values))!==JSON.stringify(keys.filter(key=>!excluded.includes(key)))||value.values.schema!=='router-owned-json-reader-corpus-v1'||value.values.entry!==rootEntry(root)||value.values.executableAdmission!==false||!Array.isArray(value.values.skipped))fail('complete stream metadata differs');
+     if(JSON.stringify(value.keys)!==JSON.stringify(keys)||JSON.stringify(Object.keys(value.values))!==JSON.stringify(keys.filter(key=>!excluded.includes(key)))||value.values.schema!=='router-owned-json-reader-corpus-v1'||value.values.entry!==rootEntry(original.root)||value.values.executableAdmission!==false||!Array.isArray(value.values.skipped))fail('complete stream metadata differs');
      skipped=value.values.skipped.map(row=>row.file);
     }
     const reference=write.jsonText(relative,event.text);if(list)list.push(reference);else if(graph)packets.moduleGraph[single]=reference;else packets[single]=reference;seen.add(event.section);
@@ -313,7 +314,7 @@ function fixedAdoptionStreamStage(name,files,createStream,original,write,depende
     rejoin(original);dependencies.verify();  // Original post-producer source guard; partial packets are not publication.
     if(!result||typeof result!=='object'||!result.after||!result.summary||!result.counts||packets.before.length!==paths.length||packets.after.length!==paths.length||packets.inputs.length!==paths.length||!['metadata','graph-metadata','graph-edges','graph-diagnostics'].every(section=>seen.has(section))||packets.moduleGraph.modules.length!==result.counts.modules||packets.moduleGraph.concreteSyntaxMeta.length!==result.counts.concreteSyntaxMeta||!Array.isArray(skipped))fail('incomplete stream EOF or packet census');
     if(JSON.stringify(Object.keys(result.after))!==JSON.stringify(paths)||paths.some(path=>result.after[path]!== (proposed.get(path)??files[path])))fail('stream final source census differs');
-    const missing=paths.filter(path=>path!=='src/translation_core.rs'&&!path.startsWith('src/translation_core/')&&!proposed.has(path));if(new Set(skipped).size!==skipped.length||skipped.length!==missing.length||skipped.some((path,at)=>path!==missing[at]))fail('stream proposals/skips do not partition originals');
+    const missing=paths.filter(path=>path!==crateEntrySourcePath(rootEntry(original.root),'src/translation_core.rs')&&!path.startsWith(crateEntrySourcePath(rootEntry(original.root),'src/translation_core/'))&&!proposed.has(path));if(new Set(skipped).size!==skipped.length||skipped.length!==missing.length||skipped.some((path,at)=>path!==missing[at]))fail('stream proposals/skips do not partition originals');
     actual.skippedFiles=skipped.length;if(JSON.stringify(result.summary)!==JSON.stringify(actual))fail('stream summary differs from complete packets');
     drained=true;return {files:result.after,packets,summary:actual,verify:()=>stream.verify()};
    }finally{if(!drained)stream.return();}

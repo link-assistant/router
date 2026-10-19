@@ -9,16 +9,16 @@ name: Soak
 on:
   pull_request:
     paths:
-      - 'src/proxy*.rs'
-      - 'src/proxy/**'
-      - 'src/subscription_proxy*.rs'
-      - 'src/provider_proxy*.rs'
-      - 'src/usage.rs'
-      - 'src/token_reservation.rs'
-      - 'src/stream_termination.rs'
-      - 'src/*stream*.rs'
-      - 'tests/soak_test.rs'
-      - 'tests/support/replay_router.rs'
+      - 'rust/src/proxy*.rs'
+      - 'rust/src/proxy/**'
+      - 'rust/src/subscription_proxy*.rs'
+      - 'rust/src/provider_proxy*.rs'
+      - 'rust/src/usage.rs'
+      - 'rust/src/token_reservation.rs'
+      - 'rust/src/stream_termination.rs'
+      - 'rust/src/*stream*.rs'
+      - 'rust/tests/soak_test.rs'
+      - 'rust/tests/support/replay_router.rs'
       - '.github/workflows/soak.yml'
   schedule:
     - cron: '23 4 * * *'
