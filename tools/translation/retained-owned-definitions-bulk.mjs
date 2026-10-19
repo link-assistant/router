@@ -25,7 +25,7 @@ import {planProjectMetaUtf8ObjectStorage} from './project-meta-utf8-storage.mjs'
 import {serializeProjectMetaFieldUtf8} from './project-meta-field-json.mjs';
 import {captureOwnedDefinitionInputs,packageOwnedDefinitions,finishOwnedDefinitionOutput,validateOwnedDefinitionOutput} from './owned-definition-output.mjs';
 import {createPrivateOutputPlanStore} from './private-output-text.mjs';
-import {createPrivateByteOutputTextMap as createPrivateOutputTextMap} from './private-byte-output-text.mjs';
+import {createPrivateDescribedByteOutputTextMap as createPrivateOutputTextMap} from './private-described-byte-output-text.mjs';
 
 export const OUTPUT_ROOTS = ['tools/translation/meta', 'js/generated/rust-draft', 'ts/generated/rust-draft', 'tools/translation/projects', 'js/generated/rust-project', 'ts/generated/rust-project', 'tools/translation/generated/owned-definitions', 'js/generated/rust-owned-definitions', 'ts/generated/rust-owned-definitions'];
 const plans=createPrivateOutputPlanStore();
@@ -107,7 +107,9 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
     progress({stage:'project',state:'advance',entry,phase:'owned-meta-retain-end'});
     expected.set(targets.javascript, result.javascript); expected.set(targets.typescript, result.typescript);
     projects.push({ entry, status: 'partial', runtimeParity: false, sources: result.meta.sources.length, moduleEdges: result.meta.moduleEdges.length, moduleDiagnostics: result.meta.moduleDiagnostics.length, executableFunctions: result.meta.executable.filter(item => item.term === 'fn').length, executableConstants: result.meta.executable.filter(item => item.term === 'const').length, checkedMethods: result.meta.checkedMethods?.length ?? 0, checkedGeneratedMethods: result.meta.checkedGeneratedMethods?.length ?? 0, refused: result.meta.refused.length, unloweredItems: result.meta.unloweredItems.length, targets });
+    progress({stage:'project',state:'advance',entry,phase:'owned-package-start'});
     ownedProjects.push(packageOwnedDefinitions({result:result.ownedDefinitions,entry,expected,outputRoots,prefix,profile,inputs:ownedInputs,assets,hostAssets:hostRuntimeAssetsNamedDataAliases()}));
+    progress({stage:'project',state:'advance',entry,phase:'owned-package-end'});
     progress({stage:'project',state:'end',entry});
   }
   progress({stage:'standalone',state:'start',total:paths.length});
@@ -240,9 +242,9 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
   freezeData(manifest);
   expected.set(`${prefix?prefix+'/':''}parity/rust-source-inventory.json`, json(manifest));
   finishOwnedDefinitionOutput(expected,{projects:ownedProjects,outputRoots,prefix,profile,inputs:ownedInputs});
-  let expectedBytes=0;for(const content of expected.values())expectedBytes+=Buffer.byteLength(content);
+  let expectedBytes=0;for(const row of expected.descriptions())expectedBytes+=row.bytes;
   if(expectedBytes>BULK_PLAN_LIMITS.profileExpectedBytes)throw new TypeError('bulk profile output plan exceeds its 536870912 byte budget');
-  const outputs=[];for(const [path,content] of expected)outputs.push(Object.freeze({path,bytes:Buffer.byteLength(content),sha256:sha256(content)}));
+  const outputs=Array.from(expected.descriptions());
   const plan=Object.freeze({schema:'checked-bulk-output-plan-v1',root,outputPrefix:prefix||null,outputRoots:Object.freeze(outputRoots),expectedBytes,outputs:Object.freeze(outputs),manifest});
   plans.set(plan,{root,prefix,outputRoots,expected,manifest,ownedInputs});
   progress({stage:'plan',state:'end',outputs:outputs.length,bytes:expectedBytes});

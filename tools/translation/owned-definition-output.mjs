@@ -85,13 +85,13 @@ export function packageOwnedDefinitions({result,entry,expected,outputRoots,prefi
  const {definitions:ignoredDefinitions,parents:ignoredParents,...summary}=result;packet('complete-result-fields',summary);
  const runtime=new Map(hostAssets);runtime.set('effects.mjs',assets.javascript);runtime.set('effects.d.mts',assets.declarations);
  for(const root of [jsRoot,tsRoot])for(const [name,text]of runtime)put(expected,root+'/runtime/'+name,text);
- const files=[];for(const [path,text]of expected)if([metaRoot,jsRoot,tsRoot].some(root=>path.startsWith(root+'/')))files.push({path,bytes:Buffer.byteLength(text),sha256:ownedDefinitionHash(text)});
+ const files=[];for(const path of expected.keys())if([metaRoot,jsRoot,tsRoot].some(root=>path.startsWith(root+'/'))){const text=expected.get(path);files.push({path,bytes:Buffer.byteLength(text),sha256:ownedDefinitionHash(text)});}
  const index={schema:'materialized-owned-definitions-project-v1',entry,prefix:prefix||null,compilationProfile:profile,inputs:ownedDefinitionInputsDescription(inputs),definitions,packets,files,moduleStartupEquivalent:false,runtimeParity:false,applicationEffectCompleteness:false};
  const path=metaRoot+'/index.json';put(expected,path,JSON.stringify(index)+'\n');return {entry,index:path,sha256:ownedDefinitionHash(expected.get(path)),definitions:definitions.length};
 }
 export function finishOwnedDefinitionOutput(expected,{projects,outputRoots,prefix,profile,inputs}){
  const index={schema:'materialized-owned-definitions-inventory-v1',projects,prefix:prefix||null,compilationProfile:profile,inputs:ownedDefinitionInputsDescription(inputs),runtimeParity:false,moduleStartupEquivalent:false,limits:OWNED_DEFINITION_LIMITS};put(expected,outputRoots[6]+'/index.json',JSON.stringify(index)+'\n');
- let bytes=0,paths=0;for(const [path,text]of expected)if(outputRoots.slice(6).some(root=>path.startsWith(root+'/'))){bytes+=Buffer.byteLength(text);paths++;}if(bytes>OWNED_DEFINITION_LIMITS.evidenceBytes||paths>OWNED_DEFINITION_LIMITS.paths)fail('evidence output bound');
+ let bytes=0,paths=0;for(const path of expected.keys())if(outputRoots.slice(6).some(root=>path.startsWith(root+'/'))){bytes+=Buffer.byteLength(expected.get(path));paths++;}if(bytes>OWNED_DEFINITION_LIMITS.evidenceBytes||paths>OWNED_DEFINITION_LIMITS.paths)fail('evidence output bound');
 }
 export function validateOwnedDefinitionOutput(root,expected,outputRoots,inputs){requireOwnedDefinitionInputs(inputs);for(const path of expected.keys())if(outputRoots.slice(6).some(base=>path.startsWith(base+'/')))ownedDefinitionPhysical(root,path,true);}
 export function legacyOwnedDefinitionOutputs(plan){

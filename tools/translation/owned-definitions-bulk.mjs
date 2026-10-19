@@ -103,7 +103,9 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
     progress({stage:'project',state:'advance',entry,phase:'owned-meta-retain-end'});
     expected.set(targets.javascript, result.javascript); expected.set(targets.typescript, result.typescript);
     projects.push({ entry, status: 'partial', runtimeParity: false, sources: result.meta.sources.length, moduleEdges: result.meta.moduleEdges.length, moduleDiagnostics: result.meta.moduleDiagnostics.length, executableFunctions: result.meta.executable.filter(item => item.term === 'fn').length, executableConstants: result.meta.executable.filter(item => item.term === 'const').length, checkedMethods: result.meta.checkedMethods?.length ?? 0, checkedGeneratedMethods: result.meta.checkedGeneratedMethods?.length ?? 0, refused: result.meta.refused.length, unloweredItems: result.meta.unloweredItems.length, targets });
+    progress({stage:'project',state:'advance',entry,phase:'owned-package-start'});
     ownedProjects.push(packageOwnedDefinitions({result:result.ownedDefinitions,entry,expected,outputRoots,prefix,profile,inputs:ownedInputs,assets,hostAssets:hostRuntimeAssetsNamedDataAliases()}));
+    progress({stage:'project',state:'advance',entry,phase:'owned-package-end'});
     progress({stage:'project',state:'end',entry});
   }
   progress({stage:'standalone',state:'start',total:paths.length});

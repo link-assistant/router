@@ -135,6 +135,19 @@ fixed. Keep the scalar-cell API and ordinary producer intact. Whole-wire storage
 timings do not establish live-project memory fit, observer equivalence, source
 authority or a full-gate pass.
 
+Select owned output keys before reading their text. Iterating `[path, text]`
+and then filtering can restore unrelated large metadata beside the live compiler.
+The retained owned lane derives a described byte map with
+`node tools/translation/prepare-described-byte-output-text.mjs --emit`; review
+its complete original source/CST and inverse, install the exact proposal and
+run `--check`. Its per-plan immutable output descriptions retain the original
+UTF-8 byte length and SHA-256 without restoring text during the final census.
+Keep surrogate pairs together across measurement chunks and retain lone-surrogate
+replacement semantics. These are storage measurements associated with private
+immutable cells, not cached source/owner verdicts or cross-invocation permits.
+Keep original byte/scalar APIs and all semantic/input checks independent, and
+qualify the full producer under its unchanged limits after focused tests pass.
+
 Canonical JSON storage validation must also avoid retaining a second complete
 object tree beside the live compiler. Preserve native parse/stringify decisions,
 including integer-key ordering, duplicate rejection, Unicode and exact malformed

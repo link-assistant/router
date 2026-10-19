@@ -374,6 +374,35 @@ deadlines and JavaScript-before-Rust dependencies.
 
 ## Work required in the next pull request
 
+The `25aa6e79effc1d0aceaf3c7427ab67f69bb98ced` feedback checkpoint was pushed
+to draft PR #771 after the preceding complete CI cycle was collected. Its new
+cycle remains in progress. Sampled complete TypeScript/parity logs confirm
+missing neutral-profile output and stale canonical Rust inventory paths, in
+addition to the known runtime gaps. Collect the complete new cycle before the
+next repair push; no running CI job was cancelled by the coordinator.
+
+The fifth complete owned producer ran against that frozen source for 1,117.318
+seconds, with 2,923,790,336 bytes peak sampled aggregate RSS. It completed
+project serialization, UTF-8 metadata planning and byte retention, then exhausted
+the unchanged 2 GiB Node heap while restoring output during packaging. All 2,686
+pre-existing generated files had verified complete preimages; no generated file
+was written by this failed run. The pipeline's 396 modules, 551 owned candidates
+and eight selected definitions are diagnostic counts, not coverage.
+
+The next source repair selects owned keys before reading text and derives a
+described byte map from the complete original byte implementation. Original
+UTF-8 lengths and hashes are measured in bounded chunks while the producer
+already owns each string; the final census reads frozen per-plan descriptions.
+Every unit, including cross-boundary surrogate pairs and lone surrogates,
+matches independent native byte/hash results. A full source-derived observer
+records zero text restorations during the description census, and a packaging
+control refuses every unrelated text read. All 20 Bun cases passed. The first
+complete Node run passed 19 cases; its new observer fixture correctly refused
+an import-span edit inside an opaque CST node. The entire corrected six-case
+file then passed, while the two unchanged complete files retain their 14 passes
+and successful original-deadline audit. No CST boundary or deadline was relaxed.
+This fixes an observed unnecessary restoration; full producer fit remains open.
+
 The current source-bank refresh includes all 850 Rust/Cargo inputs and preserves
 both historical universes and complete CST inverses. Its complete eight-case
 Node receiving file passed in 155.415 seconds, including the original two-producer
