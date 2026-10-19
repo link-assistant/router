@@ -2,8 +2,7 @@
 // second complete object tree. No semantic, source or owner permit is issued.
 // Invalid or unusually deep input uses the original native parse/stringify,
 // preserving its exact error behavior and canonicalization rules.
-export function isCanonicalJsonText(source){
- if(typeof source!=='string')throw TypeError('Complete JSON text required');
+function canonicalSyntax(source){
  let at=0;
  const stop=()=>{throw Error('Use complete native JSON validation');};
  function string(key=false){
@@ -53,5 +52,15 @@ export function isCanonicalJsonText(source){
   const raw=source.slice(begin,at),parsed=JSON.parse(raw);if(typeof parsed!=='number'||JSON.stringify(parsed)!==raw)stop();
  }
  try{value(0);if(at!==source.length)stop();return true;}
- catch{return JSON.stringify(JSON.parse(source))===source;}
+ catch{return false;}
+}
+export function isCanonicalJsonText(source){
+ if(typeof source!=='string')throw TypeError('Complete JSON text required');
+ return canonicalSyntax(source)||JSON.stringify(JSON.parse(source))===source;
+}
+// Match a discarded native JSON.parse exactly, including acceptance of valid
+// noncanonical and deep input. The canonical fast path needs no object tree.
+export function assertJsonSyntax(source){
+ if(typeof source!=='string')throw TypeError('Complete JSON text required');
+ if(!canonicalSyntax(source))JSON.parse(source);
 }

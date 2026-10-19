@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,rmSync} from 'node:fs';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
-import {fileURLToPath} from 'node:url';
+import {fileURLToPath,pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
 import {gzipSync,gunzipSync} from 'node:zlib';
 import {encodeStaticSourceStorage,decodeStaticSourceStorage} from '../static-source-storage-codec.mjs';
@@ -27,8 +27,13 @@ async function kernel(){
  for(const row of functions){const source=sourceOf(row);assert.equal(hash(source),row.sha256);if(row.kind==='product-kernel')assert.equal(moduleSource.split(source).length,2,'complete exact measured kernel '+row.name);}
  const controls=functions.filter(row=>row.kind==='test-control').map(sourceOf).join('\n'),exports=functions.filter(row=>row.kind!=='diagnostic-only'&&row.name!=='emitLineage').map(row=>row.name);
  // Only an appended test export/control suffix differs: complete source inverse.
- const suffix='\n'+controls+'\nexport const measured={'+exports.join(',')+'};\n',full=moduleSource+suffix;
- assert.equal(full.slice(0,-suffix.length),moduleSource);adapter=(await import('data:text/javascript;base64,'+Buffer.from(full).toString('base64'))).measured;return adapter;
+ const suffix='\n'+controls+'\nexport const measured={'+exports.join(',')+',decodeCanonicalText};\n',full=moduleSource+suffix;
+ assert.equal(full.slice(0,-suffix.length),moduleSource);
+ const folder=mkdtempSync(join(tmpdir(),'router-static-codec-controls-'));
+ try{
+  const dependency=readFileSync(new URL('../canonical-json-text.mjs',import.meta.url));writeFileSync(join(folder,'canonical-json-text.mjs'),dependency);assert.deepEqual(readFileSync(join(folder,'canonical-json-text.mjs')),dependency);
+  const path=join(folder,'codec.mjs');writeFileSync(path,full);assert.equal(readFileSync(path,'utf8'),full);adapter=(await import(pathToFileURL(path).href)).measured;return adapter;
+ }finally{rmSync(folder,{recursive:true,force:true});}
 }
 function retain(name,value){const folder=process.env.ROUTER_STATIC_SOURCE_STORAGE_VECTOR_DIR;if(folder){mkdirSync(folder,{recursive:true});writeFileSync(join(folder,name+'.json.gz'),gzipSync(json(value)+'\n'));}}
 function indexFor(stored,schema='router-static-source-lifecycle-v1'){return {schema,...(stored.storage?{storage:stored.storage}:{})};}
@@ -37,6 +42,23 @@ function bundleFor(source='\ufeffα😀\r\n'){
  const id=hash(source),canonical=json(doc(source));return {schema:'router-static-source-lifecycle-v1',cases:{},profiles:[],current:{},lineage:[],sources:{[id]:{source,bytes:Buffer.byteLength(source),gitBlob:'0'.repeat(40),canonical,metadata:{keep:['猫',null,false]}}},authority:{semantic:false},trace:[]};
 }
 function encoded(bundle){const raw=Buffer.from(json(bundle)+'\n'),stored=encodeStaticSourceStorage(bundle,raw);return {raw,stored,index:indexFor(stored)};}
+
+test('streamed canonical decoder matches the complete measured kernel across chunk boundaries and late corruptions',async()=>{
+ const k=await kernel();const observe=(decode,row)=>{try{return {value:decode(row)};}catch(error){return {error:{name:error.name,message:error.message}};}};
+ for(const source of ['', 'a', '\ufeffλ😀\r\n', '"\\\u0000']){
+  const document=doc(source);for(let index=1;index<20001;index++)document.nodes.push(['token','literal',0,source.length,0,Buffer.byteLength(source),0]);
+  const row={source,canonical:json(document)},packed=k.encode(row),input={source,canonical:packed};
+  assert.deepEqual(observe(k.decodeCanonicalText,input),observe(k.decode,input));assert.equal(k.decodeCanonicalText(input),row.canonical);
+  for(const reverse of [true,false]){
+   const value=JSON.parse(packed),entries=Object.entries(value[1]);value[1]=Object.fromEntries(reverse?entries.reverse():[...entries.slice(2),...entries.slice(0,2)]);
+   const expected=json({...value[1],source,nodes:document.nodes});value[5]=hash(expected);const changed={source,canonical:json(value)},baseline=observe(k.decode,changed);
+   assert.deepEqual(observe(k.decodeCanonicalText,changed),baseline);if(Object.hasOwn(baseline,'value'))assert.equal(baseline.value,expected);
+  }
+  for(const change of [value=>{value[3]++;},value=>{value[5]='0'.repeat(64);},value=>{value[1].source='foreign';},value=>{value[2].push(['unused','entry']);},value=>{value[4][0]+='AA';}]){
+   const value=JSON.parse(packed);change(value);const changed={source,canonical:json(value)},expected=observe(k.decode,changed);assert.ok(expected.error);assert.deepEqual(observe(k.decodeCanonicalText,changed),expected);
+  }
+ }
+});
 
 test('literal varints columns and complete Unicode canonical bytes retain independent inverses',{timeout:60000},async()=>{
  const k=await kernel(),varints=k.varintControls(),columns=k.columnControls();assert.equal(varints.independentCases,6);assert.equal(columns.columnCount,6);

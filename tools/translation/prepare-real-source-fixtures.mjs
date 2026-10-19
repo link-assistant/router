@@ -286,10 +286,11 @@ export function prepareStaticSourceLifecycleProposal({root=resolve(dirname(fileU
     {phase:'language',rules:[{id:'static-fixture.complete-original-cst-and-current-source-joins',apply:()=>{
       for(const row of sources.values()){retainedBytes+=Buffer.byteLength(JSON.stringify({source:row.source,bytes:row.bytes,gitBlob:row.gitBlob}));if(retainedBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticFail('retained source bound');}
       const changed=[...sources].filter(([id])=>changedIds.has(id));
-      // Preserve an explicit full first-document serialization, not an assumed
-      // equivalence between the transport's meta string and document shape.
+      // Serialize the complete first document independently and compare every
+      // code unit with the transport wire before sharing equal primitive DATA.
+      // The full fresh second-document comparison remains mandatory below.
       const firstDocuments=new Map();
-      staticSourceCsts(changed,(id,cst)=>{const row=sources.get(id);if(cst.source!==row.source||cst.document.language!=='Rust')staticFail('complete source CST differs');retainedBytes+=Buffer.byteLength(JSON.stringify(cst.meta));if(retainedBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticFail('complete retained CST bound');row.canonical=cst.meta;firstDocuments.set(id,JSON.stringify(cst.document));});
+      staticSourceCsts(changed,(id,cst)=>{const row=sources.get(id);if(cst.source!==row.source||cst.document.language!=='Rust')staticFail('complete source CST differs');const first=JSON.stringify(cst.document);if(first!==cst.meta)staticFail('independent first CST serialization differs');retainedBytes+=Buffer.byteLength(JSON.stringify(cst.meta));if(retainedBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticFail('complete retained CST bound');row.canonical=cst.meta;firstDocuments.set(id,row.canonical);});
       visitStaticSourceLifecycleCanonicals(changed,(id,document)=>{
         if(JSON.stringify(document)!==firstDocuments.get(id))staticFail('independent complete CST classification differs');firstDocuments.delete(id);
         const boundaries=new Set([0,document.source.length]);for(const node of document.nodes){boundaries.add(node[2]);boundaries.add(node[3]);}

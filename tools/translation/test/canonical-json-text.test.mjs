@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {isCanonicalJsonText} from '../canonical-json-text.mjs';
+import {isCanonicalJsonText,assertJsonSyntax} from '../canonical-json-text.mjs';
 
 function native(source){try{return {value:JSON.stringify(JSON.parse(source))===source};}catch(error){return {error:{name:error.name,message:error.message}};}}
 function actual(source){try{return {value:isCanonicalJsonText(source)};}catch(error){return {error:{name:error.name,message:error.message}};}}
@@ -60,4 +60,12 @@ test('deterministic generated values and lexical mutations match independent nat
  }
  const alphabet='{}[],:"\\0123456789-+.eEtruefalsn λ😀\n\t';
  for(let index=0;index<1000;index++){let source='';for(let count=next()%40;count;count--)source+=alphabet[next()%alphabet.length];compare([source]);}
+});
+
+test('syntax-only validation retains native parsing of noncanonical and deeply nested data',()=>{
+ const sources=['0','-0','1e0','1e400',' 1\n','{"a":1,"a":2}','{"2":1,"1":2}','"\\u0061"',
+  '"\ud800"','[1,]','{"a":}','"\\x20"','','nullx'];
+ for(const depth of [512,513,1500,12000])sources.push('['.repeat(depth)+'0'+']'.repeat(depth));
+ function observation(callback,source){try{callback(source);return {ok:true};}catch(error){return {name:error.name,message:error.message};}}
+ for(const source of sources){assert.deepEqual(observation(assertJsonSyntax,source),observation(JSON.parse,source),JSON.stringify(source));if(observation(JSON.parse,source).ok)assert.equal(assertJsonSyntax(source),undefined);}
 });

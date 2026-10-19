@@ -120,6 +120,22 @@ now shows the physical three-language layout and the source-only commit-hook
 policy. Any changed Rust source still requires the actual source-bank refresh
 and dependent compiler/portable exports before full regeneration.
 
+The updated source bank passed all 16 complete Node receiving cases in
+217.432 seconds, including the unchanged 4 MiB archive/export bounds.
+Bun's shared two-file run remained red at 82.677 seconds, and fresh whole-file
+lifecycle attempts also remained red at 35.420 and 56.706 seconds under the
+unchanged 3 GiB aggregate cap. These failures remain retained. The next repair
+removes another discarded JSON parse, compares complete first CST wires before
+sharing equal invocation-local strings, and reconstructs validated canonical
+node bytes in bounded chunks instead of retaining another whole node forest.
+The unchanged measured decoder remains an executable reference, with every
+original control preserved. New complete comparisons cover Unicode, chunk
+boundaries, header property order and late corruptions. The last Node receiving
+run passed 16 of 17 cases; its remaining export guard correctly refused the
+uncommitted compiler bytes. Current receiving qualification and complete
+regeneration remain open until rerun after the source checkpoint and export
+refresh. No original case, deadline or memory bound was changed.
+
 Both frozen historical fixture bodies are restored to their original pins.
 Receiving-only ordered CST substitutions adapt the TypeScript comparison
 loader, while the original native baseline keeps its logical filenames for
