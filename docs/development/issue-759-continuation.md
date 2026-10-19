@@ -124,6 +124,22 @@ Bun including the latest context, storage and language-layout regressions.
 The same 25 latest context/storage/layout cases passed the independent Node
 duration audit. The complete reverse corpus and full gate remain open.
 
+The actual isolated compiler and portable Git producers were refreshed against
+source checkpoint `e9c0d97a9ad8110f49c0e2e6043e603d7a6d3e4b`.
+Independent review compared all 1,303 registered files (47,045,351 raw source
+bytes), all 390 portable Git objects and the unchanged four historical source
+bodies. Both complete receiving suites then passed all 16 cases under Node
+and all 16 under Bun. A private review initially expected receiving test files
+inside the runtime-only compiler closure and failed; the corrected independent
+complete Git census preserves the original closure policy and that failed
+review remains retained.
+
+The parity manifest's 454 Rust references now point to the 23 physical
+`rust/src` files. A JSON-AST-selected source proposal retained complete original
+and edited CST wires and a whole-source inverse; independent parsed comparison
+confirmed all 443 feature statuses, evidence, gaps and every non-path field
+unchanged. This repairs physical references and makes no new parity claim.
+
 ## Work required in the next pull request
 
 | Requirement | Current state and next verification |
