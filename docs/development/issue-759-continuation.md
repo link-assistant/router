@@ -27,7 +27,9 @@ PR #761 merged at `07901ad24576e7f045270fe62ac56f8a72446c53`; work continues
 in PR #771. The latest user requirement is implemented in the local layout draft
 with real `js/src`, `ts/src` and `rust/src` directories. See the
 [language layout](language-layout.md) for commands and focused qualification.
-Full source-bank/export refresh and generated-corpus freshness remain open.
+The source bank, compiler registration and portable Git metadata are refreshed
+for this layout. Whole-file receiving qualification and full generated-corpus
+freshness remain open.
 
 ## Work required in the next pull request
 
