@@ -1,3 +1,4 @@
+import {relocatedRustSourcePath} from '../repository-layout.mjs';
 // Historical test data only. Every compiler attempt still uses the ordinary
 // source/CST/grammar/checker path; these records never grant semantic authority.
 import {readFileSync} from 'node:fs';
@@ -16,13 +17,13 @@ export function verifyRealSourceFixtureLineage(bundle){
   const current=new Map(bundle.historical.files.map(row=>[row.path,row.sourceId]));
   for(const stage of bundle.lineage)for(const row of stage.files){
     const before=bundle.sources[row.before.sourceId]?.source,after=bundle.sources[row.after.sourceId]?.source,edit=row.edit,inverse=row.inverse;
-    if(typeof before!=='string'||typeof after!=='string'||current.get(row.path)!==row.before.sourceId||row.completeInverse!==true)fail('complete adoption source association changed');
+    if(typeof before!=='string'||typeof after!=='string'||mappedCurrentSource(current,row.path)!==row.before.sourceId||row.completeInverse!==true)fail('complete adoption source association changed');
     for(const [source,change,wanted]of [[before,edit,after],[after,inverse,before]]){
       const [start,end]=change.span;if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||end<start||end>source.length||source.slice(start,end)!==change.expected||source.slice(0,start)+change.replacement+source.slice(end)!==wanted)fail('complete adoption source inverse changed');
     }
     current.set(row.path,row.after.sourceId);
   }
-  for(const row of bundle.current.files)if(current.has(row.path)&&current.get(row.path)!==row.sourceId)fail('current parent lacks continuous adoption history');
+  for(const row of bundle.current.files)if(current.has(row.path)&&mappedCurrentSource(current,row.path)!==row.sourceId)fail('current parent lacks continuous adoption history');
   return true;
 }
 export function originalRealSourceManifest(){
@@ -108,13 +109,13 @@ export function readStaticSourceLifecycle({folder=STATIC_FOLDER}={}){
   for(const profile of bundle.profiles){const expected=STATIC_SOURCE_LIFECYCLE_PROFILES[profile.revision];if(!expected||profile.files.length!==expected.files||profile.files.reduce((sum,row)=>sum+row.bytes,0)!==expected.bytes||profile.sourceSetSha256!==expected.sourceSetSha256)staticError('fixed complete historical universe differs');}
   const profiles=[...bundle.profiles,bundle.current];
   for(const profile of profiles){if(!Array.isArray(profile.files)||!profile.files.length||profile.files.length>STATIC_SOURCE_LIFECYCLE_LIMITS.paths||profile.sourceSetSha256!==staticDigest(profile.files))staticError('complete profile rows differ');let previous='';
-    for(const row of profile.files){if(typeof row.path!=='string'||row.path<=previous||row.path.startsWith('/')||row.path.includes('\\')||row.path.split('/').some(part=>!part||part==='.'||part==='..')||!row.path.endsWith('.rs')&&!['Cargo.toml','Cargo.lock'].includes(row.path))staticError('unique tracked Rust/Cargo path required');previous=row.path;const source=bundle.sources[row.sourceId];if(!source||source.bytes!==row.bytes||source.gitBlob!==row.gitBlob)staticError('complete file source/Git join differs');}
+    for(const row of profile.files){if(typeof row.path!=='string'||row.path<=previous||row.path.startsWith('/')||row.path.includes('\\')||row.path.split('/').some(part=>!part||part==='.'||part==='..')||!row.path.endsWith('.rs')&&!['Cargo.toml','Cargo.lock','rust/Cargo.toml'].includes(row.path))staticError('unique tracked Rust/Cargo path required');previous=row.path;const source=bundle.sources[row.sourceId];if(!source||source.bytes!==row.bytes||source.gitBlob!==row.gitBlob)staticError('complete file source/Git join differs');}
   }
   if(JSON.stringify(index.profiles)!==JSON.stringify(bundle.profiles.map(({revision,files,sourceSetSha256})=>({revision,files:files.length,sourceSetSha256})))||index.current!==bundle.current.sourceSetSha256)staticError('index full profile census differs');
   const current=new Map(bundle.current.files.map(row=>[row.path,row]));
   if(!Array.isArray(bundle.lineage)||bundle.lineage.length!==2)staticError('complete source lineage required');
-  for(const profile of bundle.profiles){const stage=bundle.lineage.find(row=>row.revision===profile.revision);if(!stage||!Array.isArray(stage.files))staticError('actual profile lineage missing');const expected=profile.files.filter(row=>current.get(row.path)?.sourceId!==row.sourceId);if(JSON.stringify(stage.files.map(row=>row.path))!==JSON.stringify(expected.map(row=>row.path)))staticError('complete changed/deleted parent census differs');
-    for(const row of stage.files){const before=profile.files.find(file=>file.path===row.path),after=current.get(row.path);if(JSON.stringify(row.before)!==JSON.stringify(before))staticError('actual original parent differs');if(!after){if(row.status!=='deleted'||row.current!==null||row.originalPreserved!==true)staticError('deleted original witness differs');continue;}
+  for(const profile of bundle.profiles){const stage=bundle.lineage.find(row=>row.revision===profile.revision);if(!stage||!Array.isArray(stage.files))staticError('actual profile lineage missing');const expected=profile.files.filter(row=>mappedCurrentSource(current,row.path)?.sourceId!==row.sourceId);if(JSON.stringify(stage.files.map(row=>row.path))!==JSON.stringify(expected.map(row=>row.path)))staticError('complete changed/deleted parent census differs');
+    for(const row of stage.files){const before=profile.files.find(file=>file.path===row.path),after=mappedCurrentSource(current,row.path);if(JSON.stringify(row.before)!==JSON.stringify(before))staticError('actual original parent differs');if(!after){if(row.status!=='deleted'||row.current!==null||row.originalPreserved!==true)staticError('deleted original witness differs');continue;}
       if(row.status!=='changed'||JSON.stringify(row.after)!==JSON.stringify(after)||row.completeInverse!==true)staticError('actual current parent differs');const original=bundle.sources[before.sourceId],latest=bundle.sources[after.sourceId],boundaries=boundariesBySource.get(before.sourceId),latestBoundaries=boundariesBySource.get(after.sourceId);if(!boundaries||!latestBoundaries)staticError('both changed-parent canonical documents required');
       if(!boundaries.has(row.edit.span[0])||!boundaries.has(row.edit.span[1]))staticError('whole original CST token/group boundary required');
       for(const [source,change,wanted]of [[original.source,row.edit,latest.source],[latest.source,row.inverse,original.source]]){const [start,end]=change.span;if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||end<start||end>source.length||source.slice(start,end)!==change.expected||source.slice(0,start)+change.replacement+source.slice(end)!==wanted)staticError('complete source inverse differs');}
@@ -127,7 +128,7 @@ export function staticSourceLifecycleContext(testName,{folder=STATIC_FOLDER,root
   const revision=STATIC_SOURCE_LIFECYCLE_CASES[testName];if(typeof revision!=='string')staticError('fixed original test association required');const {bundle,index}=readStaticSourceLifecycle({folder}),profile=bundle.profiles.find(row=>row.revision===revision);if(!profile)staticError('actual original profile missing');
   const historical=new Map(profile.files.map(row=>[row.path,bundle.sources[row.sourceId].source])),currentFiles=new Map(bundle.current.files.map(row=>[row.path,bundle.sources[row.sourceId].source]));
   if(current){
-    const paths=staticExec('/usr/bin/git',['-C',root,'ls-files','-z','--','*.rs','Cargo.toml','Cargo.lock'],{encoding:'utf8',timeout:30000,maxBuffer:64*1024*1024}).split('\0').filter(Boolean).sort();if(JSON.stringify(paths)!==JSON.stringify(bundle.current.files.map(row=>row.path)))staticError('actual current source set differs');
+    const paths=staticExec('/usr/bin/git',['-C',root,'ls-files','-z','--','*.rs','Cargo.toml','Cargo.lock','rust/Cargo.toml'],{encoding:'utf8',timeout:30000,maxBuffer:64*1024*1024}).split('\0').filter(Boolean).sort();if(JSON.stringify(paths)!==JSON.stringify(bundle.current.files.map(row=>row.path)))staticError('actual current source set differs');
     const raw=staticExec('/usr/bin/git',['-C',root,'cat-file','--batch'],{input:paths.map(path=>'HEAD:'+path+'\n').join(''),timeout:30000,maxBuffer:64*1024*1024});let at=0;
     for(const row of bundle.current.files){const end=raw.indexOf(10,at);if(end<at)staticError('complete current Git header');const [blob,kind,size]=raw.subarray(at,end).toString('ascii').split(' ');at=end+1;const value=raw.subarray(at,at+row.bytes);at+=row.bytes;
       if(kind!=='blob'||blob!==row.gitBlob||Number(size)!==row.bytes||raw[at++]!==10||value.toString('utf8')!==currentFiles.get(row.path))staticError('current full Git source differs');
@@ -135,14 +136,14 @@ export function staticSourceLifecycleContext(testName,{folder=STATIC_FOLDER,root
     }if(at!==raw.length)staticError('extra current Git bytes');
   }
   const source=path=>{if(!historical.has(path))staticError('unknown historical source path: '+path);return historical.get(path);};
-  const sourceCurrent=path=>{if(!currentFiles.has(path))staticError('unknown current source path: '+path);return currentFiles.get(path);};
+  const sourceCurrent=path=>{const physical=currentFiles.has(path)?path:relocatedRustSourcePath(path);if(!currentFiles.has(physical))staticError('unknown current source path: '+path);return currentFiles.get(physical);};
   // Return only detached source/profile/Cargo data. Ordinary compiler entrypoints
   // freshly rebuild every view, module binding, dependency and private proof.
   return {source,sourceCurrent,inputs:{entry:'src/lib.rs',sourceHead:profile.revision,compilationProfile:STATIC_PROFILE,sources:profile.files.map(row=>({source:row.path,bytes:row.bytes,sha256:row.sourceId,gitBlob:row.gitBlob})),originalBytes:profile.files.reduce((sum,row)=>sum+row.bytes,0),digest:profile.sourceSetSha256},current:{producerRevision:bundle.current.producerRevision,sourceSetSha256:bundle.current.sourceSetSha256,files:bundle.current.files},lineage:bundle.lineage.find(row=>row.revision===revision),scope:'Complete historical test source universe; current source evolution is retained data, never executable admission.',index};
 }
 
 // Separate fixed associations, never additions/aliases to the original16 table.
-// The original reader/API prefix above remains byte exact. These are sources,
+// The readers retain their full original validation with explicit physical path substitutions. These are sources,
 // not a namespace, ownership, checked program or historical compiler verdict.
 const ASSOCIATED_SOURCE_MANIFEST_SHA256='dabbc7daf61a793c4d1f0fef828b894b67f466df4db32c4f9fc7aa746d1d95f1';
 function associatedSourceEntry(id){
@@ -158,7 +159,7 @@ export function staticSourceAssociatedContext(caseId,{folder=STATIC_FOLDER,root=
  for(const parent of association.parents){const rows=profile.files.filter(row=>row.path===parent.path),row=rows[0];if(rows.length!==1||row.sourceId!==parent.sha256||row.bytes!==parent.bytes||row.gitBlob!==parent.gitBlob)staticError('outside full original parent differs');}
  const historical=new Map(profile.files.map(row=>[row.path,bundle.sources[row.sourceId].source])),currentFiles=new Map(bundle.current.files.map(row=>[row.path,bundle.sources[row.sourceId].source]));
  if(current){
-  const paths=staticExec('/usr/bin/git',['-C',root,'ls-files','-z','--','*.rs','Cargo.toml','Cargo.lock'],{encoding:'utf8',timeout:30000,maxBuffer:64*1024*1024}).split('\0').filter(Boolean).sort();if(JSON.stringify(paths)!==JSON.stringify(bundle.current.files.map(row=>row.path)))staticError('actual current source set differs');
+  const paths=staticExec('/usr/bin/git',['-C',root,'ls-files','-z','--','*.rs','Cargo.toml','Cargo.lock','rust/Cargo.toml'],{encoding:'utf8',timeout:30000,maxBuffer:64*1024*1024}).split('\0').filter(Boolean).sort();if(JSON.stringify(paths)!==JSON.stringify(bundle.current.files.map(row=>row.path)))staticError('actual current source set differs');
   const raw=staticExec('/usr/bin/git',['-C',root,'cat-file','--batch'],{input:paths.map(path=>'HEAD:'+path+'\n').join(''),timeout:30000,maxBuffer:64*1024*1024});let at=0;
   for(const row of bundle.current.files){const end=raw.indexOf(10,at);if(end<at)staticError('complete current Git header');const [blob,kind,size]=raw.subarray(at,end).toString('ascii').split(' ');at=end+1;const value=raw.subarray(at,at+row.bytes);at+=row.bytes;
    if(kind!=='blob'||blob!==row.gitBlob||Number(size)!==row.bytes||raw[at++]!==10||value.toString('utf8')!==currentFiles.get(row.path))staticError('current full Git source differs');
@@ -166,7 +167,7 @@ export function staticSourceAssociatedContext(caseId,{folder=STATIC_FOLDER,root=
   }if(at!==raw.length)staticError('extra current Git bytes');
  }
  const source=path=>{if(!historical.has(path))staticError('unknown associated historical source path: '+path);return historical.get(path);};
- const sourceCurrent=path=>{if(!currentFiles.has(path))staticError('unknown associated current source path: '+path);return currentFiles.get(path);};
+ const sourceCurrent=path=>{const physical=currentFiles.has(path)?path:relocatedRustSourcePath(path);if(!currentFiles.has(physical))staticError('unknown associated current source path: '+path);return currentFiles.get(physical);};
  return {source,sourceCurrent,association,inputs:{entry:'src/lib.rs',sourceHead:profile.revision,compilationProfile:STATIC_PROFILE,sources:profile.files.map(row=>({source:row.path,bytes:row.bytes,sha256:row.sourceId,gitBlob:row.gitBlob})),originalBytes:profile.files.reduce((sum,row)=>sum+row.bytes,0),digest:profile.sourceSetSha256},current:{producerRevision:bundle.current.producerRevision,sourceSetSha256:bundle.current.sourceSetSha256,files:bundle.current.files},lineage:bundle.lineage.find(row=>row.revision===revision),scope:'Explicit outside-original16 historical DATA association; current sources and later compiler obligations remain separate.',index};
 }
 
@@ -209,15 +210,15 @@ function validateStaticTextData(bundle,index){
  for(const profile of bundle.profiles){const expected=STATIC_SOURCE_LIFECYCLE_PROFILES[profile.revision];if(!expected||profile.files.length!==expected.files||profile.files.reduce((sum,row)=>sum+row.bytes,0)!==expected.bytes||profile.sourceSetSha256!==expected.sourceSetSha256)staticError('fixed complete text-data historical universe differs');}
  for(const profile of [...bundle.profiles,bundle.current]){
   if(!Array.isArray(profile.files)||!profile.files.length||profile.files.length>STATIC_SOURCE_LIFECYCLE_LIMITS.paths||profile.sourceSetSha256!==staticDigest(profile.files))staticError('complete source-text profile differs');let previous='';
-  for(const row of profile.files){if(typeof row.path!=='string'||row.path<=previous||row.path.startsWith('/')||row.path.includes('\\')||row.path.includes(':')||/[\0\r\n]/u.test(row.path)||row.path.split('/').some(part=>!part||part==='.'||part==='..')||!row.path.endsWith('.rs')&&!['Cargo.toml','Cargo.lock'].includes(row.path))staticError('unique tracked text-data Rust/Cargo path required');previous=row.path;const source=bundle.sources[row.sourceId];if(!source||source.bytes!==row.bytes||source.gitBlob!==row.gitBlob)staticError('complete source-text file association differs');}
+  for(const row of profile.files){if(typeof row.path!=='string'||row.path<=previous||row.path.startsWith('/')||row.path.includes('\\')||row.path.includes(':')||/[\0\r\n]/u.test(row.path)||row.path.split('/').some(part=>!part||part==='.'||part==='..')||!row.path.endsWith('.rs')&&!['Cargo.toml','Cargo.lock','rust/Cargo.toml'].includes(row.path))staticError('unique tracked text-data Rust/Cargo path required');previous=row.path;const source=bundle.sources[row.sourceId];if(!source||source.bytes!==row.bytes||source.gitBlob!==row.gitBlob)staticError('complete source-text file association differs');}
  }
  if(JSON.stringify(index.profiles)!==JSON.stringify(bundle.profiles.map(({revision,files,sourceSetSha256})=>({revision,files:files.length,sourceSetSha256})))||index.current!==bundle.current.sourceSetSha256)staticError('source-text index profile census differs');
  const current=new Map(bundle.current.files.map(row=>[row.path,row]));
  if(!Array.isArray(bundle.lineage)||bundle.lineage.length!==2||new Set(bundle.lineage.map(stage=>stage.revision)).size!==2)staticError('complete source-text lineage required');
  for(const profile of bundle.profiles){
-  const stage=bundle.lineage.find(row=>row.revision===profile.revision);if(!stage||!Array.isArray(stage.files))staticError('source-text profile lineage missing');const expected=profile.files.filter(row=>current.get(row.path)?.sourceId!==row.sourceId);
+  const stage=bundle.lineage.find(row=>row.revision===profile.revision);if(!stage||!Array.isArray(stage.files))staticError('source-text profile lineage missing');const expected=profile.files.filter(row=>mappedCurrentSource(current,row.path)?.sourceId!==row.sourceId);
   if(JSON.stringify(stage.files.map(row=>row.path))!==JSON.stringify(expected.map(row=>row.path)))staticError('source-text changed/deleted census differs');
-  for(const row of stage.files){const before=profile.files.find(file=>file.path===row.path),after=current.get(row.path);if(JSON.stringify(row.before)!==JSON.stringify(before))staticError('source-text original parent differs');if(!after){if(row.status!=='deleted'||row.current!==null||row.originalPreserved!==true)staticError('source-text deleted original witness differs');continue;}
+  for(const row of stage.files){const before=profile.files.find(file=>file.path===row.path),after=mappedCurrentSource(current,row.path);if(JSON.stringify(row.before)!==JSON.stringify(before))staticError('source-text original parent differs');if(!after){if(row.status!=='deleted'||row.current!==null||row.originalPreserved!==true)staticError('source-text deleted original witness differs');continue;}
    if(row.status!=='changed'||JSON.stringify(row.after)!==JSON.stringify(after)||row.completeInverse!==true)staticError('source-text current parent differs');
    const original=bundle.sources[before.sourceId].source,latest=bundle.sources[after.sourceId].source;
    for(const [source,change,wanted]of [[original,row.edit,latest],[latest,row.inverse,original]]){const [start,end]=change.span;if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||end<start||end>source.length||source.slice(start,end)!==change.expected||source.slice(0,start)+change.replacement+source.slice(end)!==wanted)staticError('complete source-text inverse differs');}
@@ -229,7 +230,7 @@ function staticTextSourceProjection(table){return path=>{if(!Object.hasOwn(table
  * Test DATA only: neither this object nor any flag is a compiler source permit. */
 export function staticSourceAssociatedTextData(caseId,{folder=STATIC_FOLDER,root=ROOT}={}){
  const association=associatedSourceEntry(caseId),head=staticExec('/usr/bin/git',['-C',root,'rev-parse','HEAD'],{encoding:'utf8',timeout:30000,maxBuffer:64*1024*1024}).trim();if(!/^[a-f0-9]{40}$/u.test(head))staticError('actual text-data Git head required');
- const currentPaths=staticExec('/usr/bin/git',['-C',root,'ls-files','-z','--','*.rs','Cargo.toml','Cargo.lock'],{encoding:'utf8',timeout:30000,maxBuffer:64*1024*1024}).split('\0').filter(Boolean).sort();
+ const currentPaths=staticExec('/usr/bin/git',['-C',root,'ls-files','-z','--','*.rs','Cargo.toml','Cargo.lock','rust/Cargo.toml'],{encoding:'utf8',timeout:30000,maxBuffer:64*1024*1024}).split('\0').filter(Boolean).sort();
  if(!currentPaths.length||currentPaths.length>STATIC_SOURCE_LIFECYCLE_LIMITS.paths||new Set(currentPaths).size!==currentPaths.length)staticError('complete current source-text census required');
  const actualAssets=TEXT_DATA_ASSETS.map(relative=>({...textDataFile(textDataCurrentPath(root,relative),STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes),relative}));
  textDataGitBodies(root,head,actualAssets);
@@ -251,4 +252,11 @@ export function staticSourceAssociatedTextData(caseId,{folder=STATIC_FOLDER,root
  for(const row of [...actualAssets,suppliedIndex,suppliedArchive,...physical]){if(!textDataSameIdentity(row.identity,textDataIdentity(textLstat(row.path))))staticError('source-text input identity changed before return');}
  if(staticExec('/usr/bin/git',['-C',root,'rev-parse','HEAD'],{encoding:'utf8',timeout:30000,maxBuffer:64*1024*1024}).trim()!==head)staticError('source-text actual Git head changed before return');
  return Object.freeze({source:staticTextSourceProjection(Object.freeze(table)),association,authentication:Object.freeze(authentication),scope:'Whole current Git-authenticated historical source TEST DATA only; no CST/namespace/semantic proof.'});
+}
+
+// Repository layout equations apply only to an already captured complete row.
+// The existing full byte, native CST, Git, census and inverse checks stay live.
+function mappedCurrentSource(rows,path) {
+ const moved=relocatedRustSourcePath(path);
+ return (path==='Cargo.toml'?rows.get(moved):undefined)??rows.get(path)??rows.get(moved);
 }

@@ -1,3 +1,4 @@
+import {relocatedRustSourcePath} from './repository-layout.mjs';
 #!/usr/bin/env node
 // Reviewed source-fixture producer. Git/CST history is data, never an issuer
 // of namespace, method-dispatch, ownership or executable authority.
@@ -280,7 +281,7 @@ export function prepareStaticSourceLifecycleProposal({root=resolve(dirname(fileU
   const frontier=JSON.parse(decode(staticGit(root,['show',subjectRevision+':tools/translation/fixtures/formatting-owner-frontier.json'])));
   const historical=profiles.find(row=>row.revision===revisions[0]);for(const row of frontier.originalFiles){const file=historical.files.find(file=>file.path===row.source);if(!file||file.sourceId!==row.sha256||file.bytes!==row.bytes)staticFail('all original formatting parents must join');}
   const currentByPath=new Map(fresh.files.map(row=>[row.path,row])),changedIds=new Set(),lineage=[];
-  for(const profile of profiles){const files=[];for(const before of profile.files){const after=currentByPath.get(before.path);if(!after){files.push({path:before.path,status:'deleted',before,current:null,originalPreserved:true});continue;}if(before.sourceId!==after.sourceId){changedIds.add(before.sourceId);changedIds.add(after.sourceId);files.push({path:before.path,status:'changed',before,after});}}lineage.push({revision:profile.revision,files});}
+  for(const profile of profiles){const files=[];for(const before of profile.files){const moved=relocatedRustSourcePath(before.path),after=(before.path==='Cargo.toml'?currentByPath.get(moved):undefined)??currentByPath.get(before.path)??currentByPath.get(moved);if(!after){files.push({path:before.path,status:'deleted',before,current:null,originalPreserved:true});continue;}if(before.sourceId!==after.sourceId){changedIds.add(before.sourceId);changedIds.add(after.sourceId);files.push({path:before.path,status:'changed',before,after});}}lineage.push({revision:profile.revision,files});}
   const pipeline=createRulePipeline([
     {phase:'language',rules:[{id:'static-fixture.complete-original-cst-and-current-source-joins',apply:()=>{
       for(const row of sources.values()){retainedBytes+=Buffer.byteLength(JSON.stringify({source:row.source,bytes:row.bytes,gitBlob:row.gitBlob}));if(retainedBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticFail('retained source bound');}

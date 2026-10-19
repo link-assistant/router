@@ -33,3 +33,9 @@ export function repositoryRustLayout(root) {
     productionPrefix: `${prefix}src/`,
   });
 }
+
+// A repository path substitution only. Callers must rejoin the selected
+// complete captured row; a matching spelling grants no source authority.
+export function relocatedRustSourcePath(path) {
+  return path === 'Cargo.toml' || path === 'build.rs' || /^(?:src|tests|benches|examples|fuzz|fixtures|proptest-regressions)\//u.test(path) ? `rust/${path}` : path;
+}
