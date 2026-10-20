@@ -62,7 +62,7 @@ function migrateOriginalProducerFormatting(source,{rootSource='',macroUseSources
   const shadows=name=>scope.module.importedNames.includes(name)||tokens.some((token,index)=>['type','struct','enum','trait','mod'].includes(token.text)&&tokens[index+1]?.text===name);
   const stringShadow=shadows('String'),strShadow=shadows('str');
   for(const item of sourceItems(source)){
-    if(item.term!=='fn')continue;
+    if(item.term!=='fn'||inspection.inactiveItemSpans.some(span=>item.start>=span[0]&&item.end<=span[1]))continue;
     const rows=item.tokens.filter(token=>token.type!=='comment'),fn=rows.findIndex(token=>token.text==='fn');
     let parameters=0,body=-1;
     for(let at=fn+2;at<rows.length;at++){
