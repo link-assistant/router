@@ -57,6 +57,25 @@ export function coreAdoptionDeriveAttributeClosed(context,source,file,localPath,
  return facts.enclosingTypeBindings.length===0&&facts.enclosingUsableValueBindings.length===0;
 }
 export function coreAdoptionProducerBindings(context){return context===null?null:stateOf(context).binding;}
+// Binding inspection may omit only these exact original producer attributes.
+// This is a source candidate operation, never permission for generated traits.
+export function coreAdoptionProducerClosedAttributeSpans(context,module){
+ if(context===null)return [];const state=stateOf(context);
+ const original=sourceModule(state,module.source,module.file,module.sourceView?.modulePath??module.path);
+ if(!state.modules.includes(module)||!original||module.configurationCondition!=='active')return [];
+ const spans=[];
+ for(const item of originalSourceModuleItems(original)){
+  const condition=itemConfiguration(item.tokens,state.profile),derives=condition.attributes.filter(attribute=>attribute.name==='derive');
+  if(condition.status!=='active'||!derives.length||!derives.every(attribute=>coreAdoptionDeriveAttributeClosed(context,module.source,module.file,module.sourceView?.modulePath??module.path,item,attribute)))continue;
+  const input=deriveFootprintAt(state.derive,original,item);if(!input||input.dimensions.attributeMacroComplete!==true)continue;
+  for(const attribute of input.attributes){
+   if(attribute.name==='derive'||attribute.helpers&&input.owners.some(owner=>registeredDeriveHelperSource({dependencies:state.dependencies,target:owner.target,helperName:attribute.name}))){
+    spans.push({span:[attribute.span.start,attribute.span.end],expected:module.source.slice(attribute.span.start,attribute.span.end),position:attribute.position,name:attribute.name});
+   }
+  }
+ }
+ return spans;
+}
 export function finishCoreAdoptionProducerContext(context){
  if(context===null)return null;const state=stateOf(context),selections=[];
  for(const row of state.selected.values()){
