@@ -107,6 +107,20 @@ inverses. Preserve frozen historical source bytes, hashes and logical source
 identities. Adapt their receiving loaders explicitly; embedded child sources
 and immutable historical revisions must keep their own paths and contracts.
 
+Receiving module copies must select real import and `import.meta.url` spans with
+the installed native parser. Repeated equal replacements need separate mapped
+spans and a complete inverse; do not rewrite embedded strings or comments with
+an import-shaped regular expression. Retain serialized/reparsed CST on both
+sides and qualify the complete original test files under Node and Bun.
+
+When later source extensions follow a historical terminal kernel, keep the
+original producer equation and checksum controls intact. A receiving history
+adapter must retain every later byte, the complete native-selected function,
+whole-source CST and exact inverse. Historical comparisons have an explicit
+scope; runtime comparisons still execute the complete current module. A new
+source-data association for a frozen parent must authenticate its own complete
+historical/current universes rather than borrowing another test's case identity.
+
 Use the [parser-selected reader proposer](docs/development/translation-rule-api.md)
 for bulk layout repairs. Source payloads require literal substitution rules so
 replacement-template dollar forms survive unchanged. Preserve the original

@@ -720,6 +720,40 @@ collection callbacks, private proof refusals and function bodies remain checked.
 The unrelated full-source deadline and external sibling derive failures remain
 open, as do current generation, receiving exports, strict parity and the gate.
 
+The next complete thirteen-file Node cohort reported 77 passes and eight
+failures, with no deadline breaches. One coordinated source proposal repairs
+all eight: native spans replace the repeated-URL fixture assumption; the frozen
+corpus assembler receives an exact physical input-path equation; historical
+reader comparisons retain the later paired-type and source extensions; output
+limiter selectors read their separately authenticated complete historical parent;
+bridge fixtures include the complete current base64 child; and existing nominal
+layout refusals identify their source-owner obligation without changing digest
+calls or admission. Raw historical sources, checksum pins, callback comparisons,
+original cases and deadlines remain unchanged. Complete before/after CST and
+source inverses are retained in `router-layout-eight-failure-batch-source-proposal-v2`
+under the task's temporary directory, outside the archived evidence allocation.
+
+All 93 cases in the original thirteen files plus two new complete control files
+passed in Node in 312.246 seconds, with peak aggregate RSS 1,602,551,808 bytes.
+Its final independent case audit passed with zero deadline breaches. The combined
+Bun process reported 64 passes before the resource monitor stopped it at the
+unchanged 3 GiB cap (peak sampled RSS 3,258,056,704 bytes); that run remains red.
+Running the identical fifteen complete files in fresh sequential Bun processes
+passed all 93 cases in 217.313 seconds, with peak aggregate RSS 2,034,286,592
+bytes and exact complete-file input rechecks. This changes process lifetime only.
+Receipts and full streams remain in `router-layout-check-physical-readers-fifteen-whole-node-v2`,
+`router-layout-check-physical-readers-fifteen-whole-bun-v2` and
+`router-layout-check-physical-readers-fifteen-fresh-bun-v3` under the task's
+temporary directory. These receiving results do not establish current complete
+generation, all compiler performance limits, strict native parity or a green gate.
+
+PR #771 still publishes `25aa6e79effc1d0aceaf3c7427ab67f69bb98ced`.
+A fresh API observation confirms all 132 checks finished: 30 succeeded, 30 failed,
+30 were cancelled and 42 were skipped. All failed and cancelled logs from that
+cycle were retained previously. No Rust job was unlocked. The complete external
+dependency sibling-derive producer closure and long-running source cases remain
+open alongside current generation and strict parity.
+
 Regenerate owned-definition producer modules with
 `node tools/translation/prepare-owned-definition-bulk.mjs --emit`. This emits a
 complete source proposal; it does not install files. Review every original

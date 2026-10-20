@@ -1,6 +1,7 @@
 // Explicit internal-source proposal and digest controls. Runtime receiving is required.
 // Extra private copier/factory stack frames are not claimed observationally equal.
 import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
+import {internalDigestAdoptionHistory} from './internal-digest-adoption-history.mjs';
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
 import {Hash} from 'node:crypto';
@@ -56,12 +57,12 @@ function oldAndNew(configure,valueFactory=()=>({a:'switch',z:2})){
 }
 
 test('canonical sibling data retains exact old bytes flags Unicode aliases and signed certificate ordering',(_t,retain)=>{
- const currentSources=Object.fromEntries(PRIVATE_METADATA_DIGEST_SOURCE_PATHS.map(path=>[path,readFileSync(repositorySourceURL(path,new URL('../../../',import.meta.url)),'utf8')])),beforeSources=restorePrivateMetadataDigestSources(currentSources),proposal=proposePrivateMetadataDigestSources(beforeSources);
- retain('complete-language-repository-source-CST-inverses',{currentSources,beforeSources,proposal});
+ const currentSources=Object.fromEntries(PRIVATE_METADATA_DIGEST_SOURCE_PATHS.map(path=>[path,readFileSync(repositorySourceURL(path,new URL('../../../',import.meta.url)),'utf8')])),sourceHistory=internalDigestAdoptionHistory(currentSources),beforeSources=sourceHistory.before,proposal=sourceHistory.proposal;
+ retain('complete-language-repository-source-CST-inverses',{currentSources,beforeSources,proposal,sourceHistory});
  assert.equal(selected.name,'metadataDigest');assert.equal(proposal.installApproved,false);assert.equal(proposal.semanticChecksPassed,false);assert.deepEqual(proposal.authority,{source:false,owner:false,type:false,executable:false});
  assert.deepEqual(proposal.selectedSyntaxSites,{cloneDigestExpressions:23,linkedParsedEvidenceExpressions:1});
- for(const row of proposal.rows){assert.equal(row.before.source,beforeSources[row.file]);assert.equal(row.after.source,currentSources[row.file]);assert.equal(row.completeInverse,true);assert.deepEqual(row.trace.map(value=>value.phase),['language','repository']);for(const stage of row.stages){assert.equal(stage.completeInverse,true);assert.equal(transportConcreteSyntaxSource(stage.before.source,{language:'JavaScript'}).source,stage.before.source);assert.equal(transportConcreteSyntaxSource(stage.after.source,{language:'JavaScript'}).source,stage.after.source);}}
- assert.equal(Buffer.byteLength(beforeSources[PRIVATE_METADATA_DIGEST_SOURCE_PATHS[0]]),58416);assert.equal(currentSources[PRIVATE_METADATA_DIGEST_SOURCE_PATHS[0]].startsWith(beforeSources[PRIVATE_METADATA_DIGEST_SOURCE_PATHS[0]]),true);
+ for(const row of proposal.rows){assert.equal(row.before.source,beforeSources[row.file]);assert.equal(row.after.source,sourceHistory.adoptionSources[row.file]);assert.equal(row.completeInverse,true);assert.deepEqual(row.trace.map(value=>value.phase),['language','repository']);for(const stage of row.stages){assert.equal(stage.completeInverse,true);assert.equal(transportConcreteSyntaxSource(stage.before.source,{language:'JavaScript'}).source,stage.before.source);assert.equal(transportConcreteSyntaxSource(stage.after.source,{language:'JavaScript'}).source,stage.after.source);}}
+ assert.equal(sourceHistory.inverse,currentSources[PRIVATE_METADATA_DIGEST_SOURCE_PATHS[0]]);assert.equal(Buffer.byteLength(beforeSources[PRIVATE_METADATA_DIGEST_SOURCE_PATHS[0]]),58416);assert.equal(currentSources[PRIVATE_METADATA_DIGEST_SOURCE_PATHS[0]].startsWith(beforeSources[PRIVATE_METADATA_DIGEST_SOURCE_PATHS[0]]),true);
  const cloneBefore=beforeSources[PRIVATE_METADATA_DIGEST_SOURCE_PATHS[2]],cloneAfter=currentSources[PRIVATE_METADATA_DIGEST_SOURCE_PATHS[2]];assert.equal(cloneAfter.replace('metadataDigestForInternalSources as metadataDigest','metadataDigest'),cloneBefore);
  let reads=0;const accessor={...beforeSources};define(accessor,PRIVATE_METADATA_DIGEST_SOURCE_PATHS[0],{configurable:true,enumerable:true,get(){reads++;return beforeSources[PRIVATE_METADATA_DIGEST_SOURCE_PATHS[0]];}});assert.throws(()=>proposePrivateMetadataDigestSources(accessor),/primitive source/);assert.equal(reads,0);
  const duplicate={...beforeSources,[PRIVATE_METADATA_DIGEST_SOURCE_PATHS[0]]:beforeSources[PRIVATE_METADATA_DIGEST_SOURCE_PATHS[0]]+'export function copyOriginalDigestMetadata(value,fallback,ordinal){'};assert.throws(()=>proposePrivateMetadataDigestSources(duplicate),/kernel/);assert.throws(()=>proposePrivateMetadataDigestSources(currentSources),/kernel/);

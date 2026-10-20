@@ -177,3 +177,15 @@ fixture attempts with full parents and source/CST inverses retained. These scope
 attempts establish neither complete parent/crate admission nor repaired semantic
 or performance frontiers. All ordinary source, dependency, checker and private
 proof checks still run afresh; source data is not a saved compiler verdict.
+
+`test/relocate-source-module.mjs` uses native import/export and module-URL spans
+to author a receiving copy, retaining separate spans for repeated replacements,
+complete serialized/reparsed CST and a whole inverse. It preserves comments and
+embedded historical source strings. It issues no source or compiler permission.
+
+`test/internal-digest-adoption-history.mjs` retains the complete actual module
+and every later suffix byte while replaying the original terminal-kernel
+producer on its exact historical scope. The actual adopted factory must still
+match that complete producer equation. Current runtime tests execute the actual
+complete module; the history adapter does not claim that later extensions were
+part of the original source proposal or grant semantic authority.

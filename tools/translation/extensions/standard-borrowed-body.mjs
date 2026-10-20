@@ -29,7 +29,7 @@ export function requireBorrowedLayouts(records,checker,program,roots,diagnosticC
     // digest calls and full arguments. Diagnostics do not select an issuer.
     let actualDigest,wantedDigest;
     if(!actual||(actualDigest=metadataDigest({ctors:actual.ctors,record:actual.record,tuple:actual.tuple,standardGeneric:actual.standardGeneric}))!==(wantedDigest=metadataDigest({ctors:wanted.ctors,record:wanted.record,tuple:wanted.tuple,standardGeneric:wanted.standardGeneric}))){
-      const error=new Error('Shared standard source layout changed'+
+      const error=new Error('Shared standard source layout changed: stale source owner; exact private checked Copy/no-Drop evidence is required for nominal moves'+
         ` [method=${diagnosticContext?.method??'unknown'} owner=${diagnosticContext?.owner??'unknown'} span=${diagnosticContext?.start??'unknown'}..${diagnosticContext?.end??'unknown'} layout=${layout.fullName} actual=${actual?.fullName??'missing'}]`);
       error.standardLayoutDiagnostic={method:diagnosticContext?.method??null,owner:diagnosticContext?.owner??null,span:{start:diagnosticContext?.start??null,end:diagnosticContext?.end??null},expectedFullName:layout.fullName,retargetedFullName:wanted.fullName,actualFullName:actual?.fullName??null,missingLayout:!actual,actualDigest:actualDigest??null,wantedDigest:wantedDigest??null,expectedComponents:{ctors:wanted.ctors!==undefined,record:wanted.record!==undefined,tuple:wanted.tuple!==undefined,standardGeneric:wanted.standardGeneric!==undefined},actualComponents:actual?{ctors:actual.ctors!==undefined,record:actual.record!==undefined,tuple:actual.tuple!==undefined,standardGeneric:actual.standardGeneric!==undefined}:null};
       throw error;

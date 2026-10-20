@@ -1,4 +1,5 @@
 import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
+import {relocateSourceModule} from './relocate-source-module.mjs';
 import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,rmSync,realpathSync} from 'node:fs';
@@ -218,7 +219,7 @@ test('actual builtin full source crypto proof reissue refusals and independent s
  const cargo={manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')};
  const leafOrigin=new URL('../builtin-derive-bang-footprints.mjs',import.meta.url),leafSource=readFileSync(leafOrigin,'utf8'),leaves={};
  for(const which of ['old','current']){
-  const changes=[],compiled=leafSource.replace(/\bfrom (['"])(\.\.?\/[^'"]+)\1/g,(before,quote,path)=>{const actual=new URL(path,leafOrigin).href,target=actual===origin.href?subjects[which].url:actual,after='from '+quote+target+quote;changes.push({before,after});return after;}).replace(/\bimport\.meta\.url\b/g,before=>{const after=json(leafOrigin.href);changes.push({before,after});return after;});let reverse=compiled;for(const change of [...changes].reverse()){assert.equal(reverse.split(change.after).length,2);reverse=reverse.replace(change.after,change.before);}assert.equal(reverse,leafSource);const path=join(directory,'builtin-'+which+'.mjs');writeFileSync(path,compiled,{flag:'wx'});leaves[which]={path,url:pathToFileURL(realpathSync(path)).href,compiled,changes};
+  const relocation=relocateSourceModule(leafSource,leafOrigin.href,new Map([[origin.href,subjects[which].url]])),compiled=relocation.text,changes=relocation.mapping;assert.equal(relocation.inverse,leafSource);const path=join(directory,'builtin-'+which+'.mjs');writeFileSync(path,compiled,{flag:'wx'});leaves[which]={path,url:pathToFileURL(realpathSync(path)).href,compiled,changes,relocation};
  }
  retain('08-complete-builtin-provenance',{subjects,leafOrigin:leafOrigin.href,leafSource,leaves,cargo,transport:readFileSync(new URL('./report-reference-transport.mjs',import.meta.url),'utf8'),indexedTransport:readFileSync(new URL('./report-reference-file-cursor.mjs',import.meta.url),'utf8')});
  function child(which){
