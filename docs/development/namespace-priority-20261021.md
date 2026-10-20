@@ -143,3 +143,27 @@ and cold JSON replacement and a hash-installed JSON replacement, bringing that
 new file to eight unrun cases. Original complete authored source snapshots are
 unchanged: source producers retain exact guard substitutions and reconstruct
 their parents through complete CST inverses.
+
+`builtin-derive-type-range.mjs` now compiles a separate conditional outer-item
+range. Its actual registered callback module declarations select source files,
+including the original `#[path]` routes for Eq and PartialEq. Every occurrence
+of the callback's output capability in its complete body must be a fourth
+argument forwarded to a locally constructed `TraitDef`. Clone, Copy, Debug
+and Eq have one such route; PartialEq has two. The common source join checks
+the sole generic `push`, all Struct/Enum/Union dispatch alternatives, the
+struct and enum return routes, the concrete Impl constructor and the actual
+item builder. The reduced-graph source retains Impl associated-item handling
+and block scope restoration. This is a conditional range of emitted callback
+items, not a claim that a callback ran or that its full generated output was
+accepted. Caller AttrLike ownership, generated outer attributes and the global
+MacroNS builtin-replacement/hygiene exception remain explicit obligations.
+
+The bounded source check reissued all five ranges from genuine dependencies;
+the complete native TypeScript 5.9.3 AST copy and both CST inverses passed.
+Six complete 60000 ms controls are drafted and unrun. No production consumer,
+original positive, historical fixture, expectation or deadline changed in
+this step. The ten original positives therefore remain unqualified. The next
+composition must close the actual ancestor producer set before consuming this
+range; in particular it cannot promote the architecture trait census, assume
+rustc_attrs is unavailable to every standard macro (`alloc::vec` explicitly
+permits it), or treat pending format/panic/assert effect plans as complete.
