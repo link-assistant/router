@@ -10,6 +10,7 @@ import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {prepareBuiltinCanonicalTable} from './prepare-builtin-canonical-table.mjs';
 import {isCompilerSourceInputPath,COMPILER_SOURCE_INPUT_LIMITS} from './compiler-source-inputs.mjs';
 import {isIsolatedCompilerSourcePath} from './prepare-isolated-project-compiler.mjs';
+import {originalDeriveAdditionalSourceClosure} from './canonical-trial-source-closure.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
 
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
@@ -37,6 +38,12 @@ export function isCanonicalTrialSourcePath(path){
  if(['tools/translation/meta/','tools/translation/projects/','tools/translation/generated/','tools/translation/js-to-rust/generated/'].some(prefix=>path.startsWith(prefix)))return false;
  return path.startsWith('scripts/')||['LICENSE','AGENTS.md','CONTRIBUTING.md','js/package.json','js/package-lock.json'].includes(path)||path.startsWith('tools/translation/')&&path.split('/').slice(2).some(part=>part==='test'||part==='fixtures');
 }
+// The broad public inventory predicate above remains compatible. Actual trial
+// discovery composes the complete compiler contracts with the ORIGINAL test's
+// native dependency closure, rather than every unrelated test/fixture archive.
+export function isCanonicalTrialBaseSourcePath(path){
+ return path.endsWith('.rs')||/(?:^|\/)Cargo\.(?:toml|lock)$/.test(path)||isCompilerSourceInputPath(path)||isIsolatedCompilerSourcePath(path)||path.startsWith('scripts/')||['LICENSE','AGENTS.md','CONTRIBUTING.md','js/package.json','js/package-lock.json'].includes(path);
+}
 function collect(directory,root,paths,budget={directories:0}){if(++budget.directories>INPUT_LIMITS.files)fail('installed compiler directory count exceeded');plain(directory,true);for(const entry of readdirSync(directory,{withFileTypes:true})){const path=join(directory,entry.name);if(entry.isSymbolicLink())fail('linked installed compiler source');if(entry.isDirectory())collect(path,root,paths,budget);else if(entry.isFile()){paths.add(relative(root,path));if(paths.size>INPUT_LIMITS.files)fail('input file count exceeded before body reads');}else fail('nonregular installed compiler source');}}
 export function preflightCanonicalTrialPaths(root,paths){
  if(paths.length===0||paths.length>INPUT_LIMITS.files||new Set(paths).size!==paths.length)fail('input file count exceeded before body reads');let totalBytes=0;
@@ -47,14 +54,23 @@ export function discoverCanonicalTrialInputs(root){
  root=resolve(root);plain(root,true);
  const head=git(root,['rev-parse','HEAD']).trim(),gitDirectory=realpathSync(git(root,['rev-parse','--absolute-git-dir']).trim());
  const listed=git(root,['ls-files','--cached','--others','--exclude-standard','-z','--','*.rs','Cargo.toml','Cargo.lock','**/Cargo.toml','**/Cargo.lock','js/package.json','js/package-lock.json','tools/translation','scripts','LICENSE','AGENTS.md','CONTRIBUTING.md']);
- // Existing compiler contracts retain actual source profiles/vendors; tests and
- // fixtures are added explicitly. Generated project/meta output is not compiler input.
- const paths=new Set(listed.split('\0').filter(path=>path&&isCanonicalTrialSourcePath(path)));if(paths.size>INPUT_LIMITS.files)fail('input file count exceeded before body reads');collect(join(root,'js/node_modules/typescript'),root,paths);
+ const inventory=[...new Set(listed.split('\0').filter(Boolean))].sort();if(inventory.length>INPUT_LIMITS.files)fail('input inventory count exceeded before body reads');const paths=new Set(inventory.filter(isCanonicalTrialBaseSourcePath));if(paths.size>INPUT_LIMITS.files)fail('input file count exceeded before body reads');collect(join(root,'js/node_modules/typescript'),root,paths);
+ // Census complete compiler inputs before native loading. Additional helper
+ // modules get the same stat-only census before their first body allocation.
+ preflightCanonicalTrialPaths(root,[...paths].sort());
+ if(createRequire(join(root,'js/package.json'))('typescript')!==ownershipCompiler())fail('native closure must use this actual root installed compiler');
+ const analyzed=new Set(paths),trackedRustPaths=git(root,['ls-files','-z','--','*.rs']).split('\0').filter(Boolean);
+ const sourceClosure=originalDeriveAdditionalSourceClosure({ts:ownershipCompiler(),root,entry:TEST,inventory,retained:[...paths],trackedRustPaths,head,readSource:path=>{
+  if(!analyzed.has(path)){analyzed.add(path);preflightCanonicalTrialPaths(root,[...analyzed].sort());}
+  const bytes=read(root,path),source=bytes.toString('utf8');if(!Buffer.from(source).equals(bytes))fail('native closure source must be lossless UTF-8');return source;
+ }});
+ for(const path of sourceClosure.paths)paths.add(path);
+ const omitted=inventory.filter(path=>!paths.has(path)).map(path=>({path,reason:'outside-complete-compiler-contracts-and-native-original-derive-input-closure',compilerSourceInput:isCompilerSourceInputPath(path),isolatedCompilerSourceInput:isIsolatedCompilerSourcePath(path),originalTestClosureInput:false,sourceAuthority:false}));
  const preflight=preflightCanonicalTrialPaths(root,[...paths].sort());
  const files=preflight.files.map(fact=>{const bytes=read(root,fact.path);if(bytes.length!==fact.bytes||(lstatSync(join(root,fact.path)).mode&0o777)!==fact.mode)fail('source changed since complete size census');return {...fact,sha256:hash(bytes)};});
  if(!files.some(row=>row.path===TEST)||!files.some(row=>row.path==='Cargo.toml')||!files.some(row=>row.path.endsWith('.rs')))fail('complete original Rust/Cargo/compiler vector required');
  const compiler=JSON.parse(read(root,'js/node_modules/typescript/package.json'));if(compiler.name!=='typescript'||compiler.version!=='5.9.3')fail('actual installed TypeScript 5.9.3 required');
- return {head,gitDirectory,typescriptVersion:compiler.version,inputLimits:preflight.limits,totalBytes:preflight.totalBytes,files,sourceAuthority:false,semanticAuthority:false,runtimeAuthority:false};
+ return {head,gitDirectory,typescriptVersion:compiler.version,inputLimits:preflight.limits,totalBytes:preflight.totalBytes,files,sourceClosure,omitted,sourceAuthority:false,semanticAuthority:false,runtimeAuthority:false};
 }
 export function canonicalTrialCases(ts,source){
  const file=ts.createSourceFile(TEST,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);if(file.parseDiagnostics.length)fail('whole original test grammar differs');const cases=[];
