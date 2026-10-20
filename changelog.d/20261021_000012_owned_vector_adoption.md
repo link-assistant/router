@@ -1,0 +1,1 @@
+Draft source-bound owned vector comma-list translation and conservative CST adoption, with native TypeScript/CST source producers, primitive/text ownership limits, complete original-module receiving cases and CI-only Rust oracle source. Historical refusal candidates are not counted as new application coverage.
