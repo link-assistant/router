@@ -7,14 +7,20 @@ import {originalMacroTrees} from './macro-token-trees.mjs';
 import {rustTokens} from './rust-structure.mjs';
 import {originalSourceModuleItems,isSourceModuleView} from './source-module-views.mjs';
 import {assertResolvedSourceScopeOrigin} from './module-bindings.mjs';
-import {originalStaticSourceIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
+import {originalStaticSourceIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged,originalPrivateParserIngressUnchanged,originalCapturedFunctionSource,throwOriginalCapturedTypeError} from './original-json-intrinsics.mjs';
 const root=new URL('./source-profiles/namespace-feature-gate/',import.meta.url);
-const initial=originalStaticSourceIntrinsicsUnchanged()&&originalDataFreezeIntrinsicsUnchanged();
-const plans=new WeakSet(),proofs=new WeakMap();
-const hash=value=>createHash('sha256').update(value).digest('hex');
-const fail=message=>{throw new TypeError('Original crate feature gate: '+message);};
+const sourceInitial=originalPrivateParserIngressUnchanged()&&originalStaticSourceIntrinsicsUnchanged()&&originalDataFreezeIntrinsicsUnchanged();
+const parseOwner=sourceInitial?Object.getOwnPropertyDescriptor(globalThis,'JSON')?.value:null;
+const parseField=sourceInitial&&parseOwner?Object.getOwnPropertyDescriptor(parseOwner,'parse'):null;
+const initial=!!(sourceInitial&&parseField&&Object.hasOwn(parseField,'value')&&originalCapturedFunctionSource(parseField.value)==='function parse() { [native code] }');
+const plans=initial?new WeakSet():null,proofs=initial?new WeakMap():null;
+const hash=value=>{const result=createHash('sha256').update(value).digest('hex');guard();return result;};
+const fail=message=>throwOriginalCapturedTypeError('Original crate feature gate: '+message);
 const freeze=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;};
-function guard(){if(!initial||!originalStaticSourceIntrinsicsUnchanged()||!originalDataFreezeIntrinsicsUnchanged())fail('original source operations changed');}
+function guard(){
+ if(!initial||!originalPrivateParserIngressUnchanged()||!originalStaticSourceIntrinsicsUnchanged()||!originalDataFreezeIntrinsicsUnchanged())fail('original source operations changed');
+ const field=Object.getOwnPropertyDescriptor(parseOwner,'parse');if(!field||!Object.hasOwn(field,'value')||field.value!==parseField.value||field.writable!==parseField.writable||field.enumerable!==parseField.enumerable||field.configurable!==parseField.configurable)fail('original source JSON parser changed');
+}
 const compact=value=>rustTokens(value).filter(token=>token.type!=='comment').map(token=>token.text).join('');
 function callback(origin,name,selector=null){
  const roots=originalMacroTrees(origin.source,{maxBytes:256000,maxTokens:32000,maxDepth:64}),found=[];

@@ -24,3 +24,7 @@ Add a private relational Cargo dependency-library source proof that excludes
 development edges without selecting cfg(test) or reconstructing raw target
 defaults. Preserve original pending-unit APIs and add five unrun controls;
 complete native AST/CST source-copy and inverse checks passed.
+
+Refuse changed source ingress before private-brand allocation and recheck JSON
+parser ownership after observable hashes. Preserve complete original source
+snapshots and both inverses; add two unrun hook controls.
