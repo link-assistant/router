@@ -1,3 +1,4 @@
+import {crateEntrySourcePath} from '../repository-layout.mjs';
 import { SerializationRefusal, freeze } from './extract.mjs';
 import { requireCheckedSerializationMeta } from './meta.mjs';
 const refuse = message => { throw new SerializationRefusal(message); };
@@ -36,7 +37,7 @@ function renamed(name, entries, rule, position) {
   }
   refuse('Unknown pinned Serde rename rule');
 }
-const sourceLabel = type => type.source.replace(/^src\//,'')+'::'+type.name;
+const sourceLabel = (type,entry) => {const prefix=crateEntrySourcePath(entry,'src/');return (type.source.startsWith(prefix)?type.source.slice(prefix.length):type.source)+'::'+type.name;};
 export function projectSerializationDescriptor(input) {
   const meta=requireCheckedSerializationMeta(input), names=new Map(), result=Object.create(null);
   for(const type of meta.types) { if([...names.values()].includes(type.name))refuse('Distinct qualified source owners collide in the ordinary store ABI: '+type.name);names.set(type.owner,type.name); }
@@ -74,7 +75,7 @@ export function projectSerializationDescriptor(input) {
   }
   for(const type of meta.types) {
     const entries=helpers(type.attributes.filter(attribute=>attribute.position==='container'),type.kind==='enum'?['rename_all','rename','tag']:['rename','rename_all']);
-    const rule=value(entries,'rename_all'), source=sourceLabel(type);
+    const rule=value(entries,'rename_all'), source=sourceLabel(type,meta.context.entry);
     if(type.kind==='struct')result[type.name]={kind:'struct',source,fields:projectFields(type.fields,rule)};
     else {
       const tag=value(entries,'tag'), unit=type.variants.every(variant=>variant.layout==='unit'), namesSeen=new Set(), variants=[], aliases=Object.create(null), tagged=Object.create(null);

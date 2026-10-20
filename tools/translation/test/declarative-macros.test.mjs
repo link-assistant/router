@@ -175,7 +175,7 @@ test('all original pinned task-local invocations use actual locked transcribers 
   const definitions=taskLocalSourceDefinitions(proof),fixture=JSON.parse(readFileSync(new URL('../fixtures/task-local-originals.json',import.meta.url),'utf8'));
   assert.equal(fixture.invocations.length,7);
   for(const pin of fixture.invocations) {
-    const source=readFileSync(new URL(pin.file,root),'utf8');assert.equal(hash(source),pin.sourceSha256);
+    const source=readFileSync(repositorySourceURL(pin.file,root),'utf8');assert.equal(hash(source),pin.sourceSha256);
     const original=source.slice(pin.span.start,pin.span.end);assert.equal(original,pin.original);assert.equal(hash(original),pin.invocationSha256);
     const input=originalMacroInvocation(original);assert.deepEqual(input.path,['tokio','task_local']);
     const first=expandDeclarativeMacro(definitions.get('task_local'),input.trees);

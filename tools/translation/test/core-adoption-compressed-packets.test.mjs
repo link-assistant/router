@@ -1,4 +1,5 @@
 // Complete storage-only transport witnesses. Compiler admission remains independent.
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
 import {writeJsonTextGzip} from '../../evidence/write-json-gzip.mjs';
@@ -30,7 +31,7 @@ function fixture(t,source='pub fn label()->String{"猫😀".to_owned()}',extra={
  const parent=fs.mkdtempSync(join(tmpdir(),'router-compressed-packets-')),directory=join(parent,'input');fs.mkdirSync(directory);t.after(()=>fs.rmSync(parent,{recursive:true,force:true}));
  const files=Object.fromEntries(Object.entries({'src/lib.rs':root,'src/translation_core.rs':ROUTER_FORMATTING_FACADE_SOURCE,'src/translation_core/primitives.rs':ROUTER_CORE_PRIMITIVES_SOURCE,'src/translation_core/ranges.rs':ROUTER_CORE_RANGES_SOURCE,'src/translation_core/json_collections.rs':ROUTER_CORE_JSON_COLLECTIONS_SOURCE,'src/sample.rs':source,...extra}).sort(([a],[b])=>a<b?-1:a>b?1:0));
  for(const [path,text]of Object.entries(files)){fs.mkdirSync(dirname(join(directory,path)),{recursive:true});fs.writeFileSync(join(directory,path),text);}
- const dependencyInputs={manifest:fs.readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:fs.readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')};for(const [path,source]of [['Cargo.toml',dependencyInputs.manifest],['Cargo.lock',dependencyInputs.lock]])fs.writeFileSync(join(directory,path),source);
+ const dependencyInputs={manifest:fs.readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:fs.readFileSync(repositorySourceURL("Cargo.lock",new URL('../../../',import.meta.url)),'utf8')};for(const [path,source]of [['Cargo.toml',dependencyInputs.manifest],['Cargo.lock',dependencyInputs.lock]])fs.writeFileSync(join(directory,path),source);
  return {parent,root:directory,files,dependencyInputs,output:join(parent,'proposal')};
 }
 function bytes(root){const result=[];function visit(relative){const path=join(root,relative),s=fs.lstatSync(path);if(s.isDirectory())for(const name of fs.readdirSync(path).sort())visit(relative?relative+'/'+name:name);else result.push({path:relative,base64:fs.readFileSync(path).toString('base64')});}visit('');return result;}

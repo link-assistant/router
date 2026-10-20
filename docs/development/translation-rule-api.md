@@ -58,6 +58,22 @@ pin the upstream input and retain the original source and license. Neither a
 successful anchor match nor a rule trace proves source ownership, a type,
 borrowing, effects or executable admission.
 
+For complete source payloads, use `exactLiteralSubstitutionRule` from
+[`literal-substitution-rule.mjs`](../../tools/translation/literal-substitution-rule.mjs).
+It retains the original argument and unique-anchor refusals and quotes replacement
+data so dollar patterns remain literal. The original constructor keeps its
+existing replacement-template contract. Both rule types grant no semantic
+authority; independently replay native syntax-span edits and full CST inverses.
+
+`node tools/translation/prepare-repository-layout-readers.mjs --emit TARGET_PATHS_JSON`
+emits a source proposal for an explicit array of complete compiler test paths.
+Its actual filesystem imports and lexical repository roots are selected with the
+installed native parser. Awaited literal imports and the actual tracked-source
+re-export retain their source evidence. Shadowed fixture roots, pending import
+promises and embedded historical strings remain unchanged. Review every original,
+selected span, complete inverse and unchanged input before installing the proposal;
+this development tool does not establish application translation coverage.
+
 ## Migrated paths and candidate evidence
 
 The 148 candidate uses the two sequences in the following actual paths:

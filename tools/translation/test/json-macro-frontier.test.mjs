@@ -56,7 +56,7 @@ test('scalar interpolation remains a non-admitting plan and never invents custom
 
 test('unchanged full bridge source retains the four anchor invocations and nonlocal-flow frontier',()=>{
   const receipt=JSON.parse(readFileSync(new URL('../fixtures/json-macro-frontier/original-anchor.json',import.meta.url),'utf8'));
-  const source=readFileSync(new URL(receipt.file,root),'utf8');assert.equal(hash(source),receipt.fileSha256);assert.equal(hash(source.slice(receipt.functionSpan.start,receipt.functionSpan.end)),receipt.functionSha256);
+  const source=readFileSync(repositorySourceURL(receipt.file,root),'utf8');assert.equal(hash(source),receipt.fileSha256);assert.equal(hash(source.slice(receipt.functionSpan.start,receipt.functionSpan.end)),receipt.functionSha256);
   const invocations=captureOriginalJsonMacroInvocations(source),anchor=invocations.filter(item=>item.span.start>=receipt.functionSpan.start&&item.span.end<=receipt.functionSpan.end);
   assert.equal(anchor.length,4);assert.equal(anchor.every(item=>item.syntax!==null),true);assert.deepEqual(anchor.slice(0,3).map(item=>item.syntax.value.value),['auto','required','none']);
   const tool=anchor[3].syntax;assert.equal(tool.value.entries[1].value.entries[0].value.source,'choice.get("name").and_then(Value::as_str)?');assert.equal(tool.leaves[0].requiresQuestionMarkFlow,true);

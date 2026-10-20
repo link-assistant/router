@@ -1,4 +1,5 @@
 // Independent packet-schema/data checks; no private compiler authority is issued.
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import nativeTest from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync} from 'node:fs';
@@ -16,7 +17,7 @@ import {translateProject} from '../project.mjs';
 import {serde_json_from_str} from '../extensions/json-runtime.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const ROOT=fileURLToPath(new URL('../../../',import.meta.url)),nativeJSON=JSON.stringify;
-const dependencyInputs={manifest:readFileSync(join(ROOT,'Cargo.toml'),'utf8'),lock:readFileSync(join(ROOT,'Cargo.lock'),'utf8')};
+const dependencyInputs={manifest:readFileSync(join(ROOT,repositorySourcePath('Cargo.toml',ROOT)),'utf8'),lock:readFileSync(join(ROOT,repositorySourcePath('Cargo.lock',ROOT)),'utf8')};
 const READER='pub fn picked(value:&crate::translation_core::Json)->crate::translation_core::Maybe<&crate::translation_core::Str>{value.get("name").and_then(crate::translation_core::Json::as_str)}';
 let number=0;
 function test(name,run){const id=++number;nativeTest(name,{timeout:60000},async()=>{const vectors=[];try{await run(vectors);}finally{const directory=process.env.ROUTER_READER_REVIEW_CONTRACT_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});const source=nativeJSON({name,vectors},(_key,value)=>typeof value==='bigint'?{$integer:String(value)}:value);writeJsonTextGzip(join(directory,String(id).padStart(2,'0')+'-complete.json.gz'),source);}}});}

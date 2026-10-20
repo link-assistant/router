@@ -1,3 +1,4 @@
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import {historicalPrivateParserPacket,assertPrivateParserPacketEvolution} from './private-parser-historical-packet.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -26,7 +27,7 @@ const beforeAssembler="import { createHash } from 'node:crypto';\nimport { isDee
 function retain(name,value){const root=process.env.ROUTER_NATIVE_BULK_CST_VECTOR_DIR;if(root){mkdirSync(root,{recursive:true});writeFileSync(join(root,name+'.json'),json(value,(_,v)=>typeof v==='bigint'?{bigint:String(v)}:v)+'\n');}}
 function outcome(action){try{return {value:action()};}catch(error){const field=error&&typeof error==='object'?get(error,'message'):null;return {error:{message:field&&Object.hasOwn(field,'value')?field.value:'non-data failure'}};}}
 function scratch(t){const path=mkdtempSync(join(tmpdir(),'router-native-bulk-cst-'));t.after(()=>rmSync(path,{recursive:true,force:true}));return path;}
-function nativeSources(){const walk=directory=>readdirSync(join(ROOT,directory),{withFileTypes:true}).flatMap(entry=>entry.isDirectory()?walk(directory+'/'+entry.name):entry.name.endsWith('.mjs')?[directory+'/'+entry.name]:[]);return walk('js/src').sort().map(path=>({path,source:readFileSync(join(ROOT,path),'utf8')}));}
+function nativeSources(){const walk=directory=>readdirSync(join(ROOT,directory),{withFileTypes:true}).flatMap(entry=>entry.isDirectory()?walk(directory+'/'+entry.name):entry.name.endsWith('.mjs')?[directory+'/'+entry.name]:[]);return walk('js/src').sort().map(path=>({path,source:readFileSync(join(ROOT,repositorySourcePath(path,ROOT)),'utf8')}));}
 async function physical(t,source,label,overrides={}){
  const root=scratch(t),changes=[],historical=source===beforeExecutor?historicalPrivateParserPacket(t,retain):null;let copied=source;
  if(historical){const selected=overrides['./private-parser-sha256.mjs'];overrides={...overrides,'./original-json-intrinsics.mjs':historical.url('original-json-intrinsics.mjs'),'./private-parser-sha256.mjs':selected?historical.probe(selected):historical.url('private-parser-sha256.mjs')};}

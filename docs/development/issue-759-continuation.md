@@ -602,6 +602,42 @@ for feedback while preparing one coherent batch. Preserve the whole tests,
 strict child deadlines, independent Node duration audit, and existing memory,
 disk and output limits. Do not compile or invoke any Rust tools locally.
 
+The `25aa6e79effc1d0aceaf3c7427ab67f69bb98ced` cycle has now finished across
+all ten workflows: 30 successful, 30 failed, 30 cancelled and 42 skipped checks.
+All 60 complete failed/cancelled logs were collected and their raw bytes rejoined.
+The ten interrupted forward cohorts expose 269 distinct failing cases; interrupted
+test runs do not establish complete compiler coverage or deadline qualification.
+
+The reusable reader proposer analyzed all 82 affected compiler test files and
+installed 87 parser-selected edits in 39 files; all 43 unchanged files also
+matched in full. Its complete source/CST inverses and independent edit replay
+passed before installation. All 22 controls passed under Node and Bun, including
+real legacy/nested receivers, awaited imports, actual tracked-source re-exports,
+shadowed roots, pending-promise refusals and literal dollar payloads. The original
+replacement constructor and its complete regression file remain unchanged.
+The first large proposal correctly refused a replacement-template expansion
+before installation; an additive literal adapter repairs that source-data case.
+
+The shared original-source capture also retains every byte of all 847 Rust files,
+their historical logical labels, physical origins and all three Cargo inputs.
+Its first controls found four unmapped build/fuzz paths; the complete corrected
+files passed under each engine. Existing cache scope and bounds were preserved.
+The installed descriptor rule uses the checked crate entry to retain the original
+public source labels while keeping physical paths in provenance.
+
+The complete six-file serialization cohort remains red: it reached 600 seconds
+after 76 reported passes and one descriptor-label failure; the final file and
+independent deadline audit were unfinished. The descriptor repair still requires
+its original whole-file qualification. Two complete profiled captures retained
+identical original inputs and public context data, but the experimental namespace
+substitution observed 126.213 seconds against 100.976 seconds before. Its exact
+source inverse was restored. No performance gain or original-case pass is claimed.
+
+The 39 repaired files, the other affected whole files, the serialization deadline
+problem, current source-bank/compiler exports and all complete producer/profile/
+reverse/parity/gate obligations remain open. The current generated fingerprints
+are stale after these source changes. No Rust tool was invoked.
+
 Regenerate owned-definition producer modules with
 `node tools/translation/prepare-owned-definition-bulk.mjs --emit`. This emits a
 complete source proposal; it does not install files. Review every original

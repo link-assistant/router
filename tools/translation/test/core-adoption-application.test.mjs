@@ -1,3 +1,4 @@
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import * as fs from 'node:fs';
@@ -121,7 +122,7 @@ try{fs.mkdirSync(root);
 fs.mkdirSync(run);
 fs.mkdirSync(temporary);
 write(join(root,'.gitignore'),'js/node_modules/\n');
-for(const path of ['src/translation_core.rs','src/translation_core/primitives.rs','src/translation_core/ranges.rs','src/translation_core/json_collections.rs','Cargo.toml','Cargo.lock'])write(join(root,path),fs.readFileSync(join(ROOT,path),'utf8'));
+for(const path of ['src/translation_core.rs','src/translation_core/primitives.rs','src/translation_core/ranges.rs','src/translation_core/json_collections.rs','Cargo.toml','Cargo.lock'])write(join(root,path),fs.readFileSync(join(ROOT,repositorySourcePath(path,ROOT)),'utf8'));
 write(join(root,'src/lib.rs'),ORIGINAL+(configuration.twoTargets?'mod second;\n':''));
 if(configuration.twoTargets)write(join(root,'src/second.rs'),ORIGINAL.replace('pub mod translation_core;\n','').replace('fn picked(','fn second_picked('));
 const compiler=process.env.ROUTER_TRANSLATION_TSC?dirname(dirname(resolve(process.env.ROUTER_TRANSLATION_TSC))):join(ROOT,'js/node_modules/typescript');

@@ -140,7 +140,7 @@ test('serialization joins complete original sibling outputs without erasing unkn
   retain();
 });
 
-test('physical nested Rust package retains both manifests and exact shared codec behavior',{timeout:30000},async()=>{
+test('physical nested Rust package retains both manifests and exact descriptor projection',{timeout:30000},async()=>{
   let javascript;
   fixture(record('enabled:bool,value:u64'),options=>{
     const before=generateSerializationSchema({...options,roots:['crate::Record']}),original=readFileSync(join(options.root,'src/lib.rs'));

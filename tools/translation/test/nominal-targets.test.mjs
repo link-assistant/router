@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -63,7 +64,7 @@ test('derive expansion preserves only the original nominal definition and not ex
 
 test('actual tracked proc-derived definitions supply family evidence while their layouts stay carried',()=>{
   for(const [file,name] of [['src/cli/management_args.rs','ManagementArgs'],['src/model_contract.rs','ModelAccessError']]){
-    const original=readFileSync(new URL('../../../'+file,import.meta.url),'utf8');
+    const original=readFileSync(repositorySourceURL(file,new URL('../../../',import.meta.url)),'utf8');
     const files=file.includes('/cli/')?{'src/lib.rs':'mod cli;','src/cli/mod.rs':'mod management_args;',[file]:original}:{'src/lib.rs':'mod model_contract;',[file]:original};
     const context=evidence(files),declaration=sourceItems(original).find(item=>item.name===name&&item.term==='struct');
     const implementation=targets(context).find(item=>item.typePath?.at(-1)===name&&item.traitPath);

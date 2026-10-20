@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -9,7 +10,7 @@ import {verifyTypedTargets} from './typed-targets.mjs';
 const none=Object.freeze({$:'None'});
 const target=(model,streaming)=>Object.freeze({$:'Some',field0:Object.freeze({$:'Tuple',field0:model,field1:streaming})});
 test('unchanged native Gemini target parser consumes general split, tuple callback and trim rules',async()=>{
-  const path='src/gemini/native.rs',name='parse_native_target',original=readFileSync(new URL('../../../'+path,import.meta.url),'utf8');
+  const path='src/gemini/native.rs',name='parse_native_target',original=readFileSync(repositorySourceURL(path,new URL('../../../',import.meta.url)),'utf8');
   assert.equal(sha256(original),'4c810825b0a056b3a21ac2c81a50e48c9adbeb29fc19ee00d481ad72bc41cef2');
   const item=sourceItems(original).find(item=>item.term==='fn'&&item.name===name);assert.deepEqual([item.start,item.end],[9826,10334]);
   const source=original.slice(item.start,item.end);assert.equal(sha256(source),'ef1925b09650ea26dc608d82d8dfcbbd1f09189bcd8203ee1dd573d8ef4a7d1b');

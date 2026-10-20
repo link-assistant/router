@@ -259,7 +259,7 @@ function child(args){const row=spawnSync(process.execPath,[cli,...args],{encodin
 
 test('progress substitutions reconstruct all three complete source files through both concrete rule phases',()=>{
  for(const [path,rules]of Object.entries(SOURCE_RULES)){
-  const current=readFileSync(new URL('../../../'+path,import.meta.url),'utf8');let before=current;
+  const current=readFileSync(repositorySourceURL(path,new URL('../../../',import.meta.url)),'utf8');let before=current;
   for(const rule of [...rules].reverse())before=once(before,rule.after,rule.before);
   let forward=before;for(const rule of rules)forward=once(forward,rule.before,rule.after);assert.equal(forward,current);
   const original=transportConcreteSyntaxSource(before,{language:'JavaScript'}),applied=applyConcreteSyntaxSubstitutions(original.document,{languageRules:[{id:'language:preserve-complete-diagnostic-source',edits:[]}],repositoryRules:[{id:'router:optional-adoption-progress',edits:[{span:[0,before.length],expected:before,replacement:current}]}]}),after=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(applied.value));assert.equal(after.source,current);

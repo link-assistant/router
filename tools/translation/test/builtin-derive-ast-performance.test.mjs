@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -12,7 +13,7 @@ assert.equal(createHash('sha256').update(previousBytes).digest('hex'),'ef60bf6ce
 const previousSource=previousBytes.toString().replace(/from '(\.\/[^']+)'/g,(_all,path)=>'from '+JSON.stringify(new URL('../'+path.slice(2),import.meta.url).href)).replace("new URL('./source-profiles/builtin-derive-bang/',import.meta.url)",JSON.stringify(new URL('../source-profiles/builtin-derive-bang/',import.meta.url).href));
 const previous=await import('data:text/javascript;base64,'+Buffer.from(previousSource).toString('base64'));
 const hash=value=>createHash('sha256').update(value).digest('hex');
-const dependencies=()=>loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',new URL('../../../',import.meta.url)),'utf8'),lock:readFileSync(new URL('Cargo.lock',new URL('../../../',import.meta.url)),'utf8')});
+const dependencies=()=>loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',new URL('../../../',import.meta.url)),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',new URL('../../../',import.meta.url)),'utf8')});
 const outcome=operation=>{try{return {value:operation()};}catch(error){return {error:{name:error.name,message:error.message}};}};
 const profile=actual.builtinDeriveAstSourceProfile(dependencies());
 test('complete original compiler recipe and definition inventory equals the immutable previous implementation',{timeout:120000},t=>{

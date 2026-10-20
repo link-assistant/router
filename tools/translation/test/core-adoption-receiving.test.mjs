@@ -1,4 +1,5 @@
 // Complete source/data receiving; copied metadata never supplies private proofs.
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
 import * as fs from 'node:fs';
@@ -77,7 +78,7 @@ try{return await run(directory);
 }finally{archive('fixture-'+hash(directory),directory);
 fs.rmSync(directory,{recursive:true,force:true});
 }}
-function smallSources(root){for(const path of core)write(join(root,path),fs.readFileSync(join(ROOT,path)));
+function smallSources(root){for(const path of core)write(join(root,path),fs.readFileSync(join(ROOT,repositorySourcePath(path,ROOT))));
 write(join(root,'src/lib.rs'),original);
 }
 async function packetFixture(directory){const root=join(directory,'source'),output=join(directory,'proposal');
@@ -253,7 +254,7 @@ keep('complete-budget-observations',result);
 test('actual checked-in workflow fully reviews strict targets and explicitly applies and recovers its selected bytes',()=>home(async directory=>{
  const root=join(directory,'source'),run=join(directory,'run'),exported=exportTranslatorBundle({sourceRoot:ROOT,output:root});
 keep('complete-committed-compiler-export',exported.manifest);
- for(const path of runtimeFiles)write(join(root,path),fs.readFileSync(join(ROOT,path)));
+ for(const path of runtimeFiles)write(join(root,path),fs.readFileSync(join(ROOT,repositorySourcePath(path,ROOT))));
 write(join(root,'tools/translation/fixtures/real-source-provenance.json'),fs.readFileSync(join(ROOT,'tools/translation/fixtures/real-source-provenance.json')));
 smallSources(root);
 write(join(root,'tests/owned-witness.rs'),'// complete guard outside src\n');

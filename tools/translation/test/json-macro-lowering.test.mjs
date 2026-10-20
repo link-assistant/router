@@ -43,7 +43,7 @@ test('source scalar and canonical Value Serialize adapters preserve original typ
 });
 
 test('complete unchanged bridge file executes original tool-choice body with independent twelve outcomes',async()=>{
-  const receipt=JSON.parse(readFileSync(new URL('../fixtures/json-macro-frontier/original-anchor.json',import.meta.url),'utf8')),source=readFileSync(new URL(receipt.file,root),'utf8');
+  const receipt=JSON.parse(readFileSync(new URL('../fixtures/json-macro-frontier/original-anchor.json',import.meta.url),'utf8')),source=readFileSync(repositorySourceURL(receipt.file,root),'utf8');
   assert.equal(hash(source),receipt.fileSha256);assert.equal(hash(source.slice(receipt.functionSpan.start,receipt.functionSpan.end)),receipt.functionSha256);
   const sources=new Map([['src/lib.rs','mod bridge_request_tools;'],[receipt.file,source]]),result=translateProject({entry:'src/lib.rs',paths:[...sources.keys()],readSource:path=>sources.get(path),compilationProfile:PRODUCTION_PROFILE,jsonMacroDependencies:dependencies()});
   const entry=result.meta.executable.find(item=>item.name==='bridge_request_tools.translate_tool_choice');assert.deepEqual(entry?.span,{start:receipt.functionSpan.start,end:receipt.functionSpan.end});

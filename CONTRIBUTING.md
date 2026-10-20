@@ -107,6 +107,13 @@ inverses. Preserve frozen historical source bytes, hashes and logical source
 identities. Adapt their receiving loaders explicitly; embedded child sources
 and immutable historical revisions must keep their own paths and contracts.
 
+Use the [parser-selected reader proposer](docs/development/translation-rule-api.md)
+for bulk layout repairs. Source payloads require literal substitution rules so
+replacement-template dollar forms survive unchanged. Preserve the original
+replacement-rule contract, qualify real legacy and nested receiving folders,
+and retain all tracked Rust rows and complete workspace/package Cargo inputs.
+An emitted or installed proposal still needs every affected complete test file.
+
 The two reviewed Router Cargo layouts use a stateless exact comparison copied
 from the complete historical layout equation. Regenerate its source proposal
 with `node tools/translation/prepare-cargo-layout-input-compatibility.mjs --emit`

@@ -1,5 +1,6 @@
 // Explicit internal-source proposal and digest controls. Runtime receiving is required.
 // Extra private copier/factory stack frames are not claimed observationally equal.
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
 import {Hash} from 'node:crypto';
@@ -55,7 +56,7 @@ function oldAndNew(configure,valueFactory=()=>({a:'switch',z:2})){
 }
 
 test('canonical sibling data retains exact old bytes flags Unicode aliases and signed certificate ordering',(_t,retain)=>{
- const currentSources=Object.fromEntries(PRIVATE_METADATA_DIGEST_SOURCE_PATHS.map(path=>[path,readFileSync(new URL('../../../'+path,import.meta.url),'utf8')])),beforeSources=restorePrivateMetadataDigestSources(currentSources),proposal=proposePrivateMetadataDigestSources(beforeSources);
+ const currentSources=Object.fromEntries(PRIVATE_METADATA_DIGEST_SOURCE_PATHS.map(path=>[path,readFileSync(repositorySourceURL(path,new URL('../../../',import.meta.url)),'utf8')])),beforeSources=restorePrivateMetadataDigestSources(currentSources),proposal=proposePrivateMetadataDigestSources(beforeSources);
  retain('complete-language-repository-source-CST-inverses',{currentSources,beforeSources,proposal});
  assert.equal(selected.name,'metadataDigest');assert.equal(proposal.installApproved,false);assert.equal(proposal.semanticChecksPassed,false);assert.deepEqual(proposal.authority,{source:false,owner:false,type:false,executable:false});
  assert.deepEqual(proposal.selectedSyntaxSites,{cloneDigestExpressions:23,linkedParsedEvidenceExpressions:1});
@@ -258,7 +259,7 @@ test('complete JSON bigint Buffer and native hash observations remain fresh exac
  }
 });
 
-function dependencyInputs(){const base=new URL('../../../',import.meta.url);return {manifest:readFileSync(new URL('Cargo.toml',base),'utf8'),lock:readFileSync(new URL('Cargo.lock',base),'utf8')};}
+function dependencyInputs(){const base=new URL('../../../',import.meta.url);return {manifest:readFileSync(repositorySourceURL('Cargo.toml',base),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',base),'utf8')};}
 function compileClone(source){const inputs=dependencyInputs();return translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,cargoManifest:inputs.manifest,deriveDependencies:loadDeriveDependencyProof(inputs),compilationProfile:PRODUCTION_PROFILE});}
 function cloneFixture(source){
  const dependencies=loadDeriveDependencyProof(dependencyInputs()),sourceView=captureSourceModuleViews({source,sourcePath:'src/lib.rs',compilationProfile:PRODUCTION_PROFILE}).views[0],modules=[{file:'src/lib.rs',path:[],source,sourceView,configurationCondition:'active',compilationProfile:PRODUCTION_PROFILE}],derive=createDeriveFootprintContext({modules,dependencies,compilationProfile:PRODUCTION_PROFILE}),context=createCloneSourceContext(derive),module=cloneSourceContextFacts(context).modules[0],item=originalSourceModuleItems(module).find(row=>row.term==='struct'||row.term==='enum'),surface=originalCloneGeneratedMethod(context,module,item,HostRustParser);

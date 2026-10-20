@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import nodeTest from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
@@ -17,7 +18,7 @@ import {DERIVE_EMPTY_ENCLOSING_EFFECT_RULE,proveDeriveEmptyEnclosingEffect,deriv
 const ITEM_SCAN_NATIVE_EVOLUTION=[["const itemScanNative=originalJsonIntrinsicsUnchanged()&&","const itemScanNative=originalDataFreezeIntrinsicsUnchanged()&&"]];
 
 const test=(name,body)=>nodeTest(name,{timeout:60_000},body);
-const repository=new URL('../../../',import.meta.url),read=path=>readFileSync(new URL(path,repository),'utf8');
+const repository=new URL('../../../',import.meta.url),read=path=>readFileSync(repositorySourceURL(path,repository),'utf8');
 const dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')});
 const retain=(name,value)=>{const directory=process.env.ROUTER_DERIVE_EFFECT_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeFileSync(directory+'/'+name+'.json',JSON.stringify(value)+'\n',{flag:'wx'});}};
 const names=[{namespace:'type',name:'Formatter'},{namespace:'type',name:'Result'},{namespace:'type',name:'Display'},{namespace:'value',name:'format'}];

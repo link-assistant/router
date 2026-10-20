@@ -38,7 +38,7 @@ test('profile source origin and forwarding lineage reject caller-created clones 
 test('all pinned Router task-local chains retain call-site standard owner and generated attribute obligations',()=>{
   const proof=dependencies(),defs=taskLocalSourceDefinitions(proof),pins=JSON.parse(readFileSync(new URL('../fixtures/task-local-originals.json',import.meta.url),'utf8'));
   for(const pin of pins.invocations) {
-    const source=readFileSync(new URL(pin.file,root),'utf8');assert.equal(hash(source),pin.sourceSha256);
+    const source=readFileSync(repositorySourceURL(pin.file,root),'utf8');assert.equal(hash(source),pin.sourceSha256);
     const original=source.slice(pin.span.start,pin.span.end);assert.equal(original,pin.original);assert.equal(hash(original),pin.invocationSha256);
     const input=originalMacroInvocation(original),front=expandDeclarativeMacro(defs.get('task_local'),input.trees);
     const inner=expandDeclarativeMacro(defs.get('__task_local_inner'),declarativeSubInput(front,calls(front,'__task_local_inner')[0]));

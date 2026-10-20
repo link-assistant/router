@@ -5,6 +5,8 @@ import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {join} from 'node:path';
+import {repositorySourcePath,repositoryCratePaths} from './fixtures/repository-paths.mjs';
+import {repositoryRustLayout} from '../repository-layout.mjs';
 import {createHash} from 'node:crypto';
 import {translateProject} from '../project.mjs';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
@@ -17,25 +19,34 @@ export function originalCsvContext(){
   if(context)return context;
   const sourceHead=execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8',timeout:30_000}).trim();
   if(!/^[a-f0-9]{40}$/.test(sourceHead))throw new TypeError('Original CSV context requires one exact source commit');
-  const paths=execFileSync('git',['ls-files','-z','--','*.rs'],{cwd:root,encoding:'utf8',timeout:30_000}).split('\0').filter(Boolean).sort();
+  const paths=repositoryCratePaths(execFileSync('git',['ls-files','-z','--','*.rs'],{cwd:root,encoding:'utf8',timeout:30_000}).split('\0').filter(Boolean),root).sort();
   if(paths.length>20_000||new Set(paths).size!==paths.length)throw new TypeError('Original CSV source set exceeds its unique-path budget');
   const sources=new Map(),receipt=[];let total=0;
   const capture=file=>{
     if(file.startsWith('/')||file.includes('\\')||file.split('/').some(part=>!part||part==='.'||part==='..'))throw new TypeError('Original CSV source path must stay inside its repository');
-    let raw,readOrigin='working-tree';try{raw=readFileSync(join(root,file));}catch(error){
+    const physicalSource=repositorySourcePath(file,root);
+    let raw,readOrigin='working-tree';try{raw=readFileSync(join(root,physicalSource));}catch(error){
       if(error.code!=='ENOENT'||!paths.includes(file))throw error;
       // Sparse worker checkouts omit tracked evidence files. Read their exact
       // original commit bytes; never replace/remove any tracked Rust input.
-      readOrigin='captured-commit-blob';raw=execFileSync('git',['show',sourceHead+':'+file],{cwd:root,timeout:30_000,maxBuffer:8*1024*1024});
+      readOrigin='captured-commit-blob';raw=execFileSync('git',['show',sourceHead+':'+physicalSource],{cwd:root,timeout:30_000,maxBuffer:8*1024*1024});
     }
     if(raw.length>8*1024*1024||(total+=raw.length)>64*1024*1024)throw new TypeError('Original CSV source set exceeds its byte budget');
     const text=raw.toString('utf8');if(!Buffer.from(text).equals(raw))throw new TypeError('Original Rust source must be lossless UTF-8');
-    sources.set(file,text);receipt.push(Object.freeze({source:file,bytes:raw.length,sha256:hash(raw),readOrigin}));return text;
+    sources.set(file,text);receipt.push(Object.freeze({source:file,physicalSource,bytes:raw.length,sha256:hash(raw),readOrigin}));return text;
   };
   for(const file of paths)capture(file);
   const manifest=capture('Cargo.toml'),lock=capture('Cargo.lock');
+  let workspaceManifest=null;
+  if(repositoryRustLayout(root).root!=='.'){
+    const file='Cargo.toml',raw=readFileSync(join(root,file));
+    if(raw.length>8*1024*1024||(total+=raw.length)>64*1024*1024)throw new TypeError('Original CSV source set exceeds its byte budget');
+    const content=raw.toString('utf8');if(!Buffer.from(content).equals(raw))throw new TypeError('Original Rust source must be lossless UTF-8');
+    workspaceManifest=Object.freeze({source:file,bytes:raw.length,sha256:hash(raw),content});
+  }
+
   const source=file=>{if(!sources.has(file))throw new TypeError('Original CSV context has no captured tracked source: '+file);return sources.get(file);};
-  const inputs=Object.freeze({entry:'src/lib.rs',sourceHead,compilationProfile:PRODUCTION_PROFILE,sources:Object.freeze(receipt),originalBytes:total,digest:hash(JSON.stringify({entry:'src/lib.rs',sourceHead,compilationProfile:PRODUCTION_PROFILE,sources:receipt}))});
+  const inputs=Object.freeze({entry:'src/lib.rs',sourceHead,compilationProfile:PRODUCTION_PROFILE,sources:Object.freeze(receipt),workspaceManifest,originalBytes:total,digest:hash(JSON.stringify({entry:'src/lib.rs',sourceHead,compilationProfile:PRODUCTION_PROFILE,sources:receipt,workspaceManifest}))});
   // Optional verification artifacts retain passing and failing full-graph
   // observations before any assertion. They supply no compiler authority and
   // do not trigger another compilation or alter the shared source selection.

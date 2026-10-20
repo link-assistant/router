@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {createHash} from 'node:crypto';
@@ -132,7 +133,7 @@ test('highest Host let-else guard rejects hostile subjects before any observable
 test('unchanged production let-else preserves source provenance while its UTF-8 host obligation stays refused',()=>{
   const evidence=JSON.parse(readFileSync(new URL('./fixtures/let-else-source-provenance.json',import.meta.url),'utf8'));
   assert.equal(evidence.newExecutedProductionBodies,0);assert.equal(evidence.runtimeParity,false);assert.equal(evidence.fullParity,false);
-  const path='src/request_log/stream_outcome.rs',source=readFileSync(new URL('../../../'+path,import.meta.url),'utf8');
+  const path='src/request_log/stream_outcome.rs',source=readFileSync(repositorySourceURL(path,new URL('../../../',import.meta.url)),'utf8');
   assert.equal(hash(source),'92452a28069d0b7055a62026b34c241153c21059c18943df97e165790b6f1f29');
   const item=sourceItems(source).find(item=>item.name==='frame_terminates_stream');
   assert.deepEqual({start:item.start,end:item.end},{start:7460,end:7791});

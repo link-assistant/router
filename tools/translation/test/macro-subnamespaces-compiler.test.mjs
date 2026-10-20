@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -19,7 +20,7 @@ const pins=[
 test('four pinned original Copy field getters execute from full tracked files despite sibling bang-export uncertainty',async()=>{
   let checkedBodies=0,literalOutcomes=0;
   for(const pin of pins){
-    const source=readFileSync(new URL(`../../../src/${pin.file}.rs`,import.meta.url),'utf8');assert.equal(hash(source),pin.sha);
+    const source=readFileSync(repositorySourceURL(`src/${pin.file}.rs`,new URL('../../../',import.meta.url)),'utf8');assert.equal(hash(source),pin.sha);
     const methods=extractImplDeclarations(source).implementations.flatMap(impl=>impl.methods);
     for(const [name,start,end,digest] of pin.methods){assert.ok(methods.some(method=>method.name===name&&method.span.start===start&&method.span.end===end));assert.equal(hash(source.slice(start,end)),digest);}
     const root=`mod ${pin.file}; mod uncertain; pub fn text()->String{format!("standard")}`;
