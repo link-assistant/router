@@ -26,6 +26,11 @@ Edges and diagnostics each have one packet containing their original whole
 array. This reconstructs the formatting corpus schema, including every status,
 refusal, scope, origin, source, digest, inspection CST, mapping and inverse.
 It does not use the literal or JSON proposal schema.
+The equation is complete JSON wire equality:
+the reconstructed result equals `JSON.parse(JSON.stringify(materialized))`.
+Ordinary JSON data preserves every serialized field, but does not preserve
+JavaScript null prototypes. A negative receiving control mutates one nested
+retained original source field and requires the complete comparison to fail.
 
 Completion returns the original summary plus detached section counts. Call
 `verify()` only after complete iteration; unfinished and returned streams fail
@@ -52,6 +57,17 @@ retained producer/helper evidence, ordinary and hash-observer source/Cargo
 mutations, unfinished streams, and all 256 functions across 32 physical source
 files. Its optional resource receipt observes heap/RSS between packets and OS
 process resource use without forced GC. A passing small case would establish
-neither a complete 564-file fit nor executable application gains. Complete new
-receiving tests and actual corpus/resource qualification remain unrun in this
-source-only worker draft. Rust remains unrun locally.
+neither a complete 564-file fit nor executable application gains.
+
+The coordinator's complete four-file Node receiving v2 run remained RED:
+18 of 21 cases passed, including all eight original, six materialized and one
+native binding case. Three packet comparisons incorrectly compared parsed
+ordinary JSON objects with the materialized result's null-prototype objects.
+The complete output and zero-error/deadline audit remain at
+`/private/tmp/router-layout-check-source-backed-formatting-four-complete-receiving-files-Node-v2`
+(audit `complete-M29jQj`). The run took 69.8497 seconds and observed a sampled
+653885440-byte peak. Its full 256-function case passed in 24.6169 seconds against
+its unchanged 60-second deadline. The expectation repair retains every field
+through the declared complete JSON wire equation and adds the nested-source
+negative control. That repair's complete receiving rerun and actual corpus
+qualification remain pending; Rust remains unrun locally.
