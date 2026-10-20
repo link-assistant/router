@@ -49,7 +49,9 @@ function fixture() {
 }
 
 test('stored first refusals join complete source/hash/name/spans and distinct groups preserve overlap', () => {
-  const report = fixture().run();
+  const input = fixture();
+  input.root.sources.push({...input.root.sources[0], module: ['inline']});
+  const report = input.run();
   assert.equal(report.representationLevel, 'DATA');
   assert.equal(report.freshCompilerExecuted, false);
   assert.equal(report.executableGainMeasured, 0);
@@ -62,6 +64,7 @@ test('stored first refusals join complete source/hash/name/spans and distinct gr
   assert.equal(report.staleness.changedCompilerInputs, 1);
   assert.equal(report.refusals[0].diagnosticText, 'format /*gap*/ !');
   assert.deepEqual(report.projectDescriptor.components, fixture().descriptor.components);
+  assert.equal(report.vectors.filter(row => row.role === 'stored-project-source').length, 2);
 });
 
 test('opaque-aware token occurrence ranking excludes comments/raw strings and retains whitespace macro spans', () => {
@@ -109,6 +112,8 @@ test('forged inventory identity, omitted source and modified body/span/status fa
     input => { input.evidence.functions[0].status = 'executable'; input.evidence.functions[2].status = 'carried'; },
     input => { input.evidence.functions[1] = structuredClone(input.evidence.functions[0]); },
     input => { input.inputs.delete(input.evidence.sources[0].metaPath); },
+    input => { input.root.sources.push(structuredClone(input.root.sources[0])); },
+    input => { input.root.sources.push({...input.root.sources[0], module: ['inline'], sha256: sha256('conflicting source')}); },
   ];
   for (const mutate of invalid) {
     const input = fixture(); mutate(input);

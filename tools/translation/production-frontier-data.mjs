@@ -118,11 +118,15 @@ export function productionFrontierData({inventoryBytes, functionEvidenceBytes, p
   }
   const expectedNames = inventory.sources.filter(row => production(row.source)).map(row => row.source);
   if (expectedNames.length !== evidenceNames.size || expectedNames.some(name => !evidenceNames.has(name))) fail('missing complete production source evidence');
-  const projectSources = new Map();
+  const projectSources = new Map(), projectContexts = new Set();
   for (const row of root.sources) {
-    if (projectSources.has(row.source)) fail('duplicate project source');
+    const context = JSON.stringify([row.source, row.module]);
+    if (!Array.isArray(row.module) || projectContexts.has(context)) fail('duplicate or malformed project module context');
+    projectContexts.add(context);
+    if (projectSources.has(row.source) && projectSources.get(row.source).sha256 !== row.sha256) fail('conflicting project source hashes');
     projectSources.set(row.source, row);
     vector('stored-project-source', row.source, row.sha256);
+    vectors.at(-1).module = row.module;
   }
 
   const positions = new Set(), functionsByPath = new Map();

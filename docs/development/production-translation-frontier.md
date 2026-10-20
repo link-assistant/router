@@ -58,6 +58,8 @@ components or their combined logical program hash. Every inventory source is
 retained as observed source text where available, together with complete retained
 production source text. Stored project source hashes must match the retained
 source before a refusal can join a function.
+Distinct inline module contexts can share the same complete source path/hash;
+all contexts remain retained. Duplicate contexts and conflicting hashes refuse.
 
 `staleness` separates each changed or missing compiler input from source changes.
 Even entirely matching hashes leave `verdictStatus` equal to
