@@ -9,3 +9,7 @@ interning, preserving complete table bytes, original fallbacks and fresh hashes.
 Add complete original-source/native-AST/CST inverse checks and nine behavioral
 controls. TypeScript 5.9.3 source checks passed; runtime and performance checks
 remain unrun and no speed or coverage gain is claimed.
+
+Use one shared call site for paired metadata stack captures and validate actual
+eager Bun or formatter-backed Node stack inputs and full roundtrips, preserving
+all nine controls and their original deadlines.
