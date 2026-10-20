@@ -94,6 +94,12 @@ effects. The failed deadline therefore does not qualify the optimization.
 Production now uses its exact original serializer import and constructor again;
 the candidate module, complete proposals and seven receiving controls remain.
 
+After the test binding repair, Root ran the complete seven negative controls
+and two initialization controls: all nine passed in 9.510330 seconds with
+866,910,208 bytes peak RSS and zero audit breaches (`complete-4PGzat`). This
+qualifies those repaired controls at that receiving state; it does not repair
+the original CatalogRecord deadline or select the candidate for production.
+
 After the initialization correction and candidate-only rollback, all three
 complete receiving files passed at `3bd3d809a`: seven negative-budget controls,
 eight original native serializer consumer cases and two copied-source binding
