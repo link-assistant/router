@@ -14,7 +14,10 @@ test('all eight actual sibling derives have source-registered callback ranges an
   const {value}=facts(name);assert.equal(value.name,name);assert.equal(value.owner.name,name);assert.equal(value.forwards.length,name==='PartialEq'?2:1);
   assert.deepEqual(value.conditionalRange.emittedCallbackItemKinds,['ItemKind::Impl']);assert.deepEqual(value.conditionalRange.newEnclosingTypeBindings,[]);
   for(const callback of Object.values(value.callbacks)){assert.ok(callback.original.startsWith('fn '));assert.equal(callback.original.length,callback.span.end-callback.span.start);assert.equal(callback.sourceSha256.length,64);}
-  assert.ok(value.rules.every(rule=>rule.completeCallbackRetained&&rule.original.length>0));assert.equal(value.callbacks.entry.path,value.owner.registration.callback[0]==='partial_eq'?'compiler/rustc_builtin_macros/src/deriving/cmp/partial_eq.rs':value.callbacks.entry.path);
+  assert.ok(value.rules.every(rule=>rule.completeCallbackRetained&&rule.original.length>0));assert.equal(value.completeDispatch.completeBodyChecked,true);assert.equal(value.completeItemBuilder.completeBodyChecked,true);
+  assert.deepEqual(Object.keys(value.normalReturns),['struct','enumeration','create']);for(const row of Object.values(value.normalReturns)){assert.equal(row.completeNormalReturnSet,true);assert.deepEqual(row.earlyExits,[]);assert.equal(row.receiverBindings.completeBodyVisited,true);}
+  assert.equal(value.sourceConstructorSchemas.constructors.length,1);assert.equal(value.sourceConstructorSchemas.constructors[0].variant.name,'Impl');assert.equal(value.sourceConstructorSchemas.constructors[0].variant.arity,1);
+  if(name==='PartialEq')assert.equal(value.callbacks.entry.path,'compiler/rustc_builtin_macros/src/deriving/cmp/partial_eq.rs');if(name==='Eq')assert.equal(value.callbacks.entry.path,'compiler/rustc_builtin_macros/src/deriving/cmp/eq.rs');
  }
 });
 test('a conditional item range never selects actual caller attribute owners or closes generated hygiene',{timeout:60000},()=>{
