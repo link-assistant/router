@@ -31,7 +31,11 @@ function same(f,value){const before=outcome(()=>f.before.encodeBuiltinSourceMeta
 function trial(api,make,install=()=>()=>{}){
  const tape=[],undo=install(tape);let result;try{result=outcome(()=>api.encodeBuiltinSourceMeta(make(tape)));}finally{undo();}return {result,tape};
 }
-function paired(f,make,install){const before=trial(f.before,make,install),current=trial(f.current,make,install);assert.deepEqual(current,before);return current;}
+function paired(f,make,install){
+ // One call site keeps genuine engine-captured source stacks identical.
+ const rows=[];for(const api of [f.before,f.current])rows.push(trial(api,make,install));
+ assert.deepEqual(rows[1],rows[0]);return rows[1];
+}
 
 test('actual native AST copies and complete language then repository CST inverses preserve the original codec',{timeout:60000},()=>{
  const row=prepareBuiltinSourceMetaStringKeys();assert.equal(row.native.typescriptVersion,'5.9.3');assert.equal(row.native.completeNativeCopy,true);assert.equal(row.native.factoryCopy,row.native.currentNativeCopy);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);assert.ok(row.stages.every(stage=>stage.completeInverse));assert.equal(row.acrossInvocationCaches,false);retain('complete-native-source-equations',row);
@@ -57,14 +61,32 @@ test('changed native JSON and inherited array serialization hooks retain complet
 });
 test('accessor proxy and lazy stack graphs retain old callbacks while failed eligibility stays stateless',{timeout:60000},async t=>{
  const f=await fixture(t);for(const mode of ['getter','proxy','lazy-stack']){
-  const prepare=get(Error,'prepareStackTrace');const row=paired(f,tape=>{
+  const prepare=get(Error,'prepareStackTrace'),captures=[];const row=paired(f,tape=>{
    const value={source:'abcdefgh'};
    if(mode==='getter')define(value,'nested',{enumerable:true,get(){tape.push('get-nested');return ['abcdefgh'];}});
    if(mode==='proxy')return new Proxy(value,{get(target,key,receiver){tape.push('get:'+String(key));return Reflect.get(target,key,receiver);},ownKeys(target){tape.push('ownKeys');return Reflect.ownKeys(target);},getOwnPropertyDescriptor(target,key){tape.push('descriptor:'+String(key));return get(target,key);}});
-   if(mode==='lazy-stack'){Error.captureStackTrace(value);define(value,'stack',{...get(value,'stack'),enumerable:true});}
+   if(mode==='lazy-stack'){
+    Error.captureStackTrace(value);const captured=get(value,'stack');assert.ok(captured);
+    const ownKind=Object.hasOwn(captured,'value')?'data':'accessor';
+    captures.push({value,ownKind,enumerable:captured.enumerable,configurable:captured.configurable,...(ownKind==='data'?{capturedStack:captured.value,writable:captured.writable}:{getter:typeof captured.get,setter:typeof captured.set})});
+    define(value,'stack',{...captured,enumerable:true});
+   }
    return value;
-  },tape=>{if(mode==='lazy-stack')define(Error,'prepareStackTrace',{configurable:true,value(){tape.push('format-stack');return 'abcdefgh';}});return ()=>{if(prepare)define(Error,'prepareStackTrace',prepare);else delete Error.prepareStackTrace;};});
-  assert.ok(row.tape.length);retain('complete-unknown-graph-'+mode,row);
+  },tape=>{if(mode==='lazy-stack')define(Error,'prepareStackTrace',{configurable:true,value(_error,frames){tape.push('format-stack');return frames.map(frame=>frame.toString()).join('\n');}});return ()=>{if(prepare)define(Error,'prepareStackTrace',prepare);else delete Error.prepareStackTrace;};});
+  if(mode!=='lazy-stack'){assert.ok(row.tape.length);retain('complete-unknown-graph-'+mode,row);continue;}
+  assert.equal(captures.length,2);assert.ok(row.result.value);
+  const decoded=[f.before,f.current].map(api=>api.decodeBuiltinSourceMeta(row.result.value)),inputs=captures.map((capture,index)=>{
+   const stack=capture.value.stack,own=get(capture.value,'stack');assert.equal(typeof stack,'string');assert.ok(stack.includes('builtin-source-meta-string-keys.test.mjs'));
+   assert.equal(own.enumerable,true);assert.equal(decoded[index].source,capture.value.source);assert.equal(decoded[index].stack,stack);
+   if(capture.ownKind==='data')assert.equal(capture.capturedStack,stack);
+   return {...capture,value:{source:capture.value.source,stack},stackAfterEncoding:stack,ownKindAfterEncoding:Object.hasOwn(own,'value')?'data':'accessor'};
+  });
+  assert.deepEqual(inputs[1],inputs[0]);assert.deepEqual(decoded[1],decoded[0]);
+  // Bun can capture eager own DATA without invoking prepareStackTrace.
+  // Node can invoke the formatter; its result uses the actual captured frames.
+  if(row.tape.length===0)assert.ok(inputs.every(input=>input.ownKind==='data'&&typeof input.capturedStack==='string'));
+  else assert.ok(row.tape.every(operation=>operation==='format-stack'));
+  retain('complete-unknown-graph-'+mode,{...row,inputs,decoded});
  }
 });
 test('numeric callee mutation cannot invalidate skipped string decisions inside the native domain',{timeout:60000},async t=>{

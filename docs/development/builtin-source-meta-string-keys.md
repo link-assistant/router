@@ -42,3 +42,12 @@ accessors/proxies/lazy stacks, numeric late mutation, changed global owners,
 all independent bounds and fresh hash reissues. Source grammar/native-copy/CST
 checks passed with TypeScript 5.9.3. The nine cases, original metadata/proof
 suites, original complete derive file and full gate remain unrun in this worker.
+
+The stack fallback control uses one shared paired call site, preserving exact
+captured source stacks across the original and current codec. Bun may capture
+an eager own data string without calling `Error.prepareStackTrace`; Node may
+invoke that formatter. The control accepts those observed engine behaviors,
+formats actual captured frames when called, and checks both input stack strings,
+their original own descriptor kinds, full callback/result equality and decoded
+roundtrips. Getter and proxy controls still require their real callbacks. The
+test does not substitute a constant stack or normalize different stack inputs.
