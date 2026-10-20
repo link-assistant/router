@@ -15,6 +15,12 @@ associated with their original source spans. Unknown attributes, helpers,
 macro producers, import globs, format shadows and unresolved configuration retain
 their refusals. Missing or different Cargo inputs cannot grant producer closure.
 
+Inspection also blanks exact original items whose actual configuration is
+inactive under the selected profile. Their original conditions, module/view
+associations, spans and complete source remain in `inactiveItems`. Unknown
+conditions stay visible. The private formatter skips inactive function spans;
+original disabled items and attributes remain unchanged in emitted source.
+
 These temporary inspection strings retain UTF-16 coordinates and line endings.
 Every inspection has complete original/inspected CST, serialization/reparsing,
 separate language and repository sequences and a whole-source inverse. Emitted

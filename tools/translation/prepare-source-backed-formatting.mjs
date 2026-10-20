@@ -19,6 +19,7 @@ export function prepareSourceBackedFormatting({root=ROOT}={}){
  migrated=once(migrated,'export function migrateCoreFormatting(','function migrateOriginalProducerFormatting(');
  migrated=once(migrated,"rootSource='',macroUseSources={}","rootSource='',macroUseSources={},inspection");
  migrated=once(migrated,'scope=binding(source,rootSource,macroSources)','scope=binding(inspection.source,inspection.rootSource,sourceMap(inspection.macroUseSources))');
+ migrated=once(migrated,"if(item.term!=='fn')continue;","if(item.term!=='fn'||inspection.inactiveItemSpans.some(span=>item.start>=span[0]&&item.end<=span[1]))continue;");
  let proposed=statement(ts,second,'proposeCoreFormattingCorpus');
  proposed=once(proposed,'proposeCoreFormattingCorpus','proposeOriginalProducerFormattingCorpus');
  proposed=once(proposed,'compilationProfile=PRODUCTION_PROFILE}={})','compilationProfile=PRODUCTION_PROFILE,dependencyInputs}={})');
