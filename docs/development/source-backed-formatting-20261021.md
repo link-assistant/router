@@ -36,6 +36,14 @@ proposal; `--check` rejects stale generated source. Its language and repository
 CST sequences preserve complete input/output source and inverse. Generated
 source is never maintained by hand.
 
+Source preparation also checks native TypeScript lexical binding diagnostics
+on the complete generated candidate, with its actual copied import declarations.
+This independently catches omitted source-copy imports such as `posix`; it does
+not replace the separate strict target compilation. The coordinator's first
+14-case receiving run passed eight original and two new cases but failed four
+new cases on that missing import. The actual generator now copies the complete
+original corpus `node:path` import; fresh receiving execution remains pending.
+
 The new complete receiving test file is
 `tools/translation/test/source-backed-core-formatting.test.mjs`. Its source
 controls cover old APIs, original producer/helper association, Unicode spans,

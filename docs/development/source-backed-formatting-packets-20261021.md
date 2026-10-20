@@ -43,6 +43,9 @@ and the existing JSON packet and own-data record helpers. The materialized
 producer equation is freshly checked first. Separate language and repository
 CST sequences serialize/reparse complete source and retain its inverse.
 `--emit` returns all source evidence; `--check` rejects stale generated source.
+Both producers also check native TypeScript unresolved lexical identifiers on
+their complete generated candidates. This source-copy check preserves actual
+import bindings and remains separate from receiving strict target compilation.
 
 The new complete receiving file checks exact materialized/packet equality,
 retained producer/helper evidence, ordinary and hash-observer source/Cargo
