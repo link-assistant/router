@@ -19,6 +19,7 @@ import {ownedCoreRuntimeSources,createOwnedCoreSourceContext,requireOwnedCoreSou
 import {translateOwnedCoreJavaScript,parseOwnedCoreMeta} from '../js-to-rust/translator.mjs';
 import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE} from '../router-core-source-data.mjs';
 import {createRulePipeline} from '../rule-pipeline.mjs';
+import {materializeNamedHostOriginalGit} from './portable-named-host-history.mjs';
 const root=fileURLToPath(new URL('../../../',import.meta.url));
 const BASELINE='077889e3fb2ad2d4f3a96c756bf6087ef17678b1';
 const HOST=NAMED_HOST_DECLARATION_SOURCE_PATHS[0],OWNED=NAMED_HOST_DECLARATION_SOURCE_PATHS[1];
@@ -46,7 +47,7 @@ const digest=value=>createHash('sha256').update(value).digest('hex');
 const receipts=[];
 function retain(label,value){receipts.push({label,value});const directory=process.env.ROUTER_NAMED_HOST_DECLARATIONS_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeFileSync(join(directory,String(receipts.length).padStart(2,'0')+'-'+label+'.json'),JSON.stringify({label,value,authority:{source:false,owner:false,type:false,executable:false}},(_,item)=>typeof item==='bigint'?{$integer:item.toString()}:item)+'\n');}return value;}
 function test(title,body){return nodeTest(title,{timeout:60000},body);}
-function original(path){const source=execFileSync('git',['show',BASELINE+':'+path],{cwd:root,encoding:'utf8',timeout:5000,maxBuffer:1048576});if(path!==HOST)return source;
+function original(path,originalRoot){const source=execFileSync('git',['show',BASELINE+':'+path],{cwd:originalRoot,encoding:'utf8',timeout:5000,maxBuffer:1048576});if(path!==HOST)return source;
  const before="for(const file of ['base64-runtime.mjs','base64-runtime.d.mts'])",after="for(const file of ['base64-runtime.mjs','base64-runtime.d.mts','json-option-runtime.mjs','json-option-runtime.d.mts'])";assert.equal(source.split(before).length,2);const evolved=source.replace(before,()=>after);assert.equal(evolved.replace(after,()=>before),source);retain('complete693-legacy-asset-addition-history',{path,original:source,evolved,inverse:evolved.replace(after,()=>before),authority:{source:false,owner:false,type:false,executable:false}});return evolved;}
 function current(){return Object.fromEntries(NAMED_HOST_DECLARATION_SOURCE_PATHS.map(path=>[path,readFileSync(join(root,rustPackageSourcePath(root,path)),'utf8')]));}
 function temporary(t){const directory=mkdtempSync(join(tmpdir(),'router-named-declarations-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));return directory;}
@@ -89,8 +90,9 @@ const CALLER='import {router_core_json_copy as copy} from "./runtime/json-update
 function input(source=CALLER){return {runtimeRoot:'runtime',declarationRoot:'runtime',files:[...ownedCoreRuntimeSources(),{path:'src/lib.rs',source:'pub mod translation_core;\n'},{path:'src/translation_core.rs',source:ROUTER_FORMATTING_FACADE_SOURCE},{path:'src/translation_core/primitives.rs',source:ROUTER_CORE_PRIMITIVES_SOURCE},{path:'Cargo.toml',source:readFileSync(join(root,rustPackageSourcePath(root,'Cargo.toml')),'utf8')},{path:'Cargo.lock',source:readFileSync(join(root,rustPackageSourcePath(root,'Cargo.lock')),'utf8')},{path:'caller.mjs',source}]};}
 function outcome(action){try{return {mode:'return',value:action()};}catch(error){return {mode:'throw',name:error.name,message:error.message};}}
 
-test('legacy assets stay exact while the explicit format changes only unused family declaration spelling',()=>{
- const sources=current(),actualRestored=restoreNamedHostDeclarationSources(sources),readerHistory=historicalReaderSource(actualRestored[OWNED]),restored={...actualRestored,[OWNED]:readerHistory.source},before=Object.fromEntries(NAMED_HOST_DECLARATION_SOURCE_PATHS.map(path=>[path,original(path)]));assert.deepEqual({...restored},before);retain('full689-current-to-historical-comparison-only',{sources,actualRestored,readerHistory});
+test('legacy assets stay exact while the explicit format changes only unused family declaration spelling',t=>{
+ const originalFixture=materializeNamedHostOriginalGit(t);assert.equal(originalFixture.revision,BASELINE);
+ const sources=current(),actualRestored=restoreNamedHostDeclarationSources(sources),readerHistory=historicalReaderSource(actualRestored[OWNED]),restored={...actualRestored,[OWNED]:readerHistory.source},before=Object.fromEntries(NAMED_HOST_DECLARATION_SOURCE_PATHS.map(path=>[path,original(path,originalFixture.root)]));assert.deepEqual({...restored},before);retain('full689-current-to-historical-comparison-only',{sources,actualRestored,readerHistory});
  const old=hostRuntimeAssets(),named=hostRuntimeAssetsNamedDataAliases();retain('complete-old-assets',[...old]);retain('complete-named-assets',[...named]);assert.deepEqual([...old.keys()],[...named.keys()]);
  const changed=[];for(const [path,source]of old){if(named.get(path)!==source)changed.push(path);if(path.endsWith('.mjs')||!FAMILY_FILES.includes(path))assert.equal(named.get(path),source,path);}
  assert.deepEqual(changed.sort(),['integer-runtime.d.mts','json-runtime.d.mts','time-runtime.d.mts']);const {declarations}=checked(),names=Object.keys(valueSchema(declarations).types);assert.equal(names.length,38);

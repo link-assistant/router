@@ -913,6 +913,39 @@ application coverage evidence.
 
 ## Layout feedback checkpoint
 
+The subsequent stored-review receiving checkpoint qualifies 322 cases across ten
+complete files under Node and fresh sequential Bun. Node's independent duration
+audit reports no breaches. Complete original direct reviewer functions remain
+unchanged; copied stored review shares its private Default context only inside
+one invocation and freshly rejoins sources, dependencies and normalized profiles.
+The actual source producer, full CST/inverse review and installed freshness pass.
+The original complete review, including its independent historical baseline,
+still exceeds the 180-second bound. No full-review speed gain is established.
+
+Both derive receiving histories preserve their original source pins and current
+callback subjects. Named host history carries eight genuine Git objects, both
+complete original sources and the actual attributes blob; all three fixture cases
+pass in both engines. Native Git and every full source/CST are independently
+verified. Its compressed archive is 137,887 bytes. Missing unrelated blobs and
+parent ancestry remain explicit; native Git validation is preserved.
+
+The complete Node three-profile attempt constructs neutral and Unix-family plans
+but fails in Windows-family semantic checking at the fixed 2 GiB heap limit,
+after 3,536.027 seconds. Peak aggregate RSS is 2,786,148,352 bytes. All 7,996
+pre-existing profile outputs, totaling 450,025,785 bytes, are independently
+rejoined to their complete normal-Git preimages and remain unchanged. The full
+failed streams remain in task-owned temporary evidence. No completed matrix,
+profile freshness, native coverage gain or full gate is claimed. All 1,185
+compiler input fingerprints remain unchanged by the receiving checkpoint.
+
+The published `4ed3325bee3156e6c36082c2fbd26d7a53f01535` cycle is complete:
+ten workflows, 132 jobs, 30 successes, 30 failures, 30 cancellations and 42 skips.
+Every one of the 60 failed/cancelled raw logs is retained and SHA-verified,
+totaling 14,549,420 bytes. The complete logs identify 69 distinct failed case
+names. Unresolved library-owner closures, original corpus cases, matrix memory,
+freshness, strict parity and the complete same-SHA gate remain open. No Rust
+verification has been unlocked or executed locally.
+
 The published `7509ff0f3dd8aa649786d635f8bdfb330f8198f4` cycle finished
 with 21 failed, six successful and 31 skipped checks across all three completed
 workflows. All 18 direct failures reported the missing native `types` import;

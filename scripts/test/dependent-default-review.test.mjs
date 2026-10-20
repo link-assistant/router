@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
 import {gzipSync} from 'node:zlib';
-import {reviewGeneratedMethods} from '../review-translation-draft.mjs';
+import {reviewStoredProjectGeneratedMethods as reviewGeneratedMethods} from '../review-translation-draft.mjs';
 import {translateProject} from '../../tools/translation/project.mjs';
 import {loadDeriveDependencyProof} from '../../tools/translation/derive-dependencies.mjs';
 import {loadJsonMacroSourceProof} from '../../tools/translation/json-macro-inputs.mjs';

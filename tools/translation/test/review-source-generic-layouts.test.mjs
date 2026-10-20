@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {join} from 'node:path';
 import {reviewInitialSourceGenericLayouts,reviewSourceAdmittedHostLayouts} from '../../../scripts/review-source-generic-layouts.mjs';
-import {reviewGeneratedMethods} from '../../../scripts/review-translation-draft.mjs';
+import {reviewStoredProjectGeneratedMethods as reviewGeneratedMethods} from '../../../scripts/review-translation-draft.mjs';
 import {translateProject,resolveModuleGraph} from '../project.mjs';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {loadJsonMacroSourceProof} from '../json-macro-inputs.mjs';

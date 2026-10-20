@@ -29,6 +29,9 @@ import {itemConfiguration} from '../tools/translation/cfg-profile.mjs';
 import {TranslationError} from '../tools/translation/vendor/meta-language/translation/diagnostics.js';
 import {resolveModuleGraph} from '../tools/translation/project.mjs';
 import {createDeriveFootprintContext,deriveFootprintAt,deriveFootprintExternalModules} from '../tools/translation/derive-footprints.mjs';
+import {createCloneEnclosingSourceContext} from '../tools/translation/clone-trait-source.mjs';
+import {createDeriveEnclosingNamespaceContext} from '../tools/translation/derive-enclosing-namespace-context.mjs';
+import {compilationProfile} from '../tools/translation/cfg-profile.mjs';
 import {createCloneSourceContext,cloneSourceContextFacts} from '../tools/translation/clone-trait-source.mjs';
 import {originalCloneGeneratedMethod} from '../tools/translation/clone-source-ir.mjs';
 import {createDefaultSourceContext,defaultSourceContextFacts} from '../tools/translation/default-trait-source.mjs';
@@ -510,6 +513,110 @@ export function reviewGeneratedMethods(meta,row,{readSource,dependencies,jsonMac
   }
   return result;
 }
+
+// Explicit stored-project review format. Fresh original joins remain required;
+// private contexts are shared only within this call. The direct API above stays exact.
+function originalStoredDefaultInputJoin(meta,row,{readSource,dependencies,jsonMacroDependencies,cargoManifest,cargoManifestPath='Cargo.toml'},shared) {
+  const proof=typeof dependencies==='function'?dependencies():dependencies;
+  if(!Array.isArray(meta.sources)||!meta.sources.length)throw new Error('Unit Default review requires complete original source modules');
+  const paths=[...new Set(meta.sources.map(item=>{relativeName(item.source);return item.source;}))],sources=new Map(paths.map(name=>[name,readSource(name)]));
+  for(const item of meta.sources)if(typeof sources.get(item.source)!=='string'||digest(sources.get(item.source))!==item.sha256)throw new Error('Unit Default original source module hash mismatch');
+  const {graph,derive}=shared;
+  if(shared.state.deriveContext!==derive||shared.state.dependencies!==proof||sources.size!==shared.sources.size||[...sources].some(([name,source])=>shared.sources.get(name)!==source))throw new Error('Stored Default fresh original inputs differ from this invocation context');
+  cloneSame(graph.compilationProfile,compilationProfile(meta.compilationProfile),'Stored Default original profile changed');
+  cloneSame(graph.modules.map(module=>({source:module.file,sha256:digest(module.source),module:module.path})),meta.sources,'Unit Default complete original source module layout mismatch');
+  // The complete original Default context is rejoined above.
+  return shared;
+}
+function originalStoredCloneReviewContext(meta,row,{readSource,dependencies,jsonMacroDependencies},shared) {
+  const proof=typeof dependencies==='function'?dependencies():dependencies;
+  if(!Array.isArray(meta.sources)||!meta.sources.length)throw new Error('Clone review requires complete original source modules');
+  const paths=[...new Set(meta.sources.map(item=>{relativeName(item.source);return item.source;}))],sources=new Map(paths.map(name=>[name,readSource(name)]));
+  for(const item of meta.sources)if(typeof sources.get(item.source)!=='string'||digest(sources.get(item.source))!==item.sha256)throw new Error('Clone original source module hash mismatch');
+  const {graph,derive,defaultContext}=shared;
+  if(shared.state.deriveContext!==derive||shared.state.dependencies!==proof||sources.size!==shared.sources.size||[...sources].some(([name,source])=>shared.sources.get(name)!==source))throw new Error('Stored Clone fresh original inputs differ from this invocation Default context');
+  cloneSame(graph.compilationProfile,compilationProfile(meta.compilationProfile),'Stored Clone original profile changed');
+  cloneSame(graph.modules.map(module=>({source:module.file,sha256:digest(module.source),module:module.path})),meta.sources,'Clone complete original source module layout mismatch');
+  const deriveBangContext=createDeriveEnclosingNamespaceContext({deriveContext:derive}),context=createCloneEnclosingSourceContext(derive,{defaultContext,deriveBangContext}),state=cloneSourceContextFacts(context);
+  return {graph,derive,context,state,sources,jsonMacroDependencies};
+}
+export function reviewStoredProjectGeneratedMethods(meta,row,{readSource,dependencies,jsonMacroDependencies,cargoManifest,cargoManifestPath='Cargo.toml'}={}) {
+  assertGeneratedReviewData(meta);assertGeneratedReviewData(row);
+  if(meta.runtimeParity===true||meta.semanticAuthority===true)throw new Error('Generated review cannot accept semantic or runtime authority');
+  const rows=generatedArray(meta),count=Object.hasOwn(row,'checkedGeneratedMethods')?row.checkedGeneratedMethods:0;
+  if(!Number.isSafeInteger(count)||count<0||count!==rows.length)throw new Error('Generated method count mismatch: '+row.entry);
+  if(!rows.length&&!Object.hasOwn(meta,'checkedSemanticProgram')&&!Object.hasOwn(meta,'targetSemanticProgram'))return [];
+  const checked=parseProgram(JSON.stringify(meta.checkedSemanticProgram)),target=parseProgram(JSON.stringify(meta.targetSemanticProgram));
+  const entries=[...checked.declarations.values()].filter(entry=>entry.generated==='router-source-generated-default-method'||entry.impl?.defaultSourceProof?.schema==='original-generated-default-ir-v1'||entry.generated==='router-source-generated-clone-method'||entry.impl?.cloneSourceProof?.schema==='original-generated-clone-ir-v1');
+  if(entries.length!==rows.length)throw new Error('Generated method semantic count mismatch: '+row.entry);
+  const names=new Map([...checked.declarations.keys()].map(name=>[name,'rp_'+Buffer.from(name).toString('hex')]));
+  const used=new Set(),identities=new Set(),result=[];let cloneContext=null,unitDefaultContext=null,containerDefaultContext=null,sharedDefaultContext=null;
+  const originalDefault=()=>sharedDefaultContext===null?(sharedDefaultContext=originalUnitDefaultReviewContext(meta,row,{readSource,dependencies,jsonMacroDependencies,cargoManifest,cargoManifestPath})):originalStoredDefaultInputJoin(meta,row,{readSource,dependencies,jsonMacroDependencies,cargoManifest,cargoManifestPath},sharedDefaultContext);
+  for(const item of rows){
+    if(['original-generated-container-default-ir-v1','original-generated-dependent-default-ir-v1'].includes(item?.defaultSourceProof?.schema)){
+      containerDefaultContext??=originalDefault();
+      const reviewed=reviewContainerDefaultMethod(meta,item,{checked,target,entries,names,used,context:containerDefaultContext});
+      const identity=generatedIdentity(reviewed);if(identities.has(identity))throw new Error('Duplicate generated method identity');identities.add(identity);result.push(reviewed);continue;
+    }
+    if(item?.generator==='core::default::Default'&&item.originalDeclarationTerm==='enum'){
+      unitDefaultContext??=originalDefault();
+      const reviewed=reviewUnitDefaultMethod(meta,item,{checked,target,entries,names,used,context:unitDefaultContext});
+      const identity=generatedIdentity(reviewed);if(identities.has(identity))throw new Error('Duplicate generated method identity');identities.add(identity);result.push(reviewed);continue;
+    }
+    if(item?.generator==='core::clone::Clone'){
+      cloneContext??=originalStoredCloneReviewContext(meta,row,{readSource,dependencies,jsonMacroDependencies},originalDefault());
+      const reviewed=reviewCloneMethod(meta,item,{checked,target,entries,names,used,context:cloneContext});
+      const identity=generatedIdentity(reviewed);if(identities.has(identity))throw new Error('Duplicate generated method identity');identities.add(identity);result.push(reviewed);continue;
+    }
+    if(item?.term!=='generated-method'||item.origin!=='derive-invocation'||item.originalDeclarationTerm!=='struct'||item.generator!=='core::default::Default'||item.receiver!==null||item.semanticBodyChecked!==true||item.runtimeParity===true||item.semanticAuthority===true||typeof item.name!=='string')throw new Error('Invalid generated method classification');
+    relativeName(item.source);const source=readSource(item.source),proof=item.defaultSourceProof,span=item.span;
+    if(typeof source!=='string'||!Number.isSafeInteger(span?.start)||!Number.isSafeInteger(span?.end)||span.start<0||span.end<=span.start||span.end>source.length)throw new Error('Invalid generated original declaration boundary');
+    const sourceSha256=digest(Buffer.from(source)),original=source.slice(span.start,span.end),itemSha256=digest(Buffer.from(original));
+    if(proof?.schema!=='original-generated-default-ir-v1'||proof.source!==item.source||proof.sourceSha256!==sourceSha256||proof.itemSha256!==itemSha256)throw new Error('Generated original declaration hash mismatch');
+    same(proof.span,span,'Generated original declaration span mismatch');
+    if(proof.bodyMapped!==true||proof.checkedBody!==false||proof.wholeCompilerExecuted!==false||proof.wholeTraitTranslated!==false||proof.runtimeParity!==false||!sha256Pattern.test(proof.contextDigest))throw new Error('Invalid generated source authority flags');
+    const parsed=sourceItems(original).filter(entry=>!entry.comment);
+    if(parsed.length!==1||parsed[0].term!=='struct'||parsed[0].start!==0||parsed[0].end!==original.length)throw new Error('Generated source is not the exact original struct');
+    const input=inspectDeriveInput(parsed[0],meta.compilationProfile);
+    if(input.derives.filter(derive=>isDeepStrictEqual(derive.path,['Default'])).length!==1)throw new Error('Generated source lacks its exact Default invocation');
+    const candidates=entries.filter(entry=>entry.impl?.defaultSourceProof?.source===item.source&&isDeepStrictEqual(entry.impl.defaultSourceProof.span,span));
+    if(candidates.length!==1||used.has(candidates[0]))throw new Error('Generated method metadata is not one-to-one');
+    const entry=candidates[0],nominal=[...entry.modulePath,parsed[0].name].join('.');used.add(entry);
+    if(item.name!==nominal+'.default'||entry.impl?.method!=='default'||entry.impl.receiver!==null||entry.generated!=='router-source-generated-default-method'||entry.params.length||entry.async||entry.constant||entry.constFunction||entry.ret.kind!=='data'||entry.ret.name!==nominal)throw new Error('Generated checked signature mismatch');
+    same(entry.impl.type.path,['crate',...entry.modulePath,parsed[0].name],'Generated nominal owner mismatch');
+    const localName='ml_impl_'+Buffer.from(['crate',...entry.modulePath,parsed[0].name].join('.')).toString('hex')+'_'+Buffer.from('default').toString('hex');
+    if(entry.name!==localName||entry.fullName!==[...entry.modulePath,localName].join('.'))throw new Error('Generated original symbol mismatch');
+    same(entry.ret,{kind:'data',name:nominal,rustSourceType:true},'Generated checked return ownership mismatch');
+    same(entry.impl.defaultSourceProof,proof,'Generated source/checked proof mismatch');
+    if(!meta.sources.some(original=>original.source===item.source&&original.sha256===sourceSha256&&isDeepStrictEqual(original.module,entry.modulePath)))throw new Error('Generated source module mismatch');
+    if(!Number.isSafeInteger(entry.span?.start)||!Number.isSafeInteger(entry.span?.end))throw new Error('Generated checked declaration boundary mismatch');
+    const shift=entry.span.start-span.start;
+    if(!Number.isSafeInteger(shift)||shift<0||entry.span.end-span.end!==shift)throw new Error('Generated relocated declaration span mismatch');
+    if(meta.checkedMethods.some(method=>method.source===item.source&&isDeepStrictEqual(method.span,span))||meta.executable.some(method=>method.source===item.source&&isDeepStrictEqual(method.span,span)))throw new Error('Generated method overlaps original fn/method counts');
+    const output=proveBuiltinScalarSourceOutput({dependencies:typeof dependencies==='function'?dependencies():dependencies,source,span,owner:'Default'}),plan=builtinScalarOriginalSourcePlan(output),branch=output.branches[0];
+    if(proof.originalOutputDigest!==output.digest||proof.originalCompilerPlanDigest!==plan.digest||proof.selectedBranch!==branch.feature||output.branches.length!==1)throw new Error('Generated original compiler plan mismatch');
+    same(proof.hygiene,branch.body.slots.fields.map(field=>field.expr.slots.expr.slots.path.segments[0]),'Generated standard hygiene mismatch');
+    if(!Array.isArray(proof.fields)||proof.fields.length!==output.input.fields.length)throw new Error('Generated primitive source field count mismatch');
+    proof.fields.forEach((field,index)=>{
+      const originalField=output.input.fields[index];if(field.field!==originalField.name||field.type!==originalField.type)throw new Error('Generated primitive source field mismatch');
+      const selection=pinnedDefaultBody(field.type),body=originalPrimitiveBody(selection),syntax=parsedPinnedBodyEvidence(body);
+      same(field.selection,selection,'Generated standard primitive selection mismatch');same(field.originalBody,body,'Generated primitive original body mismatch');
+      if(field.syntaxSha256!==syntax.syntaxSha256)throw new Error('Generated primitive syntax hash mismatch');
+    });
+    checkDefaultBody(entry,checked.declarations.get(nominal),proof.fields);
+    const flattened=target.declarations.get(names.get(entry.fullName));
+    if(!flattened||flattened.generated!=='router-project-flattened'||flattened.impl?.method!=='default'||flattened.impl.receiver!==null)throw new Error('Generated flattened target missing');
+    if(flattened.name!==flattened.fullName||flattened.modulePath.length)throw new Error('Generated flattened symbol mismatch');
+    same(flattened.impl.defaultSourceProof,proof,'Generated flattened proof mismatch');
+    same({params:flattened.params,ret:flattened.ret},flattenedNode({params:entry.params,ret:entry.ret},names),'Generated flattened signature mismatch');
+    same(flattened.body,flattenedNode(entry.body,names),'Generated flattened body mismatch');
+    same(flattened.span,entry.span,'Generated flattened span mismatch');
+    const reviewed={...item,sourceSha256,itemSha256,qualifiedName:entry.fullName,targetName:flattened.fullName,checkedSignatureSha256:digest(JSON.stringify({params:entry.params,ret:entry.ret})),checkedBodySha256:digest(JSON.stringify(entry.body)),targetBodySha256:digest(JSON.stringify(flattened.body)),semanticAuthority:false,runtimeParity:false};
+    const identity=generatedIdentity(reviewed);if(identities.has(identity))throw new Error('Duplicate generated method identity');identities.add(identity);result.push(reviewed);
+  }
+  return result;
+}
+
 export function compareGeneratedMethods(before,after) {
   const old=new Map(before.map(item=>[generatedIdentity(item),item])),current=new Map(after.map(item=>[generatedIdentity(item),item]));
   return {newlyCheckedGeneratedMethods:after.filter(item=>!old.has(generatedIdentity(item))),lostCheckedGeneratedMethods:before.filter(item=>!current.has(generatedIdentity(item))),changedGeneratedMethodBodies:after.filter(item=>{const prior=old.get(generatedIdentity(item));return prior&&(prior.checkedBodySha256!==item.checkedBodySha256||prior.checkedSignatureSha256!==item.checkedSignatureSha256);}).map(item=>({identity:generatedIdentity(item),previous:old.get(generatedIdentity(item)),current:item}))};
@@ -653,7 +760,7 @@ export function reviewTranslationDraft({root=process.cwd(),baselineSha=null,inve
     }
     const originalSource=name=>new TextDecoder('utf-8',{fatal:true}).decode(read(name));
     const concreteReview=projectSemanticReviewMetadata(meta,{readSource:originalSource});
-    return {...meta,reviewedConcreteSyntax:concreteReview.concreteSyntaxReview,reviewedGeneratedMethods:historical?historical.reviewProject(bytes,row):reviewGeneratedMethods(concreteReview.semanticMetadata,row,{readSource:originalSource,dependencies,jsonMacroDependencies,cargoManifest:cargo.some(input=>input.path===rustLayout.manifest)?read(rustLayout.manifest).toString('utf8'):null,cargoManifestPath:rustLayout.manifest})};
+    return {...meta,reviewedConcreteSyntax:concreteReview.concreteSyntaxReview,reviewedGeneratedMethods:historical?historical.reviewProject(bytes,row):reviewStoredProjectGeneratedMethods(concreteReview.semanticMetadata,row,{readSource:originalSource,dependencies,jsonMacroDependencies,cargoManifest:cargo.some(input=>input.path===rustLayout.manifest)?read(rustLayout.manifest).toString('utf8'):null,cargoManifestPath:rustLayout.manifest})};
   }
   const historical=baselineSha?createHistoricalTranslationReview({root,baselineSha,inventoryPath,readSource:read}):null;
   let historicalBaselineReview=null,projects;

@@ -1,0 +1,38 @@
+{
+  "schema": "portable-named-host-original-git-v1",
+  "revision": "077889e3fb2ad2d4f3a96c756bf6087ef17678b1",
+  "archive": "objects.json.gz",
+  "bytes": 137887,
+  "sha256": "2555cc68b267efdcbc0f45eaf9a2ed9ffcd492bec5d5c6baf7374e1ab2a96cd7",
+  "rawBytes": 788798,
+  "rawSha256": "809c12f050b3581cbfb1a6673e6d1ae35665f0ad25ed25c12ba7f0c78a77aef4",
+  "trace": [
+    {
+      "phase": "language",
+      "id": "git:retain-complete-native-commit-tree-blob-and-source-CST"
+    },
+    {
+      "phase": "repository",
+      "id": "router:select-two-genuine-named-host-history-sources"
+    }
+  ],
+  "files": [
+    {
+      "path": "tools/translation/host-assets.mjs",
+      "mode": "100644",
+      "gitBlob": "7afc43298c428a3c91f0638ca6036070d5bfd51e",
+      "bytes": 11108,
+      "sha256": "4aed0ed4463e5c372618bfac92b9b2ef91b42959ac0578ca31c8131df048d323"
+    },
+    {
+      "path": "tools/translation/js-to-rust/owned-core-source.mjs",
+      "mode": "100644",
+      "gitBlob": "072e5926f7f57aa9a43245ed36dda6af4d77c3ca",
+      "bytes": 38299,
+      "sha256": "899e9dee2b7007cc03d79b57f3b33599fac197119626b20e20112bdd45f146bd"
+    }
+  ],
+  "objects": 8,
+  "runtimeParity": false,
+  "rustExecuted": false
+}
