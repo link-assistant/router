@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -23,7 +24,7 @@ import {transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta} from '../concre
 import {parseProgram,serializeProgram} from '../semantic-meta.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const C='crate::translation_core::',T=C+'Json',M=C+'Maybe',S=C+'Str',P=C+'json_parse',B=C+'json_parse_bytes',hash=value=>createHash('sha256').update(value).digest('hex');
-const dependencyInputs={manifest:fs.readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:fs.readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')},jsonMacroDependencies=loadJsonMacroSourceProof(dependencyInputs),deriveDependencies=loadDeriveDependencyProof(dependencyInputs);
+const dependencyInputs={manifest:fs.readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:fs.readFileSync(repositorySourceURL("Cargo.lock",new URL('../../../',import.meta.url)),'utf8')},jsonMacroDependencies=loadJsonMacroSourceProof(dependencyInputs),deriveDependencies=loadDeriveDependencyProof(dependencyInputs);
 const files=source=>({'src/lib.rs':(source.startsWith('\uFEFF')?'\uFEFFpub mod translation_core;\n'+source.slice(1):'pub mod translation_core;\n'+source),'src/translation_core.rs':facade,'src/translation_core/primitives.rs':primitives,'src/translation_core/ranges.rs':ranges,'src/translation_core/json_collections.rs':collections});
 let vectors=[];const retain=(kind,value)=>{vectors.push({kind,value});return value;};
 const test=(name,run)=>testCase(name,{timeout:60_000},async()=>{vectors=[];try{await run();}finally{if(process.env.ROUTER_OPTIONAL_JSON_VECTOR_DIR){fs.mkdirSync(process.env.ROUTER_OPTIONAL_JSON_VECTOR_DIR,{recursive:true});fs.writeFileSync(join(process.env.ROUTER_OPTIONAL_JSON_VECTOR_DIR,Buffer.from(name).toString('hex')+'.json'),JSON.stringify({name,vectors},(_key,value)=>typeof value==='bigint'?{$integer:String(value)}:Object.is(value,-0)?{$negativeZero:true}:value)+'\n');}}});

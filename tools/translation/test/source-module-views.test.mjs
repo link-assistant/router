@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -6,7 +7,7 @@ import {captureSourceModuleViews,isSourceModuleView,originalModuleViewItems,orig
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const capture=(source,profile=null)=>captureSourceModuleViews({source,sourcePath:'src/lib.rs',compilationProfile:profile});
 const viewAt=(result,path)=>result.views.find(view=>JSON.stringify(view.modulePath)===JSON.stringify(path));
-const original=path=>readFileSync(new URL('../../../'+path,import.meta.url),'utf8');
+const original=path=>readFileSync(repositorySourceURL(path,new URL('../../../',import.meta.url)),'utf8');
 
 test('unchanged Router diagnostic reason module preserves every original constant and absolute token span',()=>{
   const source=original('src/auth_diagnostics.rs');assert.equal(hash(source),'4adfdd83495f6cadeb33c3c17658134c4e6a3a7947cb1c733f92bde63dd9690a');

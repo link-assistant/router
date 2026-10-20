@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
@@ -20,7 +21,7 @@ import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 import {completeOwnedCoreSourceFixture as completeCoreSourceFixture} from './complete-core-source-fixture.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
-const dependencyInputs={manifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')},dependencies=loadJsonMacroSourceProof(dependencyInputs);
+const dependencyInputs={manifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(repositorySourceURL("Cargo.lock",new URL('../../../',import.meta.url)),'utf8')},dependencies=loadJsonMacroSourceProof(dependencyInputs);
 const fixtureSource=readFileSync(new URL('../../../rust/fixtures/translation/openai-tool-choice.json',import.meta.url),'utf8'),fixture=JSON.parse(fixtureSource);
 const tag=($,fields={})=>Object.freeze({$,...fields}),some=field0=>tag('Some',{field0}),none=tag('None'),item=value=>tag('Text',{field0:value}),empty=tag('Empty');
 const nominal='enum Item{Text(String),Empty}';

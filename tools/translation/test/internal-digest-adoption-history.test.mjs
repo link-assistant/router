@@ -1,10 +1,11 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {internalDigestAdoptionHistory} from './internal-digest-adoption-history.mjs';
 import {PRIVATE_METADATA_DIGEST_SOURCE_PATHS} from '../migrate-private-metadata-digests.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
-const sources=()=>Object.fromEntries(PRIVATE_METADATA_DIGEST_SOURCE_PATHS.map(path=>[path,readFileSync(new URL('../../../'+path,import.meta.url),'utf8')]));
+const sources=()=>Object.fromEntries(PRIVATE_METADATA_DIGEST_SOURCE_PATHS.map(path=>[path,readFileSync(repositorySourceURL(path,new URL('../../../',import.meta.url)),'utf8')]));
 test('complete current source and every appended extension retain the exact original adoption equation',()=>{
  const actual=sources(),history=internalDigestAdoptionHistory(actual),path=PRIVATE_METADATA_DIGEST_SOURCE_PATHS[0];assert.equal(Buffer.byteLength(history.before[path]),58416);assert.ok(history.suffix.includes('function kindBatchedExpectedSamePrototype('));assert.equal(history.inverse,actual[path]);assert.equal(history.adoptionSources[path]+history.suffix,actual[path]);assert.equal(history.compilerAuthority,false);assert.deepEqual(history.trace.map(row=>row.phase),['language','repository']);
  for(const row of history.documents)assert.equal(transportConcreteSyntaxMeta(row.meta).source,actual[row.path]);assert.equal(transportConcreteSyntaxMeta(history.adoptionMeta).source,history.adoptionSources[path]);

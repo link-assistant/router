@@ -1,3 +1,4 @@
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,readdirSync,existsSync,rmSync,symlinkSync} from 'node:fs';
@@ -77,5 +78,5 @@ test('copied corpus and matrix handles and public staged plan fields grant no pr
 });
 
 test('every complete process-lifetime copy reproduces its original source and CST inverse',{timeout:30000},()=>{
- const proposal=deriveIsolatedMatrixSources(root);assert.equal(proposal.files.length,5);for(const row of proposal.files){assert.equal(readFileSync(join(root,row.path),'utf8'),row.text);assert.equal(row.inverse,row.source);assert.ok(row.beforeMeta);assert.ok(row.afterMeta);assert.equal(row.semanticAuthority,false);}retain('06-complete-source-derivation',proposal);
+ const proposal=deriveIsolatedMatrixSources(root);assert.equal(proposal.files.length,5);for(const row of proposal.files){assert.equal(readFileSync(join(root,repositorySourcePath(row.path,root)),'utf8'),row.text);assert.equal(row.inverse,row.source);assert.ok(row.beforeMeta);assert.ok(row.afterMeta);assert.equal(row.semanticAuthority,false);}retain('06-complete-source-derivation',proposal);
 });

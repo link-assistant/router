@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -69,7 +70,7 @@ test('actual endpoint and compatible URL functions execute unchanged source bodi
     {path:'src/provider_proxy.rs',name:'join_openai_compatible_url',fileSha256:'acdd00cd3e346de590cc41c5c497df1473e69367a2ef118c18ffffe936bb154a',start:31196,end:31504,bodySha256:'12296da0b12b5c135ded3b0f62758d8850f2da45d6cb6d30b3d15a0a3e8719c4',observations:[[['https://x/v1///','/v1/models'],'https://x/v1/models'],[['https://x///','/v1/models'],'https://x/v1/models'],[['https://x/v1','/models'],'https://x/v1/models'],[['https://x/v1','/v1beta'],'https://x/v1beta'],[['😀Ω/v1/','/v1/models'],'😀Ω/v1/models'],[['/','/v1'],'/v1']]},
   ];
   for(const fixture of fixtures){
-    const original=readFileSync(new URL('../../../'+fixture.path,import.meta.url),'utf8');assert.equal(sha256(original),fixture.fileSha256);
+    const original=readFileSync(repositorySourceURL(fixture.path,new URL('../../../',import.meta.url)),'utf8');assert.equal(sha256(original),fixture.fileSha256);
     const item=sourceItems(original).find(item=>item.term==='fn'&&item.name===fixture.name);assert.deepEqual([item.start,item.end],[fixture.start,fixture.end]);
     const source=original.slice(item.start,item.end);assert.equal(sha256(source),fixture.bodySha256);
     const module=fixture.path.slice(4,-3),files={'src/lib.rs':`mod ${module};`,[fixture.path]:source};

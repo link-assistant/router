@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -96,7 +97,7 @@ test('inner lint scope uses original bounded builtin syntax and retains conflict
 
 test('actual builtin root lints retain independently locked derive namespace evidence',async()=>{
   const source='#![allow(clippy::redundant_pub_crate)]\n#[derive(serde::Serialize)] pub struct Entry{value:u8} pub fn valid(value:u8)->u8{value}';
-  const dependencies=deriveDependencyProfile({manifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')}).proof;
+  const dependencies=deriveDependencyProfile({manifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(repositorySourceURL("Cargo.lock",new URL('../../../',import.meta.url)),'utf8')}).proof;
   const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
   assert.equal(result.meta.deriveNamespaceFootprints.certificates.length,1);assert.equal(result.meta.bindingEvidence.scopes[0].unresolvedTypeScope,false);assert.equal(result.meta.bindingEvidence.scopes[0].unresolvedBangMacroScope,false);
   const certificate=result.meta.deriveNamespaceFootprints.certificates[0];assert.equal(certificate.sourceSha256,hash(source));assert.ok(result.meta.executable.some(entry=>entry.name==='valid'));
@@ -104,7 +105,7 @@ test('actual builtin root lints retain independently locked derive namespace evi
 });
 
 test('unchanged reverse-generated policy retains original tool syntax and executes its decimal status predicate',{timeout:30_000},async()=>{
-  const path='src/generated_js_first/policy.rs',source=readFileSync(new URL('../../../'+path,import.meta.url),'utf8');assert.equal(hash(source),'c5d5cec07bf54be29de7beed707263256afa6ba1ee87c89695b237d5626f5673');
+  const path='src/generated_js_first/policy.rs',source=readFileSync(repositorySourceURL(path,new URL('../../../',import.meta.url)),'utf8');assert.equal(hash(source),'c5d5cec07bf54be29de7beed707263256afa6ba1ee87c89695b237d5626f5673');
   const item=sourceItems(source).find(item=>item.name==='retryable_status');assert.deepEqual([item.start,item.end],[3019,3183]);assert.equal(hash(source.slice(item.start,item.end)),'ac6c63fc33f2cbac3f4749bf88eabab3f058238c99260d938ff462816584d2cc');
   const result=translateProject({entry:path,paths:[path],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE});
   assert.ok(result.meta.executable.some(entry=>entry.name==='retryable_status'&&entry.span.start===item.start&&entry.span.end===item.end));

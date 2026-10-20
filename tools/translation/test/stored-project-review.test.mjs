@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
@@ -12,7 +13,7 @@ import {loadJsonMacroSourceProof} from '../json-macro-inputs.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 
-const root=new URL('../../../',import.meta.url),manifest=readFileSync(new URL('rust/Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8');
+const root=new URL('../../../',import.meta.url),manifest=readFileSync(new URL('rust/Cargo.toml',root),'utf8'),lock=readFileSync(repositorySourceURL('Cargo.lock',root),'utf8');
 const source='pub fn first(value:Option<i64>)->Option<i64>{value}\n#[derive(Default,Clone,Copy)]pub enum Choice{Before,#[default]Selected}\n#[derive(Default)]pub struct Payload{pub text:String,pub maybe:Option<i64>}\npub fn make_choice()->Choice{Choice::default()}\npub fn make_payload()->Payload{Payload::default()}';
 let serial=0;
 function retain(label,value){const directory=process.env.ROUTER_STORED_REVIEW_VECTORS;if(!directory)return;mkdirSync(directory,{recursive:true});const raw=Buffer.from(JSON.stringify(value,(_key,item)=>typeof item==='bigint'?{$integer:String(item)}:item)+'\n'),target=join(directory,String(++serial).padStart(3,'0')+'-'+label+'.json.gz');writeFileSync(target,gzipSync(raw),{flag:'wx'});assert.ok(gunzipSync(readFileSync(target)).equals(raw));}

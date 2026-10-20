@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync,mkdtempSync,rmSync} from 'node:fs';
@@ -20,7 +21,7 @@ import {serde_json_from_str,serde_json_to_string} from '../extensions/json-runti
 import {verifyTypedTargets} from './typed-targets.mjs';
 
 const C='crate::translation_core::',T=C+'Json',J=C+'json!';
-const dependencyInputs={manifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')};
+const dependencyInputs={manifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(repositorySourceURL("Cargo.lock",new URL('../../../',import.meta.url)),'utf8')};
 const jsonMacroDependencies=loadJsonMacroSourceProof(dependencyInputs),deriveDependencies=loadDeriveDependencyProof(dependencyInputs);
 let vectors=[];
 const retain=(kind,value)=>{vectors.push({kind,value});return value;};

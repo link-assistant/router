@@ -1,3 +1,4 @@
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs,{readFileSync,writeFileSync,mkdirSync,mkdtempSync,rmSync,realpathSync} from 'node:fs';
@@ -139,7 +140,7 @@ test('specialized fidelity feeds real edited-source checkers and JavaScript plus
 });
 
 test('whole originals repeat exactly while tokens and all non-source entry points retain complete old results',{timeout:60000},async t=>{
- const old=await baseline(t),files=[['src/capabilities.rs','Rust'],['src/resource_capture.rs','Rust'],['js/portable/policy.mjs','JavaScript']],rows=files.map(([path,language])=>{const source=readFileSync(join(ROOT,path),'utf8'),before=old.transportPrivateConcreteSource(source,language),actual=current.transportPrivateConcreteSource(source,language),again=current.transportPrivateConcreteSource(source,language);return {path,language,source,before,actual,again};});
+ const old=await baseline(t),files=[['src/capabilities.rs','Rust'],['src/resource_capture.rs','Rust'],['js/portable/policy.mjs','JavaScript']],rows=files.map(([path,language])=>{const source=readFileSync(join(ROOT,repositorySourcePath(path,ROOT)),'utf8'),before=old.transportPrivateConcreteSource(source,language),actual=current.transportPrivateConcreteSource(source,language),again=current.transportPrivateConcreteSource(source,language);return {path,language,source,before,actual,again};});
  const source='export const n=1;',language='JavaScript',meta=current.transportPrivateConcreteSource(source,language).meta,input=[{source,language}],operations=[['tokens',api=>api.lexPrivateConcreteSource(source,language)],['serialized',api=>api.transportPrivateConcreteMeta(meta)],['batch',api=>api.transportPrivateConcreteSources(input)],['chunks',api=>api.transportPrivateConcreteChunks([input])],['parsedChunks',api=>api.transportPrivateConcreteParsedChunks([input])],['canonicalChunks',api=>api.transportPrivateConcreteMetaChunks([[meta]])]],unchanged=operations.map(([label,run])=>({label,before:outcome(()=>run(old)),actual:outcome(()=>run(current))}));
  retain('08-full-originals-and-other-entries',{rows,source,language,meta,input,unchanged,limitation:'Original reverse whole12 and its unchanged5000ms Bun regeneration deadline remain separate Root receiving work. This test claims fidelity only; it does not predict a gain or issue source/type/owner/body authority.'});for(const row of rows){sameOutcome(row.actual,row.before);assert.deepEqual(row.again,row.actual);assert.equal(row.actual.source,row.source);}for(const row of unchanged){assert.ok(row.actual.value);sameOutcome(row.actual,row.before);}
 });

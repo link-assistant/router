@@ -500,3 +500,10 @@ Rust assets with `node scripts/sync-rust-assets.mjs --write` and check them
 before CI. No Rust tool runs locally during issue #759; every required
 JavaScript stage must pass for the same SHA before Rust CI starts, and Rust
 failures remain fatal.
+
+Source-reader substitutions must preserve the distinction between a logical
+crate input and a physical workspace input. Use an explicit workspace reader
+for the root manifest. Native import and source-span checks establish the
+actual filesystem binding; they do not establish which manifest a caller
+intends. Preserve full historical parents, original test cases and deadlines
+when repairing readers, and verify both nested and legacy receiving layouts.

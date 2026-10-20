@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -17,7 +18,7 @@ import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 
 const C='crate::translation_core::',J=C+'Json',S=C+'Str';
-const dependencyInputs={manifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')};
+const dependencyInputs={manifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(repositorySourceURL("Cargo.lock",new URL('../../../',import.meta.url)),'utf8')};
 const deriveDependencies=loadDeriveDependencyProof(dependencyInputs),jsonMacroDependencies=loadJsonMacroSourceProof(dependencyInputs);
 const core={
  'src/translation_core.rs':ROUTER_FORMATTING_FACADE_SOURCE,

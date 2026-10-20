@@ -1,3 +1,4 @@
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdtempSync,writeFileSync,mkdirSync,rmSync,cpSync} from 'node:fs';
@@ -157,7 +158,7 @@ test('tuple Cartesian alternative products retain the existing finite matrix exp
 
 const originals=JSON.parse(readFileSync(new URL('./fixtures/tuple-match-frontier.json',import.meta.url),'utf8'));
 for(const pin of originals.sources)test('whole unchanged '+pin.path+' retains '+pin.name+' and its remaining obligations',{timeout:60_000},()=>{
-  const source=trackedSource(root,pin.path);assert.equal(hash(source),pin.sourceSha256);
+  const source=trackedSource(root,repositorySourcePath(pin.path,root));assert.equal(hash(source),pin.sourceSha256);
   const item=sourceItems(source).find(item=>item.term==='fn'&&item.name===pin.name);assert.ok(item);
   assert.deepEqual({start:item.start,end:item.end},pin.span);assert.equal(hash(source.slice(item.start,item.end)),pin.itemSha256);
   const result=translateProject({entry:pin.path,paths:[pin.path],readSource:()=>source});assert.equal(result.meta.runtimeParity,false);

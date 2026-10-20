@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -8,7 +9,7 @@ import {createSerdeUnitEnumFrontier,isSerdeUnitEnumFrontier,inventoryPinnedDeriv
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 
 const hash=value=>createHash('sha256').update(value).digest('hex');
-const dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')});
+const dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(repositorySourceURL("Cargo.lock",new URL('../../../',import.meta.url)),'utf8')});
 function context(source) {
   return createDeriveFootprintContext({dependencies,compilationProfile:PRODUCTION_PROFILE,modules:[{file:'src/lib.rs',path:[],source:'mod model;'},{file:'src/model.rs',path:['model'],source}]});
 }

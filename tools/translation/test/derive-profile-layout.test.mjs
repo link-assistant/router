@@ -19,16 +19,16 @@ const history=JSON.parse(gunzipSync(readFileSync(new URL('source-profiles/cargo-
 const originalProfile=Buffer.from(history.profiles['tools/translation/source-profiles/derive/manifest.json'],'base64'),oldDigest=hash(originalProfile);
 const oldManifest=Buffer.from(history.manifest,'base64').toString('utf8'),manifest=readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock=readFileSync(repositorySourceURL('Cargo.lock',root),'utf8');
 const paths=['tools/translation/json-macro-profile-layout.mjs','tools/translation/async-trait-source-inputs.mjs'];
-function proposal(){return deriveSourceProfileLayoutImplementation({sources:new Map(paths.map(path=>[path,readFileSync(new URL(path,root),'utf8')]))});}
+function proposal(){return deriveSourceProfileLayoutImplementation({sources:new Map(paths.map(path=>[path,readFileSync(repositorySourceURL(path,root),'utf8')]))});}
 
 test('actual complete profile implementation and consumer reproduce through both ordered CST rule sequences',()=>{
  const plan=proposal();assert.equal(plan.files.length,2);assert.equal(plan.sourceAndOwnerVerdictsCached,false);assert.equal(plan.qualified,false);
  for(const row of plan.files){assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.source);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.text);assert.equal(row.inverse,row.source);assert.deepEqual([...new Set(row.trace.map(stage=>stage.phase))],['language','repository']);
   const make=rules=>rules.map(([id,before,after])=>exactLiteralSubstitutionRule(id,before,after,'Whole original changed'));
   assert.equal(createRulePipeline([{phase:'language',rules:make(row.language)},{phase:'repository',rules:make(row.repository)}]).run(row.source).value,row.text);
-  assert.equal(readFileSync(new URL(row.path,root),'utf8'),row.text);
+  assert.equal(readFileSync(repositorySourceURL(row.path,root),'utf8'),row.text);
  }
- const source=readFileSync(new URL(paths[0],root),'utf8');assert.equal(plan.files[0].source,source);assert.equal(plan.files[0].copiedFrom.sha256,hash(source));
+ const source=readFileSync(repositorySourceURL(paths[0],root),'utf8');assert.equal(plan.files[0].source,source);assert.equal(plan.files[0].copiedFrom.sha256,hash(source));
  assert.equal(oldDigest,'7cac220e8a2de28a4255366f46fd37071c2a7c3ecea3affed0cc364dd619dd1f');
 });
 
@@ -63,7 +63,7 @@ test('fresh complete profile and archive bytes refuse mutation in an independent
 });
 
 test('complete source proposals reject altered grammar, duplicate anchors and missing actual consumers',()=>{
- const sources=new Map(paths.map(path=>[path,readFileSync(new URL(path,root),'utf8')]));
+ const sources=new Map(paths.map(path=>[path,readFileSync(repositorySourceURL(path,root),'utf8')]));
  assert.throws(()=>deriveSourceProfileLayoutImplementation({sources:new Map()}));
  for(const text of [sources.get(paths[0])+'\nconst broken = ;',sources.get(paths[0]).replace('export function jsonMacroProfileMatches','export function changed'),sources.get(paths[0])+"\n// export function jsonMacroProfileMatches(dependencies,expected){\n"]){const changed=new Map(sources);changed.set(paths[0],text);assert.throws(()=>deriveSourceProfileLayoutImplementation({sources:changed}));}
 });

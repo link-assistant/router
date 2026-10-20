@@ -1,3 +1,4 @@
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync,spawnSync} from 'node:child_process';
@@ -47,7 +48,7 @@ test('complete committed offline compiler exports deterministically with full so
       assert.equal(git(bundle.destination,['ls-files','--others','-z','--','tools/translation/source-profiles']).toString(),'');
     }
     for(const row of first.manifest.inputs){
-      const original=readFileSync(join(root,row.path)),copied=readFileSync(join(first.destination,row.path));
+      const original=readFileSync(join(root,repositorySourcePath(row.path,root))),copied=readFileSync(join(first.destination,row.path));
       assert.ok(copied.equals(original),row.path);assert.equal(copied.length,row.bytes);assert.equal(sha(copied),row.sha256);
       assert.equal((lstatSync(join(first.destination,row.path)).mode&0o111)?'100755':'100644',row.mode);
     }

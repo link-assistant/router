@@ -983,3 +983,7 @@ unchanged historical sources. All 16 receiving cases pass in Node (71.049
 seconds) and fresh Bun (65.521 seconds), with complete source/deadline joins.
 The Rust/Cargo source bank remains unchanged. Full production regeneration and
 all current freshness, reverse and parity obligations remain open.
+
+The next [complete source-reader receiving cycle](complete-reader-repairs-20261020.md)
+records all 75-file failures, shared workspace/package reader repairs and the
+separate remaining performance, generation and parity obligations.

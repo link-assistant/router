@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -12,7 +13,7 @@ const root=new URL('../../../',import.meta.url),facadePath='src/translation_core
 test('all actual complete facade children cross CST without changing the authored input',()=>{
  const input={'src/lib.rs':'pub mod translation_core;',[facadePath]:ROUTER_FORMATTING_FACADE_SOURCE},before=Object.getOwnPropertyDescriptors(input),output=completeOwnedCoreSourceFixture(input);
  assert.deepEqual(Object.getOwnPropertyDescriptors(input),before);assert.deepEqual(Object.keys(output),[...Object.keys(input),...parents.map(([path])=>path)]);
- for(const [path,source]of parents){assert.equal(readFileSync(new URL('rust/'+path,root),'utf8'),source);assert.equal(output[path],source);const stage=transportConcreteSyntaxSource(source,{language:'Rust'});assert.equal(transportConcreteSyntaxMeta(stage.meta).source,source);}
+ for(const [path,source]of parents){assert.equal(readFileSync(repositorySourceURL('rust/'+path,root),'utf8'),source);assert.equal(output[path],source);const stage=transportConcreteSyntaxSource(source,{language:'Rust'});assert.equal(transportConcreteSyntaxMeta(stage.meta).source,source);}
  assert.strictEqual(completeOwnedCoreSourceFixture(output),output);assert.equal(Object.hasOwn(output,'namespaceAuthority'),false);
  const old=completeCoreSourceFixture(input);assert.deepEqual(Object.keys(old),[...Object.keys(input),'src/translation_core/json_collections.rs']);
 });
@@ -24,13 +25,13 @@ test('explicit wrong, undefined and accessor child fields remain untouched witho
  for(const candidate of [{[facadePath]:ROUTER_FORMATTING_FACADE_SOURCE+' '},{'src/lib.rs':'pub fn value(){}'},Object.defineProperty({},facadePath,{enumerable:true,get(){reads++;throw Error('must stay opaque');}})])assert.strictEqual(completeOwnedCoreSourceFixture(candidate),candidate);assert.equal(reads,0);
 });
 test('actual producer retains the old helper and reproduces all four complete installed source files',()=>{
- const paths=['tools/translation/test/complete-core-source-fixture.mjs',...CORE_SOURCE_FIXTURE_CONSUMERS],sources=new Map(paths.map(path=>[path,readFileSync(new URL(path,root),'utf8')])),plan=deriveCompleteCoreSourceFixtures({sources});assert.equal(plan.files.length,4);assert.equal(plan.qualified,false);assert.equal(plan.sourceAndOwnerVerdictsCached,false);
+ const paths=['tools/translation/test/complete-core-source-fixture.mjs',...CORE_SOURCE_FIXTURE_CONSUMERS],sources=new Map(paths.map(path=>[path,readFileSync(repositorySourceURL(path,root),'utf8')])),plan=deriveCompleteCoreSourceFixtures({sources});assert.equal(plan.files.length,4);assert.equal(plan.qualified,false);assert.equal(plan.sourceAndOwnerVerdictsCached,false);
  for(const row of plan.files){assert.equal(row.text,sources.get(row.path));assert.equal(hash(row.text),row.sha256);assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.source);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.text);assert.equal(row.inverse,row.source);}
  assert.deepEqual(plan.facade.children,parents.map(([path])=>path.split('/').at(-1).slice(0,-3)));assert.equal(plan.facade.source,ROUTER_FORMATTING_FACADE_SOURCE);assert.equal(transportConcreteSyntaxMeta(plan.facade.meta).source,plan.facade.source);
  const helper=plan.files[0];assert.equal(transportConcreteSyntaxMeta(helper.copiedFunction.meta).source,helper.copiedFunction.source);assert.ok(helper.text.includes(helper.copiedFunction.source));assert.ok(helper.source.includes(helper.copiedFunction.source));
 });
 test('source proposals refuse incomplete inputs and altered original helper or consumer syntax',()=>{
- const paths=['tools/translation/test/complete-core-source-fixture.mjs',...CORE_SOURCE_FIXTURE_CONSUMERS],sources=new Map(paths.map(path=>[path,readFileSync(new URL(path,root),'utf8')]));assert.throws(()=>deriveCompleteCoreSourceFixtures({sources:new Map()}));
+ const paths=['tools/translation/test/complete-core-source-fixture.mjs',...CORE_SOURCE_FIXTURE_CONSUMERS],sources=new Map(paths.map(path=>[path,readFileSync(repositorySourceURL(path,root),'utf8')]));assert.throws(()=>deriveCompleteCoreSourceFixtures({sources:new Map()}));
  for(const path of paths){const changed=new Map(sources);changed.set(path,changed.get(path)+'\nconst broken = ;');assert.throws(()=>deriveCompleteCoreSourceFixtures({sources:changed}));}
  const changed=new Map(sources);changed.set(paths[0],changed.get(paths[0]).replace('export function completeCoreSourceFixture(input){','export function renamed(input){'));assert.throws(()=>deriveCompleteCoreSourceFixtures({sources:changed}));
 });

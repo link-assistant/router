@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
@@ -18,7 +19,7 @@ import {originalMatchesNamespaceBindings} from '../matches-macro-context.mjs';
 import {lockedTomlValueNamespaceBindings} from '../toml-value-namespace.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const manifest=readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock=readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8');
+const manifest=readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock=readFileSync(repositorySourceURL("Cargo.lock",new URL('../../../',import.meta.url)),'utf8');
 const dependencies=loadDeriveDependencyProof({manifest,lock}),jsonDependencies=loadJsonMacroSourceProof({manifest,lock});
 const payload='#[derive(Default)]pub struct Payload{pub value:Option<i64>}pub fn make()->Payload{Payload::default()}';
 function retain(label,value){const directory=process.env.ROUTER_REVIEW_GENERIC_LAYOUT_VECTORS;if(directory){mkdirSync(directory,{recursive:true});writeFileSync(join(directory,label+'.json'),JSON.stringify(value,null,2)+'\n',{flag:'wx'});}}

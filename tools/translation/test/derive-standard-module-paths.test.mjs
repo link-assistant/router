@@ -1,3 +1,4 @@
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import {rustPackageSourcePath} from "../repository-layout.mjs";
 import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
@@ -52,7 +53,7 @@ test('complete original oracle and dense genuine mutable module graph preserve e
 });
 
 test('complete actual unchanged Router graph freshly reconstructs identical whole derive contexts',{timeout:60000},()=>{
-  const paths=execFileSync('git',['ls-files','-z','--','*.rs'],{cwd:root,encoding:'utf8',timeout:10000,maxBuffer:4*1024*1024}).split('\0').filter(Boolean),readSource=path=>trackedSource(root,path),graph=resolveModuleGraph({entry:rustPackageSourcePath(root,'src/lib.rs'),paths,readSource,compilationProfile:PRODUCTION_PROFILE});
+  const paths=execFileSync('git',['ls-files','-z','--','*.rs'],{cwd:root,encoding:'utf8',timeout:10000,maxBuffer:4*1024*1024}).split('\0').filter(Boolean),readSource=path=>trackedSource(root,repositorySourcePath(path,root)),graph=resolveModuleGraph({entry:rustPackageSourcePath(root,'src/lib.rs'),paths,readSource,compilationProfile:PRODUCTION_PROFILE});
  assert.ok(paths.length>=804);assert.ok(graph.modules.length>100);assert.ok(graph.modules.every(module=>module.sourceView));const row={modules:graph.modules},expected=run(old,row),actual=run(current,row);equal('02-complete-actual-router-contexts',expected,actual,{paths,graph,cargo,originalOracle:manifest});assert.ok(actual.context.certificates.some(row=>row.standardInput));
 });
 

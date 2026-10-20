@@ -1,3 +1,4 @@
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs,{readFileSync,writeFileSync,mkdirSync,mkdtempSync,rmSync,symlinkSync} from 'node:fs';
@@ -61,7 +62,7 @@ test('complete receiving static compiler source graph is retained without issuin
   assert.ok(report.originalSources.length>=275);assert.ok(report.totals.rawBytes<=4194304);assert.ok(report.totals.compiledBytes<=16777216);
   assert.deepEqual(report.coreVariants,['core-exposed:rust.js','core-exposed:check.js','core-exposed:emit-javascript.js']);
   const names=report.modules.flatMap(row=>row.classes.map(item=>item.name));for(const name of ['TokenCursor','ParameterCursor','HostRustParser','HostChecker','HostEmitter'])assert.ok(names.includes(name),name);
-  for(const row of report.originalSources){assert.equal(hash(row.source),row.pin.sha256);assert.equal(Buffer.byteLength(row.source),row.pin.bytes);assert.equal(row.source,readFileSync(join(ROOT,row.path),'utf8'));}
+  for(const row of report.originalSources){assert.equal(hash(row.source),row.pin.sha256);assert.equal(Buffer.byteLength(row.source),row.pin.bytes);assert.equal(row.source,readFileSync(join(ROOT,repositorySourcePath(row.path,ROOT)),'utf8'));}
   if(fs.existsSync(join(ROOT,'tools/translation/extensions/callback-local-control.mjs')))assert.ok(report.modules.some(row=>row.path==='tools/translation/extensions/callback-local-control.mjs'));
   for(const gate of ['esm-cjs-live-binding-tdz','imported-call-this-and-namespace','complete-native-host-and-private-escape','tla-staging','dynamic-execution-closure'])assert.ok(report.blockers.some(row=>row.gate===gate),gate);
 });

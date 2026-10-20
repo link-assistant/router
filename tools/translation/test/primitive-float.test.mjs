@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -84,7 +85,7 @@ test('unproved owners, shared receivers, NaN signs and floating constants stay r
 });
 
 test('unchanged policy classification declarations retain tool attributes and source pins',{timeout:60_000},async()=>{
-  const path='src/generated_js_first/policy.rs',original=readFileSync(new URL('../../../'+path,import.meta.url),'utf8');
+  const path='src/generated_js_first/policy.rs',original=readFileSync(repositorySourceURL(path,new URL('../../../',import.meta.url)),'utf8');
   assert.equal(hash(original),'c5d5cec07bf54be29de7beed707263256afa6ba1ee87c89695b237d5626f5673');
   const pins=[['valid_token_count',1977,2130,'c09f46ceeaf76fbd33a63b6d061b6d45264efca9a37d8fbaf7b5a322468a0991'],['weighted_capacity',3303,3515,'99be3d6b8d2b18ccdcb008590f100e38557b1ccba90004213789747ad4c01e43']];
   const items=sourceItems(original),selected=pins.map(([name,start,end,digest])=>{const item=items.find(item=>item.term==='fn'&&item.name===name);assert.deepEqual([item.start,item.end],[start,end]);const text=original.slice(start,end);assert.equal(hash(text),digest);assert.ok(text.startsWith('#[rustfmt::skip]'));return text;}).join('\n');

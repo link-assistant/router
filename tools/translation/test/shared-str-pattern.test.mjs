@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -31,7 +32,7 @@ test('shared Pattern admission leaves unsupported reference depths owned argumen
 });
 
 test('unchanged original marker helper recovers using the explicit standard &&str trait implementation',async()=>{
-  const path='src/login_pty_backend.rs',original=readFileSync(new URL('../../../'+path,import.meta.url),'utf8');assert.equal(sha256(original),'c808f2dc1cb7c07f2a78c4f4ad4edee6d43fb2f0f37ed4bb0c63a3fc968547e8');
+  const path='src/login_pty_backend.rs',original=readFileSync(repositorySourceURL(path,new URL('../../../',import.meta.url)),'utf8');assert.equal(sha256(original),'c808f2dc1cb7c07f2a78c4f4ad4edee6d43fb2f0f37ed4bb0c63a3fc968547e8');
   const item=sourceItems(original).find(item=>item.term==='fn'&&item.name==='contains_marker');assert.deepEqual([item.start,item.end],[3908,4029]);
   const source=original.slice(item.start,item.end);assert.equal(sha256(source),'93810b10b9bc11fe8661c2cb89a3fb7c1564f61c70f646b860f9c3d92f7221c5');
   const result=project(source);assert.deepEqual(result.meta.refused,[]);assert.equal(result.meta.runtimeParity,false);

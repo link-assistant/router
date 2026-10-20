@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {json} from '../translate.mjs';
@@ -68,7 +69,7 @@ test('actual UTF8 source producer preserves complete original sources CST and in
  const storage=readFileSync(new URL('../project-meta-storage.mjs',import.meta.url),'utf8'),translate=readFileSync(new URL('../translate.mjs',import.meta.url),'utf8'),proposal=deriveProjectMetaUtf8StorageSources({storage,translate});
  assert.equal(proposal.files.length,2);
  for(const row of proposal.files){
-  assert.equal(readFileSync(new URL('../../../'+row.path,import.meta.url),'utf8'),row.text);
+  assert.equal(readFileSync(repositorySourceURL(row.path,new URL('../../../',import.meta.url)),'utf8'),row.text);
   assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.source);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.text);assert.equal(row.inverse,row.source);
   assert.ok(row.trace.some(event=>event.phase==='repository'));
  }

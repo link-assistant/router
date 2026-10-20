@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -19,7 +20,7 @@ import {verifyTypedTargets} from './typed-targets.mjs';
 const hash=text=>createHash('sha256').update(text).digest('hex');
 let vectors=[];const retain=(kind,value)=>{vectors.push({kind,value});return value;};
 const test=(name,run)=>testCase(name,{timeout:60_000},async()=>{vectors=[];try{await run();}finally{if(process.env.ROUTER_BORROWED_JSON_LET_ELSE_VECTOR_DIR){const directory=process.env.ROUTER_BORROWED_JSON_LET_ELSE_VECTOR_DIR;mkdirSync(directory,{recursive:true});writeFileSync(join(directory,Buffer.from(name).toString('hex')+'.json'),JSON.stringify({name,vectors},(_key,value)=>typeof value==='bigint'?{$integer:String(value)}:value)+'\n');}}});
-const dependencies=()=>loadJsonMacroSourceProof({manifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')});
+const dependencies=()=>loadJsonMacroSourceProof({manifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(repositorySourceURL("Cargo.lock",new URL('../../../',import.meta.url)),'utf8')});
 const core=source=>({'src/lib.rs':'pub mod translation_core;\n'+source,'src/translation_core.rs':ROUTER_FORMATTING_FACADE_SOURCE,'src/translation_core/primitives.rs':ROUTER_CORE_PRIMITIVES_SOURCE,'src/translation_core/ranges.rs':ROUTER_CORE_RANGES_SOURCE});
 function project(input,{json=true}={}){if(typeof input==='string')input={'src/lib.rs':input};retain('complete-source-input',input);return retain('complete-project-result',translateProject({entry:'src/lib.rs',paths:Object.keys(input),readSource:path=>input[path],compilationProfile:PRODUCTION_PROFILE,...(json?{jsonMacroDependencies:dependencies()}:{})}));}
 const admitted=(result,name)=>result.meta.executable.some(row=>row.name===name);

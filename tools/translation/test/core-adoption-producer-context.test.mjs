@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
@@ -17,7 +18,7 @@ import {parseProgram,serializeProgram} from '../semantic-meta.mjs';
 import {serde_json_from_str,serde_json_to_string} from '../extensions/json-runtime.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const hash=source=>createHash('sha256').update(source).digest('hex'),C='crate::translation_core::';
-const dependencyInputs={manifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')};
+const dependencyInputs={manifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(repositorySourceURL("Cargo.lock",new URL('../../../',import.meta.url)),'utf8')};
 const dependencies=loadDeriveDependencyProof(dependencyInputs);
 let vectors=[];const retain=(kind,value)=>{vectors.push({kind,value});return value;};
 function test(name,run){testCase(name,{timeout:60_000},async()=>{vectors=[];try{await run();}finally{if(process.env.ROUTER_CORE_PRODUCER_VECTOR_DIR){mkdirSync(process.env.ROUTER_CORE_PRODUCER_VECTOR_DIR,{recursive:true});writeFileSync(join(process.env.ROUTER_CORE_PRODUCER_VECTOR_DIR,Buffer.from(name).toString('hex')+'.json'),JSON.stringify({name,vectors},(_key,value)=>typeof value==='bigint'?{$integer:String(value)}:value)+'\n');}}});}

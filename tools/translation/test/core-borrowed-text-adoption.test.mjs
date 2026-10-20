@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -67,7 +68,7 @@ test('complete current source readers retain their later independent iterator an
  for(const original of PARENTS.slice(1)){assert.equal(hash(original.source),original.sha256);const value=proposal(files('mod original;',{'src/original.rs':original.source}));retain('complete-reader-parent',{original,value,result:project(value.after)});assert.equal(value.before['src/original.rs'],original.source);assert.equal(value.executableAdmission,false);}
 });
 test('fresh dependency producer closure changed source and own data validation remain bounded',async()=>{
- const dependencyInputs={manifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')},source=`#[derive(Clone,Debug)]struct Unrelated{ready:bool}pub fn copied(value:${S})->${T}{value.to_owned()}`;
+ const dependencyInputs={manifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(repositorySourceURL("Cargo.lock",new URL('../../../',import.meta.url)),'utf8')},source=`#[derive(Clone,Debug)]struct Unrelated{ready:bool}pub fn copied(value:${S})->${T}{value.to_owned()}`;
  noBorrowed(source);const value=proposal(files(source),{dependencyInputs});assert.equal(borrowed(value).length,1);assert.ok(value.producerEffects.selections.length);const result=project(value.after,{cargoManifest:dependencyInputs.manifest,deriveDependencies:loadDeriveDependencyProof(dependencyInputs)});await targets(result,'copied',answer=>assert.equal(answer('fresh'),'fresh'));
  const changed=proposal(files(source.replace('value.to_owned()','"replacement".to_string()')),{dependencyInputs});assert.notEqual(value.after['src/lib.rs'],changed.after['src/lib.rs']);assert.equal(borrowed(changed).length,0);
  let calls=0;const bad={};Object.defineProperty(bad,'src/lib.rs',{get(){calls++;throw new Error('getter');}});assert.throws(()=>proposeCoreLiteralTextCorpus({files:bad}),TypeError);assert.equal(calls,0);assert.throws(()=>proposeCoreLiteralTextCorpus({files:new Proxy({},{ownKeys(){calls++;return [];}})}),TypeError);assert.equal(calls,0);

@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -14,7 +15,7 @@ const type=(bits,signed)=>({kind:'fixed',bits,signed,rustPrimitiveName:(signed?'
 const project=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});
 const max64=(1n<<64n)-1n;
 let actualStage;
-function original(){if(actualStage)return actualStage;const inputs=numericSourceInputsFromFiles({manifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')});return actualStage=compileNumericSourceStages(inputs,{candidateConfiguration:{flags:{test:false},values:{feature:[]},closedKeys:['feature']}});}
+function original(){if(actualStage)return actualStage;const inputs=numericSourceInputsFromFiles({manifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(repositorySourceURL("Cargo.lock",new URL('../../../',import.meta.url)),'utf8')});return actualStage=compileNumericSourceStages(inputs,{candidateConfiguration:{flags:{test:false},values:{feature:[]},closedKeys:['feature']}});}
 
 test('complete Rust1.89 macro intrinsic primitive-owner and license pins remain exact',()=>{
   const root=new URL('../source-profiles/fixed-wrapping/',import.meta.url);

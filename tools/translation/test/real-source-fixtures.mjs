@@ -144,7 +144,7 @@ export function staticSourceLifecycleContext(testName,{folder=STATIC_FOLDER,root
     }if(at!==raw.length)staticError('extra current Git bytes');
   }
   const source=path=>{if(!historical.has(path))staticError('unknown historical source path: '+path);return historical.get(path);};
-  const sourceCurrent=path=>{const physical=currentFiles.has(path)?path:relocatedRustSourcePath(path);if(!currentFiles.has(physical))staticError('unknown current source path: '+path);return currentFiles.get(physical);};
+  const sourceCurrent=path=>{const source=mappedCurrentSource(currentFiles,path);if(source===undefined)staticError('unknown current source path: '+path);return source;};
   // Return only detached source/profile/Cargo data. Ordinary compiler entrypoints
   // freshly rebuild every view, module binding, dependency and private proof.
   return {source,sourceCurrent,inputs:{entry:'src/lib.rs',sourceHead:profile.revision,compilationProfile:STATIC_PROFILE,sources:profile.files.map(row=>({source:row.path,bytes:row.bytes,sha256:row.sourceId,gitBlob:row.gitBlob})),originalBytes:profile.files.reduce((sum,row)=>sum+row.bytes,0),digest:profile.sourceSetSha256},current:{producerRevision:bundle.current.producerRevision,sourceSetSha256:bundle.current.sourceSetSha256,files:bundle.current.files},lineage:bundle.lineage.find(row=>row.revision===revision),scope:'Complete historical test source universe; current source evolution is retained data, never executable admission.',index};
@@ -175,7 +175,7 @@ export function staticSourceAssociatedContext(caseId,{folder=STATIC_FOLDER,root=
   }if(at!==raw.length)staticError('extra current Git bytes');
  }
  const source=path=>{if(!historical.has(path))staticError('unknown associated historical source path: '+path);return historical.get(path);};
- const sourceCurrent=path=>{const physical=currentFiles.has(path)?path:relocatedRustSourcePath(path);if(!currentFiles.has(physical))staticError('unknown associated current source path: '+path);return currentFiles.get(physical);};
+ const sourceCurrent=path=>{const source=mappedCurrentSource(currentFiles,path);if(source===undefined)staticError('unknown associated current source path: '+path);return source;};
  return {source,sourceCurrent,association,inputs:{entry:'src/lib.rs',sourceHead:profile.revision,compilationProfile:STATIC_PROFILE,sources:profile.files.map(row=>({source:row.path,bytes:row.bytes,sha256:row.sourceId,gitBlob:row.gitBlob})),originalBytes:profile.files.reduce((sum,row)=>sum+row.bytes,0),digest:profile.sourceSetSha256},current:{producerRevision:bundle.current.producerRevision,sourceSetSha256:bundle.current.sourceSetSha256,files:bundle.current.files},lineage:bundle.lineage.find(row=>row.revision===revision),scope:'Explicit outside-original16 historical DATA association; current sources and later compiler obligations remain separate.',index};
 }
 

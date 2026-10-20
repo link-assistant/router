@@ -1,3 +1,4 @@
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync,writeFileSync,mkdtempSync,mkdirSync,rmSync} from 'node:fs';import {tmpdir} from 'node:os';import {join} from 'node:path';import {pathToFileURL,fileURLToPath} from 'node:url';
 import {deriveRepositoryLayoutReadSources} from '../prepare-repository-layout-readers.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
@@ -26,7 +27,7 @@ test('real legacy and nested receiving modules preserve original bytes and all f
  try{for(const nested of [false,true]){
   const root=join(home,nested?'nested':'legacy'),body='pub fn original_source() -> bool { true }\n',cargo='[package]\nname = "reader-receiver"\nversion = "0.0.0"\n';
   put(root,nested?'rust/src/lib.rs':'src/lib.rs',body);put(root,nested?'rust/Cargo.toml':'Cargo.toml',cargo);if(nested)put(root,'Cargo.toml','[workspace]\nmembers = ["rust"]\n');
-  const row=propose(source,root).files[0];replay(row);put(root,path,row.text);for(const name of ['tools/translation/repository-layout.mjs','tools/translation/test/fixtures/repository-paths.mjs'])put(root,name,readFileSync(join(repository,name)));
+  const row=propose(source,root).files[0];replay(row);put(root,path,row.text);for(const name of ['tools/translation/repository-layout.mjs','tools/translation/test/fixtures/repository-paths.mjs'])put(root,name,readFileSync(join(repository,repositorySourcePath(name,repository))));
   const module=await import(pathToFileURL(join(root,path)).href);for(const name of ['fromUrl','fromPath','fromRoot'])assert.equal(module[name]('src/lib.rs'),body);assert.equal(module.fromLiteral(),body);assert.equal(module.embedded,'readFileSync(new URL("../../../src/original.rs",import.meta.url))');assert.equal(readFileSync(join(root,nested?'rust/Cargo.toml':'Cargo.toml'),'utf8'),cargo);
   if(!nested){put(root,'tools/translation/test/original-readers.test.mjs',source);const original=await import(pathToFileURL(join(root,'tools/translation/test/original-readers.test.mjs')).href);for(const name of ['fromUrl','fromPath','fromRoot'])assert.equal(original[name]('src/lib.rs'),module[name]('src/lib.rs'));assert.equal(original.fromLiteral(),module.fromLiteral());}
  }}finally{rmSync(home,{recursive:true,force:true});}
@@ -67,8 +68,27 @@ test('template reads and genuine tracked-source reexports preserve complete real
  try{
   const proposal=propose(written,home),row=proposal.files[0];replay(row);assert.equal(row.selected.filter(edit=>edit.kind!=='actual-helper-import').length,3);assert.ok(row.text.includes('repositorySourcePath(name,root)'));
   const body='pub fn original() -> bool { true }\n';put('rust/Cargo.toml','[package]\nname = "nested"\nversion = "0.0.0"\n');put('rust/src/lib.rs',body);put(path,row.text);
-  for(const name of ['tools/translation/repository-layout.mjs','tools/translation/source-corpus.mjs','tools/translation/test/fixtures/repository-paths.mjs'])put(name,readFileSync(join(repository,name)));
+  for(const name of ['tools/translation/repository-layout.mjs','tools/translation/source-corpus.mjs','tools/translation/test/fixtures/repository-paths.mjs'])put(name,readFileSync(join(repository,repositorySourcePath(name,repository))));
   put('tools/translation/bulk.mjs',proposal.trackedSourceReexport.statement+'\n');
   const module=await import(pathToFileURL(join(home,path)).href);assert.equal(await module.dynamic('src/lib.rs'),body);assert.equal(await module.tracked('src/lib.rs'),body);assert.equal(await module.template('lib'),body);assert.equal(propose(row.text,home).files.length,0);
  }finally{rmSync(home,{recursive:true,force:true});}
+});
+
+test('explicit workspace reads keep the complete physical manifest separate from the relocated Rust package',{timeout:30000},async()=>{
+ const source=`import {readFileSync} from 'node:fs';
+import {repositoryWorkspaceManifestURL} from './fixtures/repository-paths.mjs';
+const root=new URL('../../../',import.meta.url);
+export const workspace=()=>readFileSync(repositoryWorkspaceManifestURL(root),'utf8');
+export const crate=()=>readFileSync(new URL('Cargo.toml',root),'utf8');
+`;
+ const home=mkdtempSync(join(tmpdir(),'router-workspace-readers-')),put=(root,name,text)=>{mkdirSync(join(root,name,'..'),{recursive:true});writeFileSync(join(root,name),text);};
+ try{for(const nested of [false,true]){
+  const root=join(home,nested?'nested':'legacy'),workspace='[workspace]\nmembers=["rust"]\n',crate='[package]\nname="reader"\nversion="0.0.0"\n';
+  put(root,'Cargo.toml',nested?workspace:crate);if(nested)put(root,'rust/Cargo.toml',crate);
+  const row=propose(source,root).files[0];replay(row);assert.equal(row.selected.filter(edit=>edit.kind==='actual-current-repository-read').length,1);
+  assert.ok(row.text.includes("readFileSync(repositoryWorkspaceManifestURL(root),'utf8')"));
+  for(const name of ['tools/translation/repository-layout.mjs','tools/translation/test/fixtures/repository-paths.mjs'])put(root,name,readFileSync(join(repository,name)));
+  put(root,path,row.text);const api=await import(pathToFileURL(join(root,path)).href);
+  assert.equal(api.workspace(),nested?workspace:crate);assert.equal(api.crate(),crate);assert.equal(propose(row.text,root).files.length,0);
+ }}finally{rmSync(home,{recursive:true,force:true});}
 });

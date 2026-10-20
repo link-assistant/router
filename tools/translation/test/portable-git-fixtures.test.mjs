@@ -1,3 +1,4 @@
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -13,7 +14,7 @@ import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta} from '../conc
 import {translateOriginalProjectBatch} from '../isolated-project-batch.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const ROOT=fileURLToPath(new URL('../../../',import.meta.url)),ASSETS=fileURLToPath(new URL('./fixtures/portable-git/',import.meta.url)),REGISTRY='tools/translation/source-profiles/isolated-project-compiler/manifest.json.gz';
-const packed=fs.readFileSync(join(ROOT,REGISTRY)),raw=gunzipSync(packed),registry=JSON.parse(raw),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
+const packed=fs.readFileSync(join(ROOT,repositorySourcePath(REGISTRY,ROOT))),raw=gunzipSync(packed),registry=JSON.parse(raw),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 function retain(name,value){const output=process.env.ROUTER_PORTABLE_GIT_VECTOR_DIR;if(output){fs.mkdirSync(output,{recursive:true});fs.writeFileSync(join(output,name+'.json.gz'),gzipSync(JSON.stringify(value)+'\n'));}}
 function temporary(t,label){const path=fs.mkdtempSync(join(tmpdir(),'router-portable-test-'+label+'-'));t.after(()=>fs.rmSync(path,{recursive:true,force:true}));return path;}
 function changed(t,mutate){const target=temporary(t,'tamper'),{data,index}=readPortableGitFixture();mutate(data);const bytes=Buffer.from(JSON.stringify(data)+'\n'),compressed=gzipSync(bytes);fs.writeFileSync(join(target,'objects.json.gz'),compressed);fs.writeFileSync(join(target,'manifest.json'),JSON.stringify({...index,bytes:compressed.length,sha256:hash(compressed),rawBytes:bytes.length,rawSha256:hash(bytes)}));return target;}

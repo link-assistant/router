@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -18,7 +19,7 @@ import {numericSourceInputsFromFiles,compileNumericSourceStages} from '../serial
 import {lockedTomlValueNamespaceBindings} from '../toml-value-namespace.mjs';
 import {rustPackageSourcePath} from '../repository-layout.mjs';
 const root=new URL('../../../',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
-const read=path=>readFileSync(new URL(path,root));
+const read=path=>readFileSync(repositorySourceURL(path,root));
 const archive=read('tools/translation/source-profiles/cargo-layout-before/inputs.json.gz'),history=JSON.parse(gunzipSync(archive));
 const before=Buffer.from(history.manifest,'base64').toString('utf8'),after=read(rustPackageSourcePath(fileURLToPath(root),'Cargo.toml')).toString('utf8'),lock=read('Cargo.lock').toString('utf8');
 const input=manifest=>({manifest,lock}),historicalProfile=Buffer.from(history.profiles['tools/translation/source-profiles/json-macro/manifest.json'],'base64');

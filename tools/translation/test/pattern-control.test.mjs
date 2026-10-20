@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {createHash} from 'node:crypto';
@@ -254,7 +255,7 @@ test('default highest host emitter runs its early pattern guard before any hosti
 });
 
 test('default project frontend executes the unchanged tracked upstream-path function',async()=>{
-  const path='src/proxy/upstream_path.rs',source=readFileSync(new URL('../../../'+path,import.meta.url),'utf8');
+  const path='src/proxy/upstream_path.rs',source=readFileSync(repositorySourceURL(path,new URL('../../../',import.meta.url)),'utf8');
   assert.equal(hash(source),'bd1cf836b23868fdc92750d17c0548c8318930314eef81196fd9768d46ccb898');
   const item=sourceItems(source).find(item=>item.name==='resolve_upstream_path');
   assert.deepEqual({start:item.start,end:item.end},{start:687,end:1472});

@@ -14,3 +14,9 @@ export function repositoryCratePaths(paths, root) {
   const layout=repositoryRustLayout(typeof root==='string'?root:fileURLToPath(root));
   return paths.map(path=>layout.root!=='.'&&path.startsWith(layout.root+'/')?path.slice(layout.root.length+1):path);
 }
+
+// The physical workspace manifest is a distinct input from the Rust package.
+// A root URL chooses its actual repository Cargo.toml in both layouts.
+export function repositoryWorkspaceManifestURL(root) {
+  return new URL('Cargo.toml',root);
+}

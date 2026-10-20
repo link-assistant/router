@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -39,7 +40,7 @@ test('integer token translation retains source identity bounds and exact values 
 });
 
 test('original octal permission constant translates through source meta and both target generators',async()=>{
-  const path='src/unix_listener.rs',original=readFileSync(new URL('../../../'+path,import.meta.url),'utf8'),item=sourceItems(original).find(item=>item.term==='const'&&item.name==='WIDEST_MODE');
+  const path='src/unix_listener.rs',original=readFileSync(repositorySourceURL(path,new URL('../../../',import.meta.url)),'utf8'),item=sourceItems(original).find(item=>item.term==='const'&&item.name==='WIDEST_MODE');
   assert.equal(sha256(original),'f2697b44c95c5f9a7aab7d2fc55a03c80360da08b1f987a4caaf4d47fe0441b5');assert.deepEqual([item.start,item.end],[2490,2521]);
   const source=original.slice(item.start,item.end);assert.equal(sha256(source),'42122c491fa4c6c5019c5b342cd822fd2be51c6181b79e33455f0045cdbcf593');assert.equal(source,'const WIDEST_MODE: u32 = 0o666;');
   const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs',path],readSource:name=>name==='src/lib.rs'?'mod unix_listener;':source});

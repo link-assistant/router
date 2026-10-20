@@ -1,3 +1,4 @@
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -179,7 +180,7 @@ test('emission rejects removed or replaced whitespace source evidence',()=>{
 
 const frontier=JSON.parse(readFileSync(new URL('./fixtures/whitespace-iterator-frontier.json',import.meta.url),'utf8'));
 for(const pin of frontier.originalFiles)test(`whole unchanged ${pin.path} keeps ${pin.name} bytes and actual admission`,{timeout:60_000},async()=>{
-  const source=trackedSource(root,pin.path);assert.equal(hash(source),pin.sha256);
+  const source=trackedSource(root,repositorySourcePath(pin.path,root));assert.equal(hash(source),pin.sha256);
   const item=sourceItems(source).find(item=>item.term==='fn'&&item.name===pin.name);assert.ok(item);
   assert.deepEqual({start:item.start,end:item.end},pin.span);assert.equal(hash(source.slice(item.start,item.end)),pin.declarationSha256);
   const result=translateProject({entry:pin.path,paths:[pin.path],readSource:()=>source});assert.equal(result.meta.runtimeParity,false);

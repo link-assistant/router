@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -21,7 +22,7 @@ import {serde_json_from_str,serde_json_to_string} from '../extensions/json-runti
 import {parseProgram,serializeProgram} from '../semantic-meta.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const C='crate::translation_core::',T=C+'Json',J=C+'json!',hash=value=>createHash('sha256').update(value).digest('hex');
-const dependencyInputs={manifest:fs.readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:fs.readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')},jsonMacroDependencies=loadJsonMacroSourceProof(dependencyInputs),deriveDependencies=loadDeriveDependencyProof(dependencyInputs);
+const dependencyInputs={manifest:fs.readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:fs.readFileSync(repositorySourceURL("Cargo.lock",new URL('../../../',import.meta.url)),'utf8')},jsonMacroDependencies=loadJsonMacroSourceProof(dependencyInputs),deriveDependencies=loadDeriveDependencyProof(dependencyInputs);
 const files=source=>({'src/lib.rs':(source.startsWith('\uFEFF')?'\uFEFFpub mod translation_core;\n'+source.slice(1):'pub mod translation_core;\n'+source),'src/translation_core.rs':ROUTER_FORMATTING_FACADE_SOURCE,'src/translation_core/primitives.rs':ROUTER_CORE_PRIMITIVES_SOURCE,'src/translation_core/ranges.rs':ROUTER_CORE_RANGES_SOURCE,'src/translation_core/json_collections.rs':ROUTER_CORE_JSON_COLLECTIONS_SOURCE});
 let vectors=[];const retain=(kind,value)=>{vectors.push({kind,value});return value;};
 const test=(name,run)=>testCase(name,{timeout:60_000},async()=>{vectors=[];try{await run();}finally{if(process.env.ROUTER_JSON_ERROR_FLOW_VECTOR_DIR){fs.mkdirSync(process.env.ROUTER_JSON_ERROR_FLOW_VECTOR_DIR,{recursive:true});fs.writeFileSync(join(process.env.ROUTER_JSON_ERROR_FLOW_VECTOR_DIR,Buffer.from(name).toString('hex')+'.json'),JSON.stringify({name,vectors},(_key,value)=>typeof value==='bigint'?{$integer:String(value)}:value)+'\n');}}});
@@ -68,7 +69,7 @@ test('unknown error Drop retained helpers cycles stored borrowed Results and rep
  ];for(const source of sources)no(project(files(source)),['bad']);
 });
 test('both complete current structured builders execute independent schema strict and error cases after fresh proposals',async()=>{
- const path='src/structured_output.rs',source=fs.readFileSync(new URL('../../../'+path,import.meta.url),'utf8'),input={...files('mod actual;'),'src/actual.rs':source},indices=proposeCoreJsonIndicesCorpus({files:input,dependencyInputs}),copies=proposeCoreJsonCopiesCorpus({files:indices.after,dependencyInputs}),updates=proposeCoreJsonUpdateCorpus({files:copies.after,dependencyInputs});for(const stage of [indices,copies,updates])for(const row of stage.proposals)inverse(row);const result=project(updates.after);retain('complete-current-parent-and-stages',{path,source,sha256:hash(source),indices,copies,updates,result});yes(result,['actual.chat_to_responses_format','actual.responses_to_chat_format','actual.required_type','actual.validate_name_and_strict','actual.generic_object_format']);
+ const path='src/structured_output.rs',source=fs.readFileSync(repositorySourceURL(path,new URL('../../../',import.meta.url)),'utf8'),input={...files('mod actual;'),'src/actual.rs':source},indices=proposeCoreJsonIndicesCorpus({files:input,dependencyInputs}),copies=proposeCoreJsonCopiesCorpus({files:indices.after,dependencyInputs}),updates=proposeCoreJsonUpdateCorpus({files:copies.after,dependencyInputs});for(const stage of [indices,copies,updates])for(const row of stage.proposals)inverse(row);const result=project(updates.after);retain('complete-current-parent-and-stages',{path,source,sha256:hash(source),indices,copies,updates,result});yes(result,['actual.chat_to_responses_format','actual.responses_to_chat_format','actual.required_type','actual.validate_name_and_strict','actual.generic_object_format']);
  await targets(result,api=>{
   const chat=api['actual.chat_to_responses_format'],responses=api['actual.responses_to_chat_format'];assert.deepEqual(outcome(chat(none)),{ok:null});assert.deepEqual(outcome(responses(none)),{ok:null});
   for(const type of ['text','json_object']){assert.deepEqual(outcome(chat(some(json({type})))),{ok:{type}});assert.deepEqual(outcome(responses(some(json({format:{type}})))),{ok:{type}});}

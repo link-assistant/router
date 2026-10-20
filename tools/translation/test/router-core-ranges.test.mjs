@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,rmSync} from 'node:fs';
@@ -185,7 +186,7 @@ test('actual complete validator modules retain full source before after and all 
   // Approved repository adoptions may independently change current source.
   // Observe it in full, apply fresh CST rules, and verify idempotence and the
   // actual selected function set; the pinned fixture supplies exact old counts.
-  const current=Object.fromEntries(paths.map(path=>[path,readFileSync(new URL('../../../'+path,import.meta.url),'utf8')])),currentProposals=Object.fromEntries(paths.map(path=>[path,migrateCoreRanges(current[path])]));
+  const current=Object.fromEntries(paths.map(path=>[path,readFileSync(repositorySourceURL(path,new URL('../../../',import.meta.url)),'utf8')])),currentProposals=Object.fromEntries(paths.map(path=>[path,migrateCoreRanges(current[path])]));
   retain('complete-current-parent-proposals',{inputs:current,proposals:currentProposals});
   const expected={'src/bridge_controls.rs':['validate_responses'],'src/structured_output.rs':['unsupported_chat_generation_control'],'src/gemini_bridge_request.rs':['validate_chat_contract'],'src/subscription_usage_normalize.rs':[]};
   for(const path of paths){const proposal=currentProposals[path],again=retain('current-parent-idempotence-'+path,migrateCoreRanges(proposal.after.source));assert.equal(proposal.before.source,current[path]);assert.equal(transportConcreteSyntaxMeta(proposal.before.meta).source,current[path]);assert.equal(transportConcreteSyntaxMeta(proposal.after.meta).source,proposal.after.source);assert.equal(again.after.source,proposal.after.source);assert.equal(again.edits.length,0);for(const selection of proposal.selections)assert.ok(expected[path].includes(selection.function),path+': '+selection.function);}
@@ -197,7 +198,7 @@ test('actual complete validator modules retain full source before after and all 
   // test's project/parser graph first cannot warm or repair that child realm.
   const temporary=mkdtempSync(join(tmpdir(),'router-core-range-cold-cli-')),sourceRoot=join(temporary,'source'),output=join(temporary,'proposal');
   try{
-    const corePaths=['src/translation_core.rs','src/translation_core/primitives.rs','src/translation_core/ranges.rs'],core=Object.fromEntries(corePaths.map(path=>[path,readFileSync(new URL('../../../'+path,import.meta.url),'utf8')]));
+    const corePaths=['src/translation_core.rs','src/translation_core/primitives.rs','src/translation_core/ranges.rs'],core=Object.fromEntries(corePaths.map(path=>[path,readFileSync(repositorySourceURL(path,new URL('../../../',import.meta.url)),'utf8')]));
     const tree={'src/lib.rs':'pub mod translation_core;\n',...core,...inputs};retain('complete-cold-CLI-tree',tree);
     for(const[path,source]of Object.entries(tree)){const parts=path.split('/');parts.pop();mkdirSync(join(sourceRoot,...parts),{recursive:true});writeFileSync(join(sourceRoot,path),source,{flag:'wx'});}
     const tool=fileURLToPath(new URL('../migrate-core-ranges.mjs',import.meta.url)),args=[tool,'--root',sourceRoot,'--output',output,...paths.flatMap(path=>['--file',path])];

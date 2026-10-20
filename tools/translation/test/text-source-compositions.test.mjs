@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -21,7 +22,7 @@ test('unchanged original text functions compose checked character, Option and tu
     ]},
   ];
   for(const fixture of fixtures){
-    const original=readFileSync(new URL('../../../'+fixture.path,import.meta.url),'utf8');assert.equal(sha256(original),fixture.fileSha256);
+    const original=readFileSync(repositorySourceURL(fixture.path,new URL('../../../',import.meta.url)),'utf8');assert.equal(sha256(original),fixture.fileSha256);
     const item=sourceItems(original).find(item=>item.term==='fn'&&item.name===fixture.name);assert.deepEqual([item.start,item.end],[fixture.start,fixture.end]);
     const source=original.slice(item.start,item.end);assert.equal(sha256(source),fixture.bodySha256);
     const module=fixture.path.slice(4,-3),files={'src/lib.rs':`mod ${module};`,[fixture.path]:source};

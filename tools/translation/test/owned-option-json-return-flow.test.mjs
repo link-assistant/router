@@ -1,5 +1,6 @@
 // Source-only authored receiving workloads. Run the complete file in Node/Bun;
 // strict TypeScript children retain their independent 20s cap.
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -20,7 +21,7 @@ import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 import {parseProgram,serializeProgram} from '../semantic-meta.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const C='crate::translation_core::',T=C+'Json',M=C+'Maybe',S=C+'Str',P=C+'json_parse',B=C+'json_parse_bytes',COPY=C+'json_copy',hash=value=>createHash('sha256').update(value).digest('hex');
-const dependencyInputs={manifest:fs.readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:fs.readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')},jsonMacroDependencies=loadJsonMacroSourceProof(dependencyInputs),deriveDependencies=loadDeriveDependencyProof(dependencyInputs);
+const dependencyInputs={manifest:fs.readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:fs.readFileSync(repositorySourceURL("Cargo.lock",new URL('../../../',import.meta.url)),'utf8')},jsonMacroDependencies=loadJsonMacroSourceProof(dependencyInputs),deriveDependencies=loadDeriveDependencyProof(dependencyInputs);
 const files=source=>({'src/lib.rs':'pub mod translation_core;\n'+source,'src/translation_core.rs':facade,'src/translation_core/primitives.rs':primitives,'src/translation_core/ranges.rs':ranges,'src/translation_core/json_collections.rs':collections});
 let vectors=[];const retain=(kind,value)=>{vectors.push({kind,value});return value;};
 const test=(name,run)=>testCase(name,{timeout:60_000},async()=>{vectors=[];try{await run();}finally{if(process.env.ROUTER_OWNED_OPTION_VECTOR_DIR){fs.mkdirSync(process.env.ROUTER_OWNED_OPTION_VECTOR_DIR,{recursive:true});fs.writeFileSync(join(process.env.ROUTER_OWNED_OPTION_VECTOR_DIR,Buffer.from(name).toString('hex')+'.json'),JSON.stringify({name,vectors},(_key,value)=>typeof value==='bigint'?{$integer:String(value)}:Object.is(value,-0)?{$negativeZero:true}:value)+'\n');}}});
@@ -45,7 +46,7 @@ test('genuine Option String allocation preserves None nontext empty Unicode and 
 });
 async function actualParent(index){
  const fixture=PARENTS[index],original=gunzipSync(Buffer.from(fixture.parentGzip,'base64')).toString('utf8');assert.equal(hash(original),fixture.parentSha256);assert.equal(original.slice(...fixture.span.utf16),fixture.source);assert.equal(hash(fixture.source),fixture.sha256);
- const current=fs.readFileSync(new URL('../../../'+fixture.file,import.meta.url),'utf8');retain('complete-original-current-parents',{...fixture,original,current,currentSha256:hash(current)});
+ const current=fs.readFileSync(repositorySourceURL(fixture.file,new URL('../../../',import.meta.url)),'utf8');retain('complete-original-current-parents',{...fixture,original,current,currentSha256:hash(current)});
  // Full parent outcomes are retained independently. An isolated body assertion
  // does not claim admission of its surrounding namespace or the whole crate.
  const input={...files('mod actual;'),'src/actual.rs':current},adopted=propose(input),before=project(input),after=project(adopted.after);retain('complete-current-parent-outcomes',{input,adopted,before,after});for(const row of before.meta.executable)assert.ok(after.meta.executable.some(value=>value.name===row.name),'no loss: '+row.name);

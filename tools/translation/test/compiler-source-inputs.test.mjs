@@ -1,3 +1,4 @@
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
@@ -48,5 +49,5 @@ test('empty compiler selections and substituted repository roots cannot issue fi
 
 test('actual compiler discovery retains helpers omitted by earlier manual inventory and their full original bytes',()=>{
   const root=resolve(fileURLToPath(new URL('../../../',import.meta.url))),entries=discoverCompilerSourceInputs({root}),byPath=new Map(entries.map(entry=>[entry.path,entry]));
-  for(const name of ['derive-generic-parameters.mjs','derive-numeric-helpers.mjs','macro-subnamespaces.mjs','builtin-source-call-frames.mjs','format-source-meta.mjs','compiler-source-inputs.mjs','tracked-inputs.mjs']){const path=prefix+name,bytes=readFileSync(join(root,path));assert.equal(byPath.get(path)?.sha256,hash(bytes));assert.equal(byPath.get(path)?.bytes,bytes.length);assert.equal(byPath.get(path)?.semanticAuthority,false);}
+  for(const name of ['derive-generic-parameters.mjs','derive-numeric-helpers.mjs','macro-subnamespaces.mjs','builtin-source-call-frames.mjs','format-source-meta.mjs','compiler-source-inputs.mjs','tracked-inputs.mjs']){const path=prefix+name,bytes=readFileSync(join(root,repositorySourcePath(path,root)));assert.equal(byPath.get(path)?.sha256,hash(bytes));assert.equal(byPath.get(path)?.bytes,bytes.length);assert.equal(byPath.get(path)?.semanticAuthority,false);}
 });

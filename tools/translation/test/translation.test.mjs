@@ -1,3 +1,4 @@
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
@@ -210,8 +211,8 @@ test('all tracked Rust artifacts reconstruct source and all generated JS modules
   assert.deepEqual(inventory.sources.map(item => item.source), tracked);
   assert.equal(inventory.runtimeParity, false);
   for (const entry of inventory.sources) {
-    const ir = JSON.parse(readFileSync(join(root, entry.targets.meta)));
-    const source = trackedSource(root, entry.source);
+    const ir = JSON.parse(readFileSync(join(root,repositorySourcePath(entry.targets.meta,root))));
+    const source = trackedSource(root, repositorySourcePath(entry.source,root));
     assert.equal(ir.items.map(item => item.source).join(''), source, entry.source);
     assert.equal(ir.sourceSha256, sha256(source), entry.source);
     let module;
