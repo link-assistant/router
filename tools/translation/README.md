@@ -363,3 +363,10 @@ Generated trait behavior, type/value/effect authority and complete runtime parit
 remain separate obligations. CatalogRecord syntax metadata uses a measured
 524,288-byte cap independent of the unchanged 256,000 token-byte, 16,000-cell and
 64-depth limits.
+
+The explicit source-bank DATA allocation variants and their actual CST source
+producers are documented in the [allocation checkpoint](../../docs/development/static-source-allocation-20261021.md).
+Original APIs, complete source/CST passes and deadlines remain unchanged.
+Node's complete 30-case receiving batch passes; the corresponding Bun batch
+still exceeds its unchanged memory bound. These infrastructure results add no
+executable application coverage and do not establish full synchronization.

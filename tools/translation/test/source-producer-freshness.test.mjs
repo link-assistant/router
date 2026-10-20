@@ -12,6 +12,8 @@ import {prepareLexicalParentHistorySources} from '../prepare-lexical-parent-hist
 import {prepareFixedNativeDescriptorCensus} from '../prepare-fixed-native-descriptor-census.mjs';
 import {prepareReceivingModuleRelocators} from '../prepare-receiving-module-relocators.mjs';
 import {prepareInvocationLocalFreezer} from '../prepare-invocation-local-freezer.mjs';
+import {prepareStaticJsonPreflight} from '../prepare-static-json-preflight.mjs';
+import {prepareStaticSourceRelease} from '../prepare-static-source-release.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 const root=new URL('../../../',import.meta.url),read=path=>readFileSync(new URL(path,root),'utf8');
 
@@ -69,4 +71,16 @@ test('invocation-local scalar-cost source preparation reproduces both complete s
  const plan=prepareInvocationLocalFreezer({root:fileURLToPath(root)});assert.equal(plan.files.length,2);
  for(const row of plan.files){assert.equal(row.before,row.after);assert.equal(row.after,read(row.path));assert.equal(row.inverse,row.original);assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.original);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);}
  assert.equal(plan.newAcrossInvocationCache,false);assert.equal(plan.globalRetentionPolicyUnchanged,true);assert.equal(plan.sourceAuthority,false);assert.equal(plan.runtimeAuthority,false);
+});
+
+test('canonical JSON projection and reject-only metadata preflight reproduce their complete actual producer',{timeout:60000},()=>{
+ const plan=prepareStaticJsonPreflight({root:fileURLToPath(root)});assert.equal(plan.files.length,3);
+ for(const row of plan.files){assert.equal(row.before,row.after);assert.equal(row.after,read(row.path));assert.equal(row.inverse,row.original);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);}
+ assert.equal(plan.existingCompleteReaderBodyUnchanged,true);assert.equal(plan.originalLimitsUnchanged,true);assert.equal(plan.newCaches,false);assert.equal(plan.sourceAuthority,false);assert.equal(plan.runtimeAuthority,false);
+});
+
+test('invocation-local source allocation rules reproduce both complete files and native CST inverses',{timeout:60000},()=>{
+ const plan=prepareStaticSourceRelease({root:fileURLToPath(root)});assert.equal(plan.files.length,2);
+ for(const row of plan.files){assert.equal(row.before,row.after);assert.equal(row.after,read(row.path));assert.equal(row.inverse,row.original);assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.original);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);}
+ assert.equal(plan.originalProducerBodyUnchanged,true);assert.equal(plan.originalLimitsUnchanged,true);assert.equal(plan.newAcrossInvocationCaches,false);assert.equal(plan.sourceAuthority,false);assert.equal(plan.runtimeAuthority,false);
 });

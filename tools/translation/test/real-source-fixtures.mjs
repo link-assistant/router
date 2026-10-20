@@ -1,3 +1,6 @@
+import {projectCanonicalJsonStringFields} from '../canonical-json-projection.mjs';
+import {originalBatchedNamespaceTraversalIntrinsicsUnchanged,originalPrivateParserIngressUnchanged} from '../original-json-intrinsics.mjs';
+import {originalBatchedLexingIntrinsicsUnchanged} from '../original-lexing-intrinsics.mjs';
 import {relocatedRustSourcePath,rustPackageSourcePath} from '../repository-layout.mjs';
 // Historical test data only. Every compiler attempt still uses the ordinary
 // source/CST/grammar/checker path; these records never grant semantic authority.
@@ -326,4 +329,76 @@ export function staticSourcePinnedCopyGetterTextData({folder=STATIC_FOLDER,root=
 function mappedCurrentSource(rows,path) {
  const moved=relocatedRustSourcePath(path);
  return (path==='Cargo.toml'?rows.get(moved):undefined)??rows.get(path)??rows.get(moved);
+}
+
+// Generated explicit preflight DATA reader; every original public reader stays unchanged.
+// This separate reader permits additional metadata hash/JSON calls. It stores
+// no verdicts and never substitutes for original source or semantic authority.
+function preflightStaticArchiveData(raw,index){
+  if(Object.hasOwn(index,'storage')||!originalBatchedNamespaceTraversalIntrinsicsUnchanged()||!originalBatchedLexingIntrinsicsUnchanged()||!originalPrivateParserIngressUnchanged())return;
+  const projection=projectCanonicalJsonStringFields(text(raw),[['sources','*','canonical']]);
+  if(projection===null)return;
+  const bundle=JSON.parse(projection.source),canonicalRows=new Set(projection.omissions.map(row=>row.path[1]));
+  if(bundle.schema!==index.schema||JSON.stringify(bundle.cases)!==JSON.stringify(STATIC_SOURCE_LIFECYCLE_CASES)||JSON.stringify(bundle.authority)!==JSON.stringify({namespace:false,dispatch:false,ownership:false,semantic:false,executable:false}))staticError('test-data contract differs');
+  if(!Array.isArray(bundle.profiles)||bundle.profiles.length!==2||new Set(bundle.profiles.map(row=>row.revision)).size!==2)staticError('two complete historical universes required');
+  let bytes=0;for(const [id,row]of Object.entries(bundle.sources)){if(!/^[a-f0-9]{64}$/u.test(id)||typeof row.source!=='string'||Buffer.byteLength(row.source)!==row.bytes||row.bytes>STATIC_SOURCE_LIFECYCLE_LIMITS.fileBytes||hash(row.source)!==id||staticHashBlob(Buffer.from(row.source))!==row.gitBlob)staticError('complete source content address differs');bytes+=row.bytes;if(bytes>STATIC_SOURCE_LIFECYCLE_LIMITS.sourceBytes)staticError('complete original source budget');}
+  const changedParents=[];
+  for(const profile of bundle.profiles){const expected=STATIC_SOURCE_LIFECYCLE_PROFILES[profile.revision];if(!expected||profile.files.length!==expected.files||profile.files.reduce((sum,row)=>sum+row.bytes,0)!==expected.bytes||profile.sourceSetSha256!==expected.sourceSetSha256)staticError('fixed complete historical universe differs');}
+  const profiles=[...bundle.profiles,bundle.current];
+  for(const profile of profiles){if(!Array.isArray(profile.files)||!profile.files.length||profile.files.length>STATIC_SOURCE_LIFECYCLE_LIMITS.paths||profile.sourceSetSha256!==staticDigest(profile.files))staticError('complete profile rows differ');let previous='';
+    for(const row of profile.files){if(typeof row.path!=='string'||row.path<=previous||row.path.startsWith('/')||row.path.includes('\\')||row.path.split('/').some(part=>!part||part==='.'||part==='..')||!row.path.endsWith('.rs')&&!['Cargo.toml','Cargo.lock','rust/Cargo.toml'].includes(row.path))staticError('unique tracked Rust/Cargo path required');previous=row.path;const source=bundle.sources[row.sourceId];if(!source||source.bytes!==row.bytes||source.gitBlob!==row.gitBlob)staticError('complete file source/Git join differs');}
+  }
+  if(JSON.stringify(index.profiles)!==JSON.stringify(bundle.profiles.map(({revision,files,sourceSetSha256})=>({revision,files:files.length,sourceSetSha256})))||index.current!==bundle.current.sourceSetSha256)staticError('index full profile census differs');
+  const current=new Map(bundle.current.files.map(row=>[row.path,row]));
+  if(!Array.isArray(bundle.lineage)||bundle.lineage.length!==2)staticError('complete source lineage required');
+  for(const profile of bundle.profiles){const stage=bundle.lineage.find(row=>row.revision===profile.revision);if(!stage||!Array.isArray(stage.files))staticError('actual profile lineage missing');const expected=profile.files.filter(row=>mappedCurrentSource(current,row.path)?.sourceId!==row.sourceId);if(JSON.stringify(stage.files.map(row=>row.path))!==JSON.stringify(expected.map(row=>row.path)))staticError('complete changed/deleted parent census differs');
+    for(const row of stage.files){const before=profile.files.find(file=>file.path===row.path),after=mappedCurrentSource(current,row.path);if(JSON.stringify(row.before)!==JSON.stringify(before))staticError('actual original parent differs');if(!after){if(row.status!=='deleted'||row.current!==null||row.originalPreserved!==true)staticError('deleted original witness differs');continue;}
+      if(row.status!=='changed'||JSON.stringify(row.after)!==JSON.stringify(after)||row.completeInverse!==true)staticError('actual current parent differs');const original=bundle.sources[before.sourceId],latest=bundle.sources[after.sourceId];if(!canonicalRows.has(before.sourceId)||!canonicalRows.has(after.sourceId))staticError('both changed-parent canonical documents required');changedParents.push(row);
+      for(const [source,change,wanted]of [[original.source,row.edit,latest.source],[latest.source,row.inverse,original.source]]){const [start,end]=change.span;if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||end<start||end>source.length||source.slice(start,end)!==change.expected||source.slice(0,start)+change.replacement+source.slice(end)!==wanted)staticError('complete source inverse differs');}
+    }
+  }
+}
+function readStaticArchiveDataPreflight(folder){
+  const index=JSON.parse(text(readFileSync(resolve(folder,'manifest.json'))));
+  if(index.schema!=='router-static-source-lifecycle-v1'||index.archive!=='originals.json.gz'||!Number.isSafeInteger(index.rawBytes)||index.rawBytes<0||index.rawBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticError('fixed complete index required');
+  const packed=readFileSync(resolve(folder,index.archive));if(packed.length!==index.bytes||hash(packed)!==index.sha256)staticError('full packed source differs');
+  const raw=gunzipSync(packed,{maxOutputLength:STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes});if(raw.length!==index.rawBytes||hash(raw)!==index.rawSha256)staticError('full original source differs');
+  preflightStaticArchiveData(raw,index);
+  const bundle=decodeStaticSourceStorage(raw,index);return {index,bundle};
+}
+export function readStaticSourceLifecyclePreflight({folder=STATIC_FOLDER}={}){
+  const {index,bundle}=readStaticArchiveDataPreflight(folder);
+  if(bundle.schema!==index.schema||JSON.stringify(bundle.cases)!==JSON.stringify(STATIC_SOURCE_LIFECYCLE_CASES)||JSON.stringify(bundle.authority)!==JSON.stringify({namespace:false,dispatch:false,ownership:false,semantic:false,executable:false}))staticError('test-data contract differs');
+  if(!Array.isArray(bundle.profiles)||bundle.profiles.length!==2||new Set(bundle.profiles.map(row=>row.revision)).size!==2)staticError('two complete historical universes required');
+  let bytes=0;for(const [id,row]of Object.entries(bundle.sources)){if(!/^[a-f0-9]{64}$/u.test(id)||typeof row.source!=='string'||Buffer.byteLength(row.source)!==row.bytes||row.bytes>STATIC_SOURCE_LIFECYCLE_LIMITS.fileBytes||hash(row.source)!==id||staticHashBlob(Buffer.from(row.source))!==row.gitBlob)staticError('complete source content address differs');bytes+=row.bytes;if(bytes>STATIC_SOURCE_LIFECYCLE_LIMITS.sourceBytes)staticError('complete original source budget');}
+  const changedParents=[];
+  for(const profile of bundle.profiles){const expected=STATIC_SOURCE_LIFECYCLE_PROFILES[profile.revision];if(!expected||profile.files.length!==expected.files||profile.files.reduce((sum,row)=>sum+row.bytes,0)!==expected.bytes||profile.sourceSetSha256!==expected.sourceSetSha256)staticError('fixed complete historical universe differs');}
+  const profiles=[...bundle.profiles,bundle.current];
+  for(const profile of profiles){if(!Array.isArray(profile.files)||!profile.files.length||profile.files.length>STATIC_SOURCE_LIFECYCLE_LIMITS.paths||profile.sourceSetSha256!==staticDigest(profile.files))staticError('complete profile rows differ');let previous='';
+    for(const row of profile.files){if(typeof row.path!=='string'||row.path<=previous||row.path.startsWith('/')||row.path.includes('\\')||row.path.split('/').some(part=>!part||part==='.'||part==='..')||!row.path.endsWith('.rs')&&!['Cargo.toml','Cargo.lock','rust/Cargo.toml'].includes(row.path))staticError('unique tracked Rust/Cargo path required');previous=row.path;const source=bundle.sources[row.sourceId];if(!source||source.bytes!==row.bytes||source.gitBlob!==row.gitBlob)staticError('complete file source/Git join differs');}
+  }
+  if(JSON.stringify(index.profiles)!==JSON.stringify(bundle.profiles.map(({revision,files,sourceSetSha256})=>({revision,files:files.length,sourceSetSha256})))||index.current!==bundle.current.sourceSetSha256)staticError('index full profile census differs');
+  const current=new Map(bundle.current.files.map(row=>[row.path,row]));
+  if(!Array.isArray(bundle.lineage)||bundle.lineage.length!==2)staticError('complete source lineage required');
+  for(const profile of bundle.profiles){const stage=bundle.lineage.find(row=>row.revision===profile.revision);if(!stage||!Array.isArray(stage.files))staticError('actual profile lineage missing');const expected=profile.files.filter(row=>mappedCurrentSource(current,row.path)?.sourceId!==row.sourceId);if(JSON.stringify(stage.files.map(row=>row.path))!==JSON.stringify(expected.map(row=>row.path)))staticError('complete changed/deleted parent census differs');
+    for(const row of stage.files){const before=profile.files.find(file=>file.path===row.path),after=mappedCurrentSource(current,row.path);if(JSON.stringify(row.before)!==JSON.stringify(before))staticError('actual original parent differs');if(!after){if(row.status!=='deleted'||row.current!==null||row.originalPreserved!==true)staticError('deleted original witness differs');continue;}
+      if(row.status!=='changed'||JSON.stringify(row.after)!==JSON.stringify(after)||row.completeInverse!==true)staticError('actual current parent differs');const original=bundle.sources[before.sourceId],latest=bundle.sources[after.sourceId];if(typeof original.canonical!=='string'||typeof latest.canonical!=='string')staticError('both changed-parent canonical documents required');changedParents.push(row);
+      for(const [source,change,wanted]of [[original.source,row.edit,latest.source],[latest.source,row.inverse,original.source]]){const [start,end]=change.span;if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||end<start||end>source.length||source.slice(start,end)!==change.expected||source.slice(0,start)+change.replacement+source.slice(end)!==wanted)staticError('complete source inverse differs');}
+    }
+  }
+  // Reject malformed complete metadata/source equations before reparsing all
+  // native canonical documents. Every valid packet still takes the complete
+  // original CST and boundary checks; no verdict or absence is cached.
+  const canonicalRows=Object.entries(bundle.sources).filter(([,row])=>row.canonical!==undefined),boundariesBySource=new Map();
+  visitStaticSourceLifecycleCanonicals(canonicalRows,(id,document)=>{
+    staticCst(bundle.sources[id].source,document);
+    const boundaries=new Set([0,document.source.length]);for(const node of document.nodes){boundaries.add(node[2]);boundaries.add(node[3]);}
+    boundariesBySource.set(id,boundaries);
+  });
+  for(const row of changedParents){
+    const boundaries=boundariesBySource.get(row.before.sourceId),latestBoundaries=boundariesBySource.get(row.after.sourceId);
+    if(!boundaries||!latestBoundaries)staticError('both changed-parent canonical documents required');
+    if(!boundaries.has(row.edit.span[0])||!boundaries.has(row.edit.span[1]))staticError('whole original CST token/group boundary required');
+  }
+  return {index,bundle};
 }
