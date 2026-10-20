@@ -40,9 +40,17 @@ any file over 32 MiB, or total input bytes over 256 MiB. These are the unchanged
 compiler-source input limits. Bounded fd reads then enforce each allocation size
 and reject source growth or replacement after the census.
 
-Each source has a separate gzip frame with its complete original and trial
-bytes. One file packet is live at a time. Every frame is independently reopened
-and decoded; every mirror file is reread. The complete vector, file modes, HEAD,
+Each source has a separate version-two gzip frame with its complete original
+bytes. An unchanged trial records `same-original-source` plus its complete byte
+length and SHA-256; it reconstructs the exact retained original bytes rather
+than encoding those same bytes twice. The codec frame instead requires
+`complete-candidate-source` with the complete distinct candidate bytes. The
+reader reconstructs the whole packet equation, rejects an aliased codec,
+forged association, extra field or noncanonical/corrupted encoding, and checks
+both reconstructed sources against their actual physical files. This is
+lossless source transport with no encoded source/verdict cache. One file packet
+is live at a time. Every frame is independently reopened and decoded; every
+mirror file is reread. The complete vector, file modes, HEAD,
 candidate equation and original physical sources are rechecked. Exactly one
 file may differ in the mirror. Initial mirror, frames, proposal and manifest
 must fit Root's 384 MiB mirror/evidence monitor cap. Test runners retain their
@@ -104,8 +112,17 @@ source calls. Missing, duplicated, unknown, skipped, untimed, failed or overdue
 cases fail qualification. Full original receipts and raw bytes remain retained;
 the join is not a coverage or runtime-parity claim.
 
-The harness and its eight new controls are source drafts. Syntax checks do not
-qualify them. Preparation, new receiving controls and the original complete
-twelve-case candidate trial remain unrun for this draft until Root receives
-the batch and obtains the shared lease. Production codec and all original tests
-remain unchanged.
+Root's receiving run of the first eight harness controls passed in 2.20 seconds
+with no audited deadline breach. Its subsequent real preparation failed before
+any original derive runtime: Root reported approximately 153 MiB of mirror
+files plus 248 MiB of frames, exceeding the unchanged 384 MiB enclosing cap.
+The first frame format encoded unchanged original/trial bytes twice, which was
+costly for already compressed original fixtures. Preserve that failed receipt
+and partial archive separately; they establish no performance result.
+
+The version-two source association repair preserves every original input and
+adds four complete transport controls to the same file, now twelve harness
+cases with their original 60-second declarations. It has not been executed or
+receiving-qualified, and its storage outcome has not been measured. Preparation
+and the original complete twelve-case candidate derive trial remain unqualified.
+Production codec and all original tests remain unchanged.

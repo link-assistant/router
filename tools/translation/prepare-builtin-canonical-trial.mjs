@@ -81,6 +81,18 @@ export function proposeCanonicalDeriveTrial({root=ROOT}={}){
  return {schema:'isolated-original-derive-canonical-trial-source-v1',path:CODEC,original,candidate:row.after,beforeMeta:before.meta,afterMeta,sequence,inverseSequence,inverse:original,trace:applied.trace,candidateProducer:candidate,test:{path:TEST,source,bytes:Buffer.byteLength(source),sha256:hash(source),cases},originalPublicAPIUnchanged:true,originalTestUnchanged:true,productionSelected:false,trialSelected:true,performanceQualified:false,sourceAuthority:false,runtimeAuthority:false};
 }
 function writeNew(path,bytes,mode=0o600){mkdirSync(dirname(path),{recursive:true});plain(dirname(path),true);writeFileSync(path,bytes,{flag:'wx',mode});chmodSync(path,mode);}
+export function canonicalTrialFilePacket(fact,original,trial){
+ if(!Buffer.isBuffer(original)||!Buffer.isBuffer(trial)||original.length!==fact.bytes||hash(original)!==fact.sha256||original.length>INPUT_LIMITS.fileBytes||trial.length>INPUT_LIMITS.fileBytes)fail('complete bounded original/trial source bytes required');
+ const changed=fact.path===CODEC;if(changed===original.equals(trial))fail('exactly the original codec may have a distinct candidate source');
+ return {schema:'complete-original-and-isolated-trial-file-v2',path:fact.path,original:{...fact,base64:original.toString('base64')},trial:{sourceAssociation:changed?'complete-candidate-source':'same-original-source',bytes:trial.length,sha256:hash(trial),...(changed?{base64:trial.toString('base64')}:{})}};
+}
+export function decodeCanonicalTrialFilePacket(packet,fact,{candidateSource}={}){
+ if(typeof packet?.original?.base64!=='string'||packet.original.base64.length>Math.ceil(INPUT_LIMITS.fileBytes/3)*4)fail('bounded complete original source encoding required');
+ const original=Buffer.from(packet.original.base64,'base64');let trial=original;if(fact.path===CODEC){if(typeof candidateSource!=='string'||candidateSource.length>INPUT_LIMITS.fileBytes||Buffer.byteLength(candidateSource)>INPUT_LIMITS.fileBytes)fail('fresh complete actual bounded candidate source required');trial=Buffer.from(candidateSource);}
+ // Reconstruct the complete wire equation, including the association, every
+ // original field and canonical source encoding. No verdict/encoded cache.
+ equal(packet,canonicalTrialFilePacket(fact,original,trial),'complete original/trial source packet equation differs');return {original,trial};
+}
 function frameRead(output,row){if(!Number.isSafeInteger(row.packetBytes)||row.packetBytes<0||row.packetBytes>FRAME_LIMIT)fail('complete frame byte bound differs');const bytes=read(output,row.frame,FRAME_LIMIT);if(bytes.length!==row.compressedBytes||hash(bytes)!==row.compressedSha256)fail('complete gzip frame changed');const packet=JSON.parse(gunzipSync(bytes,{maxOutputLength:row.packetBytes}));if(Buffer.byteLength(JSON.stringify(packet))!==row.packetBytes)fail('complete frame length differs');return packet;}
 function safeOutput(root,output){output=resolve(output);if(inside(root,output)||inside(output,root)||output===root||existsSync(output))fail('fresh output outside original root required');plain(dirname(output),true);return output;}
 export function prepareCanonicalDeriveTrial({root=ROOT,output}={}){
@@ -91,7 +103,7 @@ export function prepareCanonicalDeriveTrial({root=ROOT,output}={}){
  for(const [index,fact]of vector.files.entries()){
   const bytes=read(root,fact.path);if(bytes.length!==fact.bytes||hash(bytes)!==fact.sha256)fail('fresh original file differs');
   const trial=fact.path===CODEC?Buffer.from(proposal.candidate):bytes;
-  const packet={schema:'complete-original-and-isolated-trial-file-v1',path:fact.path,original:{...fact,base64:bytes.toString('base64')},trial:{bytes:trial.length,sha256:hash(trial),base64:trial.toString('base64')}};
+  const packet=canonicalTrialFilePacket(fact,bytes,trial);
   const raw=Buffer.from(JSON.stringify(packet)),compressed=gzipSync(raw),frame='frames/'+String(index).padStart(6,'0')+'.json.gz';storageBytes+=compressed.length+trial.length;
   if(storageBytes>LIMIT)fail('384MiB mirror/evidence allocation exceeded');writeNew(join(output,frame),compressed);writeNew(join(mirror,fact.path),trial,fact.mode);
   const descriptor={path:fact.path,frame,packetBytes:raw.length,compressedBytes:compressed.length,compressedSha256:hash(compressed),original:{bytes:bytes.length,sha256:hash(bytes)},trial:{bytes:trial.length,sha256:hash(trial)}};equal(frameRead(output,descriptor),packet,'independent complete gzip packet readback differs');frames.push(descriptor);
@@ -114,8 +126,7 @@ export function verifyCanonicalDeriveTrial({output}={}){
  equal(proposeCanonicalDeriveTrial({root:manifest.root}),proposal,'fresh actual complete source producer equation changed');
  equal(manifest.test,proposal.test,'complete original test metadata differs');if(manifest.frames.length!==manifest.vector.files.length)fail('complete input frame count differs');let substitutions=0;
  for(const [index,row]of manifest.frames.entries()){
-  const fact=manifest.vector.files[index];if(row.path!==fact.path)fail('complete frame order/path differs');const packet=frameRead(output,row),original=Buffer.from(packet.original.base64,'base64'),trial=Buffer.from(packet.trial.base64,'base64');
-  equal(packet,{schema:'complete-original-and-isolated-trial-file-v1',path:fact.path,original:{...fact,base64:original.toString('base64')},trial:{bytes:trial.length,sha256:hash(trial),base64:trial.toString('base64')}},'complete original and trial packet fields differ');
+  const fact=manifest.vector.files[index];if(row.path!==fact.path)fail('complete frame order/path differs');const packet=frameRead(output,row),{original,trial}=decodeCanonicalTrialFilePacket(packet,fact,{candidateSource:proposal.candidate});
   equal({path:packet.path,mode:packet.original.mode,bytes:packet.original.bytes,sha256:packet.original.sha256},fact,'full original frame fact differs');
   for(const [bytes,pin]of [[original,row.original],[trial,row.trial]])if(bytes.length!==pin.bytes||hash(bytes)!==pin.sha256)fail('full frame source bytes differ');
   if(!original.equals(read(manifest.root,row.path))||!trial.equals(read(manifest.mirror,row.path))||(lstatSync(join(manifest.mirror,row.path)).mode&0o777)!==fact.mode)fail('physical original or trial source changed');
