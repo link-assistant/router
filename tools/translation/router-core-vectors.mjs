@@ -7,7 +7,7 @@ import {unsupported} from './vendor/meta-language/translation/diagnostics.js';
 
 const descriptor = Object.getOwnPropertyDescriptor(StringRustParser.prototype, 'expressionMacro');
 const owner = Object.freeze({kind: 'owned', source: 'Vec'});
-const checkedLists = new WeakMap();
+export {checkRouterCoreVector,hasCheckedRouterCoreVector} from './extensions/source-lifetimes.mjs';
 function current() {
   const actual = Object.getOwnPropertyDescriptor(StringRustParser.prototype, 'expressionMacro');
   if (!actual || ['value', 'get', 'set', 'writable', 'enumerable', 'configurable'].some(key => actual[key] !== descriptor[key])) {
@@ -54,23 +54,6 @@ export function parseRouterCoreVector(parser, path) {
   return output.value;
 }
 
-export function checkRouterCoreVector(checker, node, env, path, expected, allowLiteral) {
-  const value = checker.expr(node.value, env, path, expected, allowLiteral), type = value.type?.element;
-  const scalar = type && !type.rustReference && !type.rustGenericIdentityUnresolved && !type.rustBorrowingUnresolved &&
-    (type.kind === 'bool' || type.kind === 'fixed' && typeof type.rustPrimitiveName === 'string' ||
-      type.kind === 'string' && ['String', 'str'].includes(type.rustOwnership?.source));
-  if (value.k !== 'array' || value.type?.kind !== 'array' || !scalar || value.type.rustOwnership?.kind !== 'owned' || value.type.rustOwnership.source !== 'Vec') {
-    throw unsupported('owned vector elements', 'requires checked primitive integers, bools, owned standard text or borrowed str; nominal, nested, mutable and erased elements remain refused', node.span);
-  }
-  const proof = Object.freeze({profile: 'checked-router-owned-vector-list-v1'});
-  checkedLists.set(proof, {items: value.items, elements: [...value.items], elementType: value.type.element});
-  return {...value, constEligible: false, compatibilityCore: node.value.compatibilityCore, ownedVectorProof: proof};
-}
+
 
 // Private checker association, consumed before checked-meta serialization.
-export function hasCheckedRouterCoreVector(node) {
-  const original = node && checkedLists.get(node.ownedVectorProof);
-  return Boolean(original && node.k === 'array' && node.items === original.items && node.type?.kind === 'array' &&
-    node.type.element === original.elementType && node.type.rustOwnership?.kind === 'owned' && node.type.rustOwnership.source === 'Vec' &&
-    node.items.length === original.elements.length && node.items.every((item, at) => item === original.elements[at]));
-}

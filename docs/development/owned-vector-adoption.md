@@ -25,10 +25,17 @@ and repository rules retain complete before/after CST, serialization/reparsing,
 all edits and whole inverses. The generated Host hook delegates to the existing
 checker and keeps its enclosing ownership and primitive-identity checks.
 The native source producer also copies the existing fixed-array element-origin
-equations into a separate owned-list branch. Its private checked association
-binds the original element array and element type; copied or changed metadata
-cannot select that branch. Each borrowed element keeps its actual input or
-static origin, including when the enclosing vector owns its allocation.
+equations into a separate owned-list branch. The original portable checker
+normalizes expression objects through `reuseSuccessors`; that pass copies
+element arrays while retaining checked types. The vector checker and its
+private association now live in the lifetime module. Its real program lifecycle
+joins each normalized vector to the complete unchanged typed tree issued by the
+same checker and a genuine original parsed declaration. It then records the
+exact normalized node, type, element-array and element identities privately.
+No rebinding operation is exported. Copied programs or contexts, foreign
+checkers and changed original/normalized trees cannot establish this join.
+Each borrowed element keeps its actual input or static origin, including when
+the enclosing vector owns its allocation.
 
 Run the read-only producer comparison with the repository's installed compiler:
 
@@ -37,9 +44,10 @@ node tools/translation/prepare-core-vector-sources.mjs --root /absolute/checkout
 ```
 
 The complete historical source inputs are checked-in fixture DATA. Check mode
-freshly regenerates all five outputs and compares every byte: the Rust facade,
-its complete SOURCE/SHA256 literals, Host integration, lifetime-origin adapter
-and independent Rust oracle. It does not consume saved compiler programs or verdicts. The source
+freshly regenerates all six outputs and compares every byte: the Rust facade,
+its complete SOURCE/SHA256 literals, Host integration, vector parser/forwarding
+module, lifetime-origin adapter and independent Rust oracle. It does not
+consume saved compiler programs or verdicts. The source
 proposal and source-data constants grant no semantic authority. The oracle
 source has not run locally; all Rust tools remain prohibited during issue #759.
 
@@ -81,6 +89,24 @@ file passed JavaScript and strict TypeScript in 17.47 seconds with 727,465,984
 bytes peak aggregate RSS and an independent seven-case deadline join; each
 original case limit remained 60 seconds. Native source regeneration and all
 five vector/dependent-formatting source comparisons passed separately. A
-subsequent tighter private element-array/type association and its copied-value
-controls await complete receiving requalification. These results do not change
-the historical production coverage measurement.
+subsequent tighter private element-array/type association kept five cases green
+but refused the two borrowed-list positives because it rejected the original
+checker's normalization copies. The complete seven-case diagnostic retained
+both refusals and the exact association mismatch: element type identity agreed,
+while normalized array and expression identities differed. The lifecycle join
+repair passed native source generation with six complete source equations and
+all dependent formatting equations. The complete seven-case receiving file,
+including copied-program/foreign-checker controls and unchanged 60-second case
+limits, passed JavaScript and strict TypeScript in 17.63 seconds with
+722,272,256 bytes peak aggregate RSS. The complete native-AST case/deadline
+audit, Node event stream and source vectors are retained. These results do not
+change the historical production coverage measurement.
+
+CST inverses prove exact source restoration; they do not establish executable
+reverse translation. The owned-core reverse bridge currently registers JSON
+operations in `js-to-rust/owned-core-operations.mjs` and reconstructs a closed
+expression domain in `js-to-rust/owned-core-source.mjs`. It has no generic vector
+literal or owned-vector operation: its expression dispatcher reaches
+`unimplemented expression ArrayLiteralExpression` for a plain emitted list,
+and its registered-operation gate refuses unregistered vector helper calls.
+No reverse receiving roundtrip or bidirectional coverage is claimed here.

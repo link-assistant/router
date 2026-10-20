@@ -1,4 +1,51 @@
-import {hasCheckedRouterCoreVector} from '../router-core-vectors.mjs';
+// Generated vector checker association and original lifetime equations.
+const checkedLists = new WeakMap();
+export function checkRouterCoreVector(checker, node, env, path, expected, allowLiteral) {
+  const value = checker.expr(node.value, env, path, expected, allowLiteral), type = value.type?.element;
+  const scalar = type && !type.rustReference && !type.rustGenericIdentityUnresolved && !type.rustBorrowingUnresolved &&
+    (type.kind === 'bool' || type.kind === 'fixed' && typeof type.rustPrimitiveName === 'string' ||
+      type.kind === 'string' && ['String', 'str'].includes(type.rustOwnership?.source));
+  if (value.k !== 'array' || value.type?.kind !== 'array' || !scalar || value.type.rustOwnership?.kind !== 'owned' || value.type.rustOwnership.source !== 'Vec') {
+    throw unsupported('owned vector elements', 'requires checked primitive integers, bools, owned standard text or borrowed str; nominal, nested, mutable and erased elements remain refused', node.span);
+  }
+  const proof = Object.freeze({profile: 'checked-router-owned-vector-list-v1'});
+  const checkedVector={...value, constEligible: false, compatibilityCore: node.value.compatibilityCore, ownedVectorProof: proof};
+  checkedLists.set(proof,{items: value.items, elements: [...value.items], elementType: value.type.element,checker,snapshot:ownedVectorSnapshot(checkedVector)});
+  return checkedVector;
+}
+export function hasCheckedRouterCoreVector(node) {
+  const original = node && checkedLists.get(node.ownedVectorProof);
+  return (Boolean(original && node.k === 'array' && node.items === original.items && node.type?.kind === 'array' &&
+    node.type.element === original.elementType && node.type.rustOwnership?.kind === 'owned' && node.type.rustOwnership.source === 'Vec' &&
+    node.items.length === original.elements.length && node.items.every((item, at) => item === original.elements[at]))&&unchangedOwnedVectorSnapshot(original.snapshot,node))||hasNormalizedOwnedVector(node);
+}
+
+const normalizedOwnedVectors=new WeakMap(),ownedVectorPrograms=new WeakSet();
+function ownedVectorSnapshot(node){return {node,type:node.type,items:node.items,elements:[...node.items],fingerprint:metadataDigest(node)};}
+function unchangedOwnedVectorSnapshot(row,node){return node===row.node&&node.type===row.type&&node.items===row.items&&node.items.length===row.elements.length&&node.items.every((item,at)=>item===row.elements[at])&&metadataDigest(node)===row.fingerprint;}
+function hasNormalizedOwnedVector(node){const row=node&&normalizedOwnedVectors.get(node);return Boolean(row&&unchangedOwnedVectorSnapshot(row,node));}
+function bindNormalizedOwnedVectors(checker,program,surface){
+  if(program?.sourceLanguage!=='Rust'||program.declarations!==checker.items||ownedVectorPrograms.has(program))throw unsupported('owned vector normalization context','requires a fresh actual same-checker program',null);
+  ownedVectorPrograms.add(program);
+  const originals=new Map();
+  const sourceEntries=(items,path=[])=>{for(const entry of items)if(entry.k==='module')sourceEntries(entry.items,[...path,entry.name]);else if(entry.k==='fn'&&originalParsedDeclarationEvidence(entry))originals.set([...path,entry.name].join('.'),entry);};
+  sourceEntries(surface.items);
+  for(const entry of program.declarations.values()){
+    const originalEntry=originals.get(entry.fullName);if(entry.k!=='fn'||!originalEntry||entry.span?.start!==originalEntry.span?.start||entry.span?.end!==originalEntry.span?.end)continue;
+    const seen=new WeakSet();
+    const visit=node=>{
+      if(!node||typeof node!=='object'||seen.has(node))return;seen.add(node);
+      const original=checkedLists.get(node.ownedVectorProof);
+      if(original){
+        if(original.checker!==checker||node.k!=='array'||node.type?.element!==original.elementType||!unchangedOwnedVectorSnapshot(original.snapshot,original.snapshot.node)||metadataDigest(node)!==original.snapshot.fingerprint||!Number.isSafeInteger(node.span?.start)||!Number.isSafeInteger(node.span?.end)||node.span.start<entry.span.start||node.span.end>entry.span.end)throw unsupported('owned vector normalization source','requires the unchanged complete typed original issued by this checker and source declaration',node.span);
+        normalizedOwnedVectors.set(node,ownedVectorSnapshot(node));
+      }
+      for(const [key,value]of Object.entries(node))if(!['type','span'].includes(key)){if(value?.k)visit(value);else if(Array.isArray(value))for(const child of value)if(child?.k)visit(child);}
+    };
+    visit(entry.body);
+  }
+}
+
 import {canonicalResult} from './result-iterators.mjs';
 import {JSON_DATA} from './json-contracts.mjs';
 import {sharedReferenceCopyIdentity} from '../shared-reference-copy-source.mjs';
@@ -13,7 +60,7 @@ import {hasStaticElementOrigin} from './static-array-element.mjs';
 // equivalence. This bounded adapter does not manufacture reference lifetimes.
 import {unsupported,typeError} from '../vendor/meta-language/translation/diagnostics.js';
 import {rustFixedType} from '../checked-types.mjs';
-import {metadataDigest,ownData,copyMetadata} from './source-links.mjs';
+import {metadataDigest,ownData,copyMetadata,originalParsedDeclarationEvidence} from './source-links.mjs';
 
 const UNKNOWN='unproved-borrow-origin';
 // Active synchronous application context only; no type/verdict cache survives a call.
@@ -648,6 +695,7 @@ export function withSourceLifetimeChecker(Base) {
       const collect=(items,path=[])=>{for(const item of items)if(item.k==='module')collect(item.items,[...path,item.name]);else if(item.k==='fn')mutableParameters.set([...path,item.name].join('.'),item.params.filter(param=>param.mutable).map(param=>param.name));};
       collect(surface.items);
       const program=super.program(surface),context={checker:this,sourceSharedPatternReader:node=>this.sourceSharedPatternProofOrigin?.(node),declarations:program.declarations,resolveType:(type,path,span)=>this.resolveType(type,path,span)};
+      bindNormalizedOwnedVectors(this,program,surface);
       const signatures=new Map();
       for(const entry of program.declarations.values())if(entry.k==='fn')signatures.set(entry.fullName,functionLifetimeSignature(entry,context));
       for(const entry of program.declarations.values())if(entry.k==='fn') {

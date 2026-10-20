@@ -25,8 +25,8 @@ function transform(source, language, edits, id) {
   return {before: source, after: after.source, beforeMeta: before.meta, afterMeta, inverse: source, edits, trace: applied.trace,
     beforeSha256: hash(source), afterSha256: hash(after.source)};
 }
-export function prepareCoreVectorSources({facade, sourceData, hostSource, lifetimesSource}) {
-  for (const source of [facade, sourceData, hostSource, lifetimesSource]) if (typeof source !== 'string' || source.length > 2_000_000) fail('complete bounded original inputs required');
+export function prepareCoreVectorSources({facade, sourceData, hostSource, lifetimesSource, vectorSource}) {
+  for (const source of [facade, sourceData, hostSource, lifetimesSource, vectorSource]) if (typeof source !== 'string' || source.length > 2_000_000) fail('complete bounded original inputs required');
   const ts = ownershipCompiler();
   if (ts.version !== '5.9.3') fail('installed native TypeScript 5.9.3 required');
   const parse = (name, source) => {
@@ -75,25 +75,55 @@ export function prepareCoreVectorSources({facade, sourceData, hostSource, lifeti
       const at = state.method.body.getStart(state.hostFile) + 1;
       const checkAt = state.checkerMethod.body.getStart(state.hostFile) + 1;
       const host = transform(hostSource, 'JavaScript', [
-        {span: [0, 0], expected: '', replacement: "import {parseRouterCoreVector,checkRouterCoreVector} from '../router-core-vectors.mjs';\n"},
-        {span: [at, at], expected: '', replacement: '\n    const coreVector=parseRouterCoreVector(this,path);if(coreVector)return coreVector;'},
-        {span: [checkAt, checkAt], expected: '', replacement: "\n    if(node.k==='routerCoreVector')return checkRouterCoreVector(this,node,env,path,expected,allowLiteral);"},
+        {span: [0, 0], expected: '', replacement: "import {parseRouterCoreVector,checkRouterCoreVector} from '../router-core-vectors.mjs';"},
+        {span: [at, at], expected: '', replacement: 'const coreVector=parseRouterCoreVector(this,path);if(coreVector)return coreVector;'},
+        {span: [checkAt, checkAt], expected: '', replacement: "if(node.k==='routerCoreVector')return checkRouterCoreVector(this,node,env,path,expected,allowLiteral);"},
       ], 'router-core:compose-qualified-vector-parser-hook');
-      const lifetimes = prepareCoreVectorLifetimeSource(lifetimesSource);
+      const lifetimeSources = prepareCoreVectorLifetimeSources(lifetimesSource, vectorSource);
       parse('router-core-source-data.mjs', data.after); parse('host-contracts.mjs', host.after);
       return {schema: 'owned-vector-complete-source-proposal-v1', typescript: ts.version,
         sources: {'rust/src/translation_core.rs': state.facadeResult, 'tools/translation/router-core-source-data.mjs': data,
           'tools/translation/extensions/host-contracts.mjs': host,
-          'tools/translation/extensions/source-lifetimes.mjs': lifetimes,
+          ...lifetimeSources,
           'rust/tests/translation_core_vectors.rs': transform('', 'Rust', [{span: [0, 0], expected: '', replacement: CORE_VECTOR_RUST_ORACLE_SOURCE}], 'router-core:independent-native-vector-oracle-source')}, wrapper: state.wrapper,
         semanticAuthority: false, executableAdmission: false, rustExecuted: false};
     }}]},
   ]).run(null);
 }
 
-export function prepareCoreVectorLifetimeSource(source) {
+// ReuseSuccessors in the original checker copies expression nodes/arrays but
+// retains type objects. Issue a private association only in the actual later
+// lifetime program lifecycle; there is no exported rebinding operation.
+const VECTOR_NORMALIZATION_SOURCE = String.raw`
+const normalizedOwnedVectors=new WeakMap(),ownedVectorPrograms=new WeakSet();
+function ownedVectorSnapshot(node){return {node,type:node.type,items:node.items,elements:[...node.items],fingerprint:metadataDigest(node)};}
+function unchangedOwnedVectorSnapshot(row,node){return node===row.node&&node.type===row.type&&node.items===row.items&&node.items.length===row.elements.length&&node.items.every((item,at)=>item===row.elements[at])&&metadataDigest(node)===row.fingerprint;}
+function hasNormalizedOwnedVector(node){const row=node&&normalizedOwnedVectors.get(node);return Boolean(row&&unchangedOwnedVectorSnapshot(row,node));}
+function bindNormalizedOwnedVectors(checker,program,surface){
+  if(program?.sourceLanguage!=='Rust'||program.declarations!==checker.items||ownedVectorPrograms.has(program))throw unsupported('owned vector normalization context','requires a fresh actual same-checker program',null);
+  ownedVectorPrograms.add(program);
+  const originals=new Map();
+  const sourceEntries=(items,path=[])=>{for(const entry of items)if(entry.k==='module')sourceEntries(entry.items,[...path,entry.name]);else if(entry.k==='fn'&&originalParsedDeclarationEvidence(entry))originals.set([...path,entry.name].join('.'),entry);};
+  sourceEntries(surface.items);
+  for(const entry of program.declarations.values()){
+    const originalEntry=originals.get(entry.fullName);if(entry.k!=='fn'||!originalEntry||entry.span?.start!==originalEntry.span?.start||entry.span?.end!==originalEntry.span?.end)continue;
+    const seen=new WeakSet();
+    const visit=node=>{
+      if(!node||typeof node!=='object'||seen.has(node))return;seen.add(node);
+      const original=checkedLists.get(node.ownedVectorProof);
+      if(original){
+        if(original.checker!==checker||node.k!=='array'||node.type?.element!==original.elementType||!unchangedOwnedVectorSnapshot(original.snapshot,original.snapshot.node)||metadataDigest(node)!==original.snapshot.fingerprint||!Number.isSafeInteger(node.span?.start)||!Number.isSafeInteger(node.span?.end)||node.span.start<entry.span.start||node.span.end>entry.span.end)throw unsupported('owned vector normalization source','requires the unchanged complete typed original issued by this checker and source declaration',node.span);
+        normalizedOwnedVectors.set(node,ownedVectorSnapshot(node));
+      }
+      for(const [key,value]of Object.entries(node))if(!['type','span'].includes(key)){if(value?.k)visit(value);else if(Array.isArray(value))for(const child of value)if(child?.k)visit(child);}
+    };
+    visit(entry.body);
+  }
+}
+`;
+export function prepareCoreVectorLifetimeSources(source, vectorSource) {
   const ts = ownershipCompiler();
-  if (ts.version !== '5.9.3' || typeof source !== 'string' || source.length > 2_000_000 || source.includes('hasCheckedRouterCoreVector')) fail('complete fresh original lifetime source required');
+  if (ts.version !== '5.9.3' || [source, vectorSource].some(value => typeof value !== 'string' || value.length > 2_000_000) || source.includes('hasCheckedRouterCoreVector')) fail('complete fresh original lifetime/vector sources required');
   const file = ts.createSourceFile('source-lifetimes.mjs', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
   if (file.parseDiagnostics.length) fail('complete native lifetime syntax required');
   const named = name => file.statements.filter(row => ts.isFunctionDeclaration(row) && row.name?.text === name);
@@ -108,14 +138,50 @@ export function prepareCoreVectorLifetimeSource(source) {
   // obligation does not apply to the comma-list grammar selected here.
   const branch = "if(node.k==='array'&&hasCheckedRouterCoreVector(node)) {\n    " + statements[0].getText(file) + '\n    ' + statements[2].getText(file) + '\n  }\n  ';
   const emptyBranch = "if(hasCheckedRouterCoreVector(node)&&node.items.length===0)" + empties[0].thenStatement.getText(file) + '\n  ';
+  const vectorFile = ts.createSourceFile('router-core-vectors.mjs', vectorSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
+  if (vectorFile.parseDiagnostics.length) fail('complete original vector syntax required');
+  const pick = name => {
+    const rows = vectorFile.statements.filter(row => ts.isFunctionDeclaration(row) && row.name?.text === name || ts.isVariableStatement(row) && row.declarationList.declarations.some(value => ts.isIdentifier(value.name) && value.name.text === name));
+    if (rows.length !== 1) fail('one complete original vector declaration required: ' + name); return rows[0];
+  };
+  const moved = ['checkedLists', 'checkRouterCoreVector', 'hasCheckedRouterCoreVector'].map(pick);
+  const checker = moved[1], returns = checker.body.statements.filter(ts.isReturnStatement), registrations = checker.body.statements.filter(row => ts.isExpressionStatement(row) && ts.isCallExpression(row.expression) && row.expression.expression.getText(vectorFile) === 'checkedLists.set');
+  if (returns.length !== 1 || registrations.length !== 1) fail('one complete original vector issue and result required');
+  const result = returns[0].expression.getText(vectorFile), registration = registrations[0].expression;
+  if (registration.arguments.length !== 2 || !ts.isObjectLiteralExpression(registration.arguments[1])) fail('complete original private vector association required');
+  const fields = registration.arguments[1].getText(vectorFile);
+  let checking = checker.getText(vectorFile), old = vectorSource.slice(registrations[0].getStart(vectorFile), returns[0].end);
+  if (checking.split(old).length !== 2) fail('one exact original private issue region required');
+  checking = checking.replace(old, () => 'const checkedVector=' + result + ';\n  checkedLists.set(proof,' + fields.slice(0, -1) + ',checker,snapshot:ownedVectorSnapshot(checkedVector)});\n  return checkedVector;');
+  const guard = moved[2], guardReturns = guard.body.statements.filter(ts.isReturnStatement);
+  if (guardReturns.length !== 1) fail('one complete original vector guard required');
+  let guarded = guard.getText(vectorFile), guardReturn = guardReturns[0].getText(vectorFile);
+  guarded = guarded.replace(guardReturn, () => 'return (' + guardReturns[0].expression.getText(vectorFile) + '&&unchangedOwnedVectorSnapshot(original.snapshot,node))||hasNormalizedOwnedVector(node);');
+  const declarations = moved[0].getText(vectorFile) + '\n' + checking + '\n' + guarded + '\n' + VECTOR_NORMALIZATION_SOURCE;
+  const factories = named('withSourceLifetimeChecker');
+  const classes = []; const walk = node => { if (ts.isClassExpression(node)) classes.push(node); ts.forEachChild(node, walk); };
+  if (factories.length !== 1) fail('one original lifetime checker factory required'); walk(factories[0]);
+  const methods = classes.flatMap(row => row.members).filter(row => ts.isMethodDeclaration(row) && row.name.getText(file) === 'program');
+  if (methods.length !== 1) fail('one complete original lifetime program lifecycle required');
+  const programs = methods[0].body.statements.filter(ts.isVariableStatement).filter(row => row.declarationList.declarations.some(value => ts.isIdentifier(value.name) && value.name.text === 'program' && ts.isCallExpression(value.initializer) && value.initializer.expression.getText(file) === 'super.program'));
+  const imports = file.statements.filter(row => ts.isImportDeclaration(row) && row.moduleSpecifier.text === './source-links.mjs');
+  if (programs.length !== 1 || imports.length !== 1 || !ts.isNamedImports(imports[0].importClause?.namedBindings)) fail('actual lifetime program and source-link import required');
+  const links = imports[0].importClause.namedBindings;
   const output = transform(source, 'JavaScript', [
-    {span: [0, 0], expected: '', replacement: "import {hasCheckedRouterCoreVector} from '../router-core-vectors.mjs';\n"},
+    {span: [0, 0], expected: '', replacement: '// Generated vector checker association and original lifetime equations.\n' + declarations + '\n'},
+    {span: [links.end - 1, links.end - 1], expected: '', replacement: ',originalParsedDeclarationEvidence'},
+    {span: [programs[0].end, programs[0].end], expected: '', replacement: '\n      bindNormalizedOwnedVectors(this,program,surface);'},
     {span: [arrays[0].getStart(file), arrays[0].getStart(file)], expected: '', replacement: branch},
     {span: [empties[0].getStart(file), empties[0].getStart(file)], expected: '', replacement: emptyBranch},
   ], 'router-core:derive-owned-vector-origins-from-actual-fixed-array-equations');
   const after = ts.createSourceFile('source-lifetimes.mjs', output.after, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
   if (after.parseDiagnostics.length) fail('generated complete native lifetime syntax differs');
-  return output;
+  const forwarding = transform(vectorSource, 'JavaScript', moved.map((row, at) => {
+    const end = at === 2 && /^\s*$/u.test(vectorSource.slice(row.end)) ? vectorSource.length : row.end;
+    return {span: [row.getStart(vectorFile), end], expected: vectorSource.slice(row.getStart(vectorFile), end),
+      replacement: at === 0 ? "export {checkRouterCoreVector,hasCheckedRouterCoreVector} from './extensions/source-lifetimes.mjs';" : ''};
+  }), 'router-core:move-private-vector-checker-to-original-lifetime-lifecycle');
+  return {'tools/translation/extensions/source-lifetimes.mjs': output, 'tools/translation/router-core-vectors.mjs': forwarding};
 }
 
 export function prepareCoreVectorCheckerSources({facade, sourceData, hostSource}) {
@@ -143,7 +209,7 @@ export function prepareCoreVectorCheckerSources({facade, sourceData, hostSource}
       const at = method.body.getStart(file) + 1;
       const host = transform(hostSource, 'JavaScript', [
         {span: [import_.getStart(file), import_.end], expected: hostSource.slice(import_.getStart(file), import_.end), replacement: "import {parseRouterCoreVector,checkRouterCoreVector} from '../router-core-vectors.mjs';"},
-        {span: [at, at], expected: '', replacement: "\n    if(node.k==='routerCoreVector')return checkRouterCoreVector(this,node,env,path,expected,allowLiteral);"},
+        {span: [at, at], expected: '', replacement: "if(node.k==='routerCoreVector')return checkRouterCoreVector(this,node,env,path,expected,allowLiteral);"},
       ], 'router-core:compose-qualified-vector-checker-hook');
       return {schema: 'owned-vector-checker-source-proposal-v1', typescript: ts.version,
         sources: {'tools/translation/extensions/host-contracts.mjs': host},
@@ -164,7 +230,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     const originals = JSON.parse(gunzipSync(packed, {maxOutputLength: 2_000_000}));
     if (originals.schema !== 'owned-vector-complete-original-inputs-v1') fail('complete original source-input fixture required');
     const result = prepareCoreVectorSources({facade: originals.sources['rust/src/translation_core.rs'],
-      sourceData: originals.sources['tools/translation/router-core-source-data.mjs'], hostSource: originals.sources['tools/translation/extensions/host-contracts.mjs'], lifetimesSource: originals.sources['tools/translation/extensions/source-lifetimes.mjs']});
+      sourceData: originals.sources['tools/translation/router-core-source-data.mjs'], hostSource: originals.sources['tools/translation/extensions/host-contracts.mjs'], lifetimesSource: originals.sources['tools/translation/extensions/source-lifetimes.mjs'], vectorSource: originals.sources['tools/translation/router-core-vectors.mjs']});
     const current = Object.fromEntries(Object.keys(result.value.sources).map(name => [name, readFileSync(resolve(root, name), 'utf8')]));
     if (args[2] === '--check') {
       for (const [name, source] of Object.entries(result.value.sources)) if (current[name] !== source.after) fail('stale complete generated source: ' + name);
@@ -189,7 +255,8 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const result = prepare({facade: readFileSync(resolve(facadeRoot, 'rust/src/translation_core.rs'), 'utf8'),
     sourceData: readFileSync(resolve(root, 'tools/translation/router-core-source-data.mjs'), 'utf8'),
     hostSource: readFileSync(resolve(root, 'tools/translation/extensions/host-contracts.mjs'), 'utf8'),
-    lifetimesSource: readFileSync(resolve(root, 'tools/translation/extensions/source-lifetimes.mjs'), 'utf8')});
+    lifetimesSource: readFileSync(resolve(root, 'tools/translation/extensions/source-lifetimes.mjs'), 'utf8'),
+    vectorSource: readFileSync(resolve(root, 'tools/translation/router-core-vectors.mjs'), 'utf8')});
   // The complete reviewable receipt is durable before installation. No original
   // source is selected from a previous invocation's saved proposal or verdict.
   writeFileSync(resolve(args[5]), JSON.stringify(result) + '\n', {flag: 'wx'});

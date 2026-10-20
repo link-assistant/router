@@ -11,6 +11,7 @@ import {sourceItems} from '../rust-structure.mjs';
 import {migrateCoreVectors} from '../migrate-core-vectors.mjs';
 import {prepareCoreVectorSources} from '../prepare-core-vector-sources.mjs';
 import {checkRouterCoreVector, hasCheckedRouterCoreVector} from '../router-core-vectors.mjs';
+import * as sourceLifetimes from '../extensions/source-lifetimes.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 import {ROUTER_FORMATTING_FACADE_SOURCE, ROUTER_CORE_PRIMITIVES_SOURCE, ROUTER_CORE_RANGES_SOURCE,
   ROUTER_CORE_BASE64_SOURCE, ROUTER_CORE_JSON_COLLECTIONS_SOURCE} from '../router-core-source-data.mjs';
@@ -44,8 +45,9 @@ const has = (result, name) => result.meta.executable.some(row => row.name === na
 test('native source producer derives the actual owned wrapper and composes complete source inverses', () => {
   const input = retain('complete-pinned-source-producer-inputs', originalInputs());
   const result = retain('complete-native-source-proposal', prepareCoreVectorSources({facade: input.sources['rust/src/translation_core.rs'],
-    sourceData: input.sources['tools/translation/router-core-source-data.mjs'], hostSource: input.sources['tools/translation/extensions/host-contracts.mjs'], lifetimesSource: input.sources['tools/translation/extensions/source-lifetimes.mjs']}));
+    sourceData: input.sources['tools/translation/router-core-source-data.mjs'], hostSource: input.sources['tools/translation/extensions/host-contracts.mjs'], lifetimesSource: input.sources['tools/translation/extensions/source-lifetimes.mjs'], vectorSource: input.sources['tools/translation/router-core-vectors.mjs']}));
   assert.equal(result.value.typescript, '5.9.3');
+  assert.ok(result.value.sources['tools/translation/extensions/host-contracts.mjs'].after.split('\n').length <= 1000, 'generated Host source retains fewer than 1000 lines');
   assert.deepEqual(result.trace.map(row => row.phase), ['language', 'repository']);
   assert.equal(result.value.sources['rust/src/translation_core.rs'].after, ROUTER_FORMATTING_FACADE_SOURCE);
   assert.equal(readFileSync(new URL('rust/src/translation_core.rs', root), 'utf8'), ROUTER_FORMATTING_FACADE_SOURCE);
@@ -56,7 +58,7 @@ test('native source producer derives the actual owned wrapper and composes compl
   }
   assert.match(result.value.wrapper.after, /::std::vec!/u);
   assert.throws(() => prepareCoreVectorSources({facade: ROUTER_FORMATTING_FACADE_SOURCE,
-    sourceData: input.sources['tools/translation/router-core-source-data.mjs'], hostSource: input.sources['tools/translation/extensions/host-contracts.mjs'], lifetimesSource: input.sources['tools/translation/extensions/source-lifetimes.mjs']}), /fresh|differs/u);
+    sourceData: input.sources['tools/translation/router-core-source-data.mjs'], hostSource: input.sources['tools/translation/extensions/host-contracts.mjs'], lifetimesSource: input.sources['tools/translation/extensions/source-lifetimes.mjs'], vectorSource: input.sources['tools/translation/router-core-vectors.mjs']}), /fresh|differs/u);
 });
 
 test('qualified vector lists execute checked primitive, borrowed text, owned text and empty contextual elements', async () => {
@@ -64,13 +66,16 @@ test('qualified vector lists execute checked primitive, borrowed text, owned tex
 pub fn flags()->Vec<bool>{${C}vec![true,false]}
 pub fn empty()->Vec<bool>{${C}vec![]}
 pub fn headers()->Vec<&'static ${C}Str>{${C}vec!["user-agent","😀","content-type"]}
+pub fn empty_headers()->Vec<&'static ${C}Str>{${C}vec![]}
+pub fn borrowed<'a>(value:&'a ${C}Str)->Vec<&'a ${C}Str>{${C}vec![value]}
 pub fn text()->Vec<${C}Text>{${C}vec![${C}format!("alpha"),${C}format!("{}","beta")]}`;
   const result = project(files(source));
-  for (const name of ['numbers', 'flags', 'empty', 'headers', 'text']) assert.equal(has(result, name), true, name);
+  for (const name of ['numbers', 'flags', 'empty', 'headers', 'empty_headers', 'borrowed', 'text']) assert.equal(has(result, name), true, name + ': ' + JSON.stringify(result.meta.refused.filter(row => row.name === name)));
   await verifyTypedTargets(result, api => {
     const actual = {numbers: api.numbers(), flags: api.flags(), empty: api.empty(), headers: api.headers(), text: api.text()};
     retain('independent-native-target-observations', actual);
     assert.deepEqual(actual, {numbers: [0n, 255n, 7n], flags: [true, false], empty: [], headers: ['user-agent', '😀', 'content-type'], text: ['alpha', 'beta']});
+    assert.deepEqual(api.empty_headers(), []); assert.deepEqual(api.borrowed('input 😀'), ['input 😀']);
   }, {childTimeoutMs: 20_000});
 });
 
@@ -94,6 +99,25 @@ test('ordinary vector baselines remain unchanged while aliases forged facades re
   for (const copied of [structuredClone(associated), {...associated, items: [...associated.items]},
     {...associated, type: {...associated.type, element: {...associated.type.element}}}, {...associated, ownedVectorProof: {profile: 'checked-router-owned-vector-list-v1'}}]) assert.equal(hasCheckedRouterCoreVector(copied), false);
   associated.items.push({k: 'lit', value: false, type: {kind: 'bool'}}); assert.equal(hasCheckedRouterCoreVector(associated), false); associated.items.pop();
+  assert.equal(hasCheckedRouterCoreVector({...associated}), false);
+  associated.items[0].value = false; assert.equal(hasCheckedRouterCoreVector(associated), false); associated.items[0].value = true;
+  assert.equal(Object.hasOwn(sourceLifetimes, 'bindNormalizedOwnedVectors'), false);
+  for (const context of ['foreign-checker', 'copied-source', 'copied-program']) {
+    const Lifetime = sourceLifetimes.withSourceLifetimeChecker(class {
+      constructor() { this.language = 'Rust'; this.items = new Map(); }
+      resolveType(type) { return type; }
+      program() {
+        const current = context === 'foreign-checker' ? associated : checkRouterCoreVector(this, {value: {}}, null, [], null, false);
+        const body = {...current, items: current.items.map(item => ({...item}))}, entry = {k: 'fn', name: 'synthetic', fullName: 'synthetic', modulePath: [], params: [], ret: checked.type, body, span: {start: 0, end: 10}};
+        this.items.set(entry.fullName, entry);
+        return {schemaVersion: 1, sourceLanguage: 'Rust', items: [entry], declarations: context === 'copied-program' ? new Map(this.items) : this.items};
+      }
+      expr() { return checked; }
+    });
+    const checker = new Lifetime(), syntheticSource = {items: [{k: 'fn', name: 'synthetic', params: [], ret: checked.type, body: {}, span: {start: 0, end: 10}}]};
+    if (context === 'copied-program') assert.throws(() => checker.program(syntheticSource), /normalization context/);
+    else { const program = checker.program(syntheticSource); assert.equal(hasCheckedRouterCoreVector(program.declarations.get('synthetic').body), false, context); }
+  }
   // Independent source inputs establish the actual old standard decisions.
   // A facade draft must not retroactively turn an admitted ordinary list red.
   for (const [source, admitted] of [['pub fn bad()->Vec<u8>{vec![1u8]}', true], ['pub fn bad()->Vec<u8>{std::vec![1u8]}', false]]) {
@@ -160,7 +184,7 @@ test('the complete actual upstream-header module retains its original function a
   const after = project(files(carrier, {'src/candidate.rs': proposal.after.source}));
   retain('actual-original-function-span-and-body', {span: [originalFn.start, originalFn.end], source: completeFunction, sha256: hash(completeFunction)});
   assert.equal(has(before, 'candidate.forwarded_client_headers'), false);
-  assert.equal(has(after, 'candidate.forwarded_client_headers'), true);
+  assert.equal(has(after, 'candidate.forwarded_client_headers'), true, JSON.stringify(after.meta.refused.filter(row => row.name.endsWith('forwarded_client_headers'))));
   await verifyTypedTargets(after, api => {
     const actual = api['candidate.forwarded_client_headers'](); retain('original-whole-function-owned-candidate-output', actual);
     assert.deepEqual(actual, ['user-agent', 'anthropic-version', 'anthropic-beta', 'x-stainless-*', 'x-claude-code-*', 'accept', 'content-type']);
