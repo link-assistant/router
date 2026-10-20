@@ -3,3 +3,7 @@ skip a necessarily failing duplicate composer preflight while preserving the
 dynamic full JSON fallback, callbacks, fresh Hash payloads and old helper APIs.
 Add complete source inverses and independent receiving controls. Original
 derive-context performance qualification remains pending.
+
+Pin the complete integrated native helper including its additive stateless
+eligibility export; require a native-AST whole-source inverse back to the prior
+helper and preserve the original copied census and all old APIs.

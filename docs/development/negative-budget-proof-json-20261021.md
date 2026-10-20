@@ -41,7 +41,7 @@ Outside a retained frame the wrapper invokes the consumer's original serializer
 closure, preserving existing receiving instrumentation and scope behavior.
 Hashing and its complete fresh string payloads remain unchanged.
 
-The six new complete receiving cases cover source freshness/inverses, mutated
+The seven new complete receiving cases cover source freshness/inverses, mutated
 original sources and limits, repeated logical aliases and depth, unseen native
 callback tails, dynamic JSON lookup and full Hash payloads, unit-only/unknown
 fallbacks, changed intrinsics and closed frame lifetimes. Source preparation,
@@ -50,3 +50,17 @@ The coordinator must run the complete new receiving file, original serializer
 files and original twelve-case derive-context file under their unchanged
 deadlines. No Node/Bun runtime receiving test, full gate, Rust command or
 performance profile was executed by this worker for this draft.
+
+Root integration at `07f87aefc56b0794d26d63d43847afff8d9bb068` adds the
+stateless `privateNativeProofJsonDataWithinBudget` export required by the
+separate metadata candidate. The preparer now pins that complete actual helper
+at SHA-256 `f23c8f96cddf92af07495e67622fd98d8b9bcf04b9ed62a78693ee7455ba027b`.
+Native TypeScript selects the one complete additive exported declaration and
+its leading trivia; removing that exact span must restore the complete prior
+helper at `b02892e676b928339f15d2a529d0467dfd60efedbe8e991df0910400289db338`.
+The proposal retains the full old/new CST serializations and whole inverse.
+The copied native prefix and scoped census remain identical. The composer
+remains pinned at `6da6243dd4c2d9f48ca86c5a9e13f88b3b2ea6ad8f7a79df525128c11e732c5f`.
+The worker qualified source regeneration against a temporary source-only mirror
+containing the exact Root helper and its own remaining current inputs; it did
+not remove Root's export, change Root's worktree, or run receiving tests.

@@ -7,14 +7,26 @@ import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url)),INPUT='tools/translation/private-native-proof-json.mjs',COMPOSER='tools/translation/private-frozen-json.mjs',OUTPUT='tools/translation/private-negative-budget-proof-json.mjs',CONSUMER='tools/translation/builtin-derive-bang-footprints.mjs';
-const ORIGINALS={[INPUT]:'b02892e676b928339f15d2a529d0467dfd60efedbe8e991df0910400289db338',[COMPOSER]:'6da6243dd4c2d9f48ca86c5a9e13f88b3b2ea6ad8f7a79df525128c11e732c5f'};
+const ORIGINAL_NATIVE='b02892e676b928339f15d2a529d0467dfd60efedbe8e991df0910400289db338';
+const ORIGINALS={[INPUT]:'f23c8f96cddf92af07495e67622fd98d8b9bcf04b9ed62a78693ee7455ba027b',[COMPOSER]:'6da6243dd4c2d9f48ca86c5a9e13f88b3b2ea6ad8f7a79df525128c11e732c5f'};
 export const negativeBudgetConsumerImport={before:"import {createScopedPrivateNativeProofJsonSerializer as createPrivateFrozenJsonComposer} from './private-native-proof-json.mjs';",after:"import {createScopedPrivateNativeProofJsonSerializer as createPrivateFrozenJsonComposer} from './private-native-proof-json.mjs';\nimport {createNegativeBudgetPrivateProofJsonSerializer} from './private-negative-budget-proof-json.mjs';",factoryBefore:'const composeJson=createPrivateFrozenJsonComposer();',factoryAfter:'const composeJson=createNegativeBudgetPrivateProofJsonSerializer(createPrivateFrozenJsonComposer());'};
 const fail=message=>{throw new TypeError('Negative proof budget source: '+message);};
 function once(source,before,after){if(source.split(before).length!==2)fail('unique actual source anchor required: '+before);return source.replace(before,()=>after);}
 function native(ts,path,source){const file=ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);if(file.parseDiagnostics.length)fail('complete native grammar: '+path);return file;}
 function declaration(ts,file,name){const rows=file.statements.filter(node=>ts.isFunctionDeclaration(node)&&node.name?.text===name||ts.isVariableStatement(node)&&node.declarationList.declarations.some(row=>ts.isIdentifier(row.name)&&row.name.text===name));if(rows.length!==1)fail('complete actual declaration required: '+name);return rows[0];}
 function limit(ts,file,name){const values=[];function walk(node){if(ts.isVariableDeclaration(node)&&ts.isIdentifier(node.name)&&node.name.text===name&&node.initializer&&ts.isNumericLiteral(node.initializer))values.push(Number(node.initializer.text));ts.forEachChild(node,walk);}walk(file);if(values.length!==1)fail('one original numeric limit required: '+name);return values[0];}
-function boundsProof(ts,source,composer){
+function nativeInputEvolution(ts,root,source,file){
+ const added=declaration(ts,file,'privateNativeProofJsonDataWithinBudget');
+ if(!ts.isFunctionDeclaration(added)||!added.modifiers?.some(row=>row.kind===ts.SyntaxKind.ExportKeyword)||added.parameters.length!==1||!ts.isIdentifier(added.parameters[0].name)||added.parameters[0].name.text!=='value')fail('one actual additive stateless eligibility export required');
+ // Native fullStart includes only this declaration's original leading trivia.
+ // The complete inverse must equal the original whole helper, not just its
+ // selected prefix/census; unrelated edits and missing old APIs still refuse.
+ const span=[added.getFullStart(),added.end],historical=source.slice(0,span[0])+source.slice(span[1]);
+ if(createHash('sha256').update(historical).digest('hex')!==ORIGINAL_NATIVE)fail('additive native declaration does not restore complete original input');
+ const row=whole(ts,root,INPUT,historical,historical,source);if(row.current!==source)fail('complete actual native input changed during preparation');
+ return {...row,historicalSha256:ORIGINAL_NATIVE,actualSha256:ORIGINALS[INPUT],addedDeclaration:{kind:'FunctionDeclaration',name:added.name.text,span,source:source.slice(...span)},allOriginalBytesAndAPIsPreserved:true};
+}
+function boundsProof(ts,root,source,composer){
  for(const [path,text]of [[INPUT,source],[COMPOSER,composer]])if(createHash('sha256').update(text).digest('hex')!==ORIGINALS[path])fail('complete original budget source pin differs: '+path);
  const original=native(ts,INPUT,source),fallback=native(ts,COMPOSER,composer),limits={cells:limit(ts,original,'CELLS'),depth:limit(ts,original,'DEPTH'),units:limit(ts,original,'UNITS')};
  if(limits.cells!==limit(ts,fallback,'CELLS')||limits.depth!==limit(ts,fallback,'DEPTH')||limits.units!==limit(ts,fallback,'COMPOSITION_UNITS'))fail('actual census/composer bounds differ');
@@ -22,7 +34,7 @@ function boundsProof(ts,source,composer){
  // between unrelated quotas. Unit estimates deliberately grant no witness.
  const required=["if(depth>DEPTH)return null;","return ++cells>CELLS||kind==='string'&&value.length>COMPOSITION_UNITS?null:{kind:0,value};","if(++cells>CELLS)return null;","if(savedCells>CELLS-cells||savedHeight>DEPTH-depth)return null;cells+=savedCells;","if(costCells>CELLS-cells||costHeight>DEPTH-depth)return null;cells+=costCells;","child=inspect(field.value,depth+1,field.name,substrate&&array)"];
  const factory=declaration(ts,fallback,'createPrivateFrozenJsonComposer').getText(fallback);for(const text of required)if(factory.split(text).length!==2)fail('original complete composer logical equation changed: '+text);
- return {limits,completeComposer:composer,logicalEquations:required,unitFailureIsNotAWitness:true,unseenTailIsNotCertified:true};
+ return {limits,completeComposer:composer,logicalEquations:required,nativeInputEvolution:nativeInputEvolution(ts,root,source,original),unitFailureIsNotAWitness:true,unseenTailIsNotCertified:true};
 }
 const FACTORY=`
 // NEW internal format. Only a callback-free, fresh-guarded CELLS/DEPTH
@@ -75,7 +87,7 @@ function whole(ts,root,path,original,language,after){
  return {path,original,language,after,current,beforeMeta:first.meta,afterMeta,sequence,trace:run.trace,inverse:original,nativeBindings};
 }
 export function prepareNegativeBudgetProofJson({root=ROOT}={}){
- const source=readFileSync(resolve(root,INPUT),'utf8'),composer=readFileSync(resolve(root,COMPOSER),'utf8'),consumer=readFileSync(resolve(root,CONSUMER),'utf8'),ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('installed TypeScript5.9.3 required');const proof=boundsProof(ts,source,composer),file=native(ts,INPUT,source),start=declaration(ts,file,'withinNativeBudget');
+ const source=readFileSync(resolve(root,INPUT),'utf8'),composer=readFileSync(resolve(root,COMPOSER),'utf8'),consumer=readFileSync(resolve(root,CONSUMER),'utf8'),ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('installed TypeScript5.9.3 required');const proof=boundsProof(ts,root,source,composer),file=native(ts,INPUT,source),start=declaration(ts,file,'withinNativeBudget');
  // Copy the complete actual native-owner bootstrap/guards, then the complete
  // scoped census. Native spans select whole declarations, never hand-written
  // approximations of reflection, number, string or descriptor behavior.
