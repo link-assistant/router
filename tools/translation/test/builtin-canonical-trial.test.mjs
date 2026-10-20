@@ -1,9 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readFileSync,writeFileSync,mkdtempSync,rmSync,openSync,ftruncateSync,closeSync,mkdirSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from '../js-to-rust/vendor/module-syntax.mjs';
-import {proposeCanonicalDeriveTrial,canonicalTrialCases,joinCanonicalTrialCases,canonicalTrialBunCompletions} from '../prepare-builtin-canonical-trial.mjs';
+import {proposeCanonicalDeriveTrial,canonicalTrialCases,joinCanonicalTrialCases,canonicalTrialBunCompletions,isCanonicalTrialSourcePath,preflightCanonicalTrialPaths} from '../prepare-builtin-canonical-trial.mjs';
 
 const root=fileURLToPath(new URL('../../../',import.meta.url));
 const testPath=new URL('./derive-bang-context.test.mjs',import.meta.url);
@@ -60,4 +62,19 @@ test('Bun omitted timing missing nested original name mutations failures and ski
  const failed=[...lines];failed[9]=failed[9].replace('(pass)','(fail)');assert.equal(joinCanonicalTrialCases(cases,canonicalTrialBunCompletions([Buffer.from(failed.join('\n'))])).passed,false);
  for(const status of ['skip','todo']){const changed=[...lines];changed[0]=changed[0].replace('(pass)','('+status+')');assert.throws(()=>joinCanonicalTrialCases(cases,canonicalTrialBunCompletions([Buffer.from(changed.join('\n'))])),/skipped/);}
  const duplicate=[...lines];duplicate[0]=duplicate[1];assert.throws(()=>joinCanonicalTrialCases(cases,canonicalTrialBunCompletions([Buffer.from(duplicate.join('\n'))])),/duplicate/);
+});
+
+test('trial input selector retains actual compiler profiles vendors whole tests fixtures scripts and original Rust Cargo inputs',{timeout:60000},()=>{
+ for(const path of ['rust/src/lib.rs','rust/Cargo.toml','Cargo.lock','other/original/Cargo.toml','tools/translation/builtin-source-meta.mjs','tools/translation/prepare-isolated-project-compiler.mjs','tools/translation/vendor/original.bin','tools/translation/js-to-rust/vendor/module-syntax.mjs','tools/translation/source-profiles/derive-dependencies/original.crate','tools/translation/test/derive-bang-context.test.mjs','tools/translation/test/fixtures/repository-paths.mjs','tools/translation/js-to-rust/test/whole.test.mjs','scripts/run-node-tests.mjs','js/package-lock.json'])assert.equal(isCanonicalTrialSourcePath(path),true,path);
+ for(const path of ['tools/translation/meta/large.json','tools/translation/projects/lib.meta.json','tools/translation/generated/proposal.mjs','tools/translation/js-to-rust/generated/large.json','tools/translation/source-profiles/isolated-project-compiler/large.json','unrelated/large.json'])assert.equal(isCanonicalTrialSourcePath(path),false,path);
+});
+
+test('complete stat-only size census refuses oversized sparse files total bytes and file counts before body reads',{timeout:60000},t=>{
+ const folder=mkdtempSync(join(tmpdir(),'router-canonical-trial-census-'));t.after(()=>rmSync(folder,{recursive:true,force:true}));writeFileSync(join(folder,'small.mjs'),'original');
+ const first=preflightCanonicalTrialPaths(folder,['small.mjs']);assert.equal(first.totalBytes,8);assert.deepStrictEqual(first.limits,{files:8192,fileBytes:32*1024*1024,totalBytes:256*1024*1024});
+ const sparse=(name,size)=>{const fd=openSync(join(folder,name),'wx');try{ftruncateSync(fd,size);}finally{closeSync(fd);}};
+ sparse('oversized.bin',32*1024*1024+1);assert.throws(()=>preflightCanonicalTrialPaths(folder,['oversized.bin']),/input bytes exceeded before body reads/);
+ const paths=[];for(let index=0;index<9;index++){const path='sparse-'+index+'.bin';sparse(path,32*1024*1024);paths.push(path);}assert.throws(()=>preflightCanonicalTrialPaths(folder,paths),/input bytes exceeded before body reads/);
+ assert.throws(()=>preflightCanonicalTrialPaths(folder,Array.from({length:8193},(_,index)=>'unread-'+index)),/input file count exceeded before body reads/);assert.throws(()=>preflightCanonicalTrialPaths(folder,['small.mjs','small.mjs']),/input file count exceeded before body reads/);
+ mkdirSync(join(folder,'directory'));assert.throws(()=>preflightCanonicalTrialPaths(folder,['directory']),/regular unlinked physical path/);
 });

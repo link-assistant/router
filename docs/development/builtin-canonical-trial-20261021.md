@@ -26,18 +26,26 @@ filtered or instrumented.
 ## Preparation and storage
 
 Preparation discovers the fresh full Git tracked/unignored Rust, Cargo,
-compiler, profile and scripts universe, including generated compiler source
-and archives. It adds every physical file in the actual installed TypeScript
+compiler, profile and scripts universe. Compiler selection composes the existing
+`isCompilerSourceInputPath` and `isIsolatedCompilerSourcePath` contracts, adding
+complete test/fixture inputs while excluding the declared meta/project/generated
+output trees. Actual original source profiles, vendors and their archives stay
+included. It adds every physical file in the actual installed TypeScript
 5.9.3 package. Missing physical sources and linked inputs refuse preparation;
 there is no projected Rust subset or stale sparse-blob substitute. The native
 source producer must use that same root's actual installed compiler instance.
+
+Before reading any source body, a stat-only census rejects more than 8,192 files,
+any file over 32 MiB, or total input bytes over 256 MiB. These are the unchanged
+compiler-source input limits. Bounded fd reads then enforce each allocation size
+and reject source growth or replacement after the census.
 
 Each source has a separate gzip frame with its complete original and trial
 bytes. One file packet is live at a time. Every frame is independently reopened
 and decoded; every mirror file is reread. The complete vector, file modes, HEAD,
 candidate equation and original physical sources are rechecked. Exactly one
 file may differ in the mirror. Initial mirror, frames, proposal and manifest
-must fit the existing 500 MiB evidence allocation. Test runners retain their
+must fit Root's 384 MiB mirror/evidence monitor cap. Test runners retain their
 existing raw-stream and resource bounds; outer monitoring still applies to
 preparation, execution, receipt joins and their combined retained evidence.
 
@@ -96,7 +104,7 @@ source calls. Missing, duplicated, unknown, skipped, untimed, failed or overdue
 cases fail qualification. Full original receipts and raw bytes remain retained;
 the join is not a coverage or runtime-parity claim.
 
-The harness and its six new controls are source drafts. Syntax checks do not
+The harness and its eight new controls are source drafts. Syntax checks do not
 qualify them. Preparation, new receiving controls and the original complete
 twelve-case candidate trial remain unrun for this draft until Root receives
 the batch and obtains the shared lease. Production codec and all original tests
