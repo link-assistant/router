@@ -67,6 +67,36 @@ replacements but cannot authenticate a deliberately identical-source
 counterfeit JavaScript closure. It does not establish hostile whole-compiler
 bootstrap equivalence. An unknown runtime wrapper conservatively falls back.
 
+Root's first complete candidate/range cohort finished with eleven passes and
+three candidate failures in 8.825 seconds at 266,469,376 bytes peak RSS, with
+zero deadline-audit breaches. All six namespace cases passed; the candidate's
+three positive assertions failed because its guard refused every input. The
+other five fallback controls passed. Evidence remains at
+`/private/tmp/router-layout-check-complete-canonical-candidate-conditional-type-range-fourteen-Node-v1`.
+This is a failed candidate qualification, not an optimization pass.
+
+Exact Node v20.19.4 descriptor inspection showed global Buffer stays behind an
+accessor before and after first use. Its actual complete getter/setter source
+and descriptor flags are now retained as 242-byte profile DATA at SHA-256
+`68fd398b37577a24af89dd69deb61ed2a6170a0b2c470157d0d7f6790e778188`.
+The added lane qualifies only that exact provider, checks the unchanged
+getter/setter descriptor, and reads the qualified provider again at every
+guard to require the immutable imported Buffer. This catches ordinary setter
+rebinding, which changes the hidden value without changing the descriptor.
+Unknown or proxy getters refuse before guard invocation. The original eight
+cases now also compare setter-only rebinding, cold custom getters and cold
+proxy getters against the complete legacy callback and getter-read counts.
+
+Provider source preparation ran under the existing 90-second/3-GiB monitor
+with a 2-GiB Node heap cap. The first sandboxed controller failed because ps
+was unavailable; its controller/cleanup failure remains retained and is
+unqualified. The single escalated retry completed source preparation in
+1.640867 seconds at 299,548,672 bytes aggregate sampled RSS, without a bound
+breach (`canonical-provider-source-worker-v2`). A separate escalated process
+inspection found no worker monitor/source children remaining; no cleanup
+signals were needed. The retry regenerated actual expected source and complete
+CST/inverses only. The repaired receiving cases remain unrun by this worker.
+
 The eight complete 60-second receiving cases cover full values/aliases/frozen
 descriptors, noncanonical and malformed tables, original depth/cell/byte
 boundaries, complete JSON/freeze/Hash observations, every listed operation
