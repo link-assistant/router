@@ -11,6 +11,7 @@ import {prepareCoreBase64SourceData} from '../prepare-core-base64-sources.mjs';
 import {prepareLexicalParentHistorySources} from '../prepare-lexical-parent-history.mjs';
 import {prepareFixedNativeDescriptorCensus} from '../prepare-fixed-native-descriptor-census.mjs';
 import {prepareReceivingModuleRelocators} from '../prepare-receiving-module-relocators.mjs';
+import {prepareInvocationLocalFreezer} from '../prepare-invocation-local-freezer.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 const root=new URL('../../../',import.meta.url),read=path=>readFileSync(new URL(path,root),'utf8');
 
@@ -35,7 +36,7 @@ test('the actual class producer reproduces every registered class source and the
 
 test('the complete historical compiler readers equal their actual current source producer output',{timeout:60000},()=>{
  const plan=prepareCompilerAliasHistory({root:fileURLToPath(root)});assert.equal(plan.files.length,1);
- assert.deepEqual(plan.records.map(row=>row.name),['private-frozen-json.mjs','derive-bang-context.mjs','derive-enclosing-namespace-context.mjs','builtin-derive-bang-footprints.mjs','original-json-intrinsics.mjs']);
+ assert.deepEqual(plan.records.map(row=>row.name),['private-frozen-json.mjs','derive-bang-context.mjs','derive-enclosing-namespace-context.mjs','builtin-derive-bang-footprints.mjs','original-json-intrinsics.mjs','private-data-freeze.mjs']);
  for(const row of plan.files){assert.equal(row.before,row.after);assert.equal(row.after,read(row.path));assert.equal(row.inverse,row.before);}
  assert.equal(plan.sourceAuthority,false);assert.equal(plan.runtimeAuthority,false);
 });
@@ -62,4 +63,10 @@ test('every copied receiving relocator reproduces its complete native-span sourc
  const plan=prepareReceivingModuleRelocators({root:fileURLToPath(root)});assert.equal(plan.files.length,2);
  for(const row of plan.files){assert.equal(row.before,row.after);assert.equal(row.after,read(row.path));assert.equal(row.inverse,row.original);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);}
  assert.equal(plan.originalCaseBodiesAndDeadlinesUnchanged,true);assert.equal(plan.sourceAuthority,false);assert.equal(plan.runtimeAuthority,false);
+});
+
+test('invocation-local scalar-cost source preparation reproduces both complete sources and inverses',{timeout:60000},()=>{
+ const plan=prepareInvocationLocalFreezer({root:fileURLToPath(root)});assert.equal(plan.files.length,2);
+ for(const row of plan.files){assert.equal(row.before,row.after);assert.equal(row.after,read(row.path));assert.equal(row.inverse,row.original);assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.original);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);}
+ assert.equal(plan.newAcrossInvocationCache,false);assert.equal(plan.globalRetentionPolicyUnchanged,true);assert.equal(plan.sourceAuthority,false);assert.equal(plan.runtimeAuthority,false);
 });

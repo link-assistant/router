@@ -2,6 +2,8 @@
 // A completed record contains scalar traversal costs only, with weak keys.
 import {types} from 'node:util';
 import {originalBatchedDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
+import {createRetainedPrivateScalarCostStore} from './private-native-proof-json.mjs';
+const currentScalarCostStore=createRetainedPrivateScalarCostStore();
 const originalDataFreezeIntrinsicsUnchanged=originalBatchedDataFreezeIntrinsicsUnchanged;
 const MIN_COMPLETED_CHILDREN=64;
 const ROOT_LIMIT=1024,LARGE_LIMIT=2048,SMALL_LIMIT=1024,LARGE_CELLS=64,NODE_LIMIT=32768,CELL_LIMIT=200000,DEPTH_LIMIT=160,RECORD_BASE=CELL_LIMIT+2;
@@ -158,8 +160,10 @@ function packedPlan(value,lookup){
 export function createCompletedDataFreezer(originalFreeze){
  return function completedDataFreeze(value){
   if(!value||typeof value!=='object'||!originalDataFreezeIntrinsicsUnchanged())return originalFreeze(value);
-  if(lookup(value))return value;
-  const selected=packedPlan(value,lookup);
+  const store=currentScalarCostStore();
+  const selectedLookup=store?value=>store.values.get(value)??lookup(value):lookup;
+  if(selectedLookup(value))return value;
+  const selected=packedPlan(value,selectedLookup);
   if(selected===RETRY_ORIGINAL_PLAN){
    const original=plan(value,lookup);if(!original)return originalFreeze(value);
    for(let index=0;index<original.order.length;index++){
@@ -174,6 +178,7 @@ export function createCompletedDataFreezer(originalFreeze){
    const id=selected.order[index],encoded=selected.records[id+1],cost=encoded>>>2;
    state.value=selected.records[id];state.cells=cost%RECORD_BASE;state.height=(cost/RECORD_BASE)|0;state.jsonFlags=encoded&3;
    Object.freeze(state.value);remember(state.value,state,state.value===value);
+   if(store&&store.entries<32768&&store.values.get(state.value)===undefined){store.values.set(state.value,encoded);store.entries++;}
   }
   return value;
  };

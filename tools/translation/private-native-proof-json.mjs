@@ -301,3 +301,18 @@ export function withCurrentRetainedPrivateNativeProofCostScope(run){
  if(current&&current.open&&policy&&policy.scope===current)return run();
  return withRetainedPrivateNativeProofCostScope(run);
 }
+
+// A factory-private arithmetic store exists only during the current retained
+// synchronous proof scope. Its key never escapes, and it stores no sources,
+// owners, digests, encoded results or eligibility decisions.
+export function createRetainedPrivateScalarCostStore(){
+ const key={};
+ return function currentScalarCostStore(){
+  const scope=retainedPrivateProofCostPolicy?.scope;
+  if(!scope||!scope.open||!nativeReady())return null;
+  const memo=scope.memo??(scope.memo=new weakOwner());
+  let store=apply(weakGet,memo,[key]);
+  if(!store){store={values:new weakOwner(),entries:0};apply(weakSet,memo,[key,store]);}
+  return store;
+ };
+}

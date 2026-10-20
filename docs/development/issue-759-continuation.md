@@ -992,3 +992,6 @@ The [compiler DATA and historical producer cycle](compiler-source-producers-2026
 
 The [current compiler/export refresh](current-compiler-export-20261020.md) records
 the complete e825 source registration and both sixteen-case receiving passes.
+
+The [invocation-local freezer cycle](invocation-local-freezer-20261020.md) records
+57 receiving cases per engine and the remaining derive/memory failures.

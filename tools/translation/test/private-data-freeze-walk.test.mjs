@@ -3,7 +3,8 @@ import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // Complete helper before/after oracle; source/owner/hash joins remain in consumers.
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,rmSync} from 'node:fs';
+import {writeFileSync,mkdirSync,mkdtempSync,rmSync} from 'node:fs';
+import {readCompilerAliasHistory as readFileSync} from './fixtures/compiler-data-alias-history.mjs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {pathToFileURL} from 'node:url';

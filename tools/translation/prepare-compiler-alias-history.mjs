@@ -5,9 +5,10 @@ import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {fixedNativeDescriptorSourcePair} from './prepare-fixed-native-descriptor-census.mjs';
+import {invocationLocalFreezerSourcePairs} from './prepare-invocation-local-freezer.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
 const FIXTURE='tools/translation/test/fixtures/compiler-data-alias-history.mjs';
-const FILES=['private-walk-scalar-results','builtin-json-equality-hint','completed-json-eligibility','private-frozen-json-measurement','packed-frozen-json-eligibility','private-frozen-json-cache-policy','private-frozen-json-owner-memo','private-frozen-json-cohorts','native-descriptor-guard-batching','builtin-proof-json-composition','native-descriptor-kind-discriminator','private-frozen-json-subtrees','native-string-quotation','builtin-plan-json-composition','immutable-json-continuations','private-primitive-native-quotation','derive-bang-carrier-json','private-frozen-json','private-native-proof-cost-scope'];
+const FILES=['private-walk-scalar-results','builtin-json-equality-hint','completed-json-eligibility','private-frozen-json-measurement','packed-frozen-json-eligibility','private-frozen-json-cache-policy','private-frozen-json-owner-memo','private-frozen-json-cohorts','native-descriptor-guard-batching','builtin-proof-json-composition','native-descriptor-kind-discriminator','private-frozen-json-subtrees','native-string-quotation','builtin-plan-json-composition','immutable-json-continuations','private-primitive-native-quotation','derive-bang-carrier-json','private-frozen-json','private-native-proof-cost-scope','private-data-freeze-walk','private-data-freeze-packed-walk'];
 const sha=text=>createHash('sha256').update(text).digest('hex');
 const fail=message=>{throw new TypeError('Compiler alias receiving history: '+message);};
 function whole(path,before,after){
@@ -18,10 +19,13 @@ function whole(path,before,after){
  return {path,before,after,beforeMeta,afterMeta,sequence,trace:run.trace,inverse:before,sourceSha256:sha(before),sha256:sha(after)};
 }
 function historyRows(root){
- const paths=['private-frozen-json.mjs','derive-bang-context.mjs','derive-enclosing-namespace-context.mjs','builtin-derive-bang-footprints.mjs','original-json-intrinsics.mjs'],rows=[];
+ const paths=['private-frozen-json.mjs','derive-bang-context.mjs','derive-enclosing-namespace-context.mjs','builtin-derive-bang-footprints.mjs','original-json-intrinsics.mjs','private-data-freeze.mjs'],rows=[];
  for(const name of paths){
   const path='tools/translation/'+name,source=readFileSync(resolve(root,path),'utf8');let before=source,edits=[];
-  if(name==='original-json-intrinsics.mjs'){
+  if(name==='private-data-freeze.mjs'){
+   const pair=invocationLocalFreezerSourcePairs(root).find(row=>row.path===path);if(!pair||source!==pair.after)fail('complete actual invocation-local freezer required');
+   edits=[{expected:pair.after,replacement:pair.original}];before=pair.original;
+  }else if(name==='original-json-intrinsics.mjs'){
    const pair=fixedNativeDescriptorSourcePair(root);if(source!==pair.after)fail('complete actual fixed-native source required');
    edits=[{expected:pair.replacement,replacement:pair.expected}];if(source.split(pair.replacement).length!==2)fail('unique actual descriptor census declaration');before=source.replace(pair.replacement,()=>pair.expected);if(before!==pair.before)fail('complete normal-Git descriptor baseline differs');
   }else if(name==='private-frozen-json.mjs'){
@@ -60,7 +64,7 @@ export function restoreCompilerDataAliasHistory(source,name,retain=()=>{}){
  retain('complete-actual-and-historical-alias-source',{source,historical,row,beforeMeta:serializeConcreteSyntaxMeta(first.document),afterMeta,trace:run.trace,inverse:source,compilerAuthority:false});return historical;
 }
 // Invoke the native filesystem read first, with its original complete arguments.
-// Only these four exact physical compiler inputs have historical DATA views.
+// Only the exact registered physical compiler inputs have historical DATA views.
 export function readCompilerAliasHistory(...args){
  const source=readFileSync(...args);if(typeof source!=='string')return source;const input=args[0];let path;if(input instanceof URL)path=fileURLToPath(input);else if(typeof input==='string')path=resolve(input);else return source;
  const rows=RECORDS.filter(row=>row.name!=='builtin-derive-bang-footprints.mjs'&&path===fileURLToPath(new URL('../../'+row.name,import.meta.url)));return rows.length?restoreCompilerDataAliasHistory(source,rows[0].name):source;
