@@ -42,7 +42,10 @@ This independently catches omitted source-copy imports such as `posix`; it does
 not replace the separate strict target compilation. The coordinator's first
 14-case receiving run passed eight original and two new cases but failed four
 new cases on that missing import. The actual generator now copies the complete
-original corpus `node:path` import; fresh receiving execution remains pending.
+original corpus `node:path` import. The coordinator's complete v2 run then
+passed all eight original and six materialized cases; its three remaining
+packet expectation failures and pending complete rerun are retained in
+[the packet receiving note](source-backed-formatting-packets-20261021.md).
 
 The new complete receiving test file is
 `tools/translation/test/source-backed-core-formatting.test.mjs`. Its source
