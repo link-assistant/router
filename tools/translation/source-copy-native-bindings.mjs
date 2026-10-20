@@ -7,7 +7,10 @@ export function verifyNativeCopiedSourceBindings(ts,path,source){
  // finite scope check does not claim to typecheck Node's implementation.
  host.getSourceFile=(name,languageVersion,onError,shouldCreateNewSourceFile)=>resolve(name)===candidate?ts.createSourceFile(name,source,languageVersion,true,ts.ScriptKind.JS):resolve(name)===ambient?ts.createSourceFile(name,'declare const process: any;\ndeclare const Buffer: any;\n',languageVersion,true,ts.ScriptKind.TS):original(name,languageVersion,onError,shouldCreateNewSourceFile);
  const program=ts.createProgram([candidate,ambient],options,host),file=program.getSourceFile(candidate);if(!file)throw new TypeError('Native copied-source candidate was not parsed');
- const missing=program.getSemanticDiagnostics(file).filter(row=>[2304,2552,18004,2580].includes(row.code));
+ const diagnostics=program.getSemanticDiagnostics(file);
+ const missing=diagnostics.filter(row=>[2304,2552,18004,2580].includes(row.code));
  if(missing.length)throw new TypeError('Native copied-source unbound identifier: '+missing.map(row=>ts.flattenDiagnosticMessageText(row.messageText,' ')).join('; '));
+ const uninitialized=diagnostics.filter(row=>row.code===2448);
+ if(uninitialized.length)throw new TypeError('Native copied-source initialization: '+uninitialized.map(row=>ts.flattenDiagnosticMessageText(row.messageText,' ')).join('; '));
  return {typescriptVersion:ts.version,sourcePath:candidate,unboundIdentifiers:[],nativeSemanticScopeChecked:true,strictTypecheck:false,semanticAuthority:false};
 }
