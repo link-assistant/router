@@ -954,3 +954,23 @@ fixed in the language-layout checkpoint. No Rust job was unlocked by those
 failed JavaScript stages. The new checkpoint still requires fresh CI feedback;
 full canonical/profile/reverse outputs, strict parity and the complete gate
 remain open.
+## Sequential matrix process lifetime, 2026-10-20
+
+The source-derived [isolated matrix path](isolated-profile-matrices.md) retains
+every original compiler check, runs full profiles in fresh sequential workers,
+and joins the complete staged byte plans and current inputs before publication.
+Both complete receiving files pass in Node and fresh Bun: 16 cases per engine,
+four complete fixture output comparisons and strict TypeScript consumers.
+The original CLI deadline remains 30 seconds: Node measured 20.183 seconds
+and the qualified Bun rerun 6.957 seconds. The independent Node source audit
+has no deadline breach; all 14 finite deadlines and both default cases remain.
+Complete failed input/path, duration and harness reports remain retained.
+
+The separate full original owned-definition freshness diagnostic passed at
+`16a84f99078db4c8f5e820281dce8417f389d430`: all 847 Rust inputs and 3,188 outputs,
+1,373.153 seconds and 2,210,824,192 bytes peak aggregate RSS. Its allocation
+sampling and the isolated receiving checks establish no full-corpus matrix
+result or native parity gain. New compiler sources make regeneration and all
+current freshness checks necessary again. Full parity, complete reverse
+synchronization and all same-SHA JavaScript gates remain open. Rust is CI-only
+after all eight JavaScript stages pass; Rust failures remain fatal.
