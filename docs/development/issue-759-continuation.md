@@ -703,6 +703,23 @@ These source-fixture and behavior observations do not resolve the historical
 feature-loader, external sibling derive closures, original full-source deadlines,
 current full generation or strict parity obligations.
 
+The frozen feature-worklist receiver now derives an explicit source copy while
+retaining both raw modules and their hashes unchanged. The first two full runs
+correctly refused assumptions about nested JSON spacing and the later complete
+pretty-print change. The repaired adapter selects all four literal edits from
+serialized/reparsed CST, verifies identical nontrivia tokens through formatting,
+reconstructs the complete original trivia and token edits, and checks both known
+whole-profile hashes and original/current archive bytes. It reuses the existing
+exact Cargo manifest equation and stores no source or owner verdict.
+
+All nine cases in the complete adapter/control and original feature-worklist
+files passed in Node in 4.375 seconds (peak aggregate RSS 421,691,392 bytes) and
+Bun in 4.086 seconds (375,554,048 bytes). Node's final independent deadline
+audit passed with zero breaches. The original per-call cryptographic byte tapes,
+collection callbacks, private proof refusals and function bodies remain checked.
+The unrelated full-source deadline and external sibling derive failures remain
+open, as do current generation, receiving exports, strict parity and the gate.
+
 Regenerate owned-definition producer modules with
 `node tools/translation/prepare-owned-definition-bulk.mjs --emit`. This emits a
 complete source proposal; it does not install files. Review every original

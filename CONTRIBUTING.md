@@ -138,6 +138,13 @@ Test carriers using the owned core must retain every actual facade child. Use
 explicit wrong, undefined and accessor source fields in refusal fixtures. A
 completed source carrier still needs ordinary fresh parsing and semantic checks.
 
+Frozen feature-worklist consumers use a separate receiving adapter for the two
+known Cargo profiles. Preserve their raw modules, hashes and function bodies.
+The adapter must prove all four Cargo metadata token edits, original/current
+archive bytes and the complete CST whitespace inverse. Keep their original
+cryptographic and collection-callback comparisons in both engines; accepting a
+new raw checksum without that complete equation is insufficient.
+
 Within one project invocation, compose genuine source contexts explicitly when
 several consumers need the same original graph. Each consumer must retain its
 complete source, profile and private-issuer checks. Do not memoize namespace

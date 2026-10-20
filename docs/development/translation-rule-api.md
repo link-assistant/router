@@ -90,6 +90,15 @@ imports. Its `--check` reproduces all four complete source files. The original
 helper and its initialization controls remain intact; the new DATA composer
 preserves explicitly supplied refusal inputs and grants no compiler authority.
 
+`adaptHistoricalCargoFeatureConsumer` proposes a complete receiving copy of a
+frozen feature-worklist consumer. Its raw source hashes and original functions
+remain exact. `cargoLayoutFeatureProfileMatches` accepts only two known full
+profile pairs, authenticates original/current Cargo archives and reuses the
+complete manifest equation. General CST literal edits change the four recorded
+Cargo fields; repository formatting has an independently reconstructed trivia
+inverse and the exact current whole-byte checksum. These DATA operations do not
+replace a private dependency issuer, its runtime hashes or semantic checks.
+
 ## Migrated paths and candidate evidence
 
 The 148 candidate uses the two sequences in the following actual paths:
