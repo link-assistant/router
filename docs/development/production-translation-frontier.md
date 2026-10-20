@@ -61,6 +61,19 @@ source before a refusal can join a function.
 Distinct inline module contexts can share the same complete source path/hash;
 all contexts remain retained. Duplicate contexts and conflicting hashes refuse.
 
+Parser refusals use physical-source spans and module-local names. Later semantic
+refusals use qualified names and project-global spans. The report authenticates
+the complete historical `project.mjs` against the inventory fingerprint and
+checks unique anchors for its actual offset/name equations before converting
+the latter. Physical source instances advance the UTF-16 cursor by source
+length plus one; inline modules reuse the parent offset and their actual module
+edge bounds. External aliases retain their own source-instance offsets. Joins
+retain both original and normalized names/spans, the exact module context,
+source hash and offset. Ambiguous owners and out-of-scope spans stay unjoined.
+If the observed producer changed, `--project-producer-revision SHA` can select
+the complete historical producer; its hash must match the original fingerprint.
+Unavailable or unsupported equations leave global-coordinate joins unavailable.
+
 `staleness` separates each changed or missing compiler input from source changes.
 Even entirely matching hashes leave `verdictStatus` equal to
 `historical-not-reexecuted`. Fresh compiler verdicts, generation freshness,
@@ -83,6 +96,13 @@ records, 106 shadowed borrowed-`str` records, 95 `State` generic-type records,
 records and 47 unresolved `Path` records. These are historical record counts,
 not disjoint coverage gains or fresh verdicts. Use the report's distinct
 function memberships before selecting a batch.
+
+The initial qualified report on `9263119c73a243be13a05e315d1c51f86c19e0b5`
+joined 1649 records and explicitly retained 662 unjoined records because it
+handled only physical coordinates. Preserve that partial report separately;
+its successful DATA command does not establish complete refusal joins. The
+coordinate adapter and its additional global-offset, inline-scope, alias and
+historical-producer controls extend the subsequent source draft.
 
 The following shared work fits those observations:
 

@@ -10,6 +10,22 @@ const production = name => name.startsWith('rust/src/') && !/tests|test_support/
 const order = (a, b) => b.functions.length - a.functions.length || a.key.localeCompare(b.key);
 const unique = rows => [...new Set(rows)].sort((a, b) => a - b);
 const position = row => JSON.stringify([row.path, row.name, row.span.start, row.span.end]);
+const moduleIdentity = (source, module) => JSON.stringify([source, module]);
+const producerPath = 'tools/translation/project.mjs';
+// Exact equations of the retained producer. A different producer needs an
+// explicitly reviewed coordinate adapter; its metadata is never guessed.
+const producerAnchors = [
+  'let offset = 0;',
+  'const fileOffset=original?.offset??offset;',
+  'if(!original)offset += source.length + 1;',
+  'visit(file,childPath,childDirectory,inherited,original,childView,plan?.pathDirectory??childDirectory);continue;',
+  'visit(target,[...path,name],plan.directory,inherited,null,null,plan.pathDirectory,original.ancestors);',
+  'const source = original?.source??concrete.source;',
+  'source, offset:fileOffset, items: []',
+  "name: [...module.path, item.name].join('.')",
+  'globalSpan: { start: base, end: module.offset + item.end }',
+  'refused.push({file:owner.file,name:owner.name,term:owner.term,...diagnostic(cause)});',
+];
 const relative = name => {
   if (typeof name !== 'string' || !name || name.includes('\\') || name.startsWith('/') ||
       /[\x00-\x1f]/u.test(name) || name.split('/').some(part => !part || part === '.' || part === '..')) fail('relative input path required');
@@ -56,7 +72,7 @@ function overlap(groups) {
 /** Inputs are complete owned JSON/byte data, plus a reader for current repository
  * bytes. The reader is called again on every invocation; no compiler is run and
  * no verdict, inventory, scan or cross-invocation cache is consulted. */
-export function productionFrontierData({inventoryBytes, functionEvidenceBytes, projectDescriptorBytes, readInput}) {
+export function productionFrontierData({inventoryBytes, functionEvidenceBytes, projectDescriptorBytes, historicalProjectProducerBytes, readInput}) {
   if (!Buffer.isBuffer(inventoryBytes) || !Buffer.isBuffer(functionEvidenceBytes) ||
       !Buffer.isBuffer(projectDescriptorBytes) || typeof readInput !== 'function') fail('complete input bytes and current reader required');
   const parse = bytes => JSON.parse(new TextDecoder('utf-8', {fatal: true}).decode(bytes));
@@ -68,7 +84,8 @@ export function productionFrontierData({inventoryBytes, functionEvidenceBytes, p
       evidence.inventorySha256 !== sha256(inventoryBytes) || !Array.isArray(evidence.sources) ||
       !Array.isArray(evidence.functions) || !isDeepStrictEqual(evidence.originalFunctionCoverage, inventory.functionCoverage)) fail('function evidence/inventory identity differs');
   if (root?.schema !== 'tracked-rust-project-semantic-meta-v1' || !Array.isArray(root.sources) ||
-      !Array.isArray(root.refused) || !Array.isArray(root.executable) || !Array.isArray(root.moduleDiagnostics)) fail('complete stored project root required');
+      !Array.isArray(root.refused) || !Array.isArray(root.executable) || !Array.isArray(root.moduleEdges) ||
+      !Array.isArray(root.moduleDiagnostics)) fail('complete stored project root required');
 
   const expected = inventory.functionCoverage.production;
   if (evidence.functions.length !== expected.topLevelFunctions ||
@@ -118,15 +135,57 @@ export function productionFrontierData({inventoryBytes, functionEvidenceBytes, p
   }
   const expectedNames = inventory.sources.filter(row => production(row.source)).map(row => row.source);
   if (expectedNames.length !== evidenceNames.size || expectedNames.some(name => !evidenceNames.has(name))) fail('missing complete production source evidence');
-  const projectSources = new Map(), projectContexts = new Set();
+  const producerBytes = historicalProjectProducerBytes ?? observe(producerPath);
+  if (producerBytes !== null && !Buffer.isBuffer(producerBytes)) fail('complete original project producer bytes required');
+  const producerText = producerBytes === null ? null : new TextDecoder('utf-8', {fatal: true}).decode(producerBytes);
+  const producerHash = producerBytes === null ? null : sha256(producerBytes);
+  const anchorSpans = producerAnchors.map(text => ({text, start: producerText?.indexOf(text) ?? -1,
+    unique: producerText !== null && producerText.indexOf(text) >= 0 && producerText.indexOf(text) === producerText.lastIndexOf(text)}));
+  const producerCoordinates = {path: producerPath, expectedSha256: inventory.implementationHashes[producerPath] ?? null,
+    observedSha256: producerHash, source: producerText, anchors: anchorSpans,
+    status: producerHash === inventory.implementationHashes[producerPath] && anchorSpans.every(row => row.unique) ?
+      'pinned-historical-producer-equations' : 'unavailable-or-unsupported-producer-equations',
+    authority: 'DATA coordinate conversion only'};
+  const coordinatesAvailable = producerCoordinates.status === 'pinned-historical-producer-equations';
+  const projectSources = new Map(), projectContexts = new Map(), projectCoordinates = [];
+  let globalCursor = 0;
   for (const row of root.sources) {
-    const context = JSON.stringify([row.source, row.module]);
+    const context = moduleIdentity(row.source, row.module);
     if (!Array.isArray(row.module) || projectContexts.has(context)) fail('duplicate or malformed project module context');
-    projectContexts.add(context);
     if (projectSources.has(row.source) && projectSources.get(row.source).sha256 !== row.sha256) fail('conflicting project source hashes');
     projectSources.set(row.source, row);
     vector('stored-project-source', row.source, row.sha256);
     vectors.at(-1).module = row.module;
+    const retained = sourceMap.get(row.source);
+    const observed = observe(row.source);
+    const text = retained?.sha256 === row.sha256 ? retained.source : observed !== null && sha256(observed) === row.sha256 ?
+      new TextDecoder('utf-8', {fatal: true}).decode(observed) : null;
+    let offset = null, inline = false, scopeSpan = text === null ? null : {start: 0, end: text.length};
+    if (!row.module.length) {
+      if (projectContexts.size || row.source !== root.entry) fail('original project entry/order differs');
+    } else {
+      const edges = root.moduleEdges.filter(edge => edge.to === row.source && isDeepStrictEqual(edge.module, row.module));
+      if (edges.length !== 1) fail('original project context requires one complete module edge');
+      const edge = edges[0], parent = projectContexts.get(moduleIdentity(edge.from, row.module.slice(0, -1)));
+      if (!parent) fail('original project module parent/order differs');
+      inline = edge.kind === 'original-inline-module' || edge.pathSelection?.inline === true;
+      if (inline && edge.pathSelection && edge.pathSelection.inline !== true || !inline && edge.pathSelection?.inline !== false) fail('original module edge kind differs');
+      if (inline) {
+        if (edge.from !== row.source || parent.sha256 !== row.sha256) fail('inline module physical source/hash differs');
+        if (!edge.span || !Number.isSafeInteger(edge.span.start) || !Number.isSafeInteger(edge.span.end) ||
+            !parent.scopeSpan || edge.span.start < parent.scopeSpan.start || edge.span.end > parent.scopeSpan.end ||
+            edge.span.end <= edge.span.start) fail('inline module scope span differs');
+        scopeSpan = edge.span;
+        offset = parent.globalOffset;
+      }
+    }
+    if (!inline) {
+      offset = globalCursor;
+      globalCursor = globalCursor === null || text === null ? null : globalCursor + text.length + 1;
+    }
+    const coordinate = {...row, inline, scopeSpan, sourceUtf16Length: text?.length ?? null,
+      globalOffset: coordinatesAvailable ? offset : null};
+    projectContexts.set(context, coordinate); projectCoordinates.push(coordinate);
   }
 
   const positions = new Set(), functionsByPath = new Map();
@@ -159,19 +218,31 @@ export function productionFrontierData({inventoryBytes, functionEvidenceBytes, p
 
   const refusals = root.refused.map((row, index) => {
     const candidates = functionsByPath.get(row.file) ?? [];
-    const matches = row.term === 'fn' && production(row.file) ? candidates.filter(number => {
-      const fn = functions[number], span = row.span;
-      return fn.name === row.name && span && span.start >= fn.span.start && span.end <= fn.span.end;
-    }) : [];
     const source = sourceMap.get(row.file), projectSource = projectSources.get(row.file);
     const sourceMatches = Boolean(source && projectSource?.sha256 === source.sha256);
-    const joined = matches.length === 1 && sourceMatches ? matches : [];
+    const matches = [];
+    if (row.term === 'fn' && production(row.file) && sourceMatches && row.kind !== 'ambiguous') {
+      for (const number of candidates) for (const context of projectCoordinates.filter(context => context.source === row.file)) {
+        const fn = functions[number], local = Array.isArray(row.module);
+        if (!context.scopeSpan || fn.span.start < context.scopeSpan.start || fn.span.end > context.scopeSpan.end) continue;
+        if (local ? !isDeepStrictEqual(row.module, context.module) || fn.name !== row.name :
+            context.globalOffset === null || row.name !== [...context.module, fn.name].join('.')) continue;
+        const offset = local ? 0 : context.globalOffset;
+        if (!row.span || !Number.isSafeInteger(row.span.start) || !Number.isSafeInteger(row.span.end)) continue;
+        const span = {start: row.span.start - offset, end: row.span.end - offset};
+        if (span.start < fn.span.start || span.start >= fn.span.end || span.end < span.start || span.end > fn.span.end) continue;
+        matches.push({functionIndex: number, source: row.file, sourceSha256: projectSource.sha256, module: context.module,
+          originalName: row.name, normalizedName: fn.name, originalSpan: row.span, normalizedSpan: span,
+          projectGlobalOffset: context.globalOffset, coordinateScheme: local ? 'physical-source-utf16' : 'historical-project-global-utf16'});
+      }
+    }
+    const joined = matches.length === 1 ? [matches[0].functionIndex] : [];
     for (const number of joined) functions[number].storedRefusals.push(index);
-    return {...row, index, family: refusalFamily(row.message ?? ''), functions: joined,
+    return {...row, index, family: refusalFamily(row.message ?? ''), functions: joined, coordinateJoins: matches,
       join: !production(row.file) || row.term !== 'fn' ? 'outside-production-fn-scope' :
-        !sourceMatches ? 'stored-project-source-mismatch' : matches.length === 1 ? 'source-hash-name-enclosing-span' :
+        !sourceMatches ? 'stored-project-source-mismatch' : row.kind === 'ambiguous' ? 'ambiguous-stored-owner' : matches.length === 1 ? 'source-hash-name-enclosing-span' :
           matches.length ? 'ambiguous-function' : 'no-inventory-function',
-      diagnosticText: sourceMatches && row.span ? source.source.slice(row.span.start, row.span.end) : null};
+      diagnosticText: joined.length ? source.source.slice(matches[0].normalizedSpan.start, matches[0].normalizedSpan.end) : null};
   });
   const productionRefusals = refusals.filter(row => row.term === 'fn' && production(row.file));
   const exact = rankedGroups(productionRefusals, row => JSON.stringify([row.kind, row.message]), row => row.functions);
@@ -180,7 +251,7 @@ export function productionFrontierData({inventoryBytes, functionEvidenceBytes, p
   // source forms. Identifiers are occurrences, never resolved types or owners.
   const selectors = new Set(['format!', 'matches!', 'json!', 'vec!', 'println!', 'eprintln!', 'await', 'async']);
   for (const row of productionRefusals) {
-    for (const match of (row.message ?? '').matchAll(/(?:type\s*:?\s+|shadowed (?:borrowed )?)([A-Za-z_][A-Za-z_0-9:]*)/gu)) selectors.add(match[1].split('::').at(-1));
+    for (const match of (row.message ?? '').matchAll(/(?:type\s*:?\s+|shadowed (?:borrowed )?)([A-Za-z_][A-Za-z_0-9:.]*)/gu)) selectors.add(match[1].split(/[.:]+/u).at(-1));
     for (const match of (row.message ?? '').matchAll(/\b[A-Za-z_][A-Za-z_0-9]*!/gu)) selectors.add(match[0]);
   }
   const tokenGroups = new Map();
@@ -235,7 +306,8 @@ export function productionFrontierData({inventoryBytes, functionEvidenceBytes, p
       tokenScanFailures: scanFailures},
     vectors, sources: inventory.sources.map(row => ({...row, observedSource: observe(row.source) === null ? null : new TextDecoder('utf-8', {fatal: true}).decode(observe(row.source)),
       retainedProductionSource: sourceMap.get(row.source)?.source ?? null})),
-    functions, projectDescriptor: descriptor, refusals, exactRefusalGroups: exact, investigationBatches: batches,
+    functions, projectDescriptor: descriptor, producerCoordinates, projectCoordinates,
+    refusals, exactRefusalGroups: exact, investigationBatches: batches,
     refusalFamilyOverlap: overlap(families), tokenUsage, tokenUsageOverlap: overlap(tokenUsage),
   };
 }

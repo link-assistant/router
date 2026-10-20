@@ -10,7 +10,7 @@ import {productionFrontierData} from './production-frontier-data.mjs';
 const maxFileBytes = 64 * 1024 * 1024, maxTotalBytes = 512 * 1024 * 1024;
 export function reportProductionFrontier(args) {
   const options = {};
-  const names = new Set(['--root', '--inventory', '--functions', '--project', '--project-revision', '--missing-input-revision', '--output']);
+  const names = new Set(['--root', '--inventory', '--functions', '--project', '--project-revision', '--project-producer-revision', '--missing-input-revision', '--output']);
   for (let at = 0; at < args.length; at += 2) {
     const key = args[at], value = args[at + 1];
     if (!names.has(key) || !value || Object.hasOwn(options, key)) throw new Error('Unknown, duplicate or incomplete frontier option: ' + key);
@@ -18,7 +18,7 @@ export function reportProductionFrontier(args) {
   }
   if (!options['--functions'] || !options['--output']?.endsWith('.json.gz')) throw new Error('--functions and new --output FILE.json.gz are required');
   const root = fs.realpathSync(options['--root'] ?? process.cwd());
-  const revisions = [options['--project-revision'], options['--missing-input-revision']].filter(Boolean);
+  const revisions = [options['--project-revision'], options['--project-producer-revision'], options['--missing-input-revision']].filter(Boolean);
   if (revisions.some(value => !/^[a-f0-9]{40}$/u.test(value))) throw new Error('Git read revisions must be complete immutable SHA1s');
   let totalBytes = 0;
   const bounded = bytes => {
@@ -99,7 +99,9 @@ export function reportProductionFrontier(args) {
       if (cursor !== result.stdout.length) throw new Error('Trailing Git batch data');
     }
   }
-  const report = productionFrontierData({inventoryBytes, functionEvidenceBytes, projectDescriptorBytes, readInput});
+  const historicalProjectProducerBytes = options['--project-producer-revision'] ? gitRead(options['--project-producer-revision'], 'tools/translation/project.mjs') : undefined;
+  const report = productionFrontierData({inventoryBytes, functionEvidenceBytes, projectDescriptorBytes, historicalProjectProducerBytes, readInput});
+  report.projectProducerRead = options['--project-producer-revision'] ? {origin: 'explicit-git-object', revision: options['--project-producer-revision']} : {origin: 'observed-input'};
   report.inputReadOrigins = inputReadOrigins;
   const origins = new Map(inputReadOrigins.map(row => [row.path, row]));
   for (const row of report.vectors) row.observation = origins.get(row.path);
