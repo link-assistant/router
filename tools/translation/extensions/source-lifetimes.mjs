@@ -12,12 +12,12 @@ export function checkRouterCoreVector(checker, node, env, path, expected, allowL
   const proof = Object.freeze({profile: 'checked-router-owned-vector-list-v1'});
   const checkedVector={...value, constEligible: false, compatibilityCore: node.value.compatibilityCore, ownedVectorProof: proof};
   const frame=ownedVectorFrame;
-  if(frame){if(frame.checker!==checker)throw unsupported('owned vector checker frame','requires the active same checker',node.span);frame.originals.set(proof,{items: value.items, elements: [...value.items], elementType: value.type.element,checker,snapshot:ownedVectorSnapshot(checkedVector)});}
+  if(frame){if(frame.checker!==checker)throw unsupported('owned vector checker frame','requires the active same checker',node.span);if(!frame.originals){frame.originals=new WeakMap();frame.normalized=new WeakMap();}frame.originals.set(proof,{items: value.items, elements: [...value.items], elementType: value.type.element,checker,snapshot:ownedVectorSnapshot(checkedVector)});}
   else checkedLists.set(proof,{items: value.items, elements: [...value.items], elementType: value.type.element,node:checkedVector,synthetic:copyMetadata(checkedVector)});
   return checkedVector;
 }
 export function hasCheckedRouterCoreVector(node) {
-  const original = node && (ownedVectorFrame?ownedVectorFrame.originals:checkedLists).get(node.ownedVectorProof);
+  const original = node && (ownedVectorFrame?ownedVectorFrame.originals:checkedLists)?.get(node.ownedVectorProof);
   return (Boolean(original && node.k === 'array' && node.items === original.items && node.type?.kind === 'array' &&
     node.type.element === original.elementType && node.type.rustOwnership?.kind === 'owned' && node.type.rustOwnership.source === 'Vec' &&
     node.items.length === original.elements.length && node.items.every((item, at) => item === original.elements[at]))&&(ownedVectorFrame?unchangedOwnedVectorSnapshot(original.snapshot,node):node===original.node&&isDeepStrictEqual(copyMetadata(node),original.synthetic)))||hasNormalizedOwnedVector(node);
@@ -26,7 +26,7 @@ export function hasCheckedRouterCoreVector(node) {
 let ownedVectorFrame=null;
 function ownedVectorSnapshot(node){return {node,type:node.type,items:node.items,elements:[...node.items],fingerprint:metadataDigest(node)};}
 function unchangedOwnedVectorSnapshot(row,node){return node===row.node&&node.type===row.type&&node.items===row.items&&node.items.length===row.elements.length&&node.items.every((item,at)=>item===row.elements[at])&&metadataDigest(node)===row.fingerprint;}
-function hasNormalizedOwnedVector(node){const row=node&&ownedVectorFrame?.normalized.get(node);return Boolean(row&&unchangedOwnedVectorSnapshot(row,node));}
+function hasNormalizedOwnedVector(node){const row=node&&ownedVectorFrame?.normalized?.get(node);return Boolean(row&&unchangedOwnedVectorSnapshot(row,node));}
 function bindNormalizedOwnedVectors(checker,program,surface){
   const frame=ownedVectorFrame;
   if(!frame||frame.checker!==checker||frame.program!==null||program?.sourceLanguage!=='Rust'||program.declarations!==checker.items)throw unsupported('owned vector normalization context','requires a fresh actual same-checker program frame',null);
@@ -695,12 +695,12 @@ export function withSourceLifetimeChecker(Base) {
       return {...value,sourceBindingLifetimeType:declared};
     }
     program(surface) {
-      const previousOwnedVectorFrame=ownedVectorFrame,vectorFrame={checker:this,originals:new WeakMap(),normalized:new WeakMap(),program:null};ownedVectorFrame=vectorFrame;try {
+      const previousOwnedVectorFrame=ownedVectorFrame,vectorFrame={checker:this,originals:null,normalized:null,program:null};ownedVectorFrame=vectorFrame;try {
       const mutableParameters=new Map();
       const collect=(items,path=[])=>{for(const item of items)if(item.k==='module')collect(item.items,[...path,item.name]);else if(item.k==='fn')mutableParameters.set([...path,item.name].join('.'),item.params.filter(param=>param.mutable).map(param=>param.name));};
       collect(surface.items);
       const program=super.program(surface),context={checker:this,sourceSharedPatternReader:node=>this.sourceSharedPatternProofOrigin?.(node),declarations:program.declarations,resolveType:(type,path,span)=>this.resolveType(type,path,span)};
-      if(this.language==='Rust')bindNormalizedOwnedVectors(this,program,surface);
+      if(vectorFrame.originals&&this.language==='Rust')bindNormalizedOwnedVectors(this,program,surface);
       const signatures=new Map();
       for(const entry of program.declarations.values())if(entry.k==='fn')signatures.set(entry.fullName,functionLifetimeSignature(entry,context));
       for(const entry of program.declarations.values())if(entry.k==='fn') {

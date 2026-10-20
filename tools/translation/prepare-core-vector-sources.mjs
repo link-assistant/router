@@ -98,7 +98,7 @@ const VECTOR_NORMALIZATION_SOURCE = String.raw`
 let ownedVectorFrame=null;
 function ownedVectorSnapshot(node){return {node,type:node.type,items:node.items,elements:[...node.items],fingerprint:metadataDigest(node)};}
 function unchangedOwnedVectorSnapshot(row,node){return node===row.node&&node.type===row.type&&node.items===row.items&&node.items.length===row.elements.length&&node.items.every((item,at)=>item===row.elements[at])&&metadataDigest(node)===row.fingerprint;}
-function hasNormalizedOwnedVector(node){const row=node&&ownedVectorFrame?.normalized.get(node);return Boolean(row&&unchangedOwnedVectorSnapshot(row,node));}
+function hasNormalizedOwnedVector(node){const row=node&&ownedVectorFrame?.normalized?.get(node);return Boolean(row&&unchangedOwnedVectorSnapshot(row,node));}
 function bindNormalizedOwnedVectors(checker,program,surface){
   const frame=ownedVectorFrame;
   if(!frame||frame.checker!==checker||frame.program!==null||program?.sourceLanguage!=='Rust'||program.declarations!==checker.items)throw unsupported('owned vector normalization context','requires a fresh actual same-checker program frame',null);
@@ -153,13 +153,13 @@ export function prepareCoreVectorLifetimeSources(source, vectorSource) {
   const fields = registration.arguments[1].getText(vectorFile);
   let checking = checker.getText(vectorFile), old = vectorSource.slice(registrations[0].getStart(vectorFile), returns[0].end);
   if (checking.split(old).length !== 2) fail('one exact original private issue region required');
-  checking = checking.replace(old, () => 'const checkedVector=' + result + ';\n  const frame=ownedVectorFrame;\n  if(frame){if(frame.checker!==checker)throw unsupported(\'owned vector checker frame\',\'requires the active same checker\',node.span);frame.originals.set(proof,' + fields.slice(0, -1) + ',checker,snapshot:ownedVectorSnapshot(checkedVector)});}\n  else checkedLists.set(proof,' + fields.slice(0, -1) + ',node:checkedVector,synthetic:copyMetadata(checkedVector)});\n  return checkedVector;');
+  checking = checking.replace(old, () => 'const checkedVector=' + result + ';\n  const frame=ownedVectorFrame;\n  if(frame){if(frame.checker!==checker)throw unsupported(\'owned vector checker frame\',\'requires the active same checker\',node.span);if(!frame.originals){frame.originals=new WeakMap();frame.normalized=new WeakMap();}frame.originals.set(proof,' + fields.slice(0, -1) + ',checker,snapshot:ownedVectorSnapshot(checkedVector)});}\n  else checkedLists.set(proof,' + fields.slice(0, -1) + ',node:checkedVector,synthetic:copyMetadata(checkedVector)});\n  return checkedVector;');
   const guard = moved[2], guardReturns = guard.body.statements.filter(ts.isReturnStatement);
   if (guardReturns.length !== 1) fail('one complete original vector guard required');
   let guarded = guard.getText(vectorFile), guardReturn = guardReturns[0].getText(vectorFile);
   const originalRead = guard.body.statements.filter(ts.isVariableStatement);
   if(originalRead.length!==1||originalRead[0].getText(vectorFile)!=='const original = node && checkedLists.get(node.ownedVectorProof);')fail('one actual private original association read required');
-  guarded = guarded.replace(originalRead[0].getText(vectorFile), 'const original = node && (ownedVectorFrame?ownedVectorFrame.originals:checkedLists).get(node.ownedVectorProof);');
+  guarded = guarded.replace(originalRead[0].getText(vectorFile), 'const original = node && (ownedVectorFrame?ownedVectorFrame.originals:checkedLists)?.get(node.ownedVectorProof);');
   guarded = guarded.replace(guardReturn, () => 'return (' + guardReturns[0].expression.getText(vectorFile) + '&&(ownedVectorFrame?unchangedOwnedVectorSnapshot(original.snapshot,node):node===original.node&&isDeepStrictEqual(copyMetadata(node),original.synthetic)))||hasNormalizedOwnedVector(node);');
   const declarations = moved[0].getText(vectorFile) + '\n' + checking + '\n' + guarded + '\n' + VECTOR_NORMALIZATION_SOURCE;
   const factories = named('withSourceLifetimeChecker');
@@ -174,8 +174,8 @@ export function prepareCoreVectorLifetimeSources(source, vectorSource) {
   const output = transform(source, 'JavaScript', [
     {span: [0, 0], expected: '', replacement: "import {isDeepStrictEqual} from 'node:util';\n// Generated vector checker association and original lifetime equations.\n" + declarations + '\n'},
     {span: [links.end - 1, links.end - 1], expected: '', replacement: ',originalParsedDeclarationEvidence'},
-    {span: [methods[0].body.getStart(file)+1, methods[0].body.getStart(file)+1], expected: '', replacement: '\n      const previousOwnedVectorFrame=ownedVectorFrame,vectorFrame={checker:this,originals:new WeakMap(),normalized:new WeakMap(),program:null};ownedVectorFrame=vectorFrame;try {'},
-    {span: [programs[0].end, programs[0].end], expected: '', replacement: "\n      if(this.language==='Rust')bindNormalizedOwnedVectors(this,program,surface);"},
+    {span: [methods[0].body.getStart(file)+1, methods[0].body.getStart(file)+1], expected: '', replacement: '\n      const previousOwnedVectorFrame=ownedVectorFrame,vectorFrame={checker:this,originals:null,normalized:null,program:null};ownedVectorFrame=vectorFrame;try {'},
+    {span: [programs[0].end, programs[0].end], expected: '', replacement: "\n      if(vectorFrame.originals&&this.language==='Rust')bindNormalizedOwnedVectors(this,program,surface);"},
     {span: [methods[0].body.end-1, methods[0].body.end-1], expected: '', replacement: '}finally{vectorFrame.originals=null;vectorFrame.normalized=null;vectorFrame.checker=null;vectorFrame.program=null;ownedVectorFrame=previousOwnedVectorFrame;}\n    '},
     {span: [arrays[0].getStart(file), arrays[0].getStart(file)], expected: '', replacement: branch},
     {span: [empties[0].getStart(file), empties[0].getStart(file)], expected: '', replacement: emptyBranch},

@@ -36,7 +36,9 @@ No rebinding operation is exported. The association maps and original typed
 fingerprints live only inside a synchronous same-checker program frame, created
 before the original `super.program` call. A `finally` block clears that frame
 and restores its enclosing frame on success or exception; nested invocations
-have independent storage. No production proof/hash state survives the call.
+have independent storage. Association maps are allocated only on first vector
+issuance; ordinary programs skip the normalization traversal entirely. No
+production proof/hash state survives the call.
 The public synthetic helper contract remains separate and grants no original
 source association. Copied programs or contexts, foreign checkers and changed
 original/normalized trees cannot establish this join.
@@ -125,3 +127,9 @@ peak aggregate RSS, including both borrowed-vector positives, strict TypeScript
 and the independent seven-case deadline join. All original 60-second case
 limits remained intact; full source vectors and event streams are retained.
 Broader integrated and production qualification remains separate.
+
+The final lazy-allocation source equations passed actual native regeneration
+and all dependent comparisons in 19.60 seconds with 593,723,392 bytes peak
+aggregate RSS. Its new actual ordinary-project callback observer awaits fresh
+receiving qualification; the prior frame receiving PASS applies before this
+final optimization.

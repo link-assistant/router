@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync, writeFileSync, mkdirSync} from 'node:fs';
 import {join} from 'node:path';
 import {gunzipSync} from 'node:zlib';
-import {createHash} from 'node:crypto';
+import {createHash, Hash} from 'node:crypto';
 import {translateProject} from '../project.mjs';
 import {translateSource} from '../translate.mjs';
 import {parseProgram} from '../semantic-meta.mjs';
@@ -146,6 +146,22 @@ test('ordinary vector baselines remain unchanged while aliases forged facades re
   for (const frame of [outer, inner, throwing]) assert.equal(hasCheckedRouterCoreVector(frame.issued), false, 'closed frames cannot retain issued proof authority');
   assert.throws(() => throwing.program(emptySurface), /super.program exception/); assert.equal(hasCheckedRouterCoreVector(throwing.issued), false);
   assert.equal(hasCheckedRouterCoreVector(associated), true, 'separate synthetic helper contract survives frame cleanup');
+  // Observe the actual ordinary project/checker path: issuing no owned vectors
+  // must add neither a complete tree walk nor a vector fingerprint callback.
+  const entries = Object.getOwnPropertyDescriptor(Object, 'entries'), update = Object.getOwnPropertyDescriptor(Hash.prototype, 'update'), observer = [];
+  let ordinary;
+  try {
+    Object.defineProperty(Object, 'entries', {...entries, value: function (...args) {
+      if (new Error().stack.includes('bindNormalizedOwnedVectors')) observer.push({kind: 'entries', node: args[0]?.k});
+      return Reflect.apply(entries.value, this, args);
+    }});
+    Object.defineProperty(Hash.prototype, 'update', {...update, value: function (...args) {
+      if (new Error().stack.includes('ownedVectorSnapshot')) observer.push({kind: 'fingerprint'});
+      return Reflect.apply(update.value, this, args);
+    }});
+    ordinary = project(files('pub fn ordinary(value:u8)->u8{value}'));
+  } finally { Object.defineProperty(Object, 'entries', entries); Object.defineProperty(Hash.prototype, 'update', update); }
+  retain('ordinary-no-vector-callback-tape', observer); assert.deepEqual(observer, []); assert.equal(has(ordinary, 'ordinary'), true);
   // Independent source inputs establish the actual old standard decisions.
   // A facade draft must not retroactively turn an admitted ordinary list red.
   for (const [source, admitted] of [['pub fn bad()->Vec<u8>{vec![1u8]}', true], ['pub fn bad()->Vec<u8>{std::vec![1u8]}', false]]) {
