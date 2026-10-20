@@ -180,3 +180,42 @@ Complete source checks passed again for all five names. The unchanged original
 authored source snapshot remains retained; a separate complete afterimage
 records this receiver/return-set change, with both native AST and CST inverses.
 These stronger conditional checks still do not select caller attribute owners.
+
+A separate registered-callback lane now covers the eleven generic derive
+callbacks without selecting a prelude owner. ConstParamTy's two successive
+root-local TraitDef bindings are joined to their actual use sites. Its private
+brands cannot enter the existing caller-prelude range API. CoercePointee is
+retained separately: for original nongeneric data inputs its complete
+immutable visit and dominating generic-parameter guard precede every push.
+The coordinator subsequently reported all six earlier range controls passing;
+this worker has not executed receiving suites.
+
+The finite producer plan retains eighteen complete compiler source files,
+all sixteen selected compiler bodies, twelve LegacyAttr registrations, two
+direct Attr registrations, eleven generic derive ranges and the exceptional
+derive callback. Explicit rustc_builtin_macro arguments can select another
+registered name; they are not assumed equal to the declaration name. Local
+procedural registration installs a dummy extension. A foreign
+LoadedMacro::ProcMacro remains a separate genuine dependency obligation.
+Non-root macro_use extern-crate diagnostics do not stop the original routine
+before its global macro-use prelude updates; block restoration alone cannot
+close that escape.
+
+The data transfer program checks twenty-three complete bodies or complete
+dominating prefixes. It covers every actual builtin Attr callback on original
+nongeneric Struct/Enum inputs with no nested cfg/cfg_attr or root Fn token.
+Wrong-kind and no-generic early returns, both should_test alternatives,
+all cfg_accessible results, the cfg_eval fast path, unchanged original derive
+input and the contracts pre-injection failure are retained. These are
+conditional source rules: caller conditions, original token origins and
+foreign procedural provider exclusion are still false in this source plan.
+No resolver consumer or original positive expectation is changed here.
+
+Bounded source checks constructed all registrations and transfer joins.
+Complete authored JavaScript copies for all three changed programs passed
+native TypeScript 5.9.3 AST copying and the ordered language/repository CST
+roundtrips and inverses (3.52 seconds). Eight additional complete 60000 ms
+controls are drafted but unrun. Full runtime, original ten positives, native
+parity, performance and coverage gains remain unqualified. The complete
+receiver-range parent snapshot is preserved; a separate registered-range
+afterimage extends its exact source substitution and inverse chain.
