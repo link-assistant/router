@@ -5,6 +5,7 @@ import {rustTokens,sourceItems} from './rust-structure.mjs';
 import {macroProvenance} from './macro-provenance.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions,serializeConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
 import {crateModuleSourcePath} from './repository-layout.mjs';
+import {resolve,join,dirname,basename,posix} from 'node:path';
 import {resolveModuleGraph} from './project.mjs';
 import {PRODUCTION_PROFILE} from './cfg-profile.mjs';
 import {originalSourceModuleItems} from './source-module-views.mjs';
