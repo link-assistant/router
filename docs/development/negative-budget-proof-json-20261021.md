@@ -94,6 +94,15 @@ effects. The failed deadline therefore does not qualify the optimization.
 Production now uses its exact original serializer import and constructor again;
 the candidate module, complete proposals and seven receiving controls remain.
 
+After the initialization correction and candidate-only rollback, all three
+complete receiving files passed at `3bd3d809a`: seven negative-budget controls,
+eight original native serializer consumer cases and two copied-source binding
+cases. The independent Node audit joined every original case and found zero
+deadline breaches. The monitored run took 34.656 seconds and peaked at
+806699008 sampled aggregate RSS bytes. This qualifies those seventeen cases;
+the original twelve-case whole-library deadline remains red, and no full gate
+or performance gain is established. No Rust command ran locally.
+
 The next source-level target is `decodeBuiltinSourceMeta`'s final complete
 `encodeBuiltinSourceMeta(result)` pass. Sealing first encodes the graph, decoding
 reconstructs and freezes it, then that final pass traverses and allocates the
