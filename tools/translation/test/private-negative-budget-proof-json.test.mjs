@@ -47,7 +47,33 @@ test('an unseen getter, proxy, toJSON, lazy stack or thrown error remains in the
  const {api}=await fixture(t),serial=api.createNegativeBudgetPrivateProofJsonSerializer();
  const builders=[tape=>define({},'value',{enumerable:true,get(){tape.push('getter');return 7;}}),tape=>({toJSON(key){tape.push(['toJSON',key]);return {original:true};}}),tape=>new Proxy({value:3},{get(target,key,receiver){tape.push(['get',String(key)]);return Reflect.get(target,key,receiver);},ownKeys(target){tape.push(['keys']);return Reflect.ownKeys(target);},getOwnPropertyDescriptor(target,key){tape.push(['descriptor',String(key)]);return get(target,key);}}),tape=>define({},'value',{enumerable:true,get(){tape.push('throw');throw new RangeError('original callback exception');}})];
  for(const build of builders){const run=serialize=>{const tape=[],value=large(build(tape));return {result:capture(()=>serialize(value)),tape};},before=run(value=>JSON.stringify(value)),prior=api.facts(),after=scope(()=>run(serial));assert.deepEqual(after,before);assert.equal(api.facts().witnesses,prior.witnesses+1);assert.ok(after.tape.length>0);}
- if(typeof Error.captureStackTrace==='function'){const field=get(Error,'prepareStackTrace');const run=serialize=>{const tape=[],tail={};let result;try{define(Error,'prepareStackTrace',{configurable:true,value(){tape.push('lazy-stack');return 'original lazy stack';}});Error.captureStackTrace(tail);define(tail,'stack',{enumerable:true});result=capture(()=>serialize(large(tail)));}finally{if(field)define(Error,'prepareStackTrace',field);else delete Error.prepareStackTrace;}return {result,tape};};assert.deepEqual(scope(()=>run(serial)),run(value=>JSON.stringify(value)));}
+ if(typeof Error.captureStackTrace==='function'){
+  const field=get(Error,'prepareStackTrace');
+  const run=serialize=>{
+   const tape=[],tail={};let result,stackAfter,ownAfter;
+   try{
+    define(Error,'prepareStackTrace',{configurable:true,value(error,frames){
+     const actualFrames=frames.map(frame=>frame.toString()),formatted=actualFrames.join('\n');
+     tape.push({operation:'format-stack',errorIsTail:error===tail,frames:actualFrames,result:formatted});return formatted;
+    }});
+    Error.captureStackTrace(tail);define(tail,'stack',{enumerable:true});
+    result=capture(()=>serialize(large(tail)));stackAfter=tail.stack;const own=get(tail,'stack');
+    ownAfter={kind:Object.hasOwn(own,'value')?'data':'accessor',enumerable:own.enumerable,configurable:own.configurable,...(Object.hasOwn(own,'value')?{value:own.value,writable:own.writable}:{get:typeof own.get,set:typeof own.set})};
+   }finally{if(field)define(Error,'prepareStackTrace',field);else delete Error.prepareStackTrace;}
+   return {result,tape,stackAfter,ownAfter};
+  };
+  // Both engines capture genuine frames at this one run/capture call site,
+  // with identical retained-scope nesting for both complete serializers.
+  const rows=[],prior=api.facts().witnesses;
+  for(const serialize of [value=>JSON.stringify(value),serial])rows.push(scope(()=>run(serialize)));
+  assert.deepStrictEqual(rows[1],rows[0]);assert.equal(api.facts().witnesses,prior+1);
+  for(const row of rows){
+   assert.equal(typeof row.result.value,'string');assert.equal(typeof row.stackAfter,'string');assert.ok(row.stackAfter.includes('private-negative-budget-proof-json.test.mjs'));assert.equal(JSON.parse(row.result.value).tail.stack,row.stackAfter);assert.equal(row.ownAfter.enumerable,true);
+   if(row.tape.length){for(const call of row.tape){assert.equal(call.operation,'format-stack');assert.equal(call.errorIsTail,true);assert.ok(call.frames.length>0);assert.equal(call.result,call.frames.join('\n'));assert.equal(call.result,row.stackAfter);}}
+   // Bun may expose eager captured DATA without invoking the formatter.
+   else{assert.equal(row.ownAfter.kind,'data');assert.equal(row.ownAfter.value,row.stackAfter);}
+  }
+ }
 });
 
 test('mandatory failure retains the live global JSON lookup and actual Hash payload without caching bytes or results',{timeout:60000},async t=>{
