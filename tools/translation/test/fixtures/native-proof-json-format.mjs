@@ -72,6 +72,7 @@ const scopedSourcePins={"tools/translation/builtin-debug-ast-route.mjs":{"before
 for(const path of PROOF_JSON_FORMAT_PATHS){Object.freeze(scopedSourcePins[path].before);Object.freeze(scopedSourcePins[path].after);Object.freeze(scopedSourcePins[path]);}
 export const SCOPED_PROOF_JSON_FORMAT_SOURCE_PINS=Object.freeze(scopedSourcePins);
 export function statelessProofConsumerSource(source,retain=()=>{}){
+ source=restoreNegativeBudgetProofConsumerSource(source,retain);
  source=restoreEnclosingNamespaceSource(source,retain);
  if(typeof source!=='string')fail('complete source text required');
  let selected=null;for(const row of SCOPED_RULES)if(source.includes(row.after)&&(!selected||row.after.length>selected.after.length))selected=row;
@@ -181,4 +182,17 @@ export function restoreFrozenCarrierIdentitySource(source,retain=()=>{}){
  if(replay!==source)fail('complete carrier comparison source inverse differs');
  const first=stage(source,withoutCall,'language','javascript:retain-whole-legacy-carrier-comparison'),second=stage(withoutCall,historical,'repository','receiving:restore-original-json-comparison-import');
  retain('complete-current-and-original-carrier-comparison-source',{actualSource:source,historicalSource:historical,replayedSource:replay,stages:[first,second],compilerAuthority:false,scope:'Historical source comparison DATA only; every current production API remains current.'});return historical;
+}
+
+// Additive current-format history. Original comparison bodies and pins remain.
+export function restoreNegativeBudgetProofConsumerSource(source,retain=()=>{}){
+ if(typeof source!=='string')fail('complete negative-budget consumer source required');
+ const row={"before":"import {createScopedPrivateNativeProofJsonSerializer as createPrivateFrozenJsonComposer} from './private-native-proof-json.mjs';","after":"import {createScopedPrivateNativeProofJsonSerializer as createPrivateFrozenJsonComposer} from './private-native-proof-json.mjs';\nimport {createNegativeBudgetPrivateProofJsonSerializer} from './private-negative-budget-proof-json.mjs';","factoryBefore":"const composeJson=createPrivateFrozenJsonComposer();","factoryAfter":"const composeJson=createNegativeBudgetPrivateProofJsonSerializer(createPrivateFrozenJsonComposer());"};
+ if(!source.includes(row.after)&&!source.includes(row.factoryAfter))return source;
+ const unwrapped=exact(source,row.factoryAfter,row.factoryBefore,'restore-negative-budget-factory');
+ const restored=exact(unwrapped,row.after,row.before,'restore-negative-budget-import');
+ const replay=exact(exact(restored,row.before,row.after,'replay-negative-budget-import'),row.factoryBefore,row.factoryAfter,'replay-negative-budget-factory');
+ if(replay!==source)fail('whole negative-budget consumer inverse differs');
+ retain('complete-negative-budget-consumer-history',{actualSource:source,historicalSource:restored,replayedSource:replay,rules:row,sourceAuthority:false,semanticAuthority:false});
+ return restored;
 }
