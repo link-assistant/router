@@ -7,6 +7,7 @@ import {unsupported} from './vendor/meta-language/translation/diagnostics.js';
 
 const descriptor = Object.getOwnPropertyDescriptor(StringRustParser.prototype, 'expressionMacro');
 const owner = Object.freeze({kind: 'owned', source: 'Vec'});
+const checkedLists = new WeakMap();
 function current() {
   const actual = Object.getOwnPropertyDescriptor(StringRustParser.prototype, 'expressionMacro');
   if (!actual || ['value', 'get', 'set', 'writable', 'enumerable', 'configurable'].some(key => actual[key] !== descriptor[key])) {
@@ -22,12 +23,14 @@ function sourceContract(run, span) {
 }
 export function parseRouterCoreVector(parser, path) {
   const c = parser.cursor;
-  if (!['crate', '::', 'translation_core', '::', 'vec'].every((word, index) => c.is(word, index)) ||
-      c.peek().kind !== 'identifier' || c.peek(2).kind !== 'identifier' || c.peek(4).kind !== 'macro') return null;
-  const first = c.peek(), macro = c.peek(4), start = c.index, tokens = c.tokens;
+  if (!['crate', '::', 'translation_core', '::'].every((word, index) => c.is(word, index)) ||
+      c.peek().kind !== 'identifier' || c.peek(2).kind !== 'identifier' || c.peek(4).value !== 'vec') return null;
+  const name = c.peek(4), separate = name.kind === 'identifier' && c.is('!', 5);
+  if (name.kind !== 'macro' && !separate) return null;
+  const first = c.peek(), macro = separate ? {...name, kind: 'macro', end: c.peek(5).end} : name, start = c.index, tokens = c.tokens, width = separate ? 6 : 5;
   const location = {start: first.start, end: macro.end};
   const proof = sourceContract(() => { current(); return requireRouterCoreFacade(parser); }, location);
-  c.index += 5;
+  c.index += width;
   const output = createRulePipeline([
     {phase: 'language', rules: [{id: 'owned-vector:existing-comma-list-expression-grammar', apply: () => {
       const value = descriptor.value.call(parser, {...macro, value: 'vec', start: first.start}, path);
@@ -44,7 +47,7 @@ export function parseRouterCoreVector(parser, path) {
   ]).run(null);
   sourceContract(() => {
     current(); requireRouterCoreFacadeCurrent(parser, proof);
-    if (parser.cursor !== c || c.tokens !== tokens || c.index <= start + 5 || tokens[start] !== first || tokens[start + 4] !== macro) {
+    if (parser.cursor !== c || c.tokens !== tokens || c.index <= start + width || tokens[start] !== first || tokens[start + 4] !== name) {
       throw new TypeError('Owned vector original qualified call changed');
     }
   }, output.value.span);
@@ -59,5 +62,15 @@ export function checkRouterCoreVector(checker, node, env, path, expected, allowL
   if (value.k !== 'array' || value.type?.kind !== 'array' || !scalar || value.type.rustOwnership?.kind !== 'owned' || value.type.rustOwnership.source !== 'Vec') {
     throw unsupported('owned vector elements', 'requires checked primitive integers, bools, owned standard text or borrowed str; nominal, nested, mutable and erased elements remain refused', node.span);
   }
-  return {...value, constEligible: false, compatibilityCore: node.value.compatibilityCore};
+  const proof = Object.freeze({profile: 'checked-router-owned-vector-list-v1'});
+  checkedLists.set(proof, {items: value.items, elements: [...value.items], elementType: value.type.element});
+  return {...value, constEligible: false, compatibilityCore: node.value.compatibilityCore, ownedVectorProof: proof};
+}
+
+// Private checker association, consumed before checked-meta serialization.
+export function hasCheckedRouterCoreVector(node) {
+  const original = node && checkedLists.get(node.ownedVectorProof);
+  return Boolean(original && node.k === 'array' && node.items === original.items && node.type?.kind === 'array' &&
+    node.type.element === original.elementType && node.type.rustOwnership?.kind === 'owned' && node.type.rustOwnership.source === 'Vec' &&
+    node.items.length === original.elements.length && node.items.every((item, at) => item === original.elements[at]));
 }

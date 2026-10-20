@@ -1,3 +1,4 @@
+import {hasCheckedRouterCoreVector} from '../router-core-vectors.mjs';
 import {canonicalResult} from './result-iterators.mjs';
 import {JSON_DATA} from './json-contracts.mjs';
 import {sharedReferenceCopyIdentity} from '../shared-reference-copy-source.mjs';
@@ -305,6 +306,10 @@ function origins(node,env,context,returns,depth=0) {
     if(!node.arrayBorrowProof?.verified)throw unsupported('shared array lifetime origin','requires the checked source promotion or constant-extension proof',node.span);
     return uniformOrigins(node.type,new Set(['static']),context);
   }
+  if(node.k==='array'&&hasCheckedRouterCoreVector(node)) {
+    const values=node.items.map(value=>read(value));
+    return borrowed?union(...values.map(value=>prefix(value,['element']))):new Set();
+  }
   if(node.k==='array'&&node.type?.rustFixedArray&&node.fixedArrayProof?.verified) {
     const values=node.items.map(value=>read(value));
     // Rust checks a repeat operand against the expected element type even
@@ -540,6 +545,7 @@ function origins(node,env,context,returns,depth=0) {
 function emptyBorrowValue(node,context,depth=0) {
   if(!node||depth>256)return false;
   const empty=value=>emptyBorrowValue(value,context,depth+1);
+  if(hasCheckedRouterCoreVector(node)&&node.items.length===0)return true;
   if(node.k==='array'&&node.type?.rustFixedArray?.length===0&&node.items.length===0&&node.fixedArrayProof?.verified&&node.fixedArrayProof.syntax!=='repeat')return true;
   if(['routerReturn','routerBreak','routerContinue','routerPanic','abort'].includes(node.k))return true;
   if(['let','routerDiscard','routerSet','routerWhile','routerFor','routerIf'].includes(node.k))return empty(node.body);

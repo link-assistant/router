@@ -33,12 +33,12 @@ export function migrateCoreVectors(source, {rootSource = '', macroUseSources = {
     }
     const uncertain = tokens.slice(open + 1).some((token, index, body) =>
       ['#', 'use', 'extern', 'fn', 'mod', 'struct', 'enum', 'union', 'trait', 'impl', 'type', 'macro_rules!', 'macro'].includes(token.text) ||
-      token.text.endsWith('!') && token.text !== 'vec!' ||
+      token.text !== '!' && token.text.endsWith('!') && token.text !== 'vec!' ||
       token.text === '!' && identifiers(body[index - 1]) && body[index - 1].text !== 'vec' && ['(', '[', '{'].includes(body[index + 1]?.text));
     if (open < 0 || uncertain) { skipped.push({name: item.name, reason: 'local item or other macro producer requires original owner closure', span: [item.start, item.end]}); continue; }
     const selected = candidates.map(({token, at}) => {
-      const end = token.text === 'vec!' ? token.end : tokens[at + 1].end;
-      return {span: [token.start, end], expected: source.slice(token.start, end), replacement: 'crate::translation_core::vec!'};
+      // Preserve every byte of whitespace/comments between name and bang.
+      return {span: [token.start, token.end], expected: source.slice(token.start, token.end), replacement: 'crate::translation_core::' + token.text};
     });
     edits.push(...selected); functions.push({name: item.name, span: [item.start, item.end], macroCalls: selected.length});
   }

@@ -24,6 +24,11 @@ by changing the macro's name and absolute standard delegate. Ordered language
 and repository rules retain complete before/after CST, serialization/reparsing,
 all edits and whole inverses. The generated Host hook delegates to the existing
 checker and keeps its enclosing ownership and primitive-identity checks.
+The native source producer also copies the existing fixed-array element-origin
+equations into a separate owned-list branch. Its private checked association
+binds the original element array and element type; copied or changed metadata
+cannot select that branch. Each borrowed element keeps its actual input or
+static origin, including when the enclosing vector owns its allocation.
 
 Run the read-only producer comparison with the repository's installed compiler:
 
@@ -32,9 +37,9 @@ node tools/translation/prepare-core-vector-sources.mjs --root /absolute/checkout
 ```
 
 The complete historical source inputs are checked-in fixture DATA. Check mode
-freshly regenerates all four outputs and compares every byte: the Rust facade,
-its complete SOURCE/SHA256 literals, Host integration and independent Rust
-oracle. It does not consume saved compiler programs or verdicts. The source
+freshly regenerates all five outputs and compares every byte: the Rust facade,
+its complete SOURCE/SHA256 literals, Host integration, lifetime-origin adapter
+and independent Rust oracle. It does not consume saved compiler programs or verdicts. The source
 proposal and source-data constants grant no semantic authority. The oracle
 source has not run locally; all Rust tools remain prohibited during issue #759.
 
@@ -44,7 +49,8 @@ conservative complete-module/parent macro binding capture. Competing macros,
 glob imports, unknown attributes, unresolved parent macro imports and local or
 other macro producers retain refusals or unchanged functions. It preserves
 complete original and edited source, serialized CST, edits, mappings and a
-full inverse. Qualified standard calls are kept unchanged. The proposal does
+full inverse. Comments and whitespace between the macro name and bang survive
+adoption. Qualified standard calls are kept unchanged. The proposal does
 not select an original standard macro implementation or admit its caller;
 the owned candidate must pass a fresh checker independently.
 
@@ -67,9 +73,14 @@ original-context coverage measurement, the complete JavaScript gate and gated
 Rust CI remain coordinator obligations. The historical 155/2567 executable
 measurement is unchanged by this source candidate.
 
-The vector producer's complete `--check` and both dependent formatting
-producers' fresh byte comparisons passed after regeneration. The bounded
-native source-only refresh completed in 15.18 seconds with 684,113,920 bytes
-peak aggregate RSS and retained complete compressed before/after receipts.
-The seven-case runtime suite has not yet run; source freshness does not
-establish receiving behavior or runtime parity.
+The first combined receiving run exposed five failures in these seven cases:
+macro token selection, separated bang handling, an incorrect ordinary-vector
+baseline assertion and missing borrowed-element origin traversal. Their
+complete diagnostic streams remain retained. The repaired complete seven-case
+file passed JavaScript and strict TypeScript in 17.47 seconds with 727,465,984
+bytes peak aggregate RSS and an independent seven-case deadline join; each
+original case limit remained 60 seconds. Native source regeneration and all
+five vector/dependent-formatting source comparisons passed separately. A
+subsequent tighter private element-array/type association and its copied-value
+controls await complete receiving requalification. These results do not change
+the historical production coverage measurement.

@@ -10,6 +10,7 @@ import {parseProgram} from '../semantic-meta.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {migrateCoreVectors} from '../migrate-core-vectors.mjs';
 import {prepareCoreVectorSources} from '../prepare-core-vector-sources.mjs';
+import {checkRouterCoreVector, hasCheckedRouterCoreVector} from '../router-core-vectors.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 import {ROUTER_FORMATTING_FACADE_SOURCE, ROUTER_CORE_PRIMITIVES_SOURCE, ROUTER_CORE_RANGES_SOURCE,
   ROUTER_CORE_BASE64_SOURCE, ROUTER_CORE_JSON_COLLECTIONS_SOURCE} from '../router-core-source-data.mjs';
@@ -43,7 +44,7 @@ const has = (result, name) => result.meta.executable.some(row => row.name === na
 test('native source producer derives the actual owned wrapper and composes complete source inverses', () => {
   const input = retain('complete-pinned-source-producer-inputs', originalInputs());
   const result = retain('complete-native-source-proposal', prepareCoreVectorSources({facade: input.sources['rust/src/translation_core.rs'],
-    sourceData: input.sources['tools/translation/router-core-source-data.mjs'], hostSource: input.sources['tools/translation/extensions/host-contracts.mjs']}));
+    sourceData: input.sources['tools/translation/router-core-source-data.mjs'], hostSource: input.sources['tools/translation/extensions/host-contracts.mjs'], lifetimesSource: input.sources['tools/translation/extensions/source-lifetimes.mjs']}));
   assert.equal(result.value.typescript, '5.9.3');
   assert.deepEqual(result.trace.map(row => row.phase), ['language', 'repository']);
   assert.equal(result.value.sources['rust/src/translation_core.rs'].after, ROUTER_FORMATTING_FACADE_SOURCE);
@@ -55,7 +56,7 @@ test('native source producer derives the actual owned wrapper and composes compl
   }
   assert.match(result.value.wrapper.after, /::std::vec!/u);
   assert.throws(() => prepareCoreVectorSources({facade: ROUTER_FORMATTING_FACADE_SOURCE,
-    sourceData: input.sources['tools/translation/router-core-source-data.mjs'], hostSource: input.sources['tools/translation/extensions/host-contracts.mjs']}), /fresh|differs/u);
+    sourceData: input.sources['tools/translation/router-core-source-data.mjs'], hostSource: input.sources['tools/translation/extensions/host-contracts.mjs'], lifetimesSource: input.sources['tools/translation/extensions/source-lifetimes.mjs']}), /fresh|differs/u);
 });
 
 test('qualified vector lists execute checked primitive, borrowed text, owned text and empty contextual elements', async () => {
@@ -84,14 +85,28 @@ test('list operands remain once-only and left-to-right through serialized checke
   await verifyTypedTargets(result, api => { const actual = api.ordered(); retain('actual-ordered-target', actual); assert.deepEqual(actual, [4n, 5n]); }, {childTimeoutMs: 20_000});
 });
 
-test('ordinary standard macros, aliases, forged facades, repetition and unsupported element ownership remain refused', () => {
+test('ordinary vector baselines remain unchanged while aliases forged facades repetition and unsupported element ownership refuse', () => {
+  // Test the private helper's association independently; this synthetic unit
+  // value is never fed to translation or treated as an executable program.
+  const checked = {k: 'array', items: [{k: 'lit', value: true, type: {kind: 'bool'}}], type: {kind: 'array', element: {kind: 'bool'}, rustOwnership: {kind: 'owned', source: 'Vec'}}};
+  const associated = checkRouterCoreVector({expr: () => checked}, {value: {}}, null, [], null, false);
+  assert.equal(hasCheckedRouterCoreVector(associated), true);
+  for (const copied of [structuredClone(associated), {...associated, items: [...associated.items]},
+    {...associated, type: {...associated.type, element: {...associated.type.element}}}, {...associated, ownedVectorProof: {profile: 'checked-router-owned-vector-list-v1'}}]) assert.equal(hasCheckedRouterCoreVector(copied), false);
+  associated.items.push({k: 'lit', value: false, type: {kind: 'bool'}}); assert.equal(hasCheckedRouterCoreVector(associated), false); associated.items.pop();
+  // Independent source inputs establish the actual old standard decisions.
+  // A facade draft must not retroactively turn an admitted ordinary list red.
+  for (const [source, admitted] of [['pub fn bad()->Vec<u8>{vec![1u8]}', true], ['pub fn bad()->Vec<u8>{std::vec![1u8]}', false]]) {
+    const baseline = retain('ordinary-vector-baseline', translateSource(source));
+    assert.equal(baseline.ir.items.find(row => row.name === 'bad').status === 'executable', admitted);
+    assert.equal(has(project(files(source)), 'bad'), admitted, source);
+  }
   for (const source of [
-    'pub fn bad()->Vec<u8>{vec![1u8]}',
-    'pub fn bad()->Vec<u8>{std::vec![1u8]}',
     `use crate::translation_core::vec as list;pub fn bad()->Vec<u8>{list![1u8]}`,
     `pub fn bad()->Vec<u8>{${C}vec![1u8;2]}`,
     `pub fn bad()->Vec<Vec<u8>>{${C}vec![${C}vec![1u8]]}`,
     `pub fn bad(value:&u8)->Vec<&u8>{${C}vec![value]}`,
+    `pub fn bad(value:&${C}Str)->Vec<&'static ${C}Str>{${C}vec![value]}`,
     `pub fn bad()->Vec<f64>{${C}vec![1.0f64]}`,
     `struct Owned{value:u8} pub fn bad()->Vec<Owned>{${C}vec![Owned{value:1u8}]}`,
     `pub fn bad()->Vec<u8>{${C}vec![missing]}`,
@@ -107,7 +122,7 @@ test('ordinary standard macros, aliases, forged facades, repetition and unsuppor
 test('CST vector adoption preserves complete Unicode/trivia/source inverse and ordinary formatter behavior', () => {
   const source = '\uFEFF// vec!["comment"]\r\npub fn selected()->Vec<&\'static str>{vec /* gap */ !["a","😀"]}\r\n';
   const proposal = retain('complete-owned-vector-source-adoption', migrateCoreVectors(source));
-  assert.equal(proposal.after.source, source.replace('vec /* gap */ !', C + 'vec!'));
+  assert.equal(proposal.after.source, source.replace('>{vec', '>{' + C + 'vec'));
   assert.equal(proposal.functions.length, 1); assert.equal(proposal.edits.length, 1);
   assert.equal(transportConcreteSyntaxMeta(proposal.before.meta).source, source);
   assert.equal(transportConcreteSyntaxMeta(proposal.after.meta).source, proposal.after.source);

@@ -25,8 +25,8 @@ function transform(source, language, edits, id) {
   return {before: source, after: after.source, beforeMeta: before.meta, afterMeta, inverse: source, edits, trace: applied.trace,
     beforeSha256: hash(source), afterSha256: hash(after.source)};
 }
-export function prepareCoreVectorSources({facade, sourceData, hostSource}) {
-  for (const source of [facade, sourceData, hostSource]) if (typeof source !== 'string' || source.length > 2_000_000) fail('complete bounded original inputs required');
+export function prepareCoreVectorSources({facade, sourceData, hostSource, lifetimesSource}) {
+  for (const source of [facade, sourceData, hostSource, lifetimesSource]) if (typeof source !== 'string' || source.length > 2_000_000) fail('complete bounded original inputs required');
   const ts = ownershipCompiler();
   if (ts.version !== '5.9.3') fail('installed native TypeScript 5.9.3 required');
   const parse = (name, source) => {
@@ -79,14 +79,43 @@ export function prepareCoreVectorSources({facade, sourceData, hostSource}) {
         {span: [at, at], expected: '', replacement: '\n    const coreVector=parseRouterCoreVector(this,path);if(coreVector)return coreVector;'},
         {span: [checkAt, checkAt], expected: '', replacement: "\n    if(node.k==='routerCoreVector')return checkRouterCoreVector(this,node,env,path,expected,allowLiteral);"},
       ], 'router-core:compose-qualified-vector-parser-hook');
+      const lifetimes = prepareCoreVectorLifetimeSource(lifetimesSource);
       parse('router-core-source-data.mjs', data.after); parse('host-contracts.mjs', host.after);
       return {schema: 'owned-vector-complete-source-proposal-v1', typescript: ts.version,
         sources: {'rust/src/translation_core.rs': state.facadeResult, 'tools/translation/router-core-source-data.mjs': data,
           'tools/translation/extensions/host-contracts.mjs': host,
+          'tools/translation/extensions/source-lifetimes.mjs': lifetimes,
           'rust/tests/translation_core_vectors.rs': transform('', 'Rust', [{span: [0, 0], expected: '', replacement: CORE_VECTOR_RUST_ORACLE_SOURCE}], 'router-core:independent-native-vector-oracle-source')}, wrapper: state.wrapper,
         semanticAuthority: false, executableAdmission: false, rustExecuted: false};
     }}]},
   ]).run(null);
+}
+
+export function prepareCoreVectorLifetimeSource(source) {
+  const ts = ownershipCompiler();
+  if (ts.version !== '5.9.3' || typeof source !== 'string' || source.length > 2_000_000 || source.includes('hasCheckedRouterCoreVector')) fail('complete fresh original lifetime source required');
+  const file = ts.createSourceFile('source-lifetimes.mjs', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
+  if (file.parseDiagnostics.length) fail('complete native lifetime syntax required');
+  const named = name => file.statements.filter(row => ts.isFunctionDeclaration(row) && row.name?.text === name);
+  const origins = named('origins'), empty = named('emptyBorrowValue');
+  if (origins.length !== 1 || empty.length !== 1) fail('one actual origin and empty-value function required');
+  const arrays = origins[0].body.statements.filter(row => ts.isIfStatement(row) && row.expression.getText(file) === "node.k==='array'&&node.type?.rustFixedArray&&node.fixedArrayProof?.verified");
+  const empties = empty[0].body.statements.filter(row => ts.isIfStatement(row) && row.expression.getText(file) === "node.k==='array'&&node.type?.rustFixedArray?.length===0&&node.items.length===0&&node.fixedArrayProof?.verified&&node.fixedArrayProof.syntax!=='repeat'");
+  if (arrays.length !== 1 || empties.length !== 1 || !ts.isBlock(arrays[0].thenStatement)) fail('one complete actual fixed-array origin and empty equation required');
+  const statements = arrays[0].thenStatement.statements;
+  if (statements.length !== 3 || !ts.isVariableStatement(statements[0]) || !ts.isIfStatement(statements[1]) || !ts.isReturnStatement(statements[2])) fail('actual complete fixed-array origin equation changed');
+  // Copy its real child-origin and element-path equations. The repeat-only
+  // obligation does not apply to the comma-list grammar selected here.
+  const branch = "if(node.k==='array'&&hasCheckedRouterCoreVector(node)) {\n    " + statements[0].getText(file) + '\n    ' + statements[2].getText(file) + '\n  }\n  ';
+  const emptyBranch = "if(hasCheckedRouterCoreVector(node)&&node.items.length===0)" + empties[0].thenStatement.getText(file) + '\n  ';
+  const output = transform(source, 'JavaScript', [
+    {span: [0, 0], expected: '', replacement: "import {hasCheckedRouterCoreVector} from '../router-core-vectors.mjs';\n"},
+    {span: [arrays[0].getStart(file), arrays[0].getStart(file)], expected: '', replacement: branch},
+    {span: [empties[0].getStart(file), empties[0].getStart(file)], expected: '', replacement: emptyBranch},
+  ], 'router-core:derive-owned-vector-origins-from-actual-fixed-array-equations');
+  const after = ts.createSourceFile('source-lifetimes.mjs', output.after, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
+  if (after.parseDiagnostics.length) fail('generated complete native lifetime syntax differs');
+  return output;
 }
 
 export function prepareCoreVectorCheckerSources({facade, sourceData, hostSource}) {
@@ -135,7 +164,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     const originals = JSON.parse(gunzipSync(packed, {maxOutputLength: 2_000_000}));
     if (originals.schema !== 'owned-vector-complete-original-inputs-v1') fail('complete original source-input fixture required');
     const result = prepareCoreVectorSources({facade: originals.sources['rust/src/translation_core.rs'],
-      sourceData: originals.sources['tools/translation/router-core-source-data.mjs'], hostSource: originals.sources['tools/translation/extensions/host-contracts.mjs']});
+      sourceData: originals.sources['tools/translation/router-core-source-data.mjs'], hostSource: originals.sources['tools/translation/extensions/host-contracts.mjs'], lifetimesSource: originals.sources['tools/translation/extensions/source-lifetimes.mjs']});
     const current = Object.fromEntries(Object.keys(result.value.sources).map(name => [name, readFileSync(resolve(root, name), 'utf8')]));
     if (args[2] === '--check') {
       for (const [name, source] of Object.entries(result.value.sources)) if (current[name] !== source.after) fail('stale complete generated source: ' + name);
@@ -159,7 +188,8 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const prepare = args.length === 8 ? prepareCoreVectorCheckerSources : prepareCoreVectorSources;
   const result = prepare({facade: readFileSync(resolve(facadeRoot, 'rust/src/translation_core.rs'), 'utf8'),
     sourceData: readFileSync(resolve(root, 'tools/translation/router-core-source-data.mjs'), 'utf8'),
-    hostSource: readFileSync(resolve(root, 'tools/translation/extensions/host-contracts.mjs'), 'utf8')});
+    hostSource: readFileSync(resolve(root, 'tools/translation/extensions/host-contracts.mjs'), 'utf8'),
+    lifetimesSource: readFileSync(resolve(root, 'tools/translation/extensions/source-lifetimes.mjs'), 'utf8')});
   // The complete reviewable receipt is durable before installation. No original
   // source is selected from a previous invocation's saved proposal or verdict.
   writeFileSync(resolve(args[5]), JSON.stringify(result) + '\n', {flag: 'wx'});
