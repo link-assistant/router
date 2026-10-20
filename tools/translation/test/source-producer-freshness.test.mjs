@@ -15,6 +15,7 @@ import {prepareInvocationLocalFreezer} from '../prepare-invocation-local-freezer
 import {prepareStaticJsonPreflight} from '../prepare-static-json-preflight.mjs';
 import {prepareStaticSourceRelease} from '../prepare-static-source-release.mjs';
 import {prepareStreamingStaticEncoding} from '../prepare-streaming-static-encoding.mjs';
+import {prepareStandardModuleImportRoles} from '../prepare-standard-module-import-roles.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 const root=new URL('../../../',import.meta.url),read=path=>readFileSync(new URL(path,root),'utf8');
 
@@ -90,4 +91,10 @@ test('incremental canonical encoding reproduces its whole scanner encoders and r
  const plan=prepareStreamingStaticEncoding({root:fileURLToPath(root)});assert.equal(plan.files.length,4);
  for(const row of plan.files){assert.equal(row.before,row.after);assert.equal(row.after,read(row.path));assert.equal(row.inverse,row.original);assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.original);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);}
  assert.equal(plan.allOriginalEncoderBodiesUnchanged,true);assert.equal(plan.completePerRowAndWholeStorageInversesRemain,true);assert.equal(plan.originalLimitsUnchanged,true);assert.equal(plan.newAcrossInvocationCaches,false);assert.equal(plan.sourceAuthority,false);assert.equal(plan.runtimeAuthority,false);
+});
+
+test('source-derived standard module candidates reproduce their entire selector and complete CST inverse',{timeout:60000},()=>{
+ const plan=prepareStandardModuleImportRoles({root:fileURLToPath(root)});assert.equal(plan.files.length,1);
+ for(const row of plan.files){assert.equal(row.before,row.after);assert.equal(row.after,read(row.path));assert.equal(row.inverse,row.original);assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.original);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);}
+ assert.equal(plan.newAcrossInvocationCaches,false);assert.equal(plan.originalTimeRoleUnchanged,true);assert.equal(plan.sourceAuthority,false);assert.equal(plan.namespaceAuthority,false);assert.equal(plan.runtimeAuthority,false);
 });

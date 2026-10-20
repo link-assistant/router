@@ -371,3 +371,5 @@ The current complete 36-case receiving group passes under both Node and Bun,
 including original deadlines and complete source/CST checks. Existing public
 encoder functions remain exact. These infrastructure results add no executable
 application coverage and do not establish full synchronization or the full gate.
+
+The [source-derived standard module role extension](../../docs/development/standard-module-import-roles-20261021.md) passes all 33 complete text-adoption and producer receiving cases under Node and Bun. Its actual two-sequence CST producer retains full source inverses and all original standard time/source checks; module candidates grant no namespace, trait-dispatch or executable authority. Production executable coverage and the open full synchronization obligations remain unchanged.

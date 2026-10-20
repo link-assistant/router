@@ -145,7 +145,7 @@ export function createLiteralTextImportRoles(modules,profile,dependencyInputs=un
       const words=row.tokens.filter(token=>token.type!=='comment').map(token=>token.text);if(words[0]==='extern'&&words[1]==='crate'&&(words[3]==='as'?words[4]:words[2])===root)return true;
       return row.term==='use'&&originalUseDeclarationLeaves(row,owner.path).some(imported=>imported.glob||imported.name===root);
     }));
-    let role=!shadowed?(standardRole(leaf.segments)??external?.(leaf.segments)):null;
+    let role=!shadowed?(standardRole(leaf.segments)??standardRootModuleRole(leaf.segments)??external?.(leaf.segments)):null;
     const scope=evidence.scopes.find(row=>row.file===module.file&&same(row.path,module.path));
     const bindings=scope?.bindings.filter(row=>row.name===leaf.name&&row.span?.start===item.start&&row.span?.end===item.end&&row.status==='resolved')??[];
     if(!role&&bindings.length&&bindings.every(binding=>nonTraits.has(binding.kind))){
@@ -160,4 +160,15 @@ export function createLiteralTextImportRoles(modules,profile,dependencyInputs=un
     captured.verify();original.verify();return role?{schema:'owned-literal-import-role-candidate-v1',name:leaf.name,segments:[...leaf.segments],import:{file:module.file,sourceSha256:hash(module.source),span:[item.start,item.end]},role,namespaceComplete:false,originalDispatchProved:false,executableAdmission:false}:null;
   };
   roleChecks.set(roleFor,()=>{captured.verify();original.verify();});return roleFor;
+}
+
+// Generated direct standard module declaration candidates; no namespace authority.
+
+function standardRootModuleRole(segments){
+ if(segments.length!==2||!['std','core'].includes(segments[0]))return null;
+ const owner=segments[0],root=owner==='std'?stdRoot:coreRoot;
+ // Inspect the complete pinned original root each time. No caller table,
+ // spelling allowlist, cross-invocation census or imported trait is inferred.
+ const candidate=originalPublicModuleCandidate(root.source,segments[1]);
+ return candidate?{kind:'mod',route:[{crate:owner,sourceSha256:root.sourceSha256??root.sha256,...candidate}],namespaceComplete:false,originalDispatchProved:false,executableAdmission:false}:null;
 }
