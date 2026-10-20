@@ -11,6 +11,7 @@ import {PRODUCTION_PROFILE} from './cfg-profile.mjs';
 import {originalSourceModuleItems} from './source-module-views.mjs';
 import {ROUTER_FORMATTING_FACADE_SOURCE} from './router-core-formatting.mjs';
 import {ROUTER_CORE_PRIMITIVES_SOURCE} from './router-core-primitives.mjs';
+import {macroAdoptionFunctionBarriers} from './macro-adoption-function-boundary.mjs';
 const hash=source=>createHash('sha256').update(source).digest('hex');
 const fail=message=>{throw new TypeError('Core formatting migration: '+message);};
 const attributeNames=new Set(['doc','must_use','cfg','allow','warn','deny','forbid','inline','cold','test']);
@@ -76,6 +77,7 @@ function migrateOriginalProducerFormatting(source,{rootSource='',macroUseSources
       if((token.text==='format!'||token.text==='format'&&next.text==='!')&&previous?.text!=='::'&&previous?.text!=='#'){const end=token.text==='format!'?token.end:next.end;selected.push({span:[token.start,end],expected:source.slice(token.start,end),replacement:'crate::translation_core::format!'});}
     }
     if(!selected.length)continue;
+    const barriers=macroAdoptionFunctionBarriers(rows,body,'format');if(barriers.length){skipped.push({span:[item.start,item.end],reason:'function body retains an unresolved macro or local producer',barriers});continue;}
     if(!strShadow)for(let at=fn+2;at<body;at++)if(rows[at].text==='str'&&(rows[at-1]?.text==='&'||rows[at-1]?.text==="'static"&&rows[at-2]?.text==='&'))selected.push({span:[rows[at].start,rows[at].end],expected:'str',replacement:'crate::translation_core::Str'});
     // Only the actual simple return token is adopted. Complex/borrowed/aliased
     // types keep their ordinary checker obligations and are never erased.
