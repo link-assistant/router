@@ -854,6 +854,16 @@ the raw historical source, original adapter and all old pins remain unchanged.
 These 78 receiving cases per engine do not replace full regeneration, original
 performance frontiers, native parity or the complete same-SHA JavaScript gate.
 
+The current isolated compiler registration now includes all 1,333 complete
+compiler and TypeScript files (47,334,406 raw bytes), including the lossless
+storage producer, pinned compressor and license. Independent review compares
+every registered compiler Git/physical byte, all 132 installed TypeScript files,
+both complete bootstrap equations and their inverses. The actual portable
+fixture producer retains 411 genuine Git objects and all four unchanged
+historical source bodies. All 16 cases across the two complete receiving files
+pass in Node (63.131 seconds) and Bun (58.069 seconds). These receiving results
+do not establish full-corpus freshness, native parity or the same-SHA gate.
+
 Regenerate owned-definition producer modules with
 `node tools/translation/prepare-owned-definition-bulk.mjs --emit`. This emits a
 complete source proposal; it does not install files. Review every original
