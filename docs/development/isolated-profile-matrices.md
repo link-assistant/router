@@ -72,3 +72,13 @@ Full-corpus matrix generation, strict profile TypeScript, current generated
 freshness and the complete JavaScript gate remain open. New compiler source
 files require regeneration. This work adds no native application coverage and
 does not establish complete synchronization or full runtime parity.
+
+The dependent export refresh registers all 1,340 compiler and TypeScript files
+(47,390,179 raw bytes) from source checkpoint `92a128d821d962f87a0e4094c0761eef72497d49`.
+Independent review compares every compiler Git/physical byte, all 132 installed
+TypeScript files, both complete bootstrap equations and CST inverses, all 412
+genuine portable Git objects and the four unchanged historical source bodies.
+Both complete export receiving files pass all 16 cases in Node and fresh Bun,
+including their independent source/deadline joins. Rust/Cargo inputs and their
+source bank remain unchanged. These export checks do not qualify the full
+production matrix or complete synchronization.

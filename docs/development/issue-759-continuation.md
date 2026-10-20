@@ -974,3 +974,12 @@ result or native parity gain. New compiler sources make regeneration and all
 current freshness checks necessary again. Full parity, complete reverse
 synchronization and all same-SHA JavaScript gates remain open. Rust is CI-only
 after all eight JavaScript stages pass; Rust failures remain fatal.
+
+The dependent export refresh captures all 1,340 registered files (1,208 compiler
+and 132 TypeScript sources; 47,390,179 raw bytes) from `92a128d821d962f87a0e4094c0761eef72497d49`.
+Independent review compares all original Git/physical bytes, both bootstrap CST
+and substitution inverses, all 412 genuine portable Git objects and all four
+unchanged historical sources. All 16 receiving cases pass in Node (71.049
+seconds) and fresh Bun (65.521 seconds), with complete source/deadline joins.
+The Rust/Cargo source bank remains unchanged. Full production regeneration and
+all current freshness, reverse and parity obligations remain open.
