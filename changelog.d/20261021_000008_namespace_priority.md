@@ -43,3 +43,9 @@ ranges while keeping caller-prelude brands separate. Preserve foreign
 procedural owners, input/token origins and namespace admission as independent
 obligations. Native TypeScript 5.9.3 AST/CST source copies and inverses passed;
 eight new complete controls and the original ten positives remain unrun here.
+
+Join the two original Engine sibling data inputs through private package
+captures, exact spans, complete native parser/token origins and actual Item
+field-projection macro expansions. Preserve foreign callback ownership as a
+separate obligation. Complete native AST/CST inverses passed; six new controls
+remain unrun and no full namespace repair is claimed.
