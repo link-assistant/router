@@ -133,3 +133,10 @@ and all dependent comparisons in 19.60 seconds with 593,723,392 bytes peak
 aggregate RSS. Its new actual ordinary-project callback observer awaits fresh
 receiving qualification; the prior frame receiving PASS applies before this
 final optimization.
+
+The source adopter also reuses the shared token boundary guard for the vector
+family. Unknown qualified vector macros, separated bangs and Unicode-named
+producers keep their complete functions unchanged, including nested vector
+payload tokens. Nested selected-family lists remain source candidates, while
+the executable checker still refuses unsupported nested element types. This
+boundary repair awaits the coordinator's complete receiving qualification.

@@ -206,10 +206,18 @@ test('source adoption refuses competing macro imports and producers without chan
   }
   assert.throws(() => migrateCoreVectors(body, {rootSource: '#[macro_use] mod macros;', macroUseSources: {macros: 'macro_rules! vec{()=>{custom}}'}}), /competing vec/u);
   for (const source of ['pub fn one()->Vec<u8>{std::vec![1u8]}', 'pub fn one()->Vec<u8>{r#vec![1u8]}',
-    'pub fn one()->Vec<u8>{emit!();vec![1u8]}', 'pub fn one()->Vec<u8>{let a=format!("x");vec![1u8]}']) {
+    'pub fn one()->Vec<u8>{emit!();vec![1u8]}', 'pub fn one()->Vec<u8>{let a=format!("x");vec![1u8]}',
+    'pub fn one()->Vec<u8>{foreign::vec!(vec![1u8]);vec![2u8]}',
+    'pub fn one()->Vec<u8>{foreign::vec /* 😀 */ !(vec![1u8]);vec![2u8]}',
+    'pub fn one()->Vec<u8>{foreign::生成 /* 😀 */ !{vec![1u8]};vec![2u8]}',
+    'pub fn one()->Vec<u8>{生成 /* gap */ !(vec![1u8]);vec![2u8]}']) {
     const proposal = retain('unchanged-uncertain-complete-source', migrateCoreVectors(source));
-    assert.equal(proposal.after.source, source);
+    assert.equal(proposal.after.source, source); assert.equal(proposal.functions.length, 0); assert.equal(proposal.edits.length, 0);
+    assert.equal(proposal.inverse, source); assert.equal(transportConcreteSyntaxMeta(proposal.before.meta).source, source); assert.equal(transportConcreteSyntaxMeta(proposal.after.meta).source, source);
   }
+  const nested = 'pub fn nested()->Vec<Vec<u8>>{vec![vec![1u8]]}', selected = retain('complete-selected-family-nested-candidate', migrateCoreVectors(nested));
+  assert.equal(selected.functions.length, 1); assert.equal(selected.edits.length, 2); assert.equal(selected.inverse, nested);
+  assert.equal(selected.after.source, nested.replaceAll('vec!', C + 'vec!')); assert.equal(transportConcreteSyntaxMeta(selected.after.meta).source, selected.after.source);
   let callbacks = 0; const poisoned = Object.defineProperty({}, 'macros', {get() { callbacks++; return ''; }});
   assert.throws(() => migrateCoreVectors(body, {macroUseSources: poisoned}), TypeError); assert.equal(callbacks, 0);
 });

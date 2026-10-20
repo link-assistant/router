@@ -3,6 +3,7 @@
 import {createHash} from 'node:crypto';
 import {sourceItems} from './rust-structure.mjs';
 import {captureCoreMacroAdoptionBinding} from './migrate-core-formatting.mjs';
+import {macroAdoptionFunctionBarriers} from './macro-adoption-function-boundary.mjs';
 import {itemConfiguration, PRODUCTION_PROFILE} from './cfg-profile.mjs';
 import {transportConcreteSyntaxSource, transportConcreteSyntaxMeta, applyConcreteSyntaxSubstitutions, serializeConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
 const hash = text => createHash('sha256').update(text).digest('hex');
@@ -35,7 +36,7 @@ export function migrateCoreVectors(source, {rootSource = '', macroUseSources = {
       ['#', 'use', 'extern', 'fn', 'mod', 'struct', 'enum', 'union', 'trait', 'impl', 'type', 'macro_rules!', 'macro'].includes(token.text) ||
       token.text !== '!' && token.text.endsWith('!') && token.text !== 'vec!' ||
       token.text === '!' && identifiers(body[index - 1]) && body[index - 1].text !== 'vec' && ['(', '[', '{'].includes(body[index + 1]?.text));
-    if (open < 0 || uncertain) { skipped.push({name: item.name, reason: 'local item or other macro producer requires original owner closure', span: [item.start, item.end]}); continue; }
+    if (open < 0 || uncertain || macroAdoptionFunctionBarriers(tokens, open, 'vec').length) { skipped.push({name: item.name, reason: 'local item or other macro producer requires original owner closure', span: [item.start, item.end]}); continue; }
     const selected = candidates.map(({token, at}) => {
       // Preserve every byte of whitespace/comments between name and bang.
       return {span: [token.start, token.end], expected: source.slice(token.start, token.end), replacement: 'crate::translation_core::' + token.text};
