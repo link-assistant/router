@@ -82,8 +82,8 @@ test('the existing ordered checker evaluates the complete original subject once 
   await verifyTypedTargets(result, api => assert.equal(api['app.answer'](), true), {childTimeoutMs: 20_000});
 });
 test('standard ownership remains separate while aliases forged facades guards binders and nominal patterns refuse', () => {
-  const baseline = retain('complete-ordinary-standard-baseline', translateSource({path: 'src/original.rs', source: 'pub fn answer(value:u8)->bool{matches!(value,1u8|2u8)}'}));
-  assert.ok(baseline.meta.executable.some(row => row.name === 'answer'));
+  const baseline = retain('complete-ordinary-standard-baseline', translateSource('pub fn answer(value:u8)->bool{matches!(value,1u8|2u8)}', 'src/original.rs'));
+  assert.equal(baseline.ir.items.find(row => row.name === 'answer')?.status, 'executable');
   for (const source of [`pub fn answer(value:u8)->bool{${C}matches!(value,bound)}`, `pub fn answer(value:u8)->bool{${C}matches!(value,1u8 if true)}`, `pub fn answer(value:u8)->bool{${C}matches!(value,0u8..=3u8)}`, `pub const fn answer(value:u8)->bool{${C}matches!(value,1u8)}`, `use crate::translation_core::matches as selected;pub fn answer(value:u8)->bool{selected!(value,1u8)}`, `pub fn answer(value:u8)->bool{foreign::matches!(value,1u8)}`]) assert.equal(has(project(files(source)), 'app.answer'), false, source);
   for (const facade of [ROUTER_FORMATTING_FACADE_SOURCE + '\n', ROUTER_FORMATTING_FACADE_SOURCE.replace('::std::matches!', '::foreign::matches!')]) assert.equal(has(project({...files(`pub fn answer(value:u8)->bool{${C}matches!(value,1u8)}`), 'src/translation_core.rs': facade}), 'app.answer'), false);
 });
