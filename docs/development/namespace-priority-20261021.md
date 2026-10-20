@@ -219,3 +219,25 @@ controls are drafted but unrun. Full runtime, original ten positives, native
 parity, performance and coverage gains remain unqualified. The complete
 receiver-range parent snapshot is preserved; a separate registered-range
 afterimage extends its exact source substitution and inverse chain.
+
+The next private input issuer joins actual captured package/dependency inputs,
+complete current engine-source hashes and exact declaration spans to the
+nongeneric data preconditions. Both original Engine sibling declarations
+qualified in a bounded source check. Thirteen complete native parser,
+capture/replay and AST-to-token callback bodies are retained. HasTokens and
+HasAttrs for the actual Item type are obtained from the complete original
+macro definitions and invocations through the opt-in literal grammar; their
+complete expanded bodies and the P<T> forwarding implementations must match.
+The source relation excludes cfg/inner-attribute replacement ranges, preserves
+non-delimiter token kinds in cursor replay and retains the outer data body
+as a group. Thus the contracts input has no root Fn token. Missing native
+stored tokens may panic; the source issuer does not claim successful native
+execution or whole-crate validity.
+
+The private input token cannot select a callback or exclude a foreign
+procedural provider. Those remain separate finite-producer composition
+obligations; public input reports and metadata copies issue no namespace
+permission. The complete authored input program passed native TypeScript
+5.9.3 AST copying and both ordered CST roundtrips/inverses (1.39 seconds).
+Six new complete 60000 ms controls are drafted and unrun. The original ten
+positive bodies, expectations and deadlines remain unchanged.
