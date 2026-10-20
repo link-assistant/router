@@ -41,6 +41,18 @@ original source and complete source census. All other metadata fields reach the
 existing generated-method reviewer. Neither review grants compiler authority;
 the direct generated-method API and its original guard remain unchanged.
 
+`prepare-compressed-project-meta-storage.mjs` derives a separate complete copy
+of the existing UTF8/string storage planners and reader. Language rules encode
+only a complete concrete component and restore its exact canonical JSON; native
+syntax selects both original planner returns to retain their full decoded
+storage accounting. Repository rules name the new APIs. Existing APIs remain
+unchanged. `prepare-meta-compression-vendor.mjs` scopes the complete pinned
+fflate 0.8.3 UMD implementation without rewriting its compressor, retaining the
+original MIT license and package integrity. Both producers provide complete
+CST/inverse proposals and exact installed `--check` freshness. The compressed
+reader retains independent physical and original decoded limits. Source/type
+authority and application coverage are unaffected by these storage APIs.
+
 ```javascript
 const pipeline = createRulePipeline([
   {phase: 'language', rules: [{id: 'language:checked-transform', apply: lower}]},

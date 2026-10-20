@@ -816,6 +816,29 @@ passes do not establish complete review, parity or a green JavaScript gate.
 Complete before/after proofs and diagnostic streams remain in task-owned
 temporary evidence, outside the archived case-study allocation.
 
+The separate compressed-storage extension is drafted and qualified before
+producer integration. It copies the complete original UTF8/string planners and
+reader through both rule sequences, with native syntax selecting both complete
+planner returns to retain original decoded storage accounting. The original
+APIs and all physical/decoded limits remain unchanged. A complete pinned MIT
+fflate 0.8.3 UMD implementation is copied into a private module-export scope;
+its original implementation, package integrity and license remain inspectable.
+Native Node/Bun gzip produced different bytes for the same complete input; the
+copied pure-JavaScript implementation produced identical 10,985,776-byte gzip
+output in both engines for all 58,700,591 original concrete bytes.
+
+All four compressor cases and all six new storage cases pass in Node and Bun,
+with complete-file Node deadline audits. The complete committed project storage
+qualification also passes in Node in 12.840 seconds (2,847,981,568 bytes aggregate
+RSS). Every byte of its 176,248,200-byte logical JSON and both semantic components
+is preserved, and all 396 original source records rejoin. Proposed physical
+storage decreases from 176,249,527 to 132,196,799 bytes. This actual producer
+proposal remains in task-owned temporary evidence and is not installed over
+generated outputs. Integration, all complete receiving files and canonical/
+profile regeneration remain mandatory; new compiler files also require fresh
+inventories before any current-tree freshness claim. This storage result grants
+no semantic or runtime authority and adds no executable coverage.
+
 Regenerate owned-definition producer modules with
 `node tools/translation/prepare-owned-definition-bulk.mjs --emit`. This emits a
 complete source proposal; it does not install files. Review every original
