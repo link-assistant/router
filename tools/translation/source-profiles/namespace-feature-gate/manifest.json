@@ -1,0 +1,95 @@
+{
+  "schema": "namespace-feature-gate-original-sources-v1",
+  "compilerCommit": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+  "sources": [
+    {
+      "path": "compiler/rustc_interface/src/passes.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_interface/src/passes.rs",
+      "archive": "compiler_rustc_interface_src_passes.rs.gz",
+      "bytes": 50009,
+      "sha256": "27b309724d03a3bf5a359a31d86a3a7380e1493bbe9cf9bc52f61581efdf0441",
+      "archiveBytes": 14455,
+      "archiveSha256": "f89e2b9b4ebabb5020a14f7e1ce19340905f67abfd916aac7d1a8c89748c36aa"
+    },
+    {
+      "path": "compiler/rustc_ast_passes/src/feature_gate.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_ast_passes/src/feature_gate.rs",
+      "archive": "compiler_rustc_ast_passes_src_feature_gate.rs.gz",
+      "bytes": 27096,
+      "sha256": "29324d8343a1bf2fb4d779bf268680e56b94b7cc54b53e9955c1892fb54c4503",
+      "archiveBytes": 6921,
+      "archiveSha256": "4a7b551eba8340d17bb8ae40867052c03315f995f0b73effabe52de6a07be757"
+    },
+    {
+      "path": "compiler/rustc_feature/src/unstable.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_feature/src/unstable.rs",
+      "archive": "compiler_rustc_feature_src_unstable.rs.gz",
+      "bytes": 39387,
+      "sha256": "5416f65950570ebd368e604a4e8444fdbc92543a20162f98074edc755d681228",
+      "archiveBytes": 10567,
+      "archiveSha256": "ea9ff3237270dbdf448daeb950dfdecc605e3c26266675c07ae0e1c4b48585ae"
+    },
+    {
+      "path": "compiler/rustc_passes/src/check_attr.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_passes/src/check_attr.rs",
+      "archive": "compiler_rustc_passes_src_check_attr.rs.gz",
+      "bytes": 124743,
+      "sha256": "1d065d5235ea7e79fb81b0e8482e1e347d4c9b424b98195c20ba93e9414fd82e",
+      "archiveBytes": 22214,
+      "archiveSha256": "52e0372d18f2adc27d8cd402a458b26fea66064fe8009d5e6de8a468b623d0c4"
+    },
+    {
+      "path": "compiler/rustc_expand/src/config.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_expand/src/config.rs",
+      "archive": "../conditional-attributes/rust-expand-config-1.89.0.rs.gz",
+      "bytes": 19343,
+      "sha256": "164793e06f844ef96778a8d5593cc3e44cea542d764f49a27aebc42daa711f0e",
+      "archiveBytes": 5323,
+      "archiveSha256": "a87988a492b51b47fe9984e0afb5475c6f88770580fe95d998a18cf045471db6",
+      "reuse": "complete original; existing profile unchanged"
+    },
+    {
+      "path": "compiler/rustc_expand/src/base.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_expand/src/base.rs",
+      "archive": "../clap-concat/rust-1.89-base.rs.gz",
+      "bytes": 52174,
+      "sha256": "0bf27a4b3d96610af84dd2dd9780587e0fb4ac0fb951bbc53f982295f837077f",
+      "archiveBytes": 12220,
+      "archiveSha256": "203c8d2ef3a0774863906f41da8d5d398d08b65834468946f7d79aee6224c4d9",
+      "reuse": "complete original; existing profile unchanged"
+    },
+    {
+      "path": "compiler/rustc_feature/src/builtin_attrs.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_feature/src/builtin_attrs.rs",
+      "archive": "../tool-attributes/rust-builtin-attrs-1.89.0.rs.gz",
+      "bytes": 53039,
+      "sha256": "2f6de6720effcaef643447287b65cc471e8f0f00122e3ec8dae3fb129f106a32",
+      "archiveBytes": 10242,
+      "archiveSha256": "1146eb5e90bf1f88a57daac5be5d2596d5256beeb0a82e82c2e853061ff2050e",
+      "reuse": "complete original; existing profile unchanged"
+    }
+  ],
+  "packages": [
+    {
+      "name": "rstest_macros",
+      "version": "0.26.1",
+      "archive": "rstest_macros-0.26.1.crate",
+      "bytes": 68256,
+      "sha256": "9c845311f0ff7951c5506121a9ad75aec44d083c31583b2ea5a30bcb0b0abba0",
+      "sourceRole": "package-shipped lock candidate only; actual unit owner remains unproved"
+    },
+    {
+      "name": "rstest_reuse",
+      "version": "0.7.0",
+      "archive": "rstest_reuse-0.7.0.crate",
+      "bytes": 12828,
+      "sha256": "b3a8fb4672e840a587a66fc577a5491375df51ddb88f2a2c2a792598c326fe14",
+      "sourceRole": "package-shipped lock candidate only; actual unit owner remains unproved"
+    }
+  ],
+  "licenses": [
+    "../builtin-derive-bang/rust-1.89-LICENSE-MIT.gz",
+    "../builtin-derive-bang/rust-1.89-LICENSE-APACHE.gz"
+  ],
+  "scope": "crate-original feature collection and post-expansion gate including hygiene exception; no namespace or actual dev-unit authority"
+}

@@ -74,3 +74,39 @@ enclosing format separately from the legacy path. Current source already
 contains its private backend-dispatch repair. Installing that old packet over
 the evolved compiler or promoting its source-only flags would not close the
 external ancestor/tool obligations above.
+
+The additive `namespace-feature-gate.mjs` source issuer now retains complete
+pinned compiler inputs for feature collection, query feeding before expansion,
+the post-expansion gate and procedural internal-feature permissions. It checks
+the whole original callback selection and nineteen exact source recipes. Its
+private crate-root token enumerates every nested original `cfg_attr` alternative
+without evaluating its predicate. This proves only that the requested feature
+name does not occur in those original lists. It deliberately leaves the actual
+`Features::default` owner, generated-span provenance and attribute gate open.
+
+The source explains why feature syntax absence cannot yet close replacement:
+`gate_alt!` accepts either a feature or `span.allows_unstable(feature)`.
+`check_allow_internal_unstable` explicitly permits procedural macro functions;
+`SyntaxExtension::new` retains that permission and `expn_data` forwards it into
+hygiene. Therefore original crate feature lists cannot exclude a privileged
+generated `rustc_builtin_macro` attribute by themselves. The new token cannot
+be consumed as a namespace certificate, and no existing consumer is changed.
+
+The retained base64 package's own `Cargo.lock` identifies source candidates
+`rstest_macros` 0.26.1 and `rstest_reuse` 0.7.0. Their complete archives are kept
+with checksums matching that lock, including their original notices. The source
+templates are concrete: reuse `template` emits a `macro_rules!` and an import;
+`apply` emits the selected template call; `merge_attrs` forwards a merged
+`ItemFn`. The rstest entry dispatches to errors or single/parameterized/matrix
+function and module renderers. These are candidate producers only. A package's
+shipped lock does not prove the dev-dependency owner of the actual compilation.
+The existing explicit Cargo unit path still needs typed target/dependency
+normalization before it can exclude test-only producers. User `--cfg test` is
+legal and cannot be inferred absent from the unchanged two-argument API.
+
+Source checks passed with installed TypeScript 5.9.3: complete native AST copy,
+language then repository CST serialization/reparse, and both full inverses.
+The original compiler callback/recipe source check passed. Six new complete
+controls are drafted with 60000 ms deadlines and remain unrun pending the
+coordinator's runtime lease. The original ten positives are unchanged and have
+not been repaired by this checkpoint. Cargo normalization is the next join.
