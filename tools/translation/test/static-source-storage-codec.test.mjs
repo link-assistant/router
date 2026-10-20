@@ -31,6 +31,7 @@ async function kernel(){
  assert.equal(full.slice(0,-suffix.length),moduleSource);
  const folder=mkdtempSync(join(tmpdir(),'router-static-codec-controls-'));
  try{
+  const arrayDependency=readFileSync(new URL('../canonical-json-array-fields.mjs',import.meta.url));writeFileSync(join(folder,'canonical-json-array-fields.mjs'),arrayDependency);assert.deepEqual(readFileSync(join(folder,'canonical-json-array-fields.mjs')),arrayDependency);
   const dependency=readFileSync(new URL('../canonical-json-text.mjs',import.meta.url));writeFileSync(join(folder,'canonical-json-text.mjs'),dependency);assert.deepEqual(readFileSync(join(folder,'canonical-json-text.mjs')),dependency);
   const path=join(folder,'codec.mjs');writeFileSync(path,full);assert.equal(readFileSync(path,'utf8'),full);adapter=(await import(pathToFileURL(path).href)).measured;return adapter;
  }finally{rmSync(folder,{recursive:true,force:true});}

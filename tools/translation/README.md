@@ -365,8 +365,9 @@ remain separate obligations. CatalogRecord syntax metadata uses a measured
 64-depth limits.
 
 The explicit source-bank DATA allocation variants and their actual CST source
-producers are documented in the [allocation checkpoint](../../docs/development/static-source-allocation-20261021.md).
-Original APIs, complete source/CST passes and deadlines remain unchanged.
-Node's complete 30-case receiving batch passes; the corresponding Bun batch
-still exceeds its unchanged memory bound. These infrastructure results add no
-executable application coverage and do not establish full synchronization.
+producers are documented in the [allocation checkpoint](../../docs/development/static-source-allocation-20261021.md)
+and the subsequent [incremental encoding checkpoint](../../docs/development/incremental-static-encoding-20261021.md).
+The current complete 36-case receiving group passes under both Node and Bun,
+including original deadlines and complete source/CST checks. Existing public
+encoder functions remain exact. These infrastructure results add no executable
+application coverage and do not establish full synchronization or the full gate.

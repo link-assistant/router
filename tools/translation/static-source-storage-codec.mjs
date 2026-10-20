@@ -1,3 +1,4 @@
+import {projectCanonicalJsonArrayField} from './canonical-json-array-fields.mjs';
 // Storage fidelity only. Reconstructed data still enters every original source/CST guard.
 import {createHash} from 'node:crypto';
 import {assertJsonSyntax} from './canonical-json-text.mjs';
@@ -494,4 +495,40 @@ export function decodeStaticSourceTextData(raw,index){
   return {...stage,files:stage.files.map(row=>Object.hasOwn(index,'storage')?decodeLineageRow(row,sources):row)};
  });
  return {schema:'router-static-source-text-projection-v1',bundle:{schema:payload.schema,cases:payload.cases,authority:payload.authority,profiles:payload.profiles,current:payload.current,sources,lineage},validation:{canonicalDocuments:false,logicalPayloadDigest:false,compilerAuthority:false}};
+}
+
+// Generated incremental canonical-array DATA encoder; original functions stay exact.
+function encodeCanonicalRowsIncrementally(row){
+ const original=row.canonical;assert(typeof original==='string'&&original.length<=MAX_CANONICAL,'bounded complete canonical string required');
+ if(original.length<=262144)return encode(row);
+ const projected=projectCanonicalJsonArrayField(original,'nodes');if(!projected)return encode(row);
+ const doc=JSON.parse(projected.source),spans=projected.nodeSpans;assert(sameKeys(doc,documentKeys)&&json(doc)===projected.source&&doc.source===row.source,'exact canonical text/source required');
+ assert(doc.nodes===null&&spans.length>0&&spans.length<=MAX_NODES,'bounded complete nodes required');
+ const byteLength=Buffer.byteLength(row.source),dictionary=[],ids=new Map(),streams=Array.from({length:6},()=>Buffer.allocUnsafe(spans.length*8)),positions=[0,0,0,0,0,0];let s16=0,s8=0;
+ for(let at=0;at<spans.length;at++){
+  const text=original.slice(...spans[at]),n=JSON.parse(text);assert(json(n)===text,'complete canonical node text differs');node(n,at,row.source.length,byteLength);assert(n[2]>=s16&&n[4]>=s8,'ordered starts required');
+  const pair=[n[0],n[1]],key=json(pair);let id=ids.get(key);if(id===undefined){id=dictionary.length;ids.set(key,id);dictionary.push(pair);}
+  const d16=n[2]-s16,len16=n[3]-n[2],extraStart=n[4]-s8-d16,extraLength=n[5]-n[4]-len16,parentDistance=at-n[6];
+  assert(extraStart>=0&&extraLength>=0&&parentDistance>0,'nonnegative UTF8 excess and earlier parent required');
+  const values=[id,d16,len16,extraStart,extraLength,parentDistance];for(let column=0;column<6;column++)positions[column]=putVarint(streams[column],positions[column],values[column]);
+  s16=n[2];s8=n[4];
+ }
+ const header={...doc,source:null,nodes:null},encoded=json([TAG,header,dictionary,spans.length,streams.map((bytes,column)=>bytes.subarray(0,positions[column]).toString('base64')),hash(original)]);
+ assert(encoded.length<=MAX_CANONICAL,'encoded canonical text bound');return encoded;
+}
+export function encodeStaticSourceStorageIncremental(bundle,raw){
+ assert(Buffer.isBuffer(raw)&&raw.length<=MAX,'bounded original raw bytes required');
+ try{
+  originalShape(bundle);
+  const lineage=encodeLineage(bundle.lineage,bundle.sources,null),logical=logicalDigest({...bundle,lineage},bundle.sources,raw),sources={};
+  for(const [id,row]of Object.entries(bundle.sources)){
+   if(!Object.hasOwn(row,'canonical')){sources[id]=row;continue;}
+   const canonical=encodeCanonicalRowsIncrementally(row);assert(decodeCanonicalText({...row,canonical})===row.canonical,'complete per-row canonical storage inverse');sources[id]={...row,canonical};
+  }
+  let current=encodeSourceStrings(sources,bundle.lineage);
+  current=encodeCanonicalColumns(current,sources,bundle.lineage);
+  const tables=encodeColumnTables(current),container={schema:SCHEMA,logicalRawBytes:logical.bytes,logicalRawSha256:logical.sha256,columnTables:tables.columnTables,payload:{...bundle,lineage,sources:tables.sources}},stored=Buffer.from(json(container)+'\n');
+  assert(stored.length<=MAX,'complete compact output bound');
+  return {raw:stored,storage:{schema:storageSchema,codec:SCHEMA,logicalRawBytes:logical.bytes,logicalRawSha256:logical.sha256}};
+ }catch(error){if(error instanceof StorageShapeError)return {raw};throw error;}
 }

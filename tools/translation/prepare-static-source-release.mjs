@@ -8,7 +8,7 @@ import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcr
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const FILE='tools/translation/prepare-real-source-fixtures.mjs';
 const MARKER='\n// Generated invocation-local source/CST allocation variant; original producer stays exact.\n';
-const IMPORT="import {originalBatchedDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';\n";
+const IMPORT="import {originalBatchedDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';\nimport {encodeStaticSourceStorageIncremental} from './static-source-layout-storage.mjs';\n";
 const fail=message=>{throw new TypeError('Static source release preparation: '+message);};
 const hash=value=>createHash('sha256').update(value).digest('hex');
 function once(source,before,after){if(source.split(before).length!==2)fail('unique complete source anchor required');return source.replace(before,()=>after);}
@@ -39,6 +39,7 @@ export function prepareStaticSourceRelease({root=ROOT}={}){
     if(row&&Object.hasOwn(row,'canonical')){const value={...row};delete value.canonical;sources.set(id,value);}
   }
   const pipeline=createRulePipeline([`],
+  ['encodeStaticSourceStorage(bundle,raw)','encodeStaticSourceStorageIncremental(bundle,raw)'],
  ];let copied=definition;for(const [before,after]of rules)copied=once(copied,before,after);
  const collectors=file.statements.filter(node=>ts.isFunctionDeclaration(node)&&node.name?.text==='transportStaticSourceLifecycleCanonicals');if(collectors.length!==1)fail('one complete original canonical collector required');
  const originalCollector=collectors[0].getText(file);let shared=once(originalCollector,'export function transportStaticSourceLifecycleCanonicals(rows){','export function transportStaticSourceLifecycleCanonicalsShared(rows){');

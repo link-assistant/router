@@ -1,3 +1,4 @@
+import {encodeStaticSourceStorageIncremental as coreEncodeIncremental} from './static-source-storage-codec.mjs';
 // Reversible repository path labels around the unchanged general storage codec.
 // Storage fidelity grants no source, namespace, semantic or execution authority.
 import {createHash} from 'node:crypto';
@@ -101,4 +102,31 @@ export function decodeStaticSourceTextData(raw,index){
  if(![CODEC,LEGACY].includes(index.storage?.codec))return coreText(raw,index);
  const {container,innerRaw,innerIndex}=unwrap(raw,index,{textOnly:true}),projection=coreText(innerRaw,innerIndex);
  return {...projection,bundle:restore(projection.bundle,container.pathSubstitutions)};
+}
+
+// Generated incremental canonical-array DATA encoder; original functions stay exact.
+export function encodeStaticSourceStorageIncremental(bundle,raw){
+ requireValue(Buffer.isBuffer(raw)&&raw.length<=MAX,'bounded original raw bytes required');
+ const pipeline=createRulePipeline([
+  {phase:'language',rules:[{id:'storage:complete-original-logical-bytes',apply:()=>{
+   // The original encoder enforces every source, row, canonical and raw-byte
+   // bound before this repository layer inspects or clones the logical input.
+   const baseline=coreEncodeIncremental(bundle,raw);
+   return {bundle,raw,baseline};
+  }}]},
+  {phase:'repository',rules:[{id:'router:reversible-captured-parent-path-labels',apply:input=>{
+   if(!input.baseline.storage||!Array.isArray(input.bundle.lineage))return input.baseline;
+   const projected=project(input.bundle);
+   if(!projected.substitutions.length)return input.baseline;
+   const normalizedRaw=serializeSourceMapJson(projected.bundle),inner=coreEncodeIncremental(projected.bundle,normalizedRaw);
+   const descriptor={schema:'router-static-source-lifecycle-storage-v1',codec:CODEC,logicalRawBytes:raw.length,logicalRawSha256:hash(raw)};
+   const transport=packStaticStorageTransport(JSON.parse(inner.raw));
+   const container={schema:CODEC,logicalRawBytes:raw.length,logicalRawSha256:descriptor.logicalRawSha256,pathSubstitutions:projected.substitutions,innerStorage:inner.storage??null,columnEncoding:transport.columnEncoding,metadataEncoding:transport.metadataEncoding,payload:transport.payload};
+   const stored=bytes(container);requireValue(stored.length<=MAX,'original complete storage bound');
+   const decoded=decodeStaticSourceStorage(stored,{schema:bundle.schema,storage:descriptor});
+   requireValue(digestSourceMapJson(decoded,raw).matches,'complete path/source/CST storage inverse differs');
+   return {raw:stored,storage:descriptor};
+  }}]},
+ ]);
+ return pipeline.run(null).value;
 }
