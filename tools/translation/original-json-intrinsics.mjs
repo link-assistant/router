@@ -589,16 +589,31 @@ export function createOriginalDigestMetadataCopierForInternalSources(fallback,or
 function kindBatchedExpectedSamePrototype(owner,entries,rows){
  if(!(owner===arrayPrototype&&entries===arrayDescriptors&&rows===privateExpectedPlans[0]||owner===mapPrototype&&entries===mapDescriptors&&rows===privateExpectedPlans[1]||owner===setPrototype&&entries===setDescriptors&&rows===privateExpectedPlans[2]||owner===weakSetPrototype&&entries===weakSetDescriptors&&rows===privateExpectedPlans[3]||owner===syntaxStringPrototype&&entries===syntaxStrings&&rows===privateExpectedPlans[4]||owner===syntaxRegExpPrototype&&entries===syntaxRegexps&&rows===privateExpectedPlans[5]))return false;
  const names=keys(owner);if(names.length!==rows.length)return expectedSamePrototype(owner,entries,rows);
+ // Unknown/reordered keys keep the complete old helper. This preflight never
+ // obtains the descriptor of any newly attached native lazy stack field.
  for(let index=0;index<names.length;index++)if(names[index]!==rows[index][0])return expectedSamePrototype(owner,entries,rows);
- // This private initial descriptor was produced by the same captured native
- // operation. Its realm cannot change while that fixed operation is pinned.
- // The live prototype checks precede all direct descriptor classification.
- if(prototype(objectHasOwn)!==objectPrototype||prototype(objectPrototype)!==null||descriptor(objectPrototype,'writable'))return expectedSamePrototype(owner,entries,rows);
+ // The caller freshly qualified this captured native and all six fixed owners.
+ // All keys are now the immutable expected set (which excludes stack).
+ const fields=apply(traversalDescriptors.value,originalObject,[owner]);
+ // Optional direct classification uses only THIS genuine native output.
+ // Foreign output realms or any inherited writable cell retain the old loop.
+ if(prototype(fields)===objectPrototype&&prototype(objectPrototype)===null&&!descriptor(objectPrototype,'writable')){
+  for(let index=0;index<names.length;index++){
+   const row=rows[index],key=row[0],actual=fields[key];if(!actual)return false;
+   const writable=actual.writable;
+   if((writable!==undefined)!==row[1])return false;
+   if(actual.enumerable!==row[2]||actual.configurable!==row[3])return false;
+   if(row[1]){if(actual.value!==row[4]||writable!==row[5])return false;}
+   else if(actual.get!==row[4]||actual.set!==row[5])return false;
+  }
+  return true;
+ }
  for(let index=0;index<names.length;index++){
-  const row=rows[index],actual=descriptor(owner,names[index]);if(!actual)return false;
-  const writable=actual.writable;if((writable!==undefined)!==row[1]||actual.enumerable!==row[2]||actual.configurable!==row[3])return false;
-  if(row[1]){if(actual.value!==row[4]||writable!==row[5])return false;}
-  else if(actual.get!==row[4]||actual.set!==row[5])return false;
+  const row=rows[index],key=row[0];
+  const actual=fields[key];if(!actual||hasOwn(actual,'value')!==row[1])return false;
+  if(actual.enumerable!==row[2]||actual.configurable!==row[3])return false;
+  if(row[1]){if(actual.value!==row[4]||actual.writable!==row[5])return false;}
+  else if(!hasOwn(actual,'get')||!hasOwn(actual,'set')||actual.get!==row[4]||actual.set!==row[5])return false;
  }
  return true;
 }
