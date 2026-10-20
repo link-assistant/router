@@ -35,3 +35,11 @@ complete native AST/CST source-copy and inverse checks passed.
 Refuse changed source ingress before private-brand allocation and recheck JSON
 parser ownership after observable hashes. Preserve complete original source
 snapshots and both inverses; add two unrun hook controls.
+
+Retain the finite registered builtin callback universe, including explicit
+builtin aliases and local procedural dummy branches, and conditional complete
+source transfers for nongeneric data items. Cover all eleven generic derive
+ranges while keeping caller-prelude brands separate. Preserve foreign
+procedural owners, input/token origins and namespace admission as independent
+obligations. Native TypeScript 5.9.3 AST/CST source copies and inverses passed;
+eight new complete controls and the original ten positives remain unrun here.

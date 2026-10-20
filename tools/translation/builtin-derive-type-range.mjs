@@ -51,9 +51,9 @@ function tail(callback,receiver,method){
 // arbitrary method/body computations, but cannot send that capability there:
 // every use must be the fourth argument of its own local TraitDef receiver.
 function forwarding(callback){
- const roots=body(callback),receivers=new Set(),forwarded=[];
+ const roots=body(callback),receivers=new Set(),bindings=[],forwarded=[];
  for(let at=0;at<roots.length;at++)if(roots[at].text==='let'&&roots[at+1]?.type==='ident'&&roots[at+2]?.text==='='&&roots[at+3]?.text==='TraitDef'&&roots[at+4]?.delimiter==='{'){
-  if(receivers.has(roots[at+1].text))fail('original TraitDef receiver has multiple local bindings');receivers.add(roots[at+1].text);
+  receivers.add(roots[at+1].text);bindings.push({name:roots[at+1].text,span:roots[at+1].span,constructor:roots[at+4]});
  }
  walk(roots,(nodes,at)=>{const node=nodes[at];if(!receivers.has(node.text))return;
   const definition=nodes===roots&&nodes[at-1]?.text==='let'&&nodes[at+1]?.text==='='&&nodes[at+2]?.text==='TraitDef'&&nodes[at+3]?.delimiter==='{';
@@ -65,14 +65,18 @@ function forwarding(callback){
    if(node.children.some(child=>child.text==='push')){
     const receiver=nodes[at-3],dot=nodes[at-2],method=nodes[at-1],args=text(node.children);
     if(node.delimiter!=='('||!receivers.has(receiver?.text)||dot?.text!=='.'||!['expand','expand_ext'].includes(method?.text)||!/^cx,mitem,item,push(?:,(?:true|false|is_simple))?,?$/u.test(args))fail('output capability escapes the source TraitDef forwarding grammar');
-    forwarded.push({receiver:receiver.text,method:method.text,span:node.span,originalArguments:node.children});
+    const applicable=bindings.filter(binding=>binding.name===receiver.text&&binding.span.start<receiver.span.start),binding=applicable.at(-1);if(!binding)fail('original receiver is used before its complete local constructor binding');
+    forwarded.push({receiver:receiver.text,binding,method:method.text,span:node.span,originalArguments:node.children});
    }else visit(node.children);
   }else if(node.text==='push')fail('unaccounted original output capability use');
  }}visit(roots);
  if(!forwarded.length)fail('no complete original output forwarding route');return forwarded;
 }
-function deriveSourcePlan(dependencies,name){
- guard();const registry=builtinStandardDeriveRegistry(dependencies),owner=builtinStandardDeriveSourceOwner(registry,dependencies,name),profile=builtinDeriveAstSourceProfile(dependencies);
+function deriveSourcePlan(dependencies,name,registeredOnly=false){
+ guard();const registry=builtinStandardDeriveRegistry(dependencies),profile=builtinDeriveAstSourceProfile(dependencies);
+ const entries=registeredOnly?registry.registration.completeEntries.filter(entry=>entry.name===name):[];
+ if(registeredOnly&&entries.length!==1)fail('one actual registered derive callback required');
+ const owner=registeredOnly?{name,registration:entries[0],preludeOwnerSelected:false}:builtinStandardDeriveSourceOwner(registry,dependencies,name);
  const declaration=originalMacroTrees(owner.registration.deriveModule.original),paths=declaration.filter(node=>node.delimiter==='['&&node.children[0]?.text==='path');
  if(paths.length>1)fail('original registered callback module has ambiguous source paths');
  let relative=owner.registration.callback.slice(0,-1).join('/')+'.rs';
@@ -119,6 +123,15 @@ export function captureOriginalBuiltinDeriveTypeRange(dependencies,name){
  guard();if(typeof name!=='string')fail('actual registered original name required');const facts=deriveSourcePlan(dependencies,name),token=Object.freeze({schema:'private-original-builtin-derived-outer-item-range-v1'});proofs.set(token,{dependencies,name,facts});return token;
 }
 export function originalBuiltinDeriveTypeRangeFacts(token,dependencies,name){
- guard();const state=proofs.get(token);if(!state||state.dependencies!==dependencies||state.name!==name)fail('copied foreign or changed original range proof');const current=deriveSourcePlan(dependencies,name);
+ guard();const state=proofs.get(token);if(!state||state.registeredOnly||state.dependencies!==dependencies||state.name!==name)fail('copied foreign or changed original range proof');const current=deriveSourcePlan(dependencies,name);
  if(current.callbacks.entry.original!==state.facts.callbacks.entry.original)fail('complete original callback changed');return current;
+}
+// This lane selects the finite original registration, including non-prelude
+// derives. It never selects a caller name or treats an alias as that owner.
+export function captureOriginalRegisteredBuiltinDeriveTypeRange(dependencies,name){
+ guard();if(typeof name!=='string')fail('actual registered original name required');const facts=deriveSourcePlan(dependencies,name,true),token=Object.freeze({schema:'private-original-registered-builtin-derived-outer-item-range-v1'});proofs.set(token,{dependencies,name,facts,registeredOnly:true});return token;
+}
+export function originalRegisteredBuiltinDeriveTypeRangeFacts(token,dependencies,name){
+ guard();const state=proofs.get(token);if(!state?.registeredOnly||state.dependencies!==dependencies||state.name!==name)fail('copied foreign or changed original registered range proof');const current=deriveSourcePlan(dependencies,name,true);
+ if(current.callbacks.entry.original!==state.facts.callbacks.entry.original)fail('complete original registered callback changed');return current;
 }

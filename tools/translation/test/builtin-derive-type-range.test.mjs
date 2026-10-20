@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash,Hash} from 'node:crypto';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
-import {captureOriginalBuiltinDeriveTypeRange,originalBuiltinDeriveTypeRangeFacts} from '../builtin-derive-type-range.mjs';
+import {captureOriginalBuiltinDeriveTypeRange,originalBuiltinDeriveTypeRangeFacts,captureOriginalRegisteredBuiltinDeriveTypeRange,originalRegisteredBuiltinDeriveTypeRangeFacts} from '../builtin-derive-type-range.mjs';
 import {prepareBuiltinDeriveTypeRange} from '../prepare-builtin-derive-type-range.mjs';
 import {repositorySourceURL} from './fixtures/repository-paths.mjs';
 const root=new URL('../../../',import.meta.url),inputs={manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')},dependencies=loadDeriveDependencyProof(inputs);
@@ -45,4 +45,14 @@ test('changed private source operations reject before executing an observable re
 });
 test('complete authored source uses native TypeScript AST copies and both reversible CST layers',{timeout:60000},()=>{
  const copy=prepareBuiltinDeriveTypeRange();assert.equal(copy.typescriptVersion,'5.9.3');assert.equal(copy.completeNativeAstCopy,true);assert.equal(copy.actual,readFileSync(new URL('../builtin-derive-type-range.mjs',import.meta.url),'utf8'));assert.equal(copy.originalSha256,hash(copy.original));assert.ok(copy.callbacks.length>=8);assert.deepEqual(copy.stages.map(stage=>stage.phase),['language','repository']);assert.ok(copy.stages.every(stage=>stage.completeInverse));assert.equal(copy.RustProgramExecuted,false);
+});
+
+test('registered non-prelude callback ranges keep both sequential ConstParamTy receiver bindings',{timeout:60000},()=>{
+ for(const name of ['Clone','Copy','ConstParamTy','UnsizedConstParamTy','Debug','Default','Eq','Hash','Ord','PartialEq','PartialOrd']){
+  const token=captureOriginalRegisteredBuiltinDeriveTypeRange(dependencies,name),value=originalRegisteredBuiltinDeriveTypeRangeFacts(token,dependencies,name);assert.equal(value.owner.preludeOwnerSelected,false);assert.equal(value.name,name);assert.ok(value.forwards.every(row=>row.binding.span.start<row.span.start));assert.deepEqual(value.conditionalRange.emittedCallbackItemKinds,['ItemKind::Impl']);
+  if(name==='ConstParamTy'){assert.equal(value.forwards.length,2);assert.notDeepEqual(value.forwards[0].binding.span,value.forwards[1].binding.span);}
+ }
+});
+test('registered range tokens cannot cross into the existing caller-prelude owner API',{timeout:60000},()=>{
+ const token=captureOriginalRegisteredBuiltinDeriveTypeRange(dependencies,'Clone');assert.throws(()=>originalBuiltinDeriveTypeRangeFacts(token,dependencies,'Clone'),/copied|foreign/);assert.throws(()=>originalRegisteredBuiltinDeriveTypeRangeFacts(facts('Clone').token,dependencies,'Clone'),/copied|foreign/);assert.throws(()=>captureOriginalRegisteredBuiltinDeriveTypeRange(dependencies,'CoercePointee'),TypeError);assert.throws(()=>originalRegisteredBuiltinDeriveTypeRangeFacts({...token},dependencies,'Clone'),/copied/);
 });
