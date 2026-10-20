@@ -1,3 +1,4 @@
+import {relocateSourceModule} from './relocate-source-module.mjs';
 import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // Invocation-local storage experiment; the complete old planner and fallback remain the oracle.
 import testCase from 'node:test';
@@ -29,9 +30,9 @@ function legacyFreeze(value){if(value&&typeof value==='object'){Object.values(va
 function outcome(run){try{return {value:run()};}catch(error){return {error:{name:error instanceof TypeError?'TypeError':error instanceof RangeError?'RangeError':'Error',message:descriptor(error,'message')?.value??null}};}}
 function test(name,run){testCase(name,{timeout:60_000},async t=>{const vectors=[],retain=(kind,value)=>{vectors.push({kind,value});return value;};try{await run(t,retain);}finally{const output=process.env.ROUTER_PACKED_FREEZE_VECTOR_DIR;if(output){mkdirSync(output,{recursive:true});writeFileSync(join(output,Buffer.from(name).toString('hex')+'.json.gz'),gzipSync(json({name,vectors},(_key,value)=>typeof value==='bigint'?{$integer:String(value)}:value)+'\n'));}}});}
 function relocate(source,original,overrides={}){
- const edits=[];let text=source.replace(/(from\s+)(['"])(\.\.?\/[^'"\n]+)\2/g,(whole,prefix,quote,path)=>{const url=new URL(path,original).href,target=overrides[url]??url,after=prefix+quote+target+quote;edits.push({before:whole,after});return after;});
- if(text.includes('import.meta.url')){const after=json(original.href);text=text.replace(/\bimport\.meta\.url\b/g,after);edits.push({before:'import.meta.url',after,all:true});}
- let inverse=text;for(const edit of [...edits].reverse()){if(edit.all)inverse=inverse.split(edit.after).join(edit.before);else{assert.equal(inverse.split(edit.after).length,2);inverse=inverse.replace(edit.after,edit.before);}}assert.equal(inverse,source);return {text,edits};
+ const result=relocateSourceModule(source,original.href,new Map(Object.entries(overrides)));
+ assert.equal(result.inverse,source);
+ return {text:result.text,edits:result.mapping};
 }
 async function fixture(t,retain){
  assert.equal(hash(beforeText),BEFORE_SHA256);const currentText=readFileSync(origin,'utf8');assert.equal(currentText.split(APPENDIX).length,2);assert.equal(currentText.split(LOOP_EVOLUTION.after).length,2);const restored=currentText.replace(APPENDIX,'').replace(LOOP_EVOLUTION.after,()=>LOOP_EVOLUTION.before);assert.equal(restored.split(BATCHED_GUARD_EDIT.after).length,2);assert.equal(restored.replace(BATCHED_GUARD_EDIT.after,()=>BATCHED_GUARD_EDIT.before),beforeText);assert.equal(currentText.slice(currentText.indexOf('function plan(value,lookup){'),currentText.indexOf('// Invocation-local storage only.')),beforeText.slice(beforeText.indexOf('function plan(value,lookup){'),beforeText.indexOf('// The caller supplies')));

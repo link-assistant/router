@@ -2,7 +2,8 @@ import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // Synchronous arithmetic DATA reuse is neither source nor owner authority.
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,rmSync} from 'node:fs';
+import {writeFileSync,mkdirSync,mkdtempSync,rmSync} from 'node:fs';
+import {readCompilerAliasHistory as readFileSync} from './fixtures/compiler-data-alias-history.mjs';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {pathToFileURL} from 'node:url';

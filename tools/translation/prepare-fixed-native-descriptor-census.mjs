@@ -9,7 +9,7 @@ import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcr
 
 export const FIXED_NATIVE_DESCRIPTOR_BASELINE_SHA256='9c5255ac206087959f2cf2e2c3bd9eb9ad096a2d04648ff7bbdbaefee8cda219';
 const HOST='tools/translation/original-json-intrinsics.mjs';
-const FIXTURE='tools/translation/test/fixtures/fixed-native-descriptor/complete-original-host.mjs.gz';
+const FIXTURE='tools/translation/source-profiles/fixed-native-descriptor/complete-original-host.mjs.gz';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const fail=message=>{throw new TypeError('Fixed native descriptor source: '+message);};
 const REPLACEMENT=`function kindBatchedExpectedSamePrototype(owner,entries,rows){

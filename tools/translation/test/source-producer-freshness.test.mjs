@@ -9,6 +9,8 @@ import {prepareOriginalClassBirthPlan} from '../prepare-original-class-birth.mjs
 import {prepareCompilerAliasHistory} from '../prepare-compiler-alias-history.mjs';
 import {prepareCoreBase64SourceData} from '../prepare-core-base64-sources.mjs';
 import {prepareLexicalParentHistorySources} from '../prepare-lexical-parent-history.mjs';
+import {prepareFixedNativeDescriptorCensus} from '../prepare-fixed-native-descriptor-census.mjs';
+import {prepareReceivingModuleRelocators} from '../prepare-receiving-module-relocators.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 const root=new URL('../../../',import.meta.url),read=path=>readFileSync(new URL(path,root),'utf8');
 
@@ -32,7 +34,8 @@ test('the actual class producer reproduces every registered class source and the
 });
 
 test('the complete historical compiler readers equal their actual current source producer output',{timeout:60000},()=>{
- const plan=prepareCompilerAliasHistory({root:fileURLToPath(root)});assert.equal(plan.files.length,1);assert.equal(plan.records.length,4);
+ const plan=prepareCompilerAliasHistory({root:fileURLToPath(root)});assert.equal(plan.files.length,1);
+ assert.deepEqual(plan.records.map(row=>row.name),['private-frozen-json.mjs','derive-bang-context.mjs','derive-enclosing-namespace-context.mjs','builtin-derive-bang-footprints.mjs','original-json-intrinsics.mjs']);
  for(const row of plan.files){assert.equal(row.before,row.after);assert.equal(row.after,read(row.path));assert.equal(row.inverse,row.before);}
  assert.equal(plan.sourceAuthority,false);assert.equal(plan.runtimeAuthority,false);
 });
@@ -47,4 +50,16 @@ test('the copied Git history helper and complete original controls equal the act
  const manifest=JSON.parse(read('tools/translation/test/fixtures/portable-lexical-parent/manifest.json')),plan=prepareLexicalParentHistorySources({archiveSha256:manifest.sha256,objectCount:manifest.objects});assert.equal(plan.files.length,2);
  for(const row of plan.files){assert.equal(row.source,read(row.path));assert.equal(row.inverse,row.template);assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.template);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.source);assert.deepEqual(row.trace.map(item=>item.phase),['language','repository']);}
  assert.equal(plan.originalObjectAndSourceBoundsUnchanged,true);assert.equal(plan.runtimeAuthority,false);
+});
+
+test('the fixed native descriptor census equals the complete current host source producer',{timeout:60000},()=>{
+ const plan=prepareFixedNativeDescriptorCensus({root:fileURLToPath(root)});assert.equal(plan.files.length,1);
+ for(const row of plan.files){assert.equal(row.before,row.after);assert.equal(row.after,read(row.path));assert.equal(row.inverse,row.original);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);}
+ assert.equal(plan.newCaches,false);assert.equal(plan.originalRetentionPolicyUnchanged,true);assert.equal(plan.runtimeAuthority,false);
+});
+
+test('every copied receiving relocator reproduces its complete native-span source and inverse',{timeout:60000},()=>{
+ const plan=prepareReceivingModuleRelocators({root:fileURLToPath(root)});assert.equal(plan.files.length,2);
+ for(const row of plan.files){assert.equal(row.before,row.after);assert.equal(row.after,read(row.path));assert.equal(row.inverse,row.original);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);}
+ assert.equal(plan.originalCaseBodiesAndDeadlinesUnchanged,true);assert.equal(plan.sourceAuthority,false);assert.equal(plan.runtimeAuthority,false);
 });

@@ -521,6 +521,17 @@ imports inert. Storage changes must recover every original value without
 raising the source graph's existing bounds or adding source, owner, hash,
 verdict or encoded-result caches across translation invocations.
 
+For repeated imports in receiving fixtures, reuse the native-parser relocation
+helper rather than a globally replaced import-shaped string. Run
+`node tools/translation/prepare-receiving-module-relocators.mjs --emit`, review
+the complete original/current CST and inverse, install its actual outputs and
+require `--check`. Keep reusable function substitutions in the language sequence
+and physical helper imports in the repository sequence. Source producers keep
+their portable input snapshots under `tools/translation/source-profiles` so the
+complete compiler export includes those inputs. Preserve every original case,
+callback and deadline; qualify actual current production code separately from
+scoped historical source views.
+
 When current application migrations change a historical oracle's parent,
 carry complete original Git commit/tree/blob data and preserve its original
 source/body pins, test workload and deadline. The portable lexical-parent

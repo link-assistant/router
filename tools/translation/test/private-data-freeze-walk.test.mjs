@@ -1,3 +1,4 @@
+import {relocateSourceModule} from './relocate-source-module.mjs';
 import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // Complete helper before/after oracle; source/owner/hash joins remain in consumers.
 import testCase from 'node:test';
@@ -24,9 +25,9 @@ function legacyFreeze(value){if(value&&typeof value==='object'){Object.values(va
 function outcome(run){try{return {value:run()};}catch(error){return {error:{name:error instanceof TypeError?'TypeError':error instanceof RangeError?'RangeError':'Error',message:descriptor(error,'message')?.value??null}};}}
 function test(name,run){testCase(name,{timeout:60_000},async t=>{const vectors=[],retain=(kind,value)=>{vectors.push({kind,value});return value;};try{await run(t,retain);}finally{const output=process.env.ROUTER_DATA_FREEZE_WALK_VECTOR_DIR;if(output){mkdirSync(output,{recursive:true});writeFileSync(join(output,Buffer.from(name).toString('hex')+'.json.gz'),gzipSync(json({name,vectors},(_key,value)=>typeof value==='bigint'?{$integer:String(value)}:value)+'\n'));}}});}
 function relocate(source,original,overrides={}){
- const edits=[];let text=source.replace(/(from\s+)(['"])(\.\.?\/[^'"\n]+)\2/g,(whole,prefix,quote,path)=>{const url=new URL(path,original).href,target=overrides[url]??url,after=prefix+quote+target+quote;edits.push({before:whole,after});return after;});
- if(text.includes('import.meta.url')){const after=json(original.href);text=text.replace(/\bimport\.meta\.url\b/g,after);edits.push({before:'import.meta.url',after,all:true});}
- let inverse=text;for(const edit of [...edits].reverse()){if(edit.all)inverse=inverse.split(edit.after).join(edit.before);else{assert.equal(inverse.split(edit.after).length,2);inverse=inverse.replace(edit.after,edit.before);}}assert.equal(inverse,source);return {text,edits};
+ const result=relocateSourceModule(source,original.href,new Map(Object.entries(overrides)));
+ assert.equal(result.inverse,source);
+ return {text:result.text,edits:result.mapping};
 }
 async function fixture(t,retain){
  assert.equal(hash(beforeText),BEFORE_SHA256);const currentText=readFileSync(origin,'utf8'),start=source=>source.indexOf('function plan(value,lookup){'),end=source=>source.indexOf('// The caller supplies'),beforePlan=beforeText.slice(start(beforeText),end(beforeText)),currentPlan=currentText.slice(start(currentText),end(currentText));

@@ -156,7 +156,7 @@ function checked(){
   return current;
 }
 
-const manifestSha256='f157f48dff5606d8b2dab9e922da81299f37a7c4ef142ffce404afb2662f3576';
+const manifestSha256='b2a975d9d400a53e90f36a613ed835616c36041c410750da3250be2f51405e00';
 let paths=null,compiled=null,compiledSources=null,active=false;
 function statIdentity(value){
   if(!value||typeof value!=='object'||proxy(value))fail('own primitive source stat required');
