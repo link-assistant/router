@@ -138,6 +138,15 @@ export function createPrivateNativeProofJsonSerializer(){
  };
 }
 
+// Fresh stateless storage eligibility. The caller needs its own complete
+// operation guards before changing any callback-sensitive behavior. This
+// bounded scan stores no graph, bytes, source/hash result or verdict after
+// return; false leaves the caller's complete original operation available.
+export function privateNativeProofJsonDataWithinBudget(value){
+ if(!nativeReady())return false;
+ try{return withinNativeBudget(value);}catch{return false;}
+}
+
 // Explicit synchronous cost scope for proof DATA. No source/owner verdict or
 // encoded result is stored, and no serializer closure captures a scope.
 const scopedFrozenField=qualified?get(objectOwner,'isFrozen'):null;

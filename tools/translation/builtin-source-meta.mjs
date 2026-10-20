@@ -4,14 +4,27 @@
 // Negative integers are table references; actual negative integer leaves carry
 // an explicit numeric tag. Full signed values survive canonical roundtrip.
 import {createHash} from 'node:crypto';
+import {builtinSourceMetaStringKeysReady} from './builtin-source-meta-intrinsics.mjs';
+import {privateNativeProofJsonDataWithinBudget} from './private-native-proof-json.mjs';
 const hash=text=>createHash('sha256').update(text).digest('hex');
 const bounds=Object.freeze({cells:16000,depth:64,bytes:524288});
+// Fresh invocation-local primitive keys only. The original codec remains the
+// fallback for every graph or intrinsic outside the callback-free DATA domain.
 export function encodeBuiltinSourceMeta(value){
+  const strings=builtinSourceMetaStringKeysReady()&&privateNativeProofJsonDataWithinBudget(value)?new Map():null;
+  return encodeOriginalBuiltinSourceMeta(value,strings);
+}
+function encodeOriginalBuiltinSourceMeta(value,strings=null){
   const table=[],fieldNames=[],fields=new Map(),interned=new Map(),seen=new WeakMap(),active=new WeakSet();
   function field(key){if(!fields.has(key)){fields.set(key,fieldNames.length);fieldNames.push(key);}return fields.get(key);}
   function visit(value,depth){
     if(depth>bounds.depth)throw new TypeError('Builtin source metadata depth budget exceeded');
     if(typeof value==='string'&&value.length>=8){
+      if(strings){
+        let index=strings.get(value);
+        if(index===undefined){index=table.length;if(index>=bounds.cells)throw new TypeError('Builtin source metadata cell budget exceeded');table.push(['s',value]);strings.set(value,index);}
+        return -index-1;
+      }
       const identity=JSON.stringify(['s',value]);let index=interned.get(identity);
       if(index===undefined){index=table.length;if(index>=bounds.cells)throw new TypeError('Builtin source metadata cell budget exceeded');table.push(['s',value]);interned.set(identity,index);}
       return -index-1;
