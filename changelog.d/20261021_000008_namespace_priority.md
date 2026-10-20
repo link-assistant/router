@@ -19,3 +19,8 @@ compiler collection and gate sources, including the independent privileged-span
 branch. Add complete native AST/CST source copies and six unrun controls. Keep
 namespace admission refused while Cargo target normalization and producer
 ownership remain open; the original ten positive cases are unchanged.
+
+Add a private relational Cargo dependency-library source proof that excludes
+development edges without selecting cfg(test) or reconstructing raw target
+defaults. Preserve original pending-unit APIs and add five unrun controls;
+complete native AST/CST source-copy and inverse checks passed.

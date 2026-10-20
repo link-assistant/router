@@ -110,3 +110,27 @@ The original compiler callback/recipe source check passed. Six new complete
 controls are drafted with 60000 ms deadlines and remain unrun pending the
 coordinator's runtime lease. The original ten positives are unchanged and have
 not been repaired by this checkpoint. Cargo normalization is the next join.
+
+The following source step avoids broad normalization for one dimension.
+`cargo-normal-library-edge.mjs` privately joins the existing original dependency
+and package tokens to seventeen relational Cargo source rules. For any
+successful `calc_artifact_deps` library result, its actual target satisfies
+`Target::is_lib`. Every `check_or_build_mode` branch returns `Build` or
+`Check { test: false }`, including both host outcomes and dual procedural-macro
+edges. The interner retains that target and mode; its build-std rewrite also
+retains `TargetKind::Lib`. `State::deps` therefore rejects all Development edges
+for the selected dependency-library unit. This conclusion needs no inference
+about raw `TomlTarget` defaults, target triples, or rustc `cfg(test)`.
+
+The source-namespace token retains both cfg test branches and unresolved child
+import diagnostics. It proves neither a native invocation nor whole-crate
+validity. Extra invocation flags and environment conformance remain separate
+native-build obligations; the declared original source namespace is not
+silently enlarged with hypothetical extern inputs. Existing pending normal-unit
+APIs remain unchanged. The next namespace composition must use the private
+development-edge exclusion to close only actual unavailable child producers,
+preserve unrelated Bang traffic, and independently close builtin replacement
+and generated attribute effects. Five new whole-file controls are drafted with
+60000 ms deadlines and remain unrun. Source-only TypeScript 5.9.3 native copies,
+ordered CST boundaries/inverses, complete Cargo callback recipes and grammar
+checks passed. This source step alone does not repair the original ten cases.
