@@ -10,3 +10,7 @@ helper and preserve the original copied census and all old APIs.
 
 Compare genuine lazy/eager stack inputs at one paired capture callsite and the
 same retained-scope nesting, preserving full frame results and strict bytes.
+
+Keep the optimization as an explicit candidate after the complete original
+CatalogRecord case remained over its unchanged 60-second deadline. Restore the
+original production serializer and retain the complete proposal and controls.
