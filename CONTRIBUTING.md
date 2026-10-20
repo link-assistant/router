@@ -440,16 +440,21 @@ Fragments are automatically collected into CHANGELOG.md during the release proce
 ├── changelog.d/          # Changelog fragments
 │   ├── README.md         # Fragment instructions
 │   └── *.md              # Individual changelog fragments
-├── examples/             # Usage examples
+├── js/
+│   ├── src/              # Native JavaScript implementation and CLI
+│   └── test/             # Native JavaScript tests and typed receiving controls
+├── ts/
+│   └── src/              # TypeScript generated through checked CST/meta rules
+├── rust/
+│   ├── src/              # Rust library, CLI and compatibility core
+│   ├── tests/            # Rust integration tests, executed in gated CI
+│   ├── examples/         # Rust usage examples
+│   └── Cargo.toml        # Rust package configuration
 ├── scripts/              # JavaScript gate/generation tools and existing Rust/Python helpers
-├── src/
-│   ├── lib.rs            # Library entry point
-│   └── main.rs           # Binary entry point
-├── tests/                # Rust integration tests
 ├── tools/translation/    # Forward test/, reverse js-to-rust/test/, serialization-schema/*.test.mjs
 ├── .gitignore            # Git ignore patterns
 ├── .pre-commit-config.yaml  # Pre-commit hooks
-├── Cargo.toml            # Project configuration
+├── Cargo.toml            # Root workspace selecting rust/
 ├── CHANGELOG.md          # Project changelog
 ├── AGENTS.md             # JavaScript-first and coordination instructions
 ├── CONTRIBUTING.md       # This file
@@ -507,3 +512,19 @@ for the root manifest. Native import and source-span checks establish the
 actual filesystem binding; they do not establish which manifest a caller
 intends. Preserve full historical parents, original test cases and deadlines
 when repairing readers, and verify both nested and legacy receiving layouts.
+
+For later compiler DATA formats, use the actual producer and preserve complete
+old/current source, serialized/reparsed CST and inverses. Historical comparison
+adapters must identify their exact scope; other tests and production imports
+must still execute the current implementation. Keep cold unavailable-host
+imports inert. Storage changes must recover every original value without
+raising the source graph's existing bounds or adding source, owner, hash,
+verdict or encoded-result caches across translation invocations.
+
+When current application migrations change a historical oracle's parent,
+carry complete original Git commit/tree/blob data and preserve its original
+source/body pins, test workload and deadline. The portable lexical-parent
+fixture is copied by `prepare-lexical-parent-history.mjs` from the already
+qualified portable history producer through separate language/repository CST
+rules. Its five parents and nine genuine objects supply historical test DATA;
+they do not increase current executable coverage or establish runtime parity.

@@ -8,7 +8,8 @@ import {originalLexingIntrinsicsUnchanged} from '../original-lexing-intrinsics.m
 import assert from 'node:assert/strict';
 import {writeJsonTextGzip} from '../../evidence/write-json-gzip.mjs';
 import {Hash,createHash} from 'node:crypto';
-import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,rmSync} from 'node:fs';
+import {mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
+import {readCompilerAliasHistory as readFileSync} from './fixtures/compiler-data-alias-history.mjs';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {pathToFileURL} from 'node:url';

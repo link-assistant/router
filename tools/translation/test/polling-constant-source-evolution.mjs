@@ -1,5 +1,6 @@
 // Test data for the exact earlier compatibility migration, never an issuer.
 import assert from 'node:assert/strict';
+import {repositorySourceURL} from './fixtures/repository-paths.mjs';
 import {readFileSync,mkdirSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
@@ -25,7 +26,7 @@ function oldPin(row){const pin=row.priorPin;return {...pin,nanos:BigInt(pin.nano
 export function pollingConstantSourceEvolution(previousPin,vectorDirectory){
  const manifest=pollingEvolutionData(),matches=manifest.rows.filter(row=>row.path===previousPin.path);assert.equal(matches.length,1,'exact evolved polling parent required');
  const row=matches[0];assert.deepEqual(previousPin,oldPin(row),'complete original oracle pin required');
- const before=pollingEvolutionText(row.before),after=pollingEvolutionText(row.after),current=readFileSync(new URL(row.path,root),'utf8');assert.equal(current,after,'complete current parent changed');
+ const before=pollingEvolutionText(row.before),after=pollingEvolutionText(row.after),current=readFileSync(repositorySourceURL(row.path,root),'utf8');assert.equal(current,after,'complete current parent changed');
  const input=transportConcreteSyntaxSource(before,{language:'Rust'});assert.equal(transportConcreteSyntaxMeta(input.meta).source,before);
  const languageRules=[{id:'rust:retain-complete-polling-constant-parent',edits:[]}];
  const forward=applyConcreteSyntaxSubstitutions(input.document,{languageRules,repositoryRules:[{id:'router:replay-authorized-owned-alias-migration-data',edits:row.edits}]});
@@ -46,7 +47,7 @@ export function pollingConstantSourceEvolution(previousPin,vectorDirectory){
  const declaration=before.slice(...previousPin.span);assert.equal(declaration,row.unchangedDeclaration);assert.equal(declaration,after.slice(...span));assert.equal(hash(declaration),previousPin.declarationSha);
  const pin=Object.freeze({...previousPin,sourceSha:row.after.sha256,span:Object.freeze(span)});
  const result={manifest,row,before,after,input,forward,output,inverse,restored,pin,sourceAuthority:false,namespaceAuthority:false,runtimeParity:false};
- assert.equal(readFileSync(new URL(row.path,root),'utf8'),current,'current complete source changed during proof');pollingEvolutionData();
+ assert.equal(readFileSync(repositorySourceURL(row.path,root),'utf8'),current,'current complete source changed during proof');pollingEvolutionData();
  if(vectorDirectory){mkdirSync(vectorDirectory,{recursive:true});writeJsonGzip(join(vectorDirectory,String(++serial).padStart(3,'0')+'-'+row.path.replaceAll('/','_')+'.json.gz'),result,(_key,value)=>typeof value==='bigint'?{$integer:value.toString()}:value);}
  return result;
 }

@@ -1,7 +1,7 @@
 // Explicit enclosing-name format. Debug named/unit grammar is privately issued;
 // every other selected sibling retains its complete original output route.
 import {createHash} from 'node:crypto';
-import {createPrivateFrozenJsonCache} from './private-frozen-json.mjs';
+import {createPrivateFrozenJsonCache,privateFrozenJsonOwnFieldsAliasHint} from './private-frozen-json.mjs';
 import {compilationProfile} from './cfg-profile.mjs';
 import {originalSourceModuleItems,moduleScopeKey} from './source-module-views.mjs';
 import {deriveFootprintSourceContext,deriveFootprintAt,isDeriveFootprintContext,deriveFootprintClapArgsSourceOutput} from './derive-footprints.mjs';
@@ -123,6 +123,7 @@ export const isDeriveEnclosingNamespaceContext=value=>{requireContextNative();re
 // Return genuine parsed snapshots, preventing supplied item subsets from
 // discarding unrelated unknown macros before the normal binding walk.
 function validateItemCarrier(module,original){
+  if(privateFrozenJsonOwnFieldsAliasHint(module,original,['items','allItems'])===true)return;
   // The authoritative original scoped selection remains private. An omitted
   // carrier is harmless; a provided carrier cannot erase/retype its items.
   for(const name of ['items','allItems'])if(Object.hasOwn(module,name)&&JSON.stringify(module[name])!==originalJson(original[name]))throw new TypeError('Bang original scoped item carrier changed');

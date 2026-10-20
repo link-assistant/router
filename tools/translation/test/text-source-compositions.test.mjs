@@ -1,13 +1,14 @@
-import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
+import {materializeLexicalParentOriginalGit} from './portable-lexical-parent-history.mjs';
+import {portableGit} from '../prepare-portable-git-fixtures.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
 import {translateProject} from '../project.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {sha256} from '../translate.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 
-test('unchanged original text functions compose checked character, Option and tuple rules',async()=>{
+test('unchanged original text functions compose checked character, Option and tuple rules',async t=>{
+  const historical=materializeLexicalParentOriginalGit(t);
   const fixtures=[
     {path:'src/mpp.rs',name:'escape_header_value',fileSha256:'eeeb0629ebaf10b333867903abd5eba90886d63ec11bd9a8157a13eec3c6cc01',start:3540,end:3642,bodySha256:'23fdf6f3ce023a6e7aea9d421d9de9449726c70cd40f2d5476283c1aa0d47375',observations:[
       ['',''],['plain','plain'],['"',String.raw`\"`],['\\',String.raw`\\`],
@@ -22,7 +23,7 @@ test('unchanged original text functions compose checked character, Option and tu
     ]},
   ];
   for(const fixture of fixtures){
-    const original=readFileSync(repositorySourceURL(fixture.path,new URL('../../../',import.meta.url)),'utf8');assert.equal(sha256(original),fixture.fileSha256);
+    const original=portableGit(historical.root,['show',historical.revision+':'+fixture.path]).toString('utf8');assert.equal(sha256(original),fixture.fileSha256);
     const item=sourceItems(original).find(item=>item.term==='fn'&&item.name===fixture.name);assert.deepEqual([item.start,item.end],[fixture.start,fixture.end]);
     const source=original.slice(item.start,item.end);assert.equal(sha256(source),fixture.bodySha256);
     const module=fixture.path.slice(4,-3),files={'src/lib.rs':`mod ${module};`,[fixture.path]:source};

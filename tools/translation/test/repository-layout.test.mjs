@@ -14,6 +14,17 @@ import {parseMeta} from '../js-to-rust/translator.mjs';
 import {evaluate} from '../js-to-rust/interpreter.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 
+test('package URL substitution follows the actual native module binding and preserves templates and shadowed calls',{timeout:5000},()=>{
+  const source="import {createRequire as need} from 'node:module';\nconst child=`need(new URL('../../../packages/javascript/package.json',import.meta.url))`;\nconst load=need(new URL('../../../packages/javascript/package.json',import.meta.url));\n";
+  const proposal=substituteTypeScriptPackageLayout(source);
+  assert.equal(proposal.changed,true);assert.equal(proposal.edits.length,1);assert.equal(proposal.wholeInverse,true);
+  assert.ok(proposal.source.includes("const load=need(new URL('../../../js/package.json',import.meta.url))"));
+  assert.ok(proposal.source.includes("`need(new URL('../../../packages/javascript/package.json',import.meta.url))`"));
+  assert.equal(transportConcreteSyntaxMeta(proposal.beforeWire).source,source);assert.equal(transportConcreteSyntaxMeta(proposal.afterWire).source,proposal.source);
+  assert.deepEqual(proposal.trace.map(row=>row.phase),['language','repository']);assert.equal(substituteTypeScriptPackageLayout(proposal.source).changed,false);
+  for(const shadowed of ["function f(createRequire){return createRequire(new URL('../../../packages/javascript/package.json',import.meta.url));}","import {createRequire} from 'node:module';function f(URL){return createRequire(new URL('../../../packages/javascript/package.json',import.meta.url));}","const createRequire=value=>value;const load=createRequire(new URL('../../../packages/javascript/package.json',import.meta.url));"]){assert.equal(substituteTypeScriptPackageLayout(shadowed).changed,false);}
+});
+
 function fixture(t) {
   const root=mkdtempSync(join(tmpdir(),'router-language-layout-'));
   t.after(()=>rmSync(root,{recursive:true,force:true}));

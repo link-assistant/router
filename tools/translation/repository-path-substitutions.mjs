@@ -70,12 +70,18 @@ export function substituteTypeScriptPackageLayout(source) {
   if(typeof source!=='string'||Buffer.byteLength(source)>1024*1024)throw TypeError('Bounded adapter source required');
   const ts=ownershipCompiler(),file=ts.createSourceFile('adapter.mjs',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
   if(file.parseDiagnostics.length)throw Error('Original adapter source syntax is invalid');
+  const options={allowJs:true,noResolve:true,noLib:true,noEmit:true},host=ts.createCompilerHost(options);host.getSourceFile=name=>name==='adapter.mjs'?file:undefined;host.fileExists=name=>name==='adapter.mjs';host.readFile=()=>undefined;
+  const checker=ts.createProgram(['adapter.mjs'],options,host).getTypeChecker();
+  const importedRequire=node=>{if(!ts.isIdentifier(node))return false;const declarations=checker.getSymbolAtLocation(node)?.declarations;if(declarations?.length!==1||!ts.isImportSpecifier(declarations[0])||(declarations[0].propertyName??declarations[0].name).text!=='createRequire')return false;let owner=declarations[0];while(owner&&!ts.isImportDeclaration(owner))owner=owner.parent;return owner?.moduleSpecifier.text==='node:module';};
   const edits=[];
   function visit(node){
     const join=node.parent,require=join?.parent;
     if(ts.isStringLiteral(node)&&node.text==='packages/javascript/package.json'&&ts.isCallExpression(join)&&ts.isIdentifier(join.expression)&&join.expression.text==='join'&&join.arguments.length===2&&join.arguments[1]===node&&ts.isCallExpression(require)&&ts.isIdentifier(require.expression)&&require.expression.text==='createRequire'&&require.arguments.length===1&&require.arguments[0]===join){
       const span=[node.getStart(file),node.end],quote=source[span[0]];
       edits.push({span,expected:source.slice(...span),replacement:quote+'js/package.json'+quote});
+    }
+    if(ts.isStringLiteral(node)&&/^(?:\.\.\/){1,32}packages\/javascript\/package\.json$/u.test(node.text)&&ts.isNewExpression(join)&&ts.isIdentifier(join.expression)&&join.expression.text==='URL'&&!checker.getSymbolAtLocation(join.expression)&&join.arguments?.length===2&&join.arguments[0]===node&&join.arguments[1].getText(file)==='import.meta.url'&&ts.isCallExpression(require)&&importedRequire(require.expression)&&require.arguments.length===1&&require.arguments[0]===join){
+      const span=[node.getStart(file),node.end],quote=source[span[0]];edits.push({span,expected:source.slice(...span),replacement:quote+node.text.replace('packages/javascript/package.json','js/package.json')+quote});
     }
     ts.forEachChild(node,visit);
   }

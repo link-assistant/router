@@ -1,4 +1,4 @@
-import {relocatedRustSourcePath} from '../repository-layout.mjs';
+import {relocatedRustSourcePath,rustPackageSourcePath} from '../repository-layout.mjs';
 // Historical test data only. Every compiler attempt still uses the ordinary
 // source/CST/grammar/checker path; these records never grant semantic authority.
 import {readFileSync} from 'node:fs';
@@ -23,6 +23,11 @@ export function verifyRealSourceFixtureLineage(bundle){
     }
     current.set(row.path,row.after.sourceId);
   }
+  for(const row of bundle.currentEvolution??[]){
+    const before=bundle.sources[row.before.sourceId]?.source,after=bundle.sources[row.after.sourceId]?.source;if(typeof before!=='string'||typeof after!=='string'||current.get(row.path)!==row.before.sourceId||row.before.path!==row.path||row.after.path!==row.path||row.completeInverse!==true)fail('complete current evolution association changed');
+    for(const [source,change,wanted]of [[before,row.edit,after],[after,row.inverse,before]]){const [start,end]=change.span;if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||end<start||end>source.length||source.slice(start,end)!==change.expected||source.slice(0,start)+change.replacement+source.slice(end)!==wanted)fail('complete current evolution inverse changed');}
+    current.set(row.path,row.after.sourceId);
+  }
   for(const row of bundle.current.files)if(current.has(row.path)&&mappedCurrentSource(current,row.path)!==row.sourceId)fail('current parent lacks continuous adoption history');
   return true;
 }
@@ -45,7 +50,7 @@ export function readRealSourceFixtureBundle({folder=FOLDER}={}){
 }
 function sourceAt(bundle,period,path,{root=ROOT,physical=false}={}){
   const rows=bundle[period].files.filter(row=>row.path===path);if(rows.length!==1)fail('unique complete source path required: '+path);
-  const row=bundle.sources[rows[0].sourceId];if(physical&&text(readFileSync(resolve(root,path)))!==row.source)fail('actual current parent differs: '+path);
+  const row=bundle.sources[rows[0].sourceId];if(physical&&text(readFileSync(resolve(root,rustPackageSourcePath(root,path))))!==row.source)fail('actual current parent differs: '+path);
   if(path.endsWith('.rs')){
     // This is only the stored fixture partition. The producer/focused tests
     // validate the full CST independently; each real compilation stays fresh.

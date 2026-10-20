@@ -2,7 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
-import {transportConcreteSyntaxSource,applyConcreteSyntaxSubstitutions} from '../concrete-syntax-meta.mjs';
+import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from '../concrete-syntax-meta.mjs';
+import {deriveRepositoryLayoutReadSources} from '../prepare-repository-layout-readers.mjs';
+import {fileURLToPath} from 'node:url';
+import {substituteTypeScriptPackageLayout} from '../repository-path-substitutions.mjs';
 import {pollingEvolutionData,pollingEvolutionText,pollingConstantSourceEvolution,currentPollingConstantPin} from './polling-constant-source-evolution.mjs';
 const pin=row=>({...row.priorPin,nanos:BigInt(row.priorPin.nanos)}),hash=value=>createHash('sha256').update(value).digest('hex');
 
@@ -14,7 +17,7 @@ test('both complete migrated parents retain actual serialized CST inverses and u
 test('all fourteen old test workloads and literal oracle fields stay exact beyond the explicit pin adaptation',{timeout:60000},()=>{
  const before=pollingEvolutionText(pollingEvolutionData().originalTest),after=readFileSync(new URL('./source-links.test.mjs',import.meta.url),'utf8');
  const restored=after.replace("import {currentPollingConstantPin} from './polling-constant-source-evolution.mjs';\n",'').replace('for(const previousPin of [','for(const pin of [').replace('    const pin=currentPollingConstantPin(previousPin,process.env.ROUTER_POLLING_CONSTANT_VECTOR_DIR);\n','');
- assert.equal(restored,before);assert.equal((after.match(/^test\(/gm)||[]).length,14);assert.equal((before.match(/^test\(/gm)||[]).length,14);
+ const packageLayout=substituteTypeScriptPackageLayout(before),layout=deriveRepositoryLayoutReadSources({sources:new Map([['tools/translation/test/source-links.test.mjs',packageLayout.source]]),repositoryRoot:fileURLToPath(new URL('../../../',import.meta.url))}),row=layout.files[0];assert.equal(packageLayout.changed,true);assert.equal(packageLayout.wholeInverse,true);assert.equal(transportConcreteSyntaxMeta(packageLayout.beforeWire).source,before);assert.equal(layout.files.length,1);assert.equal(row.text,restored);assert.equal(row.inverse,packageLayout.source);assert.equal((after.match(/^test\(/gm)||[]).length,14);assert.equal((before.match(/^test\(/gm)||[]).length,14);
  const data=pollingEvolutionData();assert.deepEqual(data.rows[0].priorPin.span,[1991,2049]);assert.deepEqual(data.rows[0].afterSpan,[1991,2049]);assert.deepEqual(data.rows[1].priorPin.span,[13448,13533]);assert.deepEqual(data.rows[1].afterSpan,[13523,13608]);
 });
 test('every original pin field remains mandatory while the unrelated parent preserves identity',{timeout:60000},()=>{

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import {relocatedRustSourcePath} from './repository-layout.mjs';
+import {relocatedRustSourcePath,rustPackageSourcePath} from './repository-layout.mjs';
 // Reviewed source-fixture producer. Git/CST history is data, never an issuer
 // of namespace, method-dispatch, ownership or executable authority.
 // Enter through the ordinary project bootstrap before structural extraction
@@ -116,18 +116,19 @@ export function prepareRealSourceFixtures({root=resolve(dirname(fileURLToPath(im
   const manifestBytes=git(root,['show',current+':'+MANIFEST]);if(hash(manifestBytes)!==REAL_SOURCE_MANIFEST_SHA256)fail('original complete fixture manifest changed');
   if(historyArchive===null&&!git(root,['show',original+':'+MANIFEST]).equals(manifestBytes))fail('historical fixture manifest changed');
   const manifest=JSON.parse(decode(manifestBytes)),paths=[...new Set(manifest.entries.flatMap(row=>[row.path,...(row.testSource?[row.testSource]:[])]))].sort();
-  const currentPaths=[...new Set([...paths,...CORE])].sort();let raw,adoptions;
+  const currentPaths=[...new Set([...paths,...CORE])].sort(),physical=path=>rustPackageSourcePath(root,path);let raw,adoptions;
+  const currentBatch=()=>{const selected=batch(root,currentPaths.map(path=>current+':'+physical(path)));return new Map(currentPaths.map(path=>[current+':'+path,selected.get(current+':'+physical(path))]));};
   if(historyArchive===null){
-    const changedPaths=git(root,['diff','--name-only',original,current,'--',...paths],{encoding:'utf8'}).trim().split('\n').filter(Boolean);
+    const changedPaths=paths; // Preserve all four fixed historical adoption domains after a physical move.
     adoptions=ADOPTIONS.map(value=>{const commit=revision(root,value),parent=git(root,['rev-parse',commit+'^'],{encoding:'utf8'}).trim();return {revision:commit,parent,paths:git(root,['diff-tree','--no-commit-id','--name-only','-r',commit,'--',...changedPaths],{encoding:'utf8'}).trim().split('\n').filter(Boolean)};});
-    raw=batch(root,[...paths.map(path=>original+':'+path),...currentPaths.map(path=>current+':'+path),...adoptions.flatMap(stage=>stage.paths.flatMap(path=>[stage.parent+':'+path,stage.revision+':'+path]))]);
+    raw=new Map([...batch(root,[...paths.map(path=>original+':'+path),...adoptions.flatMap(stage=>stage.paths.flatMap(path=>[stage.parent+':'+path,stage.revision+':'+path]))]),...currentBatch()]);
   }else{
-    if(typeof historyArchive!=='string')fail('explicit reviewed archive directory required');const history=archivedHistory(historyArchive,manifest),fresh=batch(root,currentPaths.map(path=>current+':'+path));raw=new Map(paths.map(path=>[original+':'+path,history.originals.get(path)]));for(const [key,row]of fresh)raw.set(key,row);
+    if(typeof historyArchive!=='string')fail('explicit reviewed archive directory required');const history=archivedHistory(historyArchive,manifest),fresh=currentBatch();raw=new Map(paths.map(path=>[original+':'+path,history.originals.get(path)]));for(const [key,row]of fresh)raw.set(key,row);
     adoptions=history.stages.map(({revision,parent,paths})=>({revision,parent,paths}));for(const stage of history.stages)for(const row of stage.files){raw.set(stage.parent+':'+row.path,row.before);raw.set(stage.revision+':'+row.path,row.after);}
   }
   if(raw.size>REAL_SOURCE_FIXTURE_LIMITS.files||[...raw.values()].reduce((sum,row)=>sum+row.bytes,0)>REAL_SOURCE_FIXTURE_LIMITS.rawBytes)fail('complete replay source bounds');
   const changedPaths=paths.filter(path=>raw.get(original+':'+path).source!==raw.get(current+':'+path).source);
-  const snapshot=()=>currentPaths.map(path=>{const row=raw.get(current+':'+path),bytes=readFileSync(resolve(root,path));if(decode(bytes)!==row.source)fail('physical current source differs from selected revision: '+path);return {path,bytes:bytes.length,sha256:hash(bytes),gitBlob:row.gitBlob};});
+  const snapshot=()=>currentPaths.map(path=>{const row=raw.get(current+':'+path),bytes=readFileSync(resolve(root,physical(path)));if(decode(bytes)!==row.source)fail('physical current source differs from selected revision: '+path);return {path,physicalPath:physical(path),bytes:bytes.length,sha256:hash(bytes),gitBlob:row.gitBlob};});
   const before=snapshot();
   const pipeline=createRulePipeline([
     {phase:'language',rules:[{id:'native-fixture.complete-cst-and-exact-declarations',apply:()=>{
@@ -142,10 +143,13 @@ export function prepareRealSourceFixtures({root=resolve(dirname(fileURLToPath(im
       return {sources,selections,currentSelections};
     }}]},
     {phase:'repository',rules:[{id:'native-fixture.content-addressed-history-and-packets',apply:state=>{
-      const record=(rev,path)=>{const row=raw.get(rev+':'+path);return {path,sourceId:row.sha256,bytes:row.bytes,gitBlob:row.gitBlob};};
+      const record=(rev,path)=>{const row=raw.get(rev+':'+path);return {path,...(rev===current?{physicalPath:physical(path)}:{}),sourceId:row.sha256,bytes:row.bytes,gitBlob:row.gitBlob};};
       const lineage=adoptions.map(stage=>({...stage,files:stage.paths.map(path=>{const before=record(stage.parent,path),after=record(stage.revision,path);return {path,before,after,...delta(state.sources.get(before.sourceId),state.sources.get(after.sourceId))};})}));
-      for(const path of changedPaths){let id=raw.get(original+':'+path).sha256;for(const stage of lineage){const row=stage.files.find(row=>row.path===path);if(row){if(row.before.sourceId!==id)fail('adoption history is not continuous');id=row.after.sourceId;}}if(id!==raw.get(current+':'+path).sha256)fail('current parent requires separately reviewed adoption history: '+path);}
-      return {schema:'router-complete-real-source-fixtures-v1',historical:{revision:original,manifestSha256:REAL_SOURCE_MANIFEST_SHA256,files:paths.map(path=>record(original,path)),selections:state.selections},current:{revision:current,files:currentPaths.map(path=>record(current,path)),selections:state.currentSelections,behaviorIds:CURRENT_IDS},lineage,sources:Object.fromEntries([...state.sources].map(([id,row])=>[id,{source:row.source,bytes:row.bytes,canonical:row.canonical}])),authority:{namespace:false,dispatch:false,ownership:false,executable:false}};
+      const currentEvolution=[];
+      for(const path of paths){let before=record(original,path);for(const stage of lineage){const row=stage.files.find(row=>row.path===path);if(row){if(row.before.sourceId!==before.sourceId)fail('adoption history is not continuous');before=row.after;}}
+        const after=record(current,path);if(before.sourceId!==after.sourceId)currentEvolution.push({path,before,after,...delta(state.sources.get(before.sourceId),state.sources.get(after.sourceId))});
+      }
+      return {schema:'router-complete-real-source-fixtures-v1',historical:{revision:original,manifestSha256:REAL_SOURCE_MANIFEST_SHA256,files:paths.map(path=>record(original,path)),selections:state.selections},current:{revision:current,files:currentPaths.map(path=>record(current,path)),selections:state.currentSelections,behaviorIds:CURRENT_IDS},lineage,currentEvolution,sources:Object.fromEntries([...state.sources].map(([id,row])=>[id,{source:row.source,bytes:row.bytes,canonical:row.canonical}])),authority:{namespace:false,dispatch:false,ownership:false,executable:false}};
     }}]},
   ]);
   const result=pipeline.run(null),payload={...result.value,trace:result.trace},rawPayload=Buffer.from(JSON.stringify(payload)+'\n'),packed=gzipSync(rawPayload,{level:9,mtime:0});if(rawPayload.length>REAL_SOURCE_FIXTURE_LIMITS.outputBytes)fail('complete fixture output bound');

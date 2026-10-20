@@ -102,6 +102,7 @@ export function restoreScopedProofConsumerFormats(input){
 // Default creator selection is explicit format DATA, not source/owner authority.
 const DEFAULT_CREATOR_HEADER={"before":"export function createDeriveBangContext({deriveContext}={}){","after":"export function createUnscopedDeriveBangContext({deriveContext}={}){"},EXPLICIT_CREATOR_CALL={"before":" return withPrivateNativeProofCostScope(()=>createDeriveBangContext(options));","after":" return withPrivateNativeProofCostScope(()=>createUnscopedDeriveBangContext(options));"},DEFAULT_CREATOR_APPEND="\n// Default selection scopes only the genuine synchronous creator body.\nexport function createDeriveBangContext({deriveContext}={}){\n return withPrivateNativeProofCostScope(()=>createUnscopedDeriveBangContext({deriveContext}));\n}\n";
 export function unscopedCreatorSource(source,retain=()=>{}){
+ source=restoreFrozenCarrierIdentitySource(source,retain);
  source=restoreEnclosingNamespaceSource(source,retain);
  source=restoreRetainedCreatorSource(source,retain);
  if(typeof source!=='string')fail('complete creator source text required');
@@ -167,4 +168,17 @@ export function restoreCurrentEnclosingNamespaceSource(source,retain=()=>{}){
  if(exact(adapted,before,after,'current-owned-binding-import-replay')!==source)fail('complete current enclosing import inverse differs');
  const historical=restoreEnclosingNamespaceSource(adapted,retain);
  retain('complete-current-enclosing-import-and-original-history',{actualSource:source,adaptedSource:adapted,historicalSource:historical,copy,before,after,compilerAuthority:false,scope:'Complete source-comparison DATA. Original historical rules and current production imports remain unchanged.'});return historical;
+}
+
+// Additive source comparison DATA only. Current production still executes its
+// complete source, owner, parser and native hash checks on every invocation.
+export function restoreFrozenCarrierIdentitySource(source,retain=()=>{}){
+ if(typeof source!=='string')fail('complete carrier comparison source required');
+ const imported="import {createPrivateFrozenJsonCache,privateFrozenJsonOwnFieldsAliasHint} from './private-frozen-json.mjs';",original="import {createPrivateFrozenJsonCache} from './private-frozen-json.mjs';",call="  if(privateFrozenJsonOwnFieldsAliasHint(module,original,['items','allItems'])===true)return;\n";
+ if(!source.includes('privateFrozenJsonOwnFieldsAliasHint'))return source;
+ const withoutCall=exact(source,call,'','restore-complete-native-carrier-comparison'),historical=exact(withoutCall,imported,original,'restore-original-carrier-comparison-import');
+ const replayed=exact(historical,original,imported,'replay-current-carrier-import'),replay=exact(replayed,'function validateItemCarrier(module,original){\n','function validateItemCarrier(module,original){\n'+call,'replay-current-carrier-comparison');
+ if(replay!==source)fail('complete carrier comparison source inverse differs');
+ const first=stage(source,withoutCall,'language','javascript:retain-whole-legacy-carrier-comparison'),second=stage(withoutCall,historical,'repository','receiving:restore-original-json-comparison-import');
+ retain('complete-current-and-original-carrier-comparison-source',{actualSource:source,historicalSource:historical,replayedSource:replay,stages:[first,second],compilerAuthority:false,scope:'Historical source comparison DATA only; every current production API remains current.'});return historical;
 }
