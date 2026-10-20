@@ -373,3 +373,5 @@ encoder functions remain exact. These infrastructure results add no executable
 application coverage and do not establish full synchronization or the full gate.
 
 The [source-derived standard module role extension](../../docs/development/standard-module-import-roles-20261021.md) passes all 33 complete text-adoption and producer receiving cases under Node and Bun. Its actual two-sequence CST producer retains full source inverses and all original standard time/source checks; module candidates grant no namespace, trait-dispatch or executable authority. Production executable coverage and the open full synchronization obligations remain unchanged.
+
+The [complete literal-text packet stream](../../docs/development/literal-text-packets-20261021.md) and explicit `literal` + `gzip` CLI pass all 24 complete API/CLI/source-freshness cases under Node and Bun. Both actual source producers retain the two CST rule sequences and full inverses; every original materialized API and bounded writer body stays exact. The tested 256 fixture functions establish no production coverage gain, full-corpus resource fit or current compiler-export/full-gate qualification.
