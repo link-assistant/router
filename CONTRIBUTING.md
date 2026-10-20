@@ -132,6 +132,12 @@ profile change. Historical URL readers normalize only the known physical crate
 prefix before enforcing their original parent association. Do not repin frozen
 source hashes or accept arbitrary dependency profiles to repair a layout failure.
 
+Test carriers using the owned core must retain every actual facade child. Use
+`node tools/translation/prepare-complete-core-source-fixtures.mjs --emit` and
+`--check` for the copied complete-child fixture and its consumer imports. Preserve
+explicit wrong, undefined and accessor source fields in refusal fixtures. A
+completed source carrier still needs ordinary fresh parsing and semantic checks.
+
 Within one project invocation, compose genuine source contexts explicitly when
 several consumers need the same original graph. Each consumer must retain its
 complete source, profile and private-issuer checks. Do not memoize namespace

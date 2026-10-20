@@ -83,6 +83,13 @@ complete installed outputs. Original Cargo bytes, profile hashes, archives,
 inverse equations and private proof checks remain required; this DATA adapter
 does not grant namespace or executable authority.
 
+`node tools/translation/prepare-complete-core-source-fixtures.mjs --emit`
+copies the existing complete-child fixture function, selects every external
+module from the actual facade CST, and proposes all three current consumer
+imports. Its `--check` reproduces all four complete source files. The original
+helper and its initialization controls remain intact; the new DATA composer
+preserves explicitly supplied refusal inputs and grants no compiler authority.
+
 ## Migrated paths and candidate evidence
 
 The 148 candidate uses the two sequences in the following actual paths:

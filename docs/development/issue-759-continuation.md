@@ -685,6 +685,24 @@ Cargo inputs, all retained source-member hashes, copied-proof refusals and fresh
 receiving-fixture profile/archive mutations. Current full generated fingerprints,
 strict native parity and the complete JavaScript gate remain open.
 
+The character-case diagnostic compared the same source with and without every
+actual core child. Supplying the Base64 child restored the existing checked panic
+helpers without changing the parser or weakening namespace checks. The actual
+fixture producer now copies the original complete-child function, selects all
+four children from the facade CST and composes them in three current consumers.
+It preserves the original helper and explicit wrong/undefined/accessor inputs.
+The first whole four-file Node run was red at 26/28 due to two newly exposed
+package-Cargo reads in the constructor-metadata file. The existing reader proposer
+repaired their shared read helper with one parser-selected edit and full inverse.
+
+All 28 cases in the corrected complete four files passed under Node in 36.292
+seconds (peak aggregate RSS 622,051,328 bytes), with a passing final deadline
+audit and zero breaches. Bun passed the same 28 cases in 25.932 seconds (peak
+804,438,016 bytes). Producer freshness checks cover all four complete outputs.
+These source-fixture and behavior observations do not resolve the historical
+feature-loader, external sibling derive closures, original full-source deadlines,
+current full generation or strict parity obligations.
+
 Regenerate owned-definition producer modules with
 `node tools/translation/prepare-owned-definition-bulk.mjs --emit`. This emits a
 complete source proposal; it does not install files. Review every original

@@ -15,7 +15,7 @@ import {CHARACTER,requireCharacterLiteral,checkedCharacterType} from '../extensi
 import {typeScriptType,valueSchema} from '../type-layout.mjs';
 import {validateRustValue} from '../type-layout-runtime.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-import {completeCoreSourceFixture} from './complete-core-source-fixture.mjs';
+import {completeOwnedCoreSourceFixture as completeCoreSourceFixture} from './complete-core-source-fixture.mjs';
 
 const directory=process.env.ROUTER_CHARACTER_SCALAR_VECTOR_DIR;
 let vectors=[];

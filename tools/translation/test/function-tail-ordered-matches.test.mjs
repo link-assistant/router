@@ -18,7 +18,7 @@ import {sourceItems} from '../rust-structure.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-import {completeCoreSourceFixture} from './complete-core-source-fixture.mjs';
+import {completeOwnedCoreSourceFixture as completeCoreSourceFixture} from './complete-core-source-fixture.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const dependencyInputs={manifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')},dependencies=loadJsonMacroSourceProof(dependencyInputs);
 const fixtureSource=readFileSync(new URL('../../../rust/fixtures/translation/openai-tool-choice.json',import.meta.url),'utf8'),fixture=JSON.parse(fixtureSource);
