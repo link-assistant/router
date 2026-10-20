@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync, writeFileSync, mkdirSync} from 'node:fs';
 import {join} from 'node:path';
 import {gunzipSync} from 'node:zlib';
-import {createHash, Hash} from 'node:crypto';
+import {createHash} from 'node:crypto';
 import {translateProject} from '../project.mjs';
 import {translateSource} from '../translate.mjs';
 import {parseProgram} from '../semantic-meta.mjs';
@@ -90,7 +90,7 @@ test('list operands remain once-only and left-to-right through serialized checke
   await verifyTypedTargets(result, api => { const actual = api.ordered(); retain('actual-ordered-target', actual); assert.deepEqual(actual, [4n, 5n]); }, {childTimeoutMs: 20_000});
 });
 
-test('ordinary vector baselines remain unchanged while aliases forged facades repetition and unsupported element ownership refuse', () => {
+test('ordinary vector baselines remain unchanged while aliases forged facades repetition and unsupported element ownership refuse', async () => {
   // Test the private helper's association independently; this synthetic unit
   // value is never fed to translation or treated as an executable program.
   const checked = {k: 'array', items: [{k: 'lit', value: true, type: {kind: 'bool'}}], type: {kind: 'array', element: {kind: 'bool'}, rustOwnership: {kind: 'owned', source: 'Vec'}}};
@@ -146,22 +146,22 @@ test('ordinary vector baselines remain unchanged while aliases forged facades re
   for (const frame of [outer, inner, throwing]) assert.equal(hasCheckedRouterCoreVector(frame.issued), false, 'closed frames cannot retain issued proof authority');
   assert.throws(() => throwing.program(emptySurface), /super.program exception/); assert.equal(hasCheckedRouterCoreVector(throwing.issued), false);
   assert.equal(hasCheckedRouterCoreVector(associated), true, 'separate synthetic helper contract survives frame cleanup');
-  // Observe the actual ordinary project/checker path: issuing no owned vectors
-  // must add neither a complete tree walk nor a vector fingerprint callback.
-  const entries = Object.getOwnPropertyDescriptor(Object, 'entries'), update = Object.getOwnPropertyDescriptor(Hash.prototype, 'update'), observer = [];
-  let ordinary;
-  try {
-    Object.defineProperty(Object, 'entries', {...entries, value: function (...args) {
-      if (new Error().stack.includes('bindNormalizedOwnedVectors')) observer.push({kind: 'entries', node: args[0]?.k});
-      return Reflect.apply(entries.value, this, args);
-    }});
-    Object.defineProperty(Hash.prototype, 'update', {...update, value: function (...args) {
-      if (new Error().stack.includes('ownedVectorSnapshot')) observer.push({kind: 'fingerprint'});
-      return Reflect.apply(update.value, this, args);
-    }});
-    ordinary = project(files('pub fn ordinary(value:u8)->u8{value}'));
-  } finally { Object.defineProperty(Object, 'entries', entries); Object.defineProperty(Hash.prototype, 'update', update); }
-  retain('ordinary-no-vector-callback-tape', observer); assert.deepEqual(observer, []); assert.equal(has(ordinary, 'ordinary'), true);
+  // Synthetic wrapper observer: the original empty-declaration lifetime pass
+  // has two values() traversals. A no-vector frame must add no binder traversal.
+  // This exercises storage behavior only and issues no executable declarations.
+  const observer = [];
+  class ObservedDeclarations extends Map { values() { observer.push('values'); return super.values(); } }
+  const OrdinaryLifetime = sourceLifetimes.withSourceLifetimeChecker(class {
+    constructor() { this.language = 'Rust'; this.items = new ObservedDeclarations(); }
+    program() { return {sourceLanguage: 'Rust', declarations: this.items}; }
+  });
+  new OrdinaryLifetime().program({items: []});
+  retain('ordinary-no-vector-wrapper-callback-tape', observer); assert.deepEqual(observer, ['values', 'values']);
+  // Genuine source ingress keeps its original intrinsics for the actual
+  // ordinary project and independent JavaScript/strict-TypeScript targets.
+  const ordinary = project(files('pub fn ordinary(value:u8)->u8{value}'));
+  assert.equal(has(ordinary, 'ordinary'), true);
+  await verifyTypedTargets(ordinary, api => { assert.equal(api.ordinary(7n), 7n); }, {childTimeoutMs: 20_000});
   // Independent source inputs establish the actual old standard decisions.
   // A facade draft must not retroactively turn an admitted ordinary list red.
   for (const [source, admitted] of [['pub fn bad()->Vec<u8>{vec![1u8]}', true], ['pub fn bad()->Vec<u8>{std::vec![1u8]}', false]]) {

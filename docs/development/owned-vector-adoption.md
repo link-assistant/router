@@ -140,3 +140,10 @@ producers keep their complete functions unchanged, including nested vector
 payload tokens. Nested selected-family lists remain source candidates, while
 the executable checker still refuses unsupported nested element types. This
 boundary repair awaits the coordinator's complete receiving qualification.
+
+The first integrated 59-case receiving run passed 58 cases, including six
+vector cases, and refused the new ordinary observer because it changed
+`Object.entries`, correctly tripping the original private-parser ingress guard.
+The replacement test keeps actual project/target intrinsics untouched and uses
+a separate synthetic Map-subclass callback tape solely to count the wrapper's
+no-vector iterations. This test correction awaits complete qualification.
