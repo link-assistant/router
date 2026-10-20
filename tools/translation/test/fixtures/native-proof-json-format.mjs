@@ -155,3 +155,16 @@ export function restoreEnclosingNamespaceSource(source,retain=()=>{}){
  retain('complete717-current-source-and-historical-inverse',{path:selected.path,actualSource,historicalSource:source,replayedSource:replay,rules:selected.rules,stages,authority:{source:false,owner:false,type:false,executable:false},scope:'Historical source comparison DATA only. ActualCurrent and direct production imports remain current.'});
  return source;
 }
+
+// Additive receiving history for the later owned-binding import adoption.
+// The original enclosing history API and its exact frozen rules stay unchanged.
+export function restoreCurrentEnclosingNamespaceSource(source,retain=()=>{}){
+ if(typeof source!=='string')fail('complete current enclosing source text required');
+ const before="import {resolveEnclosingNamespaceModuleBindings} from './module-bindings.mjs';",after="import {resolveOwnedEnclosingNamespaceModuleBindings as resolveEnclosingNamespaceModuleBindings} from './owned-enclosing-module-bindings.mjs';";
+ if(!source.includes(after))return restoreEnclosingNamespaceSource(source,retain);
+ if(source.split('export function createEnclosingCoreAdoptionProducerContext(').length!==2)fail('one complete current enclosing context required');
+ const adapted=exact(source,after,before,'current-owned-binding-import-history'),copy=stage(source,adapted,'repository','receiving:restore-original-enclosing-binding-import');
+ if(exact(adapted,before,after,'current-owned-binding-import-replay')!==source)fail('complete current enclosing import inverse differs');
+ const historical=restoreEnclosingNamespaceSource(adapted,retain);
+ retain('complete-current-enclosing-import-and-original-history',{actualSource:source,adaptedSource:adapted,historicalSource:historical,copy,before,after,compilerAuthority:false,scope:'Complete source-comparison DATA. Original historical rules and current production imports remain unchanged.'});return historical;
+}

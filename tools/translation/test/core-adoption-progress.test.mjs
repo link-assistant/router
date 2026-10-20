@@ -1,3 +1,4 @@
+import {ownershipCompiler} from '../js-to-rust/vendor/module-syntax.mjs';
 import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import nodeTest from 'node:test';
 import assert from 'node:assert/strict';
@@ -239,6 +240,19 @@ const SOURCE_RULES={
     }
   ]
 };
+function progressLayoutHistory(path,source){
+ if(path!=='tools/translation/propose-core-adoption-corpus.mjs')return source;
+ const ts=ownershipCompiler(),file=ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS),edits=[];assert.equal(ts.version,'5.9.3');assert.deepEqual(file.parseDiagnostics,[]);
+ function visit(node){if(ts.isCallExpression(node)&&ts.isIdentifier(node.expression)&&node.expression.text==='rootEntry'){assert.equal(node.arguments.length,1);assert.ok(['root','original.root'].includes(node.arguments[0].getText(file)));edits.push({span:[node.getStart(file),node.end],expected:node.getText(file),replacement:"'src/lib.rs'"});}ts.forEachChild(node,visit);}visit(file);assert.ok(edits.length>0);
+ let target=source;for(const row of [...edits].reverse()){assert.equal(target.slice(...row.span),row.expected);target=target.slice(0,row.span[0])+row.replacement+target.slice(row.span[1]);}assert.deepEqual(ts.createSourceFile(path,target,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS).parseDiagnostics,[]);
+ // A lossless opaque region has only whole-region edit boundaries. Native
+ // syntax owns the interior spans; the CST retains the complete source edit.
+ const before=transportConcreteSyntaxSource(source,{language:'JavaScript'}),applied=applyConcreteSyntaxSubstitutions(before.document,{languageRules:[{id:'javascript:native-root-entry-spans-and-complete-CST-copy',edits:[{span:[0,source.length],expected:source,replacement:target}]}],repositoryRules:[]}),after=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(applied.value));let delta=0;const mapping=edits.map(row=>{const at=row.span[0]+delta;delta+=row.replacement.length-row.expected.length;return {...row,afterSpan:[at,at+row.replacement.length]};});
+ let nativeInverse=after.source;for(const row of [...mapping].reverse()){assert.equal(nativeInverse.slice(...row.afterSpan),row.replacement);nativeInverse=nativeInverse.slice(0,row.afterSpan[0])+row.expected+nativeInverse.slice(row.afterSpan[1]);}assert.equal(nativeInverse,source);
+ const inverse=applyConcreteSyntaxSubstitutions(after.document,{languageRules:[{id:'javascript:complete-root-entry-copy-inverse',edits:[{span:[0,target.length],expected:target,replacement:source}]}],repositoryRules:[]}),restored=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(inverse.value));assert.equal(restored.source,source);
+ retain('complete-progress-layout-receiving-history',{path,actualCurrentSource:source,logicalReceivingSource:after.source,beforeMeta:before.meta,afterMeta:after.meta,inverseMeta:restored.meta,edits,mapping,nativeInverse,trace:applied.trace,compilerAuthority:false,scope:'Explicit source-comparison DATA. All original progress rules remain unchanged, and the full current source has independent native-span and CST inverses. Actual production behavior is exercised separately.'});return after.source;
+}
+
 const once=(source,before,after)=>{assert.equal(source.split(before).length,2);return source.replace(before,after);};
 const sourceFiles=()=>({'src/lib.rs':'pub mod translation_core; mod text; pub mod nested { pub fn untouched(value:u8)->u8{value} }','src/text.rs':'pub fn original(value:&str)->String{base64::Engine::encode(&base64::engine::general_purpose::STANDARD,value)}','src/translation_core.rs':ROUTER_FORMATTING_FACADE_SOURCE,'src/translation_core/primitives.rs':ROUTER_CORE_PRIMITIVES_SOURCE,'src/translation_core/ranges.rs':ROUTER_CORE_RANGES_SOURCE,'src/translation_core/json_collections.rs':ROUTER_CORE_JSON_COLLECTIONS_SOURCE,'src/translation_core/base64.rs':ROUTER_CORE_BASE64_SOURCE});
 const request=()=>({entry:'src/lib.rs',files:sourceFiles(),dependencyInputs:{manifest,lock},compilationProfile:PRODUCTION_PROFILE});
@@ -257,9 +271,9 @@ function tree(root){
 }
 function child(args){const row=spawnSync(process.execPath,[cli,...args],{encoding:'utf8',timeout:20000,maxBuffer:4*1024*1024});retain('complete-CLI-observation',{args,status:row.status,signal:row.signal,error:row.error?{name:row.error.name,message:row.error.message}:null,stdout:row.stdout,stderr:row.stderr});return row;}
 
-test('progress substitutions reconstruct all three complete source files through both concrete rule phases',()=>{
+test('progress substitutions and complete layout inverses reconstruct all three source files through both concrete rule phases',()=>{
  for(const [path,rules]of Object.entries(SOURCE_RULES)){
-  const current=readFileSync(repositorySourceURL(path,new URL('../../../',import.meta.url)),'utf8');let before=current;
+  const actualCurrent=readFileSync(repositorySourceURL(path,new URL('../../../',import.meta.url)),'utf8'),current=progressLayoutHistory(path,actualCurrent);let before=current;
   for(const rule of [...rules].reverse())before=once(before,rule.after,rule.before);
   let forward=before;for(const rule of rules)forward=once(forward,rule.before,rule.after);assert.equal(forward,current);
   const original=transportConcreteSyntaxSource(before,{language:'JavaScript'}),applied=applyConcreteSyntaxSubstitutions(original.document,{languageRules:[{id:'language:preserve-complete-diagnostic-source',edits:[]}],repositoryRules:[{id:'router:optional-adoption-progress',edits:[{span:[0,before.length],expected:before,replacement:current}]}]}),after=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(applied.value));assert.equal(after.source,current);

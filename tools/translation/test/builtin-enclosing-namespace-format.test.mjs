@@ -27,7 +27,7 @@ import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE,ROUTER_COR
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from '../concrete-syntax-meta.mjs';
 import {parseProgram,serializeProgram} from '../semantic-meta.mjs';
 import {ownershipCompiler} from '../js-to-rust/vendor/module-syntax.mjs';
-import {restoreEnclosingNamespaceSource} from './fixtures/native-proof-json-format.mjs';
+import {restoreCurrentEnclosingNamespaceSource as restoreEnclosingNamespaceSource} from './fixtures/native-proof-json-format.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 import {writeJsonTextGzip} from '../../evidence/write-json-gzip.mjs';
 const root=new URL('../../../',import.meta.url),base=new URL('../',import.meta.url),json=JSON.stringify,apply=Reflect.apply,get=Object.getOwnPropertyDescriptor,define=Object.defineProperty;

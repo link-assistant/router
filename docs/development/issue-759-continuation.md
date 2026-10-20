@@ -864,6 +864,36 @@ historical source bodies. All 16 cases across the two complete receiving files
 pass in Node (63.131 seconds) and Bun (58.069 seconds). These receiving results
 do not establish full-corpus freshness, native parity or the same-SHA gate.
 
+The subsequent complete canonical producer run processes all 847 Rust files
+and writes 3,188 outputs totaling 317,016,184 bytes in 1,239.975 seconds, with
+2,858,926,080 bytes peak aggregate RSS. Independent census compares every output
+with normal Git preimages and rejoins all 2,032 original/compiler input records.
+Six files change. The complete actual root/concrete packets match the earlier
+qualified compression proposal; both complete semantic components remain exact.
+All 176,248,200 logical bytes retain SHA256
+`eb2299d1299304084d15e509802f3ff731db019a5f1a042efb2aa5c5fdfdf1bd`.
+This adds no executable coverage. Actual default/owned freshness commands,
+all three full profile outputs, reverse refresh and the full gate remain open.
+
+The coordinated receiving repair qualifies 147 cases across sixteen complete
+files in Node and fresh sequential Bun processes. Complete Node deadline audits
+report no breaches. Repeated static/dynamic import URLs retain separate native
+spans and complete inverses; opaque CST regions use whole-source edits with
+independent native-span inverses. Review fixtures select the actual streaming
+producer. The complete Python receiving workflow passes all eight cases,
+including strict targets, reviewed application and explicit recovery. Its
+source-derived profile pin updater retains native Python tokenize-CST and AST
+checks through actual ordered language/repository sequences and passes freshness.
+The current core fixture preserves the frozen oracle and all original pins,
+adds complete current child sources and checks the entire 24-row refusal array,
+including explicit coordinate shifts and thirteen untranslated library bodies.
+Initial red runs remain in task-owned temporary evidence; the case archive has
+not been expanded. These receiving results establish neither full-corpus
+freshness nor native parity. The 180-second full review performance frontier,
+current profile/matrix outputs, broader CI failures and the complete same-SHA
+gate remain unresolved. The proposed invocation-local stored-review sharing
+experiment remains outside the source tree and unqualified.
+
 Regenerate owned-definition producer modules with
 `node tools/translation/prepare-owned-definition-bulk.mjs --emit`. This emits a
 complete source proposal; it does not install files. Review every original

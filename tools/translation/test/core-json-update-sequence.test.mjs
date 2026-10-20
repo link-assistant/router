@@ -1,3 +1,4 @@
+import {relocateSourceModule} from './relocate-source-module.mjs';
 import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
@@ -96,7 +97,7 @@ test('real source hash observers cannot publish after changing the physical comp
 });
 test('actual pending index bytes survive a paired disk failure with no completed index publication',async()=>{
  const f=fixture();try{const original=fs.readFileSync(script,'utf8'),point="writeFileSync(join(target.path,'index.pending.json'),text,{flag:'wx'});",injection=point+"throw new Error('test-only update index failure');";assert.equal(original.split(point).length,2);const injected=original.replace(point,injection),relocations=[];
-  const copied=injected.replace(/((?:from\s+|import\()')(\.[^']+)(')/gu,(whole,prefix,specifier,suffix)=>{const replacement=prefix+new URL(specifier,pathToFileURL(script)).href+suffix;relocations.push({whole,replacement});return replacement;});let reversed=copied;for(const row of [...relocations].reverse()){assert.equal(reversed.split(row.replacement).length,2);reversed=reversed.replace(row.replacement,row.whole);}assert.equal(reversed,injected);assert.equal(injected.replace(injection,point),original);
+  const relocation=relocateSourceModule(injected,pathToFileURL(script).href),copied=relocation.text;relocations.push(...relocation.mapping);let reversed=relocation.inverse;assert.equal(reversed,injected);assert.equal(injected.replace(injection,point),original);
   const file=join(f.parent,'paired-update-producer.mjs');fs.writeFileSync(file,copied);assert.equal(fs.readFileSync(file,'utf8'),copied);const paired=await import(pathToFileURL(file).href),failed=await outcome(()=>paired.proposeCoreAdoptionSequence({root:f.root,output:f.output},'json-updates')),pending=fs.readFileSync(join(f.output,'index.pending.json'),'utf8'),failure=JSON.parse(fs.readFileSync(join(f.output,'failure.json'),'utf8'));retain('complete-paired-publication-failure',{original,injected,copied,relocations,failed,pending,failure,output:bytes(f.output)});assert.match(failed.error?.message??'',/update index failure/u);assert.equal(JSON.parse(pending).sequence,'json-updates');assert.equal(JSON.parse(pending).complete,true);assert.equal(failure.complete,false);assert.equal(fs.existsSync(join(f.output,'index.json')),false);
  }finally{f.close();}
 });

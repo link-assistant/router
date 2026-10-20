@@ -2,7 +2,7 @@ import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import nodeTest from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync as readCurrentFileSync,writeFileSync,mkdirSync,mkdtempSync,rmSync} from 'node:fs';
-import {restoreEnclosingNamespaceSource} from './fixtures/native-proof-json-format.mjs';
+import {restoreCurrentEnclosingNamespaceSource as restoreEnclosingNamespaceSource} from './fixtures/native-proof-json-format.mjs';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {pathToFileURL} from 'node:url';

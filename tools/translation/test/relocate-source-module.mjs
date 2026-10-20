@@ -19,6 +19,9 @@ export function relocateSourceModule(source,origin,overrides=new Map()){
     if((ts.isImportDeclaration(node)||ts.isExportDeclaration(node))&&node.moduleSpecifier&&ts.isStringLiteral(node.moduleSpecifier)){
      const specifier=node.moduleSpecifier.text;if(specifier.startsWith('./')||specifier.startsWith('../')){const absolute=new URL(specifier,base).href,target=overrides.get(specifier)??overrides.get(absolute)??absolute;selected.push({kind:'relative-module-specifier',start:node.moduleSpecifier.getStart(file),end:node.moduleSpecifier.end,before:node.moduleSpecifier.getText(file),after:JSON.stringify(target)});}
     }
+    if(ts.isCallExpression(node)&&node.expression.kind===ts.SyntaxKind.ImportKeyword&&node.arguments.length===1&&ts.isStringLiteral(node.arguments[0])){
+     const literal=node.arguments[0],specifier=literal.text;if(specifier.startsWith('./')||specifier.startsWith('../')){const absolute=new URL(specifier,base).href,target=overrides.get(specifier)??overrides.get(absolute)??absolute;selected.push({kind:'relative-dynamic-module-specifier',start:literal.getStart(file),end:literal.end,before:literal.getText(file),after:JSON.stringify(target)});}
+    }
     if(ts.isPropertyAccessExpression(node)&&node.name.text==='url'&&ts.isMetaProperty(node.expression)&&node.expression.keywordToken===ts.SyntaxKind.ImportKeyword&&node.expression.name.text==='meta'){selected.push({kind:'original-module-url',start:node.getStart(file),end:node.end,before:node.getText(file),after:JSON.stringify(base.href)});return;}
     ts.forEachChild(node,visit);
    }

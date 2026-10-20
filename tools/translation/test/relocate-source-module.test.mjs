@@ -18,3 +18,13 @@ test('invalid origins and source grammar refuse before any claimed receiving sou
  for(const origin of ['https://example.com/module.mjs','file:///module.mjs?variant=1','file:///module.mjs#fragment'])assert.throws(()=>relocateSourceModule('const a=1;',origin));
  assert.throws(()=>relocateSourceModule('const broken = ;','file:///module.mjs'));assert.throws(()=>relocateSourceModule('const a=1;','file:///module.mjs',new Map([['./one.mjs',{}]])));
 });
+
+test('repeated static and literal dynamic imports retain separate native spans and ordinary computed imports',()=>{
+ const source=[
+  '// import("./dep.mjs") stays comment data',
+  'import value from "./dep.mjs";',
+  "const text='import(\"./dep.mjs\")';",
+  'export async function read(path){return [await import("./dep.mjs"),await import("./dep.mjs"),await import(path),value];}',
+ ].join('\n');
+ const result=relocateSourceModule(source,'file:///receiving/original/module.mjs',new Map([['./dep.mjs','file:///receiving/selected.mjs']]));assert.equal(result.selected.length,3);assert.equal(result.selected.filter(row=>row.kind==='relative-dynamic-module-specifier').length,2);assert.equal(result.inverse,source);assert.ok(result.text.includes('await import(path)'));assert.ok(result.text.startsWith('// import("./dep.mjs") stays comment data'));for(const row of result.mapping)assert.equal(result.text.slice(...row.afterSpan),row.after);assert.equal(transportConcreteSyntaxMeta(result.afterMeta).source,result.text);
+});

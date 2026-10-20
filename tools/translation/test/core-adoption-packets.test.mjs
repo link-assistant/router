@@ -1,3 +1,4 @@
+import {relocateSourceModule} from './relocate-source-module.mjs';
 import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -84,8 +85,7 @@ test('late source census mutation retains bounded incomplete packets and never a
     // not rely on Bun updating a named fs import after module initialization.
     const original=fs.readFileSync(script,'utf8'),point="writeFileSync(join(target.path,'index.pending.json'),text,{flag:'wx'});";
     assert.equal(original.split(point).length,2);const injected=original.replace(point,point+"throw new Error('test-only pending-index failure');");
-    const relocations=[];const copied=injected.replace(/from '(\.[^']+)'/gu,(whole,specifier)=>{const replacement='from '+JSON.stringify(new URL(specifier,pathToFileURL(script)).href);relocations.push({whole,replacement});return replacement;});
-    let reversed=copied;for(let at=relocations.length-1;at>=0;at--){const row=relocations[at];assert.equal(reversed.split(row.replacement).length,2);reversed=reversed.replace(row.replacement,row.whole);}assert.equal(reversed,injected);assert.equal(injected.replace(point+"throw new Error('test-only pending-index failure');",point),original);
+    const relocations=[];const relocation=relocateSourceModule(injected,pathToFileURL(script).href),copied=relocation.text;relocations.push(...relocation.mapping);let reversed=relocation.inverse;assert.equal(reversed,injected);assert.equal(injected.replace(point+"throw new Error('test-only pending-index failure');",point),original);
     const copy=join(f.parent,'paired-producer.mjs');fs.writeFileSync(copy,copied);assert.equal(fs.readFileSync(copy,'utf8'),copied);
     const output=join(f.parent,'pending-failure'),paired=await import(pathToFileURL(copy).href),failed=attempt(()=>paired.proposeCoreAdoptionCorpus({root:f.root,output}));
     const pending=fs.readFileSync(join(output,'index.pending.json'),'utf8'),receipt=JSON.parse(fs.readFileSync(join(output,'failure.json'),'utf8'));retain('05-pending-index-failure',{original,point,injected,copied,relocations,failed,pending,receipt,files:bytes(output)});

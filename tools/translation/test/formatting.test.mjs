@@ -5,7 +5,7 @@ import {translateSource,sha256} from '../translate.mjs';
 import {translateProject} from '../project.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-import {currentCoreFiles,currentCoreOptions,assertCurrentCoreRefusals} from './current-core-text-fixture.mjs';
+import {currentCoreReceivingFiles as currentCoreFiles,currentCoreOptions,assertCurrentCoreReceivingRefusals as assertCurrentCoreRefusals} from './current-core-text-fixture.mjs';
 async function source(source,verify) {
   const result=translateSource(source);assert.equal(result.ir.items.map(item=>item.source).join(''),source);
   assert.equal(result.ir.counts.carried,0,JSON.stringify(result.ir.items.filter(item=>item.status==='carried').map(item=>item.diagnostic)));

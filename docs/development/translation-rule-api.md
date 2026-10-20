@@ -53,6 +53,28 @@ CST/inverse proposals and exact installed `--check` freshness. The compressed
 reader retains independent physical and original decoded limits. Source/type
 authority and application coverage are unaffected by these storage APIs.
 
+`python3 -B scripts/prepare-json-reader-review-profile.py --root ROOT --emit OUT`
+prepares the Python reviewer's exact JSON-profile pin. Its actual rule runner
+requires `language` followed by `repository`; IDs remain unique and extensible
+within those two sequences. Language rules serialize/reparse the complete
+`python-tokenize-cst-v1` source-preparation extension before native AST checks.
+They preserve token/trivia byte spans, whole source and inverse, and allow only
+the selected profile literal to change. Repository rules prove the complete
+pinned original/current profile and Cargo layout equation. Independently review
+the proposal before installation and require `--check` afterward. The existing
+strict reviewer check remains required. This Python source-preparation format
+supplies no Rust/JavaScript semantic or runtime authority.
+
+Receiving fixture evolution retains every frozen original source and pin.
+`currentCoreReceivingFiles` composes the exact owned-interface addition and
+complete current child sources; `assertCurrentCoreReceivingRefusals` checks
+all eleven original refusals, their explicit source-coordinate mapping and all
+thirteen additional untranslated library refusals as one complete array.
+Original fixture APIs remain available. Native module relocation records
+separate spans for repeated static and literal dynamic imports; opaque concrete
+regions retain complete source edits plus independently checked native-span
+inverses. These DATA adapters issue no namespace or executable permission.
+
 ```javascript
 const pipeline = createRulePipeline([
   {phase: 'language', rules: [{id: 'language:checked-transform', apply: lower}]},
