@@ -754,6 +754,32 @@ cycle were retained previously. No Rust job was unlocked. The complete external
 dependency sibling-derive producer closure and long-running source cases remain
 open alongside current generation and strict parity.
 
+The package-only default-feature DATA entry is now generated from the complete
+actual `facts` producer through separate language/repository substitutions.
+Its native-selected function, complete module CST and source inverse are retained
+in `router-layout-external-package-default-source-proposal-v1`; the existing
+caller-bound function bodies remain byte-exact. It reuses their genuine package
+association, private complete Cargo parser and activation worklist without
+inventing a caller, a compilation unit, a negative feature fact or `test=false`.
+Both original/new complete files pass all fifteen cases: Node in 28.397 seconds
+(peak aggregate RSS 586,203,136 bytes; final independent deadline audit passed,
+zero breaches) and Bun in 18.224 seconds (398,491,648 bytes). The actual producer
+`--check` also passes. The earlier 13/15 run remains retained; its current child
+source path and new trace-control failures were repaired together, with complete
+source/CST inverses in `router-layout-external-package-data-tests-source-proposal-v1`.
+
+The separately bounded complete-package diagnostic retains all 39 originals,
+31 module views and all 17 derive attempts. The original graph remains unknown
+at the root. Explicit non-authorizing source proposals show that conditional
+documentation and lint alternatives account for that root blocker; the proposed
+root becomes active, but all 17 sibling derive attempts still refuse. No original
+package, builtin attribute owner, runtime behavior or trait is admitted by these
+proposals. This diagnostic does not repair the external trait closure or establish
+an executable coverage gain. Its full inputs and results remain in the task's
+temporary `router-layout-check-external-complete-producer-diagnostic-v3`, `-v5`
+and `-v6` directories, outside the archived evidence allocation. The earlier
+incorrect-whitespace `-v4` diagnostic is retained and has no qualification claim.
+
 Regenerate owned-definition producer modules with
 `node tools/translation/prepare-owned-definition-bulk.mjs --emit`. This emits a
 complete source proposal; it does not install files. Review every original

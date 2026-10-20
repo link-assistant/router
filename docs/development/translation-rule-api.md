@@ -189,3 +189,12 @@ producer on its exact historical scope. The actual adopted factory must still
 match that complete producer equation. Current runtime tests execute the actual
 complete module; the history adapter does not claim that later extensions were
 part of the original source proposal or grant semantic authority.
+
+`node tools/translation/prepare-external-package-defaults.mjs --emit` selects the
+complete actual `facts` function with the installed native parser. Language
+rules copy its producer and bind genuine package/Cargo inputs; repository rules
+select the DATA schema and remove only caller-module metadata. Its complete
+source/CST inverse and `--check` preserve all existing producer bodies.
+`originalExternalPackageDefaultSourceData` reuses the actual fresh Cargo parsing
+and activation rules. It returns no project module or namespace, test, unit or
+runtime authority; every unproved configuration atom remains unknown.

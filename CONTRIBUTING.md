@@ -159,6 +159,14 @@ archive bytes and the complete CST whitespace inverse. Keep their original
 cryptographic and collection-callback comparisons in both engines; accepting a
 new raw checksum without that complete equation is insufficient.
 
+Package-only positive feature DATA use the complete existing facts producer,
+copied by `node tools/translation/prepare-external-package-defaults.mjs --emit`.
+Review and install its source/CST proposal, then require `--check`. Preserve the
+original caller-bound producers and fresh complete Cargo parser authentication.
+This entry must not invent a project module, prove a dependency unit's test or
+target configuration, close a feature key or authorize a namespace. Qualify both
+complete original/new test files and their full native Hash input comparisons.
+
 Within one project invocation, compose genuine source contexts explicitly when
 several consumers need the same original graph. Each consumer must retain its
 complete source, profile and private-issuer checks. Do not memoize namespace

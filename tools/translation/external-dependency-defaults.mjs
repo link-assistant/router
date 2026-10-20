@@ -173,3 +173,12 @@ export function observeOriginalExternalDefaultConditions(token,options,selection
   const observed=freeze({schema:'source-bound-positive-feature-predicate-observations-v1',source,project:proof.project,dependency:proof.dependency,positiveFeatures:proof.positiveFeatures,conditions,...noAuthority,scope:'Predicate truth observations only, never attribute ownership, expansion or namespace selection.'});
   unchanged(state.input,options);const field=descriptor(selection,'path');if(keys(selection).length!==1||!field||!own(field,'value')||field.value!==path)fail('late source selection changed');return observed;
 }
+
+// Package-only positive source DATA; the original caller-bound producers stay exact.
+export function originalExternalPackageDefaultSourceData(dependencies,packageToken){
+  originalRegistry();const originals=deriveDependencyOriginalInputs(dependencies),originalPackage=originalExternalTraitPackageInputs(packageToken);
+  const matches=registry.packages.filter(row=>row.name===originalPackage.dependency.package&&row.version===originalPackage.dependency.version&&row.archiveSha256===originalPackage.dependency.archiveSha256);
+  if(matches.length!==1||originalPackage.dependency.manifestSha256!==hash(originals.manifest)||originalPackage.dependency.lockSha256!==hash(originals.lock))fail('complete genuine package/project association required');
+  const state={dependencies,packageToken,originals,originalPackage,selected:matches[0]},selected=sourceFeatures(state);
+  return freeze({schema:'original-package-positive-default-source-data-v1',profile:'complete registered ordinary direct dependency defaults; positive source membership only',/* No project module or compilation unit is asserted by this DATA API. */dependency:state.originalPackage.dependency,packageSourceDomainSha256:hash(bytes),parserExecution:{kind:'private exact copied CJS graph, fresh full file authentication, live native operations',input:'primitive string Cargo data only',optionalUtilInspection:'upstream caught-unavailable branch; inspector equivalence not claimed',publicCjsCacheUsed:false,parserClassesExposed:false},...selected,...noAuthority,scope:'Positive feature membership only; additional unified features and every unproved configuration atom remain unknown.'});
+}
