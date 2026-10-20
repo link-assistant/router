@@ -989,3 +989,6 @@ records all 75-file failures, shared workspace/package reader repairs and the
 separate remaining performance, generation and parity obligations.
 
 The [compiler DATA and historical producer cycle](compiler-source-producers-20261020.md) records subsequent complete source repairs, receiving results and the unresolved derive deadline in both engines.
+
+The [current compiler/export refresh](current-compiler-export-20261020.md) records
+the complete e825 source registration and both sixteen-case receiving passes.
