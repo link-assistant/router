@@ -3,6 +3,7 @@
 import {createHash} from 'node:crypto';
 import {createPrivateFrozenJsonCache,privateFrozenJsonEqualHint} from './private-frozen-json.mjs';
 import {createScopedPrivateNativeProofJsonSerializer as createPrivateFrozenJsonComposer} from './private-native-proof-json.mjs';
+import {createNegativeBudgetPrivateProofJsonSerializer} from './private-negative-budget-proof-json.mjs';
 import {createCompletedDataFreezer} from './private-data-freeze.mjs';
 import {originalBuiltinCopyOutputSyntax} from './builtin-copy-output-syntax.mjs';
 import {deriveFootprintOriginalContext,deriveFootprintOriginalModule,deriveFootprintHelperAttributeAt,isDeriveFootprintHelperAttributeProof} from './derive-footprints.mjs';
@@ -23,7 +24,7 @@ const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
 const freezeCompleted=createCompletedDataFreezer(freeze);
 const originalJson=createPrivateFrozenJsonCache();
-const composeJson=createPrivateFrozenJsonComposer();
+const composeJson=createNegativeBudgetPrivateProofJsonSerializer(createPrivateFrozenJsonComposer());
 const plans=new WeakMap(),proofs=new WeakMap();
 const directory='compiler/rustc_builtin_macros/src/deriving/';
 const routes=new Map([
