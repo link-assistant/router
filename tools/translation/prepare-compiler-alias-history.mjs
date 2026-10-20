@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
+import {fixedNativeDescriptorSourcePair} from './prepare-fixed-native-descriptor-census.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
 const FIXTURE='tools/translation/test/fixtures/compiler-data-alias-history.mjs';
 const FILES=['private-walk-scalar-results','builtin-json-equality-hint','completed-json-eligibility','private-frozen-json-measurement','packed-frozen-json-eligibility','private-frozen-json-cache-policy','private-frozen-json-owner-memo','private-frozen-json-cohorts','native-descriptor-guard-batching','builtin-proof-json-composition','native-descriptor-kind-discriminator','private-frozen-json-subtrees','native-string-quotation','builtin-plan-json-composition','immutable-json-continuations','private-primitive-native-quotation','derive-bang-carrier-json','private-frozen-json'];
@@ -17,10 +18,13 @@ function whole(path,before,after){
  return {path,before,after,beforeMeta,afterMeta,sequence,trace:run.trace,inverse:before,sourceSha256:sha(before),sha256:sha(after)};
 }
 function historyRows(root){
- const paths=['private-frozen-json.mjs','derive-bang-context.mjs','derive-enclosing-namespace-context.mjs','builtin-derive-bang-footprints.mjs'],rows=[];
+ const paths=['private-frozen-json.mjs','derive-bang-context.mjs','derive-enclosing-namespace-context.mjs','builtin-derive-bang-footprints.mjs','original-json-intrinsics.mjs'],rows=[];
  for(const name of paths){
   const path='tools/translation/'+name,source=readFileSync(resolve(root,path),'utf8');let before=source,edits=[];
-  if(name==='private-frozen-json.mjs'){
+  if(name==='original-json-intrinsics.mjs'){
+   const pair=fixedNativeDescriptorSourcePair(root);if(source!==pair.after)fail('complete actual fixed-native source required');
+   edits=[{expected:pair.replacement,replacement:pair.expected}];if(source.split(pair.replacement).length!==2)fail('unique actual descriptor census declaration');before=source.replace(pair.replacement,()=>pair.expected);if(before!==pair.before)fail('complete normal-Git descriptor baseline differs');
+  }else if(name==='private-frozen-json.mjs'){
    const marker='\n// Optional JSON equality only; source, owner and body checks remain mandatory.\n',at=source.indexOf(marker);if(at<0||source.indexOf(marker,at+1)!==-1)fail('unique actual alias append required');
    const suffix=source.slice(at),ts=ownershipCompiler(),file=ts.createSourceFile(path,suffix,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS),functions=file.statements.filter(ts.isFunctionDeclaration);
    if(file.parseDiagnostics.length||functions.length!==2||functions[0].name?.text!=='privateFrozenJsonOwnFieldsAliasHint'||functions[1].name?.text!=='sameImmutableArrayCells'||file.statements.length!==2)fail('actual complete alias-only declarations required');
