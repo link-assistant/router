@@ -118,6 +118,34 @@ test('ordinary vector baselines remain unchanged while aliases forged facades re
     if (context === 'copied-program') assert.throws(() => checker.program(syntheticSource), /normalization context/);
     else { const program = checker.program(syntheticSource); assert.equal(hasCheckedRouterCoreVector(program.declarations.get('synthetic').body), false, context); }
   }
+  // These synthetic frames exercise storage lifetime only. They have no parsed
+  // source authority, no executable declarations and no semantic roundtrip.
+  const Framed = sourceLifetimes.withSourceLifetimeChecker(class {
+    constructor() { this.language = 'Rust'; this.items = new Map(); }
+    expr() { return checked; }
+    program() {
+      this.issued = checkRouterCoreVector(this, {value: {}}, null, [], null, false);
+      assert.equal(hasCheckedRouterCoreVector(this.issued), true);
+      assert.equal(hasCheckedRouterCoreVector({...this.issued}), false);
+      this.issued.items[0].value = false; assert.equal(hasCheckedRouterCoreVector(this.issued), false); this.issued.items[0].value = true;
+      this.during?.();
+      if (this.fail) throw new Error('synthetic super.program exception');
+      return {sourceLanguage: 'Rust', declarations: this.items};
+    }
+  });
+  const emptySurface = {items: []}, outer = new Framed(), inner = new Framed(), throwing = new Framed();
+  throwing.fail = true;
+  outer.during = () => {
+    inner.during = () => { assert.equal(hasCheckedRouterCoreVector(outer.issued), false); assert.equal(hasCheckedRouterCoreVector(inner.issued), true); };
+    inner.program(emptySurface);
+    assert.equal(hasCheckedRouterCoreVector(inner.issued), false); assert.equal(hasCheckedRouterCoreVector(outer.issued), true);
+    assert.throws(() => throwing.program(emptySurface), /super.program exception/);
+    assert.equal(hasCheckedRouterCoreVector(throwing.issued), false); assert.equal(hasCheckedRouterCoreVector(outer.issued), true);
+  };
+  outer.program(emptySurface);
+  for (const frame of [outer, inner, throwing]) assert.equal(hasCheckedRouterCoreVector(frame.issued), false, 'closed frames cannot retain issued proof authority');
+  assert.throws(() => throwing.program(emptySurface), /super.program exception/); assert.equal(hasCheckedRouterCoreVector(throwing.issued), false);
+  assert.equal(hasCheckedRouterCoreVector(associated), true, 'separate synthetic helper contract survives frame cleanup');
   // Independent source inputs establish the actual old standard decisions.
   // A facade draft must not retroactively turn an admitted ordinary list red.
   for (const [source, admitted] of [['pub fn bad()->Vec<u8>{vec![1u8]}', true], ['pub fn bad()->Vec<u8>{std::vec![1u8]}', false]]) {

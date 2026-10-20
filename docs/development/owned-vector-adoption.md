@@ -32,8 +32,14 @@ private association now live in the lifetime module. Its real program lifecycle
 joins each normalized vector to the complete unchanged typed tree issued by the
 same checker and a genuine original parsed declaration. It then records the
 exact normalized node, type, element-array and element identities privately.
-No rebinding operation is exported. Copied programs or contexts, foreign
-checkers and changed original/normalized trees cannot establish this join.
+No rebinding operation is exported. The association maps and original typed
+fingerprints live only inside a synchronous same-checker program frame, created
+before the original `super.program` call. A `finally` block clears that frame
+and restores its enclosing frame on success or exception; nested invocations
+have independent storage. No production proof/hash state survives the call.
+The public synthetic helper contract remains separate and grants no original
+source association. Copied programs or contexts, foreign checkers and changed
+original/normalized trees cannot establish this join.
 Each borrowed element keeps its actual input or static origin, including when
 the enclosing vector owns its allocation.
 
@@ -110,3 +116,12 @@ literal or owned-vector operation: its expression dispatcher reaches
 `unimplemented expression ArrayLiteralExpression` for a plain emitted list,
 and its registered-operation gate refuses unregistered vector helper calls.
 No reverse receiving roundtrip or bidirectional coverage is claimed here.
+
+The later frame-lifetime repair adds closed-frame, exception and nested-program
+storage controls. Actual native source generation and all dependent equations
+passed in 18.63 seconds with 667,811,840 bytes peak aggregate RSS. The complete
+seven-case receiving file then passed in 17.58 seconds with 735,330,304 bytes
+peak aggregate RSS, including both borrowed-vector positives, strict TypeScript
+and the independent seven-case deadline join. All original 60-second case
+limits remained intact; full source vectors and event streams are retained.
+Broader integrated and production qualification remains separate.
