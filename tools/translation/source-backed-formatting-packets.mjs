@@ -32,10 +32,10 @@ function sourceMap(value){
   }
   return result;
 }
-function binding(source,rootSource,macroSources){
+function binding(source,rootSource,macroSources,macroName='format'){
   attributes(rustTokens(source));
   const evidence=macroProvenance(source);
-  if(evidence.unresolvedImportScope||evidence.shadowedNames.includes('format')||evidence.importedNames.includes('format'))fail('format binding is ambiguous in the complete module');
+  if(evidence.unresolvedImportScope||evidence.shadowedNames.includes(macroName)||evidence.importedNames.includes(macroName))fail(macroName+' binding is ambiguous in the complete module');
   // A textual macro_use parent is resolved from its actual complete source.
   // Unknown producer attributes/globs remain refusals instead of a spelling grant.
   let root=rootSource;
@@ -45,14 +45,14 @@ function binding(source,rootSource,macroSources){
     if(tokens.some(token=>token.text==='macro_use')){
       if(tokens.map(token=>token.text).join('')!=='#[macro_use]mod'+item.name+';'||!Object.hasOwn(macroSources,item.name))fail('unresolved parent macro_use producer');
       const original=macroSources[item.name],facts=macroProvenance(original);attributes(rustTokens(original));
-      if(facts.unresolvedImportScope||facts.shadowedNames.includes('format')||facts.importedNames.includes('format'))fail('parent imports a competing format macro');
+      if(facts.unresolvedImportScope||facts.shadowedNames.includes(macroName)||facts.importedNames.includes(macroName))fail('parent imports a competing '+macroName+' macro');
       for(const producer of sourceItems(original))if(!['comment','macro_rules!','fn','struct','impl','use','type','enum','const','static'].includes(producer.term))fail('unknown imported macro producer');
       imports.push({name:item.name,source:original,sha256:hash(original)});
       root=root.slice(0,item.start)+' '.repeat(item.end-item.start)+root.slice(item.end);
     }else if(item.term==='opaque'&&tokens.some(token=>token.text==='!'||token.text.endsWith('!')))fail('unknown parent macro producer');
   }
   const parent=macroProvenance(root);
-  if(parent.unresolvedImportScope||parent.shadowedNames.includes('format')||parent.importedNames.includes('format'))fail('parent format binding is ambiguous');
+  if(parent.unresolvedImportScope||parent.shadowedNames.includes(macroName)||parent.importedNames.includes(macroName))fail('parent '+macroName+' binding is ambiguous');
   return {module:evidence,parent,imports};
 }
 function migrateOriginalProducerFormatting(source,{rootSource='',macroUseSources={},inspection}={}){

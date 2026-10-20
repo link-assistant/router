@@ -47,7 +47,6 @@ macro_rules! __router_translation_core_json {
 /// Construct JSON through the library; translation checks each supported value.
 pub use crate::__router_translation_core_json as json;
 
-
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __router_translation_core_vec {

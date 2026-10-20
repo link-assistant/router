@@ -67,6 +67,9 @@ original-context coverage measurement, the complete JavaScript gate and gated
 Rust CI remain coordinator obligations. The historical 155/2567 executable
 measurement is unchanged by this source candidate.
 
-This source draft's seven-case runtime suite and complete producer `--check`
-have not yet run. Two bounded native source-generation commands passed; their
-receipts do not establish receiving, generation freshness or runtime parity.
+The vector producer's complete `--check` and both dependent formatting
+producers' fresh byte comparisons passed after regeneration. The bounded
+native source-only refresh completed in 15.18 seconds with 684,113,920 bytes
+peak aggregate RSS and retained complete compressed before/after receipts.
+The seven-case runtime suite has not yet run; source freshness does not
+establish receiving behavior or runtime parity.

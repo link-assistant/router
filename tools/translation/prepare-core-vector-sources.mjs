@@ -3,7 +3,7 @@ import {createHash} from 'node:crypto';
 import {readFileSync, writeFileSync, mkdirSync} from 'node:fs';
 import {resolve, dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {gunzipSync} from 'node:zlib';
+import {gunzipSync, gzipSync} from 'node:zlib';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {rustTokens, sourceItems} from './rust-structure.mjs';
 import {createRulePipeline} from './rule-pipeline.mjs';
@@ -58,7 +58,7 @@ export function prepareCoreVectorSources({facade, sourceData, hostSource}) {
       }
       if (edits.length !== 2) fail('actual wrapper definition and absolute std delegate required');
       const wrapper = transform(macro, 'Rust', edits, 'router-core:derive-owned-vector-wrapper');
-      const append = '\n\n' + wrapper.after + '\n\n/// Construct a vector through Rust; translation checks the bounded comma-list subset.\npub use crate::__router_translation_core_vec as vec;\n';
+      const append = '\n' + wrapper.after + '\n\n/// Construct a vector through Rust; translation checks the bounded comma-list subset.\npub use crate::__router_translation_core_vec as vec;\n';
       const facadeResult = transform(facade, 'Rust', [{span: [facade.length, facade.length], expected: '', replacement: append}], 'router-core:append-owned-vector-interface');
       const hostFile = parse('host-contracts.mjs', hostSource), classes = hostFile.statements.filter(row => ts.isClassDeclaration(row) && row.name?.text === 'HostRustParser');
       if (classes.length !== 1) fail('one original HostRustParser declaration required');
@@ -126,7 +126,8 @@ export function prepareCoreVectorCheckerSources({facade, sourceData, hostSource}
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2);
-  if (args.length === 3 && args[0] === '--root' && args[2] === '--check') {
+  if ([3, 5].includes(args.length) && args[0] === '--root' && ['--check', '--refresh'].includes(args[2])) {
+    if (args[2] === '--refresh' && (args.length !== 5 || args[3] !== '--receipt') || args[2] === '--check' && args.length !== 3) fail('usage: --root WORKTREE --check | --root WORKTREE --refresh --receipt NEW_FILE.json.gz');
     const root = resolve(args[1]);
     // Complete historical SOURCE inputs are checked-in fixture data, not saved
     // programs or compiler verdicts. Regenerate every current output afresh.
@@ -135,7 +136,20 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     if (originals.schema !== 'owned-vector-complete-original-inputs-v1') fail('complete original source-input fixture required');
     const result = prepareCoreVectorSources({facade: originals.sources['rust/src/translation_core.rs'],
       sourceData: originals.sources['tools/translation/router-core-source-data.mjs'], hostSource: originals.sources['tools/translation/extensions/host-contracts.mjs']});
-    for (const [name, source] of Object.entries(result.value.sources)) if (readFileSync(resolve(root, name), 'utf8') !== source.after) fail('stale complete generated source: ' + name);
+    const current = Object.fromEntries(Object.keys(result.value.sources).map(name => [name, readFileSync(resolve(root, name), 'utf8')]));
+    if (args[2] === '--check') {
+      for (const [name, source] of Object.entries(result.value.sources)) if (current[name] !== source.after) fail('stale complete generated source: ' + name);
+    } else {
+      if (!args[4].endsWith('.json.gz')) fail('new complete compressed receipt required');
+      const receipt = Buffer.from(JSON.stringify({schema: 'owned-vector-source-refresh-v1', originalFixtureSha256: hash(packed), current, proposal: result}) + '\n');
+      const compressed = gzipSync(receipt, {level: 6, mtime: 0});
+      if (!gunzipSync(compressed, {maxOutputLength: 128 * 1024 * 1024}).equals(receipt)) fail('complete refresh receipt inverse differs');
+      writeFileSync(resolve(args[4]), compressed, {flag: 'wx'});
+      for (const [name, source] of Object.entries(result.value.sources)) {
+        if (readFileSync(resolve(root, name), 'utf8') !== current[name]) fail('actual current source changed before refresh: ' + name);
+        writeFileSync(resolve(root, name), source.after);
+      }
+    }
     process.stdout.write(JSON.stringify({checked: Object.keys(result.value.sources), originalFixtureSha256: hash(packed), typescript: result.value.typescript,
       semanticAuthority: false, rustExecuted: false}) + '\n');
     process.exit(0);
