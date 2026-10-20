@@ -26,9 +26,9 @@ function freeze(value){if(value&&typeof value==='object'){for(const child of Obj
 
 test('negative budget source proposal copies actual whole census, matches actual composer bounds and preserves complete source inverses',{timeout:60000},()=>{
  const plan=prepareNegativeBudgetProofJson();assert.equal(plan.typescriptVersion,'5.9.3');assert.deepEqual(plan.proof.limits,{cells:CELLS,depth:DEPTH,units:UNITS});assert.equal(plan.proof.unitFailureIsNotAWitness,true);assert.equal(plan.proof.unseenTailIsNotCertified,true);assert.equal(plan.files.length,3);
- for(const row of plan.files){assert.equal(row.current,row.after);assert.equal(row.inverse,row.original);assert.equal(row.nativeBindings.nativeSemanticScopeChecked,true);assert.equal(row.sequence.languageRules.length,1);assert.equal(row.sequence.repositoryRules.length,1);}
+ for(const row of plan.files){assert.equal(row.current,row.installationSource);assert.equal(row.inverse,row.original);assert.equal(row.nativeBindings.nativeSemanticScopeChecked,true);assert.equal(row.sequence.languageRules.length,1);assert.equal(row.sequence.repositoryRules.length,1);}
  const consumer=plan.files.find(row=>row.path.endsWith('builtin-derive-bang-footprints.mjs'));assert.equal(restoreNegativeBudgetProofConsumerSource(consumer.after),consumer.original);assert.equal(consumer.after,consumer.original.replace(negativeBudgetConsumerImport.before,()=>negativeBudgetConsumerImport.after).replace(negativeBudgetConsumerImport.factoryBefore,()=>negativeBudgetConsumerImport.factoryAfter));
- assert.equal(plan.originalHelperAPIsAndBytesUnchanged,true);assert.equal(plan.newAcrossInvocationCache,false);assert.equal(plan.semanticAdmission,false);
+ assert.equal(consumer.current,consumer.original);assert.equal(consumer.candidateOnly,true);assert.equal(plan.candidateOnly,true);assert.equal(plan.productionDefaultSelected,false);assert.equal(plan.productionInstallationApproved,false);assert.equal(plan.originalHelperAPIsAndBytesUnchanged,true);assert.equal(plan.newAcrossInvocationCache,false);assert.equal(plan.semanticAdmission,false);
 });
 
 test('changed original complete sources or limits refuse preparation rather than infer a budget equivalence',{timeout:60000},t=>{

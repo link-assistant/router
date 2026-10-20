@@ -1,21 +1,30 @@
-# Negative-only proof serialization census
+# Negative-only proof serialization candidate
 
 The original complete derive-context receiving file exceeded its unchanged
 60-second deadline (100,280 ms). The joined profile identified repeated native
 JSON, hashing, composer preflight, measurement and frozen metadata traversal.
-This draft removes one concrete duplicate preflight on a subset of large proof
-values. It does not claim that the complete deadline is repaired.
+The explicit candidate removes one concrete duplicate preflight on a subset of
+large proof values. It remains outside the production default because the
+complete original deadline has not passed.
 
 `prepare-negative-budget-proof-json.mjs` copies the actual complete native-owner
 bootstrap, fresh guards and scoped logical census from
 `private-native-proof-json.mjs`, using installed TypeScript 5.9.3 declaration
 spans. It preserves both original helper modules byte for byte. The language
-phase adds a negative witness; the repository phase wraps the builtin proof
-consumer's existing serializer. All complete source proposals pass serialized,
+phase adds a negative witness; the repository phase proposes wrapping the
+builtin proof consumer's existing serializer. All complete source proposals pass serialized,
 reparsed CST boundaries and whole inverses. Unknown original source bytes or
 changed original source pins refuse preparation. The historical comparison
 fixture reverses the additional import and wrapper; original test bodies,
 baselines and deadlines remain unchanged.
+
+`--emit` retains the complete candidate consumer source and its whole inverse.
+`--write` installs the explicit candidate module and history support, and keeps
+the original production consumer constructor. Its per-file `installationSource`
+is the original consumer source for the candidate-only consumer row; all original
+`after` proposal fields remain complete. `--check` verifies those actual installed
+sources and rejects an unqualified production default. Direct candidate API
+tests still exercise the actual proposed serializer.
 
 The new internal format records a per-call negative witness only when the
 logical occurrence count exceeds the actual original 200,000-cell limit or the
@@ -72,3 +81,28 @@ serialized stack bytes must match exactly. Eager Bun stack DATA is compared
 directly when the engine does not invoke the formatter; no constant stack
 replacement or frame normalization is used. This source-only test correction
 keeps all seven cases and their original 60-second deadlines.
+
+Root's completed v6 batch passed all eight original native proof consumer cases.
+The original twelve-case derive file passed its assertions, but CatalogRecord
+still took 88,028.170667 ms against its unchanged 60,000 ms deadline. The full
+batch took 252.49 seconds and peaked at about 1.72 GB. Its seven new negative
+cases could not load because the test's local `URL` binding shadowed the global
+constructor; the separate `subjectURL` source correction preserves all cases
+and workloads and awaits receiving qualification. Earlier observed CatalogRecord
+times were about 92 seconds and 100,280 ms; these runs do not isolate candidate
+effects. The failed deadline therefore does not qualify the optimization.
+Production now uses its exact original serializer import and constructor again;
+the candidate module, complete proposals and seven receiving controls remain.
+
+The next source-level target is `decodeBuiltinSourceMeta`'s final complete
+`encodeBuiltinSourceMeta(result)` pass. Sealing first encodes the graph, decoding
+reconstructs and freezes it, then that final pass traverses and allocates the
+graph again solely to establish canonical wire equality. An explicit stateless
+candidate can instead validate the parsed table's reachable postorder, first
+field occurrences, unique node identities and exact final canonical JSON. Any
+changed intrinsic, hook or uncertain value must retain the complete original
+roundtrip. The original source-derived encoder/decoder and all original public
+APIs, callbacks, freeze/Hash operations and deadlines remain the comparison
+baseline. That validator needs complete source inverses and independent
+malformed/noncanonical controls, followed by the complete original twelve-case
+deadline before any production selection.
