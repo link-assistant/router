@@ -134,3 +134,12 @@ and generated attribute effects. Five new whole-file controls are drafted with
 60000 ms deadlines and remain unrun. Source-only TypeScript 5.9.3 native copies,
 ordered CST boundaries/inverses, complete Cargo callback recipes and grammar
 checks passed. This source step alone does not repair the original ten cases.
+
+Both new issuers now refuse cold changed ingress before allocating private
+brands and use the captured diagnostic route. The feature issuer separately
+pins the actual JSON parser and rechecks guards after every observable hash,
+before parsing or reflecting again. Two additional complete controls cover live
+and cold JSON replacement and a hash-installed JSON replacement, bringing that
+new file to eight unrun cases. Original complete authored source snapshots are
+unchanged: source producers retain exact guard substitutions and reconstruct
+their parents through complete CST inverses.

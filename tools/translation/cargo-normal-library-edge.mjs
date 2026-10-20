@@ -6,12 +6,12 @@ import {originalCargoUnitSourceProgram,assertOriginalCargoUnitSourceProgram,reva
 import {deriveDependencyOriginalInputs} from './derive-dependencies.mjs';
 import {originalExternalTraitPackageInputs} from './extensions/external-trait-sources.mjs';
 import {parsePrivateOriginalCargoToml,assertPrivateOriginalCargoTomlExecution} from './private-cargo-toml.mjs';
-import {originalStaticSourceIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged,throwOriginalCapturedTypeError} from './original-json-intrinsics.mjs';
-const initial=originalStaticSourceIntrinsicsUnchanged()&&originalDataFreezeIntrinsicsUnchanged();
-const plans=new WeakSet(),edges=new WeakMap();
+import {originalStaticSourceIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged,originalPrivateParserIngressUnchanged,throwOriginalCapturedTypeError} from './original-json-intrinsics.mjs';
+const initial=originalPrivateParserIngressUnchanged()&&originalStaticSourceIntrinsicsUnchanged()&&originalDataFreezeIntrinsicsUnchanged();
+const plans=initial?new WeakSet():null,edges=initial?new WeakMap():null;
 const fail=message=>throwOriginalCapturedTypeError('Original Cargo library edge: '+message);
-const hash=value=>createHash('sha256').update(value).digest('hex');
-function guard(){if(!initial||!originalStaticSourceIntrinsicsUnchanged()||!originalDataFreezeIntrinsicsUnchanged())fail('qualified original source operations changed');assertPrivateOriginalCargoTomlExecution();}
+const hash=value=>{const result=createHash('sha256').update(value).digest('hex');guard();return result;};
+function guard(){if(!initial||!originalPrivateParserIngressUnchanged()||!originalStaticSourceIntrinsicsUnchanged()||!originalDataFreezeIntrinsicsUnchanged())fail('qualified original source operations changed');assertPrivateOriginalCargoTomlExecution();}
 const compact=source=>rustTokens(source).filter(token=>token.type!=='comment').map(token=>token.text).join('');
 const freeze=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;};
 function select(program,path,name,owner=null){

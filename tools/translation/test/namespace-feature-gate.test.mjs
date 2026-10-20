@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {Hash} from 'node:crypto';
 import {captureSourceModuleViews} from '../source-module-views.mjs';
 import {resolveModuleBindings} from '../module-bindings.mjs';
 import {originalCrateFeatureGateSourcePlan,requireOriginalCrateFeatureGateSourcePlan,captureOriginalCrateFeatureAbsence,originalCrateFeatureAbsenceFacts} from '../namespace-feature-gate.mjs';
@@ -32,4 +33,15 @@ test('private resolver origins and feature tokens reject copied changed and fore
 test('complete original base64 root has no original rustc_attrs alternative but retains the gate obligation',{timeout:60000},()=>{
  const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')}),packageToken=captureOriginalExternalTraitPackage(dependencies,'base64'),original=originalExternalTraitPackageInputs(packageToken),source=original.sources.find(row=>row.path===original.crateRoot),value=capture(source.source);
  assert.equal(value.facts.sourceSha256,source.sha256);assert.equal(value.facts.originalFeatureNameAbsent,true);assert.equal(value.facts.allOriginalCfgAlternativesRetained,true);assert.equal(value.facts.generatedSpanExceptionClosed,false);assert.equal(value.facts.attributeGateClosed,false);assert.equal(value.facts.namespaceAuthority,false);
+});
+test('live JSON hooks and a cold changed parser cannot execute or recover into a source proof',{timeout:60000},async()=>{
+ const sourceURL=new URL('../namespace-feature-gate.mjs',import.meta.url),original=readFileSync(sourceURL,'utf8'),define=Object.defineProperty,field=Object.getOwnPropertyDescriptor(JSON,'parse');let calls=0,cold;
+ originalCrateFeatureGateSourcePlan();
+ try{define(JSON,'parse',{...field,value(){calls++;throw Error('changed source parser must not execute');}});assert.throws(()=>originalCrateFeatureGateSourcePlan(),/original source JSON parser changed/);cold=await import(sourceURL.href+'?cold-source-json-gate-v1');}finally{define(JSON,'parse',field);}
+ assert.equal(calls,0);assert.throws(()=>cold.originalCrateFeatureGateSourcePlan(),/original source operations changed/);assert.equal(calls,0);assert.equal(readFileSync(sourceURL,'utf8'),original);assert.equal(originalCrateFeatureGateSourcePlan().namespaceAuthority,false);
+});
+test('a hash observer cannot install a JSON hook between original input authentication and parsing',{timeout:60000},()=>{
+ const define=Object.defineProperty,apply=Reflect.apply,parse=Object.getOwnPropertyDescriptor(JSON,'parse'),update=Object.getOwnPropertyDescriptor(Hash.prototype,'update');let installed=false,calls=0;
+ try{define(Hash.prototype,'update',{...update,value(value,...args){const result=apply(update.value,this,[value,...args]);if(!installed&&Buffer.from(value).includes(Buffer.from('namespace-feature-gate-original-sources-v1'))){installed=true;define(JSON,'parse',{...parse,value(){calls++;throw Error('hash-installed parser must not execute');}});}return result;}});assert.throws(()=>originalCrateFeatureGateSourcePlan(),/original source JSON parser changed/);}finally{define(JSON,'parse',parse);define(Hash.prototype,'update',update);}
+ assert.equal(installed,true);assert.equal(calls,0);assert.equal(originalCrateFeatureGateSourcePlan().namespaceAuthority,false);
 });
