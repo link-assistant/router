@@ -27,10 +27,9 @@ filtered or instrumented.
 
 Preparation discovers the fresh full Git tracked/unignored Rust, Cargo,
 compiler, profile and scripts universe. Compiler selection composes the existing
-`isCompilerSourceInputPath` and `isIsolatedCompilerSourcePath` contracts, adding
-complete test/fixture inputs while excluding the declared meta/project/generated
-output trees. Actual original source profiles, vendors and their archives stay
-included. It adds every physical file in the actual installed TypeScript
+`isCompilerSourceInputPath` and `isIsolatedCompilerSourcePath` contracts. Both
+complete source families, every Rust/Cargo input, all scripts and the actual
+source-profile/vendor archives stay included. It adds every physical file in the actual installed TypeScript
 5.9.3 package. Missing physical sources and linked inputs refuse preparation;
 there is no projected Rust subset or stale sparse-blob substitute. The native
 source producer must use that same root's actual installed compiler instance.
@@ -39,6 +38,31 @@ Before reading any source body, a stat-only census rejects more than 8,192 files
 any file over 32 MiB, or total input bytes over 256 MiB. These are the unchanged
 compiler-source input limits. Bounded fd reads then enforce each allocation size
 and reject source growth or replacement after the census.
+
+`canonical-trial-source-closure.mjs` then adds the entire unchanged original
+derive test and its actual test-side helper/resource closure. The installed
+native TypeScript parser and lexical symbols follow original static imports,
+exports and literal dynamic imports. Full helper sources, native spans and
+literal file-read expressions are retained as DATA. Direct path parameters
+must close over every actual call site; original Git reads join the actual
+HEAD and complete tracked Rust path census. The actual repository path mapper
+is rejoined to its complete current source before using its physical layout.
+Unknown dynamic paths, escaping input functions, unresolved dependencies and
+unproved input providers refuse. Each newly analyzed helper receives the same
+stat census before reading; the complete final union is censused again before
+capturing all source hashes. This extraction runs afresh at every existing
+source-vector boundary; it retains no across-invocation source or verdict cache.
+
+Compiler import edges terminate at the two complete existing compiler source
+families, whose modules and resource archives remain retained in full. Other
+test/fixture archives are not added just because they share a directory name.
+Every omitted Git inventory path has an explicit DATA record stating that it
+is outside both compiler contracts and the native original-test input closure.
+The full closure sources, edges, read targets and compiler boundary records
+explain that exclusion; neither they nor the omission records grant semantic
+or runtime authority. The older broad `isCanonicalTrialSourcePath` public
+inventory predicate stays compatible; discovery uses the new base predicate
+and the fresh native closure instead.
 
 Each source has a separate version-two gzip frame with its complete original
 bytes. An unchanged trial records `same-original-source` plus its complete byte
@@ -122,7 +146,17 @@ and partial archive separately; they establish no performance result.
 
 The version-two source association repair preserves every original input and
 adds four complete transport controls to the same file, now twelve harness
-cases with their original 60-second declarations. It has not been executed or
-receiving-qualified, and its storage outcome has not been measured. Preparation
-and the original complete twelve-case candidate derive trial remain unqualified.
-Production codec and all original tests remain unchanged.
+cases with their original 60-second declarations. Root's real version-two
+preparation also failed before runtime: its broad 3,301-file selection had
+211,219,486 logical mirror bytes and 181,197,791 frame bytes at cutoff, exceeded
+the unchanged 384 MiB cap, and still had further inputs to capture. That failed
+receipt remains distinct. Root measured the complete actual compiler registry
+at head `8c434aba7676a7a8b3fc8930d752ac6d2f6c06fe` as 1,420 files and
+48,111,863 bytes; unrelated test/fixture archives caused the larger selection.
+
+The native original-test closure repair and its seven new complete controls
+are source drafts only. No native AST generation, syntax/runtime check, archive
+preparation or original derive runtime has executed for this repair. Its final
+input census and storage outcome must be measured under Root's shared lease.
+Preparation and the original complete twelve-case candidate derive trial remain
+unqualified. Production codec and all original tests remain unchanged.
