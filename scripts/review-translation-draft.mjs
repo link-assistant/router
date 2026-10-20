@@ -11,7 +11,7 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {isDeepStrictEqual,types as utilTypes} from 'node:util';
 import {parseProgram,roundTripProgram} from '../tools/translation/semantic-meta.mjs';
-import {loadProjectMetaStorage} from '../tools/translation/project-meta-storage.mjs';
+import {loadProjectMetaStorageWithCompressedConcrete as loadProjectMetaStorage} from '../tools/translation/project-meta-compressed-storage.mjs';
 import {sourceItems} from '../tools/translation/rust-structure.mjs';
 import {inspectDeriveInput} from '../tools/translation/derive-inputs.mjs';
 import {loadDeriveDependencyProof} from '../tools/translation/derive-dependencies.mjs';

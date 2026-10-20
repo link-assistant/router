@@ -8,6 +8,7 @@ import {execFileSync} from 'node:child_process';
 import {json} from '../translate.mjs';
 import {createConcreteSyntaxMeta,parseConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 import {planProjectMetaStorage,loadProjectMetaStorage,PROJECT_META_STORAGE_LIMITS} from '../project-meta-storage.mjs';
+import {planCompressedProjectMetaStorage,loadProjectMetaStorageWithCompressedConcrete} from '../project-meta-compressed-storage.mjs';
 import {planRegeneration,applyRegenerationPlan} from '../bulk.mjs';
 import {reviewTranslationDraft} from '../../../scripts/review-translation-draft.mjs';
 
@@ -100,7 +101,7 @@ test('real bulk planning writes the whole CST sidecar and detects missing stale 
     const path=f.project.targets.concreteSyntaxMeta;assert.ok(path);assert.ok(f.plan.outputs.some(row=>row.path===path));assert.deepEqual(applyRegenerationPlan(f.plan,{check:true}).failures,[]);
     const original=readFileSync(join(f.root,path)),extra=path+'.unexpected.json';rmSync(join(f.root,path));f.write(extra,'{}');const missing=applyRegenerationPlan(f.plan,{check:true}).failures;assert.ok(missing.includes('missing: '+path));assert.ok(missing.includes('unexpected: '+extra));
     f.write(path,'[]\n');const stale=applyRegenerationPlan(f.plan,{check:true}).failures;assert.ok(stale.includes('stale: '+path));applyRegenerationPlan(f.plan);assert.ok(readFileSync(join(f.root,path)).equals(original));assert.deepEqual(applyRegenerationPlan(f.plan,{check:true}).failures,[]);
-    const loaded=loadProjectMetaStorage(readFileSync(join(f.root,metaPath)),{metaPath,targets:f.project.targets,read:name=>readFileSync(join(f.root,name)),storageLimits:f.storageLimits});assert.equal(loaded.text,f.original);assert.equal(loaded.meta.concreteSyntaxMeta[0].document.source,f.source);
+    const loaded=loadProjectMetaStorageWithCompressedConcrete(readFileSync(join(f.root,metaPath)),{metaPath,targets:f.project.targets,read:name=>readFileSync(join(f.root,name)),storageLimits:f.storageLimits});assert.equal(loaded.text,f.original);assert.equal(loaded.meta.concreteSyntaxMeta[0].document.source,f.source);
     retain('06-real-bulk-component',{source:f.source,plan:f.plan,missing,stale,loaded});
   }finally{f.cleanup();}
 });
@@ -113,7 +114,7 @@ test('independent draft reviewer reads exact Git CST baseline and current full c
     // Reorder complete pure declarations independently of CST transport. The
     // baseline CST sidecar remains the exact original, read from Git by role.
     const current=JSON.parse(f.original);for(const key of ['checkedSemanticProgram','targetSemanticProgram'])current[key].program.items.reverse();
-    const plan=planProjectMetaStorage(metaPath,json(current),{storageLimits:f.storageLimits});f.write(metaPath,plan.text);for(const row of plan.components)f.write(row.path,row.text);
+    const plan=planCompressedProjectMetaStorage(metaPath,json(current),{storageLimits:f.storageLimits});f.write(metaPath,plan.text);for(const row of plan.components)f.write(row.path,row.text);
     const review=reviewTranslationDraft({root:f.root,baselineSha:baseline,projectMetaStorageLimits:f.storageLimits});assert.equal(review.baselineProjectInputs.find(row=>row.path===path).sha256,baselineHash);assert.equal(review.outputs.find(row=>row.path===path).sha256,baselineHash);assert.equal(review.projects.length,1);
     retain('07-exact-baseline-and-current-CST',{source:f.source,baseline,baselineHash,path,currentPlan:plan,review});
   }finally{f.cleanup();}

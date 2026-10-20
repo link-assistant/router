@@ -98,3 +98,19 @@ export function adaptHistoricalMatrixLayout(source){
  if(transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(inverse.value)).source!==source)throw TypeError('Complete historical matrix inverse differs');
  return {source:result.value.source,beforeWire:original.wire,afterWire:serializeConcreteSyntaxMeta(result.value.document),trace:result.trace,wholeInverse:true};
 }
+
+// Additive storage receiving copy. The original bulk-layout adapter, raw
+// historical source and all original pins retain their exact old contracts.
+export function adaptHistoricalBulkStorage(source){
+ const layout=adaptHistoricalBulkLayout(source),before=roundtrip(layout.source);
+ const expected="import {planProjectMetaStorage} from './project-meta-storage.mjs';",replacement="import {planCompressedProjectMetaStorage as planProjectMetaStorage} from './project-meta-compressed-storage.mjs';";
+ if(layout.source.split(expected).length!==2)throw TypeError('Complete historical storage import changed');
+ const target=layout.source.replace(expected,()=>replacement);
+ const result=createRulePipeline([
+  {phase:'language',rules:[{id:'javascript:complete-historical-storage-cst',apply:()=>transportConcreteSyntaxMeta(before.wire)}]},
+  {phase:'repository',rules:[{id:'router:explicit-compressed-storage-receiving-copy',apply:input=>{const applied=applyConcreteSyntaxSubstitutions(input.document,{languageRules:[],repositoryRules:[{id:'router:complete-storage-import-source',edits:[{span:[0,layout.source.length],expected:layout.source,replacement:target}]}]});return transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(applied.value));}}]},
+ ]).run(layout.source);
+ const inverse=applyConcreteSyntaxSubstitutions(result.value.document,{languageRules:[],repositoryRules:[{id:'router:complete-historical-storage-inverse',edits:[{span:[0,target.length],expected:target,replacement:layout.source}]}]}),inverseWire=serializeConcreteSyntaxMeta(inverse.value);
+ if(transportConcreteSyntaxMeta(inverseWire).source!==layout.source||transportConcreteSyntaxMeta(layout.beforeWire).source!==source||layout.wholeInverse!==true)throw TypeError('Complete original storage/layout inverse differs');
+ return {...layout,source:result.value.source,afterWire:serializeConcreteSyntaxMeta(result.value.document),mapping:[...layout.mapping,{id:'complete-storage-import',expected,replacement,count:1}],trace:[...layout.trace,...result.trace],priorLayout:layout,storageBeforeWire:before.wire,storageAfterWire:serializeConcreteSyntaxMeta(result.value.document),storageInverseWire:inverseWire,storageMapping:{expected,replacement,count:1},storageTrace:result.trace,wholeInverse:true};
+}

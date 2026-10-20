@@ -816,8 +816,9 @@ passes do not establish complete review, parity or a green JavaScript gate.
 Complete before/after proofs and diagnostic streams remain in task-owned
 temporary evidence, outside the archived case-study allocation.
 
-The separate compressed-storage extension is drafted and qualified before
-producer integration. It copies the complete original UTF8/string planners and
+The separate compressed-storage extension is integrated into the ordinary,
+retained and owned planners and the independent draft reviewer. It copies the
+complete original UTF8/string planners and
 reader through both rule sequences, with native syntax selecting both complete
 planner returns to retain original decoded storage accounting. The original
 APIs and all physical/decoded limits remain unchanged. A complete pinned MIT
@@ -834,10 +835,24 @@ RSS). Every byte of its 176,248,200-byte logical JSON and both semantic componen
 is preserved, and all 396 original source records rejoin. Proposed physical
 storage decreases from 176,249,527 to 132,196,799 bytes. This actual producer
 proposal remains in task-owned temporary evidence and is not installed over
-generated outputs. Integration, all complete receiving files and canonical/
-profile regeneration remain mandatory; new compiler files also require fresh
-inventories before any current-tree freshness claim. This storage result grants
+generated outputs. Full canonical/profile regeneration and current inventories
+remain mandatory before any current-tree freshness claim. This storage result grants
 no semantic or runtime authority and adds no executable coverage.
+
+All 60 cases across eight complete storage/review files pass in Node and Bun
+after integration. The additional 18 cases across the complete retained-output
+and owned-definition materialization files also pass: Node in 131.871 seconds
+(1,261,617,152 bytes aggregate RSS), and fresh sequential Bun files in 28.954
+and 37.857 seconds (peaks 1,962,033,152 and 1,514,799,104 bytes). Both complete
+Node cohorts have final independent deadline audits with zero breaches. All
+four actual retained/owned/vendor/storage source-producer freshness checks pass.
+The initial 59/60 and 14/18 runs remain red in retained temporary evidence.
+The repaired fixture now uses the same concrete storage producer on its baseline
+and current sides; physical-hash assertions remain unchanged. A separate
+historical storage adapter composes the original complete bulk-layout inverse;
+the raw historical source, original adapter and all old pins remain unchanged.
+These 78 receiving cases per engine do not replace full regeneration, original
+performance frontiers, native parity or the complete same-SHA JavaScript gate.
 
 Regenerate owned-definition producer modules with
 `node tools/translation/prepare-owned-definition-bulk.mjs --emit`. This emits a

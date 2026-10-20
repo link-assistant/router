@@ -31,8 +31,8 @@ const LANGUAGE_EDITS = [
 const REPOSITORY_EDITS = [
   {
     "id": "repository:private-output-helper",
-    "before": "import {planProjectMetaStorage} from './project-meta-storage.mjs';",
-    "after": "import {planProjectMetaStorage} from './project-meta-storage.mjs';\nimport {createPrivateOutputPlanStore,createPrivateOutputTextMap} from './private-output-text.mjs';"
+    "before": "import {planCompressedProjectMetaStorage as planProjectMetaStorage} from './project-meta-compressed-storage.mjs';",
+    "after": "import {planCompressedProjectMetaStorage as planProjectMetaStorage} from './project-meta-compressed-storage.mjs';\nimport {createPrivateOutputPlanStore,createPrivateOutputTextMap} from './private-output-text.mjs';"
   }
 ];
 const MATRIX_EDITS = [

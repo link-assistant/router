@@ -17,7 +17,7 @@ import {jsonMacroDependencyProfile} from './json-macro-sources.mjs';
 import {translationProgressReporter} from './translation-progress.mjs';
 import {discoverSourceProfileInputs} from './source-profile-inputs.mjs';
 import {discoverCompilerSourceInputs} from './compiler-source-inputs.mjs';
-import {planProjectMetaStorage} from './project-meta-storage.mjs';
+import {planCompressedProjectMetaStorage as planProjectMetaStorage} from './project-meta-compressed-storage.mjs';
 
 export const OUTPUT_ROOTS = ['tools/translation/meta', 'js/generated/rust-draft', 'ts/generated/rust-draft', 'tools/translation/projects', 'js/generated/rust-project', 'ts/generated/rust-project'];
 const plans=new WeakMap();

@@ -21,7 +21,7 @@ import {jsonMacroDependencyProfile} from './json-macro-sources.mjs';
 import {translationProgressReporter} from './translation-progress.mjs';
 import {discoverSourceProfileInputs} from './source-profile-inputs.mjs';
 import {discoverCompilerSourceInputs} from './compiler-source-inputs.mjs';
-import {planProjectMetaUtf8ObjectStorage} from './project-meta-utf8-storage.mjs';
+import {planCompressedProjectMetaUtf8ObjectStorage as planProjectMetaUtf8ObjectStorage} from './project-meta-compressed-storage.mjs';
 import {serializeProjectMetaFieldUtf8} from './project-meta-field-json.mjs';
 import {captureOwnedDefinitionInputs,packageOwnedDefinitions,finishOwnedDefinitionOutput,validateOwnedDefinitionOutput} from './owned-definition-output.mjs';
 import {createPrivateOutputPlanStore} from './private-output-text.mjs';

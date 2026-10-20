@@ -7,6 +7,7 @@ import {join,dirname} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {json} from '../translate.mjs';
 import {planProjectMetaStorage,loadProjectMetaStorage,PROJECT_META_STORAGE_LIMITS} from '../project-meta-storage.mjs';
+import {loadProjectMetaStorageWithCompressedConcrete} from '../project-meta-compressed-storage.mjs';
 import {planRegeneration,applyRegenerationPlan} from '../bulk.mjs';
 import {reviewTranslationDraft,reviewGeneratedMethods} from '../../../scripts/review-translation-draft.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
@@ -75,7 +76,7 @@ test('real bulk writer lists complete sidecars and regeneration checks missing s
  const f=repository();try{
   const options={root:f.root,sources:['src/lib.rs'],projectMetaStorageLimits:f.storageLimits},paths=Object.values(f.project.targets);for(const name of paths)assert.ok(f.plan.outputs.some(row=>row.path===name));assert.deepEqual(applyRegenerationPlan(f.plan,{check:true}).failures,[]);
   const first=f.project.targets.checkedProgramMeta,second=f.project.targets.targetProgramMeta,extra=metaPath+'.parts/extra.json';unlinkSync(join(f.root,first));f.write(second,'stale');f.write(extra,'{}');const failures=applyRegenerationPlan(f.plan,{check:true}).failures;assert.ok(failures.includes('missing: '+first));assert.ok(failures.includes('stale: '+second));assert.ok(failures.includes('unexpected: '+extra));applyRegenerationPlan(f.plan);assert.deepEqual(applyRegenerationPlan(f.plan,{check:true}).failures,[]);
-  const loaded=loadProjectMetaStorage(readFileSync(join(f.root,metaPath)),{metaPath,targets:f.project.targets,read:name=>readFileSync(join(f.root,name)),storageLimits:f.storageLimits});assert.equal(loaded.text,f.original);retain('06-real-bulk-complete-outputs',{source:f.source,storageLimits:f.storageLimits,project:f.project,outputPlan:f.plan.outputs,failures,loaded});
+  const loaded=loadProjectMetaStorageWithCompressedConcrete(readFileSync(join(f.root,metaPath)),{metaPath,targets:f.project.targets,read:name=>readFileSync(join(f.root,name)),storageLimits:f.storageLimits});assert.equal(loaded.text,f.original);retain('06-real-bulk-complete-outputs',{source:f.source,storageLimits:f.storageLimits,project:f.project,outputPlan:f.plan.outputs,failures,loaded});
  }finally{f.cleanup();}
 });
 test('independent reviewer rehydrates current and exact Git baseline components before all original checks',{timeout:60000},()=>{
