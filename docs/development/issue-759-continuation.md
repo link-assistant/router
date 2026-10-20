@@ -638,6 +638,26 @@ problem, current source-bank/compiler exports and all complete producer/profile/
 reverse/parity/gate obligations remain open. The current generated fingerprints
 are stale after these source changes. No Rust tool was invoked.
 
+The first 16-file physical-reader cohort completed under both Node and Bun with
+119 of 122 cases passing. The three failures retained their complete logs: one
+frozen getter source hash differed from the current adopted source, and two
+current-source method cases lacked their complete compatibility-core context.
+The getter reader now copies the existing authenticated full-source DATA reader
+for a separate fixed three-parent association; all original file hashes, method
+spans, outcomes and the six earlier associations remain exact. Current method
+cases use an explicit authored crate carrier containing the complete application
+parent and actual facade/primitive/library files. They receive freshly compiled
+private source scopes, while unrelated crate imports and bodies remain refused.
+This carrier does not qualify the whole Router crate.
+
+The complete two repaired files passed all 13 cases in Node (22.463 seconds,
+884,981,760 aggregate RSS bytes) and Bun (16.176 seconds, 954,875,904 bytes).
+Node's independent source/deadline audit reported zero duration breaches. The
+original 16-file results remain red evidence; the unchanged 14 files and the
+repaired two files have separate whole-file observations. The proposal retained
+complete before/after CST, copied-reader source, exact substitutions and inverses.
+No overall compiler, source-bank receiving, generation or parity pass is claimed.
+
 Regenerate owned-definition producer modules with
 `node tools/translation/prepare-owned-definition-bulk.mjs --emit`. This emits a
 complete source proposal; it does not install files. Review every original

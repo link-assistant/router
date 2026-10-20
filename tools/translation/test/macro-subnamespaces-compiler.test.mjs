@@ -1,7 +1,7 @@
-import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
+import {staticSourcePinnedCopyGetterTextData} from './real-source-fixtures.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+// Original parents are read from the independently authenticated source bank.
 import {createHash} from 'node:crypto';
 import {translateProject} from '../project.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
@@ -18,9 +18,10 @@ const pins=[
 ];
 
 test('four pinned original Copy field getters execute from full tracked files despite sibling bang-export uncertainty',async()=>{
+  const original=staticSourcePinnedCopyGetterTextData();
   let checkedBodies=0,literalOutcomes=0;
   for(const pin of pins){
-    const source=readFileSync(repositorySourceURL(`src/${pin.file}.rs`,new URL('../../../',import.meta.url)),'utf8');assert.equal(hash(source),pin.sha);
+    const source=original.source(`src/${pin.file}.rs`);assert.equal(hash(source),pin.sha);
     const methods=extractImplDeclarations(source).implementations.flatMap(impl=>impl.methods);
     for(const [name,start,end,digest] of pin.methods){assert.ok(methods.some(method=>method.name===name&&method.span.start===start&&method.span.end===end));assert.equal(hash(source.slice(start,end)),digest);}
     const root=`mod ${pin.file}; mod uncertain; pub fn text()->String{format!("standard")}`;

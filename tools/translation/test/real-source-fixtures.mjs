@@ -262,6 +262,33 @@ export function staticSourceAssociatedTextData(caseId,{folder=STATIC_FOLDER,root
  return Object.freeze({source:staticTextSourceProjection(Object.freeze(table)),association,authentication:Object.freeze(authentication),scope:'Whole current Git-authenticated historical source TEST DATA only; no CST/namespace/semantic proof.'});
 }
 
+// Separate fixed getter source DATA; the six original associations stay exact.
+export function staticSourcePinnedCopyGetterTextData({folder=STATIC_FOLDER,root=ROOT}={}){
+ const association={"id":"macro-subnamespaces-compiler.test.mjs::pinned-copy-getters","revision":"5de1dea8b777dcd6e637758efc2c260150735af5","parents":[{"path":"src/credential_acceptance.rs","bytes":19997,"sha256":"4a10a1e016936d2f4dd8fddc21ed400f8ed72794343b09d5bc2e779525231b10","gitBlob":"2e1cd663349a517eda6a33d534896db41a10f3fe"},{"path":"src/lefine.rs","bytes":7222,"sha256":"bb07ea2db551cc85bc19403bfd2c160f439d6c48fe7ffc49a1e0cad249dc2093","gitBlob":"f4ce60f6f349d78396ba68d2ed3558c6c386dc68"},{"path":"src/zai_coding_plan.rs","bytes":32561,"sha256":"47c521e6806fa8d543d939fd6b1751fb48b180874322cf0699957c9c85b79aa2","gitBlob":"2dea7caf9ea4afdd44d39b1ba486c7aaeb44d1be"}]},head=staticExec('/usr/bin/git',['-C',root,'rev-parse','HEAD'],{encoding:'utf8',timeout:30000,maxBuffer:64*1024*1024}).trim();if(!/^[a-f0-9]{40}$/u.test(head))staticError('actual text-data Git head required');
+ const currentPaths=staticExec('/usr/bin/git',['-C',root,'ls-files','-z','--','*.rs','Cargo.toml','Cargo.lock','rust/Cargo.toml'],{encoding:'utf8',timeout:30000,maxBuffer:64*1024*1024}).split('\0').filter(Boolean).sort();
+ if(!currentPaths.length||currentPaths.length>STATIC_SOURCE_LIFECYCLE_LIMITS.paths||new Set(currentPaths).size!==currentPaths.length)staticError('complete current source-text census required');
+ const actualAssets=TEXT_DATA_ASSETS.map(relative=>({...textDataFile(textDataCurrentPath(root,relative),STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes),relative}));
+ textDataGitBodies(root,head,actualAssets);
+ const suppliedIndex=textDataFile(resolve(folder,'manifest.json'),STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes),suppliedArchive=textDataFile(resolve(folder,'originals.json.gz'),STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes);
+ if(!suppliedIndex.bytes.equals(actualAssets[0].bytes)||!suppliedArchive.bytes.equals(actualAssets[1].bytes))staticError('source-text archive/index differs from actual current Git assets');
+ const index=JSON.parse(text(suppliedIndex.bytes));
+ if(index.schema!=='router-static-source-lifecycle-v1'||index.archive!=='originals.json.gz'||!Number.isSafeInteger(index.rawBytes)||index.rawBytes<0||index.rawBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes||suppliedArchive.bytes.length!==index.bytes||hash(suppliedArchive.bytes)!==index.sha256)staticError('complete authenticated text-data index/packed bytes differ');
+ const raw=gunzipSync(suppliedArchive.bytes,{maxOutputLength:STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes});if(raw.length!==index.rawBytes||hash(raw)!==index.rawSha256)staticError('complete authenticated text-data raw bytes differ');
+ const projection=decodeStaticSourceTextData(raw,index),bundle=projection.bundle;validateStaticTextData(bundle,index);
+ const profile=bundle.profiles.find(row=>row.revision===association.revision);if(!profile||!Array.isArray(association.parents)||!association.parents.length)staticError('actual source-text associated profile missing');
+ for(const pin of association.parents){const rows=profile.files.filter(row=>row.path===pin.path);if(rows.length!==1||rows[0].sourceId!==pin.sha256||rows[0].bytes!==pin.bytes||rows[0].gitBlob!==pin.gitBlob)staticError('whole source-text associated parent differs');}
+ if(JSON.stringify(currentPaths)!==JSON.stringify(bundle.current.files.map(row=>row.path)))staticError('actual current source-text set differs');
+ const physical=bundle.current.files.map(row=>({...textDataFile(textDataCurrentPath(root,row.path),STATIC_SOURCE_LIFECYCLE_LIMITS.fileBytes),relative:row.path}));textDataGitBodies(root,head,physical);
+ for(let at=0;at<physical.length;at++){const row=bundle.current.files[at],value=physical[at].bytes;if(value.length!==row.bytes||text(value)!==bundle.sources[row.sourceId].source||hash(value)!==row.sourceId||staticHashBlob(value)!==row.gitBlob)staticError('complete current source-text physical/Git/source differs');}
+ const table=Object.create(null);for(const path of [...association.parents.map(row=>row.path),'Cargo.toml','Cargo.lock']){const rows=profile.files.filter(row=>row.path===path);if(rows.length!==1||Object.hasOwn(table,path))staticError('unique whole parent/Cargo text-data path required');table[path]=bundle.sources[rows[0].sourceId].source;}
+ const authentication={sourceDataOnly:true,canonicalDocuments:false,logicalPayloadDigest:false,compilerAuthority:false,sourceRows:Object.keys(bundle.sources).length,historicalProfiles:bundle.profiles.map(row=>({revision:row.revision,files:row.files.length,bytes:row.files.reduce((sum,file)=>sum+file.bytes,0),sourceSetSha256:row.sourceSetSha256})),currentFiles:physical.length,currentSourceSetSha256:bundle.current.sourceSetSha256,manifestAndArchiveCurrentGit:true,completeSourceHashesAndInverses:true};
+ // Retain no archive, canonical, whole-source table, Git buffer or layout in
+ // the returned closure. All mutable source identities are rejoined at exit.
+ for(const row of [...actualAssets,suppliedIndex,suppliedArchive,...physical]){if(!textDataSameIdentity(row.identity,textDataIdentity(textLstat(row.path))))staticError('source-text input identity changed before return');}
+ if(staticExec('/usr/bin/git',['-C',root,'rev-parse','HEAD'],{encoding:'utf8',timeout:30000,maxBuffer:64*1024*1024}).trim()!==head)staticError('source-text actual Git head changed before return');
+ return Object.freeze({source:staticTextSourceProjection(Object.freeze(table)),association,authentication:Object.freeze(authentication),scope:'Whole current Git-authenticated historical source TEST DATA only; no CST/namespace/semantic proof.'});
+}
+
 // Repository layout equations apply only to an already captured complete row.
 // The existing full byte, native CST, Git, census and inverse checks stay live.
 function mappedCurrentSource(rows,path) {
