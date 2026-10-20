@@ -64,3 +64,11 @@ remains pinned at `6da6243dd4c2d9f48ca86c5a9e13f88b3b2ea6ad8f7a79df525128c11e732
 The worker qualified source regeneration against a temporary source-only mirror
 containing the exact Root helper and its own remaining current inputs; it did
 not remove Root's export, change Root's worktree, or run receiving tests.
+
+The lazy-stack receiving control runs both serializers at one shared actual
+capture callsite with identical retained-scope nesting. Formatter records retain
+all real frame strings and their actual joined result, and full records and
+serialized stack bytes must match exactly. Eager Bun stack DATA is compared
+directly when the engine does not invoke the formatter; no constant stack
+replacement or frame normalization is used. This source-only test correction
+keeps all seven cases and their original 60-second deadlines.

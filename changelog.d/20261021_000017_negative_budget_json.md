@@ -7,3 +7,6 @@ derive-context performance qualification remains pending.
 Pin the complete integrated native helper including its additive stateless
 eligibility export; require a native-AST whole-source inverse back to the prior
 helper and preserve the original copied census and all old APIs.
+
+Compare genuine lazy/eager stack inputs at one paired capture callsite and the
+same retained-scope nesting, preserving full frame results and strict bytes.
