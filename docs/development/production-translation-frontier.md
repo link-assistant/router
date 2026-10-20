@@ -133,3 +133,11 @@ are `tools/translation/test/production-frontier-data.test.mjs`. The API reads
 all inputs afresh per invocation and has no cross-invocation cache. This DATA
 tool adds no language or repository translation rules and does not change their
 existing two-sequence contracts.
+
+The subsequent complete physical report on `d1b4843a6` joined all 2311 retained
+refusal records to 2311 distinct original functions, with no unjoined records,
+missing source inputs or changed source inputs. It used physical current inputs,
+without the Git fallback. Its 27 changed compiler inputs remain explicit and its
+verdict remains `historical-not-reexecuted`. The complete report took 3.022 seconds
+and 581124096 bytes sampled aggregate RSS. This repairs the DATA prioritization
+join; it changes neither the historical 155/2567 numerator nor admission.

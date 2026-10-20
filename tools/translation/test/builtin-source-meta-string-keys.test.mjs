@@ -12,7 +12,7 @@ import {builtinSourceMetaStringKeysReady} from '../builtin-source-meta-intrinsic
 import {privateNativeProofJsonDataWithinBudget} from '../private-native-proof-json.mjs';
 
 const get=Object.getOwnPropertyDescriptor,define=Object.defineProperty,apply=Reflect.apply,json=JSON.stringify;
-const currentURL=new URL('../builtin-source-meta.mjs',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
+const currentURL=new URL('../builtin-source-meta-string-keys-candidate.mjs',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
 const outcome=run=>{try{return {value:run()};}catch(error){return {error:{name:error.name,message:error.message,metadataBytes:error.metadataBytes,metadataCells:error.metadataCells}};}};
 function retain(name,value){
  const folder=process.env.ROUTER_BUILTIN_STRING_KEYS_VECTOR_DIR;if(!folder)return;

@@ -1,14 +1,15 @@
 // Complete original source and native AST copies; DATA transformations only.
-import {readFileSync} from 'node:fs';
-import {gunzipSync} from 'node:zlib';
+import {readFileSync,writeFileSync,mkdirSync,existsSync} from 'node:fs';
+import {gunzipSync,gzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {resolve} from 'node:path';
-import {fileURLToPath} from 'node:url';
+import {fileURLToPath,pathToFileURL} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
 
 const root=fileURLToPath(new URL('../../',import.meta.url));
-const path='tools/translation/builtin-source-meta.mjs';
+const productionPath='tools/translation/builtin-source-meta.mjs';
+const path='tools/translation/builtin-source-meta-string-keys-candidate.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const fail=message=>{throw new TypeError('Builtin source string keys: '+message);};
 const imports="import {builtinSourceMetaStringKeysReady} from './builtin-source-meta-intrinsics.mjs';\nimport {privateNativeProofJsonDataWithinBudget} from './private-native-proof-json.mjs';\n";
@@ -66,11 +67,10 @@ function stage(before,after,phase,id){
  if(transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(undo.value)).source!==before)fail('complete original inverse differs');
  return {phase,id,before,after,beforeMeta:wire,afterMeta:encoded,trace:run.trace,completeInverse:true};
 }
-export function prepareBuiltinSourceMetaStringKeys(){
+function prepareBuiltinSourceMetaStringKeysPlan(){
  const before=originalBuiltinSourceMetaCodec(),signature='export function encodeBuiltinSourceMeta(value){',helper='function encodeOriginalBuiltinSourceMeta(value,strings=null){';
  let language=once(before,signature,helper);language=once(language,"    if(typeof value==='string'&&value.length>=8){\n","    if(typeof value==='string'&&value.length>=8){\n"+branch);
- const after=once(once(language,"import {createHash} from 'node:crypto';\n","import {createHash} from 'node:crypto';\n"+imports),helper,wrapper+helper),actual=readFileSync(resolve(root,path),'utf8');
- if(actual!==after)fail('complete actual source differs from proposal');
+ const after=once(once(language,"import {createHash} from 'node:crypto';\n","import {createHash} from 'node:crypto';\n"+imports),helper,wrapper+helper);
  const native=nativeCopies(before,after),stages=[stage(before,language,'language','javascript:invocation-local-primitive-string-identity'),stage(language,after,'repository','router:guard-original-codec-string-keys')];
  const ts=ownershipCompiler(),support=[];
  for(const name of ['builtin-source-meta-intrinsics.mjs','private-native-proof-json.mjs']){
@@ -85,5 +85,25 @@ export function prepareBuiltinSourceMetaStringKeys(){
  const restored=ts.factory.updateSourceFile(newSyntax,newSyntax.statements.filter(node=>node!==additions[0])),printer=ts.createPrinter({newLine:ts.NewLineKind.LineFeed,removeComments:true});
  if(printer.printFile(restored)!==printer.printFile(oldSyntax))fail('an original scanner API changed');
  const scannerStages=[stage(original,current,'language','javascript:expose-existing-stateless-DATA-census'),stage(current,current,'repository','router:retain-original-proof-serializer-APIs')];
- return {schema:'builtin-source-meta-string-keys-source-v1',path,before,after,beforeSha256:hash(before),afterSha256:hash(after),native,stages,support,scannerStages,originalSerializerAPIsUnchanged:true,acrossInvocationCaches:false,sourceAuthority:false,namespaceAuthority:false,runtimeAuthority:false,performanceQualified:false};
+ return {schema:'builtin-source-meta-string-keys-source-v1',path,productionPath,defaultCodecUnchanged:true,productionSelection:false,defaultRestorationStages:[stage(after,before,'language','javascript:restore-complete-original-codec-after-unqualified-performance'),stage(before,before,'repository','router:retain-explicit-experimental-candidate')],before,after,beforeSha256:hash(before),afterSha256:hash(after),native,stages,support,scannerStages,originalSerializerAPIsUnchanged:true,acrossInvocationCaches:false,sourceAuthority:false,namespaceAuthority:false,runtimeAuthority:false,performanceQualified:false};
 }
+
+/** Qualify the explicit experiment while keeping the default codec exact. */
+export function prepareBuiltinSourceMetaStringKeys(){
+ const proposal=prepareBuiltinSourceMetaStringKeysPlan();
+ if(readFileSync(resolve(root,path),'utf8')!==proposal.after)fail('complete candidate differs from actual source proposal');
+ if(readFileSync(resolve(root,productionPath),'utf8')!==proposal.before)fail('default codec must retain complete original bytes');
+ return proposal;
+}
+function main(){
+ const args=process.argv.slice(2);if(args.length!==1&&! (args.length===2&&args[0]==='--emit'))fail('use --check, --write or --emit DIRECTORY');
+ if(args[0]==='--check'&&args.length===1){const row=prepareBuiltinSourceMetaStringKeys();console.log(JSON.stringify({path:row.path,defaultCodecUnchanged:true,performanceQualified:false}));return;}
+ const row=prepareBuiltinSourceMetaStringKeysPlan();
+ if(args[0]==='--emit'&&args.length===2){mkdirSync(args[1],{recursive:false});const raw=Buffer.from(JSON.stringify(row)+'\n'),encoded=gzipSync(raw);if(!gunzipSync(encoded).equals(raw))fail('full proposal recovery differs');writeFileSync(resolve(args[1],'complete-source-proposal.json.gz'),encoded,{flag:'wx'});return;}
+ if(args[0]!=='--write'||args.length!==1)fail('use --check, --write or --emit DIRECTORY');
+ const actual=readFileSync(resolve(root,productionPath),'utf8');if(actual!==row.before&&actual!==row.after)fail('default source differs from both complete original and exact candidate');
+ if(existsSync(resolve(root,path))&&readFileSync(resolve(root,path),'utf8')!==row.after)fail('existing candidate differs');
+ writeFileSync(resolve(root,path),row.after);writeFileSync(resolve(root,productionPath),row.before);
+ prepareBuiltinSourceMetaStringKeys();console.log(JSON.stringify({candidate:path,defaultCodecUnchanged:true,performanceQualified:false}));
+}
+if(process.argv[1]&&pathToFileURL(resolve(process.argv[1])).href===import.meta.url)main();
