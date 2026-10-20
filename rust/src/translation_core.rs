@@ -55,3 +55,12 @@ macro_rules! __router_translation_core_vec {
 
 /// Construct a vector through Rust; translation checks the bounded comma-list subset.
 pub use crate::__router_translation_core_vec as vec;
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __router_translation_core_matches {
+    ($($arguments:tt)*) => { ::std::matches!($($arguments)*) };
+}
+
+/// Test scalar literal patterns; translation checks every subject and alternative.
+pub use crate::__router_translation_core_matches as matches;
