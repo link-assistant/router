@@ -1,0 +1,62 @@
+// GENERATED: definition-only reverse draft; CI Rust unrun.
+#[allow(dead_code)]
+#[rustfmt::skip]
+fn __ro_domain(value: &crate::translation_core::Json) {
+    fn visit(value: &crate::translation_core::Json, depth: usize, nodes: &mut usize) {
+        *nodes += 1;
+        assert!(*nodes <= 4096 && depth <= 32, "owned reverse JSON budget");
+        match value {
+            ::serde_json::Value::Array(items) => {
+                assert!(items.len() <= 4096, "owned reverse dense bound");
+                for item in items { visit(item, depth + 1, nodes); }
+            }
+            ::serde_json::Value::Object(items) => {
+                assert!(items.len() <= 4096, "owned reverse dense bound");
+                for item in items.values() { visit(item, depth + 1, nodes); }
+            }
+            _ => {}
+        }
+    }
+    visit(value, 0, &mut 0);
+}
+#[allow(dead_code)]
+#[rustfmt::skip]
+fn __ro_copy(value: &crate::translation_core::Json) -> crate::translation_core::Json {
+    __ro_domain(value);
+    crate::translation_core::json_copy(value)
+}
+#[allow(dead_code)]
+#[rustfmt::skip]
+fn __ro_with_field(base: &crate::translation_core::Json, key: &str, value: &crate::translation_core::Json) -> crate::translation_core::Json {
+    let base = __ro_copy(base);
+    let value = __ro_copy(value);
+    assert!(base.is_null() || base.is_object(), "Owned JSON string-key update requires an object or null");
+    let result = crate::translation_core::json_with_field(base, key, value);
+    __ro_domain(&result);
+    result
+}
+
+#[must_use]
+#[rustfmt::skip]
+pub fn rp_6272696467655f726573706f6e73652e616e7468726f7069635f736572766963655f746965725f66726f6d5f6f70656e6169(input0: ::std::option::Option<&crate::translation_core::Json>) -> ::std::option::Option<&'static str> {
+    let local0 = { let __ro_arg_0 = input0; match __ro_arg_0 { Some(value) => ::serde_json::Value::as_str(value), None => None } };
+    let local1 = local0;
+    if (local1).is_some() {
+        let local2 = (match local1 { Some(value) => value, None => unreachable!("checked original Some branch") });
+        if (local2 == "default") {
+            return Some("standard");
+        } else {
+            if (local2 == "auto") {
+                return Some("standard");
+            } else {
+                if (local2 == "priority") {
+                    return Some("priority");
+                } else {
+                    return None;
+                }
+            }
+        }
+    } else {
+        return None;
+    }
+}

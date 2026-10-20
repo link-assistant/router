@@ -30,6 +30,17 @@ two phase declarations, in this order: `language`, then `repository`. Either
 rule list may be empty. Extend those lists or compose pipelines for additional
 logical layers; arbitrary phase names are not accepted.
 
+`node scripts/prepare-project-concrete-review.mjs --emit` copies the complete
+existing inert-data guard into the stored-project review helper. Its language
+sequence preserves that guard verbatim; its repository sequence attaches the
+separate required concrete and semantic reviews. Review complete CST and inverse
+evidence before installation, then run `--check`. Each representation retains
+the original two-million-object/depth-512 limit, and complete storage byte limits
+remain unchanged. The concrete review validates every full document against the
+original source and complete source census. All other metadata fields reach the
+existing generated-method reviewer. Neither review grants compiler authority;
+the direct generated-method API and its original guard remain unchanged.
+
 ```javascript
 const pipeline = createRulePipeline([
   {phase: 'language', rules: [{id: 'language:checked-transform', apply: lower}]},

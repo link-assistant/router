@@ -1,0 +1,43 @@
+// GENERATED: definition-only reverse draft; CI Rust unrun.
+#[allow(dead_code)]
+#[rustfmt::skip]
+fn __ro_domain(value: &crate::translation_core::Json) {
+    fn visit(value: &crate::translation_core::Json, depth: usize, nodes: &mut usize) {
+        *nodes += 1;
+        assert!(*nodes <= 4096 && depth <= 32, "owned reverse JSON budget");
+        match value {
+            ::serde_json::Value::Array(items) => {
+                assert!(items.len() <= 4096, "owned reverse dense bound");
+                for item in items { visit(item, depth + 1, nodes); }
+            }
+            ::serde_json::Value::Object(items) => {
+                assert!(items.len() <= 4096, "owned reverse dense bound");
+                for item in items.values() { visit(item, depth + 1, nodes); }
+            }
+            _ => {}
+        }
+    }
+    visit(value, 0, &mut 0);
+}
+#[allow(dead_code)]
+#[rustfmt::skip]
+fn __ro_copy(value: &crate::translation_core::Json) -> crate::translation_core::Json {
+    __ro_domain(value);
+    crate::translation_core::json_copy(value)
+}
+#[allow(dead_code)]
+#[rustfmt::skip]
+fn __ro_with_field(base: &crate::translation_core::Json, key: &str, value: &crate::translation_core::Json) -> crate::translation_core::Json {
+    let base = __ro_copy(base);
+    let value = __ro_copy(value);
+    assert!(base.is_null() || base.is_object(), "Owned JSON string-key update requires an object or null");
+    let result = crate::translation_core::json_with_field(base, key, value);
+    __ro_domain(&result);
+    result
+}
+
+#[must_use]
+#[rustfmt::skip]
+pub fn rp_61637469766974797075622e61637469766974797075625f636f6e74657874() -> crate::translation_core::Json {
+    return { let __ro_json_0 = { let __ro_arg_3 = "https://www.w3.org/ns/activitystreams"; ::serde_json::Value::String(__ro_arg_3.to_owned()) }; let __ro_json_1 = { let __ro_arg_4 = "https://forgefed.org/ns"; ::serde_json::Value::String(__ro_arg_4.to_owned()) }; let __ro_json_2 = { let __ro_json_5 = { let __ro_arg_7 = "https://w3id.org/fep/ef61#"; ::serde_json::Value::String(__ro_arg_7.to_owned()) }; let __ro_json_6 = { let __ro_arg_8 = "fep:aliases"; ::serde_json::Value::String(__ro_arg_8.to_owned()) }; let __ro_result = crate::translation_core::json!({"fep": __ro_json_5, "aliases": __ro_json_6}); __ro_domain(&__ro_result); __ro_result }; let __ro_result = crate::translation_core::json!([__ro_json_0, __ro_json_1, __ro_json_2]); __ro_domain(&__ro_result); __ro_result };
+}

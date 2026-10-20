@@ -4,6 +4,7 @@
 import fs from 'node:fs';
 import {repositoryRustLayout} from '../tools/translation/repository-layout.mjs';
 import {createHistoricalTranslationReview} from './historical-translation-review.mjs';
+import {projectSemanticReviewMetadata} from './project-concrete-review.mjs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
@@ -650,7 +651,9 @@ export function reviewTranslationDraft({root=process.cwd(),baselineSha=null,inve
     for(const item of [...meta.executable,...meta.checkedMethods]){
       if(!tracked.includes(item.source)||!Number.isSafeInteger(item.span?.start)||!Number.isSafeInteger(item.span?.end)||item.span.start<0||item.span.end<item.span.start||item.span.end>new TextDecoder('utf-8',{fatal:true}).decode(read(item.source)).length)throw new Error('Invalid project original item: '+row.entry);
     }
-    return {...meta,reviewedGeneratedMethods:historical?historical.reviewProject(bytes,row):reviewGeneratedMethods(meta,row,{readSource:name=>new TextDecoder('utf-8',{fatal:true}).decode(read(name)),dependencies,jsonMacroDependencies,cargoManifest:cargo.some(input=>input.path===rustLayout.manifest)?read(rustLayout.manifest).toString('utf8'):null,cargoManifestPath:rustLayout.manifest})};
+    const originalSource=name=>new TextDecoder('utf-8',{fatal:true}).decode(read(name));
+    const concreteReview=projectSemanticReviewMetadata(meta,{readSource:originalSource});
+    return {...meta,reviewedConcreteSyntax:concreteReview.concreteSyntaxReview,reviewedGeneratedMethods:historical?historical.reviewProject(bytes,row):reviewGeneratedMethods(concreteReview.semanticMetadata,row,{readSource:originalSource,dependencies,jsonMacroDependencies,cargoManifest:cargo.some(input=>input.path===rustLayout.manifest)?read(rustLayout.manifest).toString('utf8'):null,cargoManifestPath:rustLayout.manifest})};
   }
   const historical=baselineSha?createHistoricalTranslationReview({root,baselineSha,inventoryPath,readSource:read}):null;
   let historicalBaselineReview=null,projects;
@@ -666,7 +669,7 @@ export function reviewTranslationDraft({root=process.cwd(),baselineSha=null,inve
       const differences=(before,after)=>{const known=new Set(before.map(projectIdentity));return after.filter(item=>!known.has(projectIdentity(item)));};
       comparison={previousCounts:previousRow,countChanges:Object.fromEntries(['sources','executableFunctions','executableConstants','checkedMethods','checkedGeneratedMethods','refused','unloweredItems','moduleDiagnostics'].map(key=>[key,(row[key]??0)-(previousRow[key]??0)])),newlyExecutableItems:differences(previous.executable,meta.executable),lostExecutableItems:differences(meta.executable,previous.executable),newlyCheckedMethods:differences(previous.checkedMethods,meta.checkedMethods),lostCheckedMethods:differences(meta.checkedMethods,previous.checkedMethods),...compareGeneratedMethods(previous.reviewedGeneratedMethods,meta.reviewedGeneratedMethods)};
     }
-    return {...row,checkedGeneratedMethods:meta.reviewedGeneratedMethods.length,executableItems:meta.executable,checkedMethodItems:meta.checkedMethods,checkedGeneratedMethodItems:meta.reviewedGeneratedMethods,refusalCategories:categoryCounts(meta.refused),unloweredCategories:categoryCounts(meta.unloweredItems),moduleDiagnosticItems:meta.moduleDiagnostics,comparison};
+    return {...row,checkedGeneratedMethods:meta.reviewedGeneratedMethods.length,reviewedConcreteSyntax:meta.reviewedConcreteSyntax,executableItems:meta.executable,checkedMethodItems:meta.checkedMethods,checkedGeneratedMethodItems:meta.reviewedGeneratedMethods,refusalCategories:categoryCounts(meta.refused),unloweredCategories:categoryCounts(meta.unloweredItems),moduleDiagnosticItems:meta.moduleDiagnostics,comparison};
   });historicalBaselineReview=historical?.provenance()??null;
   } finally {historical?.close();}
   for(const name of outputs.keys())if(name.includes('.meta.json.parts/')&&!projectComponents.has(name))throw new Error('Unexpected project metadata component: '+name);
