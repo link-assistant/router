@@ -14,6 +14,13 @@ Use one shared call site for paired metadata stack captures and validate actual
 eager Bun or formatter-backed Node stack inputs and full roundtrips, preserving
 all nine controls and their original deadlines.
 
+Add a private conditional source-derived outer Impl range for the actual
+Clone, Copy, Debug, PartialEq and Eq callbacks, including both PartialEq
+emissions and original module path attributes. Preserve caller, generated
+attribute and exported builtin-replacement obligations. Native TypeScript
+5.9.3 source copies and complete CST inverses passed; six new complete controls
+are unrun. This step does not claim to repair the ten external-trait positives.
+
 Retain and privately join original crate feature-list alternatives to pinned
 compiler collection and gate sources, including the independent privileged-span
 branch. Add complete native AST/CST source copies and six unrun controls. Keep
