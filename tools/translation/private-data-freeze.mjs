@@ -4,7 +4,7 @@ import {types} from 'node:util';
 import {originalBatchedDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
 const originalDataFreezeIntrinsicsUnchanged=originalBatchedDataFreezeIntrinsicsUnchanged;
 const MIN_COMPLETED_CHILDREN=64;
-const ROOT_LIMIT=1024,LARGE_LIMIT=2048,SMALL_LIMIT=1024,LARGE_CELLS=64,NODE_LIMIT=32768,CELL_LIMIT=200000,DEPTH_LIMIT=160,RECORD_BASE=CELL_LIMIT+2;
+const ROOT_LIMIT=1024,LARGE_LIMIT=2048,SMALL_LIMIT=1024,LARGE_CELLS=256,NODE_LIMIT=32768,CELL_LIMIT=200000,DEPTH_LIMIT=160,RECORD_BASE=CELL_LIMIT+2;
 // Shared scalar-only weak records; no owner or proof root is retained.
 // The low two bits retain safe-scalar/no-own-toJSON subtree facts. The other
 // bits encode height * RECORD_BASE + cells; the full number stays below 2**27.

@@ -244,7 +244,7 @@ function withinScopedNativeBudget(value,scope){
   if(reusable)reusable=(scopeUnaryArgs[0]=value,apply(scopedFrozenField.value,objectOwner,scopeUnaryArgs));
   const cost=((scopeCells-cellsBefore)*scopeUnitBase+(scopeUnits-unitsBefore))*scopeHeightBase+height+1;
   (scopeBinaryArgs[0]=value,scopeBinaryArgs[1]=2*cost+(reusable?1:0),apply(weakSet,scopeCosts,scopeBinaryArgs));
-  if(reusable&&scopeCells-cellsBefore>=64&&scope.budget.admissions<4096){
+  if(reusable&&scopeCells-cellsBefore>=256&&scope.budget.admissions<4096){
    (scopeBinaryArgs[0]=value,scopeBinaryArgs[1]=cost,apply(weakSet,scopeShared,scopeBinaryArgs));scope.budget.admissions++;
   }
   scopeResultHeight=height;scopeResultReusable=reusable;return true;
