@@ -11,7 +11,10 @@ export function prepareBuiltinDeriveTypeRange(){
  const packed=readFileSync(new URL('./source-profiles/builtin-derive-type-range/complete-original.mjs.gz',import.meta.url)),bytes=gunzipSync(packed,{maxOutputLength:32768});
  if(bytes.length!==9594||hash(bytes)!=='e7e26fabc1555bb500bbdd915d3314602dc678b617c15ee2936d9a55103430d8')fail('complete original authored source differs');
  const original=new TextDecoder('utf8',{fatal:true,ignoreBOM:true}).decode(bytes),actual=readFileSync(new URL('./builtin-derive-type-range.mjs',import.meta.url),'utf8');
- const substitutions=[];
+ const afterBytes=gunzipSync(readFileSync(new URL('./source-profiles/builtin-derive-type-range/complete-receiver-range-after.mjs.gz',import.meta.url)),{maxOutputLength:65536});
+ if(afterBytes.length!==17496||hash(afterBytes)!=='4619bcb22099304e8a44c244b31b697f277a66546d90590ca6c58d6856eb6f1a')fail('complete receiver/range afterimage differs');
+ const afterSource=new TextDecoder('utf8',{fatal:true,ignoreBOM:true}).decode(afterBytes);
+ const substitutions=[[original,afterSource]];
  let language=original;for(const [before,after]of substitutions){if(language.split(before).length!==2)fail('one complete original guard source required');language=language.replace(before,()=>after);}if(language!==actual)fail('actual complete issuer differs');
  const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('installed TypeScript 5.9.3 required');
  const parse=source=>{const file=ts.createSourceFile('builtin-derive-type-range.mjs',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);if(file.parseDiagnostics.length)fail('complete native JavaScript grammar differs');return file;};

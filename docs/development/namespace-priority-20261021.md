@@ -167,3 +167,16 @@ composition must close the actual ancestor producer set before consuming this
 range; in particular it cannot promote the architecture trait census, assume
 rustc_attrs is unavailable to every standard macro (`alloc::vec` explicitly
 permits it), or treat pending format/panic/assert effect plans as complete.
+
+The range now checks whole dispatch and builder bodies. For each complete
+struct, enum and constructor body it visits every token tree, rejects all
+explicit return/try/yield alternatives, verifies the single normal-result
+suffix and its arguments, and checks receiver binding sites. Each entry's
+TraitDef receiver must be one root-local constructor binding; every occurrence
+must be that declaration or an actual expand/expand_ext receiver, excluding
+aliasing, mutation and nested shadow bindings. The concrete Impl constructor
+also joins the original ItemKind variant schema and Item payload field.
+Complete source checks passed again for all five names. The unchanged original
+authored source snapshot remains retained; a separate complete afterimage
+records this receiver/return-set change, with both native AST and CST inverses.
+These stronger conditional checks still do not select caller attribute owners.
