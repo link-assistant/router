@@ -36,7 +36,8 @@ Every original writer bound remains: 64 MiB per packet, 1 GiB complete logical
 output and a separate 384 MiB stored gzip limit. Actual receiving monitors also
 count their own temporary files and logs. Node retains 2048 MiB old space and a
 3 GiB sampled aggregate process limit; disk requires 3 GiB initially free with
-a 2 GiB reserve. Streaming is not a measured full-corpus speed or memory gain.
+a 2 GiB reserve. The production run below has no paired materialized baseline,
+so it does not establish a full-corpus speed or memory gain.
 The receiving comparisons check every packet according to its declared `json`
 or `rust-source` kind, retaining complete byte/digest checks and whole Rust CST
 round trips.
@@ -68,10 +69,42 @@ The two arithmetic-retention candidates described in the
 and were restored exactly to the reviewed Git source. They are not part of this
 runtime change. The original performance and namespace CI failures remain open.
 
-Production executable coverage remains 155/2,567 (6.04%). Selected proposals and
-fixture functions do not count as production gains. Full current production
-proposal/resource qualification, independent literal application review, actual
-application adoption, compiler export, canonical and three-profile generation,
+The actual complete production CLI run at source checkpoint `8765153f6` captures
+all 564 physical Rust source files, producing 390 complete proposals and 174
+skipped-file records. Its 3,440 packets retain 319,972,394 raw packet bytes;
+complete logical output is 321,908,375 bytes and stored output is 57,777,063 bytes.
+The producer takes 374.929 seconds. A separate 32.580-second complete readback
+checks every packet digest and declared format, original physical source joins,
+whole proposal CST, mappings and inverses. The whole monitored operation takes
+413.069 seconds at 1,603,534,848 bytes sampled aggregate RSS and 96,686,080 bytes
+observed evidence, with all 2,309 source input vectors unchanged. Full source,
+commands, streams, partial failed preflight and receipts remain under the
+task-owned `router-layout-check-actual-complete-production-literal-gzip-*`
+monitors. Storage/CST readback grants no application-equivalence authority.
+
+Only one function is selected: `login_url::redact_value`, with two edits in one
+file. Fresh complete-function checker and strict JavaScript/TypeScript probes
+admit both the original and proposed forms, including independently authored
+Unicode, NUL, overlap and invalid-argument cases. This selection therefore adds
+no demonstrated executable coverage. No application source is installed.
+
+The actual isolated compiler snapshot and portable Git fixture are refreshed
+from this source checkpoint: 1,232 compiler files plus all 132 TypeScript 5.9.3
+files, totaling 47,468,976 source bytes. Independent review compares all compiler
+Git/physical bytes, complete bootstrap equations and CST inverses, and all 416
+portable Git objects; the four historical source bodies remain exact. All 16
+original receiving cases pass in both engines with their original deadlines:
+Node takes 72.900 seconds at 930,037,760 bytes sampled aggregate RSS; Bun takes
+71.302 seconds at 865,648,640 bytes. Node audit `complete-u0Dtxn` has no breaches
+or errors; Bun independently joins every case and all 2,247 unchanged inputs.
+This qualifies the isolated snapshot's receiving files, not every exported
+compiler workflow or a complete receiving application's synchronization.
+
+The last measured production executable coverage is 155/2,567 (6.04%); a current
+full executable inventory has not been regenerated. Selected proposals and
+fixture functions do not count as production gains. Independent literal
+application review, actual application adoption, complete standalone compiler
+export qualification, canonical and three-profile generation,
 reverse freshness, strict native parity and the complete JavaScript gate remain
 unfinished. The stock Python proposal/review/application controllers currently
 support the JSON-reader equation, not this literal route. Extend and qualify
