@@ -3,13 +3,17 @@ import {Buffer as importedBuffer} from 'node:buffer';
 import {types} from 'node:util';
 import {originalPrivateParserIngressUnchanged,originalBatchedDataFreezeIntrinsicsUnchanged,originalCapturedFunctionSource} from './original-json-intrinsics.mjs';
 // Generated from the actual complete node:buffer wrapper source; no evaluation.
-import {canonicalNodeBufferByteLengthSource} from './builtin-canonical-buffer-source.mjs';
+import {canonicalNodeBufferByteLengthSource,canonicalNodeBufferGetterSource,canonicalNodeBufferSetterSource} from './builtin-canonical-buffer-source.mjs';
 const initial=originalPrivateParserIngressUnchanged()&&originalBatchedDataFreezeIntrinsicsUnchanged();
 const root=initial?globalThis:null,get=initial?Object.getOwnPropertyDescriptor:null,has=initial?Object.hasOwn:null,apply=initial?Reflect.apply:null,typeOwner=types;
 const value=field=>field&&has(field,'value')?field.value:null;
 const globals=initial?['JSON','Number','Math','Buffer'].map(name=>({name,field:get(root,name)})):[];
-const json=value(globals[0]?.field),number=value(globals[1]?.field),math=value(globals[2]?.field),buffer=value(globals[3]?.field);
-const ordinary=!!(initial&&json&&number&&math&&buffer===importedBuffer&&!types.isProxy(json)&&!types.isProxy(number)&&!types.isProxy(math)&&!types.isProxy(buffer));
+const json=value(globals[0]?.field),number=value(globals[1]?.field),math=value(globals[2]?.field),buffer=importedBuffer,bufferField=globals[3]?.field;
+// Node keeps Buffer behind a mutable provider even after first access. Accept
+// only its actual source-pinned get/set pair, never an arbitrary accessor.
+const bufferData=!!(initial&&bufferField&&has(bufferField,'value')&&bufferField.value===buffer);
+const bufferProvider=!!(initial&&bufferField&&!has(bufferField,'value')&&typeof bufferField.get==='function'&&typeof bufferField.set==='function'&&!types.isProxy(bufferField.get)&&!types.isProxy(bufferField.set)&&bufferField.enumerable===false&&bufferField.configurable===true&&originalCapturedFunctionSource(bufferField.get)===canonicalNodeBufferGetterSource&&originalCapturedFunctionSource(bufferField.set)===canonicalNodeBufferSetterSource);
+const ordinary=!!(initial&&json&&number&&math&&(bufferData||bufferProvider)&&!types.isProxy(json)&&!types.isProxy(number)&&!types.isProxy(math)&&!types.isProxy(buffer));
 const pins=ordinary?[[json,'parse'],[number,'isFinite'],[number,'isInteger'],[number,'isSafeInteger'],[math,'max'],[buffer,'byteLength']].map(([owner,key])=>({owner,key,field:get(owner,key)})):[];
 const native=(fn,name)=>typeof fn==='function'&&!types.isProxy(fn)&&originalCapturedFunctionSource(fn)==='function '+name+'() { [native code] }';
 let qualified=!!(ordinary&&native(number,'Number'));
@@ -21,7 +25,13 @@ if(qualified)try{const parse=value(pins[0].field),bytes=value(pins[5].field),pla
 const same=(actual,expected)=>!!(actual&&expected&&has(actual,'value')&&has(expected,'value')&&actual.value===expected.value&&actual.writable===expected.writable&&actual.enumerable===expected.enumerable&&actual.configurable===expected.configurable);
 export function builtinCanonicalTableReady(){
  if(!qualified||types!==typeOwner||!originalPrivateParserIngressUnchanged())return false;
- for(const pin of globals)if(!same(get(root,pin.name),pin.field))return false;
+ for(const pin of globals){
+  const actual=get(root,pin.name);if(pin.name!=='Buffer'||bufferData){if(!same(actual,pin.field))return false;}
+  else{if(!actual||has(actual,'value')||actual.get!==bufferField.get||actual.set!==bufferField.set||actual.enumerable!==bufferField.enumerable||actual.configurable!==bufferField.configurable)return false;}
+ }
+ // The ordinary Node setter can change its hidden value without changing the
+ // descriptor. Only the already qualified original provider may be invoked.
+ if(bufferProvider&&apply(bufferField.get,root,[])!==buffer)return false;
  for(const pin of pins)if(!same(get(pin.owner,pin.key),pin.field))return false;
  // This fresh complete guard covers Array map/some/includes/push/iterators,
  // Map/Set constructors and methods, Object keys/entries/fromEntries/freeze,

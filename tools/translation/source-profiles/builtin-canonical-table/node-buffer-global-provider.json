@@ -1,0 +1,9 @@
+{
+  "runtime": "v20.19.4",
+  "owner": "globalThis",
+  "property": "Buffer",
+  "enumerable": false,
+  "configurable": true,
+  "getSource": "get() {\n      return _Buffer;\n    }",
+  "setSource": "set(value) {\n      _Buffer = value;\n    }"
+}

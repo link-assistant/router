@@ -1,2 +1,4 @@
-// Generated actual Node v20.19.4 node:buffer function-source DATA only.
+// Generated actual Node v20.19.4 node:buffer and global provider source DATA only.
 export const canonicalNodeBufferByteLengthSource="function byteLength(string, encoding) {\n  if (typeof string !== 'string') {\n    if (isArrayBufferView(string) || isAnyArrayBuffer(string)) {\n      return string.byteLength;\n    }\n\n    throw new ERR_INVALID_ARG_TYPE(\n      'string', ['string', 'Buffer', 'ArrayBuffer'], string,\n    );\n  }\n\n  const len = string.length;\n  if (len === 0)\n    return 0;\n\n  if (!encoding || encoding === 'utf8') {\n    return byteLengthUtf8(string);\n  }\n\n  if (encoding === 'ascii') {\n    return len;\n  }\n\n  const ops = getEncodingOps(encoding);\n  if (ops === undefined) {\n    // TODO (ronag): Makes more sense to throw here.\n    // throw new ERR_UNKNOWN_ENCODING(encoding);\n    return byteLengthUtf8(string);\n  }\n\n  return ops.byteLength(string);\n}";
+export const canonicalNodeBufferGetterSource="get() {\n      return _Buffer;\n    }";
+export const canonicalNodeBufferSetterSource="set(value) {\n      _Buffer = value;\n    }";
