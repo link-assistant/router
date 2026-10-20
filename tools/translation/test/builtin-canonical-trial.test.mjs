@@ -3,9 +3,11 @@ import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdtempSync,rmSync,openSync,ftruncateSync,closeSync,mkdirSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
+import {createHash} from 'node:crypto';
+import {gzipSync,gunzipSync} from 'node:zlib';
 import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from '../js-to-rust/vendor/module-syntax.mjs';
-import {proposeCanonicalDeriveTrial,canonicalTrialCases,joinCanonicalTrialCases,canonicalTrialBunCompletions,isCanonicalTrialSourcePath,preflightCanonicalTrialPaths} from '../prepare-builtin-canonical-trial.mjs';
+import {proposeCanonicalDeriveTrial,canonicalTrialCases,joinCanonicalTrialCases,canonicalTrialBunCompletions,isCanonicalTrialSourcePath,preflightCanonicalTrialPaths,canonicalTrialFilePacket,decodeCanonicalTrialFilePacket} from '../prepare-builtin-canonical-trial.mjs';
 
 const root=fileURLToPath(new URL('../../../',import.meta.url));
 const testPath=new URL('./derive-bang-context.test.mjs',import.meta.url);
@@ -77,4 +79,31 @@ test('complete stat-only size census refuses oversized sparse files total bytes 
  const paths=[];for(let index=0;index<9;index++){const path='sparse-'+index+'.bin';sparse(path,32*1024*1024);paths.push(path);}assert.throws(()=>preflightCanonicalTrialPaths(folder,paths),/input bytes exceeded before body reads/);
  assert.throws(()=>preflightCanonicalTrialPaths(folder,Array.from({length:8193},(_,index)=>'unread-'+index)),/input file count exceeded before body reads/);assert.throws(()=>preflightCanonicalTrialPaths(folder,['small.mjs','small.mjs']),/input file count exceeded before body reads/);
  mkdirSync(join(folder,'directory'));assert.throws(()=>preflightCanonicalTrialPaths(folder,['directory']),/regular unlinked physical path/);
+});
+
+const packetFact=(path,bytes)=>({path,mode:0o644,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')});
+
+test('unchanged file frames retain every original byte once and reconstruct the complete trial association after gzip readback',{timeout:60000},()=>{
+ const original=readFileSync(testPath),fact=packetFact('tools/translation/test/derive-bang-context.test.mjs',original),packet=canonicalTrialFilePacket(fact,original,Buffer.from(original));
+ assert.equal(packet.schema,'complete-original-and-isolated-trial-file-v2');assert.equal(packet.original.base64,original.toString('base64'));assert.deepStrictEqual(packet.trial,{sourceAssociation:'same-original-source',bytes:fact.bytes,sha256:fact.sha256});assert.equal(Object.hasOwn(packet.trial,'base64'),false);
+ const wire=JSON.stringify(packet),stored=gzipSync(wire),parsed=JSON.parse(gunzipSync(stored)),decoded=decodeCanonicalTrialFilePacket(parsed,fact);assert.deepStrictEqual(decoded.original,original);assert.deepStrictEqual(decoded.trial,original);assert.equal(decoded.original.length,original.length);assert.equal(decoded.trial.length,original.length);assert.deepStrictEqual(parsed,packet);
+});
+
+test('the actual original codec frame retains complete distinct candidate bytes and requires the fresh candidate source equation',{timeout:60000},()=>{
+ const original=readFileSync(new URL('../builtin-source-meta.mjs',import.meta.url)),candidate=readFileSync(new URL('../builtin-source-meta-canonical-candidate.mjs',import.meta.url)),fact=packetFact('tools/translation/builtin-source-meta.mjs',original),packet=canonicalTrialFilePacket(fact,original,candidate);
+ assert.equal(packet.trial.sourceAssociation,'complete-candidate-source');assert.equal(packet.trial.base64,candidate.toString('base64'));const parsed=JSON.parse(gunzipSync(gzipSync(JSON.stringify(packet)))),decoded=decodeCanonicalTrialFilePacket(parsed,fact,{candidateSource:candidate.toString('utf8')});assert.deepStrictEqual(decoded.original,original);assert.deepStrictEqual(decoded.trial,candidate);assert.notDeepStrictEqual(decoded.trial,decoded.original);
+ assert.throws(()=>decodeCanonicalTrialFilePacket(parsed,fact),/fresh complete actual bounded candidate source/);assert.throws(()=>decodeCanonicalTrialFilePacket(parsed,fact,{candidateSource:candidate.toString('utf8')+' '}),/packet equation differs/);assert.throws(()=>canonicalTrialFilePacket(fact,original,Buffer.from(original)),/exactly the original codec/);
+ const aliased=structuredClone(packet);aliased.trial={sourceAssociation:'same-original-source',bytes:fact.bytes,sha256:fact.sha256};assert.throws(()=>decodeCanonicalTrialFilePacket(aliased,fact,{candidateSource:candidate.toString('utf8')}),/packet equation differs/);
+});
+
+test('forged same-source associations nested original fields noncanonical encoding and complete byte corruptions refuse',{timeout:60000},()=>{
+ const original=Buffer.from('original\0binary\xffbytes'),fact=packetFact('test/original.bin',original),packet=canonicalTrialFilePacket(fact,original,original);
+ for(const mutate of [row=>{row.original.sha256='0'.repeat(64);},row=>{row.original.mode=0o755;},row=>{row.trial.sha256='0'.repeat(64);},row=>{row.trial.bytes++;},row=>{row.trial.base64=row.original.base64;},row=>{row.trial.sourceAssociation='complete-candidate-source';},row=>{row.original.base64+='\n';},row=>{row.path='test/other.bin';},row=>{row.original.base64=Buffer.from('corrupted').toString('base64');}]){const changed=structuredClone(packet);mutate(changed);assert.throws(()=>decodeCanonicalTrialFilePacket(changed,fact),/packet equation differs|complete bounded original/);}
+ assert.throws(()=>canonicalTrialFilePacket(fact,original,Buffer.from('changed source')),/exactly the original codec/);assert.throws(()=>decodeCanonicalTrialFilePacket(packet,{...fact,sha256:'0'.repeat(64)}),/complete bounded original/);
+});
+
+test('invocation-local source associations preserve full fresh changed file bytes without an encoded source or verdict cache',{timeout:60000},()=>{
+ const first=Buffer.from('first complete original'),second=Buffer.from('second complete original'),path='fixtures/complete-original.txt',firstFact=packetFact(path,first),secondFact=packetFact(path,second),firstPacket=canonicalTrialFilePacket(firstFact,first,first),secondPacket=canonicalTrialFilePacket(secondFact,second,second);
+ assert.deepStrictEqual(decodeCanonicalTrialFilePacket(firstPacket,firstFact).trial,first);assert.deepStrictEqual(decodeCanonicalTrialFilePacket(secondPacket,secondFact).trial,second);assert.notEqual(firstPacket.original.base64,secondPacket.original.base64);assert.throws(()=>decodeCanonicalTrialFilePacket(firstPacket,secondFact),/complete bounded original/);
+ const corrupt=structuredClone(secondPacket);corrupt.original.base64=firstPacket.original.base64;assert.throws(()=>decodeCanonicalTrialFilePacket(corrupt,secondFact),/complete bounded original/);
 });
