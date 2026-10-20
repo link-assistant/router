@@ -3,6 +3,7 @@
 import {mkdirSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {resolve,join} from 'node:path';
+import {repositoryCratePaths} from './fixtures/repository-paths.mjs';
 import {translateProject} from '../project.mjs';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {loadJsonMacroSourceProof} from '../json-macro-sources.mjs';
@@ -17,7 +18,7 @@ export function associatedOriginalSourceReader(id){
 }
 export function associatedOriginalFileReader(id){
  const source=associatedOriginalSourceReader(id);
- return function(path,encoding){if(!(path instanceof URL)||encoding!=='utf8'||arguments.length>2)fail('one original source URL and UTF8 required');const file=fileURLToPath(path),relative=file.startsWith(root)?file.slice(root.length):null;if(!relative||resolve(root,relative)!==file)fail('source URL escapes the repository');return source(relative);};
+ return function(path,encoding){if(!(path instanceof URL)||encoding!=='utf8'||arguments.length>2)fail('one original source URL and UTF8 required');const file=fileURLToPath(path),relative=file.startsWith(root)?file.slice(root.length):null;if(!relative||resolve(root,relative)!==file)fail('source URL escapes the repository');return source(repositoryCratePaths([relative],root)[0]);};
 }
 export function associatedOriginalDependencyInputs(context){return {manifest:context.source('Cargo.toml'),lock:context.source('Cargo.lock')};}
 export function associatedOriginalProject(id,entry){

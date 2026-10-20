@@ -74,6 +74,15 @@ promises and embedded historical strings remain unchanged. Review every original
 selected span, complete inverse and unchanged input before installing the proposal;
 this development tool does not establish application translation coverage.
 
+`node tools/translation/prepare-derive-profile-layout.mjs --emit` copies the
+complete existing JSON profile equation into the derive-profile domain and
+proposes its actual async-trait consumer. Reusable language substitutions select
+the genuine private issuer and digest field; repository substitutions select the
+exact source-profile paths and operation name. Its `--check` compares both
+complete installed outputs. Original Cargo bytes, profile hashes, archives,
+inverse equations and private proof checks remain required; this DATA adapter
+does not grant namespace or executable authority.
+
 ## Migrated paths and candidate evidence
 
 The 148 candidate uses the two sequences in the following actual paths:

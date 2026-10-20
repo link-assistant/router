@@ -658,6 +658,33 @@ repaired two files have separate whole-file observations. The proposal retained
 complete before/after CST, copied-reader source, exact substitutions and inverses.
 No overall compiler, source-bank receiving, generation or parity pass is claimed.
 
+The next complete 20-file Node cohort ended at its unchanged 600-second limit:
+116 passes and 19 failures were reported, and the final full-source file and
+deadline audit remained unfinished. Peak observed aggregate RSS was
+2,038,611,968 bytes. All complete partial logs are retained. The failure set
+includes stale generated compiler fingerprints, historical reader labels,
+async-trait dependency-profile compatibility, an original stored feature-module
+fixture, external sibling derive namespace obligations and a character-case
+missing core child. These remain distinct from the open full-source performance
+and generation requirements.
+
+The historical URL reader now normalizes the known physical crate prefix before
+its original closed parent check. All three affected complete files passed 21
+cases under Node (25.095 seconds) and Bun (19.971 seconds), including both URL
+spellings, nonparent refusals and unchanged source pins. Node's final independent
+audit passed with zero duration breaches. Bun peak aggregate RSS was
+2,652,143,616 bytes, within the unchanged 3 GiB bound.
+
+The actual derive-profile source producer copies the complete existing profile
+equation through ordered language/repository rules and full CST inverses. The
+old derive-profile hash remains frozen; only the exact Cargo-layout substitution
+is accepted. All 28 cases in its controls and both original async-trait files
+passed in Node (3.291 seconds) and Bun (2.456 seconds), with a passing Node
+deadline audit and producer freshness check. Controls include genuine old/current
+Cargo inputs, all retained source-member hashes, copied-proof refusals and fresh
+receiving-fixture profile/archive mutations. Current full generated fingerprints,
+strict native parity and the complete JavaScript gate remain open.
+
 Regenerate owned-definition producer modules with
 `node tools/translation/prepare-owned-definition-bulk.mjs --emit`. This emits a
 complete source proposal; it does not install files. Review every original

@@ -124,6 +124,14 @@ This compatibility does not permit arbitrary TOML normalization or dependency
 changes. Its complete behavioral and refusal file belongs to both engines'
 mandatory compiler discovery.
 
+The derive-profile adapter is copied by the separate actual producer
+`node tools/translation/prepare-derive-profile-layout.mjs --emit`; its `--check`
+must reproduce both the adapter and async-trait consumer exactly. Keep the
+original dependency-profile hash frozen and authenticate the complete reversible
+profile change. Historical URL readers normalize only the known physical crate
+prefix before enforcing their original parent association. Do not repin frozen
+source hashes or accept arbitrary dependency profiles to repair a layout failure.
+
 Within one project invocation, compose genuine source contexts explicitly when
 several consumers need the same original graph. Each consumer must retain its
 complete source, profile and private-issuer checks. Do not memoize namespace
