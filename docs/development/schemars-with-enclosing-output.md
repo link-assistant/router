@@ -77,10 +77,11 @@ proofs, getters, unknown callbacks/cfg/macros/owners, sibling uncertainty and in
 source corruption. Any additional original owner refusal remains a real blocker;
 do not rewrite the actual parent or drop a sibling to make a fixture pass.
 
-The ClientKind control uses the unchanged complete file as an explicit standalone
-source entry. It does not substitute that fixture graph for the actual production
-crate graph. Production adoption must freshly join the complete discovered graph,
-original physical paths, ancestors, imports and current Cargo/profile inputs.
+The ClientKind control now uses the unchanged complete file in the complete
+captured original library graph, including actual ancestors, child modules and
+current Cargo/profile inputs. The previous standalone-file fixture omitted its
+external children and the private nested-helper proof correctly refused it.
+The graph repair remains unrun and retains the original 60-second deadline.
 
 This worker performed source drafting, complete pinned archive-member reads and
 an independent static literal-token census only. No engines, materialization,
@@ -116,5 +117,60 @@ ValueEnum control intentionally requires its full-bang JsonSchema residual.
 The ordinary non-owned project mode also uses that legacy full-bang lane; the
 enclosing extension does not claim to repair it. Extending that production route
 requires a separate source-derived complete consumer proposal and fresh whole
-qualification while preserving the legacy controls. No dispatcher, default
-import rewrite or production adoption is implemented by this draft.
+qualification while preserving the legacy controls. The source-only adoption
+proposal below implements the dispatcher and import equation, without installing
+the default source or qualifying production.
+
+## Same-issuer adoption proposal and genuine history
+
+`prepare-schemars-enclosing-adoption.mjs --capture-history FRESH_DIRECTORY`
+captures the complete genuine original enclosing module and the complete current
+eight-case control from pinned Git objects. The packet records full Git blob,
+SHA-256, byte count and source bytes; its manifest, archive and notice must be
+retained together under `source-profiles/schemars-enclosing-history/`. This is
+source DATA, with no compiler or semantic authority. The captured test includes
+the full-crate ClientKind fixture repair; all original eight bodies are retained.
+
+`prepareSchemarsEnclosingAdoption({root})` and its `--emit` CLI return three full
+native/CST source rows: the original enclosing module with only its actual
+Schemars module-specifier changed, a byte-exact original enclosing control copy,
+and the original eight-case test with only its old-context import redirected to
+that genuine control. The old control is necessary because the existing case
+intentionally asserts the old with-Type refusal; its test bodies and deadlines
+must not be rewritten when the actual default enclosing module gains the new
+route. The default source is not written by this CLI.
+
+The dispatcher first privately joins context/certificate membership before
+reading attributes. Own accessor or proxy input carriers cannot select a prover.
+The actual container Type helper chooses the specialized prover, which retains
+all complete source and ownership checks. Old inputs use the original prover.
+Readers branch exclusively on old/new private proof membership; copied flags or
+schemas grant nothing. Neither the original standalone Schemars API nor the
+full-bang issuer changes.
+
+Every row retains the separately declared language and repository CST phases,
+full serialized/reparsed documents, phase inverses, complete native-selected
+edits, native inverse and original source. The candidate producer recognizes
+only the exact old source or exact one-import afterimage, independently restores
+the genuine original full pin, and records the actual physical input/hash
+separately from that historic derivation source. A changed byte is a refusal.
+The binary archive is a separately typed complete input rather than a fake
+UTF-8 entry in the existing candidate `inputs` contract.
+
+The birth adoption plan remains available after a later explicit body layer and
+reports `compositionRequired` for that physical source. Its standalone `--check`
+requires the exact import afterimage. A later byte wrapper must supply its own
+complete native inverse restoring this import afterimage, then compose this
+import inverse to the genuine original. The candidate producer currently refuses
+such a later wrapper until that exact current-source composition is provided.
+No arbitrary callback, source-head selection or schema flag can normalize it.
+
+Root must capture/install the history packet, materialize the full candidate and
+control proposals, and run the new complete four-case adoption file plus all
+eight candidate cases and complete original consumer files in Node and Bun.
+The four new controls independently relocate the whole proposal issuer by native
+import spans with serialized CST and native inverses; no foreign issuer token is
+installed into a default consumer. Actual default installation remains a later
+receiving step. This worker has run no engines, generation or runtime checks for
+this adoption proposal. Full production coverage and the JavaScript gate remain
+open.

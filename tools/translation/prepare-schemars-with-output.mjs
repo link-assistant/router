@@ -6,6 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
+import {readSchemarsEnclosingHistory,assertSchemarsEnclosingHistoryFresh,deriveSchemarsEnclosingImportHistory,SCHEMARS_ENCLOSING_ORIGINAL} from './schemars-enclosing-history.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url)),PREFIX='tools/translation/';
 const INPUTS=Object.freeze({
@@ -51,7 +52,12 @@ function whole(ts,root,path,before,language,after,changes){
 }
 export function prepareSchemarsWithOutputProposal({root=ROOT,inputSources=null}={}){
  const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('installed TypeScript5.9.3 required');root=resolve(root);
- const inputs=Object.entries(INPUTS).map(([name,pin])=>{const source=inputSources&&Object.hasOwn(inputSources,name)?inputSources[name]:readFileSync(resolve(root,PREFIX+name),'utf8');if(typeof source!=='string'||Buffer.byteLength(source)>1048576||hash(source)!==pin)fail('whole pinned source differs: '+name);return {path:PREFIX+name,source,sha256:pin};});
+ const history=readSchemarsEnclosingHistory({root}),originalEnclosing=one(history.files.filter(row=>row.path===SCHEMARS_ENCLOSING_ORIGINAL),'complete genuine original enclosing source'),derivations=[];let enclosingHistory=null;
+ const inputs=Object.entries(INPUTS).map(([name,pin])=>{const source=inputSources&&Object.hasOwn(inputSources,name)?inputSources[name]:readFileSync(resolve(root,PREFIX+name),'utf8');if(typeof source!=='string'||Buffer.byteLength(source)>1048576)fail('whole pinned source differs: '+name);let before=source;
+  if(PREFIX+name===SCHEMARS_ENCLOSING_ORIGINAL){try{enclosingHistory=deriveSchemarsEnclosingImportHistory({original:originalEnclosing.source,source});before=enclosingHistory.restored;}catch{fail('whole pinned source differs: '+name);}}
+  if(hash(before)!==pin)fail('whole pinned source differs: '+name);derivations.push({path:PREFIX+name,source:before,sha256:pin});return {path:PREFIX+name,source,sha256:hash(source)};
+ });
+ inputs.push(...history.inputs);
  const support=readFileSync(resolve(root,PREFIX+SUPPORT),'utf8');if(Buffer.byteLength(support)>1048576)fail('bounded complete support required');inputs.push({path:PREFIX+SUPPORT,source:support,sha256:hash(support)});const files=[];
  const producerPath=PREFIX+'prepare-schemars-with-output.mjs',producerSource=readFileSync(resolve(root,producerPath),'utf8');if(Buffer.byteLength(producerSource)>1048576)fail('bounded complete actual producer required');inputs.push({path:producerPath,source:producerSource,sha256:hash(producerSource)});
  {
@@ -91,12 +97,12 @@ export function prepareSchemarsWithOutputProposal({root=ROOT,inputSources=null}=
   if(!checker.getSymbolAtLocation(selected.name))fail('native original route binding absent');files.push(whole(ts,root,OUTPUTS[1],source,language,after,{language:changes,repositoryPrefix:header,originalCompleteRouteRetained:true}));
  }
  {
-  const source=inputs[2].source,{file,checker}=native(ts,root,Object.keys(INPUTS)[2],source),owner=importBinding(ts,file,checker,'./schemars-bang-footprints.mjs','proveSchemarsBangFootprint'),changes=[edit(file,source,owner.declaration.moduleSpecifier,"'./schemars-with-bang-candidate.mjs'",'complete-private-Schemars-issuer-import')],language=source,header='// Generated explicit with-Type enclosing issuer; original issuer remains unchanged.\n',after=header+apply(source,changes);
+  const source=derivations[2].source,{file,checker}=native(ts,root,Object.keys(INPUTS)[2],source),owner=importBinding(ts,file,checker,'./schemars-bang-footprints.mjs','proveSchemarsBangFootprint'),changes=[edit(file,source,owner.declaration.moduleSpecifier,"'./schemars-with-bang-candidate.mjs'",'complete-private-Schemars-issuer-import')],language=source,header='// Generated explicit with-Type enclosing issuer; original issuer remains unchanged.\n',after=header+apply(source,changes);
   files.push(whole(ts,root,OUTPUTS[2],source,language,after,{repository:changes,repositoryPrefix:header,completeOriginalPrivateIssuerRetained:true}));
  }
  const supportBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,PREFIX+SUPPORT),support);
  for(const input of inputs)if(readFileSync(resolve(root,input.path),'utf8')!==input.source)fail('fresh complete source changed before return: '+input.path);
- return {schema:'complete-schemars-with-source-candidate-v1',typescriptVersion:ts.version,inputs,files,supportBindings,originalPublicAPIsUnchanged:true,productionSelected:false,sourceAuthority:false,typeOwnerResolved:false,generatedImplBehavior:false,runtimeAuthority:false,performanceQualified:false,newAcrossInvocationCache:false};
+ assertSchemarsEnclosingHistoryFresh({root,history});return {schema:'complete-schemars-with-source-candidate-v1',typescriptVersion:ts.version,inputs,derivationInputs:derivations,history,enclosingHistory,files,supportBindings,originalPublicAPIsUnchanged:true,productionSelected:false,sourceAuthority:false,typeOwnerResolved:false,generatedImplBehavior:false,runtimeAuthority:false,performanceQualified:false,newAcrossInvocationCache:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const args=process.argv.slice(2);if(args.length!==1||!['--emit','--check'].includes(args[0]))fail('usage: prepare-schemars-with-output.mjs --emit|--check');const proposal=prepareSchemarsWithOutputProposal();
