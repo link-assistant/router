@@ -19,7 +19,7 @@ test('complete checked-source layer joins the unchanged lifetime birth and retai
  const prior=Object.fromEntries(birth.files.map(part=>[part.path,part]));assert.equal(prior[row.path].after,row.before);const composed=composeExecutableCheckedSource(prior);assert.equal(composed.sources[row.path].after,row.after);assert.equal(composed.historicalSources,prior);
  assert.throws(()=>composeExecutableCheckedSource({...prior,[row.path]:{...prior[row.path],after:prior[row.path].after+' '}}),/preceding complete project equation/u);
  assert.equal(current.layers.length,2);assert.equal(current.layers[1].files.find(part=>part.path===row.path).before,row.after);
- for(const final of current.layers[1].files){assert.equal(final.current,final.after);assert.equal(final.inverse,final.before);assert.equal(transportConcreteSyntaxMeta(final.beforeMeta).source,final.before);assert.equal(transportConcreteSyntaxMeta(final.afterMeta).source,final.after);assert.deepEqual(final.stages.map(stage => stage.phase), ['language', 'repository']);
+ for(const final of current.layers[1].files){assert.equal(final.current,current.files.find(row=>row.path===final.path).after);assert.equal(final.inverse,final.before);assert.equal(transportConcreteSyntaxMeta(final.beforeMeta).source,final.before);assert.equal(transportConcreteSyntaxMeta(final.afterMeta).source,final.after);assert.deepEqual(final.stages.map(stage => stage.phase), ['language', 'repository']);
     assert.deepEqual(final.trace, final.stages.flatMap(stage => stage.trace));
     for (const stage of final.stages) {
       assert.deepEqual(stage.trace.map(part => part.phase), ['language', 'repository']);
