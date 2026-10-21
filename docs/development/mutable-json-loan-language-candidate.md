@@ -15,7 +15,9 @@ whole parent or manufacture the parameter from a public type flag.
 Only an ordinary synchronous, non-const, unadorned two-parameter unit-returning
 leaf with exactly one `&mut` canonical serde_json Value parameter and one actual
 borrowed-str parameter enters this component. A new unchanged genuine
-`HostChecker` resolves the parsed pointee to its registered JSON owner. Named
+`HostChecker` resolves the parsed pointee to its registered JSON owner. Its
+existing private constructor-issued membership and original method identities
+are checked before the program call, afterward and on every private access. Named
 lifetimes, other pointees, nested references, multiple mutable roots, async,
 escaping returns and existing unrelated refusals stay outside the candidate.
 Production enclosing/derive contexts that cannot be reissued through the closed
@@ -40,7 +42,8 @@ The finite flow checker handles active exclusive roots, child reborrows,
 parent suspension, removal, and return/Err/throw edges. It rejects use of dead
 children, overlapping reborrows, aliases, escaping loan results, unknown effects,
 await and continuation after a terminal edge. Plans and visited cells have
-nonrefundable invocation-local bounds. Checking a caller-supplied flow is only
+nonrefundable invocation-local bounds. Every attempted flow consumes its plan
+charge before copying input, so malformed metadata cannot evade the plan limit. Checking a caller-supplied flow is only
 a loan-domain check: it does not associate that flow with a Rust body.
 `deriveMutableJsonRemovePlan` additionally matches the entire original closed
 if-let/object-remove body and original Some constructor scope. Explicit disabled
