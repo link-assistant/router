@@ -19,7 +19,17 @@ test('complete checked-source layer joins the unchanged lifetime birth and retai
  const prior=Object.fromEntries(birth.files.map(part=>[part.path,part]));assert.equal(prior[row.path].after,row.before);const composed=composeExecutableCheckedSource(prior);assert.equal(composed.sources[row.path].after,row.after);assert.equal(composed.historicalSources,prior);
  assert.throws(()=>composeExecutableCheckedSource({...prior,[row.path]:{...prior[row.path],after:prior[row.path].after+' '}}),/preceding complete project equation/u);
  assert.equal(current.layers.length,2);assert.equal(current.layers[1].files.find(part=>part.path===row.path).before,row.after);
- for(const final of current.layers[1].files){assert.equal(final.current,final.after);assert.equal(final.inverse,final.before);assert.equal(transportConcreteSyntaxMeta(final.beforeMeta).source,final.before);assert.equal(transportConcreteSyntaxMeta(final.afterMeta).source,final.after);assert.deepEqual(final.trace.map(part=>part.phase),['language','repository']);assert.ok(final.nativeCopies);}
+ for(const final of current.layers[1].files){assert.equal(final.current,final.after);assert.equal(final.inverse,final.before);assert.equal(transportConcreteSyntaxMeta(final.beforeMeta).source,final.before);assert.equal(transportConcreteSyntaxMeta(final.afterMeta).source,final.after);assert.deepEqual(final.stages.map(stage => stage.phase), ['language', 'repository']);
+    assert.deepEqual(final.trace, final.stages.flatMap(stage => stage.trace));
+    for (const stage of final.stages) {
+      assert.deepEqual(stage.trace.map(part => part.phase), ['language', 'repository']);
+      assert.equal(stage.trace.find(part => part.phase === stage.phase).rules.length, 1);
+      assert.equal(stage.trace.find(part => part.phase !== stage.phase).rules.length, 0);
+      assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source, stage.before);
+      assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source, stage.after);
+      assert.equal(stage.completeInverse, true);
+    }
+    assert.equal(final.nativeCopies.length, 2); assert.ok(final.nativeCopies.every(copy => copy.completeNativeAstCopy));}
 });
 
 test('same-invocation accessor retains source Vec identity and checked body while lower keeps its portable contract',limits,()=>{

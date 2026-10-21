@@ -57,7 +57,17 @@ test('native source producers retain complete historical inputs actual current o
   for (const row of current.layers[1].files) {
     assert.equal(row.current, row.after); assert.equal(row.inverse, row.before);
     assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source, row.before); assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source, row.after);
-    assert.deepEqual(row.trace.map(part => part.phase), ['language', 'repository']); assert.ok(row.nativeCopies);
+    assert.deepEqual(row.stages.map(stage => stage.phase), ['language', 'repository']);
+    assert.deepEqual(row.trace, row.stages.flatMap(stage => stage.trace));
+    for (const stage of row.stages) {
+      assert.deepEqual(stage.trace.map(part => part.phase), ['language', 'repository']);
+      assert.equal(stage.trace.find(part => part.phase === stage.phase).rules.length, 1);
+      assert.equal(stage.trace.find(part => part.phase !== stage.phase).rules.length, 0);
+      assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source, stage.before);
+      assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source, stage.after);
+      assert.equal(stage.completeInverse, true);
+    }
+    assert.equal(row.nativeCopies.length, 2); assert.ok(row.nativeCopies.every(copy => copy.completeNativeAstCopy));
   }
   const host = prepared.files.find(row => row.path.endsWith('/host-contracts.mjs'));
   assert.ok(host.after.split('\n').length <= 1000); assert.ok(host.before.includes('parseRouterCoreVector')); assert.ok(host.after.includes('parseRouterCoreVector'));

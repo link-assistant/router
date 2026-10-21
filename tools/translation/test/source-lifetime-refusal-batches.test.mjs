@@ -29,9 +29,22 @@ test('complete actual lifetime checker collector and project source copies retai
     assert.equal(row.current, current.files.find(final => final.path === row.path).after); assert.equal(row.inverse, row.before);
     assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source, row.before);
     assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source, row.after);
-    assert.deepEqual(row.trace.map(part => part.phase), ['language', 'repository']);
-    if (layer === current.layers[1]) assert.deepEqual(row.nativeBindings.unboundIdentifiers, []);
-    else assert.ok(row.nativeCopies, 'complete original and generated native copy evidence');
+    if (layer === current.layers[1]) {
+      assert.deepEqual(row.trace.map(part => part.phase), ['language', 'repository']);
+      assert.deepEqual(row.nativeBindings.unboundIdentifiers, []);
+    } else {
+      assert.deepEqual(row.stages.map(stage => stage.phase), ['language', 'repository']);
+    assert.deepEqual(row.trace, row.stages.flatMap(stage => stage.trace));
+    for (const stage of row.stages) {
+      assert.deepEqual(stage.trace.map(part => part.phase), ['language', 'repository']);
+      assert.equal(stage.trace.find(part => part.phase === stage.phase).rules.length, 1);
+      assert.equal(stage.trace.find(part => part.phase !== stage.phase).rules.length, 0);
+      assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source, stage.before);
+      assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source, stage.after);
+      assert.equal(stage.completeInverse, true);
+    }
+    assert.equal(row.nativeCopies.length, 2); assert.ok(row.nativeCopies.every(copy => copy.completeNativeAstCopy));
+    }
   }
 });
 
