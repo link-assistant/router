@@ -8,7 +8,8 @@ import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
 import {prepareWholeOwnerProofByteCandidate} from "./current-whole-owner-proof-byte-provider.mjs";
 import {prepareWholeOwnerCoreCorpusCandidate} from './prepare-whole-owner-core-corpus-candidate.mjs';
-import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
+import {assertConcreteSyntaxHost,transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
+import {substitutePrivateConcreteSourceBatches} from './private-concrete-substitution-batch-candidate.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url)),BASE='tools/translation/';
 const COPIES=[
  ['whole-owner-enclosing-context-candidate.mjs','proof-byte-core-enclosing-candidate.mjs'],
@@ -59,15 +60,10 @@ function selection(ts,path,before,mapping){
  }
  if(JSON.stringify(hashes(ts,file))!==JSON.stringify(hashes(ts,native)))fail('complete original Hash call census changed');return {after,edits,imports,preserved,hashCalls:hashes(ts,file)};
 }
-function row(ts,path,before,choice,root){
- const after=choice.after,first=transportConcreteSyntaxSource(before,{language:'JavaScript'}),rule=(a,b,id)=>({id,edits:[{span:[0,a.length],expected:a,replacement:b}]}),stages=[];let document=first.document;
- for(const phase of ['language','repository']){
-  const from=before,to=phase==='language'?before:after,beforeMeta=serializeConcreteSyntaxMeta(document);if(transportConcreteSyntaxMeta(beforeMeta).source!==from)fail('complete phase input differs');
-  const run=applyConcreteSyntaxSubstitutions(document,{languageRules:phase==='language'?[rule(from,to,'javascript:complete-actual-current-Core-corpus-copy')]:[],repositoryRules:phase==='repository'?[rule(from,to,'router:coherent-proof-byte-issuer-imports-and-distinct-stream-schema')]:[]}),afterMeta=serializeConcreteSyntaxMeta(run.value),last=transportConcreteSyntaxMeta(afterMeta);
-  if(last.source!==to)fail('complete phase CST differs');const inverse=applyConcreteSyntaxSubstitutions(last.document,{languageRules:phase==='language'?[rule(to,from,'javascript:restore-complete-actual-current-template')]:[],repositoryRules:phase==='repository'?[rule(to,from,'router:restore-complete-original-issuer-imports')]:[]});if(transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(inverse.value)).source!==from)fail('complete phase inverse differs');
-  stages.push({phase,before:from,after:to,beforeMeta,afterMeta,trace:run.trace,completeInverse:true});document=last.document;
- }
- if(after.split('\n').length>=1000)fail('complete generated line budget');return {path,before,after,current:existsSync(resolve(root,path))?readFileSync(resolve(root,path),'utf8'):null,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta:first.meta,afterMeta:serializeConcreteSyntaxMeta(document),inverse:before,stages,trace:stages.flatMap(part=>part.trace),nativeCopies:[nativeCopy(ts,path,before),nativeCopy(ts,path,after)],completeNativeAstCopy:true,nativeBindings:verifyNativeCopiedSourceBindings(ts,resolve(root,path),after),selection:choice};
+function row(ts,path,before,choice,root,pending){
+const after=choice.after;
+if(after.split('\n').length>=1000)fail('complete generated line budget');
+const __coreCstRaw={ path, before, after, current: existsSync(resolve(root, path)) ? readFileSync(resolve(root, path), 'utf8') : null, beforeSha256: hash(before), afterSha256: hash(after), beforeMeta: void 0, afterMeta: void 0, inverse: before, stages: void 0, trace: void 0, nativeCopies: [nativeCopy(ts, path, before), nativeCopy(ts, path, after)], completeNativeAstCopy: true, nativeBindings: verifyNativeCopiedSourceBindings(ts, resolve(root, path), after), selection: choice };pending.push({path,before,after,record:__coreCstRaw});return __coreCstRaw;
 }
 function joinedBindings(ts,root,files){
  const byPath=new Map(files.map(part=>[resolve(root,part.path),part.after])),options={allowJs:true,noLib:true,target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.NodeNext,moduleResolution:ts.ModuleResolutionKind.NodeNext},host=ts.createCompilerHost(options),read=host.getSourceFile,exists=host.fileExists,source=host.readFile;
@@ -85,6 +81,17 @@ function joinedBindings(ts,root,files){
  }}return evidence;
 }
 export function prepareProofByteCoreStreamCandidate({root=ROOT}={}){
+const __coreCstPending=[];
+function __coreCstRequest(row){const {before,after}=row,rule=(a,b,id)=>({id,edits:[{span:[0,a.length],expected:a,replacement:b}]}),stages=[];for(const phase of ['language','repository']){const from=before,to=phase==='language'?before:after;stages.push({phase,expected:to,sequence:{languageRules:phase==='language'?[rule(from,to,'javascript:complete-actual-current-Core-corpus-copy')]:[],repositoryRules:phase==='repository'?[rule(from,to,'router:coherent-proof-byte-issuer-imports-and-distinct-stream-schema')]:[]},inverseSequence:{languageRules:phase==='language'?[rule(to,from,'javascript:restore-complete-actual-current-template')]:[],repositoryRules:phase==='repository'?[rule(to,from,'router:restore-complete-original-issuer-imports')]:[]}});}return {source:before,language:'JavaScript',stages};}
+function __coreCstFinish(files,inputs,prerequisites,root,pending){
+ if(files.length!==12||pending.length!==12||new Set(files.map(row=>row.path)).size!==12||pending.some((row,at)=>row.record!==files[at]))fail('complete12 actual raw/native Core rows required');
+ const snapshots=prerequisites.map(row=>{const bytes=readFileSync(resolve(root,row.path)),expected=Object.hasOwn(row,'sha256')?row.sha256:Object.hasOwn(row,'source')&&typeof row.source==='string'?hash(row.source):fail('complete prerequisite requires its own SHA or full primitive source');if(hash(bytes)!==expected)fail('complete Core prerequisite changed before all CST chunks: '+row.path);return {path:row.path,bytes};});
+ assertConcreteSyntaxHost();for(const row of inputs.values())if(typeof row.source!=='string'||readFileSync(resolve(root,row.path),'utf8')!==row.source)fail('complete Core input changed before all CST chunks');for(const row of snapshots)if(!readFileSync(resolve(root,row.path)).equals(row.bytes))fail('complete Core prerequisite bytes changed before all CST chunks');
+ for(const row of files)if((existsSync(resolve(root,row.path))?readFileSync(resolve(root,row.path),'utf8'):null)!==row.current)fail('complete Core physical output changed before all CST chunks');
+ for(let at=0;at<pending.length;at+=3){const requested=pending.slice(at,at+3),batch=substitutePrivateConcreteSourceBatches(requested.map(__coreCstRequest));if(batch.schema!=='private-concrete-source-substitution-batches-v1'||batch.sourceAuthority!==false||batch.runtimeAuthority!==false||batch.rows.length!==requested.length)fail('complete bounded authenticated Core CST chunk differs');for(let index=0;index<requested.length;index++){const raw=requested[index],fragment=JSON.parse(batch.rows[index]),row=raw.record;if(JSON.stringify(Object.keys(fragment))!==JSON.stringify(['beforeMeta','afterMeta','inverse','stages','trace'])||fragment.inverse!==raw.before||fragment.stages.length!==2||fragment.stages[0].phase!=='language'||fragment.stages[0].before!==raw.before||fragment.stages[0].after!==raw.before||fragment.stages[1].phase!=='repository'||fragment.stages[1].before!==raw.before||fragment.stages[1].after!==raw.after||fragment.stages.some(stage=>stage.completeInverse!==true))fail('complete original Core CST row fragment differs');row.beforeMeta=fragment.beforeMeta;row.afterMeta=fragment.afterMeta;row.inverse=fragment.inverse;row.stages=fragment.stages;row.trace=fragment.trace;}}
+ assertConcreteSyntaxHost();for(const row of inputs.values())if(readFileSync(resolve(root,row.path),'utf8')!==row.source)fail('complete Core input changed after all CST chunks');for(const row of snapshots)if(!readFileSync(resolve(root,row.path)).equals(row.bytes))fail('complete Core prerequisite bytes changed after all CST chunks');for(const row of files)if((existsSync(resolve(root,row.path))?readFileSync(resolve(root,row.path),'utf8'):null)!==row.current)fail('complete Core physical output changed after all CST chunks');
+}
+
  root=resolve(root);const ts=ownershipCompiler();if(ts.version!=='5.9.3'||createRequire(resolve(root,'js/package.json'))('typescript')!==ts)fail('actual root native TypeScript5.9.3 required');
  const bytes=prepareWholeOwnerProofByteCandidate({root}),corpus=prepareWholeOwnerCoreCorpusCandidate({root}),core=corpus.coreProducer;
  if([...bytes.files,...core.files,...corpus.files].some(part=>part.current!==part.after))fail('complete current materialized byte19 Core3 and corpus6 required');
@@ -92,13 +99,15 @@ export function prepareProofByteCoreStreamCandidate({root=ROOT}={}){
  const mapping=new Map(COPIES.map(([before,after])=>['./'+before,'./'+after]));
  for(const part of bytes.files){const physical=part.selection.physicalPath,sourcePath=part.selection.sourcePath;if(!physical||!sourcePath)continue;for(const path of [physical,sourcePath])mapping.set('./'+path.slice(BASE.length),'./'+part.path.slice(BASE.length));}
  mapping.set('./derive-enclosing-namespace-context.mjs','./proof-byte-core-enclosing-candidate.mjs');mapping.set('./module-bindings.mjs','./proof-byte-core-bindings-candidate.mjs');mapping.set('./owned-enclosing-module-bindings.mjs','./proof-byte-core-bindings-candidate.mjs');
- const files=COPIES.map(([before,after])=>{const source=input(BASE+before),path=BASE+after;return row(ts,path,source,selection(ts,path,source,mapping),root);});
+ const files=COPIES.map(([before,after])=>{const source=input(BASE+before),path=BASE+after;return row(ts,path,source,selection(ts,path,source,mapping),root,__coreCstPending);});
  const nativeIssuerBindings=joinedBindings(ts,root,files),enclosing=files[0],routes=enclosing.selection.imports.filter(part=>part.target.includes('proof-byte-whole-owner-'));
  if(routes.length!==8||new Set(routes.map(part=>part.target)).size!==6)fail('all seven selected enclosing owner/operation routes and late builtin binding required');
  const ownedAlias=one(files[2].selection.imports.filter(part=>part.original==='./owned-enclosing-module-bindings.mjs'),'owned resolver alias');if(ownedAlias.bindings.length!==1||ownedAlias.bindings[0].requested!=='resolveWholeOwnerEnclosingNamespaceModuleBindings')fail('exact source-derived owned resolver alias required');
  const bindingBirth=one(core.files.filter(part=>part.path===BASE+'whole-owner-core-module-bindings-candidate.mjs'),'current complete Core resolver birth');if(!bindingBirth.selection.originalOwnedWrapper||!bindingBirth.selection.newOwnedWrapper)fail('complete original/native-derived owned resolver equations required');
  input(BASE+'prepare-proof-byte-core-stream-candidate.mjs');const plans=[bytes,bytes.operationProducer,bytes.resolverProducer,bytes.resolverProducer.wholeOwnerProducer,core,corpus,...corpus.originalTemplateProducers],prerequisites=[...bytes.currentProviderInputs,...bytes.prerequisiteInputs,bytes.operationProducer.input,...plans.flatMap(plan=>[...(plan.inputs??[]),...plan.files.map(part=>({path:part.path,sha256:hash(part.after)}))])];
- for(const part of [...inputs.values(),...prerequisites])if(hash(readFileSync(resolve(root,part.path)))!==part.sha256)fail('complete current source prerequisite changed: '+part.path);
+__coreCstFinish(files,inputs,prerequisites,root,__coreCstPending);
+
+ for(const part of [...inputs.values(),...prerequisites])if(hash(readFileSync(resolve(root,part.path)))!==(Object.hasOwn(part,'sha256')?part.sha256:Object.hasOwn(part,'source')&&typeof part.source==='string'?hash(part.source):fail('complete prerequisite requires its own SHA or full primitive source')))fail('complete current source prerequisite changed: '+part.path);
  return {schema:'proof-byte-Core-stream-source-candidate-v1',typescriptVersion:ts.version,inputs:[...inputs.values()],prerequisites,files,nativeIssuerBindings,enclosingRoutes:routes,ownedResolverEquation:bindingBirth.selection,byteProducer:bytes,coreProducer:core,corpusProducer:corpus,stream:{path:BASE+STREAM,schema:SCHEMA},originalDefaultsUnchanged:true,originalFallbackUnchanged:true,originalHashCallsUnchanged:true,foreignProofsRebound:false,newAcrossInvocationCache:false,productionSelected:false,semanticAdmission:false,runtimeExecuted:false,performanceQualified:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
