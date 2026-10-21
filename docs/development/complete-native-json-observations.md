@@ -5,8 +5,11 @@ existing complete native JSON observer equation. Native `JSON.stringify` still
 visits the entire original result and callback tape, preserving its class,
 `toJSON`, getter, omission, Buffer and primitive projection behavior. A private
 replacer indexes primitive string values. Every occurrence remains in the full
-projection, and every distinct string remains in complete UTF16 chunks. Decode
-restores the entire projected result; comparison checks every encoded frame
+projection, and every distinct string remains in complete UTF16 chunks. Dense
+native Uint8Array values retain all bytes in canonical base64 and restore fresh
+views with the identical native JSON projection. Additional own fields,
+subclasses and shared byte storage refuse. Decode restores the complete data
+and byte substrates; comparison checks every encoded frame
 byte. A changed nested digest is fully re-encoded and must fail comparison.
 
 The protocol requires ordinary observation-helper intrinsics. It explicitly
