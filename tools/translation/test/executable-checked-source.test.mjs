@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {translateProject} from '../project.mjs';
-import {prepareExecutableCheckedSource,composeExecutableCheckedSource} from '../prepare-executable-checked-source.mjs';
+import {prepareExecutableCheckedSource,composeExecutableCheckedSource,prepareCurrentExecutableCheckedSource} from '../prepare-executable-checked-source.mjs';
 import {prepareSourceLifetimeRefusalBatches} from '../prepare-source-lifetime-refusal-batches.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 import {sameType} from '../checked-types.mjs';
@@ -12,12 +12,14 @@ function input(source,extra={}){return {'src/lib.rs':'pub mod translation_core;'
 function project(files){return translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path]});}
 
 test('complete checked-source layer joins the unchanged lifetime birth and retains both CST phases and full inverse',limits,()=>{
- const plan=prepareExecutableCheckedSource(),birth=prepareSourceLifetimeRefusalBatches(),row=plan.files[0];
+ const plan=prepareExecutableCheckedSource(),birth=prepareSourceLifetimeRefusalBatches(),row=plan.files[0],current=prepareCurrentExecutableCheckedSource();
  assert.equal(plan.typescriptVersion,'5.9.3');assert.equal(plan.lowerAPIUnchanged,true);assert.equal(plan.newAcrossInvocationCache,false);assert.equal(plan.semanticAuthority,false);
- assert.equal(row.current,row.after);assert.equal(row.before,plan.input.source);assert.equal(row.beforeSha256,hash(row.before));assert.equal(row.afterSha256,hash(row.after));assert.equal(row.inverse,row.before);
+ assert.equal(row.current,current.files.find(final=>final.path===row.path).after);assert.equal(row.before,plan.input.source);assert.equal(row.beforeSha256,hash(row.before));assert.equal(row.afterSha256,hash(row.after));assert.equal(row.inverse,row.before);
  assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.before);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);assert.deepEqual(row.trace.map(part=>part.phase),['language','repository']);assert.deepEqual(row.nativeBindings.unboundIdentifiers,[]);
  const prior=Object.fromEntries(birth.files.map(part=>[part.path,part]));assert.equal(prior[row.path].after,row.before);const composed=composeExecutableCheckedSource(prior);assert.equal(composed.sources[row.path].after,row.after);assert.equal(composed.historicalSources,prior);
  assert.throws(()=>composeExecutableCheckedSource({...prior,[row.path]:{...prior[row.path],after:prior[row.path].after+' '}}),/preceding complete project equation/u);
+ assert.equal(current.layers.length,2);assert.equal(current.layers[1].files.find(part=>part.path===row.path).before,row.after);
+ for(const final of current.layers[1].files){assert.equal(final.current,final.after);assert.equal(final.inverse,final.before);assert.equal(transportConcreteSyntaxMeta(final.beforeMeta).source,final.before);assert.equal(transportConcreteSyntaxMeta(final.afterMeta).source,final.after);assert.deepEqual(final.trace.map(part=>part.phase),['language','repository']);assert.ok(final.nativeCopies);}
 });
 
 test('same-invocation accessor retains source Vec identity and checked body while lower keeps its portable contract',limits,()=>{

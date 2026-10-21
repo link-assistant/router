@@ -5,7 +5,9 @@
 native TypeScript 5.9.3 selection and the language/repository CST sequences.
 `--check` compares the freshly derived complete output to the physical project.
 The pinned full input is the project output from commit
-`02e72d083d4bcd357bd74576ac535133b37d4a3c`. The original `.lower()` body and API
+`02e72d083d4bcd357bd74576ac535133b37d4a3c`. The current wrapper and CLI additionally compose the later source-proof
+preservation table layer. Its three complete current files retain their own
+native copies, CST and inverse. The original `.lower()` body and API
 remain unchanged. Lifetime and vector source checks compose this layer explicitly
 instead of changing their original birth equations.
 

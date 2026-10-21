@@ -4,6 +4,7 @@ import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
+import {composeSourceProofPreservation} from './prepare-source-proof-preservation.mjs';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
@@ -44,9 +45,18 @@ export function prepareExecutableCheckedSource({root=ROOT}={}){
 export function composeExecutableCheckedSource(prior,options={}){
  const plan=prepareExecutableCheckedSource(options),sources={...prior};for(const row of plan.files){if(sources[row.path]&&sources[row.path].after!==row.before)fail('preceding complete project equation differs');sources[row.path]=row;}return {sources,layers:[plan],historicalSources:prior};
 }
+// Current output is an explicit later layer; the original checked-source
+// equation and its native selection/CST inverse above remain unchanged.
+export function prepareCurrentExecutableCheckedSource(options={}){
+ const birth=prepareExecutableCheckedSource(options),preserved=composeSourceProofPreservation(Object.fromEntries(birth.files.map(row=>[row.path,row])),options);
+ return {schema:'current-executable-checked-source-source-v1',birth,layers:[birth,...preserved.layers],files:Object.values(preserved.sources),semanticAuthority:false};
+}
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const args=process.argv.slice(2);if(args.length!==1||!['--check','--write'].includes(args[0]))fail('usage: --check|--write');const plan=prepareExecutableCheckedSource();
- if(args[0]==='--write'){for(const row of plan.files){if(![row.before,row.after].includes(row.current)||readFileSync(resolve(ROOT,row.path),'utf8')!==row.current)fail('complete current project changed');writeFileSync(resolve(ROOT,row.path),row.after);}}
+ const args=process.argv.slice(2);if(args.length!==1||!['--check','--write'].includes(args[0]))fail('usage: --check|--write');const plan=prepareCurrentExecutableCheckedSource();
+ if(args[0]==='--write'){
+  for(const row of plan.files)if(!plan.layers.flatMap(layer=>layer.files.filter(part=>part.path===row.path).flatMap(part=>[part.before,part.after])).includes(row.current)||readFileSync(resolve(ROOT,row.path),'utf8')!==row.current)fail('complete current source changed');
+  for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);
+ }
  else if(plan.files.some(row=>row.current!==row.after))fail('complete generated project source is stale');
  console.log(JSON.stringify({schema:plan.schema,files:plan.files.map(row=>row.path),semanticAuthority:false}));
 }

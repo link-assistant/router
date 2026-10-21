@@ -11,6 +11,7 @@ import {sourceItems} from '../rust-structure.mjs';
 import {migrateCoreVectors} from '../migrate-core-vectors.mjs';
 import {prepareCoreVectorSources} from '../prepare-core-vector-sources.mjs';
 import {composeCurrentCoreMatchesSources} from '../prepare-core-matches-sources.mjs';
+import {composeSourceProofPreservation} from '../prepare-source-proof-preservation.mjs';
 import {composeExecutableCheckedSource} from '../prepare-executable-checked-source.mjs';
 import {composeSourceLifetimeRefusalBatches} from '../prepare-source-lifetime-refusal-batches.mjs';
 import {checkRouterCoreVector, hasCheckedRouterCoreVector} from '../router-core-vectors.mjs';
@@ -56,7 +57,14 @@ test('native source producer derives the actual owned wrapper and composes compl
   assert.equal(lifetime.layers[0].files.find(row => row.path.endsWith('/source-lifetimes.mjs')).before, result.value.sources['tools/translation/extensions/source-lifetimes.mjs'].after);
   const checked = retain('complete-current-executable-checked-source-layer', composeExecutableCheckedSource(lifetime.sources));
   assert.equal(checked.layers[0].files[0].before, lifetime.sources['tools/translation/project.mjs'].after);
-  const composition = retain('complete-current-owned-matches-source-layer', composeCurrentCoreMatchesSources(checked.sources));
+  const preserved = retain('complete-current-source-proof-preservation-layer', composeSourceProofPreservation(checked.sources));
+  assert.equal(preserved.layers[0].files.find(row => row.path === 'tools/translation/project.mjs').before, checked.sources['tools/translation/project.mjs'].after);
+  for (const row of preserved.layers[0].files) {
+    assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source, row.before);
+    assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source, row.after);
+    assert.equal(row.inverse, row.before); assert.ok(row.nativeCopies);
+  }
+  const composition = retain('complete-current-owned-matches-source-layer', composeCurrentCoreMatchesSources(preserved.sources));
   assert.equal(composition.layers[0].inputs.facade, result.value.sources['rust/src/translation_core.rs'].after);
   assert.equal(composition.sources['rust/src/translation_core.rs'].after, ROUTER_FORMATTING_FACADE_SOURCE);
   for (const [path, source] of Object.entries(composition.sources)) assert.equal(readFileSync(new URL(path, root), 'utf8'), source.after, path);

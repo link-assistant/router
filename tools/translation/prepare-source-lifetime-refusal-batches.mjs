@@ -4,6 +4,7 @@ import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {composeSourceProofPreservation} from './prepare-source-proof-preservation.mjs';
 import {composeExecutableCheckedSource} from './prepare-executable-checked-source.mjs';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
@@ -118,13 +119,14 @@ export function composeSourceLifetimeRefusalBatches(prior, options = {}) {
 export function prepareCurrentSourceLifetimeRefusalBatches(options = {}) {
   const birth = prepareSourceLifetimeRefusalBatches(options);
   const checked = composeExecutableCheckedSource(Object.fromEntries(birth.files.map(row => [row.path, row])), options);
-  return {schema: 'current-source-lifetime-refusal-batch-source-v1', birth, layers: [birth, ...checked.layers], files: Object.values(checked.sources), semanticAuthority: false};
+  const preserved = composeSourceProofPreservation(checked.sources, options);
+  return {schema: 'current-source-lifetime-refusal-batch-source-v1', birth, layers: [birth, ...checked.layers, ...preserved.layers], files: Object.values(preserved.sources), semanticAuthority: false};
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const [mode] = process.argv.slice(2); if (process.argv.length !== 3 || !['--check', '--write'].includes(mode)) fail('usage: --check|--write');
   const plan = prepareCurrentSourceLifetimeRefusalBatches();
   if (mode === '--write') {
-    for (const row of plan.files) if (![row.before,row.after,plan.birth.files.find(original => original.path === row.path).before].includes(row.current)) fail('current source differs from both complete original and generated source: '+row.path);
+    for (const row of plan.files) if (!plan.layers.flatMap(layer => layer.files.filter(part => part.path === row.path).flatMap(part => [part.before,part.after])).includes(row.current)) fail('current source differs from both complete original and generated source: '+row.path);
     for (const row of plan.files) { if (readFileSync(resolve(ROOT,row.path),'utf8') !== row.current) fail('current source changed before publication'); writeFileSync(resolve(ROOT, row.path), row.after); }
   }
   else if (plan.files.some(row => row.current !== row.after)) fail('complete generated lifetime collection source is stale');

@@ -241,10 +241,11 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     // the original vector producer and birth outputs above remain unchanged.
     const lifetime = (await import('./prepare-source-lifetime-refusal-batches.mjs')).composeSourceLifetimeRefusalBatches(result.value.sources, {root});
     const checked = (await import('./prepare-executable-checked-source.mjs')).composeExecutableCheckedSource(lifetime.sources, {root});
+    const preserved = (await import('./prepare-source-proof-preservation.mjs')).composeSourceProofPreservation(checked.sources, {root});
     const matched = existsSync(resolve(root, 'tools/translation/test/fixtures/owned-matches-original-inputs.json.gz'))
-      ? (await import('./prepare-core-matches-sources.mjs')).composeCurrentCoreMatchesSources(checked.sources, {root})
-      : {sources: checked.sources, layers: []};
-    const composition = {sources: matched.sources, layers: [...lifetime.layers, ...checked.layers, ...matched.layers]};
+      ? (await import('./prepare-core-matches-sources.mjs')).composeCurrentCoreMatchesSources(preserved.sources, {root})
+      : {sources: preserved.sources, layers: []};
+    const composition = {sources: matched.sources, layers: [...lifetime.layers, ...checked.layers, ...preserved.layers, ...matched.layers]};
     const generated = composition.sources;
     const current = Object.fromEntries(Object.keys(generated).map(name => [name, readFileSync(resolve(root, name), 'utf8')]));
     if (args[2] === '--check') {

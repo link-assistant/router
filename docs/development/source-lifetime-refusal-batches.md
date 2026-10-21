@@ -37,6 +37,6 @@ The historical three-file `prepareSourceLifetimeRefusalBatches()` result remains
 unchanged. `prepareCurrentSourceLifetimeRefusalBatches()` and the CLI explicitly
 compose the later executable checked-source accessor onto the exact complete
 project output. The current vector source check composes vector → lifetime
-batch → checked source → matches. Each layer retains its own original input,
+batch → checked source → source proof preservation → matches. Each layer retains its own original input,
 serialized/reparsed CST and complete inverse; matching current bytes does not
 replace any historical source equation.
