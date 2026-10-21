@@ -141,3 +141,54 @@ primitive/source-map joins are strengthened inside those cases. The additional
 archive work may itself consume material CPU or disk, and neither the full case's
 60-second fit nor any speed or application coverage gain is established. No
 engine, generation, native parser, test or Rust execution ran for this follow-up.
+
+## Explicit production-profile and relocation repair
+
+Root's first complete seven-case receiving attempt passed cases 1, 2, 3, 5 and
+6. Case 4 failed the unchanged exact source-relocation verifier. Case 7 failed
+before proposals because its neutral graph exceeded the existing 512-module
+macro-context limit; its 63176 ms duration also exceeded its original 60000 ms
+case bound. The complete 129.45-second run remains RED at
+`router-layout-check-complete-owned-unit-matches-seven-original-cases-Node-v1`,
+with deadline audit `complete-3D9K4a`. These two source repairs remain unrun.
+
+The enclosing primitive wrapper does not drop a supplied profile: it preserves
+`compilationProfile:inputProfile` through normalization, the complete module graph
+and the same private enclosing issuer. The production case itself omitted the
+profile from both project checks and the primitive phase, while the unit adopter
+already defaulted to `PRODUCTION_PROFILE`. The case now explicitly supplies that
+same existing profile through every phase and checks every returned graph/context
+profile. It sets only `test:false`; platform, feature and other cfg alternatives
+remain unknown. Neutral/default APIs and all seven workloads/deadlines remain.
+Real project-graph end observations are retained, including on failure, without
+constructing an extra graph or increasing any module limit.
+
+A streaming source-only audit of the complete stored frontier finds exactly
+209 distinct TYPE-first functions: str106, Result53, Option36, Vec14 across 27
+active scopes. All use the existing production profile; the full stored report
+contains 1370 identical profile values. There are zero explicit queried-name
+bindings. Scope flags by function are 27 type-only, 173 type+bang+attribute and
+nine type+bang. These are historical compiler facts, not fresh outcomes. The
+stored production graph has 396 module coordinates, below 512; that supports the
+cfg(test)-inflation diagnosis but does not prove the current graph's fit or time.
+
+The highest-priority residual source classes are literal item includes in
+`model_routing` (23 TYPE-first functions), `gemini_bridge_request` (19) and
+`native_service` (12), followed by privately provable builtin derives such as
+`storage::associative` (18). Counts identify first-refusal contexts only; no
+complete-function gains can be inferred. Named unresolved imports already bind
+only their actual leaf name, and anonymous trait imports do not poison every
+type name. Removing those diagnostics would not close opaque producer effects.
+A future name-specific refinement must consume genuine complete enclosing type
+footprints across every cfg/producer alternative and prove that the queried
+name is absent; spelling lists or copied scope flags cannot supply this proof.
+For literal includes, the actual macro owner, complete selected source/Cargo
+origin, include/cfg closure and every nested producer remain prerequisites.
+
+The custody fixture now selects the actual full `relocatedSyntax` callback using
+native TypeScript, clones/reparses its entire native body, validates complete
+native bindings and emits a separate pure fixture module through the two CST
+phases with a complete original-module inverse. Its exact opaque `sourcePattern`
+coordinates remain unchanged. This data constructor issues no token; the real
+linker independently enforces its original complete relocation equation. A
+separate corrupted source-pattern span still must fail that same verifier.
