@@ -1,0 +1,2 @@
+- Draft the explicit complete 07ed guarded-import layer before C6 receiving source fences and the original alias digest. Retain genuine full producers, current/runtime source bytes, all intermediate native/CST inverses and final physical input fences; preserve all original controls and deadlines.
+- Add a separate original-plan reader import proposal for the private-frozen whole file and three independent controls. Keep actual runtime modules guarded, old alias fixture/producer strict, and every unknown body/import drift refused. Worker generation and engines remain UNRUN.
