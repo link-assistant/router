@@ -7,6 +7,7 @@ import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
 import {prepareCoreAsciiReverseSources} from './prepare-core-ascii-reverse-sources.mjs';
+import {composeCoreAsciiBaseAssets} from './prepare-core-ascii-base-assets.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const HOST='tools/translation/host-assets.mjs',HELPER='tools/translation/ascii-runtime-assets.mjs',DATA='tools/translation/ascii-runtime-assets-source-data.mjs',SOURCE='tools/translation/js-to-rust/owned-core-source.mjs';
@@ -97,9 +98,10 @@ export function prepareCoreAsciiAssets({root=ROOT}={}){
  const result=afterSources(ts,rows);return {schema:'router-owned-ascii-assets-v1',typescriptVersion:ts.version,files:result.files.map(row=>prepare(ts,row,root)),selection:{path:HOST,source:parent.source,sha256:parent.sha256,statements:result.selection.selected.map(row=>({name:row.name,span:[row.node.getStart(),row.node.end],source:row.node.getText()})),nativeBindings:result.selection.nativeBindings,nativeLexicalBindings:result.selection.links},runtimeExecuted:false,rustExecuted:false,semanticAuthority:false,fullBuilderCallbackParity:false};
 }
 export function composeCoreAsciiAssets(prior,options={}){const plan=prepareCoreAsciiAssets(options),sources={...prior};for(const row of plan.files){if(sources[row.path]&&sources[row.path].after!==row.before)fail('preceding complete source equation differs: '+row.path);sources[row.path]=row;}return {sources,layers:[plan],historicalSources:prior};}
-export function prepareCurrentCoreAsciiReverseAssets(options={}){const birth=prepareCoreAsciiReverseSources(options),current=composeCoreAsciiAssets(Object.fromEntries(birth.files.map(row=>[row.path,row])),options);return {schema:'current-owned-ascii-reverse-assets-v1',birth,layers:[birth,...current.layers],files:Object.values(current.sources),semanticAuthority:false};}
+export function prepareCurrentCoreAsciiAssets(options={}){const birth=prepareCoreAsciiAssets(options),base=composeCoreAsciiBaseAssets(Object.fromEntries(birth.files.map(row=>[row.path,row])),options);return {schema:'current-owned-ascii-assets-v1',birth,layers:[birth,...base.layers],files:Object.values(base.sources),semanticAuthority:false};}
+export function prepareCurrentCoreAsciiReverseAssets(options={}){const birth=prepareCoreAsciiReverseSources(options),assets=composeCoreAsciiAssets(Object.fromEntries(birth.files.map(row=>[row.path,row])),options),base=composeCoreAsciiBaseAssets(assets.sources,options);return {schema:'current-owned-ascii-reverse-assets-v1',birth,layers:[birth,...assets.layers,...base.layers],files:Object.values(base.sources),semanticAuthority:false};}
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const args=process.argv.slice(2);if(args.length!==1||!['--write','--check'].includes(args[0]))fail('usage: --write|--check');const plan=prepareCoreAsciiAssets();
- if(args[0]==='--write'){for(const row of plan.files)if(row.current!==null&&![row.before,row.after].includes(row.current))fail('physical complete parent differs: '+row.path);for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);}
+ const args=process.argv.slice(2);if(args.length!==1||!['--write','--check'].includes(args[0]))fail('usage: --write|--check');const plan=prepareCurrentCoreAsciiAssets();
+ if(args[0]==='--write'){for(const row of plan.files)if(row.current!==null&&!plan.layers.flatMap(layer=>layer.files.filter(part=>part.path===row.path).flatMap(part=>[part.before,part.after])).includes(row.current))fail('physical complete parent differs: '+row.path);for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);}
  else if(plan.files.some(row=>row.current!==row.after))fail('complete generated ASCII assets are stale');console.log(JSON.stringify({schema:plan.schema,files:plan.files.map(row=>row.path),fullBuilderCallbackParity:false,rustExecuted:false}));
 }

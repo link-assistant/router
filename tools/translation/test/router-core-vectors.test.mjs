@@ -1,4 +1,4 @@
-import {assertAsciiSourceComposition,assertAsciiReverseComposition,assertAsciiAssetsComposition} from './ascii-source-composition.mjs';
+import {assertAsciiSourceComposition,assertAsciiReverseComposition,assertAsciiAssetsComposition,assertAsciiBaseAssetsComposition} from './ascii-source-composition.mjs';
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync, writeFileSync, mkdirSync} from 'node:fs';
@@ -16,6 +16,7 @@ import {composePrimitiveIdentityBoundary} from '../prepare-primitive-identity-bo
 import {composeCoreAscii} from '../prepare-core-ascii-sources.mjs';
 import {composeCoreAsciiReverse} from '../prepare-core-ascii-reverse-sources.mjs';
 import {composeCoreAsciiAssets} from '../prepare-core-ascii-assets.mjs';
+import {composeCoreAsciiBaseAssets} from '../prepare-core-ascii-base-assets.mjs';
 import {composeSourceProofPreservation} from '../prepare-source-proof-preservation.mjs';
 import {composeExecutableCheckedSource} from '../prepare-executable-checked-source.mjs';
 import {composeSourceLifetimeRefusalBatches} from '../prepare-source-lifetime-refusal-batches.mjs';
@@ -82,11 +83,14 @@ test('native source producer derives the actual owned wrapper and composes compl
   assert.equal(ascii.historicalSources, boundary.sources);
   const reverse = retain('complete-current-owned-ascii-reverse-source-layer', composeCoreAsciiReverse(ascii.sources));
   assert.equal(reverse.historicalSources, ascii.sources);
-  const composition = retain('complete-current-owned-ascii-assets-source-layer', composeCoreAsciiAssets(reverse.sources));
-  assert.equal(composition.historicalSources, reverse.sources);
+  const assets = retain('complete-current-owned-ascii-assets-source-layer', composeCoreAsciiAssets(reverse.sources));
+  assert.equal(assets.historicalSources, reverse.sources);
+  const composition = retain('complete-current-owned-ascii-base-assets-source-layer', composeCoreAsciiBaseAssets(assets.sources));
+  assert.equal(composition.historicalSources, assets.sources);
   assertAsciiSourceComposition(ascii.layers[0], boundary.sources, composition.sources);
   assertAsciiReverseComposition(reverse.layers[0], ascii.sources, composition.sources);
-  assertAsciiAssetsComposition(composition.layers[0], reverse.sources, composition.sources);
+  assertAsciiAssetsComposition(assets.layers[0], reverse.sources, composition.sources);
+  assertAsciiBaseAssetsComposition(composition.layers[0], assets.sources, composition.sources);
   const reverseSource = reverse.layers[0].files[0];
   assert.throws(() => composeCoreAsciiReverse({...ascii.sources, [reverseSource.path]: {after: 'forged'}}), /preceding complete source equation/u);
   assert.throws(() => composeCoreAscii({...boundary.sources, 'rust/src/translation_core.rs': {after: 'forged'}}), /preceding complete source equation/u);
