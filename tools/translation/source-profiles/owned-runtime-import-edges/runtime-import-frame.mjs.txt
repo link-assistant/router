@@ -1,12 +1,12 @@
 // Primitive import-edge storage only. Native AST/checkers never enter a frame.
-const __runtimeImportInitial=originalNamespaceTraversalIntrinsicsUnchanged()&&originalPrivateParserIngressUnchanged()&&originalDataFreezeIntrinsicsUnchanged()&&originalStaticSourceIntrinsicsUnchanged();
+const __runtimeImportInitial=originalPrivateParserIngressUnchanged()&&originalNamespaceTraversalIntrinsicsUnchanged()&&originalDataFreezeIntrinsicsUnchanged()&&originalStaticSourceIntrinsicsUnchanged();
 const __runtimeImportPins=__runtimeImportInitial?__RUNTIME_IMPORT_PINS_LITERAL__:null;
 const __runtimeImportOps=__runtimeImportInitial?{get:Object.getOwnPropertyDescriptor,keys:Reflect.ownKeys,parent:Object.getPrototypeOf,own:Object.hasOwn,apply:Reflect.apply,define:Object.defineProperty,proxy:types.isProxy,Map,getMap:Map.prototype.get,setMap:Map.prototype.set,clear:Map.prototype.clear,freeze:Object.freeze}:null;
 let __runtimeImportActive=null;
 function runtimeImportDescriptorSame(a,b){return !!a&&!!b&&a.value===b.value&&a.get===b.get&&a.set===b.set&&a.writable===b.writable&&a.enumerable===b.enumerable&&a.configurable===b.configurable;}
 function runtimeImportBootstrap(budget){
  const bad=reason=>{budget.reason=reason;return null;};
- const o=__runtimeImportOps;if(!o||!originalNamespaceTraversalIntrinsicsUnchanged()||!originalPrivateParserIngressUnchanged()||!originalDataFreezeIntrinsicsUnchanged()||!originalStaticSourceIntrinsicsUnchanged())return bad('initial-native-operations');
+ const o=__runtimeImportOps;if(!o||!originalPrivateParserIngressUnchanged()||!originalNamespaceTraversalIntrinsicsUnchanged()||!originalDataFreezeIntrinsicsUnchanged()||!originalStaticSourceIntrinsicsUnchanged())return bad('initial-native-operations');
  const ts=ownershipCompiler();if(!ownershipCompilerRuntimeNativeCurrent(ts))return bad('native-loader-function-identity');if(ts.version!=='5.9.3'||o.proxy(ts))return bad('compiler-native-shape');
  const rows=[],seen=[];
  function capture(owner,tag,selected){
@@ -33,7 +33,7 @@ function runtimeImportBootstrap(budget){
  return {ts,rows,debug,performance,getLevel,isEnabled};
 }
 function runtimeImportNativeCurrent(n){
- const o=__runtimeImportOps;if(!n||!originalNamespaceTraversalIntrinsicsUnchanged()||!originalPrivateParserIngressUnchanged()||!originalDataFreezeIntrinsicsUnchanged()||!originalStaticSourceIntrinsicsUnchanged()||ownershipCompiler()!==n.ts||!ownershipCompilerRuntimeNativeCurrent(n.ts))return false;
+ const o=__runtimeImportOps;if(!n||!originalPrivateParserIngressUnchanged()||!originalNamespaceTraversalIntrinsicsUnchanged()||!originalDataFreezeIntrinsicsUnchanged()||!originalStaticSourceIntrinsicsUnchanged()||ownershipCompiler()!==n.ts||!ownershipCompilerRuntimeNativeCurrent(n.ts))return false;
  for(const row of n.rows){if(o.proxy(row.owner)||o.parent(row.owner)!==row.parent)return false;const names=row.selected?row.names:o.keys(row.owner);if(names.length!==row.names.length)return false;for(let at=0;at<names.length;at++)if(names[at]!==row.names[at]||!runtimeImportDescriptorSame(o.get(row.owner,names[at]),row.fields[at]))return false;}
  return n.ts.tracing===undefined&&o.apply(n.isEnabled,n.performance,[])===false&&o.apply(n.getLevel,n.debug,[])===0&&n.debug.isDebugging===false;
 }
@@ -52,7 +52,7 @@ function runtimeImportEpochClose(epoch){
  epoch.frame=null;epoch.native=null;
 }
 function runtimeImportEpochReturn(epoch,value){if(epoch)epoch.complete=true;return value;}
-function runtimeImportEpochUsable(epoch){return !!epoch&&epoch.open&&epoch.frame===__runtimeImportActive&&epoch.frame.open&&!epoch.frame.disabled;}
+function runtimeImportEpochUsable(epoch){if(!epoch||!epoch.open||epoch.frame!==__runtimeImportActive||!epoch.frame.open||epoch.frame.disabled)return false;if(!runtimeImportNativeCurrent(epoch.native)){runtimeImportDisable(epoch.frame);return false;}return true;}
 function runtimeImportParsed(ts,path,source,epoch){
  if(!runtimeImportEpochUsable(epoch))return parsed(ts,path,source);
  const frame=epoch.frame,o=__runtimeImportOps,cached=frame.entries?o.apply(o.getMap,frame.entries,[path]):undefined;
@@ -86,7 +86,7 @@ export function withOwnedRuntimeImportEdges(run){
  if(typeof run!=='function')throw new TypeError('Runtime import DATA scope requires its synchronous callback');
  const o=__runtimeImportOps;if(o&&o.proxy(run))throw new TypeError('Runtime import DATA scope refuses proxy callbacks');
  const prior=__runtimeImportActive,frame={open:true,parent:prior,disabled:!!prior?.disabled,entries:null,budget:prior?prior.budget:{rows:0,units:0,edges:0,native:null,attempted:false,reason:null},hits:0,misses:0,stores:0};__runtimeImportActive=frame;
- let completed=false;try{const value=run();if(!originalNamespaceTraversalIntrinsicsUnchanged()||!originalStaticSourceIntrinsicsUnchanged()||frame.budget.native&&!runtimeImportNativeCurrent(frame.budget.native))runtimeImportDisable(frame);if(o&&!frame.disabled)runtimeImportSynchronous(value);completed=true;return value;}
+ let completed=false;try{const value=run();if(!originalPrivateParserIngressUnchanged()||!originalNamespaceTraversalIntrinsicsUnchanged()||!originalStaticSourceIntrinsicsUnchanged()||frame.budget.native&&!runtimeImportNativeCurrent(frame.budget.native))runtimeImportDisable(frame);if(o&&!frame.disabled)runtimeImportSynchronous(value);completed=true;return value;}
  finally{if(!completed)runtimeImportDisable(frame);if(frame.budget.native&&!runtimeImportNativeCurrent(frame.budget.native))runtimeImportDisable(frame);frame.open=false;if(frame.entries)o.apply(o.clear,frame.entries,[]);frame.entries=null;frame.parent=null;if(!prior){if(frame.budget.native)frame.budget.native.rows.length=0;frame.budget.native=null;}__runtimeImportActive=prior;}
 }
 export function ownedRuntimeImportEdgeFacts(){
