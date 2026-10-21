@@ -1,5 +1,6 @@
 // Native loader/function identities only. No source, syntax or verdict cache.
 const ownershipRuntimeRoot=globalThis;
+const ownershipRuntimeLazyAssertions=__OWNERSHIP_RUNTIME_LAZY_ASSERTIONS__;
 const ownershipRuntimeOps={get:Object.getOwnPropertyDescriptor,keys:Reflect.ownKeys,parent:Object.getPrototypeOf,define:Object.defineProperty,own:Object.hasOwn,apply:Reflect.apply,proxy:ownershipNativeTypes.isProxy};
 const ownershipRuntimeLoader={globalSelf:ownershipRuntimeOps.get(ownershipRuntimeRoot,'globalThis'),modulePrototype:ownershipRuntimeOps.get(Module,'prototype'),load:ownershipRuntimeOps.get(Module,'_load'),extensions:ownershipRuntimeOps.get(Module,'_extensions'),compile:ownershipRuntimeOps.get(Module.prototype,'_compile'),resolve:ownershipRuntimeOps.get(Module,'_resolveFilename'),moduleCache:ownershipRuntimeOps.get(Module,'_cache'),cache:ownershipRuntimeOps.get(require,'cache'),object:Object,array:Array,reflect:Reflect,globals:[ownershipRuntimeOps.get(ownershipRuntimeRoot,'Object'),ownershipRuntimeOps.get(ownershipRuntimeRoot,'Array'),ownershipRuntimeOps.get(ownershipRuntimeRoot,'Reflect')],operationFields:[ownershipRuntimeOps.get(Object,'getOwnPropertyDescriptor'),ownershipRuntimeOps.get(Reflect,'ownKeys'),ownershipRuntimeOps.get(Object,'getPrototypeOf'),ownershipRuntimeOps.get(Object,'defineProperty'),ownershipRuntimeOps.get(Object,'hasOwn'),ownershipRuntimeOps.get(Reflect,'apply'),ownershipRuntimeOps.get(ownershipNativeTypes,'isProxy')]};
 const ownershipRuntimeFs=(()=>{const o=ownershipRuntimeOps,field=o.get(ownershipNativeFs,'default'),owners=[ownershipNativeFs],rows=[];if(field&&o.own(field,'value')&&field.value)o.define(owners,'1',{value:field.value,writable:true,enumerable:true,configurable:true});for(let at=0;at<owners.length;at++){const owner=owners[at];if(o.proxy(owner))return null;const names=o.keys(owner),fields=[];for(let index=0;index<names.length;index++)o.define(fields,''+fields.length,{value:o.get(owner,names[index]),writable:true,enumerable:true,configurable:true});o.define(rows,''+rows.length,{value:{owner,names,fields},writable:true,enumerable:true,configurable:true});}return rows;})();
@@ -17,7 +18,7 @@ function ownershipRuntimeLoadersCurrent(){
 function ownershipRuntimeCapture(value){
  const o=ownershipRuntimeOps,rows=[];function append(array,item){o.define(array,''+array.length,{value:item,writable:true,enumerable:true,configurable:true});}
  function capture(owner,selected){if(!owner||typeof owner!=='object'&&typeof owner!=='function'||o.proxy(owner))return false;for(let at=0;at<rows.length;at++)if(rows[at].owner===owner)return true;const names=selected??o.keys(owner),fields=[];for(let at=0;at<names.length;at++)append(fields,o.get(owner,names[at]));append(rows,{owner,names,fields,parent:o.parent(owner),selected:!!selected});return true;}
- if(!capture(value,['createSourceFile','isImportDeclaration','isExportDeclaration','forEachChild','forEachChildRecursively','setParentRecursive','setParent','isJSDocNode','ScriptKind','ScriptTarget','Debug','objectAllocator','performance','tracing']))return null;
+ if(!capture(value,['noop','createSourceFile','isImportDeclaration','isExportDeclaration','forEachChild','forEachChildRecursively','setParentRecursive','setParent','isJSDocNode','ScriptKind','ScriptTarget','Debug','objectAllocator','performance','tracing']))return null;
  // The actual fresh official module has returned; these are its original
  // exported containers and allocator factories, before caller access resumes.
  const objects=[value.ScriptKind,value.ScriptTarget,value.Debug,value.objectAllocator,value.performance];
@@ -25,7 +26,8 @@ function ownershipRuntimeCapture(value){
  if(value.Debug.loggingHost!==undefined&&!capture(value.Debug.loggingHost))return null;
  const names=['getNodeConstructor','getTokenConstructor','getIdentifierConstructor','getPrivateIdentifierConstructor','getSourceFileConstructor'];
  for(let at=0;at<names.length;at++){const field=o.get(value.objectAllocator,names[at]);if(!field||!o.own(field,'value')||typeof field.value!=='function'||o.proxy(field.value))return null;let ctor=o.apply(field.value,value.objectAllocator,[]),depth=0;if(typeof ctor!=='function'||!capture(ctor))return null;let owner=ctor.prototype;while(owner!==null){if(++depth>8||!capture(owner))return null;owner=o.parent(owner);}owner=o.parent(ctor);depth=0;while(owner!==null){if(++depth>8||!capture(owner))return null;owner=o.parent(owner);}}
- return {value,rows};
+ const noop=value.noop,level=o.get(value.Debug,'getAssertionLevel');if(typeof noop!=='function'||o.proxy(noop)||!level||!o.own(level,'value')||typeof level.value!=='function'||o.proxy(level.value))return null;
+ return {value,rows,noop,debug:value.Debug,getLevel:level.value};
 }
 // Only original source-selected native require functions enter this private
 // loader. No public callback or caller-supplied compiler can issue identities.
@@ -40,6 +42,6 @@ function ownershipRuntimeRequire(load,root=sourceRoot){
 }
 export function ownershipCompilerRuntimeNativeCurrent(value){
  const n=ownershipRuntimeNative,o=ownershipRuntimeOps;if(!n||n.value!==value||!ownershipRuntimeLoadersCurrent())return false;
- for(let at=0;at<n.rows.length;at++){const row=n.rows[at];if(o.proxy(row.owner)||o.parent(row.owner)!==row.parent)return false;const names=row.selected?row.names:o.keys(row.owner);if(names.length!==row.names.length)return false;for(let index=0;index<names.length;index++)if(names[index]!==row.names[index]||!ownershipRuntimeSame(o.get(row.owner,names[index]),row.fields[index]))return false;}
- return true;
+ for(let at=0;at<n.rows.length;at++){const row=n.rows[at];if(o.proxy(row.owner)||o.parent(row.owner)!==row.parent)return false;const names=row.selected?row.names:o.keys(row.owner);if(names.length!==row.names.length)return false;for(let index=0;index<names.length;index++){if(names[index]!==row.names[index])return false;const actual=o.get(row.owner,names[index]),birth=row.fields[index];if(ownershipRuntimeSame(actual,birth))continue;let lazy=false;if(row.owner===n.debug)for(let item=0;item<ownershipRuntimeLazyAssertions.length;item++)if(names[index]===ownershipRuntimeLazyAssertions[item]){lazy=true;break;}if(!lazy||!actual||!birth||!o.own(actual,'value')||!o.own(birth,'value')||typeof birth.value!=='function'||actual.value!==n.noop||actual.get!==birth.get||actual.set!==birth.set||actual.writable!==birth.writable||actual.enumerable!==birth.enumerable||actual.configurable!==birth.configurable)return false;}}
+ return o.apply(n.getLevel,n.debug,[])===0;
 }
