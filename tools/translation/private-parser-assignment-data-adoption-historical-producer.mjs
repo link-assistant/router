@@ -1,0 +1,55 @@
+import {capturePrivateParserDataSourceHistory} from './private-parser-data-source-history.mjs';
+// Emit-only proposal. This module cannot install or select a default route.
+import {readFileSync,lstatSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
+import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
+import {prepareHistoricalPrivateParserAssignmentDataCandidate} from './private-parser-assignment-data-historical-producer.mjs';
+import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
+const ROOT=fileURLToPath(new URL('../../',import.meta.url)),TARGET='tools/translation/private-parser-execution.mjs',BASE='tools/translation/';
+const hash=value=>createHash('sha256').update(value).digest('hex'),fail=message=>{throw TypeError('Private DATA adoption proposal: '+message);};
+function one(rows,label){if(rows.length!==1)fail('unique actual native declaration required: '+label);return rows[0];}
+function native(ts,path,source){
+ const absolute=resolve(path),file=ts.createSourceFile(absolute,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);if(file.parseDiagnostics.length)fail('complete actual native grammar differs');
+ const host={getSourceFile:name=>name===absolute?file:undefined,getDefaultLibFileName:()=>'',writeFile:()=>{},getCurrentDirectory:()=>resolve('/'),getDirectories:()=>[],fileExists:name=>name===absolute,readFile:name=>name===absolute?source:undefined,getCanonicalFileName:name=>name,useCaseSensitiveFileNames:()=>true,getNewLine:()=> '\n'};
+ return {file,checker:ts.createProgram([absolute],{allowJs:true,noLib:true,noResolve:true,target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.NodeNext,moduleResolution:ts.ModuleResolutionKind.NodeNext},host).getTypeChecker()};
+}
+function declaration(ts,bound,name){return one(bound.file.statements.filter(node=>ts.isFunctionDeclaration(node)&&node.name?.text===name),name);}
+function regular(root,path){const absolute=resolve(root,path),stat=lstatSync(absolute);if(!stat.isFile()||stat.isSymbolicLink()||stat.size>2*1024*1024)fail('bounded complete physical regular source required: '+path);const source=readFileSync(absolute,'utf8');return {path,source,sha256:hash(source),identity:{dev:stat.dev,ino:stat.ino,mode:stat.mode,size:stat.size,mtimeMs:stat.mtimeMs,ctimeMs:stat.ctimeMs}};}
+function rewrite(source,edits){let value=source;for(const row of [...edits].sort((a,b)=>b.span[0]-a.span[0])){if(value.slice(...row.span)!==row.expected)fail('actual source span changed');value=value.slice(0,row.span[0])+row.replacement+value.slice(row.span[1]);}return value;}
+const rule=(before,after,id)=>({id,edits:[{span:[0,before.length],expected:before,replacement:after}]});
+function concrete(before,after,sequence,inverseSequence){
+ const first=transportConcreteSyntaxSource(before,{language:'JavaScript'}),run=applyConcreteSyntaxSubstitutions(first.document,sequence),afterMeta=serializeConcreteSyntaxMeta(run.value),last=transportConcreteSyntaxMeta(afterMeta);if(last.source!==after)fail('complete serialized/reparsed phase differs');
+ const inverse=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(applyConcreteSyntaxSubstitutions(last.document,inverseSequence).value)).source;if(inverse!==before)fail('complete original phase inverse differs');return {before,after,beforeMeta:first.meta,afterMeta,sequence,inverseSequence,inverse,trace:run.trace};
+}
+export function prepareHistoricalPrivateParserAssignmentDataAdoption({root=ROOT}={}){
+ const __privateDataHistory=capturePrivateParserDataSourceHistory({root});
+
+ root=resolve(root);const paths=[TARGET,BASE+'private-parser-assignment-data-candidate.mjs',BASE+'prepare-private-parser-assignment-data-candidate.mjs',BASE+'prepare-private-parser-assignment-data-adoption.mjs',BASE+'original-json-intrinsics.mjs',BASE+'private-parser-sha256.mjs',BASE+'concrete-syntax-meta.mjs',BASE+'source-copy-native-bindings.mjs'],inputs=paths.map(path=>regular(root,path));
+ const candidate=prepareHistoricalPrivateParserAssignmentDataCandidate({root}),candidateFile=one(candidate.files,'complete fresh explicit candidate');if(candidateFile.current!==__privateDataHistory.physical(candidateFile.path).source||candidateFile.after!==__privateDataHistory.before(candidateFile.path))fail('materialized complete explicit candidate must first match its fresh source equation');
+ const before=__privateDataHistory.before(TARGET);if(candidateFile.before!==before)fail('candidate and actual physical executor source differ');const ts=ownershipCompiler(),bound=native(ts,resolve(root,TARGET),before),copy=native(ts,resolve(root,candidateFile.path),candidateFile.after);
+ if(ts.version!=='5.9.3')fail('actual installed TypeScript5.9.3 required');if(bound.file.statements.some(node=>ts.isFunctionDeclaration(node)&&node.name?.text==='assignmentData'))fail('original input already contains the proposed helper');
+ const originalData=declaration(ts,bound,'data'),symbol=bound.checker.getSymbolAtLocation(originalData.name),helperNode=declaration(ts,copy,'assignmentData');if(!symbol)fail('actual original private DATA symbol absent');const helper=helperNode.getText(copy.file),append='\n'+helper+'\n',withHelper=before+append,edits=[],owners=[];
+ for(const name of ['execute','lexPrivateConcreteSources']){
+  const fn=declaration(ts,bound,name),calls=[];function visit(node){if(ts.isIdentifier(node)&&bound.checker.getSymbolAtLocation(node)===symbol){if(!ts.isCallExpression(node.parent)||node.parent.expression!==node)fail('unproved original private DATA lexical role');const row={owner:name,span:[node.getStart(bound.file),node.end],expected:node.getText(bound.file),replacement:'assignmentData',completeOriginalCall:node.parent.getText(bound.file)};calls.push(row);edits.push(row);}ts.forEachChild(node,visit);}visit(fn.body);if(!calls.length)fail('original complete consumer has no actual DATA call: '+name);owners.push({name,span:[fn.getStart(bound.file),fn.end],before:fn.getText(bound.file),calls});
+ }
+ const after=rewrite(withHelper,edits);if(after.split('\n').length>=1000)fail('proposed complete executor must remain below1000lines');const proposed=native(ts,resolve(root,TARGET),after),nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,TARGET),after);
+ if(declaration(ts,proposed,'data').getText(proposed.file)!==originalData.getText(bound.file))fail('original DATA implementation changed');
+ let delta=0;const inverseEdits=[...edits].sort((a,b)=>a.span[0]-b.span[0]).map(row=>{const start=row.span[0]+delta;delta+=row.replacement.length-row.expected.length;return {span:[start,start+row.replacement.length],expected:row.replacement,replacement:row.expected};});
+ const helperSymbol=proposed.checker.getSymbolAtLocation(declaration(ts,proposed,'assignmentData').name);if(!helperSymbol)fail('proposed private DATA helper native symbol absent');
+ for(const edit of inverseEdits){const references=[];function locate(node){if(ts.isIdentifier(node)&&node.getStart(proposed.file)===edit.span[0]&&node.end===edit.span[1])references.push(node);ts.forEachChild(node,locate);}locate(proposed.file);const identifier=one(references,'complete proposed actual call reference');if(proposed.checker.getSymbolAtLocation(identifier)!==helperSymbol)fail('proposed DATA call captured by another lexical binding');}
+ const restoredWithHelper=rewrite(after,inverseEdits);if(restoredWithHelper!==withHelper||restoredWithHelper.slice(0,-append.length)!==before)fail('independent whole native-span inverse differs');native(ts,resolve(root,TARGET),restoredWithHelper.slice(0,-append.length));
+ const appendRule=rule(before,withHelper,'javascript:append-only-actual-native-bound-private-DATA-helper'),routeRule=rule(withHelper,after,'javascript:route-only-original-private-DATA-call-identifiers'),repositoryRule={id:'router:preserve-original-module-API-and-all-source-authentication-fences',edits:[]};
+ const undoRoute=rule(after,withHelper,'javascript:restore-original-private-DATA-call-identifiers'),undoAppend=rule(withHelper,before,'javascript:remove-only-complete-proposed-helper'),sequence={languageRules:[appendRule,routeRule],repositoryRules:[repositoryRule]},inverseSequence={languageRules:[undoRoute,undoAppend],repositoryRules:[]};
+ const appendPhase=concrete(before,withHelper,{languageRules:[appendRule],repositoryRules:[]},{languageRules:[undoAppend],repositoryRules:[]}),routePhase=concrete(withHelper,after,{languageRules:[routeRule],repositoryRules:[]},{languageRules:[undoRoute],repositoryRules:[]}),languagePhase=concrete(before,after,{languageRules:[appendRule,routeRule],repositoryRules:[]},inverseSequence),repositoryPhase=concrete(after,after,{languageRules:[],repositoryRules:[repositoryRule]},{languageRules:[],repositoryRules:[]}),whole=concrete(before,after,sequence,inverseSequence);
+ for(const input of inputs){const final=regular(root,input.path);if(final.sha256!==input.sha256||JSON.stringify(final.identity)!==JSON.stringify(input.identity))fail('complete physical source or identity changed across final boundary: '+input.path);}
+ for(const input of candidate.inputs)if(hash(readFileSync(resolve(root,input.path)))!==__privateDataHistory.physical(input.path).sha256)fail('actual candidate input changed across final boundary: '+input.path);
+ if(readFileSync(resolve(root,candidateFile.path),'utf8')!==__privateDataHistory.physical(candidateFile.path).source)fail('complete actual explicit candidate changed across final boundary');
+ __privateDataHistory.verify();
+ return {historicalSourceArchive:__privateDataHistory.archive,physicalInputs:__privateDataHistory.inputs,schema:'private-parser-assignment-data-original-module-proposal-v1',inputs,candidateSourceEquation:candidate,files:[{path:TARGET,...whole,current:__privateDataHistory.physical(TARGET).source,sha256:hash(after),nativeBindings,selection:{helper:{path:candidateFile.path,span:[helperNode.getStart(copy.file),helperNode.end],source:helper},originalData:originalData.getText(bound.file),owners,edits,inverseEdits,independentNativeInverse:before,allOtherOriginalBytesUnchanged:true,oldDataUnchanged:true,existingPrivateCompilationStateUnchanged:true},steps:{append:appendPhase,route:routePhase},phases:{language:languagePhase,repository:repositoryPhase}}],defaultChanged:false,proposedDefaultChanged:true,publicAPIChanged:false,installed:false,receivingQualified:false,performanceQualified:false,sourceAuthority:false,runtimeAuthority:false};
+}
+if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
+ const [mode,...rest]=process.argv.slice(2);if(rest.length||mode!=='--emit')fail('emit-only proposal; use --emit');console.log(JSON.stringify(prepareHistoricalPrivateParserAssignmentDataAdoption()));
+}

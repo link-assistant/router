@@ -17,7 +17,7 @@ function legacy(row){
 function run(rows){const result=substitutePrivateConcreteSourceBatches(rows);assert.equal(result.schema,'private-concrete-source-substitution-batches-v1');assert.equal(result.sourceAuthority,false);assert.equal(result.runtimeAuthority,false);assert.ok(result.rows.every(value=>typeof value==='string'));return {...result,rows:result.rows.map(value=>JSON.parse(value))};}
 
 test('complete native original transaction copy retains fixed bank source all old APIs and independent inverses',{timeout:60000},()=>{
- const plan=preparePrivateConcreteSubstitutionBatchCandidate(),row=plan.files[0];assert.equal(row.current,row.after);assert.equal(row.inverse,row.before);assert.equal(row.nativeBindings.nativeSemanticScopeChecked,true);assert.equal(row.selection.fixedRegistryUnchanged,true);assert.equal(row.selection.originalAPIsUntouched,true);assert.equal(row.selection.noPrivateFrameAcrossReturn,true);assert.equal(row.selection.independentNativeInverse,row.selection.originalBatch);assert.ok(row.after.includes(row.before));assert.equal(plan.defaultChanged,false);assert.equal(plan.performanceQualified,false);assert.equal(row.sequence.languageRules.length,1);assert.equal(row.sequence.repositoryRules.length,1);
+ const current=prepareCurrentPrivateConcreteSubstitutionBatchCandidate(),plan=current.birth,row=plan.files[0];assertPrivateParserDataCurrentComposition(current);assert.equal(row.current,current.finalSources[row.path]);assert.equal(row.inverse,row.before);assert.equal(row.nativeBindings.nativeSemanticScopeChecked,true);assert.equal(row.selection.fixedRegistryUnchanged,true);assert.equal(row.selection.originalAPIsUntouched,true);assert.equal(row.selection.noPrivateFrameAcrossReturn,true);assert.equal(row.selection.independentNativeInverse,row.selection.originalBatch);assert.ok(row.after.includes(row.before));assert.equal(plan.defaultChanged,false);assert.equal(plan.performanceQualified,false);assert.equal(row.sequence.languageRules.length,1);assert.equal(row.sequence.repositoryRules.length,1);
  for(const input of plan.inputs)assert.equal(readFileSync(new URL('../../../'+input.path,import.meta.url),'utf8'),input.source);
 });
 
@@ -58,3 +58,6 @@ test('each separate bounded call freshly emits all original source Hash payloads
  }
  assert.deepStrictEqual(tapes[1],tapes[0]);assert.notEqual(results[0].rows[0].beforeMeta,results[1].rows[0].beforeMeta);assert.equal(results[0].rows[0].inverse,'pub fn value()->u8{7}');assert.equal(results[1].rows[0].inverse,'pub fn other()->bool{true}');
 });
+
+import {prepareCurrentPrivateConcreteSubstitutionBatchCandidate} from '../private-parser-data-current-sources.mjs';
+import {assertPrivateParserDataCurrentComposition} from './private-parser-data-current-source-assertions.mjs';
