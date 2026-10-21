@@ -68,8 +68,10 @@ both engines and existing resource monitoring. No test filters or limit changes
 are proposed. The producer accepts only its exact archived birth templates or
 its exact generated receiving afterimages, so re-emission remains reviewable.
 
-Known future `guarded-proof-lexing` import changes require their own qualified
-producer inverse before the exact C6 source-history boundary. This proposal
-currently refuses that uncomposed drift. The independently identified facade
+The explicit `prepare-guarded-proof-lexing.mjs` producer now supplies the only
+accepted later private import layer before the exact C6 source-history boundary.
+Its complete source/native/CST proof and fresh physical inputs remain separate;
+this source composition does not qualify its runtime behavior. Every other
+uncomposed import/body change still refuses. The independently identified facade
 history and the 25,881-byte builtin AST source fence are also outside this batch.
 No runtime success, memory gain, deadline repair or coverage gain is claimed.
