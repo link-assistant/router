@@ -1,9 +1,10 @@
+import {assertUnitMatchesSourceComposition} from './unit-matches-source-composition.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
-import {prepareCoreAsciiSources,composeCoreAscii} from '../prepare-core-ascii-sources.mjs';
+import {prepareCoreAsciiSources,composeCoreAscii,prepareCurrentCoreAsciiSources} from '../prepare-core-ascii-sources.mjs';
 import {proposeCoreAsciiCorpus} from '../migrate-core-ascii.mjs';
 import {router_core_ascii_chars_in as ascii} from '../extensions/string-iterator-runtime.mjs';
 import {ROUTER_CORE_ASCII_CONTRACT,checkRouterCoreScalarCall} from '../router-core-scalars.mjs';
@@ -25,10 +26,11 @@ const vectors=[['','',true],['','é猫😀',true],['a','',false],['aAa0-_','aA0-
 function inverse(row){assert.equal(transportConcreteSyntaxMeta(row.before.meta).source,row.before.source);assert.equal(transportConcreteSyntaxMeta(row.after.meta).source,row.after.source);let restored=row.after.source;for(const part of [...row.mapping].reverse())if(part.kind==='substitution'){assert.equal(restored.slice(...part.after),part.replacement);restored=restored.slice(0,part.after[0])+part.expected+restored.slice(part.after[1]);}assert.equal(restored,row.before.source);assert.equal(row.inverse,row.before.source);assert.equal(row.executableAdmission,false);}
 
 test('complete ASCII source equations retain current full facade and both native/CST copies',{timeout:60000},()=>{
- const plan=prepareCoreAsciiSources();assert.equal(plan.typescriptVersion,'5.9.3');assert.equal(plan.files.length,7);
- for(const row of plan.files){assert.equal(row.current,row.after,row.path);assert.equal(row.inverse,row.before);assert.equal(hash(row.before),row.beforeSha256);assert.equal(hash(row.after),row.afterSha256);assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.before);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);for(const stage of row.stages){assert.equal(stage.completeInverse,true);assert.deepEqual(stage.trace.map(event=>event.phase),['language','repository']);assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);}if(row.sourceLanguage==='JavaScript'){assert.equal(row.nativeCopies.length,2);assert.ok(row.nativeCopies.every(copy=>copy.completeNativeAstCopy));}else assert.deepEqual(row.nativeCopies,[]);}
+ const plan=prepareCoreAsciiSources(),current=prepareCurrentCoreAsciiSources(),finalSources=Object.fromEntries(current.files.map(row=>[row.path,row]));assert.equal(current.layers.length,2);assert.equal(plan.typescriptVersion,'5.9.3');assert.equal(plan.files.length,7);
+ for(const row of plan.files){assert.equal(row.current,finalSources[row.path].after,row.path);assert.equal(row.inverse,row.before);assert.equal(hash(row.before),row.beforeSha256);assert.equal(hash(row.after),row.afterSha256);assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.before);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);for(const stage of row.stages){assert.equal(stage.completeInverse,true);assert.deepEqual(stage.trace.map(event=>event.phase),['language','repository']);assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);}if(row.sourceLanguage==='JavaScript'){assert.equal(row.nativeCopies.length,2);assert.ok(row.nativeCopies.every(copy=>copy.completeNativeAstCopy));}else assert.deepEqual(row.nativeCopies,[]);}
  const host=plan.files.find(row=>row.path.endsWith('/host-contracts.mjs'));assert.equal(host.after.split('\n').length-1,999);assert.ok(host.before.includes('prepareOriginalPrimitiveIdentityBoundary'));
  const prior=Object.fromEntries(plan.files.map(row=>[row.path,{after:row.before}]));assert.equal(composeCoreAscii(prior).layers.length,1);assert.throws(()=>composeCoreAscii({...prior,[host.path]:{after:host.before+' '}}),/preceding complete source/);
+ assertUnitMatchesSourceComposition(current.layers[1],Object.fromEntries(plan.files.map(row=>[row.path,row])),finalSources);
  assert.equal(ROUTER_CORE_ASCII_CONTRACT.requiresRefinement,'genuine-router-core-ascii-call');assert.equal(ROUTER_CORE_ASCII_CONTRACT.constEligible,false);
 });
 

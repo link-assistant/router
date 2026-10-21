@@ -1,3 +1,4 @@
+import {composeCoreUnitMatches} from './prepare-core-unit-matches.mjs';
 // Complete native source selections followed by serialized/reparsed CST rules.
 import {composeCoreAscii} from './prepare-core-ascii-sources.mjs';
 import {composeCoreAsciiReverse} from './prepare-core-ascii-reverse-sources.mjs';
@@ -128,7 +129,8 @@ export function prepareCurrentSourceLifetimeRefusalBatches(options = {}) {
   const reverse = composeCoreAsciiReverse(ascii.sources, options);
   const assets = composeCoreAsciiAssets(reverse.sources, options);
   const base = composeCoreAsciiBaseAssets(assets.sources, options);
-  return {schema: 'current-source-lifetime-refusal-batch-source-v1', birth, layers: [birth, ...checked.layers, ...preserved.layers, ...ascii.layers, ...reverse.layers, ...assets.layers, ...base.layers], files: Object.values(base.sources), semanticAuthority: false};
+ const unit=composeCoreUnitMatches(base.sources,options);
+  return {schema: 'current-source-lifetime-refusal-batch-source-v1', birth, layers: [birth, ...checked.layers, ...preserved.layers, ...ascii.layers, ...reverse.layers, ...assets.layers, ...base.layers,...unit.layers], files: Object.values(unit.sources), semanticAuthority: false};
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const [mode] = process.argv.slice(2); if (process.argv.length !== 3 || !['--check', '--write'].includes(mode)) fail('usage: --check|--write');

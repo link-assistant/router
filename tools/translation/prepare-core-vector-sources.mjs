@@ -250,7 +250,8 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     const reverse = (await import('./prepare-core-ascii-reverse-sources.mjs')).composeCoreAsciiReverse(ascii.sources, {root});
     const assets = (await import('./prepare-core-ascii-assets.mjs')).composeCoreAsciiAssets(reverse.sources, {root});
     const base = (await import('./prepare-core-ascii-base-assets.mjs')).composeCoreAsciiBaseAssets(assets.sources, {root});
-    const composition = {sources: base.sources, layers: [...lifetime.layers, ...checked.layers, ...preserved.layers, ...matched.layers, ...boundary.layers, ...ascii.layers, ...reverse.layers, ...assets.layers, ...base.layers]};
+    const unit = (await import('./prepare-core-unit-matches.mjs')).composeCoreUnitMatches(base.sources, {root});
+    const composition = {sources: unit.sources, layers: [...lifetime.layers, ...checked.layers, ...preserved.layers, ...matched.layers, ...boundary.layers, ...ascii.layers, ...reverse.layers, ...assets.layers, ...base.layers, ...unit.layers]};
     const generated = composition.sources;
     const current = Object.fromEntries(Object.keys(generated).map(name => [name, readFileSync(resolve(root, name), 'utf8')]));
     if (args[2] === '--check') {
