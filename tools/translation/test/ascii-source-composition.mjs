@@ -24,6 +24,16 @@ export function assertAsciiAssetsComposition(layer, prior = {}, finalSources) {
   assert.equal(layer.selection.nativeLexicalBindings.length, 5);
   assertCompleteAsciiLayer(layer, prior, 3, finalSources);
 }
+export function assertAsciiBaseAssetsComposition(layer, prior = {}, finalSources) {
+  assert.equal(layer.schema, 'router-owned-ascii-base-assets-v1');
+  assert.equal(layer.runtimeExecuted, false); assert.equal(layer.rustExecuted, false);
+  assert.equal(layer.fullBuilderCallbackParity, false); assert.equal(layer.closure.rows.length, 33);
+  assert.equal(layer.originalSourcePublicBuilderUnchanged, true); assert.equal(layer.nonAsciiContextsUnchanged, true);
+  assert.deepEqual(layer.selection.nativeBindings.unboundIdentifiers, []);
+  for (const name of ['HostChecker','hostData','HOST_CONTRACTS','typeScriptAliases','typeScriptType','jsonRetentionRuntimeAssets']) assert.ok(layer.selection.nativeLexicalBindings.some(row => row.name === name));
+  assert.ok(layer.files.every(row => row.sourceLanguage === 'JavaScript'));
+  assertCompleteAsciiLayer(layer, prior, 3, finalSources);
+}
 function assertCompleteAsciiLayer(layer, prior, count, finalSources) {
   assert.equal(layer.files.length, count); assert.equal(layer.semanticAuthority, false);
   assert.equal(new Set(layer.files.map(row => row.path)).size, count);

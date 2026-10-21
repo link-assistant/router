@@ -2,6 +2,7 @@
 import {composeCoreAscii} from './prepare-core-ascii-sources.mjs';
 import {composeCoreAsciiReverse} from './prepare-core-ascii-reverse-sources.mjs';
 import {composeCoreAsciiAssets} from './prepare-core-ascii-assets.mjs';
+import {composeCoreAsciiBaseAssets} from './prepare-core-ascii-base-assets.mjs';
 import {readFileSync, writeFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
@@ -126,7 +127,8 @@ export function prepareCurrentSourceLifetimeRefusalBatches(options = {}) {
   const ascii = composeCoreAscii(preserved.sources, options);
   const reverse = composeCoreAsciiReverse(ascii.sources, options);
   const assets = composeCoreAsciiAssets(reverse.sources, options);
-  return {schema: 'current-source-lifetime-refusal-batch-source-v1', birth, layers: [birth, ...checked.layers, ...preserved.layers, ...ascii.layers, ...reverse.layers, ...assets.layers], files: Object.values(assets.sources), semanticAuthority: false};
+  const base = composeCoreAsciiBaseAssets(assets.sources, options);
+  return {schema: 'current-source-lifetime-refusal-batch-source-v1', birth, layers: [birth, ...checked.layers, ...preserved.layers, ...ascii.layers, ...reverse.layers, ...assets.layers, ...base.layers], files: Object.values(base.sources), semanticAuthority: false};
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const [mode] = process.argv.slice(2); if (process.argv.length !== 3 || !['--check', '--write'].includes(mode)) fail('usage: --check|--write');
