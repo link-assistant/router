@@ -1,6 +1,7 @@
 // Additive original-checker source view. Saved DATA never issues source owners.
 import {composeCoreAscii} from './prepare-core-ascii-sources.mjs';
 import {composeCoreAsciiReverse} from './prepare-core-ascii-reverse-sources.mjs';
+import {composeCoreAsciiAssets} from './prepare-core-ascii-assets.mjs';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -53,7 +54,8 @@ export function prepareCurrentExecutableCheckedSource(options={}){
  const birth=prepareExecutableCheckedSource(options),preserved=composeSourceProofPreservation(Object.fromEntries(birth.files.map(row=>[row.path,row])),options);
  const ascii=composeCoreAscii(preserved.sources,options);
  const reverse=composeCoreAsciiReverse(ascii.sources,options);
- return {schema:'current-executable-checked-source-source-v1',birth,layers:[birth,...preserved.layers,...ascii.layers,...reverse.layers],files:Object.values(reverse.sources),semanticAuthority:false};
+ const assets=composeCoreAsciiAssets(reverse.sources,options);
+ return {schema:'current-executable-checked-source-source-v1',birth,layers:[birth,...preserved.layers,...ascii.layers,...reverse.layers, ...assets.layers],files:Object.values(assets.sources),semanticAuthority:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const args=process.argv.slice(2);if(args.length!==1||!['--check','--write'].includes(args[0]))fail('usage: --check|--write');const plan=prepareCurrentExecutableCheckedSource();

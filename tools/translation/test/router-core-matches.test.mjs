@@ -1,4 +1,4 @@
-import {assertAsciiSourceComposition,assertAsciiReverseComposition} from './ascii-source-composition.mjs';
+import {assertAsciiSourceComposition,assertAsciiReverseComposition,assertAsciiAssetsComposition} from './ascii-source-composition.mjs';
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync, writeFileSync, mkdirSync, mkdtempSync} from 'node:fs';
@@ -45,6 +45,7 @@ function proposalFor(result, path = 'src/app.rs') { const row = result.rows.find
 test('native source producers retain complete historical inputs actual current outputs and every CST inverse', () => {
   const original = retain('complete-original-owned-matches-inputs', fixture()), prepared = retain('complete-native-runtime-proposal', prepareCurrentCoreMatchesSources());
   const current = retain('complete-current-owned-matches-boundary-composition', prepareCurrentCoreMatchesComposition());
+  const finalSources = Object.fromEntries(current.files.map(row => [row.path, row]));
   assert.equal(current.layers[1].files.find(row => row.path.endsWith('/host-contracts.mjs')).before, prepared.files.find(row => row.path.endsWith('/host-contracts.mjs')).after);
   assert.deepEqual(prepared.inputs, original.inputs); assert.equal(prepared.typescriptVersion, '5.9.3');
   assert.equal(prepared.newAcrossInvocationCache, false); assert.equal(prepared.oldStandardMatchesOwnershipUnchanged, true);
@@ -70,9 +71,11 @@ test('native source producers retain complete historical inputs actual current o
     }
     assert.equal(row.nativeCopies.length, 2); assert.ok(row.nativeCopies.every(copy => copy.completeNativeAstCopy));
   }
-  assert.equal(current.layers.length, 4);
-  assertAsciiSourceComposition(current.layers[2], Object.fromEntries([...prepared.files, ...current.layers[1].files].map(row => [row.path, row])));
-  assertAsciiReverseComposition(current.layers[3]);
+  assert.equal(current.layers.length, 5);
+  const beforeAscii = Object.fromEntries([...prepared.files, ...current.layers[1].files].map(row => [row.path, row]));
+  assertAsciiSourceComposition(current.layers[2], beforeAscii, finalSources);
+  assertAsciiReverseComposition(current.layers[3], {...beforeAscii, ...Object.fromEntries(current.layers[2].files.map(row => [row.path, row]))}, finalSources);
+  assertAsciiAssetsComposition(current.layers[4], Object.fromEntries(current.layers[3].files.map(row => [row.path, row])), finalSources);
   const host = prepared.files.find(row => row.path.endsWith('/host-contracts.mjs'));
   assert.ok(host.after.split('\n').length <= 1000); assert.ok(host.before.includes('parseRouterCoreVector')); assert.ok(host.after.includes('parseRouterCoreVector'));
   assert.match(prepared.wrapper.after, /::std::matches!/u);
