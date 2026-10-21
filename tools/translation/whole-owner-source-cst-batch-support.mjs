@@ -13,11 +13,20 @@ const fail=message=>{throw new TypeError('Whole owner source CST batch: '+messag
 // does not authenticate a hostile cold Node wrapper from captured identity.
 const bufferSource=toString&&has(toString,'value')&&typeof toString.value==='function'?originalCapturedFunctionSource(toString.value):null;
 function bufferReady(){const actual=get(SourceBuffer.prototype,'toString');return SourceBuffer.prototype===bufferPrototype&&!!bufferSource&&actual&&has(actual,'value')&&actual.value===toString.value&&actual.writable===toString.writable&&actual.enumerable===toString.enumerable&&actual.configurable===toString.configurable&&originalCapturedFunctionSource(actual.value)===bufferSource;}
-export function wholeOwnerSourceCstBatchReady(){return !!(originalAttributeOwnerBulkCryptoReady()&&bufferReady()&&privateParserHostAvailable());}
+// Scheduling is deliberately UNQUALIFIED: the actual shared TypeScript5.9.3
+// object exposes mutable callable/allocator slots and hidden compiler state.
+// Crypto qualification cannot close that provider. A file hash or captured
+// callable identity does not prove that no earlier setter registered a hook.
+// No entered input Hash/native work is replayed: the generated entry takes its
+// original fallback before that work. The parked bulk implementation below is
+// not selected until a separate genuinely closed compiler operation exists.
+export function wholeOwnerSourceCstBatchReady(){return false;}
+export function wholeOwnerSourceCstBatchDomain(){return {schema:'whole-owner-source-cst-batch-domain-v1',batchingSelected:false,compilerClosureQualified:false,reason:'shared-TypeScript-scheduling-unclosed',originalFallbackBeforeInputHash:true,sourceAuthority:false,runtimeAuthority:false};}
+
 const encoded=(bytes,encoding)=>apply(toString.value,bytes,[encoding]);
 function completeInputs(root,inputs){return inputs.map(row=>{const bytes=readFileSync(resolve(root,row.path)),source=typeof row.source==='string'?encoded(bytes,'utf8'):encoded(bytes,'base64'),expected=typeof row.source==='string'?row.source:row.base64;if(source!==expected)fail('complete captured source input differs: '+row.path);return {path:row.path,source,encoding:typeof row.source==='string'?'utf8':'base64'};});}
 function verify(root,inputs,files){
- if(!wholeOwnerSourceCstBatchReady())fail('qualified source operations changed');assertConcreteSyntaxHost();
+ if(!wholeOwnerSourceCstBatchReady()||!originalAttributeOwnerBulkCryptoReady()||!bufferReady()||!privateParserHostAvailable())fail('qualified source operations changed');assertConcreteSyntaxHost();
  for(const row of inputs)if(encoded(readFileSync(resolve(root,row.path)),row.encoding)!==row.source)fail('complete input changed around source transport: '+row.path);
  for(const row of files){const path=resolve(root,row.path),current=existsSync(path)?readFileSync(path,'utf8'):null;if(current!==row.current)fail('complete observed output changed around source transport: '+row.path);}
 }
