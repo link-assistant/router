@@ -1,3 +1,4 @@
+import {restoreReceivingSourceHistory} from './current-receiving-source-history.mjs';
 // Explicit test-DATA format equations; no source, owner or semantic permit.
 import {createHash} from 'node:crypto';
 import {types} from 'node:util';
@@ -20,6 +21,7 @@ function exact(source,before,after,id){return exactSubstitutionRule(id,before,af
  * actual selected-mode source and complete inverse stay separate test DATA.
  */
 export function legacyProofConsumerSource(source,retain=()=>{}){
+ if(typeof source==='string')source=restoreReceivingSourceHistory(source,'proof-consumer',retain);
  source=unscopedCreatorSource(source,retain);
  source=statelessProofConsumerSource(source,retain);
  if(typeof source!=='string')fail('complete source text required');
@@ -161,6 +163,7 @@ export function restoreEnclosingNamespaceSource(source,retain=()=>{}){
 // Additive receiving history for the later owned-binding import adoption.
 // The original enclosing history API and its exact frozen rules stay unchanged.
 export function restoreCurrentEnclosingNamespaceSource(source,retain=()=>{}){
+ if(typeof source==='string'&&source.includes('export function coreAdoptionProducerClosedAttributeSpans('))source=restoreReceivingSourceHistory(source,'core-attribute-extension',retain);
  if(typeof source!=='string')fail('complete current enclosing source text required');
  const before="import {resolveEnclosingNamespaceModuleBindings} from './module-bindings.mjs';",after="import {resolveOwnedEnclosingNamespaceModuleBindings as resolveEnclosingNamespaceModuleBindings} from './owned-enclosing-module-bindings.mjs';";
  if(!source.includes(after))return restoreEnclosingNamespaceSource(source,retain);

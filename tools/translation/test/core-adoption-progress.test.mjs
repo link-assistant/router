@@ -1,3 +1,4 @@
+import {restoreReceivingSourceHistory} from './fixtures/current-receiving-source-history.mjs';
 import {ownershipCompiler} from '../js-to-rust/vendor/module-syntax.mjs';
 import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import nodeTest from 'node:test';
@@ -241,6 +242,7 @@ const SOURCE_RULES={
   ]
 };
 function progressLayoutHistory(path,source){
+ if(path==='tools/translation/propose-core-adoption-corpus.mjs')source=restoreReceivingSourceHistory(source,'progress-packets',retain);
  if(path!=='tools/translation/propose-core-adoption-corpus.mjs')return source;
  const ts=ownershipCompiler(),file=ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS),edits=[];assert.equal(ts.version,'5.9.3');assert.deepEqual(file.parseDiagnostics,[]);
  function visit(node){if(ts.isCallExpression(node)&&ts.isIdentifier(node.expression)&&node.expression.text==='rootEntry'){assert.equal(node.arguments.length,1);assert.ok(['root','original.root'].includes(node.arguments[0].getText(file)));edits.push({span:[node.getStart(file),node.end],expected:node.getText(file),replacement:"'src/lib.rs'"});}ts.forEachChild(node,visit);}visit(file);assert.ok(edits.length>0);

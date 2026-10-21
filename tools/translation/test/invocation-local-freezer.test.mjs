@@ -7,7 +7,7 @@ import {pathToFileURL} from 'node:url';
 import {gzipSync} from 'node:zlib';
 import {createCompletedDataFreezer} from '../private-data-freeze.mjs';
 import {createRetainedPrivateScalarCostStore,withRetainedPrivateNativeProofCostScope,withPrivateNativeProofCostScope,createScopedPrivateNativeProofJsonSerializer} from '../private-native-proof-json.mjs';
-import {invocationLocalFreezerSourcePairs,prepareInvocationLocalFreezer} from '../prepare-invocation-local-freezer.mjs';
+import {invocationLocalFreezerSourcePairs,prepareInvocationLocalFreezer} from '../invocation-local-freezer-receiving-history.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 import {relocateSourceModule} from './relocate-source-module.mjs';
 const origin=new URL('../private-data-freeze.mjs',import.meta.url);

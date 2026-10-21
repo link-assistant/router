@@ -3,7 +3,7 @@ import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
 import {legacyProofConsumerSource} from './fixtures/native-proof-json-format.mjs';
 import {writeFileSync,mkdirSync,mkdtempSync,rmSync} from 'node:fs';
-import {readOriginalBuiltinPlanHistory as readFileSync} from './fixtures/compiler-data-alias-history.mjs';
+import {readOriginalBuiltinPlanReceivingHistory as readFileSync} from './fixtures/current-receiving-source-history.mjs';
 import {execFileSync} from 'node:child_process';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';

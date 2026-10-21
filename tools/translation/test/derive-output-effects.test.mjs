@@ -1,5 +1,5 @@
 import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
-import {legacyProofConsumerSource} from './fixtures/native-proof-json-format.mjs';
+import {legacyProofConsumerSource} from './fixtures/facade-ast-receiving-history.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 import nodeTest from 'node:test';
 import assert from 'node:assert/strict';

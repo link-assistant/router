@@ -29,7 +29,7 @@ function equal(retain,label,before,current){retain(label,{before,current});asser
 async function fixture(t,retain,countCensus=false){
  const folder=mkdtempSync(join(tmpdir(),'router-native-proof-json-'));t.after(()=>rmSync(folder,{recursive:true,force:true}));
  const before=readFileSync(sourceURL,'utf8');let source=before;
- for(const name of ['private-frozen-json.mjs','original-json-intrinsics.mjs','original-lexing-intrinsics.mjs'])source=once(source,"from './"+name+"'","from '"+new URL('../'+name,import.meta.url).href+"'");
+ for(const name of ['private-frozen-json.mjs','original-json-intrinsics.mjs',"guarded-proof-lexing-intrinsics.mjs"])source=once(source,"from './"+name+"'","from '"+new URL('../'+name,import.meta.url).href+"'");
  const branch='   if(selected)return apply(stringifyField.value,jsonOwner,[value]);';source=once(source,branch,'   if(selected){nativeCalls++;return apply(stringifyField.value,jsonOwner,[value]);}');
  source=once(source,'  return fallback(value);','  fallbackCalls++;return fallback(value);');
  source+='\nlet nativeCalls=0,fallbackCalls=0;export function receivingFacts(){return {initiallyNative,qualified,ready:nativeReady(),nativeCalls,fallbackCalls};}\n';
