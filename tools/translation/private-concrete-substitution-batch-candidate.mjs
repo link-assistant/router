@@ -385,8 +385,8 @@ function execute(input,language,operation){
     const rust=modules.rust.rustTokens,javascript=modules.javascript.tokenize,transport=operation==='source'?modules.concrete.originalStandaloneSourceTransport:modules.concrete.originalIdentityTransport;
     let result;
     try{
-      if(operation==='recipes')result=data(selected.recipes);
-      else if(operation==='tokens')result=data(language==='Rust'?rust(input):javascript(input,'JavaScript'));
+      if(operation==='recipes')result=assignmentData(selected.recipes);
+      else if(operation==='tokens')result=assignmentData(language==='Rust'?rust(input):javascript(input,'JavaScript'));
       else result=transport(input,language,operation==='serialized');
     }catch(error){
       checked();const message=error!==null&&typeof error==='object'&&!proxy(error)?descriptor(error,'message'):null;
@@ -788,7 +788,7 @@ export function lexPrivateConcreteSources(input){
         const value=row.language==='Rust'?rust(row.source):javascript(row.source,'JavaScript');
         tokens+=row.language==='Rust'?value.length:value.tokens.length+value.comments.length;
         if(tokens>BATCH_NODES)fail('batch aggregate token budget');
-        result=data(value);
+        result=assignmentData(value);
       }catch(error){
         checked();const message=error!==null&&typeof error==='object'&&!proxy(error)?descriptor(error,'message'):null;
         throwOriginalCapturedTypeError(message&&own(message,'value')&&typeof message.value==='string'?message.value:'Private original grammar refused');
@@ -804,6 +804,21 @@ export function lexPrivateConcreteSources(input){
     for(let at=0;at<before.manifest.sources.length;at++){const row=before.manifest.sources[at];if(selectedSources[row.id]!==before.sources[row.id])fail('compiled source association changed');}
     batchInputCurrent(request.snapshots);return result;
   }finally{active=false;}
+}
+
+function assignmentData(value,depth=0,budget={cells:16777216}){
+  if(--budget.cells<0||depth>256)fail('private output data budget');
+  if(value===null||typeof value==='string'||typeof value==='boolean'||typeof value==='number'||typeof value==='bigint'||value===undefined)return value;
+  if(typeof value!=='object'||proxy(value))fail('private executable result cannot escape');
+  const array=Array.isArray(value),parent=prototype(value);if(parent!==(array?Array.prototype:Object.prototype)&&parent!==null)fail('private class cannot escape');
+  const names=keys(value),result=array?[]:parent===null?Object.create(null):{};
+  for(let at=0;at<names.length;at++){
+    const key=names[at];if(typeof key!=='string')fail('private symbol cannot escape');if(array&&key==='length')continue;
+    const field=descriptor(value,key);if(!field||!own(field,'value')||field.enumerable!==true)fail('private nondata result cannot escape');
+    if(key==='__proto__'||key==='get'||key in result) Object.defineProperty(result,key,{__proto__:null,value:assignmentData(field.value,depth+1,budget),enumerable:true,writable:true,configurable:true});
+    else result[key]=assignmentData(field.value,depth+1,budget);
+  }
+  return result;
 }
 
 export function substitutePrivateConcreteSourceBatches(input){

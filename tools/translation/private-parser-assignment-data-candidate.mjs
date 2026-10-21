@@ -384,8 +384,8 @@ function execute(input,language,operation){
     const rust=modules.rust.rustTokens,javascript=modules.javascript.tokenize,transport=operation==='source'?modules.concrete.originalStandaloneSourceTransport:modules.concrete.originalIdentityTransport;
     let result;
     try{
-      if(operation==='recipes')result=data(selected.recipes);
-      else if(operation==='tokens')result=data(language==='Rust'?rust(input):javascript(input,'JavaScript'));
+      if(operation==='recipes')result=assignmentData(selected.recipes);
+      else if(operation==='tokens')result=assignmentData(language==='Rust'?rust(input):javascript(input,'JavaScript'));
       else result=transport(input,language,operation==='serialized');
     }catch(error){
       checked();const message=error!==null&&typeof error==='object'&&!proxy(error)?descriptor(error,'message'):null;
@@ -787,7 +787,7 @@ export function lexPrivateConcreteSources(input){
         const value=row.language==='Rust'?rust(row.source):javascript(row.source,'JavaScript');
         tokens+=row.language==='Rust'?value.length:value.tokens.length+value.comments.length;
         if(tokens>BATCH_NODES)fail('batch aggregate token budget');
-        result=data(value);
+        result=assignmentData(value);
       }catch(error){
         checked();const message=error!==null&&typeof error==='object'&&!proxy(error)?descriptor(error,'message'):null;
         throwOriginalCapturedTypeError(message&&own(message,'value')&&typeof message.value==='string'?message.value:'Private original grammar refused');
