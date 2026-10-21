@@ -39,6 +39,21 @@ without repairing them, and both preserve original inputs. Never patch generated
 outputs to conceal a source-rule defect. Freshness and carried source are separate
 from executable behavior and full runtime parity.
 
+Preserve frozen test literals and their independent original hash assertions.
+If a repository migration altered an embedded historical source, recover its
+complete genuine bytes from pinned history and compose the history restoration
+and current layout adaptation through native-selected edits, both ordered CST
+phases and whole inverses. Keep every original helper, case and deadline; changing
+the expected hash to a migrated fixture does not repair the original oracle.
+Retain complete original/current source packets for shallow receiving checkouts.
+
+Private DATA optimizations need actual source and lexical-binding selections,
+complete source inverses and all original source, intrinsic, callback and lifetime
+fences. Invocation-local immutable DATA can justify a redundant-copy removal;
+public shape or retained metadata cannot. Qualify complete original files in both
+engines with unchanged limits before adoption. Focused controls and source plans
+do not establish an application coverage gain or a whole-workload speed gain.
+
 Inspect existing upstream implementations and tests before adding translator
 machinery. Pin reviewed commits and retain complete source, notices and licenses;
 keep candidate copies inactive until receiving qualification passes. For an upstream

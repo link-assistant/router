@@ -70,5 +70,7 @@ staged sources and finished plans were archived and read back before removing
 the inactive owned staging directory, recovering 474,778,347 net bytes.
 
 None of these receiving results establishes a native runtime parity gain.
-Continue solo, preserve the single publisher, run no local Rust tools, and
+The later 2026-10-21 instruction permits up to three authorized workers in
+isolated worktrees, superseding the earlier solo instruction. Preserve the
+single publisher and single heavy-workload lease, run no local Rust tools, and
 require all eight same-SHA JavaScript CI stages before fatal Rust verification.

@@ -1,6 +1,6 @@
 --- a/docs/case-studies/issue-759/standard/CONTRIBUTING.template.md
 +++ b/docs/case-studies/issue-759/standard/CONTRIBUTING.template.md
-@@ -9 +9,104 @@
+@@ -9 +9,119 @@
  Keep the receiving repository's terminology, testing tier explanations, credential conditions, changelog fragment process, release steps and public API rules in this document. Add this workflow to those conventions rather than replacing them. Report unavailable parity or measurements honestly; there is no promise of complete generation until the strict gate proves its declared scope.
 +
 +## Translation rules and synchronization
@@ -33,6 +33,21 @@
 +without repairing them, and both preserve original inputs. Never patch generated
 +outputs to conceal a source-rule defect. Freshness and carried source are separate
 +from executable behavior and full runtime parity.
++
++Preserve frozen test literals and their independent original hash assertions.
++If a repository migration altered an embedded historical source, recover its
++complete genuine bytes from pinned history and compose the history restoration
++and current layout adaptation through native-selected edits, both ordered CST
++phases and whole inverses. Keep every original helper, case and deadline; changing
++the expected hash to a migrated fixture does not repair the original oracle.
++Retain complete original/current source packets for shallow receiving checkouts.
++
++Private DATA optimizations need actual source and lexical-binding selections,
++complete source inverses and all original source, intrinsic, callback and lifetime
++fences. Invocation-local immutable DATA can justify a redundant-copy removal;
++public shape or retained metadata cannot. Qualify complete original files in both
++engines with unchanged limits before adoption. Focused controls and source plans
++do not establish an application coverage gain or a whole-workload speed gain.
 +
 +Inspect existing upstream implementations and tests before adding translator
 +machinery. Pin reviewed commits and retain complete source, notices and licenses;
@@ -107,7 +122,7 @@
 +repair batch. Distinguish drafted work and unexecuted checks from verified behavior.
 --- a/docs/case-studies/issue-759/standard/AGENTS.template.md
 +++ b/docs/case-studies/issue-759/standard/AGENTS.template.md
-@@ -9 +9,70 @@
+@@ -9 +9,85 @@
  Preserve repository terminology, testing tiers, credential requirements, public contract compatibility, changelog and release conventions. Report incomplete parity or unavailable measurements explicitly. Do not treat inventory consistency as semantic equivalence.
 +
 +## Shared rule and synchronization contract
@@ -131,6 +146,21 @@
 +reverse and TypeScript producers in dependency order; check mode must reject stale
 +outputs without repairing them. Preserve original inputs and all explicit refusals.
 +Do not manually repair generated output or confuse freshness with runtime parity.
++
++Preserve frozen test literals and their independent original hash assertions.
++If a repository migration altered an embedded historical source, recover its
++complete genuine bytes from pinned history and compose the history restoration
++and current layout adaptation through native-selected edits, both ordered CST
++phases and whole inverses. Keep every original helper, case and deadline; changing
++the expected hash to a migrated fixture does not repair the original oracle.
++Retain complete original/current source packets for shallow receiving checkouts.
++
++Private DATA optimizations need actual source and lexical-binding selections,
++complete source inverses and all original source, intrinsic, callback and lifetime
++fences. Invocation-local immutable DATA can justify a redundant-copy removal;
++public shape or retained metadata cannot. Qualify complete original files in both
++engines with unchanged limits before adoption. Focused controls and source plans
++do not establish an application coverage gain or a whole-workload speed gain.
 +
 +Where the receiving maintainer authorizes a shared Rust/JavaScript compatibility
 +core, bind actual qualified APIs to matching implementations and independently
