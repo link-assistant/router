@@ -15,3 +15,8 @@ level/descriptor guards. Add complete repeated-proposal equality and foreign
 noop/descriptor controls. The earlier four-output materialization failed its
 second proposal check and rolled back all outputs. This repair is source-only;
 materialization, seven-case receiving and original whole-file checks are unrun.
+
+The second materialization attempt failed before writes because the native
+compiler bundle nests its noop declaration. The follow-up joins its actual
+recursive declaration through native binder tables to the CommonJS export
+getter and Debug assignment, retaining full source spans. Source-only and unrun.
