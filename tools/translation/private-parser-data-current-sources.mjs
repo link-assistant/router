@@ -1,0 +1,32 @@
+// Current SOURCE composition; construction never installs default parser bytes.
+import {readFileSync,lstatSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {derivePrivateParserDataNativeAdapters} from './prepare-private-parser-data-current-sources.mjs';
+import {capturePrivateParserDataSourceHistory,PRIVATE_DATA_EXECUTOR,PRIVATE_DATA_CANDIDATE,PRIVATE_DATA_BATCH} from './private-parser-data-source-history.mjs';
+import {prepareHistoricalPrivateParserAssignmentDataCandidate} from './private-parser-assignment-data-historical-producer.mjs';
+import {prepareHistoricalPrivateConcreteSubstitutionBatchCandidate} from './private-concrete-substitution-batch-historical-producer.mjs';
+import {prepareHistoricalPrivateParserAssignmentDataAdoption} from './private-parser-assignment-data-adoption-historical-producer.mjs';
+import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
+const ROOT=fileURLToPath(new URL('../../',import.meta.url)),BASE='tools/translation/',hash=value=>createHash('sha256').update(value).digest('hex'),fail=message=>{throw TypeError('Current private DATA source: '+message);};
+const DEPENDENCIES=['private-parser-data-current-sources.mjs','private-parser-data-source-history.mjs','prepare-private-parser-data-current-sources.mjs','private-parser-assignment-data-historical-producer.mjs','private-concrete-substitution-batch-historical-producer.mjs','private-parser-assignment-data-adoption-historical-producer.mjs','prepare-private-parser-assignment-data-candidate.mjs','prepare-private-concrete-substitution-batch-candidate.mjs','prepare-private-parser-assignment-data-adoption.mjs','source-copy-native-bindings.mjs','concrete-syntax-meta.mjs'];
+function regular(root,path){const stat=lstatSync(resolve(root,path));if(!stat.isFile()||stat.isSymbolicLink()||stat.size>2*1024*1024)fail('bounded complete regular source required');const source=readFileSync(resolve(root,path),'utf8');return {path,source,sha256:hash(source),identity:{dev:stat.dev,ino:stat.ino,mode:stat.mode,size:stat.size,mtimeMs:stat.mtimeMs,ctimeMs:stat.ctimeMs}};}
+function whole(row,after,current){
+ const before=row.before,rule=(a,b,id)=>({id,edits:[{span:[0,a.length],expected:a,replacement:b}]}),sequence={languageRules:[rule(before,after,'javascript:compose-complete-original-DATA-adoption')],repositoryRules:[{id:'router:preserve-exact-existing-authentication-and-candidate-APIs',edits:[]}]},inverseSequence={languageRules:[rule(after,before,'javascript:restore-entire-historical-private-source')],repositoryRules:[]};
+ const first=transportConcreteSyntaxSource(before,{language:'JavaScript'}),run=applyConcreteSyntaxSubstitutions(first.document,sequence),afterMeta=serializeConcreteSyntaxMeta(run.value),last=transportConcreteSyntaxMeta(afterMeta),inverse=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(applyConcreteSyntaxSubstitutions(last.document,inverseSequence).value)).source;if(last.source!==after||inverse!==before)fail('complete current CST equation/inverse differs');
+ return {...row,after,current,nativeBindings:after===row.before?row.beforeNativeBindings:row.nativeBindings,beforeMeta:first.meta,afterMeta,sequence,inverseSequence,inverse,trace:run.trace,sha256:hash(after),completeOriginalInverse:true};
+}
+function prepare(kind,{root=ROOT}={}){
+ root=resolve(root);const inputs=DEPENDENCIES.map(name=>regular(root,BASE+name)),projection=derivePrivateParserDataNativeAdapters({root});for(const row of projection.rows){const input=regular(root,row.path);if(input.source!==row.after)fail('complete native-derived historical/current producer is stale: '+row.path);inputs.push(input);}const history=capturePrivateParserDataSourceHistory({root}),birth=kind==='assignment'?prepareHistoricalPrivateParserAssignmentDataCandidate({root}):kind==='batch'?prepareHistoricalPrivateConcreteSubstitutionBatchCandidate({root}):prepareHistoricalPrivateParserAssignmentDataAdoption({root}),expectedPath=kind==='assignment'?PRIVATE_DATA_CANDIDATE:kind==='batch'?PRIVATE_DATA_BATCH:PRIVATE_DATA_EXECUTOR;
+ if(birth.files.length!==1||birth.files[0].path!==expectedPath)fail('one complete exact historical birth row required');const born=birth.files[0],original=history.rows.find(row=>row.path===expectedPath);if(!original||born.before!==history.before(PRIVATE_DATA_EXECUTOR)||born.after!==(kind==='adoption'?original.after:original.before))fail('historical source producer equation differs');
+ // Current candidate generation follows the physical executor; adoption remains
+ // a separate three-file proposal and never occurs through candidate --write.
+ const selected=kind==='adoption'?history.rows:[original],files=selected.map(row=>whole(row,kind==='adoption'||history.executorInstalled?row.after:row.before,history.physical(row.path).source)),finalSources=Object.fromEntries(files.map(row=>[row.path,row.after]));
+ history.verify();for(const input of inputs){const fresh=regular(root,input.path);if(fresh.sha256!==input.sha256||JSON.stringify(fresh.identity)!==JSON.stringify(input.identity))fail('complete current source/identity changed across final boundary');}
+ return {schema:'private-parser-DATA-current-source-composition-v1',kind,birth,nativeImportJoins:projection.nativeImportJoins,historicalSourceArchive:history.archive,inputs:[...history.inputs,...inputs],files,layers:[{id:'private-parser-DATA-original-module-adoption',files}],finalSources,executorInstalled:history.executorInstalled,installed:history.installed,defaultChanged:false,proposedDefaultChanged:kind==='adoption',publicAPIChanged:false,receivingQualified:false,performanceQualified:false,sourceAuthority:false,runtimeAuthority:false};
+}
+export function prepareCurrentPrivateParserAssignmentDataCandidate(options={}){return prepare('assignment',options);}
+export function prepareCurrentPrivateConcreteSubstitutionBatchCandidate(options={}){return prepare('batch',options);}
+export function prepareCurrentPrivateParserDataAdoption(options={}){return prepare('adoption',options);}
+export {prepareHistoricalPrivateParserAssignmentDataCandidate,prepareHistoricalPrivateConcreteSubstitutionBatchCandidate,prepareHistoricalPrivateParserAssignmentDataAdoption};
