@@ -22,6 +22,7 @@ import {ownedJsonReaderOperation,ownedJsonOptionalPayload,ownedJsonBorrowed} fro
 import {ownedJsonOptionalReaderOperation} from './owned-json-source.mjs';
 import {ownedAsciiOperation} from './owned-ascii-source.mjs';
 import {hostCoreAsciiRuntimeAssets} from '../ascii-runtime-assets.mjs';
+import {hostCoreAsciiBaseRuntimeAssets} from '../ascii-base-runtime-assets.mjs';
 
 const contexts=new WeakMap(),traversals=new WeakMap();
 const fail=message=>{throw new TypeError('Owned reverse source: '+message);};
@@ -122,11 +123,11 @@ function base64Source(files){
 }
 /** Fresh source selection; no source/owner/verdict is shared across calls. */
 export function createOwnedCoreSourceContext(input){
- assertReverseConcreteSourceHost();const data=ownedPlainData(input);exactKeys(data,['files','runtimeRoot','declarationRoot']);ownedSourcePath(data.runtimeRoot);ownedSourcePath(data.declarationRoot);
+ assertReverseConcreteSourceHost();const __asciiSourceHas=Map.prototype.has,__asciiSourceApply=Reflect.apply;const data=ownedPlainData(input);exactKeys(data,['files','runtimeRoot','declarationRoot']);ownedSourcePath(data.runtimeRoot);ownedSourcePath(data.declarationRoot);
  if(!Array.isArray(data.files)||!data.files.length||data.files.length>4096)fail('complete files required');
  const files=new Map();let bytes=0;
  for(const row of data.files){exactKeys(row,['path','source']);ownedSourcePath(row.path);if(typeof row.source!=='string'||files.has(row.path))fail('duplicate or invalid source');bytes+=Buffer.byteLength(row.source);if(bytes>16777216)fail('complete input byte budget');files.set(row.path,row.source);}
- const expected=ownedCoreRuntimeSources(data.runtimeRoot,data.declarationRoot);
+ const expected=(__asciiSourceApply(__asciiSourceHas,files,[data.runtimeRoot+'/string-iterator-runtime.mjs'])?ownedCoreAsciiBaseRuntimeSources:ownedCoreRuntimeSources)(data.runtimeRoot,data.declarationRoot);
  for(const row of expected)if(files.get(row.path)!==row.source)fail('registered materialized runtime differs: '+row.path);
  if(files.has(data.runtimeRoot+'/string-iterator-runtime.mjs'))for(const row of ownedCoreAsciiRuntimeSources(data.runtimeRoot,data.declarationRoot))if(files.get(row.path)!==row.source)fail('registered ASCII materialized runtime differs: '+row.path);
  const edge=rustEdge(files);
@@ -135,9 +136,9 @@ export function createOwnedCoreSourceContext(input){
  contexts.set(handle,{data,files,receipts,edge});requireOwnedCoreSourceCurrent(handle);return handle;
 }
 export function requireOwnedCoreSourceCurrent(handle){
- assertReverseConcreteSourceHost();const state=contexts.get(handle);if(!state)fail('unissued source context');
+ assertReverseConcreteSourceHost();const __asciiSourceHas=Map.prototype.has,__asciiSourceApply=Reflect.apply;const state=contexts.get(handle);if(!state)fail('unissued source context');
  for(const row of state.receipts)if(digest(row.source)!==row.sha256||state.files.get(row.path)!==row.source)fail('source receipt differs');
- for(const row of ownedCoreRuntimeSources(state.data.runtimeRoot,state.data.declarationRoot))if(state.files.get(row.path)!==row.source)fail('current runtime differs');
+ for(const row of (__asciiSourceApply(__asciiSourceHas,state.files,[state.data.runtimeRoot+'/string-iterator-runtime.mjs'])?ownedCoreAsciiBaseRuntimeSources:ownedCoreRuntimeSources)(state.data.runtimeRoot,state.data.declarationRoot))if(state.files.get(row.path)!==row.source)fail('current runtime differs');
  if(state.files.has(state.data.runtimeRoot+'/string-iterator-runtime.mjs'))for(const row of ownedCoreAsciiRuntimeSources(state.data.runtimeRoot,state.data.declarationRoot))if(state.files.get(row.path)!==row.source)fail('current ASCII runtime differs');
  rustEdge(state.files);if(state.files.has('src/translation_core/base64.rs')&&state.files.get('src/translation_core/base64.rs')!==ROUTER_CORE_BASE64_SOURCE)fail('current base64 leaf differs');assertReverseConcreteSourceHost();
 }
@@ -568,4 +569,20 @@ function checkFunction(context,path,declaration,analysis){
  const item={kind:'owned-function',name,javascript:declaration.name.text,exported:!!declaration.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword),params,returns:resultType,resultRoot,body:checked.body,source:{path,source,span:[declaration.getStart(file),declaration.end]},hostCalls};
  if(paired)item.pairedSource={path:paired.pair.typescript.path,source:paired.pair.typescript.source,span:paired.evidence.typescriptSpan,parameters:paired.evidence.parameters,locals:paired.evidence.locals,returnSpan:paired.evidence.returnSpan,erasure:paired.pair.erasure.edits};
  requireOwnedCoreSourceCurrent(context);return item;
+}
+
+// Explicit ASCII presence source profile; original full builder above remains exact.
+export function ownedCoreAsciiBaseRuntimeSources(runtimeRoot='runtime',declarationRoot=runtimeRoot){
+ ownedSourcePath(runtimeRoot);ownedSourcePath(declarationRoot);assertReverseConcreteSourceHost();const ts=ownershipCompiler(),assets=hostCoreAsciiBaseRuntimeAssets(),rows=[],seen=new Set();
+ function visit(name){
+  if(seen.has(name))return;if(seen.size>=128||name.includes('/')||!name.endsWith('.mjs')&&!name.endsWith('.mts'))fail('runtime closure bounds');seen.add(name);
+  const source=assets.get(name);if(typeof source!=='string')fail('unregistered materialized asset: '+name);const base=name.endsWith('.mts')?declarationRoot:runtimeRoot,path=base+'/'+name,file=parsed(ts,path,source);rows.push({path,source});
+  for(const node of file.statements)if((ts.isImportDeclaration(node)||ts.isExportDeclaration(node))&&node.moduleSpecifier){
+   const specifier=node.moduleSpecifier.text;if(specifier==='node:util'||specifier==='node:crypto')continue;
+   const target=relative(path,specifier);if(posix.dirname(target)!==base)fail('runtime closure escape');visit(posix.basename(target));
+  }
+ }
+ for(const name of ['json-update-runtime.mjs','json-update-runtime.d.mts','json-macro-runtime.mjs','json-macro-runtime.d.mts','base64-runtime.mjs','base64-runtime.d.mts','json-runtime.d.mts','json-option-runtime.mjs','json-option-runtime.d.mts'])visit(name);
+ for(const [name,source]of assets)if(/LICENSE|NOTICE/iu.test(name))rows.push({path:runtimeRoot+'/'+name,source});
+ assertReverseConcreteSourceHost();return rows.sort((a,b)=>a.path.localeCompare(b.path));
 }
