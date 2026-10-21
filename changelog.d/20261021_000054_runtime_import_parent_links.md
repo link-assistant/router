@@ -33,3 +33,10 @@ tapes: 73 genuine iterator observations followed by the same source-host guard
 refusal. Replace the remaining zero-count harness assumption with positive
 observations and that exact refusal; full tape equality and disabled-frame checks
 remain mandatory. This narrow follow-up is source-only and unrun.
+
+Bun receiving follow-up preserves the actual loader/source-profile refusals and
+strictly checks disabled/zero-retention fallback facts. Complete fresh Node child
+source proposals retain both full plans/receiving copies within the unchanged
+case bounds; they grant no Bun native authority. Qualified Node keeps every
+active-path assertion, and all seven behavioral/negative workloads stay intact.
+Source-only, no receiving rerun; production guards and installed outputs unchanged.

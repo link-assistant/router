@@ -97,3 +97,15 @@ before each specialization; foreign functions with identical source, altered
 descriptors and other replacements still retire the operation. Complete repeat
 proposal equality and foreign-noop receiving controls are drafted but unrun.
 No native assertion warming is added outside the original operations.
+
+Bun receiving keeps the conservative unqualified-host path explicit. The retained
+run reports `native-loader-function-identity`, disabled frames and zero retained
+rows/hits/stores; its callable text also fails the source-profile check at
+`Debug.shouldLog`. Those refusals are preserved. Qualified hosts retain all
+active-path controls, and unqualified Node still fails those controls. On the
+explicit Bun fallback, the same complete source proposal operations run afresh
+in the already required Node executable, with a child bound inside each original
+60-second case and complete gzip/CST/inverse readback. These results are SOURCE
+DATA only and never qualify Bun runtime identities. All seven cases, original
+callback/equality/negative workloads and artifact builds remain required. The
+Bun harness follow-up is source-only and unrun.
