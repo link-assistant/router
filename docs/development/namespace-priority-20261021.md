@@ -241,3 +241,57 @@ permission. The complete authored input program passed native TypeScript
 5.9.3 AST copying and both ordered CST roundtrips/inverses (1.39 seconds).
 Six new complete 60000 ms controls are drafted and unrun. The original ten
 positive bodies, expectations and deadlines remain unchanged.
+
+
+Final source-library ABI composition (receiving runtime qualification pending)
+
+The consumer now selects a separate private source-library ABI from the complete
+pinned core/std Cargo manifests, library roots, original prelude reexports and
+six actual defining declarations. Fourteen complete Cargo/metadata callback
+bodies retain library-kind normalization, default non-procedural target creation,
+proc-macro metadata encoding, root classification and defining-crate dispatch.
+The ABI explicitly interprets the original typed optional fields for this source
+model. It does not claim native serde execution, installed rmeta observation,
+actual command-line units or sysroot conformance. The existing std-only/default
+context remains non-authoritative; its false flags are never promoted. This is
+the explicit source-library contract boundary, analogous to the existing
+primitive source ABI, rather than an assertion about every external build.
+
+The genuine package issuer selects an invocation-local context. Its declared
+normal library namespace excludes development dependency edges independently
+of injected cfg(test), and all original configuration alternatives and child
+import diagnostics remain. Fresh actual data-item captures join the conditional
+finite callback transfers. Ordinary local definitions stay Bang, registered
+builtin replacement may select any actual registered callback, and same-crate
+procedural registrations stay compiler dummy callbacks. A foreign procedural
+callback is excluded only in the selected declared source-provider ABI; actual
+native binding resolution is not asserted. Child Bang traffic is not treated as
+a blanket proof about Type names or whole standard-library exports.
+
+The generic constructor's actual immutable root-attribute binder is followed to
+its item-builder argument. Its constructed symbol is joined to the original
+ungated macro expansion, complete builtin lookup/map bodies and the collector's
+builtin interception bypass. Original copied lint/stability attributes are
+separately excluded from these concrete inputs. Twenty-two complete native
+fragment, placeholder, associated-item, visitor and scope-restoration callbacks
+retain the Impl/associated/body containment relation, with graph-root MacroNS
+escapes discharged only through the separate finite source-provider contract.
+Public reports and copied flags never select these private joins. Contexts expire
+at the end of each synchronous closure invocation; there is no new source,
+hash, encoded-result or verdict cache across invocations.
+
+The external trait consumer uses this composition only for genuinely captured
+original nongeneric data siblings with exact source spans. It preserves selected
+trait/member availability and actual Send/Sync defining sources. It does not
+admit the modeled base64 namespace or authorize trait method dispatch. A foreign
+or relocated package issuer falls back to the complete old route before any new
+reflection or source work, preserving the original observer-domain controls.
+All ten original positive bodies, expectations and deadlines are untouched.
+
+All six complete authored original/after programs passed native TypeScript
+5.9.3 AST-copy checks and ordered serialized/reparsed language then repository
+CST substitutions with complete inverses. Source-only finite/containment joins
+also passed. Eight new complete 60000 ms controls are drafted but unrun here.
+The original ten, full receiving controls, both engines, native parity and any
+coverage or performance improvement remain unqualified until Root executes the
+original workloads under the shared lease.

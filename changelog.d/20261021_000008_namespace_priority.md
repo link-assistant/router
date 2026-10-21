@@ -49,3 +49,14 @@ captures, exact spans, complete native parser/token origins and actual Item
 field-projection macro expansions. Preserve foreign callback ownership as a
 separate obligation. Complete native AST/CST inverses passed; six new controls
 remain unrun and no full namespace repair is claimed.
+
+
+Compose the original Engine sibling source closure through a separate private
+pinned standard-library macro ABI, genuine normal-library edge, exact original
+data-token inputs, complete finite builtin transfers, inert generated attribute
+registration and native fragment containment source rules. Preserve the old
+optional default context domain, original Send/Sync owners, all ten original
+positive bodies/deadlines, and modeled base64 namespace refusal. Keep actual
+native invocation/sysroot metadata and runtime parity unproved. Six complete
+native TypeScript 5.9.3 AST copies plus ordered CST inverses passed; eight new
+complete controls and original runtime workloads remain unrun by this worker.

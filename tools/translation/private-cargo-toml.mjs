@@ -10,6 +10,7 @@ import {types} from 'node:util';
 import {originalStaticSourceIntrinsicsUnchanged,originalCapturedFunctionSource,throwOriginalCapturedTypeError} from './original-json-intrinsics.mjs';
 import {deriveDependencyOriginalInputs} from './derive-dependencies.mjs';
 import {originalExternalTraitPackageInputs} from './extensions/external-trait-sources.mjs';
+import {originalStandardUnitInputs} from './standard-unit-inputs.mjs';
 // This SAME common issuer guard uses its captured operations. A poisoned
 // cold import is inert and permanently disqualified, even after restoration.
 const initialQualified=originalStaticSourceIntrinsicsUnchanged();
@@ -214,3 +215,14 @@ export function parsePrivateOriginalCargoToml(source,options){
   checked();unchanged(records);return result;
 }
 export function assertPrivateOriginalCargoTomlExecution(){checked();}
+
+// Separate source-library ABI entry. The old package parser domain and body
+// stay exact. Only privately authenticated complete standard-unit manifests
+// can enter this lane; copied reports and arbitrary TOML text cannot select it.
+export function parsePrivateOriginalStandardCargoToml(unitToken,path){
+ const state=checked(),originals=originalStandardUnitInputs(unitToken),units=originals.units.filter(unit=>unit.manifest.path===path);if(units.length!==1)fail('one privately captured standard manifest required');
+ const source=units[0].manifest.source,{files,records}=sources();checked();unchanged(records);
+ if(!compiled){compiled=execute(files,state);compiledSources=files;}else for(const [path,bytes]of files){const prior=compiledSources.get(path),length=guard.length(bytes);if(!prior||guard.length(prior)!==length)fail('compiled private parser source changed');for(let at=0;at<length;at++)if(bytes[at]!==prior[at])fail('compiled private parser source changed');}
+ let result;try{result=cargoData(apply(compiled.parse,undefined,[source]),compiled.bookkeeping);}catch(error){throw new Failure('Private original standard Cargo TOML refused: '+(typeof error?.message==='string'?error.message:'unavailable parsed data'));}
+ checked();unchanged(records);originalStandardUnitInputs(unitToken);return result;
+}
