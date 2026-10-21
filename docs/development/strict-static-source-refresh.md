@@ -139,3 +139,15 @@ strict targets and Rust remain unrun. No source/owner/semantic/executable gain
 is claimed. The stock Git/filesystem/crypto producer requires an exclusive
 source freeze; these checks are not an atomic-filesystem or hostile-hook total
 attestation.
+The receiving integration on 2026-10-21 generated and independently reviewed
+all three assets against committed source head
+`2f4a6d76f2e2b31423a1463b6c6a49bdb1d55594`. The installed current universe has
+865 Rust/Cargo inputs. The original 806-file and 808-file universes retain their
+exact source-set identities. Proposal, independent review and unchanged-reader
+installation checks passed under the existing bounds. Full byte evidence also
+captured 1,745 compiler/TypeScript inputs and five explicit bootstrap records.
+All 38 source-universe and workflow-policy cases passed as complete files in
+both Node and Bun. These checks establish source-fixture integrity; affected
+original receiving workloads, compiler export freshness, full generation,
+strict parity and the complete same-SHA gate remain separate requirements.
+
