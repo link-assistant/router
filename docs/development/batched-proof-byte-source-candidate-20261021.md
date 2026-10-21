@@ -65,3 +65,24 @@ remain valid generation predecessors; the archive is unchanged.
 behavior controls using native-selected complete old/current guard copies,
 absolute native import relocation, full CST serialization/reparse/inverse, real
 physical files, and genuine Hash observers. Worker generation/runtime is unrun.
+
+The explicit Core12 adapter now defers its row CST work as well. It retains each
+actual row's full native copies, lexical checks, hashes and original record key
+slots before transport. All twelve rows and the original joined issuer/resolver
+proofs exist before four bounded three-row calls to the same authenticated
+substitution API. Each request is derived from the actual original language and
+repository rules and their full inverses. Every returned fragment fills the
+reserved key slots, retaining complete original row JSON order. Limits remain
+32MiB per actual API call; an over-budget chunk refuses without cap changes.
+
+Fresh complete input sources, physical outputs and raw prerequisite bytes are
+checked before and after all chunks. Binary license packets remain bytes.
+The original final Hash fence still executes. The complete prior import-only
+and prerequisite-normalization-only adapters remain explicit generation
+predecessors. No original compiler/producer birth archive is repinned.
+This is a separate source-cost profile; no old source-producer Hash callback
+schedule parity or speed gain is claimed. Actual runtime callback/authority
+contracts remain unchanged. `proof-byte-core-batched-source.test.mjs` adds three
+complete60s controls: native source scope, independent complete old/new twelve-row
+JSON/CST equality (including binary prerequisites), and genuine Hash mutation
+refusal. Worker materialization and all runtime/engine tests remain unrun.
