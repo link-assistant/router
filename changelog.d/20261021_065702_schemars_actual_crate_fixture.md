@@ -9,4 +9,8 @@ helper proof, registration joins and default APIs are unchanged. Root's prior
 receiving run passed 92 of 93 assertions and failed the actual ClientKind case
 at the genuine nested-helper check. This source-only fixture repair has not
 been executed; the complete graph may expose additional ownership refusals or
-exceed the unchanged receiving deadline. No coverage gain is established.
+exceed the unchanged receiving deadline. The actual graph fixture also uses the
+existing project's source-backed standard/matches/TOML external namespace
+construction, so the imported TOML `value` function keeps its genuine value
+identity rather than an unresolved possible macro slot. No coverage gain is
+established.

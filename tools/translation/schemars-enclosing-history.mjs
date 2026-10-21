@@ -11,7 +11,7 @@ export const SCHEMARS_ENCLOSING_OLD_CONTROL='tools/translation/schemars-enclosin
 const SELF='tools/translation/schemars-enclosing-history.mjs',PREFIX='tools/translation/source-profiles/schemars-enclosing-history/',SCHEMA='complete-schemars-enclosing-original-history-v1',LIMIT=1048576;
 const PINS=[
  {path:SCHEMARS_ENCLOSING_ORIGINAL,revision:'d37b18917c33ef1584e5790cfa4c610230db55d0',gitBlob:'36de9adbbd20076b9d73ac8d1d4e9dcce76230cf',bytes:26523,sha256:'65109370660c0c64885831baadfa71f6be5d03698a5a9591229be5d2910b5d9a'},
- {path:SCHEMARS_ENCLOSING_TEST,revision:'1af75698c2af44a5fad95f9470932988dc19e85e',gitBlob:'def7d1ccb98c285bb6fa541c591bfb17f8436785',bytes:13640,sha256:'86336f4fae094eb0607c1b7cc892527978a67b5b9fbaba4242a23fdac4cd6c10'},
+ {path:SCHEMARS_ENCLOSING_TEST,revision:'cd831d96113e8d98784c93be7f6c62e295b2fe9e',gitBlob:'f34329978eb4a491123f9a8342c305482f71fce6',bytes:14214,sha256:'623a340db22c5ad0d99d8328fe87f3fa991fe1cc32cd9bb01b2b4c16f81eae67'},
 ];
 const NOTICE='Complete original Router enclosing issuer and Schemars candidate controls from actual pinned Git objects. Original Router LICENSE applies. Full source and original assertion bodies remain available. Archive DATA grants no type, ownership, namespace, semantic or execution authority.\n';
 const hash=value=>createHash('sha256').update(value).digest('hex'),blob=value=>createHash('sha1').update(Buffer.from('blob '+Buffer.byteLength(value)+'\0')).update(value).digest('hex');
