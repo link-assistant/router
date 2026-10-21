@@ -4,6 +4,7 @@ import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
+import {composePrimitiveIdentityBoundary} from './prepare-primitive-identity-boundary.mjs';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
 import {sourceItems, rustTokens} from './rust-structure.mjs';
@@ -236,10 +237,20 @@ export function composeCurrentCoreMatchesSources(prior, {root = ROOT} = {}) {
   }
   return {sources, layers: [result], historicalSources: prior};
 }
+// Preserve the complete original matches birth. The installed Host additionally
+// includes the explicit original-primitive identity boundary source layer.
+export function prepareCurrentCoreMatchesComposition(options = {}) {
+  const birth = prepareCurrentCoreMatchesSources(options);
+  const boundary = composePrimitiveIdentityBoundary(Object.fromEntries(birth.files.map(row => [row.path, row])), options);
+  return {schema: 'current-owned-matches-source-composition-v1', birth, layers: [birth, ...boundary.layers], files: Object.values(boundary.sources), semanticAuthority: false};
+}
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2); if (args.length !== 1 || !['--write', '--check', '--emit'].includes(args[0])) fail('usage: --write|--check|--emit');
-  const result = prepareCurrentCoreMatchesSources();
+  const result = prepareCurrentCoreMatchesComposition();
   if (args[0] === '--emit') console.log(JSON.stringify(result));
-  else if (args[0] === '--write') { for (const row of result.files) writeFileSync(resolve(ROOT, row.path), row.after); }
+  else if (args[0] === '--write') {
+    for (const row of result.files) if (!result.layers.flatMap(layer => layer.files.filter(part => part.path === row.path).flatMap(part => [part.before,part.after])).includes(row.current) || readFileSync(resolve(ROOT,row.path),'utf8') !== row.current) fail('complete current source differs from actual composed equations');
+    for (const row of result.files) writeFileSync(resolve(ROOT, row.path), row.after);
+  }
   else { if (result.files.some(row => row.current !== row.after)) fail('generated source is stale'); console.log('Owned matches sources are current.'); }
 }

@@ -9,7 +9,7 @@ import {translateProject} from '../project.mjs';
 import {translateSource} from '../translate.mjs';
 import {parseProgram} from '../semantic-meta.mjs';
 import {sourceItems} from '../rust-structure.mjs';
-import {prepareCurrentCoreMatchesSources, prepareCoreMatchesSources} from '../prepare-core-matches-sources.mjs';
+import {prepareCurrentCoreMatchesSources, prepareCoreMatchesSources, prepareCurrentCoreMatchesComposition} from '../prepare-core-matches-sources.mjs';
 import {prepareSourceBackedMatches} from '../prepare-source-backed-matches.mjs';
 import {proposeSourceBackedCoreLiteralMatchesCorpus} from '../source-backed-core-matches.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
@@ -43,14 +43,21 @@ function propose(input, dependencyInputs) { retain('complete-original-corpus-inp
 function proposalFor(result, path = 'src/app.rs') { const row = result.rows.find(row => row.path === path); assert.ok(row, path); return row; }
 test('native source producers retain complete historical inputs actual current outputs and every CST inverse', () => {
   const original = retain('complete-original-owned-matches-inputs', fixture()), prepared = retain('complete-native-runtime-proposal', prepareCurrentCoreMatchesSources());
+  const current = retain('complete-current-owned-matches-boundary-composition', prepareCurrentCoreMatchesComposition());
+  assert.equal(current.layers[1].files.find(row => row.path.endsWith('/host-contracts.mjs')).before, prepared.files.find(row => row.path.endsWith('/host-contracts.mjs')).after);
   assert.deepEqual(prepared.inputs, original.inputs); assert.equal(prepared.typescriptVersion, '5.9.3');
   assert.equal(prepared.newAcrossInvocationCache, false); assert.equal(prepared.oldStandardMatchesOwnershipUnchanged, true);
   for (const row of prepared.files) {
-    assert.equal(row.current, row.after, row.path); assert.equal(row.inverse, row.before);
+    assert.equal(row.current, current.files.find(final => final.path === row.path).after, row.path); assert.equal(row.inverse, row.before);
     assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source, row.before); assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source, row.after);
     assert.equal(row.beforeSha256, hash(row.before)); assert.equal(row.afterSha256, hash(row.after));
     assert.deepEqual(row.trace.map(part => part.phase), ['language', 'repository']);
     if (row.nativeBindings) assert.deepEqual(row.nativeBindings.unboundIdentifiers, []);
+  }
+  for (const row of current.layers[1].files) {
+    assert.equal(row.current, row.after); assert.equal(row.inverse, row.before);
+    assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source, row.before); assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source, row.after);
+    assert.deepEqual(row.trace.map(part => part.phase), ['language', 'repository']); assert.ok(row.nativeCopies);
   }
   const host = prepared.files.find(row => row.path.endsWith('/host-contracts.mjs'));
   assert.ok(host.after.split('\n').length <= 1000); assert.ok(host.before.includes('parseRouterCoreVector')); assert.ok(host.after.includes('parseRouterCoreVector'));
