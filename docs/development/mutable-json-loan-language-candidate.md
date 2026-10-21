@@ -17,7 +17,11 @@ leaf with exactly one `&mut` canonical serde_json Value parameter and one actual
 borrowed-str parameter enters this component. A new unchanged genuine
 `HostChecker` resolves the parsed pointee to its registered JSON owner. Its
 existing private constructor-issued membership and original method identities
-are checked before the program call, afterward and on every private access. Named
+are checked before the program call, afterward and on every private access. The
+source parser retains its original module path. Its already-resolved external
+JSON identity enters the checker through the canonical rooted host-type API;
+the host-only checker does not pretend to contain the original application
+module graph. Named
 lifetimes, other pointees, nested references, multiple mutable roots, async,
 escaping returns and existing unrelated refusals stay outside the candidate.
 Production enclosing/derive contexts that cannot be reissued through the closed
