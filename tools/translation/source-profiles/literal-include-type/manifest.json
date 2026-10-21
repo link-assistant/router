@@ -1,0 +1,68 @@
+{
+  "schema": "original-literal-include-source-program-v1",
+  "rustVersion": "1.89.0",
+  "sources": [
+    {
+      "path": "library/core/src/macros/mod.rs",
+      "archive": "source-profiles/standard-macro-provider-abi/library_core_src_macros_mod.rs.gz",
+      "archiveBytes": 14787,
+      "archiveSha256": "8506fde0d40b33c2336337b7282358b44f09a010434807b6e0e06d7a896ab49e",
+      "bytes": 65222,
+      "sha256": "9a950cfa3735eef653b7f9a6a4701e7b218f9876141701dac72ccb8b8e8d3862"
+    },
+    {
+      "path": "library/std/src/lib.rs",
+      "archive": "source-profiles/namespace-standard/rust-std-lib-1.89.0.rs.gz",
+      "archiveBytes": 8934,
+      "archiveSha256": "d0216701dd8c129fb80a7c32ddd025de22d1420090a9fc7219384f06eecce065",
+      "bytes": 28184,
+      "sha256": "d070a5abc5138536e274e483181db929cc56d7a4b7a1947a11149f92b2cdc1ea"
+    },
+    {
+      "path": "compiler/rustc_builtin_macros/src/lib.rs",
+      "archive": "source-profiles/builtin-derive-bang/rust-1.89-compiler_rustc_builtin_macros_src_lib.rs.gz",
+      "archiveBytes": 1631,
+      "archiveSha256": "87b25549db475e3644a4f89b27348d0a15fba8dfd72338ae37d97e2095ebae0d",
+      "bytes": 5277,
+      "sha256": "7af7c77b36351c3ea41e1ebb62605c2f74aeee3ee76ba9ea0b1f511356f85f07"
+    },
+    {
+      "path": "compiler/rustc_builtin_macros/src/source_util.rs",
+      "archive": "source-profiles/schemars-namespace/rust-1.89-source_util.rs.gz",
+      "archiveBytes": 3501,
+      "archiveSha256": "33823fb9c9d18e8b5c49fbb7fc121b9da5864b38b3c9e85634e827ab00a2ce86",
+      "bytes": 12434,
+      "sha256": "cc9562c65f756463f1aaced793f7939ad2dc1da8fb5a4a188f7dab5d27d86dc5"
+    },
+    {
+      "path": "compiler/rustc_builtin_macros/src/util.rs",
+      "archive": "source-profiles/clap-concat/rust-1.89-util.rs.gz",
+      "archiveBytes": 3045,
+      "archiveSha256": "151d6d951de3155717a647537326da2b09ad672d0e7186f052e6624f216a4fd6",
+      "bytes": 10384,
+      "sha256": "9d659ffcdf1e188af9207cf28c1107e1286ce09433e5de0389e70a4a60eb14be"
+    },
+    {
+      "path": "compiler/rustc_expand/src/base.rs",
+      "archive": "source-profiles/clap-concat/rust-1.89-base.rs.gz",
+      "archiveBytes": 12220,
+      "archiveSha256": "203c8d2ef3a0774863906f41da8d5d398d08b65834468946f7d79aee6224c4d9",
+      "bytes": 52174,
+      "sha256": "0bf27a4b3d96610af84dd2dd9780587e0fb4ac0fb951bbc53f982295f837077f"
+    }
+  ],
+  "licenses": [
+    {
+      "path": "source-profiles/namespace-standard/LICENSE-MIT",
+      "bytes": 1068,
+      "sha256": "b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1"
+    },
+    {
+      "path": "source-profiles/namespace-standard/LICENSE-APACHE",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+    }
+  ],
+  "nativeCompilerExecuted": false,
+  "runtimeAuthority": false
+}
