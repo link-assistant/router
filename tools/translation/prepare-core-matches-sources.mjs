@@ -157,7 +157,9 @@ export function prepareCoreMatchesSources({facade, sourceData, hostSource, order
     const token = calls[0], after = source.slice(0, token.start) + 'crate::translation_core::' + source.slice(token.start);
     return {name, span: [item.start, item.end], source, after, sha256: hash(source)};
   });
-  const oracle = CORE_MATCHES_ORACLE_SOURCE + '\n// Complete original production functions; only the explicit macro API is adopted.\n' + originalFunctions.map(row => row.after).join('\n\n') + String.raw`
+  // This tail contains no escapes. Keep Unicode in an ordinary template so
+  // native engines produce identical Rust source rather than raw tag spelling.
+  const oracle = CORE_MATCHES_ORACLE_SOURCE + '\n// Complete original production functions; only the explicit macro API is adopted.\n' + originalFunctions.map(row => row.after).join('\n\n') + `
 
 #[test]
 fn complete_original_client_launch_option_predicates() {

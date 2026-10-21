@@ -26,9 +26,12 @@ available. These source preparations grant no semantic admission by themselves.
 The initial Node receiving run passed all 22 complete cases in the new lifetime
 batch suite and both existing project refusal suites, without deadline changes.
 This includes 128 independent late borrow failures, ambiguous signatures,
-transitive callers, nested source owners and fresh source replacement. Whole
-project speed, Bun, current generated outputs and the full JavaScript gate still
-require verification; no production coverage gain follows from this result.
+transitive callers, nested source owners and fresh source replacement. The
+affected nine-file Node cohort subsequently passed all 73 cases with TypeScript
+5.9.3. All 23 complete shared-adoption, reverse-vector, checked-source and lifetime
+cases passed under Bun 1.4.3. Whole-project speed, canonical/profile freshness and
+the full JavaScript gate still require verification; no production coverage gain
+follows from these receiving results.
 
 The historical three-file `prepareSourceLifetimeRefusalBatches()` result remains
 unchanged. `prepareCurrentSourceLifetimeRefusalBatches()` and the CLI explicitly
