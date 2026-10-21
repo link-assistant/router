@@ -4,10 +4,7 @@ import {types} from 'node:util';
 import {originalJsonIntrinsicsUnchanged,originalBatchedJsonIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
 import {originalBatchedDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
 function createGuardedProofLexingIntrinsics(){
- if(!originalBatchedDataFreezeIntrinsicsUnchanged())return {
-  originalLexingIntrinsicsUnchanged(){return false;},
-  originalBatchedLexingIntrinsicsUnchanged(){return false;},
- };
+ if(!originalBatchedDataFreezeIntrinsicsUnchanged())return {descriptor:void 0,own:void 0,prototype:void 0,stringPrototype:void 0,regexpPrototype:void 0,arrayPrototype:void 0,objectPrototype:void 0,species:void 0,pins:void 0,qualified:false};
 
 const descriptor=Object.getOwnPropertyDescriptor,own=Object.hasOwn,prototype=Object.getPrototypeOf,apply=Reflect.apply,text=Function.prototype.toString,isProxy=types.isProxy;
 const stringPrototype=prototype(''),regexpPrototype=prototype(/(?:)/u),arrayPrototype=prototype([]),objectPrototype=prototype({});
@@ -19,7 +16,11 @@ const pins=[];for(let i=0;i<required.length;i++){const row=required[i],owner=row
 const native=(fn,name)=>typeof fn==='function'&&!isProxy(fn)&&apply(text,fn,[])===`function ${name}() { [native code] }`;
 let qualified=iteratorPrototype!==null&&Array.prototype===arrayPrototype&&species&&own(species,'get')&&own(species,'set')&&!own(species,'value')&&species.set===undefined&&native(species.get,'get [Symbol.species]');for(let i=0;i<pins.length;i++){const pin=pins[i];if(!pin.field||!own(pin.field,'value')||!native(pin.field.value,pin.name))qualified=false;}
 if(qualified)try{const key={},map=new WeakMap(),iterator=[key][Symbol.iterator]();qualified=map.set(key,key)===map&&map.get(key)===key&&iterator.next().value===key&&iterator.next().done===true;}catch{qualified=false;}
- function originalLexingIntrinsicsUnchanged(){
+ return {descriptor,own,prototype,stringPrototype,regexpPrototype,arrayPrototype,objectPrototype,species,pins,qualified};
+}
+const {descriptor,own,prototype,stringPrototype,regexpPrototype,arrayPrototype,objectPrototype,species,pins,qualified}=createGuardedProofLexingIntrinsics();
+
+export function originalLexingIntrinsicsUnchanged(){
  if(!qualified||!originalJsonIntrinsicsUnchanged()||Array.prototype!==arrayPrototype||prototype(stringPrototype)!==objectPrototype||prototype(regexpPrototype)!==objectPrototype)return false;
  const actualSpecies=descriptor(Array,Symbol.species);if(!actualSpecies||!own(actualSpecies,'get')||!own(actualSpecies,'set')||own(actualSpecies,'value')||actualSpecies.get!==species.get||actualSpecies.set!==species.set||actualSpecies.enumerable!==species.enumerable||actualSpecies.configurable!==species.configurable)return false;
  for(let i=0;i<pins.length;i++){const pin=pins[i],actual=descriptor(pin.owner,pin.key);if(!actual||!own(actual,'value')||actual.value!==pin.field.value||actual.writable!==pin.field.writable||actual.enumerable!==pin.field.enumerable||actual.configurable!==pin.field.configurable)return false;}
@@ -27,14 +28,9 @@ if(qualified)try{const key={},map=new WeakMap(),iterator=[key][Symbol.iterator](
 }
 
 // Separate explicit sibling; the original lexical guard and all pins stay exact.
- function originalBatchedLexingIntrinsicsUnchanged(){
+export function originalBatchedLexingIntrinsicsUnchanged(){
  if(!qualified||!originalBatchedJsonIntrinsicsUnchanged()||Array.prototype!==arrayPrototype||prototype(stringPrototype)!==objectPrototype||prototype(regexpPrototype)!==objectPrototype)return false;
  const actualSpecies=descriptor(Array,Symbol.species);if(!actualSpecies||!own(actualSpecies,'get')||!own(actualSpecies,'set')||own(actualSpecies,'value')||actualSpecies.get!==species.get||actualSpecies.set!==species.set||actualSpecies.enumerable!==species.enumerable||actualSpecies.configurable!==species.configurable)return false;
  for(let i=0;i<pins.length;i++){const pin=pins[i],actual=descriptor(pin.owner,pin.key);if(!actual||!own(actual,'value')||actual.value!==pin.field.value||actual.writable!==pin.field.writable||actual.enumerable!==pin.field.enumerable||actual.configurable!==pin.field.configurable)return false;}
  return true;
 }
-
- return {originalLexingIntrinsicsUnchanged,originalBatchedLexingIntrinsicsUnchanged};
-}
-const {originalLexingIntrinsicsUnchanged,originalBatchedLexingIntrinsicsUnchanged}=createGuardedProofLexingIntrinsics();
-export {originalLexingIntrinsicsUnchanged,originalBatchedLexingIntrinsicsUnchanged};

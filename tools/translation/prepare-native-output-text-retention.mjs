@@ -22,9 +22,12 @@ function phase(ts,before,path,name,choose){
  const native=syntax(ts,before,path),edits=choose(native).sort((a,b)=>a.span[0]-b.span[0]);let delta=0,end=0,after=before;
  for(const row of edits){if(row.span[0]<end||before.slice(...row.span)!==row.expected)fail('native selections overlap or differ');row.afterSpan=[row.span[0]+delta,row.span[0]+delta+row.replacement.length];delta+=row.replacement.length-row.expected.length;end=row.span[1];}
  for(let at=edits.length-1;at>=0;at--){const row=edits[at];after=after.slice(0,row.span[0])+row.replacement+after.slice(row.span[1]);}
- syntax(ts,after,path);const beforeMeta=concrete(before),rules={languageRules:[],repositoryRules:[]};rules[name+'Rules']=[{id:'native-output:'+name,edits:edits.map(({span,expected,replacement})=>({span,expected,replacement}))}];
+ // Native selections retain every exact edit below. Whole-phase CST transport
+ // also preserves merged trivia at inserted-source boundaries in its inverse.
+ syntax(ts,after,path);const beforeMeta=concrete(before),rules={languageRules:[],repositoryRules:[]};rules[name+'Rules']=[{id:'native-output:'+name,edits:before===after?[]:[{span:[0,before.length],expected:before,replacement:after}]}];
  const changed=applyConcreteSyntaxSubstitutions(transportConcreteSyntaxMeta(beforeMeta).document,rules),afterMeta=serializeConcreteSyntaxMeta(changed.value);if(transportConcreteSyntaxMeta(afterMeta).source!==after)fail('actual native/CST substitution differs');
- const inverseEdits=edits.map(row=>({span:row.afterSpan,expected:row.replacement,replacement:row.expected}));rules[name+'Rules']=[{id:'native-output:'+name+':inverse',edits:inverseEdits}];
+ let nativeInverse=after;for(const row of [...edits].reverse()){if(nativeInverse.slice(...row.afterSpan)!==row.replacement)fail('native inverse selection differs');nativeInverse=nativeInverse.slice(0,row.afterSpan[0])+row.expected+nativeInverse.slice(row.afterSpan[1]);}if(nativeInverse!==before)fail('whole native inverse differs');
+ rules[name+'Rules']=[{id:'native-output:'+name+':inverse',edits:before===after?[]:[{span:[0,after.length],expected:after,replacement:before}]}];
  const inverse=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(applyConcreteSyntaxSubstitutions(transportConcreteSyntaxMeta(afterMeta).document,rules).value)).source;if(inverse!==before)fail('whole native/CST inverse differs');
  return {phase:name,before,after,beforeMeta,afterMeta,edits,inverse,trace:changed.trace,completeInverse:true};
 }

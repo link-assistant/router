@@ -16,6 +16,7 @@ const nativeOutputFields=[
 ].map(([owner,key])=>({owner,key,field:nativeOutputGet(owner,key)}));
 const nativeOutputFrom=nativeOutputFields[0].field?.value,nativeOutputToString=nativeOutputFields[2].field?.value;
 const nativeOutputDeflate=nativeOutputFields[7].field?.value,nativeOutputInflate=nativeOutputFields[8].field?.value;
+const nativeOutputSafeInteger=nativeOutputFields[12].field?.value,nativeOutputCeil=nativeOutputFields[13].field?.value;
 function nativeOutputReady(){
  if(NativeOutputBuffer!==nativeOutputConstructor)throw new TypeError('Native retained output constructor changed');
  for(let at=0;at<nativeOutputFields.length;at++){
@@ -28,7 +29,7 @@ function nativeOutputReady(){
 `;
 export const nativeOutputEncode=`{
   nativeOutputReady();
-  if(typeof source!=='string'||!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||end<=start||end>source.length||end-start>CHUNK)throw new TypeError('Native retained output input bounds');
+  if(typeof source!=='string'||!nativeOutputApply(nativeOutputSafeInteger,undefined,[start])||!nativeOutputApply(nativeOutputSafeInteger,undefined,[end])||start<0||end<=start||end>source.length||end-start>CHUNK)throw new TypeError('Native retained output input bounds');
   const raw=nativeOutputApply(nativeOutputFrom,NativeOutputBuffer,[slice(source,start,end),'utf16le']);
   if(raw.length!==(end-start)*2)throw new TypeError('Native retained output UTF16 length');
   const packed=nativeOutputApply(nativeOutputDeflate,nativeOutputZlib,[raw,{level:1}]);
@@ -36,7 +37,7 @@ export const nativeOutputEncode=`{
 }`;
 export const nativeOutputDecode=`{
   nativeOutputReady();
-  if(typeof packed!=='string'||packed.length>4*Math.ceil((CHUNK*2+1024)/3)||!Number.isSafeInteger(units)||units<1||units>CHUNK)throw new TypeError('Native retained output packed bounds');
+  if(typeof packed!=='string'||packed.length>4*nativeOutputApply(nativeOutputCeil,undefined,[(CHUNK*2+1024)/3])||!nativeOutputApply(nativeOutputSafeInteger,undefined,[units])||units<1||units>CHUNK)throw new TypeError('Native retained output packed bounds');
   const compressed=nativeOutputApply(nativeOutputFrom,NativeOutputBuffer,[packed,'base64']);
   if(nativeOutputApply(nativeOutputToString,compressed,['base64'])!==packed)throw new TypeError('Native retained output canonical base64');
   const raw=nativeOutputApply(nativeOutputInflate,nativeOutputZlib,[compressed,{maxOutputLength:units*2}]);
