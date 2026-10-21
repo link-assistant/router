@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import {Hash,createHash} from 'node:crypto';
 import {repositorySourceURL} from './fixtures/repository-paths.mjs';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
@@ -38,14 +40,13 @@ test('observed Hash wrappers retain every complete original source declaration b
 });
 
 test('JSON hooks and callback-installed intrinsic changes retain complete original results and callback payloads',{timeout:60000},()=>{
- const inputs=[setup('#[derive(Clone)] pub struct Empty;'),setup('#[derive(Clone)] pub struct Empty;')],field=get(JSON,'stringify'),rows=[];
- for(const [index,creator]of [createDeriveBangContext,createWholeOwnerDeriveBangContext].entries()){
-  const tape=[];try{define(JSON,'stringify',{...field,value:function(...args){const value=apply(field.value,this,args);tape[tape.length]={args:apply(field.value,JSON,[args]),value};return value;}});rows.push({result:outcome(()=>creator(inputs[index])),tape});}finally{define(JSON,'stringify',field);}
- }assert.deepStrictEqual(rows[1],rows[0]);assert.ok(rows[0].tape.length>0);
- const update=get(Hash.prototype,'update'),stringify=get(JSON,'stringify'),changed=[];
- for(const [index,creator]of [createDeriveBangContext,createWholeOwnerDeriveBangContext].entries()){
-  const input=setup('#[derive(Clone)] pub struct Other;');let first=true;try{define(Hash.prototype,'update',{...update,value:function(...args){if(first){first=false;define(JSON,'stringify',{...stringify,value:function(...values){return apply(stringify.value,this,values);}});}return apply(update.value,this,args);}});changed[index]=outcome(()=>creator(input));}finally{define(Hash.prototype,'update',update);define(JSON,'stringify',stringify);}
- }assert.deepStrictEqual(changed[1],changed[0]);
+ const fixture=fileURLToPath(new URL('./fixtures/whole-owner-hook-child.mjs',import.meta.url));
+ for(const kind of ['json-hook','callback-installed-hook']){
+  const runs=['legacy','whole'].map(mode=>spawnSync(process.execPath,[fixture,mode,kind],{encoding:'utf8',timeout:12500,maxBuffer:64*1024*1024}));for(const run of runs){assert.equal(run.error,undefined);assert.equal(run.signal,null);assert.equal(run.status,0,run.stderr);assert.equal(run.stderr,'');}
+  const [baseline,candidate]=runs.map(run=>JSON.parse(run.stdout));assert.deepStrictEqual(candidate,baseline);assert.equal(baseline.schema,'complete-whole-owner-hook-wire-v1');assert.equal(baseline.engine.execPath,process.execPath);assert.equal(baseline.workloads.length,3);
+  const rows=baseline.workloads;assert.ok(rows.every(row=>row.kind===kind));assert.deepStrictEqual(rows.map(row=>row.state),['first-observed-context','fresh-context-after-observed-work','same-context-after-observed-work']);assert.ok(rows[0].tape.length>0);assert.ok(rows[1].tape.length>0);assert.deepStrictEqual(rows[2].tape,[]);for(const row of rows)assert.ok(row.result.value);
+  const changed=structuredClone(candidate);changed.workloads[0].tape.find(row=>typeof row.value==='string').value+=' ';assert.throws(()=>assert.deepStrictEqual(changed,baseline),assert.AssertionError,'one nested original callback result remains part of full strict comparison');
+ }
 });
 
 test('unknown original owners and forged contexts retain complete residuals without partial or supplied authority',{timeout:60000},()=>{
