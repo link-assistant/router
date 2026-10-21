@@ -16,7 +16,7 @@ import {proposeSourceBackedCoreSequenceStream as legacyStream} from '../source-b
 import {runOriginalCoreSequenceStage,reviewOriginalCoreSequenceStage,proposeSourceBackedCoreSequenceStream,reviewSourceBackedCoreSequenceStream} from '../whole-owner-core-corpus-candidate.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 import {wholeOwnerCoreCorpusInspectionReady} from '../whole-owner-core-corpus-inspection-data.mjs';
-import {decodeCompleteHookWire} from './fixtures/complete-hook-wire.mjs';
+import {decodeCompleteHookWire,encodeCompleteHookWire,compareCompleteHookWires} from './fixtures/complete-hook-wire.mjs';
 const root=new URL('../../../',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex'),wire=value=>JSON.parse(JSON.stringify(value)),cargo={manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')};
 const application='\uFEFF#[derive(Clone,Copy)]pub struct Marker{value:u8}\r\npub fn formatted(value:u8)->String{format!("value={value}")}\r\npub fn accepted(value:&crate::translation_core::Str)->bool{matches!(value,"a"|"b")}\r\npub fn values()->Vec<u8>{vec![1u8,2u8]}\r\n#[cfg(test)]mod tests{unknown!();}\r\n';
 function sources(source=application){return {'src/lib.rs':'pub mod translation_core;pub mod app;','src/app.rs':source,'src/translation_core.rs':facade,'src/translation_core/primitives.rs':primitives,'src/translation_core/ranges.rs':ranges,'src/translation_core/base64.rs':base64,'src/translation_core/json_collections.rs':collections};}
@@ -50,6 +50,17 @@ test('validly recompressed detached span and producer effect DATA never replace 
  for(const kind of ['attribute','effect']){const f=physical(t);proposeSourceBackedCoreSequenceStream({root:f.directory,output:f.output});const stored=packets(f.output),at=stored.values.findIndex(value=>kind==='attribute'?value?.sourceInspectionOnly===true&&value.attributes?.length:value?.selections?.length&&value.schema==='core-adoption-original-producer-effects-v1');assert.ok(at>=0);const changed=wire(stored.values[at]);if(kind==='attribute')changed.attributes[0].expected+=' ';else changed.selections[0].sourceSha256='0'.repeat(64);repack(f.output,stored.index,at,changed);assert.throws(()=>reviewSourceBackedCoreSequenceStream({root:f.directory,output:f.output}),/native stage equation|source|span/u);}
 });
 
-test('independent complete three-stage engines retain full actual JSON refusals Hash payloads and all successful outputs',{timeout:60000},()=>{
- const fixture=fileURLToPath(new URL('./fixtures/whole-owner-core-corpus-hook-child.mjs',import.meta.url));let storedBytes=0,logicalBytes=0;for(const kind of ['json-hook','hash-hook']){const runs=['legacy','whole'].map(mode=>spawnSync(process.execPath,[fixture,mode,kind],{encoding:'utf8',timeout:12500,maxBuffer:64*1024*1024}));for(const run of runs){assert.equal(run.error,undefined);assert.equal(run.signal,null);assert.equal(run.status,0,run.stderr);assert.equal(run.stderr,'');storedBytes+=Buffer.byteLength(run.stdout);logicalBytes+=JSON.parse(run.stdout).rawBytes;assert.ok(storedBytes<=64*1024*1024);assert.ok(logicalBytes<=384*1024*1024);}const [baseline,candidate]=runs.map(run=>decodeCompleteHookWire(run.stdout));assert.deepStrictEqual(candidate,baseline);assert.equal(baseline.workload.state,'complete-formatting-matches-vectors-operation');if(kind==='hash-hook'){assert.ok(baseline.workload.tape.length>0);assert.equal(baseline.workload.result.value.length,3);const changed=structuredClone(candidate);changed.workload.tape.find(row=>typeof row.value==='string').value+=' ';assert.throws(()=>assert.deepStrictEqual(changed,baseline),assert.AssertionError);}else{assert.equal(baseline.workload.result.error.name,'TypeError');assert.match(baseline.workload.result.error.message,/native|original|concrete/iu);}}
+test('independent complete three-stage engines retain full actual JSON refusals Hash payloads and all successful outputs',{timeout:60000},t=>{
+ const fixture=fileURLToPath(new URL('./fixtures/whole-owner-core-corpus-hook-child.mjs',import.meta.url));let storedBytes=0,logicalBytes=0;
+ for(const kind of ['json-hook','hash-hook']){
+  const runs=['legacy','whole'].map(mode=>spawnSync(process.execPath,[fixture,mode,kind],{encoding:'utf8',timeout:12500,maxBuffer:64*1024*1024}));
+  for(const run of runs){assert.equal(run.error,undefined);assert.equal(run.signal,null);assert.equal(run.status,0,run.stderr);assert.equal(run.stderr,'');assert.ok(Buffer.byteLength(run.stdout)<=64*1024*1024);}
+  const sizes=compareCompleteHookWires(runs[0].stdout,runs[1].stdout);for(const row of Object.values(sizes)){storedBytes+=row.storedBytes;logicalBytes+=row.logicalBytes;}t.diagnostic(JSON.stringify({kind,children:sizes,cumulativeStoredBytes:storedBytes,cumulativeLogicalBytes:logicalBytes,sequentialChildren:true}));
+  runs[1].stdout='';const baseline=decodeCompleteHookWire(runs[0].stdout);assert.equal(baseline.workload.state,'complete-formatting-matches-vectors-operation');
+  if(kind==='hash-hook'){
+   assert.ok(baseline.workload.tape.length>0);assert.equal(baseline.workload.result.value.length,3);const row=baseline.workload.tape.find(row=>typeof row.value==='string');assert.ok(row);const original=row.value;
+   try{row.value+=' ';const changed=encodeCompleteHookWire(baseline);assert.throws(()=>compareCompleteHookWires(runs[0].stdout,changed),/complete decoded bytes/u);}finally{row.value=original;}
+  }else{assert.equal(baseline.workload.result.error.name,'TypeError');assert.match(baseline.workload.result.error.message,/native|original|concrete/iu);}
+  runs[0].stdout='';
+ }
 });

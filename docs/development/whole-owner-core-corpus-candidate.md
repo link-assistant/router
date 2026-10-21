@@ -77,6 +77,11 @@ both Node and Bun; this candidate claims no measured speed improvement.
 New callback children each retain one complete three-stage operation. Their
 complete Hash-observed outputs must succeed; JSON's original native-CST refusal
 is retained and compared as a real refusal. They use the complete framed wire
-transport introduced by `bc0321857`, with unchanged child stdout/time bounds,
-full decoded payload comparisons and aggregate storage/logical bounds. The
+transport introduced by `bc0321857`, with unchanged child stdout/time bounds
+and full decoded payload comparisons. The shared observer transport now drafts
+Brotli quality-4 frames with 1 MiB raw leaves, the original 64 MiB per-child
+stdout limit, complete decoded byte comparison and only one parsed full record.
+Per-child sizes and cumulative sequential totals are diagnostic DATA; sequential
+decoded totals are not concurrent-memory or physical-evidence measurements.
+The outer physical evidence/resource limits remain unchanged. The
 separate Core receiving file retains all original cold/warm/same-context cases.

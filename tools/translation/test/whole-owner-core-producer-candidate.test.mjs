@@ -12,7 +12,7 @@ import {wholeOwnerCoreProducerInputsCallbackFree} from '../whole-owner-core-prod
 import {originalAttributeOwnerBulkCryptoReady} from '../attribute-owner-bulk-crypto.mjs';
 import {createWholeOwnerCoreAdoptionProducerContext,createEnclosingCoreAdoptionProducerContext,coreAdoptionProducerClosedAttributeSpans,coreAdoptionProducerBindings,finishCoreAdoptionProducerContext,captureWholeOwnerCoreAdoptionAttributeData} from '../whole-owner-core-producer-candidate.mjs';
 import {createEnclosingCoreAdoptionProducerContext as originalCreate,coreAdoptionProducerBindings as originalBindings} from '../core-adoption-producer-context.mjs';
-import {decodeCompleteHookWire} from './fixtures/complete-hook-wire.mjs';
+import {decodeCompleteHookWire,encodeCompleteHookWire,compareCompleteHookWires} from './fixtures/complete-hook-wire.mjs';
 const root=new URL('../../../',import.meta.url),dependencyInputs=Object.freeze({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')}),hash=value=>createHash('sha256').update(value).digest('hex');
 function setup(source='#[derive(Clone,Debug,serde::Serialize)] pub struct Record { value:u8 }'){
  const sources=new Map([['src/lib.rs','mod model;'],['src/model.rs',source]]),graph=resolveModuleGraph({entry:'src/lib.rs',paths:[...sources.keys()],readSource:path=>sources.get(path),compilationProfile:PRODUCTION_PROFILE});return {modules:graph.modules,compilationProfile:PRODUCTION_PROFILE,dependencyInputs};
@@ -55,10 +55,17 @@ test('unknown getters and proxies reject admission without an extra caller opera
  }
 });
 
-test('independent cold warm and same-context complete Core creation inspection retain every original JSON and Hash callback',{timeout:60000},()=>{
- const fixture=fileURLToPath(new URL('./fixtures/whole-owner-core-hook-child.mjs',import.meta.url));let storedBytes=0,logicalBytes=0;for(const kind of ['json-hook','hash-hook']){const runs=['legacy','whole'].map(mode=>spawnSync(process.execPath,[fixture,mode,kind],{encoding:'utf8',timeout:12500,maxBuffer:64*1024*1024}));for(const run of runs){assert.equal(run.error,undefined);assert.equal(run.signal,null);assert.equal(run.status,0,run.stderr);assert.equal(run.stderr,'');storedBytes+=Buffer.byteLength(run.stdout);logicalBytes+=JSON.parse(run.stdout).rawBytes;assert.ok(storedBytes<=64*1024*1024);assert.ok(logicalBytes<=384*1024*1024);}const [baseline,candidate]=runs.map(run=>decodeCompleteHookWire(run.stdout));assert.deepStrictEqual(candidate,baseline);assert.equal(baseline.workloads.length,3);
+test('independent cold warm and same-context complete Core creation inspection retain every original JSON and Hash callback',{timeout:60000},t=>{
+ const fixture=fileURLToPath(new URL('./fixtures/whole-owner-core-hook-child.mjs',import.meta.url));let storedBytes=0,logicalBytes=0;
+ for(const kind of ['json-hook','hash-hook']){
+  const runs=['legacy','whole'].map(mode=>spawnSync(process.execPath,[fixture,mode,kind],{encoding:'utf8',timeout:12500,maxBuffer:64*1024*1024}));
+  for(const run of runs){assert.equal(run.error,undefined);assert.equal(run.signal,null);assert.equal(run.status,0,run.stderr);assert.equal(run.stderr,'');assert.ok(Buffer.byteLength(run.stdout)<=64*1024*1024);}
+  const sizes=compareCompleteHookWires(runs[0].stdout,runs[1].stdout);for(const row of Object.values(sizes)){storedBytes+=row.storedBytes;logicalBytes+=row.logicalBytes;}t.diagnostic(JSON.stringify({kind,children:sizes,cumulativeStoredBytes:storedBytes,cumulativeLogicalBytes:logicalBytes,sequentialChildren:true}));
+  runs[1].stdout='';const baseline=decodeCompleteHookWire(runs[0].stdout);assert.equal(baseline.workloads.length,3);
   if(kind==='hash-hook'){assert.equal(baseline.initialization,null);assert.ok(baseline.workloads.every(row=>row.tape.length>0&&row.result.value));}
   else{for(const row of baseline.workloads.slice(0,2)){assert.deepStrictEqual(row.tape,[]);assert.deepStrictEqual(row.result,{error:{name:'TypeError',message:'Private parser execution: native source operations changed'}});}assert.ok(baseline.initialization.result.value);assert.ok(baseline.initialization.tape.length>0);const last=baseline.workloads[2];assert.ok(last.tape.length>0);if(last.result.error){assert.equal(last.result.error.name,'TypeError');assert.match(last.result.error.message,/native|original|enclosing/iu);}else assert.ok(last.result.value);}
-  const observed=kind==='hash-hook'?candidate.workloads[0]:candidate.initialization,changed=structuredClone(candidate),changedObserved=kind==='hash-hook'?changed.workloads[0]:changed.initialization;assert.ok(observed.tape.some(row=>typeof row.value==='string'));changedObserved.tape.find(row=>typeof row.value==='string').value+=' ';assert.throws(()=>assert.deepStrictEqual(changed,baseline),assert.AssertionError);const damaged=JSON.parse(runs[0].stdout);damaged.frames[0].rawSha256='0'.repeat(64);assert.throws(()=>decodeCompleteHookWire(JSON.stringify(damaged)),/full bounded payload/u);
+  const observed=kind==='hash-hook'?baseline.workloads[0]:baseline.initialization,row=observed.tape.find(row=>typeof row.value==='string');assert.ok(row);const original=row.value;
+  try{row.value+=' ';const changed=encodeCompleteHookWire(baseline);assert.throws(()=>compareCompleteHookWires(runs[0].stdout,changed),/complete decoded bytes/u);}finally{row.value=original;}
+  const damaged=JSON.parse(runs[0].stdout);damaged.frames[0].rawSha256='0'.repeat(64);assert.throws(()=>decodeCompleteHookWire(JSON.stringify(damaged)),/full bounded payload/u);runs[0].stdout='';
  }
 });
