@@ -79,3 +79,27 @@ whole-call Hash schedule to change an auxiliary source after those rounds and
 requires refusal before return. Trace controls compare ordered phase names and
 all complete rule records (identifiers, spans and before/after lengths), matching
 the actual object-valued trace contract. This follow-up remains runtime unrun.
+
+`private-parser-data-physical-trial.mjs --run --output NEW_DIRECTORY` is a
+separate, explicit receiving driver. It requires the independent legacy/current
+native-portable layout layer first. Its sixteen whole files include current
+source controls, all three original candidate/adoption suites, and all twelve
+original parser/CST suites. It runs a fresh process for every file, sequentially
+under Node and Bun, preserving each complete source file and deadline. Node
+uses the repository's independent source-declared duration auditor. Bun joins
+every unique actual completion name to its unchanged native source call and
+feeds its reported duration to the same auditor; it does not claim Bun reported
+source positions. Missing/duplicate/skipped cases and deadline breaches fail,
+even when the process exits zero. Failures are collected across whole files.
+
+Before installing anything, the driver archives the complete three-file
+native/CST plan and complete original/trial byte recovery packets. It retains
+selected source/license/notice inputs as raw bytes, including binary inputs,
+and checks full gzip readbacks within the384MiB evidence cap. It then performs
+atomic guarded replacements. Every still-owned after-image is checked before
+any restoration, and `finally` restores complete original bytes after normal
+completion or handled interruption. An unrelated physical edit refuses
+restoration instead of being overwritten. A forced SIGKILL/power loss cannot
+execute `finally`; the already-written recovery packet remains available.
+No driver, engine, or materialization was run by the worker. The driver is not
+default adoption, runtime parity, or performance qualification.
