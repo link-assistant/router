@@ -19,3 +19,15 @@
   refusals retain unknown producer scopes; neither candidates, preserved source
   nor a removed first refusal is new executable coverage. Reverse owned-unit
   semantic recognition and the complete current gate remain unimplemented/unrun.
+
+### Source review follow-up
+
+- Reuse only invocation-local complete native parse trees for detached-copy
+  inspection, retaining independent reparse/AST/binding checks and exact proposed
+  outputs. Strengthen whole-corpus primitive, inspection, source/hash/inverse and
+  fresh physical/Cargo joins; pass the actual Cargo manifest to edition checks.
+- Retain both complete adoption histories in bounded, independently reopened
+  DATA packets before releasing their decoded graphs. Keep all seven original
+  workloads/deadlines and add complete-archive mutation controls. No runtime,
+  generation, native-parser or resource qualification ran; full-corpus fit,
+  speed and executable gain remain unmeasured.

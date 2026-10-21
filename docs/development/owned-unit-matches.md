@@ -103,3 +103,41 @@ reverse semantic recognizer for `matches_unit!` is implemented in this batch.
 No generation, engine, native parser, receiving, production admission or Rust
 check ran in the worker. Static source checks and `git diff --check` are separate
 from the required receiving and complete same-head gate.
+
+## Source-only review follow-up
+
+Within each producer invocation, native selection and detached-copy inspection
+reuse an already parsed complete source file only when its full text, filename
+and grammar diagnostics still match. The complete printed copy is independently
+reparsed, all AST comparisons and native binding checks remain, and no SourceFile
+or cache is retained between producer calls. Proposed output equations are
+unchanged by this reduction of seven duplicate original-program parses.
+
+The whole-corpus case reuses its one validated immutable application packet for
+Cargo extraction while reading package, workspace and lock bytes afresh. It
+passes the actual package manifest to the edition checker; inherited or unknown
+editions stay unknown. Every primitive proposal now has a complete input/output
+map, hash, CST and inverse join; unit inputs, proposals and private inspection
+DATA receive separate complete joins. Physical source identity, modes, bytes and
+Cargo are checked before, between and after phases.
+
+Each complete adoption history is written through the existing lossless indexed
+receiving-DATA codec, reopened and decoded one full row at a time. Its complete
+source/CST/inverse remains retained while the decoded graph becomes eligible for
+collection before the next graph or final checker. Owned `router-owned-unit-matches-data-`
+directories beneath the receiving TMPDIR retain the complete packets for the
+coordinator; no test cleanup deletes them before readback. Every packet includes
+its own full label/value, including undefined fields. A full inventory/decode
+pass precedes the final index, written only after strict targets and final physical
+joins pass. Failure retains packets plus an incomplete receipt. The unchanged
+64 MiB packet, 1 GiB logical transport and 384 MiB stored limits remain ceilings;
+the external shared monitor must also count all other evidence and temporary
+files within its original aggregate bounds. This is receiving evidence, never a
+source or verdict cache and never replayed to issue compiler permission.
+
+The original seven cases, complete workload, strict targets, custody/producer
+refusals and 60-second deadlines remain. Complete-archive mutation and original
+primitive/source-map joins are strengthened inside those cases. The additional
+archive work may itself consume material CPU or disk, and neither the full case's
+60-second fit nor any speed or application coverage gain is established. No
+engine, generation, native parser, test or Rust execution ran for this follow-up.

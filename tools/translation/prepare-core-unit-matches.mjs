@@ -21,7 +21,7 @@ function originals(){
 function parse(ts,path,source){const file=ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);if(file.parseDiagnostics.length)fail('complete native grammar differs: '+path);return file;}
 function shape(ts,node){const children=[];ts.forEachChild(node,child=>{children.push(shape(ts,child));});return [node.kind,ts.isIdentifier(node)?node.escapedText:ts.isLiteralExpression(node)?node.text:null,children];}
 function copy(ts,node){const result=ts.getSynthesizedDeepClone(node),detach=node=>{ts.setTextRange(node,{pos:-1,end:-1});ts.setOriginalNode(node,undefined);ts.forEachChild(node,detach);};detach(result);return result;}
-function nativeCopy(ts,path,source){const file=parse(ts,path,source),copied=ts.createPrinter({newLine:ts.NewLineKind.LineFeed,removeComments:true}).printFile(ts.factory.updateSourceFile(file,file.statements.map(node=>copy(ts,node))));if(JSON.stringify(shape(ts,parse(ts,path,copied)))!==JSON.stringify(shape(ts,file)))fail('complete detached native AST copy differs');return {source,copy:copied,completeNativeAstCopy:true};}
+function nativeCopy(ts,path,source,file=parse(ts,path,source)){if(file.fileName!==path||file.text!==source||file.parseDiagnostics.length)fail('same-invocation native source differs');const copied=ts.createPrinter({newLine:ts.NewLineKind.LineFeed,removeComments:true}).printFile(ts.factory.updateSourceFile(file,file.statements.map(node=>copy(ts,node))));if(JSON.stringify(shape(ts,parse(ts,path,copied)))!==JSON.stringify(shape(ts,file)))fail('complete detached native AST copy differs');return {source,copy:copied,completeNativeAstCopy:true};}
 function named(ts,file,name){const rows=file.statements.filter(node=>ts.isFunctionDeclaration(node)&&node.name?.text===name);if(rows.length!==1||!rows[0].body)fail('one complete native function required: '+name);return rows[0];}
 const UNIT_BRANCH=`
       if (unit) {
@@ -111,7 +111,7 @@ function equations(ts,packet){
  if(!check.getText(ordered).includes(anchor))fail('complete checked match subject declaration differs');
  after[ORDERED]=once(source[ORDERED],'export function checkOrderedMatch(',layoutSource+'\nexport function checkOrderedMatch(');
  after[ORDERED]=once(after[ORDERED],anchor,anchor+"\n  if(node.sourceMacro?.compatibilityCore?.id==='router-core-unit-matches-v1')ownedUnitMatchesLayout(checker,subject.type,node.span);");after[ORACLE]=RUST_ORACLE;
- const layoutOrigin={path:LAYOUT,source:source[LAYOUT],span:[layout.getStart(layoutFile),layout.end],original:layout.getText(layoutFile),copy:layoutSource,nativeCopy:nativeCopy(ts,LAYOUT,source[LAYOUT])};
+ const layoutOrigin={path:LAYOUT,source:source[LAYOUT],span:[layout.getStart(layoutFile),layout.end],original:layout.getText(layoutFile),copy:layoutSource,nativeCopy:nativeCopy(ts,LAYOUT,source[LAYOUT],layoutFile)};
  // This scan records correspondence only. The genuine unit parser receipt and
  // every original parent/relocation check remain separate admission obligations.
  const links=parse(ts,LINKS,source[LINKS]),association=named(ts,links,'rangeSyntaxOrigin'),selected=[];
@@ -120,9 +120,9 @@ function equations(ts,packet){
  const expression=selected[0].parent,old=expression.getText(links),replacement=old+"||kind.value==='routerOrderedMatch'";
  after[LINKS]=source[LINKS].slice(0,expression.getStart(links))+replacement+source[LINKS].slice(expression.end);
  const sourceAssociationOrigin={path:LINKS,owner:{span:[association.getStart(links),association.end],source:association.getText(links)},span:[expression.getStart(links),expression.end],before:old,after:replacement,namespaceAuthority:false,constAuthority:false};
- return {source,after,layoutOrigin,sourceAssociationOrigin};
+ return {source,after,layoutOrigin,sourceAssociationOrigin,originalNativeFiles:new Map([[ORDERED,ordered],[LINKS,links]])};
 }
-function rowPlan(ts,path,before,after,root){
+function rowPlan(ts,path,before,after,root,originalNativeFile){
  const language=path.endsWith('.rs')?'Rust':'JavaScript',languageSource=[MATCHES,CONST,ORDERED,LINKS].includes(path)?after:before,input=transportConcreteSyntaxSource(before,{language}),beforeMeta=serializeConcreteSyntaxMeta(input.document),stages=[];let document=input.document,prior=before;
  const rule=(left,right,id)=>({id,edits:[{span:[0,left.length],expected:left,replacement:right}]});
  for(const phase of ['language','repository']){
@@ -132,12 +132,13 @@ function rowPlan(ts,path,before,after,root){
   stages.push({phase,before:prior,after:target,beforeMeta:wire,afterMeta,trace:run.trace,completeInverse:true});document=result.document;prior=target;
  }
  let current=null;try{current=readFileSync(resolve(root,path),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;}
- const nativeCopies=language==='JavaScript'?[nativeCopy(ts,path,before),nativeCopy(ts,path,after)]:[];
+ const nativeCopies=language==='JavaScript'?[nativeCopy(ts,path,before,originalNativeFile),nativeCopy(ts,path,after)]:[];
  return {path,before,language:languageSource,after,current,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta,afterMeta:serializeConcreteSyntaxMeta(document),inverse:before,stages,trace:stages.flatMap(stage=>stage.trace),nativeCopies,sourceLanguage:language,completeNativeAstCopy:language==='JavaScript',...(language==='JavaScript'?{nativeBindings:verifyNativeCopiedSourceBindings(ts,resolve(root,path),after)}:{})};
 }
 export function prepareCoreUnitMatches({root=ROOT}={}){
- const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('actual TypeScript5.9.3 required');const packet=originals(),result=equations(ts,packet),paths=packet.files.map(row=>row.path).filter(path=>path!==LAYOUT);
- return {schema:'router-owned-unit-matches-source-v1',typescriptVersion:ts.version,input:packet,layoutOrigin:result.layoutOrigin,sourceAssociationOrigin:result.sourceAssociationOrigin,files:paths.map(path=>rowPlan(ts,path,result.source[path],result.after[path],root)),semanticAuthority:false,runtimeExecuted:false,rustExecuted:false,newEncodedOrDigestCache:false,originalLiteralDomainUnchanged:true};
+ const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('actual TypeScript5.9.3 required');const packet=originals(),result=equations(ts,packet),paths=packet.files.map(row=>row.path).filter(path=>path!==LAYOUT),files=[];
+ try{for(const path of paths)files.push(rowPlan(ts,path,result.source[path],result.after[path],root,result.originalNativeFiles.get(path)));}finally{result.originalNativeFiles.clear();}
+ return {schema:'router-owned-unit-matches-source-v1',typescriptVersion:ts.version,input:packet,layoutOrigin:result.layoutOrigin,sourceAssociationOrigin:result.sourceAssociationOrigin,files,semanticAuthority:false,runtimeExecuted:false,rustExecuted:false,newEncodedOrDigestCache:false,originalLiteralDomainUnchanged:true};
 }
 export function composeCoreUnitMatches(prior,options={}){const plan=prepareCoreUnitMatches(options),sources={...prior};for(const row of plan.files){if(Object.hasOwn(sources,row.path)&&sources[row.path].after!==row.before)fail('preceding complete source differs: '+row.path);sources[row.path]=row;}return {sources,layers:[plan],historicalSources:prior};}
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
