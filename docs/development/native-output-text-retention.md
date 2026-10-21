@@ -37,8 +37,10 @@ Buffer/zlib are explicit trusted stock host DATA infrastructure at module birth,
 as in the separate existing byte/project-storage contracts. Captured callable
 and descriptor fences detect later changes to the directly used Buffer/zlib
 operations, their relevant public encoding helpers and direct guard intrinsics.
-They inspect descriptors without invoking replacement getters. Existing private
-collection guards/captured methods are retained. This is not an arbitrary
+They inspect descriptors without invoking replacement getters. Numeric
+predicates are invoked through their captured function references;
+replacement global Number/Math bindings refuse before their getters can run.
+Existing private collection guards/captured methods are retained. This is not an arbitrary
 hostile-host attestation, permission to trust a cold modified native host, or
 equivalence to the original compression sizes or Map/WeakMap observations.
 Changing compression can change a packed/raw observation and the exact budget
