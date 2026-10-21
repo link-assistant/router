@@ -1,4 +1,5 @@
 // Fresh operational DATA only. Nothing here issues compiler/source ownership.
+import {readSelectedGitSizeRecords} from './selected-git-size-records.mjs';
 import {constants,lstatSync,fstatSync,openSync,closeSync,readFileSync,realpathSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
@@ -17,7 +18,7 @@ function identity(stat){const result={};for(const name of ['dev','ino','mode','n
 function head(root,expected){const value=text(git(root,['rev-parse','--verify','HEAD^{commit}'])).trim();if(!/^[a-f0-9]{40}$/u.test(expected)||value!==expected)fail('exact current full Git HEAD required');return value;}
 function inventory(root,expectedHead){
  head(root,expectedHead);const entries=[];
- for(const record of text(git(root,['ls-tree','-r','-l','-z',expectedHead])).split('\0').filter(Boolean)){
+ for(const record of readSelectedGitSizeRecords({revision:expectedHead,run:(args,options)=>git(root,args,options),select:isStaticSourceUniversePath,maxPaths:LIMITS.paths,maxFileBytes:LIMITS.fileBytes,maxTotalBytes:LIMITS.sourceBytes})){
   const at=record.indexOf('\t'),path=record.slice(at+1);if(!isStaticSourceUniversePath(path))continue;
   safe(path);const fields=record.slice(0,at).trim().split(/\s+/u),bytes=Number(fields[3]);
   if(at<0||fields.length!==4||!['100644','100755'].includes(fields[0])||fields[1]!=='blob'||!/^[a-f0-9]{40}$/u.test(fields[2])||!Number.isSafeInteger(bytes)||bytes<0||bytes>LIMITS.fileBytes)fail('complete regular HEAD Rust/Cargo row required');
