@@ -42,3 +42,24 @@ remains performance red: Node case 10 took 78,502.476333 ms and Bun took
 62,202.13 ms against the unchanged 60,000 ms deadline. A separate real-library
 diagnostic found the existing resolver admission predicate true for all 396
 genuine modules; it does not justify broadening that guard.
+
+Root subsequently materialized all three Core source equations and qualified
+the first five new Core cases, alongside all seven packet and seven stage-stream
+cases, with no case deadline breach. The sixth Core observer case failed its
+positive premise: both original JSON-hook graph constructors correctly refused
+at native CST ingress before any JSON callback. Its undefined third-context
+placeholder was a fixture artifact. Independent complete child diagnostics
+retained that refusal and all successful Hash traces; each Hash child produced
+108,848,734 complete raw wire bytes, so its uncompressed stdout would exceed the
+existing 64 MiB child buffer.
+
+The source repair retains both JSON refusal workloads and every original Hash
+success. It adds an explicitly observed Hash initialization phase inside each
+JSON child before inspecting that genuine context, preserving all initialization
+payloads rather than moving construction outside the case. The complete child
+wire uses independently hashed/reopened gzip frames with 1 MiB raw leaves,
+unchanged 64 MiB stdout buffers, at most 64 MiB aggregate stored wire and 384 MiB
+aggregate logical observations. Every original field is decoded and compared;
+wire corruption and a nested original digest mutation must still fail. This
+fixture repair is **unrun**, and the failed receiving/diagnostic receipts remain
+distinct from any future successful qualification.
