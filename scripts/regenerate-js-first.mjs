@@ -135,6 +135,7 @@ function applyArtifactsSelected(root,{check=false}={},artifacts,definitionCleanu
   const witnessFamilies=[
     {prefix:'tools/translation/js-to-rust/generated/owned-core-witness',schema:'owned-core-reverse-ci-witness-v1',header:'// GENERATED: actual checked reverse owned-core receiving witness.'},
     {prefix:'tools/translation/js-to-rust/generated/owned-base64-witness',schema:'owned-base64-reverse-ci-witness-v1',header:'// GENERATED: actual checked reverse base64 receiving witness.'},
+    {prefix:'tools/translation/js-to-rust/generated/owned-ascii-witness',schema:'owned-ascii-reverse-ci-witness-v1',header:'// GENERATED: actual checked reverse ASCII receiving witness.'},
   ];
   const previousWitness=new Map();
   for(const family of witnessFamilies){
