@@ -1,0 +1,9 @@
+{
+  "schema": "original-repository-condition-fixture-v1",
+  "sourcePath": "rust/src/model_routing_resources.rs",
+  "bytes": 4839,
+  "sha256": "4b9519ddf2158dd4097f7dd6f31f79b12630ad3c8563ea61887066d27463a2da",
+  "completeFile": true,
+  "runtimeAuthority": false,
+  "nativeInvocationObserved": false
+}
