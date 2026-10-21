@@ -22,3 +22,16 @@ The complete evidence remains in task-owned temporary directories named
 `router-layout-check-current-registry-portable-whole-Node-v16` and
 `router-layout-check-current-registry-portable-fresh-whole-Bun-v16`. This record
 does not assert those local evidence paths are part of the portable export.
+
+
+The 2026-10-21 source checkpoint now registers `e63974237e21c35c51e5005d2b09a2ceb5d2be91`:
+1,571 repository compiler members plus the same complete 132-file TypeScript
+5.9.3 installation, totaling 55,971,130 source bytes. Independent review compares
+every selected Git blob, physical compiler/TypeScript byte, complete bootstrap
+CST equation and inverse, then installs the registry and both bootstrap files
+together. The regenerated receiving fixture retains 449 genuine Git objects.
+All four historical source bodies remain unchanged. The proposal/install review
+passes in 4.373 seconds with sampled aggregate peak RSS of 420,462,592 bytes;
+its complete evidence is in `router-layout-check-current-compiler-registration-proposal-v18`.
+Current whole-file export/isolated receivers, full-corpus output freshness,
+strict parity and the full JavaScript gate remain open. No Rust tool ran locally.

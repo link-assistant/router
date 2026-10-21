@@ -88,7 +88,9 @@ tool has compiled or executed it.
 The runtime parser's four source substitutions pass native binding checks,
 both serialized/reparsed CST phases, complete independent inverses and repeated
 installed-source freshness in 35.534 seconds, with sampled aggregate peak RSS of
-1,185,480,704 bytes. TypeScript's genuine lazy assertions are joined to their
+1,185,480,704 bytes. A whitespace-only rule repair independently restores the
+complete prior layer and rematerializes all four in 36.391 seconds, with peak
+sampled aggregate RSS of 1,661,878,272 bytes. TypeScript's genuine lazy assertions are joined to their
 actual CommonJS `noop` export and declaration. The full parser still executes
 on every call; repeat-parent specialization retains invocation-local data only.
 The first complete seven-case receiving run passes five cases, including the
@@ -98,7 +100,12 @@ sampled aggregate peak RSS of 1,397,866,496 bytes and no deadline breaches
 (`complete-nP1dfe`). It retains the genuine zero-Hash static family, indexed
 recording and identical full transient callback tapes plus the original guarded
 refusal. All twelve original translator assertions also pass in Node; Bun's
-original 5,000 ms three-build deadline remains a separate open obligation.
+original 5,000 ms three-build deadline remains a separate open obligation. The
+complete Bun seven-case file passes the full artifact-map comparison and Hash/FS
+tapes, but five active-path expectations fail because its compiler custody guard
+returns false. The run takes 40.467 seconds without deadline breaches. Its exact
+conservative fallback and engine-specific receiving expectations remain under
+review; the failed full streams are retained.
 
 The four upstream whole-owner CST batching copies are explicitly parked.
 Their complete native/CST equations and inverses pass in 17.628 seconds with
