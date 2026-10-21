@@ -26,9 +26,10 @@ function assertCompleteAsciiLayer(layer, prior, count) {
     assert.equal(row.inverse, row.before);
     assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source, row.before);
     assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source, row.after);
-    assert.deepEqual(row.trace.map(part => part.phase), ['language', 'repository']);
+    assert.deepEqual(row.trace, row.stages.flatMap(stage => stage.trace));
     assert.deepEqual(row.stages.map(stage => stage.phase), ['language', 'repository']);
     for (const stage of row.stages) {
+      assert.deepEqual(stage.trace.map(part => part.phase), ['language', 'repository']);
       assert.equal(stage.completeInverse, true); assert.equal(stage.before, row.before);
       assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source, stage.before);
       assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source, stage.after);

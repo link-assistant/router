@@ -22,7 +22,7 @@ test('complete checked-source layer joins the unchanged lifetime birth and retai
  assert.equal(current.layers.length,4);assert.equal(current.layers[1].files.find(part=>part.path===row.path).before,row.after);
  assertAsciiSourceComposition(current.layers[2]);
  assertAsciiReverseComposition(current.layers[3]);
- for(const final of current.layers[1].files){assert.equal(final.current,final.after);assert.equal(final.inverse,final.before);assert.equal(transportConcreteSyntaxMeta(final.beforeMeta).source,final.before);assert.equal(transportConcreteSyntaxMeta(final.afterMeta).source,final.after);assert.deepEqual(final.stages.map(stage => stage.phase), ['language', 'repository']);
+ for(const final of current.layers[1].files){assert.equal(final.current,current.files.find(row=>row.path===final.path).after);assert.equal(final.inverse,final.before);assert.equal(transportConcreteSyntaxMeta(final.beforeMeta).source,final.before);assert.equal(transportConcreteSyntaxMeta(final.afterMeta).source,final.after);assert.deepEqual(final.stages.map(stage => stage.phase), ['language', 'repository']);
     assert.deepEqual(final.trace, final.stages.flatMap(stage => stage.trace));
     for (const stage of final.stages) {
       assert.deepEqual(stage.trace.map(part => part.phase), ['language', 'repository']);
