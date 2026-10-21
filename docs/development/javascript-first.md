@@ -62,6 +62,19 @@ The strict checker retains each native evidence runner’s 180-second bound and 
 
 The complete compiler Node cohorts also require the [independent source-declared case deadline audit](node-case-deadlines.md). A synchronous Node pass after its declared timeout remains a failed duration qualification; preserve full TAP, source joins, raw receipts and the original limits. Its nine core controls and complete seven-case local and 23-case workflow integration suites passed receiving checks under both Node and Bun. This focused qualification does not establish that every compiler cohort, the full gate or CI has passed.
 
+## Draft supplemental CI source proposal
+
+The [fixed-nine supplemental draft proposal](draft-supplemental-ci-policy.md)
+retains the main eight-stage gate and every original fatal Rust check on draft
+PRs. Only its nine named supplemental callers require an actual Boolean false PR
+draft field before selecting work; ready/non-draft/non-PR work keeps the full
+original checks, and missing or malformed PR draft data cannot select work.
+This remains a source draft until complete receiving and actual skipped/ready
+check-context observations plus fresh applicable branch/ruleset reads qualify
+integration. A skipped caller never proves eight green stages or waives same-SHA
+JavaScript success before Rust. No generic conditional caller or bypass input is
+permitted.
+
 ## Integrate one repair batch per completed CI cycle
 
 During active issue #759 development, create reviewable checkpoint commits at

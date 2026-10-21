@@ -7,9 +7,23 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { parityCheckBudgets } from './parity-check-budgets.mjs';
+import {DRAFT_SUPPLEMENTS,DRAFT_SUPPLEMENT_CONDITION,DRAFT_SUPPLEMENT_PR_TYPES,readFixedNineDraftWorkflowSources} from './fixed-nine-draft-policy.mjs';
 const require = createRequire(new URL('./ci/package.json', import.meta.url));
 const { parseDocument } = require('yaml');
 export const STAGES = ['lint', 'node-tests', 'bun-tests', 'typescript', 'parity', 'translation', 'profile-matrix', 'reverse-translation'];
+const draftSupplementNames=new Set(DRAFT_SUPPLEMENTS);
+function exact(a,b,depth=0){if(Object.is(a,b))return true;if(depth>=64||!a||!b||typeof a!=='object'||typeof b!=='object'||Array.isArray(a)!==Array.isArray(b)||Array.isArray(a)&&a.length!==b.length)return false;const left=Object.keys(a).sort(),right=Object.keys(b).sort();return left.length===right.length&&left.every((key,index)=>key===right[index]&&exact(a[key],b[key],depth+1));}
+// Immutable reviewed source DATA supplies only this fixed table. It does not
+// make skipped callers eight successful stages or grant Rust admission.
+const reviewedDraftSupplementals=new Map(readFixedNineDraftWorkflowSources().files.filter(row=>draftSupplementNames.has(path.basename(row.path))).map(row=>{
+ const document=parseDocument(row.after,{uniqueKeys:true,version:'1.2'});if(document.errors.length)throw TypeError('Fixed-nine reviewed workflow grammar differs');return [path.basename(row.path),document.toJS()];
+}));
+function auditDraftSupplement(name,workflow,errors){
+ const reviewed=reviewedDraftSupplementals.get(name),trigger=workflow.on?.pull_request;
+ if(!exact(trigger?.types,DRAFT_SUPPLEMENT_PR_TYPES)||!exact(workflow.on,reviewed.on))errors.push(`${name}: fixed-nine reviewed PR activities/paths and other triggers differ`);
+ if(workflow.jobs?.javascript?.if!==DRAFT_SUPPLEMENT_CONDITION||!exact(workflow.jobs?.javascript,reviewed.jobs.javascript))errors.push(`${name}/javascript: exact fixed-nine draft caller gate missing`);
+}
+
 const success = (id) => `needs.${id}.result == 'success'`;
 // Compare executable reviewed programs, rather than finding reassuring words
 // in comments or strings that a no-op verifier could carry.
@@ -117,12 +131,15 @@ export function auditWorkflows(sources) {
     if (aggregateSteps.length !== 1 || assertion?.env?.STAGE_RESULTS !== '${{ toJSON(needs) }}' || Object.hasOwn(assertion ?? {}, 'if') || assertion?.['continue-on-error'] || normalizeProgram(assertion?.run) !== aggregateVerifier) errors.push(`${gateName}/complete: must reject skipped, cancelled or failed stages with the unconditional reviewed program`);
     if (Object.keys(gate.jobs ?? {}).some(id => ![...STAGES, 'complete'].includes(id))) errors.push(`${gateName}: unreviewed gate job`);
   }
+  for(const name of [...DRAFT_SUPPLEMENTS,'release.yml'])if(!documents.has(name))errors.push(`${name}: missing reviewed required workflow`);
   for (const [name, workflow] of documents) {
     if (name === gateName) continue;
     if (!workflow.jobs || !Object.keys(workflow.jobs).length) { errors.push(`${name}: jobs missing`); continue; }
     if (!workflow.concurrency?.group || workflow.concurrency?.['cancel-in-progress'] !== false) errors.push(`${name}: Rust workflows must set cancel-in-progress: false`);
     const js = workflow.jobs.javascript;
-    if (!js || js.uses !== './.github/workflows/javascript-first.yml' || js.with?.sha !== '${{ github.sha }}' || Object.hasOwn(js, 'if') || js.needs || js['continue-on-error'] || js.strategy) errors.push(`${name}/javascript: unconditional same-SHA reusable gate missing`);
+    const draftSupplement=draftSupplementNames.has(name);
+    if(draftSupplement)auditDraftSupplement(name,workflow,errors);
+    if (!js || js.uses !== './.github/workflows/javascript-first.yml' || js.with?.sha !== '${{ github.sha }}' || (draftSupplement?js.if!==DRAFT_SUPPLEMENT_CONDITION:Object.hasOwn(js, 'if')) || js.needs || js['continue-on-error'] || js.strategy) errors.push(`${name}/javascript: ${draftSupplement?'exact fixed-nine draft-selected':'unconditional'} same-SHA reusable gate missing`);
     for (const [id, job] of Object.entries(workflow.jobs)) {
       if (id === 'javascript') continue;
       if (Object.hasOwn(job, 'continue-on-error') && job['continue-on-error'] !== false) errors.push(`${name}/${id}: gated verification must not ignore failures`);

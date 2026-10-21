@@ -8,6 +8,7 @@ name: Soak
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - 'rust/src/proxy*.rs'
       - 'rust/src/proxy/**'
@@ -43,6 +44,7 @@ env:
 
 jobs:
   javascript:
+    if: ${{ github.event_name != 'pull_request' || toJSON(github.event.pull_request.draft) == 'false' }}
     name: JavaScript first (same commit)
     uses: ./.github/workflows/javascript-first.yml
     with:
