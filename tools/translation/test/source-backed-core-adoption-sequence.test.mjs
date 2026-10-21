@@ -11,6 +11,7 @@ import {translateProject} from '../project.mjs';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
+import {formattingPacketIO} from '../formatting-packet-io.mjs';
 import {repositorySourceURL, repositoryWorkspaceManifestURL} from './fixtures/repository-paths.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 import {ROUTER_FORMATTING_FACADE_SOURCE, ROUTER_CORE_PRIMITIVES_SOURCE, ROUTER_CORE_RANGES_SOURCE,
@@ -54,7 +55,12 @@ test('three actual source steps receive complete fresh after maps and retain eve
   let previous = original;
   for (const step of result.history) {
     assert.deepEqual(step.proposal.inputs.map(row => [row.path, row.source]), Object.keys(previous).sort().map(path => [path, previous[path]]));
-    previous = {...previous}; for (const row of step.proposal.rows) if (row.proposal) { assert.equal(row.proposal.inverse, row.proposal.before.source); previous[row.path] = row.proposal.after.source; }
+    previous = {...previous}; for (const row of step.proposal.rows) if (row.proposal) {
+      formattingPacketIO.assertAdoptionInverse(row.proposal);
+      if (step.name === 'formatting') assert.equal(Object.hasOwn(row.proposal, 'inverse'), false);
+      else assert.equal(row.proposal.inverse, row.proposal.before.source);
+      previous[row.path] = row.proposal.after.source;
+    }
   }
   assert.deepEqual(Object.keys(result.files).sort().map(path => [path, result.files[path]]), Object.keys(previous).sort().map(path => [path, previous[path]]));
   for (const document of result.documents) { assert.equal(transportConcreteSyntaxMeta(document.meta).source, document.source); assert.equal(hash(document.source), document.sha256); }
@@ -100,6 +106,8 @@ test('detached stale coordinate hash Cargo duplicate function and undeclared sou
     value => { const row = value.history[1].proposal.rows.find(row => row.path === 'src/app.rs'); row.proposal.functions[0].span[0]--; },
     value => { const row = value.history[1].proposal.rows.find(row => row.path === 'src/app.rs'); row.proposal.functions.push(clone(row.proposal.functions[0])); },
     value => { const row = value.history[2].proposal.rows.find(row => row.path === 'src/app.rs'); row.proposal.after.source += '\n// undeclared\n'; },
+    value => { value.history[0].proposal.rows.find(row => row.path === 'src/app.rs').proposal.inverse = value.originalFiles['src/app.rs']; },
+    value => { delete value.history[1].proposal.rows.find(row => row.path === 'src/app.rs').proposal.inverse; },
     value => { value.documents.push(clone(value.documents[0])); },
   ];
   for (let at = 0; at < mutations.length; at++) { const bad = clone(result); mutations[at](bad); retain('complete-detached-negative-' + at, bad); assert.throws(() => reviewSourceBackedCoreAdoptionSequence(bad), TypeError, String(at)); }

@@ -3,6 +3,7 @@
 import {translateProject} from '../project.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {originalModuleViewItems} from '../source-module-views.mjs';
+import {sameType} from '../checked-types.mjs';
 import {createHash} from 'node:crypto';
 const fail=message=>{throw new TypeError('Owned reverse vector candidate: '+message);};
 const hash=source=>createHash('sha256').update(source).digest('hex');
@@ -26,18 +27,23 @@ export function captureOriginalOwnedVectorProfiles(data,path){
  const selected=bindings(data,path),profiles=new Map();if(!selected.length)return profiles;
  const files=new Map(data.files.map(row=>[row.path,row.source])),paths=[...files.keys()].filter(name=>name.endsWith('.rs')).sort();if(!files.has('src/lib.rs'))fail('complete original Rust entry required');
  // No public saved checked/meta projection is read. The actual freshly returned
- // declaration's lower closure closes over the same checked target program.
+ // checkedSource closure closes over the original same-invocation checked
+ // program and parsed signature. Target lowering supplies portable shape only.
  let result;try{result=translateProject({entry:'src/lib.rs',paths,readSource:name=>{if(!files.has(name))fail('missing actual Rust source');return files.get(name);},compilationProfile:PRODUCTION_PROFILE,cargoManifest:files.get('Cargo.toml')});
  for(const binding of selected){
-  const candidates=result.executableDeclarations.filter(row=>row.source===binding.rustPath&&row.qualifiedName===binding.rustName);if(candidates.length!==1)fail('actual original executable Rust function is absent or ambiguous');const original=candidates[0],source=files.get(original.source);if(typeof source!=='string'||original.sourceSha256!==hash(source)||typeof original.lower!=='function')fail('fresh actual original source/carrier differs');
-  const lowered=original.lower(),own=lowered.own;if(own?.k!=='fn'||own.async||own.params.length||own.ret?.kind!=='array'||own.ret.rustOwnership?.kind!=='owned'||own.ret.rustOwnership.source!=='Vec'||own.ret.rustReference||own.ret.patternOwnershipRefusal||own.ret.rustGenericIdentityUnresolved||own.ret.rustBorrowingUnresolved)fail('actual zero-parameter owned Vec signature required; fixed arrays and borrows remain refused');
-  if(own.body?.k!=='array'||own.body.compatibilityCore?.id!=='router-core-vector-list-v1'||own.body.type?.rustOwnership?.source!=='Vec')fail('actual accepted qualified owned-vector list body required');const element=scalar(own.ret.element);
+  const candidates=result.executableDeclarations.filter(row=>row.source===binding.rustPath&&row.qualifiedName===binding.rustName);if(candidates.length!==1)fail('actual original executable Rust function is absent or ambiguous');const original=candidates[0],source=files.get(original.source);if(typeof source!=='string'||original.sourceSha256!==hash(source)||typeof original.lower!=='function'||typeof original.checkedSource!=='function')fail('fresh actual original source/carrier differs');
+  const captured=original.checkedSource(),own=captured?.declaration,written=captured?.sourceSignature,ret=written?.ret;
+  if(captured?.schema!=='original-checked-executable-source-v1'||captured.source!==original.source||captured.sourceSha256!==hash(source)||captured.qualifiedName!==original.qualifiedName||JSON.stringify(captured.span)!==JSON.stringify(original.span)||JSON.stringify(captured.module)!==JSON.stringify(original.qualifiedName.split('.').slice(0,-1))||own?.fullName!==original.qualifiedName||JSON.stringify(own.span)!==JSON.stringify(captured.checkedSpan))fail('fresh checked source/carrier join differs');
+  if(own.k!=='fn'||own.async||own.params.length||written.params.length||ret?.kind!=='array'||ret.rustSourceType!==true||ret.rustOwnership?.kind!=='owned'||ret.rustOwnership.source!=='Vec'||ret.rustFixedArray||ret.rustReference||ret.patternOwnershipRefusal||ret.rustGenericIdentityUnresolved||ret.rustBorrowingUnresolved)fail('actual zero-parameter owned Vec signature required; fixed arrays and borrows remain refused');
+  if(own.ret?.kind!=='array'||own.body?.k!=='array'||own.body.compatibilityCore?.id!=='router-core-vector-list-v1'||own.body.type?.rustOwnership?.kind!=='owned'||own.body.type.rustOwnership.source!=='Vec'||!sameType(own.ret,own.body.type))fail('actual accepted qualified owned-vector list body required');
+  const element=scalar(own.ret.element);if(JSON.stringify(scalar(ret.element))!==JSON.stringify(element)||JSON.stringify(scalar(own.body.type.element))!==JSON.stringify(element))fail('actual original primitive source/checked body differs');
+  const lowered=original.lower();if(lowered.own?.k!=='fn'||lowered.own.params.length||!sameType(lowered.own.ret,own.ret))fail('actual target lowering portable signature differs');
   // A physical file's locally rooted inline views omit its external-module
   // prefix. Use this SAME fresh forward invocation's genuine graph view and
   // full module identity; reconstructing a guessed prefix would lose that join.
   const modulePath=original.qualifiedName.split('.').slice(0,-1),scopes=result.sourceScopes.filter(scope=>scope.source===original.source&&JSON.stringify(scope.module)===JSON.stringify(modulePath));if(scopes.length!==1||scopes[0].sha256!==hash(source)||scopes[0].sourceView?.sourcePath!==original.source)fail('actual original Rust module view differs');
-  const functions=originalModuleViewItems(scopes[0].sourceView,source).filter(item=>item.term==='fn'&&item.name===original.name);if(functions.length!==1)fail('actual original Rust function span differs');const fn=functions[0];
-  const writtenReturn=JSON.parse(JSON.stringify(own.ret));
+  const functions=originalModuleViewItems(scopes[0].sourceView,source).filter(item=>item.term==='fn'&&item.name===original.name&&item.start===captured.span.start&&item.end===captured.span.end);if(functions.length!==1)fail('actual original Rust function span differs');const fn=functions[0];
+  const writtenReturn=JSON.parse(JSON.stringify(ret));
   profiles.set(binding.javascriptName,{binding:{...binding},type:'vec:'+element.name,element,original:{path:original.source,source,sha256:hash(source),qualifiedName:original.qualifiedName,carrierSpan:{...original.span},span:[fn.start,fn.end],functionSource:source.slice(fn.start,fn.end),signature:{params:[],returns:writtenReturn}},forward:{javascript:result.javascript,typescript:result.typescript,sourceScopes:result.sourceScopes.map(scope=>({source:scope.source,module:[...scope.module],sha256:scope.sha256}))}});
  }
  // The map is confined to one native traversal, never retained in a context or

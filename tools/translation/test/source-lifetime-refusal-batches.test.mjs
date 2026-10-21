@@ -5,7 +5,7 @@ import {parseRust, checkProjectProgram, checkProgram} from '../extensions/host-c
 import {declarationRefusals} from '../extensions/declaration-refusals.mjs';
 import {TranslationError} from '../vendor/meta-language/translation/diagnostics.js';
 import {serializeProgram} from '../semantic-meta.mjs';
-import {prepareSourceLifetimeRefusalBatches} from '../prepare-source-lifetime-refusal-batches.mjs';
+import {prepareSourceLifetimeRefusalBatches,prepareCurrentSourceLifetimeRefusalBatches} from '../prepare-source-lifetime-refusal-batches.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 import {verifyCohortTargets} from './cohort-targets.mjs';
 const project = (files, options = {}) => translateProject({entry: 'src/lib.rs', paths: Object.keys(files), readSource: path => files[path], ...options});
@@ -13,9 +13,18 @@ const refusals = result => result.meta.refused.map(({name, message, span}) => ({
 function thrown(run) { try { run(); } catch (error) { return error; } assert.fail('complete invalid source must refuse'); }
 
 test('complete actual lifetime checker collector and project source copies retain native bindings and serialized CST inverses', {timeout: 60000}, () => {
-  const plan = prepareSourceLifetimeRefusalBatches();
+  const plan = prepareSourceLifetimeRefusalBatches(), current = prepareCurrentSourceLifetimeRefusalBatches();
+  assert.equal(current.layers.length, 2);
+  assert.equal(current.layers[1].files[0].before, plan.files.find(row => row.path === 'tools/translation/project.mjs').after);
   assert.equal(plan.typescriptVersion, '5.9.3'); assert.equal(plan.files.length, 3); assert.equal(plan.newAcrossInvocationCache, false);
   for (const row of plan.files) {
+    assert.equal(row.current, current.files.find(final => final.path === row.path).after); assert.equal(row.inverse, row.before);
+    assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source, row.before);
+    assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source, row.after);
+    assert.deepEqual(row.trace.map(part => part.phase), ['language', 'repository']);
+    assert.deepEqual(row.nativeBindings.unboundIdentifiers, []);
+  }
+  for (const row of current.layers[1].files) {
     assert.equal(row.current, row.after); assert.equal(row.inverse, row.before);
     assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source, row.before);
     assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source, row.after);

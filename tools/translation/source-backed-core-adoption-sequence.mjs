@@ -14,9 +14,9 @@ import {proposeSourceBackedCoreVectorCorpus} from './source-backed-core-vectors.
 const L = IO.limits, hash = value => createHash('sha256').update(value).digest('hex');
 const fail = message => { throw new TypeError('Source-backed core adoption sequence: ' + message); };
 const STEPS = Object.freeze([
-  Object.freeze({name: 'formatting', run: proposeSourceBackedCoreFormattingCorpus, corpus: 'router-owned-source-backed-formatting-corpus-proposal-v1', file: 'router-core-formatting-migration-v1', library: 'untranslated-rust-std-format'}),
-  Object.freeze({name: 'matches', run: proposeSourceBackedCoreLiteralMatchesCorpus, corpus: 'router-owned-source-backed-matches-corpus-proposal-v1', file: 'owned-literal-matches-source-adoption-v1', library: 'untranslated-rust-std-matches'}),
-  Object.freeze({name: 'vectors', run: proposeSourceBackedCoreVectorCorpus, corpus: 'router-owned-source-backed-vector-corpus-proposal-v1', file: 'owned-vector-source-adoption-v1', library: 'untranslated-rust-std-vec'}),
+  Object.freeze({name: 'formatting', run: proposeSourceBackedCoreFormattingCorpus, corpus: 'router-owned-source-backed-formatting-corpus-proposal-v1', file: 'router-core-formatting-migration-v1', library: 'untranslated-rust-std-format', inverseField: false}),
+  Object.freeze({name: 'matches', run: proposeSourceBackedCoreLiteralMatchesCorpus, corpus: 'router-owned-source-backed-matches-corpus-proposal-v1', file: 'owned-literal-matches-source-adoption-v1', library: 'untranslated-rust-std-matches', inverseField: true}),
+  Object.freeze({name: 'vectors', run: proposeSourceBackedCoreVectorCorpus, corpus: 'router-owned-source-backed-vector-corpus-proposal-v1', file: 'owned-vector-source-adoption-v1', library: 'untranslated-rust-std-vec', inverseField: true}),
 ]);
 function ownObject(value, label) {
   if (!value || typeof value !== 'object' || types.isProxy(value) || Array.isArray(value) || ![Object.prototype, null].includes(Object.getPrototypeOf(value))) fail('own ' + label + ' data required');
@@ -85,7 +85,10 @@ function coordinate(value, mapping) {
 }
 function fileChange(row, source, step) {
   const value = row.proposal;
-  if (value.schema !== step.file || value.libraryImplementation !== step.library || value.executableAdmission !== false || value.before?.source !== source || value.inverse !== source || value.before.sha256 !== hash(source) || typeof value.after?.source !== 'string' || value.after.sha256 !== hash(value.after.source)) fail('complete original file/hash/inverse join differs');
+  if (value.schema !== step.file || value.libraryImplementation !== step.library || value.executableAdmission !== false || value.before?.source !== source || value.before.sha256 !== hash(source) || typeof value.after?.source !== 'string' || value.after.sha256 !== hash(value.after.source)) fail('complete original file/hash/inverse join differs');
+  // The actual formatting producer stores its inverse as a full partition,
+  // not an additional string. The two newer producers retain both forms.
+  if (Object.hasOwn(value, 'inverse') !== step.inverseField || step.inverseField && value.inverse !== source) fail('actual producer inverse field contract differs');
   if (transportConcreteSyntaxMeta(value.before.meta).source !== source || transportConcreteSyntaxMeta(value.after.meta).source !== value.after.source) fail('complete file CST join differs');
   IO.assertAdoptionInverse(value);
   if (!Array.isArray(value.edits) || !Array.isArray(value.functions)) fail('complete file edit/function vectors required');
