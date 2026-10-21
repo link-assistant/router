@@ -21,6 +21,7 @@ import {transportConcreteSyntaxSource} from '../concrete-syntax-meta.mjs';
 import {ownedJsonReaderOperation,ownedJsonOptionalPayload,ownedJsonBorrowed} from './owned-json-source.mjs';
 import {ownedJsonOptionalReaderOperation} from './owned-json-source.mjs';
 import {ownedAsciiOperation} from './owned-ascii-source.mjs';
+import {hostCoreAsciiRuntimeAssets} from '../ascii-runtime-assets.mjs';
 
 const contexts=new WeakMap(),traversals=new WeakMap();
 const fail=message=>{throw new TypeError('Owned reverse source: '+message);};
@@ -75,7 +76,7 @@ export function ownedCoreRuntimeSources(runtimeRoot='runtime',declarationRoot=ru
 // Separate additive closure. The original runtime-source API and old contexts
 // do not acquire new required files or a broader string-iterator operation set.
 export function ownedCoreAsciiRuntimeSources(runtimeRoot='runtime',declarationRoot=runtimeRoot){
- ownedSourcePath(runtimeRoot);ownedSourcePath(declarationRoot);assertReverseConcreteSourceHost();const ts=ownershipCompiler(),assets=hostRuntimeAssets(),rows=[],seen=new Set();
+ ownedSourcePath(runtimeRoot);ownedSourcePath(declarationRoot);assertReverseConcreteSourceHost();const ts=ownershipCompiler(),assets=hostCoreAsciiRuntimeAssets(),rows=[],seen=new Set();
  function visit(name){
   if(seen.has(name))return;if(seen.size>=128||name.includes('/')||!name.endsWith('.mjs')&&!name.endsWith('.mts'))fail('ASCII runtime closure bounds');seen.add(name);
   const source=assets.get(name);if(typeof source!=='string')fail('unregistered ASCII materialized asset: '+name);const base=name.endsWith('.mts')?declarationRoot:runtimeRoot,path=base+'/'+name,file=parsed(ts,path,source);rows.push({path,source});if(declarationRoot!==runtimeRoot)rows.push({path:(name.endsWith('.mts')?runtimeRoot:declarationRoot)+'/'+name,source});
