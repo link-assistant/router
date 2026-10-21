@@ -7,8 +7,17 @@ const root = new URL('../../../', import.meta.url);
 const hash = source => createHash('sha256').update(source).digest('hex');
 export function assertAsciiSourceComposition(layer, prior = {}) {
   assert.equal(layer.schema, 'router-owned-ascii-sources-v1');
-  assert.equal(layer.files.length, 7); assert.equal(layer.semanticAuthority, false); assert.equal(layer.nativeRustExecuted, false);
-  assert.equal(new Set(layer.files.map(row => row.path)).size, 7);
+  assert.equal(layer.nativeRustExecuted, false);
+  assertCompleteAsciiLayer(layer, prior, 7);
+}
+export function assertAsciiReverseComposition(layer, prior = {}) {
+  assert.equal(layer.schema, 'router-owned-ascii-reverse-sources-v1');
+  assert.equal(layer.runtimeExecuted, false); assert.equal(layer.rustExecuted, false);
+  assertCompleteAsciiLayer(layer, prior, 4);
+}
+function assertCompleteAsciiLayer(layer, prior, count) {
+  assert.equal(layer.files.length, count); assert.equal(layer.semanticAuthority, false);
+  assert.equal(new Set(layer.files.map(row => row.path)).size, count);
   for (const row of layer.files) {
     if (Object.hasOwn(prior, row.path)) assert.equal(row.before, prior[row.path].after, row.path + ': complete predecessor');
     assert.equal(row.current, row.after, row.path + ': physical current');

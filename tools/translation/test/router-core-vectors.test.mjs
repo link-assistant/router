@@ -1,4 +1,4 @@
-import {assertAsciiSourceComposition} from './ascii-source-composition.mjs';
+import {assertAsciiSourceComposition,assertAsciiReverseComposition} from './ascii-source-composition.mjs';
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync, writeFileSync, mkdirSync} from 'node:fs';
@@ -14,6 +14,7 @@ import {prepareCoreVectorSources} from '../prepare-core-vector-sources.mjs';
 import {composeCurrentCoreMatchesSources} from '../prepare-core-matches-sources.mjs';
 import {composePrimitiveIdentityBoundary} from '../prepare-primitive-identity-boundary.mjs';
 import {composeCoreAscii} from '../prepare-core-ascii-sources.mjs';
+import {composeCoreAsciiReverse} from '../prepare-core-ascii-reverse-sources.mjs';
 import {composeSourceProofPreservation} from '../prepare-source-proof-preservation.mjs';
 import {composeExecutableCheckedSource} from '../prepare-executable-checked-source.mjs';
 import {composeSourceLifetimeRefusalBatches} from '../prepare-source-lifetime-refusal-batches.mjs';
@@ -76,9 +77,14 @@ test('native source producer derives the actual owned wrapper and composes compl
     assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source, row.after);
     assert.equal(row.inverse, row.before); assert.ok(row.nativeCopies);
   }
-  const composition = retain('complete-current-owned-ascii-source-layer', composeCoreAscii(boundary.sources));
-  assert.equal(composition.historicalSources, boundary.sources);
-  assertAsciiSourceComposition(composition.layers[0], boundary.sources);
+  const ascii = retain('complete-current-owned-ascii-source-layer', composeCoreAscii(boundary.sources));
+  assert.equal(ascii.historicalSources, boundary.sources);
+  assertAsciiSourceComposition(ascii.layers[0], boundary.sources);
+  const composition = retain('complete-current-owned-ascii-reverse-source-layer', composeCoreAsciiReverse(ascii.sources));
+  assert.equal(composition.historicalSources, ascii.sources);
+  assertAsciiReverseComposition(composition.layers[0], ascii.sources);
+  const reverseSource = composition.layers[0].files[0];
+  assert.throws(() => composeCoreAsciiReverse({...ascii.sources, [reverseSource.path]: {after: 'forged'}}), /preceding complete source equation/u);
   assert.throws(() => composeCoreAscii({...boundary.sources, 'rust/src/translation_core.rs': {after: 'forged'}}), /preceding complete source equation/u);
   assert.equal(composition.sources['rust/src/translation_core.rs'].after, ROUTER_FORMATTING_FACADE_SOURCE);
   for (const [path, source] of Object.entries(composition.sources)) assert.equal(readFileSync(new URL(path, root), 'utf8'), source.after, path);

@@ -1,4 +1,4 @@
-import {assertAsciiSourceComposition} from './ascii-source-composition.mjs';
+import {assertAsciiSourceComposition,assertAsciiReverseComposition} from './ascii-source-composition.mjs';
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync, writeFileSync, mkdirSync, mkdtempSync} from 'node:fs';
@@ -70,8 +70,9 @@ test('native source producers retain complete historical inputs actual current o
     }
     assert.equal(row.nativeCopies.length, 2); assert.ok(row.nativeCopies.every(copy => copy.completeNativeAstCopy));
   }
-  assert.equal(current.layers.length, 3);
+  assert.equal(current.layers.length, 4);
   assertAsciiSourceComposition(current.layers[2], Object.fromEntries([...prepared.files, ...current.layers[1].files].map(row => [row.path, row])));
+  assertAsciiReverseComposition(current.layers[3]);
   const host = prepared.files.find(row => row.path.endsWith('/host-contracts.mjs'));
   assert.ok(host.after.split('\n').length <= 1000); assert.ok(host.before.includes('parseRouterCoreVector')); assert.ok(host.after.includes('parseRouterCoreVector'));
   assert.match(prepared.wrapper.after, /::std::matches!/u);
