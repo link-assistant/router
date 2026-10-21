@@ -1,0 +1,1 @@
+Adopt the qualified private-parser DATA sources, regenerate complete canonical reverse artifacts including the ASCII witness, and draft checked Schemars with-Type and scoped syntax-index source proposals. Preserve the original performance failure, full profile/parity obligations and JavaScript-first Rust CI gate; this checkpoint does not establish complete translation.

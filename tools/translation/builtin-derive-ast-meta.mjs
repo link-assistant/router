@@ -109,13 +109,89 @@ export function originalAstFunction(profile,path,name,sourceContains=null){
 }
 export function assertOriginalAstFunction(profile,fragment){if(fragments.get(fragment)?.profile!==profile)throw new TypeError('Unsealed original AST construction fragment');return fragment;}
 export function astFragmentText(fragment){if(!fragments.has(fragment))throw new TypeError('Unsealed AST source fragment');const state=fragments.get(fragment);return state.origin.source.slice(fragment.span.start,fragment.span.end);}
+// Optional traversal DATA only. No source, owner, hash or executable verdict.
+const definitionPositionInitiallyNative=collectionInputsInitiallyNative&&syntaxCloneIntrinsics();
+const definitionPositionMap=definitionPositionInitiallyNative?Map:null;
+const definitionPositionMapPrototype=definitionPositionInitiallyNative?Map.prototype:null;
+const definitionPositionGetField=definitionPositionInitiallyNative?cloneDescriptor(definitionPositionMapPrototype,'get'):null;
+const definitionPositionSetField=definitionPositionInitiallyNative?cloneDescriptor(definitionPositionMapPrototype,'set'):null;
+const definitionPositionGet=definitionPositionGetField?.value;
+const definitionPositionSet=definitionPositionSetField?.value;
+const definitionPositionNativeMap=!!(definitionPositionInitiallyNative&&cloneNative({value:definitionPositionMap},'Map')&&cloneNative(definitionPositionGetField,'get')&&cloneNative(definitionPositionSetField,'set'));
+const definitionPositionFreeze=definitionPositionInitiallyNative?Object.freeze:null;
+let definitionPositionFrame=null;
+function definitionPositionOperationsReady(){
+ if(!definitionPositionNativeMap||!syntaxCloneIntrinsics())return false;
+ const get=cloneDescriptor(definitionPositionMapPrototype,'get'),set=cloneDescriptor(definitionPositionMapPrototype,'set');
+ return cloneSameField(get,definitionPositionGetField)&&cloneSameField(set,definitionPositionSetField);
+}
+function definitionPositionSynchronousResult(value){
+ for(let depth=0;value!==null&&(typeof value==='object'||typeof value==='function');depth++){
+  if(depth>160||cloneProxy(value))throw new TypeError('Builtin definition positions require an ordinary synchronous result');
+  if(cloneDescriptor(value,'then'))throw new TypeError('Builtin definition positions refuse Promise and thenable results');
+  value=clonePrototype(value);
+ }
+}
+function withBuiltinAstDefinitionPositions(run){
+ if(!definitionPositionNativeMap||typeof run!=='function'||cloneProxy(run))throw new TypeError('Builtin definition positions require a qualified synchronous callback');
+ const prior=definitionPositionFrame,frame={roots:null,rootEntries:0,positions:0,cells:0,builds:0,hits:0,fallbacks:0,disabled:false};
+ definitionPositionFrame=frame;
+ try{const result=run();definitionPositionSynchronousResult(result);return result;}
+ finally{frame.roots=null;frame.rootEntries=frame.positions=frame.cells=0;frame.disabled=true;definitionPositionFrame=prior;}
+}
+function builtinAstDefinitionPositionFacts(){
+ const frame=definitionPositionFrame;
+ const facts={active:frame!==null,rootEntries:frame?.rootEntries??0,positions:frame?.positions??0,cells:frame?.cells??0,builds:frame?.builds??0,hits:frame?.hits??0,fallbacks:frame?.fallbacks??0,disabled:frame?.disabled??false,sourceAuthority:false};
+ return definitionPositionFreeze?definitionPositionFreeze(facts):facts;
+}
+// The pure index contains occurrence positions, including every duplicate.
+// Capacity exhaustion selects the original scan; no old source limit changes.
+function buildDefinitionPositionIndex(roots,budget,operations){
+ const index=new operations.Map(),get=(map,key)=>operations.apply(operations.get,map,[key]),set=(map,key,value)=>operations.apply(operations.set,map,[key,value]);
+ let exhausted=false;
+ function visit(nodes){for(let at=0;at<nodes.length;at++){
+  if(++budget.cells>200000){exhausted=true;return;}
+  const token=nodes[at],kind=token.text,name=nodes[at+1]?.text;
+  if((kind==='enum'||kind==='struct')&&typeof name==='string'){
+   let end=at+2;while(end<nodes.length&&!(nodes[end].kind==='group'&&nodes[end].delimiter==='{')&&nodes[end].text!==';')end++;
+   if(nodes[end]?.kind==='group'&&nodes[end].delimiter==='{'){
+    if(++budget.positions>8192){exhausted=true;return;}
+    let names=get(index,kind);if(!names){names=new operations.Map();set(index,kind,names);}
+    let rows=get(names,name);if(!rows){rows=[];set(names,name,rows);}
+    rows.push({nodes,start:at,end:end+1});
+   }
+  }
+  if(token.kind==='group'){visit(token.children);if(exhausted)return;}
+ }}
+ visit(roots);return exhausted?null:index;
+}
+function indexedDefinitionPositions(roots,kind,name,matches,sharing){
+ const frame=definitionPositionFrame;if(!frame)return false;
+ if(frame.disabled)return false;
+ if(!sharing.native||!definitionPositionOperationsReady()){
+  frame.disabled=true;frame.roots=null;frame.rootEntries=0;frame.fallbacks++;return false;
+ }
+ if(typeof name!=='string'||kind!=='enum'&&kind!=='struct'){frame.fallbacks++;return false;}
+ if(!frame.roots)frame.roots=new definitionPositionMap();
+ let index=cloneApply(definitionPositionGet,frame.roots,[roots]);
+ if(index===undefined){
+  if(frame.rootEntries>=16){frame.fallbacks++;return false;}
+  index=buildDefinitionPositionIndex(roots,frame,{Map:definitionPositionMap,get:definitionPositionGet,set:definitionPositionSet,apply:cloneApply});
+  if(index===null){frame.disabled=true;frame.roots=null;frame.rootEntries=0;frame.fallbacks++;return false;}
+  cloneApply(definitionPositionSet,frame.roots,[roots,index]);frame.rootEntries++;frame.builds++;
+ }else frame.hits++;
+ const names=cloneApply(definitionPositionGet,index,[kind]),rows=names?cloneApply(definitionPositionGet,names,[name]):null;
+ if(rows)for(let at=0;at<rows.length;at++){const row=rows[at];matches.push(row.nodes.slice(row.start,row.end));}
+ return true;
+}
+
 export function originalAstDefinition(profile,path,kind,name){
   const sharing={native:syntaxCloneIntrinsics()},origin=builtinAstOriginal(profile,path),roots=originalSyntaxRoots(profile,path),matches=[];cloneStep(sharing,null);
   if(sharing.native)sharing.native=profiles.get(profile).syntaxRoots.get(path).cloneCompatible===true;
   function visit(nodes){for(let at=0;at<nodes.length;at++){
     if(nodes[at].text===kind&&nodes[at+1]?.text===name){let end=at+2;while(end<nodes.length&&!(nodes[end].kind==='group'&&nodes[end].delimiter==='{')&&nodes[end].text!==';')end++;if(nodes[end]?.kind==='group'&&nodes[end].delimiter==='{')matches.push(nodes.slice(at,end+1));}
     if(nodes[at].kind==='group')visit(nodes[at].children);
-  }}visit(roots);
+  }}if(!indexedDefinitionPositions(roots,kind,name,matches,sharing))visit(roots);
   if(matches.length!==1)throw new TypeError('Original AST schema definition is not unique: '+kind+' '+name);
   // Keep native parse's callee lookup before its stringify argument, and
   // remember every disqualification through each original observable step.
@@ -265,3 +341,5 @@ export function compilerOutputCollectionSourceAccess(access){
   collectionInputsGuard();
   compilerOutputSources.set(result,{profile:prior.profile,sourcePlan:prior.sourcePlan,child});return result;
 }
+
+export {withBuiltinAstDefinitionPositions,builtinAstDefinitionPositionFacts};

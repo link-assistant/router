@@ -3,7 +3,7 @@
 // see provenance.json. Unsupported source is reported, never put in envelopes.
 import { lex, topLevelItems } from './vendor/lexer.mjs';
 import { parseJavaScriptItem } from './vendor/frontends.mjs';
-import { check, signatures, toLino, fromLino, FRAGMENT, toOwnedCoreLinoProgram } from './vendor/ir.mjs';
+import {parsedLinoDataCopyReady,tryDecodeCopiedLinoData, check, signatures, toLino, fromLino, FRAGMENT, toOwnedCoreLinoProgram } from './vendor/ir.mjs';
 import { isRefusal } from './vendor/constructs.mjs';
 import { emitRust, emitTypeScript } from './targets.mjs';
 import { parseLinks } from './vendor/lino.mjs';
@@ -186,9 +186,10 @@ function translateConcreteInput(input,options,serialized){
 }
 
 export function parseMeta(text,{constructorGraph}={}) {
+  const __linoEntryReady=typeof text==='string'&&parsedLinoDataCopyReady();
   const links = parseLinks(text);
   if (links.some((link) => !['function', 'constant','closure'].includes(link[0]))) throw new Error('unsupported top-level meta-language link');
-  const items = fromLino(text);
+  const items = (__linoEntryReady?tryDecodeCopiedLinoData(links):null)??fromLino(text);
   if (JSON.stringify(links) !== JSON.stringify(parseLinks(items.map(toLino).join('\n')))) throw new Error('noncanonical or malformed meta-language fields');
   const names = new Set();
   for (const item of items) {
