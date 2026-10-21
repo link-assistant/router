@@ -7,7 +7,7 @@ import {encodeCompleteHookWire,decodeCompleteHookWire,compareCompleteHookWires} 
 const stringify=JSON.stringify,keys=Reflect.ownKeys,objectKeys=Object.keys,descriptor=Object.getOwnPropertyDescriptor,prototype=Object.getPrototypeOf,own=Object.hasOwn,apply=Reflect.apply,define=Object.defineProperty,arrayFrom=Array.from;
 const NativeMap=Map,NativeSet=Set,NativeWeakMap=WeakMap,NativeWeakSet=WeakSet,Failure=TypeError;
 const array=Array.isArray,finite=Number.isFinite,integer=Number.isInteger,objectIs=Object.is,proxy=types.isProxy,boxed=types.isBoxedPrimitive,nativeError=types.isNativeError,isBytes=types.isUint8Array,isShared=types.isSharedArrayBuffer,isView=ArrayBuffer.isView;
-const OBJECT=Object.prototype,ARRAY=Array.prototype,BYTE=Uint8Array.prototype,BUFFER=Buffer.prototype,Byte=Uint8Array,typed=prototype(BYTE),lengthOf=descriptor(typed,'length').get,bufferOf=descriptor(typed,'buffer').get;
+const OBJECT=Object.prototype,ARRAY=Array.prototype,BYTE=Uint8Array.prototype,BUFFER=Buffer.prototype,Byte=Uint8Array,typed=prototype(BYTE),lengthOf=descriptor(typed,'length').get,bufferOf=descriptor(typed,'buffer').get,offsetOf=descriptor(typed,'byteOffset').get,STORAGE=ArrayBuffer.prototype,storageParent=prototype(STORAGE),storageNames=keys(STORAGE),storageFields=storageNames.map(key=>descriptor(STORAGE,key));
 const bufferFrom=Buffer.from,bufferText=Buffer.prototype.toString,bufferJson=descriptor(BUFFER,'toJSON'),byteLength=Buffer.byteLength,OMIT={};
 const SCHEMA='complete-closed-json-structural-DAG-v1',LIMIT=384*1024*1024,CHUNK=32768,EDGES=Math.floor((LIMIT-64)/32);
 // These are trusted-bootstrap fixed intrinsic owners, not input prototypes.
@@ -24,14 +24,16 @@ function id(value,length){if(!integer(value)||value<0||value>=length)fail();retu
 function isByte(value){return typeof value==='number'&&integer(value)&&value>=0&&value<=255;}
 function base64(value){return apply(bufferText,apply(bufferFrom,Buffer,[value]),['base64']);}
 export function encodeCompleteClosedJsonDagHookWire(value){
- host();const strings=[],nodes=[],heights=[],stringIds=new NativeMap(),nodeIds=new NativeMap(),memo=new NativeWeakMap(),active=new NativeWeakSet(),safePrototypes=new NativeWeakSet();let cost=256;
- function charge(amount){cost+=amount;if(cost>LIMIT)fail();}
+ host();const strings=[],nodes=[],heights=[],stringIds=new NativeMap(),nodeIds=new NativeMap(),memo=new NativeWeakMap(),active=new NativeWeakSet(),safePrototypes=new NativeWeakSet(),byteStringIds=new NativeMap();const BYTE_INDEX=1024*1024;let cost=256,byteIndexCost=0;
+ function storageCensus(){if(prototype(STORAGE)!==storageParent)return false;const names=keys(STORAGE);if(names.length!==storageNames.length)return false;for(let at=0;at<names.length;at++)if(names[at]!==storageNames[at]||!same(descriptor(STORAGE,names[at]),storageFields[at]))return false;return true;}
+ const stockStorage=storageCensus();
+ function charge(amount){cost+=amount;if(cost>LIMIT)fail();if(byteIndexCost>LIMIT-cost){byteStringIds.clear();byteIndexCost=0;}}
  function intern(text){
-  if(stringIds.has(text))return stringIds.get(text);const chunks=[];let size=16;
+  const existing=stringIds.get(text);if(existing!==undefined)return existing;const chunks=[];let size=16;
   for(let at=0;at<text.length;at+=CHUNK){const chunk=text.slice(at,at+CHUNK);size+=byteLength(stringify(chunk))+1;if(size>LIMIT)fail();chunks.push(chunk);}
   if(!chunks.length){size+=3;chunks.push('');}charge(size);const next=strings.length;strings.push(chunks);stringIds.set(text,next);return next;
  }
- function node(def){const signature=stringify(def);if(signature.length>LIMIT)fail();if(nodeIds.has(signature))return nodeIds.get(signature);let height=0;if(def[0]==='a8'||def[0]==='o8')height=strings[def[1]][0].length?1:0;else if(def[0]==='a')for(const child of def[1])height=Math.max(height,1+heights[child]);else if(def[0]==='o')for(const row of def[1])height=Math.max(height,1+heights[row[1]]);if(height>512)fail();charge(signature.length+1);const next=nodes.length;nodes.push(def);heights.push(height);nodeIds.set(signature,next);return next;}
+ function node(def){const signature=stringify(def);if(signature.length>LIMIT)fail();const existing=nodeIds.get(signature);if(existing!==undefined)return existing;let height=0;if(def[0]==='a8'||def[0]==='o8')height=strings[def[1]][0].length?1:0;else if(def[0]==='a')for(const child of def[1])height=Math.max(height,1+heights[child]);else if(def[0]==='o')for(const row of def[1])height=Math.max(height,1+heights[row[1]]);if(height>512)fail();charge(signature.length+1);const next=nodes.length;nodes.push(def);heights.push(height);nodeIds.set(signature,next);return next;}
  function domain(item,buffer=false){
   const path=[];let owner=item,depth=0;
   while(owner!==null){if(++depth>512)fail();if(owner!==item&&safePrototypes.has(owner))break;if(proxy(owner)||boxed(owner)||nativeError(owner))fail();const field=descriptor(owner,'toJSON');if(field&&!(buffer&&owner===BUFFER&&bufferJson&&own(bufferJson,'value')&&typeof bufferJson.value==='function'&&same(field,bufferJson)))fail();path.push(owner);owner=prototype(owner);}
@@ -42,7 +44,29 @@ export function encodeCompleteClosedJsonDagHookWire(value){
   if(typeof item==='function'){if(proxy(item))fail();domain(item);return OMIT;}
   if(typeof item==='bigint')fail();return item;
  }
- function byteNode(tag,values){return node([tag,intern(base64(values))]);}
+ // This bounded index interns complete observation byte DATA only, AFTER
+ // every fresh object's unchanged own-key/prototype/refusal census in visit.
+ // It cannot skip that census or grant source/owner/serializer authority.
+ function byteNode(tag,values){
+  const length=array(values)?values.length:apply(lengthOf,values,[]);
+  if(length>BYTE_INDEX)return node([tag,intern(base64(values))]);
+  let view=null;
+  if(isBytes(values)){
+   const storage=apply(bufferOf,values,[]),offset=apply(offsetOf,values,[]);
+   // The native Buffer ArrayBuffer overload reads storage.byteLength. An own
+   // getter or foreign/changed prototype therefore keeps the original copy.
+   if(stockStorage&&!proxy(storage)&&prototype(storage)===STORAGE&&keys(storage).length===0)try{view=apply(bufferFrom,Buffer,[storage,offset,length]);}catch{/* Detached/out-of-bounds view: preserve the exact original copy path. */}
+  }
+  if(view===null)view=apply(bufferFrom,Buffer,[values]);
+  // Latin1 is an exact one-byte/code-unit key, not UTF8 decoding, a digest,
+  // prefix, previous object verdict or source association. Equal fresh byte
+  // objects still each passed the complete census before this full comparison.
+  const text=apply(bufferText,view,['latin1']),existing=byteStringIds.get(text);
+  if(existing!==undefined)return node([tag,existing]);
+  const index=intern(apply(bufferText,view,['base64'])),size=text.length+64;
+  if(size<=BYTE_INDEX&&size<=LIMIT-cost){if(byteIndexCost+size>BYTE_INDEX){byteStringIds.clear();byteIndexCost=0;}byteStringIds.set(text,index);byteIndexCost+=size;}
+  return node([tag,index]);
+ }
  function visit(item,depth){
   if(depth>512)fail();item=normalized(item);if(item===OMIT)fail();
   if(item===null)return node(['z']);if(typeof item==='boolean')return node(['b',item]);if(typeof item==='number')return finite(item)?node(['n',objectIs(item,-0)?0:item]):node(['z']);if(typeof item==='string')return node(['s',intern(item)]);
@@ -71,7 +95,7 @@ export function encodeCompleteClosedJsonDagHookWire(value){
    memo.set(item,result);return result;
   }finally{active.delete(item);}
  }
- try{const root=visit(value,0);host();return encodeCompleteHookWire({schema:SCHEMA,strings,nodes,root});}finally{stringIds.clear();nodeIds.clear();strings.length=0;nodes.length=0;heights.length=0;}
+ try{const root=visit(value,0);host();if(stockStorage&&!storageCensus())fail('ArrayBuffer provider changed');return encodeCompleteHookWire({schema:SCHEMA,strings,nodes,root});}finally{stringIds.clear();nodeIds.clear();byteStringIds.clear();byteIndexCost=0;strings.length=0;nodes.length=0;heights.length=0;}
 }
 export function decodeCompleteClosedJsonDagHookWire(text){
  host();const value=decodeCompleteHookWire(text);if(!value||stringify(objectKeys(value))!==stringify(['schema','strings','nodes','root'])||value.schema!==SCHEMA||!array(value.strings)||!array(value.nodes)||!value.nodes.length)fail();
