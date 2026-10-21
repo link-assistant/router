@@ -1,3 +1,4 @@
+import {assertOwnedCorePrivateAnalysisSourceComposition} from './owned-core-private-analysis-source-composition.mjs';
 import {assertUnitMatchesSourceComposition} from './unit-matches-source-composition.mjs';
 import {assertAsciiSourceComposition,assertAsciiReverseComposition,assertAsciiAssetsComposition,assertAsciiBaseAssetsComposition} from './ascii-source-composition.mjs';
 import testCase from 'node:test';
@@ -72,13 +73,14 @@ test('native source producers retain complete historical inputs actual current o
     }
     assert.equal(row.nativeCopies.length, 2); assert.ok(row.nativeCopies.every(copy => copy.completeNativeAstCopy));
   }
-  assert.equal(current.layers.length, 7);
+  assert.equal(current.layers.length, 8);
   const beforeAscii = Object.fromEntries([...prepared.files, ...current.layers[1].files].map(row => [row.path, row]));
   assertAsciiSourceComposition(current.layers[2], beforeAscii, finalSources);
   assertAsciiReverseComposition(current.layers[3], {...beforeAscii, ...Object.fromEntries(current.layers[2].files.map(row => [row.path, row]))}, finalSources);
   assertAsciiAssetsComposition(current.layers[4], Object.fromEntries(current.layers[3].files.map(row => [row.path, row])), finalSources);
   assertAsciiBaseAssetsComposition(current.layers[5], Object.fromEntries(current.layers[4].files.map(row => [row.path, row])), finalSources);
  assertUnitMatchesSourceComposition(current.layers[6],Object.fromEntries(current.layers.slice(0,6).flatMap(layer=>layer.files.map(row=>[row.path,row]))),finalSources);
+ assertOwnedCorePrivateAnalysisSourceComposition(current.layers[7],Object.fromEntries(current.layers.slice(0,7).flatMap(layer=>layer.files.map(row=>[row.path,row]))),finalSources);
   const host = prepared.files.find(row => row.path.endsWith('/host-contracts.mjs'));
   assert.ok(host.after.split('\n').length <= 1000); assert.ok(host.before.includes('parseRouterCoreVector')); assert.ok(host.after.includes('parseRouterCoreVector'));
   assert.match(prepared.wrapper.after, /::std::matches!/u);

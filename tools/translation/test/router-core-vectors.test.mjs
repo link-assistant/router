@@ -1,3 +1,5 @@
+import {composeOwnedCorePrivateAnalysisRetention} from '../prepare-owned-core-private-analysis-retention.mjs';
+import {assertOwnedCorePrivateAnalysisSourceComposition} from './owned-core-private-analysis-source-composition.mjs';
 import {composeCoreUnitMatches} from '../prepare-core-unit-matches.mjs';
 import {assertUnitMatchesSourceComposition} from './unit-matches-source-composition.mjs';
 import {assertAsciiSourceComposition,assertAsciiReverseComposition,assertAsciiAssetsComposition,assertAsciiBaseAssetsComposition} from './ascii-source-composition.mjs';
@@ -89,13 +91,16 @@ test('native source producer derives the actual owned wrapper and composes compl
   assert.equal(assets.historicalSources, reverse.sources);
   const base = retain('complete-current-owned-ascii-base-assets-source-layer', composeCoreAsciiBaseAssets(assets.sources));
   assert.equal(base.historicalSources, assets.sources);
-  const composition = retain('complete-current-owned-unit-matches-source-layer', composeCoreUnitMatches(base.sources));
-  assert.equal(composition.historicalSources, base.sources);
+  const unit = retain('complete-current-owned-unit-matches-source-layer', composeCoreUnitMatches(base.sources));
+  assert.equal(unit.historicalSources, base.sources);
+  const composition = retain('complete-current-private-analysis-retention-source-layer', composeOwnedCorePrivateAnalysisRetention(unit.sources));
+  assert.equal(composition.historicalSources, unit.sources);
   assertAsciiSourceComposition(ascii.layers[0], boundary.sources, composition.sources);
   assertAsciiReverseComposition(reverse.layers[0], ascii.sources, composition.sources);
   assertAsciiAssetsComposition(assets.layers[0], reverse.sources, composition.sources);
   assertAsciiBaseAssetsComposition(base.layers[0], assets.sources, composition.sources);
-  assertUnitMatchesSourceComposition(composition.layers[0], base.sources, composition.sources);
+  assertUnitMatchesSourceComposition(unit.layers[0], base.sources, composition.sources);
+  assertOwnedCorePrivateAnalysisSourceComposition(composition.layers[0], unit.sources, composition.sources);
   const reverseSource = reverse.layers[0].files[0];
   assert.throws(() => composeCoreAsciiReverse({...ascii.sources, [reverseSource.path]: {after: 'forged'}}), /preceding complete source equation/u);
   assert.throws(() => composeCoreAscii({...boundary.sources, 'rust/src/translation_core.rs': {after: 'forged'}}), /preceding complete source equation/u);

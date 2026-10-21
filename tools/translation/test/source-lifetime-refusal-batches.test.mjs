@@ -1,3 +1,4 @@
+import {assertOwnedCorePrivateAnalysisSourceComposition} from './owned-core-private-analysis-source-composition.mjs';
 import {assertUnitMatchesSourceComposition} from './unit-matches-source-composition.mjs';
 import {assertAsciiSourceComposition,assertAsciiReverseComposition,assertAsciiAssetsComposition,assertAsciiBaseAssetsComposition} from './ascii-source-composition.mjs';
 import test from 'node:test';
@@ -17,7 +18,7 @@ function thrown(run) { try { run(); } catch (error) { return error; } assert.fai
 test('complete actual lifetime checker collector and project source copies retain native bindings and serialized CST inverses', {timeout: 60000}, () => {
   const plan = prepareSourceLifetimeRefusalBatches(), current = prepareCurrentSourceLifetimeRefusalBatches();
   const finalSources = Object.fromEntries(current.files.map(row => [row.path, row]));
-  assert.equal(current.layers.length, 8);
+  assert.equal(current.layers.length, 9);
   assert.equal(current.layers[1].files[0].before, plan.files.find(row => row.path === 'tools/translation/project.mjs').after);
   assert.equal(current.layers[2].files.find(row => row.path === 'tools/translation/project.mjs').before, current.layers[1].files[0].after);
   assert.equal(plan.typescriptVersion, '5.9.3'); assert.equal(plan.files.length, 3); assert.equal(plan.newAcrossInvocationCache, false);
@@ -34,6 +35,7 @@ test('complete actual lifetime checker collector and project source copies retai
   assertAsciiAssetsComposition(current.layers[5], Object.fromEntries(current.layers[4].files.map(row => [row.path, row])), finalSources);
   assertAsciiBaseAssetsComposition(current.layers[6], Object.fromEntries(current.layers[5].files.map(row => [row.path, row])), finalSources);
  assertUnitMatchesSourceComposition(current.layers[7],Object.fromEntries(current.layers.slice(0,7).flatMap(layer=>layer.files.map(row=>[row.path,row]))),finalSources);
+ assertOwnedCorePrivateAnalysisSourceComposition(current.layers[8],Object.fromEntries(current.layers.slice(0,8).flatMap(layer=>layer.files.map(row=>[row.path,row]))),finalSources);
   for (const layer of current.layers.slice(1)) for (const row of layer.files) {
     assert.equal(row.current, current.files.find(final => final.path === row.path).after); assert.equal(row.inverse, row.before);
     assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source, row.before);
