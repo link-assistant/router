@@ -117,7 +117,7 @@ export function prepareOwnedFieldBulkSources({root=resolve(dirname(fileURLToPath
  const files=[];for(const [before,after]of pairs)files.push(deriveOwnedFieldBulkSource(sources[before],prefix+after));
  for(const [retainedName,planner]of [['','owned-field-bulk.mjs'],['retained-','retained-owned-field-bulk.mjs']]){
   const source=retainedName+'matrix-bulk.mjs',target=retainedName+'owned-field-matrix-bulk.mjs';
-  files.push(literalRoutes(sources[source],prefix+target,{'./'+(retainedName?'retained-bulk.mjs':'bulk.mjs'):'./'+planner}));
+  files.push(literalRoutes(sources[source],prefix+target,{['./'+(retainedName?'retained-bulk.mjs':'bulk.mjs')]:'./'+planner}));
   files.push(isolated(sources['isolated-'+source],prefix+'isolated-'+target,planner));
  }
  files.push(processBoundary(sources['isolated-matrix-session.mjs'],prefix+'owned-field-isolated-matrix-session.mjs',true));
