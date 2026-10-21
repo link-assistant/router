@@ -34,6 +34,25 @@ Track every requested requirement and continue independent source review while C
 runs, preserving the tested head. Inspect pinned upstream implementations before
 adding machinery and retain reproducible upstream defects for authorized reporting.
 
+## Current Router examples
+
+Router's current physical source roots are `js/src`, `ts/src` and `rust/src`;
+[the language layout](../language-layout.md) distinguishes them from historical
+logical labels. Adapt these paths to the receiving repository rather than copying
+old `packages/` labels into current physical loaders.
+
+[Historical assembler recovery](../native-portable-historical-layout.md) retains
+complete genuine and mixed source packets, restores the actual original frozen
+literal and hash assertion, then applies the current layout through separate
+native-selected CST phases and full inverses. It does not repin the oracle to
+an accidentally migrated literal. [Private analysis retention](../owned-core-private-analysis-retention.md)
+uses actual lexical bindings to remove one redundant copy of already private DATA,
+while preserving original callback, intrinsic, lifetime and source checks. Its
+full receiving controls remain separate from application coverage, complete
+regeneration, performance deadlines and strict runtime parity. These are reusable
+source-equation patterns, not permission to admit unsupported source or skip the
+receiving project's complete qualification.
+
 ## Existing standard templates
 
 `standard-guidance.patch` is an exact additive patch for the two older guidance templates and the workflow scaffold
