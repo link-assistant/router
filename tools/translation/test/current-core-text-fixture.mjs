@@ -1,3 +1,4 @@
+import {transportConcreteSourceEquations} from '../concrete-source-equations.mjs';
 import {currentCoreFacadeLaterHistory,restoreCorePrimitiveReceivingHistory} from './fixtures/facade-ast-receiving-history.mjs';
 import {completeOwnedCoreSourceFixture} from './complete-core-source-fixture.mjs';
 import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_BASE64_SOURCE} from '../router-core-source-data.mjs';
@@ -21,8 +22,8 @@ const CORE_BASE64_ADOPTION="\nmod base64;\npub use self::base64::{\n    Base64Er
 function currentCoreFacadeHistory(){
  const row=oracle.inputs.find(row=>row.path==='src/translation_core.rs');assert.ok(row);assert.equal(hash(row.source),row.sha256);assert.equal(Buffer.byteLength(row.source),row.bytes);
  const actual=read(row.path);assert.equal(actual,ROUTER_FORMATTING_FACADE_SOURCE);const later=currentCoreFacadeLaterHistory(actual);const anchor='pub use self::ranges::f64_inclusive_contains;\n';assert.equal(row.source.split(anchor).length,2);const target=row.source.replace(anchor,()=>anchor+CORE_BASE64_ADOPTION);assert.equal(target,later.before);
- const before=transportConcreteSyntaxSource(row.source,{language:'Rust'}),applied=applyConcreteSyntaxSubstitutions(before.document,{languageRules:[{id:'rust:retain-complete-old-owned-interface',edits:[]}],repositoryRules:[{id:'router:complete-base64-library-interface-addition',edits:[{span:[0,row.source.length],expected:row.source,replacement:target}]}]}),after=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(applied.value));assert.equal(after.source,target);
- const inverse=applyConcreteSyntaxSubstitutions(after.document,{languageRules:[{id:'rust:retain-complete-interface-history-inverse',edits:[]}],repositoryRules:[{id:'router:restore-complete-old-interface',edits:[{span:[0,target.length],expected:target,replacement:row.source}]}]}),restored=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(inverse.value));assert.equal(restored.source,row.source);
+ const equation=transportConcreteSourceEquations([{before:row.source,after:target,language:'Rust'}])[0],before={meta:equation.beforeMeta},applied={trace:equation.trace},after={source:equation.after,meta:equation.afterMeta};assert.equal(after.source,target);
+ const restored={source:equation.inverse,meta:equation.beforeMeta};assert.equal(restored.source,row.source);
  return {before:row.source,actual,beforeMeta:before.meta,afterMeta:later.afterMeta,inverseMeta:restored.meta,trace:[...applied.trace,...later.trace],compilerAuthority:false,base64History:{before:row.source,actual:target,beforeMeta:before.meta,afterMeta:after.meta,inverseMeta:restored.meta,trace:applied.trace},laterHistory:later};
 }
 export function currentCoreReceivingFiles(path,name,source){

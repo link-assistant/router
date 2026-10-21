@@ -29,3 +29,17 @@ test('all original receiving workloads use the complete current primitive child 
  assert.equal(hash(raw),'d484c8599546faebc8f1cde10fe85a4559ba617b50efb98f3ead806d0afd7f8d');assert.equal(oracle.contexts.length,8);
  for(const row of oracle.contexts){const original=currentCoreFiles(row.path,row.name,row.source),snapshot=JSON.stringify(original),receiving=currentCoreReceivingFiles(row.path,row.name,row.source);assert.equal(JSON.stringify(original),snapshot);assert.equal(original['src/translation_core/primitives.rs'],restoreCorePrimitiveReceivingHistory(primitive));assert.equal(receiving['src/translation_core/primitives.rs'],primitive);assert.equal(receiving[row.path],original[row.path]);assert.notEqual(receiving['src/translation_core.rs'],original['src/translation_core.rs']);}
 });
+
+test('batched history runtime retains the complete original factory and derives its receiving copy by actual native spans',{timeout:60000},()=>{
+ const plan=prepareFacadeAstReceivingHistory(),copy=plan.runtimeCopy;assert.equal(copy.inverse,copy.before);assert.equal(copy.nativeSelections.length,3);let actual=copy.before;
+ for(const row of [...copy.nativeSelections].sort((a,b)=>b.span[0]-a.span[0])){assert.equal(actual.slice(...row.span),row.expected);actual=actual.slice(0,row.span[0])+row.replacement+actual.slice(row.span[1]);}
+ assert.equal(actual,copy.after);assert.ok(copy.before.includes('function phase(before,after)'));assert.ok(copy.before.includes('transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(inverse.value))'));assert.ok(copy.after.includes('transports[position++]'));
+ const equation=plan.runtimeEquation;assert.equal(equation.inverse,equation.before);assert.ok(equation.before.includes(copy.before));assert.ok(equation.after.includes(copy.after));for(const stage of equation.stages){assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);assert.equal(stage.inverse,stage.before);}
+});
+
+test('complete base64 history copy retains its source checks and replaces only native CST declarations',{timeout:60000},()=>{
+ const plan=prepareFacadeAstReceivingHistory(),equation=plan.coreEquation;assert.equal(equation.nativeSelections.length,3);assert.equal(equation.inverse,equation.before);let source=equation.before;
+ for(const edit of [...equation.nativeSelections].sort((a,b)=>b.span[0]-a.span[0])){assert.equal(source.slice(...edit.span),edit.expected);source=source.slice(0,edit.span[0])+edit.replacement+source.slice(edit.span[1]);}assert.equal(source,equation.after);assert.ok(equation.before.includes('const before=transportConcreteSyntaxSource(row.source'));assert.ok(equation.after.includes('after={source:equation.after,meta:equation.afterMeta}'));
+ for(const row of [equation.before,equation.after])for(const guard of ['assert.equal(target,later.before)','assert.equal(after.source,target)','assert.equal(restored.source,row.source)','assert.equal(expected.length,25)','assert.deepEqual(result.meta.refused,expected)'])assert.ok(row.includes(guard),guard);
+ for(const stage of equation.stages){assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);assert.equal(stage.inverse,stage.before);}
+});

@@ -819,3 +819,51 @@ function assignmentData(value,depth=0,budget={cells:16777216}){
   }
   return result;
 }
+
+// Begin generated separate complete source-equation transaction.
+function originalSourceEquationRows(rows,equationApply,equationSerialize){
+ if(rows.length%2!==0)fail('complete before/after pairs required');
+ const equations=[];
+ for(let index=0;index<rows.length;index+=2){
+  checked();const initial=rows[index],final=rows[index+1],before=initial.source,after=final.source;
+  if(initial.document.language!==final.document.language)fail('whole equation language differs');
+  const rule=(left,right,id)=>({id,edits:[{span:[0,left.length],expected:left,replacement:right}]}),run=equationApply(initial.document,{languageRules:[rule(before,before,'source-equation:retain-complete-source')],repositoryRules:[rule(before,after,'source-equation:exact-whole-edit')]}),wire=equationSerialize(run.value);
+  if(wire!==final.meta)fail('complete edited canonical differs');
+  const restored=equationApply(final.document,{languageRules:[],repositoryRules:[rule(after,before,'source-equation:complete-inverse')]});
+  if(equationSerialize(restored.value)!==initial.meta)fail('complete canonical inverse differs');
+  equations.push({before,after,beforeMeta:initial.meta,afterMeta:final.meta,trace:run.trace,inverse:before});checked();
+ }
+ return equations;
+}
+export function transportPrivateConcreteEquations(input){
+  const current=checked();if(active)fail('recursive source transaction');
+  const request=batchSnapshot(input,current);active=true;
+  try{
+    const before=authenticate();checked();
+    if(!compiled){compiled=compile(before);compiledSources=before.sources;}
+    const selected=compiled,selectedSources=compiledSources,modules=selected.modules,transport=modules.concrete.originalIdentityTransport;
+    for(let at=0;at<before.manifest.sources.length;at++){const row=before.manifest.sources[at];if(selectedSources[row.id]!==before.sources[row.id])fail('compiled complete source changed');}
+    const rows=[];let nodes=0,canonicalUnits=0;
+    for(let at=0;at<request.rows.length;at++){
+      checked();const row=request.rows[at];let result;
+      try{result=transport(row.source,row.language,false);}catch(error){
+        checked();const message=error!==null&&typeof error==='object'&&!proxy(error)?descriptor(error,'message'):null;
+        throwOriginalCapturedTypeError(message&&own(message,'value')&&typeof message.value==='string'?message.value:'Private original grammar refused');
+      }
+      checked();
+      if(result.source!==row.source||result.document.language!==row.language)fail('batch source association differs');
+      nodes+=result.document.nodes.length;canonicalUnits+=result.meta.length;
+      if(nodes>BATCH_NODES||canonicalUnits>BATCH_SERIAL)fail('batch aggregate node/canonical budget');
+      rows.push(result);
+    }
+    const equationApply=modules.concrete.applyConcreteSyntaxSubstitutions,equationSerialize=modules.concrete.serializeConcreteSyntaxMeta,equations=originalSourceEquationRows(rows,equationApply,equationSerialize);
+    const result={equations,rows,totals:{rows:rows.length,sourceCodeUnits:request.units,utf8Bytes:request.bytes,nodes,canonicalCodeUnits:canonicalUnits}};
+    const after=authenticate();checked();if(before.text!==after.text)fail('current manifest differs');
+    for(let at=0;at<before.manifest.sources.length;at++){const row=before.manifest.sources[at];if(before.sources[row.id]!==after.sources[row.id])fail('current complete source differs');}
+    finalIdentities(before.records,before.ancestors);finalIdentities(after.records,after.ancestors);checked();
+    if(compiled!==selected||compiledSources!==selectedSources||selected.modules!==modules||modules.concrete.originalIdentityTransport!==transport)fail('batch source transaction association changed');
+    for(let at=0;at<before.manifest.sources.length;at++){const row=before.manifest.sources[at];if(selectedSources[row.id]!==before.sources[row.id])fail('compiled source association changed');}
+    // Captured native reflection only: no callbacks/hash/IO follow this join.
+    batchInputCurrent(request.snapshots);if(modules.concrete.applyConcreteSyntaxSubstitutions!==equationApply||modules.concrete.serializeConcreteSyntaxMeta!==equationSerialize)fail('complete source equation function association changed');return result;
+  }finally{active=false;}
+}

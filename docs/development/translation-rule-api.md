@@ -23,6 +23,12 @@ not prove absence of a competing `rustfmt` type-prefix binding. A complete
 source-backed export/producer closure remains required; registered spelling or
 a public namespace flag cannot replace it.
 
+The [complete source-equation adapter](concrete-source-equations.md) reuses the
+original full canonical CST transport for a bounded before/after source batch.
+Its native-selected transaction copy retains both substitution sequences and
+complete inverses, with fresh original source and native checks on each call.
+These DATA results grant no semantic or owner authority.
+
 The [rule-layer contract](translation-rules.md) defines the required separation
 between language semantics and repository conventions. The implementation in
 [`rule-pipeline.mjs`](../../tools/translation/rule-pipeline.mjs) accepts exactly
