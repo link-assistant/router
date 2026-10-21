@@ -13,7 +13,7 @@ const ROOT=new URL('./',import.meta.url),MANIFEST=new URL('./source-profiles/lit
 const PROFILE_SHA='78ae478f690f967ab483b4584467d87a754fa4c2f357cf1bdd7552090bcf1b1a';
 const hash=value=>{const result=createHash('sha256').update(value).digest('hex');guard();return result;},programs=new WeakMap();
 const fail=message=>{throw new TypeError('Original include source program: '+message);};
-function guard(){if(!originalNamespaceTraversalIntrinsicsUnchanged()||!originalStaticSourceIntrinsicsUnchanged()||!originalPrivateParserIngressUnchanged()||!originalDataFreezeIntrinsicsUnchanged())fail('native source traversal changed');}
+function guard(){if(!literalIncludeJsonParseUnchanged()||(!originalNamespaceTraversalIntrinsicsUnchanged()||!originalStaticSourceIntrinsicsUnchanged()||!originalPrivateParserIngressUnchanged()||!originalDataFreezeIntrinsicsUnchanged()))fail('native source traversal changed');}
 function one(rows,label){if(rows.length!==1)fail('one complete original '+label+' required');return rows[0];}
 function functionOf(origin,name){
  const found=[];function scan(nodes){for(let at=0;at<nodes.length;at++){
@@ -45,3 +45,8 @@ export function loadOriginalLiteralIncludeSourceProgram(){
  for(const row of raw)if(!readFileSync(row.url).equals(row.bytes))fail('complete source changed at EOF');if(!readFileSync(MANIFEST).equals(profileBytes))fail('manifest changed at EOF');guard();programs.set(result,{profileBytes,raw});return result;
 }
 export function requireOriginalLiteralIncludeSourceProgram(program){guard();const state=programs.get(program);if(!state)fail('copied or foreign source program');for(const row of state.raw)if(!readFileSync(row.url).equals(row.bytes))fail('original source changed');if(!readFileSync(MANIFEST).equals(state.profileBytes))fail('manifest changed');const fresh=loadOriginalLiteralIncludeSourceProgram();if(fresh.profileSha256!==program.profileSha256)fail('source program changed');return program;}
+
+// JSON.parse is not included in the shared stringify/traversal guards.
+const literalIncludeJsonOwner=JSON,literalIncludeJsonHasOwn=Object.hasOwn,literalIncludeJsonDescriptor=Object.getOwnPropertyDescriptor(JSON,'parse'),literalIncludeJsonGetDescriptor=Object.getOwnPropertyDescriptor,literalIncludeJsonApply=Reflect.apply,literalIncludeJsonFunctionText=Function.prototype.toString;
+const literalIncludeJsonNative=!!(literalIncludeJsonDescriptor&&literalIncludeJsonHasOwn(literalIncludeJsonDescriptor,'value')&&typeof literalIncludeJsonDescriptor.value==='function'&&literalIncludeJsonApply(literalIncludeJsonFunctionText,literalIncludeJsonDescriptor.value,[])==='function parse() { [native code] }');
+function literalIncludeJsonParseUnchanged(){const current=literalIncludeJsonGetDescriptor(literalIncludeJsonOwner,'parse'),before=literalIncludeJsonDescriptor;return !!(literalIncludeJsonNative&&current&&literalIncludeJsonHasOwn(current,'value')&&current.value===before.value&&current.writable===before.writable&&current.enumerable===before.enumerable&&current.configurable===before.configurable);}
