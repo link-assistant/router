@@ -64,3 +64,6 @@ macro_rules! __router_translation_core_matches {
 
 /// Test scalar literal patterns; translation checks every subject and alternative.
 pub use crate::__router_translation_core_matches as matches;
+
+/// Test checked Copy/no-Drop unit-enum constructors; library internals stay native.
+pub use crate::__router_translation_core_matches as matches_unit;

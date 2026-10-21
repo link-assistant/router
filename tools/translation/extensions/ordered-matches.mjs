@@ -146,6 +146,7 @@ function originalConstBody(checker,node,subject,variable,attempts,branches,type,
   return {k:'let',name:variable.name,value:subject,body:result,type,mutable:false,span:node.span,
     constMatchSourceEvidence:JSON.stringify({schema:'original-unguarded-const-match-source-v1',sourceMacro:node.sourceMacro,rows:evidence,subjectEvaluatedOnce:true,exhaustiveness:'unguarded-source-patterns-only',runtimeParity:false})};
 }
+function ownedUnitMatchesLayout(checker,type,span){const token=checkedOptionNominal(checker,type,span),entry=checker.items.get(type.name);if(entry.record||entry.tuple||entry.standardGeneric||!entry.ctors.length||entry.ctors.length>256||entry.ctors.some(ctor=>ctor.ctorStyle!=='unit'||ctor.fields.length))throw unsupported('owned unit-enum matches source','requires the complete privately checked implicit-discriminant unit enum',span);return {token,entry};}
 export function checkOrderedMatch(checker,node,env,path,expected,allowLiteral=false) {
   env=checker.contextEnvironment(node,env,expected);
   const statement=checkingStatementMatch(node),functionTail=checker.sourceSharedPatternFunctionTail?.(node)===true;
@@ -153,6 +154,7 @@ export function checkOrderedMatch(checker,node,env,path,expected,allowLiteral=fa
   if(exits(node.subject)||node.rows.some(row=>exits(row.guard)||!statement&&(!functionTail&&exits(row.body)||functionTail&&nonReturnExit(row.body))))throw unsupported('ordered match control','nonlocal control needs a separately checked statement join',node.span);
   if(statement&&node.rows.some(row=>exits(row.body)))expected??=UNIT;
   const subject=checker.expr(node.subject,env,path);checker.patternDomain(subject.type,node.span);
+  if(node.sourceMacro?.compatibilityCore?.id==='router-core-unit-matches-v1')ownedUnitMatchesLayout(checker,subject.type,node.span);
   const integerRange=node.rows.some(row=>containsIntegerRange(row.pattern));
   if(integerRange&&subject.type.kind!=='fixed')throw unsupported('nested integer range match','this profile requires a primitive integer subject',node.span);
   let name;do{name=checker.freshName('ml_ordered_match_');}while(env.has(name));

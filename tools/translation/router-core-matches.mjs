@@ -1,3 +1,4 @@
+import {originalParsedSyntaxNode} from './extensions/source-links.mjs';
 // Generated from complete ordered-match source; prepare-core-matches-sources.mjs owns this file.
 import {typeError,unsupported} from './vendor/meta-language/translation/diagnostics.js';
 import {ORDERED_MATCH_PROFILE} from './extensions/ordered-matches.mjs';
@@ -22,12 +23,24 @@ function parseOriginalOwnedMatchesBody(parser,token,path) {
   return {k:'routerOrderedMatch',subject,rows:[{...parsed,guard,body:literal(true),span},{pattern:{k:'wild',span},sourcePattern:{pattern:{k:'wild',span},tokens:[],span},guard:null,body:literal(false),span}],sourceMacro:{name:'matches',owner:'standard-prelude',profile:ORDERED_MATCH_PROFILE.id,span},span};
 }
 
+
+// These records retain original parse custody, never a source/owner verdict,
+// digest or encoded payload. The checker reissues its own scope on each run.
+const ownedUnitMatchesParses=new WeakMap();
+export function originalOwnedUnitMatchesSource(entry,node){
+  const origin=originalParsedSyntaxNode(entry,node),receipt=origin&&ownedUnitMatchesParses.get(origin.original);
+  if(!receipt||origin.actual!==node||origin.parser!==receipt.parser)return false;
+  try { const proof=requireRouterCoreFacade(receipt.parser);requireRouterCoreFacadeCurrent(receipt.parser,proof); }
+  catch(error){if(error instanceof TypeError)return false;throw error;}
+  return true;
+}
+
 const fail = (message, span) => { throw unsupported('Router compatibility matches', message, span); };
 export function parseRouterCoreMatches(parser, path) {
   const c = parser.cursor;
   if (!['crate', '::', 'translation_core', '::'].every((word, index) => c.is(word, index)) ||
-      c.peek().kind !== 'identifier' || c.peek(2).kind !== 'identifier' || c.peek(4).value !== 'matches') return null;
-  const name = c.peek(4), separate = name.kind === 'identifier' && c.is('!', 5);
+      c.peek().kind !== 'identifier' || c.peek(2).kind !== 'identifier' || !['matches','matches_unit'].includes(c.peek(4).value)) return null;
+  const name = c.peek(4), unit = name.value === 'matches_unit', separate = name.kind === 'identifier' && c.is('!', 5);
   if (name.kind !== 'macro' && !separate) return null;
   const first = c.peek(), sourceTokens = c.tokens, start = c.index, width = separate ? 6 : 5;
   const macro = separate ? {...name, kind: 'macro', end: c.peek(5).end} : name;
@@ -37,9 +50,24 @@ export function parseRouterCoreMatches(parser, path) {
   catch (error) { if (!(error instanceof TypeError)) throw error; fail(error.message, location); }
   c.index += width;
   const node = createRulePipeline([
-    {phase: 'language', rules: [{id: 'literal-matches:existing-ordered-source-pattern-parser', apply: () => parseOriginalOwnedMatchesBody(parser, {...macro, start: first.start}, path)}]},
-    {phase: 'repository', rules: [{id: 'router-core:qualified-owned-literal-matches', apply: node => {
+    {phase: 'language', rules: [{id: unit ? 'unit-matches:existing-ordered-source-pattern-parser' : 'literal-matches:existing-ordered-source-pattern-parser', apply: () => parseOriginalOwnedMatchesBody(parser, {...macro, start: first.start}, path)}]},
+    {phase: 'repository', rules: [{id: unit ? 'router-core:qualified-owned-unit-matches' : 'router-core:qualified-owned-literal-matches', apply: node => {
       if (node.rows[0].guard) fail('guarded patterns require a separate owned domain', node.span);
+      if (unit) {
+        let cells = 0;
+        const pattern = value => {
+          if (++cells > ORDERED_MATCH_PROFILE.alternativeLimit) fail('unit alternative bound exceeded', value.span);
+          if (value.k === 'or') { for (const child of value.alternatives) pattern(child); return; }
+          if (value.k !== 'ctor' || !Array.isArray(value.args) || value.args.length) fail('requires unguarded unit constructors without bindings', value.span);
+        };
+        pattern(node.rows[0].pattern);
+        node.sourceMacro = {name:'matches_unit',owner:'owned-router-unit-source',profile:ORDERED_MATCH_PROFILE.id,span:node.span,
+          compatibilityCore:{id:'router-core-unit-matches-v1',symbol:'crate::translation_core::matches_unit',
+            facadeSha256:ROUTER_FORMATTING_FACADE_SHA256,libraryImplementation:'untranslated-rust-std-matches',
+            domain:'original-checked-Copy-no-Drop-unit-enums-without-guards-or-bindings'}};
+        return {...node,constEligible:false};
+      }
+
       let cells = 0;
       const literal = pattern => {
         if (++cells > ORDERED_MATCH_PROFILE.alternativeLimit) fail('literal alternative bound exceeded', pattern.span);
@@ -57,5 +85,6 @@ export function parseRouterCoreMatches(parser, path) {
   try { requireRouterCoreFacadeCurrent(parser, proof); }
   catch (error) { if (!(error instanceof TypeError)) throw error; fail(error.message, node.span); }
   if (parser.cursor !== c || c.tokens !== sourceTokens || c.index <= start + width || sourceTokens[start] !== first || sourceTokens[start + 4] !== name) fail('original qualified source call changed', node.span);
+  if(unit)ownedUnitMatchesParses.set(node,{parser});
   return node;
 }
