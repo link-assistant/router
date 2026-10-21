@@ -42,7 +42,14 @@ function select(source,item,charClosed){
   const name=rows[at+9],filter=['.','chars','(',')','.','filter','(','|',name?.text,'|','!',name?.text,'.','is_whitespace','(',')',')','.','collect','(',')'];
   const control=['.','chars','(',')','.','any','(','char','::','is_control',')'];
   let operation=null,length=0;
-  if(ident(name)&&filter.every((word,index)=>rows[at+index+1]?.text===word)){operation='strip_unicode_whitespace';length=filter.length;callbacks.push([at+8,at+17]);}
+  if(ident(name)&&filter.every((word,index)=>rows[at+index+1]?.text===word)){
+   // collect is generic. Only the complete tail expression of a function
+   // explicitly returning the actual owned Text alias fixes String collection;
+   // a nested argument or other return type could select any FromIterator.
+   const returned=rows.slice(end+1,body).map(row=>row.text).join('');
+   if(returned!=='->'+C+'Text'||at!==body+1||at+filter.length!==rows.length-2)return {edits:[],reason:'collection requires the complete owned Text tail expression'};
+   operation='strip_unicode_whitespace';length=filter.length;callbacks.push([at+8,at+17]);
+  }
   else if(charClosed&&control.every((word,index)=>rows[at+index+1]?.text===word)){operation='has_unicode_control';length=control.length;}
   if(!operation)continue;
   const span=[rows[at].start,rows[at+length].end];

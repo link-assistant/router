@@ -23,7 +23,8 @@ reparsed CSTs, both stages and complete inverses. It adds to the current
 ASCII/matches/vector facade without replacing historical source equations.
 The full Rust scalar oracle is emitted by that producer and is CI-only.
 
-After integrating the complete source batch, materialize with:
+The candidate must remain uninstalled until the ASCII producer composition
+described below is implemented. Its eventual standalone materialization uses:
 
 ```sh
 node tools/translation/prepare-core-unicode-predicates.mjs --write
@@ -35,12 +36,36 @@ resource lease. Bank/class/exports and current-composer freshness must be
 refreshed separately for the final source checkpoint. The producer does not
 install application edits or run Rust.
 
+Source review found a concrete integration blocker. The existing
+`prepareCoreAsciiAssets` requires the complete physical predecessor
+`host-assets.mjs`; `prepareCoreAsciiBaseAssets` requires both that predecessor
+and the original Host source. Their emitted helpers freshly check these full
+parents, selected string runtime bytes and declarations. This Unicode layer
+changes those parents. Appending it to current wrappers alone cannot satisfy
+the historical producers: they refuse before reaching the new composition.
+Those checks must not be weakened or replaced by a newly asserted hash.
+
+A later source batch must compose the actual native/CST ASCII helper producers
+against the complete Unicode after-sources, retain the old historical birth
+and physical-source checks explicitly, refresh the selected/base helper DATA,
+and then join the current wrappers and original whole receiving cases to that
+complete chain. That source-generation work is not implemented here. The
+rejected append-only adapter draft is retained with full before/after/inverse
+sources outside the checkout at
+`/private/tmp/router-unicode-append-only-composition-rejected-20261021-v1.json.gz`.
+It was not generated or executed and is not part of the installed compiler.
+Keeping this two-function candidate separate avoids adding an unproved
+freshness exception to the existing production performance work.
+
 `proposeCoreUnicodePredicatesCorpus` invokes the unchanged scalar source-owner
 selector on a fresh complete graph, then selects exact shared-`Str` formal
 occurrences of `chars().filter(|ch| !ch.is_whitespace()).collect()` and
 `chars().any(char::is_control)`. The latter also requires no competing `char`
 type/module/import/extern-crate binding or implicit-prelude uncertainty in the
-fresh graph. Every other local binder, unrelated callback, item, body macro,
+fresh graph. The generic collection expression must be the complete tail of
+a function explicitly returning the genuine owned `Text` alias; nested
+collection arguments and other return types retain their original source.
+Every other local binder, unrelated callback, item, body macro,
 unknown attribute/import/producer or comment inside a replaced expression
 keeps the original source. All untouched source bytes and full inverse
 coordinates remain in the proposal. No proposal metadata grants admission.

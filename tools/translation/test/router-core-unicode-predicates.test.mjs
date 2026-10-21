@@ -59,9 +59,10 @@ test('whole-expression adoption preserves BOM CRLF Unicode trivia and exact comp
 });
 
 test('unknown producers shadowed names attributes and unobserved callbacks retain original source',{timeout:60000},()=>{
- const bodies=[`let value=other();value.chars().any(char::is_control)`,`unknown!();value.chars().any(char::is_control)`,`foreign::unknown /* gap */ !();value.chars().any(char::is_control)`,`other.map(|value|value.chars().any(char::is_control));value.chars().any(char::is_control)`,`value.chars()/*keep*/.any(char::is_control)`,`value.chars().filter(|ch| !ch.is_whitespace() && ch!='x').collect()`];
+ const bodies=[`let value=other();value.chars().any(char::is_control)`,`unknown!();value.chars().any(char::is_control)`,`foreign::unknown /* gap */ !();value.chars().any(char::is_control)`,`other.map(|value|value.chars().any(char::is_control));value.chars().any(char::is_control)`,`value.chars()/*keep*/.any(char::is_control)`,`value.chars().filter(|ch| !ch.is_whitespace() && ch!='x').collect()`,`value.chars().filter(|ch| !ch.is_whitespace()).collect()`,`consume(value.chars().filter(|ch| !ch.is_whitespace()).collect())`];
  for(const body of bodies){const plan=proposeCoreUnicodePredicatesCorpus({files:input(`pub fn unchanged(value:${S})->bool{${body}}`)}),row=plan.proposals.find(row=>row.file==='src/lib.rs');inverse(row);assert.equal(row.edits.length,0,body);}
  for(const prefix of ['struct char;','use unknown::char;','use unknown::*;','#![no_implicit_prelude]','#[unknown]']){const files=input(prefix+`pub fn unchanged(value:${S})->bool{value.chars().any(char::is_control)}`),plan=proposeCoreUnicodePredicatesCorpus({files}),row=plan.proposals.find(row=>row.file==='src/lib.rs');inverse(row);assert.equal(row.edits.length,0,prefix);}
+ for(const source of [`pub fn unchanged(value:${S})->Vec<char>{value.chars().filter(|ch| !ch.is_whitespace()).collect()}`,`pub fn unchanged(value:${S})->${C}Text{consume(value.chars().filter(|ch| !ch.is_whitespace()).collect())}`]){const plan=proposeCoreUnicodePredicatesCorpus({files:input(source)}),row=plan.proposals.find(row=>row.file==='src/lib.rs');inverse(row);assert.equal(row.edits.length,0,source);}
  let callbacks=0;const proxy=new Proxy({},{ownKeys(){callbacks++;return [];}});assert.throws(()=>proposeCoreUnicodePredicatesCorpus({files:proxy}));assert.equal(callbacks,0);
 });
 
