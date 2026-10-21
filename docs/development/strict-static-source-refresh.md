@@ -150,4 +150,3 @@ All 38 source-universe and workflow-policy cases passed as complete files in
 both Node and Bun. These checks establish source-fixture integrity; affected
 original receiving workloads, compiler export freshness, full generation,
 strict parity and the complete same-SHA gate remain separate requirements.
-
