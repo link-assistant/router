@@ -19,7 +19,7 @@ import {proveSchemarsBangFootprint} from '../schemars-bang-footprints.mjs';
 import {proveSchemarsWithTypeConfinement} from '../derive-schemars-with.mjs';
 import {proveSchemarsWithOutput,assertSchemarsWithOutput,isSchemarsWithOutput,originalSchemarsWithOutput} from '../schemars-with-bang-candidate.mjs';
 import {createDeriveEnclosingNamespaceContext,deriveEnclosingNamespaceOutputAt,proveDeriveEnclosingNamespaceEffect,deriveEnclosingNamespaceEffectFacts} from '../schemars-with-context-candidate.mjs';
-import {createDeriveEnclosingNamespaceContext as createOriginalEnclosing,deriveEnclosingNamespaceOutputAt as originalEnclosingAt} from '../derive-enclosing-namespace-context.mjs';
+import {createDeriveEnclosingNamespaceContext as createOriginalEnclosing,deriveEnclosingNamespaceOutputAt as originalEnclosingAt} from '../schemars-enclosing-original-control.mjs';
 const root=new URL('../../../',import.meta.url),read=path=>readFileSync(repositorySourceURL(path,root),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex');
 const dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')});
 const simple='/// Original documented container.\n#[derive(schemars::JsonSchema)]#[schemars(with="String")]pub enum Entry{First,Last}';

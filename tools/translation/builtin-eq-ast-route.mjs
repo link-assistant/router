@@ -1,7 +1,7 @@
 // Source-selected Eq callback bridge. These are original construction recipes
 // and typed source leaves; no generated implementation bodies are synthesized.
 import {createHash} from 'node:crypto';
-import {createPrivateFrozenJsonComposer} from './private-frozen-json.mjs';
+import {createPrivateFrozenJsonComposer} from "./operation-proof-byte-bridge.mjs";
 import {createCompletedDataFreezer} from './private-data-freeze.mjs';
 import {builtinPayloadDataInputs} from './builtin-derive-data-inputs.mjs';
 import {inventoryDeriveQuoteMeta,createQuoteFragmentCompiler} from './derive-quote-meta.mjs';

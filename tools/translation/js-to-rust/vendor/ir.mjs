@@ -841,3 +841,10 @@ export function tryDecodeCopiedLinoData(links){
  const __linoDataCopy=__copyClosedLinoData(links);if(__linoDataCopy===null)return null;
 return __linoDataCopy.filter((link) => ['function','constant','closure','owned-function'].includes(link[0])).map(itemOf);
 }
+
+export function tryCopyParsedLinoData(links){return __copyClosedLinoData(links);}
+export function tryDecodePreparedOwnedLinoData(links){
+ const __linoDataCopy=__copyClosedLinoData(links);if(__linoDataCopy===null)return null;
+ /\s/u.test('\n');
+ return __linoDataCopy.filter((link) => ['function','constant','closure','owned-function'].includes(link[0])).map(itemOf);
+}

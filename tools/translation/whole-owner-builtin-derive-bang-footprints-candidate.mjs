@@ -2,7 +2,7 @@
 // list; callback-valued routes remain source-bearing obligations, not guesses.
 import {createHash} from 'node:crypto';
 import {createPrivateFrozenJsonCache,privateFrozenJsonEqualHint} from './private-frozen-json.mjs';
-import {createScopedPrivateNativeProofJsonSerializer as createPrivateFrozenJsonComposer} from './private-native-proof-json.mjs';
+import {createScopedPrivateNativeProofJsonSerializer as createPrivateFrozenJsonComposer} from "./operation-proof-byte-bridge.mjs";
 import {createCompletedDataFreezer} from './private-data-freeze.mjs';
 import {originalBuiltinCopyOutputSyntax} from './builtin-copy-output-syntax.mjs';
 import {deriveFootprintOriginalContext,deriveFootprintOriginalModule,deriveFootprintHelperAttributeAt,isDeriveFootprintHelperAttributeProof} from './derive-footprints.mjs';

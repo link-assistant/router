@@ -55,9 +55,11 @@ function enclosingRoutes(){return routes??=new Map([
   ['schemars::JsonSchema',{prove:proveSchemarsBangFootprint,assert:assertSchemarsBangFootprint}],
 ]);}
 let routes=null;
+import {withDefaultProofByteConsumers} from './default-proof-byte-operation.mjs';
+
 
 export function createDeriveEnclosingNamespaceContext({deriveContext}={}){
-  return withRetainedPrivateNativeProofCostScope(()=>createUnscopedDeriveEnclosingNamespaceContext({deriveContext}));
+  return withRetainedPrivateNativeProofCostScope(()=>withDefaultProofByteConsumers(()=>createUnscopedDeriveEnclosingNamespaceContext({deriveContext})));
 }
 // Use the same fresh, bounded DATA-cost scope as the legacy complete creator.
 // It closes before return; source, owner and semantic checks still run afresh.

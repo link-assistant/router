@@ -3,7 +3,7 @@
 // see provenance.json. Unsupported source is reported, never put in envelopes.
 import { lex, topLevelItems } from './vendor/lexer.mjs';
 import { parseJavaScriptItem } from './vendor/frontends.mjs';
-import {parsedLinoDataCopyReady,tryDecodeCopiedLinoData, check, signatures, toLino, fromLino, FRAGMENT, toOwnedCoreLinoProgram } from './vendor/ir.mjs';
+import {tryCopyParsedLinoData,tryDecodePreparedOwnedLinoData,parsedLinoDataCopyReady,tryDecodeCopiedLinoData, check, signatures, toLino, fromLino, FRAGMENT, toOwnedCoreLinoProgram } from './vendor/ir.mjs';
 import { isRefusal } from './vendor/constructs.mjs';
 import { emitRust, emitTypeScript } from './targets.mjs';
 import { parseLinks } from './vendor/lino.mjs';
@@ -374,12 +374,14 @@ function analyzeOwnedCoreStage(stage,sourcePath,context){
 }
 export function parseOwnedCoreMeta(text,{context}={}){
  if(typeof text!=='string'||Buffer.byteLength(text)>33554432)throw TypeError('Owned meta byte bound');
+ const __ownedLinoEntryReady=parsedLinoDataCopyReady()&&text.length!==0&&text[text.length-1]==='\n';
  const links=parseLinks(text),header=links[0];
+ const __ownedLinoPrepared=__ownedLinoEntryReady?tryCopyParsedLinoData(links):null;
  if(!header||header[0]!=='owned-core-context'||header.length!==2||links.slice(1).some(row=>row[0]!=='owned-function'))throw TypeError('Owned meta context/functions required');
  const data=JSON.parse(textOf(header[1]));
  if(context){if(JSON.stringify(ownedCoreSourceData(context))!==JSON.stringify(data))throw TypeError('Owned meta current context differs');}
  else context=createOwnedCoreSourceContext(data);
- const raw=fromLino(text),program=checkOwnedCoreProgram(raw,context);
+ const raw=(__ownedLinoPrepared?tryDecodePreparedOwnedLinoData(__ownedLinoPrepared):null)??fromLino(text),program=checkOwnedCoreProgram(raw,context);
  const canonical=writeLink(['owned-core-context',encodeWord(JSON.stringify(ownedCoreSourceData(context)))])+'\n'+toOwnedCoreLinoProgram(program).join('\n')+'\n';
  if(canonical!==text)throw TypeError('Noncanonical owned checked meta');
  requireOwnedCoreSourceCurrent(context);return program;

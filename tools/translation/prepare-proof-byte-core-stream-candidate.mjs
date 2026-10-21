@@ -1,3 +1,4 @@
+import {prepareSchemarsCoreDispatcherRoute,completeSchemarsCoreEnclosingRoutes} from './proof-byte-core-schemars-route.mjs';
 // Distinct, source-only coherent Core stream closure. Existing defaults stay exact.
 import {readFileSync,writeFileSync,existsSync,lstatSync} from 'node:fs';
 import {createHash} from 'node:crypto';
@@ -45,7 +46,7 @@ function selection(ts,path,before,mapping){
     bindings.push({imported,requested,local:binding.name.text,span:[binding.name.getStart(file),binding.name.end]});
    }
   }else if(node.exportClause){if(!ts.isNamedExports(node.exportClause))fail('selected original named export required');for(const binding of node.exportClause.elements)bindings.push({imported:(binding.propertyName??binding.name).text,requested:(binding.propertyName??binding.name).text,local:binding.name.text});}
-  edits.push({span:[node.moduleSpecifier.getStart(file),node.moduleSpecifier.end],expected:node.moduleSpecifier.getText(file),replacement:JSON.stringify(target)});imports.push({kind:ts.isImportDeclaration(node)?'import':'export',original:old,target,source:node.getText(file),bindings,star:ts.isExportDeclaration(node)&&!node.exportClause});
+  edits.push({span:[node.moduleSpecifier.getStart(file),node.moduleSpecifier.end],expected:node.moduleSpecifier.getText(file),replacement:target===old?node.moduleSpecifier.getText(file):JSON.stringify(target)});imports.push({kind:ts.isImportDeclaration(node)?'import':'export',original:old,target,source:node.getText(file),bindings,star:ts.isExportDeclaration(node)&&!node.exportClause});
  }
  if(path.endsWith('/'+STREAM)){
   const declarations=file.statements.filter(ts.isVariableStatement).flatMap(node=>[...node.declarationList.declarations]),schema=one(declarations.filter(node=>ts.isIdentifier(node.name)&&node.name.text==='SCHEMA'),'outer stream schema');
@@ -99,16 +100,17 @@ function __coreCstFinish(files,inputs,prerequisites,root,pending){
  const mapping=new Map(COPIES.map(([before,after])=>['./'+before,'./'+after]));
  for(const part of bytes.files){const physical=part.selection.physicalPath,sourcePath=part.selection.sourcePath;if(!physical||!sourcePath)continue;for(const path of [physical,sourcePath])mapping.set('./'+path.slice(BASE.length),'./'+part.path.slice(BASE.length));}
  mapping.set('./derive-enclosing-namespace-context.mjs','./proof-byte-core-enclosing-candidate.mjs');mapping.set('./module-bindings.mjs','./proof-byte-core-bindings-candidate.mjs');mapping.set('./owned-enclosing-module-bindings.mjs','./proof-byte-core-bindings-candidate.mjs');
+ const schemarsCoreRoute=prepareSchemarsCoreDispatcherRoute({root,ts,input,mapping});
  const files=COPIES.map(([before,after])=>{const source=input(BASE+before),path=BASE+after;return row(ts,path,source,selection(ts,path,source,mapping),root,__coreCstPending);});
- const nativeIssuerBindings=joinedBindings(ts,root,files),enclosing=files[0],routes=enclosing.selection.imports.filter(part=>part.target.includes('proof-byte-whole-owner-'));
+ const nativeIssuerBindings=joinedBindings(ts,root,files),enclosing=files[0],routes=completeSchemarsCoreEnclosingRoutes(enclosing,nativeIssuerBindings,schemarsCoreRoute);
  if(routes.length!==8||new Set(routes.map(part=>part.target)).size!==6)fail('all seven selected enclosing owner/operation routes and late builtin binding required');
  const ownedAlias=one(files[2].selection.imports.filter(part=>part.original==='./owned-enclosing-module-bindings.mjs'),'owned resolver alias');if(ownedAlias.bindings.length!==1||ownedAlias.bindings[0].requested!=='resolveWholeOwnerEnclosingNamespaceModuleBindings')fail('exact source-derived owned resolver alias required');
  const bindingBirth=one(core.files.filter(part=>part.path===BASE+'whole-owner-core-module-bindings-candidate.mjs'),'current complete Core resolver birth');if(!bindingBirth.selection.originalOwnedWrapper||!bindingBirth.selection.newOwnedWrapper)fail('complete original/native-derived owned resolver equations required');
- input(BASE+'prepare-proof-byte-core-stream-candidate.mjs');const plans=[bytes,bytes.operationProducer,bytes.resolverProducer,bytes.resolverProducer.wholeOwnerProducer,core,corpus,...corpus.originalTemplateProducers],prerequisites=[...bytes.currentProviderInputs,...bytes.prerequisiteInputs,bytes.operationProducer.input,...plans.flatMap(plan=>[...(plan.inputs??[]),...plan.files.map(part=>({path:part.path,sha256:hash(part.after)}))])];
+ input(BASE+'prepare-proof-byte-core-stream-candidate.mjs');const plans=[bytes,bytes.operationProducer,bytes.resolverProducer,bytes.resolverProducer.wholeOwnerProducer,core,corpus,...corpus.originalTemplateProducers],prerequisites=[...bytes.currentProviderInputs,...bytes.prerequisiteInputs,bytes.operationProducer.input,...plans.flatMap(plan=>[...(plan.inputs??[]),...plan.files.map(part=>({path:part.path,sha256:hash(part.after)}))]),...schemarsCoreRoute.prerequisites];
 __coreCstFinish(files,inputs,prerequisites,root,__coreCstPending);
 
  for(const part of [...inputs.values(),...prerequisites])if(hash(readFileSync(resolve(root,part.path)))!==(Object.hasOwn(part,'sha256')?part.sha256:Object.hasOwn(part,'source')&&typeof part.source==='string'?hash(part.source):fail('complete prerequisite requires its own SHA or full primitive source')))fail('complete current source prerequisite changed: '+part.path);
- return {schema:'proof-byte-Core-stream-source-candidate-v1',typescriptVersion:ts.version,inputs:[...inputs.values()],prerequisites,files,nativeIssuerBindings,enclosingRoutes:routes,ownedResolverEquation:bindingBirth.selection,byteProducer:bytes,coreProducer:core,corpusProducer:corpus,stream:{path:BASE+STREAM,schema:SCHEMA},originalDefaultsUnchanged:true,originalFallbackUnchanged:true,originalHashCallsUnchanged:true,foreignProofsRebound:false,newAcrossInvocationCache:false,productionSelected:false,semanticAdmission:false,runtimeExecuted:false,performanceQualified:false};
+ return {schema:'proof-byte-Core-stream-source-candidate-v1',typescriptVersion:ts.version,inputs:[...inputs.values()],prerequisites,files,nativeIssuerBindings,enclosingRoutes:routes,ownedResolverEquation:bindingBirth.selection,byteProducer:bytes,coreProducer:core,corpusProducer:corpus,stream:{path:BASE+STREAM,schema:SCHEMA},originalDefaultsUnchanged:true,originalFallbackUnchanged:true,originalHashCallsUnchanged:true,foreignProofsRebound:false,newAcrossInvocationCache:false,productionSelected:false,semanticAdmission:false,runtimeExecuted:false,performanceQualified:false,schemarsCoreRoute};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const [mode,...rest]=process.argv.slice(2);if(rest.length||!['--emit','--write','--check'].includes(mode))fail('use --emit|--write|--check');const plan=prepareProofByteCoreStreamCandidate();

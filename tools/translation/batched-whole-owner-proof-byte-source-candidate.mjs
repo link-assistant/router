@@ -75,7 +75,7 @@ function relocated(ts,path,source,mapping,{serializers=false}={}){
  const file=parse(ts,path,source),rows=[];
  for(const node of file.statements){if(!ts.isImportDeclaration(node)||!ts.isStringLiteral(node.moduleSpecifier))continue;
   const owner=node.moduleSpecifier.text,bindings=names(ts,node);
-  if(serializers&&(owner==='./private-native-proof-json.mjs'||owner==='./private-frozen-json.mjs')){
+  if(serializers&&(owner==='./private-native-proof-json.mjs'||owner==='./private-frozen-json.mjs'||owner==='./operation-proof-byte-bridge.mjs')){
    const selected=bindings.filter(row=>row.imported==='createScopedPrivateNativeProofJsonSerializer'||row.imported==='createPrivateFrozenJsonComposer');
    if(selected.length){
     if(bindings.length!==selected.length||node.importClause.name)fail('serializer requires its complete genuine named import binding');

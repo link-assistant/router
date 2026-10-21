@@ -10,7 +10,7 @@ import {proveSerdeDeserializeBangFootprint,assertSerdeDeserializeBangFootprint,o
 import {hasBuiltinDeriveBangRoute,proveBuiltinDeriveBangFootprint,assertBuiltinDeriveBangFootprint,originalBuiltinDeriveEnclosingOutput} from './builtin-derive-bang-footprints.mjs';
 import {proveClapArgsBangFootprint,assertClapArgsBangFootprint} from './clap-args-bang-footprints.mjs';
 import {proveClapValueEnumBangFootprint,assertClapValueEnumBangFootprint,originalClapValueEnumBangOutput} from './clap-value-enum-bang-footprints.mjs';
-import {proveSchemarsBangFootprint,assertSchemarsBangFootprint,originalSchemarsOutput} from './schemars-bang-footprints.mjs';
+import {proveSchemarsBangFootprint,assertSchemarsBangFootprint,originalSchemarsOutput} from './schemars-enclosing-output-dispatch.mjs';
 import {types} from 'node:util';
 import {originalDataFreezeIntrinsicsUnchanged,originalCapturedFunctionSource} from './original-json-intrinsics.mjs';
 import {withRetainedPrivateNativeProofCostScope} from './private-native-proof-json.mjs';
@@ -54,9 +54,11 @@ function enclosingRoutes(){return routes??=new Map([
   ['schemars::JsonSchema',{prove:proveSchemarsBangFootprint,assert:assertSchemarsBangFootprint}],
 ]);}
 let routes=null;
+import {withDefaultProofByteConsumers} from './default-proof-byte-operation.mjs';
+
 
 export function createDeriveEnclosingNamespaceContext({deriveContext}={}){
-  return withRetainedPrivateNativeProofCostScope(()=>createUnscopedDeriveEnclosingNamespaceContext({deriveContext}));
+  return withRetainedPrivateNativeProofCostScope(()=>withDefaultProofByteConsumers(()=>createUnscopedDeriveEnclosingNamespaceContext({deriveContext})));
 }
 // Use the same fresh, bounded DATA-cost scope as the legacy complete creator.
 // It closes before return; source, owner and semantic checks still run afresh.
