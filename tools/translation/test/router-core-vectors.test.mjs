@@ -1,3 +1,5 @@
+import {composeCoreUnitMatches} from '../prepare-core-unit-matches.mjs';
+import {assertUnitMatchesSourceComposition} from './unit-matches-source-composition.mjs';
 import {assertAsciiSourceComposition,assertAsciiReverseComposition,assertAsciiAssetsComposition,assertAsciiBaseAssetsComposition} from './ascii-source-composition.mjs';
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
@@ -85,12 +87,15 @@ test('native source producer derives the actual owned wrapper and composes compl
   assert.equal(reverse.historicalSources, ascii.sources);
   const assets = retain('complete-current-owned-ascii-assets-source-layer', composeCoreAsciiAssets(reverse.sources));
   assert.equal(assets.historicalSources, reverse.sources);
-  const composition = retain('complete-current-owned-ascii-base-assets-source-layer', composeCoreAsciiBaseAssets(assets.sources));
-  assert.equal(composition.historicalSources, assets.sources);
+  const base = retain('complete-current-owned-ascii-base-assets-source-layer', composeCoreAsciiBaseAssets(assets.sources));
+  assert.equal(base.historicalSources, assets.sources);
+  const composition = retain('complete-current-owned-unit-matches-source-layer', composeCoreUnitMatches(base.sources));
+  assert.equal(composition.historicalSources, base.sources);
   assertAsciiSourceComposition(ascii.layers[0], boundary.sources, composition.sources);
   assertAsciiReverseComposition(reverse.layers[0], ascii.sources, composition.sources);
   assertAsciiAssetsComposition(assets.layers[0], reverse.sources, composition.sources);
-  assertAsciiBaseAssetsComposition(composition.layers[0], assets.sources, composition.sources);
+  assertAsciiBaseAssetsComposition(base.layers[0], assets.sources, composition.sources);
+  assertUnitMatchesSourceComposition(composition.layers[0], base.sources, composition.sources);
   const reverseSource = reverse.layers[0].files[0];
   assert.throws(() => composeCoreAsciiReverse({...ascii.sources, [reverseSource.path]: {after: 'forged'}}), /preceding complete source equation/u);
   assert.throws(() => composeCoreAscii({...boundary.sources, 'rust/src/translation_core.rs': {after: 'forged'}}), /preceding complete source equation/u);

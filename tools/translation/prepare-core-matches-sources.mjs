@@ -1,3 +1,4 @@
+import {composeCoreUnitMatches,prepareCoreUnitMatches} from './prepare-core-unit-matches.mjs';
 // Native source composition for an explicit owned compatibility operation.
 import {composeCoreAscii} from './prepare-core-ascii-sources.mjs';
 import {composeCoreAsciiReverse} from './prepare-core-ascii-reverse-sources.mjs';
@@ -224,7 +225,8 @@ fn complete_original_client_launch_option_predicates() {
 }
 export function prepareCurrentCoreMatchesSources({root = ROOT} = {}) {
   const original = JSON.parse(gunzipSync(readFileSync(resolve(root, FIXTURE)), {maxOutputLength: 2_000_000}));
-  if (original.schema !== 'owned-matches-complete-original-inputs-v1' || readFileSync(resolve(root, 'tools/translation/extensions/ordered-matches.mjs'), 'utf8') !== original.inputs.orderedSource) fail('complete original parser source fixture is stale');
+  const ordered = prepareCoreUnitMatches({root}).files.find(row => row.path === 'tools/translation/extensions/ordered-matches.mjs');
+  if (original.schema !== 'owned-matches-complete-original-inputs-v1' || ordered.before !== original.inputs.orderedSource || ![ordered.before,ordered.after].includes(readFileSync(resolve(root, ordered.path), 'utf8'))) fail('complete original parser source fixture is stale');
   if (original.inputs.applicationSource !== original.production.application.source || hash(original.inputs.applicationSource) !== original.production.application.sha256 || readFileSync(resolve(root, original.production.application.path), 'utf8') !== original.inputs.applicationSource) fail('complete actual application function source is stale');
   const result = prepareCoreMatchesSources(original.inputs);
   for (const row of result.files) { try { row.current = readFileSync(resolve(root, row.path), 'utf8'); } catch (error) { if (error.code !== 'ENOENT') throw error; row.current = null; } }
@@ -250,7 +252,8 @@ export function prepareCurrentCoreMatchesComposition(options = {}) {
   const reverse = composeCoreAsciiReverse(ascii.sources, options);
   const assets = composeCoreAsciiAssets(reverse.sources, options);
   const base = composeCoreAsciiBaseAssets(assets.sources, options);
-  return {schema: 'current-owned-matches-source-composition-v1', birth, layers: [birth, ...boundary.layers, ...ascii.layers, ...reverse.layers, ...assets.layers, ...base.layers], files: Object.values(base.sources), semanticAuthority: false};
+ const unit=composeCoreUnitMatches(base.sources,options);
+  return {schema: 'current-owned-matches-source-composition-v1', birth, layers: [birth, ...boundary.layers, ...ascii.layers, ...reverse.layers, ...assets.layers, ...base.layers,...unit.layers], files: Object.values(unit.sources), semanticAuthority: false};
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2); if (args.length !== 1 || !['--write', '--check', '--emit'].includes(args[0])) fail('usage: --write|--check|--emit');
