@@ -4,7 +4,7 @@ import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
 import {join} from 'node:path';
 import {createHash,Hash} from 'node:crypto';
 import {gzipSync,gunzipSync} from 'node:zlib';
-import {prepareWholeOwnerProofByteCandidate} from '../prepare-whole-owner-proof-byte-candidate.mjs';
+import {prepareWholeOwnerProofByteCandidate} from "../current-whole-owner-proof-byte-provider.mjs";
 import {prepareWholeOwnerProofByteOriginalTrial} from '../prepare-whole-owner-proof-byte-original-trial.mjs';
 import {proposeWholeOwnerProofByteCanonicalTrial,assertWholeOwnerProofByteTrialInputs,wholeOwnerProofByteTrialFilePacket,decodeWholeOwnerProofByteTrialFilePacket} from '../whole-owner-proof-byte-trial-support.mjs';
 import {createScopedPrivateNativeProofJsonSerializer as byteNative,createPrivateFrozenJsonComposer as byteFrozen,withOperationProofByteConsumerBridge as operation} from '../operation-proof-byte-bridge.mjs';

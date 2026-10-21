@@ -6,7 +6,7 @@ import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
-import {prepareWholeOwnerProofByteCandidate} from './prepare-whole-owner-proof-byte-candidate.mjs';
+import {prepareWholeOwnerProofByteCandidate} from "./current-whole-owner-proof-byte-provider.mjs";
 import {prepareWholeOwnerCoreCorpusCandidate} from './prepare-whole-owner-core-corpus-candidate.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url)),BASE='tools/translation/';
@@ -97,7 +97,7 @@ export function prepareProofByteCoreStreamCandidate({root=ROOT}={}){
  if(routes.length!==8||new Set(routes.map(part=>part.target)).size!==6)fail('all seven selected enclosing owner/operation routes and late builtin binding required');
  const ownedAlias=one(files[2].selection.imports.filter(part=>part.original==='./owned-enclosing-module-bindings.mjs'),'owned resolver alias');if(ownedAlias.bindings.length!==1||ownedAlias.bindings[0].requested!=='resolveWholeOwnerEnclosingNamespaceModuleBindings')fail('exact source-derived owned resolver alias required');
  const bindingBirth=one(core.files.filter(part=>part.path===BASE+'whole-owner-core-module-bindings-candidate.mjs'),'current complete Core resolver birth');if(!bindingBirth.selection.originalOwnedWrapper||!bindingBirth.selection.newOwnedWrapper)fail('complete original/native-derived owned resolver equations required');
- input(BASE+'prepare-proof-byte-core-stream-candidate.mjs');const plans=[bytes,bytes.operationProducer,bytes.resolverProducer,bytes.resolverProducer.wholeOwnerProducer,core,corpus,...corpus.originalTemplateProducers],prerequisites=[...bytes.prerequisiteInputs,bytes.operationProducer.input,...plans.flatMap(plan=>[...(plan.inputs??[]),...plan.files.map(part=>({path:part.path,sha256:hash(part.after)}))])];
+ input(BASE+'prepare-proof-byte-core-stream-candidate.mjs');const plans=[bytes,bytes.operationProducer,bytes.resolverProducer,bytes.resolverProducer.wholeOwnerProducer,core,corpus,...corpus.originalTemplateProducers],prerequisites=[...bytes.currentProviderInputs,...bytes.prerequisiteInputs,bytes.operationProducer.input,...plans.flatMap(plan=>[...(plan.inputs??[]),...plan.files.map(part=>({path:part.path,sha256:hash(part.after)}))])];
  for(const part of [...inputs.values(),...prerequisites])if(hash(readFileSync(resolve(root,part.path)))!==part.sha256)fail('complete current source prerequisite changed: '+part.path);
  return {schema:'proof-byte-Core-stream-source-candidate-v1',typescriptVersion:ts.version,inputs:[...inputs.values()],prerequisites,files,nativeIssuerBindings,enclosingRoutes:routes,ownedResolverEquation:bindingBirth.selection,byteProducer:bytes,coreProducer:core,corpusProducer:corpus,stream:{path:BASE+STREAM,schema:SCHEMA},originalDefaultsUnchanged:true,originalFallbackUnchanged:true,originalHashCallsUnchanged:true,foreignProofsRebound:false,newAcrossInvocationCache:false,productionSelected:false,semanticAdmission:false,runtimeExecuted:false,performanceQualified:false};
 }
