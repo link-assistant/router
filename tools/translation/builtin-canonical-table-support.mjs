@@ -25,14 +25,15 @@ if(qualified)try{const parse=value(pins[0].field),bytes=value(pins[5].field),pla
 const same=(actual,expected)=>!!(actual&&expected&&has(actual,'value')&&has(expected,'value')&&actual.value===expected.value&&actual.writable===expected.writable&&actual.enumerable===expected.enumerable&&actual.configurable===expected.configurable);
 export function builtinCanonicalTableReady(){
  if(!qualified||types!==typeOwner||!originalPrivateParserIngressUnchanged())return false;
- for(const pin of globals){
+ // These private dense slots must be read without a late Array iterator hook.
+ for(let at=0;at<globals.length;at++){const pin=globals[at];
   const actual=get(root,pin.name);if(pin.name!=='Buffer'||bufferData){if(!same(actual,pin.field))return false;}
   else{if(!actual||has(actual,'value')||actual.get!==bufferField.get||actual.set!==bufferField.set||actual.enumerable!==bufferField.enumerable||actual.configurable!==bufferField.configurable)return false;}
  }
  // The ordinary Node setter can change its hidden value without changing the
  // descriptor. Only the already qualified original provider may be invoked.
  if(bufferProvider&&apply(bufferField.get,root,[])!==buffer)return false;
- for(const pin of pins)if(!same(get(pin.owner,pin.key),pin.field))return false;
+ for(let at=0;at<pins.length;at++){const pin=pins[at];if(!same(get(pin.owner,pin.key),pin.field))return false;}
  // This fresh complete guard covers Array map/some/includes/push/iterators,
  // Map/Set constructors and methods, Object keys/entries/fromEntries/freeze,
  // JSON.stringify, prototype domains, species and inherited toJSON/numerics.
