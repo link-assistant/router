@@ -39,8 +39,10 @@ CST, all document and packet references, exact original function identities,
 complete physical source/Cargo/workspace/lock membership and each whole-source
 inverse back to the original map. A stored checksum, summary, flag or caller
 verifier cannot replace an actual native source equation. The success index is
-written last, after all stage EOF, physical-input and packet checks. While the owned output directory remains intact, a failure retains finite
-incomplete packets and a bounded failure receipt, with no success index. Source inverse fidelity does not establish reverse executable support.
+written last, after all stage EOF, physical-input and packet checks. While the
+owned output directory remains intact, a failure retains finite incomplete
+packets and a bounded failure receipt, with no success index. Source inverse
+fidelity does not establish reverse executable support.
 
 Progress callbacks receive bounded frozen scalar events for document emission,
 stage completion and final packet EOF. Callback failure or physical mutation

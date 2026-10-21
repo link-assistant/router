@@ -129,5 +129,5 @@ test('physical source additions byte changes workspace changes missing Cargo and
   const app = join(f.directory, 'rust/src/app.rs'); writeFileSync(app, f.input['rust/src/app.rs'] + '\n'); assert.throws(() => reviewPhysicalCoreAdoptionSequence(result, f.directory), /physical/u);
   const workspace = join(f.directory, 'Cargo.toml'); writeFileSync(workspace, f.input['Cargo.toml'] + '\n'); assert.throws(() => reviewPhysicalCoreAdoptionSequence(result, f.directory), /physical/u);
   rmSync(join(f.directory, 'Cargo.lock')); assert.throws(() => proposePhysicalCoreAdoptionSequence(f.directory), /Cargo/u);
-  const link = f.directory + '-linked'; symlinkSync(f.directory, link, 'dir'); t.after(() => rmSync(link)); assert.throws(() => proposePhysicalCoreAdoptionSequence(link), /unlinked/u);
+  const link = f.directory + '-linked'; symlinkSync(f.directory, link, 'dir'); t.after(() => rmSync(link, {force: true})); assert.throws(() => proposePhysicalCoreAdoptionSequence(link), /unlinked/u);
 });
