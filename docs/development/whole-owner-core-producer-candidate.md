@@ -53,13 +53,36 @@ retained that refusal and all successful Hash traces; each Hash child produced
 108,848,734 complete raw wire bytes, so its uncompressed stdout would exceed the
 existing 64 MiB child buffer.
 
-The source repair retains both JSON refusal workloads and every original Hash
+The observer repair retains both JSON refusal workloads and every original Hash
 success. It adds an explicitly observed Hash initialization phase inside each
 JSON child before inspecting that genuine context, preserving all initialization
-payloads rather than moving construction outside the case. The complete child
-wire uses independently hashed/reopened gzip frames with 1 MiB raw leaves,
-unchanged 64 MiB stdout buffers, at most 64 MiB aggregate stored wire and 384 MiB
-aggregate logical observations. Every original field is decoded and compared;
-wire corruption and a nested original digest mutation must still fail. This
-fixture repair is **unrun**, and the failed receiving/diagnostic receipts remain
-distinct from any future successful qualification.
+payloads rather than moving construction outside the case. Root's next complete
+six-case receiving run passed the first five cases and failed the new observer's
+aggregate stored-byte assertion. It completed in 40.0126 seconds with no case
+deadline breach and 2,546,810,880 bytes peak aggregate RSS. The full failed receipt
+is `/private/tmp/router-layout-check-complete-core-operation-six-framed-hooks-Node-v2`.
+The four complete child wire sizes were not retained by that failed test; do not
+infer them from its aggregate assertion.
+
+That assertion introduced conservative aggregate limits of 64 MiB stored and
+384 MiB expanded across sequential children. They were not the original child
+limits. The original 64 MiB stdout limit applies separately to each child, and
+the outer 384 MiB physical evidence cap remains separate from cumulative decoded
+observations. Every child keeps its original 12.5-second deadline; the complete
+case keeps 60 seconds. Neither resource bound nor workload is increased.
+
+The next source-only repair uses the distinct
+`complete-hook-observation-brotli-frames-v2` format: Brotli quality 4, independently
+hashed and reopened 1 MiB raw leaves, at most 64 MiB per child stdout and stored
+frames, and at most 384 MiB per decoded child. Comparison reads and checks every
+decoded byte on both sides, even after a difference; hashes alone cannot satisfy
+it. Only the baseline becomes a parsed complete callback record. The candidate
+stdout is released before that parse, and an actual nested baseline digest is
+temporarily changed and completely re-encoded to prove byte inequality without
+duplicating the whole record with `structuredClone`. All original fields and
+four children remain. Scalar diagnostics report each child's frame count,
+stored/decoded size and explicitly cumulative sequential totals. Additional
+complete helper controls cover multiple leaves, both different-length cases,
+metadata corruption and a malformed later frame after an earlier byte mismatch.
+This repair, its complete helper file and receiving reruns are **unrun**. The
+failed receipts remain evidence; no performance qualification is claimed.
