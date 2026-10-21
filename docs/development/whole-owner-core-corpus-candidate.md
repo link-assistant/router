@@ -85,3 +85,45 @@ Per-child sizes and cumulative sequential totals are diagnostic DATA; sequential
 decoded totals are not concurrent-memory or physical-evidence measurements.
 The outer physical evidence/resource limits remain unchanged. The
 separate Core receiving file retains all original cold/warm/same-context cases.
+
+Root's complete sixteen-case receiving run subsequently passed all four framed
+wire controls, all six Core cases and the first five corpus cases. The Core
+observer took 13,927 ms; the whole cohort took 160.55 seconds with 2.77 GB peak
+aggregate RSS and no case deadline breach. Corpus case six remained red: the
+Hash child reached `RangeError: Invalid string length` while the complete
+expanded callback tape was being stringified, before the logical-byte check.
+The full failed receipt remains at
+`/private/tmp/router-layout-check-complete-hook-helper-core-and-corpus-sixteen-Node-v1`.
+This establishes no corpus observer success or candidate performance gain.
+
+The next source-only corpus repair leaves that qualified Core transport and all
+four original child workloads intact. Its separate indexed-DATA format retains
+one invocation-local dictionary of primitive strings and an ordered tree entry
+for every key, array occurrence, callback argument and result. Repeated strings
+retain every occurrence index; no event, field, source byte or payload is
+discarded. Unique strings use bounded 32,768-code-unit pieces, preserving even a
+surrogate pair split between pieces. A conservative byte census bounds the
+complete representation before its native stringify. The representation then
+uses the existing independent 1 MiB Brotli leaves, 384 MiB logical representation
+limit and 64 MiB per-child stdout limit. The outer 384 MiB physical evidence cap,
+12.5-second child deadlines and 60-second complete-case deadline are unchanged.
+Expanded repeated-string volume is explicitly different from representation or
+concurrent-memory volume; it is never passed to one native stringify call.
+
+All complete dictionary/tree frame bytes are compared, then the baseline is
+fully decoded. A nested actual digest is changed and completely re-encoded with
+the same indexed encoder to prove strict comparison. Ordinary/null prototypes
+retain the prior JSON wire projection. Buffer leaves retain every byte and
+restore the same ordinary `Buffer.toJSON` projection. Additional primitive tags
+retain undefined, BigInt, negative zero and nonfinite values without treating
+them as source authority. Unknown classes, executable fields, proxies,
+accessors, cycles and custom Buffer hooks refuse without invoking them. Object
+alias identity and property flags were never part of the original JSON wire.
+No dictionary, tree, source, encoded verdict or primitive map crosses calls.
+
+The new complete six-case indexed-wire file covers a tape with over 512 MiB of
+repeated primitive strings and all 600 original occurrences, full small JSON
+projection/Buffer equality, all primitive tags, silent-hook refusal and validly
+framed forged tree data. It also checks the complete authored codec and child
+through serialized/reparsed source CST equations. This repair, the new helper
+file and the corpus receiving rerun remain **unrun**.

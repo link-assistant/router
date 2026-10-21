@@ -16,7 +16,7 @@ import {proposeSourceBackedCoreSequenceStream as legacyStream} from '../source-b
 import {runOriginalCoreSequenceStage,reviewOriginalCoreSequenceStage,proposeSourceBackedCoreSequenceStream,reviewSourceBackedCoreSequenceStream} from '../whole-owner-core-corpus-candidate.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 import {wholeOwnerCoreCorpusInspectionReady} from '../whole-owner-core-corpus-inspection-data.mjs';
-import {decodeCompleteHookWire,encodeCompleteHookWire,compareCompleteHookWires} from './fixtures/complete-hook-wire.mjs';
+import {decodeCompleteIndexedHookWire,encodeCompleteIndexedHookWire,compareCompleteIndexedHookWires} from './fixtures/complete-indexed-hook-wire.mjs';
 const root=new URL('../../../',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex'),wire=value=>JSON.parse(JSON.stringify(value)),cargo={manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')};
 const application='\uFEFF#[derive(Clone,Copy)]pub struct Marker{value:u8}\r\npub fn formatted(value:u8)->String{format!("value={value}")}\r\npub fn accepted(value:&crate::translation_core::Str)->bool{matches!(value,"a"|"b")}\r\npub fn values()->Vec<u8>{vec![1u8,2u8]}\r\n#[cfg(test)]mod tests{unknown!();}\r\n';
 function sources(source=application){return {'src/lib.rs':'pub mod translation_core;pub mod app;','src/app.rs':source,'src/translation_core.rs':facade,'src/translation_core/primitives.rs':primitives,'src/translation_core/ranges.rs':ranges,'src/translation_core/base64.rs':base64,'src/translation_core/json_collections.rs':collections};}
@@ -55,11 +55,11 @@ test('independent complete three-stage engines retain full actual JSON refusals 
  for(const kind of ['json-hook','hash-hook']){
   const runs=['legacy','whole'].map(mode=>spawnSync(process.execPath,[fixture,mode,kind],{encoding:'utf8',timeout:12500,maxBuffer:64*1024*1024}));
   for(const run of runs){assert.equal(run.error,undefined);assert.equal(run.signal,null);assert.equal(run.status,0,run.stderr);assert.equal(run.stderr,'');assert.ok(Buffer.byteLength(run.stdout)<=64*1024*1024);}
-  const sizes=compareCompleteHookWires(runs[0].stdout,runs[1].stdout);for(const row of Object.values(sizes)){storedBytes+=row.storedBytes;logicalBytes+=row.logicalBytes;}t.diagnostic(JSON.stringify({kind,children:sizes,cumulativeStoredBytes:storedBytes,cumulativeLogicalBytes:logicalBytes,sequentialChildren:true}));
-  runs[1].stdout='';const baseline=decodeCompleteHookWire(runs[0].stdout);assert.equal(baseline.workload.state,'complete-formatting-matches-vectors-operation');
+  const sizes=compareCompleteIndexedHookWires(runs[0].stdout,runs[1].stdout);for(const row of Object.values(sizes)){storedBytes+=row.storedBytes;logicalBytes+=row.logicalBytes;}t.diagnostic(JSON.stringify({kind,children:sizes,cumulativeStoredBytes:storedBytes,cumulativeIndexedRepresentationBytes:logicalBytes,sequentialChildren:true,expandedTapeIsNotStringified:true}));
+  runs[1].stdout='';const baseline=decodeCompleteIndexedHookWire(runs[0].stdout);assert.equal(baseline.workload.state,'complete-formatting-matches-vectors-operation');
   if(kind==='hash-hook'){
    assert.ok(baseline.workload.tape.length>0);assert.equal(baseline.workload.result.value.length,3);const row=baseline.workload.tape.find(row=>typeof row.value==='string');assert.ok(row);const original=row.value;
-   try{row.value+=' ';const changed=encodeCompleteHookWire(baseline);assert.throws(()=>compareCompleteHookWires(runs[0].stdout,changed),/complete decoded bytes/u);}finally{row.value=original;}
+   try{row.value+=' ';const changed=encodeCompleteIndexedHookWire(baseline);assert.throws(()=>compareCompleteIndexedHookWires(runs[0].stdout,changed),/complete decoded bytes/u);}finally{row.value=original;}
   }else{assert.equal(baseline.workload.result.error.name,'TypeError');assert.match(baseline.workload.result.error.message,/native|original|concrete/iu);}
   runs[0].stdout='';
  }
