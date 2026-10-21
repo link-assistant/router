@@ -239,9 +239,11 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       sourceData: originals.sources['tools/translation/router-core-source-data.mjs'], hostSource: originals.sources['tools/translation/extensions/host-contracts.mjs'], lifetimesSource: originals.sources['tools/translation/extensions/source-lifetimes.mjs'], vectorSource: originals.sources['tools/translation/router-core-vectors.mjs']});
     // Later explicit owned APIs compose their actual complete source equations;
     // the original vector producer and birth outputs above remain unchanged.
-    const composition = existsSync(resolve(root, 'tools/translation/test/fixtures/owned-matches-original-inputs.json.gz'))
-      ? (await import('./prepare-core-matches-sources.mjs')).composeCurrentCoreMatchesSources(result.value.sources, {root})
-      : {sources: result.value.sources, layers: []};
+    const lifetime = (await import('./prepare-source-lifetime-refusal-batches.mjs')).composeSourceLifetimeRefusalBatches(result.value.sources, {root});
+    const matched = existsSync(resolve(root, 'tools/translation/test/fixtures/owned-matches-original-inputs.json.gz'))
+      ? (await import('./prepare-core-matches-sources.mjs')).composeCurrentCoreMatchesSources(lifetime.sources, {root})
+      : {sources: lifetime.sources, layers: []};
+    const composition = {sources: matched.sources, layers: [...lifetime.layers, ...matched.layers]};
     const generated = composition.sources;
     const current = Object.fromEntries(Object.keys(generated).map(name => [name, readFileSync(resolve(root, name), 'utf8')]));
     if (args[2] === '--check') {

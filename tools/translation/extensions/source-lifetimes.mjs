@@ -1,3 +1,4 @@
+import {checkSourceLifetimeRefusals} from './declaration-refusals.mjs';
 import {isDeepStrictEqual} from 'node:util';
 // Generated vector checker association and original lifetime equations.
 const checkedLists = new WeakMap();
@@ -702,8 +703,8 @@ export function withSourceLifetimeChecker(Base) {
       const program=super.program(surface),context={checker:this,sourceSharedPatternReader:node=>this.sourceSharedPatternProofOrigin?.(node),declarations:program.declarations,resolveType:(type,path,span)=>this.resolveType(type,path,span)};
       if(vectorFrame.originals&&this.language==='Rust')bindNormalizedOwnedVectors(this,program,surface);
       const signatures=new Map();
-      for(const entry of program.declarations.values())if(entry.k==='fn')signatures.set(entry.fullName,functionLifetimeSignature(entry,context));
-      for(const entry of program.declarations.values())if(entry.k==='fn') {
+      checkSourceLifetimeRefusals(this,program,'source-lifetime-signatures',entry=>{signatures.set(entry.fullName,functionLifetimeSignature(entry,context));});
+      checkSourceLifetimeRefusals(this,program,'source-lifetime-bodies',entry=>{
         if(entry.params.some(param=>mutableParameters.get(entry.fullName)?.includes(param.name)&&hasBorrow(param.type,context)))throw unsupported('mutable borrowed parameter','the lifetime profile requires immutable borrow bindings',entry.span);
         const signature=signatures.get(entry.fullName),env=new Map(entry.params.map((param,index)=>[param.name,leafOrigins(new Map(signature.params[index].map(region=>[key(region.path),new Set([region.identity])]))) ]));
         const borrowFlowBudget={steps:0,mutableBindings:0,fixedPoints:0},borrowOriginUniverse=new Set(['static',UNKNOWN,...signature.params.flat().map(region=>region.identity)]);
@@ -714,7 +715,7 @@ export function withSourceLifetimeChecker(Base) {
         }
         const leaves=value=>[...(value.leaves??[])].map(([path,origins])=>({path:JSON.parse(path),origins:[...origins].sort()}));
         entry.sourceLifetimeProof={...signature,returnOrigins:[...union(result,...returns.map(returned=>returned.value))].sort(),returnLeaves:leaves(result),explicitReturnLeaves:returns.map(returned=>({span:returned.node.span??entry.span,leaves:leaves(returned.value)})),...(borrowFlowBudget.mutableBindings?{copiedLocalFlow:{profile:'finite-copied-shared-local-origins-v1',steps:borrowFlowBudget.steps,fixedPoints:borrowFlowBudget.fixedPoints,originDomain:[...borrowOriginUniverse].sort(),mutablePointeeAccess:false,mutableParameterSupport:false}}:{})};
-      }
+      });
       return program;
     }finally{vectorFrame.originals=null;vectorFrame.normalized=null;vectorFrame.checker=null;vectorFrame.program=null;ownedVectorFrame=previousOwnedVectorFrame;}
     }

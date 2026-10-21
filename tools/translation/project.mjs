@@ -17,7 +17,7 @@ import {registeredStandardHostBindings} from './standard-host-bindings.mjs';
 import {STANDARD_NAMESPACE_EVIDENCE} from './namespace-standard.mjs';
 import {configureParserSourceScope,requestImmutableNamespaceTargets} from './source-scopes.mjs';
 import { HostRustParser as MethodRustParser, checkProjectProgram, emitJavaScript,hostData as effectData } from './extensions/host-contracts.mjs';
-import {declarationRefusals} from './extensions/declaration-refusals.mjs';
+import {declarationRefusals,withSourceLifetimeRefusals} from './extensions/declaration-refusals.mjs';
 import { extractImplDeclarations, lowerSharedMethodTokens, lowerCopyMethodTokens,originalMethodMember,originalMethodLowering } from './impl-resolver.mjs';
 import {projectCopyEvidence,originalOptionCopyPayload} from './project-copy.mjs';
 import {createDefaultSourceContext,createDefaultEnclosingSourceContext} from './default-trait-source.mjs';
@@ -517,7 +517,7 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
   progress({stage:'semantic-check',state:'start',entry:options.entry,remaining:active.length});
   for (let attempts = 0; attempts <= declarations.length; attempts++) {
     progress({stage:'semantic-check',state:'advance',entry:options.entry,attempt:attempts,remaining:active.length});
-    try { const surface={ language: 'Rust', items: [...tree(active), ...admittedHostData(effectData(),tree(active))], main: null };associateOriginalSharedPatternDependencies(surface,options.jsonMacroDependencies);const nativeChecked=checkProjectProgram(surface,{jsonParserProfile,collectIndependentBodies:options.collectIndependentBodies??true});checked=roundTripProgram(nativeChecked);if(ownedDefinitionMode==='core-json-readers')genuineOrigin=nativeChecked;break; }
+    try { const surface={ language: 'Rust', items: [...tree(active), ...admittedHostData(effectData(),tree(active))], main: null };associateOriginalSharedPatternDependencies(surface,options.jsonMacroDependencies);const nativeChecked=withSourceLifetimeRefusals(surface,options.collectIndependentSourceLifetimes??(options.collectIndependentBodies??true),()=>checkProjectProgram(surface,{jsonParserProfile,collectIndependentBodies:options.collectIndependentBodies??true}));checked=roundTripProgram(nativeChecked);if(ownedDefinitionMode==='core-json-readers')genuineOrigin=nativeChecked;break; }
     catch (error) {
       const failures=declarationRefusals(error)??(error instanceof TranslationError?[{error}]:null);
       if(!failures)throw error;

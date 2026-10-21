@@ -11,6 +11,7 @@ import {sourceItems} from '../rust-structure.mjs';
 import {migrateCoreVectors} from '../migrate-core-vectors.mjs';
 import {prepareCoreVectorSources} from '../prepare-core-vector-sources.mjs';
 import {composeCurrentCoreMatchesSources} from '../prepare-core-matches-sources.mjs';
+import {composeSourceLifetimeRefusalBatches} from '../prepare-source-lifetime-refusal-batches.mjs';
 import {checkRouterCoreVector, hasCheckedRouterCoreVector} from '../router-core-vectors.mjs';
 import * as sourceLifetimes from '../extensions/source-lifetimes.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
@@ -50,7 +51,9 @@ test('native source producer derives the actual owned wrapper and composes compl
   assert.equal(result.value.typescript, '5.9.3');
   assert.ok(result.value.sources['tools/translation/extensions/host-contracts.mjs'].after.split('\n').length <= 1000, 'generated Host source retains fewer than 1000 lines');
   assert.deepEqual(result.trace.map(row => row.phase), ['language', 'repository']);
-  const composition = retain('complete-current-owned-matches-source-layer', composeCurrentCoreMatchesSources(result.value.sources));
+  const lifetime = retain('complete-current-lifetime-refusal-source-layer', composeSourceLifetimeRefusalBatches(result.value.sources));
+  assert.equal(lifetime.layers[0].files.find(row => row.path.endsWith('/source-lifetimes.mjs')).before, result.value.sources['tools/translation/extensions/source-lifetimes.mjs'].after);
+  const composition = retain('complete-current-owned-matches-source-layer', composeCurrentCoreMatchesSources(lifetime.sources));
   assert.equal(composition.layers[0].inputs.facade, result.value.sources['rust/src/translation_core.rs'].after);
   assert.equal(composition.sources['rust/src/translation_core.rs'].after, ROUTER_FORMATTING_FACADE_SOURCE);
   for (const [path, source] of Object.entries(composition.sources)) assert.equal(readFileSync(new URL(path, root), 'utf8'), source.after, path);
