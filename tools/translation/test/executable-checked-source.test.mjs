@@ -1,3 +1,4 @@
+import {assertRuntimeImportSourceComposition} from './runtime-import-source-composition.mjs';
 import {assertOwnedCorePrivateAnalysisSourceComposition} from './owned-core-private-analysis-source-composition.mjs';
 import {assertUnitMatchesSourceComposition} from './unit-matches-source-composition.mjs';
 import {assertAsciiSourceComposition,assertAsciiReverseComposition,assertAsciiAssetsComposition,assertAsciiBaseAssetsComposition} from './ascii-source-composition.mjs';
@@ -21,7 +22,7 @@ test('complete checked-source layer joins the unchanged lifetime birth and retai
  assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.before);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);assert.deepEqual(row.trace.map(part=>part.phase),['language','repository']);assert.deepEqual(row.nativeBindings.unboundIdentifiers,[]);
  const prior=Object.fromEntries(birth.files.map(part=>[part.path,part]));assert.equal(prior[row.path].after,row.before);const composed=composeExecutableCheckedSource(prior);assert.equal(composed.sources[row.path].after,row.after);assert.equal(composed.historicalSources,prior);
  assert.throws(()=>composeExecutableCheckedSource({...prior,[row.path]:{...prior[row.path],after:prior[row.path].after+' '}}),/preceding complete project equation/u);
- assert.equal(current.layers.length,8);assert.equal(current.layers[1].files.find(part=>part.path===row.path).before,row.after);
+ assert.equal(current.layers.length,9);assertRuntimeImportSourceComposition(current.layers[8],Object.fromEntries(current.layers.slice(0,8).flatMap(layer=>layer.files.map(row=>[row.path,row]))),finalSources);assert.equal(current.layers[1].files.find(part=>part.path===row.path).before,row.after);
  const beforeAscii=Object.fromEntries(current.layers.slice(0,2).flatMap(layer=>layer.files.map(row=>[row.path,row])));
  assertAsciiSourceComposition(current.layers[2],beforeAscii,finalSources);
  assertAsciiReverseComposition(current.layers[3],Object.fromEntries(current.layers[2].files.map(row=>[row.path,row])),finalSources);

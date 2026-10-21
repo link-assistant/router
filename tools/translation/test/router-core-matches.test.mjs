@@ -1,3 +1,4 @@
+import {assertRuntimeImportSourceComposition} from './runtime-import-source-composition.mjs';
 import {assertOwnedCorePrivateAnalysisSourceComposition} from './owned-core-private-analysis-source-composition.mjs';
 import {assertUnitMatchesSourceComposition} from './unit-matches-source-composition.mjs';
 import {assertAsciiSourceComposition,assertAsciiReverseComposition,assertAsciiAssetsComposition,assertAsciiBaseAssetsComposition} from './ascii-source-composition.mjs';
@@ -73,7 +74,7 @@ test('native source producers retain complete historical inputs actual current o
     }
     assert.equal(row.nativeCopies.length, 2); assert.ok(row.nativeCopies.every(copy => copy.completeNativeAstCopy));
   }
-  assert.equal(current.layers.length, 8);
+  assert.equal(current.layers.length,9);assertRuntimeImportSourceComposition(current.layers[8],Object.fromEntries(current.layers.slice(0,8).flatMap(layer=>layer.files.map(row=>[row.path,row]))),finalSources);
   const beforeAscii = Object.fromEntries([...prepared.files, ...current.layers[1].files].map(row => [row.path, row]));
   assertAsciiSourceComposition(current.layers[2], beforeAscii, finalSources);
   assertAsciiReverseComposition(current.layers[3], {...beforeAscii, ...Object.fromEntries(current.layers[2].files.map(row => [row.path, row]))}, finalSources);

@@ -252,7 +252,8 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     const base = (await import('./prepare-core-ascii-base-assets.mjs')).composeCoreAsciiBaseAssets(assets.sources, {root});
     const unit = (await import('./prepare-core-unit-matches.mjs')).composeCoreUnitMatches(base.sources, {root});
     const retention = (await import('./prepare-owned-core-private-analysis-retention.mjs')).composeOwnedCorePrivateAnalysisRetention(unit.sources, {root});
-    const composition = {sources: retention.sources, layers: [...lifetime.layers, ...checked.layers, ...preserved.layers, ...matched.layers, ...boundary.layers, ...ascii.layers, ...reverse.layers, ...assets.layers, ...base.layers, ...unit.layers, ...retention.layers]};
+    const runtime = (await import('./prepare-owned-runtime-import-edges.mjs')).composeOwnedRuntimeImportEdges(retention.sources, {root});
+    const composition = {sources: runtime.sources, layers: [...lifetime.layers, ...checked.layers, ...preserved.layers, ...matched.layers, ...boundary.layers, ...ascii.layers, ...reverse.layers, ...assets.layers, ...base.layers, ...unit.layers, ...retention.layers, ...runtime.layers]};
     const generated = composition.sources;
     const current = Object.fromEntries(Object.keys(generated).map(name => [name, readFileSync(resolve(root, name), 'utf8')]));
     if (args[2] === '--check') {

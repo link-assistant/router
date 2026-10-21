@@ -1,3 +1,4 @@
+import {assertRuntimeImportSourceComposition} from './runtime-import-source-composition.mjs';
 import {assertOwnedCorePrivateAnalysisSourceComposition} from './owned-core-private-analysis-source-composition.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -22,7 +23,7 @@ test('selected ASCII producer retains all complete original native nodes current
  assert.deepEqual(plan.selection.statements.map(row=>row.name),names);assert.deepEqual(plan.selection.nativeBindings.unboundIdentifiers,[]);
  for(const row of plan.files){assert.equal(row.current,current.files.find(final=>final.path===row.path).after,row.path);assert.equal(row.beforeSha256,hash(row.before));assert.equal(row.afterSha256,hash(row.after));assert.equal(row.inverse,row.before);assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.before);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);assert.equal(row.nativeCopies.length,2);assert.ok(row.nativeCopies.every(copy=>copy.completeNativeAstCopy));assert.deepEqual(row.trace,row.stages.flatMap(stage=>stage.trace));for(const stage of row.stages){assert.equal(stage.completeInverse,true);assert.deepEqual(stage.trace.map(part=>part.phase),['language','repository']);}}
  for(const row of reverse.files){assert.equal(row.current,current.files.find(final=>final.path===row.path).after);assert.equal(row.inverse,row.before);}
- assert.equal(current.layers.length,4);assertOwnedCorePrivateAnalysisSourceComposition(current.layers[3],Object.fromEntries(current.layers.slice(0,3).flatMap(layer=>layer.files.map(row=>[row.path,row]))),Object.fromEntries(current.files.map(row=>[row.path,row])));
+ assert.equal(current.layers.length,5);assertRuntimeImportSourceComposition(current.layers[4],Object.fromEntries(current.layers.slice(0,4).flatMap(layer=>layer.files.map(row=>[row.path,row]))),Object.fromEntries(current.files.map(row=>[row.path,row])));assertOwnedCorePrivateAnalysisSourceComposition(current.layers[3],Object.fromEntries(current.layers.slice(0,3).flatMap(layer=>layer.files.map(row=>[row.path,row]))),Object.fromEntries(current.files.map(row=>[row.path,row])));
  const prior=Object.fromEntries(reverse.files.map(row=>[row.path,row]));assert.equal(composeCoreAsciiAssets(prior).historicalSources,prior);assert.throws(()=>composeCoreAsciiAssets({...prior,'tools/translation/js-to-rust/owned-core-source.mjs':{after:'changed'}}),/preceding complete source/);
 });
 test('new selected schedule matches all three complete old-builder outputs without unrelated asset reads',{timeout:60000},()=>{

@@ -1,3 +1,4 @@
+import {composeOwnedRuntimeImportEdges} from './prepare-owned-runtime-import-edges.mjs';
 import {composeOwnedCorePrivateAnalysisRetention} from './prepare-owned-core-private-analysis-retention.mjs';
 import {composeCoreUnitMatches} from './prepare-core-unit-matches.mjs';
 // Additive original-checker source view. Saved DATA never issues source owners.
@@ -61,7 +62,8 @@ export function prepareCurrentExecutableCheckedSource(options={}){
  const base=composeCoreAsciiBaseAssets(assets.sources,options);
  const unit=composeCoreUnitMatches(base.sources,options);
  const retention=composeOwnedCorePrivateAnalysisRetention(unit.sources,options);
- return {schema:'current-executable-checked-source-source-v1',birth,layers:[birth,...preserved.layers,...ascii.layers,...reverse.layers, ...assets.layers, ...base.layers,...unit.layers,...retention.layers],files:Object.values(retention.sources),semanticAuthority:false};
+ const runtime=composeOwnedRuntimeImportEdges(retention.sources,options);
+ return {schema:'current-executable-checked-source-source-v1',birth,layers:[birth,...preserved.layers,...ascii.layers,...reverse.layers, ...assets.layers, ...base.layers,...unit.layers,...retention.layers,...runtime.layers],files:Object.values(runtime.sources),semanticAuthority:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const args=process.argv.slice(2);if(args.length!==1||!['--check','--write'].includes(args[0]))fail('usage: --check|--write');const plan=prepareCurrentExecutableCheckedSource();

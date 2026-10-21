@@ -28,7 +28,8 @@ The omitted native tail assigns parent links and traverses parser-created nodes.
 Eligibility additionally requires actual loader-issued compiler function and
 prototype identities, unchanged allocator constructors, native object/prototype
 descriptors, no parent setters, disabled TypeScript performance/tracing/debug
-hooks, and the original shared intrinsic guards. A changed descriptor or hook
+hooks, and the original shared intrinsic guards. Every specialization and supplemental extraction first rechecks the complete
+native/intrinsic frame. A changed descriptor or hook
 retires the operation's dictionary and all active ancestors. Fallback executes
 the original parser and returns its original result or exception once.
 
@@ -68,9 +69,10 @@ Archive the full emitted plan under the existing bounded streaming evidence
 controller; `--emit` is the complete value API and is not a bounded writer.
 `composeOwnedRuntimeImportEdges` requires exact prior after-sources and adds this
 layer after the current owned-core source layers. Existing historical birth APIs,
-before/after equations and source inverses must remain. Current wrapper/CLI
-freshness checks and any class/source-bank captures require explicit final-layer
-composition; merely changing an expected hash is insufficient. The existing
+before/after equations and source inverses must remain. The authored current wrappers and CLI/source-case adapters explicitly append
+this layer after their former final retention/base layer, with full predecessor
+checks and old birth controls. Any class/source-bank captures still require a
+fresh final-source capture; merely changing an expected hash is insufficient. The existing
 frontend provenance's unchanged-support rows do not list any proposed output;
 the receiving test verifies that fact and leaves those old hashes untouched.
 
@@ -80,5 +82,7 @@ each retaining its 60-second deadline. It includes complete source/CST inverses,
 all three runtime families, cold/warm/no-cross-call observations, complete Hash
 payload and RegExp-static tapes, filesystem callback tapes, same-text foreign
 allocator and parent/constructor/Debug hooks, a joined bounded preloaded-compiler
-child, performance/exception/nesting/budget cleanup, and full original/current
+child, transient mid-visit allocator/statement-iterator mutations at native-derived
+receiving-only observation points, performance/exception/nesting/budget cleanup,
+and full original/current
 artifact maps. Native generation and every receiving workload remain unrun.
