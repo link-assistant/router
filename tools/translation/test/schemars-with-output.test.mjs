@@ -7,6 +7,8 @@ import {repositorySourceURL} from './fixtures/repository-paths.mjs';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {createDeriveFootprintContext,deriveFootprintOriginalModule,deriveFootprintExternalModules} from '../derive-footprints.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
+import {resolveModuleGraph} from '../project.mjs';
+import {originalCsvContext} from './original-csv-context.mjs';
 import {originalSourceModuleItems} from '../source-module-views.mjs';
 import {prepareSchemarsWithOutputProposal} from '../prepare-schemars-with-output.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
@@ -19,7 +21,16 @@ const root=new URL('../../../',import.meta.url),read=path=>readFileSync(reposito
 const dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')});
 const simple='/// Original documented container.\n#[derive(schemars::JsonSchema)]#[schemars(with="String")]pub enum Entry{First,Last}';
 function setup(source,name='Entry',file='src/lib.rs'){
- const context=createDeriveFootprintContext({modules:[{file,path:[],source,configurationCondition:'active'}],dependencies,compilationProfile:PRODUCTION_PROFILE}),certificate=context.certificates.find(row=>row.name===name);
+ let modules=[{file,path:[],source,configurationCondition:'active'}];
+ if(file!=='src/lib.rs'){
+  // Actual repository items keep their complete original crate ancestry and
+  // child-module bodies. A lone physical file is not an invented crate root.
+  const original=originalCsvContext();assert.equal(original.source(file),source);assert.equal(original.source('Cargo.toml'),read('Cargo.toml'));assert.equal(original.source('Cargo.lock'),read('Cargo.lock'));
+  const paths=original.inputs.sources.map(row=>row.source).filter(path=>path.endsWith('.rs'));
+  const graph=resolveModuleGraph({entry:original.inputs.entry,paths,readSource:original.source,compilationProfile:original.inputs.compilationProfile});
+  modules=graph.modules;assert.ok(modules.some(row=>row.file===file&&row.source===source));
+ }
+ const context=createDeriveFootprintContext({modules,dependencies,compilationProfile:PRODUCTION_PROFILE}),certificate=context.certificates.find(row=>row.name===name&&row.source===file);
  const module=certificate?deriveFootprintOriginalModule(context,certificate):null,item=module?originalSourceModuleItems(module).find(row=>row.start===certificate.span.start&&row.end===certificate.span.end):null;return {source,context,certificate,module,item};
 }
 const issue=row=>proveSchemarsWithOutput({context:row.context,certificate:row.certificate});
