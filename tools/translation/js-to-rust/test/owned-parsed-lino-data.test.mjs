@@ -16,7 +16,7 @@ import {writeJsonTextGzip} from '../../../evidence/write-json-gzip.mjs';
 const ROOT=fileURLToPath(new URL('../../../../',import.meta.url)),TRANSLATOR='tools/translation/js-to-rust/translator.mjs',IR='tools/translation/js-to-rust/vendor/ir.mjs',LINO='tools/translation/js-to-rust/vendor/lino.mjs';
 const field=Object.getOwnPropertyDescriptor,define=Object.defineProperty,apply=Reflect.apply,nativeJSON=JSON.stringify,hash=value=>createHash('sha256').update(value).digest('hex');let serial=0,vectors=[];
 const retain=(kind,value)=>{vectors.push({kind,value});return value;};
-function test(name,options,run){assert.equal(options.timeout,60000);return nativeTest(name,{timeout:60000},async()=>{vectors=[];try{return await run();}finally{const out=process.env.ROUTER_OWNED_PARSED_LINO_DATA_VECTOR_DIR;if(out){mkdirSync(out,{recursive:true});writeJsonTextGzip(join(out,Buffer.from(name).toString('hex')+'.json.gz'),nativeJSON({schema:'owned-parsed-Lino-DATA-receiving-v1',name,vectors}));}}});}
+function test(name,options,run){assert.equal(options.timeout,60000);return nativeTest(name,{timeout:60000},async()=>{vectors=[];try{return await run();}finally{const out=process.env.ROUTER_OWNED_PARSED_LINO_DATA_VECTOR_DIR;if(out){mkdirSync(out,{recursive:true});writeJsonTextGzip(join(out,hash(name)+'.json.gz'),nativeJSON({schema:'owned-parsed-Lino-DATA-receiving-v1',name,vectors}));}}});}
 function outcome(run){try{return {ok:true,value:run()};}catch(error){return {ok:false,name:error?.name,message:error?.message};}}
 const legacyNames=['input','$_','lastMatch','$&','lastParen','$+','leftContext','$`','rightContext',"$'",'$1','$2','$3','$4','$5','$6','$7','$8','$9'];
 const legacy=()=>legacyNames.map(name=>({name,present:Object.hasOwn(RegExp,name),value:RegExp[name]}));
