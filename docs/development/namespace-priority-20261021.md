@@ -295,3 +295,42 @@ also passed. Eight new complete 60000 ms controls are drafted but unrun here.
 The original ten, full receiving controls, both engines, native parity and any
 coverage or performance improvement remain unqualified until Root executes the
 original workloads under the shared lease.
+
+
+Receiving batch DTk3vU and documentation-input repair
+
+Root ran the six complete files (42 cases) under Node: 30 passed, 12 failed,
+with no deadline breach. Every complete failure block was read from
+`/private/tmp/router-layout-check-complete-original-external-ten-and-new-source-ABI-six-files-Node-v1/stdout.log.gz`.
+Eleven failures have the same source cause: the private data syntax preserves
+three variant and two field sugared outer line documentation comments, while
+the newly composed producer context required every attribute to be at the data
+container. This includes the ten original positives and the new Engine control;
+one original negative-route assertion first encounters the same admission error.
+The remaining failure is the new ABI full Hash observer: a genuine dependency
+issuer supplies the complete project manifest/lock, but the standard-unit join
+had not freshly hashed those two strings itself.
+
+The repair adds a separate source-derived outer line documentation relation.
+Five complete retained compiler originals and ten whole callback bodies cover
+slash/slash lexing, the exact third/fourth slash distinction, native cooking to
+an Outer/Line DocComment token, parser construction of AttrKind::DocComment,
+native predicate delegation, native token replay and the entire collector bypass.
+The actual source hash, span and single raw comment token are joined before this
+relation excludes the comment from expansion candidates. Ordinary `////`, inner
+`//!`, block comments, normal `#[doc]`, changed spans and non-comment attributes
+cannot use this relation. Nested unknown attributes and cfg alternatives retain
+their existing refusal; there is no new attribute-name whitelist. No native
+execution or whole-package owner authority is claimed by the comment report.
+
+Each standard-unit qualification now freshly hashes and compares both complete
+private project input strings against their genuine dependency issuer digests.
+A bounded source-input observer confirmed both actual strings pass through Hash
+update. All five actual nested comments qualified in a bounded source check.
+Seven complete authored programs passed native TypeScript 5.9.3 AST-copy checks
+and ordered language/repository serialized CST substitutions and full inverses.
+Previous complete original/after source archives are retained; distinct repair
+afterimages preserve the earlier programs. Five additional complete 60000 ms
+controls are drafted separately. The original ten and the previous eight
+controls remain unchanged. No full runtime or test file was executed by this
+worker; Root must rerun the full receiving batch before passing claims.

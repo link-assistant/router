@@ -60,3 +60,13 @@ positive bodies/deadlines, and modeled base64 namespace refusal. Keep actual
 native invocation/sysroot metadata and runtime parity unproved. Six complete
 native TypeScript 5.9.3 AST copies plus ordered CST inverses passed; eight new
 complete controls and original runtime workloads remain unrun by this worker.
+
+
+Repair the receiving batch's eleven shared nested-comment failures through a
+complete source-derived outer line DocComment lexer/parser/AST/replay/collector
+relation for the five actual variant/field comments. Keep unknown nested
+attributes refused and original full tests unchanged. Freshly hash both genuine
+project manifest/lock strings during each standard-unit ABI qualification,
+repairing the separate Hash observer failure. Seven complete native AST/CST
+source copies and inverses passed; five new controls and the full receiving
+runtime batch remain unrun by this worker.
