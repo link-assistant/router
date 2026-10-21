@@ -20,3 +20,10 @@ The second materialization attempt failed before writes because the native
 compiler bundle nests its noop declaration. The follow-up joins its actual
 recursive declaration through native binder tables to the CommonJS export
 getter and Debug assignment, retaining full source spans. Source-only and unrun.
+
+Receiving harness follow-up: retained Node vectors show the original static
+runtime closure succeeds with 33 source rows and zero Hash calls; preserve that
+exact zero tape while keeping positive Hash tapes for both ASCII closures.
+RegExp tape recording now uses indexed field reads, so observing a changed Array
+iterator cannot recursively observe the recorder itself. Source-only and unrun;
+all seven workloads and original deadlines remain unchanged.
