@@ -34,8 +34,9 @@ function copiedProducer(ts,before){
  // All34 original raw/native records exist before the first bulk transport.
  const __batchedRows=[...files,...physicalOverlays];
  if(__batchedRows.length!==34||__batchedPending.length!==34||new Set(__batchedRows.map(row=>row.path)).size!==34)fail('complete34 original native assemblies required');
- const __batchedInputs=[...inputs.values(),...currentProviderInputs],__batchedPrerequisites=prerequisites.map(row=>{const source=readFileSync(resolve(root,row.path),'utf8');if(hash(source)!==row.sha256)fail('complete prerequisite changed before all CST chunks');return {...row,source};});
- assertConcreteSyntaxHost();for(const row of [...__batchedInputs,...__batchedPrerequisites])if(typeof row.source!=='string'||readFileSync(resolve(root,row.path),'utf8')!==row.source)fail('complete source changed before all CST chunks');
+ const __batchedInputs=[...inputs.values(),...currentProviderInputs],__batchedPrerequisites=prerequisites.map(row=>{const bytes=readFileSync(resolve(root,row.path));if(hash(bytes)!==row.sha256)fail('complete prerequisite changed before all CST chunks: '+row.path);return {...row,bytes};});
+ assertConcreteSyntaxHost();for(const row of __batchedInputs)if(typeof row.source!=='string'||readFileSync(resolve(root,row.path),'utf8')!==row.source)fail('complete source changed before all CST chunks');
+ for(const row of __batchedPrerequisites)if(!readFileSync(resolve(root,row.path)).equals(row.bytes))fail('complete prerequisite bytes changed before all CST chunks: '+row.path);
  for(const row of __batchedRows)if((existsSync(resolve(root,row.path))?readFileSync(resolve(root,row.path),'utf8'):null)!==row.current)fail('complete original physical row changed before all CST chunks');
  for(let at=0;at<__batchedPending.length;at+=3){
   const requested=__batchedPending.slice(at,at+3),batch=substitutePrivateConcreteSourceBatches(requested.map(__batchedRequest));
@@ -46,7 +47,8 @@ function copiedProducer(ts,before){
    row.beforeMeta=fragment.beforeMeta;row.afterMeta=fragment.afterMeta;row.inverse=fragment.inverse;row.stages=fragment.stages;row.trace=fragment.trace;
   }
  }
- assertConcreteSyntaxHost();for(const row of [...__batchedInputs,...__batchedPrerequisites])if(readFileSync(resolve(root,row.path),'utf8')!==row.source)fail('complete source changed after all CST chunks');
+ assertConcreteSyntaxHost();for(const row of __batchedInputs)if(readFileSync(resolve(root,row.path),'utf8')!==row.source)fail('complete source changed after all CST chunks');
+ for(const row of __batchedPrerequisites)if(!readFileSync(resolve(root,row.path)).equals(row.bytes))fail('complete prerequisite bytes changed after all CST chunks: '+row.path);
  for(const row of __batchedRows)if((existsSync(resolve(root,row.path))?readFileSync(resolve(root,row.path),'utf8'):null)!==row.current)fail('complete original physical row changed after all CST chunks');
 `;
  const currentInputsSource='const currentProviderInputs='+JSON.stringify([COPY,PROVIDER,BASE+'prepare-batched-proof-byte-source-candidate.mjs',API,BASE+'private-concrete-substitution-batch-operations.mjs'])+".map(path=>{const source=readFileSync(resolve(root,path),'utf8');return {path,source,sha256:hash(source)};});\n",inputDeclaration=one(entry.body.statements.filter(node=>ts.isVariableStatement(node)&&node.declarationList.declarations.some(value=>ts.isIdentifier(value.name)&&value.name.text==='inputs')),'complete original input storage');
