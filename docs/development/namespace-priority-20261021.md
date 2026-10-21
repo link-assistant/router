@@ -405,3 +405,26 @@ all unchanged Engine declaration ranges and the mutation rejection. Comparing
 span values through own plain {start,end} observations preserves exact expected
 coordinates when serialized checked meta uses null-prototype records. No
 production authority or original test body/deadline is changed by this fix.
+
+
+Matches receiving composition observer correction
+
+The original matches birth uses one CST substitution call and retains its
+original language/repository trace and native binding checks. The later identity
+boundary source producer deliberately serializes/reparses between two CST
+stages; each substitution call records both phases, including the empty phase.
+Its flattened trace therefore contains four records within that single layer.
+The complete matches receiving control now checks the two stage identities,
+each complete language/repository trace, exactly one active rule and zero
+inactive rules per stage, exact serialized/reparsed stage sources, every full
+inverse and both complete native AST copies. It also keeps the complete birth
+checks and current-layer chaining checks. No producer, native domain, original
+case body after that assertion block or deadline changes. Root's complete
+current test is retained as the before program for this narrow source edit.
+
+The same stage-aware assertion correction also applies to the complete current
+checkedSource and lifetime-refusal receiving files. Their original lifetime and
+checkedSource birth phase/native-binding checks stay intact; only the later
+proof-preservation layer uses the stage-by-stage observer. All three full files
+retain their original behavioral cases and deadlines, and all three exact
+source edits passed native TypeScript grammar plus ordered CST/inverse checks.
