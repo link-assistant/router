@@ -6,7 +6,8 @@ import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
-import {readSchemarsEnclosingHistory,assertSchemarsEnclosingHistoryFresh,deriveSchemarsEnclosingImportHistory,SCHEMARS_ENCLOSING_ORIGINAL} from './schemars-enclosing-history.mjs';
+import {readSchemarsEnclosingHistory,assertSchemarsEnclosingHistoryFresh,SCHEMARS_ENCLOSING_ORIGINAL} from './schemars-enclosing-history.mjs';
+import {normalizeSchemarsCurrentEnclosingSource,assertSchemarsCurrentEnclosingHistoryFresh} from './schemars-current-enclosing-history.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url)),PREFIX='tools/translation/';
 const INPUTS=Object.freeze({
@@ -54,10 +55,12 @@ export function prepareSchemarsWithOutputProposal({root=ROOT,inputSources=null}=
  const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('installed TypeScript5.9.3 required');root=resolve(root);
  const history=readSchemarsEnclosingHistory({root}),originalEnclosing=one(history.files.filter(row=>row.path===SCHEMARS_ENCLOSING_ORIGINAL),'complete genuine original enclosing source'),derivations=[];let enclosingHistory=null;
  const inputs=Object.entries(INPUTS).map(([name,pin])=>{const source=inputSources&&Object.hasOwn(inputSources,name)?inputSources[name]:readFileSync(resolve(root,PREFIX+name),'utf8');if(typeof source!=='string'||Buffer.byteLength(source)>1048576)fail('whole pinned source differs: '+name);let before=source;
-  if(PREFIX+name===SCHEMARS_ENCLOSING_ORIGINAL){try{enclosingHistory=deriveSchemarsEnclosingImportHistory({original:originalEnclosing.source,source});before=enclosingHistory.restored;}catch{fail('whole pinned source differs: '+name);}}
+  if(PREFIX+name===SCHEMARS_ENCLOSING_ORIGINAL){try{enclosingHistory=normalizeSchemarsCurrentEnclosingSource({root,original:originalEnclosing.source,source});before=enclosingHistory.restored;}catch{fail('whole pinned source differs: '+name);}}
   if(hash(before)!==pin)fail('whole pinned source differs: '+name);derivations.push({path:PREFIX+name,source:before,sha256:pin});return {path:PREFIX+name,source,sha256:hash(source)};
  });
  inputs.push(...history.inputs);
+ for(const input of enclosingHistory.physicalInputs){const previous=inputs.find(row=>row.path===input.path);if(previous){if(previous.source!==input.source)fail('complete physical current history input differs');}else inputs.push(input);}
+ for(const name of ['schemars-current-enclosing-history.mjs','prepare-default-proof-byte-adoption.mjs']){const path=PREFIX+name;if(!inputs.some(row=>row.path===path)){const source=readFileSync(resolve(root,path),'utf8');if(Buffer.byteLength(source)>1048576)fail('bounded complete source history provider required');inputs.push({path,source,sha256:hash(source)});}}
  const support=readFileSync(resolve(root,PREFIX+SUPPORT),'utf8');if(Buffer.byteLength(support)>1048576)fail('bounded complete support required');inputs.push({path:PREFIX+SUPPORT,source:support,sha256:hash(support)});const files=[];
  const producerPath=PREFIX+'prepare-schemars-with-output.mjs',producerSource=readFileSync(resolve(root,producerPath),'utf8');if(Buffer.byteLength(producerSource)>1048576)fail('bounded complete actual producer required');inputs.push({path:producerPath,source:producerSource,sha256:hash(producerSource)});
  {
@@ -102,7 +105,7 @@ export function prepareSchemarsWithOutputProposal({root=ROOT,inputSources=null}=
  }
  const supportBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,PREFIX+SUPPORT),support);
  for(const input of inputs)if(readFileSync(resolve(root,input.path),'utf8')!==input.source)fail('fresh complete source changed before return: '+input.path);
- assertSchemarsEnclosingHistoryFresh({root,history});return {schema:'complete-schemars-with-source-candidate-v1',typescriptVersion:ts.version,inputs,derivationInputs:derivations,history,enclosingHistory,files,supportBindings,originalPublicAPIsUnchanged:true,productionSelected:false,sourceAuthority:false,typeOwnerResolved:false,generatedImplBehavior:false,runtimeAuthority:false,performanceQualified:false,newAcrossInvocationCache:false};
+ assertSchemarsEnclosingHistoryFresh({root,history});assertSchemarsCurrentEnclosingHistoryFresh({root,history:enclosingHistory});return {schema:'complete-schemars-with-source-candidate-v1',typescriptVersion:ts.version,inputs,derivationInputs:derivations,history,enclosingHistory,files,supportBindings,originalPublicAPIsUnchanged:true,productionSelected:false,sourceAuthority:false,typeOwnerResolved:false,generatedImplBehavior:false,runtimeAuthority:false,performanceQualified:false,newAcrossInvocationCache:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const args=process.argv.slice(2);if(args.length!==1||!['--emit','--check'].includes(args[0]))fail('usage: prepare-schemars-with-output.mjs --emit|--check');const proposal=prepareSchemarsWithOutputProposal();
