@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from "../../repository-layout.mjs";
 // Definition-only receiving, with full original parents and module refusals.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -18,7 +19,7 @@ import {createOwnedCoreSourceContext,translateOwnedCoreJavaScript,parseOwnedCore
 import {ownedCoreRuntimeSources} from '../owned-core-source.mjs';
 import {prepareOwnedCoreRuntime,evaluate} from '../interpreter.mjs';
 const root=fileURLToPath(new URL('../../../../',import.meta.url)),limits={timeout:60000},C='crate::translation_core::',hash=value=>createHash('sha256').update(value).digest('hex');
-const original=path=>existsSync(join(root,path))?readFileSync(join(root,path),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:30000,maxBuffer:16777216});
+const original=path=>existsSync(join(root,rustPackageSourcePath(root,path)))?readFileSync(join(root,rustPackageSourcePath(root,path)),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:30000,maxBuffer:16777216});
 const dependencyInputs={manifest:original('Cargo.toml'),lock:original('Cargo.lock')},jsonMacroDependencies=loadJsonMacroSourceProof(dependencyInputs),deriveDependencies=loadDeriveDependencyProof(dependencyInputs);
 const files=source=>({'src/lib.rs':'pub mod translation_core;\n'+source,'src/translation_core.rs':facade,'src/translation_core/primitives.rs':primitives,'src/translation_core/ranges.rs':ranges,'src/translation_core/json_collections.rs':collections});
 const options=input=>({entry:'src/lib.rs',paths:Object.keys(input),readSource:path=>input[path],compilationProfile:PRODUCTION_PROFILE,cargoManifest:dependencyInputs.manifest,jsonMacroDependencies,deriveDependencies});
@@ -37,7 +38,7 @@ async function targets(t,row){
  const value=reverse(row),directory=mkdtempSync(join(tmpdir(),'router-forward-owned-definitions-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));for(const file of value.data.files.filter(file=>/\.(?:mjs|mts|ts)$/u.test(file.path)))write(directory,file.path,file.source);
  for(const file of value.data.files.filter(file=>file.path.startsWith('typed/runtime/')&&file.path.endsWith('.mts')))write(directory,'app/runtime/'+file.path.slice('typed/runtime/'.length),file.source);
  write(directory,'typed/owned-definitions/reverse.mts',value.result.typescript);
- try{execFileSync(process.execPath,[join(root,'packages/javascript/node_modules/typescript/bin/tsc'),'--strict','--skipLibCheck','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--rootDir',directory,'--outDir',join(directory,'out'),join(directory,row.typescriptPath),join(directory,'typed/owned-definitions/reverse.mts')],{cwd:root,encoding:'utf8',timeout:20000,stdio:'pipe'});}catch(error){assert.fail('strict forward/reverse TypeScript failed\n'+String(error.stdout??'')+'\n'+String(error.stderr??''));}
+ try{execFileSync(process.execPath,[join(root,'js/node_modules/typescript/bin/tsc'),'--strict','--skipLibCheck','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--rootDir',directory,'--outDir',join(directory,'out'),join(directory,row.typescriptPath),join(directory,'typed/owned-definitions/reverse.mts')],{cwd:root,encoding:'utf8',timeout:20000,stdio:'pipe'});}catch(error){assert.fail('strict forward/reverse TypeScript failed\n'+String(error.stdout??'')+'\n'+String(error.stderr??''));}
  for(const file of value.data.files.filter(file=>file.path.startsWith('app/runtime/'))){write(directory,'out/'+file.path,file.source);write(directory,'out/typed/runtime/'+file.path.slice('app/runtime/'.length),file.source);}
  const source=await import(pathToFileURL(join(directory,row.javascriptPath)).href),typed=await import(pathToFileURL(join(directory,'out',row.typescriptPath.replace(/\.mts$/u,'.mjs'))).href),again=await import(pathToFileURL(join(directory,'out/typed/owned-definitions/reverse.mjs')).href),runtime=await prepareOwnedCoreRuntime(value.result.program);
  retain('complete-independent-targets',{row,...value});return {source,typed,again,result:value.result,run:()=>evaluate(value.result.program,row.target,[],runtime)};

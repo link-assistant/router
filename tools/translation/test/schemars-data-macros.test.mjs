@@ -1,9 +1,10 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {proveSchemarsDataMacroNamespace,isSchemarsDataMacroNamespace,assertSchemarsDataMacroNamespace} from '../schemars-macro-inputs.mjs';
-const root=new URL('../../../',import.meta.url),read=p=>readFileSync(new URL(p,root),'utf8');
+const root=new URL('../../../',import.meta.url),read=p=>readFileSync(repositorySourceURL(p,root),'utf8');
 const dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')});
 test('original complete schema wrapper follows private definition-site serde_json reexport and full recursive JSON rules',()=>{
  const source='schemars::json_schema!({"type":"object","additionalProperties":false})',proof=proveSchemarsDataMacroNamespace({dependencies,source});assert.equal(assertSchemarsDataMacroNamespace(proof,{dependencies,source}),proof);assert.equal(proof.noUnprovedNestedBangCalls,true);assert.equal(proof.callerMacroOwnerResolved,false);assert.equal(proof.namespaceAuthority,false);assert.equal(proof.generatedImplBehavior,false);assert.ok(proof.calls.some(row=>row.target==='schemars::json_schema'));assert.ok(proof.calls.some(row=>row.target==='serde_json::json'));assert.ok(proof.calls.filter(row=>row.target==='serde_json::json_internal').length>2);assert.ok(proof.calls.slice(1).every(row=>row.parentDigest));const internal=proof.origins.find(row=>row.name==='json_internal');assert.equal(internal.ruleCount,37);assert.equal(internal.ruleBudget,37);assert.ok(proof.origins.every(row=>row.header.sourceVerified&&row.header.attributes.every(attribute=>['doc','macro_export'].includes(attribute.tokens[0].text))));assert.ok(proof.sourceReexports.private.sourceSha256);assert.ok(proof.attributes.every(row=>row.name==='allow'&&row.arguments.join()==='unused_imports'));

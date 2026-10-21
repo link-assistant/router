@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -54,7 +55,7 @@ test('float source syntax cannot invent integer, reference, binary32 or const-ev
 });
 
 test('unchanged original Router decimal tokens retain file and declaration pins without a tool-attribute runtime claim',()=>{
-  const path='src/generated_js_first/policy.rs',source=readFileSync(new URL('../../../'+path,import.meta.url),'utf8');
+  const path='src/generated_js_first/policy.rs',source=readFileSync(repositorySourceURL(path,new URL('../../../',import.meta.url)),'utf8');
   assert.equal(hash(source),'c5d5cec07bf54be29de7beed707263256afa6ba1ee87c89695b237d5626f5673');
   const item=sourceItems(source).find(item=>item.name==='retryable_status');assert.deepEqual([item.start,item.end],[3019,3183]);
   const original=source.slice(item.start,item.end);assert.equal(hash(original),'ac6c63fc33f2cbac3f4749bf88eabab3f058238c99260d938ff462816584d2cc');

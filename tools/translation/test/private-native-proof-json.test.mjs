@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // Stateless serialization grants no source, owner or executable authority.
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
@@ -28,7 +29,7 @@ function equal(retain,label,before,current){retain(label,{before,current});asser
 async function fixture(t,retain,countCensus=false){
  const folder=mkdtempSync(join(tmpdir(),'router-native-proof-json-'));t.after(()=>rmSync(folder,{recursive:true,force:true}));
  const before=readFileSync(sourceURL,'utf8');let source=before;
- for(const name of ['private-frozen-json.mjs','original-json-intrinsics.mjs','original-lexing-intrinsics.mjs'])source=once(source,"from './"+name+"'","from '"+new URL('../'+name,import.meta.url).href+"'");
+ for(const name of ['private-frozen-json.mjs','original-json-intrinsics.mjs',"guarded-proof-lexing-intrinsics.mjs"])source=once(source,"from './"+name+"'","from '"+new URL('../'+name,import.meta.url).href+"'");
  const branch='   if(selected)return apply(stringifyField.value,jsonOwner,[value]);';source=once(source,branch,'   if(selected){nativeCalls++;return apply(stringifyField.value,jsonOwner,[value]);}');
  source=once(source,'  return fallback(value);','  fallbackCalls++;return fallback(value);');
  source+='\nlet nativeCalls=0,fallbackCalls=0;export function receivingFacts(){return {initiallyNative,qualified,ready:nativeReady(),nativeCalls,fallbackCalls};}\n';
@@ -83,7 +84,7 @@ test('cold changed optional native qualification keeps the complete old native o
 });
 
 test('genuine private Copy source proof bytes reissues forgeries and strict emitted targets remain independently checked',async(t,retain)=>{
- const {module}=await fixture(t,retain),source='#[derive(Copy,Debug)]pub struct Payload{value:u8}pub fn keep(value:u8)->u8{value}',cargo={manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')},dependencies=loadDeriveDependencyProof(cargo),views=captureSourceModuleViews({source,sourcePath:'src/lib.rs',compilationProfile:PRODUCTION_PROFILE}),entry={file:'src/lib.rs',path:[],source,sourceView:views.views[0],compilationProfile:PRODUCTION_PROFILE},context=createDeriveFootprintContext({modules:[entry],dependencies,compilationProfile:PRODUCTION_PROFILE}),certificate=context.certificates.find(row=>row.name==='Payload');assert.ok(certificate);const attribute=certificate.attributes.find(row=>row.name==='derive');retain('full-genuine-private-input-and-source',{source,cargo,views,entry,context,certificate});
+ const {module}=await fixture(t,retain),source='#[derive(Copy,Debug)]pub struct Payload{value:u8}pub fn keep(value:u8)->u8{value}',cargo={manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')},dependencies=loadDeriveDependencyProof(cargo),views=captureSourceModuleViews({source,sourcePath:'src/lib.rs',compilationProfile:PRODUCTION_PROFILE}),entry={file:'src/lib.rs',path:[],source,sourceView:views.views[0],compilationProfile:PRODUCTION_PROFILE},context=createDeriveFootprintContext({modules:[entry],dependencies,compilationProfile:PRODUCTION_PROFILE}),certificate=context.certificates.find(row=>row.name==='Payload');assert.ok(certificate);const attribute=certificate.attributes.find(row=>row.name==='derive');retain('full-genuine-private-input-and-source',{source,cargo,views,entry,context,certificate});
  for(const name of ['Copy','Debug']){const invocation={path:[name],attributeSpan:attribute.span},proof=proveBuiltinDeriveBangFootprint({context,certificate,invocation});retain('full-genuine-proof-'+name,{invocation,proof});assertBuiltinDeriveBangFootprint(proof,context,certificate,invocation);assert.throws(()=>assertBuiltinDeriveBangFootprint(structuredClone(proof),context,certificate,invocation));const start=module.receivingFacts(),before=createPrivateFrozenJsonComposer()(proof),current=module.createPrivateNativeProofJsonSerializer()(proof),final=module.receivingFacts();equal(retain,'full-genuine-proof-serialization-'+name,before,current);assert.equal(current,json(proof));equal(retain,'full-source-proof-sha-'+name,createHash('sha256').update(before).digest('hex'),createHash('sha256').update(current).digest('hex'));retain('actual-full-proof-selection-'+name,{start,final,nativeSelected:final.nativeCalls===start.nativeCalls+1,scope:'Receiving observations only; no invented fit or gain from metadata.'});}
 
  const translated=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});retain('complete-current-translation',{source,result:translated});await verifyTypedTargets(translated,api=>{assert.deepEqual([api.keep(0n),api.keep(1n),api.keep(255n)],[0n,1n,255n]);assert.throws(()=>api.keep(256n),RangeError);},{childTimeoutMs:20_000});
@@ -146,7 +147,7 @@ async function shortStringFixture(t,retain){
  const folder=mkdtempSync(join(tmpdir(),'router-native-proof-short-string-'));t.after(()=>rmSync(folder,{recursive:true,force:true}));
  const before=readFileSync(sourceURL,'utf8'),steps=[];let source=before;
  const step=(old,next)=>{assert.equal(source.split(old).length,2);const previous=source;source=source.replace(old,()=>next);assert.equal(source.replace(next,()=>old),previous);steps.push({before:old,after:next});};
- for(const name of ['private-frozen-json.mjs','original-json-intrinsics.mjs','original-lexing-intrinsics.mjs'])step("from './"+name+"'","from '"+new URL('../'+name,import.meta.url).href+"'");
+ for(const name of ['private-frozen-json.mjs','original-json-intrinsics.mjs',"guarded-proof-lexing-intrinsics.mjs"])step("from './"+name+"'","from '"+new URL('../'+name,import.meta.url).href+"'");
  step('  const special=','  receivingScans++;const special=');
  step("(binaryArgs[0]=value,binaryArgs[1]=count,apply(mapSet,quotedCosts,binaryArgs));quotedEntries++;","(binaryArgs[0]=value,binaryArgs[1]=count,apply(mapSet,quotedCosts,binaryArgs));quotedEntries++;receivingWrites++;");
  step('   if(selected)return apply(stringifyField.value,jsonOwner,[value]);','   if(selected){receivingNative++;return apply(stringifyField.value,jsonOwner,[value]);}');

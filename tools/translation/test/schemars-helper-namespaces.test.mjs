@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -5,7 +6,7 @@ import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {registeredDeriveHelperSource,isRegisteredDeriveHelperSource} from '../derive-helper-namespaces.mjs';
 import {createDeriveFootprintContext,deriveFootprintOriginalModule,deriveFootprintHelperAttributeAt,isDeriveFootprintHelperAttributeProof} from '../derive-footprints.mjs';
 import {originalSourceModuleItems} from '../source-module-views.mjs';
-const root=new URL('../../../',import.meta.url),read=p=>readFileSync(new URL(p,root),'utf8'),dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')});
+const root=new URL('../../../',import.meta.url),read=p=>readFileSync(repositorySourceURL(p,root),'utf8'),dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')});
 function setup(source){const context=createDeriveFootprintContext({modules:[{file:'src/lib.rs',path:[],source}],dependencies}),certificate=context.certificates.find(row=>row.name==='Payload');if(!certificate)return{context,certificate};const module=deriveFootprintOriginalModule(context,certificate),item=originalSourceModuleItems(module).find(row=>row.start===certificate.span.start&&row.end===certificate.span.end),attribute=certificate.attributes.find(row=>row.position==='field'&&['serde','schemars'].includes(row.name));return{context,certificate,module,item,attribute};}
 test('actual JsonSchema proc-macro declaration privately registers all four original helper names without output authority',()=>{
  for(const helperName of['schemars','serde','validate','garde']){const proof=registeredDeriveHelperSource({dependencies,target:['schemars','JsonSchema'],helperName});assert.equal(isRegisteredDeriveHelperSource(proof),true);assert.deepEqual(proof.registration.registeredHelpers,['schemars','serde','validate','garde']);assert.match(proof.registration.originalAttribute,/proc_macro_derive\(JsonSchema/);assert.equal(proof.namespaceAuthority,false);assert.equal(proof.bangOutputAuthority,false);assert.equal(proof.generatedImplBehavior,false);assert.equal(isRegisteredDeriveHelperSource(structuredClone(proof)),false);}assert.equal(registeredDeriveHelperSource({dependencies,target:['schemars','JsonSchema'],helperName:'unknown'}),null);

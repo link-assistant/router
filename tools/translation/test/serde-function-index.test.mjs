@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
@@ -12,7 +13,7 @@ import {sourceItems} from '../rust-structure.mjs';
 import {captureSourceModuleViews,originalSourceModuleItems} from '../source-module-views.mjs';
 import {createDeriveFootprintContext,deriveFootprintAt} from '../derive-footprints.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
-const root=new URL('../../../',import.meta.url),manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock}),path='src/ser.rs',name='serialize_unit_struct';
+const root=new URL('../../../',import.meta.url),manifest=readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock=readFileSync(repositorySourceURL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock}),path='src/ser.rs',name='serialize_unit_struct';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 function retain(name,value){const dir=process.env.ROUTER_FUNCTION_INDEX_VECTOR_DIR;if(dir){mkdirSync(dir,{recursive:true});writeFileSync(dir+'/'+name+'.json.gz',gzipSync(JSON.stringify(value),{mtime:0}));}}
 function definitions(origin){const roots=sourceItems(origin.source),result=[...roots];for(const implementation of roots.filter(item=>item.term==='impl')){const open=implementation.tokens.find(token=>token.type==='punct'&&token.text==='{'),close=implementation.tokens.at(-1);if(!open||close?.text!=='}')throw new TypeError('Original generator impl function boundary remains unresolved');result.push(...sourceItems(origin.source.slice(open.end,close.start)).map(item=>({...item,start:item.start+open.end,end:item.end+open.end})));}return result;}

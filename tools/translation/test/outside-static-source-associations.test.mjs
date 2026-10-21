@@ -1,4 +1,5 @@
 // New historical DATA associations, not additional original16 cases or proof.
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,mkdtempSync,rmSync} from 'node:fs';
@@ -17,7 +18,7 @@ import {loadJsonMacroSourceProof} from '../json-macro-sources.mjs';
 import {STATIC_SOURCE_LIFECYCLE_CASES,STATIC_SOURCE_LIFECYCLE_PROFILES} from '../prepare-real-source-fixtures.mjs';
 import {staticSourceAssociatedContext,staticSourceLifecycleContext} from './real-source-fixtures.mjs';
 import {associatedOriginalSourceReader,associatedOriginalFileReader} from './associated-original-context.mjs';
-const root=fileURLToPath(new URL('../../../',import.meta.url)),read=path=>readFileSync(new URL('../../../'+path,import.meta.url),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex');
+const root=fileURLToPath(new URL('../../../',import.meta.url)),read=path=>readFileSync(repositorySourceURL(path,new URL('../../../',import.meta.url)),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex');
 const manifest=JSON.parse(readFileSync(new URL('./fixtures/outside-static-source-associations.json',import.meta.url),'utf8'));
 const ids=['bool-then-some.test.mjs','bridge-stop-edges.test.mjs','copy-translation.test.mjs','csv-original-source.test.mjs','derive-helper-originals.test.mjs','option-borrowed-str-equality.test.mjs::telegram-case4'];
 let vectors;
@@ -41,7 +42,7 @@ function currentCore(context,path){
  assert.equal(inverse.source,originalRoot);assert.equal(inverseWire,beforeWire);assert.deepEqual(inverse.document,parsed.document);
  const files={'src/lib.rs':authored};for(const file of [path,'src/translation_core.rs','src/translation_core/primitives.rs','src/translation_core/ranges.rs','src/translation_core/json_collections.rs'])files[file]=context.sourceCurrent(file);
  const sourceCst=Object.entries(files).map(([path,source])=>{const document=transportConcreteSyntaxSource(source,{language:'Rust'}),wire=serializeConcreteSyntaxMeta(document.document),reparsed=transportConcreteSyntaxMeta(wire);assert.equal(reparsed.source,source);return {path,source,wire};});
- const cargo={manifest:context.sourceCurrent('Cargo.toml'),lock:context.sourceCurrent('Cargo.lock')},result=translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:file=>{assert.ok(Object.hasOwn(files,file));return files[file];},cargoManifest:cargo.manifest,deriveDependencies:loadDeriveDependencyProof(cargo),jsonMacroDependencies:loadJsonMacroSourceProof(cargo),compilationProfile:context.inputs.compilationProfile});
+ const cargo={manifest:context.sourceCurrent('rust/Cargo.toml'),lock:context.sourceCurrent('Cargo.lock')},result=translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:file=>{assert.ok(Object.hasOwn(files,file));return files[file];},cargoManifest:cargo.manifest,deriveDependencies:loadDeriveDependencyProof(cargo),jsonMacroDependencies:loadJsonMacroSourceProof(cargo),compilationProfile:context.inputs.compilationProfile});
  for(const [path,source]of Object.entries(files)){const rows=result.meta.sources.filter(row=>row.source===path);assert.equal(rows.length,1,'actual complete module '+path);assert.equal(rows[0].sha256,hash(source));}assert.equal(result.meta.runtimeParity,false);
  return {originalRoot,selected,beforeWire,afterWire,rules,inverseRules,inverseApplied,inverseWire,inverse,files,sourceCst,cargo,result,scope:'Complete current parent in an explicitly authored Core crate; all later refusals retained, no full parent/crate execution claim.'};
 }
@@ -55,6 +56,15 @@ test('six new associations are disjoint from the unchanged original sixteen and 
 test('complete original universes retain every source Git blob Cargo input and original16 association',()=>{
  const context=staticSourceAssociatedContext(ids[0]),other=staticSourceLifecycleContext('option-ok-or-else.test.mjs');retain('new-association-complete-universe',completeInputs(context));retain('old16-second-complete-universe',completeInputs(other));
  assert.equal(context.inputs.sources.length,806);assert.equal(other.inputs.sources.length,808);assert.notEqual(context.inputs.sourceHead,other.inputs.sourceHead);assert.equal(context.source('Cargo.toml'),other.source('Cargo.toml'));assert.equal(context.source('Cargo.lock'),other.source('Cargo.lock'));retain('complete-bool-parents',parents(context));
+ const packageSource=read('Cargo.toml');
+ for(const selected of [context,other]){
+  assert.equal(selected.sourceCurrent('Cargo.toml'),packageSource);
+  assert.equal(selected.sourceCurrent('rust/Cargo.toml'),packageSource);
+  assert.equal(selected.sourceCurrent('Cargo.lock'),read('Cargo.lock'));
+  assert.equal(selected.sourceCurrent('src/lib.rs'),read('src/lib.rs'));
+  assert.throws(()=>selected.sourceCurrent('src/__absent_original__.rs'),/unknown/);
+ }
+ retain('complete-current-package-path-joins',{associated:context.current,original:other.current,packageSource});
 });
 
 test('all original CSV scalar method and Default parents keep exact historical spans without prewarming compilation',()=>{
@@ -89,7 +99,7 @@ test('historical Telegram stays separate from the current qwen root and neither 
 test('unknown copied associations paths and a changed current source universe remain refusals',()=>{
  for(const id of ['unknown',ids[0]+':copy',{id:ids[0],authority:{executable:true}},...Object.keys(STATIC_SOURCE_LIFECYCLE_CASES)])assert.throws(()=>staticSourceAssociatedContext(id),/unknown explicit outside association/u);
  const source=associatedOriginalSourceReader(ids[0]);assert.throws(()=>source('src/config.rs'),/outside the explicit old parent association/u);assert.throws(()=>source('../Cargo.toml'),/outside the explicit old parent association/u);
- const file=associatedOriginalFileReader(ids[0]);assert.throws(()=>file('/tmp/not-an-original','utf8'),/one original source URL/u);assert.throws(()=>file(new URL('../../../src/output_limit.rs',import.meta.url),'binary'),/one original source URL/u);
+ const file=associatedOriginalFileReader(ids[0]);assert.throws(()=>file('/tmp/not-an-original','utf8'),/one original source URL/u);assert.throws(()=>file(new URL('../../../rust/src/output_limit.rs',import.meta.url),'binary'),/one original source URL/u);
  const directory=mkdtempSync(join(tmpdir(),'router-outside-source-universe-'));try{execFileSync('/usr/bin/git',['init','--quiet',directory],{encoding:'utf8',timeout:20_000});assert.throws(()=>staticSourceAssociatedContext(ids[0],{root:directory}),/actual current source set differs/u);}finally{rmSync(directory,{recursive:true,force:true});}
  retain('no-compiler-authority',{authority:manifest.authority,unknownAndCopiedRefused:true,currentSourceSetMustJoin:true});
 });

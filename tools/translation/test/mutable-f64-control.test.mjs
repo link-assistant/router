@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,statSync,mkdirSync,writeFileSync} from 'node:fs';
@@ -30,7 +31,7 @@ test('genuine f64 mutable locals and parameters retain IEEE values through seria
 });
 
 test('complete unchanged original policy parent and helper bodies execute retry_backoff IEEE boundaries',{timeout:60_000},async()=>{
- const paths=['src/generated_js_first/mod.rs','src/generated_js_first/policy.rs'],sources=Object.fromEntries(paths.map(path=>{const url=new URL(path,root);assert.ok(statSync(url).size<1024*1024);return [path,readFileSync(url,'utf8')];}));assert.equal(hash(sources[paths[1]]),'c5d5cec07bf54be29de7beed707263256afa6ba1ee87c89695b237d5626f5673');
+ const paths=['src/generated_js_first/mod.rs','src/generated_js_first/policy.rs'],sources=Object.fromEntries(paths.map(path=>{const url=repositorySourceURL(path,root);assert.ok(statSync(url).size<1024*1024);return [path,readFileSync(url,'utf8')];}));assert.equal(hash(sources[paths[1]]),'c5d5cec07bf54be29de7beed707263256afa6ba1ee87c89695b237d5626f5673');
  const item=sourceItems(sources[paths[1]]).find(item=>item.name==='retry_backoff'&&item.term==='fn');assert.deepEqual([item.start,item.end],[2663,3017]);assert.equal(hash(sources[paths[1]].slice(2680,3017)),'9b2e4c622cdf430a03fc46ebe8554b0fdb6419ae7c12084a8dd64d2bbc778d2a');
  const result=translateProject({entry:paths[0],paths,readSource:path=>sources[path],compilationProfile:PRODUCTION_PROFILE}),cases=[
   [0,10,100,10],[1,10,100,20],[2,10,100,40],[3,10,100,80],[4,10,100,100],[4.9,10,100,100],[-3,10,100,10],[NaN,10,100,10],[-Infinity,10,100,10],

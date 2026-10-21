@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
-import { createNativeRouter } from '../../../packages/javascript/native/server.mjs';
-import { translateRequest, translateResponse } from '../../../packages/javascript/native/protocols.mjs';
-import { decodeSSE, translateStream } from '../../../packages/javascript/native/streams.mjs';
+import { createNativeRouter } from '../../../js/src/server.mjs';
+import { translateRequest, translateResponse } from '../../../js/src/protocols.mjs';
+import { decodeSSE, translateStream } from '../../../js/src/streams.mjs';
 
 const candidate = { provider: 'openai', protocol: 'chat', model: 'upstream-model', baseUrl: 'http://127.0.0.1:12345/v1', apiKey: 'upstream-secret', account: 'account-a' };
 const body = { model: 'alias', messages: [{ role: 'user', content: 'hello' }] };

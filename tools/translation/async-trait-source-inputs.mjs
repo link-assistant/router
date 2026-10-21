@@ -1,5 +1,6 @@
 // Complete original inputs only. A source selection is not an attribute
 // expansion certificate or permission to ignore a caller's nested effects.
+import {deriveSourceProfileMatches} from './derive-profile-layout.mjs';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
@@ -26,7 +27,7 @@ function archiveMembers(archive){
 }
 export function createAsyncTraitSourceInputs({deriveDependencies,archive}={}){
  if(!isDeriveDependencyProof(deriveDependencies)||types.isProxy(deriveDependencies))fail('genuine original dependency inputs required');
- if(deriveDependencies.sourceProfileSha256!==profile.dependencySourceProfileSha256)fail('original syntax dependency source profile differs');
+ if(!deriveSourceProfileMatches(deriveDependencies,profile.dependencySourceProfileSha256))fail('original syntax dependency source profile differs');
  const original=deriveDependencyOriginalInputs(deriveDependencies),sections=original.lock.split('[[package]]').filter(section=>/^\s*name = "async-trait"\nversion = "0\.1\.92"/mu.test(section));
  if(sections.length!==1||!sections[0].includes('checksum = "'+profile.sha256+'"')||!sections[0].includes('source = "registry+https://github.com/rust-lang/crates.io-index"')||!/^async-trait = "0\.1"$/mu.test(original.manifest))fail('original direct dependency and complete locked registry owner differ');
  if(!Buffer.isBuffer(archive)||types.isProxy(archive)||archive.length!==profile.bytes||hash(archive)!==profile.sha256)fail('complete original archive differs');

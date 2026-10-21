@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -119,7 +120,7 @@ const pins=[
   ['src/responses.rs','5d00fae1c3f24e678c460381c58f0bc746435910655109d8d4ce2609a01ffea0','extract_sse_data',30721,31000,'ea95ad29548df0bb2ef72ebfdb44fff1fb88e8967e999e283b1509a8b5aa89fa'],
 ];
 for(const [path,sourceHash,name,start,end,declarationHash]of pins)test(`complete unchanged ${path} preserves ${name} source bytes and its actual namespace admission`,{timeout:60_000},async()=>{
-  const source=readFileSync(new URL(path,root),'utf8');assert.equal(hash(source),sourceHash);
+  const source=readFileSync(repositorySourceURL(path,root),'utf8');assert.equal(hash(source),sourceHash);
   const item=sourceItems(source).find(item=>item.term==='fn'&&item.name===name);assert.deepEqual([item.start,item.end],[start,end]);assert.equal(hash(source.slice(start,end)),declarationHash);
   // Feed the entire original file to the ordinary compiler. Other carried
   // declarations remain visible; no import, attribute or body is replaced.

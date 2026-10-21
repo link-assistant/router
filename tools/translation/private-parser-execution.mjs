@@ -156,7 +156,7 @@ function checked(){
   return current;
 }
 
-const manifestSha256='f157f48dff5606d8b2dab9e922da81299f37a7c4ef142ffce404afb2662f3576';
+const manifestSha256='b2a975d9d400a53e90f36a613ed835616c36041c410750da3250be2f51405e00';
 let paths=null,compiled=null,compiledSources=null,active=false;
 function statIdentity(value){
   if(!value||typeof value!=='object'||proxy(value))fail('own primitive source stat required');
@@ -384,8 +384,8 @@ function execute(input,language,operation){
     const rust=modules.rust.rustTokens,javascript=modules.javascript.tokenize,transport=operation==='source'?modules.concrete.originalStandaloneSourceTransport:modules.concrete.originalIdentityTransport;
     let result;
     try{
-      if(operation==='recipes')result=data(selected.recipes);
-      else if(operation==='tokens')result=data(language==='Rust'?rust(input):javascript(input,'JavaScript'));
+      if(operation==='recipes')result=assignmentData(selected.recipes);
+      else if(operation==='tokens')result=assignmentData(language==='Rust'?rust(input):javascript(input,'JavaScript'));
       else result=transport(input,language,operation==='serialized');
     }catch(error){
       checked();const message=error!==null&&typeof error==='object'&&!proxy(error)?descriptor(error,'message'):null;
@@ -787,7 +787,7 @@ export function lexPrivateConcreteSources(input){
         const value=row.language==='Rust'?rust(row.source):javascript(row.source,'JavaScript');
         tokens+=row.language==='Rust'?value.length:value.tokens.length+value.comments.length;
         if(tokens>BATCH_NODES)fail('batch aggregate token budget');
-        result=data(value);
+        result=assignmentData(value);
       }catch(error){
         checked();const message=error!==null&&typeof error==='object'&&!proxy(error)?descriptor(error,'message'):null;
         throwOriginalCapturedTypeError(message&&own(message,'value')&&typeof message.value==='string'?message.value:'Private original grammar refused');
@@ -802,5 +802,68 @@ export function lexPrivateConcreteSources(input){
     if(compiled!==selected||compiledSources!==selectedSources||selected.modules!==modules||modules.rust.rustTokens!==rust||modules.javascript.tokenize!==javascript)fail('batch token transaction association changed');
     for(let at=0;at<before.manifest.sources.length;at++){const row=before.manifest.sources[at];if(selectedSources[row.id]!==before.sources[row.id])fail('compiled source association changed');}
     batchInputCurrent(request.snapshots);return result;
+  }finally{active=false;}
+}
+
+function assignmentData(value,depth=0,budget={cells:16777216}){
+  if(--budget.cells<0||depth>256)fail('private output data budget');
+  if(value===null||typeof value==='string'||typeof value==='boolean'||typeof value==='number'||typeof value==='bigint'||value===undefined)return value;
+  if(typeof value!=='object'||proxy(value))fail('private executable result cannot escape');
+  const array=Array.isArray(value),parent=prototype(value);if(parent!==(array?Array.prototype:Object.prototype)&&parent!==null)fail('private class cannot escape');
+  const names=keys(value),result=array?[]:parent===null?Object.create(null):{};
+  for(let at=0;at<names.length;at++){
+    const key=names[at];if(typeof key!=='string')fail('private symbol cannot escape');if(array&&key==='length')continue;
+    const field=descriptor(value,key);if(!field||!own(field,'value')||field.enumerable!==true)fail('private nondata result cannot escape');
+    if(key==='__proto__'||key==='get'||key in result) Object.defineProperty(result,key,{__proto__:null,value:assignmentData(field.value,depth+1,budget),enumerable:true,writable:true,configurable:true});
+    else result[key]=assignmentData(field.value,depth+1,budget);
+  }
+  return result;
+}
+
+// Begin generated separate complete source-equation transaction.
+function originalSourceEquationRows(rows,equationApply,equationSerialize){
+ if(rows.length%2!==0)fail('complete before/after pairs required');
+ const equations=[];
+ for(let index=0;index<rows.length;index+=2){
+  checked();const initial=rows[index],final=rows[index+1],before=initial.source,after=final.source;
+  if(initial.document.language!==final.document.language)fail('whole equation language differs');
+  const rule=(left,right,id)=>({id,edits:[{span:[0,left.length],expected:left,replacement:right}]}),run=equationApply(initial.document,{languageRules:[rule(before,before,'source-equation:retain-complete-source')],repositoryRules:[rule(before,after,'source-equation:exact-whole-edit')]}),wire=equationSerialize(run.value);
+  if(wire!==final.meta)fail('complete edited canonical differs');
+  const restored=equationApply(final.document,{languageRules:[],repositoryRules:[rule(after,before,'source-equation:complete-inverse')]});
+  if(equationSerialize(restored.value)!==initial.meta)fail('complete canonical inverse differs');
+  equations.push({before,after,beforeMeta:initial.meta,afterMeta:final.meta,trace:run.trace,inverse:before});checked();
+ }
+ return equations;
+}
+export function transportPrivateConcreteEquations(input){
+  const current=checked();if(active)fail('recursive source transaction');
+  const request=batchSnapshot(input,current);active=true;
+  try{
+    const before=authenticate();checked();
+    if(!compiled){compiled=compile(before);compiledSources=before.sources;}
+    const selected=compiled,selectedSources=compiledSources,modules=selected.modules,transport=modules.concrete.originalIdentityTransport;
+    for(let at=0;at<before.manifest.sources.length;at++){const row=before.manifest.sources[at];if(selectedSources[row.id]!==before.sources[row.id])fail('compiled complete source changed');}
+    const rows=[];let nodes=0,canonicalUnits=0;
+    for(let at=0;at<request.rows.length;at++){
+      checked();const row=request.rows[at];let result;
+      try{result=transport(row.source,row.language,false);}catch(error){
+        checked();const message=error!==null&&typeof error==='object'&&!proxy(error)?descriptor(error,'message'):null;
+        throwOriginalCapturedTypeError(message&&own(message,'value')&&typeof message.value==='string'?message.value:'Private original grammar refused');
+      }
+      checked();
+      if(result.source!==row.source||result.document.language!==row.language)fail('batch source association differs');
+      nodes+=result.document.nodes.length;canonicalUnits+=result.meta.length;
+      if(nodes>BATCH_NODES||canonicalUnits>BATCH_SERIAL)fail('batch aggregate node/canonical budget');
+      rows.push(result);
+    }
+    const equationApply=modules.concrete.applyConcreteSyntaxSubstitutions,equationSerialize=modules.concrete.serializeConcreteSyntaxMeta,equations=originalSourceEquationRows(rows,equationApply,equationSerialize);
+    const result={equations,rows,totals:{rows:rows.length,sourceCodeUnits:request.units,utf8Bytes:request.bytes,nodes,canonicalCodeUnits:canonicalUnits}};
+    const after=authenticate();checked();if(before.text!==after.text)fail('current manifest differs');
+    for(let at=0;at<before.manifest.sources.length;at++){const row=before.manifest.sources[at];if(before.sources[row.id]!==after.sources[row.id])fail('current complete source differs');}
+    finalIdentities(before.records,before.ancestors);finalIdentities(after.records,after.ancestors);checked();
+    if(compiled!==selected||compiledSources!==selectedSources||selected.modules!==modules||modules.concrete.originalIdentityTransport!==transport)fail('batch source transaction association changed');
+    for(let at=0;at<before.manifest.sources.length;at++){const row=before.manifest.sources[at];if(selectedSources[row.id]!==before.sources[row.id])fail('compiled source association changed');}
+    // Captured native reflection only: no callbacks/hash/IO follow this join.
+    batchInputCurrent(request.snapshots);if(modules.concrete.applyConcreteSyntaxSubstitutions!==equationApply||modules.concrete.serializeConcreteSyntaxMeta!==equationSerialize)fail('complete source equation function association changed');return result;
   }finally{active=false;}
 }

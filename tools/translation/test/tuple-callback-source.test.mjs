@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {readFileSync,mkdtempSync,writeFileSync,rmSync} from 'node:fs';
@@ -28,11 +29,11 @@ const hash=source=>createHash('sha256').update(source).digest('hex');
 
 test('original deployment image classifier executes its unchanged tuple callback and nested match patterns',async()=>{
   assert.equal(pin.fullParity,false);assert.equal(pin.runtimeParity,false);assert.equal(pin.rustExecution,false);assert.equal(pin.bodyRewritten,false);
-  const source=readFileSync(new URL(pin.path,root),'utf8');assert.equal(hash(source),pin.sourceSha256);
+  const source=readFileSync(repositorySourceURL(pin.path,root),'utf8');assert.equal(hash(source),pin.sourceSha256);
   const items=sourceItems(source).filter(item=>item.name===pin.name&&item.term==='fn');assert.equal(items.length,1);
   const item=items[0];assert.deepEqual({start:item.start,end:item.end,unit:'utf16'},pin.span);
   const original=source.slice(item.start,item.end);assert.equal(hash(original),pin.declarationSha256);
-  const rustTests=readFileSync(new URL(pin.rustTest.path,root),'utf8');assert.equal(hash(rustTests),pin.rustTest.sourceSha256);assert.match(rustTests,new RegExp(`fn ${pin.rustTest.name}\\(`));
+  const rustTests=readFileSync(repositorySourceURL(pin.rustTest.path,root),'utf8');assert.equal(hash(rustTests),pin.rustTest.sourceSha256);assert.match(rustTests,new RegExp(`fn ${pin.rustTest.name}\\(`));
   const result=translateProject({entry:pin.path,paths:[pin.path],readSource:()=>original});
   assert.deepEqual(result.meta.moduleDiagnostics,[]);assert.deepEqual(result.meta.refused,[]);assert.equal(result.meta.runtimeParity,false);
   const executable=result.meta.executable.filter(item=>item.term==='fn');assert.deepEqual(executable.map(item=>item.name),[pin.name]);assert.deepEqual(executable[0].span,{start:0,end:original.length});assert.equal(hash(original.slice(executable[0].span.start,executable[0].span.end)),pin.declarationSha256);

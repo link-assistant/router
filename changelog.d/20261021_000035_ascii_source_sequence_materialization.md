@@ -1,0 +1,3 @@
+### Changed
+- Materialize the complete forward and reverse ASCII source equations and stagewise source-packet helpers through native TypeScript parsing, serialized/reparsed CST substitutions and full inverse readback. Refresh the current Rust/Cargo source bank and committed Host entry metadata while preserving historical inputs.
+- Correct current receiving assertions to retain every rule-stage trace and compare historical rows with the final composed physical source. Behavioral, strict TypeScript, full regeneration and parity checks remain separate obligations; this source checkpoint does not establish complete translation.

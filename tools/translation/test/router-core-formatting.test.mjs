@@ -19,7 +19,7 @@ const test=(name,run)=>testCase(name,{timeout:60_000},async()=>{
   vectors=[];try{await run();}finally{if(vectorRoot){mkdirSync(vectorRoot,{recursive:true});writeFileSync(join(vectorRoot,Buffer.from(name).toString('hex')+'.json'),JSON.stringify({name,vectors},(_,value)=>typeof value==='bigint'?{$integer:String(value)}:value)+'\n');}}
 });
 const rootSource='pub mod translation_core;\n';
-const primitiveSource=()=>readFileSync(new URL('../../../src/translation_core/primitives.rs',import.meta.url),'utf8');
+const primitiveSource=()=>readFileSync(new URL('../../../rust/src/translation_core/primitives.rs',import.meta.url),'utf8');
 function project(source,{facade=ROUTER_FORMATTING_FACADE_SOURCE,root=rootSource,extra={}}={}){
   const files={'src/lib.rs':root+source,'src/translation_core.rs':facade,'src/translation_core/primitives.rs':primitiveSource(),...extra};
   retain('complete-project-input',files);
@@ -33,7 +33,7 @@ async function targets(label,result,expected){
 function returned(source,name='answer'){return `pub fn ${name}()->crate::translation_core::Text{${source}}`;}
 
 test('owned format facade is a complete explicit source contract and qualified Text boundary',async()=>{
-  const physical=readFileSync(new URL('../../../src/translation_core.rs',import.meta.url),'utf8');
+  const physical=readFileSync(new URL('../../../rust/src/translation_core.rs',import.meta.url),'utf8');
   retain('actual-owned-facade',{physical,registered:ROUTER_FORMATTING_FACADE_SOURCE,sha256:ROUTER_FORMATTING_FACADE_SHA256});
   assert.equal(physical,ROUTER_FORMATTING_FACADE_SOURCE);assert.equal(digest(physical),ROUTER_FORMATTING_FACADE_SHA256);
   const result=project(returned('crate::translation_core::format!("core {{text}}")'));
@@ -110,7 +110,7 @@ const COMPLETE_ACCOUNTS_ORIGINAL='Ly8hIFRoZSBgYWNjb3VudHNgIHN1YmNvbW1hbmQ6IHJlcG
 const ACCOUNTS_ORIGINAL_SHA256='3119369d8c1b4b1ac57d7ce1eb75ecdc8229ede1148eb8a0024a544da4583681';
 
 test('actual complete accounts CLI header adopts the core and reaches checked JS and strict TypeScript',async()=>{
-  const original=Buffer.from(COMPLETE_ACCOUNTS_ORIGINAL,'base64').toString('utf8'),root=readFileSync(new URL('../../../src/lib.rs',import.meta.url),'utf8'),operation=readFileSync(new URL('../../../src/operation_output.rs',import.meta.url),'utf8');
+  const original=Buffer.from(COMPLETE_ACCOUNTS_ORIGINAL,'base64').toString('utf8'),root=readFileSync(new URL('../../../rust/src/lib.rs',import.meta.url),'utf8'),operation=readFileSync(new URL('../../../rust/src/operation_output.rs',import.meta.url),'utf8');
   assert.equal(digest(original),ACCOUNTS_ORIGINAL_SHA256);
   const migration=retain('actual-application-migration',migrateCoreFormatting(original,{rootSource:root,macroUseSources:{operation_output:operation}}));
   const build=source=>{const files={'src/lib.rs':root,'src/accounts_cli.rs':source,'src/operation_output.rs':operation,'src/translation_core.rs':ROUTER_FORMATTING_FACADE_SOURCE,'src/translation_core/primitives.rs':primitiveSource()};return translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path]});};

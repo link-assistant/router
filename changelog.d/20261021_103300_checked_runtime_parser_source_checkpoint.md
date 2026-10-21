@@ -1,0 +1,1 @@
+Bulk-generate four native-bound runtime parser substitutions through separate language/repository CST phases and full inverses; retain full parsing and invocation-local DATA. Qualify all seven Node receiving cases and six parked batching controls in both engines, preserve default producer equations, and keep full coverage, performance and JavaScript-first CI obligations explicit.

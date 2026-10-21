@@ -27,7 +27,7 @@ async function filesystemInputs(root,output){
 async function inputVector(root,output){
  const headResult=spawnSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}),head=headResult.status===0?headResult.stdout.trim():null;
  let paths;
- if(head){const listed=spawnSync('git',['ls-files','--cached','--others','--exclude-standard','-z','--','*.rs','Cargo.toml','Cargo.lock','**/Cargo.toml','**/Cargo.lock','packages/javascript/package.json','packages/javascript/package-lock.json','tools/translation','scripts'],{cwd:root,encoding:'utf8'});if(listed.status!==0)throw Error('Tracked input inventory failed');paths=listed.stdout.split('\0').filter(path=>path&&!excluded(path)).sort();}
+ if(head){const listed=spawnSync('git',['ls-files','--cached','--others','--exclude-standard','-z','--','*.rs','Cargo.toml','Cargo.lock','**/Cargo.toml','**/Cargo.lock','js/package.json','js/package-lock.json','tools/translation','scripts'],{cwd:root,encoding:'utf8'});if(listed.status!==0)throw Error('Tracked input inventory failed');paths=listed.stdout.split('\0').filter(path=>path&&!excluded(path)).sort();}
  else paths=await filesystemInputs(root,output);
  const missing=paths.filter(path=>!existsSync(join(root,path))),blobs=new Map();
  if(missing.length){

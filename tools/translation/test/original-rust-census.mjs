@@ -1,5 +1,6 @@
 // Test discovery only: retain the pinned historical census and include every
 // current tracked Rust path. This does not issue a source or body capability.
+import {repositoryCratePaths} from './fixtures/repository-paths.mjs';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
@@ -18,5 +19,5 @@ export function assertOriginalRustCensus(paths){
 }
 export function currentOriginalRustPaths(root){
  const output=execFileSync('git',['ls-files','-z','--','*.rs'],{cwd:root,encoding:'utf8',timeout:10000,maxBuffer:4*1024*1024});
- return assertOriginalRustCensus(output.split('\0').filter(Boolean));
+ return assertOriginalRustCensus(repositoryCratePaths(output.split('\0').filter(Boolean),root));
 }

@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
@@ -25,7 +26,7 @@ test('complete original String Pattern and RangeFull forwarding selections remai
 });
 
 test('complete unchanged original policy parent executes both owned String Pattern bodies in JS and strict TS',{timeout:60000},async()=>{
- const paths=['src/generated_js_first/mod.rs','src/generated_js_first/policy.rs'],sources=Object.fromEntries(paths.map(path=>[path,readFileSync(new URL(path,root),'utf8')]));assert.equal(hash(sources[paths[1]]),'c5d5cec07bf54be29de7beed707263256afa6ba1ee87c89695b237d5626f5673');
+ const paths=['src/generated_js_first/mod.rs','src/generated_js_first/policy.rs'],sources=Object.fromEntries(paths.map(path=>[path,readFileSync(repositorySourceURL(path,root),'utf8')]));assert.equal(hash(sources[paths[1]]),'c5d5cec07bf54be29de7beed707263256afa6ba1ee87c89695b237d5626f5673');
  const result=translateProject({entry:paths[0],paths,readSource:path=>sources[path],compilationProfile:PRODUCTION_PROFILE}),qualified=[['',false],['plain',false],['/',true],['/model',true],['provider/model',true],['a//b',true],['Ω/😀',true],['\0/\0',true],['／',false]],prefixes=[['','',true],['abc','',true],['','a',false],['abc','ab',true],['abc','bc',false],['Ω😀tail','Ω😀',true],['e\u0301','é',false],['\0abc','\0',true]],observations=[];
  retain('02-complete-original-project',{sources,result,qualified,prefixes,scope:'actual complete original policy parent; no whole-library admission claim'});
  for(const name of ['policy.is_qualified_model','policy.credential_prefix_matches'])assert.ok(result.meta.executable.some(row=>row.name===name),JSON.stringify(result.meta.refused));for(const source of result.meta.sources)assert.equal(source.sha256,hash(sources[source.source]));

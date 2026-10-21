@@ -1,7 +1,7 @@
 import { load } from './helpers.mjs';
 
-const { createNativeRouter } = await load('packages/javascript/native/server.mjs');
-const { NativeAffinityStore } = await load('packages/javascript/native/native-service.mjs');
+const { createNativeRouter } = await load('js/src/server.mjs');
+const { NativeAffinityStore } = await load('js/src/native-service.mjs');
 export const owner = { client_kind: 'codex', principal_id: 'alice' };
 export const request = (path, method = 'GET', body, credential = 'alice') => new Request(`http://router.test${path}`, {
   method, headers: { authorization: `Bearer ${credential}`, ...(body === undefined ? {} : { 'content-type': 'application/json' }) },

@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -99,7 +100,7 @@ test('original ThinkingLevel from_budget retains full enum attrs and mechanicall
   const method=extractImplDeclarations(source).implementations.find(item=>item.typePath?.join('::')==='ThinkingLevel').methods.find(method=>method.name==='from_budget');
   assert.deepEqual(method.span,{start:1878,end:2166});assert.equal(hash(method.source),'b47b48021ce81eb7a111b973f4724308e7929e888c89051c7774b2985d958f00');
   const text=source.slice(data.start,data.end)+'\nimpl ThinkingLevel {\n'+method.source+'\n}';
-  const dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+  const dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
   const result=project(text,{deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});assert.deepEqual(result.meta.refused,[]);
   assert.equal(result.meta.checkedMethods.length,1);assert.equal(result.meta.checkedMethods[0].name,'ThinkingLevel.from_budget');
   const checked=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram)),target=parseProgram(JSON.stringify(result.meta.targetSemanticProgram));

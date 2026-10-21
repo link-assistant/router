@@ -1,3 +1,4 @@
+import {crateModuleSourcePath} from './repository-layout.mjs';
 // Source-bound owned aliases feed the existing registered JSON/Option/Result
 // representations. Native library implementations remain untranslated.
 import {JSON_TYPES,JSON_CONTRACTS} from './extensions/json-contracts.mjs';
@@ -31,7 +32,7 @@ function context(parser,row,position=row.start){
   identity(parser);const state=matchesParserFacts(parser),facade=requireRouterCoreFacade(parser);
   const leaves=state.facts.modules.filter(module=>module.path.join('.')==='translation_core.primitives');
   if(leaves.length!==1)fail('requires the complete owned primitives leaf');const leaf=leaves[0];
-  if(leaf.file!=='src/translation_core/primitives.rs'||leaf.configurationCondition!=='active'||leaf.source!==ROUTER_CORE_PRIMITIVES_SOURCE)fail('primitives source changed');
+  if(leaf.file!==crateModuleSourcePath(state.facts.modules,'src/translation_core/primitives.rs')||leaf.configurationCondition!=='active'||leaf.source!==ROUTER_CORE_PRIMITIVES_SOURCE)fail('primitives source changed');
   originalSourceModuleItems(leaf);
   if(row.name==='Json'){const target=parser.resolveSourceNamespace(JSON_TYPES.value.path,parser.modulePath??[],'type');if(target.join('::')!=='serde_json::Value'||parser.shadowedEffectRoots?.has('serde_json'))fail('the registered JSON representation is shadowed');}
   const stage=createRulePipeline([

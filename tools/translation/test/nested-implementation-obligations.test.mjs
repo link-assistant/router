@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -9,7 +10,7 @@ import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {translateProject} from '../project.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 
-const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
 const compile=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
 const views=source=>captureSourceModuleViews({source,sourcePath:'src/lib.rs',compilationProfile:PRODUCTION_PROFILE}).views.map(sourceView=>({file:'src/lib.rs',path:sourceView.modulePath,source,sourceView,compilationProfile:PRODUCTION_PROFILE,configurationCondition:sourceView.configurationCondition}));
 const cases=[
@@ -65,7 +66,7 @@ test('borrowed opaque types retain their original reference lifetime and mutabil
 });
 test('whole unchanged Router reference-to-opaque headers retain an empty nested implementation census',()=>{
  for(const [path,sha256]of [['src/accounts_selection.rs','51157f36c992f5606066c6dee5346cf705a20c31ad4847bad1ee83417d4b8b2a'],['src/audit.rs','63e6f5520be013d18bca0ad1580f1e437fd869926b854e1bd1d30b98d35d3ff1']]){
-  const source=readFileSync(new URL(path,root),'utf8');assert.equal(createHash('sha256').update(source).digest('hex'),sha256);
+  const source=readFileSync(repositorySourceURL(path,root),'utf8');assert.equal(createHash('sha256').update(source).digest('hex'),sha256);
   const captured=captureSourceModuleViews({source,sourcePath:path,compilationProfile:PRODUCTION_PROFILE});
   for(const sourceView of captured.views)assert.deepEqual(originalNestedImplementationObligations({file:path,path:sourceView.modulePath,source,sourceView,compilationProfile:PRODUCTION_PROFILE,configurationCondition:sourceView.configurationCondition}),[],path);
  }

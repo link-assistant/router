@@ -7,9 +7,23 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { parityCheckBudgets } from './parity-check-budgets.mjs';
+import {DRAFT_SUPPLEMENTS,DRAFT_SUPPLEMENT_CONDITION,DRAFT_SUPPLEMENT_PR_TYPES,readFixedNineDraftWorkflowSources} from './fixed-nine-draft-policy.mjs';
 const require = createRequire(new URL('./ci/package.json', import.meta.url));
 const { parseDocument } = require('yaml');
 export const STAGES = ['lint', 'node-tests', 'bun-tests', 'typescript', 'parity', 'translation', 'profile-matrix', 'reverse-translation'];
+const draftSupplementNames=new Set(DRAFT_SUPPLEMENTS);
+function exact(a,b,depth=0){if(Object.is(a,b))return true;if(depth>=64||!a||!b||typeof a!=='object'||typeof b!=='object'||Array.isArray(a)!==Array.isArray(b)||Array.isArray(a)&&a.length!==b.length)return false;const left=Object.keys(a).sort(),right=Object.keys(b).sort();return left.length===right.length&&left.every((key,index)=>key===right[index]&&exact(a[key],b[key],depth+1));}
+// Immutable reviewed source DATA supplies only this fixed table. It does not
+// make skipped callers eight successful stages or grant Rust admission.
+const reviewedDraftSupplementals=new Map(readFixedNineDraftWorkflowSources().files.filter(row=>draftSupplementNames.has(path.basename(row.path))).map(row=>{
+ const document=parseDocument(row.after,{uniqueKeys:true,version:'1.2'});if(document.errors.length)throw TypeError('Fixed-nine reviewed workflow grammar differs');return [path.basename(row.path),document.toJS()];
+}));
+function auditDraftSupplement(name,workflow,errors){
+ const reviewed=reviewedDraftSupplementals.get(name),trigger=workflow.on?.pull_request;
+ if(!exact(trigger?.types,DRAFT_SUPPLEMENT_PR_TYPES)||!exact(workflow.on,reviewed.on))errors.push(`${name}: fixed-nine reviewed PR activities/paths and other triggers differ`);
+ if(workflow.jobs?.javascript?.if!==DRAFT_SUPPLEMENT_CONDITION||!exact(workflow.jobs?.javascript,reviewed.jobs.javascript))errors.push(`${name}/javascript: exact fixed-nine draft caller gate missing`);
+}
+
 const success = (id) => `needs.${id}.result == 'success'`;
 // Compare executable reviewed programs, rather than finding reassuring words
 // in comments or strings that a no-op verifier could carry.
@@ -63,16 +77,16 @@ export function auditWorkflows(sources) {
     if (!gate.on?.workflow_call || Object.keys(gate.on).some(key => key !== 'workflow_call')) errors.push(`${gateName}: must only be workflow_call`);
     if (gate.on?.workflow_call?.inputs?.sha?.required !== true) errors.push(`${gateName}: required immutable SHA input missing`);
     const required = {
-      lint: ['node scripts/lint-js-first.mjs', 'node --test scripts/test/check-js-first-workflows.test.mjs', 'node --test scripts/test/check-js-first-local.test.mjs', 'node scripts/check-js-first-workflows.mjs'],
-      'node-tests': ['npm run native:test --prefix packages/javascript'],
-      'bun-tests': ['npm run native:test:bun --prefix packages/javascript'],
-      typescript: ['node scripts/run-node-tests.mjs --outer-timeout-ms=180000 scripts/test/node-case-deadlines.test.mjs', 'npm run typecheck --prefix packages/javascript', 'npm run native:typecheck --prefix packages/javascript', 'node scripts/regenerate-native-typescript.mjs --check', 'node scripts/check-native-typescript.mjs', 'node scripts/run-node-tests.mjs --outer-timeout-ms=900000 tools/translation/js-to-rust/test/native-typescript.test.mjs', 'node packages/javascript/node_modules/typescript/bin/tsc -p tools/translation/tsconfig.json', 'node tools/translation/check-typescript-fixtures.mjs', 'node scripts/check-profile-typescript.mjs', 'node scripts/check-owned-definition-typescript.mjs', 'node tools/translation/serialization-schema/native-descriptor.mjs --check', 'node tools/translation/serialization-schema/check-descriptor-typescript.mjs', 'node tools/translation/serialization-schema/bulk.mjs --check', 'node tools/translation/serialization-schema/check-bulk-typescript.mjs', 'node scripts/build-js-first-ui.mjs'],
+      lint: ['node scripts/prepare-bun-reverse-files.mjs --check', 'node scripts/lint-js-first.mjs', 'node --test --test-concurrency=1 scripts/test/run-bun-forward-files.test.mjs scripts/test/run-bun-reverse-files.test.mjs scripts/test/bun-reverse-inputs.test.mjs', 'node --test scripts/test/check-js-first-workflows.test.mjs', 'node --test scripts/test/check-js-first-local.test.mjs', 'node scripts/check-js-first-workflows.mjs'],
+      'node-tests': ['npm run native:test --prefix js'],
+      'bun-tests': ['npm run native:test:bun --prefix js'],
+      typescript: ['node scripts/run-node-tests.mjs --outer-timeout-ms=180000 scripts/test/node-case-deadlines.test.mjs', 'npm run typecheck --prefix js', 'npm run native:typecheck --prefix js', 'node scripts/regenerate-native-typescript.mjs --check', 'node scripts/check-native-typescript.mjs', 'node scripts/run-node-tests.mjs --outer-timeout-ms=900000 tools/translation/js-to-rust/test/native-typescript.test.mjs', 'node js/node_modules/typescript/bin/tsc -p tools/translation/tsconfig.json', 'node tools/translation/check-typescript-fixtures.mjs', 'node scripts/check-profile-typescript.mjs', 'node scripts/check-owned-definition-typescript.mjs', 'node tools/translation/serialization-schema/native-descriptor.mjs --check', 'node tools/translation/serialization-schema/check-descriptor-typescript.mjs', 'node tools/translation/serialization-schema/bulk.mjs --check', 'node tools/translation/serialization-schema/check-bulk-typescript.mjs', 'node scripts/build-js-first-ui.mjs'],
       parity: ['node --test --test-concurrency=2 experiments/issue-759/acceptance/*.test.mjs', 'node scripts/check-router-parity.mjs --strict'],
       translation: ['node scripts/translate-router.mjs --check', 'node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --check', 'node scripts/run-node-tests.mjs --outer-timeout-ms=3600000 --test-concurrency=2 tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs'],
       'profile-matrix': ['node scripts/translate-router.mjs --profile-matrix --check', 'node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --profile-matrix --check'],
-      'reverse-translation': ['node scripts/regenerate-js-first.mjs --check', 'node scripts/regenerate-js-first.mjs --owned-core-definitions --check', 'node scripts/regenerate-js-first.mjs --owned-core-definitions --profile-matrix --check', 'node scripts/run-node-tests.mjs --outer-timeout-ms=900000 --test-concurrency=2 tools/translation/js-to-rust/test/*.test.mjs', 'bun test tools/translation/js-to-rust/test/*.test.mjs'],
+      'reverse-translation': ['node scripts/regenerate-js-first.mjs --check', 'node scripts/regenerate-js-first.mjs --owned-core-definitions --check', 'node scripts/regenerate-js-first.mjs --owned-core-definitions --profile-matrix --check', 'node scripts/run-node-tests.mjs --outer-timeout-ms=900000 --test-concurrency=2 tools/translation/js-to-rust/test/*.test.mjs', 'node scripts/run-bun-reverse-files.mjs --output-root js/node_modules/.bun-reverse-files'],
     };
-    const packageInstall = 'npm ci --prefix packages/javascript --ignore-scripts';
+    const packageInstall = 'npm ci --prefix js --ignore-scripts';
     for (const id of STAGES) {
       const job = gate.jobs?.[id];
       if (!job || !job['runs-on'] || Object.hasOwn(job, 'if') || job['continue-on-error'] || job.strategy?.['fail-fast'] === true) errors.push(`${gateName}/${id}: required unconditional failing stage missing`);
@@ -81,7 +95,8 @@ export function auditWorkflows(sources) {
       if (['typescript', 'translation', 'reverse-translation'].includes(id)) {
         const uploads = (job?.steps ?? []).filter(step => step.uses === 'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a');
         const upload = uploads.length === 1 ? uploads[0] : null;
-        const validShape = upload && !Object.hasOwn(upload, 'run') && job.steps.at(-1) === upload && upload.with?.name === 'node-case-deadlines-${{ github.job }}-${{ inputs.sha }}' && upload.with?.path === 'packages/javascript/node_modules/.node-case-deadlines/' && upload.with?.['include-hidden-files'] === true && upload.with?.['if-no-files-found'] === 'error';
+        const evidencePath = id === 'reverse-translation' ? 'js/node_modules/.node-case-deadlines/\njs/node_modules/.bun-reverse-files/\n' : 'js/node_modules/.node-case-deadlines/';
+        const validShape = upload && !Object.hasOwn(upload, 'run') && job.steps.at(-1) === upload && upload.with?.name === 'node-case-deadlines-${{ github.job }}-${{ inputs.sha }}' && upload.with?.path === evidencePath && upload.with?.['include-hidden-files'] === true && upload.with?.['if-no-files-found'] === 'error';
         if (!validShape) errors.push(`${gateName}/${id}: missing mandatory command evidence uploader for complete Node deadline receipts/raws`);
         if (upload && upload.if !== '${{ always() }}') errors.push(`${gateName}/${id}: conditional deadline evidence loss is forbidden`);
         if (upload?.['continue-on-error']) errors.push(`${gateName}/${id}: deadline evidence uploader cannot ignore failures`);
@@ -116,12 +131,15 @@ export function auditWorkflows(sources) {
     if (aggregateSteps.length !== 1 || assertion?.env?.STAGE_RESULTS !== '${{ toJSON(needs) }}' || Object.hasOwn(assertion ?? {}, 'if') || assertion?.['continue-on-error'] || normalizeProgram(assertion?.run) !== aggregateVerifier) errors.push(`${gateName}/complete: must reject skipped, cancelled or failed stages with the unconditional reviewed program`);
     if (Object.keys(gate.jobs ?? {}).some(id => ![...STAGES, 'complete'].includes(id))) errors.push(`${gateName}: unreviewed gate job`);
   }
+  for(const name of [...DRAFT_SUPPLEMENTS,'release.yml'])if(!documents.has(name))errors.push(`${name}: missing reviewed required workflow`);
   for (const [name, workflow] of documents) {
     if (name === gateName) continue;
     if (!workflow.jobs || !Object.keys(workflow.jobs).length) { errors.push(`${name}: jobs missing`); continue; }
     if (!workflow.concurrency?.group || workflow.concurrency?.['cancel-in-progress'] !== false) errors.push(`${name}: Rust workflows must set cancel-in-progress: false`);
     const js = workflow.jobs.javascript;
-    if (!js || js.uses !== './.github/workflows/javascript-first.yml' || js.with?.sha !== '${{ github.sha }}' || Object.hasOwn(js, 'if') || js.needs || js['continue-on-error'] || js.strategy) errors.push(`${name}/javascript: unconditional same-SHA reusable gate missing`);
+    const draftSupplement=draftSupplementNames.has(name);
+    if(draftSupplement)auditDraftSupplement(name,workflow,errors);
+    if (!js || js.uses !== './.github/workflows/javascript-first.yml' || js.with?.sha !== '${{ github.sha }}' || (draftSupplement?js.if!==DRAFT_SUPPLEMENT_CONDITION:Object.hasOwn(js, 'if')) || js.needs || js['continue-on-error'] || js.strategy) errors.push(`${name}/javascript: ${draftSupplement?'exact fixed-nine draft-selected':'unconditional'} same-SHA reusable gate missing`);
     for (const [id, job] of Object.entries(workflow.jobs)) {
       if (id === 'javascript') continue;
       if (Object.hasOwn(job, 'continue-on-error') && job['continue-on-error'] !== false) errors.push(`${name}/${id}: gated verification must not ignore failures`);

@@ -4,8 +4,8 @@ import {mkdtemp,rm,readFile,realpath} from 'node:fs/promises';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {createServer} from 'node:http';
-import {createNativeRouter} from '../../../packages/javascript/native/server.mjs';
-const {createRouterCore}=await import(process.env.ROUTER_NATIVE_CORE_MODULE ?? '../../../packages/javascript/native/core.mjs');
+import {createNativeRouter} from '../../../js/src/server.mjs';
+const {createRouterCore}=await import(process.env.ROUTER_NATIVE_CORE_MODULE ?? '../../../js/src/core.mjs');
 const secret='native-integration-independent-signing-key-759';
 const req=(path,method='GET',body,token)=>new Request('http://router'+path,{method,headers:token?{authorization:`Bearer ${token}`}:{},...(body===undefined?{}:{body:JSON.stringify(body)})});
 test('real core native resources retain Rust stored-provider identity and client ownership through durable restart',{timeout:30000},async t=>{

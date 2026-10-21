@@ -1,5 +1,5 @@
 // GENERATED: node scripts/regenerate-js-first.mjs
-// Independently checked scoped bodies from packages/javascript/native/client-status.mjs; source sha256=cfd6afd52b809baa8478dd1df89a34e44dcf1f12529c76cc6b73f85bd0da2c84; IR sha256=b0ea219acf85b6b5e2301ad64974b5d8bf111a895a1c6c14b1b5411f1ce5cf65.
+// Independently checked scoped bodies from js/src/client-status.mjs; source sha256=cfd6afd52b809baa8478dd1df89a34e44dcf1f12529c76cc6b73f85bd0da2c84; IR sha256=2ea5847202ce191e68be66f4c3b48e4737560d828fd5d6aac727facfb152747b.
 // Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
 #[derive(Clone, Copy)]
 pub enum JsPayload<'a> {
@@ -104,7 +104,7 @@ impl<'a> JsValue<'a> {
 // Conditional private body draft: original standard collection intrinsics required.
 // Original has/includes lookup stability and parent execution are unproved.
 pub struct JsClosureEnvironment0 {}
-fn scoped_src0cef2b40b0bcdecd_at2581() -> JsClosureEnvironment0 {
+fn scoped_src8fb263f4ccf34de5_at2581() -> JsClosureEnvironment0 {
     JsClosureEnvironment0 {}
 }
 impl JsClosureEnvironment0 {
@@ -114,6 +114,6 @@ impl JsClosureEnvironment0 {
 }
 
 #[rustfmt::skip]
-fn scoped_src68a7fd82a94bce8e_at3464<'a>(key: JsPayload<'a>) -> bool {
+fn scoped_src1e0923ac60ac7f44_at3464<'a>(key: JsPayload<'a>) -> bool {
     return (!({ let observed = key; JsPayload::String(&[65, 78, 84, 72, 82, 79, 80, 73, 67, 95, 77, 79, 68, 69, 76]).same_primitive(observed) || JsPayload::String(&[67, 76, 65, 85, 68, 69, 95, 67, 79, 68, 69, 95, 83, 85, 66, 65, 71, 69, 78, 84, 95, 77, 79, 68, 69, 76]).same_primitive(observed) }));
 }

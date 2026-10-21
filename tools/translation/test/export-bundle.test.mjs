@@ -1,3 +1,4 @@
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync,spawnSync} from 'node:child_process';
@@ -47,7 +48,7 @@ test('complete committed offline compiler exports deterministically with full so
       assert.equal(git(bundle.destination,['ls-files','--others','-z','--','tools/translation/source-profiles']).toString(),'');
     }
     for(const row of first.manifest.inputs){
-      const original=readFileSync(join(root,row.path)),copied=readFileSync(join(first.destination,row.path));
+      const original=readFileSync(join(root,repositorySourcePath(row.path,root))),copied=readFileSync(join(first.destination,row.path));
       assert.ok(copied.equals(original),row.path);assert.equal(copied.length,row.bytes);assert.equal(sha(copied),row.sha256);
       assert.equal((lstatSync(join(first.destination,row.path)).mode&0o111)?'100755':'100644',row.mode);
     }
@@ -69,18 +70,18 @@ test('the exported synchronization CLI generates and updates real receiving Java
     const receiving=join(directory,'receiving');mkdirSync(receiving);
     const put=(name,value)=>{const file=join(receiving,name);mkdirSync(join(file,'..'),{recursive:true});writeFileSync(file,value);};
     const policy='/** @param {number} x @returns {number} */ export function increment(x) { return x + 1; }\n';
-    put('packages/javascript/package.json','{"name":"receiving-sync","version":"1.0.0","type":"module"}\n');
-    put('packages/javascript/portable/policy.mjs',policy);
-    put('packages/javascript/native/core.mjs','export function observed() { return 7; }\n');
-    put('packages/javascript/index.js','export const receiving = true;\n');
-    put('packages/javascript/testing.js','export const testing = true;\n');
-    put('packages/javascript/catalog.json','{"operations":[]}\n');
+    put('js/package.json','{"name":"receiving-sync","version":"1.0.0","type":"module"}\n');
+    put('js/portable/policy.mjs',policy);
+    put('js/src/core.mjs','export function observed() { return 7; }\n');
+    put('js/index.js','export const receiving = true;\n');
+    put('js/testing.js','export const testing = true;\n');
+    put('js/catalog.json','{"operations":[]}\n');
     put('parity/fixtures/js-first/policy.json',JSON.stringify({cases:[{id:'increment-seven',function:'increment',args:[7],expected:8}]}));
     put('parity/fixtures/js-first/unsupported.json','[]\n');
     const original='pub fn original() -> bool { true }\n';put('src/original.rs',original);
-    const require=createRequire(join(root,'packages/javascript/package.json'));
+    const require=createRequire(join(root,'js/package.json'));
     const dependencies=join(require.resolve('typescript/package.json'),'../..');
-    symlinkSync(dependencies,join(receiving,'packages/javascript/node_modules'),'dir');
+    symlinkSync(dependencies,join(receiving,'js/node_modules'),'dir');
     git(receiving,['init','--quiet']);put('.git/info/exclude','node_modules/\n');git(receiving,['add','.']);
     git(receiving,['-c','user.name=Translation fixture','-c','user.email=fixture@example.invalid','commit','--quiet','-m','Independent receiving sources']);
     const cli=join(bundle.destination,'scripts/sync-router.mjs');
@@ -90,7 +91,7 @@ test('the exported synchronization CLI generates and updates real receiving Java
       const receipt=existsSync(join(output,'receipt.json'))?JSON.parse(readFileSync(join(output,'receipt.json'))):null;
       const logs=receipt?.records.flatMap(row=>(row.logs??[]).map(log=>({path:log.path,content:readFileSync(join(output,log.path),'utf8')})))??[];
       if(result.status!==0){
-        const retained=join(root,'packages/javascript/node_modules/.issue-759-verification/exported-sync-child-failures');mkdirSync(retained,{recursive:true});
+        const retained=join(root,'js/node_modules/.issue-759-verification/exported-sync-child-failures');mkdirSync(retained,{recursive:true});
         const failure=mkdtempSync(join(retained,'receiving-'));writeFileSync(join(failure,'command.json'),JSON.stringify({mode,name,cli,receiving,exitCode:result.status,error:result.error?.message})+'\n');
         writeFileSync(join(failure,'stdout.raw.log'),result.stdout??'');writeFileSync(join(failure,'stderr.raw.log'),result.stderr??'');
         if(receipt)writeFileSync(join(failure,'receipt.json'),JSON.stringify(receipt,null,2)+'\n');
@@ -107,14 +108,14 @@ test('the exported synchronization CLI generates and updates real receiving Java
     const {compileNativeTypeScript}=await import(pathToFileURL(join(bundle.destination,'tools/translation/js-to-rust/native-typescript.mjs')));
     assert.equal(evaluate(parseMeta(readFileSync(join(receiving,'tools/translation/js-to-rust/generated/policy.lino'),'utf8')),'increment',[7]),8);
     assert.equal(compileNativeTypeScript(receiving,{sourceRoot:receiving}).compiler,'5.9.3');
-    put('packages/javascript/portable/policy.mjs',policy.replace('x + 1','x + 2'));
-    put('packages/javascript/native/core.mjs','export function observed() { return 9; }\n');
+    put('js/portable/policy.mjs',policy.replace('x + 1','x + 2'));
+    put('js/src/core.mjs','export function observed() { return 9; }\n');
     put('parity/fixtures/js-first/policy.json',JSON.stringify({cases:[{id:'increment-seven',function:'increment',args:[7],expected:9}]}));
     const changed=run('--write','changed');assert.equal(changed.exitCode,0);assert.equal(changed.originalInputsUnchanged,true);
     assert.notEqual(readFileSync(join(receiving,'src/generated_js_first/policy.rs'),'utf8'),rust);
     assert.equal(evaluate(parseMeta(readFileSync(join(receiving,'tools/translation/js-to-rust/generated/policy.lino'),'utf8')),'increment',[7]),9);
     assert.equal(compileNativeTypeScript(receiving,{sourceRoot:receiving}).compiler,'5.9.3');
-    const ts=require('typescript'),native=readFileSync(join(receiving,'packages/typescript/native/core.ts'),'utf8');
+    const ts=require('typescript'),native=readFileSync(join(receiving,'ts/src/core.ts'),'utf8');
     const erased=ts.transpileModule(native,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
     const observed=await import('data:text/javascript;base64,'+Buffer.from(erased).toString('base64'));assert.equal(observed.observed(),9);
     const fresh=run('--check','fresh');assert.equal(fresh.exitCode,0);assert.equal(fresh.artifactsCurrent,true);assert.equal(fresh.wholeSourceSynchronization,false);assert.equal(fresh.rustExecuted,false);
@@ -131,9 +132,9 @@ test('the complete exported CST extension feeds edited source into both checked 
     const load=name=>import(pathToFileURL(join(bundle.destination,'tools/translation',name)).href);
     // The receiving application supplies the installed native grammar/compiler
     // dependency; the exported source manifest never pretends to vendor it.
-    const receivingPackage=join(bundle.destination,'packages/javascript');mkdirSync(receivingPackage,{recursive:true});
+    const receivingPackage=join(bundle.destination,'js');mkdirSync(receivingPackage,{recursive:true});
     writeFileSync(join(receivingPackage,'package.json'),'{"type":"module","private":true}\n');
-    const require=createRequire(join(root,'packages/javascript/package.json'));
+    const require=createRequire(join(root,'js/package.json'));
     symlinkSync(join(require.resolve('typescript/package.json'),'../..'),join(receivingPackage,'node_modules'),'dir');
     const concrete=await load('concrete-syntax-meta.mjs'),forward=await load('translate.mjs');
     const priorCompilerRoot=process.env.ROUTER_NATIVE_TS_SOURCE_ROOT;let reverse,interpreter;

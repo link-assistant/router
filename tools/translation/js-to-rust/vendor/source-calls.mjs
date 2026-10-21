@@ -10,7 +10,7 @@ import {parseJavaScriptItem} from './frontends.mjs';
 import {check,toLino,lowerSourceClosure,snakeFromCamel} from './ir.mjs';
 import {createLexicalEnvironmentIssuer,issueSourceCallEnvironmentFrom,lexicalClosureName,readLexicalEnvironment} from './lexical-environments.mjs';
 const root=process.env.ROUTER_NATIVE_TS_SOURCE_ROOT??resolve(dirname(fileURLToPath(import.meta.url)),'../../../..');
-const require=createRequire(join(root,'packages/javascript/package.json'));
+const require=createRequire(join(root,'js/package.json'));
 const issued=new WeakMap(),checking=new WeakSet(),issuers=new WeakMap();
 const fail=message=>{throw Object.assign(new Error(message),{slug:'collection'});};
 const hash=source=>createHash('sha256').update(Buffer.from(source,'utf16le')).digest('hex');

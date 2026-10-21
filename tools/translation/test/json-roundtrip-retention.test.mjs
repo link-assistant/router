@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -15,7 +16,7 @@ const source=JSON_ROUNDTRIP_RETENTION_SOURCES.find(row=>row.path==='src/lexical/
 const bits=value=>{const view=new DataView(new ArrayBuffer(8));view.setFloat64(0,value);return view.getBigUint64(0);};
 
 test('full original retention and associated Float bound inputs match exact locked archive bytes',()=>{
-  const proof=loadJsonMacroSourceProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+  const proof=loadJsonMacroSourceProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
   for(const row of JSON_ROUNDTRIP_RETENTION_SOURCES){const original=jsonMacroOriginalSource(proof,'serde_json',row.path);assert.equal(row.source,original.source);assert.equal(row.sha256,original.sha256);assert.equal(hash(row.source),row.sha256);}
   const plan=compileOriginalDigitRetentionControl(source,constant,config);assert.equal(plan.retainedDigits,768);assert.equal(plan.emittedDigitsBound,769);assert.equal(JSON_LEXICAL_MAX_MANTISSA_DIGITS,769);assert.equal(plan.retentionControlShapeVerified,true);assert.equal(hash(source.slice(plan.functionSpan.start,plan.functionSpan.end)),plan.functionSha256);
   for(const key of ['numericCallOwnerVerified','traitOwnerVerified','allocatorEffectsVerified','sourceBehaviorFidelityVerified','parseAdmission','namespaceAuthority','runtimeParity'])assert.equal(plan[key],false,key);

@@ -1,5 +1,7 @@
+import {projectCanonicalJsonArrayField} from './canonical-json-array-fields.mjs';
 // Storage fidelity only. Reconstructed data still enters every original source/CST guard.
 import {createHash} from 'node:crypto';
+import {assertJsonSyntax} from './canonical-json-text.mjs';
 const MAX=256*1024**2,MAX_SOURCE=64*1024**2,MAX_FILE=8*1024**2,MAX_NODES=200000,MAX_CANONICAL=33554432,TAG='router-static-cst-varint-columns-v1',SCHEMA='router-static-cst-global-column-table-storage-v1';
 class StorageShapeError extends TypeError {}
 const assert=(condition,message)=>{if(!condition)throw new StorageShapeError(message);},json=JSON.stringify,hash=b=>createHash('sha256').update(b).digest('hex');
@@ -81,6 +83,40 @@ function decode(row){
  for(const read of reads)read.end();assert(nextID===dictionary.length,'all first-seen dictionary entries consumed');
  assert(json(nodes[0])===json(['root','file',0,row.source.length,0,bytes,-1]),'exact root required');
  const canonical=json({...header,source:row.source,nodes});assert(canonical.length<=MAX_CANONICAL&&hash(canonical)===digest,'full reconstructed canonical SHA required');return canonical;
+}
+
+// Current data decoder; the unchanged measured kernel above remains an oracle.
+function decodeCanonicalText(row){
+ const encoded=row.canonical;assert(typeof encoded==='string'&&encoded.length<=MAX_CANONICAL,'bounded encoded canonical required');
+ const value=JSON.parse(encoded);assert(Array.isArray(value)&&value.length===6&&value[0]===TAG&&json(value)===encoded,'exact tagged transport JSON required');
+ const [,header,dictionary,count,columns,digest]=value;assert(sameKeys(header,documentKeys)&&header.source===null&&header.nodes===null&&typeof digest==='string'&&/^[a-f0-9]{64}$/.test(digest),'exact complete header/reference required');
+ assert(safe(count)&&count>0&&count<=MAX_NODES&&Array.isArray(dictionary)&&dictionary.length>0&&dictionary.length<=count,'node/dictionary census bound');
+ const pairs=new Set();for(const pair of dictionary){assert(Array.isArray(pair)&&pair.length===2&&pair.every(x=>typeof x==='string'&&x.length<=40),'exact bounded dictionary pair');const key=json(pair);assert(!pairs.has(key),'duplicate dictionary pair');pairs.add(key);}
+ const reads=columnVarints(columns,count),nodeParts=[],bytes=Buffer.byteLength(row.source);let s16=0,s8=0,nextID=0,firstNode=null,pending='[';
+ const flush=()=>{
+  // JSON string literals contain escaped lone surrogates. Verify the complete
+  // UTF-16 inverse before retaining a flat chunk rather than a long string rope.
+  const flat=Buffer.from(pending,'utf8').toString('utf8');assert(flat===pending,'complete literal node chunk differs');nodeParts.push(flat);pending='';
+ };
+ const emit=text=>{if(pending.length+text.length>65536)flush();pending+=text;};
+ for(let at=0;at<count;at++){
+  const id=reads[0].read(),d16=reads[1].read(),len16=reads[2].read(),extraStart=reads[3].read(),extraLength=reads[4].read(),distance=reads[5].read();
+  assert(id<dictionary.length&&id<=nextID&&distance>0,'actual dictionary/parent reference');if(id===nextID)nextID++;
+  const pair=dictionary[id],start16=s16+d16,start8=s8+d16+extraStart,n=[pair[0],pair[1],start16,start16+len16,start8,start8+len16+extraLength,at-distance];
+  node(n,at,row.source.length,bytes);if(at===0)firstNode=n;else emit(',');emit(json(n));s16=n[2];s8=n[4];
+ }
+ for(const read of reads)read.end();assert(nextID===dictionary.length,'all first-seen dictionary entries consumed');
+ assert(json(firstNode)===json(['root','file',0,row.source.length,0,bytes,-1]),'exact root required');
+ emit(']');flush();
+ // Emit every validated node in order without retaining a second full forest.
+ // Header property order matches the original spread-and-overwrite serializer.
+ const parts=['{'];let first=true;
+ for(const [key,value]of Object.entries(header)){
+  if(!first)parts.push(',');first=false;parts.push(json(key),':');
+  if(key==='nodes')for(const part of nodeParts)parts.push(part);
+  else parts.push(json(key==='source'?row.source:value));
+ }
+ parts.push('}');const canonical=parts.join('');assert(canonical.length<=MAX_CANONICAL&&hash(canonical)===digest,'full reconstructed canonical SHA required');return canonical;
 }
 
 function sliceDescriptor(row,side,field,sources){
@@ -384,7 +420,7 @@ function originalShape(bundle){
   if(Object.hasOwn(row,'canonical')){
    assert(typeof row.canonical==='string'&&row.canonical.length<=MAX_CANONICAL,'bounded original canonical string');
    // Only a local syntax refusal selects legacy encoding. Native/crypto errors escape.
-   try{JSON.parse(row.canonical);}catch(error){if(error instanceof SyntaxError)throw new StorageShapeError('Static source storage: original canonical JSON shape');throw error;}
+   try{assertJsonSyntax(row.canonical);}catch(error){if(error instanceof SyntaxError)throw new StorageShapeError('Static source storage: original canonical JSON shape');throw error;}
   }
  }
 }
@@ -398,7 +434,7 @@ export function encodeStaticSourceStorage(bundle,raw){
   const lineage=encodeLineage(bundle.lineage,bundle.sources,null),logical=logicalDigest({...bundle,lineage},bundle.sources,raw),sources={};
   for(const [id,row]of Object.entries(bundle.sources)){
    if(!Object.hasOwn(row,'canonical')){sources[id]=row;continue;}
-   const canonical=encode(row);assert(decode({...row,canonical})===row.canonical,'complete per-row canonical storage inverse');sources[id]={...row,canonical};
+   const canonical=encode(row);assert(decodeCanonicalText({...row,canonical})===row.canonical,'complete per-row canonical storage inverse');sources[id]={...row,canonical};
   }
   let current=encodeSourceStrings(sources,bundle.lineage);
   current=encodeCanonicalColumns(current,sources,bundle.lineage);
@@ -419,7 +455,7 @@ export function decodeStaticSourceStorage(raw,index){
  let sources=decodeColumnTables(stored.payload.sources,stored.columnTables);
  sources=decodeSourceStrings(sources,stored.payload.lineage);
  sources=decodeCanonicalColumns(sources,stored.payload.lineage);
- sources=Object.fromEntries(Object.entries(sources).map(([id,row])=>[id,record(row)&&Object.hasOwn(row,'canonical')?{...row,canonical:decode(row)}:row]));
+ sources=Object.fromEntries(Object.entries(sources).map(([id,row])=>[id,record(row)&&Object.hasOwn(row,'canonical')?{...row,canonical:decodeCanonicalText(row)}:row]));
  const logical=logicalDigest(stored.payload,sources);
  assert(logical.bytes===descriptor.logicalRawBytes&&logical.sha256===descriptor.logicalRawSha256,'complete reconstructed logical length/SHA');
  const lineage=stored.payload.lineage.map(stage=>({...stage,files:stage.files.map(row=>decodeLineageRow(row,sources))}));
@@ -459,4 +495,40 @@ export function decodeStaticSourceTextData(raw,index){
   return {...stage,files:stage.files.map(row=>Object.hasOwn(index,'storage')?decodeLineageRow(row,sources):row)};
  });
  return {schema:'router-static-source-text-projection-v1',bundle:{schema:payload.schema,cases:payload.cases,authority:payload.authority,profiles:payload.profiles,current:payload.current,sources,lineage},validation:{canonicalDocuments:false,logicalPayloadDigest:false,compilerAuthority:false}};
+}
+
+// Generated incremental canonical-array DATA encoder; original functions stay exact.
+function encodeCanonicalRowsIncrementally(row){
+ const original=row.canonical;assert(typeof original==='string'&&original.length<=MAX_CANONICAL,'bounded complete canonical string required');
+ if(original.length<=262144)return encode(row);
+ const projected=projectCanonicalJsonArrayField(original,'nodes');if(!projected)return encode(row);
+ const doc=JSON.parse(projected.source),spans=projected.nodeSpans;assert(sameKeys(doc,documentKeys)&&json(doc)===projected.source&&doc.source===row.source,'exact canonical text/source required');
+ assert(doc.nodes===null&&spans.length>0&&spans.length<=MAX_NODES,'bounded complete nodes required');
+ const byteLength=Buffer.byteLength(row.source),dictionary=[],ids=new Map(),streams=Array.from({length:6},()=>Buffer.allocUnsafe(spans.length*8)),positions=[0,0,0,0,0,0];let s16=0,s8=0;
+ for(let at=0;at<spans.length;at++){
+  const text=original.slice(...spans[at]),n=JSON.parse(text);assert(json(n)===text,'complete canonical node text differs');node(n,at,row.source.length,byteLength);assert(n[2]>=s16&&n[4]>=s8,'ordered starts required');
+  const pair=[n[0],n[1]],key=json(pair);let id=ids.get(key);if(id===undefined){id=dictionary.length;ids.set(key,id);dictionary.push(pair);}
+  const d16=n[2]-s16,len16=n[3]-n[2],extraStart=n[4]-s8-d16,extraLength=n[5]-n[4]-len16,parentDistance=at-n[6];
+  assert(extraStart>=0&&extraLength>=0&&parentDistance>0,'nonnegative UTF8 excess and earlier parent required');
+  const values=[id,d16,len16,extraStart,extraLength,parentDistance];for(let column=0;column<6;column++)positions[column]=putVarint(streams[column],positions[column],values[column]);
+  s16=n[2];s8=n[4];
+ }
+ const header={...doc,source:null,nodes:null},encoded=json([TAG,header,dictionary,spans.length,streams.map((bytes,column)=>bytes.subarray(0,positions[column]).toString('base64')),hash(original)]);
+ assert(encoded.length<=MAX_CANONICAL,'encoded canonical text bound');return encoded;
+}
+export function encodeStaticSourceStorageIncremental(bundle,raw){
+ assert(Buffer.isBuffer(raw)&&raw.length<=MAX,'bounded original raw bytes required');
+ try{
+  originalShape(bundle);
+  const lineage=encodeLineage(bundle.lineage,bundle.sources,null),logical=logicalDigest({...bundle,lineage},bundle.sources,raw),sources={};
+  for(const [id,row]of Object.entries(bundle.sources)){
+   if(!Object.hasOwn(row,'canonical')){sources[id]=row;continue;}
+   const canonical=encodeCanonicalRowsIncrementally(row);assert(decodeCanonicalText({...row,canonical})===row.canonical,'complete per-row canonical storage inverse');sources[id]={...row,canonical};
+  }
+  let current=encodeSourceStrings(sources,bundle.lineage);
+  current=encodeCanonicalColumns(current,sources,bundle.lineage);
+  const tables=encodeColumnTables(current),container={schema:SCHEMA,logicalRawBytes:logical.bytes,logicalRawSha256:logical.sha256,columnTables:tables.columnTables,payload:{...bundle,lineage,sources:tables.sources}},stored=Buffer.from(json(container)+'\n');
+  assert(stored.length<=MAX,'complete compact output bound');
+  return {raw:stored,storage:{schema:storageSchema,codec:SCHEMA,logicalRawBytes:logical.bytes,logicalRawSha256:logical.sha256}};
+ }catch(error){if(error instanceof StorageShapeError)return {raw};throw error;}
 }

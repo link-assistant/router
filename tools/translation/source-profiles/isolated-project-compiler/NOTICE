@@ -1,9 +1,9 @@
 Original project compiler isolation registration (ID 300)
 
-The current complete registered original compiler sourceHead is 9f204f8d4c57477f6c71dcec6b74297bcf3d683c.
-Actual reviewed preparation proposal: 1296 files, 46869291 raw source bytes.
-Registry raw: 322758 B, SHA256 ccfe4a30c1e42e3fad4b56fac6c5933a469cf93d672b6db2dd80013d28a21b12.
-Registry gzip: 322801 B, SHA256 5bff6ba366af30162a1df73f732366deec7ab6c657f9f2ebc6ef59872f52a8ac.
+The current complete registered original compiler sourceHead is 8765153f6e346f8d3b486953237c6b2785489311.
+Actual reviewed preparation proposal: 1364 files, 47468976 raw source bytes.
+Registry raw: 337098 B, SHA256 c45adee520229d6f3e6d0cb62caeec3300063254905fe9c51931dbc07dd2ac4d.
+Registry gzip: 337146 B, SHA256 4097556494de2d360db0a7e0d82cbad8d77fdae31a5273897d843a48dd727413.
 The sourceHead identifies captured originals; the receiving Git head may later include registry/metadata-only commits.
 The initial and previous complete source candidates remain retained separately.
 
@@ -34,8 +34,8 @@ source/type/body gates run in the original compiler inside the fresh child.
 
 Request: canonical JSON with schema original-project-child-request-v1, sourceFiles
 exact {path,source} rows and entries owned .rs paths. At most 1024 source files,
-8 entries, 2 MiB/file, 16 MiB source UTF8 and 32 MiB request wire. Root Cargo.toml
-and Cargo.lock are optional data, never caller-owned compiler/environment flags.
+8 entries, 2 MiB/file, 16 MiB source UTF8 and 32 MiB request wire. Root and safely nested Cargo.toml
+and Cargo.lock inputs are optional data, never caller-owned compiler/environment flags.
 The initial compilation profile is null, preserving conditional uncertainty.
 Artifact text and protocol wire each have separate 512 MiB bounds, 8 MiB frames,
 65536 UTF16-unit chunks, 8 MiB stderr and 1.5 GiB sampled task disk. Disk sums max(logical size, own POSIX blocks*512 when available), includes directories, and bounds 40000 entries; missing blocks uses logical fallback. Aggregate parent+

@@ -22,8 +22,14 @@ for (let index = 0; index < args.length; index++) {
 }
 const progressStarted=process.hrtime.bigint();
 const options={root,check,entries:entries.length?entries:undefined,progress:progress?record=>process.stderr.write(JSON.stringify({...record,elapsedMilliseconds:Number((process.hrtime.bigint()-progressStarted)/1_000_000n)})+'\n'):undefined};
-// Keep the original default invocation/report block byte-for-byte.
-if(ownedCoreDefinitions){
+// Complete matrix CLI: sequential source-derived process lifetime.
+if(profileMatrix){
+  const name=ownedCoreDefinitions?(retainOutputText?'isolated-retained-owned-definitions-matrix-bulk.mjs':'isolated-owned-definitions-matrix-bulk.mjs'):(retainOutputText?'isolated-retained-matrix-bulk.mjs':'isolated-matrix-bulk.mjs');
+  const module=await import('../tools/translation/'+name);
+  const {manifest,failures}=module.regenerateCompilationMatrix({...options,matrix:createCompilationMatrix({profiles:DECLARED_FAMILY_PROFILES})});
+  console.log(JSON.stringify(ownedCoreDefinitions?{ownedCoreDefinitions:true,definitionOnly:true,projects:manifest.projects,runtimeParity:false,mode:check?'check':'write'}:{kind:manifest.schema,matrixSha256:manifest.matrixSha256,sourceSetSha256:manifest.sourceSetSha256,profiles:manifest.profiles.map(member=>({name:member.name,profileSha256:member.profileSha256,totals:member.totals,projects:member.projects})),platformDomainComplete:false,commonExecutableOutput:false,runtimeParity:false,mode:check?'check':'write'}));
+  if(failures.length){console.error(failures.join('\n'));process.exitCode=1;}
+}else if(ownedCoreDefinitions){
   const name=profileMatrix?(retainOutputText?'retained-owned-definitions-matrix-bulk.mjs':'owned-definitions-matrix-bulk.mjs'):(retainOutputText?'retained-owned-definitions-bulk.mjs':'owned-definitions-bulk.mjs');
   import('../tools/translation/'+name).then(module=>{
     const produce=profileMatrix?module.regenerateCompilationMatrix:module.regenerate;

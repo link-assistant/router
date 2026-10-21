@@ -18,9 +18,9 @@ import {originalPrivateParserExpectedCommonIntrinsicsUnchanged,throwOriginalCapt
 import {independentParserSha256} from './private-parser-sha256.mjs';
 import {createRulePipeline,exactSubstitutionRule} from './rule-pipeline.mjs';
 
-const SOURCE_HEAD = "9f204f8d4c57477f6c71dcec6b74297bcf3d683c";
-const REGISTRY_RAW_SHA256 = "ccfe4a30c1e42e3fad4b56fac6c5933a469cf93d672b6db2dd80013d28a21b12";
-const DRIVER_SHA256 = "e255d1b4aa83d3a9cc22698b1192c4a39a43c19ea21c2ee2ebabc36289ef19f3";
+const SOURCE_HEAD = "e63974237e21c35c51e5005d2b09a2ceb5d2be91";
+const REGISTRY_RAW_SHA256 = "27133e881ad550ce3cd14d7f24ee2f7f13859e8bdda3341942bd40b7731bea10";
+const DRIVER_SHA256 = "963512cab3dafb7027e4661367fd5adbe062d4e691a32952260ab9f953e6f29c";
 const LIMIT={input:33554432,wire:536870912,output:536870912,frame:8388608,artifacts:16384,
   chunk:65536,stderr:8388608,rss:3221225472,disk:1610612736,milliseconds:2400000};
 const initial=originalPrivateParserExpectedCommonIntrinsicsUnchanged();
@@ -120,7 +120,7 @@ function exactRecord(value,names){if(!value||typeof value!=='object'||Array.isAr
 function validateRequest(text){
   let depth=0,cells=0;for(let at=0;at<text.length;at++){const unit=text[at];if(unit==='"'){for(at++;at<text.length;at++){if(text[at]==='\\')at++;else if(text[at]==='"')break;}}else if(unit==='['||unit==='{'){if(++depth>4)fail('request nesting bound');}else if(unit===']'||unit==='}'){if(--depth<0)fail('request delimiter');}else if((unit===','||unit===':')&&++cells>8240)fail('request cell bound');}if(depth!==0)fail('request delimiter');
   const value=parse(text);exactRecord(value,['schema','sourceFiles','entries']);if(value.schema!=='original-project-child-request-v1'||!Array.isArray(value.sourceFiles)||!value.sourceFiles.length||value.sourceFiles.length>1024||!Array.isArray(value.entries)||!value.entries.length||value.entries.length>8)fail('request schema/count');
-  const paths=new Set();let total=0;for(let at=0;at<value.sourceFiles.length;at++){const row=value.sourceFiles[at];exactRecord(row,['path','source']);if(!safePath(row.path)||!(row.path.endsWith('.rs')||row.path==='Cargo.toml'||row.path==='Cargo.lock')||typeof row.source!=='string'||paths.has(row.path))fail('request source row');const bytes=from(row.source,'utf8');exactUtf8(row.source,bytes);const count=apply(typedLength,bytes,[]);if(count>2097152||(total+=count)>16777216)fail('request source byte bound');paths.add(row.path);}
+  const paths=new Set();let total=0;for(let at=0;at<value.sourceFiles.length;at++){const row=value.sourceFiles[at];exactRecord(row,['path','source']);if(!safePath(row.path)||!(row.path.endsWith('.rs')||/(^|\/)Cargo\.(?:toml|lock)$/u.test(row.path))||typeof row.source!=='string'||paths.has(row.path))fail('request source row');const bytes=from(row.source,'utf8');exactUtf8(row.source,bytes);const count=apply(typedLength,bytes,[]);if(count>2097152||(total+=count)>16777216)fail('request source byte bound');paths.add(row.path);}
   const entries=new Set();for(let at=0;at<value.entries.length;at++){const path=value.entries[at];if(typeof path!=='string'||!path.endsWith('.rs')||!paths.has(path)||entries.has(path))fail('request entry association');entries.add(path);}if(stringify(value)!==text)fail('canonical JSON request required');return value;
 }
 function errorText(error){if(!error||typeof error!=='object'||isProxy(error))return 'unclassified infrastructure failure';const field=get(error,'message');return field&&own(field,'value')&&typeof field.value==='string'?field.value.slice(0,4096):'unclassified infrastructure failure';}

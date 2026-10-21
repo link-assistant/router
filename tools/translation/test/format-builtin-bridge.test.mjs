@@ -62,7 +62,7 @@ test('standalone Arguments, I/O, custom owners and unsupported traits cannot inh
 });
 
 test('whole unchanged account_http remains source pinned; compiler staging does not bypass its module/effect dependencies',()=>{
-  const source=readFileSync(new URL('../../../src/account_http.rs',import.meta.url),'utf8'),result=translateCheckedPrimitiveFormatSource(source,{path:'src/account_http.rs',proof:loadPinnedFormatSourceStages()});
+  const source=readFileSync(new URL('../../../rust/src/account_http.rs',import.meta.url),'utf8'),result=translateCheckedPrimitiveFormatSource(source,{path:'src/account_http.rs',proof:loadPinnedFormatSourceStages()});
   assert.equal(hash(source),'876e7e38985d93f896c9d191f9d7591abb66697f93504a202d4fd208217bdd09');assert.equal(result.ir.items.map(item=>item.source).join(''),source);assert.equal(result.formatSourceBridge.additionalDeclarationsAdmitted,0);assert.equal(result.formatSourceBridge.sourceSemanticClosureVerified,false);assert.equal(result.formatSourceBridge.allocatorEffectsVerified,false);assert.equal(result.formatSourceBridge.ioEffectsVerified,false);
   assert.ok(result.ir.items.some(item=>item.status==='carried'));const actual=source.slice(7878,7909);assert.equal(actual,'format!("{what} needs a value")');
 });

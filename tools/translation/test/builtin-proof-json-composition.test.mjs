@@ -1,9 +1,11 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // Full source/hash oracle; composition stores immutable substrings, never proof decisions.
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
 import {legacyProofConsumerSource} from './fixtures/native-proof-json-format.mjs';
 import {writeJsonTextGzip} from '../../evidence/write-json-gzip.mjs';
-import {readFileSync,mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
+import {mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
+import {readCompilerAliasHistory as readFileSync} from './fixtures/compiler-data-alias-history.mjs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {pathToFileURL} from 'node:url';
@@ -121,7 +123,7 @@ test('logical alias depth and output bounds fall back without partial byte-cache
  const before=storage.createPrivateFrozenJsonCache(),current=createPrivateFrozenJsonCache(),carrier=freeze({source:['same',1]});equal(retain,'old-public-cache-native-bytes',before(carrier),current(carrier));equal(retain,'old-public-cache-callback-tapes',observeJson(()=>before(carrier)),observeJson(()=>current(carrier)));
 });
 test('complete pristine builtin and Debug consumers preserve fresh proofs hashes reissue and private refusals',async(t,retain)=>{
- const {original}=await beforeModules(t,retain),source='#[derive(Debug,PartialEq,Copy,Clone)]pub struct Payload{a:u8,b:u8,c:u8,d:u8,e:u8,f:u8}',cargo={manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')},dependencies=loadDeriveDependencyProof(cargo),views=captureSourceModuleViews({source,sourcePath:'src/lib.rs',compilationProfile:PRODUCTION_PROFILE}),module={file:'src/lib.rs',path:[],source,sourceView:views.views[0],compilationProfile:PRODUCTION_PROFILE},context=createDeriveFootprintContext({modules:[module],dependencies,compilationProfile:PRODUCTION_PROFILE}),certificate=context.certificates[0];assert.ok(certificate);retain('complete-source-and-genuine-input',{source,cargo,views,context});
+ const {original}=await beforeModules(t,retain),source='#[derive(Debug,PartialEq,Copy,Clone)]pub struct Payload{a:u8,b:u8,c:u8,d:u8,e:u8,f:u8}',cargo={manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')},dependencies=loadDeriveDependencyProof(cargo),views=captureSourceModuleViews({source,sourcePath:'src/lib.rs',compilationProfile:PRODUCTION_PROFILE}),module={file:'src/lib.rs',path:[],source,sourceView:views.views[0],compilationProfile:PRODUCTION_PROFILE},context=createDeriveFootprintContext({modules:[module],dependencies,compilationProfile:PRODUCTION_PROFILE}),certificate=context.certificates[0];assert.ok(certificate);retain('complete-source-and-genuine-input',{source,cargo,views,context});
  for(const name of ['Debug','PartialEq','Copy']){
   const attribute=certificate.attributes.find(row=>row.name==='derive'),invocation={path:[name],attributeSpan:attribute.span},input={context,certificate,invocation};
   // Warm the same complete private source plans on both sides before observing

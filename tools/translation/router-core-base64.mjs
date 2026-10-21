@@ -1,3 +1,4 @@
+import {crateModuleSourcePath} from './repository-layout.mjs';
 // Concrete owned-library boundary. Complete source is data until a genuine
 // parser, checked operands, whole-function flow and emission all rejoin it.
 import {types} from 'node:util';
@@ -110,7 +111,7 @@ function freshLibrary(library){
 }
 function source(parser){
  guard();const state=matchesParserFacts(parser),facade=requireRouterCoreFacade(parser),rows=state.facts.modules.filter(row=>row.path.join('::')==='translation_core::base64'),leaf=rows[0];
- if(rows.length!==1||leaf.file!=='src/translation_core/base64.rs'||leaf.source!==ROUTER_CORE_BASE64_SOURCE||leaf.configurationCondition!=='active'||!leaf.sourceView)fail('complete active owned leaf required');originalSourceModuleItems(leaf);
+ if(rows.length!==1||leaf.file!==crateModuleSourcePath(state.facts.modules,'src/translation_core/base64.rs')||leaf.source!==ROUTER_CORE_BASE64_SOURCE||leaf.configurationCondition!=='active'||!leaf.sourceView)fail('complete active owned leaf required');originalSourceModuleItems(leaf);
  const dependencies=originalMatchesDependencyProof(state.facts),inputs=deriveDependencyOriginalInputs(dependencies),capture=captureOriginalExternalTraitPackage(dependencies,'base64'),library=originalExternalTraitPackageInputs(capture);
  freshLibrary(library);
  const stage=createRulePipeline([{phase:'language',rules:[{id:'owned-base64:lossless-concrete-library-contract',apply:()=>{const actual=transportConcreteSyntaxSource(leaf.source,{language:'Rust'});if(actual.source!==ROUTER_CORE_BASE64_SOURCE)fail('leaf CST');return actual;}}]},{phase:'repository',rules:[{id:'router-core:bind-fixed-owned-base64-interface',apply:value=>value}]}]).run(null);
@@ -248,7 +249,7 @@ export function originalBase64ErrorDisplay(checker,node,piece,value,bind){
 // Reproducible source-DATA rendering; not admission or a manually repinned
 // generated asset. Root receiving must invoke this API and compare full bytes.
 export function prepareCoreBase64SourceData(){
- const facade=readFileSync(new URL('../../src/translation_core.rs',import.meta.url),'utf8'),leaf=readFileSync(new URL('../../src/translation_core/base64.rs',import.meta.url),'utf8');
+ const facade=readFileSync(new URL('../../rust/src/translation_core.rs',import.meta.url),'utf8'),leaf=readFileSync(new URL('../../rust/src/translation_core/base64.rs',import.meta.url),'utf8');
  if(facade!==ROUTER_FORMATTING_FACADE_SOURCE||leaf!==ROUTER_CORE_BASE64_SOURCE)fail('physical facade/leaf differ from complete source data');
  const hash=value=>createHash('sha256').update(value).digest('hex'),before=readFileSync(new URL('./router-core-source-data.mjs',import.meta.url),'utf8'),edits=[];let rendered=before;
  for(const [name,value]of [['ROUTER_FORMATTING_FACADE_SOURCE',facade],['ROUTER_FORMATTING_FACADE_SHA256',hash(facade)],['ROUTER_CORE_BASE64_SOURCE',leaf],['ROUTER_CORE_BASE64_SHA256',hash(leaf)]]){

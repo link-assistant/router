@@ -6,7 +6,8 @@ import {originalLexingIntrinsicsUnchanged} from '../original-lexing-intrinsics.m
 import assert from 'node:assert/strict';
 import {Hash,createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
-import {mkdtempSync,mkdirSync,readFileSync,writeFileSync,rmSync} from 'node:fs';
+import {mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
+import {readCompilerAliasHistory as readFileSync} from './fixtures/compiler-data-alias-history.mjs';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {pathToFileURL} from 'node:url';

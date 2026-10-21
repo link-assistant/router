@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // Production body selection under an explicit profile; no source substitutions.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -19,7 +20,7 @@ const pins=[
   ['src/clients/repair.rs',765,924,'542b470042712269128fb28c9889f5bc22db3616dc0c07b98c120ade7bb22f90'],
 ];
 function originalDeclarations(){
-  return pins.map(([path,start,end,hash])=>{const source=readFileSync(new URL(path,root),'utf8'),item=sourceItems(source).find(item=>item.start===start&&item.end===end);assert.ok(item,path);const text=source.slice(start,end);assert.equal(sha256(text),hash,path);return text;});
+  return pins.map(([path,start,end,hash])=>{const source=readFileSync(repositorySourceURL(path,root),'utf8'),item=sourceItems(source).find(item=>item.start===start&&item.end===end);assert.ok(item,path);const text=source.slice(start,end);assert.equal(sha256(text),hash,path);return text;});
 }
 const compile=(source,profile)=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,compilationProfile:profile});
 async function bothTargets(result,assertions){
@@ -62,7 +63,7 @@ test('tracked generation records its explicit profile and keeps every inactive f
     regenerate({root:directory});assert.deepEqual(regenerate({root:directory,check:true}).failures,[]);
     const inventory=JSON.parse(readFileSync(join(directory,'parity/rust-source-inventory.json'),'utf8'));assert.equal(inventory.totals.sources,2);assert.equal(inventory.compilationProfile.flags.test,false);assert.ok(inventory.implementationHashes['tools/translation/cfg-profile.mjs']);
     for(const [path,original] of [['src/lib',source],['src/tests',testSource]]){const meta=JSON.parse(readFileSync(join(directory,`tools/translation/meta/${path}.meta.json`),'utf8'));assert.equal(meta.items.map(item=>item.source).join(''),original);}
-    const result={javascript:readFileSync(join(directory,'packages/javascript/generated/rust-draft/src/lib.mjs'),'utf8'),typescript:readFileSync(join(directory,'packages/typescript/generated/rust-draft/src/lib.ts'),'utf8')};await bothTargets(result,api=>assert.equal(api.selected(),3n));
+    const result={javascript:readFileSync(join(directory,'js/generated/rust-draft/src/lib.mjs'),'utf8'),typescript:readFileSync(join(directory,'ts/generated/rust-draft/src/lib.ts'),'utf8')};await bothTargets(result,api=>assert.equal(api.selected(),3n));
   }finally{rmSync(directory,{recursive:true,force:true});}
 });
 

@@ -1,3 +1,5 @@
+import {relocateSourceModule} from './relocate-source-module.mjs';
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -57,7 +59,7 @@ test('BOM CRLF Unicode comments complete CST and both inverse mappings survive p
   }finally{f.close();}
 });
 test('actual complete production files retain graph skip and full source evidence without filtering',{timeout:60000},()=>{
-  const originals=Object.fromEntries(['src/api_error.rs','src/emergency_auth.rs'].map(path=>[path,fs.readFileSync(new URL(path,sourceRoot),'utf8')]));
+  const originals=Object.fromEntries(['src/api_error.rs','src/emergency_auth.rs'].map(path=>[path,fs.readFileSync(repositorySourceURL(path,sourceRoot),'utf8')]));
   const f=fixture(originals,'pub mod translation_core;\nmod api_error;\nmod emergency_auth;\n');
   try{const direct=expected(f.files);proposeCoreAdoptionCorpus({root:f.root,output:f.output});const actual=readProposal(f.output);retain('03-full-production',{originals,actual});assert.equal(JSON.stringify(actual.formatting),JSON.stringify(direct.formatting));assert.equal(JSON.stringify(actual.primitives),JSON.stringify(direct.primitives));
     for(const [path,source]of Object.entries(originals)){assert.equal(actual.formatting.inputs.find(row=>row.path===path).source,source);assert.ok(actual.primitives.moduleGraph.modules.some(row=>row.file===path));}
@@ -83,8 +85,7 @@ test('late source census mutation retains bounded incomplete packets and never a
     // not rely on Bun updating a named fs import after module initialization.
     const original=fs.readFileSync(script,'utf8'),point="writeFileSync(join(target.path,'index.pending.json'),text,{flag:'wx'});";
     assert.equal(original.split(point).length,2);const injected=original.replace(point,point+"throw new Error('test-only pending-index failure');");
-    const relocations=[];const copied=injected.replace(/from '(\.[^']+)'/gu,(whole,specifier)=>{const replacement='from '+JSON.stringify(new URL(specifier,pathToFileURL(script)).href);relocations.push({whole,replacement});return replacement;});
-    let reversed=copied;for(let at=relocations.length-1;at>=0;at--){const row=relocations[at];assert.equal(reversed.split(row.replacement).length,2);reversed=reversed.replace(row.replacement,row.whole);}assert.equal(reversed,injected);assert.equal(injected.replace(point+"throw new Error('test-only pending-index failure');",point),original);
+    const relocations=[];const relocation=relocateSourceModule(injected,pathToFileURL(script).href),copied=relocation.text;relocations.push(...relocation.mapping);let reversed=relocation.inverse;assert.equal(reversed,injected);assert.equal(injected.replace(point+"throw new Error('test-only pending-index failure');",point),original);
     const copy=join(f.parent,'paired-producer.mjs');fs.writeFileSync(copy,copied);assert.equal(fs.readFileSync(copy,'utf8'),copied);
     const output=join(f.parent,'pending-failure'),paired=await import(pathToFileURL(copy).href),failed=attempt(()=>paired.proposeCoreAdoptionCorpus({root:f.root,output}));
     const pending=fs.readFileSync(join(output,'index.pending.json'),'utf8'),receipt=JSON.parse(fs.readFileSync(join(output,'failure.json'),'utf8'));retain('05-pending-index-failure',{original,point,injected,copied,relocations,failed,pending,receipt,files:bytes(output)});

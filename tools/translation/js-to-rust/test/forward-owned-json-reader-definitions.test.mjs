@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from "../../repository-layout.mjs";
 // Genuine checked forward definitions; guarded reverse admission is separate.
 import nodeTest from 'node:test';
 import assert from 'node:assert/strict';
@@ -24,7 +25,7 @@ import {writeJsonTextGzip} from '../../../evidence/write-json-gzip.mjs';
 const root=fileURLToPath(new URL('../../../../',import.meta.url)),C='crate::translation_core::',nativeJson=JSON.stringify,vectorRoot=process.env.ROUTER_FORWARD_JSON_READER_DEFINITION_VECTOR_DIR;let vectors=[];
 const retain=(kind,value)=>{vectors.push({kind,value});return value;};
 const test=(name,run)=>nodeTest(name,{timeout:60000},async t=>{vectors=[];try{await run(t);}finally{if(vectorRoot){mkdirSync(vectorRoot,{recursive:true});writeJsonTextGzip(join(vectorRoot,Buffer.from(name).toString('hex')+'.json.gz'),nativeJson({name,vectors},(_,value)=>typeof value==='bigint'?{$integer:String(value)}:value));}}});
-const original=path=>existsSync(join(root,path))?readFileSync(join(root,path),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:5000,maxBuffer:16777216});
+const original=path=>existsSync(join(root,rustPackageSourcePath(root,path)))?readFileSync(join(root,rustPackageSourcePath(root,path)),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:5000,maxBuffer:16777216});
 const dependencyInputs={manifest:original('Cargo.toml'),lock:original('Cargo.lock')},jsonMacroDependencies=loadJsonMacroSourceProof(dependencyInputs),deriveDependencies=loadDeriveDependencyProof(dependencyInputs);
 const specs=[['read_key','value_get_string',"<'a>(input:&'a "+C+'Json,key:&'+C+"Str)->"+C+"Maybe<&'a "+C+'Json>{input.get(key)}'],['read_index','value_get_usize','(input:&'+C+'Json,index:usize)->'+C+'Maybe<&'+C+'Json>{input.get(index)}'],['read_pointer','value_pointer',"<'a>(input:&'a "+C+'Json,key:&'+C+"Str)->"+C+"Maybe<&'a "+C+'Json>{input.pointer(key)}'],['read_text','value_as_str','(input:&'+C+'Json)->'+C+'Maybe<&'+C+'Str>{input.as_str()}'],['read_bool','value_as_bool','(input:&'+C+'Json)->'+C+'Maybe<bool>{input.as_bool()}'],['read_u64','value_as_u64','(input:&'+C+'Json)->'+C+'Maybe<u64>{input.as_u64()}'],['read_i64','value_as_i64','(input:&'+C+'Json)->'+C+'Maybe<i64>{input.as_i64()}'],['read_null','value_is_null','(input:&'+C+'Json)->bool{input.is_null()}']];
 const body=specs.map(([name,,source])=>'pub fn '+name+source).join('\n');
@@ -39,7 +40,7 @@ async function targets(t,rows){
  for(const base of ['app/runtime','typed/runtime'])for(const [name,source]of assets)write(directory,base+'/'+name,source);
  for(const selected of rows){write(directory,selected.javascriptPath,selected.javascript.after.source);write(directory,selected.typescriptPath,selected.typescript.after.source);}
  const consumer=rows.map((selected,index)=>{const spec=specs.find(([name])=>name===selected.name);return 'import { '+selected.target+' as f'+index+' } from "./'+selected.typescriptPath.replace(/\.mts$/u,'.mjs')+'";\nimport { serde_json_'+spec[1]+' as h'+index+' } from "./typed/runtime/json-runtime.mjs";\nconst a'+index+':typeof h'+index+'=f'+index+';const b'+index+':typeof f'+index+'=h'+index+';void a'+index+';void b'+index+';';}).join('\n');write(directory,'consumer.mts',consumer);
- execFileSync(process.execPath,[join(root,'packages/javascript/node_modules/typescript/bin/tsc'),'--strict','--skipLibCheck','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--rootDir',directory,'--outDir',join(directory,'out'),...rows.map(row=>join(directory,row.typescriptPath)),join(directory,'consumer.mts')],{cwd:root,timeout:20000,encoding:'utf8',stdio:'pipe'});
+ execFileSync(process.execPath,[join(root,'js/node_modules/typescript/bin/tsc'),'--strict','--skipLibCheck','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--rootDir',directory,'--outDir',join(directory,'out'),...rows.map(row=>join(directory,row.typescriptPath)),join(directory,'consumer.mts')],{cwd:root,timeout:20000,encoding:'utf8',stdio:'pipe'});
  for(const [name,source]of assets)write(directory,'out/typed/runtime/'+name,source);
  const result=new Map();for(const selected of rows)result.set(selected.name,{javascript:(await import(pathToFileURL(join(directory,selected.javascriptPath)).href))[selected.target],typescript:(await import(pathToFileURL(join(directory,'out',selected.typescriptPath.replace(/\.mts$/u,'.mjs'))).href))[selected.target]});archive(directory);return result;
 }

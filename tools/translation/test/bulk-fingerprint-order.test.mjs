@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
@@ -13,7 +14,7 @@ test('actual complete bulk plans preserve every output byte under reversed exten
   const directory=mkdtempSync(join(tmpdir(),'router-bulk-order-'));
   try{
     mkdirSync(join(directory,'src'));
-    const manifest=readFileSync(new URL('Cargo.toml',repository),'utf8'),lock=readFileSync(new URL('Cargo.lock',repository),'utf8');
+    const manifest=readFileSync(repositorySourceURL('Cargo.toml',repository),'utf8'),lock=readFileSync(repositorySourceURL('Cargo.lock',repository),'utf8');
     writeFileSync(join(directory,'src/lib.rs'),source);writeFileSync(join(directory,'Cargo.toml'),manifest);writeFileSync(join(directory,'Cargo.lock'),lock);
     const env=Object.fromEntries(Object.entries(process.env).filter(([key])=>!key.startsWith('GIT_')));
     const git=args=>execFileSync('git',args,{cwd:directory,env,timeout:10000,stdio:'pipe'});

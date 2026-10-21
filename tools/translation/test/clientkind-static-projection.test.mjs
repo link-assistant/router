@@ -1,8 +1,9 @@
 // Exact original declaration bodies in a dependency projection. This fixture
 // deliberately makes no unchanged-whole-module or bulk admission claim.
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {createHash} from 'node:crypto';
 import {sourceItems} from '../rust-structure.mjs';import {translateProject} from '../project.mjs';import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';import {parseProgram} from '../semantic-meta.mjs';import {verifyTypedTargets} from './typed-targets.mjs';
-const read=p=>readFileSync(new URL('../../../'+p,import.meta.url),'utf8'),hash=s=>createHash('sha256').update(s).digest('hex'),tag=$=>Object.freeze({$});
+const read=p=>readFileSync(repositorySourceURL(p,new URL('../../../',import.meta.url)),'utf8'),hash=s=>createHash('sha256').update(s).digest('hex'),tag=$=>Object.freeze({$});
 export function originalClientKindProjection(){
  const sources={'src/clients.rs':read('src/clients.rs'),'src/route_contract.rs':read('src/route_contract.rs'),'src/route_contract_types.rs':read('src/route_contract_types.rs')},slices=[];
  const select=(path,predicate)=>sourceItems(sources[path]).filter(predicate).map(item=>{const text=sources[path].slice(item.start,item.end);slices.push({source:path,start:item.start,end:item.end,sha256:hash(text)});return text;}).join('\n');

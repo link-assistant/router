@@ -1,6 +1,6 @@
 // Original PartialEq construction closure only; equality is not executed here.
 import {createHash} from 'node:crypto';
-import {createPrivateFrozenJsonComposer} from './private-frozen-json.mjs';
+import {createPrivateFrozenJsonComposer} from "./operation-proof-byte-bridge.mjs";
 import {createCompletedDataFreezer} from './private-data-freeze.mjs';
 import {builtinDeriveDataInputs,builtinPayloadDataInputs} from './builtin-derive-data-inputs.mjs';
 import {inventoryDeriveQuoteMeta,createQuoteFragmentCompiler} from './derive-quote-meta.mjs';

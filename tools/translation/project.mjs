@@ -9,17 +9,19 @@ import { posix } from 'node:path';
 import {captureSourceModuleViews,originalSourceModuleItems,moduleScopeKey} from './source-module-views.mjs';
 import {planTrackedModulePath,planConditionalModuleSourcePath,isTrackedModulePathPlan,MODULE_PATH_PROFILE} from './module-paths.mjs';
 import {resolveModuleBindings} from './module-bindings.mjs';
+import {resolveOwnedEnclosingNamespaceModuleBindings as resolveEnclosingNamespaceModuleBindings} from './owned-enclosing-module-bindings.mjs';
 import {createDeriveBangContext} from './derive-bang-context.mjs';
+import {createDeriveEnclosingNamespaceContext} from './derive-enclosing-namespace-context.mjs';
 import {lockedTomlValueNamespaceBindings} from './toml-value-namespace.mjs';
 import {registeredStandardHostBindings} from './standard-host-bindings.mjs';
 import {STANDARD_NAMESPACE_EVIDENCE} from './namespace-standard.mjs';
 import {configureParserSourceScope,requestImmutableNamespaceTargets} from './source-scopes.mjs';
 import { HostRustParser as MethodRustParser, checkProjectProgram, emitJavaScript,hostData as effectData } from './extensions/host-contracts.mjs';
-import {declarationRefusals} from './extensions/declaration-refusals.mjs';
+import {declarationRefusals,withSourceLifetimeRefusals} from './extensions/declaration-refusals.mjs';
 import { extractImplDeclarations, lowerSharedMethodTokens, lowerCopyMethodTokens,originalMethodMember,originalMethodLowering } from './impl-resolver.mjs';
 import {projectCopyEvidence,originalOptionCopyPayload} from './project-copy.mjs';
-import {createDefaultSourceContext} from './default-trait-source.mjs';
-import {createCloneSourceContext} from './clone-trait-source.mjs';
+import {createDefaultSourceContext,createDefaultEnclosingSourceContext} from './default-trait-source.mjs';
+import {createCloneSourceContext,createCloneEnclosingSourceContext} from './clone-trait-source.mjs';
 import {originalCloneGeneratedMethods,assertOriginalCloneGeneratedMethod} from './clone-source-ir.mjs';
 import {linkOriginalCloneSemantic} from './extensions/clone-source-body.mjs';
 import {originalDefaultGeneratedMethods,assertOriginalDefaultGeneratedMethod} from './default-source-ir.mjs';
@@ -144,7 +146,7 @@ const relocate = (node, offset) => Array.isArray(node) ? node.map(value => reloc
 // Original pattern evidence uses frontend nodes, including ctor
 // syntax without checked declaration links. Keep it out of target renaming
 // and executable dependency discovery while preserving it in serialized meta.
-const sourceEvidence = key => ['copyCertificate', 'sourceParameterPatterns', 'sourceParameterPattern', 'sourcePattern', 'constantEvaluationProof','deriveNamespaceProof','toolAttributeProof','jsonMacroProof','sourceMatchesProof','pinnedStandardBodyProof','sourceMethodProof','sourceDisplayScope','sourceBoolFromScope','defaultSourceProof','sourceConversionProof','sourceSharedPatternProof','sourcePatternProjectionProof','sourceSharedStringViewProof','cloneSourceProof'].includes(key);
+const sourceEvidence = key => ['copyCertificate', 'sourceParameterPatterns', 'sourceParameterPattern', 'sourcePattern', 'constantEvaluationProof','deriveNamespaceProof','toolAttributeProof','jsonMacroProof','sourceMatchesProof','pinnedStandardBodyProof','sourceMethodProof','sourceDisplayScope','sourceBoolFromScope','defaultSourceProof','sourceConversionProof','sourceSharedPatternProof','sourcePatternProjectionProof','sourceSharedStringViewProof','cloneSourceProof','sourceConversionScope'].includes(key);
 
 // The separate optional argument leaves every old option read unchanged.
 export function resolveModuleGraph({ entry, paths, readSource, compilationProfile:profileInput=null },progressInput=undefined) {
@@ -304,23 +306,41 @@ function declarationProgram(program, root) {
 function compileProjectLanguage(options, ownedDefinitionMode=false) {
   const progress=translationProgressReporter(options.progress);
   progress({stage:'project-graph',state:'start',entry:options.entry});
-  const cargoEditionContext=options.cargoManifest===undefined||options.cargoManifest===null?null:captureOriginalCargoEdition(options.cargoManifest);
+  const cargoEditionContext=options.cargoManifest===undefined||options.cargoManifest===null?null:captureOriginalCargoEdition(options.cargoManifest,{sourcePath:options.cargoManifestPath??'Cargo.toml'});
   const graph = resolveModuleGraph(options);
   progress({stage:'project-graph',state:'end',entry:options.entry,total:graph.modules.length});
   progress({stage:'namespace',state:'start',entry:options.entry});
+  const enclosingNamespace=ownedDefinitionMode===true||ownedDefinitionMode==='core-json-readers';
+  const namespaceProgress=phase=>{if(enclosingNamespace)progress({stage:'namespace',state:'advance',entry:options.entry,phase});};
+  namespaceProgress('json-context');
   const jsonParserProfile=options.jsonParserProfile??actualJsonCapabilityProfile();
   let jsonMacroContext=null,jsonMacroDiagnostic=null;
   if(options.jsonMacroDependencies)try{jsonMacroContext=createJsonMacroContext({modules:graph.modules,dependencies:options.jsonMacroDependencies,compilationProfile:graph.compilationProfile});}catch(error){if(!(error instanceof TypeError))throw error;jsonMacroDiagnostic={kind:'unsupported-profile',message:error.message};}
+  namespaceProgress('external-bindings');
   const externalModules=registeredStandardHostBindings([...originalMatchesNamespaceBindings(),...lockedTomlValueNamespaceBindings(options.deriveDependencies)]);
+  namespaceProgress('derive-inputs');
   const deriveContext=options.deriveDependencies?createDeriveFootprintContext({modules:graph.modules,dependencies:options.deriveDependencies,externalModules,compilationProfile:graph.compilationProfile}):null;
+  // Construct the genuine enclosing issuer once for this project and pass it
+  // explicitly through the independent Default/Clone and binding consumers.
+  let deriveBangContext=null;
+  if(enclosingNamespace){
+    namespaceProgress('derive-namespace-context');
+    deriveBangContext=deriveContext?createDeriveEnclosingNamespaceContext({deriveContext}):null;
+  }
+  namespaceProgress('default-source');
   const hasDefaultDeclarations=graph.modules.some(module=>module.items.some(item=>['struct','enum','impl'].includes(item.term)&&item.tokens.some(token=>token.text==='Default')));
-  const defaultContext=deriveContext&&hasDefaultDeclarations?createDefaultSourceContext(deriveContext):null;
+  const defaultContext=deriveContext&&hasDefaultDeclarations?(enclosingNamespace?createDefaultEnclosingSourceContext(deriveContext,{deriveBangContext}):createDefaultSourceContext(deriveContext)):null;
+  namespaceProgress('clone-source');
   const hasCloneDeclarations=graph.modules.some(module=>module.items.some(item=>['struct','enum'].includes(item.term)&&item.tokens.some(token=>token.text==='Clone')));
-  const cloneContext=deriveContext&&hasCloneDeclarations?createCloneSourceContext(deriveContext):null;
+  const cloneContext=deriveContext&&hasCloneDeclarations?(enclosingNamespace?createCloneEnclosingSourceContext(deriveContext,{deriveBangContext,defaultContext:defaultContext??undefined}):createCloneSourceContext(deriveContext)):null;
+  namespaceProgress('tool-attributes');
   const resolvedExternal=deriveContext?deriveFootprintExternalModules(deriveContext):externalModules;
   const toolContext=createToolAttributeContext({modules:graph.modules,externalModules:resolvedExternal,deriveContext,compilationProfile:graph.compilationProfile});
-  const deriveBangContext=deriveContext?createDeriveBangContext({deriveContext}):null;
-  const bindingEvidence=resolveModuleBindings({modules:graph.modules,externalModules:resolvedExternal,deriveContext,deriveBangContext,toolContext,compilationProfile:graph.compilationProfile});
+  // This consumer needs enclosing bindings. Runtime/ownership and generated
+  // Default/Clone checking retain their separate original source contexts.
+  if(!enclosingNamespace)deriveBangContext=deriveContext?createDeriveBangContext({deriveContext}):null;
+  namespaceProgress(enclosingNamespace?'enclosing-bindings':'complete-bindings');
+  const bindingEvidence=(enclosingNamespace?resolveEnclosingNamespaceModuleBindings:resolveModuleBindings)({modules:graph.modules,externalModules:resolvedExternal,deriveContext,deriveBangContext,toolContext,compilationProfile:graph.compilationProfile});
   const scopes=new Map(bindingEvidence.scopes.map(scope=>[moduleScopeKey(scope),scope]));
   const configureSourceScope=(parser,module)=>configureParserSourceScope(requestImmutableNamespaceTargets(parser),scopes.get(moduleScopeKey(module)),bindingEvidence.scopes,module.path);
   const matchesMacroContext=createMatchesMacroContext({modules:graph.modules,compilationProfile:graph.compilationProfile,deriveDependencies:options.deriveDependencies??null,cargoEditionContext});
@@ -497,7 +517,7 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
   progress({stage:'semantic-check',state:'start',entry:options.entry,remaining:active.length});
   for (let attempts = 0; attempts <= declarations.length; attempts++) {
     progress({stage:'semantic-check',state:'advance',entry:options.entry,attempt:attempts,remaining:active.length});
-    try { const surface={ language: 'Rust', items: [...tree(active), ...admittedHostData(effectData(),tree(active))], main: null };associateOriginalSharedPatternDependencies(surface,options.jsonMacroDependencies);const nativeChecked=checkProjectProgram(surface,{jsonParserProfile,collectIndependentBodies:options.collectIndependentBodies??true});checked=roundTripProgram(nativeChecked);if(ownedDefinitionMode==='core-json-readers')genuineOrigin=nativeChecked;break; }
+    try { const surface={ language: 'Rust', items: [...tree(active), ...admittedHostData(effectData(),tree(active))], main: null };associateOriginalSharedPatternDependencies(surface,options.jsonMacroDependencies);const nativeChecked=withSourceLifetimeRefusals(surface,options.collectIndependentSourceLifetimes??(options.collectIndependentBodies??true),()=>checkProjectProgram(surface,{jsonParserProfile,collectIndependentBodies:options.collectIndependentBodies??true}));checked=roundTripProgram(nativeChecked);if(ownedDefinitionMode==='core-json-readers')genuineOrigin=nativeChecked;break; }
     catch (error) {
       const failures=declarationRefusals(error)??(error instanceof TranslationError?[{error}]:null);
       if(!failures)throw error;
@@ -557,7 +577,12 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
     const signatures=[...program.declarations.values()].filter(entry=>entry.k==='fn').map(entry=>({target:emitted.mappings.find(mapping=>mapping.source===entry.fullName)?.target,params:entry.params,ret:entry.async?{kind:'routerFuture',value:entry.ret}:entry.ret}));
     return {own,program,emitted:{...emitted,signatures,mappings:[...emitted.mappings,{...targetMapping,source:name}]}};
   };
-  const executableDeclarations=entries.map(entry=>({source:entry.file,sourceSha256:sha256(graph.modules.find(module=>module.file===entry.file).source),name:entry.name.split('.').at(-1),span:entry.span,project:options.entry,qualifiedName:entry.name,lower:lowerDeclaration(entry,entry.name.split('.').at(-1))}));
+  const executableDeclarations=entries.map(entry=>({source:entry.file,sourceSha256:sha256(graph.modules.find(module=>module.file===entry.file).source),name:entry.name.split('.').at(-1),span:entry.span,project:options.entry,qualifiedName:entry.name,lower:lowerDeclaration(entry,entry.name.split('.').at(-1)),checkedSource:()=>{
+    const own=checked.declarations.get(entry.name),modules=graph.modules.filter(module=>module.file===entry.file&&JSON.stringify(module.path)===JSON.stringify(entry.path));
+    const origin=originalParsedDeclarationEvidence(entry.surface),module=modules.length===1?modules[0]:null;
+    if(entry.term!=='fn'||own?.k!=='fn'||own.fullName!==entry.name||!origin||!module||origin.sourcePath!==entry.file||origin.sourceSha256!==sha256(module.source)||origin.declarationSpan.start!==entry.span.start||origin.declarationSpan.end!==entry.span.end||origin.checkedSpan.start!==entry.surface.span.start||origin.checkedSpan.end!==entry.surface.span.end||own.span.start!==entry.surface.span.start||own.span.end!==entry.surface.span.end)throw new TypeError('Original executable checked source association differs');
+    return freezeMacroTree(structuredClone({schema:'original-checked-executable-source-v1',source:entry.file,sourceSha256:sha256(module.source),qualifiedName:entry.name,module:entry.path,span:entry.span,checkedSpan:own.span,sourceSignature:{params:entry.surface.params,ret:entry.surface.ret},declaration:own}));
+  }}));
   // This additive facade closes over the same actual checked program. It does
   // not append a synthetic Rust wrapper or count a method as a source fn.
   const checkedMethodDeclarations=methods.map(entry=>{
@@ -566,10 +591,12 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
     const token=fieldEvidenceBySurface.get(entry.surface);if(token)checkedMethodFieldOrigins.set(facade,originalProjectMethodFieldEvidenceGrouped(token,methodFieldEvidence.get(token).transform));
     return facade;
   });
-  progress({stage:'project-serialize',state:'end',entry:options.entry});
+  if(ownedDefinitionMode!==true&&ownedDefinitionMode!=='core-json-readers')progress({stage:'project-serialize',state:'end',entry:options.entry});
   const checkedGeneratedMethodDeclarations=generatedMethods.map(entry=>{const own=checked.declarations.get(entry.name);return Object.freeze({source:entry.file,sourceSha256:sha256(graph.modules.find(module=>module.file===entry.file).source),name:entry.surface.impl.method,term:'generated-method',origin:'derive-invocation',originalDeclarationTerm:entry.originalDeclarationTerm,generator:entry.surface.impl.cloneSourceProof?'core::clone::Clone':'core::default::Default',span:Object.freeze({...entry.span}),project:options.entry,qualifiedName:entry.name,displayName:entry.displayName,receiver:entry.surface.impl.receiver,compilationProfile:graph.compilationProfile,signature:freezeMacroTree(structuredClone({params:own.params,ret:own.ret})),lower:lowerDeclaration(entry,entry.surface.impl.method)});});
   if(ownedDefinitionMode===true||ownedDefinitionMode==='core-json-readers'){
-    let definitions;try {definitions=prepareForwardOwnedDefinitions({project:graph.entry,entries,checked,genuineOrigin,target,sourceModules:graph.modules,readerFormat:ownedDefinitionMode==='core-json-readers'?'core-reader':undefined,lower:entry=>lowerDeclaration(entry,entry.name.split('.').at(-1))({runtimeModule:'../runtime/effects.mjs'})});}finally {genuineOrigin=undefined;}
+    let definitions;try {definitions=prepareForwardOwnedDefinitions({project:graph.entry,entries,checked,genuineOrigin,target,sourceModules:graph.modules,readerFormat:ownedDefinitionMode==='core-json-readers'?'core-reader':undefined,progress,lower:entry=>lowerDeclaration(entry,entry.name.split('.').at(-1))({runtimeModule:'../runtime/effects.mjs'})});}finally {genuineOrigin=undefined;}
+    progress({stage:'project-serialize',state:'advance',entry:options.entry,phase:'owned-definitions-complete',completed:definitions.definitions.length,total:entries.length});
+    progress({stage:'project-serialize',state:'end',entry:options.entry});
     return {meta,javascript,typescript,executableDeclarations,checkedMethodDeclarations,checkedGeneratedMethodDeclarations,sourceScopes,ownedDefinitions:definitions};
   }
   return { meta, javascript, typescript, executableDeclarations, checkedMethodDeclarations, checkedGeneratedMethodDeclarations, sourceScopes };

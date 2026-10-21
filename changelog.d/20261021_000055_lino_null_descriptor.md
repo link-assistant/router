@@ -1,0 +1,1 @@
+Use null-prototype property descriptors for copied Lino DATA arrays so inherited Object.prototype get/set DATA fields cannot introduce an accessor/data descriptor conflict. Add a complete receiving control with actual parsed networks and original/new semantic parser outcomes. Source-only draft; receiving execution remains unrun.

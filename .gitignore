@@ -81,3 +81,10 @@ experiments/issue-697/tools/
 # Isolated vendor installation for issue #703 verification.
 experiments/issue-703/tools/
 ci-logs/
+
+# Physical JavaScript/TypeScript package dependencies and generated build output.
+**/node_modules/
+/ts/dist/
+
+# Temporary generated profile storage; the owning matrix session removes it.
+/.router-isolated-matrix-*/

@@ -94,7 +94,7 @@ test('corpus proposal preserves deterministic replay and executes the real heade
   const checked=build(first);assert.ok(checked.meta.executable.some(row=>row.name==='a.a'));
   const edited=Object.fromEntries(first.inputs.map(row=>[row.path,row.source]));edited['src/a.rs']=row(first,'src/a.rs').proposal.after.source.replace('translation_core::format!','translation_core::unknown!');
   const result=retain('actual-tampered-source-result',translateProject({entry:'src/lib.rs',paths:Object.keys(edited),readSource:path=>edited[path]}));assert.equal(result.meta.executable.some(row=>row.name==='a.a'),false);
-  const original=Buffer.from(ORIGINAL_ACCOUNTS_SOURCE_BASE64,'base64').toString('utf8'),root=readFileSync(new URL('../../../src/lib.rs',import.meta.url),'utf8'),operation=readFileSync(new URL('../../../src/operation_output.rs',import.meta.url),'utf8');
+  const original=Buffer.from(ORIGINAL_ACCOUNTS_SOURCE_BASE64,'base64').toString('utf8'),root=readFileSync(new URL('../../../rust/src/lib.rs',import.meta.url),'utf8'),operation=readFileSync(new URL('../../../rust/src/operation_output.rs',import.meta.url),'utf8');
   retain('complete-pristine-application-source',original);assert.equal(createHash('sha256').update(original).digest('hex'),ORIGINAL_ACCOUNTS_SHA256);
   const actualProposal=propose({...library,'src/lib.rs':root,'src/operation_output.rs':operation,'src/accounts_cli.rs':original});
   const application=row(actualProposal,'src/accounts_cli.rs');assert.equal(application.status,'proposed');inverse(application.proposal);

@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,rmSync,realpathSync} from 'node:fs';
@@ -27,7 +28,7 @@ const helperOrigin=new URL('../private-data-freeze.mjs',import.meta.url),helperS
 function leaf(source,label,current){const origin=new URL('../builtin-derive-bang-footprints.mjs',import.meta.url),path=join(directory,label+'.mjs'),exports=String.fromCharCode(10)+'export {freeze as originalFreezeForOracle'+(current?',freezeCompleted as completedFreezeForOracle':'')+'};'+String.fromCharCode(10);writeFileSync(path,relocate(source,origin,label,current?{[helperOrigin.href]:pathToFileURL(freshHelperPath).href}:{})+exports);return {source,path,url:pathToFileURL(path).href,exports};}
 const leaves={old:leaf(oldSource,'complete-original',false),current:leaf(currentSource,'complete-current',true)};leaves.old.module=await import(leaves.old.url);leaves.current.module=await import(leaves.current.url);
 const legacyFreeze=leaves.current.module.originalFreezeForOracle;
-const cargo={manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')},dependencies=loadDeriveDependencyProof(cargo);
+const cargo={manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')},dependencies=loadDeriveDependencyProof(cargo);
 function retain(name,value){const output=process.env.ROUTER_DATA_FREEZE_VECTOR_DIR;if(output){mkdirSync(output,{recursive:true});writeFileSync(join(output,name+'.json.gz'),gzipSync(json(value,(_key,item)=>typeof item==='bigint'?{$integer:item.toString()}:item)+String.fromCharCode(10)),{flag:'wx'});}}
 const outcome=run=>{try{return {value:run()};}catch(error){return {error:{name:error.name,message:error.message}};}};
 // Observe the complete returned graph without executing a retained accessor.

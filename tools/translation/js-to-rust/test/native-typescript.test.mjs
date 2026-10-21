@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from "../../repository-layout.mjs";
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createHash } from 'node:crypto';
@@ -16,9 +17,9 @@ const SOURCE = process.env.ROUTER_NATIVE_TS_SOURCE_ROOT ? resolve(process.env.RO
 // Full private-build versus unchanged public-parser comparison. This fixture is
 // additional work; the original four regeneration builds below remain intact.
 async function lexicalThisBuildControls(ts,directory) {
-  const root=join(directory,'lexical-this-build'),javascript=join(root,'packages/javascript'),sourcePath='packages/javascript/native/lexical.mjs';
-  mkdirSync(join(javascript,'native'),{recursive:true});
-  symlinkSync(join(SOURCE,'packages/javascript/node_modules'),join(javascript,'node_modules'),'dir');
+  const root=join(directory,'lexical-this-build'),javascript=join(root,'js'),sourcePath='js/src/lexical.mjs';
+  mkdirSync(join(javascript,'src'),{recursive:true});
+  symlinkSync(join(SOURCE,'js/node_modules'),join(javascript,'node_modules'),'dir');
   writeFileSync(join(javascript,'package.json'),JSON.stringify({name:'lexical-this-fixture',version:'0.0.0',type:'module'}));
   writeFileSync(join(javascript,'catalog.json'),'{}\n');
   for(const name of ['index.js','testing.js'])writeFileSync(join(javascript,name),'export {};\n');
@@ -53,9 +54,9 @@ export function outerGenerator() { const value = function* nestedGenerator(){yie
   writeFileSync(join(root,sourcePath),source);
   const paths=sourceModules(root),artifacts=buildNativeTypeScript(root),fresh=inferenceProgram(ts,root,paths),expectedFlags=new Map([['lexical',true],['nested',false],['child',true],['asyncLexical',true],['generatorLexical',true],['asyncGeneratorLexical',true],['defaults',true],['objectBoundary',false],['computedKey',true],['classBoundary',false],['classExpressionBoundary',false],['namedExpression',true],['dataOnly',false],['propertyArrow',true],['outerGenerator',false],['nestedGenerator',true]]);
   for(const path of paths) {
-    const text=readFileSync(join(root,path),'utf8'),file=fresh.program.getSourceFile(join(root,path)),legacy=parseNativeJavaScript(ts,path,text,{file,checker:fresh.checker}),metaPath='tools/translation/js-to-rust/generated/native-typescript/'+path.slice('packages/javascript/'.length)+'.meta.json',wire=artifacts.get(metaPath);
+    const text=readFileSync(join(root,rustPackageSourcePath(root,path)),'utf8'),file=fresh.program.getSourceFile(join(root,path)),legacy=parseNativeJavaScript(ts,path,text,{file,checker:fresh.checker}),metaPath='tools/translation/js-to-rust/generated/native-typescript/'+path.slice('js/'.length)+'.meta.json',wire=artifacts.get(metaPath);
     assert.equal(wire,JSON.stringify(legacy)+'\n',path+': complete private/public meta byte equality');
-    const meta=JSON.parse(wire),output=emitNativeTypeScript(ts,legacy),target=path.replace('packages/javascript/','packages/typescript/').replace(/\.(?:mjs|js)$/u,'.ts'),header='// GENERATED JavaScript -> structured syntax AST -> TypeScript draft.\n// Meta sha256='+createHash('sha256').update(wire).digest('hex')+'; dynamic any annotations are explicit draft gaps.\n';
+    const meta=JSON.parse(wire),output=emitNativeTypeScript(ts,legacy),target=path.replace('js/','ts/').replace(/\.(?:mjs|js)$/u,'.ts'),header='// GENERATED JavaScript -> structured syntax AST -> TypeScript draft.\n// Meta sha256='+createHash('sha256').update(wire).digest('hex')+'; dynamic any annotations are explicit draft gaps.\n';
     assert.equal(artifacts.get(target),header+output.text,path+': complete target byte equality');
     if(path===sourcePath) {
       let index=0;const functions=[];const inspect=node=>{if(ts.isFunctionLike(node)&&node.parameters){const annotation=meta.annotations[index++];functions.push(node);if(ts.isFunctionDeclaration(node)||ts.isFunctionExpression(node)){assert.ok(expectedFlags.has(node.name?.text),'independent expected function '+node.name?.text);assert.equal(annotation.thisContext===true,expectedFlags.get(node.name.text),node.name.text);assert.deepEqual(Object.keys(annotation),['function','parameters','returns',...(annotation.thisContext?['thisContext']:[])]);}else assert.equal(Object.hasOwn(annotation,'thisContext'),false,'arrows/methods/constructor/accessors retain no ordinary-function receiver annotation');}ts.forEachChild(node,inspect);};inspect(file);assert.equal(index,meta.annotations.length);
@@ -66,10 +67,10 @@ export function outerGenerator() { const value = function* nestedGenerator(){yie
     }
   }
   for(const [path,value]of artifacts){const file=join(root,path);mkdirSync(dirname(file),{recursive:true});writeFileSync(file,value);}
-  symlinkSync(join(javascript,'node_modules'),join(root,'packages/typescript/node_modules'),'dir');
-  const strict=join(directory,'lexical-this-strict'),targets=paths.map(path=>join(root,path.replace('packages/javascript/','packages/typescript/').replace(/\.(?:mjs|js)$/u,'.ts')));
-  execFileSync(process.execPath,[join(SOURCE,'packages/javascript/node_modules/typescript/lib/tsc.js'),'--strict','--skipLibCheck','--target','ES2022','--module','commonjs','--outDir',strict,...targets],{encoding:'utf8',timeout:20_000,maxBuffer:1024*1024,stdio:'pipe'});
-  const compiled=await import(pathToFileURL(join(strict,'native/lexical.js')).href),original=await import(pathToFileURL(join(root,sourcePath)).href);
+  symlinkSync(join(javascript,'node_modules'),join(root,'ts/node_modules'),'dir');
+  const strict=join(directory,'lexical-this-strict'),targets=paths.map(path=>join(root,path.replace('js/','ts/').replace(/\.(?:mjs|js)$/u,'.ts')));
+  execFileSync(process.execPath,[join(SOURCE,'js/node_modules/typescript/lib/tsc.js'),'--strict','--skipLibCheck','--target','ES2022','--module','commonjs','--outDir',strict,...targets],{encoding:'utf8',timeout:20_000,maxBuffer:1024*1024,stdio:'pipe'});
+  const compiled=await import(pathToFileURL(join(strict,'src/lexical.js')).href),original=await import(pathToFileURL(join(root,sourcePath)).href);
   const verify=async runtime=>{assert.equal(runtime.lexical.call({value:11}),11);assert.equal(runtime.nested(),7);assert.equal(await runtime.asyncLexical.call({value:12}),12);assert.deepEqual([...runtime.generatorLexical.call({value:13})],[13,13]);assert.equal(runtime.defaults.call({value:14}),14);const generated=[];for await(const value of runtime.asyncGeneratorLexical.call({value:18}))generated.push(value);assert.deepEqual(generated,[18,18]);assert.equal(runtime.objectBoundary(),15);assert.equal(runtime.classBoundary(),17);assert.equal(runtime.classExpressionBoundary(),6);assert.equal(runtime.named.call({value:15}),15);assert.deepEqual(runtime.dataOnly(),['猫😀','this',true]);assert.equal(runtime.propertyArrow.call({value:16}),16);assert.equal(runtime.outerGenerator(),9);};await verify(original);await verify(compiled);
 }
 
@@ -203,9 +204,9 @@ test('structured dynamic gap plans preserve extra arguments, comma calls, coerci
 });
 
 test('every native JavaScript module has a structured syntax AST and executable TS draft', () => {
-  const manifest = JSON.parse(readFileSync(join(ROOT, 'tools/translation/js-to-rust/generated/native-typescript/manifest.json'), 'utf8'));
+  const manifest = JSON.parse(readFileSync(join(ROOT, rustPackageSourcePath(ROOT,'tools/translation/js-to-rust/generated/native-typescript/manifest.json')), 'utf8'));
   assert.deepEqual(manifest.modules.map((row) => row.source), sourceModules(SOURCE));
-  assert.deepEqual(manifest.inferenceInputs.map(row=>row.path), ['packages/javascript/package.json', ...readdirSync(join(SOURCE,'packages/javascript')).filter(name=>name.endsWith('.d.ts')).sort().map(name=>`packages/javascript/${name}`)]);
+  assert.deepEqual(manifest.inferenceInputs.map(row=>row.path), ['js/package.json', ...readdirSync(join(SOURCE,'js')).filter(name=>name.endsWith('.d.ts')).sort().map(name=>`js/${name}`)]);
   for(const row of manifest.inferenceInputs) { assert.equal(row.sha256,createHash('sha256').update(readFileSync(join(SOURCE,row.path))).digest('hex')); assert.equal(typeof row.resolvedByCompiler,'boolean'); }
   assert.ok(manifest.inferenceInputs.some(row=>row.role==='public-declaration'&&row.resolvedByCompiler));
   for (const row of manifest.modules) {
@@ -231,43 +232,43 @@ test('regeneration rejects stale, missing, and unexpected TS, meta, and asset ar
   const directory = mkdtempSync(join(tmpdir(), 'router-native-ts-drift-'));
   try {
     regenerateNativeTypeScript(directory, { sourceRoot: SOURCE });
-    const target = join(directory, 'packages/typescript/native/core.ts');
+    const target = join(directory, 'ts/src/core.ts');
     writeFileSync(target, 'stale\n');
-    rmSync(join(directory, 'packages/typescript/catalog.json'));
-    writeFileSync(join(directory, 'packages/typescript/native/unexpected.ts'), 'export const stale = true;\n');
-    writeFileSync(join(directory, 'packages/typescript/unexpected.ts'), 'export const stale = true;\n');
+    rmSync(join(directory, 'ts/catalog.json'));
+    writeFileSync(join(directory, 'ts/src/unexpected.ts'), 'export const stale = true;\n');
+    writeFileSync(join(directory, 'ts/unexpected.ts'), 'export const stale = true;\n');
     const result = regenerateNativeTypeScript(directory, { sourceRoot: SOURCE, check: true });
-    assert.ok(result.changed.includes('packages/typescript/native/core.ts'));
-    assert.ok(result.changed.includes('packages/typescript/catalog.json'));
-    assert.ok(result.unexpected.includes('packages/typescript/native/unexpected.ts'));
-    assert.ok(result.unexpected.includes('packages/typescript/unexpected.ts'));
+    assert.ok(result.changed.includes('ts/src/core.ts'));
+    assert.ok(result.changed.includes('ts/catalog.json'));
+    assert.ok(result.unexpected.includes('ts/src/unexpected.ts'));
+    assert.ok(result.unexpected.includes('ts/unexpected.ts'));
     regenerateNativeTypeScript(directory, { sourceRoot: SOURCE });
-    assert.equal(existsSync(join(directory, 'packages/typescript/native/unexpected.ts')), false);
-    assert.equal(existsSync(join(directory, 'packages/typescript/unexpected.ts')), false);
+    assert.equal(existsSync(join(directory, 'ts/src/unexpected.ts')), false);
+    assert.equal(existsSync(join(directory, 'ts/unexpected.ts')), false);
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
 
 test('compiled TypeScript executes the shared native runtime fixture suite in Node and Bun', { timeout: 300000 }, async (context) => {
   const directory = mkdtempSync(join(tmpdir(), 'router-native-ts-runtime-'));
   try {
-    const outDir = join(directory, 'packages/javascript');
+    const outDir = join(directory, 'js');
     compileNativeTypeScript(ROOT, { sourceRoot: SOURCE, outDir, emit: true });
     cpSync(join(SOURCE, 'parity/fixtures'), join(directory, 'parity/fixtures'), { recursive: true });
     cpSync(join(SOURCE, 'openapi'), join(directory, 'openapi'), { recursive: true });
     mkdirSync(join(outDir, 'test'), { recursive: true });
     const tests = [];
-    for (const name of readdirSync(join(SOURCE, 'packages/javascript/test'))) if (/^native-.*\.(?:mjs|js|json)$/u.test(name)) {
-      cpSync(join(SOURCE, 'packages/javascript/test', name), join(outDir, 'test', name));
+    for (const name of readdirSync(join(SOURCE, 'js/test'))) if (/^native-.*\.(?:mjs|js|json)$/u.test(name)) {
+      cpSync(join(SOURCE, 'js/test', name), join(outDir, 'test', name));
       if (/\.test\.(?:mjs|js)$/u.test(name)) tests.push(join(outDir, 'test', name));
     }
     // Canonical filesystem aliases preserve fixture imports, spawned module
     // URLs and public browser paths without duplicate module cache identities.
     const aliases=folder=>{for(const entry of readdirSync(folder,{withFileTypes:true})) {
-      const path=join(folder,entry.name);if(entry.isDirectory()){if(path!==join(outDir,'native/assets'))aliases(path);continue;}if(!path.endsWith('.js'))continue;
+      const path=join(folder,entry.name);if(entry.isDirectory()){if(path!==join(outDir,'src/assets'))aliases(path);continue;}if(!path.endsWith('.js'))continue;
       const alias=path.replace(/\.js$/u,'.mjs');symlinkSync(entry.name,alias);
       assert.equal(realpathSync(alias),realpathSync(path));
     }};
-    aliases(join(outDir,'native'));aliases(join(outDir,'portable'));
+    aliases(join(outDir,'src'));aliases(join(outDir,'portable'));
     // Exercise Node's canonical module cache under Node even when Bun hosts
     // this test. Bun's shared runtime fixtures run independently below.
     execFileSync('node', ['--input-type=module', '-e', `
@@ -275,10 +276,10 @@ test('compiled TypeScript executes the shared native runtime fixture suite in No
       import {join} from 'node:path';
       import {pathToFileURL} from 'node:url';
       const root=process.argv[1];
-      const canonical=await import(pathToFileURL(join(root,'native/oauth.js')).href);
-      assert.equal(await import(pathToFileURL(join(root,'native/oauth.mjs')).href),canonical);
+      const canonical=await import(pathToFileURL(join(root,'src/oauth.js')).href);
+      assert.equal(await import(pathToFileURL(join(root,'src/oauth.mjs')).href),canonical);
     `, outDir], { encoding: 'utf8', timeout: 10_000, stdio: 'pipe' });
-    const original = tests.map((path) => join(SOURCE, 'packages/javascript/test', path.slice(path.lastIndexOf('/') + 1)));
+    const original = tests.map((path) => join(SOURCE, 'js/test', path.slice(path.lastIndexOf('/') + 1)));
     const nodeArgs = ['--test', '--test-reporter=tap'];
     const env = { ...process.env }; delete env.NODE_TEST_CONTEXT;
     const run = (binary, args, cwd) => {

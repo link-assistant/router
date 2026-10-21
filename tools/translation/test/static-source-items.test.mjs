@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,rmSync} from 'node:fs';
@@ -15,7 +16,7 @@ import * as core from '../extensions/primitive-trait-closure.mjs';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {translateProject} from '../project.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const base=new URL('../',import.meta.url),root=new URL('../../../',import.meta.url),fixtures=new URL('../test/fixtures/static-source-items/',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
+const base=new URL('../',import.meta.url),root=new URL('../../../',import.meta.url),fixtures=new URL('./fixtures/static-source-items/',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
 const manifest=JSON.parse(readFileSync(new URL('manifest.json',fixtures),'utf8')),json=JSON.stringify,apply=Reflect.apply,descriptor=Object.getOwnPropertyDescriptor,nativeRegExp=RegExp;
 const directory=mkdtempSync(join(tmpdir(),'router-static-source-'));after(()=>rmSync(directory,{recursive:true,force:true}));
 const originals=new Map(),relocations=[];
@@ -23,7 +24,7 @@ for(const row of manifest.members){const bytes=readFileSync(new URL(row.storedPa
 function relocate(source,origin,name,overrides={}){return source.replace(/\bfrom (['"])(\.\.?\/[^'"]+)\1/g,(_whole,quote,path)=>{const resolved=new URL(path,origin).href,target=overrides[resolved]??resolved;relocations.push({consumer:name,path,target});return 'from '+quote+target+quote;}).replace(/\bimport\.meta\.url\b/g,()=>{relocations.push({consumer:name,kind:'original-module-url',target:origin.href});return json(origin.href);});}
 function oracle(path,name){const source=originals.get(path),origin=new URL(path.replace('tools/translation/',''),base),target=join(directory,name+'.mjs');writeFileSync(target,relocate(source,origin,name));return import(pathToFileURL(target).href);}
 const oldExternal=await oracle('tools/translation/extensions/external-trait-sources.mjs','complete-original-external'),oldCore=await oracle('tools/translation/extensions/primitive-trait-closure.mjs','complete-original-core');
-const cargo={manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')},dependencies=loadDeriveDependencyProof(cargo);
+const cargo={manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')},dependencies=loadDeriveDependencyProof(cargo);
 const pin=source=>Object.freeze({path:'src/original.rs',source});
 const retain=(name,value)=>{const output=process.env.ROUTER_STATIC_SOURCE_VECTOR_DIR;if(output){mkdirSync(output,{recursive:true});writeFileSync(join(output,name+'.json'),json(value)+'\n',{flag:'wx'});}};
 const legacyNames=['input','$_','lastMatch','$&','lastParen','$+','leftContext','$`','rightContext',"$'",'$1','$2','$3','$4','$5','$6','$7','$8','$9'];

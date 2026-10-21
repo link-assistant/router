@@ -7,8 +7,8 @@ import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {gzipSync,gunzipSync} from 'node:zlib';
-import {prepareStaticSourceLifecycleProposal,writeStaticSourceLifecycleProposal,STATIC_SOURCE_LIFECYCLE_CASES,STATIC_SOURCE_LIFECYCLE_PROFILES,STATIC_SOURCE_LIFECYCLE_LIMITS,selectRealSourceFixture,transportStaticSourceLifecycleCanonicals,visitStaticSourceLifecycleCanonicals} from '../prepare-real-source-fixtures.mjs';
-import {readStaticSourceLifecycle,staticSourceLifecycleContext,originalRealSourceManifest} from './real-source-fixtures.mjs';
+import {prepareStaticSourceLifecycleProposalReleased as prepareStaticSourceLifecycleProposal,writeStaticSourceLifecycleProposal,STATIC_SOURCE_LIFECYCLE_CASES,STATIC_SOURCE_LIFECYCLE_PROFILES,STATIC_SOURCE_LIFECYCLE_LIMITS,selectRealSourceFixture,transportStaticSourceLifecycleCanonicalsShared as transportStaticSourceLifecycleCanonicals,visitStaticSourceLifecycleCanonicals} from '../prepare-real-source-fixtures.mjs';
+import {readStaticSourceLifecyclePreflight as readStaticSourceLifecycle,staticSourceLifecycleContext,originalRealSourceManifest} from './real-source-fixtures.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,transportConcreteSyntaxMetaChunks,applyConcreteSyntaxSubstitutions,serializeConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {translateProject} from '../project.mjs';
@@ -90,8 +90,8 @@ test('original native constants and a current complete formatting body retain in
  retain('04-full-original-constant-and-result',{original,item,arrayPin,historical});assert.equal(hash(original),arrayPin.fileSha256);assert.equal(hash(original.slice(item.start,item.end)),arrayPin.declarationSha256);assert.ok(historical.meta.executable.some(row=>row.name==='MODEL_FAMILIES'));assert.deepEqual(historical.meta.refused,[]);
  await verifyTypedTargets(historical,api=>{assert.deepEqual(api.MODEL_FAMILIES,['opus','sonnet','haiku']);assert.ok(Object.isFrozen(api.MODEL_FAMILIES));},{childTimeoutMs:20000});
  const entry=originalRealSourceManifest().entries.find(row=>row.id==='format-resume_message'),parent=bank.sourceCurrent(entry.path),selection=selectRealSourceFixture(parent,entry,{current:true}),files={'src/lib.rs':'pub mod translation_core;\n'+selection.source};
- for(const row of bank.current.files)if(row.path==='src/translation_core.rs'||row.path.startsWith('src/translation_core/'))files[row.path]=bank.sourceCurrent(row.path);
- const dependencies={manifest:bank.sourceCurrent('Cargo.toml'),lock:bank.sourceCurrent('Cargo.lock')},result=translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path],cargoManifest:dependencies.manifest,deriveDependencies:loadDeriveDependencyProof(dependencies),jsonMacroDependencies:loadJsonMacroSourceProof(dependencies),compilationProfile:PRODUCTION_PROFILE});
+ for(const row of bank.current.files){const logical=row.path.startsWith('rust/')?row.path.slice(5):row.path;if(logical==='src/translation_core.rs'||logical.startsWith('src/translation_core/'))files[logical]=bank.sourceCurrent(row.path);}
+ const dependencies={manifest:bank.sourceCurrent('rust/Cargo.toml'),lock:bank.sourceCurrent('Cargo.lock')},result=translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path],cargoManifest:dependencies.manifest,deriveDependencies:loadDeriveDependencyProof(dependencies),jsonMacroDependencies:loadJsonMacroSourceProof(dependencies),compilationProfile:PRODUCTION_PROFILE});
  retain('04-full-current-parent-selection-and-core',{parent,selection,files,dependencies,result,scope:'Actual complete selected current function in declared Core carrier, not whole-parent admission.'});
  assert.ok(result.meta.executable.some(row=>row.name==='resume_message'),JSON.stringify(result.meta.refused));assert.equal(result.meta.refused.some(row=>row.source==='src/lib.rs'),false,JSON.stringify(result.meta.refused));
  await verifyTypedTargets(result,api=>{for(const [name,paused,wanted]of [['primary',true,'resumed primary'],['Ω/😀',false,'Ω/😀 was not paused'],['',true,'resumed '],['{name}',false,'{name} was not paused']])assert.equal(api.resume_message(name,paused),wanted);assert.throws(()=>api.resume_message('a',1n),TypeError);},{childTimeoutMs:20000});

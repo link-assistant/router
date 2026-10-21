@@ -1,0 +1,116 @@
+// Generated storage and historical comparison DATA must remain reproducible.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {fileURLToPath} from 'node:url';
+import {renderClassProgramStorage} from '../class-program-storage.mjs';
+import {prepareClassBirthEntrySource} from '../prepare-class-birth-entry.mjs';
+import {prepareOriginalClassBirthPlan} from '../prepare-original-class-birth.mjs';
+import {prepareCompilerAliasHistory} from '../prepare-compiler-alias-history.mjs';
+import {prepareCoreBase64SourceData} from '../prepare-core-base64-sources.mjs';
+import {prepareLexicalParentHistorySources} from '../prepare-lexical-parent-history.mjs';
+import {prepareFixedNativeDescriptorCensus} from '../prepare-fixed-native-descriptor-census.mjs';
+import {prepareReceivingModuleRelocators} from '../prepare-receiving-module-relocators.mjs';
+import {prepareInvocationLocalFreezer} from '../prepare-invocation-local-freezer.mjs';
+import {prepareStaticJsonPreflight} from '../prepare-static-json-preflight.mjs';
+import {prepareStaticSourceRelease} from '../prepare-static-source-release.mjs';
+import {prepareStreamingStaticEncoding} from '../prepare-streaming-static-encoding.mjs';
+import {prepareStandardModuleImportRoles} from '../prepare-standard-module-import-roles.mjs';
+import {prepareLiteralTextPacketStream} from '../prepare-literal-text-packet-stream.mjs';
+import {prepareLiteralPacketCli} from '../prepare-literal-packet-cli.mjs';
+import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
+const root=new URL('../../../',import.meta.url),read=path=>readFileSync(new URL(path,root),'utf8');
+
+test('the actual guarded class DATA storage renderer reproduces the complete installed leaf',{timeout:60000},()=>{
+ const source=read('tools/translation/extensions/original-class-definition-birth.mjs'),plan=renderClassProgramStorage({source});
+ assert.equal(plan.text,source);assert.equal(plan.inverse,source);assert.equal(plan.beforeProgramJson,plan.programJson);
+ assert.equal(transportConcreteSyntaxMeta(plan.beforeMeta).source,source);assert.equal(transportConcreteSyntaxMeta(plan.afterMeta).source,source);
+ assert.equal(plan.sourceAuthority,false);assert.equal(plan.runtimeAuthority,false);
+});
+
+test('the untransformed Host entry pin joins the complete current physical and normal Git source',{timeout:60000},()=>{
+ const plan=prepareClassBirthEntrySource({root:fileURLToPath(root)});assert.equal(plan.before,plan.after);assert.equal(plan.entry.source,read(plan.entry.path));
+ assert.equal(plan.classDefinitionsChanged,false);assert.equal(plan.registeredClassDomainExpanded,false);assert.equal(plan.runtimeAuthority,false);
+ assert.deepEqual(plan.trace.map(row=>row.phase),['language','repository']);
+});
+
+test('the actual class producer reproduces every registered class source and the complete stored PROGRAM',{timeout:60000},()=>{
+ const plan=prepareOriginalClassBirthPlan({sourceRoot:fileURLToPath(root)});assert.equal(plan.files.length,13);assert.equal(plan.selections.length,24);
+ for(const row of plan.files)assert.equal(row.afterSource,read('tools/translation/'+row.path));assert.equal(plan.leaf.afterSource,read(plan.leaf.path));
+ assert.deepEqual(plan.authority,{type:false,owner:false,executable:false});
+});
+
+test('the complete historical compiler readers equal their actual current source producer output',{timeout:60000},()=>{
+ const plan=prepareCompilerAliasHistory({root:fileURLToPath(root)});assert.equal(plan.files.length,1);
+ assert.deepEqual(plan.records.map(row=>row.name),['private-frozen-json.mjs','derive-bang-context.mjs','derive-enclosing-namespace-context.mjs','builtin-derive-bang-footprints.mjs','original-json-intrinsics.mjs','private-data-freeze.mjs']);
+ for(const row of plan.files){assert.equal(row.before,row.after);assert.equal(row.after,read(row.path));assert.equal(row.inverse,row.before);}
+ assert.equal(plan.sourceAuthority,false);assert.equal(plan.runtimeAuthority,false);
+});
+
+test('the base64 library DATA extension reproduces all current source bytes and its whole inverse',{timeout:60000},()=>{
+ const source=read('tools/translation/router-core-source-data.mjs'),at=source.indexOf('\nexport const ROUTER_CORE_BASE64_SOURCE=');assert.ok(at>0);
+ const plan=prepareCoreBase64SourceData({sourceData:source.slice(0,at),base64:read('rust/src/translation_core/base64.rs')});assert.equal(plan.value.after,source);assert.equal(plan.value.inverse,source.slice(0,at));
+ assert.deepEqual(plan.trace.map(row=>row.phase),['language','repository']);assert.deepEqual(plan.value.authority,{source:false,type:false,executable:false});
+});
+
+test('the copied Git history helper and complete original controls equal the actual source rule producer',{timeout:60000},()=>{
+ const manifest=JSON.parse(read('tools/translation/test/fixtures/portable-lexical-parent/manifest.json')),plan=prepareLexicalParentHistorySources({archiveSha256:manifest.sha256,objectCount:manifest.objects});assert.equal(plan.files.length,2);
+ for(const row of plan.files){assert.equal(row.source,read(row.path));assert.equal(row.inverse,row.template);assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.template);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.source);assert.deepEqual(row.trace.map(item=>item.phase),['language','repository']);}
+ assert.equal(plan.originalObjectAndSourceBoundsUnchanged,true);assert.equal(plan.runtimeAuthority,false);
+});
+
+test('the fixed native descriptor census equals the complete current host source producer',{timeout:60000},()=>{
+ const plan=prepareFixedNativeDescriptorCensus({root:fileURLToPath(root)});assert.equal(plan.files.length,1);
+ for(const row of plan.files){assert.equal(row.before,row.after);assert.equal(row.after,read(row.path));assert.equal(row.inverse,row.original);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);}
+ assert.equal(plan.newCaches,false);assert.equal(plan.originalRetentionPolicyUnchanged,true);assert.equal(plan.runtimeAuthority,false);
+});
+
+test('every copied receiving relocator reproduces its complete native-span source and inverse',{timeout:60000},()=>{
+ const plan=prepareReceivingModuleRelocators({root:fileURLToPath(root)});assert.equal(plan.files.length,2);
+ for(const row of plan.files){assert.equal(row.before,row.after);assert.equal(row.after,read(row.path));assert.equal(row.inverse,row.original);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);}
+ assert.equal(plan.originalCaseBodiesAndDeadlinesUnchanged,true);assert.equal(plan.sourceAuthority,false);assert.equal(plan.runtimeAuthority,false);
+});
+
+test('invocation-local scalar-cost source preparation reproduces both complete sources and inverses',{timeout:60000},()=>{
+ const plan=prepareInvocationLocalFreezer({root:fileURLToPath(root)});assert.equal(plan.files.length,2);
+ for(const row of plan.files){assert.equal(row.before,row.after);assert.equal(row.after,read(row.path));assert.equal(row.inverse,row.original);assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.original);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);}
+ assert.equal(plan.newAcrossInvocationCache,false);assert.equal(plan.globalRetentionPolicyUnchanged,true);assert.equal(plan.sourceAuthority,false);assert.equal(plan.runtimeAuthority,false);
+});
+
+test('canonical JSON projection and reject-only metadata preflight reproduce their complete actual producer',{timeout:60000},()=>{
+ const plan=prepareStaticJsonPreflight({root:fileURLToPath(root)});assert.equal(plan.files.length,3);
+ for(const row of plan.files){assert.equal(row.before,row.after);assert.equal(row.after,read(row.path));assert.equal(row.inverse,row.original);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);}
+ assert.equal(plan.existingCompleteReaderBodyUnchanged,true);assert.equal(plan.originalLimitsUnchanged,true);assert.equal(plan.newCaches,false);assert.equal(plan.sourceAuthority,false);assert.equal(plan.runtimeAuthority,false);
+});
+
+test('invocation-local source allocation rules reproduce both complete files and native CST inverses',{timeout:60000},()=>{
+ const plan=prepareStaticSourceRelease({root:fileURLToPath(root)});assert.equal(plan.files.length,2);
+ for(const row of plan.files){assert.equal(row.before,row.after);assert.equal(row.after,read(row.path));assert.equal(row.inverse,row.original);assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.original);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);}
+ assert.equal(plan.originalProducerBodyUnchanged,true);assert.equal(plan.originalLimitsUnchanged,true);assert.equal(plan.newAcrossInvocationCaches,false);assert.equal(plan.sourceAuthority,false);assert.equal(plan.runtimeAuthority,false);
+});
+
+test('incremental canonical encoding reproduces its whole scanner encoders and receiving dependency copy',{timeout:60000},()=>{
+ const plan=prepareStreamingStaticEncoding({root:fileURLToPath(root)});assert.equal(plan.files.length,4);
+ for(const row of plan.files){assert.equal(row.before,row.after);assert.equal(row.after,read(row.path));assert.equal(row.inverse,row.original);assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.original);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);}
+ assert.equal(plan.allOriginalEncoderBodiesUnchanged,true);assert.equal(plan.completePerRowAndWholeStorageInversesRemain,true);assert.equal(plan.originalLimitsUnchanged,true);assert.equal(plan.newAcrossInvocationCaches,false);assert.equal(plan.sourceAuthority,false);assert.equal(plan.runtimeAuthority,false);
+});
+
+test('source-derived standard module candidates reproduce their entire selector and complete CST inverse',{timeout:60000},()=>{
+ const plan=prepareStandardModuleImportRoles({root:fileURLToPath(root)});assert.equal(plan.files.length,1);
+ for(const row of plan.files){assert.equal(row.before,row.after);assert.equal(row.after,read(row.path));assert.equal(row.inverse,row.original);assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.original);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);}
+ assert.equal(plan.newAcrossInvocationCaches,false);assert.equal(plan.originalTimeRoleUnchanged,true);assert.equal(plan.sourceAuthority,false);assert.equal(plan.namespaceAuthority,false);assert.equal(plan.runtimeAuthority,false);
+});
+
+
+test('detached literal packet DATA reproduces the complete actual producer and original function inverses',{timeout:60000},()=>{
+ const plan=prepareLiteralTextPacketStream({root:fileURLToPath(root)});assert.equal(plan.files.length,1);
+ for(const row of plan.files){assert.equal(row.before,row.after);assert.equal(row.after,read(row.path));assert.equal(row.inverse,row.original);assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.original);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);}
+ assert.equal(plan.allOriginalMaterializedFunctionsUnchanged,true);assert.equal(plan.newAcrossInvocationCache,false);assert.equal(plan.sourceAuthority,false);assert.equal(plan.runtimeAuthority,false);
+});
+
+
+test('literal gzip CLI reproduces its full bounded original writer copy and source/CST inverse',{timeout:60000},()=>{
+ const plan=prepareLiteralPacketCli({root:fileURLToPath(root)});assert.equal(plan.files.length,1);
+ for(const row of plan.files){assert.equal(row.before,row.after);assert.equal(row.after,read(row.path));assert.equal(row.inverse,row.original);assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.original);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);}
+ assert.equal(plan.allOriginalPublicFunctionBodiesUnchanged,true);assert.equal(plan.allOriginalWriterAndQuotaBoundsUnchanged,true);assert.equal(plan.newAcrossInvocationCache,false);assert.equal(plan.sourceAuthority,false);assert.equal(plan.runtimeAuthority,false);
+});

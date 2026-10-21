@@ -5,10 +5,10 @@ import { join } from 'node:path';
 import { load, upstream, temporary } from './helpers.mjs';
 import { owner, request, fixture, reply, destination } from './provider-resource-helpers.mjs';
 
-const { NativeAffinityStore } = await load('packages/javascript/native/native-service.mjs');
-const { AffinityStore } = await load('packages/javascript/native/affinities.mjs');
-const { createRouterCore } = await load('packages/javascript/native/core.mjs');
-const { createNativeRouter } = await load('packages/javascript/native/server.mjs');
+const { NativeAffinityStore } = await load('js/src/native-service.mjs');
+const { AffinityStore } = await load('js/src/affinities.mjs');
+const { createRouterCore } = await load('js/src/core.mjs');
+const { createNativeRouter } = await load('js/src/server.mjs');
 const root = '/api/services/openai/v1/conversations', children = root + '/items';
 const missing = (item = false) => ({ error: { message: item ? 'Conversation item not found' : 'Conversation not found', type: 'invalid_request_error', param: null, code: item ? 'conversation_item_not_found' : 'conversation_not_found' } });
 

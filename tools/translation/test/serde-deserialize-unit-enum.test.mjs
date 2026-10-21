@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
@@ -13,7 +14,7 @@ import {resolveModuleBindings} from '../module-bindings.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock});
+const root=new URL('../../../',import.meta.url),manifest=readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock=readFileSync(repositorySourceURL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock});
 const retain=(name,value)=>{if(process.env.ROUTER_UNIT_ENUM_VECTOR_DIR){mkdirSync(process.env.ROUTER_UNIT_ENUM_VECTOR_DIR,{recursive:true});writeFileSync(process.env.ROUTER_UNIT_ENUM_VECTOR_DIR+'/'+name+'.json.gz',gzipSync(JSON.stringify(value,(_,value)=>typeof value==='bigint'?{$integer:value.toString()}:value)+'\n',{mtime:0}));}};
 const source=execFileSync('git',['show','HEAD:src/subscription/types.rs'],{encoding:'utf8'}),recovery=execFileSync('git',['show','HEAD:src/refresh_recovery.rs'],{encoding:'utf8'}),originalItem=sourceItems(recovery).find(item=>item.name==='refresh_failure_diagnostic'),originalFunction=recovery.slice(originalItem.start,originalItem.end),rootSource='pub mod subscription{pub mod types;}mod refresh_recovery{use crate::subscription::types::SubscriptionProvider;'+originalFunction+'}';
 function setup(source,root='pub mod model;'){

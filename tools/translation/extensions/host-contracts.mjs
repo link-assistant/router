@@ -1,4 +1,4 @@
-import {parseCharacterType,checkedCharacterType,assertCharacterBoundary,checkCharacterExpression,emitCharacterExpression,needsCharacterValueGuard} from './character-scalars.mjs';
+import {parseRouterCoreMatches} from '../router-core-matches.mjs';import {parseRouterCoreVector,checkRouterCoreVector} from '../router-core-vectors.mjs';import {parseCharacterType,checkedCharacterType,assertCharacterBoundary,checkCharacterExpression,emitCharacterExpression,needsCharacterValueGuard} from './character-scalars.mjs';
 import {parseRouterCoreRangeCall,checkRouterCoreRangeCall,captureRouterCoreRangeCalls,ROUTER_CORE_RANGE_CONTRACT} from '../router-core-ranges.mjs';
 import {parseRouterCoreStrReference} from '../router-core-primitives.mjs';
 import {parseRouterCoreFormatting,parseRouterCoreText} from '../router-core-formatting.mjs';
@@ -14,7 +14,7 @@ import {captureOriginalStandardCalls,hasOriginalStandardCall} from './original-s
 import {contextualIntegerParseReceiver,contextualIntegerParseTarget} from './contextual-integer-parse.mjs';
 import {checkPinnedSharedBody,checkedSharedMatchPlace,requirePinnedSharedBody,originalStandardRefField,prepareOriginalSharedBodies,requireOriginalSharedEmission} from './standard-borrowed-body.mjs';
 import {STANDARD_OPTION_COPY_SOURCE,SHARED_REFERENCE_COPY_SOURCE,sharedReferenceCopyIdentity,originalPrimitiveCopySource} from '../shared-reference-copy-source.mjs';
-import {pinnedPrimitiveIdentityFrom,parsePrimitiveIdentityFromBody,requirePrimitiveIdentityFromBody,requirePrimitiveIdentityFromEvidence} from './primitive-identity-from-source.mjs';
+import {pinnedPrimitiveIdentityFrom,parsePrimitiveIdentityFromBody,requirePrimitiveIdentityFromBody,requirePrimitiveIdentityFromEvidence} from './primitive-identity-from-source.mjs'; import {prepareOriginalPrimitiveIdentityBoundary,originalPrimitiveIdentityParameterGuard} from './primitive-identity-boundary.mjs';
 import {pinnedPrimitiveFrom,parsePrimitiveFromBody,requirePrimitiveFromBody,hasSourceFixedFrom} from './primitive-from-source.mjs';
 import {parsePrimitiveComparison,checkedPrimitiveCast,checkedPrimitiveShift,requirePrimitiveOperator} from './primitive-operators.mjs';
 import {sourcePrimitiveAlias} from './primitive-type-aliases.mjs';
@@ -88,11 +88,11 @@ import {TokenCursor} from '../vendor/meta-language/translation/lexer.js';
 import {validateOriginalMethodAssociations,withCheckedMethodCopyReceivers} from '../source-method-admission.mjs';
 import {withSharedNullaryEnumChecker} from '../shared-nullary-enum.mjs';
 import {parseRouterCoreAlgebraicType,parseRouterCoreAlgebraicExpression,parseRouterCoreAlgebraicPattern,routerCoreAlgebraicControlPatternOwner} from '../router-core-algebraic.mjs';
-import {parseRouterCoreScalarCall,checkRouterCoreScalarCall,captureRouterCoreScalarCalls,ROUTER_CORE_SCALAR_CONTRACT} from '../router-core-scalars.mjs';
+import {parseRouterCoreScalarCall,checkRouterCoreScalarCall,captureRouterCoreScalarCalls,ROUTER_CORE_SCALAR_CONTRACT,ROUTER_CORE_ASCII_CONTRACT} from '../router-core-scalars.mjs';
 import {parseRouterCoreJson,captureRouterCoreJsonCalls,checkRouterCoreJson} from '../router-core-json.mjs';
 import {checkOriginalOwnedJsonLetElse,parseRouterCoreJsonUpdate,captureRouterCoreJsonUpdates,checkRouterCoreJsonUpdate,visitOriginalJsonCollectionTextMatch,observeOriginalJsonErrorFormat,finalizeOriginalJsonErrorFlow,visitRouterCoreJsonUpdateFunction,checkRouterCoreJsonMutableLet,prepareOriginalJsonProjectionEmission,requireOriginalJsonProjectionEmission,ROUTER_CORE_JSON_UPDATE_CONTRACTS} from '../router-core-json-updates.mjs';
 import {originalDataFreezeIntrinsicsUnchanged} from '../original-json-intrinsics.mjs'; import {ROUTER_CORE_BASE64_CONTRACTS,ROUTER_CORE_BASE64_DATA,parseRouterCoreBase64Type,parseRouterCoreBase64Call,captureRouterCoreBase64Calls,checkRouterCoreBase64Call,visitRouterCoreBase64Function,prepareRouterCoreBase64Emission,requireRouterCoreBase64Emission,originalBase64ErrorDisplay,finalizeRouterCoreBase64Program} from '../router-core-base64.mjs';
-export const HOST_CONTRACTS=[...ROUTER_CORE_BASE64_CONTRACTS,...ROUTER_CORE_JSON_UPDATE_CONTRACTS,ROUTER_CORE_SCALAR_CONTRACT,ROUTER_CORE_RANGE_CONTRACT,...FLOAT_CONTRACTS,...JSON_CONTRACTS.map(contract=>({...contract,family:'json',pure:true,constEligible:false})),...TIME_CONTRACTS.map(contract=>({...contract,family:'time'})),...INTEGER_ERROR_CONTRACTS.map(contract=>({...contract,family:'integer',assumptions:['Registered standard ParseIntError layout and source-derived diagnostic behavior.']}))];
+export const HOST_CONTRACTS=[...ROUTER_CORE_BASE64_CONTRACTS,...ROUTER_CORE_JSON_UPDATE_CONTRACTS,ROUTER_CORE_SCALAR_CONTRACT,ROUTER_CORE_ASCII_CONTRACT,ROUTER_CORE_RANGE_CONTRACT,...FLOAT_CONTRACTS,...JSON_CONTRACTS.map(contract=>({...contract,family:'json',pure:true,constEligible:false})),...TIME_CONTRACTS.map(contract=>({...contract,family:'time'})),...INTEGER_ERROR_CONTRACTS.map(contract=>({...contract,family:'integer',assumptions:['Registered standard ParseIntError layout and source-derived diagnostic behavior.']}))];
 const pathKey=path=>path.filter((part,index)=>index!==0||part!=='crate').join('::'); const jsonCheckerOriginQualified=originalDataFreezeIntrinsicsUnchanged(),jsonCheckerOrigins=jsonCheckerOriginQualified?new WeakSet():null,jsonCheckerHas=jsonCheckerOriginQualified?WeakSet.prototype.has:null,jsonCheckerAdd=jsonCheckerOriginQualified?WeakSet.prototype.add:null,jsonCheckerApply=jsonCheckerOriginQualified?Reflect.apply:null;
 const span=(start,end)=>({start:start.start,end:end.end});
 const runtimeValueType=type=>type.kind==='fixed'?{kind:'fixed',bits:type.bits,signed:type.signed}:type.kind==='array'?{kind:'array',element:runtimeValueType(type.element),...(type.rustFixedArray?{rustFixedArray:{length:type.rustFixedArray.length}}:{})}:type.kind==='named'?{kind:'data',name:(type.path[0]==='crate'?type.path.slice(1):type.path).join('.')}:type.kind==='data'?{kind:'data',name:type.name}:{kind:type.kind};
@@ -150,7 +150,7 @@ export function hostData() {
   const merge=(target,items,path=[])=>{for(const item of items){
     const existing=target.find(entry=>entry.name===item.name && entry.k===item.k);
     if(item.k==='module') {
-      const module=existing??{...item,items:[]};if(!existing)target.push(module);
+      const module=existing??{...item,generated:item.generated??'router-host-contract',items:[]};if(!existing)target.push(module);
       merge(module.items,item.items,[...path,item.name]);
     } else if(!existing)target.push({...item,hostTypePath:[...path,item.name],generated:item.generated??'router-host-contract'});
   }};
@@ -334,7 +334,7 @@ export class HostRustParser extends withOriginalFormatDisplayParser(withJsonMacr
     };
     tree([]);c.expect(';','use');
   }
-  primary(path,options) {
+  primary(path,options) {const coreMatches=parseRouterCoreMatches(this,path);if(coreMatches)return coreMatches;const coreVector=parseRouterCoreVector(this,path);if(coreVector)return coreVector;
     const algebraic=parseRouterCoreAlgebraicExpression(this,path);if(algebraic)return algebraic;
     const coreScalar=parseRouterCoreScalarCall(this,path);if(coreScalar)return coreScalar;
     const coreBase64=parseRouterCoreBase64Call(this,path);if(coreBase64)return coreBase64;const coreRange=parseRouterCoreRangeCall(this,path);if(coreRange)return coreRange;
@@ -540,7 +540,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
     assertCharacterBoundary(actual,expected,range);
     assertRustPrimitiveIdentity(actual,expected,range,{declarations:this.items,resolveType:(type,scope,span)=>this.resolveType(type,scope??path,span)});
   }
-  hostExpression(node,env,path,expected,allowLiteral=false) {
+  hostExpression(node,env,path,expected,allowLiteral=false) {if(node.k==='routerCoreVector')return checkRouterCoreVector(this,node,env,path,expected,allowLiteral);
     const mutableJson=checkRouterCoreJsonMutableLet(this,node,env,path,expected,allowLiteral);if(mutableJson)return mutableJson;
     const character=checkCharacterExpression(this,node,env,path,expected);if(character)return character;
     if(node.k==='routerTextPattern'&&['contains','starts_with'].includes(node.op)&&node.args?.length===1&&node.args[0].k==='routerTextReference'&&node.args[0].sourceAmpersand)return super.expr(this.prepareOriginalStringPatternBorrow(node,env,path),env,path,expected,allowLiteral);
@@ -815,7 +815,7 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
     if(needsCharacterValueGuard(param.type))return [...constructorGuards,this.valueGuard(param.name,param.type)+';'];
     // The portable bounds helper compares values. Reject non-BigInts before
     // that helper can invoke a hostile object's conversion hooks.
-    if(param.type.kind==='fixed')return [...constructorGuards,`if (typeof ${param.name} !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');`,...super.parameterGuard(param)];
+    const identityBoundary=param.type.kind==='fixed'?originalPrimitiveIdentityParameterGuard(this,param):null;if(identityBoundary)return [...constructorGuards,...identityBoundary];if(param.type.kind==='fixed')return [...constructorGuards,`if (typeof ${param.name} !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');`,...super.parameterGuard(param)];
     const hasData=type=>type.kind==='data'||type.kind==='named'||type.kind==='array'&&(type.rustFixedArray||hasData(type.element));
     if(!hasData(param.type)&&param.type.kind!=='float')return [...constructorGuards,...(this.iteratorParameterGuards?.(param)??[]),...super.parameterGuard(param)];
     // A helper's guard must depend only on its actual reachable parameter
@@ -836,7 +836,7 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
     const schemaName='ml_host_value_schema_'+key,refinementsName='ml_host_value_refinements_'+key;this.state.reserved.add(schemaName).add(refinementsName);
     return `ml_validate_rust_value(${value}, ${JSON.stringify(runtimeValueType(type))}, ${schemaName}, { refinements: ${refinementsName} })`;
   }
-  fn(entry){const restoreBase64=prepareRouterCoreBase64Emission(this,entry,HostChecker),restoreJsonProjection=prepareOriginalJsonProjectionEmission(this,entry,HostChecker),restore=preparePinnedStandardFunction(this,entry,HostRustParser,HostChecker),restoreShared=prepareOriginalSharedBodies(this,entry,HostRustParser,HostChecker),restoreMapped=prepareOriginalMappedBodies(this,entry,HostRustParser,HostChecker),restoreCallbacks=prepareOriginalOptionCallbacks(this,entry,HostRustParser,HostChecker),restoreFrames=prepareOriginalSourceFrames(this,entry),restoreConversions=prepareOriginalConversionFunction(this,entry),restoreTryFrom=prepareOriginalPrimitiveTryFrom(this,entry),restorePatterns=sourcePatterns.prepareOriginalSharedPatterns(this,entry),restoreClones=prepareOriginalCloneEmission(this,entry),prior=this.constMatchFunction;this.constMatchFunction=this.state.localName(entry.fullName);try{return super.fn(entry);}finally{this.constMatchFunction=prior;restoreClones?.();restorePatterns?.();restoreTryFrom?.();restoreConversions?.();restoreFrames?.();restoreCallbacks?.();restoreMapped?.();restoreShared?.();restore?.();restoreJsonProjection?.();restoreBase64?.();}}
+  fn(entry){const restoreBase64=prepareRouterCoreBase64Emission(this,entry,HostChecker),restoreJsonProjection=prepareOriginalJsonProjectionEmission(this,entry,HostChecker),restore=preparePinnedStandardFunction(this,entry,HostRustParser,HostChecker),restoreShared=prepareOriginalSharedBodies(this,entry,HostRustParser,HostChecker),restoreMapped=prepareOriginalMappedBodies(this,entry,HostRustParser,HostChecker),restoreCallbacks=prepareOriginalOptionCallbacks(this,entry,HostRustParser,HostChecker),restoreFrames=prepareOriginalSourceFrames(this,entry),restoreConversions=prepareOriginalConversionFunction(this,entry),restoreTryFrom=prepareOriginalPrimitiveTryFrom(this,entry),restorePatterns=sourcePatterns.prepareOriginalSharedPatterns(this,entry),restoreClones=prepareOriginalCloneEmission(this,entry),restoreIdentityBoundary=prepareOriginalPrimitiveIdentityBoundary(this,entry),prior=this.constMatchFunction;this.constMatchFunction=this.state.localName(entry.fullName);try{return super.fn(entry);}finally{this.constMatchFunction=prior;restoreIdentityBoundary?.();restoreClones?.();restorePatterns?.();restoreTryFrom?.();restoreConversions?.();restoreFrames?.();restoreCallbacks?.();restoreMapped?.();restoreShared?.();restore?.();restoreJsonProjection?.();restoreBase64?.();}}
   statements(node,...args){
     if(node.k==='routerOriginalSharedPatternMatch'&&node.sourceSharedPatternProof?.functionTail===true)return sourcePatterns.withOriginalSharedPatternEmission(this,node,body=>this.statements(body,...args));
     if(node.k==='routerOrderedMatchArms'&&node.functionTail===true)sourcePatterns.requireOriginalSharedPatternNodeEmission(this,node);

@@ -743,7 +743,7 @@ jobs:
         run: |
           node --input-type=module -e "
             import fs from 'node:fs';
-            const version = fs.readFileSync('Cargo.toml', 'utf8').match(/^version\s*=\s*\"([^\"]+)\"/m)[1];
+            const version = fs.readFileSync('rust/Cargo.toml', 'utf8').match(/^version\s*=\s*\"([^\"]+)\"/m)[1];
             fs.appendFileSync(process.env.GITHUB_OUTPUT, 'version=' + version + '\n');
           "
 
@@ -1350,7 +1350,7 @@ jobs:
           python3 scripts/generate-contracts.py --check
           python3 scripts/generate-bindings.py --check
       - run: npm ci && npm test && npm run typecheck
-        working-directory: packages/javascript
+        working-directory: js
       - run: python3 -m pip install -e packages/python build
       - run: python3 -m unittest discover -s packages/python/tests -v
       - run: python3 scripts/package-integrations.py --output dist-integrations

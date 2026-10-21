@@ -52,10 +52,10 @@ run(["python3", "experiments/issue-719/bounded-build.py", "cargo", "test",
      "--locked", "--all-features", "--test", "soak_test", "--", "--ignored",
      "--nocapture"], "soak", {**ENV, "ROUTER_BUILD_RSS_LIMIT_MIB": "768",
                               "SOAK_SECONDS": "60", "SOAK_CONCURRENCY": "16"})
-run(["npm", "test"], "node", directory=ROOT / "packages/javascript")
+run(["npm", "test"], "node", directory=ROOT / "js")
 run(["npm", "run", "typecheck"], "typescript",
-    directory=ROOT / "packages/javascript")
-run(["bun", "test", "test"], "bun", directory=ROOT / "packages/javascript")
+    directory=ROOT / "js")
+run(["bun", "test", "test"], "bun", directory=ROOT / "js")
 run([str(ROOT / ".venv/bin/python"), "-m", "unittest", "discover", "-s",
      "packages/python/tests", "-v"], "python")
 run(["bash", "scripts/generate-http-clients.sh"], "generate-http-clients")

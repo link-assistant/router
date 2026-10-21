@@ -1,0 +1,10 @@
+{
+  "schema": "original-executable-checked-source-project-v1",
+  "sourceCommit": "02e72d083d4bcd357bd74576ac535133b37d4a3c",
+  "path": "tools/translation/project.mjs",
+  "archive": "project.mjs.gz",
+  "bytes": 67082,
+  "sha256": "b7424e36ec0de368e9b716301298be99b5bc98ac00cefff4a0cd5f0fbd40bf8f",
+  "archiveBytes": 16228,
+  "archiveSha256": "2ddaed7ed36b952ec1fe05a634bcb8bf55c8c7d739d9a5c15934a9f23d86af8a"
+}

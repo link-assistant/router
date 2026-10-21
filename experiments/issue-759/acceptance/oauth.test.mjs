@@ -4,8 +4,8 @@ import { mkdir, writeFile, readFile, stat, access } from 'node:fs/promises';
 import { join } from 'node:path';
 import { load, temporary, upstream } from './helpers.mjs';
 
-const { CredentialFileStore, OAuthManager, importCredential } = await load('packages/javascript/native/oauth.mjs');
-const { atomicWrite } = await load('packages/javascript/native/storage.mjs');
+const { CredentialFileStore, OAuthManager, importCredential } = await load('js/src/oauth.mjs');
+const { atomicWrite } = await load('js/src/storage.mjs');
 const now = 1_800_000_000;
 const document = (accessToken = 'old-access', refreshToken = 'old-refresh', expiry = now * 1000 + 60_000) => ({
   preference: { keep: true }, claudeAiOauth: { accessToken, refreshToken, expiresAt: expiry, scopes: ['user:inference'] },

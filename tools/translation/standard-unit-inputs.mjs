@@ -1,0 +1,24 @@
+// Private pinned standard-library source units. This selects source-model
+// inputs; it never authenticates an installed sysroot or compiled metadata.
+import {readFileSync} from 'node:fs';
+import {gunzipSync} from 'node:zlib';
+import {createHash} from 'node:crypto';
+import {deriveDependencyOriginalInputs} from './derive-dependencies.mjs';
+import {originalPrivateParserIngressUnchanged,originalStaticSourceIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged,originalCapturedFunctionSource,throwOriginalCapturedTypeError} from './original-json-intrinsics.mjs';
+const root=new URL('./source-profiles/standard-macro-provider-abi/',import.meta.url),initial=originalPrivateParserIngressUnchanged()&&originalStaticSourceIntrinsicsUnchanged()&&originalDataFreezeIntrinsicsUnchanged();
+const json=initial?Object.getOwnPropertyDescriptor(globalThis,'JSON')?.value:null,parse=initial&&json?Object.getOwnPropertyDescriptor(json,'parse'):null;
+const native=!!(parse&&Object.hasOwn(parse,'value')&&originalCapturedFunctionSource(parse.value)==='function parse() { [native code] }'),captures=native?new WeakMap():null;
+const fail=message=>throwOriginalCapturedTypeError('Original standard unit inputs: '+message);
+function guard(){if(!native||!originalPrivateParserIngressUnchanged()||!originalStaticSourceIntrinsicsUnchanged()||!originalDataFreezeIntrinsicsUnchanged())fail('original source operations changed');const current=Object.getOwnPropertyDescriptor(json,'parse');if(!current||!Object.hasOwn(current,'value')||current.value!==parse.value||current.writable!==parse.writable||current.enumerable!==parse.enumerable||current.configurable!==parse.configurable)fail('original source JSON parser changed');}
+const hash=value=>{const result=createHash('sha256').update(value).digest('hex');guard();return result;};
+const freeze=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;};
+function load(dependencies){
+ guard();const original=deriveDependencyOriginalInputs(dependencies),manifestSha256=hash(original.manifest),lockSha256=hash(original.lock);if(manifestSha256!==dependencies.manifestSha256||lockSha256!==dependencies.lockSha256)fail('genuine project manifest/lock changed');const bytes=readFileSync(new URL('manifest.json',root)),profileSha256=hash(bytes);if(profileSha256!=='25c746bb9f92d765d00edc31b7196bf8a8165e998fe67fa15947cd2a2a2980b2')fail('complete standard unit registry differs');
+ const text=new TextDecoder('utf8',{fatal:true,ignoreBOM:true}).decode(bytes);if(hash(text)!==profileSha256)fail('original registry decoding differs');const profile=parse.value(text);
+ if(dependencies.rustVersion!==profile.rustVersion)fail('genuine dependency compiler source version differs');
+ const sources=profile.sources.map(pin=>{const url=new URL(pin.archive,root);if(!url.pathname.startsWith(new URL('./source-profiles/',import.meta.url).pathname))fail('standard source archive escapes retained inputs');const packed=readFileSync(url);if(packed.length!==pin.archiveBytes||hash(packed)!==pin.archiveSha256)fail('complete standard source archive differs');const raw=gunzipSync(packed,{maxOutputLength:262144});if(raw.length!==pin.bytes||hash(raw)!==pin.sha256)fail('complete standard source differs');const source=new TextDecoder('utf8',{fatal:true,ignoreBOM:true}).decode(raw);if(hash(source)!==pin.sha256)fail('complete standard source decoding differs');return {...pin,source};});
+ guard();return freeze({profileSha256,profile,sources,projectInputs:{manifest:original.manifest,lock:original.lock,manifestSha256,lockSha256},units:profile.units.map(unit=>{const manifests=sources.filter(row=>row.path===unit.manifest),roots=sources.filter(row=>row.path===unit.crateRoot);if(manifests.length!==1||roots.length!==1)fail('one complete pinned source manifest/root required');return {...unit,manifest:manifests[0],crateRoot:roots[0]};}),nativeSysrootConformance:false,actualInvocationObserved:false,wholeNamespaceAuthority:false});
+}
+export function captureOriginalStandardUnitInputs(dependencies){const value=load(dependencies),token=Object.freeze({schema:'private-original-standard-unit-inputs-v1'});captures.set(token,{dependencies,value});return token;}
+export function originalStandardUnitInputs(token){guard();const state=captures.get(token);if(!state)fail('copied or foreign standard unit inputs');const value=load(state.dependencies);if(value.profileSha256!==state.value.profileSha256||value.sources.some((row,at)=>row.source!==state.value.sources[at].source))fail('complete standard source inputs changed');guard();return value;}
+export function requireOriginalStandardUnitInputs(token,dependencies){guard();if(captures.get(token)?.dependencies!==dependencies)fail('foreign original standard dependency association');return originalStandardUnitInputs(token);}

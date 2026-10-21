@@ -23,12 +23,67 @@ not prove absence of a competing `rustfmt` type-prefix binding. A complete
 source-backed export/producer closure remains required; registered spelling or
 a public namespace flag cannot replace it.
 
+The [complete source-equation adapter](concrete-source-equations.md) reuses the
+original full canonical CST transport for a bounded before/after source batch.
+Its native-selected transaction copy retains both substitution sequences and
+complete inverses, with fresh original source and native checks on each call.
+These DATA results grant no semantic or owner authority.
+
 The [rule-layer contract](translation-rules.md) defines the required separation
 between language semantics and repository conventions. The implementation in
 [`rule-pipeline.mjs`](../../tools/translation/rule-pipeline.mjs) accepts exactly
 two phase declarations, in this order: `language`, then `repository`. Either
 rule list may be empty. Extend those lists or compose pipelines for additional
 logical layers; arbitrary phase names are not accepted.
+
+`node scripts/prepare-project-concrete-review.mjs --emit` copies the complete
+existing inert-data guard into the stored-project review helper. Its language
+sequence preserves that guard verbatim; its repository sequence attaches the
+separate required concrete and semantic reviews. Review complete CST and inverse
+evidence before installation, then run `--check`. Each representation retains
+the original two-million-object/depth-512 limit, and complete storage byte limits
+remain unchanged. The concrete review validates every full document against the
+original source and complete source census. All other metadata fields reach the
+existing generated-method reviewer. Neither review grants compiler authority;
+the direct generated-method API and its original guard remain unchanged.
+
+`prepare-compressed-project-meta-storage.mjs` derives a separate complete copy
+of the existing UTF8/string storage planners and reader. Language rules encode
+only a complete concrete component and restore its exact canonical JSON; native
+syntax selects both original planner returns to retain their full decoded
+storage accounting. Repository rules name the new APIs. Existing APIs remain
+unchanged. `prepare-meta-compression-vendor.mjs` scopes the complete pinned
+fflate 0.8.3 UMD implementation without rewriting its compressor, retaining the
+original MIT license and package integrity. Both producers provide complete
+CST/inverse proposals and exact installed `--check` freshness. The compressed
+reader retains independent physical and original decoded limits. Source/type
+authority and application coverage are unaffected by these storage APIs.
+
+`python3 -B scripts/prepare-json-reader-review-profile.py --root ROOT --emit OUT`
+prepares the Python reviewer's exact JSON-profile pin. Its actual rule runner
+requires `language` followed by `repository`; IDs remain unique and extensible
+within those two sequences. Language rules serialize/reparse the complete
+`python-tokenize-cst-v1` source-preparation extension before native AST checks.
+They preserve token/trivia byte spans, whole source and inverse, and allow only
+the selected profile literal to change. Repository rules prove the complete
+pinned original/current profile and Cargo layout equation. Independently review
+the proposal before installation and require `--check` afterward. The existing
+strict reviewer check remains required. This Python source-preparation format
+supplies no Rust/JavaScript semantic or runtime authority.
+
+Receiving fixture evolution retains every frozen original source and pin.
+`currentCoreReceivingFiles` composes the exact owned-interface addition and
+complete current child sources; `assertCurrentCoreReceivingRefusals` checks
+all eleven original refusals, their explicit source-coordinate mapping, all
+thirteen base64 library refusals and the explicit appended ASCII library refusal
+as one complete array. The receiving composer checks the complete old primitive
+child against its full known source inverse before using the complete current
+child. Historical fixture APIs retain their original bytes. See
+[the current receiving contract](complete-current-core-receiving.md).
+Original fixture APIs remain available. Native module relocation records
+separate spans for repeated static and literal dynamic imports; opaque concrete
+regions retain complete source edits plus independently checked native-span
+inverses. These DATA adapters issue no namespace or executable permission.
 
 ```javascript
 const pipeline = createRulePipeline([
@@ -57,6 +112,47 @@ retains JavaScript string-replacement behavior. Its caller must independently
 pin the upstream input and retain the original source and license. Neither a
 successful anchor match nor a rule trace proves source ownership, a type,
 borrowing, effects or executable admission.
+
+For complete source payloads, use `exactLiteralSubstitutionRule` from
+[`literal-substitution-rule.mjs`](../../tools/translation/literal-substitution-rule.mjs).
+It retains the original argument and unique-anchor refusals and quotes replacement
+data so dollar patterns remain literal. The original constructor keeps its
+existing replacement-template contract. Both rule types grant no semantic
+authority; independently replay native syntax-span edits and full CST inverses.
+
+`node tools/translation/prepare-repository-layout-readers.mjs --emit TARGET_PATHS_JSON`
+emits a source proposal for an explicit array of complete compiler test paths.
+Its actual filesystem imports and lexical repository roots are selected with the
+installed native parser. Awaited literal imports and the actual tracked-source
+re-export retain their source evidence. Shadowed fixture roots, pending import
+promises and embedded historical strings remain unchanged. Review every original,
+selected span, complete inverse and unchanged input before installing the proposal;
+this development tool does not establish application translation coverage.
+
+`node tools/translation/prepare-derive-profile-layout.mjs --emit` copies the
+complete existing JSON profile equation into the derive-profile domain and
+proposes its actual async-trait consumer. Reusable language substitutions select
+the genuine private issuer and digest field; repository substitutions select the
+exact source-profile paths and operation name. Its `--check` compares both
+complete installed outputs. Original Cargo bytes, profile hashes, archives,
+inverse equations and private proof checks remain required; this DATA adapter
+does not grant namespace or executable authority.
+
+`node tools/translation/prepare-complete-core-source-fixtures.mjs --emit`
+copies the existing complete-child fixture function, selects every external
+module from the actual facade CST, and proposes all three current consumer
+imports. Its `--check` reproduces all four complete source files. The original
+helper and its initialization controls remain intact; the new DATA composer
+preserves explicitly supplied refusal inputs and grants no compiler authority.
+
+`adaptHistoricalCargoFeatureConsumer` proposes a complete receiving copy of a
+frozen feature-worklist consumer. Its raw source hashes and original functions
+remain exact. `cargoLayoutFeatureProfileMatches` accepts only two known full
+profile pairs, authenticates original/current Cargo archives and reuses the
+complete manifest equation. General CST literal edits change the four recorded
+Cargo fields; repository formatting has an independently reconstructed trivia
+inverse and the exact current whole-byte checksum. These DATA operations do not
+replace a private dependency issuer, its runtime hashes or semantic checks.
 
 ## Migrated paths and candidate evidence
 
@@ -136,3 +232,24 @@ fixture attempts with full parents and source/CST inverses retained. These scope
 attempts establish neither complete parent/crate admission nor repaired semantic
 or performance frontiers. All ordinary source, dependency, checker and private
 proof checks still run afresh; source data is not a saved compiler verdict.
+
+`test/relocate-source-module.mjs` uses native import/export and module-URL spans
+to author a receiving copy, retaining separate spans for repeated replacements,
+complete serialized/reparsed CST and a whole inverse. It preserves comments and
+embedded historical source strings. It issues no source or compiler permission.
+
+`test/internal-digest-adoption-history.mjs` retains the complete actual module
+and every later suffix byte while replaying the original terminal-kernel
+producer on its exact historical scope. The actual adopted factory must still
+match that complete producer equation. Current runtime tests execute the actual
+complete module; the history adapter does not claim that later extensions were
+part of the original source proposal or grant semantic authority.
+
+`node tools/translation/prepare-external-package-defaults.mjs --emit` selects the
+complete actual `facts` function with the installed native parser. Language
+rules copy its producer and bind genuine package/Cargo inputs; repository rules
+select the DATA schema and remove only caller-module metadata. Its complete
+source/CST inverse and `--check` preserve all existing producer bodies.
+`originalExternalPackageDefaultSourceData` reuses the actual fresh Cargo parsing
+and activation rules. It returns no project module or namespace, test, unit or
+runtime authority; every unproved configuration atom remains unknown.

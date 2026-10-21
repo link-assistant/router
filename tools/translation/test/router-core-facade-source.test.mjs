@@ -1,3 +1,4 @@
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import {translateProject} from '../project.mjs';
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
@@ -20,7 +21,7 @@ import {json_macro_object,json_macro_string,json_macro_bool} from '../json-macro
 const root=fileURLToPath(new URL('../../../',import.meta.url)),core='src/translation_core.rs',primitive='src/translation_core/primitives.rs';
 let vectors=[];const retain=(kind,value)=>{vectors.push({kind,value});return value;};
 const test=(name,run)=>testCase(name,{timeout:60000},async t=>{vectors=[];try{await run(t);}finally{if(process.env.ROUTER_CORE_FACADE_SOURCE_VECTOR_DIR){const directory=process.env.ROUTER_CORE_FACADE_SOURCE_VECTOR_DIR;mkdirSync(directory,{recursive:true});writeFileSync(join(directory,Buffer.from(name).toString('hex')+'.json'),JSON.stringify({name,vectors},(_key,value)=>typeof value==='bigint'?{$integer:String(value)}:value)+'\n');}}});
-function original(path){return existsSync(join(root,path))?readFileSync(join(root,path),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:30000,maxBuffer:16777216});}
+function original(path){return existsSync(join(root,path))?readFileSync(join(root,repositorySourcePath(path,root)),'utf8'):execFileSync('git',['show','HEAD:'+repositorySourcePath(path,root)],{cwd:root,encoding:'utf8',timeout:30000,maxBuffer:16777216});}
 function selected(rootSource='pub mod translation_core;\n',options={}){
  const files={'src/lib.rs':rootSource,[core]:ROUTER_FORMATTING_FACADE_SOURCE,[primitive]:ROUTER_CORE_PRIMITIVES_SOURCE,...options.files},profile=Object.hasOwn(options,'profile')?options.profile:PRODUCTION_PROFILE,modules=[];
  for(const [file,prefix]of [['src/lib.rs',[]],[core,['translation_core']],[primitive,['translation_core','primitives']]]){
@@ -36,7 +37,7 @@ async function reverseTargets(t,data){
  const context=createOwnedCoreSourceContext(data),source=data.files.find(row=>row.path==='caller.mjs').source,result=translateOwnedCoreJavaScript(source,{context,sourcePath:'caller.mjs'}),directory=mkdtempSync(join(tmpdir(),'owned-facade-edge-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));
  for(const row of data.files.filter(row=>row.path.startsWith('runtime/'))){mkdirSync(dirname(join(directory,row.path)),{recursive:true});writeFileSync(join(directory,row.path),row.source);}
  writeFileSync(join(directory,'caller.mjs'),source);writeFileSync(join(directory,'typed.mts'),result.typescript);
- try{execFileSync(process.execPath,[join(root,'packages/javascript/node_modules/typescript/bin/tsc'),'--strict','--skipLibCheck','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--outDir',join(directory,'out'),join(directory,'typed.mts')],{cwd:root,timeout:20000,stdio:'pipe'});}catch(error){retain('strict-child',{stdout:error.stdout?.toString('utf8'),stderr:error.stderr?.toString('utf8'),status:error.status});throw error;}
+ try{execFileSync(process.execPath,[join(root,'js/node_modules/typescript/bin/tsc'),'--strict','--skipLibCheck','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--outDir',join(directory,'out'),join(directory,'typed.mts')],{cwd:root,timeout:20000,stdio:'pipe'});}catch(error){retain('strict-child',{stdout:error.stdout?.toString('utf8'),stderr:error.stderr?.toString('utf8'),status:error.status});throw error;}
  mkdirSync(join(directory,'out/runtime'),{recursive:true});for(const row of data.files.filter(row=>row.path.startsWith('runtime/')))writeFileSync(join(directory,'out',row.path),row.source);
  const actual=await import(pathToFileURL(join(directory,'caller.mjs')).href),typed=await import(pathToFileURL(join(directory,'out/typed.mjs')).href);retain('complete-reverse',{data,result});return {actual,typed,result,context};
 }

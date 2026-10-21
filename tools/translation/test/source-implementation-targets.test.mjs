@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
@@ -11,7 +12,7 @@ import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {HostRustParser} from '../extensions/host-contracts.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
 function retain(name,value){const directory=process.env.ROUTER_IMPLEMENTATION_TARGET_VECTORS;if(directory){mkdirSync(directory,{recursive:true});writeFileSync(directory+'/'+name+'.json.gz',gzipSync(JSON.stringify(value)));}}
 function original(source,entry='src/lib.rs'){
  const graph=resolveModuleGraph({entry,paths:[entry],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE}),binding=resolveModuleBindings({modules:graph.modules,externalModules:registeredStandardHostBindings(),compilationProfile:PRODUCTION_PROFILE}),module=graph.modules[0],implementations=extractImplDeclarations(source,{sourcePath:entry,modulePath:module.path,sourceView:module.sourceView,compilationProfile:PRODUCTION_PROFILE}).implementations;
@@ -22,7 +23,7 @@ for(const [target,kind]of [['String','owned-standard-string'],['&str','shared-pr
  const source='pub struct Other; impl PartialEq<Other> for '+target+' {fn eq(&self,_other:&Other)->bool{false}}',input=original(source),selected=bind(input),proof=originalStandardImplementationTarget(selected);assert.ok(proof);assert.equal(proof.kind,kind);assert.equal(proof.targetOriginal,target);assert.equal(proof.traitBodyExecuted,false);assert.equal(proof.copyAuthority,false);assert.equal(proof.noDropAuthority,false);assert.equal(proof.conditionalAvailabilitySelected,false);assert.deepEqual(selected.diagnostics,input.implementations[0].diagnostics);assert.ok(proof.parsedType.rustOwnership);retain('canonical-'+kind,{source,implementation:input.implementations[0],selected,proof});
 });
 test('complete unchanged InstanceName original String and shared str impl headers retain all independent body refusals',()=>{
- const file='src/deploy/instance.rs',source=readFileSync(new URL(file,root),'utf8'),input=original(source,file),rows=[];
+ const file='src/deploy/instance.rs',source=readFileSync(repositorySourceURL(file,root),'utf8'),input=original(source,file),rows=[];
  for(const [start,end,kind]of [[6296,6335,'owned-standard-string'],[6427,6464,'shared-primitive-str']]){
   const implementation=input.implementations.find(row=>row.headerSpan.start===start&&row.headerSpan.end===end);assert.ok(implementation);const selected=bind(input,implementation),proof=originalStandardImplementationTarget(selected);assert.ok(proof);assert.equal(proof.kind,kind);assert.deepEqual(proof.headerSpan,{start,end});assert.deepEqual(selected.diagnostics,implementation.diagnostics);assert.equal(proof.traitBodyExecuted,false);rows.push({implementation,selected,proof});
  }

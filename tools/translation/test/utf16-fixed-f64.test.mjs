@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -85,7 +86,7 @@ test('shared/custom/f32 casts, unknown UTF16 owners, static and escaping tempora
 });
 
 test('original complete attributed UTF16 policy declarations retain byte pins and shared Unicode outcomes',{timeout:60_000},async()=>{
-  const path='src/generated_js_first/policy.rs',original=readFileSync(new URL('../../../'+path,import.meta.url),'utf8');
+  const path='src/generated_js_first/policy.rs',original=readFileSync(repositorySourceURL(path,new URL('../../../',import.meta.url)),'utf8');
   assert.equal(hash(original),'c5d5cec07bf54be29de7beed707263256afa6ba1ee87c89695b237d5626f5673');
   const pins=[['utf16_length',3920,4042,'77a429191843ebe5548e18557493245f04831bf8887e4e6f4f2364d69af88d94'],['model_name_length_permits',4044,4236,'4286f43941d0cf1ce0dd46ef80f2d0f4608a57febf05104946aee6ebc6479bfe']];
   const items=sourceItems(original),selected=pins.map(([name,start,end,digest])=>{const item=items.find(item=>item.term==='fn'&&item.name===name);assert.deepEqual([item.start,item.end],[start,end]);const text=original.slice(start,end);assert.equal(hash(text),digest);assert.ok(text.startsWith('#[rustfmt::skip]'));return text;}).join('\n');

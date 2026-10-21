@@ -83,7 +83,7 @@ test('mixed tuple leaves retain their distinct input and static origins',{timeou
   assert.ok(result.meta.refused.some(entry=>entry.name==='bad'));
 });
 test('unchanged tracked static error classifier retains literal lifetime origin evidence',{timeout:30_000},async()=>{
-  const source=readFileSync(new URL('../../../src/api_error.rs',import.meta.url),'utf8');
+  const source=readFileSync(new URL('../../../rust/src/api_error.rs',import.meta.url),'utf8');
   const item=sourceItems(source).find(item=>item.term==='fn'&&item.name==='openai_error_type');
   assert.ok(item);const declaration=source.slice(item.start,item.end);
   const hash=createHash('sha256').update(declaration).digest('hex');

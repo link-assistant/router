@@ -1,3 +1,4 @@
+import {adaptHistoricalTypeScriptLayout} from '../../test/fixtures/historical-language-layout.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
@@ -15,11 +16,12 @@ function retain(name,value){if(!process.env.ROUTER_STATIC_NATIVE_VECTORS)return;
 async function oracle(name){
  if(oracles.has(name))return oracles.get(name);const row=pins.members.find(row=>row.sourceFile===name+'.source.txt');assert.ok(row);const bytes=readFileSync(new URL(row.sourceFile,fixtures));assert.equal(bytes.length,row.bytes);assert.equal(hash(bytes),row.sha256);assert.equal(createHash('sha1').update('blob '+bytes.length+'\0').update(bytes).digest('hex'),row.gitBlob);
  // Full pinned implementation, with only its module specifiers relocated.
- const original=bytes.toString(),parent=new URL(row.originalPath,pathToFileURL(root+'/'));
+ const original=bytes.toString(),adaptation=name==='native-typescript'?adaptHistoricalTypeScriptLayout(original):null,parent=new URL(row.originalPath,pathToFileURL(root+'/'));
+ if(adaptation)retain('complete-historical-typescript-layout',{original,adaptation,originalSha256:row.sha256});
  const dependencies=new Map();
  if(name==='scoped-helpers'||name==='ir')dependencies.set('./lexical-environments.mjs',(await oracle('lexical-environments')).url);
  if(name==='scoped-helpers')dependencies.set('./ir.mjs',(await oracle('ir')).url);
- const source=original.replace(/(from\s+)(['"])(\.[^'"]+)\2/g,(_all,prefix,quote,path)=>prefix+quote+(dependencies.get(path)??new URL(path,parent).href)+quote);
+ const source=(adaptation?.source??original).replace(/(from\s+)(['"])(\.[^'"]+)\2/g,(_all,prefix,quote,path)=>prefix+quote+(dependencies.get(path)??new URL(path,parent).href)+quote);
  // A separate complete old IR module reads only its matching old private
  // lexical issuer. No old handle crosses into the current private WeakMap.
  const url='data:text/javascript;base64,'+Buffer.from(source).toString('base64'),module=await import(url);const value={module,url,originalSha256:row.sha256};oracles.set(name,value);return value;
@@ -65,8 +67,8 @@ test('copied, proxy, changed source and foreign span issuers cannot provide lexi
 });
 test('every original native module retains complete top/scoped programs and all705 source refusal identities', {timeout:60000},async()=>{
  const old=(await oracle('scoped-helpers')).module,rows=[];let scoped=0,top=0,modules=0,translatedTop=0,translatedScoped=0,full=0,conditional=0,currentTranslatedScoped=0,currentFull=0,currentConditional=0;
- for(const path of sourceModules(sourceRoot).filter(path=>path.startsWith('packages/javascript/native/'))){const source=readFileSync(resolve(sourceRoot,path),'utf8'),current=analyzeJavaScript(source,{sourcePath:path}),previous=old.discoverScopedHelpers(source,current.items,analyzeJavaScript,path);
-  const gains=new Map([['packages/javascript/native/client-status.mjs',2581],['packages/javascript/native/config.mjs',15324],['packages/javascript/native/github-proxy.mjs',2346],['packages/javascript/native/provider-manifest.mjs',737],['packages/javascript/native/tokens.mjs',4090]]);
+ for(const path of sourceModules(sourceRoot).filter(path=>path.startsWith('js/src/'))){const source=readFileSync(resolve(sourceRoot,path),'utf8'),current=analyzeJavaScript(source,{sourcePath:path}),previous=old.discoverScopedHelpers(source,current.items,analyzeJavaScript,path);
+  const gains=new Map([['js/src/client-status.mjs',2581],['js/src/config.mjs',15324],['js/src/github-proxy.mjs',2346],['js/src/provider-manifest.mjs',737],['js/src/tokens.mjs',4090]]);
   assert.equal(current.scopedFunctions.sourceItems,previous.sourceItems);
   for(const fn of previous.program)assert.deepEqual(current.scopedFunctions.program.find(row=>row.name===fn.name),fn,path+':'+fn.name);
   for(const before of previous.items){const after=current.scopedFunctions.items.find(row=>row.start===before.start);if(before.start===gains.get(path)){assert.equal(before.status,'unsupported');assert.equal(after.status,'translated');assert.equal(after.end,before.end);assert.deepEqual(after.sourceScope,before.sourceScope);assert.deepEqual(after.captures,before.captures);}else assert.deepEqual(after,before,path+':'+before.start);}

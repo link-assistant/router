@@ -1,3 +1,4 @@
+import {crateModuleSourcePath} from './repository-layout.mjs';
 // Owned compatibility type binding. The Rust alias remains ordinary `str`;
 // its library internals are intentionally outside translation. This adapter
 // creates the existing borrowed-text type only for the genuine qualified edge.
@@ -24,7 +25,7 @@ function originalLeaf(state){
   const leaves=state.facts.modules.filter(module=>module.path.length===2&&module.path[0]==='translation_core'&&module.path[1]==='primitives');
   if(leaves.length!==1)fail();
   const leaf=leaves[0];
-  if(leaf.file!=='src/translation_core/primitives.rs'||leaf.configurationCondition!=='active'||leaf.source!==ROUTER_CORE_PRIMITIVES_SOURCE||!Object.hasOwn(leaf,'sourceView'))fail();
+  if(leaf.file!==crateModuleSourcePath(state.facts.modules,'src/translation_core/primitives.rs')||leaf.configurationCondition!=='active'||leaf.source!==ROUTER_CORE_PRIMITIVES_SOURCE||!Object.hasOwn(leaf,'sourceView'))fail();
   originalSourceModuleItems(leaf);
   return leaf;
 }

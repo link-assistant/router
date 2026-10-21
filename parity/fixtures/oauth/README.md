@@ -3,7 +3,7 @@
 All credential strings are inert fixtures. Tests use temporary directories,
 injected fetch responses and a fixed Unix clock; they never read a user's home,
 call live token endpoints, modify a real account, install dependencies or build
-Rust. Run `node --test packages/javascript/test/native-oauth.test.mjs`.
+Rust. Run `node --test js/test/native-oauth.test.mjs`.
 
 The implementation follows local Rust contracts in `subscription.rs`,
 `subscription/types.rs`, `refresh.rs`, `refresh_state.rs`,

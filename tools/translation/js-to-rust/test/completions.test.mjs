@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from "../../repository-layout.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,rmSync,realpathSync} from 'node:fs';
@@ -17,7 +18,7 @@ import {terminatesCompletion} from '../vendor/completions.mjs';
 import {parseJavaScriptItem} from '../vendor/frontends.mjs';
 import {lex} from '../vendor/lexer.mjs';
 
-const root=fileURLToPath(new URL('../../../../',import.meta.url)),require=createRequire(join(root,'packages/javascript/package.json'));
+const root=fileURLToPath(new URL('../../../../',import.meta.url)),require=createRequire(join(root,'js/package.json'));
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const put=(root,path,source)=>{mkdirSync(dirname(join(root,path)),{recursive:true});writeFileSync(join(root,path),source);};
 const result=run=>{try{return {normal:true,value:run()};}catch(error){return {normal:false,error};}};
@@ -234,13 +235,13 @@ test('actual TypeScript class import aliases avoid all legal parameter local and
 });
 
 test('complete original imageMedia body independently preserves all-input throw/return and actual native class identity',{timeout:60000},async t=>{
-  const inventory=spawnSync('git',['ls-files','-z','--','packages/javascript/native'],{cwd:root,encoding:'utf8',timeout:10000});assert.equal(inventory.status,0);
+  const inventory=spawnSync('git',['ls-files','-z','--','js/src'],{cwd:root,encoding:'utf8',timeout:10000});assert.equal(inventory.status,0);
   const paths=inventory.stdout.split('\0').filter(path=>path.endsWith('.mjs')).sort();assert.equal(paths.length,52);
-  const sources=paths.map(path=>({path,source:readFileSync(join(root,path),'utf8')})),graph=createConstructorSourceGraph(sources),path='packages/javascript/native/gemini-protocol.mjs',source=sources.find(row=>row.path===path).source;
+  const sources=paths.map(path=>({path,source:readFileSync(join(root,rustPackageSourcePath(root,path)),'utf8')})),graph=createConstructorSourceGraph(sources),path='js/src/gemini-protocol.mjs',source=sources.find(row=>row.path===path).source;
   const analysis=analyzeJavaScript(source,{sourcePath:path,constructorGraph:graph}),item=analysis.program.find(row=>row.name==='image_media');
   assert.ok(item,'unchanged whole original imageMedia must check through its qualified constructor source graph');assert.equal(item.params[0].type,'value');assert.equal(item.returns,'value');assert.equal(item.conditionalConstructors,true);
   const meta=toLino(item)+'\n',program=parseMeta(meta,{constructorGraph:graph}),owner=item.sourceConstructors.owner,originalBody=source.slice(owner.start,owner.end);
-  const {ProtocolError}=await import(pathToFileURL(join(root,'packages/javascript/native/protocols.mjs')).href);
+  const {ProtocolError}=await import(pathToFileURL(join(root,'js/src/protocols.mjs')).href);
   const original=Function('ProtocolError','return ('+originalBody+');')(ProtocolError);
   let reads=0;const getter={get [Symbol.toPrimitive](){reads++;throw Error('coercion');},get value(){reads++;throw Error('property');}},proxy=new Proxy({}, {get(){reads++;throw Error('proxy');}}),revoked=Proxy.revocable({},{});revoked.revoke();
   const cases=[['jpeg','image/jpeg'],['png','image/png'],['gif','image/gif'],['webp','image/webp'],['undefined',undefined],['null',null],['false',false],['zero',0],['negative-zero',-0],['nan',NaN],['huge-bigint',10n**100n],['symbol',Symbol('opaque')],['function',()=>1],['object',{}],['getter-object',getter],['proxy',proxy],['revoked-proxy',revoked.proxy],['boxed-string',Object('image/png')],['lone-surrogate','\ud800'],['other-media','text/plain']],rows=[];
@@ -253,9 +254,9 @@ test('complete original imageMedia body independently preserves all-input throw/
   }
   assert.equal(reads,0);
   const directory=realpathSync(mkdtempSync(join(tmpdir(),'router-original-constructor-ts-')));t.after(()=>rmSync(directory,{recursive:true,force:true}));put(directory,'package.json','{"type":"module"}');
-  for(const stem of ['protocols','gemini-protocol'])put(directory,'packages/typescript/native/'+stem+'.ts',readFileSync(join(root,'packages/typescript/native/'+stem+'.ts'),'utf8'));
-  const targetPath='packages/typescript/native/portable-draft/top-level/gemini-protocol.ts',typescript=emitTypeScript(program,{outputPath:targetPath});put(directory,targetPath,typescript+'\nexport {imageMedia};\n');strict(directory,targetPath);
-  const target=await import(pathToFileURL(join(directory,'out',targetPath.replace(/\.ts$/u,'.js'))).href),targetCtor=(await import(pathToFileURL(join(directory,'out/packages/typescript/native/protocols.js')).href)).ProtocolError;
+  for(const stem of ['protocols','gemini-protocol'])put(directory,'ts/src/'+stem+'.ts',readFileSync(join(root,'ts/src/'+stem+'.ts'),'utf8'));
+  const targetPath='ts/src/portable-draft/top-level/gemini-protocol.ts',typescript=emitTypeScript(program,{outputPath:targetPath});put(directory,targetPath,typescript+'\nexport {imageMedia};\n');strict(directory,targetPath);
+  const target=await import(pathToFileURL(join(directory,'out',targetPath.replace(/\.ts$/u,'.js'))).href),targetCtor=(await import(pathToFileURL(join(directory,'out/ts/src/protocols.js')).href)).ProtocolError;
   for(const [label,value]of cases) {
     const expected=result(()=>original(value)),actual=result(()=>target.imageMedia(value));assert.equal(actual.normal,expected.normal,label);
     if(expected.normal)assert.ok(Object.is(actual.value,expected.value));else {assert.equal(actual.error.constructor,targetCtor);assert.equal(Object.getPrototypeOf(actual.error),targetCtor.prototype);assert.deepEqual(errorContract(actual.error),errorContract(expected.error));}

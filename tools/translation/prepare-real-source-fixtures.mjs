@@ -1,4 +1,8 @@
 #!/usr/bin/env node
+import {readSelectedGitSizeRecords} from './selected-git-size-records.mjs';
+import {originalBatchedDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
+import {encodeStaticSourceStorageIncremental} from './static-source-layout-storage.mjs';
+import {relocatedRustSourcePath,rustPackageSourcePath} from './repository-layout.mjs';
 // Reviewed source-fixture producer. Git/CST history is data, never an issuer
 // of namespace, method-dispatch, ownership or executable authority.
 // Enter through the ordinary project bootstrap before structural extraction
@@ -115,18 +119,19 @@ export function prepareRealSourceFixtures({root=resolve(dirname(fileURLToPath(im
   const manifestBytes=git(root,['show',current+':'+MANIFEST]);if(hash(manifestBytes)!==REAL_SOURCE_MANIFEST_SHA256)fail('original complete fixture manifest changed');
   if(historyArchive===null&&!git(root,['show',original+':'+MANIFEST]).equals(manifestBytes))fail('historical fixture manifest changed');
   const manifest=JSON.parse(decode(manifestBytes)),paths=[...new Set(manifest.entries.flatMap(row=>[row.path,...(row.testSource?[row.testSource]:[])]))].sort();
-  const currentPaths=[...new Set([...paths,...CORE])].sort();let raw,adoptions;
+  const currentPaths=[...new Set([...paths,...CORE])].sort(),physical=path=>rustPackageSourcePath(root,path);let raw,adoptions;
+  const currentBatch=()=>{const selected=batch(root,currentPaths.map(path=>current+':'+physical(path)));return new Map(currentPaths.map(path=>[current+':'+path,selected.get(current+':'+physical(path))]));};
   if(historyArchive===null){
-    const changedPaths=git(root,['diff','--name-only',original,current,'--',...paths],{encoding:'utf8'}).trim().split('\n').filter(Boolean);
+    const changedPaths=paths; // Preserve all four fixed historical adoption domains after a physical move.
     adoptions=ADOPTIONS.map(value=>{const commit=revision(root,value),parent=git(root,['rev-parse',commit+'^'],{encoding:'utf8'}).trim();return {revision:commit,parent,paths:git(root,['diff-tree','--no-commit-id','--name-only','-r',commit,'--',...changedPaths],{encoding:'utf8'}).trim().split('\n').filter(Boolean)};});
-    raw=batch(root,[...paths.map(path=>original+':'+path),...currentPaths.map(path=>current+':'+path),...adoptions.flatMap(stage=>stage.paths.flatMap(path=>[stage.parent+':'+path,stage.revision+':'+path]))]);
+    raw=new Map([...batch(root,[...paths.map(path=>original+':'+path),...adoptions.flatMap(stage=>stage.paths.flatMap(path=>[stage.parent+':'+path,stage.revision+':'+path]))]),...currentBatch()]);
   }else{
-    if(typeof historyArchive!=='string')fail('explicit reviewed archive directory required');const history=archivedHistory(historyArchive,manifest),fresh=batch(root,currentPaths.map(path=>current+':'+path));raw=new Map(paths.map(path=>[original+':'+path,history.originals.get(path)]));for(const [key,row]of fresh)raw.set(key,row);
+    if(typeof historyArchive!=='string')fail('explicit reviewed archive directory required');const history=archivedHistory(historyArchive,manifest),fresh=currentBatch();raw=new Map(paths.map(path=>[original+':'+path,history.originals.get(path)]));for(const [key,row]of fresh)raw.set(key,row);
     adoptions=history.stages.map(({revision,parent,paths})=>({revision,parent,paths}));for(const stage of history.stages)for(const row of stage.files){raw.set(stage.parent+':'+row.path,row.before);raw.set(stage.revision+':'+row.path,row.after);}
   }
   if(raw.size>REAL_SOURCE_FIXTURE_LIMITS.files||[...raw.values()].reduce((sum,row)=>sum+row.bytes,0)>REAL_SOURCE_FIXTURE_LIMITS.rawBytes)fail('complete replay source bounds');
   const changedPaths=paths.filter(path=>raw.get(original+':'+path).source!==raw.get(current+':'+path).source);
-  const snapshot=()=>currentPaths.map(path=>{const row=raw.get(current+':'+path),bytes=readFileSync(resolve(root,path));if(decode(bytes)!==row.source)fail('physical current source differs from selected revision: '+path);return {path,bytes:bytes.length,sha256:hash(bytes),gitBlob:row.gitBlob};});
+  const snapshot=()=>currentPaths.map(path=>{const row=raw.get(current+':'+path),bytes=readFileSync(resolve(root,physical(path)));if(decode(bytes)!==row.source)fail('physical current source differs from selected revision: '+path);return {path,physicalPath:physical(path),bytes:bytes.length,sha256:hash(bytes),gitBlob:row.gitBlob};});
   const before=snapshot();
   const pipeline=createRulePipeline([
     {phase:'language',rules:[{id:'native-fixture.complete-cst-and-exact-declarations',apply:()=>{
@@ -141,10 +146,13 @@ export function prepareRealSourceFixtures({root=resolve(dirname(fileURLToPath(im
       return {sources,selections,currentSelections};
     }}]},
     {phase:'repository',rules:[{id:'native-fixture.content-addressed-history-and-packets',apply:state=>{
-      const record=(rev,path)=>{const row=raw.get(rev+':'+path);return {path,sourceId:row.sha256,bytes:row.bytes,gitBlob:row.gitBlob};};
+      const record=(rev,path)=>{const row=raw.get(rev+':'+path);return {path,...(rev===current?{physicalPath:physical(path)}:{}),sourceId:row.sha256,bytes:row.bytes,gitBlob:row.gitBlob};};
       const lineage=adoptions.map(stage=>({...stage,files:stage.paths.map(path=>{const before=record(stage.parent,path),after=record(stage.revision,path);return {path,before,after,...delta(state.sources.get(before.sourceId),state.sources.get(after.sourceId))};})}));
-      for(const path of changedPaths){let id=raw.get(original+':'+path).sha256;for(const stage of lineage){const row=stage.files.find(row=>row.path===path);if(row){if(row.before.sourceId!==id)fail('adoption history is not continuous');id=row.after.sourceId;}}if(id!==raw.get(current+':'+path).sha256)fail('current parent requires separately reviewed adoption history: '+path);}
-      return {schema:'router-complete-real-source-fixtures-v1',historical:{revision:original,manifestSha256:REAL_SOURCE_MANIFEST_SHA256,files:paths.map(path=>record(original,path)),selections:state.selections},current:{revision:current,files:currentPaths.map(path=>record(current,path)),selections:state.currentSelections,behaviorIds:CURRENT_IDS},lineage,sources:Object.fromEntries([...state.sources].map(([id,row])=>[id,{source:row.source,bytes:row.bytes,canonical:row.canonical}])),authority:{namespace:false,dispatch:false,ownership:false,executable:false}};
+      const currentEvolution=[];
+      for(const path of paths){let before=record(original,path);for(const stage of lineage){const row=stage.files.find(row=>row.path===path);if(row){if(row.before.sourceId!==before.sourceId)fail('adoption history is not continuous');before=row.after;}}
+        const after=record(current,path);if(before.sourceId!==after.sourceId)currentEvolution.push({path,before,after,...delta(state.sources.get(before.sourceId),state.sources.get(after.sourceId))});
+      }
+      return {schema:'router-complete-real-source-fixtures-v1',historical:{revision:original,manifestSha256:REAL_SOURCE_MANIFEST_SHA256,files:paths.map(path=>record(original,path)),selections:state.selections},current:{revision:current,files:currentPaths.map(path=>record(current,path)),selections:state.currentSelections,behaviorIds:CURRENT_IDS},lineage,currentEvolution,sources:Object.fromEntries([...state.sources].map(([id,row])=>[id,{source:row.source,bytes:row.bytes,canonical:row.canonical}])),authority:{namespace:false,dispatch:false,ownership:false,executable:false}};
     }}]},
   ]);
   const result=pipeline.run(null),payload={...result.value,trace:result.trace},rawPayload=Buffer.from(JSON.stringify(payload)+'\n'),packed=gzipSync(rawPayload,{level:9,mtime:0});if(rawPayload.length>REAL_SOURCE_FIXTURE_LIMITS.outputBytes)fail('complete fixture output bound');
@@ -232,10 +240,10 @@ function staticDelta(before,after){
   ]).run(null);
   return {...operation.value,trace:operation.trace,afterCanonicalSha256:hash(after.canonical),completeInverse:true,meaning:'Exact reviewed Git adoption source delta; not a new semantic or dispatch proof.'};
 }
-function staticCapture(root,rev){
-  const listing=staticGit(root,['ls-tree','-r','-l','-z',rev]).toString('utf8').split('\0').filter(Boolean),rows=[];
+function staticCapture(root,rev,{nestedPackage=false}={}){
+  const listing=readSelectedGitSizeRecords({revision:rev,run:(args,options)=>staticGit(root,args,options),select:path=>!(!path.endsWith('.rs')&&!['Cargo.toml','Cargo.lock',...(nestedPackage?['rust/Cargo.toml']:[])].includes(path)),maxPaths:STATIC_SOURCE_LIFECYCLE_LIMITS.paths,maxFileBytes:STATIC_SOURCE_LIFECYCLE_LIMITS.fileBytes,maxTotalBytes:STATIC_SOURCE_LIFECYCLE_LIMITS.sourceBytes}),rows=[];
   for(const record of listing){const tab=record.indexOf('\t'),path=record.slice(tab+1),fields=record.slice(0,tab).trim().split(/\s+/u);
-    if(!path.endsWith('.rs')&&!['Cargo.toml','Cargo.lock'].includes(path))continue;
+    if(!path.endsWith('.rs')&&!['Cargo.toml','Cargo.lock',...(nestedPackage?['rust/Cargo.toml']:[])].includes(path))continue;
     if(tab<0||fields.length!==4||fields[1]!=='blob'||path.startsWith('/')||path.includes('\\')||path.split('/').some(value=>!value||value==='.'||value==='..'))staticFail('complete tracked source row required');
     const bytes=Number(fields[3]);if(!Number.isSafeInteger(bytes)||bytes<0||bytes>STATIC_SOURCE_LIFECYCLE_LIMITS.fileBytes)staticFail('individual source byte bound');
     rows.push({path,gitBlob:fields[2],bytes});
@@ -250,7 +258,8 @@ function staticCapture(root,rev){
   }
   if(at!==raw.length)staticFail('extra source batch bytes');return {files:rows,sources,sourceSetSha256:staticRowsDigest(rows)};
 }
-import {encodeStaticSourceStorage,decodeStaticSourceStorage} from './static-source-storage-codec.mjs';
+import {encodeStaticSourceStorage,decodeStaticSourceStorage} from './static-source-layout-storage.mjs';
+import {serializeSourceMapJson} from './source-map-json.mjs';
 function staticReadArchive(folder){
   const index=JSON.parse(decode(readFileSync(resolve(folder,'manifest.json'))));
   if(index.schema!=='router-static-source-lifecycle-v1'||index.archive!=='originals.json.gz'||!Number.isSafeInteger(index.rawBytes)||index.rawBytes<0||index.rawBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticFail('reviewed index differs');
@@ -272,21 +281,24 @@ export function prepareStaticSourceLifecycleProposal({root=resolve(dirname(fileU
     const expected=STATIC_SOURCE_LIFECYCLE_PROFILES[rev];if(captured.files.length!==expected.files||captured.files.reduce((sum,row)=>sum+row.bytes,0)!==expected.bytes||captured.sourceSetSha256!==expected.sourceSetSha256)staticFail('fixed complete historical universe differs');
     profiles.push({revision:rev,files:captured.files,sourceSetSha256:captured.sourceSetSha256});for(const [id,row]of captured.sources)add(id,row);
   }
-  const fresh=staticCapture(root,subjectRevision);for(const [id,row]of fresh.sources)add(id,row);
+  // Preserve the fixed historical universes. Current Router captures include
+  // both workspace and nested package manifests plus the shared lockfile.
+  const fresh=staticCapture(root,subjectRevision,{nestedPackage:true});for(const [id,row]of fresh.sources)add(id,row);
   const actual=()=>fresh.files.map(row=>{let bytes;try{bytes=readFileSync(resolve(root,row.path));}catch(error){if(error.code!=='ENOENT')throw error;bytes=staticGit(root,['show',subjectRevision+':'+row.path]);}if(bytes.length!==row.bytes||hash(bytes)!==row.sourceId||staticBlob(bytes)!==row.gitBlob)staticFail('current physical/Git source differs: '+row.path);return row;});
   const before=actual(),provenanceRevision=history?.bundle.current.sourceSetSha256===fresh.sourceSetSha256?history.bundle.current.producerRevision:subjectRevision;
   const frontier=JSON.parse(decode(staticGit(root,['show',subjectRevision+':tools/translation/fixtures/formatting-owner-frontier.json'])));
   const historical=profiles.find(row=>row.revision===revisions[0]);for(const row of frontier.originalFiles){const file=historical.files.find(file=>file.path===row.source);if(!file||file.sourceId!==row.sha256||file.bytes!==row.bytes)staticFail('all original formatting parents must join');}
   const currentByPath=new Map(fresh.files.map(row=>[row.path,row])),changedIds=new Set(),lineage=[];
-  for(const profile of profiles){const files=[];for(const before of profile.files){const after=currentByPath.get(before.path);if(!after){files.push({path:before.path,status:'deleted',before,current:null,originalPreserved:true});continue;}if(before.sourceId!==after.sourceId){changedIds.add(before.sourceId);changedIds.add(after.sourceId);files.push({path:before.path,status:'changed',before,after});}}lineage.push({revision:profile.revision,files});}
+  for(const profile of profiles){const files=[];for(const before of profile.files){const moved=relocatedRustSourcePath(before.path),after=(before.path==='Cargo.toml'?currentByPath.get(moved):undefined)??currentByPath.get(before.path)??currentByPath.get(moved);if(!after){files.push({path:before.path,status:'deleted',before,current:null,originalPreserved:true});continue;}if(before.sourceId!==after.sourceId){changedIds.add(before.sourceId);changedIds.add(after.sourceId);files.push({path:before.path,status:'changed',before,after});}}lineage.push({revision:profile.revision,files});}
   const pipeline=createRulePipeline([
     {phase:'language',rules:[{id:'static-fixture.complete-original-cst-and-current-source-joins',apply:()=>{
       for(const row of sources.values()){retainedBytes+=Buffer.byteLength(JSON.stringify({source:row.source,bytes:row.bytes,gitBlob:row.gitBlob}));if(retainedBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticFail('retained source bound');}
       const changed=[...sources].filter(([id])=>changedIds.has(id));
-      // Preserve an explicit full first-document serialization, not an assumed
-      // equivalence between the transport's meta string and document shape.
+      // Serialize the complete first document independently and compare every
+      // code unit with the transport wire before sharing equal primitive DATA.
+      // The full fresh second-document comparison remains mandatory below.
       const firstDocuments=new Map();
-      staticSourceCsts(changed,(id,cst)=>{const row=sources.get(id);if(cst.source!==row.source||cst.document.language!=='Rust')staticFail('complete source CST differs');retainedBytes+=Buffer.byteLength(JSON.stringify(cst.meta));if(retainedBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticFail('complete retained CST bound');row.canonical=cst.meta;firstDocuments.set(id,JSON.stringify(cst.document));});
+      staticSourceCsts(changed,(id,cst)=>{const row=sources.get(id);if(cst.source!==row.source||cst.document.language!=='Rust')staticFail('complete source CST differs');const first=JSON.stringify(cst.document);if(first!==cst.meta)staticFail('independent first CST serialization differs');retainedBytes+=Buffer.byteLength(JSON.stringify(cst.meta));if(retainedBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticFail('complete retained CST bound');row.canonical=cst.meta;firstDocuments.set(id,row.canonical);});
       visitStaticSourceLifecycleCanonicals(changed,(id,document)=>{
         if(JSON.stringify(document)!==firstDocuments.get(id))staticFail('independent complete CST classification differs');firstDocuments.delete(id);
         const boundaries=new Set([0,document.source.length]);for(const node of document.nodes){boundaries.add(node[2]);boundaries.add(node[3]);}
@@ -298,9 +310,9 @@ export function prepareStaticSourceLifecycleProposal({root=resolve(dirname(fileU
       return {lineage};
     }}]},
     {phase:'repository',rules:[{id:'static-fixture.fixed-historical-universes-and-reversible-current-parents',apply:state=>({schema:'router-static-source-lifecycle-v1',cases:STATIC_SOURCE_LIFECYCLE_CASES,profiles,current:{producerRevision:provenanceRevision,files:fresh.files,sourceSetSha256:fresh.sourceSetSha256},lineage:state.lineage,sources:Object.fromEntries([...sources].map(([id,row])=>[id,{source:row.source,bytes:row.bytes,gitBlob:row.gitBlob,...(row.canonical?{canonical:row.canonical}:{})}])),authority:{namespace:false,dispatch:false,ownership:false,semantic:false,executable:false}})}]},
-  ]),result=pipeline.run(null),bundle={...result.value,trace:result.trace},raw=Buffer.from(JSON.stringify(bundle)+'\n');
+  ]),result=pipeline.run(null),bundle={...result.value,trace:result.trace},raw=serializeSourceMapJson(bundle);
   if(raw.length>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticFail('complete output byte bound');
-  const stored=encodeStaticSourceStorage(bundle,raw),packed=gzipSync(stored.raw,{level:9,mtime:0}),index={schema:bundle.schema,archive:'originals.json.gz',rawBytes:stored.raw.length,rawSha256:hash(stored.raw),bytes:packed.length,sha256:hash(packed),...(stored.storage?{storage:stored.storage}:{}),profiles:profiles.map(({revision,files,sourceSetSha256})=>({revision,files:files.length,sourceSetSha256})),current:bundle.current.sourceSetSha256,trace:result.trace},notice='# Complete static source lifecycle fixtures\n\nTwo complete original Router Rust/Cargo source universes and separately captured current source parents. All original LICENSE terms apply. Historical revisions: '+revisions.join(', ')+'. Full source/Git blob/CST joins and reversible actual source evolution are data only: no namespace, dispatch, ownership, trait, semantic or execution authority. Current producer revision is provenance; exact full source rows determine freshness across compiler/asset-only commits.\n';
+  const stored=encodeStaticSourceStorage(bundle,raw),packed=gzipSync(stored.raw,{level:1,mtime:0}),index={schema:bundle.schema,archive:'originals.json.gz',rawBytes:stored.raw.length,rawSha256:hash(stored.raw),bytes:packed.length,sha256:hash(packed),...(stored.storage?{storage:stored.storage}:{}),profiles:profiles.map(({revision,files,sourceSetSha256})=>({revision,files:files.length,sourceSetSha256})),current:bundle.current.sourceSetSha256,trace:result.trace},notice='# Complete static source lifecycle fixtures\n\nTwo complete original Router Rust/Cargo source universes and separately captured current source parents. All original LICENSE terms apply. Historical revisions: '+revisions.join(', ')+'. Full source/Git blob/CST joins and reversible actual source evolution are data only: no namespace, dispatch, ownership, trait, semantic or execution authority. Current producer revision is provenance; exact full source rows determine freshness across compiler/asset-only commits.\n';
   const files=[{path:STATIC_SOURCE_PREFIX+'originals.json.gz',encoding:'base64',content:packed.toString('base64')},{path:STATIC_SOURCE_PREFIX+'manifest.json',encoding:'utf8',content:JSON.stringify(index,null,2)+'\n'},{path:STATIC_SOURCE_PREFIX+'NOTICE.md',encoding:'utf8',content:notice}].map(row=>({...row,bytes:Buffer.byteLength(row.content,row.encoding),sha256:hash(Buffer.from(row.content,row.encoding))}));
   const after=actual();if(JSON.stringify(before)!==JSON.stringify(after))staticFail('source inputs changed');
   return {schema:'router-static-source-lifecycle-proposal-v1',sourceRoot:root,subjectRevision,provenanceRevision,before,after,files,cstSchedule:{source:'existing bounded Sources; large rows existing single transport',canonical:'every canonical through full untrusted MetaChunks',substitution:'actual whole-span language/repository pipeline; full inverse',retention:'first full document JSON captured during source pass; full fresh second JSON compared before retaining only whole-node boundaries; native batch results released after visitor consumption'},trace:result.trace,limits:STATIC_SOURCE_LIFECYCLE_LIMITS,completeInverse:true,authority:bundle.authority};
@@ -312,4 +324,87 @@ export function writeStaticSourceLifecycleProposal(proposal,output){
   mkdirSync(target,{recursive:true});if(realpathSync(target)!==expected||overlaps(realpathSync(target)))staticFail('output physical identity differs');
   for(const row of proposal.files){const name=row.path.slice(STATIC_SOURCE_PREFIX.length);if(row.path!==STATIC_SOURCE_PREFIX+name||!['manifest.json','originals.json.gz','NOTICE.md'].includes(name))staticFail('fixed output path required');const bytes=Buffer.from(row.content,row.encoding);if(bytes.length!==row.bytes||hash(bytes)!==row.sha256)staticFail('full proposal bytes differ');writeFileSync(resolve(target,name),bytes,{flag:'wx'});}
   writeFileSync(resolve(target,'proposal.json'),JSON.stringify(proposal,null,2)+'\n',{flag:'wx'});return target;
+}
+
+// Generated invocation-local source/CST allocation variant; original producer stays exact.
+export function prepareStaticSourceLifecycleProposalReleased({root=resolve(dirname(fileURLToPath(import.meta.url)),'../..'),currentRevision='HEAD',historyArchive=null}={}){
+  root=realpathSync(root);const subjectRevision=revision(root,currentRevision);
+  let history=historyArchive===null?null:staticReadArchive(historyArchive);
+  const sources=new Map(),profiles=[];
+  let sourceBytes=0,retainedBytes=0;
+  const add=(id,row)=>{if(sources.has(id)){if(sources.get(id).source!==row.source)staticFail('source identity collision');return;}sourceBytes+=row.bytes;if(sourceBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.sourceBytes)staticFail('deduplicated complete source byte bound');sources.set(id,{...row});};
+  const revisions=[...new Set(Object.values(STATIC_SOURCE_LIFECYCLE_CASES))];
+  for(const rev of revisions){
+    let captured;
+    if(history){const profile=history.bundle.profiles.find(row=>row.revision===rev);if(!profile||profile.sourceSetSha256!==staticRowsDigest(profile.files))staticFail('historical full profile differs');captured={...profile,sources:new Map(profile.files.map(row=>{const value=history.bundle.sources[row.sourceId];if(!value||value.bytes!==row.bytes||hash(value.source)!==row.sourceId||staticBlob(Buffer.from(value.source))!==row.gitBlob)staticFail('historical complete source bytes differ');return [row.sourceId,value];}))};}
+    else captured=staticCapture(root,revision(root,rev));
+    const expected=STATIC_SOURCE_LIFECYCLE_PROFILES[rev];if(captured.files.length!==expected.files||captured.files.reduce((sum,row)=>sum+row.bytes,0)!==expected.bytes||captured.sourceSetSha256!==expected.sourceSetSha256)staticFail('fixed complete historical universe differs');
+    profiles.push({revision:rev,files:captured.files,sourceSetSha256:captured.sourceSetSha256});for(const [id,row]of captured.sources)add(id,row);
+    captured=null;
+  }
+  // Preserve the fixed historical universes. Current Router captures include
+  // both workspace and nested package manifests plus the shared lockfile.
+  const fresh=staticCapture(root,subjectRevision,{nestedPackage:true});for(const [id,row]of fresh.sources)add(id,row);
+  const actual=()=>fresh.files.map(row=>{let bytes;try{bytes=readFileSync(resolve(root,row.path));}catch(error){if(error.code!=='ENOENT')throw error;bytes=staticGit(root,['show',subjectRevision+':'+row.path]);}if(bytes.length!==row.bytes||hash(bytes)!==row.sourceId||staticBlob(bytes)!==row.gitBlob)staticFail('current physical/Git source differs: '+row.path);return row;});
+  const before=actual(),provenanceRevision=history?.bundle.current.sourceSetSha256===fresh.sourceSetSha256?history.bundle.current.producerRevision:subjectRevision;
+  const frontier=JSON.parse(decode(staticGit(root,['show',subjectRevision+':tools/translation/fixtures/formatting-owner-frontier.json'])));
+  const historical=profiles.find(row=>row.revision===revisions[0]);for(const row of frontier.originalFiles){const file=historical.files.find(file=>file.path===row.source);if(!file||file.sourceId!==row.sha256||file.bytes!==row.bytes)staticFail('all original formatting parents must join');}
+  const currentByPath=new Map(fresh.files.map(row=>[row.path,row])),changedIds=new Set(),lineage=[];
+  for(const profile of profiles){const files=[];for(const before of profile.files){const moved=relocatedRustSourcePath(before.path),after=(before.path==='Cargo.toml'?currentByPath.get(moved):undefined)??currentByPath.get(before.path)??currentByPath.get(moved);if(!after){files.push({path:before.path,status:'deleted',before,current:null,originalPreserved:true});continue;}if(before.sourceId!==after.sourceId){changedIds.add(before.sourceId);changedIds.add(after.sourceId);files.push({path:before.path,status:'changed',before,after});}}lineage.push({revision:profile.revision,files});}
+  // All original archive bytes have already received complete decoding and
+  // logical digest checks. Drop only first-pass inputs freshly overwritten by
+  // BOTH complete source and canonical transports below. Unchanged/deleted
+  // parents retain every historical canonical value and output field.
+  history=null;
+  for(const id of changedIds){
+    const row=sources.get(id);
+    if(row&&Object.hasOwn(row,'canonical')){const value={...row};delete value.canonical;sources.set(id,value);}
+  }
+  const pipeline=createRulePipeline([
+    {phase:'language',rules:[{id:'static-fixture.complete-original-cst-and-current-source-joins',apply:()=>{
+      for(const row of sources.values()){retainedBytes+=Buffer.byteLength(JSON.stringify({source:row.source,bytes:row.bytes,gitBlob:row.gitBlob}));if(retainedBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticFail('retained source bound');}
+      const changed=[...sources].filter(([id])=>changedIds.has(id));
+      // Serialize the complete first document independently and compare every
+      // code unit with the transport wire before sharing equal primitive DATA.
+      // The full fresh second-document comparison remains mandatory below.
+      const firstDocuments=new Map();
+      staticSourceCsts(changed,(id,cst)=>{const row=sources.get(id);if(cst.source!==row.source||cst.document.language!=='Rust')staticFail('complete source CST differs');const first=JSON.stringify(cst.document);if(first!==cst.meta)staticFail('independent first CST serialization differs');retainedBytes+=Buffer.byteLength(JSON.stringify(cst.meta));if(retainedBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticFail('complete retained CST bound');row.canonical=cst.meta;firstDocuments.set(id,row.canonical);});
+      visitStaticSourceLifecycleCanonicals(changed,(id,document)=>{
+        if(JSON.stringify(document)!==firstDocuments.get(id))staticFail('independent complete CST classification differs');firstDocuments.delete(id);
+        const boundaries=new Set([0,document.source.length]);for(const node of document.nodes){boundaries.add(node[2]);boundaries.add(node[3]);}
+        sources.get(id).boundaries=[...boundaries].sort((a,b)=>a-b);
+      });
+      for(const stage of lineage)for(const row of stage.files)if(row.status==='changed'){
+        Object.assign(row,staticDelta(sources.get(row.before.sourceId),sources.get(row.after.sourceId)));retainedBytes+=Buffer.byteLength(JSON.stringify(row));if(retainedBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticFail('complete inverse retention bound');
+      }
+      return {lineage};
+    }}]},
+    {phase:'repository',rules:[{id:'static-fixture.fixed-historical-universes-and-reversible-current-parents',apply:state=>({schema:'router-static-source-lifecycle-v1',cases:STATIC_SOURCE_LIFECYCLE_CASES,profiles,current:{producerRevision:provenanceRevision,files:fresh.files,sourceSetSha256:fresh.sourceSetSha256},lineage:state.lineage,sources:Object.fromEntries([...sources].map(([id,row])=>[id,{source:row.source,bytes:row.bytes,gitBlob:row.gitBlob,...(row.canonical?{canonical:row.canonical}:{})}])),authority:{namespace:false,dispatch:false,ownership:false,semantic:false,executable:false}})}]},
+  ]),result=pipeline.run(null),bundle={...result.value,trace:result.trace},raw=serializeSourceMapJson(bundle);
+  if(raw.length>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticFail('complete output byte bound');
+  const stored=encodeStaticSourceStorageIncremental(bundle,raw),packed=gzipSync(stored.raw,{level:1,mtime:0}),index={schema:bundle.schema,archive:'originals.json.gz',rawBytes:stored.raw.length,rawSha256:hash(stored.raw),bytes:packed.length,sha256:hash(packed),...(stored.storage?{storage:stored.storage}:{}),profiles:profiles.map(({revision,files,sourceSetSha256})=>({revision,files:files.length,sourceSetSha256})),current:bundle.current.sourceSetSha256,trace:result.trace},notice='# Complete static source lifecycle fixtures\n\nTwo complete original Router Rust/Cargo source universes and separately captured current source parents. All original LICENSE terms apply. Historical revisions: '+revisions.join(', ')+'. Full source/Git blob/CST joins and reversible actual source evolution are data only: no namespace, dispatch, ownership, trait, semantic or execution authority. Current producer revision is provenance; exact full source rows determine freshness across compiler/asset-only commits.\n';
+  const files=[{path:STATIC_SOURCE_PREFIX+'originals.json.gz',encoding:'base64',content:packed.toString('base64')},{path:STATIC_SOURCE_PREFIX+'manifest.json',encoding:'utf8',content:JSON.stringify(index,null,2)+'\n'},{path:STATIC_SOURCE_PREFIX+'NOTICE.md',encoding:'utf8',content:notice}].map(row=>({...row,bytes:Buffer.byteLength(row.content,row.encoding),sha256:hash(Buffer.from(row.content,row.encoding))}));
+  const after=actual();if(JSON.stringify(before)!==JSON.stringify(after))staticFail('source inputs changed');
+  return {schema:'router-static-source-lifecycle-proposal-v1',sourceRoot:root,subjectRevision,provenanceRevision,before,after,files,cstSchedule:{source:'existing bounded Sources; large rows existing single transport',canonical:'every canonical through full untrusted MetaChunks',substitution:'actual whole-span language/repository pipeline; full inverse',retention:'first full document JSON captured during source pass; full fresh second JSON compared before retaining only whole-node boundaries; native batch results released after visitor consumption'},trace:result.trace,limits:STATIC_SOURCE_LIFECYCLE_LIMITS,completeInverse:true,authority:bundle.authority};
+}
+export function transportStaticSourceLifecycleCanonicalsShared(rows){
+  if(!originalBatchedDataFreezeIntrinsicsUnchanged())return transportStaticSourceLifecycleCanonicals(rows);
+  const out=new Map(),prefixes=new Map();
+  visitStaticSourceLifecycleCanonicals(rows,(id,document)=>{
+    if(!originalBatchedDataFreezeIntrinsicsUnchanged()||!Object.isFrozen(document)||!Object.isFrozen(document.nodes)){out.set(id,document);return;}
+    const nodes=document.nodes,key=document.source.slice(0,1024),previous=prefixes.get(key);let selected=document;
+    if(previous&&nodes.length>=128){
+      const end=Math.min(nodes.length,previous.length);let equal=0;
+      for(let at=1;at<end;at++){const left=nodes[at],right=previous[at];let same=true;for(let field=0;field<7;field++)if(left[field]!==right[field]){same=false;break;}if(same)equal++;}
+      // The new outer array costs one reference per node. Share only when
+      // more than a quarter of the seven-field immutable rows are identical.
+      if(equal>nodes.length/4){
+        const values=nodes.slice();
+        for(let at=1;at<end;at++){const left=nodes[at],right=previous[at];let same=true;for(let field=0;field<7;field++)if(left[field]!==right[field]){same=false;break;}if(same)values[at]=right;}
+        Object.freeze(values);selected=Object.freeze({...document,nodes:values});
+      }
+    }
+    if(prefixes.has(key)||prefixes.size<256)prefixes.set(key,selected.nodes);
+    out.set(id,selected);
+  });return out;
 }

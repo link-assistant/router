@@ -1,17 +1,17 @@
 docs/case-studies/**/raw/*.log -whitespace
-tests/fixtures/token_stores/*.lino text eol=lf
-src/deploy/remote_agent.sh text eol=lf
+rust/tests/fixtures/token_stores/*.lino text eol=lf
+rust/src/deploy/remote_agent.sh text eol=lf
 
 # Collapse generated bulk drafts while retaining their files for inspection.
-packages/javascript/generated/rust-draft/** linguist-generated=true
-packages/typescript/generated/rust-draft/** linguist-generated=true
+js/generated/rust-draft/** linguist-generated=true
+ts/generated/rust-draft/** linguist-generated=true
 tools/translation/meta/** linguist-generated=true
-packages/typescript/native/** linguist-generated=true
-packages/typescript/portable/policy.ts linguist-generated=true
-packages/typescript/index.ts linguist-generated=true
-packages/typescript/testing.ts linguist-generated=true
-packages/typescript/catalog.json linguist-generated=true
-packages/typescript/schemas/** linguist-generated=true
+ts/src/** linguist-generated=true
+ts/portable/policy.ts linguist-generated=true
+ts/index.ts linguist-generated=true
+ts/testing.ts linguist-generated=true
+ts/catalog.json linguist-generated=true
+ts/schemas/** linguist-generated=true
 tools/translation/js-to-rust/generated/native-typescript/**/*.meta.json linguist-generated=true
 docs/case-studies/issue-759/raw/** linguist-generated=true
 

@@ -1,17 +1,18 @@
+import {repositorySourcePath} from "../../tools/translation/test/fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
 import {gzipSync} from 'node:zlib';
-import {reviewGeneratedMethods} from '../review-translation-draft.mjs';
+import {reviewStoredProjectGeneratedMethods as reviewGeneratedMethods} from '../review-translation-draft.mjs';
 import {translateProject} from '../../tools/translation/project.mjs';
 import {loadDeriveDependencyProof} from '../../tools/translation/derive-dependencies.mjs';
 import {loadJsonMacroSourceProof} from '../../tools/translation/json-macro-inputs.mjs';
 import {parseProgram} from '../../tools/translation/semantic-meta.mjs';
 import {verifyTypedTargets} from '../../tools/translation/test/typed-targets.mjs';
 import {PRODUCTION_PROFILE} from '../../tools/translation/cfg-profile.mjs';
-const root=new URL('../../',import.meta.url),read=name=>execFileSync('git',['show','HEAD:'+name],{cwd:root,timeout:30000,maxBuffer:16*1024*1024}).toString(),inputs={manifest:read('Cargo.toml'),lock:read('Cargo.lock')},dependencies=loadDeriveDependencyProof(inputs),jsonMacroDependencies=loadJsonMacroSourceProof(inputs);
+const root=new URL('../../',import.meta.url),read=name=>execFileSync('git',['show','HEAD:'+repositorySourcePath(name,root)],{cwd:root,timeout:30000,maxBuffer:16*1024*1024}).toString(),inputs={manifest:read('Cargo.toml'),lock:read('Cargo.lock')},dependencies=loadDeriveDependencyProof(inputs),jsonMacroDependencies=loadJsonMacroSourceProof(inputs);
 function vector(name,value){if(!process.env.ROUTER_CONTAINER_REVIEW_VECTORS)return;mkdirSync(process.env.ROUTER_CONTAINER_REVIEW_VECTORS,{recursive:true});writeFileSync(process.env.ROUTER_CONTAINER_REVIEW_VECTORS+'/'+name+'.json.gz',gzipSync(JSON.stringify(value)));}
 function compile(source,file='src/lib.rs'){const result=translateProject({entry:file,paths:[file],readSource:()=>source,deriveDependencies:dependencies,jsonMacroDependencies,compilationProfile:PRODUCTION_PROFILE});return {source,file,result,meta:JSON.parse(JSON.stringify(result.meta))};}
 function review(fixture,meta=fixture.meta){return reviewGeneratedMethods(meta,{entry:fixture.file,checkedGeneratedMethods:fixture.meta.checkedGeneratedMethods.length},{readSource:()=>fixture.source,dependencies,jsonMacroDependencies});}

@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
@@ -9,7 +10,7 @@ import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {parseProgram} from '../semantic-meta.mjs';
 import {requireOriginalCloneEmission} from '../extensions/clone-source-body.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),read=path=>readFileSync(new URL(path,root),'utf8'),manifest=read('Cargo.toml'),lock=read('Cargo.lock');
+const root=new URL('../../../',import.meta.url),read=path=>readFileSync(repositorySourceURL(path,root),'utf8'),manifest=read('Cargo.toml'),lock=read('Cargo.lock');
 const dependencies=loadDeriveDependencyProof({manifest,lock});
 const compile=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
 function retain(name,value){const directory=process.env.ROUTER_CLONE_UNIT_EVIDENCE_DIR;if(directory){mkdirSync(directory,{recursive:true});writeFileSync(directory+'/'+name+'.json.gz',gzipSync(JSON.stringify(value,null,2)+'\n'));}}

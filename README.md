@@ -14,7 +14,7 @@ own credential terms.
 [![crates.io](https://img.shields.io/crates/v/link-assistant-router.svg?label=crates.io)](https://crates.io/crates/link-assistant-router)
 [![Docker Hub](https://img.shields.io/docker/v/konard/link-assistant-router?label=docker%20hub)](https://hub.docker.com/r/konard/link-assistant-router)
 [![docs.rs](https://img.shields.io/docsrs/link-assistant-router?label=docs.rs)](https://docs.rs/link-assistant-router)
-[![Rust Version](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Flink-assistant%2Frouter%2Fmain%2FCargo.toml&query=%24.package.rust-version&label=rust&prefix=v&suffix=%2B&color=blue)](https://www.rust-lang.org/)
+[![Rust Version](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Flink-assistant%2Frouter%2Fmain%2Frust%2FCargo.toml&query=%24.package.rust-version&label=rust&prefix=v&suffix=%2B&color=blue)](https://www.rust-lang.org/)
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](http://unlicense.org/)
 
 ## Integration packages
@@ -22,6 +22,15 @@ own credential terms.
 Import operational logic from the Rust crate, `@link-assistant/router` for JavaScript/TypeScript on Node 20+ and Bun, or `link-assistant-router` for Python 3.10+. Each official package exposes the same operation catalog and validates versioned JSON contracts. PHP, Go and Java HTTP clients are generated and tested from the complete OpenAPI description in CI.
 
 See the [downstream integration guide](docs/integration/downstream.md), [operation × language matrix](docs/integration/operations.md), [JSON Schemas](schemas), and [OpenAPI 3.1](openapi/router.yaml). All official packages share Router's version and exact-tag release gate.
+
+## Language source trees
+
+Native JavaScript lives in [`js/src`](js/src), generated TypeScript in
+[`ts/src`](ts/src), and the Rust crate in [`rust/src`](rust/src). Develop covered
+behavior in JavaScript first and regenerate through the checked CST/meta
+pipelines. The root Cargo manifest is a workspace; the package manifest is
+[`rust/Cargo.toml`](rust/Cargo.toml). Full Router translation and synchronization
+remain in progress. See [the layout and commands](docs/development/language-layout.md).
 
 ## Overview
 
@@ -2379,89 +2388,54 @@ This demonstrates token issuance, validation, and revocation programmatically.
 
 ```
 .
-├── .github/workflows/
-│   └── release.yml           # CI/CD pipeline (lint, test, build, release)
-├── changelog.d/              # Changelog fragments (per-PR documentation)
-├── docs/                     # Documentation
-│   ├── use-cases/            # One document per supported scenario / CLI
-│   ├── case-studies/         # Per-issue research, requirements, solution plans
-│   └── adr/                  # Architecture decision records
-├── examples/
-│   └── basic_usage.rs        # Token management example
-├── scripts/
-│   ├── test-manual.sh        # Manual end-to-end testing script
-│   ├── bump-version.rs       # Version bumping utility
-│   ├── check-file-size.rs    # File size validation
-│   └── ...                   # Other CI/CD scripts
-├── src/
-│   ├── lib.rs                # Library root — re-exports modules
-│   ├── main.rs               # Binary entry point — Cli dispatch + server setup
-│   ├── cli.rs                # `lino-arguments`-based CLI parser + subcommands
-│   ├── config.rs             # CLI/env/.lenv configuration
-│   ├── crater.rs             # Crater ForgeFed task provider
-│   ├── oauth.rs              # Claude Code OAuth credential reader
-│   ├── accounts.rs           # Multi-account router (round-robin/priority/least-used + cooldowns)
-│   ├── app_state.rs          # Shared HTTP handler state
-│   ├── storage.rs            # Persistent token store (text Lino + binary backends)
-│   ├── providers.rs          # OpenAI-compatible provider store + encrypted secrets
-│   ├── proxy.rs              # Transparent API proxy with token swap, OpenAI shim, ops endpoints
-│   ├── request_routing.rs    # Session/account routing signal extraction
-│   ├── openai.rs             # OpenAI <-> Anthropic translation helpers
-│   ├── anthropic_bridge.rs   # Anthropic Messages served from OpenAI-dialect upstreams
-│   ├── anthropic_stream.rs   # OpenAI SSE -> Anthropic SSE translator
-│   ├── audit.rs              # Per-token JSONL audit log
-│   ├── claude_identity.rs    # Claude Code identity block required by Claude MAX OAuth
-│   ├── metrics.rs            # Atomic counters, Prometheus rendering, JSON snapshots
-│   └── token.rs              # Custom JWT token management (la_sk_...)
-├── tests/
-│   └── integration_test.rs   # Integration tests
-├── experiments/              # Local end-to-end harnesses (see docs/case-studies/)
-├── Cargo.toml                # Project configuration and dependencies
+├── js/
+│   ├── src/                  # Native JavaScript Router implementation
+│   ├── generated/            # Checked Rust translation drafts and runtimes
+│   ├── test/                 # Node and Bun behavior fixtures
+│   └── package.json          # Native API and compatible binary wrapper exports
+├── ts/
+│   ├── src/                  # Generated native TypeScript syntax projections
+│   └── generated/            # Checked Rust-to-TypeScript translation drafts
+├── rust/
+│   ├── src/                  # Rust library, CLI and server implementation
+│   ├── tests/                # Rust unit and integration oracle sources
+│   ├── examples/             # Rust API examples
+│   ├── fuzz/                 # Fuzz targets
+│   └── Cargo.toml            # Rust package configuration and dependencies
+├── tools/translation/        # Ordered language/repository rules and CST/meta
+├── parity/                   # Feature evidence and translation inventories
+├── .github/workflows/        # JavaScript gates before same-commit Rust jobs
+├── scripts/                  # Generation, verification and release tooling
+├── docs/                     # Guides, case studies and architecture decisions
+├── changelog.d/              # Changelog fragments
+├── experiments/              # Acceptance and end-to-end harnesses
+├── Cargo.toml                # Rust workspace configuration
+├── Cargo.lock                # Shared Rust dependency lock
 ├── Dockerfile                # Multi-stage Docker build
-├── CHANGELOG.md              # Project changelog
-├── CONTRIBUTING.md           # Contribution guidelines
-├── LICENSE                   # Unlicense (public domain)
-└── README.md                 # This file
+└── CONTRIBUTING.md           # Development and verification requirements
 ```
+
+The three language source directories are physical directories. Translation
+and reverse synchronization remain incomplete; the parity manifest retains
+each unsupported behavior and generated draft limitation.
 
 ### Build cache
 
-A debug build links many integration-test binaries plus the `[[bin]]` targets
-and evicts nothing, so `target/` can grow without bound. Two things keep it in
-check, and both are automatic:
+Development starts with complete focused JavaScript tests and the full
+JavaScript gate described in [CONTRIBUTING.md](CONTRIBUTING.md). Rust CI runs
+only after every required JavaScript stage passes for the same commit.
+Issue #759 prohibits all local Rust tool invocations, including hooks.
 
-- `.cargo/config.toml` disables the incremental cache and drops debug info to
-  line tables. Backtraces still resolve; stepping through variables in a
-  debugger does not.
-- The last `pre-commit` hook runs `scripts/clear-build-cache.sh`, which uses
-  `cargo clean` to remove the checkout's build output after formatting, lint,
-  and tests finish:
-
-  ```bash
-  pre-commit install
-  ```
-
-- An optional `post-commit` hook also runs
-  `scripts/sweep-build-artifacts.sh` to prune superseded artifacts during
-  workflows that bypass the pre-commit checks. It needs `cargo-sweep`:
-
-  ```bash
-  cargo install cargo-sweep
-  pre-commit install --hook-type post-commit
-  ```
-
-  Without `cargo-sweep` the post-commit hook prints a note and does nothing; it
-  never fails a commit. The pre-commit `cargo clean` remains unconditional.
-
-To reclaim space by hand, run `cargo clean`. The next build is intentionally a
-cold build; the hook trades compilation reuse for a predictable disk bound.
+`.cargo/config.toml` disables incremental compilation and reduces development
+debug information. Repository commit hooks perform source hygiene; they do not
+run Rust tools or automatically remove build caches. Cleanup is a separate
+reviewed action limited to identified inactive task-owned paths. Preserve other
+workers' active output and locks.
 
 CI compiles through [sccache](https://github.com/mozilla/sccache) with the
-GitHub Actions backend. The artifact cache is keyed on `Cargo.lock`, so one
-dependency bump misses everything; sccache keys on each compilation unit and
-still hits. Caches are readable from the current branch and the default branch
-only — sibling branches cannot share, which is deliberate isolation — so
-keeping `main` building regularly is what keeps the shared cache warm.
+GitHub Actions backend. Its artifact cache is keyed on `Cargo.lock`, while
+sccache keys on each compilation unit. Cache availability follows GitHub's
+branch access rules; it does not waive the JavaScript gate.
 
 ## Contributing
 

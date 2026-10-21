@@ -1,5 +1,6 @@
 // Feature activation uses the checksum-locked incoming dependency subgraph.
 // Cargo targets are unioned conservatively; no platform is guessed or executed.
+import {cargoLayoutManifestDigestsMatch} from './cargo-layout-input-compatibility.mjs';
 import {readFileSync} from 'node:fs';
 import {activateCargoFeatureRecords} from './cargo-feature-worklist.mjs';
 import {gunzipSync} from 'node:zlib';
@@ -8,11 +9,11 @@ import {freezeMacroTree} from './macro-token-trees.mjs';
 import {isJsonMacroSourceProof} from './json-macro-inputs.mjs';
 const root=new URL('./source-profiles/json-macro/features/',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
 const bytes=readFileSync(new URL('manifest.json',root));
-if(hash(bytes)!=='a2c8d8a3e73ff7bafd7a27214270aa1be07bf4f51539b48560974172cc6ad982')throw new TypeError('JSON feature source profile changed');
+if(hash(bytes)!=='7593739464a03be25451c7214257332fbc604f1a39fe38681c85cb10e40919ce')throw new TypeError('JSON feature source profile changed');
 export const JSON_MACRO_FEATURE_INPUTS=freezeMacroTree(JSON.parse(bytes));
 const proofs=new WeakSet();
 export function proveJsonMacroFeatures(dependencies,{includeDev=false}={}) {
-  if(!isJsonMacroSourceProof(dependencies)||dependencies.manifestSha256!==JSON_MACRO_FEATURE_INPUTS.manifestSha256||dependencies.lockSha256!==JSON_MACRO_FEATURE_INPUTS.lockSha256)throw new TypeError('JSON features require original sealed manifest/lock dependencies');
+  if(!isJsonMacroSourceProof(dependencies)||(dependencies.manifestSha256!==JSON_MACRO_FEATURE_INPUTS.manifestSha256&&!cargoLayoutManifestDigestsMatch(dependencies.manifestSha256,JSON_MACRO_FEATURE_INPUTS.manifestSha256))||dependencies.lockSha256!==JSON_MACRO_FEATURE_INPUTS.lockSha256)throw new TypeError('JSON features require original sealed manifest/lock dependencies');
   if(includeDev!==false)throw new TypeError('JSON feature profile supports ordinary production dependencies only');
   const packages=new Map(),sources=[];
   for(const entry of JSON_MACRO_FEATURE_INPUTS.packages) {

@@ -8,7 +8,7 @@ import {createCaseDeadlineAudit,readCaseSource} from '../node-case-deadlines.mjs
 import {nodeTestArguments} from '../run-node-tests.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url));
 function fixture(source){
- const directory=fs.mkdtempSync(path.join(root,'packages/javascript/node_modules/node-deadline-fixture-'));
+ const directory=fs.mkdtempSync(path.join(root,'js/node_modules/node-deadline-fixture-'));
  const file=path.join(directory,'whole.test.mjs');fs.writeFileSync(file,source);
  return {directory,file,dispose:()=>fs.rmSync(directory,{recursive:true,force:true})};
 }

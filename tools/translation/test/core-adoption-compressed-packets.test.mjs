@@ -1,4 +1,6 @@
+import {relocateSourceModule} from './relocate-source-module.mjs';
 // Complete storage-only transport witnesses. Compiler admission remains independent.
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
 import {writeJsonTextGzip} from '../../evidence/write-json-gzip.mjs';
@@ -30,7 +32,7 @@ function fixture(t,source='pub fn label()->String{"猫😀".to_owned()}',extra={
  const parent=fs.mkdtempSync(join(tmpdir(),'router-compressed-packets-')),directory=join(parent,'input');fs.mkdirSync(directory);t.after(()=>fs.rmSync(parent,{recursive:true,force:true}));
  const files=Object.fromEntries(Object.entries({'src/lib.rs':root,'src/translation_core.rs':ROUTER_FORMATTING_FACADE_SOURCE,'src/translation_core/primitives.rs':ROUTER_CORE_PRIMITIVES_SOURCE,'src/translation_core/ranges.rs':ROUTER_CORE_RANGES_SOURCE,'src/translation_core/json_collections.rs':ROUTER_CORE_JSON_COLLECTIONS_SOURCE,'src/sample.rs':source,...extra}).sort(([a],[b])=>a<b?-1:a>b?1:0));
  for(const [path,text]of Object.entries(files)){fs.mkdirSync(dirname(join(directory,path)),{recursive:true});fs.writeFileSync(join(directory,path),text);}
- const dependencyInputs={manifest:fs.readFileSync(new URL('../../../Cargo.toml',import.meta.url),'utf8'),lock:fs.readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')};for(const [path,source]of [['Cargo.toml',dependencyInputs.manifest],['Cargo.lock',dependencyInputs.lock]])fs.writeFileSync(join(directory,path),source);
+ const dependencyInputs={manifest:fs.readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:fs.readFileSync(repositorySourceURL("Cargo.lock",new URL('../../../',import.meta.url)),'utf8')};for(const [path,source]of [['Cargo.toml',dependencyInputs.manifest],['Cargo.lock',dependencyInputs.lock]])fs.writeFileSync(join(directory,path),source);
  return {parent,root:directory,files,dependencyInputs,output:join(parent,'proposal')};
 }
 function bytes(root){const result=[];function visit(relative){const path=join(root,relative),s=fs.lstatSync(path);if(s.isDirectory())for(const name of fs.readdirSync(path).sort())visit(relative?relative+'/'+name:name);else result.push({path:relative,base64:fs.readFileSync(path).toString('base64')});}visit('');return result;}
@@ -46,7 +48,7 @@ function complete(output,compressed){
  for(let at=1;at<stages.length;at++)assert.deepEqual(stages[at].proposal.before,stages[at-1].proposal.after);
  assert.deepEqual(index.limits,L);assert.equal(index.packetBytes,index.packets.reduce((sum,row)=>sum+row.bytes,0));if(reader)assert.equal(reader.verify(),true);return {index,stages,raw};
 }
-function relocate(source,file){const edits=[],relocated=source.replace(/((?:from\s+|import\()')(\.[^']+)(')/gu,(whole,prefix,spec,suffix)=>{const replacement=prefix+new URL(spec,pathToFileURL(script)).href+suffix;edits.push({before:whole,after:replacement});return replacement;});let inverse=relocated;for(const edit of [...edits].reverse()){assert.equal(inverse.split(edit.after).length,2);inverse=inverse.replace(edit.after,edit.before);}assert.equal(inverse,source);fs.writeFileSync(file,relocated);assert.equal(fs.readFileSync(file,'utf8'),relocated);return {source,relocated,edits,inverse};}
+function relocate(source,file){const recipe=relocateSourceModule(source,pathToFileURL(script).href),relocated=recipe.text,edits=recipe.mapping,inverse=recipe.inverse;assert.equal(inverse,source);fs.writeFileSync(file,relocated);assert.equal(fs.readFileSync(file,'utf8'),relocated);return {source,relocated,edits,inverse,recipe};}
 async function hashes(action){const update=descriptor(Hash.prototype,'update'),digest=descriptor(Hash.prototype,'digest'),tape=[],receivers=new Map();const id=value=>{if(!receivers.has(value))receivers.set(value,receivers.size);return receivers.get(value);};try{define(Hash.prototype,'update',{...update,value:function(...args){const recorded=args.map(value=>typeof value==='string'?{type:'string',value}:typeof value==='number'?{type:'number',value}:{type:'bytes',base64:Buffer.from(value).toString('base64')}),result=apply(update.value,this,args);tape.push({operation:'update',receiver:id(this),args:recorded,sameReceiver:result===this});return result;}});define(Hash.prototype,'digest',{...digest,value:function(...args){const result=apply(digest.value,this,args);tape.push({operation:'digest',receiver:id(this),args,result:typeof result==='string'?result:{base64:Buffer.from(result).toString('base64')}});return result;}});return {result:await outcome(action),tape};}finally{define(Hash.prototype,'update',update);define(Hash.prototype,'digest',digest);}}
 // Independent tiny transport carrier: these data are not compiler/source proofs.
 function synthetic(t,sources=['{"text":"猫😀"}\n']){

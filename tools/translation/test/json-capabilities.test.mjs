@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -11,7 +12,7 @@ import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {serde_json_from_str} from '../extensions/json-runtime.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 import {JSON_CONTRACTS} from '../extensions/json-contracts.mjs';
-const root=new URL('../../../',import.meta.url),manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8');
+const root=new URL('../../../',import.meta.url),manifest=readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock=readFileSync(repositorySourceURL('Cargo.lock',root),'utf8');
 const profile=()=>actualJsonCapabilityProfile({manifest,lock,compilationProfile:PRODUCTION_PROFILE});
 const project=(source,jsonParserProfile)=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE,...(jsonParserProfile?{jsonParserProfile}:{})});
 const fromString='pub fn decode(value:&str)->Result<serde_json::Value,serde_json::Error>{serde_json::from_str::<serde_json::Value>(value)}';

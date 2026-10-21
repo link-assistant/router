@@ -14,7 +14,7 @@ const fail=message=>throwOriginalCapturedTypeError('Original macro literal: '+me
 function guard(){if(!initial||!originalStaticSourceIntrinsicsUnchanged()||!originalDataFreezeIntrinsicsUnchanged())fail('original source operations changed');const actual=Object.getOwnPropertyDescriptor(JSON,'parse');if(!actual||!Object.hasOwn(actual,'value')||actual.value!==parsePin.value||actual.enumerable!==parsePin.enumerable||actual.writable!==parsePin.writable||actual.configurable!==parsePin.configurable)fail('original source operations changed');}
 const hash=value=>{const result=createHash('sha256').update(value).digest('hex');guard();return result;};
 const inputs=[
- {manifest:'./source-profiles/declarative/manifest.json',manifestSha256:'f1b0582e049761c844aca326c25cfe8577e679210026a27e6b8b4162d35a7ee9',field:'standard',path:'compiler/rustc_parse/src/parser/nonterminal.rs'},
+ {manifest:'./source-profiles/declarative/manifest.json',manifestSha256:'f3192260b3efe0ed8cdd1c9318d1b61918029f48ff87867fd6561d27fed6645f',field:'standard',path:'compiler/rustc_parse/src/parser/nonterminal.rs'},
  {manifest:'./source-profiles/format-constructors/manifest.json',manifestSha256:'c499a8b3871286c18ec6ce5db7d49895ff00df2fce462baeb97f865391c849f0',field:'sources',path:'compiler/rustc_parse/src/parser/expr.rs'},
  {manifest:'./source-profiles/clap-concat/manifest.json',manifestSha256:'a4964c33a27f51b6dc54713d44838b0d1b5d987251f485500e8a36424fd131e5',field:'sources',path:'compiler/rustc_ast/src/token.rs'},
 ];

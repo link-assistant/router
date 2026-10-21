@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
@@ -40,7 +41,7 @@ test('actual owned sources are mandatory and copied source spelling grants no al
   const source=`pub fn f(v:&${J})->bool{${J}::is_null(v)}`;
   for(const input of [files(source,{'src/translation_core/primitives.rs':ROUTER_CORE_PRIMITIVES_SOURCE.replace('::serde_json::Value','bool')}),files(source,{'src/translation_core.rs':ROUTER_FORMATTING_FACADE_SOURCE.replace('Json, Maybe','Maybe')}),files(source,{'src/lib.rs':'mod translation_core;\n'+source})]){const result=project(input);assert.equal(has(result,'f'),false);}
   for(const source of [`pub fn f()->${M}<bool>{${M}::None()}`,`pub fn f()->${M}<bool>{${M}::Some}`,`pub fn f(v:&mut ${J})->bool{true}`,`pub fn f(v:${C}NotRegistered<bool>)->bool{true}`])assert.equal(has(project(files(source)),'f'),false);
-  const leaf=readFileSync(new URL('../../../src/translation_core/primitives.rs',import.meta.url),'utf8');retain('complete-physical-and-registered-primitives',{leaf,registered:ROUTER_CORE_PRIMITIVES_SOURCE,sha256:sha(leaf)});assert.equal(leaf,ROUTER_CORE_PRIMITIVES_SOURCE);
+  const leaf=readFileSync(new URL('../../../rust/src/translation_core/primitives.rs',import.meta.url),'utf8');retain('complete-physical-and-registered-primitives',{leaf,registered:ROUTER_CORE_PRIMITIVES_SOURCE,sha256:sha(leaf)});assert.equal(leaf,ROUTER_CORE_PRIMITIVES_SOURCE);
 });
 
 test('payload mutation borrowing and destruction retain existing refusal boundaries',()=>{
@@ -92,7 +93,7 @@ test('complete real scalar helpers adopt through the corpus rule and execute bot
 test('edited concrete sources receive fresh semantic checks and complete current corpus proposals',()=>{
   const source=`pub fn value()->${M}<bool>{${M}::Some(true)}`,stage=transportConcreteSyntaxSource(source,{language:'Rust'}),original=project(files(transportConcreteSyntaxMeta(stage.meta).source));assert.equal(has(original,'value'),true);
   const edited=transportConcreteSyntaxSource(source.replace('::Some(true)','::Unregistered(true)'),{language:'Rust'}),refused=project(files(transportConcreteSyntaxMeta(edited.meta).source));assert.equal(has(refused,'value'),false);retain('complete-original-and-edited-concrete',{stage,edited,original,refused});
-  const physical={};for(const path of ['src/lib.rs','src/translation_core.rs','src/translation_core/primitives.rs','src/translation_core/ranges.rs'])physical[path]=readFileSync(new URL('../../../'+path,import.meta.url),'utf8');
+  const physical={};for(const path of ['src/lib.rs','src/translation_core.rs','src/translation_core/primitives.rs','src/translation_core/ranges.rs'])physical[path]=readFileSync(repositorySourceURL(path,new URL('../../../',import.meta.url)),'utf8');
   retain('complete-current-physical-core-sources',physical);
   // The complete original lib.rs graph is supplied by the integration producer;
   // a local closed fixture still retains current physical facade bytes here.

@@ -23,7 +23,7 @@ async function artifacts(result,operation){
   }finally{rmSync(directory,{recursive:true,force:true});}
 }
 test('original consuming FailureKind.message checks its original enum, constant and const method',async()=>{
-  const source=readFileSync(new URL('../../../src/stream_termination.rs',import.meta.url),'utf8');
+  const source=readFileSync(new URL('../../../rust/src/stream_termination.rs',import.meta.url),'utf8');
   const items=sourceItems(source),enumItem=items.find(item=>item.term==='enum'&&item.name==='FailureKind'),constant=items.find(item=>item.term==='const'&&item.name==='INCOMPLETE_STREAM_MESSAGE');
   const method=extractImplDeclarations(source).implementations.find(impl=>impl.typePath.join('.')==='FailureKind').methods.find(method=>method.name==='message');
   const result=project({'src/lib.rs':[source.slice(enumItem.start,enumItem.end),source.slice(constant.start,constant.end),'impl FailureKind { '+source.slice(method.span.start,method.span.end)+' }','pub fn message(kind:FailureKind)->&\'static str{kind.message()}'].join('\n')});

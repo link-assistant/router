@@ -1,13 +1,13 @@
 {
   "schema": "router-complete-real-source-fixtures-v1",
   "originalRevision": "5de1dea8b777dcd6e637758efc2c260150735af5",
-  "currentRevision": "e8f9769ab986f367799226f92a592d234cbe5003",
+  "currentRevision": "b6202d02f52bff8a30b9cde4f23561aeed7d9083",
   "originalManifestSha256": "fc81dbdc0ddf1c650f41c41a4c44f3e30db4c28f76170f2857983f7d80c0ff67",
   "archive": "originals.json.gz",
-  "rawBytes": 5734772,
-  "rawSha256": "4c74b74f5b6905cdb0654f678a3ca46df9d1d046612852bdd75faf619394fcc5",
-  "bytes": 984569,
-  "sha256": "b8078965bb04d2f73fe6c86348af87d43b9e017c67a8b0f9fff046b271fdc8fb",
+  "rawBytes": 5882898,
+  "rawSha256": "f66e3c09e30cdc533d1e5dedc31d6b2475f1de23197f16054ffa0b854c3ca555",
+  "bytes": 1014113,
+  "sha256": "8ab91e55751ffe1d04aada16f82d300555772847637c30ceefa415ce3600be42",
   "historicalFiles": 15,
   "currentFiles": 21,
   "trace": [

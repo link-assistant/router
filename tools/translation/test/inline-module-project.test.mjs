@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -83,7 +84,7 @@ test('inline tool prefix shadowing and nested exported-macro uncertainty stay vi
 });
 
 test('whole unchanged diagnostic module translates all 18 original reason constants through semantic meta',{timeout:30_000},async()=>{
-  const path='src/auth_diagnostics.rs',source=readFileSync(new URL('../../../'+path,import.meta.url),'utf8');
+  const path='src/auth_diagnostics.rs',source=readFileSync(repositorySourceURL(path,new URL('../../../',import.meta.url)),'utf8');
   assert.equal(hash(source),'4adfdd83495f6cadeb33c3c17658134c4e6a3a7947cb1c733f92bde63dd9690a');
   const result=translateProject({entry:path,paths:[path],readSource:()=>source});
   const reason=result.meta.executable.filter(entry=>entry.name.startsWith('reason.'));

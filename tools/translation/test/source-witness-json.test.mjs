@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // Storage equivalence for genuine private source witnesses, never proof reuse.
 import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
@@ -14,7 +15,7 @@ const directory=realpathSync(mkdtempSync(join(tmpdir(),'router-source-witness-js
 const originals=new Map(),relocations=[];for(const row of manifest.sources){const value=readFileSync(new URL(row.storedPath,fixture));assert.equal(value.length,row.bytes);assert.equal(hash(value),row.sha256);originals.set(row.path,value.toString('utf8'));}
 function copy(source,label){const path=join(directory,label+'.mjs'),copied=source.replace(/\bfrom (['"])(\.\.?\/[^'"]+)\1/g,(_match,quote,path)=>{const target=new URL(path,origin).href;relocations.push({label,path,target});return 'from '+quote+target+quote;}).replace(/\bimport\.meta\.url\b/g,()=>{relocations.push({label,kind:'original-module-url',target:origin.href});return json(origin.href);});writeFileSync(path,copied,{flag:'wx'});return {source,copied,path,url:pathToFileURL(path).href};}
 const leaves={old:copy(originals.get('tools/translation/derive-ancestor-attribute-scope.mjs'),'complete-before'),current:copy(readFileSync(origin,'utf8'),'complete-current')};
-const source={manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8'),originalRoot:readFileSync(new URL('src/lib.rs',root),'utf8')};
+const source={manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8'),originalRoot:readFileSync(repositorySourceURL('src/lib.rs',root),'utf8')};
 const requests=[{namespace:'attribute',name:'allow'},{namespace:'attribute',name:'serde'},{namespace:'attribute',name:'default'},{namespace:'type',name:'core'},{namespace:'type',name:'std'},{namespace:'type',name:'Default'},{namespace:'type',name:'clap'}];
 const imports=Object.fromEntries(['original-json-intrinsics.mjs','private-frozen-json.mjs','derive-dependencies.mjs','extensions/external-trait-sources.mjs','project.mjs','module-bindings.mjs','source-module-views.mjs','cfg-profile.mjs','derive-ancestor-attribute-scope.mjs'].map(path=>[path,new URL(path,base).href]));
 function retain(name,value){const output=process.env.ROUTER_SOURCE_WITNESS_JSON_VECTOR_DIR;if(output){mkdirSync(output,{recursive:true});writeFileSync(join(output,name+'.json.gz'),gzipSync(json(value)+String.fromCharCode(10)),{flag:'wx'});}}

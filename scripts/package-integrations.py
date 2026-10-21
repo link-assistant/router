@@ -18,7 +18,7 @@ def main():
     for script in ['generate-contracts.py', 'generate-bindings.py']:
         subprocess.run([sys.executable, str(ROOT/'scripts'/script), '--check'], check=True)
     output = args.output.resolve(); output.mkdir(parents=True, exist_ok=True)
-    subprocess.run(['npm', 'pack', '--pack-destination', str(output)], cwd=ROOT/'packages/javascript', check=True)
+    subprocess.run(['npm', 'pack', '--pack-destination', str(output)], cwd=ROOT/'js', check=True)
     subprocess.run([sys.executable, '-m', 'build', '--outdir', str(output), str(ROOT/'packages/python')], check=True)
     with tarfile.open(output/f'router-contracts-{version}.tar.gz', 'w:gz') as archive:
         for directory in ['schemas', 'openapi']:

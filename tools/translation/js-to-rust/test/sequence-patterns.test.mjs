@@ -1,3 +1,5 @@
+import {historicalNativeSourcePath} from '../../test/fixtures/historical-language-layout.mjs';
+import {rustPackageSourcePath} from "../../repository-layout.mjs";
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {createHash} from 'node:crypto';
@@ -33,7 +35,7 @@ test('two genuine guarded native bodies independently preserve every public valu
   const zeroes=[...unknown.map(value=>[value,false]),['',false],['0'.repeat(39),false],['0'.repeat(40),true],['0'.repeat(41),true],['0'.repeat(8192),true],['0'.repeat(40)+'\n',false],['0'.repeat(40)+'\r\n',false],['0'.repeat(40)+'\r',false],['0'.repeat(40)+'\u2029',false],['0'.repeat(40)+'\u2028',false],['0'.repeat(40)+'\ud800',false],['1'+'0'.repeat(40),false]];
   try {
     for(const fixture of [{file:'tokens.mjs',start:4090,cases:repository,arity:1},{file:'github-proxy.mjs',start:2346,cases:zeroes,arity:2}]) {
-      const path='packages/javascript/native/'+fixture.file,source=readFileSync(join(ROOT,path),'utf8'),analysis=analyzeJavaScript(source,{sourcePath:path}),row=analysis.scopedFunctions.items.find(row=>row.start===fixture.start),fn=analysis.scopedFunctions.program.find(fn=>fn.name===row?.name);
+      const path='js/src/'+fixture.file,source=readFileSync(join(ROOT,rustPackageSourcePath(ROOT,path)),'utf8'),analysis=analyzeJavaScript(source,{sourcePath:path}),row=analysis.scopedFunctions.items.find(row=>row.start===fixture.start),fn=analysis.scopedFunctions.program.find(fn=>fn.name===row?.name);
       assert.equal(row.status,'translated');assert.equal(row.coverageContract,'full-domain-body');assert.equal(row.owner.status,'unsupported');assert.deepEqual(row.captures,[]);assert.equal(fn.conditionalInputs,undefined);assert.equal(fn.lossless,true);assert.deepEqual(fn.params.map(param=>param.type),Array(fixture.arity).fill('value'));
       const meta=toLino(fn),program=parseMeta(meta);assert.deepEqual(program,[fn]);const name=fn.name.replace(/_([a-z])/gu,(_,letter)=>letter.toUpperCase()),originalSource='export const '+name+'=('+source.slice(row.start,row.end)+');',runtime=await runtimes(originalSource,program,directory,fixture.file),observations=[];
       const observation={path,sourceSha256:hash(source),fullOriginalBody:source.slice(row.start,row.end),row,program,meta,typescript:runtime.typescript,rust:runtime.rust,observations};vectors.originalBodies.push(observation);save();
@@ -89,16 +91,17 @@ test('coercion unsupported regexp operators mutations and malformed or oversized
 
 
 test('every old complete program survives within unchanged 788 and 705 source censuses',{timeout:60000},()=>{
-  const baselineBytes=readFileSync(join(ROOT,'tools/translation/fixtures/sequence-patterns/native-program-baseline.json'));assert.equal(hash(baselineBytes),'d3b55956cc6eb290f5c9ebbab4c12a5c2635e94dbffb637a37badd6f85ce147b');
+  const baselineBytes=readFileSync(join(ROOT,rustPackageSourcePath(ROOT,'tools/translation/fixtures/sequence-patterns/native-program-baseline.json')));assert.equal(hash(baselineBytes),'d3b55956cc6eb290f5c9ebbab4c12a5c2635e94dbffb637a37badd6f85ce147b');
   const baseline=JSON.parse(baselineBytes),totals={modules:0,top:0,topDefinitions:0,scoped:0,full:0,conditional:0},gains=[];
   assert.equal(baseline.modules.length,52);assert.deepEqual(baseline.counts,{modules:52,topLevelSourceItems:788,topLevelDefinitions:73,topLevelConstants:38,topLevelFunctions:35,scopedSourceItems:705,scopedFunctions:61,fullDomainScopedFunctions:52,conditionalScopedFunctions:9});
-  for(const previous of baseline.modules) {
+  for(const historical of baseline.modules) {
+    const previous={...historical,path:historicalNativeSourcePath(historical.path)};
     const source=readFileSync(join(ROOT,previous.path),'utf8');assert.equal(Buffer.byteLength(source),previous.originalSourceBytes);assert.equal(hash(source),previous.sourceSha256,'original source changed');
-    const analysis=analyzeJavaScript(source,{sourcePath:previous.path});assert.equal(analysis.scopedFunctions.complete,true);assert.deepEqual(analysis.program,previous.topLevelProgram);
+    const analysis=analyzeJavaScript(source,{sourcePath:historical.path});assert.equal(analysis.scopedFunctions.complete,true);assert.deepEqual(analysis.program,previous.topLevelProgram);
     for(const fn of previous.scopedProgram){assert.deepEqual(parseMeta(toLino(fn)),[fn]);assert.deepEqual(analysis.scopedFunctions.program.find(row=>row.name===fn.name),fn,'old original body '+previous.path+':'+fn.name);}
     const names=new Set(previous.scopedProgram.map(fn=>fn.name));for(const fn of analysis.scopedFunctions.program)if(!names.has(fn.name)){const row=analysis.scopedFunctions.items.find(row=>row.name===fn.name);gains.push({path:previous.path,start:row.start,end:row.end,name:fn.name,fullOriginalBody:source.slice(row.start,row.end),row,program:fn,meta:toLino(fn),typescript:emitTypeScript([fn]),rust:emitRust([fn])});}
     totals.modules++;totals.top+=analysis.items.length;totals.topDefinitions+=analysis.program.length;totals.scoped+=analysis.scopedFunctions.sourceItems;totals.full+=analysis.scopedFunctions.fullDomainTranslatedItems;totals.conditional+=analysis.scopedFunctions.conditionalPrivateBodyDraftItems;
-    vectors.census.push({path:previous.path,sourceSha256:previous.sourceSha256,previous,completeCurrentItems:analysis.items,completeCurrentScoped:analysis.scopedFunctions});save();
+    vectors.census.push({path:previous.path,sourceSha256:previous.sourceSha256,historical,previous,completeCurrentItems:analysis.items,completeCurrentScoped:analysis.scopedFunctions});save();
   }
-  assert.deepEqual(totals,{modules:52,top:788,topDefinitions:73,scoped:705,full:54,conditional:12});assert.deepEqual(gains.map(row=>[row.path,row.start]),[['packages/javascript/native/client-status.mjs',2581],['packages/javascript/native/config.mjs',15324],['packages/javascript/native/github-proxy.mjs',2346],['packages/javascript/native/provider-manifest.mjs',737],['packages/javascript/native/tokens.mjs',4090]]);vectors.gains=gains;save();
+  assert.deepEqual(totals,{modules:52,top:788,topDefinitions:73,scoped:705,full:54,conditional:12});assert.deepEqual(gains.map(row=>[row.path,row.start]),[['js/src/client-status.mjs',2581],['js/src/config.mjs',15324],['js/src/github-proxy.mjs',2346],['js/src/provider-manifest.mjs',737],['js/src/tokens.mjs',4090]]);vectors.gains=gains;save();
 });

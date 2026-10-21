@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -90,7 +91,7 @@ test('source metadata keeps nested conditional grammar opaque when forwarded',()
 });
 
 test('actual pinned cfg_if transcribes every original std branch without selecting a platform or closing its owner',()=>{
-  const proof=loadDeclarativeSourceProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+  const proof=loadDeclarativeSourceProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
   const definition=standardCfgIfSourceDefinition(proof);
   assert.throws(()=>standardCfgIfSourceDefinition(structuredClone(proof)),/Unsealed/);
   const invocations=declarativeStandardInvocations(proof,'library/std/src/sys/thread_local/mod.rs').filter(input=>input.path.join('::')==='cfg_if::cfg_if');
@@ -144,7 +145,7 @@ function invocationPath(trees,name,prefix=[]) {
 }
 
 test('original std transcribers forward actual nested key expressions across every pinned leaf without a closure claim',()=>{
-  const proof=loadDeclarativeSourceProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+  const proof=loadDeclarativeSourceProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
   assert.equal(proof.standardCfgIf.version,'1.0.1');
   assert.equal(proof.standardCfgIf.sha256,'9555578bc9e57714c812a1f84e4fc5b4d21fcb063490c624de019f7464c91268');
   const definitions=standardThreadLocalSourceDefinitions(proof);
@@ -168,13 +169,13 @@ test('original std transcribers forward actual nested key expressions across eve
 });
 
 test('all original pinned task-local invocations use actual locked transcribers without runtime or namespace admission',()=>{
-  const proof=loadDeclarativeSourceProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+  const proof=loadDeclarativeSourceProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
   assert.equal(isDeclarativeSourceProof(proof),true);assert.equal(isDeclarativeSourceProof(structuredClone(proof)),false);
   assert.throws(()=>taskLocalSourceDefinitions(structuredClone(proof)),/Unsealed/);
   const definitions=taskLocalSourceDefinitions(proof),fixture=JSON.parse(readFileSync(new URL('../fixtures/task-local-originals.json',import.meta.url),'utf8'));
   assert.equal(fixture.invocations.length,7);
   for(const pin of fixture.invocations) {
-    const source=readFileSync(new URL(pin.file,root),'utf8');assert.equal(hash(source),pin.sourceSha256);
+    const source=readFileSync(repositorySourceURL(pin.file,root),'utf8');assert.equal(hash(source),pin.sourceSha256);
     const original=source.slice(pin.span.start,pin.span.end);assert.equal(original,pin.original);assert.equal(hash(original),pin.invocationSha256);
     const input=originalMacroInvocation(original);assert.deepEqual(input.path,['tokio','task_local']);
     const first=expandDeclarativeMacro(definitions.get('task_local'),input.trees);

@@ -1,7 +1,8 @@
 // Fresh native descriptor collection changes internal work, never proof authority.
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,rmSync} from 'node:fs';
+import {writeFileSync,mkdirSync,mkdtempSync,rmSync} from 'node:fs';
+import {readCompilerAliasHistory as readFileSync} from './fixtures/compiler-data-alias-history.mjs';
 import {execFileSync} from 'node:child_process';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';

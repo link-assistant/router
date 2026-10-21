@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from "../../repository-layout.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
@@ -14,7 +15,7 @@ import {buildOwnedCoreDocumentArtifacts} from '../owned-core-corpus.mjs';
 import {createCompilationMatrix,DECLARED_FAMILY_PROFILES,compilationMatrixDescription} from '../../compilation-matrix.mjs';
 import {ROUTER_FORMATTING_FACADE_SOURCE as facade,ROUTER_CORE_PRIMITIVES_SOURCE as primitives,ROUTER_CORE_RANGES_SOURCE as ranges,ROUTER_CORE_JSON_COLLECTIONS_SOURCE as collections} from '../../router-core-source-data.mjs';
 const root=fileURLToPath(new URL('../../../../',import.meta.url)),limits={timeout:60000},C='crate::translation_core::',sha=ownedDefinitionHash;
-const original=path=>existsSync(join(root,path))?readFileSync(join(root,path),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:30000,maxBuffer:32*1024*1024});
+const original=path=>existsSync(join(root,rustPackageSourcePath(root,path)))?readFileSync(join(root,rustPackageSourcePath(root,path)),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:30000,maxBuffer:32*1024*1024});
 function write(root,path,text){mkdirSync(dirname(join(root,path)),{recursive:true});writeFileSync(join(root,path),text);}
 function fixture(t,{two=false}={}){
  const directory=mkdtempSync(join(tmpdir(),'owned-definition-materialization-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));
@@ -27,7 +28,7 @@ function fixture(t,{two=false}={}){
 const owned=()=>import('../../retained-owned-definitions-bulk.mjs'),raw=()=>import('../../owned-definitions-bulk.mjs');
 async function materialize(t,options={}){const value=fixture(t,options),bulk=await owned(),plan=bulk.planRegeneration({root:value.directory,entries:options.two?['src/lib.rs','src/main.rs']:['src/lib.rs']});assert.deepEqual(bulk.applyRegenerationPlan(plan).failures,[]);return {...value,bulk,plan};}
 const value=()=>({$:'Object',field0:{$:'Map',entries:[{$:'MapEntry',key:'a',value:{$:'Array',field0:[{$:'Null'},{$:'String',field0:'猫😀'},{$:'Bool',field0:true}]}}]}});
-function strict(directory,files){const temporary=mkdtempSync(join(tmpdir(),'owned-definition-strict-'));try{const config=join(temporary,'tsconfig.json');writeFileSync(config,JSON.stringify({compilerOptions:{strict:true,skipLibCheck:true,target:'ES2022',module:'NodeNext',moduleResolution:'NodeNext',outDir:join(directory,'out'),rootDir:directory},files:files.map(path=>join(directory,path))}));execFileSync(process.execPath,[join(root,'packages/javascript/node_modules/typescript/bin/tsc'),'-p',config],{cwd:root,encoding:'utf8',timeout:20000,stdio:'pipe'});}finally{rmSync(temporary,{recursive:true,force:true});}}
+function strict(directory,files){const temporary=mkdtempSync(join(tmpdir(),'owned-definition-strict-'));try{const config=join(temporary,'tsconfig.json');writeFileSync(config,JSON.stringify({compilerOptions:{strict:true,skipLibCheck:true,target:'ES2022',module:'NodeNext',moduleResolution:'NodeNext',outDir:join(directory,'out'),rootDir:directory},files:files.map(path=>join(directory,path))}));execFileSync(process.execPath,[join(root,'js/node_modules/typescript/bin/tsc'),'-p',config],{cwd:root,encoding:'utf8',timeout:20000,stdio:'pipe'});}finally{rmSync(temporary,{recursive:true,force:true});}}
 function retained(name,object){if(!process.env.ROUTER_OWNED_DEFINITION_MATERIALIZATION_VECTORS)return;const directory=process.env.ROUTER_OWNED_DEFINITION_MATERIALIZATION_VECTORS;mkdirSync(directory,{recursive:true});const packet=encodeOwnedDefinitionPacket(object);writeFileSync(join(directory,name+'.json.gz.b64'),packet.text);writeFileSync(join(directory,name+'.index.json'),JSON.stringify({...packet,text:undefined})+'\n');}
 test('complete original producers derive four modules with independent full inverses',limits,()=>{
  const bulk=original('tools/translation/bulk.mjs'),matrix=original('tools/translation/matrix-bulk.mjs'),proposal=deriveOwnedDefinitionBulkSources({bulk,matrix});assert.equal(proposal.files.length,4);
@@ -53,7 +54,7 @@ test('complete packets CST inverse actual source and independent TS closure rema
  retained('all-forward-fields',index);
 });
 test('current source Cargo compiler and typed inputs rejoin before any genuine plan writes',limits,async t=>{
- const actual=fixture(t),bulk=await owned(),plan=bulk.planRegeneration({root:actual.directory,entries:['src/lib.rs']}),input=captureOwnedDefinitionInputs(actual.directory);write(actual.directory,'Cargo.toml',actual.files['Cargo.toml']+'\n# changed');assert.throws(()=>requireOwnedDefinitionInputs(input),/changed/u);assert.throws(()=>bulk.applyRegenerationPlan(plan),/changed/u);assert.equal(existsSync(join(actual.directory,'packages/javascript/generated')),false);write(actual.directory,'Cargo.toml',actual.files['Cargo.toml']);write(actual.directory,'new.rs','fn new(){}');execFileSync('git',['add','new.rs'],{cwd:actual.directory});assert.throws(()=>requireOwnedDefinitionInputs(input),/changed|census/u);
+ const actual=fixture(t),bulk=await owned(),plan=bulk.planRegeneration({root:actual.directory,entries:['src/lib.rs']}),input=captureOwnedDefinitionInputs(actual.directory);write(actual.directory,'Cargo.toml',actual.files['Cargo.toml']+'\n# changed');assert.throws(()=>requireOwnedDefinitionInputs(input),/changed/u);assert.throws(()=>bulk.applyRegenerationPlan(plan),/changed/u);assert.equal(existsSync(join(actual.directory,'js/generated')),false);write(actual.directory,'Cargo.toml',actual.files['Cargo.toml']);write(actual.directory,'new.rs','fn new(){}');execFileSync('git',['add','new.rs'],{cwd:actual.directory});assert.throws(()=>requireOwnedDefinitionInputs(input),/changed|census/u);
 });
 test('two genuine projects retain both checked occurrences but deduplicate the physical original',limits,async t=>{
  const actual=await materialize(t,{two:true}),result=buildOwnedCoreDefinitionArtifacts(actual.directory),summary=result.definitions[0];assert.equal(summary.totals.occurrences,2);assert.equal(summary.totals.uniquePhysicalOriginals,1);assert.equal(summary.originals[0].occurrences.length,2);assert.equal(summary.witnessApplicationItems,0);assert.ok(summary.occurrences.every(row=>row.mainOverlap==='unknown'&&row.status==='definition-only'));retained('full-two-project-result',summary);
@@ -70,4 +71,14 @@ test('cold explicit CLI and stale draft cleanup preserve refusal and exact insta
  const command=[join(root,'scripts/translate-router.mjs'),'--root',actual.directory,'--retain-output-text','--owned-core-definitions','--entry','src/lib.rs','--check'];execFileSync(process.execPath,command,{cwd:root,encoding:'utf8',timeout:30000,maxBuffer:4*1024*1024});
  // Both full actual525 original parents remain independent evidence, not synthetic coverage.
  const historical=original('tools/translation/js-to-rust/test/forward-owned-json-definitions.test.mjs'),start=historical.indexOf('const PARENTS=');assert.ok(start>0);const parents=JSON.parse(historical.slice(start+'const PARENTS='.length).trim().slice(0,-1));for(const row of parents){const source=gunzipSync(Buffer.from(row.parentGzip,'base64')).toString('utf8');assert.equal(sha(source),row.parentSha256);assert.equal(source.slice(...row.span),row.source);retained(row.name+'-complete-parent',{...row,parent:source,current:original(row.file)});}
+});
+
+test('owned metadata storage and retention diagnostics preserve complete output and callback refusal',limits,async t=>{
+ const actual=fixture(t),bulk=await owned(),options={root:actual.directory,entries:['src/lib.rs']},plain=bulk.planRegeneration(options),records=[],traced=bulk.planRegeneration({...options,progress:record=>records.push(record)});
+ assert.deepEqual(traced.outputs,plain.outputs);assert.deepEqual(traced.manifest,plain.manifest);
+ const phases=['owned-meta-storage-start','owned-meta-storage-end','owned-meta-retain-start','owned-meta-retain-end'];
+ assert.deepEqual(records.filter(record=>phases.includes(record.phase)).map(record=>record.phase),phases);
+ for(const phase of phases){const sentinel=new Error(phase);assert.throws(()=>bulk.planRegeneration({...options,progress:record=>{if(record.phase===phase)throw sentinel;}}),error=>error===sentinel);}
+ assert.equal(existsSync(join(actual.directory,'tools/translation/projects')),false);
+ assert.equal(existsSync(join(actual.directory,'js/generated')),false);
 });

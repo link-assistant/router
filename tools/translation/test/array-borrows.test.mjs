@@ -71,7 +71,7 @@ test('checked Option propagation retains static tuple payload leaf origins',{tim
 });
 
 test('unchanged verification constant and its actual helpers run in both emitted targets',{timeout:30_000},async()=>{
-  const source=readFileSync(new URL('../../../src/verification.rs',import.meta.url),'utf8');
+  const source=readFileSync(new URL('../../../rust/src/verification.rs',import.meta.url),'utf8');
   const pins={Run:'10d003eb79e8bbc05829dafe0b06c6d0d2d9005cfa50ee8346eeee28004da9ef',Area:'37a0ff6e05a6449fd0defe819cd1c6ef55f95b325792b2272f96b6b17214d82e',tests:'14f0e1f4a6111faa1ecb4032d9be28c5ee872cde1b7f237812a594b1228404eb',unit:'4ed0ef7ea0423e468281f1bfd3e3932589d47406a815434d7130fb4e4bf08732',AREAS:'183095f1a2687fd6d2e084b465f9dee667f7a77ea86189b49c8b92abf97295d3'};
   const selected=sourceItems(source).filter(item=>['struct','fn','const'].includes(item.term)&&['Run','Area','tests','unit','AREAS'].includes(item.name));
   assert.deepEqual(selected.map(item=>item.name),['Run','Area','tests','unit','AREAS']);

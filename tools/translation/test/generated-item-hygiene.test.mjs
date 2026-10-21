@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // Conditional proof prerequisites only; no generated owner or Rust context is issued.
 import nodeTest from 'node:test';
 import assert from 'node:assert/strict';
@@ -17,7 +18,7 @@ import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {translateProject} from '../project.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const test=(name,body)=>nodeTest(name,{timeout:60000},body),hash=value=>createHash('sha256').update(value).digest('hex');
-const root=new URL('../../../',import.meta.url),profileRoot=new URL('../source-profiles/generated-item-hygiene/',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+const root=new URL('../../../',import.meta.url),profileRoot=new URL('../source-profiles/generated-item-hygiene/',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
 let serial=0;
 function retain(label,value){const dir=process.env.ROUTER_GENERATED_HYGIENE_VECTOR_DIR;if(!dir)return value;mkdirSync(dir,{recursive:true});writeFileSync(dir+'/'+String(++serial).padStart(3,'0')+'-'+label+'.json.gz',gzipSync(JSON.stringify(value)),{flag:'wx'});return value;}
 function module(source,file='src/lib.rs'){const result=captureSourceModuleViews({source,sourcePath:file,compilationProfile:PRODUCTION_PROFILE});return {file,path:[],source,sourceView:result.views[0],compilationProfile:PRODUCTION_PROFILE};}

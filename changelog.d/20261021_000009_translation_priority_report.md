@@ -1,0 +1,1 @@
+Add a reusable production translation frontier DATA report that joins complete original function/source metadata to stored project first refusals, preserves compiler staleness and input vectors, and ranks distinct function batches and lexical overlaps without claiming new executable coverage.

@@ -128,7 +128,7 @@ test('source pattern tokens survive checked semantic meta round trips and per-fi
 });
 
 test('unchanged complete Router declarations remain carried with their unresolved provider and formatting dependencies',()=>{
-  const source=readFileSync(new URL('../../../src/bridge_controls.rs',import.meta.url),'utf8');
+  const source=readFileSync(new URL('../../../rust/src/bridge_controls.rs',import.meta.url),'utf8');
   const result=translateSource(source,'src/bridge_controls.rs');
   for(const name of ['untranslatable_chat_participant_name','codex_instruction_cache_breakpoint']){
     const item=result.ir.items.find(item=>item.name===name);

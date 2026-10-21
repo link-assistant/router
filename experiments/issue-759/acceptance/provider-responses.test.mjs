@@ -5,10 +5,10 @@ import { join } from 'node:path';
 import { load, upstream, temporary } from './helpers.mjs';
 import { owner, request, fixture, reply } from './provider-resource-helpers.mjs';
 
-const { createNativeRouter } = await load('packages/javascript/native/server.mjs');
-const { NativeAffinityStore } = await load('packages/javascript/native/native-service.mjs');
-const { createRouterCore } = await load('packages/javascript/native/core.mjs');
-const { AffinityStore } = await load('packages/javascript/native/affinities.mjs');
+const { createNativeRouter } = await load('js/src/server.mjs');
+const { NativeAffinityStore } = await load('js/src/native-service.mjs');
+const { createRouterCore } = await load('js/src/core.mjs');
+const { AffinityStore } = await load('js/src/affinities.mjs');
 const root = '/api/services/openai/v1', namespace = `${root}/responses`;
 const absent = { error: { message: 'Response not found', type: 'invalid_request_error', param: null, code: 'response_not_found' } };
 

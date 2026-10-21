@@ -1,3 +1,4 @@
+import {crateModuleSourcePath} from './repository-layout.mjs';
 // Reserved explicit owned interface selection, not global namespace closure.
 // Both callers supply their freshly reconstructed genuine original source scope.
 import {originalSourceModuleItems,isSourceModuleView} from './source-module-views.mjs';
@@ -13,7 +14,7 @@ export function selectOriginalRouterCoreFacade({modules,sourceScopes,compilation
   // The actual tracked edge must select this complete external source. No alias,
   // cfg, attribute macro, caller flag or copied source-view can supply the API.
   const declarations=originalSourceModuleItems(root).filter(item=>item.term==='mod'&&item.name==='translation_core');
-  if(declarations.length!==1||root.source.slice(declarations[0].start,declarations[0].end).trim()!=='pub mod translation_core;'||core.file!=='src/translation_core.rs'||core.source!==ROUTER_FORMATTING_FACADE_SOURCE||core.configurationCondition!=='active')fail();
+  if(declarations.length!==1||root.source.slice(declarations[0].start,declarations[0].end).trim()!=='pub mod translation_core;'||core.file!==crateModuleSourcePath(modules,'src/translation_core.rs')||core.source!==ROUTER_FORMATTING_FACADE_SOURCE||core.configurationCondition!=='active')fail();
   const scope=sourceScopes.find(scope=>scope.file===root.file&&scope.path.length===0),bindings=scope?.bindings.filter(binding=>binding.namespace==='type'&&binding.name==='translation_core');
   if(bindings?.length!==1||bindings[0].status!=='resolved'||bindings[0].kind!=='mod'||bindings[0].via!=='declaration'||bindings[0].source!==root.file||bindings[0].target?.join('::')!=='crate::translation_core'||bindings[0].span.start!==declarations[0].start||bindings[0].span.end!==declarations[0].end)fail();
   if(originalSourceModuleItems(root).some(item=>item.term==='use'&&item.tokens.some(token=>token.text==='translation_core')))fail();

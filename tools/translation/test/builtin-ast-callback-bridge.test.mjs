@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // Eight SOURCE-ONLY authored cases, all UNRUN. No generated trait execution.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -11,7 +12,7 @@ import {createBuiltinDeriveAstCallbackBridge,assertBuiltinDeriveAstCallbackBridg
 import {resolveModuleGraph} from '../project.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {originalCsvContext} from './original-csv-context.mjs';
-const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
 const profile=builtinDeriveAstSourceProfile(dependencies);
 function selected(source,name='Clone'){
   const context=createDeriveFootprintContext({dependencies,compilationProfile:PRODUCTION_PROFILE,modules:[{file:'src/lib.rs',path:[],source:'mod data;'},{file:'src/data.rs',path:['data'],source}]}),certificate=context.certificates[0];assert.ok(certificate);

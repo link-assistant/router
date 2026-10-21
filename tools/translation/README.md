@@ -49,8 +49,8 @@ through the frontend and semantic checker.
 
 Each source produces source-bearing structural meta JSON in
 `tools/translation/meta`, a JavaScript draft in
-`packages/javascript/generated/rust-draft`, and a TypeScript draft in
-`packages/typescript/generated/rust-draft`. Source text appears in the meta JSON;
+`js/generated/rust-draft`, and a TypeScript draft in
+`ts/generated/rust-draft`. Source text appears in the meta JSON;
 source and item hashes, UTF-16 and UTF-8 spans, diagnostics, checked semantic IR,
 encodings and assumptions remain inspectable there.
 
@@ -363,3 +363,15 @@ Generated trait behavior, type/value/effect authority and complete runtime parit
 remain separate obligations. CatalogRecord syntax metadata uses a measured
 524,288-byte cap independent of the unchanged 256,000 token-byte, 16,000-cell and
 64-depth limits.
+
+The explicit source-bank DATA allocation variants and their actual CST source
+producers are documented in the [allocation checkpoint](../../docs/development/static-source-allocation-20261021.md)
+and the subsequent [incremental encoding checkpoint](../../docs/development/incremental-static-encoding-20261021.md).
+The current complete 36-case receiving group passes under both Node and Bun,
+including original deadlines and complete source/CST checks. Existing public
+encoder functions remain exact. These infrastructure results add no executable
+application coverage and do not establish full synchronization or the full gate.
+
+The [source-derived standard module role extension](../../docs/development/standard-module-import-roles-20261021.md) passes all 33 complete text-adoption and producer receiving cases under Node and Bun. Its actual two-sequence CST producer retains full source inverses and all original standard time/source checks; module candidates grant no namespace, trait-dispatch or executable authority. Production executable coverage and the open full synchronization obligations remain unchanged.
+
+The [complete literal-text packet stream](../../docs/development/literal-text-packets-20261021.md) and explicit `literal` + `gzip` CLI pass all 24 complete API/CLI/source-freshness cases under Node and Bun. Both actual source producers retain the two CST rule sequences and full inverses; every original materialized API and bounded writer body stays exact. The tested 256 fixture functions establish no production coverage gain, full-corpus resource fit or current compiler-export/full-gate qualification.

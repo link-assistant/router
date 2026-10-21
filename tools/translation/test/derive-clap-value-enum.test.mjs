@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
@@ -13,7 +14,7 @@ import {translateProject} from '../project.mjs';
 import {parseProgram} from '../semantic-meta.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock});
+const root=new URL('../../../',import.meta.url),manifest=readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock=readFileSync(repositorySourceURL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock});
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const retain=(name,value)=>{const directory=process.env.ROUTER_OLD_VALUE_ENUM_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeFileSync(directory+'/'+name+'.json.gz',gzipSync(JSON.stringify(value,(_,item)=>typeof item==='bigint'?{$integer:item.toString()}:item)+'\n',{mtime:0}));}};
 let contextIndex=0;
@@ -54,7 +55,7 @@ test('actual imported or qualified Clap derive owners certify source output whil
 });
 
 test('complete unchanged original ClientKind eight variants preserve exact names aliases attributes and source quote bindings',()=>{
-  const source=readFileSync(new URL('src/clients.rs',root),'utf8');assert.equal(hash(source),'2f12c5aa34a65ec62b793902cdefe8f36c1b6c414c673e6499ef40c7dbfb8c2d');
+  const source=readFileSync(repositorySourceURL('src/clients.rs',root),'utf8');assert.equal(hash(source),'2f12c5aa34a65ec62b793902cdefe8f36c1b6c414c673e6499ef40c7dbfb8c2d');
   const result=createDeriveFootprintContext({modules:[{file:'src/clients.rs',path:[],source}],dependencies,compilationProfile:PRODUCTION_PROFILE}),certificate=result.certificates.find(row=>row.name==='ClientKind');assert.deepEqual(result.diagnostics,[{source:'src/clients.rs',span:{start:4323,end:4490},name:'ClientIsolation',message:'Standard-only input has an unresolved original ancestor, prelude root or attribute owner'},{source:'src/clients.rs',span:{start:4569,end:7151},name:'ClientIntegration',message:'Standard-only input has an unresolved original ancestor, prelude root or attribute owner'},{source:'src/clients.rs',span:{start:18299,end:18842},name:'ClientManager',message:'Standard-only input has an unresolved original ancestor, prelude root or attribute owner'}]);assert.ok(certificate);
   const item=sourceItems(source).find(row=>row.name==='ClientKind');assert.deepEqual(certificate.span,{start:item.start,end:item.end});assert.equal(certificate.itemSha256,hash(source.slice(item.start,item.end)));
   const proof=certificate.clapValueEnumOutput;assert.deepEqual(proof.input.variants.map(row=>[row.name,row.canonicalName,row.aliases]),[['Codex','codex',[]],['ClaudeCode','claude',['claude-code']],['Cursor','cursor-agent',['cursor']],['GeminiCli','gemini',['gemini-cli']],['GrokCli','grok',['grok-cli']],['Opencode','opencode',[]],['QwenCode','qwen',['qwen-code']],['Agent','agent',[]]]);
@@ -64,7 +65,7 @@ test('complete unchanged original ClientKind eight variants preserve exact names
 
 test('whole original clients module admits its data declaration and source constants in emitted JS and strict TS',{timeout:60000},async()=>{
   const paths=currentOriginalRustPaths(root);
-  const result=translateProject({entry:'src/clients.rs',paths,readSource:path=>readFileSync(new URL(path,root),'utf8'),cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
+  const result=translateProject({entry:'src/clients.rs',paths,readSource:path=>readFileSync(repositorySourceURL(path,root),'utf8'),cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
   retain('06-complete-original-client-production',{paths,result});
   const program=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram)),type=program.declarations.get('ClientKind');assert.equal(type.k,'data');assert.equal(type.ctors.length,8);assert.equal(result.meta.runtimeParity,false);
   assert.ok(result.meta.executable.some(row=>row.name==='CODEX_PROVIDER'));assert.ok(result.meta.executable.some(row=>row.name==='CLAUDE_TOKEN_ENV'));

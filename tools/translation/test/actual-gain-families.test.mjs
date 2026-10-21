@@ -18,8 +18,15 @@ if(generation!==null&&!/^[0-9a-f]{40}$/u.test(generation))throw new Error('Actua
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const pin=(path,bytes)=>({path,bytes:bytes.length,sha256:hash(bytes)});
 const relative=path=>{assert.ok(typeof path==='string'&&!path.includes('\\')&&!path.includes('\0')&&!path.includes('\n')&&!path.includes(':')&&path.split('/').every(part=>part&&part!=='.'&&part!=='..'),'safe artifact path');return path;};
+function actualSourcePath(path){
+ if(!path.startsWith('src/')||!path.endsWith('.rs'))return path;
+ assert.ok(Array.isArray(inventory?.sources),'complete generation source inventory required');
+ const matches=inventory.sources.filter(row=>row.source===path||row.source==='rust/'+path);
+ assert.equal(matches.length,1,'one exact legacy or nested generation source row '+path);
+ return matches[0].source;
+}
 const read=path=>{
-  relative(path);let file=SOURCE;for(const part of path.split('/')){file=join(file,part);assert.ok(!lstatSync(file).isSymbolicLink(),path);}
+  relative(path);path=actualSourcePath(path);relative(path);let file=SOURCE;for(const part of path.split('/')){file=join(file,part);assert.ok(!lstatSync(file).isSymbolicLink(),path);}
   const initial=lstatSync(file,{bigint:true});assert.ok(initial.isFile()&&initial.size<=32n*1024n*1024n,path);
   const descriptor=openSync(file,constants.O_RDONLY|constants.O_NOFOLLOW);
   try{
@@ -33,7 +40,7 @@ const read=path=>{
   }finally{closeSync(descriptor);}
 };
 const git=paths=>{
-  const bytes=execFileSync('git',['cat-file','--batch'],{cwd:SOURCE,input:paths.map(path=>generation+':'+relative(path)+'\n').join(''),maxBuffer:128*1024*1024});
+  const bytes=execFileSync('git',['cat-file','--batch'],{cwd:SOURCE,input:paths.map(path=>generation+':'+relative(actualSourcePath(path))+'\n').join(''),maxBuffer:128*1024*1024});
   let at=0;const result=new Map();
   for(const path of paths){const end=bytes.indexOf(10,at),header=bytes.subarray(at,end).toString().split(' ');assert.equal(header[1],'blob',path);const length=Number(header[2]);at=end+1;result.set(path,bytes.subarray(at,at+length));at+=length;assert.equal(bytes[at++],10);}
   assert.equal(at,bytes.length);return result;
@@ -71,7 +78,7 @@ before(async()=>{
   compilerEvidence=compilerPaths.map(path=>{const bytes=originals?.get(path)??read(path);assert.equal(hash(bytes),inventory.implementationHashes[path],'generation compiler input '+path);return pin(path,bytes);});
   coverage=[];directory=mkdtempSync(join(tmpdir(),'router-actual-gain-families-'));writeFileSync(join(directory,'package.json'),'{"type":"module"}\n');mkdirSync(join(directory,'runtime'),{recursive:true});runtimeEvidence=[];
   const runtimeCopies=new Map();
-  for(const runtimeRoot of ['packages/javascript/generated/rust-draft/runtime','packages/typescript/generated/rust-draft/runtime']){
+  for(const runtimeRoot of ['js/generated/rust-draft/runtime','ts/generated/rust-draft/runtime']){
     const names=readdirSync(join(SOURCE,runtimeRoot)).sort(),paths=names.map(name=>runtimeRoot+'/'+name),originalRuntime=generation?git(paths):null;
     for(const name of names){
       const path=runtimeRoot+'/'+name,bytes=read(path);assert.ok(!name.includes('/')&&!name.includes('\\'));
@@ -83,25 +90,25 @@ before(async()=>{
   }
   const completeArtifacts=[],companionSources=[];
   for(const source of ['src/subscription_usage_types.rs','src/model_contract.rs']){
-    const item=inventory.sources.find(row=>row.source===source),bytes=read(source);assert.ok(item,source);assert.equal(hash(bytes),item.sha256);
+    const physicalSource=actualSourcePath(source),item=inventory.sources.find(row=>row.source===physicalSource),bytes=read(source);assert.ok(item,source);assert.equal(hash(bytes),item.sha256);
     if(generation)assert.deepEqual(git([source]).get(source),bytes,'companion source from exact generation '+source);
-    companionSources.push({...pin(source,bytes),source:bytes.toString('utf8')});
+    companionSources.push({...pin(physicalSource,bytes),logicalSource:source,source:bytes.toString('utf8')});
   }
   for(const [source,gains]of Object.entries(GAINS)){
-    const item=inventory.sources.find(row=>row.source===source);assert.ok(item,source);const sourceBytes=read(source),metaBytes=read(item.targets.meta),javascript=read(item.targets.javascript),typescript=read(item.targets.typescript),meta=JSON.parse(metaBytes);
-    assert.equal(hash(sourceBytes),item.sha256);assert.equal(meta.sourceSha256,item.sha256);assert.equal(meta.sourcePath,source);assert.equal(meta.items.map(row=>row.source).join(''),sourceBytes.toString('utf8'));
+    const physicalSource=actualSourcePath(source),item=inventory.sources.find(row=>row.source===physicalSource);assert.ok(item,source);const sourceBytes=read(source),metaBytes=read(item.targets.meta),javascript=read(item.targets.javascript),typescript=read(item.targets.typescript),meta=JSON.parse(metaBytes);
+    assert.equal(hash(sourceBytes),item.sha256);assert.equal(meta.sourceSha256,item.sha256);assert.equal(meta.sourcePath,physicalSource);assert.equal(meta.items.map(row=>row.source).join(''),sourceBytes.toString('utf8'));
     if(generation)for(const [path,bytes]of [[source,sourceBytes],[item.targets.meta,metaBytes],[item.targets.javascript,javascript],[item.targets.typescript,typescript]])assert.deepEqual(git([path]).get(path),bytes,'artifact from exact committed generation '+path);
-    for(const [term,names]of Object.entries(gains))for(const name of names){const matches=meta.items.filter(row=>row.term===term&&row.name===name);assert.equal(matches.length,1);assert.equal(matches[0].status,'executable',source+' '+name);assert.ok(matches[0].semantic?.checkedIR);coverage.push({source,term,name,span:matches[0].span,project:matches[0].semantic.project??null});}
-    const relative=source.slice(0,-3),targetJS=join(directory,relative+'.mjs'),targetTS=join(directory,relative+'.ts');mkdirSync(dirname(targetJS),{recursive:true});writeFileSync(targetJS,javascript);writeFileSync(targetTS,typescript);rows.push({source,relative,targetJS,meta,sourceText:sourceBytes.toString('utf8')});
-    completeArtifacts.push({source,sourceBytes:sourceBytes.toString('utf8'),metaBytes:metaBytes.toString('utf8'),javascript:javascript.toString('utf8'),typescript:typescript.toString('utf8')});
+    for(const [term,names]of Object.entries(gains))for(const name of names){const matches=meta.items.filter(row=>row.term===term&&row.name===name);assert.equal(matches.length,1);assert.equal(matches[0].status,'executable',source+' '+name);assert.ok(matches[0].semantic?.checkedIR);coverage.push({source:physicalSource,logicalSource:source,term,name,span:matches[0].span,project:matches[0].semantic.project??null});}
+    const relative=physicalSource.slice(0,-3),targetJS=join(directory,relative+'.mjs'),targetTS=join(directory,relative+'.ts');mkdirSync(dirname(targetJS),{recursive:true});writeFileSync(targetJS,javascript);writeFileSync(targetTS,typescript);rows.push({source,artifactSource:physicalSource,relative,targetJS,meta,sourceText:sourceBytes.toString('utf8')});
+    completeArtifacts.push({source:physicalSource,logicalSource:source,sourceBytes:sourceBytes.toString('utf8'),metaBytes:metaBytes.toString('utf8'),javascript:javascript.toString('utf8'),typescript:typescript.toString('utf8')});
   }
   assert.equal(coverage.length,37);assert.equal(coverage.filter(row=>row.term==='fn').length,7);assert.equal(coverage.filter(row=>row.term==='const').length,26);assert.equal(coverage.filter(row=>row.term==='struct').length,4);
   let compiler=process.env.ROUTER_TRANSLATION_TSC,prefix=[];
-  if(compiler===undefined){prefix=[createRequire(join(SOURCE,'packages/javascript/package.json')).resolve('typescript/bin/tsc')];compiler=process.execPath;}
+  if(compiler===undefined){prefix=[createRequire(join(SOURCE,'js/package.json')).resolve('typescript/bin/tsc')];compiler=process.execPath;}
   const version=execFileSync(compiler,[...prefix,'--version'],{encoding:'utf8',timeout:30_000}).trim();assert.equal(version,'Version 5.9.3');
   const compiled=join(directory,'compiled');execFileSync(compiler,[...prefix,'--strict','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--skipLibCheck','--rootDir',directory,'--outDir',compiled,...rows.map(row=>join(directory,row.relative+'.ts'))],{stdio:'pipe',timeout:30_000});
   cpSync(join(directory,'runtime'),join(compiled,'runtime'),{recursive:true});
-  for(const row of rows){const modules=[];for(const path of [row.targetJS,join(compiled,row.relative+'.js')]){const module=await import(pathToFileURL(path).href);assert.deepEqual(module.provenance,{sourcePath:row.source,sourceSha256:row.meta.sourceSha256,...row.meta.counts,runtimeParity:false});assert.equal(Object.keys(module.translated).length,row.meta.counts.executable);modules.push(module.translated);}loaded.set(row.source,modules);}
+  for(const row of rows){const modules=[];for(const path of [row.targetJS,join(compiled,row.relative+'.js')]){const module=await import(pathToFileURL(path).href);assert.deepEqual(module.provenance,{sourcePath:row.artifactSource,sourceSha256:row.meta.sourceSha256,...row.meta.counts,runtimeParity:false});assert.equal(Object.keys(module.translated).length,row.meta.counts.executable);modules.push(module.translated);}loaded.set(row.source,modules);}
   retain('complete-original-artifacts',{generation,inventoryBytes:inventoryBytes.toString('utf8'),compilerEvidence,runtimeEvidence,coverage,completeArtifacts,companionSources,compilerVersion:version,localRustExecuted:false});
 },{timeout:60_000});
 after(()=>{if(directory)rmSync(directory,{recursive:true,force:true});});

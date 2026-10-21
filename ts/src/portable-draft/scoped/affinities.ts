@@ -1,0 +1,5 @@
+// GENERATED: node scripts/regenerate-js-first.mjs
+// Independently checked scoped bodies from js/src/affinities.mjs; source sha256=8a101d57de4ba2ec7267533348bb774c8798e0668924793d4bb97a932e773e6d; IR sha256=01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b.
+// Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
+export {};
+

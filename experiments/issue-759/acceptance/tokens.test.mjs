@@ -5,8 +5,8 @@ import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { load, temporary } from './helpers.mjs';
 
-const { TokenManager } = await load('packages/javascript/native/tokens.mjs');
-const { MemoryTokenStore, TextTokenStore, createTokenStore } = await load('packages/javascript/native/storage.mjs');
+const { TokenManager } = await load('js/src/tokens.mjs');
+const { MemoryTokenStore, TextTokenStore, createTokenStore } = await load('js/src/storage.mjs');
 const now = 1_700_000_000;
 const secret = 'independent-acceptance-only-secret';
 const manager = (options = {}) => new TokenManager({ secret, clock: () => now, ...options });

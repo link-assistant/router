@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
@@ -14,7 +15,7 @@ import {tokenizeRust} from '../extensions/lexical.mjs';
 import {standaloneMatchesMacroContext,configureMatchesMacroParser} from '../matches-macro-context.mjs';
 import {captureOriginalCargoEdition} from '../cargo-edition-context.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),type=name=>({...rustFixedType(name),rustPrimitiveName:name}),hash=value=>createHash('sha256').update(value).digest('hex');
+const root=new URL('../../../',import.meta.url),manifest=readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),type=name=>({...rustFixedType(name),rustPrimitiveName:name}),hash=value=>createHash('sha256').update(value).digest('hex');
 const compile=(source,cargoManifest=manifest)=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,cargoManifest});
 const scalar=(name,bits,signed)=>({name,bits,signed,min:signed?-(1n<<BigInt(bits-1)):0n,max:(1n<<BigInt(signed?bits-1:bits))-1n});
 const domains=['u8','u16','u32','u64','u128','i8','i16','i32','i64','i128'].map(name=>scalar(name,Number(name.slice(1)),name[0]==='i'));

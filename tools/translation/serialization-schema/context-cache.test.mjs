@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from '../repository-layout.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,rmSync} from 'node:fs';
@@ -10,7 +11,7 @@ import {HostChecker} from '../extensions/host-contracts.mjs';
 import {projectSerializationDescriptor} from './descriptor.mjs';
 const repository=fileURLToPath(new URL('../../../',import.meta.url));
 const source='use serde::{Serialize,Deserialize};#[derive(Serialize,Deserialize)]struct First{value:u8}#[derive(Serialize,Deserialize)]struct Second{flag:bool}';
-function fixture(run){const root=mkdtempSync(join(tmpdir(),'router-serialization-private-cache-'));try{mkdirSync(join(root,'src'));writeFileSync(join(root,'src/lib.rs'),source);for(const path of ['Cargo.toml','Cargo.lock'])writeFileSync(join(root,path),readFileSync(join(repository,path)));const capture=profile=>captureSerializationContext({root,paths:['src/lib.rs'],compilationProfile:profile??{flags:{test:false,unix:true,windows:false}}});return run({root,capture});}finally{rmSync(root,{recursive:true,force:true});}}
+function fixture(run){const root=mkdtempSync(join(tmpdir(),'router-serialization-private-cache-'));try{mkdirSync(join(root,'src'));writeFileSync(join(root,'src/lib.rs'),source);for(const path of ['Cargo.toml','Cargo.lock'])writeFileSync(join(root,path),readFileSync(join(repository,rustPackageSourcePath(repository,path))));const capture=profile=>captureSerializationContext({root,paths:['src/lib.rs'],compilationProfile:profile??{flags:{test:false,unix:true,windows:false}}});return run({root,capture});}finally{rmSync(root,{recursive:true,force:true});}}
 const options={roots:['crate::First']};
 test('private source metadata reuse returns fresh frozen unbranded values and never promotes prior extraction',()=>fixture(({capture})=>{
   const context=capture(),first=extractSerializationSchema(context,options),second=extractSerializationSchema(context,options);

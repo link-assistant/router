@@ -1,0 +1,80 @@
+// Generated draft from rust/src/login_pty.rs; sha256=85f8e6be2b3a9c43b300d8e5205c4adbb2473fb1f8fb0aec11c886d8c795c31d
+// Carried constructs are data, never runtime parity evidence.
+import { std_time_duration_from_millis as ml_host_std_time_duration_from_millis } from "../../runtime/time-runtime.mjs";
+
+import { validateRustValue as ml_validate_rust_value } from "../../runtime/type-layout-runtime.mjs";
+
+import { snapshotConstructorValue as ml_snapshot_constructor_value, assertConstructorInput as ml_assert_constructor_input } from "../../runtime/constructor-value-runtime.mjs";
+
+const ml_constructor_value_schema_d5cb32245d4cbec63e7142460f1766afc5cbbe22f7e03fc49c35d8db29f43964 = {"schemaVersion":1,"types":{"RouterOption_3_u32":{"kind":"data","name":"RouterOption_3_u32","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":32,"signed":false}}]}]}}};
+
+const ml_constructor_value_schema_46a2ba05e6af91605ab44b4a06f0601c2d0a726a148c1662ecf33d9546d3d8fe = {"schemaVersion":1,"types":{"WaitError":{"kind":"data","name":"WaitError","ctors":[{"name":"Timeout","fields":[]},{"name":"ChildExited","fields":[{"name":"field0","type":{"kind":"data","name":"RouterOption_3_u32"}}]}]},"RouterOption_3_u32":{"kind":"data","name":"RouterOption_3_u32","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":32,"signed":false}}]}]}}};
+
+const ml_host_value_schema_d5cb32245d4cbec63e7142460f1766afc5cbbe22f7e03fc49c35d8db29f43964 = {"schemaVersion":1,"types":{"RouterOption_3_u32":{"kind":"data","name":"RouterOption_3_u32","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":32,"signed":false}}]}]}}};
+
+const ml_host_value_refinements_d5cb32245d4cbec63e7142460f1766afc5cbbe22f7e03fc49c35d8db29f43964 = new Map([]);
+
+function rp_6c6f67696e5f7074792e5054595f434f4c53() {
+  return 400n;
+}
+
+function rp_6c6f67696e5f7074792e5054595f524f5753() {
+  return 60n;
+}
+
+function rp_6c6f67696e5f7074792e504f4c4c5f494e54455256414c() {
+  return ml_host_std_time_duration_from_millis(50n);
+}
+
+function ml_make_WaitError_Timeout() {
+  return Object.freeze({ $: 'Timeout' });
+}
+
+function ml_make_WaitError_ChildExited(field0) {
+  ml_assert_constructor_input(field0, {"kind":"data","name":"RouterOption_3_u32"}, ml_constructor_value_schema_d5cb32245d4cbec63e7142460f1766afc5cbbe22f7e03fc49c35d8db29f43964);
+  ml_validate_rust_value(field0, {"kind":"data","name":"RouterOption_3_u32"}, ml_host_value_schema_d5cb32245d4cbec63e7142460f1766afc5cbbe22f7e03fc49c35d8db29f43964, { refinements: ml_host_value_refinements_d5cb32245d4cbec63e7142460f1766afc5cbbe22f7e03fc49c35d8db29f43964 });
+  return ml_snapshot_constructor_value(Object.freeze({ $: 'ChildExited', field0: field0 }), {"kind":"data","name":"WaitError"}, ml_constructor_value_schema_46a2ba05e6af91605ab44b4a06f0601c2d0a726a148c1662ecf33d9546d3d8fe);
+}
+
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+  num: {
+
+  },
+};
+
+const router_core_base64 = {
+
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
+function ml_make_Key_Enter() {
+  return Object.freeze({ $: 'Enter' });
+}
+
+function ml_make_Key_Escape() {
+  return Object.freeze({ $: 'Escape' });
+}
+
+function ml_make_Key_CtrlC() {
+  return Object.freeze({ $: 'CtrlC' });
+}
+
+export const translated = { ["PTY_COLS"]: rp_6c6f67696e5f7074792e5054595f434f4c53(), ["PTY_ROWS"]: rp_6c6f67696e5f7074792e5054595f524f5753(), ["POLL_INTERVAL"]: rp_6c6f67696e5f7074792e504f4c4c5f494e54455256414c(), ["WaitError"]: Object.freeze({ ["Timeout"]: ml_make_WaitError_Timeout, ["ChildExited"]: ml_make_WaitError_ChildExited }), ["Key"]: Object.freeze({ ["Enter"]: ml_make_Key_Enter, ["Escape"]: ml_make_Key_Escape, ["CtrlC"]: ml_make_Key_CtrlC }) };
+export const provenance = {"sourcePath":"rust/src/login_pty.rs","sourceSha256":"85f8e6be2b3a9c43b300d8e5205c4adbb2473fb1f8fb0aec11c886d8c795c31d","executable":5,"executableFunctions":0,"executableConstants":3,"executableTypes":2,"executableConstructors":5,"carried":14,"preserved":20,"runtimeParity":false};

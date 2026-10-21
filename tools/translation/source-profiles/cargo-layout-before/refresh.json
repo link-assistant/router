@@ -1,0 +1,137 @@
+{
+  "schema": "cargo-layout-profile-refresh-v1",
+  "baseline": "tools/translation/source-profiles/cargo-layout-before/inputs.json.gz",
+  "baselineRevision": "7509ff0f3dd8aa649786d635f8bdfb330f8198f4",
+  "beforeManifestSha256": "328a6026c740f42468d0752d9cea4cb4930304b45c979b03d3f3db9ce658d476",
+  "actualManifest": "rust/Cargo.toml",
+  "manifestSha256": "564ff6c847a421e8e751185facd37c3e21f76c6429bae44c1bdcf8312d103661",
+  "lockSha256": "c1cb53b3b73c3a547d362c88c400d0a81457876f4c3e5537acb2fbd3e4aececa",
+  "languageRules": [
+    "toml:complete-package-source-equation",
+    "toml:unchanged-package-dependencies-targets-features",
+    "toml:identical-workspace-profiles",
+    "cargo:unchanged-complete-lockfile"
+  ],
+  "repositoryRules": [
+    "router:current-manifest-profile-fields",
+    "router:complete-consumer-manifest-archives",
+    "router:transitive-profile-file-fingerprints"
+  ],
+  "completeSourceEquation": true,
+  "packageDependencyFeatureTargetDataUnchanged": true,
+  "workspaceProfilesUnchanged": true,
+  "historicalCaptureReceiptsUnchanged": true,
+  "rustExecuted": false,
+  "outputs": [
+    {
+      "path": "tools/translation/external-dependency-defaults.mjs",
+      "bytes": 16323,
+      "sha256": "e96a4298f2677af30c3cba4f7f10913f98fc0389a03f2397175f33c355057658"
+    },
+    {
+      "path": "tools/translation/json-capabilities.mjs",
+      "bytes": 5847,
+      "sha256": "90c54212ca6f440cca6bd4a6dd8e4cdaba7bb11986a388cda6ae25f05ae17641"
+    },
+    {
+      "path": "tools/translation/json-macro-features.mjs",
+      "bytes": 3437,
+      "sha256": "bc56cfa56630f8d1c25cd7993e960fbfbb3bac805d6d977d862d54bf57e039c5"
+    },
+    {
+      "path": "tools/translation/json-macro-inputs.mjs",
+      "bytes": 8289,
+      "sha256": "b9e2f45e8be5996cb00beaa8538fe52de05fe21983bbd42a65f3c3540e39d188"
+    },
+    {
+      "path": "tools/translation/macro-literal-source.mjs",
+      "bytes": 12212,
+      "sha256": "7f978336769566bf0447fa04883112b6f76ce3dcf0177c7e24129f2caac5d89c"
+    },
+    {
+      "path": "tools/translation/private-cargo-toml.mjs",
+      "bytes": 26123,
+      "sha256": "9d9fcee2c5cb11c9f5ac3a07dffad77a469343abfef30b7f7e58e31bc9d0a48e"
+    },
+    {
+      "path": "tools/translation/serialization-schema/json-source-profile.json",
+      "bytes": 3991,
+      "sha256": "147deb834d920e56f8df48454e359488afb4526e729df8b19b92ad9e9b7d9ec5"
+    },
+    {
+      "path": "tools/translation/serialization-schema/json-source.mjs",
+      "bytes": 15445,
+      "sha256": "0f347fa879d9867c4af9914783378cecef11b124cf415a76e4ed45850779d047"
+    },
+    {
+      "path": "tools/translation/serialization-schema/numeric-source-profile.json",
+      "bytes": 19160,
+      "sha256": "22069799622656854873a2e91f825fb4780c41db688aff1f464393acc4ad1baf"
+    },
+    {
+      "path": "tools/translation/serialization-schema/numeric-source-stage.mjs",
+      "bytes": 14230,
+      "sha256": "910e020132405467ad047a348c18f26929104baf15c993afd2f29aea40f45523"
+    },
+    {
+      "path": "tools/translation/source-profiles/declarative/manifest.json",
+      "bytes": 7899,
+      "sha256": "f3192260b3efe0ed8cdd1c9318d1b61918029f48ff87867fd6561d27fed6645f"
+    },
+    {
+      "path": "tools/translation/source-profiles/dependency-namespaces/manifest.json",
+      "bytes": 13692,
+      "sha256": "0653d491d6726d3514e5f9fe8e2367fdc6e03d57810b8ffa0132327f7552335b"
+    },
+    {
+      "path": "tools/translation/source-profiles/derive/manifest.json",
+      "bytes": 27727,
+      "sha256": "41a0b2bb63809af030fff023dc8d887a41fe81a89248ea263eb12c76239f5c63"
+    },
+    {
+      "path": "tools/translation/source-profiles/external-dependency-defaults/manifest.json",
+      "bytes": 4888,
+      "sha256": "e52dd81d35984bcdfc279563dca465c8bccd0569384312bccfd82a1132f2d88c"
+    },
+    {
+      "path": "tools/translation/source-profiles/json-capabilities/link-assistant-router-1.24.1-Cargo.toml.gz",
+      "bytes": 2110,
+      "sha256": "dd965d46bb2cfb452dd545e1782e7bd680771a90d4b8ec07aac963ca635c2c06"
+    },
+    {
+      "path": "tools/translation/source-profiles/json-capabilities/manifest.json",
+      "bytes": 45010,
+      "sha256": "b31b059ad69822aebe097347a55dfbf590aa209085750f3821b5bd0cf8ff94cd"
+    },
+    {
+      "path": "tools/translation/source-profiles/json-macro/features/link-assistant-router-1.24.1-Cargo.toml.gz",
+      "bytes": 2110,
+      "sha256": "dd965d46bb2cfb452dd545e1782e7bd680771a90d4b8ec07aac963ca635c2c06"
+    },
+    {
+      "path": "tools/translation/source-profiles/json-macro/features/manifest.json",
+      "bytes": 43225,
+      "sha256": "7593739464a03be25451c7214257332fbc604f1a39fe38681c85cb10e40919ce"
+    },
+    {
+      "path": "tools/translation/source-profiles/json-macro/manifest.json",
+      "bytes": 9628,
+      "sha256": "e42ec7a5f1358da8f077c9fdb77057b52cf6748d26cc4d2b8574e1afae4ae0af"
+    },
+    {
+      "path": "tools/translation/source-profiles/toml-value-namespace/manifest.json",
+      "bytes": 842,
+      "sha256": "f9f1d40912b6f7ed313f952cced27609486c77560a9098a2aa058bd7b360e2cc"
+    },
+    {
+      "path": "tools/translation/source-profiles/tracing-bang-inputs/manifest.json",
+      "bytes": 3628,
+      "sha256": "8ee101caf4bebeebca7db087a1645c053ff61a2afa4536f0f7b8f9d70f31bf1f"
+    },
+    {
+      "path": "tools/translation/source-profiles/tracing-bang-inputs/members.json",
+      "bytes": 36602,
+      "sha256": "337e38246b860035674024e97373fb9e5f21e5336a3015b3ef8deb24ab3ce719"
+    }
+  ]
+}

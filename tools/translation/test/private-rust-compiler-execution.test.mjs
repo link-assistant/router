@@ -1,3 +1,4 @@
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs,{readFileSync,writeFileSync,mkdirSync,mkdtempSync,rmSync,symlinkSync} from 'node:fs';
@@ -61,7 +62,7 @@ test('complete receiving static compiler source graph is retained without issuin
   assert.ok(report.originalSources.length>=275);assert.ok(report.totals.rawBytes<=4194304);assert.ok(report.totals.compiledBytes<=16777216);
   assert.deepEqual(report.coreVariants,['core-exposed:rust.js','core-exposed:check.js','core-exposed:emit-javascript.js']);
   const names=report.modules.flatMap(row=>row.classes.map(item=>item.name));for(const name of ['TokenCursor','ParameterCursor','HostRustParser','HostChecker','HostEmitter'])assert.ok(names.includes(name),name);
-  for(const row of report.originalSources){assert.equal(hash(row.source),row.pin.sha256);assert.equal(Buffer.byteLength(row.source),row.pin.bytes);assert.equal(row.source,readFileSync(join(ROOT,row.path),'utf8'));}
+  for(const row of report.originalSources){assert.equal(hash(row.source),row.pin.sha256);assert.equal(Buffer.byteLength(row.source),row.pin.bytes);assert.equal(row.source,readFileSync(join(ROOT,repositorySourcePath(row.path,ROOT)),'utf8'));}
   if(fs.existsSync(join(ROOT,'tools/translation/extensions/callback-local-control.mjs')))assert.ok(report.modules.some(row=>row.path==='tools/translation/extensions/callback-local-control.mjs'));
   for(const gate of ['esm-cjs-live-binding-tdz','imported-call-this-and-namespace','complete-native-host-and-private-escape','tla-staging','dynamic-execution-closure'])assert.ok(report.blockers.some(row=>row.gate===gate),gate);
 });
@@ -129,6 +130,6 @@ test('strict TypeScript requires explicit context and request but grants no runt
     +'// @ts-expect-error explicit context and request are required\nexecutePrivateRustCompiler();\n'
     +'// @ts-expect-error explicit request is required\nexecutePrivateRustCompiler({});\n'
     +'executePrivateRustCompiler({},{});\n';writeFileSync(contract,source);
-  const require=createRequire(join(ROOT,'packages/javascript/package.json')),compiler=require.resolve('typescript/bin/tsc'),child=spawnSync(process.execPath,[compiler,'--strict','--allowJs','--skipLibCheck','--target','ES2022','--module','NodeNext','--noEmit',contract],{encoding:'utf8',timeout:20000,maxBuffer:8388608});
+  const require=createRequire(join(ROOT,'js/package.json')),compiler=require.resolve('typescript/bin/tsc'),child=spawnSync(process.execPath,[compiler,'--strict','--allowJs','--skipLibCheck','--target','ES2022','--module','NodeNext','--noEmit',contract],{encoding:'utf8',timeout:20000,maxBuffer:8388608});
   retain('08-complete-strict-contract',{source,child:{status:child.status,stdout:child.stdout,stderr:child.stderr,error:child.error?.message},runtime:outcome(()=>executePrivateRustCompiler({},{}))});assert.equal(child.status,0,child.stdout+'\n'+child.stderr);assert.equal(originalPrivateRustCompilerProgram(),null);
 });

@@ -12,7 +12,7 @@ const witnessCommit='688bf9b9a1257a1dc58c758b50b6906ecc4eee63';
 const reviewerPath='scripts/review-translation-draft.mjs';
 const registeredCompilerMapSha='bdd3883e2711ac3a3f1cd5f24fff46c4c1f4fd99c81a3ed41fa4226f8f3b7204';
 const reviewerSha='e977e0dddc27b97edbe79444770be1e60df80264935e4fb9cbc99e8afe7d091a';
-const roots=['tools/translation/meta','tools/translation/projects','packages/javascript/generated/rust-draft','packages/typescript/generated/rust-draft','packages/javascript/generated/rust-project','packages/typescript/generated/rust-project'];
+const roots=['tools/translation/meta','tools/translation/projects','js/generated/rust-draft','ts/generated/rust-draft','js/generated/rust-project','ts/generated/rust-project'];
 const MAX_FILE=64*1024*1024,MAX_TOTAL=256*1024*1024,MAX_GRAPH=16*1024*1024,MAX_ROWS=720,TIMEOUT=120000;
 const fail=message=>{throw new Error('Historical translation review: '+message);};
 function relative(name){if(typeof name!=='string'||!name||name.includes('\\')||/[\x00-\x1f]/u.test(name)||path.isAbsolute(name)||name.split('/').some(p=>!p||p==='.'||p==='..'))fail('escaping or malformed path');return name;}

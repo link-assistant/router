@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createNativeRouter} from '../../../packages/javascript/native/server.mjs';
+import {createNativeRouter} from '../../../js/src/server.mjs';
 const req=(path,token='admin',method='GET')=>new Request('http://router'+path,{method,headers:{authorization:`Bearer ${token}`,'x-forwarded-for':'127.0.0.1'}});
 test('management requires actual peer, rejects remote combined ingress and enforces protected method before authentication',async()=>{
   const core={config:{admin_token:'admin'},admin:{status:()=>({claimed:false})},tokens:{list:()=>[]}};

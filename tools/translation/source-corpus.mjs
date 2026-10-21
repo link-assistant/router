@@ -1,3 +1,4 @@
+import {repositoryRustLayout} from './repository-layout.mjs';
 // Capture complete original tracked bytes once; configured compilation never
 // reconsults a mutable source reader or invents a fragment as an original file.
 import {execFileSync} from 'node:child_process';
@@ -59,7 +60,7 @@ export function captureSourceCorpus({root,paths}={}){
     texts.set(path,exactText(bytes,path));sources.push({source:path,bytes:bytes.length,sha256:hash(bytes)});
   }
   const cargo=[];
-  for(const path of ['Cargo.toml','Cargo.lock']){
+  for(const path of repositoryRustLayout(root).cargoInputs){
     // Cargo files are optional only for stand-alone fixture directories. A
     // tracked sparse file must still be captured through its immutable HEAD.
     let bytes=null;

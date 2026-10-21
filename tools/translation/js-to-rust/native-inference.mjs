@@ -57,7 +57,7 @@ export function typeNode(ts, hint, depth = 0) {
 }
 
 export function inferenceProgram(ts, root, paths) {
-  const dependencyTypes = `${root}/packages/javascript/node_modules/@types`;
+  const dependencyTypes = `${root}/js/node_modules/@types`;
   const program = ts.createProgram(paths.map(path => `${root}/${path}`), {
     allowJs: true, checkJs: false, noEmit: true, strictNullChecks: true,
     target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.NodeNext,

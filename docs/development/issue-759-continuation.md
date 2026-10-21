@@ -1,69 +1,55 @@
-# Issue #759 continuation ledger
+# Continue the JavaScript-first translation work
 
-The 2026-10-19 checkpoint is an explicitly requested PR rollover. Issue #759
-remains open. Merging the checkpoint does not establish complete Router runtime
-translation, bidirectional synchronization, strict parity, or release readiness.
+The active continuation is [issue #772](https://github.com/link-assistant/router/issues/772).
+It preserves every requirement of [#759](https://github.com/link-assistant/router/issues/759)
+after the meaningful checkpoint in [#771](https://github.com/link-assistant/router/pull/771),
+following merged [#761](https://github.com/link-assistant/router/pull/761).
+Keep #759 open. Merging this checkpoint does not certify complete translation,
+runtime parity, a green JavaScript gate or Rust verification.
 
-## Retained implementation and evidence
+The [complete prior ledger](issue-759-continuation-through-20261021.md)
+is preserved byte for byte, including historical measurements, source proposals
+and failed or unrun obligations. Its dated status is historical; this summary
+and issue #772 identify the current continuation.
 
-The translator uses ordered reusable language rules followed by repository
-format and quality rules. Both directions retain the serialized and reparsed
-lossless CST/meta boundary and independent semantic checks. Generated products
-must come from the producers; preserve refusals instead of hand-editing output
-or treating preserved source and declarations as executable application code.
+The completed implementation checkpoint is
+`2018b7d021d5f601afbcd4394a69268345f6aa59`. Its source-equation/Core
+effects/formatting/text batch passes all 41 cases across six complete files in
+both Node and Bun. Its private DATA/source-history batch passes all 34 cases
+across six complete files in both engines. Original deadlines are preserved.
+These overlapping focused batches do not establish a whole-suite pass.
 
-The checked Json constructor work now handles the genuine checked string
-comparison shapes and ordinary Json tails in four copied Router declarations.
-All eight complete constructor cases passed under both Node and Bun at
-`9f204f8d4c57477f6c71dcec6b74297bcf3d683c`, within their original deadlines.
-The independent scalar, string and named-reader cases also passed in the
-earlier complete focused run. These are focused results, not a full gate pass.
-The source bank, isolated compiler registration and portable Git fixtures have
-been refreshed through `b4a9a2d89fd6419c9e71003bf2cd61e7208c8e7f`.
+The last fully collected remote cycle at
+`c6bed6215e157de4381e39e04b4cb1ef02720384` has 132 terminal checks:
+30 success, 40 failure, 20 cancelled and 42 skipped. All 60 failed/cancelled
+complete streams were retained. Rust did not unlock. New published and merge
+SHAs require their own results; skipped or cancelled work remains unqualified.
 
-## Work required in the next pull request
+The last measured executable production baseline is 155/2,567 functions
+(6.04%) against an older 847-source inventory. The refreshed fixture contains
+865 Rust/Cargo inputs, but a fresh executable census is still required.
+The recorded 441 parity gaps and `runtimeParity: false` remain open.
 
-| Requirement | Current state and next verification |
-| --- | --- |
-| Complete JavaScript and TypeScript generation | Open. Run preparation, affinity, canonical and all three profile producers; independently review and install every output. |
-| Rust to CST/meta to JavaScript/TypeScript | Implemented for declared subsets; full application coverage remains unproved. Preserve all retained refusals and measure actual executable function coverage. |
-| Independent JavaScript to CST/meta to Rust synchronization | Open for the complete generated corpus. Run owned-definition reverse regeneration after forward output is installed. |
-| Strict TypeScript and deterministic freshness | Open for the complete current corpus. Keep TypeScript 5.9.3, all 132 installed files, strictness and original deadlines. |
-| Producer performance | Open. The original default derive case, full base64 producer, and some original whole-file cases exceed their limits. A new opt-in enclosing-namespace source draft still requires runtime qualification. |
-| External procedural macro owners | Open. Unknown owners and configurations retain uncertainty; source spellings and public metadata confer no authority. |
-| Full local JavaScript gate and all CI failures | Open. Focused successes do not replace these requirements. |
-| Rust edge cases and broader Rust checks | Test source added; execution remains CI-only after all required JavaScript stages pass for the same SHA. |
+The next batch must finish current full compiler/export qualification,
+canonical and neutral/Unix/Windows generation, owned definitions, strict
+TypeScript 5.9.3, reverse freshness and strict parity. It must repair original
+Bun derive-helper, source-lifecycle, retained-storage, Core and CatalogRecord
+deadline failures without raising limits or reducing workloads. A metadata-copy
+prototype was withheld: its 30-case Node batch passes, while Bun finds native
+error-message and stack-control differences. It is not a qualified improvement.
 
-The previous published head,
-`1c34066c143b71bf46ae3d3a96aab97945bd8e05`, completed its full CI cycle:
-30 successful jobs, 50 failures, 10 cancelled jobs and 42 skipped jobs.
-TypeScript, reverse, matrix and parity failure families remain open; these
-results must not be relabeled as green for the checkpoint.
+Issue #772 carries the full case study, native Router feature parity,
+bidirectional CST/meta translation, compatibility core, single-publisher
+workflow, resource limits, same-SHA JavaScript-before-Rust gate, measurements,
+reusable export/adoption and cross-repository audit obligations. Track actual
+source changes, generated artifacts, checks and remaining gaps for each one.
 
-A bounded receiving-worktree setup copied all 11,489 selected files but failed
-final qualification at its unchanged 55-second limit. Recovery exposed and
-repaired an exact oversized-product reader mismatch, then again reached the
-wall limit during removal. Its complete journals and original preimages are
-retained locally. Receiving setup and recovery remain unqualified; preserve
-those preimages while optimizing the complete operation before reusing it.
-
-## Continuation workflow
-
-Continue with the coordinator alone, using partial complete JavaScript files
-for feedback while preparing one coherent batch. Preserve the whole tests,
-strict child deadlines, independent Node duration audit, and existing memory,
-disk and output limits. Do not compile or invoke any Rust tools locally.
-
-Regenerate owned-definition producer modules with
-`node tools/translation/prepare-owned-definition-bulk.mjs --emit`. Use
-`node scripts/translate-router.mjs --retain-output-text --owned-core-definitions`
-and its `--profile-matrix` variant for forward outputs, then
-`node scripts/regenerate-js-first.mjs --owned-core-definitions --write` and its
-`--profile-matrix` variant for reverse outputs. Run all corresponding check
-commands and `node scripts/check-owned-definition-typescript.mjs`, followed by
-the complete `node scripts/check-js-first-local.mjs` gate.
-
-Keep checkpoint commits at least every six hours, collect the whole published
-CI cycle before the next repair push, and report failed and unrun checks against
-the exact SHA. No overall completion percentage is supported by current
-application coverage evidence.
+The user's 2026-10-22 instruction authorizes prompt merge of #771 at this
+meaningful checkpoint through normal repository protections. It supersedes
+keeping this checkpoint draft until full parity is complete. It does not
+waive required checks, permit an administrative bypass or unlock Rust early.
+Continue alone; do not restart finished workers. Do not invoke local Rust tools.
+Preserve the ordered language/repository substitution sequences, serialized
+and reparsed CST boundaries, independent semantic validation and full inverses.
+Keep physical `js/src`, `ts/src` and `rust/src`, original whole test files and
+deadlines, one heavy workload, bounded evidence and careful task-owned cleanup.

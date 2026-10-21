@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync,writeFileSync,rmSync} from 'node:fs';
@@ -89,7 +90,7 @@ test('reserved source helper collisions stay carried while ordinary eager calls 
 });
 
 test('complete unchanged output_limit data_payload is source-pinned and runs both typed targets',{timeout:60_000},async()=>{
-  const source=readFileSync(new URL('src/output_limit.rs',root),'utf8');assert.equal(hash(source),'b165be6e33444a5811b33e52567de74ca144e7208a24c161b231bd332cf899e0');
+  const source=readFileSync(repositorySourceURL('src/output_limit.rs',root),'utf8');assert.equal(hash(source),'b165be6e33444a5811b33e52567de74ca144e7208a24c161b231bd332cf899e0');
   const item=sourceItems(source).find(item=>item.term==='fn'&&item.name==='data_payload');assert.deepEqual([item.start,item.end],[15207,15550]);assert.equal(hash(source.slice(item.start,item.end)),'04bfbe451d693d4d59236c58510214e7a13b0ff5d9dd3ae18a4e0f8aa42a08cd');
   const result=translateProject({entry:'src/output_limit.rs',paths:['src/output_limit.rs'],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE});
   const checked=result.meta.executable.find(entry=>entry.name==='data_payload');assert.ok(checked,JSON.stringify(result.meta.refused));assert.deepEqual(checked.span,{start:item.start,end:item.end});assert.equal(result.meta.runtimeParity,false);

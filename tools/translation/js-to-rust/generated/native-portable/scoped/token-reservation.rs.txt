@@ -1,5 +1,5 @@
 // GENERATED: node scripts/regenerate-js-first.mjs
-// Independently checked scoped bodies from packages/javascript/native/token-reservation.mjs; source sha256=3cc49c0c08930a8e697cde1f0914a64153400c7c5e163510bc9d67a9b197fbd1; IR sha256=8cf809dcb85a6331acd9cb3cdb847f7294cef83e54d31887584fd924d9ec2d48.
+// Independently checked scoped bodies from js/src/token-reservation.mjs; source sha256=3cc49c0c08930a8e697cde1f0914a64153400c7c5e163510bc9d67a9b197fbd1; IR sha256=fd793c24a9bfe442b652d7c0d79dc85d8f859fab507d78424bfc5a2da5ffdbf9.
 // Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
 #[derive(Clone, Copy)]
 pub enum JsPayload<'a> {
@@ -106,6 +106,6 @@ fn js_safe_integer(value: f64) -> bool {
 }
 
 #[rustfmt::skip]
-fn scoped_src890bbba6f95d7588_at677<'a>(value: JsPayload<'a>) -> bool {
+fn scoped_srcd05102516b6bb4ce_at677<'a>(value: JsPayload<'a>) -> bool {
     return (value.is_safe_integer() && (value.as_number() >= 0.0));
 }

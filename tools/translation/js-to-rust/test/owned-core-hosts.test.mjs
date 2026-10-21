@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from "../../repository-layout.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
@@ -16,13 +17,13 @@ const limits={timeout:60000};
 const imports="import {router_core_json_copy as copy,router_core_json_with_field as update,router_core_json_index_str as index,router_core_json_index_usize as at} from './runtime/json-update-runtime.mjs';\n";
 const param='/** @param {import("./runtime/json-macro-runtime.mjs").JsonValue} value */\n';
 function corpus(source){return {runtimeRoot:'runtime',declarationRoot:'runtime',files:[...ownedCoreRuntimeSources(),{path:'src/lib.rs',source:'pub mod translation_core;\n'},{path:'src/translation_core.rs',source:ROUTER_FORMATTING_FACADE_SOURCE},{path:'src/translation_core/primitives.rs',source:ROUTER_CORE_PRIMITIVES_SOURCE},{path:'Cargo.toml',source:original('Cargo.toml')},{path:'Cargo.lock',source:original('Cargo.lock')},{path:'caller.mjs',source}]};}
-function original(path){return existsSync(join(root,path))?readFileSync(join(root,path),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:30000,maxBuffer:16777216});}
+function original(path){return existsSync(join(root,rustPackageSourcePath(root,path)))?readFileSync(join(root,rustPackageSourcePath(root,path)),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:30000,maxBuffer:16777216});}
 function translate(source){const data=corpus(source),context=createOwnedCoreSourceContext(data);return {data,context,result:translateOwnedCoreJavaScript(source,{sourcePath:'caller.mjs',context})};}
 async function targets(t,source){
  const {data,context,result}=translate(source),directory=mkdtempSync(join(tmpdir(),'owned-reverse-ts-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));
  for(const row of data.files.filter(row=>row.path.endsWith('.mjs')||row.path.endsWith('.mts'))){mkdirSync(dirname(join(directory,row.path)),{recursive:true});writeFileSync(join(directory,row.path),row.source);}
  writeFileSync(join(directory,'caller.mts'),result.typescript);
- const compiler=join(root,'packages/javascript/node_modules/typescript/bin/tsc');
+ const compiler=join(root,'js/node_modules/typescript/bin/tsc');
  const args=[compiler,'--strict','--skipLibCheck','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--outDir',join(directory,'out'),join(directory,'caller.mts')];
  try{execFileSync(process.execPath,args,{cwd:root,encoding:'utf8',timeout:20000,stdio:'pipe'});}catch(error){assert.fail('strict emitted TypeScript failed\n'+String(error.stdout??'')+'\n'+String(error.stderr??''));}
  // tsc leaves runtime .mjs inputs in place; emitted code imports its sibling.
@@ -77,7 +78,7 @@ test('CST reconstruction and checked Links reissue retain all source and type bo
  const received=receive(typedSource),directory=mkdtempSync(join(tmpdir(),'owned-written-return-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));
  for(const row of received.data.files.filter(row=>row.path.startsWith('runtime/'))){mkdirSync(dirname(join(directory,row.path)),{recursive:true});writeFileSync(join(directory,row.path),row.source);}
  writeFileSync(join(directory,'original.mts'),typedSource);writeFileSync(join(directory,'caller.mts'),received.result.typescript);
- try{execFileSync(process.execPath,[join(root,'packages/javascript/node_modules/typescript/bin/tsc'),'--strict','--skipLibCheck','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--outDir',join(directory,'out'),join(directory,'original.mts'),join(directory,'caller.mts')],{cwd:root,encoding:'utf8',timeout:20000,stdio:'pipe'});}catch(error){assert.fail('strict original/emitted written-return TypeScript failed\n'+String(error.stdout??'')+'\n'+String(error.stderr??''));}
+ try{execFileSync(process.execPath,[join(root,'js/node_modules/typescript/bin/tsc'),'--strict','--skipLibCheck','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--outDir',join(directory,'out'),join(directory,'original.mts'),join(directory,'caller.mts')],{cwd:root,encoding:'utf8',timeout:20000,stdio:'pipe'});}catch(error){assert.fail('strict original/emitted written-return TypeScript failed\n'+String(error.stdout??'')+'\n'+String(error.stderr??''));}
  mkdirSync(join(directory,'out/runtime'),{recursive:true});for(const row of received.data.files.filter(row=>row.path.startsWith('runtime/')))writeFileSync(join(directory,'out',row.path),row.source);
  const actual=await import(pathToFileURL(join(directory,'out/original.mjs')).href),emitted=await import(pathToFileURL(join(directory,'out/caller.mjs')).href),input=json_macro_object([['name',json_macro_string('🦀')]]),golden=json_macro_object([['name',json_macro_string('🦀')]]);
  assert.deepEqual(actual.copied(input),golden);assert.deepEqual(emitted.copied(input),golden);assert.notEqual(emitted.copied(input),input);

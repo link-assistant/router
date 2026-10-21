@@ -1,7 +1,7 @@
 // Original Ord/PartialOrd construction for nonempty unit enums only. This is
 // namespace syntax evidence; comparison and trait implementation are not run.
 import {createHash} from 'node:crypto';
-import {createPrivateFrozenJsonComposer} from './private-frozen-json.mjs';
+import {createPrivateFrozenJsonComposer} from "./operation-proof-byte-bridge.mjs";
 import {createCompletedDataFreezer} from './private-data-freeze.mjs';
 import {originalMacroTrees,originalMacroInvocation} from './macro-token-trees.mjs';
 import {compileDeclarativeMacro,expandDeclarativeMacro,declarativeExpansionLineage,declarativeSubInput} from './declarative-token-macros.mjs';

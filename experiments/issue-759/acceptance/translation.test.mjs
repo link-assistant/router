@@ -39,7 +39,7 @@ test('bulk regeneration detects source and artifact drift before changed behavio
   await mkdir(join(root, 'parity'));
   for (const file of ['translate.mjs', 'rust-structure.mjs', 'bulk.mjs']) await writeFile(join(root, 'tools/translation', file), await readFile(join(repository, 'tools/translation', file)));
   const source = join(root, 'src/fixture.rs');
-  const artifact = join(root, 'packages/javascript/generated/rust-draft/src/fixture.mjs');
+  const artifact = join(root, 'js/generated/rust-draft/src/fixture.mjs');
   await writeFile(source, 'pub fn observed() -> u8 { 5 }');
   regenerate({ root, sources: ['src/fixture.rs'] });
   assert.deepEqual(regenerate({ root, sources: ['src/fixture.rs'], check: true }).failures, []);

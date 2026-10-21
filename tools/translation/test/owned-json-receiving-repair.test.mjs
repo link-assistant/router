@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync,mkdtempSync,rmSync} from 'node:fs';
@@ -18,7 +19,7 @@ import {sourceItems} from '../rust-structure.mjs';
 import {serde_json_from_str,serde_json_to_string} from '../extensions/json-runtime.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const C='crate::translation_core::',T=C+'Json',M=C+'Maybe',J=C+'json!',P=C+'json_copy',U=C+'json_with_field';
-const dependencyInputs={manifest:readFileSync(new URL('../../../Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')};
+const dependencyInputs={manifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(repositorySourceURL("Cargo.lock",new URL('../../../',import.meta.url)),'utf8')};
 const jsonMacroDependencies=loadJsonMacroSourceProof(dependencyInputs),deriveDependencies=loadDeriveDependencyProof(dependencyInputs),hash=source=>createHash('sha256').update(source).digest('hex');
 let vectors=[];const retain=(kind,value)=>{vectors.push({kind,value});return value;};
 const test=(name,run)=>testCase(name,{timeout:60_000},async()=>{vectors=[];try{await run();}finally{if(process.env.ROUTER_OWNED_JSON_REPAIR_VECTOR_DIR){mkdirSync(process.env.ROUTER_OWNED_JSON_REPAIR_VECTOR_DIR,{recursive:true});writeFileSync(join(process.env.ROUTER_OWNED_JSON_REPAIR_VECTOR_DIR,Buffer.from(name).toString('hex')+'.json'),JSON.stringify({name,vectors},(_key,value)=>typeof value==='bigint'?{$integer:String(value)}:value)+'\n');}}});
@@ -47,14 +48,31 @@ test('unary negation and trailing constructor commas preserve real checked branc
  const source='pub fn branch(flag:bool)->'+T+'{if !flag{let mut doc='+J+'({});doc["selected"]='+J+'(true);doc}else{'+J+'(null)}}pub fn comma(flag:bool)->'+M+'<'+T+'>{let mut doc='+J+'({});if !flag{doc["selected"]='+J+'(true);}Some(doc,)}',proposal=propose(files(source)),row=proposal.proposals.find(row=>row.file==='src/lib.rs');assert.deepEqual(row.selections.map(selection=>selection.function),['branch','comma']);assert.ok(row.after.source.includes('if !flag'));assert.ok(row.after.source.includes('Some(doc,)'));
  const result=project(proposal.after);yes(result,['branch','comma']);await targets(result,({branch,comma})=>{assert.deepEqual(plain(branch(false)),{selected:true});assert.equal(plain(branch(true)),null);assert.deepEqual(plain(comma(false).field0),{selected:true});assert.deepEqual(plain(comma(true).field0),{});});
 });
-test('full same spelling census and unknown macro or wrapper uncertainty remain intact',()=>{
- for(const source of [
+test('full same spelling census and unknown macro or wrapper uncertainty remain intact',async()=>{
+ const cases=[
   'pub fn blocked(flag:bool)->'+T+'{if flag{let mut doc='+J+'({});doc["x"]='+J+'(true);doc}else{let doc='+J+'(null);doc}}',
   'pub fn blocked()->'+T+'{let mut doc='+J+'({});let loan=&doc;doc["x"]='+J+'(true);doc}',
   'pub fn blocked()->'+T+'{let mut doc='+J+'({});unknown!();doc["x"]='+J+'(true);doc}',
   'fn take(v:'+T+')->'+T+'{v}pub fn blocked()->'+T+'{let mut doc='+J+'({});doc["x"]='+J+'(true);take(doc)}',
   'use unknown::*;pub fn blocked()->'+T+'{let mut doc='+J+'({});doc["x"]='+J+'(true);Some(doc)}',
- ]){const input=files(source),proposal=propose(input);assert.equal(proposal.after['src/lib.rs'],input['src/lib.rs'],source);assert.equal(proposal.proposals.reduce((sum,row)=>sum+row.edits.length,0),0);}
+
+  'pub fn blocked()->'+T+'{let mut doc='+J+'({});let doc='+J+'(null);doc["x"]='+J+'(true);doc}',
+ ];
+ for(const [index,source]of cases.entries()){
+  const input=files(source),proposal=propose(input);
+  if(index===0){
+   // Both original sibling blocks remain present. The later lexical rule
+   // selects one independently owned mutable block and leaves the other exact.
+   const selections=proposal.proposals.flatMap(row=>row.selections);assert.equal(selections.length,1);
+   const block=selections[0].lexicalBinding.block;assert.ok(input['src/lib.rs'].slice(...block).includes('let mut doc='));
+   assert.ok(proposal.after['src/lib.rs'].includes('else{let doc='+J+'(null);doc}'));
+   const result=project(proposal.after);yes(result,['blocked']);await targets(result,api=>{
+    assert.deepEqual(plain(api.blocked(true)),{x:true});assert.equal(plain(api.blocked(false)),null);
+    assert.deepEqual(plain(api.blocked(true)),{x:true});
+   });
+  }else{assert.equal(proposal.after['src/lib.rs'],input['src/lib.rs'],source);assert.equal(proposal.proposals.reduce((sum,row)=>sum+row.edits.length,0),0);}
+ }
+
 });
 test('genuine owned copy interpolation has independent canonical output and preserves each written input',async()=>{
  const source='pub fn repeated(v:&'+T+')->'+T+'{'+J+'({"left":'+P+'(v),"right":'+P+'(v)})}pub fn written(v:'+T+')->'+T+'{'+J+'({"copy":'+P+'(&v),"original":v})}',result=project(files(source));yes(result,['repeated','written']);

@@ -4,9 +4,9 @@ import {mkdtemp,realpath,mkdir,writeFile,rm} from 'node:fs/promises';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {createServer} from 'node:http';
-import {createRouterCore} from '../../../packages/javascript/native/core.mjs';
-import {createNativeRouter} from '../../../packages/javascript/native/server.mjs';
-import {principalAccountName,principalAccountScope} from '../../../packages/javascript/native/accounts.mjs';
+import {createRouterCore} from '../../../js/src/core.mjs';
+import {createNativeRouter} from '../../../js/src/server.mjs';
+import {principalAccountName,principalAccountScope} from '../../../js/src/accounts.mjs';
 const secret='fixture-account-scope-secret-759';
 async function directory(t){const dir=await realpath(await mkdtemp(join(tmpdir(),'router-account-scope-')));t.after(()=>rm(dir,{recursive:true,force:true,maxRetries:5,retryDelay:50}));return dir;}
 async function upstream(t,handler){const server=createServer(async(req,res)=>{for await(const _chunk of req){}handler(req,res);});await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));t.after(()=>new Promise(resolve=>{server.close(resolve);server.closeIdleConnections?.();}));return `http://127.0.0.1:${server.address().port}/v1`;}

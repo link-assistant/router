@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // Finite source-derived token boundaries; no cooked values or owner authority.
 import nodeTest from 'node:test';
 import assert from 'node:assert/strict';
@@ -14,7 +15,7 @@ import {originalTopLevelMacroInvocations} from '../macro-token-trees.mjs';
 import {originalPrimitiveNamespaceSources} from '../extensions/primitive-namespace-sources.mjs';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
-const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')}),nativeJson=JSON.stringify;
+const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')}),nativeJson=JSON.stringify;
 const test=(name,body)=>nodeTest(name,{timeout:60000},async()=>{const rows=[],retain=(kind,value)=>{rows.push({kind,value});return value;};try{await body(retain);}finally{const folder=process.env.ROUTER_ORIGINAL_PREFIX_GRAMMAR_VECTOR_DIR;if(folder){mkdirSync(folder,{recursive:true});writeJsonTextGzip(folder+'/'+Buffer.from(name).toString('hex')+'.json.gz',nativeJson({name,rows,authority:false},(_key,value)=>typeof value==='bigint'?value.toString():value));}}});
 function module(source,file='src/lib.rs',path=[],profile=PRODUCTION_PROFILE){const result=captureSourceModuleViews({source,sourcePath:file,compilationProfile:profile}),view=result.views.find(row=>JSON.stringify(row.modulePath)===JSON.stringify(path));assert.ok(view);return {file,path,source,sourceView:view,compilationProfile:profile};}
 function request(source='pub struct Copy(u8);',selected='Copy',file='src/lib.rs',path=[],profile=PRODUCTION_PROFILE){const start=source.indexOf(selected);assert.ok(start>=0);return {module:module(source,file,path,profile),span:{start,end:start+selected.length}};}

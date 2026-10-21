@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -85,7 +86,7 @@ test('module plans reject changed source items paths profiles and caller fragmen
 });
 
 test('all five unchanged deployment path declarations select their complete original tracked files',()=>{
-  const file='src/deploy.rs',source=readFileSync(new URL('../../../'+file,import.meta.url),'utf8');
+  const file='src/deploy.rs',source=readFileSync(repositorySourceURL(file,new URL('../../../',import.meta.url)),'utf8');
   assert.equal(hash(source),'0acc07b144b6b63a32e337d38c4d74685b04c83d0f202b193ba999f160f9435a');
   const owner=module(source,{file,path:['deploy'],directory:'src/deploy',pathDirectory:'src'});
   const declarations=originalSourceModuleItems(owner).filter(entry=>entry.term==='mod'&&entry.tokens.some(token=>token.text==='path'));

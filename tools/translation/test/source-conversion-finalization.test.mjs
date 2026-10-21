@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {writeFileSync,readFileSync} from 'node:fs';
@@ -96,7 +97,7 @@ test('no-conversion Host subclasses retain ordinary checking while conversion is
   }
   // A real qualified operation is parsed from the complete current owned Core
   // graph. Its parser receipt is genuine; an Extension still gets no frame.
-  const read=path=>readFileSync(new URL('../../../'+path,import.meta.url),'utf8'),inputs={'src/lib.rs':'pub mod translation_core;\n'+'pub fn copied(value:&crate::translation_core::Json)->crate::translation_core::Json{crate::translation_core::json_copy(value)}'};
+  const read=path=>readFileSync(repositorySourceURL(path,new URL('../../../',import.meta.url)),'utf8'),inputs={'src/lib.rs':'pub mod translation_core;\n'+'pub fn copied(value:&crate::translation_core::Json)->crate::translation_core::Json{crate::translation_core::json_copy(value)}'};
   for(const path of ['src/translation_core.rs','src/translation_core/primitives.rs','src/translation_core/ranges.rs','src/translation_core/json_collections.rs'])inputs[path]=read(path);
   const cargo={manifest:read('Cargo.toml'),lock:read('Cargo.lock')},deriveDependencies=loadDeriveDependencyProof(cargo),graph=resolveModuleGraph({entry:'src/lib.rs',paths:Object.keys(inputs),readSource:path=>inputs[path]}),context=createMatchesMacroContext({modules:graph.modules,deriveDependencies}),full=inputs['src/lib.rs'],item=sourceItems(full).find(row=>row.name==='copied'&&row.term==='fn'),parser=new HostRustParser(tokenizeRust(full.slice(item.start,item.end)));
   configureMatchesMacroParser(parser,context,{file:'src/lib.rs',offset:item.start});parser.attributes();parser.visibility();const raw=parser.fn([]),relocate=value=>Array.isArray(value)?value.map(relocate):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).map(([key,row])=>[key,key==='span'&&row?{start:row.start+item.start,end:row.end+item.start}:relocate(row)])):value,semantic=relocate(raw);assert.equal(linkProjectDeclaration(parser,raw,semantic,{source:full,sourcePath:'src/lib.rs',itemSpan:{start:item.start,end:item.end},itemOffset:item.start,globalOffset:0,path:[],scope:null}),true);

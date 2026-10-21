@@ -1,0 +1,20 @@
+{
+  "source_kind": "provider_owned_versioned_document",
+  "source_url": "https://platform.claude.com/docs/en/docs/build-with-claude/extended-thinking",
+  "verified_at": "2026-09-19",
+  "product": "Anthropic Messages API",
+  "wire_protocol": "anthropic-messages",
+  "models": [
+    "claude-opus-4-6",
+    "claude-sonnet-4-6",
+    "claude-opus-4-7",
+    "claude-opus-4-8",
+    "claude-opus-5",
+    "claude-sonnet-5",
+    "claude-fable-5",
+    "claude-mythos-5",
+    "claude-fable-5-1",
+    "claude-mythos-5-1",
+    "claude-mythos-preview"
+  ]
+}

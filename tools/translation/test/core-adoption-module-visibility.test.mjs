@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync,mkdtempSync,rmSync} from 'node:fs';
@@ -20,7 +21,7 @@ import {serde_json_from_str,serde_json_to_string} from '../extensions/json-runti
 import {verifyTypedTargets} from './typed-targets.mjs';
 
 const C='crate::translation_core::',T=C+'Json',J=C+'json!';
-const dependencyInputs={manifest:readFileSync(new URL('../../../Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')};
+const dependencyInputs={manifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(repositorySourceURL("Cargo.lock",new URL('../../../',import.meta.url)),'utf8')};
 const jsonMacroDependencies=loadJsonMacroSourceProof(dependencyInputs),deriveDependencies=loadDeriveDependencyProof(dependencyInputs);
 let vectors=[];
 const retain=(kind,value)=>{vectors.push({kind,value});return value;};
@@ -71,7 +72,7 @@ test('invalid root or unrelated visibility still fails the original ancestor che
  const valid=originalDeclarationHeader(header('pub(super) fn valid(){}'),['outer','inner']);assert.equal(valid.kind,'fn');assert.equal(valid.name,'valid');assert.equal(valid.namespaceAuthority,false);
 });
 test('complete actual restricted tool parent retains every original body and outcome',()=>{
- const source=readFileSync(new URL('../../../src/bridge_request_tools.rs',import.meta.url),'utf8');assert.ok(source.includes('pub(super) fn translate_tools'));
+ const source=readFileSync(new URL('../../../rust/src/bridge_request_tools.rs',import.meta.url),'utf8');assert.ok(source.includes('pub(super) fn translate_tools'));
  const input=files('mod captured;',{'src/captured.rs':source}),result=migrate(input);retain('complete-current-restricted-parent',{source,...result});
  for(const proposal of [result.updates,result.indices]){assert.equal(proposal.before['src/captured.rs'],source);for(const row of proposal.proposals)inverse(row);assert.equal(proposal.executableAdmission,false);}
 });

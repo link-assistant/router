@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from "../../repository-layout.mjs";
 import nodeTest from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
@@ -16,7 +17,7 @@ import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE,ROUTER_COR
 const root=fileURLToPath(new URL('../../../../',import.meta.url)),nativeJson=JSON.stringify,vectorRoot=process.env.ROUTER_OWNED_BASE64_VECTOR_DIR;let vectors=[];
 const retain=(kind,value)=>{vectors.push({kind,value});return value;};
 const test=(name,run)=>nodeTest(name,{timeout:60000},async t=>{vectors=[];try{await run(t);}finally{if(vectorRoot){mkdirSync(vectorRoot,{recursive:true});const text=nativeJson({name,vectors},(_,value)=>typeof value==='bigint'?{$integer:String(value)}:value);writeJsonTextGzip(join(vectorRoot,Buffer.from(name).toString('hex')+'.json.gz'),text);}}});
-function original(path){return existsSync(join(root,path))?readFileSync(join(root,path),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:5000,maxBuffer:16777216});}
+function original(path){return existsSync(join(root,rustPackageSourcePath(root,path)))?readFileSync(join(root,rustPackageSourcePath(root,path)),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:5000,maxBuffer:16777216});}
 const oracle=original('tests/translation_core_base64_reverse_oracle.rs'),source=/const REVERSE_BASE64_JS_WITNESS: &str = r###"([\s\S]*?)"###;/u.exec(oracle)[1];
 const names=['standard_encode_bytes','standard_encode_text','standard_encode_owned_bytes','standard_no_pad_encode_text','url_no_pad_encode_bytes','url_no_pad_encode_owned_bytes','url_no_pad_encode_owned_text','url_no_pad_encode_array32','standard_decode_text','standard_decode_owned_text','standard_no_pad_decode_text','url_no_pad_decode_text','url_no_pad_decode_owned_text'];
 const fixture=JSON.parse(original('tools/translation/test/fixtures/router-core-base64-vectors.json'));
@@ -26,7 +27,7 @@ function write(directory,path,text){mkdirSync(dirname(join(directory,path)),{rec
 function temporary(t){const directory=mkdtempSync(join(tmpdir(),'owned-base64-reverse-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));return directory;}
 async function targets(t,row){const directory=temporary(t);for(const file of row.input.files.filter(file=>/\.(?:mjs|mts|ts)$/u.test(file.path)))write(directory,file.path,file.source);write(directory,'reverse.mts',row.result.typescript);
  const paths=['reverse.mts',...(row.input.files.some(file=>file.path==='caller.mts')?['caller.mts']:[])];
- execFileSync(process.execPath,[join(root,'packages/javascript/node_modules/typescript/bin/tsc'),'--strict','--skipLibCheck','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--rootDir',directory,'--outDir',join(directory,'out'),...paths.map(path=>join(directory,path))],{cwd:root,timeout:20000,encoding:'utf8',stdio:'pipe'});
+ execFileSync(process.execPath,[join(root,'js/node_modules/typescript/bin/tsc'),'--strict','--skipLibCheck','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--rootDir',directory,'--outDir',join(directory,'out'),...paths.map(path=>join(directory,path))],{cwd:root,timeout:20000,encoding:'utf8',stdio:'pipe'});
  for(const file of row.input.files.filter(file=>file.path.startsWith('runtime/')))write(directory,'out/'+file.path,file.source);
  return {javascript:await import(pathToFileURL(join(directory,'caller.mjs')).href),reverse:await import(pathToFileURL(join(directory,'out/reverse.mjs')).href),...(paths.length>1?{typed:await import(pathToFileURL(join(directory,'out/caller.mjs')).href)}:{})};}
 const octets=bytes=>Object.freeze(bytes.map(BigInt));
@@ -74,7 +75,7 @@ test('reverse native result locals remain affine and error inputs permit only fi
 });
 
 test('actual reverse corpus captures the full base64 leaf and keeps independent witness outside application counts',t=>{
- const directory=temporary(t),js='packages/javascript/generated/rust-project',ts='packages/typescript/generated/rust-project';for(const file of data().files){const path=file.path==='caller.mjs'?js+'/caller.mjs':file.path.startsWith('runtime/')?(file.path.endsWith('.mts')?ts:js)+'/'+file.path:file.path;write(directory,path,file.source);}write(directory,'tests/translation_core_base64_reverse_oracle.rs',oracle);
+ const directory=temporary(t),js='js/generated/rust-project',ts='ts/generated/rust-project';for(const file of data().files){const path=file.path==='caller.mjs'?js+'/caller.mjs':file.path.startsWith('runtime/')?(file.path.endsWith('.mts')?ts:js)+'/'+file.path:file.path;write(directory,path,file.source);}write(directory,'tests/translation_core_base64_reverse_oracle.rs',oracle);
  const capture=captureOwnedCoreCorpus(directory);assert.ok(capture.files.some(row=>row.path==='src/translation_core/base64.rs'));const result=retain('complete-actual-corpus',Object.fromEntries(buildOwnedCoreDocumentArtifacts(directory).artifacts));assert.ok(result['tools/translation/js-to-rust/generated/owned-base64-witness.rs']);const report=JSON.parse(result['parity/js-owned-core-reverse-draft.json']);assert.equal(report.base64Witness.applicationItems,0);assert.equal(report.base64Witness.functions,14);assert.equal(report.rustExecuted,false);
  write(directory,'src/translation_core/base64.rs',ROUTER_CORE_BASE64_SOURCE+'\n');assert.throws(()=>capture.requireCurrent(),/changed/);
 });

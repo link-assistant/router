@@ -1,6 +1,6 @@
 //! Compile the actual parser separately to check upstream signed-zero grammar.
 pub use link_assistant_router::thinking::{ThinkingConfig, ThinkingLevel, ThinkingMode};
-#[path = "../../src/thinking/parser.rs"]
+#[path = "../../rust/src/thinking/parser.rs"]
 mod parser;
 
 fn main() {

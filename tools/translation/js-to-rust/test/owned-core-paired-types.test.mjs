@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from "../../repository-layout.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
@@ -17,7 +18,7 @@ const JS='app/src/caller.mjs',TS='typed/src/caller.mts';
 const imports="import {router_core_json_copy as copy,router_core_json_index_str as index} from '../runtime/json-update-runtime.mjs';\n";
 const types="import type {JsonValue} from '../runtime/json-macro-runtime.mjs';\n";
 const copied=imports+'export function copied(value){return copy(value);}',copiedTyped=imports+types+'export function copied(value:JsonValue):JsonValue{return copy(value);}';
-function original(path){return existsSync(join(root,path))?readFileSync(join(root,path),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:30000,maxBuffer:16777216});}
+function original(path){return existsSync(join(root,rustPackageSourcePath(root,path)))?readFileSync(join(root,rustPackageSourcePath(root,path)),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:30000,maxBuffer:16777216});}
 function input(source,typed){
  return {runtimeRoot:'app/runtime',declarationRoot:'typed/runtime',files:[...ownedCoreRuntimeSources('app/runtime','typed/runtime'),{path:'src/lib.rs',source:'pub mod translation_core;\n'},{path:'src/translation_core.rs',source:ROUTER_FORMATTING_FACADE_SOURCE},{path:'src/translation_core/primitives.rs',source:ROUTER_CORE_PRIMITIVES_SOURCE},{path:'Cargo.toml',source:original('Cargo.toml')},{path:'Cargo.lock',source:original('Cargo.lock')},{path:JS,source},...(typed===undefined?[]:[{path:TS,source:typed}])]};
 }
@@ -32,7 +33,7 @@ async function targets(t,source=copied,typed=copiedTyped){
  // these are the complete same registered declarations captured by the input.
  for(const file of row.data.files.filter(file=>file.path.startsWith('typed/runtime/')&&file.path.endsWith('.mts')))write(directory,'app/runtime/'+file.path.slice('typed/runtime/'.length),file.source);
  write(directory,'typed/src/reverse.mts',row.result.typescript);
- try{execFileSync(process.execPath,[join(root,'packages/javascript/node_modules/typescript/bin/tsc'),'--strict','--skipLibCheck','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--rootDir',directory,'--outDir',join(directory,'out'),join(directory,TS),join(directory,'typed/src/reverse.mts')],{cwd:root,encoding:'utf8',timeout:20000,stdio:'pipe'});}catch(error){assert.fail('strict paired original/reverse TypeScript failed\n'+String(error.stdout??'')+'\n'+String(error.stderr??''));}
+ try{execFileSync(process.execPath,[join(root,'js/node_modules/typescript/bin/tsc'),'--strict','--skipLibCheck','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--rootDir',directory,'--outDir',join(directory,'out'),join(directory,TS),join(directory,'typed/src/reverse.mts')],{cwd:root,encoding:'utf8',timeout:20000,stdio:'pipe'});}catch(error){assert.fail('strict paired original/reverse TypeScript failed\n'+String(error.stdout??'')+'\n'+String(error.stderr??''));}
  for(const file of row.data.files.filter(file=>file.path.startsWith('app/runtime/'))){
   write(directory,'out/'+file.path,file.source);
   // Both emitted TS modules import the same complete actual runtime bytes.
@@ -103,10 +104,10 @@ test('module preflight, malformed pairs and forged source data retain complete r
  const foreign=input(copied,copiedTyped);foreign.files.push({path:'typed/runtime/json-macro-runtime.mjs',source:'export const forged=true;'});const foreignContext=createOwnedCoreSourceContext(foreign);assert.throws(()=>translateOwnedCoreJavaScript(copied,{sourcePath:JS,context:foreignContext}),/paired runtime counterpart differs/u);
  const {result}=translate();const detached=JSON.parse(JSON.stringify(result.program));assert.throws(()=>emitRust(detached),/unissued/u);
  const fields=input(copied,copiedTyped);fields.pairedTypesProved=true;assert.throws(()=>createOwnedCoreSourceContext(fields),/unknown source record field/u);
- const written=imports+'/** @param {import("../runtime/json-macro-runtime.mjs").JsonValue} value */\nexport function copied(value){return copy(value);}';const legacy=translate(written,undefined);assert.equal(Object.hasOwn(legacy.result.program[0],'pairedSource'),false);
+ const written=imports+'/** @param {import("../runtime/json-macro-runtime.mjs").JsonValue} value */\nexport function copied(value){return copy(value);}';const legacyContext=createOwnedCoreSourceContext(input(written,undefined)),legacy=translateOwnedCoreJavaScript(written,{sourcePath:JS,context:legacyContext,typescriptOutputPath:'typed/src/reverse.mts'});assert.equal(Object.hasOwn(legacy.program[0],'pairedSource'),false);
 });
 test('the actual corpus captures matching application TS and consumes it before packaging',limits,t=>{
- const directory=mkdtempSync(join(tmpdir(),'owned-paired-corpus-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));const base='packages/javascript/generated/rust-project',typed='packages/typescript/generated/rust-project';
+ const directory=mkdtempSync(join(tmpdir(),'owned-paired-corpus-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));const base='js/generated/rust-project',typed='ts/generated/rust-project';
  for(const row of input(copied,copiedTyped).files){
   const path=row.path===JS?base+'/src/lib.mjs':row.path===TS?typed+'/src/lib.mts':row.path.startsWith('app/runtime/')?base+'/runtime/'+row.path.slice('app/runtime/'.length):row.path.startsWith('typed/runtime/')?typed+'/runtime/'+row.path.slice('typed/runtime/'.length):row.path;
   write(directory,path,row.source);
@@ -117,10 +118,32 @@ test('the actual corpus captures matching application TS and consumes it before 
  write(directory,typed+'/src/lib.mts',copiedTyped.replace('copy(value)','index(value,"changed")'));assert.throws(()=>captured.requireCurrent(),/complete input changed/u);const changed=buildOwnedCoreArtifacts(directory);assert.equal(changed.manifest.totals.translatedItems,0);assert.match(changed.manifest.diagnostics[0].message,/complete executable tokens differ/u);
 });
 test('full real forward parents and every independent refusal remain in the actual input census',limits,()=>{
- const captured=captureOwnedCoreCorpus(root),js='packages/javascript/generated/rust-project/src/lib.mjs',typed='packages/typescript/generated/rust-project/src/lib.ts';
+ const captured=captureOwnedCoreCorpus(root),stem=rustPackageSourcePath(root,'src/lib.rs').slice(0,-3),js='js/generated/rust-project/'+stem+'.mjs',typed='ts/generated/rust-project/'+stem+'.ts';
  assert.equal(captured.files.find(row=>row.path===js).source,original(js));assert.equal(captured.files.find(row=>row.path===typed).source,original(typed));
  const result=buildOwnedCoreArtifacts(root),stored=JSON.parse(result.artifacts.get('tools/translation/js-to-rust/generated/owned-core/inputs.json'));
  for(const path of [js,typed])assert.equal(stored.files.find(row=>row.path===path).source,original(path));
  for(const row of result.manifest.modules){assert.equal(row.sourceItems,row.translatedItems+row.unsupportedItems);assert.equal(stored.files.find(file=>file.path===row.path).source,original(row.path));}
  assert.equal(result.manifest.runtimeParity,false);assert.equal(result.manifest.wholeSourceSynchronization,false);assert.equal(result.manifest.witness.applicationItems,0);
+});
+
+test('written JSDoc retains an available complete TypeScript pair and rejects every mismatched domain',limits,async t=>{
+ const documentation="/** @param {import(\"../runtime/json-macro-runtime.mjs\").JsonValue} value */\n",documented=imports+documentation+'export function copied(value){return copy(value);}',documentedTyped=copiedTyped.replace('export function',documentation+'export function');
+ const api=await targets(t,documented,documentedTyped),value=json_macro_object([['text',json_macro_string('猫😀')]]),expected=json_macro_object([['text',json_macro_string('猫😀')]]);
+ for(const actual of [api.javascript.copied(value),api.typedOriginal.copied(value),api.typedReverse.copied(value),api.run('copied',[value])]){assert.deepEqual(actual,expected);assert.notStrictEqual(actual,value);}
+ assert.equal(api.result.program[0].pairedSource.path,TS);assert.equal(api.result.program[0].source.source,documented);assert.equal(api.result.program[0].pairedSource.source,documentedTyped);
+ assert.equal(parseOwnedCoreMeta(api.result.meta,{context:api.context})[0].pairedSource.source,documentedTyped);
+ assert.throws(()=>translate(documented,documentedTyped.replace('value:JsonValue','value:boolean')),/paired written parameter ABI differs/);
+ assert.throws(()=>translate(documented,documentedTyped.replace('):JsonValue','):boolean')),/paired written return ABI differs/);
+ const local=documented.replace('return copy(value);','const actual=copy(value);return actual;'),typed=documentedTyped.replace('return copy(value);','const actual:boolean=copy(value);return actual;');
+ assert.throws(()=>translate(local,typed),/paired written local ABI differs/);
+ const context=createOwnedCoreSourceContext(input(documented,undefined)),legacy=translateOwnedCoreJavaScript(documented,{sourcePath:JS,context,typescriptOutputPath:'typed/src/reverse.mts'});assert.equal(Object.hasOwn(legacy.program[0],'pairedSource'),false);
+});
+
+test('source-bound JSON macro ReturnType validates written constructors and retains independent targets',limits,async t=>{
+ const macroImports="import {json_macro_object as object,json_macro_string as string} from '../runtime/json-macro-runtime.mjs';\n",documentation="/** @param {string} value */\n",body="return object([[\"text\",string(value)]]);";
+ const source=imports+macroImports+documentation+'export function build(value){'+body+'}',typed=imports+macroImports+documentation+'export function build(value:string):ReturnType<typeof object>{'+body+'}';
+ const api=await targets(t,source,typed);assert.equal(api.result.program[0].pairedSource.source,typed);
+ for(const value of ['', '猫😀', 'line\nnext']){const expected=json_macro_object([['text',json_macro_string(value)]]);for(const actual of [api.javascript.build(value),api.typedOriginal.build(value),api.typedReverse.build(value),api.run('build',[value])])assert.deepEqual(actual,expected);}
+ assert.throws(()=>translate(source,typed.replace('ReturnType<typeof object>','ReturnType<typeof index>')),/unregistered written type domain/);
+ assert.throws(()=>translate(source,typed.replace('ReturnType<typeof object>','boolean')),/paired written return ABI differs/);
 });

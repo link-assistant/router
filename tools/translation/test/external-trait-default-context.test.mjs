@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,rmSync,realpathSync} from 'node:fs';
@@ -22,7 +23,7 @@ import {translateProject} from '../project.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 import {rustFixedType} from '../checked-types.mjs';
 
-const root=new URL('../../../',import.meta.url),base=new URL('../',import.meta.url),read=path=>readFileSync(new URL(path,root),'utf8'),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
+const root=new URL('../../../',import.meta.url),base=new URL('../',import.meta.url),read=path=>readFileSync(repositorySourceURL(path,root),'utf8'),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const cargo={manifest:read('Cargo.toml'),lock:read('Cargo.lock')},dependencies=loadDeriveDependencyProof(cargo),path=['base64','Engine'];
 const caller='use base64::Engine as _;pub fn flag(v:bool)->u64{u64::from(v)}pub fn identity(v:u8)->u8{v.into()}';
 const directory=realpathSync(mkdtempSync(join(tmpdir(),'router-external-default-context-')));after(()=>rmSync(directory,{recursive:true,force:true}));

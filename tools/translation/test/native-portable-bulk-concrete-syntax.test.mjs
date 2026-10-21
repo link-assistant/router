@@ -1,3 +1,4 @@
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import {historicalPrivateParserPacket,assertPrivateParserPacketEvolution} from './private-parser-historical-packet.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -17,6 +18,7 @@ import {ownershipCompiler} from '../js-to-rust/vendor/module-syntax.mjs';
 import {toLino} from '../js-to-rust/vendor/ir.mjs';
 import {evaluate} from '../js-to-rust/interpreter.mjs';
 import {buildArtifacts} from '../../../scripts/regenerate-js-first.mjs';
+import {historicalNativePortableAssemblerSource} from '../prepare-native-portable-historical-layout.mjs';
 
 const ROOT=process.env.ROUTER_NATIVE_TS_SOURCE_ROOT??resolve(dirname(fileURLToPath(import.meta.url)),'../../..');
 const TOOL=resolve(dirname(fileURLToPath(import.meta.url)),'..'),hash=value=>createHash('sha256').update(value).digest('hex');
@@ -26,7 +28,7 @@ const beforeAssembler="import { createHash } from 'node:crypto';\nimport { isDee
 function retain(name,value){const root=process.env.ROUTER_NATIVE_BULK_CST_VECTOR_DIR;if(root){mkdirSync(root,{recursive:true});writeFileSync(join(root,name+'.json'),json(value,(_,v)=>typeof v==='bigint'?{bigint:String(v)}:v)+'\n');}}
 function outcome(action){try{return {value:action()};}catch(error){const field=error&&typeof error==='object'?get(error,'message'):null;return {error:{message:field&&Object.hasOwn(field,'value')?field.value:'non-data failure'}};}}
 function scratch(t){const path=mkdtempSync(join(tmpdir(),'router-native-bulk-cst-'));t.after(()=>rmSync(path,{recursive:true,force:true}));return path;}
-function nativeSources(){const walk=directory=>readdirSync(join(ROOT,directory),{withFileTypes:true}).flatMap(entry=>entry.isDirectory()?walk(directory+'/'+entry.name):entry.name.endsWith('.mjs')?[directory+'/'+entry.name]:[]);return walk('packages/javascript/native').sort().map(path=>({path,source:readFileSync(join(ROOT,path),'utf8')}));}
+function nativeSources(){const walk=directory=>readdirSync(join(ROOT,directory),{withFileTypes:true}).flatMap(entry=>entry.isDirectory()?walk(directory+'/'+entry.name):entry.name.endsWith('.mjs')?[directory+'/'+entry.name]:[]);return walk('js/src').sort().map(path=>({path,source:readFileSync(join(ROOT,repositorySourcePath(path,ROOT)),'utf8')}));}
 async function physical(t,source,label,overrides={}){
  const root=scratch(t),changes=[],historical=source===beforeExecutor?historicalPrivateParserPacket(t,retain):null;let copied=source;
  if(historical){const selected=overrides['./private-parser-sha256.mjs'];overrides={...overrides,'./original-json-intrinsics.mjs':historical.url('original-json-intrinsics.mjs'),'./private-parser-sha256.mjs':selected?historical.probe(selected):historical.url('private-parser-sha256.mjs')};}
@@ -60,7 +62,7 @@ const positive='/** @param {number} n @returns {number} */ export function answe
 const phases=[{phase:'language',id:'native-bulk:plan-original-scoped-cst'},{phase:'language',id:'native-bulk:checked-concrete-batch'},{phase:'language',id:'native-bulk:fresh-authoritative-analysis'},{phase:'repository',id:'native-bulk:package-source-analysis'}];
 
 test('complete native corpus artifacts and every legacy census field equal the full original assembler',{timeout:60000},async t=>{
- const old=await physical(t,beforeAssembler,'assembler'),sources=nativeSources(),beforeAttempt=outcome(()=>old.buildNativePortableArtifacts(sources)),currentAttempt=outcome(()=>buildNativePortableArtifactsBulk(sources));
+ const old=await physical(t,historicalNativePortableAssemblerSource(beforeAssembler,retain),'assembler'),sources=nativeSources(),beforeAttempt=outcome(()=>old.buildNativePortableArtifacts(sources)),currentAttempt=outcome(()=>buildNativePortableArtifactsBulk(sources));
  retain('01-attempts',{sources,beforeError:beforeAttempt.error,currentError:currentAttempt.error});assert.ok(beforeAttempt.value);assert.ok(currentAttempt.value);const before=beforeAttempt.value,current=currentAttempt.value;
  const audit=[];for(const input of sources){const plan=collectScopedWrapperSources(input.source,input.path),batch=transportConcreteSyntaxSources(plan.rows);const observations=batch.rows.map((row,index)=>({index,source:row.source,document:row.document,meta:row.meta,reconstructed:row.document.nodes.slice(1).filter(node=>node[0]!=='group').map(node=>row.document.source.slice(node[2],node[3])).join('')}));audit.push({input,plan,totals:batch.totals,observations});}
  retain('01-complete-cst-audit',audit);for(const module of audit)for(const row of module.observations){assert.equal(row.source,module.plan.rows[row.index].source);assert.equal(row.reconstructed,row.source);assert.deepEqual(JSON.parse(row.meta),row.document);assert.deepEqual(row.document.authority,{type:false,owner:false,executable:false});}
@@ -95,7 +97,7 @@ test('raw batch descriptors proxies sparse fields and aggregate bounds refuse wi
  const cases=[proxy,[rowProxy],[accessor],Array(1),[{source:'x',language:'Rust',extra:1}],[{source:{toString:hook},language:'Rust'}],[{source:'x',language:'Foreign'}],Array.from({length:257},()=>({source:'',language:'Rust'})),[{source:'x'.repeat(1048577),language:'Rust'},{source:'x'.repeat(1048576),language:'Rust'}]];
  const rows=cases.map((input,index)=>({index,result:outcome(()=>transportPrivateConcreteSources(input))}));const nodeSources=[{source:'value '.repeat(60000),language:'JavaScript'},{source:'other '.repeat(60000),language:'JavaScript'}],nodeBefore=nodeSources.map(row=>transportPrivateConcreteSource(row.source,row.language)),nodeRefusal=outcome(()=>transportPrivateConcreteSources(nodeSources));const positive=transportPrivateConcreteSources([{source:'pub fn okay(){}',language:'Rust'}]);retain('04-own-boundaries',{rows,calls,positive,nodeSources,nodeBefore,nodeRefusal});
  const pair=await lazyDescriptorPair(t),priorFormatter=get(Error,'prepareStackTrace'),lazyRows=[],formatterEvents=[];let phase='setup',lazyFailure;
- const rawRow={source:'pub fn okay(){}',language:'Rust'},artifactRow={path:'packages/javascript/native/bulk-fixture.mjs',source:'/** @param {number} n @returns {number} */ export function answer(n){return n+1;}'};
+ const rawRow={source:'pub fn okay(){}',language:'Rust'},artifactRow={path:'js/src/bulk-fixture.mjs',source:'/** @param {number} n @returns {number} */ export function answer(n){return n+1;}'};
  const subjects=[{name:'raw-array',target:[rawRow],kind:'raw',row:false},{name:'raw-row',target:{...rawRow},kind:'raw',row:true},{name:'assembler-array',target:[artifactRow],kind:'assembler',row:false},{name:'assembler-row',target:{...artifactRow},kind:'assembler',row:true}];
  const originals=subjects.map(subject=>ownState(subject.target));
  try{
@@ -169,16 +171,16 @@ test('raw mutation and later semantic namespace hashes cannot reuse a stale host
 test('bulk assembler owns detached graph inputs and rejoins caller fields after final callbacks',{timeout:60000},()=>{
  const owner=Object.getPrototypeOf(createHash('sha256')),prior=get(owner,'update'),rows=[];
  for(const mode of ['value','accessor']){
-  const source=[{path:'packages/javascript/native/bulk-fixture.mjs',source:positive}];let calls=0,getters=0,changed=false,result;
+  const source=[{path:'js/src/bulk-fixture.mjs',source:positive}];let calls=0,getters=0,changed=false,result;
   try{define(owner,'update',{...prior,value:function(value,...args){const returned=apply(prior.value,this,[value,...args]);calls++;if(!changed&&value===positive){changed=true;if(mode==='value')source[0].source=positive+' ';else define(source[0],'source',{get(){getters++;throw 290;},enumerable:true,configurable:true});}return returned;}});result=outcome(()=>buildNativePortableArtifactsBulk(source));}
-  finally{define(owner,'update',prior);}const restored=buildNativePortableArtifactsBulk([{path:'packages/javascript/native/bulk-fixture.mjs',source:positive}]);rows.push({mode,calls,getters,changed,result,restored:{manifest:restored.manifest,artifacts:[...restored.artifacts]}});
+  finally{define(owner,'update',prior);}const restored=buildNativePortableArtifactsBulk([{path:'js/src/bulk-fixture.mjs',source:positive}]);rows.push({mode,calls,getters,changed,result,restored:{manifest:restored.manifest,artifacts:[...restored.artifacts]}});
  }
  retain('07-final-caller-rejoin',{positive,rows});for(const row of rows){assert.equal(row.changed,true);assert.equal(row.getters,0);assert.ok(row.calls>0);assert.equal(row.result.error.message,'bulk artifact original source changed');assert.equal(row.restored.manifest.modules.length,1);}
 });
 
 test('all three real repository builds and checked semantic targets stay inside the original workloads',{timeout:60000},async t=>{
  const buildAttempts=[outcome(()=>buildArtifacts(ROOT)),outcome(()=>buildArtifacts(ROOT)),outcome(()=>buildArtifacts(ROOT))],analysisAttempt=outcome(()=>analyzeJavaScriptBatched(positive,{sourcePath:'fixtures/typed.mjs'}));retain('08-complete-attempts',{builds:buildAttempts.map(row=>row.value?{artifacts:[...row.value]}:row),analysisAttempt});for(const row of buildAttempts)assert.ok(row.value);assert.ok(analysisAttempt.value);const builds=buildAttempts.map(row=>row.value),analysis=analysisAttempt.value,meta=analysis.analysis.program.map(toLino).join('\n')+'\n',program=parseMeta(meta),typescript=emitTypeScript(program),rust=emitRust(program);
- const dir=scratch(t),typed=join(dir,'target.ts'),out=join(dir,'out'),originalPath=join(dir,'original.mjs');writeFileSync(originalPath,positive);const original=await import(pathToFileURL(originalPath).href);writeFileSync(typed,typescript);const require=createRequire(join(ROOT,'packages/javascript/package.json')),compiler=require.resolve('typescript/bin/tsc');
+ const dir=scratch(t),typed=join(dir,'target.ts'),out=join(dir,'out'),originalPath=join(dir,'original.mjs');writeFileSync(originalPath,positive);const original=await import(pathToFileURL(originalPath).href);writeFileSync(typed,typescript);const require=createRequire(join(ROOT,'js/package.json')),compiler=require.resolve('typescript/bin/tsc');
  const child=spawnSync(process.execPath,[compiler,'--strict','--skipLibCheck','--target','ES2022','--module','commonjs','--outDir',out,typed],{encoding:'utf8',timeout:20000,maxBuffer:8388608});
  const target=child.status===0?createRequire(import.meta.url)(join(out,'target.js')):null,observations=target?[original.answer(2),evaluate(program,'answer',[2]),target.answer(2)]:[];
  retain('08-repository-and-typed',{builds:builds.map(value=>[...value]),positive,analysis,meta,program,typescript,rust,child:{status:child.status,stdout:child.stdout,stderr:child.stderr,error:child.error?.message},observations});

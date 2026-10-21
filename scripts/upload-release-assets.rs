@@ -8,7 +8,7 @@
 //! process-wrap = { version = "10.0.1", default-features = false, features = ["std", "job-object"] }
 //! ```
 
-#[path = "../src/bounded_process.rs"]
+#[path = "../rust/src/bounded_process.rs"]
 mod bounded_process;
 use serde_json::Value;
 use std::collections::BTreeSet;

@@ -1,0 +1,1 @@
+Refresh the portable compiler registry from the reviewed source checkpoint with all 1,571 repository compiler and 132 TypeScript 5.9.3 files; independently check every source byte, both complete bootstrap CST equations/inverses and 449 genuine Git fixture objects. Preserve explicit incomplete receiving, freshness and parity status.

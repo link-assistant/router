@@ -1,3 +1,4 @@
+import {crateModuleSourcePath} from './repository-layout.mjs';
 // Complete-source adoption of transparent owned aliases, not semantic admission.
 import {createHash} from 'node:crypto';
 import {types} from 'node:util';
@@ -113,13 +114,13 @@ export function proposeCoreAlgebraicCorpus({entry='src/lib.rs',files:input,compi
   const files=sourceMap(input),profile=normalizeProfile(inputProfile);if(!Object.hasOwn(files,entry))fail('entry source is missing');
   const graph=resolveModuleGraph({entry,paths:Object.keys(files),readSource:path=>files[path],compilationProfile:profile});
   const root=graph.modules.filter(module=>!module.path.length),core=graph.modules.filter(module=>same(module.path,['translation_core'])),leaf=graph.modules.filter(module=>same(module.path,['translation_core','primitives']));
-  if(root.length!==1||core.length!==1||leaf.length!==1||core[0].source!==ROUTER_FORMATTING_FACADE_SOURCE||leaf[0].source!==ROUTER_CORE_PRIMITIVES_SOURCE||core[0].file!=='src/translation_core.rs'||leaf[0].file!=='src/translation_core/primitives.rs'||core[0].configurationCondition!=='active'||leaf[0].configurationCondition!=='active')fail('requires complete current owned core sources');
+  if(root.length!==1||core.length!==1||leaf.length!==1||core[0].source!==ROUTER_FORMATTING_FACADE_SOURCE||leaf[0].source!==ROUTER_CORE_PRIMITIVES_SOURCE||core[0].file!==crateModuleSourcePath(graph.modules,'src/translation_core.rs')||leaf[0].file!==crateModuleSourcePath(graph.modules,'src/translation_core/primitives.rs')||core[0].configurationCondition!=='active'||leaf[0].configurationCondition!=='active')fail('requires complete current owned core sources');
   const declarations=originalSourceModuleItems(root[0]).filter(item=>item.term==='mod'&&item.name==='translation_core');if(declarations.length!==1||root[0].source.slice(declarations[0].start,declarations[0].end).trim()!=='pub mod translation_core;')fail('requires the actual unqualified public core edge');
   if(originalSourceModuleItems(root[0]).some(item=>item.term==='use'&&item.tokens.some(token=>token.text==='translation_core')))fail('core root reexport competes with the owned edge');
   const producerContext=createCoreAdoptionProducerContext({modules:graph.modules,compilationProfile:profile,dependencyInputs});
   const evidence=coreAdoptionProducerBindings(producerContext)??resolveModuleBindings({modules:graph.modules,externalModules:registeredStandardHostBindings(),compilationProfile:profile}),proposals=[],skipped=[],after={...files};
   for(const file of Object.keys(files)){
-    if(file==='src/translation_core.rs'||file.startsWith('src/translation_core/'))continue;
+    if(file===crateModuleSourcePath(graph.modules,'src/translation_core.rs')||file.startsWith(crateModuleSourcePath(graph.modules,'src/translation_core/')))continue;
     const modules=graph.modules.filter(module=>module.file===file),origins=modules.filter(module=>module.sourceView.modulePath.length===0);
     if(origins.length!==1){skipped.push({file,reason:'missing or multiple physical module origins'});continue;}
     const origin=origins[0],parents=graph.modules.filter(module=>module.file!==file&&module.path.length<origin.path.length&&module.path.every((name,at)=>origin.path[at]===name));

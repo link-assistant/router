@@ -1,4 +1,5 @@
 // Complete source/data receiving; copied metadata never supplies private proofs.
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
 import * as fs from 'node:fs';
@@ -10,7 +11,7 @@ import {join,dirname,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {writeJsonTextGzip} from '../../evidence/write-json-gzip.mjs';
 import {exportTranslatorBundle} from '../export-bundle.mjs';
-import {proposeCoreAdoptionSequence} from '../propose-core-adoption-corpus.mjs';
+import {proposeCoreJsonReadersGzipPackets} from '../propose-core-adoption-corpus.mjs';
 import {openCoreAdoptionGzipPackets} from '../core-adoption-packet-storage.mjs';
 import {applyReviewedCoreAdoption,recoverReviewedCoreAdoption} from '../apply-reviewed-core-adoption.mjs';
 import {sourceItems} from '../rust-structure.mjs';
@@ -51,10 +52,10 @@ assert.equal(child.signal,null);
 assert.equal(child.status,0,child.stderr);
 return JSON.parse(child.stdout);
 }
-function compiler(root){const actual=process.env.ROUTER_TRANSLATION_TSC?dirname(dirname(resolve(process.env.ROUTER_TRANSLATION_TSC))):join(ROOT,'packages/javascript/node_modules/typescript');
+function compiler(root){const actual=process.env.ROUTER_TRANSLATION_TSC?dirname(dirname(resolve(process.env.ROUTER_TRANSLATION_TSC))):join(ROOT,'js/node_modules/typescript');
 assert.equal(JSON.parse(fs.readFileSync(join(actual,'package.json'))).version,'5.9.3');
-fs.cpSync(actual,join(root,'packages/javascript/node_modules/typescript'),{recursive:true,dereference:true});
-write(join(root,'.gitignore'),'packages/javascript/node_modules/\n');
+fs.cpSync(actual,join(root,'js/node_modules/typescript'),{recursive:true,dereference:true});
+write(join(root,'.gitignore'),'js/node_modules/\n');
 }
 function archive(label,root){const output=process.env.ROUTER_CORE_RECEIVING_VECTOR_DIR;
 if(!output)return;
@@ -77,13 +78,13 @@ try{return await run(directory);
 }finally{archive('fixture-'+hash(directory),directory);
 fs.rmSync(directory,{recursive:true,force:true});
 }}
-function smallSources(root){for(const path of core)write(join(root,path),fs.readFileSync(join(ROOT,path)));
+function smallSources(root){for(const path of core)write(join(root,path),fs.readFileSync(join(ROOT,repositorySourcePath(path,ROOT))));
 write(join(root,'src/lib.rs'),original);
 }
 async function packetFixture(directory){const root=join(directory,'source'),output=join(directory,'proposal');
 fs.mkdirSync(root);
 smallSources(root);
-assert.equal((await proposeCoreAdoptionSequence({root,output},'json-readers','gzip')).complete,true);
+assert.equal((await proposeCoreJsonReadersGzipPackets({root,output})).complete,true);
 return {root,output};
 }
 function allPackets(output){const storage=openCoreAdoptionGzipPackets(output);
@@ -135,7 +136,7 @@ compiler(root);
 const head=commit(root);
  const actual=python(`import importlib.util\nfrom pathlib import Path\nspec=importlib.util.spec_from_file_location('capture',${JSON.stringify(join(ROOT,'scripts/propose-core-adoption.py'))});module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)\nmodule.ROOT=Path(payload['root']);module.OUT=Path(payload['run']);module.HEAD=payload['head'];module.ACTIVE_TEMP=None\nbefore,snapshots,rust=module.capture_prechild_sources();module.SOURCE_FREEZE=module.source_freeze(before,snapshots,rust);module.require_current_capture(before,snapshots,rust)\nafter,other,again=module.capture();module.require_current_capture(after,other,again)\nassert before==after and snapshots==other and rust==again\nprint(json.dumps({'before':before,'snapshots':snapshots,'rust':rust,'sourceFreeze':module.SOURCE_FREEZE,'same':True}))\n`,{root,run,head});
  assert.equal(actual.same,true);
-assert.equal(actual.snapshots.filter(row=>row.path.startsWith('packages/javascript/node_modules/typescript/')).length,132);
+assert.equal(actual.snapshots.filter(row=>row.path.startsWith('js/node_modules/typescript/')).length,132);
 assert.ok(actual.rust.some(row=>row.path==='tests/owned-witness.rs'));
 assert.equal(actual.sourceFreeze.census.physicalSrcRust,1);
 assert.equal(actual.sourceFreeze.census.allTrackedRustCargo,4);
@@ -253,7 +254,7 @@ keep('complete-budget-observations',result);
 test('actual checked-in workflow fully reviews strict targets and explicitly applies and recovers its selected bytes',()=>home(async directory=>{
  const root=join(directory,'source'),run=join(directory,'run'),exported=exportTranslatorBundle({sourceRoot:ROOT,output:root});
 keep('complete-committed-compiler-export',exported.manifest);
- for(const path of runtimeFiles)write(join(root,path),fs.readFileSync(join(ROOT,path)));
+ for(const path of runtimeFiles)write(join(root,path),fs.readFileSync(join(ROOT,repositorySourcePath(path,ROOT))));
 write(join(root,'tools/translation/fixtures/real-source-provenance.json'),fs.readFileSync(join(ROOT,'tools/translation/fixtures/real-source-provenance.json')));
 smallSources(root);
 write(join(root,'tests/owned-witness.rs'),'// complete guard outside src\n');
@@ -262,7 +263,7 @@ const head=commit(root);
  const command=(script,args,expected=0)=>{const child=spawnSync('python3',['-B',join(root,script),...args],{encoding:'utf8',timeout:20000,maxBuffer:8*1024**2});
 keep('complete-real-workflow-child',{script,args,status:child.status,signal:child.signal,stdout:child.stdout,stderr:child.stderr,error:child.error&&{name:child.error.name,message:child.error.message}});
 assert.equal(child.signal,null);
-assert.equal(child.status,expected,child.stderr);
+assert.equal(child.status,expected,JSON.stringify({stdout:child.stdout,stderr:child.stderr,status:child.status,signal:child.signal,error:child.error&&{name:child.error.name,message:child.error.message}}));
 return JSON.parse(child.stdout);
 };
  const produced=command('scripts/propose-core-adoption.py',['--root',root,'--expected-head',head,'--output',run,'--sequence','json-readers']);

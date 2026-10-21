@@ -10,17 +10,18 @@ name: Upgrade matrix
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
-      - 'src/storage.rs'
-      - 'src/storage/**'
-      - 'src/storage_*.rs'
-      - 'src/token*.rs'
-      - 'src/providers.rs'
-      - 'src/managed_server*.rs'
-      - 'src/managed_server/**'
-      - 'tests/upgrade_fixture_test.rs'
-      - 'tests/fixtures/upgrade/**'
-      - 'src/lino_json.rs'
+      - 'rust/src/storage.rs'
+      - 'rust/src/storage/**'
+      - 'rust/src/storage_*.rs'
+      - 'rust/src/token*.rs'
+      - 'rust/src/providers.rs'
+      - 'rust/src/managed_server*.rs'
+      - 'rust/src/managed_server/**'
+      - 'rust/tests/upgrade_fixture_test.rs'
+      - 'rust/tests/fixtures/upgrade/**'
+      - 'rust/src/lino_json.rs'
       - 'scripts/upgrade-matrix.sh'
       - '.github/workflows/upgrade-matrix.yml'
   schedule:
@@ -43,6 +44,7 @@ env:
 
 jobs:
   javascript:
+    if: ${{ github.event_name != 'pull_request' || toJSON(github.event.pull_request.draft) == 'false' }}
     name: JavaScript first (same commit)
     uses: ./.github/workflows/javascript-first.yml
     with:

@@ -1,10 +1,11 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {loadDeriveDependencyProof,deriveDependencySource} from '../derive-dependencies.mjs';
 import {serdeFieldHelperInputs,originalSerdeFieldHelperSourcePlan} from '../serde-field-helper-inputs.mjs';
 import {inventoryDeriveQuoteMeta,createQuoteFragmentCompiler} from '../derive-quote-meta.mjs';
-const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
 const input=source=>serdeFieldHelperInputs({source,span:{start:0,end:source.length}});
 test('original fields retain exact default and predicate syntax across separate attributes comments and Unicode docs',()=>{
  const source='#[derive(serde::Serialize,serde::Deserialize)]pub struct R{/// λ😀\n#[serde(default)]#[serde(skip_serializing_if="Vec::is_empty")]pub(crate) a:Vec<String>,#[serde(skip_serializing_if="::local::predicate")]b:bool,c:Option<String>}';const row=input(source);assert.deepEqual(row.fields.map(field=>[field.name,field.default,field.skipSerializingIf]),[['a',true,'Vec::is_empty'],['b',false,'::local::predicate'],['c',false,null]]);assert.equal(row.fields[0].helperAttributes.length,2);assert.equal(source.slice(row.fields[0].fieldDefinitionSpan.start,row.fields[0].fieldDefinitionSpan.end),'pub(crate) a:Vec<String>');assert.equal(source.slice(row.fields[0].helperAttributes[0].attribute.span.start,row.fields[0].helperAttributes[0].attribute.span.end),'#[serde(default)]');for(const key of ['namespaceAuthority','ownerAuthority','copyAuthority','noDropAuthority','constAuthority','generatedHelperBehavior'])assert.equal(row[key],false);assert.throws(()=>row.fields[0].default=false,TypeError);

@@ -1,9 +1,11 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // Positive equality is optional storage work, never a source/owner verdict.
 import {translateProject} from '../project.mjs';
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
 import {legacyProofConsumerSource} from './fixtures/native-proof-json-format.mjs';
-import {readFileSync,writeFileSync,mkdtempSync,mkdirSync,rmSync} from 'node:fs';
+import {writeFileSync,mkdtempSync,mkdirSync,rmSync} from 'node:fs';
+import {readCompilerAliasHistory as readFileSync} from './fixtures/compiler-data-alias-history.mjs';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {pathToFileURL} from 'node:url';
@@ -66,7 +68,7 @@ async function modules(t,retain,{instrument=false}={}){
  }
  return result;
 }
-function sourceInput(source){const cargo={manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')},dependencies=loadDeriveDependencyProof(cargo),views=captureSourceModuleViews({source,sourcePath:'src/lib.rs',compilationProfile:PRODUCTION_PROFILE}),module={file:'src/lib.rs',path:[],source,sourceView:views.views[0],compilationProfile:PRODUCTION_PROFILE},context=createDeriveFootprintContext({modules:[module],dependencies,compilationProfile:PRODUCTION_PROFILE}),certificate=context.certificates[0];assert.ok(certificate);const attribute=certificate.attributes.find(row=>row.name==='derive');return {source,cargo,dependencies,views,module,context,certificate,select:name=>({context,certificate,invocation:{path:[name],attributeSpan:attribute.span}})};}
+function sourceInput(source){const cargo={manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')},dependencies=loadDeriveDependencyProof(cargo),views=captureSourceModuleViews({source,sourcePath:'src/lib.rs',compilationProfile:PRODUCTION_PROFILE}),module={file:'src/lib.rs',path:[],source,sourceView:views.views[0],compilationProfile:PRODUCTION_PROFILE},context=createDeriveFootprintContext({modules:[module],dependencies,compilationProfile:PRODUCTION_PROFILE}),certificate=context.certificates[0];assert.ok(certificate);const attribute=certificate.attributes.find(row=>row.name==='derive');return {source,cargo,dependencies,views,module,context,certificate,select:name=>({context,certificate,invocation:{path:[name],attributeSpan:attribute.span}})};}
 
 test('positive primitive and frozen wrapper equality grants no authority or new cache activity',async(t,retain)=>{
  const pairs=[[null,null],[true,true],[false,false],['猫😀\ud800','猫😀\ud800'],[7,7],[-0,0]];

@@ -17,7 +17,7 @@ export function outer(input) {
   const clean = value => typeof value === 'string' ? value.trim() : null;
   return missing(clean(input));
 }`;
-const row = (name = 'one', text = source) => ({ path: `packages/javascript/native/${name}.mjs`, source: text });
+const row = (name = 'one', text = source) => ({ path: `js/src/${name}.mjs`, source: text });
 
 test('bulk drafts retain refused owners and independent lexical bodies, with deterministic distinct identities', () => {
   const a = buildNativePortableArtifacts([row('two'), row()]);
@@ -37,7 +37,7 @@ test('bulk drafts retain refused owners and independent lexical bodies, with det
     }
   }
   assert.throws(() => buildNativePortableArtifacts([row(), row()]), /duplicate/u);
-  assert.throws(() => buildNativePortableArtifacts([{ ...row(), path: 'packages/javascript/native/../escape.mjs' }]), /invalid/u);
+  assert.throws(() => buildNativePortableArtifacts([{ ...row(), path: 'js/src/../escape.mjs' }]), /invalid/u);
   assert.throws(() => buildNativePortableArtifacts([row('bad', 'export function broken(')]), /incomplete scoped/u);
 });
 
@@ -54,7 +54,7 @@ test('emitted scoped TypeScript compiles strictly and preserves independently au
     assert.deepEqual(ts.getPreEmitDiagnostics(program).map((diagnostic) => ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n')), []);
     const meta = parseMeta(artifacts.get('tools/translation/js-to-rust/generated/native-portable/scoped/one.lino'));
     const name = camelFromSnake(meta[0].name);
-    const text = `${artifacts.get('packages/typescript/native/portable-draft/scoped/one.ts')}\nexport { ${name} };\n`;
+    const text = `${artifacts.get('ts/src/portable-draft/scoped/one.ts')}\nexport { ${name} };\n`;
     const erased = ts.transpileModule(text, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText;
     const target = join(directory, 'target.mjs'); writeFileSync(target, erased);
     const fn = (await import(pathToFileURL(target).href))[name];
@@ -68,12 +68,12 @@ test('emitted scoped TypeScript compiles strictly and preserves independently au
 test('regeneration clears newly refused bodies and reports/removes stale drafts without mutating in check mode', { timeout: 30_000 }, () => {
   const root = mkdtempSync(join(tmpdir(), 'router-native-portable-drift-'));
   try {
-    for (const path of ['packages/javascript/portable/policy.mjs', 'parity/fixtures/js-first/policy.json', 'parity/fixtures/js-first/unsupported.json']) {
+    for (const path of ['js/portable/policy.mjs', 'parity/fixtures/js-first/policy.json', 'parity/fixtures/js-first/unsupported.json']) {
       mkdirSync(dirname(join(root, path)), { recursive: true }); writeFileSync(join(root, path), readFileSync(join(ROOT, path)));
     }
     const input = join(root, row().path); mkdirSync(dirname(input), { recursive: true }); writeFileSync(input, source);
     regenerate(root);
-    const target = 'packages/typescript/native/portable-draft/scoped/one.ts';
+    const target = 'ts/src/portable-draft/scoped/one.ts';
     const original = readFileSync(join(root, target), 'utf8');
     regenerateNativeTypeScript(root, { sourceRoot: ROOT });
     assert.equal(readFileSync(join(root, target), 'utf8'), original);
@@ -112,7 +112,7 @@ test('bulk census separates conditional private definitions and retains producer
   const metaPath = 'tools/translation/js-to-rust/generated/native-portable/scoped/conditional.lino';
   const program = parseMeta(artifacts.get(metaPath));
   assert.equal(program[0].conditionalInputs, true);
-  assert.match(artifacts.get('packages/typescript/native/portable-draft/scoped/conditional.ts'), /conditional/u);
+  assert.match(artifacts.get('ts/src/portable-draft/scoped/conditional.ts'), /conditional/u);
   assert.match(artifacts.get('tools/translation/js-to-rust/generated/native-portable/scoped/conditional.rs.txt'), /conditional/u);
   assert.equal(manifest.contract.runtimeParity, false);
 });
@@ -137,7 +137,7 @@ test('checked original owned-call bodies keep their intrinsic qualification and 
   const program=parseMeta(artifacts.get('tools/translation/js-to-rust/generated/native-portable/top-level/source-calls.lino'));
   assert.equal(program[0].conditionalCalls,true);assert.equal(program[0].sourceCalls.iterations[0].standardArraySomeRequired,true);assert.equal(program[0].sourceCalls.iterations[0].lookupStabilityProved,false);
   assert.equal(manifest.modules[0].topLevel.items[0].coverageContract,'conditional-original-body-draft');
-  for(const path of ['packages/typescript/native/portable-draft/top-level/source-calls.ts','tools/translation/js-to-rust/generated/native-portable/top-level/source-calls.rs.txt'])assert.match(artifacts.get(path),/Conditional original body draft/u);
+  for(const path of ['ts/src/portable-draft/top-level/source-calls.ts','tools/translation/js-to-rust/generated/native-portable/top-level/source-calls.rs.txt'])assert.match(artifacts.get(path),/Conditional original body draft/u);
   for(const mutate of [item=>delete item.conditionalCalls,item=>item.sourceCalls.iterations[0].lookupStabilityProved=true,item=>delete item.sourceCalls]){const wrong=JSON.parse(JSON.stringify(program[0]));mutate(wrong);assert.throws(()=>parseMeta(toLino(wrong)));}
   const changed=buildNativePortableArtifacts([row('changed','Array.prototype.some=evil;'+source)]);assert.equal(changed.manifest.topLevel.translatedItems,0);assert.equal(changed.manifest.scopedFunctions.translatedItems,0);
   assert.equal(manifest.contract.runtimeParity,false);
@@ -157,6 +157,6 @@ test('genuine imported constructor bodies stay conditional and require the origi
   assert.throws(()=>parseMeta(meta),/copied or foreign/u);
   const foreign=createConstructorSourceGraph(sources.map(source=>({...source,source:source.source.replace('status=400','status=401')})));assert.throws(()=>parseMeta(meta,{constructorGraph:foreign}),/producer graph/u);
   for(const changed of [sources.slice(1),sources.map(source=>({...source,source:source.source+';Array.prototype.includes=evil;'}))]){const current=buildNativePortableArtifacts(changed);assert.equal(current.manifest.topLevel.translatedItems,0);assert.equal(current.manifest.topLevel.conditionalPrivateBodyDraftItems,0);}
-  const typescript=artifacts.get('packages/typescript/native/portable-draft/top-level/constructor-owner.ts');assert.match(typescript,/import \{ Failure as routerOriginalError0 \} from "\.\.\/\.\.\/constructor-error\.js"/u);assert.match(typescript,/unknown/u);
+  const typescript=artifacts.get('ts/src/portable-draft/top-level/constructor-owner.ts');assert.match(typescript,/import \{ Failure as routerOriginalError0 \} from "\.\.\/\.\.\/constructor-error\.js"/u);assert.match(typescript,/unknown/u);
   assert.match(artifacts.get('tools/translation/js-to-rust/generated/native-portable/top-level/constructor-owner.rs.txt'),/Result<JsPayload<'a>, SourceErrorProjection>/u);assert.equal(manifest.contract.runtimeParity,false);
 });

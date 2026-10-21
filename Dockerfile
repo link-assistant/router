@@ -12,6 +12,7 @@ RUN apt-get update && \
 
 # Copy manifests first for dependency caching
 COPY Cargo.toml Cargo.lock ./
+COPY rust/Cargo.toml rust/Cargo.toml
 
 # Cargo validates every declared target even when only binaries are built.
 # Generate all paths from the manifest instead of maintaining a list (#687).

@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -7,7 +8,7 @@ import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {parseProgram} from '../semantic-meta.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8');
+const root=new URL('../../../',import.meta.url),manifest=readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock=readFileSync(repositorySourceURL('Cargo.lock',root),'utf8');
 const dependencies=loadDeriveDependencyProof({manifest,lock}),hash=value=>createHash('sha256').update(value).digest('hex');
 const pins=new Map([
   ['src/token.rs','7ca5ba2669621a395ddf9f9fbc3ce32c9c033be6fc8acea5b6ec264c233e53be'],
@@ -16,7 +17,7 @@ const pins=new Map([
   ['src/token_validate.rs','18f8c47dea08dca31c905576173d9ce9a7716bcf31cb51a646b70e0900144112'],
   ['src/token_error.rs','7461c7d04125715cbf5355778a10ba275d0af3742c61f12b99d37368af090353'],
 ]);
-const sources=new Map([...pins].map(([path,digest])=>{const source=readFileSync(new URL(path,root),'utf8');assert.equal(hash(source),digest);return [path,source];}));
+const sources=new Map([...pins].map(([path,digest])=>{const source=readFileSync(repositorySourceURL(path,root),'utf8');assert.equal(hash(source),digest);return [path,source];}));
 const project=()=>translateProject({entry:'src/token.rs',paths:[...sources.keys()],readSource:path=>sources.get(path),cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
 const tag=($,fields={})=>Object.freeze({$,...fields});
 

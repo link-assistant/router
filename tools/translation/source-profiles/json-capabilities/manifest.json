@@ -1,1 +1,1605 @@
-{"schema":"locked-serde-json-feature-inputs-v1","manifestSha256":"328a6026c740f42468d0752d9cea4cb4930304b45c979b03d3f3db9ce658d476","lockSha256":"c1cb53b3b73c3a547d362c88c400d0a81457876f4c3e5537acb2fbd3e4aececa","root":"link-assistant-router","packages":[{"name":"axum","version":"0.8.9","lockedArchiveSha256":"31b698c5f9a010f6573133b09e0de5408834d0c82f8d7475a89fc1867a71cd90","manifest":{"path":"axum-0.8.9-Cargo.toml.gz","sourcePath":"axum-0.8.9/Cargo.toml","bytes":8126,"sha256":"ed35dc0f840f27c8b953d9789fff678c0f5b2f10229c8f50d70a1a5857bdd83f","archiveSha256":"050534042870506fa6e04c8a426999a5b37b25449cf71b2de3e9be2f03c1ecd0"},"licenses":[{"path":"axum-0.8.9-LICENSE.gz","sourcePath":"axum-0.8.9/LICENSE","bytes":1061,"sha256":"6a13bc24a100a6812f053879ec51b126b103af7cda6dbf48c4188722da44da9f","archiveSha256":"4d7d0704ba6c5cd399c600124084ef94e74f20552797db303b4b6d0c5f6f2d7f"}],"features":{"__private":["tokio","http1","dep:reqwest"],"__private_docs":["axum-core/__private_docs","tower/full","dep:serde","dep:tower-http"],"default":["form","http1","json","matched-path","original-uri","query","tokio","tower-log","tracing"],"form":["dep:form_urlencoded","dep:serde_urlencoded","dep:serde_path_to_error"],"http1":["dep:hyper","hyper?/http1","hyper-util?/http1"],"http2":["dep:hyper","hyper?/http2","hyper-util?/http2"],"json":["dep:serde_json","dep:serde_path_to_error"],"macros":["dep:axum-macros"],"matched-path":[],"multipart":["dep:multer"],"original-uri":[],"query":["dep:form_urlencoded","dep:serde_urlencoded","dep:serde_path_to_error"],"tokio":["dep:hyper-util","dep:tokio","tokio/net","tokio/rt","tower/make","tokio/macros"],"tower-log":["tower/log"],"tracing":["dep:tracing","axum-core/tracing"],"ws":["dep:hyper","tokio","dep:tokio-tungstenite","dep:sha1","dep:base64"]},"dependencies":[{"alias":"reqwest","package":"reqwest","version":"0.13.5","kind":"dependencies","conditional":null,"optional":true,"defaultFeatures":false,"features":["json","stream","multipart"]},{"alias":"serde_json","package":"serde_json","version":"1.0.151","kind":"dependencies","conditional":null,"optional":true,"defaultFeatures":true,"features":["raw_value"]},{"alias":"reqwest","package":"reqwest","version":"0.13.5","kind":"dev-dependencies","conditional":null,"optional":false,"defaultFeatures":false,"features":["json","stream","multipart"]},{"alias":"serde_json","package":"serde_json","version":"1.0.151","kind":"dev-dependencies","conditional":null,"optional":false,"defaultFeatures":true,"features":["raw_value"]},{"alias":"tracing-subscriber","package":"tracing-subscriber","version":"0.3.23","kind":"dev-dependencies","conditional":null,"optional":false,"defaultFeatures":true,"features":["json"]}],"unrelatedDependencyAliases":["axum-core","axum-macros","base64","bytes","form_urlencoded","futures-util","http","http-body","http-body-util","hyper","hyper-util","itoa","matchit","memchr","mime","multer","percent-encoding","pin-project-lite","serde","serde_core","serde_path_to_error","serde_urlencoded","sha1","sync_wrapper","tokio","tokio-tungstenite","tower","tower-http","tower-layer","tower-service","tracing"]},{"name":"cookie_store","version":"0.22.1","lockedArchiveSha256":"15b2c103cf610ec6cae3da84a766285b42fd16aad564758459e6ecf128c75206","manifest":{"path":"cookie_store-0.22.1-Cargo.toml.gz","sourcePath":"cookie_store-0.22.1/Cargo.toml","bytes":2214,"sha256":"def3d47bdb9ee66fb2463cbd7607a4ac4d65ca3553f260f69a71905b9d2fadcd","archiveSha256":"ff53de39e6c609a32344b24d3e842422a3d85e3ed45cb29f4bfe54f2ee6d92de"},"licenses":[{"path":"cookie_store-0.22.1-LICENSE-APACHE.gz","sourcePath":"cookie_store-0.22.1/LICENSE-APACHE","bytes":11357,"sha256":"b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1","archiveSha256":"7199c994418c80d76a28f9b3745c21eaac5081bdf1b9e05a15b11db48edb0fe3"},{"path":"cookie_store-0.22.1-LICENSE-MIT.gz","sourcePath":"cookie_store-0.22.1/LICENSE-MIT","bytes":1057,"sha256":"afb11426e09da40a1ae4f8fa17ddcc6b6a52d14df04c29bc5bcd06eb8730624d","archiveSha256":"3e489fdffd112701151a88bc33b0b4bae1031c682d993a27999449924558c074"}],"features":{"default":["public_suffix","serde_json"],"log_secure_cookie_values":[],"preserve_order":["dep:indexmap"],"public_suffix":["dep:publicsuffix"],"serde":["dep:serde","dep:serde_derive"],"serde_json":["serde","dep:serde_json"],"serde_ron":["serde","dep:ron"],"wasm-bindgen":["time/wasm-bindgen"]},"dependencies":[{"alias":"serde_json","package":"serde_json","version":"1.0.151","kind":"dependencies","conditional":null,"optional":true,"defaultFeatures":true,"features":[]}],"unrelatedDependencyAliases":["cookie","document-features","idna","indexmap","log","publicsuffix","ron","serde","serde_derive","time","url"]},{"name":"criterion","version":"0.8.2","lockedArchiveSha256":"950046b2aa2492f9a536f5f4f9a3de7b9e2476e575e05bd6c333371add4d98f3","manifest":{"path":"criterion-0.8.2-Cargo.toml.gz","sourcePath":"criterion-0.8.2/Cargo.toml","bytes":3532,"sha256":"058e4ce4a339af60716255c0d662c3efe6efac9da0905371c7f3ff3019822352","archiveSha256":"b3fc12f0f2933b78c7c98c36d3c051a2b3cf668e905c218508e0ba935eea9ec2"},"licenses":[{"path":"criterion-0.8.2-LICENSE-APACHE.gz","sourcePath":"criterion-0.8.2/LICENSE-APACHE","bytes":10847,"sha256":"a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2","archiveSha256":"31cd5c988a03f359c79ffd86104335779b692f972595e34078367b1f5f5d77eb"},{"path":"criterion-0.8.2-LICENSE-MIT.gz","sourcePath":"criterion-0.8.2/LICENSE-MIT","bytes":1058,"sha256":"4594f18866be94a3ce309ed8f94d92699f5b87739b76e1216addca75f5253fa7","archiveSha256":"ae7269467a86499c2654ebb319e669aa73bf48a099faa4b120834eb292303638"}],"features":{"async":[],"async_futures":["dep:futures","async"],"async_smol":["dep:smol","async"],"async_tokio":["dep:tokio","async"],"cargo_bench_support":[],"csv_output":["dep:csv"],"default":["rayon","plotters","cargo_bench_support"],"html_reports":[],"plotters":["dep:plotters"],"rayon":["dep:rayon"],"real_blackbox":[],"stable":["csv_output","html_reports","async_futures","async_smol","async_tokio"]},"dependencies":[{"alias":"serde_json","package":"serde_json","version":"1.0.151","kind":"dependencies","conditional":null,"optional":false,"defaultFeatures":true,"features":[]},{"alias":"tinytemplate","package":"tinytemplate","version":"1.2.1","kind":"dependencies","conditional":null,"optional":false,"defaultFeatures":true,"features":[]}],"unrelatedDependencyAliases":["alloca","anes","cast","ciborium","clap","criterion-plot","csv","futures","itertools","num-traits","oorandom","page_size","plotters","rayon","regex","serde","smol","tokio","walkdir"]},{"name":"jsonschema","version":"0.58.5","lockedArchiveSha256":"ea18b8d5e1469b1bdd6b349169305141316a7c26da27f239773b65c830c0f5d6","manifest":{"path":"jsonschema-0.58.5-Cargo.toml.gz","sourcePath":"jsonschema-0.58.5/Cargo.toml","bytes":7603,"sha256":"eb28c386e084a7f954c7feb59ab5bcd40b3113261092b71e04016447f6fe823b","archiveSha256":"ec797657023a02ebe6a27e11ca9f97d5c412380b1be329b199db56800b168eb7"},"licenses":[{"path":"jsonschema-0.58.5-LICENSE.gz","sourcePath":"jsonschema-0.58.5/LICENSE","bytes":1075,"sha256":"117829c3ca21efb132d81a44b55363d395ab8eea18526873bc828da4c0e5f038","archiveSha256":"ef8a8c3333e1f0a59469686e763bfb17ce02dab8217d6c44b4e9ad4c71d3a85b"}],"features":{"arbitrary-precision":["serde_json/arbitrary_precision","dep:num-bigint","jsonschema-macros?/arbitrary-precision","jsonschema-value/arbitrary-precision"],"conformance":["jsonschema-value/conformance"],"default":["resolve-http","resolve-file","tls-aws-lc-rs","idna"],"idna":["dep:idna"],"jsonb":["jsonschema-value/jsonb"],"macros":["dep:jsonschema-macros","jsonschema-macros/float-roundtrip","jsonschema-value/macros"],"magnus":["jsonschema-value/magnus","dep:magnus"],"pyo3":["jsonschema-value/pyo3","dep:pyo3"],"resolve-async":["referencing/retrieve-async","reqwest","dep:async-trait","dep:tokio"],"resolve-file":[],"resolve-http":["reqwest","dep:rustls"],"tls-aws-lc-rs":["rustls/aws-lc-rs"],"tls-ring":["rustls/ring"]},"dependencies":[{"alias":"jsonschema-value","package":"jsonschema-value","version":"0.58.6","kind":"dependencies","conditional":null,"optional":false,"defaultFeatures":true,"features":[]},{"alias":"referencing","package":"referencing","version":"0.58.6","kind":"dependencies","conditional":null,"optional":false,"defaultFeatures":true,"features":[]},{"alias":"serde_json","package":"serde_json","version":"1.0.151","kind":"dependencies","conditional":null,"optional":false,"defaultFeatures":true,"features":["float_roundtrip"]},{"alias":"reqwest","package":"reqwest","version":"0.13.5","kind":"dependencies","conditional":"cfg(all(target_arch = \"wasm32\", any(target_os = \"unknown\", target_os = \"none\")))","optional":true,"defaultFeatures":false,"features":["json"]},{"alias":"reqwest","package":"reqwest","version":"0.13.5","kind":"dependencies","conditional":"cfg(not(target_arch = \"wasm32\"))","optional":true,"defaultFeatures":false,"features":["blocking","json","http2","rustls-no-provider"]},{"alias":"criterion","package":"criterion","version":"0.8.2","kind":"dev-dependencies","conditional":"cfg(not(target_arch = \"wasm32\"))","optional":false,"defaultFeatures":false,"features":[]}],"unrelatedDependencyAliases":["ahash","async-trait","bytecount","data-encoding","email_address","fancy-regex","fraction","getrandom","idna","itoa","jsonschema-macros","jsonschema-regex","magnus","num-bigint","num-cmp","num-traits","percent-encoding","pyo3","regex","rustls","serde","strum","tokio","unicode-general-category","uuid-simd"]},{"name":"jsonschema-value","version":"0.58.6","lockedArchiveSha256":"39b7670345e5ce87371339d13705dbb9276b7e3e934bbe1efa2c6734a1f65a96","manifest":{"path":"jsonschema-value-0.58.6-Cargo.toml.gz","sourcePath":"jsonschema-value-0.58.6/Cargo.toml","bytes":3122,"sha256":"8270a39ed0531eaf4de5ff516df9e09d17d3c2a697b0b428b02673a661f37844","archiveSha256":"72e0718752339e9aa695fa228bb48bf4a7a1649cd04e7b7ca7c276cfa7302559"},"licenses":[],"features":{"arbitrary-precision":["serde_json/arbitrary_precision","dep:num-bigint"],"conformance":[],"default":["serde_json"],"jsonb":["serde_json"],"jsonb-testkit":["jsonb"],"macros":[],"magnus":["dep:magnus","dep:rb-sys"],"magnus-tests":["magnus","magnus/embed"],"pyo3":["dep:pyo3","dep:pyo3-build-config"],"pyo3-tests":["pyo3","pyo3/auto-initialize"],"serde_json":["dep:bytecount"]},"dependencies":[{"alias":"serde_json","package":"serde_json","version":"1.0.151","kind":"dependencies","conditional":null,"optional":false,"defaultFeatures":true,"features":["float_roundtrip"]}],"unrelatedDependencyAliases":["ahash","bytecount","fraction","getrandom","magnus","num-bigint","num-cmp","num-traits","pyo3","rb-sys","zmij"]},{"name":"jsonwebtoken","version":"11.1.0","lockedArchiveSha256":"e75fe14a82d81e5f5af639997db37d8b96045938a7ac6ab18cdbe1c7467e05e1","manifest":{"path":"jsonwebtoken-11.1.0-Cargo.toml.gz","sourcePath":"jsonwebtoken-11.1.0/Cargo.toml","bytes":3798,"sha256":"9dc09ddaf9c1ba49e1686f68317a75fb1f316d5954e80f476a492607de7304a0","archiveSha256":"4901ed6fd4b01c4f6e92baa52cd23140e88ed825ec50b1a75a0f0ba2acb47e54"},"licenses":[{"path":"jsonwebtoken-11.1.0-LICENSE.gz","sourcePath":"jsonwebtoken-11.1.0/LICENSE","bytes":1084,"sha256":"a8012be84ea176195305bfb4e9109ed6f28860a8e697bc50302e75c2040813f3","archiveSha256":"12d189a5ec1b771157eb0002cd64acf150429634523c95a43f66706abaaa7fc7"}],"features":{"aws_lc_rs":["dep:aws-lc-rs"],"default":["use_pem"],"rust_crypto":["dep:ed25519-dalek","dep:hmac","dep:p256","dep:p384","dep:rand","dep:rsa","dep:sha2"],"use_pem":["dep:pem","dep:simple_asn1"]},"dependencies":[{"alias":"serde_json","package":"serde_json","version":"1.0.151","kind":"dependencies","conditional":null,"optional":false,"defaultFeatures":true,"features":[]},{"alias":"criterion","package":"criterion","version":"0.8.2","kind":"dev-dependencies","conditional":"cfg(all(target_arch = \"wasm32\", not(any(target_os = \"emscripten\", target_os = \"wasi\"))))","optional":false,"defaultFeatures":false,"features":[]},{"alias":"criterion","package":"criterion","version":"0.8.2","kind":"dev-dependencies","conditional":"cfg(not(all(target_arch = \"wasm32\", not(any(target_os = \"emscripten\", target_os = \"wasi\")))))","optional":false,"defaultFeatures":true,"features":[]}],"unrelatedDependencyAliases":["aws-lc-rs","base64","ed25519-dalek","getrandom","hmac","js-sys","p256","p384","pem","rand","rsa","serde","sha2","signature","simple_asn1","zeroize"]},{"name":"link-assistant-router","version":"1.24.1","lockedArchiveSha256":null,"manifest":{"path":"link-assistant-router-1.24.1-Cargo.toml.gz","sourcePath":"Cargo.toml","bytes":5296,"sha256":"328a6026c740f42468d0752d9cea4cb4930304b45c979b03d3f3db9ce658d476","archiveSha256":"aa246918bc4fe5820bfbe497c1cb0641dadca706559ff20603c16fab870dd3df"},"licenses":[],"features":{},"dependencies":[{"alias":"axum","package":"axum","version":"0.8.9","kind":"dependencies","conditional":null,"optional":false,"defaultFeatures":true,"features":["macros","ws"]},{"alias":"reqwest","package":"reqwest","version":"0.13.5","kind":"dependencies","conditional":null,"optional":false,"defaultFeatures":true,"features":["stream","json","form","query","cookies","socks"]},{"alias":"cookie_store","package":"cookie_store","version":"0.22.1","kind":"dependencies","conditional":null,"optional":false,"defaultFeatures":true,"features":[]},{"alias":"schemars","package":"schemars","version":"1.2.2","kind":"dependencies","conditional":null,"optional":false,"defaultFeatures":true,"features":["chrono04"]},{"alias":"jsonschema","package":"jsonschema","version":"0.58.5","kind":"dependencies","conditional":null,"optional":false,"defaultFeatures":false,"features":[]},{"alias":"serde_json","package":"serde_json","version":"1.0.151","kind":"dependencies","conditional":null,"optional":false,"defaultFeatures":true,"features":[]},{"alias":"jsonwebtoken","package":"jsonwebtoken","version":"11.1.0","kind":"dependencies","conditional":null,"optional":false,"defaultFeatures":false,"features":["rust_crypto"]},{"alias":"tracing-subscriber","package":"tracing-subscriber","version":"0.3.23","kind":"dependencies","conditional":null,"optional":false,"defaultFeatures":true,"features":["env-filter","json"]},{"alias":"criterion","package":"criterion","version":"0.8.2","kind":"dev-dependencies","conditional":null,"optional":false,"defaultFeatures":false,"features":["cargo_bench_support"]}],"unrelatedDependencyAliases":["aes-gcm","async-trait","axum-server","base64","brotli","bytes","chrono","clap","doublets","flate2","fs2","futures-util","getrandom","hex","http","http-body-util","hyper","hyper-util","link-cli","links-notation","lino-arguments","lino-objects-codec","log-lazy","os_info","portable-pty","process-wrap","rcgen","reflink-copy","rust-embed","serde","sha2","tempfile","tokio","tokio-tungstenite","toml_edit","tower","tower-http","tracing","url","uuid","vt100","zstd"]},{"name":"referencing","version":"0.58.6","lockedArchiveSha256":"558f3855529c0a7e78a48e409fa653456e55f1b167eab4109c16a255b7727e3f","manifest":{"path":"referencing-0.58.6-Cargo.toml.gz","sourcePath":"referencing-0.58.6/Cargo.toml","bytes":2857,"sha256":"b76476723bee5d0c68b8e970324254a5a4d75d7a264d6a31f1664f5abc1f87a4","archiveSha256":"3d46f554c212bf862302c88c5e3785f7d8fbb47f94bb164f38be23a7c8bf56dd"},"licenses":[{"path":"referencing-0.58.6-LICENSE.gz","sourcePath":"referencing-0.58.6/LICENSE","bytes":1075,"sha256":"117829c3ca21efb132d81a44b55363d395ab8eea18526873bc828da4c0e5f038","archiveSha256":"ef8a8c3333e1f0a59469686e763bfb17ce02dab8217d6c44b4e9ad4c71d3a85b"}],"features":{"default":[],"retrieve-async":["dep:async-trait","dep:futures"]},"dependencies":[{"alias":"serde_json","package":"serde_json","version":"1.0.151","kind":"dependencies","conditional":null,"optional":false,"defaultFeatures":true,"features":[]},{"alias":"criterion","package":"criterion","version":"0.8.2","kind":"dev-dependencies","conditional":null,"optional":false,"defaultFeatures":false,"features":[]}],"unrelatedDependencyAliases":["ahash","async-trait","fluent-uri","futures","getrandom","hashbrown","itoa","micromap","parking_lot","percent-encoding"]},{"name":"reqwest","version":"0.13.5","lockedArchiveSha256":"16a1cfa75cc186dd73d5818e510e042e40927bccc9c236b061cea97e1eb08029","manifest":{"path":"reqwest-0.13.5-Cargo.toml.gz","sourcePath":"reqwest-0.13.5/Cargo.toml","bytes":13151,"sha256":"ab36603e15fa21c4fe1f4e9810245dcb06499cdcf6e6b07296e5d2a3c25c69a1","archiveSha256":"07d3ca0031fcc5866068b72753d9a3d1f5ab7a549e9949325ab1213021072b20"},"licenses":[{"path":"reqwest-0.13.5-LICENSE-APACHE.gz","sourcePath":"reqwest-0.13.5/LICENSE-APACHE","bytes":10833,"sha256":"751963a8b88c0e3a9f27e98933079fbcf09b9998b2c13ac49c2e4d58444520d6","archiveSha256":"e37f64f3dbd4907e096977e23b460a318036bb1a395a9d3869ba5b1f0815115d"},{"path":"reqwest-0.13.5-LICENSE-MIT.gz","sourcePath":"reqwest-0.13.5/LICENSE-MIT","bytes":1063,"sha256":"dd87e27dfbaa888cb77ea34592648a7743636b8dce07e49543bddda0fcfc73bc","archiveSha256":"46d0400326a9960206605e88578222b2dddc24b3315d62b1f73c0b3c50034aa9"}],"features":{"__native-tls":["dep:hyper-tls","dep:native-tls-crate","__tls","dep:tokio-native-tls"],"__native-tls-alpn":["native-tls-crate?/alpn","hyper-tls?/alpn"],"__rustls":["dep:hyper-rustls","dep:tokio-rustls","dep:rustls","__tls"],"__rustls-aws-lc-rs":["hyper-rustls?/aws-lc-rs","tokio-rustls?/aws-lc-rs","rustls?/aws-lc-rs","quinn?/rustls-aws-lc-rs"],"__tls":["dep:rustls-pki-types","tokio/io-util"],"blocking":["dep:futures-channel","futures-channel?/sink","dep:futures-util","futures-util?/io","futures-util?/sink","tokio/sync"],"brotli":["tower-http/decompression-br"],"charset":["dep:encoding_rs","dep:mime"],"cookies":["dep:cookie_crate","dep:cookie_store"],"default":["default-tls","charset","http2","system-proxy"],"default-tls":["rustls"],"deflate":["tower-http/decompression-deflate"],"form":["dep:serde","dep:serde_urlencoded"],"gzip":["tower-http/decompression-gzip"],"hickory-dns":["dep:hickory-resolver","dep:once_cell"],"http2":["dep:h2","hyper/http2","hyper-util/http2","hyper-rustls?/http2"],"http3":["rustls","dep:h3","dep:h3-quinn","dep:quinn","tokio/macros"],"json":["dep:serde","dep:serde_json"],"multipart":["dep:mime_guess","dep:futures-util"],"native-tls":["__native-tls","__native-tls-alpn"],"native-tls-no-alpn":["__native-tls"],"native-tls-vendored":["__native-tls","native-tls-crate?/vendored","__native-tls-alpn"],"native-tls-vendored-no-alpn":["__native-tls","native-tls-crate?/vendored"],"query":["dep:serde","dep:serde_urlencoded"],"rustls":["__rustls-aws-lc-rs","dep:rustls-platform-verifier","__rustls"],"rustls-no-provider":["dep:rustls-platform-verifier","__rustls"],"socks":[],"stream":["tokio/fs","dep:futures-util","dep:tokio-util","dep:wasm-streams"],"system-proxy":["hyper-util/client-proxy-system"],"zstd":["tower-http/decompression-zstd"]},"dependencies":[{"alias":"serde_json","package":"serde_json","version":"1.0.151","kind":"dependencies","conditional":null,"optional":true,"defaultFeatures":true,"features":[]},{"alias":"cookie_store","package":"cookie_store","version":"0.22.1","kind":"dependencies","conditional":"cfg(not(all(target_arch = \"wasm32\", any(target_os = \"unknown\", target_os = \"none\"))))","optional":true,"defaultFeatures":true,"features":[]}],"unrelatedDependencyAliases":["base64","bytes","cookie_crate","encoding_rs","futures-channel","futures-core","futures-util","h2","h3","h3-quinn","hickory-resolver","http","http-body","http-body-util","hyper","hyper-rustls","hyper-tls","hyper-util","js-sys","log","mime","mime_guess","native-tls-crate","once_cell","percent-encoding","pin-project-lite","quinn","rustls","rustls-pki-types","rustls-platform-verifier","serde","serde_urlencoded","sync_wrapper","tokio","tokio-native-tls","tokio-rustls","tokio-util","tower","tower-http","tower-service","url","wasm-bindgen","wasm-bindgen-futures","wasm-streams","web-sys"]},{"name":"schemars","version":"1.2.2","lockedArchiveSha256":"687274d293b6cdc6e73e0fee520bf2049650090d7164f87672d212a3c530cf4a","manifest":{"path":"schemars-1.2.2-Cargo.toml.gz","sourcePath":"schemars-1.2.2/Cargo.toml","bytes":6166,"sha256":"72e6395009b8393b5d1063333154dd421a58bb91cbbecaf0dde5320074c6c81e","archiveSha256":"1b787cc28e0a4763443b8796da9d83f7511ebc7e67ecc99adacea0b13431c031"},"licenses":[{"path":"schemars-1.2.2-LICENSE.gz","sourcePath":"schemars-1.2.2/LICENSE","bytes":1068,"sha256":"1954992a2b32e8a2af24a4c11b726902e344c1934b947a77f04d404908f8db30","archiveSha256":"faa1788b6b0fd51e8ae4272d33181a9a5f401bd0eb55714ed1d6b09ee9342f5b"}],"features":{"_ui_test":[],"default":["derive","std"],"derive":["schemars_derive"],"preserve_order":["serde_json/preserve_order"],"raw_value":["serde_json/raw_value"],"std":[]},"dependencies":[{"alias":"serde_json","package":"serde_json","version":"1.0.151","kind":"dependencies","conditional":null,"optional":false,"defaultFeatures":false,"features":["alloc"]},{"alias":"jsonschema","package":"jsonschema","version":"0.58.5","kind":"dev-dependencies","conditional":null,"optional":false,"defaultFeatures":false,"features":[]}],"unrelatedDependencyAliases":["arrayvec07","bigdecimal04","bytes1","chrono04","dyn-clone","either1","indexmap2","jiff02","ref-cast","rust_decimal1","schemars_derive","semver1","serde","smallvec1","smol_str02","smol_str03","url2","uuid1"]},{"name":"serde_json","version":"1.0.151","lockedArchiveSha256":"c841b55ecdae098c80dcae9cf767f6f8a0c2cdb3416bbef72181df4d0fe73f14","manifest":{"path":"serde_json-1.0.151-Cargo.toml.gz","sourcePath":"serde_json-1.0.151/Cargo.toml","bytes":3118,"sha256":"00b920255c320a278bf25b962b491263a19d8c90e12e4a91c1d823db71eabb2f","archiveSha256":"6e608d6f6f87bb51466bf7f0823e6e122970ecd3647c215d77626108e0086272"},"licenses":[{"path":"serde_json-1.0.151-LICENSE-APACHE.gz","sourcePath":"serde_json-1.0.151/LICENSE-APACHE","bytes":9723,"sha256":"62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a","archiveSha256":"743f15542c6a31637b66b952a6d7da62ac00374b5caae6530e8d7317c29b0fd6"},{"path":"serde_json-1.0.151-LICENSE-MIT.gz","sourcePath":"serde_json-1.0.151/LICENSE-MIT","bytes":1023,"sha256":"23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3","archiveSha256":"8a5eddda9f93808335b34a03abef4968118f82a872cd3f7b52cc43d3cf41b497"}],"features":{"alloc":["serde_core/alloc"],"arbitrary_precision":[],"default":["std"],"float_roundtrip":[],"preserve_order":["indexmap","std"],"raw_value":[],"std":["memchr/std","serde_core/std"],"unbounded_depth":[]},"dependencies":[{"alias":"serde_core","package":"serde_core","version":"1.0.220","kind":"dependencies","conditional":null,"optional":false,"defaultFeatures":false,"features":[]}],"unrelatedDependencyAliases":["indexmap","itoa","memchr","serde","zmij"]},{"name":"tinytemplate","version":"1.2.1","lockedArchiveSha256":"be4d6b5f19ff7664e8c98d03e2139cb510db9b0a60b55f8e8709b689d939b6bc","manifest":{"path":"tinytemplate-1.2.1-Cargo.toml.gz","sourcePath":"tinytemplate-1.2.1/Cargo.toml","bytes":1183,"sha256":"f5e4758f59eb8cebd7cfb8553d2158223f24fc4716327e2a1de3a8726b8bc441","archiveSha256":"58823facde584fcf300ba0e9ec5f245766c9052f425cc9a4927278d29777cbb3"},"licenses":[{"path":"tinytemplate-1.2.1-LICENSE-APACHE.gz","sourcePath":"tinytemplate-1.2.1/LICENSE-APACHE","bytes":10847,"sha256":"a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2","archiveSha256":"31cd5c988a03f359c79ffd86104335779b692f972595e34078367b1f5f5d77eb"},{"path":"tinytemplate-1.2.1-LICENSE-MIT.gz","sourcePath":"tinytemplate-1.2.1/LICENSE-MIT","bytes":1057,"sha256":"b6d10b8851a36aa6ec9612a186e56c2fcea0ad7db7b90c3dda1d16ae27c0077e","archiveSha256":"820c772961a472c1da7b9b08735304a5fb7f46f8ac7b0236b9758e2f8e7edc09"}],"features":{},"dependencies":[{"alias":"serde_json","package":"serde_json","version":"1.0.151","kind":"dependencies","conditional":null,"optional":false,"defaultFeatures":true,"features":[]},{"alias":"criterion","package":"criterion","version":"0.8.2","kind":"dev-dependencies","conditional":null,"optional":false,"defaultFeatures":true,"features":[]}],"unrelatedDependencyAliases":["serde"]},{"name":"tracing-subscriber","version":"0.3.23","lockedArchiveSha256":"cb7f578e5945fb242538965c2d0b04418d38ec25c79d160cd279bf0731c8d319","manifest":{"path":"tracing-subscriber-0.3.23-Cargo.toml.gz","sourcePath":"tracing-subscriber-0.3.23/Cargo.toml","bytes":6686,"sha256":"77e768dd859bd228564f4504598bc8cf8b226f3a54df03a506a67c3025aea8fb","archiveSha256":"36bfb76e21e869d70d907481020852b309bec40deb389d919b72a15a968ca678"},"licenses":[{"path":"tracing-subscriber-0.3.23-LICENSE.gz","sourcePath":"tracing-subscriber-0.3.23/LICENSE","bytes":1062,"sha256":"898b1ae9821e98daf8964c8d6c7f61641f5f5aa78ad500020771c0939ee0dea1","archiveSha256":"072c7206f6a620b7baffc8a56e870c6c5dc80c5d0616537213356959911ae7f1"}],"features":{"alloc":[],"ansi":["fmt","nu-ansi-term"],"default":["smallvec","fmt","ansi","tracing-log","std"],"env-filter":["matchers","once_cell","tracing","std","thread_local","dep:regex-automata"],"fmt":["registry","std"],"json":["tracing-serde","serde","serde_json"],"local-time":["time/local-offset"],"nu-ansi-term":["dep:nu-ansi-term"],"regex":[],"registry":["sharded-slab","thread_local","std"],"std":["alloc","tracing-core/std"],"valuable":["tracing-core/valuable","valuable_crate","valuable-serde","tracing-serde/valuable"]},"dependencies":[{"alias":"serde_json","package":"serde_json","version":"1.0.151","kind":"dependencies","conditional":null,"optional":true,"defaultFeatures":true,"features":[]},{"alias":"criterion","package":"criterion","version":"0.8.2","kind":"dev-dependencies","conditional":null,"optional":false,"defaultFeatures":false,"features":[]}],"unrelatedDependencyAliases":["chrono","matchers","nu-ansi-term","once_cell","parking_lot","regex-automata","serde","sharded-slab","smallvec","thread_local","time","tracing","tracing-core","tracing-log","tracing-serde","valuable-serde","valuable_crate"]},{"name":"serde_core","version":"1.0.229","lockedArchiveSha256":"67dca2c9c51e58a4791a4b1ed58308b39c64224d349a935ab5039aa360942a48","manifest":{"path":"serde_core-1.0.229-Cargo.toml.gz","sourcePath":"serde_core-1.0.229/Cargo.toml","bytes":1950,"sha256":"c6049e170e4f7c2b48749fefab59db583bfac4e466cde6d0c53e4f49bc5044f7","archiveSha256":"cde494e2d24c309618ea064e0b9ac493e3ace589f3ad1c2d18c241455dae963e"},"licenses":[{"path":"serde_core-1.0.229-LICENSE-MIT.gz","sourcePath":"serde_core-1.0.229/LICENSE-MIT","bytes":1023,"sha256":"23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3","archiveSha256":"8a5eddda9f93808335b34a03abef4968118f82a872cd3f7b52cc43d3cf41b497"},{"path":"serde_core-1.0.229-LICENSE-APACHE.gz","sourcePath":"serde_core-1.0.229/LICENSE-APACHE","bytes":9723,"sha256":"62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a","archiveSha256":"743f15542c6a31637b66b952a6d7da62ac00374b5caae6530e8d7317c29b0fd6"}],"features":{"alloc":[],"default":["std","result"],"rc":[],"result":[],"std":[],"unstable":[]},"dependencies":[],"unrelatedDependencyAliases":[]}],"closure":"all Cargo.lock incoming serde_json dependency manifests; Cargo-normalized original source tables; target dependencies conservatively unioned; dev/build roots separately refused until selected","unsupported":["registry patches/local replacements","unlisted profile manifests","workspace feature inheritance","unknown weak activation outside locked incoming graph"],"runtimeParity":false,"generatedTraitBehavior":false,"scope":"actual locked root default production serde_json/std and float_roundtrip feature activation; independent parser-capability admission, no macro lowering","parserSource":{"path":"serde_json-1.0.151-de.rs.gz","sourcePath":"serde_json-1.0.151/src/de.rs","bytes":86840,"sha256":"4998d7e252eb513be85b298e287048b4fb283882e9ba7df905f572f07200f3f3","archiveSha256":"e3fa5e28d55b40b078a1a679467a00fb534b354c32579ee72bf78cf81ef90f41","originalCrateSha256":"c841b55ecdae098c80dcae9cf767f6f8a0c2cdb3416bbef72181df4d0fe73f14"},"lexicalSources":[{"path":"serde_json-1.0.151-src-lexical-parse.rs.gz","sourcePath":"serde_json-1.0.151/src/lexical/parse.rs","bytes":2241,"sha256":"c2bfac4c70a19938ced61e991f4ec606764887cf12bac1a0978b5b5318a56aac","archiveSha256":"001117a56acb53117443e6fbcda8f4a6923d8f7300f89279e3cd77343bdff229"},{"path":"serde_json-1.0.151-src-lexical-algorithm.rs.gz","sourcePath":"serde_json-1.0.151/src/lexical/algorithm.rs","bytes":6117,"sha256":"54d599033e5a182a3076a0ba23a3550bf8680c99399b0313166b3c42c85b35b9","archiveSha256":"e02a74f9f314bfe362e977798f0df8bf45d7c9218c036192f179db4871d75b7c"},{"path":"serde_json-1.0.151-src-lexical-bhcomp.rs.gz","sourcePath":"serde_json-1.0.151/src/lexical/bhcomp.rs","bytes":7035,"sha256":"26f39d52008225a6b377d7246d326940d44200e160a7b4652733e712e1a45a04","archiveSha256":"cc112f40166e56bd03b5fcae75e2b8a86cd0a62e19009e39ff83e205d725fc06"},{"path":"serde_json-1.0.151-src-lexical-rounding.rs.gz","sourcePath":"serde_json-1.0.151/src/lexical/rounding.rs","bytes":7388,"sha256":"4762af3612880b17468ff2a1bb800c8e99f08330ae439699dd53d8dc5463ad13","archiveSha256":"4b0bb5a7690bebfb5cece63d6e96d2d8073d31945ddefeb32873d4771365e4d7"}]}
+{
+  "schema": "locked-serde-json-feature-inputs-v1",
+  "manifestSha256": "564ff6c847a421e8e751185facd37c3e21f76c6429bae44c1bdcf8312d103661",
+  "lockSha256": "c1cb53b3b73c3a547d362c88c400d0a81457876f4c3e5537acb2fbd3e4aececa",
+  "root": "link-assistant-router",
+  "packages": [
+    {
+      "name": "axum",
+      "version": "0.8.9",
+      "lockedArchiveSha256": "31b698c5f9a010f6573133b09e0de5408834d0c82f8d7475a89fc1867a71cd90",
+      "manifest": {
+        "path": "axum-0.8.9-Cargo.toml.gz",
+        "sourcePath": "axum-0.8.9/Cargo.toml",
+        "bytes": 8126,
+        "sha256": "ed35dc0f840f27c8b953d9789fff678c0f5b2f10229c8f50d70a1a5857bdd83f",
+        "archiveSha256": "050534042870506fa6e04c8a426999a5b37b25449cf71b2de3e9be2f03c1ecd0"
+      },
+      "licenses": [
+        {
+          "path": "axum-0.8.9-LICENSE.gz",
+          "sourcePath": "axum-0.8.9/LICENSE",
+          "bytes": 1061,
+          "sha256": "6a13bc24a100a6812f053879ec51b126b103af7cda6dbf48c4188722da44da9f",
+          "archiveSha256": "4d7d0704ba6c5cd399c600124084ef94e74f20552797db303b4b6d0c5f6f2d7f"
+        }
+      ],
+      "features": {
+        "__private": [
+          "tokio",
+          "http1",
+          "dep:reqwest"
+        ],
+        "__private_docs": [
+          "axum-core/__private_docs",
+          "tower/full",
+          "dep:serde",
+          "dep:tower-http"
+        ],
+        "default": [
+          "form",
+          "http1",
+          "json",
+          "matched-path",
+          "original-uri",
+          "query",
+          "tokio",
+          "tower-log",
+          "tracing"
+        ],
+        "form": [
+          "dep:form_urlencoded",
+          "dep:serde_urlencoded",
+          "dep:serde_path_to_error"
+        ],
+        "http1": [
+          "dep:hyper",
+          "hyper?/http1",
+          "hyper-util?/http1"
+        ],
+        "http2": [
+          "dep:hyper",
+          "hyper?/http2",
+          "hyper-util?/http2"
+        ],
+        "json": [
+          "dep:serde_json",
+          "dep:serde_path_to_error"
+        ],
+        "macros": [
+          "dep:axum-macros"
+        ],
+        "matched-path": [],
+        "multipart": [
+          "dep:multer"
+        ],
+        "original-uri": [],
+        "query": [
+          "dep:form_urlencoded",
+          "dep:serde_urlencoded",
+          "dep:serde_path_to_error"
+        ],
+        "tokio": [
+          "dep:hyper-util",
+          "dep:tokio",
+          "tokio/net",
+          "tokio/rt",
+          "tower/make",
+          "tokio/macros"
+        ],
+        "tower-log": [
+          "tower/log"
+        ],
+        "tracing": [
+          "dep:tracing",
+          "axum-core/tracing"
+        ],
+        "ws": [
+          "dep:hyper",
+          "tokio",
+          "dep:tokio-tungstenite",
+          "dep:sha1",
+          "dep:base64"
+        ]
+      },
+      "dependencies": [
+        {
+          "alias": "reqwest",
+          "package": "reqwest",
+          "version": "0.13.5",
+          "kind": "dependencies",
+          "conditional": null,
+          "optional": true,
+          "defaultFeatures": false,
+          "features": [
+            "json",
+            "stream",
+            "multipart"
+          ]
+        },
+        {
+          "alias": "serde_json",
+          "package": "serde_json",
+          "version": "1.0.151",
+          "kind": "dependencies",
+          "conditional": null,
+          "optional": true,
+          "defaultFeatures": true,
+          "features": [
+            "raw_value"
+          ]
+        },
+        {
+          "alias": "reqwest",
+          "package": "reqwest",
+          "version": "0.13.5",
+          "kind": "dev-dependencies",
+          "conditional": null,
+          "optional": false,
+          "defaultFeatures": false,
+          "features": [
+            "json",
+            "stream",
+            "multipart"
+          ]
+        },
+        {
+          "alias": "serde_json",
+          "package": "serde_json",
+          "version": "1.0.151",
+          "kind": "dev-dependencies",
+          "conditional": null,
+          "optional": false,
+          "defaultFeatures": true,
+          "features": [
+            "raw_value"
+          ]
+        },
+        {
+          "alias": "tracing-subscriber",
+          "package": "tracing-subscriber",
+          "version": "0.3.23",
+          "kind": "dev-dependencies",
+          "conditional": null,
+          "optional": false,
+          "defaultFeatures": true,
+          "features": [
+            "json"
+          ]
+        }
+      ],
+      "unrelatedDependencyAliases": [
+        "axum-core",
+        "axum-macros",
+        "base64",
+        "bytes",
+        "form_urlencoded",
+        "futures-util",
+        "http",
+        "http-body",
+        "http-body-util",
+        "hyper",
+        "hyper-util",
+        "itoa",
+        "matchit",
+        "memchr",
+        "mime",
+        "multer",
+        "percent-encoding",
+        "pin-project-lite",
+        "serde",
+        "serde_core",
+        "serde_path_to_error",
+        "serde_urlencoded",
+        "sha1",
+        "sync_wrapper",
+        "tokio",
+        "tokio-tungstenite",
+        "tower",
+        "tower-http",
+        "tower-layer",
+        "tower-service",
+        "tracing"
+      ]
+    },
+    {
+      "name": "cookie_store",
+      "version": "0.22.1",
+      "lockedArchiveSha256": "15b2c103cf610ec6cae3da84a766285b42fd16aad564758459e6ecf128c75206",
+      "manifest": {
+        "path": "cookie_store-0.22.1-Cargo.toml.gz",
+        "sourcePath": "cookie_store-0.22.1/Cargo.toml",
+        "bytes": 2214,
+        "sha256": "def3d47bdb9ee66fb2463cbd7607a4ac4d65ca3553f260f69a71905b9d2fadcd",
+        "archiveSha256": "ff53de39e6c609a32344b24d3e842422a3d85e3ed45cb29f4bfe54f2ee6d92de"
+      },
+      "licenses": [
+        {
+          "path": "cookie_store-0.22.1-LICENSE-APACHE.gz",
+          "sourcePath": "cookie_store-0.22.1/LICENSE-APACHE",
+          "bytes": 11357,
+          "sha256": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1",
+          "archiveSha256": "7199c994418c80d76a28f9b3745c21eaac5081bdf1b9e05a15b11db48edb0fe3"
+        },
+        {
+          "path": "cookie_store-0.22.1-LICENSE-MIT.gz",
+          "sourcePath": "cookie_store-0.22.1/LICENSE-MIT",
+          "bytes": 1057,
+          "sha256": "afb11426e09da40a1ae4f8fa17ddcc6b6a52d14df04c29bc5bcd06eb8730624d",
+          "archiveSha256": "3e489fdffd112701151a88bc33b0b4bae1031c682d993a27999449924558c074"
+        }
+      ],
+      "features": {
+        "default": [
+          "public_suffix",
+          "serde_json"
+        ],
+        "log_secure_cookie_values": [],
+        "preserve_order": [
+          "dep:indexmap"
+        ],
+        "public_suffix": [
+          "dep:publicsuffix"
+        ],
+        "serde": [
+          "dep:serde",
+          "dep:serde_derive"
+        ],
+        "serde_json": [
+          "serde",
+          "dep:serde_json"
+        ],
+        "serde_ron": [
+          "serde",
+          "dep:ron"
+        ],
+        "wasm-bindgen": [
+          "time/wasm-bindgen"
+        ]
+      },
+      "dependencies": [
+        {
+          "alias": "serde_json",
+          "package": "serde_json",
+          "version": "1.0.151",
+          "kind": "dependencies",
+          "conditional": null,
+          "optional": true,
+          "defaultFeatures": true,
+          "features": []
+        }
+      ],
+      "unrelatedDependencyAliases": [
+        "cookie",
+        "document-features",
+        "idna",
+        "indexmap",
+        "log",
+        "publicsuffix",
+        "ron",
+        "serde",
+        "serde_derive",
+        "time",
+        "url"
+      ]
+    },
+    {
+      "name": "criterion",
+      "version": "0.8.2",
+      "lockedArchiveSha256": "950046b2aa2492f9a536f5f4f9a3de7b9e2476e575e05bd6c333371add4d98f3",
+      "manifest": {
+        "path": "criterion-0.8.2-Cargo.toml.gz",
+        "sourcePath": "criterion-0.8.2/Cargo.toml",
+        "bytes": 3532,
+        "sha256": "058e4ce4a339af60716255c0d662c3efe6efac9da0905371c7f3ff3019822352",
+        "archiveSha256": "b3fc12f0f2933b78c7c98c36d3c051a2b3cf668e905c218508e0ba935eea9ec2"
+      },
+      "licenses": [
+        {
+          "path": "criterion-0.8.2-LICENSE-APACHE.gz",
+          "sourcePath": "criterion-0.8.2/LICENSE-APACHE",
+          "bytes": 10847,
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "archiveSha256": "31cd5c988a03f359c79ffd86104335779b692f972595e34078367b1f5f5d77eb"
+        },
+        {
+          "path": "criterion-0.8.2-LICENSE-MIT.gz",
+          "sourcePath": "criterion-0.8.2/LICENSE-MIT",
+          "bytes": 1058,
+          "sha256": "4594f18866be94a3ce309ed8f94d92699f5b87739b76e1216addca75f5253fa7",
+          "archiveSha256": "ae7269467a86499c2654ebb319e669aa73bf48a099faa4b120834eb292303638"
+        }
+      ],
+      "features": {
+        "async": [],
+        "async_futures": [
+          "dep:futures",
+          "async"
+        ],
+        "async_smol": [
+          "dep:smol",
+          "async"
+        ],
+        "async_tokio": [
+          "dep:tokio",
+          "async"
+        ],
+        "cargo_bench_support": [],
+        "csv_output": [
+          "dep:csv"
+        ],
+        "default": [
+          "rayon",
+          "plotters",
+          "cargo_bench_support"
+        ],
+        "html_reports": [],
+        "plotters": [
+          "dep:plotters"
+        ],
+        "rayon": [
+          "dep:rayon"
+        ],
+        "real_blackbox": [],
+        "stable": [
+          "csv_output",
+          "html_reports",
+          "async_futures",
+          "async_smol",
+          "async_tokio"
+        ]
+      },
+      "dependencies": [
+        {
+          "alias": "serde_json",
+          "package": "serde_json",
+          "version": "1.0.151",
+          "kind": "dependencies",
+          "conditional": null,
+          "optional": false,
+          "defaultFeatures": true,
+          "features": []
+        },
+        {
+          "alias": "tinytemplate",
+          "package": "tinytemplate",
+          "version": "1.2.1",
+          "kind": "dependencies",
+          "conditional": null,
+          "optional": false,
+          "defaultFeatures": true,
+          "features": []
+        }
+      ],
+      "unrelatedDependencyAliases": [
+        "alloca",
+        "anes",
+        "cast",
+        "ciborium",
+        "clap",
+        "criterion-plot",
+        "csv",
+        "futures",
+        "itertools",
+        "num-traits",
+        "oorandom",
+        "page_size",
+        "plotters",
+        "rayon",
+        "regex",
+        "serde",
+        "smol",
+        "tokio",
+        "walkdir"
+      ]
+    },
+    {
+      "name": "jsonschema",
+      "version": "0.58.5",
+      "lockedArchiveSha256": "ea18b8d5e1469b1bdd6b349169305141316a7c26da27f239773b65c830c0f5d6",
+      "manifest": {
+        "path": "jsonschema-0.58.5-Cargo.toml.gz",
+        "sourcePath": "jsonschema-0.58.5/Cargo.toml",
+        "bytes": 7603,
+        "sha256": "eb28c386e084a7f954c7feb59ab5bcd40b3113261092b71e04016447f6fe823b",
+        "archiveSha256": "ec797657023a02ebe6a27e11ca9f97d5c412380b1be329b199db56800b168eb7"
+      },
+      "licenses": [
+        {
+          "path": "jsonschema-0.58.5-LICENSE.gz",
+          "sourcePath": "jsonschema-0.58.5/LICENSE",
+          "bytes": 1075,
+          "sha256": "117829c3ca21efb132d81a44b55363d395ab8eea18526873bc828da4c0e5f038",
+          "archiveSha256": "ef8a8c3333e1f0a59469686e763bfb17ce02dab8217d6c44b4e9ad4c71d3a85b"
+        }
+      ],
+      "features": {
+        "arbitrary-precision": [
+          "serde_json/arbitrary_precision",
+          "dep:num-bigint",
+          "jsonschema-macros?/arbitrary-precision",
+          "jsonschema-value/arbitrary-precision"
+        ],
+        "conformance": [
+          "jsonschema-value/conformance"
+        ],
+        "default": [
+          "resolve-http",
+          "resolve-file",
+          "tls-aws-lc-rs",
+          "idna"
+        ],
+        "idna": [
+          "dep:idna"
+        ],
+        "jsonb": [
+          "jsonschema-value/jsonb"
+        ],
+        "macros": [
+          "dep:jsonschema-macros",
+          "jsonschema-macros/float-roundtrip",
+          "jsonschema-value/macros"
+        ],
+        "magnus": [
+          "jsonschema-value/magnus",
+          "dep:magnus"
+        ],
+        "pyo3": [
+          "jsonschema-value/pyo3",
+          "dep:pyo3"
+        ],
+        "resolve-async": [
+          "referencing/retrieve-async",
+          "reqwest",
+          "dep:async-trait",
+          "dep:tokio"
+        ],
+        "resolve-file": [],
+        "resolve-http": [
+          "reqwest",
+          "dep:rustls"
+        ],
+        "tls-aws-lc-rs": [
+          "rustls/aws-lc-rs"
+        ],
+        "tls-ring": [
+          "rustls/ring"
+        ]
+      },
+      "dependencies": [
+        {
+          "alias": "jsonschema-value",
+          "package": "jsonschema-value",
+          "version": "0.58.6",
+          "kind": "dependencies",
+          "conditional": null,
+          "optional": false,
+          "defaultFeatures": true,
+          "features": []
+        },
+        {
+          "alias": "referencing",
+          "package": "referencing",
+          "version": "0.58.6",
+          "kind": "dependencies",
+          "conditional": null,
+          "optional": false,
+          "defaultFeatures": true,
+          "features": []
+        },
+        {
+          "alias": "serde_json",
+          "package": "serde_json",
+          "version": "1.0.151",
+          "kind": "dependencies",
+          "conditional": null,
+          "optional": false,
+          "defaultFeatures": true,
+          "features": [
+            "float_roundtrip"
+          ]
+        },
+        {
+          "alias": "reqwest",
+          "package": "reqwest",
+          "version": "0.13.5",
+          "kind": "dependencies",
+          "conditional": "cfg(all(target_arch = \"wasm32\", any(target_os = \"unknown\", target_os = \"none\")))",
+          "optional": true,
+          "defaultFeatures": false,
+          "features": [
+            "json"
+          ]
+        },
+        {
+          "alias": "reqwest",
+          "package": "reqwest",
+          "version": "0.13.5",
+          "kind": "dependencies",
+          "conditional": "cfg(not(target_arch = \"wasm32\"))",
+          "optional": true,
+          "defaultFeatures": false,
+          "features": [
+            "blocking",
+            "json",
+            "http2",
+            "rustls-no-provider"
+          ]
+        },
+        {
+          "alias": "criterion",
+          "package": "criterion",
+          "version": "0.8.2",
+          "kind": "dev-dependencies",
+          "conditional": "cfg(not(target_arch = \"wasm32\"))",
+          "optional": false,
+          "defaultFeatures": false,
+          "features": []
+        }
+      ],
+      "unrelatedDependencyAliases": [
+        "ahash",
+        "async-trait",
+        "bytecount",
+        "data-encoding",
+        "email_address",
+        "fancy-regex",
+        "fraction",
+        "getrandom",
+        "idna",
+        "itoa",
+        "jsonschema-macros",
+        "jsonschema-regex",
+        "magnus",
+        "num-bigint",
+        "num-cmp",
+        "num-traits",
+        "percent-encoding",
+        "pyo3",
+        "regex",
+        "rustls",
+        "serde",
+        "strum",
+        "tokio",
+        "unicode-general-category",
+        "uuid-simd"
+      ]
+    },
+    {
+      "name": "jsonschema-value",
+      "version": "0.58.6",
+      "lockedArchiveSha256": "39b7670345e5ce87371339d13705dbb9276b7e3e934bbe1efa2c6734a1f65a96",
+      "manifest": {
+        "path": "jsonschema-value-0.58.6-Cargo.toml.gz",
+        "sourcePath": "jsonschema-value-0.58.6/Cargo.toml",
+        "bytes": 3122,
+        "sha256": "8270a39ed0531eaf4de5ff516df9e09d17d3c2a697b0b428b02673a661f37844",
+        "archiveSha256": "72e0718752339e9aa695fa228bb48bf4a7a1649cd04e7b7ca7c276cfa7302559"
+      },
+      "licenses": [],
+      "features": {
+        "arbitrary-precision": [
+          "serde_json/arbitrary_precision",
+          "dep:num-bigint"
+        ],
+        "conformance": [],
+        "default": [
+          "serde_json"
+        ],
+        "jsonb": [
+          "serde_json"
+        ],
+        "jsonb-testkit": [
+          "jsonb"
+        ],
+        "macros": [],
+        "magnus": [
+          "dep:magnus",
+          "dep:rb-sys"
+        ],
+        "magnus-tests": [
+          "magnus",
+          "magnus/embed"
+        ],
+        "pyo3": [
+          "dep:pyo3",
+          "dep:pyo3-build-config"
+        ],
+        "pyo3-tests": [
+          "pyo3",
+          "pyo3/auto-initialize"
+        ],
+        "serde_json": [
+          "dep:bytecount"
+        ]
+      },
+      "dependencies": [
+        {
+          "alias": "serde_json",
+          "package": "serde_json",
+          "version": "1.0.151",
+          "kind": "dependencies",
+          "conditional": null,
+          "optional": false,
+          "defaultFeatures": true,
+          "features": [
+            "float_roundtrip"
+          ]
+        }
+      ],
+      "unrelatedDependencyAliases": [
+        "ahash",
+        "bytecount",
+        "fraction",
+        "getrandom",
+        "magnus",
+        "num-bigint",
+        "num-cmp",
+        "num-traits",
+        "pyo3",
+        "rb-sys",
+        "zmij"
+      ]
+    },
+    {
+      "name": "jsonwebtoken",
+      "version": "11.1.0",
+      "lockedArchiveSha256": "e75fe14a82d81e5f5af639997db37d8b96045938a7ac6ab18cdbe1c7467e05e1",
+      "manifest": {
+        "path": "jsonwebtoken-11.1.0-Cargo.toml.gz",
+        "sourcePath": "jsonwebtoken-11.1.0/Cargo.toml",
+        "bytes": 3798,
+        "sha256": "9dc09ddaf9c1ba49e1686f68317a75fb1f316d5954e80f476a492607de7304a0",
+        "archiveSha256": "4901ed6fd4b01c4f6e92baa52cd23140e88ed825ec50b1a75a0f0ba2acb47e54"
+      },
+      "licenses": [
+        {
+          "path": "jsonwebtoken-11.1.0-LICENSE.gz",
+          "sourcePath": "jsonwebtoken-11.1.0/LICENSE",
+          "bytes": 1084,
+          "sha256": "a8012be84ea176195305bfb4e9109ed6f28860a8e697bc50302e75c2040813f3",
+          "archiveSha256": "12d189a5ec1b771157eb0002cd64acf150429634523c95a43f66706abaaa7fc7"
+        }
+      ],
+      "features": {
+        "aws_lc_rs": [
+          "dep:aws-lc-rs"
+        ],
+        "default": [
+          "use_pem"
+        ],
+        "rust_crypto": [
+          "dep:ed25519-dalek",
+          "dep:hmac",
+          "dep:p256",
+          "dep:p384",
+          "dep:rand",
+          "dep:rsa",
+          "dep:sha2"
+        ],
+        "use_pem": [
+          "dep:pem",
+          "dep:simple_asn1"
+        ]
+      },
+      "dependencies": [
+        {
+          "alias": "serde_json",
+          "package": "serde_json",
+          "version": "1.0.151",
+          "kind": "dependencies",
+          "conditional": null,
+          "optional": false,
+          "defaultFeatures": true,
+          "features": []
+        },
+        {
+          "alias": "criterion",
+          "package": "criterion",
+          "version": "0.8.2",
+          "kind": "dev-dependencies",
+          "conditional": "cfg(all(target_arch = \"wasm32\", not(any(target_os = \"emscripten\", target_os = \"wasi\"))))",
+          "optional": false,
+          "defaultFeatures": false,
+          "features": []
+        },
+        {
+          "alias": "criterion",
+          "package": "criterion",
+          "version": "0.8.2",
+          "kind": "dev-dependencies",
+          "conditional": "cfg(not(all(target_arch = \"wasm32\", not(any(target_os = \"emscripten\", target_os = \"wasi\")))))",
+          "optional": false,
+          "defaultFeatures": true,
+          "features": []
+        }
+      ],
+      "unrelatedDependencyAliases": [
+        "aws-lc-rs",
+        "base64",
+        "ed25519-dalek",
+        "getrandom",
+        "hmac",
+        "js-sys",
+        "p256",
+        "p384",
+        "pem",
+        "rand",
+        "rsa",
+        "serde",
+        "sha2",
+        "signature",
+        "simple_asn1",
+        "zeroize"
+      ]
+    },
+    {
+      "name": "link-assistant-router",
+      "version": "1.24.1",
+      "lockedArchiveSha256": null,
+      "manifest": {
+        "path": "link-assistant-router-1.24.1-Cargo.toml.gz",
+        "sourcePath": "Cargo.toml",
+        "bytes": 4805,
+        "sha256": "564ff6c847a421e8e751185facd37c3e21f76c6429bae44c1bdcf8312d103661",
+        "archiveSha256": "dd965d46bb2cfb452dd545e1782e7bd680771a90d4b8ec07aac963ca635c2c06"
+      },
+      "licenses": [],
+      "features": {},
+      "dependencies": [
+        {
+          "alias": "axum",
+          "package": "axum",
+          "version": "0.8.9",
+          "kind": "dependencies",
+          "conditional": null,
+          "optional": false,
+          "defaultFeatures": true,
+          "features": [
+            "macros",
+            "ws"
+          ]
+        },
+        {
+          "alias": "reqwest",
+          "package": "reqwest",
+          "version": "0.13.5",
+          "kind": "dependencies",
+          "conditional": null,
+          "optional": false,
+          "defaultFeatures": true,
+          "features": [
+            "stream",
+            "json",
+            "form",
+            "query",
+            "cookies",
+            "socks"
+          ]
+        },
+        {
+          "alias": "cookie_store",
+          "package": "cookie_store",
+          "version": "0.22.1",
+          "kind": "dependencies",
+          "conditional": null,
+          "optional": false,
+          "defaultFeatures": true,
+          "features": []
+        },
+        {
+          "alias": "schemars",
+          "package": "schemars",
+          "version": "1.2.2",
+          "kind": "dependencies",
+          "conditional": null,
+          "optional": false,
+          "defaultFeatures": true,
+          "features": [
+            "chrono04"
+          ]
+        },
+        {
+          "alias": "jsonschema",
+          "package": "jsonschema",
+          "version": "0.58.5",
+          "kind": "dependencies",
+          "conditional": null,
+          "optional": false,
+          "defaultFeatures": false,
+          "features": []
+        },
+        {
+          "alias": "serde_json",
+          "package": "serde_json",
+          "version": "1.0.151",
+          "kind": "dependencies",
+          "conditional": null,
+          "optional": false,
+          "defaultFeatures": true,
+          "features": []
+        },
+        {
+          "alias": "jsonwebtoken",
+          "package": "jsonwebtoken",
+          "version": "11.1.0",
+          "kind": "dependencies",
+          "conditional": null,
+          "optional": false,
+          "defaultFeatures": false,
+          "features": [
+            "rust_crypto"
+          ]
+        },
+        {
+          "alias": "tracing-subscriber",
+          "package": "tracing-subscriber",
+          "version": "0.3.23",
+          "kind": "dependencies",
+          "conditional": null,
+          "optional": false,
+          "defaultFeatures": true,
+          "features": [
+            "env-filter",
+            "json"
+          ]
+        },
+        {
+          "alias": "criterion",
+          "package": "criterion",
+          "version": "0.8.2",
+          "kind": "dev-dependencies",
+          "conditional": null,
+          "optional": false,
+          "defaultFeatures": false,
+          "features": [
+            "cargo_bench_support"
+          ]
+        }
+      ],
+      "unrelatedDependencyAliases": [
+        "aes-gcm",
+        "async-trait",
+        "axum-server",
+        "base64",
+        "brotli",
+        "bytes",
+        "chrono",
+        "clap",
+        "doublets",
+        "flate2",
+        "fs2",
+        "futures-util",
+        "getrandom",
+        "hex",
+        "http",
+        "http-body-util",
+        "hyper",
+        "hyper-util",
+        "link-cli",
+        "links-notation",
+        "lino-arguments",
+        "lino-objects-codec",
+        "log-lazy",
+        "os_info",
+        "portable-pty",
+        "process-wrap",
+        "rcgen",
+        "reflink-copy",
+        "rust-embed",
+        "serde",
+        "sha2",
+        "tempfile",
+        "tokio",
+        "tokio-tungstenite",
+        "toml_edit",
+        "tower",
+        "tower-http",
+        "tracing",
+        "url",
+        "uuid",
+        "vt100",
+        "zstd"
+      ]
+    },
+    {
+      "name": "referencing",
+      "version": "0.58.6",
+      "lockedArchiveSha256": "558f3855529c0a7e78a48e409fa653456e55f1b167eab4109c16a255b7727e3f",
+      "manifest": {
+        "path": "referencing-0.58.6-Cargo.toml.gz",
+        "sourcePath": "referencing-0.58.6/Cargo.toml",
+        "bytes": 2857,
+        "sha256": "b76476723bee5d0c68b8e970324254a5a4d75d7a264d6a31f1664f5abc1f87a4",
+        "archiveSha256": "3d46f554c212bf862302c88c5e3785f7d8fbb47f94bb164f38be23a7c8bf56dd"
+      },
+      "licenses": [
+        {
+          "path": "referencing-0.58.6-LICENSE.gz",
+          "sourcePath": "referencing-0.58.6/LICENSE",
+          "bytes": 1075,
+          "sha256": "117829c3ca21efb132d81a44b55363d395ab8eea18526873bc828da4c0e5f038",
+          "archiveSha256": "ef8a8c3333e1f0a59469686e763bfb17ce02dab8217d6c44b4e9ad4c71d3a85b"
+        }
+      ],
+      "features": {
+        "default": [],
+        "retrieve-async": [
+          "dep:async-trait",
+          "dep:futures"
+        ]
+      },
+      "dependencies": [
+        {
+          "alias": "serde_json",
+          "package": "serde_json",
+          "version": "1.0.151",
+          "kind": "dependencies",
+          "conditional": null,
+          "optional": false,
+          "defaultFeatures": true,
+          "features": []
+        },
+        {
+          "alias": "criterion",
+          "package": "criterion",
+          "version": "0.8.2",
+          "kind": "dev-dependencies",
+          "conditional": null,
+          "optional": false,
+          "defaultFeatures": false,
+          "features": []
+        }
+      ],
+      "unrelatedDependencyAliases": [
+        "ahash",
+        "async-trait",
+        "fluent-uri",
+        "futures",
+        "getrandom",
+        "hashbrown",
+        "itoa",
+        "micromap",
+        "parking_lot",
+        "percent-encoding"
+      ]
+    },
+    {
+      "name": "reqwest",
+      "version": "0.13.5",
+      "lockedArchiveSha256": "16a1cfa75cc186dd73d5818e510e042e40927bccc9c236b061cea97e1eb08029",
+      "manifest": {
+        "path": "reqwest-0.13.5-Cargo.toml.gz",
+        "sourcePath": "reqwest-0.13.5/Cargo.toml",
+        "bytes": 13151,
+        "sha256": "ab36603e15fa21c4fe1f4e9810245dcb06499cdcf6e6b07296e5d2a3c25c69a1",
+        "archiveSha256": "07d3ca0031fcc5866068b72753d9a3d1f5ab7a549e9949325ab1213021072b20"
+      },
+      "licenses": [
+        {
+          "path": "reqwest-0.13.5-LICENSE-APACHE.gz",
+          "sourcePath": "reqwest-0.13.5/LICENSE-APACHE",
+          "bytes": 10833,
+          "sha256": "751963a8b88c0e3a9f27e98933079fbcf09b9998b2c13ac49c2e4d58444520d6",
+          "archiveSha256": "e37f64f3dbd4907e096977e23b460a318036bb1a395a9d3869ba5b1f0815115d"
+        },
+        {
+          "path": "reqwest-0.13.5-LICENSE-MIT.gz",
+          "sourcePath": "reqwest-0.13.5/LICENSE-MIT",
+          "bytes": 1063,
+          "sha256": "dd87e27dfbaa888cb77ea34592648a7743636b8dce07e49543bddda0fcfc73bc",
+          "archiveSha256": "46d0400326a9960206605e88578222b2dddc24b3315d62b1f73c0b3c50034aa9"
+        }
+      ],
+      "features": {
+        "__native-tls": [
+          "dep:hyper-tls",
+          "dep:native-tls-crate",
+          "__tls",
+          "dep:tokio-native-tls"
+        ],
+        "__native-tls-alpn": [
+          "native-tls-crate?/alpn",
+          "hyper-tls?/alpn"
+        ],
+        "__rustls": [
+          "dep:hyper-rustls",
+          "dep:tokio-rustls",
+          "dep:rustls",
+          "__tls"
+        ],
+        "__rustls-aws-lc-rs": [
+          "hyper-rustls?/aws-lc-rs",
+          "tokio-rustls?/aws-lc-rs",
+          "rustls?/aws-lc-rs",
+          "quinn?/rustls-aws-lc-rs"
+        ],
+        "__tls": [
+          "dep:rustls-pki-types",
+          "tokio/io-util"
+        ],
+        "blocking": [
+          "dep:futures-channel",
+          "futures-channel?/sink",
+          "dep:futures-util",
+          "futures-util?/io",
+          "futures-util?/sink",
+          "tokio/sync"
+        ],
+        "brotli": [
+          "tower-http/decompression-br"
+        ],
+        "charset": [
+          "dep:encoding_rs",
+          "dep:mime"
+        ],
+        "cookies": [
+          "dep:cookie_crate",
+          "dep:cookie_store"
+        ],
+        "default": [
+          "default-tls",
+          "charset",
+          "http2",
+          "system-proxy"
+        ],
+        "default-tls": [
+          "rustls"
+        ],
+        "deflate": [
+          "tower-http/decompression-deflate"
+        ],
+        "form": [
+          "dep:serde",
+          "dep:serde_urlencoded"
+        ],
+        "gzip": [
+          "tower-http/decompression-gzip"
+        ],
+        "hickory-dns": [
+          "dep:hickory-resolver",
+          "dep:once_cell"
+        ],
+        "http2": [
+          "dep:h2",
+          "hyper/http2",
+          "hyper-util/http2",
+          "hyper-rustls?/http2"
+        ],
+        "http3": [
+          "rustls",
+          "dep:h3",
+          "dep:h3-quinn",
+          "dep:quinn",
+          "tokio/macros"
+        ],
+        "json": [
+          "dep:serde",
+          "dep:serde_json"
+        ],
+        "multipart": [
+          "dep:mime_guess",
+          "dep:futures-util"
+        ],
+        "native-tls": [
+          "__native-tls",
+          "__native-tls-alpn"
+        ],
+        "native-tls-no-alpn": [
+          "__native-tls"
+        ],
+        "native-tls-vendored": [
+          "__native-tls",
+          "native-tls-crate?/vendored",
+          "__native-tls-alpn"
+        ],
+        "native-tls-vendored-no-alpn": [
+          "__native-tls",
+          "native-tls-crate?/vendored"
+        ],
+        "query": [
+          "dep:serde",
+          "dep:serde_urlencoded"
+        ],
+        "rustls": [
+          "__rustls-aws-lc-rs",
+          "dep:rustls-platform-verifier",
+          "__rustls"
+        ],
+        "rustls-no-provider": [
+          "dep:rustls-platform-verifier",
+          "__rustls"
+        ],
+        "socks": [],
+        "stream": [
+          "tokio/fs",
+          "dep:futures-util",
+          "dep:tokio-util",
+          "dep:wasm-streams"
+        ],
+        "system-proxy": [
+          "hyper-util/client-proxy-system"
+        ],
+        "zstd": [
+          "tower-http/decompression-zstd"
+        ]
+      },
+      "dependencies": [
+        {
+          "alias": "serde_json",
+          "package": "serde_json",
+          "version": "1.0.151",
+          "kind": "dependencies",
+          "conditional": null,
+          "optional": true,
+          "defaultFeatures": true,
+          "features": []
+        },
+        {
+          "alias": "cookie_store",
+          "package": "cookie_store",
+          "version": "0.22.1",
+          "kind": "dependencies",
+          "conditional": "cfg(not(all(target_arch = \"wasm32\", any(target_os = \"unknown\", target_os = \"none\"))))",
+          "optional": true,
+          "defaultFeatures": true,
+          "features": []
+        }
+      ],
+      "unrelatedDependencyAliases": [
+        "base64",
+        "bytes",
+        "cookie_crate",
+        "encoding_rs",
+        "futures-channel",
+        "futures-core",
+        "futures-util",
+        "h2",
+        "h3",
+        "h3-quinn",
+        "hickory-resolver",
+        "http",
+        "http-body",
+        "http-body-util",
+        "hyper",
+        "hyper-rustls",
+        "hyper-tls",
+        "hyper-util",
+        "js-sys",
+        "log",
+        "mime",
+        "mime_guess",
+        "native-tls-crate",
+        "once_cell",
+        "percent-encoding",
+        "pin-project-lite",
+        "quinn",
+        "rustls",
+        "rustls-pki-types",
+        "rustls-platform-verifier",
+        "serde",
+        "serde_urlencoded",
+        "sync_wrapper",
+        "tokio",
+        "tokio-native-tls",
+        "tokio-rustls",
+        "tokio-util",
+        "tower",
+        "tower-http",
+        "tower-service",
+        "url",
+        "wasm-bindgen",
+        "wasm-bindgen-futures",
+        "wasm-streams",
+        "web-sys"
+      ]
+    },
+    {
+      "name": "schemars",
+      "version": "1.2.2",
+      "lockedArchiveSha256": "687274d293b6cdc6e73e0fee520bf2049650090d7164f87672d212a3c530cf4a",
+      "manifest": {
+        "path": "schemars-1.2.2-Cargo.toml.gz",
+        "sourcePath": "schemars-1.2.2/Cargo.toml",
+        "bytes": 6166,
+        "sha256": "72e6395009b8393b5d1063333154dd421a58bb91cbbecaf0dde5320074c6c81e",
+        "archiveSha256": "1b787cc28e0a4763443b8796da9d83f7511ebc7e67ecc99adacea0b13431c031"
+      },
+      "licenses": [
+        {
+          "path": "schemars-1.2.2-LICENSE.gz",
+          "sourcePath": "schemars-1.2.2/LICENSE",
+          "bytes": 1068,
+          "sha256": "1954992a2b32e8a2af24a4c11b726902e344c1934b947a77f04d404908f8db30",
+          "archiveSha256": "faa1788b6b0fd51e8ae4272d33181a9a5f401bd0eb55714ed1d6b09ee9342f5b"
+        }
+      ],
+      "features": {
+        "_ui_test": [],
+        "default": [
+          "derive",
+          "std"
+        ],
+        "derive": [
+          "schemars_derive"
+        ],
+        "preserve_order": [
+          "serde_json/preserve_order"
+        ],
+        "raw_value": [
+          "serde_json/raw_value"
+        ],
+        "std": []
+      },
+      "dependencies": [
+        {
+          "alias": "serde_json",
+          "package": "serde_json",
+          "version": "1.0.151",
+          "kind": "dependencies",
+          "conditional": null,
+          "optional": false,
+          "defaultFeatures": false,
+          "features": [
+            "alloc"
+          ]
+        },
+        {
+          "alias": "jsonschema",
+          "package": "jsonschema",
+          "version": "0.58.5",
+          "kind": "dev-dependencies",
+          "conditional": null,
+          "optional": false,
+          "defaultFeatures": false,
+          "features": []
+        }
+      ],
+      "unrelatedDependencyAliases": [
+        "arrayvec07",
+        "bigdecimal04",
+        "bytes1",
+        "chrono04",
+        "dyn-clone",
+        "either1",
+        "indexmap2",
+        "jiff02",
+        "ref-cast",
+        "rust_decimal1",
+        "schemars_derive",
+        "semver1",
+        "serde",
+        "smallvec1",
+        "smol_str02",
+        "smol_str03",
+        "url2",
+        "uuid1"
+      ]
+    },
+    {
+      "name": "serde_json",
+      "version": "1.0.151",
+      "lockedArchiveSha256": "c841b55ecdae098c80dcae9cf767f6f8a0c2cdb3416bbef72181df4d0fe73f14",
+      "manifest": {
+        "path": "serde_json-1.0.151-Cargo.toml.gz",
+        "sourcePath": "serde_json-1.0.151/Cargo.toml",
+        "bytes": 3118,
+        "sha256": "00b920255c320a278bf25b962b491263a19d8c90e12e4a91c1d823db71eabb2f",
+        "archiveSha256": "6e608d6f6f87bb51466bf7f0823e6e122970ecd3647c215d77626108e0086272"
+      },
+      "licenses": [
+        {
+          "path": "serde_json-1.0.151-LICENSE-APACHE.gz",
+          "sourcePath": "serde_json-1.0.151/LICENSE-APACHE",
+          "bytes": 9723,
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+          "archiveSha256": "743f15542c6a31637b66b952a6d7da62ac00374b5caae6530e8d7317c29b0fd6"
+        },
+        {
+          "path": "serde_json-1.0.151-LICENSE-MIT.gz",
+          "sourcePath": "serde_json-1.0.151/LICENSE-MIT",
+          "bytes": 1023,
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+          "archiveSha256": "8a5eddda9f93808335b34a03abef4968118f82a872cd3f7b52cc43d3cf41b497"
+        }
+      ],
+      "features": {
+        "alloc": [
+          "serde_core/alloc"
+        ],
+        "arbitrary_precision": [],
+        "default": [
+          "std"
+        ],
+        "float_roundtrip": [],
+        "preserve_order": [
+          "indexmap",
+          "std"
+        ],
+        "raw_value": [],
+        "std": [
+          "memchr/std",
+          "serde_core/std"
+        ],
+        "unbounded_depth": []
+      },
+      "dependencies": [
+        {
+          "alias": "serde_core",
+          "package": "serde_core",
+          "version": "1.0.220",
+          "kind": "dependencies",
+          "conditional": null,
+          "optional": false,
+          "defaultFeatures": false,
+          "features": []
+        }
+      ],
+      "unrelatedDependencyAliases": [
+        "indexmap",
+        "itoa",
+        "memchr",
+        "serde",
+        "zmij"
+      ]
+    },
+    {
+      "name": "tinytemplate",
+      "version": "1.2.1",
+      "lockedArchiveSha256": "be4d6b5f19ff7664e8c98d03e2139cb510db9b0a60b55f8e8709b689d939b6bc",
+      "manifest": {
+        "path": "tinytemplate-1.2.1-Cargo.toml.gz",
+        "sourcePath": "tinytemplate-1.2.1/Cargo.toml",
+        "bytes": 1183,
+        "sha256": "f5e4758f59eb8cebd7cfb8553d2158223f24fc4716327e2a1de3a8726b8bc441",
+        "archiveSha256": "58823facde584fcf300ba0e9ec5f245766c9052f425cc9a4927278d29777cbb3"
+      },
+      "licenses": [
+        {
+          "path": "tinytemplate-1.2.1-LICENSE-APACHE.gz",
+          "sourcePath": "tinytemplate-1.2.1/LICENSE-APACHE",
+          "bytes": 10847,
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "archiveSha256": "31cd5c988a03f359c79ffd86104335779b692f972595e34078367b1f5f5d77eb"
+        },
+        {
+          "path": "tinytemplate-1.2.1-LICENSE-MIT.gz",
+          "sourcePath": "tinytemplate-1.2.1/LICENSE-MIT",
+          "bytes": 1057,
+          "sha256": "b6d10b8851a36aa6ec9612a186e56c2fcea0ad7db7b90c3dda1d16ae27c0077e",
+          "archiveSha256": "820c772961a472c1da7b9b08735304a5fb7f46f8ac7b0236b9758e2f8e7edc09"
+        }
+      ],
+      "features": {},
+      "dependencies": [
+        {
+          "alias": "serde_json",
+          "package": "serde_json",
+          "version": "1.0.151",
+          "kind": "dependencies",
+          "conditional": null,
+          "optional": false,
+          "defaultFeatures": true,
+          "features": []
+        },
+        {
+          "alias": "criterion",
+          "package": "criterion",
+          "version": "0.8.2",
+          "kind": "dev-dependencies",
+          "conditional": null,
+          "optional": false,
+          "defaultFeatures": true,
+          "features": []
+        }
+      ],
+      "unrelatedDependencyAliases": [
+        "serde"
+      ]
+    },
+    {
+      "name": "tracing-subscriber",
+      "version": "0.3.23",
+      "lockedArchiveSha256": "cb7f578e5945fb242538965c2d0b04418d38ec25c79d160cd279bf0731c8d319",
+      "manifest": {
+        "path": "tracing-subscriber-0.3.23-Cargo.toml.gz",
+        "sourcePath": "tracing-subscriber-0.3.23/Cargo.toml",
+        "bytes": 6686,
+        "sha256": "77e768dd859bd228564f4504598bc8cf8b226f3a54df03a506a67c3025aea8fb",
+        "archiveSha256": "36bfb76e21e869d70d907481020852b309bec40deb389d919b72a15a968ca678"
+      },
+      "licenses": [
+        {
+          "path": "tracing-subscriber-0.3.23-LICENSE.gz",
+          "sourcePath": "tracing-subscriber-0.3.23/LICENSE",
+          "bytes": 1062,
+          "sha256": "898b1ae9821e98daf8964c8d6c7f61641f5f5aa78ad500020771c0939ee0dea1",
+          "archiveSha256": "072c7206f6a620b7baffc8a56e870c6c5dc80c5d0616537213356959911ae7f1"
+        }
+      ],
+      "features": {
+        "alloc": [],
+        "ansi": [
+          "fmt",
+          "nu-ansi-term"
+        ],
+        "default": [
+          "smallvec",
+          "fmt",
+          "ansi",
+          "tracing-log",
+          "std"
+        ],
+        "env-filter": [
+          "matchers",
+          "once_cell",
+          "tracing",
+          "std",
+          "thread_local",
+          "dep:regex-automata"
+        ],
+        "fmt": [
+          "registry",
+          "std"
+        ],
+        "json": [
+          "tracing-serde",
+          "serde",
+          "serde_json"
+        ],
+        "local-time": [
+          "time/local-offset"
+        ],
+        "nu-ansi-term": [
+          "dep:nu-ansi-term"
+        ],
+        "regex": [],
+        "registry": [
+          "sharded-slab",
+          "thread_local",
+          "std"
+        ],
+        "std": [
+          "alloc",
+          "tracing-core/std"
+        ],
+        "valuable": [
+          "tracing-core/valuable",
+          "valuable_crate",
+          "valuable-serde",
+          "tracing-serde/valuable"
+        ]
+      },
+      "dependencies": [
+        {
+          "alias": "serde_json",
+          "package": "serde_json",
+          "version": "1.0.151",
+          "kind": "dependencies",
+          "conditional": null,
+          "optional": true,
+          "defaultFeatures": true,
+          "features": []
+        },
+        {
+          "alias": "criterion",
+          "package": "criterion",
+          "version": "0.8.2",
+          "kind": "dev-dependencies",
+          "conditional": null,
+          "optional": false,
+          "defaultFeatures": false,
+          "features": []
+        }
+      ],
+      "unrelatedDependencyAliases": [
+        "chrono",
+        "matchers",
+        "nu-ansi-term",
+        "once_cell",
+        "parking_lot",
+        "regex-automata",
+        "serde",
+        "sharded-slab",
+        "smallvec",
+        "thread_local",
+        "time",
+        "tracing",
+        "tracing-core",
+        "tracing-log",
+        "tracing-serde",
+        "valuable-serde",
+        "valuable_crate"
+      ]
+    },
+    {
+      "name": "serde_core",
+      "version": "1.0.229",
+      "lockedArchiveSha256": "67dca2c9c51e58a4791a4b1ed58308b39c64224d349a935ab5039aa360942a48",
+      "manifest": {
+        "path": "serde_core-1.0.229-Cargo.toml.gz",
+        "sourcePath": "serde_core-1.0.229/Cargo.toml",
+        "bytes": 1950,
+        "sha256": "c6049e170e4f7c2b48749fefab59db583bfac4e466cde6d0c53e4f49bc5044f7",
+        "archiveSha256": "cde494e2d24c309618ea064e0b9ac493e3ace589f3ad1c2d18c241455dae963e"
+      },
+      "licenses": [
+        {
+          "path": "serde_core-1.0.229-LICENSE-MIT.gz",
+          "sourcePath": "serde_core-1.0.229/LICENSE-MIT",
+          "bytes": 1023,
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+          "archiveSha256": "8a5eddda9f93808335b34a03abef4968118f82a872cd3f7b52cc43d3cf41b497"
+        },
+        {
+          "path": "serde_core-1.0.229-LICENSE-APACHE.gz",
+          "sourcePath": "serde_core-1.0.229/LICENSE-APACHE",
+          "bytes": 9723,
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+          "archiveSha256": "743f15542c6a31637b66b952a6d7da62ac00374b5caae6530e8d7317c29b0fd6"
+        }
+      ],
+      "features": {
+        "alloc": [],
+        "default": [
+          "std",
+          "result"
+        ],
+        "rc": [],
+        "result": [],
+        "std": [],
+        "unstable": []
+      },
+      "dependencies": [],
+      "unrelatedDependencyAliases": []
+    }
+  ],
+  "closure": "all Cargo.lock incoming serde_json dependency manifests; Cargo-normalized original source tables; target dependencies conservatively unioned; dev/build roots separately refused until selected",
+  "unsupported": [
+    "registry patches/local replacements",
+    "unlisted profile manifests",
+    "workspace feature inheritance",
+    "unknown weak activation outside locked incoming graph"
+  ],
+  "runtimeParity": false,
+  "generatedTraitBehavior": false,
+  "scope": "actual locked root default production serde_json/std and float_roundtrip feature activation; independent parser-capability admission, no macro lowering",
+  "parserSource": {
+    "path": "serde_json-1.0.151-de.rs.gz",
+    "sourcePath": "serde_json-1.0.151/src/de.rs",
+    "bytes": 86840,
+    "sha256": "4998d7e252eb513be85b298e287048b4fb283882e9ba7df905f572f07200f3f3",
+    "archiveSha256": "e3fa5e28d55b40b078a1a679467a00fb534b354c32579ee72bf78cf81ef90f41",
+    "originalCrateSha256": "c841b55ecdae098c80dcae9cf767f6f8a0c2cdb3416bbef72181df4d0fe73f14"
+  },
+  "lexicalSources": [
+    {
+      "path": "serde_json-1.0.151-src-lexical-parse.rs.gz",
+      "sourcePath": "serde_json-1.0.151/src/lexical/parse.rs",
+      "bytes": 2241,
+      "sha256": "c2bfac4c70a19938ced61e991f4ec606764887cf12bac1a0978b5b5318a56aac",
+      "archiveSha256": "001117a56acb53117443e6fbcda8f4a6923d8f7300f89279e3cd77343bdff229"
+    },
+    {
+      "path": "serde_json-1.0.151-src-lexical-algorithm.rs.gz",
+      "sourcePath": "serde_json-1.0.151/src/lexical/algorithm.rs",
+      "bytes": 6117,
+      "sha256": "54d599033e5a182a3076a0ba23a3550bf8680c99399b0313166b3c42c85b35b9",
+      "archiveSha256": "e02a74f9f314bfe362e977798f0df8bf45d7c9218c036192f179db4871d75b7c"
+    },
+    {
+      "path": "serde_json-1.0.151-src-lexical-bhcomp.rs.gz",
+      "sourcePath": "serde_json-1.0.151/src/lexical/bhcomp.rs",
+      "bytes": 7035,
+      "sha256": "26f39d52008225a6b377d7246d326940d44200e160a7b4652733e712e1a45a04",
+      "archiveSha256": "cc112f40166e56bd03b5fcae75e2b8a86cd0a62e19009e39ff83e205d725fc06"
+    },
+    {
+      "path": "serde_json-1.0.151-src-lexical-rounding.rs.gz",
+      "sourcePath": "serde_json-1.0.151/src/lexical/rounding.rs",
+      "bytes": 7388,
+      "sha256": "4762af3612880b17468ff2a1bb800c8e99f08330ae439699dd53d8dc5463ad13",
+      "archiveSha256": "4b0bb5a7690bebfb5cece63d6e96d2d8073d31945ddefeb32873d4771365e4d7"
+    }
+  ]
+}

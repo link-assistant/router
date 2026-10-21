@@ -2,7 +2,7 @@
 // list; callback-valued routes remain source-bearing obligations, not guesses.
 import {createHash} from 'node:crypto';
 import {createPrivateFrozenJsonCache,privateFrozenJsonEqualHint} from './private-frozen-json.mjs';
-import {createScopedPrivateNativeProofJsonSerializer as createPrivateFrozenJsonComposer} from './private-native-proof-json.mjs';
+import {createScopedPrivateNativeProofJsonSerializer as createPrivateFrozenJsonComposer} from "./operation-proof-byte-bridge.mjs";
 import {createCompletedDataFreezer} from './private-data-freeze.mjs';
 import {originalBuiltinCopyOutputSyntax} from './builtin-copy-output-syntax.mjs';
 import {deriveFootprintOriginalContext,deriveFootprintOriginalModule,deriveFootprintHelperAttributeAt,isDeriveFootprintHelperAttributeProof} from './derive-footprints.mjs';
@@ -216,3 +216,137 @@ export function originalBuiltinDeriveEnclosingOutput(proof,context,certificate,i
 }
 
 export function originalBuiltinDefaultBangOutput({context,certificate,invocation}={}){const proof=proveBuiltinDeriveBangFootprint({context,certificate,invocation});assertBuiltinDeriveBangFootprint(proof,context,certificate,invocation);if(proof.schema!=="builtin-default-bang-output-v1")throw new TypeError("Default data output accessor requires its actual privately joined data route");return freezeCompleted({proof,route:proof.route,output:originalBuiltinDefaultAstOutput(proof.route),plan:builtinDefaultOriginalSourcePlan(proof.route)});}
+
+// Explicit dimension-specific issuer. These lazy private tables and ordinary
+// function declarations add no probe or constructor to legacy bootstrap.
+import {types} from 'node:util';
+import {compileBuiltinDebugEnclosingNamespaceModel} from './builtin-debug-ast-route.mjs';
+import {originalDataFreezeIntrinsicsUnchanged as enclosingNativeUnchanged,originalCapturedFunctionSource} from './original-json-intrinsics.mjs';
+import {originalImplNamespaceSourcePlan,requireOriginalImplNamespaceSourcePlan} from './derive-ancestor-attribute-scope.mjs';
+let debugEnclosingIssued=null,enclosingProxyOperation=null;
+const enclosingTypeOwner=types;
+// The first explicit operation may refuse after an observed capture. No capture
+// or guard probe is added to legacy bootstrap. Later protected checks reject a
+// rebound owner by identity before any reflection or old live-owner guard.
+function enclosingReady(){
+ if(types!==enclosingTypeOwner)return false;
+ if(!enclosingProxyOperation){
+  const field=Object.getOwnPropertyDescriptor(enclosingTypeOwner,'isProxy');
+  if(!field||!Object.hasOwn(field,'value')||typeof field.value!=='function'||originalCapturedFunctionSource(field.value)!=='function isProxy() { [native code] }'||field.value(enclosingTypeOwner))return false;
+  enclosingProxyOperation={field,isProxy:field.value};
+ }
+ if(types!==enclosingTypeOwner||enclosingProxyOperation.isProxy(enclosingTypeOwner))return false;
+ const now=Object.getOwnPropertyDescriptor(enclosingTypeOwner,'isProxy'),old=enclosingProxyOperation.field;
+ if(!now||!Object.hasOwn(now,'value')||now.value!==old.value||now.writable!==old.writable||now.enumerable!==old.enumerable||now.configurable!==old.configurable)return false;
+ return enclosingNativeUnchanged();
+}
+function snapshotBuiltinEnclosingInvocation(value){
+ if(!value||typeof value!=='object'||enclosingProxyOperation.isProxy(value)||Object.getPrototypeOf(value)!==Object.prototype)return null;
+ const names=Reflect.ownKeys(value);if(names.length!==2||!names.includes('path')||!names.includes('attributeSpan'))return null;
+ const path=Object.getOwnPropertyDescriptor(value,'path'),span=Object.getOwnPropertyDescriptor(value,'attributeSpan');
+ if(!path||!span||!Object.hasOwn(path,'value')||!Object.hasOwn(span,'value'))return null;
+ const p=path.value,q=span.value;
+ if(!p||enclosingProxyOperation.isProxy(p)||!Array.isArray(p)||Object.getPrototypeOf(p)!==Array.prototype)return null;
+ const pathNames=Reflect.ownKeys(p);if(pathNames.length!==2||pathNames[0]!=='0'||pathNames[1]!=='length')return null;
+ const first=Object.getOwnPropertyDescriptor(p,'0'),length=Object.getOwnPropertyDescriptor(p,'length');
+ if(!first||!length||!Object.hasOwn(first,'value')||!Object.hasOwn(length,'value')||length.value!==1||first.value!=='Debug')return null;
+ if(!q||typeof q!=='object'||enclosingProxyOperation.isProxy(q)||Object.getPrototypeOf(q)!==Object.prototype)return null;
+ const fields=Reflect.ownKeys(q);if(fields.length!==2||!fields.includes('start')||!fields.includes('end'))return null;
+ const start=Object.getOwnPropertyDescriptor(q,'start'),end=Object.getOwnPropertyDescriptor(q,'end');
+ if(!start||!end||!Object.hasOwn(start,'value')||!Object.hasOwn(end,'value'))return null;
+ for(const n of [start.value,end.value])if(typeof n!=='number'||n<0||n>9007199254740991||n%1!==0)return null;
+ if(end.value<start.value)return null;
+ return {path:['Debug'],attributeSpan:{start:start.value,end:end.value}};
+}
+// This new format qualifies parse lazily; the older native guard does not pin it.
+function enclosingParseSelection(){
+ if(!enclosingReady())return null;
+ const owner=JSON,field=Object.getOwnPropertyDescriptor(owner,'parse');
+ if(!field||!Object.hasOwn(field,'value')||field.writable!==true||field.enumerable!==false||field.configurable!==true||
+  typeof field.value!=='function'||enclosingProxyOperation.isProxy(field.value)||Object.getPrototypeOf(field.value)!==Object.getPrototypeOf(function enclosingParsePrototype(){})||
+  originalCapturedFunctionSource(field.value)!=='function parse() { [native code] }')return null;
+ const probe=field.value('{"privateEnclosingParse":[7,null]}');
+ if(!probe||Object.getPrototypeOf(probe)!==Object.prototype||Reflect.ownKeys(probe).length!==1)return null;
+ const row=Object.getOwnPropertyDescriptor(probe,'privateEnclosingParse');
+ if(!row||!Object.hasOwn(row,'value')||!Array.isArray(row.value)||Object.getPrototypeOf(row.value)!==Array.prototype||row.value.length!==2||row.value[0]!==7||row.value[1]!==null)return null;
+ return {owner,field};
+}
+function enclosingParseUnchanged(selection){
+ if(!enclosingReady()||JSON!==selection.owner)return false;
+ const field=Object.getOwnPropertyDescriptor(selection.owner,'parse'),old=selection.field;
+ return !!field&&Object.hasOwn(field,'value')&&field.value===old.value&&field.writable===old.writable&&field.enumerable===old.enumerable&&field.configurable===old.configurable;
+}
+// Only newly parsed, unaliased DATA is frozen. Genuine contexts/profiles are never frozen here.
+function freezeEnclosingModel(value){
+ let cells=0;
+ function visit(node,depth){
+  if(++cells>200000||depth>160)throw new TypeError('Builtin enclosing model DATA budget exceeded');
+  if(node===null||typeof node!=='object')return;
+  const parent=Object.getPrototypeOf(node),array=Array.isArray(node);
+  if(parent!==(array?Array.prototype:Object.prototype)||enclosingProxyOperation.isProxy(node))throw new TypeError('Builtin enclosing parsed model has foreign DATA');
+  const keys=Reflect.ownKeys(node);
+  for(let at=0;at<keys.length;at++){
+   const key=keys[at];if(typeof key!=='string')throw new TypeError('Builtin enclosing parsed model has symbolic DATA');
+   const field=Object.getOwnPropertyDescriptor(node,key);
+   if(!field||!Object.hasOwn(field,'value'))throw new TypeError('Builtin enclosing parsed model has non-DATA field');
+   if(array&&key==='length')continue;visit(field.value,depth+1);
+  }
+  Object.freeze(node);
+ }
+ visit(value,0);return value;
+}
+function sameEnclosingInvocation(a,b){return a.path[0]===b.path[0]&&a.attributeSpan.start===b.attributeSpan.start&&a.attributeSpan.end===b.attributeSpan.end;}
+function finalEnclosingInput(module,source,invocation,selected){
+ if(enclosingProxyOperation.isProxy(module))return false;
+ const field=Object.getOwnPropertyDescriptor(module,'source'),now=snapshotBuiltinEnclosingInvocation(invocation);
+ return !!field&&Object.hasOwn(field,'value')&&field.value===source&&!!now&&sameEnclosingInvocation(now,selected);
+}
+export function proveBuiltinDebugEnclosingNamespace({context,certificate,invocation}={}){
+ const original=originalInput(context,certificate,invocation);
+ if(original.name!=='Debug'||!enclosingReady())return null;
+ const selectedInvocation=snapshotBuiltinEnclosingInvocation(invocation);if(!selectedInvocation)return null;
+ const sourceBefore=original.module.source,route=routes.get(original.name),profile=builtinDeriveAstSourceProfile(original.dependencies),entry=originalAstFunction(profile,directory+route.path,route.entry),registry=builtinAstOriginal(profile,'compiler/rustc_builtin_macros/src/lib.rs');
+ const registered='Debug: debug::'+route.entry,registrationStart=registry.source.indexOf(registered);
+ if(registrationStart<0||registry.source.indexOf(registered,registrationStart+1)>=0)throw new TypeError('Builtin enclosing Debug registry owner is not unique');
+ const selected=debugDataInput({original},context,certificate),grammar=compileBuiltinDebugEnclosingNamespaceModel({profile,entry,original,certificate,input:selected.input});
+ if(grammar===null)return null;
+ const attributes=attributeOwners(original,certificate,new Set(['automatically_derived','inline','doc','Debug',...certificate.attributes.map(attribute=>attribute.name)])),resolver=requireOriginalImplNamespaceSourcePlan(originalImplNamespaceSourcePlan());
+ const model={schema:'original-debug-enclosing-namespace-model-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,span:certificate.span,itemSha256:certificate.itemSha256,inputCertificateDigest:certificate.digest,dependenciesDigest:original.dependencies.digest,compilationProfile:certificate.compilationProfile,
+  owner:{target:['core','Debug'],invocation:selectedInvocation,registration:{source:registry.path,sourceSha256:registry.sha256,span:{start:registrationStart,end:registrationStart+registered.length}}},profileDigest:profile.digest,
+  grammar,originalHelperOwners:selected.helpers,attributeOwners:attributes,
+  resolverSources:Object.values(resolver.selections).map(row=>({path:row.path,sourceSha256:row.sourceSha256,span:row.span})),
+  enclosingTypeBindings:[],enclosingUsableValueBindings:[],enclosingMacroNames:[],methodBehavior:'opaque-untranslated',generatedImplBehavior:false,namespaceAuthority:false,runtimeAuthority:false};
+ // All candidate aliases are detached through a qualified native parse before
+ // freezing. The bounded canonical wire is DATA, not the source/owner premise.
+ const parseSelection=enclosingParseSelection();if(!parseSelection)return null;
+ const wire=JSON.stringify(model);
+ if(typeof wire!=='string'||wire.length>8388608)throw new TypeError('Builtin enclosing model wire budget exceeded');
+ const reparsed=freezeEnclosingModel(parseSelection.field.value(wire));
+ if(JSON.stringify(reparsed)!==wire)throw new TypeError('Builtin enclosing model canonical roundtrip changed');
+ const digest=hash(wire),current=originalInput(context,certificate,invocation);
+ requireOriginalImplNamespaceSourcePlan(resolver);
+ // Every observer-capable reissue/hash precedes this last callback-free interval.
+ if(current.module!==original.module||!enclosingParseUnchanged(parseSelection)||!finalEnclosingInput(original.module,sourceBefore,invocation,selectedInvocation))throw new TypeError('Builtin enclosing original input changed during model reissue');
+ const facts=Object.freeze({model:reparsed,wire,digest,namespaceAuthority:false,runtimeAuthority:false});
+ const token=Object.freeze({schema:'private-original-debug-enclosing-namespace-v1'});
+ debugEnclosingIssued??=new WeakMap();
+ debugEnclosingIssued.set(token,{context,certificate,invocation:selectedInvocation,module:original.module,source:sourceBefore,facts,resolver,parseSelection});return token;
+}
+function builtinDebugEnclosingState(token,context,certificate,invocation){
+ if(!enclosingReady())throw new TypeError('Builtin enclosing native model operations changed');
+ const state=debugEnclosingIssued?.get(token),selectedInvocation=snapshotBuiltinEnclosingInvocation(invocation);
+ if(!selectedInvocation||!state||state.context!==context||state.certificate!==certificate||!sameEnclosingInvocation(state.invocation,selectedInvocation))throw new TypeError('Builtin enclosing model requires its private original invocation');
+ const current=originalInput(context,certificate,invocation);
+ requireOriginalImplNamespaceSourcePlan(state.resolver);
+ if(current.module!==state.module||!enclosingParseUnchanged(state.parseSelection)||!finalEnclosingInput(state.module,state.source,invocation,state.invocation))throw new TypeError('Builtin enclosing source changed');
+ return state;
+}
+export function requireBuiltinDebugEnclosingNamespace(token,context,certificate,invocation){
+ return builtinDebugEnclosingState(token,context,certificate,invocation).facts;
+}
+export function reissueBuiltinDebugEnclosingNamespace(token,context,certificate,invocation){
+ const prior=builtinDebugEnclosingState(token,context,certificate,invocation),fresh=proveBuiltinDebugEnclosingNamespace({context,certificate,invocation});
+ if(!fresh)throw new TypeError('Builtin enclosing domain no longer closes');
+ const current=builtinDebugEnclosingState(fresh,context,certificate,invocation);
+ if(current.facts.wire!==prior.facts.wire)throw new TypeError('Builtin enclosing complete model changed');return current.facts;
+}

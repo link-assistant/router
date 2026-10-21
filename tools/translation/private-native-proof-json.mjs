@@ -3,7 +3,7 @@
 import {types} from 'node:util';
 import {createPrivateFrozenJsonComposer} from './private-frozen-json.mjs';
 import {originalBatchedNamespaceTraversalIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
-import {originalBatchedLexingIntrinsicsUnchanged} from './original-lexing-intrinsics.mjs';
+import {originalBatchedLexingIntrinsicsUnchanged} from './guarded-proof-lexing-intrinsics.mjs';
 
 // This NEW internal format uses fixed ordinary intrinsic owners. It neither
 // reflects on the mutable globalThis binding nor assumes Bun's global is plain.
@@ -136,6 +136,15 @@ export function createPrivateNativeProofJsonSerializer(){
   }
   return fallback(value);
  };
+}
+
+// Fresh stateless storage eligibility. The caller needs its own complete
+// operation guards before changing any callback-sensitive behavior. This
+// bounded scan stores no graph, bytes, source/hash result or verdict after
+// return; false leaves the caller's complete original operation available.
+export function privateNativeProofJsonDataWithinBudget(value){
+ if(!nativeReady())return false;
+ try{return withinNativeBudget(value);}catch{return false;}
 }
 
 // Explicit synchronous cost scope for proof DATA. No source/owner verdict or
@@ -300,4 +309,19 @@ export function withCurrentRetainedPrivateNativeProofCostScope(run){
  const current=nativeProofCostScope,policy=retainedPrivateProofCostPolicy;
  if(current&&current.open&&policy&&policy.scope===current)return run();
  return withRetainedPrivateNativeProofCostScope(run);
+}
+
+// A factory-private arithmetic store exists only during the current retained
+// synchronous proof scope. Its key never escapes, and it stores no sources,
+// owners, digests, encoded results or eligibility decisions.
+export function createRetainedPrivateScalarCostStore(){
+ const key={};
+ return function currentScalarCostStore(){
+  const scope=retainedPrivateProofCostPolicy?.scope;
+  if(!scope||!scope.open||!nativeReady())return null;
+  const memo=scope.memo??(scope.memo=new weakOwner());
+  let store=apply(weakGet,memo,[key]);
+  if(!store){store={values:new weakOwner(),entries:0};apply(weakSet,memo,[key,store]);}
+  return store;
+ };
 }

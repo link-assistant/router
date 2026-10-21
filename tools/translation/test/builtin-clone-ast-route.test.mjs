@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
@@ -12,7 +13,7 @@ import {createDeriveBangContext} from '../derive-bang-context.mjs';
 import {PRODUCTION_PROFILE,compilationProfile} from '../cfg-profile.mjs';
 import {translateProject} from '../project.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
 function setup(source,profile=PRODUCTION_PROFILE){const modules=[{file:'src/lib.rs',path:[],source}],context=createDeriveFootprintContext({modules,dependencies,compilationProfile:profile}),certificate=context.certificates[0],attribute=certificate?.attributes.find(a=>a.derives?.some(path=>path.join('::')==='Clone'));return {modules,context,certificate,invocation:attribute&&{path:['Clone'],attributeSpan:attribute.span}};}
 const prove=source=>proveBuiltinDeriveBangFootprint(setup(source));
 function retain(name,source,proof){if(!process.env.ROUTER_CLONE_NAMESPACE_VECTORS)return;mkdirSync(process.env.ROUTER_CLONE_NAMESPACE_VECTORS,{recursive:true});writeFileSync(process.env.ROUTER_CLONE_NAMESPACE_VECTORS+'/'+name+'.json.gz',gzipSync(JSON.stringify({source,proof,plan:proof.schema==='builtin-clone-bang-output-v1'?builtinCloneOriginalSourcePlan(proof.route):null})));}

@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
@@ -12,7 +13,7 @@ import {PRODUCTION_PROFILE,compilationProfile} from '../cfg-profile.mjs';
 import {createDeriveBangContext} from '../derive-bang-context.mjs';
 import {translateProject} from '../project.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')}),profile=builtinDeriveAstSourceProfile(dependencies);
+const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')}),profile=builtinDeriveAstSourceProfile(dependencies);
 function setup(source,config=PRODUCTION_PROFILE){const context=createDeriveFootprintContext({modules:[{file:'src/lib.rs',path:[],source}],dependencies,compilationProfile:config}),certificate=context.certificates.find(row=>row.attributes.some(attr=>attr.derives?.some(path=>path.join('::')==='Hash'))),attribute=certificate?.attributes.find(row=>row.derives?.some(path=>path.join('::')==='Hash'));return {context,certificate,invocation:attribute&&{path:['Hash'],attributeSpan:attribute.span}};}
 const prove=source=>proveBuiltinDeriveBangFootprint(setup(source));
 function vector(name,value){if(!process.env.ROUTER_DOLLAR_TOKEN_VECTORS)return;mkdirSync(process.env.ROUTER_DOLLAR_TOKEN_VECTORS,{recursive:true});writeFileSync(process.env.ROUTER_DOLLAR_TOKEN_VECTORS+'/'+name+'.json.gz',gzipSync(JSON.stringify(value)));}

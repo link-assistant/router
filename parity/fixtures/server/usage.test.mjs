@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {UsageTracker} from '../../../packages/javascript/native/usage.mjs';
-import {createNativeRouter} from '../../../packages/javascript/native/server.mjs';
+import {UsageTracker} from '../../../js/src/usage.mjs';
+import {createNativeRouter} from '../../../js/src/server.mjs';
 const frame=value=>`data: ${JSON.stringify(value)}\n\n`;
 test('usage tracker counts vendor caches, Unicode partial output and final usage without double counting',()=>{
   const tracker=new UsageTracker();const bytes=Buffer.from(frame({type:'message_start',message:{usage:{input_tokens:3,cache_read_input_tokens:2,cache_creation_input_tokens:1}}})+frame({type:'content_block_delta',delta:{type:'text_delta',text:'Xin chào🙂'}}));

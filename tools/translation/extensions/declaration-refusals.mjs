@@ -1,9 +1,11 @@
+import {createSourceLifetimeRefusalSupport} from './source-lifetime-refusal-support.mjs';
 // Collect attributed original declaration errors. A failed phase never
 // returns checked IR; callers discard this checker and recheck the survivors.
 import {TranslationError} from '../vendor/meta-language/translation/diagnostics.js';
 import {originalMethodRefusalRange} from '../source-method-admission.mjs';
 import {originalProjectDeclarationRefusalRange,originalProjectDeclarationRefusalRangesGroupedTokens as originalProjectDeclarationRefusalRanges} from '../project.mjs';
 const collectors=new WeakMap(),batches=new WeakMap();
+export const {withSourceLifetimeRefusals,sourceLifetimeRefusalsSelected,checkSourceLifetimeRefusals}=createSourceLifetimeRefusalSupport({collectors,failedPhase,TranslationError,originalRanges:originalProjectDeclarationRefusalRanges});
 function failedPhase(errors) {
   const error=new Error('Original declaration phase contains semantic refusals');
   batches.set(error,Object.freeze(errors.map(entry=>Object.freeze(entry))));
@@ -26,6 +28,7 @@ export function withDeclarationRefusalCollection(Base) {return class extends Bas
   }
   visitDeclaration(item,path,entry,visit,phase) {
     const state=collectors.get(this);
+    if(state?.collectSourceLifetimes&&phase==='declaration-bodies'&&item.k==='fn')state.sourceProofOrigins.set(entry.fullName,{item,path:[...path],entry});
     if(state?.collectIndependentBodies&&phase==='declaration-bodies'&&item.k==='fn'&&(item.constant||item.constFunction))state.constantOrigins.set(entry,{item,path:[...path]});
     const body=state?.collectIndependentBodies===true&&state.phase==='declaration-bodies';
     if(!state||state.phase!=='declaration-types'&&!body)return super.visitDeclaration(item,path,entry,visit,phase);
@@ -69,7 +72,7 @@ export function checkConstEligibilityRefusals(checker,program,verify) {
 export function checkCollectedDeclarationTypes(checker,surface,{collectIndependentBodies=false}={}) {
   if(typeof collectIndependentBodies!=='boolean')throw new TypeError('Independent body refusal collection requires an explicit boolean');
   if(collectors.has(checker))throw new TypeError('Declaration refusal collector is already active');
-  collectors.set(checker,{depth:0,phase:null,errors:[],constantOrigins:new Map(),collectIndependentBodies});
+  collectors.set(checker,{depth:0,phase:null,errors:[],constantOrigins:new Map(),collectIndependentBodies,collectSourceLifetimes:sourceLifetimeRefusalsSelected(surface),sourceProofOrigins:sourceLifetimeRefusalsSelected(surface)?new Map():null});
   try {return checker.program(surface);}
   finally {collectors.delete(checker);}
 }

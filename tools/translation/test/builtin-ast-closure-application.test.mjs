@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // Eight source-only authored cases; ALL UNRUN, no generator/trait execution.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -9,7 +10,7 @@ import {createBuiltinVecRemoveSourcePlan,assertBuiltinVecRemoveSourcePlan,isBuil
 import {createBuiltinDeriveFieldAstBridge} from '../builtin-ast-field-construction.mjs';
 import {createDeriveFootprintContext} from '../derive-footprints.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
-const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
 const profile=builtinDeriveAstSourceProfile(dependencies),generic='compiler/rustc_builtin_macros/src/deriving/generic/mod.rs';
 function collect(node,predicate,result=[]){if(!node||typeof node!=='object')return result;if(predicate(node))result.push(node);for(const [key,value]of Object.entries(node))if(!['syntax','schema','recipe','import','typeSyntax','sourceBinding','original','declaredTypeSyntax'].includes(key))if(Array.isArray(value))value.forEach(value=>collect(value,predicate,result));else collect(value,predicate,result);return result;}
 function application(name='create_struct_field_access_fields'){

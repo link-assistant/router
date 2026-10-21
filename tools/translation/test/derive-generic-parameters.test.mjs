@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -10,7 +11,7 @@ import {sourceItems} from '../rust-structure.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {translateProject} from '../project.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock});
+const root=new URL('../../../',import.meta.url),manifest=readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock=readFileSync(repositorySourceURL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock});
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const module=source=>({file:'src/lib.rs',path:[],source});
 const context=source=>createDeriveFootprintContext({modules:[module(source)],dependencies,compilationProfile:PRODUCTION_PROFILE});
@@ -50,7 +51,7 @@ test('generic certificates reject clones altered tokens sources and module subst
 });
 
 test('whole original operation result preserves its actual default Value parameter and unresolved runtime',()=>{
-  const path='src/operations.rs',source=readFileSync(new URL(path,root),'utf8');assert.equal(hash(source),'df80717e2d2fc4b3b8ad00f08e2e5f06061a96b135981f42833ffc5ca4eeeabc');
+  const path='src/operations.rs',source=readFileSync(repositorySourceURL(path,root),'utf8');assert.equal(hash(source),'df80717e2d2fc4b3b8ad00f08e2e5f06061a96b135981f42833ffc5ca4eeeabc');
   const proof=createDeriveFootprintContext({modules:[{file:path,path:[],source}],dependencies,compilationProfile:PRODUCTION_PROFILE}),certificate=proof.certificates.find(item=>item.name==='OperationResult');assert.ok(certificate);assert.deepEqual(certificate.span,{start:787,end:1456});assert.equal(certificate.sourceSha256,hash(source));assert.deepEqual(certificate.genericParameters.parameters.map(parameter=>[parameter.name,parameter.typeDefault.segments]),[['T',['Value']]]);
   assert.equal(source.slice(certificate.genericParameters.span.start,certificate.genericParameters.span.end),'<T = Value>');assert.equal(certificate.genericParameters.genericTypeInstantiation,false);assert.equal(certificate.generatedImplBehavior,false);assert.equal(certificate.dimensions.bangMacroComplete,false);
 });

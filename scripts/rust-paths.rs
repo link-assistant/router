@@ -58,19 +58,19 @@ pub fn get_rust_root(explicit_root: Option<&str>, verbose: bool) -> Result<Strin
     }
 
     // Check for single-language repo (Cargo.toml in root)
-    if Path::new("./Cargo.toml").exists() {
-        if verbose {
-            eprintln!("Detected single-language repository (Cargo.toml in root)");
-        }
-        return Ok(".".to_string());
-    }
-
-    // Check for multi-language repo (Cargo.toml in rust/ subfolder)
     if Path::new("./rust/Cargo.toml").exists() {
         if verbose {
             eprintln!("Detected multi-language repository (Cargo.toml in rust/)");
         }
         return Ok("rust".to_string());
+    }
+
+    // Check for multi-language repo (Cargo.toml in rust/ subfolder)
+    if Path::new("./Cargo.toml").exists() {
+        if verbose {
+            eprintln!("Detected single-language repository (Cargo.toml in root)");
+        }
+        return Ok(".".to_string());
     }
 
     // No Cargo.toml found
@@ -98,7 +98,7 @@ pub fn get_cargo_toml_path(rust_root: &str) -> PathBuf {
 
 /// Get the path to Cargo.lock
 pub fn get_cargo_lock_path(rust_root: &str) -> PathBuf {
-    if rust_root == "." {
+    if rust_root == "." || (rust_root == "rust" && Path::new("./Cargo.lock").is_file()) {
         PathBuf::from("./Cargo.lock")
     } else {
         PathBuf::from(rust_root).join("Cargo.lock")
@@ -107,7 +107,7 @@ pub fn get_cargo_lock_path(rust_root: &str) -> PathBuf {
 
 /// Get the path to changelog.d directory
 pub fn get_changelog_dir(rust_root: &str) -> PathBuf {
-    if rust_root == "." {
+    if rust_root == "." || (rust_root == "rust" && Path::new("./changelog.d").is_dir()) {
         PathBuf::from("./changelog.d")
     } else {
         PathBuf::from(rust_root).join("changelog.d")
@@ -116,7 +116,7 @@ pub fn get_changelog_dir(rust_root: &str) -> PathBuf {
 
 /// Get the path to CHANGELOG.md
 pub fn get_changelog_path(rust_root: &str) -> PathBuf {
-    if rust_root == "." {
+    if rust_root == "." || (rust_root == "rust" && Path::new("./CHANGELOG.md").is_file()) {
         PathBuf::from("./CHANGELOG.md")
     } else {
         PathBuf::from(rust_root).join("CHANGELOG.md")

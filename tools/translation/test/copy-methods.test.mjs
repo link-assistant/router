@@ -100,7 +100,7 @@ test('Copy evidence never permits mutable, typed, unsafe, generic, conditional o
 });
 
 test('original FailureKind enum and original message method acquire a narrow checked Copy lowering',()=>{
-  const source=readFileSync(new URL('../../../src/stream_termination.rs',import.meta.url),'utf8'),item=sourceItems(source).find(item=>item.term==='enum' && item.name==='FailureKind');
+  const source=readFileSync(new URL('../../../rust/src/stream_termination.rs',import.meta.url),'utf8'),item=sourceItems(source).find(item=>item.term==='enum' && item.name==='FailureKind');
   const options=context(source.slice(item.start,item.end)),type={kind:'data',name:'FailureKind'};
   const implementation=extractImplDeclarations(source).implementations.find(implementation=>implementation.typePath.join('::')==='FailureKind');
   options.implementations=[{...implementation,resolvedType:type}];

@@ -1,10 +1,11 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {loadJsonMacroSourceProof,jsonMacroOriginalSource} from '../json-macro-sources.mjs';
 import {verifyPinnedJsonLimbArithmetic,isPinnedJsonLimbArithmetic} from '../json-roundtrip-limb-arithmetic.mjs';
-const root=new URL('../../../',import.meta.url),dependencies=()=>loadJsonMacroSourceProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+const root=new URL('../../../',import.meta.url),dependencies=()=>loadJsonMacroSourceProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
 test('all original32/64 limb power arrays retain exact little-endian arithmetic and declaration source',()=>{
   const input=dependencies(),proof=verifyPinnedJsonLimbArithmetic(input);assert.equal(isPinnedJsonLimbArithmetic(proof),true);assert.equal(proof.rows.length,100);
   for(const bits of [32,64]){

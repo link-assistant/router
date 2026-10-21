@@ -1,5 +1,6 @@
 // Identity of the actual locked public function, independently of any runtime
 // implementation. Only a genuine current Cargo dependency proof selects it.
+import {cargoLayoutManifestDigestsMatch} from './cargo-layout-input-compatibility.mjs';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
@@ -36,6 +37,6 @@ function sourceDescriptor(){
   descriptor=Object.freeze({name:'value',namespace:'value',target:Object.freeze(['toml_edit','value']),kind:'fn',source:'locked-original-toml-value-function',sourceEvidence:Object.freeze({package:profile.package,version:profile.version,archiveSha256:profile.sha256,declarationSha256:hash(item.slice(declaration.start,declaration.end)),declarationSpan:Object.freeze({start:declaration.start,end:declaration.end}),reexportSha256:hash(lib.slice(reexport.start,reexport.end)),reexportSpan:Object.freeze({start:reexport.start,end:reexport.end}),callAuthority:false,layoutAuthority:false,namespaceComplete:false,runtimeAuthority:false})});return descriptor;
 }
 export function lockedTomlValueNamespaceBindings(dependencies){
-  if(!isDeriveDependencyProof(dependencies)||dependencies.manifestSha256!==profile.cargoManifestSha256||dependencies.lockSha256!==profile.cargoLockSha256)return [];
+  if(!isDeriveDependencyProof(dependencies)||(dependencies.manifestSha256!==profile.cargoManifestSha256&&!cargoLayoutManifestDigestsMatch(dependencies.manifestSha256,profile.cargoManifestSha256))||dependencies.lockSha256!==profile.cargoLockSha256)return [];
   return [sourceDescriptor()];
 }

@@ -1,3 +1,5 @@
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
+import {rustPackageSourcePath} from "../repository-layout.mjs";
 import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdtempSync,writeFileSync,mkdirSync,rmSync} from 'node:fs';
@@ -24,7 +26,7 @@ const oldSource=oldBytes.toString('utf8').replace(/\bfrom (['"])(\.\/[^'"]+)\1/g
 const oldPath=join(directory,'complete-original.mjs');writeFileSync(oldPath,oldSource);
 const currentBytes=readFileSync(new URL('../derive-footprints.mjs',import.meta.url)),currentRelocations=[],currentSource=currentBytes.toString('utf8').replace(/\bfrom (['"])(\.\/[^'"]+)\1/g,(whole,quote,path)=>{const target=new URL(path,base).href;currentRelocations.push({path,target});return 'from '+quote+target+quote;});
 const currentPath=join(directory,'complete-current.mjs');writeFileSync(currentPath,currentSource);after(()=>rmSync(directory,{recursive:true,force:true}));
-const old=await import(pathToFileURL(oldPath).href),cargo={manifest:readFileSync(join(root,'Cargo.toml'),'utf8'),lock:readFileSync(join(root,'Cargo.lock'),'utf8')},dependencies=loadDeriveDependencyProof(cargo);
+const old=await import(pathToFileURL(oldPath).href),cargo={manifest:readFileSync(join(root,rustPackageSourcePath(root,'Cargo.toml')),'utf8'),lock:readFileSync(join(root,rustPackageSourcePath(root,'Cargo.lock')),'utf8')},dependencies=loadDeriveDependencyProof(cargo);
 function retain(name,value){const output=process.env.ROUTER_STANDARD_MODULE_PATH_VECTOR_DIR;if(output){mkdirSync(output,{recursive:true});writeFileSync(join(output,name+'.json'),nativeJson(value));}}
 function inputs(source,count=0){if(count)source=Array.from({length:count},(_,index)=>`mod child_${index}{#[derive(Clone,Debug)]pub struct Payload{value:u8}}`).join('')+source;const views=captureSourceModuleViews({source,sourcePath:'src/lib.rs',compilationProfile:PRODUCTION_PROFILE}).views;return {source,modules:views.map(sourceView=>({file:'src/lib.rs',path:[...sourceView.modulePath],source,sourceView,configurationCondition:sourceView.configurationCondition,compilationProfile:PRODUCTION_PROFILE}))};}
 function run(implementation,row){try{return {context:implementation.createDeriveFootprintContext({modules:row.modules,dependencies,compilationProfile:PRODUCTION_PROFILE})};}catch(error){return {error:{name:error.name,message:error.message}};}}
@@ -51,7 +53,7 @@ test('complete original oracle and dense genuine mutable module graph preserve e
 });
 
 test('complete actual unchanged Router graph freshly reconstructs identical whole derive contexts',{timeout:60000},()=>{
- const paths=execFileSync('git',['ls-files','-z','--','*.rs'],{cwd:root,encoding:'utf8',timeout:10000,maxBuffer:4*1024*1024}).split('\0').filter(Boolean),readSource=path=>trackedSource(root,path),graph=resolveModuleGraph({entry:'src/lib.rs',paths,readSource,compilationProfile:PRODUCTION_PROFILE});
+  const paths=execFileSync('git',['ls-files','-z','--','*.rs'],{cwd:root,encoding:'utf8',timeout:10000,maxBuffer:4*1024*1024}).split('\0').filter(Boolean),readSource=path=>trackedSource(root,repositorySourcePath(path,root)),graph=resolveModuleGraph({entry:rustPackageSourcePath(root,'src/lib.rs'),paths,readSource,compilationProfile:PRODUCTION_PROFILE});
  assert.ok(paths.length>=804);assert.ok(graph.modules.length>100);assert.ok(graph.modules.every(module=>module.sourceView));const row={modules:graph.modules},expected=run(old,row),actual=run(current,row);equal('02-complete-actual-router-contexts',expected,actual,{paths,graph,cargo,originalOracle:manifest});assert.ok(actual.context.certificates.some(row=>row.standardInput));
 });
 

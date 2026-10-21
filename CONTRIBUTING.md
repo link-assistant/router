@@ -7,7 +7,7 @@ Thank you for your interest in contributing! This document provides guidelines a
 Clone `https://github.com/link-assistant/router.git`, then install Node 20 or newer and Bun for the JavaScript development gate. Install package dependencies with:
 
 ```bash
-npm ci --prefix packages/javascript
+npm ci --prefix js
 ```
 
 Rust, rustfmt, Clippy and rust-script remain tools for the Rust implementation and its CI checks. Install them when working on that surface, rather than compiling the project as the first setup step. Optional pre-commit hooks use `pip install pre-commit` and `pre-commit install`. Local hooks must remain free of Rust execution and automatic build-cache cleanup; obtain Rust results through the gated workflow below and perform authorized cleanup separately.
@@ -24,7 +24,7 @@ Run the complete local gate:
 node scripts/check-js-first-local.mjs --stamp /tmp/router-js-first-gate.json
 ```
 
-It runs the actual JavaScript lint, native Node and Bun tests, type checks, strict parity, forward translation and reverse regeneration checks. A missing or partial parity entry keeps the gate red. Fix all reported failures together. Individual diagnostics include `npm run native:test --prefix packages/javascript`, `npm run native:test:bun --prefix packages/javascript`, `npm run typecheck --prefix packages/javascript`, `node scripts/check-router-parity.mjs` and `node --test scripts/test/*.test.mjs`. These help locate failures but do not replace the complete gate.
+It runs the actual JavaScript lint, native Node and Bun tests, type checks, strict parity, forward translation and reverse regeneration checks. A missing or partial parity entry keeps the gate red. Fix all reported failures together. Individual diagnostics include `npm run native:test --prefix js`, `npm run native:test:bun --prefix js`, `npm run typecheck --prefix js`, `node scripts/check-router-parity.mjs` and `node --test scripts/test/*.test.mjs`. These help locate failures but do not replace the complete gate.
 
 Use CI for broader Rust verification after the JavaScript gate. Do not run full local Cargo builds, test suites or Clippy. Only an explicitly necessary targeted exception can use the bounded shared build wrapper after a green stamp for the current SHA and file contents:
 
@@ -67,7 +67,11 @@ For active issue #759, the user has given standing authorization for the designa
 
 The user explicitly requested the 2026-10-19 checkpoint push and merge of PR #761, followed by a new continuation pull request. Record the remaining work in [the continuation ledger](docs/development/issue-759-continuation.md), keep issue #759 open, and use normal repository merge protections. This checkpoint rollover does not certify complete translation or parity and does not unlock Rust CI before all required JavaScript stages pass for the same SHA.
 
+The user's 2026-10-22 instruction authorizes prompt merge of PR #771 once green or at a meaningful completed checkpoint, with remaining requirements tracked in [issue #772](https://github.com/link-assistant/router/issues/772). Use normal merge protections without bypassing required checks. A checkpoint merge does not certify full parity or change the same-SHA JavaScript gate before Rust.
+
 ## Translation rules and shared regressions
+
+Profile matrices use the [sequential process contract](docs/development/isolated-profile-matrices.md): run every complete profile in a fresh process, preserve all original compiler checks and validate every staged byte plan and current input before publishing profile outputs. Generate the copied producers and CLI branch through `node tools/translation/prepare-isolated-matrix.mjs --emit /tmp/FRESH_PROPOSAL`, independently review complete CST/native-source inverses, and require `--check` freshness. Preserve whole receiving files, original deadlines and matrix, heap, aggregate RSS and disk limits. Remove only the task's identified inactive temporary generated storage after interruption. This changes compiler-context lifetime, grants no new source or semantic authority, and does not certify full translation or parity.
 
 Implement translation as ordered substitution rules over parsed source, checked semantic meta or target syntax. Keep at least two separately declared rule sequences: reusable programming-language rules first, then repository rules for Router's output layout, imports, formatting and quality conventions. Keep language semantics independent of Router paths and declaration names. Repository rules must preserve the meaning established by the checked language rules. Both Rust → meta → JavaScript/TypeScript and JavaScript → meta → Rust/TypeScript must retain the serialized, reparsed meta boundary. See [the rule-layer contract](docs/development/translation-rules.md).
 
@@ -79,11 +83,31 @@ The reverse entry `translateConcreteSyntaxMeta` accepts JavaScript and TypeScrip
 
 For bulk stored or edited CST, use the [explicit bulk transport contracts](docs/development/concrete-syntax-bulk.md). Retain every row, independent concrete validation and whole-call limits across chunk boundaries. Grouped source authentication changes the observer schedule explicitly; it does not replace fresh semantic checks or authorize caller-supplied metadata. Keep the untrusted-document path separate from the private source-origin specialization.
 
+Stored project review validates the complete concrete field and all remaining semantic metadata separately. Each keeps the original two-million-object/depth-512 guard; storage still limits each complete file to 64 MiB and the aggregate to 512 MiB. Every concrete document must serialize, reparse and reconstruct its complete original Rust source, with an exact source-hash and row-census join. The source-derived stored-project reviewer receives every other field and retains independent generated-method checks; the original direct reviewer API remains unchanged. Generate the copied concrete review guard with `node scripts/prepare-project-concrete-review.mjs --emit`, review its complete CST and inverse before installation, and require `--check` freshness. This data validation grants no namespace, executable or runtime authority.
+
+The separate compressed project-storage APIs preserve the complete logical JSON and original decoded-file, decoded-aggregate and physical-storage limits. Generate their complete source copy with `node tools/translation/prepare-compressed-project-meta-storage.mjs --emit`; generate the pinned MIT compressor scope with `node tools/translation/prepare-meta-compression-vendor.mjs --emit`. Review both proposals' complete CST, inverses, native grammar and upstream license before installation, and require both `--check` commands. Compression is deterministic across Node and Bun, validates full byte restoration and cannot admit a source, type or runtime behavior. Integrate producers/readers and regenerate all canonical/profile outputs before claiming the storage extension is active or current.
+
+Prepare the JSON-reader reviewer's profile pin with `python3 -B scripts/prepare-json-reader-review-profile.py --root "$PWD" --emit /tmp/FRESH_PROPOSAL`. Its actual ordered `language` and `repository` sequences retain lossless serialized/reparsed Python tokenize-CST, verify that only the selected native AST literal changes, and prove the complete original/current Cargo and JSON-profile equation. Independently review the full proposal and inverse before installing it, then require the same command with `--check`. Keep the strict source-profile check and run the complete receiving workflow in Node and Bun. Copy this preparation tool with the receiving workflow when adopting it elsewhere; its CST records grant no compiler or runtime authority.
+
+Generate the complete stored-project reviewer copy with `node scripts/prepare-stored-project-review.mjs --emit /tmp/FRESH_PROPOSAL`, independently review every original function, copy equation, native grammar, CST and inverse, and require `--check` after installation. Follow [its contract](docs/development/stored-project-review.md): share private contexts only within one fresh review call, rejoin original sources and sealed dependencies, normalize serialized profiles through the existing profile parser, and preserve all original body and refusal checks. Never reuse this invocation's source or verdict in a later call. Qualify complete receiving files under both engines and the original full-review bound before claiming a performance improvement.
+
+Historical Git tests must carry complete genuine commit, selected tree and source blob bytes when CI cannot access the original revision. Preserve every original source pin, validate all selected paths with native Git and full CST roundtrips, report missing parent ancestry explicitly, and clean task-owned fixture directories. Use a portable fixture rather than substituting current source for missing historical bytes. Qualify every original receiving case and its deadline after adapting the loader.
+
 Extend a rule at the shared translation layer when it repairs a class of source constructs. Record its stable identity, prerequisites, order, supported inputs and explicit refusals; add independent positive, negative and boundary fixtures. Exact text substitutions require unique validated anchors against pinned inputs. Semantic substitutions require resolved owners, types, effects and source evidence; matching a familiar name or arbitrary object shape is insufficient. Never grant new semantic authority through a formatting rule, weaken a refusal to inflate coverage, or manually patch generated outputs.
 
 Use complete small JavaScript test files under Node and Bun and strict TypeScript execution for quick feedback while drafting a batch. Use the repository's lockfile-installed compiler and record its actual version; do not downgrade the compiler or strictness to obtain a pass. Read the corresponding Rust and generated bodies, collect related failures together and repair the shared rules before expensive full-corpus regeneration. Add Rust edge cases for the same behavior, including overflow, empty values, Unicode, malformed input, ordering and errors where applicable. Distinguish the Rust oracle, JavaScript behavior, executed TypeScript and synchronization freshness in the evidence. Run the complete JavaScript gate on the final integrated tree before claiming a verified or release-ready batch; authorized feedback checkpoints retain their failed/unrun status under the policy above. Targeted diagnostics do not replace the gate.
 
 Inspect reported case durations as well as command exit codes. A synchronous Node test can block its timeout callback and report a pass after exceeding its declared deadline. Treat that duration breach as a performance failure, retain the complete output, and optimize the shared implementation. Preserve whole files and deadlines; moving work outside a case does not qualify its original workload. Record diagnostic limits separately from test deadlines, and never present a timed-out comparison or a comparison with changed compiler inputs as a measured speed gain.
+
+Before installing a JavaScript source proposal, also run the current engine's
+native syntax check over each complete proposed module. A TypeScript parser's
+empty syntax diagnostics do not catch every JavaScript early error, including
+duplicate lexical declarations. Keep the complete source/CST inverse and the
+independent behavioral checks; a native syntax pass does not replace either.
+Node uses `--input-type=module --check`; Bun's `--check` selects a different
+command. Use its [native JavaScript scanner](https://bun.com/docs/runtime/transpiler)
+for complete module syntax, and qualify duplicate-binding rejection and the
+absence of proposed-module execution or dependency resolution in both engines.
 
 Track every requested requirement through its source changes, generated artifacts, checks and remaining gaps. While remote CI runs, continue source review and independent draft work in assigned worktrees without changing the published head or starting a second expensive workload. Collect the complete CI results before integrating the next repair batch. A bulk draft or an unexecuted test remains a draft until the corresponding checks pass.
 
@@ -91,7 +115,142 @@ Prioritize common translation blockers using actual project diagnostics. A [shar
 
 Keep work bounded: run one expensive compiler, test or compression workload at a time, reuse existing worktrees and dependencies, check disk space and retain complete failure evidence with lossless compression. Assign that workload explicitly before a worker starts it. Retain actual source versions, full vectors, commands, compiler identities, logs and resource receipts; a digest alone does not preserve the original evidence. When a command becomes slow, measure it before optimizing shared rules; preserve semantics, complete test cases and deadlines. Do not filter failures, raise limits or weaken refusals to obtain a pass. Report executable coverage separately from source preservation, and retain explicit parity limitations until the full checks prove them resolved.
 
-For issue #759, the user's 2026-10-19 instruction supersedes the earlier two-worker limit: existing assignments have finished and the coordinator continues alone, including publication. Do not spawn or resume subagents. Reuse the assigned worktrees; do not clone more repositories. The current owner is recorded in [AGENTS.md](AGENTS.md). Keep the case study below its fixed 500,000,000-byte filesystem allocation and measure allocation without counting shared inodes twice. Preserve complete recovery and continuity evidence before retiring an archive. The user authorized removal of this task's own inactive Rust caches and build directories regardless of age; identify each owned path, check that no worker uses it, and record reclaimed space. Never remove another worker's active directory or lock. Freed space does not authorize a local Rust build.
+For source-layout changes, select executable filesystem and current Git reads
+with the parser, apply ordered CST substitutions and verify complete source
+inverses. Preserve frozen historical source bytes, hashes and logical source
+identities. Adapt their receiving loaders explicitly; embedded child sources
+and immutable historical revisions must keep their own paths and contracts.
+
+Receiving module copies must select real import and `import.meta.url` spans with
+the installed native parser. Repeated equal replacements need separate mapped
+spans and a complete inverse; do not rewrite embedded strings or comments with
+an import-shaped regular expression. Retain serialized/reparsed CST on both
+sides and qualify the complete original test files under Node and Bun.
+
+When later source extensions follow a historical terminal kernel, keep the
+original producer equation and checksum controls intact. A receiving history
+adapter must retain every later byte, the complete native-selected function,
+whole-source CST and exact inverse. Historical comparisons have an explicit
+scope; runtime comparisons still execute the complete current module. A new
+source-data association for a frozen parent must authenticate its own complete
+historical/current universes rather than borrowing another test's case identity.
+
+Use the [parser-selected reader proposer](docs/development/translation-rule-api.md)
+for bulk layout repairs. Source payloads require literal substitution rules so
+replacement-template dollar forms survive unchanged. Preserve the original
+replacement-rule contract, qualify real legacy and nested receiving folders,
+and retain all tracked Rust rows and complete workspace/package Cargo inputs.
+An emitted or installed proposal still needs every affected complete test file.
+
+The two reviewed Router Cargo layouts use a stateless exact comparison copied
+from the complete historical layout equation. Regenerate its source proposal
+with `node tools/translation/prepare-cargo-layout-input-compatibility.mjs --emit`
+and check installed freshness with `--check`. Review full source/CST inverses
+before installation. Keep raw manifest hashes in evidence, exact lock and
+archive checks, and genuine private dependency proofs at every semantic join.
+This compatibility does not permit arbitrary TOML normalization or dependency
+changes. Its complete behavioral and refusal file belongs to both engines'
+mandatory compiler discovery.
+
+The derive-profile adapter is copied by the separate actual producer
+`node tools/translation/prepare-derive-profile-layout.mjs --emit`; its `--check`
+must reproduce both the adapter and async-trait consumer exactly. Keep the
+original dependency-profile hash frozen and authenticate the complete reversible
+profile change. Historical URL readers normalize only the known physical crate
+prefix before enforcing their original parent association. Do not repin frozen
+source hashes or accept arbitrary dependency profiles to repair a layout failure.
+
+Test carriers using the owned core must retain every actual facade child. Use
+`node tools/translation/prepare-complete-core-source-fixtures.mjs --emit` and
+`--check` for the copied complete-child fixture and its consumer imports. Preserve
+explicit wrong, undefined and accessor source fields in refusal fixtures. A
+completed source carrier still needs ordinary fresh parsing and semantic checks.
+
+Frozen feature-worklist consumers use a separate receiving adapter for the two
+known Cargo profiles. Preserve their raw modules, hashes and function bodies.
+The adapter must prove all four Cargo metadata token edits, original/current
+archive bytes and the complete CST whitespace inverse. Keep their original
+cryptographic and collection-callback comparisons in both engines; accepting a
+new raw checksum without that complete equation is insufficient.
+
+Package-only positive feature DATA use the complete existing facts producer,
+copied by `node tools/translation/prepare-external-package-defaults.mjs --emit`.
+Review and install its source/CST proposal, then require `--check`. Preserve the
+original caller-bound producers and fresh complete Cargo parser authentication.
+This entry must not invent a project module, prove a dependency unit's test or
+target configuration, close a feature key or authorize a namespace. Qualify both
+complete original/new test files and their full native Hash input comparisons.
+
+Within one project invocation, compose genuine source contexts explicitly when
+several consumers need the same original graph. Each consumer must retain its
+complete source, profile and private-issuer checks. Do not memoize namespace
+verdicts across invocations. Compare large serialized metadata in bounded
+fragments while preserving every byte comparison, existing component and
+aggregate limits, and independent reconstruction. A storage optimization or a
+focused pass still requires a fresh complete producer and gate result.
+
+The owned enclosing resolver is a source-derived wrapper around the existing
+genuine resolver inside its existing synchronous retained DATA-cost scope.
+Derive it and its parser-selected consumer imports with
+`node tools/translation/prepare-owned-enclosing-bindings.mjs --emit`, review
+complete source/CST inverses, install the exact proposals and run `--check`.
+Keep the legacy resolver body intact and independently compare all binding,
+diagnostic, source/profile-refusal and original argument-default behavior.
+The scope reuses frozen DATA arithmetic only; it closes before return and
+stores no source/owner verdict or encoded result. A synthetic timing comparison
+does not qualify the full project or extend any original case deadline.
+
+The explicit owned-definition producers may serialize complete top-level data
+fields separately with their fixed Map/BigInt serializer. Preserve native member
+keys, omissions, ordered logical bytes, every component and the original storage
+limits. Flatten a field only with a complete UTF-16/UTF-8 inverse; retaining both
+large wrappers and their component copies can defeat the memory optimization.
+This data-storage contract does not establish arbitrary replacer/observer
+equivalence or cache any source or semantic verdict.
+
+For the owned UTF-8 field format, derive both complete source copies with
+`node tools/translation/prepare-project-meta-utf8-storage.mjs --emit`, review
+their serialized/reparsed CST and full inverses, install the exact proposals
+and run `--check`. Its fixed serializer copies the actual Map/BigInt JSON
+expression and converts the keyed wrapper directly to bytes before returning.
+Preserve every field byte, native key argument, omission and original storage
+bound. The original string API remains independently checked. The owned bulk
+producer reports bounded storage and retention progress before and after each
+operation; callback failures must propagate before any generated file is written.
+Passing storage fixtures does not establish live-project memory fit or parity.
+
+The explicit retained owned-definition lane uses a separately generated UTF-16
+byte-retention format. Derive it with
+`node tools/translation/prepare-byte-output-text.mjs --emit`, review its complete
+original/edited CST and inverse, install the exact proposal and run `--check`.
+It assumes stock Buffer/zlib operations at module birth and refuses later
+operation changes. Private immutable compressed strings retain every UTF-16
+unit, including lone surrogates; the original chunk and retention budgets stay
+fixed. Keep the scalar-cell API and ordinary producer intact. Whole-wire storage
+timings do not establish live-project memory fit, observer equivalence, source
+authority or a full-gate pass.
+
+Select owned output keys before reading their text. Iterating `[path, text]`
+and then filtering can restore unrelated large metadata beside the live compiler.
+The retained owned lane derives a described byte map with
+`node tools/translation/prepare-described-byte-output-text.mjs --emit`; review
+its complete original source/CST and inverse, install the exact proposal and
+run `--check`. Its per-plan immutable output descriptions retain the original
+UTF-8 byte length and SHA-256 without restoring text during the final census.
+Keep surrogate pairs together across measurement chunks and retain lone-surrogate
+replacement semantics. These are storage measurements associated with private
+immutable cells, not cached source/owner verdicts or cross-invocation permits.
+Keep original byte/scalar APIs and all semantic/input checks independent, and
+qualify the full producer under its unchanged limits after focused tests pass.
+
+Canonical JSON storage validation must also avoid retaining a second complete
+object tree beside the live compiler. Preserve native parse/stringify decisions,
+including integer-key ordering, duplicate rejection, Unicode and exact malformed
+input errors. Deep or malformed inputs retain the original native fallback;
+bounded validation grants no semantic or source authority. Compare complete real
+inputs in separate fresh processes and report sampled memory and time separately.
+
+For issue #759, the user's latest 2026-10-21 instruction requires existing subagents to finish and the coordinator to continue alone, superseding the earlier allowance of up to three subagents. All existing workers have finished; do not spawn or restart workers. The coordinator alone integrates, verifies and publishes, with one resource-intensive workload at a time. Prioritize common rules using source-bound production function counts, retaining overlapping groups and subsequent blockers; count progress only when actual application functions become executable. Do not clone more repositories. The current owner is recorded in [AGENTS.md](AGENTS.md). Keep the case study below its fixed 500,000,000-byte filesystem allocation and measure allocation without counting shared inodes twice. Preserve complete recovery and continuity evidence before retiring an archive. The user authorized removal of this task's own inactive Rust caches and build directories regardless of age; identify each owned path, check that no worker uses it, and record reclaimed space. Never remove another worker's active directory or lock. Freed space does not authorize a local Rust build.
 
 Use [the reusable translation guidance](docs/development/reusable-translation-guidance/README.md) when copying this workflow to another repository. Copy its contribution and agent guidance separately from the compiler export, preserve the receiving repository's conventions and stricter user constraints, and qualify the receiving project independently. Reused upstream implementations must retain pinned source bytes, notices and licenses; a copied approach or successful export is not evidence of complete translation.
 
@@ -283,16 +442,21 @@ Fragments are automatically collected into CHANGELOG.md during the release proce
 ├── changelog.d/          # Changelog fragments
 │   ├── README.md         # Fragment instructions
 │   └── *.md              # Individual changelog fragments
-├── examples/             # Usage examples
+├── js/
+│   ├── src/              # Native JavaScript implementation and CLI
+│   └── test/             # Native JavaScript tests and typed receiving controls
+├── ts/
+│   └── src/              # TypeScript generated through checked CST/meta rules
+├── rust/
+│   ├── src/              # Rust library, CLI and compatibility core
+│   ├── tests/            # Rust integration tests, executed in gated CI
+│   ├── examples/         # Rust usage examples
+│   └── Cargo.toml        # Rust package configuration
 ├── scripts/              # JavaScript gate/generation tools and existing Rust/Python helpers
-├── src/
-│   ├── lib.rs            # Library entry point
-│   └── main.rs           # Binary entry point
-├── tests/                # Rust integration tests
 ├── tools/translation/    # Forward test/, reverse js-to-rust/test/, serialization-schema/*.test.mjs
 ├── .gitignore            # Git ignore patterns
 ├── .pre-commit-config.yaml  # Pre-commit hooks
-├── Cargo.toml            # Project configuration
+├── Cargo.toml            # Root workspace selecting rust/
 ├── CHANGELOG.md          # Project changelog
 ├── AGENTS.md             # JavaScript-first and coordination instructions
 ├── CONTRIBUTING.md       # This file
@@ -329,3 +493,51 @@ Releases are managed through GitHub releases. To trigger a release:
 Thank you for contributing!
 
 For the explicit checked-definition receiving lane, prepare and review the complete source-derived bulk modules with `node tools/translation/prepare-owned-definition-bulk.mjs --emit`, then run actual canonical and `--profile-matrix` generation using `node scripts/translate-router.mjs --retain-output-text --owned-core-definitions`. Review and install only actual producer outputs. Generate their independent reverse counterparts with `node scripts/regenerate-js-first.mjs --owned-core-definitions --write` and its `--profile-matrix` variant. Every command's `--check` variant and `node scripts/check-owned-definition-typescript.mjs` are mandatory in the existing complete local and same-SHA CI gates. Preserve all ordinary commands, seven local/eight CI stages, strict TypeScript 5.9.3, original deadlines and the requirement for green JavaScript stages before Rust CI. Definition-only sidecars and witnesses do not count as full-module or crate equivalence; retain all original source and main-module refusal accounting. Keep new observed evidence within the 384 MiB monitor bound, using complete verified lossless terminal compression rather than truncation or waived workloads. See the [workflow](docs/development/javascript-first.md) for exact paths, materialization prerequisites and the separate unresolved parity obligations.
+
+### Language source layout
+
+Maintain physical `js/src`, `ts/src` and `rust/src` directories; see
+[the language layout and commands](docs/development/language-layout.md).
+JavaScript changes and checks run first. Generate TypeScript with the checked
+CST/meta producer; keep forward and reverse translation rules in separate
+ordered language and repository sequences. Do not hand edit generated files.
+The root Cargo manifest is a workspace; package metadata lives in
+`rust/Cargo.toml`, and the workspace lockfile remains at root. Refresh shared
+Rust assets with `node scripts/sync-rust-assets.mjs --write` and check them
+before CI. No Rust tool runs locally during issue #759; every required
+JavaScript stage must pass for the same SHA before Rust CI starts, and Rust
+failures remain fatal.
+
+Source-reader substitutions must preserve the distinction between a logical
+crate input and a physical workspace input. Use an explicit workspace reader
+for the root manifest. Native import and source-span checks establish the
+actual filesystem binding; they do not establish which manifest a caller
+intends. Preserve full historical parents, original test cases and deadlines
+when repairing readers, and verify both nested and legacy receiving layouts.
+
+For later compiler DATA formats, use the actual producer and preserve complete
+old/current source, serialized/reparsed CST and inverses. Historical comparison
+adapters must identify their exact scope; other tests and production imports
+must still execute the current implementation. Keep cold unavailable-host
+imports inert. Storage changes must recover every original value without
+raising the source graph's existing bounds or adding source, owner, hash,
+verdict or encoded-result caches across translation invocations.
+
+For repeated imports in receiving fixtures, reuse the native-parser relocation
+helper rather than a globally replaced import-shaped string. Run
+`node tools/translation/prepare-receiving-module-relocators.mjs --emit`, review
+the complete original/current CST and inverse, install its actual outputs and
+require `--check`. Keep reusable function substitutions in the language sequence
+and physical helper imports in the repository sequence. Source producers keep
+their portable input snapshots under `tools/translation/source-profiles` so the
+complete compiler export includes those inputs. Preserve every original case,
+callback and deadline; qualify actual current production code separately from
+scoped historical source views.
+
+When current application migrations change a historical oracle's parent,
+carry complete original Git commit/tree/blob data and preserve its original
+source/body pins, test workload and deadline. The portable lexical-parent
+fixture is copied by `prepare-lexical-parent-history.mjs` from the already
+qualified portable history producer through separate language/repository CST
+rules. Its five parents and nine genuine objects supply historical test DATA;
+they do not increase current executable coverage or establish runtime parity.

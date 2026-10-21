@@ -29,7 +29,7 @@ export async function runAuditedNodeTests({root,files,flags=[],outputDirectory,o
  for(const file of absoluteFiles){if(path.relative(root,file).startsWith('..')||!fs.statSync(file).isFile())throw Error('Whole Node source must be inside selected root');}
  const originalSources=absoluteFiles.map(file=>readCaseSource(file));
  if(originalSources.reduce((sum,row)=>sum+row.bytes,0)>64*1024*1024)throw Error('Complete original Node source bound exceeded');
- const outputBase=path.join(root,'packages/javascript/node_modules/.node-case-deadlines');
+ const outputBase=path.join(root,'js/node_modules/.node-case-deadlines');
  if(!outputDirectory){plainDirectory(path.dirname(outputBase));fs.mkdirSync(outputBase,{recursive:true});plainDirectory(outputBase);outputDirectory=fs.mkdtempSync(path.join(outputBase,'complete-'));}
  else {outputDirectory=canonicalCasePath(outputDirectory);plainDirectory(path.dirname(outputDirectory));fs.mkdirSync(outputDirectory,{mode:0o700});}
  const outputIdentity=fs.lstatSync(outputDirectory),guardOutput=()=>{plainDirectory(outputDirectory);const after=fs.lstatSync(outputDirectory);if(after.dev!==outputIdentity.dev||after.ino!==outputIdentity.ino||after.mode!==outputIdentity.mode)throw Error('Deadline output directory identity changed');};

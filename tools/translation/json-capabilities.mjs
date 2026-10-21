@@ -1,5 +1,6 @@
 // Feature activation uses the checksum-locked incoming dependency subgraph.
 // Cargo targets are unioned conservatively; no platform is guessed or executed.
+import {cargoLayoutManifestMatches} from './cargo-layout-input-compatibility.mjs';
 import {readFileSync} from 'node:fs';
 import {activateCargoFeatureRecords} from './cargo-feature-worklist.mjs';
 import {gunzipSync} from 'node:zlib';
@@ -8,11 +9,11 @@ import {unsupported} from './vendor/meta-language/translation/diagnostics.js';
 import {freezeMacroTree} from './macro-token-trees.mjs';
 const root=new URL('./source-profiles/json-capabilities/',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
 const bytes=readFileSync(new URL('manifest.json',root));
-if(hash(bytes)!=='4b329929001961cd6cdb221ba83f97698ccad8ca1de2b43d73641027e018f02d')throw new TypeError('JSON feature source profile changed');
+if(hash(bytes)!=='b31b059ad69822aebe097347a55dfbf590aa209085750f3821b5bd0cf8ff94cd')throw new TypeError('JSON feature source profile changed');
 const INPUTS=freezeMacroTree(JSON.parse(bytes));
 
 function actualFeatures(manifest,lock) {
-  if(typeof manifest!=='string'||typeof lock!=='string'||hash(manifest)!==INPUTS.manifestSha256||hash(lock)!==INPUTS.lockSha256)throw new TypeError('JSON parser lacks its exact original Cargo manifest/lock profile');
+  if(typeof manifest!=='string'||typeof lock!=='string'||(hash(manifest)!==INPUTS.manifestSha256&&!cargoLayoutManifestMatches(manifest,INPUTS.manifestSha256))||hash(lock)!==INPUTS.lockSha256)throw new TypeError('JSON parser lacks its exact original Cargo manifest/lock profile');
   const packages=new Map(),sources=[];
   for(const entry of INPUTS.packages) {
     if(entry.lockedArchiveSha256){const sections=lock.split('[[package]]').filter(section=>section.includes('name = '+JSON.stringify(entry.name)+'\nversion = '+JSON.stringify(entry.version)+'\n'));if(sections.length!==1||!sections[0].includes('checksum = '+JSON.stringify(entry.lockedArchiveSha256))||!sections[0].includes('source = "registry+https://github.com/rust-lang/crates.io-index"'))throw new TypeError('JSON feature package lacks its actual locked registry source');}

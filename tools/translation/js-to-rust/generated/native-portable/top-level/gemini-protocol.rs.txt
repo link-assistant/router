@@ -1,5 +1,5 @@
 // GENERATED: node scripts/regenerate-js-first.mjs
-// Independently checked top-level bodies from packages/javascript/native/gemini-protocol.mjs; source sha256=0c15dfd433d8a354b5c66a6c88d9edc66db1796b56e1aa46e8045756632626e9; IR sha256=b5027a564e31f3d6fcec344f75bf0d74044aeff723dc61d1dc7eb35322230e66.
+// Independently checked top-level bodies from js/src/gemini-protocol.mjs; source sha256=0c15dfd433d8a354b5c66a6c88d9edc66db1796b56e1aa46e8045756632626e9; IR sha256=554904678c3155503bf7a2e3df4f0f3384471c7c70ef48087a988579b7482f97.
 // Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
 #[derive(Clone, Copy)]
 pub enum JsPayload<'a> {
@@ -117,7 +117,7 @@ pub struct SourceErrorProjection {
 #[rustfmt::skip]
 fn image_media<'a>(value: JsPayload<'a>) -> Result<JsPayload<'a>, SourceErrorProjection> {
     if (!({ let observed = value; JsPayload::String(&[105, 109, 97, 103, 101, 47, 106, 112, 101, 103]).same_primitive(observed) || JsPayload::String(&[105, 109, 97, 103, 101, 47, 112, 110, 103]).same_primitive(observed) || JsPayload::String(&[105, 109, 97, 103, 101, 47, 103, 105, 102]).same_primitive(observed) || JsPayload::String(&[105, 109, 97, 103, 101, 47, 119, 101, 98, 112]).same_primitive(observed) })) {
-        return Err(SourceErrorProjection { source_class: "packages/javascript/native/protocols.mjs#ProtocolError#95331b80f43cce34bd79a70216b676d7744e1b62804c99256af53a2a3d53ae78", message: vec![73, 109, 97, 103, 101, 32, 109, 101, 100, 105, 97, 32, 116, 121, 112, 101, 32, 105, 115, 32, 117, 110, 115, 117, 112, 112, 111, 114, 116, 101, 100], own_fields: vec![(vec![115, 116, 97, 116, 117, 115], SourceErrorScalar::Number(400.0)), (vec![99, 111, 100, 101], SourceErrorScalar::Utf16(vec![117, 110, 115, 117, 112, 112, 111, 114, 116, 101, 100, 95, 116, 114, 97, 110, 115, 108, 97, 116, 105, 111, 110]))], identity: std::rc::Rc::new(()) });
+        return Err(SourceErrorProjection { source_class: "js/src/protocols.mjs#ProtocolError#95331b80f43cce34bd79a70216b676d7744e1b62804c99256af53a2a3d53ae78", message: vec![73, 109, 97, 103, 101, 32, 109, 101, 100, 105, 97, 32, 116, 121, 112, 101, 32, 105, 115, 32, 117, 110, 115, 117, 112, 112, 111, 114, 116, 101, 100], own_fields: vec![(vec![115, 116, 97, 116, 117, 115], SourceErrorScalar::Number(400.0)), (vec![99, 111, 100, 101], SourceErrorScalar::Utf16(vec![117, 110, 115, 117, 112, 112, 111, 114, 116, 101, 100, 95, 116, 114, 97, 110, 115, 108, 97, 116, 105, 111, 110]))], identity: std::rc::Rc::new(()) });
     }
     return Ok(value);
 }

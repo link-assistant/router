@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
@@ -57,7 +58,7 @@ test('genuine inline view path is part of the lexical family and no caller item 
 });
 
 test('the complete unchanged bounded_process original retains both Owned layouts and every body-output obligation',{timeout:5000},()=>{
- const file='src/bounded_process.rs',source=readFileSync(new URL('../../../'+file,import.meta.url),'utf8'),value=original(source,{file}),proof=prove(value),evidence=facts(proof,value),backing=originals(proof,value);
+ const file='src/bounded_process.rs',source=readFileSync(repositorySourceURL(file,new URL('../../../',import.meta.url)),'utf8'),value=original(source,{file}),proof=prove(value),evidence=facts(proof,value),backing=originals(proof,value);
  assert.deepEqual(evidence.family,['crate','Owned']);assert.equal(evidence.sourceSha256,hash(source));
  assert.equal(evidence.alternatives.length,2);assert.deepEqual(evidence.alternatives.map(row=>row.configuration.status),['unknown','unknown']);
  assert.ok(backing.alternatives.some(row=>source.slice(row.item.start,row.item.end).includes('std::process::Child')));

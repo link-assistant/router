@@ -1,3 +1,4 @@
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
@@ -13,6 +14,15 @@ import {parseProgram} from '../semantic-meta.mjs';
 import {fileURLToPath} from 'node:url';
 import {loadJavaScript as load,writeRuntimeAssets} from './artifact-loader.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
+// Authored crate carrier: every selected application/core parent stays complete.
+// This fixture qualifies those methods; unrelated imports and bodies stay refused.
+function currentOwnedParent(root,source){
+  const match=/^src\/([a-z_][a-z_0-9]*)\.rs$/u.exec(source);
+  if(!match)throw new TypeError('A complete crate-relative application parent is required');
+  const files={'src/lib.rs':'pub mod translation_core;\nmod '+match[1]+';\n'};
+  for(const path of [source,'src/translation_core.rs','src/translation_core/primitives.rs','src/translation_core/json_collections.rs','src/translation_core/ranges.rs','src/translation_core/base64.rs'])files[path]=trackedSource(root,repositorySourcePath(path,root));
+  return translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path],compilationProfile:PRODUCTION_PROFILE});
+}
 const project=files=>translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path]});
 function strict(result) {
   const directory=mkdtempSync(join(tmpdir(),'router-checked-methods-'));
@@ -73,7 +83,7 @@ test('module-local Option instantiations with equal type spellings retain distin
 test('actual tracked production methods retain independent constructor and ref-update behavior',async()=>{
   const root=fileURLToPath(new URL('../../../',import.meta.url));
   const checked=async source=>{
-    const result=translateProject({entry:source,paths:[source],readSource:path=>trackedSource(root,path),compilationProfile:PRODUCTION_PROFILE});
+    const result=currentOwnedParent(root,source);
     const program=parseProgram(JSON.stringify(result.meta.targetSemanticProgram));
     const methods=[...program.declarations.values()].filter(entry=>entry.impl);
     const exports=methods.map(entry=>`[${JSON.stringify(entry.impl.method)}]: ${entry.name}`).join(',');
@@ -105,7 +115,8 @@ test('shared record helpers have deterministic binders and reserved field labels
 test('actual tracked sibling closures load while whole verification retains namespace obligations',{timeout:30000},async()=>{
   const root=fileURLToPath(new URL('../../../',import.meta.url));
   for(const path of ['src/bridge_response.rs','src/verification.rs']) {
-    const source=trackedSource(root,path),result=translateSource(source,path);strict(result);
+    const source=trackedSource(root,repositorySourcePath(path,root)),context=path.endsWith('bridge_response.rs')?currentOwnedParent(root,path):null;
+    const result=translateSource(source,path,context?{projectDeclarations:context.executableDeclarations,projectSourceScopes:context.sourceScopes}:{});strict(result);
     assert.equal(result.ir.items.map(item=>item.source).join(''),source);
     const api=(await load(result.javascript)).translated;
     const get=name=>api[Object.keys(api).find(key=>key===name||key===name+'_')];

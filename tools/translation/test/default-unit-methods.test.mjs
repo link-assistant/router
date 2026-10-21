@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -14,7 +15,7 @@ import {captureSourceModuleViews,originalSourceModuleItems} from '../source-modu
 import {HostRustParser} from '../extensions/host-contracts.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 
-const root=new URL('../../../',import.meta.url),input={manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')};
+const root=new URL('../../../',import.meta.url),input={manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')};
 const dependencies=loadDeriveDependencyProof(input),jsonMacroDependencies=loadJsonMacroSourceProof(input);
 const compile=(source,entry='src/lib.rs')=>translateProject({entry,paths:[entry],readSource:()=>source,deriveDependencies:dependencies,jsonMacroDependencies,compilationProfile:PRODUCTION_PROFILE});
 function setup(source){
@@ -46,7 +47,7 @@ test('private original unit Default output and surface reject copied changed for
  surface.body.path[surface.body.path.length-1]='A';assert.throws(()=>assertOriginalDefaultGeneratedMethod(surface,context),/changed/);
 });
 test('whole original Model source checks its separate unit and container Default bodies',{timeout:60000},async()=>{
- const file='src/model_contract.rs',source=readFileSync(new URL(file,root),'utf8'),r=compile(source,file);
+ const file='src/model_contract.rs',source=readFileSync(repositorySourceURL(file,root),'utf8'),r=compile(source,file);
  assert.equal(r.meta.executable.filter(row=>row.term==='fn').length,2);assert.equal(r.meta.checkedMethods.length,5);assert.equal(r.meta.refused.length,17);
  const row=r.meta.checkedGeneratedMethods.find(row=>row.name==='ModelSelectorKind.default');assert.ok(row);assert.equal(row.originalDeclarationTerm,'enum');assert.equal(row.generator,'core::default::Default');assert.equal(row.receiver,null);
  assert.equal(r.meta.checkedGeneratedMethods.filter(row=>row.name==='ModelSelectorKind.clone').length,1);

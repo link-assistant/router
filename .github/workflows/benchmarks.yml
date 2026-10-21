@@ -8,10 +8,12 @@ name: Benchmarks
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
-      - 'src/**'
-      - 'benches/**'
+      - 'rust/src/**'
+      - 'rust/benches/**'
       - 'Cargo.toml'
+      - 'rust/Cargo.toml'
       - 'Cargo.lock'
       - 'scripts/compare-benchmarks.rs'
       - '.github/workflows/benchmarks.yml'
@@ -36,6 +38,7 @@ env:
 
 jobs:
   javascript:
+    if: ${{ github.event_name != 'pull_request' || toJSON(github.event.pull_request.draft) == 'false' }}
     name: JavaScript first (same commit)
     uses: ./.github/workflows/javascript-first.yml
     with:
@@ -112,8 +115,8 @@ jobs:
           base="$(git rev-parse --verify --quiet "origin/$BASE_REF^{commit}" \
             || git rev-parse --verify "$BASE_REF^{commit}")"
           git worktree add --detach "$RUNNER_TEMP/base" "$base"
-          if [ ! -f "$RUNNER_TEMP/base/benches/hot_paths.rs" ]; then
-            echo "Base $BASE_REF has no benches/hot_paths.rs; nothing to compare against." \
+          if [ ! -f "$RUNNER_TEMP/base/rust/benches/hot_paths.rs" ] && [ ! -f "$RUNNER_TEMP/base/benches/hot_paths.rs" ]; then
+            echo "Base $BASE_REF has no Rust hot_paths benchmark; nothing to compare against." \
               | tee -a "$GITHUB_STEP_SUMMARY"
             echo "present=false" >> "$GITHUB_OUTPUT"
             exit 0

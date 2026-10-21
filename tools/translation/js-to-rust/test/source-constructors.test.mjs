@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from "../../repository-layout.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createConstructorSourceGraph,issueImportedErrorConstructor,originalImportedErrorConstructor,reissueImportedErrorConstructor} from '../vendor/source-constructors.mjs';
@@ -151,7 +152,7 @@ test('private syntax occurrences match the complete old leaf across every native
   try {
     const old=await import(pathToFileURL(oldPath).href),current={createConstructorSourceGraph,issueImportedErrorConstructor,originalImportedErrorConstructor};
     const result=(implementation,graph,path,start,end)=>{try{const token=implementation.issueImportedErrorConstructor(graph,path,start,end);return {comparison:{admitted:true,state:implementation.originalImportedErrorConstructor(token)},rawError:null};}catch(error){return {comparison:{admitted:false,error:{name:error.name,message:error.message,slug:error.slug??null}},rawError:{name:error.name,message:error.message,slug:error.slug??null,stack:error.stack}};}};
-    const modules=JSON.parse(readFileSync(join(root,'parity/js-native-portable-draft.json'),'utf8')).modules,records=modules.map(module=>({path:module.path,source:readFileSync(join(root,module.path),'utf8')}));
+    const modules=JSON.parse(readFileSync(join(root,rustPackageSourcePath(root,'parity/js-native-portable-draft.json')),'utf8')).modules,records=modules.map(module=>({path:module.path,source:readFileSync(join(root,module.path),'utf8')}));
     assert.equal(records.length,52);vectors.fullOriginalNativeSources=records;
     const oldGraph=old.createConstructorSourceGraph(records),newGraph=createConstructorSourceGraph(records);let admitted=0;
     for(const record of records){const {ts,file}=ownershipSyntax(record.source),nodes=[];const visit=node=>{if(ts.isNewExpression(node))nodes.push(node);ts.forEachChild(node,visit);};visit(file);

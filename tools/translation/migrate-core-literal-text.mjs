@@ -1,3 +1,4 @@
+import {crateModuleSourcePath} from './repository-layout.mjs';
 // Maintainer-authorized source adoption; ordinary standard trait dispatch is
 // not inferred or granted by this proposal. Fresh checking remains mandatory.
 import {createHash} from 'node:crypto';
@@ -171,7 +172,7 @@ export function proposeCoreLiteralTextCorpus(options={}){
   const files=sourceMap(input),profile=normalizeProfile(inputProfile);if(typeof entry!=='string'||!Object.hasOwn(files,entry))fail('actual entry source required');
   const graph=resolveModuleGraph({entry,paths:Object.keys(files),readSource:path=>files[path],compilationProfile:profile}),same=(module,path)=>module.path.length===path.length&&module.path.every((name,at)=>name===path[at]);
   const roots=graph.modules.filter(module=>same(module,[])),cores=graph.modules.filter(module=>same(module,['translation_core'])),leaves=graph.modules.filter(module=>same(module,['translation_core','primitives']));
-  if(roots.length!==1||cores.length!==1||leaves.length!==1||cores[0].file!=='src/translation_core.rs'||cores[0].source!==ROUTER_FORMATTING_FACADE_SOURCE||leaves[0].file!=='src/translation_core/primitives.rs'||leaves[0].source!==ROUTER_CORE_PRIMITIVES_SOURCE||cores[0].configurationCondition!=='active'||leaves[0].configurationCondition!=='active')fail('complete actual owned facade/primitive source routes required');
+  if(roots.length!==1||cores.length!==1||leaves.length!==1||cores[0].file!==crateModuleSourcePath(graph.modules,'src/translation_core.rs')||cores[0].source!==ROUTER_FORMATTING_FACADE_SOURCE||leaves[0].file!==crateModuleSourcePath(graph.modules,'src/translation_core/primitives.rs')||leaves[0].source!==ROUTER_CORE_PRIMITIVES_SOURCE||cores[0].configurationCondition!=='active'||leaves[0].configurationCondition!=='active')fail('complete actual owned facade/primitive source routes required');
   const edge=originalSourceModuleItems(roots[0]).filter(item=>item.term==='mod'&&item.name==='translation_core');if(edge.length!==1||roots[0].source.slice(edge[0].start,edge[0].end).trim()!=='pub mod translation_core;')fail('actual unadorned public core edge required');
   const after={...files},proposals=[],skipped=[],producerContext=createCoreAdoptionProducerContext({modules:graph.modules,compilationProfile:profile,dependencyInputs}),roleFor=createLiteralTextImportRoles(graph.modules,profile,dependencyInputs,producerContext),pathFor=trackedPathSelector(graph,files);
   for(const file of Object.keys(files)){const modules=graph.modules.filter(module=>module.file===file),origins=modules.filter(module=>module.sourceView?.modulePath.length===0);if(origins.length!==1){skipped.push({file,reason:'physical source has no unique original module origin'});continue;}const origin=origins[0],ancestors=graph.modules.filter(module=>module.file!==file&&module.path.length<origin.path.length&&module.path.every((name,at)=>origin.path[at]===name)),conditions=[],problems=ancestors.flatMap(module=>scopeProblems(originalSourceModuleItems(module),profile,module.path,module,roleFor,[],conditions,producerContext,pathFor)),borrowedProblems=ancestors.flatMap(module=>borrowedScopeProblems(originalSourceModuleItems(module),profile,module.path)),result=propose(files[file],modules,profile,problems,roleFor,conditions,producerContext,borrowedProblems,pathFor);proposals.push({file,module:origin.path,...result});after[file]=result.after.source;}
@@ -180,4 +181,57 @@ export function proposeCoreLiteralTextCorpus(options={}){
   verifyLiteralTextImportRoles(roleFor);const currentDependency=Object.getOwnPropertyDescriptor(options,'dependencyInputs');
   if(!!currentDependency!==!!dependencyField||dependencyField&&(!currentDependency||!Object.hasOwn(currentDependency,'value')||currentDependency.value!==dependencyInputs||currentDependency.writable!==dependencyField.writable||currentDependency.enumerable!==dependencyField.enumerable||currentDependency.configurable!==dependencyField.configurable))fail('dependencyInputs option changed');
   return result;
+}
+
+// Generated detached literal-text packet DATA; original materialized API unchanged.
+const literalStreamSame=(a,b)=>a.length===b.length&&a.every((value,at)=>value===b[at]);
+function literalStreamRecord(input,allowed,bound,label){
+ if(!input||typeof input!=='object'||types.isProxy(input)||![Object.prototype,null].includes(Object.getPrototypeOf(input)))fail(label+' own data required');
+ const parent=Object.getPrototypeOf(input),names=Reflect.ownKeys(input);if(names.length>bound||names.some(name=>typeof name!=='string'||name==='stack'||allowed&&!allowed.includes(name)))fail(label+' fields differ');
+ const rows=names.map(name=>[name,Object.getOwnPropertyDescriptor(input,name)]),value=Object.create(null);for(const [name,d]of rows){if(!d||!Object.hasOwn(d,'value'))fail(label+' own data required');value[name]=d.value;}
+ return {value,verify(){if(Object.getPrototypeOf(input)!==parent||!literalStreamSame(Reflect.ownKeys(input),names))fail(label+' changed');for(const [name,a]of rows){const b=Object.getOwnPropertyDescriptor(input,name);if(!b||!Object.hasOwn(b,'value')||b.value!==a.value||b.enumerable!==a.enumerable||b.writable!==a.writable||b.configurable!==a.configurable)fail(label+' changed');}}};
+}
+export function iterateCoreLiteralTextCorpusPackets(options={}){
+  const optionSnapshot=literalStreamRecord(options,['entry','files','compilationProfile','dependencyInputs'],4,'options');
+  const {entry='src/lib.rs',files:input,compilationProfile:inputProfile=PRODUCTION_PROFILE}=optionSnapshot.value,dependencyField=Object.getOwnPropertyDescriptor(options,'dependencyInputs');
+  if(dependencyField&&!Object.hasOwn(dependencyField,'value'))fail('dependencyInputs must be an own data field');
+  const dependencyInputs=dependencyField?.value;
+  const inputSnapshot=literalStreamRecord(input,null,MAX_FILES,'files'),dependencySnapshot=dependencyInputs===undefined?null:literalStreamRecord(dependencyInputs,['manifest','lock'],2,'dependency inputs');
+  const files=sourceMap(inputSnapshot.value),profile=normalizeProfile(inputProfile);if(typeof entry!=='string'||!Object.hasOwn(files,entry))fail('actual entry source required');
+  const graph=resolveModuleGraph({entry,paths:Object.keys(files),readSource:path=>files[path],compilationProfile:profile}),same=(module,path)=>module.path.length===path.length&&module.path.every((name,at)=>name===path[at]);
+  const roots=graph.modules.filter(module=>same(module,[])),cores=graph.modules.filter(module=>same(module,['translation_core'])),leaves=graph.modules.filter(module=>same(module,['translation_core','primitives']));
+  if(roots.length!==1||cores.length!==1||leaves.length!==1||cores[0].file!==crateModuleSourcePath(graph.modules,'src/translation_core.rs')||cores[0].source!==ROUTER_FORMATTING_FACADE_SOURCE||leaves[0].file!==crateModuleSourcePath(graph.modules,'src/translation_core/primitives.rs')||leaves[0].source!==ROUTER_CORE_PRIMITIVES_SOURCE||cores[0].configurationCondition!=='active'||leaves[0].configurationCondition!=='active')fail('complete actual owned facade/primitive source routes required');
+  const edge=originalSourceModuleItems(roots[0]).filter(item=>item.term==='mod'&&item.name==='translation_core');if(edge.length!==1||roots[0].source.slice(edge[0].start,edge[0].end).trim()!=='pub mod translation_core;')fail('actual unadorned public core edge required');
+  const after={...files},proposals=[],skipped=[],producerContext=createCoreAdoptionProducerContext({modules:graph.modules,compilationProfile:profile,dependencyInputs}),roleFor=createLiteralTextImportRoles(graph.modules,profile,dependencyInputs,producerContext),pathFor=trackedPathSelector(graph,files);
+
+  const summary={sourceFiles:Object.keys(files).length,proposals:0,selections:0,edits:0,changedFiles:0,skippedFiles:0};let finished=false;
+  const packet=(section,ordinal,value)=>({section,ordinal,text:JSON.stringify(value)+'\n'});
+  function verifyStreamInputs(){verifyLiteralTextImportRoles(roleFor);dependencySnapshot?.verify();inputSnapshot.verify();optionSnapshot.verify();}
+  function encodedFile(file){const modules=graph.modules.filter(module=>module.file===file),origins=modules.filter(module=>module.sourceView?.modulePath.length===0);if(origins.length!==1){skipped.push({file,reason:'physical source has no unique original module origin'});return null;}const origin=origins[0],ancestors=graph.modules.filter(module=>module.file!==file&&module.path.length<origin.path.length&&module.path.every((name,at)=>origin.path[at]===name)),conditions=[],problems=ancestors.flatMap(module=>scopeProblems(originalSourceModuleItems(module),profile,module.path,module,roleFor,[],conditions,producerContext,pathFor)),borrowedProblems=ancestors.flatMap(module=>borrowedScopeProblems(originalSourceModuleItems(module),profile,module.path)),result=propose(files[file],modules,profile,problems,roleFor,conditions,producerContext,borrowedProblems,pathFor);return {text:JSON.stringify({file,module:origin.path,...result})+'\n',source:result.after.source,selections:result.selections.length,edits:result.edits.length,changed:files[file]!==result.after.source};}
+  function* packets(){
+  for(const [at,[path,source]]of Object.entries(files).entries())yield packet('before',at,{path,source});
+yield packet('graph-metadata',0,{keys:['modules','edges','diagnostics','concreteSyntaxMeta'],values:{}});
+for(let at=0;at<graph.modules.length;at++)yield packet('graph-modules',at,graph.modules[at]);
+yield packet('graph-edges',0,graph.edges);
+yield packet('graph-diagnostics',0,graph.diagnostics);
+for(let at=0;at<graph.concreteSyntaxMeta.length;at++)yield packet('graph-concrete',at,graph.concreteSyntaxMeta[at]);
+  for(const file of Object.keys(files)){
+   const encoded=encodedFile(file);if(!encoded)continue;after[file]=encoded.source;summary.selections+=encoded.selections;summary.edits+=encoded.edits;if(encoded.changed)summary.changedFiles++;
+   yield {section:'proposals',ordinal:summary.proposals++,text:encoded.text};
+  }
+
+  const result={schema:'router-owned-literal-text-corpus-v1',entry,compilationProfile:profile,before:{...files},after,inputs:Object.entries(files).map(([file,source])=>({file,source,sha256:hash(source)})),moduleGraph:{modules:graph.modules,edges:graph.edges,diagnostics:graph.diagnostics,concreteSyntaxMeta:graph.concreteSyntaxMeta},proposals,skipped,executableAdmission:false};
+  const producerEffects=finishCoreAdoptionProducerContext(producerContext);if(producerEffects)result.producerEffects=producerEffects;
+  verifyLiteralTextImportRoles(roleFor);const currentDependency=Object.getOwnPropertyDescriptor(options,'dependencyInputs');
+  if(!!currentDependency!==!!dependencyField||dependencyField&&(!currentDependency||!Object.hasOwn(currentDependency,'value')||currentDependency.value!==dependencyInputs||currentDependency.writable!==dependencyField.writable||currentDependency.enumerable!==dependencyField.enumerable||currentDependency.configurable!==dependencyField.configurable))fail('dependencyInputs option changed');
+
+  for(let at=0;at<result.inputs.length;at++)yield packet('inputs',at,result.inputs[at]);
+  for(const [at,[path,source]]of Object.entries(after).entries())yield packet('after',at,{path,source});
+  const keys=Object.keys(result),excluded=new Set(['before','after','inputs','moduleGraph','proposals']),values={};for(const key of keys)if(!excluded.has(key))values[key]=result[key];
+  yield packet('metadata',0,{keys,values});verifyStreamInputs();finished=true;summary.skippedFiles=skipped.length;
+  return {after,summary,counts:{modules:graph.modules.length,concreteSyntaxMeta:graph.concreteSyntaxMeta.length}};
+
+
+  }
+  const iterator=packets();return {next:()=>iterator.next(),return:()=>iterator.return(),verify(){if(!finished)fail('unfinished literal packet stream');verifyStreamInputs();}};
 }

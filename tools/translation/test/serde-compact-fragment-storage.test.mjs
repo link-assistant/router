@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdtempSync,mkdirSync,rmSync} from 'node:fs';
@@ -17,7 +18,7 @@ import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {translateSource} from '../translate.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const root=new URL('../../../',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
-const dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+const dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
 let vectors=[];const retain=(kind,value)=>{vectors.push({kind,value});return value;};
 function test(name,run){testCase(name,{timeout:60_000},async t=>{vectors=[];try{await run(t);}finally{const folder=process.env.ROUTER_SERDE_COMPACT_FRAGMENT_VECTOR_DIR;if(folder){mkdirSync(folder,{recursive:true});writeJsonGzip(join(folder,Buffer.from(name).toString('hex')+'.json.gz'),{name,vectors},(_key,value)=>typeof value==='bigint'?{$integer:String(value)}:value);}}});}
 const decode=text=>Buffer.from(text,'base64').toString('utf8');
@@ -148,7 +149,7 @@ function completeOriginalOpenAiInput(){
 }
 
 test('complete original twenty-six-field request preserves both storage outputs without claiming whole-parent admission',async t=>{
- const before=await historical(t),physical=readFileSync(new URL('../../../src/openai.rs',import.meta.url),'utf8');assert.equal(hash(ORIGINAL_OPENAI),ORIGINAL_OPENAI_SHA);
+ const before=await historical(t),physical=readFileSync(new URL('../../../rust/src/openai.rs',import.meta.url),'utf8');assert.equal(hash(ORIGINAL_OPENAI),ORIGINAL_OPENAI_SHA);
  const incomplete=input(ORIGINAL_OPENAI,'OpenAIChatCompletionRequest'),missingBefore=observed(()=>before.consumer.proveSerdeDeserializeBangFootprint(incomplete)),missingCurrent=observed(()=>proveSerdeDeserializeBangFootprint(incomplete));retain('complete-original-incomplete-carrier-refusal',{incomplete,missingBefore,missingCurrent});assert.match(missingBefore.error?.message??'',/Original Serde field helper requires its genuine active declaring owner/);assert.deepEqual(missingCurrent.error,missingBefore.error);
  const setup=completeOriginalOpenAiInput();retain('complete-original-active-source-and-field-helper-closure',setup);assert.equal(setup.certificate.sourceSha256,ORIGINAL_OPENAI_SHA);assert.deepEqual(setup.certificate.span,{start:1922,end:4431});
  const old=observed(()=>before.consumer.proveSerdeDeserializeBangFootprint(setup));retain('complete-old-request-refusal',{source:ORIGINAL_OPENAI,setup,old});assert.match(old.error?.message??'',/Generator fragment metadata-byte budget exceeded/);

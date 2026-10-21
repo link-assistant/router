@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -17,8 +18,8 @@ import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const C='crate::translation_core::',S='&'+C+'Str',T=C+'Text';
 const core={'src/translation_core.rs':ROUTER_FORMATTING_FACADE_SOURCE,'src/translation_core/primitives.rs':ROUTER_CORE_PRIMITIVES_SOURCE,'src/translation_core/ranges.rs':ROUTER_CORE_RANGES_SOURCE,'src/translation_core/json_collections.rs':ROUTER_CORE_JSON_COLLECTIONS_SOURCE};
-const dependencyInputs={manifest:readFileSync(new URL('../../../Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')};
-const hash=value=>createHash('sha256').update(value).digest('hex'),read=path=>readFileSync(new URL('../../../'+path,import.meta.url),'utf8');
+const dependencyInputs={manifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(repositorySourceURL("Cargo.lock",new URL('../../../',import.meta.url)),'utf8')};
+const hash=value=>createHash('sha256').update(value).digest('hex'),read=path=>readFileSync(repositorySourceURL(path,new URL('../../../',import.meta.url)),'utf8');
 const copied=`pub fn copied(value:${S})->${T}{value.to_owned()}`;
 const files=(root,extra={})=>({'src/lib.rs':'pub mod translation_core;\n'+root,...core,...extra});
 let vectors=[];

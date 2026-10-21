@@ -101,7 +101,7 @@ test('checked meta retains original method and Default input identities and refu
 });
 
 test('untouched full Router caller uses checked copied shared-local flow without source rewriting',()=>{
-  const complete=readFileSync(new URL('../../../src/github_proxy.rs',import.meta.url),'utf8'),item=sourceItems(complete).find(item=>item.name==='contains_inline_zero_after_oid');assert.ok(item);
+  const complete=readFileSync(new URL('../../../rust/src/github_proxy.rs',import.meta.url),'utf8'),item=sourceItems(complete).find(item=>item.name==='contains_inline_zero_after_oid');assert.ok(item);
   const source=complete.slice(item.start,item.end),result=translateSource(source,'src/github_proxy.rs');assert.equal(result.ir.items.map(item=>item.source).join(''),source);
   const caller=result.ir.items.find(item=>item.name==='contains_inline_zero_after_oid');assert.equal(caller.status,'executable');assert.equal(result.ir.counts.executableFunctions,1);
 });

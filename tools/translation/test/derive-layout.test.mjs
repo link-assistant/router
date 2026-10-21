@@ -1,3 +1,4 @@
+import {repositorySourceURL,repositoryCratePaths} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -12,7 +13,7 @@ import {configureDeriveLayout} from '../derive-layout.mjs';
 import {HostRustParser} from '../extensions/host-contracts.mjs';
 import {tokenizeRust} from '../extensions/lexical.mjs';
 const root=new URL('../../../',import.meta.url);
-const dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+const dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
 const project=files=>translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path],compilationProfile:PRODUCTION_PROFILE,deriveDependencies:dependencies});
 
 test('written string borrow and allocation chains retain the actual outer operation',async()=>{
@@ -49,10 +50,10 @@ test('sealed actual derive attributes retain layout source and do not implement 
 });
 
 test('unchanged whole tracked thinking file retains unproved task-local and Copy provenance',()=>{
-  const source=readFileSync(new URL('src/thinking/mod.rs',root),'utf8');
+  const source=readFileSync(repositorySourceURL('src/thinking/mod.rs',root),'utf8');
   assert.equal(createHash('sha256').update(source).digest('hex'),'26a39c5916007a8fd5ca6c65b25e2135b788ba6831d9ba77674b7b80da1e1b3b');
-  const paths=execFileSync('git',['ls-files','-z','--','src/thinking'],{cwd:root,encoding:'utf8'}).split('\0').filter(path=>path.endsWith('.rs'));
-  const result=translateProject({entry:'src/thinking/mod.rs',paths,readSource:path=>readFileSync(new URL(path,root),'utf8'),compilationProfile:PRODUCTION_PROFILE,deriveDependencies:dependencies});
+  const paths=repositoryCratePaths(execFileSync('git',['ls-files','-z','--','rust/src/thinking'],{cwd:root,encoding:'utf8'}).split('\0').filter(path=>path.endsWith('.rs')),root);
+  const result=translateProject({entry:'src/thinking/mod.rs',paths,readSource:path=>readFileSync(repositorySourceURL(path,root),'utf8'),compilationProfile:PRODUCTION_PROFILE,deriveDependencies:dependencies});
   assert.equal(result.meta.deriveNamespaceFootprints.certificates.some(certificate=>certificate.source==='src/thinking/mod.rs'),false);
   assert.ok(result.meta.deriveNamespaceFootprints.diagnostics.some(diagnostic=>diagnostic.source==='src/thinking/mod.rs'&&diagnostic.name==='ThinkingLevel'));
   for(const [name,start,end,digest] of [
@@ -68,13 +69,13 @@ test('unchanged whole tracked thinking file retains unproved task-local and Copy
 
 let subscriptionTranslation;
 function originalSubscriptionTranslation(){
-  const path='src/subscription/types.rs',source=readFileSync(new URL(path,root),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex');
+  const path='src/subscription/types.rs',source=readFileSync(repositorySourceURL(path,root),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex');
   assert.equal(hash(source),'74996ec0b4a32cb6e8d8c6a5e4cf2057a09238acff6d141ad58b592184c12c26');
   return subscriptionTranslation??=translateProject({entry:path,paths:[path],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE,deriveDependencies:dependencies});
 }
 
 test('unchanged whole subscription file checks proven original Copy and shared expiry source',()=>{
-  const path='src/subscription/types.rs',source=readFileSync(new URL(path,root),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex'),result=originalSubscriptionTranslation();
+  const path='src/subscription/types.rs',source=readFileSync(repositorySourceURL(path,root),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex'),result=originalSubscriptionTranslation();
   const method=result.meta.checkedMethods.find(method=>method.source===path&&method.name==='SubscriptionToken.is_expired');
   assert.ok(method);assert.deepEqual(method.span,{start:6721,end:6850});assert.equal(method.receiver,'shared');
   assert.equal(hash(source.slice(method.span.start,method.span.end)),'e83bced63445758eaec0237fbad7f91eb1e895191ba8eaed92548862ee4286ad');

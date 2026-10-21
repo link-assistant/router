@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
@@ -15,7 +16,7 @@ import {translateProject} from '../project.mjs';
 import {parseProgram} from '../semantic-meta.mjs';
 import {loadJsonMacroSourceProof} from '../json-macro-inputs.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
 const compile=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
 function vector(name,value){if(!process.env.ROUTER_DEFAULT_CONTAINER_VECTORS)return;mkdirSync(process.env.ROUTER_DEFAULT_CONTAINER_VECTORS,{recursive:true});writeFileSync(process.env.ROUTER_DEFAULT_CONTAINER_VECTORS+'/'+name+'.json.gz',gzipSync(JSON.stringify(value)));}
 function context(source){const views=captureSourceModuleViews({source,sourcePath:'src/lib.rs',compilationProfile:PRODUCTION_PROFILE}),modules=views.views.map(sourceView=>({file:'src/lib.rs',path:sourceView.modulePath,source,sourceView,compilationProfile:PRODUCTION_PROFILE,configurationCondition:sourceView.configurationCondition})),derive=createDeriveFootprintContext({modules,dependencies,compilationProfile:PRODUCTION_PROFILE}),context=createDefaultSourceContext(derive),module=defaultSourceContextFacts(context).modules[0],item=originalSourceModuleItems(module).find(row=>row.name==='Payload');return {context,module,item};}
@@ -42,7 +43,7 @@ test('aliases shadows coherence helpers allocator arguments borrowed types and a
 });
 
 for(const [file,type,golden]of [['src/admin.rs','ClaimFile',{$:'ClaimFile',token_sha256:'',token_id:'',ttl_hours:0n,claimed_at:0n}],['src/metrics.rs','TokenUsage',{$:'TokenUsage',label:'',requests:0n}]])test('complete unchanged '+file+' generated '+type+' Default executes JS and strict TS',{timeout:60000},async()=>{
- const source=readFileSync(new URL(file,root),'utf8'),jsonMacroDependencies=loadJsonMacroSourceProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')}),result=translateProject({entry:file,paths:[file],readSource:()=>source,deriveDependencies:dependencies,jsonMacroDependencies,compilationProfile:PRODUCTION_PROFILE});
+ const source=readFileSync(repositorySourceURL(file,root),'utf8'),jsonMacroDependencies=loadJsonMacroSourceProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')}),result=translateProject({entry:file,paths:[file],readSource:()=>source,deriveDependencies:dependencies,jsonMacroDependencies,compilationProfile:PRODUCTION_PROFILE});
  assert.ok(result.meta.checkedGeneratedMethods.some(row=>row.name===type+'.default'),JSON.stringify(result.meta.refused));assert.equal(result.meta.checkedMethods.some(row=>row.name===type+'.default'),false);
  const program=parseProgram(JSON.stringify(result.meta.targetSemanticProgram)),entry=[...program.declarations.values()].find(row=>row.impl?.method==='default'&&row.impl.defaultSourceProof?.source===file&&row.impl.defaultSourceProof.span.start===result.meta.checkedGeneratedMethods.find(row=>row.name===type+'.default').span.start);assert.ok(entry);
  const targets={...result,javascript:result.javascript+'\nexport {'+entry.fullName+' as originalDefault};',typescript:result.typescript+'\nexport {'+entry.fullName+' as originalDefault};'};vector('whole-original-'+type,{source,result,golden:JSON.stringify(golden,(_,value)=>typeof value==='bigint'?value.toString()+'n':value)});
@@ -56,5 +57,5 @@ test('unsupported original field types retain generated refusals without abortin
  }
 });
 test('complete unchanged auth keeps the independently unresolved serde helper owner refused',{timeout:60000},()=>{
- const file='src/auth.rs',source=readFileSync(new URL(file,root),'utf8'),result=translateProject({entry:file,paths:[file],readSource:()=>source,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});assert.equal(result.meta.checkedGeneratedMethods?.some(row=>row.name==='DeviceErrorResponse.default')??false,false);const row=result.meta.refused.find(row=>row.name==='DeviceErrorResponse.default');assert.match(row.message,/genuine active helper owner/);vector('whole-original-DeviceErrorResponse-refused',{source,result});
+ const file='src/auth.rs',source=readFileSync(repositorySourceURL(file,root),'utf8'),result=translateProject({entry:file,paths:[file],readSource:()=>source,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});assert.equal(result.meta.checkedGeneratedMethods?.some(row=>row.name==='DeviceErrorResponse.default')??false,false);const row=result.meta.refused.find(row=>row.name==='DeviceErrorResponse.default');assert.match(row.message,/genuine active helper owner/);vector('whole-original-DeviceErrorResponse-refused',{source,result});
 });

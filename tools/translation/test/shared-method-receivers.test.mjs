@@ -57,7 +57,7 @@ test('shared source fields never move String Vec or unchecked aggregates',()=>{
 });
 
 test('derived Copy field reads consume verified source certificates and preserve exact production getter',async()=>{
-  const source=readFileSync(new URL('../../../src/lefine.rs',import.meta.url),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex');
+  const source=readFileSync(new URL('../../../rust/src/lefine.rs',import.meta.url),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex');
   assert.equal(hash(source),'bb07ea2db551cc85bc19403bfd2c160f439d6c48fe7ffc49a1e0cad249dc2093');
   const pins=[['enum','CatalogFailureKind',347,481,'ba2154daf3f33a700df7129835eb5b4760093a430d1315a140e03ba13fafeb14'],['struct','CatalogFailure',483,586,'6c707cf7b2b840df15afcae49444abd626dc380d6cece9015f7569f1273442a3'],['impl','CatalogFailure',588,818,'da84707a093a370174b5bfa6ea0c4a25768c13ae1c162738e43f2e3f31d4bde5']];
   const declarations=pins.map(([term,name,start,end,digest])=>{assert.ok(sourceItems(source).some(item=>item.term===term&&item.name===name&&item.start===start&&item.end===end));const text=source.slice(start,end);assert.equal(hash(text),digest);return text;});

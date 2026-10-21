@@ -10,7 +10,7 @@
 //! process-wrap = { version = "10.0.1", default-features = false, features = ["std", "job-object"] }
 //! ```
 
-#[path = "../src/bounded_process.rs"]
+#[path = "../rust/src/bounded_process.rs"]
 mod bounded_process;
 #[path = "release-status.rs"]
 mod release_status;
@@ -269,6 +269,16 @@ fn verify_registries(
     Ok(())
 }
 
+fn package_manifest_from_tree(tree: &str) -> Result<&'static str, String> {
+    if tree.lines().any(|path| path == "rust/Cargo.toml") {
+        Ok("rust/Cargo.toml")
+    } else if tree.lines().any(|path| path == "Cargo.toml") {
+        Ok("Cargo.toml")
+    } else {
+        Err("package manifest missing from source tree".into())
+    }
+}
+
 fn inspect(repository: &str, source: &str, verify: bool) -> Result<Value, String> {
     command(
         "git",
@@ -297,7 +307,12 @@ fn inspect(repository: &str, source: &str, verify: bool) -> Result<Value, String
     let runs: Vec<Value> = pages.iter().flat_map(|page|page["workflow_runs"].as_array().into_iter().flatten())
         .filter(|run|run["head_sha"] == source && run["event"] != "pull_request")
         .map(|run|json!({"id":run["id"],"head_sha":run["head_sha"],"created_at":run["created_at"],"event":run["event"],"conclusion":run["conclusion"],"url":run["html_url"]})).collect();
-    let manifest = command("git", &["show", "origin/main:Cargo.toml"])?;
+    let manifest_tree = command(
+        "git",
+        &["ls-tree", "--name-only", "origin/main", "--", "Cargo.toml", "rust/Cargo.toml"],
+    )?;
+    let manifest_path = package_manifest_from_tree(&manifest_tree)?;
+    let manifest = command("git", &["show", &format!("origin/main:{manifest_path}")])?;
     let version = manifest
         .lines()
         .find_map(|line| {
@@ -407,6 +422,18 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn package_manifest_selection_supports_both_repository_layouts() {
+        assert_eq!(package_manifest_from_tree("Cargo.toml\n").unwrap(), "Cargo.toml");
+        assert_eq!(package_manifest_from_tree("rust/Cargo.toml\n").unwrap(), "rust/Cargo.toml");
+        assert_eq!(package_manifest_from_tree("Cargo.toml\nrust/Cargo.toml\n").unwrap(), "rust/Cargo.toml");
+    }
+    #[test]
+    fn manifest_selection_refuses_absence_and_similar_path_names() {
+        assert!(package_manifest_from_tree("").is_err());
+        assert!(package_manifest_from_tree("rust/Cargo.toml.backup\nother/Cargo.toml\n").is_err());
+    }
+
     use super::*;
     #[test]
     fn every_platform_binary_and_checksum_is_required() {

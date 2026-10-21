@@ -163,8 +163,8 @@ return new Set(actual.document.nodes.flatMap(node=>[node[2],node[3]]));
 }
 async function joinInputs(root,run,captured,head,replacements=new Map()){
  need(git(root,['rev-parse','HEAD']).toString().trim()===head,'current source HEAD');
-const names=git(root,['ls-files','-z','--','*.rs','Cargo.toml','Cargo.lock','tools/translation','scripts']).toString().split('\0').filter(p=>p&&(p.endsWith('.rs')||!p.startsWith('tools/translation/meta/')&&!p.startsWith('tools/translation/projects/')&&!p.startsWith('tools/translation/js-to-rust/generated/'))).sort();
- const prefix='packages/javascript/node_modules/typescript/',nonTs=captured.filter(r=>!r.path.startsWith(prefix));
+const names=git(root,['ls-files','-z','--','*.rs','Cargo.toml','rust/Cargo.toml','Cargo.lock','tools/translation','scripts']).toString().split('\0').filter(p=>p&&(p.endsWith('.rs')||!p.startsWith('tools/translation/meta/')&&!p.startsWith('tools/translation/projects/')&&!p.startsWith('tools/translation/js-to-rust/generated/'))).sort();
+ const prefix='js/node_modules/typescript/',nonTs=captured.filter(r=>!r.path.startsWith(prefix));
 need(wire(names)===wire(nonTs.map(r=>r.path).sort()),'entire captured tracked source census');
 const tsRoot=file(root,prefix.slice(0,-1)),tsFiles=[];
 const visit=(dir,local='')=>{for(const leaf of fs.readdirSync(dir).sort()){const next=join(dir,leaf),s=fs.lstatSync(next);
@@ -269,7 +269,7 @@ need(doc.files.every(r=>typeof r.physicalPresent==='boolean'),'complete physical
 const observed=doc.files.map(r=>r.physicalPresent);need(presence===null||wire(presence)===wire(observed),'before/after full physical presence');presence=observed;
 const rust=read(file(o.run,'all-rust-cargo-'+suffix+'.json'));
 need(hash(rust)===report.value.retainedSnapshotDigests['rust-'+suffix],'full Rust/Cargo snapshot report join');
-need(wire(JSON.parse(rust).files)===wire(doc.files.filter(r=>r.path.endsWith('.rs')||['Cargo.toml','Cargo.lock'].includes(r.path))),'all Rust/Cargo rows');
+need(wire(JSON.parse(rust).files)===wire(doc.files.filter(r=>r.path.endsWith('.rs')||['Cargo.toml','rust/Cargo.toml','Cargo.lock'].includes(r.path))),'all Rust/Cargo rows');
 }need(wire(json(file(o.run,'proposal.inputs-after.json')).value)===wire(captured.value),'actual complete producer after inputs');
 return {captured:rows.map((row,at)=>({...row,physicalPresent:presence[at]})),report:report.value,plan:plan.value};
 }

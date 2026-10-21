@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -19,7 +20,7 @@ import {verifyTypedTargets} from './typed-targets.mjs';
 const hash=text=>createHash('sha256').update(text).digest('hex');
 let vectors=[];const retain=(kind,value)=>{vectors.push({kind,value});return value;};
 const test=(name,run)=>testCase(name,{timeout:60_000},async()=>{vectors=[];try{await run();}finally{if(process.env.ROUTER_BORROWED_JSON_LET_ELSE_VECTOR_DIR){const directory=process.env.ROUTER_BORROWED_JSON_LET_ELSE_VECTOR_DIR;mkdirSync(directory,{recursive:true});writeFileSync(join(directory,Buffer.from(name).toString('hex')+'.json'),JSON.stringify({name,vectors},(_key,value)=>typeof value==='bigint'?{$integer:String(value)}:value)+'\n');}}});
-const dependencies=()=>loadJsonMacroSourceProof({manifest:readFileSync(new URL('../../../Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')});
+const dependencies=()=>loadJsonMacroSourceProof({manifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(repositorySourceURL("Cargo.lock",new URL('../../../',import.meta.url)),'utf8')});
 const core=source=>({'src/lib.rs':'pub mod translation_core;\n'+source,'src/translation_core.rs':ROUTER_FORMATTING_FACADE_SOURCE,'src/translation_core/primitives.rs':ROUTER_CORE_PRIMITIVES_SOURCE,'src/translation_core/ranges.rs':ROUTER_CORE_RANGES_SOURCE});
 function project(input,{json=true}={}){if(typeof input==='string')input={'src/lib.rs':input};retain('complete-source-input',input);return retain('complete-project-result',translateProject({entry:'src/lib.rs',paths:Object.keys(input),readSource:path=>input[path],compilationProfile:PRODUCTION_PROFILE,...(json?{jsonMacroDependencies:dependencies()}:{})}));}
 const admitted=(result,name)=>result.meta.executable.some(row=>row.name===name);
@@ -126,7 +127,7 @@ test('complete unchanged safety module gains anthropic identifier behavior with 
   assert.equal(hash(SAFETY_SOURCE),SAFETY_SHA256);const input={...core('pub mod safety_identifier;'),'src/safety_identifier.rs':SAFETY_SOURCE},without=project(input,{json:false}),result=project(input);retain('complete-missing-and-genuine-dependency-results',{without,result});
   for(const name of ['validate_openai_value','validate_openai_user_value'])assert.equal(admitted(without,'safety_identifier.'+name),false,name+' still requires its actual JSON source context');
   const names=['validate_openai','validate_openai_user','validate_openai_value','validate_openai_user_value','anthropic_user_id'].map(name=>'safety_identifier.'+name);requireFunctions(result,names);
-  const physical=readFileSync(new URL('../../../src/safety_identifier.rs',import.meta.url),'utf8'),current=project({...core('pub mod safety_identifier;'),'src/safety_identifier.rs':physical});retain('complete-current-physical-safety',{source:physical,sha256:hash(physical),current});requireFunctions(current,names);
+  const physical=readFileSync(new URL('../../../rust/src/safety_identifier.rs',import.meta.url),'utf8'),current=project({...core('pub mod safety_identifier;'),'src/safety_identifier.rs':physical});retain('complete-current-physical-safety',{source:physical,sha256:hash(physical),current});requireFunctions(current,names);
   const item=sourceItems(SAFETY_SOURCE).find(row=>row.term==='fn'&&row.name==='anthropic_user_id');assert.ok(item);assert.deepEqual(result.meta.executable.find(row=>row.name==='safety_identifier.anthropic_user_id').span,{start:item.start,end:item.end});
   const verify=api=>{
     const run=(name,value)=>retain('actual-safety-outcome',{name,value,result:api['safety_identifier.'+name](value)}).result,long='😀'.repeat(65);

@@ -1,5 +1,0 @@
-// GENERATED: node scripts/regenerate-js-first.mjs
-// Independently checked top-level bodies from packages/javascript/native/token-reservation.mjs; source sha256=3cc49c0c08930a8e697cde1f0914a64153400c7c5e163510bc9d67a9b197fbd1; IR sha256=01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b.
-// Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
-export {};
-

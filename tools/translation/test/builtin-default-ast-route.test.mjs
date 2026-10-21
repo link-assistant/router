@@ -1,9 +1,10 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {builtinDeriveAstSourceProfile,builtinAstOriginal,originalAstFunction,astFragmentText} from '../builtin-derive-ast-meta.mjs';
-const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
 const profile=builtinDeriveAstSourceProfile(dependencies),attr='compiler/rustc_ast/src/attr/mod.rs';
 test('complete original Default attribute and visitor source share the exact immutable Rust revision',()=>{
  const origin=builtinAstOriginal(profile,attr),visitor=builtinAstOriginal(profile,'compiler/rustc_ast/src/visit.rs');assert.equal(origin.revision,'29483883eed69d5fb4db01964cdf2af4d86e9cb2');assert.equal(visitor.revision,origin.revision);assert.equal(origin.bytes,29412);assert.equal(origin.sha256,'48133e6b040d81c61ab6a0d33ea698e9f5032578c7df09fa95ebcbdbb84397b8');assert.equal(visitor.sha256,'2cde31625ec47f907d6a314ae06e75711245ca79f8dc1f5bf5b44768c6dc87fd');assert.equal(visitor.reusedProfile,'clap-concat/manifest.json');

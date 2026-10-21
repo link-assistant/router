@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
@@ -6,7 +7,7 @@ import {loadDeriveDependencyProof,deriveDependencySource} from '../derive-depend
 import {originalControlRecordSchema,originalControlRecord,originalControlRecordSchemaFacts,originalControlRecordValueFacts} from '../source-control-records.mjs';
 import {compileFormatSourceControlBodies,compileFormatSourceControlBodiesWithOriginalMacros,executeFormatSourceControlBodies,formatSourceControlBodyFacts} from '../source-format-template.mjs';
 import {expandOriginalControlDeclarative,originalControlDeclarativeFacts,originalControlDeclarativeSlot} from '../source-control-declarative.mjs';
-const read=name=>readFileSync(new URL('../../../'+name,import.meta.url),'utf8'),dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')}),selection={package:'schemars_derive',sourcePath:'src/attr/mod.rs',name:'CommonAttrs'};
+const read=name=>readFileSync(repositorySourceURL(name,new URL('../../../',import.meta.url)),'utf8'),dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')}),selection={package:'schemars_derive',sourcePath:'src/attr/mod.rs',name:'CommonAttrs'};
 const schema=()=>originalControlRecordSchema(dependencies,selection),none=()=>({tag:'None',args:[]}),some=value=>({tag:'Some',args:[value]}),values=()=>({doc:none(),deprecated:false,title:none(),description:none(),examples:[],extensions:[],transforms:[]});
 const retain=(name,value)=>{const directory=process.env.ROUTER_RECORD_CONTROL_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeFileSync(directory+'/'+name+'.json.gz',gzipSync(JSON.stringify(value)+'\n',{mtime:0}));}};
 const refusal=(run,expected)=>{let failure;assert.throws(()=>{try{run();}catch(error){failure={name:error.name,message:error.message};throw error;}},expected);return failure;};

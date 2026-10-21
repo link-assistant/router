@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -97,7 +98,7 @@ test('fresh semantic parser token namespace and field mutations remain internal 
 });
 
 test('ordinary generated Default Clone and unresolved structural origins retain their complete independent paths',{timeout:60000},async()=>{
-  const manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock}),options={cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE};
+  const manifest=readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock=readFileSync(repositorySourceURL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock}),options={cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE};
   const subjects=[
     ['ordinary','pub fn bad()->u8{missing()}pub fn good()->u8{7}'],
     ['Default','#[derive(Default)]pub struct Payload{value:u32}pub fn make()->Payload{Payload::default()}pub fn bad()->u8{missing()}'],

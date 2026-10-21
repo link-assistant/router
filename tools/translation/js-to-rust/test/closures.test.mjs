@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from "../../repository-layout.mjs";
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {readFileSync,writeFileSync,mkdtempSync,rmSync} from 'node:fs';
@@ -138,7 +139,7 @@ test('private issuance rejects copied/foreign handles and exact-source metadata 
 });
 
 test('all 52 complete native censuses preserve legacy programs and separately qualify generated constructor drafts',{timeout:60000},()=>{
- const manifest=JSON.parse(readFileSync(join(ROOT,'parity/js-native-portable-draft.json'),'utf8')),sources=manifest.modules.map(module=>({path:module.path,source:readFileSync(join(ROOT,module.path),'utf8')})),constructorGraph=createConstructorSourceGraph(sources);let top=0,scope=0,full=0,conditional=0,currentTop=0,constructorCount=0;const constructorBodies=[];
+ const manifest=JSON.parse(readFileSync(join(ROOT,rustPackageSourcePath(ROOT,'parity/js-native-portable-draft.json')),'utf8')),sources=manifest.modules.map(module=>({path:module.path,source:readFileSync(join(ROOT,module.path),'utf8')})),constructorGraph=createConstructorSourceGraph(sources);let top=0,scope=0,full=0,conditional=0,currentTop=0,constructorCount=0;const constructorBodies=[];
  for(const module of manifest.modules){const source=sources.find(row=>row.path===module.path).source,legacy=analyzeJavaScript(source,{sourcePath:module.path}),a=analyzeJavaScript(source,{sourcePath:module.path,constructorGraph});assert.deepEqual(a.items,module.topLevel.items);assert.deepEqual(a.scopedFunctions.items,module.scopedFunctions.items);assert.equal(a.scopedFunctions.sourceItems,module.scopedFunctions.sourceItems);assert.deepEqual(a.scopedFunctions,legacy.scopedFunctions);assert.deepEqual(a.program.filter(item=>!item.conditionalConstructors),legacy.program,'complete old top programs '+module.path);
  for(const item of a.program.filter(item=>item.conditionalConstructors)){assert.equal(item.sourceConstructors.runtimeParity,false);assert.equal(item.sourceConstructors.constructors.every(proof=>proof.conditions.hostDiagnosticLocationsPreserved===false&&proof.conditions.originalSignatureFullDomainPreserved===false),true);constructorCount++;constructorBodies.push({path:module.path,item});}
  for(const [kind,program]of [['top-level',a.program],['scoped',a.scopedFunctions.program]]){const output=module.outputs.find(output=>output.scope===kind&&output.path.endsWith('.lino'));assert.ok(output,kind);assert.equal('# GENERATED: checked portable-router-v1 bodies; no source envelopes.\n'+program.map(toLino).join('\n')+'\n',readFileSync(join(ROOT,output.path),'utf8'));assert.deepEqual(parseMeta(program.map(toLino).join('\n'),{constructorGraph}),program);}

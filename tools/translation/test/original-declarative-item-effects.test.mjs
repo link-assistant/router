@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // These are source-provenance/conditional-envelope tests, not admission of
 // the external-trait corpus or execution of generated tuple Clone bodies.
 import nodeTest from 'node:test';
@@ -18,7 +19,7 @@ import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {translateProject} from '../project.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const test=(name,body)=>nodeTest(name,{timeout:60000},body);
-const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
 let retained=0;
 function retain(label,value){const dir=process.env.ROUTER_DECLARATIVE_ITEM_EFFECT_VECTOR_DIR;if(!dir)return value;mkdirSync(dir,{recursive:true});writeFileSync(dir+'/'+String(++retained).padStart(3,'0')+'-'+label+'.json.gz',gzipSync(JSON.stringify(value,(_key,item)=>typeof item==='bigint'?{$bigint:String(item)}:item)),{flag:'wx'});return value;}
 function module(source,file='src/lib.rs'){const result=captureSourceModuleViews({source,sourcePath:file,compilationProfile:PRODUCTION_PROFILE});return {file,path:[],source,sourceView:result.views[0],compilationProfile:PRODUCTION_PROFILE};}

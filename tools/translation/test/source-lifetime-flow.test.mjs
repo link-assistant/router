@@ -66,7 +66,7 @@ test('lazy borrowed capture mutation and mutable borrowed parameters retain expl
 });
 
 test('untouched original inline-zero caller translates its while-let and copied remainder through both targets',async()=>{
-  const complete=readFileSync(new URL('../../../src/github_proxy.rs',import.meta.url),'utf8'),item=sourceItems(complete).find(item=>item.name==='contains_inline_zero_after_oid');assert.ok(item);
+  const complete=readFileSync(new URL('../../../rust/src/github_proxy.rs',import.meta.url),'utf8'),item=sourceItems(complete).find(item=>item.name==='contains_inline_zero_after_oid');assert.ok(item);
   const source=complete.slice(item.start,item.end),result=translateSource(source,'src/github_proxy.rs');assert.equal(result.ir.items.map(entry=>entry.source).join(''),source);assert.equal(result.ir.items.find(entry=>entry.name===item.name).status,'executable');
   const targets=project(source);assert.deepEqual(targets.meta.refused,[]);
   await verifyTypedTargets(targets,api=>{const call=api.contains_inline_zero_after_oid;assert.equal(call(''),false);assert.equal(call('afteroid:"'+('0'.repeat(39))+'"'),false);assert.equal(call('afteroid:"'+('0'.repeat(40))+'"'),true);assert.equal(call('afteroid:"'+('0'.repeat(40))+'1"'),false);assert.equal(call('afteroid:"abc"afteroid:"'+('0'.repeat(40))+'"'),true);assert.equal(call('afteroid:"Ω"afteroid:"'+('0'.repeat(40))+'"'),true);});

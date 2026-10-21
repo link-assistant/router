@@ -14,7 +14,7 @@ const ROOT=process.env.ROUTER_NATIVE_TS_SOURCE_ROOT??resolve(dirname(fileURLToPa
 async function runtime(ts,directory,name,source,typescript) {
   const original=join(directory,`${name}-original.mjs`),typed=join(directory,`${name}.ts`),target=join(directory,`${name}-target.mjs`);
   writeFileSync(original,source);writeFileSync(typed,typescript);
-  const program=ts.createProgram([typed],{strict:true,noEmit:true,target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,typeRoots:[join(ROOT,'packages/javascript/node_modules/@types')],types:['node'],skipLibCheck:true});
+  const program=ts.createProgram([typed],{strict:true,noEmit:true,target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,typeRoots:[join(ROOT,'js/node_modules/@types')],types:['node'],skipLibCheck:true});
   assert.deepEqual(ts.getPreEmitDiagnostics(program).map(d=>ts.flattenDiagnosticMessageText(d.messageText,'\n')),[]);
   writeFileSync(target,ts.transpileModule(typescript,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText);
   return [await import(pathToFileURL(original).href),await import(pathToFileURL(target).href)];
@@ -33,7 +33,7 @@ test('four original native Unicode observers match authored all-type and boundar
   ];
   try {
     for(const fixture of fixtures) {
-      const source=readFileSync(join(ROOT,'packages/javascript/native',fixture.path),'utf8'),result=analyzeJavaScript(source),fn=result.program.find(fn=>fn.name===fixture.name);
+      const source=readFileSync(join(ROOT,'js/src',fixture.path),'utf8'),result=analyzeJavaScript(source),fn=result.program.find(fn=>fn.name===fixture.name);
       assert.equal(fn?.kind,'function');assert.equal(fn.params[0].type,'value');
       const item=result.items.find(item=>item.name===fixture.name&&item.status==='translated'),checked=parseMeta(toLino(fn));
       assert.deepEqual(checked,[fn]);

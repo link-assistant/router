@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
@@ -15,7 +16,7 @@ import {registeredStandardHostBindings} from '../standard-host-bindings.mjs';
 import {createDefaultSourceContext,defaultSourceContextFacts} from '../default-trait-source.mjs';
 import {createCloneSourceContext,cloneSourceContextFacts} from '../clone-trait-source.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8');
+const root=new URL('../../../',import.meta.url),manifest=readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock=readFileSync(repositorySourceURL('Cargo.lock',root),'utf8');
 const dependencies=loadDeriveDependencyProof({manifest,lock});
 const source='#[derive(Default)] pub struct Payload{flag:bool,count:u32} pub fn make()->Payload{Payload::default()}';
 function retain(name,value){if(!process.env.ROUTER_DERIVED_BINDING_VECTORS)return;mkdirSync(process.env.ROUTER_DERIVED_BINDING_VECTORS,{recursive:true});writeFileSync(join(process.env.ROUTER_DERIVED_BINDING_VECTORS,name+'.json.gz'),gzipSync(JSON.stringify(value)));}

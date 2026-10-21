@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
@@ -6,7 +7,7 @@ import {gzipSync} from 'node:zlib';
 import {compileDeclarativeMacro,expandDeclarativeMacro,declarativeExpansionLineage,declarativeSubInput} from '../declarative-token-macros.mjs';
 import {originalMacroTrees,originalMacroTreeText} from '../macro-token-trees.mjs';
 import {loadJsonMacroSourceProof,jsonMacroOriginalSource} from '../json-macro-sources.mjs';
-const root=new URL('../../../',import.meta.url),manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8'),proof=loadJsonMacroSourceProof({manifest,lock}),member=jsonMacroOriginalSource(proof,'serde_json','src/macros.rs'),hash=source=>createHash('sha256').update(source).digest('hex');
+const root=new URL('../../../',import.meta.url),manifest=readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock=readFileSync(repositorySourceURL('Cargo.lock',root),'utf8'),proof=loadJsonMacroSourceProof({manifest,lock}),member=jsonMacroOriginalSource(proof,'serde_json','src/macros.rs'),hash=source=>createHash('sha256').update(source).digest('hex');
 function vector(name,value){if(!process.env.ROUTER_DOLLAR_TOKEN_VECTORS)return;mkdirSync(process.env.ROUTER_DOLLAR_TOKEN_VECTORS,{recursive:true});writeFileSync(process.env.ROUTER_DOLLAR_TOKEN_VECTORS+'/'+name+'.json.gz',gzipSync(JSON.stringify(value)));}
 function actualDefinition(){const trees=originalMacroTrees(member.source),rows=[];for(let at=0;at<trees.length;at++)if(trees[at].text==='macro_rules'&&trees[at+1]?.text==='!'&&trees[at+2]?.text==='json_internal'&&trees[at+3]?.delimiter==='{')rows.push(at);assert.equal(rows.length,1);const at=rows[0],body=trees[at+3],span={start:trees[at].span.start,end:body.span.end},source=member.source.slice(span.start,span.end),rules=[];for(let index=0;index<body.children.length;){const matcher=body.children[index++],arrow=body.children[index++],template=body.children[index++];assert.equal(matcher.kind,'group');assert.equal(arrow.text,'=>');assert.equal(template.kind,'group');rules.push({matcher,template});if(index<body.children.length)assert.ok([';',','].includes(body.children[index++].text));}return {span,source,rules};}
 const original=actualDefinition(),options={name:'json_internal',owner:['serde_json']};

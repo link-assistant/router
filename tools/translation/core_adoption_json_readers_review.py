@@ -425,7 +425,7 @@ def main():
     require(Path(__file__).resolve()==root/'tools/translation/core_adoption_json_readers_review.py' and Path(source_review.__file__).resolve()==root/'tools/translation/core_adoption_review.py','executing fixed reviewer closure belongs to the captured source checkout')
     for name in critical_source_paths:
         require(name in pins,'complete captured selector/controller/reviewer source input '+name)
-    prefix = 'packages/javascript/node_modules/typescript/'
+    prefix = 'js/node_modules/typescript/'
     expected_git = {p for p in git('ls-files', '-z', '--', '*.rs', 'Cargo.toml', 'Cargo.lock', 'tools/translation', 'scripts').decode().split('\0') if p and (p.endswith('.rs') or not p.startswith(('tools/translation/meta/', 'tools/translation/projects/', 'tools/translation/js-to-rust/generated/')))}
     require({p for p in pins if not p.startswith(prefix)} == expected_git, 'complete tracked compiler/Rust/Cargo census')
     compiler = (root / prefix.rstrip('/')).resolve()
@@ -556,7 +556,7 @@ def main():
     dependency_evidence={'schema':'locked-derive-dependencies-v1','manifestSha256':sha(cargo['Cargo.toml'].encode()),'lockSha256':sha(cargo['Cargo.lock'].encode()),'sourceProfileSha256':sha(derive_raw),'edition':derive_profile['rustEdition'],'rustVersion':derive_profile['rustVersion'],'features':derive_profile['dependencies'],'packages':derive_packages,'standardCore':{'url':core_pin['url'],'sha256':sha(core_raw)}}
     expected_dependency_digest=sha(encoded(dependency_evidence))
     profile_raw = read_stable(root / 'tools/translation/source-profiles/json-macro/manifest.json', 16 * 1024 * 1024)
-    require(sha(profile_raw) == '101f9e042d3c4665f531017082115d209a390940732532cef1b08a1420f8cfab', 'exact registered JSON source profile')
+    require(sha(profile_raw) == 'e42ec7a5f1358da8f077c9fdb77057b52cf6748d26cc4d2b8574e1afae4ae0af', 'exact registered JSON source profile')
     profile = parse(profile_raw); external = {}
     require(sha(cargo['Cargo.toml'].encode()) == profile['manifestSha256'] and sha(cargo['Cargo.lock'].encode()) == profile['lockSha256'], 'registered import Cargo profile')
     for package in profile['packages']:

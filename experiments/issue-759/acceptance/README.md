@@ -32,7 +32,7 @@ The expectations come from existing Rust specifications and published contracts:
 | Exact model allow-list and missing durable authority | `src/token_model_policy_tests.rs` |
 | Qualified model ownership, policies, pauses and cooldowns | `src/model_routing_native_catalog_tests.rs`, `tests/account_routing_policy_test.rs`, `tests/pool_failover_test.rs` |
 | Upstream identity isolation and response observations | `src/native_service_tests_relay.rs`, `tests/router_e2e/token_budget.rs`, `tests/provider_stream_settlement_test.rs` |
-| Operation envelopes, CLI status and wrapper compatibility | `packages/javascript/schemas`, `packages/javascript/catalog.json` |
+| Operation envelopes, CLI status and wrapper compatibility | `js/schemas`, `js/catalog.json` |
 
 Forward translator cases execute generated JavaScript and require checked
 fixed-width overflow errors. Carried Rust and its dependants must remain absent

@@ -1,3 +1,4 @@
+import {crateModuleSourcePath} from './repository-layout.mjs';
 // Candidate-only, maintainer-authorized owned API adoption. No original generic method
 // dispatch, public type/borrow authority or executable admission is issued.
 import {createHash} from 'node:crypto';
@@ -174,15 +175,15 @@ export function proposeCoreJsonReadersCorpus(options={}){
  if(Object.keys(dependencyInputs).length!==2||Object.values(dependencyInputs).some(source=>typeof source!=='string'||source.length>2_000_000))fail('complete bounded Cargo sources required');
  if(typeof entry!=='string'||!Object.hasOwn(files,entry))fail('actual source entry required');
  const graph=resolveModuleGraph({entry,paths:Object.keys(files),readSource:path=>files[path],compilationProfile:profile}),root=graph.modules.filter(module=>!module.path.length),core=graph.modules.filter(module=>same(module.path,['translation_core'])),leaf=graph.modules.filter(module=>same(module.path,['translation_core','primitives']));
- if(root.length!==1||core.length!==1||leaf.length!==1||core[0].file!=='src/translation_core.rs'||core[0].source!==ROUTER_FORMATTING_FACADE_SOURCE||leaf[0].file!=='src/translation_core/primitives.rs'||leaf[0].source!==ROUTER_CORE_PRIMITIVES_SOURCE||core[0].configurationCondition!=='active'||leaf[0].configurationCondition!=='active')fail('complete current owned facade and primitive source required');
+ if(root.length!==1||core.length!==1||leaf.length!==1||core[0].file!==crateModuleSourcePath(graph.modules,'src/translation_core.rs')||core[0].source!==ROUTER_FORMATTING_FACADE_SOURCE||leaf[0].file!==crateModuleSourcePath(graph.modules,'src/translation_core/primitives.rs')||leaf[0].source!==ROUTER_CORE_PRIMITIVES_SOURCE||core[0].configurationCondition!=='active'||leaf[0].configurationCondition!=='active')fail('complete current owned facade and primitive source required');
  for(const [path,source]of [['ranges',ROUTER_CORE_RANGES_SOURCE],['json_collections',ROUTER_CORE_JSON_COLLECTIONS_SOURCE]]){
   const selected=graph.modules.filter(module=>same(module.path,['translation_core',path]));
-  if(selected.length!==1||selected[0].file!=='src/translation_core/'+path+'.rs'||selected[0].source!==source||selected[0].configurationCondition!=='active')fail('complete current owned core leaf source required');
+  if(selected.length!==1||selected[0].file!==crateModuleSourcePath(graph.modules,'src/translation_core/')+path+'.rs'||selected[0].source!==source||selected[0].configurationCondition!=='active')fail('complete current owned core leaf source required');
  }
  const edges=originalSourceModuleItems(root[0]).filter(item=>item.term==='mod'&&item.name==='translation_core');if(edges.length!==1||root[0].source.slice(edges[0].start,edges[0].end).trim()!=='pub mod translation_core;')fail('actual public core edge required');
  const roleFor=createLiteralTextImportRoles(graph.modules,profile,dependencyInputs),context=createCoreAdoptionProducerContext({modules:graph.modules,compilationProfile:profile,dependencyInputs}),selfAlias=createCoreAdoptionSelfAliasSelector({modules:graph.modules,compilationProfile:profile,context}),imports=importedJsonTargets(graph.modules,profile,context),proposals=[],skipped=[],after={...files};
  for(const file of Object.keys(files)){
-  if(file==='src/translation_core.rs'||file.startsWith('src/translation_core/'))continue;
+  if(file===crateModuleSourcePath(graph.modules,'src/translation_core.rs')||file.startsWith(crateModuleSourcePath(graph.modules,'src/translation_core/')))continue;
   const modules=graph.modules.filter(module=>module.file===file),origins=modules.filter(module=>!module.sourceView.modulePath.length);if(origins.length!==1){skipped.push({file,reason:'one complete physical source origin required'});continue;}
   const edits=[],selections=[],preserved=[],names=new Set(files[file].match(/[\p{ID_Start}_][\p{ID_Continue}_]*/gu)??[]);
   for(const module of modules){const scoped=scope(module,graph.modules,profile,roleFor,context,selfAlias);for(const item of originalSourceModuleItems(module)){
@@ -205,10 +206,10 @@ export function iterateCoreJsonReadersCorpusPackets(options={}){
  if(Object.keys(dependencyInputs).length!==2||Object.values(dependencyInputs).some(source=>typeof source!=='string'||source.length>2_000_000))fail('complete bounded Cargo sources required');
  if(typeof entry!=='string'||!Object.hasOwn(files,entry))fail('actual source entry required');
  const graph=resolveModuleGraph({entry,paths:Object.keys(files),readSource:path=>files[path],compilationProfile:profile}),root=graph.modules.filter(module=>!module.path.length),core=graph.modules.filter(module=>same(module.path,['translation_core'])),leaf=graph.modules.filter(module=>same(module.path,['translation_core','primitives']));
- if(root.length!==1||core.length!==1||leaf.length!==1||core[0].file!=='src/translation_core.rs'||core[0].source!==ROUTER_FORMATTING_FACADE_SOURCE||leaf[0].file!=='src/translation_core/primitives.rs'||leaf[0].source!==ROUTER_CORE_PRIMITIVES_SOURCE||core[0].configurationCondition!=='active'||leaf[0].configurationCondition!=='active')fail('complete current owned facade and primitive source required');
+ if(root.length!==1||core.length!==1||leaf.length!==1||core[0].file!==crateModuleSourcePath(graph.modules,'src/translation_core.rs')||core[0].source!==ROUTER_FORMATTING_FACADE_SOURCE||leaf[0].file!==crateModuleSourcePath(graph.modules,'src/translation_core/primitives.rs')||leaf[0].source!==ROUTER_CORE_PRIMITIVES_SOURCE||core[0].configurationCondition!=='active'||leaf[0].configurationCondition!=='active')fail('complete current owned facade and primitive source required');
  for(const [path,source]of [['ranges',ROUTER_CORE_RANGES_SOURCE],['json_collections',ROUTER_CORE_JSON_COLLECTIONS_SOURCE]]){
   const selected=graph.modules.filter(module=>same(module.path,['translation_core',path]));
-  if(selected.length!==1||selected[0].file!=='src/translation_core/'+path+'.rs'||selected[0].source!==source||selected[0].configurationCondition!=='active')fail('complete current owned core leaf source required');
+  if(selected.length!==1||selected[0].file!==crateModuleSourcePath(graph.modules,'src/translation_core/')+path+'.rs'||selected[0].source!==source||selected[0].configurationCondition!=='active')fail('complete current owned core leaf source required');
  }
  const edges=originalSourceModuleItems(root[0]).filter(item=>item.term==='mod'&&item.name==='translation_core');if(edges.length!==1||root[0].source.slice(edges[0].start,edges[0].end).trim()!=='pub mod translation_core;')fail('actual public core edge required');
  let roleFor=null,context=null,selfAlias=null,imports=null,finished=false;
@@ -235,7 +236,7 @@ export function iterateCoreJsonReadersCorpusPackets(options={}){
   for(let at=0;at<graph.concreteSyntaxMeta.length;at++)yield packet('graph-concrete',at,graph.concreteSyntaxMeta[at]);
   roleFor=createLiteralTextImportRoles(graph.modules,profile,dependencyInputs);context=createCoreAdoptionProducerContext({modules:graph.modules,compilationProfile:profile,dependencyInputs});selfAlias=createCoreAdoptionSelfAliasSelector({modules:graph.modules,compilationProfile:profile,context});imports=importedJsonTargets(graph.modules,profile,context);
   for(const file of Object.keys(files)){
-   if(file==='src/translation_core.rs'||file.startsWith('src/translation_core/'))continue;
+   if(file===crateModuleSourcePath(graph.modules,'src/translation_core.rs')||file.startsWith(crateModuleSourcePath(graph.modules,'src/translation_core/')))continue;
    const modules=graph.modules.filter(module=>module.file===file),origins=modules.filter(module=>!module.sourceView.modulePath.length);if(origins.length!==1){skipped.push({file,reason:'one complete physical source origin required'});continue;}
    const encoded=encodedFile(file,modules);after[file]=encoded.source;summary.selections+=encoded.selections;summary.edits+=encoded.edits;if(encoded.changed)summary.changedFiles++;
    yield {section:'proposals',ordinal:summary.proposals++,text:encoded.text};

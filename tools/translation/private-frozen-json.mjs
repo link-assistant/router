@@ -3,7 +3,7 @@
 // their private owner join first; every ineligible case runs normal stringify.
 import {types} from 'node:util';
 import {originalBatchedNamespaceTraversalIntrinsicsUnchanged,originalBatchedDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
-import {originalBatchedLexingIntrinsicsUnchanged} from './original-lexing-intrinsics.mjs';
+import {originalBatchedLexingIntrinsicsUnchanged} from './guarded-proof-lexing-intrinsics.mjs';
 const originalNamespaceTraversalIntrinsicsUnchanged=originalBatchedNamespaceTraversalIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged=originalBatchedDataFreezeIntrinsicsUnchanged,originalLexingIntrinsicsUnchanged=originalBatchedLexingIntrinsicsUnchanged;
 import {completedDataTraversalExceedsBudget,completedDataJsonWithinBudget} from './private-data-freeze.mjs';
 const enabled=originalNamespaceTraversalIntrinsicsUnchanged()&&originalLexingIntrinsicsUnchanged();
@@ -352,4 +352,40 @@ export function privateFrozenJsonEqualHint(left,right){
  }
  try{if(!equal(left,right,0))return null;}catch{return null;}
  return compositionIntrinsics()&&originalDataFreezeIntrinsicsUnchanged()?true:null;
+}
+
+// Optional JSON equality only; source, owner and body checks remain mandatory.
+// Reuse existing bounded immutable scalar costs for the original operand.
+// Public array carriers may be mutable: their complete own fields are checked
+// afresh and must alias that original's deeply immutable cells. No public
+// carrier eligibility, byte result, source or compiler verdict is cached.
+export function privateFrozenJsonOwnFieldsAliasHint(left,right,names){
+ if(!compositionIntrinsics()||!originalDataFreezeIntrinsicsUnchanged()||left===null||right===null||typeof left!=='object'||typeof right!=='object'||isProxy(left)||isProxy(right)||!isArray(names)||isProxy(names))return null;
+ const length=descriptor(names,'length');
+ if(!length||!own(length,'value')||length.value>64)return null;
+ try{
+  for(let at=0;at<length.value;at++){
+   const name=descriptor(names,''+at);if(!name||!own(name,'value')||typeof name.value!=='string')return null;
+   const field=descriptor(left,name.value);if(!field)continue;
+   const actual=descriptor(right,name.value);
+   if(!own(field,'value')||!actual||!own(actual,'value')||actual.value===null||typeof actual.value!=='object'||!immutableCost(actual.value))return null;
+   if(field.value!==actual.value&&!sameImmutableArrayCells(field.value,actual.value))return null;
+  }
+ }catch{return null;}
+ return compositionIntrinsics()&&originalDataFreezeIntrinsicsUnchanged()?true:null;
+}
+
+// The right side has just passed the existing immutable/no-stack planner.
+// Both complete own-key/descriptor censuses stay fresh on the public side.
+function sameImmutableArrayCells(left,right){
+ if(!isArray(left)||isProxy(left)||prototype(left)!==arrayPrototype||!isArray(right))return false;
+ const a=descriptor(left,'length'),b=descriptor(right,'length');
+ if(!a||!own(a,'value')||a.value>CELLS||a.value!==b.value)return false;
+ const names=keys(left);if(names.length!==a.value+1||names[a.value]!=='length')return false;
+ for(let at=0;at<a.value;at++){
+  if(names[at]!==''+at)return false;
+  const field=descriptor(left,names[at]),actual=descriptor(right,names[at]);
+  if(!field||!own(field,'value')||!field.enumerable||field.value!==actual.value)return false;
+ }
+ return true;
 }

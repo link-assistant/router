@@ -1,3 +1,4 @@
+import {crateModuleSourcePath} from './repository-layout.mjs';
 // Owned Unicode scalar counting, not general char iterator admission.
 // The genuine complete facade and leaf bind this one fixed qualified API.
 import {types} from 'node:util';
@@ -26,17 +27,29 @@ export const ROUTER_CORE_SCALAR_CONTRACT=freeze({
     'The target result uses the existing 64-bit usize BigInt ABI.',
     'Rust library internals remain intentionally untranslated; no general iterator admission.'],
 });
+
+export const ROUTER_CORE_ASCII_CONTRACT=freeze({
+  id:'router_core_ascii_chars_in',jsExport:'router_core_ascii_chars_in',
+  rustPath:['crate','translation_core','ascii_chars_in'],kind:'function',family:'string-iterator',
+  params:[SOURCE_STR,SOURCE_STR],ret:{kind:'bool'},async:false,pure:true,constEligible:false,
+  requiresRefinement:'genuine-router-core-ascii-call',profile:'router-owned-ascii-chars-in-v1',
+  assumptions:['Complete owned facade and primitives leaf select the exact qualified operation.',
+    'Two checked borrowed scalar-text arguments evaluate once, left to right.',
+    'Every input UTF-8 byte must be ASCII and occur in the alphabet; empty input is true.',
+    'Non-ASCII alphabet characters do not admit non-ASCII input.',
+    'Native iterators and Pattern dispatch remain intentionally untranslated.'],
+});
 const calls=new WeakMap(),checkedCalls=new WeakMap();
 const fail=()=>{throw new TypeError('Router scalar counting requires the actual owned primitives leaf and qualified source binding');};
 function sourceContract(run,location){try{return run();}catch(error){if(!(error instanceof TypeError))throw error;throw unsupported('Router compatibility scalar count',error.message,location);}}
 function originalLeaf(state){
   const leaves=state.facts.modules.filter(module=>module.path.length===2&&module.path[0]==='translation_core'&&module.path[1]==='primitives');
   if(leaves.length!==1)fail();const leaf=leaves[0];
-  if(leaf.file!=='src/translation_core/primitives.rs'||leaf.configurationCondition!=='active'||leaf.source!==ROUTER_CORE_PRIMITIVES_SOURCE||!Object.hasOwn(leaf,'sourceView'))fail();
+  if(leaf.file!==crateModuleSourcePath(state.facts.modules,'src/translation_core/primitives.rs')||leaf.configurationCondition!=='active'||leaf.source!==ROUTER_CORE_PRIMITIVES_SOURCE||!Object.hasOwn(leaf,'sourceView'))fail();
   originalSourceModuleItems(leaf);return leaf;
 }
 export function parseRouterCoreScalarCall(parser,path){
-  const c=parser.cursor,words=['crate','::','translation_core','::','unicode_scalar_count'];
+  const c=parser.cursor,ascii=c.is('ascii_chars_in',4),words=['crate','::','translation_core','::',ascii?'ascii_chars_in':'unicode_scalar_count'];
   if(!words.every((word,index)=>c.is(word,index))||[0,2,4].some(index=>c.peek(index).kind!=='identifier'))return null;
   const first=c.peek(),location={start:first.start,end:c.peek(4).end};
   if(!c.is('(',5))throw unsupported('Router scalar count call','requires a complete nongeneric call',location);
@@ -54,7 +67,7 @@ export function parseRouterCoreScalarCall(parser,path){
   const last=c.expect(')','Router scalar count'),span={start:first.start,end:last.end};
   const end=c.index;
   sourceContract(()=>{requireRouterCoreFacadeCurrent(parser,facade);if(originalLeaf(state)!==leaf||leaf.sourceView!==view||matchesParserFacts(parser)!==state||parser.cursor!==c||c.tokens!==tokens||c.index!==end)fail();},span);
-  const node={k:'routerCoreScalarCountCall',args,span};calls.set(node,{parser,syntax:copyMetadata(node),trace:stage.trace});return node;
+  const node={k:'routerCoreScalarCountCall',args,span};calls.set(node,{parser,syntax:copyMetadata(node),trace:stage.trace,contract:ascii?ROUTER_CORE_ASCII_CONTRACT:ROUTER_CORE_SCALAR_CONTRACT});return node;
 }
 // Compare complete mutable node data after the last source-link hash. Keys
 // are preflighted before descriptors; proxies/accessors never supply syntax.
@@ -99,10 +112,10 @@ export function checkRouterCoreScalarCall(checker,node,env,path,expected){
   requireOriginalPrimitiveTryFromChecker(checker);const receipt=capture.receipt;
   const pipeline=createRulePipeline([
     {phase:'language',rules:[{id:'compatibility-unicode-scalar-count:check-borrowed-text-operand',apply:()=>{
-      const call=checker.hostCall([ROUTER_CORE_SCALAR_CONTRACT],node.args,env,path,expected,node.span);
+      const call=checker.hostCall([receipt.contract],node.args,env,path,expected,node.span);
       if(call.args.some(arg=>arg.type.kind!=='string'||arg.type.rustReference||arg.type.rustOwnership?.kind!=='borrowed'||arg.type.rustOwnership.source!=='str'||arg.type.patternOwnershipRefusal||arg.type.rustGenericIdentityUnresolved))throw typeError('scalar count requires checked borrowed Rust text',node.span);
       requireOriginalPrimitiveTryFromChecker(checker);if(!sameSyntax(node,capture.syntax))throw typeError('scalar-count source call changed during operand checking',node.span);return call;
     }}]},
-    {phase:'repository',rules:[{id:'router-core:retain-scalar-count-boundary',apply:call=>({...call,compatibilityCore:{id:'router-owned-unicode-scalar-count-v1',symbol:'crate::translation_core::unicode_scalar_count',sourceSha256:ROUTER_CORE_PRIMITIVES_SHA256,libraryImplementation:'untranslated-owned-rust-library',sourceTrace:receipt.trace}})}]},
+    {phase:'repository',rules:[{id:'router-core:retain-scalar-count-boundary',apply:call=>({...call,compatibilityCore:{id:receipt.contract.profile,symbol:receipt.contract.rustPath.join('::'),sourceSha256:ROUTER_CORE_PRIMITIVES_SHA256,libraryImplementation:'untranslated-owned-rust-library',sourceTrace:receipt.trace}})}]},
   ]);return pipeline.run(null).value;
 }

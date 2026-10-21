@@ -1,9 +1,11 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // Complete source and behavior oracle: immutable bytes never issue owner facts.
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
 import {legacyProofConsumerSource} from './fixtures/native-proof-json-format.mjs';
 import {writeJsonTextGzip} from '../../evidence/write-json-gzip.mjs';
-import {readFileSync,mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
+import {mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
+import {readCompilerAliasHistory as readFileSync} from './fixtures/compiler-data-alias-history.mjs';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {pathToFileURL} from 'node:url';
@@ -41,7 +43,7 @@ const SUCCESSFUL_MEASUREMENT_EDITS=[{"before":"   if(saved&&!isArray(value)){con
 const DESCENDANT_MEASUREMENT_EDITS=[...ORIGINAL_DESCENDANT_MEASUREMENT_EDITS,...POSITIVE_EQUALITY_HINT_EDITS,...BOUNDED_NATIVE_QUOTATION_EDITS];
 const json=JSON.stringify,descriptor=Object.getOwnPropertyDescriptor,define=Object.defineProperty,apply=Reflect.apply;
 const base=new URL('../',import.meta.url),root=new URL('../../../',import.meta.url),sha=value=>createHash('sha256').update(value).digest('hex');
-const cargo={manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')},dependencies=loadDeriveDependencyProof(cargo);
+const cargo={manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')},dependencies=loadDeriveDependencyProof(cargo);
 function test(name,run){testCase(name,{timeout:60_000},async t=>{const vectors=[],retain=(kind,value)=>{vectors.push({kind,value});return value;};try{await run(t,retain);}finally{const directory=process.env.ROUTER_PLAN_JSON_COMPOSITION_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeJsonTextGzip(join(directory,Buffer.from(name).toString('hex')+'.json.gz'),json({name,vectors},(_key,value)=>typeof value==='bigint'?{$integer:String(value)}:value));}}});}
 function outcome(run){try{return {value:run()};}catch(error){return {error:{type:error instanceof TypeError?'TypeError':error instanceof RangeError?'RangeError':'Error',message:descriptor(error,'message')?.value??null}};}}
 function equal(retain,label,before,current){retain(label,{before,current});assert.deepEqual(current,before);return current;}

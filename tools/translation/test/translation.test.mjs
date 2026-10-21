@@ -1,3 +1,4 @@
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
@@ -188,15 +189,15 @@ test('regeneration rejects stale, missing, unexpected and tampered semantic fiel
     const options = { root: sandbox, sources: ['sample.rs'] };
     assert.deepEqual(regenerate(options).failures, []);
     assert.deepEqual(regenerate({ ...options, check: true }).failures, []);
-    writeFileSync(join(sandbox, 'packages/javascript/generated/rust-draft/unexpected.mjs'), '');
-    rmSync(join(sandbox, 'packages/typescript/generated/rust-draft/sample.ts'));
+    writeFileSync(join(sandbox, 'js/generated/rust-draft/unexpected.mjs'), '');
+    rmSync(join(sandbox, 'ts/generated/rust-draft/sample.ts'));
     const meta = join(sandbox, 'tools/translation/meta/sample.meta.json');
     const ir = JSON.parse(readFileSync(meta));
     ir.items.find(item => item.semantic).semantic.checkedIR.body.value = false;
     writeFileSync(meta, JSON.stringify(ir));
     const errors = regenerate({ ...options, check: true }).failures;
-    assert.ok(errors.includes('unexpected: packages/javascript/generated/rust-draft/unexpected.mjs'));
-    assert.ok(errors.includes('missing: packages/typescript/generated/rust-draft/sample.ts'));
+    assert.ok(errors.includes('unexpected: js/generated/rust-draft/unexpected.mjs'));
+    assert.ok(errors.includes('missing: ts/generated/rust-draft/sample.ts'));
     assert.ok(errors.includes('stale: tools/translation/meta/sample.meta.json'));
     regenerate(options);
     writeFileSync(join(sandbox, 'sample.rs'), 'pub fn truth() -> bool { false }');
@@ -210,8 +211,8 @@ test('all tracked Rust artifacts reconstruct source and all generated JS modules
   assert.deepEqual(inventory.sources.map(item => item.source), tracked);
   assert.equal(inventory.runtimeParity, false);
   for (const entry of inventory.sources) {
-    const ir = JSON.parse(readFileSync(join(root, entry.targets.meta)));
-    const source = trackedSource(root, entry.source);
+    const ir = JSON.parse(readFileSync(join(root,repositorySourcePath(entry.targets.meta,root))));
+    const source = trackedSource(root, repositorySourcePath(entry.source,root));
     assert.equal(ir.items.map(item => item.source).join(''), source, entry.source);
     assert.equal(ir.sourceSha256, sha256(source), entry.source);
     let module;

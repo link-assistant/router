@@ -1,3 +1,4 @@
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -84,14 +85,14 @@ test('false conditional derives and helpers do not acquire an applied derive inv
 test('whole unchanged production files pin actual conditional attributes and the request derive inputs',()=>{
   const root=fileURLToPath(new URL('../../../',import.meta.url));
   const pins=JSON.parse(readFileSync(new URL('./fixtures/conditional-attribute-frontier.json',import.meta.url),'utf8'));
-  for(const pin of pins.files){const source=trackedSource(root,pin.path);assert.equal(hash(source),pin.sha256);for(const attribute of pin.attributes)assert.equal(hash(source.slice(attribute.span.start,attribute.span.end)),attribute.sha256);}
-  const token=pins.files.find(pin=>pin.path==='src/token_admin.rs'),source=trackedSource(root,token.path);
+  for(const pin of pins.files){const source=trackedSource(root,repositorySourcePath(pin.path,root));assert.equal(hash(source),pin.sha256);for(const attribute of pin.attributes)assert.equal(hash(source.slice(attribute.span.start,attribute.span.end)),attribute.sha256);}
+  const token=pins.files.find(pin=>pin.path==='src/token_admin.rs'),source=trackedSource(root,repositorySourcePath(token.path,root));
   const item=sourceItems(source).find(item=>item.term==='struct'&&item.name==='IssueClientTokenRequest');assert.ok(item);
   const input=inspectDeriveInput(item,PRODUCTION_PROFILE);
   assert.deepEqual(input.derives.map(entry=>entry.path),[['serde','Deserialize'],['schemars','JsonSchema']]);
   assert.equal(input.absentConditionalAttributes.length,1);assert.equal(input.generatedImplBehavior,false);
   assert.equal(source.slice(input.absentConditionalAttributes[0].span.start,input.absentConditionalAttributes[0].span.end),'#[cfg_attr(test, derive(serde::Serialize))]');
-  const lifecycle=pins.files.find(pin=>pin.path==='src/client_lifecycle/active.rs'),active=trackedSource(root,lifecycle.path);
+  const lifecycle=pins.files.find(pin=>pin.path==='src/client_lifecycle/active.rs'),active=trackedSource(root,repositorySourcePath(lifecycle.path,root));
   const inner=sourceItems(active).find(item=>item.tokens[0]?.text==='#'&&item.tokens[1]?.text==='!');assert.ok(inner);
   assert.equal(itemConfiguration(inner.tokens,compilationProfile({flags:{test:false,unix:true,windows:false}})).status,'active');
   assert.equal(itemConfiguration(inner.tokens,PRODUCTION_PROFILE).status,'active');

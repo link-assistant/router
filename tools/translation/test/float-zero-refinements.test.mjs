@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -87,7 +88,7 @@ test('NaN predicates, aliases, closures, continuations, references and const sig
 });
 
 test('original js_min and js_max retain complete attributes and exact signed-zero semantics',{timeout:60_000},async()=>{
-  const path='src/generated_js_first/policy.rs',original=readFileSync(new URL('../../../'+path,import.meta.url),'utf8');
+  const path='src/generated_js_first/policy.rs',original=readFileSync(repositorySourceURL(path,new URL('../../../',import.meta.url)),'utf8');
   assert.equal(hash(original),'c5d5cec07bf54be29de7beed707263256afa6ba1ee87c89695b237d5626f5673');
   const pins=[['js_min',252,522,'1f20e76a4730851db65b3bcd8d26c828c044df123e44130dd41125cfeb28f128'],['js_max',524,794,'99cf61ef989436d2df9ae2f42c6f4007c2827c94db1b08889350056636727509']];
   const items=sourceItems(original),selected=pins.map(([name,start,end,digest])=>{const item=items.find(item=>item.term==='fn'&&item.name===name);assert.deepEqual([item.start,item.end],[start,end]);const text=original.slice(start,end);assert.equal(hash(text),digest);assert.ok(text.startsWith('#[rustfmt::skip]'));return text;}).join('\n');

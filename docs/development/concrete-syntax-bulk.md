@@ -114,6 +114,17 @@ Project CST component storage is separate. Its 64 MiB per-component and 512 MiB
 aggregate storage limits do not increase these source transport limits or
 establish that a stored project is semantically translatable.
 
+The explicit owned-definition bulk producers use
+`planProjectMetaObjectStorage` to serialize each complete top-level owned data
+field with their fixed Map/BigInt serializer. The resulting inline or two/three
+component bytes, native member-key behavior, omitted fields and full ordered
+logical digest retain the existing format. Each retained field has one flat
+complete value and an independently checked UTF-16/UTF-8 inverse. Ordinary data
+roots have at most 4,096 enumerable fields; root accessors, proxies and root
+`toJSON` hooks refuse. This separate entry does not claim arbitrary root/replacer
+observer equivalence. The original serialized-string entry remains available.
+Neither entry supplies source, namespace, ownership or executable permission.
+
 For a complete compiler operation over an explicit source batch, see
 [fresh-process bulk translation](isolated-project-bulk.md). Its source packet
 registration is separate from these CST transport contracts.

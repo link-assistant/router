@@ -1,0 +1,33 @@
+{
+  "schema": "source-lifetime-refusal-original-source-v1",
+  "sourceHead": "476d30da2d3620b1c4d42c144ca063cac1804cba",
+  "sources": [
+    {
+      "path": "tools/translation/extensions/declaration-refusals.mjs",
+      "archive": "declaration-refusals.mjs.gz",
+      "bytes": 5080,
+      "sha256": "94e4e92989320a0831b6a3bc8e742e98c5dc63b6abdb6b5c47d1ca71261f2c19",
+      "archiveBytes": 1692,
+      "archiveSha256": "3a0ab584f0e977a09732cad9c2ef9973ea763b3541a44e304144da8d7075aae7"
+    },
+    {
+      "path": "tools/translation/extensions/source-lifetimes.mjs",
+      "archive": "source-lifetimes.mjs.gz",
+      "bytes": 62628,
+      "sha256": "18865f4d47273cae36ec736e3d1fe34d3c35f27b3e5867517b798d87ee5c4511",
+      "archiveBytes": 15616,
+      "archiveSha256": "10a488f86072a35ee0d260de404da0ced96a5ace51a0177d44662034f7cfe2ba"
+    },
+    {
+      "path": "tools/translation/project.mjs",
+      "archive": "project.mjs.gz",
+      "bytes": 66931,
+      "sha256": "3b82b299ff62f21fa3c2c52ed30a5906e5e87cdcaed29ac4d598cca17b8011f5",
+      "archiveBytes": 16144,
+      "archiveSha256": "fd271ed116cd7ff4a55e6afd828cf3cecbdc2ebb2fe1e32989c0a8090dc9f6ad"
+    }
+  ],
+  "license": "Repository LICENSE",
+  "sourceAuthority": false,
+  "executableAdmission": false
+}

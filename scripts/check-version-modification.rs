@@ -77,7 +77,7 @@ fn get_cargo_toml_diff() -> String {
     // Get the diff for Cargo.toml
     exec(
         "git",
-        &["diff", &format!("origin/{}...HEAD", base_ref), "--", "Cargo.toml"],
+        &["diff", &format!("origin/{}...HEAD", base_ref), "--", "Cargo.toml", "rust/Cargo.toml"],
     )
 }
 
@@ -86,10 +86,15 @@ fn has_version_change(diff: &str) -> bool {
         return false;
     }
 
-    // Look for changes to the version line
-    // Match lines that start with + or - followed by version = "..."
-    let version_change_pattern = Regex::new(r#"(?m)^[+-]version\s*=\s*""#).unwrap();
-    version_change_pattern.is_match(diff)
+    // A physical package move removes and adds the same version. Cancel only
+    // identical complete values, retaining counts so unmatched changes fail.
+    let pattern = Regex::new(r#"(?m)^([+-])version\s*=\s*"([^"\n]+)""#).unwrap();
+    let mut changes = std::collections::BTreeMap::<String, i64>::new();
+    for entry in pattern.captures_iter(diff) {
+        let direction = if &entry[1] == "+" { 1 } else { -1 };
+        *changes.entry(entry[2].to_string()).or_default() += direction;
+    }
+    changes.values().any(|count| *count != 0)
 }
 
 fn main() {
@@ -131,4 +136,25 @@ fn main() {
 
     println!("Cargo.toml was modified but version field was not changed.");
     println!("Version check passed.");
+}
+
+#[cfg(test)]
+mod layout_version_tests {
+    use super::has_version_change;
+
+    #[test]
+    fn identical_package_move_keeps_version() {
+        assert!(!has_version_change("-version = \"1.2.3\"\n+version = \"1.2.3\"\n"));
+    }
+
+    #[test]
+    fn package_move_cannot_hide_manual_bump() {
+        assert!(has_version_change("-version = \"1.2.3\"\n+version = \"1.2.4\"\n"));
+    }
+
+    #[test]
+    fn unmatched_version_occurrences_still_fail() {
+        assert!(has_version_change("-version = \"1.2.3\"\n+version = \"1.2.3\"\n+version = \"1.2.3\"\n"));
+        assert!(!has_version_change("-description = \"old\"\n+description = \"new\"\n"));
+    }
 }

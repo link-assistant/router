@@ -2,14 +2,16 @@
 // Review original inputs and every generated output. This does not certify
 // target behavior, replace regeneration checks or grant a green gate stamp.
 import fs from 'node:fs';
+import {repositoryRustLayout} from '../tools/translation/repository-layout.mjs';
 import {createHistoricalTranslationReview} from './historical-translation-review.mjs';
+import {projectSemanticReviewMetadata} from './project-concrete-review.mjs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {isDeepStrictEqual,types as utilTypes} from 'node:util';
 import {parseProgram,roundTripProgram} from '../tools/translation/semantic-meta.mjs';
-import {loadProjectMetaStorage} from '../tools/translation/project-meta-storage.mjs';
+import {loadProjectMetaStorageWithCompressedConcrete as loadProjectMetaStorage} from '../tools/translation/project-meta-compressed-storage.mjs';
 import {sourceItems} from '../tools/translation/rust-structure.mjs';
 import {inspectDeriveInput} from '../tools/translation/derive-inputs.mjs';
 import {loadDeriveDependencyProof} from '../tools/translation/derive-dependencies.mjs';
@@ -27,6 +29,9 @@ import {itemConfiguration} from '../tools/translation/cfg-profile.mjs';
 import {TranslationError} from '../tools/translation/vendor/meta-language/translation/diagnostics.js';
 import {resolveModuleGraph} from '../tools/translation/project.mjs';
 import {createDeriveFootprintContext,deriveFootprintAt,deriveFootprintExternalModules} from '../tools/translation/derive-footprints.mjs';
+import {createCloneEnclosingSourceContext} from '../tools/translation/clone-trait-source.mjs';
+import {createDeriveEnclosingNamespaceContext} from '../tools/translation/derive-enclosing-namespace-context.mjs';
+import {compilationProfile} from '../tools/translation/cfg-profile.mjs';
 import {createCloneSourceContext,cloneSourceContextFacts} from '../tools/translation/clone-trait-source.mjs';
 import {originalCloneGeneratedMethod} from '../tools/translation/clone-source-ir.mjs';
 import {createDefaultSourceContext,defaultSourceContextFacts} from '../tools/translation/default-trait-source.mjs';
@@ -48,7 +53,7 @@ import {HostChecker} from '../tools/translation/extensions/host-contracts.mjs';
 
 const MAX_FILE_BYTES=64*1024*1024,MAX_TOTAL_BYTES=512*1024*1024,MAX_FILES=32768;
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
-const outputRoots=['tools/translation/meta','tools/translation/projects','packages/javascript/generated/rust-draft','packages/typescript/generated/rust-draft','packages/javascript/generated/rust-project','packages/typescript/generated/rust-project'];
+const outputRoots=['tools/translation/meta','tools/translation/projects','js/generated/rust-draft','ts/generated/rust-draft','js/generated/rust-project','ts/generated/rust-project'];
 const statusNames=['executable','carried','preserved'];
 const identity=item=>JSON.stringify([item.term,item.name??null,item.span.start,item.span.end,item.sha256]);
 function git(root,args,input) {
@@ -281,7 +286,7 @@ function reviewCloneMethod(meta,item,{checked,target,entries,names,used,context}
   used.add(entry);return {...item,sourceSha256,itemSha256,qualifiedName:entry.fullName,targetName:flattened.fullName,checkedSignatureSha256:digest(JSON.stringify({params:entry.params,ret:entry.ret})),checkedBodySha256:digest(JSON.stringify(entry.body)),targetBodySha256:digest(JSON.stringify(flattened.body)),semanticAuthority:false,runtimeParity:false};
 }
 
-function originalUnitDefaultReviewContext(meta,row,{readSource,dependencies,jsonMacroDependencies,cargoManifest}) {
+function originalUnitDefaultReviewContext(meta,row,{readSource,dependencies,jsonMacroDependencies,cargoManifest,cargoManifestPath='Cargo.toml'}) {
   const proof=typeof dependencies==='function'?dependencies():dependencies;
   if(!Array.isArray(meta.sources)||!meta.sources.length)throw new Error('Unit Default review requires complete original source modules');
   const paths=[...new Set(meta.sources.map(item=>{relativeName(item.source);return item.source;}))],sources=new Map(paths.map(name=>[name,readSource(name)]));
@@ -293,7 +298,7 @@ function originalUnitDefaultReviewContext(meta,row,{readSource,dependencies,json
     deriveDependencies:proof,
     // The review caller supplies the producer's actual manifest explicitly.
     // A null producer input stays null even when dependency Cargo bytes exist.
-    cargoManifest:cargoManifest??null,
+    cargoManifest:cargoManifest??null,cargoManifestPath,
     expectedCargoEdition:meta.originalCargoEditionInput??null,
     jsonMacroDependencies:jsonMacroDependencies??null,
     expectedJsonContext:meta.jsonMacroContext??null,
@@ -433,7 +438,7 @@ function assertGeneratedReviewData(value) {
 // brands; source namespace, runtime and whole-trait authority remain false.
 // Direct callers must supply the actual cargoManifest when the producer used
 // one. The CLI supplies its verified original input; metadata is no substitute.
-export function reviewGeneratedMethods(meta,row,{readSource,dependencies,jsonMacroDependencies,cargoManifest}={}) {
+export function reviewGeneratedMethods(meta,row,{readSource,dependencies,jsonMacroDependencies,cargoManifest,cargoManifestPath='Cargo.toml'}={}) {
   assertGeneratedReviewData(meta);assertGeneratedReviewData(row);
   if(meta.runtimeParity===true||meta.semanticAuthority===true)throw new Error('Generated review cannot accept semantic or runtime authority');
   const rows=generatedArray(meta),count=Object.hasOwn(row,'checkedGeneratedMethods')?row.checkedGeneratedMethods:0;
@@ -446,12 +451,12 @@ export function reviewGeneratedMethods(meta,row,{readSource,dependencies,jsonMac
   const used=new Set(),identities=new Set(),result=[];let cloneContext=null,unitDefaultContext=null,containerDefaultContext=null;
   for(const item of rows){
     if(['original-generated-container-default-ir-v1','original-generated-dependent-default-ir-v1'].includes(item?.defaultSourceProof?.schema)){
-      containerDefaultContext??=originalUnitDefaultReviewContext(meta,row,{readSource,dependencies,jsonMacroDependencies,cargoManifest});
+      containerDefaultContext??=originalUnitDefaultReviewContext(meta,row,{readSource,dependencies,jsonMacroDependencies,cargoManifest,cargoManifestPath});
       const reviewed=reviewContainerDefaultMethod(meta,item,{checked,target,entries,names,used,context:containerDefaultContext});
       const identity=generatedIdentity(reviewed);if(identities.has(identity))throw new Error('Duplicate generated method identity');identities.add(identity);result.push(reviewed);continue;
     }
     if(item?.generator==='core::default::Default'&&item.originalDeclarationTerm==='enum'){
-      unitDefaultContext??=originalUnitDefaultReviewContext(meta,row,{readSource,dependencies,jsonMacroDependencies,cargoManifest});
+      unitDefaultContext??=originalUnitDefaultReviewContext(meta,row,{readSource,dependencies,jsonMacroDependencies,cargoManifest,cargoManifestPath});
       const reviewed=reviewUnitDefaultMethod(meta,item,{checked,target,entries,names,used,context:unitDefaultContext});
       const identity=generatedIdentity(reviewed);if(identities.has(identity))throw new Error('Duplicate generated method identity');identities.add(identity);result.push(reviewed);continue;
     }
@@ -508,6 +513,110 @@ export function reviewGeneratedMethods(meta,row,{readSource,dependencies,jsonMac
   }
   return result;
 }
+
+// Explicit stored-project review format. Fresh original joins remain required;
+// private contexts are shared only within this call. The direct API above stays exact.
+function originalStoredDefaultInputJoin(meta,row,{readSource,dependencies,jsonMacroDependencies,cargoManifest,cargoManifestPath='Cargo.toml'},shared) {
+  const proof=typeof dependencies==='function'?dependencies():dependencies;
+  if(!Array.isArray(meta.sources)||!meta.sources.length)throw new Error('Unit Default review requires complete original source modules');
+  const paths=[...new Set(meta.sources.map(item=>{relativeName(item.source);return item.source;}))],sources=new Map(paths.map(name=>[name,readSource(name)]));
+  for(const item of meta.sources)if(typeof sources.get(item.source)!=='string'||digest(sources.get(item.source))!==item.sha256)throw new Error('Unit Default original source module hash mismatch');
+  const {graph,derive}=shared;
+  if(shared.state.deriveContext!==derive||shared.state.dependencies!==proof||sources.size!==shared.sources.size||[...sources].some(([name,source])=>shared.sources.get(name)!==source))throw new Error('Stored Default fresh original inputs differ from this invocation context');
+  cloneSame(graph.compilationProfile,compilationProfile(meta.compilationProfile),'Stored Default original profile changed');
+  cloneSame(graph.modules.map(module=>({source:module.file,sha256:digest(module.source),module:module.path})),meta.sources,'Unit Default complete original source module layout mismatch');
+  // The complete original Default context is rejoined above.
+  return shared;
+}
+function originalStoredCloneReviewContext(meta,row,{readSource,dependencies,jsonMacroDependencies},shared) {
+  const proof=typeof dependencies==='function'?dependencies():dependencies;
+  if(!Array.isArray(meta.sources)||!meta.sources.length)throw new Error('Clone review requires complete original source modules');
+  const paths=[...new Set(meta.sources.map(item=>{relativeName(item.source);return item.source;}))],sources=new Map(paths.map(name=>[name,readSource(name)]));
+  for(const item of meta.sources)if(typeof sources.get(item.source)!=='string'||digest(sources.get(item.source))!==item.sha256)throw new Error('Clone original source module hash mismatch');
+  const {graph,derive,defaultContext}=shared;
+  if(shared.state.deriveContext!==derive||shared.state.dependencies!==proof||sources.size!==shared.sources.size||[...sources].some(([name,source])=>shared.sources.get(name)!==source))throw new Error('Stored Clone fresh original inputs differ from this invocation Default context');
+  cloneSame(graph.compilationProfile,compilationProfile(meta.compilationProfile),'Stored Clone original profile changed');
+  cloneSame(graph.modules.map(module=>({source:module.file,sha256:digest(module.source),module:module.path})),meta.sources,'Clone complete original source module layout mismatch');
+  const deriveBangContext=createDeriveEnclosingNamespaceContext({deriveContext:derive}),context=createCloneEnclosingSourceContext(derive,{defaultContext,deriveBangContext}),state=cloneSourceContextFacts(context);
+  return {graph,derive,context,state,sources,jsonMacroDependencies};
+}
+export function reviewStoredProjectGeneratedMethods(meta,row,{readSource,dependencies,jsonMacroDependencies,cargoManifest,cargoManifestPath='Cargo.toml'}={}) {
+  assertGeneratedReviewData(meta);assertGeneratedReviewData(row);
+  if(meta.runtimeParity===true||meta.semanticAuthority===true)throw new Error('Generated review cannot accept semantic or runtime authority');
+  const rows=generatedArray(meta),count=Object.hasOwn(row,'checkedGeneratedMethods')?row.checkedGeneratedMethods:0;
+  if(!Number.isSafeInteger(count)||count<0||count!==rows.length)throw new Error('Generated method count mismatch: '+row.entry);
+  if(!rows.length&&!Object.hasOwn(meta,'checkedSemanticProgram')&&!Object.hasOwn(meta,'targetSemanticProgram'))return [];
+  const checked=parseProgram(JSON.stringify(meta.checkedSemanticProgram)),target=parseProgram(JSON.stringify(meta.targetSemanticProgram));
+  const entries=[...checked.declarations.values()].filter(entry=>entry.generated==='router-source-generated-default-method'||entry.impl?.defaultSourceProof?.schema==='original-generated-default-ir-v1'||entry.generated==='router-source-generated-clone-method'||entry.impl?.cloneSourceProof?.schema==='original-generated-clone-ir-v1');
+  if(entries.length!==rows.length)throw new Error('Generated method semantic count mismatch: '+row.entry);
+  const names=new Map([...checked.declarations.keys()].map(name=>[name,'rp_'+Buffer.from(name).toString('hex')]));
+  const used=new Set(),identities=new Set(),result=[];let cloneContext=null,unitDefaultContext=null,containerDefaultContext=null,sharedDefaultContext=null;
+  const originalDefault=()=>sharedDefaultContext===null?(sharedDefaultContext=originalUnitDefaultReviewContext(meta,row,{readSource,dependencies,jsonMacroDependencies,cargoManifest,cargoManifestPath})):originalStoredDefaultInputJoin(meta,row,{readSource,dependencies,jsonMacroDependencies,cargoManifest,cargoManifestPath},sharedDefaultContext);
+  for(const item of rows){
+    if(['original-generated-container-default-ir-v1','original-generated-dependent-default-ir-v1'].includes(item?.defaultSourceProof?.schema)){
+      containerDefaultContext??=originalDefault();
+      const reviewed=reviewContainerDefaultMethod(meta,item,{checked,target,entries,names,used,context:containerDefaultContext});
+      const identity=generatedIdentity(reviewed);if(identities.has(identity))throw new Error('Duplicate generated method identity');identities.add(identity);result.push(reviewed);continue;
+    }
+    if(item?.generator==='core::default::Default'&&item.originalDeclarationTerm==='enum'){
+      unitDefaultContext??=originalDefault();
+      const reviewed=reviewUnitDefaultMethod(meta,item,{checked,target,entries,names,used,context:unitDefaultContext});
+      const identity=generatedIdentity(reviewed);if(identities.has(identity))throw new Error('Duplicate generated method identity');identities.add(identity);result.push(reviewed);continue;
+    }
+    if(item?.generator==='core::clone::Clone'){
+      cloneContext??=originalStoredCloneReviewContext(meta,row,{readSource,dependencies,jsonMacroDependencies},originalDefault());
+      const reviewed=reviewCloneMethod(meta,item,{checked,target,entries,names,used,context:cloneContext});
+      const identity=generatedIdentity(reviewed);if(identities.has(identity))throw new Error('Duplicate generated method identity');identities.add(identity);result.push(reviewed);continue;
+    }
+    if(item?.term!=='generated-method'||item.origin!=='derive-invocation'||item.originalDeclarationTerm!=='struct'||item.generator!=='core::default::Default'||item.receiver!==null||item.semanticBodyChecked!==true||item.runtimeParity===true||item.semanticAuthority===true||typeof item.name!=='string')throw new Error('Invalid generated method classification');
+    relativeName(item.source);const source=readSource(item.source),proof=item.defaultSourceProof,span=item.span;
+    if(typeof source!=='string'||!Number.isSafeInteger(span?.start)||!Number.isSafeInteger(span?.end)||span.start<0||span.end<=span.start||span.end>source.length)throw new Error('Invalid generated original declaration boundary');
+    const sourceSha256=digest(Buffer.from(source)),original=source.slice(span.start,span.end),itemSha256=digest(Buffer.from(original));
+    if(proof?.schema!=='original-generated-default-ir-v1'||proof.source!==item.source||proof.sourceSha256!==sourceSha256||proof.itemSha256!==itemSha256)throw new Error('Generated original declaration hash mismatch');
+    same(proof.span,span,'Generated original declaration span mismatch');
+    if(proof.bodyMapped!==true||proof.checkedBody!==false||proof.wholeCompilerExecuted!==false||proof.wholeTraitTranslated!==false||proof.runtimeParity!==false||!sha256Pattern.test(proof.contextDigest))throw new Error('Invalid generated source authority flags');
+    const parsed=sourceItems(original).filter(entry=>!entry.comment);
+    if(parsed.length!==1||parsed[0].term!=='struct'||parsed[0].start!==0||parsed[0].end!==original.length)throw new Error('Generated source is not the exact original struct');
+    const input=inspectDeriveInput(parsed[0],meta.compilationProfile);
+    if(input.derives.filter(derive=>isDeepStrictEqual(derive.path,['Default'])).length!==1)throw new Error('Generated source lacks its exact Default invocation');
+    const candidates=entries.filter(entry=>entry.impl?.defaultSourceProof?.source===item.source&&isDeepStrictEqual(entry.impl.defaultSourceProof.span,span));
+    if(candidates.length!==1||used.has(candidates[0]))throw new Error('Generated method metadata is not one-to-one');
+    const entry=candidates[0],nominal=[...entry.modulePath,parsed[0].name].join('.');used.add(entry);
+    if(item.name!==nominal+'.default'||entry.impl?.method!=='default'||entry.impl.receiver!==null||entry.generated!=='router-source-generated-default-method'||entry.params.length||entry.async||entry.constant||entry.constFunction||entry.ret.kind!=='data'||entry.ret.name!==nominal)throw new Error('Generated checked signature mismatch');
+    same(entry.impl.type.path,['crate',...entry.modulePath,parsed[0].name],'Generated nominal owner mismatch');
+    const localName='ml_impl_'+Buffer.from(['crate',...entry.modulePath,parsed[0].name].join('.')).toString('hex')+'_'+Buffer.from('default').toString('hex');
+    if(entry.name!==localName||entry.fullName!==[...entry.modulePath,localName].join('.'))throw new Error('Generated original symbol mismatch');
+    same(entry.ret,{kind:'data',name:nominal,rustSourceType:true},'Generated checked return ownership mismatch');
+    same(entry.impl.defaultSourceProof,proof,'Generated source/checked proof mismatch');
+    if(!meta.sources.some(original=>original.source===item.source&&original.sha256===sourceSha256&&isDeepStrictEqual(original.module,entry.modulePath)))throw new Error('Generated source module mismatch');
+    if(!Number.isSafeInteger(entry.span?.start)||!Number.isSafeInteger(entry.span?.end))throw new Error('Generated checked declaration boundary mismatch');
+    const shift=entry.span.start-span.start;
+    if(!Number.isSafeInteger(shift)||shift<0||entry.span.end-span.end!==shift)throw new Error('Generated relocated declaration span mismatch');
+    if(meta.checkedMethods.some(method=>method.source===item.source&&isDeepStrictEqual(method.span,span))||meta.executable.some(method=>method.source===item.source&&isDeepStrictEqual(method.span,span)))throw new Error('Generated method overlaps original fn/method counts');
+    const output=proveBuiltinScalarSourceOutput({dependencies:typeof dependencies==='function'?dependencies():dependencies,source,span,owner:'Default'}),plan=builtinScalarOriginalSourcePlan(output),branch=output.branches[0];
+    if(proof.originalOutputDigest!==output.digest||proof.originalCompilerPlanDigest!==plan.digest||proof.selectedBranch!==branch.feature||output.branches.length!==1)throw new Error('Generated original compiler plan mismatch');
+    same(proof.hygiene,branch.body.slots.fields.map(field=>field.expr.slots.expr.slots.path.segments[0]),'Generated standard hygiene mismatch');
+    if(!Array.isArray(proof.fields)||proof.fields.length!==output.input.fields.length)throw new Error('Generated primitive source field count mismatch');
+    proof.fields.forEach((field,index)=>{
+      const originalField=output.input.fields[index];if(field.field!==originalField.name||field.type!==originalField.type)throw new Error('Generated primitive source field mismatch');
+      const selection=pinnedDefaultBody(field.type),body=originalPrimitiveBody(selection),syntax=parsedPinnedBodyEvidence(body);
+      same(field.selection,selection,'Generated standard primitive selection mismatch');same(field.originalBody,body,'Generated primitive original body mismatch');
+      if(field.syntaxSha256!==syntax.syntaxSha256)throw new Error('Generated primitive syntax hash mismatch');
+    });
+    checkDefaultBody(entry,checked.declarations.get(nominal),proof.fields);
+    const flattened=target.declarations.get(names.get(entry.fullName));
+    if(!flattened||flattened.generated!=='router-project-flattened'||flattened.impl?.method!=='default'||flattened.impl.receiver!==null)throw new Error('Generated flattened target missing');
+    if(flattened.name!==flattened.fullName||flattened.modulePath.length)throw new Error('Generated flattened symbol mismatch');
+    same(flattened.impl.defaultSourceProof,proof,'Generated flattened proof mismatch');
+    same({params:flattened.params,ret:flattened.ret},flattenedNode({params:entry.params,ret:entry.ret},names),'Generated flattened signature mismatch');
+    same(flattened.body,flattenedNode(entry.body,names),'Generated flattened body mismatch');
+    same(flattened.span,entry.span,'Generated flattened span mismatch');
+    const reviewed={...item,sourceSha256,itemSha256,qualifiedName:entry.fullName,targetName:flattened.fullName,checkedSignatureSha256:digest(JSON.stringify({params:entry.params,ret:entry.ret})),checkedBodySha256:digest(JSON.stringify(entry.body)),targetBodySha256:digest(JSON.stringify(flattened.body)),semanticAuthority:false,runtimeParity:false};
+    const identity=generatedIdentity(reviewed);if(identities.has(identity))throw new Error('Duplicate generated method identity');identities.add(identity);result.push(reviewed);
+  }
+  return result;
+}
+
 export function compareGeneratedMethods(before,after) {
   const old=new Map(before.map(item=>[generatedIdentity(item),item])),current=new Map(after.map(item=>[generatedIdentity(item),item]));
   return {newlyCheckedGeneratedMethods:after.filter(item=>!old.has(generatedIdentity(item))),lostCheckedGeneratedMethods:before.filter(item=>!current.has(generatedIdentity(item))),changedGeneratedMethodBodies:after.filter(item=>{const prior=old.get(generatedIdentity(item));return prior&&(prior.checkedBodySha256!==item.checkedBodySha256||prior.checkedSignatureSha256!==item.checkedSignatureSha256);}).map(item=>({identity:generatedIdentity(item),previous:old.get(generatedIdentity(item)),current:item}))};
@@ -515,6 +624,7 @@ export function compareGeneratedMethods(before,after) {
 
 export function reviewTranslationDraft({root=process.cwd(),baselineSha=null,inventoryPath='parity/rust-source-inventory.json',projectMetaStorageLimits}={}) {
   root=fs.realpathSync(root);
+  const rustLayout=repositoryRustLayout(root);
   if(baselineSha!==null&&!/^[a-f0-9]{40}$/u.test(baselineSha))throw new TypeError('Baseline must be an immutable full Git SHA');
   relativeName(inventoryPath);
   const profile=/^(profiles\/[A-Za-z0-9_-]+\/)?parity\/rust-source-inventory\.json$/u.exec(inventoryPath);
@@ -635,11 +745,11 @@ export function reviewTranslationDraft({root=process.cwd(),baselineSha=null,inve
   for(const [key,count] of Object.entries(totals))if(inventory.totals[key]!==count)throw new Error('Invalid complete inventory total: '+key);
   if(oldInventory)for(const [key,count] of Object.entries(previousTotals))if(oldInventory.totals[key]!==count)throw new Error('Invalid baseline inventory total: '+key);
   const cargo=[];
-  for(const name of git(root,['ls-files','-z','--','Cargo.toml','Cargo.lock']).toString().split('\0').filter(Boolean)){
+  for(const name of git(root,['ls-files','-z','--',...rustLayout.cargoInputs]).toString().split('\0').filter(Boolean)){
     const bytes=read(name);if(baselineSha&&digest(git(root,['show',baselineSha+':'+name]))!==digest(bytes))throw new Error('Original Cargo input changed since baseline: '+name);cargo.push(inputs.get(name));
   }
-  let generatedDependencies;const dependencies=()=>generatedDependencies??=loadDeriveDependencyProof({manifest:read('Cargo.toml').toString('utf8'),lock:read('Cargo.lock').toString('utf8')});
-  let generatedJsonDependencies;const jsonMacroDependencies=()=>generatedJsonDependencies??=loadJsonMacroSourceProof({manifest:read('Cargo.toml').toString('utf8'),lock:read('Cargo.lock').toString('utf8')});
+  let generatedDependencies;const dependencies=()=>generatedDependencies??=loadDeriveDependencyProof({manifest:read(rustLayout.manifest).toString('utf8'),lock:read(rustLayout.lock).toString('utf8')});
+  let generatedJsonDependencies;const jsonMacroDependencies=()=>generatedJsonDependencies??=loadJsonMacroSourceProof({manifest:read(rustLayout.manifest).toString('utf8'),lock:read(rustLayout.lock).toString('utf8')});
   const projectIdentity=item=>JSON.stringify([item.source,item.name,item.term??null,item.span.start,item.span.end]);
   function projectMeta(meta,row,historical=null,bytes=null) {
     if(!Array.isArray(meta.sources)||!Array.isArray(meta.refused)||!Array.isArray(meta.unloweredItems)||!Array.isArray(meta.checkedMethods)||!Array.isArray(meta.executable)||!Array.isArray(meta.moduleDiagnostics))throw new Error('Incomplete project metadata: '+row.entry);
@@ -648,7 +758,9 @@ export function reviewTranslationDraft({root=process.cwd(),baselineSha=null,inve
     for(const item of [...meta.executable,...meta.checkedMethods]){
       if(!tracked.includes(item.source)||!Number.isSafeInteger(item.span?.start)||!Number.isSafeInteger(item.span?.end)||item.span.start<0||item.span.end<item.span.start||item.span.end>new TextDecoder('utf-8',{fatal:true}).decode(read(item.source)).length)throw new Error('Invalid project original item: '+row.entry);
     }
-    return {...meta,reviewedGeneratedMethods:historical?historical.reviewProject(bytes,row):reviewGeneratedMethods(meta,row,{readSource:name=>new TextDecoder('utf-8',{fatal:true}).decode(read(name)),dependencies,jsonMacroDependencies,cargoManifest:cargo.some(input=>input.path==='Cargo.toml')?read('Cargo.toml').toString('utf8'):null})};
+    const originalSource=name=>new TextDecoder('utf-8',{fatal:true}).decode(read(name));
+    const concreteReview=projectSemanticReviewMetadata(meta,{readSource:originalSource});
+    return {...meta,reviewedConcreteSyntax:concreteReview.concreteSyntaxReview,reviewedGeneratedMethods:historical?historical.reviewProject(bytes,row):reviewStoredProjectGeneratedMethods(concreteReview.semanticMetadata,row,{readSource:originalSource,dependencies,jsonMacroDependencies,cargoManifest:cargo.some(input=>input.path===rustLayout.manifest)?read(rustLayout.manifest).toString('utf8'):null,cargoManifestPath:rustLayout.manifest})};
   }
   const historical=baselineSha?createHistoricalTranslationReview({root,baselineSha,inventoryPath,readSource:read}):null;
   let historicalBaselineReview=null,projects;
@@ -664,7 +776,7 @@ export function reviewTranslationDraft({root=process.cwd(),baselineSha=null,inve
       const differences=(before,after)=>{const known=new Set(before.map(projectIdentity));return after.filter(item=>!known.has(projectIdentity(item)));};
       comparison={previousCounts:previousRow,countChanges:Object.fromEntries(['sources','executableFunctions','executableConstants','checkedMethods','checkedGeneratedMethods','refused','unloweredItems','moduleDiagnostics'].map(key=>[key,(row[key]??0)-(previousRow[key]??0)])),newlyExecutableItems:differences(previous.executable,meta.executable),lostExecutableItems:differences(meta.executable,previous.executable),newlyCheckedMethods:differences(previous.checkedMethods,meta.checkedMethods),lostCheckedMethods:differences(meta.checkedMethods,previous.checkedMethods),...compareGeneratedMethods(previous.reviewedGeneratedMethods,meta.reviewedGeneratedMethods)};
     }
-    return {...row,checkedGeneratedMethods:meta.reviewedGeneratedMethods.length,executableItems:meta.executable,checkedMethodItems:meta.checkedMethods,checkedGeneratedMethodItems:meta.reviewedGeneratedMethods,refusalCategories:categoryCounts(meta.refused),unloweredCategories:categoryCounts(meta.unloweredItems),moduleDiagnosticItems:meta.moduleDiagnostics,comparison};
+    return {...row,checkedGeneratedMethods:meta.reviewedGeneratedMethods.length,reviewedConcreteSyntax:meta.reviewedConcreteSyntax,executableItems:meta.executable,checkedMethodItems:meta.checkedMethods,checkedGeneratedMethodItems:meta.reviewedGeneratedMethods,refusalCategories:categoryCounts(meta.refused),unloweredCategories:categoryCounts(meta.unloweredItems),moduleDiagnosticItems:meta.moduleDiagnostics,comparison};
   });historicalBaselineReview=historical?.provenance()??null;
   } finally {historical?.close();}
   for(const name of outputs.keys())if(name.includes('.meta.json.parts/')&&!projectComponents.has(name))throw new Error('Unexpected project metadata component: '+name);

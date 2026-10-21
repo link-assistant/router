@@ -6,10 +6,12 @@ name: Fuzz
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
-      - 'src/**'
-      - 'fuzz/**'
+      - 'rust/src/**'
+      - 'rust/fuzz/**'
       - 'Cargo.toml'
+      - 'rust/Cargo.toml'
       - 'Cargo.lock'
       - '.github/workflows/fuzz.yml'
   schedule:
@@ -32,6 +34,7 @@ env:
 
 jobs:
   javascript:
+    if: ${{ github.event_name != 'pull_request' || toJSON(github.event.pull_request.draft) == 'false' }}
     name: JavaScript first (same commit)
     uses: ./.github/workflows/javascript-first.yml
     with:
@@ -68,6 +71,7 @@ jobs:
           toolchain: nightly
 
       - name: Run ${{ matrix.target }}
+        working-directory: rust
         env:
           SECONDS_PER_TARGET: ${{ github.event_name == 'pull_request' && '60' || inputs.seconds || '1200' }}
         run: |
@@ -83,5 +87,5 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: fuzz-artifacts-${{ matrix.target }}
-          path: fuzz/artifacts/
+          path: rust/fuzz/artifacts/
           if-no-files-found: ignore

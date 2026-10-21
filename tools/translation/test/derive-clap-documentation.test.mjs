@@ -1,3 +1,4 @@
+import {repositorySourceURL,repositoryCratePaths} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
@@ -14,7 +15,7 @@ import {translateProject} from '../project.mjs';
 import {parseProgram} from '../semantic-meta.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock});
+const root=new URL('../../../',import.meta.url),manifest=readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock=readFileSync(repositorySourceURL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock});
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const historicalRustPaths=JSON.parse(readFileSync(new URL('../fixtures/static-source-performance/original-rust-inputs.json',import.meta.url),'utf8')).rustSources.map(row=>row.path);
 assert.equal(historicalRustPaths.length,804);assert.equal(new Set(historicalRustPaths).size,804);
@@ -76,9 +77,9 @@ for(const [path,digest,owner,variants,certificateCount,constants]of [
   ['src/subscription_usage_types.rs','82d1cd22e3f51589a10197244374b7c00ccb3fdfc3573c09291e1e6463ca7145','UsageProvider',[['Anthropic','anthropic'],['OpenAi','openai'],['ZAi','z-ai'],['Lefine','lefine'],['Gemini','gemini'],['Qwen','qwen']],11,[]],
   ['src/deploy_config.rs','3ae8cf1934d158188b5685421eb38e9b39adab01a0d89873ce91ba663ae4483c','ProviderKeyMode',[['Keep','keep'],['IfAbsent','if-absent'],['Replace','replace']],13,['RESERVED_ENV','RESERVED_ENV_PREFIXES','VERIFIABLE_CLIENTS']],
 ])test('complete unchanged '+path+' admits source data and original methods in emitted JS and strict TS',{timeout:60000},async()=>{
-  const source=readFileSync(new URL(path,root),'utf8');assert.equal(hash(source),digest);
-  const paths=execFileSync('git',['ls-files','*.rs'],{cwd:root,encoding:'utf8',timeout:10000}).trim().split('\n'),currentPaths=new Set(paths);assert.equal(currentPaths.size,paths.length);assert.ok(currentPaths.has(path));for(const original of historicalRustPaths)assert.ok(currentPaths.has(original),original+' historical input remains present');const addedRustPaths=paths.filter(path=>!historicalRustPaths.includes(path));
-  const result=translateProject({entry:path,paths,readSource:path=>readFileSync(new URL(path,root),'utf8'),cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
+  const source=readFileSync(repositorySourceURL(path,root),'utf8');assert.equal(hash(source),digest);
+  const paths=repositoryCratePaths(execFileSync('git',['ls-files','*.rs'],{cwd:root,encoding:'utf8',timeout:10000}).trim().split('\n'),root),currentPaths=new Set(paths);assert.equal(currentPaths.size,paths.length);assert.ok(currentPaths.has(path));for(const original of historicalRustPaths)assert.ok(currentPaths.has(original),original+' historical input remains present');const addedRustPaths=paths.filter(path=>!historicalRustPaths.includes(path));
+  const result=translateProject({entry:path,paths,readSource:path=>readFileSync(repositorySourceURL(path,root),'utf8'),cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
   retain('complete-'+path.replaceAll('/','-'),{source,path,paths,historicalRustPaths,addedRustPaths,cargoManifest:manifest,lock,result});
   assert.equal(result.meta.sources.find(row=>row.source===path).sha256,digest);assert.equal(result.meta.deriveNamespaceFootprints.certificates.length,certificateCount);assert.equal(result.meta.runtimeParity,false);assert.deepEqual(result.meta.executable.map(row=>row.name),constants);if(path==='src/deploy_config.rs'){const standard=result.meta.deriveNamespaceFootprints.certificates.filter(row=>row.standardInput);assert.deepEqual(standard.map(row=>row.name),['SecretSource','EnvSpec','SshSettings','ProviderKeySpec','DeploySection','DeployConfig','ResolvedProviderKey','ResolvedDeploy','Merged']);for(const row of standard){assert.deepEqual(row.dimensions,{typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:true,bangMacroComplete:false});assert.equal(row.generatedImplBehavior,false);assert.equal(row.standardInput.namespaceAuthority,false);assert.equal(row.standardInput.runtimeAuthority,false);}}
   const certificate=result.meta.deriveNamespaceFootprints.certificates.find(row=>row.name===owner);assert.ok(certificate);const item=sourceItems(source).find(row=>row.name===owner);assert.equal(certificate.itemSha256,hash(source.slice(item.start,item.end)));assert.deepEqual(certificate.span,{start:item.start,end:item.end});assert.equal(certificate.generatedImplBehavior,false);assert.equal(certificate.dimensions.bangMacroComplete,false);

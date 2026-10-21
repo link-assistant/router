@@ -5,8 +5,8 @@ import { join } from 'node:path';
 import { execFile } from 'node:child_process';
 import { load, repository, temporary } from './helpers.mjs';
 
-const { NativeRouter, validateNativeResult, version } = await load('packages/javascript/native/operations.mjs');
-const { Router } = await load('packages/javascript/index.js');
+const { NativeRouter, validateNativeResult, version } = await load('js/src/operations.mjs');
+const { Router } = await load('js/index.js');
 export const processResult = (file, args, options = {}) => new Promise(resolve => {
   execFile(file, args, { timeout: 5000, maxBuffer: 1_048_576, ...options }, (error, stdout, stderr) => resolve({ status: error ? error.code : 0, stdout, stderr }));
 });
@@ -70,7 +70,7 @@ test('model explanation returns an actual requested selector and candidate obser
 
 test('native CLI publishes parse failures and numeric issue flags with matching actual exit status', async t => {
   const directory = await temporary(t);
-  const cli = join(repository, 'packages/javascript/native/cli.mjs');
+  const cli = join(repository, 'js/src/cli.mjs');
   const env = { PATH: process.env.PATH, TOKEN_SECRET: 'cli-acceptance-secret', STORAGE_POLICY: 'memory', DATA_DIR: directory };
   for (const args of [['version', '--invented'], ['tokens', 'issue', '--ttl-hours', 'no-number'], ['version', '--token-secret', 'secret-argument']]) {
     const result = await processResult(process.execPath, [cli, ...args, '--json'], { env });

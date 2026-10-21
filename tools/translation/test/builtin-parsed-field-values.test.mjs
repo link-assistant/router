@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // Eight source-only authored cases; ALL UNRUN, no Rust/parser/generator execution.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -9,7 +10,7 @@ import {builtinParsedFieldConstructorSources,createBuiltinParsedFieldValueBridge
 import {resolveModuleGraph} from '../project.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {originalCsvContext} from './original-csv-context.mjs';
-const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
 const profile=builtinDeriveAstSourceProfile(dependencies);
 function selected(source){const context=createDeriveFootprintContext({dependencies,compilationProfile:PRODUCTION_PROFILE,modules:[{file:'src/lib.rs',path:[],source:'mod data;'},{file:'src/data.rs',path:['data'],source}]}),certificate=context.certificates[0];assert.ok(certificate);const attribute=certificate.attributes.find(value=>value.derives?.some(path=>path.length===1&&path[0]==='Clone'));assert.ok(attribute);return {context,certificate,invocation:{path:['Clone'],attributeSpan:attribute.span}};}
 function collect(node,predicate,result=[]){if(!node||typeof node!=='object')return result;if(predicate(node))result.push(node);for(const [key,value]of Object.entries(node))if(!['syntax','schema','recipe','import','typeSyntax','sourceBinding','original'].includes(key))if(Array.isArray(value))value.forEach(value=>collect(value,predicate,result));else collect(value,predicate,result);return result;}

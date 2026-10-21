@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // Complete original source/expansion prerequisites, never a Rust runtime model.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -17,7 +18,7 @@ import {originalMacroInvocation} from '../macro-token-trees.mjs';
 import {translateProject} from '../project.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),read=path=>readFileSync(new URL(path,root),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex');
+const root=new URL('../../../',import.meta.url),read=path=>readFileSync(repositorySourceURL(path,root),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex');
 const dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')}),profile=builtinDeriveAstSourceProfile(dependencies),plan=originalStandardBangOutputSourcePlan(),base='compiler/rustc_expand/src/base.rs';
 const retain=(name,value)=>{const path=process.env.ROUTER_COMPILER_COLLECTION_CONTRACT_VECTOR_DIR;if(path){mkdirSync(path,{recursive:true});writeFileSync(join(path,name+'.json'),JSON.stringify(value)+'\n',{flag:'wx'});}};
 function relocatedColdCompilerModule(source,originalURL){

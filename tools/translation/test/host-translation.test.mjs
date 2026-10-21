@@ -1,3 +1,4 @@
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync,writeFileSync,rmSync,mkdirSync} from 'node:fs';
@@ -81,7 +82,7 @@ test('user enum shapes, host namespace shadows and imported generic shadows neve
 
 test('overlapping registered imports coalesce once across genuine source dependency closures',async()=>{
  const root=fileURLToPath(new URL('../../../',import.meta.url));const path='src/request_routing.rs';
- const source=trackedSource(root,path),checked=translateProject({entry:path,paths:[path],readSource:()=>source}),result=translateSource(source,path,{projectDeclarations:checked.executableDeclarations});assert.ok(result.ir.items.some(item=>item.name==='bounded_retry_after'&&item.status==='executable'));strict(result);await loadJavaScript(result.javascript);
+ const source=trackedSource(root,repositorySourcePath(path,root)),checked=translateProject({entry:path,paths:[path],readSource:()=>source}),result=translateSource(source,path,{projectDeclarations:checked.executableDeclarations});assert.ok(result.ir.items.some(item=>item.name==='bounded_retry_after'&&item.status==='executable'));strict(result);await loadJavaScript(result.javascript);
  const imported=result.javascript.match(/std_time_duration_from_secs as ml_host_std_time_duration_from_secs/g)??[];assert.equal(imported.length,1);
 });
 

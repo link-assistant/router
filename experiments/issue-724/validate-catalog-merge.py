@@ -34,9 +34,9 @@ checks = [
     ("bindings", root, [sys.executable, "scripts/generate-bindings.py", "--check"]),
     ("compatibility", root, [sys.executable, "scripts/check-contract-compatibility.py",
                              "--base", "origin/main"]),
-    ("node", root / "packages/javascript", ["npm", "test"]),
-    ("typescript", root / "packages/javascript", ["npm", "run", "typecheck"]),
-    ("bun", root / "packages/javascript", ["bun", "test", "test/router.test.js"]),
+    ("node", root / "js", ["npm", "test"]),
+    ("typescript", root / "js", ["npm", "run", "typecheck"]),
+    ("bun", root / "js", ["bun", "test", "test/router.test.js"]),
     ("python", root / "packages/python", [sys.executable, "-m", "unittest", "discover", "-s", "tests"]),
 ]
 parser = argparse.ArgumentParser(description=__doc__)

@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
@@ -10,7 +11,7 @@ import {resolveModuleBindings} from '../module-bindings.mjs';
 import {attributeOwners,proveSerdeSerializeBangFootprint} from '../serde-bang-footprints.mjs';
 import {originalJsonIntrinsicsUnchanged} from '../original-json-intrinsics.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
-const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
 const source='#[derive(serde::Serialize)]pub struct Payload{#[serde(rename="original")]value:u8}',names=new Set(['allow','automatically_derived']);
 const hash=value=>createHash('sha256').update(value).digest('hex');
 function retain(name,value){const directory=process.env.ROUTER_HELPER_REUSE_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeFileSync(directory+'/'+name+'.json.gz',gzipSync(JSON.stringify(value),{mtime:0}));}}

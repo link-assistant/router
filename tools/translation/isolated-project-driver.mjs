@@ -10,9 +10,9 @@ import {types} from 'node:util';
 
 const ORIGINAL_ROOT = null;
 const TASK_ROOT = null;
-const SOURCE_HEAD = "9f204f8d4c57477f6c71dcec6b74297bcf3d683c";
-const REGISTRY_GZIP_SHA256 = "5bff6ba366af30162a1df73f732366deec7ab6c657f9f2ebc6ef59872f52a8ac";
-const REGISTRY_RAW_SHA256 = "ccfe4a30c1e42e3fad4b56fac6c5933a469cf93d672b6db2dd80013d28a21b12";
+const SOURCE_HEAD = "e63974237e21c35c51e5005d2b09a2ceb5d2be91";
+const REGISTRY_GZIP_SHA256 = "50a3fccf581074de4df2bfcb9edafb4ff567813fba91dde9b36875dcbc5c6ae1";
+const REGISTRY_RAW_SHA256 = "27133e881ad550ce3cd14d7f24ee2f7f13859e8bdda3341942bd40b7731bea10";
 const REGISTRY_PATH='tools/translation/source-profiles/isolated-project-compiler/manifest.json.gz';
 const LIMIT={files:1024,entries:8,file:2097152,source:16777216,input:33554432,
   compilerFiles:2048,compilerFile:33554432,compiler:67108864,outputs:16384,
@@ -53,7 +53,7 @@ function requestPreflight(text){let depth=0,cells=0,strings=0;for(let at=0;at<te
 function readRequest(text){
   requestPreflight(text);const value=record(JSON.parse(text),['schema','sourceFiles','entries']);if(value.schema!=='original-project-child-request-v1'||!Array.isArray(value.sourceFiles)||!value.sourceFiles.length||value.sourceFiles.length>LIMIT.files||!Array.isArray(value.entries)||!value.entries.length||value.entries.length>LIMIT.entries)fail('request schema/count');
   const paths=new Set();let total=0;
-  for(const row of value.sourceFiles){record(row,['path','source']);if(!safePath(row.path)||!(row.path.endsWith('.rs')||['Cargo.toml','Cargo.lock'].includes(row.path))||typeof row.source!=='string'||paths.has(row.path))fail('source row');const bytes=Buffer.from(row.source,'utf8');if(exactText(bytes)!==row.source||bytes.length>LIMIT.file||(total+=bytes.length)>LIMIT.source)fail('source text/aggregate bound');paths.add(row.path);}
+  for(const row of value.sourceFiles){record(row,['path','source']);if(!safePath(row.path)||!(row.path.endsWith('.rs')||/(^|\/)Cargo\.(?:toml|lock)$/u.test(row.path))||typeof row.source!=='string'||paths.has(row.path))fail('source row');const bytes=Buffer.from(row.source,'utf8');if(exactText(bytes)!==row.source||bytes.length>LIMIT.file||(total+=bytes.length)>LIMIT.source)fail('source text/aggregate bound');paths.add(row.path);}
   if(new Set(value.entries).size!==value.entries.length||value.entries.some(path=>typeof path!=='string'||!path.endsWith('.rs')||!paths.has(path)))fail('entry association');return value;
 }
 function outputPath(root,path){if(!safePath(path))fail('output path');const file=join(root,path);fs.mkdirSync(dirname(file),{recursive:true,mode:0o700});return file;}
@@ -94,8 +94,8 @@ async function main(){
   work=fs.mkdtempSync(join(TASK_ROOT,'child-'));const compilerRoot=join(work,'compiler'),applicationRoot=join(work,'application');fs.mkdirSync(compilerRoot,{mode:0o700});fs.mkdirSync(applicationRoot,{mode:0o700});
   const packed=readRegular(ORIGINAL_ROOT,REGISTRY_PATH,1048576,sourceRecords);if(hash(packed)!==REGISTRY_GZIP_SHA256)fail('registry archive changed');const raw=gunzipSync(packed,{maxOutputLength:1048576});if(hash(raw)!==REGISTRY_RAW_SHA256)fail('registry decoded changed');const registry=JSON.parse(exactText(raw));
   if(registry.schema!=='original-project-isolated-compiler-v1'||registry.sourceHead!==SOURCE_HEAD||registry.typescriptVersion!=='5.9.3'||registry.sources.length!==registry.files||registry.files>LIMIT.compilerFiles||registry.totalBytes>LIMIT.compiler)fail('complete fixed registry required');
-  const tsRoot=fs.realpathSync(join(ORIGINAL_ROOT,'packages/javascript/node_modules/typescript')),seen=new Set();let copied=0;
-  for(const row of registry.sources){if(!safePath(row.path)||seen.has(row.path)||!['compiler','typescript'].includes(row.origin)||!['100644','100755'].includes(row.mode)||!Number.isInteger(row.bytes)||row.bytes<0||row.bytes>LIMIT.compilerFile)fail('registry row');seen.add(row.path);const root=row.origin==='typescript'?tsRoot:ORIGINAL_ROOT,path=row.origin==='typescript'?row.path.slice('packages/javascript/node_modules/typescript/'.length):row.path;if(row.origin==='typescript'&&!row.path.startsWith('packages/javascript/node_modules/typescript/'))fail('TS source route');const bytes=verifyRow(row,root,path,sourceRecords);copied+=bytes.length;if(copied>LIMIT.compiler)fail('compiler aggregate bound');fs.writeFileSync(outputPath(compilerRoot,row.path),bytes,{flag:'wx',mode:row.mode==='100755'?0o555:0o444});}
+  const tsRoot=fs.realpathSync(join(ORIGINAL_ROOT,'js/node_modules/typescript')),seen=new Set();let copied=0;
+  for(const row of registry.sources){if(!safePath(row.path)||seen.has(row.path)||!['compiler','typescript'].includes(row.origin)||!['100644','100755'].includes(row.mode)||!Number.isInteger(row.bytes)||row.bytes<0||row.bytes>LIMIT.compilerFile)fail('registry row');seen.add(row.path);const root=row.origin==='typescript'?tsRoot:ORIGINAL_ROOT,path=row.origin==='typescript'?row.path.slice('js/node_modules/typescript/'.length):row.path;if(row.origin==='typescript'&&!row.path.startsWith('js/node_modules/typescript/'))fail('TS source route');const bytes=verifyRow(row,root,path,sourceRecords);copied+=bytes.length;if(copied>LIMIT.compiler)fail('compiler aggregate bound');fs.writeFileSync(outputPath(compilerRoot,row.path),bytes,{flag:'wx',mode:row.mode==='100755'?0o555:0o444});}
   if(copied!==registry.totalBytes)fail('compiler census changed');const index=freshIndex(compilerRoot,registry.sources);compilerReadOnly(compilerRoot);
   for(const row of registry.sources)verifyRow(row,compilerRoot,row.path,snapshotRecords);current(sourceRecords);stable();
   for(const row of request.sourceFiles){fs.writeFileSync(outputPath(applicationRoot,row.path),row.source,{flag:'wx',mode:0o600});const bytes=readRegular(applicationRoot,row.path,LIMIT.file,applicationRecords);if(exactText(bytes)!==row.source)fail('materialized source association');}
@@ -106,7 +106,7 @@ async function main(){
   const paths=request.sourceFiles.filter(row=>row.path.endsWith('.rs')).map(row=>row.path),sourceCorpus=corpusModule.captureSourceCorpus({root:applicationRoot,paths});
   const plan=bulk.planRegeneration({root:applicationRoot,sources:paths,entries:request.entries,compilationProfile:null,sourceCorpus});
   if(plan.outputs.length>LIMIT.outputs||plan.expectedBytes>LIMIT.output)fail('artifact aggregate bound');const applied=bulk.applyRegenerationPlan(plan,{check:false});if(applied.failures.length)fail('original output application failed');stable();
-  for(const row of registry.sources){const origin=row.origin==='typescript'?tsRoot:ORIGINAL_ROOT,path=row.origin==='typescript'?row.path.slice('packages/javascript/node_modules/typescript/'.length):row.path;verifyRow(row,origin,path,sourceRecords);verifyRow(row,compilerRoot,row.path,snapshotRecords);}
+  for(const row of registry.sources){const origin=row.origin==='typescript'?tsRoot:ORIGINAL_ROOT,path=row.origin==='typescript'?row.path.slice('js/node_modules/typescript/'.length):row.path;verifyRow(row,origin,path,sourceRecords);verifyRow(row,compilerRoot,row.path,snapshotRecords);}
   for(const row of request.sourceFiles){const bytes=readRegular(applicationRoot,row.path,LIMIT.file,applicationRecords);if(exactText(bytes)!==row.source)fail('original input changed during compilation');}current(applicationRecords);
   if(git(compilerRoot,['ls-files','--stage','-z'])!==index)fail('compiler index changed');current(sourceRecords);current(snapshotRecords);stable();
   await line({kind:'header',schema:'original-project-child-output-v1',engine:ENGINE,sourceHead:SOURCE_HEAD,registrySha256:REGISTRY_RAW_SHA256,requestSha256:requestDigest,artifacts:plan.outputs.length,artifactBytes:plan.expectedBytes});

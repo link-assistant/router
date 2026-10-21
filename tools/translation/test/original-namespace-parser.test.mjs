@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync,mkdtempSync,rmSync} from 'node:fs';
@@ -15,7 +16,7 @@ import {resolveModuleGraph,translateProject} from '../project.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 import {captureOriginalNamespaceFunction,originalNamespaceFunctionMembers,originalNamespaceFunctionFacts,originalNamespaceFunctionInvocationPosition,originalNamespacePositionFacts} from '../original-namespace-parser.mjs';
 import {captureOriginalNamespaceSourceSuperset,originalNamespaceSourceSupersetFacts} from '../conditional-namespace-superset.mjs';
-const root=new URL('../../../',import.meta.url),read=path=>readFileSync(new URL(path,root),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex');
+const root=new URL('../../../',import.meta.url),read=path=>readFileSync(repositorySourceURL(path,root),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex');
 const dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')});
 const retain=(name,value)=>{const directory=process.env.ROUTER_ORIGINAL_NAMESPACE_PARSER_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeFileSync(join(directory,name+'.json'),JSON.stringify(value)+'\n',{flag:'wx'});}};
 function authored(source,name='caller'){

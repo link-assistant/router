@@ -1,6 +1,0 @@
-// GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=5594aa515bd5e219fcb214d9aaea1db3e58dcef0333af945467af37b0dcb42c4; dynamic any annotations are explicit draft gaps.
-var e: any = (Object as any).create, t: any = (Object as any).defineProperty, n: any = (Object as any).getOwnPropertyDescriptor, r: any = (Object as any).getOwnPropertyNames, i: any = (Object as any).getPrototypeOf, a: any = (Object as any).prototype.hasOwnProperty, o: any = (e?: any, t?: any): any => (): any => (t || ((e as any)(((t as any) = { exports: {} }).exports, t), (e as any) = null), (t as any).exports), s: any = (e?: any, i?: any, o?: any, s?: any): any => { if (i && typeof i == `object` || typeof i == `function`)
-    for (var c: any = r(i), l: any = 0, u: any = c.length, d: any; l < u; l++)
-        (d as any) = (c as any)[l], !a.call(e, d) && d !== o && t(e, d, { get: (((e?: any): any => (i as any)[e]).bind as any)(null, d), enumerable: !((s as any) = n(i, d)) || (s as any).enumerable }); return e; }, c: any = (n?: any, r?: any, o?: any): any => ((o as any) = n == null ? {} : e(i(n)), s(r || !n || !n.__esModule || !a.call(n, `default`) ? t(o, `default`, { value: n, enumerable: !0 }) : o, n));
-export { c as n, o as t };

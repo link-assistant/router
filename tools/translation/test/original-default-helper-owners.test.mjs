@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
@@ -12,7 +13,7 @@ import {createDeriveFootprintContext,deriveFootprintSourceContext,deriveFootprin
 import {isRegisteredDeriveHelperSource} from '../derive-helper-namespaces.mjs';
 import {originalSourceModuleItems} from '../source-module-views.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),read=file=>readFileSync(new URL(file,root),'utf8'),inputs={manifest:read('Cargo.toml'),lock:read('Cargo.lock')},dependencies=loadDeriveDependencyProof(inputs),jsonMacroDependencies=loadJsonMacroSourceProof(inputs),hash=value=>createHash('sha256').update(value).digest('hex');
+const root=new URL('../../../',import.meta.url),read=file=>readFileSync(repositorySourceURL(file,root),'utf8'),inputs={manifest:read('Cargo.toml'),lock:read('Cargo.lock')},dependencies=loadDeriveDependencyProof(inputs),jsonMacroDependencies=loadJsonMacroSourceProof(inputs),hash=value=>createHash('sha256').update(value).digest('hex');
 function vector(name,value){const path=process.env.ROUTER_DEFAULT_HELPER_VECTORS;if(!path)return;mkdirSync(path,{recursive:true});writeFileSync(path+'/'+name+'.json.gz',gzipSync(JSON.stringify(value)));}
 const compile=(entry,paths=[entry])=>translateProject({entry,paths,readSource:read,deriveDependencies:dependencies,jsonMacroDependencies,compilationProfile:PRODUCTION_PROFILE});
 const none=()=>({$:'None'});

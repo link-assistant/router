@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdtempSync,mkdirSync,rmSync} from 'node:fs';
@@ -20,7 +21,7 @@ import {resolveModuleGraph,translateProject} from '../project.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 
-const root=new URL('../../../',import.meta.url),read=path=>readFileSync(new URL(path,root),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex'),dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')});
+const root=new URL('../../../',import.meta.url),read=path=>readFileSync(repositorySourceURL(path,root),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex'),dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')});
 const directory=mkdtempSync(join(tmpdir(),'router-original-literal-panic-'));after(()=>rmSync(directory,{recursive:true,force:true}));
 function retain(name,value){const output=process.env.ROUTER_LITERAL_PANIC_VECTOR_DIR;if(output){mkdirSync(output,{recursive:true});writeFileSync(join(output,name+'.json.gz'),gzipSync(JSON.stringify(value)+'\n'),{flag:'wx'});}}
 function physical(source,originalURL,name){const relocations=[],copied=source.replace(/\bfrom (['"])(\.\/[^'"]+)\1/g,(_all,quote,path)=>{const target=new URL(path,originalURL).href;relocations.push({path,target});return 'from '+quote+target+quote;}),path=join(directory,name);assert.equal(copied.replace(/\bfrom (['"])(file:[^'"]+)\1/g,(all,quote,target)=>{const row=relocations.find(row=>row.target===target);return row?'from '+quote+row.path+quote:all;}),source);writeFileSync(path,copied,{flag:'wx'});assert.equal(readFileSync(path,'utf8'),copied);return {source,originalURL:originalURL.href,copied,relocations,path,url:pathToFileURL(path).href};}

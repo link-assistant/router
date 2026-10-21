@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createNativeRouter } from '../../../packages/javascript/native/server.mjs';
+import { createNativeRouter } from '../../../js/src/server.mjs';
 
 const make = (path, body, token = 'client') => new Request(`http://router${path}`, { method: body ? 'POST' : 'GET', headers: { authorization: `Bearer ${token}` }, ...(body ? { body: JSON.stringify(body) } : {}) });
 const model = (id, provider = 'provider-one') => ({ id, provider, owned_by: provider, supported_clients: ['opencode'], created: 0 });

@@ -1,10 +1,11 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {loadDeriveDependencyProof,deriveDependencyOriginalInputs,isDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {loadJsonMacroSourceProof,isJsonMacroSourceProof,jsonMacroOriginalSource} from '../json-macro-inputs.mjs';
-const root=new URL('../../../',import.meta.url),manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex'),dependencies=loadDeriveDependencyProof({manifest,lock});
+const root=new URL('../../../',import.meta.url),manifest=readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock=readFileSync(repositorySourceURL('Cargo.lock',root),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex'),dependencies=loadDeriveDependencyProof({manifest,lock});
 test('genuine original source accessor returns exact immutable inputs without changing existing proof metadata',()=>{
  const inputs=deriveDependencyOriginalInputs(dependencies);assert.deepEqual(inputs,{manifest,lock});assert.equal(hash(inputs.manifest),dependencies.manifestSha256);assert.equal(hash(inputs.lock),dependencies.lockSha256);assert.equal(Object.isFrozen(inputs),true);assert.equal(deriveDependencyOriginalInputs(dependencies),inputs);assert.throws(()=>{inputs.lock+=' ';},TypeError);assert.equal(isDeriveDependencyProof(dependencies),true);assert.equal(Object.hasOwn(dependencies,'manifest'),false);assert.equal(Object.hasOwn(dependencies,'lock'),false);
 });

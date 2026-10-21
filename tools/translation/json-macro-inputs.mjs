@@ -1,5 +1,6 @@
 // Byte-pinned source facts only. A package checksum does not resolve a caller
 // macro, its generated trait methods, or Cargo's transitive feature selection.
+import {cargoLayoutManifestMatches} from './cargo-layout-input-compatibility.mjs';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
@@ -7,7 +8,7 @@ import { freezeMacroTree } from './macro-token-trees.mjs';
 const root = new URL('./source-profiles/json-macro/', import.meta.url);
 const hash = value => createHash('sha256').update(value).digest('hex');
 const profileBytes = readFileSync(new URL('manifest.json', root));
-if (hash(profileBytes) !== '101f9e042d3c4665f531017082115d209a390940732532cef1b08a1420f8cfab')
+if (hash(profileBytes) !== 'e42ec7a5f1358da8f077c9fdb77057b52cf6748d26cc4d2b8574e1afae4ae0af')
     throw new TypeError('JSON macro source profile changed');
 export const JSON_MACRO_SOURCE_PROFILE = freezeMacroTree(JSON.parse(profileBytes));
 const proofs = new WeakMap();
@@ -60,7 +61,7 @@ function archiveMembers(bytes) {
 }
 export function createJsonMacroSourceProof({ manifest, lock, archives } = {}) {
     const profile = JSON_MACRO_SOURCE_PROFILE;
-    if (typeof manifest !== 'string' || typeof lock !== 'string' || hash(manifest) !== profile.manifestSha256 || hash(lock) !== profile.lockSha256)
+    if (typeof manifest !== 'string' || typeof lock !== 'string' || (hash(manifest) !== profile.manifestSha256 && !cargoLayoutManifestMatches(manifest,profile.manifestSha256)) || hash(lock) !== profile.lockSha256)
         throw new TypeError('JSON macro dependencies differ from the original audited manifest/lock');
     if (!(archives instanceof Map))
         throw new TypeError('JSON macro source proof requires original archive bytes');
@@ -117,7 +118,7 @@ export function jsonMacroOriginalSource(proof, packageName, path) {
     return source;
 }
 export function jsonMacroDependencyProfile({ manifest, lock }) {
-    if (typeof manifest !== 'string' || typeof lock !== 'string' || hash(manifest) !== JSON_MACRO_SOURCE_PROFILE.manifestSha256 || hash(lock) !== JSON_MACRO_SOURCE_PROFILE.lockSha256)
+    if (typeof manifest !== 'string' || typeof lock !== 'string' || (hash(manifest) !== JSON_MACRO_SOURCE_PROFILE.manifestSha256 && !cargoLayoutManifestMatches(manifest,JSON_MACRO_SOURCE_PROFILE.manifestSha256)) || hash(lock) !== JSON_MACRO_SOURCE_PROFILE.lockSha256)
         return { proof: null, diagnostics: [{ kind: 'unsupported-profile', message: 'JSON macro owner and features remain unresolved outside the audited manifest/lock' }] };
     return { proof: loadJsonMacroSourceProof({ manifest, lock }), diagnostics: [] };
 }

@@ -48,7 +48,7 @@ function borrowed(type,lifetime){
 }
 
 test('complete owned alias selects borrowed text and survives checked semantic serialization',async()=>{
-  const physical=readFileSync(new URL('../../../src/translation_core/primitives.rs',import.meta.url),'utf8');
+  const physical=readFileSync(new URL('../../../rust/src/translation_core/primitives.rs',import.meta.url),'utf8');
   const stage=retain('actual-alias-CST',transportConcreteSyntaxSource(physical,{language:'Rust'}));
   retain('actual-full-alias',{physical,registered:ROUTER_CORE_PRIMITIVES_SOURCE,sha256:ROUTER_CORE_PRIMITIVES_SHA256});
   assert.equal(physical,ROUTER_CORE_PRIMITIVES_SOURCE);assert.equal(digest(physical),ROUTER_CORE_PRIMITIVES_SHA256);assert.equal(stage.source,physical);assert.equal(transportConcreteSyntaxMeta(stage.meta).source,physical);
@@ -161,7 +161,7 @@ test('actual affected signatures adopt the owned core through full CST substitut
 });
 
 test('actual static error classifier retains its entire body and independent status outputs',async()=>{
-  const original=readFileSync(new URL('../../../src/api_error.rs',import.meta.url),'utf8');
+  const original=readFileSync(new URL('../../../rust/src/api_error.rs',import.meta.url),'utf8');
   const item=sourceItems(original).find(item=>item.term==='fn'&&item.name==='openai_error_type');assert.ok(item);
   const declaration=original.slice(item.start,item.end);assert.equal(digest(declaration),'4821472c2fa2db9400bd30cacf285f8f7b845454670db1b93f7a45e377975097');
   const from="&'static str",to=S;assert.equal(declaration.split(from).length,2);

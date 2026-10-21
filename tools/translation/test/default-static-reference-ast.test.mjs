@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
@@ -16,7 +17,7 @@ import {builtinDeriveDataInputs} from '../builtin-derive-data-inputs.mjs';
 import {translateProject} from '../project.mjs';
 import {parseProgram,serializeProgram} from '../semantic-meta.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8');
+const root=new URL('../../../',import.meta.url),manifest=readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock=readFileSync(repositorySourceURL('Cargo.lock',root),'utf8');
 const dependencies=loadDeriveDependencyProof({manifest,lock}),profile=builtinDeriveAstSourceProfile(dependencies);
 const sha=source=>createHash('sha256').update(source).digest('hex');
 function retain(name,value){if(!process.env.ROUTER_DEFAULT_STATIC_VECTOR_DIR)return;mkdirSync(process.env.ROUTER_DEFAULT_STATIC_VECTOR_DIR,{recursive:true});writeFileSync(join(process.env.ROUTER_DEFAULT_STATIC_VECTOR_DIR,name+'.json.gz'),gzipSync(JSON.stringify(value)));}
@@ -48,7 +49,7 @@ function noBehavior(joined){for(const key of ['namespaceAuthority','runtimeAutho
 function staticTokens(value){const found=[];function visit(node){if(!node||typeof node!=='object')return;if(node.tokenType==='lifetime')found.push(node.text);for(const value of Object.values(node))if(value&&typeof value==='object')visit(value);}visit(value);return found;}
 
 test('complete unchanged EmergencyAuthConfig original Default executes JS and strict TS',{timeout:60000},async()=>{
-  const file='src/emergency_auth.rs',source=readFileSync(new URL(file,root),'utf8'),result=compile(source,file);
+  const file='src/emergency_auth.rs',source=readFileSync(repositorySourceURL(file,root),'utf8'),result=compile(source,file);
   retain('01-complete-emergency',{source,sha256:sha(source),result});
   assert.ok(result.meta.checkedMethods.some(row=>row.name==='EmergencyAuthConfig.default'));
   const wire=JSON.stringify(result.meta.targetSemanticProgram),program=parseProgram(wire);assert.equal(serializeProgram(program),wire);
@@ -58,7 +59,7 @@ test('complete unchanged EmergencyAuthConfig original Default executes JS and st
   await verifyTypedTargets(exported,(_api,_result,module)=>{assert.deepEqual(module.originalDefault(),{$:'EmergencyAuthConfig',enabled:false,allow_non_loopback:false,duration_minutes:60n});assert.notStrictEqual(module.originalDefault(),module.originalDefault());},{childTimeoutMs:20000});
 });
 test('both actual Emergency siblings close complete Default name effects without collection behavior',{timeout:60000},()=>{
-  const file='src/emergency_auth.rs',source=readFileSync(new URL(file,root),'utf8'),args=setup(source,'EmergencyAuth',file),bang=createDeriveBangContext({deriveContext:args.context});
+  const file='src/emergency_auth.rs',source=readFileSync(repositorySourceURL(file,root),'utf8'),args=setup(source,'EmergencyAuth',file),bang=createDeriveBangContext({deriveContext:args.context});
   const selected=bang.certificates.filter(row=>['EmergencyAuth','EmergencyAuthStatus'].some(name=>args.context.certificates.find(input=>input.digest===row.inputCertificateDigest)?.name===name));
   retain('02-complete-emergency-owner-set',{source,context:args.context,bang});assert.equal(selected.length,2);
   for(const row of selected){assert.deepEqual(row.residualOwners,[]);assert.equal(row.dimensions.bangMacroComplete,true);assert.equal(row.generatedImplBehavior,false);}

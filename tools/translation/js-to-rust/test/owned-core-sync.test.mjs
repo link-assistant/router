@@ -1,3 +1,4 @@
+import {rustPackageSourcePath} from "../../repository-layout.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,existsSync,rmSync,symlinkSync} from 'node:fs';
@@ -14,9 +15,9 @@ import {synchronizationSteps} from '../../../../scripts/sync-router.mjs';
 import {parseOwnedCoreMeta,emitRust} from '../translator.mjs';
 import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE} from '../../router-core-source-data.mjs';
 const root=fileURLToPath(new URL('../../../../',import.meta.url));
-const limits={timeout:60000},base='packages/javascript/generated/rust-project',typed='packages/typescript/generated/rust-project';
+const limits={timeout:60000},base='js/generated/rust-project',typed='ts/generated/rust-project';
 const source='import {router_core_json_copy as copy} from "../runtime/json-update-runtime.mjs";\n/** @param {import("../runtime/json-macro-runtime.mjs").JsonValue} value */\nexport function copied(value){return copy(value);}\n';
-function original(path){return existsSync(join(root,path))?readFileSync(join(root,path),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:30000,maxBuffer:16777216});}
+function original(path){return existsSync(join(root,rustPackageSourcePath(root,path)))?readFileSync(join(root,rustPackageSourcePath(root,path)),'utf8'):execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',timeout:30000,maxBuffer:16777216});}
 function fixture(t){
  const directory=mkdtempSync(join(tmpdir(),'owned-sync-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));
  const write=(path,text)=>{mkdirSync(dirname(join(directory,path)),{recursive:true});writeFileSync(join(directory,path),text);};
@@ -24,7 +25,7 @@ function fixture(t){
  write('src/lib.rs','pub mod translation_core;\n');write('src/translation_core.rs',ROUTER_FORMATTING_FACADE_SOURCE);write('src/translation_core/primitives.rs',ROUTER_CORE_PRIMITIVES_SOURCE);
  write('tests/translation_core_reverse_owned_oracle.rs',original('tests/translation_core_reverse_owned_oracle.rs'));
  write('Cargo.toml',original('Cargo.toml'));write('Cargo.lock',original('Cargo.lock'));write(base+'/src/lib.mjs',source);
- write('packages/javascript/portable/policy.mjs','/** @param {boolean} value @returns {boolean} */\nexport function identity(value){return value;}');
+ write('js/portable/policy.mjs','/** @param {boolean} value @returns {boolean} */\nexport function identity(value){return value;}');
  write('parity/fixtures/js-first/policy.json',JSON.stringify({cases:[{id:'yes',function:'identity',args:[true],expected:true}]}));write('parity/fixtures/js-first/unsupported.json','[]');return {directory,write};
 }
 test('registered default regeneration discovers actual forward application paths',limits,t=>{
@@ -46,7 +47,7 @@ test('CST and serialized checked source meta reissue before both packaged target
  const witness=JSON.parse(result.artifacts.get('tools/translation/js-to-rust/generated/owned-core-witness-inputs.json'));assert.equal(witness.applicationItems,0);assert.equal(witness.stagedReceivingInputs.files.find(row=>row.path==='src/lib.rs').source,'pub mod translation_core;\n');assert.ok(witness.oracle.source.includes('reverse_generated::nested'));
  for(const [path,content]of result.artifacts){mkdirSync(dirname(join(directory,path)),{recursive:true});writeFileSync(join(directory,path),content);}
  const prefix='tools/translation/js-to-rust/generated/owned-core-witness',out=join(directory,'compiled');
- try{execFileSync(process.execPath,[join(root,'packages/javascript/node_modules/typescript/bin/tsc'),'--strict','--skipLibCheck','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--outDir',out,join(directory,prefix,'witness.mts')],{cwd:root,timeout:20000,stdio:'pipe'});}catch(error){assert.fail('strict actual witness TypeScript failed\n'+String(error.stdout??'')+'\n'+String(error.stderr??''));}
+ try{execFileSync(process.execPath,[join(root,'js/node_modules/typescript/bin/tsc'),'--strict','--skipLibCheck','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--outDir',out,join(directory,prefix,'witness.mts')],{cwd:root,timeout:20000,stdio:'pipe'});}catch(error){assert.fail('strict actual witness TypeScript failed\n'+String(error.stdout??'')+'\n'+String(error.stderr??''));}
  mkdirSync(join(out,'runtime'),{recursive:true});for(const [path,content]of result.artifacts)if(path.startsWith(prefix+'/runtime/'))writeFileSync(join(out,'runtime',path.slice((prefix+'/runtime/').length)),content);
  const api=await import(pathToFileURL(join(out,'witness.mjs')).href);assert.deepEqual(api.copied(Object.freeze({$:'Null'})),{$:'Null'});assert.equal(api.nested(Object.freeze({$:'Null'})).$,'Object');
 });

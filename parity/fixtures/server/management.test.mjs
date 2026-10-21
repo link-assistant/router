@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createNativeRouter} from '../../../packages/javascript/native/server.mjs';
+import {createNativeRouter} from '../../../js/src/server.mjs';
 const request=(path,method='GET',body,token='admin')=>new Request(`http://router${path}`,{method,headers:token?{authorization:`Bearer ${token}`}:{},...(body===undefined?{}:{body:JSON.stringify(body)})});
 test('canonical token management list/issuance/revoke/rotation preserve Rust wire shapes and numeric budgets',async()=>{
   let input,rotated,revoked;const core={config:{admin_token:'admin'},tokens:{list:()=>[{id:'t',max_tokens:7,used_tokens:2,token:'hidden'}],issue:options=>{input=options;return {token:'new',record:{label:'l',client_kind:'claude',model_policy:options.model_policy}};},get:id=>({id,scope:id==='admin-id'?'admin':''}),revoke:id=>{revoked=id;return true;},rotate:(id,body)=>{rotated=[id,body];return {token:'replacement'};}}};

@@ -55,7 +55,7 @@ checks the persisted provider and encrypted key in the normal Rust suite. The
 experiment also accepts `--router` to replay seeding with a released binary.
 
 ```sh
-(cd packages/javascript && npm ci && npm test && npm run typecheck && bun test test/router.test.js)
+(cd js && npm ci && npm test && npm run typecheck && bun test test/router.test.js)
 python3 -m pip install -e packages/python
 python3 -m unittest discover -s packages/python/tests -v
 bash scripts/generate-http-clients.sh

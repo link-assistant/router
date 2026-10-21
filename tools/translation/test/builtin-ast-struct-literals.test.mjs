@@ -1,9 +1,10 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {builtinDeriveAstSourceProfile,builtinAstOriginal,originalAstFunction,astStructLiteral,astStructLiterals,astSyntaxText} from '../builtin-derive-ast-meta.mjs';
-const root=new URL('../../../',import.meta.url),dependencies=()=>loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')}),profile=builtinDeriveAstSourceProfile(dependencies());
+const root=new URL('../../../',import.meta.url),dependencies=()=>loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')}),profile=builtinDeriveAstSourceProfile(dependencies());
 const path='compiler/rustc_builtin_macros/src/deriving/cmp/partial_eq.rs',entry=originalAstFunction(profile,path,'expand_deriving_partial_eq');
 test('original PartialEq retains both complete TraitDef literals in original lexical order',()=>{
  const source=builtinAstOriginal(profile,path).source,rows=astStructLiterals(profile,entry,'TraitDef');assert.equal(rows.length,2);

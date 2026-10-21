@@ -18,7 +18,7 @@
 // Names are canonical snake_case (UPPER_SNAKE for constants); `type` is a
 // type row of the construct map. `check` adds `type` to every expression.
 
-import {isDeepStrictEqual} from 'node:util';
+import {types as __linoTypes,isDeepStrictEqual} from 'node:util';
 import {parseJavaScriptItem} from './frontends.mjs';
 import {lex,topLevelItems} from './lexer.mjs';
 import {readLexicalEnvironment,reissueLexicalEnvironment,lexicalClosureName} from './lexical-environments.mjs';
@@ -38,6 +38,7 @@ import {sourceConstructorItem,isOriginalConstructorBodyCheck,checkOriginalConstr
 import {reissueImportedErrorConstructor,originalImportedErrorConstructor} from './source-constructors.mjs';
 
 import {isOwnedCoreItem,checkOwnedCoreItem,withOwnedCoreItemChecks} from '../owned-core-operations.mjs';
+import {originalStaticSourceIntrinsicsUnchanged as __linoStaticReady,originalPrivateParserIngressUnchanged as __linoIngressReady,originalDataFreezeIntrinsicsUnchanged as __linoFreezeReady} from '../../original-json-intrinsics.mjs';
 
 export const FRAGMENT = 'portable-router-v1';
 function callableOf(type){if(typeof type!=='string'||!type.startsWith('callable:'))return null;return JSON.parse(type.slice(9));}
@@ -801,4 +802,49 @@ function exprOf(link) {
     default:
       throw new Error(`unknown meta expression ${kind}`);
   }
+}
+
+// DATA decoding only. Neither public closed DATA nor these predicates issue
+// source, native grammar, type, owner or executable authority.
+export function parsedLinoDataCopyReady(){
+ return __linoStaticReady()&&__linoIngressReady()&&__linoFreezeReady();
+}
+function __copyClosedLinoData(value){
+ if(!parsedLinoDataCopyReady())return null;
+ const ops={proxy:__linoTypes.isProxy,array:Array.isArray,prototype:Object.getPrototypeOf,keys:Reflect.ownKeys,field:Object.getOwnPropertyDescriptor,own:Object.hasOwn,define:Object.defineProperty,apply:Reflect.apply,Set,has:Set.prototype.has,add:Set.prototype.add,remove:Set.prototype.delete,arrayPrototype:Array.prototype,objectPrototype:Object.prototype};
+ const seen=new ops.Set();let cells=0,units=0,bad=false;
+ function visit(value,depth){
+  if(bad||++cells>200000||depth>256){bad=true;return undefined;}
+  if(typeof value==='string'){units+=value.length;if(units>33554432)bad=true;return value;}
+  if(!value||typeof value!=='object'||ops.proxy(value)||ops.apply(ops.has,seen,[value])){bad=true;return undefined;}
+  const array=ops.array(value),parent=ops.prototype(value),names=ops.keys(value);
+  if(parent!==(array?ops.arrayPrototype:ops.objectPrototype)){bad=true;return undefined;}
+  if(!array){
+   if(names.length!==1||names[0]!=='quoted'){bad=true;return undefined;}
+   const field=ops.field(value,'quoted');if(!field||!ops.own(field,'value')||typeof field.value!=='string'||!field.enumerable||!field.writable||!field.configurable){bad=true;return undefined;}
+   const quoted=visit(field.value,depth+1);return {quoted};
+  }
+  const length=ops.field(value,'length');
+  if(!length||!ops.own(length,'value')||typeof length.value!=='number'||length.value<0||length.value%1||length.value>200000||length.enumerable||length.configurable||!length.writable||names.length!==length.value+1||names[length.value]!=='length'){bad=true;return undefined;}
+  ops.apply(ops.add,seen,[value]);const copy=[];
+  for(let at=0;at<length.value;at++){
+   if(names[at]!==''+at){bad=true;break;}const field=ops.field(value,names[at]);
+   if(!field||!ops.own(field,'value')||!field.enumerable||!field.writable||!field.configurable){bad=true;break;}
+   const child=visit(field.value,depth+1);if(bad)break;ops.define(copy,''+at,{__proto__:null,value:child,enumerable:true,writable:true,configurable:true});
+  }
+  ops.apply(ops.remove,seen,[value]);return copy;
+ }
+ if(!ops.array(value))return null;const result=visit(value,0);
+ return bad||!parsedLinoDataCopyReady()?null:result;
+}
+export function tryDecodeCopiedLinoData(links){
+ const __linoDataCopy=__copyClosedLinoData(links);if(__linoDataCopy===null)return null;
+return __linoDataCopy.filter((link) => ['function','constant','closure','owned-function'].includes(link[0])).map(itemOf);
+}
+
+export function tryCopyParsedLinoData(links){return __copyClosedLinoData(links);}
+export function tryDecodePreparedOwnedLinoData(links){
+ const __linoDataCopy=__copyClosedLinoData(links);if(__linoDataCopy===null)return null;
+ /\s/u.test('\n');
+ return __linoDataCopy.filter((link) => ['function','constant','closure','owned-function'].includes(link[0])).map(itemOf);
 }

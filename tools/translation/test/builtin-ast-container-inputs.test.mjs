@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // All five cases authored SOURCE-ONLY and UNRUN; no heap/namespace authority.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -6,7 +7,7 @@ import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {builtinDeriveAstSourceProfile} from '../builtin-derive-ast-meta.mjs';
 import {builtinAstContainerSourceEvidence,isBuiltinAstContainerSourceEvidence} from '../builtin-ast-container-inputs.mjs';
 import {createBuiltinAstBuilderMetaCompiler} from '../builtin-ast-builder-meta.mjs';
-const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
 const profile=builtinDeriveAstSourceProfile(dependencies),compiler=createBuiltinAstBuilderMetaCompiler(profile);
 
 test('actual compiler Cargo lock fixes original ThinVec version and checksum independently of Router dependencies',()=>{

@@ -1,5 +1,5 @@
 // GENERATED: node scripts/regenerate-js-first.mjs
-// Independently checked scoped bodies from packages/javascript/native/auth-service.mjs; source sha256=39d3f52bcf3e0c28181de027c195f7ab85282bb6ef6e8aa269d215d8a8065c46; IR sha256=c954d7088075ad6fca5dda88a90f7cc7bc7c5b7e6ed92c31ede33ac692551cd1.
+// Independently checked scoped bodies from js/src/auth-service.mjs; source sha256=39d3f52bcf3e0c28181de027c195f7ab85282bb6ef6e8aa269d215d8a8065c46; IR sha256=19bcb26adb59e3c6839b6c668064819bea92aad8ba148a6c554b55dcc17cd5e0.
 // Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
 #[derive(Clone, Copy)]
 pub enum JsPayload<'a> {
@@ -109,6 +109,6 @@ fn js_trim(value: &str) -> String {
 }
 
 #[rustfmt::skip]
-fn scoped_src9cb8ab7a44fe6061_at2201<'a>(model: JsPayload<'a>) -> JsPayload<'a> {
+fn scoped_srcc88af6ad19a278ff_at2201<'a>(model: JsPayload<'a>) -> JsPayload<'a> {
     return (if (model.type_name().to_string() == "string".to_string()) { JsPayload::String(js_payload_trim(model.as_utf16())) } else { JsPayload::Boolean(false) });
 }

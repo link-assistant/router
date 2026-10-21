@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdtempSync,writeFileSync,rmSync} from 'node:fs';
@@ -25,7 +26,7 @@ async function both(result,assertions) {
     writeRuntimeAssets(folder);const js=join(folder,'src/module.mjs'),ts=join(folder,'src/module.ts');writeFileSync(js,result.javascript);writeFileSync(ts,result.typescript);
     execFileSync(process.execPath,['--check',js],{timeout:30000});
     let command=process.env.ROUTER_TRANSLATION_TSC,prefix=[];
-    if(!command){try{prefix=[createRequire(new URL('../../../packages/javascript/package.json',import.meta.url)).resolve('typescript/bin/tsc')];command=process.execPath;}catch(error){if(error.code!=='MODULE_NOT_FOUND')throw error;command='tsc';}}
+    if(!command){try{prefix=[createRequire(new URL('../../../js/package.json',import.meta.url)).resolve('typescript/bin/tsc')];command=process.execPath;}catch(error){if(error.code!=='MODULE_NOT_FOUND')throw error;command='tsc';}}
     execFileSync(command,[...prefix,'--strict','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext',ts],{encoding:'utf8',timeout:30000});
     for(const path of [js,join(folder,'src/module.js')])await assertions((await import(pathToFileURL(path).href)).translated);
   }finally{rmSync(folder,{recursive:true,force:true});}
@@ -80,7 +81,7 @@ test('original STACK_BYTES and MAX_RETRY_AFTER receive independently pinned sour
     {path:'src/entrypoint.rs',name:'STACK_BYTES',sourceSha:'39268a95729f7c2f4004ce47761afb31369ddb600ff3c63b3fc890868f6aa85e',span:[677,721],body:[704,720],declarationSha:'0be2725212bd633b4ba92f7ec53651d19475018d26014bf2960896808d6fe8d1',assert:api=>assert.equal(api.STACK_BYTES,16777216n)},
     {path:'src/request_routing.rs',name:'MAX_RETRY_AFTER',sourceSha:'983ec98db6d62721c2675f8c94256507c48985c504c063c9e9b80933ff6a7c42',span:[169,241],body:[207,240],declarationSha:'b783afd2f14624b09072b47aae14903b6c4b416daf3234657cb7af9fedc14f12',assert:api=>assert.deepEqual(api.MAX_RETRY_AFTER,{$:'Duration',secs:86400n,nanos:0n})},
   ]){
-    const source=readFileSync(new URL('../../../'+pin.path,import.meta.url),'utf8');assert.equal(hash(source),pin.sourceSha);
+    const source=readFileSync(repositorySourceURL(pin.path,new URL('../../../',import.meta.url)),'utf8');assert.equal(hash(source),pin.sourceSha);
     const result=translateProject({entry:pin.path,paths:[pin.path],readSource:()=>source}),entry=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram)).declarations.get(pin.name);
     assert.ok(entry,JSON.stringify(result.meta.refused));const link=entry.constantEvaluationProof.resolution.find(entry=>entry.name===pin.name).source;
     assert.deepEqual(link.declarationSpan,{start:pin.span[0],end:pin.span[1]});assert.deepEqual(link.bodySpan,{start:pin.body[0],end:pin.body[1]});assert.equal(link.sourceSha256,pin.sourceSha);assert.equal(link.declarationSha256,pin.declarationSha);
@@ -94,7 +95,7 @@ test('three unchanged polling constants use pinned const Duration::from_millis',
     {path:'src/durable_file.rs',name:'LOCK_POLL_INTERVAL',sourceSha:'970eae37d4f282547bdcc178ce08eb119ce87ed0e593a6bad6aa5444433de6f0',span:[13448,13533],declarationSha:'2a432a643307b6540395ad3ffe7b52bf091fe32b359f3d62735d5d725060ac0d',bodySha:'9a4f0e5f1fda452e1e25755fc85437ae882627728e16b632159c370dd49c1198',nanos:20000000n},
   ]) {
     const pin=currentPollingConstantPin(previousPin,process.env.ROUTER_POLLING_CONSTANT_VECTOR_DIR);
-    const source=readFileSync(new URL('../../../'+pin.path,import.meta.url),'utf8');assert.equal(hash(source),pin.sourceSha);
+    const source=readFileSync(repositorySourceURL(pin.path,new URL('../../../',import.meta.url)),'utf8');assert.equal(hash(source),pin.sourceSha);
     const result=translateProject({entry:pin.path,paths:[pin.path],readSource:()=>source});
     const entry=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram)).declarations.get(pin.name);assert.ok(entry,JSON.stringify(result.meta.refused));
     const proof=entry.constantEvaluationProof,link=proof.resolution.find(entry=>entry.name===pin.name).source;

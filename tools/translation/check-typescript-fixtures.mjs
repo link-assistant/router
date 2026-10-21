@@ -26,7 +26,7 @@ export function checkTypeScriptFixtures(cases = fixtures, { compiler = process.e
     let command = compiler, prefix = [];
     if (!command) {
       try {
-        const require = createRequire(new URL('../../packages/javascript/package.json', import.meta.url));
+        const require = createRequire(new URL('../../js/package.json', import.meta.url));
         prefix = [require.resolve('typescript/bin/tsc')]; command = process.execPath;
       } catch (error) { if (error.code !== 'MODULE_NOT_FOUND') throw error; command = 'tsc'; }
     }

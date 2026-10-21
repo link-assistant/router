@@ -1,9 +1,10 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {join} from 'node:path';
 import {reviewInitialSourceGenericLayouts,reviewSourceAdmittedHostLayouts} from '../../../scripts/review-source-generic-layouts.mjs';
-import {reviewGeneratedMethods} from '../../../scripts/review-translation-draft.mjs';
+import {reviewStoredProjectGeneratedMethods as reviewGeneratedMethods} from '../../../scripts/review-translation-draft.mjs';
 import {translateProject,resolveModuleGraph} from '../project.mjs';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {loadJsonMacroSourceProof} from '../json-macro-inputs.mjs';
@@ -18,7 +19,7 @@ import {originalMatchesNamespaceBindings} from '../matches-macro-context.mjs';
 import {lockedTomlValueNamespaceBindings} from '../toml-value-namespace.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const manifest=readFileSync(new URL('../../../Cargo.toml',import.meta.url),'utf8'),lock=readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8');
+const manifest=readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock=readFileSync(repositorySourceURL("Cargo.lock",new URL('../../../',import.meta.url)),'utf8');
 const dependencies=loadDeriveDependencyProof({manifest,lock}),jsonDependencies=loadJsonMacroSourceProof({manifest,lock});
 const payload='#[derive(Default)]pub struct Payload{pub value:Option<i64>}pub fn make()->Payload{Payload::default()}';
 function retain(label,value){const directory=process.env.ROUTER_REVIEW_GENERIC_LAYOUT_VECTORS;if(directory){mkdirSync(directory,{recursive:true});writeFileSync(join(directory,label+'.json'),JSON.stringify(value,null,2)+'\n',{flag:'wx'});}}
@@ -131,7 +132,7 @@ test('genuine source module shadows remove registered payload layouts and retain
  retain('source-shadow-external-refusal',{source,inspection:inspection.layouts,support,result,error,registeredExternalAdmission:false});
 });
 test('actual original clamp_ttl and TtlRequest first-origin witness remains complete and source-only',()=>{
- const admin=readFileSync(new URL('../../../src/admin.rs',import.meta.url),'utf8'),api=readFileSync(new URL('../../../src/admin_api.rs',import.meta.url),'utf8');
+ const admin=readFileSync(new URL('../../../rust/src/admin.rs',import.meta.url),'utf8'),api=readFileSync(new URL('../../../rust/src/admin_api.rs',import.meta.url),'utf8');
  assert.match(admin.slice(28682,28888),/fn clamp_ttl/u);assert.match(api.slice(5576,5782),/struct TtlRequest/u);
  const witness={actual:{source:'src/admin.rs',owner:'clamp_ttl',offset:139259,span:{start:167965,end:167976},original:admin.slice(28682,28888)},oldReviewer:{source:'src/admin_api.rs',owner:'TtlRequest',offset:169786,span:{start:175554,end:175565},original:api.slice(5576,5782)},fullCrateCandidateReviewExecuted:false};
  assert.match(witness.actual.original,/Option<i64>/u);assert.match(witness.oldReviewer.original,/Option<i64>/u);retain('actual-original-witness',witness);

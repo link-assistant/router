@@ -6,7 +6,7 @@ The top-level and scoped programs have separate output trees. Scoped discovery c
 
 Every native module receives explicit outputs, including empty programs. A helper that becomes refused therefore loses its previous executable body. Check mode reports differences without writing. Removed modules report stale generated files; write mode removes only recognized files in the two owned draft trees and rejects links or unrecognized files.
 
-Generated TypeScript lives under `packages/typescript/native/portable-draft/` and is included by the existing strict native TypeScript configuration. Each file is an independent module, preserving private declaration visibility and avoiding collisions between unrelated source modules. The full reverse tests and regeneration check remain mandatory.
+Generated TypeScript lives under `ts/src/portable-draft/` and is included by the existing strict native TypeScript configuration. Each file is an independent module, preserving private declaration visibility and avoiding collisions between unrelated source modules. The full reverse tests and regeneration check remain mandatory.
 
 Rust projections live beside the meta-language files under `tools/translation/js-to-rust/generated/native-portable/` with `.rs.txt` extensions. They contain emitted Rust syntax, remain uncompiled, and are excluded from the original tracked `.rs` corpus so regeneration does not recursively translate its own reverse drafts. They use the fragment's explicit UTF-16 payload and host-qualified projections; their presence establishes neither native Rust equivalence nor runtime parity. No Rust build is required or authorized by generation.
 

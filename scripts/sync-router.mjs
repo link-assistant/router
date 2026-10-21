@@ -14,7 +14,7 @@ const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const directions=new Set(['both','javascript-to-rust','rust-to-javascript']);
 const MAX_INPUT_BYTES=256*1024*1024;
 const MAX_FILE_BYTES=32*1024*1024,MAX_INPUT_PATHS=32768;
-const affinityDescriptor='packages/javascript/native/affinity-schema-descriptor.mjs';
+const affinityDescriptor='js/src/affinity-schema-descriptor.mjs';
 function git(root,args,input) {
   const result=spawnSync('git',args,{cwd:root,input,maxBuffer:MAX_INPUT_BYTES,timeout:30_000});
   if(result.status!==0)throw Error(result.error?.message??result.stderr.toString()??'Git input capture failed');
@@ -27,15 +27,16 @@ function relativeName(name) {
 function protectedInput(name) {
   // Exclude only exact producer-owned outputs. Their handwritten neighbors
   // remain original inputs, including other native descriptors and Rust files.
-  if(name==='src/generated_js_first/policy.rs'||name==='src/generated_js_first/mod.rs'
+  if(/^(?:rust\/)?src\/generated_js_first\/(?:policy|mod)\.rs$/u.test(name)
     ||name==='tools/translation/js-to-rust/generated/owned-core-witness.rs'
+    ||name==='tools/translation/js-to-rust/generated/owned-base64-witness.rs'
     ||name===affinityDescriptor)return false;
   return name.endsWith('.rs')||/(^|\/)Cargo\.(?:toml|lock)$/u.test(name)
-    ||name.startsWith('packages/javascript/native/')
-    ||name.startsWith('packages/javascript/portable/')
-    ||name.startsWith('packages/javascript/schemas/')
+    ||name.startsWith('js/src/')
+    ||name.startsWith('js/portable/')
+    ||name.startsWith('js/schemas/')
     ||name.startsWith('parity/fixtures/js-first/')
-    ||/^packages\/javascript\/[^/]+\.(?:json|d\.ts|mjs|js|cjs)$/u.test(name);
+    ||/^js\/[^/]+\.(?:json|d\.ts|mjs|js|cjs)$/u.test(name);
 }
 function originalFileStatus(root,name) {
   let ancestor=root;
@@ -91,11 +92,11 @@ function producer(module,expression,root,check) {
 }
 function affinityDescriptorInput(root) {
   const descriptor=path.join(root,affinityDescriptor);
-  if(fs.existsSync(descriptor)||fs.existsSync(path.join(root,'packages/javascript/native/affinity-schema.mjs')))return true;
-  const native=path.join(root,'packages/javascript/native');
+  if(fs.existsSync(descriptor)||fs.existsSync(path.join(root,'js/src/affinity-schema.mjs')))return true;
+  const native=path.join(root,'js/src');
   if(!fs.existsSync(native))return false;
   let ancestor=root;
-  for(const component of ['packages','javascript','native']) {
+  for(const component of ['js','src']) {
     ancestor=path.join(ancestor,component);
     if(fs.lstatSync(ancestor).isSymbolicLink())throw Error('Linked original synchronization source refused: '+ancestor);
   }
@@ -114,7 +115,7 @@ function affinityDescriptorInput(root) {
       // Use this receiving project's dependencies, including in an exported
       // CLI whose inherited compiler source-root environment is unrelated.
       if(compiler===undefined){
-        const receivingPackage=path.join(root,'packages/javascript/package.json');
+        const receivingPackage=path.join(root,'js/package.json');
         const receivingRequire=createRequire(receivingPackage);
         const missing=()=>{
           const error=new Error("Cannot find module 'typescript' in receiving dependency search paths\nRequire stack:\n- "+receivingPackage);

@@ -26,7 +26,7 @@ const fail=message=>throwOriginalCapturedTypeError('Original external dependency
 function originalRegistry(){
   assertPrivateOriginalCargoTomlExecution();
   if(!initialQualified)fail('native source operations unavailable at import');
-  if(!registry){bytes=readFileSync(new URL('./source-profiles/external-dependency-defaults/manifest.json',import.meta.url));if(hash(bytes)!=='d6b391594e58f0639235fbd2b7008e189d8b65ae2f76e1b43a8b176168cffba5')fail('source domain changed');assertPrivateOriginalCargoTomlExecution();registry=JSON.parse(bytes);assertPrivateOriginalCargoTomlExecution();}
+  if(!registry){bytes=readFileSync(new URL('./source-profiles/external-dependency-defaults/manifest.json',import.meta.url));if(hash(bytes)!=='e52dd81d35984bcdfc279563dca465c8bccd0569384312bccfd82a1132f2d88c')fail('source domain changed');assertPrivateOriginalCargoTomlExecution();registry=JSON.parse(bytes);assertPrivateOriginalCargoTomlExecution();}
   return registry;
 }
 function freeze(value){
@@ -172,4 +172,13 @@ export function observeOriginalExternalDefaultConditions(token,options,selection
   }
   const observed=freeze({schema:'source-bound-positive-feature-predicate-observations-v1',source,project:proof.project,dependency:proof.dependency,positiveFeatures:proof.positiveFeatures,conditions,...noAuthority,scope:'Predicate truth observations only, never attribute ownership, expansion or namespace selection.'});
   unchanged(state.input,options);const field=descriptor(selection,'path');if(keys(selection).length!==1||!field||!own(field,'value')||field.value!==path)fail('late source selection changed');return observed;
+}
+
+// Package-only positive source DATA; the original caller-bound producers stay exact.
+export function originalExternalPackageDefaultSourceData(dependencies,packageToken){
+  originalRegistry();const originals=deriveDependencyOriginalInputs(dependencies),originalPackage=originalExternalTraitPackageInputs(packageToken);
+  const matches=registry.packages.filter(row=>row.name===originalPackage.dependency.package&&row.version===originalPackage.dependency.version&&row.archiveSha256===originalPackage.dependency.archiveSha256);
+  if(matches.length!==1||originalPackage.dependency.manifestSha256!==hash(originals.manifest)||originalPackage.dependency.lockSha256!==hash(originals.lock))fail('complete genuine package/project association required');
+  const state={dependencies,packageToken,originals,originalPackage,selected:matches[0]},selected=sourceFeatures(state);
+  return freeze({schema:'original-package-positive-default-source-data-v1',profile:'complete registered ordinary direct dependency defaults; positive source membership only',/* No project module or compilation unit is asserted by this DATA API. */dependency:state.originalPackage.dependency,packageSourceDomainSha256:hash(bytes),parserExecution:{kind:'private exact copied CJS graph, fresh full file authentication, live native operations',input:'primitive string Cargo data only',optionalUtilInspection:'upstream caught-unavailable branch; inspector equivalence not claimed',publicCjsCacheUsed:false,parserClassesExposed:false},...selected,...noAuthority,scope:'Positive feature membership only; additional unified features and every unproved configuration atom remain unknown.'});
 }

@@ -1,3 +1,4 @@
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -13,7 +14,7 @@ import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta} from '../conc
 import {translateOriginalProjectBatch} from '../isolated-project-batch.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const ROOT=fileURLToPath(new URL('../../../',import.meta.url)),ASSETS=fileURLToPath(new URL('./fixtures/portable-git/',import.meta.url)),REGISTRY='tools/translation/source-profiles/isolated-project-compiler/manifest.json.gz';
-const packed=fs.readFileSync(join(ROOT,REGISTRY)),raw=gunzipSync(packed),registry=JSON.parse(raw),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
+const packed=fs.readFileSync(join(ROOT,repositorySourcePath(REGISTRY,ROOT))),raw=gunzipSync(packed),registry=JSON.parse(raw),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 function retain(name,value){const output=process.env.ROUTER_PORTABLE_GIT_VECTOR_DIR;if(output){fs.mkdirSync(output,{recursive:true});fs.writeFileSync(join(output,name+'.json.gz'),gzipSync(JSON.stringify(value)+'\n'));}}
 function temporary(t,label){const path=fs.mkdtempSync(join(tmpdir(),'router-portable-test-'+label+'-'));t.after(()=>fs.rmSync(path,{recursive:true,force:true}));return path;}
 function changed(t,mutate){const target=temporary(t,'tamper'),{data,index}=readPortableGitFixture();mutate(data);const bytes=Buffer.from(JSON.stringify(data)+'\n'),compressed=gzipSync(bytes);fs.writeFileSync(join(target,'objects.json.gz'),compressed);fs.writeFileSync(join(target,'manifest.json'),JSON.stringify({...index,bytes:compressed.length,sha256:hash(compressed),rawBytes:bytes.length,rawSha256:hash(bytes)}));return target;}
@@ -57,5 +58,5 @@ test('output aliases existing destinations and changed full TS input refuse befo
 
 test('original callable still runs through genuine isolated compiler and strict target oracle',{timeout:60000},async()=>{
  const source='pub fn answer()->u8{7}\npub fn enabled()->bool{true}\n',request={schema:'original-project-child-request-v1',sourceFiles:[{path:'src/lib.rs',source}],entries:['src/lib.rs']},result=await translateOriginalProjectBatch(JSON.stringify(request)),text=path=>{const row=result.artifacts.find(row=>row.path===path);assert.ok(row,path);assert.equal(hash(row.text),row.sha256);return row.text;};
- const meta=JSON.parse(text('tools/translation/meta/src/lib.meta.json'));assert.equal(meta.items.map(row=>row.source).join(''),source);assert.equal(meta.concreteSyntaxMeta.source,source);assert.equal(result.receipt.issuerContextEscaped,false);const project={meta:{entry:'src/lib.rs'},javascript:text('packages/javascript/generated/rust-project/src/lib.mjs'),typescript:text('packages/typescript/generated/rust-project/src/lib.ts')};await verifyTypedTargets(project,api=>{assert.equal(api.answer(),7n);assert.equal(api.enabled(),true);},{childTimeoutMs:20000});retain('08-genuine-original-callable',{source,request,result,project});
+ const meta=JSON.parse(text('tools/translation/meta/src/lib.meta.json'));assert.equal(meta.items.map(row=>row.source).join(''),source);assert.equal(meta.concreteSyntaxMeta.source,source);assert.equal(result.receipt.issuerContextEscaped,false);const project={meta:{entry:'src/lib.rs'},javascript:text('js/generated/rust-project/src/lib.mjs'),typescript:text('ts/generated/rust-project/src/lib.ts')};await verifyTypedTargets(project,api=>{assert.equal(api.answer(),7n);assert.equal(api.enabled(),true);},{childTimeoutMs:20000});retain('08-genuine-original-callable',{source,request,result,project});
 });

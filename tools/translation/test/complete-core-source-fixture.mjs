@@ -1,6 +1,6 @@
 // Test source data only. Ordinary project parsing and checking retain authority.
 import assert from 'node:assert/strict';
-import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_JSON_COLLECTIONS_SOURCE} from '../router-core-source-data.mjs';
+import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_JSON_COLLECTIONS_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE,ROUTER_CORE_RANGES_SOURCE,ROUTER_CORE_BASE64_SOURCE} from '../router-core-source-data.mjs';
 
 const facadePath='src/translation_core.rs',childPath='src/translation_core/json_collections.rs';
 export function completeCoreSourceFixture(input){
@@ -33,3 +33,21 @@ Object.defineProperty(otherAccessor,'src/other.rs',{enumerable:true,get(){callba
 const copiedAccessor=completeCoreSourceFixture(otherAccessor);
 assert.deepEqual(Object.getOwnPropertyDescriptor(copiedAccessor,'src/other.rs'),Object.getOwnPropertyDescriptor(otherAccessor,'src/other.rs'));
 assert.equal(callbacks,0);
+// Begin generated complete owned Core fixture.
+const OWNED_CORE_SOURCE_CHILDREN=[
+ ['src/translation_core/primitives.rs',ROUTER_CORE_PRIMITIVES_SOURCE],
+ ['src/translation_core/json_collections.rs',ROUTER_CORE_JSON_COLLECTIONS_SOURCE],
+ ['src/translation_core/ranges.rs',ROUTER_CORE_RANGES_SOURCE],
+ ['src/translation_core/base64.rs',ROUTER_CORE_BASE64_SOURCE]
+];
+function completeOwnedCoreChildSourceFixture(input,childPath,childSource){
+  const facade=Object.getOwnPropertyDescriptor(input,facadePath);
+  if(!facade||!Object.hasOwn(facade,'value')||facade.value!==ROUTER_FORMATTING_FACADE_SOURCE||Object.hasOwn(input,childPath))return input;
+  const descriptors=Object.getOwnPropertyDescriptors(input);
+  descriptors[childPath]={value:childSource,writable:true,enumerable:true,configurable:true};
+  return Object.create(Object.getPrototypeOf(input),descriptors);
+}
+export function completeOwnedCoreSourceFixture(input){
+ let result=input;for(const [path,source]of OWNED_CORE_SOURCE_CHILDREN)result=completeOwnedCoreChildSourceFixture(result,path,source);return result;
+}
+// End generated complete owned Core fixture.

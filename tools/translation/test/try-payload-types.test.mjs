@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -48,11 +49,11 @@ test('genuine Option and Result try preserve success payload and residual types'
 });
 
 test('whole original capabilities propagates typed JSON arrays into ordinary any closures in both outputs',{timeout:60_000},async()=>{
-  const path='src/capabilities.rs',source=readFileSync(new URL(path,root),'utf8');
+  const path='src/capabilities.rs',source=readFileSync(repositorySourceURL(path,root),'utf8');
   assert.equal(hash(source),'7a8bb8a76288590bbc9d556b77d4415cd513837a45d88edb278dc5c6b7b6b222');
   const item=sourceItems(source).find(item=>item.name==='unsatisfiable_forced_tool_choice');assert.deepEqual([item.start,item.end],[6112,6808]);
   assert.equal(hash(source.slice(item.start,item.end)),'be78dd12b76f8f6baac481f5072b0700ad3962ae52641c0dfbbb192df7313f97');
-  const deriveDependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+  const deriveDependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
   const project=translateProject({entry:path,paths:[path],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE,deriveDependencies});
   assert.deepEqual(project.meta.executable.find(entry=>entry.name===item.name)?.span,{start:item.start,end:item.end});
   const draft=translateSource(source,path,{projectDeclarations:project.executableDeclarations,projectSourceScopes:project.sourceScopes});

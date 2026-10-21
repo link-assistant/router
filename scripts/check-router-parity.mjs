@@ -9,12 +9,12 @@ import { createHash } from 'node:crypto';
 import { evidenceTimeoutMs, translationTimeoutMs } from './parity-check-budgets.mjs';
 const exec = promisify(execFile), root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const manifest = JSON.parse(await readFile(resolve(root, 'parity/router-features.json'), 'utf8'));
-const catalog = JSON.parse(await readFile(resolve(root, 'packages/javascript/catalog.json'), 'utf8'));
+const catalog = JSON.parse(await readFile(resolve(root, 'js/catalog.json'), 'utf8'));
 const spec = JSON.parse(await readFile(resolve(root, 'openapi/router.yaml'), 'utf8'));
 const docs = await readFile(resolve(root, 'docs/integration/operations.md'), 'utf8');
 const strict = process.argv.includes('--strict');
 if (process.argv.slice(2).some(argument => argument !== '--strict')) throw new Error('Usage: check-router-parity.mjs [--strict]');
-const { nativeOperationSupport } = await import('../packages/javascript/native/operations.mjs');
+const { nativeOperationSupport } = await import('../js/src/operations.mjs');
 const errors = [], gaps = [], ids = new Set(), operations = new Set(), routes = new Set(), runners = new Map();
 const expected = new Set(catalog.operations.map(operation => operation.name));
 const httpMethods = new Set(['get','post','put','patch','delete','options','head','trace']);
@@ -70,7 +70,7 @@ for (const feature of manifest.features ?? []) {
       if (!expected.has(feature.operation) || operations.has(feature.operation)) throw new Error(`Unknown/duplicate operation ${feature.operation}`);
       operations.add(feature.operation);
       if (feature.status !== (nativeOperationSupport[feature.operation] ?? 'unsupported')) throw new Error(`Dispatcher support status disagrees for ${feature.operation}`);
-      const contract = JSON.parse(await readFile(await localFile(`packages/javascript/schemas/${feature.operation.replaceAll('.', '-')}.v1.json`), 'utf8'));
+      const contract = JSON.parse(await readFile(await localFile(`js/schemas/${feature.operation.replaceAll('.', '-')}.v1.json`), 'utf8'));
       if (contract.properties.operation.const !== feature.operation) throw new Error('Operation schema mismatch');
     }
     let route;
@@ -103,8 +103,8 @@ for (const operation of expected) if (!operations.has(operation)) errors.push(`M
 for (const route of expectedRoutes) if (!routes.has(route)) errors.push(`Missing OpenAPI route inventory: ${route}`);
 for (const id of mandatory) if (!ids.has(id)) errors.push(`Missing native feature inventory: ${id}`);
 const coveredNative = new Set((manifest.features ?? []).flatMap(feature => feature.implementation ?? []));
-for (const name of await readdir(resolve(root, 'packages/javascript/native'))) {
-  if (name.endsWith('.mjs') && !coveredNative.has(`packages/javascript/native/${name}`)) errors.push(`Native module missing feature/evidence references: ${name}`);
+for (const name of await readdir(resolve(root, 'js/src'))) {
+  if (name.endsWith('.mjs') && !coveredNative.has(`js/src/${name}`)) errors.push(`Native module missing feature/evidence references: ${name}`);
 }
 let translation;
 try {

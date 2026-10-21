@@ -1,3 +1,4 @@
+import {repositoryRustLayout} from '../repository-layout.mjs';
 import { createHash } from 'node:crypto';
 import {types as utilTypes} from 'node:util';
 import { resolve } from 'node:path';
@@ -29,12 +30,12 @@ export class SerializationRefusal extends TypeError {
 const refuse = (message, module, span) => { throw new SerializationRefusal(message, module?.file ?? null, span ?? null); };
 
 // Callers cannot manufacture a source/namespace certificate by copying its JSON.
-export function captureSerializationContext({ root, paths, entry = 'src/lib.rs', compilationProfile: input = null } = {}) {
+export function captureSerializationContext({ root, paths, entry = repositoryRustLayout(root).entries[0], compilationProfile: input = null } = {}) {
   root = resolve(root);
   const corpus = captureSourceCorpus({ root, paths }), profile = compilationProfile(input);
   const graph = resolveModuleGraph({ entry, paths: sourceCorpusPaths(corpus, root), readSource: path => sourceCorpusText(corpus, root, path), compilationProfile: profile });
-  const dependencies = loadDeriveDependencyProof({ manifest: sourceCorpusText(corpus, root, 'Cargo.toml'), lock: sourceCorpusText(corpus, root, 'Cargo.lock') });
-  const json=captureJsonSerializationSources({manifest:sourceCorpusText(corpus,root,'Cargo.toml'),lock:sourceCorpusText(corpus,root,'Cargo.lock'),deriveDependencies:dependencies,compilationProfile:profile});
+  const dependencies = loadDeriveDependencyProof({ manifest: sourceCorpusText(corpus, root, repositoryRustLayout(root).manifest), lock: sourceCorpusText(corpus, root, repositoryRustLayout(root).lock) });
+  const json=captureJsonSerializationSources({manifest:sourceCorpusText(corpus,root,repositoryRustLayout(root).manifest),lock:sourceCorpusText(corpus,root,repositoryRustLayout(root).lock),deriveDependencies:dependencies,compilationProfile:profile});
   // The private complete-output context authenticates the whole original
   // external composition. Register actual JSON sources before issuing it,
   // rather than extending its tables after source/owner closure was captured.

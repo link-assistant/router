@@ -1,0 +1,167 @@
+{
+  "$defs": {
+    "AuthImportReport": {
+      "additionalProperties": false,
+      "properties": {
+        "results": {
+          "items": {
+            "$ref": "#/$defs/AuthImportReport_ImportReport"
+          },
+          "type": "array"
+        },
+        "schema_version": {
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schema_version",
+        "results"
+      ],
+      "title": "ImportEnvelope",
+      "type": "object"
+    },
+    "AuthImportReport_ImportOutcome": {
+      "description": "Public import outcomes. These serialized spellings are a compatibility\ncontract for automation and must not be inferred from diagnostic prose.",
+      "enum": [
+        "not_attempted",
+        "exchange_rejected",
+        "exchange_uncertain",
+        "persistence_uncertain",
+        "successor_retained",
+        "promoted",
+        "promotion_cleanup_pending",
+        "already_present"
+      ],
+      "type": "string"
+    },
+    "AuthImportReport_ImportPhase": {
+      "description": "The last import phase reached before the reported outcome.",
+      "enum": [
+        "preflight",
+        "exchange",
+        "persistence",
+        "catalog",
+        "promotion"
+      ],
+      "type": "string"
+    },
+    "AuthImportReport_ImportReport": {
+      "additionalProperties": false,
+      "description": "The only fields emitted as JSON. Deliberately excludes diagnostic strings,\npaths, source documents, and tokens.",
+      "properties": {
+        "outcome": {
+          "$ref": "#/$defs/AuthImportReport_ImportOutcome"
+        },
+        "phase": {
+          "$ref": "#/$defs/AuthImportReport_ImportPhase"
+        },
+        "previous_credential_safe": {
+          "type": "boolean"
+        },
+        "provider": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "transaction_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "outcome",
+        "phase",
+        "previous_credential_safe"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "link-assistant-router/auth-import/v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "else": {
+        "properties": {
+          "exit_code": {
+            "minimum": 1,
+            "type": "integer"
+          }
+        }
+      },
+      "if": {
+        "properties": {
+          "success": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "exit_code": {
+            "const": 0
+          }
+        }
+      }
+    }
+  ],
+  "properties": {
+    "data": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AuthImportReport"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "output": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "output"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "diagnostics": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "exit_code": {
+      "maximum": 255,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "operation": {
+      "const": "auth.import"
+    },
+    "schema": {
+      "const": "link-assistant-router/auth-import/v1"
+    },
+    "success": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schema",
+    "operation",
+    "success",
+    "exit_code",
+    "data",
+    "diagnostics"
+  ],
+  "type": "object"
+}

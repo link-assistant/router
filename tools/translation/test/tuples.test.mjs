@@ -74,7 +74,7 @@ test('earlier tuple declarations cannot launder later ownership or primitive ide
 
 test('original response content key functions execute unchanged through contextual tuple lowering',async()=>{
   for(const [file,name] of [['responses.rs','stream_content_key'],['anthropic_stream.rs','response_content_key']]) {
-    const source=readFileSync(new URL('../../../src/'+file,import.meta.url),'utf8'),item=sourceItems(source).find(item=>item.term==='fn'&&item.name===name);
+    const source=readFileSync(new URL('../../../rust/src/'+file,import.meta.url),'utf8'),item=sourceItems(source).find(item=>item.term==='fn'&&item.name===name);
     assert.ok(item);const original=source.slice(item.start,item.end),fixture='use serde_json::Value;\n'+original;
     const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>fixture});
     assert.deepEqual(result.meta.refused,[]);const executable=result.meta.executable.find(item=>item.name===name);

@@ -1,7 +1,9 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
 import {legacyProofConsumerSource} from './fixtures/native-proof-json-format.mjs';
-import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,rmSync} from 'node:fs';
+import {writeFileSync,mkdirSync,mkdtempSync,rmSync} from 'node:fs';
+import {readOriginalBuiltinPlanReceivingHistory as readFileSync} from './fixtures/current-receiving-source-history.mjs';
 import {execFileSync} from 'node:child_process';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
@@ -18,7 +20,7 @@ const json=JSON.stringify,apply=Reflect.apply,descriptor=Object.getOwnPropertyDe
 const root=new URL('../../../',import.meta.url),base=new URL('../',import.meta.url),fixture=new URL('../fixtures/private-frozen-json/',import.meta.url),manifest=JSON.parse(readFileSync(new URL('manifest.json',fixture),'utf8')),directory=mkdtempSync(join(tmpdir(),'router-private-json-'));
 function relocate(source,name){let formatData=null;source=legacyProofConsumerSource(source,(_kind,value)=>{formatData=value;});const imports=[],relocated=source.replace(/\bfrom (['"])(\.\/[^'"]+)\1/g,(whole,quote,path)=>{const url=new URL(path,base).href;imports.push({path,url});return 'from '+quote+url+quote;}),path=join(directory,name+'.mjs');writeFileSync(path,relocated);return {source,relocated,imports,path,url:pathToFileURL(path).href,formatData};}
 const leaves={};for(const row of manifest.sources){const bytes=readFileSync(new URL(row.storedPath,fixture));assert.equal(bytes.length,row.bytes);assert.equal(hash(bytes),row.sha256);const key=row.path.includes('builtin-')?'builtin':'bang';leaves[key]={old:relocate(bytes.toString('utf8'),key+'-original'),current:relocate(readFileSync(new URL(row.path.slice('tools/translation/'.length),base),'utf8'),key+'-current')};leaves[key].old.module=await import(leaves[key].old.url);leaves[key].current.module=await import(leaves[key].current.url);}after(()=>rmSync(directory,{recursive:true,force:true}));
-const cargo={manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')},dependencies=loadDeriveDependencyProof(cargo);
+const cargo={manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')},dependencies=loadDeriveDependencyProof(cargo);
 function retain(name,value){const output=process.env.ROUTER_PRIVATE_FROZEN_JSON_VECTOR_DIR;if(output){mkdirSync(output,{recursive:true});writeFileSync(join(output,name+'.json.gz'),gzipSync(json(value)+'\n'));}}
 function equal(name,expected,actual,extra={}){retain(name,{...extra,expected,actual});assert.deepEqual(actual,expected);assert.equal(json(actual),json(expected));}
 function frozen(value){if(value&&typeof value==='object'){for(const key of Reflect.ownKeys(value)){const field=descriptor(value,key);if(Object.hasOwn(field,'value'))frozen(field.value);}Object.freeze(value);}return value;}

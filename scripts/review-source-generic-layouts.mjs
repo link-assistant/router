@@ -26,8 +26,8 @@ function relocate(node,offset){
   if(!node||typeof node!=='object')return node;
   return Object.fromEntries(Object.entries(node).map(([key,value])=>[key,sourceEvidence.has(key)?value:['span','subjectSyntaxSpan','patternSpan'].includes(key)&&value?{start:value.start+offset,end:value.end+offset}:relocate(value,offset)]));
 }
-export function reviewInitialSourceGenericLayouts({graph,binding,toolContext,deriveContext,deriveDependencies,jsonMacroDependencies=null,cargoManifest=null,expectedCargoEdition=null,expectedJsonContext=null}){
-  const cargoEditionContext=cargoManifest===null?null:captureOriginalCargoEdition(cargoManifest);
+export function reviewInitialSourceGenericLayouts({graph,binding,toolContext,deriveContext,deriveDependencies,jsonMacroDependencies=null,cargoManifest=null,cargoManifestPath='Cargo.toml',expectedCargoEdition=null,expectedJsonContext=null}){
+  const cargoEditionContext=cargoManifest===null?null:captureOriginalCargoEdition(cargoManifest,{sourcePath:cargoManifestPath});
   if(!isDeepStrictEqual(originalCargoEditionEvidence(cargoEditionContext),expectedCargoEdition))throw new Error('Review initial generic issuance original Cargo edition mismatch');
   const matches=createMatchesMacroContext({modules:graph.modules,compilationProfile:graph.compilationProfile,deriveDependencies,cargoEditionContext});
   const jsonDependencies=typeof jsonMacroDependencies==='function'?jsonMacroDependencies():jsonMacroDependencies;

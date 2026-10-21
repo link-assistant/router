@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
@@ -14,7 +15,7 @@ import {tokenizeRust} from '../extensions/lexical.mjs';
 import {translateProject} from '../project.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const root=new URL('../../../',import.meta.url),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
-const manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock});
+const manifest=readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock=readFileSync(repositorySourceURL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock});
 function retain(name,value){const directory=process.env.ROUTER_EXTERNAL_TRAIT_SOURCE_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeFileSync(join(directory,name+'.json'),JSON.stringify(value)+'\n',{flag:'wx'});}}
 function facts(source){const file='src/lib.rs',captured=captureSourceModuleViews({source,sourcePath:file}),modules=captured.views.map(sourceView=>({file,path:[...sourceView.modulePath],source,sourceView})),context=createMatchesMacroContext({modules,deriveDependencies:dependencies}),parser=configureMatchesMacroParser(new HostRustParser(tokenizeRust(source)),context,{file}),state=matchesParserFacts(parser);return {consumer:state.module,facts:state.facts};}
 

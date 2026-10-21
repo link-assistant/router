@@ -42,7 +42,7 @@ function readOriginal(root,path){
 }
 function compiler(root){
   const installed=process.env.ROUTER_NATIVE_TS_SOURCE_ROOT??root;
-  const require=createRequire(resolve(installed,'packages/javascript/package.json'));
+  const require=createRequire(resolve(installed,'js/package.json'));
   const filename=require.resolve('typescript'),ts=require(filename);
   if(ts.version!=='5.9.3')fail('requires existing TypeScript5.9.3');
   return {ts,witness:{version:ts.version,path:filename,...pin(readFileSync(filename,'utf8')),

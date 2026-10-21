@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -7,7 +8,7 @@ import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {parseProgram} from '../semantic-meta.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const root=new URL('../../../',import.meta.url),manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock});
+const root=new URL('../../../',import.meta.url),manifest=readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock=readFileSync(repositorySourceURL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock});
 const pins=new Map([
   ['src/model_catalog_sources.rs','8737b379eadfcecd2cae09e3c2036d5ef89ff25aed5ae12d3d14d6ad3061c83a'],
   ['src/model_catalog_sources_config.rs','c2a422b2353658a5c2fd2e21a87769dcd9ff303a4ad07d047652ee245b95df51'],
@@ -17,7 +18,7 @@ const pins=new Map([
 const hash=text=>createHash('sha256').update(text).digest('hex');
 
 test('whole original model catalog retains numeric helpers and source-backed public limits in JS and TS',{timeout:60000},async()=>{
-  const sources=new Map([...pins].map(([path,digest])=>{const source=readFileSync(new URL(path,root),'utf8');assert.equal(hash(source),digest);return [path,source];}));
+  const sources=new Map([...pins].map(([path,digest])=>{const source=readFileSync(repositorySourceURL(path,root),'utf8');assert.equal(hash(source),digest);return [path,source];}));
   const result=translateProject({entry:'src/model_catalog_sources.rs',paths:[...sources.keys()],readSource:path=>sources.get(path),cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
   assert.equal(result.meta.sources.length,4);for(const entry of result.meta.sources)assert.equal(entry.sha256,pins.get(entry.source));
   assert.equal(result.meta.runtimeParity,false);assert.ok(result.meta.refused.some(entry=>entry.name==='document_schema'),'JsonSchema execution and catalog I/O remain unimplemented');

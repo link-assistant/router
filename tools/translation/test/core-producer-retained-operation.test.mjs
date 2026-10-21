@@ -1,6 +1,8 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import nodeTest from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,rmSync} from 'node:fs';
+import {readFileSync as readCurrentFileSync,writeFileSync,mkdirSync,mkdtempSync,rmSync} from 'node:fs';
+import {restoreCurrentEnclosingNamespaceSource as restoreEnclosingNamespaceSource} from './fixtures/native-proof-json-format.mjs';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {pathToFileURL} from 'node:url';
@@ -18,10 +20,10 @@ import {parseProgram,serializeProgram} from '../semantic-meta.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 import {writeJsonTextGzip} from '../../evidence/write-json-gzip.mjs';
 const root=new URL('../../../',import.meta.url),base=new URL('../',import.meta.url),helperURL=new URL('../private-native-proof-json.mjs',import.meta.url),json=JSON.stringify,apply=Reflect.apply,get=Object.getOwnPropertyDescriptor,define=Object.defineProperty,freeze=Object.freeze,keys=Reflect.ownKeys;
-const cargo={manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')},hash=value=>createHash('sha256').update(value).digest('hex');
+const cargo={manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')},hash=value=>createHash('sha256').update(value).digest('hex');
 const CORE_RECIPE={"parameterPrefix": "export function createCoreAdoptionProducerContext({modules,compilationProfile:inputProfile,dependencyInputs}){", "comment": "\n// Explicit whole-operation cost format; old producer APIs above stay exact.\n", "fixedImports": "import {createUnscopedDeriveBangContext as createWholeProducerDeriveBangContext} from './derive-bang-context.mjs';\nimport {withRetainedPrivateNativeProofCostScope} from './private-native-proof-json.mjs';\n", "beforeBytes": 17319, "beforeUTF16": 17319, "beforeSHA256": "f8da5aceca5bfada1b92dbf9c4617cbdfbbcb3123c0278ef7d602c0830b2d65a"};
 const BASE64_IMPORT={"before": "import {createCoreAdoptionProducerContext,finishCoreAdoptionProducerContext,createCoreAdoptionNonTraitImportSelector} from './core-adoption-producer-context.mjs';", "after": "import {createWholeScopedCoreAdoptionProducerContext as createCoreAdoptionProducerContext,finishCoreAdoptionProducerContext,createCoreAdoptionNonTraitImportSelector} from './core-adoption-producer-context.mjs';"};
-function test(name,run){return nodeTest(name,{timeout:60000},async t=>{const vectors=[],retain=(kind,value)=>{vectors.push({kind,value});return value;};try{await run(t,retain);}finally{const directory=process.env.ROUTER_WHOLE_PRODUCER_COST_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeJsonTextGzip(join(directory,hash(name)+'.json.gz'),json({name,vectors,rustExecuted:false},(_key,value)=>typeof value==='bigint'?{$integer:String(value)}:value===undefined?{$undefined:true}:value));}}});}
+function test(name,run){return nodeTest(name,{timeout:60000},async t=>{const vectors=[],retain=(kind,value)=>{vectors.push({kind,value});return value;};const previousHistoryRetain=retainEnclosingHistory;retainEnclosingHistory=retain;try{await run(t,retain);}finally{retainEnclosingHistory=previousHistoryRetain;const directory=process.env.ROUTER_WHOLE_PRODUCER_COST_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeJsonTextGzip(join(directory,hash(name)+'.json.gz'),json({name,vectors,rustExecuted:false},(_key,value)=>typeof value==='bigint'?{$integer:String(value)}:value===undefined?{$undefined:true}:value));}}});}
 function once(source,before,after){assert.equal(source.split(before).length,2,'one complete source equation');return source.replace(before,()=>after);}
 function capture(run){try{return {value:run()};}catch(caught){return {caught};}}
 function materialize(raw){return raw.caught?{error:{name:raw.caught.name,message:raw.caught.message,stack:String(raw.caught.stack)}}:{value:raw.value};}
@@ -75,3 +77,15 @@ test('actual complete controlled base64 graph retains every file proposal invers
 test('actual current checked artifacts retain serialized meta private refusals and independent strict20s targets',async(_t,retain)=>{
  const state=setup('#[derive(Clone,Copy)]pub struct Record{value:u8}pub fn echo(value:u8)->u8{value}'),token=createWholeScopedCoreAdoptionProducerContext(state.options);assert.ok(token);assert.ok(close(token,state).every(row=>row.closed));const dependencies=loadDeriveDependencyProof(cargo),result=translateProject({entry:'src/lib.rs',paths:Object.keys(state.files),readSource:path=>state.files[path],compilationProfile:PRODUCTION_PROFILE,cargoManifest:cargo.manifest,deriveDependencies:dependencies});assert.ok(result.meta.executable.some(row=>row.name==='echo'),json(result.meta.refused));const wire=json(result.meta.checkedSemanticProgram);assert.equal(serializeProgram(parseProgram(wire)),wire);retain('complete-actual-source-checked-artifact',{state,producer:facts(token),result,wire});await verifyTypedTargets(result,api=>{for(const value of [0n,1n,255n])assert.equal(api.echo(value),value);assert.throws(()=>api.echo('255'));},{childTimeoutMs:20000});assert.throws(()=>finishCoreAdoptionProducerContext(structuredClone(token)),/copied|foreign/);assert.equal(createWholeScopedCoreAdoptionProducerContext({...state.options,dependencyInputs:{...cargo,manifest:cargo.manifest+'\n'}}),null);
 });
+
+// Historical712 regeneration reads exact old complete sources inside the same
+// existing callbacks. Direct actualCurrent imports above keep actual new mode.
+let retainEnclosingHistory=null;
+function readFileSync(...args){
+ const actual=readCurrentFileSync(...args),[url,encoding]=args;
+ if(encoding!=='utf8'||!(url instanceof URL))return actual;
+ const selected=['../core-adoption-producer-context.mjs','../migrate-core-base64.mjs'].some(path=>new URL(path,import.meta.url).href===url.href);
+ if(!selected)return actual;
+ assert.equal(typeof retainEnclosingHistory,'function','717 source history preparation stays inside the existing callback');
+ return restoreEnclosingNamespaceSource(actual,retainEnclosingHistory);
+}

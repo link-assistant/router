@@ -1,3 +1,4 @@
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
@@ -7,7 +8,7 @@ import {createDeclarativeMacroEngine} from '../declarative-macro-engine.mjs';
 import {originalMacroTrees,originalMacroInvocation,originalMacroTreeText} from '../macro-token-trees.mjs';
 import {loadJsonMacroSourceProof,jsonMacroOriginalSource} from '../json-macro-inputs.mjs';
 
-const root=new URL('../../../',import.meta.url),dependencies=loadJsonMacroSourceProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+const root=new URL('../../../',import.meta.url),dependencies=loadJsonMacroSourceProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
 const original=jsonMacroOriginalSource(dependencies,'serde_json','src/macros.rs');
 const definitions=Object.fromEntries(['json','json_internal','json_unexpected','json_expect_expr_comma'].map(name=>[name,compileDeclarativeMacro(original.source,{name,owner:['serde_json'],...(name==='json_internal'?{maxRules:37}:{})})]));
 function closure(source){

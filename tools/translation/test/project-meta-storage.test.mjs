@@ -7,6 +7,7 @@ import {join,dirname} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {json} from '../translate.mjs';
 import {planProjectMetaStorage,loadProjectMetaStorage,PROJECT_META_STORAGE_LIMITS} from '../project-meta-storage.mjs';
+import {loadProjectMetaStorageWithCompressedConcrete} from '../project-meta-compressed-storage.mjs';
 import {planRegeneration,applyRegenerationPlan} from '../bulk.mjs';
 import {reviewTranslationDraft,reviewGeneratedMethods} from '../../../scripts/review-translation-draft.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
@@ -27,6 +28,16 @@ test('complete components roundtrip original Map BigInt undefined Unicode key or
  assert.equal(wrapper.logical.bytes,Buffer.byteLength(f.original));assert.equal(wrapper.logical.sha256,hash(f.original));assert.equal(loaded.meta.omitted,undefined);assert.deepEqual(loaded.meta.map,{b:{$bigint:'3'}});assert.deepEqual(loaded.meta.middle,{v:{$bigint:'7'}});assert.equal(loaded.meta.runtimeParity,false);
  assert.equal(loadProjectMetaStorage(f.plan.text,{metaPath,targets:f.targets,read:name=>f.files.get(name)}).text,f.original);
  retain('02-complete-special-json-roundtrip',{...f,files:Object.fromEntries(f.files),loaded});
+});
+test('large Unicode components preserve complete bytes and reject noncanonical parent separators',()=>{
+ const payload='Ω😀\\\"{}\n'.repeat(17000),original=json({schema:'tracked-rust-project-semantic-meta-v1',checkedSemanticProgram:{payload},middle:{payload},targetSemanticProgram:{payload}});
+ const storageLimits={fileBytes:Buffer.byteLength(json({payload}))+2048,totalBytes:8*1024*1024};
+ const plan=planProjectMetaStorage(metaPath,original,{storageLimits}),files=new Map(plan.components.map(row=>[row.path,row.text]));
+ assert.ok(original.length>65536);assert.equal(plan.components.length,2);
+ const loaded=loadProjectMetaStorage(plan.text,{metaPath,targets:{meta:metaPath,javascript:'out.mjs',typescript:'out.ts',...plan.targets},read:name=>files.get(name),storageLimits});
+ assert.equal(loaded.text,original);assert.deepEqual(loaded.meta,JSON.parse(original));
+ for(const changed of [' '+original,original.replace(',"middle":',', "middle":'),original.slice(0,-1)])assert.throws(()=>planProjectMetaStorage(metaPath,changed,{storageLimits}),/complete canonical json\(meta\) required/);
+ retain('02-large-complete-unicode-parent-comparison',{original,plan,loaded});
 });
 test('complete storage bytes hash logical digest field ordering and component roles reject tampering',()=>{
  const f=fixture(),failures=[];for(const change of [root=>{root.logical.sha256='0'.repeat(64);},root=>{root.logical.bytes++;},root=>{root.logical.keys.reverse();},root=>{delete root.root.last;},root=>{root.root.extra='forged';},root=>{root.components.reverse();},root=>{root.components[0].bytes++;},root=>{root.components[0].sha256='f'.repeat(64);},root=>{root.components.push(root.components[0]);}]){
@@ -65,7 +76,7 @@ test('real bulk writer lists complete sidecars and regeneration checks missing s
  const f=repository();try{
   const options={root:f.root,sources:['src/lib.rs'],projectMetaStorageLimits:f.storageLimits},paths=Object.values(f.project.targets);for(const name of paths)assert.ok(f.plan.outputs.some(row=>row.path===name));assert.deepEqual(applyRegenerationPlan(f.plan,{check:true}).failures,[]);
   const first=f.project.targets.checkedProgramMeta,second=f.project.targets.targetProgramMeta,extra=metaPath+'.parts/extra.json';unlinkSync(join(f.root,first));f.write(second,'stale');f.write(extra,'{}');const failures=applyRegenerationPlan(f.plan,{check:true}).failures;assert.ok(failures.includes('missing: '+first));assert.ok(failures.includes('stale: '+second));assert.ok(failures.includes('unexpected: '+extra));applyRegenerationPlan(f.plan);assert.deepEqual(applyRegenerationPlan(f.plan,{check:true}).failures,[]);
-  const loaded=loadProjectMetaStorage(readFileSync(join(f.root,metaPath)),{metaPath,targets:f.project.targets,read:name=>readFileSync(join(f.root,name)),storageLimits:f.storageLimits});assert.equal(loaded.text,f.original);retain('06-real-bulk-complete-outputs',{source:f.source,storageLimits:f.storageLimits,project:f.project,outputPlan:f.plan.outputs,failures,loaded});
+  const loaded=loadProjectMetaStorageWithCompressedConcrete(readFileSync(join(f.root,metaPath)),{metaPath,targets:f.project.targets,read:name=>readFileSync(join(f.root,name)),storageLimits:f.storageLimits});assert.equal(loaded.text,f.original);retain('06-real-bulk-complete-outputs',{source:f.source,storageLimits:f.storageLimits,project:f.project,outputPlan:f.plan.outputs,failures,loaded});
  }finally{f.cleanup();}
 });
 test('independent reviewer rehydrates current and exact Git baseline components before all original checks',{timeout:60000},()=>{
