@@ -105,3 +105,24 @@ passing its private contexts to a different original issuer is invalid.
 No Root trial harness or default module is changed here. A separate explicit
 whole-resolver operation could address the later reproofs; it is not silently
 included in this creator's claimed scope or evidence.
+
+The first Root receiving run materialized all eight actual outputs in
+12.943 seconds, then passed seven of eight bulk controls. Its six-file cohort
+passed 29/33 in 161.067 seconds with no deadline breaches; the other three
+failures concern independent source-trace observers. The failed bulk case is
+retained at `/private/tmp/router-layout-check-complete-whole-owner-proof-core-accessor-lifetime-thirtythree-Node-v1/stdout.log.gz`.
+It compared the first observed original builder/profile replay against a later
+call after shared compiler-unit caches had been populated. Missing JSON tape
+rows came from those original generic Rust AST replays.
+
+The source repair keeps both original `Empty` and `Other` inputs and the same
+60,000 ms case. Each observer kind now compares complete legacy and candidate
+workloads in independent fresh processes of the actual parent engine. It
+observes all cold work, a fresh context after that work, and the same cached
+context. No warmup is moved outside observation. Full result, JSON argument and
+return tapes, plus callback-installed Hash argument/digest tapes, cross a
+declared complete JSON wire boundary and receive strict whole-record equality.
+Changing one existing nested callback result must fail that comparison. Four
+sequential child requests have 12,500 ms bounds each and 64 MiB output bounds;
+the original case limit remains 60,000 ms. This repair changes no production
+source and remains unrun until Root qualifies the complete eight-case file.
