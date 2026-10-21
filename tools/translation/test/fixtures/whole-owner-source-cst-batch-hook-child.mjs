@@ -1,5 +1,6 @@
 // Independent cold observation process: both source modules initialize before hooks.
 import {Hash} from 'node:crypto';
+import {encodeCompleteClosedJsonDagHookWire} from './complete-closed-json-dag-hook-wire.mjs';
 import {ownershipCompiler} from '../../js-to-rust/vendor/module-syntax.mjs';
 import {prepareWholeOwnerDeriveCandidate as old} from '../../prepare-whole-owner-derive-candidate.mjs';
 import {prepareWholeOwnerDeriveCandidate as next} from '../../cst-batched-whole-owner-derive-producer.mjs';
@@ -21,4 +22,7 @@ try{
  else define(JSON,'stringify',{...jsonField,value:function(...args){tape.push(apply(json,JSON,[args]));return apply(json,this,args);}});
  ready=wholeOwnerSourceCstBatchReady();try{result=(which==='old'?old:next)();}catch(caught){error={name:caught.name,message:caught.message};}
 }finally{define(Hash.prototype,'update',hashField);define(JSON,'stringify',jsonField);define(allocator,'getSourceFileConstructor',tsField);if(installed&&!restored){tape.push({kind:hook,operation:'restore-finally'});restored=true;}}
-process.stdout.write(json({ready,result,error,tape,hashCount,restored}));
+// Hooks are restored before the complete callback-free observation encoding.
+// Structural references retain every original field/event without a >512MiB
+// expanded JSON string; the existing64MiB/384MiB/1MiB bounds remain unchanged.
+process.stdout.write(encodeCompleteClosedJsonDagHookWire({ready,result,error,tape,hashCount,restored}));
