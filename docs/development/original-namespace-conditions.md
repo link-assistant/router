@@ -105,3 +105,23 @@ Root receiving order:
    affected source equations; never repin an old original to a new afterimage.
 
 No step above was executed by the worker.
+
+The coordinator materialized only the separate receiving copy after complete
+native bindings, both CST phases, full independent inverses and a fresh source
+check passed in22.207 seconds. The three complete receiving files then passed
+all24 cases in Node (84.076 seconds,778,649,600 bytes sampled aggregate peakRSS)
+and Bun (74.539 seconds,951,762,944 bytes). The unchanged original5-second and
+60-second limits all passed. These results include the new8, original parser9
+and literal include7 cases. The physical parser remains unchanged, and actual
+include-owner/type/behavior obligations and application coverage remain open.
+
+The coordinator subsequently connected the original Rust oracle's complete
+`main` body to Cargo discovery in
+[`translation_namespace_source_oracles.rs`](../../rust/tests/translation_namespace_source_oracles.rs).
+The same integration target also covers every boolean/Option boundary, empty
+and reverse-order while-let iteration, and the literal include fixture's own
+all-u8 regression. The Rust package explicitly declares edition2024 and
+Rust1.89; its existing gated CI `cargo test --locked --all-features --verbose`
+discovers this target. These tests remain uncompiled and unexecuted locally.
+They may run only after all eight JavaScript stages pass for the same SHA,
+and a Rust failure must fail CI.
