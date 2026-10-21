@@ -17,6 +17,7 @@ import {collectScopedWrapperSources} from '../js-to-rust/vendor/scoped-helpers.m
 import {toLino} from '../js-to-rust/vendor/ir.mjs';
 import {evaluate} from '../js-to-rust/interpreter.mjs';
 import {buildArtifacts,regenerate} from '../../../scripts/regenerate-js-first.mjs';
+import {historicalNativePortableAssemblerSource} from '../prepare-native-portable-historical-layout.mjs';
 const ROOT=process.env.ROUTER_NATIVE_TS_SOURCE_ROOT??resolve(dirname(fileURLToPath(import.meta.url)),'../../..'),TOOL=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const get=Object.getOwnPropertyDescriptor,define=Object.defineProperty,apply=Reflect.apply,json=JSON.stringify,hash=value=>createHash('sha256').update(value).digest('hex');
 function outcome(action){try{return {value:action()};}catch(error){const field=error&&typeof error==='object'?get(error,'message'):null;return {error:{message:field&&Object.hasOwn(field,'value')?field.value:'non-data failure'}};}}
@@ -43,7 +44,7 @@ function ownState(value){return Reflect.ownKeys(value).map(key=>({key,field:get(
 function restoreOwnState(value,before){const fixed=before.filter(row=>row.field.configurable===false).map(row=>row.key),actual=Reflect.ownKeys(value);for(let at=0;at<actual.length;at++)if(!fixed.includes(actual[at]))Reflect.deleteProperty(value,actual[at]);for(let at=0;at<before.length;at++)define(value,before[at].key,before[at].field);}
 
 test('whole actual corpus outputs equal both complete existing assemblers and every CST association',{timeout:60000},async t=>{
- const sources=nativeSources(),old=await physical(t,beforeAssembler,'js-to-rust/native-portable-artifacts.mjs','before-assembler'),before=outcome(()=>old.module.buildNativePortableArtifacts(sources)),perModule=outcome(()=>old.module.buildNativePortableArtifactsBulk(sources)),current=outcome(()=>buildNativePortableArtifactsCorpusBulk(sources));
+ const sources=nativeSources(),old=await physical(t,historicalNativePortableAssemblerSource(beforeAssembler,retain),'js-to-rust/native-portable-artifacts.mjs','before-assembler'),before=outcome(()=>old.module.buildNativePortableArtifacts(sources)),perModule=outcome(()=>old.module.buildNativePortableArtifactsBulk(sources)),current=outcome(()=>buildNativePortableArtifactsCorpusBulk(sources));
  retain('01-complete-artifact-attempts',{sources,beforeAssembler,beforeAssemblerSha256:hash(beforeAssembler),before:stored(before),perModule:stored(perModule),current:stored(current)});
  assert.ok(before.value);assert.ok(perModule.value);assert.ok(current.value);assert.deepEqual([...current.value.artifacts],[...before.value.artifacts]);assert.deepEqual(current.value.manifest,before.value.manifest);assert.deepEqual(current.value,perModule.value);
  const plan=planned(sources),audit=transportConcreteSyntaxChunks(plan.chunks),rows=audit.chunks.flatMap(chunk=>chunk.rows),canonicalInput=audit.chunks.map(chunk=>chunk.rows.map(row=>row.meta)),canonicalAudit=transportConcreteSyntaxMetaChunks(canonicalInput),canonicalRows=canonicalAudit.chunks.flatMap(chunk=>chunk.rows),observations=[];

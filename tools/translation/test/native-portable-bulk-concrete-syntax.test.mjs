@@ -18,6 +18,7 @@ import {ownershipCompiler} from '../js-to-rust/vendor/module-syntax.mjs';
 import {toLino} from '../js-to-rust/vendor/ir.mjs';
 import {evaluate} from '../js-to-rust/interpreter.mjs';
 import {buildArtifacts} from '../../../scripts/regenerate-js-first.mjs';
+import {historicalNativePortableAssemblerSource} from '../prepare-native-portable-historical-layout.mjs';
 
 const ROOT=process.env.ROUTER_NATIVE_TS_SOURCE_ROOT??resolve(dirname(fileURLToPath(import.meta.url)),'../../..');
 const TOOL=resolve(dirname(fileURLToPath(import.meta.url)),'..'),hash=value=>createHash('sha256').update(value).digest('hex');
@@ -61,7 +62,7 @@ const positive='/** @param {number} n @returns {number} */ export function answe
 const phases=[{phase:'language',id:'native-bulk:plan-original-scoped-cst'},{phase:'language',id:'native-bulk:checked-concrete-batch'},{phase:'language',id:'native-bulk:fresh-authoritative-analysis'},{phase:'repository',id:'native-bulk:package-source-analysis'}];
 
 test('complete native corpus artifacts and every legacy census field equal the full original assembler',{timeout:60000},async t=>{
- const old=await physical(t,beforeAssembler,'assembler'),sources=nativeSources(),beforeAttempt=outcome(()=>old.buildNativePortableArtifacts(sources)),currentAttempt=outcome(()=>buildNativePortableArtifactsBulk(sources));
+ const old=await physical(t,historicalNativePortableAssemblerSource(beforeAssembler,retain),'assembler'),sources=nativeSources(),beforeAttempt=outcome(()=>old.buildNativePortableArtifacts(sources)),currentAttempt=outcome(()=>buildNativePortableArtifactsBulk(sources));
  retain('01-attempts',{sources,beforeError:beforeAttempt.error,currentError:currentAttempt.error});assert.ok(beforeAttempt.value);assert.ok(currentAttempt.value);const before=beforeAttempt.value,current=currentAttempt.value;
  const audit=[];for(const input of sources){const plan=collectScopedWrapperSources(input.source,input.path),batch=transportConcreteSyntaxSources(plan.rows);const observations=batch.rows.map((row,index)=>({index,source:row.source,document:row.document,meta:row.meta,reconstructed:row.document.nodes.slice(1).filter(node=>node[0]!=='group').map(node=>row.document.source.slice(node[2],node[3])).join('')}));audit.push({input,plan,totals:batch.totals,observations});}
  retain('01-complete-cst-audit',audit);for(const module of audit)for(const row of module.observations){assert.equal(row.source,module.plan.rows[row.index].source);assert.equal(row.reconstructed,row.source);assert.deepEqual(JSON.parse(row.meta),row.document);assert.deepEqual(row.document.authority,{type:false,owner:false,executable:false});}
