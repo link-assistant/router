@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {withOwnedRuntimeImportEdges} from '../tools/translation/js-to-rust/owned-core-source.mjs';
 import { createHash } from 'node:crypto';
 import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
@@ -128,7 +129,7 @@ function buildArtifactsSelected(root = ROOT, definitions=false, matrix,ownedBuil
   return artifacts;
 }
 
-export function buildArtifacts(root = ROOT){return buildArtifactsSelected(root);}
+export function buildArtifacts(root = ROOT){return withOwnedRuntimeImportEdges(()=>buildArtifactsSelected(root));}
 export async function buildArtifactsWithOwnedDefinitions(root = ROOT,{matrix=false}={}){const [owned,profiles]=await Promise.all([import('../tools/translation/js-to-rust/owned-core-definition-corpus.mjs'),import('../tools/translation/compilation-matrix.mjs')]);return buildArtifactsSelected(root,true,matrix?profiles.createCompilationMatrix({profiles:profiles.DECLARED_FAMILY_PROFILES}):undefined,owned.buildOwnedCoreDefinitionArtifacts);}
 function applyArtifactsSelected(root,{check=false}={},artifacts,definitionCleanup,matrix=false){
   const changed = [];

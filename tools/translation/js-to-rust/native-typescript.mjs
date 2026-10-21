@@ -1,3 +1,4 @@
+import {ownershipCompilerRuntimeLoad} from './vendor/module-syntax.mjs';
 // Full JavaScript/TypeScript identity lowering through a structured syntax AST.
 // Each meta node records SyntaxKind and children. Only lexical leaf tokens
 // contain text; no source file or function body is an opaque source carrier.
@@ -11,10 +12,7 @@ import {prepareReverseConcreteSource} from './concrete-source.mjs';
 
 const hash = (value) => createHash('sha256').update(value).digest('hex');
 const walkFiles = (root, directory) => existsSync(join(root, directory)) ? readdirSync(join(root, directory), { withFileTypes: true }).flatMap((entry) => entry.isDirectory() ? walkFiles(root, `${directory}/${entry.name}`) : [`${directory}/${entry.name}`]).sort() : [];
-export function loadTypeScript(sourceRoot) {
-  const require = createRequire(join(sourceRoot, 'js/package.json'));
-  return require('typescript');
-}
+export function loadTypeScript(sourceRoot) { return ownershipCompilerRuntimeLoad(sourceRoot); }
 
 export function sourceModules(root) {
   return [...walkFiles(root, 'js/src'), ...walkFiles(root, 'js/portable'), 'js/index.js', 'js/testing.js'].filter((path) => /\.(?:mjs|js)$/u.test(path)).sort();
