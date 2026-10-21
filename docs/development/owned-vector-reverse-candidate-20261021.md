@@ -34,13 +34,19 @@ The fresh function must have zero parameters, an owned Vec return, a closed
 bool/fixed primitive element with the actual original name/width/signedness,
 and an accepted qualified owned-vector list body. Its full physical Rust parent,
 source hash, exact native module/function view and source span remain retained.
+The module view comes from that same fresh result's source-scope row, joined by
+the physical source, complete qualified module path and fresh source hash.
+This preserves external-file prefixes and nested inline modules; a new local
+file-view capture would lose the external module prefix. A same-named function
+in a different module cannot supply the selected original signature.
 The same actual JS/TS pair undergoes existing whole CST transport, native type
 erasure, whole executable-token/AST equality and lexical symbol checking. A new
 JavaScript list may differ from the original forward body, but every edited
 literal must fit the original actual element profile.
 
 Actual forward programs, type objects and callable carriers stay local to this
-invocation. The forward result is released in `finally`; the reverse traversal's
+invocation. The forward result is released in `finally`; failed capture also
+clears its partial profile map. The reverse traversal's
 profile map is cleared in `finally` before any analysis returns. Only detached
 source/scalar/signature DATA enters checked metadata. Every later serialization,
 read and emission uses the original private reissuance checks and creates a new
@@ -72,8 +78,11 @@ emission, independent evaluator and original source checks. Generated modules
 must come from the actual producer, never hand editing.
 
 Root must first obtain the shared resource lease and run the actual producer
-with the installed compiler, then qualify the complete new test file under
-Node and Bun with its six original 60,000 ms declarations:
+with that source root's actual installed compiler, then qualify both complete
+new test files under Node and Bun. The original six 60,000 ms declarations
+remain untouched; one additional 60,000 ms module-identity control checks an
+external file's nested inline module, a competing same-named root function,
+full meta reissuance and fresh evaluator lists:
 
 ```sh
 node tools/translation/js-to-rust/prepare-owned-vector-candidate.mjs --write
