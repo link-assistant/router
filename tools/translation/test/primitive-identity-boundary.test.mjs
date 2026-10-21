@@ -1,0 +1,20 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {translateProject} from '../project.mjs';
+import {fixedBounds,rustFixedType} from '../checked-types.mjs';
+import {preparePrimitiveIdentityBoundary,composePrimitiveIdentityBoundary} from '../prepare-primitive-identity-boundary.mjs';
+import {prepareOriginalPrimitiveIdentityBoundary,originalPrimitiveIdentityParameterGuard} from '../extensions/primitive-identity-boundary.mjs';
+import {verifyTypedTargets} from './typed-targets.mjs';
+const names=['i','u'].flatMap(prefix=>[8,16,32,64,128].map(bits=>prefix+bits));
+function identity(node){if(!node||typeof node!=='object')return null;if(node.k==='routerPrimitiveIdentityFrom')return node;for(const value of Object.values(node))for(const child of Array.isArray(value)?value:[value]){const found=identity(child);if(found)return found;}return null;}
+test('source boundary complete HostEmitter equation follows actual native methods with complete parent and inverse',{timeout:60000},()=>{
+ const plan=preparePrimitiveIdentityBoundary();assert.equal(plan.files.length,2);for(const row of plan.files){assert.equal(row.current,row.after);assert.ok(row.completeNativeAstCopy);assert.equal(row.nativeCopies.length,2);assert.ok(row.nativeCopies.every(copy=>copy.completeNativeAstCopy));assert.equal(row.inverse,row.before);assert.ok(row.stages.every(stage=>stage.completeInverse));}assert.equal(plan.files[0].selectedNativeInsertions.length,4);const prior=Object.fromEntries(plan.files.map(row=>[row.path,{after:row.before}])),joined=composePrimitiveIdentityBoundary(prior);assert.equal(joined.layers.length,1);assert.throws(()=>composePrimitiveIdentityBoundary({[plan.files[0].path]:{after:'forged'}}),/preceding/);assert.equal(plan.ordinaryFixedRangeErrorsUnchanged,true);assert.equal(plan.semanticAuthority,false);
+});
+test('whole checked identity From validates all ten fixed input domains while ordinary arguments and arithmetic retain RangeError',{timeout:60000},async()=>{
+ const source=names.map(name=>`pub fn identity_${name}(value:${name})->${name}{${name}::from(value)}`).join(' ')+' pub fn plain(value:u8)->u8{value}pub fn add(value:u8)->u8{value+1}pub fn computed(value:u8)->u8{u8::from(value+1)}',result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});assert.deepEqual(result.meta.refused,[]);
+ await verifyTypedTargets(result,api=>{for(const name of names){const {min,max}=fixedBounds(rustFixedType(name));for(const value of new Set([min,min+1n,0n,1n,max-1n,max]))assert.equal(api['identity_'+name](value),value);for(const value of [min-1n,max+1n,0,1,'1',true,null,{}])assert.throws(()=>api['identity_'+name](value),TypeError);}assert.equal(api.plain(255n),255n);assert.equal(api.add(254n),255n);assert.equal(api.computed(254n),255n);for(const name of ['plain','add','computed'])assert.throws(()=>api[name](256n),RangeError);for(const name of ['add','computed'])assert.throws(()=>api[name](255n),RangeError);assert.throws(()=>api.plain(1),TypeError);},{childTimeoutMs:30000});
+});
+test('a fabricated source identity body or caller proof cannot install the specialized boundary',{timeout:60000},()=>{
+ const source='pub fn actual(value:u8)->u8{u8::from(value)}',result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source}),body=identity(result.meta.checkedSemanticProgram);assert.ok(body);const emitter={state:{ident:value=>value,localReserved:()=>[]},valueGuard(){throw Error('must not reach guard');}},entry={params:[{name:body.value.name,type:body.value.type}],body};
+ for(const mutate of [copy=>copy.sourcePrimitiveIdentityFromBody.digest='forged',copy=>copy.sourceCallerTraitScope.digest='forged',copy=>copy.constEligible=true]){const copy=structuredClone(body);mutate(copy);assert.throws(()=>prepareOriginalPrimitiveIdentityBoundary(emitter,{...entry,body:copy}),TypeError);assert.equal(originalPrimitiveIdentityParameterGuard(emitter,{name:body.value.name,type:body.value.type}),null);}
+});

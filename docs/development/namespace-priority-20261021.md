@@ -334,3 +334,61 @@ afterimages preserve the earlier programs. Five additional complete 60000 ms
 controls are drafted separately. The original ten and the previous eight
 controls remain unchanged. No full runtime or test file was executed by this
 worker; Root must rerun the full receiving batch before passing claims.
+
+
+Final receiving forwarding and argument-boundary repairs
+
+Root's complete Node SzXjD4 batch ran 61 cases: 59 passed, 2 failed, with no
+deadline breaches. The original 15000 ms Engine closure and all new source ABI
+and documentation controls passed. Both complete remaining failure blocks were
+read from the retained original stdout gzip. No original tests are changed.
+
+The source conversion failure is a real forwarding defect. The three source
+relocation/evidence tables in project, translate and source-links omit the
+opaque sourceConversionScope payload. New nested original Engine producer
+spans are therefore rewritten as executable syntax coordinates, and the
+private issuer correctly rejects the changed digest. The repair preserves
+that entire original proof payload in all three passes, while executable spans
+continue to relocate normally. Public copied or altered proofs still have to
+match their actual private issuance; the table key itself grants no authority.
+The complete project BEFORE is Root's checkedSource-after program a4811463bd40b9258f4dc2fb7174b6d4bde003061abfca8ebf7321ba06e5f3a3.
+The producer composes after lifetime then checkedSource, preserving both birth
+source equations and complete native/CST originals and inverses.
+
+The second failure newly reaches the original emitted targets: the original
+external-source test expects TypeError for invalid host inputs to an exact
+primitive identity From function. Existing whole fixtures explicitly require
+RangeError for ordinary fixed argument boundaries (including private native
+proof JSON, scalar-result walks, compact serde fragment storage and reuse
+translation) and for arithmetic overflow. A global error-class change would
+break that established contract. Existing generic primitive identity From
+fixtures require invalid-domain rejection without choosing its error class.
+
+The new narrow source-selected boundary uses the existing Rust-value schema
+validator for a whole direct, one-parameter fixed identity From function.
+It requires the actual issued primitive identity body and original caller
+scope, the same checked type/primitive identity for source parameter, receiver
+and result, a direct parameter variable and its exact emitted renamed binder.
+The schema validates primitive BigInt representation and complete signed/unsigned
+width bounds before executing that source identity. Invalid encoded Rust values
+are TypeError at this source-checked API boundary; no RangeError is caught or
+rewritten, and there is no Rust arithmetic operation on that path. This is a
+host-boundary contract choice, not a claim that Rust accepts invalid u8 values.
+Plain fixed identities, computed/nested conversions, general fixed inputs and
+arithmetic retain the existing RangeError guards. No source spelling, package,
+function name or test identity selects the new validator. The per-emitter
+function selection is restored in finally and retained in no source/verdict
+cache across translations.
+
+A separate complete HostEmitter source producer applies four native-AST-position
+insertions to Root's actual current matches/vector Host parent da5d2e4e39d6f86c1808b43170326e70e9f1cfbf737f8f4527bf18907c6be2a1.
+The worker does not overwrite that older-prerequisite worktree's project/Host
+program with Root's unrelated preceding layers; both exact final programs are
+reviewable source equations for Root's receiving publication. Receiving source
+publication must apply these producers before runtime tests. All five complete
+original/after programs passed native TypeScript 5.9.3 AST copy, serialized/
+reparsed language then repository CST substitutions and complete inverses.
+Five separate complete 60000 ms controls cover forwarding, forgeries, all ten
+fixed widths, ordinary boundaries and overflow; their native grammar passed.
+No full runtime or test case was run by this worker, and no final green batch,
+native parity or performance improvement is claimed before Root qualification.

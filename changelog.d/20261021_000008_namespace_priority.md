@@ -70,3 +70,13 @@ project manifest/lock strings during each standard-unit ABI qualification,
 repairing the separate Hash observer failure. Seven complete native AST/CST
 source copies and inverses passed; five new controls and the full receiving
 runtime batch remain unrun by this worker.
+
+
+Preserve the original opaque sourceConversionScope through all three syntax
+relocation/evidence tables, repairing private caller-proof forwarding. Add a
+separate genuine source-selected Rust-value boundary for whole direct fixed
+identity From functions; keep ordinary fixed argument and arithmetic RangeError
+contracts. Retain Root's complete lifetime/checkedSource and matches/vector
+parents as exact source equations and provide additive publication producers.
+Five complete native AST/CST source copies and inverses passed; five new controls
+and all original runtime workloads await Root's receiving qualification.
