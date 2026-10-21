@@ -46,11 +46,16 @@ export function encodeCompleteClosedJsonDagHookWire(value){
  function visit(item,depth){
   if(depth>512)fail();item=normalized(item);if(item===OMIT)fail();
   if(item===null)return node(['z']);if(typeof item==='boolean')return node(['b',item]);if(typeof item==='number')return finite(item)?node(['n',objectIs(item,-0)?0:item]):node(['z']);if(typeof item==='string')return node(['s',intern(item)]);
-  if(typeof item!=='object'||proxy(item)||boxed(item)||nativeError(item))fail();if(active.has(item))fail();if(memo.has(item))return memo.get(item);if(keys(item).includes('stack'))fail();const bytes=isBytes(item),buffer=bytes&&prototype(item)===BUFFER;domain(item,buffer);active.add(item);
+  if(typeof item!=='object'||proxy(item)||boxed(item)||nativeError(item))fail();if(active.has(item))fail();if(memo.has(item))return memo.get(item);
+  // No input callback runs in this closed operation. Retain one complete own
+  // key census for stack refusal, exact byte shape and ordered object fields.
+  // Numeric typed-array key names can otherwise allocate twice per full byte
+  // payload; this list remains local to this visit and is never authority.
+  const names=keys(item);if(names.includes('stack'))fail();const bytes=isBytes(item),buffer=bytes&&prototype(item)===BUFFER;domain(item,buffer);active.add(item);
   try{
    let result;
    if(bytes){
-    const length=apply(lengthOf,item,[]),storage=apply(bufferOf,item,[]);if(!buffer&&prototype(item)!==BYTE||isShared(storage)||length>LIMIT*3/4||keys(item).length!==length)fail();
+    const length=apply(lengthOf,item,[]),storage=apply(bufferOf,item,[]);if(!buffer&&prototype(item)!==BYTE||isShared(storage)||length>LIMIT*3/4||names.length!==length)fail();
     if(buffer){const type=intern('type'),name=node(['s',intern('Buffer')]),data=intern('data'),contents=byteNode('a8',item);result=node(['o',[[type,name],[data,contents]]]);}
     else result=byteNode('o8',item);
    }else if(isView(item))fail();
@@ -59,7 +64,7 @@ export function encodeCompleteClosedJsonDagHookWire(value){
     for(let at=0;at<length.value;at++){let field;for(const owner of parents){field=descriptor(owner,''+at);if(field)break;}if(field&&!own(field,'value'))fail();let value=normalized(field?field.value:undefined);if(value===OMIT)value=null;values.push(value);if(!isByte(value))allBytes=false;}
     result=allBytes?byteNode('a8',values):node(['a',values.map(value=>visit(value,depth+1))]);
    }else{
-    const names=keys(item);if(names.includes('stack')||names.length>EDGES)fail();const rows=[];let allBytes=true;
+    if(names.length>EDGES)fail();const rows=[];let allBytes=true;
     for(const key of names){if(typeof key!=='string')continue;const field=descriptor(item,key);if(!field)fail();if(!field.enumerable)continue;if(!own(field,'value'))fail();const value=normalized(field.value);if(value===OMIT)continue;if(key!==''+rows.length||!isByte(value))allBytes=false;rows.push([key,value]);}
     result=allBytes?byteNode('o8',rows.map(row=>row[1])):node(['o',rows.map(([key,value])=>[intern(key),visit(value,depth+1)])]);
    }
