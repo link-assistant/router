@@ -84,6 +84,7 @@ resource lease, are:
 
 ```sh
 node tools/translation/prepare-whole-owner-derive-candidate.mjs --write
+node tools/translation/prepare-whole-owner-resolver-candidate.mjs --write
 node tools/translation/prepare-whole-owner-derive-candidate.mjs --check
 node --test tools/translation/test/whole-owner-derive-candidate.test.mjs
 ```
@@ -105,6 +106,12 @@ passing its private contexts to a different original issuer is invalid.
 No Root trial harness or default module is changed here. A separate explicit
 whole-resolver operation could address the later reproofs; it is not silently
 included in this creator's claimed scope or evidence.
+
+The separate resolver draft introduces a generated private bootstrap dependency
+for the additive operation. Run its producer after the original eight-output
+producer and before importing the candidate. The eight original candidate
+outputs and receiving cases remain intact; the resolver's additional three
+outputs and six controls have their own source and receiving obligations.
 
 The first Root receiving run materialized all eight actual outputs in
 12.943 seconds, then passed seven of eight bulk controls. Its six-file cohort
