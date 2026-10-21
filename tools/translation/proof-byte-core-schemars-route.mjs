@@ -1,7 +1,7 @@
 // Source/declaration joins only. Every runtime route still issues and checks its
 // own private original proof. No context, output or semantic verdict is copied.
 import {createHash} from 'node:crypto';
-import {resolve,dirname} from 'node:path';
+import {resolve,dirname,relative,sep} from 'node:path';
 const BASE='tools/translation/',DISPATCH='./schemars-enclosing-output-dispatch.mjs',TEMPLATE='whole-owner-enclosing-context-candidate.mjs';
 const PINS={
  'schemars-enclosing-output-dispatch.mjs':'0111154d7dc2b611882051cbd0053bbd22b42e0e701b965a417671031c558000',
@@ -18,7 +18,7 @@ function parse(ts,path,source){const file=ts.createSourceFile(path,source,ts.Scr
 function imports(ts,file,path){return file.statements.filter(node=>ts.isImportDeclaration(node)&&node.moduleSpecifier.text===path);}
 function nativeJoins(ts,root,sources){
  const rows=new Map(sources.map(row=>[resolve(root,row.path),row.source])),files=new Map([...rows].map(([path,source])=>[path,parse(ts,path,source)])),options={allowJs:true,noLib:true,target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.NodeNext,moduleResolution:ts.ModuleResolutionKind.NodeNext},host={
-  getSourceFile:path=>files.get(resolve(path)),getDefaultLibFileName:()=>'',writeFile:()=>{},getCurrentDirectory:()=>root,getDirectories:()=>[],directoryExists:path=>[...rows.keys()].some(name=>name.startsWith(resolve(path)+'/')),fileExists:path=>rows.has(resolve(path)),readFile:path=>rows.get(resolve(path)),getCanonicalFileName:path=>path,useCaseSensitiveFileNames:()=>true,getNewLine:()=> '\n',
+  getSourceFile:path=>files.get(resolve(path)),getDefaultLibFileName:()=>'',writeFile:()=>{},getCurrentDirectory:()=>root,getDirectories:()=>[],directoryExists:path=>{const base=resolve(path),prefix=base.endsWith(sep)?base:base+sep;return [...rows.keys()].some(name=>name.startsWith(prefix));},fileExists:path=>rows.has(resolve(path)),readFile:path=>rows.get(resolve(path)),getCanonicalFileName:path=>path,useCaseSensitiveFileNames:()=>true,getNewLine:()=> '\n',
  },program=ts.createProgram([...rows.keys()],options,host),checker=program.getTypeChecker(),evidence=[];
  function join(name,path,bindings){
   const file=program.getSourceFile(resolve(root,BASE+name)),declaration=one(imports(ts,file,path),name+' import '+path),target=resolve(dirname(file.fileName),path),module=checker.getSymbolAtLocation(declaration.moduleSpecifier);if(!module||!module.declarations?.some(node=>resolve(node.getSourceFile().fileName)===target))fail('actual imported module has foreign source');
@@ -26,7 +26,7 @@ function nativeJoins(ts,root,sources){
   for(const [requested,local]of bindings){
    const spec=one([...specifiers].filter(node=>(node.propertyName??node.name).text===requested&&node.name.text===local),'actual local import '+local),symbol=checker.getSymbolAtLocation(spec.name),output=one(exported.filter(row=>row.name===requested),'actual exported '+requested),actual=output.flags&ts.SymbolFlags.Alias?checker.getAliasedSymbol(output):output;
    if(!symbol||!(symbol.flags&ts.SymbolFlags.Alias)||checker.getAliasedSymbol(symbol)!==actual||!actual.declarations?.length||actual.declarations.some(node=>resolve(node.getSourceFile().fileName)!==target))fail('actual native private issuer/export identity differs');
-   evidence.push({source:BASE+name,import:path,requested,local,target:target.slice(root.length+1),declarations:actual.declarations.map(node=>({path:node.getSourceFile().fileName,span:[node.getStart(),node.end],source:node.getText()})),actualNativeModuleSymbol:true});
+   evidence.push({source:BASE+name,import:path,requested,local,target:relative(root,target).split(sep).join('/'),declarations:actual.declarations.map(node=>({path:node.getSourceFile().fileName,span:[node.getStart(),node.end],source:node.getText()})),actualNativeModuleSymbol:true});
   }
  }
  join(TEMPLATE,DISPATCH,NAMES.map(name=>[name,name]));
@@ -44,14 +44,14 @@ export function prepareSchemarsCoreDispatcherRoute({root,ts,input,mapping}){
  const sources=Object.entries(PINS).map(([name,pin])=>{const source=input(BASE+name);if(hash(source)!==pin)fail('complete actual source differs from received dispatcher/private prover: '+name);return {path:BASE+name,source,sha256:pin};});
  const deriveSource=input(BASE+'derive-footprints.mjs');sources.push({path:BASE+'derive-footprints.mjs',source:deriveSource,sha256:hash(deriveSource)},{path:BASE+TEMPLATE,source:template,sha256:hash(template)});input(BASE+'proof-byte-core-schemars-route.mjs');
  const nativeBindings=nativeJoins(ts,root,sources);mapping.set(DISPATCH,DISPATCH);
- return {schema:'original-Core-Schemars-route-source-v1',mode:'same-original-private-dispatcher',module:DISPATCH,source:BASE+'schemars-enclosing-output-dispatch.mjs',sha256:PINS['schemars-enclosing-output-dispatch.mjs'],sources,nativeBindings,prerequisites:sources.map(({path,sha256})=>({path,sha256})),allRuntimePrivateProofChecksRetained:true,foreignProofsRebound:false,sourceAuthority:false};
+ return {schema:'original-Core-Schemars-route-source-v1',mode:'same-original-private-dispatcher',root,module:DISPATCH,source:BASE+'schemars-enclosing-output-dispatch.mjs',sha256:PINS['schemars-enclosing-output-dispatch.mjs'],sources,nativeBindings,prerequisites:sources.map(({path,sha256})=>({path,sha256})),allRuntimePrivateProofChecksRetained:true,foreignProofsRebound:false,sourceAuthority:false};
 }
 export function completeSchemarsCoreEnclosingRoutes(enclosing,nativeIssuerBindings,selection){
  const dispatcher=enclosing.selection.imports.filter(row=>row.original===DISPATCH||row.target===DISPATCH);
  if(selection.mode==='legacy'){if(dispatcher.length)fail('unexpected dispatcher without its original source closure');return enclosing.selection.imports.filter(row=>row.target.includes('proof-byte-whole-owner-'));}
  if(selection.mode!=='same-original-private-dispatcher'||selection.module!==DISPATCH||dispatcher.length!==1||dispatcher[0].original!==DISPATCH||dispatcher[0].target!==DISPATCH||dispatcher[0].bindings.length!==NAMES.length||JSON.stringify(dispatcher[0].bindings.map(row=>[row.imported,row.requested,row.local]))!==JSON.stringify(NAMES.map(name=>[name,name,name])))fail('one exact same-module dispatcher replacement required');
  if(enclosing.before!==one(selection.sources.filter(row=>row.path===BASE+TEMPLATE),'complete captured enclosing template').source)fail('complete copied enclosing issuer differs from its actual original template');
- const joined=one(nativeIssuerBindings.filter(row=>row.path===enclosing.path&&row.original===DISPATCH&&row.target===selection.source),'copied dispatcher native module join');if(joined.actualNativeModuleSymbol!==true||JSON.stringify(joined.bindings.map(binding=>[binding.imported,binding.requested,binding.local]))!==JSON.stringify(NAMES.map(name=>[name,name,name])))fail('actual dispatcher module identity absent');const source=one(selection.sources.filter(row=>row.path===selection.source),'complete captured dispatcher source');
- for(const binding of joined.bindings){if(!NAMES.includes(binding.imported)||binding.requested!==binding.imported||binding.local!==binding.imported||binding.declarations.length!==1)fail('complete copied dispatcher binding differs');const declaration=binding.declarations[0];if(!declaration.path.endsWith('/'+selection.source)||source.source.slice(...declaration.span)!==declaration.source)fail('complete original dispatcher export declaration differs');}
+ const joined=one(nativeIssuerBindings.filter(row=>row.path===enclosing.path&&row.original===DISPATCH&&row.target.split(sep).join('/')===selection.source),'copied dispatcher native module join');if(joined.actualNativeModuleSymbol!==true||JSON.stringify(joined.bindings.map(binding=>[binding.imported,binding.requested,binding.local]))!==JSON.stringify(NAMES.map(name=>[name,name,name])))fail('actual dispatcher module identity absent');const source=one(selection.sources.filter(row=>row.path===selection.source),'complete captured dispatcher source');
+ for(const binding of joined.bindings){if(!NAMES.includes(binding.imported)||binding.requested!==binding.imported||binding.local!==binding.imported||binding.declarations.length!==1)fail('complete copied dispatcher binding differs');const declaration=binding.declarations[0];if(resolve(declaration.path)!==resolve(selection.root,selection.source)||source.source.slice(...declaration.span)!==declaration.source)fail('complete original dispatcher export declaration differs');}
  return enclosing.selection.imports.filter(row=>row.target.includes('proof-byte-whole-owner-')||row===dispatcher[0]);
 }
