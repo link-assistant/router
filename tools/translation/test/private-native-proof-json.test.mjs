@@ -147,7 +147,7 @@ async function shortStringFixture(t,retain){
  const folder=mkdtempSync(join(tmpdir(),'router-native-proof-short-string-'));t.after(()=>rmSync(folder,{recursive:true,force:true}));
  const before=readFileSync(sourceURL,'utf8'),steps=[];let source=before;
  const step=(old,next)=>{assert.equal(source.split(old).length,2);const previous=source;source=source.replace(old,()=>next);assert.equal(source.replace(next,()=>old),previous);steps.push({before:old,after:next});};
- for(const name of ['private-frozen-json.mjs','original-json-intrinsics.mjs','original-lexing-intrinsics.mjs'])step("from './"+name+"'","from '"+new URL('../'+name,import.meta.url).href+"'");
+ for(const name of ['private-frozen-json.mjs','original-json-intrinsics.mjs',"guarded-proof-lexing-intrinsics.mjs"])step("from './"+name+"'","from '"+new URL('../'+name,import.meta.url).href+"'");
  step('  const special=','  receivingScans++;const special=');
  step("(binaryArgs[0]=value,binaryArgs[1]=count,apply(mapSet,quotedCosts,binaryArgs));quotedEntries++;","(binaryArgs[0]=value,binaryArgs[1]=count,apply(mapSet,quotedCosts,binaryArgs));quotedEntries++;receivingWrites++;");
  step('   if(selected)return apply(stringifyField.value,jsonOwner,[value]);','   if(selected){receivingNative++;return apply(stringifyField.value,jsonOwner,[value]);}');

@@ -132,11 +132,11 @@ json-source-f64-borrows.test.mjs
 ```
 
 Preserve all cases and original deadlines in both Node and Bun, then complete
-the same-SHA JavaScript gate and parity obligations before Rust. This draft
-contains source-only changes. Static diff and file/case bounds passed; all new
-native production, controllers, seven cases, old receiving files, Node/Bun,
-strict targets and Rust remain unrun. No source/owner/semantic/executable gain
-is claimed. The stock Git/filesystem/crypto producer requires an exclusive
+the same-SHA JavaScript gate and parity obligations before Rust. The initial
+worker draft had source-only checks. The receiving checks below supersede
+that draft status; original receiving workloads, strict targets, complete parity
+and Rust verification remain separate obligations. No source/owner/semantic/
+executable gain is claimed. The stock Git/filesystem/crypto producer requires an exclusive
 source freeze; these checks are not an atomic-filesystem or hostile-hook total
 attestation.
 The receiving integration on 2026-10-21 generated and independently reviewed
