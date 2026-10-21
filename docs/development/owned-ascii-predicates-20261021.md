@@ -76,8 +76,36 @@ Neither test file has run in the worker. Only bounded native TS grammar/AST-copy
 and CST source checks have passed so far. Root owns runtime qualification and
 the mandatory final Host class-birth, source bank and export refreshes.
 
-JS/TS runtime-import recognition for reverse translation of this new symbol is
-currently unimplemented. The draft therefore adds a forward compatibility
-operation, with an explicit reverse synchronization obligation. It does not
-establish strict parity, whole-project coverage, native invocation conformance
-or complete bidirectional synchronization.
+The follow-up reverse draft checks the actual native TypeScript import symbol,
+complete canonical runtime/declaration closure, full owned Rust facade and leaf,
+and current receiving Cargo sources. It accepts only this fixed new runtime
+operation. Unknown exports, namespace calls, shadowing and nontransparent
+reexports keep their refusals. `ownedCoreRuntimeSources` retains its previous
+output; `ownedCoreAsciiRuntimeSources` adds the separate explicit closure. With
+separate JS/TS roots, its runtime counterparts and declarations are retained at
+both roots and checked against the same canonical bytes.
+
+Inputs are the existing owned reverse profile's declared scalar-text inputs or
+actual static literals. Static aliases have an additional private fact in the
+current lexical traversal; a null public root alone cannot establish a loan.
+Existing string-return and conditional loan rules are unchanged. Owned text
+temporaries and unrelated parameter types remain outside this new operation.
+Rust projection binds both arguments in order and uses the qualified owned Str
+alias in ASCII-using signatures, preserving the independently checked result
+lifetime. Meta decoding reconstructs every original source/symbol/loan relation.
+
+The separate six-case reverse file covers independent JS and native TS source
+entries, complete source/CST/meta roundtrips, strict TS targets, split roots,
+actual named reexports, static/input aliases, invalid ABI and lone-surrogate
+refusals, changed complete sources and forged meta. The authored
+`translation_core_ascii_reverse_oracle.rs` witness is registered in both owned
+corpus producers. Its Rust module comes from the actual reverse pipeline and is
+kept outside application coverage counts. Its shared scalar cases and all 128
+ASCII hexadecimal results are CI-only.
+
+The reverse source equations retain four complete before/after programs with
+actual TS 5.9.3 AST copies, native grammar and ordered CST/inverse checks. Worker
+verification is limited to those bounded source checks; receiving runtime,
+strict target execution, witness generation and Rust remain unrun. This does
+not establish strict parity, whole-project coverage, native invocation
+conformance or complete bidirectional synchronization.

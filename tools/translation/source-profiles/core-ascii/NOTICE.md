@@ -5,3 +5,8 @@ the facade after vector/matches and Host after the identity boundary.
 `application.json.gz` retains complete production modules, crate root and Cargo
 inputs for source/oracle review. These packets confer no native, type, ownership
 or executable authority. No Rust tool was executed to produce them.
+
+`reverse-originals.json.gz` and `reverse-afterimages.json.gz` retain the complete
+three existing reverse programs and the new finite ABI helper's source equation.
+Their native AST/CST checks qualify source copies only; runtime and native Rust
+conformance require independent receiving and CI qualification.

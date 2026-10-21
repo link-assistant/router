@@ -20,6 +20,7 @@ import {captureOriginalExternalTraitPackage,originalExternalTraitPackageInputs} 
 import {transportConcreteSyntaxSource} from '../concrete-syntax-meta.mjs';
 import {ownedJsonReaderOperation,ownedJsonOptionalPayload,ownedJsonBorrowed} from './owned-json-source.mjs';
 import {ownedJsonOptionalReaderOperation} from './owned-json-source.mjs';
+import {ownedAsciiOperation} from './owned-ascii-source.mjs';
 
 const contexts=new WeakMap(),traversals=new WeakMap();
 const fail=message=>{throw new TypeError('Owned reverse source: '+message);};
@@ -71,6 +72,21 @@ export function ownedCoreRuntimeSources(runtimeRoot='runtime',declarationRoot=ru
  for(const [name,source]of assets)if(/LICENSE|NOTICE/iu.test(name))rows.push({path:runtimeRoot+'/'+name,source});
  assertReverseConcreteSourceHost();return rows.sort((a,b)=>a.path.localeCompare(b.path));
 }
+// Separate additive closure. The original runtime-source API and old contexts
+// do not acquire new required files or a broader string-iterator operation set.
+export function ownedCoreAsciiRuntimeSources(runtimeRoot='runtime',declarationRoot=runtimeRoot){
+ ownedSourcePath(runtimeRoot);ownedSourcePath(declarationRoot);assertReverseConcreteSourceHost();const ts=ownershipCompiler(),assets=hostRuntimeAssets(),rows=[],seen=new Set();
+ function visit(name){
+  if(seen.has(name))return;if(seen.size>=128||name.includes('/')||!name.endsWith('.mjs')&&!name.endsWith('.mts'))fail('ASCII runtime closure bounds');seen.add(name);
+  const source=assets.get(name);if(typeof source!=='string')fail('unregistered ASCII materialized asset: '+name);const base=name.endsWith('.mts')?declarationRoot:runtimeRoot,path=base+'/'+name,file=parsed(ts,path,source);rows.push({path,source});if(declarationRoot!==runtimeRoot)rows.push({path:(name.endsWith('.mts')?runtimeRoot:declarationRoot)+'/'+name,source});
+  for(const node of file.statements)if((ts.isImportDeclaration(node)||ts.isExportDeclaration(node))&&node.moduleSpecifier){
+   const specifier=node.moduleSpecifier.text;if(specifier==='node:util'||specifier==='node:crypto')continue;
+   const target=relative(path,specifier);if(posix.dirname(target)!==base)fail('ASCII runtime closure escape');visit(posix.basename(target));
+  }
+ }
+ for(const name of ['string-iterator-runtime.mjs','string-iterator-runtime.d.mts'])visit(name);
+ assertReverseConcreteSourceHost();return rows.sort((a,b)=>a.path.localeCompare(b.path));
+}
 function rustEdge(files){
  const source=files.get('src/lib.rs');if(typeof source!=='string')fail('complete actual Rust root required');
  const views=captureSourceModuleViews({source,sourcePath:'src/lib.rs'}),items=originalModuleViewItems(views.views[0],source);
@@ -111,6 +127,7 @@ export function createOwnedCoreSourceContext(input){
  for(const row of data.files){exactKeys(row,['path','source']);ownedSourcePath(row.path);if(typeof row.source!=='string'||files.has(row.path))fail('duplicate or invalid source');bytes+=Buffer.byteLength(row.source);if(bytes>16777216)fail('complete input byte budget');files.set(row.path,row.source);}
  const expected=ownedCoreRuntimeSources(data.runtimeRoot,data.declarationRoot);
  for(const row of expected)if(files.get(row.path)!==row.source)fail('registered materialized runtime differs: '+row.path);
+ if(files.has(data.runtimeRoot+'/string-iterator-runtime.mjs'))for(const row of ownedCoreAsciiRuntimeSources(data.runtimeRoot,data.declarationRoot))if(files.get(row.path)!==row.source)fail('registered ASCII materialized runtime differs: '+row.path);
  const edge=rustEdge(files);
  const receipts=data.files.map(row=>({path:row.path,source:row.source,sha256:digest(row.source)}));
  const handle=Object.freeze({schema:'owned-core-source-context-v1'});
@@ -120,6 +137,7 @@ export function requireOwnedCoreSourceCurrent(handle){
  assertReverseConcreteSourceHost();const state=contexts.get(handle);if(!state)fail('unissued source context');
  for(const row of state.receipts)if(digest(row.source)!==row.sha256||state.files.get(row.path)!==row.source)fail('source receipt differs');
  for(const row of ownedCoreRuntimeSources(state.data.runtimeRoot,state.data.declarationRoot))if(state.files.get(row.path)!==row.source)fail('current runtime differs');
+ if(state.files.has(state.data.runtimeRoot+'/string-iterator-runtime.mjs'))for(const row of ownedCoreAsciiRuntimeSources(state.data.runtimeRoot,state.data.declarationRoot))if(state.files.get(row.path)!==row.source)fail('current ASCII runtime differs');
  rustEdge(state.files);if(state.files.has('src/translation_core/base64.rs')&&state.files.get('src/translation_core/base64.rs')!==ROUTER_CORE_BASE64_SOURCE)fail('current base64 leaf differs');assertReverseConcreteSourceHost();
 }
 /** Detached full original data, used to reconstruct private authority on read. */
@@ -159,9 +177,14 @@ function pairedFunction(handle,path,declaration,analysis){
 }
 function originalImportTarget(from,specifier,analysis,state){
  const target=relative(from,specifier);
+ // A direct native TypeScript entry has no JavaScript pairing frame. This
+ // new endpoint still requires its complete, byte-equal canonical counterpart.
+ if(analysis.file.scriptKind===analysis.ts.ScriptKind.TS&&posix.dirname(target)===state.data.declarationRoot&&posix.basename(target)==='string-iterator-runtime.mjs'){
+  const runtime=state.data.runtimeRoot+'/string-iterator-runtime.mjs';if(!state.files.has(target)||state.files.get(target)!==state.files.get(runtime))fail('direct TypeScript ASCII runtime counterpart differs');return runtime;
+ }
  // A paired TS import resolves its genuine .d.mts in declarationRoot. Its
  // fixed runtime counterpart remains the independently checked JS callee.
- if(traversals.get(analysis)?.paired&&posix.dirname(target)===state.data.declarationRoot&&['json-update-runtime.mjs','json-macro-runtime.mjs','base64-runtime.mjs','json-runtime.mjs','json-option-runtime.mjs'].includes(posix.basename(target))){
+ if(traversals.get(analysis)?.paired&&posix.dirname(target)===state.data.declarationRoot&&['json-update-runtime.mjs','json-macro-runtime.mjs','base64-runtime.mjs','json-runtime.mjs','json-option-runtime.mjs','string-iterator-runtime.mjs'].includes(posix.basename(target))){
   const runtime=state.data.runtimeRoot+'/'+posix.basename(target);
   if(state.files.has(target)&&state.files.get(target)!==state.files.get(runtime))fail('paired runtime counterpart differs');return runtime;
  }
@@ -179,7 +202,8 @@ function originalOwnedCoreImport(handle,path,node,analysis){
  let target=originalImportTarget(path,declaration.moduleSpecifier.text,analysis,state),name=(spec.propertyName??spec.name).text,ownerFile=file,ownerDeclaration=declaration;const links=[];
  for(let depth=0;depth<32;depth++){
   const source=state.files.get(target);if(source===undefined)fail('import target missing');links.push({path:target,name,source,from:{path:ownerFile.fileName,span:[ownerDeclaration.getStart(ownerFile),ownerDeclaration.end]}});
-  if(target===state.data.runtimeRoot+'/json-update-runtime.mjs'||target===state.data.runtimeRoot+'/json-macro-runtime.mjs'||target===state.data.runtimeRoot+'/base64-runtime.mjs'||target===state.data.runtimeRoot+'/json-runtime.mjs'||target===state.data.runtimeRoot+'/json-option-runtime.mjs'){
+  if(target===state.data.runtimeRoot+'/json-update-runtime.mjs'||target===state.data.runtimeRoot+'/json-macro-runtime.mjs'||target===state.data.runtimeRoot+'/base64-runtime.mjs'||target===state.data.runtimeRoot+'/json-runtime.mjs'||target===state.data.runtimeRoot+'/json-option-runtime.mjs'||target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'){
+   if(target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'&&!ownedAsciiOperation(name))fail('unregistered ASCII runtime export');
    const typesOnly=spec.isTypeOnly||declaration.importClause?.isTypeOnly;
    const actual=typesOnly?syntax.get(state.data.declarationRoot+'/'+posix.basename(target).replace(/\.mjs$/u,'.d.mts')):syntax.get(target);
    const exported=actual?.statements.some(item=>item.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword)&&((item.name?.text===name)||(ts.isVariableStatement(item)&&item.declarationList.declarations.some(node=>ts.isIdentifier(node.name)&&node.name.text===name))));
@@ -214,6 +238,7 @@ function originalOwnedCoreType(handle,path,type,analysis){
   if(analysis.checker.getSymbolAtLocation(type.typeName)?.declarations?.length)fail('shadowed ReturnType type');
   const query=type.typeArguments[0];if(ts.isTypeQueryNode(query)&&ts.isIdentifier(query.exprName)){
    const binding=originalOwnedCoreImport(handle,path,query.exprName,analysis),op=ownedBase64Operation(binding.name);
+   const ascii=ownedAsciiOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'&&ascii)return ascii.ret;
    if(binding.target===state.data.runtimeRoot+'/base64-runtime.mjs'&&op)return op.ret;
    const reader=ownedJsonReaderOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/json-runtime.mjs'&&reader)return reader.ret;
    const optional=ownedJsonOptionalReaderOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/json-option-runtime.mjs'&&optional)return optional.ret;
@@ -228,6 +253,7 @@ function originalOwnedCoreType(handle,path,type,analysis){
   const query=type.objectType.typeArguments[0];
   if(ts.isTypeQueryNode(query)&&ts.isIdentifier(query.exprName)){
    const binding=originalOwnedCoreImport(handle,path,query.exprName,analysis);
+   const ascii=ownedAsciiOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'&&ascii)return ascii.args[Number(type.indexType.literal.text)];
    const base64=ownedBase64Operation(binding.name);if(binding.target===state.data.runtimeRoot+'/base64-runtime.mjs'&&base64&&type.indexType.literal.text==='0')return base64.input;
    const reader=ownedJsonReaderOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/json-runtime.mjs'&&reader&&Number(type.indexType.literal.text)<reader.args.length)return reader.args[Number(type.indexType.literal.text)];
    const optional=ownedJsonOptionalReaderOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/json-option-runtime.mjs'&&optional&&type.indexType.literal.text==='0')return optional.input;
@@ -343,6 +369,13 @@ function checkFunction(context,path,declaration,analysis){
    if(right.root===null||left.root===right.root)return left;
    return undefined;
   }
+  // This additional fact stays in the current native lexical environment.
+  // It does not broaden existing str-return/conditional loan rules or turn
+  // a public null root into a static-origin proof.
+  function asciiStringLoan(value,scope){
+   const loan=stringLoan(value);if(loan)return loan;
+   return value.type==='str'&&value.kind==='variable'&&value.root===null&&scope.get(value.name)?.asciiStaticLoan===true?{root:null}:undefined;
+  }
 
  function expression(node,scope,depth,opaqueOperand=false){
   tick(depth);if(ts.isParenthesizedExpression(node))return expression(node.expression,scope,depth+1);
@@ -377,6 +410,14 @@ function checkFunction(context,path,declaration,analysis){
   if(ts.isCallExpression(node)){
    if(node.questionDotToken||node.typeArguments?.length||node.arguments.some(ts.isSpreadElement))fail('optional/generic/spread call');
    const binding=originalOwnedCoreImport(context,path,node.expression,analysis),op=OPS[binding.name];
+   const ascii=ownedAsciiOperation(binding.name);
+   if(ascii&&binding.target===analysis.runtimeRoot+'/string-iterator-runtime.mjs'){
+    requireOwnedCoreSourceCurrent(context);if(node.arguments.length!==2)fail('fixed ASCII arity');
+    const args=node.arguments.map(argument=>expression(argument,scope,depth+1));
+    if(args.some(value=>value.type!=='str'||!asciiStringLoan(value,scope)))fail('ASCII arguments require actual borrowed input or static scalar text');
+    hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});requireOwnedCoreSourceCurrent(context);
+    return {kind:'ascii-call',name:binding.name,args,type:ascii.ret,root:null};
+   }
    const optional=ownedJsonOptionalReaderOperation(binding.name);
    if(optional&&binding.target===analysis.runtimeRoot+'/json-option-runtime.mjs'){
     requireOwnedCoreSourceCurrent(context);
@@ -484,7 +525,8 @@ function checkFunction(context,path,declaration,analysis){
        if(written==='json-ref'?!json(value.type):!ownedBase64Compatible(value.type,written))fail('paired written local ABI differs');
       }
      }
-     const name=bind(declaration.name,{type:value.type,root:value.root},scope);body.push({kind:'let',name,value});
+     const asciiLoan=value.type==='str'?asciiStringLoan(value,scope):undefined;
+     const name=bind(declaration.name,{type:value.type,root:value.root,...(asciiLoan?.root===null?{asciiStaticLoan:true}:{})},scope);body.push({kind:'let',name,value});
     }
    }else if(ts.isReturnStatement(statement)&&statement.expression){
     const value=expression(statement.expression,scope,depth+1);
