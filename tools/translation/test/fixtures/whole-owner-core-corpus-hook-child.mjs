@@ -6,7 +6,7 @@ import {ROUTER_FORMATTING_FACADE_SOURCE as facade,ROUTER_CORE_PRIMITIVES_SOURCE 
 import {PRODUCTION_PROFILE} from '../../cfg-profile.mjs';
 import {runOriginalCoreSequenceStage as original} from '../../core-sequence-stage-source.mjs';
 import {runOriginalCoreSequenceStage as candidate} from '../../whole-owner-core-corpus-candidate.mjs';
-import {encodeCompleteIndexedHookWire} from './complete-indexed-hook-wire.mjs';
+import {encodeCompleteJsonProjectionHookWire as encodeCompleteIndexedHookWire} from './complete-json-projection-hook-wire.mjs';
 const root=new URL('../../../../',import.meta.url),cargo={manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')},mode=process.argv[2],kind=process.argv[3],json=JSON.stringify,get=Object.getOwnPropertyDescriptor,define=Object.defineProperty,apply=Reflect.apply;
 if(!['legacy','whole'].includes(mode)||!['json-hook','hash-hook'].includes(kind)||process.argv.length!==4)throw TypeError('Complete legacy|whole JSON|Hash corpus fixture required');const stage=mode==='legacy'?original:candidate;
 const files={'src/lib.rs':'pub mod translation_core;mod app;','src/app.rs':'#[derive(Clone)]pub struct Empty;pub fn text()->String{format!("x")}pub fn yes(value:&crate::translation_core::Str)->bool{matches!(value,"a")}pub fn values()->Vec<bool>{vec![true]}','src/translation_core.rs':facade,'src/translation_core/primitives.rs':primitives,'src/translation_core/ranges.rs':ranges,'src/translation_core/base64.rs':base64,'src/translation_core/json_collections.rs':collections};
