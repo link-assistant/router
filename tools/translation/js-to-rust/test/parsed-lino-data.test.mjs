@@ -92,3 +92,13 @@ test('final source and archive joins refuse mutation during complete actual sour
  try{define(Hash.prototype,'update',{...field,value:function(...args){const value=apply(field.value,this,args);if(args[0]===target.after&&!changed){changed=true;writeFileSync(join(root,TRANSLATOR),target.before+'\n// changed during final source hashing\n');}return value;}});assert.throws(()=>prepareParsedLinoData({root}),/source changed at final input join/u);assert.equal(changed,true);}
  finally{define(Hash.prototype,'update',field);rmSync(root,{recursive:true,force:true});}
 });
+
+test('inherited get and set DATA fields do not become copied Lino array descriptor accessors',{timeout:60000},async()=>{
+ const pair=await copies(prepareParsedLinoData()),meta=pair.before.api.translateJavaScript('/** @param {number} value */\nexport function increment(value){return value+1;}',{includeScoped:false}).meta,network=pair.after.lino.parseLinks(meta),expected=pair.before.ir.fromLino(meta),pins=['get','set'].map(key=>({key,field:descriptor(Object.prototype,key)}));
+ let before,after,direct,ready;
+ try{
+  for(const {key}of pins)define(Object.prototype,key,{__proto__:null,value:undefined,writable:true,enumerable:false,configurable:true});
+  ready=pair.after.ir.parsedLinoDataCopyReady();direct=outcome(()=>pair.after.ir.tryDecodeCopiedLinoData(network));before=outcome(()=>pair.before.api.parseMeta(meta));after=outcome(()=>pair.after.api.parseMeta(meta));
+ }finally{for(const {key,field}of pins){if(field)define(Object.prototype,key,{__proto__:null,...field});else delete Object.prototype[key];}}
+ assert.equal(ready,true);assert.equal(direct.ok,true);assert.deepEqual(direct.value,expected);assert.deepEqual(after,before);retain('complete-inherited-descriptor-DATA-outcomes',{meta,network,expected,ready,direct,before,after});
+});
