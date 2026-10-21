@@ -188,6 +188,28 @@ comparison and both inverse forms, changed whole sources, and physical text and
 binary freshness refusals. These new controls and the composed source path are
 source-only and unrun. The original eight bodies/deadlines are unchanged.
 
+When the actual default enclosing source has the exact qualified byte-wrapper
+afterimage, the candidate producer also copies that operation into its separate
+enclosing context. Installing the default scope alone cannot accelerate the
+original ClientKind case: that case calls the copied context. The producer now
+selects the copied helper import and wrapper call through their actual native
+symbols, selects the original private creator call through its own native symbol,
+and reuses only the focused equation's exact wrapper/import source. It verifies
+the whole candidate, after removing its existing generated header, equals the
+complete actual byte-layer afterimage with only the native-selected Schemars
+import relocated to the candidate prover. Both source phases and native inverse
+still restore the complete original 651093 issuer. Private tables, public
+signature, original creator call, and retained-cost scope remain the original
+module's source; no private context is transferred from another issuer.
+
+Before actual byte adoption, the old/import-only input still produces the
+original unwrapped candidate bytes. After the known byte scope is installed,
+Root must regenerate all three candidate rows before receiving. Two additional
+complete source controls verify that exact copied operation/inverse and reject
+a candidate copy or changed source as an original input. They do not replace
+the unchanged eight-case workload or its 60-second ClientKind deadline. This
+source extension is unrun and establishes no performance improvement.
+
 Root must capture/install the history packet, materialize the full candidate and
 control proposals, and run the new complete four-case adoption file plus all
 eight candidate cases and complete original consumer files in Node and Bun.
