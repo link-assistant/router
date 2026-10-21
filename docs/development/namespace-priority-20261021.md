@@ -392,3 +392,16 @@ Five separate complete 60000 ms controls cover forwarding, forgeries, all ten
 fixed widths, ordinary boundaries and overflow; their native grammar passed.
 No full runtime or test case was run by this worker, and no final green batch,
 native parity or performance improvement is claimed before Root qualification.
+
+
+Nested caller control correction
+
+Root's complete original external/conversion/identity workloads now pass. The
+new forwarding control must give the inner module its own anonymous Engine
+import: the original trait-scope API does not treat the parent's anonymous
+import as an inherited child binding. The corrected complete control retains
+both root and nonzero child call sites, both actual private proof replay checks,
+all unchanged Engine declaration ranges and the mutation rejection. Comparing
+span values through own plain {start,end} observations preserves exact expected
+coordinates when serialized checked meta uses null-prototype records. No
+production authority or original test body/deadline is changed by this fix.
