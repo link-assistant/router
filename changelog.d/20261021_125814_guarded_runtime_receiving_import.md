@@ -1,0 +1,2 @@
+- Draft one native-selected fixture literal relocation to the actual guarded-proof lexing import, retaining the genuine complete producer, all original runtime instrumentation, seventeen cases/deadlines, and independent native/CST inverses. Add three full receiving/refusal controls; worker engines and generation remain UNRUN.
+- Keep the separately missing private-frozen fixture files an environment restoration issue; do not alter their correct tracked URL or source pins.
