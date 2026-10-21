@@ -50,3 +50,18 @@ copies, original lexical producer binding evidence, serialized/reparsed CSTs
 and phase/full inverses for every output. Four new complete receiving cases
 retain 60000 ms deadlines. Generation, native source checks, all receiving
 files, strict TypeScript, production trial and Rust are unrun in this draft.
+
+The Core stream adapter additionally normalizes its final prerequisite operand.
+An own `sha256` field retains the original strict comparison. Only a record
+without that own field and with its own complete primitive `source` receives a
+fresh hash of those full source bytes. Missing source, inherited source,
+undefined/null explicit hashes and mismatched hashes still refuse. The original
+physical-file Hash call remains unchanged. This matches the actual source-only
+input emitted by the formatting producer without treating a metadata label as
+source authority. Both complete archived and prior import-only adapter sources
+remain valid generation predecessors; the archive is unchanged.
+
+`proof-byte-core-prerequisite-source.test.mjs` adds three complete60s source and
+behavior controls using native-selected complete old/current guard copies,
+absolute native import relocation, full CST serialization/reparse/inverse, real
+physical files, and genuine Hash observers. Worker generation/runtime is unrun.
