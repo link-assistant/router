@@ -41,7 +41,9 @@ test('owned count evaluates nested calls once and stays lazy under existing Mayb
 });
 test('source tampering wrong ownership fake nodes and independent analyses cannot issue count calls',()=>{
   const good=`pub fn bad(value:${S})->usize{${F}(value)}`;
-  for(const input of [files(good,{'src/translation_core/primitives.rs':ROUTER_CORE_PRIMITIVES_SOURCE.replace('value.chars().count()','value.len()')}),files(good,{'src/translation_core.rs':ROUTER_FORMATTING_FACADE_SOURCE.replace('pub use self::primitives::unicode_scalar_count;','')}),files(good,{'src/lib.rs':'mod translation_core;'+good})])assert.equal(has(project(input),'bad'),false);
+  const missingCountExport=ROUTER_FORMATTING_FACADE_SOURCE.replace('pub use self::primitives::{unicode_scalar_count, ascii_chars_in};','pub use self::primitives::ascii_chars_in;');
+  assert.notEqual(missingCountExport,ROUTER_FORMATTING_FACADE_SOURCE,'the refusal must actually remove the current count export');
+  for(const input of [files(good,{'src/translation_core/primitives.rs':ROUTER_CORE_PRIMITIVES_SOURCE.replace('value.chars().count()','value.len()')}),files(good,{'src/translation_core.rs':missingCountExport}),files(good,{'src/lib.rs':'mod translation_core;'+good})])assert.equal(has(project(input),'bad'),false);
   for(const source of [`pub fn bad(v:u8)->usize{${F}(v)}`,`pub fn bad(v:${C}Text)->usize{${F}(v)}`,`pub fn bad(v:&mut ${C}Str)->usize{${F}(v)}`,`pub fn bad()->usize{${F}()}`,`pub fn bad(v:${S})->usize{${F}(v,v)}`,`pub const fn bad(v:${S})->usize{${F}(v)}`])assert.equal(has(project(files(source)),'bad'),false,source);
   assert.throws(()=>checkRouterCoreScalarCall({}, {k:'routerCoreScalarCountCall',args:[],span:{start:0,end:1}},new Map(),[],null),error=>error.kind==='type');
   const source=`pub fn answer()->usize{${F}("Ω😀")}`,input=files(source),full=input['src/lib.rs'],graph=resolveModuleGraph({entry:'src/lib.rs',paths:Object.keys(input),readSource:path=>input[path]}),context=createMatchesMacroContext({modules:graph.modules}),item=sourceItems(full).find(row=>row.term==='fn');

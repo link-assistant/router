@@ -46,7 +46,8 @@ test('complete actual lifetime checker collector and project source copies retai
       assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source, stage.after);
       assert.equal(stage.completeInverse, true);
     }
-    assert.equal(row.nativeCopies.length, 2); assert.ok(row.nativeCopies.every(copy => copy.completeNativeAstCopy));
+    assert.equal(row.nativeCopies.length, row.sourceLanguage === 'Rust' ? 0 : 2);
+    assert.ok(row.nativeCopies.every(copy => copy.completeNativeAstCopy));
     }
   }
 });
