@@ -18,6 +18,11 @@ const PREREQUISITES=['operation-proof-byte-bridge.mjs','operation-proof-byte-con
 const hash=value=>createHash('sha256').update(value).digest('hex'),fail=message=>{throw new TypeError('Default proof byte adoption: '+message);};
 const one=(rows,label)=>{if(rows.length!==1)fail('one exact native selection required: '+label);return rows[0];};
 function compiler(root){const ts=ownershipCompiler();if(ts.version!=='5.9.3'||createRequire(resolve(root,'js/package.json'))('typescript')!==ts)fail('actual root installed native TypeScript5.9.3 required');return ts;}
+function originalInputs(root){
+ const packed=readFileSync(resolve(root,ARCHIVE));if(packed.length!==63979||hash(packed)!==ARCHIVE_PIN)fail('complete original archive differs');const raw=gunzipSync(packed,{maxOutputLength:1048576});if(raw.length!==270943||hash(raw)!==RAW_PIN)fail('complete original sources differ');
+ const archive=JSON.parse(new TextDecoder('utf8',{fatal:true,ignoreBOM:true}).decode(raw));if(archive.schema!=='default-proof-byte-adoption-original-inputs-v1'||archive.files.length!==11)fail('complete original input vector differs');const originals=new Map();
+ for(const row of archive.files){if(originals.has(row.path)||Buffer.byteLength(row.source)!==row.bytes||hash(row.source)!==row.sha256)fail('complete original source/hash join differs');originals.set(row.path,row);}return {archive,originals};
+}
 function sourceAt(root,path){const absolute=resolve(root,path);if(!existsSync(absolute))return null;const state=lstatSync(absolute);if(!state.isFile()||state.isSymbolicLink()||state.size>2*1024*1024)fail('bounded regular complete source required: '+path);return readFileSync(absolute,'utf8');}
 function parse(ts,path,source){const file=ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);if(file.parseDiagnostics.length)fail('complete native grammar differs: '+path);return file;}
 function nativeCopy(ts,path,source){
@@ -65,9 +70,7 @@ function producer(ts,path,before){
 }
 export function prepareDefaultProofByteAdoption({root=ROOT}={}){
  root=resolve(root);const ts=compiler(root);
- const packed=readFileSync(resolve(root,ARCHIVE));if(packed.length!==63979||hash(packed)!==ARCHIVE_PIN)fail('complete original archive differs');const raw=gunzipSync(packed,{maxOutputLength:1048576});if(raw.length!==270943||hash(raw)!==RAW_PIN)fail('complete original sources differ');
- const archive=JSON.parse(new TextDecoder('utf8',{fatal:true,ignoreBOM:true}).decode(raw));if(archive.schema!=='default-proof-byte-adoption-original-inputs-v1'||archive.files.length!==11)fail('complete original input vector differs');const originals=new Map();
- for(const row of archive.files){if(originals.has(row.path)||Buffer.byteLength(row.source)!==row.bytes||hash(row.source)!==row.sha256)fail('complete original source/hash join differs');originals.set(row.path,row);}
+ const {archive,originals}=originalInputs(root);
  const prerequisiteInputs=PREREQUISITES.map(name=>{const row=originals.get(BASE+name);if(!row||sourceAt(root,row.path)!==row.source)fail('complete actual byte bridge prerequisite differs');return row;});
  const fragment=readFileSync(resolve(root,FRAGMENT),'utf8');if(hash(fragment)!==FRAGMENT_PIN)fail('complete authored internal adapter differs');parse(ts,HELPER,fragment);
  const schemars=prepareSchemarsEnclosingAdoption({root}),schemarsRow=one(schemars.files.filter(row=>row.path===ENCLOSING),'complete Schemars import predecessor');if(schemarsRow.before!==originals.get(ENCLOSING).source)fail('complete original Schemars birth differs');
@@ -80,6 +83,17 @@ export function prepareDefaultProofByteAdoption({root=ROOT}={}){
  for(const row of files){row.current=sourceAt(root,row.path);const allowed=[row.before,row.after];if(row.path===ENCLOSING)allowed.push(schemarsRow.before);if(row.path===HELPER)allowed.push(null);if(!allowed.includes(row.current))fail('complete physical source differs from explicit historical/final layers: '+row.path);}
  if(hash(readFileSync(resolve(root,ARCHIVE)))!==ARCHIVE_PIN||readFileSync(resolve(root,FRAGMENT),'utf8')!==fragment)fail('complete source inputs changed during operation');for(const row of prerequisiteInputs)if(sourceAt(root,row.path)!==row.source)fail('complete byte bridge source changed during operation');for(const row of files)if(sourceAt(root,row.path)!==row.current)fail('complete target source changed during operation');
  return {schema:'default-operation-proof-byte-adoption-v1',typescriptVersion:ts.version,historicalLayers:[schemars],inputs:archive.files,prerequisiteInputs,fragment:{path:FRAGMENT,source:fragment,sha256:FRAGMENT_PIN},files,sameOriginalPrivateIssuers:true,classicCreatorUnchanged:true,originalSourceOwnerAndHashCallsUnchanged:true,originalJsonBytesAndFallbacksRequired:true,diagnosticWarmingCountersMayDiffer:true,newAcrossInvocationEncodedCache:false,semanticAuthority:false,performanceQualified:false,runtimeExecuted:false,requiredRegeneration:['prepare-batched-proof-byte-source-candidate.mjs','current-whole-owner-proof-byte-provider.mjs complete candidate closure'],defaultAdoptionProposed:true};
+}
+// Exact history for the existing enclosing source pin. This reissues the same
+// native selection/equation only, not the unrelated eight proposal rows.
+export function prepareDefaultProofByteEnclosingHistory({root=ROOT}={}){
+ root=resolve(root);const ts=compiler(root),{archive,originals}=originalInputs(root),schemars=prepareSchemarsEnclosingAdoption({root}),birth=one(schemars.files.filter(row=>row.path===ENCLOSING),'complete Schemars history predecessor');if(birth.before!==originals.get(ENCLOSING).source)fail('complete original Schemars birth differs');
+ const fragment=readFileSync(resolve(root,FRAGMENT),'utf8');if(hash(fragment)!==FRAGMENT_PIN)fail('complete authored internal adapter differs');const helper=sourceAt(root,HELPER);if(helper!==null&&helper!==fragment)fail('complete current internal adapter differs');
+ const prerequisiteInputs=PREREQUISITES.map(name=>{const row=originals.get(BASE+name);if(!row||sourceAt(root,row.path)!==row.source)fail('complete current byte bridge prerequisite differs');return row;});
+ const result=entry(ts,root,ENCLOSING,birth.after,'createDeriveEnclosingNamespaceContext','createUnscopedDeriveEnclosingNamespaceContext','createUnscopedDeriveEnclosingNamespaceContext({deriveContext})'),row={...equation(ts,root,ENCLOSING,birth.after,result.language,result.after,result.edits),repositorySelections:result.repositoryEdits,originalEntry:result.originalEntry,originalCall:result.originalCall,current:sourceAt(root,ENCLOSING)};
+ if(![birth.before,row.before,row.after].includes(row.current))fail('complete physical enclosing source differs from exact import/wrapper history');if(row.current===row.after&&helper!==fragment)fail('complete installed byte wrapper helper is absent');if(row.inverse!==birth.after)fail('complete wrapper inverse differs from import predecessor');
+ if(hash(readFileSync(resolve(root,ARCHIVE)))!==ARCHIVE_PIN||readFileSync(resolve(root,FRAGMENT),'utf8')!==fragment||sourceAt(root,HELPER)!==helper||sourceAt(root,ENCLOSING)!==row.current)fail('complete enclosing history inputs changed');for(const input of prerequisiteInputs)if(sourceAt(root,input.path)!==input.source)fail('complete enclosing history byte bridge changed');
+ return {schema:'default-operation-proof-byte-enclosing-history-v1',typescriptVersion:ts.version,historicalLayers:[schemars],inputs:archive.files,prerequisiteInputs,fragment:{path:FRAGMENT,source:fragment,sha256:FRAGMENT_PIN},files:[row],semanticAuthority:false,performanceQualified:false,runtimeExecuted:false};
 }
 // Receiving copies have separate private tables. They compare DATA and native
 // call tapes; no context they issue is accepted by the installed issuer.

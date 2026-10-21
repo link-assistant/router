@@ -38,6 +38,15 @@ source. Applying the byte inverse first restores that exact predecessor; its
 own inverse restores the original `651093...` context. Unknown physical later
 layers are refused.
 
+`prepareDefaultProofByteEnclosingHistory({root})` reissues that same enclosing
+row alone for downstream current-source pin adapters. It uses the same private
+complete archive, native callee selector, bridge/helper inputs, detached copies
+and CST inverses; no other physical consumer rows are generated. Its full row
+must equal the enclosing row in the complete nine-row proposal. This avoids
+building unrelated source equations merely to verify the known wrapper before
+restoring the Schemars import history. No arbitrary restoration callback or
+caller eligibility flag is accepted.
+
 Root must first materialize the Schemars dispatcher/import proposal. Then:
 
 ```sh
