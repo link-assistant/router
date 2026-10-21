@@ -15,11 +15,11 @@ function runtimeImportBootstrap(budget){
   const names=selected??o.keys(owner),fields=[];for(const key of names){const field=o.get(owner,key);if(!field)return false;fields.push(field);}
   const expected=__runtimeImportPins[tag];if(expected){
    if(expected.length!==names.length)return false;
-   for(let at=0;at<names.length;at++){const row=expected[at],field=fields[at];if(row.key!==names[at]||field.writable!==row.writable||field.enumerable!==row.enumerable||field.configurable!==row.configurable)return false;if(row.primitive&&!(row.primitive.type===typeof field.value&&(row.primitive.type==='undefined'||field.value===row.primitive.value)))return false;for(const kind of ['value','get','set'])if(typeof field[kind]==='function'?(o.proxy(field[kind])||originalCapturedFunctionSource(field[kind])!==row[kind]):row[kind]!==undefined)return false;}
+   for(let at=0;at<names.length;at++){const row=expected[at],field=fields[at];if(row.key!==names[at]||field.writable!==row.writable||field.enumerable!==row.enumerable||field.configurable!==row.configurable)return false;if(row.primitive&&!(row.primitive.type===typeof field.value&&(row.primitive.type==='undefined'||field.value===row.primitive.value)))return false;for(const kind of ['value','get','set'])if(typeof field[kind]==='function'?(o.proxy(field[kind])||originalCapturedFunctionSource(field[kind])!==row[kind]&&!(kind==='value'&&row.nativeNoop!==undefined&&field[kind]===ts.noop&&originalCapturedFunctionSource(field[kind])===row.nativeNoop)):row[kind]!==undefined)return false;}
   }
   rows.push({owner,tag,names,fields,parent:o.parent(owner),selected:!!selected});return true;
  }
- const top=['createSourceFile','isImportDeclaration','isExportDeclaration','forEachChild','forEachChildRecursively','setParentRecursive','setParent','isJSDocNode','ScriptKind','ScriptTarget','Debug','objectAllocator','performance','tracing'];if(!capture(ts,'compiler',top))return bad('compiler-fields');
+ const top=['noop','createSourceFile','isImportDeclaration','isExportDeclaration','forEachChild','forEachChildRecursively','setParentRecursive','setParent','isJSDocNode','ScriptKind','ScriptTarget','Debug','objectAllocator','performance','tracing'];if(!capture(ts,'compiler',top))return bad('compiler-fields');
  const debug=ts.Debug,allocator=ts.objectAllocator,performance=ts.performance;
  for(const [owner,tag]of [[ts.ScriptKind,'ScriptKind'],[ts.ScriptTarget,'ScriptTarget'],[debug,'Debug'],[allocator,'allocator'],[performance,'performance']])if(!capture(owner,tag))return bad('native-object:'+tag);
  if(debug.loggingHost!==undefined&&!capture(debug.loggingHost,'loggingHost'))return bad('native-object:loggingHost');
@@ -34,7 +34,7 @@ function runtimeImportBootstrap(budget){
 }
 function runtimeImportNativeCurrent(n){
  const o=__runtimeImportOps;if(!n||!originalPrivateParserIngressUnchanged()||!originalNamespaceTraversalIntrinsicsUnchanged()||!originalDataFreezeIntrinsicsUnchanged()||!originalStaticSourceIntrinsicsUnchanged()||ownershipCompiler()!==n.ts||!ownershipCompilerRuntimeNativeCurrent(n.ts))return false;
- for(const row of n.rows){if(o.proxy(row.owner)||o.parent(row.owner)!==row.parent)return false;const names=row.selected?row.names:o.keys(row.owner);if(names.length!==row.names.length)return false;for(let at=0;at<names.length;at++)if(names[at]!==row.names[at]||!runtimeImportDescriptorSame(o.get(row.owner,names[at]),row.fields[at]))return false;}
+ for(const row of n.rows){if(o.proxy(row.owner)||o.parent(row.owner)!==row.parent)return false;const names=row.selected?row.names:o.keys(row.owner);if(names.length!==row.names.length)return false;for(let at=0;at<names.length;at++){if(names[at]!==row.names[at])return false;const actual=o.get(row.owner,names[at]),birth=row.fields[at];if(runtimeImportDescriptorSame(actual,birth))continue;const expected=row.tag==='Debug'?__runtimeImportPins.Debug[at]:null;if(!expected?.nativeNoop||!actual||!birth||!o.own(actual,'value')||!o.own(birth,'value')||typeof birth.value!=='function'||actual.value!==n.ts.noop||actual.get!==birth.get||actual.set!==birth.set||actual.writable!==birth.writable||actual.enumerable!==birth.enumerable||actual.configurable!==birth.configurable)return false;}}
  return n.ts.tracing===undefined&&o.apply(n.isEnabled,n.performance,[])===false&&o.apply(n.getLevel,n.debug,[])===0&&n.debug.isDebugging===false;
 }
 function runtimeImportDisable(frame){

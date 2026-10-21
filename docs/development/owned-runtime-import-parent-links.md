@@ -86,3 +86,14 @@ child, transient mid-visit allocator/statement-iterator mutations at native-deri
 receiving-only observation points, performance/exception/nesting/budget cleanup,
 and full original/current
 artifact maps. Native generation and every receiving workload remain unrun.
+
+The native compiler has a finite lazy assertion transition: its source-selected
+`shouldAssertFunction` assigns the same module's empty `noop` at level 0. The
+producer retains all selected assertion/export spans and complete dependency
+bodies, and emits deterministic original/noop source alternatives. The genuine
+loader identity tape permits only its birth callable or that exact native noop
+with unchanged descriptor flags and level 0. Frame guards recheck this tape
+before each specialization; foreign functions with identical source, altered
+descriptors and other replacements still retire the operation. Complete repeat
+proposal equality and foreign-noop receiving controls are drafted but unrun.
+No native assertion warming is added outside the original operations.
