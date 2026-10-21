@@ -68,8 +68,12 @@ supplies no Rust/JavaScript semantic or runtime authority.
 Receiving fixture evolution retains every frozen original source and pin.
 `currentCoreReceivingFiles` composes the exact owned-interface addition and
 complete current child sources; `assertCurrentCoreReceivingRefusals` checks
-all eleven original refusals, their explicit source-coordinate mapping and all
-thirteen additional untranslated library refusals as one complete array.
+all eleven original refusals, their explicit source-coordinate mapping, all
+thirteen base64 library refusals and the explicit appended ASCII library refusal
+as one complete array. The receiving composer checks the complete old primitive
+child against its full known source inverse before using the complete current
+child. Historical fixture APIs retain their original bytes. See
+[the current receiving contract](complete-current-core-receiving.md).
 Original fixture APIs remain available. Native module relocation records
 separate spans for repeated static and literal dynamic imports; opaque concrete
 regions retain complete source edits plus independently checked native-span
