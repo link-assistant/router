@@ -11,6 +11,7 @@ import * as candidate from '../private-parser-assignment-data-candidate.mjs';
 import * as original from '../private-parser-execution.mjs';
 import * as facade from '../private-parser-assignment-data.mjs';
 import {Hash} from 'node:crypto';
+import {ownershipCompiler} from '../js-to-rust/vendor/module-syntax.mjs';
 const ROOT=fileURLToPath(new URL('../../../',import.meta.url));
 function scratch(t){const path=mkdtempSync(join(tmpdir(),'router-private-DATA-assignment-'));t.after(()=>rmSync(path,{recursive:true,force:true}));return path;}
 function outcome(run){try{return {value:run()};}catch(error){return {error:{name:error.name,message:error.message}};}}
@@ -19,8 +20,11 @@ function probe(t){
  // The diagnostic seam invokes the actual two private copiers under their
  // original guards. It issues DATA only and does not become a shipped API.
  const suffix="\nexport function inspectActualPrivateData(value,whole,budget){checked();const result=whole?assignmentData(value,0,budget):data(value,0,budget);checked();return result;}\n";
- const imports=["./private-parser-sha256.mjs","./original-json-intrinsics.mjs"];let language=before;
- for(const name of imports){const token="from '"+name+"'",replacement="from '"+new URL(name,new URL('../private-parser-assignment-data-candidate.mjs',import.meta.url)).href+"'";assert.equal(language.split(token).length,2);language=language.replace(token,replacement);}
+ const ts=ownershipCompiler();assert.equal(ts.version,'5.9.3');const syntax=ts.createSourceFile(path,before,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);assert.equal(syntax.parseDiagnostics.length,0);
+ const imports=['./private-parser-sha256.mjs','./original-json-intrinsics.mjs'],edits=[];let language=before;
+ for(const name of imports){const nodes=syntax.statements.filter(node=>ts.isImportDeclaration(node)&&ts.isStringLiteral(node.moduleSpecifier)&&node.moduleSpecifier.text===name);assert.equal(nodes.length,1);const node=nodes[0].moduleSpecifier;edits.push({span:[node.getStart(syntax),node.end],expected:node.getText(syntax),replacement:JSON.stringify(new URL(name,new URL('../private-parser-assignment-data-candidate.mjs',import.meta.url)).href)});}
+ for(const edit of [...edits].sort((a,b)=>b.span[0]-a.span[0])){assert.equal(language.slice(...edit.span),edit.expected);language=language.slice(0,edit.span[0])+edit.replacement+language.slice(edit.span[1]);}
+ assert.equal(ts.createSourceFile(path,language,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS).parseDiagnostics.length,0);let restored=language;for(const edit of [...edits].sort((a,b)=>a.span[0]-b.span[0])){assert.equal(restored.slice(edit.span[0],edit.span[0]+edit.replacement.length),edit.replacement);restored=restored.slice(0,edit.span[0])+edit.expected+restored.slice(edit.span[0]+edit.replacement.length);}assert.equal(restored,before);assert.equal(ts.createSourceFile(path,restored,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS).parseDiagnostics.length,0);
  const after=language+suffix,rule=(old,next,id)=>({id,edits:[{span:[0,old.length],expected:old,replacement:next}]}),first=transportConcreteSyntaxSource(before,{language:'JavaScript'}),run=applyConcreteSyntaxSubstitutions(first.document,{languageRules:[rule(before,language,'javascript:retain-whole-original-private-copier-probe')],repositoryRules:[rule(language,after,'router:absolute-current-imports-and-explicit-DATA-only-test-seam')]}),stored=serializeConcreteSyntaxMeta(run.value);
  assert.equal(transportConcreteSyntaxMeta(stored).source,after);const inverse=applyConcreteSyntaxSubstitutions(run.value,{languageRules:[rule(after,before,'javascript:restore-entire-private-executor')],repositoryRules:[]});assert.equal(transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(inverse.value)).source,before);writeFileSync(path,after,{flag:'wx'});assert.equal(readFileSync(path,'utf8'),after);return {path,directory};
 }
