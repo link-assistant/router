@@ -43,7 +43,7 @@ RUN python3 /tmp/docker-cache-targets.py --touch && \
 
 # Runtime base
 #
-FROM oven/bun:1@sha256:9114c058aeae42162ee16dd5084b95fe9473970bb6bcb5b232ab1630f0546895 AS bun-runtime
+FROM oven/bun:1@sha256:ec06c3b6cea04192ae6770c434f668ca41d343ad19fa6472216c7b48be39c598 AS bun-runtime
 
 # Deliberately contains no vendor CLI. Native OAuth creates and refreshes the
 # credential; bun is only a small runner for a disposable compatibility flow.
