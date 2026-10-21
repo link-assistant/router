@@ -37,7 +37,7 @@ function __copyClosedLinoData(value){
   for(let at=0;at<length.value;at++){
    if(names[at]!==''+at){bad=true;break;}const field=ops.field(value,names[at]);
    if(!field||!ops.own(field,'value')||!field.enumerable||!field.writable||!field.configurable){bad=true;break;}
-   const child=visit(field.value,depth+1);if(bad)break;ops.define(copy,''+at,{value:child,enumerable:true,writable:true,configurable:true});
+   const child=visit(field.value,depth+1);if(bad)break;ops.define(copy,''+at,{__proto__:null,value:child,enumerable:true,writable:true,configurable:true});
   }
   ops.apply(ops.remove,seen,[value]);return copy;
  }
