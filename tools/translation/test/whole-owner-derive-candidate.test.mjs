@@ -9,6 +9,7 @@ import {sourceItems} from '../rust-structure.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {prepareWholeOwnerDeriveCandidate} from '../prepare-whole-owner-derive-candidate.mjs';
 import {createOriginalAttributeOwnerBulkOperation} from '../attribute-owner-bulk-operation.mjs';
+import {withWholeOriginalAttributeOwnerOperation} from '../whole-owner-serde-bang-footprints-candidate.mjs';
 import {createWholeOwnerDeriveBangContext,createDeriveBangContext,isDeriveBangContext,deriveBangModules,deriveBangOutputAt,originalAttributeOwnerBulkCryptoReady} from '../whole-owner-derive-candidate.mjs';
 const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')}),json=JSON.stringify,get=Object.getOwnPropertyDescriptor,define=Object.defineProperty,apply=Reflect.apply;
 const source='#[derive(Clone,Debug,serde::Serialize)] pub struct Record { value:u8 }';
@@ -70,4 +71,10 @@ test('actual private native handle hooks select legacy payloads and constructor-
  const constructor=get(owner,'constructor').value,key=Symbol.hasInstance,before=get(constructor,key),inherited=Function.prototype[key],operation=createOriginalAttributeOwnerBulkOperation(),input=setup();let entered=false;
  try{assert.throws(()=>operation.run(input.deriveContext,()=>{entered=true;define(constructor,key,{configurable:true,value:function(...args){return apply(inherited,this,args);}});assert.equal(originalAttributeOwnerBulkCryptoReady(),false);return {partial:'must not escape'};}),/final original crypto\/intrinsics changed/u);assert.equal(entered,true);assert.equal(operation.active(),false);}finally{if(before)define(constructor,key,before);else delete constructor[key];}
  assert.equal(originalAttributeOwnerBulkCryptoReady(),true);
+});
+
+test('nested observed fallback suspends a different active owner frame and restores the complete outer operation',{timeout:60000},()=>{
+ const outer=setup('#[derive(Clone)] pub struct Outer;'),left=setup(),right=setup(),baseline=observeHash(()=>createDeriveBangContext(left));let actual;
+ const result=withWholeOriginalAttributeOwnerOperation(outer.deriveContext,()=>{actual=observeHash(()=>createWholeOwnerDeriveBangContext(right));return {complete:'outer'};});
+ assert.deepStrictEqual(actual,baseline);assert.deepStrictEqual(result,{complete:'outer'});assert.equal(isDeriveBangContext(actual.result.value),true);
 });

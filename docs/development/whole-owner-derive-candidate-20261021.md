@@ -64,7 +64,9 @@ The fast domain is limited to at most 20,000 original module carriers, module
 paths of at most 64 segments, and 64 Mi UTF-16 source units. These are selection
 bounds for the new operation: a larger or uncertain input executes the complete
 original creator, without excluding a module or changing any old limit.
-Unknown engines, crypto wrappers, JSON hooks and changed descriptors select the
+Nested legacy fallbacks temporarily suspend an outer operation frame and
+restore it in `finally`, so a complete old read cannot consume another context's
+batch. Unknown engines, crypto wrappers, JSON hooks and changed descriptors select the
 exact original copied creator, including its original cached-context behavior.
 Callbacks are not given a new reduced hash tape. Qualification requires the
 callback-free pinned runtime domain; source data alone is insufficient.
@@ -86,11 +88,11 @@ node tools/translation/prepare-whole-owner-derive-candidate.mjs --check
 node --test tools/translation/test/whole-owner-derive-candidate.test.mjs
 ```
 
-All seven 60,000 ms receiving cases are new and currently unrun. They retain
+All eight 60,000 ms receiving cases are new and currently unrun. They retain
 complete source/CST equations, full output equality, genuine copied consumers,
 repeated fresh results, original Hash/JSON callback tapes, callback-installed
 changes, unknown owner/forged context refusals, nested/exception/thenable frame
-cleanup and private native-handle hooks. No generated output has been edited
+cleanup, private native-handle hooks and observed nested fallback isolation. No generated output has been edited
 or installed by hand.
 
 The unchanged original twelve cases under Node and Bun remain mandatory, with
