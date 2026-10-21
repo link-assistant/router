@@ -30,7 +30,7 @@ function requested(input){
 }
 function sources(root){
  const source=IO.snapshot(root),cargo=IO.sequenceDependencies(root);
- if(!cargo.inputs||cargo.rows.some(row=>row.absent))fail('complete package/workspace/lock inputs required');
+ if(!cargo.inputs||cargo.rows.some(row=>row.absent))fail('complete Cargo package/workspace/lock inputs required');
  return {verify(){IO.rejoin(source);cargo.verify();}};
 }
 // Each full source/CST/inspection row is one bounded leaf. The structural wire
