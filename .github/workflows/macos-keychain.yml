@@ -11,6 +11,7 @@ name: macOS Keychain
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - 'rust/src/platform_keychain*.rs'
       - 'rust/src/subscription.rs'
@@ -37,6 +38,7 @@ env:
 
 jobs:
   javascript:
+    if: ${{ github.event_name != 'pull_request' || toJSON(github.event.pull_request.draft) == 'false' }}
     name: JavaScript first (same commit)
     uses: ./.github/workflows/javascript-first.yml
     with:

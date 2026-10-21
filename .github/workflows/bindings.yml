@@ -1,6 +1,7 @@
 name: Downstream Operations and Contracts
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [main]
   workflow_dispatch:
@@ -11,6 +12,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   javascript:
+    if: ${{ github.event_name != 'pull_request' || toJSON(github.event.pull_request.draft) == 'false' }}
     name: JavaScript first (same commit)
     uses: ./.github/workflows/javascript-first.yml
     with:

@@ -11,6 +11,7 @@ name: Mutants
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - 'rust/src/token.rs'
       - 'rust/src/token_validate.rs'
@@ -47,6 +48,7 @@ env:
 
 jobs:
   javascript:
+    if: ${{ github.event_name != 'pull_request' || toJSON(github.event.pull_request.draft) == 'false' }}
     name: JavaScript first (same commit)
     uses: ./.github/workflows/javascript-first.yml
     with:
