@@ -69,3 +69,13 @@ materialization and all engine/runtime tests are unrun. No default adoption,
 legacy-corpus fix, or speed gain is claimed. The Root trial's 94/96 result
 included two independent registry/baseline questions; this composition does
 not relabel them as DATA failures or silently repair their authority.
+
+The current EOF fence also retains the five auxiliary birth inputs: substitution
+operations, fixed registry manifest, original concrete source, JSON intrinsics,
+and private SHA helper. Their initial physical source/identity snapshots are
+rechecked after the added current CST rounds, even when the historical producer
+had already checked them. A seventh control uses an independently observed
+whole-call Hash schedule to change an auxiliary source after those rounds and
+requires refusal before return. Trace controls compare ordered phase names and
+all complete rule records (identifiers, spans and before/after lengths), matching
+the actual object-valued trace contract. This follow-up remains runtime unrun.

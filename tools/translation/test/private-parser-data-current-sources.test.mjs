@@ -41,3 +41,14 @@ test('fresh physical source checks survive separate calls and refuse changes mad
 test('candidate materialization plans cannot install the default and partial physical adoption is explicit source data',{timeout:60000},t=>{
  const {root,rows}=fixture(t);writeFileSync(resolve(root,PRIVATE_DATA_EXECUTOR),rows[0].after);const physical=RUNTIMES.map(path=>readFileSync(resolve(root,path),'utf8')),plan=prepareCurrentPrivateParserAssignmentDataCandidate({root});assert.equal(plan.installed,false);assert.equal(plan.executorInstalled,true);assert.equal(plan.files.length,1);assert.equal(plan.files[0].path,PRIVATE_DATA_CANDIDATE);assert.equal(plan.files[0].current,rows[1].before);assert.equal(plan.files[0].after,rows[1].after);assert.equal(plan.birth.files[0].inverse,rows[0].before);assert.deepStrictEqual(RUNTIMES.map(path=>readFileSync(resolve(root,path),'utf8')),physical);
 });
+
+
+test('outer current EOF fence retains all birth-only auxiliary sources after current CST work and catches a late Hash mutation',{timeout:60000},t=>{
+ const {root,rows}=fixture(t),paths=['private-concrete-substitution-batch-operations.mjs','source-profiles/private-parser-execution/manifest.json','private-parser-inputs/concrete-syntax-original.mjs','original-json-intrinsics.mjs','private-parser-sha256.mjs'].map(name=>BASE+name),update=Object.getOwnPropertyDescriptor(Hash.prototype,'update'),payload=rows[1].after;let seen=0;
+ let baseline;try{Object.defineProperty(Hash.prototype,'update',{...update,value:function(...args){if(args[0]===payload)seen++;return Reflect.apply(update.value,this,args);}});baseline=prepareCurrentPrivateParserAssignmentDataCandidate({root});}finally{Object.defineProperty(Hash.prototype,'update',update);}assertPrivateParserDataCurrentComposition(baseline,{root});assert.ok(seen>0);for(const path of paths){const input=baseline.inputs.find(row=>row.path===path);assert.ok(input,path);assert.equal(input.source,readFileSync(resolve(root,path),'utf8'));assert.ok(input.identity.ino);}
+ // The last complete proposed-candidate hash is emitted after its added CST
+ // rounds. Use the independently observed whole-call schedule, not a guessed
+ // hash count or a callback that changes an input before birth validation.
+ const path=resolve(root,paths[0]),original=readFileSync(path,'utf8'),last=seen;let at=0,changed=false,returned;
+ try{Object.defineProperty(Hash.prototype,'update',{...update,value:function(...args){const value=Reflect.apply(update.value,this,args);if(args[0]===payload&&++at===last){writeFileSync(path,original+'\n// late complete current source mutation\n');changed=true;}return value;}});assert.throws(()=>{returned=prepareCurrentPrivateParserAssignmentDataCandidate({root});},/complete current source\/identity changed across final boundary/);}finally{Object.defineProperty(Hash.prototype,'update',update);writeFileSync(path,original);}assert.equal(changed,true);assert.equal(returned,undefined);
+});
