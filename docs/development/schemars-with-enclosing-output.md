@@ -87,3 +87,34 @@ an independent static literal-token census only. No engines, materialization,
 runtime tests or Rust tools ran. Source generation, whole-file receiving, default
 adoption, production coverage and the complete JavaScript gate remain unqualified.
 Rust remains CI-only after all eight same-SHA JavaScript stages pass.
+
+## Meaningful production adoption after receiving
+
+The three parallel candidates alone do not change any production selection.
+After their complete receiving qualification, propose a source-derived private
+Schemars enclosing dispatcher. Its new-prover selection must first join the
+genuine original context/module/invocation and actual container Type helper.
+Other inputs retain the original prover and refusals. Assertion/output dispatch
+must use actual private `isSchemarsWithOutput` membership, never a public schema,
+helper spelling, boolean or copied metadata. An unsupported candidate stays a
+refusal; it cannot borrow another output's token or erase a sibling obligation.
+
+Native-select only the actual Schemars import in
+`derive-enclosing-namespace-context.mjs` for that dispatcher. Keep the installed
+module's existing private context/effect issuer identity and complete source
+guards. This reaches `project.mjs`'s existing owned-definition/core-json-readers
+namespace branch, `derived-source-bindings.mjs`'s enclosing fallback and
+`core-adoption-producer-context.mjs`'s enclosing creator through their actual
+imports. Existing Default/Clone enclosing consumers and the owned resolver then
+consume the same genuine issuer; no foreign parallel context token is installed.
+Review the complete native/CST source proposal and every whole consumer file,
+then run the actual full production graph/profile and emitted-target checks.
+
+Keep `schemars-bang-footprints.mjs` and `derive-bang-context.mjs`'s standalone/full
+proof APIs unchanged in this first adoption. The existing actual ClientKind
+ValueEnum control intentionally requires its full-bang JsonSchema residual.
+The ordinary non-owned project mode also uses that legacy full-bang lane; the
+enclosing extension does not claim to repair it. Extending that production route
+requires a separate source-derived complete consumer proposal and fresh whole
+qualification while preserving the legacy controls. No dispatcher, default
+import rewrite or production adoption is implemented by this draft.
