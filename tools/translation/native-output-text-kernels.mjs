@@ -32,7 +32,12 @@ export const nativeOutputEncode=`{
   if(typeof source!=='string'||!nativeOutputApply(nativeOutputSafeInteger,undefined,[start])||!nativeOutputApply(nativeOutputSafeInteger,undefined,[end])||start<0||end<=start||end>source.length||end-start>CHUNK)throw new TypeError('Native retained output input bounds');
   const raw=nativeOutputApply(nativeOutputFrom,NativeOutputBuffer,[slice(source,start,end),'utf16le']);
   if(raw.length!==(end-start)*2)throw new TypeError('Native retained output UTF16 length');
-  const packed=nativeOutputApply(nativeOutputDeflate,nativeOutputZlib,[raw,{level:1}]);
+  let packed=nativeOutputApply(nativeOutputDeflate,nativeOutputZlib,[raw,{level:1}]);
+  // Bun's fast encoder may expand incompressible UTF16 beyond this fixed
+  // packet bound. Stored DEFLATE blocks preserve the bound and exact bytes;
+  // the unchanged caller then selects its original raw-storage fallback.
+  if(packed.length>CHUNK*2+1024)packed=nativeOutputApply(nativeOutputDeflate,nativeOutputZlib,[raw,{level:0}]);
+  if(packed.length>CHUNK*2+1024)throw new TypeError('Native retained output encoded bounds');
   const result=nativeOutputApply(nativeOutputToString,packed,['base64']);nativeOutputReady();return result;
 }`;
 export const nativeOutputDecode=`{

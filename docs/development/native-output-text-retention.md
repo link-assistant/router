@@ -1,7 +1,9 @@
 The explicit native retained owned-field path is a source proposal. The prior
-complete generation exceeded its unchanged deadline while retaining the first
-project's fields; its native stack contained string flattening and substring
-work. This proposal has no measured speed, memory or coverage result. It does
+retained complete generation exhausted its unchanged JavaScript heap while
+retaining the first project's fields; its native stack contained string
+flattening and substring work. An unretained field-storage run also exhausted
+the heap later in generation. This proposal has no full-project speed, memory
+or coverage result. It does
 not qualify another full application run before modest codec and receiving
 checks establish that the new storage path works within the existing bounds.
 
@@ -17,7 +19,10 @@ copies and a native binding check accompany every complete output source.
 
 The new encoder receives the original at-most-65,536-code-unit chunk, copies it
 to bounded UTF16LE bytes, deflates at level one and produces a primitive base64
-string. Decode requires canonical base64, inflates with `maxOutputLength` equal
+string. If the fast deflater exceeds the existing packet bound, the encoder
+uses level-zero stored blocks and rechecks that same bound. The original caller
+then retains its raw-storage fallback for incompressible values. Decode requires
+canonical base64, inflates with `maxOutputLength` equal
 to that chunk's requested code units times two (at most 131,072 bytes), and
 checks exact byte and code-unit lengths. UTF16LE preserves every code unit,
 including unpaired surrogates; no UTF8 replacement is introduced. Every encode
@@ -44,6 +49,25 @@ equivalence to the original compression sizes or Map/WeakMap observations.
 Changing compression can change a packed/raw observation and the exact budget
 fallback point. Full restored output strings and all application refusals must
 still compare exactly. No source/owner/type/execution authority is granted.
+
+The full UTF16 regression exposed a Bun 1.4.3 difference: level-one raw DEFLATE
+expanded 131,072 bytes to 138,242 bytes, exceeding the unchanged 132,096-byte
+packet bound. This local reproduction retains the complete input construction:
+
+```js
+import {Buffer} from 'node:buffer';
+import zlib from 'node:zlib';
+let source='';
+for(let unit=0;unit<65536;unit++)source+=String.fromCharCode(unit);
+const raw=Buffer.from(source,'utf16le');
+console.log(raw.length,zlib.deflateRawSync(raw,{level:1}).length);
+```
+
+The bounded stored-block fallback addresses that observed expansion without
+changing chunk, storage, test or monitor limits. Numeric helpers use captured
+functions; replacing global `Number` or `Math` with getter-bearing objects
+does not execute those getters. Complete native edit inverses remain separate
+from whole-phase CST transport, preserving trivia at inserted-source joins.
 
 The producer first invokes the actual original `prepareOwnedFieldBulkSources`
 and freshly compares all nine complete physical outputs to their original
@@ -108,7 +132,8 @@ node scripts/translate-router-native-owned-field-meta.mjs --retain-output-text -
 
 Keep the original seven local/eight CI stage requirements and full same-SHA
 generation, parity and strict-target checks. Existing Rust checks stay gated by
-the complete JavaScript gate; there is no local Rust task. The draft is source
-only: native materialization, all seven new cases, Node/Bun, CLI/profile checks
-and full generation are unrun. No application coverage gain or release-ready
+the complete JavaScript gate; there is no local Rust task. Native materialization
+and full source inverses have passed. Node/Bun qualification for the revised
+codec and full-project generation remain separate required checks. No
+application coverage gain or release-ready
 freshness claim follows from preserved source or compressed storage.
