@@ -44,7 +44,7 @@ url = "2.5"
 tokio = { version = "1.53", features = ["rt-multi-thread", "macros", "time", "signal", "fs", "process", "sync", "net"] }
 serde = { version = "1.0", features = ["derive"] }
 schemars = { version = "1.2", features = ["chrono04"] }
-jsonschema = { version = "0.58", default-features = false }
+jsonschema = { version = "0.59", default-features = false }
 serde_json = "1.0"
 toml_edit = "0.25"
 jsonwebtoken = { version = "11.0", default-features = false, features = ["rust_crypto"] }
@@ -61,11 +61,11 @@ futures-util = "0.3"
 tokio-tungstenite = { version = "0.30", features = ["rustls-tls-webpki-roots"] }
 http = "1.5"
 http-body-util = "0.1"
-lino-arguments = "0.3"
-lino-objects-codec = "0.7.0"
-links-notation = "0.22.0"
-doublets = "0.5.0"
-link-cli = "0.2.10"
+lino-arguments = "0.5"
+lino-objects-codec = "0.8.0"
+links-notation = "0.23.0"
+doublets = "0.8.0"
+link-cli = "1.0.0"
 clap = { version = "4", features = ["derive", "env", "string"] }
 base64 = "0.23"
 async-trait = "0.1"
@@ -83,7 +83,7 @@ brotli = "9.0.0"
 zstd = "0.14.0"
 fs2 = "0.4"
 reflink-copy = "0.1.30"
-vt100 = "0.16"
+vt100 = "0.17"
 
 [target.'cfg(windows)'.dependencies]
 process-wrap = { version = "10.0.1", default-features = false, features = ["std", "job-object"] }
