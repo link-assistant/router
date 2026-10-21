@@ -27,3 +27,9 @@ exact zero tape while keeping positive Hash tapes for both ASCII closures.
 RegExp tape recording now uses indexed field reads, so observing a changed Array
 iterator cannot recursively observe the recorder itself. Source-only and unrun;
 all seven workloads and original deadlines remain unchanged.
+
+The second whole receiving run retained equal original/scoped before-retention
+tapes: 73 genuine iterator observations followed by the same source-host guard
+refusal. Replace the remaining zero-count harness assumption with positive
+observations and that exact refusal; full tape equality and disabled-frame checks
+remain mandatory. This narrow follow-up is source-only and unrun.
