@@ -31,11 +31,12 @@ export function createOriginalAttributeOwnerBulkOperation(){
   },
   run(context,run,fallback=run){
    if(typeof run!=='function'||typeof fallback!=='function')fail('synchronous complete original creator required');
-   if(!originalAttributeOwnerBulkCryptoReady())return fallback();
+   const legacy=()=>{const prior=current;current=null;try{return fallback();}finally{current=prior;}};
+   if(!originalAttributeOwnerBulkCryptoReady())return legacy();
    let source=deriveFootprintSourceContext(context),rows=[],units=0;
    // Unknown size selects the complete old creator; no owner list is filtered.
-   if(!immutableSourceCarriers(source))return fallback();
-   for(const module of source.modules){units+=module.source.length;if(units>64*1024*1024)return fallback();}
+   if(!immutableSourceCarriers(source))return legacy();
+   for(const module of source.modules){units+=module.source.length;if(units>64*1024*1024)return legacy();}
    let external=JSON.stringify([...source.externalModules]),profile=JSON.stringify(source.compilationProfile),dependencies=source.dependencies;
    for(const module of source.modules)rows.push({file:module.file,path:JSON.stringify(module.path),source:module.source,sha256:hash(module.source),view:module.sourceView,condition:module.configurationCondition??null});
    if(!originalAttributeOwnerBulkCryptoReady())fail('entry source capture changed crypto/intrinsics');
