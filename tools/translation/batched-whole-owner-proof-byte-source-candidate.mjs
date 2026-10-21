@@ -147,8 +147,8 @@ __batchedPending.push({path,before,language,after,sequence});return __batchedRaw
  // All34 original raw/native records exist before the first bulk transport.
  const __batchedRows=[...files,...physicalOverlays];
  if(__batchedRows.length!==34||__batchedPending.length!==34||new Set(__batchedRows.map(row=>row.path)).size!==34)fail('complete34 original native assemblies required');
- const __batchedInputs=[...inputs.values(),...prerequisites,...currentProviderInputs];
- assertConcreteSyntaxHost();for(const row of __batchedInputs)if(typeof row.source!=='string'||readFileSync(resolve(root,row.path),'utf8')!==row.source)fail('complete source changed before all CST chunks');
+ const __batchedInputs=[...inputs.values(),...currentProviderInputs],__batchedPrerequisites=prerequisites.map(row=>{const source=readFileSync(resolve(root,row.path),'utf8');if(hash(source)!==row.sha256)fail('complete prerequisite changed before all CST chunks');return {...row,source};});
+ assertConcreteSyntaxHost();for(const row of [...__batchedInputs,...__batchedPrerequisites])if(typeof row.source!=='string'||readFileSync(resolve(root,row.path),'utf8')!==row.source)fail('complete source changed before all CST chunks');
  for(const row of __batchedRows)if((existsSync(resolve(root,row.path))?readFileSync(resolve(root,row.path),'utf8'):null)!==row.current)fail('complete original physical row changed before all CST chunks');
  for(let at=0;at<__batchedPending.length;at+=3){
   const requested=__batchedPending.slice(at,at+3),batch=substitutePrivateConcreteSourceBatches(requested.map(__batchedRequest));
@@ -159,7 +159,7 @@ __batchedPending.push({path,before,language,after,sequence});return __batchedRaw
    row.beforeMeta=fragment.beforeMeta;row.afterMeta=fragment.afterMeta;row.inverse=fragment.inverse;row.stages=fragment.stages;row.trace=fragment.trace;
   }
  }
- assertConcreteSyntaxHost();for(const row of __batchedInputs)if(readFileSync(resolve(root,row.path),'utf8')!==row.source)fail('complete source changed after all CST chunks');
+ assertConcreteSyntaxHost();for(const row of [...__batchedInputs,...__batchedPrerequisites])if(readFileSync(resolve(root,row.path),'utf8')!==row.source)fail('complete source changed after all CST chunks');
  for(const row of __batchedRows)if((existsSync(resolve(root,row.path))?readFileSync(resolve(root,row.path),'utf8'):null)!==row.current)fail('complete original physical row changed after all CST chunks');
 const serializerBindings=files.flatMap(row=>(row.selection.imports??[]).filter(edit=>edit.kind==='serializer-binding').map(edit=>({path:row.path,...edit})));
  if(serializerBindings.length!==5)fail('complete current native/frozen composer consumer import census differs');
