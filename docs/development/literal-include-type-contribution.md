@@ -61,6 +61,18 @@ rechecked after source/Hash callbacks, including a final child/source join.
 Changed native reflection, parser ingress, JSON or traversal operations refuse.
 No source/hash/verdict/encoded cache is introduced.
 
+The first Node receiving run passed six of seven cases; case 6 exposed that the
+shared traversal/static/ingress/freeze guards do not pin `JSON.parse`. The
+continuation pins its captured own data descriptor and native function before
+calling any parser or CST path, and compares every descriptor field afresh.
+It checks both source-loader and caller-helper entrypoints without invoking a
+replacement or accessor. The producer retains all three original full archives
+and the exact original binder pin, and adds two complete authored afterimages.
+Native guard-expression spans plus complete appended private pins derive those
+afterimages; native and two-phase CST inverses retain the original programs.
+The original seven receiving bodies and their 60-second limits are unchanged.
+The worker has not rerun engines or materialized this continuation.
+
 The actual Router includes are:
 
 | Original caller | Complete tracked child |
