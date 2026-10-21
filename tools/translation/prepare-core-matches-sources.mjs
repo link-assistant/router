@@ -1,4 +1,5 @@
 // Native source composition for an explicit owned compatibility operation.
+import {composeCoreAscii} from './prepare-core-ascii-sources.mjs';
 import {readFileSync, writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -242,7 +243,8 @@ export function composeCurrentCoreMatchesSources(prior, {root = ROOT} = {}) {
 export function prepareCurrentCoreMatchesComposition(options = {}) {
   const birth = prepareCurrentCoreMatchesSources(options);
   const boundary = composePrimitiveIdentityBoundary(Object.fromEntries(birth.files.map(row => [row.path, row])), options);
-  return {schema: 'current-owned-matches-source-composition-v1', birth, layers: [birth, ...boundary.layers], files: Object.values(boundary.sources), semanticAuthority: false};
+  const ascii = composeCoreAscii(boundary.sources, options);
+  return {schema: 'current-owned-matches-source-composition-v1', birth, layers: [birth, ...boundary.layers, ...ascii.layers], files: Object.values(ascii.sources), semanticAuthority: false};
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2); if (args.length !== 1 || !['--write', '--check', '--emit'].includes(args[0])) fail('usage: --write|--check|--emit');

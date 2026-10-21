@@ -1,3 +1,4 @@
+import {assertAsciiSourceComposition} from './ascii-source-composition.mjs';
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync, writeFileSync, mkdirSync, mkdtempSync} from 'node:fs';
@@ -55,7 +56,7 @@ test('native source producers retain complete historical inputs actual current o
     if (row.nativeBindings) assert.deepEqual(row.nativeBindings.unboundIdentifiers, []);
   }
   for (const row of current.layers[1].files) {
-    assert.equal(row.current, row.after); assert.equal(row.inverse, row.before);
+    assert.equal(row.current, current.files.find(final => final.path === row.path).after); assert.equal(row.inverse, row.before);
     assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source, row.before); assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source, row.after);
     assert.deepEqual(row.stages.map(stage => stage.phase), ['language', 'repository']);
     assert.deepEqual(row.trace, row.stages.flatMap(stage => stage.trace));
@@ -69,6 +70,8 @@ test('native source producers retain complete historical inputs actual current o
     }
     assert.equal(row.nativeCopies.length, 2); assert.ok(row.nativeCopies.every(copy => copy.completeNativeAstCopy));
   }
+  assert.equal(current.layers.length, 3);
+  assertAsciiSourceComposition(current.layers[2], Object.fromEntries([...prepared.files, ...current.layers[1].files].map(row => [row.path, row])));
   const host = prepared.files.find(row => row.path.endsWith('/host-contracts.mjs'));
   assert.ok(host.after.split('\n').length <= 1000); assert.ok(host.before.includes('parseRouterCoreVector')); assert.ok(host.after.includes('parseRouterCoreVector'));
   assert.match(prepared.wrapper.after, /::std::matches!/u);

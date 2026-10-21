@@ -246,7 +246,8 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       ? (await import('./prepare-core-matches-sources.mjs')).composeCurrentCoreMatchesSources(preserved.sources, {root})
       : {sources: preserved.sources, layers: []};
     const boundary = (await import('./prepare-primitive-identity-boundary.mjs')).composePrimitiveIdentityBoundary(matched.sources, {root});
-    const composition = {sources: boundary.sources, layers: [...lifetime.layers, ...checked.layers, ...preserved.layers, ...matched.layers, ...boundary.layers]};
+    const ascii = (await import('./prepare-core-ascii-sources.mjs')).composeCoreAscii(boundary.sources, {root});
+    const composition = {sources: ascii.sources, layers: [...lifetime.layers, ...checked.layers, ...preserved.layers, ...matched.layers, ...boundary.layers, ...ascii.layers]};
     const generated = composition.sources;
     const current = Object.fromEntries(Object.keys(generated).map(name => [name, readFileSync(resolve(root, name), 'utf8')]));
     if (args[2] === '--check') {

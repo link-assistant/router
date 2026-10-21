@@ -1,3 +1,4 @@
+import {assertAsciiSourceComposition} from './ascii-source-composition.mjs';
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync, writeFileSync, mkdirSync} from 'node:fs';
@@ -12,6 +13,7 @@ import {migrateCoreVectors} from '../migrate-core-vectors.mjs';
 import {prepareCoreVectorSources} from '../prepare-core-vector-sources.mjs';
 import {composeCurrentCoreMatchesSources} from '../prepare-core-matches-sources.mjs';
 import {composePrimitiveIdentityBoundary} from '../prepare-primitive-identity-boundary.mjs';
+import {composeCoreAscii} from '../prepare-core-ascii-sources.mjs';
 import {composeSourceProofPreservation} from '../prepare-source-proof-preservation.mjs';
 import {composeExecutableCheckedSource} from '../prepare-executable-checked-source.mjs';
 import {composeSourceLifetimeRefusalBatches} from '../prepare-source-lifetime-refusal-batches.mjs';
@@ -67,13 +69,17 @@ test('native source producer derives the actual owned wrapper and composes compl
   }
   const matched = retain('complete-current-owned-matches-source-layer', composeCurrentCoreMatchesSources(preserved.sources));
   assert.equal(matched.layers[0].inputs.facade, result.value.sources['rust/src/translation_core.rs'].after);
-  const composition = retain('complete-current-primitive-identity-boundary-layer', composePrimitiveIdentityBoundary(matched.sources));
-  assert.equal(composition.layers[0].files.find(row => row.path === 'tools/translation/extensions/host-contracts.mjs').before, matched.sources['tools/translation/extensions/host-contracts.mjs'].after);
-  for (const row of composition.layers[0].files) {
+  const boundary = retain('complete-current-primitive-identity-boundary-layer', composePrimitiveIdentityBoundary(matched.sources));
+  assert.equal(boundary.layers[0].files.find(row => row.path === 'tools/translation/extensions/host-contracts.mjs').before, matched.sources['tools/translation/extensions/host-contracts.mjs'].after);
+  for (const row of boundary.layers[0].files) {
     assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source, row.before);
     assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source, row.after);
     assert.equal(row.inverse, row.before); assert.ok(row.nativeCopies);
   }
+  const composition = retain('complete-current-owned-ascii-source-layer', composeCoreAscii(boundary.sources));
+  assert.equal(composition.historicalSources, boundary.sources);
+  assertAsciiSourceComposition(composition.layers[0], boundary.sources);
+  assert.throws(() => composeCoreAscii({...boundary.sources, 'rust/src/translation_core.rs': {after: 'forged'}}), /preceding complete source equation/u);
   assert.equal(composition.sources['rust/src/translation_core.rs'].after, ROUTER_FORMATTING_FACADE_SOURCE);
   for (const [path, source] of Object.entries(composition.sources)) assert.equal(readFileSync(new URL(path, root), 'utf8'), source.after, path);
   assert.equal(readFileSync(new URL('rust/src/translation_core.rs', root), 'utf8'), ROUTER_FORMATTING_FACADE_SOURCE);

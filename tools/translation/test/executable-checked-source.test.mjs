@@ -1,3 +1,4 @@
+import {assertAsciiSourceComposition} from './ascii-source-composition.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {translateProject} from '../project.mjs';
@@ -18,7 +19,8 @@ test('complete checked-source layer joins the unchanged lifetime birth and retai
  assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.before);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);assert.deepEqual(row.trace.map(part=>part.phase),['language','repository']);assert.deepEqual(row.nativeBindings.unboundIdentifiers,[]);
  const prior=Object.fromEntries(birth.files.map(part=>[part.path,part]));assert.equal(prior[row.path].after,row.before);const composed=composeExecutableCheckedSource(prior);assert.equal(composed.sources[row.path].after,row.after);assert.equal(composed.historicalSources,prior);
  assert.throws(()=>composeExecutableCheckedSource({...prior,[row.path]:{...prior[row.path],after:prior[row.path].after+' '}}),/preceding complete project equation/u);
- assert.equal(current.layers.length,2);assert.equal(current.layers[1].files.find(part=>part.path===row.path).before,row.after);
+ assert.equal(current.layers.length,3);assert.equal(current.layers[1].files.find(part=>part.path===row.path).before,row.after);
+ assertAsciiSourceComposition(current.layers[2]);
  for(const final of current.layers[1].files){assert.equal(final.current,final.after);assert.equal(final.inverse,final.before);assert.equal(transportConcreteSyntaxMeta(final.beforeMeta).source,final.before);assert.equal(transportConcreteSyntaxMeta(final.afterMeta).source,final.after);assert.deepEqual(final.stages.map(stage => stage.phase), ['language', 'repository']);
     assert.deepEqual(final.trace, final.stages.flatMap(stage => stage.trace));
     for (const stage of final.stages) {

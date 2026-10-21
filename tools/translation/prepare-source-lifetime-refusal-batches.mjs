@@ -1,4 +1,5 @@
 // Complete native source selections followed by serialized/reparsed CST rules.
+import {composeCoreAscii} from './prepare-core-ascii-sources.mjs';
 import {readFileSync, writeFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
@@ -120,7 +121,8 @@ export function prepareCurrentSourceLifetimeRefusalBatches(options = {}) {
   const birth = prepareSourceLifetimeRefusalBatches(options);
   const checked = composeExecutableCheckedSource(Object.fromEntries(birth.files.map(row => [row.path, row])), options);
   const preserved = composeSourceProofPreservation(checked.sources, options);
-  return {schema: 'current-source-lifetime-refusal-batch-source-v1', birth, layers: [birth, ...checked.layers, ...preserved.layers], files: Object.values(preserved.sources), semanticAuthority: false};
+  const ascii = composeCoreAscii(preserved.sources, options);
+  return {schema: 'current-source-lifetime-refusal-batch-source-v1', birth, layers: [birth, ...checked.layers, ...preserved.layers, ...ascii.layers], files: Object.values(ascii.sources), semanticAuthority: false};
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const [mode] = process.argv.slice(2); if (process.argv.length !== 3 || !['--check', '--write'].includes(mode)) fail('usage: --check|--write');
