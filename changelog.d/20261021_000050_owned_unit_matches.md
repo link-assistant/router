@@ -31,3 +31,16 @@
   workloads/deadlines and add complete-archive mutation controls. No runtime,
   generation, native-parser or resource qualification ran; full-corpus fit,
   speed and executable gain remain unmeasured.
+
+### Receiving repair draft
+
+- Retain Root's first whole seven-case RED (five pass, source-relocation failure
+  and neutral-profile module-cap failure; the latter also exceeded 60 seconds).
+  Replace only the fixture span constructor with a native/CST copy of the actual
+  original relocation callback; keep real verifier/custody negatives unchanged.
+- Explicitly pass existing `PRODUCTION_PROFILE` through the complete production
+  case's project and both adoption phases, retaining actual graph observations
+  and every original cap/deadline. No platform flags are inferred and neutral
+  defaults remain. All 209 historical TYPE-first contexts already used this
+  production profile, so this repair does not explain or claim to resolve them.
+- Source-only/static review; receiving and current resource outcomes are unrun.
