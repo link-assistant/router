@@ -126,9 +126,9 @@ export function withOwnedCoreItemChecks(run){
   if(!isDeepStrictEqual(result,snapshot))fail('checked function/meta differs');
   if(!originalNamespaceTraversalIntrinsicsUnchanged()||!originalStaticSourceIntrinsicsUnchanged()){disable();return checkOwnedCoreItem(input,context);}
   if(admit&&!retained){
-   // analyzeOwnedCoreModule issues its original rows through WeakMap.set.
-   // Store a NEW whole-analysis copy after equality; never store issued rows.
-   const privateAnalysis=canonicalCopy(analysis);if(!privateAnalysis){disable();return checkOwnedCoreItem(item,context);}
+   // Retain the qualified private copy made before equality. Returned and
+   // original issued rows remain separate; the census and all fences still run.
+   const privateAnalysis=analysis;
    const size=groupCount<64?cost(privateAnalysis):null;
    if(size){
     if(!paths){paths=new native.Map();set(groups,context,paths);contexts[contexts.length]=context;}
