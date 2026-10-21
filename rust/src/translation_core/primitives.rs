@@ -80,3 +80,11 @@ pub fn json_parse(value: &Str) -> Maybe<Json> {
 pub fn json_parse_bytes(value: &[u8]) -> Maybe<Json> {
     ::serde_json::from_slice::<Json>(value).ok()
 }
+
+/// Test every UTF-8 byte against an ASCII alphabet, including vacuous empty input.
+/// Non-ASCII alphabet characters never permit a non-ASCII input byte.
+/// Both arguments evaluate once, left to right; native iterator internals stay untranslated.
+#[must_use]
+pub fn ascii_chars_in(value: &Str, alphabet: &Str) -> bool {
+    value.bytes().all(|byte| byte.is_ascii() && alphabet.as_bytes().contains(&byte))
+}
