@@ -35,11 +35,15 @@ guard, final source fence and fallback remains in place. There is no retained
 object, source, verdict, digest or encoded result across invocations.
 
 The proposal exposes `composeOwnedCorePrivateAnalysisRetention(prior, options)`
-as a later source-equation layer. Before permanent installation, current source
-wrappers must append it after their existing final layer and compare physical
-operations source with that final composed map. Historical ASCII reverse birth
-sources and inverses must remain unchanged. Its standalone proposal can first
-be used in a reversible receiving trial without overwriting historical pins.
+as a later source-equation layer. The current primitive boundary, checked source,
+lifetime, matches, ASCII assets/reverse and vector CLI compositions append it
+after their existing final layer. Their complete source controls compare physical
+operations with the final composed map, including a fresh full-source Hash and
+exit join. Historical layer indexes, ASCII reverse birth sources and inverses
+remain unchanged. The new layer is checked without regenerating any earlier
+layer implicitly. The standalone proposal can first be used in a reversible
+receiving trial without overwriting historical pins. Default installation and
+all updated current wrappers still require receiving qualification.
 
 Required receiving files are the complete new four-case
 `tools/translation/js-to-rust/test/owned-core-private-analysis-retention.test.mjs`,

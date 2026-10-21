@@ -1,3 +1,4 @@
+import {composeOwnedCorePrivateAnalysisRetention} from './prepare-owned-core-private-analysis-retention.mjs';
 import {composeCoreUnitMatches} from './prepare-core-unit-matches.mjs';
 // Complete native source selections followed by serialized/reparsed CST rules.
 import {composeCoreAscii} from './prepare-core-ascii-sources.mjs';
@@ -130,7 +131,8 @@ export function prepareCurrentSourceLifetimeRefusalBatches(options = {}) {
   const assets = composeCoreAsciiAssets(reverse.sources, options);
   const base = composeCoreAsciiBaseAssets(assets.sources, options);
  const unit=composeCoreUnitMatches(base.sources,options);
-  return {schema: 'current-source-lifetime-refusal-batch-source-v1', birth, layers: [birth, ...checked.layers, ...preserved.layers, ...ascii.layers, ...reverse.layers, ...assets.layers, ...base.layers,...unit.layers], files: Object.values(unit.sources), semanticAuthority: false};
+ const retention=composeOwnedCorePrivateAnalysisRetention(unit.sources,options);
+  return {schema: 'current-source-lifetime-refusal-batch-source-v1', birth, layers: [birth, ...checked.layers, ...preserved.layers, ...ascii.layers, ...reverse.layers, ...assets.layers, ...base.layers,...unit.layers,...retention.layers], files: Object.values(retention.sources), semanticAuthority: false};
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const [mode] = process.argv.slice(2); if (process.argv.length !== 3 || !['--check', '--write'].includes(mode)) fail('usage: --check|--write');
