@@ -2,7 +2,7 @@
 // can issue a checked function. No supplied metadata or type flag is consumed.
 import {translateProject} from '../project.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
-import {captureSourceModuleViews,originalModuleViewItems} from '../source-module-views.mjs';
+import {originalModuleViewItems} from '../source-module-views.mjs';
 import {createHash} from 'node:crypto';
 const fail=message=>{throw new TypeError('Owned reverse vector candidate: '+message);};
 const hash=source=>createHash('sha256').update(source).digest('hex');
@@ -32,14 +32,17 @@ export function captureOriginalOwnedVectorProfiles(data,path){
   const candidates=result.executableDeclarations.filter(row=>row.source===binding.rustPath&&row.qualifiedName===binding.rustName);if(candidates.length!==1)fail('actual original executable Rust function is absent or ambiguous');const original=candidates[0],source=files.get(original.source);if(typeof source!=='string'||original.sourceSha256!==hash(source)||typeof original.lower!=='function')fail('fresh actual original source/carrier differs');
   const lowered=original.lower(),own=lowered.own;if(own?.k!=='fn'||own.async||own.params.length||own.ret?.kind!=='array'||own.ret.rustOwnership?.kind!=='owned'||own.ret.rustOwnership.source!=='Vec'||own.ret.rustReference||own.ret.patternOwnershipRefusal||own.ret.rustGenericIdentityUnresolved||own.ret.rustBorrowingUnresolved)fail('actual zero-parameter owned Vec signature required; fixed arrays and borrows remain refused');
   if(own.body?.k!=='array'||own.body.compatibilityCore?.id!=='router-core-vector-list-v1'||own.body.type?.rustOwnership?.source!=='Vec')fail('actual accepted qualified owned-vector list body required');const element=scalar(own.ret.element);
-  const modulePath=original.qualifiedName.split('.').slice(0,-1),capture=captureSourceModuleViews({source,sourcePath:original.source,compilationProfile:PRODUCTION_PROFILE}),views=capture.views.filter(view=>JSON.stringify(view.modulePath)===JSON.stringify(modulePath));if(views.length!==1)fail('actual original Rust module view differs');
-  const functions=originalModuleViewItems(views[0],source).filter(item=>item.term==='fn'&&item.name===original.name);if(functions.length!==1)fail('actual original Rust function span differs');const fn=functions[0];
+  // A physical file's locally rooted inline views omit its external-module
+  // prefix. Use this SAME fresh forward invocation's genuine graph view and
+  // full module identity; reconstructing a guessed prefix would lose that join.
+  const modulePath=original.qualifiedName.split('.').slice(0,-1),scopes=result.sourceScopes.filter(scope=>scope.source===original.source&&JSON.stringify(scope.module)===JSON.stringify(modulePath));if(scopes.length!==1||scopes[0].sha256!==hash(source)||scopes[0].sourceView?.sourcePath!==original.source)fail('actual original Rust module view differs');
+  const functions=originalModuleViewItems(scopes[0].sourceView,source).filter(item=>item.term==='fn'&&item.name===original.name);if(functions.length!==1)fail('actual original Rust function span differs');const fn=functions[0];
   const writtenReturn=JSON.parse(JSON.stringify(own.ret));
   profiles.set(binding.javascriptName,{binding:{...binding},type:'vec:'+element.name,element,original:{path:original.source,source,sha256:hash(source),qualifiedName:original.qualifiedName,carrierSpan:{...original.span},span:[fn.start,fn.end],functionSource:source.slice(fn.start,fn.end),signature:{params:[],returns:writtenReturn}},forward:{javascript:result.javascript,typescript:result.typescript,sourceScopes:result.sourceScopes.map(scope=>({source:scope.source,module:[...scope.module],sha256:scope.sha256}))}});
  }
  // The map is confined to one native traversal, never retained in a context or
  // accepted from a caller. Source handles re-run this complete producer on read.
- return profiles;}finally{result=null;}
+ return profiles;}catch(error){profiles.clear();throw error;}finally{result=null;}
 }
 function arrayType(ts,type,element){
  if(ts.isTypeOperatorNode(type)&&type.operator===ts.SyntaxKind.ReadonlyKeyword)type=type.type;

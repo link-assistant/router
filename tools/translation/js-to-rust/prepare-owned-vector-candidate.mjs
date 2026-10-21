@@ -4,6 +4,7 @@ import {readFileSync,writeFileSync,existsSync,lstatSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
+import {createRequire} from 'node:module';
 import {ownershipCompiler} from './vendor/module-syntax.mjs';
 import {verifyNativeCopiedSourceBindings} from '../source-copy-native-bindings.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from '../concrete-syntax-meta.mjs';
@@ -14,7 +15,7 @@ const support='./owned-vector-candidate-support.mjs';
 function read(root,path){const file=resolve(root,path),state=lstatSync(file);if(!state.isFile()||state.isSymbolicLink()||state.size>32*1024*1024)fail('bounded complete physical source required');return readFileSync(file,'utf8');}
 function syntax(ts,path,source){const file=ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);if(file.parseDiagnostics.length)fail('complete native source grammar differs');return file;}
 export function prepareOwnedVectorCandidateSources({root=ROOT}={}){
- const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('actual installed TypeScript5.9.3 required');const inputs=copies.map(([name])=>({path:BASE+name,source:read(root,BASE+name)})),helper=read(root,BASE+'owned-vector-candidate-support.mjs'),files=[];
+ root=resolve(root);const ts=ownershipCompiler();if(ts.version!=='5.9.3'||createRequire(resolve(root,'js/package.json'))('typescript')!==ts)fail('this actual source root installed TypeScript5.9.3 required');const inputs=copies.map(([name])=>({path:BASE+name,source:read(root,BASE+name)})),helper=read(root,BASE+'owned-vector-candidate-support.mjs'),files=[];
  for(const [index,[originalName,candidateName]]of copies.entries()){
   const before=inputs[index].source,path=BASE+candidateName,edits=[];let language=before;
   function once(source,old,value,id){if(source.split(old).length!==2)fail('unique complete actual source anchor required: '+id);edits.push({id,before:old,after:value});return source.replace(old,()=>value);}
