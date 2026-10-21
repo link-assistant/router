@@ -45,3 +45,11 @@ The current receiving user is the
 [complete Core source-history adapter](complete-current-core-receiving.md).
 This scoped performance repair does not qualify full-source generation, native
 runtime parity, reverse synchronization or whole-project translation coverage.
+
+The private DATA source-history composer retains a separate exact later-source
+layer for this added transaction. It derives the complete current executor from
+the actual producer, joins its full beforeimage to the original DATA adoption,
+retains both CST phases and inverse, and freshly checks all producer inputs and
+physical identities. Existing adoption proposals preserve the already installed
+later API. Unknown source suffixes still refuse. This source history adds no
+parser, namespace or executable authority.
