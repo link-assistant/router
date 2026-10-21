@@ -81,7 +81,9 @@ The ClientKind control now uses the unchanged complete file in the complete
 captured original library graph, including actual ancestors, child modules and
 current Cargo/profile inputs. The previous standalone-file fixture omitted its
 external children and the private nested-helper proof correctly refused it.
-The graph repair remains unrun and retains the original 60-second deadline.
+Root's complete eight-case Node v3 run passed every assertion with the full graph
+and actual project external inputs. ClientKind took 81,950.771 ms, exceeding its
+unchanged 60-second deadline; the receiving file remains performance RED.
 
 This worker performed source drafting, complete pinned archive-member reads and
 an independent static literal-token census only. No engines, materialization,
@@ -161,9 +163,30 @@ The birth adoption plan remains available after a later explicit body layer and
 reports `compositionRequired` for that physical source. Its standalone `--check`
 requires the exact import afterimage. A later byte wrapper must supply its own
 complete native inverse restoring this import afterimage, then compose this
-import inverse to the genuine original. The candidate producer currently refuses
-such a later wrapper until that exact current-source composition is provided.
-No arbitrary callback, source-head selection or schema flag can normalize it.
+import inverse to the genuine original. `schemars-current-enclosing-history.mjs`
+now supplies that exact composition through the coverage worker's focused
+`prepareDefaultProofByteEnclosingHistory` operation. It reissues only the actual
+enclosing row and its birth predecessor, rather than all nine byte proposal rows.
+The physical source must be exactly the known wrapper afterimage; altered whole
+source remains a refusal. No arbitrary callback, source-head selection or schema
+flag can normalize it.
+
+The current helper retains the complete focused native/CST equation, independent
+native repository/call inverses and serialized/reparsed inverse CST phases before
+restoring the exact Schemars import. It captures full physical text inputs and
+the complete byte-history archive separately as base64 DATA, then checks every
+byte and any absent helper again without an extra observable Hash callback in the
+final fence. The candidate's existing `inputs` entries remain complete current
+UTF-8 source/hash records; binary evidence remains explicitly typed separately.
+`prepareCurrentSchemarsEnclosingAdoption` in that helper returns both full layers
+and the actual current source under a distinct schema. It does not relabel the
+birth plan's import-only rows as final byte-wrapped files or install defaults.
+The full byte-adoption producer remains the final combined write/check owner.
+
+Three additional complete current-history controls cover the full focused-plan
+comparison and both inverse forms, changed whole sources, and physical text and
+binary freshness refusals. These new controls and the composed source path are
+source-only and unrun. The original eight bodies/deadlines are unchanged.
 
 Root must capture/install the history packet, materialize the full candidate and
 control proposals, and run the new complete four-case adoption file plus all
