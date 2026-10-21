@@ -1,0 +1,95 @@
+// Primitive import-edge storage only. Native AST/checkers never enter a frame.
+const __runtimeImportInitial=originalNamespaceTraversalIntrinsicsUnchanged()&&originalPrivateParserIngressUnchanged()&&originalDataFreezeIntrinsicsUnchanged()&&originalStaticSourceIntrinsicsUnchanged();
+const __runtimeImportPins=__runtimeImportInitial?__RUNTIME_IMPORT_PINS_LITERAL__:null;
+const __runtimeImportOps=__runtimeImportInitial?{get:Object.getOwnPropertyDescriptor,keys:Reflect.ownKeys,parent:Object.getPrototypeOf,own:Object.hasOwn,apply:Reflect.apply,define:Object.defineProperty,proxy:types.isProxy,Map,getMap:Map.prototype.get,setMap:Map.prototype.set,clear:Map.prototype.clear,freeze:Object.freeze}:null;
+let __runtimeImportActive=null;
+function runtimeImportDescriptorSame(a,b){return !!a&&!!b&&a.value===b.value&&a.get===b.get&&a.set===b.set&&a.writable===b.writable&&a.enumerable===b.enumerable&&a.configurable===b.configurable;}
+function runtimeImportBootstrap(budget){
+ const bad=reason=>{budget.reason=reason;return null;};
+ const o=__runtimeImportOps;if(!o||!originalNamespaceTraversalIntrinsicsUnchanged()||!originalPrivateParserIngressUnchanged()||!originalDataFreezeIntrinsicsUnchanged()||!originalStaticSourceIntrinsicsUnchanged())return bad('initial-native-operations');
+ const ts=ownershipCompiler();if(!ownershipCompilerRuntimeNativeCurrent(ts))return bad('native-loader-function-identity');if(ts.version!=='5.9.3'||o.proxy(ts))return bad('compiler-native-shape');
+ const rows=[],seen=[];
+ function capture(owner,tag,selected){
+  if(!owner||typeof owner!=='object'&&typeof owner!=='function'||o.proxy(owner))return false;
+  if(seen.includes(owner))return true;seen.push(owner);
+  const names=selected??o.keys(owner),fields=[];for(const key of names){const field=o.get(owner,key);if(!field)return false;fields.push(field);}
+  const expected=__runtimeImportPins[tag];if(expected){
+   if(expected.length!==names.length)return false;
+   for(let at=0;at<names.length;at++){const row=expected[at],field=fields[at];if(row.key!==names[at]||field.writable!==row.writable||field.enumerable!==row.enumerable||field.configurable!==row.configurable)return false;if(row.primitive&&!(row.primitive.type===typeof field.value&&(row.primitive.type==='undefined'||field.value===row.primitive.value)))return false;for(const kind of ['value','get','set'])if(typeof field[kind]==='function'?(o.proxy(field[kind])||originalCapturedFunctionSource(field[kind])!==row[kind]):row[kind]!==undefined)return false;}
+  }
+  rows.push({owner,tag,names,fields,parent:o.parent(owner),selected:!!selected});return true;
+ }
+ const top=['createSourceFile','isImportDeclaration','isExportDeclaration','forEachChild','forEachChildRecursively','setParentRecursive','setParent','isJSDocNode','ScriptKind','ScriptTarget','Debug','objectAllocator','performance','tracing'];if(!capture(ts,'compiler',top))return bad('compiler-fields');
+ const debug=ts.Debug,allocator=ts.objectAllocator,performance=ts.performance;
+ for(const [owner,tag]of [[ts.ScriptKind,'ScriptKind'],[ts.ScriptTarget,'ScriptTarget'],[debug,'Debug'],[allocator,'allocator'],[performance,'performance']])if(!capture(owner,tag))return bad('native-object:'+tag);
+ if(debug.loggingHost!==undefined&&!capture(debug.loggingHost,'loggingHost'))return bad('native-object:loggingHost');
+ const getLevel=debug.getAssertionLevel,isEnabled=performance.isEnabled;if(typeof getLevel!=='function'||typeof isEnabled!=='function')return bad('native-state-readers');
+ if(ts.tracing!==undefined||o.apply(isEnabled,performance,[])!==false||o.apply(getLevel,debug,[])!==0||debug.isDebugging!==false)return bad('tracing-performance-debug-state');
+ for(const name of ['getNodeConstructor','getTokenConstructor','getIdentifierConstructor','getPrivateIdentifierConstructor','getSourceFileConstructor']){
+  const method=allocator[name];if(typeof method!=='function')return bad('allocator-method:'+name);const ctor=o.apply(method,allocator,[]);if(typeof ctor!=='function'||!capture(ctor,'ctor:'+name))return bad('allocator-constructor:'+name);
+  let owner=ctor.prototype,depth=0;while(owner!==null){if(++depth>8||!capture(owner,'prototype:'+name+':'+depth))return bad('allocator-prototype:'+name+':'+depth);owner=o.parent(owner);}
+ }
+ for(const owner of [Object.prototype,Array.prototype,Map.prototype,Function.prototype,String.prototype])if(!capture(owner,'intrinsic'))return bad('global-intrinsic');
+ return {ts,rows,debug,performance,getLevel,isEnabled};
+}
+function runtimeImportNativeCurrent(n){
+ const o=__runtimeImportOps;if(!n||!originalNamespaceTraversalIntrinsicsUnchanged()||!originalPrivateParserIngressUnchanged()||!originalDataFreezeIntrinsicsUnchanged()||!originalStaticSourceIntrinsicsUnchanged()||ownershipCompiler()!==n.ts||!ownershipCompilerRuntimeNativeCurrent(n.ts))return false;
+ for(const row of n.rows){if(o.proxy(row.owner)||o.parent(row.owner)!==row.parent)return false;const names=row.selected?row.names:o.keys(row.owner);if(names.length!==row.names.length)return false;for(let at=0;at<names.length;at++)if(names[at]!==row.names[at]||!runtimeImportDescriptorSame(o.get(row.owner,names[at]),row.fields[at]))return false;}
+ return n.ts.tracing===undefined&&o.apply(n.isEnabled,n.performance,[])===false&&o.apply(n.getLevel,n.debug,[])===0&&n.debug.isDebugging===false;
+}
+function runtimeImportDisable(frame){
+ for(let value=frame;value;value=value.parent){value.disabled=true;if(value.entries)__runtimeImportOps.apply(__runtimeImportOps.clear,value.entries,[]);value.entries=null;}
+}
+function runtimeImportEpoch(ts){
+ const frame=__runtimeImportActive;if(!frame||!frame.open||frame.disabled)return null;
+ const budget=frame.budget;if(!budget.attempted){budget.attempted=true;try{budget.native=runtimeImportBootstrap(budget);}catch{budget.reason='native-bootstrap-refused';budget.native=null;}}
+ const native=budget.native;if(!native||native.ts!==ts||!runtimeImportNativeCurrent(native)){runtimeImportDisable(frame);return null;}
+ return {frame,native,open:true,complete:false};
+}
+function runtimeImportEpochClose(epoch){
+ if(!epoch)return;epoch.open=false;
+ if(!epoch.complete||!runtimeImportNativeCurrent(epoch.native))runtimeImportDisable(epoch.frame);
+ epoch.frame=null;epoch.native=null;
+}
+function runtimeImportEpochReturn(epoch,value){if(epoch)epoch.complete=true;return value;}
+function runtimeImportEpochUsable(epoch){return !!epoch&&epoch.open&&epoch.frame===__runtimeImportActive&&epoch.frame.open&&!epoch.frame.disabled;}
+function runtimeImportParsed(ts,path,source,epoch){
+ if(!runtimeImportEpochUsable(epoch))return parsed(ts,path,source);
+ const frame=epoch.frame,o=__runtimeImportOps,cached=frame.entries?o.apply(o.getMap,frame.entries,[path]):undefined;
+ if(cached&&cached.source===source){frame.hits++;return runtimeParsedWithoutParents(ts,path,source);}
+ frame.misses++;const budget=frame.budget;budget.rows++;budget.units+=path.length+source.length;
+ if(budget.rows>256||budget.units>2097152)runtimeImportDisable(frame);
+ // Every first actual use retains the complete original true-parent parse.
+ return parsed(ts,path,source);
+}
+function runtimeImportComplete(ts,path,source,file,epoch){
+ if(!runtimeImportEpochUsable(epoch))return;const frame=epoch.frame,o=__runtimeImportOps,cached=frame.entries?o.apply(o.getMap,frame.entries,[path]):undefined;
+ if(cached&&cached.source===source)return;const edges=[];
+ // The first native parse and complete original recursive namespace walk have
+ // already finished. Only primitive specifier strings enter the dictionary.
+ for(const node of file.statements)if((ts.isImportDeclaration(node)||ts.isExportDeclaration(node))&&node.moduleSpecifier){
+  const text=node.moduleSpecifier.text;if(typeof text!=='string'){runtimeImportDisable(frame);return;}
+  if(++frame.budget.edges>16384){runtimeImportDisable(frame);return;}
+  o.define(edges,''+edges.length,{value:text,writable:true,enumerable:true,configurable:true});
+ }
+ if(!frame.entries)frame.entries=new o.Map();
+ o.apply(o.setMap,frame.entries,[path,{source,edges:o.freeze(edges)}]);frame.stores++;
+}
+function runtimeImportSynchronous(value){
+ const o=__runtimeImportOps;let depth=0;
+ while(value!==null&&(typeof value==='object'||typeof value==='function')){
+  if(++depth>160||o.proxy(value))throw new TypeError('Runtime import DATA scope requires an ordinary synchronous result');
+  if(o.get(value,'then'))throw new TypeError('Runtime import DATA scope refuses Promise and thenable results');value=o.parent(value);
+ }
+}
+export function withOwnedRuntimeImportEdges(run){
+ if(typeof run!=='function')throw new TypeError('Runtime import DATA scope requires its synchronous callback');
+ const o=__runtimeImportOps;if(o&&o.proxy(run))throw new TypeError('Runtime import DATA scope refuses proxy callbacks');
+ const prior=__runtimeImportActive,frame={open:true,parent:prior,disabled:!!prior?.disabled,entries:null,budget:prior?prior.budget:{rows:0,units:0,edges:0,native:null,attempted:false,reason:null},hits:0,misses:0,stores:0};__runtimeImportActive=frame;
+ let completed=false;try{const value=run();if(!originalNamespaceTraversalIntrinsicsUnchanged()||!originalStaticSourceIntrinsicsUnchanged()||frame.budget.native&&!runtimeImportNativeCurrent(frame.budget.native))runtimeImportDisable(frame);if(o&&!frame.disabled)runtimeImportSynchronous(value);completed=true;return value;}
+ finally{if(!completed)runtimeImportDisable(frame);if(frame.budget.native&&!runtimeImportNativeCurrent(frame.budget.native))runtimeImportDisable(frame);frame.open=false;if(frame.entries)o.apply(o.clear,frame.entries,[]);frame.entries=null;frame.parent=null;if(!prior){if(frame.budget.native)frame.budget.native.rows.length=0;frame.budget.native=null;}__runtimeImportActive=prior;}
+}
+export function ownedRuntimeImportEdgeFacts(){
+ const frame=__runtimeImportActive;if(!frame)return {active:false,disabled:false,hits:0,misses:0,stores:0,rows:0,sourceUnits:0,edges:0,reason:null};
+ return {active:frame.open,disabled:frame.disabled,hits:frame.hits,misses:frame.misses,stores:frame.stores,rows:frame.budget.rows,sourceUnits:frame.budget.units,edges:frame.budget.edges,reason:frame.budget.reason};
+}
