@@ -3,7 +3,7 @@
 import {createHash} from 'node:crypto';
 import {types} from 'node:util';
 import {deriveFootprintSourceContext} from './derive-footprints.mjs';
-import {resolveModuleBindings} from './module-bindings.mjs';
+import {resolveOriginalWholeOwnerBindingBootstrap} from './whole-owner-original-binding-bootstrap.mjs';
 import {isSourceModuleView} from './source-module-views.mjs';
 import {originalAttributeOwnerBulkCryptoReady} from './attribute-owner-bulk-crypto.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
@@ -40,7 +40,7 @@ export function createOriginalAttributeOwnerBulkOperation(){
    let external=JSON.stringify([...source.externalModules]),profile=JSON.stringify(source.compilationProfile),dependencies=source.dependencies;
    for(const module of source.modules)rows.push({file:module.file,path:JSON.stringify(module.path),source:module.source,sha256:hash(module.source),view:module.sourceView,condition:module.configurationCondition??null});
    if(!originalAttributeOwnerBulkCryptoReady())fail('entry source capture changed crypto/intrinsics');
-   let program=resolveModuleBindings({...source,deriveContext:context}),canonical=JSON.stringify(program),digest=hash(canonical);
+   let program=resolveOriginalWholeOwnerBindingBootstrap({...source,deriveContext:context}),canonical=JSON.stringify(program),digest=hash(canonical);
    if(!originalAttributeOwnerBulkCryptoReady())fail('fresh complete binding program changed crypto/intrinsics');
    const prior=current,frame={context,open:true,bindings:program,digest,original:source};current=frame;
    try{
