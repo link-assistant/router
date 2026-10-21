@@ -80,8 +80,9 @@ function previousFactoryProof(source,self,previous){
  const current=native(self,'prepare-guarded-proof-lexing.mjs'),old=native(previous,'prepare-guarded-proof-lexing-v1.mjs'),pick=(file,ts,name)=>one(file.statements.filter(node=>ts.isFunctionDeclaration(node)&&node.name?.text===name),'exact previous '+name);
  const selected=pick(current.file,current.ts,'sourceFactoryV1'),original=pick(old.file,old.ts,'sourceFactory'),start=selected.getStart(current.file),nameStart=selected.name.getStart(current.file),renamed=self.slice(start,nameStart)+'sourceFactory'+self.slice(selected.name.end,selected.end);
  if(renamed!==original.getText(old.file))fail('complete known V1 constructor changed');
+ const currentImports=current.file.statements.filter(current.ts.isImportDeclaration).map(node=>node.getText(current.file)),oldImports=old.file.statements.filter(old.ts.isImportDeclaration).map(node=>node.getText(old.file));if(JSON.stringify(currentImports)!==JSON.stringify(oldImports))fail('complete actual V1 imported closure changed');
  for(const name of ['one','native','edits','stage'])if(pick(current.file,current.ts,name).getText(current.file)!==pick(old.file,old.ts,name).getText(old.file))fail('known V1 source operation changed: '+name);
- for(const name of ['originalPath','names','factoryName','opening','closing']){
+ for(const name of ['hash','originalPath','names','factoryName','opening','closing']){
   const declaration=(parsed,key)=>one(parsed.file.statements.filter(node=>parsed.ts.isVariableStatement(node)&&node.declarationList.declarations.some(row=>parsed.ts.isIdentifier(row.name)&&row.name.text===key)),'exact V1 '+key);
   if(declaration(current,name).getText(current.file)!==declaration(old,name).getText(old.file))fail('known V1 captured input changed: '+name);
  }
