@@ -3,7 +3,7 @@
 // their private owner join first; every ineligible case runs normal stringify.
 import {types} from 'node:util';
 import {originalBatchedNamespaceTraversalIntrinsicsUnchanged,originalBatchedDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
-import {originalBatchedLexingIntrinsicsUnchanged} from './original-lexing-intrinsics.mjs';
+import {originalBatchedLexingIntrinsicsUnchanged} from './guarded-proof-lexing-intrinsics.mjs';
 const originalNamespaceTraversalIntrinsicsUnchanged=originalBatchedNamespaceTraversalIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged=originalBatchedDataFreezeIntrinsicsUnchanged,originalLexingIntrinsicsUnchanged=originalBatchedLexingIntrinsicsUnchanged;
 import {completedDataTraversalExceedsBudget,completedDataJsonWithinBudget} from './private-data-freeze.mjs';
 const enabled=originalNamespaceTraversalIntrinsicsUnchanged()&&originalLexingIntrinsicsUnchanged();

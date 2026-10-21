@@ -3,7 +3,7 @@
 import {types} from 'node:util';
 import {createPrivateFrozenJsonComposer} from './private-frozen-json.mjs';
 import {originalBatchedNamespaceTraversalIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
-import {originalBatchedLexingIntrinsicsUnchanged} from './original-lexing-intrinsics.mjs';
+import {originalBatchedLexingIntrinsicsUnchanged} from './guarded-proof-lexing-intrinsics.mjs';
 
 // This NEW internal format uses fixed ordinary intrinsic owners. It neither
 // reflects on the mutable globalThis binding nor assumes Bun's global is plain.

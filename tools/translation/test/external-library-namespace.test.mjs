@@ -2,8 +2,11 @@ import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import '../project.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync,mkdirSync} from 'node:fs';
+import {readFileSync,mkdirSync,mkdtempSync,writeFileSync,rmSync} from 'node:fs';
 import {join} from 'node:path';
+import {tmpdir} from 'node:os';
+import {pathToFileURL} from 'node:url';
+import {relocateSourceModule} from './relocate-source-module.mjs';
 import {writeJsonGzip} from '../../evidence/write-json-gzip.mjs';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {captureSourceModuleViews,originalSourceModuleItems} from '../source-module-views.mjs';
@@ -67,7 +70,13 @@ test('builtin output effects reject copied tokens changed source and custom deri
  for(const source of ['#[derive(Unknown)]pub struct Value;','mod core{}#[derive(Copy)]pub struct Value;','#[derive(Copy)]pub struct Value<T>(T);']){const original=modules(source),context=createDeriveFootprintContext({modules:original,dependencies}),item=originalSourceModuleItems(original[0]).find(item=>item.name==='Value');assert.throws(()=>proveBuiltinDeriveEmptyEnclosingEffect(context,original[0],item),/genuine current|Standard-only|unsealed|Unsealed/u);}retain('06-effect-controls',{source:result.source,value:result.value});
 });
 
-test('modeled profiles and source candidates do not waive the actual package producer refusal',{timeout:60000},()=>{
- const {row,token,value}=capture();assert.throws(()=>originalExternalTraitLibraryClosure(dependencies,path,token),/Original external trait source: original outer item has an unproved attribute producer/u);
- const root=value.sources.find(input=>input.path===value.crateRoot),original=modules(root.source,value.profile),inputs=captureOriginalNamespaceAttributeInputs({modules:original,compilationProfile:value.profile}),candidates=originalSourceModuleItems(original[0]).map(item=>originalNamespaceAttributeInputs(inputs,original[0],item));assert.ok(candidates.some(row=>row.candidates.length));assert.ok(candidates.every(row=>row.callerOwnerResolved===false&&row.namespaceAuthority===false));assert.equal(matchesParserFacts(row.parser),row.state);retain('07-honest-remaining-closure',{value,root,candidates,remaining:'unproved attribute producer; tool-prefix glob/output closure is not available'});
+test('modeled inputs retain independent source ABI proofs while foreign producers keep the original refusal',{timeout:60000},async t=>{
+ const {row,token,value}=capture(),closure=originalExternalTraitLibraryClosure(dependencies,path,token),proof=closure.declaration.originalProducerSourceABI;
+ assert.deepEqual(proof.items.map(item=>item.name),['DecodePaddingMode','DecodeMetadata']);assert.equal(proof.standardProviderSlots.length,6);assert.equal(proof.sourceNamespaceOnly,true);assert.equal(proof.developmentEdgesExcluded,true);assert.deepEqual(proof.cfgBranches,['false','true']);
+ for(const key of ['cfgTestProved','wholePackageNamespaceAuthority','wholeStandardNamespaceComplete','actualNativeCallerOwnerResolved','actualInvocationObserved','nativeSysrootConformance','nativeParity','runtimeAuthority'])assert.equal(proof[key],false,key);
+ assert.equal(closure.wholeTraitAuthority,false);assert.equal(closure.runtimeParity,false);assert.deepEqual(closure.modeledLibraryInput,value);noAuthority(closure.modeledLibraryInput);assert.deepEqual(closure.declaration.supertraits.map(item=>[item.closure.name,item.closure.source]),[['Send','library/core/src/marker.rs'],['Sync','library/core/src/marker.rs']]);
+ const origin=new URL('../extensions/external-trait-sources.mjs',import.meta.url),source=readFileSync(origin,'utf8'),relocation=relocateSourceModule(source,origin.href),directory=mkdtempSync(join(tmpdir(),'router-foreign-external-producer-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));const target=join(directory,'external-trait-sources.mjs');writeFileSync(target,relocation.text,{flag:'wx'});assert.equal(relocation.inverse,source);const foreign=await import(pathToFileURL(target).href),defaultContext=captureOriginalExternalTraitDefaultContext(row.parser,path);
+ assert.throws(()=>foreign.originalExternalTraitClosure(dependencies,path,defaultContext),/Original external trait source: original outer item has an unproved attribute producer/u);
+ for(const input of [structuredClone(token),Object.freeze({...token})])assert.throws(()=>originalExternalTraitLibraryClosure(dependencies,path,input),/copied, foreign|changed/u);
+ const root=value.sources.find(input=>input.path===value.crateRoot),original=modules(root.source,value.profile),inputs=captureOriginalNamespaceAttributeInputs({modules:original,compilationProfile:value.profile}),candidates=originalSourceModuleItems(original[0]).map(item=>originalNamespaceAttributeInputs(inputs,original[0],item));assert.ok(candidates.some(item=>item.candidates.length));assert.ok(candidates.every(item=>item.callerOwnerResolved===false&&item.namespaceAuthority===false));assert.equal(matchesParserFacts(row.parser),row.state);retain('07-honest-remaining-closure',{value,root,candidates,closure,relocation,remaining:'source ABI only; actual invocation, caller ownership, whole package and standard namespaces remain unproved'});
 });
