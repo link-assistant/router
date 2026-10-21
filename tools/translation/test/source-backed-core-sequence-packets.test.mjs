@@ -82,7 +82,7 @@ test('accessors proxies caller verifiers unknown fields missing Cargo links over
  const f=fixture(t);let callbacks=0;const accessor={output:f.output};Object.defineProperty(accessor,'root',{enumerable:true,get(){callbacks++;throw Error('getter');}});const proxy=new Proxy(f.options,{ownKeys(){callbacks++;return [];}});
  for(const input of [accessor,proxy,{...f.options,verifier(){callbacks++;}},{...f.options,sequence:'json-readers'}])assert.throws(()=>proposeSourceBackedCoreSequencePackets(input),TypeError);
  assert.equal(callbacks,0);assert.throws(()=>proposeSourceBackedCoreSequencePackets({root:f.directory,output:join(f.directory,'packets')}),/disjoint/u);
- const linked=f.directory+'-linked';symlinkSync(f.directory,linked,'dir');t.after(()=>rmSync(linked));assert.throws(()=>proposeSourceBackedCoreSequencePackets({root:linked,output:f.output}),/unlinked/u);
+ const linked=f.directory+'-linked';symlinkSync(f.directory,linked,'dir');t.after(()=>rmSync(linked,{force:true}));assert.throws(()=>proposeSourceBackedCoreSequencePackets({root:linked,output:f.output}),/unlinked/u);
  const oversized=join(f.directory,'rust/src/oversized.rs');writeFileSync(oversized,' '.repeat(L.fileUnits+1));assert.throws(()=>proposeSourceBackedCoreSequencePackets(f.options),/limit/u);rmSync(oversized);
  rmSync(join(f.directory,'Cargo.lock'));assert.throws(()=>proposeSourceBackedCoreSequencePackets(f.options),/Cargo/u);assert.equal(readdirSync(dirname(f.output)).includes('proposal'),false);
 });
