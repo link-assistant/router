@@ -19,11 +19,15 @@ both Node and Bun. Its private DATA/source-history batch passes all 34 cases
 across six complete files in both engines. Original deadlines are preserved.
 These overlapping focused batches do not establish a whole-suite pass.
 
-The last fully collected remote cycle at
-`c6bed6215e157de4381e39e04b4cb1ef02720384` has 132 terminal checks:
-30 success, 40 failure, 20 cancelled and 42 skipped. All 60 failed/cancelled
-complete streams were retained. Rust did not unlock. New published and merge
-SHAs require their own results; skipped or cancelled work remains unqualified.
+The complete final-PR and merge scope is now retained in the
+[continuation case study](../case-studies/issue-759/current/continuation-772.md):
+19 runs and 158 terminal jobs at final head
+`5c3354948dc9186a22267d576d62b950cf41407d`, plus 14 runs and 162 terminal jobs
+at merge `eb2dad1c0a18394dc1aad46413e11401e74eb502`. All 139 failed/cancelled
+complete streams were retained and verified, with no collection errors.
+The merge scope includes scheduled work and an external dynamic Dependabot job;
+that job does not certify the Router gate or Rust runtime. New published SHAs
+need their own results; skipped or cancelled work remains unqualified.
 
 The last measured executable production baseline is 155/2,567 functions
 (6.04%) against an older 847-source inventory. The refreshed fixture contains
@@ -35,8 +39,16 @@ canonical and neutral/Unix/Windows generation, owned definitions, strict
 TypeScript 5.9.3, reverse freshness and strict parity. It must repair original
 Bun derive-helper, source-lifecycle, retained-storage, Core and CatalogRecord
 deadline failures without raising limits or reducing workloads. A metadata-copy
-prototype was withheld: its 30-case Node batch passes, while Bun finds native
-error-message and stack-control differences. It is not a qualified improvement.
+prototype was withheld from #771 after Bun found native error-message and stack
+control differences. The next source-derived dispatcher preserves the complete
+private implementation and native call text: its 30 metadata cases and five
+typed-target controls pass in both engines. Node passes all 39 selected cases;
+two original Bun derive cases still exceed 5,000 ms. The complete Bun batch
+remains red; no controlled speed gain or application-coverage gain is claimed.
+
+Follow [the throughput plan](translation-throughput-plan.md): qualify shared
+operation families, generate their real callers and both directions together,
+and count only whole independently checked and executed production functions.
 
 Issue #772 carries the full case study, native Router feature parity,
 bidirectional CST/meta translation, compatibility core, single-publisher

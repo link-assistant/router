@@ -2,7 +2,8 @@
 // a caller-supplied file checksum. Private contexts are not semantic IR nodes.
 import {createHash} from 'node:crypto';
 import {types} from 'node:util';
-import {originalFlatTokenIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged,copyOriginalDigestMetadata,createOriginalDigestMetadataCopierForInternalSources} from '../original-json-intrinsics.mjs';
+import {createPrimitiveMetadataCopier as createOriginalDigestMetadataCopierForInternalSources} from '../primitive-metadata-copy.mjs';
+import {originalFlatTokenIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged,copyOriginalDigestMetadata} from '../original-json-intrinsics.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {capturedRustTokenSource} from './lexical.mjs';
 

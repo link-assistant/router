@@ -1,0 +1,31 @@
+{
+  "schema": "router-complete-ci-archive-v1",
+  "archive": "20261023-complete-ci.tar.gz",
+  "archiveBytes": 8707125,
+  "archiveSha256": "866b47a8ed42a917b9c9952ad443273eb46d58515e706c6e8ff31aecc4ac630e",
+  "sourceFileCount": 381,
+  "sourceBytes": 9408269,
+  "allMembersIndependentlyReadBack": true,
+  "workflowRuns": 33,
+  "terminalJobs": 320,
+  "jobConclusions": {
+    "success": 69,
+    "failure": 93,
+    "cancelled": 46,
+    "skipped": 112
+  },
+  "failedCancelledFullStreams": 139,
+  "uncompressedFullStreamBytes": 35037815,
+  "completeRunMetadata": true,
+  "completeAttemptJobPages": true,
+  "collectionErrors": 0,
+  "logFetchErrors": 0,
+  "artifactDownloadsIncluded": false,
+  "sourceCollection": "collect-ci.py inside archive; run IDs pinned by the two complete run-list JSON files",
+  "historicalHeads": [
+    "5c3354948dc9186a22267d576d62b950cf41407d",
+    "eb2dad1c0a18394dc1aad46413e11401e74eb502"
+  ],
+  "rustExecutedLocally": false,
+  "fullCompletion": false
+}
