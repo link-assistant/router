@@ -53,6 +53,17 @@ are repaired locally; complete CI, canonical/profile regeneration, native parity
 and whole-Router synchronization remain open. See the
 [operation documentation](scalar-json-translation.md) for commands and boundaries.
 
+The [storage and guarded-source checkpoint](../case-studies/issue-759/current/storage-and-guarded-delivery-772.md)
+retains the complete failed full-generation attempt: field storage completed,
+but standalone processing exhausted the unchanged 2 GiB heap after 1,287 seconds.
+No outputs or new global census were produced. The existing native retained
+storage path passes all 13 focused cases in both engines and is ready for a full
+retry. Actual guarded-producer composition repairs frozen composer/scanner
+comparisons and regenerates two scope modules without changing original pins.
+Its 18 focused cases pass in both engines; the broader Node source-plan family
+still has two original deadline failures. Keep these failures and the full
+reverse-project performance frontier open.
+
 The next batch must finish current full compiler/export qualification,
 canonical and neutral/Unix/Windows generation, owned definitions, strict
 TypeScript 5.9.3, reverse freshness and strict parity. It must repair original

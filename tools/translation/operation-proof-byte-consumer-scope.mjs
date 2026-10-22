@@ -1,6 +1,6 @@
 import {types} from 'node:util';
 import {originalBatchedNamespaceTraversalIntrinsicsUnchanged,originalBatchedDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
-import {originalBatchedLexingIntrinsicsUnchanged} from './original-lexing-intrinsics.mjs';
+import {originalBatchedLexingIntrinsicsUnchanged} from './guarded-proof-lexing-intrinsics.mjs';
 import {completedDataTraversalExceedsBudget,completedDataJsonWithinBudget} from './private-data-freeze.mjs';
 
 import {createScopedPrivateNativeProofJsonSerializer as operationOriginalSerializer} from "./operation-proof-byte-original-fallback.mjs";
