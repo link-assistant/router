@@ -185,7 +185,7 @@ jobs:
           "
       - run: npm ci --prefix js --ignore-scripts
       - run: node scripts/run-node-tests.mjs --outer-timeout-ms=3600000 --test-concurrency=2 tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs
-      - run: node scripts/translate-router.mjs --check
+      - run: node scripts/translate-router-flat-native-owned-field-meta.mjs --retain-output-text --check
       - run: node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --check
       - name: Preserve complete Node deadline audit and raw streams
         if: ${{ always() }}
@@ -218,7 +218,7 @@ jobs:
             if (!/^[a-f0-9]{40}$/.test(expected) || execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim() !== expected) process.exit(1);
           "
       - run: npm ci --prefix js --ignore-scripts
-      - run: node scripts/translate-router.mjs --profile-matrix --check
+      - run: node scripts/translate-router-flat-native-owned-field-meta.mjs --retain-output-text --profile-matrix --check
       - run: node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --profile-matrix --check
   reverse-translation:
     runs-on: ubuntu-24.04

@@ -21,6 +21,15 @@ and repository sequences serialize and reparse complete CSTs, retain full
 inverses, validate native syntax/bindings and generate the complete CLI, matrix,
 worker and regression closure. Do not edit generated files by hand.
 
+The actual complete canonical run at `9a57944c677615b7e0984969d8d91ea52a299974`
+processed all 862 Rust sources and applied the plan without failures in
+1,105.387 seconds, with sampled peak aggregate RSS 2,774,614,016 bytes under
+the existing 2 GiB heap and 3 GiB RSS caps. The resulting production census is
+157/2,570 executable top-level functions (6.11%); it does not establish full
+runtime parity. The CI/local canonical and profile commands and synchronizer
+now select this explicit path. Every JavaScript stage still gates fatal Rust
+verification for the same SHA. Compiler-input changes require regeneration.
+
 The old per-character detacher exhausted a 96 MiB heap on a deterministic
 16 MiB UTF16 input; the flat path preserves every code unit within that heap.
 All nine focused cases pass under Node and Bun, including host-mutation

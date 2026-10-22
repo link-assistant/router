@@ -248,6 +248,11 @@ test('producer dependency order preserves full reverse passes and makes affinity
   assert.deepEqual(ids({direction:'javascript-to-rust'}),['javascript-meta-rust','javascript-meta-typescript']);
   assert.deepEqual(ids({direction:'both'}),['javascript-meta-rust-preparation','original-affinity-schema','javascript-meta-rust','javascript-meta-typescript','rust-meta-javascript-typescript','rust-platform-matrix','original-serialization-registry']);
   assert.deepEqual(ids({direction:'rust-to-javascript',profiles:false}),['original-affinity-schema','rust-meta-javascript-typescript','original-serialization-registry']);
+  for(const check of [false,true]){
+    const selected=synchronizationSteps({root,direction:'rust-to-javascript',check}),canonical=selected.find(step=>step.id==='rust-meta-javascript-typescript'),matrix=selected.find(step=>step.id==='rust-platform-matrix');
+    assert.deepEqual(canonical.args,[path.join(repository,'scripts/translate-router-flat-native-owned-field-meta.mjs'),'--retain-output-text','--root',root,'--progress',...(check?['--check']:[])]);
+    assert.deepEqual(matrix.args,[...canonical.args,'--profile-matrix']);
+  }
   for(const scenario of ['descriptor-only','source-only','import-only']) {
     const receiving=fixture(t);
     if(scenario==='descriptor-only')put(receiving,'js/src/affinity-schema-descriptor.mjs','export const affinitySchema = {};\n');

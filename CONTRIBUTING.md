@@ -14,6 +14,8 @@ Rust, rustfmt, Clippy and rust-script remain tools for the Rust implementation a
 
 Disabling a conflicting local hook does not waive CI verification. Rust check failures must still fail CI after every required JavaScript stage passes for the same commit. Gated jobs and steps must not ignore failures with `continue-on-error`; the workflow audit enforces this independently of installed local hooks.
 
+Canonical and platform-profile checks and synchronization use `node scripts/translate-router-flat-native-owned-field-meta.mjs --retain-output-text`; add `--check` for freshness and `--profile-matrix` for the declared profiles. Its actual 862-source run passed the existing memory/disk bounds. Keep the separate owned-definition checks, all eight JavaScript stages, original case deadlines and fatal same-SHA Rust verification. See [the storage contract](docs/development/flat-output-translation.md); a successful generation does not establish complete executable coverage or runtime parity.
+
 ## Development Workflow
 
 Create a feature branch or isolated worktree, implement behavior in JavaScript, add targeted behavioral tests and update documentation. Read [the JavaScript-first workflow](docs/development/javascript-first.md) for the parity boundary and generation limitations. Router's JavaScript operations package and a valid parity inventory do not by themselves establish complete Rust runtime parity.
