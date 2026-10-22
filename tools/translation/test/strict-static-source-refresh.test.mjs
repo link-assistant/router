@@ -6,6 +6,8 @@ import {tmpdir} from 'node:os';
 import {join,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
+import {gzipSync,gunzipSync} from 'node:zlib';
+import {TRANSLATOR_EXPORT_LIMITS} from '../export-bundle.mjs';
 import {captureStaticSourceUniverse,assertStaticSourceUniverse,staticSourceUniverseRows} from '../static-source-universe.mjs';
 import {prepareStrictStaticSourceProducer} from '../prepare-strict-static-source-producer.mjs';
 import {STATIC_SOURCE_LIFECYCLE_PROFILES,STATIC_SOURCE_LIFECYCLE_LIMITS} from '../prepare-real-source-fixtures.mjs';
@@ -46,6 +48,16 @@ test('late write-and-restore byte changes remain refused by noncached physical a
  const input=fixture(t),path=join(input.root,'rust/src/lib.rs'),before=readFileSync(path);assert.throws(()=>hookHash(()=>captureStaticSourceUniverse(input),()=>{writeFileSync(path,'temporary changed bytes');writeFileSync(path,before);}),/identity changed|source changed/u);assert.ok(readFileSync(path).equals(before));const clean=captureStaticSourceUniverse(input);assert.deepEqual(assertStaticSourceUniverse(clean),clean);
 });
 
-test('actual complete native copied producer removes only explicit fallback with both CST phases and full inverses',()=>{
+test('actual complete native copied producer keeps strict physical capture and bounded export storage with both CST phases and full inverses',()=>{
  const before=readFileSync(join(ROOT,'tools/translation/prepare-real-source-fixtures.mjs'),'utf8'),limits=JSON.stringify(STATIC_SOURCE_LIFECYCLE_LIMITS),profiles=JSON.stringify(STATIC_SOURCE_LIFECYCLE_PROFILES),plan=prepareStrictStaticSourceProducer({root:ROOT}),row=plan.files[0];assert.equal(plan.files.length,1);assert.equal(row.before,before);assert.equal(row.copiedFrom,'tools/translation/prepare-real-source-fixtures.mjs');assert.equal(row.nativeSelections.length,1);assert.equal(row.nativeSelections[0].replacement,'{throw error;}');assert.ok(row.nativeSelections[0].expected.includes("bytes=staticGit(root,['show',subjectRevision+':'+row.path])"));assert.equal(row.repositorySelections[0].replacement,'prepareStrictStaticSourceLifecycleProposal');assert.equal(row.inverse,before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);for(const stage of row.stages){assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);assert.equal(stage.inverse,stage.before);assert.equal(stage.completeInverse,true);}assert.equal(row.nativeCopies.length,2);assert.equal(row.nativeBindings.nativeSemanticScopeChecked,true);assert.equal(readFileSync(join(ROOT,'tools/translation/prepare-real-source-fixtures.mjs'),'utf8'),before);assert.equal(JSON.stringify(STATIC_SOURCE_LIFECYCLE_LIMITS),limits);assert.equal(JSON.stringify(STATIC_SOURCE_LIFECYCLE_PROFILES),profiles);assert.equal(plan.originalProducerApisUnchanged,true);assert.equal(plan.semanticAuthority,false);
+});
+test('complete source-bank storage fits the original exporter file budget without changing any decoded byte',()=>{
+ const plan=prepareStrictStaticSourceProducer({root:ROOT}),row=plan.files[0];
+ assert.equal(plan.exportStorageGzipLevel,9);assert.equal(plan.previousStorageGzipLevel,1);assert.equal(plan.gzipStorageObservationsEquivalent,false);
+ assert.equal(row.repositorySelections.length,2);assert.equal(row.repositorySelections[1].expected,'1');assert.equal(row.repositorySelections[1].replacement,'9');
+ assert.equal(row.current,row.after);assert.equal(TRANSLATOR_EXPORT_LIMITS.fileBytes,4194304);
+ const packed=readFileSync(join(ROOT,'tools/translation/source-profiles/static-source-lifecycle/originals.json.gz')),raw=gunzipSync(packed),next=gzipSync(raw,{level:9,mtime:0});
+ assert.ok(next.length<=TRANSLATOR_EXPORT_LIMITS.fileBytes);assert.ok(gunzipSync(next).equals(raw));
+ const index=JSON.parse(readFileSync(join(ROOT,'tools/translation/source-profiles/static-source-lifecycle/manifest.json'),'utf8'));
+ assert.equal(raw.length,index.rawBytes);assert.equal(createHash('sha256').update(raw).digest('hex'),index.rawSha256);
 });
