@@ -1,0 +1,16 @@
+{
+  "archive": "20261023-flat-sync-delivery.tar.gz",
+  "bytes": 7288316,
+  "sha256": "6c6ee08b150f6f2bc1064eb19640505dd5713052a76627d85f76d00b89efeb24",
+  "members": 144,
+  "allMembersReadBack": true,
+  "completeCi": true,
+  "ciRuns": 6,
+  "terminalJobs": 50,
+  "ranJobLogs": 9,
+  "artifacts": 3,
+  "credentialPatterns": "no matches in complete originals and expanded gzip/zip payloads",
+  "failedAttemptsRetained": true,
+  "wholeGate": false,
+  "rustExecuted": false
+}

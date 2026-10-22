@@ -9,6 +9,7 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
 import {captureSyncInputs,syncRouter,synchronizationSteps,runSynchronizationProducer} from '../sync-router.mjs';
 import {rustPackageSourcePath} from '../../tools/translation/repository-layout.mjs';
+import {sourceItems} from '../../tools/translation/rust-structure.mjs';
 import {parseMeta} from '../../tools/translation/js-to-rust/translator.mjs';
 import {evaluate} from '../../tools/translation/js-to-rust/interpreter.mjs';
 import {compileNativeTypeScript} from '../../tools/translation/js-to-rust/native-typescript.mjs';
@@ -392,4 +393,25 @@ test('actual base64 witness synchronization and retirement preserve original Rus
   const removed=run(root,'base64-witness-retire-write');assert.equal(removed.exitCode,0,JSON.stringify(removed));assert.equal(removed.originalInputsUnchanged,true);assert.deepEqual(captureSyncInputs(root),afterRemoval);
   for(const name of [witness,prefix+'.lino',prefix+'-inputs.json',prefix+'/witness.mjs',prefix+'/witness.mts'])assert.equal(fs.existsSync(path.join(root,name)),false,name);
   assert.equal(fs.readFileSync(path.join(root,neighbor),'utf8'),'pub fn handwritten_neighbor() -> bool { true }\n');
+});
+
+test('actual ASCII and scalar witness synchronization preserves authored Rust and neighboring sources', {timeout:60_000},t=>{
+  const root=fixture(t),witness='tools/translation/js-to-rust/generated/owned-ascii-witness.rs',oracle='tests/translation_core_ascii_reverse_oracle.rs';
+  const neighbor='tools/translation/js-to-rust/generated/owned-ascii-witness-manual.rs';
+  for(const name of ['src/translation_core.rs','src/translation_core/primitives.rs','Cargo.toml','Cargo.lock',oracle])put(root,name,originalText(name));
+  put(root,'src/lib.rs','pub mod translation_core;\n');put(root,neighbor,'pub fn handwritten_neighbor() -> bool { true }\n');
+  const before=captureSyncInputs(root);
+  for(const name of [oracle,neighbor,'src/original.rs','src/generated_js_first/manual.rs','src/translation_core.rs','src/translation_core/primitives.rs'])assert.ok(before.files.some(row=>row.path===name),name);
+  const written=run(root,'ascii-scalar-witness-write');assert.equal(written.exitCode,0,JSON.stringify(written));assert.equal(written.originalInputsUnchanged,true);assert.deepEqual(captureSyncInputs(root),before);
+  const emitted=fs.readFileSync(path.join(root,witness),'utf8');assert.ok(emitted.startsWith('// GENERATED: actual checked reverse ASCII receiving witness.\n'));
+  assert.deepEqual(sourceItems(emitted).filter(item=>item.term==='fn').map(item=>item.name),['__ro_domain','__ro_copy','__ro_with_field','accepted','hexadecimal','lazy','guard','scalar_length','scalar_limit','selected_count']);
+  const manifest=JSON.parse(fs.readFileSync(path.join(root,'parity/js-first-translation.json'),'utf8')),registered=manifest.outputs.find(row=>row.path===witness);
+  assert.equal(registered.bytes,Buffer.byteLength(emitted));assert.equal(registered.sha256,createHash('sha256').update(emitted).digest('hex'));
+  const inputs=JSON.parse(fs.readFileSync(path.join(root,'tools/translation/js-to-rust/generated/owned-ascii-witness-inputs.json'),'utf8'));
+  assert.equal(inputs.schema,'owned-ascii-reverse-ci-witness-v1');assert.equal(inputs.oracle.path,oracle);assert.equal(inputs.oracle.source,originalText(oracle));assert.equal(inputs.applicationItems,0);assert.equal(inputs.sourceRecipe.wholeUndo,true);
+  assert.equal(before.files.some(row=>row.path===witness),false);assert.equal(captureSyncInputs(root).files.some(row=>row.path===witness),false);
+  put(root,witness,emitted+'// deliberate generated-artifact drift\n');assert.deepEqual(captureSyncInputs(root),before);
+  const stale=run(root,'ascii-scalar-witness-drift',true);assert.equal(stale.exitCode,1);assert.equal(stale.artifactsCurrent,false);assert.equal(stale.originalInputsUnchanged,true);
+  assert.equal(stale.records[0].status,'failed');assert.equal(stale.records[1].status,'unrun-prerequisite-failure');assert.equal(fs.readFileSync(path.join(root,witness),'utf8'),emitted+'// deliberate generated-artifact drift\n');
+  for(const name of [oracle,neighbor]){const original=fs.readFileSync(path.join(root,name),'utf8');put(root,name,original+'// authored Rust mutation\n');assert.notDeepEqual(captureSyncInputs(root),before);put(root,name,original);assert.deepEqual(captureSyncInputs(root),before);}
 });

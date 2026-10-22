@@ -30,6 +30,7 @@ function protectedInput(name) {
   if(/^(?:rust\/)?src\/generated_js_first\/(?:policy|mod)\.rs$/u.test(name)
     ||name==='tools/translation/js-to-rust/generated/owned-core-witness.rs'
     ||name==='tools/translation/js-to-rust/generated/owned-base64-witness.rs'
+    ||name==='tools/translation/js-to-rust/generated/owned-ascii-witness.rs'
     ||name===affinityDescriptor)return false;
   return name.endsWith('.rs')||/(^|\/)Cargo\.(?:toml|lock)$/u.test(name)
     ||name.startsWith('js/src/')

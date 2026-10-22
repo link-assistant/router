@@ -64,6 +64,17 @@ Its 18 focused cases pass in both engines; the broader Node source-plan family
 still has two original deadline failures. Keep these failures and the full
 reverse-project performance frontier open.
 
+The [flat retained-output path](flat-output-translation.md) is now generated
+from the actual byte/native implementations, with the complete CLI and matrix
+closure. Its nine focused cases pass under Node and Bun, including exact
+16 MiB UTF16 retention under a 96 MiB heap. It addresses the old detacher's
+observed allocation failure; full-corpus qualification remains required.
+The ASCII/scalar synchronization repair retains authored Rust input protection.
+Its complete 14-case suite passes both engines with unchanged deadlines; the
+[delivery record](../case-studies/issue-759/current/flat-sync-delivery-772.md)
+retains full failed attempts, final source equations and the now-complete
+six-run CI cycle at `4b22bd09b`.
+
 The next batch must finish current full compiler/export qualification,
 canonical and neutral/Unix/Windows generation, owned definitions, strict
 TypeScript 5.9.3, reverse freshness and strict parity. It must repair original
