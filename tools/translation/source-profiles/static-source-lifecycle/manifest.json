@@ -3,8 +3,8 @@
   "archive": "originals.json.gz",
   "rawBytes": 20689228,
   "rawSha256": "1f1552c087e2615eb031ce830796e0d4d67fa0f40caef6a85d619ad46ea1656c",
-  "bytes": 5165204,
-  "sha256": "e448ca83675e45c575a15d964294b8a1b8ad96b519649c8580e8cb4127a3b5fd",
+  "bytes": 4143555,
+  "sha256": "bd8495fac5e5f074e8c81560fb3b2c4a7ed30abb7f0f9004ffa25b5f2762f35b",
   "storage": {
     "schema": "router-static-source-lifecycle-storage-v1",
     "codec": "router-static-cst-repository-layout-storage-v2",
