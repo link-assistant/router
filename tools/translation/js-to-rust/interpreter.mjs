@@ -1,5 +1,5 @@
 import {isOwnedCoreItem,evaluateOwnedCoreProgram} from './owned-core-operations.mjs';
-export {prepareOwnedCoreRuntime} from './owned-core-operations.mjs';
+export {prepareOwnedCoreRuntime,evaluateOwnedCoreBatch} from './owned-core-operations.mjs';
 import {matchesSequence} from './vendor/sequence-patterns.mjs';
 // Independent evaluator for the semantic IR. Used alongside authored fixtures
 // and execution of the authoritative source; neither emitter is consulted.

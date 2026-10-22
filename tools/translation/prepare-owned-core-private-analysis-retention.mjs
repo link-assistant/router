@@ -1,5 +1,6 @@
 // Default source proposal: retain an already private, detached analysis once.
 import {readFileSync,writeFileSync} from 'node:fs';
+import {restoreOwnedStringOperations,extendOwnedStringOperations} from './owned-string-operation-rules.mjs';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {resolve} from 'node:path';
@@ -63,7 +64,7 @@ function derive(ts,before){
 function stage(before,after,id){return {id,edits:[{span:[0,before.length],expected:before,replacement:after}]};}
 export function prepareOwnedCorePrivateAnalysisRetention({root=ROOT}={}){
  const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('actual TypeScript5.9.3 required');const birth=original(),before=birth.source,derived=derive(ts,before),{language,after}=derived;
- const current=readFileSync(resolve(root,PATH),'utf8');if(current!==before&&current!==after)fail('complete current source equation differs');
+ const current=readFileSync(resolve(root,PATH),'utf8'),historical=restoreOwnedStringOperations(PATH,current);if(historical!==before&&historical!==after)fail('complete current source equation differs');
  const first=transportConcreteSyntaxSource(before,{language:'JavaScript'}),beforeMeta=serializeConcreteSyntaxMeta(first.document),stages=[];let document=first.document;
  for(const [phase,left,right]of [['language',before,language],['repository',language,after]]){
   const wire=serializeConcreteSyntaxMeta(document),fresh=transportConcreteSyntaxMeta(wire);if(fresh.source!==left)fail('complete phase input differs');
@@ -88,6 +89,6 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const args=process.argv.slice(2);if(args.length!==1||!['--emit','--write','--check'].includes(args[0]))fail('usage: --emit|--write|--check');
  const plan=prepareOwnedCorePrivateAnalysisRetention();
  if(args[0]==='--emit')console.log(JSON.stringify(plan));
- else if(args[0]==='--write'){for(const row of plan.files)if(readFileSync(resolve(ROOT,row.path),'utf8')!==row.current)fail('physical source changed before write');for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);}
- else if(plan.files.some(row=>row.current!==row.after))fail('complete default operations source is stale');
+ else if(args[0]==='--write'){for(const row of plan.files)if(readFileSync(resolve(ROOT,row.path),'utf8')!==row.current)fail('physical source changed before write');for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),extendOwnedStringOperations(row.path,row.after));}
+ else if(plan.files.some(row=>restoreOwnedStringOperations(row.path,row.current)!==row.after))fail('complete default operations source is stale');
 }

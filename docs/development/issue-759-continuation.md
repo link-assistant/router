@@ -34,6 +34,25 @@ The last measured executable production baseline is 155/2,567 functions
 865 Rust/Cargo inputs, but a fresh executable census is still required.
 The recorded 441 parity gaps and `runtimeParity: false` remain open.
 
+The [scalar and JSON delivery](../case-studies/issue-759/current/scalar-json-delivery-772.md)
+adds executable behavior through the actual rule producers: reverse Unicode
+scalar counts, checked integer ordering, seven generated roundtrip witnesses,
+and two formerly refused production JSON validators. All five complete functions
+in `safety_identifier.rs` now execute in focused JavaScript and strict TypeScript
+checks, compared with three before this change. This module result is not a new
+global census. A source-derived bounded interpreter batch retains every ASCII
+case and reduces the same exhaustive case from 108.34 seconds (failed deadline)
+to 26.24 seconds under its original 60-second deadline.
+
+The final results cover 72 distinct cases across 13 complete files in both Node
+and Bun, plus complete native/CST source review and six producer freshness
+checks. Intermediate failures remain retained. The prior published head's
+complete CI cycle is collected: three terminal runs, 34 primary terminal jobs,
+all nine ran job logs and all three artifacts. Shared source-history failures
+are repaired locally; complete CI, canonical/profile regeneration, native parity
+and whole-Router synchronization remain open. See the
+[operation documentation](scalar-json-translation.md) for commands and boundaries.
+
 The next batch must finish current full compiler/export qualification,
 canonical and neutral/Unix/Windows generation, owned definitions, strict
 TypeScript 5.9.3, reverse freshness and strict parity. It must repair original

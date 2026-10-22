@@ -12,10 +12,11 @@ import {writeJsonTextGzip} from '../../../evidence/write-json-gzip.mjs';
 import {createOwnedCoreSourceContext,translateOwnedCoreDocumentJavaScript,translateOwnedCoreDocumentConcreteSyntaxMeta,parseOwnedCoreDocumentMeta,emitRust} from '../translator.mjs';
 import {prepareReverseConcreteSource} from '../concrete-source.mjs';
 import {ownedCoreRuntimeSources,ownedCoreAsciiRuntimeSources} from '../owned-core-source.mjs';
-import {prepareOwnedCoreRuntime,evaluate} from '../interpreter.mjs';
+import {prepareOwnedCoreRuntime,evaluate,evaluateOwnedCoreBatch} from '../interpreter.mjs';
 import {buildOwnedCoreDocumentArtifacts} from '../owned-core-corpus.mjs';
 import {prepareCoreAsciiReverseSources,composeCoreAsciiReverse} from '../../prepare-core-ascii-reverse-sources.mjs';
-import {prepareCurrentCoreAsciiReverseAssets} from '../../prepare-core-ascii-assets.mjs';
+import {currentAsciiSourcePlan as prepareCurrentCoreAsciiReverseAssets} from '../../test/current-ascii-source-plan.mjs';
+import {assertRuntimeImportSourceComposition} from '../../test/runtime-import-source-composition.mjs';
 import {transportConcreteSyntaxMeta} from '../../concrete-syntax-meta.mjs';
 import {parseLinks,textOf,writeLink,encodeWord} from '../vendor/lino.mjs';
 import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE} from '../../router-core-source-data.mjs';
@@ -38,7 +39,7 @@ function changed(meta,run){const rows=parseLinks(meta).map(row=>({head:row[0],va
 test('reverse ASCII complete current source equations retain native copies CST phases and full inverses',()=>{
  const current=retain('complete-current-reverse-native-source-plan',prepareCurrentCoreAsciiReverseAssets()),plan=retain('complete-reverse-native-source-plan',current.birth);assert.equal(plan.files.length,4);assert.equal(plan.typescriptVersion,'5.9.3');
  for(const row of plan.files){assert.equal(row.current,current.files.find(final=>final.path===row.path).after,row.path);assert.equal(row.beforeSha256,hash(row.before));assert.equal(row.afterSha256,hash(row.after));assert.equal(row.inverse,row.before);assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.before);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);assert.equal(row.nativeCopies.length,2);assert.ok(row.nativeCopies.every(copy=>copy.completeNativeAstCopy));for(const stage of row.stages){assert.equal(stage.completeInverse,true);assert.deepEqual(stage.trace.map(event=>event.phase),['language','repository']);}}
- assert.equal(current.layers.length,4);assertOwnedCorePrivateAnalysisSourceComposition(current.layers[3],Object.fromEntries(current.layers.slice(0,3).flatMap(layer=>layer.files.map(row=>[row.path,row]))),Object.fromEntries(current.files.map(row=>[row.path,row])));
+ assert.equal(current.layers.length,6);assertOwnedCorePrivateAnalysisSourceComposition(current.layers[3],Object.fromEntries(current.layers.slice(0,3).flatMap(layer=>layer.files.map(row=>[row.path,row]))),Object.fromEntries(current.files.map(row=>[row.path,row])));assertRuntimeImportSourceComposition(current.layers[4],Object.fromEntries(current.layers.slice(0,4).flatMap(layer=>layer.files.map(row=>[row.path,row]))),Object.fromEntries(current.files.map(row=>[row.path,row])));
  const prior=Object.fromEntries(plan.files.map(row=>[row.path,{after:row.before}]));assert.equal(composeCoreAsciiReverse(prior).layers.length,1);assert.throws(()=>composeCoreAsciiReverse({...prior,[plan.files[0].path]:{after:'changed'}}),/preceding complete source/);
  assert.equal(ownedCoreRuntimeSources().some(row=>row.path.endsWith('string-iterator-runtime.mjs')),false);const oldJs="import {json_macro_bool as boolean} from './runtime/json-macro-runtime.mjs';\n/** @param {boolean} value */\nexport function original(value){return boolean(value);}";assert.equal(receive(oldJs,undefined,{ascii:false}).result.program.length,1);
 });
@@ -47,7 +48,17 @@ test('reverse actual runtime imports paired types and qualified Str projection p
  const row=receive(source,typedSource()),again=parseOwnedCoreDocumentMeta(row.result.meta,{context:row.context});assert.equal(row.result.program.length,4);assert.equal(emitRust(again),row.result.rust);assert.match(row.result.rust,/value: &crate::translation_core::Str/u);assert.match(row.result.rust,/let __ro_arg_0 = value; let __ro_arg_1 = alphabet;/u);assert.match(row.result.rust,/guard<'a>\(value: &'a crate::translation_core::Str, alphabet: &crate::translation_core::Str\) -> &'a crate::translation_core::Str/u);assert.equal(row.result.program.find(item=>item.name==='guard').resultRoot,'value');
  const token=await prepareOwnedCoreRuntime(row.result.program),api=await targets(t,row);retain('independent-shared-ASCII-cases',cases);
  for(const [value,alphabet,expected]of cases){for(const module of Object.values(api)){assert.equal(module.accepted(value,alphabet),expected);assert.equal(module.lazy(value,alphabet,false),false);assert.equal(module.lazy(value,alphabet,true),expected);assert.equal(module.guard(value,alphabet),expected?value:'');}assert.equal(evaluate(row.result.program,'accepted',[value,alphabet],token),expected);}
- for(let byte=0;byte<128;byte++){const value=String.fromCharCode(byte),expected=byte>=48&&byte<=57||byte>=65&&byte<=70||byte>=97&&byte<=102;for(const module of Object.values(api))assert.equal(module.hexadecimal(value),expected);assert.equal(evaluate(row.result.program,'hexadecimal',[value],token),expected);}
+ const hexadecimal=evaluateOwnedCoreBatch(row.result.program,Array.from({length:128},(_,byte)=>['hexadecimal',[String.fromCharCode(byte)]]),token);
+ for(let byte=0;byte<128;byte++){const value=String.fromCharCode(byte),expected=byte>=48&&byte<=57||byte>=65&&byte<=70||byte>=97&&byte<=102;for(const module of Object.values(api))assert.equal(module.hexadecimal(value),expected);assert.equal(hexadecimal[byte],expected);}
+});
+
+test('bounded independent batch evaluation preserves scalar results and refuses effectful call containers',async()=>{
+ const row=receive(),token=await prepareOwnedCoreRuntime(row.result.program),calls=[['accepted',['a','a']],['hexadecimal',['F']],['lazy',['a','a',false]],['guard',['z','a']]];
+ assert.deepEqual(evaluateOwnedCoreBatch(row.result.program,calls,token),calls.map(([name,args])=>evaluate(row.result.program,name,args,token)));
+ assert.deepEqual(evaluateOwnedCoreBatch(row.result.program,[],token),[]);assert.throws(()=>evaluateOwnedCoreBatch(row.result.program,calls,{}),/unissued/);
+ let reads=0;const accessor=[];Object.defineProperty(accessor,'0',{enumerable:true,get(){reads++;throw Error('getter');}});
+ for(const invalid of [accessor,new Proxy([],{ownKeys(){reads++;throw Error('proxy');}}),Array(1),Array(4097).fill(calls[0]),[['accepted',accessor]],[[accessor,[]]]])assert.throws(()=>evaluateOwnedCoreBatch(row.result.program,invalid,token),/batch/);
+ assert.equal(reads,0);assert.throws(()=>evaluateOwnedCoreBatch(row.result.program,[['unknown',[]]],token),/arguments differ/);
 });
 
 test('reverse ASCII explicit paired roots retain exact runtime counterparts and native named reexports',async t=>{
@@ -72,5 +83,5 @@ test('reverse ASCII copied meta forged origins foreign endpoints and changed ful
 
 test('actual reverse corpus registers authored ASCII witness outside application coverage',t=>{
  const directory=mkdtempSync(join(tmpdir(),'owned-ascii-corpus-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));const row=data(),runtime='js/generated/rust-project/runtime',declarations='ts/generated/rust-project/runtime';for(const file of row.input.files.filter(file=>!file.path.startsWith('runtime/')&&file.path!=='caller.mjs'))write(directory,file.path,file.source);for(const file of [...ownedCoreRuntimeSources(runtime,declarations),...ownedCoreAsciiRuntimeSources(runtime,declarations)])write(directory,file.path,file.source);write(directory,'js/generated/rust-project/caller.mjs',source);write(directory,'tests/translation_core_ascii_reverse_oracle.rs',oracle);
- const result=retain('complete-real-ASCII-corpus-artifacts',Object.fromEntries(buildOwnedCoreDocumentArtifacts(directory).artifacts)),report=JSON.parse(result['parity/js-owned-core-reverse-draft.json']);assert.equal(report.asciiWitness.applicationItems,0);assert.equal(report.asciiWitness.functions,4);assert.equal(report.rustExecuted,false);assert.ok(result['tools/translation/js-to-rust/generated/owned-ascii-witness.rs']);assert.ok(result['tools/translation/js-to-rust/generated/owned-ascii-witness.lino']);assert.equal(result['tools/translation/js-to-rust/generated/owned-ascii-witness-inputs.json'].includes('REVERSE_ASCII_JS_WITNESS'),true);
+ const result=retain('complete-real-ASCII-corpus-artifacts',Object.fromEntries(buildOwnedCoreDocumentArtifacts(directory).artifacts)),report=JSON.parse(result['parity/js-owned-core-reverse-draft.json']);assert.equal(report.asciiWitness.applicationItems,0);assert.equal(report.asciiWitness.functions,7);assert.equal(report.rustExecuted,false);assert.ok(result['tools/translation/js-to-rust/generated/owned-ascii-witness.rs']);assert.ok(result['tools/translation/js-to-rust/generated/owned-ascii-witness.lino']);assert.equal(result['tools/translation/js-to-rust/generated/owned-ascii-witness-inputs.json'].includes('REVERSE_ASCII_JS_WITNESS'),true);
 });
