@@ -28,8 +28,15 @@ reader body unchanged.
 `prepare-strict-static-source-producer.mjs` native-selects the complete current
 producer, its actual physical capture and the one real fallback catch block.
 Its language rule replaces only that catch block with the original error
-rethrow. Its repository rule names a separate strict export. The new complete
-module copy retains all other original source bytes, dependencies, fixed
+rethrow. Its repository sequence names a separate strict export and selects
+only that export's actual output-gzip level literal, changing one to nine.
+This storage refinement preserves every decoded byte and fits the exporter's
+existing 4 MiB individual-file bound. The complete current 20,689,228-byte raw
+bank compresses to 4,143,555 bytes under Node 20.19.4; level one produces
+5,165,204 bytes and exceeds that bound. All eight strict-source cases pass in
+Node and Bun with their original deadlines. Compression observations differ;
+the original producer's level-one output contract stays unchanged.
+The new complete module copy retains all other original source bytes, dependencies, fixed
 historical equations, native transports, guards, limits and callback operations.
 Both full native AST copies, binding checks and ordered language/repository
 CST stages and inverses are retained. The copied producer is DATA machinery,

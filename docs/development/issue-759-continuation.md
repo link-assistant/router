@@ -75,7 +75,15 @@ Its complete 14-case suite passes both engines with unchanged deadlines; the
 retains full failed attempts, final source equations and the now-complete
 six-run CI cycle at `4b22bd09b`.
 
-The next batch must finish current full compiler/export qualification,
+The [source-fixture delivery](../case-studies/issue-759/current/source-fixture-delivery-772.md)
+refreshes the complete current bank from actual committed Rust/Cargo bytes and
+preserves both historical universes. Its generated strict storage rule fits the
+existing 4 MiB export cap without changing decoded data. The final 32-case
+source/isolated-compiler batch and nine-case export file pass both engines with
+unchanged deadlines, including real receiving CST/meta synchronization. This
+qualifies the declared export subset; full Router coverage remains unproved.
+
+The next batch must finish current full compiler qualification,
 canonical and neutral/Unix/Windows generation, owned definitions, strict
 TypeScript 5.9.3, reverse freshness and strict parity. It must repair original
 Bun derive-helper, source-lifecycle, retained-storage, Core and CatalogRecord
