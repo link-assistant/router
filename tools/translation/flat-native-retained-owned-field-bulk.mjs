@@ -22,8 +22,8 @@ import {jsonMacroDependencyProfile} from './json-macro-sources.mjs';
 import {translationProgressReporter} from './translation-progress.mjs';
 import {discoverSourceProfileInputs} from './source-profile-inputs.mjs';
 import {discoverCompilerSourceInputs} from './compiler-source-inputs.mjs';
-import {planCompressedProjectMetaUtf8ObjectStorage as planProjectMetaStorage} from './project-meta-compressed-storage.mjs';
-import {serializeProjectMetaFieldUtf8} from './project-meta-field-json.mjs';
+import {planConsumedProjectMetaUtf8ObjectStorage as planProjectMetaStorage} from "./project-meta-consumed-storage.mjs";
+import {serializeProjectMetaFieldUtf8} from "./project-meta-field-flat-json.mjs";
 import {createPrivateOutputPlanStore,createPrivateOutputTextMap} from "./private-flat-native-output-text.mjs";
 
 export const OUTPUT_ROOTS = ['tools/translation/meta', 'js/generated/rust-draft', 'ts/generated/rust-draft', 'tools/translation/projects', 'js/generated/rust-project', 'ts/generated/rust-project'];

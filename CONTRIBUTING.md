@@ -248,6 +248,16 @@ producer reports bounded storage and retention progress before and after each
 operation; callback failures must propagate before any generated file is written.
 Passing storage fixtures does not establish live-project memory fit or parity.
 
+An explicitly consuming storage sibling may release only producer-owned
+selected metadata after its complete field encoding and original byte check.
+Preserve the ordinary non-consuming API, complete logical output bytes, hashes,
+validation and original budgets. Check configurable selected fields before
+consumption; document that later failures may leave earlier fields consumed.
+Generate the complete sibling and genuine consumer import substitutions through
+the two CST rule phases. Compare complete retained semantic and concrete fields
+in Node and Bun before retrying full generation under unchanged resource limits;
+small fixture passes do not establish full-project memory fit or parity.
+
 The explicit retained owned-definition lane uses a separately generated UTF-16
 byte-retention format. Derive it with
 `node tools/translation/prepare-byte-output-text.mjs --emit`, review its complete
