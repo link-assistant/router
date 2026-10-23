@@ -185,6 +185,14 @@ absence of proposed-module execution or dependency resolution in both engines.
 
 Track every requested requirement through its source changes, generated artifacts, checks and remaining gaps. While remote CI runs, continue source review and independent draft work in assigned worktrees without changing the published head or starting a second expensive workload. Collect the complete CI results before integrating the next repair batch. A bulk draft or an unexecuted test remains a draft until the corresponding checks pass.
 
+Bulk draft the complete known requirement batch before receiving tests: shared
+language rules, repository bindings, compatibility implementations, applicable
+reverse mappings and independent regression cases belong together. Resolve
+related failures together after that draft. Avoid full regeneration between
+individual rule edits. Keep drafted support, callable generated functions and
+independently verified behavior separate in progress reports; none alone is an
+overall completion percentage.
+
 Prioritize common translation blockers using actual project diagnostics. A [shared compatibility core](docs/development/compatibility-core.md) may implement matching Rust and JavaScript library abstractions while leaving their internals untranslated. Bind repository CST rules to qualified owned APIs, check operands through the language rules and retain both meta roundtrips. Test independent shared behavior and actual Router callers; keep application coverage, runtime parity and untranslated library status separate.
 
 For continuation #772, follow [the throughput plan](docs/development/translation-throughput-plan.md): qualify a shared operation family once, generate its actual callers and both translation directions together, and recheck whole functions after each prerequisite is removed. Profile shared receiving bottlenecks before expensive retries. A historical first-refusal count is a worklist, never current executable coverage.

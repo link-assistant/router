@@ -65,6 +65,13 @@ supported estimate.
 
 ## Keep each feedback cycle short and honest
 
+Draft the complete known family batch before receiving: language and repository
+rules, matching compatibility implementations, applicable reverse mappings and
+independent cases. Review shared causes and repair the batch together. Do not
+alternate a small rule edit with expensive whole-corpus regeneration. When a
+check discovers another prerequisite, add it to the coordinated batch rather
+than counting the partial draft as completed behavior.
+
 Implement a family through separately declared language and repository
 substitution sequences, preserving serialized/reparsed CST and checked semantic
 boundaries in both directions. Test actual original bodies alongside small

@@ -7,12 +7,12 @@ import {createCompletedDataFreezer} from './private-data-freeze.mjs';
 import {originalBuiltinCopyOutputSyntax} from './builtin-copy-output-syntax.mjs';
 import {deriveFootprintOriginalContext,deriveFootprintOriginalModule,deriveFootprintHelperAttributeAt,isDeriveFootprintHelperAttributeProof} from './derive-footprints.mjs';
 import {originalSourceModuleItems} from './source-module-views.mjs';
-import {builtinDeriveDataInputs,builtinDebugDataInputs,builtinPayloadDataInputs} from './builtin-derive-data-inputs.mjs';
+import {builtinCloneDataInputs,builtinDeriveDataInputs,builtinDebugDataInputs,builtinPayloadDataInputs} from './builtin-derive-data-inputs.mjs';
 import {sourceItems} from './rust-structure.mjs';
 import {liftBuiltinHashAstRoute} from './builtin-hash-ast-route.mjs';
 import {liftBuiltinEqAstRoute} from './builtin-eq-ast-route.mjs';
 import {liftBuiltinCloneAstRoute} from './builtin-clone-ast-route.mjs';
-import {liftBuiltinDebugAstRoute} from './builtin-debug-ast-route.mjs';
+import {liftBuiltinDebugTupleAstRoute,compileBuiltinDebugTupleEnclosingNamespaceModel,liftBuiltinDebugAstRoute} from './builtin-debug-ast-route.mjs';
 import {liftBuiltinPartialEqAstRoute} from './builtin-partial-eq-ast-route.mjs';
 import {liftBuiltinOrderingAstRoute} from './builtin-ordering-ast-route.mjs';
 import {liftBuiltinDefaultAstRoute,builtinDefaultOriginalSourcePlan,originalBuiltinDefaultAstOutput} from './builtin-default-ast-route.mjs';
@@ -61,7 +61,7 @@ export function planBuiltinDeriveBangOutput({context,certificate,invocation}={})
 }
 export const isBuiltinDeriveBangPlan=value=>!!value&&plans.has(value);
 function proveCloneDataOutput(state,plan,context,certificate,invocation){
-  const input=builtinPayloadDataInputs({source:state.original.module.source,span:certificate.span}),item=originalSourceModuleItems(state.original.module).find(item=>item.start===certificate.span.start&&item.end===certificate.span.end),helpers=[];
+  const input=builtinCloneDataInputs({source:state.original.module.source,span:certificate.span}),item=originalSourceModuleItems(state.original.module).find(item=>item.start===certificate.span.start&&item.end===certificate.span.end),helpers=[];
   for(const attribute of input.attributes){
     if(attribute.name==='doc'&&attribute.sourceFeature==='original-line-doc-comment'){
       const declaration=sourceItems(state.original.module.source.slice(certificate.span.start,certificate.span.end)).find(row=>row.start===0&&row.end===certificate.span.end-certificate.span.start);
@@ -78,7 +78,7 @@ function proveCloneDataOutput(state,plan,context,certificate,invocation){
   const proof=freezeCompleted({...evidence,digest:hash(JSON.stringify(evidence))});proofs.set(proof,{context,certificate,invocation});return proof;
 }
 function debugDataInput(state,context,certificate){
-  const input=builtinDebugDataInputs({source:state.original.module.source,span:certificate.span}),item=originalSourceModuleItems(state.original.module).find(item=>item.start===certificate.span.start&&item.end===certificate.span.end),helpers=[],declaration=sourceItems(state.original.module.source.slice(certificate.span.start,certificate.span.end)).find(row=>row.start===0&&row.end===certificate.span.end-certificate.span.start);
+  const input=builtinCloneDataInputs({source:state.original.module.source,span:certificate.span}),item=originalSourceModuleItems(state.original.module).find(item=>item.start===certificate.span.start&&item.end===certificate.span.end),helpers=[],declaration=sourceItems(state.original.module.source.slice(certificate.span.start,certificate.span.end)).find(row=>row.start===0&&row.end===certificate.span.end-certificate.span.start);
   for(const attribute of input.attributes){
     if(attribute.name==='doc'&&attribute.sourceFeature==='original-line-doc-comment'){
       if(!declaration?.tokens.some(token=>token.type==='comment'&&token.text.startsWith('///')&&token.start+certificate.span.start===attribute.span.start&&token.end+certificate.span.start===attribute.span.end&&token.text===attribute.source))throw new TypeError('Original Debug doc comment differs from its private source invocation');continue;
@@ -139,7 +139,7 @@ export function proveBuiltinDeriveBangFootprint({context,certificate,invocation}
       if(state.original.name==='Clone')return proveCloneDataOutput(state,plan,context,certificate,invocation);
       if(state.original.name==='Default')return proveDefaultDataOutput(state,plan,context,certificate,invocation);
       if(state.original.name!=='Debug')throw new TypeError('Builtin '+state.original.name+' retains typed callback/conditional AST output obligations: '+error.message);
-      const selected=debugDataInput(state,context,certificate),route=liftBuiltinDebugAstRoute({...state,original:state.original,input:selected.input}),attributes=attributeOwners(state.original,certificate,new Set(['automatically_derived','inline','doc','Debug',...certificate.attributes.map(attribute=>attribute.name)]));
+      const selected=debugDataInput(state,context,certificate),route=(selected.input.style==='tuple-struct'?liftBuiltinDebugTupleAstRoute:liftBuiltinDebugAstRoute)({...state,original:state.original,input:selected.input}),attributes=attributeOwners(state.original,certificate,new Set(['automatically_derived','inline','doc','Debug',...certificate.attributes.map(attribute=>attribute.name)]));
       const evidence={schema:'builtin-debug-data-bang-output-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,span:certificate.span,itemSha256:certificate.itemSha256,inputCertificateDigest:certificate.digest,dependenciesDigest:state.original.dependencies.digest,compilationProfile:certificate.compilationProfile,owner:plan.owner,planDigest:plan.digest,profileDigest:state.profile.digest,route,inputSyntax:selected.input,originalHelperOwners:selected.helpers,priorScalarRefusal:error.message,slotProofs:{outputKind:{kind:'ItemKind::Impl',associatedItems:1,associatedKind:'AssocItemKind::Fn',bodyCallbacksEvaluated:1},constness:{outcomes:['Const::Yes','Const::No'],bothPreserveSink:true},fmtDebug:{outcomes:['None','Shallow','Full'],allSelectedInputOutcomesClosed:true}},attributeOwners:attributes,semanticSyntaxRoundTrip:true,selectedOwnerBangComplete:true,dimensions:{bangMacroComplete:true,typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:false},copyAuthority:false,noDropAuthority:false,constAuthority:false,generatedImplBehavior:false,obligations:['generated Debug/fmt methods and allocator/format execution remain unlowered','all other derives, original scopes, ownership and const eligibility require independent proofs']};
       const proof=freezeCompleted({...evidence,digest:hash(composeJson(evidence))});proofs.set(proof,{context,certificate,invocation});return proof;
     }
@@ -308,7 +308,7 @@ export function proveBuiltinDebugEnclosingNamespace({context,certificate,invocat
  const sourceBefore=original.module.source,route=routes.get(original.name),profile=builtinDeriveAstSourceProfile(original.dependencies),entry=originalAstFunction(profile,directory+route.path,route.entry),registry=builtinAstOriginal(profile,'compiler/rustc_builtin_macros/src/lib.rs');
  const registered='Debug: debug::'+route.entry,registrationStart=registry.source.indexOf(registered);
  if(registrationStart<0||registry.source.indexOf(registered,registrationStart+1)>=0)throw new TypeError('Builtin enclosing Debug registry owner is not unique');
- const selected=debugDataInput({original},context,certificate),grammar=compileBuiltinDebugEnclosingNamespaceModel({profile,entry,original,certificate,input:selected.input});
+ const selected=debugDataInput({original},context,certificate),grammar=(selected.input.style==='tuple-struct'?compileBuiltinDebugTupleEnclosingNamespaceModel:compileBuiltinDebugEnclosingNamespaceModel)({profile,entry,original,certificate,input:selected.input});
  if(grammar===null)return null;
  const attributes=attributeOwners(original,certificate,new Set(['automatically_derived','inline','doc','Debug',...certificate.attributes.map(attribute=>attribute.name)])),resolver=requireOriginalImplNamespaceSourcePlan(originalImplNamespaceSourcePlan());
  const model={schema:'original-debug-enclosing-namespace-model-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,span:certificate.span,itemSha256:certificate.itemSha256,inputCertificateDigest:certificate.digest,dependenciesDigest:original.dependencies.digest,compilationProfile:certificate.compilationProfile,
