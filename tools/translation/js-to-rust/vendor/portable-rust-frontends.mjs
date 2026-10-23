@@ -6,6 +6,7 @@
 // one IR (PR #196, js/src/translation/javascript.js and rust.js).
 
 import { constructMap, idBySpelling, refuse } from './constructs.mjs';
+import {parsePortableRustAbsencePrimary} from './portable-rust-absence-syntax.mjs';
 import { camelFromSnake, canonicalRustName, snakeFromCamel } from './ir.mjs';
 import { constantValue } from './constants.mjs';
 import { parseCharacterClass } from './character-classes.mjs';
@@ -346,12 +347,12 @@ export function parseRustItem(tokens) {
     if (at.is('mut')) refuse('mutable');
     const param = canonicalRustName(at.next().text);
     at.expect(':');
-    params.push({ name: param, type: rustType(at) });
+    if(at.is('Option')&&at.is('<',1)){at.next();at.next();const type=rustType(at);at.expect('>');if(!['number','string','boolean'].includes(type))refuse('unsupported','canonical closed scalar default envelope required');params.push({name:param,type,canonicalDefaultEnvelope:true});}else params.push({ name: param, type: rustType(at) });
     if (!at.is(')')) at.expect(',');
   }
   if (!at.eat('->')) refuse('untyped', 'no result type');
   const returns = rustType(at);
-  const body = rustBlock(at);
+  const body = rustBlock(at,params.filter(parameter=>parameter.canonicalDefaultEnvelope));
   if (!at.done()) refuse('unsupported', at.peek().text);
   return { kind: 'function', name, exported, params, returns, body };
 }
@@ -363,35 +364,40 @@ function rustType(at) {
     if (at.peek().type === 'char') at.next();
   }
   written += at.next().text;
+  if(['JsNullable','JsOptional'].includes(written)&&at.eat('<')){let inner=at.eat('&')?'&':'';if(inner&&at.peek().type==='char')at.next();inner+=at.next().text;at.expect('>');written+='<'+inner+'>';}
   const map = constructMap().types;
   const id = idBySpelling(map, 'rust', written) ?? idBySpelling(map, 'rustOwned', written) ?? (written === '&String' ? 'string' : undefined);
   if (!id) refuse('untyped', written);
   return id;
 }
 
-function rustBlock(at) {
+function rustBlock(at,defaultParameters=[]) {
   at.expect('{');
+  for(const parameter of defaultParameters){at.expect('let');at.expect(parameter.name);at.expect('=');at.expect(parameter.name);at.expect('.');at.expect('unwrap_or');at.expect('(');parameter.default=expression(at,'Rust');at.expect(')');at.expect(';');delete parameter.canonicalDefaultEnvelope;}
   const body = [];
   while (!at.eat('}')) {
     if (at.peek().type === 'end') refuse('unsupported', 'an unclosed block');
     if (at.eat('let')) {
-      if (at.is('mut')) refuse('mutable');
+      const mutable=at.eat('mut');
       const name = canonicalRustName(at.next().text);
       if (at.eat(':')) rustType(at);
       at.expect('=');
       const value = expression(at, 'Rust');
       at.expect(';');
-      body.push({ kind: 'let', name, value });
+      body.push({ kind: 'let', name, value,...(mutable?{mutable:true}:{}) });
     } else if (at.eat('return')) {
       const value = expression(at, 'Rust');
       at.expect(';');
       body.push({ kind: 'return', value });
     } else if (at.is('if')) {
       body.push(rustIf(at));
-    } else if (['for', 'while', 'loop'].includes(at.peek().text)) {
+    } else if(at.eat('while')) {
+      const cond=expression(at,'Rust'),loopBody=rustBlock(at);body.push({kind:'while',cond,body:loopBody});
+    } else if (['for', 'loop'].includes(at.peek().text)) {
       refuse('loop');
     } else {
       const value = expression(at, 'Rust');
+      if(at.eat('=')){if(value.kind!=='variable')refuse('mutable','canonical assignment place required');const assigned=expression(at,'Rust');at.expect(';');body.push({kind:'assign',name:value.name,value:assigned});continue;}
       if (!at.is('}')) refuse(ASSIGNMENTS.has(at.peek().text) ? 'mutable' : 'unsupported', 'an expression statement');
       body.push({ kind: 'return', value });
     }
@@ -463,6 +469,7 @@ function binary(at, language, minimum) {
 function unary(at, language) {
   const key = language === 'Rust' ? 'rust' : 'javascript';
   const token = at.peek();
+  if(language==='Rust'&&at.is('!')&&at.is('matches!',1)){at.next();const value=postfix(at,language);if(value.kind!=='binary'||value.op!=='equal')refuse('unsupported','canonical negated absence test required');return {...value,op:'not-equal'};}
   if (language === 'Rust' && at.eat('&')) return unary(at, language);
   if (token.type === 'punct') {
     const op = idBySpelling(constructMap().unaries, key, token.text);
@@ -531,6 +538,7 @@ function argumentsOf(at, language) {
 
 function primary(at, language) {
   const token = at.next();
+  if(language==='Rust'){const selected=parsePortableRustAbsencePrimary(token,at,expression);if(selected)return selected;}
   if(token.type==='source-callable'&&language==='JavaScript'&&at.sourceCalls)return sourceCallable(token.environment);
   if (token.type === 'number') return { kind: 'number', text: numberText(token.text, language) };
   if (token.type === 'string') return { kind: 'string', value: unquote(token.text) };
@@ -595,7 +603,7 @@ function primary(at, language) {
   if (['this', 'self', 'Self', 'function', 'None', 'Some'].includes(token.text)) refuse('unsupported', token.text);
   if (at.is('=>')) refuse('unsupported', 'an arrow function');
   const builtins = constructMap().builtins;
-  if(language==='Rust'&&at.is('(')){const registered=idBySpelling(builtins,'rust',token.text);if(registered)return {kind:'builtin',name:registered,args:argumentsOf(at,language)};}
+  if(language==='Rust'&&at.is('(')){const registered=idBySpelling(builtins,'rust',token.text);if(registered)return {kind:'builtin',name:registered,args:argumentsOf(at,language)};const method=idBySpelling(constructMap().methods,'rust',token.text);if(method){const args=argumentsOf(at,language);if(!args.length)refuse('unsupported','canonical source method receiver required');return {kind:'method',name:method,receiver:args[0],args:args.slice(1)};}}
   if(language==='JavaScript'&&token.text==='Response'&&at.is('.')&&at.is('json',1)) {
     if(!at.jsonResponses?.owned)refuse('collection',at.jsonResponses?.reason??'unproved Response.json ownership');
     at.next();at.next();at.expect('(');const body=parseClosedJson(at);

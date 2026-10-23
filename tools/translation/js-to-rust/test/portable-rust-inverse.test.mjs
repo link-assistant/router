@@ -32,5 +32,5 @@ test('unrelated declarations and lossy Rust syntax normalization cannot borrow c
 });
 test('complete copied Rust frontend and synchronizer retain both source rule sequences',limits,()=>{
  const plan=preparePortableRustInverse();assert.equal(plan.files.length,2);
- for(const row of plan.files){assert.equal(row.current,row.after);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);assert.equal(row.stages[0].inverse,row.before);assert.equal(row.stages[1].inverse,row.language);assert.equal(row.nativeBindings.nativeSemanticScopeChecked,true);}
+ for(const row of plan.files){assert.equal(row.current,row.currentAfter);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);assert.equal(row.stages[0].inverse,row.before);assert.equal(row.stages[1].inverse,row.language);assert.equal(row.nativeBindings.nativeSemanticScopeChecked,true);}
 });

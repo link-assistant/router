@@ -1,9 +1,10 @@
 // Canonical scalar Rust -> checked meta -> checked JS/TS. No local Rust tool.
-import * as targets from './targets.mjs';
+import * as targets from './typed-absence-targets.mjs';
 import {parseRustItem} from './vendor/portable-rust-frontends.mjs';
-import {check,signatures,toLino} from './vendor/ir.mjs';
+import {check,signatures,toLino} from './vendor/typed-absence-ir.mjs';
 import {isRefusal} from './vendor/constructs.mjs';
-import {parseMeta} from './translator.mjs';
+import {parseMeta} from './typed-absence-translator.mjs';
+import {optionalType} from './vendor/return-types.mjs';
 import {translateTypeScript} from './typed-portable.mjs';
 import {sourceItems,rustTokens} from '../rust-structure.mjs';
 import {transportConcreteSyntaxSource} from '../concrete-syntax-meta.mjs';
@@ -36,7 +37,7 @@ function decode(source){
   // Native Rust-CST tokens preserve nested comments, literal spellings and
   // whole source coordinates. No replacement module/item subset is accepted.
   const parsed=parseRustItem(item.tokens);
-  if(parsed.kind==='function'&&(!completeReturn(parsed.body)||parsed.params.some(parameter=>!['number','string','boolean'].includes(parameter.type))))refuse('closed primitive signature and complete return paths required');
+  if(parsed.kind==='function'&&(!completeReturn(parsed.body)||parsed.params.some(parameter=>!['number','string','boolean','null','undefined'].includes(parameter.type)&&!['number','string','boolean'].includes(optionalType(parameter.type)?.primitive))))refuse('closed primitive signature and complete return paths required');
   program.push(parsed);
  }
  if(!program.length)refuse('nonempty original application program required');

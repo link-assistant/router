@@ -19,8 +19,8 @@ arbitrary Rust normalization, unknown declarations/attributes/macros, duplicate
 bindings and source the existing parser/checker cannot represent. It does not
 silently treat transparent-method parsing as proof: any lost operation changes
 the final complete Rust syntax and fails the roundtrip. General Rust ownership,
-classes/state, async, collections and the emitted absence/generic envelope
-families remain separate obligations.
+classes/state, async, collections and general generic envelope families remain
+separate obligations.
 
 Portable source units try this explicit profile for Rust changes. Only its
 specific unsupported-profile error falls back to the original complete forward
@@ -35,3 +35,29 @@ builtins. Separate repository rules integrate synchronization. Complete CST
 inverses and physical original joins remain required. This family and its
 behavioral, source-edit, nested-comment and refusal regressions are drafted and
 unrun. No local Rust compiler or verification has been executed.
+
+The absence inverse source extension uses finite token-pattern substitutions
+for the exact emitted scalar envelopes, strict matches, guarded payload
+projections, typeof and truthiness forms. It reuses the copied checked absence
+IR and emitter, including boundary-only Rust library declarations. Lost or
+wrong constructors, patterns, messages or helper definitions must change the
+fresh full-source reemission and refuse. Context-dependent unwrapping is accepted
+only when the existing checker reconstructs its actual branch premise.
+
+`prepare-portable-rust-absence-inverse.mjs` retains the preceding complete
+frontend and inverse implementations. General grammar changes and repository
+profile integration stay in separate source sequences; the parent producer
+composes the new complete successor equation. Identity, guards, Unicode,
+signed-zero/NaN, typeof/truthiness and malicious source-change regressions are
+drafted and unrun. Broader generics and recovery of optional TypeScript API
+formatting from fresh paired source remain open.
+
+The same source family also decodes the actual scalar default envelope:
+`Option<T>` parameters require their exact initial `unwrap_or` binding, closed
+default values must pass the existing checker, and matching `Some`/`None` call
+operands must reproduce the entire Rust output. This does not admit general
+Option transformations or effectful/default closures. Mutable scalar locals,
+while loops and assignment statements now use the existing checked control-flow
+IR; arbitrary ownership and iterator loops still require their separate rules.
+Default, string/boolean/signed-zero, bounded-loop and invalid-prefix regression
+source is drafted and unrun.

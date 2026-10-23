@@ -98,6 +98,16 @@ General Rust, generic/absence envelope inverses and full production sync remain
 open. Separate source review also repaired missing Rust absence declarations in
 identity-only output; complete source histories and new regressions are unrun.
 
+Finite source-pattern substitutions also draft the canonical Rust absence
+envelope inverse: constructors, strict tests, guarded projections, typeof and
+truthiness reuse the checked absence IR and require both complete Rust
+reemission checks. Actual helper source and all original implementation layers
+remain present. Its independent regressions are unrun. Canonical scalar
+Option/default prefixes, matching Some/None calls, mutable locals, while loops
+and assignments also have source rules and independent unrun cases. General
+ownership/generics, iterator loops and paired optional-API formatting still need
+their remaining implementation draft; this does not close full synchronization.
+
 The filesystem reverse source also contains ordered guarded Result flows and
 closed lazy async flows. Every intermediate Result requires its original error
 return before a successful payload can be consumed. These additional language
