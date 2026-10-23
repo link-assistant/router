@@ -71,3 +71,30 @@ test('bare controllers retain invalid and foreign CLI diagnostics before importi
   }
  });
 });
+test('fresh native scans retain complete original sparse link hardlink special-file and entry-limit accounting',{timeout:60000},()=>{
+ fixture(root=>{
+  const code=String.raw`import sys,json,ast,os,stat,gzip
+from pathlib import Path
+d=json.load(sys.stdin);root=Path(d['root']);repo=Path(d['repo']);tree=root/'tree';tree.mkdir();(tree/'inside').mkdir();(tree/'item').write_bytes(b'payload');(tree/'inside/leaf').write_bytes(b'x')
+with(tree/'sparse').open('wb')as f:f.truncate(65536)
+os.symlink(tree/'item',tree/'file-link');os.symlink(tree/'inside',tree/'dir-link');os.symlink(tree/'missing',tree/'dangling');os.link(tree/'item',tree/'hardlink')
+original=json.loads(gzip.decompress((repo/'tools/translation/source-profiles/core-adoption-rust-layout/complete-originals.json.gz').read_bytes()));results=[]
+def fail(message):raise RuntimeError(message)
+def allocation(source,limit=30000):
+ node=next(n for n in ast.parse(source).body if isinstance(n,ast.FunctionDef)and n.name=='allocation');scope={'os':os,'stat':stat,'Path':Path,'ENTRY_LIMIT':limit,'fail':fail};exec(compile(ast.Module(body=[node],type_ignores=[]),'whole-original-allocation','exec'),scope);return scope['allocation']
+def error(run):
+ try:run()
+ except Exception as e:return(type(e).__name__,str(e))
+ raise AssertionError('expected original refusal')
+for path in ['scripts/propose-core-adoption.py','scripts/review-core-adoption.py']:
+ before=next(r['source']for r in original['files']if r['path']==path);after=(repo/path).read_text();old=allocation(before);new=allocation(after);a=old(tree);b=new(tree);assert a==b
+ ts=repo/'js/node_modules/typescript';left=old(ts);right=new(ts);assert left==right
+ for limit in [1,2]:assert error(lambda:allocation(before,limit)(tree))==error(lambda:allocation(after,limit)(tree))
+ fifo=tree/'fifo';os.mkfifo(fifo)
+ try:assert error(lambda:old(tree))==error(lambda:new(tree))
+ finally:fifo.unlink()
+ results.append({'path':path,'fixture':a,'installedTypeScript':left,'allOriginalCountsAndRefusalsEqual':True})
+print(json.dumps(results))`;
+  const rows=JSON.parse(execFileSync(PYTHON,['-B','-c',code],{cwd:ROOT,env,input:JSON.stringify({root,repo:ROOT}),encoding:'utf8',timeout:20000,maxBuffer:2*1024*1024}));assert.equal(rows.length,2);assert.ok(rows.every(row=>row.allOriginalCountsAndRefusalsEqual));
+ });
+});

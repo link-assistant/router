@@ -9,3 +9,5 @@ bump: patch
   complete physical source comparisons through native Python AST/CST rules.
 - Preserve original invalid and foreign CLI diagnostics by deferring the
   operational helper import until it is needed after validation.
+- Use fresh native directory scans for evidence accounting while retaining
+  every original scan, byte/block count, refusal and resource limit.

@@ -22,19 +22,22 @@ def regular(path,maximum=128*1024**2):
  return data
 
 def allocation(directory):
- directory.lstat();pending=[directory];count=logical=observed=0
+ directory.lstat()
+ # Every call creates a fresh native directory scan and freshly stats each node.
+ pending=[(directory,None)];count=logical=observed=0
  while pending:
-  path=pending.pop();count+=1
+  path,entry=pending.pop();count+=1
   if count>ENTRY_LIMIT:fail('observed evidence entry bound')
-  try:s=path.lstat()
+  try:s=path.lstat()if entry is None else entry.stat(follow_symlinks=False)
   except FileNotFoundError:
    if path==directory:raise
    continue
   if stat.S_ISDIR(s.st_mode):
-   try:pending.extend(path/name for name in os.listdir(path))
+   try:
+    with os.scandir(path)as entries:pending.extend((entry.path,entry)for entry in entries)
    except FileNotFoundError:
     if path==directory:raise
-  elif not (stat.S_ISREG(s.st_mode) or stat.S_ISLNK(s.st_mode)):fail('special evidence node')
+  elif not(stat.S_ISREG(s.st_mode)or stat.S_ISLNK(s.st_mode)):fail('special evidence node')
   logical+=s.st_size;observed+=max(s.st_size,s.st_blocks*512)
  return dict(entriesAttempted=count,logicalBytes=logical,observedBytes=observed)
 

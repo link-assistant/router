@@ -65,7 +65,7 @@ def enclosing_assignment(node,links):
   node=links[node]
   if isinstance(node,ast.Assign):return node
  return None
-def language(source,path):
+def language(source,path,optimize_evidence=True):
  program=tree(source);edits=[];covered=[];raw=source.encode()
  # Extend every actual Git census; retain root Cargo files and add nested manifests.
  for node in ast.walk(program):
@@ -81,6 +81,11 @@ def language(source,path):
     argument=ast.get_source_segment(source,left.func.value)
     need(ast.get_source_segment(source,right.left)==argument,'same native Rust/Cargo binding')
     edits.append(selected(source,node,('_operational_source_review()'if path.startswith('scripts/')else'source_review')+'.is_rust_cargo_path('+argument+')','preserve Rust input guards and extend exact Cargo basename coverage'))
+ if optimize_evidence and path.startswith('scripts/'):
+  owners=[node for node in program.body if isinstance(node,ast.FunctionDef)and node.name=='allocation'];need(len(owners)==1,'one native complete evidence counter')
+  proposer=path=='scripts/propose-core-adoption.py';key='entriesAttempted'if proposer else'entries';bound='observed evidence entry bound'if proposer else'complete observed entry bound';special='special evidence node'if proposer else'special evidence entry'
+  body=["def allocation(directory):",*( [" directory.lstat()"]if proposer else[])," # Every call creates a fresh native directory scan and freshly stats each node."," pending=[(directory,None)];count=logical=observed=0"," while pending:","  path,entry=pending.pop();count+=1","  if count>ENTRY_LIMIT:fail("+repr(bound)+")","  try:s=path.lstat()if entry is None else entry.stat(follow_symlinks=False)","  except FileNotFoundError:","   if path==directory:raise","   continue","  if stat.S_ISDIR(s.st_mode):","   try:","    with os.scandir(path)as entries:pending.extend((entry.path,entry)for entry in entries)","   except FileNotFoundError:","    if path==directory:raise","  elif not(stat.S_ISREG(s.st_mode)or stat.S_ISLNK(s.st_mode)):fail("+repr(special)+")","  logical+=s.st_size;observed+=max(s.st_size,s.st_blocks*512)"," return dict("+key+"=count,logicalBytes=logical,observedBytes=observed)"]
+  edits.append(selected(source,owners[0],'\n'.join(body),'fresh full evidence accounting without Path construction or any cross-call cached size'))
  return apply(source,edits),edits
 def repository(source,path,helper):
  program=tree(source);links=parents(program);edits=[];root=root_name(path)
@@ -125,11 +130,12 @@ def prepare(root):
  for row in original['files']:
   path=row['path'];before=row['source'];need(len(before.encode())==row['bytes']and sha(before.encode())==row['sha256'],'complete original source association')
   middle,general=language(before,path);after,specific=repository(middle,path,helper);tree(after)
-  previous_after=after.replace(LAZY_IMPORT,DIRECT_IMPORT,1).replace('_operational_source_review().','source_review.')if path.startswith('scripts/')else after
-  current=(root/path).read_text();need(current in [before,after,previous_after],'unknown complete physical source '+path)
+  old_middle,_=language(before,path,optimize_evidence=False);old_after,_=repository(old_middle,path,helper)
+  previous_after=old_after.replace(LAZY_IMPORT,DIRECT_IMPORT,1).replace('_operational_source_review().','source_review.')if path.startswith('scripts/')else old_after
+  current=(root/path).read_text();need(current in [before,after,old_after,previous_after],'unknown complete physical source '+path)
   stages=[phase(before,middle,'language',general),phase(middle,after,'repository',specific)]
   receiving=phase(current,after,'repository',[])if current not in [before,after]else None
-  results.append({'path':path,'before':before,'language':middle,'after':after,'current':current,'previousAfter':previous_after,'receivingEvolution':receiving,'inverse':before,'stages':stages,'languageRules':['all-tracked-rust-and-nested-cargo-inputs'],'repositoryRules':['physical-rust-package-roots-and-existing-runtime-closure'],'nativePythonAstChecked':True,'semanticAuthority':False})
+  results.append({'path':path,'before':before,'language':middle,'after':after,'current':current,'previousAfter':previous_after,'previousLazyAfter':old_after,'receivingEvolution':receiving,'inverse':before,'stages':stages,'languageRules':['all-tracked-rust-and-nested-cargo-inputs',*(['fresh-native-scandir-evidence-accounting']if path.startswith('scripts/')else[])],'repositoryRules':['physical-rust-package-roots-and-existing-runtime-closure'],'nativePythonAstChecked':True,'semanticAuthority':False})
  for row in results:need((root/row['path']).read_text()==row['current'],'source changed during complete proposal')
  need((root/original['reference']['path']).read_text()==original['reference']['source'],'complete original JavaScript layout reference')
  return {'schema':'core-adoption-rust-layout-source-v1','sourceHead':original['sourceHead'],'files':results,'helperSource':helper,'reference':original['reference'],'newRuntimeFiles':False,'acrossInvocationCache':False,'semanticAuthority':False,'tested':False}
