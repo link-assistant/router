@@ -18,6 +18,18 @@ Canonical and platform-profile checks and synchronization use `node scripts/tran
 
 ## Development Workflow
 
+For the active issue #759 drafting phase, the user's latest instruction is to
+bulk draft every remaining requirement before running any tests or experiments.
+Continue source review, implementation, independent test-source drafting and
+documentation together. Defer test execution, benchmarks, compiler diagnostics,
+trial translation, freshness regeneration and CI-triggering pushes until the
+complete source batch is drafted. Automated source writing may construct the
+implementation draft; it does not qualify the generated code. Track work in
+[the bulk draft ledger](docs/development/bulk-draft-requirements.md); an unchecked
+draft is not a passing gate, a coverage result or completed delivery. Preserve
+the existing checks and deadlines for the later verification phase, and never
+run Rust tools locally for this task.
+
 Use the [fixed parallel command partitions](docs/development/parallel-javascript-gate.md)
 to run complete forward tests, canonical checks and owned-definition checks
 independently. Keep all eight same-SHA stages, every full command and original

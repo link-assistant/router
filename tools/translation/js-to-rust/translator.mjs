@@ -421,3 +421,6 @@ function translateOwnedDocumentStage(stage,{sourcePath,context,typescriptOutputP
 }
 export function translateOwnedCoreDocumentJavaScript(source,options){return translateOwnedDocumentStage(prepareReverseConcreteSource(source),options);}
 export function translateOwnedCoreDocumentConcreteSyntaxMeta(text,options){return translateOwnedDocumentStage(parseReverseConcreteSource(text),options);}
+
+export {translateFilesystemEffectJavaScript,translateFilesystemEffectTypeScript,translateFilesystemEffectConcreteSyntaxMeta,readFilesystemEffectMeta} from './filesystem-effects.mjs';
+export {translateTypeScript,translateTypeScriptConcreteSyntaxMeta,readTypeScriptSourceMeta} from './typed-portable.mjs';

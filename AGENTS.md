@@ -4,6 +4,21 @@ Implement and verify behavior in JavaScript first. Read [the workflow](docs/deve
 
 ## Checks and generation
 
+The user's latest instruction for issue #759 requires the entire remaining
+requirement set to be bulk drafted before any further tests or experiments.
+During this drafting phase, use source review and implementation work only:
+do not run tests, benchmarks, verification compiler diagnostics, trial
+translation, freshness regeneration, or exploratory execution. Automated source
+writing to construct the implementation draft is allowed; executing that draft
+for validation is deferred. Draft independent regression cases and
+Rust oracle source without executing them. Record all new changes as unverified
+and maintain the remaining requirements in
+[the bulk draft ledger](docs/development/bulk-draft-requirements.md). Do not push
+a drafting checkpoint that would start CI during this phase. This instruction
+supersedes the usual focused-test cadence below; the original complete gates,
+case deadlines and JavaScript-before-Rust requirements remain required after
+the entire source draft is complete. No local Rust tools are authorized.
+
 Run the complete local JavaScript gate with `node scripts/check-js-first-local.mjs`. Resolve the full set of failures together, rerun the gate and inspect every stage. Inventory validation alone does not establish parity. Rust verification requires the complete gate, including strict parity, forward translation and reverse regeneration checks, to pass for the current SHA and file contents.
 
 Canonical/profile gate commands and the synchronizer use the explicit flat retained CLI, `node scripts/translate-router-flat-native-owned-field-meta.mjs --retain-output-text`, after its complete 863-source canonical generation qualified under the existing resource bounds. Keep the separately checked owned-definition commands and all eight same-SHA JavaScript stages. Canonical qualification does not qualify the platform matrix, full parity or reverse freshness. Preserve original library APIs, source refusals and case deadlines; see [the storage contract](docs/development/flat-output-translation.md).

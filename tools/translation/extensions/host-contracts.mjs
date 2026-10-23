@@ -62,7 +62,7 @@ import {canonicalResult,checkResultMapError,requireResultIteratorProof} from './
 import {checkedOptionAsDeref,requireOptionDerefProof} from './option-deref.mjs';
 import {checkedReverseSplitFind,requireReverseStringProof} from './reverse-string-iterators.mjs';
 import {TIME_DATA,TIME_CONTRACTS} from './time-contracts.mjs';
-import {EFFECT_CONTRACTS} from './effects-contracts.mjs';
+import {FILESYSTEM_EFFECT_CONTRACTS as EFFECT_CONTRACTS} from './filesystem-effects-contracts.mjs';
 import {emitWith} from './core.mjs';
 import {tokenizeRust} from './lexical.mjs';
 import {sameType,fixedBounds,fixedArrayLength} from '../checked-types.mjs';
