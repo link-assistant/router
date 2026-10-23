@@ -144,3 +144,32 @@ and 45 MiB semantic documents. The complete eight-case consuming-storage file
 also passes a separate tighter 512 MiB V8 heap diagnostic in 3.260 seconds,
 with 588,464,128 bytes sampled aggregate peak RSS. These storage results do not
 establish that the live full compiler fits its unchanged 1792 MiB heap.
+
+The complete run at `98a64ecb1` passed the repaired owned-field storage step
+at 983.797 seconds, then exhausted the unchanged heap while retaining its output
+strings. Its final 997.526 seconds and 2,105,376,768 bytes sampled aggregate peak
+RSS remain red; all 4,352 inputs (241,937,326 bytes) stayed unchanged. This
+establishes the storage stage's completion, not fresh full generation or parity.
+
+The flat bulk source producer now selects the two actual synchronous transfers:
+clear the producer-owned root text after `expected.set` returns, then clear each
+owned component text after its own transfer. The retained map still owns either
+its original immutable primitive fallback or its checked private cell. Keep
+ordinary APIs, all storage/retention limits, whole inverses and native binding
+checks. Never clear a field before the transfer finishes or retain a second
+array of its source strings.
+
+Complete storage, output retention and the restored-output census reproduce
+the earlier failure in a 28.346-second diagnostic. The same input and unchanged
+1792 MiB old-space flag pass with the two transfers in 25.795 seconds
+(2,301,935,616 bytes sampled aggregate peak RSS), comparing every original output
+byte. The durable whole retention case passes its original 60-second deadline
+in Node at 25.082 seconds. Broader source-trial assertions passed, but two
+original 60-second cases took 94.694 and 60.233 seconds: that receiving group is
+red pending a performance repair. Preserve those failures without waiving limits.
+
+Bun independently passes the complete retention case and both physical-packet
+regressions. Its original source-plan comparison still takes 76.839 seconds
+against 60 seconds, so the seven-case Bun group also remains red. All four
+original source-plan cases ran in each engine; no deadlines or test bodies were
+changed. The next complete generation must qualify the actual retained pipeline.

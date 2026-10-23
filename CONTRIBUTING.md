@@ -265,6 +265,20 @@ validation. Pressure diagnostics must decode stored CST compression envelopes,
 join the original logical bytes/digest, and compare every original output byte;
 a pass on the envelope alone does not qualify the complete CST or live compiler.
 
+After a synchronous retained-map transfer succeeds, release the producer-owned
+root/component text before transferring the next component. Preserve the map's
+checked immutable cell or primitive fallback and every original budget. Test
+storage, retention and the restored-output census while the same live pressure
+remains; releasing pressure before retention misses the pipeline's peak.
+
+A complete source-trial set may contain files already in the desired form.
+Keep those unchanged members and their complete original bytes in the fresh
+source set; do not drop them to satisfy a changed-files predicate. The selected
+codec must still change. Changed source must differ in full encoded bytes,
+while unchanged source packets retain their original-source association and
+reject an added, missing or altered trial payload. Preserve all membership,
+source/hash, CST/inverse and native binding checks; packets grant no authority.
+
 The explicit retained owned-definition lane uses a separately generated UTF-16
 byte-retention format. Derive it with
 `node tools/translation/prepare-byte-output-text.mjs --emit`, review its complete

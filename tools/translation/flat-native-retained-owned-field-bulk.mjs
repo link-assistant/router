@@ -101,7 +101,8 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
     const storage=planProjectMetaStorage(targets.meta,result.meta,{serializeUtf8:serializeProjectMetaFieldUtf8,storageLimits:projectMetaStorageLimits});
     progress({stage:'project',state:'advance',entry,phase:'owned-field-storage-end'});Object.assign(targets,storage.targets);
     progress({stage:'project',state:'advance',entry,phase:'owned-field-retain-start'});
-    expected.set(targets.meta, storage.text);for(const component of storage.components)expected.set(component.path,component.text);
+    expected.set(targets.meta, storage.text);
+    storage.text=undefined;for(const component of storage.components){expected.set(component.path,component.text); component.text=undefined;}
     progress({stage:'project',state:'advance',entry,phase:'owned-field-retain-end'});
     expected.set(targets.javascript, result.javascript); expected.set(targets.typescript, result.typescript);
     projects.push({ entry, status: 'partial', runtimeParity: false, sources: result.meta.sources.length, moduleEdges: result.meta.moduleEdges.length, moduleDiagnostics: result.meta.moduleDiagnostics.length, executableFunctions: result.meta.executable.filter(item => item.term === 'fn').length, executableConstants: result.meta.executable.filter(item => item.term === 'const').length, checkedMethods: result.meta.checkedMethods?.length ?? 0, checkedGeneratedMethods: result.meta.checkedGeneratedMethods?.length ?? 0, refused: result.meta.refused.length, unloweredItems: result.meta.unloweredItems.length, targets });
