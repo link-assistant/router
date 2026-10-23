@@ -22,7 +22,7 @@ function native(){
 // This API deliberately refuses observable objects/callbacks. The original
 // semantic serializer and its ordinary observer contract remain unchanged.
 function writeJson(value,emit){
- native();let bytes=0,objects=0;const active=new Set();
+ native();if(value===undefined)fail('canonical JSON root required');let bytes=0,objects=0;const active=new Set();
  const write=text=>{bytes+=NativeBuffer.byteLength(text);if(bytes>FLAT_SEMANTIC_JSON_LIMITS.bytes)fail('original field byte budget exceeded');emit(text);};
  function visit(value,depth){
   if(depth>FLAT_SEMANTIC_JSON_LIMITS.depth)fail('original field depth budget exceeded');

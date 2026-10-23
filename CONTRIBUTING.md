@@ -36,6 +36,12 @@ require `--check`. Preserve original public APIs, stock native qualification,
 64 MiB fields, two-million-object/depth-512 bounds and original receiving
 deadlines. A focused pass or retained-document round trip does not qualify the
 complete corpus; retry actual generation within the unchanged resource limits.
+Keep private issuers, admission and checker dependencies in their original
+module. Use `node tools/translation/prepare-project-flat-semantic-entry.mjs
+--emit` for the closed storage entry, review its full CST/native inverse and
+require `--check`. Existing public entries must retain their original storage
+default; callers must never supply a codec. Include real methods and genuine,
+copied and fabricated evidence controls when qualifying a new compiler path.
 
 Create a feature branch or isolated worktree, implement behavior in JavaScript, add targeted behavioral tests and update documentation. Read [the JavaScript-first workflow](docs/development/javascript-first.md) for the parity boundary and generation limitations. Router's JavaScript operations package and a valid parity inventory do not by themselves establish complete Rust runtime parity.
 

@@ -1,3 +1,6 @@
+import {roundTripProgram as roundTripFlatProgram,serializeProgram as serializeFlatProgram} from './semantic-meta-flat.mjs';
+const originalProjectSemanticStorage={roundTripProgram,serializeProgram};
+const flatProjectSemanticStorage={roundTripProgram:roundTripFlatProgram,serializeProgram:serializeFlatProgram};
 import {createRulePipeline} from './rule-pipeline.mjs';
 import {createRustConcreteSyntaxStage} from './forward-concrete-syntax.mjs';
 import {associateOriginalSharedPatternDependencies} from './extensions/shared-source-patterns.mjs';
@@ -262,7 +265,7 @@ function captureGenericDeclarations(declarations,parser,module,globalSpan,offset
   }
 }
 
-function flatten(program) {
+function flatten(program, semanticStorage = originalProjectSemanticStorage) {
   const names = new Map([...program.declarations.keys()].map(name => [name, `rp_${Buffer.from(name).toString('hex')}`]));
   const visit = node => {
     if (Array.isArray(node)) return node.map(visit);
@@ -278,10 +281,10 @@ function flatten(program) {
     const target = names.get(name);
     return [target, { ...visit(entry), name: target, fullName: target, modulePath: [], generated: 'router-project-flattened' }];
   }));
-  return { names, program: roundTripProgram({ ...program, declarations, items: [...declarations.values()] }) };
+  return { names, program: semanticStorage.roundTripProgram({ ...program, declarations, items: [...declarations.values()] }) };
 }
 
-function declarationProgram(program, root) {
+function declarationProgram(program, root, semanticStorage = originalProjectSemanticStorage) {
   const needed = new Set();
   const visit = (node, path) => {
     if (!node || typeof node !== 'object') return;
@@ -300,10 +303,10 @@ function declarationProgram(program, root) {
   };
   include(root, 'root');
   const declarations = new Map([...program.declarations].filter(([name]) => needed.has(name)));
-  return roundTripProgram({ ...program, declarations, items: [...declarations.values()], main: null });
+  return semanticStorage.roundTripProgram({ ...program, declarations, items: [...declarations.values()], main: null });
 }
 
-function compileProjectLanguage(options, ownedDefinitionMode=false) {
+function compileProjectLanguage(options, ownedDefinitionMode=false, semanticStorage = originalProjectSemanticStorage) {
   const progress=translationProgressReporter(options.progress);
   progress({stage:'project-graph',state:'start',entry:options.entry});
   const cargoEditionContext=options.cargoManifest===undefined||options.cargoManifest===null?null:captureOriginalCargoEdition(options.cargoManifest,{sourcePath:options.cargoManifestPath??'Cargo.toml'});
@@ -517,7 +520,7 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
   progress({stage:'semantic-check',state:'start',entry:options.entry,remaining:active.length});
   for (let attempts = 0; attempts <= declarations.length; attempts++) {
     progress({stage:'semantic-check',state:'advance',entry:options.entry,attempt:attempts,remaining:active.length});
-    try { const surface={ language: 'Rust', items: [...tree(active), ...admittedHostData(effectData(),tree(active))], main: null };associateOriginalSharedPatternDependencies(surface,options.jsonMacroDependencies);const nativeChecked=withSourceLifetimeRefusals(surface,options.collectIndependentSourceLifetimes??(options.collectIndependentBodies??true),()=>checkProjectProgram(surface,{jsonParserProfile,collectIndependentBodies:options.collectIndependentBodies??true}));checked=roundTripProgram(nativeChecked);if(ownedDefinitionMode==='core-json-readers')genuineOrigin=nativeChecked;break; }
+    try { const surface={ language: 'Rust', items: [...tree(active), ...admittedHostData(effectData(),tree(active))], main: null };associateOriginalSharedPatternDependencies(surface,options.jsonMacroDependencies);const nativeChecked=withSourceLifetimeRefusals(surface,options.collectIndependentSourceLifetimes??(options.collectIndependentBodies??true),()=>checkProjectProgram(surface,{jsonParserProfile,collectIndependentBodies:options.collectIndependentBodies??true}));checked=semanticStorage.roundTripProgram(nativeChecked);if(ownedDefinitionMode==='core-json-readers')genuineOrigin=nativeChecked;break; }
     catch (error) {
       const failures=declarationRefusals(error)??(error instanceof TranslationError?[{error}]:null);
       if(!failures)throw error;
@@ -536,7 +539,7 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
   if (!checked) throw new Error('project declaration checking did not converge');
   progress({stage:'semantic-check',state:'end',entry:options.entry,remaining:active.length});
   progress({stage:'target-emit',state:'start',entry:options.entry});
-  const target = flatten(checked);
+  const target = flatten(checked, semanticStorage);
   const runtimeModule = posix.relative(posix.dirname(options.entry.replace(/\.rs$/u,'.mjs')), 'runtime/effects.mjs');
   const emitted = emitJavaScript(target.program, { runtimeModule: runtimeModule.startsWith('.') ? runtimeModule : './' + runtimeModule });
   // This private closure retains the same checked program and original issuers.
@@ -559,7 +562,7 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
   const typescript = annotateRuntimeTypes(javascript, parameterTypes, dataTypes, returnTypes, emitted.checkedLocalBindings??[]).replace('export const translated =', `export const translated: Readonly<{ ${types} }> =`);
   progress({stage:'target-emit',state:'end',entry:options.entry});
   progress({stage:'project-serialize',state:'start',entry:options.entry});
-  const meta = { schema: 'tracked-rust-project-semantic-meta-v1', compilationProfile:graph.compilationProfile, standardNamespaceCensus:STANDARD_NAMESPACE_EVIDENCE, configurationEvidence:graph.modules.map(module=>({source:module.file,condition:module.configurationCondition,items:module.configurationEvidence})), status: 'partial', entry: options.entry, runtimeParity: false, sources: graph.modules.map(module => ({ source: module.file, sha256: sha256(module.source), module: module.path })), moduleEdges: graph.edges, imports, moduleDiagnostics: graph.diagnostics, bindingEvidence, refused, unloweredItems, executable: entries.map(entry => ({ source: entry.file, name: entry.name, term: entry.term, span: entry.span })), checkedSemanticProgram: JSON.parse(serializeProgram(checked)), targetSemanticProgram: JSON.parse(serializeProgram(target.program)), checkedMethods: methods.map(entry=>({source:entry.file,name:entry.displayName,span:entry.span,receiver:entry.surface.impl.receiver,...(entry.defaultSourceAdmission?{defaultSourceAdmission:entry.defaultSourceAdmission}:{})})), encodings: emitted.encodings, assumptions: emitted.assumptions };
+  const meta = { schema: 'tracked-rust-project-semantic-meta-v1', compilationProfile:graph.compilationProfile, standardNamespaceCensus:STANDARD_NAMESPACE_EVIDENCE, configurationEvidence:graph.modules.map(module=>({source:module.file,condition:module.configurationCondition,items:module.configurationEvidence})), status: 'partial', entry: options.entry, runtimeParity: false, sources: graph.modules.map(module => ({ source: module.file, sha256: sha256(module.source), module: module.path })), moduleEdges: graph.edges, imports, moduleDiagnostics: graph.diagnostics, bindingEvidence, refused, unloweredItems, executable: entries.map(entry => ({ source: entry.file, name: entry.name, term: entry.term, span: entry.span })), checkedSemanticProgram: JSON.parse(semanticStorage.serializeProgram(checked)), targetSemanticProgram: JSON.parse(semanticStorage.serializeProgram(target.program)), checkedMethods: methods.map(entry=>({source:entry.file,name:entry.displayName,span:entry.span,receiver:entry.surface.impl.receiver,...(entry.defaultSourceAdmission?{defaultSourceAdmission:entry.defaultSourceAdmission}:{})})), encodings: emitted.encodings, assumptions: emitted.assumptions };
   meta.concreteSyntaxMeta=graph.concreteSyntaxMeta;
   if(deriveContext)meta.deriveNamespaceFootprints=deriveContext;
   if(generatedMethods.length)meta.checkedGeneratedMethods=generatedMethods.map(entry=>({source:entry.file,name:entry.displayName,term:'generated-method',origin:'derive-invocation',originalDeclarationTerm:entry.originalDeclarationTerm,generator:entry.surface.impl.cloneSourceProof?'core::clone::Clone':'core::default::Default',span:entry.span,receiver:entry.surface.impl.receiver,semanticBodyChecked:true,...(entry.surface.impl.cloneSourceProof?{cloneSourceProof:entry.surface.impl.cloneSourceProof}:{defaultSourceProof:entry.surface.impl.defaultSourceProof})}));
@@ -571,7 +574,7 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
   meta.originalCargoEditionInput=originalCargoEditionEvidence(cargoEditionContext);
   const sourceScopes=graph.modules.map(module=>Object.freeze({source:module.file,module:[...module.path],sourceView:module.sourceView,sha256:sha256(module.source),project:options.entry,compilationProfile:graph.compilationProfile,configurationCondition:module.configurationCondition,configurationEvidence:Object.freeze([...module.configurationEvidence]),scope:scopes.get(moduleScopeKey(module)),scopes:bindingEvidence.scopes,jsonParserProfile,matchesMacroContext}));
   const lowerDeclaration=(entry,name)=>function(lowerOptions={}) {
-    const program=declarationProgram(target.program,target.names.get(entry.name));
+    const program=declarationProgram(target.program,target.names.get(entry.name), semanticStorage);
     const emitted=emitJavaScript(program,lowerOptions),own=program.declarations.get(target.names.get(entry.name));
     const targetMapping=emitted.mappings.find(mapping=>mapping.source===own.fullName);
     const signatures=[...program.declarations.values()].filter(entry=>entry.k==='fn').map(entry=>({target:emitted.mappings.find(mapping=>mapping.source===entry.fullName)?.target,params:entry.params,ret:entry.async?{kind:'routerFuture',value:entry.ret}:entry.ret}));
@@ -691,3 +694,12 @@ const coreReaderDefinitionRules=createRulePipeline([
  {phase:'repository',rules:[{id:'rust-project-core-readers:explicit-owned-library-wrappers',apply:finalize=>finalize()}]},
 ]);
 export function translateProjectOwnedCoreReaderDefinitions(options){return coreReaderDefinitionRules.run(options).value;}
+
+// Explicit stock-native DATA storage; all original private issuers stay here.
+const flatSemanticProjectTranslationRules=createRulePipeline([
+  {phase:'language',rules:[{id:'rust-project:checked-language',apply:options=>compileProjectLanguage(options,false,flatProjectSemanticStorage)}]},
+  {phase:'repository',rules:[{id:'rust-project:exports-types-provenance',apply:finalize=>finalize()}]},
+]);
+export function translateProjectWithFlatSemanticMeta(options) {
+  return flatSemanticProjectTranslationRules.run(options).value;
+}
