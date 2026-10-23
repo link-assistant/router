@@ -134,25 +134,25 @@ fn token_state(record: &TokenRecord) -> &'static crate::translation_core::Str {
 
 /// One line per token: id, label, expiry, every constraint, revocation.
 /// Never the token value.
-fn describe(record: &TokenRecord) -> String {
+fn describe(record: &TokenRecord) -> crate::translation_core::Text {
     let usage = record.max_requests.map_or_else(
-        || format!("{}", record.used_requests),
-        |max| format!("{}/{max}", record.used_requests),
+        || crate::translation_core::format!("{}", record.used_requests),
+        |max| crate::translation_core::format!("{}/{max}", record.used_requests),
     );
     let state = token_state(record);
     // Every supported constraint is visible here, so an operator can audit a
     // token from chat without reaching for the CLI (issue #194).
     let spend = record.max_tokens.map_or_else(
-        || format!("{}", record.used_tokens),
-        |max| format!("{}/{max}", record.used_tokens),
+        || crate::translation_core::format!("{}", record.used_tokens),
+        |max| crate::translation_core::format!("{}/{max}", record.used_tokens),
     );
     let rpm = record
         .rate_limit_per_minute
-        .map_or_else(String::new, |rpm| format!(", {rpm}/min"));
+        .map_or_else(String::new, |rpm| crate::translation_core::format!(", {rpm}/min"));
     let account = record
         .account
         .as_deref()
-        .map_or_else(String::new, |account| format!(", account `{account}`"));
+        .map_or_else(String::new, |account| crate::translation_core::format!(", account `{account}`"));
     let label = if record.label.is_empty() {
         "(no label)"
     } else {
@@ -163,7 +163,7 @@ fn describe(record: &TokenRecord) -> String {
     } else {
         ""
     };
-    format!(
+    crate::translation_core::format!(
         "• {id} — {label}{scope}\n  {state}, expires {expires}, \
          requests {usage}, tokens {spend}{rpm}{account}",
         id = record.id,
@@ -216,13 +216,13 @@ pub(crate) fn parse_issue_options(rest: &crate::translation_core::Str) -> crate:
         if let Some((key, value)) = part.split_once('=') {
             let Some(canonical) = canonical_issue_key(key) else {
                 let known: Vec<&str> = ISSUE_KEYS.iter().map(|(name, _)| *name).collect();
-                return Err(format!(
+                return Err(crate::translation_core::format!(
                     "unknown option `{key}`. Supported: {}.",
                     known.join(", ")
                 ));
             };
             if value.is_empty() {
-                return Err(format!("{canonical} needs a value, as `{canonical}=…`."));
+                return Err(crate::translation_core::format!("{canonical} needs a value, as `{canonical}=…`."));
             }
             match canonical {
                 "label" => options.label = Some(value.to_string()),
@@ -260,10 +260,10 @@ pub(crate) fn parse_issue_options(rest: &crate::translation_core::Str) -> crate:
     Ok(options)
 }
 
-fn parse_number<T: std::str::FromStr>(value: &str, field: &str) -> Result<T, String> {
+fn parse_number<T: std::str::FromStr>(value: &crate::translation_core::Str, field: &crate::translation_core::Str) -> Result<T, String> {
     value
         .parse::<T>()
-        .map_err(|_| format!("{field} must be a whole number."))
+        .map_err(|_| crate::translation_core::format!("{field} must be a whole number."))
 }
 
 /// Human-readable summary of the constraints attached to a token.
@@ -287,7 +287,7 @@ fn describe_constraints(request: &IssueRequest<'_>) -> String {
 /// `/issue [label] [ttl_hours] [max_requests] [key=value …]` — mint a client token.
 ///
 /// The value is returned once, in a message marked secret.
-fn issue(context: &CommandContext<'_>, rest: &str) -> Reply {
+fn issue(context: &CommandContext<'_>, rest: &crate::translation_core::Str) -> Reply {
     let options = match parse_issue_options(rest) {
         Ok(options) => options,
         Err(message) => return Reply::plain(message),
@@ -311,13 +311,13 @@ fn issue(context: &CommandContext<'_>, rest: &str) -> Reply {
         return Reply::plain(message);
     }
     match context.tokens.issue(&request) {
-        Ok(token) => Reply::secret(format!(
+        Ok(token) => Reply::secret(crate::translation_core::format!(
             "Token issued — label `{label}`, {constraints}.\n\n\
              {token}\n\nThis value is shown once and never appears in /tokens.{note}",
             constraints = describe_constraints(&request),
             note = deletion_note(context.secret_ttl),
         )),
-        Err(e) => Reply::plain(format!("Could not issue a token: {e}")),
+        Err(e) => Reply::plain(crate::translation_core::format!("Could not issue a token: {e}")),
     }
 }
 
@@ -325,7 +325,7 @@ fn issue(context: &CommandContext<'_>, rest: &str) -> Reply {
 ///
 /// Constraints are preserved unless explicitly overridden, and the old value is
 /// revoked atomically by [`crate::token::TokenManager::rotate_token`].
-fn rotate_client_token(context: &CommandContext<'_>, rest: &str) -> Reply {
+fn rotate_client_token(context: &CommandContext<'_>, rest: &crate::translation_core::Str) -> Reply {
     let (id, rest) = rest.split_once(char::is_whitespace).unwrap_or((rest, ""));
     if id.is_empty() {
         return Reply::plain("Usage: /rotate-token <id> [label=… ttl_hours=… max_tokens=…]");
@@ -336,8 +336,8 @@ fn rotate_client_token(context: &CommandContext<'_>, rest: &str) -> Reply {
     };
     let existing = match context.tokens.store().get(id) {
         Ok(Some(record)) => record,
-        Ok(None) => return Reply::plain(format!("No token with id `{id}`.")),
-        Err(error) => return Reply::plain(format!("Could not read token `{id}`: {error}")),
+        Ok(None) => return Reply::plain(crate::translation_core::format!("No token with id `{id}`.")),
+        Err(error) => return Reply::plain(crate::translation_core::format!("Could not read token `{id}`: {error}")),
     };
     if existing.scope == crate::token::ADMIN_SCOPE {
         return Reply::plain("Use /rotate to rotate the admin credential.");
@@ -353,37 +353,37 @@ fn rotate_client_token(context: &CommandContext<'_>, rest: &str) -> Reply {
             account: options.account.as_deref(),
         },
     ) {
-        Ok(token) => Reply::secret(format!(
+        Ok(token) => Reply::secret(crate::translation_core::format!(
             "Token `{id}` rotated; the previous value is revoked.\n\n\
              {token}\n\nThis value is shown once and never appears in /tokens.{note}",
             note = deletion_note(context.secret_ttl),
         )),
-        Err(e) => Reply::plain(format!("Could not rotate the token: {e}")),
+        Err(e) => Reply::plain(crate::translation_core::format!("Could not rotate the token: {e}")),
     }
 }
 
 /// `/show <id>` — every constraint, counter, and state for one token.
-fn show(context: &CommandContext<'_>, rest: &str) -> Reply {
+fn show(context: &CommandContext<'_>, rest: &crate::translation_core::Str) -> Reply {
     let id = rest.trim();
     if id.is_empty() {
         return Reply::plain("Usage: /show <id>");
     }
     match context.tokens.store().get(id) {
         Ok(Some(record)) => Reply::plain(describe_full(&record)),
-        Ok(None) => Reply::plain(format!("No token with id `{id}`.")),
-        Err(error) => Reply::plain(format!("Could not read token `{id}`: {error}")),
+        Ok(None) => Reply::plain(crate::translation_core::format!("No token with id `{id}`.")),
+        Err(error) => Reply::plain(crate::translation_core::format!("Could not read token `{id}`: {error}")),
     }
 }
 
 /// Full constraint and usage detail for one token, for `/show`.
-fn describe_full(record: &crate::storage::TokenRecord) -> String {
+fn describe_full(record: &crate::storage::TokenRecord) -> crate::translation_core::Text {
     let limit = |used: u64, max: Option<u64>| {
         max.map_or_else(
-            || format!("{used}/unlimited"),
-            |max| format!("{used}/{max}"),
+            || crate::translation_core::format!("{used}/unlimited"),
+            |max| crate::translation_core::format!("{used}/{max}"),
         )
     };
-    format!(
+    crate::translation_core::format!(
         "`{id}` — {label}{scope}\n\
          state: {state}\n\
          issued: {issued}\n\
@@ -397,7 +397,7 @@ fn describe_full(record: &crate::storage::TokenRecord) -> String {
         scope = if record.scope.is_empty() {
             String::new()
         } else {
-            format!(" [{}]", record.scope)
+            crate::translation_core::format!(" [{}]", record.scope)
         },
         state = token_state(record),
         issued = format_unix(record.issued_at),
@@ -407,20 +407,20 @@ fn describe_full(record: &crate::storage::TokenRecord) -> String {
         reserved = record.reserved_tokens,
         rpm = record
             .rate_limit_per_minute
-            .map_or_else(|| "unlimited".to_string(), |rpm| format!("{rpm}/min")),
+            .map_or_else(|| "unlimited".to_string(), |rpm| crate::translation_core::format!("{rpm}/min")),
         account = record.account.as_deref().unwrap_or("(any)"),
     )
 }
 
 /// `/revoke <id>` — revoke by token id (the id from `/tokens`, not a value).
-fn revoke(context: &CommandContext<'_>, rest: &str) -> Reply {
+fn revoke(context: &CommandContext<'_>, rest: &crate::translation_core::Str) -> Reply {
     let id = rest.split_whitespace().next().unwrap_or_default();
     if id.is_empty() {
         return Reply::plain("Send `/revoke <id>` with an id from /tokens.");
     }
     match context.tokens.revoke_token(id) {
-        Ok(()) => Reply::plain(format!("Revoked `{id}`.")),
-        Err(e) => Reply::plain(format!("Could not revoke `{id}`: {e}")),
+        Ok(()) => Reply::plain(crate::translation_core::format!("Revoked `{id}`.")),
+        Err(e) => Reply::plain(crate::translation_core::format!("Could not revoke `{id}`: {e}")),
     }
 }
 
@@ -454,11 +454,11 @@ pub fn rotate(context: &CommandContext<'_>) -> Result<String, String> {
 
 /// Warning appended to every message that carries a secret.
 #[must_use]
-pub fn deletion_note(secret_ttl: Duration) -> String {
+pub fn deletion_note(secret_ttl: Duration) -> crate::translation_core::Text {
     if secret_ttl.is_zero() {
         String::new()
     } else {
-        format!(
+        crate::translation_core::format!(
             "\n\nI will delete this message in {}s where the platform allows \
              it — copy it now.",
             secret_ttl.as_secs()

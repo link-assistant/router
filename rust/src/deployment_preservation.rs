@@ -24,14 +24,14 @@ pub fn compare(previous: &[Catalog], candidate: &[Catalog]) -> crate::translatio
         .collect();
     for row in previous {
         let Some(models) = candidate.get(&(&row.token_id, &row.client_kind)) else {
-            return Err(format!(
+            return Err(crate::translation_core::format!(
                 "issued-token catalog unavailable for {} ({})",
                 row.token_id, row.client_kind
             ));
         };
         let missing: Vec<_> = row.models.difference(models).collect();
         if !missing.is_empty() {
-            return Err(format!(
+            return Err(crate::translation_core::format!(
                 "authorized models disappeared for {} ({}): {}",
                 row.token_id,
                 row.client_kind,
@@ -62,7 +62,7 @@ pub fn probe_token(record: &TokenRecord, secret: &crate::translation_core::Str) 
         &claims,
         &EncodingKey::from_secret(secret.as_bytes()),
     )
-    .map(|jwt| format!("{TOKEN_PREFIX}{jwt}"))
+    .map(|jwt| crate::translation_core::format!("{TOKEN_PREFIX}{jwt}"))
     .map_err(|_| "could not sign issued-token continuity probe".into())
 }
 

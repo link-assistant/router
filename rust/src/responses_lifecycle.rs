@@ -100,7 +100,7 @@ async fn forward(
             return openai_error(
                 StatusCode::PAYLOAD_TOO_LARGE,
                 "invalid_request_error",
-                &format!("request body exceeds the proxy limit: {error}"),
+                &crate::translation_core::format!("request body exceeds the proxy limit: {error}"),
             );
         }
     };
@@ -181,7 +181,7 @@ pub(crate) async fn forward_stored_provider(
     let provider = state
         .provider_store
         .resolve(name)
-        .map_err(|error| unavailable(&format!("provider lookup failed: {error}")))?
+        .map_err(|error| unavailable(&crate::translation_core::format!("provider lookup failed: {error}")))?
         .or_else(|| {
             (state.openai_compatible.provider_name == name)
                 .then(|| state.openai_compatible.resolve())
@@ -228,7 +228,7 @@ pub(crate) async fn forward_stored_provider(
         .request_log
         .send_upstream(correlation_id, client, request)
         .await
-        .map_err(|error| upstream_error(&format!("provider request failed: {error}")))
+        .map_err(|error| upstream_error(&crate::translation_core::format!("provider request failed: {error}")))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -257,7 +257,7 @@ pub(crate) async fn forward_subscription(
     let pinned = state
         .token_manager
         .account_for(&claims.sub)
-        .map_err(|error| unavailable(&format!("failed to resolve account binding: {error}")))?;
+        .map_err(|error| unavailable(&crate::translation_core::format!("failed to resolve account binding: {error}")))?;
     if pinned
         .as_deref()
         .unwrap_or(crate::credential_recovery_store::PRIMARY_ACCOUNT)
@@ -321,7 +321,7 @@ pub(crate) async fn forward_subscription(
         .request_log
         .send_upstream(correlation_id, upstream_client, build(&token))
         .await
-        .map_err(|error| upstream_error(&format!("subscription request failed: {error}")))?;
+        .map_err(|error| upstream_error(&crate::translation_core::format!("subscription request failed: {error}")))?;
     if response.status() == reqwest::StatusCode::UNAUTHORIZED
         && let Some(refreshed) = state
             .subscription_cache
@@ -345,7 +345,7 @@ pub(crate) async fn forward_subscription(
             .request_log
             .send_upstream(correlation_id, upstream_client, build(&refreshed))
             .await
-            .map_err(|error| upstream_error(&format!("subscription retry failed: {error}")))?;
+            .map_err(|error| upstream_error(&crate::translation_core::format!("subscription retry failed: {error}")))?;
     }
     Ok(response)
 }
@@ -447,10 +447,10 @@ async fn relay(
     response
 }
 
-fn upstream_path(response_id: &crate::translation_core::Str, operation: Operation, query: crate::translation_core::Maybe<&crate::translation_core::Str>) -> String {
+fn upstream_path(response_id: &crate::translation_core::Str, operation: Operation, query: crate::translation_core::Maybe<&crate::translation_core::Str>) -> crate::translation_core::Text {
     let encoded_id = percent_encode_segment(response_id);
-    let query = query.map_or(String::new(), |query| format!("?{query}"));
-    format!("/v1/responses/{encoded_id}{}{query}", operation.suffix())
+    let query = query.map_or(String::new(), |query| crate::translation_core::format!("?{query}"));
+    crate::translation_core::format!("/v1/responses/{encoded_id}{}{query}", operation.suffix())
 }
 
 pub(crate) fn percent_encode_segment(segment: &crate::translation_core::Str) -> String {
@@ -487,7 +487,7 @@ fn affinity_storage_error(error: &impl std::fmt::Display) -> Response {
     openai_error(
         StatusCode::SERVICE_UNAVAILABLE,
         "api_error",
-        &format!("response affinity is unavailable: {error}"),
+        &crate::translation_core::format!("response affinity is unavailable: {error}"),
     )
 }
 

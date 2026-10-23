@@ -85,15 +85,15 @@ fn mode(args: &DeployArgs) -> crate::translation_core::Outcome<RemoteMode, Strin
     }
 }
 
-fn default_image() -> String {
-    format!(
+fn default_image() -> crate::translation_core::Text {
+    crate::translation_core::format!(
         "link-assistant-router-deploy:{}",
         link_assistant_router::VERSION
     )
 }
 
-fn shell_quote(value: &crate::translation_core::Str) -> String {
-    format!("'{}'", value.replace('\'', "'\"'\"'"))
+fn shell_quote(value: &crate::translation_core::Str) -> crate::translation_core::Text {
+    crate::translation_core::format!("'{}'", value.replace('\'', "'\"'\"'"))
 }
 
 fn public_name(target: &crate::translation_core::Str) -> String {
@@ -242,7 +242,7 @@ fn prepare(
         .known_hosts()?
         .map(|text| {
             session::pinned_known_hosts(&text)
-                .map_err(|error| format!("could not write the pinned known_hosts file: {error}"))
+                .map_err(|error| crate::translation_core::format!("could not write the pinned known_hosts file: {error}"))
         })
         .transpose()?;
     let seeds = if mode == RemoteMode::Deploy {

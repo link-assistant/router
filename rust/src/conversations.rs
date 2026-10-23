@@ -432,7 +432,7 @@ async fn read_upstream(
     let mut body = Vec::new();
     while let Some(chunk) = stream.next().await {
         let chunk = chunk
-            .map_err(|error| upstream_error(&format!("upstream body read failed: {error}")))?;
+            .map_err(|error| upstream_error(&crate::translation_core::format!("upstream body read failed: {error}")))?;
         if body.len().saturating_add(chunk.len()) > state.max_proxy_request_bytes {
             return Err(upstream_error("upstream response exceeds the proxy limit"));
         }
@@ -461,7 +461,7 @@ async fn bounded_request_body(state: &AppState, body: Body) -> crate::translatio
             openai_error(
                 StatusCode::PAYLOAD_TOO_LARGE,
                 "invalid_request_error",
-                &format!("request body exceeds the proxy limit: {error}"),
+                &crate::translation_core::format!("request body exceeds the proxy limit: {error}"),
             )
         })
 }
@@ -515,9 +515,9 @@ fn list_ids(body: &[u8]) -> Vec<String> {
         .collect()
 }
 
-fn with_query(path: &crate::translation_core::Str, uri: &Uri) -> String {
+fn with_query(path: &crate::translation_core::Str, uri: &Uri) -> crate::translation_core::Text {
     uri.query()
-        .map_or_else(|| path.to_string(), |query| format!("{path}?{query}"))
+        .map_or_else(|| path.to_string(), |query| crate::translation_core::format!("{path}?{query}"))
 }
 
 fn native_response(forwarded: Forwarded) -> Response {
@@ -570,7 +570,7 @@ fn affinity_error(error: &impl std::fmt::Display) -> Response {
     openai_error(
         StatusCode::SERVICE_UNAVAILABLE,
         "api_error",
-        &format!("resource affinity is unavailable: {error}"),
+        &crate::translation_core::format!("resource affinity is unavailable: {error}"),
     )
 }
 

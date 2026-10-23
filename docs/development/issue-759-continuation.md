@@ -114,3 +114,13 @@ Preserve the ordered language/repository substitution sequences, serialized
 and reparsed CST boundaries, independent semantic validation and full inverses.
 Keep physical `js/src`, `ts/src` and `rust/src`, original whole test files and
 deadlines, one heavy workload, bounded evidence and careful task-owned cleanup.
+
+The 2026-10-23 [formatting source-adoption batch](formatting-source-adoption.md)
+applies actual reviewed CST substitutions to 125 candidate functions across 50
+Rust files. The complete 31-case formatting family passes in Node and Bun;
+independent execution of a complete real URI helper passes eight shared cases in
+JavaScript and strict TypeScript. Its complete current-module regression adds two
+whole-file cases in both engines and CI-only Rust oracle source. Candidate counts
+are not executable production coverage. Physical source-bank/export refresh,
+complete canonical/profile/reverse generation, parity and the full same-SHA gate
+remain open. No local Rust tool runs.

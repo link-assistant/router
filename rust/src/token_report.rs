@@ -56,7 +56,7 @@ pub fn row(record: &crate::translation_core::Json) -> crate::translation_core::T
     let number = |key: &str| record.get(key).and_then(Value::as_u64);
     let used_over_max = |used: &str, max: &str| {
         let used = number(used).unwrap_or(0);
-        number(max).map_or_else(|| format!("{used}/-"), |max| format!("{used}/{max}"))
+        number(max).map_or_else(|| crate::translation_core::format!("{used}/-"), |max| crate::translation_core::format!("{used}/{max}"))
     };
 
     let scope = record
@@ -70,7 +70,7 @@ pub fn row(record: &crate::translation_core::Json) -> crate::translation_core::T
         .and_then(Value::as_bool)
         .unwrap_or(false);
 
-    format!(
+    crate::translation_core::format!(
         "{:<36}  {:<10}  {:<10}  {:<8}  {:<13}  {:<15}  {:<9}  {:<8}  {scope:<6}  {}",
         text("id"),
         number("issued_at").unwrap_or(0),

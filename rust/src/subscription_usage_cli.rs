@@ -135,7 +135,7 @@ fn format_envelope(envelope: &UsageEnvelope, json: bool) -> crate::translation_c
                 output.push('\n');
                 output
             })
-            .map_err(|error| format!("could not encode subscription usage: {error}"));
+            .map_err(|error| crate::translation_core::format!("could not encode subscription usage: {error}"));
     }
     if envelope.subscriptions.is_empty() {
         return Ok("No authorized configured subscriptions.\n".into());
@@ -375,15 +375,15 @@ fn format_subscription(output: &mut String, usage: &SubscriptionUsage) {
     }
 }
 
-fn readable_duration(seconds: u64) -> String {
+fn readable_duration(seconds: u64) -> crate::translation_core::Text {
     if seconds > 0 && seconds.is_multiple_of(86_400) {
-        format!("{}d", seconds / 86_400)
+        crate::translation_core::format!("{}d", seconds / 86_400)
     } else if seconds > 0 && seconds.is_multiple_of(3_600) {
-        format!("{}h", seconds / 3_600)
+        crate::translation_core::format!("{}h", seconds / 3_600)
     } else if seconds > 0 && seconds.is_multiple_of(60) {
-        format!("{}m", seconds / 60)
+        crate::translation_core::format!("{}m", seconds / 60)
     } else {
-        format!("{seconds}s")
+        crate::translation_core::format!("{seconds}s")
     }
 }
 
