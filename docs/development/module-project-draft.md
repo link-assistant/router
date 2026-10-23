@@ -1,6 +1,6 @@
 # Pure module translation draft
 
-`translatePortableModuleProject` links an explicit acyclic ES module source
+`translatePortableModuleProject` links an explicit ES module source
 universe before using the existing JavaScript or typed TypeScript semantic
 frontend. Each module first crosses the complete serialized/reparsed CST
 boundary. The pinned native TypeScript compiler creates fresh source files,
@@ -18,7 +18,15 @@ Every complete original/edited module retains its CST and full inverse. The
 linked program then passes the ordinary semantic checker and meta round trip;
 repository rules retain module/source mappings alongside Rust and TypeScript.
 
-Cycles, dynamic imports, module identity/receivers, escaping module callables,
+Native classification now separates initialization components. A cycle with
+only hoisted named functions and type declarations can use the existing direct
+source binding substitutions. A cycle containing any runtime variable
+declaration still refuses: live binding and temporal dead zone semantics need
+their own lowering. The graph scheduler returns data; its public boolean inputs
+cannot replace native source classification or the complete semantic checker.
+Component order and original membership remain in module source history.
+
+Cycles with runtime initialization, dynamic imports, module identity/receivers, escaping module callables,
 callable reflection, unreachable
 supplied modules, missing or ambiguous dependencies, entry reexports, classes
 and other unsupported declarations remain explicit refusals. This is a pure
@@ -40,3 +48,11 @@ aliases, complete inverses, shared runtime vectors, changed dependencies and
 the refusal boundaries. None has been executed during bulk drafting. Mixed
 library profiles, cyclic live binding behavior, native classes/async modules,
 additional namespace obligations and full Router coverage remain open.
+
+`prepare-hoisted-module-cycles.mjs` retains the complete original linker and its
+original cycle refusal regression. Native-selected language substitutions add
+component scheduling; repository substitutions retain initialization history
+and keep the runtime-constant cycle refused. Both complete CST sequences and
+inverses are required. The new graph, JS/TS cycle, identity/refusal and source
+copy regression sources are drafted and unrun. No performance or production
+coverage result follows from this source extension.

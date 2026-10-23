@@ -1,7 +1,8 @@
 // Native-selected TypeScript annotations become independently checked contracts.
 // This is an additive frontend, not unrestricted TypeScript annotation erasure.
 import {ownershipCompiler} from './vendor/module-syntax.mjs';
-import {translateJavaScript} from './translator.mjs';
+import {createScalarTypeResolver} from './typed-scalar-aliases.mjs';
+import {translateJavaScript} from './typed-absence-translator.mjs';
 import {snakeFromCamel} from './vendor/ir.mjs';
 import {constructMap,idBySpelling} from './vendor/constructs.mjs';
 import {prepareReverseConcreteSource,parseReverseConcreteSource} from './concrete-source.mjs';
@@ -18,21 +19,12 @@ function sourcePlan(stage,path){
  const selected=(node,replacement,kind,start=node.getStart(file))=>{selections.push({span:[start,node.end],expected:source.slice(start,node.end),replacement,kind});};
  const allowType=node=>{ranges.push([node.getStart(file),node.end]);};
  for(const node of file.statements)if(ts.isTypeAliasDeclaration(node)){
-  if(node.typeParameters?.length||node.modifiers?.some(modifier=>modifier.kind!==ts.SyntaxKind.ExportKeyword)||aliases.has(node.name.text))fail('one nongeneric scalar type alias required');aliases.set(node.name.text,node);
+  if(node.modifiers?.some(modifier=>modifier.kind!==ts.SyntaxKind.ExportKeyword)||aliases.has(node.name.text))fail('one unique scalar type alias required');aliases.set(node.name.text,node);
  }
- function scalar(node,seen=new Set()){
-  if(!node)fail('explicit scalar source type required');const primitive=kinds.get(node.kind);if(primitive)return primitive;
-  if(ts.isLiteralTypeNode(node)&&node.literal.kind===ts.SyntaxKind.NullKeyword)return 'null';
-  if(ts.isParenthesizedTypeNode(node))return scalar(node.type,seen);
-  if(ts.isUnionTypeNode(node)){
-   const members=[...new Set(node.types.map(value=>scalar(value,new Set(seen))))],absent=members.filter(value=>value==='null'||value==='undefined'),present=members.filter(value=>['string','number','boolean'].includes(value));
-   if(members.length!==2||absent.length!==1||present.length!==1)fail('only a closed scalar plus null or undefined union is supported');return present[0]+'|'+absent[0];
-  }
-  if(ts.isTypeReferenceNode(node)&&ts.isIdentifier(node.typeName)&&!node.typeArguments?.length){const name=node.typeName.text;if(!aliases.has(name)||seen.has(name))fail('unresolved or recursive scalar alias');return scalar(aliases.get(name).type,new Set(seen).add(name));}
-  fail('type is outside the explicit scalar/absence domain');
- }
+ const scalarResolver=createScalarTypeResolver({ts,kinds,aliases,file}),scalar=node=>scalarResolver.resolve(node);
+ scalarResolver.validateAliases();
  for(const node of file.statements){
-  if(ts.isTypeAliasDeclaration(node)){scalar(node.type,new Set([node.name.text]));allowType(node.type);selected(node,'','compile-time-scalar-alias');continue;}
+  if(ts.isTypeAliasDeclaration(node)){ranges.push([node.getStart(file),node.end]);selected(node,'','compile-time-checked-scalar-alias');continue;}
   if(ts.isFunctionDeclaration(node)){
    if(!node.name||!node.body||node.asteriskToken||node.typeParameters?.length||node.modifiers?.some(modifier=>modifier.kind!==ts.SyntaxKind.ExportKeyword))fail('ordinary nongeneric scalar function required');
    if(ts.getJSDocTags(node).some(tag=>['param','return','returns','type','template','this'].includes(tag.tagName.text)))fail('competing JSDoc signature or generic contract');
@@ -69,7 +61,7 @@ function sourcePlan(stage,path){
  const run=applyConcreteSyntaxSubstitutions(concrete.document,{languageRules:[{id:'typescript:substitute-native-selected-scalar-contracts',edits:selections.map(({span,expected,replacement})=>({span,expected,replacement})).sort((a,b)=>a.span[0]-b.span[0]||a.span[1]-b.span[1])}],repositoryRules:[]});
  const afterMeta=serializeConcreteSyntaxMeta(run.value),after=transportConcreteSyntaxMeta(afterMeta).source;
  const equations=transportConcreteSourceEquations([{before:source,after,language:'TypeScript'}]);if(equations[0].inverse!==source)fail('complete annotation source inverse differs');
- return {source,after,originalConcreteSyntax:stage.concreteSyntax,afterMeta,selections,contracts,locals,equations,trace:run.trace};
+ return {source,after,originalConcreteSyntax:stage.concreteSyntax,afterMeta,selections,contracts,locals,aliasInstantiations:scalarResolver.history,equations,trace:run.trace};
 }
 function checkContracts(plan,translated){
  const type=value=>{const id=idBySpelling(constructMap().types,'javascript',value);if(!id)fail('scalar type has no existing semantic contract');return id;};
@@ -91,7 +83,7 @@ function translate(stage,options={}){
    {id:'typescript:bind-native-scalar-types-and-retain-CST-inverse',apply:()=>{plan=sourcePlan(stage,path);return plan.after;}},
    {id:'javascript:use-existing-checked-meta-and-rust-typescript-emission',apply:source=>{const result=translateJavaScript(source,options);checkContracts(plan,result);return result;}},
   ]},
-  {phase:'repository',rules:[{id:'router:retain-original-typescript-and-complete-annotation-history',apply:result=>({...result,javascript:plan.after,originalTypeScriptConcreteSyntax:plan.originalConcreteSyntax,typeAnnotationHistory:{selections:plan.selections,contracts:plan.contracts,locals:plan.locals,equations:plan.equations,trace:plan.trace},runtimeParity:false,wholeRouterSynchronization:false})}]},
+  {phase:'repository',rules:[{id:'router:retain-original-typescript-and-complete-annotation-history',apply:result=>({...result,javascript:plan.after,originalTypeScriptConcreteSyntax:plan.originalConcreteSyntax,typeAnnotationHistory:{selections:plan.selections,contracts:plan.contracts,locals:plan.locals,aliasInstantiations:plan.aliasInstantiations,equations:plan.equations,trace:plan.trace},semanticProfile:'portable-router-scalar-absence-v1',runtimeParity:false,wholeRouterSynchronization:false})}]},
  ]).run(stage);
  return {...run.value,typedSourceRuleTrace:run.trace};
 }

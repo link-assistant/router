@@ -30,7 +30,7 @@ test('namespace selection preserves source bindings and plain shorthand property
  ]});assert.ok(result.javascript.includes('return routerModuleValue'));assert.equal(result.javascript.includes('dependency.read'),false);assert.ok(result.moduleSourceHistory.modules[0].after.includes('{value: routerModuleValue'));assert.equal(result.moduleSourceHistory.order[0],'helper.mjs');
 });
 test('cyclic live bindings unresolved modules dynamic identity and callable reflection remain refused',limits,()=>{
- const cycle={entry:'a.mjs',language:'JavaScript',modules:[{path:'a.mjs',source:'import {b} from "./b.mjs"; export function a(){return b();}'},{path:'b.mjs',source:'import {a} from "./a.mjs"; export function b(){return a();}'}]};assert.throws(()=>translatePortableModuleProject(cycle),/cyclic module initialization/);
+ const cycle={entry:'a.mjs',language:'JavaScript',modules:[{path:'a.mjs',source:'import {b} from "./b.mjs"; export const a=b;'},{path:'b.mjs',source:'import {a} from "./a.mjs"; export const b=a;'}]};assert.throws(()=>translatePortableModuleProject(cycle),/cyclic module initialization/);
  const missing=project();missing.modules.pop();assert.throws(()=>translatePortableModuleProject(missing),/exact module dependency/);
  const dynamic=project();dynamic.modules[0].source='export function run(){return import.meta.url;}';assert.throws(()=>translatePortableModuleProject(dynamic),/dynamic module identity/);
  const reflected=project();reflected.modules[0].source='import {twice} from "./helper.mjs"; export function run(){return twice.name;}';assert.throws(()=>translatePortableModuleProject(reflected),/reflection/);

@@ -50,9 +50,19 @@ The [typed scalar frontend draft](typed-portable-draft.md) adds native-selected
 TypeScript annotations, scalar/absence unions and alias chains to the existing reverse semantic
 pipeline. It retains complete source inverses and compares the original written
 parameter, return, constant and local constraints with independently checked
-IR. The source and independent regressions are drafted but unrun. Generic,
-object, class, interface, async and other TypeScript obligations remain open;
+IR. The source and independent regressions are drafted but unrun. Scalar generic
+alias substitution, defaults and constraints also have a complete source draft
+and independent unrun regressions. Generic runtime functions, non-scalar generic
+types, object, class, interface, async and other TypeScript obligations remain open;
 there is no blanket type-erasure path or full-support claim.
+
+Source review also found that the legacy checker refuses nullable parameters.
+The [typed scalar absence draft](typed-scalar-absence-draft.md) now provides an
+additive full checker/guard/translator/emitter/interpreter copy for those actual
+domains. It preserves the old JavaScript refusal and adds complete source-bound
+copy histories. The semantic implementation, edge cases and forged-guard
+regressions are drafted but unrun. Annotation substitution alone is not counted
+as executable support.
 
 The filesystem reverse source also contains ordered guarded Result flows and
 closed lazy async flows. Every intermediate Result requires its original error
@@ -78,8 +88,11 @@ namespace imports through fresh native source symbols, preserves module order
 and complete CST inverses, then checks the entire linked body through the
 existing semantic pipeline. Its source-unit profile also tracks dependency-only
 edits and protects authoritative inputs from other unit outputs. Source and
-independent regressions are drafted and unrun. Cycles, native class/async module
-families and the broader forward namespace/producer closure remain open.
+independent regressions are drafted and unrun. The component scheduling draft
+also covers function/type-only cycles with fresh native classification and
+complete linked semantic checks. Cycles with runtime initialization, native
+class/async module families and the broader forward namespace/producer closure
+remain open.
 
 The [Clone enclosing draft](clone-enclosing-draft.md) adds a separate private
 namespace consumer over the complete existing source-backed Clone AST route.

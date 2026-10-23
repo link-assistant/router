@@ -1,6 +1,7 @@
 // Pure ESM module linking by fresh native symbol bindings, before semantic IR.
 // Original module CSTs remain separate from the checked flattened program.
 import {posix} from 'node:path';
+import {portableModuleOrder} from './module-order.mjs';
 import {types} from 'node:util';
 import {ownershipCompiler} from './vendor/module-syntax.mjs';
 import {prepareReverseConcreteSource} from './concrete-source.mjs';
@@ -38,9 +39,9 @@ function nativeProject(input){
   }
   function visit(node){if(ts.isIdentifier(node))allNames.add(node.text);if(ts.isMetaProperty(node)||node.kind===ts.SyntaxKind.ThisKeyword||node.kind===ts.SyntaxKind.SuperKeyword||ts.isCallExpression(node)&&node.expression.kind===ts.SyntaxKind.ImportKeyword)fail('dynamic module identity, receiver or import requires a separate contract');ts.forEachChild(node,visit);}visit(file);edges.set(row.path,targets);
  }
- const ordered=[],active=new Set(),done=new Set();function visit(name){if(active.has(name))fail('cyclic module initialization requires live-binding lowering');if(done.has(name))return;active.add(name);for(const target of edges.get(name))visit(target);active.delete(name);done.add(name);ordered.push(name);}visit(input.entry);if(done.size!==input.rows.size)fail('unreachable supplied modules are not silently excluded');
+ const initialization=portableModuleOrder({entry:input.entry,nodes:[...input.rows.keys()].map(name=>({path:name,targets:edges.get(name),hasRuntimeInitializers:files.get(PREFIX+name).statements.some(ts.isVariableStatement)}))}),ordered=initialization.order;
  const host={getSourceFile:name=>files.get(name),getDefaultLibFileName:()=>PREFIX+'lib.d.ts',writeFile:()=>fail('native project cannot emit files'),getCurrentDirectory:()=>PREFIX,getDirectories:()=>[],fileExists:name=>files.has(name),readFile:name=>files.get(name)?.text,getCanonicalFileName:name=>name,useCaseSensitiveFileNames:()=>true,getNewLine:()=>'\n',resolveModuleNames:(names,containing)=>names.map(specifier=>{const target=relativeModule(containing.slice(PREFIX.length),specifier,input.rows);return {resolvedFileName:PREFIX+target,extension:/\.(mts|ts)$/u.test(target)?target.endsWith('.mts')?ts.Extension.Mts:ts.Extension.Ts:target.endsWith('.mjs')?ts.Extension.Mjs:ts.Extension.Js,isExternalLibraryImport:false};})};
- const program=ts.createProgram({rootNames:[PREFIX+input.entry],options:compilerOptions,host}),checker=program.getTypeChecker();return {ts,files,ordered,checker,allNames};
+ const program=ts.createProgram({rootNames:[PREFIX+input.entry],options:compilerOptions,host}),checker=program.getTypeChecker();return {ts,files,ordered,checker,allNames,initialization};
 }
 function linkedSource(input){
  const native=nativeProject(input),{ts,files,ordered,checker,allNames}=native,symbols=new Map(),declarations=new Map(),modules=new Map();let serial=0;
@@ -74,12 +75,12 @@ function linkedSource(input){
   modules.set(name,{path:name,before:source,after,nativeSelections:edits,concreteSyntax:input.rows.get(name).concreteSyntax});
  }
  const equations=transportConcreteSourceEquations([...modules.values()].map(row=>({before:row.before,after:row.after,language:input.language})));[...modules.values()].forEach((row,index)=>{if(equations[index].inverse!==row.before)fail('complete module inverse differs');row.equation=equations[index];});
- const source=ordered.map((name,index)=>'\n// Source module '+index+'\n'+modules.get(name).after).join('\n');if(source.length>LIMIT)fail('complete linked source exceeds existing concrete source bound');return {source,modules:[...modules.values()],order:ordered};
+ const source=ordered.map((name,index)=>'\n// Source module '+index+'\n'+modules.get(name).after).join('\n');if(source.length>LIMIT)fail('complete linked source exceeds existing concrete source bound');return {source,modules:[...modules.values()],order:ordered,initialization:native.initialization};
 }
 export function translatePortableModuleProject(data){
  const input=sourceInputs(data);let linked;
  const run=createRulePipeline([
   {phase:'language',rules:[{id:'esm:bind-all-native-source-symbols-and-link-pure-module-initialization',apply:()=>{linked=linkedSource(input);return linked.source;}},{id:'meta:check-complete-linked-javascript-or-typescript-program',apply:source=>input.language==='TypeScript'?translateTypeScript(source,{sourcePath:input.entry}):translateJavaScript(source,{sourcePath:input.entry})}]},
-  {phase:'repository',rules:[{id:'router:retain-complete-module-CST-inverses-and-target-mappings',apply:result=>({...result,javascript:result.javascript??linked.source,moduleSourceHistory:{entry:input.entry,language:input.language,order:linked.order,modules:linked.modules,sourceAuthority:false,semanticAuthority:false},runtimeParity:false,wholeRouterSynchronization:false})}]},
+  {phase:'repository',rules:[{id:'router:retain-complete-module-CST-inverses-and-target-mappings',apply:result=>({...result,javascript:result.javascript??linked.source,moduleSourceHistory:{entry:input.entry,language:input.language,order:linked.order,modules:linked.modules,initialization:linked.initialization,sourceAuthority:false,semanticAuthority:false},runtimeParity:false,wholeRouterSynchronization:false})}]},
  ]).run(null);return {...run.value,moduleRuleTrace:run.trace};
 }
