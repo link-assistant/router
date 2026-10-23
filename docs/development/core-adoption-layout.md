@@ -51,10 +51,16 @@ review, freshly rejoining all 4,418 captured inputs. Its exact reviewed
 substitutions were applied to `token_report::row` in 18.919 seconds, with
 440,139,776 bytes peak sampled aggregate RSS, within the unchanged entire
 sixty-second/one-GiB application bounds. This qualifies full Router source
-application only. Source-bank and generated-artifact freshness, the function's
+application only. Generated-artifact freshness, the function's
 remaining local-closure refusal and full parity remain open. Additional Rust
 source cases cover scope strings, Unicode, wrong JSON kinds and boolean
 truthiness; they have not run locally and await the JavaScript-gated Rust CI.
+The complete current source bank was regenerated from commit 3d277697 and all
+three full byte plans and inverses were independently reviewed and read back;
+both historical source universes remain unchanged. Obsolete run evidence was
+moved into complete verified external archives, with the recovery locations in
+the retained cleanup receipt. The current successful run remains at its original
+external path.
 
 Both controllers count evidence with a fresh native directory walk at every
 original accounting point. The original sparse logical sizes, allocated blocks,
