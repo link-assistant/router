@@ -79,6 +79,15 @@ character scan through comments. Complete current/prior source equations and
 independent ABI, call order, trivia and refusal regressions are drafted and
 unrun. General callable/object/class/async obligations remain open.
 
+The [Rust normalization boundary draft](rust-scalar-boundaries-draft.md) adds
+independent test source calling four actual production helpers. It covers
+absence/foreign values, bit-exact f64 boundaries, strings, UTF8 byte limits and
+controls. A collected f64 full-root regression now uses its complete current
+original-source receipt while retaining the historical module and unchanged
+function pins. Complete source/CST histories are retained; all behavior and
+receiving checks remain unrun. Rust executes only in JS-gated CI. Changed Rust
+source bytes require later bank/freshness refresh after bulk drafting.
+
 The filesystem reverse source also contains ordered guarded Result flows and
 closed lazy async flows. Every intermediate Result requires its original error
 return before a successful payload can be consumed. These additional language
