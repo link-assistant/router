@@ -271,6 +271,12 @@ checked immutable cell or primitive fallback and every original budget. Test
 storage, retention and the restored-output census while the same live pressure
 remains; releasing pressure before retention misses the pipeline's peak.
 
+Release planner-owned project declaration and source-scope arrays after their
+last standalone translation use, before the output census. Verify their actual
+native bindings and consumer references; never clear caller-owned arrays or
+contexts still needed by a later compiler stage. Preserve every output and
+source check. A completed translation phase is not a completed generation.
+
 A complete source-trial set may contain files already in the desired form.
 Keep those unchanged members and their complete original bytes in the fresh
 source set; do not drop them to satisfy a changed-files predicate. The selected

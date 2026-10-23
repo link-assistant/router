@@ -173,3 +173,17 @@ regressions. Its original source-plan comparison still takes 76.839 seconds
 against 60 seconds, so the seven-case Bun group also remains red. All four
 original source-plan cases ran in each engine; no deadlines or test bodies were
 changed. The next complete generation must qualify the actual retained pipeline.
+
+The complete run at `398afa6b1` passed storage and retention and translated all
+863 standalone inputs. It then exhausted the unchanged heap during the final
+output census: 1,187.673 seconds and 2,313,732,096 bytes sampled aggregate peak
+RSS. All 4,355 captured inputs (241,954,784 bytes) stayed unchanged; no complete
+generation, applied output set or fresh coverage result was produced.
+
+The source producer now verifies the actual bindings of the planner-owned
+project declaration and source-scope arrays, their three uses each, and all
+eight consumer references in `translate.mjs`. The consumer forwards them only
+to its private stage and selects fresh arrays with `filter`. Clear both owned
+arrays after the final standalone translation and before the census, preserving
+the original ordinary APIs, output checks and limits. This releases compiler
+contexts that no later stage uses; full-corpus qualification remains required.

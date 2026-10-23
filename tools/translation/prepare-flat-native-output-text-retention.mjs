@@ -70,6 +70,23 @@ function releaseOwnedProjectStorage(ts,path,source){
  const selections=[{span:[root.end,root.end],expected:'',replacement:'\n    storage.text=undefined;'},{span:[body.getStart(file),body.end],expected:body.getText(file),replacement:'{'+body.getText(file)+' component.text=undefined;}'}];
  return {source:edits(source,selections),selections,onlyAfterSynchronousOwnedTransfer:true,allOriginalCapsAndAPIsUnchanged:true};
 }
+function releaseOwnedProjectContexts(ts,path,source,translator){
+ const file=parse(ts,path,source),entry=one(file.statements.filter(node=>ts.isFunctionDeclaration(node)&&node.name?.text==='planRegeneration'),'complete planner'),ends=entry.body.statements.filter(node=>ts.isExpressionStatement(node)&&ts.isCallExpression(node.expression)&&node.expression.expression.getText(file)==='progress'&&node.expression.arguments.length===1&&node.expression.arguments[0].getText(file)==="{stage:'standalone',state:'end',completed:completedSources,total:paths.length}"),end=one(ends,'complete standalone end');
+ const absolute=resolve(path),host={getSourceFile:name=>name===absolute?file:undefined,getDefaultLibFileName:()=>'',writeFile:()=>{},getCurrentDirectory:()=>resolve('/'),getDirectories:()=>[],fileExists:name=>name===absolute,readFile:name=>name===absolute?source:undefined,getCanonicalFileName:name=>name,useCaseSensitiveFileNames:()=>true,getNewLine:()=> '\n'},checker=ts.createProgram([absolute],{allowJs:true,noLib:true,noResolve:true},host).getTypeChecker(),bindings=[];
+ for(const name of ['projectDeclarations','projectSourceScopes']){
+  const declaration=one(entry.body.statements.filter(ts.isVariableStatement).flatMap(node=>[...node.declarationList.declarations]).filter(node=>ts.isIdentifier(node.name)&&node.name.text===name),'owned '+name);
+  if(!ts.isArrayLiteralExpression(declaration.initializer)||declaration.initializer.elements.length||!(declaration.parent.flags&ts.NodeFlags.Const))fail('owned empty const context array required');
+  const symbol=checker.getSymbolAtLocation(declaration.name),references=[];if(!symbol)fail('actual owned context symbol missing');
+  function visit(node){if(ts.isIdentifier(node)){const binding=ts.isShorthandPropertyAssignment(node.parent)&&node.parent.name===node?checker.getShorthandAssignmentValueSymbol(node.parent):checker.getSymbolAtLocation(node);if(binding===symbol){if(node.end>end.getStart(file))fail('owned context still used after standalone translation');references.push({span:[node.getStart(file),node.end],source:node.parent.getText(file)});}}ts.forEachChild(node,visit);}visit(entry);
+  if(references.length!==3||!references.some(row=>row.source.startsWith(name+'.push'))||!references.some(row=>row.source===name))fail('complete original declaration/push/translation context uses differ');bindings.push({name,references,lastUseBefore:end.getStart(file)});
+ }
+ // The actual consumer only forwards these arrays to its private stage, which
+ // selects fresh arrays with filter. It never retains or freezes either input.
+ const consumer=parse(ts,'translate.mjs',translator),uses=[];function consumerVisit(node){if(ts.isIdentifier(node)&&['projectDeclarations','projectSourceScopes'].includes(node.text)){
+  const parent=node.parent;if(ts.isBindingElement(parent)&&parent.name===node){}else if(ts.isShorthandPropertyAssignment(parent)&&parent.name===node&&ts.isObjectLiteralExpression(parent.parent)&&ts.isCallExpression(parent.parent.parent)&&parent.parent.parent.expression.getText(consumer)==='translateConcreteSyntaxStage'){}else if(ts.isPropertyAccessExpression(parent)&&parent.expression===node&&parent.name.text==='filter'&&ts.isCallExpression(parent.parent)&&parent.parent.expression===parent){}else fail('original consumer may retain or mutate owned context arrays');uses.push({name:node.text,span:[node.getStart(consumer),node.end],source:parent.getText(consumer)});
+ }ts.forEachChild(node,consumerVisit);}consumerVisit(consumer);if(uses.length!==8)fail('complete original consumer context reference census differs');
+ const selections=[{span:[end.end,end.end],expected:'',replacement:'\n  projectDeclarations.length=0;projectSourceScopes.length=0;'}];return {source:edits(source,selections),selections,bindings,consumerUses:uses,onlyAfterLastStandaloneUse:true,noInputArrayEscapes:true,allOriginalCapsAndAPIsUnchanged:true};
+}
 export async function prepareFlatNativeOutputTextRetention({root=ROOT}={}){
  root=resolve(root);const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('actual TypeScript5.9.3 required');
  const inputs=[],read=path=>{const source=readFileSync(resolve(root,path),'utf8');inputs.push({path,source,sha256:hash(source)});return source;};
@@ -82,9 +99,10 @@ export async function prepareFlatNativeOutputTextRetention({root=ROOT}={}){
   const before=row.after,path=renamed(row.path);if(path===row.path)fail('every actual native output requires a declared route');
   let language=row===codec?edits(before,[{span:detacher.targetSpan,expected:detacher.targetBody,replacement:detacher.body}]):before;
   const ownership=row.path===P+'native-retained-owned-field-bulk.mjs'?releaseOwnedProjectStorage(ts,path,language):null;if(ownership)language=ownership.source;
+  const contexts=ownership?releaseOwnedProjectContexts(ts,resolve(root,path),language,read(P+'translate.mjs')):null;if(contexts)language=contexts.source;
   const file=parse(ts,path,language),changes=[];function visit(node){if(ts.isStringLiteral(node)){let replacement=renamed(node.text);if(ts.isImportDeclaration(node.parent)&&node.parent.moduleSpecifier===node){if(node.text==='./project.mjs')replacement='./project-flat-semantic.mjs';if(node.text==='./project-meta-field-json.mjs')replacement='./project-meta-field-flat-json.mjs';if(node.text==='./project-meta-compressed-storage.mjs')replacement='./project-meta-consumed-storage.mjs';}if(replacement!==node.text)changes.push({span:[node.getStart(file),node.end],expected:node.getText(file),replacement:JSON.stringify(replacement)});}if(ts.isImportSpecifier(node)&&node.propertyName?.text==='planCompressedProjectMetaUtf8ObjectStorage'&&ts.isImportDeclaration(node.parent.parent.parent)&&node.parent.parent.parent.moduleSpecifier.text==='./project-meta-compressed-storage.mjs')changes.push({span:[node.propertyName.getStart(file),node.propertyName.end],expected:node.propertyName.getText(file),replacement:'planConsumedProjectMetaUtf8ObjectStorage'});ts.forEachChild(node,visit);}visit(file);
   const after=headed(edits(language,changes)),current=existsSync(resolve(root,path))?readFileSync(resolve(root,path),'utf8'):null;
-  files.push(equation(ts,resolve(root,path),before,language,after,current,{literalRoutes:changes,detacher:row===codec?detacher:null,ownedStorageTransfer:ownership}));
+  files.push(equation(ts,resolve(root,path),before,language,after,current,{literalRoutes:changes,detacher:row===codec?detacher:null,ownedStorageTransfer:ownership,ownedContextRelease:contexts}));
   files.at(-1).path=path;
  }
  const testPath=P+'test/native-output-text-retention.test.mjs',testBefore=read(testPath),testTarget=P+'test/flat-native-output-text-retention.test.mjs',testFile=parse(ts,testPath,testBefore),testEdits=[];
