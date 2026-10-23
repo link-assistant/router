@@ -13,9 +13,12 @@ whole token/trivia CST documents serialized and reparsed at both stages, exact
 UTF8 byte spans and complete inverses. Existing bounds and the four-file runtime
 closure remain. The CST extension grants no namespace or executable authority.
 
-All seven complete receiving cases pass under Node 20.19.4 and Bun 1.4.3 with
+All eight complete receiving cases pass under Node 20.19.4 and Bun 1.4.3 with
 their original deadlines. They independently compare Python and JavaScript
-layout selection, nested Cargo guards, linked-path refusals and complete CST
+layout selection, nested Cargo guards, linked-path refusals, bare CLI diagnostics and complete CST
 inverses. The actual proposal/review/application/recovery workflow, adoption
 output, fresh exports and full CI still need qualification; path checks do not
-establish production coverage or complete synchronization. No Rust ran locally.
+establish production coverage or complete synchronization. The operational
+helper loads after argument validation; an invalid or foreign CLI selection
+still reports its original error without the rest of the runtime installed.
+No Rust ran locally.

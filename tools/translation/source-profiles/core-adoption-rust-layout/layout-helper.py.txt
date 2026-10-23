@@ -37,4 +37,3 @@ def rust_package_source_path(root, path):
 def is_rust_cargo_path(path):
     return type(path) is str and (path.endswith('.rs')
                                   or PurePosixPath(path).name in ['Cargo.toml', 'Cargo.lock'])
-

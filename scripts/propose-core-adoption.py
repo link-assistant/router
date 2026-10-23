@@ -3,8 +3,11 @@
 from pathlib import Path
 import argparse,gzip,hashlib,json,os,re,shutil,signal,stat,subprocess,sys,tempfile,time
 sys.dont_write_bytecode=True
-sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'tools/translation'))
-import core_adoption_review as source_review
+def _operational_source_review():
+ directory=str(Path(__file__).resolve().parents[1]/'tools/translation')
+ if directory not in sys.path:sys.path.insert(0,directory)
+ import core_adoption_review as source_review
+ return source_review
 
 LIMIT=384*1024**2;RSS=3*1024**3;CAP=900;ENTRY_LIMIT=30000;ACTIVE_TEMP=None
 
@@ -116,7 +119,7 @@ def capture():
  if len(paths)!=132 or any(p.is_symlink()for p in compiler.rglob('*'))or json.loads(regular(compiler/'package.json'))['version']!='5.9.3':fail('complete installed132 TypeScript5.9.3')
  for path in paths:
   name='js/node_modules/typescript/'+path.relative_to(compiler).as_posix();row=retain(name,regular(path));snapshots.append({**row,'physicalPresent':True});rows.append({key:row[key]for key in ['path','bytes','sha256']})
- rust=[r for r in snapshots if source_review.is_rust_cargo_path(r['path'])]
+ rust=[r for r in snapshots if _operational_source_review().is_rust_cargo_path(r['path'])]
  if {r['path']for r in rust}!={p for p in git('ls-files','-z','--','*.rs','Cargo.toml','Cargo.lock','**/Cargo.toml','**/Cargo.lock').decode().split('\0')if p}:fail('all-current Rust/Cargo census')
  return dict(sourceHead=HEAD,inputs=rows),snapshots,rust
 
@@ -125,7 +128,7 @@ def capture():
 SOURCE_FREEZE=None
 
 def source_freeze(captured,snapshots,rust):
- paths=sorted(row['path']for row in rust if row['path'].startswith(source_review.repository_rust_layout(ROOT)['productionPrefix']))
+ paths=sorted(row['path']for row in rust if row['path'].startswith(_operational_source_review().repository_rust_layout(ROOT)['productionPrefix']))
  return dict(schema='captured-producer-source-freeze-v1',sourceHead=HEAD,root=str(ROOT),inputs=captured['inputs'],allTrackedRustCargoPaths=sorted(row['path']for row in rust),physicalSrcPaths=paths,census=dict(trackedCompilerScriptRustCargo=sum(not row['path'].startswith('js/node_modules/typescript/')for row in snapshots),allTrackedRustCargo=len(rust),physicalSrcRust=len(paths),installedTypeScript=132,totalCapturedInputs=len(snapshots)))
 
 def require_current_capture(captured,snapshots,rust):
@@ -135,7 +138,7 @@ def require_current_capture(captured,snapshots,rust):
  if sorted(row['path']for row in rust)!=SOURCE_FREEZE['allTrackedRustCargoPaths']:fail('original full all-tracked Rust/Cargo paths')
  if len([row for row in snapshots if row['path'].startswith('js/node_modules/typescript/')])!=expected['installedTypeScript']:fail('original complete TypeScript132 count')
  paths=[];entries=0
- for base,dirs,files in os.walk(ROOT/source_review.repository_rust_layout(ROOT)['productionPrefix'],followlinks=False):
+ for base,dirs,files in os.walk(ROOT/_operational_source_review().repository_rust_layout(ROOT)['productionPrefix'],followlinks=False):
   entries+=1+len(dirs)+len(files)
   if entries>ENTRY_LIMIT:fail('physical src census entry bound')
   if any((Path(base)/name).is_symlink()for name in dirs):fail('physical src symlink directory')
@@ -146,7 +149,7 @@ def require_current_capture(captured,snapshots,rust):
     paths.append(path.relative_to(ROOT).as_posix())
  paths.sort()
  if len(paths)!=expected['physicalSrcRust']or paths!=SOURCE_FREEZE['physicalSrcPaths']:fail('complete original physical src Rust paths')
- if paths!=sorted(row['path']for row in rust if row['path'].startswith(source_review.repository_rust_layout(ROOT)['productionPrefix'])):fail('physical src/current Git capture join')
+ if paths!=sorted(row['path']for row in rust if row['path'].startswith(_operational_source_review().repository_rust_layout(ROOT)['productionPrefix'])):fail('physical src/current Git capture join')
 
 def output_index():
  rows=[]
@@ -207,7 +210,7 @@ def main():
  required=['scripts/propose-core-adoption.py','scripts/review-core-adoption.py','tools/translation/core_adoption_review.py','tools/translation/core_adoption_json_readers_review.py']
  if not set(required).issubset(row['path']for row in before['inputs']):fail('complete committed controller/reviewer closure required')
  SOURCE_FREEZE=source_freeze(before,snapshots,rust_before);write_json(OUT/'captured-input-pins.json',SOURCE_FREEZE);require_current_capture(before,snapshots,rust_before);write_json(OUT/'inputs.json',before);write_json(OUT/'full-input-snapshots-before.json',dict(sourceHead=HEAD,files=snapshots));write_json(OUT/'all-rust-cargo-before.json',dict(sourceHead=HEAD,files=rust_before))
- source_count=len([p for p in(ROOT/source_review.repository_rust_layout(ROOT)['productionPrefix']).rglob('*.rs')if p.is_file()]);write_json(OUT/'scope.json',dict(adoption='Unmodified CLI complete physical src application census',adoptionInputs=source_count,allTrackedRustCargoGuards=len(rust_before),installedTypeScriptFiles=132,scopeNotCoverage=True))
+ source_count=len([p for p in(ROOT/_operational_source_review().repository_rust_layout(ROOT)['productionPrefix']).rglob('*.rs')if p.is_file()]);write_json(OUT/'scope.json',dict(adoption='Unmodified CLI complete physical src application census',adoptionInputs=source_count,allTrackedRustCargoGuards=len(rust_before),installedTypeScriptFiles=132,scopeNotCoverage=True))
  executable=shutil.which('node')
  if not executable:fail('Node absent')
  version=subprocess.run([executable,'--version'],capture_output=True,timeout=10,check=True);write_json(OUT/'engine-version.json',dict(path=executable,stdout=version.stdout.decode('utf8'),stderr=version.stderr.decode('utf8')))

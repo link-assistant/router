@@ -3,8 +3,11 @@
 from pathlib import Path
 import argparse,hashlib,json,os,re,shutil,signal,stat,subprocess,sys,tempfile,time
 sys.dont_write_bytecode=True
-sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'tools/translation'))
-import core_adoption_review as source_review
+def _operational_source_review():
+ directory=str(Path(__file__).resolve().parents[1]/'tools/translation')
+ if directory not in sys.path:sys.path.insert(0,directory)
+ import core_adoption_review as source_review
+ return source_review
 
 CAP=180;RSS=1024**3;LIMIT=384*1024**2;ENTRY_LIMIT=30000
 REVIEWER=None
@@ -74,7 +77,7 @@ def source_join():
  expected_git=tracked();expected_non_ts=[row['path']for row in INPUTS if not row['path'].startswith(TS_PREFIX)]
  if expected_git!=expected_non_ts:problem('complete tracked compiler/Rust/Cargo census changed')
  actual_rust={p for p in git('ls-files','-z','--','*.rs','Cargo.toml','Cargo.lock','**/Cargo.toml','**/Cargo.lock').decode().split('\0')if p}
- if actual_rust!={p for p in expected_non_ts if source_review.is_rust_cargo_path(p)}:problem('all tracked Rust/Cargo scope changed')
+ if actual_rust!={p for p in expected_non_ts if _operational_source_review().is_rust_cargo_path(p)}:problem('all tracked Rust/Cargo scope changed')
  child=subprocess.Popen(['git','-C',str(ROOT),'cat-file','--batch'],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
  try:
   for row in INPUTS:

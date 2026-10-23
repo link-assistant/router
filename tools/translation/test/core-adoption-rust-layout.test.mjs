@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {execFileSync} from 'node:child_process';
+import {execFileSync,spawnSync} from 'node:child_process';
 import {existsSync,mkdtempSync,mkdirSync,writeFileSync,readFileSync,rmSync,symlinkSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join,dirname} from 'node:path';
@@ -60,4 +60,14 @@ test('logical fixture CORE declaration is retained while its independent physica
  assert.ok(!row.after.includes("visit(root / 'src')"));
  const producer=plan.files.find(row=>row.path==='scripts/propose-core-adoption.py');
  assert.ok(!producer.after.includes("os.walk(ROOT/'src'"));assert.ok(producer.after.includes("'**/Cargo.toml','**/Cargo.lock'"));
+});
+test('bare controllers retain invalid and foreign CLI diagnostics before importing the operational helper',{timeout:60000},()=>{
+ fixture((directory,write)=>{
+  const root=join(directory,'source'),source=readFileSync(join(ROOT,'scripts/propose-core-adoption.py'),'utf8');
+  write('source/scripts/propose-core-adoption.py',source);write('source/foreign.py',source);
+  for(const [script,sequence,expected]of [['scripts/propose-core-adoption.py','unsupported',/invalid choice/],['foreign.py','json-readers',/execute the captured checked-in proposal controller/]]){
+   const output=join(directory,'proposal'),child=spawnSync(PYTHON,['-B',join(root,script),'--root',root,'--expected-head','0'.repeat(40),'--output',output,'--sequence',sequence],{cwd:ROOT,env,encoding:'utf8',timeout:20000,maxBuffer:2*1024*1024});
+   assert.equal(child.signal,null);assert.notEqual(child.status,0);assert.match(child.stderr,expected);assert.doesNotMatch(child.stderr,/ModuleNotFoundError/);assert.equal(existsSync(output),false);
+  }
+ });
 });

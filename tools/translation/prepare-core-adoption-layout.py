@@ -6,7 +6,9 @@ PIN='a486ed6479954693ca428f631706bd93e842c509e0d6f6d3ff654230fae9a149'
 SIZE=36211
 BASE=Path(__file__).resolve().parent
 SOURCE=BASE/'source-profiles/core-adoption-rust-layout'
-HELPER_PIN='e75d6b9c6e8700e5feb4fe1a456f332fe941f8751b9a758dcfa13cd129a54c27'
+HELPER_PIN='983fb61eb68c6321af16f2496934b327f39f16933906d8272ab075d68e5c8d0b'
+DIRECT_IMPORT="\nsys.dont_write_bytecode=True\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]/'tools/translation'))\nimport core_adoption_review as source_review"
+LAZY_IMPORT="\nsys.dont_write_bytecode=True\ndef _operational_source_review():\n directory=str(Path(__file__).resolve().parents[1]/'tools/translation')\n if directory not in sys.path:sys.path.insert(0,directory)\n import core_adoption_review as source_review\n return source_review"
 sha=lambda raw:hashlib.sha256(raw).hexdigest()
 def need(value,message):
  if not value:raise ValueError('Core adoption layout source: '+message)
@@ -53,9 +55,9 @@ def phase(before,after,name,edits):
 def root_name(path):
  return 'ROOT'if path.startswith('scripts/')else'root'
 def package(root,value):
- return 'source_review.rust_package_source_path('+root+','+repr(value)+')'
+ return ('_operational_source_review()'if root=='ROOT'else'source_review')+'.rust_package_source_path('+root+','+repr(value)+')'
 def layout(root,key):
- return 'source_review.repository_rust_layout('+root+')['+repr(key)+']'
+ return ('_operational_source_review()'if root=='ROOT'else'source_review')+'.repository_rust_layout('+root+')['+repr(key)+']'
 def parents(program):
  return {child:node for node in ast.walk(program)for child in ast.iter_child_nodes(node)}
 def enclosing_assignment(node,links):
@@ -78,7 +80,7 @@ def language(source,path):
    if isinstance(left,ast.Call)and isinstance(left.func,ast.Attribute)and left.func.attr=='endswith'and len(left.args)==1 and isinstance(left.args[0],ast.Constant)and left.args[0].value=='.rs'and isinstance(right,ast.Compare)and len(right.ops)==1 and isinstance(right.ops[0],ast.In)and isinstance(right.comparators[0],(ast.List,ast.Tuple))and [v.value for v in right.comparators[0].elts if isinstance(v,ast.Constant)]==['Cargo.toml','Cargo.lock']:
     argument=ast.get_source_segment(source,left.func.value)
     need(ast.get_source_segment(source,right.left)==argument,'same native Rust/Cargo binding')
-    edits.append(selected(source,node,'source_review.is_rust_cargo_path('+argument+')','preserve Rust input guards and extend exact Cargo basename coverage'))
+    edits.append(selected(source,node,('_operational_source_review()'if path.startswith('scripts/')else'source_review')+'.is_rust_cargo_path('+argument+')','preserve Rust input guards and extend exact Cargo basename coverage'))
  return apply(source,edits),edits
 def repository(source,path,helper):
  program=tree(source);links=parents(program);edits=[];root=root_name(path)
@@ -106,7 +108,7 @@ def repository(source,path,helper):
   selected_imports=[node for node in program.body if isinstance(node,ast.Import)and any(alias.name=='sys'for alias in node.names)]
   need(len(selected_imports)==1,'one native standard imports owner')
   at=interval(source,selected_imports[0])[1]
-  text="\nsys.dont_write_bytecode=True\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]/'tools/translation'))\nimport core_adoption_review as source_review"
+  text=LAZY_IMPORT
   edits.append({'kind':'native-import-anchor','span':[at,at],'expected':'','replacement':text,'reason':'reuse the existing captured four-file runtime closure'})
  if path.endswith('/core_adoption_review.py'):
   edits.append({'kind':'complete-owned-layout-helper','span':[len(source.encode()),len(source.encode())],'expected':'','replacement':'\n\n'+helper.rstrip()+'\n','reason':'shared operational path functions; no cache or semantic admission'})
@@ -118,14 +120,16 @@ def repository(source,path,helper):
 def prepare(root):
  packed=(SOURCE/'complete-originals.json.gz').read_bytes();need(len(packed)==SIZE and sha(packed)==PIN,'complete original archive')
  original=json.loads(gzip.decompress(packed));need(original['schema']=='core-adoption-rust-layout-originals-v1'and len(original['files'])==4,'complete original membership')
- helper=(SOURCE/'layout-helper.py.txt').read_text();need(len(helper.encode())==1821 and sha(helper.encode())==HELPER_PIN,'complete owned helper source');tree(helper)
+ helper=(SOURCE/'layout-helper.py.txt').read_text();need(len(helper.encode())==1820 and sha(helper.encode())==HELPER_PIN,'complete owned helper source');tree(helper)
  results=[]
  for row in original['files']:
   path=row['path'];before=row['source'];need(len(before.encode())==row['bytes']and sha(before.encode())==row['sha256'],'complete original source association')
   middle,general=language(before,path);after,specific=repository(middle,path,helper);tree(after)
-  current=(root/path).read_text();need(current in [before,after],'unknown complete physical source '+path)
+  previous_after=after.replace(LAZY_IMPORT,DIRECT_IMPORT,1).replace('_operational_source_review().','source_review.')if path.startswith('scripts/')else after
+  current=(root/path).read_text();need(current in [before,after,previous_after],'unknown complete physical source '+path)
   stages=[phase(before,middle,'language',general),phase(middle,after,'repository',specific)]
-  results.append({'path':path,'before':before,'language':middle,'after':after,'current':current,'inverse':before,'stages':stages,'languageRules':['all-tracked-rust-and-nested-cargo-inputs'],'repositoryRules':['physical-rust-package-roots-and-existing-runtime-closure'],'nativePythonAstChecked':True,'semanticAuthority':False})
+  receiving=phase(current,after,'repository',[])if current not in [before,after]else None
+  results.append({'path':path,'before':before,'language':middle,'after':after,'current':current,'previousAfter':previous_after,'receivingEvolution':receiving,'inverse':before,'stages':stages,'languageRules':['all-tracked-rust-and-nested-cargo-inputs'],'repositoryRules':['physical-rust-package-roots-and-existing-runtime-closure'],'nativePythonAstChecked':True,'semanticAuthority':False})
  for row in results:need((root/row['path']).read_text()==row['current'],'source changed during complete proposal')
  need((root/original['reference']['path']).read_text()==original['reference']['source'],'complete original JavaScript layout reference')
  return {'schema':'core-adoption-rust-layout-source-v1','sourceHead':original['sourceHead'],'files':results,'helperSource':helper,'reference':original['reference'],'newRuntimeFiles':False,'acrossInvocationCache':False,'semanticAuthority':False,'tested':False}
