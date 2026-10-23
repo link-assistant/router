@@ -16,9 +16,11 @@ closure remain. The CST extension grants no namespace or executable authority.
 All nine complete receiving cases pass under Node 20.19.4 and Bun 1.4.3 with
 their original deadlines. They independently compare Python and JavaScript
 layout selection, nested Cargo guards, linked-path refusals, bare CLI diagnostics and complete CST
-inverses. The actual proposal/review/application/recovery workflow, adoption
-output, fresh exports and full CI still need qualification; path checks do not
-establish production coverage or complete synchronization. The operational
+inverses. The complete eight-case proposal/review/application/recovery receiving
+workflow also passes under both engines with its original twenty-second child
+and sixty-second case limits. Actual full Router adoption, fresh exports and
+full CI still need qualification; these fixtures do not establish production
+coverage or complete synchronization. The operational
 helper loads after argument validation; an invalid or foreign CLI selection
 still reports its original error without the rest of the runtime installed.
 No Rust ran locally.
@@ -29,5 +31,5 @@ directory and link counts, special-file refusals and entry limits remain.
 Independent comparisons include the complete installed TypeScript tree.
 No size or verdict is cached between scans. Profiling the first ten seconds of
 a complete controller diagnostic identified repeated accounting as a hotspot;
-this observation does not establish an end-to-end speed gain or qualify the
-original twenty-second workflow child deadline.
+this observation does not establish an end-to-end speed gain. The complete
+receiving workflow separately qualifies its original child and case deadlines.
