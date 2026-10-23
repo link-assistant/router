@@ -119,6 +119,16 @@ The user's 2026-10-22 instruction authorizes prompt merge of PR #771 once green 
 
 ## Translation rules and shared regressions
 
+For [invocation-local source checks](docs/development/invocation-local-source-checks.md),
+retain complete canonical wire comparisons, already serialized/reparsed CST
+transports, both actual substitution sequences and complete inverses. Native
+module batches must preserve original filenames, module isolation and the
+original compiler options/diagnostics; scripts use the unchanged checker.
+Run final source fingerprints after native checks. Regenerate dependent sources
+through their actual producer, preserve every original whole test and deadline,
+and retain failed/late attempts. These optimizations grant no semantic authority
+or application coverage and create no caches across invocations.
+
 Profile matrices use the [sequential process contract](docs/development/isolated-profile-matrices.md): run every complete profile in a fresh process, preserve all original compiler checks and validate every staged byte plan and current input before publishing profile outputs. Generate the copied producers and CLI branch through `node tools/translation/prepare-isolated-matrix.mjs --emit /tmp/FRESH_PROPOSAL`, independently review complete CST/native-source inverses, and require `--check` freshness. Preserve whole receiving files, original deadlines and matrix, heap, aggregate RSS and disk limits. Remove only the task's identified inactive temporary generated storage after interruption. This changes compiler-context lifetime, grants no new source or semantic authority, and does not certify full translation or parity.
 
 Implement translation as ordered substitution rules over parsed source, checked semantic meta or target syntax. Keep at least two separately declared rule sequences: reusable programming-language rules first, then repository rules for Router's output layout, imports, formatting and quality conventions. Keep language semantics independent of Router paths and declaration names. Repository rules must preserve the meaning established by the checked language rules. Both Rust → meta → JavaScript/TypeScript and JavaScript → meta → Rust/TypeScript must retain the serialized, reparsed meta boundary. See [the rule-layer contract](docs/development/translation-rules.md).
