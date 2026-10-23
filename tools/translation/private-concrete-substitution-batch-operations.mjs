@@ -53,20 +53,20 @@ export function capturePrivateConcreteSubstitutionRequests(input,ops){
  return {rows,snapshots,units,bytes,textUnits,rules,edits};
 }
 export function executePrivateConcreteSubstitutionRow(row,operations,fail){
- const first=operations.source(row.source,row.language),stages=[];let document=first.document,canonical=0;
+ const first=operations.source(row.source,row.language),stages=[];let document=first.document,transported=first,canonical=0;
  if(first.source!==row.source||document.language!==row.language)fail('substitution complete initial source association differs');
  for(const stage of row.stages){
-  const from=document.source,beforeMeta=operations.serialize(document),fresh=operations.transport(beforeMeta,'Rust',true);if(fresh.source!==from)fail('substitution complete current phase source differs');
-  const run=operations.substitute(fresh.document,stage.sequence),afterMeta=operations.serialize(run.value),last=operations.transport(afterMeta,'Rust',true);if(last.source!==stage.expected||last.document.language!==row.language)fail('substitution complete phase source equation differs');
-  const inverse=operations.substitute(last.document,stage.inverseSequence),inverseMeta=operations.serialize(inverse.value),restored=operations.transport(inverseMeta,'Rust',true);if(restored.source!==from||restored.meta!==beforeMeta)fail('substitution complete phase inverse differs');
+  const from=document.source,beforeMeta=transported.meta,fresh=transported;if(fresh.source!==from)fail('substitution complete current phase source differs');
+  const run=operations.substitute(fresh.document,stage.sequence),afterMeta=operations.serialize(run.value),last=operations.source(run.value.source,row.language);if(last.source!==stage.expected||last.document.language!==row.language||last.meta!==afterMeta)fail('substitution complete phase source equation differs');
+  const inverse=operations.substitute(last.document,stage.inverseSequence),inverseMeta=operations.serialize(inverse.value),restored=fresh;if(inverse.value.source!==from||restored.source!==from||restored.meta!==inverseMeta||inverseMeta!==beforeMeta)fail('substitution complete phase inverse differs');
   canonical+=beforeMeta.length+afterMeta.length+inverseMeta.length;if(canonical>SERIAL)fail('substitution row canonical budget');
-  stages.push({phase:stage.phase,before:from,after:last.source,beforeMeta,afterMeta,trace:run.trace,completeInverse:true});document=last.document;
+  stages.push({phase:stage.phase,before:from,after:last.source,beforeMeta,afterMeta,trace:run.trace,completeInverse:true});document=last.document;transported=last;
  }
  // Each phase's complete inverse above restores its exact canonical CST.
  // Their checked source joins establish the whole inverse in reverse phase
  // order, retaining the original producer's complete two inverse operations.
  if(stages.length!==2||stages[0].before!==row.source||stages[0].after!==stages[1].before||stages[1].after!==document.source)fail('substitution complete phase/inverse composition differs');
- const fragment={beforeMeta:first.meta,afterMeta:operations.serialize(document),inverse:row.source,stages,trace:stages.flatMap(stage=>stage.trace)},wire=operations.stringify(fragment),wireBytes=privateConcretePrimitiveUtf8Bytes(wire);
+ const fragment={beforeMeta:first.meta,afterMeta:transported.meta,inverse:row.source,stages,trace:stages.flatMap(stage=>stage.trace)},wire=operations.stringify(fragment),wireBytes=privateConcretePrimitiveUtf8Bytes(wire);
  if(wire.length>SERIAL||wireBytes>SERIAL)fail('substitution row primitive result budget');
  return {wire,nodes:document.nodes.length,canonicalCodeUnits:wire.length,canonicalUtf8Bytes:wireBytes,sourceCodeUnits:document.source.length,utf8Bytes:document.sourceEncoding.utf8Bytes};
 }

@@ -1,3 +1,4 @@
+import {nativeStaticImportCount} from './native-source-fixture-inputs.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,rmSync,realpathSync,symlinkSync,unlinkSync,renameSync,lstatSync,utimesSync} from 'node:fs';
@@ -158,7 +159,7 @@ test('native transitive read write species iterator and diagnostic hooks refuse 
     const f=fixture(t,'03-early-core-'+mode),source=readFileSync(join(base,'concrete-syntax-meta.mjs'),'utf8'),relocations=[];let copied=source;
     for(const path of ['./private-parser-execution.mjs','./original-json-intrinsics.mjs']){
       const before="from '"+path+"'",after="from '"+new URL(path,pathToFileURL(join(base,'concrete-syntax-meta.mjs'))).href+"'";
-      const count=path==='./private-parser-execution.mjs'?4:1;
+      const count=nativeStaticImportCount(copied,path);
       assert.equal(copied.split(before).length,count+1);
       for(let at=0;at<count;at++){copied=copied.replace(before,after);relocations.push({before,after});}
     }

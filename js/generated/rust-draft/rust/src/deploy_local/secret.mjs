@@ -1,4 +1,4 @@
-// Generated draft from rust/src/deploy_local/secret.rs; sha256=11a1b3424204ca1f25a83f53cd7c990e1edff7bf7996f52ac36c9a198e5e013d
+// Generated draft from rust/src/deploy_local/secret.rs; sha256=cc51c10c381dff81088ed2799b13411fe1a35ccd92597dcd93c304679b88a54a
 // Carried constructs are data, never runtime parity evidence.
 function ml_fixed(value, min, max, message) {
   if (value < min || value > max) throw new RangeError(message);
@@ -69,4 +69,4 @@ function rp_6465706c6f795f6c6f63616c2e7365637265742e70726f62655f6163636570746564
 }
 
 export const translated = { ["LABEL_SUFFIX"]: rp_6465706c6f795f6c6f63616c2e7365637265742e4c4142454c5f535546464958(), ["PROBE_ENV"]: rp_6465706c6f795f6c6f63616c2e7365637265742e50524f42455f454e56(), ["PROBE_SCRIPT"]: rp_6465706c6f795f6c6f63616c2e7365637265742e50524f42455f534352495054(), ["SecretMatch"]: Object.freeze({ ["Matches"]: ml_make_SecretMatch_Matches, ["Changed"]: ml_make_SecretMatch_Changed, ["Unknown"]: ml_make_SecretMatch_Unknown, ["NotSupplied"]: ml_make_SecretMatch_NotSupplied }), ["probe_accepted"]: rp_6465706c6f795f6c6f63616c2e7365637265742e70726f62655f6163636570746564 };
-export const provenance = {"sourcePath":"rust/src/deploy_local/secret.rs","sourceSha256":"11a1b3424204ca1f25a83f53cd7c990e1edff7bf7996f52ac36c9a198e5e013d","executable":5,"executableFunctions":1,"executableConstants":3,"executableTypes":1,"executableConstructors":4,"carried":10,"preserved":16,"runtimeParity":false};
+export const provenance = {"sourcePath":"rust/src/deploy_local/secret.rs","sourceSha256":"cc51c10c381dff81088ed2799b13411fe1a35ccd92597dcd93c304679b88a54a","executable":5,"executableFunctions":1,"executableConstants":3,"executableTypes":1,"executableConstructors":4,"carried":10,"preserved":16,"runtimeParity":false};

@@ -37,7 +37,7 @@ type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$"
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
-// Generated draft from rust/src/providers_cli.rs; sha256=ac242910e4d3d0babb35bc64a2f1b1efc2d4fa51396782831db17246538be02f
+// Generated draft from rust/src/providers_cli.rs; sha256=e085369a50e8bbcacb52c12d755e3000ee8d6f33536c9f14c61c24b634a977f4
 // Carried constructs are data, never runtime parity evidence.
 import { validateJsonNumber as ml_validate_json_number, validateJsonMap as ml_validate_json_map } from "../../runtime/json-values.mjs";
 
@@ -90,4 +90,4 @@ const serde_json = {
 };
 
 export const translated: { "Call": (method: string, path: string, body: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_73657264655f6a736f6e2e56616c7565 }>) => Readonly<{ readonly "$": "Call"; readonly "method": string; readonly "path": string; readonly "body": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_73657264655f6a736f6e2e56616c7565 }> }> } = { ["Call"]: ml_make_Call_Call };
-export const provenance = {"sourcePath":"rust/src/providers_cli.rs","sourceSha256":"ac242910e4d3d0babb35bc64a2f1b1efc2d4fa51396782831db17246538be02f","executable":1,"executableFunctions":0,"executableConstants":0,"executableTypes":1,"executableConstructors":1,"carried":23,"preserved":25,"runtimeParity":false};
+export const provenance = {"sourcePath":"rust/src/providers_cli.rs","sourceSha256":"e085369a50e8bbcacb52c12d755e3000ee8d6f33536c9f14c61c24b634a977f4","executable":1,"executableFunctions":0,"executableConstants":0,"executableTypes":1,"executableConstructors":1,"carried":23,"preserved":25,"runtimeParity":false};

@@ -18,7 +18,7 @@ const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const git=(cwd,args)=>execFileSync('git',args,{cwd,timeout:10000,stdio:'pipe'});
 function fixture(){
   const directory=mkdtempSync(join(tmpdir(),'router-translator-export-')),source=join(directory,'source');mkdirSync(source);
-  const paths=['scripts/translate-router.mjs','tools/translation/bulk.mjs','tools/translation/vendor/meta-language/package.json','tools/translation/source-profiles/original/full.rs.gz','tools/translation/source-profiles/original/LICENSE.txt'];
+  const paths=['scripts/translate-router.mjs',"scripts/translate-router-flat-native-owned-field-meta.mjs",'tools/translation/bulk.mjs','tools/translation/vendor/meta-language/package.json','tools/translation/source-profiles/original/full.rs.gz','tools/translation/source-profiles/original/LICENSE.txt'];
   for(const path of paths){mkdirSync(join(source,path,'..'),{recursive:true});writeFileSync(join(source,path),path+'\n');}
   chmodSync(join(source,paths[0]),0o755);
   git(source,['init','--quiet']);git(source,['add','--force','.']);

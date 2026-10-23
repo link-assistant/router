@@ -54,7 +54,7 @@ pub async fn retrieve(
                 dialect,
                 StatusCode::BAD_GATEWAY,
                 "api_error",
-                &format!("model catalog response is too large: {error}"),
+                &crate::translation_core::format!("model catalog response is too large: {error}"),
             );
         }
     };
@@ -65,7 +65,7 @@ pub async fn retrieve(
                 dialect,
                 StatusCode::BAD_GATEWAY,
                 "api_error",
-                &format!("model catalog response is invalid: {error}"),
+                &crate::translation_core::format!("model catalog response is invalid: {error}"),
             );
         }
     };
@@ -163,7 +163,7 @@ async fn bounded_native_response(
     let mut stream = upstream.bytes_stream();
     let mut body = Vec::new();
     while let Some(chunk) = stream.next().await {
-        let chunk = chunk.map_err(|error| format!("upstream model response failed: {error}"))?;
+        let chunk = chunk.map_err(|error| crate::translation_core::format!("upstream model response failed: {error}"))?;
         if body.len().saturating_add(chunk.len()) > state.max_proxy_request_bytes {
             return Err("upstream model response exceeds the proxy limit".into());
         }
@@ -239,7 +239,7 @@ fn model_not_found(dialect: ApiDialect, model_id: &crate::translation_core::Str)
         } else {
             "invalid_request_error"
         },
-        &format!("model '{model_id}' was not found"),
+        &crate::translation_core::format!("model '{model_id}' was not found"),
     )
 }
 

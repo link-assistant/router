@@ -1,0 +1,26 @@
+{
+  "schema": "router-complete-local-receiving-archive-v1",
+  "archive": "20261023-complete-local-receiving.tar.gz",
+  "bytes": 1336229,
+  "sha256": "8f5a614b04b1fd5d937ba4fb7116e41ee34a3a818c7b6e370c640e9f480a89c4",
+  "members": 94,
+  "completeMemberReadback": true,
+  "NodeCases": {
+    "passed": 39,
+    "total": 39
+  },
+  "BunCases": {
+    "passed": 37,
+    "total": 39
+  },
+  "BunOriginalUnchangedDeadlineFailures": 2,
+  "sourceReview": "All seven complete changed modules, both native engines, both CST phases and full inverses; exact installed producer freshness.",
+  "finalFormatting": "Only one extra whitespace line before the generated composite close was corrected through the producer; complete prior afterimage retained and full output equality independently checked. Complete four-case copier file rerun in both engines; both pass.",
+  "node": "20.19.4",
+  "bun": "1.4.3",
+  "typescript": "5.9.3",
+  "wholeGate": false,
+  "coverageGainClaimed": false,
+  "controlledSpeedGainClaimed": false,
+  "rustExecuted": false
+}

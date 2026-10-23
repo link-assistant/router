@@ -263,14 +263,14 @@ pub fn repository_in_git_path(path: &crate::translation_core::Str) -> crate::tra
     let mut parts = rest.split('/');
     let owner = parts.next().filter(|part| !part.is_empty())?;
     let repo = parts.next().filter(|part| !part.is_empty())?;
-    Some(format!("{owner}/{}", repo.trim_end_matches(".git")))
+    Some(crate::translation_core::format!("{owner}/{}", repo.trim_end_matches(".git")))
 }
 
 /// The upstream git URL for a proxied path.
 #[must_use]
 pub fn upstream_git_url(base: &crate::translation_core::Str, path: &crate::translation_core::Str, query: crate::translation_core::Maybe<&crate::translation_core::Str>) -> crate::translation_core::Maybe<String> {
     let rest = path.strip_prefix("/git/")?;
-    let mut url = format!("{}/{rest}", base.trim_end_matches('/'));
+    let mut url = crate::translation_core::format!("{}/{rest}", base.trim_end_matches('/'));
     if let Some(query) = query {
         url.push('?');
         url.push_str(query);
@@ -424,7 +424,7 @@ async fn refuse_rewrites_upstream(
     for query in queries {
         // `{base}...{head}` is "how does head stand relative to base", so the
         // ref's current tip is the base and the proposed tip is the head.
-        let url = format!(
+        let url = crate::translation_core::format!(
             "{}/repos/{repository}/compare/{}...{}",
             state.github.base_url.trim_end_matches('/'),
             query.old,
@@ -446,13 +446,13 @@ async fn refuse_rewrites_upstream(
             Ok(response) => {
                 return Some(RefRefusal::Unverifiable(
                     query.name,
-                    format!("upstream answered {}", response.status()),
+                    crate::translation_core::format!("upstream answered {}", response.status()),
                 ));
             }
             Err(error) => {
                 return Some(RefRefusal::Unverifiable(
                     query.name,
-                    format!("upstream request failed: {error}"),
+                    crate::translation_core::format!("upstream request failed: {error}"),
                 ));
             }
         };
@@ -480,7 +480,7 @@ fn blocked(message: &crate::translation_core::Str) -> Response {
 }
 
 fn git_error(status: StatusCode, message: &crate::translation_core::Str) -> Response {
-    (status, format!("{message}\n")).into_response()
+    (status, crate::translation_core::format!("{message}\n")).into_response()
 }
 
 #[cfg(test)]

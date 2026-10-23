@@ -1,3 +1,4 @@
+import {qualifyNativeParsedCstSourceSuccessor} from './prepare-native-parsed-cst.mjs';
 // Derive a separate source-only equation transaction from the complete existing
 // batch. Existing ingress, full canonical validation and APIs remain unchanged.
 import {readFileSync,writeFileSync} from 'node:fs';
@@ -6,7 +7,7 @@ import {gunzipSync} from 'node:zlib';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
-import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
+import {assertConcreteSyntaxHost as checked,transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url)),SELF='tools/translation/prepare-concrete-equation-transaction.mjs';
 const ARCHIVE='tools/translation/source-profiles/concrete-equation-transaction/complete-originals.json.gz';
 const hash=value=>createHash('sha256').update(value).digest('hex'),fail=message=>{throw new TypeError('Concrete equation transaction: '+message);};
@@ -42,7 +43,7 @@ export function prepareConcreteEquationTransaction({root=ROOT}={}){
   }else{
    const selected=[];function visit(row){if(ts.isIdentifier(row)&&row.text==='transportPrivateConcreteSources')selected.push(row);ts.forEachChild(row,visit);}visit(actual.body);const target=one(selected,'actual private transaction call');edits.push({span:[target.getStart(kernelFile),target.end],expected:target.text,replacement:'transportPrivateConcreteEquations'});
   }
-  const copied=changes(kernel,edits),marker='\n// Begin generated separate complete source-equation transaction.\n',language=before+marker+(privateModule?factorySource+'\n':'')+kernel+'\n',after=before+marker+(privateModule?factorySource+'\n':"import {transportPrivateConcreteEquations} from './private-parser-execution.mjs';\n")+copied+'\n',current=readFileSync(resolve(root,path),'utf8');if(current!==before&&current!==after)fail('physical source differs from exact original/successor: '+path);native(ts,path,after);if(after.split('\n').length>=1000)fail('repository file-size convention exceeded');const stages=[stage(before,language,'language'),stage(language,after,'repository')];files.push({path,before,language,after,current,inverse:before,nativeSelections:edits,nativeKernel:{span:[node.getStart(file),node.end],source:kernel,inverse:kernel,copied,selectionCoordinates:'kernel-local'},stages,trace:stages.flatMap(row=>row.trace),beforeSha256:hash(before),afterSha256:hash(after),existingApisUnchanged:true});
+  const copied=changes(kernel,edits),marker='\n// Begin generated separate complete source-equation transaction.\n',language=before+marker+(privateModule?factorySource+'\n':'')+kernel+'\n',after=qualifyNativeParsedCstSourceSuccessor({root,path,before,after:before+marker+(privateModule?factorySource+'\n':"import {transportPrivateConcreteEquations} from './private-parser-execution.mjs';\n")+copied+'\n'}),current=readFileSync(resolve(root,path),'utf8');if(current!==before&&current!==after)fail('physical source differs from exact original/successor: '+path);native(ts,path,after);if(after.split('\n').length>=1000)fail('repository file-size convention exceeded');const stages=[stage(before,language,'language'),stage(language,after,'repository')];files.push({path,before,language,after,current,inverse:before,nativeSelections:edits,nativeKernel:{span:[node.getStart(file),node.end],source:kernel,inverse:kernel,copied,selectionCoordinates:'kernel-local'},stages,trace:stages.flatMap(row=>row.trace),beforeSha256:hash(before),afterSha256:hash(after),existingApisUnchanged:true});
  }
  if(readFileSync(resolve(root,SELF),'utf8')!==self||!readFileSync(resolve(root,ARCHIVE)).equals(packed))fail('complete producer inputs changed');for(const row of files)if(readFileSync(resolve(root,row.path),'utf8')!==row.current)fail('complete physical source changed');return {schema:'complete-source-equation-transaction-proposal-v1',files,originals,nativeFactory:{source:factorySource,span:[factory.getStart(selfFile),factory.end],inverse:factorySource},newCaches:false,existingFullCanonicalPathsUnchanged:true,semanticAuthority:false,performanceQualified:false};
 }

@@ -1,0 +1,61 @@
+{
+  "schema": "pinned-zopfli-source-package-v1",
+  "name": "@gfx/zopfli",
+  "version": "1.0.15",
+  "gitHead": "29b826a49f4161363dc44a91031feea87808716b",
+  "repository": "git+https://github.com/gfx/universal-zopfli-js.git",
+  "integrity": "sha512-7mBgpi7UD82fsff5ThQKet0uBTl4BYerQuc+/qA1ELTwWEiIedRTcD3JgiUu9wwZ2kytW8JOb165rSdAt8PfcQ==",
+  "tarballBytes": 48230,
+  "tarballSha256": "57f5edd9ae3ad12a3c3b16ff3f7bd029b9348554f015d53b383655f048d3f3f9",
+  "wasmBytes": 64083,
+  "wasmSha256": "1b9fd611f0485bef26d0ed4e7d141a8697d5843f5860cbed1c625f5c0fd853bd",
+  "files": [
+    {
+      "path": "dist/index.js",
+      "bytes": 3874,
+      "sha256": "82bcf1f3bebda80b8e541ec4d3b9827e3b274d04a23beda01234596a30bc0ff0"
+    },
+    {
+      "path": "dist/libzopfli.js",
+      "bytes": 19836,
+      "sha256": "d04ac0e089b794f8c87d11b613a1f151f8638e5dec6a5edb981d3da4bcba40f5"
+    },
+    {
+      "path": "dist/libzopfli-wasm.json",
+      "bytes": 85447,
+      "sha256": "ee6aa579539f20646b83e711377fb8e785be60041579da2a939a06508cc161ea"
+    },
+    {
+      "path": "package.json",
+      "bytes": 851,
+      "sha256": "f38a54fde344180c9cb3d0756e0121d85d37d78701681f459e4bdac79991b736"
+    },
+    {
+      "path": "dist/index.js.map",
+      "bytes": 2926,
+      "sha256": "11b7a8bf87c5f1bcd026c7547db61844834e2062e12568143b53865ae4690a4a"
+    },
+    {
+      "path": "CHANGES.md",
+      "bytes": 1896,
+      "sha256": "5c60dca134280830853aafb1ff6d8c4cb20c5e6db5ddff1237bac19d6275eeb3"
+    },
+    {
+      "path": "LICENSE.md",
+      "bytes": 10495,
+      "sha256": "ec640150e03774d1b5264fb268f3829dc36745551109131ebf6dd0a59d5ec3eb"
+    },
+    {
+      "path": "README.md",
+      "bytes": 3988,
+      "sha256": "474d2986a5bf3f82392172839a9a20fdcc283b041297cc4cdb13817f30a9d584"
+    },
+    {
+      "path": "dist/index.d.ts",
+      "bytes": 2317,
+      "sha256": "36f95a2bc89328a470c7ac0a88eb977a080e2672aa6827c150d9310e10da3a67"
+    }
+  ],
+  "license": "Apache-2.0",
+  "implementation": "Google Zopfli C compiled to WebAssembly with Emscripten; precompiled npm artifact, no local build"
+}

@@ -527,7 +527,7 @@ function checkFunction(context,path,declaration,analysis){
    const binding=originalOwnedCoreImport(context,path,node.expression,analysis),op=OPS[binding.name];
    const ascii=ownedAsciiOperation(binding.name);
    if(ascii&&binding.target===analysis.runtimeRoot+'/string-iterator-runtime.mjs'){
-    requireOwnedCoreSourceCurrent(context);if(node.arguments.length!==2)fail('fixed ASCII arity');
+    requireOwnedCoreSourceCurrent(context);if(node.arguments.length!==ascii.args.length)fail('fixed ASCII arity');
     const args=node.arguments.map(argument=>expression(argument,scope,depth+1));
     if(args.some(value=>value.type!=='str'||!asciiStringLoan(value,scope)))fail('ASCII arguments require actual borrowed input or static scalar text');
     hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});requireOwnedCoreSourceCurrent(context);
@@ -595,10 +595,11 @@ function checkFunction(context,path,declaration,analysis){
    if(cond.type!=='bool'||yes.type!==no.type||yes.type==='str'&&!loan||yes.root!==no.root&&!loan&&yes.kind!=='option-none'&&no.kind!=='option-none')fail('conditional result or loan differs');mergeMoves(scope,a,b);return {kind:'choose',cond,then:yes,else:no,type:yes.type,root:loan?loan.root:yes.kind==='option-none'?no.root:yes.root};
   }
   if(ts.isPrefixUnaryExpression(node)&&node.operator===ts.SyntaxKind.ExclamationToken){const value=expression(node.operand,scope,depth+1);if(value.type!=='bool')fail('boolean negation only');return {kind:'not',value,type:'bool',root:null};}
-  if(ts.isBinaryExpression(node)&&[ts.SyntaxKind.AmpersandAmpersandToken,ts.SyntaxKind.BarBarToken,ts.SyntaxKind.EqualsEqualsEqualsToken,ts.SyntaxKind.ExclamationEqualsEqualsToken].includes(node.operatorToken.kind)){
+  if(ts.isBinaryExpression(node)&&[ts.SyntaxKind.AmpersandAmpersandToken,ts.SyntaxKind.BarBarToken,ts.SyntaxKind.EqualsEqualsEqualsToken,ts.SyntaxKind.ExclamationEqualsEqualsToken,ts.SyntaxKind.LessThanToken,ts.SyntaxKind.LessThanEqualsToken,ts.SyntaxKind.GreaterThanToken,ts.SyntaxKind.GreaterThanEqualsToken].includes(node.operatorToken.kind)){
    const optional=optionTest(node,scope,depth);if(optional)return optional;
    const left=expression(node.left,scope,depth+1),right=expression(node.right,scope,depth+1),op=node.operatorToken.getText(file);
-   if(['&&','||'].includes(op)?left.type!=='bool'||right.type!=='bool':!['bool','str','usize'].includes(left.type)||left.type!==right.type)fail('identity/coercion comparison outside owned profile');
+   if(['<','<=','>','>='].includes(op)){if(!['usize','u64','i64'].includes(left.type)||left.type!==right.type)fail('ordered comparison requires identical checked integer domains');}
+   else if(['&&','||'].includes(op)?left.type!=='bool'||right.type!=='bool':!['bool','str','usize'].includes(left.type)||left.type!==right.type)fail('identity/coercion comparison outside owned profile');
    return {kind:'binary',op,left,right,type:'bool',root:null};
   }
   fail('unimplemented expression '+ts.SyntaxKind[node.kind]);

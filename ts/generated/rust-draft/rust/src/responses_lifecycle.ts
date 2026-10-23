@@ -37,7 +37,7 @@ type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$"
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
-// Generated draft from rust/src/responses_lifecycle.rs; sha256=afdb3dfb799bcf2cdfc324d2a8c76cd49d5a043770cab23434c7f769a4852801
+// Generated draft from rust/src/responses_lifecycle.rs; sha256=4f371cb96a894f015c59eabdc2b2a8e507c6d4a8126f09064bf5d4da35e2ec05
 // Carried constructs are data, never runtime parity evidence.
 function ml_make_Operation_Retrieve(): Readonly<{ readonly "$": "Retrieve" }> | Readonly<{ readonly "$": "Delete" }> | Readonly<{ readonly "$": "Cancel" }> | Readonly<{ readonly "$": "InputItems" }> {
   return Object.freeze({ $: 'Retrieve' });
@@ -84,4 +84,4 @@ const serde_json = {
 };
 
 export const translated: { "Operation": Readonly<{ "Retrieve": () => Readonly<{ readonly "$": "Retrieve" }> | Readonly<{ readonly "$": "Delete" }> | Readonly<{ readonly "$": "Cancel" }> | Readonly<{ readonly "$": "InputItems" }>; "Delete": () => Readonly<{ readonly "$": "Retrieve" }> | Readonly<{ readonly "$": "Delete" }> | Readonly<{ readonly "$": "Cancel" }> | Readonly<{ readonly "$": "InputItems" }>; "Cancel": () => Readonly<{ readonly "$": "Retrieve" }> | Readonly<{ readonly "$": "Delete" }> | Readonly<{ readonly "$": "Cancel" }> | Readonly<{ readonly "$": "InputItems" }>; "InputItems": () => Readonly<{ readonly "$": "Retrieve" }> | Readonly<{ readonly "$": "Delete" }> | Readonly<{ readonly "$": "Cancel" }> | Readonly<{ readonly "$": "InputItems" }> }> } = { ["Operation"]: Object.freeze({ ["Retrieve"]: ml_make_Operation_Retrieve, ["Delete"]: ml_make_Operation_Delete, ["Cancel"]: ml_make_Operation_Cancel, ["InputItems"]: ml_make_Operation_InputItems }) };
-export const provenance = {"sourcePath":"rust/src/responses_lifecycle.rs","sourceSha256":"afdb3dfb799bcf2cdfc324d2a8c76cd49d5a043770cab23434c7f769a4852801","executable":1,"executableFunctions":0,"executableConstants":0,"executableTypes":1,"executableConstructors":4,"carried":26,"preserved":28,"runtimeParity":false};
+export const provenance = {"sourcePath":"rust/src/responses_lifecycle.rs","sourceSha256":"4f371cb96a894f015c59eabdc2b2a8e507c6d4a8126f09064bf5d4da35e2ec05","executable":1,"executableFunctions":0,"executableConstants":0,"executableTypes":1,"executableConstructors":4,"carried":26,"preserved":28,"runtimeParity":false};

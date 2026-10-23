@@ -139,7 +139,7 @@ pub async fn bind_all(
                 Some(crate::tls::load_config(cert, key).await?)
             }
             (ListenerTransport::Tls, TlsSetup::Disabled) => {
-                return Err(format!(
+                return Err(crate::translation_core::format!(
                     "listener {} requires TLS; configure TLS_CERT_FILE and TLS_KEY_FILE or TLS_SELF_SIGNED=1",
                     config.address
                 ));
@@ -147,7 +147,7 @@ pub async fn bind_all(
         };
         let listener = tokio::net::TcpListener::bind(config.address)
             .await
-            .map_err(|error| format!("could not bind listener {}: {error}", config.address))?;
+            .map_err(|error| crate::translation_core::format!("could not bind listener {}: {error}", config.address))?;
         bound.push(BoundPrimaryListener {
             config: *config,
             listener,

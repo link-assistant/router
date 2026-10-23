@@ -182,8 +182,11 @@ export class ControlChecker extends StringChecker {
     if (!env.has(RETURN) && expected) {
       // Fresh binders belong to one function's lexical scope. Their names must
       // not depend on which sibling bodies happened to check before this one.
-      this.fresh = 0;
-      const mutable = this.mutableParameters.get(node) ?? [];
+      const parameters = this.mutableParameters.get(node);
+      // Independently checked standard-library bodies share the caller's
+      // allocator. Only an actual program function starts a new name scope.
+      if (parameters !== undefined) this.fresh = 0;
+      const mutable = parameters ?? [];
       if (mutable.some(name => !scalar(env.get(name)))) throw unsupported('mutable aggregate parameter', 'aggregate ownership and aliases require a separate runtime contract', node.span);
       env = new Map(env).set(RETURN, expected).set(MUTABLE, new Set(mutable));
     }

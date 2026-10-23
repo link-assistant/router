@@ -740,10 +740,10 @@ fn clamp_ttl(ttl_hours: Option<i64>) -> i64 {
 ///
 /// Only reached when no token manager is attached (unit tests and embedders
 /// that never build one); the router itself always mints a JWT.
-fn mint_legacy_admin_token() -> String {
+fn mint_legacy_admin_token() -> crate::translation_core::Text {
     let high = Uuid::new_v4().simple().to_string();
     let low = Uuid::new_v4().simple().to_string();
-    format!("{ADMIN_TOKEN_PREFIX}{high}{low}")
+    crate::translation_core::format!("{ADMIN_TOKEN_PREFIX}{high}{low}")
 }
 
 /// Lowercase hex SHA-256 of a string.

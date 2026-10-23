@@ -14,9 +14,57 @@ Rust, rustfmt, Clippy and rust-script remain tools for the Rust implementation a
 
 Disabling a conflicting local hook does not waive CI verification. Rust check failures must still fail CI after every required JavaScript stage passes for the same commit. Gated jobs and steps must not ignore failures with `continue-on-error`; the workflow audit enforces this independently of installed local hooks.
 
+Canonical and platform-profile checks and synchronization use `node scripts/translate-router-flat-native-owned-field-meta.mjs --retain-output-text`; add `--check` for freshness and `--profile-matrix` for the declared profiles. Its actual 863-source canonical run passed the existing memory/disk/time bounds; platform-profile qualification remains separate. Keep the separate owned-definition checks, all eight JavaScript stages, original case deadlines and fatal same-SHA Rust verification. See [the storage contract](docs/development/flat-output-translation.md); a successful generation does not establish complete executable coverage or runtime parity.
+
 ## Development Workflow
 
+Use the [fixed parallel command partitions](docs/development/parallel-javascript-gate.md)
+to run complete forward tests, canonical checks and owned-definition checks
+independently. Keep all eight same-SHA stages, every full command and original
+timeout. Require every matrix member, set `fail-fast: false`, retain failed-test
+evidence and reject unreviewed conditions or dynamic member lists. Verify the
+actual generated workflow with `node scripts/prepare-parallel-js-gate.mjs --check`;
+its native CST/source inverse is not a successful CI result or Rust permission.
+
+Keep complete source banks within the original export budgets. The
+[source-compression workflow](docs/development/static-source-compression.md)
+uses pinned precompiled C/WebAssembly, complete source/CST inverses and full byte
+restoration. Review actual producer proposals, retain upstream licenses and
+require `prepare-zopfli-vendor.mjs --check` and
+`prepare-strict-static-source-producer.mjs --check` under `tools/translation/`.
+Qualify whole Node/Bun files under their original deadlines before regenerating
+current banks and receiving exports. Do not raise limits, add result caches or
+count compressed source as executable translation.
+
+The [flat semantic storage lane](docs/development/flat-semantic-meta.md) retains
+the complete original JSON representation and semantic validations. Generate
+its complete siblings with `node tools/translation/prepare-flat-semantic-meta.mjs
+--emit`, independently review native selections and full CST inverses, then
+require `--check`. Preserve original public APIs, stock native qualification,
+64 MiB fields, two-million-object/depth-512 bounds and original receiving
+deadlines. A focused pass or retained-document round trip does not qualify the
+complete corpus; retry actual generation within the unchanged resource limits.
+Keep private issuers, admission and checker dependencies in their original
+module. Use `node tools/translation/prepare-project-flat-semantic-entry.mjs
+--emit` for the closed storage entry, review its full CST/native inverse and
+require `--check`. Existing public entries must retain their original storage
+default; callers must never supply a codec. Include real methods and genuine,
+copied and fabricated evidence controls when qualifying a new compiler path.
+
 Create a feature branch or isolated worktree, implement behavior in JavaScript, add targeted behavioral tests and update documentation. Read [the JavaScript-first workflow](docs/development/javascript-first.md) for the parity boundary and generation limitations. Router's JavaScript operations package and a valid parity inventory do not by themselves establish complete Rust runtime parity.
+
+Use the [bulk Rust assertion fixtures](docs/development/bulk-rust-assertion-fixtures.md)
+for fast feedback on already generated production functions. The runner reads
+eligible original literal assertions and executes complete JavaScript and
+independently strict-compiled TypeScript modules in Node and Bun. Retain its
+excluded-case census; source assertions do not establish successful Rust
+execution or replace the complete suites and parity gate.
+
+Keep [independently captured method scopes](docs/development/matches-enclosing-context.md)
+consistent with their project's resolver. Rebuild genuine source contexts when
+changing namespace modes; do not substitute copied scope metadata or weaken the
+exact source-link comparison. Qualify complete generation again after compiler
+changes, even when focused source and behavior controls pass.
 
 Run the complete local gate:
 
@@ -71,6 +119,32 @@ The user's 2026-10-22 instruction authorizes prompt merge of PR #771 once green 
 
 ## Translation rules and shared regressions
 
+For [one-operation source preparation](docs/development/single-source-rule-operation.md),
+compare all complete canonical phase sources independently, retain the actual
+rule IDs and inverses, and keep the original larger-input path when existing
+canonical/UTF8 bounds do not fit. Share the established language engine through
+an adapter; preserve the batch generator's binding-collision refusal. This does
+not qualify or enable the separately parked shared-TypeScript scheduling draft.
+
+For [native-parsed canonical CST construction](docs/development/native-parsed-canonical-cst.md),
+preserve the complete original compiler prefix, source authentication, both
+independent builds, full canonical-wire comparisons and the legacy validator
+fallback. Source-text preflight is equality data and never a reviewed-source,
+parser or owner capability. Actual source proposals and history joins require
+the complete CST/native reviews. Fixture setup must copy the complete current
+dependency set and derive import counts from the native grammar while retaining
+all behavior cases, callback assertions, refusals, inverses and original limits.
+
+For [invocation-local source checks](docs/development/invocation-local-source-checks.md),
+retain complete canonical wire comparisons, already serialized/reparsed CST
+transports, both actual substitution sequences and complete inverses. Native
+module batches must preserve original filenames, module isolation and the
+original compiler options/diagnostics; scripts use the unchanged checker.
+Run final source fingerprints after native checks. Regenerate dependent sources
+through their actual producer, preserve every original whole test and deadline,
+and retain failed/late attempts. These optimizations grant no semantic authority
+or application coverage and create no caches across invocations.
+
 Profile matrices use the [sequential process contract](docs/development/isolated-profile-matrices.md): run every complete profile in a fresh process, preserve all original compiler checks and validate every staged byte plan and current input before publishing profile outputs. Generate the copied producers and CLI branch through `node tools/translation/prepare-isolated-matrix.mjs --emit /tmp/FRESH_PROPOSAL`, independently review complete CST/native-source inverses, and require `--check` freshness. Preserve whole receiving files, original deadlines and matrix, heap, aggregate RSS and disk limits. Remove only the task's identified inactive temporary generated storage after interruption. This changes compiler-context lifetime, grants no new source or semantic authority, and does not certify full translation or parity.
 
 Implement translation as ordered substitution rules over parsed source, checked semantic meta or target syntax. Keep at least two separately declared rule sequences: reusable programming-language rules first, then repository rules for Router's output layout, imports, formatting and quality conventions. Keep language semantics independent of Router paths and declaration names. Repository rules must preserve the meaning established by the checked language rules. Both Rust → meta → JavaScript/TypeScript and JavaScript → meta → Rust/TypeScript must retain the serialized, reparsed meta boundary. See [the rule-layer contract](docs/development/translation-rules.md).
@@ -112,6 +186,8 @@ absence of proposed-module execution or dependency resolution in both engines.
 Track every requested requirement through its source changes, generated artifacts, checks and remaining gaps. While remote CI runs, continue source review and independent draft work in assigned worktrees without changing the published head or starting a second expensive workload. Collect the complete CI results before integrating the next repair batch. A bulk draft or an unexecuted test remains a draft until the corresponding checks pass.
 
 Prioritize common translation blockers using actual project diagnostics. A [shared compatibility core](docs/development/compatibility-core.md) may implement matching Rust and JavaScript library abstractions while leaving their internals untranslated. Bind repository CST rules to qualified owned APIs, check operands through the language rules and retain both meta roundtrips. Test independent shared behavior and actual Router callers; keep application coverage, runtime parity and untranslated library status separate.
+
+For continuation #772, follow [the throughput plan](docs/development/translation-throughput-plan.md): qualify a shared operation family once, generate its actual callers and both translation directions together, and recheck whole functions after each prerequisite is removed. Profile shared receiving bottlenecks before expensive retries. A historical first-refusal count is a worklist, never current executable coverage.
 
 Keep work bounded: run one expensive compiler, test or compression workload at a time, reuse existing worktrees and dependencies, check disk space and retain complete failure evidence with lossless compression. Assign that workload explicitly before a worker starts it. Retain actual source versions, full vectors, commands, compiler identities, logs and resource receipts; a digest alone does not preserve the original evidence. When a command becomes slow, measure it before optimizing shared rules; preserve semantics, complete test cases and deadlines. Do not filter failures, raise limits or weaken refusals to obtain a pass. Report executable coverage separately from source preservation, and retain explicit parity limitations until the full checks prove them resolved.
 
@@ -218,6 +294,43 @@ bound. The original string API remains independently checked. The owned bulk
 producer reports bounded storage and retention progress before and after each
 operation; callback failures must propagate before any generated file is written.
 Passing storage fixtures does not establish live-project memory fit or parity.
+
+An explicitly consuming storage sibling may release only producer-owned
+selected metadata after its complete field encoding and original byte check.
+Preserve the ordinary non-consuming API, complete logical output bytes, hashes,
+validation and original budgets. Check configurable selected fields before
+consumption; document that later failures may leave earlier fields consumed.
+Generate the complete sibling and genuine consumer import substitutions through
+the two CST rule phases. Compare complete retained semantic and concrete fields
+in Node and Bun before retrying full generation under unchanged resource limits;
+small fixture passes do not establish full-project memory fit or parity.
+
+For this consuming lane, encode selected components first and restore original
+property order before complete logical hashes and output. Retain other root
+fields as bytes and avoid duplicate root strings while preserving full canonical
+validation. Pressure diagnostics must decode stored CST compression envelopes,
+join the original logical bytes/digest, and compare every original output byte;
+a pass on the envelope alone does not qualify the complete CST or live compiler.
+
+After a synchronous retained-map transfer succeeds, release the producer-owned
+root/component text before transferring the next component. Preserve the map's
+checked immutable cell or primitive fallback and every original budget. Test
+storage, retention and the restored-output census while the same live pressure
+remains; releasing pressure before retention misses the pipeline's peak.
+
+Release planner-owned project declaration and source-scope arrays after their
+last standalone translation use, before the output census. Verify their actual
+native bindings and consumer references; never clear caller-owned arrays or
+contexts still needed by a later compiler stage. Preserve every output and
+source check. A completed translation phase is not a completed generation.
+
+A complete source-trial set may contain files already in the desired form.
+Keep those unchanged members and their complete original bytes in the fresh
+source set; do not drop them to satisfy a changed-files predicate. The selected
+codec must still change. Changed source must differ in full encoded bytes,
+while unchanged source packets retain their original-source association and
+reject an added, missing or altered trial payload. Preserve all membership,
+source/hash, CST/inverse and native binding checks; packets grant no authority.
 
 The explicit retained owned-definition lane uses a separately generated UTF-16
 byte-retention format. Derive it with

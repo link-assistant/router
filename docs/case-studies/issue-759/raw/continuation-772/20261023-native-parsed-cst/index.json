@@ -1,0 +1,641 @@
+{
+  "schema": "appended-native-canonical-cst-evidence-v1",
+  "sourceHeadBefore": "6ecd3fddfd1d9aefb95196f90da4d4c29434c57c",
+  "entries": [
+    {
+      "path": "issue772-appended-native-parsed-cst-source-v1/command.json.gz",
+      "bytes": 284,
+      "sha256": "d2931d94b70dd6221c71e695359e2e27cde0e59b525990c011accdb778ed1ec3",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-parsed-cst-source-v1/command.json"
+    },
+    {
+      "path": "issue772-appended-native-parsed-cst-source-v1/receipt.json.gz",
+      "bytes": 193,
+      "sha256": "c59242a8c949988ed683102511e6d74b2ddde55c6e0826c767f2adf9dc8a3608",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-parsed-cst-source-v1/receipt.json"
+    },
+    {
+      "path": "issue772-appended-native-parsed-cst-source-v1/resources.jsonl.gz",
+      "bytes": 294,
+      "sha256": "677221b50f1721dd86b894299f49fbb10031cfe47c9a6dbdc943bb3becacfe46",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-parsed-cst-source-v1/resources.jsonl"
+    },
+    {
+      "path": "issue772-appended-native-parsed-cst-source-v1/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-parsed-cst-source-v1/stderr.log.gz"
+    },
+    {
+      "path": "issue772-appended-native-parsed-cst-source-v1/stdout.log.gz",
+      "bytes": 210,
+      "sha256": "fae5d9e3aae22a9875e8b50cdb40b5a31cd51a396ee876e0e92b7a61b7ce1241",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-parsed-cst-source-v1/stdout.log.gz"
+    },
+    {
+      "path": "issue772-appended-native-parsed-cst-source-v1/temporary/complete-appended-native-parsed-cst-proposal.json.gz",
+      "bytes": 2531483,
+      "sha256": "25808f3618c6fc5465bcead6666e2ba2ffb55fe52d1b535a1490f8431720ec32",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-parsed-cst-source-v1/temporary/complete-appended-native-parsed-cst-proposal.json.gz"
+    },
+    {
+      "path": "issue772-native-parsed-history-source-v1/command.json.gz",
+      "bytes": 281,
+      "sha256": "5dad3211903fc1305bb5891cff5e1295c720a6ee9035485da780f4212f321f33",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-parsed-history-source-v1/command.json"
+    },
+    {
+      "path": "issue772-native-parsed-history-source-v1/receipt.json.gz",
+      "bytes": 179,
+      "sha256": "38494b7c666b8c4968daf03d06bf69933ec7c573f6f52b0e03b7ea80de7d140d",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-parsed-history-source-v1/receipt.json"
+    },
+    {
+      "path": "issue772-native-parsed-history-source-v1/resources.jsonl.gz",
+      "bytes": 169,
+      "sha256": "a90c8d2bb3eb7bc163833bf46dcfb95133ce0c93382332ad1b68cc1b08e072de",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-parsed-history-source-v1/resources.jsonl"
+    },
+    {
+      "path": "issue772-native-parsed-history-source-v1/stderr.log.gz",
+      "bytes": 540,
+      "sha256": "0088d8eefc9e03f942312c4b94f698450fd48a5d5a5461a68bcffe8361f2b205",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-parsed-history-source-v1/stderr.log.gz"
+    },
+    {
+      "path": "issue772-native-parsed-history-source-v1/stdout.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-parsed-history-source-v1/stdout.log.gz"
+    },
+    {
+      "path": "issue772-native-parsed-history-source-v2/command.json.gz",
+      "bytes": 281,
+      "sha256": "5dad3211903fc1305bb5891cff5e1295c720a6ee9035485da780f4212f321f33",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-parsed-history-source-v2/command.json"
+    },
+    {
+      "path": "issue772-native-parsed-history-source-v2/receipt.json.gz",
+      "bytes": 192,
+      "sha256": "af8e91ba6547e6488ae30704609b3eabf5cbcea923294dfd0f56dbde1164ffa1",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-parsed-history-source-v2/receipt.json"
+    },
+    {
+      "path": "issue772-native-parsed-history-source-v2/resources.jsonl.gz",
+      "bytes": 182,
+      "sha256": "1e0372cc0ae5264651e5a7c33d384cdd2849db1a8e94853db280a45882adb484",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-parsed-history-source-v2/resources.jsonl"
+    },
+    {
+      "path": "issue772-native-parsed-history-source-v2/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-parsed-history-source-v2/stderr.log.gz"
+    },
+    {
+      "path": "issue772-native-parsed-history-source-v2/stdout.log.gz",
+      "bytes": 171,
+      "sha256": "30fadd6db1e2187d2bde46f8d18f832de594d562dbf33c3d4ce6fdb6eb6390dc",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-parsed-history-source-v2/stdout.log.gz"
+    },
+    {
+      "path": "issue772-native-parsed-history-source-v2/temporary/complete-native-parsed-history-proposal.json.gz",
+      "bytes": 337309,
+      "sha256": "66080b5bd028d6ec27985f83558f5dafc9dc423ddab6a84cc9c494010d2cc78d",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-parsed-history-source-v2/temporary/complete-native-parsed-history-proposal.json.gz"
+    },
+    {
+      "path": "issue772-native-parsed-history-source-v3/command.json.gz",
+      "bytes": 281,
+      "sha256": "5dad3211903fc1305bb5891cff5e1295c720a6ee9035485da780f4212f321f33",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-parsed-history-source-v3/command.json"
+    },
+    {
+      "path": "issue772-native-parsed-history-source-v3/receipt.json.gz",
+      "bytes": 193,
+      "sha256": "160b2e0434797a791dd0b1a0bb60c7a9d54f3f284400860e8efe4b55078616b3",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-parsed-history-source-v3/receipt.json"
+    },
+    {
+      "path": "issue772-native-parsed-history-source-v3/resources.jsonl.gz",
+      "bytes": 248,
+      "sha256": "24a7e8e99e2b000d9a244490077d96f6b4c5ac9779a054d9e5c795bc7dfa9e38",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-parsed-history-source-v3/resources.jsonl"
+    },
+    {
+      "path": "issue772-native-parsed-history-source-v3/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-parsed-history-source-v3/stderr.log.gz"
+    },
+    {
+      "path": "issue772-native-parsed-history-source-v3/stdout.log.gz",
+      "bytes": 205,
+      "sha256": "496ca2b03d0b326ff15401f42e85963a441707081aae0f87e71978ac4820d4dd",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-parsed-history-source-v3/stdout.log.gz"
+    },
+    {
+      "path": "issue772-native-parsed-history-source-v3/temporary/complete-native-parsed-history-proposal.json.gz",
+      "bytes": 1107890,
+      "sha256": "cb83c55c645c1b2f75c4b1ae7a0483ab232c93151b06012d0b0d8afb2f3906f3",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-parsed-history-source-v3/temporary/complete-native-parsed-history-proposal.json.gz"
+    },
+    {
+      "path": "issue772-native-parsed-history-source-v4/command.json.gz",
+      "bytes": 281,
+      "sha256": "5dad3211903fc1305bb5891cff5e1295c720a6ee9035485da780f4212f321f33",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-parsed-history-source-v4/command.json"
+    },
+    {
+      "path": "issue772-native-parsed-history-source-v4/receipt.json.gz",
+      "bytes": 193,
+      "sha256": "86a67a3392b851b4e64ca8beb8bf4ebc1320903c8cfeeb655aaa9e106590dd01",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-parsed-history-source-v4/receipt.json"
+    },
+    {
+      "path": "issue772-native-parsed-history-source-v4/resources.jsonl.gz",
+      "bytes": 239,
+      "sha256": "8f49ba8b73ffa4828a3fa645b4c377089ed05ffc3d879c44a82a40a0f18dbc1c",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-parsed-history-source-v4/resources.jsonl"
+    },
+    {
+      "path": "issue772-native-parsed-history-source-v4/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-parsed-history-source-v4/stderr.log.gz"
+    },
+    {
+      "path": "issue772-native-parsed-history-source-v4/stdout.log.gz",
+      "bytes": 205,
+      "sha256": "496ca2b03d0b326ff15401f42e85963a441707081aae0f87e71978ac4820d4dd",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-parsed-history-source-v4/stdout.log.gz"
+    },
+    {
+      "path": "issue772-native-parsed-history-source-v4/temporary/complete-native-parsed-history-proposal.json.gz",
+      "bytes": 1108131,
+      "sha256": "253da250689420bf8f28c97c3cd6785858360be1160f87cd9e30e9c1322b07b4",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-parsed-history-source-v4/temporary/complete-native-parsed-history-proposal.json.gz"
+    },
+    {
+      "path": "issue772-appended-native-cst-cohort-review-v1/command.json.gz",
+      "bytes": 285,
+      "sha256": "bd8e0fc039212d7370a90110e59cb3e5ebec11b86b8f9960c0ce56e97e4064be",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-cohort-review-v1/command.json"
+    },
+    {
+      "path": "issue772-appended-native-cst-cohort-review-v1/receipt.json.gz",
+      "bytes": 178,
+      "sha256": "8a1b5506dfb8436a4f1d93f3d1541d52b6edc13f9804c8cedcb459614832408a",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-cohort-review-v1/receipt.json"
+    },
+    {
+      "path": "issue772-appended-native-cst-cohort-review-v1/resources.jsonl.gz",
+      "bytes": 96,
+      "sha256": "3e4a1e8bc810383ce35b823574c23458c3db86bc169beee41f243b8849a0a4f4",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-cohort-review-v1/resources.jsonl"
+    },
+    {
+      "path": "issue772-appended-native-cst-cohort-review-v1/stderr.log.gz",
+      "bytes": 446,
+      "sha256": "8e733b1f0cfd93bf15fee6ffd7a0bbb15b591bd8b03cfa1b1bc15016424a8c9d",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-cohort-review-v1/stderr.log.gz"
+    },
+    {
+      "path": "issue772-appended-native-cst-cohort-review-v1/stdout.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-cohort-review-v1/stdout.log.gz"
+    },
+    {
+      "path": "issue772-appended-native-cst-cohort-review-v2/command.json.gz",
+      "bytes": 285,
+      "sha256": "a332a193fce89f40fd6feef4727239e103c968683715fadbb6d8b448ac82d894",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-cohort-review-v2/command.json"
+    },
+    {
+      "path": "issue772-appended-native-cst-cohort-review-v2/receipt.json.gz",
+      "bytes": 194,
+      "sha256": "2a85d445cafe206255a065aa912187a1ec8a59349d884b96be17673e6433001d",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-cohort-review-v2/receipt.json"
+    },
+    {
+      "path": "issue772-appended-native-cst-cohort-review-v2/resources.jsonl.gz",
+      "bytes": 227,
+      "sha256": "95146a80d3ca9aadfb56c21d76bf0c01beb0e7e45dc5690651b4426ca567b358",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-cohort-review-v2/resources.jsonl"
+    },
+    {
+      "path": "issue772-appended-native-cst-cohort-review-v2/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-cohort-review-v2/stderr.log.gz"
+    },
+    {
+      "path": "issue772-appended-native-cst-cohort-review-v2/stdout.log.gz",
+      "bytes": 246,
+      "sha256": "06a10891815dee2f8aa241fc546f4aeaa3147f87c34e51ee5118d58d0182411f",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-cohort-review-v2/stdout.log.gz"
+    },
+    {
+      "path": "issue772-native-parsed-history-review-v4/command.json.gz",
+      "bytes": 281,
+      "sha256": "12b253038d1f691f1a9fe0008e08e3ac3c93cf7b0febf459f2b9ae3198f9df3c",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-parsed-history-review-v4/command.json"
+    },
+    {
+      "path": "issue772-native-parsed-history-review-v4/receipt.json.gz",
+      "bytes": 193,
+      "sha256": "8c24b01673c68b73f5efe372f4d8a3ec4ad1a7d24f10439f3037466a32930170",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-parsed-history-review-v4/receipt.json"
+    },
+    {
+      "path": "issue772-native-parsed-history-review-v4/resources.jsonl.gz",
+      "bytes": 151,
+      "sha256": "ece7d0776301c57a78c31481416aa3ba963908292c994db0474afd1fd42d6d64",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-parsed-history-review-v4/resources.jsonl"
+    },
+    {
+      "path": "issue772-native-parsed-history-review-v4/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-parsed-history-review-v4/stderr.log.gz"
+    },
+    {
+      "path": "issue772-native-parsed-history-review-v4/stdout.log.gz",
+      "bytes": 238,
+      "sha256": "4860936c11ea00192fe309b36197f4127c31a2e0a43367f4f1eed7bcde4028c3",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-parsed-history-review-v4/stdout.log.gz"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Node-v1/command.json.gz",
+      "bytes": 379,
+      "sha256": "53211758988cb1d0b7517b601d95b305ef342e3377f6fd536c94633a4b657542",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Node-v1/command.json"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Node-v1/receipt.json.gz",
+      "bytes": 179,
+      "sha256": "c359ee8e3e6868e7918aa2b3528a217f3021fff21b4724177515952c6a45a50e",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Node-v1/receipt.json"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Node-v1/resources.jsonl.gz",
+      "bytes": 11382,
+      "sha256": "c1be474cbafeb1fa5942a5538c2654e00987d830d21cf669cb6272dd2c286767",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Node-v1/resources.jsonl"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Node-v1/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Node-v1/stderr.log.gz"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Node-v1/stdout.log.gz",
+      "bytes": 3848,
+      "sha256": "ccdd1eb7442d33a66949336a90a772daf80323c81a5aa10e865e096b343d3b1c",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Node-v1/stdout.log.gz"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Node-v1/temporary/complete-Node-deadlines/case-deadlines.json.gz",
+      "bytes": 48585,
+      "sha256": "bb73131a3c0b10a955b6fe62260d60e5efa957f4cb2bf20f4da80f2f3bc27496",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Node-v1/temporary/complete-Node-deadlines/case-deadlines.json"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Node-v1/temporary/complete-Node-deadlines/command.json.gz",
+      "bytes": 53933,
+      "sha256": "f76872c2d42b6dce18eb2beea7437a743ebfcf07cd4b7ca36893f7a315c1d3ed",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Node-v1/temporary/complete-Node-deadlines/command.json"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Node-v1/temporary/complete-Node-deadlines/request.json.gz",
+      "bytes": 371,
+      "sha256": "638f878a2b3dea9c0ddb269b92a714c1a3690f6b8ce38e95355d47d7923652e8",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Node-v1/temporary/complete-Node-deadlines/request.json"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Node-v1/temporary/complete-Node-deadlines/stderr.raw.log.gz",
+      "bytes": 20,
+      "sha256": "abfbb86f9f5ddfbd9fc1a72c43ab384702ce8bae86b60f3324748485e235e61e",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Node-v1/temporary/complete-Node-deadlines/stderr.raw.log"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Node-v1/temporary/complete-Node-deadlines/stdout.raw.tap.gz",
+      "bytes": 3438,
+      "sha256": "c8bea3db0ffab790c54211a43feb4195463e680e35f35264661700578b81389e",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Node-v1/temporary/complete-Node-deadlines/stdout.raw.tap"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Node-v2/command.json.gz",
+      "bytes": 379,
+      "sha256": "53211758988cb1d0b7517b601d95b305ef342e3377f6fd536c94633a4b657542",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Node-v2/command.json"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Node-v2/receipt.json.gz",
+      "bytes": 193,
+      "sha256": "decf598d0dc67ea92acac1b5118cffc029dc9fded8ed290bea1653198f2b8001",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Node-v2/receipt.json"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Node-v2/resources.jsonl.gz",
+      "bytes": 18615,
+      "sha256": "dc6b71566c079c5d48d0bedb1295e2cbe344c18d9de360c2e6cf72f4dedfbc18",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Node-v2/resources.jsonl"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Node-v2/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Node-v2/stderr.log.gz"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Node-v2/stdout.log.gz",
+      "bytes": 2959,
+      "sha256": "bb6c3f3390e448d17e9909455271c0f0d55a5dbffe91fe04ce57c29350250ac3",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Node-v2/stdout.log.gz"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Node-v2/temporary/complete-Node-deadlines/case-deadlines.json.gz",
+      "bytes": 48910,
+      "sha256": "bd5bbae9dfa2a19ee2973f0b9aaa33bd07c7bd518e3678f5b3e00e405960cd97",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Node-v2/temporary/complete-Node-deadlines/case-deadlines.json"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Node-v2/temporary/complete-Node-deadlines/command.json.gz",
+      "bytes": 54202,
+      "sha256": "017d1300d74e57b0a0515914543a41ada05c543ac2dc1d54a66b46d22480a458",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Node-v2/temporary/complete-Node-deadlines/command.json"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Node-v2/temporary/complete-Node-deadlines/request.json.gz",
+      "bytes": 371,
+      "sha256": "9aadb48625f0f4bcf7a99c0fce1fa7e16d7077aaf233cbd1b5674274c56b01d9",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Node-v2/temporary/complete-Node-deadlines/request.json"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Node-v2/temporary/complete-Node-deadlines/stderr.raw.log.gz",
+      "bytes": 20,
+      "sha256": "abfbb86f9f5ddfbd9fc1a72c43ab384702ce8bae86b60f3324748485e235e61e",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Node-v2/temporary/complete-Node-deadlines/stderr.raw.log"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Node-v2/temporary/complete-Node-deadlines/stdout.raw.tap.gz",
+      "bytes": 2595,
+      "sha256": "582c42bb9964a7cae3ec9145310c38fa167d9f79a16f84d10e83c9ea3170b788",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Node-v2/temporary/complete-Node-deadlines/stdout.raw.tap"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Bun-v2/command.json.gz",
+      "bytes": 454,
+      "sha256": "c55de24f5a3ad04b5de498074f22bf280954e2790506e6ea6d19b02c514a24bb",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Bun-v2/command.json"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Bun-v2/receipt.json.gz",
+      "bytes": 194,
+      "sha256": "e55f9c90244d26d8aa155692897be1fc1e919687c57480120da0ef5db7a5fe01",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Bun-v2/receipt.json"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Bun-v2/resources.jsonl.gz",
+      "bytes": 17833,
+      "sha256": "211f30c9d67143c5e7e3fc45bc168495cc6c266b60b720127389a7b8963c6e9c",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Bun-v2/resources.jsonl"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Bun-v2/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Bun-v2/stderr.log.gz"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Bun-v2/stdout.log.gz",
+      "bytes": 234,
+      "sha256": "4cbfc0395d80d1e85948c9ad507840c8e5d077408b1128cd2c94c6311eedcbe3",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Bun-v2/stdout.log.gz"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Bun-v2/temporary/complete-focused-Bun-source-call-joins/0/request.json.gz",
+      "bytes": 324,
+      "sha256": "d042e885e5b4ec7ef21921406b8a85ea6bb49feacdd3d3fc732e1e3c982938f9",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Bun-v2/temporary/complete-focused-Bun-source-call-joins/0/request.json"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Bun-v2/temporary/complete-focused-Bun-source-call-joins/0/stderr.raw.log.gz",
+      "bytes": 383,
+      "sha256": "0b091785d791c4bc13b8509c38ddd2471e56c3960d389b7596e2db34c72d00ca",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Bun-v2/temporary/complete-focused-Bun-source-call-joins/0/stderr.raw.log"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Bun-v2/temporary/complete-focused-Bun-source-call-joins/1/request.json.gz",
+      "bytes": 331,
+      "sha256": "4706d8140e4de6546b83814bbaef2e67bcd681a16923509956837a79dbe22631",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Bun-v2/temporary/complete-focused-Bun-source-call-joins/1/request.json"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Bun-v2/temporary/complete-focused-Bun-source-call-joins/1/stderr.raw.log.gz",
+      "bytes": 255,
+      "sha256": "224cb1326c2f584335c06efa4b599ac3db76c6d2b5abe2d4180cae0ddf56cacd",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Bun-v2/temporary/complete-focused-Bun-source-call-joins/1/stderr.raw.log"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Bun-v2/temporary/complete-focused-Bun-source-call-joins/2/request.json.gz",
+      "bytes": 333,
+      "sha256": "42a8eb6c0009fc2860c7ee723e744ab1bef4156b8d415bac14c363ce0dc2fd61",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Bun-v2/temporary/complete-focused-Bun-source-call-joins/2/request.json"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Bun-v2/temporary/complete-focused-Bun-source-call-joins/2/stderr.raw.log.gz",
+      "bytes": 335,
+      "sha256": "7df4c49a4275c7cabc4edd93493e6230de0f28e9c3e45072d159e370e6adaa26",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Bun-v2/temporary/complete-focused-Bun-source-call-joins/2/stderr.raw.log"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Bun-v2/temporary/complete-focused-Bun-source-call-joins/3/request.json.gz",
+      "bytes": 336,
+      "sha256": "5badfe4d282f6b05f91023a845df6c5e8af951d43f1a9403414faba0534541f6",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Bun-v2/temporary/complete-focused-Bun-source-call-joins/3/request.json"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Bun-v2/temporary/complete-focused-Bun-source-call-joins/3/stderr.raw.log.gz",
+      "bytes": 602,
+      "sha256": "1ac55640c6637246e3a286036344e9fd540bf3a5a6466d07ab1e589417d0f616",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Bun-v2/temporary/complete-focused-Bun-source-call-joins/3/stderr.raw.log"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Bun-v2/temporary/complete-focused-Bun-source-call-joins/4/request.json.gz",
+      "bytes": 343,
+      "sha256": "a2b15527187712075f60066c6d6146846aab12817012dd8d18285903979687e8",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Bun-v2/temporary/complete-focused-Bun-source-call-joins/4/request.json"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Bun-v2/temporary/complete-focused-Bun-source-call-joins/4/stderr.raw.log.gz",
+      "bytes": 562,
+      "sha256": "138467ed98727abfb32098b87813980726b9aa5232179753499088d595cd661d",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Bun-v2/temporary/complete-focused-Bun-source-call-joins/4/stderr.raw.log"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Bun-v2/temporary/complete-focused-Bun-source-call-joins/5/request.json.gz",
+      "bytes": 329,
+      "sha256": "5ee20ab741d73ff3b859ee388112011148b16722817d5c95adf2c0b083778df9",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Bun-v2/temporary/complete-focused-Bun-source-call-joins/5/request.json"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Bun-v2/temporary/complete-focused-Bun-source-call-joins/5/stderr.raw.log.gz",
+      "bytes": 562,
+      "sha256": "0a1cac668a73086548d1aec3a1637d55e33c8e026213ae3d6b0182712af7117e",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Bun-v2/temporary/complete-focused-Bun-source-call-joins/5/stderr.raw.log"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Bun-v2/temporary/complete-focused-Bun-source-call-joins/6/request.json.gz",
+      "bytes": 329,
+      "sha256": "50eb865c4224b6b9688455106c7f8cad35a1c7f24e9a1c8addbb1bb1a1ecc7db",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Bun-v2/temporary/complete-focused-Bun-source-call-joins/6/request.json"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Bun-v2/temporary/complete-focused-Bun-source-call-joins/6/stderr.raw.log.gz",
+      "bytes": 577,
+      "sha256": "881dc9e048929a5c91cd3c900015644a38b577bc2faf488f909d9ccf7cb44309",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Bun-v2/temporary/complete-focused-Bun-source-call-joins/6/stderr.raw.log"
+    },
+    {
+      "path": "issue772-appended-native-cst-history-whole-Bun-v2/temporary/complete-focused-Bun-source-call-joins/receipt.json.gz",
+      "bytes": 380,
+      "sha256": "8844e11bed95128aef308dc1bd70fcb48a696f8e1e9678fe55c27471d42fd8a7",
+      "originalPath": "/private/tmp/router-layout-check-issue772-appended-native-cst-history-whole-Bun-v2/temporary/complete-focused-Bun-source-call-joins/receipt.json"
+    },
+    {
+      "path": "issue772-native-cst-complete-batched-source-profile-v1/command.json.gz",
+      "bytes": 283,
+      "sha256": "0f71273b9486fcf6045129aad5d47d4b78ffba79cf548cb6cfbfd1fd6aebd912",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-cst-complete-batched-source-profile-v1/command.json",
+      "originalBytes": 386,
+      "originalSha256": "fa5b2e1d4bf0c26d5dab5c156824e51a9170d925af90f1330a597d6f95ab129e",
+      "completeReadbackVerified": true
+    },
+    {
+      "path": "issue772-native-cst-complete-batched-source-profile-v1/receipt.json.gz",
+      "bytes": 180,
+      "sha256": "680cb3bece9ec0c0017c0aa70b23ade401e2d9a7ac4252a33312438261461681",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-cst-complete-batched-source-profile-v1/receipt.json",
+      "originalBytes": 222,
+      "originalSha256": "efaceea0c6141f8ed721cc2210bcdaa1320dcef10c4b2b61869b351a3a7a1c6d",
+      "completeReadbackVerified": true
+    },
+    {
+      "path": "issue772-native-cst-complete-batched-source-profile-v1/resources.jsonl.gz",
+      "bytes": 13121,
+      "sha256": "b895aed89798fc54c3a0868167de2c9431d813b94a3d3c5af46685c90d96dbf0",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-cst-complete-batched-source-profile-v1/resources.jsonl",
+      "originalBytes": 58599,
+      "originalSha256": "9e4dcea4a770641988b76631ec861e6289a8b651c89afecb44aebf2af7df8ed7",
+      "completeReadbackVerified": true
+    },
+    {
+      "path": "issue772-native-cst-complete-batched-source-profile-v1/stderr.log.gz",
+      "bytes": 829,
+      "sha256": "a8d16f865d6e53ed21e0f603c950d84640c22c71ba0290d712e819d34956251d",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-cst-complete-batched-source-profile-v1/stderr.log.gz",
+      "originalBytes": 829,
+      "originalSha256": "a8d16f865d6e53ed21e0f603c950d84640c22c71ba0290d712e819d34956251d",
+      "completeReadbackVerified": true
+    },
+    {
+      "path": "issue772-native-cst-complete-batched-source-profile-v1/stdout.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-cst-complete-batched-source-profile-v1/stdout.log.gz",
+      "originalBytes": 20,
+      "originalSha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "completeReadbackVerified": true
+    },
+    {
+      "path": "issue772-native-cst-complete-batched-source-profile-v1/temporary/CPU.20261023.203139.62731.0.001.cpuprofile.gz",
+      "bytes": 3653929,
+      "sha256": "2a7a016d48d519a556725410e0fb93e1d28856aad05765ff7e843fac262bed15",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-cst-complete-batched-source-profile-v1/temporary/CPU.20261023.203139.62731.0.001.cpuprofile",
+      "originalBytes": 69455446,
+      "originalSha256": "92757ae0f3751213640db4651bbdf68bbcfbd5206cb26ed3b5c09a9deb4751c4",
+      "completeReadbackVerified": true
+    },
+    {
+      "path": "issue772-native-cst-complete-batched-source-profile-v1/temporary/case-deadlines.json.gz",
+      "bytes": 3086,
+      "sha256": "5ca430ab43e2b9d7cb975c5698c4e7242048076b5f48dfb9e995466d28a316ec",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-cst-complete-batched-source-profile-v1/temporary/case-deadlines.json",
+      "originalBytes": 12202,
+      "originalSha256": "733a9cbb91e4fbff90c36a6b56570423fd6d126d89e674fdd9cdae1752ff435d",
+      "completeReadbackVerified": true
+    },
+    {
+      "path": "issue772-native-cst-complete-batched-source-profile-v1/temporary/command.json.gz",
+      "bytes": 12248,
+      "sha256": "ec60cf535e37386924653153af14e5a20ca15348dfe06c573d5bc382ed944d5c",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-cst-complete-batched-source-profile-v1/temporary/command.json",
+      "originalBytes": 41035,
+      "originalSha256": "afa44c3a8b34035c64bed8edf6c2afefcbb4650b86bf1ab038a173ddc65a22be",
+      "completeReadbackVerified": true
+    },
+    {
+      "path": "issue772-native-cst-complete-batched-source-profile-v1/temporary/complete-cpu-profile-summary.json.gz",
+      "bytes": 1411,
+      "sha256": "30837e9576a45ef20dc060dd429d3e754aaada7636d3d2b391131aa7bd4d4eb5",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-cst-complete-batched-source-profile-v1/temporary/complete-cpu-profile-summary.json",
+      "originalBytes": 8055,
+      "originalSha256": "8411da35bad2fe6b167d1a1c23055dbf36f16ab4e00c0592d54c19d82452f49c",
+      "completeReadbackVerified": true
+    },
+    {
+      "path": "issue772-native-cst-complete-batched-source-profile-v1/temporary/request.json.gz",
+      "bytes": 282,
+      "sha256": "dc9b085ea931ee63d801b40309c1a6eb296fc11fe63e43f6b737a111867b0752",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-cst-complete-batched-source-profile-v1/temporary/request.json",
+      "originalBytes": 484,
+      "originalSha256": "2715ee041c466b5e80ba10c6a84340204621939a55a49ec69099f6918fd296c1",
+      "completeReadbackVerified": true
+    },
+    {
+      "path": "issue772-native-cst-complete-batched-source-profile-v1/temporary/stderr.raw.log.gz",
+      "bytes": 20,
+      "sha256": "ac73670af3abed54ac6fb4695131f4099be9fbe39d6076c5d0264a6bbdae9d83",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-cst-complete-batched-source-profile-v1/temporary/stderr.raw.log",
+      "originalBytes": 0,
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "completeReadbackVerified": true
+    },
+    {
+      "path": "issue772-native-cst-complete-batched-source-profile-v1/temporary/stdout.raw.tap.gz",
+      "bytes": 475,
+      "sha256": "ac0862d95864b0a4580f2af1669eacaef0c0503e2d260b319f8c38e4c41aabe7",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-cst-complete-batched-source-profile-v1/temporary/stdout.raw.tap",
+      "originalBytes": 1350,
+      "originalSha256": "93ab562e0582dc43abbd7fd09d439e27b5d97e4ea8959c81a30f4dc6039bf51f",
+      "completeReadbackVerified": true
+    }
+  ],
+  "node40WholeCasesPassed": true,
+  "bun40WholeCasesPassed": true,
+  "originalDeadlinesChanged": false,
+  "originalRuntimePrefixesUnchanged": true,
+  "newAcrossInvocationCaches": false,
+  "slowWholePlanComparisonPending": false,
+  "fullGenerationQualifiedForCurrentCompiler": false,
+  "runtimeParity": false,
+  "rustExecuted": false,
+  "slowWholePlanComparison": {
+    "status": "RED",
+    "wholeCases": 4,
+    "failedFunctionalEvents": 0,
+    "durationBreaches": 1,
+    "errors": [
+      "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-storage-repair-20261021/tools/translation/test/batched-proof-byte-source-candidate.test.mjs:16:1 every full birth source plan field equals the current plan except its explicitly additional fresh provider source inputs: Observed 81564.670792ms exceeds unchanged source-declared 60000ms timeout"
+    ],
+    "individualCpuEvidenceBoundBytes": 67108864,
+    "observedCpuProfileBytes": 69455446,
+    "controllerEvidenceBoundFailed": true,
+    "speedGainClaimed": false
+  },
+  "nextSharedCause": "Repeated public CST builds reauthenticate the same fixed parser sources; use one bounded existing rule operation per whole source with independent full canonical source comparisons and original fallback."
+}

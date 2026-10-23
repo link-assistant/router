@@ -32,12 +32,12 @@ function rp_726573706f6e7365732e636861745f696e7075742e6e6f6e656d7074795f73747269
   return (() => {
     const ml_standard_callback_self_2 = ml_host_option_bind(ml_host_serde_json_value_get_string(value, field), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_0_0); }, "and_then") as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
     return (() => {
-    const ml_pattern_1 = ml_standard_callback_self_2 as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
-    if ((ml_pattern_immutable(ml_pattern_1) && (ml_pattern_1.$ === "Some"))) {
-      const ml_standard_pattern_3 = (ml_pattern_1)["field0"];
+    const ml_pattern_4 = ml_standard_callback_self_2 as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
+    if ((ml_pattern_immutable(ml_pattern_4) && (ml_pattern_4.$ === "Some"))) {
+      const ml_standard_pattern_3 = (ml_pattern_4)["field0"];
       if ((() => {
-      const ml_standard_callback_arg_2 = ml_standard_pattern_3;
-      const text = ml_standard_callback_arg_2;
+      const ml_standard_callback_arg_5 = ml_standard_pattern_3;
+      const text = ml_standard_callback_arg_5;
       return !(text.length === 0);
     })()) {
         return Object.freeze({ $: 'Some', field0: ml_standard_pattern_3 });

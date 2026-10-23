@@ -8,7 +8,7 @@ import {fileURLToPath} from 'node:url';
 import {isCompilerSourceInputPath} from './compiler-source-inputs.mjs';
 
 export const TRANSLATOR_EXPORT_LIMITS=Object.freeze({files:2048,fileBytes:4*1024*1024,totalBytes:64*1024*1024,gitMilliseconds:10000,gitOutputBytes:4*1024*1024});
-const roots=['tools/translation','scripts/translate-router.mjs','scripts/export-router-translator.mjs',
+const roots=['tools/translation','scripts/translate-router.mjs',"scripts/translate-router-flat-native-owned-field-meta.mjs",'scripts/export-router-translator.mjs',
   'scripts/regenerate-js-first.mjs','scripts/regenerate-native-typescript.mjs','scripts/sync-router.mjs'];
 const sha256=bytes=>createHash('sha256').update(bytes).digest('hex');
 const selected=path=>{
@@ -40,7 +40,7 @@ function committedInputs(root){
     if(inputs.length>TRANSLATOR_EXPORT_LIMITS.files)throw new RangeError('Translator export file budget exceeded');
   }
   inputs.sort((a,b)=>a.path<b.path?-1:a.path>b.path?1:0);
-  if(!inputs.some(row=>row.path==='scripts/translate-router.mjs')||!inputs.some(row=>row.path==='tools/translation/bulk.mjs')||!inputs.some(row=>row.path==='tools/translation/vendor/meta-language/package.json')||!inputs.some(row=>row.path.startsWith('tools/translation/source-profiles/')))throw new TypeError('Translator export is missing required compiler, CLI, vendor or original-source inputs');
+  if(!inputs.some(row=>row.path==="scripts/translate-router-flat-native-owned-field-meta.mjs")||!inputs.some(row=>row.path==='scripts/translate-router.mjs')||!inputs.some(row=>row.path==='tools/translation/bulk.mjs')||!inputs.some(row=>row.path==='tools/translation/vendor/meta-language/package.json')||!inputs.some(row=>row.path.startsWith('tools/translation/source-profiles/')))throw new TypeError('Translator export is missing required compiler, CLI, vendor or original-source inputs');
   const indexed=[];
   for(const record of git(root,['ls-files','--stage','-z','--',...roots]).split('\0').filter(Boolean)){
     const match=/^(\d{6}) ([a-f0-9]+) (\d+)\t(.+)$/u.exec(record);

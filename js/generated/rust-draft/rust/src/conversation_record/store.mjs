@@ -89,18 +89,18 @@ function rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e737472696e675f66
   ml_validate_rust_value(record, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
   if (!(typeof name === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(name))) throw new TypeError('argument outside supported Rust value domain');
   return (() => {
-    const ml_standard_body_2 = ml_host_option_bind(ml_host_serde_json_value_get_string(record, name), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_0_0); }, "and_then");
-    const ml_standard_body_3 = "unknown";
-    switch (ml_standard_body_2.$) {
+    const ml_standard_body_8 = ml_host_option_bind(ml_host_serde_json_value_get_string(record, name), (ml_host_callback_6_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_6_0); }, "and_then");
+    const ml_standard_body_9 = "unknown";
+    switch (ml_standard_body_8.$) {
       case "None": {
-        return ml_standard_body_3;
+        return ml_standard_body_9;
       }
       case "Some": {
-        const x = ml_standard_body_2.field0;
+        const x = ml_standard_body_8.field0;
         return x;
       }
       default: {
-        return ml_router_unexpected(ml_standard_body_2);
+        return ml_router_unexpected(ml_standard_body_8);
       }
     }
   })();

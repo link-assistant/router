@@ -1,0 +1,12 @@
+{
+  "archive": "20261023-guarded-storage-delivery.tar.gz",
+  "bytes": 12553386,
+  "sha256": "24828f7374bd1c4d30e3a1821d94d621cb03b62ef8c19761be52f16e3a8d0896",
+  "members": 143,
+  "allMembersReadBack": true,
+  "credentialPatterns": "no matches in all selected files, expanded gzip and zip members",
+  "ciComplete": false,
+  "localFailedGenerationAndDeadlineAuditsRetained": true,
+  "rustExecuted": false,
+  "wholeGate": false
+}

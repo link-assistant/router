@@ -135,7 +135,7 @@ try {
   // within a finite 1200-second window and budget every outer caller separately.
   const translationStarted = performance.now();
   try {
-    await exec(process.execPath, ['scripts/translate-router.mjs','--check'], { cwd: root, timeout: translationTimeoutMs, maxBuffer: 4_194_304 });
+    await exec(process.execPath, ['scripts/translate-router-flat-native-owned-field-meta.mjs','--retain-output-text','--check'], { cwd: root, timeout: translationTimeoutMs, maxBuffer: 4_194_304 });
   } catch (error) {
     throw new Error(`${error.message}; deterministic --check diagnostics: timeoutBudgetMs=${translationTimeoutMs}, elapsedMs=${Math.round(performance.now() - translationStarted)}, killed=${error.killed === true}, signal=${error.signal ?? 'none'}, code=${error.code ?? 'none'}`, { cause: error });
   }

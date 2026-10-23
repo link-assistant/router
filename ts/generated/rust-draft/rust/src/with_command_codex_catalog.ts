@@ -43,34 +43,34 @@ function rp_776974685f636f6d6d616e642e636f6465785f636174616c6f672e6d6f64656c5f6d
   ml_validate_rust_value(model, {"kind":"data","name":"rp_636c69656e74732e636174616c6f672e526f757465724d6f64656c"}, ml_host_value_schema_53c9e0da3f7623185b48cc1d05251224f3b9286bfb7d43f0786d6b7d511ff379, { refinements: ml_host_value_refinements_53c9e0da3f7623185b48cc1d05251224f3b9286bfb7d43f0786d6b7d511ff379 });
   if (!(typeof effort === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(effort))) throw new TypeError('argument outside supported Rust value domain');
   return (() => {
-    const ml_standard_callback_self_2 = (() => { const ml_shared_immutable_value = (() => {
+    const ml_standard_callback_self_3 = (() => { const ml_shared_immutable_value = (() => {
       const ml_standard_shared_1 = (() => { const ml_shared_immutable_value = (model).supported_reasoning_levels; ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": ReadonlyArray<Readonly<{ readonly "$": "RouterReasoningLevel"; readonly "effort": string; readonly "description": string }>> }>;
-      const ml_s1 = ml_standard_shared_1 as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": ReadonlyArray<Readonly<{ readonly "$": "RouterReasoningLevel"; readonly "effort": string; readonly "description": string }>> }>;
-      switch (ml_s1.$) {
+      const ml_s2 = ml_standard_shared_1 as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": ReadonlyArray<Readonly<{ readonly "$": "RouterReasoningLevel"; readonly "effort": string; readonly "description": string }>> }>;
+      switch (ml_s2.$) {
         case "None": {
           return Object.freeze({ $: 'None' });
         }
         case "Some": {
-          const x = ml_s1.field0;
+          const x = ml_s2.field0;
           return ml_snapshot_constructor_value(Object.freeze({ $: 'Some', field0: x }), {"kind":"data","name":"rp_526f757465724f7074696f6e5f3130385f7265666572656e63655f7368617265645f727573745f6f776e65645f7665635f6e616d65645f36333663363936353665373437335f36333631373436313663366636375f35323666373537343635373235323635363137333666366536393665363734633635373636353663"}, ml_constructor_value_schema_6e817ec55fa8f45ca54ad6af4f52b3c6eb27d9ef1456c81b8c53ffca8c1e6f55);
         }
         default: {
-          return ml_router_unexpected(ml_s1);
+          return ml_router_unexpected(ml_s2);
         }
       }
     })(); ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": ReadonlyArray<Readonly<{ readonly "$": "RouterReasoningLevel"; readonly "effort": string; readonly "description": string }>> }>;
-    switch (ml_standard_callback_self_2.$) {
+    switch (ml_standard_callback_self_3.$) {
       case "None": {
         return true;
       }
       case "Some": {
-        const ml_standard_pattern_3 = ml_standard_callback_self_2.field0;
-        const ml_standard_callback_arg_1 = ml_standard_pattern_3;
-        const levels = ml_standard_callback_arg_1;
+        const ml_standard_pattern_4 = ml_standard_callback_self_3.field0;
+        const ml_standard_callback_arg_5 = ml_standard_pattern_4;
+        const levels = ml_standard_callback_arg_5;
         return ml_router_any(ml_router_iter(levels, true), (level) => { return ((level).effort === effort); });
       }
       default: {
-        return ml_router_unexpected(ml_standard_callback_self_2);
+        return ml_router_unexpected(ml_standard_callback_self_3);
       }
     }
   })();

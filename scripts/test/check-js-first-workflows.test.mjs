@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { auditWorkflows, guarded } from '../check-js-first-workflows.mjs';
-import {DRAFT_SUPPLEMENTS,DRAFT_SUPPLEMENT_CONDITION,DRAFT_SUPPLEMENT_PR_TYPES,readFixedNineDraftWorkflowSources} from '../fixed-nine-draft-policy.mjs';
+import {DRAFT_SUPPLEMENTS,DRAFT_SUPPLEMENT_CONDITION,DRAFT_SUPPLEMENT_PR_TYPES,readCurrentFixedNineDraftWorkflowSources as readFixedNineDraftWorkflowSources,readFixedNineDraftWorkflowSources as readOriginalFixedNineDraftWorkflowSources} from '../fixed-nine-draft-policy.mjs';
 import {prepareDraftSupplementalWorkflows} from '../prepare-draft-supplemental-workflows.mjs';
 import { parityCheckBudgets } from '../parity-check-budgets.mjs';
 const require = createRequire(new URL('../ci/package.json', import.meta.url));
@@ -21,6 +21,14 @@ function mutate(filename, operation) {
 }
 function fails(filename, operation, expected) { assert.ok(mutate(filename, operation).some(error => error.includes(expected))); }
 test('all repository workflows satisfy the policy', () => assert.deepEqual(auditWorkflows(baseline), []));
+test('current storage commands retain the immutable workflow archive and its complete native CST source inverse',{timeout:60000},()=>{
+ const original=readOriginalFixedNineDraftWorkflowSources(),before=JSON.stringify(original),current=readFixedNineDraftWorkflowSources(),name='.github/workflows/javascript-first.yml';
+ const old=original.files.find(row=>row.path===name),now=current.files.find(row=>row.path===name),evolution=current.currentWorkflowSourceEvolution;
+ assert.equal(JSON.stringify(original),before);assert.equal(evolution.before,old.before);assert.equal(evolution.after,baseline['javascript-first.yml']);assert.equal(evolution.inverse,old.before);assert.equal(evolution.completeInverse,true);assert.deepEqual(evolution.trace.map(row=>row.phase),['language','repository']);
+ assert.equal(JSON.parse(evolution.beforeMeta).source,old.before);assert.equal(JSON.parse(evolution.afterMeta).source,now.before);assert.equal(now.before,now.after);assert.equal(evolution.nativeSelections.length,2);assert.ok(old.before.includes('node scripts/translate-router.mjs --check'));assert.ok(now.before.includes('node scripts/translate-router-flat-native-owned-field-meta.mjs --retain-output-text --check'));
+ for(const row of original.files)if(row.path!==name)assert.deepEqual(current.files.find(candidate=>candidate.path===row.path),row);
+ assert.equal(JSON.stringify(readOriginalFixedNineDraftWorkflowSources()),before);
+});
 test('locked repository dependencies are installed before every consuming stage, including forward and profile checks', () => {
   const jobs = parse(baseline['javascript-first.yml']).jobs;
   const installations = [
@@ -49,7 +57,7 @@ test('locked repository dependencies are installed before every consuming stage,
     const steps = workflow.jobs.translation.steps;
     const index = steps.findIndex(step => step.run === 'npm ci --prefix js --ignore-scripts');
     const [install] = steps.splice(index, 1);
-    steps.splice(steps.findIndex(step => step.run === 'node scripts/translate-router.mjs --check'), 0, install);
+    steps.splice(steps.findIndex(step => step.run === "node scripts/translate-router-flat-native-owned-field-meta.mjs --retain-output-text --check"), 0, install);
   }, 'locked dependency install must precede');
 });
 test('installed pre-commit hooks preserve generic checks without automatic Rust execution or cache cleanup', () => {
@@ -137,7 +145,7 @@ test('aggregate rejects partial green, skipped and cancelled stages', () => {
 });
 test('independent profile freshness and strict TypeScript cannot be removed or replaced by canonical checks', () => {
   for (const [stage, command, substitute] of [
-    ['profile-matrix', 'node scripts/translate-router.mjs --profile-matrix --check', 'node scripts/translate-router.mjs --check'],
+    ['profile-matrix', "node scripts/translate-router-flat-native-owned-field-meta.mjs --retain-output-text --profile-matrix --check", "node scripts/translate-router-flat-native-owned-field-meta.mjs --retain-output-text --check"],
     ['typescript', 'node scripts/check-profile-typescript.mjs', 'node js/node_modules/typescript/bin/tsc -p tools/translation/tsconfig.json'],
   ]) {
     assert.ok(parse(baseline['javascript-first.yml']).jobs[stage].steps.some(step => step.run === command));

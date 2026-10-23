@@ -1,3 +1,5 @@
+import {substituteWholeSourceRow} from './single-source-substitution-runtime.mjs';
+import {verifyNativeCopiedSourceBindingBatch} from './source-copy-native-bindings.mjs';
 // Explicit complete consumer closure. Old/default and existing bulk copies stay exact.
 import {readFileSync,writeFileSync,existsSync,lstatSync} from 'node:fs';
 import {createHash} from 'node:crypto';
@@ -8,7 +10,7 @@ import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
 import {prepareOperationProofByteSources} from './prepare-operation-proof-byte-sources.mjs';
 import {prepareWholeOwnerResolverCandidate} from './prepare-whole-owner-resolver-candidate.mjs';
-import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
+import {transportConcreteSyntaxParsedChunks,transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url)),BASE='tools/translation/';
 const BRIDGE='operation-proof-byte-bridge.mjs',FALLBACK='operation-proof-byte-original-fallback.mjs',SCOPE='operation-proof-byte-consumer-scope.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex'),fail=message=>{throw TypeError('Whole owner proof byte source: '+message);};
@@ -87,6 +89,8 @@ function relocated(ts,path,source,mapping,{serializers=false}={}){
 }
 function hashCalls(ts,path,source){const file=parse(ts,path,source),rows=[];function visit(node){if(ts.isCallExpression(node)&&ts.isPropertyAccessExpression(node.expression)&&['update','digest'].includes(node.expression.name.text))rows.push(node.getText(file));ts.forEachChild(node,visit);}visit(file);return rows;}
 export function prepareWholeOwnerProofByteCandidate({root=ROOT}={}){
+ const nativeBatchRows=[];function verifyNativeCopiedSourceBindings(compiler,path,source){if(compiler!==ts)fail('native compiler association differs');const result={};nativeBatchRows.push({path,source,result});return result;}
+
  root=resolve(root);const ts=ownershipCompiler();if(ts.version!=='5.9.3'||createRequire(resolve(root,'js/package.json'))('typescript')!==ts)fail('actual root installed TypeScript5.9.3 required');
  const operation=prepareOperationProofByteSources({root}),resolver=prepareWholeOwnerResolverCandidate({root}),bulk=resolver.wholeOwnerProducer;
  if([...operation.files,...resolver.files,...bulk.files].some(row=>row.current!==row.after))fail('fresh complete materialized operation and existing whole-owner closure required');
@@ -94,15 +98,34 @@ export function prepareWholeOwnerProofByteCandidate({root=ROOT}={}){
  function input(path){if(!inputs.has(path)){const state=lstatSync(resolve(root,path));if(!state.isFile()||state.isSymbolicLink()||state.size>2*1024*1024)fail('bounded regular complete source input required');const source=readFileSync(resolve(root,path),'utf8');inputs.set(path,{path,source,sha256:hash(source)});}return inputs.get(path).source;}
  function whole(path,before,language,after,selection){
   if(after.split('\n').length>=1000)fail('complete generated source line budget');parse(ts,path,language);parse(ts,path,after);
-  const nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,path),after),rule=(old,value,id)=>({id,edits:[{span:[0,old.length],expected:old,replacement:value}]}),sequence={languageRules:[rule(before,language,'javascript:complete-original-proof-byte-consumer-copy')],repositoryRules:[rule(language,after,'router:single-private-issuer-and-operation-byte-import-closure')]},first=transportConcreteSyntaxSource(before,{language:'JavaScript'}),stages=[];let document=first.document;
-  for(const phase of ['language','repository']){
-   const from=phase==='language'?before:language,to=phase==='language'?language:after,beforeMeta=serializeConcreteSyntaxMeta(document),fresh=transportConcreteSyntaxMeta(beforeMeta);if(fresh.source!==from)fail('complete current phase source differs');
-   const run=applyConcreteSyntaxSubstitutions(fresh.document,{languageRules:phase==='language'?sequence.languageRules:[],repositoryRules:phase==='repository'?sequence.repositoryRules:[]}),afterMeta=serializeConcreteSyntaxMeta(run.value),last=transportConcreteSyntaxMeta(afterMeta);if(last.source!==to)fail('complete phase CST source equation differs');
-   const inverse=applyConcreteSyntaxSubstitutions(last.document,{languageRules:phase==='language'?[rule(to,from,'javascript:restore-complete-original-consumer')]:[],repositoryRules:phase==='repository'?[rule(to,from,'router:restore-complete-original-issuer-imports')]:[]});if(transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(inverse.value)).source!==from)fail('complete phase source inverse differs');
-   stages.push({phase,before:from,after:to,beforeMeta,afterMeta,trace:run.trace,completeInverse:true});document=last.document;
+  const nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,path),after),rule=(old,value,id)=>({id,edits:[{span:[0,old.length],expected:old,replacement:value}]}),sequence={languageRules:[rule(before,language,'javascript:complete-original-proof-byte-consumer-copy')],repositoryRules:[rule(language,after,'router:single-private-issuer-and-operation-byte-import-closure')]},first=(()=>{const rows=transportConcreteSyntaxParsedChunks([[{source:before,language:'JavaScript'},{source:language,language:'JavaScript'},{source:after,language:'JavaScript'}]]).chunks[0].rows;if(rows.length!==3||rows[0].source!==before||rows[1].source!==language||rows[2].source!==after)fail('complete phase source batch differs');return {...rows[0],completePhaseTransports:rows};})(),stages=[];let document=first.document,transported=first;
+  let wholeSourceFragment=null;
+ const wholeSourceTransports=first.completePhaseTransports,wholeMeta0=wholeSourceTransports[0].meta.length,wholeMeta1=wholeSourceTransports[1].meta.length,wholeMeta2=wholeSourceTransports[2].meta.length;
+ // Canonical JSON text needs at most twice its units when JSON-quoted; raw
+ // sources need at most six. Three bytes per unit bounds complete UTF8.
+ const wholeWireBound=4*(wholeMeta0+wholeMeta1+wholeMeta2)+6*(2*before.length+2*language.length+after.length)+4096;
+ if(2*wholeMeta0+3*wholeMeta1+wholeMeta2<=33554432&&3*wholeWireBound<=33554432){
+  const requested=(()=>{const stages=[];for(const phase of ['language','repository']){const from=phase==='language'?before:language,to=phase==='language'?language:after;stages.push({phase,expected:to,sequence:{languageRules:phase==='language'?sequence.languageRules:[],repositoryRules:phase==='repository'?sequence.repositoryRules:[]},inverseSequence:{languageRules:phase==='language'?[rule(to,from,'javascript:restore-complete-original-consumer')]:[],repositoryRules:phase==='repository'?[rule(to,from,'router:restore-complete-original-issuer-imports')]:[]}});}return {source:before,language:'JavaScript',stages};})(),received=substituteWholeSourceRow([requested]);
+  if(received.schema!=='private-concrete-source-substitution-batches-v1'||received.sourceAuthority!==false||received.runtimeAuthority!==false||received.rows.length!==1||typeof received.rows[0]!=='string')fail('complete single source operation differs');
+  const fragment=JSON.parse(received.rows[0]);
+  if(JSON.stringify(Object.keys(fragment))!==JSON.stringify(['beforeMeta','afterMeta','inverse','stages','trace'])||fragment.beforeMeta!==wholeSourceTransports[0].meta||fragment.afterMeta!==wholeSourceTransports[2].meta||fragment.inverse!==before||fragment.stages.length!==2)fail('complete independent source/CST join differs');
+  for(let index=0;index<2;index++){
+   const stage=fragment.stages[index],input=wholeSourceTransports[index],output=wholeSourceTransports[index+1];
+   if(JSON.stringify(Object.keys(stage))!==JSON.stringify(['phase','before','after','beforeMeta','afterMeta','trace','completeInverse'])||stage.phase!==(index?'repository':'language')||stage.before!==input.source||stage.after!==output.source||stage.beforeMeta!==input.meta||stage.afterMeta!==output.meta||stage.completeInverse!==true)fail('complete independent phase/inverse join differs');
+  }
+  if(JSON.stringify(fragment.trace.map(stage=>stage.phase))!==JSON.stringify(['language','repository','language','repository'])||JSON.stringify(fragment.trace.flatMap(stage=>stage.rules.map(rule=>rule.id)))!==JSON.stringify([...sequence.languageRules,...sequence.repositoryRules].map(rule=>rule.id)))fail('complete actual original rule trace differs');
+  wholeSourceFragment=fragment;
+ }
+ for(const phase of ['language','repository']){
+   if(wholeSourceFragment){const index=phase==='language'?0:1;stages.push(wholeSourceFragment.stages[index]);document=wholeSourceTransports[index+1].document;transported=wholeSourceTransports[index+1];continue;}
+
+   const from=phase==='language'?before:language,to=phase==='language'?language:after,beforeMeta=transported.meta,fresh=transported;if(fresh.source!==from)fail('complete current phase source differs');
+   const run=applyConcreteSyntaxSubstitutions(fresh.document,{languageRules:phase==='language'?sequence.languageRules:[],repositoryRules:phase==='repository'?sequence.repositoryRules:[]}),afterMeta=serializeConcreteSyntaxMeta(run.value),last=first.completePhaseTransports[phase==='language'?1:2];if(last.source!==to||last.meta!==afterMeta)fail('complete phase CST source equation differs');
+   const inverse=applyConcreteSyntaxSubstitutions(last.document,{languageRules:phase==='language'?[rule(to,from,'javascript:restore-complete-original-consumer')]:[],repositoryRules:phase==='repository'?[rule(to,from,'router:restore-complete-original-issuer-imports')]:[]});const inverseMeta=serializeConcreteSyntaxMeta(inverse.value),restored=fresh;if(inverse.value.source!==from||restored.source!==from||restored.meta!==inverseMeta||inverseMeta!==beforeMeta)fail('complete phase source inverse differs');
+   stages.push({phase,before:from,after:to,beforeMeta,afterMeta,trace:run.trace,completeInverse:true});document=last.document;transported=last;
   }
   if(JSON.stringify(hashCalls(ts,path,before))!==JSON.stringify(hashCalls(ts,path,after)))fail('every complete original Hash update/digest call must stay exact');
-  return {path,before,language,after,current:existsSync(resolve(root,path))?readFileSync(resolve(root,path),'utf8'):null,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta:first.meta,afterMeta:serializeConcreteSyntaxMeta(document),inverse:before,sequence,stages,trace:stages.flatMap(row=>row.trace),nativeBindings,selection};
+  return {path,before,language,after,current:existsSync(resolve(root,path))?readFileSync(resolve(root,path),'utf8'):null,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta:first.meta,afterMeta:transported.meta,inverse:before,sequence,stages,trace:stages.flatMap(row=>row.trace),nativeBindings,selection};
  }
  const mapping=new Map();for(const row of targets)for(const name of [row.physical,row.input])mapping.set('./'+name,'./'+row.output);
  let scope=input(BASE+'operation-proof-byte-scope.mjs');const scoped=relocated(ts,BASE+SCOPE,scope,new Map([['./private-native-proof-json.mjs','./'+FALLBACK]]));
@@ -143,6 +166,7 @@ export function prepareWholeOwnerProofByteCandidate({root=ROOT}={}){
  const serializerBindings=files.flatMap(row=>(row.selection.imports??[]).filter(edit=>edit.kind==='serializer-binding').map(edit=>({path:row.path,...edit})));
  if(serializerBindings.length!==5)fail('complete current native/frozen composer consumer import census differs');
  input(BASE+'prepare-whole-owner-proof-byte-candidate.mjs');
+ const nativeBatchChecks=verifyNativeCopiedSourceBindingBatch(ts,nativeBatchRows);if(nativeBatchChecks.length!==nativeBatchRows.length)fail('complete native result census differs');for(let index=0;index<nativeBatchRows.length;index++)Object.assign(nativeBatchRows[index].result,nativeBatchChecks[index]);
  for(const row of [...inputs.values(),...prerequisites])if(hash(readFileSync(resolve(root,row.path)))!==row.sha256)fail('complete current source input/prerequisite changed');
  return {schema:'whole-owner-operation-proof-byte-candidate-v1',typescriptVersion:ts.version,inputs:[...inputs.values()],prerequisiteInputs:prerequisites,files,physicalOverlays,serializerBindings,cycleEvidence,operationProducer:operation,resolverProducer:resolver,existingDefaultsUnchanged:true,existingBulkCopiesUnchanged:true,scope:'one qualified complete synchronous owner operation; no retained encoded bytes',newAcrossInvocationEncodedCache:false,originalHashCallsUnchanged:true,performanceQualified:false,runtimeExecuted:false,sourceAuthority:false,runtimeAuthority:false};
 }

@@ -1,3 +1,9 @@
+The [flat retained-output variant](flat-output-translation.md) subsequently
+copies the actual byte detacher into this complete generated native closure.
+It addresses the reproduced incompressible-string allocation failure while
+preserving this original API and all other storage function bodies. Its focused
+checks and full-corpus qualification remain distinct.
+
 The explicit native retained owned-field path is a source proposal. The prior
 retained complete generation exhausted its unchanged JavaScript heap while
 retaining the first project's fields; its native stack contained string
