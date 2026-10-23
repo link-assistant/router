@@ -2,6 +2,8 @@
 // This is an additive frontend, not unrestricted TypeScript annotation erasure.
 import {ownershipCompiler} from './vendor/module-syntax.mjs';
 import {createScalarTypeResolver} from './typed-scalar-aliases.mjs';
+import {typedScalarCallArguments} from './typed-call-arguments.mjs';
+import {restoreTypedOptionalTarget} from './typed-optional-target.mjs';
 import {translateJavaScript} from './typed-absence-translator.mjs';
 import {snakeFromCamel} from './vendor/ir.mjs';
 import {constructMap,idBySpelling} from './vendor/constructs.mjs';
@@ -23,18 +25,20 @@ function sourcePlan(stage,path){
  }
  const scalarResolver=createScalarTypeResolver({ts,kinds,aliases,file}),scalar=node=>scalarResolver.resolve(node);
  scalarResolver.validateAliases();
+ const callArguments=typedScalarCallArguments(ts,source);selections.push(...callArguments.edits);
  for(const node of file.statements){
   if(ts.isTypeAliasDeclaration(node)){ranges.push([node.getStart(file),node.end]);selected(node,'','compile-time-checked-scalar-alias');continue;}
   if(ts.isFunctionDeclaration(node)){
    if(!node.name||!node.body||node.asteriskToken||node.typeParameters?.length||node.modifiers?.some(modifier=>modifier.kind!==ts.SyntaxKind.ExportKeyword))fail('ordinary nongeneric scalar function required');
    if(ts.getJSDocTags(node).some(tag=>['param','return','returns','type','template','this'].includes(tag.tagName.text)))fail('competing JSDoc signature or generic contract');
-   const parameters=[],docs=[];
+   const parameters=[],docs=[];let optionalSeen=false;
    for(const parameter of node.parameters){
-    if(!ts.isIdentifier(parameter.name)||parameter.questionToken||parameter.dotDotDotToken||parameter.initializer||parameter.modifiers?.length)fail('ordinary required scalar parameter');
-    const type=scalar(parameter.type);allowType(parameter.type);parameters.push({name:snakeFromCamel(parameter.name.text),type});docs.push('@param {'+type+'} '+parameter.name.text);selected(parameter.type,'','native-scalar-parameter-annotation',parameter.name.end);
+    if(!ts.isIdentifier(parameter.name)||parameter.dotDotDotToken||parameter.modifiers?.length)fail('ordinary required scalar parameter');
+    const written=scalar(parameter.type);if(optionalSeen&&!parameter.questionToken&&!parameter.initializer)fail('required parameter follows an optional parameter');optionalSeen ||= Boolean(parameter.questionToken);
+    const type=parameter.questionToken?['number','string','boolean'].includes(written)?written+'|undefined':written==='undefined'||written.endsWith('|undefined')?written:fail('optional parameter requires one scalar/undefined domain'):written;allowType(parameter.type);parameters.push({name:snakeFromCamel(parameter.name.text),type,...(parameter.questionToken?{optionalSource:{span:[parameter.questionToken.getStart(file),parameter.questionToken.end],source:parameter.questionToken.getText(file)}}:{}),...(parameter.initializer?{defaultSource:{source:parameter.initializer.getText(file),span:[parameter.initializer.getStart(file),parameter.initializer.end]}}:{})});docs.push('@param {'+type+'} '+parameter.name.text);selected(parameter.type,'','native-scalar-parameter-annotation',parameter.name.end);
    }
    const returns=node.type?scalar(node.type):null;
-   if(node.type){allowType(node.type);docs.push('@returns {'+returns+'}');const close=node.parameters.end;let at=close;while(at<node.body.getStart(file)&&source[at]!==')')at++;if(source[at]!==')')fail('complete native parameter-list close');selected(node.type,'','native-scalar-return-annotation',at+1);}
+   if(node.type){allowType(node.type);docs.push('@returns {'+returns+'}');const colons=node.getChildren(file).filter(child=>child.kind===ts.SyntaxKind.ColonToken&&child.getStart(file)>=node.parameters.end&&child.end<=node.type.getStart(file));if(colons.length!==1)fail('one actual native return annotation colon required');selected(node.type,'','native-scalar-return-annotation',colons[0].getStart(file));}
    const start=node.getStart(file);selections.push({span:[start,start],expected:'',replacement:'/**\n'+docs.map(value=>' * '+value).join('\n')+'\n */\n',kind:'native-signature-to-checked-jsdoc'});
    contracts.push({kind:'function',name:snakeFromCamel(node.name.text),parameters,returns,span:[node.getStart(file),node.end]});
    const names=new Set();function visitLocal(child){
@@ -61,14 +65,14 @@ function sourcePlan(stage,path){
  const run=applyConcreteSyntaxSubstitutions(concrete.document,{languageRules:[{id:'typescript:substitute-native-selected-scalar-contracts',edits:selections.map(({span,expected,replacement})=>({span,expected,replacement})).sort((a,b)=>a.span[0]-b.span[0]||a.span[1]-b.span[1])}],repositoryRules:[]});
  const afterMeta=serializeConcreteSyntaxMeta(run.value),after=transportConcreteSyntaxMeta(afterMeta).source;
  const equations=transportConcreteSourceEquations([{before:source,after,language:'TypeScript'}]);if(equations[0].inverse!==source)fail('complete annotation source inverse differs');
- return {source,after,originalConcreteSyntax:stage.concreteSyntax,afterMeta,selections,contracts,locals,aliasInstantiations:scalarResolver.history,equations,trace:run.trace};
+ return {source,after,originalConcreteSyntax:stage.concreteSyntax,afterMeta,selections,contracts,locals,aliasInstantiations:scalarResolver.history,callArguments,equations,trace:run.trace};
 }
 function checkContracts(plan,translated){
  const type=value=>{const id=idBySpelling(constructMap().types,'javascript',value);if(!id)fail('scalar type has no existing semantic contract');return id;};
  for(const row of plan.contracts){
   const entries=translated.program.filter(entry=>entry.kind===row.kind&&entry.name===row.name);if(entries.length!==1)fail('one complete independently checked source declaration required');const entry=entries[0];
   if(row.kind==='constant'){if(entry.type!==type(row.type))fail('constant annotation and checked value differ');continue;}
-  if(entry.params.length!==row.parameters.length||entry.params.some((parameter,index)=>parameter.name!==row.parameters[index].name||parameter.type!==type(row.parameters[index].type)))fail('parameter annotation and checked signature differ');
+  if(entry.params.length!==row.parameters.length||entry.params.some((parameter,index)=>parameter.name!==row.parameters[index].name||parameter.type!==type(row.parameters[index].type)||Boolean(parameter.default)!==Boolean(row.parameters[index].defaultSource)))fail('parameter annotation and checked signature differ');
   if(row.returns&&entry.returns!==type(row.returns))fail('return annotation and checked body differ');
  }
  for(const row of plan.locals){
@@ -83,7 +87,7 @@ function translate(stage,options={}){
    {id:'typescript:bind-native-scalar-types-and-retain-CST-inverse',apply:()=>{plan=sourcePlan(stage,path);return plan.after;}},
    {id:'javascript:use-existing-checked-meta-and-rust-typescript-emission',apply:source=>{const result=translateJavaScript(source,options);checkContracts(plan,result);return result;}},
   ]},
-  {phase:'repository',rules:[{id:'router:retain-original-typescript-and-complete-annotation-history',apply:result=>({...result,javascript:plan.after,originalTypeScriptConcreteSyntax:plan.originalConcreteSyntax,typeAnnotationHistory:{selections:plan.selections,contracts:plan.contracts,locals:plan.locals,aliasInstantiations:plan.aliasInstantiations,equations:plan.equations,trace:plan.trace},semanticProfile:'portable-router-scalar-absence-v1',runtimeParity:false,wholeRouterSynchronization:false})}]},
+  {phase:'repository',rules:[{id:'router:retain-original-typescript-and-complete-annotation-history',apply:result=>{const optionalTarget=restoreTypedOptionalTarget(result.typescript,plan.contracts);return {...result,typescript:optionalTarget.source,optionalTargetHistory:optionalTarget.history,javascript:plan.after,originalTypeScriptConcreteSyntax:plan.originalConcreteSyntax,typeAnnotationHistory:{selections:plan.selections,contracts:plan.contracts,locals:plan.locals,aliasInstantiations:plan.aliasInstantiations,callArguments:plan.callArguments,equations:plan.equations,trace:plan.trace},semanticProfile:'portable-router-scalar-absence-v1',runtimeParity:false,wholeRouterSynchronization:false};}}]},
  ]).run(stage);
  return {...run.value,typedSourceRuleTrace:run.trace};
 }

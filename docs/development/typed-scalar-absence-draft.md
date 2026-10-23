@@ -36,5 +36,12 @@ Independent regression source covers repeated string reads, matching calls,
 strict guards, null/undefined distinctions, short circuiting, `typeof`, truthy
 edges, signed zero, NaN, infinities, invalid bodies and forged serialized guards.
 All source and regressions remain unrun. Union-typed defaults, general object
-unions, arbitrary coalescing/logic, optional parameter omission, broad TypeScript
+unions, arbitrary coalescing/logic, broad TypeScript
 generics, complete Router coverage and receiving qualification remain open.
+
+The later optional-scalar source family separately handles written `?`
+parameters, actual omitted local calls and the emitted TypeScript public
+signature. It uses fresh native source binding and explicit undefined
+substitutions; it does not broaden the legacy JavaScript checker or erase the
+distinction between required unions and optional parameters. All these source
+layers and regressions remain unrun.

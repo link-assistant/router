@@ -34,7 +34,7 @@ opaque-value permission.
 
 Assertions, non-null assertions, `satisfies`, generic runtime functions,
 non-scalar generic types, unresolved/recursive
-aliases, classes, interfaces, enums, optional/rest/default parameters and
+aliases, classes, interfaces, enums, rest parameters and
 arbitrary nested typed scopes remain explicit refusals. This draft adds actual
 typed source handling; it does not claim complete TypeScript support. The
 filesystem reverse lane separately handles its source-bound typed effect
@@ -52,3 +52,35 @@ repository rules preserve actual alias instantiation history alongside all
 original annotation/CST evidence. Both full source inverses remain required.
 The new positive, constraint/refusal, module linking and numeric boundary
 regression sources have not been executed during bulk drafting.
+
+Closed scalar parameter defaults now keep their complete original initializer
+source while native annotation rules remove only the declared type spans. The
+existing JavaScript parser, checker, meta serializer and emitters check the
+actual default expression. Parameter history records its source/span and the
+checked signature must retain the same presence of a default. Missing arguments
+and explicit undefined use that existing default contract; zero, false and
+empty strings keep their actual values. Defaults with parameter dependencies,
+calls, untyped parameters or absence unions remain outside this draft.
+
+`prepare-typed-scalar-defaults.mjs` retains the preceding complete frontend and
+its language/repository substitutions. Alias and absence preparers compose the
+complete fresh successor histories rather than overwriting the later source.
+Independent default behavior, source inverse and refusal regressions are
+drafted and unrun.
+
+Optional scalar parameters now select the same explicit scalar/undefined domain
+and retain their original `?` source span. A fresh native TypeScript Program
+resolves actual local call symbols before substitutions append missing optional
+operands as explicit undefined. Required arguments and parameter ordering remain
+checked. Existing arguments retain order, comments and trailing comma handling.
+The emitted TypeScript signature receives native-selected optional markers so
+external consumers can still omit the argument; that target source also retains
+its full CST equation and inverse. Rust keeps explicit absence envelopes.
+
+Return annotation removal now selects the native colon token rather than
+scanning for a parenthesis in source trivia. The optional family includes the
+whole prior frontend/refusal source and fresh adjacent default history through
+`prepare-typed-scalar-optional.mjs`. Its implementation, strict external-consumer
+regressions, native-binding refusals and source/trivia cases are drafted and
+unrun. Optional object or triple-absence domains and general callable classes
+still require separate rules.

@@ -28,7 +28,7 @@ test('closed nullable and undefined scalar aliases retain distinct existing abse
   const source='type Maybe='+annotation+'; export function identity(value: Maybe): Maybe {return value;}';
   const result=translateTypeScript(source);assert.ok(result.javascript.includes('@param {'+contract+'} value'));assert.ok(result.rust.includes(rust));assert.equal(result.typeAnnotationHistory.contracts[0].parameters[0].type,contract);assert.equal(result.typeAnnotationHistory.equations[0].inverse,source);
  }
- for(const source of ['export function mixed(value: string | null | undefined): string | null | undefined {return value;}','export function narrowed(value: true): true {return value;}','export function omitted(value?: string): string | undefined {return value;}'])assert.throws(()=>translateTypeScript(source),TypeError);
+ for(const source of ['export function mixed(value: string | null | undefined): string | null | undefined {return value;}','export function narrowed(value: true): true {return value;}'])assert.throws(()=>translateTypeScript(source),TypeError);
 });
 test('cycles unresolved aliases opaque types and runtime assertions retain explicit refusals',limits,()=>{
  for(const source of [

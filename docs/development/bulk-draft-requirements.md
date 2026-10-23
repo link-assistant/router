@@ -64,6 +64,21 @@ copy histories. The semantic implementation, edge cases and forged-guard
 regressions are drafted but unrun. Annotation substitution alone is not counted
 as executable support.
 
+The TypeScript source draft also preserves explicit closed scalar parameter
+defaults through the existing checked JavaScript pipeline. Initializer spans,
+signature default presence, omission/undefined behavior and complete adjacent
+alias/absence/default source histories have implementation and independent
+regression source. Nothing in these families has been executed. Dependent or
+effectful defaults, inferred parameter types and union defaults remain open.
+
+The optional scalar source family now includes actual native call binding,
+explicit undefined operands for omitted optional arguments, original question
+spans and restored public TypeScript optional signatures. Required union
+parameters remain required. Native return-colon selection replaces the earlier
+character scan through comments. Complete current/prior source equations and
+independent ABI, call order, trivia and refusal regressions are drafted and
+unrun. General callable/object/class/async obligations remain open.
+
 The filesystem reverse source also contains ordered guarded Result flows and
 closed lazy async flows. Every intermediate Result requires its original error
 return before a successful payload can be consumed. These additional language
