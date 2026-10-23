@@ -6,6 +6,7 @@ import {execFileSync} from 'node:child_process';
 import {createHash,randomUUID} from 'node:crypto';
 import {translateSource} from './translate.mjs';
 import {translatePortableRust,UnsupportedPortableRustSource} from './js-to-rust/portable-rust.mjs';
+import {preservePairedTypeScriptAPI} from './js-to-rust/paired-typescript-api.mjs';
 import {translateProject} from './project.mjs';
 import {translateJavaScript} from './js-to-rust/translator.mjs';
 import {translateTypeScript} from './js-to-rust/typed-portable.mjs';
@@ -73,7 +74,7 @@ function translate(unit,language,text,runtime,dependencies=[]){
    if(result.meta.refused.length)fail('Rust project unit still has unsupported source obligations: '+unit.id);return {Rust:text,JavaScript:result.javascript,TypeScript:result.typescript,meta:result.meta,generatedFrom:unit.paths.Rust.replace(/\.rs$/u,'.mjs'),runtimeBefore:'runtime'};
   }
   if(unit.profile==='portable'){
-   try{const result=translatePortableRust(text,{sourcePath:unit.paths.Rust});return {Rust:text,JavaScript:result.javascript,TypeScript:result.typescript,meta:{semanticMeta:result.meta,portableRustSourceHistory:result.portableRustSourceHistory},generatedFrom:unit.paths.Rust.replace(/\.rs$/u,'.mjs'),runtimeBefore:'runtime'};}
+   try{const result=translatePortableRust(text,{sourcePath:unit.paths.Rust});return {Rust:text,JavaScript:result.javascript,TypeScript:result.typescript,meta:{semanticMeta:result.meta,portableRustSourceHistory:result.portableRustSourceHistory},portableProgram:result.program,generatedFrom:unit.paths.Rust.replace(/\.rs$/u,'.mjs'),runtimeBefore:'runtime'};}
    catch(error){if(!(error instanceof UnsupportedPortableRustSource))throw error;}
   }
   const result=translateSource(text,unit.paths.Rust);if(result.ir.counts.carried||result.ir.items.some(row=>row.term==='fn'&&row.status!=='executable'))fail('Rust unit still contains unsupported bodies: '+unit.id);return {Rust:text,JavaScript:result.javascript,TypeScript:result.typescript,meta:result.ir,generatedFrom:unit.paths.Rust.replace(/\.rs$/u,'.mjs'),runtimeBefore:'runtime'};
@@ -97,11 +98,12 @@ export function planUnitSynchronization({root,manifestPath}={}){
   const run=createRulePipeline([
    {phase:'language',rules:[{id:'source-unit:translate-complete-current-authoritative-source',apply:()=>{translated=translate(unit,language,original,runtime,dependencies[language]);return translated;}}]},
    {phase:'repository',rules:[{id:'router:relocate-target-modules-and-retain-complete-source-proposal',apply:result=>{
+    if(language==='Rust'&&result.portableProgram&&current.TypeScript!==null){const paired=preservePairedTypeScriptAPI({original:current.TypeScript,typescript:result.TypeScript,program:result.portableProgram,rustSource:original});result={...result,TypeScript:paired.typescript,meta:{...result.meta,pairedTypeScriptAPIHistory:paired.history}};}
     const targetEquations=[];for(const target of languages){if(target===language)continue;let after=result[target];if(target!=='Rust'){const row=relocate(after,result.generatedFrom,unit.paths[target],result.runtimeBefore,unit.runtimes[target],target);after=row.source;targetEquations.push({language:target,...row});}const concrete=transportConcreteSyntaxSource(after,{language:target});if(transportConcreteSyntaxMeta(concrete.meta).source!==after)fail('complete target CST roundtrip differs');output(unit.paths[target],after,'translated-source');targetEquations.push({language:target,concreteSyntax:concrete.meta});}
     for(const target of ['JavaScript','TypeScript'])for(const [name,text]of assets)output(unit.runtimes[target]+'/'+name,text,'runtime-closure');return {targetEquations};
    }}]},
   ]).run(original);
-  const metadata={schema:SCHEMA,id:unit.id,authority:language,sourcePath:unit.paths[language],sourceSha256:hash(original),semanticMeta:translated.meta,targetEquations:run.value.targetEquations,trace:run.trace,runtimeParity:false};output(unit.meta,JSON.stringify(metadata)+'\n','translation-meta');units.push({id:unit.id,authority:language,paths:unit.paths,trace:run.trace});
+  const metadata={schema:SCHEMA,id:unit.id,authority:language,sourcePath:unit.paths[language],sourceSha256:hash(original),semanticMeta:run.value.meta,targetEquations:run.value.targetEquations,trace:run.trace,runtimeParity:false};output(unit.meta,JSON.stringify(metadata)+'\n','translation-meta');units.push({id:unit.id,authority:language,paths:unit.paths,trace:run.trace});
  }
  for(const row of outputs.values())if(protectedSources.has(row.path)&&row.before!==row.after)fail('a generated target would overwrite another unit authoritative input/dependency');
  for(const row of inputs)if(source(root,row.path)!==row.source)fail('source changed during complete planning');if(git(root,['rev-parse','HEAD']).trim()!==revision)fail('Git baseline changed');

@@ -49,8 +49,10 @@ frontend and inverse implementations. General grammar changes and repository
 profile integration stay in separate source sequences; the parent producer
 composes the new complete successor equation. Identity, guards, Unicode,
 signed-zero/NaN, typeof/truthiness and malicious source-change regressions are
-drafted and unrun. Broader generics and recovery of optional TypeScript API
-formatting from fresh paired source remain open.
+drafted and unrun. Broader generics remain open. The later
+[paired API source draft](paired-typescript-api-draft.md) recovers accepted
+optional/alias signatures from actual captured TypeScript and independently
+rechecks the complete formatted target against authoritative Rust.
 
 The same source family also decodes the actual scalar default envelope:
 `Option<T>` parameters require their exact initial `unwrap_or` binding, closed
@@ -61,3 +63,10 @@ while loops and assignment statements now use the existing checked control-flow
 IR; arbitrary ownership and iterator loops still require their separate rules.
 Default, string/boolean/signed-zero, bounded-loop and invalid-prefix regression
 source is drafted and unrun.
+
+Whole-source equality and fixed helper selection now compare bounded token
+cells directly under the existing native source host guards. That removes
+repeated JSON encodings from each helper comparison without adding a source,
+hash, owner, verdict or encoded-result cache. Complete original code and fresh
+successor equations are retained by `prepare-rust-syntax-cells.mjs`; receiving
+and performance qualification remain unrun.

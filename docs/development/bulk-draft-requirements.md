@@ -105,8 +105,17 @@ reemission checks. Actual helper source and all original implementation layers
 remain present. Its independent regressions are unrun. Canonical scalar
 Option/default prefixes, matching Some/None calls, mutable locals, while loops
 and assignments also have source rules and independent unrun cases. General
-ownership/generics, iterator loops and paired optional-API formatting still need
-their remaining implementation draft; this does not close full synchronization.
+ownership/generics and iterator loops still need their remaining implementation
+draft; this does not close full synchronization.
+
+The [paired TypeScript API draft](paired-typescript-api-draft.md) now preserves
+accepted scalar alias spellings and optional/required choices after Rust
+authority. Fresh paired source supplies formatting proposals only; the final
+independently checked TypeScript must reproduce the complete authoritative Rust
+syntax. Both native-selected source stages and final metadata histories remain
+present. Independent consumer, invalid proposal and whole baseline/Rust-edit
+integration regressions are drafted and unrun. Broader API forms and all other
+open requirement rows remain unfinished.
 
 The filesystem reverse source also contains ordered guarded Result flows and
 closed lazy async flows. Every intermediate Result requires its original error
@@ -145,3 +154,9 @@ joins and all sibling obligations. A reusable native-selected source-copy
 preparer retains complete originals, exact recipes and two-sequence CST
 inverses. The implementation and regression source are unrun; this adds no
 measured coverage or performance result and does not close the namespace row.
+
+Rust syntax comparison also has a shared bounded token-cell source draft with
+direct comparisons and native host guards. It removes repeated JSON encoding
+inside helper matching without a new cross-invocation cache. Full prior code,
+native-selected substitutions and both source inverses remain retained. This
+source-review optimization and its regressions are unrun and unmeasured.

@@ -27,6 +27,6 @@ test('Rust wrapper definitions panic branches and typeof payloads cannot be chan
 });
 test('complete original frontend and scalar inverse retain the explicit new source layer',limits,()=>{
  const next=preparePortableRustAbsenceInverse();assert.equal(next.files.length,2);
- for(const row of next.files){assert.equal(row.current,row.after);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);assert.equal(row.stages[0].inverse,row.before);assert.equal(row.stages[1].inverse,row.language);}
+ for(const row of next.files){assert.equal(row.current,row.currentAfter);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);assert.equal(row.stages[0].inverse,row.before);assert.equal(row.stages[1].inverse,row.language);}
  const parent=preparePortableRustInverse().files.find(row=>row.path.endsWith('/portable-rust-frontends.mjs'));assert.equal(parent.current,parent.currentAfter);assert.equal(parent.currentAfter,next.files.find(row=>row.path===parent.path).after);assert.equal(parent.laterHistories[0].before,parent.after);
 });

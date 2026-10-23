@@ -27,8 +27,16 @@ reemission and independently checked JavaScript that reproduces that complete
 Rust syntax. It retains original source/CST history and both semantic documents.
 Only the specific unsupported-profile refusal falls back to the existing
 forward translator. Native/infrastructure errors remain fatal. The whole
-three-language baseline/body-edit integration regression is drafted and unrun;
-general Rust and the emitted absence/generic envelope inverses remain open.
+three-language baseline/body-edit integration regression is drafted and unrun.
+Scalar absence/default envelopes and mutable scalar control flow have later
+source rules; general Rust, ownership and broader generic inverses remain open.
+
+The [paired TypeScript API draft](paired-typescript-api-draft.md) preserves
+accepted original scalar aliases and optional/required signatures after Rust
+authority. Paired source proposes formatting only; the final checked TypeScript
+must reproduce the authoritative complete Rust syntax again. Both source
+histories enter final synchronization metadata. The complete baseline/Rust-edit
+API regression source remains unrun.
 
 Language rules call the actual forward or reverse meta translator. Repository
 rules relocate native-selected import literals, retain complete CST/source

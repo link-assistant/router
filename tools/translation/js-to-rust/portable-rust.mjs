@@ -6,7 +6,8 @@ import {isRefusal} from './vendor/constructs.mjs';
 import {parseMeta} from './typed-absence-translator.mjs';
 import {optionalType} from './vendor/return-types.mjs';
 import {translateTypeScript} from './typed-portable.mjs';
-import {sourceItems,rustTokens} from '../rust-structure.mjs';
+import {sourceItems} from '../rust-structure.mjs';
+import {rustSyntaxCells,equalRustSyntaxCells,sameRustSourceSyntax} from '../rust-syntax-cells.mjs';
 import {transportConcreteSyntaxSource} from '../concrete-syntax-meta.mjs';
 import {transportConcreteSourceEquations} from '../concrete-source-equations.mjs';
 import {createRulePipeline} from '../rule-pipeline.mjs';
@@ -16,10 +17,9 @@ export class UnsupportedPortableRustSource extends TypeError {
 }
 const refuse=message=>{throw new UnsupportedPortableRustSource(message);};
 function syntax(source){
- const tokens=rustTokens(source).filter(token=>token.type!=='comment');if(tokens.length>200000)refuse('bounded complete Rust token census required');
- return tokens.map(token=>[token.type,token.text]);
+ return rustSyntaxCells(source);
 }
-function sameSyntax(left,right){return JSON.stringify(syntax(left))===JSON.stringify(syntax(right));}
+function sameSyntax(left,right){return sameRustSourceSyntax(left,right);}
 function originalHelpers(){
  const rows=[];for(const [name,source]of Object.entries(targets))if(typeof source==='string'&&/_HELPERS?$/u.test(name)){
   for(const item of sourceItems(source)){if(item.comment)continue;const text=source.slice(item.start,item.end);rows.push({family:name,source:text,syntax:syntax(text)});}
@@ -31,7 +31,7 @@ function decode(source){
  for(const item of items){
   if(item.comment)continue;
   if(item.name&&item.term!=='impl'){if(names.has(item.name))refuse('duplicate original source binding');names.add(item.name);}
-  const text=source.slice(item.start,item.end),tokens=syntax(text),matches=helpers.filter(helper=>JSON.stringify(helper.syntax)===JSON.stringify(tokens));
+  const text=source.slice(item.start,item.end),tokens=syntax(text),matches=helpers.filter(helper=>equalRustSyntaxCells(helper.syntax,tokens));
   if(matches.length){selected.push({span:[item.start,item.end],source:text,families:matches.map(helper=>helper.family),implementation:'original-complete-emitter-library-source',sourceAuthority:false,semanticAuthority:false});continue;}
   if(!['fn','const'].includes(item.term))refuse('source item has no scalar canonical inverse: '+item.term);
   // Native Rust-CST tokens preserve nested comments, literal spellings and
