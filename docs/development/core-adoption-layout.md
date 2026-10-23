@@ -37,11 +37,14 @@ The actual 566-file Router proposal and independent 3,443-packet review passed
 at b2187181, with 884 Rust/Cargo guards and 4,415 captured inputs. They selected
 two reader substitutions in one function, which is not executable coverage.
 The original installer then refused its incomplete Cargo guard universe before
-changing source. A new complete nested-layout application/recovery fixture is
-drafted alongside the original flat workflow. Both still need qualification at
-the committed installer repair, followed by a fresh actual Router run; the first
-receiving attempt correctly refused uncommitted compiler source. No source
-guard or original deadline is relaxed to reuse an older proposal.
+changing source. At repair checkpoint 23cb7de, both complete receiving files
+pass all ten cases under Node and Bun, including the new nested-layout
+application/recovery workflow and the unchanged flat workflow. Their original
+twenty-second child and sixty-second case deadlines pass without breaches.
+The current compiler and portable Git fixture refresh also passes with complete
+source/CST inverses and readback. A fresh actual Router run remains required;
+the first receiving attempt correctly refused uncommitted compiler source.
+No source guard or original deadline is relaxed to reuse an older proposal.
 
 Both controllers count evidence with a fresh native directory walk at every
 original accounting point. The original sparse logical sizes, allocated blocks,
