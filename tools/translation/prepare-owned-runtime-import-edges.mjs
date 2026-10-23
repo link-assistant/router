@@ -1,3 +1,4 @@
+import {execFileSync} from 'node:child_process';
 // Fresh full native parses; operation-local primitive import DATA only.
 import {readFileSync,writeFileSync} from 'node:fs';
 import {restoreOwnedStringOperations,extendOwnedStringOperations} from './owned-string-operation-rules.mjs';
@@ -62,8 +63,26 @@ function compilerProfile(ts,source,lazy){
  for(const name of CTORS){const ctor=ts.objectAllocator[name]();pin(ctor,'ctor:'+name);let owner=ctor.prototype,depth=0;while(owner!==null){if(++depth>8)fail('actual native allocator prototype depth differs');pin(owner,'prototype:'+name+':'+depth);owner=Object.getPrototypeOf(owner);}}
  return {pins,origins};
 }
+function nativeCompilerInputs(root){
+ root=resolve(root);const require=createRequire(resolve(root,'js/package.json')),ts=ownershipCompiler();if(ts!==require('typescript')||ts.version!=='5.9.3')fail('actual root installed native TypeScript5.9.3 required');const compilerPath=require.resolve('typescript'),compilerBytes=readFileSync(compilerPath);if(compilerBytes.length!==9112572||hash(compilerBytes)!==COMPILER_PIN)fail('complete original native TypeScript5.9.3 source differs');const compilerSource=new TextDecoder('utf8',{fatal:true,ignoreBOM:true}).decode(compilerBytes),compilerFile=parse(ts,compilerPath,compilerSource),lazy=nativeLazyAssertions(ts,compilerFile);return {root,ts,compilerPath,compilerBytes,compilerSource,compilerFile,lazy};
+}
+// A canonical source-preparation profile. This DATA operation grants no
+// runtime identity, parser, source-owner or executable permission.
+export function prepareOwnedRuntimeNativeCompilerData({root=ROOT}={}){
+ if(process.versions.bun)fail('canonical native profile requires Node.js');
+ const {ts,compilerSource,compilerFile,lazy}=nativeCompilerInputs(root);
+ const profile=compilerProfile(ts,compilerSource,lazy);return {schema:'canonical-native-compiler-profile-DATA-v1',profile,typescriptVersion:ts.version,sourceSha256:hash(compilerSource),runtime:process.versions.node};
+}
+function canonicalCompilerProfile(root,ts,source,lazy){
+ if(!process.versions.bun)return compilerProfile(ts,source,lazy);
+ const script="const {prepareOwnedRuntimeNativeCompilerData}=await import(process.argv[1]);process.stdout.write(JSON.stringify(prepareOwnedRuntimeNativeCompilerData({root:process.argv[2]})));";
+ const data=JSON.parse(execFileSync('node',['--input-type=module','--eval',script,import.meta.url,root],{cwd:root,encoding:'utf8',timeout:20000,maxBuffer:8*1024*1024}));
+ if(data.schema!=='canonical-native-compiler-profile-DATA-v1'||data.typescriptVersion!=='5.9.3'||data.sourceSha256!==hash(source)||typeof data.runtime!=='string'||!/^\d+\.\d+\.\d+/u.test(data.runtime)||Number(data.runtime.split('.')[0])<20||!data.profile||!Array.isArray(data.profile.origins))fail('complete canonical native profile differs');
+ for(const row of data.profile.origins)if(source.slice(...row.span)!==row.source||data.profile.pins[row.tag]?.find(pin=>pin.key===row.key)?.[row.kind]!==row.source)fail('complete canonical native origin differs');
+ return data.profile;
+}
 export function prepareOwnedRuntimeImportEdges({root=ROOT}={}){
- root=resolve(root);const require=createRequire(resolve(root,'js/package.json')),ts=ownershipCompiler();if(ts!==require('typescript')||ts.version!=='5.9.3')fail('actual root installed native TypeScript5.9.3 required');const compilerPath=require.resolve('typescript'),compilerBytes=readFileSync(compilerPath);if(compilerBytes.length!==9112572||hash(compilerBytes)!==COMPILER_PIN)fail('complete original native TypeScript5.9.3 source differs');const compilerSource=new TextDecoder('utf8',{fatal:true,ignoreBOM:true}).decode(compilerBytes),compilerFile=parse(ts,compilerPath,compilerSource),lazy=nativeLazyAssertions(ts,compilerFile),native=compilerProfile(ts,compilerSource,lazy),parentTail=[];
+ const {ts,compilerPath,compilerBytes,compilerSource,compilerFile,lazy}=nativeCompilerInputs(root);root=resolve(root);const native=canonicalCompilerProfile(root,ts,compilerSource,lazy),parentTail=[];
  for(const name of ['createSourceFile','parseSourceFileWorker','fixupParentReferences','setParentRecursive','setParent','forEachChild','forEachChildRecursively','gatherPossibleChildren','isJSDocNode','hasJSDocNodes']){const node=one(find(ts,compilerFile,value=>ts.isFunctionDeclaration(value)&&value.name?.text===name),'complete actual native '+name);parentTail.push({name,source:node.getText(compilerFile),span:[node.getStart(compilerFile),node.end]});}
  const table=one(find(ts,compilerFile,node=>ts.isVariableDeclaration(node)&&ts.isIdentifier(node.name)&&node.name.text==='forEachChildTable'),'complete native child traversal table');parentTail.push({name:'forEachChildTable',source:table.getText(compilerFile),span:[table.getStart(compilerFile),table.end]});
  const packed=readFileSync(resolve(root,ARCHIVE));if(packed.length!==27671||hash(packed)!==PACKED_PIN)fail('complete original archive differs');const raw=gunzipSync(packed,{maxOutputLength:262144});if(raw.length!==110675||hash(raw)!==RAW_PIN)fail('complete original source vector differs');const original=JSON.parse(new TextDecoder('utf8',{fatal:true,ignoreBOM:true}).decode(raw));if(original.schema!=='owned-runtime-import-edge-originals-v1'||original.files.length!==4)fail('complete original source domain differs');for(const row of original.files)if(Buffer.byteLength(row.source)!==row.bytes||hash(row.source)!==row.sha256)fail('complete original source/hash join differs');
