@@ -119,6 +119,15 @@ The user's 2026-10-22 instruction authorizes prompt merge of PR #771 once green 
 
 ## Translation rules and shared regressions
 
+For [native-parsed canonical CST construction](docs/development/native-parsed-canonical-cst.md),
+preserve the complete original compiler prefix, source authentication, both
+independent builds, full canonical-wire comparisons and the legacy validator
+fallback. Source-text preflight is equality data and never a reviewed-source,
+parser or owner capability. Actual source proposals and history joins require
+the complete CST/native reviews. Fixture setup must copy the complete current
+dependency set and derive import counts from the native grammar while retaining
+all behavior cases, callback assertions, refusals, inverses and original limits.
+
 For [invocation-local source checks](docs/development/invocation-local-source-checks.md),
 retain complete canonical wire comparisons, already serialized/reparsed CST
 transports, both actual substitution sequences and complete inverses. Native
