@@ -164,6 +164,10 @@ jobs:
     # Cycle nine forward/canonical steps reached 719s/752s; the separate matrix
     # stage prevents their sum exhausting a shared 60-minute job.
     timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [tests, canonical, owned-definitions]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -184,11 +188,14 @@ jobs:
             if (!/^[a-f0-9]{40}$/.test(expected) || execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim() !== expected) process.exit(1);
           "
       - run: npm ci --prefix js --ignore-scripts
-      - run: node scripts/run-node-tests.mjs --outer-timeout-ms=3600000 --test-concurrency=2 tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs
-      - run: node scripts/translate-router-flat-native-owned-field-meta.mjs --retain-output-text --check
-      - run: node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --check
+      - if: ${{ matrix.part == 'tests' }}
+        run: node scripts/run-node-tests.mjs --outer-timeout-ms=3600000 --test-concurrency=2 tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs
+      - if: ${{ matrix.part == 'canonical' }}
+        run: node scripts/translate-router-flat-native-owned-field-meta.mjs --retain-output-text --check
+      - if: ${{ matrix.part == 'owned-definitions' }}
+        run: node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --check
       - name: Preserve complete Node deadline audit and raw streams
-        if: ${{ always() }}
+        if: ${{ always() && matrix.part == 'tests' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: node-case-deadlines-${{ github.job }}-${{ inputs.sha }}
@@ -201,6 +208,10 @@ jobs:
     # Completed cycle-nine matrix checks reached 2166s. Keep a finite independent
     # 60-minute window, the same immutable SHA and unconditional failure.
     timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [canonical, owned-definitions]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -218,8 +229,10 @@ jobs:
             if (!/^[a-f0-9]{40}$/.test(expected) || execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim() !== expected) process.exit(1);
           "
       - run: npm ci --prefix js --ignore-scripts
-      - run: node scripts/translate-router-flat-native-owned-field-meta.mjs --retain-output-text --profile-matrix --check
-      - run: node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --profile-matrix --check
+      - if: ${{ matrix.part == 'canonical' }}
+        run: node scripts/translate-router-flat-native-owned-field-meta.mjs --retain-output-text --profile-matrix --check
+      - if: ${{ matrix.part == 'owned-definitions' }}
+        run: node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --profile-matrix --check
   reverse-translation:
     runs-on: ubuntu-24.04
     timeout-minutes: 15

@@ -94,10 +94,14 @@ the user's current instruction and never invoke a local Rust tool.
 
 ## Current acceptance boundary
 
-Full compiler generation still exceeds memory in the profile path; TypeScript
-cannot check absent neutral output trees; strict parity records 441 genuine
-draft gaps and a stale source inventory; reverse CI has incomplete cancelled
-work. The completed #771 source checkpoint does not close any of these.
+The complete 863-source canonical generation now fits its unchanged resource
+bounds and both canonical TypeScript trees pass strict checking. The current
+production census admits 163/2,570 functions (6.34%), with independent Node/Bun
+execution of all six newly admitted functions. Profile generation still needs
+qualification; TypeScript cannot check absent neutral output trees. The prior
+strict parity result records 441 genuine draft gaps; reverse CI has incomplete
+cancelled work. Canonical success does not close those obligations or certify
+full runtime parity.
 Missing source provenance in older stored-gain fixtures is a separate bulk
 receiving repair. Preserve full logs and source identities for every category.
 

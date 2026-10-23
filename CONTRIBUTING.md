@@ -14,9 +14,17 @@ Rust, rustfmt, Clippy and rust-script remain tools for the Rust implementation a
 
 Disabling a conflicting local hook does not waive CI verification. Rust check failures must still fail CI after every required JavaScript stage passes for the same commit. Gated jobs and steps must not ignore failures with `continue-on-error`; the workflow audit enforces this independently of installed local hooks.
 
-Canonical and platform-profile checks and synchronization use `node scripts/translate-router-flat-native-owned-field-meta.mjs --retain-output-text`; add `--check` for freshness and `--profile-matrix` for the declared profiles. Its actual 862-source run passed the existing memory/disk bounds. Keep the separate owned-definition checks, all eight JavaScript stages, original case deadlines and fatal same-SHA Rust verification. See [the storage contract](docs/development/flat-output-translation.md); a successful generation does not establish complete executable coverage or runtime parity.
+Canonical and platform-profile checks and synchronization use `node scripts/translate-router-flat-native-owned-field-meta.mjs --retain-output-text`; add `--check` for freshness and `--profile-matrix` for the declared profiles. Its actual 863-source canonical run passed the existing memory/disk/time bounds; platform-profile qualification remains separate. Keep the separate owned-definition checks, all eight JavaScript stages, original case deadlines and fatal same-SHA Rust verification. See [the storage contract](docs/development/flat-output-translation.md); a successful generation does not establish complete executable coverage or runtime parity.
 
 ## Development Workflow
+
+Use the [fixed parallel command partitions](docs/development/parallel-javascript-gate.md)
+to run complete forward tests, canonical checks and owned-definition checks
+independently. Keep all eight same-SHA stages, every full command and original
+timeout. Require every matrix member, set `fail-fast: false`, retain failed-test
+evidence and reject unreviewed conditions or dynamic member lists. Verify the
+actual generated workflow with `node scripts/prepare-parallel-js-gate.mjs --check`;
+its native CST/source inverse is not a successful CI result or Rust permission.
 
 Keep complete source banks within the original export budgets. The
 [source-compression workflow](docs/development/static-source-compression.md)

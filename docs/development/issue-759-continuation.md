@@ -29,7 +29,7 @@ The merge scope includes scheduled work and an external dynamic Dependabot job;
 that job does not certify the Router gate or Rust runtime. New published SHAs
 need their own results; skipped or cancelled work remains unqualified.
 
-The last measured executable production baseline is 155/2,567 functions
+The historical executable production baseline is 155/2,567 functions
 (6.04%) against an older 847-source inventory. The refreshed fixture contains
 865 Rust/Cargo inputs, but a fresh executable census is still required.
 The recorded 441 parity gaps and `runtimeParity: false` remain open.
@@ -135,3 +135,15 @@ Rust oracle source; complete source-composition checks also pass both engines.
 Full current canonical/platform generation, executable coverage, reverse
 freshness, strict parity and the complete same-SHA gate remain separate open
 delivery obligations.
+
+The current [complete canonical qualification](flat-semantic-meta.md) passes
+at `ec0bed123`: 863 sources, 2,867 outputs, strict TypeScript 5.9.3 and all
+4,355 unchanged source inputs, within the original memory/disk/time bounds.
+Release planner-owned contexts after their final use rather than carrying them
+through the output census. The fresh production census admits 163/2,570
+functions (6.34%). All six newly admitted functions execute independently in
+generated JavaScript and strict TypeScript under Node and Bun; the complete
+15-case current production group passes both engines. This is a current
+canonical result, not 100% translation or native Router parity. All remaining
+profile, owned-definition, reverse, runtime-parity and same-SHA CI requirements
+in #772 remain required.

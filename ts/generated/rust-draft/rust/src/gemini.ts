@@ -90,38 +90,38 @@ function rp_67656d696e692e6d61705f66696e6973685f726561736f6e(gemini: string): st
 function rp_67656d696e692e67656d696e695f66696e6973685f726561736f6e(response: MLData_72705f3733363537323634363535663661373336663665326535363631366337353635): Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }> {
   ml_validate_rust_value(response, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
   const inner = (() => {
-    const ml_standard_body_1 = (() => { const ml_shared_immutable_value = ml_host_serde_json_value_get_string(response, "response"); ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
-    const ml_standard_body_2 = (() => { const ml_shared_immutable_value = response; ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
-    switch (ml_standard_body_1.$) {
+    const ml_standard_body_5 = (() => { const ml_shared_immutable_value = ml_host_serde_json_value_get_string(response, "response"); ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
+    const ml_standard_body_6 = (() => { const ml_shared_immutable_value = response; ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
+    switch (ml_standard_body_5.$) {
       case "None": {
-        return ml_standard_body_2;
+        return ml_standard_body_6;
       }
       case "Some": {
-        const x = ml_standard_body_1.field0;
+        const x = ml_standard_body_5.field0;
         return x;
       }
       default: {
-        return ml_router_unexpected(ml_standard_body_1);
+        return ml_router_unexpected(ml_standard_body_5);
       }
     }
   })() as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
   return ml_host_option_bind((() => {
-    const ml_standard_body_2_2 = (() => { const ml_shared_immutable_value = ml_host_serde_json_value_pointer(inner, "/candidates/0/finishReason"); ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
-    switch (ml_standard_body_2_2.$) {
+    const ml_standard_body_8 = (() => { const ml_shared_immutable_value = ml_host_serde_json_value_pointer(inner, "/candidates/0/finishReason"); ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
+    switch (ml_standard_body_8.$) {
       case "None": {
-        const ml_standard_capture_domain_1 = (() => { const ml_shared_immutable_value = inner; ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
+        const ml_standard_capture_domain_7 = (() => { const ml_shared_immutable_value = inner; ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
         return ml_host_serde_json_value_pointer(inner, "/promptFeedback/blockReason");
       }
       case "Some": {
-        const ml_standard_alias_field = ml_standard_body_2_2.field0;
-        const x_2 = ml_standard_body_2_2 as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
+        const ml_standard_alias_field = ml_standard_body_8.field0;
+        const x_2 = ml_standard_body_8 as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
         return x_2;
       }
       default: {
-        return ml_router_unexpected(ml_standard_body_2_2);
+        return ml_router_unexpected(ml_standard_body_8);
       }
     }
-  })(), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_0_0); }, "and_then");
+  })(), (ml_host_callback_8_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_8_0); }, "and_then");
 }
 
 function ml_make_ShapeIn_Chat(): Readonly<{ readonly "$": "Chat" }> | Readonly<{ readonly "$": "Responses" }> {

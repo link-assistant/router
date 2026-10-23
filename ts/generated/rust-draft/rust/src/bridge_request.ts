@@ -23,8 +23,10 @@ type MLData_526f75746572526573756c745f33375f6e616d65645f373336353732363436353566
 type MLData_526f75746572526573756c745f33385f6e616d65645f3733373436345f37343639366436355f343437353732363137343639366636655f36345f6e616d65645f3733373436345f37343639366436355f353437323739343637323666366434363663366636313734353336353633373334353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": MLData_7374642e74696d652e4475726174696f6e }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 }>;
 type MLData_526f75746572526573756c745f345f756e69745f32385f6e616d65645f3733373436345f363936665f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": null }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_7374642e696f2e4572726f72 }>;
 type MLData_726f757465725f636f72655f6261736536342e4261736536344572726f72 = Readonly<{ readonly "$": "InvalidByte"; readonly "field0": bigint; readonly "field1": bigint }> | Readonly<{ readonly "$": "InvalidLength"; readonly "field0": bigint }> | Readonly<{ readonly "$": "InvalidLastSymbol"; readonly "offset": bigint; readonly "symbol": bigint; readonly "symbol_value": bigint }> | Readonly<{ readonly "$": "InvalidPadding" }>;
+type MLData_72705f353236663735373436353732346637303734363936663665356633313337356637323735373337343566366637373665363536343566373337343732363936653637 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
 type MLData_72705f3532366637353734363537323466373037343639366636653566333533343566373236353636363537323635366536333635356637333638363137323635363435663665363136643635363435663337333333363335333733323336333433363335333536363336363133373333333636363336363535663335333633363331333636333337333533363335 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
 type MLData_72705f353236663735373436353732346637303734363936663665356633363566373337343732363936653637 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
+type MLData_72705f353236663735373436353732353437353730366336353566333435663632366636663663356633343566363236663666366335663732373537333734356633353632333736323337363433323633333736323337363433353634 = Readonly<{ readonly "$": "Tuple"; readonly "field0": boolean; readonly "field1": boolean }>;
 type MLData_72705f3733363537323634363535663661373336663665326534643631373034353665373437323739 = Readonly<{ readonly "$": "MapEntry"; readonly "key": string; readonly "value": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
 type MLData_72705f373336353732363436353566366137333666366532653464363137303566353337343732363936653637356635363631366337353635 = Readonly<{ readonly "$": "Map"; readonly "entries": ReadonlyArray<MLData_72705f3733363537323634363535663661373336663665326534643631373034353665373437323739> }>;
 type MLData_72705f37333635373236343635356636613733366636653265346537353664363236353732 = Readonly<{ readonly "$": "PosInt"; readonly "field0": bigint }> | Readonly<{ readonly "$": "NegInt"; readonly "field0": bigint }> | Readonly<{ readonly "$": "Float"; readonly "field0": number }>;
@@ -49,11 +51,15 @@ import { validateJsonNumber as ml_validate_json_number, validateJsonMap as ml_va
 
 import { validateRustValue as ml_validate_rust_value } from "../../runtime/type-layout-runtime.mjs";
 
-import { serde_json_value_get_string as ml_host_serde_json_value_get_string, serde_json_value_as_str as ml_host_serde_json_value_as_str } from "../../runtime/json-runtime.mjs";
+import { serde_json_value_get_string as ml_host_serde_json_value_get_string, serde_json_value_is_null as ml_host_serde_json_value_is_null, serde_json_value_as_str as ml_host_serde_json_value_as_str } from "../../runtime/json-runtime.mjs";
 
-import { assertImmutableCopy as ml_pattern_immutable } from "../../runtime/copy-runtime.mjs";
+import { assertImmutableCopy as ml_assert_immutable_copy, assertImmutableCopy as ml_pattern_immutable } from "../../runtime/copy-runtime.mjs";
 
 import { assertImmutableIterator as ml_pattern_immutable_view } from "../../runtime/iterator-runtime.mjs";
+
+function ml_router_unexpected(value: any): never {
+  throw new TypeError(`unexpected constructor ${value.$}`);
+}
 
 const ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 = {"schemaVersion":1,"types":{"rp_73657264655f6a736f6e2e4d6170456e747279":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d6170456e747279","ctors":[{"name":"MapEntry","fields":[{"name":"key","type":{"kind":"string"}},{"name":"value","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}]}]},"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565","ctors":[{"name":"Map","fields":[{"name":"entries","type":{"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d6170456e747279"}}}]}]},"rp_73657264655f6a736f6e2e4e756d626572":{"kind":"data","name":"rp_73657264655f6a736f6e2e4e756d626572","ctors":[{"name":"PosInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":false}}]},{"name":"NegInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":true}}]},{"name":"Float","fields":[{"name":"field0","type":{"kind":"float"}}]}]},"rp_73657264655f6a736f6e2e56616c7565":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565","ctors":[{"name":"Null","fields":[]},{"name":"Bool","fields":[{"name":"field0","type":{"kind":"bool"}}]},{"name":"Number","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e4e756d626572"}}]},{"name":"String","fields":[{"name":"field0","type":{"kind":"string"}}]},{"name":"Array","fields":[{"name":"field0","type":{"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}}]},{"name":"Object","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565"}}]}]}}};
 
@@ -104,6 +110,81 @@ const serde_json = {
   },
 };
 
+function rp_6272696467655f726571756573742e756e7472616e736c617461626c655f726573706f6e7365735f7374617465(body: MLData_72705f3733363537323634363535663661373336663665326535363631366337353635): Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }> {
+  ml_pattern_immutable_view(body);
+  ml_validate_rust_value(body, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  const previous = (() => {
+    const ml_standard_callback_self_7 = (() => { const ml_shared_immutable_value = ml_host_serde_json_value_get_string(body, "previous_response_id"); ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
+    switch (ml_standard_callback_self_7.$) {
+      case "None": {
+        return false;
+      }
+      case "Some": {
+        const ml_standard_pattern_8 = ml_standard_callback_self_7.field0;
+        const ml_standard_callback_arg_9 = ml_standard_pattern_8 as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
+        const value = ml_standard_callback_arg_9 as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
+        return !ml_host_serde_json_value_is_null(value);
+      }
+      default: {
+        return ml_router_unexpected(ml_standard_callback_self_7);
+      }
+    }
+  })();
+  const conversation = (() => {
+    const ml_standard_callback_self_16 = (() => { const ml_shared_immutable_value = ml_host_serde_json_value_get_string(body, "conversation"); ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
+    switch (ml_standard_callback_self_16.$) {
+      case "None": {
+        return false;
+      }
+      case "Some": {
+        const ml_standard_pattern_17 = ml_standard_callback_self_16.field0;
+        const ml_standard_callback_arg_18 = ml_standard_pattern_17 as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
+        const value_2 = ml_standard_callback_arg_18 as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
+        return !ml_host_serde_json_value_is_null(value_2);
+      }
+      default: {
+        return ml_router_unexpected(ml_standard_callback_self_16);
+      }
+    }
+  })();
+  const ml_s20 = (() => {
+    const ml_match_subject25 = Object.freeze({ $: 'Tuple', field0: previous, field1: conversation });
+    ml_pattern_immutable(ml_match_subject25);
+    return ml_match_subject25;
+  })();
+  switch (ml_s20.$) {
+    case "Tuple": {
+      const ml_f21 = ml_s20.field0;
+      const ml_f22 = ml_s20.field1;
+      if ((ml_f21 === true)) {
+        if ((ml_f22 === true)) {
+          return Object.freeze({ $: 'Some', field0: (() => {
+        const ml_conversion_source_26 = "previous_response_id and conversation are mutually exclusive and cannot be resolved by an Anthropic bridge; send self-contained input";
+        return ml_conversion_source_26;
+      })() });
+        } else {
+          return Object.freeze({ $: 'Some', field0: (() => {
+        const ml_conversion_source_27 = "previous_response_id cannot be resolved by an Anthropic bridge; send self-contained input";
+        return ml_conversion_source_27;
+      })() });
+        }
+      } else {
+        if ((ml_f22 === true)) {
+          return Object.freeze({ $: 'Some', field0: (() => {
+        const ml_conversion_source_28 = "conversation cannot be resolved by an Anthropic bridge; send self-contained input";
+        return ml_conversion_source_28;
+      })() });
+        } else {
+          return Object.freeze({ $: 'None' });
+        }
+      }
+    }
+    default: {
+      return ml_router_unexpected(ml_s20);
+    }
+  }
+}
+
 function rp_6272696467655f726571756573742e6e6f6e656d707479(value: MLData_72705f3733363537323634363535663661373336663665326535363631366337353635, key: string): Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }> {
   ml_pattern_immutable_view(value);
   ml_validate_rust_value(value, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
@@ -111,12 +192,12 @@ function rp_6272696467655f726571756573742e6e6f6e656d707479(value: MLData_72705f3
   return (() => {
     const ml_standard_callback_self_2 = ml_host_option_bind(ml_host_serde_json_value_get_string(value, key), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_0_0); }, "and_then") as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
     return (() => {
-    const ml_pattern_1 = ml_standard_callback_self_2 as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
-    if ((ml_pattern_immutable(ml_pattern_1) && (ml_pattern_1.$ === "Some"))) {
-      const ml_standard_pattern_3 = (ml_pattern_1)["field0"];
+    const ml_pattern_4 = ml_standard_callback_self_2 as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
+    if ((ml_pattern_immutable(ml_pattern_4) && (ml_pattern_4.$ === "Some"))) {
+      const ml_standard_pattern_3 = (ml_pattern_4)["field0"];
       if ((() => {
-      const ml_standard_callback_arg_2 = ml_standard_pattern_3;
-      const text = ml_standard_callback_arg_2;
+      const ml_standard_callback_arg_5 = ml_standard_pattern_3;
+      const text = ml_standard_callback_arg_5;
       return !(text.length === 0);
     })()) {
         return Object.freeze({ $: 'Some', field0: ml_standard_pattern_3 });
@@ -129,5 +210,5 @@ function rp_6272696467655f726571756573742e6e6f6e656d707479(value: MLData_72705f3
   })();
 }
 
-export const translated: { "BridgeTarget": Readonly<{ "Responses": () => Readonly<{ readonly "$": "Responses" }> | Readonly<{ readonly "$": "Chat" }> | Readonly<{ readonly "$": "Gemini" }>; "Chat": () => Readonly<{ readonly "$": "Responses" }> | Readonly<{ readonly "$": "Chat" }> | Readonly<{ readonly "$": "Gemini" }>; "Gemini": () => Readonly<{ readonly "$": "Responses" }> | Readonly<{ readonly "$": "Chat" }> | Readonly<{ readonly "$": "Gemini" }> }>; "nonempty": (value: MLData_72705f3733363537323634363535663661373336663665326535363631366337353635, key: string) => Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }> } = { ["BridgeTarget"]: Object.freeze({ ["Responses"]: ml_make_BridgeTarget_Responses, ["Chat"]: ml_make_BridgeTarget_Chat, ["Gemini"]: ml_make_BridgeTarget_Gemini }), ["nonempty"]: rp_6272696467655f726571756573742e6e6f6e656d707479 };
-export const provenance = {"sourcePath":"rust/src/bridge_request.rs","sourceSha256":"acdba5185dc63148a8a8821c10208ec8ba5c965313df900ee23eecb526695236","executable":2,"executableFunctions":1,"executableConstants":0,"executableTypes":1,"executableConstructors":3,"carried":33,"preserved":36,"runtimeParity":false};
+export const translated: { "BridgeTarget": Readonly<{ "Responses": () => Readonly<{ readonly "$": "Responses" }> | Readonly<{ readonly "$": "Chat" }> | Readonly<{ readonly "$": "Gemini" }>; "Chat": () => Readonly<{ readonly "$": "Responses" }> | Readonly<{ readonly "$": "Chat" }> | Readonly<{ readonly "$": "Gemini" }>; "Gemini": () => Readonly<{ readonly "$": "Responses" }> | Readonly<{ readonly "$": "Chat" }> | Readonly<{ readonly "$": "Gemini" }> }>; "untranslatable_responses_state": (body: MLData_72705f3733363537323634363535663661373336663665326535363631366337353635) => Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; "nonempty": (value: MLData_72705f3733363537323634363535663661373336663665326535363631366337353635, key: string) => Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }> } = { ["BridgeTarget"]: Object.freeze({ ["Responses"]: ml_make_BridgeTarget_Responses, ["Chat"]: ml_make_BridgeTarget_Chat, ["Gemini"]: ml_make_BridgeTarget_Gemini }), ["untranslatable_responses_state"]: rp_6272696467655f726571756573742e756e7472616e736c617461626c655f726573706f6e7365735f7374617465, ["nonempty"]: rp_6272696467655f726571756573742e6e6f6e656d707479 };
+export const provenance = {"sourcePath":"rust/src/bridge_request.rs","sourceSha256":"acdba5185dc63148a8a8821c10208ec8ba5c965313df900ee23eecb526695236","executable":3,"executableFunctions":2,"executableConstants":0,"executableTypes":1,"executableConstructors":3,"carried":32,"preserved":36,"runtimeParity":false};

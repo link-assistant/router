@@ -1,4 +1,4 @@
-// Generated draft from rust/src/claude_identity.rs; sha256=4d572b96cff36186a56cb18b4a03c0727a0774083bfe57b584f4c573a48a0bd0
+// Generated draft from rust/src/claude_identity.rs; sha256=bd4440a5694bb8741cd75e1cb438f252f44e43df4d3ac6faebb537e21276b5c9
 // Carried constructs are data, never runtime parity evidence.
 import { validateJsonNumber as ml_validate_json_number, validateJsonMap as ml_validate_json_map } from "../../runtime/json-values.mjs";
 
@@ -45,8 +45,8 @@ function rp_636c617564655f6964656e746974792e66697273745f626c6f636b5f69735f696465
       }
       case "Some": {
         const ml_standard_pattern_5 = ml_standard_callback_self_4.field0;
-        const ml_standard_callback_arg_1 = ml_standard_pattern_5;
-        const text = ml_standard_callback_arg_1;
+        const ml_standard_callback_arg_6 = ml_standard_pattern_5;
+        const text = ml_standard_callback_arg_6;
         const ml_text_2 = text;
         const ml_text_3 = rp_636c617564655f6964656e746974792e434c415544455f434f44455f53595354454d5f50524f4d5054();
         return ml_text_2.startsWith(ml_text_3);
@@ -59,4 +59,4 @@ function rp_636c617564655f6964656e746974792e66697273745f626c6f636b5f69735f696465
 }
 
 export const translated = { ["CLAUDE_CODE_SYSTEM_PROMPT"]: rp_636c617564655f6964656e746974792e434c415544455f434f44455f53595354454d5f50524f4d5054(), ["DEFAULT_CLIENT_VERSION"]: rp_636c617564655f6964656e746974792e44454641554c545f434c49454e545f56455253494f4e(), ["is_oauth_credential"]: rp_636c617564655f6964656e746974792e69735f6f617574685f63726564656e7469616c, ["first_block_is_identity"]: rp_636c617564655f6964656e746974792e66697273745f626c6f636b5f69735f6964656e74697479 };
-export const provenance = {"sourcePath":"rust/src/claude_identity.rs","sourceSha256":"4d572b96cff36186a56cb18b4a03c0727a0774083bfe57b584f4c573a48a0bd0","executable":4,"executableFunctions":2,"executableConstants":2,"executableTypes":0,"executableConstructors":0,"carried":7,"preserved":12,"runtimeParity":false};
+export const provenance = {"sourcePath":"rust/src/claude_identity.rs","sourceSha256":"bd4440a5694bb8741cd75e1cb438f252f44e43df4d3ac6faebb537e21276b5c9","executable":4,"executableFunctions":2,"executableConstants":2,"executableTypes":0,"executableConstructors":0,"carried":7,"preserved":12,"runtimeParity":false};

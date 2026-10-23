@@ -67,6 +67,16 @@ function parse(source, name, errors) {
   for (const error of document.errors) errors.push(`${name}: ${error.message}`);
   return document.toJS() ?? {};
 }
+// Exact fixed command partitions; their complete matrix result remains one
+// mandatory stage in the unchanged eight-stage SHA aggregate.
+function reviewedCommandPartition(id,job){
+ const groups=id==='translation'?[['tests','node scripts/run-node-tests.mjs --outer-timeout-ms=3600000 --test-concurrency=2 tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs'],['canonical','node scripts/translate-router-flat-native-owned-field-meta.mjs --retain-output-text --check'],['owned-definitions','node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --check']]:id==='profile-matrix'?[['canonical','node scripts/translate-router-flat-native-owned-field-meta.mjs --retain-output-text --profile-matrix --check'],['owned-definitions','node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --profile-matrix --check']]:null;
+ if(!groups)return job?.strategy===undefined?{steps:new Set(),evidenceCondition:'${{ always() }}'}:null;
+ const strategy={'fail-fast':false,matrix:{part:groups.map(row=>row[0])}};if(!exact(job?.strategy,strategy))return null;const steps=new Set();
+ for(const [part,command]of groups){const matches=(job?.steps??[]).filter(step=>step.run===command);if(matches.length!==1||Object.keys(matches[0]).sort().join(',')!=='if,run'||matches[0].if!=="${{ matrix.part == '"+part+"' }}")return null;steps.add(matches[0]);}
+ return {steps,evidenceCondition:id==='translation'?"${{ always() && matrix.part == 'tests' }}":'${{ always() }}'};
+}
+
 export function auditWorkflows(sources) {
   const errors = [];
   const documents = new Map(Object.entries(sources).map(([name, source]) => [name, parse(source, name, errors)]));
@@ -91,6 +101,8 @@ export function auditWorkflows(sources) {
       const job = gate.jobs?.[id];
       if (!job || !job['runs-on'] || Object.hasOwn(job, 'if') || job['continue-on-error'] || job.strategy?.['fail-fast'] === true) errors.push(`${gateName}/${id}: required unconditional failing stage missing`);
       const runs = (job?.steps ?? []).map(step => step.run);
+      const partition=reviewedCommandPartition(id,job);if(!partition)errors.push(`${gateName}/${id}: complete reviewed noncancelling command matrix required; checks cannot be conditional or ignore failures`);
+      const evidenceCondition=partition?.evidenceCondition??'${{ always() }}';
       let deadlineEvidenceUpload = null;
       if (['typescript', 'translation', 'reverse-translation'].includes(id)) {
         const uploads = (job?.steps ?? []).filter(step => step.uses === 'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a');
@@ -98,11 +110,11 @@ export function auditWorkflows(sources) {
         const evidencePath = id === 'reverse-translation' ? 'js/node_modules/.node-case-deadlines/\njs/node_modules/.bun-reverse-files/\n' : 'js/node_modules/.node-case-deadlines/';
         const validShape = upload && !Object.hasOwn(upload, 'run') && job.steps.at(-1) === upload && upload.with?.name === 'node-case-deadlines-${{ github.job }}-${{ inputs.sha }}' && upload.with?.path === evidencePath && upload.with?.['include-hidden-files'] === true && upload.with?.['if-no-files-found'] === 'error';
         if (!validShape) errors.push(`${gateName}/${id}: missing mandatory command evidence uploader for complete Node deadline receipts/raws`);
-        if (upload && upload.if !== '${{ always() }}') errors.push(`${gateName}/${id}: conditional deadline evidence loss is forbidden`);
+        if (upload && upload.if !== evidenceCondition) errors.push(`${gateName}/${id}: conditional deadline evidence loss is forbidden`);
         if (upload?.['continue-on-error']) errors.push(`${gateName}/${id}: deadline evidence uploader cannot ignore failures`);
         // Only this fully checked non-run action may retain evidence after a
         // failure. A name/uses marker never exempts an executable check.
-        if (validShape && upload.if === '${{ always() }}' && !upload['continue-on-error']) deadlineEvidenceUpload = upload;
+        if (validShape && upload.if === evidenceCondition && !upload['continue-on-error']) deadlineEvidenceUpload = upload;
       }
       for (const command of required[id]) if (!runs.includes(command)) errors.push(`${gateName}/${id}: missing mandatory command ${command}`);
       const installations = id === 'lint'
@@ -115,7 +127,7 @@ export function auditWorkflows(sources) {
       }
       if (!(job?.steps ?? []).some(step => step.env?.EXPECTED_SHA === '${{ inputs.sha }}' && normalizeProgram(step.run) === shaVerifier)) errors.push(`${gateName}/${id}: immutable SHA verification missing`);
       for (const step of job?.steps ?? []) {
-        if (step['continue-on-error'] || Object.hasOwn(step, 'if') && step !== deadlineEvidenceUpload) errors.push(`${gateName}/${id}: checks cannot be conditional or ignore failures`);
+        if (step['continue-on-error'] || Object.hasOwn(step, 'if') && step !== deadlineEvidenceUpload && !partition?.steps.has(step)) errors.push(`${gateName}/${id}: checks cannot be conditional or ignore failures`);
         if (step.uses?.startsWith('actions/checkout@') && step.with?.ref !== '${{ inputs.sha }}') errors.push(`${gateName}/${id}: checkout must use inputs.sha`);
         if (/\b(?:cargo|rustc|rust-script|clippy-driver)\b|rust-toolchain|docker\/(?:build|setup-buildx)/.test(`${step.uses ?? ''}\n${step.run ?? ''}`)) errors.push(`${gateName}/${id}: Rust must not execute inside JavaScript gate`);
       }

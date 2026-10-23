@@ -187,3 +187,25 @@ to its private stage and selects fresh arrays with `filter`. Clear both owned
 arrays after the final standalone translation and before the census, preserving
 the original ordinary APIs, output checks and limits. This releases compiler
 contexts that no later stage uses; full-corpus qualification remains required.
+
+The complete canonical run at `ec0bed123` now passes: 863 source files produce
+2,867 outputs totaling 318,838,659 bytes. All 4,355 captured inputs
+(241,957,056 bytes) stay unchanged. The monitored run takes 1,173.469 seconds
+with 2,682,109,952 bytes sampled aggregate peak RSS under the original 1792 MiB
+old-space flag, 3 GiB RSS and 1,800-second bounds. No explicit collection or
+larger limit is introduced. Heap use falls from 1,750,331,904 bytes at census
+start to 667,862,224 bytes at plan completion after the owned contexts are
+released. The earlier failed runs remain distinct evidence.
+
+Strict TypeScript 5.9.3 passes both complete canonical trees. The fresh census
+admits 163 of 2,570 production functions (6.3424%); it still reports 2,407
+carried functions and `runtimeParity: false`. Six newly admitted whole
+functions have independent execution cases against their actual generated
+JavaScript and strict TypeScript in Node and Bun. Together with the complete
+stored-gain and usage-record files, all 15 production cases pass both engines
+under their original deadlines. The new record regression checks the existing
+mutable-input copy contract, including isolation and accessor/proxy refusals.
+
+Canonical output generation is qualified; neutral/Unix/Windows generation,
+owned definitions, reverse freshness, full receiving synchronization, strict
+runtime parity and the complete same-SHA JavaScript/Rust CI cycle remain open.

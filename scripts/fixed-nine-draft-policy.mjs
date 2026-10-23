@@ -6,6 +6,7 @@ import {createHash} from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
 import {createRequire} from 'node:module';
 import {createRulePipeline} from '../tools/translation/rule-pipeline.mjs';
+import {restoreParallelJavaScriptGateSource} from './parallel-js-gate-source.mjs';
 export const DRAFT_SUPPLEMENTS=Object.freeze(['benchmarks.yml','bindings.yml','docker-build.yml','fuzz.yml','macos-keychain.yml','mutants.yml','real-clients.yml','soak.yml','upgrade-matrix.yml']);
 export const DRAFT_SUPPLEMENT_CONDITION="${{ github.event_name != 'pull_request' || toJSON(github.event.pull_request.draft) == 'false' }}";
 export const DRAFT_SUPPLEMENT_PR_TYPES=Object.freeze(['opened','synchronize','reopened','ready_for_review']);
@@ -22,7 +23,7 @@ export function readCurrentFixedNineDraftWorkflowSources({root=ROOT}={}){
  if(!original||original.before!==(original.after??original.before))throw TypeError('Fixed-nine original reusable gate must remain unchanged');
  let source;try{source=fs.readFileSync(path.resolve(root,name),'utf8');}catch(error){if(error.code==='ENOENT')return packet;throw error;}
  if(source===original.before)return packet;
- const require=createRequire(new URL('./ci/package.json',import.meta.url)),{parseDocument,Parser,CST,visit}=require('yaml');
+ const require=createRequire(new URL('./ci/package.json',import.meta.url)),{parseDocument,Parser,CST,visit,isMap,isSeq,isScalar}=require('yaml');
  const commands=new Map([
   ['node scripts/translate-router-flat-native-owned-field-meta.mjs --retain-output-text --check','node scripts/translate-router.mjs --check'],
   ['node scripts/translate-router-flat-native-owned-field-meta.mjs --retain-output-text --profile-matrix --check','node scripts/translate-router.mjs --profile-matrix --check'],
@@ -34,16 +35,16 @@ export function readCurrentFixedNineDraftWorkflowSources({root=ROOT}={}){
  }
  const sequence=createRulePipeline([
   {phase:'language',rules:[{id:'yaml:complete-serialized-reparsed-native-CST',apply:concrete}]},
-  {phase:'repository',rules:[{id:'router:restore-only-qualified-flat-storage-commands',apply:input=>{
-   const document=parseDocument(input.source,{version:'1.2',uniqueKeys:true,keepSourceTokens:true}),edits=[];
-   visit(document,{Scalar(_key,node){if(commands.has(node.value)){const span=node.range.slice(0,2);if(input.source.slice(...span)!==node.value)fail('plain native command span');edits.push({span,expected:node.value,replacement:commands.get(node.value)});}}});
+  {phase:'repository',rules:[{id:'router:restore-qualified-flat-storage-and-fixed-command-partitions',apply:input=>{
+   const parallelism=restoreParallelJavaScriptGateSource(input.source,{parseDocument,isMap,isSeq,isScalar}),selectedSource=parallelism.source,document=parseDocument(selectedSource,{version:'1.2',uniqueKeys:true,keepSourceTokens:true}),edits=[];
+   visit(document,{Scalar(_key,node){if(commands.has(node.value)){const span=node.range.slice(0,2);if(selectedSource.slice(...span)!==node.value)fail('plain native command span');edits.push({span,expected:node.value,replacement:commands.get(node.value)});}}});
    if(edits.length!==2||new Set(edits.map(row=>row.expected)).size!==2)fail('exact canonical and matrix source edits required');
-   let restored=input.source;for(const row of [...edits].sort((a,b)=>b.span[0]-a.span[0])){if(restored.slice(...row.span)!==row.expected)fail('actual command changed');restored=restored.slice(0,row.span[0])+row.replacement+restored.slice(row.span[1]);}
+   let restored=selectedSource;for(const row of [...edits].sort((a,b)=>b.span[0]-a.span[0])){if(restored.slice(...row.span)!==row.expected)fail('actual command changed');restored=restored.slice(0,row.span[0])+row.replacement+restored.slice(row.span[1]);}
    let offset=0;const inverse=[];for(const row of [...edits].sort((a,b)=>a.span[0]-b.span[0])){inverse.push({span:[row.span[0]+offset,row.span[0]+offset+row.replacement.length],expected:row.replacement,replacement:row.expected});offset+=row.replacement.length-row.expected.length;}
-   let again=restored;for(const row of inverse.reverse()){if(again.slice(...row.span)!==row.expected)fail('whole inverse span differs');again=again.slice(0,row.span[0])+row.replacement+again.slice(row.span[1]);}if(again!==input.source)fail('whole inverse differs');return {...concrete(restored),edits};
+   let again=restored;for(const row of inverse.reverse()){if(again.slice(...row.span)!==row.expected)fail('whole inverse span differs');again=again.slice(0,row.span[0])+row.replacement+again.slice(row.span[1]);}for(const row of [...parallelism.nativeInverseEdits].sort((a,b)=>b.span[0]-a.span[0])){if(again.slice(...row.span)!==row.expected)fail('complete command partition inverse span differs');again=again.slice(0,row.span[0])+row.replacement+again.slice(row.span[1]);}if(again!==input.source)fail('whole inverse differs');return {...concrete(restored),edits,parallelism:{...parallelism,beforeMeta:input.meta,afterMeta:concrete(selectedSource).meta}};
   }}]},
  ]),result=sequence.run(source);
  if(result.value.source!==original.before)fail('complete restored workflow differs from immutable reviewed gate');
- const evolution={path:name,before:original.before,after:source,beforeMeta:result.value.meta,afterMeta:concrete(source).meta,inverse:original.before,completeInverse:true,nativeSelections:result.value.edits,trace:result.trace,sourceAuthority:false};
+ const evolution={path:name,before:original.before,after:source,beforeMeta:result.value.meta,afterMeta:concrete(source).meta,inverse:original.before,completeInverse:true,nativeSelections:result.value.edits,parallelismSourceLayer:result.value.parallelism,trace:result.trace,sourceAuthority:false};
  return {...packet,files:packet.files.map(row=>row===original?{...row,before:source,after:source,beforeSha256:hash(source),afterSha256:hash(source)}:row),currentWorkflowSourceEvolution:evolution};
 }

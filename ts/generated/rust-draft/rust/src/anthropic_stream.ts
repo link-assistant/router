@@ -5,7 +5,7 @@ type MLData_72705f37333635373236343635356636613733366636653265346436313730343536
 type MLData_72705f373336353732363436353566366137333666366532653464363137303566353337343732363936653637356635363631366337353635 = Readonly<{ readonly "$": "Map"; readonly "entries": ReadonlyArray<MLData_72705f3733363537323634363535663661373336663665326534643631373034353665373437323739> }>;
 type MLData_72705f37333635373236343635356636613733366636653265346537353664363236353732 = Readonly<{ readonly "$": "PosInt"; readonly "field0": bigint }> | Readonly<{ readonly "$": "NegInt"; readonly "field0": bigint }> | Readonly<{ readonly "$": "Float"; readonly "field0": number }>;
 type MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 = Readonly<{ readonly "$": "Null" }> | Readonly<{ readonly "$": "Bool"; readonly "field0": boolean }> | Readonly<{ readonly "$": "Number"; readonly "field0": MLData_72705f37333635373236343635356636613733366636653265346537353664363236353732 }> | Readonly<{ readonly "$": "String"; readonly "field0": string }> | Readonly<{ readonly "$": "Array"; readonly "field0": ReadonlyArray<MLData_72705f3733363537323634363535663661373336663665326535363631366337353635> }> | Readonly<{ readonly "$": "Object"; readonly "field0": MLData_72705f373336353732363436353566366137333666366532653464363137303566353337343732363936653637356635363631366337353635 }>;
-// Generated draft from rust/src/anthropic_stream.rs; sha256=88567b1c4fb054dcd896e8c847246b95eb840d5d605c7454bb793377e00fedca
+// Generated draft from rust/src/anthropic_stream.rs; sha256=1ee8f466f42eecebc3bf938c548424768762b22d2482a23d5661ecbe426e0c82
 // Carried constructs are data, never runtime parity evidence.
 import { validateJsonNumber as ml_validate_json_number, validateJsonMap as ml_validate_json_map } from "../../runtime/json-values.mjs";
 
@@ -73,22 +73,22 @@ function rp_616e7468726f7069635f73747265616d2e726573706f6e73655f636f6e74656e745f
       }
     }
   })(), field1: (() => {
-    const ml_standard_body_2_2 = ml_host_option_bind(ml_host_serde_json_value_get_string(event, "content_index"), (ml_host_callback_0_0_2) => { return ml_host_serde_json_value_as_u64(ml_host_callback_0_0_2); }, "and_then") as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>;
-    const ml_standard_body_3_2 = 0n;
-    switch (ml_standard_body_2_2.$) {
+    const ml_standard_body_5 = ml_host_option_bind(ml_host_serde_json_value_get_string(event, "content_index"), (ml_host_callback_3_0) => { return ml_host_serde_json_value_as_u64(ml_host_callback_3_0); }, "and_then") as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>;
+    const ml_standard_body_6 = 0n;
+    switch (ml_standard_body_5.$) {
       case "None": {
-        return ml_standard_body_3_2;
+        return ml_standard_body_6;
       }
       case "Some": {
-        const x_2 = ml_standard_body_2_2.field0;
+        const x_2 = ml_standard_body_5.field0;
         return x_2;
       }
       default: {
-        return ml_router_unexpected(ml_standard_body_2_2);
+        return ml_router_unexpected(ml_standard_body_5);
       }
     }
   })() });
 }
 
 export const translated: { "map_stop_reason": (finish_reason: string) => string; "response_content_key": (event: MLData_72705f3733363537323634363535663661373336663665326535363631366337353635) => Readonly<{ readonly "$": "Tuple"; readonly "field0": bigint; readonly "field1": bigint }> } = { ["map_stop_reason"]: rp_616e7468726f7069635f73747265616d2e6d61705f73746f705f726561736f6e, ["response_content_key"]: rp_616e7468726f7069635f73747265616d2e726573706f6e73655f636f6e74656e745f6b6579 };
-export const provenance = {"sourcePath":"rust/src/anthropic_stream.rs","sourceSha256":"88567b1c4fb054dcd896e8c847246b95eb840d5d605c7454bb793377e00fedca","executable":2,"executableFunctions":2,"executableConstants":0,"executableTypes":0,"executableConstructors":0,"carried":9,"preserved":12,"runtimeParity":false};
+export const provenance = {"sourcePath":"rust/src/anthropic_stream.rs","sourceSha256":"1ee8f466f42eecebc3bf938c548424768762b22d2482a23d5661ecbe426e0c82","executable":2,"executableFunctions":2,"executableConstants":0,"executableTypes":0,"executableConstructors":0,"carried":9,"preserved":12,"runtimeParity":false};

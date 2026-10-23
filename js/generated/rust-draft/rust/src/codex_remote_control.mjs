@@ -1,4 +1,4 @@
-// Generated draft from rust/src/codex_remote_control.rs; sha256=8619faf794863a705cb7a8d5e57c85382ab0e3146f06f8a522447ee4e634ce9a
+// Generated draft from rust/src/codex_remote_control.rs; sha256=fb30f91f72be6aad59244113cab75d518402d05fee24c49ccd750424e3c75b6c
 // Carried constructs are data, never runtime parity evidence.
 import { validateRustValue as ml_validate_rust_value } from "../../runtime/type-layout-runtime.mjs";
 
@@ -161,6 +161,20 @@ function rp_636f6465785f72656d6f74655f636f6e74726f6c2e69735f72656d6f74655f636f6e
   return ml_text_1.startsWith(ml_text_2);
 }
 
+function rp_636f6465785f72656d6f74655f636f6e74726f6c2e7572695f706174685f616e645f7175657279(path, query) {
+  if (!(typeof path === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(path))) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof query === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(query))) throw new TypeError('argument outside supported Rust value domain');
+  if ((query.length === 0)) {
+    return path;
+  } else {
+    return (() => {
+    const ml_fmt_1 = path;
+    const ml_fmt_2 = query;
+    return ((ml_fmt_1 + "?") + ml_fmt_2);
+  })();
+  }
+}
+
 function rp_636f6465785f72656d6f74655f636f6e74726f6c2e6865785f6469676974(byte) {
   if (typeof byte !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(byte, 0n, 255n, "u8 argument byte out of range");
@@ -181,5 +195,5 @@ function rp_636f6465785f72656d6f74655f636f6e74726f6c2e6865785f6469676974(byte) {
   }
 }
 
-export const translated = { ["CONTINUATION_PREFIX"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e434f4e54494e554154494f4e5f505245464958(), ["FILE_NAME"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e46494c455f4e414d45(), ["STORE_VERSION"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e53544f52455f56455253494f4e(), ["MAX_RECORDS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e4d41585f5245434f524453(), ["StoreError"]: Object.freeze({ ["Io"]: ml_make_StoreError_Io, ["Decode"]: ml_make_StoreError_Decode, ["Crypto"]: ml_make_StoreError_Crypto, ["Invalid"]: ml_make_StoreError_Invalid, ["StaleRotation"]: ml_make_StoreError_StaleRotation }), ["ROOT"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e524f4f54(), ["SERVER"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e534552564552(), ["ENROLL"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e454e524f4c4c(), ["REFRESH"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e52454652455348(), ["REFRESH_UPSTREAM"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e524546524553485f555053545245414d(), ["PAIR"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e50414952(), ["PAIR_STATUS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e504149525f535441545553(), ["ENVIRONMENTS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e454e5649524f4e4d454e5453(), ["Operation"]: Object.freeze({ ["WebSocket"]: ml_make_Operation_WebSocket, ["Enroll"]: ml_make_Operation_Enroll, ["Refresh"]: ml_make_Operation_Refresh, ["Pair"]: ml_make_Operation_Pair, ["PairStatus"]: ml_make_Operation_PairStatus, ["List"]: ml_make_Operation_List, ["Revoke"]: ml_make_Operation_Revoke }), ["is_remote_control_path"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e69735f72656d6f74655f636f6e74726f6c5f70617468, ["hex_digit"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e6865785f6469676974 };
-export const provenance = {"sourcePath":"rust/src/codex_remote_control.rs","sourceSha256":"8619faf794863a705cb7a8d5e57c85382ab0e3146f06f8a522447ee4e634ce9a","executable":16,"executableFunctions":2,"executableConstants":12,"executableTypes":2,"executableConstructors":12,"carried":55,"preserved":72,"runtimeParity":false};
+export const translated = { ["CONTINUATION_PREFIX"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e434f4e54494e554154494f4e5f505245464958(), ["FILE_NAME"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e46494c455f4e414d45(), ["STORE_VERSION"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e53544f52455f56455253494f4e(), ["MAX_RECORDS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e4d41585f5245434f524453(), ["StoreError"]: Object.freeze({ ["Io"]: ml_make_StoreError_Io, ["Decode"]: ml_make_StoreError_Decode, ["Crypto"]: ml_make_StoreError_Crypto, ["Invalid"]: ml_make_StoreError_Invalid, ["StaleRotation"]: ml_make_StoreError_StaleRotation }), ["ROOT"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e524f4f54(), ["SERVER"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e534552564552(), ["ENROLL"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e454e524f4c4c(), ["REFRESH"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e52454652455348(), ["REFRESH_UPSTREAM"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e524546524553485f555053545245414d(), ["PAIR"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e50414952(), ["PAIR_STATUS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e504149525f535441545553(), ["ENVIRONMENTS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e454e5649524f4e4d454e5453(), ["Operation"]: Object.freeze({ ["WebSocket"]: ml_make_Operation_WebSocket, ["Enroll"]: ml_make_Operation_Enroll, ["Refresh"]: ml_make_Operation_Refresh, ["Pair"]: ml_make_Operation_Pair, ["PairStatus"]: ml_make_Operation_PairStatus, ["List"]: ml_make_Operation_List, ["Revoke"]: ml_make_Operation_Revoke }), ["is_remote_control_path"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e69735f72656d6f74655f636f6e74726f6c5f70617468, ["uri_path_and_query"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e7572695f706174685f616e645f7175657279, ["hex_digit"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e6865785f6469676974 };
+export const provenance = {"sourcePath":"rust/src/codex_remote_control.rs","sourceSha256":"fb30f91f72be6aad59244113cab75d518402d05fee24c49ccd750424e3c75b6c","executable":17,"executableFunctions":3,"executableConstants":12,"executableTypes":2,"executableConstructors":12,"carried":55,"preserved":73,"runtimeParity":false};
