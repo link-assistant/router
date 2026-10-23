@@ -25,6 +25,24 @@ helper loads after argument validation; an invalid or foreign CLI selection
 still reports its original error without the rest of the runtime installed.
 No Rust ran locally.
 
+The reviewed JavaScript installer and recovery path use the same package layout
+for the complete production census and eligible destination paths. Their guard
+universe includes every tracked Rust source and every nested Cargo manifest and
+lock, including experiments outside the Rust package. Generate these operational
+changes with `prepare-core-adoption-application-layout.mjs`; it retains complete
+original sources, native TypeScript selections, separate language and repository
+substitutions, both whole serialized/reparsed CST stages and full inverses.
+
+The actual 566-file Router proposal and independent 3,443-packet review passed
+at b2187181, with 884 Rust/Cargo guards and 4,415 captured inputs. They selected
+two reader substitutions in one function, which is not executable coverage.
+The original installer then refused its incomplete Cargo guard universe before
+changing source. A new complete nested-layout application/recovery fixture is
+drafted alongside the original flat workflow. Both still need qualification at
+the committed installer repair, followed by a fresh actual Router run; the first
+receiving attempt correctly refused uncommitted compiler source. No source
+guard or original deadline is relaxed to reuse an older proposal.
+
 Both controllers count evidence with a fresh native directory walk at every
 original accounting point. The original sparse logical sizes, allocated blocks,
 directory and link counts, special-file refusals and entry limits remain.
