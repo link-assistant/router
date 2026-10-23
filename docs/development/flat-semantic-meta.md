@@ -14,6 +14,14 @@ with 2,523,332,608 bytes sampled aggregate peak RSS; all 4,343 captured inputs
 stayed unchanged. This later failure remains red and produced no qualified
 current output or coverage result.
 
+The run at `0ba447645` also exhausted the same heap during owned storage:
+931.737 seconds and 2,521,858,048 bytes sampled aggregate peak RSS. Its complete
+4,347 inputs (241,906,517 bytes) stayed unchanged. Individual field tests had
+passed; they did not reproduce the retained live compiler's pressure. Preserve
+this failed result and require a complete decoded-CST pressure diagnostic
+before another full attempt. A stored compression envelope is not its decoded
+logical CST; verify the complete reconstructed logical bytes and digest too.
+
 The explicit flat bulk path now selects a closed data serializer in the
 **original project module**. Its existing private method issuers, admission
 module and checker share their original context. Callers cannot supply a codec.
@@ -41,6 +49,9 @@ The field-storage sibling preserves the original Map-to-object and BigInt
 encodings, including primitive Map key coercion, numeric key ordering, duplicate
 keys, omissions and Unicode. It emits complete UTF-8 chunks directly, avoiding a
 second full UTF-16 document. The ordinary field serializer remains unchanged.
+BigInt text uses primitive concatenation after the actual `typeof` check, so
+replaced BigInt prototype conversion methods cannot execute. This explicit
+storage format preserves stock bytes and does not promise arbitrary callbacks.
 The source producer selects its actual native function body, then retains both
 ordered CST phases, the complete inverse and independent native binding checks.
 
@@ -53,6 +64,41 @@ earlier field was encoded may leave that field consumed; this API does not
 promise rollback. Keep the original non-consuming APIs, all original storage
 validation, logical byte/hash checks and 64 MiB/512 MiB budgets unchanged.
 Consumption grants no source or executable authority and introduces no cache.
+
+Encode the three selected components first, clear their detached descriptor
+values, then restore the original key order before hashing or emitting output.
+Other root fields retain owned UTF-8 bytes instead of complete duplicate strings.
+The root is assembled in bytes, receives the original full canonical validation,
+and becomes a string only for the final stored wrapper. Keep every original
+logical and physical budget check. Earlier selected fields can all be consumed
+before a later ordinary field fails; callers must not assume rollback or the
+ordinary API's validation order.
+
+The concrete component stays in UTF-8 through validation and compression.
+`prepare-utf8-canonical-json.mjs` copies the complete existing JSON validator,
+preserving all three original function bodies. Its added byte entry verifies
+each codepoint-aligned 16 KiB chunk's complete UTF-8 inverse, then presents a
+fresh bounded UTF-16 cursor to the unchanged canonical grammar. Invalid or deep
+JSON retains the original native fallback. Original text APIs remain untouched.
+Cursor ranges and one decoded chunk live only within that invocation; they do
+not cache source, eligibility, logical bytes or semantic results across calls.
+
+The complete 25-case validator/storage group passes with original deadlines in
+Node (13.012 seconds, 1,118,830,592 bytes sampled aggregate peak RSS) and Bun
+(10.047 seconds, 1,596,293,120 bytes). A separate corrected pressure diagnostic
+decodes all 58,743,663 CST bytes, rejoins the original logical metadata digest,
+and compares all 132,913,433 output bytes against the original planner in a
+fresh process. It passes with 1,738,682,120 bytes of retained live heap before
+storage, using the unchanged 1792 MiB old-space flag: 23.367 seconds overall,
+2,354,413,568 bytes sampled aggregate peak RSS. Earlier diagnostics that used
+the stored compression envelope do not qualify the decoded CST. This pressure
+pass still does not qualify the live full compiler, its freshness or parity.
+
+The durable complete pressure regression also passes independently through both
+whole-file harnesses: Node 23.556 seconds / 2,765,340,672 bytes sampled aggregate
+peak RSS and Bun 23.054 seconds / 2,658,877,440 bytes, preserving its 60-second
+source deadline. The complete input/output byte checks run in the child before
+any summary is emitted. Temporary reference outputs are removed after readback.
 
 The inert-data serializer preserves original JSON property order and
 `{$map:[...entries]}` encoding. Native JSON encodes every primitive and key.

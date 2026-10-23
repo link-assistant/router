@@ -26,7 +26,7 @@ function writeJson(value,emit,projectField=false){
  const write=text=>{bytes+=NativeBuffer.byteLength(text);if(bytes>FLAT_SEMANTIC_JSON_LIMITS.bytes)fail('original field byte budget exceeded');emit(text);};
  function visit(value,depth){
   if(depth>FLAT_SEMANTIC_JSON_LIMITS.depth)fail('original field depth budget exceeded');
-  if(typeof value==='bigint'&&projectField){visit({$bigint:value.toString()},depth);return;}
+  if(typeof value==='bigint'&&projectField){visit({$bigint:value+''},depth);return;}
   if(value===null||typeof value==='string'||typeof value==='boolean'||typeof value==='number'){write(nativeJson(value));return;}
   if(value===undefined){write('null');return;}
   if(typeof value!=='object'||types.isProxy(value)||active.has(value))fail('acyclic inert values required');

@@ -258,6 +258,13 @@ the two CST rule phases. Compare complete retained semantic and concrete fields
 in Node and Bun before retrying full generation under unchanged resource limits;
 small fixture passes do not establish full-project memory fit or parity.
 
+For this consuming lane, encode selected components first and restore original
+property order before complete logical hashes and output. Retain other root
+fields as bytes and avoid duplicate root strings while preserving full canonical
+validation. Pressure diagnostics must decode stored CST compression envelopes,
+join the original logical bytes/digest, and compare every original output byte;
+a pass on the envelope alone does not qualify the complete CST or live compiler.
+
 The explicit retained owned-definition lane uses a separately generated UTF-16
 byte-retention format. Derive it with
 `node tools/translation/prepare-byte-output-text.mjs --emit`, review its complete

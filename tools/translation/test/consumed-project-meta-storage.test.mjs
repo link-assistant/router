@@ -27,7 +27,8 @@ test('owned field rejects observable values without invoking their callbacks',{t
 
 test('consuming storage retains every original output byte and consumes only selected owned fields',{timeout:60000},()=>{
  const untouched=fixture(),owned=fixture(),before=originalBytes(untouched),retained=owned.middle;
- const options={storageLimits:{fileBytes:18000,totalBytes:2000000}},expected=originalPlan(path,untouched,{...options,serializeUtf8:originalBytes}),actual=consumedPlan(path,owned,{...options,serializeUtf8:flatBytes});
+ const encoded=[],options={storageLimits:{fileBytes:18000,totalBytes:2000000}},expected=originalPlan(path,untouched,{...options,serializeUtf8:originalBytes}),actual=consumedPlan(path,owned,{...options,serializeUtf8(value){encoded.push(Object.keys(value)[0]);return flatBytes(value);}});
+ assert.deepEqual(encoded.slice(0,3),['checkedSemanticProgram','targetSemanticProgram','concreteSyntaxMeta']);
  assert.deepEqual(actual,expected);assert.equal(actual.components.length,3);assert.deepEqual(originalBytes(untouched),before);assert.equal(owned.middle,retained);assert.deepEqual(Object.keys(owned),['schema','middle','executable']);
  assert.equal(owned.executable,false);assert.equal(untouched.checkedSemanticProgram.value,17n);
 });
@@ -41,11 +42,11 @@ test('consuming storage preserves original bounds and checks nonconfigurable fie
   assert.throws(()=>planner(path,fixture(),{serializeUtf8:flatBytes,storageLimits:{fileBytes:67108865}}),/only be lowered/);
  }
  const owned=fixture();assert.throws(()=>consumedPlan(path,owned,{serializeUtf8(value){if(Object.hasOwn(value,'middle'))throw Error('later field failure');return flatBytes(value);}}),/later field failure/);
- assert.equal(Object.hasOwn(owned,'checkedSemanticProgram'),false);assert.ok(owned.targetSemanticProgram);assert.ok(owned.concreteSyntaxMeta);
+ assert.equal(Object.hasOwn(owned,'checkedSemanticProgram'),false);assert.equal(Object.hasOwn(owned,'targetSemanticProgram'),false);assert.equal(Object.hasOwn(owned,'concreteSyntaxMeta'),false);
 });
 
 test('consuming source copy preserves all unselected helpers full CST phases inverses and native bindings',{timeout:60000},()=>{
- const plan=prepareConsumedProjectMetaStorage(),[row]=plan.files;assert.equal(plan.originalAPIsUnchanged,true);assert.equal(plan.allOriginalValidationAndBoundsRetained,true);assert.equal(plan.newAcrossInvocationCache,false);assert.equal(plan.selectedOwnedValuesMayBeConsumedBeforeFailure,true);
+ const plan=prepareConsumedProjectMetaStorage(),[row]=plan.files;assert.equal(plan.originalAPIsUnchanged,true);assert.equal(plan.selectedFieldsEncodedFirst,true);assert.equal(plan.rootFieldsRetainedAsUtf8,true);assert.equal(plan.originalOutputKeyOrderRestored,true);assert.equal(plan.allOriginalValidationAndBoundsRetained,true);assert.equal(plan.newAcrossInvocationCache,false);assert.equal(plan.selectedOwnedValuesMayBeConsumedBeforeFailure,true);
  assert.equal(row.current,row.after);assert.equal(row.inverse,row.before);assert.equal(row.before,readFileSync(new URL('../project-meta-compressed-storage.mjs',import.meta.url),'utf8'));assert.ok(row.unchangedFunctions.length>10);assert.equal(row.nativeBindings.nativeSemanticScopeChecked,true);
  assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);for(const stage of row.stages){assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);assert.equal(stage.inverse,stage.before);assert.equal(stage.completeInverse,true);}
 });
@@ -53,4 +54,12 @@ test('consuming source copy preserves all unselected helpers full CST phases inv
 for(const field of ['checkedSemanticProgram','targetSemanticProgram','concreteSyntaxMeta'])test('complete retained '+field+' field encodes every original byte',{timeout:60000},()=>{
  const stored=readFileSync(new URL('../projects/rust/src/lib.meta.json.parts/'+field+'.json',import.meta.url)),document=JSON.parse(stored),actual=flatBytes(document);
  assert.equal(stored[stored.length-1],10);assert.deepEqual(actual,stored.subarray(0,-1));
+});
+
+test('primitive BigInt encoding cannot invoke replaced prototype conversion callbacks',{timeout:60000},()=>{
+ const fields=['toString','toJSON'],before=fields.map(key=>Object.getOwnPropertyDescriptor(BigInt.prototype,key));let calls=0;
+ try{for(const key of fields)Object.defineProperty(BigInt.prototype,key,{configurable:true,value(){calls++;throw Error('BigInt callback');}});
+  for(const [value,decimal]of [[0n,'0'],[-17n,'-17'],[2n**256n,'115792089237316195423570985008687907853269984665640564039457584007913129639936']])assert.equal(flatBytes(value).toString(),'{"$bigint":"'+decimal+'"}');
+ }finally{fields.forEach((key,index)=>{if(before[index])Object.defineProperty(BigInt.prototype,key,before[index]);else delete BigInt.prototype[key];});}
+ assert.equal(calls,0);
 });
