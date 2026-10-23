@@ -28,6 +28,15 @@ Qualify whole Node/Bun files under their original deadlines before regenerating
 current banks and receiving exports. Do not raise limits, add result caches or
 count compressed source as executable translation.
 
+The [flat semantic storage lane](docs/development/flat-semantic-meta.md) retains
+the complete original JSON representation and semantic validations. Generate
+its complete siblings with `node tools/translation/prepare-flat-semantic-meta.mjs
+--emit`, independently review native selections and full CST inverses, then
+require `--check`. Preserve original public APIs, stock native qualification,
+64 MiB fields, two-million-object/depth-512 bounds and original receiving
+deadlines. A focused pass or retained-document round trip does not qualify the
+complete corpus; retry actual generation within the unchanged resource limits.
+
 Create a feature branch or isolated worktree, implement behavior in JavaScript, add targeted behavioral tests and update documentation. Read [the JavaScript-first workflow](docs/development/javascript-first.md) for the parity boundary and generation limitations. Router's JavaScript operations package and a valid parity inventory do not by themselves establish complete Rust runtime parity.
 
 Run the complete local gate:

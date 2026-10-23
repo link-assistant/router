@@ -22,6 +22,21 @@ peak RSS were 40.017 seconds / 219,037,696 bytes for Node and 38.097 seconds /
 188,284,928 bytes for Bun. These are bounded diagnostics, distinct from whole
 test qualification and full-gate results.
 
+The complete compression and strict-refresh files subsequently passed all 12
+cases under both engines with independent audits of their unchanged deadlines.
+Node took 87.869 seconds with 599,130,112 bytes sampled aggregate peak RSS; Bun
+took 81.931 seconds with 747,094,016 bytes. An intermediate Bun run correctly
+refused a changed immutable upstream notice; its complete failure is retained,
+the exact original notice was restored and the new notice is separate.
+
+Actual committed-source proposal and independent review/install took 76.292 and
+24.625 seconds, respectively. They retain all 866 current Rust/Cargo inputs, both
+complete historical universes, complete source/CST inverses and unchanged whole
+compiler/TypeScript before-and-after observations. The installed archive has
+exactly the diagnostic's decoded and compressed bytes. The original nine-case
+receiving export suite then passed in Node (27.064 seconds) and Bun (16.868
+seconds), including real bidirectional CST/meta edits and strict TypeScript.
+
 `prepare-zopfli-vendor.mjs --emit` proposes the complete pinned upstream copy
 with separate language and repository substitutions, native syntax, complete
 CST round trips and inverse. `prepare-strict-static-source-producer.mjs --emit`

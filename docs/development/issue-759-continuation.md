@@ -124,3 +124,14 @@ whole-file cases in both engines and CI-only Rust oracle source. Candidate count
 are not executable production coverage. Physical source-bank/export refresh,
 complete canonical/profile/reverse generation, parity and the full same-SHA gate
 remain open. No local Rust tool runs.
+
+The subsequent [bounded source-bank repair](static-source-compression.md)
+preserves every decoded byte and the original 4 MiB export cap. Its complete
+12-case compression/source-refresh group and nine-case receiving export file
+pass in both engines with their original deadline audits. Current complete
+compiler and portable Git fixtures are regenerated. The shared record-conversion
+binder defect is repaired and independently covered by 24 vectors plus CI-only
+Rust oracle source; complete source-composition checks also pass both engines.
+Full current canonical/platform generation, executable coverage, reverse
+freshness, strict parity and the complete same-SHA gate remain separate open
+delivery obligations.

@@ -14,6 +14,7 @@ const hash=value=>createHash('sha256').update(value).digest('hex');
 const fail=message=>{throw TypeError('Flat native output source: '+message);};
 const one=(rows,label)=>{if(rows.length!==1)fail('one complete native '+label+' required');return rows[0];};
 const routes=new Map([
+ ['project.mjs','project-flat-semantic.mjs'],
  ['private-native-output-text.mjs','private-flat-native-output-text.mjs'],
  ['native-retained-owned-field-bulk.mjs','flat-native-retained-owned-field-bulk.mjs'],
  ['native-retained-owned-field-matrix-bulk.mjs','flat-native-retained-owned-field-matrix-bulk.mjs'],

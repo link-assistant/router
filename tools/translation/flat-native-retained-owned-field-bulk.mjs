@@ -9,7 +9,7 @@ import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, unlinkSync
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { translateSource, json, PIN, sha256 } from './translate.mjs';
-import { translateProject } from './project.mjs';
+import { translateProject } from "./project-flat-semantic.mjs";
 import {PRODUCTION_PROFILE,compilationProfile} from './cfg-profile.mjs';
 import { effectRuntimeAssets } from './effect-assets.mjs';
 import {hostRuntimeAssets} from './host-assets.mjs';
@@ -151,7 +151,7 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
   }
   progress({stage:'standalone',state:'end',completed:completedSources,total:paths.length});
   progress({stage:'fingerprint',state:'start'});
-  const implementation = ['tools/translation/translate.mjs', 'tools/translation/checked-types.mjs', 'tools/translation/checked-coercions.mjs', 'tools/translation/rust-structure.mjs', 'tools/translation/bulk.mjs', 'tools/translation/cfg-profile.mjs', 'tools/translation/project.mjs', 'tools/translation/project-copy.mjs', 'tools/translation/project-nominal.mjs', 'tools/translation/semantic-meta.mjs', 'tools/translation/effect-assets.mjs', 'tools/translation/host-assets.mjs', 'tools/translation/type-layout.mjs', 'tools/translation/type-layout-runtime.mjs', 'tools/translation/pattern-bindings.mjs', 'tools/translation/pattern-syntax.mjs', 'tools/translation/monomorphic.mjs', 'tools/translation/macro-provenance.mjs', 'tools/translation/module-bindings.mjs', 'tools/translation/registered-bindings.mjs', 'tools/translation/source-scopes.mjs', 'tools/translation/impl-resolver.mjs', ...readdirSync(new URL('./extensions/', import.meta.url)).filter(name => name.endsWith('.mjs')).sort().map(name => `tools/translation/extensions/${name}`)];
+  const implementation = ['tools/translation/translate.mjs', 'tools/translation/checked-types.mjs', 'tools/translation/checked-coercions.mjs', 'tools/translation/rust-structure.mjs', 'tools/translation/bulk.mjs', 'tools/translation/cfg-profile.mjs', "tools/translation/project-flat-semantic.mjs", 'tools/translation/project-copy.mjs', 'tools/translation/project-nominal.mjs', 'tools/translation/semantic-meta.mjs', 'tools/translation/effect-assets.mjs', 'tools/translation/host-assets.mjs', 'tools/translation/type-layout.mjs', 'tools/translation/type-layout-runtime.mjs', 'tools/translation/pattern-bindings.mjs', 'tools/translation/pattern-syntax.mjs', 'tools/translation/monomorphic.mjs', 'tools/translation/macro-provenance.mjs', 'tools/translation/module-bindings.mjs', 'tools/translation/registered-bindings.mjs', 'tools/translation/source-scopes.mjs', 'tools/translation/impl-resolver.mjs', ...readdirSync(new URL('./extensions/', import.meta.url)).filter(name => name.endsWith('.mjs')).sort().map(name => `tools/translation/extensions/${name}`)];
   const translatorRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
   // Namespace authority consumes the exact offline dependency source bytes,
   // not only descriptors containing their expected digests.
