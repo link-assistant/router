@@ -14,7 +14,6 @@ const hash=value=>createHash('sha256').update(value).digest('hex');
 const fail=message=>{throw TypeError('Flat native output source: '+message);};
 const one=(rows,label)=>{if(rows.length!==1)fail('one complete native '+label+' required');return rows[0];};
 const routes=new Map([
- ['project.mjs','project-flat-semantic.mjs'],
  ['private-native-output-text.mjs','private-flat-native-output-text.mjs'],
  ['native-retained-owned-field-bulk.mjs','flat-native-retained-owned-field-bulk.mjs'],
  ['native-retained-owned-field-matrix-bulk.mjs','flat-native-retained-owned-field-matrix-bulk.mjs'],
@@ -69,7 +68,7 @@ export async function prepareFlatNativeOutputTextRetention({root=ROOT}={}){
  for(const row of native.files){
   const before=row.after,path=renamed(row.path);if(path===row.path)fail('every actual native output requires a declared route');
   const language=row===codec?edits(before,[{span:detacher.targetSpan,expected:detacher.targetBody,replacement:detacher.body}]):before;
-  const file=parse(ts,path,language),changes=[];function visit(node){if(ts.isStringLiteral(node)){const replacement=renamed(node.text);if(replacement!==node.text)changes.push({span:[node.getStart(file),node.end],expected:node.getText(file),replacement:JSON.stringify(replacement)});}ts.forEachChild(node,visit);}visit(file);
+  const file=parse(ts,path,language),changes=[];function visit(node){if(ts.isStringLiteral(node)){let replacement=renamed(node.text);if(ts.isImportDeclaration(node.parent)&&node.parent.moduleSpecifier===node&&node.text==='./project.mjs')replacement='./project-flat-semantic.mjs';if(replacement!==node.text)changes.push({span:[node.getStart(file),node.end],expected:node.getText(file),replacement:JSON.stringify(replacement)});}ts.forEachChild(node,visit);}visit(file);
   const after=headed(edits(language,changes)),current=existsSync(resolve(root,path))?readFileSync(resolve(root,path),'utf8'):null;
   files.push(equation(ts,resolve(root,path),before,language,after,current,{literalRoutes:changes,detacher:row===codec?detacher:null}));
   files.at(-1).path=path;

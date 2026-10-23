@@ -42,3 +42,14 @@ TypeScript 5.9.3 execution. These receiving results are not a controlled
 whole-corpus memory comparison. Qualify the complete flat-retention file and
 retry full canonical/platform generation under the original limits before
 claiming that the original heap failure is repaired.
+
+The complete unchanged nine-case flat-retention suite subsequently passes in
+both engines: Node 75.042 seconds / 995,917,824 bytes sampled aggregate peak RSS;
+Bun 48.456 seconds / 1,711,128,576 bytes, with original deadlines. It checks
+every output byte, implementation fingerprint and refusal, actual canonical and
+isolated-profile CLIs, native mutations and the original 96 MiB diagnostic heap.
+An intermediate seven-of-nine result caught a fingerprint insertion-order
+change. The repaired native rule selects only the genuine import declaration;
+the original fingerprint literal/order and all complete compiler inputs remain.
+The original failed full-corpus run and both intermediate failures stay retained.
+Actual full-corpus retry remains necessary.
