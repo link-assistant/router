@@ -1,3 +1,4 @@
+import {stages as localGateStages} from '../check-js-first-local.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -37,7 +38,7 @@ test('wrong command partitions and lost failed-test evidence remain fatal',{time
 });
 test('complete native YAML source history retains both original command edits and every parallelism inverse',{timeout:60000},()=>{
  const packet=readCurrentFixedNineDraftWorkflowSources(),evolution=packet.currentWorkflowSourceEvolution,layer=evolution.parallelismSourceLayer;
- assert.equal(evolution.after,source);assert.equal(evolution.completeInverse,true);assert.equal(JSON.parse(evolution.beforeMeta).source,evolution.before);assert.equal(JSON.parse(evolution.afterMeta).source,source);assert.equal(evolution.nativeSelections.length,2);assert.equal(layer.edits.length,8);assert.equal(layer.inverse,source);assert.equal(JSON.parse(layer.beforeMeta).source,source);assert.equal(JSON.parse(layer.afterMeta).source,layer.source);
+ assert.equal(evolution.after,source);assert.equal(evolution.completeInverse,true);assert.equal(JSON.parse(evolution.beforeMeta).source,evolution.before);assert.equal(JSON.parse(evolution.afterMeta).source,source);assert.equal(evolution.nativeSelections.length,2);assert.equal(layer.edits.length,9);assert.equal(layer.inverse,source);assert.equal(JSON.parse(layer.beforeMeta).source,source);assert.equal(JSON.parse(layer.afterMeta).source,layer.source);
  for(const edit of layer.edits)assert.equal(source.slice(...edit.span),edit.expected);for(const edit of evolution.nativeSelections)assert.equal(layer.source.slice(...edit.span),edit.expected);
  const root=fs.mkdtempSync(path.join(os.tmpdir(),'router-parallel-source-'));try{
   fs.mkdirSync(path.join(root,'scripts/ci'),{recursive:true});fs.mkdirSync(path.join(root,'.github/workflows'),{recursive:true});fs.copyFileSync(new URL('../ci/fixed-nine-draft-workflow-sources.json.gz',import.meta.url),path.join(root,'scripts/ci/fixed-nine-draft-workflow-sources.json.gz'));
@@ -47,5 +48,14 @@ test('complete native YAML source history retains both original command edits an
 });
 
 test('the actual source producer reproduces the installed complete workflow without writes or cached checks',{timeout:60000},async()=>{
- const root=fileURLToPath(new URL('../../',import.meta.url)),first=await prepareParallelJavaScriptGate({root}),second=await prepareParallelJavaScriptGate({root});assert.deepEqual(second,first);assert.equal(first.current,source);assert.equal(first.after,source);assert.equal(first.inverse,first.before);assert.equal(first.selection.length,5);assert.equal(first.languageEdits.length,2);assert.equal(first.repositoryEdits.length,6);assert.equal(first.allOriginalCommandsRequired,true);assert.equal(first.allEightStagesRetained,true);assert.equal(first.originalTimeoutsUnchanged,true);assert.equal(first.cancelSiblingJobs,false);assert.equal(first.rustAuthority,false);assert.equal(first.defaultWritesAllowed,false);assert.deepEqual(first.trace.map(row=>row.phase),['language','repository']);for(const stage of first.stages){assert.equal(JSON.parse(stage.beforeMeta).source,stage.before);assert.equal(JSON.parse(stage.afterMeta).source,stage.after);assert.equal(stage.inverse,stage.before);assert.equal(stage.completeInverse,true);}
+ const root=fileURLToPath(new URL('../../',import.meta.url)),first=await prepareParallelJavaScriptGate({root}),second=await prepareParallelJavaScriptGate({root});assert.deepEqual(second,first);assert.equal(first.current,source);assert.equal(first.after,source);assert.equal(first.inverse,first.before);assert.equal(first.selection.length,5);assert.equal(first.languageEdits.length,2);assert.equal(first.repositoryEdits.length,7);assert.equal(first.allOriginalCommandsRequired,true);assert.equal(first.allEightStagesRetained,true);assert.equal(first.originalTimeoutsUnchanged,true);assert.equal(first.cancelSiblingJobs,false);assert.equal(first.rustAuthority,false);assert.equal(first.defaultWritesAllowed,false);assert.deepEqual(first.trace.map(row=>row.phase),['language','repository']);for(const stage of first.stages){assert.equal(JSON.parse(stage.beforeMeta).source,stage.before);assert.equal(JSON.parse(stage.afterMeta).source,stage.after);assert.equal(stage.inverse,stage.before);assert.equal(stage.completeInverse,true);}
+});
+
+test('partition checks run under Node and Bun and producer freshness is mandatory in CI',{timeout:60000},()=>{
+ const commands=["node --test scripts/test/parallel-js-gate.test.mjs", "bun test ./scripts/test/parallel-js-gate.test.mjs", "node scripts/prepare-parallel-js-gate.mjs --check"],jobs=parse(source).jobs;
+ for(const command of commands){const steps=jobs.lint.steps.filter(step=>step.run===command);assert.equal(steps.length,1);assert.deepEqual(Object.keys(steps[0]),['run']);fails(workflow=>{workflow.jobs.lint.steps=workflow.jobs.lint.steps.filter(step=>step.run!==command);});fails(workflow=>{workflow.jobs.lint.steps.find(step=>step.run===command).if='${{ false }}';});}
+});
+
+test('the local gate keeps the same complete mandatory partition checks as CI',{timeout:60000},()=>{
+ const commands=["node --test scripts/test/parallel-js-gate.test.mjs","bun test ./scripts/test/parallel-js-gate.test.mjs","node scripts/prepare-parallel-js-gate.mjs --check"],lint=localGateStages.find(([id])=>id==='lint')[1],anchor=lint.indexOf('node --test scripts/test/check-js-first-workflows.test.mjs');assert.ok(anchor>=0);assert.deepEqual(lint.slice(anchor+1,anchor+4),commands);for(const command of commands)assert.equal(lint.filter(value=>value===command).length,1);assert.ok(lint.indexOf('node --test scripts/test/check-js-first-local.test.mjs')>anchor+3);
 });

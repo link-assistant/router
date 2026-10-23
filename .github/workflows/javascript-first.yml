@@ -38,6 +38,9 @@ jobs:
       - run: node scripts/lint-js-first.mjs
       - run: node --test --test-concurrency=1 scripts/test/run-bun-forward-files.test.mjs scripts/test/run-bun-reverse-files.test.mjs scripts/test/bun-reverse-inputs.test.mjs
       - run: node --test scripts/test/check-js-first-workflows.test.mjs
+      - run: node --test scripts/test/parallel-js-gate.test.mjs
+      - run: bun test ./scripts/test/parallel-js-gate.test.mjs
+      - run: node scripts/prepare-parallel-js-gate.mjs --check
       - run: node --test scripts/test/check-js-first-local.test.mjs
       - run: node scripts/check-js-first-workflows.mjs
   node-tests:

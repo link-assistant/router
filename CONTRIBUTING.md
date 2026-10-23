@@ -53,6 +53,13 @@ copied and fabricated evidence controls when qualifying a new compiler path.
 
 Create a feature branch or isolated worktree, implement behavior in JavaScript, add targeted behavioral tests and update documentation. Read [the JavaScript-first workflow](docs/development/javascript-first.md) for the parity boundary and generation limitations. Router's JavaScript operations package and a valid parity inventory do not by themselves establish complete Rust runtime parity.
 
+Use the [bulk Rust assertion fixtures](docs/development/bulk-rust-assertion-fixtures.md)
+for fast feedback on already generated production functions. The runner reads
+eligible original literal assertions and executes complete JavaScript and
+independently strict-compiled TypeScript modules in Node and Bun. Retain its
+excluded-case census; source assertions do not establish successful Rust
+execution or replace the complete suites and parity gate.
+
 Run the complete local gate:
 
 ```bash

@@ -29,8 +29,9 @@ node scripts/prepare-parallel-js-gate.mjs --check
 ```
 
 The proposal retains complete serialized/reparsed native YAML CST for both
-phases, full byte inverses, the five original complete commands and eight native
-edits. It writes nothing. The source-history reader independently reverses the
+phases, full byte inverses, the five original complete commands and nine native
+edits. The ninth inserts the complete mandatory lint check block. It writes
+nothing. The source-history reader independently reverses the
 parallelism edits and the two earlier storage-command edits to the immutable
 reviewed archive. Neither a source proposal nor that archive grants Rust
 permission or records a successful CI run.
@@ -42,3 +43,11 @@ original whole workflow-policy test file and its deadlines, and run the new
 partition/source-history controls in both Node and Bun. Actual remote CI remains
 required; a local model of scheduling is not a completed GitHub run or a measured
 speed improvement.
+
+The lint stage runs the partition controls with both `node --test
+scripts/test/parallel-js-gate.test.mjs` and `bun test
+./scripts/test/parallel-js-gate.test.mjs`, then requires the generator's `--check`.
+The original workflow-policy file remains unchanged. The auditor rejects a
+missing or conditional partition test or generator freshness command.
+The local gate requires the same three commands in the same order; a separate
+control checks that its command list stays aligned with CI.
