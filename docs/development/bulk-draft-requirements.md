@@ -47,9 +47,36 @@ flow, other effect families, production caller adoption and all other open
 rows above still need their complete draft; this family does not close them.
 
 The [typed scalar frontend draft](typed-portable-draft.md) adds native-selected
-TypeScript annotations and scalar alias chains to the existing reverse semantic
+TypeScript annotations, scalar/absence unions and alias chains to the existing reverse semantic
 pipeline. It retains complete source inverses and compares the original written
 parameter, return, constant and local constraints with independently checked
 IR. The source and independent regressions are drafted but unrun. Generic,
 object, class, interface, async and other TypeScript obligations remain open;
 there is no blanket type-erasure path or full-support claim.
+
+The filesystem reverse source also contains ordered guarded Result flows and
+closed lazy async flows. Every intermediate Result requires its original error
+return before a successful payload can be consumed. These additional language
+and runtime rules and their regression source remain unrun.
+
+The [source-unit synchronization draft](source-unit-sync-draft.md) provides an
+additive three-language proposal/apply path. It captures full current source
+and Git baseline bytes, detects concurrent edits, invokes actual language/meta
+translators, relocates native module edges and packages complete runtime assets.
+Apply recomputes the whole proposal before writing; stored plans grant no source
+or semantic permission. Its source and refusal/transaction regressions are
+drafted and unrun. Full production profile coverage and the existing complete
+Router synchronization/gate obligations remain open.
+Compiler export, isolated and portable-Git source selection now share one
+entrypoint list, including the additive unit synchronizer. Complete original
+packaging sources, native-selected changes and two-sequence CST inverses are
+retained by `prepare-unit-sync-exports.mjs`; its qualification and fixture
+regeneration are deferred with all other verification.
+
+The [pure module project draft](module-project-draft.md) links actual named and
+namespace imports through fresh native source symbols, preserves module order
+and complete CST inverses, then checks the entire linked body through the
+existing semantic pipeline. Its source-unit profile also tracks dependency-only
+edits and protects authoritative inputs from other unit outputs. Source and
+independent regressions are drafted and unrun. Cycles, native class/async module
+families and the broader forward namespace/producer closure remain open.

@@ -1,3 +1,4 @@
+import {TRANSLATOR_ENTRYPOINTS} from './translator-entrypoints.mjs';
 // Copy the complete committed offline compiler; exported metadata grants no
 // source, namespace, ownership, or runtime-equivalence authority.
 import {execFileSync} from 'node:child_process';
@@ -8,8 +9,7 @@ import {fileURLToPath} from 'node:url';
 import {isCompilerSourceInputPath} from './compiler-source-inputs.mjs';
 
 export const TRANSLATOR_EXPORT_LIMITS=Object.freeze({files:2048,fileBytes:4*1024*1024,totalBytes:64*1024*1024,gitMilliseconds:10000,gitOutputBytes:4*1024*1024});
-const roots=['tools/translation','scripts/translate-router.mjs',"scripts/translate-router-flat-native-owned-field-meta.mjs",'scripts/export-router-translator.mjs',
-  'scripts/regenerate-js-first.mjs','scripts/regenerate-native-typescript.mjs','scripts/sync-router.mjs'];
+const roots=['tools/translation',...TRANSLATOR_ENTRYPOINTS];
 const sha256=bytes=>createHash('sha256').update(bytes).digest('hex');
 const selected=path=>{
   if(roots.slice(1).includes(path))return true;

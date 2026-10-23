@@ -10,7 +10,7 @@ import {transportConcreteSourceEquations} from '../concrete-source-equations.mjs
 import {createRulePipeline} from '../rule-pipeline.mjs';
 
 const fail=message=>{throw new TypeError('Typed portable source: '+message);};
-const scalarKinds=ts=>new Map([[ts.SyntaxKind.StringKeyword,'string'],[ts.SyntaxKind.NumberKeyword,'number'],[ts.SyntaxKind.BooleanKeyword,'boolean']]);
+const scalarKinds=ts=>new Map([[ts.SyntaxKind.StringKeyword,'string'],[ts.SyntaxKind.NumberKeyword,'number'],[ts.SyntaxKind.BooleanKeyword,'boolean'],[ts.SyntaxKind.UndefinedKeyword,'undefined']]);
 function nativeSource(source,path){const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('lockfile TypeScript5.9.3 required');const file=ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);if(file.parseDiagnostics.length)fail('complete native TypeScript grammar differs');return {ts,file};}
 function sourcePlan(stage,path){
  if(stage.concreteSyntax.language!=='TypeScript')fail('TypeScript concrete input required');
@@ -22,9 +22,14 @@ function sourcePlan(stage,path){
  }
  function scalar(node,seen=new Set()){
   if(!node)fail('explicit scalar source type required');const primitive=kinds.get(node.kind);if(primitive)return primitive;
+  if(ts.isLiteralTypeNode(node)&&node.literal.kind===ts.SyntaxKind.NullKeyword)return 'null';
   if(ts.isParenthesizedTypeNode(node))return scalar(node.type,seen);
+  if(ts.isUnionTypeNode(node)){
+   const members=[...new Set(node.types.map(value=>scalar(value,new Set(seen))))],absent=members.filter(value=>value==='null'||value==='undefined'),present=members.filter(value=>['string','number','boolean'].includes(value));
+   if(members.length!==2||absent.length!==1||present.length!==1)fail('only a closed scalar plus null or undefined union is supported');return present[0]+'|'+absent[0];
+  }
   if(ts.isTypeReferenceNode(node)&&ts.isIdentifier(node.typeName)&&!node.typeArguments?.length){const name=node.typeName.text;if(!aliases.has(name)||seen.has(name))fail('unresolved or recursive scalar alias');return scalar(aliases.get(name).type,new Set(seen).add(name));}
-  fail('type is outside the explicit string/number/boolean domain');
+  fail('type is outside the explicit scalar/absence domain');
  }
  for(const node of file.statements){
   if(ts.isTypeAliasDeclaration(node)){scalar(node.type,new Set([node.name.text]));allowType(node.type);selected(node,'','compile-time-scalar-alias');continue;}

@@ -135,6 +135,10 @@ export function deferFilesystemEffect(id,args,capability) {
   const copied=[];for(let at=0;at<count;at++){if(!Object.hasOwn(args,at))throw new TypeError('Filesystem future arguments must be dense');copied.push(requireString(args[at]));}
   const operation=filesystemDeferredOperations[id];return ml_router_future(()=>operation(...copied,capability));
 }
+export function deferFilesystemFlow(operation) {
+  if(typeof operation!=='function')throw new TypeError('Filesystem flow requires a deferred operation');
+  return ml_router_future(operation);
+}
 function filesystemPaths(values) {
   for (const value of values) { const invalid=checkPath(value); if(invalid)return invalid; }
   return null;

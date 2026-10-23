@@ -62,6 +62,19 @@ test('reverse wrappers refuse eager async timing shadowing indirect calls missin
   'import {std_fs_read as read} from "./runtime/effects.mjs"; /** @param {string} path */ export function bytes(path){return read(path + "suffix");}',
  ];for(const source of sources)assert.throws(()=>translateFilesystemEffectJavaScript(source,input()),TypeError);
 });
+test('complete guarded Result flows lower ordered effects and original early errors to Rust propagation',limits,()=>{
+ const source='import {std_fs_read_to_string as read,std_fs_write as write} from "./runtime/effects.mjs";\n/**\n * @param {string} from\n * @param {string} to\n */\nexport function copy(from,to){const loaded=read(from);if(loaded.$==="Err"){return loaded;}return write(to,loaded.field0);}';
+ const result=translateFilesystemEffectJavaScript(source,input());assert.match(result.rust,/let loaded = std::fs::read_to_string\(from\)\?;/);assert.match(result.rust,/std::fs::write\(to, loaded\)/);const meta=JSON.parse(result.meta);assert.equal(meta.functions[0].flow.steps.length,1);assert.equal(meta.functions[0].flow.tail.operation,'std_fs_write');
+ for(const changed of [source.replace('loaded.$==="Err"','loaded.$==="Ok"'),source.replace('write(to,loaded.field0)','write(loaded.field0,loaded.field0)'),source.replace('return loaded;','return write(to,from);')])assert.throws(()=>translateFilesystemEffectJavaScript(changed,input()),TypeError);
+});
+test('closed lazy async Result flows retain actual await order and reject eager or unmatched flow bodies',limits,async()=>{
+ const source='import {tokio_fs_read_to_string as read,tokio_fs_write as write,deferFilesystemFlow as lazy} from "./runtime/effects.mjs";\n/**\n * @param {string} from\n * @param {string} to\n */\nexport function copy(from,to){return lazy(async()=>{const loaded=await read(from);if(loaded.$!=="Ok")return loaded;return await write(to,loaded.field0);});}';
+ const result=translateFilesystemEffectJavaScript(source,input());assert.match(result.rust,/async fn copy/);assert.match(result.rust,/read_to_string\(from\).await\?/);assert.match(result.rust,/write\(to, loaded\).await/);assert.throws(()=>translateFilesystemEffectJavaScript(source.replace('await read(from)','read(from)'),input()),/await\/polling/);
+ const tape=[],capability={fs:{async:{readFile:async path=>{tape.push(['read',path]);return Buffer.from('independent payload');},writeFile:async(path,value)=>{tape.push(['write',path,Buffer.from(value).toString('utf8')]);}}}};
+ const pending=runtime.deferFilesystemFlow(async()=>{const loaded=await runtime.tokio_fs_read_to_string('input');if(loaded.$==='Err')return loaded;return await runtime.tokio_fs_write('output',loaded.field0);});assert.deepEqual(tape,[]);assert.deepEqual(await runtime.withEffectCapabilities(capability,()=>Promise.resolve(pending)),{$:'Ok',field0:null});assert.deepEqual(tape,[['read','input'],['write','output','independent payload']]);
+ const failed=runtime.deferFilesystemFlow(async()=>{const loaded=await runtime.tokio_fs_read_to_string('missing');if(loaded.$==='Err')return loaded;return await runtime.tokio_fs_write('untouched',loaded.field0);});
+ const denied={fs:{async:{readFile:async()=>{throw io('EACCES');},writeFile:async()=>{throw Error('must never write after the original error');}}}};assert.equal((await runtime.withEffectCapabilities(denied,()=>Promise.resolve(failed))).field0.kind,'PermissionDenied');
+});
 test('new qualified sync and async Rust filesystem callers execute complete generated JS and strict TypeScript',limits,async()=>{
  const source='fn bytes(path: &str) -> std::io::Result<Vec<u8>> { std::fs::read(path) } async fn moved(from: &str, to: &str) -> std::io::Result<()> { tokio::fs::rename(from, to).await }';
  const result=translateSource(source,'input.rs');assert.equal(result.ir.counts.carried,0,JSON.stringify(result.ir.items));

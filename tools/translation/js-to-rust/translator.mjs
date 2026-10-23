@@ -424,3 +424,4 @@ export function translateOwnedCoreDocumentConcreteSyntaxMeta(text,options){retur
 
 export {translateFilesystemEffectJavaScript,translateFilesystemEffectTypeScript,translateFilesystemEffectConcreteSyntaxMeta,readFilesystemEffectMeta} from './filesystem-effects.mjs';
 export {translateTypeScript,translateTypeScriptConcreteSyntaxMeta,readTypeScriptSourceMeta} from './typed-portable.mjs';
+export {translatePortableModuleProject} from './module-project.mjs';

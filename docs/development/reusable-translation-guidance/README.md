@@ -95,3 +95,17 @@ receiving environment, then execute the emitted JavaScript and strict-compiled
 TypeScript. A concrete tree proves source fidelity only; it cannot supply missing
 grammar, types, ownership or runtime parity. Copying the compiler does not establish
 that the receiving repository's complete code can be translated.
+
+## Respect an explicit bulk-draft phase
+
+When the user requires the entire source batch before testing, keep a complete
+requirement ledger and draft implementations, forward/reverse mappings, runtime
+declarations, regression source and documentation together. Automated source
+writing may construct draft files; it does not qualify them. Defer tests,
+benchmarks, verification compiler runs, exploratory execution, freshness
+regeneration and CI-triggering publication until that complete draft exists.
+Keep all original verification obligations and deadlines for the later phase.
+Record partial source coverage and unverified changes explicitly; neither a
+rule catalogue, an output proposal nor a source/CST inverse establishes runtime
+parity or full synchronization. Preserve the receiving user's local-tool and
+resource restrictions, including CI-only Rust when requested.

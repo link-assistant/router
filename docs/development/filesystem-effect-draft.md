@@ -15,7 +15,8 @@ and declarations. Both stages retain full serialized/reparsed CST and inverses.
 The source producer has not been executed or qualified during drafting.
 
 The separate reverse API accepts complete JavaScript/TypeScript modules of
-typed direct filesystem wrappers. It resolves actual named imports against the
+typed direct filesystem wrappers and guarded sequential Result flows. It
+resolves actual named imports against the
 entire current runtime source, reconstructs the original CST, serializes and
 reparses operation meta, then checks emitted Rust through the existing semantic
 parser/checker and checked-meta round trip. Native string annotation edits
@@ -26,9 +27,12 @@ Synchronous wrappers directly call qualified standard filesystem functions.
 Asynchronous wrappers return `deferFilesystemEffect` with a literal operation
 and actual bound operands. That helper copies the original lazy future. Eager
 JavaScript async wrappers are refused because their invocation/polling behavior
-differs from Rust futures. Borrowing, callbacks, arbitrary path expressions,
-annotations outside the explicit string subset and indirect imports remain
-separate requirements.
+differs from Rust futures. `deferFilesystemFlow` also accepts a closed deferred
+async flow. Each intermediate Result must have an immediate complete failure
+return; checked successful payloads have one consumer. Source rules lower that
+sequence to ordered Rust calls and `?` while preserving the original error.
+Arbitrary callbacks, borrowing, path expressions, annotations outside the
+explicit string subset and indirect imports remain separate requirements.
 
 The independent JS/TS regression source and Rust oracle source are drafted and
 unrun. Recursive removal of a regular file must refuse; a root symlink must be

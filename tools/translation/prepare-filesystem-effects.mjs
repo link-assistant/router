@@ -26,7 +26,7 @@ function originalInputs(root){
  for(const row of data.files)need(Buffer.byteLength(row.source)===row.bytes&&hash(row.source)===row.sha256,'complete original source bytes');
  return {index,packed,files:data.files};
 }
-function parse(ts,path,source){const file=ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);need(!file.parseDiagnostics.length&&source.split('\n').length<1000,'complete native grammar and file bound');return file;}
+function parse(ts,path,source){const file=ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS),lines=source.split('\n').length-(source.endsWith('\n')?1:0);need(!file.parseDiagnostics.length&&lines<1000,'complete native grammar and file bound');return file;}
 function selectedImport(ts,file,from,replacement){
  const nodes=file.statements.filter(node=>ts.isImportDeclaration(node)&&node.moduleSpecifier.text===from);
  need(nodes.length===1,'one complete original native import');const node=nodes[0];
@@ -44,14 +44,15 @@ export function prepareFilesystemEffects({root=ROOT}={}){
   else if(path.endsWith('/extensions/effects.mjs'))selections.push(selectedImport(ts,file,'./effects-contracts.mjs',"import { FILESYSTEM_EFFECT_DATA as EFFECT_DATA, FILESYSTEM_EFFECT_CONTRACTS as EFFECT_CONTRACTS, filesystemEffectContract as effectContract } from './filesystem-effects-contracts.mjs';"));
   else if(path.endsWith('/extensions/host-contracts.mjs'))selections.push(selectedImport(ts,file,'./effects-contracts.mjs',"import {FILESYSTEM_EFFECT_CONTRACTS as EFFECT_CONTRACTS} from './filesystem-effects-contracts.mjs';"));
   else if(path==='tools/translation/js-to-rust/translator.mjs'){
-   language=before+"\nexport {translateFilesystemEffectJavaScript,translateFilesystemEffectTypeScript,translateFilesystemEffectConcreteSyntaxMeta,readFilesystemEffectMeta} from './filesystem-effects.mjs';\nexport {translateTypeScript,translateTypeScriptConcreteSyntaxMeta,readTypeScriptSourceMeta} from './typed-portable.mjs';\n";
+   language=before+"\nexport {translateFilesystemEffectJavaScript,translateFilesystemEffectTypeScript,translateFilesystemEffectConcreteSyntaxMeta,readFilesystemEffectMeta} from './filesystem-effects.mjs';\nexport {translateTypeScript,translateTypeScriptConcreteSyntaxMeta,readTypeScriptSourceMeta} from './typed-portable.mjs';\nexport {translatePortableModuleProject} from './module-project.mjs';\n";
   }else{
    need(path==='tools/translation/effect-assets.mjs','closed original source targets');
    selections.push(selectedImport(ts,file,'./extensions/effects-contracts.mjs',"import { FILESYSTEM_EFFECT_CONTRACTS as EFFECT_CONTRACTS } from './extensions/filesystem-effects-contracts.mjs';"));
    const literals=[];function visit(node){if(ts.isStringLiteral(node)&&node.text==='./extensions/effects-runtime.mjs')literals.push(node);ts.forEachChild(node,visit);}visit(file);need(literals.length===1,'one complete native runtime source literal');const node=literals[0];selections.push({span:[node.getStart(file),node.end],expected:node.getText(file),replacement:"'./extensions/filesystem-effects-runtime.mjs'",kind:'native-source-literal'});
    const owners=file.statements.filter(node=>ts.isFunctionDeclaration(node)&&node.name?.text==='effectRuntimeAssets');need(owners.length===1,'whole original runtime asset producer');const returns=owners[0].body.statements.filter(ts.isReturnStatement);need(returns.length===1,'whole original asset return');const fields=returns[0].expression.properties.filter(node=>ts.isPropertyAssignment(node)&&node.name.getText(file)==='declarations');need(fields.length===1,'whole original declarations field');const field=fields[0].initializer;
    const deferred="EFFECT_CONTRACTS.filter(row=>row.async).map(row=>`export declare function deferFilesystemEffect(operation: ${JSON.stringify(row.id)}, args: readonly [${row.params.map(type=>tsType(type,dataTypes)).join(', ')}], capability?: unknown): PromiseLike<${tsType(resolved(row.ret),dataTypes)}>;`).join('\\n')";
-   selections.push({span:[field.getStart(file),field.end],expected:field.getText(file),replacement:'('+field.getText(file)+")+'\\n'+"+deferred,kind:'native-declaration-field'});
+   const flow="'\\nexport declare function deferFilesystemFlow<T>(operation: () => PromiseLike<T>): PromiseLike<T>;\\n'";
+   selections.push({span:[field.getStart(file),field.end],expected:field.getText(file),replacement:'('+field.getText(file)+")+'\\n'+"+deferred+'+'+flow,kind:'native-declaration-field'});
   }
   const after=edits(language,selections);parse(ts,path,after);
   const run=createRulePipeline([

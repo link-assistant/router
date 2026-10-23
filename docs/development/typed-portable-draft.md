@@ -2,8 +2,9 @@
 
 The additive `translateTypeScript` and `translateTypeScriptConcreteSyntaxMeta`
 APIs retain the original TypeScript CST before native AST selection. The source
-rules accept explicit string, number and boolean annotations, closed scalar
-alias chains, ordinary scalar function signatures, scalar constants and
+rules accept explicit string, number and boolean annotations, their closed
+unions with either null or undefined, closed scalar alias chains, ordinary
+scalar function signatures, scalar constants and
 unambiguous initialized scalar locals. They retain each written constraint.
 
 Language rules replace only selected native annotation spans, express parameter
@@ -13,6 +14,9 @@ parser, semantic checker, meta serializer/reparser and Rust/TypeScript emitters
 still process the complete resulting module. Each retained parameter, return,
 constant and local constraint must match that independently checked program.
 Repository rules package the complete original source history and targets.
+Null and undefined retain their distinct existing semantic contracts. Existing
+numeric and string ABI domains remain unchanged; this adds no wider UTF16 or
+opaque-value permission.
 
 Assertions, non-null assertions, `satisfies`, generic types, unresolved/recursive
 aliases, classes, interfaces, enums, optional/rest/default parameters and

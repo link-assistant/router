@@ -26,6 +26,48 @@ function options(input){
 }
 function contract(id){const row=FILESYSTEM_EFFECT_CONTRACTS.find(row=>row.id===id&&row.rustPath[1]==='fs');if(!row)fail('unregistered filesystem operation');return row;}
 function rustResult(row){return row.rustPath.at(-1)==='read'?'std::io::Result<Vec<u8>>':row.rustPath.at(-1)==='read_to_string'?'std::io::Result<String>':'std::io::Result<()>';}
+function flow(ts,statements,parameters,imports,{lazy=false}={}){
+ const bindings=new Map(),steps=[];let tail=null;
+ function operand(node){
+  if(ts.isIdentifier(node)&&parameters.includes(node.text))return {kind:'parameter',name:node.text,type:'str'};
+  if(ts.isPropertyAccessExpression(node)&&node.name.text==='field0'&&ts.isIdentifier(node.expression)&&bindings.has(node.expression.text)){
+   const row=bindings.get(node.expression.text);if(row.used++)fail('owned successful payload is used more than once');return {kind:'payload',name:node.expression.text,type:row.type};
+  }
+  fail('flow operand is not an actual parameter or guarded unique payload');
+ }
+ function call(expression){
+  const awaited=ts.isAwaitExpression(expression);if(awaited)expression=expression.expression;
+  if(!ts.isCallExpression(expression)||!ts.isIdentifier(expression.expression)||expression.typeArguments?.length||!imports.has(expression.expression.text))fail('flow requires direct bound filesystem operations');
+  const op=contract(imports.get(expression.expression.text));if(op.async!==awaited||op.async&&!lazy)fail('flow await/polling contract differs');
+  if(expression.arguments.length!==op.params.length)fail('flow operation argument count differs');const args=[...expression.arguments].map(operand);
+  if(args.some((arg,index)=>arg.type!=='str'||op.params[index].kind!=='string'))fail('flow operand type differs from the declared operation');
+  return {operation:op.id,arguments:args,awaited,result:op.rustPath.at(-1)==='read'?'bytes':op.rustPath.at(-1)==='read_to_string'?'str':'unit'};
+ }
+ function guard(node,local){
+  if(!node||!ts.isIfStatement(node)||node.elseStatement||!ts.isBinaryExpression(node.expression))fail('each result binding requires its immediate complete failure return');
+  const condition=node.expression,left=condition.left,right=condition.right;if(!ts.isPropertyAccessExpression(left)||left.name.text!=='$'||!ts.isIdentifier(left.expression)||left.expression.text!==local||!ts.isStringLiteral(right))fail('failure guard must inspect the same actual Result tag');
+  if(!(condition.operatorToken.kind===ts.SyntaxKind.EqualsEqualsEqualsToken&&right.text==='Err'||condition.operatorToken.kind===ts.SyntaxKind.ExclamationEqualsEqualsToken&&right.text==='Ok'))fail('unsupported Result failure condition');
+  const body=ts.isBlock(node.thenStatement)?node.thenStatement.statements:[node.thenStatement];if(body.length!==1||!ts.isReturnStatement(body[0])||!body[0].expression||!ts.isIdentifier(body[0].expression)||body[0].expression.text!==local)fail('failure branch must return that complete original Result');
+ }
+ if(!statements.length||statements.length>4096)fail('bounded nonempty effect flow required');
+ for(let at=0;at<statements.length;at++){
+  const statement=statements[at];
+  if(ts.isVariableStatement(statement)){
+   if(statement.modifiers?.length||!(statement.declarationList.flags&ts.NodeFlags.Const)||statement.declarationList.declarations.length!==1)fail('one immutable Result binding per source step');const declaration=statement.declarationList.declarations[0];
+   if(!ts.isIdentifier(declaration.name)||!declaration.initializer||declaration.type)fail('inferred ordinary Result binding required');const id=name(declaration.name.text);if(bindings.has(id)||parameters.includes(id)||imports.has(id))fail('flow binding shadows an actual source binding');
+   const value=call(declaration.initializer);guard(statements[++at],id);bindings.set(id,{type:value.result,operation:value.operation,used:0});steps.push({name:id,...value});continue;
+  }
+  if(at!==statements.length-1||!ts.isReturnStatement(statement)||!statement.expression)fail('flow requires one complete final Result return');
+  const expression=statement.expression;
+  if(ts.isIdentifier(expression)&&bindings.has(expression.text)){const row=bindings.get(expression.text);if(row.used++)fail('returned payload was already consumed');tail={kind:'bound-result',name:expression.text,operation:row.operation};}
+  else tail={kind:'operation',...call(expression)};
+ }
+ if(!tail)fail('complete effect flow has no return');return {steps,tail,lazy};
+}
+function emitFlow(value){
+ const argument=row=>name(row.name),operation=row=>contract(row.operation).rustPath.join('::')+'('+row.arguments.map(argument).join(', ')+')'+(row.awaited?'.await':'');
+ return value.steps.map(row=>'let '+name(row.name)+' = '+operation(row)+'?;').concat(value.tail.kind==='bound-result'?'Ok('+name(value.tail.name)+')':operation(value.tail)).join('\n');
+}
 function analyze(stage,input){
  const context=options(input),source=stage.source,language=stage.concreteSyntax.language,ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('lockfile TypeScript5.9.3 required');
  const file=ts.createSourceFile(context.sourcePath,source,ts.ScriptTarget.Latest,true,language==='TypeScript'?ts.ScriptKind.TS:ts.ScriptKind.JS);if(file.parseDiagnostics.length)fail('complete original native grammar differs');
@@ -35,7 +77,7 @@ function analyze(stage,input){
    if(item.modifiers?.length||item.attributes||!ts.isStringLiteral(item.moduleSpecifier)||item.importClause?.isTypeOnly||item.importClause?.name||!item.importClause?.namedBindings||!ts.isNamedImports(item.importClause.namedBindings))fail('one transparent named runtime import required');
    const specifier=item.moduleSpecifier.text;if(!specifier.startsWith('./')&&!specifier.startsWith('../'))fail('relative runtime source import required');
    if(posix.normalize(posix.join(posix.dirname(context.sourcePath),specifier))!==context.runtimePath)fail('import does not select the complete runtime input');
-   for(const binding of item.importClause.namedBindings.elements){if(binding.isTypeOnly)fail('type-only operation import');const local=name(binding.name.text),imported=binding.propertyName?.text??local;if(locals.has(local))fail('competing imported binding');locals.add(local);imports.set(local,imported);if(imported!=='deferFilesystemEffect'&&!FILESYSTEM_EFFECT_CONTRACTS.some(row=>row.id===imported&&row.rustPath[1]==='fs'&&!row.async))fail('unsupported direct operation or eager async import');}
+   for(const binding of item.importClause.namedBindings.elements){if(binding.isTypeOnly)fail('type-only operation import');const local=name(binding.name.text),imported=binding.propertyName?.text??local;if(locals.has(local))fail('competing imported binding');locals.add(local);imports.set(local,imported);if(!['deferFilesystemEffect','deferFilesystemFlow'].includes(imported)&&!FILESYSTEM_EFFECT_CONTRACTS.some(row=>row.id===imported&&row.rustPath[1]==='fs'))fail('unsupported direct operation import');}
   }else{
    if(!ts.isFunctionDeclaration(item)||!item.name||!item.body||item.asteriskToken||item.typeParameters?.length||item.type||item.modifiers?.some(modifier=>modifier.kind!==ts.SyntaxKind.ExportKeyword))fail('ordinary synchronous wrapper with inferred return required');
    const id=name(item.name.text);if(locals.has(id))fail('competing module binding');locals.add(id);functions.push(item);
@@ -51,10 +93,14 @@ function analyze(stage,input){
    return id;
   });
   if(new Set(parameters).size!==parameters.length||parameters.length>64)fail('unique bounded source parameters');
-  if(item.body.statements.length!==1||!ts.isReturnStatement(item.body.statements[0])||!item.body.statements[0].expression)fail('one complete effect return required');
+  if(item.body.statements.length!==1){const value=flow(ts,item.body.statements,parameters,imports);return {kind:'filesystem-effect-function',name:item.name.text,exported:item.modifiers?.some(modifier=>modifier.kind===ts.SyntaxKind.ExportKeyword)??false,parameters:parameters.map(name=>({name,type:'str'})),operation:value.tail.operation,arguments:[],lazy:false,flow:value,span:{start:item.getStart(file),end:item.end}};}
+  if(!ts.isReturnStatement(item.body.statements[0])||!item.body.statements[0].expression)fail('one complete effect return required');
   const expression=item.body.statements[0].expression;if(!ts.isCallExpression(expression)||!ts.isIdentifier(expression.expression)||expression.typeArguments?.length||!imports.has(expression.expression.text))fail('direct actual imported operation required');
   const imported=imports.get(expression.expression.text);let selected,args,lazy=false;
-  if(imported==='deferFilesystemEffect'){
+  if(imported==='deferFilesystemFlow'){
+   const callback=expression.arguments[0];if(expression.arguments.length!==1||!ts.isArrowFunction(callback)||callback.parameters.length||callback.type||callback.typeParameters?.length||!ts.isBlock(callback.body)||callback.modifiers?.length!==1||callback.modifiers[0].kind!==ts.SyntaxKind.AsyncKeyword)fail('one closed deferred async flow required');
+   const value=flow(ts,callback.body.statements,parameters,imports,{lazy:true});return {kind:'filesystem-effect-function',name:item.name.text,exported:item.modifiers?.some(modifier=>modifier.kind===ts.SyntaxKind.ExportKeyword)??false,parameters:parameters.map(name=>({name,type:'str'})),operation:value.tail.operation,arguments:[],lazy:true,flow:value,span:{start:item.getStart(file),end:item.end}};
+  }else if(imported==='deferFilesystemEffect'){
    if(expression.arguments.length!==2||!ts.isStringLiteral(expression.arguments[0])||!ts.isArrayLiteralExpression(expression.arguments[1]))fail('literal lazy operation and ordinary argument array required');
    selected=contract(expression.arguments[0].text);if(!selected.async)fail('lazy wrapper requires an asynchronous operation');args=[...expression.arguments[1].elements];lazy=true;
   }else{selected=contract(imported);if(selected.async)fail('eager JS async calls have a different polling contract');args=[...expression.arguments];}
@@ -67,7 +113,7 @@ function analyze(stage,input){
 }
 function edit(source,edits){let value=source,last=source.length+1;for(const row of [...edits].sort((a,b)=>b.span[0]-a.span[0])){if(row.span[1]>=last)fail('overlapping native type selections');value=value.slice(0,row.span[0])+row.replacement+value.slice(row.span[1]);last=row.span[0];}return value;}
 function emit(rows){
- return rows.map(row=>{const op=contract(row.operation);if(row.lazy!==op.async||row.arguments.length!==op.params.length)fail('semantic operation shape differs');const args=row.arguments.map(name).join(', '),params=row.parameters.map(row=>name(row.name)+': &str').join(', ');return (row.exported?'pub ':'')+(op.async?'async ':'')+'fn '+name(row.name)+'('+params+') -> '+rustResult(op)+' { '+op.rustPath.join('::')+'('+args+')'+(op.async?'.await':'')+' }';}).join('\n')+'\n';
+ return rows.map(row=>{const op=contract(row.operation);if(!row.flow&&(row.lazy!==op.async||row.arguments.length!==op.params.length))fail('semantic operation shape differs');const args=row.arguments.map(name).join(', '),params=row.parameters.map(row=>name(row.name)+': &str').join(', '),body=row.flow?emitFlow(row.flow):op.rustPath.join('::')+'('+args+')'+(op.async?'.await':'');return (row.exported?'pub ':'')+(row.lazy?'async ':'')+'fn '+name(row.name)+'('+params+') -> '+rustResult(op)+' { '+body+' }';}).join('\n')+'\n';
 }
 function translate(stage,input){
  const analysis=analyze(stage,input),pipeline=createRulePipeline([
