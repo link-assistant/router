@@ -5,6 +5,7 @@ import {resolve,dirname,posix} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {createHash,randomUUID} from 'node:crypto';
 import {translateSource} from './translate.mjs';
+import {translatePortableRust,UnsupportedPortableRustSource} from './js-to-rust/portable-rust.mjs';
 import {translateProject} from './project.mjs';
 import {translateJavaScript} from './js-to-rust/translator.mjs';
 import {translateTypeScript} from './js-to-rust/typed-portable.mjs';
@@ -70,6 +71,10 @@ function translate(unit,language,text,runtime,dependencies=[]){
   if(unit.profile==='portable-project'){
    const sources=new Map([{path:unit.paths.Rust,source:text},...dependencies].map(row=>[row.path,row.source])),result=translateProject({entry:unit.paths.Rust,paths:[...sources.keys()],readSource:path=>{if(!sources.has(path))fail('missing complete Rust project source');return sources.get(path);}});
    if(result.meta.refused.length)fail('Rust project unit still has unsupported source obligations: '+unit.id);return {Rust:text,JavaScript:result.javascript,TypeScript:result.typescript,meta:result.meta,generatedFrom:unit.paths.Rust.replace(/\.rs$/u,'.mjs'),runtimeBefore:'runtime'};
+  }
+  if(unit.profile==='portable'){
+   try{const result=translatePortableRust(text,{sourcePath:unit.paths.Rust});return {Rust:text,JavaScript:result.javascript,TypeScript:result.typescript,meta:{semanticMeta:result.meta,portableRustSourceHistory:result.portableRustSourceHistory},generatedFrom:unit.paths.Rust.replace(/\.rs$/u,'.mjs'),runtimeBefore:'runtime'};}
+   catch(error){if(!(error instanceof UnsupportedPortableRustSource))throw error;}
   }
   const result=translateSource(text,unit.paths.Rust);if(result.ir.counts.carried||result.ir.items.some(row=>row.term==='fn'&&row.status!=='executable'))fail('Rust unit still contains unsupported bodies: '+unit.id);return {Rust:text,JavaScript:result.javascript,TypeScript:result.typescript,meta:result.ir,generatedFrom:unit.paths.Rust.replace(/\.rs$/u,'.mjs'),runtimeBefore:'runtime'};
  }

@@ -509,7 +509,8 @@ impl JsonResponseProjection {
     serialized.includes('"name":"trim"') ? TRIM_HELPER : '',
     serialized.includes('"name":"safe-integer"') ? SAFE_INTEGER_HELPER : '',
     serialized.includes('"name":"utf8-length"') ? UTF8_LENGTH_HELPER : '',
-    serialized.includes('"kind":"null"') || serialized.includes('"kind":"undefined"') || serialized.includes('"kind":"table-get"') ? ABSENCE_HELPERS : '',
+    // Keep Rust boundary declarations even when the body has no absent literal.
+    serialized.match(/"(?:type|returns)":"(?:(?:nullable|optional)-(?:string|number|boolean)|null|undefined)"/u) || serialized.includes('"kind":"null"') || serialized.includes('"kind":"undefined"') || serialized.includes('"kind":"table-get"') ? ABSENCE_HELPERS : '',
     serialized.includes('"kind":"table-set"') || serialized.includes('"kind":"table-map"') ? TABLE_HELPERS : '',
   ].filter(Boolean).map(helper => `${helper}\n\n`).join('') : '';
   const imports=!rust?[...constructorImports.values()].map(row=>`import { ${row.exported} as ${row.name} } from ${JSON.stringify(row.relative)};`).join('\n'):'';

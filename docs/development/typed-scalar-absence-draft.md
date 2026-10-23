@@ -45,3 +45,11 @@ signature. It uses fresh native source binding and explicit undefined
 substitutions; it does not broaden the legacy JavaScript checker or erase the
 distinction between required unions and optional parameters. All these source
 layers and regressions remain unrun.
+
+The copied emitter's Rust library selection also follows checked parameter,
+return and expression type roles. An identity body may contain no absent
+literal while still requiring `JsNullable`, `JsOptional`, `JsNull` or
+`JsUndefined`. The complete previous emitter, source substitutions and parent
+source history are retained by `prepare-typed-absence-library-types.mjs`.
+Identity-only boundary declaration and behavioral regressions are drafted and
+unrun; native Rust compilation remains deferred to the gated CI phase.

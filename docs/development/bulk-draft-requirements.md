@@ -88,6 +88,16 @@ function pins. Complete source/CST histories are retained; all behavior and
 receiving checks remain unrun. Rust executes only in JS-gated CI. Changed Rust
 source bytes require later bank/freshness refresh after bulk drafting.
 
+The [canonical scalar Rust inverse draft](portable-rust-inverse-draft.md) adds
+an actual Rust-to-checked-meta-to-JS/TS path for the existing emitter's closed
+scalar normal form. Both decoded Rust meta and independently checked JavaScript
+must freshly reproduce the complete Rust syntax. Portable synchronization
+retains those full source equations and preserves original fallback refusals.
+Its source, body-edit, nested-comment and behavioral regressions are unrun.
+General Rust, generic/absence envelope inverses and full production sync remain
+open. Separate source review also repaired missing Rust absence declarations in
+identity-only output; complete source histories and new regressions are unrun.
+
 The filesystem reverse source also contains ordered guarded Result flows and
 closed lazy async flows. Every intermediate Result requires its original error
 return before a successful payload can be consumed. These additional language

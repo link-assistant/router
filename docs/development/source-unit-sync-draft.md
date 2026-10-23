@@ -21,6 +21,15 @@ Commit an installed set of projections to establish the next Git baseline;
 uncommitted edits to multiple projections remain a conflict rather than an
 implicit authority claim.
 
+For `portable` Rust authority, the canonical scalar inverse can decode the
+actual emitter normal form into checked meta and require both fresh Rust
+reemission and independently checked JavaScript that reproduces that complete
+Rust syntax. It retains original source/CST history and both semantic documents.
+Only the specific unsupported-profile refusal falls back to the existing
+forward translator. Native/infrastructure errors remain fatal. The whole
+three-language baseline/body-edit integration regression is drafted and unrun;
+general Rust and the emitted absence/generic envelope inverses remain open.
+
 Language rules call the actual forward or reverse meta translator. Repository
 rules relocate native-selected import literals, retain complete CST/source
 inverses, package complete runtime assets and preserve actual before/after
