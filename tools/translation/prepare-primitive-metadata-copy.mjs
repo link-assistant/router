@@ -37,6 +37,14 @@ export function preparePrimitiveMetadataCopy({root=ROOT}={}){
  const imports=file.statements.filter(node=>ts.isImportDeclaration(node)&&node.moduleSpecifier.text==='../original-json-intrinsics.mjs'),bindings=one(imports,'actual common import').importClause.namedBindings,elements=bindings.elements,selected=one(elements.filter(node=>node.name.text===OLD&&!node.propertyName),'actual original factory import');if(elements.at(-1)!==selected||elements.length<2)fail('complete original common import order differs');const removal={span:[elements.at(-2).end,selected.end],expected:links.source.slice(elements.at(-2).end,selected.end),replacement:''},added={span:[imports[0].getStart(file),imports[0].getStart(file)],expected:'',replacement:"import {createPrimitiveMetadataCopier as createOriginalDigestMetadataCopierForInternalSources} from '../primitive-metadata-copy.mjs';\n"},linked=changes(links.source,[removal,added]);add(LINKS,links.source,links.source,linked,{nativeSelections:[removal,added],oldHashAndJsonExpressionUnchanged:true});
  if(!readFileSync(resolve(root,ARCHIVE)).equals(packed)||readFileSync(resolve(root,COMMON),'utf8')!==common.source)fail('complete pinned source input changed');for(const row of files)if((existsSync(resolve(root,row.path))?readFileSync(resolve(root,row.path),'utf8'):'')!==row.current)fail('complete physical input changed');return {schema:'complete-primitive-metadata-copy-proposal-v1',files,originals,kernel:copy,allOriginalChecksRetained:true,oldFactoryUnchanged:true,pinnedHostUnchanged:true,allOriginalParameterDefaultsRetained:true,oldHashAndJsonExpressionUnchanged:true,newCaches:false,performanceQualified:false,sourceAuthority:false,runtimeAuthority:false};
 }
+export function composePrimitiveMetadataCopy(prior,options={}){
+ const plan=preparePrimitiveMetadataCopy(options),sources={...prior};
+ for(const row of plan.files){
+  if(Object.hasOwn(prior,row.path)&&prior[row.path].after!==row.before)fail('complete preceding source differs: '+row.path);
+  sources[row.path]=row;
+ }
+ return {sources,layers:[plan]};
+}
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const args=process.argv.slice(2);if(args.length!==1||!['--emit','--write','--check'].includes(args[0]))fail('use --emit|--write|--check');const plan=preparePrimitiveMetadataCopy();if(args[0]==='--write'){for(const row of plan.files)if((existsSync(resolve(ROOT,row.path))?readFileSync(resolve(ROOT,row.path),'utf8'):'')!==row.current)fail('physical input changed before write');for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);}else if(args[0]==='--check'){if(plan.files.some(row=>row.current!==row.after))fail('complete source copies are stale');console.log('Complete specialized copier and native import selection are current; no semantic authority.');}else console.log(JSON.stringify(plan));
 }
