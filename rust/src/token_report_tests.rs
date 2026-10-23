@@ -81,3 +81,45 @@ fn an_unfamiliar_record_still_renders() {
         "unknown usage is zero of unlimited: {line}"
     );
 }
+
+/// Only nonempty JSON strings supply the scope, including Unicode text.
+#[test]
+fn scope_reader_preserves_kind_and_empty_string_behavior() {
+    let cases = [
+        (Value::Null, "client"),
+        (Value::Bool(true), "client"),
+        (Value::from(7), "client"),
+        (serde_json::json!([]), "client"),
+        (serde_json::json!({}), "client"),
+        (Value::String(String::new()), "client"),
+        (Value::String("管理员😀".into()), "管理员😀"),
+    ];
+
+    for (scope, expected) in cases {
+        let mut value = record();
+        value["scope"] = scope;
+        let line = row(&value);
+        assert_eq!(line.split_whitespace().nth(8), Some(expected), "{line}");
+    }
+}
+
+/// JSON truthiness must never replace the native boolean reader.
+#[test]
+fn revoked_reader_accepts_only_actual_json_booleans() {
+    let cases = [
+        (Value::Bool(true), "true"),
+        (Value::Bool(false), "false"),
+        (Value::Null, "false"),
+        (Value::String("true".into()), "false"),
+        (Value::from(1), "false"),
+        (serde_json::json!([true]), "false"),
+        (serde_json::json!({"revoked": true}), "false"),
+    ];
+
+    for (revoked, expected) in cases {
+        let mut value = record();
+        value["revoked"] = revoked;
+        let line = row(&value);
+        assert_eq!(line.split_whitespace().nth(3), Some(expected), "{line}");
+    }
+}

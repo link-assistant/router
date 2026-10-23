@@ -46,6 +46,16 @@ source/CST inverses and readback. A fresh actual Router run remains required;
 the first receiving attempt correctly refused uncommitted compiler source.
 No source guard or original deadline is relaxed to reuse an older proposal.
 
+The fresh full Router run at d46eaec also passed proposal and independent
+review, freshly rejoining all 4,418 captured inputs. Its exact reviewed
+substitutions were applied to `token_report::row` in 18.919 seconds, with
+440,139,776 bytes peak sampled aggregate RSS, within the unchanged entire
+sixty-second/one-GiB application bounds. This qualifies full Router source
+application only. Source-bank and generated-artifact freshness, the function's
+remaining local-closure refusal and full parity remain open. Additional Rust
+source cases cover scope strings, Unicode, wrong JSON kinds and boolean
+truthiness; they have not run locally and await the JavaScript-gated Rust CI.
+
 Both controllers count evidence with a fresh native directory walk at every
 original accounting point. The original sparse logical sizes, allocated blocks,
 directory and link counts, special-file refusals and entry limits remain.
