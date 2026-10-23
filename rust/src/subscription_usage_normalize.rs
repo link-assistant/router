@@ -611,3 +611,40 @@ fn epoch_timestamp(value: &Value) -> Option<String> {
         .and_then(|seconds| chrono::DateTime::from_timestamp(seconds, 0))
         .map(|time| time.to_rfc3339())
 }
+
+#[cfg(test)]
+mod translation_record_hygiene_tests {
+    use super::*;
+
+    #[test]
+    fn empty_usage_preserves_each_provider_and_every_independent_field() {
+        for provider in [
+            UsageProvider::Anthropic,
+            UsageProvider::OpenAi,
+            UsageProvider::ZAi,
+            UsageProvider::Lefine,
+            UsageProvider::Gemini,
+            UsageProvider::Qwen,
+        ] {
+            let value = empty_usage(provider);
+            assert_eq!(value.provider, provider);
+            assert_eq!(value.state, UsageState::Unverified);
+            assert_eq!(value.status, "unverified");
+            assert!(value.pool.is_none());
+            assert!(value.allowed.is_none());
+            assert!(value.limit_reached.is_none());
+            assert!(value.plan.is_none());
+            assert!(value.windows.is_empty());
+            assert!(value.additional_limits.is_empty());
+            assert!(value.credits.is_none());
+            assert!(value.extra_usage.is_none());
+            assert!(value.spend_control.is_none());
+            assert!(value.rate_limit_reached_type.is_none());
+            assert!(value.rate_limit_reset_credits_available.is_none());
+            assert!(value.subscription_end.is_none());
+            assert!(value.trial_end.is_none());
+            assert!(value.subscription_created.is_none());
+            assert!(value.retry_after_seconds.is_none());
+        }
+    }
+}
