@@ -1,5 +1,6 @@
 // Explicit stock-native inert-data storage lane. No semantic/source authority.
 import {types} from 'node:util';
+import {Buffer as NativeBuffer} from 'node:buffer';
 import {originalPrivateParserExpectedCommonIntrinsicsUnchanged,originalNamespaceTraversalIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
 
 export const FLAT_SEMANTIC_JSON_LIMITS=Object.freeze({bytes:64*1024*1024,objects:2000000,depth:512});
@@ -7,13 +8,22 @@ const nativeJson=JSON.stringify,ownKeys=Reflect.ownKeys,descriptor=Object.getOwn
 const objectPrototype=Object.prototype,arrayPrototype=Array.prototype,mapPrototype=Map.prototype;
 const mapEntries=Map.prototype.entries,mapNext=prototype(new Map().entries()).next;
 const fail=reason=>{throw new TypeError('Flat semantic JSON: '+reason);};
-function native(){if(!originalPrivateParserExpectedCommonIntrinsicsUnchanged()||!originalNamespaceTraversalIntrinsicsUnchanged())fail('original stock native operations required');}
+// As in the existing native output lane, Buffer infrastructure is trusted at
+// module birth. Pin its complete constructor/prototype chains thereafter.
+const hosts=[],seenHosts=new Set(),globalBuffer=descriptor(globalThis,'Buffer');
+for(const first of [NativeBuffer,NativeBuffer.prototype])for(let owner=first;owner!==null&&!seenHosts.has(owner);owner=prototype(owner)){seenHosts.add(owner);const keys=ownKeys(owner);hosts.push({owner,parent:prototype(owner),keys,fields:keys.map(key=>descriptor(owner,key))});}
+function sameDescriptor(a,b){return !!a&&!!b&&Object.hasOwn(a,'value')===Object.hasOwn(b,'value')&&a.enumerable===b.enumerable&&a.configurable===b.configurable&&(Object.hasOwn(a,'value')?a.value===b.value&&a.writable===b.writable:a.get===b.get&&a.set===b.set);}
+function native(){
+ if(!originalPrivateParserExpectedCommonIntrinsicsUnchanged()||!originalNamespaceTraversalIntrinsicsUnchanged())fail('original stock native operations required');
+ if(!globalBuffer||Object.hasOwn(globalBuffer,'value')&&globalBuffer.value!==NativeBuffer||!sameDescriptor(globalBuffer,descriptor(globalThis,'Buffer')))fail('original Buffer binding required');
+ for(const host of hosts){const keys=ownKeys(host.owner);if(prototype(host.owner)!==host.parent||keys.length!==host.keys.length)fail('original Buffer host required');for(let index=0;index<keys.length;index++)if(keys[index]!==host.keys[index]||!sameDescriptor(host.fields[index],descriptor(host.owner,keys[index])))fail('original Buffer host required');}
+}
 
 // This API deliberately refuses observable objects/callbacks. The original
 // semantic serializer and its ordinary observer contract remain unchanged.
 function writeJson(value,emit){
  native();let bytes=0,objects=0;const active=new Set();
- const write=text=>{bytes+=Buffer.byteLength(text);if(bytes>FLAT_SEMANTIC_JSON_LIMITS.bytes)fail('original field byte budget exceeded');emit(text);};
+ const write=text=>{bytes+=NativeBuffer.byteLength(text);if(bytes>FLAT_SEMANTIC_JSON_LIMITS.bytes)fail('original field byte budget exceeded');emit(text);};
  function visit(value,depth){
   if(depth>FLAT_SEMANTIC_JSON_LIMITS.depth)fail('original field depth budget exceeded');
   if(value===null||typeof value==='string'||typeof value==='boolean'||typeof value==='number'){write(nativeJson(value));return;}
@@ -52,9 +62,9 @@ export function serializeFlatSemanticJson(value){
  // UTF16LE buffers keep completed chunks outside the V8 string heap and retain
  // every code unit, including lone surrogates escaped by native JSON.stringify.
  const chunks=[];let pending='';
- const flush=()=>{if(pending){chunks.push(Buffer.from(pending,'utf16le'));pending='';}};
- writeJson(value,text=>{if(pending.length+text.length>16384)flush();if(text.length>16384)chunks.push(Buffer.from(text,'utf16le'));else pending+=text;});
- flush();return Buffer.concat(chunks).toString('utf16le');
+ const flush=()=>{if(pending){chunks.push(NativeBuffer.from(pending,'utf16le'));pending='';}};
+ writeJson(value,text=>{if(pending.length+text.length>16384)flush();if(text.length>16384)chunks.push(NativeBuffer.from(text,'utf16le'));else pending+=text;});
+ flush();native();const result=NativeBuffer.concat(chunks).toString('utf16le');native();return result;
 }
 
 export function flatSemanticJsonMatches(value,text){

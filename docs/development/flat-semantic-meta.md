@@ -53,3 +53,11 @@ change. The repaired native rule selects only the genuine import declaration;
 the original fingerprint literal/order and all complete compiler inputs remain.
 The original failed full-corpus run and both intermediate failures stay retained.
 Actual full-corpus retry remains necessary.
+
+Buffer infrastructure follows the existing native output lane's explicit
+trusted-module-birth contract. Its complete constructor/prototype chains and
+global binding descriptor are pinned thereafter; a stock lazy binding retains
+its exact accessor descriptor without invocation. Live method, accessor and
+binding replacement controls reject without calling replacements. All 16 whole
+metadata cases pass Node (7.031 seconds) and Bun (5.989 seconds), preserving the
+44 MiB byte checks, original nine metadata cases and strict TypeScript execution.

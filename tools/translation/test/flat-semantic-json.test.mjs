@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {Buffer as NativeBuffer} from 'node:buffer';
 import {serializeFlatSemanticJson,flatSemanticJsonMatches} from '../flat-semantic-json.mjs';
 import * as original from '../semantic-meta.mjs';
 import * as flat from '../semantic-meta-flat.mjs';
@@ -38,6 +39,18 @@ test('both actual complete source copies retain original validation bodies nativ
  const plan=prepareFlatSemanticMeta();assert.equal(plan.files.length,2);assert.equal(plan.originalAPIsUnchanged,true);assert.equal(plan.originalValidationsRetained,true);assert.equal(plan.newAcrossInvocationCache,false);
  assert.deepEqual(plan.files.map(row=>row.selections.length),[2,1]);
  for(const row of plan.files){assert.equal(row.current,row.after);assert.equal(row.before,read(row.copiedFrom));assert.equal(row.inverse,row.before);assert.equal(row.nativeBindings.nativeSemanticScopeChecked,true);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);for(const stage of row.stages){assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);assert.equal(stage.inverse,stage.before);assert.equal(stage.completeInverse,true);}}
+});
+
+test('live Buffer binding methods accessors and prototype changes refuse without invoking replacements',{timeout:60000},()=>{
+ let calls=0;
+ for(const [owner,key]of [[NativeBuffer,'from'],[NativeBuffer,'concat'],[NativeBuffer,'byteLength'],[NativeBuffer.prototype,'toString'],[NativeBuffer.prototype,'utf16leSlice']]){
+  const previous=Object.getOwnPropertyDescriptor(owner,key);if(!previous)continue;
+  try{Object.defineProperty(owner,key,{...previous,value(){calls++;throw Error('replacement');}});assert.throws(()=>serializeFlatSemanticJson({value:'λ😀'}),/Buffer|native/);}
+  finally{Object.defineProperty(owner,key,previous);}
+ }
+ const previous=Object.getOwnPropertyDescriptor(NativeBuffer,'from');try{Object.defineProperty(NativeBuffer,'from',{configurable:true,get(){calls++;throw Error('accessor');}});assert.throws(()=>serializeFlatSemanticJson({}),/Buffer|native/);}finally{Object.defineProperty(NativeBuffer,'from',previous);}
+ const binding=Object.getOwnPropertyDescriptor(globalThis,'Buffer');try{Object.defineProperty(globalThis,'Buffer',{configurable:binding.configurable,enumerable:binding.enumerable,writable:true,value:new Proxy(NativeBuffer,{get(){calls++;throw Error('binding');}})});assert.throws(()=>serializeFlatSemanticJson({}),/Buffer|native/);}finally{Object.defineProperty(globalThis,'Buffer',binding);}
+ assert.equal(calls,0);assert.equal(serializeFlatSemanticJson({value:'restored'}),'{"value":"restored"}');
 });
 
 test('complete retained actual project semantic document round trips with every original byte and declaration',{timeout:60000},()=>{
