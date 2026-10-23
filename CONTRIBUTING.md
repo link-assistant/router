@@ -193,6 +193,13 @@ individual rule edits. Keep drafted support, callable generated functions and
 independently verified behavior separate in progress reports; none alone is an
 overall completion percentage.
 
+For [default-byte source histories](docs/development/default-byte-source-histories.md),
+compose complete genuine successor-producer chains and regenerate the receiving
+records as one batch. Retain independently pinned originals, every unknown-source
+refusal, whole case bodies, full CST inverses and original deadlines. Reuse the
+existing bounded source-substitution operation within one preparation call;
+preserve its complete original fallback and avoid caches between calls.
+
 Prioritize common translation blockers using actual project diagnostics. A [shared compatibility core](docs/development/compatibility-core.md) may implement matching Rust and JavaScript library abstractions while leaving their internals untranslated. Bind repository CST rules to qualified owned APIs, check operands through the language rules and retain both meta roundtrips. Test independent shared behavior and actual Router callers; keep application coverage, runtime parity and untranslated library status separate.
 
 For continuation #772, follow [the throughput plan](docs/development/translation-throughput-plan.md): qualify a shared operation family once, generate its actual callers and both translation directions together, and recheck whole functions after each prerequisite is removed. Profile shared receiving bottlenecks before expensive retries. A historical first-refusal count is a worklist, never current executable coverage.
