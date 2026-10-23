@@ -133,3 +133,20 @@ export function liftBuiltinCloneAstRoute({profile,original,certificate,entry,inp
  const result=freeze({...evidence,digest:hash(JSON.stringify(evidence))});outputs.set(result,{state,branches});validateBuiltinCloneAstOutput(result,branches);return result;
 }
 export function builtinCloneOriginalSourcePlan(route){const value=outputs.get(route);if(!value)throw new TypeError('Clone plan requires genuine original output');return value.state.result;}
+
+
+// Dimension-specific DATA model; complete original AST construction stays the
+// premise. This copy makes no new assumption about field types or Clone calls.
+export function compileBuiltinCloneEnclosingNamespaceModel(args={}){
+ const route=liftBuiltinCloneAstRoute(args),plan=builtinCloneOriginalSourcePlan(route);
+ validateBuiltinCloneAstOutput(route,route.branches);
+ const fields=route.typedSource.inputSyntax.style==='payload-enum'?route.typedSource.variants.flatMap(variant=>variant.fields):route.typedSource.fields;
+ if(fields.some(field=>field.type.semanticSyntaxRoundTrip!==true))throw new TypeError('Original Clone enclosing model requires every actual source Ty roundtrip');
+ return {schema:'original-clone-enclosing-grammar-candidate-v1',inputStyle:route.typedSource.inputSyntax.style,
+  originalSourcePlan:{schema:plan.schema,digest:plan.digest},
+  sources:plan.recipes.map(recipe=>({source:recipe.source,sourceSha256:recipe.sourceSha256,span:recipe.span,syntaxSha256:recipe.syntaxSha256,digest:recipe.digest})),
+  branches:route.branches.map(branch=>({condition:branch.feature,outputKind:branch.output.kind,associatedTypes:branch.output.associatedTypes.length,associatedKinds:branch.output.items.map(item=>item.kind),methodNames:branch.output.items.map(item=>item.name),completePositiveAstSourceDigest:route.digest})),
+  sourceTypeRoundtrips:fields.map(field=>({name:field.name,typeSpan:field.fieldInfoSpan.typeSpan,sourceSha256:field.type.sourceSha256,semanticSyntaxRoundTrip:field.type.semanticSyntaxRoundTrip})),
+  generatedAttributes:['automatically_derived','inline'],
+  methodBehavior:'opaque-untranslated',namespaceAuthority:false,runtimeAuthority:false};
+}

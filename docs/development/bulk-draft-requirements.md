@@ -80,3 +80,11 @@ existing semantic pipeline. Its source-unit profile also tracks dependency-only
 edits and protects authoritative inputs from other unit outputs. Source and
 independent regressions are drafted and unrun. Cycles, native class/async module
 families and the broader forward namespace/producer closure remain open.
+
+The [Clone enclosing draft](clone-enclosing-draft.md) adds a separate private
+namespace consumer over the complete existing source-backed Clone AST route.
+It preserves field type checks, both resolver branches, original owner/helper
+joins and all sibling obligations. A reusable native-selected source-copy
+preparer retains complete originals, exact recipes and two-sequence CST
+inverses. The implementation and regression source are unrun; this adds no
+measured coverage or performance result and does not close the namespace row.

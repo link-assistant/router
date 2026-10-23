@@ -78,6 +78,14 @@ function createUnscopedDeriveEnclosingNamespaceContext({deriveContext}={}){
       // not evidence of empty output: their bang route stays independently open.
       if(owners.length===0&&invocation.path.length===1&&hasBuiltinDeriveBangRoute(invocation.path[0])){
         try{
+          if(invocation.path[0]==='Clone'){
+            const namespace=proveBuiltinCloneEnclosingNamespace({context:deriveContext,certificate:input,invocation});
+            if(namespace){
+              const facts=requireBuiltinCloneEnclosingNamespace(namespace,deriveContext,input,invocation);
+              privateAppend(selected,{invocation,owner:{path:invocation.path,attributeSpan:invocation.attributeSpan,target:['core','Clone'],source:'original-standard-owner+pinned-builtin-registration'},namespace,facts,builtin:true});
+              continue;
+            }
+          }
           if(invocation.path[0]==='Debug'){
             const namespace=proveBuiltinDebugEnclosingNamespace({context:deriveContext,certificate:input,invocation});
             if(namespace){
@@ -153,10 +161,10 @@ export function deriveEnclosingNamespaceOutputAt(context,deriveContext,module,it
   const sealed=privateGet(certificates,certificate),input=deriveFootprintAt(deriveContext,module,item);
   if(!sealed||input!==sealed.input||item.term!==input.kind||item.name!==input.name||certificate.sourceSha256!==hash(module.source)||certificate.itemSha256!==hash(module.source.slice(item.start,item.end)))throw new TypeError('Bang output no longer matches its original invocation');
   requireContextNative();
-  for(const selected of sealed.selected)if(selected.namespace)requireBuiltinDebugEnclosingNamespace(selected.namespace,deriveContext,input,selected.invocation);else if(selected.builtin)assertBuiltinDeriveBangFootprint(selected.proof,deriveContext,input,selected.invocation);else privateLookup(enclosingRoutes(),selected.owner.target.join('::')).assert(selected.proof,deriveContext,input);
+  for(const selected of sealed.selected)if(selected.namespace)requireSelectedBuiltinEnclosingNamespace(selected,deriveContext,input);else if(selected.builtin)assertBuiltinDeriveBangFootprint(selected.proof,deriveContext,input,selected.invocation);else privateLookup(enclosingRoutes(),selected.owner.target.join('::')).assert(selected.proof,deriveContext,input);
   // Other full owners may hash/reenter. Finish with the dimension issuer's
   // current source/invocation fence after all of those observations.
-  for(const selected of sealed.selected)if(selected.namespace)requireBuiltinDebugEnclosingNamespace(selected.namespace,deriveContext,input,selected.invocation);
+  for(const selected of sealed.selected)if(selected.namespace)requireSelectedBuiltinEnclosingNamespace(selected,deriveContext,input);
   return certificate;
 }
 export function deriveEnclosingNamespaceHelperAttributeAt(context,deriveContext,module,item,span){
@@ -180,7 +188,7 @@ export function originalDeriveEnclosingNamespaceOutputs(context,deriveContext,mo
  if(state.selected.length>128)throw new TypeError('Original enclosing-output owner bound exceeded');
  for(const selected of state.selected){
   const {proof,invocation}=selected;
-  if(selected.namespace){privateAppend(outputs,{format:'debug-enclosing',invocation,facts:reissueBuiltinDebugEnclosingNamespace(selected.namespace,deriveContext,state.input,invocation)});continue;}
+  if(selected.namespace){privateAppend(outputs,{format:selected.owner.target.at(-1)==='Clone'?'clone-enclosing':'debug-enclosing',invocation,facts:reissueSelectedBuiltinEnclosingNamespace(selected,deriveContext,state.input)});continue;}
   if(selected.builtin){privateAppend(outputs,{format:'builtin-impl',invocation,output:originalBuiltinDeriveEnclosingOutput(proof,deriveContext,state.input,invocation)});continue;}
   const target=selected.owner.target.join('::');
   const quote=output=>privateAppend(outputs,{format:'quote',invocation,proof,syntax:output.syntax});
@@ -199,7 +207,7 @@ export function originalDeriveEnclosingNamespaceOutputs(context,deriveContext,mo
 import {proveBuiltinDebugEnclosingNamespace,requireBuiltinDebugEnclosingNamespace,reissueBuiltinDebugEnclosingNamespace} from './builtin-derive-bang-footprints.mjs';
 
 function enclosingSelectedOwner(selected){
- if(selected.namespace)return {invocation:selected.invocation,target:selected.owner.target,format:'debug-enclosing-named-unit-v1',modelDigest:selected.facts.digest,methodBehavior:'opaque-untranslated',namespaceAuthority:false,runtimeAuthority:false};
+ if(selected.namespace)return {invocation:selected.invocation,target:selected.owner.target,format:selected.owner.target.at(-1)==='Clone'?'clone-enclosing-v1':'debug-enclosing-named-unit-v1',modelDigest:selected.facts.digest,methodBehavior:'opaque-untranslated',namespaceAuthority:false,runtimeAuthority:false};
  return (({invocation,owner,proof,builtin})=>({invocation,target:owner.target,proofDigest:proof.digest,attributeOwnersDigest:hash(nativeContextOperations.stringify(proof.attributeOwners)),...(builtin?{astOutputSink:proof.slotProofs.outputKind}:{fixedMacroDigest:hash(nativeContextOperations.stringify(proof.fixedMacro))}),...(proof.outputs?{featureOutputDigests:proof.outputs.map(output=>({feature:output.feature,digest:output.outputGrammarDigest}))}:{...(proof.outputGrammarDigest?{outputGrammarDigest:proof.outputGrammarDigest}:{})})}))(selected);
 }
 
@@ -213,10 +221,10 @@ export function proveDeriveEnclosingNamespaceEffect(context,deriveContext,module
  requireContextNative();
  if(original.outputs.length>256)fail('complete retained output alternative bound');
  for(const row of original.outputs){
-  if(row.format==='debug-enclosing'){
+  if(row.format==='debug-enclosing'||row.format==='clone-enclosing'){
    // Membership and fresh source/model reissue happened in the private issuer;
    // the public model's empty arrays and flags are never an admission input.
-   privateAppend(alternatives,nativeContextOperations.freeze({invocation:row.invocation,kind:'ItemKind::Impl',format:'debug-enclosing-named-unit-v1',originalEnclosingModel:row.facts}));
+   privateAppend(alternatives,nativeContextOperations.freeze({invocation:row.invocation,kind:'ItemKind::Impl',format:row.format==='clone-enclosing'?'clone-enclosing-v1':'debug-enclosing-named-unit-v1',originalEnclosingModel:row.facts}));
   }else if(row.format==='builtin-impl'){
    if(row.output.sink.kind!=='ItemKind::Impl')fail('unproved builtin enclosing output');
    privateAppend(alternatives,nativeContextOperations.freeze({invocation:row.invocation,kind:'ItemKind::Impl',originalCompleteOutput:row.output}));
@@ -227,7 +235,7 @@ export function proveDeriveEnclosingNamespaceEffect(context,deriveContext,module
  requireOriginalImplNamespaceSourcePlan(sourcePlan);
  if(deriveEnclosingNamespaceOutputAt(context,deriveContext,module,item)!==original.certificate)fail('original invocation changed during enclosing proof');
  requireContextNative();
- const facts=nativeContextOperations.freeze({rule:nativeContextOperations.freeze({id:'rust.original-debug-enclosing-namespace-format.v1',runtimeAuthority:false}),certificate:original.certificate,alternatives:nativeContextOperations.freeze(alternatives),enclosingTypeBindings:nativeContextOperations.freeze([]),enclosingUsableValueBindings:nativeContextOperations.freeze([]),enclosingMacroNames:nativeContextOperations.freeze([]),cells:budget.cells,runtimeAuthority:false,generatedImplBehavior:false});
+ const facts=nativeContextOperations.freeze({rule:nativeContextOperations.freeze({id:original.outputs.some(row=>row.format==='clone-enclosing')?'rust.original-builtin-enclosing-namespace-format.v1':'rust.original-debug-enclosing-namespace-format.v1',runtimeAuthority:false}),certificate:original.certificate,alternatives:nativeContextOperations.freeze(alternatives),enclosingTypeBindings:nativeContextOperations.freeze([]),enclosingUsableValueBindings:nativeContextOperations.freeze([]),enclosingMacroNames:nativeContextOperations.freeze([]),cells:budget.cells,runtimeAuthority:false,generatedImplBehavior:false});
  const token=nativeContextOperations.freeze({schema:'private-derived-enclosing-namespace-effect-v1'});
  effects??=new WeakMap();privateSet(effects,token,{context,deriveContext,moduleKey:moduleScopeKey(module),source:module.source,sourceView:module.sourceView,itemStart:item.start,itemEnd:item.end,facts});return token;
 }
@@ -264,4 +272,13 @@ function quoteRoots(nodes,budget){
   }else fail('enclosing item remains outside the complete Impl/anonymous-const grammar');
  }
  if(!roots.length)fail('missing complete generated enclosing item');return nativeContextOperations.freeze(roots);
+}
+
+
+import {proveBuiltinCloneEnclosingNamespace,requireBuiltinCloneEnclosingNamespace,reissueBuiltinCloneEnclosingNamespace} from './builtin-derive-bang-footprints.mjs';
+function requireSelectedBuiltinEnclosingNamespace(selected,context,certificate){
+ return selected.owner.target.at(-1)==='Clone'?requireBuiltinCloneEnclosingNamespace(selected.namespace,context,certificate,selected.invocation):requireBuiltinDebugEnclosingNamespace(selected.namespace,context,certificate,selected.invocation);
+}
+function reissueSelectedBuiltinEnclosingNamespace(selected,context,certificate){
+ return selected.owner.target.at(-1)==='Clone'?reissueBuiltinCloneEnclosingNamespace(selected.namespace,context,certificate,selected.invocation):reissueBuiltinDebugEnclosingNamespace(selected.namespace,context,certificate,selected.invocation);
 }
