@@ -18,6 +18,16 @@ Canonical and platform-profile checks and synchronization use `node scripts/tran
 
 ## Development Workflow
 
+Keep complete source banks within the original export budgets. The
+[source-compression workflow](docs/development/static-source-compression.md)
+uses pinned precompiled C/WebAssembly, complete source/CST inverses and full byte
+restoration. Review actual producer proposals, retain upstream licenses and
+require `prepare-zopfli-vendor.mjs --check` and
+`prepare-strict-static-source-producer.mjs --check` under `tools/translation/`.
+Qualify whole Node/Bun files under their original deadlines before regenerating
+current banks and receiving exports. Do not raise limits, add result caches or
+count compressed source as executable translation.
+
 Create a feature branch or isolated worktree, implement behavior in JavaScript, add targeted behavioral tests and update documentation. Read [the JavaScript-first workflow](docs/development/javascript-first.md) for the parity boundary and generation limitations. Router's JavaScript operations package and a valid parity inventory do not by themselves establish complete Rust runtime parity.
 
 Run the complete local gate:

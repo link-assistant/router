@@ -49,6 +49,8 @@ This batch does not establish 125 newly executable functions. Refresh the
 complete physical source bank, current compiler exports, canonical/platform
 outputs and reverse outputs, then measure the actual complete production
 functions. Full parity, deterministic synchronization and the complete same-SHA
-gate remain required. The separate source-composition test's observed
-69.314-second run still exceeds its unchanged 60-second deadline; its passing
-assertions do not make that run green.
+gate remain required. The separate source-composition test's historical
+69.314-second run exceeded its unchanged 60-second deadline and remains retained
+as a failure. The subsequent [complete source-equation repair](source-preparation-equations.md)
+passes the original deadline audit in both engines; this does not establish a
+green complete gate.

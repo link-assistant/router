@@ -10,6 +10,7 @@ import {gzipSync,gunzipSync} from 'node:zlib';
 import {TRANSLATOR_EXPORT_LIMITS} from '../export-bundle.mjs';
 import {captureStaticSourceUniverse,assertStaticSourceUniverse,staticSourceUniverseRows} from '../static-source-universe.mjs';
 import {prepareStrictStaticSourceProducer} from '../prepare-strict-static-source-producer.mjs';
+import {gzipStaticSourceStorage} from '../static-source-gzip.mjs';
 import {STATIC_SOURCE_LIFECYCLE_PROFILES,STATIC_SOURCE_LIFECYCLE_LIMITS} from '../prepare-real-source-fixtures.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 
@@ -54,9 +55,9 @@ test('actual complete native copied producer keeps strict physical capture and b
 test('complete source-bank storage fits the original exporter file budget without changing any decoded byte',()=>{
  const plan=prepareStrictStaticSourceProducer({root:ROOT}),row=plan.files[0];
  assert.equal(plan.exportStorageGzipLevel,9);assert.equal(plan.previousStorageGzipLevel,1);assert.equal(plan.gzipStorageObservationsEquivalent,false);
- assert.equal(row.repositorySelections.length,2);assert.equal(row.repositorySelections[1].expected,'1');assert.equal(row.repositorySelections[1].replacement,'9');
+ assert.equal(row.repositorySelections.length,3);assert.equal(row.repositorySelections[1].expected,'gzipSync(stored.raw,{level:1,mtime:0})');assert.equal(row.repositorySelections[1].replacement,'gzipStaticSourceStorage(stored.raw)');assert.equal(row.repositorySelections[2].expected,'');assert.equal(row.repositorySelections[2].replacement,"import {gzipStaticSourceStorage} from './static-source-gzip.mjs';\n");
  assert.equal(row.current,row.after);assert.equal(TRANSLATOR_EXPORT_LIMITS.fileBytes,4194304);
- const packed=readFileSync(join(ROOT,'tools/translation/source-profiles/static-source-lifecycle/originals.json.gz')),raw=gunzipSync(packed),next=gzipSync(raw,{level:9,mtime:0});
+ const packed=readFileSync(join(ROOT,'tools/translation/source-profiles/static-source-lifecycle/originals.json.gz')),raw=gunzipSync(packed),next=gzipStaticSourceStorage(raw);
  assert.ok(next.length<=TRANSLATOR_EXPORT_LIMITS.fileBytes);assert.ok(gunzipSync(next).equals(raw));
  const index=JSON.parse(readFileSync(join(ROOT,'tools/translation/source-profiles/static-source-lifecycle/manifest.json'),'utf8'));
  assert.equal(raw.length,index.rawBytes);assert.equal(createHash('sha256').update(raw).digest('hex'),index.rawSha256);
