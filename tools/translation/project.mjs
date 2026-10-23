@@ -46,7 +46,7 @@ import {createToolAttributeContext} from './tool-attributes.mjs';
 import {configureToolAttributes} from './tool-attribute-layout.mjs';
 import {actualJsonCapabilityProfile} from './json-capabilities.mjs';
 import {createJsonMacroContext,configureJsonMacroParser} from './json-macro-context.mjs';
-import {createMatchesMacroContext,configureMatchesMacroParser,originalMatchesNamespaceBindings,OriginalMethodOwnerUnproved} from './matches-macro-context.mjs';
+import {createMatchesMacroContext,createMatchesEnclosingMacroContext,configureMatchesMacroParser,originalMatchesNamespaceBindings,OriginalMethodOwnerUnproved} from './matches-macro-context.mjs';
 import {captureOriginalCargoEdition,originalCargoEditionEvidence} from './cargo-edition-context.mjs';
 
 // Only the actual original-source project pipeline can issue this identity.
@@ -313,7 +313,7 @@ function compileProjectLanguage(options, ownedDefinitionMode=false, semanticStor
   const graph = resolveModuleGraph(options);
   progress({stage:'project-graph',state:'end',entry:options.entry,total:graph.modules.length});
   progress({stage:'namespace',state:'start',entry:options.entry});
-  const enclosingNamespace=ownedDefinitionMode===true||ownedDefinitionMode==='core-json-readers';
+  const enclosingNamespace=ownedDefinitionMode===true||ownedDefinitionMode==='core-json-readers'||ownedDefinitionMode==='flat-enclosing';
   const namespaceProgress=phase=>{if(enclosingNamespace)progress({stage:'namespace',state:'advance',entry:options.entry,phase});};
   namespaceProgress('json-context');
   const jsonParserProfile=options.jsonParserProfile??actualJsonCapabilityProfile();
@@ -346,7 +346,7 @@ function compileProjectLanguage(options, ownedDefinitionMode=false, semanticStor
   const bindingEvidence=(enclosingNamespace?resolveEnclosingNamespaceModuleBindings:resolveModuleBindings)({modules:graph.modules,externalModules:resolvedExternal,deriveContext,deriveBangContext,toolContext,compilationProfile:graph.compilationProfile});
   const scopes=new Map(bindingEvidence.scopes.map(scope=>[moduleScopeKey(scope),scope]));
   const configureSourceScope=(parser,module)=>configureParserSourceScope(requestImmutableNamespaceTargets(parser),scopes.get(moduleScopeKey(module)),bindingEvidence.scopes,module.path);
-  const matchesMacroContext=createMatchesMacroContext({modules:graph.modules,compilationProfile:graph.compilationProfile,deriveDependencies:options.deriveDependencies??null,cargoEditionContext});
+  const matchesMacroContext=(enclosingNamespace?createMatchesEnclosingMacroContext:createMatchesMacroContext)({modules:graph.modules,compilationProfile:graph.compilationProfile,deriveDependencies:options.deriveDependencies??null,cargoEditionContext});
   progress({stage:'namespace',state:'end',entry:options.entry,total:bindingEvidence.scopes.length});
   const declarations = [], refused = [], imports = [], unloweredItems = [], moduleAliases = new Map();
   let completedModules=0,completedMethods=0;
@@ -702,4 +702,12 @@ const flatSemanticProjectTranslationRules=createRulePipeline([
 ]);
 export function translateProjectWithFlatSemanticMeta(options) {
   return flatSemanticProjectTranslationRules.run(options).value;
+}
+
+const flatEnclosingSemanticProjectTranslationRules=createRulePipeline([
+  {phase:'language',rules:[{id:'rust-project:checked-language',apply:options=>compileProjectLanguage(options,'flat-enclosing',flatProjectSemanticStorage)}]},
+  {phase:'repository',rules:[{id:'rust-project:exports-types-provenance',apply:finalize=>finalize()}]},
+]);
+export function translateProjectWithFlatEnclosingSemanticMeta(options) {
+  return flatEnclosingSemanticProjectTranslationRules.run(options).value;
 }

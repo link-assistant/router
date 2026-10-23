@@ -1,4 +1,4 @@
-// Keep every private project issuer in its original module. Select DATA only.
+// UNREVIEWED draft. Preserve ordinary and flat DATA entries; add closed enclosing entry.
 import {readFileSync,writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -7,6 +7,7 @@ import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
 import {createRulePipeline} from './rule-pipeline.mjs';
 import {transportConcreteSourceEquations} from './concrete-source-equations.mjs';
+import {extendProjectMatchesEnclosingSource} from './prepare-matches-enclosing-context.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url)),P='tools/translation/',PROFILE=P+'source-profiles/flat-semantic-meta/';
 const PIN='8a83cf40fe68ae27644d02cda87670a49a323f521d3056976a37d5fa464d3cd4',hash=value=>createHash('sha256').update(value).digest('hex');
 const fail=message=>{throw new TypeError('Project semantic storage source: '+message);};
@@ -32,14 +33,22 @@ export function prepareProjectFlatSemanticEntry({root=ROOT}={}){
  const pipelineText=pipelineNode.getText(file),entryText=entry.getText(file),pipelineSource=ts.createSourceFile('pipeline.mjs',pipelineText,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS),entrySource=ts.createSourceFile('entry.mjs',entryText,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS),pipelineEdits=[],entryEdits=[];
  function route(node,source,out){if(ts.isIdentifier(node)){if(node.text==='projectTranslationRules')out.push({span:[node.getStart(source),node.end],expected:node.getText(source),replacement:'flatSemanticProjectTranslationRules'});if(node.text==='translateProject')out.push({span:[node.getStart(source),node.end],expected:node.getText(source),replacement:'translateProjectWithFlatSemanticMeta'});if(node.text==='compileProjectLanguage')out.push({span:[node.getStart(source),node.end],expected:node.getText(source),replacement:'options=>compileProjectLanguage(options,false,flatProjectSemanticStorage)'});}ts.forEachChild(node,child=>route(child,source,out));}
  route(pipelineSource,pipelineSource,pipelineEdits);route(entrySource,entrySource,entryEdits);if(pipelineEdits.length!==2||entryEdits.length!==2)fail('complete pipeline/entry native binding census differs');
+ const namespaceSelection=one(functions[2].body.statements.filter(ts.isVariableStatement).flatMap(node=>node.declarationList.declarations).filter(node=>node.name.getText(file)==='enclosingNamespace'),'actual enclosing namespace selection');
+ if(namespaceSelection.initializer.getText(file)!=="ownedDefinitionMode===true||ownedDefinitionMode==='core-json-readers'")fail('original enclosing selection differs');
+ const enclosingEdit={span:[namespaceSelection.initializer.getStart(file),namespaceSelection.initializer.end],expected:namespaceSelection.initializer.getText(file),replacement:"ownedDefinitionMode===true||ownedDefinitionMode==='core-json-readers'||ownedDefinitionMode==='flat-enclosing'"};
  const prefix="import {roundTripProgram as roundTripFlatProgram,serializeProgram as serializeFlatProgram} from './semantic-meta-flat.mjs';\nconst originalProjectSemanticStorage={roundTripProgram,serializeProgram};\nconst flatProjectSemanticStorage={roundTripProgram:roundTripFlatProgram,serializeProgram:serializeFlatProgram};\n";
  const suffix='\n// Explicit stock-native DATA storage; all original private issuers stay here.\n'+apply(pipelineText,pipelineEdits)+'\n'+apply(entryText,entryEdits)+'\n';
- let language;const run=createRulePipeline([{phase:'language',rules:[{id:'semantic-meta:select-private-serialization-only',apply:source=>language=apply(source,edits)}]},{phase:'repository',rules:[{id:'router:closed-flat-entry-in-original-issuer-module',apply:source=>prefix+source+suffix}]}]).run(before),after=run.value;grammar(ts,'project.mjs',after);if(after.split('\n').length>=1000)fail('source line bound');
+ // Draft only: a separate closed entry reuses existing genuine enclosing
+ // contexts, with no owned-definition materialization or cross-call cache.
+ const enclosingPipeline=apply(pipelineText,pipelineEdits.map(row=>({...row,replacement:row.replacement==='flatSemanticProjectTranslationRules'?'flatEnclosingSemanticProjectTranslationRules':"options=>compileProjectLanguage(options,'flat-enclosing',flatProjectSemanticStorage)"}))),enclosingEntry=apply(entryText,entryEdits.map(row=>({...row,replacement:row.replacement==='flatSemanticProjectTranslationRules'?'flatEnclosingSemanticProjectTranslationRules':'translateProjectWithFlatEnclosingSemanticMeta'})));
+ const previousAfter=prefix+apply(before,edits)+suffix,newSuffix=suffix+'\n'+enclosingPipeline+'\n'+enclosingEntry+'\n';edits.push(enclosingEdit);
+ let language;const run=createRulePipeline([{phase:'language',rules:[{id:'semantic-meta:select-private-serialization-only',apply:source=>language=apply(source,edits)}]},{phase:'repository',rules:[{id:'router:closed-flat-entry-in-original-issuer-module',apply:source=>extendProjectMatchesEnclosingSource(prefix+source+newSuffix,ts).source}]}]).run(before),after=run.value;grammar(ts,'project.mjs',after);if(after.split('\n').length>=1000)fail('source line bound');
  const parsed=grammar(ts,'after.mjs',after),unchanged=[];for(const node of file.statements.filter(ts.isFunctionDeclaration))if(!names.includes(node.name.text)){const candidate=one(parsed.statements.filter(row=>ts.isFunctionDeclaration(row)&&row.name?.text===node.name.text),'unchanged original issuer/helper '+node.name.text);if(candidate.getText(parsed)!==node.getText(file))fail('unselected original function changed');unchanged.push(node.name.text);}
  const rows=[{path:P+'project.mjs',before,language,after,selections:edits,trace:run.trace,unchangedOriginalFunctions:unchanged,originalIssuersRetainedInSameModule:true}];
  const wrapperBefore=inputs[1].source,wrapperLanguage="export * from './project.mjs';\nexport {translateProjectWithFlatSemanticMeta as translateProject} from './project.mjs';\n",wrapperAfter='// Generated adapter; delegates to the actual original project issuer.\n'+wrapperLanguage;
  rows.push({path:P+'project-flat-semantic.mjs',before:wrapperBefore,language:wrapperLanguage,after:wrapperAfter,selections:[{span:[0,wrapperBefore.length],expected:wrapperBefore,replacement:wrapperLanguage}],originalIssuersRetainedInSameModule:true});
- for(const row of rows){row.current=readFileSync(resolve(root,row.path),'utf8');if(row.current!==row.before&&row.current!==row.after)fail('unknown current project output');row.inverse=row.before;row.stages=stages(row.before,row.language,row.after);row.nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,row.path),row.after);}
+
+ for(const row of rows){row.current=readFileSync(resolve(root,row.path),'utf8');if(row.current!==row.before&&row.current!==row.after&&!(row.path===P+'project.mjs'&&row.current===previousAfter))fail('unknown current project output');row.inverse=row.before;row.stages=stages(row.before,row.language,row.after);row.nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,row.path),row.after);}
  for(const row of inputs)if(hash(readFileSync(resolve(root,PROFILE+row.path)))!==row.sha256)fail('complete original source changed');
  return {schema:'original-project-flat-semantic-entry-v1',files:rows,inputs,allOriginalPublicEntriesDefaultToOriginalStorage:true,privateIssuersNotCopied:true,callerCannotSupplySemanticStorage:true,newAcrossInvocationCache:false,semanticAuthority:false,rustExecuted:false};
 }

@@ -60,6 +60,12 @@ independently strict-compiled TypeScript modules in Node and Bun. Retain its
 excluded-case census; source assertions do not establish successful Rust
 execution or replace the complete suites and parity gate.
 
+Keep [independently captured method scopes](docs/development/matches-enclosing-context.md)
+consistent with their project's resolver. Rebuild genuine source contexts when
+changing namespace modes; do not substitute copied scope metadata or weaken the
+exact source-link comparison. Qualify complete generation again after compiler
+changes, even when focused source and behavior controls pass.
+
 Run the complete local gate:
 
 ```bash
