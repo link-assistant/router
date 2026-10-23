@@ -8,7 +8,7 @@ import {repositoryRustLayout} from './repository-layout.mjs';
 import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { translateSource, json, PIN, sha256 } from './translate.mjs';
+import { translateSourceWithProjectBodies as translateSource, json, PIN, sha256 } from './translate.mjs';
 import { translateProjectWithFlatEnclosingSemanticMeta as translateProject } from "./project-flat-semantic.mjs";
 import {PRODUCTION_PROFILE,compilationProfile} from './cfg-profile.mjs';
 import { effectRuntimeAssets } from './effect-assets.mjs';

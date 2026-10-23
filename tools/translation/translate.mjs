@@ -64,7 +64,7 @@ export function translateSourceConcreteSyntaxMeta(serialized,path='input.rs',opt
   return translateConcreteSyntaxStage(readRustConcreteSyntaxMeta(serialized),path,options);
 }
 
-function translateConcreteSyntaxStage({source,document}, path, { projectDeclarations = [],projectSourceScopes=[],jsonParserProfile:parserProfile,cargoManifest } = {}) {
+function translateConcreteSyntaxStage({source,document}, path, { projectDeclarations = [],projectSourceScopes=[],jsonParserProfile:parserProfile,cargoManifest } = {}, reuseProjectChecks=false) {
   const macroEvidence=macroProvenance(source),sourceHash=sha256(source);
   const matchingScopes=projectSourceScopes.filter(entry=>entry.source===path&&entry.sha256===sourceHash&&(!entry.sourceView||entry.sourceView.modulePath.length===0));
   const sourceScope=matchingScopes.length===1?matchingScopes[0]:null;
@@ -188,6 +188,9 @@ function translateConcreteSyntaxStage({source,document}, path, { projectDeclarat
     }
   }
   for (const item of candidates.values()) {
+    // Only skip a result the unchanged final project join replaces.
+    if(reuseProjectChecks&&sourceScope){const contexts = projectDeclarations.filter(entry => entry.source === path && entry.sourceSha256 === sourceHash && entry.name === item.name && entry.span.start === item.span.start && entry.span.end === item.span.end);if(contexts.length===1&&contexts[0].project===sourceScope.project)continue;}
+
     try {
       const group = closure(item);
       const supportTypes = [...new Map([...group.flatMap(entry => entry.supportTypes), ...layoutClosure(group.map(entry => entry.surface))].map(type => [type.name, type])).values()];
@@ -393,4 +396,10 @@ export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTy
   let typedRuntime = runtime;
   for (const { offset, text } of annotations.sort((a, b) => b.offset - a.offset)) typedRuntime = typedRuntime.slice(0, offset) + text + typedRuntime.slice(offset);
   return typeScriptAliases(new Map(dataTypes.map(entry=>[entry.fullName,entry])))+'\n'+typedRuntime;
+}
+
+// Explicit project-body reuse; ordinary public source entries retain their original checks.
+export function translateSourceWithProjectBodies(source,path='input.rs',{projectDeclarations=[],projectSourceScopes=[],jsonParserProfile:parserProfile,cargoManifest}={}) {
+  // Preserve the original four option reads/defaults before any source work.
+  return translateConcreteSyntaxStage(createRustConcreteSyntaxStage(source),path,{projectDeclarations,projectSourceScopes,jsonParserProfile:parserProfile,cargoManifest}, true);
 }
