@@ -119,6 +119,13 @@ The user's 2026-10-22 instruction authorizes prompt merge of PR #771 once green 
 
 ## Translation rules and shared regressions
 
+For [one-operation source preparation](docs/development/single-source-rule-operation.md),
+compare all complete canonical phase sources independently, retain the actual
+rule IDs and inverses, and keep the original larger-input path when existing
+canonical/UTF8 bounds do not fit. Share the established language engine through
+an adapter; preserve the batch generator's binding-collision refusal. This does
+not qualify or enable the separately parked shared-TypeScript scheduling draft.
+
 For [native-parsed canonical CST construction](docs/development/native-parsed-canonical-cst.md),
 preserve the complete original compiler prefix, source authentication, both
 independent builds, full canonical-wire comparisons and the legacy validator

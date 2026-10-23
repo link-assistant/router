@@ -1,3 +1,4 @@
+import {substituteWholeSourceRow} from './single-source-substitution-runtime.mjs';
 import {verifyNativeCopiedSourceBindingBatch} from './source-copy-native-bindings.mjs';
 // Explicit complete consumer closure. Old/default and existing bulk copies stay exact.
 import {readFileSync,writeFileSync,existsSync,lstatSync} from 'node:fs';
@@ -98,7 +99,26 @@ export function prepareWholeOwnerProofByteCandidate({root=ROOT}={}){
  function whole(path,before,language,after,selection){
   if(after.split('\n').length>=1000)fail('complete generated source line budget');parse(ts,path,language);parse(ts,path,after);
   const nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,path),after),rule=(old,value,id)=>({id,edits:[{span:[0,old.length],expected:old,replacement:value}]}),sequence={languageRules:[rule(before,language,'javascript:complete-original-proof-byte-consumer-copy')],repositoryRules:[rule(language,after,'router:single-private-issuer-and-operation-byte-import-closure')]},first=(()=>{const rows=transportConcreteSyntaxParsedChunks([[{source:before,language:'JavaScript'},{source:language,language:'JavaScript'},{source:after,language:'JavaScript'}]]).chunks[0].rows;if(rows.length!==3||rows[0].source!==before||rows[1].source!==language||rows[2].source!==after)fail('complete phase source batch differs');return {...rows[0],completePhaseTransports:rows};})(),stages=[];let document=first.document,transported=first;
-  for(const phase of ['language','repository']){
+  let wholeSourceFragment=null;
+ const wholeSourceTransports=first.completePhaseTransports,wholeMeta0=wholeSourceTransports[0].meta.length,wholeMeta1=wholeSourceTransports[1].meta.length,wholeMeta2=wholeSourceTransports[2].meta.length;
+ // Canonical JSON text needs at most twice its units when JSON-quoted; raw
+ // sources need at most six. Three bytes per unit bounds complete UTF8.
+ const wholeWireBound=4*(wholeMeta0+wholeMeta1+wholeMeta2)+6*(2*before.length+2*language.length+after.length)+4096;
+ if(2*wholeMeta0+3*wholeMeta1+wholeMeta2<=33554432&&3*wholeWireBound<=33554432){
+  const requested=(()=>{const stages=[];for(const phase of ['language','repository']){const from=phase==='language'?before:language,to=phase==='language'?language:after;stages.push({phase,expected:to,sequence:{languageRules:phase==='language'?sequence.languageRules:[],repositoryRules:phase==='repository'?sequence.repositoryRules:[]},inverseSequence:{languageRules:phase==='language'?[rule(to,from,'javascript:restore-complete-original-consumer')]:[],repositoryRules:phase==='repository'?[rule(to,from,'router:restore-complete-original-issuer-imports')]:[]}});}return {source:before,language:'JavaScript',stages};})(),received=substituteWholeSourceRow([requested]);
+  if(received.schema!=='private-concrete-source-substitution-batches-v1'||received.sourceAuthority!==false||received.runtimeAuthority!==false||received.rows.length!==1||typeof received.rows[0]!=='string')fail('complete single source operation differs');
+  const fragment=JSON.parse(received.rows[0]);
+  if(JSON.stringify(Object.keys(fragment))!==JSON.stringify(['beforeMeta','afterMeta','inverse','stages','trace'])||fragment.beforeMeta!==wholeSourceTransports[0].meta||fragment.afterMeta!==wholeSourceTransports[2].meta||fragment.inverse!==before||fragment.stages.length!==2)fail('complete independent source/CST join differs');
+  for(let index=0;index<2;index++){
+   const stage=fragment.stages[index],input=wholeSourceTransports[index],output=wholeSourceTransports[index+1];
+   if(JSON.stringify(Object.keys(stage))!==JSON.stringify(['phase','before','after','beforeMeta','afterMeta','trace','completeInverse'])||stage.phase!==(index?'repository':'language')||stage.before!==input.source||stage.after!==output.source||stage.beforeMeta!==input.meta||stage.afterMeta!==output.meta||stage.completeInverse!==true)fail('complete independent phase/inverse join differs');
+  }
+  if(JSON.stringify(fragment.trace.map(stage=>stage.phase))!==JSON.stringify(['language','repository','language','repository'])||JSON.stringify(fragment.trace.flatMap(stage=>stage.rules.map(rule=>rule.id)))!==JSON.stringify([...sequence.languageRules,...sequence.repositoryRules].map(rule=>rule.id)))fail('complete actual original rule trace differs');
+  wholeSourceFragment=fragment;
+ }
+ for(const phase of ['language','repository']){
+   if(wholeSourceFragment){const index=phase==='language'?0:1;stages.push(wholeSourceFragment.stages[index]);document=wholeSourceTransports[index+1].document;transported=wholeSourceTransports[index+1];continue;}
+
    const from=phase==='language'?before:language,to=phase==='language'?language:after,beforeMeta=transported.meta,fresh=transported;if(fresh.source!==from)fail('complete current phase source differs');
    const run=applyConcreteSyntaxSubstitutions(fresh.document,{languageRules:phase==='language'?sequence.languageRules:[],repositoryRules:phase==='repository'?sequence.repositoryRules:[]}),afterMeta=serializeConcreteSyntaxMeta(run.value),last=first.completePhaseTransports[phase==='language'?1:2];if(last.source!==to||last.meta!==afterMeta)fail('complete phase CST source equation differs');
    const inverse=applyConcreteSyntaxSubstitutions(last.document,{languageRules:phase==='language'?[rule(to,from,'javascript:restore-complete-original-consumer')]:[],repositoryRules:phase==='repository'?[rule(to,from,'router:restore-complete-original-issuer-imports')]:[]});const inverseMeta=serializeConcreteSyntaxMeta(inverse.value),restored=fresh;if(inverse.value.source!==from||restored.source!==from||restored.meta!==inverseMeta||inverseMeta!==beforeMeta)fail('complete phase source inverse differs');

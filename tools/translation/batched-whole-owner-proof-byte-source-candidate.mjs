@@ -1,3 +1,4 @@
+import {substituteWholeSourceRow} from './single-source-substitution-runtime.mjs';
 import {verifyNativeCopiedSourceBindingBatch} from './source-copy-native-bindings.mjs';
 // Explicit complete consumer closure. Old/default and existing bulk copies stay exact.
 import {readFileSync,writeFileSync,existsSync,lstatSync} from 'node:fs';
