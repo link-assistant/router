@@ -432,7 +432,7 @@ export function evaluateOwnedCoreProgram(input,name,args,token){
    else if(statement.kind==='break'||statement.kind==='continue')return {[statement.kind]:true,returned:false};
    else if(statement.kind==='while'){while(get(statement.cond,scope)){const child=new Map(scope),completion=execute(statement.body,child);for(const name of scope.keys())scope.set(name,child.get(name));if(completion.returned)return completion;if(completion.break)break;}}
    else if(statement.kind==='for-range'){
-    const start=get(statement.start,scope),end=get(statement.end,scope);for(let index=start;index<end;index+=1n){const child=new Map(scope);child.set(statement.name,index);const completion=execute(statement.body,child);for(const name of scope.keys())if(name!==statement.name)scope.set(name,child.get(name));if(completion.returned)return completion;if(completion.break)break;}
+    const start=get(statement.start,scope),end=get(statement.end,scope);for(let index=statement.reverse?end:start;statement.reverse?index>=start:index<end;index+=statement.reverse?-1n:1n){const child=new Map(scope);child.set(statement.name,index);const completion=execute(statement.body,child);for(const name of scope.keys())if(name!==statement.name)scope.set(name,child.get(name));if(completion.returned)return completion;if(completion.break)break;}
    }
    else if(statement.kind==='for-json'){
     if(!state.modules.state)fail('unissued bounded JSON list iterator');const values=state.modules.state.router_state_json_values_copy(get(statement.value,scope));
@@ -499,7 +499,7 @@ function evaluateOwnedCorePrepared(program,name,args,state){
    else if(statement.kind==='break'||statement.kind==='continue')return {[statement.kind]:true,returned:false};
    else if(statement.kind==='while'){while(get(statement.cond,scope)){const child=new Map(scope),completion=execute(statement.body,child);for(const name of scope.keys())scope.set(name,child.get(name));if(completion.returned)return completion;if(completion.break)break;}}
    else if(statement.kind==='for-range'){
-    const start=get(statement.start,scope),end=get(statement.end,scope);for(let index=start;index<end;index+=1n){const child=new Map(scope);child.set(statement.name,index);const completion=execute(statement.body,child);for(const name of scope.keys())if(name!==statement.name)scope.set(name,child.get(name));if(completion.returned)return completion;if(completion.break)break;}
+    const start=get(statement.start,scope),end=get(statement.end,scope);for(let index=statement.reverse?end:start;statement.reverse?index>=start:index<end;index+=statement.reverse?-1n:1n){const child=new Map(scope);child.set(statement.name,index);const completion=execute(statement.body,child);for(const name of scope.keys())if(name!==statement.name)scope.set(name,child.get(name));if(completion.returned)return completion;if(completion.break)break;}
    }
    else if(statement.kind==='for-json'){
     if(!state.modules.state)fail('unissued bounded JSON list iterator');const values=state.modules.state.router_state_json_values_copy(get(statement.value,scope));

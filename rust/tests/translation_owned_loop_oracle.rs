@@ -82,4 +82,6 @@ fn original_reversed_ranges_preserve_inclusive_extrema_and_source_item_order() {
     assert_eq!(output,json!(["high","middle","low"]));
     assert_eq!((i64::MIN..=i64::MIN+1).rev().collect::<Vec<_>>(),vec![i64::MIN+1,i64::MIN]);
     assert_eq!((u64::MAX-1..=u64::MAX).rev().collect::<Vec<_>>(),vec![u64::MAX,u64::MAX-1]);
+    assert_eq!((0_u64..=0_u64).rev().collect::<Vec<_>>(),vec![0_u64]);
+    assert_eq!((i64::MIN..=i64::MIN).rev().collect::<Vec<_>>(),vec![i64::MIN]);
 }

@@ -635,3 +635,10 @@ Complete original rules, independent strict-target/control/refusal cases and
 native oracle source remain unrun. Other iterator adapters, resource/future/Drop
 qualification, broader types/effects, production parity and all other open ledger
 rows still need their remaining draft.
+
+The counted-for draft now also covers inclusive descending JS/TS loops, native
+reversed inclusive ranges, both interpreter paths and complete canonical inverse
+proposals. Numeric literal bounds are contextualized only by actual native
+operands. Complete source predecessors and independent zero/extreme/control/
+mutation/refusal cases are drafted and unrun. Other loop forms and every other
+incomplete requirement remain open; no verification or CI has run.

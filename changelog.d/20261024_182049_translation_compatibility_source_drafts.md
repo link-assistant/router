@@ -15,6 +15,8 @@
 - Drafted shared iterator take chains with native count identity and retained
   receiver loans through count evaluation.
 - Drafted owned caller flow through the existing source-backed reversed ranges.
+- Drafted inclusive descending JS/TS loops, native reversed-range inversion and
+  literal-bound contextualization.
 
 These sources and independent regression cases remain unverified during the
 required bulk-drafting phase. Complete translation, production parity, async
