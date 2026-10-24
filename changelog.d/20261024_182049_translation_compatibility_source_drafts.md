@@ -55,3 +55,5 @@ integration and the remaining requirement ledger are still open.
 - Draft whole scalar local-initializer/final-return inverse batches, actual lexical scope and native let intervals, exported project mode and independent unrun JS/TS/native oracle source.
 
 - Draft whole scalar control-body inverse rules for immutable locals and nested terminal branches, exact input-guard fences, exported project selection and independent unrun JS/TS/native oracle source.
+
+- Draft whole scalar imperative inverse rules for mutable locals, early returns, while and loop exits with actual native type observations, exported project mode and independent unrun JS/TS/native oracle source.

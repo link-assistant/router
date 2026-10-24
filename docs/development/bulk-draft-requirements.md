@@ -788,3 +788,13 @@ project/export mode and independent strict target/truth-table/overflow/refusal/
 history plus native oracle source are drafted and unrun. General loops/early
 returns, owned/generic/recursive/async bodies, namespace bootstrap, production
 adoption/parity and every other incomplete requirement remain open.
+
+The [scalar imperative-body inverse draft](imperative-body-inverse-draft.md) now
+adds actual lexical scalar mutation, early returns, while bodies and scoped
+break/continue through the existing checked native control frontend. Original
+private scalar local type observations propose numeric syntax only; complete
+fresh native/target/census checking still owns admission. Full original source
+copies, exported project mode and independent strict target/zero/extreme/control/
+guard/type/refusal/history plus native oracle source are drafted and unrun.
+For/iterator, owned/aggregate/generic/recursive/async bodies, namespace bootstrap,
+production adoption/parity and every other incomplete requirement remain open.

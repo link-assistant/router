@@ -816,3 +816,12 @@ modified native project, reproduce complete changed target bodies and retain
 unchanged bodies byte-for-byte. A syntactic body proposal cannot waive native
 types, ownership, source provenance or any CI requirement. See the
 [control body draft](docs/development/control-body-inverse-draft.md).
+
+Scalar imperative inverse rules must track lexical mutability and current loop
+boundaries, preserve exact original parameter guards, require value-returning
+function paths and refuse unknown or unreachable statements. Derive native
+integer hints only from actual original checked scalar locals; a name, bigint
+shape or caller-provided map supplies no type or owner authority. Keep exact
+native TypeScript type syntax and complete native/target reproduction. Normalize
+an empty else only when its admitted block contains no statement or effect. See
+the [imperative body draft](docs/development/imperative-body-inverse-draft.md).
