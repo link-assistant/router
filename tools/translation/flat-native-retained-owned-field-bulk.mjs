@@ -12,7 +12,7 @@ import { translateSourceWithProjectBodies as translateSource, json, PIN, sha256 
 import { translateProjectWithFlatEnclosingSemanticMeta as translateProject } from "./project-flat-semantic.mjs";
 import {PRODUCTION_PROFILE,compilationProfile} from './cfg-profile.mjs';
 import { effectRuntimeAssets } from './effect-assets.mjs';
-import {hostRuntimeAssets} from './host-assets.mjs';
+import {hostRuntimeAssets} from './text-host-assets.mjs';
 import {deriveDependencyProfile} from './derive-dependencies.mjs';
 import {actualJsonCapabilityProfile} from './json-capabilities.mjs';
 import {trackedSource,sourceCorpusPaths,sourceCorpusText,assertSourceCorpusSelection} from './source-corpus.mjs';

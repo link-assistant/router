@@ -11,7 +11,7 @@ import { translateSource, json, PIN, sha256 } from './translate.mjs';
 import { translateProject } from './project.mjs';
 import {PRODUCTION_PROFILE,compilationProfile} from './cfg-profile.mjs';
 import { effectRuntimeAssets } from './effect-assets.mjs';
-import {hostRuntimeAssets} from './host-assets.mjs';
+import {hostRuntimeAssets} from './text-host-assets.mjs';
 import {deriveDependencyProfile} from './derive-dependencies.mjs';
 import {actualJsonCapabilityProfile} from './json-capabilities.mjs';
 import {trackedSource,sourceCorpusPaths,sourceCorpusText,assertSourceCorpusSelection} from './source-corpus.mjs';

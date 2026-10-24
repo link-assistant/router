@@ -77,6 +77,7 @@ export function deriveOwnedFieldBulkSource(source,path='tools/translation/owned-
   return [edit(file,specifier.propertyName,'planCompressedProjectMetaUtf8ObjectStorage','storage:import-owned-object-planner'),edit(file,call.arguments[1],'result.meta','storage:no-whole-project-JSON'),edit(file,call.arguments[2],'{serializeUtf8:serializeProjectMetaFieldUtf8,storageLimits:projectMetaStorageLimits}','storage:fixed-field-serializer')];
  },({ts,file,nodes})=>{
   const storageImport=imported({ts,file},'./project-meta-compressed-storage.mjs'),rows=[];
+  const runtimeImport=imported({ts,file},'./host-assets.mjs');rows.push(edit(file,runtimeImport.moduleSpecifier,JSON.stringify('./text-host-assets.mjs'),'runtime:shared-text-and-integer-assets'));
   rows.push(span(file.text,storageImport.end,storageImport.end,"\nimport {serializeProjectMetaFieldUtf8} from './project-meta-field-json.mjs';",'storage:serializer-import'));
   const declaration=(name,callee)=>one(nodes.filter(node=>ts.isVariableStatement(node)&&node.declarationList.declarations.some(declaration=>ts.isIdentifier(declaration.name)&&declaration.name.text===name&&(!callee||ts.isCallExpression(declaration.initializer)&&ts.isIdentifier(declaration.initializer.expression)&&declaration.initializer.expression.text===callee))),'actual '+name+' statement');
   const result=declaration('result','translateProject'),storage=declaration('storage');

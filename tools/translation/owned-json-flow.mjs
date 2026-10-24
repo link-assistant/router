@@ -60,6 +60,11 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
   const payload=checker.resolveType(source.arguments[0],owner?.modulePath??entry.modulePath,node?.span??entry.span);if(canonical(payload,node)!=='serde_json::Value')return false;
   return isForwardOwnedCarrier(checker,type,entry.modulePath,node?.span??entry.span,(_checker,type,span,shared)=>{if(shared||canonical(type,node)!=='serde_json::Value')refuse('actual owned carrier canonical JSON payload required',node);});
  };
+ let textBoundary=null;
+ const hasTextBoundary=()=>{
+  if(textBoundary!==null)return textBoundary;
+  const visit=(node,depth=0)=>{if(!node||typeof node!=='object')return false;if(--cells<0||depth>160)refuse('text operation source-bound flow census exceeded',entry);if(node.k==='routerHostCall'&&jsonStateContract(node.id)?.family==='text'&&genuine(node,entry))return true;for(const [key,value]of Object.entries(node))if(!['type','span','compatibilityCore','pinnedStandardBodyProof','sourceFrameProof','originalCallbackProof','originalLoanProof','sharedBodyProof','sourceSharedPatternProof'].includes(key))for(const child of Array.isArray(value)?value:[value])if(visit(child,depth+1))return true;return false;};return textBoundary=visit(entry.body);
+ };
  const ownedText=type=>type?.kind==='string'&&!type.rustReference&&!type.rustBorrowingUnresolved&&!type.rustGenericIdentityUnresolved&&type.rustOwnership?.kind==='owned'&&type.rustOwnership.source==='String'&&[undefined,'ownership-bearing String type','owned String source type','owned String formatting'].includes(type.patternOwnershipRefusal);
  const resultOwner=(type,node)=>{const result=canonicalResult(checker,type,entry.modulePath,node?.span??entry.span,false);if(!result||!ownedText(result.error))refuse('requires actual canonical Result with owned standard String error',node);return result;};
  const canonical=(type,node)=>{
@@ -132,7 +137,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
    return arguments_.some(linear)?'linear':'copy';
   }
   if(type.kind==='string'){
-   if((closedErrors||closedOption||hasOwnedCarrierBoundary())&&ownedText(type))return 'owned-text';
+   if((closedErrors||closedOption||hasOwnedCarrierBoundary()||hasTextBoundary())&&ownedText(type))return 'owned-text';
    if(type.rustOwnership&&!(type.rustOwnership.kind==='borrowed'&&type.rustOwnership.source==='str')||type.patternOwnershipRefusal)refuse('owned text or unknown Drop',node);
    return 'copy';
   }
@@ -345,6 +350,16 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
   }
   if(node.k==='routerHostCall'){
    const stateOperation=jsonStateContract(node.id);
+   if(stateOperation?.family==='text'){
+    const wanted=stateOperation.returns==='text-owned'?'owned-text':'copy';if(!genuine(node,state.entry)||node.args.length!==stateOperation.parameters.length||kind!==wanted)refuse('text operation requires its original complete call and actual result ownership',node);
+    const observed=node.args.map((value,index)=>{const role=stateOperation.parameters[index];if(!['str','u64'].includes(role)||domain(value.type,value)!=='copy')refuse('text operand requires its actual immutable source domain',value);const found=read(value,role==='str'?'borrow':'copy');ensureRoots(found,state,value);return found;});
+    if(stateOperation.root!==null){const origin=observed[stateOperation.root];if(!origin||!['str','str-option-ref'].includes(stateOperation.returns))refuse('text result requires its declared actual borrowed input origin',node);const loan=copy(origin);loan.tags=null;if(stateOperation.returns==='str-option-ref'){const optional=prefix(loan,'field0');optional.tags=new Set(['Some','None']);return optional;}return loan;}
+    if(retainsLoan(node.type))refuse('a nonborrowing text operation cannot invent an output loan',node);return {loans:new Map(),tags:stateOperation.returns==='u64-option'?new Set(['Some','None']):null};
+   }
+   if(stateOperation?.family==='stream'){
+    if(!genuine(node,state.entry)||stateOperation.returns!=='json'||kind!=='json'||node.args.length!==stateOperation.parameters.length)refuse('stream interface requires its actual checked native call and owned JSON result',node);
+    for(const [index,value]of node.args.entries()){if(stateOperation.parameters[index]!=='str'||domain(value.type,value)!=='copy')refuse('stream state and chunk require actual borrowed source text',value);ensureRoots(read(value,'borrow'),state,value);}return empty();
+   }
    if(stateOperation?.family==='field'){
     if(!genuine(node,state.entry)||node.args.length!==stateOperation.parameters.length)refuse('field operation requires its actual original whole-call receipt',node);
     const receiver=read(node.args[0],'borrow');for(const value of node.args.slice(1))read(value,'borrow');ensureRoots(receiver,state,node);

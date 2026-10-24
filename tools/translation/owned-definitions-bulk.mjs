@@ -9,7 +9,7 @@ import { translateSource, json, PIN, sha256 } from './translate.mjs';
 import {translateProjectOwnedCoreReaderDefinitions as translateProject} from './project.mjs';
 import {PRODUCTION_PROFILE,compilationProfile} from './cfg-profile.mjs';
 import { effectRuntimeAssets } from './effect-assets.mjs';
-import {hostRuntimeAssets,hostRuntimeAssetsNamedDataAliases} from './host-assets.mjs';
+import {hostRuntimeAssets,hostRuntimeAssetsNamedDataAliases} from './text-host-assets.mjs';
 import {deriveDependencyProfile} from './derive-dependencies.mjs';
 import {actualJsonCapabilityProfile} from './json-capabilities.mjs';
 import {trackedSource,sourceCorpusPaths,sourceCorpusText,assertSourceCorpusSelection} from './source-corpus.mjs';
