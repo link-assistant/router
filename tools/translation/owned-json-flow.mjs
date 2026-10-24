@@ -3,6 +3,7 @@
 // This grants no public IR, arbitrary Drop, or source lifetime authority.
 import {JSON_CONTRACTS,JSON_DATA,JSON_TYPES} from './extensions/json-contracts.mjs';
 import {sameType} from './checked-types.mjs';
+import {jsonIterationContract} from './json-iteration-contracts.mjs';
 import {canonicalResult} from './extensions/result-iterators.mjs';
 import {hasOriginalCallbackLoan,hasOriginalSourceFrame,originalCallbackLoanInputMatches} from './extensions/standard-source-frame.mjs';
 import {hasOriginalSharedDomainGuard} from './extensions/standard-borrowed-body.mjs';
@@ -126,7 +127,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
   if(!generic||active.has(type.name))return false;const inner=new Set(active).add(type.name);
   return generic.arguments.some(argument=>retainsLoan(checker.resolveType(argument,owner.modulePath,entry.span),inner));
  };
- const clone=state=>({names:new Map(state.names),available:new Map(state.available),values:new Map([...state.values].map(([slot,value])=>[slot,copy(value)])),alive:state.alive,callbackCaptures:state.callbackCaptures,lambdaInputs:state.lambdaInputs,optionCallback:state.optionCallback,standardScope:state.standardScope,localReturns:state.localReturns,tailNode:state.tailNode,entry:state.entry,external:state.external,callPath:state.callPath,functionReturns:state.functionReturns});
+ const clone=state=>({names:new Map(state.names),available:new Map(state.available),values:new Map([...state.values].map(([slot,value])=>[slot,copy(value)])),alive:state.alive,callbackCaptures:state.callbackCaptures,lambdaInputs:state.lambdaInputs,iterationOwnedInputs:state.iterationOwnedInputs,optionCallback:state.optionCallback,standardScope:state.standardScope,localReturns:state.localReturns,tailNode:state.tailNode,entry:state.entry,external:state.external,callPath:state.callPath,functionReturns:state.functionReturns});
  const bind=(state,name,type,mutable,node,value=empty(),input=false)=>{const local=value.localLoanType;if(local&&JSON.stringify(local)!==JSON.stringify(type))refuse('original callback loan type changed',node);const kind=local?'borrow':domain(type,node);if(kind==='loan-result')refuse('stored borrowed Result requires a separate retained-carrier proof',node);const slot={name,kind,type,mutable,input,...(local?{localLoanType:local,localLoanOrigin:value.localLoanOrigin}:{})};state.names.set(name,slot);state.available.set(slot,true);state.values.set(slot,copy(value));return slot;};
  const createState=(current,arguments_=null,external=new Set(),callPath=[])=>{
   const state={names:new Map(),available:new Map(),values:new Map(),alive:true,entry:current,external,callPath,functionReturns:[]};
@@ -188,9 +189,23 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
    const format=closedErrors.format(node,state.entry);if(format){for(const argument of format)read(argument,'borrow');return empty();}
   }
   if(node.k==='routerLambdaInput'){
+   if(state.iterationOwnedInputs?.has(node.position)){const value=state.lambdaInputs?.[node.position];if(kind!=='json'||!value||value.loans.size)refuse('owned iteration input requires its actual by-value Json domain',node);return copy(value);}
    const value=state.lambdaInputs?.[node.position];if(!value||kind!=='borrow'&&!(standardContext&&state.optionCallback&&kind==='copy'))refuse('callback item requires its actual shared slice root',node);ensureRoots(value,state,node);return copy(value);
   }
   if(node.k==='routerCoreJsonCollection'){
+   const iteration=jsonIterationContract(node.id);
+   if(iteration){
+    if(!genuine(node,state.entry)||node.args.length!==iteration.parameters.length||state.callbackCaptures)refuse('iteration requires its actual source call and finite callback boundary',node);
+    const receiver=node.args[0],callback=node.args.at(-1),wanted=iteration.returns==='owned-json-list'?'json-vector':iteration.returns==='bool'?'copy':iteration.returns==='owned-json'?'json':'linear';
+    if(kind!==wanted||domain(receiver.type,receiver)!=='slice'||callback.k!=='routerLambda'||callback.arity!==iteration.callbackParameters.length)refuse('actual iteration receiver callback or result domain differs',node);
+    const input=read(receiver,'borrow');ensureRoots(input,state,node);const inputRoots=input.loans.get(path([]));if(!inputRoots?.size)refuse('iteration input lacks its live shared slice root',node);
+    if(iteration.parameters.length===3){if(domain(node.args[1].type,node.args[1])!=='json')refuse('fold initial value must be owned canonical Json',node);const initial=read(node.args[1],'move');if(initial.loans.size)refuse('fold initial value retains a loan',node);}
+    if(iteration.callbackReturns==='bool'?callback.type.result.kind!=='bool':canonical(callback.type.result,node)!=='serde_json::Value')refuse('actual iteration callback result changed',node);
+    if(iteration.returns==='owned-json-option'){const actual=option(node.type,node);if(!actual||canonical(actual.payload,node)!=='serde_json::Value')refuse('find result requires its actual owned Option<Json>',node);}
+    const child=clone(state);child.callbackCaptures=new Set(state.names.values());child.iterationOwnedInputs=new Set();child.lambdaInputs=iteration.callbackParameters.map((role,index)=>{if(role==='owned-json'){child.iterationOwnedInputs.add(index);return empty();}return {loans:new Map([[path([]),new Set(inputRoots)]]),tags:null};});
+    const result=selectedBody(callback.binding,()=>visit(callback.binding,child,'move',depth+1));if(result.loans.size)refuse('iteration callback cannot return a borrowed value',node);return empty();
+   }
+
    if(!genuine(node,state.entry)||node.args.length!==2||kind!=='json-vector'||state.callbackCaptures)refuse('collection requires its actual source call and one closed callback boundary',node);
    const receiver=node.args[0],callback=node.args[1];if(domain(receiver.type,receiver)!=='slice'||callback.k!=='routerLambda'||callback.arity!==1)refuse('collection receiver or callback source ownership changed',node);
    const input=read(receiver,'borrow');ensureRoots(input,state,node);const inputRoots=input.loans.get(path([]));if(!inputRoots?.size)refuse('collection input has no live shared slice root',node);

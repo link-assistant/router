@@ -1,0 +1,1 @@
+- Draft qualified Rust predicate/fold callers through native source frames, checked callback domains, original private issuance, ownership/lifetime passes and guarded JavaScript/TypeScript emission for #759/#772. Complete originals, class-owner source rules and independent regressions are retained; all execution remains deferred.

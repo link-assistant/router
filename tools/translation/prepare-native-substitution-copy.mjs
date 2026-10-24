@@ -31,7 +31,7 @@ function nativeOwner(ts,file,edit){
  }
  let matches=[];
  const visit=node=>{
-  if(owner.kind==='function'&&ts.isFunctionDeclaration(node)&&node.name?.text===owner.name||owner.kind==='import'&&ts.isImportDeclaration(node)&&ts.isStringLiteral(node.moduleSpecifier)&&node.moduleSpecifier.text===owner.name||owner.kind==='call'&&ts.isCallExpression(node)&&ts.isIdentifier(node.expression)&&node.expression.text===owner.name&&node.arguments.length>0&&ts.isStringLiteral(node.arguments[0])&&node.arguments[0].text===owner.argument||owner.kind==='variable'&&ts.isVariableDeclaration(node)&&ts.isIdentifier(node.name)&&node.name.text===owner.name)matches.push(node);
+  if(owner.kind==='class'&&ts.isClassDeclaration(node)&&node.name?.text===owner.name||owner.kind==='function'&&ts.isFunctionDeclaration(node)&&node.name?.text===owner.name||owner.kind==='import'&&ts.isImportDeclaration(node)&&ts.isStringLiteral(node.moduleSpecifier)&&node.moduleSpecifier.text===owner.name||owner.kind==='call'&&ts.isCallExpression(node)&&ts.isIdentifier(node.expression)&&node.expression.text===owner.name&&node.arguments.length>0&&ts.isStringLiteral(node.arguments[0])&&node.arguments[0].text===owner.argument||owner.kind==='variable'&&ts.isVariableDeclaration(node)&&ts.isIdentifier(node.name)&&node.name.text===owner.name)matches.push(node);
   ts.forEachChild(node,visit);
  };
  visit(file);need(matches.length===1,'unique native-selected original owner');const node=matches[0];

@@ -55,6 +55,7 @@ import {canonicalResult} from './result-iterators.mjs';
 import {JSON_DATA} from './json-contracts.mjs';
 import {sharedReferenceCopyIdentity} from '../shared-reference-copy-source.mjs';
 import {hasOriginalRouterCoreJsonProjection,hasOriginalJsonStringErrorContext} from '../router-core-json-updates.mjs';
+import {jsonIterationContract} from '../json-iteration-contracts.mjs';
 import {hasOriginalMappedOrigin} from './standard-mapped-body.mjs';
 import {sameType} from '../checked-types.mjs';
 import {originalCloneReceiverOrigin} from './clone-source-body.mjs';
@@ -295,6 +296,15 @@ function origins(node,env,context,returns,depth=0) {
     read(node.separator);return new Set(); // join allocates an owned String.
   }
   if(node.k==='routerCoreJsonCollection'){
+    const iteration=jsonIterationContract(node.id);
+    if(iteration){
+      const callback=node.args.at(-1);if(!hasOriginalRouterCoreJsonProjection(node)||node.args.length!==iteration.parameters.length||callback?.k!=='routerLambda'||callback.arity!==iteration.callbackParameters.length)throw unsupported('owned iteration borrow origin','requires its actual private checked function and call',node.span);
+      const input=read(node.args[0]),item=node.args[0].type.rustReference?.pointee?.element;if(!item)throw unsupported('owned iteration source type','requires its actual shared Json slice',node.span);
+      if(iteration.parameters.length===3&&read(node.args[1]).size)throw unsupported('owned fold accumulator','cannot retain a borrowed source origin',node.span);
+      readCallback(callback.binding,iteration.callbackParameters.map(role=>role==='owned-json'?new Set():uniformOrigins({...item,rustReference:{kind:'shared',pointee:item}},at(input,[]),context)));
+      return new Set();
+    }
+
     if(!hasOriginalRouterCoreJsonProjection(node)||node.args.length!==2||node.args[1].k!=='routerLambda'||node.args[1].arity!==1)throw unsupported('owned collection borrow origin','requires its actual private checked function/call context',node.span);
     const input=read(node.args[0]),item=node.args[0].type.rustReference?.pointee?.element;
     if(!item||node.type.kind!=='array'||node.type.rustOwnership?.kind!=='owned'||node.type.rustOwnership.source!=='Vec')throw unsupported('owned collection source type','requires actual shared input and owned output',node.span);

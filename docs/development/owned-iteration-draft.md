@@ -40,7 +40,10 @@ refusals and complete source histories. Four additional native Rust oracle cases
 call the actual new APIs. None has executed. The JS and JSON resource bounds,
 all eight original same-SHA gate stages and fatal JS-gated Rust jobs remain.
 
-Forward Rust caller registration/adoption, nested iterator combinations,
+The [forward source draft](forward-json-iteration-draft.md) adds actual qualified
+Rust caller registration, callback checking, whole-function ownership,
+lifetimes and guarded emission rules. That implementation and its independent
+caller regressions are also unrun. Standard iterator adoption, nested combinations,
 general mutation/state, async/HTTP/streaming, production synchronization and
 current bank/export/output qualification remain open. A complete core function
 or reverse profile is not a whole Router coverage claim. All new source and

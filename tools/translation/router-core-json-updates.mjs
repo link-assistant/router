@@ -1,4 +1,5 @@
 import {crateModuleSourcePath} from './repository-layout.mjs';
+import {forwardJsonIterationContract} from './json-iteration-forward-domain.mjs';
 // Only source-bound owned JSON operations enter this language rule. The Rust
 // library bodies remain untranslated; no general Clone/IndexMut is admitted.
 import {types} from 'node:util';
@@ -140,10 +141,11 @@ export function checkRouterCoreJsonUpdate(checker,node,env,path,expected){
 // The same private caller issuer handles both fixed JSON families. Collection
 // contexts retain detached data only; checking frame/Checker never escapes.
 function checkedCollection(checker,node,capture,env,path,expected){
- const stage=createRulePipeline([{phase:'language',rules:[{id:'owned-json-collections:check-shared-input-and-local-callback',apply:()=>checkRouterCoreJsonCollection(checker,node,env,path,expected)}]},{phase:'repository',rules:[{id:'router-core:retain-actual-eager-collection',apply:call=>({...call,compatibilityCore:{id:'router-owned-json-collections-v1',symbol:'crate::translation_core::'+node.operation,sourceSha256:routerCoreJsonCollectionSourceHash,sourceTrace:capture.receipt.trace,libraryImplementation:'untranslated-owned-rust-library',boundedProjection:true,runtimeParity:false}})}]}]).run(null);
+ const iteration=forwardJsonIterationContract(node.operation);
+ const stage=createRulePipeline([{phase:'language',rules:[{id:'owned-json-collections:check-shared-input-and-local-callback',apply:()=>checkRouterCoreJsonCollection(checker,node,env,path,expected)}]},{phase:'repository',rules:[{id:'router-core:retain-actual-eager-collection',apply:call=>({...call,compatibilityCore:{id:'router-owned-json-collections-v1',symbol:'crate::'+(iteration?.namespace??'translation_core')+'::'+node.operation,sourceSha256:iteration?.sourceSha256??routerCoreJsonCollectionSourceHash,sourceTrace:capture.receipt.trace,libraryImplementation:'untranslated-owned-rust-library',boundedProjection:true,runtimeParity:false}})}]}]).run(null);
  const value=stage.value,record={checker,frame:activeFunctions.get(checker),id:value.id,args:copyMetadata(value.args)};
  requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged()||!same(node,capture.syntax))fail();
- const roots=[value.args[0].type,value.type,value.args[1].type.result];record.layouts=copyMetadata(captureBorrowedLayouts(checker,roots));record.roots=copyMetadata(roots);
+ const roots=[...value.args.slice(0,-1).map(argument=>argument.type),value.type,value.args.at(-1).type.result];record.layouts=copyMetadata(captureBorrowedLayouts(checker,roots));record.roots=copyMetadata(roots);
  record.key=metadataDigest({functionName:record.frame.functionName,source:record.frame.syntax,call:value,layouts:record.layouts});value.compatibilityCore.sourceProjectionKey=record.key;record.call=copyMetadata(value);
  (record.frame.projections??=new Set()).add(record);issued.set(value.compatibilityCore,record);return value;
 }
