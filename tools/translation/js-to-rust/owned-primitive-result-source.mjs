@@ -2,7 +2,7 @@
 import {ownedPrimitiveResultOperation,ownedPrimitiveResultPayload} from './owned-primitive-result-contracts.mjs';
 const fail=message=>{throw new TypeError('Owned primitive Result: '+message);};
 const owned=type=>['base64-result','json','json-list-owned','json-text-result','json-owned-option','text-owned','text-owned-option'].includes(type)||ownedPrimitiveResultPayload(type)!==null;
-const compatible=(actual,wanted)=>actual===wanted||wanted==='str'&&actual==='text-owned';
+const compatible=(actual,wanted)=>actual===wanted||wanted==='str'&&actual==='text-owned'||wanted==='json-ref'&&actual==='json';
 export function checkOwnedPrimitiveResult(node,binding,scope,depth,helpers){
  const row=ownedPrimitiveResultOperation(binding.name);if(!row||binding.target!==helpers.runtimeRoot+'/'+row.runtimeModule)return null;helpers.current();const {ts,file}=helpers;
  if(node.arguments.length!==row.parameters.length)fail('complete actual argument count required');const args=[];for(let index=0;index<row.parameters.length;index++){

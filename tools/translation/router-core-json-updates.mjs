@@ -653,4 +653,4 @@ export function hasOriginalPrimitiveOptionAbsentLoan(node){const record=projecti
 export function originalPrimitiveOptionCallbackProjection(node){const record=projectionRecord(node),row=record&&jsonStateContract(record.id);return record&&row?.family==='primitive-option-callback'?row:null;}
 
 // Actual private current whole-call membership, never public row metadata.
-export function originalPrimitiveResultProjection(node){const record=projectionRecord(node),row=record&&jsonStateContract(record.id);return record&&row?.family==='primitive-result'?row:null;}
+export function originalPrimitiveResultProjection(node){const record=projectionRecord(node),row=record&&jsonStateContract(record.id);return record&&['primitive-result','http-protocol'].includes(row?.family)?row:null;}

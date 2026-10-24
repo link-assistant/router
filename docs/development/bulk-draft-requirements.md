@@ -19,7 +19,7 @@ present; verification and delivery remain separate later obligations.
 | Physical language layout | `js/src`, `ts/src`, `rust/src`; layout-aware tooling | Remove remaining assumptions about root `src` in active translation and adoption paths. |
 | Reusable ordered rules | Language and repository rule sequences | Cover the remaining source constructs, keep inverse mappings and explicit refusals; no semantic admission from a spelling or source hash. |
 | CST/meta boundary | Lossless source transport and separate checked semantic program | Complete every new forward/reverse path with serialization, reparsing, source spans and full source inverses. |
-| Common application operations | Formatting, text, numbers, JSON, Option/Result, vector readers and selected effects | Complete collection mutation, iterator/callback combinations, error propagation, state, HTTP, filesystem and streaming contracts with matching native abstractions. |
+| Common application operations | Formatting, text, numbers, JSON, Option/Result, pure HTTP values, vector readers and selected effects | Complete collection mutation, iterator/callback combinations, error propagation, state, network HTTP, filesystem and streaming contracts with matching native abstractions. |
 | Source binding and namespace closure | Private source issuers and original module/derive resolution | Remove unresolved common binding and producer prerequisites without bypassing owner/type/effect checks. |
 | Forward translation | Partial actual Rust application translation | Complete caller lowering, types, async control, mutation and generated JS/TS packaging for the entire production source set. |
 | Reverse translation | Portable scalar and owned-core subsets | Complete the corresponding JS/TS source constructs, owned operation mappings and Rust/TS emission. |
@@ -589,3 +589,13 @@ source inverses and fresh selected whole-function checks remain required.
 Independent actual caller, strict target, packet, application and refusal source
 is drafted and unrun. Production application, broader inference and all other
 remaining requirement rows are still open.
+
+The [HTTP value translation draft](http-protocol-translation-draft.md) now adds
+all twelve matching pure HTTP operations to actual caller checking, forward
+source/loan checking, both interpreters, Rust/TypeScript emission, canonical
+Rust inversion and receiving assets. Complete emitter/source copies preserve
+ordered language/repository substitutions and full originals/inverses. Independent
+JavaScript, strict TypeScript, forward/native, inverse, dependency/source alteration
+and escaping-borrow cases are drafted and unrun. Network transport, streaming,
+async caller integration, production adoption and every other open ledger row
+still need their remaining source draft. No verification or CI has run.

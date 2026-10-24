@@ -24,6 +24,7 @@ import {emitOwnedPrimitiveOptionCallback,evaluateOwnedPrimitiveOptionCallback} f
 import {ownedPrimitiveResultOperation,ownedPrimitiveResultType,ownedPrimitiveResultPayload,ownedPrimitiveResultRustTypes} from './owned-primitive-result-contracts.mjs';
 import {emitOwnedPrimitiveResult,evaluateOwnedPrimitiveResult} from './owned-primitive-result-emission.mjs';
 import {requireOwnedResultSources} from './owned-result-source-contracts.mjs';
+import {emitOwnedHttpProtocolCall} from './owned-http-protocol-emission.mjs';
 import {emitOwnedPrimitiveOptionCall,evaluateOwnedPrimitiveOptionCall} from './owned-primitive-option-emission.mjs';
 import {emitOwnedTextCall,evaluateOwnedTextCall} from './owned-text-emission.mjs';
 import {ownedJsonFieldOperation,emitOwnedJsonFieldCall,evaluateOwnedJsonFieldCall} from './owned-json-fields.mjs';
@@ -203,7 +204,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
    case 'local-call':return emitOwnedLocalCall(value,{rust,expr,rustName});
    case 'sse-call':return emitOwnedSseCall(value,{rust,expr,imports});
    case 'owned-text-copy':return emitOwnedTextCall({kind:'text-call',name:'router_text_repeat',args:[value.value,{kind:'integer',value:'1',type:'u64',root:null}],type:'text-owned',root:null},{rust,expr,imports});
-   case 'primitive-result-call':return emitOwnedPrimitiveResult(value,{rust,expr,body,rustName,imports,typeScriptType:publicTypeScriptType});
+   case 'primitive-result-call':if(ownedPrimitiveResultOperation(value.name)?.runtimeModule==='http-protocol-runtime.mjs')return emitOwnedHttpProtocolCall(value,{rust,expr,imports,sequence:()=>sequence++});return emitOwnedPrimitiveResult(value,{rust,expr,body,rustName,imports,typeScriptType:publicTypeScriptType});
    case 'primitive-result-ok':return rust?'Ok('+expr(value.value)+')':"({$:'Ok',field0:"+expr(value.value)+'})';
    case 'primitive-result-err':return rust?'Err('+expr(value.value)+'.to_owned())':"({$:'Err',field0:"+expr(value.value)+'})';
    case 'primitive-option-callback-call':return emitOwnedPrimitiveOptionCallback(value,{rust,expr,body,rustName,imports,typeScriptType:publicTypeScriptType});
@@ -312,7 +313,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  const output=outputPath??program[0].source.path,relative=(name,base=sourceData.runtimeRoot)=>{const path=posix.relative(posix.dirname(output),base+'/'+name);return path.startsWith('.')?path:'./'+path;};
  const lines=['import type {JsonValue} from '+JSON.stringify(relative('json-macro-runtime.mjs',[...imports].some(ownedAsciiOperation)?sourceData.declarationRoot:sourceData.runtimeRoot))+';'];
  if([...imports].some(name=>ownedBase64Operation(name)))lines.push('import type {Base64Error,Base64Result} from '+JSON.stringify(relative('base64-runtime.mjs'))+';');
- for(const family of ['json-update','json-macro','base64','json','json-option','string-iterator','json-collections','json-iteration','json-state','json-fields','owned-outcome','integer','sse','text','primitive-option','primitive-option-callback','primitive-result','owned-result']){
+ for(const family of ['json-update','json-macro','base64','json','json-option','string-iterator','json-collections','json-iteration','json-state','json-fields','owned-outcome','integer','sse','text','primitive-option','primitive-option-callback','primitive-result','owned-result','http-protocol']){
   const names=[...imports].filter(name=>(ownedPrimitiveResultOperation(name)?ownedPrimitiveResultOperation(name).runtimeModule.slice(0,-12):ownedPrimitiveOptionCallbackOperation(name)?'primitive-option-callback':ownedPrimitiveOptionOperation(name)?'primitive-option':ownedTextOperation(name)?'text':ownedSseOperation(name)?'sse':ownedIntegerOperation(name)?'integer':ownedOutcomeOperation(name)?'owned-outcome':ownedJsonFieldOperation(name)?'json-fields':ownedStateOperation(name)?'json-state':ownedIterationOnlyOperation(name)?'json-iteration':ownedCollectionOperation(name)?'json-collections':ownedAsciiOperation(name)?'string-iterator':ownedJsonOptionalReaderOperation(name)?'json-option':ownedBase64Operation(name)?'base64':ownedJsonReaderOperation(name)?'json':name.startsWith('json_macro_')?'json-macro':'json-update')===family);
   if(names.length)lines.push('import { '+names.map(name=>name+' as __ro_'+name).join(', ')+' } from '+JSON.stringify(relative(family+'-runtime.mjs'))+';');
  }
@@ -365,6 +366,7 @@ export async function prepareOwnedCoreRuntime(input){
  if(program.some(item=>item.hostCalls.some(call=>ownedPrimitiveOptionOperation(call.name))))modules.primitiveOption=await import('../primitive-option-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedPrimitiveResultOperation(call.name)?.runtimeModule==='primitive-result-runtime.mjs')))modules.primitiveResult=await import('../primitive-result-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedPrimitiveResultOperation(call.name)?.runtimeModule==='owned-result-runtime.mjs')))modules.ownedResult=await import('../owned-result-runtime.mjs');
+ if(program.some(item=>item.hostCalls.some(call=>ownedPrimitiveResultOperation(call.name)?.runtimeModule==='http-protocol-runtime.mjs')))modules.httpProtocol=await import('../http-protocol-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedPrimitiveOptionCallbackOperation(call.name))))modules.primitiveOptionCallback=await import('../primitive-option-callback-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedJsonReaderOperation(call.name))))modules.json=await import('../extensions/json-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedJsonOptionalReaderOperation(call.name))))modules.optional=await import('../json-option-runtime.mjs');

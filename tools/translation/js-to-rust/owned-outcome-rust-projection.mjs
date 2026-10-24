@@ -8,6 +8,7 @@ import {PRIMITIVE_OPTION_CONTRACTS} from '../primitive-option-contracts.mjs';
 import {PRIMITIVE_OPTION_CALLBACK_CONTRACTS} from '../primitive-option-callback-contracts.mjs';
 import {PRIMITIVE_RESULT_CONTRACTS} from '../primitive-result-contracts.mjs';
 import {OWNED_RESULT_CONTRACTS} from '../owned-result-contracts.mjs';
+import {HTTP_PROTOCOL_CONTRACTS} from '../http-protocol-contracts.mjs';
 import {SSE_CONTRACTS} from '../sse-contracts.mjs';
 import {JSON_STATE_CONTRACTS} from '../json-state-contracts.mjs';
 import {JSON_FIELD_CONTRACTS} from '../json-field-contracts.mjs';
@@ -20,6 +21,7 @@ const snake=name=>name.replace(/[A-Z]/gu,character=>'_'+character.toLowerCase())
 const ordinary=name=>typeof name==='string'&&/^[a-z][A-Za-z0-9_]*$/u.test(name)&&!name.startsWith('__ro');
 const families=[
  ...SSE_CONTRACTS.map(row=>({path:row.rustPath,name:row.javascriptName,runtime:'sse',roles:row.parameters})),
+ ...HTTP_PROTOCOL_CONTRACTS.map(row=>({path:row.rustPath,name:row.javascriptName,runtime:'http-protocol',roles:row.parameters})),
  ...OWNED_RESULT_CONTRACTS.map(row=>({path:row.rustPath,name:row.javascriptName,runtime:'owned-result',roles:row.parameters})),
  ...PRIMITIVE_RESULT_CONTRACTS.map(row=>({path:row.rustPath,name:row.javascriptName,runtime:'primitive-result',roles:row.parameters})),
  ...PRIMITIVE_OPTION_CALLBACK_CONTRACTS.map(row=>({path:row.rustPath,name:row.javascriptName,runtime:'primitive-option-callback',roles:row.parameters})),

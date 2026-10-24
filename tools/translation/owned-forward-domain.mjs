@@ -36,6 +36,7 @@ function carrierInput(checker,type,kind,path,span,canonical,borrow){
  forwardOwnedCarrier(checker,pointee,kind,path,span,canonical);
 }
 export function checkForwardOwnedExtra(checker,node,env,path,expected,row,{canonical,current}){
+ if(row.family==='http-protocol')return checkForwardPrimitiveResult(checker,node,env,path,expected,row,{current,carrier:forwardOwnedCarrier,ownedString:forwardOwnedString,canonical});
  if(row.family==='primitive-result')return checkForwardPrimitiveResult(checker,node,env,path,expected,row,{current,carrier:forwardOwnedCarrier,ownedString:forwardOwnedString});
  if(row.family==='primitive-option-callback')return checkForwardPrimitiveOptionCallback(checker,node,env,path,expected,row,{current,carrier:forwardOwnedCarrier});
  if(row.family==='primitive-option')return checkForwardPrimitiveOption(checker,node,env,path,expected,row,{current,carrier:forwardOwnedCarrier});

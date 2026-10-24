@@ -1,11 +1,12 @@
 // Finite domain equations over actual, freshly checked native/runtime sources.
 import {PRIMITIVE_RESULT_CONTRACTS,primitiveResultContract} from '../primitive-result-contracts.mjs';
 import {ownedResultSourceOperation} from './owned-result-source-contracts.mjs';
+import {ownedHttpProtocolOperation} from './owned-http-protocol-contracts.mjs';
 import {PRIMITIVE_RESULT_NATIVE_SOURCE,PRIMITIVE_RESULT_RUNTIME_SOURCE,PRIMITIVE_RESULT_DECLARATIONS_SOURCE} from '../primitive-result-native-source.mjs';
 import {requireOwnedTextSources} from './owned-text-contracts.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 import {captureSourceModuleViews,originalModuleViewItems} from '../source-module-views.mjs';
-export const ownedPrimitiveResultOperation=name=>primitiveResultContract(name)??ownedResultSourceOperation(name);
+export const ownedPrimitiveResultOperation=name=>primitiveResultContract(name)??ownedResultSourceOperation(name)??ownedHttpProtocolOperation(name);
 const payloads=Object.freeze({'bool-text-result':'bool','u64-text-result':'u64','i64-text-result':'i64','str-text-result':'str','text-text-result':'text-owned'});
 export const ownedPrimitiveResultPayload=type=>Object.hasOwn(payloads,type)?payloads[type]:null;
 export const ownedPrimitiveResultType=type=>ownedPrimitiveResultPayload(type)!==null;

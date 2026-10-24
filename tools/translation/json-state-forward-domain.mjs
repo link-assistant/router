@@ -10,6 +10,7 @@ import {requireBorrowedString} from './extensions/string-iterators.mjs';
 import {requireOriginalPrimitiveTryFromChecker} from './extensions/host-contracts.mjs';
 import {matchesParserFacts,originalMatchesDependencyProof} from './matches-macro-context.mjs';
 import {requireSseLockedDependencies} from './sse-native-dependencies.mjs';
+import {requireHttpProtocolLockedDependencies} from './http-protocol-native-dependencies.mjs';
 import {requireRouterCoreFacade,requireRouterCoreFacadeCurrent} from './router-core-formatting.mjs';
 import {originalSourceModuleItems} from './source-module-views.mjs';
 import {crateModuleSourcePath} from './repository-layout.mjs';
@@ -22,7 +23,7 @@ export function forwardJsonStateContract(name,options){const row=jsonStateContra
 function leaf(state,row){
  const rows=state.facts.modules.filter(module=>module.path.join('::')===row.rustModule);
  if(rows.length!==1||rows[0].file!==crateModuleSourcePath(state.facts.modules,row.rustSource)||rows[0].source!==row.source||rows[0].configurationCondition!=='active'||!rows[0].sourceView)fail();
- const items=originalSourceModuleItems(rows[0]),members=items.filter(item=>item.term==='fn'&&item.name===row.rustName);if(members.length!==1)fail();if(row.family==='stream')requireSseLockedDependencies(originalMatchesDependencyProof(state.facts));for(const dependency of row.nativeDependencies??[]){const originals=state.facts.modules.filter(module=>module.path.join('::')===dependency.module);if(originals.length!==1||originals[0].file!==crateModuleSourcePath(state.facts.modules,dependency.path)||originals[0].source!==dependency.source||originals[0].configurationCondition!=='active'||!originals[0].sourceView)fail();originalSourceModuleItems(originals[0]);}return rows[0];
+ const items=originalSourceModuleItems(rows[0]),members=items.filter(item=>item.term==='fn'&&item.name===row.rustName);if(members.length!==1)fail();if(row.family==='stream')requireSseLockedDependencies(originalMatchesDependencyProof(state.facts));if(row.family==='http-protocol')requireHttpProtocolLockedDependencies(originalMatchesDependencyProof(state.facts));for(const dependency of row.nativeDependencies??[]){const originals=state.facts.modules.filter(module=>module.path.join('::')===dependency.module);if(originals.length!==1||originals[0].file!==crateModuleSourcePath(state.facts.modules,dependency.path)||originals[0].source!==dependency.source||originals[0].configurationCondition!=='active'||!originals[0].sourceView)fail();originalSourceModuleItems(originals[0]);}return rows[0];
 }
 export function parseRouterCoreJsonState(parser,path){
  const c=parser.cursor,row=jsonStateContract(c.peek(4).value,{rustModule:c.peek(2).value});if(!row||!['crate','::',row.rustModule,'::'].every((word,index)=>c.is(word,index))||[0,2,4].some(index=>c.peek(index).kind!=='identifier'))return null;
