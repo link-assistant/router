@@ -308,3 +308,5 @@ pub mod translation_primitive_option_callbacks_core;
 pub mod translation_primitive_results_core;
 
 pub mod translation_async_control_core;
+
+pub mod translation_owned_results_core;

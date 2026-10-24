@@ -192,6 +192,15 @@ workloads/deadlines. Actual opaque caller/future/exclusive-borrow qualification,
 both directions, asset/export closure, HTTP use, production integration and all
 other unfinished rows remain open. No test or experiment has executed.
 
+The [owned-success Result core draft](owned-result-core-draft.md) extends a full
+copy of the 88-interface primitive Result implementation with 32 operations for
+owned String successes. Its 120-interface catalog, matching native/JS bodies,
+strict declarations, complete native/runtime/root source copies and independent
+unrun JS/Rust oracle source are drafted. Actual caller/type/loan qualification,
+explicit owned text construction, both directions/interpreters, assets/export,
+method adoption and HTTP integration remain open. No coverage or parity result
+is claimed, and every other incomplete requirement remains open.
+
 The last checkpoint before this phase is `0460fb741`: four complete
 source-history receiving files passed 26 cases in Node and Bun. That historical
 focused evidence does not qualify any change drafted in this phase or the full
