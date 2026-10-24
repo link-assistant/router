@@ -50,6 +50,14 @@ export entrypoints. All implementation and independent regression source is
 unrun. Unannotated multi-module signature proposals, arbitrary native layout,
 broader syntax and the remaining production/delivery requirements stay open.
 
+The [local helper signature draft](owned-local-signature-draft.md) now supports
+native-bound `ReturnType` and indexed `Parameters` queries over freshly checked
+helper bodies. Call/type dependencies include actual paired TS and JSDoc
+sources; language and repository source histories compose the prior call family.
+Independent direct, project-alias, body/refusal and history regressions are
+drafted and unrun. Generic and recursive functions, other effects, production
+coverage and the rest of this ledger remain open.
+
 The last checkpoint before this phase is `0460fb741`: four complete
 source-history receiving files passed 26 cases in Node and Bun. That historical
 focused evidence does not qualify any change drafted in this phase or the full

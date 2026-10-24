@@ -28,6 +28,7 @@ import {ownedOutcomeOperation,ownedOutcomeType,ownedOutcomeCompatible,requireOwn
 import {ownedIntegerOperation,requireOwnedIntegerSources} from './owned-integer-contracts.mjs';
 import {ownedSseOperation,requireOwnedSseSources} from './owned-sse-contracts.mjs';
 import {checkOwnedLocalFunctions} from './owned-local-function-calls.mjs';
+import {ownedLocalWrittenType} from './owned-local-signatures.mjs';
 import {ownedJsonFieldOperation,requireOwnedJsonFieldSources} from './owned-json-fields.mjs';
 import {pairedCollectionCallback} from './owned-collections-paired.mjs';
 import {ownedJsonOptionalReaderOperation} from './owned-json-source.mjs';
@@ -346,6 +347,7 @@ function originalOwnedCoreImport(handle,path,node,analysis){
 function originalOwnedCoreType(handle,path,type,analysis){
  const {ts,file}=analysis,privateState=traversals.get(analysis);if(privateState?.handle!==handle)fail('foreign type traversal');const state=privateState.state;
  if(!type)fail('written input domain required');
+ const localType=ownedLocalWrittenType(type,analysis);if(localType!==null)return localType;
  const stateType=ownedStateWrittenType(ts,type,analysis,node=>originalOwnedCoreImport(handle,path,node,analysis));if(stateType!==null)return stateType;
  if(type.kind===ts.SyntaxKind.StringKeyword)return 'str';
  if(type.kind===ts.SyntaxKind.BooleanKeyword)return 'bool';
@@ -381,7 +383,7 @@ function originalOwnedCoreType(handle,path,type,analysis){
  }
  // Map and byte domains must be written through the actual imported operation,
  // not a caller's similarly-shaped object/array declaration.
- if(ts.isIndexedAccessTypeNode(type)&&ts.isLiteralTypeNode(type.indexType)&&['0','1'].includes(type.indexType.literal.text)&&ts.isTypeReferenceNode(type.objectType)&&type.objectType.typeName.getText(file)==='Parameters'&&type.objectType.typeArguments?.length===1){
+ if(ts.isIndexedAccessTypeNode(type)&&ts.isLiteralTypeNode(type.indexType)&&/^(?:0|[1-9][0-9]?)$/u.test(type.indexType.literal.text)&&Number(type.indexType.literal.text)<=63&&ts.isTypeReferenceNode(type.objectType)&&type.objectType.typeName.getText(file)==='Parameters'&&type.objectType.typeArguments?.length===1){
   if(analysis.checker.getSymbolAtLocation(type.objectType.typeName)?.declarations?.length)fail('shadowed Parameters type');
   const query=type.objectType.typeArguments[0];
   if(ts.isTypeQueryNode(query)&&ts.isIdentifier(query.exprName)){
@@ -440,7 +442,7 @@ export function analyzeOriginalOwnedCoreSource(context,path){
   if(ts.isEmptyStatement(item))continue;
   fail('top-level evaluation or unsupported declaration');
  }
- for(const {declaration,item,error,span}of checkOwnedLocalFunctions(analysis,functions,declaration=>checkFunction(context,path,declaration,analysis))){
+ for(const {declaration,item,error,span}of checkOwnedLocalFunctions(analysis,functions,declaration=>checkFunction(context,path,declaration,analysis),{pairedFor:declaration=>pairedFunction(context,path,declaration,analysis)})){
   const name=declaration.name?.text??null;if(item){program.push(item);items.push({name,span,status:'translated'});}else{const diagnostic={kind:'owned-core',name,span,message:error?.message??'called original function remains unsupported'};diagnostics.push(diagnostic);items.push({name,span,status:'unsupported',diagnostic});}
  }
  requireOwnedCoreSourceCurrent(context);return {program,diagnostics,items,source,path};
