@@ -466,6 +466,7 @@ function checkFunction(context,path,declaration,analysis){
   const rust=rustName(identifier.text);if([...scope.values()].some(binding=>binding.rust===rust))fail('colliding Rust binding');
   const symbol=checker.getSymbolAtLocation(identifier);if(!symbol)fail('unresolved lexical declaration');scope.set(identifier.text,{...value,symbol,rust});return identifier.text;
  }
+ let primitiveOptionPublicInputs=false;
  for(let index=0;index<declaration.parameters.length;index++){
   const param=declaration.parameters[index];
   if(param.dotDotDotToken||param.questionToken||param.initializer||param.modifiers?.length)fail('default/rest/optional parameter');
@@ -476,7 +477,7 @@ function checkFunction(context,path,declaration,analysis){
    type=paired?originalOwnedCoreType(context,paired.pair.typescript.path,paired.declaration.parameters[index].type,paired.analysis):originalOwnedCoreType(context,path,undefined,analysis);
   }
   if(type==='base64-result')fail('native base64 result input control is not implemented');
-  if(ownedJsonOptionalPayload(type)&&type!=='json-owned-option')fail('optional public parameters require an independently checked carrier boundary');
+  if(ownedJsonOptionalPayload(type)&&type!=='json-owned-option'){if(!['bool-option','u64-option','i64-option','str-option-ref'].includes(type))fail('optional public parameter needs its independent actual carrier boundary');if(!primitiveOptionPublicInputs){const actual=ownedCoreSourceData(context);requireOwnedPrimitiveOptionSources(new Map(actual.files.map(row=>[row.path,row.source])),actual);primitiveOptionPublicInputs=true;}}
   if(type==='text-owned')type='str';
   const identifier=param.name;
   const sourceName=bind(identifier,{type,root:['json-ref','map-ref','str','bytes-ref','base64-error-ref'].includes(type)||ownedJsonBorrowed(type)||type==='json-option-input'||type==='json-list-ref'?identifier.text:null,input:true},environment);

@@ -68,6 +68,7 @@ export function projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot,
   if(text==='i64')return 'Parameters<typeof '+imported('json_macro_i64','json-macro')+'>[0]';
   if(text==='::std::result::Result<crate::translation_core::Json,::std::string::String>')return 'ReturnType<typeof '+imported('router_carrier_json_ok','owned-outcome')+'>';
   if(text==='::std::option::Option<crate::translation_core::Json>')return 'ReturnType<typeof '+imported('router_carrier_json_some','owned-outcome')+'>';
+  const primitiveOptionInputs={'::std::option::Option<bool>':'bool','::std::option::Option<u64>':'u64','::std::option::Option<i64>':'i64','::std::option::Option<&str>':'str'};if(Object.hasOwn(primitiveOptionInputs,text))return 'ReturnType<typeof '+imported('router_option_'+primitiveOptionInputs[text]+'_none','primitive-option')+'>';
   if(text==='&str')return 'string';if(text==='bool')return 'boolean';
   if(text==='u64')return 'Parameters<typeof '+imported('router_state_json_with_index','json-state')+'>[1]';
   if(text==='usize')return 'Parameters<typeof '+imported('router_core_json_index_usize','json-update')+'>[1]';

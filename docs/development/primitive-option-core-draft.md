@@ -19,7 +19,8 @@ empty Some values, owned text after the source is dropped, and panic/boundaries.
 
 The [translation integration draft](primitive-option-translation-draft.md) now
 adds actual internal callers in both directions, interpreters, emission and bulk
-assets. Public optional operands, callback/mapping and Result families,
+assets and closed primitive public inputs. General optional operands,
+callback/mapping and Result families,
 automatic method adoption and production synchronization remain open.
 All independent runtime,
 declaration, source-history and native oracle cases remain unrun. No coverage,

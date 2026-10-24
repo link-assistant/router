@@ -120,8 +120,11 @@ generated declarations, complete native root/source preparation and independent
 unrun JS and native Rust oracle cases. The [Option integration draft](primitive-option-translation-draft.md)
 adds actual internal callers in both directions, predicate refinement,
 unsigned-literal return joins, both interpreters/emitters, private absence/loan
-checks and bulk assets. Public optional operand qualification, callbacks/mapping,
-Result counterparts, method adoption and production use remain open. Static method
+checks and bulk assets. The [closed Option input draft](primitive-option-input-draft.md)
+adds actual bool/u64/i64/str optional public operands and their canonical inverse,
+with complete native sources, input roots and three source histories. Other
+optional layouts, callbacks/mapping, Result counterparts, method adoption and
+production use remain open. Static method
 spelling frequency supplies drafting priority only and is not coverage evidence.
 
 The last checkpoint before this phase is `0460fb741`: four complete
