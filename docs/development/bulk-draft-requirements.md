@@ -214,3 +214,11 @@ signature proposals for edited JS. Complete successor source histories also
 repair split JS/TS runtime binding and retain semantic metadata in packaging.
 Independent inverse and multi-language synchronization regressions are drafted
 and unrun. General Rust forms, production adoption and the other rows remain.
+
+The [owned local flow draft](owned-state-flow-draft.md) adds source-bound lexical
+owned JSON/vector assignments, branch continuation, surviving-path guard facts
+and nested finite callbacks with independent private type contexts. Both
+interpreters, JS/TS and Rust emission/inversion retain the same domains and
+complete source histories. Independent behavior/refusal and native Rust oracle
+source is unrun. Standard iterator/property mutation adoption, persistent
+state/concurrency and every other open row still need their remaining draft.

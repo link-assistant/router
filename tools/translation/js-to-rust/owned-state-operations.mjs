@@ -239,7 +239,8 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  }
  function body(statements,indent){return statements.map(statement=>{
   const pad=' '.repeat(indent);
-  if(statement.kind==='let')return pad+(rust?'let ':'const ')+(rust?rustName(statement.name):statement.name)+' = '+expr(statement.value)+';';
+  if(statement.kind==='let')return pad+(rust?(statement.mutable?'let mut ':'let '):(statement.mutable?'let ':'const '))+(rust?rustName(statement.name):statement.name)+' = '+expr(statement.value)+';';
+  if(statement.kind==='assign')return pad+(rust?rustName(statement.name):statement.name)+' = '+expr(statement.value)+';';
   if(statement.kind==='return')return pad+'return '+expr(statement.value)+';';
   return pad+'if '+(rust?'':'(')+expr(statement.cond)+(rust?'':')')+' {\n'+body(statement.then,indent+4)+'\n'+pad+'} else {\n'+body(statement.else,indent+4)+'\n'+pad+'}';
  }).join('\n');}
@@ -343,7 +344,17 @@ export function evaluateOwnedCoreProgram(input,name,args,token){
    default:fail('unknown evaluated expression');
   }
  };
- const run=(body,scope)=>{for(const statement of body){if(statement.kind==='let')scope.set(statement.name,get(statement.value,scope));else if(statement.kind==='return')return get(statement.value,scope);else return run(get(statement.cond,scope)?statement.then:statement.else,new Map(scope));}fail('no return');};
+ const execute=(body,scope)=>{
+  for(const statement of body){
+   if(statement.kind==='let'||statement.kind==='assign')scope.set(statement.name,get(statement.value,scope));
+   else if(statement.kind==='return')return {returned:true,value:get(statement.value,scope)};
+   else{
+    const child=new Map(scope),completion=execute(get(statement.cond,scope)?statement.then:statement.else,child);
+    for(const name of scope.keys())scope.set(name,child.get(name));if(completion.returned)return completion;
+   }
+  }return {returned:false};
+ };
+ const run=(body,scope)=>{const completion=execute(body,scope);if(!completion.returned)fail('no return');return completion.value;};
  return run(item.body,env);
 }
 
@@ -375,7 +386,17 @@ function evaluateOwnedCorePrepared(program,name,args,state){
    default:fail('unknown evaluated expression');
   }
  };
- const run=(body,scope)=>{for(const statement of body){if(statement.kind==='let')scope.set(statement.name,get(statement.value,scope));else if(statement.kind==='return')return get(statement.value,scope);else return run(get(statement.cond,scope)?statement.then:statement.else,new Map(scope));}fail('no return');};
+ const execute=(body,scope)=>{
+  for(const statement of body){
+   if(statement.kind==='let'||statement.kind==='assign')scope.set(statement.name,get(statement.value,scope));
+   else if(statement.kind==='return')return {returned:true,value:get(statement.value,scope)};
+   else{
+    const child=new Map(scope),completion=execute(get(statement.cond,scope)?statement.then:statement.else,child);
+    for(const name of scope.keys())scope.set(name,child.get(name));if(completion.returned)return completion;
+   }
+  }return {returned:false};
+ };
+ const run=(body,scope)=>{const completion=execute(body,scope);if(!completion.returned)fail('no return');return completion.value;};
  return run(item.body,env);
 }
 

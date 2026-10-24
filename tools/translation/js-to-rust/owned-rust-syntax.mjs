@@ -52,7 +52,8 @@ export class OwnedRustReader {
   this.tick(depth);this.expect('{');const local=new Map(environment),statements=[];let tail=null;
   while(!this.eat('}')){
    this.tick(depth);
-   if(this.eat('let')){if(this.eat('mut'))fail('mutable canonical owned local needs its flow rule');const name=this.identifier();this.expect('=');const value=this.expression(local,0,depth+1);this.expect(';');if(name.startsWith('__ro_'))local.set(name,value);else statements.push({kind:'let',name,value});continue;}
+   if(this.eat('let')){const mutable=this.eat('mut'),name=this.identifier();if(mutable&&name.startsWith('__ro_'))fail('mutable compiler temporary is outside the emitted form');this.expect('=');const value=this.expression(local,0,depth+1);this.expect(';');if(name.startsWith('__ro_'))local.set(name,value);else statements.push({kind:'let',name,value,...(mutable?{mutable:true}:{})});continue;}
+   if(this.peek().type==='ident'&&this.is('=',1)){const name=this.identifier();this.expect('=');const value=this.expression(local,0,depth+1);this.expect(';');statements.push({kind:'assign',name,value});continue;}
    if(this.eat('return')){const value=this.expression(local,0,depth+1);this.expect(';');statements.push({kind:'return',value});continue;}
    if(this.is('assert!')||this.is('for')||this.is('__ro_domain')||this.is('if')&&this.is('let',1)){this.skipGuard();continue;}
    if(this.eat('if')){const condition=this.expression(local,0,depth+1),yes=this.block(local,depth+1);this.expect('else');const no=this.block(local,depth+1);statements.push({kind:'if',condition,yes,no});continue;}

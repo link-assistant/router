@@ -132,7 +132,8 @@ export function projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot,
   tick(depth);if(body.tail)fail('function/callback tail differs from canonical checked return');
   return '{\n'+body.statements.map(statement=>{
    tick(depth+1);
-   if(statement.kind==='let')return 'const '+(names.get(statement.name)??statement.name)+' = '+expression(statement.value,names,depth+1)+';';
+   if(statement.kind==='let')return (statement.mutable?'let ':'const ')+(names.get(statement.name)??statement.name)+' = '+expression(statement.value,names,depth+1)+';';
+   if(statement.kind==='assign')return (names.get(statement.name)??statement.name)+' = '+expression(statement.value,names,depth+1)+';';
    if(statement.kind==='return')return 'return '+expression(statement.value,names,depth+1)+';';
    if(statement.kind==='if')return 'if ('+expression(statement.condition,names,depth+1)+') '+block(statement.yes,names,depth+1)+' else '+block(statement.no,names,depth+1);
    fail('unknown original Rust statement');

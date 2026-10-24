@@ -455,7 +455,7 @@ function checkFunction(context,path,declaration,analysis){
   params.push({name:sourceName,rust:rustName(sourceName),type});
  }
  // The complete available pair was selected before parameter domains.
- const hostCalls=[],byteInputs=new Set();let collectionReturn=null;
+ const hostCalls=[],byteInputs=new Set();let collectionReturn=null,collectionDeclaration=declaration;
  const branchScope=scope=>new Map([...scope].map(([key,value])=>[key,ownedBase64Result(value.type)?{...value}:value]));
  const mergeMoves=(scope,yes,no)=>{for(const [key,value]of scope)if(ownedBase64Result(value.type))value.moved=!!yes.get(key)?.moved||!!no.get(key)?.moved;};
  const refine=(scope,condition,truth)=>{
@@ -501,29 +501,29 @@ function checkFunction(context,path,declaration,analysis){
 
  function collectionCall(node,binding,scope,depth){
   const operation=ownedCollectionOperation(binding.name);if(!operation||binding.target!==analysis.runtimeRoot+'/'+operation.runtime+'-runtime.mjs')return null;
-  requireOwnedCoreSourceCurrent(context);if(collectionReturn!==null||node.arguments.length!==operation.arity)fail('one finite non-nested iteration callback required');
+  requireOwnedCoreSourceCurrent(context);if(node.arguments.length!==operation.arity)fail('actual finite iteration callback arity required');
   const receiver=expression(node.arguments[0],scope,depth+1),initial=operation.arity===3?expression(node.arguments[1],scope,depth+1):null,callback=node.arguments.at(-1);
   if(!['json-list-ref','json-list-owned'].includes(receiver.type)||initial&&!json(initial.type)||!ts.isArrowFunction(callback)||callback.modifiers?.length||callback.typeParameters?.length||callback.parameters.length!==operation.parameters.length)fail('actual shared JSON list, owned initial value and fixed inline callback required');
-  const local=branchScope(scope);for(const [key,value]of local)if(ownedBase64Result(value.type))local.delete(key);
+  const local=branchScope(scope);for(const [key,value]of local)if(ownedBase64Result(value.type)||value.mutable)local.delete(key);
   const parameterNames=[];
   for(let index=0;index<callback.parameters.length;index++){
    const parameter=callback.parameters[index];if(!ts.isIdentifier(parameter.name)||parameter.initializer||parameter.questionToken||parameter.dotDotDotToken||parameter.modifiers?.length||parameter.type||callback.type)fail('ordinary contextually typed inline JSON parameters required');
-   parameterNames.push(bind(parameter.name,{type:operation.parameters[index],root:operation.parameters[index]==='json-ref'?parameter.name.text:null,input:false},local));
+   local.delete(parameter.name.text);parameterNames.push(bind(parameter.name,{type:operation.parameters[index],root:operation.parameters[index]==='json-ref'?parameter.name.text:null,input:false},local));
   }
-  const callbackPair=pairedCollectionCallback(ts,declaration,callback,paired);
+  const callbackPair=pairedCollectionCallback(ts,collectionDeclaration,callback,paired);
   for(let index=0;index<callback.parameters.length;index++){
    const written=callbackPair?.declaration.parameters[index].type??ts.getJSDocType(callback.parameters[index]);
    if(written&&originalOwnedCoreType(context,callbackPair?callbackPair.pair.typescript.path:path,written,callbackPair?.analysis??analysis)!=='json-ref')fail('written callback parameter differs from actual Json domain');
   }
-  const saved={resultType,resultRoot,resultOnlyAbsent,stringResultLoan,paired,scalarCount:scalarReturnValues.length};let checked;
-  paired=callbackPair;collectionReturn=operation.returns;resultType=null;resultRoot=null;resultOnlyAbsent=true;stringResultLoan=null;
+  const saved={resultType,resultRoot,resultOnlyAbsent,stringResultLoan,paired,collectionReturn,collectionDeclaration,scalarCount:scalarReturnValues.length};let checked;
+  paired=callbackPair;collectionReturn=operation.returns;collectionDeclaration=callback;resultType=null;resultRoot=null;resultOnlyAbsent=true;stringResultLoan=null;
   try{
    if(ts.isBlock(callback.body))checked=block(callback.body.statements,local,depth+1);
    else{const value=expression(callback.body,local,depth+1);resultType=value.type;checked={body:[{kind:'return',value}],terminated:true};}
    if(!checked.terminated||resultType!==operation.returns)fail('every callback path must match its actual owned iteration result contract');
    const annotation=callbackPair?.declaration.type??ts.getJSDocReturnType(callback);
    if(annotation){const written=originalOwnedCoreType(context,callbackPair?callbackPair.pair.typescript.path:path,annotation,callbackPair?.analysis??analysis);if(written==='json-ref'?resultType!=='json':written!==resultType)fail('written callback return differs');}
-  }finally{collectionReturn=null;resultType=saved.resultType;resultRoot=saved.resultRoot;resultOnlyAbsent=saved.resultOnlyAbsent;stringResultLoan=saved.stringResultLoan;paired=saved.paired;scalarReturnValues.length=saved.scalarCount;}
+  }finally{collectionReturn=saved.collectionReturn;collectionDeclaration=saved.collectionDeclaration;resultType=saved.resultType;resultRoot=saved.resultRoot;resultOnlyAbsent=saved.resultOnlyAbsent;stringResultLoan=saved.stringResultLoan;paired=saved.paired;scalarReturnValues.length=saved.scalarCount;}
   hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end],callbackSpan:[callback.getStart(file),callback.end]});requireOwnedCoreSourceCurrent(context);
   return {kind:'json-collection-call',name:binding.name,receiver,...(initial?{initial}:{}),callback:{parameters:parameterNames,returns:operation.returns,body:checked.body,span:[callback.getStart(file),callback.end]},type:operation.result,root:null};
  }
@@ -671,9 +671,9 @@ function checkFunction(context,path,declaration,analysis){
   for(const statement of statements){
    tick(depth);if(terminated)fail('statement after terminating return');
    if(ts.isVariableStatement(statement)){
-    if(statement.modifiers?.length||(statement.declarationList.flags&ts.NodeFlags.BlockScoped)!==ts.NodeFlags.Const)fail('only fresh immutable local declarations');
+    const declarationKind=statement.declarationList.flags&ts.NodeFlags.BlockScoped,mutable=declarationKind===ts.NodeFlags.Let;if(statement.modifiers?.length||!mutable&&declarationKind!==ts.NodeFlags.Const)fail('only fresh lexical const or owned let declarations');
     for(const declaration of statement.declarationList.declarations){
-     if(!declaration.initializer||declaration.exclamationToken||declaration.type)fail('unsupported local declaration');const value=expression(declaration.initializer,scope,depth+1);
+     if(!declaration.initializer||declaration.exclamationToken||declaration.type)fail('unsupported local declaration');const value=expression(declaration.initializer,scope,depth+1);if(mutable&&(!['json','json-list-owned'].includes(value.type)||value.root!==null))fail('mutable local requires a fresh owned JSON or Vec value');
      if(paired){
       const evidence=paired.evidence.locals.filter(item=>item.javascriptSpan[0]===declaration.getStart(file)&&item.javascriptSpan[1]===declaration.end);if(evidence.length!==1)fail('actual paired local span differs');
       const span=evidence[0].typeSpan;
@@ -685,8 +685,13 @@ function checkFunction(context,path,declaration,analysis){
       }
      }
      const asciiLoan=value.type==='str'?asciiStringLoan(value,scope):undefined;
-     const name=bind(declaration.name,{type:value.type,root:value.root,...(asciiLoan?.root===null?{asciiStaticLoan:true}:{})},scope);body.push({kind:'let',name,value});
+     const name=bind(declaration.name,{type:value.type,root:value.root,...(mutable?{mutable:true}:{}),...(asciiLoan?.root===null?{asciiStaticLoan:true}:{})},scope);body.push({kind:'let',name,value,...(mutable?{mutable:true}:{})});
     }
+   }else if(ts.isExpressionStatement(statement)&&ts.isBinaryExpression(statement.expression)&&statement.expression.operatorToken.kind===ts.SyntaxKind.EqualsToken&&ts.isIdentifier(statement.expression.left)){
+    const assignment=statement.expression,entry=scope.get(assignment.left.text);
+    if(!entry?.mutable||!['json','json-list-owned'].includes(entry.type)||checker.getSymbolAtLocation(assignment.left)!==entry.symbol)fail('assignment requires the actual mutable owned JSON or Vec binding');
+    const value=expression(assignment.right,scope,depth+1);if(value.type!==entry.type||value.root!==null)fail('assigned owned domain or loan differs');
+    body.push({kind:'assign',name:assignment.left.text,value});
    }else if(ts.isReturnStatement(statement)&&statement.expression){
     const value=expression(statement.expression,scope,depth+1);
     if(!['json','json-ref','bool','str','usize','text-owned','base64-result','u64','i64','json-list-owned'].includes(value.type)&&!ownedJsonOptionalPayload(value.type))fail('unsupported owned result');
@@ -696,10 +701,10 @@ function checkFunction(context,path,declaration,analysis){
     const loan=value.type==='str'?(stringResultLoan===null?stringLoan(value):meetStringLoans(stringResultLoan,stringLoan(value))):undefined,effectiveRoot=loan?loan.root:value.root;
     if(value.type==='str'&&!loan)fail('returned str requires an actual literal or live input origin');
     if(resultType!==null&&(resultType!==value.type||resultRoot!==effectiveRoot&&!(value.type==='str'&&loan)&&!(ownedJsonOptionalPayload(value.type)&&(value.kind==='option-none'||resultOnlyAbsent))))fail('return domains differ');resultType=value.type;if(value.kind!=='option-none'){resultRoot=effectiveRoot;resultOnlyAbsent=false;}if(value.type==='str')stringResultLoan=loan;scalarReturnValues.push(value);body.push({kind:'return',value});terminated=true;
-   }else if(ts.isIfStatement(statement)&&ts.isBlock(statement.thenStatement)&&statement.elseStatement&&ts.isBlock(statement.elseStatement)){
+   }else if(ts.isIfStatement(statement)&&ts.isBlock(statement.thenStatement)&&(!statement.elseStatement||ts.isBlock(statement.elseStatement))){
     const cond=expression(statement.expression,scope,depth+1);if(cond.type!=='bool')fail('nonboolean condition');
-    const a=refine(branchScope(scope),cond,true),b=refine(branchScope(scope),cond,false),yes=block(statement.thenStatement.statements,a,depth+1),no=block(statement.elseStatement.statements,b,depth+1);
-    if(!yes.terminated||!no.terminated)fail('partial branch flow');mergeMoves(scope,a,b);body.push({kind:'if',cond,then:yes.body,else:no.body});terminated=true;
+    const a=refine(branchScope(scope),cond,true),b=refine(branchScope(scope),cond,false),yes=block(statement.thenStatement.statements,a,depth+1),no=block(statement.elseStatement?.statements??[],b,depth+1);
+    if(yes.terminated!==no.terminated){const continuing=yes.terminated?b:a;for(const name of scope.keys())scope.set(name,continuing.get(name));}else mergeMoves(scope,a,b);body.push({kind:'if',cond,then:yes.body,else:no.body});terminated=yes.terminated&&no.terminated;
    }else fail('statement/effects outside owned profile');
   }
   return {body,terminated};
