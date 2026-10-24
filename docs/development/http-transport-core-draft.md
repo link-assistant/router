@@ -25,6 +25,12 @@ remain responses and never forward credentials to their Location destination.
 
 Requests use the checked pure HTTP request shape. The transport supplies framing;
 CONNECT, upgrade and explicitly listed connection/framing headers refuse.
+The JS raw header array explicitly includes the normalized URL authority as Host,
+including a nondefault port and bracketed IPv6 authority. Reading the official
+[Node 20 client source](https://github.com/nodejs/node/blob/v20.19.0/lib/_http_client.js#L266)
+identified that raw arrays bypass Node's automatic Host insertion. Complete
+runtime/source-provider originals and ordered correction rules are retained;
+the independent host-header case remains unrun.
 The request body is bounded by the existing encoded HTTP body contract. Each
 read returns at most 64 KiB, with at most one MiB of pending bytes. Chunk boundaries
 depend on network delivery; concatenated bytes retain their order. Clients share
