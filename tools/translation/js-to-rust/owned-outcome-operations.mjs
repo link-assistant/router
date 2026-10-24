@@ -15,6 +15,7 @@ import {emitOwnedOutcomeCall,evaluateOwnedOutcomeCall} from './owned-outcome-emi
 import {emitOwnedIntegerCall,evaluateOwnedIntegerCall} from './owned-integer-emission.mjs';
 import {emitOwnedSseCall,evaluateOwnedSseCall} from './owned-sse-emission.mjs';
 import {ownedSseOperation} from './owned-sse-contracts.mjs';
+import {requireOwnedLocalCallClosure,emitOwnedLocalCall} from './owned-local-function-calls.mjs';
 import {ownedIntegerOperation} from './owned-integer-contracts.mjs';
 import {ownedJsonFieldOperation,emitOwnedJsonFieldCall,evaluateOwnedJsonFieldCall} from './owned-json-fields.mjs';
 import {emitOwnedStateCall,evaluateOwnedStateCall} from './owned-state-emission.mjs';
@@ -162,7 +163,8 @@ export function withOwnedCoreItemChecks(run){
  }
 }
 export function checkOwnedCoreProgram(program,context){
- if(!Array.isArray(program)||program.length>4096)fail('invalid program');const names=new Set();return withOwnedRuntimeImportEdges(()=>withOwnedCoreItemChecks(check=>program.map(item=>{const result=check(item,context);if(names.has(result.name))fail('duplicate function');names.add(result.name);return result;})));
+ if(!Array.isArray(program)||program.length>4096)fail('invalid program');const names=new Set(),checked=withOwnedRuntimeImportEdges(()=>withOwnedCoreItemChecks(check=>program.map(item=>{const result=check(item,context);if(names.has(result.name))fail('duplicate function');names.add(result.name);return result;})));
+ requireOwnedLocalCallClosure(checked);if(checked.some(item=>item.localCalls?.length)){const first=issued.get(checked[0])?.context;if(!first||checked.some(item=>issued.get(item)?.context!==first))fail('local calls require one complete genuine source context');}return checked;
 }
 export function ownedCoreContext(item){return issued.get(checkOwnedCoreItem(item))?.context;}
 const rustString=value=>'"'+value.replace(/[\\"\x00-\x1f\x7f]/gu,c=>({'\\':'\\\\','"':'\\"','\n':'\\n','\r':'\\r','\t':'\\t'}[c]??'\\u{'+c.codePointAt(0).toString(16)+'}'))+'"';
@@ -186,6 +188,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
 
  function expr(value,borrowOwned=false){
   switch(value.kind){
+   case 'local-call':return emitOwnedLocalCall(value,{rust,expr,rustName});
    case 'sse-call':return emitOwnedSseCall(value,{rust,expr,imports});
    case 'integer-call':return emitOwnedIntegerCall(value,{rust,expr,imports});
    case 'outcome-call':return emitOwnedOutcomeCall(value,{rust,expr,imports,sequence:()=>sequence++});
@@ -356,6 +359,7 @@ export function evaluateOwnedCoreProgram(input,name,args,token){
  const env=new Map(item.params.map((param,index)=>[param.name,args[index]]));
  const get=(value,scope)=>{
   switch(value.kind){
+   case 'local-call':return evaluateOwnedCorePrepared(program,value.name,value.args.map(argument=>get(argument,scope)),state);
    case 'sse-call':return evaluateOwnedSseCall(value,{state,scope,get});
    case 'integer-call':return evaluateOwnedIntegerCall(value,{state,scope,get});
    case 'outcome-call':return evaluateOwnedOutcomeCall(value,{state,scope,get});
@@ -412,6 +416,7 @@ function evaluateOwnedCorePrepared(program,name,args,state){
  const env=new Map(item.params.map((param,index)=>[param.name,args[index]]));
  const get=(value,scope)=>{
   switch(value.kind){
+   case 'local-call':return evaluateOwnedCorePrepared(program,value.name,value.args.map(argument=>get(argument,scope)),state);
    case 'sse-call':return evaluateOwnedSseCall(value,{state,scope,get});
    case 'integer-call':return evaluateOwnedIntegerCall(value,{state,scope,get});
    case 'outcome-call':return evaluateOwnedOutcomeCall(value,{state,scope,get});

@@ -356,6 +356,14 @@ JS/TS/interpreter, forward caller, unit, refusal and native oracle sources are
 drafted and unrun. HTTP, cancellation/backpressure, protocol business state,
 production adoption and all other remaining requirement rows are still open.
 
+The [complete-module ordinary call draft](owned-local-calls-draft.md) adds
+native-symbol-bound acyclic helper calls, callback calls, loan propagation and
+complete checked callee closure to both interpreters, meta and canonical inverse.
+Five complete source successors plus independent JS/TS/native, missing/forged
+callee, recursion and ownership regression sources are drafted and unrun.
+Cross-module calls, declared recursion, async/generic application logic and every
+other remaining requirement row are still open.
+
 The [primitive method adoption draft](integer-method-adoption-draft.md) copies
 three complete adopter/packet/installer implementations for actual i64/u64
 method receivers and closed operands. Native parameter/producer scope, complete

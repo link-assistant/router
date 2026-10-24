@@ -27,6 +27,7 @@ import {ownedStateOperation,ownedStateCompatible,ownedStateWrittenType,requireOw
 import {ownedOutcomeOperation,ownedOutcomeType,ownedOutcomeCompatible,requireOwnedOutcomeSources} from './owned-outcome-contracts.mjs';
 import {ownedIntegerOperation,requireOwnedIntegerSources} from './owned-integer-contracts.mjs';
 import {ownedSseOperation,requireOwnedSseSources} from './owned-sse-contracts.mjs';
+import {checkOwnedLocalFunctions} from './owned-local-function-calls.mjs';
 import {ownedJsonFieldOperation,requireOwnedJsonFieldSources} from './owned-json-fields.mjs';
 import {pairedCollectionCallback} from './owned-collections-paired.mjs';
 import {ownedJsonOptionalReaderOperation} from './owned-json-source.mjs';
@@ -299,7 +300,7 @@ function pairedFunction(handle,path,declaration,analysis){
  return {declaration:nodes[0],analysis:typed,evidence,pair};
 }
 function originalImportTarget(from,specifier,analysis,state){
- const target=relative(from,specifier),families=['json-update-runtime.mjs','json-macro-runtime.mjs','base64-runtime.mjs','json-runtime.mjs','json-option-runtime.mjs','string-iterator-runtime.mjs','json-collections-runtime.mjs','json-iteration-runtime.mjs','json-state-runtime.mjs','json-fields-runtime.mjs','owned-outcome-runtime.mjs'];
+ const target=relative(from,specifier),families=['json-update-runtime.mjs','json-macro-runtime.mjs','base64-runtime.mjs','json-runtime.mjs','json-option-runtime.mjs','string-iterator-runtime.mjs','json-collections-runtime.mjs','json-iteration-runtime.mjs','json-state-runtime.mjs','json-fields-runtime.mjs','owned-outcome-runtime.mjs','integer-runtime.mjs','sse-runtime.mjs'];
  if(posix.dirname(target)===state.data.declarationRoot&&families.includes(posix.basename(target))){
   const runtime=state.data.runtimeRoot+'/'+posix.basename(target),paired=traversals.get(analysis)?.paired,direct=analysis.file.scriptKind===analysis.ts.ScriptKind.TS;
   if(paired||direct){
@@ -439,10 +440,8 @@ export function analyzeOriginalOwnedCoreSource(context,path){
   if(ts.isEmptyStatement(item))continue;
   fail('top-level evaluation or unsupported declaration');
  }
- for(const declaration of functions){
-  const span=[declaration.getStart(file),declaration.end],name=declaration.name?.text??null;
-  try{const item=checkFunction(context,path,declaration,analysis);program.push(item);items.push({name,span,status:'translated'});}
-  catch(error){if(!(error instanceof TypeError))throw error;const diagnostic={kind:'owned-core',name,span,message:error.message};diagnostics.push(diagnostic);items.push({name,span,status:'unsupported',diagnostic});}
+ for(const {declaration,item,error,span}of checkOwnedLocalFunctions(analysis,functions,declaration=>checkFunction(context,path,declaration,analysis))){
+  const name=declaration.name?.text??null;if(item){program.push(item);items.push({name,span,status:'translated'});}else{const diagnostic={kind:'owned-core',name,span,message:error?.message??'called original function remains unsupported'};diagnostics.push(diagnostic);items.push({name,span,status:'unsupported',diagnostic});}
  }
  requireOwnedCoreSourceCurrent(context);return {program,diagnostics,items,source,path};
 }
@@ -473,7 +472,7 @@ function checkFunction(context,path,declaration,analysis){
   params.push({name:sourceName,rust:rustName(sourceName),type});
  }
  // The complete available pair was selected before parameter domains.
- const hostCalls=[],byteInputs=new Set();let collectionReturn=null,collectionDeclaration=declaration;
+ const hostCalls=[],localCalls=[],byteInputs=new Set(),localValidatedInputs=new Set();let collectionReturn=null,collectionDeclaration=declaration;
  const branchScope=scope=>new Map([...scope].map(([key,value])=>[key,ownedBase64Result(value.type)?{...value}:value]));
  const mergeMoves=(scope,yes,no)=>{for(const [key,value]of scope){if(ownedBase64Result(value.type))value.moved=!!yes.get(key)?.moved||!!no.get(key)?.moved;if(value.mutable&&(yes.get(key)?.variant!==value.variant||no.get(key)?.variant!==value.variant||yes.get(key)?.some!==value.some||no.get(key)?.some!==value.some))scope.set(key,{...value,variant:undefined,some:undefined});}};
  const refine=(scope,condition,truth)=>{
@@ -510,7 +509,7 @@ function checkFunction(context,path,declaration,analysis){
   function stringLoan(value){
    if(value.type!=='str')return undefined;
    if(value.root!==null)return params.some(param=>param.name===value.root&&(['json-ref','map-ref','str','json-option-input'].includes(param.type)||ownedJsonBorrowed(param.type)))?{root:value.root}:undefined;
-   if(value.kind==='string')return {root:null};
+   if(value.kind==='string'||value.kind==='local-call'&&value.staticString===true)return {root:null};
    if(value.kind==='choose')return meetStringLoans(stringLoan(value.then),stringLoan(value.else));
    return undefined;
   }
@@ -591,6 +590,16 @@ function checkFunction(context,path,declaration,analysis){
   }
   if(ts.isCallExpression(node)){
    if(node.questionDotToken||node.typeArguments?.length||node.arguments.some(ts.isSpreadElement))fail('optional/generic/spread call');
+   const localSymbol=ts.isIdentifier(node.expression)?checker.getSymbolAtLocation(node.expression):null,callee=analysis.localFunctions?.get(localSymbol);
+   if(callee){
+    if(node.arguments.length!==callee.params.length)fail('actual local function argument count differs');const args=node.arguments.map((argument,index)=>expression(argument,scope,depth+1,callee.params[index].type==='json-option-input',callee.params[index].type));
+    const accepts=(actual,wanted)=>wanted==='json-ref'?json(actual):wanted==='json-list-ref'?['json-list-ref','json-list-owned'].includes(actual):wanted==='str'?['str','text-owned'].includes(actual):wanted==='u64'||wanted==='usize'?['u64','usize'].includes(actual):actual===wanted;
+    if(args.some((argument,index)=>!accepts(argument.type,callee.params[index].type)))fail('actual local function operand domain differs');let root=null,staticString=false;
+    if(callee.resultRoot!==null){const index=callee.params.findIndex(parameter=>parameter.name===callee.resultRoot),argument=args[index];if(!argument)fail('original local return loan has no actual parameter');if(callee.returns==='str'){const loan=stringLoan(argument);if(!loan)fail('local returned string needs a live original input or literal');root=loan.root;staticString=root===null;}else{if(!argument.root)fail('local borrowed return requires an actual live original root');root=argument.root;}}
+    else if(callee.returns==='str')staticString=true;
+    for(let index=0;index<callee.params.length;index++){const parameter=callee.params[index],argument=args[index];if(parameter.type==='bytes-ref'&&argument.root)byteInputs.add(argument.root);if(parameter.type==='json-option-input'&&argument.root)localValidatedInputs.add(argument.root);}
+    const call={kind:'local-call',name:callee.name,javascript:callee.javascript,sourcePath:callee.source.path,calleeSpan:callee.source.span,parameters:callee.params.map(parameter=>parameter.type),args,type:callee.returns,root,...(staticString?{staticString:true}:{})};localCalls.push({name:callee.name,sourcePath:callee.source.path,calleeSpan:callee.source.span,span:[node.getStart(file),node.end]});return call;
+   }
    const binding=originalOwnedCoreImport(context,path,node.expression,analysis),op=OPS[binding.name];
    const outcome=ownedOutcomeOperation(binding.name);if(outcome&&binding.target===analysis.runtimeRoot+'/owned-outcome-runtime.mjs'){
     requireOwnedCoreSourceCurrent(context);const args=node.arguments.map(argument=>expression(argument,scope,depth+1));if(args.length!==outcome.args.length||args.some((value,index)=>!ownedOutcomeCompatible(value.type,outcome.args[index])))fail('actual owned carrier operand domains differ');
@@ -798,9 +807,9 @@ function checkFunction(context,path,declaration,analysis){
   if(written==='json-ref'?!json(resultType):!compatible(resultType,written)&&!ownedBase64Compatible(resultType,written))fail('paired written return ABI differs');
  }
  if(params.some(param=>param.type==='bytes-ref'&&!byteInputs.has(param.name)))fail('octet input requires an actual fixed base64 operand');
- if(params.some(param=>param.type==='json-option-input'&&!hostCalls.some(call=>ownedJsonOptionalReaderOperation(call.name)&&call.inputRoot===param.name)))fail('opaque optional Json input requires validation');
- if(!hostCalls.length)fail('no actual owned-core call');
- const item={kind:'owned-function',name,javascript:declaration.name.text,exported:!!declaration.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword),params,returns:resultType,resultRoot,body:checked.body,source:{path,source,span:[declaration.getStart(file),declaration.end]},hostCalls};
+ if(params.some(param=>param.type==='json-option-input'&&!localValidatedInputs.has(param.name)&&!hostCalls.some(call=>ownedJsonOptionalReaderOperation(call.name)&&call.inputRoot===param.name)))fail('opaque optional Json input requires validation');
+ if(!hostCalls.length&&!localCalls.length)fail('no actual owned-core or freshly checked local call');
+ const item={kind:'owned-function',name,javascript:declaration.name.text,exported:!!declaration.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword),params,returns:resultType,resultRoot,body:checked.body,source:{path,source,span:[declaration.getStart(file),declaration.end]},hostCalls,...(localCalls.length?{localCalls}: {})};
  if(paired)item.pairedSource={path:paired.pair.typescript.path,source:paired.pair.typescript.source,span:paired.evidence.typescriptSpan,parameters:paired.evidence.parameters,locals:paired.evidence.locals,returnSpan:paired.evidence.returnSpan,erasure:paired.pair.erasure.edits};
  requireOwnedCoreSourceCurrent(context);return item;
 }

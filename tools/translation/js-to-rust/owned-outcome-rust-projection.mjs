@@ -52,7 +52,7 @@ export function ownedRustNameProposals(source,path){
 }
 /** Catalog rows and AST observations cannot grant native binding authority. */
 export function projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot,nameProposals=[]}={}){
- const imports=new Map();let cells=0;
+ const imports=new Map(),localNames=new Map(functions.map(fn=>[fn.name,nameProposals.find(proposal=>proposal.rust===fn.name)?.javascript??fn.name]));let cells=0;
  const tick=depth=>{if(++cells>100000||depth>160)fail('original owned projection node/depth budget exceeded');};
  const relative=name=>{const value=posix.relative(posix.dirname(javascriptPath),runtimeRoot+'/'+name+'-runtime.mjs');return value.startsWith('.')?value:'./'+value;};
  function imported(name,family){const key=family+':'+name;if(!imports.has(key))imports.set(key,{name,family,local:'original_'+name});return imports.get(key).local;}
@@ -123,6 +123,7 @@ export function projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot,
     fail('Rust match requires a canonical guarded carrier rule');break;
    }
    case 'call':{
+    if(localNames.has(node.path))return localNames.get(node.path)+'('+args(node.args)+')';
     const row=families.find(row=>row.path===node.path);
     if(row){if(node.args.length!==row.roles.length)fail('catalog operand count differs');return call(row.name,row.runtime,node.args,row.roles);}
     if(['Ok','Err'].includes(node.path)&&node.args.length===1)return "({$:"+JSON.stringify(node.path)+',field0:'+next(adapter(node.args[0],node.path==='Ok'?'owned-json':null))+'})';
