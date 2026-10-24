@@ -39,6 +39,13 @@ permission. Preserve full CST inverses, current native/Cargo/runtime captures,
 atomic installation and rollback. Its additive CLI and regressions remain
 unrun during the current bulk drafting phase.
 
+For [public scalar project interfaces](docs/development/owned-scalar-unit-draft.md),
+carry type definitions from actual source and reemit bodies only from genuine
+current checked programs. Previous Rust bodies never supply new body authority.
+Native export censuses are work-selection hints, and annotations/naming maps
+remain proposals. Recheck complete receiving module trees and entire Rust roots;
+retain runtime-compatible TS import suffixes and independent JS signatures.
+
 Use the [fixed parallel command partitions](docs/development/parallel-javascript-gate.md)
 to run complete forward tests, canonical checks and owned-definition checks
 independently. Keep all eight same-SHA stages, every full command and original

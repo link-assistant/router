@@ -3,7 +3,8 @@
 import {posix} from 'node:path';
 import {ownershipCompiler} from './vendor/module-syntax.mjs';
 import {createOwnedStateContext,translateOwnedStateTypeScript} from './owned-outcome.mjs';
-import {translateOwnedModuleProject} from './owned-module-aliased-project.mjs';
+import {translateOwnedModuleProject} from './owned-module-scalar-project.mjs';
+import {ownedProjectMayExportTypes} from './owned-project-type-exports.mjs';
 import {ownedModuleOriginalDeclarations} from './owned-module-distribution.mjs';
 import {ownedCoreSourceData,requireOwnedCoreSourceCurrent} from './owned-outcome-source.mjs';
 import {transportConcreteSourceEquations} from '../concrete-source-equations.mjs';
@@ -71,7 +72,8 @@ export function projectOwnedModuleJavaScript(project,{context,pairedPaths}={}){
    // The same private batch travels only through contexts created here.
    signatureProjectBatches.set(derived,batch);const result=projectOwnedStateUnitJavaScript(row.source,{context:derived,sourcePath:row.path,pairedTypeScriptPath:pairedPaths.get(row.path)});if(result.context!==derived){signatureProjectBatches.delete(derived);derived=result.context;signatureProjectBatches.set(derived,batch);}modules.push({path:row.path,source:result.source});if(result.history)histories.push({path:row.path,...result.history});
   }
+  const typedEntry=pairedPaths.get(project.entry);if(typeof originals.get(typedEntry)==='string'){const candidate={entry:typedEntry,language:'TypeScript',modules:project.modules.map(row=>({path:pairedPaths.get(row.path),source:originals.get(pairedPaths.get(row.path))}))};if(ownedProjectMayExportTypes(candidate,{context:receiving}))checkedFor(project.entry);}
   requireOwnedCoreSourceCurrent(context);requireOwnedCoreSourceCurrent(receiving);requireOwnedCoreSourceCurrent(derived);if(qualified)requireOwnedCoreSourceCurrent(qualified.typedContext);
-  return {project:{entry:project.entry,language:'JavaScript',modules},context:derived,history:{schema:'router-owned-project-signature-proposals-v1',modules:histories,pairedModuleHistory:qualified?.result.moduleSourceHistory??null,pairedSemanticMeta:qualified?.result.meta??null,pairedAliasHistory:qualified?.result.ownedTypeAliasSourceHistory??null,sourceAuthority:false,semanticAuthority:false,runtimeAuthority:false}};
+  return {project:{entry:project.entry,language:'JavaScript',modules},context:derived,pairedRootRustSource:qualified?.result.rust??null,history:{schema:'router-owned-project-signature-proposals-v1',modules:histories,pairedModuleHistory:qualified?.result.moduleSourceHistory??null,pairedSemanticMeta:qualified?.result.meta??null,pairedAliasHistory:qualified?.result.ownedTypeAliasSourceHistory??null,sourceAuthority:false,semanticAuthority:false,runtimeAuthority:false}};
  }finally{signatureProjectBatches.delete(receiving);signatureProjectBatches.delete(derived);}
 }

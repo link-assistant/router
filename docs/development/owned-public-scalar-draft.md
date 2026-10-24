@@ -25,7 +25,8 @@ or extra root declarations, keywords and unsupported type shapes refuse.
 
 Six complete original source copies and independent public API, changed-type,
 whole-root inverse, strict TS consumer, source/refusal and history regressions
-are drafted and unrun. This first public type family is additive and is not yet
-connected to all project transactions or JS-authority type preservation. Owned,
-generic and compound public types, full reverse distribution, receiving
+are drafted and unrun. The later [project integration draft](owned-scalar-unit-draft.md)
+connects closed scalars to JS-authority preservation, Rust type edits and
+receiving module trees. Owned, generic and compound public types, full reverse
+type identity preservation, receiving
 qualification and all other unfinished issue requirements remain open.

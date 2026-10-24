@@ -89,6 +89,16 @@ public-interface, type-edit, strict-consumer/refusal and source-history cases
 are drafted and unrun. Project/JS-authority preservation, owned/generic/compound
 public types, reverse distribution and the remaining requirements remain open.
 
+The [project scalar synchronization draft](owned-scalar-unit-draft.md) now
+connects closed public scalars to JS-authority preservation and authoritative
+Rust type edits. It reemits current genuine bodies, refuses body/plan forgeries,
+uses native type-export census only as a work hint, restores receiving JS
+signature annotations and emits runtime-compatible TS import suffixes. Five
+complete original source successors, independent multi-language/source/type
+regressions and native Rust boundary oracle source remain unrun. Full type
+identity, owned/generic/compound public types, broader runtime code/effects,
+production parity and every other unfinished obligation remain open.
+
 The last checkpoint before this phase is `0460fb741`: four complete
 source-history receiving files passed 26 cases in Node and Bun. That historical
 focused evidence does not qualify any change drafted in this phase or the full
