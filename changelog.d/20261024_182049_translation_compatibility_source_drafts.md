@@ -51,3 +51,5 @@ integration and the remaining requirement ledger are still open.
 - Draft explicit genuine enclosing producer/tool-prelude composition with complete original source histories, retained legacy/refusal domains and independent unrun JS/TS/native oracle source.
 
 - Draft checked scalar call and conditional-argument inverse composition with actual module/source associations, complete callee source data and independent unrun target/native oracle cases.
+
+- Draft whole scalar local-initializer/final-return inverse batches, actual lexical scope and native let intervals, exported project mode and independent unrun JS/TS/native oracle source.

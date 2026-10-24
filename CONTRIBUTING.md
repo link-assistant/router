@@ -797,3 +797,13 @@ borrowing, effects and types. Reproduce the complete requested target, including
 conditional statement shape and all arithmetic guards. Keep callee observations
 invocation scoped and release original checked declaration closures before the
 modified compilation.
+
+Scalar local-body inverse rules must preserve declaration names, order, counts,
+type annotations and all target bytes outside selected actual initializer and
+return spans. Rejoin the complete original checked scalar let chain with native
+assignment/terminator intervals; preserve typed prefixes and surrounding trivia.
+Only parameters and earlier locals are available inside an initializer. Retain
+self/future-name and incomplete-prefix refusals, complete native/paired source
+inverses, original resource bounds and fresh whole-project target reproduction.
+Keep the old final-return API separate. See the
+[scalar body draft](docs/development/scalar-body-inverse-draft.md).

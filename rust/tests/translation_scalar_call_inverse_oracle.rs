@@ -23,7 +23,10 @@ fn complete_boolean_call_truth_tables_and_unicode_borrows() {
         for second in [false, true] {
             assert_eq!(caller(first, second), !first && second);
             for flag in [false, true] {
-                assert_eq!(choose(flag, first, second), (if flag { first } else { second }) && !second);
+                assert_eq!(
+                    choose(flag, first, second),
+                    (if flag { first } else { second }) && !second
+                );
             }
         }
     }

@@ -12,3 +12,4 @@ export {proposeForwardExpressionSynchronization} from './forward-literal-synchro
 export {proposeForwardReturnExpressionSynchronization} from './forward-return-expression-synchronization.mjs';
 export {planForwardReturnExpressionUnitSynchronization,applyForwardReturnExpressionUnitSynchronization} from './forward-return-expression-unit-synchronization.mjs';
 export {planForwardProjectUnitSynchronization,applyForwardProjectUnitSynchronization} from './forward-project-unit-synchronization.mjs';
+export {proposeForwardScalarBodySynchronization} from './forward-scalar-body-synchronization.mjs';

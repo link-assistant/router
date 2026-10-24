@@ -768,3 +768,13 @@ own semantic admission. Full originals and independent strict target/truth-table
 borrow/refusal/history plus native oracle source are drafted and unrun. Whole
 statement inverses, generic/recursive/owned/async calls, production qualification
 and all other unfinished requirements remain open.
+
+The [scalar local-body inverse draft](scalar-body-inverse-draft.md) now adds a
+separate complete original inverse copy for bulk local initializers and final
+returns. It retains actual source-bound immutable native let intervals, typed
+prefixes/comments, complete lexical scope order, invocation-local walks and
+whole modified-project/target reproduction. Project selection, facade/export,
+full source histories and independent strict target/scope/refusal/transaction
+plus native oracle source are drafted and unrun. Branch/loop statement bodies,
+owned/generic/recursive/async syntax, full production synchronization and every
+other incomplete requirement remain open.

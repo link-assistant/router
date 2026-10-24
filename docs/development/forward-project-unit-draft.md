@@ -22,7 +22,7 @@ The explicit manifest has exactly these fields:
 ```
 
 Language authority can be `auto`, `Rust`, `JavaScript` or `TypeScript`. Inverse
-selection is `return-expressions` or `literals`. Distinct canonical paths and
+selection is `return-expressions`, `literals` or `scalar-bodies`. Distinct canonical paths and
 physical `js/src` and `ts/src` locations are required. No unchecked, runtime-only
 or force-overwrite mode exists.
 
@@ -77,3 +77,9 @@ repeated imports, type queries and runtime closure/refusals. All are unrun. No
 compiler, source planner, helper, preparer, CLI, test, experiment, Rust tool or CI
 has executed. Broader inverse constructs, whole production coverage, opaque
 async/resource ownership and every other open requirement still need drafting.
+
+The current full forward project path uses the existing flat semantic DATA
+storage API to avoid requiring the expanded metadata representation for an
+entire Router source set. Private checking and all original executable/refusal
+results remain required. This source integration has not executed or been
+benchmarked and does not broaden semantic admission.
