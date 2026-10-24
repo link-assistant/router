@@ -43,3 +43,5 @@ integration and the remaining requirement ledger are still open.
 - Draft corresponding readonly scalar-slice JS/TS source checking, both interpreters, native/typed emission, paired signatures and full Rust inverse source with independent unrun integration cases.
 
 - Draft complete scalar return-formula inverse proposals, preserved local prefixes, optional compiler signature data and fresh exported transactions/CLI; all independent regression and native oracle source remains unrun.
+
+- Draft checked return arithmetic inverse rules by observing complete pinned emitter helpers, retaining exact bounds/rounding/error metadata and full unrun JS/TS/native oracle source.

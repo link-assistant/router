@@ -729,3 +729,12 @@ API export copies, source inverses and independent strict/source/refusal/truth-
 table/receiving plus native oracle cases are drafted and unrun. General calls/
 arithmetic/statements/types, production qualification and all other open rows
 remain unfinished.
+
+The whole-expression inverse now also reuses complete actual pinned range and
+truncating division helpers for checked arithmetic candidates. Full upstream
+source bytes/CST, helper implementation comparisons and unchanged-source checks
+remain DATA; fresh whole-project target reproduction retains every bound,
+rounding/zero behavior and error string. Independent strict target/arithmetic/
+metadata/refusal/source plus native oracle cases are drafted and unrun. Broader
+helper closure/calls/scopes/types, production parity and other open rows remain
+unfinished.

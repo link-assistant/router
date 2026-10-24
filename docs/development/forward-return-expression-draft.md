@@ -51,6 +51,29 @@ extremes, scalar local prefixes, Unicode, inline modules, unbound/call/assignmen
 outside-source/format-only refusals, optional signature observations and fresh
 transaction/forgery source plus native Rust oracle cases are drafted and unrun.
 No compiler, planner, preparer, target, interpreter, test, experiment, Rust tool
-or CI has executed. Arithmetic/calls, conditionals/statements, richer types and
+or CI has executed. Arbitrary calls, conditionals/statements, richer types and
 scopes, full production synchronization and other open requirements remain
 unfinished. This is source drafting, with no new coverage or parity claim.
+
+The checked arithmetic extension now observes the complete original `ml_fixed`
+and truncating `ml_divide` helper implementations from the pinned emitter's
+actual static helper table. Whole original emitter bytes, lossless UTF8, CST
+roundtrip, exact helper bodies/parameters and unchanged-source rechecks are
+retained as DATA. A matching helper name or detached source digest grants no
+semantic admission. Only helpers already present in the original compiler's
+output can select these syntactic candidate rules.
+
+Candidate lowering handles checked addition/subtraction/multiplication/negation
+and truncating division/remainder through that existing implementation. Fresh
+whole-project checking and complete native target syntax comparison still keep
+every range bound, rounding mode, zero behavior and error message exact. A
+requested unguarded operation or changed metadata cannot be silently stripped.
+Calls to shadowed or arbitrary functions remain outside this family. New or
+removed global helper closure requires a separate whole-output rule.
+
+Independent authored JS/strict TS signed arithmetic, truncation, zero, min/max,
+negation, forged bounds/messages/rounding/missing checks and altered helper body
+cases plus native Rust checked arithmetic oracle source are drafted and unrun.
+No compiler, helper, planner, target, interpreter, preparer, test, experiment or
+Rust tool has executed. Broader calls/scopes/types, production qualification and
+all remaining ledger rows stay open.
