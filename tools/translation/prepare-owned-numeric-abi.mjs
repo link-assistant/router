@@ -1,9 +1,10 @@
 import {fileURLToPath} from 'node:url';
 import {resolve} from 'node:path';
 import {prepareNativeSubstitutionCopy,writeNativeSubstitutionCopy} from './prepare-native-substitution-copy.mjs';
+import {prepareOwnedOutcome} from './prepare-owned-outcome.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 export function prepareOwnedNumericAbi({root=ROOT}={}){
- return prepareNativeSubstitutionCopy({root,archive:'tools/translation/source-profiles/owned-numeric-abi/complete-originals-and-rules.json.gz',pin:'dab78c3dddccfeaa1c38586580d68b35083129a0b7f542f8c445a0cf84aefbc3',id:'router:owned-numeric-abi-source-substitutions-v1'});
+ return prepareNativeSubstitutionCopy({root,archive:'tools/translation/source-profiles/owned-numeric-abi/complete-originals-and-rules.json.gz',pin:'dab78c3dddccfeaa1c38586580d68b35083129a0b7f542f8c445a0cf84aefbc3',id:'router:owned-numeric-abi-source-substitutions-v1',laterPlans:[prepareOwnedOutcome({root})]});
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const args=process.argv.slice(2);if(args.length!==1||!['--emit','--write','--check'].includes(args[0]))throw new TypeError('Use --emit|--write|--check');const plan=prepareOwnedNumericAbi();

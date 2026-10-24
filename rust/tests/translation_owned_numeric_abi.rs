@@ -20,5 +20,11 @@ fn borrowed_map_lookup_preserves_unicode_null_and_missing_semantics() {
     values.insert("null".to_owned(), Json::Null);
     assert_eq!(router::translation_core::json_map_index(&values, "λ😀"), &Json::String("value".to_owned()));
     assert_eq!(router::translation_core::json_map_index(&values, "null"), &Json::Null);
-    assert_eq!(router::translation_core::json_map_index(&values, "absent"), &Json::Null);
+}
+
+#[test]
+#[should_panic(expected = "no entry found for key")]
+fn missing_map_index_retains_its_native_panic() {
+    let values = serde_json::Map::new();
+    let _ = router::translation_core::json_map_index(&values, "absent");
 }

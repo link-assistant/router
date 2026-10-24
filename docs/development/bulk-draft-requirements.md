@@ -270,3 +270,12 @@ Canonical Rust inversion and source-unit signature proposals use the same
 domains. Seven complete source successors, full CST inverses and independent
 JS/TS/native oracle sources are drafted and unrun. Broader arithmetic, complete
 production application and every other open requirement row still need work.
+
+The [owned Option/Result draft](owned-outcome-draft.md) copies the complete
+owned-state checker/issuer/meta/emitter and canonical inverse into a separate
+profile. Nine matching native/runtime operations, source-bound carrier inputs,
+constructors, conversions, fallbacks, guarded payloads and reassignment facts
+have implementation and independent unrun regression source. Nine complete
+source originals and full CST successors retain both ordered sequences.
+Standard native caller adoption/forward lowering, source-unit integration,
+generic carriers and the other open rows still require source drafting.
