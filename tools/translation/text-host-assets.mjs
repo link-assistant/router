@@ -82,7 +82,7 @@ ${['checked_add','checked_sub','checked_mul','wrapping_add','wrapping_sub','satu
     catch(error){if(error.code!=='ENOENT')throw error;}
   }
   for(const [path,content] of jsonRetentionRuntimeAssets())files.set(path,content);
-  for(const asset of ['text-runtime.mjs','text-runtime.d.mts','primitive-option-runtime.mjs','primitive-option-runtime.d.mts','primitive-option-callback-runtime.mjs','primitive-option-callback-runtime.d.mts','primitive-result-runtime.mjs','primitive-result-runtime.d.mts'])files.set(asset,readFileSync(new URL('./'+asset,import.meta.url),'utf8'));
+  for(const asset of ['text-runtime.mjs','text-runtime.d.mts','primitive-option-runtime.mjs','primitive-option-runtime.d.mts','primitive-option-callback-runtime.mjs','primitive-option-callback-runtime.d.mts','primitive-result-runtime.mjs','primitive-result-runtime.d.mts','owned-result-runtime.mjs','owned-result-runtime.d.mts'])files.set(asset,readFileSync(new URL('./'+asset,import.meta.url),'utf8'));
   files.set('integer-core-runtime.mjs',readFileSync(new URL('./integer-runtime.mjs',import.meta.url),'utf8'));
   files.set('integer-runtime.mjs',files.get('integer-runtime.mjs')+'\nexport { '+INTEGER_CONTRACTS.map(row=>row.javascriptName).join(', ')+' } from "./integer-core-runtime.mjs";\n');
   return files;
@@ -169,7 +169,7 @@ ${['checked_add','checked_sub','checked_mul','wrapping_add','wrapping_sub','satu
     catch(error){if(error.code!=='ENOENT')throw error;}
   }
   for(const [path,content] of jsonRetentionRuntimeAssets())files.set(path,content);
-  for(const asset of ['text-runtime.mjs','text-runtime.d.mts','primitive-option-runtime.mjs','primitive-option-runtime.d.mts','primitive-option-callback-runtime.mjs','primitive-option-callback-runtime.d.mts','primitive-result-runtime.mjs','primitive-result-runtime.d.mts'])files.set(asset,readFileSync(new URL('./'+asset,import.meta.url),'utf8'));
+  for(const asset of ['text-runtime.mjs','text-runtime.d.mts','primitive-option-runtime.mjs','primitive-option-runtime.d.mts','primitive-option-callback-runtime.mjs','primitive-option-callback-runtime.d.mts','primitive-result-runtime.mjs','primitive-result-runtime.d.mts','owned-result-runtime.mjs','owned-result-runtime.d.mts'])files.set(asset,readFileSync(new URL('./'+asset,import.meta.url),'utf8'));
   files.set('integer-core-runtime.mjs',readFileSync(new URL('./integer-runtime.mjs',import.meta.url),'utf8'));
   files.set('integer-runtime.mjs',files.get('integer-runtime.mjs')+'\nexport { '+INTEGER_CONTRACTS.map(row=>row.javascriptName).join(', ')+' } from "./integer-core-runtime.mjs";\n');
   return files;

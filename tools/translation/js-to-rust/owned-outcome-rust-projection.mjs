@@ -7,6 +7,7 @@ import {TEXT_CONTRACTS} from '../text-contracts.mjs';
 import {PRIMITIVE_OPTION_CONTRACTS} from '../primitive-option-contracts.mjs';
 import {PRIMITIVE_OPTION_CALLBACK_CONTRACTS} from '../primitive-option-callback-contracts.mjs';
 import {PRIMITIVE_RESULT_CONTRACTS} from '../primitive-result-contracts.mjs';
+import {OWNED_RESULT_CONTRACTS} from '../owned-result-contracts.mjs';
 import {SSE_CONTRACTS} from '../sse-contracts.mjs';
 import {JSON_STATE_CONTRACTS} from '../json-state-contracts.mjs';
 import {JSON_FIELD_CONTRACTS} from '../json-field-contracts.mjs';
@@ -19,6 +20,7 @@ const snake=name=>name.replace(/[A-Z]/gu,character=>'_'+character.toLowerCase())
 const ordinary=name=>typeof name==='string'&&/^[a-z][A-Za-z0-9_]*$/u.test(name)&&!name.startsWith('__ro');
 const families=[
  ...SSE_CONTRACTS.map(row=>({path:row.rustPath,name:row.javascriptName,runtime:'sse',roles:row.parameters})),
+ ...OWNED_RESULT_CONTRACTS.map(row=>({path:row.rustPath,name:row.javascriptName,runtime:'owned-result',roles:row.parameters})),
  ...PRIMITIVE_RESULT_CONTRACTS.map(row=>({path:row.rustPath,name:row.javascriptName,runtime:'primitive-result',roles:row.parameters})),
  ...PRIMITIVE_OPTION_CALLBACK_CONTRACTS.map(row=>({path:row.rustPath,name:row.javascriptName,runtime:'primitive-option-callback',roles:row.parameters})),
  ...PRIMITIVE_OPTION_CONTRACTS.map(row=>({path:row.rustPath,name:row.javascriptName,runtime:'primitive-option',roles:row.parameters})),
@@ -59,7 +61,8 @@ export function ownedRustNameProposals(source,path){
  return result;
 }
 /** Catalog rows and AST observations cannot grant native binding authority. */
-export function projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot,nameProposals=[]}={}){
+export function projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot,nameProposals=[],resultTypeLibrary='primitive-result'}={}){
+ if(!['primitive-result','owned-result'].includes(resultTypeLibrary))fail('unknown Result type proposal library');const resultTypePrefix=resultTypeLibrary==='owned-result'?'router_owned_result_':'router_result_';
  const imports=new Map(),localNames=new Map(functions.map(fn=>[fn.name,nameProposals.find(proposal=>proposal.rust===fn.name)?.javascript??fn.name]));let cells=0;
  const tick=depth=>{if(++cells>100000||depth>160)fail('original owned projection node/depth budget exceeded');};
  const relative=name=>{const value=posix.relative(posix.dirname(javascriptPath),runtimeRoot+'/'+name+'-runtime.mjs');return value.startsWith('.')?value:'./'+value;};
@@ -69,11 +72,12 @@ export function projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot,
   if(text==='&crate::translation_core::Json')return 'import('+JSON.stringify(relative('json-macro'))+').JsonValue';
   if(text==='&[crate::translation_core::Json]')return 'Parameters<typeof '+imported('router_state_json_values_copy','json-state')+'>[0]';
   if(text==='&::serde_json::Map<::std::string::String,crate::translation_core::Json>')return 'Parameters<typeof '+imported('router_core_json_map_index','json-update')+'>[0]';
+  if(text==='::std::string::String')return 'Parameters<typeof '+imported('router_owned_result_text_ok','owned-result')+'>[0]';
   if(text==='i64')return 'Parameters<typeof '+imported('json_macro_i64','json-macro')+'>[0]';
   if(text==='::std::result::Result<crate::translation_core::Json,::std::string::String>')return 'ReturnType<typeof '+imported('router_carrier_json_ok','owned-outcome')+'>';
   if(text==='::std::option::Option<crate::translation_core::Json>')return 'ReturnType<typeof '+imported('router_carrier_json_some','owned-outcome')+'>';
   const primitiveOptionInputs={'::std::option::Option<bool>':'bool','::std::option::Option<u64>':'u64','::std::option::Option<i64>':'i64','::std::option::Option<&str>':'str'};if(Object.hasOwn(primitiveOptionInputs,text))return 'ReturnType<typeof '+imported('router_option_'+primitiveOptionInputs[text]+'_none','primitive-option')+'>';
-  const resultInputs={'::std::result::Result<bool,::std::string::String>':'bool','::std::result::Result<u64,::std::string::String>':'u64','::std::result::Result<i64,::std::string::String>':'i64','::std::result::Result<&str,::std::string::String>':'str'};if(Object.hasOwn(resultInputs,text))return 'ReturnType<typeof '+imported('router_result_'+resultInputs[text]+'_ok','primitive-result')+'>';if(text==='::std::option::Option<::std::string::String>')return 'ReturnType<typeof '+imported('router_result_bool_err_option','primitive-result')+'>';
+  if(text==='::std::result::Result<::std::string::String,::std::string::String>')return 'ReturnType<typeof '+imported('router_owned_result_text_ok','owned-result')+'>';const resultInputs={'::std::result::Result<bool,::std::string::String>':'bool','::std::result::Result<u64,::std::string::String>':'u64','::std::result::Result<i64,::std::string::String>':'i64','::std::result::Result<&str,::std::string::String>':'str'};if(Object.hasOwn(resultInputs,text))return 'ReturnType<typeof '+imported(resultTypePrefix+resultInputs[text]+'_ok',resultTypeLibrary)+'>';if(text==='::std::option::Option<::std::string::String>')return 'ReturnType<typeof '+imported(resultTypePrefix+'bool_err_option',resultTypeLibrary)+'>';
   if(text==='&str')return 'string';if(text==='bool')return 'boolean';
   if(text==='u64')return 'Parameters<typeof '+imported('router_state_json_with_index','json-state')+'>[1]';
   if(text==='usize')return 'Parameters<typeof '+imported('router_core_json_index_usize','json-update')+'>[1]';

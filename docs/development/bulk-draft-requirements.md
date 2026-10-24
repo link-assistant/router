@@ -209,6 +209,15 @@ independent same-project JS/strict TS, wrong-module and inverse regression
 source are drafted and unrun. Owned-success caller integration and every other
 unfinished requirement remain open.
 
+The [owned-success Result caller draft](owned-result-callers-draft.md) now adds
+actual copied-library source/type/callback qualification, both directions and
+interpreters, explicit borrowed-to-owned expressions, real owned Rust public
+parameters, qualified type proposals, canonical inverses and receiving assets.
+Twelve complete source histories and independent JS/strict TS/native caller,
+copy/variant/capture/refusal regressions are drafted and unrun. Broader lifetime
+cases, method adoption, production application, HTTP and every other unfinished
+requirement remain open; tests, experiments and CI remain deferred.
+
 The last checkpoint before this phase is `0460fb741`: four complete
 source-history receiving files passed 26 cases in Node and Bun. That historical
 focused evidence does not qualify any change drafted in this phase or the full

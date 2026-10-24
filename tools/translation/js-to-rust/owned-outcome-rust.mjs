@@ -11,6 +11,7 @@ import {ownedCoreSourceData,requireOwnedCoreSourceCurrent,ownedSourcePath} from 
 import {createOwnedStateContext,translateOwnedStateJavaScript} from './owned-outcome.mjs';
 import {UnsupportedOwnedRustSource,readOwnedRustFunction} from './owned-outcome-rust-syntax.mjs';
 import {projectOwnedRustFunctions,ownedRustNameProposals} from './owned-outcome-rust-projection.mjs';
+import {requireOwnedResultSources} from './owned-result-source-contracts.mjs';
 export {UnsupportedOwnedRustSource};
 const fail=message=>{throw new UnsupportedOwnedRustSource(message);};
 function originalFunctions(source){
@@ -29,14 +30,15 @@ function pairPaths(path,data){
 }
 export function translateOwnedStateRust(source,{context,sourcePath,javascriptPath,typescriptOutputPath}={}){
  ownedSourcePath(sourcePath);ownedSourcePath(javascriptPath);if(!sourcePath.endsWith('.rs')||!javascriptPath.endsWith('.mjs'))fail('actual Rust and JavaScript source paths required');
- if(sourcePath==='src/lib.rs'||sourcePath.startsWith('src/translation_core')||sourcePath.startsWith('src/translation_collections_core')||sourcePath.startsWith('src/translation_state_core')||sourcePath.startsWith('src/translation_json_fields_core')||sourcePath.startsWith('src/translation_carriers_core'))fail('canonical caller inverse cannot rewrite its native library');
+ if(sourcePath==='src/lib.rs'||sourcePath.startsWith('src/translation_core')||sourcePath.startsWith('src/translation_collections_core')||sourcePath.startsWith('src/translation_state_core')||sourcePath.startsWith('src/translation_json_fields_core')||sourcePath.startsWith('src/translation_carriers_core')||['translation_integer_core','translation_stream_core','translation_text_core','translation_primitive_option_core','translation_primitive_option_callbacks_core','translation_primitive_results_core','translation_owned_results_core','translation_async_control_core'].some(name=>sourcePath==='src/'+name+'.rs'))fail('canonical caller inverse cannot rewrite its native library');
  if(typeof source!=='string'||source.length>2097152)fail('bounded complete Rust source required');
  const data=ownedCoreSourceData(context);if(data.files.find(row=>row.path===sourcePath)?.source!==source)fail('complete authoritative Rust source/path differs');
+ let resultTypeLibrary='primitive-result';try{requireOwnedResultSources(new Map(data.files.map(row=>[row.path,row.source])),data);resultTypeLibrary='owned-result';}catch{}
  const previousJavaScript=data.files.find(row=>row.path===javascriptPath)?.source??null,pairs=pairPaths(javascriptPath,data),previousPairs=data.files.filter(row=>pairs.includes(row.path));let originalConcrete,projection,derivedContext;
  const run=createRulePipeline([
   {phase:'language',rules:[
    {id:'rust:serialize-reparse-complete-original-owned-source-CST',apply:()=>{originalConcrete=transportConcreteSyntaxSource(source,{language:'Rust'});if(transportConcreteSyntaxMeta(originalConcrete.meta).source!==source)fail('whole original Rust CST differs');return originalFunctions(originalConcrete.source);}},
-   {id:'rust:substitute-canonical-owned-calls-types-and-control-into-JavaScript-proposals',apply:functions=>{projection=projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot:data.runtimeRoot,nameProposals:ownedRustNameProposals(previousJavaScript,javascriptPath)});return projection.javascript;}},
+   {id:'rust:substitute-canonical-owned-calls-types-and-control-into-JavaScript-proposals',apply:functions=>{projection=projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot:data.runtimeRoot,resultTypeLibrary,nameProposals:ownedRustNameProposals(previousJavaScript,javascriptPath)});return projection.javascript;}},
    {id:'meta:fresh-private-owned-source-check-serialize-reparse-and-reissue',apply:javascript=>{
     const files=data.files.filter(row=>row.path!==javascriptPath&&!pairs.includes(row.path)).concat([{path:javascriptPath,source:javascript}]);
     derivedContext=createOwnedStateContext({...data,files});return translateOwnedStateJavaScript(javascript,{context:derivedContext,sourcePath:javascriptPath,typescriptOutputPath});

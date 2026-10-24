@@ -5,7 +5,7 @@ import {requireBorrowedString} from './extensions/string-iterators.mjs';
 import {requireOriginalPrimitiveTryFromChecker} from './extensions/host-contracts.mjs';
 import {typeError,unsupported} from './vendor/meta-language/translation/diagnostics.js';
 const primitive=domain=>domain==='str'?SOURCE_STR:domain==='text-owned'?{...SOURCE_STRING,rustSourceType:true}:domain==='bool'?BOOL:['u64','i64'].includes(domain)?{...fixed(64,domain==='i64'),rustPrimitiveName:domain,rustSourceType:true}:null;
-const resultDomain=role=>['bool-text-result','u64-text-result','i64-text-result','str-text-result'].includes(role)?role.slice(0,-12):null;
+const resultDomain=role=>['bool-text-result','u64-text-result','i64-text-result','str-text-result','text-text-result'].includes(role)?role==='text-text-result'?'text-owned':role.slice(0,-12):null;
 export function checkForwardPrimitiveResult(checker,node,env,path,expected,row,{current,carrier,ownedString}){
  requireOriginalPrimitiveTryFromChecker(checker);current();if(node.args.length!==row.parameters.length)throw typeError('Actual primitive Result arity differs',node.span);
  const wanted=role=>{const domain=resultDomain(role);if(domain)return checker.instantiations.result(primitive(domain),primitive('text-owned'),node.span);if(role==='text-owned-option')return checker.instantiations.option(primitive('text-owned'),node.span);if(role==='str-option-ref')return checker.instantiations.option(SOURCE_STR,node.span);if(['bool-option','u64-option','i64-option'].includes(role))return checker.instantiations.option(primitive(role.slice(0,-7)),node.span);return primitive(role);};

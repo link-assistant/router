@@ -4,9 +4,9 @@ const fail=message=>{throw new TypeError('Owned primitive Result: '+message);};
 const owned=type=>['base64-result','json','json-list-owned','json-text-result','json-owned-option','text-owned','text-owned-option'].includes(type)||ownedPrimitiveResultPayload(type)!==null;
 const compatible=(actual,wanted)=>actual===wanted||wanted==='str'&&actual==='text-owned';
 export function checkOwnedPrimitiveResult(node,binding,scope,depth,helpers){
- const row=ownedPrimitiveResultOperation(binding.name);if(!row||binding.target!==helpers.runtimeRoot+'/primitive-result-runtime.mjs')return null;helpers.current();const {ts,file}=helpers;
+ const row=ownedPrimitiveResultOperation(binding.name);if(!row||binding.target!==helpers.runtimeRoot+'/'+row.runtimeModule)return null;helpers.current();const {ts,file}=helpers;
  if(node.arguments.length!==row.parameters.length)fail('complete actual argument count required');const args=[];for(let index=0;index<row.parameters.length;index++){
-  const role=row.parameters[index];if(role==='callback')continue;const value=helpers.expression(node.arguments[index],scope,depth+1,false,role);if(!compatible(value.type,role))fail('actual primitive Result operand differs');args.push(value);
+  const role=row.parameters[index];if(role==='callback')continue;let value=helpers.expression(node.arguments[index],scope,depth+1,false,role);if(role==='text-owned')value=helpers.ownedText(value,scope);if(!compatible(value.type,role))fail('actual primitive Result operand differs');args.push(value);
  }
  let callback=null,root=null,staticResultBorrow=false;
  if(row.parameters.includes('callback')){

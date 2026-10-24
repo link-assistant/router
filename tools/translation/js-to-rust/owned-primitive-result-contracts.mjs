@@ -1,20 +1,21 @@
 // Finite domain equations over actual, freshly checked native/runtime sources.
 import {PRIMITIVE_RESULT_CONTRACTS,primitiveResultContract} from '../primitive-result-contracts.mjs';
+import {ownedResultSourceOperation} from './owned-result-source-contracts.mjs';
 import {PRIMITIVE_RESULT_NATIVE_SOURCE,PRIMITIVE_RESULT_RUNTIME_SOURCE,PRIMITIVE_RESULT_DECLARATIONS_SOURCE} from '../primitive-result-native-source.mjs';
 import {requireOwnedTextSources} from './owned-text-contracts.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 import {captureSourceModuleViews,originalModuleViewItems} from '../source-module-views.mjs';
-export const ownedPrimitiveResultOperation=primitiveResultContract;
-const payloads=Object.freeze({'bool-text-result':'bool','u64-text-result':'u64','i64-text-result':'i64','str-text-result':'str'});
+export const ownedPrimitiveResultOperation=name=>primitiveResultContract(name)??ownedResultSourceOperation(name);
+const payloads=Object.freeze({'bool-text-result':'bool','u64-text-result':'u64','i64-text-result':'i64','str-text-result':'str','text-text-result':'text-owned'});
 export const ownedPrimitiveResultPayload=type=>Object.hasOwn(payloads,type)?payloads[type]:null;
 export const ownedPrimitiveResultType=type=>ownedPrimitiveResultPayload(type)!==null;
-export const ownedPrimitiveResultAbsent=value=>value?.type==='str-text-result'&&(value.kind==='primitive-result-err'||value.kind==='primitive-result-call'&&primitiveResultContract(value.name)?.method==='err'||value.kind==='variable'&&value.definitelyAbsent===true);
-export const ownedPrimitiveResultRustTypes=Object.freeze(Object.fromEntries(Object.entries(payloads).map(([type,payload])=>[type,'::std::result::Result<'+(payload==='str'?"&'a str":payload)+',::std::string::String>'])));
+export const ownedPrimitiveResultAbsent=value=>value?.type==='str-text-result'&&(value.kind==='primitive-result-err'||value.kind==='primitive-result-call'&&ownedPrimitiveResultOperation(value.name)?.method==='err'||value.kind==='variable'&&value.definitelyAbsent===true);
+export const ownedPrimitiveResultRustTypes=Object.freeze(Object.fromEntries(Object.entries(payloads).map(([type,payload])=>[type,'::std::result::Result<'+(payload==='str'?"&'a str":payload==='text-owned'?'::std::string::String':payload)+',::std::string::String>'])));
 export function ownedPrimitiveResultStaticLoan(value,{stringLoan}={}){
  if(value?.type!=='str-text-result'||value.root!==null)return false;
  if(value.kind==='primitive-result-err')return true;
  if(value.kind==='primitive-result-ok')return stringLoan(value.value)?.root===null;
- if(value.kind==='primitive-result-call'){const row=primitiveResultContract(value.name);if(row?.method==='err')return true;if(row?.method==='ok')return stringLoan(value.args[0])?.root===null;}
+ if(value.kind==='primitive-result-call'){const row=ownedPrimitiveResultOperation(value.name);if(row?.method==='err')return true;if(row?.method==='ok')return stringLoan(value.args[0])?.root===null;}
  if(value.kind==='choose')return ownedPrimitiveResultStaticLoan(value.then,{stringLoan})&&ownedPrimitiveResultStaticLoan(value.else,{stringLoan});
  return ['variable','local-call','primitive-result-call'].includes(value.kind)&&Object.hasOwn(value,'staticResultBorrow')&&value.staticResultBorrow===true;
 }
