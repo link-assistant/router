@@ -347,3 +347,11 @@ Eight complete source successors, full native root histories and independent
 boundary, JS/TS/interpreter, source-unit, refusal and native oracle sources are
 drafted and unrun. Standard method adoption, production application and all
 remaining requirement rows are still open.
+
+The [primitive method adoption draft](integer-method-adoption-draft.md) copies
+three complete adopter/packet/installer implementations for actual i64/u64
+method receivers and closed operands. Native parameter/producer scope, complete
+source inverses and fresh selected whole-function checks remain required.
+Independent actual caller, strict target, packet, application and refusal source
+is drafted and unrun. Production application, broader inference and all other
+remaining requirement rows are still open.
