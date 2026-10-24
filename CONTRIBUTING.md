@@ -807,3 +807,12 @@ self/future-name and incomplete-prefix refusals, complete native/paired source
 inverses, original resource bounds and fresh whole-project target reproduction.
 Keep the old final-return API separate. See the
 [scalar body draft](docs/development/scalar-body-inverse-draft.md).
+
+Whole scalar control-body inverse rules must preserve actual function headers,
+complete body membership and original parameter guards. Keep lexical locals
+immutable and scoped, require complete terminal values in every admitted branch,
+and reject unsupported fallthrough/effect/loop constructs. Recompile the entire
+modified native project, reproduce complete changed target bodies and retain
+unchanged bodies byte-for-byte. A syntactic body proposal cannot waive native
+types, ownership, source provenance or any CI requirement. See the
+[control body draft](docs/development/control-body-inverse-draft.md).

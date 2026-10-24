@@ -22,7 +22,7 @@ The explicit manifest has exactly these fields:
 ```
 
 Language authority can be `auto`, `Rust`, `JavaScript` or `TypeScript`. Inverse
-selection is `return-expressions`, `literals` or `scalar-bodies`. Distinct canonical paths and
+selection is `return-expressions`, `literals`, `scalar-bodies` or `control-bodies`. Distinct canonical paths and
 physical `js/src` and `ts/src` locations are required. No unchecked, runtime-only
 or force-overwrite mode exists.
 

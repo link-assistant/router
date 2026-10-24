@@ -778,3 +778,13 @@ full source histories and independent strict target/scope/refusal/transaction
 plus native oracle source are drafted and unrun. Branch/loop statement bodies,
 owned/generic/recursive/async syntax, full production synchronization and every
 other incomplete requirement remain open.
+
+The [scalar control-body inverse draft](control-body-inverse-draft.md) now adds
+whole ordinary function bodies with immutable scoped locals and nested terminal
+if/else branches. It retains actual checked source/header associations, original
+parameter-guard fences, unchanged body bytes, complete target/census reproduction
+and the original guarded project transaction. Full original source copies,
+project/export mode and independent strict target/truth-table/overflow/refusal/
+history plus native oracle source are drafted and unrun. General loops/early
+returns, owned/generic/recursive/async bodies, namespace bootstrap, production
+adoption/parity and every other incomplete requirement remain open.

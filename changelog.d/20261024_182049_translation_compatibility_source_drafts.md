@@ -53,3 +53,5 @@ integration and the remaining requirement ledger are still open.
 - Draft checked scalar call and conditional-argument inverse composition with actual module/source associations, complete callee source data and independent unrun target/native oracle cases.
 
 - Draft whole scalar local-initializer/final-return inverse batches, actual lexical scope and native let intervals, exported project mode and independent unrun JS/TS/native oracle source.
+
+- Draft whole scalar control-body inverse rules for immutable locals and nested terminal branches, exact input-guard fences, exported project selection and independent unrun JS/TS/native oracle source.
