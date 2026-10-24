@@ -171,3 +171,12 @@ also covers the complete emitted scalar envelope, including fresh inner checks,
 public alias reconstruction and mandatory complete outer Rust reemission.
 Generic public type constraints, paired multi-file API restoration and the
 other module families remain open.
+
+The [owned collection caller draft](owned-collections-draft.md) adds a separate
+full private checker/emitter/document/paired-source copy for the existing owned
+JSON map and filter-map operations. Actual native imports, full Rust/runtime
+sources, callback domains, branch/loan checks, ordered emission and complete
+source inverses remain required. JavaScript and TypeScript source frontends,
+both interpreters, independent regressions and four actual native Rust oracle
+cases are drafted and unrun. General collection mutation, iterator combinations,
+effects, production adoption and whole-project synchronization remain open.
