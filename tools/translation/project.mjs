@@ -42,7 +42,7 @@ import {originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.
 import {freezeMacroTree} from './macro-token-trees.mjs';
 import {createDeriveFootprintContext,deriveFootprintAt,deriveFootprintExternalModules} from './derive-footprints.mjs';
 import {configureDeriveLayout} from './derive-layout.mjs';
-import {createToolAttributeContext} from './tool-attributes.mjs';
+import {createToolAttributeContext,createEnclosingToolAttributeContext} from './tool-attributes.mjs';
 import {configureToolAttributes} from './tool-attribute-layout.mjs';
 import {actualJsonCapabilityProfile} from './json-capabilities.mjs';
 import {createJsonMacroContext,configureJsonMacroParser} from './json-macro-context.mjs';
@@ -338,7 +338,7 @@ function compileProjectLanguage(options, ownedDefinitionMode=false, semanticStor
   const cloneContext=deriveContext&&hasCloneDeclarations?(enclosingNamespace?createCloneEnclosingSourceContext(deriveContext,{deriveBangContext,defaultContext:defaultContext??undefined}):createCloneSourceContext(deriveContext)):null;
   namespaceProgress('tool-attributes');
   const resolvedExternal=deriveContext?deriveFootprintExternalModules(deriveContext):externalModules;
-  const toolContext=createToolAttributeContext({modules:graph.modules,externalModules:resolvedExternal,deriveContext,compilationProfile:graph.compilationProfile});
+  const toolContext=enclosingNamespace?createEnclosingToolAttributeContext({modules:graph.modules,externalModules:resolvedExternal,deriveContext,deriveBangContext,compilationProfile:graph.compilationProfile}):createToolAttributeContext({modules:graph.modules,externalModules:resolvedExternal,deriveContext,compilationProfile:graph.compilationProfile});
   // This consumer needs enclosing bindings. Runtime/ownership and generated
   // Default/Clone checking retain their separate original source contexts.
   if(!enclosingNamespace)deriveBangContext=deriveContext?createDeriveBangContext({deriveContext}):null;

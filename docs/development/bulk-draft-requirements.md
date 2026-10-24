@@ -749,3 +749,13 @@ modified-runtime conflicts. Full original source/CLI/API/export copies and
 independent direction/source/runtime/strict/receiving regression source are
 drafted and unrun. Broader syntax, namespace/producer closure, opaque resources,
 production adoption/parity and every other incomplete row remain open.
+
+The [enclosing tool context draft](enclosing-tool-context-draft.md) now connects
+the existing genuine enclosing producer-output issuer to tool-prelude resolution
+in the enclosing-project path. It preserves the complete original tool API,
+requires full source/view/profile/external/item-carrier association before any
+candidate inspection, and retains actual ancestor/prefix/import checks. Full
+source rules and independent strict target/refusal/history plus native oracle
+source are drafted and unrun. Missing input-owner bootstrap, architecture prefix
+closure, opaque resources, production adoption and all other unfinished rows
+remain open.

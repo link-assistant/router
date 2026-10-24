@@ -780,3 +780,11 @@ literal delimiters and complete inverse equations, and reuse fresh guarded
 all-or-nothing installation. Do not introduce a persistent source/owner/verdict
 cache or treat successful packaging as production parity. See the
 [project source draft](docs/development/forward-project-unit-draft.md).
+
+When composing enclosing producer outputs with tool-attribute resolution, use
+the exact genuine input/output context and complete original module set, source
+views, compilation profile, external tables and item carriers before inspecting
+candidates. Keep legacy APIs distinct, retain ancestor and competing type-prefix
+checks, and never use a non-trait import census to prove tool-prefix absence.
+A consumer connection cannot supply a missing original input-owner proof. See
+the [enclosing tool draft](docs/development/enclosing-tool-context-draft.md).

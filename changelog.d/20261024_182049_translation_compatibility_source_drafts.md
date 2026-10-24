@@ -47,3 +47,5 @@ integration and the remaining requirement ledger are still open.
 - Draft checked return arithmetic inverse rules by observing complete pinned emitter helpers, retaining exact bounds/rounding/error metadata and full unrun JS/TS/native oracle source.
 
 - Draft version-control-aware full forward and supported inverse project source transactions, physical JS/TS runtime packaging, complete source histories and independent unrun receiving/conflict/refusal cases.
+
+- Draft explicit genuine enclosing producer/tool-prelude composition with complete original source histories, retained legacy/refusal domains and independent unrun JS/TS/native oracle source.
