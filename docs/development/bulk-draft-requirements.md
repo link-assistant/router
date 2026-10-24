@@ -664,3 +664,10 @@ proposal, all native/paired inverses, and a fresh all-or-nothing transaction/CLI
 Complete original APIs and source histories plus independent JS/TS/module/
 conflict/forgery cases are drafted and unrun. Ambiguous origins, wider inverse
 syntax, full production translation and the other open rows remain unfinished.
+
+The [synchronization export draft](synchronization-export-draft.md) now shares
+all original and inverse CLI entries, retains complete pinned original vector
+prefixes, and adds a forwarding API facade through the existing committed
+compiler/runtime/profile closure. Full histories plus isolated exported JS/TS
+receiving regression source are drafted and unrun. Broad receiving qualification,
+production coverage/parity and every other unfinished row remain open.

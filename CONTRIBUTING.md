@@ -714,3 +714,29 @@ fixture is copied by `prepare-lexical-parent-history.mjs` from the already
 qualified portable history producer through separate language/repository CST
 rules. Its five parents and nine genuine objects supply historical test DATA;
 they do not increase current executable coverage or establish runtime parity.
+
+### Source synchronization exports during issue #759
+
+Keep every public synchronization CLI in the shared
+`tools/translation/translator-entrypoints.mjs` list. Preserve all original entries
+in order and retain the complete compiler/runtime/declaration/profile/license
+closure through the committed-source exporter. Source preparation must compare
+complete pinned original vectors against their exact retained prefix, rather
+than assuming there will always be only one added command. Keep original
+resource limits and all eight full JavaScript gate stages unchanged.
+
+The source synchronization facade forwards to fresh original issuers. Never
+accept a saved proposal, public semantic flag or source hash as admission. For
+bulk inverse edits, parse complete JS/TS, retain serialized/reparsed CST and
+whole Rust/JS/TS inverses, resolve actual checked source origins, refuse an
+ambiguous or incomplete batch and recompile the whole modified project before
+guarded installation. Work within one invocation instead of adding persistent
+source or verdict caches. The current literal families do not establish broad
+expression or whole Router support.
+
+Independent exported receiving cases, complete original histories and behavioral
+regressions must be drafted with implementation. Under the user's active bulk
+draft instruction, execute none until every requirement has its full source
+draft; no CI-triggering push or local Rust tool is allowed during this phase.
+Record exported source, receiving evidence, whole-gate evidence and production
+parity separately. See the [export draft](docs/development/synchronization-export-draft.md).

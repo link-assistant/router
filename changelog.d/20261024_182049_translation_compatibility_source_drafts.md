@@ -27,3 +27,5 @@ integration and the remaining requirement ledger are still open.
 - Draft fresh source-unit plan/apply and CLI copies for forward-derived JS/TS string edits, with complete originals, inverses and independent unrun conflict/forgery regressions.
 
 - Draft multi-literal forward-derived inverse rules and cross-module source-unit transactions with invocation-local bulk traversal and full unrun regression source.
+
+- Draft shared synchronization exports and retained original entrypoint prefixes, a forwarding API facade, receiving source cases and contribution guidance; all unverified.
