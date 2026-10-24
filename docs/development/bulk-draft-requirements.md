@@ -82,6 +82,13 @@ source/history/body/constraint regressions remain unrun. Public root type
 packaging, runtime generics/records/effects, production coverage and every
 other incomplete requirement still need their remaining source draft.
 
+The [owned public scalar draft](owned-public-scalar-draft.md) adds a first closed
+root type API through the existing scalar resolver, actual module packaging and
+mandatory complete Rust inverse. Six complete original copies and independent
+public-interface, type-edit, strict-consumer/refusal and source-history cases
+are drafted and unrun. Project/JS-authority preservation, owned/generic/compound
+public types, reverse distribution and the remaining requirements remain open.
+
 The last checkpoint before this phase is `0460fb741`: four complete
 source-history receiving files passed 26 cases in Node and Bun. That historical
 focused evidence does not qualify any change drafted in this phase or the full
