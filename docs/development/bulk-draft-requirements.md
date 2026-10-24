@@ -247,3 +247,11 @@ proposal against physical source, package/workspace Cargo and Git inputs before
 the existing transaction. Complete source/target review and inverses are
 retained. Independent cases are unrun; original trait dispatch, native parity,
 production adoption and all remaining requirement rows stay open.
+
+The [JSON field/Option draft](json-fields-draft.md) adds six matching native and
+canonical-runtime field/index readers, actual source/import/private checking,
+typed Options and loans, numeric guard/construction rules, both interpreters and
+JS/TS/Rust emission/inversion. Complete native root and nine source-copy
+successors retain original bytes and both CST rule sequences. Independent
+runtime, source/target/refusal and native oracle sources are unrun. General
+Option/Result, effects/state, adoption and every other open row remain.

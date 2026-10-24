@@ -1,9 +1,10 @@
 import {fileURLToPath} from 'node:url';
 import {resolve} from 'node:path';
 import {prepareNativeSubstitutionCopy,writeNativeSubstitutionCopy} from './prepare-native-substitution-copy.mjs';
+import {prepareJsonFieldSources} from './prepare-json-field-sources.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 export function prepareOwnedStateFlow({root=ROOT}={}){
- return prepareNativeSubstitutionCopy({root,archive:'tools/translation/source-profiles/owned-state-flow/complete-originals-and-rules.json.gz',pin:'40110f0af42161755f799c092e8a6439cea6868a2457fe432a16b7881c4b8c83',id:'router:owned-state-flow-substitutions-v1'});
+ return prepareNativeSubstitutionCopy({root,archive:'tools/translation/source-profiles/owned-state-flow/complete-originals-and-rules.json.gz',pin:'40110f0af42161755f799c092e8a6439cea6868a2457fe432a16b7881c4b8c83',id:'router:owned-state-flow-substitutions-v1',laterPlans:[prepareJsonFieldSources({root})]});
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const args=process.argv.slice(2);if(args.length!==1||!['--emit','--write','--check'].includes(args[0]))throw new TypeError('Use --emit|--write|--check');const plan=prepareOwnedStateFlow();

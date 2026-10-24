@@ -29,7 +29,7 @@ function pairPaths(path,data){
 }
 export function translateOwnedStateRust(source,{context,sourcePath,javascriptPath,typescriptOutputPath}={}){
  ownedSourcePath(sourcePath);ownedSourcePath(javascriptPath);if(!sourcePath.endsWith('.rs')||!javascriptPath.endsWith('.mjs'))fail('actual Rust and JavaScript source paths required');
- if(sourcePath==='src/lib.rs'||sourcePath.startsWith('src/translation_core')||sourcePath.startsWith('src/translation_collections_core')||sourcePath.startsWith('src/translation_state_core'))fail('canonical caller inverse cannot rewrite its native library');
+ if(sourcePath==='src/lib.rs'||sourcePath.startsWith('src/translation_core')||sourcePath.startsWith('src/translation_collections_core')||sourcePath.startsWith('src/translation_state_core')||sourcePath.startsWith('src/translation_json_fields_core'))fail('canonical caller inverse cannot rewrite its native library');
  if(typeof source!=='string'||source.length>2097152)fail('bounded complete Rust source required');
  const data=ownedCoreSourceData(context);if(data.files.find(row=>row.path===sourcePath)?.source!==source)fail('complete authoritative Rust source/path differs');
  const previousJavaScript=data.files.find(row=>row.path===javascriptPath)?.source??null,pairs=pairPaths(javascriptPath,data),previousPairs=data.files.filter(row=>pairs.includes(row.path));let originalConcrete,projection,derivedContext;

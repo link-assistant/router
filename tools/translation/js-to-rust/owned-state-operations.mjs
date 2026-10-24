@@ -9,6 +9,7 @@ import {ownedJsonReaderOperation,ownedJsonBorrowed,ownedJsonRustTypes,ownedJsonT
 import {ownedIterationOperation as ownedCollectionOperation,ownedIterationOnlyOperation,ownedCollectionOptionalPayload as ownedJsonOptionalPayload,ownedCollectionRustTypes,ownedCollectionTypeScriptTypes} from './owned-iteration-contracts.mjs';
 import {emitOwnedIterationCall,evaluateOwnedIterationCall} from './owned-iteration-emission.mjs';
 import {ownedStateOperation} from './owned-state-contracts.mjs';
+import {ownedJsonFieldOperation,emitOwnedJsonFieldCall,evaluateOwnedJsonFieldCall} from './owned-json-fields.mjs';
 import {emitOwnedStateCall,evaluateOwnedStateCall} from './owned-state-emission.mjs';
 import {ownedJsonOptionalReaderOperation,ownedJsonOptionalReaderRustCall} from './owned-json-source.mjs';
 import {ownedAsciiOperation,ownedAsciiRustCall} from './owned-ascii-source.mjs';
@@ -33,7 +34,7 @@ function rustName(name){
  const rust=name.replace(/[A-Z]/gu,c=>'_'+c.toLowerCase());if(KEYS.has(rust))fail('reserved declaration name');return rust;
 }
 const json=type=>type==='json'||type==='json-ref';
-const compatible=(actual,wanted)=>wanted==='json'?json(actual):wanted==='i64'?actual==='i64'||actual==='usize':wanted==='u64'?actual==='usize':actual===wanted;
+const compatible=(actual,wanted)=>wanted==='json'?json(actual):wanted==='i64'?actual==='i64'||actual==='usize':wanted==='u64'||wanted==='usize'?actual==='usize'||actual==='u64':actual===wanted;
 /** Only a private original check can create an executable item. */
 export const isOwnedCoreItem=item=>!!item&&typeof item==='object'&&!types.isProxy(item)&&Object.getOwnPropertyDescriptor(item,'kind')?.value==='owned-function';
 export function analyzeOwnedCoreModule(context,path){
@@ -165,8 +166,17 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  const context=issued.get(program[0]).context;requireOwnedCoreSourceCurrent(context);const sourceData=ownedCoreSourceData(context);
  if(program.some(item=>issued.get(item).context!==context))fail('mixed receiving contexts');
  let sequence=0;const imports=new Set();
+ function publicTypeScriptType(type){
+  const options={'json-option-ref':'serde_json_value_get_string','str-option-ref':'serde_json_value_as_str','bool-option':'serde_json_value_as_bool','u64-option':'serde_json_value_as_u64','i64-option':'serde_json_value_as_i64','json-owned-option':'router_core_json_find'};
+  if(Object.hasOwn(options,type)){const name=options[type];imports.add(name);return 'ReturnType<typeof __ro_'+name+'>';}
+  if(type==='u64'){imports.add('router_state_json_with_index');return 'Parameters<typeof __ro_router_state_json_with_index>[1]';}
+  if(type==='usize'){imports.add('router_core_json_index_usize');return 'Parameters<typeof __ro_router_core_json_index_usize>[1]';}
+  return TS_TYPES[type];
+ }
+
  function expr(value,borrowOwned=false){
   switch(value.kind){
+   case 'json-field-call':return emitOwnedJsonFieldCall(value,{rust,expr,imports,sequence:()=>sequence++});
    case 'json-state-call':return emitOwnedStateCall(value,{rust,expr,imports,sequence:()=>sequence++});
    case 'json-collection-call':return emitOwnedIterationCall(value,{rust,expr,body,rustName,imports,sequence:()=>sequence++});
    case 'variable':if(rust&&value.type==='json-owned-option')return rustName(value.name)+'.clone()';if(rust&&value.type==='json-list-owned')return borrowOwned?'&'+rustName(value.name):rustName(value.name)+'.clone()';if(rust&&value.type==='text-owned')return borrowOwned?'&'+rustName(value.name):rustName(value.name)+'.to_owned()';return rust?(value.type==='json'?(borrowOwned?'&'+rustName(value.name):'__ro_copy(&'+rustName(value.name)+')'):rustName(value.name)):value.name;
@@ -248,10 +258,10 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
   const rustTypes=item.hostCalls.some(call=>ownedAsciiOperation(call.name))?{...RUST_TYPES,str:"&'a crate::translation_core::Str"}:RUST_TYPES;
   const borrowed=type=>['json-ref','map-ref','str','bytes-ref','base64-error-ref','json-option-input','json-list-ref'].includes(type)||ownedJsonBorrowed(type),loan=borrowed(item.returns),explicit=loan&&item.resultRoot!==null&&item.params.filter(param=>borrowed(param.type)).length>1;
   const parameters=item.params.map(param=>{
-   const type=rust?rustTypes[param.type].replace("'a ",explicit&&param.name===item.resultRoot?"'a ":''):TS_TYPES[param.type];
+   const type=rust?rustTypes[param.type].replace("'a ",explicit&&param.name===item.resultRoot?"'a ":''):publicTypeScriptType(param.type);
    return (rust?param.rust:param.name)+': '+type;
   }).join(', ');
-  const returns=rust?rustTypes[item.returns].replace("'a ",item.resultRoot===null?"'static ":explicit?"'a ":''):TS_TYPES[item.returns];
+  const returns=rust?rustTypes[item.returns].replace("'a ",item.resultRoot===null?"'static ":explicit?"'a ":''):publicTypeScriptType(item.returns);
   const signature=rust?'#[must_use]\n#[rustfmt::skip]\n'+(item.exported?'pub ':'')+'fn '+item.name+(explicit?"<'a>":'')+'(':(item.exported?'export ':'')+'function '+item.javascript+'(';
   return signature+parameters+')'+(rust?' -> ':': ')+returns+' {\n'+body(item.body,4)+'\n}';
  }).join('\n\n');
@@ -260,8 +270,8 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  const output=outputPath??program[0].source.path,relative=(name,base=sourceData.runtimeRoot)=>{const path=posix.relative(posix.dirname(output),base+'/'+name);return path.startsWith('.')?path:'./'+path;};
  const lines=['import type {JsonValue} from '+JSON.stringify(relative('json-macro-runtime.mjs',[...imports].some(ownedAsciiOperation)?sourceData.declarationRoot:sourceData.runtimeRoot))+';'];
  if([...imports].some(name=>ownedBase64Operation(name)))lines.push('import type {Base64Error,Base64Result} from '+JSON.stringify(relative('base64-runtime.mjs'))+';');
- for(const family of ['json-update','json-macro','base64','json','json-option','string-iterator','json-collections','json-iteration','json-state']){
-  const names=[...imports].filter(name=>(ownedStateOperation(name)?'json-state':ownedIterationOnlyOperation(name)?'json-iteration':ownedCollectionOperation(name)?'json-collections':ownedAsciiOperation(name)?'string-iterator':ownedJsonOptionalReaderOperation(name)?'json-option':ownedBase64Operation(name)?'base64':ownedJsonReaderOperation(name)?'json':name.startsWith('json_macro_')?'json-macro':'json-update')===family);
+ for(const family of ['json-update','json-macro','base64','json','json-option','string-iterator','json-collections','json-iteration','json-state','json-fields']){
+  const names=[...imports].filter(name=>(ownedJsonFieldOperation(name)?'json-fields':ownedStateOperation(name)?'json-state':ownedIterationOnlyOperation(name)?'json-iteration':ownedCollectionOperation(name)?'json-collections':ownedAsciiOperation(name)?'string-iterator':ownedJsonOptionalReaderOperation(name)?'json-option':ownedBase64Operation(name)?'base64':ownedJsonReaderOperation(name)?'json':name.startsWith('json_macro_')?'json-macro':'json-update')===family);
   if(names.length)lines.push('import { '+names.map(name=>name+' as __ro_'+name).join(', ')+' } from '+JSON.stringify(relative(family+'-runtime.mjs'))+';');
  }
  return lines.join('\n')+'\n\n'+code+'\n';
@@ -313,6 +323,7 @@ export async function prepareOwnedCoreRuntime(input){
  if(program.some(item=>item.hostCalls.some(call=>ownedAsciiOperation(call.name))))modules.ascii=await import('../extensions/string-iterator-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedCollectionOperation(call.name))))modules.collections=await import('../json-collections-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedIterationOnlyOperation(call.name))))modules.iteration=await import('../json-iteration-runtime.mjs');
+ if(program.some(item=>item.hostCalls.some(call=>ownedJsonFieldOperation(call.name))))modules.fields=await import('../json-fields-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedStateOperation(call.name))))modules.state=await import('../json-state-runtime.mjs');
  checkOwnedCoreProgram(program);const token=Object.freeze({schema:'owned-core-runtime-v1'});runtimes.set(token,{program,modules});return token;
 }
@@ -322,6 +333,7 @@ export function evaluateOwnedCoreProgram(input,name,args,token){
  const env=new Map(item.params.map((param,index)=>[param.name,args[index]]));
  const get=(value,scope)=>{
   switch(value.kind){
+   case 'json-field-call':return evaluateOwnedJsonFieldCall(value,{state,scope,get});
    case 'json-state-call':return evaluateOwnedStateCall(value,{state,scope,get});
    case 'json-collection-call':return evaluateOwnedIterationCall(value,{state,scope,get,run});
    case 'variable':return scope.get(value.name);
@@ -364,6 +376,7 @@ function evaluateOwnedCorePrepared(program,name,args,state){
  const env=new Map(item.params.map((param,index)=>[param.name,args[index]]));
  const get=(value,scope)=>{
   switch(value.kind){
+   case 'json-field-call':return evaluateOwnedJsonFieldCall(value,{state,scope,get});
    case 'json-state-call':return evaluateOwnedStateCall(value,{state,scope,get});
    case 'json-collection-call':return evaluateOwnedIterationCall(value,{state,scope,get,run});
    case 'variable':return scope.get(value.name);
