@@ -339,3 +339,11 @@ interpreters and canonical Rust inverse. Entry/exit facts are conservative acros
 all iterations. Six complete source successors and independent JS/TS/native,
 completion, loan and refusal regression sources are drafted and unrun. General
 arithmetic, application data/effects and all remaining rows still need work.
+
+The [fixed-width integer draft](owned-integer-draft.md) adds thirty native/runtime
+interfaces, operand-derived literal widths, numeric Options, actual forward
+caller rules, canonical inverse and existing three-language source-unit support.
+Eight complete source successors, full native root histories and independent
+boundary, JS/TS/interpreter, source-unit, refusal and native oracle sources are
+drafted and unrun. Standard method adoption, production application and all
+remaining requirement rows are still open.

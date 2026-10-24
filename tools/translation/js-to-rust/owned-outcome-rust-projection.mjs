@@ -2,6 +2,7 @@
 // The consumer must independently reproduce the COMPLETE original Rust syntax.
 import {posix} from 'node:path';
 import {OWNED_OUTCOME_CONTRACTS} from '../owned-outcome-contracts.mjs';
+import {INTEGER_CONTRACTS} from '../integer-contracts.mjs';
 import {JSON_STATE_CONTRACTS} from '../json-state-contracts.mjs';
 import {JSON_FIELD_CONTRACTS} from '../json-field-contracts.mjs';
 import {JSON_ITERATION_CONTRACTS} from '../json-iteration-contracts.mjs';
@@ -12,6 +13,7 @@ const fail=message=>{throw new UnsupportedOwnedRustSource(message);};
 const snake=name=>name.replace(/[A-Z]/gu,character=>'_'+character.toLowerCase());
 const ordinary=name=>typeof name==='string'&&/^[a-z][A-Za-z0-9_]*$/u.test(name)&&!name.startsWith('__ro');
 const families=[
+ ...INTEGER_CONTRACTS.map(row=>({path:row.rustPath,name:row.javascriptName,runtime:'integer',roles:row.parameters})),
  ...OWNED_OUTCOME_CONTRACTS.map(row=>({path:row.rustPath,name:row.javascriptName,runtime:'owned-outcome',roles:row.parameters})),
  ...JSON_FIELD_CONTRACTS.map(row=>({path:row.rustPath,name:row.javascriptName,runtime:'json-fields',roles:row.parameters})),
  ...JSON_STATE_CONTRACTS.map(row=>({path:'crate::translation_state_core::'+row.rustName,name:row.javascriptName,runtime:'json-state',roles:row.parameters})),

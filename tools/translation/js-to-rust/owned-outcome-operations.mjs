@@ -12,6 +12,8 @@ import {ownedStateOperation} from './owned-state-contracts.mjs';
 import {emitOwnedJsonLoop,hasOwnedJsonLoop} from './owned-json-loop-emission.mjs';
 import {ownedOutcomeOperation} from './owned-outcome-contracts.mjs';
 import {emitOwnedOutcomeCall,evaluateOwnedOutcomeCall} from './owned-outcome-emission.mjs';
+import {emitOwnedIntegerCall,evaluateOwnedIntegerCall} from './owned-integer-emission.mjs';
+import {ownedIntegerOperation} from './owned-integer-contracts.mjs';
 import {ownedJsonFieldOperation,emitOwnedJsonFieldCall,evaluateOwnedJsonFieldCall} from './owned-json-fields.mjs';
 import {emitOwnedStateCall,evaluateOwnedStateCall} from './owned-state-emission.mjs';
 import {ownedJsonOptionalReaderOperation,ownedJsonOptionalReaderRustCall} from './owned-json-source.mjs';
@@ -182,6 +184,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
 
  function expr(value,borrowOwned=false){
   switch(value.kind){
+   case 'integer-call':return emitOwnedIntegerCall(value,{rust,expr,imports});
    case 'outcome-call':return emitOwnedOutcomeCall(value,{rust,expr,imports,sequence:()=>sequence++});
    case 'outcome-ok':return rust?'Ok(__ro_copy(&'+expr(value.value)+'))':"({$:'Ok',field0:"+expr(value.value)+'})';
    case 'outcome-err':return rust?'Err('+expr(value.value)+'.to_owned())':"({$:'Err',field0:"+expr(value.value)+'})';
@@ -284,8 +287,8 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  const output=outputPath??program[0].source.path,relative=(name,base=sourceData.runtimeRoot)=>{const path=posix.relative(posix.dirname(output),base+'/'+name);return path.startsWith('.')?path:'./'+path;};
  const lines=['import type {JsonValue} from '+JSON.stringify(relative('json-macro-runtime.mjs',[...imports].some(ownedAsciiOperation)?sourceData.declarationRoot:sourceData.runtimeRoot))+';'];
  if([...imports].some(name=>ownedBase64Operation(name)))lines.push('import type {Base64Error,Base64Result} from '+JSON.stringify(relative('base64-runtime.mjs'))+';');
- for(const family of ['json-update','json-macro','base64','json','json-option','string-iterator','json-collections','json-iteration','json-state','json-fields','owned-outcome']){
-  const names=[...imports].filter(name=>(ownedOutcomeOperation(name)?'owned-outcome':ownedJsonFieldOperation(name)?'json-fields':ownedStateOperation(name)?'json-state':ownedIterationOnlyOperation(name)?'json-iteration':ownedCollectionOperation(name)?'json-collections':ownedAsciiOperation(name)?'string-iterator':ownedJsonOptionalReaderOperation(name)?'json-option':ownedBase64Operation(name)?'base64':ownedJsonReaderOperation(name)?'json':name.startsWith('json_macro_')?'json-macro':'json-update')===family);
+ for(const family of ['json-update','json-macro','base64','json','json-option','string-iterator','json-collections','json-iteration','json-state','json-fields','owned-outcome','integer']){
+  const names=[...imports].filter(name=>(ownedIntegerOperation(name)?'integer':ownedOutcomeOperation(name)?'owned-outcome':ownedJsonFieldOperation(name)?'json-fields':ownedStateOperation(name)?'json-state':ownedIterationOnlyOperation(name)?'json-iteration':ownedCollectionOperation(name)?'json-collections':ownedAsciiOperation(name)?'string-iterator':ownedJsonOptionalReaderOperation(name)?'json-option':ownedBase64Operation(name)?'base64':ownedJsonReaderOperation(name)?'json':name.startsWith('json_macro_')?'json-macro':'json-update')===family);
   if(names.length)lines.push('import { '+names.map(name=>name+' as __ro_'+name).join(', ')+' } from '+JSON.stringify(relative(family+'-runtime.mjs'))+';');
  }
  return lines.join('\n')+'\n\n'+code+'\n';
@@ -331,6 +334,7 @@ fn __ro_with_field(base: &crate::translation_core::Json, key: &str, value: &crat
 /** Prepare only the actual registered module, after fresh complete source joins. */
 export async function prepareOwnedCoreRuntime(input){
  const program=checkOwnedCoreProgram(input),modules={update:await import('../json-update-runtime.mjs'),macro:await import('../json-macro-runtime.mjs')};
+ if(program.some(item=>item.hostCalls.some(call=>ownedIntegerOperation(call.name))))modules.integer=await import('../integer-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedJsonReaderOperation(call.name))))modules.json=await import('../extensions/json-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedJsonOptionalReaderOperation(call.name))))modules.optional=await import('../json-option-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedBase64Operation(call.name))))modules.base64=await import('../base64-runtime.mjs');
@@ -348,6 +352,7 @@ export function evaluateOwnedCoreProgram(input,name,args,token){
  const env=new Map(item.params.map((param,index)=>[param.name,args[index]]));
  const get=(value,scope)=>{
   switch(value.kind){
+   case 'integer-call':return evaluateOwnedIntegerCall(value,{state,scope,get});
    case 'outcome-call':return evaluateOwnedOutcomeCall(value,{state,scope,get});
    case 'outcome-ok':return state.modules.outcome.router_carrier_json_ok(get(value.value,scope));
    case 'outcome-err':return state.modules.outcome.router_carrier_json_err(get(value.value,scope));
@@ -402,6 +407,7 @@ function evaluateOwnedCorePrepared(program,name,args,state){
  const env=new Map(item.params.map((param,index)=>[param.name,args[index]]));
  const get=(value,scope)=>{
   switch(value.kind){
+   case 'integer-call':return evaluateOwnedIntegerCall(value,{state,scope,get});
    case 'outcome-call':return evaluateOwnedOutcomeCall(value,{state,scope,get});
    case 'outcome-ok':return state.modules.outcome.router_carrier_json_ok(get(value.value,scope));
    case 'outcome-err':return state.modules.outcome.router_carrier_json_err(get(value.value,scope));

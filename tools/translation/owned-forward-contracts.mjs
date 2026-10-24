@@ -5,7 +5,10 @@ import {OWNED_OUTCOME_CONTRACTS} from './owned-outcome-contracts.mjs';
 import {JSON_STATE_NATIVE_SOURCE} from './json-state-native-source.mjs';
 import {JSON_FIELDS_NATIVE_SOURCE} from './json-fields-native-source.mjs';
 import {OWNED_OUTCOME_NATIVE_SOURCE} from './owned-outcome-native-source.mjs';
+import {INTEGER_CONTRACTS} from './integer-contracts.mjs';
+import {INTEGER_NATIVE_SOURCE} from './integer-native-source.mjs';
 export const FORWARD_OWNED_CONTRACTS=Object.freeze([
+ ...INTEGER_CONTRACTS.map(row=>Object.freeze({...row,family:'integer',source:INTEGER_NATIVE_SOURCE})),
  ...JSON_STATE_CONTRACTS.map(row=>Object.freeze({...row,family:'state',rustPath:'crate::translation_state_core::'+row.rustName,source:JSON_STATE_NATIVE_SOURCE})),
  ...JSON_FIELD_CONTRACTS.map(row=>Object.freeze({...row,family:'field',rustModule:'translation_json_fields_core',rustSource:row.nativeSource,returns:row.ret,source:JSON_FIELDS_NATIVE_SOURCE})),
  ...OWNED_OUTCOME_CONTRACTS.map(row=>Object.freeze({...row,family:'carrier',rustModule:'translation_carriers_core',rustSource:'src/translation_carriers_core.rs',runtimeModule:'owned-outcome-runtime.mjs',source:OWNED_OUTCOME_NATIVE_SOURCE,parameters:Object.freeze(row.parameters.map(role=>role==='json-text-result'?'shared-json-result':role==='json-owned-option'?'shared-json-option':role)),returns:row.returns})),

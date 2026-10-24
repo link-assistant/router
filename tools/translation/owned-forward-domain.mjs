@@ -35,13 +35,17 @@ function carrierInput(checker,type,kind,path,span,canonical,borrow){
 export function checkForwardOwnedExtra(checker,node,env,path,expected,row,{canonical,current}){
  requireOriginalPrimitiveTryFromChecker(checker);current();if(node.args.length!==row.parameters.length)throw typeError('actual owned field/carrier arity differs',node.span);
  const args=node.args.map((syntax,index)=>{
-  const role=row.parameters[index],shared=role==='shared-json'||role==='shared-json-result'||role==='shared-json-option',borrow=shared&&syntax.k==='routerTextReference',wanted=role==='u64'?{...fixed(64,false),rustPrimitiveName:'u64',rustSourceType:true}:undefined,value=checker.expr(borrow?syntax.value:syntax,env,path,wanted);current();
+  const role=row.parameters[index],shared=role==='shared-json'||role==='shared-json-result'||role==='shared-json-option',borrow=shared&&syntax.k==='routerTextReference',wanted=['u64','i64'].includes(role)?{...fixed(64,role==='i64'),rustPrimitiveName:role,rustSourceType:true}:undefined,value=checker.expr(borrow?syntax.value:syntax,env,path,wanted);current();
   if(role==='shared-json'){canonical(checker,value.type,syntax.span,true);if(!borrow&&!value.type.rustReference)throw unsupported('owned field/carrier JSON input','requires the actual shared source borrow',syntax.span);}
   else if(role==='shared-json-result'||role==='shared-json-option')carrierInput(checker,value.type,role==='shared-json-result'?'Result':'Option',path,syntax.span,canonical,borrow);
   else if(role==='str'){requireBorrowedString(value.type,syntax.span);if(value.type.patternOwnershipRefusal)throw unsupported('owned field/carrier text','requires actual unrefused borrowed str',syntax.span);}
-  else if(role==='u64'){const type=value.type;if(type.kind!=='fixed'||type.bits!==64||type.signed!==false||type.rustPrimitiveName!=='u64'||type.rustReference||type.rustOwnership||type.patternOwnershipRefusal||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)throw unsupported('owned JSON field index','requires actual by-value u64',syntax.span);checker.expectedPrimitiveIdentity(type,wanted,path,syntax.span);}
+  else if(role==='u64'||role==='i64'){const type=value.type;if(type.kind!=='fixed'||type.bits!==64||type.signed!==(role==='i64')||type.rustPrimitiveName!==role||type.rustReference||type.rustOwnership||type.patternOwnershipRefusal||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)throw unsupported('owned JSON field index','requires actual by-value u64',syntax.span);checker.expectedPrimitiveIdentity(type,wanted,path,syntax.span);}
   else throw typeError('unknown owned field/carrier argument domain',syntax.span);return value;
  });
+ if(row.family==='integer'){
+  const domain=row.returns.endsWith('-option')?row.returns.slice(0,-7):row.returns,payload={...fixed(64,domain==='i64'),rustPrimitiveName:domain,rustSourceType:true},type=row.returns.endsWith('-option')?checker.instantiations.option(payload,node.span):payload;
+  if(!['u64','i64'].includes(domain))throw typeError('unknown actual fixed-width return',node.span);if(expected)compatible(checker,type,expected,path,node.span);requireOriginalPrimitiveTryFromChecker(checker);current();return {k:'routerHostCall',id:row.javascriptName,args,type,span:node.span,constEligible:false};
+ }
  const json={...checker.hostType(JSON_TYPES.value,path,node.span),rustSourceType:true};canonical(checker,json,node.span,false);let type;
  if(row.returns==='json')type=json;
  else if(row.returns==='json-text-result')type=checker.instantiations.result(json,{...SOURCE_STRING,rustSourceType:true},node.span);

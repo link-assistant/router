@@ -25,6 +25,7 @@ import {ownedIterationOperation as ownedCollectionOperation,ownedIterationOnlyOp
 import {ownedIntegerLiteral,narrowOwnedNumericLiteral} from './owned-numeric-literals.mjs';
 import {ownedStateOperation,ownedStateCompatible,ownedStateWrittenType,requireOwnedStateSources as requireOwnedCollectionLeaf} from './owned-state-contracts.mjs';
 import {ownedOutcomeOperation,ownedOutcomeType,ownedOutcomeCompatible,requireOwnedOutcomeSources} from './owned-outcome-contracts.mjs';
+import {ownedIntegerOperation,requireOwnedIntegerSources} from './owned-integer-contracts.mjs';
 import {ownedJsonFieldOperation,requireOwnedJsonFieldSources} from './owned-json-fields.mjs';
 import {pairedCollectionCallback} from './owned-collections-paired.mjs';
 import {ownedJsonOptionalReaderOperation} from './owned-json-source.mjs';
@@ -182,7 +183,7 @@ export function ownedCoreRuntimeSources(runtimeRoot='runtime',declarationRoot=ru
   }
  runtimeImportComplete(ts,path,source,file,__runtimeEpoch);
  }
- for(const name of ['json-update-runtime.mjs','json-update-runtime.d.mts','json-macro-runtime.mjs','json-macro-runtime.d.mts','base64-runtime.mjs','base64-runtime.d.mts','json-runtime.d.mts','json-option-runtime.mjs','json-option-runtime.d.mts','json-collections-runtime.mjs','json-collections-runtime.d.mts','json-iteration-runtime.mjs','json-iteration-runtime.d.mts','json-state-runtime.mjs','json-state-runtime.d.mts','json-fields-runtime.mjs','json-fields-runtime.d.mts','owned-outcome-runtime.mjs','owned-outcome-runtime.d.mts'])visit(name);
+ for(const name of ['json-update-runtime.mjs','json-update-runtime.d.mts','json-macro-runtime.mjs','json-macro-runtime.d.mts','base64-runtime.mjs','base64-runtime.d.mts','json-runtime.d.mts','json-option-runtime.mjs','json-option-runtime.d.mts','json-collections-runtime.mjs','json-collections-runtime.d.mts','json-iteration-runtime.mjs','json-iteration-runtime.d.mts','json-state-runtime.mjs','json-state-runtime.d.mts','json-fields-runtime.mjs','json-fields-runtime.d.mts','owned-outcome-runtime.mjs','owned-outcome-runtime.d.mts','integer-runtime.mjs','integer-runtime.d.mts'])visit(name);
  for(const [name,source]of assets)if(/LICENSE|NOTICE/iu.test(name))rows.push({path:runtimeRoot+'/'+name,source});
  assertReverseConcreteSourceHost();return runtimeImportEpochReturn(__runtimeEpoch,rows.sort((a,b)=>a.path.localeCompare(b.path)));
 
@@ -319,8 +320,9 @@ function originalOwnedCoreImport(handle,path,node,analysis){
  let target=originalImportTarget(path,declaration.moduleSpecifier.text,analysis,state),name=(spec.propertyName??spec.name).text,ownerFile=file,ownerDeclaration=declaration;const links=[];
  for(let depth=0;depth<32;depth++){
   const source=state.files.get(target);if(source===undefined)fail('import target missing');links.push({path:target,name,source,from:{path:ownerFile.fileName,span:[ownerDeclaration.getStart(ownerFile),ownerDeclaration.end]}});
-  if(target===state.data.runtimeRoot+'/json-update-runtime.mjs'||target===state.data.runtimeRoot+'/json-macro-runtime.mjs'||target===state.data.runtimeRoot+'/base64-runtime.mjs'||target===state.data.runtimeRoot+'/json-runtime.mjs'||target===state.data.runtimeRoot+'/json-option-runtime.mjs'||target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'||target===state.data.runtimeRoot+'/json-collections-runtime.mjs'||target===state.data.runtimeRoot+'/json-iteration-runtime.mjs'||target===state.data.runtimeRoot+'/json-state-runtime.mjs'||target===state.data.runtimeRoot+'/json-fields-runtime.mjs'||target===state.data.runtimeRoot+'/owned-outcome-runtime.mjs'){
+  if(target===state.data.runtimeRoot+'/json-update-runtime.mjs'||target===state.data.runtimeRoot+'/json-macro-runtime.mjs'||target===state.data.runtimeRoot+'/base64-runtime.mjs'||target===state.data.runtimeRoot+'/json-runtime.mjs'||target===state.data.runtimeRoot+'/json-option-runtime.mjs'||target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'||target===state.data.runtimeRoot+'/json-collections-runtime.mjs'||target===state.data.runtimeRoot+'/json-iteration-runtime.mjs'||target===state.data.runtimeRoot+'/json-state-runtime.mjs'||target===state.data.runtimeRoot+'/json-fields-runtime.mjs'||target===state.data.runtimeRoot+'/owned-outcome-runtime.mjs'||target===state.data.runtimeRoot+'/integer-runtime.mjs'){
    if(target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'&&!ownedAsciiOperation(name))fail('unregistered ASCII runtime export');
+   if(target===state.data.runtimeRoot+'/integer-runtime.mjs'){if(!ownedIntegerOperation(name))fail('unregistered actual integer operation');requireOwnedIntegerSources(state.files,state.data);}
    if(target===state.data.runtimeRoot+'/owned-outcome-runtime.mjs'){if(!ownedOutcomeOperation(name))fail('unregistered actual carrier operation');requireOwnedOutcomeSources(state.files,state.data);}
    if(target===state.data.runtimeRoot+'/json-fields-runtime.mjs'){if(!ownedJsonFieldOperation(name))fail('unregistered JSON field runtime export');requireOwnedJsonFieldSources(state.files,state.data);}
    const typesOnly=spec.isTypeOnly||declaration.importClause?.isTypeOnly;
@@ -364,6 +366,7 @@ function originalOwnedCoreType(handle,path,type,analysis){
    if(binding.target===state.data.runtimeRoot+'/json-collections-runtime.mjs'&&ownedCollectionOperation(binding.name))return 'json-list-ref';
    const ascii=ownedAsciiOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'&&ascii)return ascii.ret;
    if(binding.target===state.data.runtimeRoot+'/base64-runtime.mjs'&&op)return op.ret;
+   const integer=ownedIntegerOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/integer-runtime.mjs'&&integer)return integer.ret;
    const outcome=ownedOutcomeOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/owned-outcome-runtime.mjs'&&outcome)return outcome.ret==='json'?'json-ref':outcome.ret;
    const field=ownedJsonFieldOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/json-fields-runtime.mjs'&&field)return field.ret;
    const reader=ownedJsonReaderOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/json-runtime.mjs'&&reader)return reader.ret;
@@ -383,6 +386,7 @@ function originalOwnedCoreType(handle,path,type,analysis){
    if(binding.target===state.data.runtimeRoot+'/json-collections-runtime.mjs'&&ownedCollectionOperation(binding.name)&&type.indexType.literal.text==='0')return 'json-list-ref';
    const ascii=ownedAsciiOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'&&ascii)return ascii.args[Number(type.indexType.literal.text)];
    const base64=ownedBase64Operation(binding.name);if(binding.target===state.data.runtimeRoot+'/base64-runtime.mjs'&&base64&&type.indexType.literal.text==='0')return base64.input;
+   const integer=ownedIntegerOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/integer-runtime.mjs'&&integer&&Number(type.indexType.literal.text)<integer.args.length)return integer.args[Number(type.indexType.literal.text)];
    const outcome=ownedOutcomeOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/owned-outcome-runtime.mjs'&&outcome&&Number(type.indexType.literal.text)<outcome.args.length)return outcome.args[Number(type.indexType.literal.text)];
    const field=ownedJsonFieldOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/json-fields-runtime.mjs'&&field&&Number(type.indexType.literal.text)<field.args.length)return field.args[Number(type.indexType.literal.text)];
    const reader=ownedJsonReaderOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/json-runtime.mjs'&&reader&&Number(type.indexType.literal.text)<reader.args.length)return reader.args[Number(type.indexType.literal.text)];
@@ -595,6 +599,12 @@ function checkFunction(context,path,declaration,analysis){
     const root=fieldOperation.root===null?null:args[0].root;if(fieldOperation.root!==null&&!root)fail('borrowed JSON field requires a live actual input root');
     hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});requireOwnedCoreSourceCurrent(context);
     return {kind:'json-field-call',name:binding.name,args,type:fieldOperation.ret,root};
+   }
+   const integerOperation=ownedIntegerOperation(binding.name);
+   if(integerOperation&&binding.target===analysis.runtimeRoot+'/integer-runtime.mjs'){
+    requireOwnedCoreSourceCurrent(context);const args=node.arguments.map((argument,index)=>expression(argument,scope,depth+1,false,integerOperation.args[index]));
+    if(args.length!==integerOperation.args.length||args.some((argument,index)=>argument.type!==integerOperation.args[index]))fail('actual fixed-width integer operands differ');
+    hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});requireOwnedCoreSourceCurrent(context);return {kind:'integer-call',name:binding.name,args,type:integerOperation.ret,root:null};
    }
    const stateOperation=ownedStateOperation(binding.name);
    if(stateOperation&&binding.target===analysis.runtimeRoot+'/json-state-runtime.mjs'){

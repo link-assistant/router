@@ -294,3 +294,5 @@ pub mod translation_state_core;
 pub mod translation_json_fields_core;
 
 pub mod translation_carriers_core;
+
+pub mod translation_integer_core;
