@@ -73,6 +73,15 @@ and byte-grouping source successors plus independent JS/TS/interpreter/refusal
 regressions are drafted and unrun. Public/project alias packaging, broader
 generics/records and reverse preservation remain open with the other rows.
 
+The [module alias integration draft](owned-module-alias-draft.md) now connects
+actual imported/dependency aliases to module checking, project units, paired
+signatures and Rust restoration. Existing dependency type exports and type-only
+imports are retained as proposals, with complete fresh tree/Rust reproduction.
+Eight complete original source predecessors and independent strict-consumer,
+source/history/body/constraint regressions remain unrun. Public root type
+packaging, runtime generics/records/effects, production coverage and every
+other incomplete requirement still need their remaining source draft.
+
 The last checkpoint before this phase is `0460fb741`: four complete
 source-history receiving files passed 26 cases in Node and Bun. That historical
 focused evidence does not qualify any change drafted in this phase or the full

@@ -29,7 +29,9 @@ before-images and CST inverses remain in the proposal. Runtime-only mode still
 avoids application translation. There is no persisted result cache or Rust tool.
 
 The entire family, independent multi-language/dependency/conflict/forgery and
-runtime-only regressions, and exported receiving CLI remain unrun. General
-syntax, unannotated multi-module signature proposals, arbitrary native module
+runtime-only regressions, and exported receiving CLI remain unrun. Later source
+drafts add [paired module signatures](owned-project-signatures-draft.md) and
+[module alias integration](owned-module-alias-draft.md). General
+syntax, arbitrary native module
 layout, production adoption, receiving qualification, full parity and the
 remaining issue requirements stay open. No CI or freshness result is claimed.

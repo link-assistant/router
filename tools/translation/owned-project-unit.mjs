@@ -3,7 +3,7 @@
 import {posix} from 'node:path';
 import {OWNED_OUTCOME_NATIVE_INPUTS,ownedOutcomeUnitContext,ownedOutcomeUnitRuntimeSources} from './owned-outcome-unit.mjs';
 import {createOwnedCoreSourceContext,ownedCoreSourceData,requireOwnedCoreSourceCurrent} from './js-to-rust/owned-outcome-source.mjs';
-import {translateOwnedModuleProject} from './js-to-rust/owned-module-project.mjs';
+import {translateOwnedModuleProject} from './js-to-rust/owned-module-aliased-project.mjs';
 import {restoreOwnedModuleProject,recheckOwnedModuleDistribution} from './js-to-rust/owned-module-restore.mjs';
 import {distributeOwnedModuleSource} from './js-to-rust/owned-module-distribution.mjs';
 import {projectOwnedModuleJavaScript} from './js-to-rust/owned-project-signature-inputs.mjs';
@@ -28,5 +28,5 @@ export function translateOwnedProjectUnit({unit,language,current,nativeSources,r
   const receiving=recheckOwnedModuleDistribution(distribution,{context,rust,bundlePath:target==='TypeScript'?checked.ownedProjectTypeScriptBundlePath:checked.ownedProjectBundlePath});histories.push({language:target,distribution,semanticMeta:receiving.meta});for(const row of distribution.modules)projectSources.push({path:row.path,source:row.source,language:target,previousSource:actual.get(row.path)??null,equation:row.equation});
  }
  requireOwnedCoreSourceCurrent(base);requireOwnedCoreSourceCurrent(context);const entry=target=>target===language?current[target]:projectSources.find(row=>row.path===unit.paths[target])?.source;
- return {Rust:rust,JavaScript:entry('JavaScript'),TypeScript:entry('TypeScript'),projectSources,meta:{semanticMeta:checked.meta,moduleSourceHistory:baseline.moduleSourceHistory,moduleRestorationHistory:restoration,signatureProposalHistory:signatureHistory,moduleDistributionHistories:histories,sourceAuthority:false,semanticAuthority:false},generatedFrom:unit.paths.JavaScript,runtimeBefore:unit.runtimes.JavaScript,profile:'router-owned-project-v1',runtimeParity:false,wholeRouterSynchronization:false,rustExecuted:false};
+ return {Rust:rust,JavaScript:entry('JavaScript'),TypeScript:entry('TypeScript'),projectSources,meta:{semanticMeta:checked.meta,typeAliasSourceHistory:checked.ownedTypeAliasSourceHistory??null,moduleSourceHistory:baseline.moduleSourceHistory,moduleRestorationHistory:restoration,signatureProposalHistory:signatureHistory,moduleDistributionHistories:histories,sourceAuthority:false,semanticAuthority:false},generatedFrom:unit.paths.JavaScript,runtimeBefore:unit.runtimes.JavaScript,profile:'router-owned-project-v1',runtimeParity:false,wholeRouterSynchronization:false,rustExecuted:false};
 }

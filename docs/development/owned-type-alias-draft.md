@@ -25,7 +25,9 @@ alias family from growing without limit. There is no cross-invocation cache.
 
 Independent JSON/list behavior, generic defaults/constraints, grouping,
 bigint-versus-number boundaries, source conflicts, unsupported bodies and full
-source-history regressions are drafted and unrun. This additive API is not yet
-integrated with public type packaging or project units. Cross-module aliases,
-general TypeScript inference/generics/records, full reverse preservation,
+source-history regressions are drafted and unrun. The later
+[module integration draft](owned-module-alias-draft.md) connects private and
+dependency aliases to projects, units, paired signatures and Rust restoration.
+Public root type packaging, general TypeScript inference/generics/records,
+full reverse preservation,
 production adoption and every other remaining issue obligation stay open.

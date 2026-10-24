@@ -3,7 +3,7 @@
 import {posix} from 'node:path';
 import {ownershipCompiler} from './vendor/module-syntax.mjs';
 import {createOwnedStateContext,translateOwnedStateTypeScript} from './owned-outcome.mjs';
-import {translateOwnedModuleProject} from './owned-module-project.mjs';
+import {translateOwnedModuleProject} from './owned-module-aliased-project.mjs';
 import {ownedModuleOriginalDeclarations} from './owned-module-distribution.mjs';
 import {ownedCoreSourceData,requireOwnedCoreSourceCurrent} from './owned-outcome-source.mjs';
 import {transportConcreteSourceEquations} from '../concrete-source-equations.mjs';
@@ -72,6 +72,6 @@ export function projectOwnedModuleJavaScript(project,{context,pairedPaths}={}){
    signatureProjectBatches.set(derived,batch);const result=projectOwnedStateUnitJavaScript(row.source,{context:derived,sourcePath:row.path,pairedTypeScriptPath:pairedPaths.get(row.path)});if(result.context!==derived){signatureProjectBatches.delete(derived);derived=result.context;signatureProjectBatches.set(derived,batch);}modules.push({path:row.path,source:result.source});if(result.history)histories.push({path:row.path,...result.history});
   }
   requireOwnedCoreSourceCurrent(context);requireOwnedCoreSourceCurrent(receiving);requireOwnedCoreSourceCurrent(derived);if(qualified)requireOwnedCoreSourceCurrent(qualified.typedContext);
-  return {project:{entry:project.entry,language:'JavaScript',modules},context:derived,history:{schema:'router-owned-project-signature-proposals-v1',modules:histories,pairedModuleHistory:qualified?.result.moduleSourceHistory??null,pairedSemanticMeta:qualified?.result.meta??null,sourceAuthority:false,semanticAuthority:false,runtimeAuthority:false}};
+  return {project:{entry:project.entry,language:'JavaScript',modules},context:derived,history:{schema:'router-owned-project-signature-proposals-v1',modules:histories,pairedModuleHistory:qualified?.result.moduleSourceHistory??null,pairedSemanticMeta:qualified?.result.meta??null,pairedAliasHistory:qualified?.result.ownedTypeAliasSourceHistory??null,sourceAuthority:false,semanticAuthority:false,runtimeAuthority:false}};
  }finally{signatureProjectBatches.delete(receiving);signatureProjectBatches.delete(derived);}
 }
