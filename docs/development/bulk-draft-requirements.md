@@ -230,3 +230,11 @@ source transaction retains its byte limits, source protection, atomic
 installation and full inverse history. The existing CLI adds a runtime mode;
 no application translation or Rust execution is implied. Independent source
 and all receiving/export qualification checks remain unrun.
+
+The [automatic JSON iterator adoption draft](json-iteration-adoption-draft.md)
+copies the complete existing map/filter-map adopter and packet CLI, then adds
+source-selected filter/any/all/owned-find/fold terminals with actual library,
+scope, producer, Cargo, CST and inverse joins. Block/expression callbacks and
+standard collect syntax have source rules. All proposals remain candidate-only;
+independent fresh caller and standard-native oracle regression source is unrun.
+Production adoption/application qualification and the broader open rows remain.
