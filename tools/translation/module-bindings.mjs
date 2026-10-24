@@ -485,12 +485,14 @@ export function resolveModuleBindings({modules,externalModules=new Map(),compila
 
 // Explicit dimension format; every legacy resolver/default byte above remains exact.
 import {isDeriveEnclosingNamespaceContext,deriveEnclosingNamespaceModules,deriveEnclosingNamespaceOutputAt,deriveEnclosingNamespaceHelperAttributeAt,proveDeriveEnclosingNamespaceEffect,deriveEnclosingNamespaceEffectFacts} from './derive-enclosing-namespace-context.mjs';
+import {enumNamespaceBody,originalEnumNamespaceSourcePlan} from './enum-namespace-header.mjs';
 export function resolveEnclosingNamespaceModuleBindings({modules,externalModules=new Map(),compilationProfile:profileInput=null,deriveContext=null,deriveBangContext=null,toolContext=null}={}) {
   if(!Array.isArray(modules) || !(externalModules instanceof Map))throw new TypeError('Binding resolution requires tracked modules and explicit external tables');
   if(deriveContext&&!isDeriveFootprintContext(deriveContext))throw new TypeError('Unsealed derive footprint context');
   if(deriveBangContext){if(!isDeriveEnclosingNamespaceContext(deriveBangContext))throw new TypeError('Unsealed derive bang output context');modules=deriveEnclosingNamespaceModules(deriveBangContext,{deriveContext,modules,externalModules,compilationProfile:profileInput});}
   if(toolContext&&!isToolAttributeContext(toolContext))throw new TypeError('Unsealed tool attribute context');
   const profile=compilationProfile(profileInput);
+  let enumNamespacePlan=null;
   const scopes=new Map(),containers=new Map(),tasks=[],macroUses=[],diagnostics=[];
   const diagnostic=(scope,message,span,extra={})=>{const value={kind:'module-binding',message,source:scope.file,module:[...scope.path],span,...extra};diagnostics.push(value);return value;};
   for(const module of modules) {
@@ -617,8 +619,7 @@ export function resolveEnclosingNamespaceModuleBindings({modules,externalModules
           } else if(tokens[at]?.text===';')add(scope,declaration,name,'value',head.visibility,extra);
         }
         if(term==='enum') {
-          if(tokens[keyword+2]?.text==='<')throw new Error('generic enum variant namespace requires a checked declaration plan');
-          const open=tokens.findIndex((token,index)=>index>keyword && token.text==='{');
+          const open=enumNamespaceBody(tokens,keyword,enumNamespacePlan??=originalEnumNamespaceSourcePlan());
           if(open<0)throw new Error('enum namespace has no body');
           const enumScope={file:scope.file,path:[...scope.path,name],seeds:[],bindings:[],unknownType:uncertain.type,unknownMacro:uncertain.macro,unknownBang:uncertain.bang,unknownAttribute:uncertain.attribute,baseType:uncertain.type,baseMacro:uncertain.macro,baseBang:uncertain.bang,baseAttribute:uncertain.attribute};
           containers.set(key(canonical(enumScope.path)),enumScope);

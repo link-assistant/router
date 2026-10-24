@@ -94,6 +94,22 @@ export function originalImplNamespaceSourcePlan(){
  const value=freeze({schema:'original-impl-enclosing-namespace-source-plan-v1',profileSha256:hash(profileBytes),selections,recipes,wholeCompilerExecuted:false,namespaceAuthority:false,runtimeAuthority:false});implPlans.add(value);if(reusableImplPlan())cachedImplPlan=value;return value;
 }
 export function requireOriginalImplNamespaceSourcePlan(value){if(!implPlans.has(value))fail('copied or foreign impl namespace source plan');return value;}
+// Complete native resolver source witness; no caller verdict is retained.
+const enumPlans=new WeakSet();
+export function originalEnumNamespaceSourcePlan(){
+ const path='compiler/rustc_resolve/src/build_reduced_graph.rs';
+ const selections={item:originalFunction(path,'build_reduced_graph_for_item','BuildReducedGraphVisitor'),variant:originalFunction(path,'visit_variant','Visitor'),visit:originalFunction(path,'visit_item','Visitor')};
+ const recipes=[
+  recipe(selections.item,`ItemKind::Enum(ident, _, _) | ItemKind::Trait(box ast::Trait { ident, .. }) => { let module = self.r.new_module(Some(parent), ModuleKind::Def(def_kind, def_id, Some(ident.name)), expansion.to_expn_id(), item.span, parent.no_implicit_prelude,); self.r.define(parent, ident, TypeNS, (module, vis, sp, expansion)); self.parent_scope.module = module; }`,'original generic parameters do not alter the enclosing enum TypeNS binding'),
+  recipe(selections.variant,`if variant.is_placeholder { self.visit_invoc_in_module(variant.id); return; }`,'unexpanded variants remain independent obligations'),
+  recipe(selections.variant,`self.r.define(parent, ident, TypeNS, (self.res(def_id), vis, variant.span, expn_id));`,'original variant type name in its actual enum namespace'),
+  recipe(selections.variant,`if let Some(ctor_node_id) = variant.data.ctor_node_id() { let feed = self.r.feed(ctor_node_id); let ctor_def_id = feed.key(); let ctor_res = self.res(ctor_def_id); self.r.define(parent, ident, ValueNS, (ctor_res, ctor_vis, variant.span, expn_id)); self.r.feed_visibility(feed, ctor_vis); }`,'only actual tuple/unit constructors bind the value namespace'),
+  recipe(selections.visit,`self.parent_scope.module = orig_module_scope;`,'original enum visitor restores the enclosing parent namespace'),
+ ];
+ const value=freeze({schema:'original-enum-namespace-source-plan-v1',profileSha256:hash(profileBytes),selections,recipes,namespaceAuthority:false,runtimeAuthority:false,genericTypeValidity:false,wholeCompilerExecuted:false});enumPlans.add(value);return value;
+}
+export function requireOriginalEnumNamespaceSourcePlan(value){if(!enumPlans.has(value))fail('copied or foreign enum namespace source plan');return value;}
+
 export function createOriginalAncestorAttributeScopeContext({modules,binding,dependencies}={}){
  if(!Array.isArray(modules)||!isResolvedSourceScopeSet(binding?.scopes)||binding.scopes.length!==modules.length||!isDeriveDependencyProof(dependencies))fail('complete private resolver and dependency source scopes required');
  assertResolvedSourceScopeOrigin(binding.scopes,{modules,compilationProfile:binding.compilationProfile});

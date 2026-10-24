@@ -324,3 +324,11 @@ canonical Rust authority and physical three-language unit synchronization.
 Seven full source successors and independent JS/TS/native oracle, ordering,
 conflict and refusal regression sources are drafted and unrun. Broader effects,
 production application and every remaining requirement row still need work.
+
+The [generic enum namespace draft](generic-enum-namespace-draft.md) replaces a
+blanket generic enum refusal in the enclosing resolver with bounded original
+header selection and retained native resolver recipes. The original scope
+issuer, configuration/visibility and all independent semantic obligations stay
+required. Two complete source successors plus independent namespace/refusal and
+native oracle sources are drafted and unrun. This is no coverage measurement;
+the broader namespace/producer and production application work remains open.
