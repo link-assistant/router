@@ -279,3 +279,11 @@ have implementation and independent unrun regression source. Nine complete
 source originals and full CST successors retain both ordered sequences.
 Standard native caller adoption/forward lowering, source-unit integration,
 generic carriers and the other open rows still require source drafting.
+
+The [owned carrier source-unit draft](owned-outcome-unit-draft.md) connects the
+new private profile to actual JS/TS/Rust authority selection, checked paired
+signature proposals and complete runtime materialization. Nine complete source
+successors compose the original transaction/history producers. Independent
+three-direction, conflict, stale-input and installation cases are drafted and
+unrun. Native standard-source adoption, full forward project lowering and the
+other open rows still require their remaining source draft.
