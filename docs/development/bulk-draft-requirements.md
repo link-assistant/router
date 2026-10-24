@@ -166,6 +166,16 @@ linear/error/borrow flow, both directions/interpreters, assets and method adopti
 remain open integration obligations; these declarations are not translated
 production coverage. All other incomplete requirements remain open.
 
+The [Result translation integration draft](primitive-result-translation-draft.md)
+adds native-bound public domains, actual standard Result/owned-error checks,
+inline callbacks, both interpreters/emitters, canonical Rust proposals, separate
+success/error/capture loan walks, optional error outputs and receiving assets.
+Sixteen complete source predecessors and independent actual JS/strict TS/native
+caller/refusal/inverse cases are drafted and unrun. Option callback syntax
+checking now reads original parameter lists. Automatic Result method adoption,
+broader residual/control, production coverage and all other incomplete rows
+remain open; no test, translator, preparer, Rust tool or CI was executed.
+
 The last checkpoint before this phase is `0460fb741`: four complete
 source-history receiving files passed 26 cases in Node and Bun. That historical
 focused evidence does not qualify any change drafted in this phase or the full

@@ -5,9 +5,9 @@ import {transportConcreteSyntaxSource} from '../concrete-syntax-meta.mjs';
 import {captureSourceModuleViews,originalModuleViewItems} from '../source-module-views.mjs';
 import {ownedJsonOptionalPayload as originalPayload} from './owned-json-source.mjs';
 export const ownedCollectionOperation=name=>name==='router_core_json_map'?{name,rust:'json_map',returns:'json'}:name==='router_core_json_filter_map'?{name,rust:'json_filter_map',returns:'json-owned-option'}:null;
-export const ownedCollectionOptionalPayload=type=>type==='json-owned-option'?'json':originalPayload(type);
-export const ownedCollectionRustTypes=Object.freeze({'json-list-ref':"&'a [crate::translation_core::Json]",'json-list-owned':'::std::vec::Vec<crate::translation_core::Json>','json-owned-option':'::std::option::Option<crate::translation_core::Json>'});
-export const ownedCollectionTypeScriptTypes=Object.freeze({'json-list-ref':'readonly JsonValue[]','json-list-owned':'readonly JsonValue[]','json-owned-option':"Readonly<{$:'None'}>|Readonly<{$:'Some';field0:JsonValue}>"});
+export const ownedCollectionOptionalPayload=type=>type==='json-owned-option'?'json':type==='text-owned-option'?'text-owned':originalPayload(type);
+export const ownedCollectionRustTypes=Object.freeze({'text-owned-option':'::std::option::Option<::std::string::String>','json-list-ref':"&'a [crate::translation_core::Json]",'json-list-owned':'::std::vec::Vec<crate::translation_core::Json>','json-owned-option':'::std::option::Option<crate::translation_core::Json>'});
+export const ownedCollectionTypeScriptTypes=Object.freeze({'text-owned-option':"Readonly<{$:'None'}>|Readonly<{$:'Some';field0:string}>",'json-list-ref':'readonly JsonValue[]','json-list-owned':'readonly JsonValue[]','json-owned-option':"Readonly<{$:'None'}>|Readonly<{$:'Some';field0:JsonValue}>"});
 export function requireOwnedCollectionLeaf(files){
  const facade=files.get('src/translation_core.rs'),source=files.get('src/translation_core/json_collections.rs');
  if(facade!==ROUTER_FORMATTING_FACADE_SOURCE||source!==ROUTER_CORE_JSON_COLLECTIONS_SOURCE)throw new TypeError('Owned collections require complete actual facade and native leaf');

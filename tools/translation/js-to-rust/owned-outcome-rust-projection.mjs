@@ -6,6 +6,7 @@ import {INTEGER_CONTRACTS} from '../integer-contracts.mjs';
 import {TEXT_CONTRACTS} from '../text-contracts.mjs';
 import {PRIMITIVE_OPTION_CONTRACTS} from '../primitive-option-contracts.mjs';
 import {PRIMITIVE_OPTION_CALLBACK_CONTRACTS} from '../primitive-option-callback-contracts.mjs';
+import {PRIMITIVE_RESULT_CONTRACTS} from '../primitive-result-contracts.mjs';
 import {SSE_CONTRACTS} from '../sse-contracts.mjs';
 import {JSON_STATE_CONTRACTS} from '../json-state-contracts.mjs';
 import {JSON_FIELD_CONTRACTS} from '../json-field-contracts.mjs';
@@ -18,6 +19,7 @@ const snake=name=>name.replace(/[A-Z]/gu,character=>'_'+character.toLowerCase())
 const ordinary=name=>typeof name==='string'&&/^[a-z][A-Za-z0-9_]*$/u.test(name)&&!name.startsWith('__ro');
 const families=[
  ...SSE_CONTRACTS.map(row=>({path:row.rustPath,name:row.javascriptName,runtime:'sse',roles:row.parameters})),
+ ...PRIMITIVE_RESULT_CONTRACTS.map(row=>({path:row.rustPath,name:row.javascriptName,runtime:'primitive-result',roles:row.parameters})),
  ...PRIMITIVE_OPTION_CALLBACK_CONTRACTS.map(row=>({path:row.rustPath,name:row.javascriptName,runtime:'primitive-option-callback',roles:row.parameters})),
  ...PRIMITIVE_OPTION_CONTRACTS.map(row=>({path:row.rustPath,name:row.javascriptName,runtime:'primitive-option',roles:row.parameters})),
  ...TEXT_CONTRACTS.map(row=>({path:row.rustPath,name:row.javascriptName,runtime:'text',roles:row.parameters})),
@@ -71,6 +73,7 @@ export function projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot,
   if(text==='::std::result::Result<crate::translation_core::Json,::std::string::String>')return 'ReturnType<typeof '+imported('router_carrier_json_ok','owned-outcome')+'>';
   if(text==='::std::option::Option<crate::translation_core::Json>')return 'ReturnType<typeof '+imported('router_carrier_json_some','owned-outcome')+'>';
   const primitiveOptionInputs={'::std::option::Option<bool>':'bool','::std::option::Option<u64>':'u64','::std::option::Option<i64>':'i64','::std::option::Option<&str>':'str'};if(Object.hasOwn(primitiveOptionInputs,text))return 'ReturnType<typeof '+imported('router_option_'+primitiveOptionInputs[text]+'_none','primitive-option')+'>';
+  const resultInputs={'::std::result::Result<bool,::std::string::String>':'bool','::std::result::Result<u64,::std::string::String>':'u64','::std::result::Result<i64,::std::string::String>':'i64','::std::result::Result<&str,::std::string::String>':'str'};if(Object.hasOwn(resultInputs,text))return 'ReturnType<typeof '+imported('router_result_'+resultInputs[text]+'_ok','primitive-result')+'>';if(text==='::std::option::Option<::std::string::String>')return 'ReturnType<typeof '+imported('router_result_bool_err_option','primitive-result')+'>';
   if(text==='&str')return 'string';if(text==='bool')return 'boolean';
   if(text==='u64')return 'Parameters<typeof '+imported('router_state_json_with_index','json-state')+'>[1]';
   if(text==='usize')return 'Parameters<typeof '+imported('router_core_json_index_usize','json-update')+'>[1]';
@@ -82,7 +85,7 @@ export function projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot,
    '&crate::translation_core::Json':['serde_json_value_get_string','json'],
    '&str':['serde_json_value_as_str','json'],bool:['serde_json_value_as_bool','json'],u64:['serde_json_value_as_u64','json'],i64:['serde_json_value_as_i64','json'],
   };
-  const normalized=text.replaceAll("&'a",'&').replaceAll("&'static",'&');if(normalized==='::std::result::Result<crate::translation_core::Json,::std::string::String>')return 'ReturnType<typeof '+imported('router_carrier_json_ok','owned-outcome')+'>';if(normalized==='i64')return 'Parameters<typeof '+imported('json_macro_i64','json-macro')+'>[0]';const match=/^::std::option::Option<(.+)>$/u.exec(normalized);if(!match)return null;
+  const normalized=text.replaceAll("&'a",'&').replaceAll("&'static",'&');if(normalized.startsWith('::std::result::Result<')&&!normalized.includes('crate::translation_core::Json'))return type(normalized);if(normalized==='::std::option::Option<::std::string::String>')return type(normalized);if(normalized==='::std::result::Result<crate::translation_core::Json,::std::string::String>')return 'ReturnType<typeof '+imported('router_carrier_json_ok','owned-outcome')+'>';if(normalized==='i64')return 'Parameters<typeof '+imported('json_macro_i64','json-macro')+'>[0]';const match=/^::std::option::Option<(.+)>$/u.exec(normalized);if(!match)return null;
   const row=values[match[1]];if(!row)fail('optional Rust return needs its original registered domain');return 'ReturnType<typeof '+imported(...row)+'>';
  }
  function expression(node,names,depth=0,lowering=false){

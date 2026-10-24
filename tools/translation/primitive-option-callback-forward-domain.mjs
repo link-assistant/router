@@ -8,7 +8,7 @@ import {typeError,unsupported} from './vendor/meta-language/translation/diagnost
 const primitive=domain=>domain==='str'?SOURCE_STR:domain==='bool'?BOOL:['u64','i64'].includes(domain)?{...fixed(64,domain==='i64'),rustPrimitiveName:domain,rustSourceType:true}:null;
 export function checkForwardPrimitiveOptionCallback(checker,node,env,path,expected,row,{current,carrier}){
  requireOriginalPrimitiveTryFromChecker(checker);current();
- if(node.args.length!==2||node.args[1]?.k!=='routerLambda'||node.args[1].arity!==row.callbackParameters.length)throw unsupported('primitive Option callback','requires its actual inline fixed-arity closure',node.span);
+ if(node.args.length!==2||node.args[1]?.k!=='routerLambda'||node.args[1].params?.length!==row.callbackParameters.length||node.args[1].params.some(parameter=>parameter.pattern))throw unsupported('primitive Option callback','requires its actual inline fixed-arity closure',node.span);
  const assertPrimitive=(actual,domain,span)=>{
   const wanted=primitive(domain);if(!wanted)throw typeError('Unknown callback payload',span);
   if(domain==='str'){requireBorrowedString(actual,span);if(actual.patternOwnershipRefusal)throw unsupported('primitive Option callback text','requires actual unrefused borrowed str',span);}

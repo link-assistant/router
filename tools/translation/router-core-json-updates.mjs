@@ -641,7 +641,7 @@ function checkedState(checker,node,capture,env,path,expected){
   {phase:'language',rules:[{id:'owned-json-state:check-all-actual-source-operands-and-ownership',apply:()=>checkForwardJsonState(checker,node,env,path,expected,{canonical,current})}]},
   {phase:'repository',rules:[{id:'router:retain-qualified-owned-state-native-boundary',apply:call=>({...call,compatibilityCore:{id:'router-owned-json-'+row.family+'-v1',symbol:row.rustPath,sourceSha256:row.sourceSha256,sourceTrace:capture.receipt.trace,libraryImplementation:'untranslated-owned-rust-library',boundedProjection:true,runtimeParity:false}})}]},
  ]).run(null);
- const value=stage.value,record={checker,frame,id:value.id,args:copyMetadata(value.args)},roots=row.family==='primitive-option-callback'?[value.args[0].type,value.args[1].type.result,value.type]:[...value.args.map(argument=>argument.type),value.type];
+ const value=stage.value,record={checker,frame,id:value.id,args:copyMetadata(value.args)},roots=row.parameters.includes('callback')?[value.args[0].type,value.args[1].type.result,value.type]:[...value.args.map(argument=>argument.type),value.type];
  record.layouts=copyMetadata(captureBorrowedLayouts(checker,roots));record.roots=copyMetadata(roots);record.key=metadataDigest({functionName:frame.functionName,source:frame.syntax,call:value,layouts:record.layouts});value.compatibilityCore.sourceProjectionKey=record.key;record.call=copyMetadata(value);
  (frame.projections??=new Set()).add(record);issued.set(value.compatibilityCore,record);current();return value;
 }
@@ -651,3 +651,6 @@ export function hasOriginalPrimitiveOptionAbsentLoan(node){const record=projecti
 
 // Membership is rejoined to the private current original caller and callback.
 export function originalPrimitiveOptionCallbackProjection(node){const record=projectionRecord(node),row=record&&jsonStateContract(record.id);return record&&row?.family==='primitive-option-callback'?row:null;}
+
+// Actual private current whole-call membership, never public row metadata.
+export function originalPrimitiveResultProjection(node){const record=projectionRecord(node),row=record&&jsonStateContract(record.id);return record&&row?.family==='primitive-result'?row:null;}

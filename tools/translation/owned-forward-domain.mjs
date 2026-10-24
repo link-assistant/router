@@ -2,6 +2,7 @@
 import {sameType,fixed,BOOL} from './checked-types.mjs';
 import {checkForwardPrimitiveOption} from './primitive-option-forward-domain.mjs';
 import {checkForwardPrimitiveOptionCallback} from './primitive-option-callback-forward-domain.mjs';
+import {checkForwardPrimitiveResult} from './primitive-result-forward-domain.mjs';
 import {JSON_TYPES} from './extensions/json-contracts.mjs';
 import {SOURCE_STRING,SOURCE_STR,sourceShared} from './extensions/source-contract-types.mjs';
 import {canonicalResult} from './extensions/result-iterators.mjs';
@@ -35,6 +36,7 @@ function carrierInput(checker,type,kind,path,span,canonical,borrow){
  forwardOwnedCarrier(checker,pointee,kind,path,span,canonical);
 }
 export function checkForwardOwnedExtra(checker,node,env,path,expected,row,{canonical,current}){
+ if(row.family==='primitive-result')return checkForwardPrimitiveResult(checker,node,env,path,expected,row,{current,carrier:forwardOwnedCarrier,ownedString:forwardOwnedString});
  if(row.family==='primitive-option-callback')return checkForwardPrimitiveOptionCallback(checker,node,env,path,expected,row,{current,carrier:forwardOwnedCarrier});
  if(row.family==='primitive-option')return checkForwardPrimitiveOption(checker,node,env,path,expected,row,{current,carrier:forwardOwnedCarrier});
  requireOriginalPrimitiveTryFromChecker(checker);current();if(node.args.length!==row.parameters.length)throw typeError('actual owned field/carrier arity differs',node.span);

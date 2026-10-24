@@ -14,7 +14,7 @@ const operations=Object.freeze(rows.map(([name,args,ret,method,root])=>Object.fr
 export const ownedJsonReaderOperation=name=>operations.find(row=>row.name===name)??null;
 const payloads=Object.freeze({'json-option-ref':'json-ref','str-option-ref':'str','bool-option':'bool','u64-option':'u64','i64-option':'i64'});
 export const ownedJsonOptionalPayload=type=>Object.hasOwn(payloads,type)?payloads[type]:null;
-export const ownedJsonBorrowed=type=>type==='json-option-ref'||type==='str-option-ref';
+export const ownedJsonBorrowed=type=>type==='json-option-ref'||type==='str-option-ref'||type==='str-text-result';
 export const ownedJsonRustTypes=Object.freeze({'json-option-ref':"::std::option::Option<&'a crate::translation_core::Json>",'str-option-ref':"::std::option::Option<&'a str>",'bool-option':'::std::option::Option<bool>','u64-option':'::std::option::Option<u64>','i64-option':'::std::option::Option<i64>',u64:'u64',i64:'i64'});
 const maybe=value=>"Readonly<{$:'None'}>|Readonly<{$:'Some';field0:"+value+'}>';
 export const ownedJsonTypeScriptTypes=Object.freeze({'json-option-ref':maybe('JsonValue'),'str-option-ref':maybe('string'),'bool-option':maybe('boolean'),'u64-option':maybe('bigint'),'i64-option':maybe('bigint'),u64:'bigint',i64:'bigint'});

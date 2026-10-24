@@ -1,5 +1,5 @@
 import {checkSourceLifetimeRefusals} from './declaration-refusals.mjs';
-import {originalPrimitiveOptionCallbackProjection} from '../router-core-json-updates.mjs';
+import {originalPrimitiveOptionCallbackProjection,originalPrimitiveResultProjection} from '../router-core-json-updates.mjs';
 import {isDeepStrictEqual} from 'node:util';
 // Generated vector checker association and original lifetime equations.
 const checkedLists = new WeakMap();
@@ -522,6 +522,11 @@ function origins(node,env,context,returns,depth=0) {
       const origin=region.identity==='static'?new Set(['static']):inputs.length?new Set(inputs.flatMap(input=>[...(arguments_[input.param]?at(arguments_[input.param],input.path):new Set([UNKNOWN]))])):new Set([UNKNOWN]);
       return [key(region.path),origin];
     })));
+  }
+  if(node.k==='routerHostCall'&&originalPrimitiveResultProjection(node)){
+    const row=originalPrimitiveResultProjection(node),arguments_=node.args.map((value,index)=>row.parameters[index]==='callback'?null:read(value));let called=new Set();
+    if(row.parameters.includes('callback')){const callback=node.args[1];if(callback?.k!=='routerLambda'||callback.arity!==row.callbackParameters.length)throw unsupported('primitive Result callback origins','requires its actual complete qualified callback',node.span);const callbackReturns=[],tail=origins(callback.binding,new Map(env),{...context,lambdaInputs:row.callbackParameters.map(domain=>domain==='text-owned'?new Set():project(arguments_[0],['argument',0])),mutableBorrowLocals:new Map(context.mutableBorrowLocals),callbackCapturedBorrowLocals:new Set(context.mutableBorrowLocals.values()),loopExitStates:[]},callbackReturns,depth+1);called=union(tail,...callbackReturns.map(row=>row.value));}
+    if(!borrowed)return new Set();if(row.method==='ok')return prefix(arguments_[0],['argument',0]);if(row.method==='err')return new Set();if(row.method==='ok_option'||row.method==='map_err')return arguments_[0];if(row.method==='map')return prefix(called,['argument',0]);if(row.method==='and_then')return called;if(row.method==='or_else')return union(arguments_[0],called);throw unsupported('primitive Result borrowed output','requires a complete declared native borrow equation',node.span);
   }
   if(node.k==='routerHostCall'&&originalPrimitiveOptionCallbackProjection(node)){
     const row=originalPrimitiveOptionCallbackProjection(node),callback=node.args[1];if(node.args.length!==2||callback?.k!=='routerLambda'||callback.arity!==row.callbackParameters.length)throw unsupported('primitive Option callback origins','requires its actual complete qualified callback',node.span);

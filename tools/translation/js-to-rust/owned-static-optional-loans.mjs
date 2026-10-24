@@ -9,5 +9,5 @@ export function hasOwnedStaticOptionalLoan(value,{stringLoan}={}){
  if(value.kind==='primitive-option-call'){const row=ownedPrimitiveOptionOperation(value.name);return row?.method==='some'&&stringLoan(value.args[0])?.root===null;}
  if(value.kind==='text-call'){const row=ownedTextOperation(value.name);return row?.root!==null&&row?.root!==undefined&&stringLoan(value.args[row.root])?.root===null;}
  if(value.kind==='choose')return hasOwnedStaticOptionalLoan(value.then,{stringLoan})&&hasOwnedStaticOptionalLoan(value.else,{stringLoan});
- return ['variable','local-call','primitive-option-callback-call'].includes(value.kind)&&Object.hasOwn(value,'staticOptionalBorrow')&&value.staticOptionalBorrow===true;
+ return ['variable','local-call','primitive-option-callback-call','primitive-result-call'].includes(value.kind)&&Object.hasOwn(value,'staticOptionalBorrow')&&value.staticOptionalBorrow===true;
 }

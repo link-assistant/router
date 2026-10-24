@@ -10,6 +10,8 @@ import {TEXT_CONTRACTS} from './text-contracts.mjs';
 import {PRIMITIVE_OPTION_CONTRACTS} from './primitive-option-contracts.mjs';
 import {PRIMITIVE_OPTION_CALLBACK_CONTRACTS} from './primitive-option-callback-contracts.mjs';
 import {PRIMITIVE_OPTION_CALLBACK_NATIVE_SOURCE} from './primitive-option-callback-native-source.mjs';
+import {PRIMITIVE_RESULT_CONTRACTS} from './primitive-result-contracts.mjs';
+import {PRIMITIVE_RESULT_NATIVE_SOURCE} from './primitive-result-native-source.mjs';
 import {PRIMITIVE_OPTION_NATIVE_SOURCE} from './primitive-option-native-source.mjs';
 import {TEXT_NATIVE_SOURCE} from './text-native-source.mjs';
 import {INTEGER_NATIVE_SOURCE} from './integer-native-source.mjs';
@@ -17,6 +19,7 @@ import {SSE_CONTRACTS} from './sse-contracts.mjs';
 import {SSE_NATIVE_SOURCE,SSE_ORIGINAL_FRAMER_SOURCE} from './sse-native-source.mjs';
 export const FORWARD_OWNED_CONTRACTS=Object.freeze([
  ...SSE_CONTRACTS.map(row=>Object.freeze({...row,family:'stream',source:SSE_NATIVE_SOURCE,nativeDependencies:Object.freeze([Object.freeze({module:'sse',path:'src/sse.rs',source:SSE_ORIGINAL_FRAMER_SOURCE})])})),
+ ...PRIMITIVE_RESULT_CONTRACTS.map(row=>Object.freeze({...row,family:'primitive-result',source:PRIMITIVE_RESULT_NATIVE_SOURCE,nativeDependencies:Object.freeze([Object.freeze({module:'translation_text_core',path:'src/translation_text_core.rs',source:TEXT_NATIVE_SOURCE})])})),
  ...PRIMITIVE_OPTION_CALLBACK_CONTRACTS.map(row=>Object.freeze({...row,family:'primitive-option-callback',source:PRIMITIVE_OPTION_CALLBACK_NATIVE_SOURCE,nativeDependencies:Object.freeze([Object.freeze({module:'translation_primitive_option_core',path:'src/translation_primitive_option_core.rs',source:PRIMITIVE_OPTION_NATIVE_SOURCE}),Object.freeze({module:'translation_text_core',path:'src/translation_text_core.rs',source:TEXT_NATIVE_SOURCE})])})),
  ...PRIMITIVE_OPTION_CONTRACTS.map(row=>Object.freeze({...row,family:'primitive-option',source:PRIMITIVE_OPTION_NATIVE_SOURCE})),
  ...TEXT_CONTRACTS.map(row=>Object.freeze({...row,family:'text',source:TEXT_NATIVE_SOURCE})),
