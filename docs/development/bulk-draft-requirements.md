@@ -201,6 +201,14 @@ explicit owned text construction, both directions/interpreters, assets/export,
 method adoption and HTTP integration remain open. No coverage or parity result
 is claimed, and every other incomplete requirement remains open.
 
+The [module-qualified operation draft](owned-operation-dispatch-draft.md) adds
+actual Rust module/method selection and unique checked operation IDs, refusing
+ambiguous bare names. It covers existing Option/Result name collisions and the
+prerequisite for copied libraries. Three complete source histories and
+independent same-project JS/strict TS, wrong-module and inverse regression
+source are drafted and unrun. Owned-success caller integration and every other
+unfinished requirement remain open.
+
 The last checkpoint before this phase is `0460fb741`: four complete
 source-history receiving files passed 26 cases in Node and Bun. That historical
 focused evidence does not qualify any change drafted in this phase or the full

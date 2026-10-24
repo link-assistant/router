@@ -18,19 +18,19 @@ import {transportConcreteSyntaxSource} from './concrete-syntax-meta.mjs';
 import {createRulePipeline} from './rule-pipeline.mjs';
 import {unsupported,typeError} from './vendor/meta-language/translation/diagnostics.js';
 const fail=()=>{throw new TypeError('Owned JSON state requires its actual complete native leaf and source frame');};
-export function forwardJsonStateContract(name){const row=jsonStateContract(name);return row?{...row,source:row.source,sourceSha256:createHash('sha256').update(row.source).digest('hex')}:null;}
+export function forwardJsonStateContract(name,options){const row=jsonStateContract(name,options);return row?{...row,source:row.source,sourceSha256:createHash('sha256').update(row.source).digest('hex')}:null;}
 function leaf(state,row){
  const rows=state.facts.modules.filter(module=>module.path.join('::')===row.rustModule);
  if(rows.length!==1||rows[0].file!==crateModuleSourcePath(state.facts.modules,row.rustSource)||rows[0].source!==row.source||rows[0].configurationCondition!=='active'||!rows[0].sourceView)fail();
  const items=originalSourceModuleItems(rows[0]),members=items.filter(item=>item.term==='fn'&&item.name===row.rustName);if(members.length!==1)fail();if(row.family==='stream')requireSseLockedDependencies(originalMatchesDependencyProof(state.facts));for(const dependency of row.nativeDependencies??[]){const originals=state.facts.modules.filter(module=>module.path.join('::')===dependency.module);if(originals.length!==1||originals[0].file!==crateModuleSourcePath(state.facts.modules,dependency.path)||originals[0].source!==dependency.source||originals[0].configurationCondition!=='active'||!originals[0].sourceView)fail();originalSourceModuleItems(originals[0]);}return rows[0];
 }
 export function parseRouterCoreJsonState(parser,path){
- const c=parser.cursor,row=jsonStateContract(c.peek(4).value);if(!row||!['crate','::',row.rustModule,'::'].every((word,index)=>c.is(word,index))||[0,2,4].some(index=>c.peek(index).kind!=='identifier'))return null;
+ const c=parser.cursor,row=jsonStateContract(c.peek(4).value,{rustModule:c.peek(2).value});if(!row||!['crate','::',row.rustModule,'::'].every((word,index)=>c.is(word,index))||[0,2,4].some(index=>c.peek(index).kind!=='identifier'))return null;
  if(!originalDataFreezeIntrinsicsUnchanged())fail();const state=matchesParserFacts(parser),facade=requireRouterCoreFacade(parser),original=leaf(state,row),view=original.sourceView,tokens=c.tokens,start=c.index,first=c.peek();
  const stage=createRulePipeline([{phase:'language',rules:[{id:'owned-json-state:serialize-reparse-complete-actual-native-leaf-CST',apply:()=>{const concrete=transportConcreteSyntaxSource(original.source,{language:'Rust'});if(concrete.source!==row.source)fail();return concrete;}}]},{phase:'repository',rules:[{id:'router:bind-actual-qualified-owned-state-operation',apply:value=>value}]}]).run(null);
  const current=index=>{if(!originalDataFreezeIntrinsicsUnchanged())fail();requireRouterCoreFacadeCurrent(parser,facade);if(matchesParserFacts(parser)!==state||leaf(state,row)!==original||original.sourceView!==view||parser.cursor!==c||c.tokens!==tokens||c.index!==index)fail();};
  current(start);c.index+=5;c.expect('(','owned JSON state');const args=[];while(!c.is(')')){args.push(parser.expr(path));if(!c.eat(','))break;}const last=c.expect(')','owned JSON state');current(c.index);
- return {node:{k:'routerCoreJsonUpdateCall',operation:row.rustName,args,span:{start:first.start,end:last.end}},trace:stage.trace};
+ return {node:{k:'routerCoreJsonUpdateCall',operation:row.javascriptName,args,span:{start:first.start,end:last.end}},trace:stage.trace};
 }
 function jsonList(checker,type,path,span,canonical,owned){
  if(type?.kind!=='array'||type.rustSourceType!==true||type.rustFixedArray||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)throw unsupported('owned JSON state list','requires an actual canonical JSON Vec or shared slice',span);

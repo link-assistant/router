@@ -28,7 +28,7 @@ export const FORWARD_OWNED_CONTRACTS=Object.freeze([
  ...JSON_FIELD_CONTRACTS.map(row=>Object.freeze({...row,family:'field',rustModule:'translation_json_fields_core',rustSource:row.nativeSource,returns:row.ret,source:JSON_FIELDS_NATIVE_SOURCE})),
  ...OWNED_OUTCOME_CONTRACTS.map(row=>Object.freeze({...row,family:'carrier',rustModule:'translation_carriers_core',rustSource:'src/translation_carriers_core.rs',runtimeModule:'owned-outcome-runtime.mjs',source:OWNED_OUTCOME_NATIVE_SOURCE,parameters:Object.freeze(row.parameters.map(role=>role==='json-text-result'?'shared-json-result':role==='json-owned-option'?'shared-json-option':role)),returns:row.returns})),
 ]);
-export const forwardOwnedContract=name=>FORWARD_OWNED_CONTRACTS.find(row=>row.rustName===name||row.javascriptName===name)??null;
+export const forwardOwnedContract=(name,{rustModule=null}={})=>{const rows=FORWARD_OWNED_CONTRACTS.filter(row=>(row.rustName===name||row.javascriptName===name)&&(rustModule===null||row.rustModule===rustModule));return rows.length===1?rows[0]:null;};
 export {FORWARD_OWNED_CONTRACTS as JSON_STATE_CONTRACTS,forwardOwnedContract as jsonStateContract};
 export function forwardOwnedImports(runtimeModule='./runtime/effects.mjs'){
  const groups=new Map();for(const row of FORWARD_OWNED_CONTRACTS){if(!groups.has(row.runtimeModule))groups.set(row.runtimeModule,[]);groups.get(row.runtimeModule).push(row.javascriptName);}
