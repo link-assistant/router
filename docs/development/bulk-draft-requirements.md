@@ -66,6 +66,13 @@ All independent regressions remain unrun. New signatures without written input
 types, generic/inferred domains, remaining effects, production coverage and all
 other unfinished rows remain open.
 
+The [owned type alias draft](owned-type-alias-draft.md) adds native-bound local
+generic alias substitutions, finite constraints/defaults, preserved grouping,
+complete source inverses and fresh whole-body owned checking. Complete checker
+and byte-grouping source successors plus independent JS/TS/interpreter/refusal
+regressions are drafted and unrun. Public/project alias packaging, broader
+generics/records and reverse preservation remain open with the other rows.
+
 The last checkpoint before this phase is `0460fb741`: four complete
 source-history receiving files passed 26 cases in Node and Bun. That historical
 focused evidence does not qualify any change drafted in this phase or the full
