@@ -146,6 +146,8 @@ export function projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot,
    if(statement.kind==='let')return (statement.mutable?'let ':'const ')+(names.get(statement.name)??statement.name)+' = '+expression(statement.value,names,depth+1)+';';
    if(statement.kind==='assign')return (names.get(statement.name)??statement.name)+' = '+expression(statement.value,names,depth+1)+';';
    if(statement.kind==='return')return 'return '+expression(statement.value,names,depth+1)+';';
+   if(statement.kind==='break'||statement.kind==='continue')return statement.kind+';';
+   if(statement.kind==='while')return 'while ('+expression(statement.condition,names,depth+1)+') '+block(statement.body,names,depth+1);
    if(statement.kind==='for-json'){const value=unwrap(statement.value);if(value?.kind!=='call'||value.path!=='crate::translation_state_core::json_values_copy'||value.args.length!==1)fail('canonical copied JSON iterator source required');return 'for (const '+(names.get(statement.name)??statement.name)+' of '+expression(adapter(value.args[0],'shared-json-list'),names,depth+1)+') '+block(statement.body,names,depth+1);}
    if(statement.kind==='if')return 'if ('+expression(statement.condition,names,depth+1)+') '+block(statement.yes,names,depth+1)+' else '+block(statement.no,names,depth+1);
    fail('unknown original Rust statement');

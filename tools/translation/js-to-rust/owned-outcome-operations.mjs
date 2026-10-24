@@ -261,6 +261,8 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  function body(statements,indent){return statements.map(statement=>{
   const pad=' '.repeat(indent);
   if(statement.kind==='for-json')return emitOwnedJsonLoop(statement,{rust,expr,body,sequence:()=>sequence++,indent,rustName});
+  if(statement.kind==='break'||statement.kind==='continue')return pad+statement.kind+';';
+  if(statement.kind==='while')return pad+'while ('+expr(statement.cond)+') {\n'+body(statement.body,indent+4)+'\n'+pad+'}';
   if(statement.kind==='let')return pad+(rust?(statement.mutable?'let mut ':'let '):(statement.mutable?'let ':'const '))+(rust?rustName(statement.name):statement.name)+' = '+expr(statement.value)+';';
   if(statement.kind==='assign')return pad+(rust?rustName(statement.name):statement.name)+' = '+expr(statement.value)+';';
   if(statement.kind==='return')return pad+'return '+expr(statement.value)+';';
@@ -378,13 +380,15 @@ export function evaluateOwnedCoreProgram(input,name,args,token){
   for(const statement of body){
    if(statement.kind==='let'||statement.kind==='assign')scope.set(statement.name,get(statement.value,scope));
    else if(statement.kind==='return')return {returned:true,value:get(statement.value,scope)};
+   else if(statement.kind==='break'||statement.kind==='continue')return {[statement.kind]:true,returned:false};
+   else if(statement.kind==='while'){while(get(statement.cond,scope)){const child=new Map(scope),completion=execute(statement.body,child);for(const name of scope.keys())scope.set(name,child.get(name));if(completion.returned)return completion;if(completion.break)break;}}
    else if(statement.kind==='for-json'){
     if(!state.modules.state)fail('unissued bounded JSON list iterator');const values=state.modules.state.router_state_json_values_copy(get(statement.value,scope));
-    for(const value of values){const child=new Map(scope);child.set(statement.name,value);const completion=execute(statement.body,child);for(const name of scope.keys())if(name!==statement.name)scope.set(name,child.get(name));if(completion.returned)return completion;}
+    for(const value of values){const child=new Map(scope);child.set(statement.name,value);const completion=execute(statement.body,child);for(const name of scope.keys())if(name!==statement.name)scope.set(name,child.get(name));if(completion.returned)return completion;if(completion.break)break;}
    }
    else{
     const child=new Map(scope),completion=execute(get(statement.cond,scope)?statement.then:statement.else,child);
-    for(const name of scope.keys())scope.set(name,child.get(name));if(completion.returned)return completion;
+    for(const name of scope.keys())scope.set(name,child.get(name));if(completion.returned||completion.break||completion.continue)return completion;
    }
   }return {returned:false};
  };
@@ -430,13 +434,15 @@ function evaluateOwnedCorePrepared(program,name,args,state){
   for(const statement of body){
    if(statement.kind==='let'||statement.kind==='assign')scope.set(statement.name,get(statement.value,scope));
    else if(statement.kind==='return')return {returned:true,value:get(statement.value,scope)};
+   else if(statement.kind==='break'||statement.kind==='continue')return {[statement.kind]:true,returned:false};
+   else if(statement.kind==='while'){while(get(statement.cond,scope)){const child=new Map(scope),completion=execute(statement.body,child);for(const name of scope.keys())scope.set(name,child.get(name));if(completion.returned)return completion;if(completion.break)break;}}
    else if(statement.kind==='for-json'){
     if(!state.modules.state)fail('unissued bounded JSON list iterator');const values=state.modules.state.router_state_json_values_copy(get(statement.value,scope));
-    for(const value of values){const child=new Map(scope);child.set(statement.name,value);const completion=execute(statement.body,child);for(const name of scope.keys())if(name!==statement.name)scope.set(name,child.get(name));if(completion.returned)return completion;}
+    for(const value of values){const child=new Map(scope);child.set(statement.name,value);const completion=execute(statement.body,child);for(const name of scope.keys())if(name!==statement.name)scope.set(name,child.get(name));if(completion.returned)return completion;if(completion.break)break;}
    }
    else{
     const child=new Map(scope),completion=execute(get(statement.cond,scope)?statement.then:statement.else,child);
-    for(const name of scope.keys())scope.set(name,child.get(name));if(completion.returned)return completion;
+    for(const name of scope.keys())scope.set(name,child.get(name));if(completion.returned||completion.break||completion.continue)return completion;
    }
   }return {returned:false};
  };

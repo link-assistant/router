@@ -332,3 +332,10 @@ issuer, configuration/visibility and all independent semantic obligations stay
 required. Two complete source successors plus independent namespace/refusal and
 native oracle sources are drafted and unrun. This is no coverage measurement;
 the broader namespace/producer and production application work remains open.
+
+The [owned loop-control draft](owned-control-draft.md) adds actual while,
+break/continue and mutable scalar control to the owned profile, both independent
+interpreters and canonical Rust inverse. Entry/exit facts are conservative across
+all iterations. Six complete source successors and independent JS/TS/native,
+completion, loan and refusal regression sources are drafted and unrun. General
+arithmetic, application data/effects and all remaining rows still need work.

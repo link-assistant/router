@@ -704,23 +704,29 @@ function checkFunction(context,path,declaration,analysis){
   }
  }
 
- function block(statements,scope,depth){
+ function block(statements,scope,depth,loopDepth=0){
   const body=[];let terminated=false;
   for(const statement of statements){
    tick(depth);if(terminated)fail('statement after terminating return');
-   if(ts.isForOfStatement(statement)){
+   if(ts.isBreakStatement(statement)||ts.isContinueStatement(statement)){
+    if(statement.label||loopDepth===0)fail('unlabeled control requires an actual enclosing loop in this function');body.push({kind:ts.isBreakStatement(statement)?'break':'continue'});terminated=true;
+   }else if(ts.isWhileStatement(statement)){
+    if(!ts.isBlock(statement.statement))fail('ordinary Boolean while block required');const local=branchScope(scope);for(const [name,value]of local){if(ownedBase64Result(value.type))local.delete(name);else if(value.mutable)local.set(name,{...value,variant:undefined,some:undefined});}
+    const cond=expression(statement.expression,local,depth+1);if(cond.type!=='bool')fail('actual primitive Boolean loop condition required');const checked=block(statement.statement.statements,refine(local,cond,true),depth+1,loopDepth+1);
+    for(const [name,value]of scope)if(value.mutable)scope.set(name,{...value,variant:undefined,some:undefined});body.push({kind:'while',cond,body:checked.body});
+   }else if(ts.isForOfStatement(statement)){
     const declarationList=statement.initializer;if(statement.awaitModifier||!ts.isVariableDeclarationList(declarationList)||(declarationList.flags&ts.NodeFlags.BlockScoped)!==ts.NodeFlags.Const||declarationList.declarations.length!==1||!ts.isBlock(statement.statement))fail('ordinary const JSON for-of block required');
     const declaration=declarationList.declarations[0];if(!ts.isIdentifier(declaration.name)||declaration.type||declaration.initializer||declaration.exclamationToken||declaration.name.text.startsWith('__ro'))fail('ordinary inferred immutable loop binding required');
     if(paired){const matches=paired.evidence.locals.filter(row=>row.javascriptSpan[0]===declaration.getStart(file)&&row.javascriptSpan[1]===declaration.end);if(matches.length!==1||matches[0].typeSpan)fail('paired loop input requires its original inferred native declaration');}
     const value=expression(statement.expression,scope,depth+1);if(!['json-list-ref','json-list-owned'].includes(value.type))fail('actual canonical JSON slice or Vec iteration required');
-    const local=branchScope(scope);for(const [name,value]of local)if(ownedBase64Result(value.type))local.delete(name);local.delete(declaration.name.text);
-    const name=bind(declaration.name,{type:'json-ref',root:'__ro_loop_root_'+declaration.getStart(file),input:false},local),checked=block(statement.statement.statements,local,depth+1);
-    mergeMoves(scope,branchScope(scope),local);body.push({kind:'for-json',name,value,body:checked.body});
+    const local=branchScope(scope);for(const [name,value]of local){if(ownedBase64Result(value.type))local.delete(name);else if(value.mutable)local.set(name,{...value,variant:undefined,some:undefined});}local.delete(declaration.name.text);
+    const name=bind(declaration.name,{type:'json-ref',root:'__ro_loop_root_'+declaration.getStart(file),input:false},local),checked=block(statement.statement.statements,local,depth+1,loopDepth+1);
+    mergeMoves(scope,branchScope(scope),local);for(const [name,value]of scope)if(value.mutable)scope.set(name,{...value,variant:undefined,some:undefined});body.push({kind:'for-json',name,value,body:checked.body});
    }else if(ts.isVariableStatement(statement)){
 
     const declarationKind=statement.declarationList.flags&ts.NodeFlags.BlockScoped,mutable=declarationKind===ts.NodeFlags.Let;if(statement.modifiers?.length||!mutable&&declarationKind!==ts.NodeFlags.Const)fail('only fresh lexical const or owned let declarations');
     for(const declaration of statement.declarationList.declarations){
-     if(!declaration.initializer||declaration.exclamationToken||declaration.type)fail('unsupported local declaration');const value=expression(declaration.initializer,scope,depth+1);if(mutable&&(!['json','json-list-owned','json-text-result','json-owned-option'].includes(value.type)||value.root!==null))fail('mutable local requires a fresh owned JSON or Vec value');
+     if(!declaration.initializer||declaration.exclamationToken||declaration.type)fail('unsupported local declaration');const value=expression(declaration.initializer,scope,depth+1);if(mutable&&(!['json','json-list-owned','json-text-result','json-owned-option','bool','usize','u64','i64','text-owned'].includes(value.type)||value.root!==null))fail('mutable local requires a fresh owned JSON or Vec value');
      if(paired){
       const evidence=paired.evidence.locals.filter(item=>item.javascriptSpan[0]===declaration.getStart(file)&&item.javascriptSpan[1]===declaration.end);if(evidence.length!==1)fail('actual paired local span differs');
       const span=evidence[0].typeSpan;
@@ -736,7 +742,7 @@ function checkFunction(context,path,declaration,analysis){
     }
    }else if(ts.isExpressionStatement(statement)&&ts.isBinaryExpression(statement.expression)&&statement.expression.operatorToken.kind===ts.SyntaxKind.EqualsToken&&ts.isIdentifier(statement.expression.left)){
     const assignment=statement.expression,entry=scope.get(assignment.left.text);
-    if(!entry?.mutable||!['json','json-list-owned','json-text-result','json-owned-option'].includes(entry.type)||checker.getSymbolAtLocation(assignment.left)!==entry.symbol)fail('assignment requires the actual mutable owned JSON or Vec binding');
+    if(!entry?.mutable||!['json','json-list-owned','json-text-result','json-owned-option','bool','usize','u64','i64','text-owned'].includes(entry.type)||checker.getSymbolAtLocation(assignment.left)!==entry.symbol)fail('assignment requires the actual mutable owned JSON or Vec binding');
     const value=expression(assignment.right,scope,depth+1);if(value.type!==entry.type||value.root!==null)fail('assigned owned domain or loan differs');
     scope.set(assignment.left.text,{...entry,variant:undefined,some:undefined});body.push({kind:'assign',name:assignment.left.text,value});
    }else if(ts.isReturnStatement(statement)&&statement.expression){
@@ -750,7 +756,7 @@ function checkFunction(context,path,declaration,analysis){
     if(resultType!==null&&(resultType!==value.type||resultRoot!==effectiveRoot&&!(value.type==='str'&&loan)&&!(ownedJsonOptionalPayload(value.type)&&(value.kind==='option-none'||resultOnlyAbsent))))fail('return domains differ');resultType=value.type;if(value.kind!=='option-none'){resultRoot=effectiveRoot;resultOnlyAbsent=false;}if(value.type==='str')stringResultLoan=loan;scalarReturnValues.push(value);body.push({kind:'return',value});terminated=true;
    }else if(ts.isIfStatement(statement)&&ts.isBlock(statement.thenStatement)&&(!statement.elseStatement||ts.isBlock(statement.elseStatement))){
     const cond=expression(statement.expression,scope,depth+1);if(cond.type!=='bool')fail('nonboolean condition');
-    const a=refine(branchScope(scope),cond,true),b=refine(branchScope(scope),cond,false),yes=block(statement.thenStatement.statements,a,depth+1),no=block(statement.elseStatement?.statements??[],b,depth+1);
+    const a=refine(branchScope(scope),cond,true),b=refine(branchScope(scope),cond,false),yes=block(statement.thenStatement.statements,a,depth+1,loopDepth),no=block(statement.elseStatement?.statements??[],b,depth+1,loopDepth);
     if(yes.terminated!==no.terminated){const continuing=yes.terminated?b:a;for(const name of scope.keys())scope.set(name,continuing.get(name));}else mergeMoves(scope,a,b);body.push({kind:'if',cond,then:yes.body,else:no.body});terminated=yes.terminated&&no.terminated;
    }else fail('statement/effects outside owned profile');
   }
