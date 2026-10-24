@@ -53,3 +53,11 @@ export function router_async_receive(value,cancellation){
 export function router_async_close(value){const state=resource(receiverStates,value);if(state.reader)throw new TypeError('Close requires an exclusive idle receiver');state.closed=true;pump(state);return null;}
 export function router_async_dispose(value){const state=resource(receiverStates,value);if(state.reader)throw new TypeError('Dispose requires an exclusive idle receiver');state.disposed=true;state.closed=true;state.queue=[];state.bytes=0;pump(state);return null;}
 export const ASYNC_CONTROL_SOURCE_AUTHORITY=freeze({sourceAuthority:false,semanticAuthority:false,runtimeParity:false});
+
+// Native-library implementation bridge, never a portable application operation.
+// The subscription belongs to this single awaited runtime operation and is
+// detached on success, failure and cancellation; no compiler verdict is stored.
+export function withAsyncCancellation(value,operation){
+ const state=resource(cancellationStates,value);if(typeof operation!=='function'||isProxy(operation))throw new TypeError('Actual cancellation-scoped runtime operation required');
+ return defer(async()=>{const controller=new AbortController(),unsubscribe=subscribe(state,()=>controller.abort());try{return await operation(controller.signal);}finally{unsubscribe();}});
+}

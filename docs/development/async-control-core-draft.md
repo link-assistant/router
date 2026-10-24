@@ -34,3 +34,10 @@ Opaque native type/call qualification, future/exclusive-borrow checking, both
 translation directions, runtime asset/export closure, HTTP use and production
 integration remain open with the rest of the requirement ledger. No parity or
 production coverage is claimed for this foundation.
+
+A source-drafted native-library implementation bridge now scopes an AbortSignal
+subscription to one actual lazy awaited operation. It detaches on success and
+failure and preserves fault identity. This supports HTTP implementation code;
+it grants no portable callback, opaque handle, Drop or application qualification.
+Complete runtime/declaration originals and independent lazy, active/preexisting
+cancellation and detached-listener cases are retained and unrun.

@@ -21,3 +21,4 @@ export function router_async_receive(argument0:Receiver,argument1:Cancellation):
 export function router_async_close(argument0:Receiver): null;
 export function router_async_dispose(argument0:Receiver): null;
 export const ASYNC_CONTROL_SOURCE_AUTHORITY:Readonly<{sourceAuthority:false;semanticAuthority:false;runtimeParity:false}>;
+export function withAsyncCancellation<T>(value:Cancellation,operation:(signal:AbortSignal)=>T|PromiseLike<T>):Deferred<T>;

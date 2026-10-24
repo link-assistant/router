@@ -1,0 +1,10 @@
+// Runtime bridge oracle SOURCE. Unrun during bulk drafting.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {router_cancel_new as cancel,router_cancel_set as set,withAsyncCancellation as scoped} from '../async-control-runtime.mjs';
+import {prepareAsyncCancellationScopeSources} from '../prepare-async-cancellation-scope-sources.mjs';
+const limits={timeout:60000};
+test('scoped cancellation stays lazy shares the real token and detaches after success',limits,async()=>{const token=cancel();let calls=0,signal;const pending=scoped(token,value=>{calls++;signal=value;return 7;});assert.equal(calls,0);assert.equal(await pending,7);assert.equal(calls,1);assert.equal(signal.aborted,false);set(token);assert.equal(signal.aborted,false);});
+test('active and preexisting cancellation reach the actual runtime operation',limits,async()=>{const token=cancel();let started;const ready=new Promise(resolve=>{started=resolve;}),pending=Promise.resolve(scoped(token,signal=>new Promise(resolve=>{signal.addEventListener('abort',()=>resolve('cancelled'),{once:true});started();})));await ready;set(token);assert.equal(await pending,'cancelled');let called=0;assert.equal(await scoped(token,signal=>{called++;return signal.aborted;}),true);assert.equal(called,1);});
+test('scoped failures keep fault identity and detach subscriptions on every completion',limits,async()=>{const token=cancel(),fault=Error('same fault');let signal;await assert.rejects(()=>Promise.resolve(scoped(token,value=>{signal=value;throw fault;})),error=>error===fault);set(token);assert.equal(signal.aborted,false);assert.throws(()=>scoped({},()=>null),TypeError);assert.throws(()=>scoped(cancel(),new Proxy(()=>null,{})),TypeError);});
+test('scoped cancellation source copies retain complete inverses and both phases',limits,()=>{const plan=prepareAsyncCancellationScopeSources();for(const row of plan.files){assert.equal(row.current,row.currentAfter);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}assert.equal(plan.receivingExecuted,false);});
