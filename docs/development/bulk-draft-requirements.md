@@ -294,3 +294,10 @@ packaging rules through the existing whole-function private issuer. Nine full
 source successors and independent actual Rust caller/strict target/refusal cases
 are drafted and unrun. Production application, namespace/producer closure,
 generic flows, effects, CI/freshness and the other ledger rows remain open.
+
+The [automatic owned carrier adoption draft](owned-carrier-adoption-draft.md)
+adds source-selected Option/Result fallback/conversion rules, a bounded packet
+sequence and fresh checked selected installation through three complete source
+copies. Independent actual caller, strict target, refusal, packet and application
+cases are drafted and unrun. Production application, broader forms, original
+dispatch/Drop equivalence and the other open requirements still need work.
