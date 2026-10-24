@@ -11,6 +11,7 @@ import {hasOriginalCallbackLoan,hasOriginalSourceFrame,originalCallbackLoanInput
 import {hasOriginalSharedDomainGuard} from './extensions/standard-borrowed-body.mjs';
 import {sharedReferenceCopyIdentity} from './shared-reference-copy-source.mjs';
 import {unsupported} from './vendor/meta-language/translation/diagnostics.js';
+import {checkOwnedLoop,checkOwnedLoopExit,ownedLoopInput,unreachableOwnedFlowState} from './owned-json-loop-flow.mjs';
 const linear=kind=>kind==='json'||kind==='linear'||kind==='json-vector'||kind==='owned-text'||kind==='loan-result',path=parts=>JSON.stringify(parts);
 const empty=()=>({loans:new Map(),tags:null});
 const copy=value=>({loans:new Map([...value.loans].map(([key,roots])=>[key,new Set(roots)])),tags:value.tags&&new Set(value.tags),...(value.localLoanType?{localLoanType:value.localLoanType,localLoanOrigin:value.localLoanOrigin}:{})});
@@ -154,7 +155,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
   if(!generic||active.has(type.name))return false;const inner=new Set(active).add(type.name);
   return generic.arguments.some(argument=>retainsLoan(checker.resolveType(argument,owner.modulePath,entry.span),inner));
  };
- const clone=state=>({names:new Map(state.names),available:new Map(state.available),values:new Map([...state.values].map(([slot,value])=>[slot,copy(value)])),alive:state.alive,callbackCaptures:state.callbackCaptures,lambdaInputs:state.lambdaInputs,iterationOwnedInputs:state.iterationOwnedInputs,optionCallback:state.optionCallback,primitiveOptionCallback:state.primitiveOptionCallback,primitiveResultCallback:state.primitiveResultCallback,standardScope:state.standardScope,localReturns:state.localReturns,tailNode:state.tailNode,entry:state.entry,external:state.external,callPath:state.callPath,functionReturns:state.functionReturns});
+ const clone=state=>({names:new Map(state.names),available:new Map(state.available),values:new Map([...state.values].map(([slot,value])=>[slot,copy(value)])),alive:state.alive,callbackCaptures:state.callbackCaptures,lambdaInputs:state.lambdaInputs,iterationOwnedInputs:state.iterationOwnedInputs,optionCallback:state.optionCallback,primitiveOptionCallback:state.primitiveOptionCallback,primitiveResultCallback:state.primitiveResultCallback,standardScope:state.standardScope,localReturns:state.localReturns,tailNode:state.tailNode,entry:state.entry,external:state.external,callPath:state.callPath,functionReturns:state.functionReturns,loopFrame:state.loopFrame});
  const bind=(state,name,type,mutable,node,value=empty(),input=false)=>{const local=value.localLoanType;if(local&&JSON.stringify(local)!==JSON.stringify(type))refuse('original callback loan type changed',node);const kind=local?'borrow':domain(type,node);if(kind==='loan-result')refuse('stored borrowed Result requires a separate retained-carrier proof',node);const slot={name,kind,type,mutable,input,...(local?{localLoanType:local,localLoanOrigin:value.localLoanOrigin}:{})};state.names.set(name,slot);state.available.set(slot,true);state.values.set(slot,copy(value));return slot;};
  const createState=(current,arguments_=null,external=new Set(),callPath=[])=>{
   const state={names:new Map(),available:new Map(),values:new Map(),alive:true,entry:current,external,callPath,functionReturns:[]};
@@ -185,7 +186,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
    checker.expectedOwnership(node.type,slot.localLoanType,state.entry.modulePath,node.span);checker.expectedPrimitiveIdentity(node.type,slot.localLoanType,state.entry.modulePath,node.span);
   }
   const value=copy(state.values.get(slot));ensureRoots(value,state,node);
-  if(mode==='borrow'&&slot.kind==='json')value.loans.set(path([]),new Set([slot]));
+  if(mode==='borrow'&&['json','json-vector'].includes(slot.kind))value.loans.set(path([]),new Set([slot]));
   if(mode!=='borrow'&&linear(slot.kind)){if(live(state,slot))refuse('moving an owned JSON root with a live lexical loan: '+slot.name,node);state.available.set(slot,false);}
   // Copying a genuine shared reference does not move its pointee. A by-value
   // operation still needs the separate canonical-ownership checker above us.
@@ -245,6 +246,9 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
    const result=selectedBody(callback.binding,()=>visit(callback.binding,child,'move',depth+1));if(result.loans.size)refuse('a collection callback cannot return a borrowed output',node);return empty();
   }
 
+  if(['routerWhile','routerFor'].includes(node.k))return checkOwnedLoop(node,state,{checker,clone,visit,merge,refine,domain,empty,copy,ensureRoots,refuse,depth});
+  if(['routerBreak','routerContinue'].includes(node.k))return checkOwnedLoopExit(node,state,{clone,visit,depth,empty,refuse});
+  if(node.k==='routerLoopInput')return ownedLoopInput(node,state,{checker,domain,ensureRoots,copy,refuse});
   if(['lit','unit'].includes(node.k)){if(linear(kind)||kind==='borrow'||kind==='loan-option')refuse('unproved JSON literal ownership',node);return empty();}
   if(node.k==='let'){
    const value=read(node.value);ensureRoots(value,state,node.value);
@@ -256,7 +260,13 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
    if(node.target.k!=='var')refuse('only direct local reinitialization is supported',node);
    const slot=state.names.get(node.target.name);
    if(state.callbackCaptures?.has(slot))refuse('collection callback cannot replace captured state',node);
-   if(!slot?.mutable||slot.kind!=='json'||domain(node.value.type,node.value)!=='json')refuse('assignment needs its actual mutable canonical JSON binding',node);
+   if(!slot?.mutable)refuse('assignment needs its actual mutable local binding',node);
+   const assigned=domain(node.value.type,node.value);
+   if(slot.kind==='copy'){
+    if(assigned!=='copy'||!sameType(node.value.type,slot.type))refuse('scalar assignment needs its actual identical native Copy domain',node);checker.expectedOwnership(node.value.type,slot.type,state.entry.modulePath,node.span);checker.expectedPrimitiveIdentity(node.value.type,slot.type,state.entry.modulePath,node.span);
+    const value=read(node.value);if(value.loans.size)refuse('mutable scalar retained loans require a separate flow rule',node);state.available.set(slot,true);state.values.set(slot,empty());return read(node.body);
+   }
+   if(slot.kind!=='json'||assigned!=='json')refuse('assignment needs its actual mutable canonical JSON binding',node);
    if(live(state,slot))refuse('reinitializing an owned JSON root with a live lexical loan: '+slot.name,node);
    read(node.value);state.available.set(slot,true);state.values.set(slot,empty());return read(node.body);
   }
@@ -294,7 +304,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
    merge(state,left,right);return node.k==='routerIf'?read(node.body):result;
   }
   if(node.k==='routerReturn'){
-   const value=read(node.value);if(state.localReturns){state.localReturns.push({value:copy(value),state:clone(state)});}else{returnRoots(value,node,state);state.functionReturns.push(copy(value));}const unreachable=clone(state);unreachable.functionReturns=[];if(state.localReturns)unreachable.localReturns=[];visit(node.body,unreachable,'move',depth+1);state.alive=false;return empty();
+   const value=read(node.value);if(state.localReturns){state.localReturns.push({value:copy(value),state:clone(state)});}else{returnRoots(value,node,state);state.functionReturns.push(copy(value));}const unreachable=unreachableOwnedFlowState(state,clone);visit(node.body,unreachable,'move',depth+1);state.alive=false;return empty();
   }
   if(node.k==='routerDiscard'){read(node.value);return read(node.body);}
   if(node.k==='routerTry'){

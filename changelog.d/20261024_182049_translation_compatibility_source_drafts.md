@@ -8,6 +8,8 @@
   both caller translation directions, interpreter and receiving integration.
 - Drafted guarded HTTP/1 clients, bounded pull streams, buffered sends,
   explicit cleanup, matching network policy and receiving runtime closure.
+- Drafted native owned-JSON loop flow for while/range/shared iteration,
+  scalar updates, backedge moves, lexical loans and local loop exits.
 
 These sources and independent regression cases remain unverified during the
 required bulk-drafting phase. Complete translation, production parity, async

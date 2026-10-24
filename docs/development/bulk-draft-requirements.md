@@ -610,3 +610,12 @@ strict declaration, local-server behavioral and native Rust oracle source are
 drafted and unrun. Opaque resource/future/Drop caller qualification, both transport
 translation directions, proxy/TLS/protocol modes, production adoption and every
 other open requirement remain unfinished. Nothing has been executed or pushed.
+
+The [owned forward loop draft](owned-forward-loops-draft.md) now adds actual
+while/range/shared-JSON iteration flow, matching Copy scalar assignments,
+bounded fixed-point move/loan analysis, live iterator roots and separate
+break/continue/callback boundaries to the existing private source checker.
+Complete originals/rules and independent JS/strict TS/native oracle source are
+drafted and unrun. Broader iterator adapters/reference patterns, mutable retained
+loans, arbitrary aggregates/effects/Drop, production use and all other open
+requirements still need their remaining draft. No tests or experiments have run.
