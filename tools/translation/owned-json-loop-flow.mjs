@@ -18,7 +18,13 @@ export function checkOwnedLoopExit(node,state,{clone,visit,depth,empty,refuse}){
  visit(node.body,unreachableOwnedFlowState(state,clone),'move',depth+1);state.alive=false;return empty();
 }
 function checkedInput(node,state,helpers){
- const {visit,domain,ensureRoots,empty,refuse,depth}=helpers;
+ const {checker,visit,domain,ensureRoots,empty,refuse,depth}=helpers;
+ if(node?.k==='routerIteratorOperation'&&node.op==='take'&&node.args?.length===1&&node.type?.kind==='routerIterator'){
+  if(!sameType(node.type.element,node.object?.type?.element))refuse('take cannot change its actual checked iterator element',node);checker.expectedOwnership(node.type.element,node.object.type.element,state.entry.modulePath,node.span);checker.expectedPrimitiveIdentity(node.type.element,node.object.type.element,state.entry.modulePath,node.span);
+  const held=checkedInput(node.object,state,helpers),count=node.args[0];if(count.type?.kind!=='fixed'||count.type.rustPrimitiveName!=='usize'||count.type.rustReference||count.type.rustOwnership||count.type.patternOwnershipRefusal||domain(count.type,count)!=='copy')refuse('take count needs its actual by-value native usize',count);
+  const anchor={name:'<actual pending iterator receiver>',kind:'borrow',input:false,mutable:false};if(held.loans.size){state.available.set(anchor,true);state.values.set(anchor,helpers.copy(held));}
+  try{const value=visit(count,state,'copy',depth+1);if(value.loans.size)refuse('take count cannot retain a loan',count);ensureRoots(held,state,node);}finally{state.available.delete(anchor);state.values.delete(anchor);}return held;
+ }
  if(node?.k==='routerRange'){
   if(node.type?.kind!=='routerIterator'||node.type.element?.kind!=='fixed'||node.start?.type?.kind!=='fixed'||node.end?.type?.kind!=='fixed')refuse('range loop requires actual checked bounded native integer operands',node);
   for(const value of [node.start,node.end]){if(domain(value.type,value)!=='copy')refuse('range endpoints cannot transfer storage',value);const fact=visit(value,state,'copy',depth+1);if(fact.loans.size)refuse('range endpoints cannot conceal retained loans',value);}return empty();

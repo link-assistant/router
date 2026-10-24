@@ -58,3 +58,16 @@ fn exclusive_native_ranges_keep_the_last_increment_inside_the_numeric_domain() {
         assert_eq!(count,expected);
     }
 }
+
+#[test]
+fn actual_take_distinguishes_zero_oversized_and_nested_limits_without_moving_shared_items() {
+    let values = [json!(null),json!("é😀")];
+    for (count,expected) in [(0,vec![]),(1,vec![json!(null)]),(usize::MAX,values.to_vec())] {
+        let mut output = core::json_copy(&json!([]));
+        for value in values.iter().take(count) { output = state::json_append(output,core::json_copy(value)); }
+        assert_eq!(output,json!(expected));
+    }
+    let mut output = core::json_copy(&json!([]));
+    for value in values.iter().take(2).take(1) { output = state::json_append(output,core::json_copy(value)); }
+    assert_eq!(output,json!([null]));
+}

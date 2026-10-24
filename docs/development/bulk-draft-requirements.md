@@ -628,3 +628,10 @@ independent boundary/control/refusal cases and native numeric-edge oracle source
 are drafted and unrun. Other loop forms, broader effects/types, application
 adoption and every other incomplete requirement remain open. No new implementation
 or check has executed.
+
+The owned forward loop draft now also includes shared `Iterator::take` chains,
+actual usize count identity and pending-receiver loans during argument evaluation.
+Complete original rules, independent strict-target/control/refusal cases and
+native oracle source remain unrun. Other iterator adapters, resource/future/Drop
+qualification, broader types/effects, production parity and all other open ledger
+rows still need their remaining draft.

@@ -12,6 +12,8 @@
   scalar updates, backedge moves, lexical loans and local loop exits.
 - Drafted checked JS/TS counted loops with native Rust ranges, inverse source
   restoration and both interpreter paths.
+- Drafted shared iterator take chains with native count identity and retained
+  receiver loans through count evaluation.
 
 These sources and independent regression cases remain unverified during the
 required bulk-drafting phase. Complete translation, production parity, async

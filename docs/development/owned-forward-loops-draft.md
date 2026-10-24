@@ -31,3 +31,10 @@ refusals, malformed dependencies and Rust oracle source are drafted and unrun.
 Existing reverse loops/interpreters remain separately drafted. No translator,
 checker, preparer, test, experiment, local Rust tool or CI has executed. Production
 adoption, remaining loop forms and the rest of the requirement ledger remain open.
+
+The shared iterator lane also drafts `Iterator::take` and nested take chains.
+Actual native `usize` identity remains required. Receiver loans are live during
+count evaluation and the loop body, and count expressions cannot conceal an owner
+move. Original checker/emitter/iterator qualification remains separate from this
+flow extension. Complete source inverses and independent zero, oversized, nested,
+wrong-width and move/refusal cases plus native oracle source are drafted and unrun.
