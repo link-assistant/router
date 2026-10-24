@@ -99,6 +99,13 @@ regressions and native Rust boundary oracle source remain unrun. Full type
 identity, owned/generic/compound public types, broader runtime code/effects,
 production parity and every other unfinished obligation remain open.
 
+The [UTF-8 text core draft](text-core-draft.md) adds twenty matching native/JS
+interfaces, shared declarations, complete root source preparation and independent
+Unicode/byte-boundary/literal replacement/resource refusal oracle source.
+Nothing has run. Translator registration, both direction callers, source units,
+automatic method adoption, production application and the remaining rows still
+need their complete source draft.
+
 The last checkpoint before this phase is `0460fb741`: four complete
 source-history receiving files passed 26 cases in Node and Bun. That historical
 focused evidence does not qualify any change drafted in this phase or the full
