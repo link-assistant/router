@@ -218,6 +218,14 @@ copy/variant/capture/refusal regressions are drafted and unrun. Broader lifetime
 cases, method adoption, production application, HTTP and every other unfinished
 requirement remain open; tests, experiments and CI remain deferred.
 
+The [automatic owned-success Result draft](owned-result-method-draft.md) adds
+four complete selector/corpus/packet/installer copies for ordinary owned String
+successes and mapping/error/default/recovery chains. Both original native
+implementations stay excluded from self-adoption. Independent actual caller,
+strict TS, packet/inverse, selected installation and refusal source is drafted
+and unrun. Production use, wider captures/control, HTTP, other effects and every
+other unfinished requirement remain open; no verification has started.
+
 The last checkpoint before this phase is `0460fb741`: four complete
 source-history receiving files passed 26 cases in Node and Bun. That historical
 focused evidence does not qualify any change drafted in this phase or the full
