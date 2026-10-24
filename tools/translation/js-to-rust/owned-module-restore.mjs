@@ -26,5 +26,5 @@ export function restoreOwnedModuleProject(source,{project,context,sourcePath}={}
    {id:'meta:freshly-recheck-the-entire-reconstructed-module-tree-and-Rust-root',apply:()=>recheckOwnedModuleDistribution(distribution,{context,rust:source,bundlePath:project.language==='TypeScript'?baseline.ownedProjectTypeScriptBundlePath:baseline.ownedProjectBundlePath})},
   ]},
   {phase:'repository',rules:[{id:'router:retain-complete-module-source-inverses-and-unverified-parity-obligations',apply:result=>({...result,restoredModules:distribution.modules,moduleRestorationHistory:{schema:'router-owned-module-restoration-v1',sourcePath,originalRust:source,originalModuleHistory:baseline.moduleSourceHistory,reverseHistory:reverse.ownedRustSourceHistory,distribution,sourceAuthority:false,semanticAuthority:false,runtimeAuthority:false},runtimeParity:false,wholeRouterSynchronization:false,rustExecuted:false})}]},
- ]).run(null);requireOwnedCoreSourceCurrent(context);requireOwnedCoreSourceCurrent(receiving);return {...run.value,moduleRestorationRuleTrace:run.trace};
+ ]).run(null);requireOwnedCoreSourceCurrent(context);requireOwnedCoreSourceCurrent(receiving);return {...run.value,originalModuleBaseline:baseline,moduleRestorationRuleTrace:run.trace};
 }

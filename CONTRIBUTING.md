@@ -30,6 +30,15 @@ draft is not a passing gate, a coverage result or completed delivery. Preserve
 the existing checks and deadlines for the later verification phase, and never
 run Rust tools locally for this task.
 
+The [owned project transaction draft](docs/development/owned-project-unit-draft.md)
+uses physical JS/TS module trees and one packaged Rust file. Keep dependency
+edits in authority/conflict selection, reconstruct actual module bindings from
+fresh sources, and require every receiving tree to reproduce the complete
+authoritative Rust. Identifier maps and stored plans grant no semantic
+permission. Preserve full CST inverses, current native/Cargo/runtime captures,
+atomic installation and rollback. Its additive CLI and regressions remain
+unrun during the current bulk drafting phase.
+
 Use the [fixed parallel command partitions](docs/development/parallel-javascript-gate.md)
 to run complete forward tests, canonical checks and owned-definition checks
 independently. Keep all eight same-SHA stages, every full command and original

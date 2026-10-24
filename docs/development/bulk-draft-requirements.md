@@ -41,6 +41,15 @@ behavioral and refusal regressions are drafted and unrun. Multi-module
 transactions, broader source syntax, production adoption and the remaining
 requirements below still need their complete implementation draft.
 
+The [owned project transaction draft](owned-project-unit-draft.md) now connects
+those modules to complete source-unit proposals, dependency-aware direction
+selection and the original fresh recompute/atomic installation contract. It
+includes initialization of missing targets, Rust-to-original-tree restoration,
+per-language runtime relocation, runtime-only initialization and compiler
+export entrypoints. All implementation and independent regression source is
+unrun. Unannotated multi-module signature proposals, arbitrary native layout,
+broader syntax and the remaining production/delivery requirements stay open.
+
 The last checkpoint before this phase is `0460fb741`: four complete
 source-history receiving files passed 26 cases in Node and Bun. That historical
 focused evidence does not qualify any change drafted in this phase or the full
