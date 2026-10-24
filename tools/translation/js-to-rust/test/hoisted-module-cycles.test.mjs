@@ -49,5 +49,5 @@ test('TypeScript source types remain checked across a function-only cycle',limit
 });
 test('source-copy producer retains original program and refusal case with both ordered sequences',limits,()=>{
  const plan=prepareHoistedModuleCycles();assert.equal(plan.files.length,2);
- for(const row of plan.files){assert.equal(row.current,row.after);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);assert.equal(row.stages[0].inverse,row.before);assert.equal(row.stages[1].inverse,row.language);assert.equal(row.nativeBindings.nativeSemanticScopeChecked,true);}
+ for(const row of plan.files){assert.equal(row.current,row.currentAfter);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);assert.equal(row.stages[0].inverse,row.before);assert.equal(row.stages[1].inverse,row.language);assert.equal(row.nativeBindings.nativeSemanticScopeChecked,true);}
 });

@@ -28,7 +28,7 @@ Component order and original membership remain in module source history.
 
 Cycles with runtime initialization, dynamic imports, module identity/receivers, escaping module callables,
 callable reflection, unreachable
-supplied modules, missing or ambiguous dependencies, entry reexports, classes
+supplied modules, missing or ambiguous dependencies, classes
 and other unsupported declarations remain explicit refusals. This is a pure
 module profile, not a blanket native module bundler or complete class/async
 translator. Existing semantic refusals still apply to every linked body.
@@ -56,3 +56,9 @@ and keep the runtime-constant cycle refused. Both complete CST sequences and
 inverses are required. The new graph, JS/TS cycle, identity/refusal and source
 copy regression sources are drafted and unrun. No performance or production
 coverage result follows from this source extension.
+
+The [public module API draft](module-public-api-draft.md) adds native-selected
+named and star reexports, exact public runtime aliases and scalar type exports.
+Private implementation names stay private. Its complete source equations and
+independent regression sources are unrun; module Rust inverse synchronization,
+generic public type constraints and the other open module forms remain open.

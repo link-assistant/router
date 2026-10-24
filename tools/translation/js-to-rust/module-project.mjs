@@ -2,6 +2,7 @@
 // Original module CSTs remain separate from the checked flattened program.
 import {posix} from 'node:path';
 import {portableModuleOrder} from './module-order.mjs';
+import {moduleDeclarationPublicEdits,packagePortableModuleAPI} from './module-public-api.mjs';
 import {types} from 'node:util';
 import {ownershipCompiler} from './vendor/module-syntax.mjs';
 import {prepareReverseConcreteSource} from './concrete-source.mjs';
@@ -35,13 +36,13 @@ function nativeProject(input){
    else if(input.language==='TypeScript'&&ts.isTypeAliasDeclaration(node)){}
    else if(ts.isEmptyStatement(node)||ts.isExpressionStatement(node)&&ts.isStringLiteral(node.expression)&&node.expression.text==='use strict'){}
    else if(!ts.isImportDeclaration(node)&&!ts.isExportDeclaration(node))fail('unsupported module evaluation or declaration');
-   if(row.path===input.entry&&ts.isExportDeclaration(node))fail('entry reexports require a distinct public-export mapping');
+
   }
   function visit(node){if(ts.isIdentifier(node))allNames.add(node.text);if(ts.isMetaProperty(node)||node.kind===ts.SyntaxKind.ThisKeyword||node.kind===ts.SyntaxKind.SuperKeyword||ts.isCallExpression(node)&&node.expression.kind===ts.SyntaxKind.ImportKeyword)fail('dynamic module identity, receiver or import requires a separate contract');ts.forEachChild(node,visit);}visit(file);edges.set(row.path,targets);
  }
  const initialization=portableModuleOrder({entry:input.entry,nodes:[...input.rows.keys()].map(name=>({path:name,targets:edges.get(name),hasRuntimeInitializers:files.get(PREFIX+name).statements.some(ts.isVariableStatement)}))}),ordered=initialization.order;
  const host={getSourceFile:name=>files.get(name),getDefaultLibFileName:()=>PREFIX+'lib.d.ts',writeFile:()=>fail('native project cannot emit files'),getCurrentDirectory:()=>PREFIX,getDirectories:()=>[],fileExists:name=>files.has(name),readFile:name=>files.get(name)?.text,getCanonicalFileName:name=>name,useCaseSensitiveFileNames:()=>true,getNewLine:()=>'\n',resolveModuleNames:(names,containing)=>names.map(specifier=>{const target=relativeModule(containing.slice(PREFIX.length),specifier,input.rows);return {resolvedFileName:PREFIX+target,extension:/\.(mts|ts)$/u.test(target)?target.endsWith('.mts')?ts.Extension.Mts:ts.Extension.Ts:target.endsWith('.mjs')?ts.Extension.Mjs:ts.Extension.Js,isExternalLibraryImport:false};})};
- const program=ts.createProgram({rootNames:[PREFIX+input.entry],options:compilerOptions,host}),checker=program.getTypeChecker();return {ts,files,ordered,checker,allNames,initialization};
+ const program=ts.createProgram({rootNames:[PREFIX+input.entry],options:compilerOptions,host}),checker=program.getTypeChecker();return {ts,files,ordered,checker,allNames,initialization,program};
 }
 function linkedSource(input){
  const native=nativeProject(input),{ts,files,ordered,checker,allNames}=native,symbols=new Map(),declarations=new Map(),modules=new Map();let serial=0;
@@ -50,6 +51,18 @@ function linkedSource(input){
   for(const declaration of rows){if(!declaration.name||!ts.isIdentifier(declaration.name))fail('named source declaration required');let replacement=declaration.name.text;if(name!==input.entry){do{replacement='routerModuleValue'+serial++;}while(allNames.has(replacement));allNames.add(replacement);}const symbol=checker.getSymbolAtLocation(declaration.name);if(!symbol||symbols.has(symbol))fail('one genuine original declaration symbol required');symbols.set(symbol,replacement);declarations.set(declaration,replacement);}
  }
  function binding(symbol){if(!symbol)return null;if(symbol.flags&ts.SymbolFlags.Alias)symbol=checker.getAliasedSymbol(symbol);if(symbols.has(symbol))return symbols.get(symbol);const names=[...new Set((symbol.declarations??[]).map(node=>declarations.get(node)).filter(Boolean))];return names.length===1?names[0]:null;}
+ const entryFile=files.get(PREFIX+input.entry),entrySymbol=checker.getSymbolAtLocation(entryFile),publicExports=[],publicDeclarations=new Set();if(!entrySymbol)fail('actual native entry module symbol is missing');
+ for(const file of files.values()){
+  const edges=file.statements.filter(node=>ts.isImportDeclaration(node)||ts.isExportDeclaration(node));
+  for(const diagnostic of native.program.getSemanticDiagnostics(file))if(diagnostic.category===ts.DiagnosticCategory.Error&&diagnostic.start!==undefined&&edges.some(node=>diagnostic.start>=node.getStart(file)&&diagnostic.start<node.end))fail('native import/export binding diagnostic: '+ts.flattenDiagnosticMessageText(diagnostic.messageText,' '));
+ }
+ for(const exported of checker.getExportsOfModule(entrySymbol)){
+  const actual=exported.flags&ts.SymbolFlags.Alias?checker.getAliasedSymbol(exported):exported,owners=(actual.declarations??[]).filter(node=>declarations.has(node));
+  if(owners.length!==1)fail('public export has no unique original source declaration');const declaration=owners[0],kind=ts.isTypeAliasDeclaration(declaration)?'type':'value',internalName=declarations.get(declaration);
+  if(kind==='value'&&!ts.isFunctionDeclaration(declaration)&&!ts.isVariableDeclaration(declaration))fail('public value needs a checked function or immutable constant');
+  publicExports.push({publicName:exported.name,internalName,kind,source:declaration.getSourceFile().fileName.slice(PREFIX.length),span:[declaration.getStart(declaration.getSourceFile()),declaration.end],sourceAuthority:false,semanticAuthority:false});if(kind==='value')publicDeclarations.add(declaration);
+ }
+ if(publicExports.length>4096)fail('bounded complete entry export table required');
  function callableUse(node){
   if(!checker.getTypeAtLocation(node).getCallSignatures().length)return;const parent=node.parent;
   if(ts.isCallExpression(parent)&&parent.expression===node||ts.isTypeOfExpression(parent)&&parent.expression===node)return;
@@ -58,7 +71,7 @@ function linkedSource(input){
  }
  for(const name of ordered){
   const file=files.get(PREFIX+name),source=input.rows.get(name).source,edits=source.startsWith('#!')?[{span:[0,2],expected:'#!',replacement:'//',kind:'module-hashbang-trivia'}]:[];
-  for(const node of file.statements){if(ts.isImportDeclaration(node)||ts.isExportDeclaration(node)||ts.isEmptyStatement(node)||ts.isExpressionStatement(node)&&ts.isStringLiteral(node.expression)&&node.expression.text==='use strict')edits.push({span:[node.getStart(file),node.end],expected:node.getText(file),replacement:''});else if(name!==input.entry)for(const modifier of node.modifiers??[])if(modifier.kind===ts.SyntaxKind.ExportKeyword)edits.push({span:[modifier.getStart(file),modifier.end],expected:modifier.getText(file),replacement:''});}
+  edits.push(...moduleDeclarationPublicEdits(ts,file,source,publicDeclarations));
   function replace(node,replacement){const expected=node.getText(file);if(expected!==replacement)edits.push({span:[node.getStart(file),node.end],expected,replacement});}
   function visit(node){
    if(ts.isImportDeclaration(node)||ts.isExportDeclaration(node))return;
@@ -71,16 +84,16 @@ function linkedSource(input){
    if(ts.isIdentifier(node)){const symbol=checker.getSymbolAtLocation(node),replacement=binding(symbol);if(replacement){callableUse(node);replace(node,replacement);}if(symbol?.declarations?.some(ts.isNamespaceImport)&&!(ts.isPropertyAccessExpression(node.parent)&&node.parent.expression===node))fail('namespace object escapes direct source member access');}
    ts.forEachChild(node,visit);
   }visit(file);
-  let after=source,last=source.length+1;for(const row of [...edits].sort((a,b)=>b.span[0]-a.span[0])){if(row.span[1]>=last||source.slice(...row.span)!==row.expected)fail('native selected source edits overlap');after=after.slice(0,row.span[0])+row.replacement+after.slice(row.span[1]);last=row.span[0];}
+  let after=source,last=source.length+1;for(const row of [...edits].sort((a,b)=>b.span[0]-a.span[0])){if(row.span[1]>last||source.slice(...row.span)!==row.expected)fail('native selected source edits overlap');after=after.slice(0,row.span[0])+row.replacement+after.slice(row.span[1]);last=row.span[0];}
   modules.set(name,{path:name,before:source,after,nativeSelections:edits,concreteSyntax:input.rows.get(name).concreteSyntax});
  }
  const equations=transportConcreteSourceEquations([...modules.values()].map(row=>({before:row.before,after:row.after,language:input.language})));[...modules.values()].forEach((row,index)=>{if(equations[index].inverse!==row.before)fail('complete module inverse differs');row.equation=equations[index];});
- const source=ordered.map((name,index)=>'\n// Source module '+index+'\n'+modules.get(name).after).join('\n');if(source.length>LIMIT)fail('complete linked source exceeds existing concrete source bound');return {source,modules:[...modules.values()],order:ordered,initialization:native.initialization};
+ const source=ordered.map((name,index)=>'\n// Source module '+index+'\n'+modules.get(name).after).join('\n');if(source.length>LIMIT)fail('complete linked source exceeds existing concrete source bound');return {source,modules:[...modules.values()],order:ordered,initialization:native.initialization,publicExports};
 }
 export function translatePortableModuleProject(data){
  const input=sourceInputs(data);let linked;
  const run=createRulePipeline([
   {phase:'language',rules:[{id:'esm:bind-all-native-source-symbols-and-link-pure-module-initialization',apply:()=>{linked=linkedSource(input);return linked.source;}},{id:'meta:check-complete-linked-javascript-or-typescript-program',apply:source=>input.language==='TypeScript'?translateTypeScript(source,{sourcePath:input.entry}):translateJavaScript(source,{sourcePath:input.entry})}]},
-  {phase:'repository',rules:[{id:'router:retain-complete-module-CST-inverses-and-target-mappings',apply:result=>({...result,javascript:result.javascript??linked.source,moduleSourceHistory:{entry:input.entry,language:input.language,order:linked.order,modules:linked.modules,initialization:linked.initialization,sourceAuthority:false,semanticAuthority:false},runtimeParity:false,wholeRouterSynchronization:false})}]},
+  {phase:'repository',rules:[{id:'router:retain-complete-module-CST-inverses-and-target-mappings',apply:result=>{const packaged=packagePortableModuleAPI({...result,javascript:result.javascript??linked.source},{publicExports:linked.publicExports,linkedSource:linked.source,language:input.language});return {...packaged,moduleSourceHistory:{entry:input.entry,language:input.language,order:linked.order,modules:linked.modules,initialization:linked.initialization,publicExports:linked.publicExports,sourceAuthority:false,semanticAuthority:false},runtimeParity:false,wholeRouterSynchronization:false};}}]},
  ]).run(null);return {...run.value,moduleRuleTrace:run.trace};
 }

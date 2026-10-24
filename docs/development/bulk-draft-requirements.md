@@ -160,3 +160,11 @@ direct comparisons and native host guards. It removes repeated JSON encoding
 inside helper matching without a new cross-invocation cache. Full prior code,
 native-selected substitutions and both source inverses remain retained. This
 source-review optimization and its regressions are unrun and unmeasured.
+
+The [public module API draft](module-public-api-draft.md) selects actual native
+named and star reexports, preserves JavaScript/TypeScript function identity,
+retains scalar TypeScript type exports and emits closed Rust scalar aliases.
+Mixed constant visibility, private Rust implementation packaging, full source
+inverses and independent consumer/refusal regressions have source drafts.
+Nothing has been executed. Module Rust inverse decoding, generic public type
+constraints and the other module families remain open.
