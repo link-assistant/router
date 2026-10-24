@@ -642,3 +642,11 @@ proposals. Numeric literal bounds are contextualized only by actual native
 operands. Complete source predecessors and independent zero/extreme/control/
 mutation/refusal cases are drafted and unrun. Other loop forms and every other
 incomplete requirement remain open; no verification or CI has run.
+
+The [forward-derived string synchronization draft](forward-string-synchronization-draft.md)
+adds actual JS or TS string-edit proposals using the original forward compiler's
+checked body/source associations, a complete original encoder copy and mandatory
+fresh whole-project reproduction. Complete source histories, ordered rules,
+paired outputs and independent behavioral/refusal source remain unrun. Receiving
+transaction/CLI integration, wider inverse edits, whole production qualification
+and all other unfinished ledger rows still need their remaining source draft.

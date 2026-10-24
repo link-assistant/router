@@ -17,6 +17,8 @@
 - Drafted owned caller flow through the existing source-backed reversed ranges.
 - Drafted inclusive descending JS/TS loops, native reversed-range inversion and
   literal-bound contextualization.
+- Drafted forward-derived JS/TS string-edit synchronization proposals with
+  complete fresh recompilation and source inverses.
 
 These sources and independent regression cases remain unverified during the
 required bulk-drafting phase. Complete translation, production parity, async
