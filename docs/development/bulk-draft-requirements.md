@@ -123,9 +123,15 @@ unsigned-literal return joins, both interpreters/emitters, private absence/loan
 checks and bulk assets. The [closed Option input draft](primitive-option-input-draft.md)
 adds actual bool/u64/i64/str optional public operands and their canonical inverse,
 with complete native sources, input roots and three source histories. Other
-optional layouts, callbacks/mapping, Result counterparts, method adoption and
+optional layouts, callbacks/mapping, Result counterparts, broader method adoption and
 production use remain open. Static method
 spelling frequency supplies drafting priority only and is not coverage evidence.
+
+The [primitive Option method draft](primitive-option-method-draft.md) now adds
+automatic closed method chains, immutable aliases and direct scalar JSON-reader
+receivers, with complete original corpus/packet/installer copies and independent
+unrun integration cases. Lazy/callback/nested option methods, Result counterparts,
+production adoption and every other unfinished row remain open.
 
 The last checkpoint before this phase is `0460fb741`: four complete
 source-history receiving files passed 26 cases in Node and Bun. That historical
