@@ -364,6 +364,14 @@ callee, recursion and ownership regression sources are drafted and unrun.
 Cross-module calls, declared recursion, async/generic application logic and every
 other remaining requirement row are still open.
 
+The [owned multi-module draft](owned-module-project-draft.md) copies the original
+ESM linker and public packager, preserves actual runtime imports, and sends the
+complete linked proposal through the existing fresh owned checker/meta pipeline.
+Both complete source copies and independent original/linked JS, strict TS,
+interpreter, export and refusal cases are drafted and unrun. Packaged Rust reverse
+authority, original-module distribution, unit transactions, broader application
+types/effects and the other remaining requirement rows are still open.
+
 The [primitive method adoption draft](integer-method-adoption-draft.md) copies
 three complete adopter/packet/installer implementations for actual i64/u64
 method receivers and closed operands. Native parameter/producer scope, complete
