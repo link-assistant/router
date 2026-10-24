@@ -176,6 +176,14 @@ checking now reads original parameter lists. Automatic Result method adoption,
 broader residual/control, production coverage and all other incomplete rows
 remain open; no test, translator, preparer, Rust tool or CI was executed.
 
+The [automatic Result method draft](primitive-result-method-draft.md) adds four
+complete selector/corpus/packet/installer copies for closed ordinary methods,
+mapping/binding, error mapping and lazy default/recovery chains. Independent
+actual caller, strict TS, complete packet, selected installation and refusal
+cases are drafted and unrun. Wider Result payload/error types, propagation,
+other control/effect families, production application and every other incomplete
+requirement remain open; no verification or execution has started.
+
 The last checkpoint before this phase is `0460fb741`: four complete
 source-history receiving files passed 26 cases in Node and Bun. That historical
 focused evidence does not qualify any change drafted in this phase or the full
