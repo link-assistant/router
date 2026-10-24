@@ -114,6 +114,14 @@ adds source-bound text/SSE ownership branches and retains complete source
 histories. All remain unrun. Production application and the remaining rows still
 need their source draft.
 
+The [primitive Option core draft](primitive-option-core-draft.md) begins the next
+high-frequency family with thirty-four matching native/JS interface bodies,
+generated declarations, complete native root/source preparation and independent
+unrun JS and native Rust oracle cases. Actual callers in both directions,
+optional operand qualification, method adoption, bulk packaging and production
+use remain open. Static method
+spelling frequency supplies drafting priority only and is not coverage evidence.
+
 The last checkpoint before this phase is `0460fb741`: four complete
 source-history receiving files passed 26 cases in Node and Bun. That historical
 focused evidence does not qualify any change drafted in this phase or the full

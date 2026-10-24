@@ -300,3 +300,5 @@ pub mod translation_integer_core;
 pub mod translation_stream_core;
 
 pub mod translation_text_core;
+
+pub mod translation_primitive_option_core;
