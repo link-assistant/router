@@ -149,6 +149,14 @@ source/refusal and inverse regressions are drafted and unrun. Automatic callback
 method adoption, Result counterparts, production use and every other incomplete
 ledger row remain open. No translator, test, producer, Rust tool or CI has run.
 
+The [callback method adoption draft](primitive-option-callback-method-draft.md)
+now supplies four complete selector/corpus/packet/installer copies for ordinary
+primitive Option mapping, binding and lazy fallback chains. Callback bodies
+remain subject to the complete fresh source check, independently of proposed
+result domains. Independent actual caller, strict TS, packet and installation
+regression source is drafted and unrun. Production application, Result, broader
+effects and every other incomplete requirement remain open.
+
 The last checkpoint before this phase is `0460fb741`: four complete
 source-history receiving files passed 26 cases in Node and Bun. That historical
 focused evidence does not qualify any change drafted in this phase or the full
