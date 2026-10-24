@@ -4,8 +4,9 @@
 import {JSON_CONTRACTS,JSON_DATA,JSON_TYPES} from './extensions/json-contracts.mjs';
 import {sameType} from './checked-types.mjs';
 import {jsonIterationContract} from './json-iteration-contracts.mjs';
-import {jsonStateContract} from './json-state-contracts.mjs';
+import {jsonStateContract} from './owned-forward-contracts.mjs';
 import {canonicalResult} from './extensions/result-iterators.mjs';
+import {isForwardOwnedCarrier} from './owned-forward-domain.mjs';
 import {hasOriginalCallbackLoan,hasOriginalSourceFrame,originalCallbackLoanInputMatches} from './extensions/standard-source-frame.mjs';
 import {hasOriginalSharedDomainGuard} from './extensions/standard-borrowed-body.mjs';
 import {sharedReferenceCopyIdentity} from './shared-reference-copy-source.mjs';
@@ -48,6 +49,16 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
   if(ownedStateVectorBoundary!==null)return ownedStateVectorBoundary;
   const visit=(node,depth=0)=>{if(!node||typeof node!=='object')return false;if(--cells<0||depth>160)refuse('owned state Vec source boundary bound',entry);const row=node.k==='routerHostCall'?jsonStateContract(node.id):null;if(row&&(row.returns==='owned-json-list'||row.parameters.includes('owned-json-list'))&&genuine(node,entry))return true;for(const [key,value]of Object.entries(node))if(!['type','span','compatibilityCore','pinnedStandardBodyProof','sourceFrameProof','originalCallbackProof','originalLoanProof','sharedBodyProof','sourceSharedPatternProof'].includes(key))for(const child of Array.isArray(value)?value:[value])if(visit(child,depth+1))return true;return false;};
   return ownedStateVectorBoundary=visit(entry.body);
+ };
+ let ownedCarrierBoundary=null;
+ const hasOwnedCarrierBoundary=()=>{
+  if(ownedCarrierBoundary!==null)return ownedCarrierBoundary;
+  const visit=(node,depth=0)=>{if(!node||typeof node!=='object')return false;if(--cells<0||depth>160)refuse('owned carrier source-bound flow census exceeded',entry);if(node.k==='routerHostCall'&&jsonStateContract(node.id)?.family==='carrier'&&genuine(node,entry))return true;for(const [key,value]of Object.entries(node))if(!['type','span','compatibilityCore','pinnedStandardBodyProof','sourceFrameProof','originalCallbackProof','originalLoanProof','sharedBodyProof','sourceSharedPatternProof'].includes(key))for(const child of Array.isArray(value)?value:[value])if(visit(child,depth+1))return true;return false;};return ownedCarrierBoundary=visit(entry.body);
+ };
+ const carrierType=(type,node)=>{
+  const owner=type?.kind==='data'?checker.items.get(type.name):null,source=type?.rustStandardGeneric??owner?.standardGeneric;if(!['Option','Result'].includes(source?.kind)||!source.arguments?.length)return false;
+  const payload=checker.resolveType(source.arguments[0],owner?.modulePath??entry.modulePath,node?.span??entry.span);if(canonical(payload,node)!=='serde_json::Value')return false;
+  return isForwardOwnedCarrier(checker,type,entry.modulePath,node?.span??entry.span,(_checker,type,span,shared)=>{if(shared||canonical(type,node)!=='serde_json::Value')refuse('actual owned carrier canonical JSON payload required',node);});
  };
  const ownedText=type=>type?.kind==='string'&&!type.rustReference&&!type.rustBorrowingUnresolved&&!type.rustGenericIdentityUnresolved&&type.rustOwnership?.kind==='owned'&&type.rustOwnership.source==='String'&&[undefined,'ownership-bearing String type','owned String source type','owned String formatting'].includes(type.patternOwnershipRefusal);
  const resultOwner=(type,node)=>{const result=canonicalResult(checker,type,entry.modulePath,node?.span??entry.span,false);if(!result||!ownedText(result.error))refuse('requires actual canonical Result with owned standard String error',node);return result;};
@@ -92,6 +103,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
    const byte=t=>t?.kind==='fixed'&&t.bits===8&&t.signed===false&&t.rustPrimitiveName==='u8'&&t.rustSourceType===true&&!t.rustReference&&!t.rustOwnership&&!t.patternOwnershipRefusal&&!t.rustBorrowingUnresolved&&!t.rustGenericIdentityUnresolved;
    const bytes=t=>t?.kind==='array'&&t.rustSourceType===true&&t.rustOwnership?.kind==='borrowed'&&t.rustOwnership.source==='slice'&&!t.rustFixedArray&&!t.rustBorrowingUnresolved&&!t.rustGenericIdentityUnresolved&&byte(t.element);
    if(bytes(type)&&bytes(pointee)&&!pointee.rustReference&&!pointee.patternOwnershipRefusal&&type.patternOwnershipRefusal==='shared source reference'&&type.rustReference.tokens?.[0]?.value==='&'&&sameType(type.element,pointee.element)&&hasOptionalParse()){checker.expectedOwnership(type.element,pointee.element,entry.modulePath??[],node?.span??entry.span);checker.expectedPrimitiveIdentity(type.element,pointee.element,entry.modulePath??[],node?.span??entry.span);return 'copy';}
+   if(hasOwnedCarrierBoundary()&&carrierType(pointee,node))return 'borrow';
    if(domain(type.rustReference.pointee,node,active)==='copy')return 'copy';
    refuse('aggregate reference requires a separate loan proof',node);
   }
@@ -120,7 +132,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
    return arguments_.some(linear)?'linear':'copy';
   }
   if(type.kind==='string'){
-   if((closedErrors||closedOption)&&ownedText(type))return 'owned-text';
+   if((closedErrors||closedOption||hasOwnedCarrierBoundary())&&ownedText(type))return 'owned-text';
    if(type.rustOwnership&&!(type.rustOwnership.kind==='borrowed'&&type.rustOwnership.source==='str')||type.patternOwnershipRefusal)refuse('owned text or unknown Drop',node);
    return 'copy';
   }
@@ -333,6 +345,23 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
   }
   if(node.k==='routerHostCall'){
    const stateOperation=jsonStateContract(node.id);
+   if(stateOperation?.family==='field'){
+    if(!genuine(node,state.entry)||node.args.length!==stateOperation.parameters.length)refuse('field operation requires its actual original whole-call receipt',node);
+    const receiver=read(node.args[0],'borrow');for(const value of node.args.slice(1))read(value,'borrow');ensureRoots(receiver,state,node);
+    if(retainsLoan(node.type)){
+     if(!['json-option-ref','str-option-ref'].includes(stateOperation.returns)||!receiver.loans.get(path([]))?.size||!['copy','loan-option'].includes(kind))refuse('field loan requires a live actual canonical receiver and optional layout',node);
+     return {loans:new Map([[path(['field0']),new Set(receiver.loans.get(path([])))]]),tags:new Set(['Some','None'])};
+    }
+    if(kind!=='copy')refuse('scalar field reader ownership differs',node);return {loans:new Map(),tags:new Set(['Some','None'])};
+   }
+   if(stateOperation?.family==='carrier'){
+    const wanted=stateOperation.returns==='json'?'json':'linear';if(!genuine(node,state.entry)||node.args.length!==stateOperation.parameters.length||kind!==wanted)refuse('carrier operation needs its private actual call and owned result',node);
+    for(let index=0;index<node.args.length;index++){
+     const value=node.args[index],role=stateOperation.parameters[index],actual=domain(value.type,value);if(role==='shared-json'?!['json','borrow'].includes(actual):role==='shared-json-result'||role==='shared-json-option'?!['linear','borrow'].includes(actual):actual!=='copy')refuse('carrier operand ownership differs',value);
+     const observed=read(value,'borrow');ensureRoots(observed,state,value);
+    }
+    return {loans:new Map(),tags:stateOperation.returns==='json-owned-option'?new Set(['Some','None']):null};
+   }
    if(stateOperation){
     const wanted=stateOperation.returns==='owned-json'?'json':stateOperation.returns==='owned-json-list'?'json-vector':'copy';
     if(!genuine(node,state.entry)||node.args.length!==stateOperation.parameters.length||kind!==wanted)refuse('state operation requires its genuine checked call and result domain',node);

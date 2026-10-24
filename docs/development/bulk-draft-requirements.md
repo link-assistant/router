@@ -287,3 +287,10 @@ successors compose the original transaction/history producers. Independent
 three-direction, conflict, stale-input and installation cases are drafted and
 unrun. Native standard-source adoption, full forward project lowering and the
 other open rows still require their remaining source draft.
+
+The [forward field/carrier draft](owned-forward-draft.md) adds qualified native
+caller parser, type/ownership, optional loan, owned carrier flow and runtime
+packaging rules through the existing whole-function private issuer. Nine full
+source successors and independent actual Rust caller/strict target/refusal cases
+are drafted and unrun. Production application, namespace/producer closure,
+generic flows, effects, CI/freshness and the other ledger rows remain open.

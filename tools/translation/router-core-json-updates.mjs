@@ -1,7 +1,7 @@
 import {crateModuleSourcePath} from './repository-layout.mjs';
 import {forwardJsonIterationContract} from './json-iteration-forward-domain.mjs';
 import {parseRouterCoreJsonState,checkForwardJsonState,forwardJsonStateContract} from './json-state-forward-domain.mjs';
-import {jsonStateContract} from './json-state-contracts.mjs';
+import {jsonStateContract} from './owned-forward-contracts.mjs';
 // Only source-bound owned JSON operations enter this language rule. The Rust
 // library bodies remain untranslated; no general Clone/IndexMut is admitted.
 import {types} from 'node:util';
@@ -639,7 +639,7 @@ function checkedState(checker,node,capture,env,path,expected){
  const current=()=>{requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged()||activeFunctions.get(checker)!==frame||!same(node,capture.syntax))fail();};current();
  const stage=createRulePipeline([
   {phase:'language',rules:[{id:'owned-json-state:check-all-actual-source-operands-and-ownership',apply:()=>checkForwardJsonState(checker,node,env,path,expected,{canonical,current})}]},
-  {phase:'repository',rules:[{id:'router:retain-qualified-owned-state-native-boundary',apply:call=>({...call,compatibilityCore:{id:'router-owned-json-state-v1',symbol:'crate::translation_state_core::'+row.rustName,sourceSha256:row.sourceSha256,sourceTrace:capture.receipt.trace,libraryImplementation:'untranslated-owned-rust-library',boundedProjection:true,runtimeParity:false}})}]},
+  {phase:'repository',rules:[{id:'router:retain-qualified-owned-state-native-boundary',apply:call=>({...call,compatibilityCore:{id:'router-owned-json-'+row.family+'-v1',symbol:row.rustPath,sourceSha256:row.sourceSha256,sourceTrace:capture.receipt.trace,libraryImplementation:'untranslated-owned-rust-library',boundedProjection:true,runtimeParity:false}})}]},
  ]).run(null);
  const value=stage.value,record={checker,frame,id:value.id,args:copyMetadata(value.args)},roots=[...value.args.map(argument=>argument.type),value.type];
  record.layouts=copyMetadata(captureBorrowedLayouts(checker,roots));record.roots=copyMetadata(roots);record.key=metadataDigest({functionName:frame.functionName,source:frame.syntax,call:value,layouts:record.layouts});value.compatibilityCore.sourceProjectionKey=record.key;record.call=copyMetadata(value);
