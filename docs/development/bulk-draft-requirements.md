@@ -255,3 +255,10 @@ JS/TS/Rust emission/inversion. Complete native root and nine source-copy
 successors retain original bytes and both CST rule sequences. Independent
 runtime, source/target/refusal and native oracle sources are unrun. General
 Option/Result, effects/state, adoption and every other open row remain.
+
+The [typed field-reader adoption draft](json-field-adoption-draft.md) adds
+automatic source-selected field/scalar chains, named lifetime handling, bounded
+packet production and fresh checked selected installation. Three complete
+original source producers, their refusal scopes and full CST inverses remain
+retained. All independent caller, packet, installation and refusal regression
+sources are unrun. Production application and the broader open rows remain.
