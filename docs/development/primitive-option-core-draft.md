@@ -17,8 +17,10 @@ preparer implementation and adjacent CST histories through a separate complete
 source copy. Independent Rust oracle source covers primitive extrema, false and
 empty Some values, owned text after the source is dropped, and panic/boundaries.
 
-Forward/reverse caller registration, checked public optional operands,
-emission/interpreter paths, automatic method adoption, bulk assets and production
-synchronization still need integration drafts. All independent runtime,
+The [translation integration draft](primitive-option-translation-draft.md) now
+adds actual internal callers in both directions, interpreters, emission and bulk
+assets. Public optional operands, callback/mapping and Result families,
+automatic method adoption and production synchronization remain open.
+All independent runtime,
 declaration, source-history and native oracle cases remain unrun. No coverage,
 translation, parity, compiler or receiving qualification is claimed.

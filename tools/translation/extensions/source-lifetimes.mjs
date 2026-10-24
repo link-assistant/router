@@ -54,7 +54,7 @@ function bindNormalizedOwnedVectors(checker,program,surface){
 import {canonicalResult} from './result-iterators.mjs';
 import {JSON_DATA} from './json-contracts.mjs';
 import {sharedReferenceCopyIdentity} from '../shared-reference-copy-source.mjs';
-import {hasOriginalRouterCoreJsonProjection,hasOriginalJsonStringErrorContext} from '../router-core-json-updates.mjs';
+import {hasOriginalRouterCoreJsonProjection,hasOriginalJsonStringErrorContext,hasOriginalPrimitiveOptionAbsentLoan} from '../router-core-json-updates.mjs';
 import {jsonIterationContract} from '../json-iteration-contracts.mjs';
 import {hasOriginalMappedOrigin} from './standard-mapped-body.mjs';
 import {sameType} from '../checked-types.mjs';
@@ -524,6 +524,7 @@ function origins(node,env,context,returns,depth=0) {
   }
   if(node.k==='routerHostCall') {
     const arguments_=node.args.map(value=>read(value));
+    if(borrowed&&hasOriginalPrimitiveOptionAbsentLoan(node))return new Set();
     if(borrowed&&hasOriginalRouterCoreJsonProjection(node))return uniformOrigins(node.type,at(arguments_[0]??new Set([UNKNOWN]),[]),context);
     // Registered shared receiver methods borrow from that receiver; no
     // lifetime permission is inferred for free functions or owned receivers.

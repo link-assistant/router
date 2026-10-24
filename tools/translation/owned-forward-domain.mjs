@@ -1,5 +1,6 @@
 // Finite field/carrier language rules. Original full function issuers are reused.
 import {sameType,fixed,BOOL} from './checked-types.mjs';
+import {checkForwardPrimitiveOption} from './primitive-option-forward-domain.mjs';
 import {JSON_TYPES} from './extensions/json-contracts.mjs';
 import {SOURCE_STRING,SOURCE_STR,sourceShared} from './extensions/source-contract-types.mjs';
 import {canonicalResult} from './extensions/result-iterators.mjs';
@@ -33,6 +34,7 @@ function carrierInput(checker,type,kind,path,span,canonical,borrow){
  forwardOwnedCarrier(checker,pointee,kind,path,span,canonical);
 }
 export function checkForwardOwnedExtra(checker,node,env,path,expected,row,{canonical,current}){
+ if(row.family==='primitive-option')return checkForwardPrimitiveOption(checker,node,env,path,expected,row,{current,carrier:forwardOwnedCarrier});
  requireOriginalPrimitiveTryFromChecker(checker);current();if(node.args.length!==row.parameters.length)throw typeError('actual owned field/carrier arity differs',node.span);
  const args=node.args.map((syntax,index)=>{
   const role=row.parameters[index],shared=role==='shared-json'||role==='shared-json-result'||role==='shared-json-option',borrow=shared&&syntax.k==='routerTextReference',wanted=['u64','i64'].includes(role)?{...fixed(64,role==='i64'),rustPrimitiveName:role,rustSourceType:true}:undefined,value=checker.expr(borrow?syntax.value:syntax,env,path,wanted);current();

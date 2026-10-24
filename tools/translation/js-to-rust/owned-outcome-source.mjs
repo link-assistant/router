@@ -28,6 +28,7 @@ import {ownedOutcomeOperation,ownedOutcomeType,ownedOutcomeCompatible,requireOwn
 import {ownedIntegerOperation,requireOwnedIntegerSources} from './owned-integer-contracts.mjs';
 import {ownedSseOperation,requireOwnedSseSources} from './owned-sse-contracts.mjs';
 import {ownedTextOperation,requireOwnedTextSources} from './owned-text-contracts.mjs';
+import {ownedPrimitiveOptionOperation,ownedPrimitiveOptionAbsent,requireOwnedPrimitiveOptionSources} from './owned-primitive-option-contracts.mjs';
 import {checkOwnedLocalFunctions} from './owned-local-function-calls.mjs';
 import {ownedLocalWrittenType} from './owned-local-signatures.mjs';
 import {ownedJsonFieldOperation,requireOwnedJsonFieldSources} from './owned-json-fields.mjs';
@@ -187,7 +188,7 @@ export function ownedCoreRuntimeSources(runtimeRoot='runtime',declarationRoot=ru
   }
  runtimeImportComplete(ts,path,source,file,__runtimeEpoch);
  }
- for(const name of ['json-update-runtime.mjs','json-update-runtime.d.mts','json-macro-runtime.mjs','json-macro-runtime.d.mts','base64-runtime.mjs','base64-runtime.d.mts','json-runtime.d.mts','json-option-runtime.mjs','json-option-runtime.d.mts','json-collections-runtime.mjs','json-collections-runtime.d.mts','json-iteration-runtime.mjs','json-iteration-runtime.d.mts','json-state-runtime.mjs','json-state-runtime.d.mts','json-fields-runtime.mjs','json-fields-runtime.d.mts','owned-outcome-runtime.mjs','owned-outcome-runtime.d.mts','integer-runtime.mjs','integer-runtime.d.mts','sse-runtime.mjs','sse-runtime.d.mts','text-runtime.mjs','text-runtime.d.mts'])visit(name);
+ for(const name of ['json-update-runtime.mjs','json-update-runtime.d.mts','json-macro-runtime.mjs','json-macro-runtime.d.mts','base64-runtime.mjs','base64-runtime.d.mts','json-runtime.d.mts','json-option-runtime.mjs','json-option-runtime.d.mts','json-collections-runtime.mjs','json-collections-runtime.d.mts','json-iteration-runtime.mjs','json-iteration-runtime.d.mts','json-state-runtime.mjs','json-state-runtime.d.mts','json-fields-runtime.mjs','json-fields-runtime.d.mts','owned-outcome-runtime.mjs','owned-outcome-runtime.d.mts','integer-runtime.mjs','integer-runtime.d.mts','sse-runtime.mjs','sse-runtime.d.mts','text-runtime.mjs','text-runtime.d.mts','primitive-option-runtime.mjs','primitive-option-runtime.d.mts'])visit(name);
  for(const [name,source]of assets)if(/LICENSE|NOTICE/iu.test(name))rows.push({path:runtimeRoot+'/'+name,source});
  assertReverseConcreteSourceHost();return runtimeImportEpochReturn(__runtimeEpoch,rows.sort((a,b)=>a.path.localeCompare(b.path)));
 
@@ -302,7 +303,7 @@ function pairedFunction(handle,path,declaration,analysis){
  return {declaration:nodes[0],analysis:typed,evidence,pair};
 }
 function originalImportTarget(from,specifier,analysis,state){
- const target=relative(from,specifier),families=['json-update-runtime.mjs','json-macro-runtime.mjs','base64-runtime.mjs','json-runtime.mjs','json-option-runtime.mjs','string-iterator-runtime.mjs','json-collections-runtime.mjs','json-iteration-runtime.mjs','json-state-runtime.mjs','json-fields-runtime.mjs','owned-outcome-runtime.mjs','integer-runtime.mjs','sse-runtime.mjs','text-runtime.mjs'];
+ const target=relative(from,specifier),families=['json-update-runtime.mjs','json-macro-runtime.mjs','base64-runtime.mjs','json-runtime.mjs','json-option-runtime.mjs','string-iterator-runtime.mjs','json-collections-runtime.mjs','json-iteration-runtime.mjs','json-state-runtime.mjs','json-fields-runtime.mjs','owned-outcome-runtime.mjs','integer-runtime.mjs','sse-runtime.mjs','text-runtime.mjs','primitive-option-runtime.mjs'];
  if(posix.dirname(target)===state.data.declarationRoot&&families.includes(posix.basename(target))){
   const runtime=state.data.runtimeRoot+'/'+posix.basename(target),paired=traversals.get(analysis)?.paired,direct=analysis.file.scriptKind===analysis.ts.ScriptKind.TS;
   if(paired||direct){
@@ -324,8 +325,9 @@ function originalOwnedCoreImport(handle,path,node,analysis){
  let target=originalImportTarget(path,declaration.moduleSpecifier.text,analysis,state),name=(spec.propertyName??spec.name).text,ownerFile=file,ownerDeclaration=declaration;const links=[];
  for(let depth=0;depth<32;depth++){
   const source=state.files.get(target);if(source===undefined)fail('import target missing');links.push({path:target,name,source,from:{path:ownerFile.fileName,span:[ownerDeclaration.getStart(ownerFile),ownerDeclaration.end]}});
-  if(target===state.data.runtimeRoot+'/json-update-runtime.mjs'||target===state.data.runtimeRoot+'/json-macro-runtime.mjs'||target===state.data.runtimeRoot+'/base64-runtime.mjs'||target===state.data.runtimeRoot+'/json-runtime.mjs'||target===state.data.runtimeRoot+'/json-option-runtime.mjs'||target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'||target===state.data.runtimeRoot+'/json-collections-runtime.mjs'||target===state.data.runtimeRoot+'/json-iteration-runtime.mjs'||target===state.data.runtimeRoot+'/json-state-runtime.mjs'||target===state.data.runtimeRoot+'/json-fields-runtime.mjs'||target===state.data.runtimeRoot+'/owned-outcome-runtime.mjs'||target===state.data.runtimeRoot+'/integer-runtime.mjs'||target===state.data.runtimeRoot+'/sse-runtime.mjs'||target===state.data.runtimeRoot+'/text-runtime.mjs'){
+  if(target===state.data.runtimeRoot+'/json-update-runtime.mjs'||target===state.data.runtimeRoot+'/json-macro-runtime.mjs'||target===state.data.runtimeRoot+'/base64-runtime.mjs'||target===state.data.runtimeRoot+'/json-runtime.mjs'||target===state.data.runtimeRoot+'/json-option-runtime.mjs'||target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'||target===state.data.runtimeRoot+'/json-collections-runtime.mjs'||target===state.data.runtimeRoot+'/json-iteration-runtime.mjs'||target===state.data.runtimeRoot+'/json-state-runtime.mjs'||target===state.data.runtimeRoot+'/json-fields-runtime.mjs'||target===state.data.runtimeRoot+'/owned-outcome-runtime.mjs'||target===state.data.runtimeRoot+'/integer-runtime.mjs'||target===state.data.runtimeRoot+'/sse-runtime.mjs'||target===state.data.runtimeRoot+'/text-runtime.mjs'||target===state.data.runtimeRoot+'/primitive-option-runtime.mjs'){
    if(target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'&&!ownedAsciiOperation(name))fail('unregistered ASCII runtime export');
+   if(target===state.data.runtimeRoot+'/primitive-option-runtime.mjs'){if(!ownedPrimitiveOptionOperation(name))fail('unregistered actual primitive Option operation');requireOwnedPrimitiveOptionSources(state.files,state.data);}
    if(target===state.data.runtimeRoot+'/text-runtime.mjs'){if(!ownedTextOperation(name))fail('unregistered actual text operation');requireOwnedTextSources(state.files,state.data);}
    if(target===state.data.runtimeRoot+'/sse-runtime.mjs'){if(!ownedSseOperation(name))fail('unregistered actual SSE operation');requireOwnedSseSources(state.files,state.data);}
    if(target===state.data.runtimeRoot+'/integer-runtime.mjs'){if(!ownedIntegerOperation(name))fail('unregistered actual integer operation');requireOwnedIntegerSources(state.files,state.data);}
@@ -374,6 +376,7 @@ function originalOwnedCoreType(handle,path,type,analysis){
    if(binding.target===state.data.runtimeRoot+'/json-collections-runtime.mjs'&&ownedCollectionOperation(binding.name))return 'json-list-ref';
    const ascii=ownedAsciiOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'&&ascii)return ascii.ret;
    if(binding.target===state.data.runtimeRoot+'/base64-runtime.mjs'&&op)return op.ret;
+   const primitiveOption=ownedPrimitiveOptionOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/primitive-option-runtime.mjs'&&primitiveOption)return primitiveOption.ret==='text-owned'?'str':primitiveOption.ret;
    const text=ownedTextOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/text-runtime.mjs'&&text)return text.ret==='text-owned'?'str':text.ret;
    const sse=ownedSseOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/sse-runtime.mjs'&&sse)return sse.ret;
    const integer=ownedIntegerOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/integer-runtime.mjs'&&integer)return integer.ret;
@@ -396,6 +399,7 @@ function originalOwnedCoreType(handle,path,type,analysis){
    if(binding.target===state.data.runtimeRoot+'/json-collections-runtime.mjs'&&ownedCollectionOperation(binding.name)&&type.indexType.literal.text==='0')return 'json-list-ref';
    const ascii=ownedAsciiOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'&&ascii)return ascii.args[Number(type.indexType.literal.text)];
    const base64=ownedBase64Operation(binding.name);if(binding.target===state.data.runtimeRoot+'/base64-runtime.mjs'&&base64&&type.indexType.literal.text==='0')return base64.input;
+   const primitiveOption=ownedPrimitiveOptionOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/primitive-option-runtime.mjs'&&primitiveOption&&Number(type.indexType.literal.text)<primitiveOption.args.length)return primitiveOption.args[Number(type.indexType.literal.text)];
    const text=ownedTextOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/text-runtime.mjs'&&text&&Number(type.indexType.literal.text)<text.args.length)return text.args[Number(type.indexType.literal.text)];
    const sse=ownedSseOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/sse-runtime.mjs'&&sse&&Number(type.indexType.literal.text)<sse.args.length)return sse.args[Number(type.indexType.literal.text)];
    const integer=ownedIntegerOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/integer-runtime.mjs'&&integer&&Number(type.indexType.literal.text)<integer.args.length)return integer.args[Number(type.indexType.literal.text)];
@@ -484,6 +488,7 @@ function checkFunction(context,path,declaration,analysis){
  const mergeMoves=(scope,yes,no)=>{for(const [key,value]of scope){if(ownedBase64Result(value.type))value.moved=!!yes.get(key)?.moved||!!no.get(key)?.moved;if(value.mutable&&(yes.get(key)?.variant!==value.variant||no.get(key)?.variant!==value.variant||yes.get(key)?.some!==value.some||no.get(key)?.some!==value.some))scope.set(key,{...value,variant:undefined,some:undefined});}};
  const refine=(scope,condition,truth)=>{
   if(condition.kind==='not')return refine(scope,condition.value,!truth);
+  if(condition.kind==='primitive-option-call'){const operation=ownedPrimitiveOptionOperation(condition.name),value=condition.args[0];if(['is_some','is_none'].includes(operation?.method)&&value?.kind==='variable'){const entry=scope.get(value.name);if(entry&&ownedJsonOptionalPayload(entry.type))scope.set(value.name,{...entry,some:truth===(operation.method==='is_some')});}return scope;}
   if(condition.kind==='outcome-test'){const entry=scope.get(condition.value.name);if(entry)scope.set(condition.value.name,{...entry,variant:truth===condition.ok?'Ok':'Err'});return scope;}
   if(condition.kind!=='option-test')return scope;
   const entry=scope.get(condition.value.name);if(entry)scope.set(condition.value.name,{...entry,some:truth===condition.some});return scope;
@@ -575,7 +580,7 @@ function checkFunction(context,path,declaration,analysis){
    const value=expression(fields[1].initializer,scope,depth+1);if(tag==='Ok'?!json(value.type):!['str','text-owned'].includes(value.type))fail('actual Result payload domain differs');return {kind:tag==='Ok'?'outcome-ok':'outcome-err',value,type,root:null};
   }
   if(ts.isObjectLiteralExpression(node)){
-   const fields=node.properties,type=resultOption(),payload=ownedJsonOptionalPayload(type);
+   const fields=node.properties,type=ownedJsonOptionalPayload(numericDomain)?numericDomain:resultOption(),payload=ownedJsonOptionalPayload(type);
    if(fields.length<1||fields.length>2||fields.some(field=>!ts.isPropertyAssignment(field)||!ts.isIdentifier(field.name)&&!ts.isStringLiteral(field.name))||fields[0].name.text!=='$'||!ts.isStringLiteral(fields[0].initializer))fail('closed optional constructor required');
    const tag=fields[0].initializer.text;
    if(tag==='None'&&fields.length===1)return {kind:'option-none',type,root:null};
@@ -593,7 +598,7 @@ function checkFunction(context,path,declaration,analysis){
    const value=scope.get(node.text);if(!value||checker.getSymbolAtLocation(node)!==value.symbol)fail('unknown, shadowed or moved binding');
    if(value.type==='json-option-input'&&!opaqueOperand)fail('opaque optional Json input requires its actual checked operation');
    if(ownedBase64Result(value.type)){if(value.moved)fail('native base64 result used after move');value.moved=true;}
-   return {kind:'variable',name:node.text,type:value.type,root:value.root};
+   return {kind:'variable',name:node.text,type:value.type,root:value.root,...(value.definitelyAbsent===true?{definitelyAbsent:true}:{})};
   }
   if(ts.isCallExpression(node)){
    if(node.questionDotToken||node.typeArguments?.length||node.arguments.some(ts.isSpreadElement))fail('optional/generic/spread call');
@@ -624,6 +629,12 @@ function checkFunction(context,path,declaration,analysis){
    if(sseOperation&&binding.target===analysis.runtimeRoot+'/sse-runtime.mjs'){
     requireOwnedCoreSourceCurrent(context);const args=node.arguments.map(argument=>expression(argument,scope,depth+1));if(args.length!==sseOperation.args.length||args.some(argument=>!['str','text-owned'].includes(argument.type)))fail('actual SSE string operands differ');
     hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});requireOwnedCoreSourceCurrent(context);return {kind:'sse-call',name:binding.name,args,type:sseOperation.ret,root:null};
+   }
+   const primitiveOption=ownedPrimitiveOptionOperation(binding.name);
+   if(primitiveOption&&binding.target===analysis.runtimeRoot+'/primitive-option-runtime.mjs'){
+    requireOwnedCoreSourceCurrent(context);const args=node.arguments.map((argument,index)=>expression(argument,scope,depth+1,false,primitiveOption.args[index]));if(args.length!==primitiveOption.args.length||args.some((argument,index)=>primitiveOption.args[index]==='str'?!['str','text-owned'].includes(argument.type):argument.type!==primitiveOption.args[index]))fail('actual primitive Option operand domains differ');
+    let root=null;if(primitiveOption.root!==null){const loan=asciiStringLoan(args[primitiveOption.root],scope);if(!loan)fail('Some borrowed str requires an actual literal or live input origin');root=loan.root;}
+    hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});requireOwnedCoreSourceCurrent(context);return {kind:'primitive-option-call',name:binding.name,args,type:primitiveOption.ret,root};
    }
    const textOperation=ownedTextOperation(binding.name);
    if(textOperation&&binding.target===analysis.runtimeRoot+'/text-runtime.mjs'){
@@ -740,6 +751,8 @@ function checkFunction(context,path,declaration,analysis){
  };
  function joinI64LiteralReturn(value){
   if(resultRoot!==null||value.root!==null)return;
+  if(resultType==='u64'&&value.kind==='integer'&&value.type==='usize'){narrowOwnedNumericLiteral(value,'u64');return;}
+  if(resultType==='usize'&&value.type==='u64'&&scalarReturnValues.length&&scalarReturnValues.every(prior=>prior.kind==='integer'&&prior.type==='usize')){for(const prior of scalarReturnValues)narrowOwnedNumericLiteral(prior,'u64');resultType='u64';return;}
   if(resultType==='i64'&&fittingLiteral(value)&&scalarReturnValues.some(i64Payload)){value.type='i64';return;}
   if(resultType==='usize'&&i64Payload(value)&&scalarReturnValues.length&&scalarReturnValues.every(fittingLiteral)){
    for(const literal of scalarReturnValues)literal.type='i64';resultType='i64';
@@ -780,7 +793,7 @@ function checkFunction(context,path,declaration,analysis){
       }
      }
      const asciiLoan=value.type==='str'?asciiStringLoan(value,scope):undefined;
-     const name=bind(declaration.name,{type:value.type,root:value.root,...(mutable?{mutable:true}:{}),...(asciiLoan?.root===null?{asciiStaticLoan:true}:{})},scope);body.push({kind:'let',name,value,...(mutable?{mutable:true}:{})});
+     const name=bind(declaration.name,{type:value.type,root:value.root,...(mutable?{mutable:true}:{}),...(asciiLoan?.root===null?{asciiStaticLoan:true}:{}),...(!mutable&&(value.kind==='option-none'||ownedPrimitiveOptionAbsent(value))?{definitelyAbsent:true}:{})},scope);body.push({kind:'let',name,value,...(mutable?{mutable:true}:{})});
     }
    }else if(ts.isExpressionStatement(statement)&&ts.isBinaryExpression(statement.expression)&&statement.expression.operatorToken.kind===ts.SyntaxKind.EqualsToken&&ts.isIdentifier(statement.expression.left)){
     const assignment=statement.expression,entry=scope.get(assignment.left.text);
@@ -795,7 +808,7 @@ function checkFunction(context,path,declaration,analysis){
     joinI64LiteralReturn(value);
     const loan=value.type==='str'?(stringResultLoan===null?stringLoan(value):meetStringLoans(stringResultLoan,stringLoan(value))):undefined,effectiveRoot=loan?loan.root:value.root;
     if(value.type==='str'&&!loan)fail('returned str requires an actual literal or live input origin');
-    if(resultType!==null&&(resultType!==value.type||resultRoot!==effectiveRoot&&!(value.type==='str'&&loan)&&!(ownedJsonOptionalPayload(value.type)&&(value.kind==='option-none'||resultOnlyAbsent))))fail('return domains differ');resultType=value.type;if(value.kind!=='option-none'){resultRoot=effectiveRoot;resultOnlyAbsent=false;}if(value.type==='str')stringResultLoan=loan;scalarReturnValues.push(value);body.push({kind:'return',value});terminated=true;
+    if(resultType!==null&&(resultType!==value.type||resultRoot!==effectiveRoot&&!(value.type==='str'&&loan)&&!(ownedJsonOptionalPayload(value.type)&&(value.kind==='option-none'||ownedPrimitiveOptionAbsent(value)||resultOnlyAbsent))))fail('return domains differ');resultType=value.type;if(value.kind!=='option-none'&&!ownedPrimitiveOptionAbsent(value)){resultRoot=effectiveRoot;resultOnlyAbsent=false;}if(value.type==='str')stringResultLoan=loan;scalarReturnValues.push(value);body.push({kind:'return',value});terminated=true;
    }else if(ts.isIfStatement(statement)&&ts.isBlock(statement.thenStatement)&&(!statement.elseStatement||ts.isBlock(statement.elseStatement))){
     const cond=expression(statement.expression,scope,depth+1);if(cond.type!=='bool')fail('nonboolean condition');
     const a=refine(branchScope(scope),cond,true),b=refine(branchScope(scope),cond,false),yes=block(statement.thenStatement.statements,a,depth+1,loopDepth),no=block(statement.elseStatement?.statements??[],b,depth+1,loopDepth);
@@ -842,7 +855,7 @@ export function ownedCoreAsciiBaseRuntimeSources(runtimeRoot='runtime',declarati
   }
  runtimeImportComplete(ts,path,source,file,__runtimeEpoch);
  }
- for(const name of ['json-update-runtime.mjs','json-update-runtime.d.mts','json-macro-runtime.mjs','json-macro-runtime.d.mts','base64-runtime.mjs','base64-runtime.d.mts','json-runtime.d.mts','json-option-runtime.mjs','json-option-runtime.d.mts','json-collections-runtime.mjs','json-collections-runtime.d.mts','json-iteration-runtime.mjs','json-iteration-runtime.d.mts','json-state-runtime.mjs','json-state-runtime.d.mts','json-fields-runtime.mjs','json-fields-runtime.d.mts','owned-outcome-runtime.mjs','owned-outcome-runtime.d.mts','integer-runtime.mjs','integer-runtime.d.mts','sse-runtime.mjs','sse-runtime.d.mts','text-runtime.mjs','text-runtime.d.mts'])visit(name);
+ for(const name of ['json-update-runtime.mjs','json-update-runtime.d.mts','json-macro-runtime.mjs','json-macro-runtime.d.mts','base64-runtime.mjs','base64-runtime.d.mts','json-runtime.d.mts','json-option-runtime.mjs','json-option-runtime.d.mts','json-collections-runtime.mjs','json-collections-runtime.d.mts','json-iteration-runtime.mjs','json-iteration-runtime.d.mts','json-state-runtime.mjs','json-state-runtime.d.mts','json-fields-runtime.mjs','json-fields-runtime.d.mts','owned-outcome-runtime.mjs','owned-outcome-runtime.d.mts','integer-runtime.mjs','integer-runtime.d.mts','sse-runtime.mjs','sse-runtime.d.mts','text-runtime.mjs','text-runtime.d.mts','primitive-option-runtime.mjs','primitive-option-runtime.d.mts'])visit(name);
  for(const [name,source]of assets)if(/LICENSE|NOTICE/iu.test(name))rows.push({path:runtimeRoot+'/'+name,source});
  assertReverseConcreteSourceHost();return runtimeImportEpochReturn(__runtimeEpoch,rows.sort((a,b)=>a.path.localeCompare(b.path)));
 

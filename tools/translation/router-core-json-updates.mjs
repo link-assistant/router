@@ -645,3 +645,6 @@ function checkedState(checker,node,capture,env,path,expected){
  record.layouts=copyMetadata(captureBorrowedLayouts(checker,roots));record.roots=copyMetadata(roots);record.key=metadataDigest({functionName:frame.functionName,source:frame.syntax,call:value,layouts:record.layouts});value.compatibilityCore.sourceProjectionKey=record.key;record.call=copyMetadata(value);
  (frame.projections??=new Set()).add(record);issued.set(value.compatibilityCore,record);current();return value;
 }
+
+// Absence theorem for the actual qualified native str_none body only.
+export function hasOriginalPrimitiveOptionAbsentLoan(node){const record=projectionRecord(node),row=record&&jsonStateContract(record.id);return Boolean(record&&row?.family==='primitive-option'&&row.method==='none'&&row.returns==='str-option-ref'&&node.args.length===0);}

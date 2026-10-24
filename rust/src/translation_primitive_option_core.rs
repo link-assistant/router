@@ -6,7 +6,9 @@ fn checked_text(value: &str) {
 }
 
 fn checked_str_option(value: Option<&str>) {
-    if let Some(value) = value { checked_text(value); }
+    if let Some(value) = value {
+        checked_text(value);
+    }
 }
 
 #[must_use]
@@ -174,18 +176,18 @@ pub fn str_is_none(value: Option<&str>) -> bool {
 pub fn str_unwrap_or(value: Option<&str>, other: &str) -> String {
     checked_str_option(value);
     checked_text(other);
-    value.unwrap_or(other) .to_owned()
+    value.unwrap_or(other).to_owned()
 }
 
 #[must_use]
 pub fn str_unwrap(value: Option<&str>) -> String {
     checked_str_option(value);
-    value.unwrap() .to_owned()
+    value.unwrap().to_owned()
 }
 
 #[must_use]
 pub fn str_expect(value: Option<&str>, other: &str) -> String {
     checked_str_option(value);
     checked_text(other);
-    value.expect(other) .to_owned()
+    value.expect(other).to_owned()
 }
