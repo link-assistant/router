@@ -10,6 +10,8 @@
   explicit cleanup, matching network policy and receiving runtime closure.
 - Drafted native owned-JSON loop flow for while/range/shared iteration,
   scalar updates, backedge moves, lexical loans and local loop exits.
+- Drafted checked JS/TS counted loops with native Rust ranges, inverse source
+  restoration and both interpreter paths.
 
 These sources and independent regression cases remain unverified during the
 required bulk-drafting phase. Complete translation, production parity, async

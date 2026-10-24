@@ -619,3 +619,12 @@ Complete originals/rules and independent JS/strict TS/native oracle source are
 drafted and unrun. Broader iterator adapters/reference patterns, mutable retained
 loans, arbitrary aggregates/effects/Drop, production use and all other open
 requirements still need their remaining draft. No tests or experiments have run.
+
+The [counted-for draft](owned-counted-for-draft.md) now adds actual exclusive
+same-domain integer loops from JS/TS, source-bound progress/bound checking,
+both interpreters, Rust/TS emission and canonical Rust inverse proposals with
+mandatory whole-source reproduction. Five complete original source successors,
+independent boundary/control/refusal cases and native numeric-edge oracle source
+are drafted and unrun. Other loop forms, broader effects/types, application
+adoption and every other incomplete requirement remain open. No new implementation
+or check has executed.

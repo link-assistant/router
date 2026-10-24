@@ -44,3 +44,17 @@ fn shared_items_are_copied_and_owned_iterator_storage_moves_only_after_the_borro
     for value in &copied { assert_eq!(core::json_copy(value),*value); }
     assert_eq!(state::json_from_values(copied),json!([null,"😀"]));
 }
+
+#[test]
+fn exclusive_native_ranges_keep_the_last_increment_inside_the_numeric_domain() {
+    for (lower,upper,expected) in [(u64::MAX-1,u64::MAX,1_usize),(2,2,0),(3,2,0)] {
+        let mut count = 0_usize;
+        for _ in lower..upper { count += 1; }
+        assert_eq!(count,expected);
+    }
+    for (lower,upper,expected) in [(i64::MIN,i64::MIN+1,1_usize),(i64::MAX-1,i64::MAX,1),(1,-1,0),(-2,1,3)] {
+        let mut count = 0_usize;
+        for _ in lower..upper { count += 1; }
+        assert_eq!(count,expected);
+    }
+}

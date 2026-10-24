@@ -34,6 +34,7 @@ import {checkOwnedPrimitiveOptionCallback} from './owned-primitive-option-callba
 import {hasOwnedStaticOptionalLoan} from './owned-static-optional-loans.mjs';
 import {ownedPrimitiveResultOperation,ownedPrimitiveResultType,ownedPrimitiveResultPayload,ownedPrimitiveResultAbsent,ownedPrimitiveResultStaticLoan,requireOwnedPrimitiveResultSources} from './owned-primitive-result-contracts.mjs';
 import {checkOwnedPrimitiveResult} from './owned-primitive-result-source.mjs';
+import {checkOwnedCountedFor} from './owned-counted-for-source.mjs';
 import {requireOwnedResultSources} from './owned-result-source-contracts.mjs';
 import {requireOwnedResultPublicInputSources} from './owned-result-public-inputs.mjs';
 import {requireOwnedHttpProtocolSources} from './owned-http-protocol-contracts.mjs';
@@ -814,6 +815,8 @@ function checkFunction(context,path,declaration,analysis){
     if(!ts.isBlock(statement.statement))fail('ordinary Boolean while block required');const local=branchScope(scope);for(const [name,value]of local){if(ownedBase64Result(value.type))local.delete(name);else if(value.mutable)local.set(name,{...value,variant:undefined,some:undefined});}
     const cond=expression(statement.expression,local,depth+1);if(cond.type!=='bool')fail('actual primitive Boolean loop condition required');const checked=block(statement.statement.statements,refine(local,cond,true),depth+1,loopDepth+1);
     for(const [name,value]of scope)if(value.mutable)scope.set(name,{...value,variant:undefined,some:undefined});body.push({kind:'while',cond,body:checked.body});
+   }else if(ts.isForStatement(statement)){
+    const checked=checkOwnedCountedFor(statement,scope,{ts,file,checker,paired,depth,loopDepth,expression,branchScope,bind,block,fail,ownedBase64Result});mergeMoves(scope,branchScope(scope),checked.scope);for(const [name,value]of scope)if(value.mutable)scope.set(name,{...value,variant:undefined,some:undefined});body.push(checked.statement);
    }else if(ts.isForOfStatement(statement)){
     const declarationList=statement.initializer;if(statement.awaitModifier||!ts.isVariableDeclarationList(declarationList)||(declarationList.flags&ts.NodeFlags.BlockScoped)!==ts.NodeFlags.Const||declarationList.declarations.length!==1||!ts.isBlock(statement.statement))fail('ordinary const JSON for-of block required');
     const declaration=declarationList.declarations[0];if(!ts.isIdentifier(declaration.name)||declaration.type||declaration.initializer||declaration.exclamationToken||declaration.name.text.startsWith('__ro'))fail('ordinary inferred immutable loop binding required');
