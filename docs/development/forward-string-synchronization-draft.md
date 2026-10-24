@@ -37,5 +37,34 @@ phases, complete source originals and inverses are retained. Independent actual
 JS/TS edits, strict paired runtime behavior, Unicode/control escapes, ambiguity,
 source conflicts, accessor/forgery and source-history cases are drafted and unrun.
 No proposal, compiler, target, preparer, test, experiment, Rust tool or CI has run.
-Receiving transaction/CLI integration, broader inverse edits, full production
-translation and all other open requirement ledger rows remain unfinished.
+Broader inverse edits, full production translation and all other open
+requirement ledger rows remain unfinished.
+
+The source-unit transaction and CLI are now drafted. A manifest selects the
+complete physical Rust entry, authoritative JS or TS file, paired file and
+review output:
+
+```json
+{"schema":"router-forward-string-unit-v1","id":"message","entry":"rust/src/lib.rs","authority":"JavaScript","javascript":"js/src/message.mjs","typescript":"ts/src/message.mts","meta":"translation/message.json"}
+```
+
+`planForwardStringUnitSynchronization` captures the complete Rust universe,
+actual Cargo/workspace inputs, manifest, both targets and Git revision. A
+differing independent paired edit refuses. Missing paired output can be
+initialized. The proposal retains every original, proposed output and inverse.
+`applyForwardStringUnitSynchronization` recomputes everything and uses the
+original guarded installer with atomic replacement, readback and rollback.
+Saved plans never supply source or semantic authority.
+
+After the whole bulk draft phase, the intended CLI commands are:
+
+```sh
+node scripts/sync-router-forward-strings.mjs --manifest unit.json --plan new-plan.json
+node scripts/sync-router-forward-strings.mjs --manifest unit.json --apply new-plan.json
+```
+
+The CLI preserves fresh-process dependency binding, existing memory/time/byte
+limits and exclusive plan creation. It has no runtime-only bypass. Independent
+JS/TS transaction, missing paired file, stale source/revision, concurrent edit,
+forgery, linked source, argument and complete source-history cases are drafted
+and unrun. No transaction, CLI, installer, compiler or test has executed.

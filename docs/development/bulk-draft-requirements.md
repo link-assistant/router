@@ -647,6 +647,12 @@ The [forward-derived string synchronization draft](forward-string-synchronizatio
 adds actual JS or TS string-edit proposals using the original forward compiler's
 checked body/source associations, a complete original encoder copy and mandatory
 fresh whole-project reproduction. Complete source histories, ordered rules,
-paired outputs and independent behavioral/refusal source remain unrun. Receiving
-transaction/CLI integration, wider inverse edits, whole production qualification
+paired outputs and independent behavioral/refusal source remain unrun. Wider inverse edits, whole production qualification
 and all other unfinished ledger rows still need their remaining source draft.
+
+The forward string synchronization draft now also includes complete original
+transaction/CLI copies, explicit JS/TS authority, full Rust/Cargo/workspace/source
+capture, paired-file conflicts, missing-target initialization and fresh guarded
+installation with complete inverses. Independent source/revision/forgery/link/CLI
+cases are drafted and unrun. Wider inverse syntax, production qualification and
+every other incomplete row remain open. No implementation or test has run.
