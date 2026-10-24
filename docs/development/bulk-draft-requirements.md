@@ -105,8 +105,11 @@ Unicode/byte-boundary/literal replacement/resource refusal oracle source.
 Nothing has run. The [text translation draft](owned-text-translation-draft.md)
 now adds translator registration, both interpreters, canonical Rust projection,
 actual forward domains and three-direction source-unit regression source.
-Automatic method adoption, complete bulk packaging, production application and
-the remaining rows still need their complete source draft.
+The [automatic text method draft](text-method-adoption-draft.md) now adds common
+immutable method chains, borrowed local propagation, closed count operands,
+compressed packets, fresh selected installation, receiving assets and complete
+independent forward caller cases. All remain unrun. Complete bulk packaging,
+production application and the remaining rows still need their source draft.
 
 The last checkpoint before this phase is `0460fb741`: four complete
 source-history receiving files passed 26 cases in Node and Bun. That historical
