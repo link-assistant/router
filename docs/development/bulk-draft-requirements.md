@@ -238,3 +238,12 @@ scope, producer, Cargo, CST and inverse joins. Block/expression callbacks and
 standard collect syntax have source rules. All proposals remain candidate-only;
 independent fresh caller and standard-native oracle regression source is unrun.
 Production adoption/application qualification and the broader open rows remain.
+
+The [checked iterator installation draft](checked-iteration-adoption-draft.md)
+recomputes actual source proposals, retains selected whole-function CST
+equations and requires every selected replacement body to freshly pass the
+existing private project checker/meta/JS/TS pipeline. Apply recomputes the full
+proposal against physical source, package/workspace Cargo and Git inputs before
+the existing transaction. Complete source/target review and inverses are
+retained. Independent cases are unrun; original trait dispatch, native parity,
+production adoption and all remaining requirement rows stay open.

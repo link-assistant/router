@@ -163,3 +163,7 @@ export function applyUnitRuntimeMaterialization(serialized,{root,manifestPath}={
  return installFreshUnitProposal(serialized,()=>planUnitRuntimeMaterialization({root,manifestPath}));
 }
 
+
+// Generic source transaction DATA APIs. The caller supplies its actual fresh
+// producer; these issue no compiler, semantic or runtime authority.
+export {installFreshUnitProposal as installFreshSourceProposal,source as readCurrentSourceProposalFile};
