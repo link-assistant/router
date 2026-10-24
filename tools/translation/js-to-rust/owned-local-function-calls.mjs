@@ -14,7 +14,7 @@ export function checkOwnedLocalFunctions(analysis,functions,check,{pairedFor}={}
    if(seen.has(node))return;seen.add(node);if(++cells>100000||++total>2000000||depth>160)fail('complete native call/signature graph source bound exceeded');
    if(ts.isCallExpression(node)&&ts.isIdentifier(node.expression)){const target=bySymbol.get(nativeChecker.getSymbolAtLocation(node.expression));if(target)edges.add(target);}
    const query=ownedLocalTypeQuery(ts,node,nativeChecker);if(query){const target=bySymbol.get(query.symbol);if(target)edges.add(target);}
-   if(ts.isFunctionDeclaration(node)){for(const parameter of node.parameters){const type=ts.getJSDocType(parameter);if(type)visit(type,nativeChecker,depth+1);}const returns=ts.getJSDocReturnType(node);if(returns)visit(returns,nativeChecker,depth+1);}
+   if(ts.isFunctionDeclaration(node)||ts.isArrowFunction(node)||ts.isFunctionExpression(node)){for(const parameter of node.parameters){const type=ts.getJSDocType(parameter);if(type)visit(type,nativeChecker,depth+1);}const returns=ts.getJSDocReturnType(node);if(returns)visit(returns,nativeChecker,depth+1);}
    ts.forEachChild(node,child=>visit(child,nativeChecker,depth+1));
   };visit(declaration,checker);const pair=pairs.get(declaration);if(pair)visit(pair.declaration,pair.analysis.checker);dependencies.set(declaration,edges);
  }

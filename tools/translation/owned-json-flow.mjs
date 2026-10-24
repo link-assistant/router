@@ -150,7 +150,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
   if(!generic||active.has(type.name))return false;const inner=new Set(active).add(type.name);
   return generic.arguments.some(argument=>retainsLoan(checker.resolveType(argument,owner.modulePath,entry.span),inner));
  };
- const clone=state=>({names:new Map(state.names),available:new Map(state.available),values:new Map([...state.values].map(([slot,value])=>[slot,copy(value)])),alive:state.alive,callbackCaptures:state.callbackCaptures,lambdaInputs:state.lambdaInputs,iterationOwnedInputs:state.iterationOwnedInputs,optionCallback:state.optionCallback,standardScope:state.standardScope,localReturns:state.localReturns,tailNode:state.tailNode,entry:state.entry,external:state.external,callPath:state.callPath,functionReturns:state.functionReturns});
+ const clone=state=>({names:new Map(state.names),available:new Map(state.available),values:new Map([...state.values].map(([slot,value])=>[slot,copy(value)])),alive:state.alive,callbackCaptures:state.callbackCaptures,lambdaInputs:state.lambdaInputs,iterationOwnedInputs:state.iterationOwnedInputs,optionCallback:state.optionCallback,primitiveOptionCallback:state.primitiveOptionCallback,standardScope:state.standardScope,localReturns:state.localReturns,tailNode:state.tailNode,entry:state.entry,external:state.external,callPath:state.callPath,functionReturns:state.functionReturns});
  const bind=(state,name,type,mutable,node,value=empty(),input=false)=>{const local=value.localLoanType;if(local&&JSON.stringify(local)!==JSON.stringify(type))refuse('original callback loan type changed',node);const kind=local?'borrow':domain(type,node);if(kind==='loan-result')refuse('stored borrowed Result requires a separate retained-carrier proof',node);const slot={name,kind,type,mutable,input,...(local?{localLoanType:local,localLoanOrigin:value.localLoanOrigin}:{})};state.names.set(name,slot);state.available.set(slot,true);state.values.set(slot,copy(value));return slot;};
  const createState=(current,arguments_=null,external=new Set(),callPath=[])=>{
   const state={names:new Map(),available:new Map(),values:new Map(),alive:true,entry:current,external,callPath,functionReturns:[]};
@@ -213,7 +213,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
   }
   if(node.k==='routerLambdaInput'){
    if(state.iterationOwnedInputs?.has(node.position)){const value=state.lambdaInputs?.[node.position];if(kind!=='json'||!value||value.loans.size)refuse('owned iteration input requires its actual by-value Json domain',node);return copy(value);}
-   const value=state.lambdaInputs?.[node.position];if(!value||kind!=='borrow'&&!(standardContext&&state.optionCallback&&kind==='copy'))refuse('callback item requires its actual shared slice root',node);ensureRoots(value,state,node);return copy(value);
+   const value=state.lambdaInputs?.[node.position];if(!value||kind!=='borrow'&&!((standardContext&&state.optionCallback||state.primitiveOptionCallback)&&kind==='copy'))refuse('callback item requires its actual shared slice root',node);ensureRoots(value,state,node);return copy(value);
   }
   if(node.k==='routerCoreJsonCollection'){
    const iteration=jsonIterationContract(node.id);
@@ -350,6 +350,14 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
   }
   if(node.k==='routerHostCall'){
    const stateOperation=jsonStateContract(node.id);
+   if(stateOperation?.family==='primitive-option-callback'){
+    const callback=node.args[1],wanted=stateOperation.returns==='text-owned'?'owned-text':'copy';if(!genuine(node,state.entry)||node.args.length!==2||callback?.k!=='routerLambda'||callback.arity!==stateOperation.callbackParameters.length||kind!==wanted)refuse('Option callback requires its complete private source-bound native call',node);
+    if(domain(node.args[0].type,node.args[0])!=='copy')refuse('Option callback receiver requires its actual Copy optional domain',node);const receiver=read(node.args[0],'borrow');ensureRoots(receiver,state,node);
+    const child=clone(state);child.callbackCaptures=new Set(state.names.values());child.primitiveOptionCallback=true;child.lambdaInputs=callback.arity?[project(receiver,'field0')]:[];child.localReturns=[];child.functionReturns=[];
+    const tail=selectedBody(callback.binding,()=>visit(callback.binding,child,'move',depth+1)),returned=child.localReturns.map(row=>row.value);if(child.alive)returned.push(tail);if(!returned.length)refuse('Option callback requires a complete result path',node);let result=returned[0];for(const value of returned.slice(1))result=union(result,value);ensureRoots(result,state,node);
+    if(stateOperation.method==='unwrap_or_else'){if(stateOperation.returns==='text-owned'){ensureRoots(project(receiver,'field0'),state,node);return empty();}if(result.loans.size)refuse('Copy lazy fallback cannot invent a loan',node);return empty();}
+    const output=stateOperation.method==='map'?prefix(result,'field0'):copy(result);output.tags=new Set(['Some','None']);if(!retainsLoan(node.type)&&output.loans.size)refuse('nonborrowing callback output retains an unexpected loan',node);return output;
+   }
    if(stateOperation?.family==='primitive-option'){
     const wanted=stateOperation.returns==='text-owned'?'owned-text':'copy';if(!genuine(node,state.entry)||node.args.length!==stateOperation.parameters.length||kind!==wanted)refuse('primitive Option requires its actual complete native call and result',node);
     const observed=node.args.map(value=>{if(domain(value.type,value)!=='copy')refuse('primitive Option operand needs its actual Copy or borrowed str domain',value);const found=read(value,'borrow');ensureRoots(found,state,value);return found;});

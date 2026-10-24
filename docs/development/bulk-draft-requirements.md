@@ -140,6 +140,15 @@ unrun JS/Rust oracle source. Whole callback qualification, capture/loan walks,
 both translation directions/interpreters, packaging, automatic adoption and
 production use still need integration drafts.
 
+The [Option callback translation draft](primitive-option-callback-translation-draft.md)
+now adds actual forward and reverse callers, both interpreters/emitters, canonical
+Rust projection, isolated callback return state, separate capture/receiver loan
+walks, static optional proofs, typed optional locals and receiving assets.
+Twelve complete source predecessors and independent caller, capture, laziness,
+source/refusal and inverse regressions are drafted and unrun. Automatic callback
+method adoption, Result counterparts, production use and every other incomplete
+ledger row remain open. No translator, test, producer, Rust tool or CI has run.
+
 The last checkpoint before this phase is `0460fb741`: four complete
 source-history receiving files passed 26 cases in Node and Bun. That historical
 focused evidence does not qualify any change drafted in this phase or the full

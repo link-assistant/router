@@ -1,4 +1,5 @@
 import {checkSourceLifetimeRefusals} from './declaration-refusals.mjs';
+import {originalPrimitiveOptionCallbackProjection} from '../router-core-json-updates.mjs';
 import {isDeepStrictEqual} from 'node:util';
 // Generated vector checker association and original lifetime equations.
 const checkedLists = new WeakMap();
@@ -521,6 +522,11 @@ function origins(node,env,context,returns,depth=0) {
       const origin=region.identity==='static'?new Set(['static']):inputs.length?new Set(inputs.flatMap(input=>[...(arguments_[input.param]?at(arguments_[input.param],input.path):new Set([UNKNOWN]))])):new Set([UNKNOWN]);
       return [key(region.path),origin];
     })));
+  }
+  if(node.k==='routerHostCall'&&originalPrimitiveOptionCallbackProjection(node)){
+    const row=originalPrimitiveOptionCallbackProjection(node),callback=node.args[1];if(node.args.length!==2||callback?.k!=='routerLambda'||callback.arity!==row.callbackParameters.length)throw unsupported('primitive Option callback origins','requires its actual complete qualified callback',node.span);
+    const receiver=read(node.args[0]),callbackReturns=[],tail=origins(callback.binding,new Map(env),{...context,lambdaInputs:callback.arity?[project(receiver,['argument',0])]:[],mutableBorrowLocals:new Map(context.mutableBorrowLocals),callbackCapturedBorrowLocals:new Set(context.mutableBorrowLocals.values()),loopExitStates:[]},callbackReturns,depth+1),called=union(tail,...callbackReturns.map(row=>row.value));
+    if(!borrowed)return new Set();return row.method==='map'?prefix(called,['argument',0]):row.method==='and_then'?called:new Set();
   }
   if(node.k==='routerHostCall') {
     const arguments_=node.args.map(value=>read(value));

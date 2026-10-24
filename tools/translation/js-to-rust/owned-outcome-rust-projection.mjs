@@ -5,6 +5,7 @@ import {OWNED_OUTCOME_CONTRACTS} from '../owned-outcome-contracts.mjs';
 import {INTEGER_CONTRACTS} from '../integer-contracts.mjs';
 import {TEXT_CONTRACTS} from '../text-contracts.mjs';
 import {PRIMITIVE_OPTION_CONTRACTS} from '../primitive-option-contracts.mjs';
+import {PRIMITIVE_OPTION_CALLBACK_CONTRACTS} from '../primitive-option-callback-contracts.mjs';
 import {SSE_CONTRACTS} from '../sse-contracts.mjs';
 import {JSON_STATE_CONTRACTS} from '../json-state-contracts.mjs';
 import {JSON_FIELD_CONTRACTS} from '../json-field-contracts.mjs';
@@ -17,6 +18,7 @@ const snake=name=>name.replace(/[A-Z]/gu,character=>'_'+character.toLowerCase())
 const ordinary=name=>typeof name==='string'&&/^[a-z][A-Za-z0-9_]*$/u.test(name)&&!name.startsWith('__ro');
 const families=[
  ...SSE_CONTRACTS.map(row=>({path:row.rustPath,name:row.javascriptName,runtime:'sse',roles:row.parameters})),
+ ...PRIMITIVE_OPTION_CALLBACK_CONTRACTS.map(row=>({path:row.rustPath,name:row.javascriptName,runtime:'primitive-option-callback',roles:row.parameters})),
  ...PRIMITIVE_OPTION_CONTRACTS.map(row=>({path:row.rustPath,name:row.javascriptName,runtime:'primitive-option',roles:row.parameters})),
  ...TEXT_CONTRACTS.map(row=>({path:row.rustPath,name:row.javascriptName,runtime:'text',roles:row.parameters})),
  ...INTEGER_CONTRACTS.map(row=>({path:row.rustPath,name:row.javascriptName,runtime:'integer',roles:row.parameters})),

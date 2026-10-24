@@ -19,6 +19,8 @@ import {requireOwnedLocalCallClosure,emitOwnedLocalCall} from './owned-local-fun
 import {ownedIntegerOperation} from './owned-integer-contracts.mjs';
 import {ownedTextOperation} from './owned-text-contracts.mjs';
 import {ownedPrimitiveOptionOperation} from './owned-primitive-option-contracts.mjs';
+import {ownedPrimitiveOptionCallbackOperation} from './owned-primitive-option-callback-contracts.mjs';
+import {emitOwnedPrimitiveOptionCallback,evaluateOwnedPrimitiveOptionCallback} from './owned-primitive-option-callback-emission.mjs';
 import {emitOwnedPrimitiveOptionCall,evaluateOwnedPrimitiveOptionCall} from './owned-primitive-option-emission.mjs';
 import {emitOwnedTextCall,evaluateOwnedTextCall} from './owned-text-emission.mjs';
 import {ownedJsonFieldOperation,emitOwnedJsonFieldCall,evaluateOwnedJsonFieldCall} from './owned-json-fields.mjs';
@@ -194,6 +196,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
   switch(value.kind){
    case 'local-call':return emitOwnedLocalCall(value,{rust,expr,rustName});
    case 'sse-call':return emitOwnedSseCall(value,{rust,expr,imports});
+   case 'primitive-option-callback-call':return emitOwnedPrimitiveOptionCallback(value,{rust,expr,body,rustName,imports,typeScriptType:publicTypeScriptType});
    case 'primitive-option-call':return emitOwnedPrimitiveOptionCall(value,{rust,expr,imports});
    case 'text-call':return emitOwnedTextCall(value,{rust,expr,imports});
    case 'integer-call':return emitOwnedIntegerCall(value,{rust,expr,imports});
@@ -278,7 +281,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
   if(statement.kind==='for-json')return emitOwnedJsonLoop(statement,{rust,expr,body,sequence:()=>sequence++,indent,rustName});
   if(statement.kind==='break'||statement.kind==='continue')return pad+statement.kind+';';
   if(statement.kind==='while')return pad+'while ('+expr(statement.cond)+') {\n'+body(statement.body,indent+4)+'\n'+pad+'}';
-  if(statement.kind==='let')return pad+(rust?(statement.mutable?'let mut ':'let '):(statement.mutable?'let ':'const '))+(rust?rustName(statement.name):statement.name)+' = '+expr(statement.value)+';';
+  if(statement.kind==='let')return pad+(rust?(statement.mutable?'let mut ':'let '):(statement.mutable?'let ':'const '))+(rust?rustName(statement.name):statement.name)+(!rust&&ownedJsonOptionalPayload(statement.value.type)?': '+publicTypeScriptType(statement.value.type):'')+' = '+expr(statement.value)+';';
   if(statement.kind==='assign')return pad+(rust?rustName(statement.name):statement.name)+' = '+expr(statement.value)+';';
   if(statement.kind==='return')return pad+'return '+expr(statement.value)+';';
   return pad+'if '+(rust?'':'(')+expr(statement.cond)+(rust?'':')')+' {\n'+body(statement.then,indent+4)+'\n'+pad+'} else {\n'+body(statement.else,indent+4)+'\n'+pad+'}';
@@ -299,8 +302,8 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  const output=outputPath??program[0].source.path,relative=(name,base=sourceData.runtimeRoot)=>{const path=posix.relative(posix.dirname(output),base+'/'+name);return path.startsWith('.')?path:'./'+path;};
  const lines=['import type {JsonValue} from '+JSON.stringify(relative('json-macro-runtime.mjs',[...imports].some(ownedAsciiOperation)?sourceData.declarationRoot:sourceData.runtimeRoot))+';'];
  if([...imports].some(name=>ownedBase64Operation(name)))lines.push('import type {Base64Error,Base64Result} from '+JSON.stringify(relative('base64-runtime.mjs'))+';');
- for(const family of ['json-update','json-macro','base64','json','json-option','string-iterator','json-collections','json-iteration','json-state','json-fields','owned-outcome','integer','sse','text','primitive-option']){
-  const names=[...imports].filter(name=>(ownedPrimitiveOptionOperation(name)?'primitive-option':ownedTextOperation(name)?'text':ownedSseOperation(name)?'sse':ownedIntegerOperation(name)?'integer':ownedOutcomeOperation(name)?'owned-outcome':ownedJsonFieldOperation(name)?'json-fields':ownedStateOperation(name)?'json-state':ownedIterationOnlyOperation(name)?'json-iteration':ownedCollectionOperation(name)?'json-collections':ownedAsciiOperation(name)?'string-iterator':ownedJsonOptionalReaderOperation(name)?'json-option':ownedBase64Operation(name)?'base64':ownedJsonReaderOperation(name)?'json':name.startsWith('json_macro_')?'json-macro':'json-update')===family);
+ for(const family of ['json-update','json-macro','base64','json','json-option','string-iterator','json-collections','json-iteration','json-state','json-fields','owned-outcome','integer','sse','text','primitive-option','primitive-option-callback']){
+  const names=[...imports].filter(name=>(ownedPrimitiveOptionCallbackOperation(name)?'primitive-option-callback':ownedPrimitiveOptionOperation(name)?'primitive-option':ownedTextOperation(name)?'text':ownedSseOperation(name)?'sse':ownedIntegerOperation(name)?'integer':ownedOutcomeOperation(name)?'owned-outcome':ownedJsonFieldOperation(name)?'json-fields':ownedStateOperation(name)?'json-state':ownedIterationOnlyOperation(name)?'json-iteration':ownedCollectionOperation(name)?'json-collections':ownedAsciiOperation(name)?'string-iterator':ownedJsonOptionalReaderOperation(name)?'json-option':ownedBase64Operation(name)?'base64':ownedJsonReaderOperation(name)?'json':name.startsWith('json_macro_')?'json-macro':'json-update')===family);
   if(names.length)lines.push('import { '+names.map(name=>name+' as __ro_'+name).join(', ')+' } from '+JSON.stringify(relative(family+'-runtime.mjs'))+';');
  }
  return lines.join('\n')+'\n\n'+code+'\n';
@@ -350,6 +353,7 @@ export async function prepareOwnedCoreRuntime(input){
  if(program.some(item=>item.hostCalls.some(call=>ownedSseOperation(call.name))))modules.sse=await import('../sse-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedTextOperation(call.name))))modules.text=await import('../text-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedPrimitiveOptionOperation(call.name))))modules.primitiveOption=await import('../primitive-option-runtime.mjs');
+ if(program.some(item=>item.hostCalls.some(call=>ownedPrimitiveOptionCallbackOperation(call.name))))modules.primitiveOptionCallback=await import('../primitive-option-callback-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedJsonReaderOperation(call.name))))modules.json=await import('../extensions/json-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedJsonOptionalReaderOperation(call.name))))modules.optional=await import('../json-option-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedBase64Operation(call.name))))modules.base64=await import('../base64-runtime.mjs');
@@ -369,6 +373,7 @@ export function evaluateOwnedCoreProgram(input,name,args,token){
   switch(value.kind){
    case 'local-call':return evaluateOwnedCorePrepared(program,value.name,value.args.map(argument=>get(argument,scope)),state);
    case 'sse-call':return evaluateOwnedSseCall(value,{state,scope,get});
+   case 'primitive-option-callback-call':return evaluateOwnedPrimitiveOptionCallback(value,{state,scope,get,run});
    case 'primitive-option-call':return evaluateOwnedPrimitiveOptionCall(value,{state,scope,get});
    case 'text-call':return evaluateOwnedTextCall(value,{state,scope,get});
    case 'integer-call':return evaluateOwnedIntegerCall(value,{state,scope,get});
@@ -428,6 +433,7 @@ function evaluateOwnedCorePrepared(program,name,args,state){
   switch(value.kind){
    case 'local-call':return evaluateOwnedCorePrepared(program,value.name,value.args.map(argument=>get(argument,scope)),state);
    case 'sse-call':return evaluateOwnedSseCall(value,{state,scope,get});
+   case 'primitive-option-callback-call':return evaluateOwnedPrimitiveOptionCallback(value,{state,scope,get,run});
    case 'primitive-option-call':return evaluateOwnedPrimitiveOptionCall(value,{state,scope,get});
    case 'text-call':return evaluateOwnedTextCall(value,{state,scope,get});
    case 'integer-call':return evaluateOwnedIntegerCall(value,{state,scope,get});
