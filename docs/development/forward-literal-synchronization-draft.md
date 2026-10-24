@@ -1,7 +1,7 @@
 # Forward-derived scalar literal synchronization source draft
 
 `proposeForwardLiteralSynchronization` drafts a whole batch of edits to actual
-string, Boolean and nonnegative fixed-integer literals in checked ordinary
+string, Boolean and fixed-integer literals in checked ordinary
 functions. Either complete JS or complete TS may supply the requested edit.
 
 The original project compiler now exposes a forwarding `targetBinding()` data
@@ -18,7 +18,7 @@ actual emitted function and original kind/value. Checked body spans select the
 original Rust tokens. When values repeat, the complete source/target multiplicity
 must agree before an ordered source proposal is possible. Ambiguous counts
 refuse. Each native integer retains its actual primitive name, signedness and
-width; overflow and negative edits refuse in this initial scalar family.
+width; edited values must stay between that actual primitive's minimum and maximum.
 
 The proposal applies nonoverlapping native spans and independently recompiles
 the whole modified project once. Its complete target must reproduce every
@@ -41,6 +41,16 @@ Independent JS/strict TS mixed batches, repeated values across/inside functions,
 actual u64/usize/u8 identities, upper bounds, negative/kind/code refusals,
 source-bound target data and fresh transaction/forgery cases are drafted and
 unrun. Compiler/preparer/target/planner/CLI/tests and Rust tools have not run.
-Signed literals, floats, other expressions, methods/constants, new source syntax,
+Floats, other expressions, methods/constants, new source syntax,
 complete Router production qualification and the other open ledger rows remain
 unfinished. No translation coverage or full parity result is claimed.
+
+Signed fixed-integer source rules now retain the entire actual checked unary
+minus/token span, including its whitespace, and the complete canonical target
+parenthesized numeral. Sign changes across zero preserve only that literal
+expression boundary. Arbitrary arithmetic, commented unary token gaps and
+unresolved native spans refuse. This path still requires actual source/target
+multiplicity, native primitive bounds and complete modified-project reproduction.
+Independent JS/strict TS i64 extreme, sign-crossing, unsigned-negative, overflow,
+expression refusal and full-span/inverse cases plus native Rust oracle source
+are drafted and unrun. No implementation, test or Rust tool has executed.

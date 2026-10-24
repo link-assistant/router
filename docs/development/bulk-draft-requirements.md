@@ -687,3 +687,10 @@ and complete repeated-value source/target multiplicity. Full transaction/CLI/API
 export copies, complete originals/inverses and independent strict/refusal/source/
 receiving cases are drafted and unrun. Signed/floating/expression/method inverse
 rules, whole production coverage and all other unfinished rows remain open.
+
+The scalar inverse draft now also includes signed native integer spans,
+canonical target numeral parentheses, actual minimum/maximum checks and sign
+changes across zero. Complete original source rules and independent strict JS/TS
+extreme/boundary/refusal/inverse plus Rust oracle source are drafted and unrun.
+Floats, general expression/method inverse rules, whole production qualification
+and every other unfinished requirement remain open.

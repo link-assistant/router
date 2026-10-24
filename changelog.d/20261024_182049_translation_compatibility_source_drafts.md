@@ -33,3 +33,5 @@ integration and the remaining requirement ledger are still open.
 - Draft owned loop scalar map/filter callback flow with separate yielded-item and retained receiver/capture facts; independent strict target and Rust oracle source remains unrun.
 
 - Draft compiler-bound bulk string/Boolean/fixed-integer inverse synchronization and fresh source-unit/CLI/API export integration with full unrun regressions.
+
+- Draft signed fixed-integer inverse spans and canonical numeral boundaries with native min/max checks; independent target and Rust oracle source remains unrun.
