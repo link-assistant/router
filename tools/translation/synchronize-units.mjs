@@ -12,6 +12,8 @@ import {translateJavaScript} from './js-to-rust/translator.mjs';
 import {translateTypeScript} from './js-to-rust/typed-portable.mjs';
 import {translatePortableModuleProject} from './js-to-rust/module-project.mjs';
 import {translateFilesystemEffectJavaScript,translateFilesystemEffectTypeScript} from './js-to-rust/filesystem-effects.mjs';
+import {translateFilesystemControlJavaScript,translateFilesystemControlTypeScript} from './js-to-rust/filesystem-control.mjs';
+import {translateFilesystemControlRust} from './js-to-rust/filesystem-control-rust.mjs';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {hostRuntimeAssets} from './host-assets.mjs';
 import {effectRuntimeAssets} from './effect-assets.mjs';
@@ -42,7 +44,7 @@ function baselines(root,revision,names){
 function descriptor(value){
  if(!value||value.schema!==SCHEMA||!Array.isArray(value.units)||!value.units.length||value.units.length>256)fail('bounded nonempty unit descriptor required');const ids=new Set(),paths=new Set();
  for(const unit of value.units){
-  if(!unit||typeof unit.id!=='string'||!/^[_a-zA-Z0-9-]{1,96}$/u.test(unit.id)||ids.has(unit.id)||!['portable','portable-project','filesystem','owned-state','owned-outcome'].includes(unit.profile)||!['auto',...languages].includes(unit.authority??'auto'))fail('unique source unit and known profile required');ids.add(unit.id);
+  if(!unit||typeof unit.id!=='string'||!/^[_a-zA-Z0-9-]{1,96}$/u.test(unit.id)||ids.has(unit.id)||!['portable','portable-project','filesystem','filesystem-control','owned-state','owned-outcome'].includes(unit.profile)||!['auto',...languages].includes(unit.authority??'auto'))fail('unique source unit and known profile required');ids.add(unit.id);
   for(const language of languages){const name=relative(unit.paths?.[language]);if(paths.has(name))fail('source units cannot overlap');paths.add(name);if(!name.endsWith(language==='Rust'?'.rs':language==='TypeScript'?'.ts':'.mjs'))fail('language extension differs');}
   const owned=ownedUnitProfile(unit.profile);if(owned){
    if(!Array.isArray(unit.nativeSources)||unit.nativeSources.length<owned.nativeInputs.length||unit.nativeSources.length>32)fail('complete bounded actual native source mappings required');
@@ -74,6 +76,7 @@ function relocate(text,from,to,runtimeBefore,runtimeAfter,language){
  let after=text;for(const row of [...edits].sort((a,b)=>b.span[0]-a.span[0]))after=after.slice(0,row.span[0])+row.replacement+after.slice(row.span[1]);const equation=transportConcreteSourceEquations([{before:text,after,language}])[0];if(equation.inverse!==text)fail('whole native target import inverse differs');return {source:after,edits,equation};
 }
 function translate(unit,language,text,runtime,dependencies=[],ownedStateInputs=null){
+ if(unit.profile==='filesystem-control'&&language==='Rust'){const result=translateFilesystemControlRust(text,{sourcePath:unit.paths.Rust,javascriptPath:unit.paths.JavaScript,runtimePath:unit.runtimes.JavaScript+'/effects.mjs',runtimeSource:runtime.javascript});return {Rust:text,JavaScript:result.javascript,TypeScript:result.typescript,meta:{semanticMeta:result.meta,filesystemRustSourceHistory:result.filesystemRustSourceHistory},generatedFrom:unit.paths.JavaScript,runtimeBefore:unit.runtimes.JavaScript};}
  const owned=ownedUnitProfile(unit.profile);if(owned){if(!ownedStateInputs)fail('complete actual owned unit inputs required');return owned.translate(ownedStateInputs);}
  if(language==='Rust'){
   if(unit.profile==='portable-project'){
@@ -87,8 +90,8 @@ function translate(unit,language,text,runtime,dependencies=[],ownedStateInputs=n
   const result=translateSource(text,unit.paths.Rust);if(result.ir.counts.carried||result.ir.items.some(row=>row.term==='fn'&&row.status!=='executable'))fail('Rust unit still contains unsupported bodies: '+unit.id);return {Rust:text,JavaScript:result.javascript,TypeScript:result.typescript,meta:result.ir,generatedFrom:unit.paths.Rust.replace(/\.rs$/u,'.mjs'),runtimeBefore:'runtime'};
  }
  let result;if(unit.profile==='portable-project')result=translatePortableModuleProject({entry:unit.paths[language],language,modules:[{path:unit.paths[language],source:text},...dependencies]});
- else if(unit.profile==='filesystem'){
-  const input={sourcePath:unit.paths[language],runtimePath:unit.runtimes[language]+'/effects.mjs',runtimeSource:runtime.javascript};result=language==='TypeScript'?translateFilesystemEffectTypeScript(text,input):translateFilesystemEffectJavaScript(text,input);
+ else if(unit.profile==='filesystem'||unit.profile==='filesystem-control'){
+  const input={sourcePath:unit.paths[language],runtimePath:unit.runtimes[language]+'/effects.mjs',runtimeSource:runtime.javascript};result=unit.profile==='filesystem-control'?(language==='TypeScript'?translateFilesystemControlTypeScript(text,input):translateFilesystemControlJavaScript(text,input)):(language==='TypeScript'?translateFilesystemEffectTypeScript(text,input):translateFilesystemEffectJavaScript(text,input));
  }else result=language==='TypeScript'?translateTypeScript(text,{sourcePath:unit.paths[language]}):translateJavaScript(text,{sourcePath:unit.paths[language]});
  return {Rust:result.rust,JavaScript:result.javascript??text,TypeScript:result.typescript,meta:result.moduleSourceHistory?{semanticMeta:result.meta,moduleSourceHistory:result.moduleSourceHistory}:result.meta,generatedFrom:unit.paths[language],runtimeBefore:unit.runtimes[language]};
 }
@@ -101,7 +104,7 @@ export function planUnitSynchronization({root,manifestPath}={}){
   const current={},previous={};for(const language of languages){current[language]=source(root,unit.paths[language]);previous[language]=previousSources.get(unit.paths[language]);retained+=current[language]===null?0:Buffer.byteLength(current[language]);if(retained>LIMIT)fail('whole original source byte budget exceeded');inputs.push({path:unit.paths[language],source:current[language]});}
   const dependencies={},dependencyChanges=new Set();for(const language of languages){dependencies[language]=(unit.dependencies?.[language]??[]).map(path=>{const text=source(root,path);if(text===null)fail('complete physical dependency source is missing');retained+=Buffer.byteLength(text);if(retained>LIMIT)fail('whole dependency source byte budget exceeded');inputs.push({path,source:text});if(text!==previousSources.get(path))dependencyChanges.add(language);return {path,source:text};});}
   const language=choose(unit,current,previous,dependencyChanges),original=current[language];protectedSources.add(unit.paths[language]);for(const row of dependencies[language])protectedSources.add(row.path);let translated;
-  if(unit.profile==='filesystem'&&language!=='Rust'){const path=unit.runtimes[language]+'/effects.mjs',actual=source(root,path);if(actual!==runtime.javascript)fail('complete actual source filesystem runtime differs');inputs.push({path,source:actual});retained+=Buffer.byteLength(actual);if(retained>LIMIT)fail('whole original runtime byte budget exceeded');}
+  if(unit.profile==='filesystem-control'||unit.profile==='filesystem'&&language!=='Rust'){const path=unit.runtimes[language==='Rust'?'JavaScript':language]+'/effects.mjs',actual=source(root,path);if(actual!==runtime.javascript)fail('complete actual source filesystem runtime differs');inputs.push({path,source:actual});retained+=Buffer.byteLength(actual);if(retained>LIMIT)fail('whole original runtime byte budget exceeded');}
   let ownedStateInputs=null;
   const owned=ownedUnitProfile(unit.profile);if(owned){
    const capture=path=>{const text=source(root,path);if(text===null)fail('complete actual owned-state input is missing: '+path);retained+=Buffer.byteLength(text);if(retained>LIMIT)fail('whole owned-state input byte budget exceeded');inputs.push({path,source:text});protectedSources.add(path);return text;};

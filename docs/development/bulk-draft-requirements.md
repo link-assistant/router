@@ -317,3 +317,10 @@ copies retain packet generation, fresh selected whole-function checking and
 guarded installation. Independent actual caller and refusal sources are unrun.
 Production application, general loops/control/effects and the other requirement
 rows remain unfinished.
+
+The [conditional filesystem draft](filesystem-control-draft.md) adds native
+Boolean branches, exclusive payload usage, deferred async control, complete
+canonical Rust authority and physical three-language unit synchronization.
+Seven full source successors and independent JS/TS/native oracle, ordering,
+conflict and refusal regression sources are drafted and unrun. Broader effects,
+production application and every remaining requirement row still need work.
