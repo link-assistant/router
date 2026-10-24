@@ -54,6 +54,8 @@ export function projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot,
   text=text.replaceAll("&'a",'&');
   if(text==='&crate::translation_core::Json')return 'import('+JSON.stringify(relative('json-macro'))+').JsonValue';
   if(text==='&[crate::translation_core::Json]')return 'Parameters<typeof '+imported('router_state_json_values_copy','json-state')+'>[0]';
+  if(text==='&::serde_json::Map<::std::string::String,crate::translation_core::Json>')return 'Parameters<typeof '+imported('router_core_json_map_index','json-update')+'>[0]';
+  if(text==='i64')return 'Parameters<typeof '+imported('json_macro_i64','json-macro')+'>[0]';
   if(text==='&str')return 'string';if(text==='bool')return 'boolean';
   if(text==='u64')return 'Parameters<typeof '+imported('router_state_json_with_index','json-state')+'>[1]';
   if(text==='usize')return 'Parameters<typeof '+imported('router_core_json_index_usize','json-update')+'>[1]';
@@ -65,7 +67,7 @@ export function projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot,
    '&crate::translation_core::Json':['serde_json_value_get_string','json'],
    '&str':['serde_json_value_as_str','json'],bool:['serde_json_value_as_bool','json'],u64:['serde_json_value_as_u64','json'],i64:['serde_json_value_as_i64','json'],
   };
-  const normalized=text.replaceAll("&'a",'&').replaceAll("&'static",'&'),match=/^::std::option::Option<(.+)>$/u.exec(normalized);if(!match)return null;
+  const normalized=text.replaceAll("&'a",'&').replaceAll("&'static",'&');if(normalized==='i64')return 'Parameters<typeof '+imported('json_macro_i64','json-macro')+'>[0]';const match=/^::std::option::Option<(.+)>$/u.exec(normalized);if(!match)return null;
   const row=values[match[1]];if(!row)fail('optional Rust return needs its original registered domain');return 'ReturnType<typeof '+imported(...row)+'>';
  }
  function expression(node,names,depth=0,lowering=false){

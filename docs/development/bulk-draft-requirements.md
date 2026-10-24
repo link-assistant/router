@@ -262,3 +262,11 @@ packet production and fresh checked selected installation. Three complete
 original source producers, their refusal scopes and full CST inverses remain
 retained. All independent caller, packet, installation and refusal regression
 sources are unrun. Production application and the broader open rows remain.
+
+The [signed numeric and map ABI draft](owned-numeric-abi-draft.md) adds actual
+operation-derived signed/map interfaces, bounded negative literals, numeric
+Option constructors and contextual literal returns to the owned-state path.
+Canonical Rust inversion and source-unit signature proposals use the same
+domains. Seven complete source successors, full CST inverses and independent
+JS/TS/native oracle sources are drafted and unrun. Broader arithmetic, complete
+production application and every other open requirement row still need work.

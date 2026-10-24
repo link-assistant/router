@@ -20,6 +20,7 @@ export function projectOwnedStateUnitJavaScript(source,{context,sourcePath,paire
  function type(domain){
   const json='import('+JSON.stringify(relative('json-macro'))+').JsonValue';
   if(domain==='json-ref')return json;if(domain==='json-list-ref')return 'readonly '+json+'[]';if(domain==='str')return 'string';if(domain==='bool')return 'boolean';
+  if(domain==='i64')return operation('json_macro_i64','json-macro',0);
   if(domain==='u64')return operation('router_state_json_with_index','json-state',1);if(domain==='usize')return operation('router_core_json_index_usize','json-update',1);if(domain==='map-ref')return operation('router_core_json_map_index','json-update',0);
   fail('paired public input needs its own source-bound signature rule: '+domain);
  }

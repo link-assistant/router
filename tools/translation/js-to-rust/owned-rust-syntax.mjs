@@ -41,7 +41,7 @@ export class OwnedRustReader {
    if(this.index-start>200000)fail('guard source token budget exceeded');
   }fail('complete runtime guard statement required');
  }
- typeUntil(stops){const result=[];let depth=0;while(!(depth===0&&stops.includes(this.peek().text))){const token=this.next();if(['<','[','('].includes(token.text))depth++;if(['>',']',')'].includes(token.text))depth--;if(depth<0)fail('Rust type delimiters differ');result.push(token.text);}return result.join('');}
+ typeUntil(stops){const result=[];let depth=0;while(!(depth===0&&stops.includes(this.peek().text))){const token=this.next();if(['<','[','('].includes(token.text))depth++;if(['>',']',')'].includes(token.text))depth--;if(token.text==='>>')depth-=2;if(depth<0)fail('Rust type delimiters differ');result.push(token.text);}return result.join('');}
  function(){
   while(this.eat('#'))this.group('[',']');const exported=this.eat('pub');this.expect('fn');const name=this.identifier();
   if(this.eat('<')){this.expect("'a");this.expect('>');}this.expect('(');const parameters=[];
@@ -82,9 +82,10 @@ export class OwnedRustReader {
    return {kind:'match',value,arms};
   }
   if(this.eat('|')){const parameters=[];while(!this.eat('|')){parameters.push(this.identifier());if(!this.is('|'))this.expect(',');}return {kind:'lambda',parameters,body:this.block(environment,depth+1)};}
+  if(this.eat('-')){const token=this.next(),found=token.type==='number'&&/^(0|[1-9][0-9]{0,18})_i64$/u.exec(token.text);if(!found||BigInt(found[1])>9223372036854775808n)fail('canonical bounded negative i64 literal required');return {kind:'integer',value:(-BigInt(found[1])).toString(),type:'i64'};}
   const token=this.peek();
   if(token.type==='string'){this.next();return {kind:'string',value:ownedRustString(token.text)};}
-  if(token.type==='number'){this.next();const found=/^(0|[1-9][0-9]*)_(u64|i64)$/u.exec(token.text);if(!found)fail('canonical suffixed integer required');return {kind:'integer',value:found[1],type:found[2]};}
+  if(token.type==='number'){this.next();const found=/^(0|[1-9][0-9]*)_(u64|i64)$/u.exec(token.text);if(!found||found[1].length>20||BigInt(found[1])>(found[2]==='i64'?9223372036854775807n:18446744073709551615n))fail('canonical bounded suffixed integer required');return {kind:'integer',value:found[1],type:found[2]};}
   if(this.eat('true'))return {kind:'boolean',value:true};if(this.eat('false'))return {kind:'boolean',value:false};
   const path=this.path();
   if(path==='crate::translation_core::json!')return this.jsonMacro(environment,depth+1);
