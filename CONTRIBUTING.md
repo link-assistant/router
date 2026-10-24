@@ -788,3 +788,12 @@ candidates. Keep legacy APIs distinct, retain ancestor and competing type-prefix
 checks, and never use a non-trait import census to prove tool-prefix absence.
 A consumer connection cannot supply a missing original input-owner proof. See
 the [enclosing tool draft](docs/development/enclosing-tool-context-draft.md).
+
+Inverse call rules must resolve actual compiler-issued source and target
+associations, retain complete selected callee bytes and recompile the entire
+modified project. A target name, observed arity or syntactic native path is
+candidate data only; the original semantic checker still owns visibility,
+borrowing, effects and types. Reproduce the complete requested target, including
+conditional statement shape and all arithmetic guards. Keep callee observations
+invocation scoped and release original checked declaration closures before the
+modified compilation.

@@ -759,3 +759,12 @@ source rules and independent strict target/refusal/history plus native oracle
 source are drafted and unrun. Missing input-owner bootstrap, architecture prefix
 closure, opaque resources, production adoption and all other unfinished rows
 remain open.
+
+The whole-expression inverse draft now also composes actual compiler-associated
+scalar callees, nested conditional arguments and qualified cross-module paths.
+Each selected callee retains full original source and safe nongeneric header/
+arity checks; complete modified compilation and whole target reproduction still
+own semantic admission. Full originals and independent strict target/truth-table/
+borrow/refusal/history plus native oracle source are drafted and unrun. Whole
+statement inverses, generic/recursive/owned/async calls, production qualification
+and all other unfinished requirements remain open.

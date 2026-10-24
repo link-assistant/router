@@ -77,3 +77,27 @@ cases plus native Rust checked arithmetic oracle source are drafted and unrun.
 No compiler, helper, planner, target, interpreter, preparer, test, experiment or
 Rust tool has executed. Broader calls/scopes/types, production qualification and
 all remaining ledger rows stay open.
+
+The scalar call extension now derives candidate native paths from actual
+compiler-issued target/source/signature associations for already checked ordinary
+scalar functions. It lazily rejoins each selected callee with its complete
+original function bytes, actual module path, safe nongeneric nonasync header and
+arity. Qualified ordinary Rust path segments preserve actual module ownership;
+keyword/raw-identifier paths need their separate lexical rule. Full callee source rows are retained as review data, with no stored
+permission or cross-invocation cache. Original declaration closures are still
+released before the complete modified compilation.
+
+The normalizer can compose these calls and conditional scalar arguments with
+existing literal, predicate and checked arithmetic expressions. Conditional
+candidates use actual Rust `if` expressions. Complete fresh target reproduction
+remains required: a top-level conditional that changes emitted statement shape
+is outside this final-return format until its separate body rule exists.
+Unbound/property/optional/spread/generic/shadowed calls and mismatched native
+types refuse. The compiler continues to own visibility, lifetime, effect, type
+and executable admission; this syntactic call mapping supplies none of them.
+
+Independent JS/strict TS truth tables, nested calls, conditional arguments,
+Unicode borrowed strings, cross-module/cross-file associations, arity/type/
+source/refusal cases and native Rust oracle source are drafted and unrun.
+Recursive/generic/async/owned calls, whole statement inverses and production
+qualification remain open with the rest of the requirement ledger.

@@ -49,3 +49,5 @@ integration and the remaining requirement ledger are still open.
 - Draft version-control-aware full forward and supported inverse project source transactions, physical JS/TS runtime packaging, complete source histories and independent unrun receiving/conflict/refusal cases.
 
 - Draft explicit genuine enclosing producer/tool-prelude composition with complete original source histories, retained legacy/refusal domains and independent unrun JS/TS/native oracle source.
+
+- Draft checked scalar call and conditional-argument inverse composition with actual module/source associations, complete callee source data and independent unrun target/native oracle cases.
