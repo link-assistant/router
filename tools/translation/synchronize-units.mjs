@@ -15,6 +15,7 @@ import {translateFilesystemEffectJavaScript,translateFilesystemEffectTypeScript}
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {hostRuntimeAssets} from './host-assets.mjs';
 import {effectRuntimeAssets} from './effect-assets.mjs';
+import {OWNED_STATE_NATIVE_INPUTS,ownedStateUnitRuntimeSources,translateOwnedStateUnit} from './owned-state-unit.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
 import {transportConcreteSourceEquations} from './concrete-source-equations.mjs';
 import {createRulePipeline} from './rule-pipeline.mjs';
@@ -41,8 +42,13 @@ function baselines(root,revision,names){
 function descriptor(value){
  if(!value||value.schema!==SCHEMA||!Array.isArray(value.units)||!value.units.length||value.units.length>256)fail('bounded nonempty unit descriptor required');const ids=new Set(),paths=new Set();
  for(const unit of value.units){
-  if(!unit||typeof unit.id!=='string'||!/^[_a-zA-Z0-9-]{1,96}$/u.test(unit.id)||ids.has(unit.id)||!['portable','portable-project','filesystem'].includes(unit.profile)||!['auto',...languages].includes(unit.authority??'auto'))fail('unique source unit and known profile required');ids.add(unit.id);
+  if(!unit||typeof unit.id!=='string'||!/^[_a-zA-Z0-9-]{1,96}$/u.test(unit.id)||ids.has(unit.id)||!['portable','portable-project','filesystem','owned-state'].includes(unit.profile)||!['auto',...languages].includes(unit.authority??'auto'))fail('unique source unit and known profile required');ids.add(unit.id);
   for(const language of languages){const name=relative(unit.paths?.[language]);if(paths.has(name))fail('source units cannot overlap');paths.add(name);if(!name.endsWith(language==='Rust'?'.rs':language==='TypeScript'?'.ts':'.mjs'))fail('language extension differs');}
+  if(unit.profile==='owned-state'){
+   if(!Array.isArray(unit.nativeSources)||unit.nativeSources.length<OWNED_STATE_NATIVE_INPUTS.length||unit.nativeSources.length>32)fail('complete bounded actual native source mappings required');
+   const logical=new Set(),physical=new Set();for(const row of unit.nativeSources){relative(row.path);relative(row.sourcePath);if(logical.has(row.path)||physical.has(row.sourcePath))fail('unique logical and physical native source mappings required');logical.add(row.path);physical.add(row.sourcePath);}
+   if(OWNED_STATE_NATIVE_INPUTS.some(path=>!logical.has(path)))fail('complete actual native boundary and Cargo mappings required');
+  }else if(unit.nativeSources!==undefined)fail('native source mappings require the owned-state profile');
   relative(unit.meta);for(const language of ['JavaScript','TypeScript'])relative(unit.runtimes?.[language]);
   for(const language of languages){const dependencies=unit.dependencies?.[language]??[];if(!Array.isArray(dependencies)||dependencies.length>127||new Set(dependencies).size!==dependencies.length)fail('bounded unique dependency paths required');for(const dependency of dependencies)relative(dependency);if(dependencies.length&&unit.profile!=='portable-project')fail('source dependency lists require the project profile');}
  }
@@ -67,7 +73,8 @@ function relocate(text,from,to,runtimeBefore,runtimeAfter,language){
  }
  let after=text;for(const row of [...edits].sort((a,b)=>b.span[0]-a.span[0]))after=after.slice(0,row.span[0])+row.replacement+after.slice(row.span[1]);const equation=transportConcreteSourceEquations([{before:text,after,language}])[0];if(equation.inverse!==text)fail('whole native target import inverse differs');return {source:after,edits,equation};
 }
-function translate(unit,language,text,runtime,dependencies=[]){
+function translate(unit,language,text,runtime,dependencies=[],ownedStateInputs=null){
+ if(unit.profile==='owned-state'){if(!ownedStateInputs)fail('complete owned state inputs required');return translateOwnedStateUnit(ownedStateInputs);}
  if(language==='Rust'){
   if(unit.profile==='portable-project'){
    const sources=new Map([{path:unit.paths.Rust,source:text},...dependencies].map(row=>[row.path,row.source])),result=translateProject({entry:unit.paths.Rust,paths:[...sources.keys()],readSource:path=>{if(!sources.has(path))fail('missing complete Rust project source');return sources.get(path);}});
@@ -88,19 +95,25 @@ function translate(unit,language,text,runtime,dependencies=[]){
 export function planUnitSynchronization({root,manifestPath}={}){
  root=resolve(root);if(!fs.lstatSync(root).isDirectory()||fs.lstatSync(root).isSymbolicLink())fail('ordinary repository root required');manifestPath=relative(manifestPath);const manifestSource=source(root,manifestPath);if(manifestSource===null)fail('source descriptor is missing');const manifest=descriptor(JSON.parse(manifestSource)),revision=git(root,['rev-parse','HEAD']).trim();if(!/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/u.test(revision))fail('one full current Git revision required');
  const inputs=[{path:manifestPath,source:manifestSource}],outputs=new Map(),units=[],protectedSources=new Set(),runtime=effectRuntimeAssets(),assets=hostRuntimeAssets();assets.set('effects.mjs',runtime.javascript);assets.set('effects.d.mts',runtime.declarations);let retained=Buffer.byteLength(manifestSource);
- const baselinePaths=[...new Set(manifest.units.flatMap(unit=>[...languages.map(language=>unit.paths[language]),...languages.flatMap(language=>unit.dependencies?.[language]??[])]))],previousSources=baselines(root,revision,baselinePaths),sourcePaths=new Set(baselinePaths);
+ const baselinePaths=[...new Set(manifest.units.flatMap(unit=>[...languages.map(language=>unit.paths[language]),...languages.flatMap(language=>unit.dependencies?.[language]??[]),...(unit.nativeSources??[]).map(row=>row.sourcePath)]))],previousSources=baselines(root,revision,baselinePaths),sourcePaths=new Set(baselinePaths);
  const output=(path,after,kind)=>{relative(path);if(path===manifestPath||kind!=='translated-source'&&sourcePaths.has(path))fail('generated data cannot overwrite its descriptor or a source unit/dependency');if(typeof after!=='string'||Buffer.byteLength(after)>FILE_LIMIT)fail('bounded complete generated source required');const prior=outputs.get(path);if(prior){if(prior.after!==after)fail('competing generated outputs');return;}const before=source(root,path),mode=before===null?0o644:fs.lstatSync(physical(root,path)).mode&0o777;retained+=Buffer.byteLength(after)+(before===null?0:Buffer.byteLength(before));if(retained>LIMIT)fail('whole source-unit proposal byte budget exceeded');outputs.set(path,{path,before,after,mode,kind,inverse:before});};
  for(const unit of manifest.units){
   const current={},previous={};for(const language of languages){current[language]=source(root,unit.paths[language]);previous[language]=previousSources.get(unit.paths[language]);retained+=current[language]===null?0:Buffer.byteLength(current[language]);if(retained>LIMIT)fail('whole original source byte budget exceeded');inputs.push({path:unit.paths[language],source:current[language]});}
   const dependencies={},dependencyChanges=new Set();for(const language of languages){dependencies[language]=(unit.dependencies?.[language]??[]).map(path=>{const text=source(root,path);if(text===null)fail('complete physical dependency source is missing');retained+=Buffer.byteLength(text);if(retained>LIMIT)fail('whole dependency source byte budget exceeded');inputs.push({path,source:text});if(text!==previousSources.get(path))dependencyChanges.add(language);return {path,source:text};});}
   const language=choose(unit,current,previous,dependencyChanges),original=current[language];protectedSources.add(unit.paths[language]);for(const row of dependencies[language])protectedSources.add(row.path);let translated;
   if(unit.profile==='filesystem'&&language!=='Rust'){const path=unit.runtimes[language]+'/effects.mjs',actual=source(root,path);if(actual!==runtime.javascript)fail('complete actual source filesystem runtime differs');inputs.push({path,source:actual});retained+=Buffer.byteLength(actual);if(retained>LIMIT)fail('whole original runtime byte budget exceeded');}
+  let ownedStateInputs=null;
+  if(unit.profile==='owned-state'){
+   const capture=path=>{const text=source(root,path);if(text===null)fail('complete actual owned-state input is missing: '+path);retained+=Buffer.byteLength(text);if(retained>LIMIT)fail('whole owned-state input byte budget exceeded');inputs.push({path,source:text});protectedSources.add(path);return text;};
+   const nativeSources=unit.nativeSources.map(row=>({path:row.path,source:capture(row.sourcePath)})),runtimeSources=ownedStateUnitRuntimeSources(unit).map(row=>{const actual=capture(row.path);if(actual!==row.source)fail('complete actual owned-state runtime differs: '+row.path);return {path:row.path,source:actual};});
+   ownedStateInputs={unit,language,current,nativeSources,runtimeSources};
+  }
   const run=createRulePipeline([
-   {phase:'language',rules:[{id:'source-unit:translate-complete-current-authoritative-source',apply:()=>{translated=translate(unit,language,original,runtime,dependencies[language]);return translated;}}]},
+   {phase:'language',rules:[{id:'source-unit:translate-complete-current-authoritative-source',apply:()=>{translated=translate(unit,language,original,runtime,dependencies[language],ownedStateInputs);return translated;}}]},
    {phase:'repository',rules:[{id:'router:relocate-target-modules-and-retain-complete-source-proposal',apply:result=>{
     if(language==='Rust'&&result.portableProgram&&current.TypeScript!==null){const paired=preservePairedTypeScriptAPI({original:current.TypeScript,typescript:result.TypeScript,program:result.portableProgram,rustSource:original});result={...result,TypeScript:paired.typescript,meta:{...result.meta,pairedTypeScriptAPIHistory:paired.history}};}
     const targetEquations=[];for(const target of languages){if(target===language)continue;let after=result[target];if(target!=='Rust'){const row=relocate(after,result.generatedFrom,unit.paths[target],result.runtimeBefore,unit.runtimes[target],target);after=row.source;targetEquations.push({language:target,...row});}const concrete=transportConcreteSyntaxSource(after,{language:target});if(transportConcreteSyntaxMeta(concrete.meta).source!==after)fail('complete target CST roundtrip differs');output(unit.paths[target],after,'translated-source');targetEquations.push({language:target,concreteSyntax:concrete.meta});}
-    for(const target of ['JavaScript','TypeScript'])for(const [name,text]of assets)output(unit.runtimes[target]+'/'+name,text,'runtime-closure');return {targetEquations};
+    for(const target of ['JavaScript','TypeScript'])for(const [name,text]of assets)output(unit.runtimes[target]+'/'+name,text,'runtime-closure');return {...result,targetEquations};
    }}]},
   ]).run(original);
   const metadata={schema:SCHEMA,id:unit.id,authority:language,sourcePath:unit.paths[language],sourceSha256:hash(original),semanticMeta:run.value.meta,targetEquations:run.value.targetEquations,trace:run.trace,runtimeParity:false};output(unit.meta,JSON.stringify(metadata)+'\n','translation-meta');units.push({id:unit.id,authority:language,paths:unit.paths,trace:run.trace});

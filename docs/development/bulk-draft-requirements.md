@@ -204,3 +204,13 @@ interpreters have source drafts. Complete original/CST successor histories
 compose earlier producers. Independent runtime, ten actual Rust caller, JS/TS,
 refusal and native oracle sources are unrun. General mutation/iterator adoption,
 persistent state/concurrency, async/HTTP/streaming and all other open rows remain.
+
+The [canonical owned Rust synchronization draft](owned-rust-sync-draft.md)
+adds complete original Rust CST transport, catalog/control substitutions into
+JS proposals and mandatory fresh checked whole-Rust reproduction. The
+`owned-state` unit profile captures physical native/Cargo/runtime inputs,
+preserves baseline conflicts and proposal/apply checks, and supports paired
+signature proposals for edited JS. Complete successor source histories also
+repair split JS/TS runtime binding and retain semantic metadata in packaging.
+Independent inverse and multi-language synchronization regressions are drafted
+and unrun. General Rust forms, production adoption and the other rows remain.

@@ -294,17 +294,13 @@ function pairedFunction(handle,path,declaration,analysis){
  return {declaration:nodes[0],analysis:typed,evidence,pair};
 }
 function originalImportTarget(from,specifier,analysis,state){
- const target=relative(from,specifier);
- // A direct native TypeScript entry has no JavaScript pairing frame. This
- // new endpoint still requires its complete, byte-equal canonical counterpart.
- if(analysis.file.scriptKind===analysis.ts.ScriptKind.TS&&posix.dirname(target)===state.data.declarationRoot&&posix.basename(target)==='string-iterator-runtime.mjs'){
-  const runtime=state.data.runtimeRoot+'/string-iterator-runtime.mjs';if(!state.files.has(target)||state.files.get(target)!==state.files.get(runtime))fail('direct TypeScript ASCII runtime counterpart differs');return runtime;
- }
- // A paired TS import resolves its genuine .d.mts in declarationRoot. Its
- // fixed runtime counterpart remains the independently checked JS callee.
- if(traversals.get(analysis)?.paired&&posix.dirname(target)===state.data.declarationRoot&&['json-update-runtime.mjs','json-macro-runtime.mjs','base64-runtime.mjs','json-runtime.mjs','json-option-runtime.mjs','string-iterator-runtime.mjs'].includes(posix.basename(target))){
-  const runtime=state.data.runtimeRoot+'/'+posix.basename(target);
-  if(state.files.has(target)&&state.files.get(target)!==state.files.get(runtime))fail('paired runtime counterpart differs');return runtime;
+ const target=relative(from,specifier),families=['json-update-runtime.mjs','json-macro-runtime.mjs','base64-runtime.mjs','json-runtime.mjs','json-option-runtime.mjs','string-iterator-runtime.mjs','json-collections-runtime.mjs','json-iteration-runtime.mjs','json-state-runtime.mjs'];
+ if(posix.dirname(target)===state.data.declarationRoot&&families.includes(posix.basename(target))){
+  const runtime=state.data.runtimeRoot+'/'+posix.basename(target),paired=traversals.get(analysis)?.paired,direct=analysis.file.scriptKind===analysis.ts.ScriptKind.TS;
+  if(paired||direct){
+   if(typeof state.files.get(runtime)!=='string'||state.files.has(target)&&state.files.get(target)!==state.files.get(runtime)||direct&&!state.files.has(target))fail('complete actual TypeScript runtime counterpart differs');
+   return runtime;
+  }
  }
  return target;
 }
