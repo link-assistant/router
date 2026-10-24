@@ -708,7 +708,16 @@ function checkFunction(context,path,declaration,analysis){
   const body=[];let terminated=false;
   for(const statement of statements){
    tick(depth);if(terminated)fail('statement after terminating return');
-   if(ts.isVariableStatement(statement)){
+   if(ts.isForOfStatement(statement)){
+    const declarationList=statement.initializer;if(statement.awaitModifier||!ts.isVariableDeclarationList(declarationList)||(declarationList.flags&ts.NodeFlags.BlockScoped)!==ts.NodeFlags.Const||declarationList.declarations.length!==1||!ts.isBlock(statement.statement))fail('ordinary const JSON for-of block required');
+    const declaration=declarationList.declarations[0];if(!ts.isIdentifier(declaration.name)||declaration.type||declaration.initializer||declaration.exclamationToken||declaration.name.text.startsWith('__ro'))fail('ordinary inferred immutable loop binding required');
+    if(paired){const matches=paired.evidence.locals.filter(row=>row.javascriptSpan[0]===declaration.getStart(file)&&row.javascriptSpan[1]===declaration.end);if(matches.length!==1||matches[0].typeSpan)fail('paired loop input requires its original inferred native declaration');}
+    const value=expression(statement.expression,scope,depth+1);if(!['json-list-ref','json-list-owned'].includes(value.type))fail('actual canonical JSON slice or Vec iteration required');
+    const local=branchScope(scope);for(const [name,value]of local)if(ownedBase64Result(value.type))local.delete(name);local.delete(declaration.name.text);
+    const name=bind(declaration.name,{type:'json-ref',root:'__ro_loop_root_'+declaration.getStart(file),input:false},local),checked=block(statement.statement.statements,local,depth+1);
+    mergeMoves(scope,branchScope(scope),local);body.push({kind:'for-json',name,value,body:checked.body});
+   }else if(ts.isVariableStatement(statement)){
+
     const declarationKind=statement.declarationList.flags&ts.NodeFlags.BlockScoped,mutable=declarationKind===ts.NodeFlags.Let;if(statement.modifiers?.length||!mutable&&declarationKind!==ts.NodeFlags.Const)fail('only fresh lexical const or owned let declarations');
     for(const declaration of statement.declarationList.declarations){
      if(!declaration.initializer||declaration.exclamationToken||declaration.type)fail('unsupported local declaration');const value=expression(declaration.initializer,scope,depth+1);if(mutable&&(!['json','json-list-owned','json-text-result','json-owned-option'].includes(value.type)||value.root!==null))fail('mutable local requires a fresh owned JSON or Vec value');

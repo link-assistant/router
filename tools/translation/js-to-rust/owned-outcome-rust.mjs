@@ -9,7 +9,7 @@ import {createRulePipeline} from '../rule-pipeline.mjs';
 import {RUST_SUPPORT} from './owned-outcome-operations.mjs';
 import {ownedCoreSourceData,requireOwnedCoreSourceCurrent,ownedSourcePath} from './owned-outcome-source.mjs';
 import {createOwnedStateContext,translateOwnedStateJavaScript} from './owned-outcome.mjs';
-import {UnsupportedOwnedRustSource,readOwnedRustFunction} from './owned-rust-syntax.mjs';
+import {UnsupportedOwnedRustSource,readOwnedRustFunction} from './owned-outcome-rust-syntax.mjs';
 import {projectOwnedRustFunctions,ownedRustNameProposals} from './owned-outcome-rust-projection.mjs';
 export {UnsupportedOwnedRustSource};
 const fail=message=>{throw new UnsupportedOwnedRustSource(message);};

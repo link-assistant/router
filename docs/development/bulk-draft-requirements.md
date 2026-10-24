@@ -301,3 +301,11 @@ sequence and fresh checked selected installation through three complete source
 copies. Independent actual caller, strict target, refusal, packet and application
 cases are drafted and unrun. Production application, broader forms, original
 dispatch/Drop equivalence and the other open requirements still need work.
+
+The [canonical JSON loop draft](owned-json-loop-draft.md) adds actual immutable
+list for-of bindings, lexical scopes, owned assignments, nested/empty loops and
+real return completions to the owned profile, both interpreters and target
+emitters. A complete Rust reader copy and mandatory inverse reproduction retain
+all resource guards. Seven complete source successors and independent unrun
+JS/TS/native/refusal sources are present. Standard forward/adoption loop forms,
+broader control/effects and the other open rows remain unfinished.

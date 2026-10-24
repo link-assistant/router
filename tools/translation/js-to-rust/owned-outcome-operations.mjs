@@ -9,6 +9,7 @@ import {ownedJsonReaderOperation,ownedJsonBorrowed,ownedJsonRustTypes,ownedJsonT
 import {ownedIterationOperation as ownedCollectionOperation,ownedIterationOnlyOperation,ownedCollectionOptionalPayload as ownedJsonOptionalPayload,ownedCollectionRustTypes,ownedCollectionTypeScriptTypes} from './owned-iteration-contracts.mjs';
 import {emitOwnedIterationCall,evaluateOwnedIterationCall} from './owned-iteration-emission.mjs';
 import {ownedStateOperation} from './owned-state-contracts.mjs';
+import {emitOwnedJsonLoop,hasOwnedJsonLoop} from './owned-json-loop-emission.mjs';
 import {ownedOutcomeOperation} from './owned-outcome-contracts.mjs';
 import {emitOwnedOutcomeCall,evaluateOwnedOutcomeCall} from './owned-outcome-emission.mjs';
 import {ownedJsonFieldOperation,emitOwnedJsonFieldCall,evaluateOwnedJsonFieldCall} from './owned-json-fields.mjs';
@@ -259,6 +260,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  }
  function body(statements,indent){return statements.map(statement=>{
   const pad=' '.repeat(indent);
+  if(statement.kind==='for-json')return emitOwnedJsonLoop(statement,{rust,expr,body,sequence:()=>sequence++,indent,rustName});
   if(statement.kind==='let')return pad+(rust?(statement.mutable?'let mut ':'let '):(statement.mutable?'let ':'const '))+(rust?rustName(statement.name):statement.name)+' = '+expr(statement.value)+';';
   if(statement.kind==='assign')return pad+(rust?rustName(statement.name):statement.name)+' = '+expr(statement.value)+';';
   if(statement.kind==='return')return pad+'return '+expr(statement.value)+';';
@@ -335,7 +337,7 @@ export async function prepareOwnedCoreRuntime(input){
  if(program.some(item=>item.hostCalls.some(call=>ownedIterationOnlyOperation(call.name))))modules.iteration=await import('../json-iteration-runtime.mjs');
  if(program.some(item=>['json-text-result','json-owned-option'].includes(item.returns)||item.params.some(param=>param.type==='json-text-result')||item.hostCalls.some(call=>ownedOutcomeOperation(call.name))))modules.outcome=await import('../owned-outcome-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedJsonFieldOperation(call.name))))modules.fields=await import('../json-fields-runtime.mjs');
- if(program.some(item=>item.hostCalls.some(call=>ownedStateOperation(call.name))))modules.state=await import('../json-state-runtime.mjs');
+ if(hasOwnedJsonLoop(program)||program.some(item=>item.hostCalls.some(call=>ownedStateOperation(call.name))))modules.state=await import('../json-state-runtime.mjs');
  checkOwnedCoreProgram(program);const token=Object.freeze({schema:'owned-core-runtime-v1'});runtimes.set(token,{program,modules});return token;
 }
 export function evaluateOwnedCoreProgram(input,name,args,token){
@@ -376,6 +378,10 @@ export function evaluateOwnedCoreProgram(input,name,args,token){
   for(const statement of body){
    if(statement.kind==='let'||statement.kind==='assign')scope.set(statement.name,get(statement.value,scope));
    else if(statement.kind==='return')return {returned:true,value:get(statement.value,scope)};
+   else if(statement.kind==='for-json'){
+    if(!state.modules.state)fail('unissued bounded JSON list iterator');const values=state.modules.state.router_state_json_values_copy(get(statement.value,scope));
+    for(const value of values){const child=new Map(scope);child.set(statement.name,value);const completion=execute(statement.body,child);for(const name of scope.keys())if(name!==statement.name)scope.set(name,child.get(name));if(completion.returned)return completion;}
+   }
    else{
     const child=new Map(scope),completion=execute(get(statement.cond,scope)?statement.then:statement.else,child);
     for(const name of scope.keys())scope.set(name,child.get(name));if(completion.returned)return completion;
@@ -424,6 +430,10 @@ function evaluateOwnedCorePrepared(program,name,args,state){
   for(const statement of body){
    if(statement.kind==='let'||statement.kind==='assign')scope.set(statement.name,get(statement.value,scope));
    else if(statement.kind==='return')return {returned:true,value:get(statement.value,scope)};
+   else if(statement.kind==='for-json'){
+    if(!state.modules.state)fail('unissued bounded JSON list iterator');const values=state.modules.state.router_state_json_values_copy(get(statement.value,scope));
+    for(const value of values){const child=new Map(scope);child.set(statement.name,value);const completion=execute(statement.body,child);for(const name of scope.keys())if(name!==statement.name)scope.set(name,child.get(name));if(completion.returned)return completion;}
+   }
    else{
     const child=new Map(scope),completion=execute(get(statement.cond,scope)?statement.then:statement.else,child);
     for(const name of scope.keys())scope.set(name,child.get(name));if(completion.returned)return completion;
