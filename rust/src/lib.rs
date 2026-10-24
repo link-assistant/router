@@ -306,3 +306,5 @@ pub mod translation_primitive_option_core;
 pub mod translation_primitive_option_callbacks_core;
 
 pub mod translation_primitive_results_core;
+
+pub mod translation_async_control_core;

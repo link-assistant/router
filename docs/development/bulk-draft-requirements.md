@@ -184,6 +184,14 @@ cases are drafted and unrun. Wider Result payload/error types, propagation,
 other control/effect families, production application and every other incomplete
 requirement remain open; no verification or execution has started.
 
+The [async control core draft](async-control-core-draft.md) adds thirteen matching
+native/JS cancellation, deadline and bounded pull-channel interfaces, strict
+opaque declarations, native root/source histories and independent unrun JS/Rust
+oracle source. It reuses the existing lazy-future adapter and keeps existing
+workloads/deadlines. Actual opaque caller/future/exclusive-borrow qualification,
+both directions, asset/export closure, HTTP use, production integration and all
+other unfinished rows remain open. No test or experiment has executed.
+
 The last checkpoint before this phase is `0460fb741`: four complete
 source-history receiving files passed 26 cases in Node and Bun. That historical
 focused evidence does not qualify any change drafted in this phase or the full
