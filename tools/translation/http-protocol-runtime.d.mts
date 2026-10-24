@@ -1,0 +1,14 @@
+import type {JsonValue} from './json-macro-runtime.mjs';
+export type HttpResult<T>=Readonly<{$:'Ok';field0:T}>|Readonly<{$:'Err';field0:string}>;
+export declare function router_http_headers_normalize(argument0:JsonValue): HttpResult<JsonValue>;
+export declare function router_http_headers_get_all(argument0:JsonValue,argument1:string): HttpResult<JsonValue>;
+export declare function router_http_headers_append(argument0:JsonValue,argument1:string,argument2:string): HttpResult<JsonValue>;
+export declare function router_http_headers_set(argument0:JsonValue,argument1:string,argument2:string): HttpResult<JsonValue>;
+export declare function router_http_headers_remove(argument0:JsonValue,argument1:string): HttpResult<JsonValue>;
+export declare function router_http_request(argument0:string,argument1:string,argument2:JsonValue,argument3:string): HttpResult<JsonValue>;
+export declare function router_http_response(argument0:bigint,argument1:JsonValue,argument2:string): HttpResult<JsonValue>;
+export declare function router_http_status(argument0:JsonValue): HttpResult<bigint>;
+export declare function router_http_is_success(argument0:JsonValue): HttpResult<boolean>;
+export declare function router_http_body_base64(argument0:JsonValue): HttpResult<string>;
+export declare function router_http_body_text(argument0:JsonValue): HttpResult<string>;
+export declare function router_http_body_json(argument0:JsonValue): HttpResult<JsonValue>;

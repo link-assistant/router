@@ -226,6 +226,14 @@ strict TS, packet/inverse, selected installation and refusal source is drafted
 and unrun. Production use, wider captures/control, HTTP, other effects and every
 other unfinished requirement remain open; no verification has started.
 
+The [HTTP value core draft](http-protocol-core-draft.md) adds twelve matching
+native/JS header, request/response, status and body operations, strict generated
+declarations, complete native root/source histories and independent unrun
+JS/Rust oracle source. It preserves duplicate/binary headers and uses the exact
+existing JSON parser. Caller/dependency/loan qualification, both directions,
+assets/export, network transport, cancellation/streaming, production use and
+every other unfinished requirement remain open. No tests or experiments ran.
+
 The last checkpoint before this phase is `0460fb741`: four complete
 source-history receiving files passed 26 cases in Node and Bun. That historical
 focused evidence does not qualify any change drafted in this phase or the full
