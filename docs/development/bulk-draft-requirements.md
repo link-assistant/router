@@ -222,3 +222,11 @@ interpreters, JS/TS and Rust emission/inversion retain the same domains and
 complete source histories. Independent behavior/refusal and native Rust oracle
 source is unrun. Standard iterator/property mutation adoption, persistent
 state/concurrency and every other open row still need their remaining draft.
+
+The [runtime materialization draft](unit-runtime-materialization-draft.md)
+provides separate fresh proposal/apply initialization of complete declared
+JS/TS runtime, declaration and license assets. A complete copy of the original
+source transaction retains its byte limits, source protection, atomic
+installation and full inverse history. The existing CLI adds a runtime mode;
+no application translation or Rust execution is implied. Independent source
+and all receiving/export qualification checks remain unrun.
