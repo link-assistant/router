@@ -133,6 +133,13 @@ receivers, with complete original corpus/packet/installer copies and independent
 unrun integration cases. Lazy/callback/nested option methods, Result counterparts,
 production adoption and every other unfinished row remain open.
 
+The [Option callback core draft](primitive-option-callback-core-draft.md) adds
+thirty-six matching native/JS map, and_then and lazy-fallback interfaces, separate
+input/output lifetimes, complete runtime/root source copies and independent
+unrun JS/Rust oracle source. Whole callback qualification, capture/loan walks,
+both translation directions/interpreters, packaging, automatic adoption and
+production use still need integration drafts.
+
 The last checkpoint before this phase is `0460fb741`: four complete
 source-history receiving files passed 26 cases in Node and Bun. That historical
 focused evidence does not qualify any change drafted in this phase or the full

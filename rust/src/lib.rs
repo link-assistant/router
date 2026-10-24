@@ -302,3 +302,5 @@ pub mod translation_stream_core;
 pub mod translation_text_core;
 
 pub mod translation_primitive_option_core;
+
+pub mod translation_primitive_option_callbacks_core;
