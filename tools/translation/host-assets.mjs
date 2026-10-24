@@ -24,7 +24,7 @@ export function hostRuntimeAssets() {
   files.set('json-update-runtime.mjs',readFileSync(new URL('./json-update-runtime.mjs',import.meta.url),'utf8').replace("'./extensions/json-roundtrip-runtime.mjs'","'./json-roundtrip-runtime.mjs'").replace("'./extensions/json-values.mjs'","'./json-values.mjs'").replace("'./extensions/json-runtime.mjs'","'./json-runtime.mjs'"));
   files.set('json-update-runtime.d.mts',readFileSync(new URL('./json-update-runtime.d.mts',import.meta.url),'utf8'));
   files.set('owned-outcome-runtime.mjs',readFileSync(new URL('./owned-outcome-runtime.mjs',import.meta.url),'utf8'));
-  for(const name of ['integer-runtime.mjs','integer-runtime.d.mts'])files.set(name,readFileSync(new URL('./'+name,import.meta.url),'utf8'));
+  for(const name of ['integer-runtime.mjs','integer-runtime.d.mts','sse-runtime.mjs','sse-runtime.d.mts'])files.set(name,readFileSync(new URL('./'+name,import.meta.url),'utf8'));
   files.set('owned-outcome-runtime.d.mts',readFileSync(new URL('./owned-outcome-runtime.d.mts',import.meta.url),'utf8'));
   files.set('json-fields-runtime.mjs',readFileSync(new URL('./json-fields-runtime.mjs',import.meta.url),'utf8').replace("'./extensions/json-runtime.mjs'","'./json-runtime.mjs'"));
   files.set('json-fields-runtime.d.mts',readFileSync(new URL('./json-fields-runtime.d.mts',import.meta.url),'utf8'));
@@ -108,7 +108,7 @@ export function hostRuntimeAssetsNamedDataAliases() {
   files.set('json-update-runtime.mjs',readFileSync(new URL('./json-update-runtime.mjs',import.meta.url),'utf8').replace("'./extensions/json-roundtrip-runtime.mjs'","'./json-roundtrip-runtime.mjs'").replace("'./extensions/json-values.mjs'","'./json-values.mjs'").replace("'./extensions/json-runtime.mjs'","'./json-runtime.mjs'"));
   files.set('json-update-runtime.d.mts',readFileSync(new URL('./json-update-runtime.d.mts',import.meta.url),'utf8'));
   files.set('owned-outcome-runtime.mjs',readFileSync(new URL('./owned-outcome-runtime.mjs',import.meta.url),'utf8'));
-  for(const name of ['integer-runtime.mjs','integer-runtime.d.mts'])files.set(name,readFileSync(new URL('./'+name,import.meta.url),'utf8'));
+  for(const name of ['integer-runtime.mjs','integer-runtime.d.mts','sse-runtime.mjs','sse-runtime.d.mts'])files.set(name,readFileSync(new URL('./'+name,import.meta.url),'utf8'));
   files.set('owned-outcome-runtime.d.mts',readFileSync(new URL('./owned-outcome-runtime.d.mts',import.meta.url),'utf8'));
   files.set('json-fields-runtime.mjs',readFileSync(new URL('./json-fields-runtime.mjs',import.meta.url),'utf8').replace("'./extensions/json-runtime.mjs'","'./json-runtime.mjs'"));
   files.set('json-fields-runtime.d.mts',readFileSync(new URL('./json-fields-runtime.d.mts',import.meta.url),'utf8'));

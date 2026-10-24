@@ -7,7 +7,10 @@ import {JSON_FIELDS_NATIVE_SOURCE} from './json-fields-native-source.mjs';
 import {OWNED_OUTCOME_NATIVE_SOURCE} from './owned-outcome-native-source.mjs';
 import {INTEGER_CONTRACTS} from './integer-contracts.mjs';
 import {INTEGER_NATIVE_SOURCE} from './integer-native-source.mjs';
+import {SSE_CONTRACTS} from './sse-contracts.mjs';
+import {SSE_NATIVE_SOURCE,SSE_ORIGINAL_FRAMER_SOURCE} from './sse-native-source.mjs';
 export const FORWARD_OWNED_CONTRACTS=Object.freeze([
+ ...SSE_CONTRACTS.map(row=>Object.freeze({...row,family:'stream',source:SSE_NATIVE_SOURCE,nativeDependencies:Object.freeze([Object.freeze({module:'sse',path:'src/sse.rs',source:SSE_ORIGINAL_FRAMER_SOURCE})])})),
  ...INTEGER_CONTRACTS.map(row=>Object.freeze({...row,family:'integer',source:INTEGER_NATIVE_SOURCE})),
  ...JSON_STATE_CONTRACTS.map(row=>Object.freeze({...row,family:'state',rustPath:'crate::translation_state_core::'+row.rustName,source:JSON_STATE_NATIVE_SOURCE})),
  ...JSON_FIELD_CONTRACTS.map(row=>Object.freeze({...row,family:'field',rustModule:'translation_json_fields_core',rustSource:row.nativeSource,returns:row.ret,source:JSON_FIELDS_NATIVE_SOURCE})),
