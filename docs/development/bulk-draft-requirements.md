@@ -31,6 +31,16 @@ present; verification and delivery remain separate later obligations.
 | Reusable delivery | Exported compiler, source provenance and adoption tooling | Include every new runtime/rule/source dependency, notices and receiving instructions; no qualification claim from an export alone. |
 | Resource and publication discipline | Single publisher; coordinator works alone | Continue alone, avoid extra dependency trees, create coherent commits without Rust hooks and defer CI-triggering pushes until drafting is complete. |
 
+The [owned module restoration draft](owned-module-restoration-draft.md) now
+returns freshly checked packaged Rust bodies to the original JS/TS modules.
+It reconstructs native imports, local declaration names and public aliases,
+retains complete source inverses, and requires the entire reconstructed tree
+to reproduce the authoritative Rust again. Its receiving linker is a complete
+source copy with ordered language/repository substitutions. Independent
+behavioral and refusal regressions are drafted and unrun. Multi-module
+transactions, broader source syntax, production adoption and the remaining
+requirements below still need their complete implementation draft.
+
 The last checkpoint before this phase is `0460fb741`: four complete
 source-history receiving files passed 26 cases in Node and Bun. That historical
 focused evidence does not qualify any change drafted in this phase or the full

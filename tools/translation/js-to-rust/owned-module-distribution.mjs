@@ -1,0 +1,59 @@
+// Source redistribution is a proposal. The complete reconstructed module tree
+// must freshly check and reproduce the authoritative packaged Rust afterward.
+import {posix} from 'node:path';
+import {ownershipCompiler} from './vendor/module-syntax.mjs';
+import {snakeFromCamel} from './vendor/ir.mjs';
+import {transportConcreteSourceEquations} from '../concrete-source-equations.mjs';
+const fail=message=>{throw new TypeError('Owned module distribution: '+message);};
+const LIMIT=2097152;
+function native(source,path,language){const ts=ownershipCompiler();if(ts.version!=='5.9.3'||typeof source!=='string'||source.length>LIMIT)fail('bounded source and lockfile TypeScript5.9.3 required');const file=ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,language==='TypeScript'?ts.ScriptKind.TS:ts.ScriptKind.JS);if(file.parseDiagnostics.length)fail('complete native source grammar differs');return {ts,file};}
+const relative=(from,to)=>{const text=posix.relative(posix.dirname(from),to);return text.startsWith('.')?text:'./'+text;};
+function substitute(source,edits){let after=source,last=source.length+1;for(const row of [...edits].sort((a,b)=>b.span[0]-a.span[0])){if(row.span[1]>last||source.slice(...row.span)!==row.expected)fail('complete native-selected substitutions overlap or differ');after=after.slice(0,row.span[0])+row.replacement+after.slice(row.span[1]);last=row.span[0];}return after;}
+export function ownedModuleOriginalDeclarations(baseline){
+ const history=baseline.moduleSourceHistory,rows=[],seen=new Set();if(!history||!Array.isArray(history.modules)||history.modules.length>128)fail('fresh original module history required');
+ for(const module of history.modules){const original=native(module.before,module.path,history.language),linked=native(module.after,module.path,history.language),before=original.file.statements.filter(original.ts.isFunctionDeclaration),after=linked.file.statements.filter(linked.ts.isFunctionDeclaration);if(before.length!==after.length)fail('complete original/linked function census differs');for(let at=0;at<before.length;at++){const a=before[at],b=after[at];if(!a.name||!b.name)fail('named actual source declaration required');const name=b.name.text,nativeName=snakeFromCamel(name),checked=baseline.program.filter(item=>item.javascript===name&&item.name===nativeName);if(checked.length!==1||seen.has(nativeName))fail('each original function needs one distinct fresh checked linked declaration');seen.add(nativeName);rows.push({path:module.path,name:a.name.text,linked:name,native:nativeName,span:[a.getStart(original.file),a.end],sourceAuthority:false,semanticAuthority:false});}}
+ if(rows.length!==baseline.program.length)fail('every checked original function must have a source module');return rows;
+}
+function bindingProgram(source,path,language){
+ const {ts,file}=native(source,path,language),options={target:ts.ScriptTarget.Latest,module:ts.ModuleKind.ESNext,noLib:true,noResolve:true,allowJs:true,checkJs:true,noEmit:true},host={getSourceFile:name=>name===path?file:undefined,getDefaultLibFileName:()=>'/__absent_lib.d.ts',writeFile:()=>fail('source distribution cannot emit'),getCurrentDirectory:()=> '/',getDirectories:()=>[],fileExists:name=>name===path,readFile:name=>name===path?source:undefined,getCanonicalFileName:name=>name,useCaseSensitiveFileNames:()=>true,getNewLine:()=> '\n'},program=ts.createProgram({rootNames:[path],options,host});
+ return {ts,file,checker:program.getTypeChecker()};
+}
+export function distributeOwnedModuleSource({baseline,result,language,bundlePath,entry,modulePaths,runtimePaths,pathMap,previousSources}={}){
+ const original=ownedModuleOriginalDeclarations(baseline).map(row=>({...row,path:pathMap?.get(row.path)??row.path})),originalByNative=new Map(original.map(row=>[row.native,row])),source=language==='TypeScript'?result.typescript:result.javascript,{ts,file,checker}=bindingProgram(source,bundlePath,language),functions=file.statements.filter(ts.isFunctionDeclaration),owners=new Map(),symbols=new Map(),allNames=new Set();
+ if(!['JavaScript','TypeScript'].includes(language)||!Array.isArray(modulePaths)||modulePaths.length>128||!modulePaths.includes(entry)||new Set(modulePaths).size!==modulePaths.length||!(runtimePaths instanceof Set))fail('complete explicit receiving module/runtime census required');
+ if(pathMap!==undefined&&(!(pathMap instanceof Map)||pathMap.size!==baseline.moduleSourceHistory.modules.length||new Set(pathMap.values()).size!==pathMap.size||baseline.moduleSourceHistory.modules.some(row=>!pathMap.has(row.path))))fail('complete bijective source path proposal required');
+ const targetOriginals=new Map(previousSources??baseline.moduleSourceHistory.modules.map(row=>[row.path,row.before]));if(modulePaths.some(path=>!targetOriginals.has(path)||typeof targetOriginals.get(path)!=='string'))fail('receiving paths must select complete actual previous source bytes');
+ let cells=0;function census(node,depth=0){if(++cells>2000000||depth>160)fail('native source node/depth bound exceeded');if(ts.isIdentifier(node))allNames.add(node.text);ts.forEachChild(node,child=>census(child,depth+1));}census(file);
+ for(const node of functions){if(!node.name)fail('named checked receiving function required');const items=result.program.filter(item=>item.javascript===node.name.text);if(items.length!==1)fail('each receiving declaration needs one complete fresh checked function');const item=items[0],prior=originalByNative.get(item.name),owner=prior??{path:entry,name:item.javascript,linked:item.javascript,native:item.name};if(!modulePaths.includes(owner.path))fail('function owner is outside the receiving source census');const key=owner.path+'\0'+owner.name;if(owners.has(key))fail('receiving declaration names collide');owners.set(key,{...owner,node,item});const symbol=checker.getSymbolAtLocation(node.name);if(!symbol||symbols.has(symbol))fail('unique native receiving declaration symbol required');symbols.set(symbol,{kind:'function',...owner});}
+ if(functions.length!==result.program.length)fail('complete receiving declaration census differs');
+ for(const node of file.statements)if(ts.isImportDeclaration(node)){
+  if(!ts.isStringLiteral(node.moduleSpecifier)||!node.moduleSpecifier.text.startsWith('.')||!node.importClause?.namedBindings||!ts.isNamedImports(node.importClause.namedBindings)||node.importClause.name||node.attributes)fail('actual named relative runtime binding required');const path=posix.normalize(posix.join(posix.dirname(bundlePath),node.moduleSpecifier.text));if(!runtimePaths.has(path))fail('receiving import must select the complete captured runtime closure');
+  for(const row of node.importClause.namedBindings.elements){const symbol=checker.getSymbolAtLocation(row.name);if(!symbol||symbols.has(symbol))fail('distinct original runtime binding required');const selected={kind:'runtime',path,name:(row.propertyName??row.name).text,typeOnly:!!node.importClause.isTypeOnly||!!row.isTypeOnly};symbols.set(symbol,selected);}
+ }
+ const modules=[],functionNames=[];let serial=0;
+ for(const path of modulePaths){
+  const selected=[...owners.values()].filter(row=>row.path===path),edges=new Map(),body=[],selections=[];
+  function edge(binding){const key=binding.kind+'\0'+binding.path+'\0'+binding.name+'\0'+!!binding.typeOnly;if(!edges.has(key)){let local;do{local='routerSourceBinding'+serial++;}while(allNames.has(local));allNames.add(local);edges.set(key,{...binding,local});}return edges.get(key).local;}
+  for(const owner of selected){
+   const node=owner.node,start=node.getFullStart(),end=node.end,chunk=source.slice(start,end),edits=[],seen=new WeakSet();let count=0;
+   function replace(selected,replacement){const expected=selected.getText(file);if(expected!==replacement)edits.push({span:[selected.getStart(file)-start,selected.end-start],expected,replacement});}
+   function visit(value,depth=0){
+    if(seen.has(value))return;seen.add(value);if(++count>100000||depth>160)fail('receiving function node/depth bound exceeded');
+    if(ts.isImportTypeNode(value)&&ts.isLiteralTypeNode(value.argument)&&ts.isStringLiteral(value.argument.literal)){const target=posix.normalize(posix.join(posix.dirname(bundlePath),value.argument.literal.text));if(!value.argument.literal.text.startsWith('.')||!runtimePaths.has(target))fail('type import must select the complete actual runtime source');replace(value.argument.literal,JSON.stringify(relative(path,target)));}
+    if(ts.isIdentifier(value)){const binding=symbols.get(checker.getSymbolAtLocation(value));if(binding){if(value===node.name)replace(value,owner.name);else if(binding.kind==='function'&&binding.path===path)replace(value,binding.name);else replace(value,edge(binding));}}
+    if(ts.isFunctionDeclaration(value)){for(const parameter of value.parameters){const written=ts.getJSDocType(parameter);if(written)visit(written,depth+1);}const returns=ts.getJSDocReturnType(value);if(returns)visit(returns,depth+1);}
+    ts.forEachChild(value,child=>visit(child,depth+1));
+   }visit(node);
+   for(const modifier of node.modifiers??[])if(modifier.kind===ts.SyntaxKind.ExportKeyword)edits.push({span:[modifier.getStart(file)-start,modifier.end-start],expected:modifier.getText(file),replacement:''});
+   if(path!==entry)edits.push({span:[node.getStart(file)-start,node.getStart(file)-start],expected:'',replacement:'export '});
+   const after=substitute(chunk,edits);body.push(after);selections.push({sourceSpan:[start,end],before:chunk,after,nativeSelections:edits});functionNames.push({path,name:owner.name,linked:owner.item.javascript});
+  }
+  const lines=[...edges.values()].map(row=>'import '+(row.typeOnly?'type ':'')+'{ '+row.name+' as '+row.local+' } from '+JSON.stringify(relative(path,row.path))+';');
+  // Preserve the complete declared pure-module census, including a module
+  // whose final function was deleted. Empty imports observe no new effects.
+  if(path===entry)for(const other of modulePaths)if(other!==entry)lines.push('import {} from '+JSON.stringify(relative(path,other))+';');
+  let footer='';if(path===entry){const aliases=result.modulePublicAPIHistory.publicExports.map(row=>{const item=result.program.find(value=>value.javascript===row.internalName),owner=[...owners.values()].find(value=>value.item===item);if(!owner)fail('public alias lacks its actual receiving declaration');return {row,local:owner.path===path?owner.name:edge({kind:'function',path:owner.path,name:owner.name})};});for(const row of [...edges.values()]){const line='import '+(row.typeOnly?'type ':'')+'{ '+row.name+' as '+row.local+' } from '+JSON.stringify(relative(path,row.path))+';';if(!lines.includes(line))lines.push(line);}footer='\nexport { '+aliases.map(({row,local})=>local+(local===row.publicName?'':' as '+row.publicName)).join(', ')+' };\n';}
+  const before=targetOriginals.get(path),hashbang=before.startsWith('#!')?before.slice(0,before.indexOf('\n')<0?before.length:before.indexOf('\n'))+'\n':'',after=hashbang+lines.join('\n')+'\n'+body.join('\n\n')+footer+'\n';if(after.length>LIMIT)fail('complete receiving module exceeds the existing bound');native(after,path,language);const equation=transportConcreteSourceEquations([{before,after,language}])[0];if(equation.inverse!==before)fail('complete receiving module inverse differs');modules.push({path,source:after,before,equation,selections,sourceAuthority:false,semanticAuthority:false});
+ }
+ return {entry,language,modules,functionNames,sourceAuthority:false,semanticAuthority:false,runtimeAuthority:false};
+}
