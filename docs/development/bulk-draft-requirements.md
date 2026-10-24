@@ -711,3 +711,11 @@ strict target/empty/boundary/overflow/refusal plus Rust oracle source are drafte
 and unrun. Owned scalar vectors, Clone-specific invocations, aggregate/fixed-array
 slices, corresponding broader reverse syntax, production adoption and the other
 incomplete requirements remain open.
+
+The shared primitive slice reverse draft now adds explicit readonly u64/i64/
+Boolean ABIs, actual numeric input-domain proposals, scalar for-of checking,
+both interpreters, Rust/TS emission, paired signatures and mandatory complete
+canonical Rust inverse reproduction. Full originals and independent authored JS/
+strict TS/interpreter/numeric/Boolean/control/inverse/refusal source are drafted
+and unrun. Broader widths, owned/generic vectors and adapters, production
+adoption and every other incomplete row remain open.

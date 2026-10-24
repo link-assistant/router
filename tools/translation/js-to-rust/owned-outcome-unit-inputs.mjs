@@ -6,6 +6,7 @@ import {createOwnedStateContext,translateOwnedStateTypeScript} from './owned-out
 import {ownedCoreSourceData,requireOwnedCoreSourceCurrent} from './owned-outcome-source.mjs';
 import {transportConcreteSourceEquations} from '../concrete-source-equations.mjs';
 import {createRulePipeline} from '../rule-pipeline.mjs';
+import {ownedPrimitiveSliceElement} from './owned-scalar-slice-contracts.mjs';
 const fail=message=>{throw new TypeError('Owned state signature proposals: '+message);};
 export function projectOwnedStateUnitJavaScript(source,{context,sourcePath,pairedTypeScriptPath}={}){
  const data=ownedCoreSourceData(context);if(data.files.find(row=>row.path===sourcePath)?.source!==source)fail('complete original JavaScript/path differs');
@@ -19,6 +20,7 @@ export function projectOwnedStateUnitJavaScript(source,{context,sourcePath,paire
  const relative=family=>{const path=posix.relative(posix.dirname(sourcePath),data.runtimeRoot+'/'+family+'-runtime.mjs');return path.startsWith('.')?path:'./'+path;};
  function operation(name,family,index){const key=family+':'+name;if(!imports.has(key))imports.set(key,{name,family,local:'paired_input_'+name});return 'Parameters<typeof '+imports.get(key).local+'>['+index+']';}
  function type(domain){
+  const slice=ownedPrimitiveSliceElement(domain);if(slice)return 'readonly ('+type(slice)+')[]';
   const json='import('+JSON.stringify(relative('json-macro'))+').JsonValue';
   if(domain==='json-ref')return json;if(domain==='json-list-ref')return 'readonly '+json+'[]';if(domain==='str')return 'string';if(domain==='bool')return 'boolean';
   if(domain==='json-text-result')return operation('router_carrier_json_result_copy','owned-outcome',0);

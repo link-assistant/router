@@ -11,6 +11,7 @@ import {emitOwnedIterationCall,evaluateOwnedIterationCall} from './owned-iterati
 import {ownedStateOperation} from './owned-state-contracts.mjs';
 import {emitOwnedJsonLoop,hasOwnedJsonLoop} from './owned-json-loop-emission.mjs';
 import {emitOwnedCountedFor} from './owned-counted-for-emission.mjs';
+import {OWNED_PRIMITIVE_SLICE_RUST_TYPES,ownedPrimitiveSliceElement,emitOwnedPrimitiveSliceLoop} from './owned-scalar-slice-contracts.mjs';
 import {ownedOutcomeOperation} from './owned-outcome-contracts.mjs';
 import {emitOwnedOutcomeCall,evaluateOwnedOutcomeCall} from './owned-outcome-emission.mjs';
 import {emitOwnedIntegerCall,evaluateOwnedIntegerCall} from './owned-integer-emission.mjs';
@@ -180,13 +181,14 @@ export function checkOwnedCoreProgram(program,context){
 export function ownedCoreContext(item){return issued.get(checkOwnedCoreItem(item))?.context;}
 const rustString=value=>'"'+value.replace(/[\\"\x00-\x1f\x7f]/gu,c=>({'\\':'\\\\','"':'\\"','\n':'\\n','\r':'\\r','\t':'\\t'}[c]??'\\u{'+c.codePointAt(0).toString(16)+'}'))+'"';
 const TS_TYPES={...ownedCollectionTypeScriptTypes,...ownedBase64TypeScriptTypes,...ownedJsonTypeScriptTypes,'json-option-input':'Parameters<typeof __ro_router_core_json_option_as_str>[0]','json-text-result':'ReturnType<typeof __ro_router_carrier_json_ok>',json:'JsonValue','json-ref':'JsonValue','map-ref':"Extract<JsonValue,{readonly $:'Object'}>['field0']",str:'string',bool:'boolean',usize:'bigint'};
-const RUST_TYPES={...ownedPrimitiveResultRustTypes,...ownedCollectionRustTypes,...ownedBase64RustTypes,...ownedJsonRustTypes,'json-option-input':"::std::option::Option<&'a crate::translation_core::Json>",'json-text-result':'::std::result::Result<crate::translation_core::Json,::std::string::String>',json:'crate::translation_core::Json','json-ref':"&'a crate::translation_core::Json",'map-ref':"&'a ::serde_json::Map<::std::string::String,crate::translation_core::Json>",str:"&'a str",bool:'bool',usize:'u64'};
+const RUST_TYPES={...OWNED_PRIMITIVE_SLICE_RUST_TYPES,...ownedPrimitiveResultRustTypes,...ownedCollectionRustTypes,...ownedBase64RustTypes,...ownedJsonRustTypes,'json-option-input':"::std::option::Option<&'a crate::translation_core::Json>",'json-text-result':'::std::result::Result<crate::translation_core::Json,::std::string::String>',json:'crate::translation_core::Json','json-ref':"&'a crate::translation_core::Json",'map-ref':"&'a ::serde_json::Map<::std::string::String,crate::translation_core::Json>",str:"&'a str",bool:'bool',usize:'u64'};
 export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  const program=checkOwnedCoreProgram(input),rust=target==='rust';if(!rust&&target!=='typescript')fail('unknown target');if(!program.length)return '';
  const context=issued.get(program[0]).context;requireOwnedCoreSourceCurrent(context);const sourceData=ownedCoreSourceData(context);
  if(program.some(item=>issued.get(item).context!==context))fail('mixed receiving contexts');
  let sequence=0;const imports=new Set();let resultTypePrefix=null;const resultTypeNamespace=()=>{if(resultTypePrefix!==null)return resultTypePrefix;if(!sourceData.files.some(row=>row.path==='src/translation_owned_results_core.rs'))return resultTypePrefix='router_result_';try{requireOwnedResultSources(new Map(sourceData.files.map(row=>[row.path,row.source])),sourceData);resultTypePrefix='router_owned_result_';}catch{resultTypePrefix='router_result_';}return resultTypePrefix;};
  function publicTypeScriptType(type,parameter=false){
+  const slice=ownedPrimitiveSliceElement(type);if(slice)return 'readonly ('+publicTypeScriptType(slice,true)+')[]';
   if(parameter&&type==='text-owned'){imports.add('router_owned_result_text_ok');return 'Parameters<typeof __ro_router_owned_result_text_ok>[0]';}
   if(ownedPrimitiveResultType(type)){const name=type==='text-text-result'?'router_owned_result_text_ok':resultTypeNamespace()+ownedPrimitiveResultPayload(type)+'_ok';imports.add(name);return 'ReturnType<typeof __ro_'+name+'>'; }
   if(type==='text-owned-option'){const name=resultTypeNamespace()+'bool_err_option';imports.add(name);return 'ReturnType<typeof __ro_'+name+'>';}
@@ -291,6 +293,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  function body(statements,indent){return statements.map(statement=>{
   const pad=' '.repeat(indent);
   if(statement.kind==='for-range')return emitOwnedCountedFor(statement,{rust,expr,body,indent,rustName});
+  if(statement.kind==='for-scalar')return emitOwnedPrimitiveSliceLoop(statement,{rust,expr,body,sequence:()=>sequence++,indent,rustName});
   if(statement.kind==='for-json')return emitOwnedJsonLoop(statement,{rust,expr,body,sequence:()=>sequence++,indent,rustName});
   if(statement.kind==='break'||statement.kind==='continue')return pad+statement.kind+';';
   if(statement.kind==='while')return pad+'while ('+expr(statement.cond)+') {\n'+body(statement.body,indent+4)+'\n'+pad+'}';
@@ -301,7 +304,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  }).join('\n');}
  const code=program.map(item=>{
   const rustTypes=item.hostCalls.some(call=>ownedAsciiOperation(call.name))?{...RUST_TYPES,str:"&'a crate::translation_core::Str"}:RUST_TYPES;
-  const borrowed=type=>['json-ref','map-ref','str','bytes-ref','base64-error-ref','json-option-input','json-list-ref'].includes(type)||ownedJsonBorrowed(type),loan=borrowed(item.returns),explicit=loan&&item.resultRoot!==null&&item.params.filter(param=>borrowed(param.type)).length>1;
+  const borrowed=type=>['json-ref','map-ref','str','bytes-ref','base64-error-ref','json-option-input','json-list-ref'].includes(type)||ownedJsonBorrowed(type)||ownedPrimitiveSliceElement(type)!==null,loan=borrowed(item.returns),explicit=loan&&item.resultRoot!==null&&item.params.filter(param=>borrowed(param.type)).length>1;
   const parameters=item.params.map(param=>{
    const type=rust?rustTypes[param.type].replace("'a ",explicit&&param.name===item.resultRoot?"'a ":''):publicTypeScriptType(param.type,true);
    return (rust?param.rust:param.name)+': '+type;
@@ -434,6 +437,9 @@ export function evaluateOwnedCoreProgram(input,name,args,token){
    else if(statement.kind==='for-range'){
     const start=get(statement.start,scope),end=get(statement.end,scope);for(let index=statement.reverse?end:start;statement.reverse?index>=start:index<end;index+=statement.reverse?-1n:1n){const child=new Map(scope);child.set(statement.name,index);const completion=execute(statement.body,child);for(const name of scope.keys())if(name!==statement.name)scope.set(name,child.get(name));if(completion.returned)return completion;if(completion.break)break;}
    }
+   else if(statement.kind==='for-scalar'){
+    const values=get(statement.value,scope);if(!Array.isArray(values))fail('actual primitive slice value required');for(const value of values){const child=new Map(scope);child.set(statement.name,value);const completion=execute(statement.body,child);for(const name of scope.keys())if(name!==statement.name)scope.set(name,child.get(name));if(completion.returned)return completion;if(completion.break)break;}
+   }
    else if(statement.kind==='for-json'){
     if(!state.modules.state)fail('unissued bounded JSON list iterator');const values=state.modules.state.router_state_json_values_copy(get(statement.value,scope));
     for(const value of values){const child=new Map(scope);child.set(statement.name,value);const completion=execute(statement.body,child);for(const name of scope.keys())if(name!==statement.name)scope.set(name,child.get(name));if(completion.returned)return completion;if(completion.break)break;}
@@ -500,6 +506,9 @@ function evaluateOwnedCorePrepared(program,name,args,state){
    else if(statement.kind==='while'){while(get(statement.cond,scope)){const child=new Map(scope),completion=execute(statement.body,child);for(const name of scope.keys())scope.set(name,child.get(name));if(completion.returned)return completion;if(completion.break)break;}}
    else if(statement.kind==='for-range'){
     const start=get(statement.start,scope),end=get(statement.end,scope);for(let index=statement.reverse?end:start;statement.reverse?index>=start:index<end;index+=statement.reverse?-1n:1n){const child=new Map(scope);child.set(statement.name,index);const completion=execute(statement.body,child);for(const name of scope.keys())if(name!==statement.name)scope.set(name,child.get(name));if(completion.returned)return completion;if(completion.break)break;}
+   }
+   else if(statement.kind==='for-scalar'){
+    const values=get(statement.value,scope);if(!Array.isArray(values))fail('actual primitive slice value required');for(const value of values){const child=new Map(scope);child.set(statement.name,value);const completion=execute(statement.body,child);for(const name of scope.keys())if(name!==statement.name)scope.set(name,child.get(name));if(completion.returned)return completion;if(completion.break)break;}
    }
    else if(statement.kind==='for-json'){
     if(!state.modules.state)fail('unissued bounded JSON list iterator');const values=state.modules.state.router_state_json_values_copy(get(statement.value,scope));

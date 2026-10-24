@@ -748,3 +748,11 @@ project reproduction. Preserve each fixed integer's actual native name, width
 and signedness. Reject unmatched code edits, out-of-domain values and incomplete
 batches; do not treat a matching source order or target name as semantic proof.
 See the [scalar inverse draft](docs/development/forward-literal-synchronization-draft.md).
+
+Primitive slice source rules must preserve each actual numeric domain through
+registered operation-derived types; bare bigint array shapes do not distinguish
+Rust u64 and i64. Retain readonly input roots, Copy item checks, fresh complete
+body checking and whole canonical Rust reproduction. State the ordinary dense
+immutable array runtime domain explicitly, and keep exotic iterator/getter,
+mutable array and unqualified generic/Clone uses outside the admitted source
+subset until their own matching rules and independent cases exist.

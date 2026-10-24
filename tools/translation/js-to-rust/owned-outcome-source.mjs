@@ -35,6 +35,7 @@ import {hasOwnedStaticOptionalLoan} from './owned-static-optional-loans.mjs';
 import {ownedPrimitiveResultOperation,ownedPrimitiveResultType,ownedPrimitiveResultPayload,ownedPrimitiveResultAbsent,ownedPrimitiveResultStaticLoan,requireOwnedPrimitiveResultSources} from './owned-primitive-result-contracts.mjs';
 import {checkOwnedPrimitiveResult} from './owned-primitive-result-source.mjs';
 import {checkOwnedCountedFor} from './owned-counted-for-source.mjs';
+import {ownedPrimitiveSliceElement,ownedPrimitiveSliceDomain} from './owned-scalar-slice-contracts.mjs';
 import {requireOwnedResultSources} from './owned-result-source-contracts.mjs';
 import {requireOwnedResultPublicInputSources} from './owned-result-public-inputs.mjs';
 import {requireOwnedHttpProtocolSources} from './owned-http-protocol-contracts.mjs';
@@ -371,7 +372,7 @@ function originalOwnedCoreType(handle,path,type,analysis){
  if(type.kind===ts.SyntaxKind.BooleanKeyword)return 'bool';
  if(ownedBase64ReadonlyOctets(ts,type))return 'bytes-ref';
  const list=ts.isTypeOperatorNode(type)&&type.operator===ts.SyntaxKind.ReadonlyKeyword?type.type:type;
- if(ts.isArrayTypeNode(list)&&originalOwnedCoreType(handle,path,list.elementType,analysis)==='json-ref')return 'json-list-ref';
+ if(ts.isArrayTypeNode(list)){const element=originalOwnedCoreType(handle,path,list.elementType,analysis);if(element==='json-ref')return 'json-list-ref';const slice=ownedPrimitiveSliceDomain(element);if(slice&&ts.isTypeOperatorNode(type)&&type.operator===ts.SyntaxKind.ReadonlyKeyword)return slice;}
 
  if(ts.isTypeReferenceNode(type)&&ts.isIdentifier(type.typeName)&&type.typeName.text!=='ReturnType'){
   const binding=originalOwnedCoreImport(handle,path,type.typeName,analysis);
@@ -498,7 +499,7 @@ function checkFunction(context,path,declaration,analysis){
   if(ownedJsonOptionalPayload(type)&&type!=='json-owned-option'&&type!=='text-owned-option'){if(!['bool-option','u64-option','i64-option','str-option-ref'].includes(type))fail('optional public parameter needs its independent actual carrier boundary');if(!primitiveOptionPublicInputs){const actual=ownedCoreSourceData(context);requireOwnedPrimitiveOptionSources(new Map(actual.files.map(row=>[row.path,row.source])),actual);primitiveOptionPublicInputs=true;}}
   // A real owned String input keeps its native by-value parameter domain.
   const identifier=param.name;
-  const sourceName=bind(identifier,{type,root:['json-ref','map-ref','str','bytes-ref','base64-error-ref'].includes(type)||ownedJsonBorrowed(type)||type==='json-option-input'||type==='json-list-ref'?identifier.text:null,input:true},environment);
+  const sourceName=bind(identifier,{type,root:['json-ref','map-ref','str','bytes-ref','base64-error-ref'].includes(type)||ownedJsonBorrowed(type)||type==='json-option-input'||type==='json-list-ref'||ownedPrimitiveSliceElement(type)!==null?identifier.text:null,input:true},environment);
   params.push({name:sourceName,rust:rustName(sourceName),type});
  }
  // The complete available pair was selected before parameter domains.
@@ -821,10 +822,10 @@ function checkFunction(context,path,declaration,analysis){
     const declarationList=statement.initializer;if(statement.awaitModifier||!ts.isVariableDeclarationList(declarationList)||(declarationList.flags&ts.NodeFlags.BlockScoped)!==ts.NodeFlags.Const||declarationList.declarations.length!==1||!ts.isBlock(statement.statement))fail('ordinary const JSON for-of block required');
     const declaration=declarationList.declarations[0];if(!ts.isIdentifier(declaration.name)||declaration.type||declaration.initializer||declaration.exclamationToken||declaration.name.text.startsWith('__ro'))fail('ordinary inferred immutable loop binding required');
     if(paired){const matches=paired.evidence.locals.filter(row=>row.javascriptSpan[0]===declaration.getStart(file)&&row.javascriptSpan[1]===declaration.end);if(matches.length!==1||matches[0].typeSpan)fail('paired loop input requires its original inferred native declaration');}
-    const value=expression(statement.expression,scope,depth+1);if(!['json-list-ref','json-list-owned'].includes(value.type))fail('actual canonical JSON slice or Vec iteration required');
+    const value=expression(statement.expression,scope,depth+1);if(!['json-list-ref','json-list-owned'].includes(value.type)&&!ownedPrimitiveSliceElement(value.type))fail('actual canonical JSON or primitive shared slice iteration required');
     const local=branchScope(scope);for(const [name,value]of local){if(ownedBase64Result(value.type))local.delete(name);else if(value.mutable)local.set(name,{...value,variant:undefined,some:undefined});}local.delete(declaration.name.text);
-    const name=bind(declaration.name,{type:'json-ref',root:'__ro_loop_root_'+declaration.getStart(file),input:false},local),checked=block(statement.statement.statements,local,depth+1,loopDepth+1);
-    mergeMoves(scope,branchScope(scope),local);for(const [name,value]of scope)if(value.mutable)scope.set(name,{...value,variant:undefined,some:undefined});body.push({kind:'for-json',name,value,body:checked.body});
+    const primitive=ownedPrimitiveSliceElement(value.type),name=bind(declaration.name,{type:primitive??'json-ref',root:primitive?null:'__ro_loop_root_'+declaration.getStart(file),input:false},local),checked=block(statement.statement.statements,local,depth+1,loopDepth+1);
+    mergeMoves(scope,branchScope(scope),local);for(const [name,value]of scope)if(value.mutable)scope.set(name,{...value,variant:undefined,some:undefined});body.push({kind:primitive?'for-scalar':'for-json',name,value,body:checked.body});
    }else if(ts.isVariableStatement(statement)){
 
     const declarationKind=statement.declarationList.flags&ts.NodeFlags.BlockScoped,mutable=declarationKind===ts.NodeFlags.Let;if(statement.modifiers?.length||!mutable&&declarationKind!==ts.NodeFlags.Const)fail('only fresh lexical const or owned let declarations');

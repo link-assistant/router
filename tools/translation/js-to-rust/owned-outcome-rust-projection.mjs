@@ -71,6 +71,7 @@ export function projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot,
  function imported(name,family){const key=family+':'+name;if(!imports.has(key))imports.set(key,{name,family,local:'original_'+name});return imports.get(key).local;}
  function type(text){
   text=text.replaceAll("&'a",'&');
+  const scalar=/^&\[(u64|i64|bool)\]$/u.exec(text);if(scalar)return 'readonly ('+type(scalar[1])+')[]';
   if(text==='&crate::translation_core::Json')return 'import('+JSON.stringify(relative('json-macro'))+').JsonValue';
   if(text==='&[crate::translation_core::Json]')return 'Parameters<typeof '+imported('router_state_json_values_copy','json-state')+'>[0]';
   if(text==='&::serde_json::Map<::std::string::String,crate::translation_core::Json>')return 'Parameters<typeof '+imported('router_core_json_map_index','json-update')+'>[0]';
@@ -170,6 +171,7 @@ export function projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot,
    if(statement.kind==='break'||statement.kind==='continue')return statement.kind+';';
    if(statement.kind==='while')return 'while ('+expression(statement.condition,names,depth+1)+') '+block(statement.body,names,depth+1);
    if(statement.kind==='for-range'){const name=names.get(statement.name)??statement.name;return (statement.reverse?'for (let '+name+' = '+expression(statement.end,names,depth+1)+'; '+name+' >= '+expression(statement.start,names,depth+1)+'; '+name+' -= 1n) ':'for (let '+name+' = '+expression(statement.start,names,depth+1)+'; '+name+' < '+expression(statement.end,names,depth+1)+'; '+name+' += 1n) ')+block(statement.body,names,depth+1);}
+   if(statement.kind==='for-scalar')return 'for (const '+(names.get(statement.name)??statement.name)+' of '+expression(unwrap(statement.value),names,depth+1)+') '+block(statement.body,names,depth+1);
    if(statement.kind==='for-json'){const value=unwrap(statement.value);if(value?.kind!=='call'||value.path!=='crate::translation_state_core::json_values_copy'||value.args.length!==1)fail('canonical copied JSON iterator source required');return 'for (const '+(names.get(statement.name)??statement.name)+' of '+expression(adapter(value.args[0],'shared-json-list'),names,depth+1)+') '+block(statement.body,names,depth+1);}
    if(statement.kind==='if')return 'if ('+expression(statement.condition,names,depth+1)+') '+block(statement.yes,names,depth+1)+' else '+block(statement.no,names,depth+1);
    fail('unknown original Rust statement');

@@ -83,3 +83,26 @@ Broader reverse source syntax and production adoption still need their draft.
 Complete originals/rules, independent strict JS/TS scalar/Boolean/extreme/empty/
 overflow/refusal cases and native Rust oracle source are drafted and unrun.
 No compiler, checker, source preparer, target, test or Rust tool has executed.
+
+A corresponding reverse source draft now adds explicit readonly u64/i64/Boolean
+slice domains, actual operation-derived numeric element signatures, scalar
+`for...of` checking, both interpreters and Rust/TS emission. Rust captures the
+shared input once and uses its standard primitive `iter().copied()` adapter.
+Loop items are Copy values, with ordinary break/continue/return and surviving
+outer assignments. Inputs remain borrowed and cannot become mutable owned
+arrays through a public shape or a bare ambiguous bigint annotation.
+
+Canonical Rust inverse proposals recognize only the complete once-captured
+primitive Copy loop shape and reissue the entire original JS/TS body before
+requiring full Rust reproduction. Paired JS signature proposals preserve the
+actual numeric domain through registered operation input types. The qualified
+JS runtime input domain is an ordinary dense immutable array of actual native
+primitive values; exotic iterators, getters, mutation, arbitrary aggregates and
+array methods have no new source permission. No persistent caches are added.
+
+Full original source histories plus independent authored JS, strict TS, both
+interpreter, canonical inverse, mixed numeric/Boolean extremes, empty/nested/
+control/refusal cases are drafted and unrun. Broader integer widths, owned
+vectors, generic/record arrays, adapter syntax in authored JS, Clone-specific
+source invocations, production use and remaining requirements remain open. No
+compiler, interpreter, preparer, target, test, experiment or Rust tool has run.

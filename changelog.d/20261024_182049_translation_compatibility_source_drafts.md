@@ -39,3 +39,5 @@ integration and the remaining requirement ledger are still open.
 - Draft compiler-bound predicate expression inverse rules with preserved native trivia and mixed literal batches; independent strict target and Rust oracle source remains unrun.
 
 - Draft shared primitive slice loops and copied/dereferenced item flow in owned JSON callers, preserving optional byte parsing and full unrun target/native oracle source.
+
+- Draft corresponding readonly scalar-slice JS/TS source checking, both interpreters, native/typed emission, paired signatures and full Rust inverse source with independent unrun integration cases.
