@@ -1,22 +1,74 @@
-// Independent boundary SOURCE. Do not run until the entire bulk draft is done.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import * as integer from '../integer-runtime.mjs';
-import {INTEGER_CONTRACTS,emitIntegerDeclarations} from '../integer-contracts.mjs';
-import {INTEGER_NATIVE_SOURCE,INTEGER_RUNTIME_SOURCE,INTEGER_DECLARATIONS_SOURCE} from '../integer-native-source.mjs';
-import {readFileSync} from 'node:fs';
-const limits={timeout:60000},MAX=18446744073709551615n,MIN=-9223372036854775808n,IMAX=9223372036854775807n,none={$:'None'},some=field0=>({$:'Some',field0});
-test('unsigned saturation wrapping checked results min max and clamp retain full width',limits,()=>{
- const cases=[['u64_saturating_add',[MAX,1n],MAX],['u64_saturating_sub',[0n,1n],0n],['u64_saturating_mul',[MAX,2n],MAX],['u64_wrapping_add',[MAX,1n],0n],['u64_wrapping_sub',[0n,1n],MAX],['u64_wrapping_mul',[MAX,2n],MAX-1n],['u64_checked_add',[MAX,1n],none],['u64_checked_add',[MAX-1n,1n],some(MAX)],['u64_checked_sub',[0n,1n],none],['u64_checked_sub',[MAX,MAX],some(0n)],['u64_checked_mul',[MAX,2n],none],['u64_checked_mul',[MAX,0n],some(0n)],['u64_checked_div',[MAX,0n],none],['u64_checked_div',[MAX,2n],some(9223372036854775807n)],['u64_checked_rem',[MAX,2n],some(1n)],['u64_checked_rem',[1n,0n],none],['u64_min',[MAX,0n],0n],['u64_max',[MAX,0n],MAX],['u64_clamp',[0n,1n,MAX],1n],['u64_clamp',[MAX,0n,MAX-1n],MAX-1n]];
- for(const [name,args,expected]of cases)assert.deepEqual(integer['router_integer_'+name](...args),expected);
+import {Checker} from '../extensions/core.mjs';
+import {integerContracts,INTEGER_TYPES} from '../extensions/integer-contracts.mjs';
+import {createIntegerRuntime,std_num_parse_int_error_kind,std_num_parse_int_error_to_string} from '../extensions/integer-runtime.mjs';
+import {valueSchema} from '../type-layout.mjs';
+import {validateRustValue} from '../type-layout-runtime.mjs';
+const fixed=(bits,signed=false)=>({kind:'fixed',bits,signed});
+const check=items=>new Checker('Rust',[]).program({language:'Rust',items:structuredClone(items)});
+const reason=result=>{assert.equal(result.$,'Err');return std_num_parse_int_error_kind(result.field0).$;};
+test('integer instantiations register actual typed errors and collision-free Result layouts in the copied checker',()=>{
+  const factory=integerContracts(fixed(64)),program=check(factory.data),schema=valueSchema(program.declarations);
+  assert.equal(program.declarations.get('std.num.IntErrorKind').ctors.length,5);
+  assert.equal(program.declarations.get('std.num.ParseIntError').ctors[0].fields[0].type.name,'std.num.IntErrorKind');
+  assert.equal(factory.contracts[0].constEligible,false);assert.equal(factory.contracts[2].constEligible,true);
+  const repeated=integerContracts(fixed(64),program.declarations);assert.equal(repeated.data.length,0);
+  const result=program.declarations.get(factory.ret.path[0]);
+  assert.deepEqual(result.standardGeneric,{kind:'Result',arguments:[factory.type,INTEGER_TYPES.error]});
+  const unproven=new Map(program.declarations);unproven.set(factory.ret.path[0],{...result,standardGeneric:undefined});
+  assert.throws(()=>integerContracts(fixed(64),unproven),/Conflicting checked integer Result provenance/);
+  const signed=integerContracts(fixed(64,true),program.declarations);assert.notEqual(signed.ret.path[0],factory.ret.path[0]);assert.equal(signed.data.length,1);
+  for(const input of ['18446744073709551615','18446744073709551616','+',''])assert.equal(validateRustValue(createIntegerRuntime(factory.type).rust_integer_parse(input),factory.ret,schema),true);
+  assert.equal(validateRustValue({$:'ParseIntError',kind:{$:'Zero'}},INTEGER_TYPES.error,schema),true);
+  for(const type of [null,{kind:'float'},fixed(7),{kind:'fixed',bits:64,signed:'false'}])assert.throws(()=>integerContracts(type),TypeError);
+  const conflict=new Map(program.declarations);conflict.set('std.num.IntErrorKind',{k:'data',ctors:[{name:'Empty',fields:[]}]});assert.throws(()=>integerContracts(fixed(64),conflict),/Conflicting checked/);
 });
-test('signed overflow and truncation preserve Rust division remainder and absolute-value boundaries',limits,()=>{
- const cases=[['i64_saturating_add',[IMAX,1n],IMAX],['i64_saturating_sub',[MIN,1n],MIN],['i64_saturating_mul',[MIN,-1n],IMAX],['i64_wrapping_add',[IMAX,1n],MIN],['i64_wrapping_sub',[MIN,1n],IMAX],['i64_wrapping_mul',[MIN,-1n],MIN],['i64_checked_add',[IMAX,1n],none],['i64_checked_sub',[MIN,1n],none],['i64_checked_mul',[MIN,-1n],none],['i64_checked_div',[MIN,-1n],none],['i64_checked_rem',[MIN,-1n],none],['i64_checked_div',[-7n,3n],some(-2n)],['i64_checked_rem',[-7n,3n],some(-1n)],['i64_checked_div',[7n,-3n],some(-2n)],['i64_checked_rem',[7n,-3n],some(1n)],['i64_checked_div',[1n,0n],none],['i64_checked_rem',[1n,0n],none],['i64_checked_abs',[MIN],none],['i64_checked_abs',[-IMAX],some(IMAX)],['i64_saturating_abs',[MIN],IMAX],['i64_saturating_abs',[-17n],17n],['i64_min',[MIN,IMAX],MIN],['i64_max',[MIN,IMAX],IMAX],['i64_clamp',[MIN,-2n,3n],-2n]];
- for(const [name,args,expected]of cases)assert.deepEqual(integer['router_integer_'+name](...args),expected);
+test('all fixed widths preserve exact signed and unsigned boundaries without Number conversion',()=>{
+  for(const bits of [8,16,32,64,128])for(const signed of [false,true]) {
+    const parser=createIntegerRuntime(fixed(bits,signed)),width=BigInt(bits),min=signed?-(1n<<(width-1n)):0n,max=signed?(1n<<(width-1n))-1n:(1n<<width)-1n;
+    for(const value of [min,0n,max])assert.deepEqual(parser.rust_integer_parse(String(value)),{$:'Ok',field0:value});
+    assert.equal(reason(parser.rust_integer_parse(String(max+1n))),'PosOverflow');
+    assert.equal(reason(parser.rust_integer_parse(String(min-1n))),signed?'NegOverflow':'InvalidDigit');
+    assert.deepEqual(parser.rust_integer_parse('+00042'),{$:'Ok',field0:42n});
+    assert.deepEqual(parser.rust_integer_parse(signed?'-0':'0'),{$:'Ok',field0:0n});
+  }
 });
-test('foreign inputs never coerce and closed option results remain immutable',limits,()=>{
- let touched=0;const hooks={valueOf(){touched++;return 1n;},toString(){touched++;return '1';}};for(const value of [1,'1',NaN,undefined,null,hooks,Object(1n),-1n,MAX+1n])assert.throws(()=>integer.router_integer_u64_wrapping_add(value,1n),TypeError);for(const value of [MIN-1n,IMAX+1n])assert.throws(()=>integer.router_integer_i64_min(value,0n),TypeError);assert.equal(touched,0);assert.throws(()=>integer.router_integer_i64_clamp(0n,1n,-1n),RangeError);const result=integer.router_integer_i64_checked_add(1n,2n);assert.equal(Object.isFrozen(result),true);assert.deepEqual(result,some(3n));
+test('string parsing rejects whitespace, Unicode digits, Rust literal underscores and misplaced signs',()=>{
+  const parser=createIntegerRuntime(fixed(64));
+  assert.equal(reason(parser.rust_integer_parse('')),'Empty');
+  for(const source of ['+','-','-0','-1',' 1','1 ','1\n','\ufeff1','١','１','1_000','0xff','++1','1+2','1e3','1.0','1\0','Ω'])assert.equal(reason(parser.rust_integer_parse(source)),'InvalidDigit',source);
+  assert.throws(()=>parser.rust_integer_parse('\ud800'),TypeError);assert.throws(()=>parser.rust_integer_parse(42),TypeError);
 });
-test('all 30 actual interfaces and declarations rejoin complete native/runtime source',limits,()=>{
- assert.equal(INTEGER_CONTRACTS.length,30);for(const row of INTEGER_CONTRACTS)assert.equal(typeof integer[row.javascriptName],'function');assert.equal(emitIntegerDeclarations(),INTEGER_DECLARATIONS_SOURCE);for(const [path,source]of [['integer-runtime.mjs',INTEGER_RUNTIME_SOURCE],['integer-runtime.d.mts',INTEGER_DECLARATIONS_SOURCE]])assert.equal(readFileSync(new URL('../'+path,import.meta.url),'utf8'),source);assert.equal(readFileSync(new URL('../../../rust/src/translation_integer_core.rs',import.meta.url),'utf8'),INTEGER_NATIVE_SOURCE);
+test('digit validation and arithmetic overflow preserve pinned source error precedence',()=>{
+  const unsigned=createIntegerRuntime(fixed(8)),signed=createIntegerRuntime(fixed(8,true));
+  assert.equal(reason(unsigned.rust_integer_parse('25x')),'InvalidDigit');
+  assert.equal(reason(unsigned.rust_integer_parse('255x')),'InvalidDigit');
+  assert.equal(reason(unsigned.rust_integer_parse('256x')),'PosOverflow');
+  assert.equal(reason(unsigned.rust_integer_parse('2550x')),'PosOverflow');
+  assert.equal(reason(signed.rust_integer_parse('-128x')),'InvalidDigit');
+  assert.equal(reason(signed.rust_integer_parse('-129x')),'NegOverflow');
+  assert.equal(reason(signed.rust_integer_parse('-1280x')),'NegOverflow');
+  assert.deepEqual(unsigned.rust_integer_parse('0'.repeat(128)+'255'),{$:'Ok',field0:255n});
+});
+test('radix parsing supports stable bases two through thirty-six and distinguishes panic from Result errors',()=>{
+  const parser=createIntegerRuntime(fixed(128));
+  for(const radix of [2n,8n,10n,16n,36n]) {
+    const value=340282366920938463463374607431768211455n;
+    assert.deepEqual(parser.rust_integer_from_str_radix(value.toString(Number(radix)),radix),{$:'Ok',field0:value});
+    assert.equal(reason(parser.rust_integer_from_str_radix((value+1n).toString(Number(radix)),radix)),'PosOverflow');
+  }
+  assert.deepEqual(parser.rust_integer_from_str_radix('aBcDeF',16n),{$:'Ok',field0:11259375n});
+  assert.equal(reason(parser.rust_integer_from_str_radix('0xff',16n)),'InvalidDigit');
+  for(const radix of [0n,1n,37n,4294967295n])assert.throws(()=>parser.rust_integer_from_str_radix('',radix),RangeError);
+  for(const radix of [-1n,4294967296n,10])assert.throws(()=>parser.rust_integer_from_str_radix('1',radix),TypeError);
+});
+test('typed parse errors expose stable categories and source display while rejecting forged accessors',()=>{
+  const parser=createIntegerRuntime(fixed(8)),expected=[['','cannot parse integer from empty string'],['x','invalid digit found in string'],['256','number too large to fit in target type']];
+  for(const [input,message] of expected)assert.equal(std_num_parse_int_error_to_string(parser.rust_integer_parse(input).field0),message);
+  assert.equal(std_num_parse_int_error_to_string(createIntegerRuntime(fixed(8,true)).rust_integer_parse('-129').field0),'number too small to fit in target type');
+  assert.equal(std_num_parse_int_error_to_string({$:'ParseIntError',kind:{$:'Zero'}}),'number would be zero for non-zero type');
+  let invoked=0;const accessor={$:'ParseIntError',get kind(){invoked++;return {$:'Empty'};}};
+  for(const value of [accessor,{$:'Other',kind:{$:'Empty'}},{$:'ParseIntError',kind:{$:'Unknown'}},{$:'ParseIntError',kind:{$:'Empty',extra:true}},{$:'ParseIntError',kind:{$:'Empty'},extra:true},null])assert.throws(()=>std_num_parse_int_error_to_string(value),TypeError);
+  assert.equal(invoked,0);assert.ok(Object.isFrozen(parser.rust_integer_parse('1')));assert.ok(Object.isFrozen(parser.rust_integer_parse('x').field0));
 });
