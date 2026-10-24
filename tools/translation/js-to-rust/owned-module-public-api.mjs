@@ -2,6 +2,7 @@
 // checked complete program. It adds aliases, never new function bodies.
 import {ownershipCompiler} from './vendor/module-syntax.mjs';
 import {snakeFromCamel} from './vendor/ir.mjs';
+import {ownedModuleRustPublicName} from './owned-module-public-names.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {publicScalarRustTypes} from './module-scalar-types.mjs';
 import {transportConcreteSourceEquations} from '../concrete-source-equations.mjs';
@@ -48,7 +49,7 @@ export function packageOwnedModuleAPI(result,{publicExports,linkedSource,languag
  const typeFooter=types.length?'\nexport type { '+types.map(row=>row.internalName+(row.internalName===row.publicName?'':' as '+row.publicName)).join(', ')+' };\n':'';
  const rustScalarTypes={helpers:'',rows:[],declarations:''},rustImplementation=rustScalarTypes.helpers+result.rust,rustItems=sourceItems(rustImplementation),publicTypes=[];
  for(const item of rustItems)if(['struct','enum','type'].includes(item.term)){const tokens=item.tokens.filter(token=>token.type!=='comment'),keyword=tokens.findIndex(token=>token.text===item.term);if(tokens.slice(0,keyword).some(token=>token.text==='pub'))publicTypes.push(item.name);}
- const rustNames=values.map(row=>snakeFromCamel(row.publicName));if(new Set(rustNames).size!==rustNames.length)fail('public aliases collide after Rust naming');
+ const rustNames=values.map(row=>ownedModuleRustPublicName(row.publicName));if(new Set(rustNames).size!==rustNames.length)fail('public aliases collide after Rust naming');
  const allPublicNames=[...rustNames,...publicTypes,...rustScalarTypes.rows.map(row=>row.publicName)];if(new Set(allPublicNames).size!==allPublicNames.length)fail('public value, support type and scalar alias names collide');
  const module='__router_owned_project',rustLanguage='mod '+module+' {\n'+rustImplementation+'\n}\n';
  const rustFooter=values.map((row,index)=>'pub use self::'+module+'::'+snakeFromCamel(row.internalName)+(snakeFromCamel(row.internalName)===rustNames[index]?'':' as '+rustNames[index])+';').concat([...new Set(publicTypes)].map(name=>'pub use self::'+module+'::'+name+';')).join('\n')+'\n';

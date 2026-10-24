@@ -372,6 +372,13 @@ interpreter, export and refusal cases are drafted and unrun. Packaged Rust rever
 authority, original-module distribution, unit transactions, broader application
 types/effects and the other remaining requirement rows are still open.
 
+The [packaged owned Rust reverse draft](owned-module-reverse-draft.md) copies
+the complete canonical inverse, freshly checks inner functions and reconstructs
+actual public aliases only after complete outer Rust reproduction. Three full
+source successors and independent packaged/unpaired JS, malformed-root, source,
+alias and history regression sources are drafted and unrun. Distribution into
+original module files, project transactions and the other rows remain open.
+
 The [primitive method adoption draft](integer-method-adoption-draft.md) copies
 three complete adopter/packet/installer implementations for actual i64/u64
 method receivers and closed operands. Native parameter/producer scope, complete
