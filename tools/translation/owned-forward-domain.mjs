@@ -42,6 +42,9 @@ export function checkForwardOwnedExtra(checker,node,env,path,expected,row,{canon
   else if(role==='u64'||role==='i64'){const type=value.type;if(type.kind!=='fixed'||type.bits!==64||type.signed!==(role==='i64')||type.rustPrimitiveName!==role||type.rustReference||type.rustOwnership||type.patternOwnershipRefusal||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)throw unsupported('owned JSON field index','requires actual by-value u64',syntax.span);checker.expectedPrimitiveIdentity(type,wanted,path,syntax.span);}
   else throw typeError('unknown owned field/carrier argument domain',syntax.span);return value;
  });
+ if(row.family==='text'){
+  const outputs={str:SOURCE_STR,'text-owned':{...SOURCE_STRING,rustSourceType:true},bool:BOOL,u64:{...fixed(64,false),rustPrimitiveName:'u64',rustSourceType:true}},payload=row.returns==='u64-option'?outputs.u64:row.returns==='str-option-ref'?SOURCE_STR:null,type=payload?checker.instantiations.option(payload,node.span):outputs[row.returns];if(!type)throw typeError('unknown actual UTF-8 text return domain',node.span);if(expected)compatible(checker,type,expected,path,node.span);requireOriginalPrimitiveTryFromChecker(checker);current();return {k:'routerHostCall',id:row.javascriptName,args,type,span:node.span,constEligible:false};
+ }
  if(row.family==='integer'){
   const domain=row.returns.endsWith('-option')?row.returns.slice(0,-7):row.returns,payload={...fixed(64,domain==='i64'),rustPrimitiveName:domain,rustSourceType:true},type=row.returns.endsWith('-option')?checker.instantiations.option(payload,node.span):payload;
   if(!['u64','i64'].includes(domain))throw typeError('unknown actual fixed-width return',node.span);if(expected)compatible(checker,type,expected,path,node.span);requireOriginalPrimitiveTryFromChecker(checker);current();return {k:'routerHostCall',id:row.javascriptName,args,type,span:node.span,constEligible:false};

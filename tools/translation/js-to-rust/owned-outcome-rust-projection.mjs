@@ -3,6 +3,7 @@
 import {posix} from 'node:path';
 import {OWNED_OUTCOME_CONTRACTS} from '../owned-outcome-contracts.mjs';
 import {INTEGER_CONTRACTS} from '../integer-contracts.mjs';
+import {TEXT_CONTRACTS} from '../text-contracts.mjs';
 import {SSE_CONTRACTS} from '../sse-contracts.mjs';
 import {JSON_STATE_CONTRACTS} from '../json-state-contracts.mjs';
 import {JSON_FIELD_CONTRACTS} from '../json-field-contracts.mjs';
@@ -15,6 +16,7 @@ const snake=name=>name.replace(/[A-Z]/gu,character=>'_'+character.toLowerCase())
 const ordinary=name=>typeof name==='string'&&/^[a-z][A-Za-z0-9_]*$/u.test(name)&&!name.startsWith('__ro');
 const families=[
  ...SSE_CONTRACTS.map(row=>({path:row.rustPath,name:row.javascriptName,runtime:'sse',roles:row.parameters})),
+ ...TEXT_CONTRACTS.map(row=>({path:row.rustPath,name:row.javascriptName,runtime:'text',roles:row.parameters})),
  ...INTEGER_CONTRACTS.map(row=>({path:row.rustPath,name:row.javascriptName,runtime:'integer',roles:row.parameters})),
  ...OWNED_OUTCOME_CONTRACTS.map(row=>({path:row.rustPath,name:row.javascriptName,runtime:'owned-outcome',roles:row.parameters})),
  ...JSON_FIELD_CONTRACTS.map(row=>({path:row.rustPath,name:row.javascriptName,runtime:'json-fields',roles:row.parameters})),

@@ -102,9 +102,11 @@ production parity and every other unfinished obligation remain open.
 The [UTF-8 text core draft](text-core-draft.md) adds twenty matching native/JS
 interfaces, shared declarations, complete root source preparation and independent
 Unicode/byte-boundary/literal replacement/resource refusal oracle source.
-Nothing has run. Translator registration, both direction callers, source units,
-automatic method adoption, production application and the remaining rows still
-need their complete source draft.
+Nothing has run. The [text translation draft](owned-text-translation-draft.md)
+now adds translator registration, both interpreters, canonical Rust projection,
+actual forward domains and three-direction source-unit regression source.
+Automatic method adoption, complete bulk packaging, production application and
+the remaining rows still need their complete source draft.
 
 The last checkpoint before this phase is `0460fb741`: four complete
 source-history receiving files passed 26 cases in Node and Bun. That historical
