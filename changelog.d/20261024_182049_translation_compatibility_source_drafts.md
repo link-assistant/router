@@ -14,6 +14,7 @@
   restoration and both interpreter paths.
 - Drafted shared iterator take chains with native count identity and retained
   receiver loans through count evaluation.
+- Drafted owned caller flow through the existing source-backed reversed ranges.
 
 These sources and independent regression cases remain unverified during the
 required bulk-drafting phase. Complete translation, production parity, async

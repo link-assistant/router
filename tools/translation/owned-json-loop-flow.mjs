@@ -1,6 +1,7 @@
 // Language-level fixed-point flow over an already privately checked whole body.
 // No public node, source spelling, shape or loop summary grants admission.
 import {sameType} from './checked-types.mjs';
+import {requireReversedRange} from './extensions/reversed-ranges.mjs';
 const sameSet=(left,right)=>left===right||left instanceof Set&&right instanceof Set&&left.size===right.size&&[...left].every(value=>right.has(value));
 function sameFact(left,right){return Boolean(left&&right)&&sameSet(left.tags,right.tags)&&left.loans.size===right.loans.size&&[...left.loans].every(([path,roots])=>sameSet(roots,right.loans.get(path)))&&left.localLoanType===right.localLoanType&&left.localLoanOrigin===right.localLoanOrigin;}
 function sameState(left,right,slots){return slots.every(slot=>left.available.get(slot)===right.available.get(slot)&&sameFact(left.values.get(slot),right.values.get(slot)));}
@@ -25,6 +26,7 @@ function checkedInput(node,state,helpers){
   const anchor={name:'<actual pending iterator receiver>',kind:'borrow',input:false,mutable:false};if(held.loans.size){state.available.set(anchor,true);state.values.set(anchor,helpers.copy(held));}
   try{const value=visit(count,state,'copy',depth+1);if(value.loans.size)refuse('take count cannot retain a loan',count);ensureRoots(held,state,node);}finally{state.available.delete(anchor);state.values.delete(anchor);}return held;
  }
+ if(node?.k==='routerIteratorOperation'&&node.op==='rev'){requireReversedRange(node);return checkedInput(node.object,state,helpers);}
  if(node?.k==='routerRange'){
   if(node.type?.kind!=='routerIterator'||node.type.element?.kind!=='fixed'||node.start?.type?.kind!=='fixed'||node.end?.type?.kind!=='fixed')refuse('range loop requires actual checked bounded native integer operands',node);
   for(const value of [node.start,node.end]){if(domain(value.type,value)!=='copy')refuse('range endpoints cannot transfer storage',value);const fact=visit(value,state,'copy',depth+1);if(fact.loans.size)refuse('range endpoints cannot conceal retained loans',value);}return empty();

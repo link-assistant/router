@@ -38,3 +38,10 @@ count evaluation and the loop body, and count expressions cannot conceal an owne
 move. Original checker/emitter/iterator qualification remains separate from this
 flow extension. Complete source inverses and independent zero, oversized, nested,
 wrong-width and move/refusal cases plus native oracle source are drafted and unrun.
+
+Fresh fixed native ranges can also retain the existing source-backed `rev`
+qualifier and emitter inside owned JSON callers, including `rev().take(...)`.
+This reuses the complete existing reversed-range source profile and its original
+validation; it grants no arbitrary DoubleEndedIterator or specialized consumer.
+Independent order, inclusive/extreme endpoint, empty range and native oracle
+source plus complete source equations are drafted and unrun.

@@ -71,3 +71,15 @@ fn actual_take_distinguishes_zero_oversized_and_nested_limits_without_moving_sha
     for value in values.iter().take(2).take(1) { output = state::json_append(output,core::json_copy(value)); }
     assert_eq!(output,json!([null]));
 }
+
+#[test]
+fn original_reversed_ranges_preserve_inclusive_extrema_and_source_item_order() {
+    let values = [json!("low"),json!("middle"),json!("high")];
+    let mut output = core::json_copy(&json!([]));
+    for index in (0_u64..3_u64).rev() {
+        output = state::json_append(output,core::json_copy(&values[usize::try_from(index).unwrap()]));
+    }
+    assert_eq!(output,json!(["high","middle","low"]));
+    assert_eq!((i64::MIN..=i64::MIN+1).rev().collect::<Vec<_>>(),vec![i64::MIN+1,i64::MIN]);
+    assert_eq!((u64::MAX-1..=u64::MAX).rev().collect::<Vec<_>>(),vec![u64::MAX,u64::MAX-1]);
+}
