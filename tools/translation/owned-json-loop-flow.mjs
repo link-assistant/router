@@ -2,6 +2,7 @@
 // No public node, source spelling, shape or loop summary grants admission.
 import {sameType} from './checked-types.mjs';
 import {requireReversedRange} from './extensions/reversed-ranges.mjs';
+import {scalarSliceIteratorItem} from './owned-scalar-slice-flow.mjs';
 const sameSet=(left,right)=>left===right||left instanceof Set&&right instanceof Set&&left.size===right.size&&[...left].every(value=>right.has(value));
 function sameFact(left,right){return Boolean(left&&right)&&sameSet(left.tags,right.tags)&&left.loans.size===right.loans.size&&[...left.loans].every(([path,roots])=>sameSet(roots,right.loans.get(path)))&&left.localLoanType===right.localLoanType&&left.localLoanOrigin===right.localLoanOrigin;}
 function sameState(left,right,slots){return slots.every(slot=>left.available.get(slot)===right.available.get(slot)&&sameFact(left.values.get(slot),right.values.get(slot)));}
@@ -33,7 +34,7 @@ function checkedInput(node,state,helpers){
   for(const value of [node.start,node.end]){if(domain(value.type,value)!=='copy')refuse('range endpoints cannot transfer storage',value);const fact=visit(value,state,'copy',depth+1);if(fact.loans.size)refuse('range endpoints cannot conceal retained loans',value);}return {item:empty(),retained:empty()};
  }
  if(node?.k==='routerIteratorOperation'&&node.op==='iter'&&node.args?.length===0&&node.type?.kind==='routerIterator'){
-  const kind=domain(node.object?.type,node.object);if(!['slice','json-vector'].includes(kind))refuse('JSON for loop needs its actual shared slice or borrowed Vec iterator',node);
+  const kind=domain(node.object?.type,node.object);if(kind==='scalar-slice'){const fact=visit(node.object,state,'borrow',depth+1);ensureRoots(fact,state,node);if(!fact.loans.get('[]')?.size)refuse('scalar slice iterator has no actual live receiver root',node);const item=scalarSliceIteratorItem(checker,node,node.object,{empty,copy:helpers.copy,refuse,fact});return {item:item.item,retained:helpers.copy(fact)};}if(!['slice','json-vector'].includes(kind))refuse('JSON for loop needs its actual shared slice or borrowed Vec iterator',node);
   if(domain(node.type.element,node)!=='borrow')refuse('JSON for loop element needs its actual single shared canonical reference',node);
   const fact=visit(node.object,state,'borrow',depth+1);ensureRoots(fact,state,node);if(!fact.loans.get('[]')?.size)refuse('JSON for iterator has no live original receiver root',node);return {item:fact,retained:helpers.copy(fact)};
  }

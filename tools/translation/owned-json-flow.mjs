@@ -10,6 +10,7 @@ import {isForwardOwnedCarrier} from './owned-forward-domain.mjs';
 import {hasOriginalCallbackLoan,hasOriginalSourceFrame,originalCallbackLoanInputMatches} from './extensions/standard-source-frame.mjs';
 import {hasOriginalSharedDomainGuard} from './extensions/standard-borrowed-body.mjs';
 import {sharedReferenceCopyIdentity} from './shared-reference-copy-source.mjs';
+import {actualPrimitiveSlice,checkPrimitiveSliceDereference} from './owned-scalar-slice-flow.mjs';
 import {unsupported} from './vendor/meta-language/translation/diagnostics.js';
 import {checkOwnedLoop,checkOwnedLoopExit,ownedLoopInput,unreachableOwnedFlowState} from './owned-json-loop-flow.mjs';
 const linear=kind=>kind==='json'||kind==='linear'||kind==='json-vector'||kind==='owned-text'||kind==='loan-result',path=parts=>JSON.stringify(parts);
@@ -113,6 +114,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
    const byte=t=>t?.kind==='fixed'&&t.bits===8&&t.signed===false&&t.rustPrimitiveName==='u8'&&t.rustSourceType===true&&!t.rustReference&&!t.rustOwnership&&!t.patternOwnershipRefusal&&!t.rustBorrowingUnresolved&&!t.rustGenericIdentityUnresolved;
    const bytes=t=>t?.kind==='array'&&t.rustSourceType===true&&t.rustOwnership?.kind==='borrowed'&&t.rustOwnership.source==='slice'&&!t.rustFixedArray&&!t.rustBorrowingUnresolved&&!t.rustGenericIdentityUnresolved&&byte(t.element);
    if(bytes(type)&&bytes(pointee)&&!pointee.rustReference&&!pointee.patternOwnershipRefusal&&type.patternOwnershipRefusal==='shared source reference'&&type.rustReference.tokens?.[0]?.value==='&'&&sameType(type.element,pointee.element)&&hasOptionalParse()){checker.expectedOwnership(type.element,pointee.element,entry.modulePath??[],node?.span??entry.span);checker.expectedPrimitiveIdentity(type.element,pointee.element,entry.modulePath??[],node?.span??entry.span);return 'copy';}
+   if(actualPrimitiveSlice(checker,type,node))return 'scalar-slice';
    if(hasOwnedCarrierBoundary()&&carrierType(pointee,node))return 'borrow';
    if(domain(type.rustReference.pointee,node,active)==='copy')return 'copy';
    refuse('aggregate reference requires a separate loan proof',node);
@@ -161,8 +163,8 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
   const state={names:new Map(),available:new Map(),values:new Map(),alive:true,entry:current,external,callPath,functionReturns:[]};
   for(const [at,param]of current.params.entries()){
    const initial=arguments_?.[at]??empty(),slot=bind(state,param.name,param.type,false,current,initial),fact=state.values.get(slot);
-   slot.input=slot.kind==='borrow'||slot.kind==='loan-option'||slot.kind==='slice';
-   if(!arguments_){if(slot.kind==='borrow'||slot.kind==='slice')fact.loans.set(path([]),new Set([slot]));if(slot.kind==='loan-option'){fact.loans.set(path(['field0']),new Set([slot]));fact.tags=new Set(['Some','None']);}}
+   slot.input=slot.kind==='borrow'||slot.kind==='loan-option'||slot.kind==='slice'||slot.kind==='scalar-slice';
+   if(!arguments_){if(slot.kind==='borrow'||slot.kind==='slice'||slot.kind==='scalar-slice')fact.loans.set(path([]),new Set([slot]));if(slot.kind==='loan-option'){fact.loans.set(path(['field0']),new Set([slot]));fact.tags=new Set(['Some','None']);}}
   }
   return state;
  };
@@ -489,6 +491,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
   if(node.k==='binary'&&['eq','ne'].includes(node.op)&&node.left.type.kind==='string'&&node.right.type.kind==='string'){
    for(const value of [node.left,node.right]){if(value.type.rustReference||value.type.patternOwnershipRefusal||!(value.type.rustOwnership?.kind==='borrowed'&&value.type.rustOwnership.source==='str'||value.k==='lit'&&typeof value.value==='string'&&!value.type.rustOwnership))refuse('text equality needs actual borrowed scalar text',node);ensureRoots(read(value),state,node);}return empty();
   }
+  if(node.k==='routerPrimitiveDereference'&&node.value?.type?.rustReference&&!node.type.rustReference&&['fixed','bool'].includes(node.type?.kind))return checkPrimitiveSliceDereference(checker,node,state,{visit,domain,ensureRoots,empty,refuse,depth});
   if(['unary','binary','cast','routerConstObligation','routerBuiltinConversion','routerPrimitiveDereference','routerStandardSharedReceiver'].includes(node.k)){
    if(kind!=='copy'&&!(node.k==='routerStandardSharedReceiver'&&kind==='borrow'))refuse('aggregate projection or coercion needs a transfer proof',node);
    let result=empty();for(const key of ['arg','left','right','value','object'])if(node[key]){

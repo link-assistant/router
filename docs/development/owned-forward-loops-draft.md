@@ -66,3 +66,20 @@ Complete source histories plus independent strict JS/TS ordering, zero-take,
 overflow timing, local return, receiver lifetime, capture and invalid exit cases
 and native Rust oracle source are drafted and unrun. No adapter, checker,
 compiler, target, test or Rust tool has executed.
+
+The shared scalar-slice draft now admits actual immutable native slices of
+standard fixed integers and Boolean values in owned JSON callers. It checks
+complete outer/pointee slice shape, primitive Copy source, source ownership and
+primitive identity. Inputs receive live shared roots. Direct shared iteration
+retains those item roots; an actual `copied()` iterator yields by-value facts
+while retaining the receiver for iteration. A checked primitive dereference
+consumes a live reference into a copied scalar without carrying a JSON loan.
+
+These rules compose with existing scalar map/filter/take behavior and preserve
+the original optional byte-parser branch before the new scalar-slice branch.
+Mutable references, owned scalar vectors, arbitrary aggregate slices, fixed
+arrays and Clone-specific invocation qualification remain outside this family.
+Broader reverse source syntax and production adoption still need their draft.
+Complete originals/rules, independent strict JS/TS scalar/Boolean/extreme/empty/
+overflow/refusal cases and native Rust oracle source are drafted and unrun.
+No compiler, checker, source preparer, target, test or Rust tool has executed.

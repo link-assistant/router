@@ -37,3 +37,5 @@ integration and the remaining requirement ledger are still open.
 - Draft signed fixed-integer inverse spans and canonical numeral boundaries with native min/max checks; independent target and Rust oracle source remains unrun.
 
 - Draft compiler-bound predicate expression inverse rules with preserved native trivia and mixed literal batches; independent strict target and Rust oracle source remains unrun.
+
+- Draft shared primitive slice loops and copied/dereferenced item flow in owned JSON callers, preserving optional byte parsing and full unrun target/native oracle source.

@@ -703,3 +703,11 @@ required. Full original rules and independent strict JS/TS truth-table/boundary/
 conflict/refusal source plus native oracle cases are drafted and unrun. General
 arithmetic/statements/methods, full production coverage and all other open rows
 still need their remaining draft.
+
+The owned loop draft now also supports actual shared standard fixed-integer/
+Boolean slices, native Copy item qualification, retained reference/receiver
+roots and scoped primitive dereferences. Complete original rules and independent
+strict target/empty/boundary/overflow/refusal plus Rust oracle source are drafted
+and unrun. Owned scalar vectors, Clone-specific invocations, aggregate/fixed-array
+slices, corresponding broader reverse syntax, production adoption and the other
+incomplete requirements remain open.
