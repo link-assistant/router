@@ -9,6 +9,9 @@ import {createRulePipeline} from './rule-pipeline.mjs';
 import {transportConcreteSourceEquations} from './concrete-source-equations.mjs';
 import {prepareNativeSubstitutionCopy} from './prepare-native-substitution-copy.mjs';
 import {emitJsonIterationDeclarations} from './json-iteration-contracts.mjs';
+import {prepareJsonStateCore} from './prepare-json-state-core.mjs';
+import {prepareJsonStateSources} from './prepare-json-state-sources.mjs';
+import {composeConcreteSourceHistory} from './compose-concrete-source-history.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url)),BASE='tools/translation/source-profiles/json-iteration-core/';
 const PIN='feb5b6bd584e6f9493098eaca3c52097d5250975c8c072381090567defd69eaf',JSPIN='887b7228f319e117f08f4e550db450180ede5e330ad21467e4117e90cb8d7c27';
 const hash=value=>createHash('sha256').update(value).digest('hex');
@@ -21,11 +24,11 @@ export function prepareJsonIterationCore({root=ROOT}={}){
  const run=createRulePipeline([{phase:'language',rules:[{id:'rust:add-actual-owned-JSON-iteration-library-module',apply:value=>{need(value===before,'whole original source join');return language;}}]},{phase:'repository',rules:[{id:'router:publish-explicit-native-iteration-library-boundary',apply:value=>{need(value===language,'whole language source join');return after;}}]}]).run(before);
  const selected=sourceItems(after).filter(item=>item.term==='mod'&&item.name==='translation_collections_core');need(selected.length===1&&after.slice(selected[0].start,selected[0].end).trim()==='pub mod translation_collections_core;','one actual public Rust module edge');
  const stages=transportConcreteSourceEquations([{before,after:language,language:'Rust'},{before:language,after,language:'Rust'}]).map((stage,index)=>({...stage,phase:index?'repository':'language'}));need(run.value===after&&stages[0].inverse===before&&stages[1].inverse===language,'complete Rust source equations and inverses');
- const current=readFileSync(resolve(root,row.path),'utf8');need(current===before||current===after,'unknown full current Rust root');
- const javascript=prepareNativeSubstitutionCopy({root,archive:BASE+'complete-javascript-originals-and-rules.json.gz',pin:JSPIN,id:'router:json-iteration-host-assets-source-copy-v1'});
+ const successor=prepareJsonStateCore({root}),history=composeConcreteSourceHistory({path:row.path,before,after,language:'Rust',laterPlans:[successor]});const current=readFileSync(resolve(root,row.path),'utf8');need(current===before||current===after||current===history.currentAfter,'unknown full current Rust root');
+ const javascript=prepareNativeSubstitutionCopy({root,archive:BASE+'complete-javascript-originals-and-rules.json.gz',pin:JSPIN,id:'router:json-iteration-host-assets-source-copy-v1',laterPlans:[prepareJsonStateSources({root})]});
  need(readFileSync(resolve(root,'tools/translation/json-iteration-runtime.d.mts'),'utf8')===emitJsonIterationDeclarations(),'complete declarations must come from the shared operation description');
  need(readFileSync(resolve(root,row.path),'utf8')===current&&readFileSync(resolve(root,BASE+'complete-rust-original.json.gz')).equals(packed),'complete original inputs changed');
- return {schema:'owned-json-iteration-core-source-plan-v1',files:[{path:row.path,before,language,after,current,currentAfter:after,stages,trace:run.trace,inverse:before,nativeRustGrammarChecked:false},...javascript.files],sourceAuthority:false,semanticAuthority:false,rustExecuted:false,receivingExecuted:false};
+ return {schema:'owned-json-iteration-core-source-plan-v1',files:[{path:row.path,before,language,after,current,...history,stages,trace:run.trace,inverse:before,nativeRustGrammarChecked:false},...javascript.files],sourceAuthority:false,semanticAuthority:false,rustExecuted:false,receivingExecuted:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const args=process.argv.slice(2);need(args.length===1&&['--emit','--write','--check'].includes(args[0]),'use --emit|--write|--check');const plan=prepareJsonIterationCore();

@@ -23,6 +23,8 @@ export function hostRuntimeAssets() {
   files.set('json-macro-runtime.d.mts',readFileSync(new URL('./json-macro-runtime.d.mts',import.meta.url),'utf8'));
   files.set('json-update-runtime.mjs',readFileSync(new URL('./json-update-runtime.mjs',import.meta.url),'utf8').replace("'./extensions/json-roundtrip-runtime.mjs'","'./json-roundtrip-runtime.mjs'").replace("'./extensions/json-values.mjs'","'./json-values.mjs'").replace("'./extensions/json-runtime.mjs'","'./json-runtime.mjs'"));
   files.set('json-update-runtime.d.mts',readFileSync(new URL('./json-update-runtime.d.mts',import.meta.url),'utf8'));
+  files.set('json-state-runtime.mjs',readFileSync(new URL('./json-state-runtime.mjs',import.meta.url),'utf8').replace("'./extensions/iterator-runtime.mjs'","'./iterator-runtime.mjs'"));
+  files.set('json-state-runtime.d.mts',readFileSync(new URL('./json-state-runtime.d.mts',import.meta.url),'utf8'));
   files.set('json-iteration-runtime.mjs',readFileSync(new URL('./json-iteration-runtime.mjs',import.meta.url),'utf8').replace("'./extensions/iterator-runtime.mjs'","'./iterator-runtime.mjs'"));
   files.set('json-iteration-runtime.d.mts',readFileSync(new URL('./json-iteration-runtime.d.mts',import.meta.url),'utf8'));
   files.set('json-collections-runtime.mjs',readFileSync(new URL('./json-collections-runtime.mjs',import.meta.url),'utf8').replace("'./extensions/iterator-runtime.mjs'","'./iterator-runtime.mjs'"));
@@ -100,6 +102,8 @@ export function hostRuntimeAssetsNamedDataAliases() {
   files.set('json-macro-runtime.d.mts',readFileSync(new URL('./json-macro-runtime.d.mts',import.meta.url),'utf8'));
   files.set('json-update-runtime.mjs',readFileSync(new URL('./json-update-runtime.mjs',import.meta.url),'utf8').replace("'./extensions/json-roundtrip-runtime.mjs'","'./json-roundtrip-runtime.mjs'").replace("'./extensions/json-values.mjs'","'./json-values.mjs'").replace("'./extensions/json-runtime.mjs'","'./json-runtime.mjs'"));
   files.set('json-update-runtime.d.mts',readFileSync(new URL('./json-update-runtime.d.mts',import.meta.url),'utf8'));
+  files.set('json-state-runtime.mjs',readFileSync(new URL('./json-state-runtime.mjs',import.meta.url),'utf8').replace("'./extensions/iterator-runtime.mjs'","'./iterator-runtime.mjs'"));
+  files.set('json-state-runtime.d.mts',readFileSync(new URL('./json-state-runtime.d.mts',import.meta.url),'utf8'));
   files.set('json-iteration-runtime.mjs',readFileSync(new URL('./json-iteration-runtime.mjs',import.meta.url),'utf8').replace("'./extensions/iterator-runtime.mjs'","'./iterator-runtime.mjs'"));
   files.set('json-iteration-runtime.d.mts',readFileSync(new URL('./json-iteration-runtime.d.mts',import.meta.url),'utf8'));
   files.set('json-collections-runtime.mjs',readFileSync(new URL('./json-collections-runtime.mjs',import.meta.url),'utf8').replace("'./extensions/iterator-runtime.mjs'","'./iterator-runtime.mjs'"));

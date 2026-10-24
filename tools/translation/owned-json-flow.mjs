@@ -4,6 +4,7 @@
 import {JSON_CONTRACTS,JSON_DATA,JSON_TYPES} from './extensions/json-contracts.mjs';
 import {sameType} from './checked-types.mjs';
 import {jsonIterationContract} from './json-iteration-contracts.mjs';
+import {jsonStateContract} from './json-state-contracts.mjs';
 import {canonicalResult} from './extensions/result-iterators.mjs';
 import {hasOriginalCallbackLoan,hasOriginalSourceFrame,originalCallbackLoanInputMatches} from './extensions/standard-source-frame.mjs';
 import {hasOriginalSharedDomainGuard} from './extensions/standard-borrowed-body.mjs';
@@ -37,11 +38,16 @@ export function describeOwnedJsonDifference(actual,expected,{propertyOrder=false
 export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,closedErrors=null,closedOption=null}) {
  const refuse=(detail,node,comparison=null)=>{const diagnostic=comparison??closedErrors?.diagnostic?.(node);throw unsupported('owned JSON flow',detail+(diagnostic?' [comparison '+JSON.stringify(diagnostic)+']':''),node?.span??entry.span);};
  const standardContext=closedErrors??closedOption;
- let cells=100000,callCount=0,selectedOptionTypes=null,optionalParseBoundary=null;
+ let cells=100000,callCount=0,selectedOptionTypes=null,optionalParseBoundary=null,ownedStateVectorBoundary=null;
  const hasOptionalParse=()=>{
   if(optionalParseBoundary!==null)return optionalParseBoundary;
   const visit=(node,depth=0)=>{if(!node||typeof node!=='object')return false;if(--cells<0||depth>160)refuse('optional parser source boundary bound',entry);if(node.k==='routerHostCall'&&['router_core_json_parse','router_core_json_parse_bytes'].includes(node.id)&&genuine(node,entry))return true;for(const [key,value]of Object.entries(node))if(!['type','span','compatibilityCore','pinnedStandardBodyProof','sourceFrameProof','originalCallbackProof','originalLoanProof','sharedBodyProof','sourceSharedPatternProof'].includes(key))for(const child of Array.isArray(value)?value:[value])if(visit(child,depth+1))return true;return false;};
   return optionalParseBoundary=visit(entry.body);
+ };
+ const hasOwnedStateVectorBoundary=()=>{
+  if(ownedStateVectorBoundary!==null)return ownedStateVectorBoundary;
+  const visit=(node,depth=0)=>{if(!node||typeof node!=='object')return false;if(--cells<0||depth>160)refuse('owned state Vec source boundary bound',entry);const row=node.k==='routerHostCall'?jsonStateContract(node.id):null;if(row&&(row.returns==='owned-json-list'||row.parameters.includes('owned-json-list'))&&genuine(node,entry))return true;for(const [key,value]of Object.entries(node))if(!['type','span','compatibilityCore','pinnedStandardBodyProof','sourceFrameProof','originalCallbackProof','originalLoanProof','sharedBodyProof','sourceSharedPatternProof'].includes(key))for(const child of Array.isArray(value)?value:[value])if(visit(child,depth+1))return true;return false;};
+  return ownedStateVectorBoundary=visit(entry.body);
  };
  const ownedText=type=>type?.kind==='string'&&!type.rustReference&&!type.rustBorrowingUnresolved&&!type.rustGenericIdentityUnresolved&&type.rustOwnership?.kind==='owned'&&type.rustOwnership.source==='String'&&[undefined,'ownership-bearing String type','owned String source type','owned String formatting'].includes(type.patternOwnershipRefusal);
  const resultOwner=(type,node)=>{const result=canonicalResult(checker,type,entry.modulePath,node?.span??entry.span,false);if(!result||!ownedText(result.error))refuse('requires actual canonical Result with owned standard String error',node);return result;};
@@ -90,7 +96,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
    refuse('aggregate reference requires a separate loan proof',node);
   }
   if(type.kind==='array'){
-   if(!type.rustReference&&!type.rustFixedArray&&type.rustOwnership?.kind==='owned'&&type.rustOwnership.source==='Vec'&&!type.patternOwnershipRefusal&&canonical(type.element,node)==='serde_json::Value')return 'json-vector';
+   if(!type.rustReference&&!type.rustFixedArray&&type.rustOwnership?.kind==='owned'&&type.rustOwnership.source==='Vec'&&(!type.patternOwnershipRefusal||type.rustSourceType===true&&type.patternOwnershipRefusal==='ownership-bearing Vec type'&&hasOwnedStateVectorBoundary())&&canonical(type.element,node)==='serde_json::Value')return 'json-vector';
    refuse('array ownership needs the exact owned Json collection contract',node);
   }
   if(type.kind==='data'){
@@ -326,6 +332,18 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
    for(const argument of node.args){const value=argument.value;if(!value?.k)refuse('missing checked JSON interpolation',node);read(value,value.k==='var'?'borrow':'move');}return empty();
   }
   if(node.k==='routerHostCall'){
+   const stateOperation=jsonStateContract(node.id);
+   if(stateOperation){
+    const wanted=stateOperation.returns==='owned-json'?'json':stateOperation.returns==='owned-json-list'?'json-vector':'copy';
+    if(!genuine(node,state.entry)||node.args.length!==stateOperation.parameters.length||kind!==wanted)refuse('state operation requires its genuine checked call and result domain',node);
+    for(let index=0;index<node.args.length;index++){
+     const value=node.args[index],role=stateOperation.parameters[index],actual=domain(value.type,value),expected=role==='owned-json'?'json':role==='owned-json-list'?'json-vector':role==='shared-json-list'?'slice':role==='shared-json'?null:'copy';
+     if(expected!==null&&actual!==expected||role==='shared-json'&&!['json','borrow'].includes(actual))refuse('state operation operand ownership differs',value);
+     const observed=read(value,role.startsWith('shared-')?'borrow':role.startsWith('owned-')?'move':'copy');ensureRoots(observed,state,value);
+    }
+    return empty();
+   }
+
    if(['router_core_json_index_str','router_core_json_index_usize','router_core_json_map_index'].includes(node.id)){
     if(!genuine(node,state.entry)||node.args.length!==2||kind!=='borrow')refuse('projection requires its private actual borrowed-call receipt',node);
     const receiver=read(node.args[0],'borrow');read(node.args[1],'borrow');ensureRoots(receiver,state,node);

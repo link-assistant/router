@@ -194,3 +194,13 @@ whole-function ownership, lifetime analysis and guarded target imports.
 Independent caller/refusal and source-history regressions are unrun. Standard
 iterator adoption, nested combinations, general mutation/state and all other
 open rows still need their complete implementation draft.
+
+The [owned state draft](owned-state-draft.md) adds twelve matching Rust/JS core
+operations for arrays, object updates and owned JSON vector bridges. A shared
+catalog drives declarations and both translation directions. Actual native
+source frames, original private issuance, whole-function ownership/layout
+checks, guarded emission, five full reverse implementation copies and both
+interpreters have source drafts. Complete original/CST successor histories
+compose earlier producers. Independent runtime, ten actual Rust caller, JS/TS,
+refusal and native oracle sources are unrun. General mutation/iterator adoption,
+persistent state/concurrency, async/HTTP/streaming and all other open rows remain.
