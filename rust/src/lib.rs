@@ -286,3 +286,5 @@ pub mod management_middleware;
 
 #[cfg(test)]
 mod translation_filesystem_tests;
+
+pub mod translation_collections_core;

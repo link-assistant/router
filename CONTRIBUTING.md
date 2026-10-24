@@ -205,6 +205,23 @@ individual rule edits. Keep drafted support, callable generated functions and
 independently verified behavior separate in progress reports; none alone is an
 overall completion percentage.
 
+For the current entire-requirement drafting phase of #759/#772, continue source
+review and implementation only until every remaining implementation draft in
+[the ledger](docs/development/bulk-draft-requirements.md) exists. Defer tests,
+experiments, benchmarks, verification compiler diagnostics, trial translation,
+freshness regeneration and CI-triggering pushes. Automated source construction
+may write complete originals, rules and implementation drafts; executing those
+drafts for validation remains deferred. Draft independent JS/TS regressions and
+native Rust oracle source together. This phase overrides the usual receiving
+test cadence while preserving every original gate, deadline and JS-first rule.
+
+The [owned collection](docs/development/owned-collections-draft.md) and
+[predicate/fold](docs/development/owned-iteration-draft.md) profiles illustrate
+complete implementation copies with distinct private issuers and checked meta.
+Keep their original sources and language/repository inverses intact. A library
+implementation, declaration table or reverse profile does not close forward
+caller adoption, production synchronization or whole Router coverage.
+
 For [default-byte source histories](docs/development/default-byte-source-histories.md),
 compose complete genuine successor-producer chains and regenerate the receiving
 records as one batch. Retain independently pinned originals, every unknown-source

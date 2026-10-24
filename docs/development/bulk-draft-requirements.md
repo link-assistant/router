@@ -180,3 +180,13 @@ source inverses remain required. JavaScript and TypeScript source frontends,
 both interpreters, independent regressions and four actual native Rust oracle
 cases are drafted and unrun. General collection mutation, iterator combinations,
 effects, production adoption and whole-project synchronization remain open.
+
+The [owned predicate/fold draft](owned-iteration-draft.md) adds matching native
+and JavaScript filter, any/all, find and fold boundaries, a shared operation
+description, generated declaration rules and complete root/asset source
+histories. A separate five-implementation reverse copy carries predicates,
+accumulators, owned Option<Json>, JS/TS source projection, emission and both
+interpreters through checked meta. Independent caller, boundary/refusal and
+native Rust oracle sources are drafted and unrun. Forward caller registration,
+nested combinations, general mutation/state and all other open rows still need
+their complete implementation draft.
