@@ -188,15 +188,15 @@ export function ownedCoreRuntimeSources(runtimeRoot='runtime',declarationRoot=ru
  const __runtimeEpoch=runtimeImportEpoch(ts);try{
 
  function visit(name){
-  if(seen.has(name))return;if(seen.size>=128||name.includes('/')||!name.endsWith('.mjs')&&!name.endsWith('.mts'))fail('runtime closure bounds');seen.add(name);
+  if(seen.has(name))return;ownedSourcePath(name);if(seen.size>=128||!name.endsWith('.mjs')&&!name.endsWith('.mts'))fail('runtime closure bounds');seen.add(name);
   const source=assets.get(name);if(typeof source!=='string')fail('unregistered materialized asset: '+name);const base=name.endsWith('.mts')?declarationRoot:runtimeRoot,path=base+'/'+name,file=runtimeImportParsed(ts,path,source,__runtimeEpoch);rows.push({path,source});
   for(const node of file.statements)if((ts.isImportDeclaration(node)||ts.isExportDeclaration(node))&&node.moduleSpecifier){
-   const specifier=node.moduleSpecifier.text;if(specifier==='node:util'||specifier==='node:crypto')continue;
-   const target=relative(path,specifier);if(posix.dirname(target)!==base)fail('runtime closure escape');visit(posix.basename(target));
+   const specifier=node.moduleSpecifier.text;if(['node:util','node:crypto','node:buffer','node:http','node:https','node:dns','node:net','node:fs','node:fs/promises','node:os','node:async_hooks'].includes(specifier))continue;
+   const target=relative(path,specifier);if(!target.startsWith(base+'/'))fail('runtime closure escape');visit(target.slice(base.length+1));
   }
  runtimeImportComplete(ts,path,source,file,__runtimeEpoch);
  }
- for(const name of ['json-update-runtime.mjs','json-update-runtime.d.mts','json-macro-runtime.mjs','json-macro-runtime.d.mts','base64-runtime.mjs','base64-runtime.d.mts','json-runtime.d.mts','json-option-runtime.mjs','json-option-runtime.d.mts','json-collections-runtime.mjs','json-collections-runtime.d.mts','json-iteration-runtime.mjs','json-iteration-runtime.d.mts','json-state-runtime.mjs','json-state-runtime.d.mts','json-fields-runtime.mjs','json-fields-runtime.d.mts','owned-outcome-runtime.mjs','owned-outcome-runtime.d.mts','integer-runtime.mjs','integer-runtime.d.mts','sse-runtime.mjs','sse-runtime.d.mts','text-runtime.mjs','text-runtime.d.mts','primitive-option-runtime.mjs','primitive-option-runtime.d.mts','primitive-option-callback-runtime.mjs','primitive-option-callback-runtime.d.mts','primitive-result-runtime.mjs','primitive-result-runtime.d.mts','owned-result-runtime.mjs','owned-result-runtime.d.mts','http-protocol-runtime.mjs','http-protocol-runtime.d.mts'])visit(name);
+ for(const name of ['json-update-runtime.mjs','json-update-runtime.d.mts','json-macro-runtime.mjs','json-macro-runtime.d.mts','base64-runtime.mjs','base64-runtime.d.mts','json-runtime.d.mts','json-option-runtime.mjs','json-option-runtime.d.mts','json-collections-runtime.mjs','json-collections-runtime.d.mts','json-iteration-runtime.mjs','json-iteration-runtime.d.mts','json-state-runtime.mjs','json-state-runtime.d.mts','json-fields-runtime.mjs','json-fields-runtime.d.mts','owned-outcome-runtime.mjs','owned-outcome-runtime.d.mts','integer-runtime.mjs','integer-runtime.d.mts','sse-runtime.mjs','sse-runtime.d.mts','text-runtime.mjs','text-runtime.d.mts','primitive-option-runtime.mjs','primitive-option-runtime.d.mts','primitive-option-callback-runtime.mjs','primitive-option-callback-runtime.d.mts','primitive-result-runtime.mjs','primitive-result-runtime.d.mts','owned-result-runtime.mjs','owned-result-runtime.d.mts','http-protocol-runtime.mjs','http-protocol-runtime.d.mts','async-control-runtime.mjs','async-control-runtime.d.mts','http-transport-runtime.mjs','http-transport-runtime.d.mts','http-network-policy-runtime.mjs'])visit(name);
  for(const [name,source]of assets)if(/LICENSE|NOTICE/iu.test(name))rows.push({path:runtimeRoot+'/'+name,source});
  assertReverseConcreteSourceHost();return runtimeImportEpochReturn(__runtimeEpoch,rows.sort((a,b)=>a.path.localeCompare(b.path)));
 
@@ -892,15 +892,15 @@ export function ownedCoreAsciiBaseRuntimeSources(runtimeRoot='runtime',declarati
  const __runtimeEpoch=runtimeImportEpoch(ts);try{
 
  function visit(name){
-  if(seen.has(name))return;if(seen.size>=128||name.includes('/')||!name.endsWith('.mjs')&&!name.endsWith('.mts'))fail('runtime closure bounds');seen.add(name);
+  if(seen.has(name))return;ownedSourcePath(name);if(seen.size>=128||!name.endsWith('.mjs')&&!name.endsWith('.mts'))fail('runtime closure bounds');seen.add(name);
   const source=assets.get(name);if(typeof source!=='string')fail('unregistered materialized asset: '+name);const base=name.endsWith('.mts')?declarationRoot:runtimeRoot,path=base+'/'+name,file=runtimeImportParsed(ts,path,source,__runtimeEpoch);rows.push({path,source});
   for(const node of file.statements)if((ts.isImportDeclaration(node)||ts.isExportDeclaration(node))&&node.moduleSpecifier){
-   const specifier=node.moduleSpecifier.text;if(specifier==='node:util'||specifier==='node:crypto')continue;
-   const target=relative(path,specifier);if(posix.dirname(target)!==base)fail('runtime closure escape');visit(posix.basename(target));
+   const specifier=node.moduleSpecifier.text;if(['node:util','node:crypto','node:buffer','node:http','node:https','node:dns','node:net','node:fs','node:fs/promises','node:os','node:async_hooks'].includes(specifier))continue;
+   const target=relative(path,specifier);if(!target.startsWith(base+'/'))fail('runtime closure escape');visit(target.slice(base.length+1));
   }
  runtimeImportComplete(ts,path,source,file,__runtimeEpoch);
  }
- for(const name of ['json-update-runtime.mjs','json-update-runtime.d.mts','json-macro-runtime.mjs','json-macro-runtime.d.mts','base64-runtime.mjs','base64-runtime.d.mts','json-runtime.d.mts','json-option-runtime.mjs','json-option-runtime.d.mts','json-collections-runtime.mjs','json-collections-runtime.d.mts','json-iteration-runtime.mjs','json-iteration-runtime.d.mts','json-state-runtime.mjs','json-state-runtime.d.mts','json-fields-runtime.mjs','json-fields-runtime.d.mts','owned-outcome-runtime.mjs','owned-outcome-runtime.d.mts','integer-runtime.mjs','integer-runtime.d.mts','sse-runtime.mjs','sse-runtime.d.mts','text-runtime.mjs','text-runtime.d.mts','primitive-option-runtime.mjs','primitive-option-runtime.d.mts','primitive-option-callback-runtime.mjs','primitive-option-callback-runtime.d.mts','primitive-result-runtime.mjs','primitive-result-runtime.d.mts','owned-result-runtime.mjs','owned-result-runtime.d.mts','http-protocol-runtime.mjs','http-protocol-runtime.d.mts'])visit(name);
+ for(const name of ['json-update-runtime.mjs','json-update-runtime.d.mts','json-macro-runtime.mjs','json-macro-runtime.d.mts','base64-runtime.mjs','base64-runtime.d.mts','json-runtime.d.mts','json-option-runtime.mjs','json-option-runtime.d.mts','json-collections-runtime.mjs','json-collections-runtime.d.mts','json-iteration-runtime.mjs','json-iteration-runtime.d.mts','json-state-runtime.mjs','json-state-runtime.d.mts','json-fields-runtime.mjs','json-fields-runtime.d.mts','owned-outcome-runtime.mjs','owned-outcome-runtime.d.mts','integer-runtime.mjs','integer-runtime.d.mts','sse-runtime.mjs','sse-runtime.d.mts','text-runtime.mjs','text-runtime.d.mts','primitive-option-runtime.mjs','primitive-option-runtime.d.mts','primitive-option-callback-runtime.mjs','primitive-option-callback-runtime.d.mts','primitive-result-runtime.mjs','primitive-result-runtime.d.mts','owned-result-runtime.mjs','owned-result-runtime.d.mts','http-protocol-runtime.mjs','http-protocol-runtime.d.mts','async-control-runtime.mjs','async-control-runtime.d.mts','http-transport-runtime.mjs','http-transport-runtime.d.mts','http-network-policy-runtime.mjs'])visit(name);
  for(const [name,source]of assets)if(/LICENSE|NOTICE/iu.test(name))rows.push({path:runtimeRoot+'/'+name,source});
  assertReverseConcreteSourceHost();return runtimeImportEpochReturn(__runtimeEpoch,rows.sort((a,b)=>a.path.localeCompare(b.path)));
 

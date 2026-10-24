@@ -599,3 +599,14 @@ JavaScript, strict TypeScript, forward/native, inverse, dependency/source altera
 and escaping-borrow cases are drafted and unrun. Network transport, streaming,
 async caller integration, production adoption and every other open ledger row
 still need their remaining source draft. No verification or CI has run.
+
+The [guarded HTTP transport core draft](http-transport-core-draft.md) adds eight
+matching explicit native/JS client and pull-stream interfaces, native network
+policy reuse with a matching JS classifier, independent timeout/cancellation
+handling, explicit cleanup and byte limits. Receiving runtime closure now retains
+nested lazy support and fixed native builtins; complete typed source-copy helpers
+retain the original JS helpers unchanged. Full native root/source/CST histories,
+strict declaration, local-server behavioral and native Rust oracle source are
+drafted and unrun. Opaque resource/future/Drop caller qualification, both transport
+translation directions, proxy/TLS/protocol modes, production adoption and every
+other open requirement remain unfinished. Nothing has been executed or pushed.

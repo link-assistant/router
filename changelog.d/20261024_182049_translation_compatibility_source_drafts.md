@@ -6,6 +6,8 @@
 - Drafted cancellation-scoped HTTP implementation plumbing with listener cleanup.
 - Drafted pure HTTP header, request/response, status and body value interfaces,
   both caller translation directions, interpreter and receiving integration.
+- Drafted guarded HTTP/1 clients, bounded pull streams, buffered sends,
+  explicit cleanup, matching network policy and receiving runtime closure.
 
 These sources and independent regression cases remain unverified during the
 required bulk-drafting phase. Complete translation, production parity, async

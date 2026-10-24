@@ -312,3 +312,5 @@ pub mod translation_async_control_core;
 pub mod translation_owned_results_core;
 
 pub mod translation_http_protocol_core;
+
+pub mod translation_http_transport_core;
