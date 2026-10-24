@@ -54,3 +54,27 @@ multiplicity, native primitive bounds and complete modified-project reproduction
 Independent JS/strict TS i64 extreme, sign-crossing, unsigned-negative, overflow,
 expression refusal and full-span/inverse cases plus native Rust oracle source
 are drafted and unrun. No implementation, test or Rust tool has executed.
+
+The additive expression alias `proposeForwardExpressionSynchronization` now
+uses the same complete batch/transaction path for strict equality, fixed-integer
+ordering and Boolean conjunction/disjunction edits. The native target parser
+selects actual operator tokens inside emitted functions. Source origins require
+actual checked binary operands and their source interval, scalar domains and
+the corresponding native operator. Comparison edits remain integer-only; string
+equality is supported but string ordering, arithmetic and arbitrary expressions
+need additional rules. Equality, ordering and logic remain separate operator
+families, so a kind change cannot silently alter a domain or return type.
+
+A bounded interval reader selects only the actual native operator token while
+retaining surrounding whitespace/comments. Multiple operators and literal edits
+can share one proposal and one full modified-project compilation. Native source
+checking revalidates changed short-circuit paths and ownership. Full target
+reproduction, origin multiplicity and all prior refusal boundaries remain
+required. The expression API alias adds no saved-plan authority.
+
+Independent JS/strict TS complete predicate batches, numeric/Boolean truth
+tables, zero/max bounds, mixed threshold edits, retained comments, loose equality,
+operator-family/injected-code refusals and complete source histories plus native
+Rust oracle source are drafted and unrun. Tests, compiler, planners, CLIs and
+Rust tools remain unexecuted. General expressions/statements/methods, complete
+production synchronization and the other unfinished requirements remain open.

@@ -694,3 +694,12 @@ changes across zero. Complete original source rules and independent strict JS/TS
 extreme/boundary/refusal/inverse plus Rust oracle source are drafted and unrun.
 Floats, general expression/method inverse rules, whole production qualification
 and every other unfinished requirement remain open.
+
+The expression inverse draft now also includes strict equality, fixed-integer
+ordering and Boolean short-circuit operator edits, mixed with literal batches.
+Actual checked operand intervals select native tokens while preserving comments;
+complete modified-project reproduction and domain/ownership checks remain
+required. Full original rules and independent strict JS/TS truth-table/boundary/
+conflict/refusal source plus native oracle cases are drafted and unrun. General
+arithmetic/statements/methods, full production coverage and all other open rows
+still need their remaining draft.

@@ -8,3 +8,4 @@ export {proposeBulkForwardStringSynchronization} from './bulk-forward-string-syn
 export {planBulkForwardStringUnitSynchronization,applyBulkForwardStringUnitSynchronization} from './bulk-forward-string-unit-synchronization.mjs';
 export {proposeForwardLiteralSynchronization} from './forward-literal-synchronization.mjs';
 export {planForwardLiteralUnitSynchronization,applyForwardLiteralUnitSynchronization} from './forward-literal-unit-synchronization.mjs';
+export {proposeForwardExpressionSynchronization} from './forward-literal-synchronization.mjs';
