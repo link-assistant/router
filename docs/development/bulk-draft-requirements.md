@@ -719,3 +719,13 @@ canonical Rust inverse reproduction. Full originals and independent authored JS/
 strict TS/interpreter/numeric/Boolean/control/inverse/refusal source are drafted
 and unrun. Broader widths, owned/generic vectors and adapters, production
 adoption and every other incomplete row remain open.
+
+The [whole return-expression draft](forward-return-expression-draft.md) now adds
+actual scalar signature/local associations and complete formula proposals, with
+preserved native let prefixes, inline offsets, full modified-project checking,
+complete target reproduction and native syntax comparison. The original checked
+program is released before the modified compile. Full original transaction/CLI/
+API export copies, source inverses and independent strict/source/refusal/truth-
+table/receiving plus native oracle cases are drafted and unrun. General calls/
+arithmetic/statements/types, production qualification and all other open rows
+remain unfinished.

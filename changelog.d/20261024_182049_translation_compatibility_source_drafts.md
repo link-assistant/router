@@ -41,3 +41,5 @@ integration and the remaining requirement ledger are still open.
 - Draft shared primitive slice loops and copied/dereferenced item flow in owned JSON callers, preserving optional byte parsing and full unrun target/native oracle source.
 
 - Draft corresponding readonly scalar-slice JS/TS source checking, both interpreters, native/typed emission, paired signatures and full Rust inverse source with independent unrun integration cases.
+
+- Draft complete scalar return-formula inverse proposals, preserved local prefixes, optional compiler signature data and fresh exported transactions/CLI; all independent regression and native oracle source remains unrun.

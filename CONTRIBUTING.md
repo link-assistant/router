@@ -756,3 +756,13 @@ body checking and whole canonical Rust reproduction. State the ordinary dense
 immutable array runtime domain explicitly, and keep exotic iterator/getter,
 mutable array and unqualified generic/Clone uses outside the admitted source
 subset until their own matching rules and independent cases exist.
+
+Whole return-expression inverse proposals must obtain actual compiler-issued
+parameter/local source associations, preserve every unchanged native prefix and
+header, recompile the entire modified Rust project through checked semantic
+meta, and reproduce the complete JS/TS target. Structural comparison may ignore
+only proven harmless grouping/trivia inside the supported expression grammar.
+Keep operators, identifiers and literal values exact; do not normalize away
+observable guards, effects or error strings. Release original checked program
+closures before the modified compile and keep any AST reuse invocation scoped.
+See the [whole formula draft](docs/development/forward-return-expression-draft.md).

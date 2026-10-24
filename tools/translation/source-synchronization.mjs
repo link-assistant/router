@@ -9,3 +9,5 @@ export {planBulkForwardStringUnitSynchronization,applyBulkForwardStringUnitSynch
 export {proposeForwardLiteralSynchronization} from './forward-literal-synchronization.mjs';
 export {planForwardLiteralUnitSynchronization,applyForwardLiteralUnitSynchronization} from './forward-literal-unit-synchronization.mjs';
 export {proposeForwardExpressionSynchronization} from './forward-literal-synchronization.mjs';
+export {proposeForwardReturnExpressionSynchronization} from './forward-return-expression-synchronization.mjs';
+export {planForwardReturnExpressionUnitSynchronization,applyForwardReturnExpressionUnitSynchronization} from './forward-return-expression-unit-synchronization.mjs';
