@@ -68,3 +68,25 @@ limits and exclusive plan creation. It has no runtime-only bypass. Independent
 JS/TS transaction, missing paired file, stale source/revision, concurrent edit,
 forgery, linked source, argument and complete source-history cases are drafted
 and unrun. No transaction, CLI, installer, compiler or test has executed.
+
+The additive bulk API `proposeBulkForwardStringSynchronization` now drafts up to
+4,096 distinct string edits, including edits across Rust modules. It parses the
+whole requested JS/TS source and compares every gap outside literal tokens. It
+traverses each actual checked body once for all requested values, tokenizes each
+relevant Rust file once, applies nonoverlapping native spans, then recompiles the
+entire proposed project once. The original checked program is released first.
+The complete target must reproduce all edits with the same full census. This
+reduces repeated source checking within a batch without persistent caches.
+
+Every changed native file has its own complete CST equation and inverse. The
+bulk transaction uses schema `router-forward-string-bulk-unit-v1` with the same
+manifest fields above. `scripts/sync-router-bulk-forward-strings.mjs` has the
+same explicit plan/apply arguments and original guarded installation. Complete
+single-edit APIs remain available in their original modules.
+
+Repeated original values, ambiguous source origins, changed nonliteral code,
+added/removed tokens, methods/constants and broader expressions still refuse.
+The batch is all-or-nothing: an unresolved edit cannot silently disappear.
+Independent multi-edit JS/TS behavior, cross-module source capture, ambiguity,
+conflicting code and atomic transaction/forgery source is drafted and unrun.
+The bulk compiler, planner, CLI and every test remain unexecuted.

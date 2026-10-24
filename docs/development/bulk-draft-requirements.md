@@ -656,3 +656,11 @@ capture, paired-file conflicts, missing-target initialization and fresh guarded
 installation with complete inverses. Independent source/revision/forgery/link/CLI
 cases are drafted and unrun. Wider inverse syntax, production qualification and
 every other incomplete row remain open. No implementation or test has run.
+
+The forward string inverse now also has an additive bulk path for up to 4,096
+distinct literal edits across modules. Each body/file is traversed once for the
+whole edit set, with one full original and one full modified compilation per
+proposal, all native/paired inverses, and a fresh all-or-nothing transaction/CLI.
+Complete original APIs and source histories plus independent JS/TS/module/
+conflict/forgery cases are drafted and unrun. Ambiguous origins, wider inverse
+syntax, full production translation and the other open rows remain unfinished.

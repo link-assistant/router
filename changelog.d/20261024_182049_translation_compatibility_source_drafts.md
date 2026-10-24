@@ -25,3 +25,5 @@ required bulk-drafting phase. Complete translation, production parity, async
 integration and the remaining requirement ledger are still open.
 
 - Draft fresh source-unit plan/apply and CLI copies for forward-derived JS/TS string edits, with complete originals, inverses and independent unrun conflict/forgery regressions.
+
+- Draft multi-literal forward-derived inverse rules and cross-module source-unit transactions with invocation-local bulk traversal and full unrun regression source.
