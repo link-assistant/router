@@ -60,5 +60,5 @@ coverage result follows from this source extension.
 The [public module API draft](module-public-api-draft.md) adds native-selected
 named and star reexports, exact public runtime aliases and scalar type exports.
 Private implementation names stay private. Its complete source equations and
-independent regression sources are unrun; module Rust inverse synchronization,
+independent regression sources are unrun; general module synchronization,
 generic public type constraints and the other open module forms remain open.

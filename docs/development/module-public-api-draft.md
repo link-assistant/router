@@ -25,8 +25,9 @@ Rust implementation functions stay in a private module. Explicit public uses
 expose selected runtime aliases and needed public support types. Colliding
 names refuse. Namespace objects, default exports, callable reflection, escaping
 callables, cycles with runtime initializers and general class/async modules
-remain open. The canonical single-file Rust inverse does not yet decode this
-module packaging; complete module round-trip synchronization remains open.
+remain open. A separate [canonical Rust module inverse draft](portable-rust-module-inverse-draft.md)
+now decodes this emitted scalar envelope with complete outer Rust reemission.
+General module and paired multi-file synchronization remain open.
 
 Every complete target retains separate language and repository CST equations,
 serialized/reparsed source and full inverses. The linker copy retains its

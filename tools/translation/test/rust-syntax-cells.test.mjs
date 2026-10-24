@@ -15,5 +15,5 @@ test('literal contents and attributes remain source tokens rather than trivia or
 });
 test('complete inverse and paired API source copies retain native selections and both CST equations',limits,()=>{
  const plan=prepareRustSyntaxCells();assert.equal(plan.files.length,2);
- for(const row of plan.files){assert.equal(row.current,row.after);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);assert.equal(row.stages[0].inverse,row.before);assert.equal(row.stages[1].inverse,row.language);assert.equal(row.nativeBindings.nativeSemanticScopeChecked,true);}
+ for(const row of plan.files){assert.equal(row.current,row.currentAfter);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);assert.equal(row.stages[0].inverse,row.before);assert.equal(row.stages[1].inverse,row.language);assert.equal(row.nativeBindings.nativeSemanticScopeChecked,true);}
 });

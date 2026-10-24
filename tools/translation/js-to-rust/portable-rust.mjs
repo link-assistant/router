@@ -7,6 +7,7 @@ import {parseMeta} from './typed-absence-translator.mjs';
 import {optionalType} from './vendor/return-types.mjs';
 import {translateTypeScript} from './typed-portable.mjs';
 import {sourceItems} from '../rust-structure.mjs';
+import {portableRustModuleEnvelope,translatePortableRustModule} from './portable-rust-module.mjs';
 import {rustSyntaxCells,equalRustSyntaxCells,sameRustSourceSyntax} from '../rust-syntax-cells.mjs';
 import {transportConcreteSyntaxSource} from '../concrete-syntax-meta.mjs';
 import {transportConcreteSourceEquations} from '../concrete-source-equations.mjs';
@@ -26,7 +27,7 @@ function originalHelpers(){
  }return rows;
 }
 function completeReturn(body){return body.some(statement=>statement.kind==='return'||statement.kind==='if'&&statement.else!==null&&completeReturn(statement.then)&&completeReturn(statement.else));}
-function decode(source){
+function decode(source,allowModuleHelpers=false){
  const helpers=originalHelpers(),items=sourceItems(source),program=[],selected=[],names=new Set();if(items.length>4096)refuse('bounded complete source item census required');
  for(const item of items){
   if(item.comment)continue;
@@ -43,22 +44,37 @@ function decode(source){
  if(!program.length)refuse('nonempty original application program required');
  const table=signatures(program),checked=program.map(item=>check(item,table)),meta=checked.map(toLino).join('\n')+'\n',reparsed=parseMeta(meta);
  const canonicalRust=targets.emitRust(reparsed);
- if(!sameSyntax(source,canonicalRust))refuse('complete source is outside the actual emitter normal form');
+ if(!sameSyntax(source,canonicalRust)){
+  if(!allowModuleHelpers)refuse('complete source is outside the actual emitter normal form');
+  // Only exact original emitter helper items may be unneeded by the inner
+  // application. The enclosing module must reproduce every such byte again.
+  const canonicalHelpers=sourceItems(canonicalRust).filter(item=>!item.comment).map(item=>syntax(canonicalRust.slice(item.start,item.end)));
+  const unneeded=selected.filter(item=>!canonicalHelpers.some(tokens=>equalRustSyntaxCells(syntax(item.source),tokens)));
+  let application=source;for(const item of [...unneeded].sort((a,b)=>b.span[0]-a.span[0]))application=application.slice(0,item.span[0])+application.slice(item.span[1]);
+  if(!sameSyntax(application,canonicalRust))refuse('complete checked inner application differs from its actual emitter normal form');
+ }
  return {program:reparsed,meta,canonicalRust,selectedHelpers:selected};
 }
-export function translatePortableRust(source,{sourcePath='input.rs'}={}){
+function translateScalarRust(source,{sourcePath='input.rs'}={},allowModuleHelpers=false){
  if(typeof source!=='string'||source.length>2097152)refuse('bounded complete primitive source required');
  let original,decoded,projection;const run=createRulePipeline([
   {phase:'language',rules:[
    {id:'rust:transport-complete-original-CST-before-canonical-source-decoding',apply:()=>{original=transportConcreteSyntaxSource(source,{language:'Rust'});if(original.source!==source)refuse('whole original CST source differs');return original.source;}},
-   {id:'rust:decode-scalar-source-and-require-fresh-full-Rust-reemission',apply:value=>{decoded=decode(value);return decoded;}},
-   {id:'meta:emit-and-independently-check-complete-typescript-javascript',apply:value=>{projection=translateTypeScript(targets.emitTypeScript(value.program),{sourcePath:sourcePath.replace(/\.rs$/u,'.ts')});if(!sameSyntax(source,projection.rust))refuse('checked JavaScript does not reproduce the complete Rust syntax');return projection;}},
+   {id:'rust:decode-scalar-source-and-require-fresh-full-Rust-reemission',apply:value=>{decoded=decode(value,allowModuleHelpers);return decoded;}},
+   {id:'meta:emit-and-independently-check-complete-typescript-javascript',apply:value=>{projection=translateTypeScript(targets.emitTypeScript(value.program),{sourcePath:sourcePath.replace(/\.rs$/u,'.ts')});if(!sameSyntax(decoded.canonicalRust,projection.rust))refuse('checked JavaScript does not reproduce the complete Rust syntax');return projection;}},
   ]},
   {phase:'repository',rules:[{id:'router:retain-original-Rust-and-both-checked-meta-source-equations',apply:value=>{
    const equation=transportConcreteSourceEquations([{before:source,after:decoded.canonicalRust,language:'Rust'}])[0];if(equation.inverse!==source)refuse('complete Rust source inverse differs');
-   return {...value,rust:source,portableRustSourceHistory:{sourcePath,originalRustConcreteSyntax:original.meta,canonicalRust:decoded.canonicalRust,originalDecodedMeta:decoded.meta,checkedJavaScriptMeta:projection.meta,selectedHelpers:decoded.selectedHelpers,equation,sourceAuthority:false,semanticAuthority:false,runtimeAuthority:false},runtimeParity:false,wholeRouterSynchronization:false};
+   return {...value,rust:allowModuleHelpers?decoded.canonicalRust:source,portableRustSourceHistory:{sourcePath,originalRustConcreteSyntax:original.meta,canonicalRust:decoded.canonicalRust,originalDecodedMeta:decoded.meta,checkedJavaScriptMeta:projection.meta,selectedHelpers:decoded.selectedHelpers,equation,sourceAuthority:false,semanticAuthority:false,runtimeAuthority:false},runtimeParity:false,wholeRouterSynchronization:false};
   }}]},
  ]);
  try{const result=run.run(source);return {...result.value,portableRustRuleTrace:result.trace};}
  catch(error){if(isRefusal(error))throw new UnsupportedPortableRustSource(error.message);throw error;}
+}
+
+export function translatePortableRust(source,options){
+ if(typeof source!=='string'||source.length>2097152)refuse('bounded complete primitive source required');
+ const envelope=portableRustModuleEnvelope(source);
+ if(envelope)return translatePortableRustModule(source,envelope,options,translateScalarRust);
+ return translateScalarRust(source,options);
 }

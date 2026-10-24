@@ -166,5 +166,8 @@ named and star reexports, preserves JavaScript/TypeScript function identity,
 retains scalar TypeScript type exports and emits closed Rust scalar aliases.
 Mixed constant visibility, private Rust implementation packaging, full source
 inverses and independent consumer/refusal regressions have source drafts.
-Nothing has been executed. Module Rust inverse decoding, generic public type
-constraints and the other module families remain open.
+Nothing has been executed. The [canonical Rust module inverse draft](portable-rust-module-inverse-draft.md)
+also covers the complete emitted scalar envelope, including fresh inner checks,
+public alias reconstruction and mandatory complete outer Rust reemission.
+Generic public type constraints, paired multi-file API restoration and the
+other module families remain open.
