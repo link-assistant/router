@@ -157,6 +157,15 @@ result domains. Independent actual caller, strict TS, packet and installation
 regression source is drafted and unrun. Production application, Result, broader
 effects and every other incomplete requirement remain open.
 
+The [primitive Result core draft](primitive-result-core-draft.md) adds 88 matching
+native/JS interface bodies, declarations, full runtime-copy histories, native
+root/source preparation and independent unrun JS/Rust oracle source. It batches
+constructors/predicates, unwrap/default/expect, Option conversions, all scalar
+map/bind pairs, error mapping and lazy recovery. Actual caller qualification,
+linear/error/borrow flow, both directions/interpreters, assets and method adoption
+remain open integration obligations; these declarations are not translated
+production coverage. All other incomplete requirements remain open.
+
 The last checkpoint before this phase is `0460fb741`: four complete
 source-history receiving files passed 26 cases in Node and Bun. That historical
 focused evidence does not qualify any change drafted in this phase or the full
