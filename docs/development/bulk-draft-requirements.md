@@ -309,3 +309,11 @@ emitters. A complete Rust reader copy and mandatory inverse reproduction retain
 all resource guards. Seven complete source successors and independent unrun
 JS/TS/native/refusal sources are present. Standard forward/adoption loop forms,
 broader control/effects and the other open rows remain unfinished.
+
+The [standard JSON loop adoption draft](json-loop-adoption-draft.md) converts
+closed actual slice/accumulator loops into the existing owned fold interface,
+with complete clone/initializer/update source substitutions. Three full source
+copies retain packet generation, fresh selected whole-function checking and
+guarded installation. Independent actual caller and refusal sources are unrun.
+Production application, general loops/control/effects and the other requirement
+rows remain unfinished.
