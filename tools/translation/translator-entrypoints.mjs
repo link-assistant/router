@@ -13,4 +13,5 @@ export const TRANSLATOR_ENTRYPOINTS=Object.freeze([
  'scripts/sync-router-bulk-forward-strings.mjs',
  'scripts/sync-router-forward-literals.mjs',
  'scripts/sync-router-return-expressions.mjs',
+ 'scripts/sync-router-project-unit.mjs',
 ]);

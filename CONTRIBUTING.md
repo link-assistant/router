@@ -766,3 +766,17 @@ Keep operators, identifiers and literal values exact; do not normalize away
 observable guards, effects or error strings. Release original checked program
 closures before the modified compile and keep any AST reuse invocation scoped.
 See the [whole formula draft](docs/development/forward-return-expression-draft.md).
+
+For project synchronization, derive direction from complete current sources
+and immutable Git HEAD blobs within one invocation. Capture the whole native
+source universe and Cargo/workspace inputs, including committed native files
+that were deleted. Reject concurrent language edits, implicit source deletion
+and explicit authority that would overwrite another edited language. Use
+physical `js/src` and `ts/src` outputs and retain truthful original partial and
+refusal metadata. Match registered per-language runtime implementation and
+declaration closures exactly, retain licenses/notices and refuse modified
+runtime files. Relocate only actual native module-specifier spans, preserve
+literal delimiters and complete inverse equations, and reuse fresh guarded
+all-or-nothing installation. Do not introduce a persistent source/owner/verdict
+cache or treat successful packaging as production parity. See the
+[project source draft](docs/development/forward-project-unit-draft.md).

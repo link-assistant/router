@@ -738,3 +738,14 @@ rounding/zero behavior and error string. Independent strict target/arithmetic/
 metadata/refusal/source plus native oracle cases are drafted and unrun. Broader
 helper closure/calls/scopes/types, production parity and other open rows remain
 unfinished.
+
+The [forward project unit draft](forward-project-unit-draft.md) now connects
+full forward generation and supported formula/literal inverse proposals to
+fresh Git direction selection, whole Rust/Cargo capture, concurrent/deletion
+refusals, physical JS/TS targets, complete source inverses and the original
+fresh guarded transaction. Per-language runtime relocation retains actual
+transitive implementations/declarations, licenses/notices, source histories and
+modified-runtime conflicts. Full original source/CLI/API/export copies and
+independent direction/source/runtime/strict/receiving regression source are
+drafted and unrun. Broader syntax, namespace/producer closure, opaque resources,
+production adoption/parity and every other incomplete row remain open.

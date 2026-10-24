@@ -29,3 +29,10 @@ preparers, compiler and receiving code remain unrun. No export or narrow receive
 case establishes whole Router translation, full receiving qualification, runtime
 parity or permission to start Rust. All complete JS stages must still pass for
 the same commit before fatal Rust checks run in CI.
+
+The same retained entrypoint prefix now includes the complete forward-project
+unit CLI and API. The exported compiler closure includes fresh Git baseline
+capture, actual native runtime import mapping, both full inverse checkers and
+complete source substitution archives. Independent receiving inventory source
+covers every original and added entrypoint; it remains unrun. Packaging the
+closure does not qualify arbitrary receiving source or the whole Router.
