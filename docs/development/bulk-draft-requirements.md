@@ -58,6 +58,14 @@ Independent direct, project-alias, body/refusal and history regressions are
 drafted and unrun. Generic and recursive functions, other effects, production
 coverage and the rest of this ledger remain open.
 
+The [paired project signature draft](owned-project-signatures-draft.md) now
+extends unannotated JS proposals to freshly checked complete TS module trees,
+including Rust-authority restoration. It preserves actual source conflicts,
+body checking, import hygiene, invocation membership and full source inverses.
+All independent regressions remain unrun. New signatures without written input
+types, generic/inferred domains, remaining effects, production coverage and all
+other unfinished rows remain open.
+
 The last checkpoint before this phase is `0460fb741`: four complete
 source-history receiving files passed 26 cases in Node and Bun. That historical
 focused evidence does not qualify any change drafted in this phase or the full
