@@ -679,3 +679,11 @@ boundaries. Full originals/rules plus independent strict target/refusal/lifetime
 ordering/zero-take/overflow source and native oracle cases are drafted and unrun.
 Other iterator domains, opaque resources/futures/Drop, production adoption and
 every other incomplete requirement remain open.
+
+The [scalar literal inverse draft](forward-literal-synchronization-draft.md) now
+adds compiler-owned emitted function associations and whole-batch string/bool/
+nonnegative fixed-integer proposals, including actual native width/domain checks
+and complete repeated-value source/target multiplicity. Full transaction/CLI/API
+export copies, complete originals/inverses and independent strict/refusal/source/
+receiving cases are drafted and unrun. Signed/floating/expression/method inverse
+rules, whole production coverage and all other unfinished rows remain open.

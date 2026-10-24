@@ -740,3 +740,11 @@ draft instruction, execute none until every requirement has its full source
 draft; no CI-triggering push or local Rust tool is allowed during this phase.
 Record exported source, receiving evidence, whole-gate evidence and production
 parity separately. See the [export draft](docs/development/synchronization-export-draft.md).
+
+For forward-derived literal synchronization, use the original compiler's actual
+emitted function mapping together with its fresh checked source association.
+Repeated values require complete source/target multiplicity and full modified
+project reproduction. Preserve each fixed integer's actual native name, width
+and signedness. Reject unmatched code edits, out-of-domain values and incomplete
+batches; do not treat a matching source order or target name as semantic proof.
+See the [scalar inverse draft](docs/development/forward-literal-synchronization-draft.md).

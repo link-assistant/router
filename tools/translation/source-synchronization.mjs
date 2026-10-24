@@ -6,3 +6,5 @@ export {proposeForwardStringSynchronization} from './forward-string-synchronizat
 export {planForwardStringUnitSynchronization,applyForwardStringUnitSynchronization} from './forward-string-unit-synchronization.mjs';
 export {proposeBulkForwardStringSynchronization} from './bulk-forward-string-synchronization.mjs';
 export {planBulkForwardStringUnitSynchronization,applyBulkForwardStringUnitSynchronization} from './bulk-forward-string-unit-synchronization.mjs';
+export {proposeForwardLiteralSynchronization} from './forward-literal-synchronization.mjs';
+export {planForwardLiteralUnitSynchronization,applyForwardLiteralUnitSynchronization} from './forward-literal-unit-synchronization.mjs';

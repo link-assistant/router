@@ -31,3 +31,5 @@ integration and the remaining requirement ledger are still open.
 - Draft shared synchronization exports and retained original entrypoint prefixes, a forwarding API facade, receiving source cases and contribution guidance; all unverified.
 
 - Draft owned loop scalar map/filter callback flow with separate yielded-item and retained receiver/capture facts; independent strict target and Rust oracle source remains unrun.
+
+- Draft compiler-bound bulk string/Boolean/fixed-integer inverse synchronization and fresh source-unit/CLI/API export integration with full unrun regressions.
