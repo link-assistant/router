@@ -155,7 +155,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
   if(!generic||active.has(type.name))return false;const inner=new Set(active).add(type.name);
   return generic.arguments.some(argument=>retainsLoan(checker.resolveType(argument,owner.modulePath,entry.span),inner));
  };
- const clone=state=>({names:new Map(state.names),available:new Map(state.available),values:new Map([...state.values].map(([slot,value])=>[slot,copy(value)])),alive:state.alive,callbackCaptures:state.callbackCaptures,lambdaInputs:state.lambdaInputs,iterationOwnedInputs:state.iterationOwnedInputs,optionCallback:state.optionCallback,primitiveOptionCallback:state.primitiveOptionCallback,primitiveResultCallback:state.primitiveResultCallback,standardScope:state.standardScope,localReturns:state.localReturns,tailNode:state.tailNode,entry:state.entry,external:state.external,callPath:state.callPath,functionReturns:state.functionReturns,loopFrame:state.loopFrame});
+ const clone=state=>({names:new Map(state.names),available:new Map(state.available),values:new Map([...state.values].map(([slot,value])=>[slot,copy(value)])),alive:state.alive,callbackCaptures:state.callbackCaptures,lambdaInputs:state.lambdaInputs,iterationOwnedInputs:state.iterationOwnedInputs,optionCallback:state.optionCallback,primitiveOptionCallback:state.primitiveOptionCallback,primitiveResultCallback:state.primitiveResultCallback,iteratorCallback:state.iteratorCallback,standardScope:state.standardScope,localReturns:state.localReturns,tailNode:state.tailNode,entry:state.entry,external:state.external,callPath:state.callPath,functionReturns:state.functionReturns,loopFrame:state.loopFrame});
  const bind=(state,name,type,mutable,node,value=empty(),input=false)=>{const local=value.localLoanType;if(local&&JSON.stringify(local)!==JSON.stringify(type))refuse('original callback loan type changed',node);const kind=local?'borrow':domain(type,node);if(kind==='loan-result')refuse('stored borrowed Result requires a separate retained-carrier proof',node);const slot={name,kind,type,mutable,input,...(local?{localLoanType:local,localLoanOrigin:value.localLoanOrigin}:{})};state.names.set(name,slot);state.available.set(slot,true);state.values.set(slot,copy(value));return slot;};
  const createState=(current,arguments_=null,external=new Set(),callPath=[])=>{
   const state={names:new Map(),available:new Map(),values:new Map(),alive:true,entry:current,external,callPath,functionReturns:[]};
@@ -219,7 +219,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
   if(node.k==='routerLambdaInput'){
    if(state.primitiveResultCallback){const value=state.lambdaInputs?.[node.position];if(!value||!['copy','owned-text'].includes(kind))refuse('Result callback input requires its actual checked primitive or owned String domain',node);ensureRoots(value,state,node);return copy(value);}
    if(state.iterationOwnedInputs?.has(node.position)){const value=state.lambdaInputs?.[node.position];if(kind!=='json'||!value||value.loans.size)refuse('owned iteration input requires its actual by-value Json domain',node);return copy(value);}
-   const value=state.lambdaInputs?.[node.position];if(!value||kind!=='borrow'&&!((standardContext&&state.optionCallback||state.primitiveOptionCallback)&&kind==='copy'))refuse('callback item requires its actual shared slice root',node);ensureRoots(value,state,node);return copy(value);
+   const value=state.lambdaInputs?.[node.position];if(!value||kind!=='borrow'&&!((standardContext&&state.optionCallback||state.primitiveOptionCallback||state.iteratorCallback)&&kind==='copy'))refuse('callback item requires its actual shared slice root',node);ensureRoots(value,state,node);return copy(value);
   }
   if(node.k==='routerCoreJsonCollection'){
    const iteration=jsonIterationContract(node.id);
@@ -246,7 +246,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
    const result=selectedBody(callback.binding,()=>visit(callback.binding,child,'move',depth+1));if(result.loans.size)refuse('a collection callback cannot return a borrowed output',node);return empty();
   }
 
-  if(['routerWhile','routerFor'].includes(node.k))return checkOwnedLoop(node,state,{checker,clone,visit,merge,refine,domain,empty,copy,ensureRoots,refuse,depth});
+  if(['routerWhile','routerFor'].includes(node.k))return checkOwnedLoop(node,state,{checker,clone,visit,merge,refine,domain,empty,copy,union,ensureRoots,selectedBody,refuse,depth});
   if(['routerBreak','routerContinue'].includes(node.k))return checkOwnedLoopExit(node,state,{clone,visit,depth,empty,refuse});
   if(node.k==='routerLoopInput')return ownedLoopInput(node,state,{checker,domain,ensureRoots,copy,refuse});
   if(['lit','unit'].includes(node.k)){if(linear(kind)||kind==='borrow'||kind==='loan-option')refuse('unproved JSON literal ownership',node);return empty();}

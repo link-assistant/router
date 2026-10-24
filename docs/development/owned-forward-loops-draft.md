@@ -45,3 +45,24 @@ This reuses the complete existing reversed-range source profile and its original
 validation; it grants no arbitrary DoubleEndedIterator or specialized consumer.
 Independent order, inclusive/extreme endpoint, empty range and native oracle
 source plus complete source equations are drafted and unrun.
+
+The callback adapter draft now handles scalar `map`, Copy-item `filter`, and
+compositions with existing `take`/range loops. Callback bodies use the same
+private whole-function checker, lexical captures and total traversal budget.
+Returns stay inside their actual callback boundary. Mutable or owned captures
+actually read by a callback refuse; borrowed capture roots remain retained.
+
+Iterator analysis now keeps yielded-item facts separate from retained receiver
+and capture loans. A map to a Boolean cannot erase the live borrow of an owned
+JSON vector. Those roots remain anchored during count evaluation and the loop,
+then leave scope before later ownership transfer. Conservative captured-root
+retention can refuse cases that need more precise capture analysis.
+
+The current callback output is Copy and must retain no JSON loan. Filters on
+JSON reference items, owned/non-Copy mapped outputs, general iterator storage,
+aggregate products, arbitrary Drop/effects and production adoption remain open.
+Original lazy emitter behavior and all existing checker refusals remain required.
+Complete source histories plus independent strict JS/TS ordering, zero-take,
+overflow timing, local return, receiver lifetime, capture and invalid exit cases
+and native Rust oracle source are drafted and unrun. No adapter, checker,
+compiler, target, test or Rust tool has executed.

@@ -29,3 +29,5 @@ integration and the remaining requirement ledger are still open.
 - Draft multi-literal forward-derived inverse rules and cross-module source-unit transactions with invocation-local bulk traversal and full unrun regression source.
 
 - Draft shared synchronization exports and retained original entrypoint prefixes, a forwarding API facade, receiving source cases and contribution guidance; all unverified.
+
+- Draft owned loop scalar map/filter callback flow with separate yielded-item and retained receiver/capture facts; independent strict target and Rust oracle source remains unrun.

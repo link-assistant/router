@@ -671,3 +671,11 @@ prefixes, and adds a forwarding API facade through the existing committed
 compiler/runtime/profile closure. Full histories plus isolated exported JS/TS
 receiving regression source are drafted and unrun. Broad receiving qualification,
 production coverage/parity and every other unfinished row remain open.
+
+The owned loop flow draft now also covers scalar map/Copy-filter callbacks and
+compositions with range/take adapters. Yielded item facts and live receiver/
+capture loans are tracked separately, with checked callback returns and capture
+boundaries. Full originals/rules plus independent strict target/refusal/lifetime/
+ordering/zero-take/overflow source and native oracle cases are drafted and unrun.
+Other iterator domains, opaque resources/futures/Drop, production adoption and
+every other incomplete requirement remain open.
