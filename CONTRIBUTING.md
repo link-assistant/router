@@ -50,6 +50,11 @@ semantic/binding/source check stays fresh. Its complete original histories and
 typed/CLI repairs remain unrun; extend its final source-history part without
 creating an import or preparation cycle. It supplies no speed qualification.
 
+The [partitioned compiler export draft](docs/development/partitioned-compiler-export-draft.md)
+retains every original module/profile/license in bounded inventory groups. Keep
+the original exporter and refusal cases, complete receiving workloads and all
+existing byte/Git/deadline limits. Source-only packaging is not receiving proof.
+
 The [owned project transaction draft](docs/development/owned-project-unit-draft.md)
 uses physical JS/TS module trees and one packaged Rust file. Keep dependency
 edits in authority/conflict selection, reconstruct actual module bindings from

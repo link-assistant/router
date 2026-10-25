@@ -584,3 +584,11 @@ selected-arm execution lazy in both targets and recheck the entire native
 projection; a type or root metadata field is not a permit. See the
 [conditional value draft](http-resource-conditional-values-draft.md); partial
 moves and all new receiving/native qualification remain open.
+
+When the complete compiler closure exceeds an original per-batch file count,
+retain the original bounded API and partition the entire census using the
+existing compiler logical-file budget. Keep every physical source and license,
+reconstruct the whole original inventory exactly once and include metadata in
+the unchanged global byte bound. Preserve every receiving workload and deadline.
+See the [partitioned export draft](partitioned-compiler-export-draft.md); no
+packaging or receiving qualification follows from source drafting.

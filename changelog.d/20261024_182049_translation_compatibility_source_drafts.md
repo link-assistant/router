@@ -148,3 +148,5 @@ integration and the remaining requirement ledger are still open.
 - Draft original JS/TS do/while control, nearest-continue condition gates and canonical native inverses, with complete original histories and independent unrun execute-once, nested-loop, break/return and refusal source in gated CI discovery.
 
 - Draft complete conditional values in returns, locals and operation arguments with fresh arm ownership/resource joins, all borrowed roots and native expression inverses, retaining full original histories and independent unrun JS/strict TS/native/refusal source in gated CI discovery.
+
+- Draft complete compiler export partitions with every original source/license, the existing logical compiler bound and unchanged per-file/global-byte/Git/deadline constraints, retaining full original exporter/CLI/receiving histories and independent unrun whole-closure and 2,049-input boundary cases.

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import {exportTranslatorBundle} from '../tools/translation/export-bundle.mjs';
+import {exportPartitionedTranslatorBundle as exportTranslatorBundle} from '../tools/translation/partitioned-export-bundle.mjs';
 const args=process.argv.slice(2),options={};
 for(let index=0;index<args.length;index++){
   const key=args[index],value=args[index+1];

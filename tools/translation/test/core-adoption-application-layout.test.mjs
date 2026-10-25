@@ -7,7 +7,7 @@ import {join,dirname,resolve} from 'node:path';
 import {tmpdir} from 'node:os';
 import {fileURLToPath} from 'node:url';
 import {prepareCoreAdoptionApplicationLayout} from '../prepare-core-adoption-application-layout.mjs';
-import {exportTranslatorBundle} from '../export-bundle.mjs';
+import {exportPartitionedTranslatorBundle} from '../partitioned-export-bundle.mjs';
 import {applyReviewedCoreAdoption,recoverReviewedCoreAdoption} from '../apply-reviewed-core-adoption.mjs';
 import {repositorySourcePath} from './fixtures/repository-paths.mjs';
 const ROOT=resolve(dirname(fileURLToPath(import.meta.url)),'../../..');
@@ -32,7 +32,7 @@ test('nested Rust receiving preserves all Cargo guards and applies and recovers 
   assert.equal(child.signal,null);assert.equal(child.status,0,JSON.stringify(vectors.at(-1)));return JSON.parse(child.stdout);
  };
  try{
-  exportTranslatorBundle({sourceRoot:ROOT,output:root});
+  exportPartitionedTranslatorBundle({sourceRoot:ROOT,output:root});
   for(const path of runtimeFiles)write(root,path,fs.readFileSync(join(ROOT,path)));
   write(root,'tools/translation/fixtures/real-source-provenance.json',fs.readFileSync(join(ROOT,'tools/translation/fixtures/real-source-provenance.json')));
   for(const path of ['src/translation_core.rs','src/translation_core/primitives.rs','src/translation_core/ranges.rs','src/translation_core/json_collections.rs','Cargo.toml'])write(root,'rust/'+path,fs.readFileSync(join(ROOT,repositorySourcePath(path,ROOT))));

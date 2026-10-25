@@ -407,3 +407,11 @@ Full originals and independent unrun JS/strict TS/native/refusal cases are
 retained; a twelfth oracle joins gated CI discovery. Partial moves, broader
 language domains, namespace/bootstrap, production parity and every unfinished
 requirement remain open.
+
+The [complete partitioned export draft](partitioned-compiler-export-draft.md)
+adds a complete original exporter copy with exact 2,048-file inventory groups,
+the existing compiler logical-file bound and unchanged per-file/global-byte/Git
+limits. Every original source/license and receiving workload is retained. Full
+originals and independent unrun whole-closure/2,049-input/boundary cases are
+drafted. Export receiving/freshness, namespace/bootstrap, production parity and
+every unfinished requirement remain open.
