@@ -278,6 +278,15 @@ fallback needs its complete explicit match and fresh inverse reproduction.
 See the [Option guard draft](http-resource-option-guards-draft.md); all new
 source/native qualification remains unrun during bulk drafting.
 
+Local resource helper interfaces must come from whole freshly checked actual
+callee bodies, preserve real import/local binding identities and retain cold
+await, move, cleanup and returned-root rules at every call. Keep descriptors
+inside one source analysis and rebuild them after meta serialization. Recursive,
+input-release and multiple-root cases need complete separate joins; native
+signature DATA cannot waive them. See the
+[local helper draft](http-resource-local-functions-draft.md); all new receiving
+and native qualification remains unrun during bulk drafting.
+
 HTTP physical source units must capture complete native/Cargo and mirrored
 runtime inputs, retain the original Git conflict/atomic installation rules and
 freshly check all three authority directions. Paired annotations propose domains

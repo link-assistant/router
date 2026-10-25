@@ -8,6 +8,7 @@ import {prepareReverseConcreteSource,parseReverseConcreteSource} from './concret
 import {httpResourceCallerContract,httpResourceCallerRustType,checkHttpResourceCallerFlow,emitHttpResourceCallerFlow} from './http-resource-caller-flow.mjs';
 import {captureHttpResourceCallerInputs,analyzeHttpResourceCallerSource} from './http-resource-caller-source.mjs';
 import {hasHttpResourceBorrowedText} from './http-resource-borrowed-text.mjs';
+import {httpResourceLocalContracts} from './http-resource-local-functions.mjs';
 
 
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
@@ -29,9 +30,9 @@ function emitFlow(value){return emitHttpResourceCallerFlow(value);}
 function analyze(stage,input){return analyzeHttpResourceCallerSource(stage,input);}
 function edit(source,edits){let value=source,last=source.length+1;for(const row of [...edits].sort((a,b)=>b.span[0]-a.span[0])){if(row.span[1]>=last)fail('overlapping native type selections');value=value.slice(0,row.span[0])+row.replacement+value.slice(row.span[1]);last=row.span[0];}return value;}
 function emit(rows){
- return rows.map(row=>{
+ const localFunctions=httpResourceLocalContracts(rows);return rows.map(row=>{
   const borrowedText=hasHttpResourceBorrowedText(row.returns),generics=borrowedText?"<'a>":'',roots=new Set(row.flow.returnRoots),parameters=row.parameters.map(parameter=>name(parameter.name)+': '+httpResourceCallerRustType(parameter.type,{borrowedLifetime:borrowedText&&roots.has(parameter.name)})).join(', '),returns=httpResourceCallerRustType(row.returns,{borrowedLifetime:borrowedText});
-  return (row.exported?'pub ':'')+(row.lazy?'async ':'')+'fn '+name(row.name)+generics+'('+parameters+') -> '+returns+' { '+emitHttpResourceCallerFlow(row.flow)+' }';
+  return (row.exported?'pub ':'')+(row.lazy?'async ':'')+'fn '+name(row.name)+generics+'('+parameters+') -> '+returns+' { '+emitHttpResourceCallerFlow(row.flow,{localFunctions})+' }';
  }).join('\n')+'\n';
 }
 function translate(stage,input){

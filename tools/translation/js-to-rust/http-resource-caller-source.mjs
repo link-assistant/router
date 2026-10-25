@@ -10,6 +10,7 @@ import {httpDeadlineResultRuntimeSources as httpDeadlineRuntimeSources} from '..
 import {ASYNC_CONTROL_NATIVE_SOURCE,ASYNC_CONTROL_RUNTIME_SOURCE,ASYNC_CONTROL_DECLARATIONS_SOURCE} from '../async-control-native-source.mjs';
 import {httpResourceCallerContract,httpResourceCallerName,checkHttpResourceCallerFlow} from './http-resource-caller-flow.mjs';
 import {selectAsyncControlCallerBody} from './async-control-u64-guards.mjs';
+import {orderHttpResourceLocalFunctions,httpResourceLocalContracts} from './http-resource-local-functions.mjs';
 const RUNTIME=new URL('../async-control-runtime.mjs',import.meta.url),DECLARATIONS=new URL('../async-control-runtime.d.mts',import.meta.url),FLOW=new URL('../extensions/filesystem-effects-runtime.mjs',import.meta.url);
 const fail=message=>{throw new TypeError('Async control caller source: '+message);};
 export function captureHttpResourceCallerInputs(input){
@@ -49,15 +50,15 @@ export function analyzeHttpResourceCallerSource(stage,input){
   }
   fail('written original primitive or operation-derived resource input required');
  };
- const rows=functions.map(item=>{
-  const bodyPlan=selectAsyncControlCallerBody(ts,item,imports,file,httpResourceCallerContract),guarded=new Set(bodyPlan.inputGuards.map(row=>row.name));
+ const rowsByName=new Map(),localFunctions=new Map(),callBindings=new Map(imports),lookup=id=>typeof id==='string'&&id.startsWith('local:')?localFunctions.get(id.slice(6)):httpResourceCallerContract(id);for(const item of orderHttpResourceLocalFunctions(ts,functions)){
+  const bodyPlan=selectAsyncControlCallerBody(ts,item,callBindings,file,lookup),guarded=new Set(bodyPlan.inputGuards.map(row=>row.name));
   const parameters=item.parameters.map(parameter=>{
    if(!ts.isIdentifier(parameter.name)||parameter.questionToken||parameter.dotDotDotToken||parameter.initializer||parameter.modifiers?.length)fail('ordinary required caller parameter');const local=name(parameter.name.text);if(locals.has(local))fail('parameter shadows an actual runtime or module binding');
    const written=language==='TypeScript'?parameter.type:ts.getJSDocType(parameter);if(!written)fail('explicit native written input required');const domain=type(written,guarded.has(local)),text=written.getText(file);
    if(language==='TypeScript')erase.push({span:[parameter.name.end,written.end],replacement:''});else annotate.push({span:[parameter.name.end,parameter.name.end],replacement:': '+text});return {name:local,type:domain};
   });
   if(parameters.length>64||new Set(parameters.map(row=>row.name)).size!==parameters.length)fail('unique bounded actual caller parameters required');if(bodyPlan.inputGuards.some(guard=>!parameters.some(parameter=>parameter.name===guard.name&&parameter.type==='u64')))fail('entry guards must bind actual checked u64 parameters');const {statements,lazy,allowColdTail}=bodyPlan;
-  const flow=checkHttpResourceCallerFlow(ts,statements,parameters,imports,{lazy,allowColdTail,moduleNames:locals});return {kind:'http-resource-caller-function',name:item.name.text,exported:item.modifiers?.some(modifier=>modifier.kind===ts.SyntaxKind.ExportKeyword)??false,parameters,inputGuards:bodyPlan.inputGuards,lazy,flow,returns:flow.type,span:{start:item.getStart(file),end:item.end}};
- });
+  const flow=checkHttpResourceCallerFlow(ts,statements,parameters,imports,{lazy,allowColdTail,moduleNames:locals,localFunctions});const row={kind:'http-resource-caller-function',name:item.name.text,exported:item.modifiers?.some(modifier=>modifier.kind===ts.SyntaxKind.ExportKeyword)??false,parameters,inputGuards:bodyPlan.inputGuards,lazy,flow,returns:flow.type,span:{start:item.getStart(file),end:item.end}};rowsByName.set(row.name,row);localFunctions.set(row.name,httpResourceLocalContracts([row]).get(row.name));callBindings.set(row.name,'local:'+row.name);
+ }const rows=functions.map(item=>rowsByName.get(item.name.text));
  context.current();return {rows,source,context,language,erase,annotate,concreteSyntax:stage.concreteSyntax};
 }

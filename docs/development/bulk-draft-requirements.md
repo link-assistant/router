@@ -108,6 +108,14 @@ oracle/refusal source are retained. Option guards, wider language/resource
 domains, namespace/bootstrap, production adoption and every unfinished
 requirement remain open.
 
+The [local resource helper draft](http-resource-local-functions-draft.md) now
+checks actual callee bodies before callers, composes cold futures and single
+returned roots, preserves source order and separates imported/local binding
+routes. Full original source histories and independent unrun JS/strict TS/native
+oracle/refusal source are retained. Recursive/generic/method and release/multiple-
+root joins, wider language/resource domains, namespace/bootstrap, production
+adoption and every unfinished requirement remain open.
+
 The [Option guard draft](http-resource-option-guards-draft.md) adds whole absent
 branches, every-exit resource cleanup, explicit fallback domains, Some payload
 moves, same-Option propagation and complete canonical native inverse rules.

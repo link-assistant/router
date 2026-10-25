@@ -103,3 +103,5 @@ integration and the remaining requirement ledger are still open.
 - Draft shared text, callback-free primitive Result and JSON carrier composition in resource callers, explicit Option domains and local string-root loan tracking, with full original substitutions and independent unrun JS/strict TS/native/refusal source.
 
 - Draft complete Option guards in resource callers with absent-exit cleanup, explicit fallback domains, linear Some payloads, same-Option native propagation and full inverse/source histories; independent JS/strict TS/native/refusal source remains unrun.
+
+- Draft whole local helper composition, original call graph/order, cold future and returned-root flow, separate imported/local bindings and canonical complete native inverse proposals with full source histories and independent unrun receiving/native/refusal source.

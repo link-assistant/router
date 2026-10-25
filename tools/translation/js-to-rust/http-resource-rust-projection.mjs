@@ -3,13 +3,14 @@
 import {posix} from 'node:path';
 import {httpResourceCallerOperationNames,httpResourceCallerContract,httpResourceResult} from './http-resource-caller-contracts.mjs';
 import {httpResourceOption} from './http-resource-options.mjs';
+import {httpResourceNativeDomain} from './http-resource-native-domains.mjs';
 import {httpResourceCallerName} from './http-resource-caller-flow.mjs';
 import {emitAsyncControlU64Guards} from './async-control-u64-guards.mjs';
 import {UnsupportedOwnedRustSource} from './http-resource-rust-syntax.mjs';
 const fail=message=>{throw new UnsupportedOwnedRustSource('Async control proposal: '+message);};
 
 export function projectHttpResourceRustFunctions(functions,{javascriptPath,runtimeRoot}={}){
- const imports=new Map(),used=new Set();let cells=0,sequence=0;
+ const imports=new Map(),used=new Set(),localProposals=new Map();for(const fn of functions){if(localProposals.has(fn.name))fail('unique actual native local function required');localProposals.set(fn.name,{local:true,javascriptName:fn.name,rustPath:fn.name,args:fn.parameters.map(parameter=>httpResourceNativeDomain(parameter.type)),ret:httpResourceNativeDomain(fn.returns),async:fn.asynchronous,release:null});}let cells=0,sequence=0;
  const tick=depth=>{if(++cells>100000||depth>160)fail('complete canonical HTTP source projection bound');};
  const name=value=>{try{return httpResourceCallerName(value);}catch(error){if(!(error instanceof TypeError))throw error;fail(error.message);}};
  const reserve=(value,depth=0)=>{tick(depth);if(typeof value==='string')used.add(value);else if(value&&typeof value==='object')for(const child of Object.values(value))reserve(child,depth+1);};reserve(functions);
@@ -23,7 +24,7 @@ export function projectHttpResourceRustFunctions(functions,{javascriptPath,runti
  }
  function unwrap(node,depth=0){tick(depth);return node?.kind==='temporary'?unwrap(node.value,depth+1):node;}
  function borrowed(node,depth=0){node=unwrap(node,depth);return ['borrow','dereference'].includes(node?.kind)?borrowed(node.value,depth+1):node;}
- function operation(path){const rows=httpResourceCallerOperationNames().map(httpResourceCallerContract).filter(row=>!row.nativeForm&&row.rustPath===path);if(rows.length!==1)fail('one actual complete native HTTP operation path required');return rows[0];}
+ function operation(path){if(localProposals.has(path))return localProposals.get(path);const rows=httpResourceCallerOperationNames().map(httpResourceCallerContract).filter(row=>!row.nativeForm&&row.rustPath===path);if(rows.length!==1)fail('one actual complete native HTTP operation path required');return rows[0];}
  function domain(node,locals,depth=0){
   tick(depth);node=borrowed(node,depth+1);if(node.kind==='name')return locals.get(node.name)?.type??null;if(['boolean','string','integer'].includes(node.kind))return {boolean:'bool',string:'str',integer:node.type}[node.kind];
   if(node.kind==='field'&&node.name==='await')return domain(node.value,locals,depth+1);if(node.kind==='effect-try')return httpResourceResult(domain(node.value,locals,depth+1))?.value??null;
@@ -40,7 +41,7 @@ export function projectHttpResourceRustFunctions(functions,{javascriptPath,runti
   let awaited=false;if(node.kind==='field'&&node.name==='await'){awaited=true;node=unwrap(node.value,depth+1);}if(node.kind!=='call')fail('actual canonical HTTP operation required');
   if(['Ok','Some'].includes(node.path)){const value=unwrap(node.args[0],depth+1),actual=value?.kind==='name'?locals.get(value.name):null;if(awaited||node.args.length!==1||!actual?.guarded||actual.carrier!==(node.path==='Ok'?'result':'option'))fail('canonical wrapper must restore its actual same guarded container');return name(value.name);}
   const row=operation(node.path);if(Boolean(row.async)!==awaited||awaited&&!asynchronous||node.args.length!==row.args.length||row.args.includes('deferred-callback'))fail('complete canonical operation/await/arity domain differs');
-  return (awaited?'await ':'')+imported(row.javascriptName)+'('+node.args.map(argument=>expression(borrowed(argument,depth+1),locals,asynchronous,depth+1)).join(', ')+')';
+  return (awaited?'await ':'')+(row.local?name(row.javascriptName):imported(row.javascriptName))+'('+node.args.map(argument=>expression(borrowed(argument,depth+1),locals,asynchronous,depth+1)).join(', ')+')';
  }
  function propagated(node,locals,asynchronous,depth){
   tick(depth);node=unwrap(node,depth+1);if(node.kind==='effect-try')return {node:node.value,value:expression(node.value,locals,asynchronous,depth+1),cleanup:[],option:httpResourceOption(domain(node.value,locals,depth+1))?{same:true,cleanup:[]}:null};if(node.kind!=='match'||node.arms.length!==2)return null;
