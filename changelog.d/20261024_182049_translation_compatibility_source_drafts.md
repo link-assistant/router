@@ -195,3 +195,9 @@ integration and the remaining requirement ledger are still open.
 - Draft exact original enum variant configuration through a separate enclosing resolver and complete copied tool contexts, preserving legacy domains, full source histories and independent unrun profile/namespace/derive/project/native cases.
 - Draft actual native wildcard call discards through existing complete effect/ownership rules, retaining full source histories and independent unrun cancellation/disposal/literal/refusal/native cases.
 - Draft exact original token-bound builtin variant attributes through a complete copied source frame, retaining full source histories and independent unrun nested token/string/source/tool/native cases.
+
+- Draft explicit shared-issuer tool-aware adoption contexts, complete original
+  nontrait/primitive selectors and selected base64 composition, preserving Rust
+  stability metadata, source/profile joins and all executable checks. Retain
+  four complete source equations and independent unrun JS/strict-TS/native and
+  refusal case source; no whole translation or verification claim is made.

@@ -730,3 +730,13 @@ identity/None-return arms with existing checked propagation. Four complete
 originals, both phases and independent absent/range/ownership/source/refusal
 and native oracle source remain unrun. Wider matches, namespace/producer closure
 and every unfinished requirement above remain open.
+
+The [tool-aware adoption draft](tool-aware-core-adoption-draft.md) connects
+original tool-aware derive input, genuine enclosing output and configured tool
+ownership within the same private adoption issuer. Complete copied import and
+primitive selectors retain original owners, source joins and refusals; base64
+selects the coherent context/helper family. Stability namespace facts preserve
+Rust metadata and never issue stability-erasure spans. Four complete originals,
+both rule phases, independent JS/strict TS/refusal and native oracle source
+remain unrun. No-derive adoption, architecture/producer closure, broader language
+and effects, production parity and every unfinished requirement remain open.
