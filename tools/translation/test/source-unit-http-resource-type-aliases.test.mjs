@@ -21,7 +21,7 @@ test('retained type query imports use actual owners and avoid new value binding 
 });
 test('unsupported old aliases and a divergent complete target refuse without a saved verdict',limits,()=>{
  const source='export function chosen(flag:boolean){return flag;}\n',input=options(source,source),expected=translateHttpResourceCallerTypeScript(source,input);
- for(const declaration of ['type T=number;','type T=T;','type T<X>=X;']){const previous=declaration+source;assert.throws(()=>retainHttpResourceUnitTypeAliases(source,{unit,current:{TypeScript:previous},options:input,expectedRust:expected.rust}),declaration);}
+ for(const declaration of ['type T=number;','type T=T;','type T<X extends unknown>=X;']){const previous=declaration+source;assert.throws(()=>retainHttpResourceUnitTypeAliases(source,{unit,current:{TypeScript:previous},options:input,expectedRust:expected.rust}),declaration);}
  const previous='export type T=boolean;'+source;assert.throws(()=>retainHttpResourceUnitTypeAliases(source,{unit,current:{TypeScript:previous},options:input,expectedRust:'pub fn changed() -> bool { false }'}),/authoritative native behavior/u);
  const competing="import {router_text_len_utf8 as length} from './runtime/text-runtime.mjs';type length=boolean;"+source;assert.throws(()=>translateHttpResourceCallerTypeScript(competing,options(competing,source)),/compete/u);
 });

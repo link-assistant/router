@@ -21,6 +21,7 @@ import {captureHttpResourceFunctionReturnAnnotation} from './http-resource-funct
 import {createHttpResourceWrittenAnnotationReader} from './http-resource-callback-annotations.mjs';
 import {httpResourcePublicInputDomain} from './http-resource-public-domains.mjs';
 import {expandHttpResourceTypeAliasSource} from './http-resource-type-aliases.mjs';
+import {validateHttpResourceTypeAliasTemplates} from './http-resource-type-alias-templates.mjs';
 import {requireHttpResourceFilesystemSources} from './http-resource-filesystem-source.mjs';
 import {captureHttpResourceTypeScriptParameterDoc,finishHttpResourceTypeScriptDocs} from './http-resource-typescript-docs.mjs';
 const RUNTIME=new URL('../async-control-runtime.mjs',import.meta.url),DECLARATIONS=new URL('../async-control-runtime.d.mts',import.meta.url),FLOW=new URL('../extensions/filesystem-effects-runtime.mjs',import.meta.url);
@@ -46,7 +47,7 @@ export function analyzeHttpResourceCallerSource(stage,input){
  const imports=new Map(),aliases=new Map(),locals=new Set(),functions=[],erase=[],annotate=[],typeDocsPrinter=language==='TypeScript'?ts.createPrinter({removeComments:true}):null;
  const name=httpResourceCallerName;
  for(const item of file.statements){
-  if(ts.isTypeAliasDeclaration(item)){if(language!=='TypeScript'||item.typeParameters?.length||item.modifiers?.some(modifier=>modifier.kind!==ts.SyntaxKind.ExportKeyword))fail('original nongeneric type-only alias required');const id=name(item.name.text);if(aliases.has(id)||aliases.size>=4096)fail('complete unique bounded original type aliases required');aliases.set(id,item);erase.push({span:[item.getStart(file),item.end],replacement:''});continue;}
+  if(ts.isTypeAliasDeclaration(item)){if(language!=='TypeScript'||item.modifiers?.some(modifier=>modifier.kind!==ts.SyntaxKind.ExportKeyword))fail('original type-only alias with checked template slots required');const id=name(item.name.text);if(aliases.has(id)||aliases.size>=4096)fail('complete unique bounded original type aliases required');aliases.set(id,item);erase.push({span:[item.getStart(file),item.end],replacement:''});continue;}
   if(ts.isImportDeclaration(item)){
    if(item.modifiers?.length||item.attributes||!ts.isStringLiteral(item.moduleSpecifier)||!item.moduleSpecifier.text.startsWith('.')||item.importClause?.isTypeOnly||item.importClause?.name||!item.importClause?.namedBindings||!ts.isNamedImports(item.importClause.namedBindings))fail('transparent relative named runtime import required');
    const target=posix.normalize(posix.join(posix.dirname(context.sourcePath),item.moduleSpecifier.text));if(!target.startsWith(context.runtimeRoot+'/'))fail('actual registered runtime path required');
@@ -59,7 +60,7 @@ export function analyzeHttpResourceCallerSource(stage,input){
  if([...imports.values()].some(id=>httpResourceCallerContract(id)?.family==='option-callback'))context.requireOptionCallbackSources();
  requireHttpResourceFilesystemSources(imports,context);
  if(!functions.length||functions.length>4096)fail('complete bounded nonempty caller module required');
- let annotationCells=0;const describeInput=createHttpResourceWrittenAnnotationReader(ts,imports,()=>{if(++annotationCells>100000)fail('complete public signature source-cell bound');},{aliases});for(const alias of aliases.values())describeInput(alias.type);
+ let annotationCells=0;const describeInput=createHttpResourceWrittenAnnotationReader(ts,imports,()=>{if(++annotationCells>100000)fail('complete public signature source-cell bound');},{aliases});validateHttpResourceTypeAliasTemplates(ts,aliases,imports,{name,tick:()=>{if(++annotationCells>100000)fail('complete original alias template bound');}});for(const alias of aliases.values())if(!alias.typeParameters?.length)describeInput(alias.type);
  const type=(written,guarded=false)=>{const actual=describeInput(written);if(actual.kind!=='domain'||!httpResourcePublicInputDomain(actual.type,{guarded}))fail('written actual shared or owned input domain and original u64 entry guard required');return actual.type;};
  const rowsByName=new Map(),localFunctions=new Map(),callBindings=new Map(imports),lookup=id=>typeof id==='string'&&id.startsWith('local:')?localFunctions.get(id.slice(6)):httpResourceCallerContract(id);
  for(const group of orderHttpResourceLocalFunctions(ts,functions,{groups:true})){

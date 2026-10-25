@@ -33,7 +33,7 @@ run Rust tools locally for this task.
 Current source-only resource extensions include shared collection iteration,
 read-only captures, owning and settled signatures, actual standard filesystem
 and byte operations, complete Result fallbacks, Option loop/stream exits and
-Result/Option callbacks and original nongeneric TypeScript aliases. Follow the
+Result/Option callbacks and original TypeScript aliases/templates. Follow the
 complete source histories, private source
 joins and open limits in [the extension guidelines](docs/development/translation-extension-guidelines.md).
 Independent JS/strict TS/native and physical source-unit cases are drafted;

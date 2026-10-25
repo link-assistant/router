@@ -555,3 +555,10 @@ bindings and freshly check the whole new target against authoritative native
 syntax. Preserve both full source inverses and transaction/conflict safeguards.
 See the [paired alias retention draft](http-resource-unit-type-aliases-draft.md);
 no new receiving evidence is claimed.
+
+Substitute generic type slots with the actual original argument nodes and their
+lexical environments. Alias bodies receive only their own parameters; validate
+all unused templates and the complete dependency graph. Keep constraints and
+unsupported parameter-dependent utilities explicit, then recheck every actual
+instantiation and whole function. See the [type-template draft](http-resource-type-templates-draft.md);
+this source-only extension supplies no generic executable-function authority.

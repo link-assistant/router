@@ -35,7 +35,7 @@ test('aliases cannot hide recursive generic unused unsupported ownership or nume
  for(const body of [
   'type T=T;export function bad(){return null;}',
   'type A=B;type B=A;export function bad(){return null;}',
-  'type T<X>=X;export function bad(){return null;}',
+  'type T<X extends unknown>=X;export function bad(){return null;}',
   'type T=number;export function bad(){return null;}',
   'type T=boolean;type T=string;export function bad(){return null;}',
   'type Awaited=boolean;export function bad(){return null;}',
