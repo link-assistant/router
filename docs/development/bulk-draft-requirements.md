@@ -819,3 +819,14 @@ rounding/zero/subnormal/IEEE/refusal/runtime/project plus native oracle source
 are drafted and unrun. Broader owned/slice/generic/recursive/async syntax,
 namespace bootstrap, production adoption/parity and every other open row remain
 unfinished.
+
+The [standard floating inverse draft](standard-floating-inverse-draft.md) now
+joins actual original runtime imports, registry paths and whole-function lexical
+shadows for standard f64 call candidates. Fresh native frontend owner/type/
+refinement checks and complete target reproduction remain mandatory. Shared
+complete source mechanics and a reusable native-selected function extractor
+retain full originals and ordered source inverses while keeping new modes small.
+Project/export integration and independent strict target/IEEE/zero/import/refusal/
+history plus native oracle source are drafted and unrun. Broader domains,
+namespace bootstrap, production qualification and every other open row remain
+unfinished.

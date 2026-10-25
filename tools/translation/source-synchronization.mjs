@@ -17,3 +17,4 @@ export {proposeForwardControlBodySynchronization} from './forward-control-body-s
 export {proposeForwardImperativeBodySynchronization} from './forward-imperative-body-synchronization.mjs';
 export {proposeForwardRangeBodySynchronization} from './forward-range-body-synchronization.mjs';
 export {proposeForwardFloatingBodySynchronization} from './forward-floating-body-synchronization.mjs';
+export {proposeForwardStandardFloatingBodySynchronization} from './forward-standard-floating-body-synchronization.mjs';

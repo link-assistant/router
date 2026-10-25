@@ -61,3 +61,5 @@ integration and the remaining requirement ledger are still open.
 - Draft actual fixed-range/inclusive/reverse for-of inverse rules with full original generator source observations, native domain proposals, exported project mode and independent unrun JS/TS/native oracle source.
 
 - Draft source-qualified f64 whole-body inverse rules with exact decimal decoder reuse, preserved legacy observations, complete registered standard runtime closure and independent unrun JS/TS/native oracle source.
+
+- Draft actual-import standard f64 inverse calls and checked sign refinements, shared source mechanics, reusable native-selected module extraction and independent unrun JS/TS/native oracle source.
