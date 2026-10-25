@@ -4,7 +4,7 @@ import {posix} from 'node:path';
 import {httpResourceFilesystemRuntimeSources as ownedStateRuntimeSources} from './http-resource-filesystem-runtime-sources.mjs';
 import {translateHttpResourceCallerJavaScript,translateHttpResourceCallerTypeScript} from './js-to-rust/http-resource-callers.mjs';
 
-import {translateHttpResourceCallerRust as translateOwnedStateRust} from './js-to-rust/http-resource-rust.mjs';
+import {translateHttpResourceShadowCallerRust as translateOwnedStateRust} from './js-to-rust/http-resource-shadow-rust.mjs';
 import {projectHttpResourceUnitJavaScript} from './http-resource-unit-signatures.mjs';
 import {retainHttpResourceUnitTypeAliases} from './http-resource-unit-type-aliases.mjs';
 export const OWNED_STATE_NATIVE_INPUTS=Object.freeze([
@@ -37,7 +37,7 @@ export function translateOwnedStateUnit({unit,language,current,nativeSources,run
  else if(language==='JavaScript'){
   const proposal=projectHttpResourceUnitJavaScript(current.JavaScript,{unit,current,options});history=proposal.history;const proposed={...options,files:options.files.map(row=>row.path===sourcePath?{path:row.path,source:proposal.source}:row)};result=translateHttpResourceCallerJavaScript(proposal.source,proposed);
  }else fail('one actual source language required');
- const aliasProposal=language==='TypeScript'?{source:current.TypeScript,history:null}:retainHttpResourceUnitTypeAliases(result.typescript,{unit,current,options,expectedRust:language==='Rust'?current.Rust:result.rust});
+ const aliasProposal=language==='TypeScript'?{source:current.TypeScript,history:null}:retainHttpResourceUnitTypeAliases(result.typescript,{unit,current,options,expectedRust:result.rust});
  return {Rust:language==='Rust'?current.Rust:result.rust,JavaScript:language==='JavaScript'?current.JavaScript:result.javascript,TypeScript:aliasProposal.source,meta:{semanticMeta:result.meta,httpResourceRustSourceHistory:result.httpResourceRustSourceHistory??null,signatureProposalHistory:history,typeAliasProposalHistory:aliasProposal.history,nativeSourceInputs:result.nativeSourceInputs,flowSourceInput:result.flowSourceInput},generatedFrom:language==='Rust'?unit.paths.JavaScript:unit.paths[language],runtimeBefore:runtimeRoot,profile:'router-http-resource-unit-v1',sourceAuthority:false,semanticAuthority:false,nativeRustGrammarChecked:false,runtimeParity:false,rustExecuted:false,receivingExecuted:false};
 }
 

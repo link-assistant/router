@@ -654,3 +654,12 @@ existing ownership, temporary shared loans and JSON-byte parsing in both source
 directions. Four complete originals, both rule phases and independent direct
 JS/strict TS/native inverse/refusal and real-library oracle source remain unrun.
 Empty/calculated/wider vectors and every unfinished requirement remain open.
+
+The [native lexical binding draft](http-resource-native-bindings-draft.md)
+adds complete reader/translator copies, exact original value binding spans,
+previous-scope initializer resolution, collision-free local renaming and physical
+source-unit composition. Whole bodies still re-enter the original checker and
+must reproduce the normalized native source, with full original CST inverses.
+Five complete source copies, both phases and independent native/JS/strict TS,
+physical transaction, refusal and oracle source remain unrun. Wider patterns,
+namespace/producer closure and every unfinished requirement remain open.

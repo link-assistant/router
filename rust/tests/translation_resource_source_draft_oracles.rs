@@ -60,3 +60,5 @@ mod explicit_deadlines;
 mod call_grouping;
 #[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-byte-literals-oracle.rs"]
 mod byte_literals;
+#[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-native-bindings-oracle.rs"]
+mod native_bindings;
