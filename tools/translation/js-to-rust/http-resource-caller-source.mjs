@@ -50,7 +50,7 @@ export function analyzeHttpResourceCallerSource(stage,input){
   // Numeric domains require their actual dominating original entry guard.
   // A bare annotation or operation-derived query cannot supply that proof.
   if(ts.isIndexedAccessTypeNode(written)&&ts.isLiteralTypeNode(written.indexType)&&/^\d+$/u.test(written.indexType.literal.text??'')&&ts.isTypeReferenceNode(written.objectType)&&ts.isIdentifier(written.objectType.typeName)&&written.objectType.typeName.text==='Parameters'&&written.objectType.typeArguments?.length===1){
-   const query=written.objectType.typeArguments[0];if(!ts.isTypeQueryNode(query)||!ts.isIdentifier(query.exprName)||!imports.has(query.exprName.text))fail('resource type query requires its actual imported operation');const operation=httpResourceCallerContract(imports.get(query.exprName.text)),index=Number(written.indexType.literal.text),domain=operation?.args[index];if(['cancel-ref','sender-ref','receiver-mut','http-client-ref','http-client-mut','http-stream-ref','http-stream-mut','json-ref'].includes(domain)||domain==='u64'&&guarded)return domain;
+   const query=written.objectType.typeArguments[0];if(!ts.isTypeQueryNode(query)||!ts.isIdentifier(query.exprName)||!imports.has(query.exprName.text))fail('resource type query requires its actual imported operation');const operation=httpResourceCallerContract(imports.get(query.exprName.text)),index=Number(written.indexType.literal.text),domain=operation?.args[index];if(['cancel-ref','sender-ref','receiver-mut','http-client-ref','http-client-mut','http-stream-ref','http-stream-mut','json-ref','json-list-ref'].includes(domain)||domain==='u64'&&guarded)return domain;
   }
   fail('written original primitive or operation-derived resource input required');
  };

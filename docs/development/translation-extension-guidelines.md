@@ -51,6 +51,15 @@ set through the separate structural shared-reference query. Preserve the old
 text-only query and refuse unproved temporary loans. See the
 [unrun JSON view draft](http-resource-json-views-draft.md).
 
+Owned JSON lists and shared slices have separate ABI domains. Require an actual
+imported list operation for public slice types, original owning operations for
+owned locals, and complete moves/roots when lists cross calls, scopes or loops.
+Keep native Vec fully qualified and slice lifetimes tied to the actual checked
+input roots. Paired-source-unit type proposals must re-enter the complete
+source checker. Array shapes, proxies, copied metadata and unproved iteration
+cannot supply ownership or a list domain. See the
+[unrun JSON list draft](http-resource-json-lists-draft.md).
+
 ### Source synchronization exports during issue #759
 
 Keep every public synchronization CLI in the shared

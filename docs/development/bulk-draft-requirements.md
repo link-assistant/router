@@ -169,6 +169,15 @@ value, refusal and inverse source are retained. Temporary loans, borrowed list
 iteration, incompatible state joins, namespace/bootstrap, production parity and
 every unfinished requirement remain open.
 
+The [owned JSON list/shared slice draft](http-resource-json-lists-draft.md)
+composes every existing list-bearing state operation with distinct owned/shared
+domains, actual operation-derived input types, native qualified Vec/slice
+signatures, root/move protection and paired-source-unit proposals. Complete
+original histories and independent unrun JS/strict TS/native value, identity,
+refusal and inverse source are retained. General iteration/callbacks, generic
+element domains, incompatible state joins, namespace/bootstrap, production
+parity and every unfinished requirement remain open.
+
 The [local resource helper draft](http-resource-local-functions-draft.md) now
 checks actual callee bodies before callers, composes cold futures and single
 returned roots, preserves source order and separates imported/local binding

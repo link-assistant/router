@@ -15,11 +15,11 @@ export function httpResourceCallerContract(name){return actualHttpResourceContra
 export function httpResourceCallerRustType(type,options){return actualHttpResourceRustType(type,options);}
 export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{lazy=false,allowColdTail=false,bindings=null,moduleNames=new Set(),budget={cells:0},depth=0,localFunctions=null,fragment=null}={}){
  if(depth>64||!statements.length&&!fragment||statements.length>4096)fail('bounded complete HTTP resource flow required');
- const environment=bindings?new Map([...bindings].map(([key,row])=>[key,{...row}])):new Map(parameters.map(row=>[row.name,{type:row.type,input:true,moved:false,disposed:false,root:['str','json-ref'].includes(row.type)?row.name:null,roots:['str','json-ref'].includes(row.type)?[row.name]:[]}])),steps=[],failures=[],alternatives=[],resourceExits=[],loopExits=[],functionReturns=[],scopeFallthroughs=[];let tail=null;
+ const environment=bindings?new Map([...bindings].map(([key,row])=>[key,{...row}])):new Map(parameters.map(row=>[row.name,{type:row.type,input:true,moved:false,disposed:false,root:['str','json-ref','json-list-ref'].includes(row.type)?row.name:null,roots:['str','json-ref','json-list-ref'].includes(row.type)?[row.name]:[]}])),steps=[],failures=[],alternatives=[],resourceExits=[],loopExits=[],functionReturns=[],scopeFallthroughs=[];let tail=null;
  const tick=()=>{if(++budget.cells>100000)fail('complete HTTP resource source-cell budget');};
  const binding=id=>{const row=environment.get(id);if(!row||row.moved||row.disposed)fail('unknown, moved or disposed actual HTTP binding: '+id);return row;};
  const newName=id=>{httpResourceCallerName(id);if(environment.has(id)||moduleNames.has(id))fail('unique actual resource local required');return id;};
- const isLoan=type=>['cancel-ref','sender-ref','receiver-mut','http-client-ref','http-client-mut','http-stream-ref','http-stream-mut','json-ref'].includes(type);
+ const isLoan=type=>['cancel-ref','sender-ref','receiver-mut','http-client-ref','http-client-mut','http-stream-ref','http-stream-mut','json-ref','json-list-ref'].includes(type);
  function recordResourceExit(loopBoundary=false){const states=[];for(const [name,row]of environment)if(row.input&&['receiver-mut','http-client-mut','http-stream-mut'].includes(row.type)){tick();states.push({name,disposed:!!row.disposed});}(loopBoundary?loopExits:resourceExits).push(states);}
  function requireLocalCleanup(id,row){if(row.input||row.moved||row.disposed)return;if(httpResourceNeedsDisposal(row.type)||httpResourceResultOwnsDisposal(row.type)&&!row.used)fail('every local resource must be explicitly released or returned on this exit: '+id);}
  function finish(){for(const [id,row]of environment)requireLocalCleanup(id,row);recordResourceExit();}
@@ -46,7 +46,7 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
     if(httpResourceBorrowRole(row.type)!==wanted&&!shared&&!exclusive)fail('actual input loan role differs');
     return {kind:'borrow',name:node.text,type:wanted,sourceType:row.type,owned:httpResourceOwned(row.type),root:row.root??null,roots:httpResourceValueRoots(row)};
    }
-   if(row.type==='json-ref')return {kind:'variable',name:node.text,type:row.type,root:row.root??null,roots:httpResourceValueRoots(row)};
+   if(['json-ref','json-list-ref'].includes(row.type))return {kind:'variable',name:node.text,type:row.type,root:row.root??null,roots:httpResourceValueRoots(row)};
    if(isLoan(row.type))fail('borrowed resources cannot be stored or escape this caller');
    if(option){if(row.used)fail('whole Option payload already consumed');if(move){row.used=true;row.moved=true;}return {kind:'optional-variable',name:node.text,type:row.type,guarded:!!row.guarded,root:row.root??null,roots:httpResourceValueRoots(row)};}
    if(result){if(row.used)fail('complete Result payload already consumed');if(move){row.used=true;row.moved=true;}return {kind:'result-variable',name:node.text,type:row.type,guarded:!!row.guarded,root:row.root??null,roots:httpResourceValueRoots(row)};}
@@ -73,7 +73,7 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
   for(let index=0;index<operation.args.length;index++){
    const role=operation.args[index],argument=node.arguments[index];let value,candidate=argument,grouping=0;while(ts.isParenthesizedExpression(candidate)){if(++grouping>16)fail('bounded actual call argument grouping required');candidate=candidate.expression;}
    if(ts.isCallExpression(candidate)||ts.isAwaitExpression(candidate)||ts.isBinaryExpression(candidate)){
-    value=expression(candidate,{level:level+1});if(role==='json-ref'&&value.type==='json')value={kind:'temporary-json-borrow',value,type:'json-ref'};
+    value=expression(candidate,{level:level+1});if(role==='json-ref'&&value.type==='json')value={kind:'temporary-json-borrow',value,type:'json-ref'};else if(role==='json-list-ref'&&value.type==='json-list-owned')value={kind:'temporary-json-list-borrow',value,type:'json-list-ref'};
    }else value=operand(argument,role,{move:!isLoan(role)&&role!=='str'});
    if(value.type!==role)fail('actual complete operation argument domain differs');
    if(value.kind==='borrow'){
@@ -87,10 +87,10 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
     if(roots.length)for(const root of roots)returnedRoots.add(root);
     else if(argument?.kind==='string')continue;
     else if(actual?.input&&actual.type==='json-ref'&&argument.type==='json-ref')returnedRoots.add(argument.name);
-    else if(actual?.type==='text-owned'&&argument.type==='str'||actual?.type==='json'&&argument.type==='json-ref')returnedRoots.add(argument.name);
+    else if(actual?.type==='text-owned'&&argument.type==='str'||actual?.type==='json'&&argument.type==='json-ref'||actual?.type==='json-list-owned'&&argument.type==='json-list-ref')returnedRoots.add(argument.name);
     else fail('borrowed output must retain every actual string or public immutable JSON root');
    }
-   for(const root of returnedRoots){const owner=environment.get(root);if(!owner||owner.moved||owner.disposed||!['str','text-owned','json','json-ref'].includes(owner.type))fail('actual borrowed output owner is unavailable');}
+   for(const root of returnedRoots){const owner=environment.get(root);if(!owner||owner.moved||owner.disposed||!['str','text-owned','json','json-ref','json-list-owned','json-list-ref'].includes(owner.type))fail('actual borrowed output owner is unavailable');}
   }const roots=[...returnedRoots],root=roots[0]??null;
   httpResourceCallerRustType(operation.ret);const value={kind:'http-resource-call',operation:operation.javascriptName,args,type:operation.ret,awaited:Boolean(awaited||implicitAwait),implicitAwait,root,roots,local:!!operation.local};
   if(operation.release){if(args.length!==1||args[0].kind!=='borrow')fail('release must bind one actual resource');const row=binding(args[0].name);row.disposed=true;value.release=operation.release;}
@@ -147,14 +147,14 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
     const names=declaration.name.elements.map((element,index)=>{if(!ts.isBindingElement(element)||element.dotDotDotToken||element.propertyName||element.initializer||!ts.isIdentifier(element.name))fail('exact complete channel destructuring required');const id=newName(element.name.text);environment.set(id,{type:index?'receiver-owned':'sender-owned',moved:false,disposed:false});return id;});steps.push({kind:'channel-split',from:input.expression.text,names});continue;
    }
    if(!ts.isIdentifier(declaration.name))fail('ordinary resource local required');const id=newName(declaration.name.text),value=expression(declaration.initializer),carrier=httpResourceResult(value.type)??httpResourceOption(value.type),guarded=!!carrier&&hasGuard(statements[at+1],id),isOption=!!httpResourceOption(value.type);let cleanup=[],option=null;if(guarded){const next=statements[++at];if(isOption)option=optionGuard(next,id,value);else cleanup=guard(next,id,value.type);}
-   if(mutable&&!['bool','u64','text-owned','json'].includes(value.type))fail('mutable locals require actual Boolean, guarded u64, owned String or owned JSON values');environment.set(id,{type:value.type,mutable,guarded,moved:false,disposed:false,used:false,root:value.root??null,roots:httpResourceValueRoots(value)});steps.push({kind:'let',name:id,value,mutable,guarded,cleanup,option});continue;
+   if(mutable&&!['bool','u64','text-owned','json','json-list-owned'].includes(value.type))fail('mutable locals require an actual scalar, owned String, JSON or JSON list domain');environment.set(id,{type:value.type,mutable,guarded,moved:false,disposed:false,used:false,root:value.root??null,roots:httpResourceValueRoots(value)});steps.push({kind:'let',name:id,value,mutable,guarded,cleanup,option});continue;
   }
   if(ts.isWhileStatement(statement)){
    if(!ts.isBlock(statement.statement))fail('complete original loop block required');const entry=new Map([...environment].map(([id,row])=>[id,{...row,roots:httpResourceValueRoots(row)}])),test=condition(statement.expression);requireLoopState(entry,environment);
    const body=checkHttpResourceCallerFlow(ts,statement.statement.statements,[],imports,{lazy,allowColdTail:false,bindings:environment,moduleNames,budget,depth:depth+1,localFunctions,fragment:{entry}});if(body.type!=='unit'||body.returnRoots.length)fail('complete loop control fragment required');resourceExits.push(...body.resourceExits);functionReturns.push(...body.functionReturns);failures.push(...body.propagatedErrors);steps.push({kind:'while',condition:test,body});continue;
   }
   if(ts.isExpressionStatement(statement)&&ts.isBinaryExpression(statement.expression)&&statement.expression.operatorToken.kind===ts.SyntaxKind.EqualsToken){
-   const assignment=statement.expression;if(!ts.isIdentifier(assignment.left))fail('assignment needs one actual scalar local');const id=assignment.left.text,row=environment.get(id);if(!row||!row.mutable||row.input||row.disposed||!['bool','u64','text-owned','json'].includes(row.type))fail('assignment requires an actual mutable scalar, owned String or owned JSON local');if(['text-owned','json'].includes(row.type)&&[...environment].some(([name,loan])=>name!==id&&!loan.moved&&!loan.disposed&&httpResourceValueRoots(loan).includes(id)))fail('owned String or JSON replacement cannot invalidate any live original view');const value=expression(assignment.right);if(value.type!==row.type||httpResourceValueRoots(value).length)fail('assignment must preserve its complete scalar or owned String domain');row.moved=false;row.used=false;row.root=null;row.roots=[];steps.push({kind:'assign',name:id,value});continue;
+   const assignment=statement.expression;if(!ts.isIdentifier(assignment.left))fail('assignment needs one actual scalar local');const id=assignment.left.text,row=environment.get(id);if(!row||!row.mutable||row.input||row.disposed||!['bool','u64','text-owned','json','json-list-owned'].includes(row.type))fail('assignment requires an actual mutable scalar, owned String, JSON or JSON list local');if(['text-owned','json','json-list-owned'].includes(row.type)&&[...environment].some(([name,loan])=>name!==id&&!loan.moved&&!loan.disposed&&httpResourceValueRoots(loan).includes(id)))fail('owned String or JSON replacement cannot invalidate any live original view');const value=expression(assignment.right);if(value.type!==row.type||httpResourceValueRoots(value).length)fail('assignment must preserve its complete scalar or owned String domain');row.moved=false;row.used=false;row.root=null;row.roots=[];steps.push({kind:'assign',name:id,value});continue;
   }
   if(ts.isExpressionStatement(statement)){const value=call(statement.expression);if(httpResourceResult(value.type)||httpResourceOwned(value.type))fail('owned values and Results cannot be discarded');steps.push({kind:'effect',value});continue;}
   if(ts.isIfStatement(statement)){
@@ -175,7 +175,7 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
  const type=fragment?'unit':tail.kind==='branch'?tail.yes.type:tail.value.type,result=httpResourceResult(type);functionReturns.push(...alternatives);
  if(!fragment&&failures.some(error=>result?.error!==error))fail('propagated error families must agree with the complete return Result');
  if(!fragment&&functionReturns.some(row=>row.type!==type))fail('every actual function return including loop and Option exits must share its complete domain');
- const actualRoots=[...new Set(functionReturns.flatMap(row=>row.returnRoots))];for(const id of actualRoots){const row=environment.get(id);if(!row?.input||!['json-ref','str'].includes(row.type))fail('returned loan must retain a public immutable source input root');}
+ const actualRoots=[...new Set(functionReturns.flatMap(row=>row.returnRoots))];for(const id of actualRoots){const row=environment.get(id);if(!row?.input||!['json-ref','json-list-ref','str'].includes(row.type))fail('returned loan must retain a public immutable source input root');}
  if(!resourceExits.length&&!loopExits.length&&!scopeFallthroughs.length)fail('every complete resource flow needs its actual exit states');return {steps,tail,type,lazy,captures:[],returnRoots:fragment?[]:actualRoots,resourceExits,loopExits,scopeFallthroughs,functionReturns,propagatedErrors:[...new Set(failures)],loopFragment:!!fragment};
 }
 
@@ -185,7 +185,7 @@ export function emitHttpResourceCallerFlow(flow,{localFunctions=null}={}){
   if(value.kind==='variable'||value.kind==='payload')return value.name;
   if(value.kind==='option-none')return 'None';if(value.kind==='optional-variable')return value.guarded?'Some('+value.name+')':value.name;
   if(value.kind==='result-variable')return value.guarded?'Ok('+value.name+')':value.name;
-  if(value.kind==='temporary-json-borrow')return '&'+expression(value.value);
+  if(['temporary-json-borrow','temporary-json-list-borrow'].includes(value.kind))return '&'+expression(value.value);
   if(value.kind==='borrow'){
    if(value.type==='str')return value.sourceType==='text-owned'?'&'+value.name:value.name;
    if(['receiver-mut','http-client-mut','http-stream-mut'].includes(value.type))return value.owned?'&mut '+value.name:'&mut *'+value.name;
