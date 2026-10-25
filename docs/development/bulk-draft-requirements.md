@@ -862,3 +862,14 @@ Actual native target syntax supplies scheduling data only. Complete derivation,
 project/export integration and independent unrun mixed JS/strict TS/source/conflict
 regression source are retained. Broader source domains, namespace/bootstrap,
 production adoption/parity and all other incomplete rows remain open.
+
+The [synchronous cancellation caller draft](owned-cancellation-draft.md) adds a
+separate copied private source issuer and semantic codec for real imported
+new/clone/set/is-set operations. Owned local handles move once; shared operation
+borrows preserve the actual lexical binding. Branches join moves, mutable/stored
+shared handles and owned loop/callback captures refuse, and public shared inputs
+use actual operation-derived written types. Both interpreters, Rust/TS emission,
+full immutable predecessor snapshots, source/export closure and independent
+unrun caller/refusal/native oracle cases are drafted. Forward Rust caller and
+canonical inverse integration, async future/Drop/channel/HTTP qualification,
+production adoption/parity and every other unfinished row remain open.

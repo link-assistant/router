@@ -876,3 +876,12 @@ and semantic-meta check, unchanged census and whole target reproduction. Keep
 three deterministic layer batches, existing deadlines and a 192 MiB retained raw
 source budget. See the [composition draft](docs/development/composite-inverse-draft.md).
 The implementation and all new cases remain unrun during bulk source drafting.
+
+Opaque cancellation callers use the separate synchronous profile and actual
+native/runtime/declaration source joins. Track owned local moves across branches;
+shared synchronous operands require the current original lexical handle. Require
+operation-derived public borrow types. Owned captures, stored shared aliases,
+mutable handles, futures and exclusive channel/HTTP resources need their own
+rules. Keep the original private issuers and codecs separate; see the
+[cancellation caller draft](docs/development/owned-cancellation-draft.md). All new
+caller, strict TS and Rust oracle source remains unrun during bulk drafting.

@@ -69,3 +69,5 @@ integration and the remaining requirement ledger are still open.
 - Draft bulk checked text predicate method-token inverses preserving original temporaries, complete source histories, JS/TS/project/export and unrun native oracle cases.
 
 - Draft deterministic batched composition of existing literal, text and numeric/control inverses, retaining full adjacent sources and final complete checking; all mixed regression source is unrun.
+
+- Draft separate synchronous cancellation caller qualification, linear local moves/shared borrows, checked meta, Rust/TS emission, both interpreters and independent unrun source/native cases; async/forward/inverse integration remains open.

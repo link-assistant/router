@@ -2,9 +2,10 @@ import {fileURLToPath} from 'node:url';
 import {resolve} from 'node:path';
 import {prepareNativeSubstitutionCopy,writeNativeSubstitutionCopy} from './prepare-native-substitution-copy.mjs';
 import {prepareDerivedInverseModule} from './prepare-derived-inverse-module.mjs';
+import {prepareOwnedCancellationSources} from './prepare-owned-cancellation-sources.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 export function prepareCompositeInverseSources({root=ROOT}={}){
- const main=prepareNativeSubstitutionCopy({root,archive:'tools/translation/source-profiles/composite-inverse/complete-originals-and-rules.json.gz',pin:'b3603cc1e08704e6a9ca5b191c7c0a77043cf99e470ff627cb3eab3924216f6d',id:'router:composite-inverse-complete-source-substitutions-v1'});
+ const main=prepareNativeSubstitutionCopy({root,archive:'tools/translation/source-profiles/composite-inverse/complete-originals-and-rules.json.gz',pin:'b3603cc1e08704e6a9ca5b191c7c0a77043cf99e470ff627cb3eab3924216f6d',id:'router:composite-inverse-complete-source-substitutions-v1',laterPlans:[prepareOwnedCancellationSources({root})]});
  const derived=prepareDerivedInverseModule({root,archive:'tools/translation/source-profiles/composite-inverse/derived-functions.json.gz',pin:'c78658d1b0d39e655310fd4e438c5c06b269eb5f9bd9438deb932d1feabe7690',id:'router:composite-inverse-function-source-extraction-v1'});
  return {...main,files:main.files.concat(derived.files),originalInputs:main.originalInputs.concat(derived.originalInputs)};
 }
