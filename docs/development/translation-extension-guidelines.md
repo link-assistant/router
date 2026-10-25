@@ -482,6 +482,14 @@ the real deferred caller body. Runtime tables cannot waive a namespace refusal
 or supply cold polling. See the [filesystem composition draft](http-resource-filesystem-draft.md);
 all new receiving qualification remains unrun during source drafting.
 
+Byte collections require actual owned Vec/u8 or shared u8 slice domains and
+matching runtime validation. Keep owning and shared roots separate throughout
+moves, aliases, replacements and returns. Successful Result/Option type queries
+must retain the actual imported operation, constructor tag and field projection;
+structural spelling cannot admit an octet array or erase a loan. See the
+[owned octet draft](http-resource-bytes-draft.md); all new qualification remains
+unrun during source drafting.
+
 Compose common operation families through their actual fully checked native and
 runtime sources, retaining callbacks/numeric domains with their original checker
 when unsupported. Option/Result containers move once. Local borrowed string

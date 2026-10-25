@@ -239,6 +239,14 @@ signature, refusal and forged-meta source are retained. Byte vectors and broader
 filesystem APIs, namespace/bootstrap, production parity and every unfinished
 requirement remain open.
 
+The [owned octet/shared byte draft](http-resource-bytes-draft.md) adds both
+original filesystem reads, complete owning/shared byte domains, actual JSON
+byte parsing, successful original Result/Option type projections and whole
+native/source inverses. Full originals and independent unrun JS/strict TS/native
+UTF8, empty, Some(Null), polling, ownership, root, refusal and forged-meta source
+are retained. General byte iterators, Result fallbacks, namespace/bootstrap,
+production parity and every unfinished requirement remain open.
+
 The [local resource helper draft](http-resource-local-functions-draft.md) now
 checks actual callee bodies before callers, composes cold futures and single
 returned roots, preserves source order and separates imported/local binding

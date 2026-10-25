@@ -11,7 +11,7 @@ export function captureHttpResourceRecursiveSignature(ts,item,file,language,impo
  return {domain,span,source,erase,annotate,javascriptAnnotation,sourceAuthority:false,semanticAuthority:false};
 }
 export function httpResourceRecursivePrototype(plan){
- if(plan.lazy||plan.parameters.some(parameter=>!['str','bool','u64','json-ref','json-list-ref'].includes(parameter.type)&&!httpResourceOwnedSignatureDomain(parameter.type)))throw new TypeError('Recursive helpers require synchronous immutable or owned non-resource inputs');
+ if(plan.lazy||plan.parameters.some(parameter=>!['str','bool','u64','json-ref','json-list-ref','bytes-ref'].includes(parameter.type)&&!httpResourceOwnedSignatureDomain(parameter.type)))throw new TypeError('Recursive helpers require synchronous immutable or owned non-resource inputs');
  return {javascriptName:plan.item.name.text,rustPath:plan.item.name.text,args:plan.parameters.map(parameter=>parameter.type),ret:plan.signature.domain,async:false,local:true,borrowedResult:false,rootArgument:null,rootArguments:[],release:null,releasedArguments:[],localRefusal:null,sourceAuthority:false,semanticAuthority:false};
 }
 
