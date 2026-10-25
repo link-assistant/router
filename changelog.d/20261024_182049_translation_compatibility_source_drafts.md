@@ -117,3 +117,4 @@ integration and the remaining requirement ledger are still open.
 - Draft checked scalar let/assignment/while fragments, full incoming loopback resource/type invariants, lexical mutability scopes and canonical whole native inverse rules, with complete originals and independent unrun receiving/native/refusal source.
 
 - Draft checked owned String state/reinitialization, all-root live-view replacement protection, loopback/native inverse preservation and complete original source histories with independent unrun receiving/native/refusal source.
+- Draft fresh original generic derive outer-attribute flow, complete builtin registration/collector source joins and shared finite-producer integration, with full CST/source inverses and independent unrun JS/native oracle cases. Caller ownership, namespace closure and all verification remain open.

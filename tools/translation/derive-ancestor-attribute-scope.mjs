@@ -16,6 +16,8 @@ import {macroBindingAffects} from './macro-subnamespaces.mjs';
 import {originalLexingIntrinsicsUnchanged} from './original-lexing-intrinsics.mjs';
 import {originalDeriveHelperCryptoUnchanged} from './derive-footprints.mjs';
 import {createPrivateFrozenJsonCache} from './private-frozen-json.mjs';
+import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
+import {originalPrivateParserIngressUnchanged,originalStaticSourceIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
 const sourceWitnessJson=createPrivateFrozenJsonCache();
 const root=new URL('./source-profiles/derive-ancestor-scope/',import.meta.url),profileBytes=readFileSync(new URL('manifest.json',root)),profile=JSON.parse(profileBytes);
 const hash=value=>createHash('sha256').update(value).digest('hex'),freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;},same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
@@ -180,3 +182,21 @@ export function assertOriginalConditionalSiblingScope(value,context,module,item,
 // Authenticate the actual caller and every original source join before exposing
 // complete retained evidence. Copied metadata is never an accessor capability.
 export function originalConditionalSiblingScopeEvidence(value,context,module,item,caller,requests){assertOriginalConditionalSiblingScope(value,context,module,item,caller,requests);return proofs.get(value).fullEvidence;}
+
+
+// Independent finite source DATA. No caller context and no shared verdict cache.
+export function originalDerivedOuterBuiltinAttributeRegistrations(){
+ const check=()=>{if(!derivedAttributeCatalogueNative||!originalLexingIntrinsicsUnchanged()||!originalDeriveHelperCryptoUnchanged()||!originalPrivateParserIngressUnchanged()||!originalStaticSourceIntrinsicsUnchanged()||!originalDataFreezeIntrinsicsUnchanged())fail('original attribute catalogue operations changed');};check();
+ const manifest=readFileSync(new URL('manifest.json',root));if(hash(manifest)!=='9113a635e5534c083dbc3af97ef815040fc916548a245e5477941873f7dc62f5'||!manifest.equals(profileBytes))fail('complete current builtin attribute inventory differs');
+ const path='compiler/rustc_feature/src/builtin_attrs.rs',origin=originals.get(path),pin=profile.sources.find(row=>row.path===path);if(!pin||!origin)fail('actual complete builtin attribute source absent');
+ const archiveURL=new URL(pin.archive,root),packed=readFileSync(archiveURL),raw=gunzipSync(packed,{maxOutputLength:180000}),source=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(raw);
+ if(packed.length!==pin.archiveBytes||hash(packed)!==pin.archiveSha256||raw.length!==pin.bytes||hash(raw)!==pin.sha256||source!==origin.source)fail('complete current builtin attribute source differs');
+ const state={attributeSources:new Map(),attributeDefinition:null},names=['automatically_derived','allow','warn','deny','forbid','stable','unstable'],registrations=names.map(name=>({name,registration:originalBuiltinAttribute(state,name)}));
+ const concrete=transportConcreteSyntaxSource(source,{language:'Rust'});if(transportConcreteSyntaxMeta(concrete.meta).source!==source)fail('complete builtin attribute concrete inverse differs');
+ const registry=sourceItems(source).filter(row=>row.term==='static'&&row.name==='BUILTIN_ATTRIBUTES');if(registry.length!==1)fail('one complete actual builtin attribute array required');const header=significant(registry[0].tokens),staticAt=header.findIndex(token=>token.text==='static');if(staticAt<0||header.slice(0,staticAt).some(token=>token.text==='cfg'||token.text==='cfg_attr'))fail('actual builtin attribute array availability remains conditional');
+ const trees=originalMacroTrees(source.slice(registry[0].start,registry[0].end)),array=trees.filter(tree=>tree.delimiter==='[').at(-1);if(!array)fail('complete source attribute array absent');
+ for(const {registration}of registrations){const at=array.children.findIndex(node=>registry[0].start+node.span.start===registration.originalInvocation.sourceSpan.start);if(at<0||at>0&&array.children[at-1].text!==','||array.children[at+3]?.text!==',')fail('actual ungated registration has another enclosing attribute or element boundary');}
+ if(!readFileSync(new URL('manifest.json',root)).equals(manifest)||!readFileSync(archiveURL).equals(packed))fail('complete builtin attribute inputs changed during source proof');check();
+ return freeze({schema:'original-derived-outer-builtin-attribute-registrations-v1',path,source,sourceSha256:pin.sha256,manifestSha256:hash(manifest),concreteSyntax:concrete.meta,inverse:source,registrations,sourceAuthority:false,namespaceAuthority:false,runtimeAuthority:false,callerOwnerResolved:false,attributeBehaviorExecuted:false,crossInvocationCache:false});
+}
+const derivedAttributeCatalogueNative=originalLexingIntrinsicsUnchanged()&&originalDeriveHelperCryptoUnchanged()&&originalPrivateParserIngressUnchanged()&&originalStaticSourceIntrinsicsUnchanged()&&originalDataFreezeIntrinsicsUnchanged();

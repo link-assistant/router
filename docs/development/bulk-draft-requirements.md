@@ -44,6 +44,16 @@ unrun. Architecture export/type-prefix closure, producer bootstrap, broader
 owned/async domains, production adoption/parity, CI repairs and every incomplete
 row above remain open.
 
+The [conditional generic derive attribute draft](builtin-derived-outer-attributes-draft.md)
+adds the complete generated attribute definition/use suffix, actual constructor
+and predicate owners, real ungated registration expansions and full collector
+bypass source. The finite producer joins one shared source closure to every
+actual generic callback without promoting its namespace or caller-owner flags.
+Complete originals/CST histories and independent JS/native oracle source are
+drafted and unrun. Architecture type-prefix closure, producer bootstrap, nested
+and exported macro effects, broader language/resource domains, production parity
+and every unfinished requirement remain open.
+
 The [cold future/resource caller draft](async-control-callers-draft.md) adds
 actual imported cancellation, deadline and channel source rules through the
 complete copied control adapter. It retains private source joins, checked meta,

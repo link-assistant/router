@@ -3,6 +3,16 @@
 These requirements supplement [CONTRIBUTING.md](../../CONTRIBUTING.md).
 The active source-only phase and all original gates remain mandatory.
 
+Generic derived outer-attribute source facts must retain the complete generated
+attribute definition/use suffix, actual method implementation owners, inherited
+predicate defaults, original ungated registration expansions and complete
+collector body. A registry-name list or an `Impl` discriminant alone cannot
+discharge that obligation. Join a single per-invocation shared source proof to
+every actual registered common callback. Keep caller ownership, nested/exported
+macro effects and full producer closure separate and retain their false flags
+until their independent proofs exist. See the
+[unrun source draft](builtin-derived-outer-attributes-draft.md).
+
 ### Source synchronization exports during issue #759
 
 Keep every public synchronization CLI in the shared
