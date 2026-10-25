@@ -7,7 +7,7 @@ import {translateHttpResourceCallerJavaScript,translateHttpResourceCallerTypeScr
 import {translateHttpResourceCallerRust as translateOwnedStateRust} from './js-to-rust/http-resource-rust.mjs';
 import {projectHttpResourceUnitJavaScript} from './http-resource-unit-signatures.mjs';
 export const OWNED_STATE_NATIVE_INPUTS=Object.freeze([
- 'src/translation_http_deadline_results_core.rs','src/translation_text_core.rs','src/translation_owned_results_core.rs','src/translation_http_protocol_core.rs','src/translation_http_transport_core.rs','src/translation_http_deadline_core.rs','src/upstream_guard.rs','src/translation_async_control_core.rs','src/lib.rs','src/translation_core.rs','src/translation_core/primitives.rs','src/translation_core/json_collections.rs','src/translation_collections_core.rs','src/translation_state_core.rs','src/translation_carriers_core.rs','Cargo.toml','Cargo.lock',
+ 'src/translation_integer_core.rs','src/translation_primitive_option_core.rs','src/translation_http_deadline_results_core.rs','src/translation_text_core.rs','src/translation_owned_results_core.rs','src/translation_http_protocol_core.rs','src/translation_http_transport_core.rs','src/translation_http_deadline_core.rs','src/upstream_guard.rs','src/translation_async_control_core.rs','src/lib.rs','src/translation_core.rs','src/translation_core/primitives.rs','src/translation_core/json_collections.rs','src/translation_collections_core.rs','src/translation_state_core.rs','src/translation_carriers_core.rs','Cargo.toml','Cargo.lock',
 ]);
 const fail=message=>{throw new TypeError('Owned state source unit: '+message);};
 /** Complete declared runtime closure, including byte-equal physical mirrors. */

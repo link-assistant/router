@@ -2,13 +2,15 @@
 import {httpDeadlineReceivingData} from './http-deadline-receiving-data.mjs';
 import {httpDeadlineResultRuntimeSources} from '../../http-deadline-result-runtime-sources.mjs';
 import {HTTP_DEADLINE_RESULT_NATIVE_SOURCE} from '../../http-deadline-result-native-source.mjs';
+import {INTEGER_NATIVE_SOURCE} from '../../integer-native-source.mjs';
+import {PRIMITIVE_OPTION_NATIVE_SOURCE} from '../../primitive-option-native-source.mjs';
 import {mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join,dirname} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {execFileSync} from 'node:child_process';
 export function httpResourceReceivingData(callerFiles=[]){
- const data=httpDeadlineReceivingData(callerFiles);data.files=data.files.filter(row=>!row.path.startsWith('runtime/')).concat(httpDeadlineResultRuntimeSources());data.files.find(row=>row.path==='src/lib.rs').source+='pub mod translation_http_deadline_results_core;\n';data.files.push({path:'src/translation_http_deadline_results_core.rs',source:HTTP_DEADLINE_RESULT_NATIVE_SOURCE});return data;
+ const data=httpDeadlineReceivingData(callerFiles);data.files=data.files.filter(row=>!row.path.startsWith('runtime/')).concat(httpDeadlineResultRuntimeSources());data.files.find(row=>row.path==='src/lib.rs').source+='pub mod translation_http_deadline_results_core;\n';data.files.push({path:'src/translation_http_deadline_results_core.rs',source:HTTP_DEADLINE_RESULT_NATIVE_SOURCE});for(const [name,source]of [['translation_integer_core',INTEGER_NATIVE_SOURCE],['translation_primitive_option_core',PRIMITIVE_OPTION_NATIVE_SOURCE]]){data.files.find(row=>row.path==='src/lib.rs').source+='pub mod '+name+';\n';data.files.push({path:'src/'+name+'.rs',source});}return data;
 }
 // Ordinary independent receiving execution helper. Invoked only after drafting.
 export async function verifyHttpResourceTargets(result,verify){

@@ -1,0 +1,17 @@
+// Existing matching native/runtime interface DATA, not executable permission.
+import {TEXT_CONTRACTS} from '../text-contracts.mjs';
+import {OWNED_RESULT_CONTRACTS} from '../owned-result-contracts.mjs';
+import {OWNED_OUTCOME_CONTRACTS} from '../owned-outcome-contracts.mjs';
+const domains=Object.freeze({bool:'bool',u64:'u64',str:'str','text-owned':'text-owned',json:'json','shared-json':'json-ref','bool-text-result':'http-result:bool','u64-text-result':'http-result:u64','str-text-result':'http-result:str','text-text-result':'http-result:text-owned','json-text-result':'http-result:json','bool-option':'optional:bool','u64-option':'optional:u64','str-option-ref':'optional:str','text-owned-option':'option-text','json-owned-option':'optional:json'});
+export function httpResourceSynchronousContracts(){
+ const result=[];
+ for(const [family,rows,runtimeModule]of [['text',TEXT_CONTRACTS,'text-runtime.mjs'],['owned-result',OWNED_RESULT_CONTRACTS,'owned-result-runtime.mjs'],['json-carrier',OWNED_OUTCOME_CONTRACTS,'owned-outcome-runtime.mjs']]){
+  for(const row of rows){
+   // Wider numeric and callback domains keep their original separate checker.
+   // No erased callback or guessed numeric type may enter this closed lane.
+   if(!row.parameters.every(type=>Object.hasOwn(domains,type))||!Object.hasOwn(domains,row.returns))continue;
+   result.push({...row,family,args:row.parameters.map(type=>domains[type]),ret:domains[row.returns],async:false,runtimeModule,borrowedResult:row.root!==null&&row.root!==undefined,rootArgument:row.root??null,release:null,sourceAuthority:false,semanticAuthority:false});
+  }
+ }
+ return result;
+}

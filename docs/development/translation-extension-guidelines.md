@@ -287,6 +287,14 @@ signature DATA cannot waive them. See the
 [local helper draft](http-resource-local-functions-draft.md); all new receiving
 and native qualification remains unrun during bulk drafting.
 
+Numeric resource callers must bind complete original fixed-width/Option native
+and runtime sources and retain distinct wrapping, saturation and checked error
+behavior. Strict comparisons require matching actual primitive domains; do not
+infer unsigned ranges from bigint annotations or allow string/Number coercion.
+Keep original public entry guards, recursive body checks and whole inverse
+reproduction. See the [fixed-width caller draft](http-resource-numeric-draft.md);
+all new source and native qualification remains unrun during bulk drafting.
+
 Returned helper loans must retain every possible actual argument root through
 branches and nested Result/Option values. Protect every backing local owner
 from moves and refuse any borrowed return that may outlive one. Static literal

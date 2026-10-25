@@ -111,3 +111,5 @@ integration and the remaining requirement ledger are still open.
 - Draft complete multiple-input returned-root sets across helper calls, local views and Result/Option conversions, all-owner move/escape protection and full original source histories with independent unrun receiving/native/refusal source.
 
 - Draft explicit synchronous recursive helper groups with actual written return obligations, complete scalar/owned body checks, native annotation/source inverses and independent unrun JS/strict TS/native/refusal source.
+
+- Draft source-qualified unsigned fixed-width and primitive Option caller composition, strict primitive comparisons, guarded recursive arithmetic and full native/unit/source histories with independent unrun JS/strict TS/native/refusal source.

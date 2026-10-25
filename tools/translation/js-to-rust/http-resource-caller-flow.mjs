@@ -55,9 +55,9 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
   const implicitAwait=operation.async&&!awaited&&coldTail;if(Boolean(operation.async)!==Boolean(awaited||implicitAwait)||operation.async&&!lazy)fail('future must be immediately awaited inside a cold caller');
   if(node.arguments.length!==operation.args.length)fail('complete actual operation arity differs');const loans=new Map(),args=[];
   for(let index=0;index<operation.args.length;index++){
-   const role=operation.args[index],argument=node.arguments[index];let value;
-   if(ts.isCallExpression(argument)||ts.isAwaitExpression(argument)){
-    value=call(argument,{level:level+1});if(role==='json-ref'&&value.type==='json')value={kind:'temporary-json-borrow',value,type:'json-ref'};
+   const role=operation.args[index],argument=node.arguments[index];let value,candidate=argument,grouping=0;while(ts.isParenthesizedExpression(candidate)){if(++grouping>16)fail('bounded actual call argument grouping required');candidate=candidate.expression;}
+   if(ts.isCallExpression(candidate)||ts.isAwaitExpression(candidate)||ts.isBinaryExpression(candidate)){
+    value=expression(candidate,{level:level+1});if(role==='json-ref'&&value.type==='json')value={kind:'temporary-json-borrow',value,type:'json-ref'};
    }else value=operand(argument,role,{move:!isLoan(role)&&role!=='str'});
    if(value.type!==role)fail('actual complete operation argument domain differs');
    if(value.kind==='borrow'){
@@ -81,7 +81,15 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
   if(operation.releasedArguments?.length){for(const index of operation.releasedArguments){const argument=args[index];if(argument?.kind!=='borrow'||!['receiver-mut','http-client-mut','http-stream-mut'].includes(argument.type))fail('proven helper release must bind its actual exclusive resource input');binding(argument.name).disposed=true;}value.releasedArguments=[...operation.releasedArguments];if(operation.ret==='unit')value.release='local-proven-release';}
   return value;
  }
- function expression(node,flags={}){return ts.isCallExpression(node)||ts.isAwaitExpression(node)?call(node,flags):operand(node);}
+ function expression(node,flags={}){
+  tick();const level=flags.level??depth;if(level>160)fail('complete scalar expression depth bound');if(ts.isParenthesizedExpression(node))return expression(node.expression,{...flags,level:level+1});
+  if(ts.isCallExpression(node)||ts.isAwaitExpression(node))return call(node,flags);
+  if(ts.isBinaryExpression(node)){
+   const operators=new Map([[ts.SyntaxKind.EqualsEqualsEqualsToken,'=='],[ts.SyntaxKind.ExclamationEqualsEqualsToken,'!='],[ts.SyntaxKind.LessThanToken,'<'],[ts.SyntaxKind.LessThanEqualsToken,'<='],[ts.SyntaxKind.GreaterThanToken,'>'],[ts.SyntaxKind.GreaterThanEqualsToken,'>=']]),operator=operators.get(node.operatorToken.kind);
+   if(operator){const left=expression(node.left,{level:level+1}),right=expression(node.right,{level:level+1});if(left.type!==right.type||left.type!=='u64'&&!(left.type==='bool'&&['==','!='].includes(operator)))fail('comparison needs actual matching u64 or Boolean domains');return {kind:'compare',operator,left,right,type:'bool'};}
+  }
+  return operand(node);
+ }
  function condition(node,level=0){
   tick();if(level+depth>160)fail('Boolean resource condition depth budget');if(ts.isParenthesizedExpression(node))return condition(node.expression,level+1);
   if(ts.isPrefixUnaryExpression(node)&&node.operator===ts.SyntaxKind.ExclamationToken)return {kind:'not',value:condition(node.operand,level+1),type:'bool'};
@@ -142,6 +150,7 @@ export function emitHttpResourceCallerFlow(flow,{localFunctions=null}={}){
    return (value.owned?'&':'')+value.name;
   }
   if(value.kind==='integer')return value.value+'_u64';if(value.kind==='string')return rustString(value.value);if(value.kind==='boolean')return String(value.value);if(value.kind==='unit')return '()';if(value.kind==='empty-json-list')return '[]';
+  if(value.kind==='compare')return '('+expression(value.left)+' '+value.operator+' '+expression(value.right)+')';
   if(value.kind==='not')return '(!'+expression(value.value)+')';if(value.kind==='and'||value.kind==='or')return '('+expression(value.left)+(value.kind==='and'?' && ':' || ')+expression(value.right)+')';
   if(value.kind==='http-resource-call'){
    const operation=value.local?localFunctions?.get(value.operation):httpResourceCallerContract(value.operation);if(!operation)fail('unregistered complete emission operation');

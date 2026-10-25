@@ -140,6 +140,14 @@ oracle/refusal source are retained. General recursion/signatures, loops/mutation
 language/resource domains, namespace/bootstrap, production adoption/parity and
 every unfinished requirement remain open.
 
+The [fixed-width caller draft](http-resource-numeric-draft.md) composes actual
+unsigned integer/primitive Option libraries with guarded public domains, strict
+primitive comparisons, recursive arithmetic and complete inverse/unit mappings.
+Full original source histories and independent unrun JS/strict TS/native oracle/
+refusal source are retained. Wider numeric/language/resource domains, loops and
+mutation, namespace/bootstrap, production adoption/parity and every unfinished
+requirement remain open.
+
 The [Option guard draft](http-resource-option-guards-draft.md) adds whole absent
 branches, every-exit resource cleanup, explicit fallback domains, Some payload
 moves, same-Option propagation and complete canonical native inverse rules.
