@@ -34,7 +34,8 @@ Current source-only resource extensions include shared collection iteration,
 read-only captures, owning and settled signatures, actual standard filesystem
 and byte operations, complete Result fallbacks, Option loop/stream exits and
 Result/Option callbacks, original TypeScript aliases/templates, post-test loops,
-conditional values and strict Boolean values. Follow the
+conditional values, strict Boolean values and source-qualified signed integers.
+Follow the
 complete source histories, private source
 joins and open limits in [the extension guidelines](docs/development/translation-extension-guidelines.md).
 Independent JS/strict TS/native and physical source-unit cases are drafted;

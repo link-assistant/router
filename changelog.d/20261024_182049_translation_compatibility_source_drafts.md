@@ -154,3 +154,5 @@ integration and the remaining requirement ledger are still open.
 - Draft strict Boolean value negation and short-circuit locals/arguments/returns through original state checks and native inverses, with full source histories and independent unrun truth-table, lazy-failure, domain and forged-meta source in gated CI discovery.
 
 - Draft dense actual owned JSON list literals with ordered element/move checks, collection/shared-iteration composition and complete native vector inverses, retaining original histories and independent unrun JS/strict TS/native boundary and refusal source in gated CI discovery.
+
+- Draft source-qualified signed integer operations and Option/Result callbacks, exact original entry guards, local literal constraints, mutable/recursive/cold return composition and complete native inverses, with full original histories and independent unrun JS/strict TS/native limit, overflow, division, callback and refusal source in gated CI discovery.

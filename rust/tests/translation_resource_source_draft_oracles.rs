@@ -32,3 +32,5 @@ mod conditional_values;
 mod boolean_values;
 #[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-list-literals-oracle.rs"]
 mod list_literals;
+#[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-signed-numbers-oracle.rs"]
+mod signed_numbers;

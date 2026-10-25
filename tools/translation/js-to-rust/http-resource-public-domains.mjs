@@ -5,17 +5,19 @@ import {httpResourceOption} from './http-resource-options.mjs';
 
 function ownedValue(type,depth=0){
  if(typeof type!=='string'||depth>8)return false;
- if(['unit','bool','u64','text-owned','json','json-list-owned','bytes-owned'].includes(type))return true;
+ if(['unit','bool','u64','i64','text-owned','json','json-list-owned','bytes-owned'].includes(type))return true;
  const optional=httpResourceOption(type),result=httpResourceResult(type);
  return !!optional&&ownedValue(optional.value,depth+1)||!!result&&ownedValue(result.value,depth+1);
 }
 export function httpResourcePublicInputDomain(type,{guarded=false}={}){
- if(typeof type!=='string'||type==='u64'&&!guarded)return false;
- if(['str','bool','u64','cancel-ref','sender-ref','receiver-mut','http-client-ref','http-client-mut','http-stream-ref','http-stream-mut','json-ref','json-list-ref','bytes-ref'].includes(type))return true;
+ if(typeof type!=='string'||['u64','i64'].includes(type)&&!guarded)return false;
+ if(type.endsWith(':i64'))return false;
+ if(['str','bool','u64','i64','cancel-ref','sender-ref','receiver-mut','http-client-ref','http-client-mut','http-stream-ref','http-stream-mut','json-ref','json-list-ref','bytes-ref'].includes(type))return true;
  return ownedValue(type)&&!httpResourceResultOwnsDisposal(type);
 }
 export function httpResourceOwnedSignatureDomain(type){return ownedValue(type)&&!httpResourceResultOwnsDisposal(type);}
 export function httpResourcePublicInputType(type,operation){
+ if(type==='i64')return 'ReturnType<typeof '+operation('router_integer_i64_saturating_add')+'>';
  const primitive={str:'string',bool:'boolean',u64:'bigint'}[type];if(primitive)return primitive;
  const reference={'cancel-ref':['router_cancel_is_set',0],'sender-ref':['router_async_send',0],'receiver-mut':['router_async_receive',0],'http-client-ref':['router_http_transport_open',0],'http-client-mut':['router_http_transport_client_dispose',0],'http-stream-ref':['router_http_transport_head',0],'http-stream-mut':['router_http_transport_read',0],'json-ref':['router_http_status',0],'json-list-ref':['router_state_json_values_copy',0],'bytes-ref':['router_core_json_parse_bytes',0]}[type];
  if(reference)return 'Parameters<typeof '+operation(reference[0])+'>['+reference[1]+']';

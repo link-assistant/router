@@ -6,16 +6,16 @@ const fail=message=>{throw new TypeError('Resource callback annotations: '+messa
 export function captureHttpResourceCallbackAnnotations(ts,node,contract,imports,context,tick){
  const written=node.type||node.parameters.some(parameter=>parameter.type);if(!written)return;
  if(!context||context.language!=='TypeScript'||node.getSourceFile()!==context.file||!Array.isArray(context.erase))fail('actual complete original TypeScript annotation context required');
- const describe=createHttpResourceWrittenAnnotationReader(ts,imports,tick,{aliases:context.aliases,coldTypeCurrent:context.coldTypeCurrent});
+ const describe=(written,numericDomain)=>createHttpResourceWrittenAnnotationReader(ts,imports,tick,{aliases:context.aliases,coldTypeCurrent:context.coldTypeCurrent,numericDomain})(written);
  const edits=[];
- for(let index=0;index<node.parameters.length;index++){const parameter=node.parameters[index];if(!parameter.type)continue;const actual=describe(parameter.type);if(actual.kind!=='domain'||actual.type!==contract.args[index])fail('written parameter must preserve its actual contextual native domain');edits.push({span:[parameter.name.end,parameter.type.end],replacement:''});}
- if(node.type){const actual=describe(node.type);if(actual.kind!=='domain'||actual.type!==contract.ret)fail('written return annotation must preserve its complete actual callback domain');const colons=node.getChildren(context.file).filter(child=>child.kind===ts.SyntaxKind.ColonToken);if(colons.length!==1||colons[0].end>node.type.getStart(context.file))fail('actual native arrow return annotation boundary required');edits.push({span:[colons[0].getStart(context.file),node.type.end],replacement:''});}
+ for(let index=0;index<node.parameters.length;index++){const parameter=node.parameters[index];if(!parameter.type)continue;const actual=describe(parameter.type,contract.args[index]);if(actual.kind!=='domain'||actual.type!==contract.args[index])fail('written parameter must preserve its actual contextual native domain');edits.push({span:[parameter.name.end,parameter.type.end],replacement:''});}
+ if(node.type){const actual=describe(node.type,contract.ret);if(actual.kind!=='domain'||actual.type!==contract.ret)fail('written return annotation must preserve its complete actual callback domain');const colons=node.getChildren(context.file).filter(child=>child.kind===ts.SyntaxKind.ColonToken);if(colons.length!==1||colons[0].end>node.type.getStart(context.file))fail('actual native arrow return annotation boundary required');edits.push({span:[colons[0].getStart(context.file),node.type.end],replacement:''});}
  context.erase.push(...edits);
 }
 
 
 // Fresh invocation-local type DATA reader, shared by source obligations only.
-export function createHttpResourceWrittenAnnotationReader(ts,imports,tick,{aliases=null,coldTypeCurrent=null}={}){
+export function createHttpResourceWrittenAnnotationReader(ts,imports,tick,{aliases=null,coldTypeCurrent=null,numericDomain=null}={}){
  const domain=type=>({kind:'domain',type});
  function callable(row){
   if(!row)fail('actual imported operation type required');const args=row.args.map(type=>['json-callback','value-callback'].includes(type)?row.callbackContract?{kind:'function',args:row.callbackContract.args.map(domain),returns:domain(row.callbackContract.ret)}:fail('actual complete callback descriptor required'):domain(type));
@@ -23,7 +23,7 @@ export function createHttpResourceWrittenAnnotationReader(ts,imports,tick,{alias
  }
  function describe(type,depth=0,bindings=null){
   tick();if(!type||depth>32)fail('complete bounded original callback type required');if(ts.isParenthesizedTypeNode(type))return describe(type.type,depth+1,bindings);
-  const primitive=new Map([[ts.SyntaxKind.StringKeyword,'str'],[ts.SyntaxKind.BooleanKeyword,'bool'],[ts.SyntaxKind.BigIntKeyword,'u64']]);if(primitive.has(type.kind))return domain(primitive.get(type.kind));
+  const primitive=new Map([[ts.SyntaxKind.StringKeyword,'str'],[ts.SyntaxKind.BooleanKeyword,'bool'],[ts.SyntaxKind.BigIntKeyword,numericDomain==='i64'?'i64':'u64']]);if(primitive.has(type.kind))return domain(primitive.get(type.kind));
   if(ts.isLiteralTypeNode(type)&&type.literal.kind===ts.SyntaxKind.NullKeyword)return domain('unit');
   if(ts.isTypeReferenceNode(type)&&ts.isIdentifier(type.typeName)&&type.typeName.text==='Awaited'&&type.typeArguments?.length===1){const actual=describe(type.typeArguments[0],depth+1,bindings);if(actual.kind!=='future'||actual.value?.kind!=='domain')fail('Awaited requires its actual imported operation future domain');return actual.value;}
   const slot=httpResourceTypeAliasSlot(ts,type,bindings);if(slot)return describe(slot.node,depth+1,slot.bindings);

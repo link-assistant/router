@@ -1,7 +1,7 @@
 // Existing original Result library ABI DATA. Actual native/source and every
 // complete callback body must be checked again before a whole caller is issued.
 import {OWNED_RESULT_CONTRACTS} from '../owned-result-contracts.mjs';
-const domains=Object.freeze({bool:'bool',u64:'u64',str:'str','text-owned':'text-owned','bool-text-result':'http-result:bool','u64-text-result':'http-result:u64','str-text-result':'http-result:str','text-text-result':'http-result:text-owned','bool-option':'optional:bool','u64-option':'optional:u64','str-option-ref':'optional:str','text-owned-option':'option-text'});
+const domains=Object.freeze({bool:'bool',u64:'u64',i64:'i64',str:'str','text-owned':'text-owned','bool-text-result':'http-result:bool','u64-text-result':'http-result:u64','i64-text-result':'http-result:i64','str-text-result':'http-result:str','text-text-result':'http-result:text-owned','bool-option':'optional:bool','u64-option':'optional:u64','i64-option':'optional:i64','str-option-ref':'optional:str','text-owned-option':'option-text'});
 const hasLoan=type=>type==='str'||type?.endsWith(':str');
 export function httpResourceOutcomeCallbackContracts(){
  const rows=[];

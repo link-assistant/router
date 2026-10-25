@@ -429,3 +429,12 @@ composition and complete fully qualified native vector inverses. Full originals
 and independent unrun JS/strict TS/native/refusal cases are retained; a
 fourteenth oracle joins gated CI discovery. Wider collection/language domains,
 namespace/bootstrap, production parity and every unfinished requirement remain open.
+
+The [source-qualified signed family draft](http-resource-signed-numbers-draft.md)
+adds actual i64 operations/Option/Result callbacks, distinct complete scalar
+entry guards, source-local literal constraints, mutable/recursive/cold return
+composition and full native inverses. Complete originals and independent unrun
+JS/strict TS/native/boundary/refusal cases are retained; a fifteenth oracle joins
+gated CI discovery. Signed payload-container guards, wider language/numeric
+domains, namespace/bootstrap, production parity and every unfinished requirement
+remain open.

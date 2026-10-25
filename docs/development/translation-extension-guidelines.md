@@ -605,3 +605,11 @@ fully written native constructors and reject unknown macro owners. Compose
 backing-root iteration and whole-target checking rather than treating a vector
 spelling as authority. See the [owned list literal draft](http-resource-list-literals-draft.md);
 all new source/runtime/native qualification remains unrun.
+
+Choose signed literal representations from actual operation/callback contracts,
+original return queries and source-local constraints, then recheck the complete
+body. Public signed inputs require the complete matching original i64 entry
+guard; a bigint type, unsigned guard or detached numeric hint cannot supply it.
+Preserve exact limits, native inverse guards, private current library joins and
+explicit payload-container refusals. See the [signed family draft](http-resource-signed-numbers-draft.md);
+all new source/runtime/native qualification remains unrun.
