@@ -163,3 +163,4 @@ integration and the remaining requirement ledger are still open.
 - Draft actual lexical block state joins, nearest-loop control and complete native block inverses, with retained full originals and independent unrun oracle/refusal source.
 - Draft populated scalar for loops, scoped initializers, exact continue updates and strictly bounded unit counter increments/decrements; connect existing numeric declaration hints, with full originals and independent unrun boundary/refusal source.
 - Draft independently checked local types and erased TypeScript wrappers, retaining real native domains through expanded JSDoc, complete original source inverses and independent unrun nested/refusal cases.
+- Draft whole actual declaration lists, ordered comma header effects and per-scope counter mutability, with complete original controls and independent unrun ordering/ownership/refusal cases.

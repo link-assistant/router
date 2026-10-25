@@ -474,3 +474,10 @@ JSDoc retention, original parenthesized JSDoc checks and checked as/prefix/
 satisfies/non-null wrappers. Full originals and independent unrun JS/strict TS/
 native/refusal cases are retained. Structural types, domain-changing casts,
 namespace/bootstrap, production parity and every unfinished requirement remain open.
+
+The [original declaration list draft](http-resource-declaration-lists-draft.md)
+adds sequential actual local/header declarations, ordered comma header effects,
+last-declaration guards and correctly scoped header mutability. Complete originals
+and independent unrun JS/strict TS/native/ordering/refusal cases are retained.
+General expression sequences, wider language domains, namespace/bootstrap,
+production parity and every unfinished requirement remain open.

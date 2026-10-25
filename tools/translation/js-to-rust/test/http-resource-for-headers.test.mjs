@@ -44,7 +44,7 @@ test('unit counter update requires actual strict bounds immutable limits and an 
   'export function bad(){for(const index=0n;index<3n;index++){}return null;}',
   'export function bad(){for(let index=0n;index<3n;index++){}return index;}',
   'export function bad(){for(var index=0n;index<3n;index=add(index,1n)){}return null;}',
-  'export function bad(){for(let index=0n,other=0n;index<3n;index=add(index,1n)){}return null;}',
+  'export function bad(){for(let index=0n,index=0n;index<3n;index=add(index,1n)){}return null;}',
   'export function bad(){for(let index=0n;index<3n;index=true){}return null;}',
   'export function bad(){for(let index=0n;index>0n;index++){}return null;}',
  ]){const value=imports+body;assert.throws(()=>translateHttpResourceCallerTypeScript(value,input(value)),body);}
