@@ -1,10 +1,15 @@
 // Per-invocation source proposals only. Callers must check every whole body.
-export function orderHttpResourceLocalFunctions(ts,functions){
- const declared=new Map(functions.map(item=>[item.name.text,item])),edges=new Map();let cells=0;
+export function orderHttpResourceLocalFunctions(ts,functions,{groups=false}={}){
+ const declared=new Map(functions.map(item=>[item.name.text,item])),positions=new Map(functions.map((item,index)=>[item.name.text,index])),edges=new Map();let cells=0;
  for(const item of functions){const calls=new Set();const visit=(node,depth=0)=>{if(++cells>200000||depth>256)throw new TypeError('Complete local caller source census bound');if(ts.isCallExpression(node)&&ts.isIdentifier(node.expression)&&declared.has(node.expression.text))calls.add(node.expression.text);ts.forEachChild(node,child=>visit(child,depth+1));};visit(item.body);edges.set(item.name.text,[...calls]);}
- const active=new Set(),done=new Set(),ordered=[];
- function visit(name,depth=0){if(depth>64)throw new TypeError('Complete local call graph depth bound');if(done.has(name))return;if(active.has(name))throw new TypeError('Recursive resource helpers require a separate signature/effect rule');active.add(name);for(const child of edges.get(name))visit(child,depth+1);active.delete(name);done.add(name);ordered.push(declared.get(name));}
- for(const item of functions)visit(item.name.text);return ordered;
+ const indices=new Map(),low=new Map(),stack=[],active=new Set(),ordered=[];let sequence=0;
+ function visit(name,depth=0){
+  if(depth>64)throw new TypeError('Complete local call graph depth bound');indices.set(name,sequence);low.set(name,sequence++);stack.push(name);active.add(name);
+  for(const child of edges.get(name)){if(!indices.has(child)){visit(child,depth+1);low.set(name,Math.min(low.get(name),low.get(child)));}else if(active.has(child))low.set(name,Math.min(low.get(name),indices.get(child)));}
+  if(low.get(name)===indices.get(name)){const names=[];let child;do{child=stack.pop();active.delete(child);names.push(child);}while(child!==name);names.sort((left,right)=>positions.get(left)-positions.get(right));ordered.push({items:names.map(name=>declared.get(name)),recursive:names.length>1||edges.get(name).includes(name)});}
+ }
+ for(const item of functions)if(!indices.has(item.name.text))visit(item.name.text);
+ if(groups)return ordered;if(ordered.some(group=>group.recursive))throw new TypeError('Recursive resource helpers require a separate signature/effect rule');return ordered.flatMap(group=>group.items);
 }
 export function httpResourceLocalContracts(rows){
  const contracts=new Map();let cells=0;

@@ -132,6 +132,14 @@ refusal source are retained. Partial release, recursion/generics/methods, wider
 language/resource domains, namespace/bootstrap, production adoption and every
 unfinished requirement remain open.
 
+The [restricted recursion draft](http-resource-recursion-draft.md) adds actual
+strongly connected function groups, original explicit return obligations, whole
+synchronous scalar/owned body checking and canonical native annotation/inverse
+rules. Full original source histories and independent unrun JS/strict TS/native
+oracle/refusal source are retained. General recursion/signatures, loops/mutation,
+language/resource domains, namespace/bootstrap, production adoption/parity and
+every unfinished requirement remain open.
+
 The [Option guard draft](http-resource-option-guards-draft.md) adds whole absent
 branches, every-exit resource cleanup, explicit fallback domains, Some payload
 moves, same-Option propagation and complete canonical native inverse rules.

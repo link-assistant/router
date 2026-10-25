@@ -295,6 +295,15 @@ separate complete proof. See the
 [returned-root set draft](http-resource-root-sets-draft.md); all new source and
 native qualification remains unrun during bulk drafting.
 
+Recursive helper types must come from actual written signatures on complete
+ordinary source declarations. Check every original body in the group and
+require its actual return/ownership domain before emitting anything. Restricted
+synchronous scalar typing does not supply Rust namespace/producer ownership,
+termination, async recursion or resource effects. Preserve real annotation
+spans and fresh full native reproduction. See the
+[restricted recursion draft](http-resource-recursion-draft.md); all new source
+and native qualification remains unrun during bulk drafting.
+
 Helper resource release summaries must join actual mutable-input state at every
 original exit. Mark a caller argument disposed only when all checked exits
 release that same exclusive input; partial releases need outcome-sensitive
