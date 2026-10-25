@@ -570,3 +570,10 @@ Never erase generic arguments on ordinary operation queries. Native async docs
 must retain cold future types with real settled-value domains. See the
 [written/cold return draft](http-resource-cold-return-types-draft.md); every new
 receiving/runtime/native qualification remains unrun.
+
+Post-test loop substitution must evaluate its condition on every normal and
+nearest-continue path, and skip it on break/return. Reset the continue context at
+nested loops/callbacks, retain whole loop state/root obligations and recheck the
+complete ordinary native inverse. Keep semantic EOF edits in the language
+sequence at original coordinates. See the [post-test loop draft](http-resource-do-loops-draft.md);
+all new receiving and native cases remain unrun.

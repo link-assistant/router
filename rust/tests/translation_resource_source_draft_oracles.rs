@@ -24,3 +24,5 @@ mod outcome_callbacks;
 mod option_callbacks;
 #[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-cold-return-types-oracle.rs"]
 mod cold_return_types;
+#[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-do-loops-oracle.rs"]
+mod do_loops;

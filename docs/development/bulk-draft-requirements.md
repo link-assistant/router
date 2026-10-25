@@ -392,3 +392,10 @@ independent unrun JS/strict TS/native lazy/value/source-refusal cases are
 retained; a tenth oracle joins gated CI discovery. General generic/method/async
 domains, namespace/bootstrap, production parity and every unfinished requirement
 remain open.
+
+The [post-test loop draft](http-resource-do-loops-draft.md) adds actual do/while
+source checking, condition gates on normal fallthrough and nearest continues,
+nested control isolation and complete canonical native inverses. Full originals
+and independent unrun JS/strict TS/native/refusal cases are retained; an
+eleventh oracle joins gated CI discovery. Wider loop/language domains,
+namespace/bootstrap, production parity and every unfinished requirement remain open.
