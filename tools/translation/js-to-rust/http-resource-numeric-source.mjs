@@ -3,10 +3,10 @@
 const fail=message=>{throw new TypeError('Async control u64 guard: '+message);};
 export const CONTROL_U64_GUARD_MESSAGE='Control u64 input outside native range';
 function unparenthesized(ts,node){let depth=0;while(ts.isParenthesizedExpression(node)){if(++depth>16)fail('guard grouping bound');node=node.expression;}return node;}
-function originalGuards(ts,statements,file,parameters){
+function originalGuards(ts,statements,file,parameters,parameterType=null){
  const records=[],names=new Set();let at=0;
  for(;at<statements.length;at++){
-  const statement=statements[at],container=observeHttpResourceNumericContainerGuard(ts,statement,file,parameters);if(container){if(names.has(container.name))fail('one complete original numeric parameter guard required');records.push(container);names.add(container.name);continue;}if(!ts.isIfStatement(statement)||statement.elseStatement)break;
+  const statement=statements[at],container=observeHttpResourceNumericContainerGuard(ts,statement,file,parameters,parameterType);if(container){if(names.has(container.name))fail('one complete original numeric parameter guard required');records.push(container);names.add(container.name);continue;}if(!ts.isIfStatement(statement)||statement.elseStatement)break;
   const condition=unparenthesized(ts,statement.expression);if(!ts.isBinaryExpression(condition)||condition.operatorToken.kind!==ts.SyntaxKind.BarBarToken)break;
   const right=unparenthesized(ts,condition.right),left=unparenthesized(ts,condition.left);if(!ts.isBinaryExpression(left)||left.operatorToken.kind!==ts.SyntaxKind.BarBarToken)break;
   const primitive=unparenthesized(ts,left.left),lower=unparenthesized(ts,left.right),upper=right;
@@ -20,12 +20,12 @@ function originalGuards(ts,statements,file,parameters){
  }
  return {statements:statements.slice(at),records};
 }
-export function selectHttpResourceNumericCallerBody(ts,item,imports,file,contract){
- const parameters=new Set(item.parameters.filter(parameter=>ts.isIdentifier(parameter.name)).map(parameter=>parameter.name.text)),root=originalGuards(ts,item.body.statements,file,parameters);let statements=root.statements,lazy=false,allowColdTail=false,records=root.records;
+export function selectHttpResourceNumericCallerBody(ts,item,imports,file,contract,{parameterType=null}={}){
+ const parameters=new Set(item.parameters.filter(parameter=>ts.isIdentifier(parameter.name)).map(parameter=>parameter.name.text)),root=originalGuards(ts,item.body.statements,file,parameters,parameterType);let statements=root.statements,lazy=false,allowColdTail=false,records=root.records;
  if(statements.length===1&&ts.isReturnStatement(statements[0])&&ts.isCallExpression(statements[0].expression)&&ts.isIdentifier(statements[0].expression.expression)){
   const call=statements[0].expression,imported=imports.get(call.expression.text);
   if(imported==='deferFilesystemFlow'){
-   const callback=call.arguments[0];if(call.arguments.length!==1||call.typeArguments?.length||!ts.isArrowFunction(callback)||callback.parameters.length||callback.type||callback.typeParameters?.length||callback.modifiers?.length!==1||callback.modifiers[0].kind!==ts.SyntaxKind.AsyncKeyword||!ts.isBlock(callback.body))fail('one closed original deferred async body required');const inner=originalGuards(ts,callback.body.statements,file,parameters);statements=inner.statements;records=[...records,...inner.records];lazy=true;
+   const callback=call.arguments[0];if(call.arguments.length!==1||call.typeArguments?.length||!ts.isArrowFunction(callback)||callback.parameters.length||callback.type||callback.typeParameters?.length||callback.modifiers?.length!==1||callback.modifiers[0].kind!==ts.SyntaxKind.AsyncKeyword||!ts.isBlock(callback.body))fail('one closed original deferred async body required');const inner=originalGuards(ts,callback.body.statements,file,parameters,parameterType);statements=inner.statements;records=[...records,...inner.records];lazy=true;
   }else if(contract(imported)?.async){lazy=true;allowColdTail=true;}
  }
  if(new Set(records.map(row=>row.name)).size!==records.length)fail('one complete entry guard per numeric parameter');return {statements,lazy,allowColdTail,inputGuards:records};

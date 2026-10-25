@@ -11,8 +11,7 @@ function ownedValue(type,depth=0){
 }
 export function httpResourcePublicInputDomain(type,{guarded=false}={}){
  if(typeof type!=='string'||['u64','i64'].includes(type)&&!guarded)return false;
- if(['optional:i64','http-result:i64'].includes(type))return guarded;
- if(type.endsWith(':i64'))return false;
+ if(type.endsWith(':i64'))return guarded&&httpResourceNumericContainerGuardDomain(type)&&ownedValue(type)&&!httpResourceResultOwnsDisposal(type);
  if(['str','bool','u64','i64','cancel-ref','sender-ref','receiver-mut','http-client-ref','http-client-mut','http-stream-ref','http-stream-mut','json-ref','json-list-ref','bytes-ref'].includes(type))return true;
  return ownedValue(type)&&!httpResourceResultOwnsDisposal(type);
 }
@@ -28,3 +27,5 @@ export function httpResourcePublicInputType(type,operation){
  if(!selected){if(type.startsWith('result:')){const settled=httpResourcePublicInputType(type.slice(7),operation);return 'Awaited<ReturnType<typeof '+operation('router_async_with_deadline')+'<'+settled+'>>>'; }throw new TypeError('Public owned domain needs an actual complete matching operation signature');}
  const query='ReturnType<typeof '+operation(selected.javascriptName)+'>';return selected.async?'Awaited<'+query+'>':query;
 }
+
+import {httpResourceNumericContainerGuardDomain} from './http-resource-container-guards.mjs';

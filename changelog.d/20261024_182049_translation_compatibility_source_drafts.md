@@ -174,3 +174,4 @@ integration and the remaining requirement ledger are still open.
 - Draft original numeric Option/Result payload ingress guards, guarded signed parameter domains and canonical native inverses, with full originals and independent unrun range/constructor/refusal oracle source.
 - Draft native Promise/PromiseLike type obligations and precise cold/eager return distinctions, retaining complete originals and independent unrun Awaited/alias/refusal source.
 - Draft actual generic deadline type equations and checked control-result witnesses, preserving complete original declaration/source joins and independent unrun constructor/refusal cases.
+- Draft source-typed recursive numeric ingress and exact native constructor/path guards, retaining complete originals and independent unrun ControlError/range/refusal oracle source.

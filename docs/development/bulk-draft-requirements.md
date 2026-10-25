@@ -558,3 +558,11 @@ Five complete originals, the original declaration asset and independent unrun
 JS/strict TS/native/source/refusal cases are retained. Generic callback execution,
 recursive numeric ingress, namespace/bootstrap, production parity and every
 unfinished requirement remain open.
+
+The [source-typed nested numeric ingress draft](http-resource-nested-guards-draft.md)
+adds actual qualified parameter constructor chains, complete successful payload
+paths and original range obligations through nested Option/control/text/I/O
+results. Five complete originals and independent unrun JS/strict TS/native/path/
+refusal cases are retained; a twenty-third oracle uses real native ControlError.
+Numeric collections, wider async effects, namespace/bootstrap, production parity
+and every unfinished requirement remain open.

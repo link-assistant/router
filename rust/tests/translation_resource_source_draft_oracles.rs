@@ -48,3 +48,5 @@ mod generic_identity;
 mod generic_linear;
 #[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-container-guards-oracle.rs"]
 mod container_guards;
+#[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-nested-guards-oracle.rs"]
+mod nested_guards;

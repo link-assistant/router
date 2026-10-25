@@ -2,11 +2,12 @@
 const fail=message=>{throw new TypeError('Resource original numeric container guard: '+message);};
 const constructors=Object.freeze([{prefix:'optional',tag:'Some',label:'optional'},{prefix:'http-result',tag:'Ok',label:'result'}]);
 const limits=Object.freeze({u64:{minimum:'0',maximum:'18446744073709551615'},i64:{minimum:'-9223372036854775808',maximum:'9223372036854775807'}});
-export function httpResourceNumericContainerGuardDomain(type){return constructors.some(row=>['u64','i64'].some(integer=>type===row.prefix+':'+integer));}
+export function httpResourceNumericContainerGuardDomain(type){return httpResourceNestedNumericGuardPath(type)!==null;}
 function unwrap(ts,node){let depth=0;while(node&&ts.isParenthesizedExpression(node)){if(++depth>16)fail('complete original guard grouping bound');node=node.expression;}return node;}
 function property(ts,node,name,field){node=unwrap(ts,node);return !!node&&ts.isPropertyAccessExpression(node)&&!node.questionDotToken&&ts.isIdentifier(node.expression)&&node.expression.text===name&&node.name.text===field;}
 function message(row,integer){return 'Resource '+row.label+' '+integer+' input outside native range';}
-export function observeHttpResourceNumericContainerGuard(ts,statement,file,parameters){
+export function observeHttpResourceNumericContainerGuard(ts,statement,file,parameters,parameterType=null){
+ const nested=observeHttpResourceNestedNumericGuard(ts,statement,file,parameters,parameterType);if(nested)return nested;
  if(!ts.isIfStatement(statement)||statement.elseStatement)return null;const condition=unwrap(ts,statement.expression);if(!ts.isBinaryExpression(condition)||condition.operatorToken.kind!==ts.SyntaxKind.AmpersandAmpersandToken)return null;
  const tag=unwrap(ts,condition.left);if(!ts.isBinaryExpression(tag)||tag.operatorToken.kind!==ts.SyntaxKind.EqualsEqualsEqualsToken||!ts.isStringLiteral(tag.right))return null;const row=constructors.find(value=>value.tag===tag.right.text);if(!row)return null;const owner=unwrap(ts,tag.left);if(!ts.isPropertyAccessExpression(owner)||owner.questionDotToken||!ts.isIdentifier(owner.expression)||owner.name.text!=='$')return null;const name=owner.expression.text;if(!parameters.has(name))fail('original numeric container guard must bind its actual parameter');
  const bounds=unwrap(ts,condition.right);if(!ts.isBinaryExpression(bounds)||bounds.operatorToken.kind!==ts.SyntaxKind.BarBarToken)fail('complete actual successful-payload range required');const left=unwrap(ts,bounds.left),upper=unwrap(ts,bounds.right);if(!ts.isBinaryExpression(left)||left.operatorToken.kind!==ts.SyntaxKind.BarBarToken)fail('complete original payload type and lower bound required');const primitive=unwrap(ts,left.left),lower=unwrap(ts,left.right);
@@ -16,5 +17,8 @@ export function observeHttpResourceNumericContainerGuard(ts,statement,file,param
  const span={start:statement.getStart(file),end:statement.end};return {name,type:row.prefix+':'+integer,span,source:file.text.slice(span.start,span.end),minimum:limit.minimum,maximum:limit.maximum,sourceAuthority:false,semanticAuthority:false};
 }
 export function emitHttpResourceNumericContainerGuard({name,type}){
+ if(!constructors.some(row=>['u64','i64'].some(integer=>type===row.prefix+':'+integer)))return emitHttpResourceNestedNumericGuard({name,type});
  const row=constructors.find(row=>type.startsWith(row.prefix+':')),integer=row?type.slice(row.prefix.length+1):null,limit=limits[integer];if(!row||!limit)fail('complete actual original numeric container domain required');return 'if ('+name+'.$ === '+JSON.stringify(row.tag)+' && (typeof '+name+'.field0 !== "bigint" || '+name+'.field0 < '+limit.minimum+'n || '+name+'.field0 > '+limit.maximum+'n)) { throw new RangeError('+JSON.stringify(message(row,integer))+'); }';
 }
+
+import {httpResourceNestedNumericGuardPath,observeHttpResourceNestedNumericGuard,emitHttpResourceNestedNumericGuard} from './http-resource-nested-numeric-guards.mjs';
