@@ -40,3 +40,5 @@ mod lexical_scopes;
 mod for_headers;
 #[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-text-equality-oracle.rs"]
 mod text_equality;
+#[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-switches-oracle.rs"]
+mod switches;

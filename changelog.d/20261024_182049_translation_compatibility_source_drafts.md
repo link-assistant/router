@@ -165,3 +165,4 @@ integration and the remaining requirement ledger are still open.
 - Draft independently checked local types and erased TypeScript wrappers, retaining real native domains through expanded JSDoc, complete original source inverses and independent unrun nested/refusal cases.
 - Draft whole actual declaration lists, ordered comma header effects and per-scope counter mutability, with complete original controls and independent unrun ordering/ownership/refusal cases.
 - Draft exact scalar text equality and read-only owned String captures, preserving actual move/root checks, full originals and independent unrun Unicode/native/refusal source.
+- Draft original terminal scalar switches, stacked labels and complete returning case trees, retaining shared-scope rules, full originals and independent unrun native/refusal cases.

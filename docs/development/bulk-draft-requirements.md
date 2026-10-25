@@ -489,3 +489,11 @@ originals and independent unrun JS/strict TS/native/Unicode/refusal cases are
 retained; an eighteenth oracle joins gated CI discovery. Wider captures/language
 domains, namespace/bootstrap, production parity and every unfinished requirement
 remain open.
+
+The [terminal scalar switch draft](http-resource-switches-draft.md) adds actual
+stable selectors, checked literal/stacked labels, shared case lexical census,
+complete returning arms and canonical scoped native case-tree inverses. Full
+originals and independent unrun JS/strict TS/native/Unicode/TDZ/refusal cases are
+retained; a nineteenth oracle joins gated CI discovery. Continuing switches,
+fallthrough/dynamic labels, namespace/bootstrap, production parity and every
+unfinished requirement remain open.
