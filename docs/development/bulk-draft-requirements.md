@@ -83,3 +83,11 @@ CST/source inverses and independent unrun JS/strict TS/native oracle/refusal
 source are retained. Broader numeric/control grammars, generic/recursive/async
 and HTTP resources, namespace/bootstrap, production adoption, receiving/CI
 repairs and every unfinished requirement remain open.
+
+The [closed HTTP deadline core draft](http-deadline-core-draft.md) adds three
+matching native/JS operations with actual settlement/Drop cleanup, late owned
+stream disposal, complete root/library source histories and additive receiving
+assets. Independent unrun loopback, strict TS, settlement-edge and Rust oracle
+source is retained. General HTTP caller lowering/inverses/units, other async
+domains, namespace/bootstrap, production adoption/parity, remaining CI/receiving
+repairs and every unfinished requirement remain open.

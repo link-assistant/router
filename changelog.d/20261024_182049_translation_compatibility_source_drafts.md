@@ -89,3 +89,5 @@ integration and the remaining requirement ledger are still open.
 - Draft complete transitive source-history forwarding through intermediate copy plans while preserving direct file membership, full CST inverses, fresh physical/original source guards and independent unrun regression source.
 
 - Draft source-bound u64 entry guards for async delay/capacity parameters, canonical Rust inverse guard proposals, paired numeric signatures and independent unrun JS/strict TS/native oracle/refusal source.
+
+- Draft fixed native/JS HTTP deadline operations with known-child settlement, explicit interrupted-read and late owned-stream cleanup, complete native root/library source construction, additive receiving closure and independent unrun loopback/strict TS/native oracle source.

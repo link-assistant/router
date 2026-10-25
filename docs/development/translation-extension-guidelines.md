@@ -250,3 +250,12 @@ recheck the complete original body after checked meta round trips. Canonical
 Rust inverses must propose real JS guards before fresh checking. See the
 [guarded numeric draft](async-control-u64-draft.md). All new source and native
 oracle cases remain unrun during bulk drafting.
+
+HTTP deadline resource callers must not return exclusive loans before actual JS
+abort/finally cleanup finishes. Fixed native/JS operations may wait for their
+known HTTP child and close a late owned stream or an interrupted borrowed read.
+Keep general arbitrary-callback deadline behavior intact. Unstarted timeout or
+preexisting cancellation must not consume the original stream. Retain full
+root/library CST histories, fresh runtime closure and independent native cases;
+see the [closed HTTP deadline draft](http-deadline-core-draft.md). All new source
+and receiving qualification remains unrun during bulk drafting.
