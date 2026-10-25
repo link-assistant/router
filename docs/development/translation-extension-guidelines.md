@@ -34,6 +34,14 @@ Keep exact substitution spans inside their native owner, including complete
 function replacements; trailing trivia cannot widen that owner. See the
 [unrun scoped continuation draft](http-resource-scoped-branches-draft.md).
 
+Compose existing matching JSON storage implementations through their real
+current native/root/facade/runtime sources and closed domains. Mutable JSON
+state requires a genuinely owned constructor, copy or carrier payload; a shared
+input annotation cannot transfer ownership. Preserve whole moves, reinitializing
+assignments, loop/branch state joins, Some(Null) versus None, and the existing
+bounded successful-resource contract. List and callback shapes need independent
+rules. See the [unrun JSON resource draft](http-resource-json-state-draft.md).
+
 ### Source synchronization exports during issue #759
 
 Keep every public synchronization CLI in the shared

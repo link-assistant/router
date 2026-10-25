@@ -152,6 +152,15 @@ retained. General shadowing, outcome-sensitive incompatible state, labels,
 exceptional exits, namespace/bootstrap, production parity and every unfinished
 requirement remain open.
 
+The [owned JSON resource state draft](http-resource-json-state-draft.md) composes
+existing matching field/index updates, append, removal, merge, key/length
+queries and optional parsing with actual native/root/runtime joins and owned
+JSON loop/branch replacement. Full original contracts/capture/flow/projection
+histories and independent unrun JS/strict TS/native oracle/refusal source are
+retained. Borrowed JSON views, list/callback domains, incompatible state joins,
+namespace/bootstrap, production parity and every unfinished requirement remain
+open.
+
 The [local resource helper draft](http-resource-local-functions-draft.md) now
 checks actual callee bodies before callers, composes cold futures and single
 returned roots, preserves source order and separates imported/local binding

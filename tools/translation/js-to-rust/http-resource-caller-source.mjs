@@ -8,6 +8,7 @@ import {createOwnedCoreSourceContext,ownedPlainData,ownedSourcePath,ownedCoreSou
 import {observeHttpDeadlineResultSources as observeHttpDeadlineSources} from '../http-deadline-result-native-inputs.mjs';
 import {requireOwnedIntegerSources} from './owned-integer-contracts.mjs';
 import {requireOwnedPrimitiveOptionSources} from './owned-primitive-option-contracts.mjs';
+import {requireOwnedStateSources} from './owned-state-contracts.mjs';
 import {httpDeadlineResultRuntimeSources as httpDeadlineRuntimeSources} from '../http-deadline-result-runtime-sources.mjs';
 import {ASYNC_CONTROL_NATIVE_SOURCE,ASYNC_CONTROL_RUNTIME_SOURCE,ASYNC_CONTROL_DECLARATIONS_SOURCE} from '../async-control-native-source.mjs';
 import {httpResourceCallerContract,httpResourceCallerName,checkHttpResourceCallerFlow} from './http-resource-caller-flow.mjs';
@@ -23,9 +24,9 @@ export function captureHttpResourceCallerInputs(input){
  const runtimePath=runtimeRoot+'/async-control-runtime.mjs',flowRuntimePath=runtimeRoot+'/extensions/filesystem-effects-runtime.mjs',flowSource=files.get(flowRuntimePath),callerSource=files.get(sourcePath);
  if(typeof callerSource!=='string'||sourcePath.startsWith(runtimeRoot+'/')||sourcePath.startsWith(declarationRoot+'/'))fail('complete actual caller must be separate from library inputs');
  if(flowSource!==readFileSync(FLOW,'utf8')||flowSource!==readFileSync(new URL('../source-profiles/async-control-callers/originals/filesystem-effects-runtime.mjs.txt',import.meta.url),'utf8'))fail('complete original cold-flow library differs');
- const nativeInputs=observeHttpDeadlineSources(files,{runtimeRoot,declarationRoot}).records.concat(requireOwnedIntegerSources(files,{runtimeRoot,declarationRoot}),requireOwnedPrimitiveOptionSources(files,{runtimeRoot,declarationRoot})),expected=httpDeadlineRuntimeSources(runtimeRoot,declarationRoot);
+ const nativeInputs=observeHttpDeadlineSources(files,{runtimeRoot,declarationRoot}).records.concat(requireOwnedIntegerSources(files,{runtimeRoot,declarationRoot}),requireOwnedPrimitiveOptionSources(files,{runtimeRoot,declarationRoot}),requireOwnedStateSources(files)),expected=httpDeadlineRuntimeSources(runtimeRoot,declarationRoot);
  for(const row of expected)if(files.get(row.path)!==row.source)fail('complete actual HTTP runtime/declaration closure differs: '+row.path);
- const current=()=>{requireOwnedCoreSourceCurrent(privateContext);for(const row of httpDeadlineRuntimeSources(runtimeRoot,declarationRoot))if(files.get(row.path)!==row.source)fail('current HTTP runtime/declaration source changed');if(readFileSync(FLOW,'utf8')!==flowSource)fail('current complete cold-flow source changed');observeHttpDeadlineSources(files,{runtimeRoot,declarationRoot});requireOwnedIntegerSources(files,{runtimeRoot,declarationRoot});requireOwnedPrimitiveOptionSources(files,{runtimeRoot,declarationRoot});};
+ const current=()=>{requireOwnedCoreSourceCurrent(privateContext);for(const row of httpDeadlineRuntimeSources(runtimeRoot,declarationRoot))if(files.get(row.path)!==row.source)fail('current HTTP runtime/declaration source changed');if(readFileSync(FLOW,'utf8')!==flowSource)fail('current complete cold-flow source changed');observeHttpDeadlineSources(files,{runtimeRoot,declarationRoot});requireOwnedIntegerSources(files,{runtimeRoot,declarationRoot});requireOwnedPrimitiveOptionSources(files,{runtimeRoot,declarationRoot});requireOwnedStateSources(files);};
  current();return {sourcePath,callerSource,runtimePath,runtimeRoot,declarationRoot,flowRuntimePath,flowSource,nativeInputs,current};
 }
 
