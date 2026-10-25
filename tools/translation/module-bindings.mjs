@@ -486,12 +486,13 @@ export function resolveModuleBindings({modules,externalModules=new Map(),compila
 // Explicit dimension format; every legacy resolver/default byte above remains exact.
 import {isDeriveEnclosingNamespaceContext,deriveEnclosingNamespaceModules,deriveEnclosingNamespaceOutputAt,deriveEnclosingNamespaceHelperAttributeAt,proveDeriveEnclosingNamespaceEffect,deriveEnclosingNamespaceEffectFacts} from './derive-enclosing-namespace-context.mjs';
 import {enumNamespaceBody,originalEnumNamespaceSourcePlan} from './enum-namespace-header.mjs';
-export function resolveEnclosingNamespaceModuleBindings({modules,externalModules=new Map(),compilationProfile:profileInput=null,deriveContext=null,deriveBangContext=null,toolContext=null}={}) {
+function resolveRegisteredBuiltinEnclosingSourceBindings({modules,externalModules=new Map(),compilationProfile:profileInput=null,deriveContext=null,deriveBangContext=null,toolContext=null}={},registeredAttributes=false) {
   if(!Array.isArray(modules) || !(externalModules instanceof Map))throw new TypeError('Binding resolution requires tracked modules and explicit external tables');
   if(deriveContext&&!isDeriveFootprintContext(deriveContext))throw new TypeError('Unsealed derive footprint context');
   if(deriveBangContext){if(!isDeriveEnclosingNamespaceContext(deriveBangContext))throw new TypeError('Unsealed derive bang output context');modules=deriveEnclosingNamespaceModules(deriveBangContext,{deriveContext,modules,externalModules,compilationProfile:profileInput});}
   if(toolContext&&!isToolAttributeContext(toolContext))throw new TypeError('Unsealed tool attribute context');
-  const profile=compilationProfile(profileInput);
+  if(registeredAttributes)modules=modules.map(module=>{const all=originalSourceModuleItems(module);return {...module,items:all,allItems:all};});
+  const registered=registeredAttributes?createOriginalRegisteredBuiltinCallerAttributeScope():null,profile=compilationProfile(profileInput);
   let enumNamespacePlan=null;
   const scopes=new Map(),containers=new Map(),tasks=[],macroUses=[],diagnostics=[];
   const diagnostic=(scope,message,span,extra={})=>{const value={kind:'module-binding',message,source:scope.file,module:[...scope.path],span,...extra};diagnostics.push(value);return value;};
@@ -526,10 +527,10 @@ export function resolveEnclosingNamespaceModuleBindings({modules,externalModules
       if(innerBuiltin){scope.innerBuiltinNames.push({name:innerBuiltin.name,span:innerBuiltin.span});continue;}
       try {
         const tokens=tokensOf(item),head=header(tokens,scope.path),moduleAttribute=tokens[head.at]?.text==='mod';
-        const nestedExport=nestedExportUncertainty(tokens,head.at,profile,span=>deriveContext&&deriveFootprintHelperAttributeAt(deriveContext,module,item,span)||deriveBangContext&&deriveEnclosingNamespaceHelperAttributeAt(deriveBangContext,deriveContext,module,item,span));
+        const nestedExport=nestedExportUncertainty(tokens,head.at,profile,span=>deriveContext&&deriveFootprintHelperAttributeAt(deriveContext,module,item,span)||deriveBangContext&&deriveEnclosingNamespaceHelperAttributeAt(deriveBangContext,deriveContext,module,item,span)||registered&&registered.at(module,item,{name:module.source.slice(span.start,span.end).match(/^#\s*\[\s*([A-Za-z_][A-Za-z0-9_]*)/u)?.[1],span}));
         if(nestedExport){scope.baseMacro=scope.baseBang=true;diagnostic(scope,'nested source attribute can introduce crate-root exported macros; expansion remains unresolved',nestedExport);}
         const macroUse=moduleAttribute&&head.attributes.some(attribute=>attribute.name==='macro_use'&&attribute.tokens.length===1)&&condition.status==='active'&&scope.configurationCondition==='active';
-        const effectiveAttributes=head.attributes.filter(attribute=>!isInertConditionalAttribute(condition.attributes.find(original=>original.span.start===attribute.span.start))&&!(attribute.name==='cfg'&&condition.attributes.find(original=>original.span.start===attribute.span.start)?.evaluation?.value===true)&&!(macroUse&&attribute.name==='macro_use'&&attribute.tokens.length===1)&&!(toolContext&&toolAttributeAt(toolContext,module,item,attribute))),uncertain=uncertainty(effectiveAttributes,{moduleAttribute});
+        const effectiveAttributes=head.attributes.filter(attribute=>!isInertConditionalAttribute(condition.attributes.find(original=>original.span.start===attribute.span.start))&&!(attribute.name==='cfg'&&condition.attributes.find(original=>original.span.start===attribute.span.start)?.evaluation?.value===true)&&!(macroUse&&attribute.name==='macro_use'&&attribute.tokens.length===1)&&!(toolContext&&toolAttributeAt(toolContext,module,item,attribute))&&!(registered&&registered.at(module,item,attribute))),uncertain=uncertainty(effectiveAttributes,{moduleAttribute});
         const deriveCertificate=deriveContext&&['struct','enum'].includes(item.term)?deriveFootprintAt(deriveContext,module,item):null;
         if(deriveCertificate) {
           // Only the original invocation is narrowed. The sealed expansion
@@ -766,8 +767,16 @@ export function resolveEnclosingNamespaceModuleBindings({modules,externalModules
     if(result.error || task.conditional || !task.glob && result.bindings?.some(binding=>binding.status!=='resolved') || task.glob && (!result.container || result.container===task.scope || result.container.unknownType || result.container.unknownMacro))diagnostic(task.scope,result.error??'use scope completeness, target or compilation condition remains unresolved',task.span,{name:task.name??null,glob:!!task.glob});
     if(!task.glob && result.bindings?.some(binding=>!narrower(task.visibility,binding.visibility)))diagnostic(task.scope,'reexport visibility exceeds the checked target visibility',task.span,{name:task.name});
   }
-  const result=frozen(structuredClone({version:1,compilationProfile:profile,editionProfile:'2018+',externPrelude,scopes:[...scopes.values()].map(scope=>({file:scope.file,path:scope.path,compilationProfile:profile,configurationCondition:scope.configurationCondition,bindings:scope.bindings,unresolvedImports:diagnostics.filter(diagnostic=>diagnostic.source===scope.file && key(diagnostic.module)===key(scope.path)),unresolvedTypeScope:scope.unknownType,unresolvedMacroScope:scope.unknownMacro,unresolvedBangMacroScope:scope.unknownBang,unresolvedAttributeMacroScope:scope.unknownAttribute})),diagnostics}));
+  const registeredSource=registered?.finish();
+  const result=frozen(structuredClone({...(registeredSource?{registeredBuiltinAttributeSource:registeredSource}:{}),version:1,compilationProfile:profile,editionProfile:'2018+',externPrelude,scopes:[...scopes.values()].map(scope=>({file:scope.file,path:scope.path,compilationProfile:profile,configurationCondition:scope.configurationCondition,bindings:scope.bindings,unresolvedImports:diagnostics.filter(diagnostic=>diagnostic.source===scope.file && key(diagnostic.module)===key(scope.path)),unresolvedTypeScope:scope.unknownType,unresolvedMacroScope:scope.unknownMacro,unresolvedBangMacroScope:scope.unknownBang,unresolvedAttributeMacroScope:scope.unknownAttribute})),diagnostics}));
   resolvedSourceScopeSets.add(result.scopes);
   resolvedSourceScopeOrigins.set(result.scopes,frozen({compilationProfile:profile,modules:modules.map(module=>({file:module.file,path:[...module.path],source:module.source,hasSourceView:Object.hasOwn(module,'sourceView'),sourceView:module.sourceView,hasCompilationProfile:Object.hasOwn(module,'compilationProfile'),moduleCompilationProfile:compilationProfile(module.compilationProfile),hasConfigurationCondition:Object.hasOwn(module,'configurationCondition'),configurationCondition:module.configurationCondition}))}));
   return result;
 }
+
+// Original enclosing API retains its exact prior domain. The explicit successor
+// creates every registered source frame itself; options cannot supply one.
+export function resolveEnclosingNamespaceModuleBindings(options={}){return resolveRegisteredBuiltinEnclosingSourceBindings(options,false);}
+export function resolveRegisteredBuiltinEnclosingNamespaceModuleBindings(options={}){return resolveRegisteredBuiltinEnclosingSourceBindings(options,true);}
+
+import {createOriginalRegisteredBuiltinCallerAttributeScope} from './registered-builtin-caller-attribute-source.mjs';

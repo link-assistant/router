@@ -610,3 +610,13 @@ before their full purity/cancellation checks. Five complete original sources,
 both substitution phases, independent JS/strict TS/native inverse/tampering and
 real native range oracle cases remain unrun. Every unfinished requirement
 remains open; no test, experiment or performance/coverage measurement ran.
+
+The [written builtin attribute namespace draft](registered-builtin-caller-attributes-draft.md)
+joins twelve complete original Rust parser callbacks, normal AST construction,
+actual builtin registration and custom-attribute exclusion to exact original
+caller item spans. The owned enclosing path selects the explicit successor;
+original resolver APIs retain their domains and truncated item carriers cannot
+erase unknown producers. Four complete source copies, both substitution phases,
+independent namespace/view/source/refusal cases and native oracle source remain
+unrun. Architecture exports, other producers, derive/tool bootstrap, production
+qualification and every unfinished requirement above remain open.
