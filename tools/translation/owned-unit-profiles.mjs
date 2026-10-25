@@ -5,7 +5,7 @@ import {hostRuntimeAssets} from './host-assets.mjs';
 import {ownedOutcomeRuntimeAssets} from './owned-outcome-runtime-assets.mjs';
 import {ASYNC_CONTROL_NATIVE_INPUTS,asyncControlUnitRuntimeSources,translateAsyncControlUnit} from './async-control-unit.mjs';
 import {HTTP_RESOURCE_NATIVE_INPUTS,httpResourceUnitRuntimeSources,translateHttpResourceUnit} from './http-resource-unit.mjs';
-import {httpDeadlineRuntimeAssets} from './http-deadline-runtime-sources.mjs';
+import {httpDeadlineResultRuntimeAssets as httpDeadlineRuntimeAssets} from './http-deadline-result-runtime-sources.mjs';
 import {OWNED_CANCELLATION_NATIVE_INPUTS,ownedCancellationUnitRuntimeSources,translateOwnedCancellationUnit} from './owned-cancellation-unit.mjs';
 export function ownedUnitProfile(profile){
  if(profile==='owned-state')return {nativeInputs:OWNED_STATE_NATIVE_INPUTS,runtimeSources:ownedStateUnitRuntimeSources,translate:translateOwnedStateUnit,runtimeAssets:hostRuntimeAssets};

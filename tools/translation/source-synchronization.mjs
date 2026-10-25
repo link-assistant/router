@@ -32,3 +32,4 @@ export {httpDeadlineRuntimeAssets,httpDeadlineRuntimeSources} from './http-deadl
 export {HTTP_RESOURCE_NATIVE_INPUTS,httpResourceUnitRuntimeSources,httpResourceUnitContext,translateHttpResourceUnit} from './http-resource-unit.mjs';
 export {translateHttpResourceCallerJavaScript,translateHttpResourceCallerTypeScript,translateHttpResourceCallerConcreteSyntaxMeta,readHttpResourceCallerMeta} from './js-to-rust/http-resource-callers.mjs';
 export {translateHttpResourceCallerRust} from './js-to-rust/http-resource-rust.mjs';
+export {httpDeadlineResultRuntimeAssets,httpDeadlineResultRuntimeSources} from './http-deadline-result-runtime-sources.mjs';

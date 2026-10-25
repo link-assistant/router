@@ -97,3 +97,5 @@ integration and the remaining requirement ledger are still open.
 - Draft the physical HTTP resource source-unit profile, complete native/Cargo inputs, mirrored opaque runtimes, fresh paired signatures and original synchronization transactions in all three source directions; independent receiving/refusal source remains unrun.
 
 - Draft original-input-rooted HTTP borrowed text Results, checked local/branch root propagation, native lifetime emission and whole inverse reproduction with complete source histories and independent unrun native/refusal source.
+
+- Draft explicit by-value HTTP deadline Result adapters, all five control-error mappings, nested Result move/caller/inverse/unit rules, complete native root/runtime histories and independent unrun JS/strict TS/native/refusal source.

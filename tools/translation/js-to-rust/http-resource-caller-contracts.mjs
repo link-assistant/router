@@ -3,6 +3,7 @@
 import {ASYNC_CONTROL_CONTRACTS} from '../async-control-contracts.mjs';
 import {HTTP_TRANSPORT_CONTRACTS} from '../http-transport-contracts.mjs';
 import {HTTP_DEADLINE_CONTRACTS} from '../http-deadline-contracts.mjs';
+import {HTTP_DEADLINE_RESULT_CONTRACTS} from '../http-deadline-result-contracts.mjs';
 import {HTTP_PROTOCOL_CONTRACTS} from '../http-protocol-contracts.mjs';
 import {asyncControlCallerContract} from './async-control-caller-flow.mjs';
 const role=Object.freeze({'shared-cancellation':'cancel-ref','shared-sender':'sender-ref','exclusive-receiver':'receiver-mut','shared-http-client':'http-client-ref','exclusive-http-client':'http-client-mut','shared-http-stream':'http-stream-ref','exclusive-http-stream':'http-stream-mut'});
@@ -11,6 +12,7 @@ const operations=[
  ...ASYNC_CONTROL_CONTRACTS.map(row=>({...asyncControlCallerContract(row.javascriptName),family:'control',release:row.rustName==='dispose'?'receiver-owned':null})),
  ...HTTP_TRANSPORT_CONTRACTS.map(row=>({...row,family:'http-transport',args:row.parameters.map(value=>role[value]??value),ret:returns[row.returns]??row.returns,release:row.rustName==='client_dispose'?'http-client-owned':row.rustName==='close'?'http-stream-owned':null})),
  ...HTTP_DEADLINE_CONTRACTS.map(row=>({...row,family:'http-deadline',args:row.parameters.map(value=>role[value]??value),ret:returns[row.returns],release:null})),
+ ...HTTP_DEADLINE_RESULT_CONTRACTS.map(row=>({...row,family:'http-deadline-result',args:[...row.parameters],ret:row.returns,release:null})),
  ...HTTP_PROTOCOL_CONTRACTS.map(row=>({...row,async:false,family:'http-protocol',args:row.parameters,ret:returns[row.returns],borrowedResult:row.root!==null,rootArgument:row.root,release:null})),
  ...[['null',[]],['array',['empty-json-list']],['bool',['bool']],['string',['str']],['u64',['u64']]].map(([name,args])=>({rustName:'json_'+name,javascriptName:'json_macro_'+name,rustPath:'crate::translation_core::json!',runtimeModule:'json-macro-runtime.mjs',family:'json-macro',args,ret:'json',async:false,nativeForm:name,release:null,sourceAuthority:false,semanticAuthority:false})),
  {rustName:'json_copy',javascriptName:'router_core_json_copy',rustPath:'crate::translation_core::json_copy',runtimeModule:'json-update-runtime.mjs',family:'json-copy',args:['json-ref'],ret:'json',async:false,release:null,sourceAuthority:false,semanticAuthority:false},

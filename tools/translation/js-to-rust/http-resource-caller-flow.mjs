@@ -44,8 +44,8 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
   if(wanted==='empty-json-list'&&ts.isArrayLiteralExpression(node)&&node.elements.length===0)return {kind:'empty-json-list',type:'empty-json-list'};
   fail('actual checked HTTP resource or scalar operand required');
  }
- function call(node,{coldTail=false}={}){
-  tick();let awaited=ts.isAwaitExpression(node);if(awaited)node=node.expression;
+ function call(node,{coldTail=false,level=depth}={}){
+  tick();if(level>160)fail('complete nested resource operation depth bound');let awaited=ts.isAwaitExpression(node);if(awaited)node=node.expression;
   if(!ts.isCallExpression(node)||!ts.isIdentifier(node.expression)||node.typeArguments?.length||!imports.has(node.expression.text))fail('one direct actual imported HTTP operation required');
   const operation=httpResourceCallerContract(imports.get(node.expression.text));if(!operation)fail('unregistered actual operation');
   if(operation.args.includes('deferred-callback'))fail('generic deadline callbacks use the separate control lane; HTTP resources require closed settled operations');
@@ -54,7 +54,7 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
   for(let index=0;index<operation.args.length;index++){
    const role=operation.args[index],argument=node.arguments[index];let value;
    if(ts.isCallExpression(argument)||ts.isAwaitExpression(argument)){
-    value=call(argument);if(role==='json-ref'&&value.type==='json')value={kind:'temporary-json-borrow',value,type:'json-ref'};
+    value=call(argument,{level:level+1});if(role==='json-ref'&&value.type==='json')value={kind:'temporary-json-borrow',value,type:'json-ref'};
    }else value=operand(argument,role,{move:!isLoan(role)&&role!=='str'});
    if(value.type!==role)fail('actual complete operation argument domain differs');
    if(value.kind==='borrow'){

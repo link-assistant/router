@@ -284,3 +284,12 @@ copies cannot supply escaping roots. Emit native lifetimes only from those
 fresh roots and require complete original Rust reproduction in the inverse.
 See the [borrowed HTTP text draft](http-resource-borrowed-text-draft.md); all new
 source/native cases remain unrun during bulk drafting.
+
+Mixed HTTP/control error callers require explicit matching native/JS by-value
+adapters. Preserve the original nested deadline APIs, every control variant,
+original provider errors and owned payloads. Whole source checking must move
+each Result once and recheck all cleanup exits; table membership or a copied
+Result object cannot supply that proof. Retain complete native root/library and
+runtime closure histories with the original bounds. See the
+[deadline Result draft](http-deadline-results-draft.md); all new receiving and
+native qualification remains unrun during bulk drafting.

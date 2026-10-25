@@ -107,6 +107,14 @@ source substitutions and independent unrun semantic, lifetime/refusal and native
 oracle source are retained. Broader local loans/error domains, production
 adoption and every unfinished requirement remain open.
 
+The [explicit deadline result draft](http-deadline-results-draft.md) adds three
+matching by-value native/JS adapters, all five control-error strings, whole
+nested Result move rules, canonical inverse and physical source-unit integration.
+Full original source histories and independent unrun variant/refusal/strict TS/
+native oracle source are retained. General language/resource domains, original
+namespace/bootstrap, production adoption/parity and every unfinished requirement
+remain open.
+
 The [closed HTTP deadline core draft](http-deadline-core-draft.md) adds three
 matching native/JS operations with actual settlement/Drop cleanup, late owned
 stream disposal, complete root/library source histories and additive receiving

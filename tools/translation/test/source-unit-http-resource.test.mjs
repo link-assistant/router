@@ -9,7 +9,7 @@ import {execFileSync} from 'node:child_process';
 import {planUnitSynchronization,applyUnitSynchronization} from '../synchronize-units.mjs';
 import {planUnitRuntimeMaterialization,applyUnitRuntimeMaterialization} from '../unit-runtime-materialization.mjs';
 import {HTTP_RESOURCE_NATIVE_INPUTS,httpResourceUnitRuntimeSources} from '../http-resource-unit.mjs';
-import {httpDeadlineReceivingData} from '../js-to-rust/test/http-deadline-receiving-data.mjs';
+import {httpResourceReceivingData as httpDeadlineReceivingData} from '../js-to-rust/test/http-resource-receiving-data.mjs';
 import {HTTP_DEADLINE_NATIVE_SOURCE} from '../http-deadline-native-source.mjs';
 import {prepareHttpResourceUnitSources} from '../prepare-http-resource-unit-sources.mjs';
 const limits={timeout:60000};

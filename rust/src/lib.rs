@@ -316,3 +316,5 @@ pub mod translation_http_protocol_core;
 pub mod translation_http_transport_core;
 
 pub mod translation_http_deadline_core;
+
+pub mod translation_http_deadline_results_core;

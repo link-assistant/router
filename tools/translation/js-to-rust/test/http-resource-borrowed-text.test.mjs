@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {translateHttpResourceCallerJavaScript,translateHttpResourceCallerTypeScript,readHttpResourceCallerMeta} from '../http-resource-callers.mjs';
 import {translateHttpResourceCallerRust} from '../http-resource-rust.mjs';
-import {httpDeadlineReceivingData} from './http-deadline-receiving-data.mjs';
+import {httpResourceReceivingData as httpDeadlineReceivingData} from './http-resource-receiving-data.mjs';
 import {sameRustSourceSyntax} from '../../rust-syntax-cells.mjs';
 import {prepareHttpResourceBorrowedSources} from '../../prepare-http-resource-borrowed-sources.mjs';
 const limits={timeout:60000},imports="import {router_http_body_base64 as encoded} from './runtime/http-protocol-runtime.mjs';\nimport {router_core_json_copy as copy} from './runtime/json-update-runtime.mjs';\n";

@@ -9,7 +9,7 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 import {execFileSync} from 'node:child_process';
 import {translateHttpResourceCallerJavaScript,translateHttpResourceCallerTypeScript,translateHttpResourceCallerConcreteSyntaxMeta,readHttpResourceCallerMeta} from '../http-resource-callers.mjs';
 import {translateHttpResourceCallerRust} from '../http-resource-rust.mjs';
-import {httpDeadlineReceivingData} from './http-deadline-receiving-data.mjs';
+import {httpResourceReceivingData as httpDeadlineReceivingData} from './http-resource-receiving-data.mjs';
 import {sameRustSourceSyntax} from '../../rust-syntax-cells.mjs';
 import {prepareReverseConcreteSource} from '../concrete-source.mjs';
 import {prepareHttpResourceCallerSources} from '../../prepare-http-resource-caller-sources.mjs';
