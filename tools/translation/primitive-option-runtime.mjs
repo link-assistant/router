@@ -57,3 +57,6 @@ export const router_option_str_is_none=(argument0)=>operate("str","is_none",[arg
 export const router_option_str_unwrap_or=(argument0,argument1)=>operate("str","unwrap_or",[argument0,argument1]);
 export const router_option_str_unwrap=(argument0)=>operate("str","unwrap",[argument0]);
 export const router_option_str_expect=(argument0,argument1)=>operate("str","expect",[argument0,argument1]);
+
+// The carrier and payload remain opaque to this shared identity operation.
+export function router_option_identity(value) { return value; }

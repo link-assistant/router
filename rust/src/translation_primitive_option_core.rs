@@ -191,3 +191,8 @@ pub fn str_expect(value: Option<&str>, other: &str) -> String {
     checked_text(other);
     value.expect(other).to_owned()
 }
+
+/// Preserve an entire generic Option without observing or dropping its payload.
+pub fn option_identity<T>(value: Option<T>) -> Option<T> {
+    value
+}

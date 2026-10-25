@@ -32,3 +32,6 @@ export declare function router_option_str_is_none(argument0:Readonly<{$:'None'}>
 export declare function router_option_str_unwrap_or(argument0:Readonly<{$:'None'}>|Readonly<{$:'Some';field0:string}>,argument1:string): string;
 export declare function router_option_str_unwrap(argument0:Readonly<{$:'None'}>|Readonly<{$:'Some';field0:string}>): string;
 export declare function router_option_str_expect(argument0:Readonly<{$:'None'}>|Readonly<{$:'Some';field0:string}>,argument1:string): string;
+
+export type GenericOption<T> = Readonly<{$:"None"}> | Readonly<{$:"Some";field0:T}>;
+export declare function router_option_identity<T>(value:GenericOption<T>):GenericOption<T>;

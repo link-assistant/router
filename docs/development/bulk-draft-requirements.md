@@ -811,3 +811,13 @@ complete functions still require fresh meta/native reproduction. Three complete
 originals, both phases and independent target/refusal/native drop cases are unrun;
 37 resource oracle modules are now drafted. Wider patterns, architecture/producer
 closure, production parity and every unfinished requirement remain open.
+
+The [generic Option ABI foundation](generic-option-foundation-draft.md) extends
+existing native/JS/dts library files without another runtime asset or module.
+Fresh optional source checks retain full original library rules, actual unchanged
+bodies and declared generic carrier fields; a signature-only descriptor cannot
+be called as an unchecked operation. Eleven compiler source equations, complete
+three-language library inverses and independent refusal/receiving/native drop
+source remain unrun. Actual generic carrier lowering and the existing if-let
+generic regression still require implementation before verification; every other
+unfinished requirement remains open.

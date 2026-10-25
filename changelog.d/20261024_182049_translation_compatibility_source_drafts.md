@@ -245,3 +245,9 @@ integration and the remaining requirement ledger are still open.
   propagation with exact lexical spans, previous-scope initializers and preserved
   else-if/return targets. Retain three complete source equations and independent
   unrun JS/strict-TS/refusal/native drop source; register resource oracle 37.
+
+- Draft a shared generic Option identity ABI in existing native/runtime files,
+  exact source additions and actual Rust/JS/dts identity checks, with a source-only
+  signature descriptor and no extra runtime asset. Retain eleven compiler source
+  equations, complete library inverses and independent unrun receiving/drop cases;
+  generic caller lowering remains the next implementation prerequisite.
