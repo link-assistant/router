@@ -15,3 +15,4 @@ export {planForwardProjectUnitSynchronization,applyForwardProjectUnitSynchroniza
 export {proposeForwardScalarBodySynchronization} from './forward-scalar-body-synchronization.mjs';
 export {proposeForwardControlBodySynchronization} from './forward-control-body-synchronization.mjs';
 export {proposeForwardImperativeBodySynchronization} from './forward-imperative-body-synchronization.mjs';
+export {proposeForwardRangeBodySynchronization} from './forward-range-body-synchronization.mjs';

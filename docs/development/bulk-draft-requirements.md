@@ -798,3 +798,13 @@ copies, exported project mode and independent strict target/zero/extreme/control
 guard/type/refusal/history plus native oracle source are drafted and unrun.
 For/iterator, owned/aggregate/generic/recursive/async bodies, namespace bootstrap,
 production adoption/parity and every other incomplete requirement remain open.
+
+The [original fixed-range inverse draft](range-body-inverse-draft.md) now adds
+source-bound range/inclusive/reverse for-of syntax, actual original generator
+observations, checked scalar binding hints and explicit literal suffix proposals.
+Whole native range/step qualification, retreat callback metadata and full target
+reproduction remain mandatory. Complete original copies, project/export mode
+and independent strict target/empty/min/max/direction/control/refusal/history
+plus native oracle source are drafted and unrun. Generic/slice/owned adapters,
+new global helper closure, namespace bootstrap, production adoption/parity and
+every other incomplete requirement remain open.

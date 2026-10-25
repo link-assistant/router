@@ -825,3 +825,12 @@ shape or caller-provided map supplies no type or owner authority. Keep exact
 native TypeScript type syntax and complete native/target reproduction. Normalize
 an empty else only when its admitted block contains no statement or effect. See
 the [imperative body draft](docs/development/imperative-body-inverse-draft.md).
+
+Range inverse rules must observe complete actual emitter generator sources and
+retain every bound, inclusive flag, reverse retreat callback and error string in
+whole target reproduction. Use original checked scalar binding observations
+only to propose native fixed domains and literal suffixes; a helper name or
+bare bigint supplies no range, step or ownership authority. Let the original
+native checker reissue standard range/reverse contracts. Preserve endpoint
+order, once-only evaluation, empty/min/max paths and current loop exits. See the
+[range body draft](docs/development/range-body-inverse-draft.md).
