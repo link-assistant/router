@@ -67,3 +67,11 @@ Complete original adapter and profile/transaction substitutions plus independent
 unrun receiving cases are retained. General source inference and async domains,
 HTTP resources, transitive source-history composition, production adoption,
 CI repairs and every unfinished row remain open.
+
+The [transitive source-history draft](transitive-source-history-draft.md) now
+forwards complete descendant rows across intermediate source families while
+preserving each plan's direct file list and fresh physical/original-source joins.
+Full original producer substitutions and independent unrun three-plan/source/
+inverse regressions are retained. Whole-chain receiving, remaining CI repairs,
+namespace/producer bootstrap, broader language/resource domains, production
+adoption/parity and every unfinished requirement remain open.

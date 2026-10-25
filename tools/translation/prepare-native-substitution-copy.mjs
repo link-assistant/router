@@ -7,6 +7,7 @@ import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {createRulePipeline} from './rule-pipeline.mjs';
 import {transportConcreteSourceEquations} from './concrete-source-equations.mjs';
 import {verifyNativeCopiedSourceBindingBatch} from './source-copy-native-bindings.mjs';
+import {nativeSourceHistoryFiles,collectNativeSourceDescendants} from './native-source-descendants.mjs';
 
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const need=(value,message)=>{if(!value)throw new TypeError('Native substitution source copy: '+message);};
@@ -53,7 +54,7 @@ export function prepareNativeSubstitutionCopy({root,archive,pin,id,laterPlans=[]
  const original=JSON.parse(gunzipSync(packed,{maxOutputLength:16777216}));
  need(original.schema==='native-substitution-source-copy-v1'&&original.id===id&&Array.isArray(original.files)&&original.files.length>0&&original.files.length<=64,'whole source-copy family');
  need(Array.isArray(laterPlans)&&laterPlans.length<=16,'bounded explicit later source DATA layers');
- const ts=ownershipCompiler();need(ts.version==='5.9.3','lockfile TypeScript 5.9.3');const seen=new Set(),files=[],originalGuards=[];
+ const ts=ownershipCompiler();need(ts.version==='5.9.3','lockfile TypeScript 5.9.3');const seen=new Set(),files=[],originalGuards=[],descendantFiles=collectNativeSourceDescendants(laterPlans,new Set(original.files.map(row=>row.path)));
  for(const row of original.files){
   const path=localPath(root,row.path);need(!seen.has(path),'unique complete original file');seen.add(path);
   const before=row.source;need(hash(before)===row.sha256&&Buffer.byteLength(before)===row.bytes,'complete original source bytes');
@@ -68,7 +69,7 @@ export function prepareNativeSubstitutionCopy({root,archive,pin,id,laterPlans=[]
   let currentAfter=after;const laterHistories=[];
   for(const later of laterPlans){
    need(later.schema==='native-substitution-source-copy-plan-v1'&&Array.isArray(later.files)&&later.sourceAuthority===false&&later.semanticAuthority===false,'later layer is source equation DATA only');
-   const candidates=later.files.filter(value=>value.path===row.path);need(candidates.length<=1,'unique later source equation');
+   const candidates=nativeSourceHistoryFiles(later).filter(value=>value.path===row.path);need(candidates.length<=1,'unique later source equation');
    if(!candidates.length)continue;const next=candidates[0];need(next.before===currentAfter&&next.inverse===next.before,'complete adjacent source history join');
    const end=next.currentAfter??next.after;parsed(ts,path,end);
    const equation=transportConcreteSourceEquations([{before:currentAfter,after:end,language:'JavaScript'}])[0];need(equation.inverse===currentAfter,'complete later source inverse');
@@ -80,8 +81,9 @@ export function prepareNativeSubstitutionCopy({root,archive,pin,id,laterPlans=[]
  const bindings=verifyNativeCopiedSourceBindingBatch(ts,files.map(row=>({path:resolve(root,row.path),source:row.currentAfter})));
  files.forEach((row,index)=>{row.nativeBindings=bindings[index];need(currentSource(resolve(root,row.path),Boolean(row.originalPath&&row.originalPath!==row.path))===row.current,'physical source changed during construction');});
  for(const original of originalGuards)need(readFileSync(original.path,'utf8')===original.source,'complete original implementation changed');
+ for(const later of laterPlans)for(const row of nativeSourceHistoryFiles(later)){need(currentSource(localPath(root,row.path),Boolean(row.originalPath&&row.originalPath!==row.path))===row.current,'complete descendant physical source changed');if(row.originalPath&&row.originalPath!==row.path)need(currentSource(localPath(root,row.originalPath))===row.before,'complete descendant original implementation changed');}
  need(readFileSync(archivePath).equals(packed),'complete original/rule input changed');
- return {schema:'native-substitution-source-copy-plan-v1',id,files,originalInputs:original.files,sourceAuthority:false,semanticAuthority:false,receivingExecuted:false};
+ return {schema:'native-substitution-source-copy-plan-v1',id,files,descendantFiles,originalInputs:original.files,sourceAuthority:false,semanticAuthority:false,receivingExecuted:false};
 }
 
 export function writeNativeSubstitutionCopy(plan,{root}={}){

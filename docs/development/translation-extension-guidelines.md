@@ -234,3 +234,11 @@ recheck the entire edited JS body before emission. Runtime-only initialization
 does not qualify application translation. See the
 [physical async unit draft](async-control-unit-draft.md). All independent source
 and receiving cases remain unrun during bulk drafting.
+
+Composed source-copy families must forward complete descendant histories even
+through intermediate plans that do not edit that path. Keep direct file lists
+and installation semantics intact, join every original/final string and CST
+inverse, and freshly compare physical sources and retained originals at ancestor
+return. Descendant metadata remains DATA and supplies no semantic permission.
+See the [transitive history draft](transitive-source-history-draft.md). Whole-chain
+receiving and all new source regressions remain unrun during bulk drafting.

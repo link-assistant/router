@@ -85,3 +85,5 @@ integration and the remaining requirement ledger are still open.
 - Draft canonical async resource Rust inverse translation using complete original reader/consumer copies, tuple and mutable-borrow syntax, actual cleanup/capture proposals, fresh full JS/meta/Rust reproduction and independent unrun receiving/refusal source.
 
 - Draft physical JS/TS/Rust async-control source-unit synchronization, current paired borrow signatures, mirrored native/runtime source capture, original fresh atomic transactions and independent unrun receiving cases.
+
+- Draft complete transitive source-history forwarding through intermediate copy plans while preserving direct file membership, full CST inverses, fresh physical/original source guards and independent unrun regression source.
