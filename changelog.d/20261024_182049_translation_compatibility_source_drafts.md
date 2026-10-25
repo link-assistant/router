@@ -187,3 +187,4 @@ integration and the remaining requirement ledger are still open.
 - Draft actual dense bounded byte literals through existing owned-buffer contracts and canonical native u8 vectors, retaining complete source histories and independent unrun target/native boundary and refusal cases.
 - Draft exact original native lexical value renaming through complete separate reader/translator copies and physical source units, preserving old initializer scope, full originals/inverses and independent unrun move, callback, transaction and native oracle cases.
 - Draft original Rust local annotation obligations with one fresh flow index and retained i64 target witnesses, preserving complete source histories and independent unrun native/target/scope/refusal cases.
+- Draft original native final-return targets, empty else insertion and scoped else-if chains through source units, preserving full source inverses, complete body checks and independent unrun target/native/refusal cases.

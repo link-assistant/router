@@ -64,3 +64,5 @@ mod byte_literals;
 mod native_bindings;
 #[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-native-local-types-oracle.rs"]
 mod native_local_types;
+#[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-native-control-oracle.rs"]
+mod native_control;

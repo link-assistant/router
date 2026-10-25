@@ -11,7 +11,7 @@ export function normalizeHttpResourceRustBindings(source){
  if(typeof source!=='string'||source.length>2097152)fail('bounded complete original native source required');
  const concrete=transportConcreteSyntaxSource(source,{language:'Rust'});if(transportConcreteSyntaxMeta(concrete.meta).source!==source)fail('original serialized and reparsed CST differs');
  const items=sourceItems(source).filter(row=>row.term!=='comment');if(!items.length||items.length>4096||items.some(row=>row.term!=='fn'))fail('complete ordinary native function module required');
- const used=new Set(),moduleNames=new Set(),edits=[],selections=[],annotations=[];let cells=0,sequence=0;
+ const used=new Set(),moduleNames=new Set(),edits=[],selections=[],annotations=[],controls=[];let cells=0,sequence=0;
  const tick=(depth=0)=>{if(++cells>100000||depth>160)fail('complete native binding walk bound');};
  for(const token of rustTokens(source)){tick();if(token.type==='ident')used.add(token.text);}
  for(const item of items){if(moduleNames.has(item.name))fail('unique actual native function name required');httpResourceCallerName(item.name);moduleNames.add(item.name);}
@@ -24,6 +24,9 @@ export function normalizeHttpResourceRustBindings(source){
   let portable=true;try{httpResourceCallerName(original);}catch(error){if(!(error instanceof TypeError))throw error;portable=false;}
   if(!force&&portable&&!scope.has(original)&&!moduleNames.has(original))return original;
   let value;do{tick();value='router_shadow_'+sequence++;}while(used.has(value));used.add(value);return value;
+ }
+ function insertControl(item,at,replacement,priority,kind){
+  tick();if(!Number.isSafeInteger(at)||at<0||at>item.end-item.start)fail('actual original control boundary required');controls.push({at:item.start+at,replacement,priority,kind});
  }
  function declare(item,binding,scope,kind){
   if(nonBindings.has(binding.name))fail('an original Rust keyword or discard pattern is not an ordinary value binding');
@@ -45,21 +48,21 @@ export function normalizeHttpResourceRustBindings(source){
   if(node.kind==='choose'){value(item,node.condition,scope,depth+1);block(item,node.yes,scope,depth+1);block(item,node.no,scope,depth+1);return;}
   if(node.kind==='block'){block(item,node,scope,depth+1);return;}
   if(['typed-lambda','typed-async-lambda'].includes(node.kind)){
-   const inner=new Map(scope),parameters=new Set();for(const parameter of node.parameters){if(parameters.has(parameter.name))fail('unique actual native callback parameter required');parameters.add(parameter.name);declare(item,parameter,inner,'callback-parameter');}block(item,node.body,inner,depth+1);return;
+   const inner=new Map(scope),parameters=new Set();for(const parameter of node.parameters){if(parameters.has(parameter.name))fail('unique actual native callback parameter required');parameters.add(parameter.name);declare(item,parameter,inner,'callback-parameter');}block(item,node.body,inner,depth+1,true);return;
   }
   fail('this original expression needs an independent complete lexical binding rule: '+node.kind);
  }
- function block(item,node,outer,depth=0){
+ function block(item,node,outer,depth=0,returnsHere=false){
   tick(depth);if(node?.kind!=='block'||!Array.isArray(node.statements)||node.statements.length>4096)fail('complete bounded original block required');const scope=new Map(outer);
-  for(const statement of node.statements){
-   tick(depth+1);
+  for(let index=0;index<node.statements.length;index++){
+   const statement=node.statements[index],tailPosition=returnsHere&&index===node.statements.length-1&&!node.tail;tick(depth+1);
    if(statement.kind==='let'){value(item,statement.value,scope,depth+1);declare(item,statement,scope,'let');continue;}
    if(statement.kind==='let-tuple'){value(item,statement.value,scope,depth+1);const names=new Set();for(const binding of statement.bindings){if(names.has(binding.name))fail('unique native tuple binders required');names.add(binding.name);declare(item,binding,scope,'tuple-let');}continue;}
    if(statement.kind==='assign'){const target=scope.get(statement.name);if(target===undefined)fail('assignment must select an actual original local');spanEdit(item,statement.nameSpan,statement.name,target,'assignment');value(item,statement.value,scope,depth+1);continue;}
-   if(['effect','return'].includes(statement.kind)){value(item,statement.value,scope,depth+1);continue;}
-   if(statement.kind==='if'){value(item,statement.condition,scope,depth+1);block(item,statement.yes,scope,depth+1);block(item,statement.no,scope,depth+1);continue;}
+   if(['effect','return'].includes(statement.kind)){value(item,statement.value,scope,depth+1);if(statement.kind==='return'&&tailPosition){spanEdit(item,statement.returnSpan,'return','','tail-return-keyword');spanEdit(item,statement.semicolonSpan,';','','tail-return-semicolon');}continue;}
+   if(statement.kind==='if'){if(statement.missingElseAt!==null&&statement.missingElseAt!==undefined){if(source[item.start+statement.missingElseAt-1]!=='}')fail('actual original missing-else body boundary required');insertControl(item,statement.missingElseAt,' else {}',0,'empty-else');}if(statement.elseIf){if(source.slice(item.start+statement.elseIf.start,item.start+statement.elseIf.start+2)!=='if'||source[item.start+statement.elseIf.end-1]!=='}')fail('actual original else-if boundaries required');insertControl(item,statement.elseIf.start,'{ ',0,'else-if-open');insertControl(item,statement.elseIf.end,' }',1,'else-if-close');}value(item,statement.condition,scope,depth+1);block(item,statement.yes,scope,depth+1,tailPosition);block(item,statement.no,scope,depth+1,tailPosition);continue;}
    if(statement.kind==='while'){value(item,statement.condition,scope,depth+1);block(item,statement.body,scope,depth+1);continue;}
-   if(['loop','lexical-scope'].includes(statement.kind)){block(item,statement.body,scope,depth+1);continue;}
+   if(['loop','lexical-scope'].includes(statement.kind)){block(item,statement.body,scope,depth+1,statement.kind==='lexical-scope'&&tailPosition);continue;}
    if(statement.kind==='for-shared-json'){value(item,statement.iterable,scope,depth+1);const inner=new Map(scope);declare(item,statement,inner,'for-element');block(item,statement.body,inner,depth+1);continue;}
    if(['break','continue'].includes(statement.kind))continue;
    fail('this original statement needs a complete lexical binding rule: '+statement.kind);
@@ -68,10 +71,11 @@ export function normalizeHttpResourceRustBindings(source){
  }
  for(const item of items){
   const reader=new HttpResourceBindingRustReader(rustTokens(source.slice(item.start,item.end))),fn=reader.function(),scope=new Map(),names=new Set();
-  if(fn.name!==item.name)fail('actual original function owner differs');for(const parameter of fn.parameters){if(names.has(parameter.name))fail('unique original function parameter required');names.add(parameter.name);declare(item,parameter,scope,'parameter');}block(item,fn.body,scope);
+  if(fn.name!==item.name)fail('actual original function owner differs');for(const parameter of fn.parameters){if(names.has(parameter.name))fail('unique original function parameter required');names.add(parameter.name);declare(item,parameter,scope,'parameter');}block(item,fn.body,scope,0,true);
  }
+ const groupedControls=new Map();for(const control of controls){if(!groupedControls.has(control.at))groupedControls.set(control.at,[]);groupedControls.get(control.at).push(control);}for(const [at,rows]of groupedControls)edits.push({span:[at,at],expected:'',replacement:rows.sort((left,right)=>left.priority-right.priority).map(row=>row.replacement).join('')});
  edits.sort((left,right)=>left.span[0]-right.span[0]);for(let index=1;index<edits.length;index++)if(edits[index-1].span[1]>edits[index].span[0])fail('original binding edit overlap');
- const substituted=applyConcreteSyntaxSubstitutions(concrete.document,{languageRules:[{id:'rust:alpha-rename-exact-original-lexical-binding-tokens',edits}],repositoryRules:[{id:'router:retain-portable-collision-free-local-names',edits:[]}]}),after=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(substituted.value)).source,equation=transportConcreteSourceEquations([{before:source,after,language:'Rust'}])[0];
+ const substituted=applyConcreteSyntaxSubstitutions(concrete.document,{languageRules:[{id:'rust:normalize-actual-lexical-bindings-local-types-and-control-spellings',edits}],repositoryRules:[{id:'router:retain-portable-collision-free-local-names',edits:[]}]}),after=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(substituted.value)).source,equation=transportConcreteSourceEquations([{before:source,after,language:'Rust'}])[0];
  if(equation.inverse!==source)fail('complete original binding source inverse differs');
- return {schema:'router-http-resource-native-lexical-bindings-v1',before:source,after,edits,selections,annotations,equation,trace:substituted.trace,sourceAuthority:false,semanticAuthority:false,namespaceAuthority:false,rustExecuted:false,receivingExecuted:false,crossInvocationCache:false};
+ return {schema:'router-http-resource-native-lexical-bindings-v1',before:source,after,edits,selections,annotations,controls,equation,trace:substituted.trace,sourceAuthority:false,semanticAuthority:false,namespaceAuthority:false,rustExecuted:false,receivingExecuted:false,crossInvocationCache:false};
 }

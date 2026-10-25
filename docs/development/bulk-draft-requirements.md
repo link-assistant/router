@@ -671,3 +671,11 @@ Fresh local joins use one flow traversal; no new cross-invocation cache exists.
 Five complete originals, both rule phases and independent 128-declaration,
 target/native/refusal and oracle source remain unrun. Wider native types and
 every unfinished requirement above remain open.
+
+The [native control spelling draft](http-resource-native-control-draft.md)
+composes exact original return targets, optional-else statement bodies and
+else-if chain braces with the lexical/type source path. Earlier and loop returns
+keep their targets; whole-source/native checks remain mandatory. Three complete
+originals, both phases and independent branch/callback/generic/mutable/physical
+unit/refusal and native oracle source remain unrun. Wider control, namespace
+closure and every unfinished requirement remain open.
