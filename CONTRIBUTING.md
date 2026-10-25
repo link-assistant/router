@@ -893,3 +893,11 @@ support code and native library exclusions. Catalog paths and erased borrow
 syntax are candidate data only; see the
 [cancellation inverse draft](docs/development/owned-cancellation-inverse-draft.md).
 All source and receiving cases remain unrun during bulk drafting.
+
+The `owned-cancellation` source-unit profile keeps physical JS/TS/Rust paths,
+complete current native/Cargo mappings and matching opaque runtimes. Treat paired
+borrow signatures as proposals, recheck complete callers and use the original
+fresh recompute/atomic installation and conflict rules. Runtime-only installation
+never qualifies a caller. See the
+[cancellation unit draft](docs/development/owned-cancellation-unit-draft.md).
+All new integration and receiving source remains unrun during bulk drafting.

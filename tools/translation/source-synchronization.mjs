@@ -23,3 +23,4 @@ export {proposeForwardTextPredicateSynchronization} from './forward-text-predica
 export {proposeForwardCompositeSynchronization} from './forward-composite-synchronization.mjs';
 export {createOwnedCancellationContext,ownedCancellationRuntimeSources,translateOwnedCancellationJavaScript,translateOwnedCancellationTypeScript,translateOwnedCancellationConcreteSyntaxMeta,emitOwnedCancellationRust,prepareOwnedCancellationRuntime,evaluateOwnedCancellation,evaluateOwnedCancellationBatch,readOwnedCancellationMeta} from './js-to-rust/owned-cancellation.mjs';
 export {translateOwnedCancellationRust} from './js-to-rust/owned-cancellation-rust.mjs';
+export {OWNED_CANCELLATION_NATIVE_INPUTS,ownedCancellationUnitRuntimeSources,ownedCancellationUnitContext,translateOwnedCancellationUnit} from './owned-cancellation-unit.mjs';

@@ -883,3 +883,13 @@ complete Rust reproduction. Immutable predecessors, public/export integration
 and independent unrun ownership/borrow/source/refusal/typed restoration cases are
 drafted. General forward Rust/project adoption, async future/Drop/channel/HTTP
 qualification, production parity and every unfinished requirement remain open.
+
+The [cancellation source-unit draft](owned-cancellation-unit-draft.md) now
+connects all three source directions, current paired borrow signatures and both
+physical runtime trees to the original fresh transaction/rollback contract.
+Native module/Cargo mappings, conflict handling and runtime-only installation
+remain mandatory. Full unit/signature adapter predecessors, profile/manifest
+source substitutions, export integration and independent unrun receiving cases
+are retained. General forward Rust application qualification, async futures,
+exclusive resources/Drop, production adoption/parity and every other unfinished
+requirement remain open.
