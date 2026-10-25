@@ -499,7 +499,7 @@ export function createToolAwareDeriveFootprintContext({modules,dependencies,comp
           return true;
         }catch(error){clapSourceRefusals.set(invocationId(module,candidate),error.message);return false;}
       }
-      return condition.attributes.every(attribute=>isInertConditionalAttribute(attribute)||toolContext&&toolAttributeAt(toolContext,module,candidate,attribute)||originalRegisteredBuiltinCallerAttributeAt(module,candidate,attribute)||['cfg','path','doc','allow','warn','deny','forbid','must_use','inline','cold','deprecated','repr','non_exhaustive','track_caller','macro_use','macro_export'].includes(attribute.name))&&!scope.bindings.some(binding=>binding.namespace==='macro'&&binding.macroKind!=='bang'&&condition.attributes.some(attribute=>!isInertConditionalAttribute(attribute)&&attribute.name===binding.name))&&originalDeclarationHeader(candidate,condition,module,scope);
+      return condition.attributes.every(attribute=>isInertConditionalAttribute(attribute)||toolContext&&toolAttributeAt(toolContext,module,candidate,attribute)||originalSourceMetadataBuiltinCallerAttributeAt(module,candidate,attribute)||['cfg','path','doc','allow','warn','deny','forbid','must_use','inline','cold','deprecated','repr','non_exhaustive','track_caller','macro_use','macro_export'].includes(attribute.name))&&!scope.bindings.some(binding=>binding.namespace==='macro'&&binding.macroKind!=='bang'&&condition.attributes.some(attribute=>!isInertConditionalAttribute(attribute)&&attribute.name===binding.name))&&originalDeclarationHeader(candidate,condition,module,scope);
     })&&!scope.unresolvedImports.some(entry=>entry.glob));
   }
   // Preserve the old module-wide closure above. Only an actual owner request
@@ -513,7 +513,7 @@ export function createToolAwareDeriveFootprintContext({modules,dependencies,comp
     const condition=itemConfiguration(candidate.tokens,profile);if(condition.status!=='active')return false;
     const input=moduleInputs.get(moduleScopeKey(module)).get(candidate.start);
     if(input){const owners=input.derives.map(invocation=>standardOwner(invocation.path,scope)?true:actualOwner(invocation.path,scope,scopes,external,dependencies));if(owners.some(owner=>!owner)||clapSourceRefusals.has(invocationId(module,candidate)))return false;for(const owner of owners.filter(owner=>owner!==true&&owner.target[0]==='clap')){const output=clapSourceOutputs.get(invocationId(module,candidate));if(owner.target.join('::')==='clap::ValueEnum'&&!output?.valueEnum||owner.target.join('::')==='clap::Args'&&!output?.args)return false;}return true;}
-    return condition.attributes.every(attribute=>isInertConditionalAttribute(attribute)||toolContext&&toolAttributeAt(toolContext,module,candidate,attribute)||originalRegisteredBuiltinCallerAttributeAt(module,candidate,attribute)||['cfg','path','doc','allow','warn','deny','forbid','must_use','inline','cold','deprecated','repr','non_exhaustive','track_caller','macro_use','macro_export'].includes(attribute.name))&&!requestedBindingCollision(scope,condition,projection)&&originalDeclarationHeader(candidate,condition,module,scope);
+    return condition.attributes.every(attribute=>isInertConditionalAttribute(attribute)||toolContext&&toolAttributeAt(toolContext,module,candidate,attribute)||originalSourceMetadataBuiltinCallerAttributeAt(module,candidate,attribute)||['cfg','path','doc','allow','warn','deny','forbid','must_use','inline','cold','deprecated','repr','non_exhaustive','track_caller','macro_use','macro_export'].includes(attribute.name))&&!requestedBindingCollision(scope,condition,projection)&&originalDeclarationHeader(candidate,condition,module,scope);
   };
   const requestedAttributeClosure=(scope,caller,requests)=>{
     const module=modules.find(module=>moduleScopeKey(module)===moduleScopeKey(scope));if(!module||scope.configurationCondition!=='active'||caller.configurationCondition==='unknown'||caller.configurationCondition==='inactive')return null;
@@ -659,4 +659,4 @@ export function createToolAwareDeriveFootprintContext({modules,dependencies,comp
   contexts.set(context,{byId,external:originalExternal,dependencies,originalModules,moduleIndices,helperScopes:baseline.scopes,attributeClosure,requestedAttributeClosure,ownerRequests,toolContext});return context;
 }
 
-import {originalRegisteredBuiltinCallerAttributeAt} from './registered-builtin-caller-attribute-source.mjs';
+import {originalSourceMetadataBuiltinCallerAttributeAt} from './registered-builtin-caller-attribute-source.mjs';

@@ -235,7 +235,7 @@ export function createEnclosingCoreAdoptionProducerContext({modules,compilationP
 // Separate tool-aware adoption format; earlier public creators stay intact.
 import {createToolAwareDeriveFootprintContext} from './derive-footprints.mjs';
 import {createConfiguredVariantEnclosingToolAttributeContext,toolAttributeAt} from './tool-attributes.mjs';
-import {createTokenBoundRegisteredBuiltinCallerAttributeScope} from './registered-builtin-caller-attribute-source.mjs';
+import {createSourceMetadataBuiltinCallerAttributeScope as createTokenBoundRegisteredBuiltinCallerAttributeScope} from './registered-builtin-caller-attribute-source.mjs';
 export function createToolAwareEnclosingCoreAdoptionProducerContext({modules,compilationProfile:inputProfile,dependencyInputs}){
  return withRetainedPrivateNativeProofCostScope(()=>{
  const inputs=dependencySources(dependencyInputs);if(!inputs)return null;

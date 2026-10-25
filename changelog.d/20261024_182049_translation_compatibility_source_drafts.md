@@ -235,3 +235,8 @@ integration and the remaining requirement ledger are still open.
 - Document the shared private adoption issuer, no-derive Cargo boundary,
   preservation of stability metadata, asynchronous source snapshots, complete
   packet readback and deferred CLI/export receiving work in contributor guidance.
+
+- Draft original literal target-feature namespace rules through complete copied
+  builtin registration/parser/collector proofs and coherent tool-aware consumers.
+  Preserve native metadata, unsafe/CPU/body obligations and old API domains;
+  retain six complete source equations and independent unrun refusal/native source.

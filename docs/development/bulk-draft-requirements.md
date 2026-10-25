@@ -793,3 +793,12 @@ heap/time/output bounds and original source-unit APIs remain intact. Three full
 originals, both phases and independent CLI/offline receiving/refusal source remain
 unrun. Packaging and source review grant no executable parity; every unfinished
 receiving, language/resource, adoption and CI obligation remains open.
+
+The [original target-feature namespace draft](target-feature-namespace-draft.md)
+adds a complete copied unconditional builtin registration and actual parser/
+collector/token proof for literal target-feature metadata. Configured namespace,
+tool-aware derive and adoption consumers compose those facts without removing
+native metadata or granting CPU/unsafe/body authority. Six complete originals,
+both phases and independent registration/refusal/native oracle source remain
+unrun. Architecture export/type closure, producer bootstrap, broader executable
+language/effects, production parity and every unfinished requirement remain.

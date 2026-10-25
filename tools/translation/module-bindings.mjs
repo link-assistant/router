@@ -780,7 +780,7 @@ function resolveRegisteredBuiltinEnclosingSourceBindings({modules,externalModule
 export function resolveEnclosingNamespaceModuleBindings(options={}){return resolveRegisteredBuiltinEnclosingSourceBindings(options,false);}
 export function resolveRegisteredBuiltinEnclosingNamespaceModuleBindings(options={}){return resolveRegisteredBuiltinEnclosingSourceBindings(options,true);}
 
-import {createOriginalRegisteredBuiltinCallerAttributeScope,createTokenBoundRegisteredBuiltinCallerAttributeScope} from './registered-builtin-caller-attribute-source.mjs';
+import {createOriginalRegisteredBuiltinCallerAttributeScope,createSourceMetadataBuiltinCallerAttributeScope as createTokenBoundRegisteredBuiltinCallerAttributeScope} from './registered-builtin-caller-attribute-source.mjs';
 
 // Explicit configured-variant successor; old public resolver domains remain.
 export function resolveConfiguredVariantEnclosingNamespaceModuleBindings(options={}){return resolveRegisteredBuiltinEnclosingSourceBindings(options,true,true);}
