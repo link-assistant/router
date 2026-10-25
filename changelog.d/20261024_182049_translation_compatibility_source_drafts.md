@@ -206,3 +206,8 @@ integration and the remaining requirement ledger are still open.
   crate-local imports, avoiding derive archive/proof work and retaining explicit
   missing dependency authority. Compose the selected primitive/base64 producers,
   four complete source equations and independent unrun behavioral/refusal source.
+
+- Draft connected source-bound formatting, matches and vector adoption sequences
+  with complete copied inspectors, physical source/Cargo joins and fresh full
+  inspection/effect readback. Export explicit entry points, retain eight complete
+  source equations and add independent unrun physical/refusal/native case source.

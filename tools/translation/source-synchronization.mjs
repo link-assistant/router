@@ -35,3 +35,6 @@ export {translateHttpResourceCallerRust} from './js-to-rust/http-resource-rust.m
 export {httpDeadlineResultRuntimeAssets,httpDeadlineResultRuntimeSources} from './http-deadline-result-runtime-sources.mjs';
 
 export {translateHttpResourceShadowCallerRust} from './js-to-rust/http-resource-shadow-rust.mjs';
+
+export {proposeSourceBackedCoreAdoptionSequence as proposeSourceBoundCoreAdoptionSequence,reviewSourceBackedCoreAdoptionSequence as reviewSourceBoundCoreAdoptionSequence} from './source-bound-core-adoption-sequence.mjs';
+export {proposePhysicalCoreAdoptionSequence as proposeSourceBoundPhysicalCoreAdoptionSequence,reviewPhysicalCoreAdoptionSequence as reviewSourceBoundPhysicalCoreAdoptionSequence} from './source-bound-physical-core-adoption-sequence.mjs';

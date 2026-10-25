@@ -750,3 +750,12 @@ complete-output issuer. Retained Cargo strings grant no dependency authority.
 Four complete originals, both phases and independent JS/strict TS/native/refusal
 source remain unrun. Wider executable domains, architecture/producer closure,
 production parity and every unfinished requirement remain open.
+
+The [connected source-bound sequence draft](source-bound-adoption-sequence-draft.md)
+copies complete formatting/matches/vector producers, source inspection, readback
+and physical source/Cargo orchestration. Fresh readback reconstructs every retained
+original-file inspection and full producer effects; public labels cannot replace
+those joins. Outputs preserve original attributes. Eight complete originals,
+both phases and independent physical/refusal/native source cases remain unrun.
+Source CST inverses grant no reverse execution or application coverage. Every
+unfinished requirement above remains open.
