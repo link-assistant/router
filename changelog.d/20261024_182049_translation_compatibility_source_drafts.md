@@ -231,3 +231,7 @@ integration and the remaining requirement ledger are still open.
   by copying the original cold worker controller and registering complete export
   closure. Retain source-only receipts, three complete source equations and
   independent unrun CLI/refusal/offline receiving case source.
+
+- Document the shared private adoption issuer, no-derive Cargo boundary,
+  preservation of stability metadata, asynchronous source snapshots, complete
+  packet readback and deferred CLI/export receiving work in contributor guidance.

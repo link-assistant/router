@@ -54,6 +54,31 @@ semantic/binding/source check stays fresh. Its complete original histories and
 typed/CLI repairs remain unrun; extend its final source-history part without
 creating an import or preparation cycle. It supplies no speed qualification.
 
+The [bulk owned-core source draft](docs/development/source-bound-owned-core-bulk-draft.md)
+uses complete original adopter copies and a shared private source/tool/derive
+issuer across its fixed operation stages. Preserve both ordered substitution
+sequences and complete source histories when extending a stage. The no-derive
+lane retains Cargo strings as source inputs with no verified dependency digest;
+those strings cannot establish a dependency owner or generated implementation.
+Original stability attributes must stay in Rust: namespace passivity never
+authorizes removing stability or feature metadata from executable source.
+
+Keep the next complete source map independent of mutable yielded proposal data.
+Rejoin original source, Cargo, profile and stage inputs across asynchronous
+boundaries, and release whole prior proposals before constructing another graph.
+The [physical packet draft](docs/development/source-bound-owned-packets-draft.md)
+retains full evidence or refuses completion within its bounds. Its
+[readback draft](docs/development/source-bound-owned-readback-draft.md) compares
+every decoded source/graph/CST packet to a fresh complete original proposer;
+valid hashes and copied authority flags cannot replace that comparison.
+
+The [bounded proposal/review CLI](docs/development/owned-core-cli-draft.md)
+belongs in the canonical translator export entrypoint list. Preserve complete
+offline receiving cases, worker limits and every original profile and license.
+During this drafting phase, write these cases without executing either CLI,
+exporter, receiving worker or source preparer. None of these source drafts
+qualifies executable coverage, reverse execution, parity or CI.
+
 The [partitioned compiler export draft](docs/development/partitioned-compiler-export-draft.md)
 retains every original module/profile/license in bounded inventory groups. Keep
 the original exporter and refusal cases, complete receiving workloads and all
