@@ -759,3 +759,13 @@ those joins. Outputs preserve original attributes. Eight complete originals,
 both phases and independent physical/refusal/native source cases remain unrun.
 Source CST inverses grant no reverse execution or application coverage. Every
 unfinished requirement above remains open.
+
+The [bulk source-bound owned-core draft](source-bound-owned-core-bulk-draft.md)
+connects 23 complete original adopter/helper copies and 21 fixed corpus exports
+through the same private source/derive/tool context. A bounded async coordinator
+passes complete after maps between stages and yields whole proposals individually,
+without retaining every prior graph/CST. Independent snapshots isolate later
+inputs from mutated output DATA; original source/Cargo/profile/stage changes
+refuse across yields. Twenty-seven complete originals, both phases and independent
+JS/strict TS/native/refusal source remain unrun. All-stage receiving, architecture/
+producer closure, broader domains, production parity and every open row remain.

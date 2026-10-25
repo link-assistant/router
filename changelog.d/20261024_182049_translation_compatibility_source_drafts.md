@@ -211,3 +211,8 @@ integration and the remaining requirement ledger are still open.
   with complete copied inspectors, physical source/Cargo joins and fresh full
   inspection/effect readback. Export explicit entry points, retain eight complete
   source equations and add independent unrun physical/refusal/native case source.
+
+- Draft 23 complete original source-bound adopter/helper copies across 21 owned
+  operation stages, a shared-issuer facade and bounded whole-proposal async
+  orchestration. Preserve original selectors/refusals, full source joins and
+  inverses; add independent unrun combined target/native and mutation cases.

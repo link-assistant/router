@@ -38,3 +38,5 @@ export {translateHttpResourceShadowCallerRust} from './js-to-rust/http-resource-
 
 export {proposeSourceBackedCoreAdoptionSequence as proposeSourceBoundCoreAdoptionSequence,reviewSourceBackedCoreAdoptionSequence as reviewSourceBoundCoreAdoptionSequence} from './source-bound-core-adoption-sequence.mjs';
 export {proposePhysicalCoreAdoptionSequence as proposeSourceBoundPhysicalCoreAdoptionSequence,reviewPhysicalCoreAdoptionSequence as reviewSourceBoundPhysicalCoreAdoptionSequence} from './source-bound-physical-core-adoption-sequence.mjs';
+
+export {SOURCE_BOUND_OWNED_CORE_STAGES,proposeSourceBoundOwnedCoreStage,proposeSourceBoundOwnedCoreStages} from './source-bound-owned-core-bulk.mjs';
