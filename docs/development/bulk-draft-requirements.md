@@ -415,3 +415,10 @@ limits. Every original source/license and receiving workload is retained. Full
 originals and independent unrun whole-closure/2,049-input/boundary cases are
 drafted. Export receiving/freshness, namespace/bootstrap, production parity and
 every unfinished requirement remain open.
+
+The [strict Boolean value draft](http-resource-boolean-values-draft.md) adds
+negation and short-circuit locals/arguments/returns through the complete original
+condition/state checker and native inverse. Full originals and independent unrun
+JS/strict TS/native/refusal cases are retained; a thirteenth oracle joins gated
+CI discovery. Wider language domains, namespace/bootstrap, production parity
+and every unfinished requirement remain open.

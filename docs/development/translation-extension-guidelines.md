@@ -592,3 +592,9 @@ reconstruct the whole original inventory exactly once and include metadata in
 the unchanged global byte bound. Preserve every receiving workload and deadline.
 See the [partitioned export draft](partitioned-compiler-export-draft.md); no
 packaging or receiving qualification follows from source drafting.
+
+Reuse original Boolean condition/state checks for value-position negation and
+short-circuit operators. Preserve selected-side laziness, require actual Boolean
+domains and keep skipped-arm ownership state valid. See the
+[strict Boolean value draft](http-resource-boolean-values-draft.md); complete
+original histories and all receiving/native cases remain unrun.

@@ -115,6 +115,7 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
  }
  function expression(node,flags={}){
   tick();const level=flags.level??depth;if(level>160)fail('complete scalar expression depth bound');if(ts.isParenthesizedExpression(node))return expression(node.expression,{...flags,level:level+1});
+  if(ts.isPrefixUnaryExpression(node)&&node.operator===ts.SyntaxKind.ExclamationToken||ts.isBinaryExpression(node)&&[ts.SyntaxKind.AmpersandAmpersandToken,ts.SyntaxKind.BarBarToken].includes(node.operatorToken.kind))return condition(node,level+1);
   if(ts.isConditionalExpression(node)){
    const test=condition(node.condition,level+1),entry=new Map(snapshotIncoming()),yes=expression(node.whenTrue,{...flags,level:level+1}),yesState=new Map(snapshotIncoming());environment.clear();for(const [id,row]of entry)environment.set(id,{...row,roots:httpResourceValueRoots(row)});const no=expression(node.whenFalse,{...flags,level:level+1}),noState=new Map(snapshotIncoming());requireLoopState(yesState,noState);if(yes.type!==no.type)fail('every actual conditional value arm must retain its complete native domain');const roots=[...new Set([...httpResourceValueRoots(yes),...httpResourceValueRoots(no)])];return {kind:'conditional',condition:test,yes,no,type:yes.type,root:roots[0]??null,roots};
   }

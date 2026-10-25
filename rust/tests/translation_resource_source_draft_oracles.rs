@@ -28,3 +28,5 @@ mod cold_return_types;
 mod do_loops;
 #[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-conditional-values-oracle.rs"]
 mod conditional_values;
+#[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-boolean-values-oracle.rs"]
+mod boolean_values;
