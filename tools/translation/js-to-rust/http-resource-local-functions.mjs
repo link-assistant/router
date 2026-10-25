@@ -9,10 +9,14 @@ export function orderHttpResourceLocalFunctions(ts,functions){
 export function httpResourceLocalContracts(rows){
  const contracts=new Map();let cells=0;
  for(const row of rows){
-  const parameters=new Set(row.parameters.map(parameter=>parameter.name));let releasesInput=false;
-  const visit=(value,depth=0)=>{if(++cells>200000||depth>256)throw new TypeError('Complete local helper effect source bound');if(!value||typeof value!=='object')return;if(value.kind==='http-resource-call'&&value.release&&parameters.has(value.args[0]?.name))releasesInput=true;for(const child of Object.values(value))if(child&&typeof child==='object'){if(Array.isArray(child))for(const part of child)visit(part,depth+1);else visit(child,depth+1);}};visit(row.flow);
+  const exits=row.flow.resourceExits;if(!Array.isArray(exits)||!exits.length)throw new TypeError('Complete original helper resource exits required');
+  const releasedArguments=[];let partial=false;
+  for(let index=0;index<row.parameters.length;index++){
+   const parameter=row.parameters[index];if(!['receiver-mut','http-client-mut','http-stream-mut'].includes(parameter.type))continue;const states=exits.map(exit=>{if(++cells>200000)throw new TypeError('Complete helper resource exit bound');const actual=exit.filter(state=>state.name===parameter.name);if(actual.length!==1||typeof actual[0].disposed!=='boolean')throw new TypeError('Every original helper resource exit must be complete');return actual[0].disposed;});
+   if(states.every(Boolean))releasedArguments.push(index);else if(states.some(Boolean))partial=true;
+  }
   const roots=row.flow.returnRoots,rootArgument=roots.length===1?row.parameters.findIndex(parameter=>parameter.name===roots[0]):null;
-  contracts.set(row.name,{javascriptName:row.name,rustPath:row.name,args:row.parameters.map(parameter=>parameter.type),ret:row.returns,async:row.lazy,local:true,borrowedResult:roots.length===1,rootArgument,release:null,localRefusal:releasesInput?'local helper releases an input; complete interprocedural release states remain required':roots.length>1?'multiple borrowed helper roots require a complete interprocedural loan join':null,sourceAuthority:false,semanticAuthority:false});
+  contracts.set(row.name,{javascriptName:row.name,rustPath:row.name,args:row.parameters.map(parameter=>parameter.type),ret:row.returns,async:row.lazy,local:true,borrowedResult:roots.length===1,rootArgument,release:null,releasedArguments,localRefusal:partial?'partial helper input release requires an outcome-sensitive source state join':roots.length>1?'multiple borrowed helper roots require a complete interprocedural loan join':null,sourceAuthority:false,semanticAuthority:false});
  }
  return contracts;
 }

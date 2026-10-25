@@ -105,3 +105,5 @@ integration and the remaining requirement ledger are still open.
 - Draft complete Option guards in resource callers with absent-exit cleanup, explicit fallback domains, linear Some payloads, same-Option native propagation and full inverse/source histories; independent JS/strict TS/native/refusal source remains unrun.
 
 - Draft whole local helper composition, original call graph/order, cold future and returned-root flow, separate imported/local bindings and canonical complete native inverse proposals with full source histories and independent unrun receiving/native/refusal source.
+
+- Draft complete local helper input-release exit summaries, actual caller disposition and cleanup inverse rules with complete original source histories and independent unrun JS/strict TS/native/refusal source.

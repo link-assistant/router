@@ -33,7 +33,7 @@ test('recursive helpers unresolved callees release-state gaps and multiple-root 
   '/** @param {string} input */ export function recur(input){return recur(input);}',
   '/** @param {string} input */ export function first(input){return second(input);}/** @param {string} input */ function second(input){return first(input);}',
   '/** @param {string} input */ export function bad(input){return unregistered(input);}',
-  '/** @param {Parameters<typeof dispose>[0]} client */ export function bad(client){return release(client);}/** @param {Parameters<typeof dispose>[0]} client */ function release(client){return dispose(client);}',
+  '/** @param {Parameters<typeof dispose>[0]} client */ export function bad(client){return release(client,true);}/** @param {Parameters<typeof dispose>[0]} client @param {boolean} choice */ function release(client,choice){if(choice){return dispose(client);}else{return null;}}',
   '/** @param {string} left @param {string} right @param {boolean} choice */ export function bad(left,right,choice){return selected(left,right,choice);}/** @param {string} left @param {string} right @param {boolean} choice */ function selected(left,right,choice){if(choice){return left;}else{return right;}}',
  ]){const source=imports+body;assert.throws(()=>translateHttpResourceCallerJavaScript(source,input(source)),body);}
  const source=imports+body,result=translateHttpResourceCallerJavaScript(source,input(source)),forged=JSON.parse(result.meta);forged.functions[0].flow.tail.value.local=false;assert.throws(()=>readHttpResourceCallerMeta(JSON.stringify(forged),source,input(source)));

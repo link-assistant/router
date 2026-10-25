@@ -116,6 +116,14 @@ oracle/refusal source are retained. Recursive/generic/method and release/multipl
 root joins, wider language/resource domains, namespace/bootstrap, production
 adoption and every unfinished requirement remain open.
 
+The [helper release draft](http-resource-helper-releases-draft.md) adds actual
+exclusive input state at every exit, complete helper release joins, caller
+disposition and local cleanup in Result/Option inverses. Full original source
+histories and independent unrun JS/strict TS/native oracle/refusal source are
+retained. Partial outcome-sensitive releases, multiple roots, recursion,
+generics/methods, wider language/resource domains, namespace/bootstrap,
+production adoption and every unfinished requirement remain open.
+
 The [Option guard draft](http-resource-option-guards-draft.md) adds whole absent
 branches, every-exit resource cleanup, explicit fallback domains, Some payload
 moves, same-Option propagation and complete canonical native inverse rules.

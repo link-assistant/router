@@ -287,6 +287,14 @@ signature DATA cannot waive them. See the
 [local helper draft](http-resource-local-functions-draft.md); all new receiving
 and native qualification remains unrun during bulk drafting.
 
+Helper resource release summaries must join actual mutable-input state at every
+original exit. Mark a caller argument disposed only when all checked exits
+release that same exclusive input; partial releases need outcome-sensitive
+state joins. Keep immediate-await boundaries, alias refusals and whole fresh
+callee/caller rechecking. See the
+[helper release draft](http-resource-helper-releases-draft.md); all new source
+and native qualification remains unrun during bulk drafting.
+
 HTTP physical source units must capture complete native/Cargo and mirrored
 runtime inputs, retain the original Git conflict/atomic installation rules and
 freshly check all three authority directions. Paired annotations propose domains
