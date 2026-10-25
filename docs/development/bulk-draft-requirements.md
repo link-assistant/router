@@ -467,3 +467,10 @@ Complete originals and independent unrun JS/strict TS/native/boundary/refusal
 cases are retained; a seventeenth oracle joins gated CI discovery. General
 Number/range loops, broader language domains, namespace/bootstrap, production
 parity and every unfinished requirement remain open.
+
+The [original local annotation/type-wrapper draft](http-resource-local-annotations-draft.md)
+adds actual local type obligations, closed native domain checks, alias-expanded
+JSDoc retention, original parenthesized JSDoc checks and checked as/prefix/
+satisfies/non-null wrappers. Full originals and independent unrun JS/strict TS/
+native/refusal cases are retained. Structural types, domain-changing casts,
+namespace/bootstrap, production parity and every unfinished requirement remain open.
