@@ -893,3 +893,13 @@ source substitutions, export integration and independent unrun receiving cases
 are retained. General forward Rust application qualification, async futures,
 exclusive resources/Drop, production adoption/parity and every other unfinished
 requirement remain open.
+
+The [tool-first derive input draft](tool-first-derive-draft.md) now recomputes
+independently genuine tool attributes from the complete current sources, profile
+and merged external tables before the explicit enclosing derive-input path.
+Both full ancestor/item attribute closures consume actual private tool proofs;
+caller-supplied proof overrides refuse. The original constructor remains intact.
+Complete original source substitutions and independent unrun source/shadow/glob/
+context/default-API/typed-project cases are retained. Same-scope circular inputs,
+architecture type-prefix/export/producer closure, general opaque futures and all
+other unfinished requirements remain open.

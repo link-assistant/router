@@ -901,3 +901,11 @@ fresh recompute/atomic installation and conflict rules. Runtime-only installatio
 never qualifies a caller. See the
 [cancellation unit draft](docs/development/owned-cancellation-unit-draft.md).
 All new integration and receiving source remains unrun during bulk drafting.
+
+Tool-first derive input composition must recompute genuine original tool proofs
+from the complete current source/profile/external tables. Caller-provided tool
+certificates cannot select this stage. Consume actual proofs in both ancestor
+and item attribute closures and keep unknown producers, globs and same-scope
+circular inputs refused. See the
+[tool-first derive draft](docs/development/tool-first-derive-draft.md). All new
+proof/receiving regression source remains unrun during bulk drafting.

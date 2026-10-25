@@ -41,7 +41,7 @@ import {parseOriginalMethodTransform,parseOriginalMethodTransformGrouped,origina
 import {originalMethodSemantic,originalMethodSemanticGrouped,relocateOriginalMethodSemantic,relocateOriginalMethodSemanticGrouped,originalMethodRefusalRange,originalMethodRefusalRangeGrouped,isOriginalMethodSemanticSource} from './source-method-admission.mjs';
 import {originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
 import {freezeMacroTree} from './macro-token-trees.mjs';
-import {createDeriveFootprintContext,deriveFootprintAt,deriveFootprintExternalModules} from './derive-footprints.mjs';
+import {createDeriveFootprintContext,createToolAwareDeriveFootprintContext,deriveFootprintAt,deriveFootprintExternalModules} from './derive-footprints.mjs';
 import {configureDeriveLayout} from './derive-layout.mjs';
 import {createToolAttributeContext,createEnclosingToolAttributeContext} from './tool-attributes.mjs';
 import {configureToolAttributes} from './tool-attribute-layout.mjs';
@@ -323,7 +323,7 @@ function compileProjectLanguage(options, ownedDefinitionMode=false, semanticStor
   namespaceProgress('external-bindings');
   const externalModules=registeredStandardHostBindings([...originalMatchesNamespaceBindings(),...lockedTomlValueNamespaceBindings(options.deriveDependencies)]);
   namespaceProgress('derive-inputs');
-  const deriveContext=options.deriveDependencies?createDeriveFootprintContext({modules:graph.modules,dependencies:options.deriveDependencies,externalModules,compilationProfile:graph.compilationProfile}):null;
+  const deriveContext=options.deriveDependencies?(enclosingNamespace?createToolAwareDeriveFootprintContext:createDeriveFootprintContext)({modules:graph.modules,dependencies:options.deriveDependencies,externalModules,compilationProfile:graph.compilationProfile}):null;
   // Construct the genuine enclosing issuer once for this project and pass it
   // explicitly through the independent Default/Clone and binding consumers.
   let deriveBangContext=null;

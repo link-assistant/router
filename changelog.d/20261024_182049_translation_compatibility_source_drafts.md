@@ -75,3 +75,5 @@ integration and the remaining requirement ledger are still open.
 - Draft canonical synchronous Cancellation Rust-to-JS/TS restoration through fresh private move/borrow checking and whole Rust reproduction, with complete original copies and unrun regression source.
 
 - Draft three-language cancellation source-unit synchronization, paired borrow signatures, runtime initialization, complete native/Cargo capture and original fresh atomic installation; receiving cases are unrun.
+
+- Draft independently genuine tool-first derive input composition in the explicit enclosing project path, retaining the original constructor, complete source histories and unrun refusal/typed cases.
