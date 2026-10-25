@@ -2,13 +2,13 @@ import {createHash,Hash} from 'node:crypto';
 import {createPrivateFrozenJsonCache} from './private-frozen-json.mjs';
 import {types} from 'node:util';
 import {originalJsonIntrinsicsUnchanged,originalPathMembershipIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
-import {resolveModuleBindings} from './module-bindings.mjs';
+import {resolveModuleBindings,resolveRegisteredBuiltinEnclosingNamespaceModuleBindings} from './module-bindings.mjs';
 import {compilationProfile,itemConfiguration,isInertConditionalAttribute} from './cfg-profile.mjs';
 import {sourceItems} from './rust-structure.mjs';
 import {originalSourceModuleItems,moduleScopeKey,isSourceModuleView} from './source-module-views.mjs';
 import {createDeriveDependencyProof,deriveExternalModules,isDeriveDependencyProof} from './derive-dependencies.mjs';
 import {inspectDeriveInput,STANDARD_LAYOUT_DERIVES} from './derive-inputs.mjs';
-import {inertInnerLintItem,createToolAttributeContext,toolAttributeAt} from './tool-attributes.mjs';
+import {inertInnerLintItem,createToolAttributeContext,createRegisteredBuiltinToolAttributeContext,toolAttributeAt} from './tool-attributes.mjs';
 import {builtinDefaultDependencyProof} from './derive-builtin-default.mjs';
 import {proveSchemarsWithTypeConfinement} from './derive-schemars-with.mjs';
 import {proveClapValueEnumSourceOutput} from './derive-clap-value-enum.mjs';
@@ -469,10 +469,10 @@ export function createToolAwareDeriveFootprintContext({modules,dependencies,comp
     if(existing?.bindings.some(binding=>table.bindings.some(derived=>derived.namespace===binding.namespace&&derived.name===binding.name)))throw new TypeError('Registered derive namespace collides with another external table');
     external.set(path,{...table,bindings:[...(existing?.bindings??[]),...table.bindings],complete:false});
   }
-  const toolContext=createToolAttributeContext({modules,externalModules:external,compilationProfile:profile});
+  const toolContext=createRegisteredBuiltinToolAttributeContext({modules,externalModules:external,compilationProfile:profile});
   // Resolve aliases against actual source before applying any certificates.
   // Unknown imports, duplicate slots and local package shadows remain visible.
-  const baseline=resolveModuleBindings({modules,externalModules:external,toolContext,compilationProfile:profile}),scopes=new Map(baseline.scopes.map(scope=>[key(['crate',...scope.path]),scope]));
+  const baseline=resolveRegisteredBuiltinEnclosingNamespaceModuleBindings({modules,externalModules:external,toolContext,compilationProfile:profile}),scopes=new Map(baseline.scopes.map(scope=>[key(['crate',...scope.path]),scope]));
   const attributeClosure=new Map(),clapSourceOutputs=new Map(),clapSourceRefusals=new Map(),moduleInputs=new Map(),scalarConcatCandidates=[];
   for(const module of modules) {
     const scope=scopes.get(key(['crate',...module.path])),inputs=new Map();
@@ -499,7 +499,7 @@ export function createToolAwareDeriveFootprintContext({modules,dependencies,comp
           return true;
         }catch(error){clapSourceRefusals.set(invocationId(module,candidate),error.message);return false;}
       }
-      return condition.attributes.every(attribute=>isInertConditionalAttribute(attribute)||toolContext&&toolAttributeAt(toolContext,module,candidate,attribute)||['cfg','path','doc','allow','warn','deny','forbid','must_use','inline','cold','deprecated','repr','non_exhaustive','track_caller','macro_use','macro_export'].includes(attribute.name))&&!scope.bindings.some(binding=>binding.namespace==='macro'&&binding.macroKind!=='bang'&&condition.attributes.some(attribute=>!isInertConditionalAttribute(attribute)&&attribute.name===binding.name))&&originalDeclarationHeader(candidate,condition,module,scope);
+      return condition.attributes.every(attribute=>isInertConditionalAttribute(attribute)||toolContext&&toolAttributeAt(toolContext,module,candidate,attribute)||originalRegisteredBuiltinCallerAttributeAt(module,candidate,attribute)||['cfg','path','doc','allow','warn','deny','forbid','must_use','inline','cold','deprecated','repr','non_exhaustive','track_caller','macro_use','macro_export'].includes(attribute.name))&&!scope.bindings.some(binding=>binding.namespace==='macro'&&binding.macroKind!=='bang'&&condition.attributes.some(attribute=>!isInertConditionalAttribute(attribute)&&attribute.name===binding.name))&&originalDeclarationHeader(candidate,condition,module,scope);
     })&&!scope.unresolvedImports.some(entry=>entry.glob));
   }
   // Preserve the old module-wide closure above. Only an actual owner request
@@ -513,7 +513,7 @@ export function createToolAwareDeriveFootprintContext({modules,dependencies,comp
     const condition=itemConfiguration(candidate.tokens,profile);if(condition.status!=='active')return false;
     const input=moduleInputs.get(moduleScopeKey(module)).get(candidate.start);
     if(input){const owners=input.derives.map(invocation=>standardOwner(invocation.path,scope)?true:actualOwner(invocation.path,scope,scopes,external,dependencies));if(owners.some(owner=>!owner)||clapSourceRefusals.has(invocationId(module,candidate)))return false;for(const owner of owners.filter(owner=>owner!==true&&owner.target[0]==='clap')){const output=clapSourceOutputs.get(invocationId(module,candidate));if(owner.target.join('::')==='clap::ValueEnum'&&!output?.valueEnum||owner.target.join('::')==='clap::Args'&&!output?.args)return false;}return true;}
-    return condition.attributes.every(attribute=>isInertConditionalAttribute(attribute)||toolContext&&toolAttributeAt(toolContext,module,candidate,attribute)||['cfg','path','doc','allow','warn','deny','forbid','must_use','inline','cold','deprecated','repr','non_exhaustive','track_caller','macro_use','macro_export'].includes(attribute.name))&&!requestedBindingCollision(scope,condition,projection)&&originalDeclarationHeader(candidate,condition,module,scope);
+    return condition.attributes.every(attribute=>isInertConditionalAttribute(attribute)||toolContext&&toolAttributeAt(toolContext,module,candidate,attribute)||originalRegisteredBuiltinCallerAttributeAt(module,candidate,attribute)||['cfg','path','doc','allow','warn','deny','forbid','must_use','inline','cold','deprecated','repr','non_exhaustive','track_caller','macro_use','macro_export'].includes(attribute.name))&&!requestedBindingCollision(scope,condition,projection)&&originalDeclarationHeader(candidate,condition,module,scope);
   };
   const requestedAttributeClosure=(scope,caller,requests)=>{
     const module=modules.find(module=>moduleScopeKey(module)===moduleScopeKey(scope));if(!module||scope.configurationCondition!=='active'||caller.configurationCondition==='unknown'||caller.configurationCondition==='inactive')return null;
@@ -658,3 +658,5 @@ export function createToolAwareDeriveFootprintContext({modules,dependencies,comp
   const moduleIndices=originalJsonIntrinsicsUnchanged()?{paths:new Set(originalModules.map(module=>JSON.stringify(['crate',...module.path]))),scopes:new Map(originalModules.map(module=>[moduleScopeKey(module),module]))}:null;
   contexts.set(context,{byId,external:originalExternal,dependencies,originalModules,moduleIndices,helperScopes:baseline.scopes,attributeClosure,requestedAttributeClosure,ownerRequests,toolContext});return context;
 }
+
+import {originalRegisteredBuiltinCallerAttributeAt} from './registered-builtin-caller-attribute-source.mjs';

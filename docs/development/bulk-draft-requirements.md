@@ -620,3 +620,12 @@ erase unknown producers. Four complete source copies, both substitution phases,
 independent namespace/view/source/refusal cases and native oracle source remain
 unrun. Architecture exports, other producers, derive/tool bootstrap, production
 qualification and every unfinished requirement above remain open.
+
+The [registered builtin tool context draft](registered-builtin-tool-contexts-draft.md)
+composes complete copied initial/output tool constructors, the explicit tool-first
+derive input and selected enclosing project with the written builtin source path.
+Original constructors/default project remain; unknown owners, type shadows,
+architecture globs and same-scope cycles retain their obligations. Five complete
+source copies, both phases, independent context/source/refusal/project cases and
+ordinary native tool/derive oracle source remain unrun. Every unfinished row
+above remains open; no validation or fresh coverage evidence is claimed.

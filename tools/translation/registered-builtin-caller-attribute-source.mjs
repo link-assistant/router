@@ -105,3 +105,6 @@ export function createOriginalRegisteredBuiltinCallerAttributeScope(){
 }
 
 import {originalSourceModuleItems} from './source-module-views.mjs';
+
+// Every direct source request creates and closes its own complete frame.
+export function originalRegisteredBuiltinCallerAttributeAt(module,item,attribute){const scope=createOriginalRegisteredBuiltinCallerAttributeScope();const selected=scope.at(module,item,attribute);scope.finish();return selected;}

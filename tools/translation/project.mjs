@@ -43,7 +43,7 @@ import {originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.
 import {freezeMacroTree} from './macro-token-trees.mjs';
 import {createDeriveFootprintContext,createToolAwareDeriveFootprintContext,deriveFootprintAt,deriveFootprintExternalModules} from './derive-footprints.mjs';
 import {configureDeriveLayout} from './derive-layout.mjs';
-import {createToolAttributeContext,createEnclosingToolAttributeContext} from './tool-attributes.mjs';
+import {createToolAttributeContext,createRegisteredBuiltinEnclosingToolAttributeContext as createEnclosingToolAttributeContext} from './tool-attributes.mjs';
 import {configureToolAttributes} from './tool-attribute-layout.mjs';
 import {actualJsonCapabilityProfile} from './json-capabilities.mjs';
 import {createJsonMacroContext,configureJsonMacroParser} from './json-macro-context.mjs';

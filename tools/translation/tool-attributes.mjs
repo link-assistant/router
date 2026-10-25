@@ -5,7 +5,7 @@ import {gunzipSync} from 'node:zlib';
 import {sourceItems} from './rust-structure.mjs';
 import {originalSourceModuleItems,originalModuleViewItems,moduleScopeKey} from './source-module-views.mjs';
 import {compilationProfile,itemConfiguration,isInertConditionalAttribute} from './cfg-profile.mjs';
-import {resolveModuleBindings,resolveEnclosingNamespaceModuleBindings} from './module-bindings.mjs';
+import {resolveModuleBindings,resolveEnclosingNamespaceModuleBindings,resolveRegisteredBuiltinEnclosingNamespaceModuleBindings} from './module-bindings.mjs';
 import {deriveEnclosingNamespaceModules} from './derive-enclosing-namespace-context.mjs';
 import {builtinInnerSourceItem} from './inner-source-attributes.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
@@ -138,6 +138,80 @@ export function createEnclosingToolAttributeContext({modules,externalModules=new
     const projection=Object.freeze({});contexts.set(projection,{byId:candidates,byScope,provisional:true});
     let baseline;
     try{baseline=resolveEnclosingNamespaceModuleBindings({modules:complete,externalModules,deriveContext,deriveBangContext,toolContext:projection,compilationProfile:profile});}
+    finally{contexts.delete(projection);}
+    const scopes=new Map(baseline.scopes.map(scope=>[scopeKey(scope.path),scope]));
+    for(const [key,candidate]of candidates){
+      const ancestors=candidate.module.map((_,index)=>scopes.get(scopeKey(candidate.module.slice(0,index+1))));ancestors.unshift(scopes.get('crate'));
+      const disabledPrelude=originals.some(module=>module.path.every((name,index)=>candidate.module[index]===name)&&originalSourceModuleItems(module).some(item=>builtinInnerSourceItem(item,module.source,module.sourceView,profile)?.preludeControl==='no_implicit_prelude'));
+      if(disabledPrelude||ancestors.some(scope=>!scope||scope.configurationCondition!=='active'||scope.unresolvedTypeScope!==false||scope.bindings.some(binding=>binding.namespace==='type'&&binding.name==='rustfmt')||scope.unresolvedImports.some(entry=>entry.glob||entry.name==='rustfmt'))){
+        diagnostics.push({source:candidate.source,span:candidate.attribute.span,message:'Original tool prefix lacks closed active tool-prelude ownership'});continue;
+      }
+      const evidence={schema:'original-tool-attribute-v1',profile:TOOL_ATTRIBUTE_PROFILE,sourceInputsVerified:true,...candidate,owner:{namespace:'tool-prelude',path:['rustfmt']},dimensions:{typeNamespaceComplete:true,valueNamespaceComplete:true,attributeMacroComplete:true,bangMacroComplete:true},runtimeBehavior:false};
+      const certificate=freeze({...evidence,digest:hash(JSON.stringify(evidence))});certificates.set(certificate,candidate);byId.set(key,certificate);
+    }
+  }
+  const evidence={schema:'original-tool-context-v1',compilationProfile:profile,certificates:[...byId.values()],diagnostics};
+  const context=freeze({...evidence,digest:hash(JSON.stringify(evidence))});contexts.set(context,{byId,byScope,provisional:false});return context;
+}
+
+// Complete original tool constructors with the source-registered namespace entry.
+export function createRegisteredBuiltinToolAttributeContext({modules,externalModules=new Map(),deriveContext=null,compilationProfile:input=null}={}){
+  if(!Array.isArray(modules)||!(externalModules instanceof Map))throw new TypeError('Tool attributes require tracked modules and external namespace tables');
+  const profile=compilationProfile(input),originals=sourceModules(modules,profile),candidates=new Map();
+  const byScope=new Map(originals.map(module=>[moduleScopeKey(module),{source:module.source,sourceView:module.sourceView}]));
+  for(const module of originals)for(const item of module.items){
+    const condition=itemConfiguration(item.tokens.filter(token=>token.type!=='comment'),profile);
+    if(condition.status!=='active'||!originalHeader(item,condition))continue;
+    for(const attribute of condition.attributes){
+      if(attribute.tokens.join('')!=='#[rustfmt::skip]')continue;
+      candidates.set(id(module,item,attribute),freeze({source:module.file,module:[...module.path],sourceSha256:hash(module.source),itemSpan:{start:item.start,end:item.end},itemSha256:hash(module.source.slice(item.start,item.end)),attribute}));
+    }
+  }
+  const byId=new Map(),diagnostics=[];
+  if(candidates.size){
+    // This provisional context never escapes this function. Project only the
+    // candidate attributes, then independently resolve every actual binding.
+    const projection=Object.freeze({});contexts.set(projection,{byId:candidates,byScope,provisional:true});
+    let baseline;
+    try{baseline=resolveRegisteredBuiltinEnclosingNamespaceModuleBindings({modules:originals,externalModules,deriveContext,toolContext:projection,compilationProfile:profile});}
+    finally{contexts.delete(projection);}
+    const scopes=new Map(baseline.scopes.map(scope=>[scopeKey(scope.path),scope]));
+    for(const [key,candidate]of candidates){
+      const ancestors=candidate.module.map((_,index)=>scopes.get(scopeKey(candidate.module.slice(0,index+1))));ancestors.unshift(scopes.get('crate'));
+      const disabledPrelude=originals.some(module=>module.path.every((name,index)=>candidate.module[index]===name)&&originalSourceModuleItems(module).some(item=>builtinInnerSourceItem(item,module.source,module.sourceView,profile)?.preludeControl==='no_implicit_prelude'));
+      if(disabledPrelude||ancestors.some(scope=>!scope||scope.configurationCondition!=='active'||scope.unresolvedTypeScope!==false||scope.bindings.some(binding=>binding.namespace==='type'&&binding.name==='rustfmt')||scope.unresolvedImports.some(entry=>entry.glob||entry.name==='rustfmt'))){
+        diagnostics.push({source:candidate.source,span:candidate.attribute.span,message:'Original tool prefix lacks closed active tool-prelude ownership'});continue;
+      }
+      const evidence={schema:'original-tool-attribute-v1',profile:TOOL_ATTRIBUTE_PROFILE,sourceInputsVerified:true,...candidate,owner:{namespace:'tool-prelude',path:['rustfmt']},dimensions:{typeNamespaceComplete:true,valueNamespaceComplete:true,attributeMacroComplete:true,bangMacroComplete:true},runtimeBehavior:false};
+      const certificate=freeze({...evidence,digest:hash(JSON.stringify(evidence))});certificates.set(certificate,candidate);byId.set(key,certificate);
+    }
+  }
+  const evidence={schema:'original-tool-context-v1',compilationProfile:profile,certificates:[...byId.values()],diagnostics};
+  const context=freeze({...evidence,digest:hash(JSON.stringify(evidence))});contexts.set(context,{byId,byScope,provisional:false});return context;
+}
+
+export function createRegisteredBuiltinEnclosingToolAttributeContext({modules,externalModules=new Map(),deriveContext=null,deriveBangContext=null,compilationProfile:input=null}={}){
+  if(!Array.isArray(modules)||!(externalModules instanceof Map))throw new TypeError('Tool attributes require tracked modules and external namespace tables');
+  const profile=compilationProfile(input);
+  if(deriveContext&&!deriveBangContext)throw new TypeError('Tool enclosing resolution requires its genuine complete derive output context');
+  const complete=deriveBangContext?deriveEnclosingNamespaceModules(deriveBangContext,{deriveContext,modules,externalModules,compilationProfile:profile}):modules;
+  const originals=sourceModules(complete,profile),candidates=new Map();
+  const byScope=new Map(originals.map(module=>[moduleScopeKey(module),{source:module.source,sourceView:module.sourceView}]));
+  for(const module of originals)for(const item of module.items){
+    const condition=itemConfiguration(item.tokens.filter(token=>token.type!=='comment'),profile);
+    if(condition.status!=='active'||!originalHeader(item,condition))continue;
+    for(const attribute of condition.attributes){
+      if(attribute.tokens.join('')!=='#[rustfmt::skip]')continue;
+      candidates.set(id(module,item,attribute),freeze({source:module.file,module:[...module.path],sourceSha256:hash(module.source),itemSpan:{start:item.start,end:item.end},itemSha256:hash(module.source.slice(item.start,item.end)),attribute}));
+    }
+  }
+  const byId=new Map(),diagnostics=[];
+  if(candidates.size){
+    // This provisional context never escapes this function. Project only the
+    // candidate attributes, then independently resolve every actual binding.
+    const projection=Object.freeze({});contexts.set(projection,{byId:candidates,byScope,provisional:true});
+    let baseline;
+    try{baseline=resolveRegisteredBuiltinEnclosingNamespaceModuleBindings({modules:complete,externalModules,deriveContext,deriveBangContext,toolContext:projection,compilationProfile:profile});}
     finally{contexts.delete(projection);}
     const scopes=new Map(baseline.scopes.map(scope=>[scopeKey(scope.path),scope]));
     for(const [key,candidate]of candidates){
