@@ -490,6 +490,14 @@ structural spelling cannot admit an octet array or erase a loan. See the
 [owned octet draft](http-resource-bytes-draft.md); all new qualification remains
 unrun during source drafting.
 
+Alternate Result failure branches require complete independent checking of all
+fallback outcomes, returned roots and resource cleanup. Preserve original
+same-error propagation separately. An error branch cannot access its success
+payload, and helper release summaries must still join every exit. Keep full
+native match syntax and complete source reproduction. See the
+[Result fallback draft](http-resource-result-fallbacks-draft.md); all new
+qualification remains unrun during source drafting.
+
 Compose common operation families through their actual fully checked native and
 runtime sources, retaining callbacks/numeric domains with their original checker
 when unsupported. Option/Result containers move once. Local borrowed string

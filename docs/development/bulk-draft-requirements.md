@@ -247,6 +247,15 @@ UTF8, empty, Some(Null), polling, ownership, root, refusal and forged-meta sourc
 are retained. General byte iterators, Result fallbacks, namespace/bootstrap,
 production parity and every unfinished requirement remain open.
 
+The [complete Result failure fallback draft](http-resource-result-fallbacks-draft.md)
+adds actual alternate error branches with full return/root/resource checks,
+filesystem read-and-parse composition, every helper release exit and complete
+canonical native inverses. Full originals and independent unrun JS/strict
+TS/native value, missing-file, polling, Some(Null), cleanup, refusal and
+forged-meta source are retained. Error inspection, outcome-sensitive release,
+namespace/bootstrap, production parity and every unfinished requirement remain
+open.
+
 The [local resource helper draft](http-resource-local-functions-draft.md) now
 checks actual callee bodies before callers, composes cold futures and single
 returned roots, preserves source order and separates imported/local binding
