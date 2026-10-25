@@ -486,7 +486,7 @@ export function resolveModuleBindings({modules,externalModules=new Map(),compila
 // Explicit dimension format; every legacy resolver/default byte above remains exact.
 import {isDeriveEnclosingNamespaceContext,deriveEnclosingNamespaceModules,deriveEnclosingNamespaceOutputAt,deriveEnclosingNamespaceHelperAttributeAt,proveDeriveEnclosingNamespaceEffect,deriveEnclosingNamespaceEffectFacts} from './derive-enclosing-namespace-context.mjs';
 import {enumNamespaceBody,originalEnumNamespaceSourcePlan} from './enum-namespace-header.mjs';
-function resolveRegisteredBuiltinEnclosingSourceBindings({modules,externalModules=new Map(),compilationProfile:profileInput=null,deriveContext=null,deriveBangContext=null,toolContext=null}={},registeredAttributes=false) {
+function resolveRegisteredBuiltinEnclosingSourceBindings({modules,externalModules=new Map(),compilationProfile:profileInput=null,deriveContext=null,deriveBangContext=null,toolContext=null}={},registeredAttributes=false,configuredVariants=false) {
   if(!Array.isArray(modules) || !(externalModules instanceof Map))throw new TypeError('Binding resolution requires tracked modules and explicit external tables');
   if(deriveContext&&!isDeriveFootprintContext(deriveContext))throw new TypeError('Unsealed derive footprint context');
   if(deriveBangContext){if(!isDeriveEnclosingNamespaceContext(deriveBangContext))throw new TypeError('Unsealed derive bang output context');modules=deriveEnclosingNamespaceModules(deriveBangContext,{deriveContext,modules,externalModules,compilationProfile:profileInput});}
@@ -625,9 +625,10 @@ function resolveRegisteredBuiltinEnclosingSourceBindings({modules,externalModule
           const enumScope={file:scope.file,path:[...scope.path,name],seeds:[],bindings:[],unknownType:uncertain.type,unknownMacro:uncertain.macro,unknownBang:uncertain.bang,unknownAttribute:uncertain.attribute,baseType:uncertain.type,baseMacro:uncertain.macro,baseBang:uncertain.bang,baseAttribute:uncertain.attribute};
           containers.set(key(canonical(enumScope.path)),enumScope);
           for(const variant of parts(tokens.slice(open+1,close(tokens,open)))) {
+            const variantConfiguration=configuredVariants?itemConfiguration(variant,profile):null;if(variantConfiguration?.status==='inactive')continue;
             const variantHead=header(variant,scope.path),token=variant[variantHead.at];
             if(!identifier(token))throw new Error('enum variant namespace needs source expansion');
-            const variantUncertain=uncertainty(variantHead.attributes),variantItem={...item,term:'variant',start:token.start,end:variant.at(-1).end},variantExtra=uncertain.type || uncertain.conditional || variantUncertain.type || variantUncertain.conditional?{status:'unresolved',target:null}:{};
+            const variantUncertain=uncertainty(configuredVariants?variantHead.attributes.filter(attribute=>!isInertConditionalAttribute(variantConfiguration.attributes.find(original=>original.span.start===attribute.span.start))&&!(attribute.name==='cfg'&&variantConfiguration.attributes.find(original=>original.span.start===attribute.span.start)?.evaluation?.value===true)):variantHead.attributes),variantItem={...item,term:'variant',start:token.start,end:variant.at(-1).end},variantExtra=uncertain.type || uncertain.conditional || variantUncertain.type || variantUncertain.conditional?{status:'unresolved',target:null}:{};
             enumScope.baseType ||= variantUncertain.type;enumScope.baseMacro ||= variantUncertain.macro;enumScope.baseBang ||= variantUncertain.bang;enumScope.baseAttribute ||= variantUncertain.attribute;
             add(enumScope,variantItem,token.text,'type',head.visibility,variantExtra);
             if(variant[variantHead.at+1]?.text!=='{')add(enumScope,variantItem,token.text,'value',head.visibility,variantExtra);
@@ -780,3 +781,6 @@ export function resolveEnclosingNamespaceModuleBindings(options={}){return resol
 export function resolveRegisteredBuiltinEnclosingNamespaceModuleBindings(options={}){return resolveRegisteredBuiltinEnclosingSourceBindings(options,true);}
 
 import {createOriginalRegisteredBuiltinCallerAttributeScope} from './registered-builtin-caller-attribute-source.mjs';
+
+// Explicit configured-variant successor; old public resolver domains remain.
+export function resolveConfiguredVariantEnclosingNamespaceModuleBindings(options={}){return resolveRegisteredBuiltinEnclosingSourceBindings(options,true,true);}

@@ -86,6 +86,15 @@ inverse regressions are retained. Whole-chain receiving, remaining CI repairs,
 namespace/producer bootstrap, broader language/resource domains, production
 adoption/parity and every unfinished requirement remain open.
 
+The [configured enum variant namespace draft](configured-enum-variants-draft.md)
+applies the existing original profile evaluator to exact variants through a
+separate resolver and complete copied initial/output tool constructors. Selected
+owned, derive-input and enclosing project paths compose them; original APIs,
+unknown scopes and live shadows remain. Six complete source copies, both phases
+and independent profile/source/tool/derive/project/refusal plus native cfg/glob
+oracle cases remain unrun. Architecture/producer closure, production parity and
+every unfinished requirement remain open.
+
 The [guarded async numeric draft](async-control-u64-draft.md) now qualifies
 actual dominating original u64 entry guards, native count parameters, canonical
 Rust inverse guards and fresh paired numeric signatures. Complete originals,
