@@ -834,3 +834,12 @@ bare bigint supplies no range, step or ownership authority. Let the original
 native checker reissue standard range/reverse contracts. Preserve endpoint
 order, once-only evaluation, empty/min/max paths and current loop exits. See the
 [range body draft](docs/development/range-body-inverse-draft.md).
+
+Floating inverse rules require actual source-qualified native f64 observations,
+original checked source and full native/target reproduction. Keep earlier
+signature formats unchanged, reuse the bounded exact binary64 decoder, retain
+signed zero and IEEE classes, and preserve distinct checked integer guards.
+Compare complete TypeScript types exactly; no public shape or numeric spelling
+supplies type or owner permission. Materialize standard runtime pairs through
+the original complete registered closure validator under unchanged bounds. See
+the [floating body draft](docs/development/floating-body-inverse-draft.md).

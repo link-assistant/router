@@ -910,3 +910,24 @@ export function ownedCoreAsciiBaseRuntimeSources(runtimeRoot='runtime',declarati
 
  }finally{runtimeImportEpochClose(__runtimeEpoch);}
 }
+
+// Complete registered host/core runtime source DATA; old fixed roots unchanged.
+export function ownedRegisteredRuntimeSources(runtimeRoot='runtime',declarationRoot=runtimeRoot){
+ ownedSourcePath(runtimeRoot);ownedSourcePath(declarationRoot);assertReverseConcreteSourceHost();const ts=ownershipCompiler(),assets=hostRuntimeAssets(),rows=[],seen=new Set();
+ const __runtimeEpoch=runtimeImportEpoch(ts);try{
+
+ function visit(name){
+  if(seen.has(name))return;ownedSourcePath(name);if(seen.size>=128||!name.endsWith('.mjs')&&!name.endsWith('.mts'))fail('runtime closure bounds');seen.add(name);
+  const source=assets.get(name);if(typeof source!=='string')fail('unregistered materialized asset: '+name);const base=name.endsWith('.mts')?declarationRoot:runtimeRoot,path=base+'/'+name,file=runtimeImportParsed(ts,path,source,__runtimeEpoch);rows.push({path,source});
+  for(const node of file.statements)if((ts.isImportDeclaration(node)||ts.isExportDeclaration(node))&&node.moduleSpecifier){
+   const specifier=node.moduleSpecifier.text;if(['node:util','node:crypto','node:buffer','node:http','node:https','node:dns','node:net','node:fs','node:fs/promises','node:os','node:async_hooks'].includes(specifier))continue;
+   const target=relative(path,specifier);if(!target.startsWith(base+'/'))fail('runtime closure escape');visit(target.slice(base.length+1));
+  }
+ runtimeImportComplete(ts,path,source,file,__runtimeEpoch);
+ }
+ for(const [name]of assets)if(name.endsWith('.mjs')||name.endsWith('.mts'))visit(name);
+ for(const [name,source]of assets)if(/LICENSE|NOTICE/iu.test(name))rows.push({path:runtimeRoot+'/'+name,source});
+ assertReverseConcreteSourceHost();return runtimeImportEpochReturn(__runtimeEpoch,rows.sort((a,b)=>a.path.localeCompare(b.path)));
+
+ }finally{runtimeImportEpochClose(__runtimeEpoch);}
+}

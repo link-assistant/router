@@ -1,6 +1,6 @@
 // Per-proposal registered runtime packaging. These equations grant no admission.
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
-import {ownedCoreRuntimeSources} from './js-to-rust/owned-outcome-source.mjs';
+import {ownedRegisteredRuntimeSources} from './js-to-rust/owned-outcome-source.mjs';
 import {effectRuntimeAssets} from './effect-assets.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
 import {transportConcreteSourceEquations} from './concrete-source-equations.mjs';
@@ -28,7 +28,7 @@ function parsed(source,language,name){
 }
 function currentAssets(){
  const map=new Map(),add=(name,source)=>{path(name);need(!map.has(name)&&typeof source==='string'&&Buffer.byteLength(source)<=FILE,'unique complete registered runtime source required');map.set(name,source);};
- for(const row of ownedCoreRuntimeSources('runtime')){need(row.path.startsWith('runtime/'),'actual registered runtime root');add(row.path.slice('runtime/'.length),row.source);}
+ for(const row of ownedRegisteredRuntimeSources('runtime')){need(row.path.startsWith('runtime/'),'actual registered runtime root');add(row.path.slice('runtime/'.length),row.source);}
  const effects=effectRuntimeAssets();add('effects.mjs',effects.javascript);add('effects.d.mts',effects.declarations);return map;
 }
 function quotedRelative(specifier,original){

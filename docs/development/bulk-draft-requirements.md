@@ -808,3 +808,14 @@ and independent strict target/empty/min/max/direction/control/refusal/history
 plus native oracle source are drafted and unrun. Generic/slice/owned adapters,
 new global helper closure, namespace bootstrap, production adoption/parity and
 every other incomplete requirement remain open.
+
+The [source-f64 body inverse draft](floating-body-inverse-draft.md) now adds
+explicit original compiler signature observations, exact binary64 decoder reuse,
+IEEE arithmetic and mixed floating/integer control while preserving all older
+formats. An additive complete registered runtime source path retains the original
+validator and bounds, including standard float/time/type-layout pairs. Full
+original source histories, exported project mode and independent strict target/
+rounding/zero/subnormal/IEEE/refusal/runtime/project plus native oracle source
+are drafted and unrun. Broader owned/slice/generic/recursive/async syntax,
+namespace bootstrap, production adoption/parity and every other open row remain
+unfinished.
