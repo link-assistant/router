@@ -95,6 +95,12 @@ and independent profile/source/tool/derive/project/refusal plus native cfg/glob
 oracle cases remain unrun. Architecture/producer closure, production parity and
 every unfinished requirement remain open.
 
+The [native explicit discard draft](http-resource-native-discard-draft.md)
+retains actual wildcard let boundaries and checked call ordering through the
+existing unit/effect/ownership/disposal path. Three complete originals, both
+phases and independent target/native/literal/source/refusal and oracle cases
+remain unrun. Wider drop behavior and every unfinished requirement remain open.
+
 The [guarded async numeric draft](async-control-u64-draft.md) now qualifies
 actual dominating original u64 entry guards, native count parameters, canonical
 Rust inverse guards and fresh paired numeric signatures. Complete originals,

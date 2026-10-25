@@ -74,3 +74,5 @@ mod native_unit;
 mod native_option_match;
 #[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-native-result-match-oracle.rs"]
 mod native_result_match;
+#[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-native-discard-oracle.rs"]
+mod native_discard;

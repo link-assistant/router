@@ -49,6 +49,7 @@ export class HttpResourceBindingRustReader {
   while(!this.eat('}')){
    this.tick(depth);
    if(this.eat('let')){
+    if(this.is('_')&&this.is('=',1)){const start=this.tokens[this.index-1].start;this.next();this.expect('=');const begin=this.peek().start,value=this.expression(local,0,depth+1);this.expect(';');statements.push({kind:'discard-let',value,prefixSpan:{start,end:begin},statementSpan:{start,end:this.tokens[this.index-1].end}});continue;}
     if(this.is('Some')&&this.is('(',1)){
      const constructor=this.next();this.expect('(');const open=this.tokens[this.index-1],mutable=this.eat('mut'),name=this.identifier(),nameSpan={start:this.lastIdentifier.start,end:this.lastIdentifier.end};this.expect(')');const close=this.tokens[this.index-1];this.expect('=');const value=this.expression(local,0,depth+1),alternative=this.peek();this.expect('else');const otherwise=this.block(local,depth+1),semicolon=this.peek();this.expect(';');statements.push({kind:'let-option-else',name,nameSpan,mutable,value,otherwise,constructorSpan:{start:constructor.start,end:constructor.end},openSpan:{start:open.start,end:open.end},closeSpan:{start:close.start,end:close.end},alternativeSpan:{start:alternative.start,end:semicolon.end}});continue;
     }

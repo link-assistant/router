@@ -193,3 +193,4 @@ integration and the remaining requirement ledger are still open.
 - Draft original native Some/None extraction matches through checked propagation with exact initializer scope and full source inverses, retaining independent unrun target/native ownership and refusal cases.
 - Draft source-bound native Ok/Err extraction matches with exact captured-error identity and existing whole error/type/ownership checking, retaining full originals/inverses and independent unrun target/native/refusal cases.
 - Draft exact original enum variant configuration through a separate enclosing resolver and complete copied tool contexts, preserving legacy domains, full source histories and independent unrun profile/namespace/derive/project/native cases.
+- Draft actual native wildcard call discards through existing complete effect/ownership rules, retaining full source histories and independent unrun cancellation/disposal/literal/refusal/native cases.
