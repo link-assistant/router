@@ -39,6 +39,12 @@ Independent JS/strict TS/native and physical source-unit cases are drafted;
 none supplies current coverage, parity or CI evidence. New native oracle source
 joins the existing gated Rust discovery and must never execute locally.
 
+The [native source-operation draft](docs/development/native-source-operation-draft.md)
+retains private syntax only inside one synchronous operation while every
+semantic/binding/source check stays fresh. Its complete original histories and
+typed/CLI repairs remain unrun; extend its final source-history part without
+creating an import or preparation cycle. It supplies no speed qualification.
+
 The [owned project transaction draft](docs/development/owned-project-unit-draft.md)
 uses physical JS/TS module trees and one packaged Rust file. Keep dependency
 edits in authority/conflict selection, reconstruct actual module bindings from

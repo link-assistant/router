@@ -281,6 +281,16 @@ Unicode, arity, source, physical three-language edit, conflict and forged-meta
 cases are retained. Borrowed-output callbacks, namespace/bootstrap, production
 parity and every unfinished requirement remain open.
 
+The [one native source-operation draft](native-source-operation-draft.md)
+wraps all 146 original preparers before eager child evaluation, limits private
+syntax reuse to one genuine synchronous operation and preserves every fresh
+semantic/binding/source check. Three full-original groups retain the original
+64-row family bound. Typed descendant forwarding, complete overlapping history
+joins, nested original guards and whole descendant CLI status are drafted with
+independent unrun cases. No receiving or speed qualification is claimed.
+Remaining parser/timing/CI obligations, namespace/bootstrap, production parity
+and every unfinished requirement remain open.
+
 The [local resource helper draft](http-resource-local-functions-draft.md) now
 checks actual callee bodies before callers, composes cold futures and single
 returned roots, preserves source order and separates imported/local binding

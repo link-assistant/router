@@ -3,11 +3,12 @@ import {readFileSync,writeFileSync} from 'node:fs';
 import {resolve,relative,isAbsolute} from 'node:path';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
-import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
+import {ownershipCompiler,ownershipCompilerRuntimeNativeCurrent} from './js-to-rust/vendor/module-syntax.mjs';
+import {types} from 'node:util';
 import {createRulePipeline} from './rule-pipeline.mjs';
 import {transportConcreteSourceEquations} from './concrete-source-equations.mjs';
 import {verifyNativeCopiedSourceBindingBatch} from './source-copy-native-bindings.mjs';
-import {nativeSourceHistoryFiles,collectNativeSourceDescendants} from './native-source-descendants.mjs';
+import {nativeSourceHistoryFiles,collectNativeSourceDescendants,nativeSourceHistoryOriginalGuards,nativeSourceHistoryOverlap} from './native-source-descendants.mjs';
 
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const need=(value,message)=>{if(!value)throw new TypeError('Native substitution source copy: '+message);};
@@ -20,8 +21,13 @@ function localPath(root,path){
 function parsed(ts,path,source){
  need(typeof source==='string'&&Buffer.byteLength(source)<=8388608,'bounded complete primitive source');
  need(source.split('\n').length-(source.endsWith('\n')?1:0)<1000,'original repository file-size convention');
- const file=ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
- need(!file.parseDiagnostics.length,'complete native source grammar');return file;
+ const operation=__nativeSourceOperation,reuse=originalNativeSourceOperationCurrent(operation,ts);let file=reuse?operation.files.get(path)?.get(source):null;
+ if(!file)file=ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
+ need(!file.parseDiagnostics.length,'complete native source grammar');
+ if(reuse&&!operation.files.get(path)?.has(source)){
+  const bytes=Buffer.byteLength(source);if(bytes<=4194304){if(operation.entries>=64||operation.bytes+bytes>4194304){operation.files.clear();operation.entries=0;operation.bytes=0;}if(!operation.files.has(path))operation.files.set(path,new Map());operation.files.get(path).set(source,file);operation.entries++;operation.bytes+=bytes;}
+ }
+ return file;
 }
 function nativeOwner(ts,file,edit){
  const {start,end,expected,owner}=edit;
@@ -30,9 +36,10 @@ function nativeOwner(ts,file,edit){
  if(owner.kind==='end-of-module'){
   need(start===file.text.length&&end===start&&expected==='','native module-end append');return {kind:owner.kind,span:[start,end]};
  }
+ function callPath(node,depth=0){need(depth<=64,'bounded original member call path');if(ts.isIdentifier(node))return node.text;if(!ts.isPropertyAccessExpression(node)||node.questionDotToken)return null;const prefix=callPath(node.expression,depth+1);return prefix===null?null:prefix+'.'+node.name.text;}
  let matches=[];
  const visit=node=>{
-  if(owner.kind==='class'&&ts.isClassDeclaration(node)&&node.name?.text===owner.name||owner.kind==='function'&&ts.isFunctionDeclaration(node)&&node.name?.text===owner.name||owner.kind==='import'&&ts.isImportDeclaration(node)&&ts.isStringLiteral(node.moduleSpecifier)&&node.moduleSpecifier.text===owner.name||owner.kind==='call'&&ts.isCallExpression(node)&&ts.isIdentifier(node.expression)&&node.expression.text===owner.name&&node.arguments.length>0&&ts.isStringLiteral(node.arguments[0])&&node.arguments[0].text===owner.argument||owner.kind==='variable'&&ts.isVariableDeclaration(node)&&ts.isIdentifier(node.name)&&node.name.text===owner.name)matches.push(node);
+  if(owner.kind==='call-path'&&ts.isCallExpression(node)&&!node.questionDotToken&&callPath(node.expression)===owner.name||owner.kind==='class'&&ts.isClassDeclaration(node)&&node.name?.text===owner.name||owner.kind==='function'&&ts.isFunctionDeclaration(node)&&node.name?.text===owner.name||owner.kind==='import'&&ts.isImportDeclaration(node)&&ts.isStringLiteral(node.moduleSpecifier)&&node.moduleSpecifier.text===owner.name||owner.kind==='call'&&ts.isCallExpression(node)&&ts.isIdentifier(node.expression)&&node.expression.text===owner.name&&node.arguments.length>0&&ts.isStringLiteral(node.arguments[0])&&node.arguments[0].text===owner.argument||owner.kind==='variable'&&ts.isVariableDeclaration(node)&&ts.isIdentifier(node.name)&&node.name.text===owner.name)matches.push(node);
   ts.forEachChild(node,visit);
  };
  visit(file);need(matches.length===1,'unique native-selected original owner');const node=matches[0];
@@ -49,6 +56,7 @@ function substitute(ts,path,before,edits){
 
 /** Full inputs and rules are freshly read. A digest fixes a copy, not meaning. */
 export function prepareNativeSubstitutionCopy({root,archive,pin,id,laterPlans=[]}={}){
+ if(!__nativeSourceOperation)return withNativeSubstitutionOperation(()=>prepareNativeSubstitutionCopy({root,archive,pin,id,laterPlans}));
  root=resolve(root);const archivePath=localPath(root,archive),packed=readFileSync(archivePath);
  need(packed.length<=8388608&&hash(packed)===pin,'complete pinned original/rule archive');
  const original=JSON.parse(gunzipSync(packed,{maxOutputLength:16777216}));
@@ -66,22 +74,23 @@ export function prepareNativeSubstitutionCopy({root,archive,pin,id,laterPlans=[]
   ]).run(before);
   const stages=transportConcreteSourceEquations([{before,after:language.after,language:'JavaScript'},{before:language.after,after,language:'JavaScript'}]).map((stage,index)=>({...stage,phase:index?'repository':'language'}));
   need(run.value===after&&stages[0].inverse===before&&stages[1].inverse===language.after,'full serialized/reparsed CST equations and inverses');
-  let currentAfter=after;const laterHistories=[];
+  let currentAfter=after;const laterHistories=[],parallelHistories=[];
   for(const later of laterPlans){
    need(later.schema==='native-substitution-source-copy-plan-v1'&&Array.isArray(later.files)&&later.sourceAuthority===false&&later.semanticAuthority===false,'later layer is source equation DATA only');
    const candidates=nativeSourceHistoryFiles(later).filter(value=>value.path===row.path);need(candidates.length<=1,'unique later source equation');
-   if(!candidates.length)continue;const next=candidates[0];need(next.before===currentAfter&&next.inverse===next.before,'complete adjacent source history join');
+   if(!candidates.length)continue;const next=candidates[0];if(next.before!==currentAfter){const overlap=nativeSourceHistoryOverlap({before,after,language:language.after,currentAfter,laterHistories,parallelHistories},next);need(overlap&&next.inverse===next.before,'complete adjacent or overlapping source history join');parsed(ts,path,next.currentAfter??next.after);parallelHistories.push({...next,overlapEquation:overlap.equation});continue;}need(next.inverse===next.before,'complete adjacent source history inverse');
    const end=next.currentAfter??next.after;parsed(ts,path,end);
    const equation=transportConcreteSourceEquations([{before:currentAfter,after:end,language:'JavaScript'}])[0];need(equation.inverse===currentAfter,'complete later source inverse');
-   laterHistories.push({id:later.id,before:currentAfter,after:end,equation,stages:next.stages,laterHistories:next.laterHistories??[],sourceAuthority:false,semanticAuthority:false});currentAfter=end;
+   laterHistories.push({id:later.id,before:currentAfter,after:end,equation,stages:next.stages,laterHistories:next.laterHistories??[],parallelHistories:next.parallelHistories??[],path:next.path,...(next.originalPath?{originalPath:next.originalPath,originalSource:next.before}:{}),sourceAuthority:false,semanticAuthority:false});currentAfter=end;
   }
   const current=currentSource(path,Boolean(row.originalPath&&row.originalPath!==row.path));need(current===null||current===before||current===after||current===currentAfter,'unknown physical copied implementation');
-  files.push({path:row.path,...(row.originalPath?{originalPath:row.originalPath}:{}),before,language:language.after,after,current,currentAfter,laterHistories,stages,trace:run.trace,nativeSelections:{language:language.selections,repository:repository.selections},inverse:before});
+  files.push({path:row.path,...(row.originalPath?{originalPath:row.originalPath}:{}),before,language:language.after,after,current,currentAfter,laterHistories,parallelHistories,stages,trace:run.trace,nativeSelections:{language:language.selections,repository:repository.selections},inverse:before});
  }
  const bindings=verifyNativeCopiedSourceBindingBatch(ts,files.map(row=>({path:resolve(root,row.path),source:row.currentAfter})));
  files.forEach((row,index)=>{row.nativeBindings=bindings[index];need(currentSource(resolve(root,row.path),Boolean(row.originalPath&&row.originalPath!==row.path))===row.current,'physical source changed during construction');});
  for(const original of originalGuards)need(readFileSync(original.path,'utf8')===original.source,'complete original implementation changed');
  for(const later of laterPlans)for(const row of nativeSourceHistoryFiles(later)){need(currentSource(localPath(root,row.path),Boolean(row.originalPath&&row.originalPath!==row.path))===row.current,'complete descendant physical source changed');if(row.originalPath&&row.originalPath!==row.path)need(currentSource(localPath(root,row.originalPath))===row.before,'complete descendant original implementation changed');}
+ for(const later of laterPlans)for(const guard of nativeSourceHistoryOriginalGuards(later))need(currentSource(localPath(root,guard.path))===guard.source,'complete nested descendant original implementation changed');
  need(readFileSync(archivePath).equals(packed),'complete original/rule input changed');
  return {schema:'native-substitution-source-copy-plan-v1',id,files,descendantFiles,originalInputs:original.files,sourceAuthority:false,semanticAuthority:false,receivingExecuted:false};
 }
@@ -92,3 +101,19 @@ export function writeNativeSubstitutionCopy(plan,{root}={}){
  root=resolve(root);for(const row of plan.files)need(currentSource(localPath(root,row.path),Boolean(row.originalPath&&row.originalPath!==row.path))===row.current,'stale copy proposal');
  for(const row of plan.files)writeFileSync(localPath(root,row.path),row.currentAfter??row.after);
 }
+
+// Private syntax trees live only inside one complete synchronous source
+// operation. They never supply source binding, owner or semantic verdicts.
+let __nativeSourceOperation=null;
+function originalNativeSourceOperationCurrent(operation,ts){
+ if(!operation||operation.disabled)return false;
+ if(operation.compiler&&operation.compiler!==ts||!ownershipCompilerRuntimeNativeCurrent(ts)){operation.files.clear();operation.entries=0;operation.bytes=0;operation.disabled=true;return false;}
+ operation.compiler=ts;return true;
+}
+export function withNativeSubstitutionOperation(operation){
+ need(typeof operation==='function'&&!types.isProxy(operation)&&!types.isAsyncFunction(operation),'one synchronous original source operation required');
+ const previous=__nativeSourceOperation,frame=previous??{compiler:null,disabled:false,files:new Map(),entries:0,bytes:0,depth:0};need(frame.depth<256,'bounded complete nested source operation');frame.depth++;__nativeSourceOperation=frame;
+ try{const result=operation();need(!types.isPromise(result)&&!(result&&typeof result==='object'&&types.isProxy(result)),'source operation must finish synchronously');if(result&&typeof result==='object'){const then=Object.getOwnPropertyDescriptor(result,'then');need(!then||Object.hasOwn(then,'value')&&typeof then.value!=='function','source operation cannot return an own thenable/accessor');}return result;}
+ finally{frame.depth--;if(!previous){frame.files.clear();frame.entries=0;frame.bytes=0;frame.compiler=null;}__nativeSourceOperation=previous;}
+}
+export function nativeSubstitutionCopyHasChanges(plan){return nativeSourceHistoryFiles(plan).some(row=>row.current!==(row.currentAfter??row.after));}

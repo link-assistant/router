@@ -523,6 +523,16 @@ in all three physical source trees. A selection flag must never save semantic
 authority. See the [Option callback/source-unit draft](http-resource-option-callbacks-draft.md);
 all new qualification remains unrun during source drafting.
 
+Share syntax only inside one complete synchronous source operation, beginning
+before eager child-plan construction. Keep native ASTs private, bound retention,
+clear on native-operation changes and release on every exit. Preserve fresh
+semantic ASTs/programs, diagnostics and physical/original source checks. Source
+history overlaps require full retained equations and every nested original
+snapshot; DATA equality cannot issue a permit. Extend the common history through
+part three without importing part one from its new leaf. See the
+[native source-operation draft](native-source-operation-draft.md); receiving,
+timing and performance qualification remain unrun.
+
 Compose common operation families through their actual fully checked native and
 runtime sources, retaining callbacks/numeric domains with their original checker
 when unsupported. Option/Result containers move once. Local borrowed string
