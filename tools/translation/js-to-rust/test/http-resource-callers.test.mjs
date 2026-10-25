@@ -64,7 +64,7 @@ test('leaks moves missing cleanup mixed errors borrowed escapes and pending futu
   "export function bad(){const result=create(0n,0n,0n,'');if(result.$==='Err'){return result;}const client=result.field0;return cancel();}",
   "export function bad(){const result=create(0n,0n,0n,'');if(result.$==='Err'){return result;}const client=result.field0;const first=client;dispose(first);return clone(client);}",
   "export function bad(){const result=create(0n,0n,0n,'');if(result.$==='Err'){return result;}const client=result.field0;const next=clone(client);if(next.$==='Err'){return next;}dispose(client);return next;}",
-  "/** @param {Parameters<typeof encoded>[0]} value */ export function bad(value){return encoded(value);}",
+  "export function bad(){const local=array([]);return encoded(local);}",
   "/** @param {Parameters<typeof open>[0]} client @param {Parameters<typeof open>[1]} value @param {Parameters<typeof open>[2]} token */ export function bad(client,value,token){return defer(async()=>{const pending=open(client,value,token);return pending;});}",
   "/** @param {Parameters<typeof open>[0]} client @param {Parameters<typeof open>[1]} value @param {Parameters<typeof open>[2]} token */ export function bad(client,value,token){return defer(async()=>{const ready=await sleep(0n,token);if(ready.$==='Err'){return ready;}return await send(client,value,token);});}",
   "/** @param {Parameters<typeof read>[0]} stream */ export function bad(stream){close(stream);return head(stream);}",

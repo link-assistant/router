@@ -277,3 +277,10 @@ from a whole checked TS source; they never supply ownership or range authority.
 Runtime initialization alone cannot certify application translation. See the
 [physical HTTP unit draft](http-resource-unit-draft.md); all new receiving
 qualification remains unrun during bulk drafting.
+
+Borrowed HTTP text results must retain their actual public immutable JSON input
+roots through complete checked flow/meta and every returned branch. Local owned
+copies cannot supply escaping roots. Emit native lifetimes only from those
+fresh roots and require complete original Rust reproduction in the inverse.
+See the [borrowed HTTP text draft](http-resource-borrowed-text-draft.md); all new
+source/native cases remain unrun during bulk drafting.

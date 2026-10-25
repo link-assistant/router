@@ -95,3 +95,5 @@ integration and the remaining requirement ledger are still open.
 - Draft source-bound HTTP resource caller lowering, distinct nested error families, explicit client/stream cleanup, canonical native inverse reproduction and full original substitution histories; independent loopback, strict TS, native oracle and refusal source remains unrun.
 
 - Draft the physical HTTP resource source-unit profile, complete native/Cargo inputs, mirrored opaque runtimes, fresh paired signatures and original synchronization transactions in all three source directions; independent receiving/refusal source remains unrun.
+
+- Draft original-input-rooted HTTP borrowed text Results, checked local/branch root propagation, native lifetime emission and whole inverse reproduction with complete source histories and independent unrun native/refusal source.

@@ -38,7 +38,7 @@ export function projectHttpResourceRustFunctions(functions,{javascriptPath,runti
   if(node.kind==='not')return '(!'+expression(node.value,locals,asynchronous,depth+1)+')';if(node.kind==='binary'&&['&&','||'].includes(node.op))return '('+expression(node.left,locals,asynchronous,depth+1)+' '+node.op+' '+expression(node.right,locals,asynchronous,depth+1)+')';
   let awaited=false;if(node.kind==='field'&&node.name==='await'){awaited=true;node=unwrap(node.value,depth+1);}if(node.kind!=='call')fail('actual canonical HTTP operation required');
   if(node.path==='Ok'){const value=unwrap(node.args[0],depth+1);if(awaited||node.args.length!==1||value?.kind!=='name'||!locals.get(value.name)?.guarded)fail('Ok must restore one actual guarded complete Result');return name(value.name);}
-  const row=operation(node.path);if(Boolean(row.async)!==awaited||awaited&&!asynchronous||node.args.length!==row.args.length||row.borrowedResult||row.args.includes('deferred-callback'))fail('complete canonical operation/await/arity domain differs');
+  const row=operation(node.path);if(Boolean(row.async)!==awaited||awaited&&!asynchronous||node.args.length!==row.args.length||row.args.includes('deferred-callback'))fail('complete canonical operation/await/arity domain differs');
   return (awaited?'await ':'')+imported(row.javascriptName)+'('+node.args.map(argument=>expression(borrowed(argument,depth+1),locals,asynchronous,depth+1)).join(', ')+')';
  }
  function propagated(node,locals,asynchronous,depth){

@@ -100,6 +100,13 @@ independent receiving/refusal source are retained and unrun. Broader HTTP/error
 and language domains, production adoption and every unfinished requirement
 remain open.
 
+The [original-root HTTP text draft](http-resource-borrowed-text-draft.md) adds
+actual input-rooted borrowed protocol Results, local/branch root propagation,
+native lifetime emission and complete inverse reproduction. Complete original
+source substitutions and independent unrun semantic, lifetime/refusal and native
+oracle source are retained. Broader local loans/error domains, production
+adoption and every unfinished requirement remain open.
+
 The [closed HTTP deadline core draft](http-deadline-core-draft.md) adds three
 matching native/JS operations with actual settlement/Drop cleanup, late owned
 stream disposal, complete root/library source histories and additive receiving
