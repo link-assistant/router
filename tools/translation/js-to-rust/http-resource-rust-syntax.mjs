@@ -58,6 +58,7 @@ export class HttpResourceRustReader {
    }
    if(this.peek().type==='ident'&&this.is('=',1)){const name=this.identifier();this.expect('=');const value=this.expression(local,0,depth+1);this.expect(';');statements.push({kind:'assign',name,value});continue;}
    if(this.eat('while')){const condition=this.expression(local,0,depth+1),body=this.block(local,depth+1);statements.push({kind:'while',condition,body});continue;}
+   if(this.is('break')||this.is('continue')){const kind=this.next().text;this.expect(';');statements.push({kind});continue;}
    if(this.eat('return')){const value=this.expression(local,0,depth+1);this.expect(';');statements.push({kind:'return',value});continue;}
    if(this.is('assert!')||this.is('for')||this.is('__ro_domain')||this.is('if')&&this.is('let',1)){this.skipGuard();continue;}
    if(this.eat('if')){const condition=this.expression(local,0,depth+1),yes=this.block(local,depth+1);this.expect('else');const no=this.block(local,depth+1);statements.push({kind:'if',condition,yes,no});continue;}

@@ -13,6 +13,17 @@ macro effects and full producer closure separate and retain their false flags
 until their independent proofs exist. See the
 [unrun source draft](builtin-derived-outer-attributes-draft.md).
 
+Resource loop analysis must keep nearest-loop boundaries separate from function
+return summaries. Backedges, breaks and continues preserve incoming ownership
+and type state and clean iteration locals; actual returns clean all locals and
+join their complete domains, roots and exclusive-input states at the enclosing
+function. Result and Option propagation inside a loop returns from the function.
+Never use a loop boundary as helper-release evidence, append an outer source
+continuation into a continuing inner lexical scope, or infer unconditional moves
+and releases from a short-circuited Boolean operand. Preserve original complete
+deadlines and the independent unrun
+[loop-exit cases](http-resource-abrupt-loops-draft.md).
+
 ### Source synchronization exports during issue #759
 
 Keep every public synchronization CLI in the shared

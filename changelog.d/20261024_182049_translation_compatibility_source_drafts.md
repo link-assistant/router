@@ -1,5 +1,6 @@
 ### Added
 
+- Draft complete resource loop break/continue and function-return flows, Result/Option propagation, distinct exit summaries and native inverses, with independent unrun JS/strict TS/native oracle and refusal source.
 - Drafted text, Option callback and primitive/owned Result compatibility cores,
   translator integration, automatic adoption packets and complete source inverses.
 - Drafted shared cancellation, deadline and bounded pull-channel interfaces.

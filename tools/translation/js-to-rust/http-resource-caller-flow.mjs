@@ -15,19 +15,19 @@ export function httpResourceCallerContract(name){return actualHttpResourceContra
 export function httpResourceCallerRustType(type,options){return actualHttpResourceRustType(type,options);}
 export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{lazy=false,allowColdTail=false,bindings=null,moduleNames=new Set(),budget={cells:0},depth=0,localFunctions=null,fragment=null}={}){
  if(depth>64||!statements.length&&!fragment||statements.length>4096)fail('bounded complete HTTP resource flow required');
- const environment=bindings?new Map([...bindings].map(([key,row])=>[key,{...row}])):new Map(parameters.map(row=>[row.name,{type:row.type,input:true,moved:false,disposed:false,root:row.type==='str'?row.name:null,roots:row.type==='str'?[row.name]:[]}])),steps=[],failures=[],alternatives=[],resourceExits=[];let tail=null;
+ const environment=bindings?new Map([...bindings].map(([key,row])=>[key,{...row}])):new Map(parameters.map(row=>[row.name,{type:row.type,input:true,moved:false,disposed:false,root:row.type==='str'?row.name:null,roots:row.type==='str'?[row.name]:[]}])),steps=[],failures=[],alternatives=[],resourceExits=[],loopExits=[],functionReturns=[];let tail=null;
  const tick=()=>{if(++budget.cells>100000)fail('complete HTTP resource source-cell budget');};
  const binding=id=>{const row=environment.get(id);if(!row||row.moved||row.disposed)fail('unknown, moved or disposed actual HTTP binding: '+id);return row;};
  const newName=id=>{httpResourceCallerName(id);if(environment.has(id)||moduleNames.has(id))fail('unique actual resource local required');return id;};
  const isLoan=type=>['cancel-ref','sender-ref','receiver-mut','http-client-ref','http-client-mut','http-stream-ref','http-stream-mut','json-ref'].includes(type);
- function recordResourceExit(){const states=[];for(const [name,row]of environment)if(row.input&&['receiver-mut','http-client-mut','http-stream-mut'].includes(row.type)){tick();states.push({name,disposed:!!row.disposed});}resourceExits.push(states);}
+ function recordResourceExit(loopBoundary=false){const states=[];for(const [name,row]of environment)if(row.input&&['receiver-mut','http-client-mut','http-stream-mut'].includes(row.type)){tick();states.push({name,disposed:!!row.disposed});}(loopBoundary?loopExits:resourceExits).push(states);}
  function requireLocalCleanup(id,row){if(row.input||row.moved||row.disposed)return;if(httpResourceNeedsDisposal(row.type)||httpResourceResultOwnsDisposal(row.type)&&!row.used)fail('every local resource must be explicitly released or returned on this exit: '+id);}
  function finish(){for(const [id,row]of environment)requireLocalCleanup(id,row);recordResourceExit();}
  function requireLoopState(entry,actual){
   for(const [id,previous]of entry){tick();const row=actual.get(id);if(!row||row.type!==previous.type||!!row.input!==!!previous.input||!!row.mutable!==!!previous.mutable||!!row.moved!==!!previous.moved||!!row.disposed!==!!previous.disposed||!!row.used!==!!previous.used||!!row.guarded!==!!previous.guarded||httpResourceValueRoots(row).join('\0')!==httpResourceValueRoots(previous).join('\0'))fail('every loopback must preserve incoming ownership, resource and scalar type state: '+id);}
  }
  function finishFragment(){
-  requireLoopState(fragment.entry,environment);for(const [id,row]of environment)if(!fragment.entry.has(id))requireLocalCleanup(id,row);recordResourceExit();
+  requireLoopState(fragment.entry,environment);for(const [id,row]of environment)if(!fragment.entry.has(id))requireLocalCleanup(id,row);recordResourceExit(true);
  }
  function operand(node,wanted=null,{move=true}={}){
   tick();if(ts.isParenthesizedExpression(node))return operand(node.expression,wanted,{move});
@@ -101,12 +101,17 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
  function condition(node,level=0){
   tick();if(level+depth>160)fail('Boolean resource condition depth budget');if(ts.isParenthesizedExpression(node))return condition(node.expression,level+1);
   if(ts.isPrefixUnaryExpression(node)&&node.operator===ts.SyntaxKind.ExclamationToken)return {kind:'not',value:condition(node.operand,level+1),type:'bool'};
-  if(ts.isBinaryExpression(node)&&[ts.SyntaxKind.AmpersandAmpersandToken,ts.SyntaxKind.BarBarToken].includes(node.operatorToken.kind))return {kind:node.operatorToken.kind===ts.SyntaxKind.AmpersandAmpersandToken?'and':'or',left:condition(node.left,level+1),right:condition(node.right,level+1),type:'bool'};
+  if(ts.isBinaryExpression(node)&&[ts.SyntaxKind.AmpersandAmpersandToken,ts.SyntaxKind.BarBarToken].includes(node.operatorToken.kind)){
+   const left=condition(node.left,level+1),entry=new Map([...environment].map(([id,row])=>[id,{...row,roots:httpResourceValueRoots(row)}])),right=condition(node.right,level+1);requireLoopState(entry,environment);return {kind:node.operatorToken.kind===ts.SyntaxKind.AmpersandAmpersandToken?'and':'or',left,right,type:'bool'};
+  }
   const value=expression(node);if(value.type!=='bool')fail('primitive Boolean condition required');return value;
+ }
+ function completeAbruptBlock(block,level=0){
+  tick();if(level>64)fail('complete abrupt branch source depth bound');if(!block||!ts.isBlock(block)||!block.statements.length)return false;const last=block.statements.at(-1);
+  return ts.isReturnStatement(last)||ts.isBreakStatement(last)||ts.isContinueStatement(last)||ts.isIfStatement(last)&&completeAbruptBlock(last.thenStatement,level+1)&&completeAbruptBlock(last.elseStatement,level+1);
  }
  function hasGuard(node,id){return node&&ts.isIfStatement(node)&&ts.isBinaryExpression(node.expression)&&ts.isPropertyAccessExpression(node.expression.left)&&ts.isIdentifier(node.expression.left.expression)&&node.expression.left.expression.text===id&&node.expression.left.name.text==='$';}
  function guard(node,id,type){
-  if(fragment)fail('Result-return guards in loop fragments need a complete abrupt-exit rule');
   if(!hasGuard(node,id)||node.elseStatement)fail('complete immediate same-Result failure guard required');const {left,right,operatorToken}=node.expression;
   if(left.expression.text!==id||!ts.isStringLiteral(right)||!(operatorToken.kind===ts.SyntaxKind.EqualsEqualsEqualsToken&&right.text==='Err'||operatorToken.kind===ts.SyntaxKind.ExclamationEqualsEqualsToken&&right.text==='Ok'))fail('actual same-Result error tag required');
   const rows=ts.isBlock(node.thenStatement)?node.thenStatement.statements:[node.thenStatement],last=rows.at(-1),saved=new Map([...environment].map(([key,row])=>[key,{...row}])),cleanup=[];
@@ -115,7 +120,6 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
   finish();environment.clear();for(const [key,row]of saved)environment.set(key,row);failures.push(httpResourceResult(type).error);return cleanup;
  }
  function optionGuard(node,id,value){
-  if(fragment)fail('Option-return guards in loop fragments need a complete abrupt-exit rule');
   if(!hasGuard(node,id)||node.elseStatement)fail('complete immediate same-Option absent guard required');const {right,operatorToken}=node.expression;
   if(!ts.isStringLiteral(right)||!(operatorToken.kind===ts.SyntaxKind.EqualsEqualsEqualsToken&&right.text==='None'||operatorToken.kind===ts.SyntaxKind.ExclamationEqualsEqualsToken&&right.text==='Some'))fail('actual original absent Option tag required');
   const rows=ts.isBlock(node.thenStatement)?node.thenStatement.statements:[node.thenStatement],last=rows.at(-1);let fallback,pass=false;
@@ -139,18 +143,32 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
   }
   if(ts.isWhileStatement(statement)){
    if(!ts.isBlock(statement.statement))fail('complete original loop block required');const entry=new Map([...environment].map(([id,row])=>[id,{...row,roots:httpResourceValueRoots(row)}])),test=condition(statement.expression);requireLoopState(entry,environment);
-   const body=checkHttpResourceCallerFlow(ts,statement.statement.statements,[],imports,{lazy,allowColdTail:false,bindings:environment,moduleNames,budget,depth:depth+1,localFunctions,fragment:{entry}});if(body.type!=='unit'||body.returnRoots.length)fail('complete scalar loop fallthrough required');steps.push({kind:'while',condition:test,body});continue;
+   const body=checkHttpResourceCallerFlow(ts,statement.statement.statements,[],imports,{lazy,allowColdTail:false,bindings:environment,moduleNames,budget,depth:depth+1,localFunctions,fragment:{entry}});if(body.type!=='unit'||body.returnRoots.length)fail('complete loop control fragment required');resourceExits.push(...body.resourceExits);functionReturns.push(...body.functionReturns);failures.push(...body.propagatedErrors);steps.push({kind:'while',condition:test,body});continue;
   }
   if(ts.isExpressionStatement(statement)&&ts.isBinaryExpression(statement.expression)&&statement.expression.operatorToken.kind===ts.SyntaxKind.EqualsToken){
    const assignment=statement.expression;if(!ts.isIdentifier(assignment.left))fail('assignment needs one actual scalar local');const id=assignment.left.text,row=environment.get(id);if(!row||!row.mutable||row.input||row.disposed||!['bool','u64','text-owned'].includes(row.type))fail('assignment requires an actual mutable scalar or owned String local');if(row.type==='text-owned'&&[...environment].some(([name,loan])=>name!==id&&!loan.moved&&!loan.disposed&&httpResourceValueRoots(loan).includes(id)))fail('owned String replacement cannot invalidate any live original view');const value=expression(assignment.right);if(value.type!==row.type||httpResourceValueRoots(value).length)fail('assignment must preserve its complete scalar or owned String domain');row.moved=false;row.used=false;row.root=null;row.roots=[];steps.push({kind:'assign',name:id,value});continue;
   }
   if(ts.isExpressionStatement(statement)){const value=call(statement.expression);if(httpResourceResult(value.type)||httpResourceOwned(value.type))fail('owned values and Results cannot be discarded');steps.push({kind:'effect',value});continue;}
   if(ts.isIfStatement(statement)){
-   if(at!==statements.length-1||!ts.isBlock(statement.thenStatement)||!statement.elseStatement||!ts.isBlock(statement.elseStatement))fail('both complete terminal resource branches required');const test=condition(statement.expression),settings={lazy,allowColdTail,bindings:environment,moduleNames,budget,depth:depth+1,localFunctions,fragment},yes=checkHttpResourceCallerFlow(ts,statement.thenStatement.statements,[],imports,settings),no=checkHttpResourceCallerFlow(ts,statement.elseStatement.statements,[],imports,settings);if(yes.type!==no.type)fail('all resource branch return domains must agree');resourceExits.push(...yes.resourceExits,...no.resourceExits);tail={kind:'branch',condition:test,yes,no};continue;
+   if(!ts.isBlock(statement.thenStatement)||statement.elseStatement&&!ts.isBlock(statement.elseStatement))fail('actual complete resource branch blocks required');const remaining=statements.slice(at+1);let yesSource=statement.thenStatement.statements,noSource=statement.elseStatement?.statements??[];
+   if(remaining.length){
+    if(completeAbruptBlock(statement.thenStatement)&&noSource.length===0)noSource=remaining;
+    else if(yesSource.length===0&&completeAbruptBlock(statement.elseStatement))yesSource=remaining;
+    else fail('a continuing lexical branch requires a separate scoped continuation rule');
+   }else if(!statement.elseStatement&&!fragment)fail('every complete function branch needs its return continuation');
+   const test=condition(statement.expression),settings={lazy,allowColdTail,bindings:environment,moduleNames,budget,depth:depth+1,localFunctions,fragment},yes=checkHttpResourceCallerFlow(ts,yesSource,[],imports,settings),no=checkHttpResourceCallerFlow(ts,noSource,[],imports,settings);if(yes.type!==no.type)fail('all resource branch return domains must agree');resourceExits.push(...yes.resourceExits,...no.resourceExits);loopExits.push(...yes.loopExits,...no.loopExits);functionReturns.push(...yes.functionReturns,...no.functionReturns);failures.push(...yes.propagatedErrors,...no.propagatedErrors);tail={kind:'branch',condition:test,yes,no};break;
   }
-  if(fragment)fail('return break continue and abrupt loop exits need a separate whole-exit rule');if(at!==statements.length-1||!ts.isReturnStatement(statement)||!statement.expression)fail('complete terminal resource return required');const value=expression(statement.expression,{coldTail:allowColdTail});finish();tail={kind:value.kind==='http-resource-call'?'operation':'value',value};
+  if(ts.isBreakStatement(statement)||ts.isContinueStatement(statement)){
+   if(!fragment||statement.label||at!==statements.length-1)fail('complete unlabelled nearest-loop exit required');finishFragment();tail={kind:ts.isBreakStatement(statement)?'break':'continue'};continue;
+  }
+  if(at!==statements.length-1||!ts.isReturnStatement(statement)||!statement.expression)fail('complete terminal resource return required');const value=expression(statement.expression,{coldTail:allowColdTail});finish();functionReturns.push({type:value.type,returnRoots:httpResourceValueRoots(value)});tail={kind:fragment?'return':value.kind==='http-resource-call'?'operation':'value',value};
  }
- if(!tail&&fragment){finishFragment();tail={kind:'fallthrough'};}if(!tail)fail('every resource path must return');const type=tail.kind==='fallthrough'?'unit':tail.kind==='branch'?tail.yes.type:tail.value.type,result=httpResourceResult(type);if(failures.some(error=>result?.error!==error))fail('propagated error families must agree with the complete return Result');if(alternatives.some(row=>row.type!==type))fail('every absent Option exit must match the complete successful return domain');const primaryRoots=tail.kind==='fallthrough'?[]:tail.kind==='branch'?[...tail.yes.returnRoots,...tail.no.returnRoots]:httpResourceValueRoots(tail.value),returnRoots=[...new Set([...primaryRoots,...alternatives.flatMap(row=>row.returnRoots)])];for(const id of returnRoots){const row=environment.get(id);if(!row?.input||!['json-ref','str'].includes(row.type))fail('returned loan must retain a public immutable source input root');}if(!resourceExits.length)fail('every complete resource flow needs its actual exit states');return {steps,tail,type,lazy,captures:[],returnRoots,resourceExits,loopFragment:!!fragment};
+ if(!tail&&fragment){finishFragment();tail={kind:'fallthrough'};}if(!tail)fail('every resource path must return');
+ const type=fragment?'unit':tail.kind==='branch'?tail.yes.type:tail.value.type,result=httpResourceResult(type);functionReturns.push(...alternatives);
+ if(!fragment&&failures.some(error=>result?.error!==error))fail('propagated error families must agree with the complete return Result');
+ if(!fragment&&functionReturns.some(row=>row.type!==type))fail('every actual function return including loop and Option exits must share its complete domain');
+ const actualRoots=[...new Set(functionReturns.flatMap(row=>row.returnRoots))];for(const id of actualRoots){const row=environment.get(id);if(!row?.input||!['json-ref','str'].includes(row.type))fail('returned loan must retain a public immutable source input root');}
+ if(!resourceExits.length&&!loopExits.length)fail('every complete resource flow needs its actual exit states');return {steps,tail,type,lazy,captures:[],returnRoots:fragment?[]:actualRoots,resourceExits,loopExits,functionReturns,propagatedErrors:[...new Set(failures)],loopFragment:!!fragment};
 }
 
 function rustString(value){return '"'+[...value].map(character=>character==='"'?'\\"':character==='\\'?'\\\\':character==='\n'?'\\n':character==='\r'?'\\r':character==='\t'?'\\t':character==='\0'?'\\0':character.codePointAt(0)<32||character.codePointAt(0)===127?'\\u{'+character.codePointAt(0).toString(16)+'}':character).join('')+'"';}
@@ -187,5 +205,5 @@ export function emitHttpResourceCallerFlow(flow,{localFunctions=null}={}){
   if(row.option)return 'let '+(mutable.has(row.name)?'mut ':'')+row.name+' = '+(row.option.pass?value+'?':'match '+value+' { Some(__ro_http_some) => __ro_http_some, None => { return { '+emitHttpResourceCallerFlow(row.option.fallback,{localFunctions})+' }; } }')+';';
   return 'let '+(mutable.has(row.name)?'mut ':'')+row.name+' = '+(row.guarded?(cleanup?'match '+value+' { Ok(__ro_http_value) => __ro_http_value, Err(__ro_http_error) => { '+cleanup+' return Err(__ro_http_error); } }':value+'?'):value)+';';
  });
- const tail=flow.tail;if(tail.kind==='fallthrough')return lines.join('\n');lines.push(tail.kind==='branch'?'if '+expression(tail.condition)+' { '+emitHttpResourceCallerFlow(tail.yes,{localFunctions})+' } else { '+emitHttpResourceCallerFlow(tail.no,{localFunctions})+' }':expression(tail.value));return lines.join('\n');
+ const tail=flow.tail;if(tail.kind==='fallthrough')return lines.join('\n');if(['break','continue'].includes(tail.kind)){lines.push(tail.kind+';');return lines.join('\n');}if(tail.kind==='return'){lines.push('return '+expression(tail.value)+';');return lines.join('\n');}lines.push(tail.kind==='branch'?'if '+expression(tail.condition)+' { '+emitHttpResourceCallerFlow(tail.yes,{localFunctions})+' } else { '+emitHttpResourceCallerFlow(tail.no,{localFunctions})+' }':expression(tail.value));return lines.join('\n');
 }

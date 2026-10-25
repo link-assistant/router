@@ -134,6 +134,15 @@ exception exits, general resource/collection state, wider language domains,
 namespace/bootstrap, production adoption/parity and every unfinished requirement
 remain open.
 
+The [abrupt resource loop draft](http-resource-abrupt-loops-draft.md) adds actual
+nearest-loop break/continue, nested function returns, Result/Option propagation,
+separate loop/function resource summaries and complete all-return type/root
+joins. Complete original reader/projection/flow histories and independent unrun
+JS/strict TS/native oracle and refusal source are retained. Continuing lexical
+branches, labels, outcome-sensitive loop-entry changes, exceptional exits,
+broader language/resource domains, namespace/bootstrap, production parity and
+every unfinished requirement remain open.
+
 The [local resource helper draft](http-resource-local-functions-draft.md) now
 checks actual callee bodies before callers, composes cold futures and single
 returned roots, preserves source order and separates imported/local binding

@@ -22,14 +22,14 @@ test('mutable scalar while fragments preserve values lexical scopes and strict r
  const result=translateHttpResourceCallerJavaScript(source,input(source)),typed=translateHttpResourceCallerTypeScript(result.typescript,input(result.typescript,'caller.mts'));assert.ok(sameRustSourceSyntax(result.rust,typed.rust));assert.match(result.rust,/let mut count = 0_u64/u);assert.match(result.rust,/while \(count < limit\)/u);assert.match(result.rust,/let mut value = 0_u64/u);assert.match(result.rust,/let value = 2_u64/u);assert.equal(result.rustExecuted,false);
  await verifyHttpResourceTargets(result,async api=>{for(const [limit,expected]of [[0n,0n],[1n,0n],[5n,10n],[10n,45n]])assert.equal(api.counted(limit),expected);for(const [limit,expected]of [[0n,0n],[1n,1n],[3n,9n]])assert.equal(api.nested(limit),expected);assert.equal(api.toggled(),false);assert.equal(api.empty(),null);assert.equal(api.branched(4n),4n);assert.equal(api.scopes(),3n);assert.throws(()=>api.counted(-1n),RangeError);});
 });
-test('constant parameter owned mutations abrupt exits and loopback resource changes remain refused',limits,()=>{
+test('constant parameter owned mutations labelled exits and loopback resource changes remain refused',limits,()=>{
  for(const body of [
   'export function bad(){const count=0n;while(count<1n){count=increment(count,1n);}return count;}',
   '/** @param {boolean} pending */ export function bad(pending){while(pending){pending=false;}return pending;}',
   'export function bad(){let text="x";while(false){}return text;}',
-  'export function bad(){let count=0n;while(count<1n){return count;}return count;}',
-  'export function bad(){let count=0n;while(count<1n){break;}return count;}',
-  'export function bad(){let count=0n;while(count<1n){continue;}return count;}',
+  'export function bad(){let count=0n;while(count<1n){return true;}return count;}',
+  'export function bad(){let count=0n;outer:while(count<1n){break outer;}return count;}',
+  'export function bad(){let count=0n;outer:while(count<1n){continue outer;}return count;}',
   '/** @param {Parameters<typeof dispose>[0]} client @param {boolean} pending */ export function bad(client,pending){while(pending){dispose(client);}return null;}',
   'export function bad(){let count=0n;while(count<1n){count=true;}return count;}',
  ]){const candidate=imports+body;assert.throws(()=>translateHttpResourceCallerJavaScript(candidate,input(candidate)),body);}
