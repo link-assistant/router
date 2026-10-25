@@ -6,7 +6,7 @@ function unparenthesized(ts,node){let depth=0;while(ts.isParenthesizedExpression
 function originalGuards(ts,statements,file,parameters){
  const records=[],names=new Set();let at=0;
  for(;at<statements.length;at++){
-  const statement=statements[at];if(!ts.isIfStatement(statement)||statement.elseStatement)break;
+  const statement=statements[at],container=observeHttpResourceNumericContainerGuard(ts,statement,file,parameters);if(container){if(names.has(container.name))fail('one complete original numeric parameter guard required');records.push(container);names.add(container.name);continue;}if(!ts.isIfStatement(statement)||statement.elseStatement)break;
   const condition=unparenthesized(ts,statement.expression);if(!ts.isBinaryExpression(condition)||condition.operatorToken.kind!==ts.SyntaxKind.BarBarToken)break;
   const right=unparenthesized(ts,condition.right),left=unparenthesized(ts,condition.left);if(!ts.isBinaryExpression(left)||left.operatorToken.kind!==ts.SyntaxKind.BarBarToken)break;
   const primitive=unparenthesized(ts,left.left),lower=unparenthesized(ts,left.right),upper=right;
@@ -30,6 +30,8 @@ export function selectHttpResourceNumericCallerBody(ts,item,imports,file,contrac
  }
  if(new Set(records.map(row=>row.name)).size!==records.length)fail('one complete entry guard per numeric parameter');return {statements,lazy,allowColdTail,inputGuards:records};
 }
-export function emitHttpResourceNumericGuards(parameters){return parameters.map(({name,type})=>type==='i64'?'if (typeof '+name+' !== \"bigint\" || '+name+' < -9223372036854775808n || '+name+' > 9223372036854775807n) { throw new RangeError('+JSON.stringify(RESOURCE_I64_GUARD_MESSAGE)+'); }':'if (typeof '+name+' !== "bigint" || '+name+' < 0n || '+name+' > 18446744073709551615n) { throw new RangeError('+JSON.stringify(CONTROL_U64_GUARD_MESSAGE)+'); }').join('\n');}
+export function emitHttpResourceNumericGuards(parameters){return parameters.map(({name,type})=>httpResourceNumericContainerGuardDomain(type)?emitHttpResourceNumericContainerGuard({name,type}):type==='i64'?'if (typeof '+name+' !== \"bigint\" || '+name+' < -9223372036854775808n || '+name+' > 9223372036854775807n) { throw new RangeError('+JSON.stringify(RESOURCE_I64_GUARD_MESSAGE)+'); }':'if (typeof '+name+' !== "bigint" || '+name+' < 0n || '+name+' > 18446744073709551615n) { throw new RangeError('+JSON.stringify(CONTROL_U64_GUARD_MESSAGE)+'); }').join('\n');}
 
 export const RESOURCE_I64_GUARD_MESSAGE='Resource i64 input outside native range';
+
+import {observeHttpResourceNumericContainerGuard,emitHttpResourceNumericContainerGuard,httpResourceNumericContainerGuardDomain} from './http-resource-container-guards.mjs';

@@ -171,3 +171,4 @@ integration and the remaining requirement ledger are still open.
 - Draft native negation/unit proposal observations for complete Boolean JSON and generic unit inverses, retaining full originals and independent unrun malformed-source controls.
 - Draft common blockless loop bodies, original no-op statements and proved equal-domain comparison spellings in one batch, preserving complete originals and independent unrun native/refusal cases.
 - Draft linear generic aliases and complete checked forwarding chains with independent native dependency/move/drop checks, full original inverses and unrun drop-counter/refusal oracle source.
+- Draft original numeric Option/Result payload ingress guards, guarded signed parameter domains and canonical native inverses, with full originals and independent unrun range/constructor/refusal oracle source.

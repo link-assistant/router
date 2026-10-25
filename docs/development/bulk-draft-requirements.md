@@ -535,3 +535,11 @@ dependency closure. Six complete originals and independent unrun JS/strict TS/
 native/refusal cases are retained; a twenty-first oracle checks actual native
 drop counts after the JavaScript gate. General generics, namespace/bootstrap,
 production parity and every unfinished requirement remain open.
+
+The [original numeric container ingress draft](http-resource-container-guards-draft.md)
+adds complete successful-payload guards for primitive numeric Option/textual
+Result inputs, guarded public signed domains and exact canonical native guard
+inverses. Five full originals and independent unrun JS/strict TS/native/range/
+refusal cases are retained; a twenty-second oracle joins gated CI discovery.
+Recursive containers, other numeric error families, namespace/bootstrap,
+production parity and every unfinished requirement remain open.

@@ -46,3 +46,5 @@ mod switches;
 mod generic_identity;
 #[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-generic-linear-oracle.rs"]
 mod generic_linear;
+#[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-container-guards-oracle.rs"]
+mod container_guards;

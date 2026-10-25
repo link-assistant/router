@@ -11,6 +11,7 @@ function ownedValue(type,depth=0){
 }
 export function httpResourcePublicInputDomain(type,{guarded=false}={}){
  if(typeof type!=='string'||['u64','i64'].includes(type)&&!guarded)return false;
+ if(['optional:i64','http-result:i64'].includes(type))return guarded;
  if(type.endsWith(':i64'))return false;
  if(['str','bool','u64','i64','cancel-ref','sender-ref','receiver-mut','http-client-ref','http-client-mut','http-stream-ref','http-stream-mut','json-ref','json-list-ref','bytes-ref'].includes(type))return true;
  return ownedValue(type)&&!httpResourceResultOwnsDisposal(type);
