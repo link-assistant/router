@@ -44,3 +44,5 @@ mod text_equality;
 mod switches;
 #[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-generic-identity-oracle.rs"]
 mod generic_identity;
+#[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-generic-linear-oracle.rs"]
+mod generic_linear;

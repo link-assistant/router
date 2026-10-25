@@ -31,7 +31,7 @@ function analyze(stage,input){return analyzeHttpResourceCallerSource(stage,input
 function edit(source,edits){let value=source,last=source.length+1;for(const row of [...edits].sort((a,b)=>b.span[0]-a.span[0]||b.span[1]-a.span[1])){if(row.span[1]>last)fail('overlapping native type selections');value=value.slice(0,row.span[0])+row.replacement+value.slice(row.span[1]);last=row.span[0];}return value;}
 function emit(rows){
  const localFunctions=httpResourceLocalContracts(rows);return rows.map(row=>{
-  if(row.genericIdentity)return (row.exported?'pub ':'')+'fn '+name(row.name)+'<'+row.genericIdentity.typeParameter+'>('+name(row.genericIdentity.parameter)+': '+row.genericIdentity.typeParameter+') -> '+row.genericIdentity.typeParameter+' { '+name(row.genericIdentity.parameter)+' }';
+  if(row.genericIdentity)return (row.exported?'pub ':'')+'fn '+name(row.name)+'<'+row.genericIdentity.typeParameter+'>('+name(row.genericIdentity.parameter)+': '+row.genericIdentity.typeParameter+') -> '+row.genericIdentity.typeParameter+' { '+emitHttpResourceCallerFlow(row.flow,{localFunctions})+' }';
   const borrowedText=hasHttpResourceBorrowedReference(row.returns),generics=borrowedText?"<'a>":'',roots=new Set(row.flow.returnRoots),parameters=row.parameters.map(parameter=>name(parameter.name)+': '+httpResourceCallerRustType(parameter.type,{borrowedLifetime:borrowedText&&roots.has(parameter.name)})).join(', '),returns=httpResourceCallerRustType(row.returns,{borrowedLifetime:borrowedText});
   return (row.exported?'pub ':'')+(row.lazy?'async ':'')+'fn '+name(row.name)+generics+'('+parameters+') -> '+returns+' { '+emitHttpResourceCallerFlow(row.flow,{localFunctions})+' }';
  }).join('\n')+'\n';

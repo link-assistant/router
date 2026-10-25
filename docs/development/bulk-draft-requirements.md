@@ -527,3 +527,11 @@ empty stacked switch labels and equal-domain nonstrict equality spellings.
 Six complete originals and independent unrun JS/strict TS/native/refusal cases
 are retained. Coercions, implicit void returns, broader effects/language domains,
 namespace/bootstrap, production parity and every unfinished requirement remain open.
+
+The [linear generic forwarding draft](http-resource-generic-linear-draft.md)
+adds original local aliases and genuine complete unchanged-value helper chains,
+exact one-move/no-drop obligations, lexical slot checks and independent native
+dependency closure. Six complete originals and independent unrun JS/strict TS/
+native/refusal cases are retained; a twenty-first oracle checks actual native
+drop counts after the JavaScript gate. General generics, namespace/bootstrap,
+production parity and every unfinished requirement remain open.

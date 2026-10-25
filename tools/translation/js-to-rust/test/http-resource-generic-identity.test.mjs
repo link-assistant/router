@@ -43,7 +43,7 @@ export function mapped(){return map(some(3n),identity);}
 test('generic syntax metadata and annotations cannot replace the exact complete unchanged-input theorem',limits,()=>{
  for(const declaration of [
   'function identity<T>(value:T):T{return true;}',
-  'function identity<T>(value:T):T{const alias=value;return alias;}',
+  'function identity<T>(value:T):T{const alias=value;return value;}',
   'function identity<T>(value:T):T{return identity(value);}',
   'function identity<T,U>(value:T):T{return value;}',
   'function identity<T extends boolean>(value:T):T{return value;}',
