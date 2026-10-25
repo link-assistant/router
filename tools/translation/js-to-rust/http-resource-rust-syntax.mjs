@@ -89,6 +89,7 @@ export class HttpResourceRustReader {
    while(!this.eat('}')){const pattern=[];while(!this.eat('=>'))pattern.push(this.next().text);arms.push({pattern:pattern.join(''),value:this.expression(environment,0,depth+1)});if(!this.is('}'))this.expect(',');}
    return {kind:'match',value,arms};
   }
+  if(this.eat('||'))return {kind:'typed-lambda',parameters:[],body:this.block(environment,depth+1)};
   if(this.is('|')&&this.peek(1).type==='ident'&&this.is(':',2)){this.expect('|');const parameters=[];while(!this.eat('|')){const name=this.identifier();this.expect(':');const type=this.typeUntil([',','|']);parameters.push({name,type});if(!this.is('|'))this.expect(',');}return {kind:'typed-lambda',parameters,body:this.block(new Map(),depth+1)};}
   if(this.is('move')||this.is('|')){const moved=this.eat('move');this.expect('|');const parameters=[];while(!this.eat('|')){parameters.push(this.identifier());if(!this.is('|'))this.expect(',');}const asynchronous=this.eat('async'),futureMoved=asynchronous&&this.eat('move');return {kind:asynchronous?'async-lambda':'lambda',parameters,moved,futureMoved,body:this.block(environment,depth+1)};}
   if(this.eat('-')){const token=this.next(),found=token.type==='number'&&/^(0|[1-9][0-9]{0,18})_i64$/u.exec(token.text);if(!found||BigInt(found[1])>9223372036854775808n)fail('canonical bounded negative i64 literal required');return {kind:'integer',value:(-BigInt(found[1])).toString(),type:'i64'};}

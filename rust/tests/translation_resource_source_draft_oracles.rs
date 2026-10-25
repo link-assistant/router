@@ -18,3 +18,5 @@ mod octets;
 mod result_fallbacks;
 #[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-option-loops-oracle.rs"]
 mod option_loops;
+#[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-outcome-callbacks-oracle.rs"]
+mod outcome_callbacks;

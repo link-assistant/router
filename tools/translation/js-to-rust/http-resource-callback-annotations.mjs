@@ -18,7 +18,7 @@ export function captureHttpResourceCallbackAnnotations(ts,node,contract,imports,
 export function createHttpResourceWrittenAnnotationReader(ts,imports,tick){
  const domain=type=>({kind:'domain',type});
  function callable(row){
-  if(!row)fail('actual imported operation type required');const args=row.args.map(type=>type==='json-callback'?row.callbackContract?{kind:'function',args:row.callbackContract.args.map(domain),returns:domain(row.callbackContract.ret)}:fail('actual complete callback descriptor required'):domain(type));
+  if(!row)fail('actual imported operation type required');const args=row.args.map(type=>['json-callback','value-callback'].includes(type)?row.callbackContract?{kind:'function',args:row.callbackContract.args.map(domain),returns:domain(row.callbackContract.ret)}:fail('actual complete callback descriptor required'):domain(type));
   return {kind:'function',args,returns:row.async?{kind:'future',value:domain(row.ret)}:domain(row.ret)};
  }
  function describe(type,depth=0){

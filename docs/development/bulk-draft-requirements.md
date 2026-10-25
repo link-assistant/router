@@ -265,6 +265,14 @@ oracle fixtures now join the existing gated Rust integration-test discovery.
 Broader streaming/protocol applications, namespace/bootstrap, production parity
 and every unfinished requirement remain open.
 
+The [owning/scalar Result callback draft](http-resource-outcome-callbacks-draft.md)
+adds actual map/chaining/recovery/error operations, full Result library source
+censuses, owning callback inputs, contextual annotations and complete native
+inverses. Full originals and independent unrun JS/strict TS/native selection,
+Unicode, saturation, move, helper, refusal and forged-meta source are retained.
+General Option and borrowed-output callbacks, namespace/bootstrap, production
+parity and every unfinished requirement remain open.
+
 The [local resource helper draft](http-resource-local-functions-draft.md) now
 checks actual callee bodies before callers, composes cold futures and single
 returned roots, preserves source order and separates imported/local binding

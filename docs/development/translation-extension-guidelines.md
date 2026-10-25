@@ -507,6 +507,14 @@ an HTTP text carrier need not contain decoded response text. See the
 native oracle source in the existing gated CI discovery and execute no Rust
 locally; all new qualification remains unrun during source drafting.
 
+Result callback composition must use actual complete library ABI/source
+censuses, move each whole container once and preserve owning versus shared
+callback parameters. Check every actual body, capture, return and resource
+exit. Skipped callbacks retain their original error payloads; callback-shaped
+source syntax cannot grant a new operation or a borrowed return lifetime. See
+the [Result callback draft](http-resource-outcome-callbacks-draft.md); all new
+qualification remains unrun during source drafting.
+
 Compose common operation families through their actual fully checked native and
 runtime sources, retaining callbacks/numeric domains with their original checker
 when unsupported. Option/Result containers move once. Local borrowed string

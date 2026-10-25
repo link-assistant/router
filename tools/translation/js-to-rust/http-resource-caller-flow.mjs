@@ -65,17 +65,17 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
   if(wanted==='empty-json-list'&&ts.isArrayLiteralExpression(node)&&node.elements.length===0)return {kind:'empty-json-list',type:'empty-json-list'};
   fail('actual checked HTTP resource or scalar operand required');
  }
- function collectionCallback(node,contract){
-  tick();if(!contract||!Array.isArray(contract.args)||!contract.args.length)fail('actual original callback contract required');
+ function collectionCallback(node,contract,callbackType='json-callback'){
+  tick();if(!contract||!Array.isArray(contract.args)||contract.args.length>64)fail('actual original callback contract required');
   if(ts.isIdentifier(node)){
    const actual=localFunctions?.get(node.text);if(!actual||actual.async||actual.localRefusal||actual.borrowedResult||actual.ret!==contract.ret||actual.args.join('\0')!==contract.args.join('\0'))fail('whole checked local callback signature and body required');
-   return {kind:'function-reference',name:node.text,type:'json-callback',parameters:[...contract.args],returns:contract.ret};
+   return {kind:'function-reference',name:node.text,type:callbackType,parameters:[...contract.args],returns:contract.ret};
   }
   if(!ts.isArrowFunction(node)||node.modifiers?.length||node.typeParameters?.length||node.parameters.length!==contract.args.length)fail('synchronous original callback with independently checked read-only captures required');const names=new Set(),callbackParameters=node.parameters.map((parameter,index)=>{
    if(!ts.isIdentifier(parameter.name)||parameter.questionToken||parameter.dotDotDotToken||parameter.initializer||parameter.modifiers?.length)fail('ordinary contextually typed callback parameter required');const name=httpResourceCallerName(parameter.name.text);if(names.has(name)||moduleNames.has(name))fail('actual callback binding must be unique and cannot shadow the module');names.add(name);return {name,type:contract.args[index]};
   });
   captureHttpResourceCallbackAnnotations(ts,node,contract,imports,sourceAnnotations,tick);const callbackBindings=new Map([...environment].map(([id,row])=>[id,{...row,input:false,mutable:false,captured:true,roots:httpResourceValueRoots(row)}]));for(const parameter of callbackParameters)callbackBindings.set(parameter.name,{type:parameter.type,input:true,mutable:false,moved:false,disposed:false,used:false,root:['str','json-ref','json-list-ref','bytes-ref'].includes(parameter.type)?parameter.name:null,roots:['str','json-ref','json-list-ref','bytes-ref'].includes(parameter.type)?[parameter.name]:[]});const block=ts.isBlock(node.body),flow=checkNested(ts,block?node.body.statements:[],callbackParameters,imports,{lazy:false,allowColdTail:false,bindings:callbackBindings,moduleNames,budget,depth:depth+1,localFunctions,sourceAnnotations,inlineExpression:block?null:node.body});
-  if(flow.type!==contract.ret||flow.returnRoots.length||flow.lazy)fail('every original callback exit must satisfy its complete synchronous owned return contract');return {kind:'inline-callback',type:'json-callback',parameters:callbackParameters,returns:contract.ret,flow};
+  if(flow.type!==contract.ret||flow.returnRoots.length||flow.lazy)fail('every original callback exit must satisfy its complete synchronous owned return contract');return {kind:'inline-callback',type:callbackType,parameters:callbackParameters,returns:contract.ret,flow};
  }
  function call(node,{coldTail=false,level=depth}={}){
   tick();if(level>160)fail('complete nested resource operation depth bound');let awaited=ts.isAwaitExpression(node);if(awaited)node=node.expression;
@@ -87,7 +87,7 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
   if(node.arguments.length!==operation.args.length)fail('complete actual operation arity differs');const loans=new Map(),args=[];
   for(let index=0;index<operation.args.length;index++){
    const role=operation.args[index],argument=node.arguments[index];let value,candidate=argument,grouping=0;while(ts.isParenthesizedExpression(candidate)){if(++grouping>16)fail('bounded actual call argument grouping required');candidate=candidate.expression;}
-   if(role==='json-callback')value=collectionCallback(candidate,operation.callbackContract);
+   if(['json-callback','value-callback'].includes(role))value=collectionCallback(candidate,operation.callbackContract,role);
    else if(ts.isCallExpression(candidate)||ts.isAwaitExpression(candidate)||ts.isBinaryExpression(candidate)){
     value=expression(candidate,{level:level+1});if(role==='json-ref'&&value.type==='json')value={kind:'temporary-json-borrow',value,type:'json-ref'};else if(role==='json-list-ref'&&value.type==='json-list-owned')value={kind:'temporary-json-list-borrow',value,type:'json-list-ref'};else if(role==='bytes-ref'&&value.type==='bytes-owned')value={kind:'temporary-bytes-borrow',value,type:'bytes-ref'};
    }else value=operand(argument,role,{move:!isLoan(role)&&role!=='str'});
