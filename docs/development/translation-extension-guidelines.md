@@ -208,3 +208,13 @@ and the compiler expanded-source domain stay distinct; no application coverage
 or owner authority follows from preprocessing. See the
 [local declarative draft](local-declarative-source-draft.md). All new source
 and independent oracle cases remain unrun during bulk drafting.
+
+Cold control callers require actual native/runtime/declaration imports and
+operation-derived resource parameter types. Store no unawaited future, preserve
+the real cold constructor and enforce linear owned aliases and exclusive
+receiver reborrows. Dispose local receivers on every nonmoving exit, including
+propagated errors. Deadline callbacks require their actual child cancellation
+and a single cancellable tail; no post-await side effect is admitted. Keep native
+Rust grammar/execution flags false until gated CI supplies evidence. See the
+[async control caller draft](async-control-callers-draft.md). All new source and
+independent regression/oracle cases remain unrun during bulk drafting.

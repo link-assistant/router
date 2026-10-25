@@ -79,3 +79,5 @@ integration and the remaining requirement ledger are still open.
 - Draft independently genuine tool-first derive input composition in the explicit enclosing project path, retaining the original constructor, complete source histories and unrun refusal/typed cases.
 
 - Draft plain-root declarative macro expansion using the complete original private engine, recursive forwarding, conservative hygiene/producer refusals, CST inverses and an original-compiler project adapter; independent JS/strict TS/native oracle source remains unrun. Split source-history and extension-guideline documentation without dropping obligations.
+
+- Draft source-bound cold cancellation/deadline/channel callers using the complete original control adapter, native role/move/borrow flow, explicit receiver cleanup, full CST inverses and independent unrun JS/strict TS/native oracle source.

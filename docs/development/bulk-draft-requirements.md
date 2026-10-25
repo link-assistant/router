@@ -43,3 +43,11 @@ CST inverses and independent JS/strict TS/native oracle source are drafted and
 unrun. Architecture export/type-prefix closure, producer bootstrap, broader
 owned/async domains, production adoption/parity, CI repairs and every incomplete
 row above remain open.
+
+The [cold future/resource caller draft](async-control-callers-draft.md) adds
+actual imported cancellation, deadline and channel source rules through the
+complete copied control adapter. It retains private source joins, checked meta,
+cold/await boundaries, move/borrow flow, explicit receiver cleanup and complete
+CST inverses. Independent JS/strict TS/native oracle source is drafted and unrun.
+Rust forward/inverse and source-unit integration, broader async callbacks,
+public numeric guards, HTTP resources and every unfinished row remain open.
