@@ -226,3 +226,11 @@ actual tuple moves, receiver cleanup, mutable reborrows and deadline captures.
 Reader observations and temporary substitution supply no semantic permission.
 See the [async inverse draft](async-control-inverse-draft.md). General native
 qualification and all new receiving cases remain unrun during bulk drafting.
+
+The async control source-unit profile must preserve complete native/Cargo input
+mappings, mirrored runtime trees and original Git conflict/atomic installation
+rules. Paired input annotations are proposals from fresh complete TS checking;
+recheck the entire edited JS body before emission. Runtime-only initialization
+does not qualify application translation. See the
+[physical async unit draft](async-control-unit-draft.md). All independent source
+and receiving cases remain unrun during bulk drafting.

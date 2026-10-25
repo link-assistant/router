@@ -59,3 +59,11 @@ originals/CST inverses and independent handwritten native, JS/strict TS and
 refusal source are drafted and unrun. Source-unit installation, general Rust
 and pending-future syntax, broader numeric/HTTP boundaries, production adoption
 and every other unfinished row remain open.
+
+The [physical async source-unit draft](async-control-unit-draft.md) now connects
+the three source directions, actual native/Cargo/runtime mirrors, current paired
+signature proposals and original fresh transaction/atomic installation contract.
+Complete original adapter and profile/transaction substitutions plus independent
+unrun receiving cases are retained. General source inference and async domains,
+HTTP resources, transitive source-history composition, production adoption,
+CI repairs and every unfinished row remain open.

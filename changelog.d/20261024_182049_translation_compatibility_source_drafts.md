@@ -83,3 +83,5 @@ integration and the remaining requirement ledger are still open.
 - Draft source-bound cold cancellation/deadline/channel callers using the complete original control adapter, native role/move/borrow flow, explicit receiver cleanup, full CST inverses and independent unrun JS/strict TS/native oracle source.
 
 - Draft canonical async resource Rust inverse translation using complete original reader/consumer copies, tuple and mutable-borrow syntax, actual cleanup/capture proposals, fresh full JS/meta/Rust reproduction and independent unrun receiving/refusal source.
+
+- Draft physical JS/TS/Rust async-control source-unit synchronization, current paired borrow signatures, mirrored native/runtime source capture, original fresh atomic transactions and independent unrun receiving cases.
