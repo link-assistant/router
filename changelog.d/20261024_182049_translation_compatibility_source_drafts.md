@@ -240,3 +240,8 @@ integration and the remaining requirement ledger are still open.
   builtin registration/parser/collector proofs and coherent tool-aware consumers.
   Preserve native metadata, unsafe/CPU/body obligations and old API domains;
   retain six complete source equations and independent unrun refusal/native source.
+
+- Draft original Some/None-return if-let branches through checked Option
+  propagation with exact lexical spans, previous-scope initializers and preserved
+  else-if/return targets. Retain three complete source equations and independent
+  unrun JS/strict-TS/refusal/native drop source; register resource oracle 37.

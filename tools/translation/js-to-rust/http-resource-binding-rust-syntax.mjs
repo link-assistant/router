@@ -40,8 +40,14 @@ export class HttpResourceBindingRustReader {
   const unitReturnInsertionAt=this.is('{')?this.peek().start:null;if(unitReturnInsertionAt===null)this.expect('->');const returns=unitReturnInsertionAt===null?this.typeUntil(['{']):'()',body=this.block(new Map(),0);if(this.peek().type!=='end')fail('complete function item was not consumed');return {name,exported,asynchronous,parameters,returns,body,unitReturnInsertionAt,...(genericParameters?{genericParameters}:{})};
  }
  conditional(environment,depth){
-  this.tick(depth);const condition=this.expression(environment,0,depth+1),yes=this.block(environment,depth+1);let no,missingElseAt=null,elseIf=null;
-  if(this.eat('else')){if(this.eat('if')){const start=this.tokens[this.index-1].start,child=this.conditional(environment,depth+1);no={kind:'block',statements:[child],tail:null};elseIf={start,end:child.end};}else no=this.block(environment,depth+1);}else{no={kind:'block',statements:[],tail:null};missingElseAt=yes.span.end;}
+  this.tick(depth);
+  if(this.eat('let')){
+   const keyword=this.tokens[this.index-2],constructor=this.peek();this.expect('Some');this.expect('(');const open=this.tokens[this.index-1],mutable=this.eat('mut'),name=this.identifier(),nameSpan={start:this.lastIdentifier.start,end:this.lastIdentifier.end};this.expect(')');const close=this.tokens[this.index-1];this.expect('=');
+   const value=this.expression(environment,0,depth+1),yes=this.block(environment,depth+1),alternative=this.peek();this.expect('else');const otherwise=this.block(environment,depth+1);
+   return {kind:'if-option-let',name,nameSpan,mutable,value,yes,otherwise,keywordSpan:{start:keyword.start,end:keyword.end},constructorSpan:{start:constructor.start,end:constructor.end},openSpan:{start:open.start,end:open.end},closeSpan:{start:close.start,end:close.end},alternativeSpan:{start:alternative.start,end:otherwise.span.end},end:otherwise.span.end};
+  }
+  const condition=this.expression(environment,0,depth+1),yes=this.block(environment,depth+1);let no,missingElseAt=null,elseIf=null;
+  if(this.eat('else')){if(this.eat('if')){const start=this.tokens[this.index-1].start,child=this.conditional(environment,depth+1);no={kind:'block',statements:[child],tail:null};elseIf={start,end:child.end,...(child.kind==='if-option-let'?{patternBlock:true}:{})};}else no=this.block(environment,depth+1);}else{no={kind:'block',statements:[],tail:null};missingElseAt=yes.span.end;}
   return {kind:'if',condition,yes,no,missingElseAt,elseIf,end:elseIf?.end??no.span?.end??yes.span.end};
  }
  block(environment,depth){
@@ -63,7 +69,7 @@ export class HttpResourceBindingRustReader {
    if(this.eat('while')){const condition=this.expression(local,0,depth+1),body=this.block(local,depth+1);statements.push({kind:'while',condition,body});continue;}
    if(this.is('break')||this.is('continue')){const kind=this.next().text;this.expect(';');statements.push({kind});continue;}
    if(this.eat('return')){const keyword=this.tokens[this.index-1],bareReturn=this.is(';'),value=bareReturn?{kind:'unit'}:this.expression(local,0,depth+1),semicolon=this.peek();this.expect(';');statements.push({kind:'return',value,bareReturn,returnSpan:{start:keyword.start,end:keyword.end},semicolonSpan:{start:semicolon.start,end:semicolon.end}});continue;}
-   if(this.is('assert!')||this.is('for')||this.is('__ro_domain')||this.is('if')&&this.is('let',1)){this.skipGuard();continue;}
+   if(this.is('assert!')||this.is('for')||this.is('__ro_domain')){this.skipGuard();continue;}
    if(this.eat('if')){statements.push(this.conditional(local,depth+1));continue;}
    const value=this.expression(local,0,depth+1);if(this.eat(';')){statements.push({kind:'effect',value});continue;}tail=value;this.expect('}');break;
   }

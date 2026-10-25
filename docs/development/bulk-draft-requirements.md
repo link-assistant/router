@@ -802,3 +802,12 @@ native metadata or granting CPU/unsafe/body authority. Six complete originals,
 both phases and independent registration/refusal/native oracle source remain
 unrun. Architecture export/type closure, producer bootstrap, broader executable
 language/effects, production parity and every unfinished requirement remain.
+
+The [original Option if-let draft](http-resource-native-if-let-draft.md) retains
+real branch/payload/fallback spans and normalizes exact Some/otherwise-None-return
+branches through existing checked propagation inside the original lexical scope.
+Initializers keep prior bindings, else-if laziness and return targets remain, and
+complete functions still require fresh meta/native reproduction. Three complete
+originals, both phases and independent target/refusal/native drop cases are unrun;
+37 resource oracle modules are now drafted. Wider patterns, architecture/producer
+closure, production parity and every unfinished requirement remain open.
