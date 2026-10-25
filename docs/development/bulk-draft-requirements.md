@@ -592,3 +592,12 @@ Every exact source/unique-owner/containment/nonoverlap/CST/physical-history chec
 and original bound remains. Two complete source copies and independent boundary,
 all-owner, 128-edit, stale/ambiguous/source-change cases remain unrun. This is
 not measured CI or performance repair evidence; all unfinished rows stay open.
+
+The [cancellable deadline tail draft](http-resource-cancellable-deadlines-draft.md)
+composes the actual original sleep/send cancellation contracts with one awaited
+child-token tail, Copy/shared captures and full argument purity checking.
+Three complete original sources, both substitution sequences, independent
+JS/strict TS/queue cleanup/native inverse cases, real library Rust oracles and
+physical three-direction source transactions remain unrun. Exclusive resource
+captures, wider effects/cleanup, namespace/bootstrap, production adoption/parity
+and every unfinished requirement remain open. No test or experiment ran.

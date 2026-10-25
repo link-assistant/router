@@ -52,3 +52,5 @@ mod container_guards;
 mod nested_guards;
 #[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-pure-deadlines-oracle.rs"]
 mod pure_deadlines;
+#[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-cancellable-deadlines-oracle.rs"]
+mod cancellable_deadlines;
