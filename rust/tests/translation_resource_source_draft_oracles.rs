@@ -38,3 +38,5 @@ mod signed_numbers;
 mod lexical_scopes;
 #[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-for-headers-oracle.rs"]
 mod for_headers;
+#[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-text-equality-oracle.rs"]
+mod text_equality;

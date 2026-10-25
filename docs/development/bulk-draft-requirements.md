@@ -481,3 +481,11 @@ last-declaration guards and correctly scoped header mutability. Complete origina
 and independent unrun JS/strict TS/native/ordering/refusal cases are retained.
 General expression sequences, wider language domains, namespace/bootstrap,
 production parity and every unfinished requirement remain open.
+
+The [exact scalar text equality draft](http-resource-text-equality-draft.md)
+adds nonconsuming original String comparisons and read-only owned text captures
+for actual immediate callbacks, retaining all move/root/state refusals. Full
+originals and independent unrun JS/strict TS/native/Unicode/refusal cases are
+retained; an eighteenth oracle joins gated CI discovery. Wider captures/language
+domains, namespace/bootstrap, production parity and every unfinished requirement
+remain open.
