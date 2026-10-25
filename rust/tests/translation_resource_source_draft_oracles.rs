@@ -62,3 +62,5 @@ mod call_grouping;
 mod byte_literals;
 #[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-native-bindings-oracle.rs"]
 mod native_bindings;
+#[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-native-local-types-oracle.rs"]
+mod native_local_types;

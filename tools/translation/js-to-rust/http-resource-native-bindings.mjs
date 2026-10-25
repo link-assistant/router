@@ -11,7 +11,7 @@ export function normalizeHttpResourceRustBindings(source){
  if(typeof source!=='string'||source.length>2097152)fail('bounded complete original native source required');
  const concrete=transportConcreteSyntaxSource(source,{language:'Rust'});if(transportConcreteSyntaxMeta(concrete.meta).source!==source)fail('original serialized and reparsed CST differs');
  const items=sourceItems(source).filter(row=>row.term!=='comment');if(!items.length||items.length>4096||items.some(row=>row.term!=='fn'))fail('complete ordinary native function module required');
- const used=new Set(),moduleNames=new Set(),edits=[],selections=[];let cells=0,sequence=0;
+ const used=new Set(),moduleNames=new Set(),edits=[],selections=[],annotations=[];let cells=0,sequence=0;
  const tick=(depth=0)=>{if(++cells>100000||depth>160)fail('complete native binding walk bound');};
  for(const token of rustTokens(source)){tick();if(token.type==='ident')used.add(token.text);}
  for(const item of items){if(moduleNames.has(item.name))fail('unique actual native function name required');httpResourceCallerName(item.name);moduleNames.add(item.name);}
@@ -20,14 +20,14 @@ export function normalizeHttpResourceRustBindings(source){
   const selected=[item.start+span.start,item.start+span.end];if(source.slice(...selected)!==expected)fail('exact original binding token changed');
   if(expected!==replacement)edits.push({span:selected,expected,replacement});selections.push({kind,name:expected,target:replacement,span:selected});
  }
- function fresh(original,scope){
+ function fresh(original,scope,force=false){
   let portable=true;try{httpResourceCallerName(original);}catch(error){if(!(error instanceof TypeError))throw error;portable=false;}
-  if(portable&&!scope.has(original)&&!moduleNames.has(original))return original;
+  if(!force&&portable&&!scope.has(original)&&!moduleNames.has(original))return original;
   let value;do{tick();value='router_shadow_'+sequence++;}while(used.has(value));used.add(value);return value;
  }
  function declare(item,binding,scope,kind){
   if(nonBindings.has(binding.name))fail('an original Rust keyword or discard pattern is not an ordinary value binding');
-  const target=fresh(binding.name,scope);spanEdit(item,binding.nameSpan,binding.name,target,kind);scope.set(binding.name,target);
+  const typed=kind==='let'&&binding.type!==null&&binding.type!==undefined,target=fresh(binding.name,scope,typed);spanEdit(item,binding.nameSpan,binding.name,target,kind);scope.set(binding.name,target);if(typed){const span=binding.typeSpan;if(!span||span.start<binding.nameSpan.end||span.end>item.end-item.start)fail('complete original type annotation span required');const selected=[item.start+span.start,item.start+span.end],expected=source.slice(...selected);edits.push({span:selected,expected,replacement:''});annotations.push({function:item.name,target,type:binding.type,span:selected,original:expected});}
  }
  function value(item,node,scope,depth=0){
   tick(depth);if(!node||typeof node!=='object')fail('complete original native expression required');
@@ -73,5 +73,5 @@ export function normalizeHttpResourceRustBindings(source){
  edits.sort((left,right)=>left.span[0]-right.span[0]);for(let index=1;index<edits.length;index++)if(edits[index-1].span[1]>edits[index].span[0])fail('original binding edit overlap');
  const substituted=applyConcreteSyntaxSubstitutions(concrete.document,{languageRules:[{id:'rust:alpha-rename-exact-original-lexical-binding-tokens',edits}],repositoryRules:[{id:'router:retain-portable-collision-free-local-names',edits:[]}]}),after=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(substituted.value)).source,equation=transportConcreteSourceEquations([{before:source,after,language:'Rust'}])[0];
  if(equation.inverse!==source)fail('complete original binding source inverse differs');
- return {schema:'router-http-resource-native-lexical-bindings-v1',before:source,after,edits,selections,equation,trace:substituted.trace,sourceAuthority:false,semanticAuthority:false,namespaceAuthority:false,rustExecuted:false,receivingExecuted:false,crossInvocationCache:false};
+ return {schema:'router-http-resource-native-lexical-bindings-v1',before:source,after,edits,selections,annotations,equation,trace:substituted.trace,sourceAuthority:false,semanticAuthority:false,namespaceAuthority:false,rustExecuted:false,receivingExecuted:false,crossInvocationCache:false};
 }

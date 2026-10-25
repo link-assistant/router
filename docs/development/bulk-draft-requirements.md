@@ -663,3 +663,11 @@ must reproduce the normalized native source, with full original CST inverses.
 Five complete source copies, both phases and independent native/JS/strict TS,
 physical transaction, refusal and oracle source remain unrun. Wider patterns,
 namespace/producer closure and every unfinished requirement remain open.
+
+The [native local type draft](http-resource-native-local-types-draft.md) retains
+original let annotations as independently checked whole-value obligations and
+preserves actual signed native local widths through target type witnesses.
+Fresh local joins use one flow traversal; no new cross-invocation cache exists.
+Five complete originals, both rule phases and independent 128-declaration,
+target/native/refusal and oracle source remain unrun. Wider native types and
+every unfinished requirement above remain open.
