@@ -14,9 +14,11 @@ The ABI descriptor remains unavailable as an unchecked value operation.
 
 Actual lexical generic slots take precedence over outer aliases after real alias
 bindings resolve. Alias-template inspection recognizes only the genuine imported
-generic Option signature. Concrete payload queries currently cover bool, u64,
-i64 and owned String. This does not admit arbitrary resource disposal or borrowed
-payload domains. Numeric ingress checks retain their existing native bounds.
+generic Option signature. Concrete payload queries in this batch cover bool,
+u64, i64 and owned String; the [constructor successor](http-resource-option-constructors-draft.md)
+drafts supported nested owned payloads through the same ABI. This does not admit
+arbitrary resource disposal or borrowed payload domains. Numeric ingress checks
+retain their existing native bounds.
 
 Complete generic bodies retain the existing bounded unchanged-value theorem:
 one input, linear immutable aliases, already checked acyclic helper calls, one

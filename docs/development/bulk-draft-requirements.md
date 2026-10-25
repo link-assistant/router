@@ -831,3 +831,13 @@ original body inverses and require fresh whole-target reproduction. Fourteen
 complete source equations and independent receiving/refusal/native drop source
 are unrun. Broader patterns, architecture/producer closure, production adoption,
 parity and every unfinished requirement remain open.
+
+The [tagged constructor draft](http-resource-option-constructors-draft.md)
+adds actual Some/None syntax, String-error Ok/Err contexts, complete payload/root
+checking and native constructor projection. None and Result need actual complete
+source contexts, while literal TS tag handling retains strict target spelling.
+Nested supported owned Option signatures reuse the existing generic identity
+ABI. Seven complete source equations and independent JS/strict TS/refusal/native
+source remain unrun; resource oracle module 38 is drafted. Original noncanonical
+expression grouping remains a prerequisite for the raw if-let case. Architecture/
+producer closure, broader domains, adoption/parity and every unfinished row remain.

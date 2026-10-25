@@ -258,3 +258,10 @@ integration and the remaining requirement ledger are still open.
   callback refusals, original pure Some/None/propagation body inverses and complete
   paired-signature checking. Retain fourteen full source equations and independent
   unrun receiving/refusal/native exact-once-drop case source.
+
+- Draft literal Some/None and contextual String-error Ok/Err constructors through
+  the complete resource flow and native inverse, with actual payload moves,
+  returned roots, strict literal tags and supported nested owned Option signatures.
+  Retain seven full source equations and independent unrun JS/strict TS/refusal/
+  native oracle source. Noncanonical native grouping remains a separate source
+  prerequisite; resource oracle module 38 is drafted.
