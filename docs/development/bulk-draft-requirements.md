@@ -143,6 +143,15 @@ branches, labels, outcome-sensitive loop-entry changes, exceptional exits,
 broader language/resource domains, namespace/bootstrap, production parity and
 every unfinished requirement remain open.
 
+The [continuing lexical branch draft](http-resource-scoped-branches-draft.md)
+adds actual continuing scopes, single statements and else-if, complete incoming
+state joins, scope-local cleanup and independent function/loop/scope exit
+summaries. Complete original flow/projection histories, precise native owner
+boundaries and independent unrun JS/strict TS/native oracle/refusal source are
+retained. General shadowing, outcome-sensitive incompatible state, labels,
+exceptional exits, namespace/bootstrap, production parity and every unfinished
+requirement remain open.
+
 The [local resource helper draft](http-resource-local-functions-draft.md) now
 checks actual callee bodies before callers, composes cold futures and single
 returned roots, preserves source order and separates imported/local binding

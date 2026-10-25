@@ -24,6 +24,16 @@ and releases from a short-circuited Boolean operand. Preserve original complete
 deadlines and the independent unrun
 [loop-exit cases](http-resource-abrupt-loops-draft.md).
 
+Continuing branches retain real lexical scopes. Capture only their actual
+incoming bindings, clean new local resources before fallthrough, join every
+continuing ownership/disposal/guard/domain/root state, and discard scope-local
+names before analyzing following outer source. Scope fallthrough is neither a
+function return nor a loop boundary. Assignment and exclusive-use discovery must
+respect child declarations when a later outer binding reuses the same spelling.
+Keep exact substitution spans inside their native owner, including complete
+function replacements; trailing trivia cannot widen that owner. See the
+[unrun scoped continuation draft](http-resource-scoped-branches-draft.md).
+
 ### Source synchronization exports during issue #759
 
 Keep every public synchronization CLI in the shared

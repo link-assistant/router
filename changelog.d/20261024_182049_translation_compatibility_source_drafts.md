@@ -1,5 +1,6 @@
 ### Added
 
+- Draft continuing lexical branch/state joins, single-statement and else-if source rules, scope-aware native mutability and independent unrun JS/strict TS/native oracle cases; repair exact native function recipe boundaries without widening source authority.
 - Draft complete resource loop break/continue and function-return flows, Result/Option propagation, distinct exit summaries and native inverses, with independent unrun JS/strict TS/native oracle and refusal source.
 - Drafted text, Option callback and primitive/owned Result compatibility cores,
   translator integration, automatic adoption packets and complete source inverses.

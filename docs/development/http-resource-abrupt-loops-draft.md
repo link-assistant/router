@@ -1,5 +1,8 @@
 # Resource loop exits: source draft
 
+The later [scoped continuation draft](http-resource-scoped-branches-draft.md)
+extends this family's original restricted continuing-branch boundary.
+
 All implementation and regression source in this family is unrun. This draft
 adds unlabelled nearest-loop `break` and `continue`, actual function returns
 inside nested while loops, and complete original Result/Option return guards.
