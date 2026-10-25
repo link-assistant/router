@@ -304,6 +304,14 @@ separate complete joins. See the
 [scalar loop draft](http-resource-scalar-loops-draft.md); all new source and
 native qualification remains unrun during bulk drafting.
 
+Owned String mutation must retain a freshly checked owned domain, refuse every
+live backing loan and reinitialize moved slots only after complete RHS checking.
+Borrowed inputs/literals need an explicit matching ownership operation. Preserve
+loopback initialization/type state and complete native inverse reproduction;
+do not promote these rules to general lifetime or unwind authority. See the
+[owned text state draft](http-resource-owned-text-state-draft.md); all new source
+and native qualification remains unrun during bulk drafting.
+
 Returned helper loans must retain every possible actual argument root through
 branches and nested Result/Option values. Protect every backing local owner
 from moves and refuse any borrowed return that may outlive one. Static literal

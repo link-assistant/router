@@ -116,6 +116,14 @@ are retained. Abrupt/exception exits, general resource/collection loops and
 mutation, wider language domains, namespace/bootstrap, production adoption/parity
 and every unfinished requirement remain open.
 
+The [owned text state draft](http-resource-owned-text-state-draft.md) adds actual
+owned String mutation, moved-slot reinitialization, all-root live-view protection
+and complete native/loop state preservation. Full original source histories and
+independent unrun JS/strict TS/native oracle/refusal source are retained. Abrupt/
+exception exits, general resource/collection state, wider language domains,
+namespace/bootstrap, production adoption/parity and every unfinished requirement
+remain open.
+
 The [local resource helper draft](http-resource-local-functions-draft.md) now
 checks actual callee bodies before callers, composes cold futures and single
 returned roots, preserves source order and separates imported/local binding
