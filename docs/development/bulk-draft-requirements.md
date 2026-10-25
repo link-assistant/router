@@ -543,3 +543,10 @@ inverses. Five full originals and independent unrun JS/strict TS/native/range/
 refusal cases are retained; a twenty-second oracle joins gated CI discovery.
 Recursive containers, other numeric error families, namespace/bootstrap,
 production parity and every unfinished requirement remain open.
+
+The [native Promise/thenable obligation draft](http-resource-promise-types-draft.md)
+adds distinct native/eager, structural thenable and checked cold type descriptors,
+actual Awaited/alias domains and precise cold return obligations. Five full
+originals and independent unrun JS/strict TS/native/lexical/refusal cases are
+retained. Generic deadline typing, wider async domains, namespace/bootstrap,
+production parity and every unfinished requirement remain open.

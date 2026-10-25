@@ -19,15 +19,16 @@ export function createHttpResourceWrittenAnnotationReader(ts,imports,tick,{alias
  const domain=type=>({kind:'domain',type});
  function callable(row){
   if(!row)fail('actual imported operation type required');const args=row.args.map(type=>['json-callback','value-callback'].includes(type)?row.callbackContract?{kind:'function',args:row.callbackContract.args.map(domain),returns:domain(row.callbackContract.ret)}:fail('actual complete callback descriptor required'):domain(type));
-  return {kind:'function',args,returns:row.async?{kind:'future',value:domain(row.ret)}:domain(row.ret)};
+  return {kind:'function',args,returns:row.async?{kind:row.family==='filesystem'?'native-promise':'future',value:domain(row.ret)}:domain(row.ret)};
  }
  function describe(type,depth=0,bindings=null){
   tick();if(!type||depth>32)fail('complete bounded original callback type required');if(ts.isParenthesizedTypeNode(type))return describe(type.type,depth+1,bindings);
   const primitive=new Map([[ts.SyntaxKind.StringKeyword,'str'],[ts.SyntaxKind.BooleanKeyword,'bool'],[ts.SyntaxKind.BigIntKeyword,numericDomain==='i64'?'i64':'u64']]);if(primitive.has(type.kind))return domain(primitive.get(type.kind));
   if(ts.isLiteralTypeNode(type)&&type.literal.kind===ts.SyntaxKind.NullKeyword)return domain('unit');
-  if(ts.isTypeReferenceNode(type)&&ts.isIdentifier(type.typeName)&&type.typeName.text==='Awaited'&&type.typeArguments?.length===1){const actual=describe(type.typeArguments[0],depth+1,bindings);if(actual.kind!=='future'||actual.value?.kind!=='domain')fail('Awaited requires its actual imported operation future domain');return actual.value;}
+  if(ts.isTypeReferenceNode(type)&&ts.isIdentifier(type.typeName)&&type.typeName.text==='Awaited'&&type.typeArguments?.length===1){const actual=describe(type.typeArguments[0],depth+1,bindings);if(!['future','native-promise','thenable'].includes(actual.kind)||actual.value?.kind!=='domain')fail('Awaited requires its actual imported operation future domain');return actual.value;}
   const slot=httpResourceTypeAliasSlot(ts,type,bindings);if(slot)return describe(slot.node,depth+1,slot.bindings);
   if(ts.isTypeReferenceNode(type)&&ts.isIdentifier(type.typeName)&&aliases?.has(type.typeName.text)){const alias=aliases.get(type.typeName.text),nested=httpResourceTypeAliasBindings(ts,alias,type,bindings,tick,(node,scope)=>describe(node,depth+1,scope));return describe(alias.type,depth+1,nested);}
+  if(ts.isTypeReferenceNode(type)&&ts.isIdentifier(type.typeName)&&['Promise','PromiseLike'].includes(type.typeName.text)){if(imports.has(type.typeName.text)||type.typeArguments?.length!==1)fail('one actual unshadowed native Promise/PromiseLike type argument required');const value=describe(type.typeArguments[0],depth+1,bindings);if(value.kind!=='domain')fail('one complete actual settled native value domain required');return {kind:type.typeName.text==='Promise'?'native-promise':'thenable',value};}
   if(ts.isTypeQueryNode(type)){
    if(!ts.isIdentifier(type.exprName)||!imports.has(type.exprName.text))fail('type query must name an actual imported operation');
    if(imports.get(type.exprName.text)==='deferFilesystemFlow'){if(type.typeArguments?.length!==1||typeof coldTypeCurrent!=='function')fail('actual original cold-flow generic type and current declaration source required');coldTypeCurrent();const value=describe(type.typeArguments[0],depth+1,bindings);if(value.kind!=='domain')fail('the complete actual settled native value domain is required');return {kind:'function',args:[{kind:'cold-factory',value}],returns:{kind:'future',value}};}
