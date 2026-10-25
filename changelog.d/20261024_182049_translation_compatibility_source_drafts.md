@@ -221,3 +221,8 @@ integration and the remaining requirement ledger are still open.
   adopter stream, preserving complete source/Cargo joins, original partitions,
   inverses, failure receipts and final guards. Retain three complete source
   equations and independent unrun storage/physical/refusal case source.
+
+- Draft complete owned-core packet readback through fresh original proposer
+  execution, exact decoded metadata/source/graph/CST comparisons and physical
+  source/workspace Cargo rejoins. Preserve complete inverse and inventory checks,
+  account for control-index evidence bytes and add unrun consistent-hash forgery cases.

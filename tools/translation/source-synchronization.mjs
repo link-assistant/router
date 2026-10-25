@@ -42,3 +42,5 @@ export {proposePhysicalCoreAdoptionSequence as proposeSourceBoundPhysicalCoreAdo
 export {SOURCE_BOUND_OWNED_CORE_STAGES,proposeSourceBoundOwnedCoreStage,proposeSourceBoundOwnedCoreStages} from './source-bound-owned-core-bulk.mjs';
 
 export {proposeSourceBoundOwnedCorePackets} from './propose-core-adoption-corpus.mjs';
+
+export {reviewSourceBoundOwnedCorePackets} from './source-bound-owned-packet-readback.mjs';

@@ -777,3 +777,11 @@ Per-packet evidence bounds retain all data or refuse completion; no application
 sources are installed. Three complete originals, both phases and independent
 physical/storage/refusal source remain unrun. Complete independent stage readback,
 receiving, wider domains, production parity and every open requirement remain.
+
+The [complete owned packet readback draft](source-bound-owned-readback-draft.md)
+rejoins bounded gzip inventory and current physical source/workspace Cargo,
+reexecutes each actual original proposer, and compares every complete metadata,
+source, graph, CST and inverse packet. Exact traces, changes and full packet
+membership remain required. Four complete originals, both phases and independent
+consistent-hash forgery/physical/refusal source cases remain unrun. No source
+review grants executable or reverse authority; all unfinished requirements remain.
