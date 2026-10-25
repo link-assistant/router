@@ -85,10 +85,11 @@ export class HttpResourceBindingRustReader {
   if(this.eat('(')){if(this.eat(')'))return {kind:'unit'};const value=this.expression(environment,0,depth+1);this.expect(')');return value;}
   if(this.is('{'))return this.block(environment,depth+1);
   if(this.eat('if')){const condition=this.expression(environment,0,depth+1),yes=this.block(environment,depth+1);this.expect('else');return {kind:'choose',condition,yes,no:this.block(environment,depth+1)};}
+  if(this.eat('return')){const value=this.is(',')||this.is('}')?{kind:'unit'}:this.expression(environment,0,depth+1);return {kind:'return-expression',value};}
   if(this.eat('match')){
-   const value=this.expression(environment,0,depth+1);this.expect('{');const arms=[];
-   while(!this.eat('}')){const pattern=[];while(!this.eat('=>'))pattern.push(this.next().text);arms.push({pattern:pattern.join(''),value:this.expression(environment,0,depth+1)});if(!this.is('}'))this.expect(',');}
-   return {kind:'match',value,arms};
+   const start=this.tokens[this.index-1].start,inputStart=this.peek().start,value=this.expression(environment,0,depth+1),inputEnd=this.tokens[this.index-1].end;this.expect('{');const arms=[];
+   while(!this.eat('}')){const patternTokens=[];while(!this.eat('=>'))patternTokens.push(this.next());arms.push({pattern:patternTokens.map(row=>row.text).join(''),patternTokens,value:this.expression(environment,0,depth+1)});if(!this.is('}'))this.expect(',');}
+   return {kind:'match',value,arms,matchSpan:{start,end:this.tokens[this.index-1].end},inputSpan:{start:inputStart,end:inputEnd}};
   }
   if(this.eat('||'))return {kind:'typed-lambda',parameters:[],body:this.block(environment,depth+1)};
   if(this.is('|')&&this.peek(1).type==='ident'&&this.is(':',2)){this.expect('|');const parameters=[];while(!this.eat('|')){const name=this.identifier(),nameSpan={start:this.lastIdentifier.start,end:this.lastIdentifier.end};this.expect(':');const type=this.typeUntil([',','|']);parameters.push({name,type,nameSpan});if(!this.is('|'))this.expect(',');}const asynchronous=this.eat('async'),futureMoved=asynchronous&&this.eat('move');return {kind:asynchronous?'typed-async-lambda':'typed-lambda',parameters,...(asynchronous?{futureMoved}:{}),body:this.block(new Map(),depth+1)};}

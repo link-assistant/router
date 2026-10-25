@@ -190,3 +190,4 @@ integration and the remaining requirement ledger are still open.
 - Draft original native final-return targets, empty else insertion and scoped else-if chains through source units, preserving full source inverses, complete body checks and independent unrun target/native/refusal cases.
 - Draft source-checked native Some/None let-else propagation and conservative prelude constructor-pattern refusals, preserving complete originals/inverses and independent unrun range, owned payload, source and native drop cases.
 - Draft original native omitted unit signatures, empty bodies and bare-return targets through the existing unit/cold/disposal contracts, retaining full source histories and independent unrun target/native/refusal cases.
+- Draft original native Some/None extraction matches through checked propagation with exact initializer scope and full source inverses, retaining independent unrun target/native ownership and refusal cases.

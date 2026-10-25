@@ -70,3 +70,5 @@ mod native_control;
 mod native_option_patterns;
 #[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-native-unit-oracle.rs"]
 mod native_unit;
+#[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-native-option-match-oracle.rs"]
+mod native_option_match;

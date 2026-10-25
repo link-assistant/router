@@ -693,3 +693,10 @@ including cold callbacks and the existing cancellation/disposal contracts.
 Three complete originals, both phases and independent target/native/refusal
 and real library oracle source remain unrun. Wider syntax, production parity
 and every unfinished requirement above remain open.
+
+The [native Option extraction match draft](http-resource-native-option-match-draft.md)
+retains exact original initializer and arm scope while composing successful
+identity/None-return arms with existing checked propagation. Four complete
+originals, both phases and independent absent/range/ownership/source/refusal
+and native oracle source remain unrun. Wider matches, namespace/producer closure
+and every unfinished requirement above remain open.

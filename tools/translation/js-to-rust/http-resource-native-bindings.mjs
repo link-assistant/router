@@ -45,6 +45,13 @@ export function normalizeHttpResourceRustBindings(source){
    if(scope.has(node.path))fail('a bare call resolves to an actual local value rather than an imported or checked function');
    for(const argument of node.args)value(item,argument,scope,depth+1);return;
   }
+  if(node.kind==='match'){
+   if(scope.has('Some')||scope.has('None')||moduleNames.has('Some')||moduleNames.has('None')||node.arms.length!==2)fail('complete unshadowed original Option match required');
+   const some=node.arms.find(arm=>/^Some\(([A-Za-z_][A-Za-z0-9_]*)\)$/u.test(arm.pattern)),none=node.arms.find(arm=>arm.pattern==='None');if(!some||!none||some.patternTokens.length!==4||some.patternTokens[0].type!=='ident'||some.patternTokens[2].type!=='ident'||none.patternTokens.length!==1||none.patternTokens[0].type!=='ident')fail('one actual Some binder and one actual None arm required');
+   const binder=some.patternTokens[2].text,success=some.value.kind==='block'&&!some.value.statements.length?some.value.tail:some.value,failure=none.value.kind==='block'&&!none.value.tail&&none.value.statements.length===1&&none.value.statements[0].kind==='return'?none.value.statements[0].value:none.value.kind==='return-expression'?none.value.value:null;
+   if(nonBindings.has(binder)||success?.kind!=='name'||success.name!==binder||failure?.kind!=='name'||failure.name!=='None')fail('original successful arm must retain its one value and absent arm must only return None');
+   value(item,node.value,scope,depth+1);const full=node.matchSpan,input=node.inputSpan;if(!full||!input||full.start>=input.start||input.end>=full.end||full.end>item.end-item.start)fail('complete original match and initializer spans required');for(const [span,replacement,kind]of [[[item.start+full.start,item.start+input.start],'','option-match-prefix'],[[item.start+input.end,item.start+full.end],'?','option-match-arms']]){const expected=source.slice(...span);edits.push({span,expected,replacement});selections.push({kind,span,source:expected,replacement});}return;
+  }
   if(node.kind==='choose'){value(item,node.condition,scope,depth+1);block(item,node.yes,scope,depth+1);block(item,node.no,scope,depth+1);return;}
   if(node.kind==='block'){block(item,node,scope,depth+1);return;}
   if(['typed-lambda','typed-async-lambda'].includes(node.kind)){
