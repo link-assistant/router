@@ -512,3 +512,11 @@ native-domain-preserving argument docs across JS erasure. Four complete original
 and independent unrun JS/strict TS/native/range/ownership/refusal cases are
 retained. General generic bodies, higher-order instantiation, namespace/bootstrap,
 production parity and every unfinished requirement remain open.
+
+Source review also drafts the missing Boolean-negation/unit observations in the
+canonical native source proposal's local domain reader. This lets whole-source
+checking reach negated Boolean JSON constructors and concrete generic unit
+applications; observations still grant no semantic or source permit. Two full
+originals, both ordered CST/source inverses and independent unrun handwritten
+native/JS/strict TS/refusal cases are retained. Every unfinished requirement and
+verification obligation remains open.
