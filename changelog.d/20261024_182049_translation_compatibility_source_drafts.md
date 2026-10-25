@@ -77,3 +77,5 @@ integration and the remaining requirement ledger are still open.
 - Draft three-language cancellation source-unit synchronization, paired borrow signatures, runtime initialization, complete native/Cargo capture and original fresh atomic installation; receiving cases are unrun.
 
 - Draft independently genuine tool-first derive input composition in the explicit enclosing project path, retaining the original constructor, complete source histories and unrun refusal/typed cases.
+
+- Draft plain-root declarative macro expansion using the complete original private engine, recursive forwarding, conservative hygiene/producer refusals, CST inverses and an original-compiler project adapter; independent JS/strict TS/native oracle source remains unrun. Split source-history and extension-guideline documentation without dropping obligations.

@@ -24,3 +24,4 @@ export {proposeForwardCompositeSynchronization} from './forward-composite-synchr
 export {createOwnedCancellationContext,ownedCancellationRuntimeSources,translateOwnedCancellationJavaScript,translateOwnedCancellationTypeScript,translateOwnedCancellationConcreteSyntaxMeta,emitOwnedCancellationRust,prepareOwnedCancellationRuntime,evaluateOwnedCancellation,evaluateOwnedCancellationBatch,readOwnedCancellationMeta} from './js-to-rust/owned-cancellation.mjs';
 export {translateOwnedCancellationRust} from './js-to-rust/owned-cancellation-rust.mjs';
 export {OWNED_CANCELLATION_NATIVE_INPUTS,ownedCancellationUnitRuntimeSources,ownedCancellationUnitContext,translateOwnedCancellationUnit} from './owned-cancellation-unit.mjs';
+export {translateLocalDeclarativeProject} from './local-declarative-project.mjs';
