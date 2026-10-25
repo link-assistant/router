@@ -601,3 +601,12 @@ JS/strict TS/queue cleanup/native inverse cases, real library Rust oracles and
 physical three-direction source transactions remain unrun. Exclusive resource
 captures, wider effects/cleanup, namespace/bootstrap, production adoption/parity
 and every unfinished requirement remain open. No test or experiment ran.
+
+The [explicit deadline slot draft](http-resource-explicit-deadlines-draft.md)
+checks original generic call arguments against whole actual callback values and
+retains signed native domains through TS erasure and Rust inversion. It also
+repairs the source-reviewed distinction between scalar and operation tail kinds
+before their full purity/cancellation checks. Five complete original sources,
+both substitution phases, independent JS/strict TS/native inverse/tampering and
+real native range oracle cases remain unrun. Every unfinished requirement
+remains open; no test, experiment or performance/coverage measurement ran.
