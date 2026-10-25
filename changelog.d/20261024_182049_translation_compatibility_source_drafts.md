@@ -177,3 +177,4 @@ integration and the remaining requirement ledger are still open.
 - Draft source-typed recursive numeric ingress and exact native constructor/path guards, retaining complete originals and independent unrun ControlError/range/refusal oracle source.
 - Draft source-checked pure generic deadline callbacks through typed native async closures and whole-source inverses, with immutable capture/effect/ownership checks, complete original substitution history and independent unrun JS/TS/Rust cases.
 - Draft complete original macro source/project copies for inline textual scope inheritance and local shadowing, with unchanged private matcher/hygiene bounds, full CST inverses and independent unrun target/native oracle cases.
+- Draft temporary native owner indexing per substitution step while retaining every exact per-edit source boundary, uniqueness, original workload and complete history check; add independent unrun boundary cases without measured performance claims.

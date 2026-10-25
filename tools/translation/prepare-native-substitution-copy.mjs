@@ -29,26 +29,20 @@ function parsed(ts,path,source){
  }
  return file;
 }
-function nativeOwner(ts,file,edit){
+function nativeOwner(ts,file,edit,select){
  const {start,end,expected,owner}=edit;
  need(Number.isSafeInteger(start)&&Number.isSafeInteger(end)&&start>=0&&end>=start&&end<=file.text.length&&file.text.slice(start,end)===expected,'exact original edit span');
  need(typeof edit.replacement==='string','primitive replacement source');
  if(owner.kind==='end-of-module'){
   need(start===file.text.length&&end===start&&expected==='','native module-end append');return {kind:owner.kind,span:[start,end]};
  }
- function callPath(node,depth=0){need(depth<=64,'bounded original member call path');if(ts.isIdentifier(node))return node.text;if(!ts.isPropertyAccessExpression(node)||node.questionDotToken)return null;const prefix=callPath(node.expression,depth+1);return prefix===null?null:prefix+'.'+node.name.text;}
- let matches=[];
- const visit=node=>{
-  if(owner.kind==='call-path'&&ts.isCallExpression(node)&&!node.questionDotToken&&callPath(node.expression)===owner.name||owner.kind==='class'&&ts.isClassDeclaration(node)&&node.name?.text===owner.name||owner.kind==='function'&&ts.isFunctionDeclaration(node)&&node.name?.text===owner.name||owner.kind==='import'&&ts.isImportDeclaration(node)&&ts.isStringLiteral(node.moduleSpecifier)&&node.moduleSpecifier.text===owner.name||owner.kind==='call'&&ts.isCallExpression(node)&&ts.isIdentifier(node.expression)&&node.expression.text===owner.name&&node.arguments.length>0&&ts.isStringLiteral(node.arguments[0])&&node.arguments[0].text===owner.argument||owner.kind==='variable'&&ts.isVariableDeclaration(node)&&ts.isIdentifier(node.name)&&node.name.text===owner.name)matches.push(node);
-  ts.forEachChild(node,visit);
- };
- visit(file);need(matches.length===1,'unique native-selected original owner');const node=matches[0];
+ const matches=select(owner);need(matches.length===1,'unique native-selected original owner');const node=matches[0];
  need(start>=node.getStart(file)&&end<=node.end,'whole edit belongs to original native owner');
   return {kind:owner.kind,name:owner.name,...(owner.kind==='call'?{argument:owner.argument}:{}),span:[node.getStart(file),node.end],editSpan:[start,end]};
 }
 function substitute(ts,path,before,edits){
  need(Array.isArray(edits)&&edits.length<=128,'bounded ordered substitution sequence');
- const file=parsed(ts,path,before),selections=edits.map(edit=>nativeOwner(ts,file,edit));
+ const file=parsed(ts,path,before),select=createNativeSourceOwnerIndex(ts,file,edits),selections=edits.map(edit=>nativeOwner(ts,file,edit,select));
  const ordered=edits.map((edit,index)=>({...edit,index})).sort((a,b)=>a.start-b.start||a.end-b.end||a.index-b.index);
  let cursor=0,after='';for(const edit of ordered){need(edit.start>=cursor,'nonoverlapping native source substitutions');after+=before.slice(cursor,edit.start)+edit.replacement;cursor=edit.end;}after+=before.slice(cursor);
  parsed(ts,path,after);return {after,selections};
@@ -117,3 +111,5 @@ export function withNativeSubstitutionOperation(operation){
  finally{frame.depth--;if(!previous){frame.files.clear();frame.entries=0;frame.bytes=0;frame.compiler=null;}__nativeSourceOperation=previous;}
 }
 export function nativeSubstitutionCopyHasChanges(plan){return nativeSourceHistoryFiles(plan).some(row=>row.current!==(row.currentAfter??row.after));}
+
+import {createNativeSourceOwnerIndex} from './native-source-owner-index.mjs';

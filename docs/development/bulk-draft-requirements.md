@@ -585,3 +585,10 @@ JS/strict TS/refusal cases and native textual-scope oracle source remain unrun.
 Function-local/external-file inheritance, architecture namespace and attribute
 producer bootstrap, production qualification and every unfinished row remain
 open. Original root-only APIs and resource bounds retain their contracts.
+
+The [native owner index draft](native-source-owner-index-draft.md) replaces
+repeated per-edit walks with one actual syntax-tree walk per substitution step.
+Every exact source/unique-owner/containment/nonoverlap/CST/physical-history check
+and original bound remains. Two complete source copies and independent boundary,
+all-owner, 128-edit, stale/ambiguous/source-change cases remain unrun. This is
+not measured CI or performance repair evidence; all unfinished rows stay open.
