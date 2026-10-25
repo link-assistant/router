@@ -384,3 +384,11 @@ unused-declaration/cycle checks and expanded target docs. Full original source
 histories and independent unrun signature/callback/recursion/settlement/ownership
 and refusal cases are retained. Generic functions, constraints/defaults, methods,
 namespace/bootstrap, production parity and every unfinished requirement stay open.
+
+The [written/cold return draft](http-resource-cold-return-types-draft.md) adds
+ordinary JavaScript return-doc obligations, freshly joined real deferred generic
+declarations and complete native async return docs. Full originals and
+independent unrun JS/strict TS/native lazy/value/source-refusal cases are
+retained; a tenth oracle joins gated CI discovery. General generic/method/async
+domains, namespace/bootstrap, production parity and every unfinished requirement
+remain open.

@@ -22,13 +22,13 @@ export function validateHttpResourceTypeAliasTemplates(ts,aliases,imports,{name,
    step();if(!node||depth>64||node.getSourceFile()!==alias.getSourceFile())fail('complete original native template nodes required');
    if(ts.isParenthesizedTypeNode(node))return inspect(node.type,depth+1);
    if([ts.SyntaxKind.StringKeyword,ts.SyntaxKind.BooleanKeyword,ts.SyntaxKind.BigIntKeyword].includes(node.kind)||ts.isLiteralTypeNode(node)&&node.literal.kind===ts.SyntaxKind.NullKeyword)return;
-   if(ts.isTypeQueryNode(node)){if(!ts.isIdentifier(node.exprName)||node.typeArguments?.length||!httpResourceCallerContract(imports.get(node.exprName.text)))fail('template typeof requires its real original operation binding');return;}
+   if(ts.isTypeQueryNode(node)){if(!ts.isIdentifier(node.exprName))fail('template typeof requires its real original operation binding');if(imports.get(node.exprName.text)==='deferFilesystemFlow'){if(node.typeArguments?.length!==1)fail('complete original cold-flow type instantiation required');inspect(node.typeArguments[0],depth+1);return;}if(node.typeArguments?.length||!httpResourceCallerContract(imports.get(node.exprName.text)))fail('template typeof requires its real original operation binding');return;}
    if(ts.isTypeReferenceNode(node)&&ts.isIdentifier(node.typeName)){
     const target=node.typeName.text,args=node.typeArguments??[];
     if(parameters.has(target)){if(args.length)fail('template slots cannot be generic constructors');return;}
     if(aliases.has(target)){if(args.length!==(aliases.get(target).typeParameters?.length??0))fail('template alias exact argument arity required');references.add(target);for(const argument of args)inspect(argument,depth+1);return;}
     const expected=target==='Extract'?2:['Parameters','ReturnType','Awaited'].includes(target)?1:null;if(expected===null||args.length!==expected)fail('closed original template constructor required');
-    if(['Parameters','ReturnType'].includes(target)&&dependent(args[0],parameters))fail('generic callable constraints require a separate original source rule');inspect(args[0],depth+1);
+    if(['Parameters','ReturnType'].includes(target)&&dependent(args[0],parameters)&&!(ts.isTypeQueryNode(args[0])&&ts.isIdentifier(args[0].exprName)&&imports.get(args[0].exprName.text)==='deferFilesystemFlow'))fail('generic callable constraints require a separate original source rule');inspect(args[0],depth+1);
     if(target==='Extract'){const predicate=args[1],field=ts.isTypeLiteralNode(predicate)&&predicate.members.length===1?predicate.members[0]:null;if(!field||!ts.isPropertySignature(field)||field.questionToken||field.modifiers?.some(modifier=>modifier.kind!==ts.SyntaxKind.ReadonlyKeyword)||!ts.isIdentifier(field.name)||field.name.text!=='$'||!ts.isLiteralTypeNode(field.type)||!ts.isStringLiteral(field.type.literal)||!['Ok','Some'].includes(field.type.literal.text))fail('actual single successful template tag required');}return;
    }
    if(ts.isIndexedAccessTypeNode(node)){

@@ -562,3 +562,11 @@ all unused templates and the complete dependency graph. Keep constraints and
 unsupported parameter-dependent utilities explicit, then recheck every actual
 instantiation and whole function. See the [type-template draft](http-resource-type-templates-draft.md);
 this source-only extension supplies no generic executable-function authority.
+
+Check ordinary JavaScript return docs against whole actual bodies, including
+value/future and owning domains. Generic cold type queries must bind the actual
+imported deferred factory and freshly recheck its complete original declaration.
+Never erase generic arguments on ordinary operation queries. Native async docs
+must retain cold future types with real settled-value domains. See the
+[written/cold return draft](http-resource-cold-return-types-draft.md); every new
+receiving/runtime/native qualification remains unrun.

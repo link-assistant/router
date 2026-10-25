@@ -40,8 +40,9 @@ Independent JS/strict TS/native and physical source-unit cases are drafted;
 none supplies current coverage, parity or CI evidence. Preserve exported typed
 aliases across later JS/Rust edits using fresh original and whole-target checks;
 see [paired alias retention](docs/development/http-resource-unit-type-aliases-draft.md).
-New native oracle source
-joins the existing gated Rust discovery and must never execute locally.
+Check written JavaScript returns and cold generic types through the complete
+original declaration and whole body; see [cold return types](docs/development/http-resource-cold-return-types-draft.md).
+New native oracle source joins the existing gated Rust discovery and must never execute locally.
 
 The [native source-operation draft](docs/development/native-source-operation-draft.md)
 retains private syntax only inside one synchronous operation while every

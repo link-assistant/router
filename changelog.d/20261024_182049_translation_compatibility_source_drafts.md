@@ -142,3 +142,5 @@ integration and the remaining requirement ledger are still open.
 - Draft fresh exported TypeScript alias retention across JavaScript/Rust source-unit edits, complete target reproduction and actual import conflict handling, with full original histories and independent unrun physical three-language and forged-plan source.
 
 - Draft bounded original generic type-alias slot substitution, lexical argument environments, complete unused-declaration/cycle checks and expanded JS docs, with full source histories and independent unrun body, callback, recursion, settlement, ownership and refusal source.
+
+- Draft ordinary JavaScript return-doc obligations, actual original deferred generic type queries and complete native async return docs, with full source histories and independent unrun JS/strict TS/native lazy/value/source-refusal cases in existing gated CI discovery.
