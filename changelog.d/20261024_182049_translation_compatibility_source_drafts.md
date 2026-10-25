@@ -160,3 +160,4 @@ integration and the remaining requirement ledger are still open.
 - Draft source-review corrections for grouped numeric calls and bounded conditional constraints, retaining complete originals/inverses and independent unrun grouped/deep source cases.
 
 - Draft original generic alias constraints/defaults, exact actual descriptor obligations, earlier-slot scope and complete constraint/default query retention across JS/Rust source-unit edits, with full originals and independent unrun strict-target, physical transaction and refusal source.
+- Draft actual lexical block state joins, nearest-loop control and complete native block inverses, with retained full originals and independent unrun oracle/refusal source.

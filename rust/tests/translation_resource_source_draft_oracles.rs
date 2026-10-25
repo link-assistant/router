@@ -34,3 +34,5 @@ mod boolean_values;
 mod list_literals;
 #[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-signed-numbers-oracle.rs"]
 mod signed_numbers;
+#[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-lexical-scopes-oracle.rs"]
+mod lexical_scopes;

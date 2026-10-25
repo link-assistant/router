@@ -451,3 +451,10 @@ across JS/Rust source-unit edits. Complete originals and independent unrun
 JS/strict TS/physical transaction and refusal cases are retained. Generic
 executable functions, general constraints/variance/methods, namespace/bootstrap,
 production parity and every unfinished requirement remain open.
+
+The [original lexical scope draft](http-resource-lexical-scopes-draft.md) adds
+complete incoming-state joins, local cleanup, nearest-loop exits, terminal
+function returns and canonical native block inverses. Complete originals and
+independent unrun JS/strict TS/native/refusal cases are retained; a sixteenth
+oracle joins gated CI discovery. Shadowing, exceptions, broader language domains,
+namespace/bootstrap, production parity and every unfinished requirement remain open.
