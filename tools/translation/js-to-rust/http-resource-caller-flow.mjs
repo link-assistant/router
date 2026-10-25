@@ -1,6 +1,7 @@
 // Closed awaited resource flow. Syntax candidates receive complete fresh source
 // checking in the caller adapter; this module issues no standalone source permit.
 import {httpResourceCallerContract as actualHttpResourceContract,httpResourceCallerRustType as actualHttpResourceRustType,httpResourceOwned,httpResourceBorrowRole,httpResourceNeedsDisposal,httpResourceResult,httpResourceResultOwnsDisposal} from './http-resource-caller-contracts.mjs';
+import {httpResourceOption} from './http-resource-options.mjs';
 const fail=message=>{throw new TypeError('Async control caller: '+message);};
 const roles=Object.freeze({'shared-cancellation':'cancel-ref','shared-sender':'sender-ref','exclusive-receiver':'receiver-mut'});
 const outputs=Object.freeze({cancellation:'cancel-owned',sender:'sender-owned','control-channel-result':'result:channel-pair','control-unit-result':'result:unit','control-optional-text-result':'result:option-text'});
@@ -13,7 +14,7 @@ export function httpResourceCallerContract(name){return actualHttpResourceContra
 export function httpResourceCallerRustType(type,options){return actualHttpResourceRustType(type,options);}
 export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{lazy=false,allowColdTail=false,bindings=null,moduleNames=new Set(),budget={cells:0},depth=0}={}){
  if(depth>64||!statements.length||statements.length>4096)fail('bounded complete HTTP resource flow required');
- const environment=bindings?new Map([...bindings].map(([key,row])=>[key,{...row}])):new Map(parameters.map(row=>[row.name,{type:row.type,input:true,moved:false,disposed:false,root:row.type==='str'?row.name:null}])),steps=[],failures=[];let tail=null;
+ const environment=bindings?new Map([...bindings].map(([key,row])=>[key,{...row}])):new Map(parameters.map(row=>[row.name,{type:row.type,input:true,moved:false,disposed:false,root:row.type==='str'?row.name:null}])),steps=[],failures=[],alternatives=[];let tail=null;
  const tick=()=>{if(++budget.cells>100000)fail('complete HTTP resource source-cell budget');};
  const binding=id=>{const row=environment.get(id);if(!row||row.moved||row.disposed)fail('unknown, moved or disposed actual HTTP binding: '+id);return row;};
  const newName=id=>{httpResourceCallerName(id);if(environment.has(id)||moduleNames.has(id))fail('unique actual resource local required');return id;};
@@ -22,7 +23,7 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
  function operand(node,wanted=null,{move=true}={}){
   tick();if(ts.isParenthesizedExpression(node))return operand(node.expression,wanted,{move});
   if(ts.isIdentifier(node)){
-   const row=binding(node.text),result=httpResourceResult(row.type);
+   const row=binding(node.text),result=httpResourceResult(row.type),option=httpResourceOption(row.type);
    if(wanted&&(isLoan(wanted)||wanted==='str')){
     const shared=wanted==='http-client-ref'&&row.type==='http-client-mut'||wanted==='http-stream-ref'&&row.type==='http-stream-mut';
     const exclusive=wanted==='http-client-mut'&&row.type==='http-client-owned'||wanted==='http-stream-mut'&&row.type==='http-stream-owned';
@@ -30,11 +31,12 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
     return {kind:'borrow',name:node.text,type:wanted,sourceType:row.type,owned:httpResourceOwned(row.type),root:row.root??null};
    }
    if(isLoan(row.type))fail('borrowed resources cannot be stored or escape this caller');
+   if(option){if(row.used)fail('whole Option payload already consumed');if(move){row.used=true;row.moved=true;}return {kind:'optional-variable',name:node.text,type:row.type,guarded:!!row.guarded,root:row.root??null};}
    if(result){if(row.used)fail('complete Result payload already consumed');if(move){row.used=true;row.moved=true;}return {kind:'result-variable',name:node.text,type:row.type,guarded:!!row.guarded,root:row.root??null};}
    if(httpResourceOwned(row.type)&&move){if([...environment].some(([id,loan])=>id!==node.text&&!loan.moved&&!loan.disposed&&loan.root===node.text))fail('owned value cannot move while an original borrowed view remains live');row.moved=true;}return {kind:'variable',name:node.text,type:row.type,root:row.root??null};
   }
   if(ts.isPropertyAccessExpression(node)&&node.name.text==='field0'&&ts.isIdentifier(node.expression)){
-   const row=binding(node.expression.text),result=httpResourceResult(row.type);if(!result||!row.guarded||row.used||result.value==='channel-pair')fail('actual guarded complete payload required');
+   const row=binding(node.expression.text),result=httpResourceResult(row.type)??httpResourceOption(row.type);if(!result||!row.guarded||row.used||result.value==='channel-pair')fail('actual guarded complete payload required');
    if(httpResourceOwned(result.value)||httpResourceResult(result.value)){row.used=true;row.moved=true;}return {kind:'payload',name:node.expression.text,type:result.value,root:row.root??null};
   }
   if(ts.isBigIntLiteral(node)){const raw=node.text.replace(/_/gu,'');if(!/^[0-9]+n$/u.test(raw)||BigInt(raw.slice(0,-1))>18446744073709551615n)fail('closed decimal u64 literal required');return {kind:'integer',value:BigInt(raw.slice(0,-1)).toString(),type:'u64'};}
@@ -91,6 +93,17 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
   for(const statement of rows.slice(0,-1)){if(!ts.isExpressionStatement(statement))fail('explicit resource release required before error return');const value=call(statement.expression);if(!value.release)fail('only actual resource release may precede error return');cleanup.push(value);}
   finish();environment.clear();for(const [key,row]of saved)environment.set(key,row);failures.push(httpResourceResult(type).error);return cleanup;
  }
+ function optionGuard(node,id,value){
+  if(!hasGuard(node,id)||node.elseStatement)fail('complete immediate same-Option absent guard required');const {right,operatorToken}=node.expression;
+  if(!ts.isStringLiteral(right)||!(operatorToken.kind===ts.SyntaxKind.EqualsEqualsEqualsToken&&right.text==='None'||operatorToken.kind===ts.SyntaxKind.ExclamationEqualsEqualsToken&&right.text==='Some'))fail('actual original absent Option tag required');
+  const rows=ts.isBlock(node.thenStatement)?node.thenStatement.statements:[node.thenStatement],last=rows.at(-1);let fallback,pass=false;
+  if(last&&ts.isReturnStatement(last)&&ts.isIdentifier(last.expression)&&last.expression.text===id){
+   const saved=new Map([...environment].map(([key,row])=>[key,{...row}])),cleanup=[];
+   for(const statement of rows.slice(0,-1)){if(!ts.isExpressionStatement(statement))fail('absent Option cleanup requires explicit releases');const effect=call(statement.expression);if(!effect.release)fail('only actual resource release may precede original None return');cleanup.push({kind:'effect',value:effect});}
+   finish();environment.clear();for(const [key,row]of saved)environment.set(key,row);pass=cleanup.length===0;fallback={steps:cleanup,tail:{kind:'value',value:{kind:'option-none',type:value.type}},type:value.type,lazy,captures:[],returnRoots:[]};
+  }else fallback=checkHttpResourceCallerFlow(ts,rows,[],imports,{lazy,allowColdTail:false,bindings:environment,moduleNames,budget,depth:depth+1});
+  alternatives.push({type:fallback.type,returnRoots:fallback.returnRoots});return {fallback,pass};
+ }
  for(let at=0;at<statements.length;at++){
   tick();const statement=statements[at];if(tail)fail('statement follows complete resource return');
   if(ts.isVariableStatement(statement)){
@@ -99,8 +112,8 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
     const input=declaration.initializer;if(!ts.isPropertyAccessExpression(input)||input.name.text!=='field0'||!ts.isIdentifier(input.expression))fail('original guarded channel pair split required');const row=binding(input.expression.text);if(row.type!=='result:channel-pair'||!row.guarded||row.used||declaration.name.elements.length!==2)fail('one complete guarded channel pair required');row.used=true;row.moved=true;
     const names=declaration.name.elements.map((element,index)=>{if(!ts.isBindingElement(element)||element.dotDotDotToken||element.propertyName||element.initializer||!ts.isIdentifier(element.name))fail('exact complete channel destructuring required');const id=newName(element.name.text);environment.set(id,{type:index?'receiver-owned':'sender-owned',moved:false,disposed:false});return id;});steps.push({kind:'channel-split',from:input.expression.text,names});continue;
    }
-   if(!ts.isIdentifier(declaration.name))fail('ordinary resource local required');const id=newName(declaration.name.text),value=expression(declaration.initializer),guarded=!!httpResourceResult(value.type)&&hasGuard(statements[at+1],id),cleanup=guarded?guard(statements[++at],id,value.type):[];
-   environment.set(id,{type:value.type,guarded,moved:false,disposed:false,used:false,root:value.root??null});steps.push({kind:'let',name:id,value,guarded,cleanup});continue;
+   if(!ts.isIdentifier(declaration.name))fail('ordinary resource local required');const id=newName(declaration.name.text),value=expression(declaration.initializer),carrier=httpResourceResult(value.type)??httpResourceOption(value.type),guarded=!!carrier&&hasGuard(statements[at+1],id),isOption=!!httpResourceOption(value.type);let cleanup=[],option=null;if(guarded){const next=statements[++at];if(isOption)option=optionGuard(next,id,value);else cleanup=guard(next,id,value.type);}
+   environment.set(id,{type:value.type,guarded,moved:false,disposed:false,used:false,root:value.root??null});steps.push({kind:'let',name:id,value,guarded,cleanup,option});continue;
   }
   if(ts.isExpressionStatement(statement)){const value=call(statement.expression);if(httpResourceResult(value.type)||httpResourceOwned(value.type))fail('owned values and Results cannot be discarded');steps.push({kind:'effect',value});continue;}
   if(ts.isIfStatement(statement)){
@@ -108,13 +121,14 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
   }
   if(at!==statements.length-1||!ts.isReturnStatement(statement)||!statement.expression)fail('complete terminal resource return required');const value=expression(statement.expression,{coldTail:allowColdTail});finish();tail={kind:value.kind==='http-resource-call'?'operation':'value',value};
  }
- if(!tail)fail('every resource path must return');const type=tail.kind==='branch'?tail.yes.type:tail.value.type,result=httpResourceResult(type);if(failures.some(error=>result?.error!==error))fail('propagated error families must agree with the complete return Result');const returnRoots=tail.kind==='branch'?[...new Set([...tail.yes.returnRoots,...tail.no.returnRoots])]:tail.value.root?[tail.value.root]:[];for(const id of returnRoots){const row=environment.get(id);if(!row?.input||!['json-ref','str'].includes(row.type))fail('returned loan must retain a public immutable source input root');}return {steps,tail,type,lazy,captures:[],returnRoots};
+ if(!tail)fail('every resource path must return');const type=tail.kind==='branch'?tail.yes.type:tail.value.type,result=httpResourceResult(type);if(failures.some(error=>result?.error!==error))fail('propagated error families must agree with the complete return Result');if(alternatives.some(row=>row.type!==type))fail('every absent Option exit must match the complete successful return domain');const primaryRoots=tail.kind==='branch'?[...tail.yes.returnRoots,...tail.no.returnRoots]:tail.value.root?[tail.value.root]:[],returnRoots=[...new Set([...primaryRoots,...alternatives.flatMap(row=>row.returnRoots)])];for(const id of returnRoots){const row=environment.get(id);if(!row?.input||!['json-ref','str'].includes(row.type))fail('returned loan must retain a public immutable source input root');}return {steps,tail,type,lazy,captures:[],returnRoots};
 }
 
 function rustString(value){return '"'+[...value].map(character=>character==='"'?'\\"':character==='\\'?'\\\\':character==='\n'?'\\n':character==='\r'?'\\r':character==='\t'?'\\t':character==='\0'?'\\0':character.codePointAt(0)<32||character.codePointAt(0)===127?'\\u{'+character.codePointAt(0).toString(16)+'}':character).join('')+'"';}
 export function emitHttpResourceCallerFlow(flow){
  function expression(value){
   if(value.kind==='variable'||value.kind==='payload')return value.name;
+  if(value.kind==='option-none')return 'None';if(value.kind==='optional-variable')return value.guarded?'Some('+value.name+')':value.name;
   if(value.kind==='result-variable')return value.guarded?'Ok('+value.name+')':value.name;
   if(value.kind==='temporary-json-borrow')return '&'+expression(value.value);
   if(value.kind==='borrow'){
@@ -139,6 +153,7 @@ export function emitHttpResourceCallerFlow(flow){
  const lines=flow.steps.map(row=>{
   if(row.kind==='channel-split')return 'let ('+row.names.map(id=>(mutable.has(id)?'mut ':'')+id).join(', ')+') = '+row.from+';';if(row.kind==='effect')return expression(row.value)+';';
   const cleanup=row.cleanup.map(value=>expression(value)+';').join(' '),value=expression(row.value);
+  if(row.option)return 'let '+(mutable.has(row.name)?'mut ':'')+row.name+' = '+(row.option.pass?value+'?':'match '+value+' { Some(__ro_http_some) => __ro_http_some, None => { return { '+emitHttpResourceCallerFlow(row.option.fallback)+' }; } }')+';';
   return 'let '+(mutable.has(row.name)?'mut ':'')+row.name+' = '+(row.guarded?(cleanup?'match '+value+' { Ok(__ro_http_value) => __ro_http_value, Err(__ro_http_error) => { '+cleanup+' return Err(__ro_http_error); } }':value+'?'):value)+';';
  });
  const tail=flow.tail;lines.push(tail.kind==='branch'?'if '+expression(tail.condition)+' { '+emitHttpResourceCallerFlow(tail.yes)+' } else { '+emitHttpResourceCallerFlow(tail.no)+' }':expression(tail.value));return lines.join('\n');

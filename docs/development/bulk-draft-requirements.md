@@ -108,6 +108,14 @@ oracle/refusal source are retained. Option guards, wider language/resource
 domains, namespace/bootstrap, production adoption and every unfinished
 requirement remain open.
 
+The [Option guard draft](http-resource-option-guards-draft.md) adds whole absent
+branches, every-exit resource cleanup, explicit fallback domains, Some payload
+moves, same-Option propagation and complete canonical native inverse rules.
+Full original sources/CST histories and independent unrun JS/strict TS/native
+oracle/refusal source are retained. General loops/callbacks, wider language and
+resource domains, namespace/bootstrap, production adoption and every unfinished
+requirement remain open.
+
 The [original-root HTTP text draft](http-resource-borrowed-text-draft.md) adds
 actual input-rooted borrowed protocol Results, local/branch root propagation,
 native lifetime emission and complete inverse reproduction. Complete original

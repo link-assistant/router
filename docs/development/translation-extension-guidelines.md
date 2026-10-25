@@ -270,6 +270,14 @@ refused until complete rules exist. See the
 [resource caller draft](http-resource-callers-draft.md). All new source and
 receiving cases remain unrun during bulk drafting.
 
+An Option tag guard must inspect the same original container, check its complete
+absent exit and release every live owned resource on that exit. Success payloads
+move once; fallback and success return domains and borrowed roots must join.
+Use native `?` only for actual unchanged same-Option propagation. Every other
+fallback needs its complete explicit match and fresh inverse reproduction.
+See the [Option guard draft](http-resource-option-guards-draft.md); all new
+source/native qualification remains unrun during bulk drafting.
+
 HTTP physical source units must capture complete native/Cargo and mirrored
 runtime inputs, retain the original Git conflict/atomic installation rules and
 freshly check all three authority directions. Paired annotations propose domains

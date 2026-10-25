@@ -101,3 +101,5 @@ integration and the remaining requirement ledger are still open.
 - Draft explicit by-value HTTP deadline Result adapters, all five control-error mappings, nested Result move/caller/inverse/unit rules, complete native root/runtime histories and independent unrun JS/strict TS/native/refusal source.
 
 - Draft shared text, callback-free primitive Result and JSON carrier composition in resource callers, explicit Option domains and local string-root loan tracking, with full original substitutions and independent unrun JS/strict TS/native/refusal source.
+
+- Draft complete Option guards in resource callers with absent-exit cleanup, explicit fallback domains, linear Some payloads, same-Option native propagation and full inverse/source histories; independent JS/strict TS/native/refusal source remains unrun.

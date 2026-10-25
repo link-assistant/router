@@ -2,6 +2,7 @@
 // freshly checks the entire JS proposal and reproduces every original Rust token.
 import {posix} from 'node:path';
 import {httpResourceCallerOperationNames,httpResourceCallerContract,httpResourceResult} from './http-resource-caller-contracts.mjs';
+import {httpResourceOption} from './http-resource-options.mjs';
 import {httpResourceCallerName} from './http-resource-caller-flow.mjs';
 import {emitAsyncControlU64Guards} from './async-control-u64-guards.mjs';
 import {UnsupportedOwnedRustSource} from './http-resource-rust-syntax.mjs';
@@ -26,7 +27,7 @@ export function projectHttpResourceRustFunctions(functions,{javascriptPath,runti
  function domain(node,locals,depth=0){
   tick(depth);node=borrowed(node,depth+1);if(node.kind==='name')return locals.get(node.name)?.type??null;if(['boolean','string','integer'].includes(node.kind))return {boolean:'bool',string:'str',integer:node.type}[node.kind];
   if(node.kind==='field'&&node.name==='await')return domain(node.value,locals,depth+1);if(node.kind==='effect-try')return httpResourceResult(domain(node.value,locals,depth+1))?.value??null;
-  if(node.kind==='call')return node.path==='Ok'&&node.args.length===1?null:operation(node.path).ret;if(['json-array','json-null','json-scalar'].includes(node.kind))return 'json';return null;
+  if(node.kind==='call'){if(['Ok','Some'].includes(node.path)&&node.args.length===1){const value=unwrap(node.args[0],depth+1);return value?.kind==='name'?locals.get(value.name)?.fullType??null:null;}return operation(node.path).ret;}if(['json-array','json-null','json-scalar'].includes(node.kind))return 'json';return null;
  }
  function expression(node,locals,asynchronous,depth=0){
   tick(depth);node=unwrap(node,depth+1);if(!node)fail('complete original HTTP expression required');
@@ -37,12 +38,17 @@ export function projectHttpResourceRustFunctions(functions,{javascriptPath,runti
   if(node.kind==='json-scalar'){const type=domain(node.value,locals,depth+1),form={str:'string',bool:'bool',u64:'u64'}[type];if(!form)fail('native JSON scalar needs an actual whole source scalar domain');return imported('json_macro_'+form)+'('+expression(node.value,locals,asynchronous,depth+1)+')';}
   if(node.kind==='not')return '(!'+expression(node.value,locals,asynchronous,depth+1)+')';if(node.kind==='binary'&&['&&','||'].includes(node.op))return '('+expression(node.left,locals,asynchronous,depth+1)+' '+node.op+' '+expression(node.right,locals,asynchronous,depth+1)+')';
   let awaited=false;if(node.kind==='field'&&node.name==='await'){awaited=true;node=unwrap(node.value,depth+1);}if(node.kind!=='call')fail('actual canonical HTTP operation required');
-  if(node.path==='Ok'){const value=unwrap(node.args[0],depth+1);if(awaited||node.args.length!==1||value?.kind!=='name'||!locals.get(value.name)?.guarded)fail('Ok must restore one actual guarded complete Result');return name(value.name);}
+  if(['Ok','Some'].includes(node.path)){const value=unwrap(node.args[0],depth+1),actual=value?.kind==='name'?locals.get(value.name):null;if(awaited||node.args.length!==1||!actual?.guarded||actual.carrier!==(node.path==='Ok'?'result':'option'))fail('canonical wrapper must restore its actual same guarded container');return name(value.name);}
   const row=operation(node.path);if(Boolean(row.async)!==awaited||awaited&&!asynchronous||node.args.length!==row.args.length||row.args.includes('deferred-callback'))fail('complete canonical operation/await/arity domain differs');
   return (awaited?'await ':'')+imported(row.javascriptName)+'('+node.args.map(argument=>expression(borrowed(argument,depth+1),locals,asynchronous,depth+1)).join(', ')+')';
  }
  function propagated(node,locals,asynchronous,depth){
-  tick(depth);node=unwrap(node,depth+1);if(node.kind==='effect-try')return {node:node.value,value:expression(node.value,locals,asynchronous,depth+1),cleanup:[]};if(node.kind!=='match'||node.arms.length!==2)return null;
+  tick(depth);node=unwrap(node,depth+1);if(node.kind==='effect-try')return {node:node.value,value:expression(node.value,locals,asynchronous,depth+1),cleanup:[],option:httpResourceOption(domain(node.value,locals,depth+1))?{same:true,cleanup:[]}:null};if(node.kind!=='match'||node.arms.length!==2)return null;
+  if(node.arms.some(row=>row.pattern==='Some(__ro_http_some)')){
+   const some=node.arms.find(row=>row.pattern==='Some(__ro_http_some)'),none=node.arms.find(row=>row.pattern==='None'),success=unwrap(some?.value,depth+1),failure=unwrap(none?.value,depth+1);if(!some||!none||success?.kind!=='name'||success.name!=='__ro_http_some'||failure?.kind!=='block'||failure.tail||failure.statements.length!==1||failure.statements[0].kind!=='return')fail('complete canonical absent Option return arm required');const returned=unwrap(failure.statements[0].value,depth+1);if(returned?.kind!=='block')fail('complete canonical Option fallback block required');let fallback;
+   if(returned.tail?.kind==='name'&&returned.tail.name==='None'){const cleanup=returned.statements.map(statement=>{const value=unwrap(statement.value,depth+1);if(statement.kind!=='effect'||value?.kind!=='call'||!operation(value.path).release)fail('canonical None cleanup requires actual resource release');return expression(value,locals,asynchronous,depth+1)+';';});fallback={same:true,cleanup};}
+   else fallback={same:false,body:returned};return {node:node.value,value:expression(node.value,locals,asynchronous,depth+1),cleanup:[],option:fallback};
+  }
   const ok=node.arms.find(row=>row.pattern==='Ok(__ro_http_value)'),err=node.arms.find(row=>row.pattern==='Err(__ro_http_error)');if(!ok||!err)fail('whole canonical HTTP cleanup arms required');const success=unwrap(ok.value,depth+1),failure=unwrap(err.value,depth+1);
   if(success?.kind!=='name'||success.name!=='__ro_http_value'||failure?.kind!=='block'||failure.tail||!failure.statements.length)fail('whole canonical HTTP success/error branch required');const last=failure.statements.at(-1),returned=unwrap(last.value,depth+1);
   if(last.kind!=='return'||returned?.kind!=='call'||returned.path!=='Err'||returned.args.length!==1||unwrap(returned.args[0],depth+1)?.name!=='__ro_http_error')fail('cleanup must return the actual whole original error');
@@ -54,7 +60,7 @@ export function projectHttpResourceRustFunctions(functions,{javascriptPath,runti
    const statement=block.statements[index];tick(depth+1);if(terminal)fail('statement after complete canonical HTTP return');
    if(statement.kind==='let'){
     const id=name(statement.name);if(locals.has(id))fail('ordinary nonshadowed canonical local required');const value=propagated(statement.value,locals,asynchronous,depth+1);
-    if(value){const type=httpResourceResult(domain(value.node,locals,depth+1))?.value;if(!type)fail('canonical propagation requires an actual whole Result');lines.push('const '+id+' = '+value.value+';','if ('+id+'.$ === "Err") { '+value.cleanup.join(' ')+' return '+id+'; }');locals.set(id,{guarded:true,type});}
+    if(value){const fullType=domain(value.node,locals,depth+1),carrier=value.option?httpResourceOption(fullType):httpResourceResult(fullType),type=carrier?.value;if(!type)fail('canonical propagation requires an actual whole container');const fallback=value.option?(value.option.same?'{ '+value.option.cleanup.join(' ')+' return '+id+'; }':body(value.option.body,locals,asynchronous,depth+1)):'{ '+value.cleanup.join(' ')+' return '+id+'; }';lines.push('const '+id+' = '+value.value+';','if ('+id+'.$ === '+JSON.stringify(value.option?'None':'Err')+') '+fallback);locals.set(id,{guarded:true,carrier:value.option?'option':'result',type,fullType});}
     else{const type=domain(statement.value,locals,depth+1);lines.push('const '+id+' = '+expression(statement.value,locals,asynchronous,depth+1)+';');locals.set(id,{guarded:false,type});}continue;
    }
    if(statement.kind==='let-tuple'){const value=unwrap(statement.value,depth+1);if(statement.bindings.length!==2||value?.kind!=='name'||!locals.get(value.name)?.guarded||locals.get(value.name).type!=='channel-pair')fail('complete guarded channel pair required');const names=statement.bindings.map(row=>name(row.name));lines.push('const ['+names.join(', ')+'] = '+name(value.name)+'.field0;');names.forEach((id,index)=>locals.set(id,{guarded:false,type:index?'receiver-owned':'sender-owned'}));continue;}
