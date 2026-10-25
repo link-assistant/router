@@ -15,8 +15,8 @@ export function httpResourceLocalContracts(rows){
    const parameter=row.parameters[index];if(!['receiver-mut','http-client-mut','http-stream-mut'].includes(parameter.type))continue;const states=exits.map(exit=>{if(++cells>200000)throw new TypeError('Complete helper resource exit bound');const actual=exit.filter(state=>state.name===parameter.name);if(actual.length!==1||typeof actual[0].disposed!=='boolean')throw new TypeError('Every original helper resource exit must be complete');return actual[0].disposed;});
    if(states.every(Boolean))releasedArguments.push(index);else if(states.some(Boolean))partial=true;
   }
-  const roots=row.flow.returnRoots,rootArgument=roots.length===1?row.parameters.findIndex(parameter=>parameter.name===roots[0]):null;
-  contracts.set(row.name,{javascriptName:row.name,rustPath:row.name,args:row.parameters.map(parameter=>parameter.type),ret:row.returns,async:row.lazy,local:true,borrowedResult:roots.length===1,rootArgument,release:null,releasedArguments,localRefusal:partial?'partial helper input release requires an outcome-sensitive source state join':roots.length>1?'multiple borrowed helper roots require a complete interprocedural loan join':null,sourceAuthority:false,semanticAuthority:false});
+  const roots=row.flow.returnRoots,rootArguments=roots.map(root=>{const index=row.parameters.findIndex(parameter=>parameter.name===root);if(index<0)throw new TypeError('Every helper returned root must retain its actual input');return index;}),rootArgument=rootArguments.length===1?rootArguments[0]:null;
+  contracts.set(row.name,{javascriptName:row.name,rustPath:row.name,args:row.parameters.map(parameter=>parameter.type),ret:row.returns,async:row.lazy,local:true,borrowedResult:roots.length>0,rootArgument,rootArguments,release:null,releasedArguments,localRefusal:partial?'partial helper input release requires an outcome-sensitive source state join':null,sourceAuthority:false,semanticAuthority:false});
  }
  return contracts;
 }

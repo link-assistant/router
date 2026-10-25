@@ -287,6 +287,14 @@ signature DATA cannot waive them. See the
 [local helper draft](http-resource-local-functions-draft.md); all new receiving
 and native qualification remains unrun during bulk drafting.
 
+Returned helper loans must retain every possible actual argument root through
+branches and nested Result/Option values. Protect every backing local owner
+from moves and refuse any borrowed return that may outlive one. Static literal
+roots need no local owner; source choices cannot narrow a root set without a
+separate complete proof. See the
+[returned-root set draft](http-resource-root-sets-draft.md); all new source and
+native qualification remains unrun during bulk drafting.
+
 Helper resource release summaries must join actual mutable-input state at every
 original exit. Mark a caller argument disposed only when all checked exits
 release that same exclusive input; partial releases need outcome-sensitive

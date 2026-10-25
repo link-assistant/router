@@ -124,6 +124,14 @@ retained. Partial outcome-sensitive releases, multiple roots, recursion,
 generics/methods, wider language/resource domains, namespace/bootstrap,
 production adoption and every unfinished requirement remain open.
 
+The [returned-root set draft](http-resource-root-sets-draft.md) joins every actual
+helper argument root through values, Result/Option conversions and branches,
+retains native shared lifetimes and protects all possible local owners. Full
+original source histories and independent unrun JS/strict TS/native oracle/
+refusal source are retained. Partial release, recursion/generics/methods, wider
+language/resource domains, namespace/bootstrap, production adoption and every
+unfinished requirement remain open.
+
 The [Option guard draft](http-resource-option-guards-draft.md) adds whole absent
 branches, every-exit resource cleanup, explicit fallback domains, Some payload
 moves, same-Option propagation and complete canonical native inverse rules.

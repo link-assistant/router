@@ -2,6 +2,7 @@
 // checking in the caller adapter; this module issues no standalone source permit.
 import {httpResourceCallerContract as actualHttpResourceContract,httpResourceCallerRustType as actualHttpResourceRustType,httpResourceOwned,httpResourceBorrowRole,httpResourceNeedsDisposal,httpResourceResult,httpResourceResultOwnsDisposal} from './http-resource-caller-contracts.mjs';
 import {httpResourceOption} from './http-resource-options.mjs';
+import {httpResourceValueRoots} from './http-resource-root-sets.mjs';
 const fail=message=>{throw new TypeError('Async control caller: '+message);};
 const roles=Object.freeze({'shared-cancellation':'cancel-ref','shared-sender':'sender-ref','exclusive-receiver':'receiver-mut'});
 const outputs=Object.freeze({cancellation:'cancel-owned',sender:'sender-owned','control-channel-result':'result:channel-pair','control-unit-result':'result:unit','control-optional-text-result':'result:option-text'});
@@ -14,7 +15,7 @@ export function httpResourceCallerContract(name){return actualHttpResourceContra
 export function httpResourceCallerRustType(type,options){return actualHttpResourceRustType(type,options);}
 export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{lazy=false,allowColdTail=false,bindings=null,moduleNames=new Set(),budget={cells:0},depth=0,localFunctions=null}={}){
  if(depth>64||!statements.length||statements.length>4096)fail('bounded complete HTTP resource flow required');
- const environment=bindings?new Map([...bindings].map(([key,row])=>[key,{...row}])):new Map(parameters.map(row=>[row.name,{type:row.type,input:true,moved:false,disposed:false,root:row.type==='str'?row.name:null}])),steps=[],failures=[],alternatives=[],resourceExits=[];let tail=null;
+ const environment=bindings?new Map([...bindings].map(([key,row])=>[key,{...row}])):new Map(parameters.map(row=>[row.name,{type:row.type,input:true,moved:false,disposed:false,root:row.type==='str'?row.name:null,roots:row.type==='str'?[row.name]:[]}])),steps=[],failures=[],alternatives=[],resourceExits=[];let tail=null;
  const tick=()=>{if(++budget.cells>100000)fail('complete HTTP resource source-cell budget');};
  const binding=id=>{const row=environment.get(id);if(!row||row.moved||row.disposed)fail('unknown, moved or disposed actual HTTP binding: '+id);return row;};
  const newName=id=>{httpResourceCallerName(id);if(environment.has(id)||moduleNames.has(id))fail('unique actual resource local required');return id;};
@@ -28,16 +29,16 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
     const shared=wanted==='http-client-ref'&&row.type==='http-client-mut'||wanted==='http-stream-ref'&&row.type==='http-stream-mut';
     const exclusive=wanted==='http-client-mut'&&row.type==='http-client-owned'||wanted==='http-stream-mut'&&row.type==='http-stream-owned';
     if(httpResourceBorrowRole(row.type)!==wanted&&!shared&&!exclusive)fail('actual input loan role differs');
-    return {kind:'borrow',name:node.text,type:wanted,sourceType:row.type,owned:httpResourceOwned(row.type),root:row.root??null};
+    return {kind:'borrow',name:node.text,type:wanted,sourceType:row.type,owned:httpResourceOwned(row.type),root:row.root??null,roots:httpResourceValueRoots(row)};
    }
    if(isLoan(row.type))fail('borrowed resources cannot be stored or escape this caller');
-   if(option){if(row.used)fail('whole Option payload already consumed');if(move){row.used=true;row.moved=true;}return {kind:'optional-variable',name:node.text,type:row.type,guarded:!!row.guarded,root:row.root??null};}
-   if(result){if(row.used)fail('complete Result payload already consumed');if(move){row.used=true;row.moved=true;}return {kind:'result-variable',name:node.text,type:row.type,guarded:!!row.guarded,root:row.root??null};}
-   if(httpResourceOwned(row.type)&&move){if([...environment].some(([id,loan])=>id!==node.text&&!loan.moved&&!loan.disposed&&loan.root===node.text))fail('owned value cannot move while an original borrowed view remains live');row.moved=true;}return {kind:'variable',name:node.text,type:row.type,root:row.root??null};
+   if(option){if(row.used)fail('whole Option payload already consumed');if(move){row.used=true;row.moved=true;}return {kind:'optional-variable',name:node.text,type:row.type,guarded:!!row.guarded,root:row.root??null,roots:httpResourceValueRoots(row)};}
+   if(result){if(row.used)fail('complete Result payload already consumed');if(move){row.used=true;row.moved=true;}return {kind:'result-variable',name:node.text,type:row.type,guarded:!!row.guarded,root:row.root??null,roots:httpResourceValueRoots(row)};}
+   if(httpResourceOwned(row.type)&&move){if([...environment].some(([id,loan])=>id!==node.text&&!loan.moved&&!loan.disposed&&httpResourceValueRoots(loan).includes(node.text)))fail('owned value cannot move while an original borrowed view remains live');row.moved=true;}return {kind:'variable',name:node.text,type:row.type,root:row.root??null,roots:httpResourceValueRoots(row)};
   }
   if(ts.isPropertyAccessExpression(node)&&node.name.text==='field0'&&ts.isIdentifier(node.expression)){
    const row=binding(node.expression.text),result=httpResourceResult(row.type)??httpResourceOption(row.type);if(!result||!row.guarded||row.used||result.value==='channel-pair')fail('actual guarded complete payload required');
-   if(httpResourceOwned(result.value)||httpResourceResult(result.value)){row.used=true;row.moved=true;}return {kind:'payload',name:node.expression.text,type:result.value,root:row.root??null};
+   if(httpResourceOwned(result.value)||httpResourceResult(result.value)){row.used=true;row.moved=true;}return {kind:'payload',name:node.expression.text,type:result.value,root:row.root??null,roots:httpResourceValueRoots(row)};
   }
   if(ts.isBigIntLiteral(node)){const raw=node.text.replace(/_/gu,'');if(!/^[0-9]+n$/u.test(raw)||BigInt(raw.slice(0,-1))>18446744073709551615n)fail('closed decimal u64 literal required');return {kind:'integer',value:BigInt(raw.slice(0,-1)).toString(),type:'u64'};}
   if(ts.isStringLiteral(node)){if(/\p{Surrogate}/u.test(node.text))fail('well-formed scalar text required');return {kind:'string',value:node.text,type:'str'};}
@@ -64,16 +65,18 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
    }
    args.push(value);
   }
-  let root=null;if(operation.borrowedResult){
-   const argument=args[operation.rootArgument],actual=argument?.kind==='borrow'?environment.get(argument.name):null;
-   if(argument?.root)root=argument.root;
-   else if(argument?.kind==='string')root=null;
-   else if(actual?.input&&actual.type==='json-ref'&&argument.type==='json-ref')root=argument.name;
-   else if(actual?.type==='text-owned'&&argument.type==='str')root=argument.name;
-   else fail('borrowed output must retain its actual string or public immutable JSON root');
-   if(root){const owner=environment.get(root);if(!owner||owner.moved||owner.disposed||!['str','text-owned','json-ref'].includes(owner.type))fail('actual borrowed output owner is unavailable');}
-  }
-  httpResourceCallerRustType(operation.ret);const value={kind:'http-resource-call',operation:operation.javascriptName,args,type:operation.ret,awaited:Boolean(awaited||implicitAwait),implicitAwait,root,local:!!operation.local};
+  const returnedRoots=new Set();if(operation.borrowedResult){
+   const indices=operation.rootArguments??[operation.rootArgument];for(const index of indices){
+    const argument=args[index],actual=argument?.kind==='borrow'?environment.get(argument.name):null,roots=argument?httpResourceValueRoots(argument):[];
+    if(roots.length)for(const root of roots)returnedRoots.add(root);
+    else if(argument?.kind==='string')continue;
+    else if(actual?.input&&actual.type==='json-ref'&&argument.type==='json-ref')returnedRoots.add(argument.name);
+    else if(actual?.type==='text-owned'&&argument.type==='str')returnedRoots.add(argument.name);
+    else fail('borrowed output must retain every actual string or public immutable JSON root');
+   }
+   for(const root of returnedRoots){const owner=environment.get(root);if(!owner||owner.moved||owner.disposed||!['str','text-owned','json-ref'].includes(owner.type))fail('actual borrowed output owner is unavailable');}
+  }const roots=[...returnedRoots],root=roots[0]??null;
+  httpResourceCallerRustType(operation.ret);const value={kind:'http-resource-call',operation:operation.javascriptName,args,type:operation.ret,awaited:Boolean(awaited||implicitAwait),implicitAwait,root,roots,local:!!operation.local};
   if(operation.release){if(args.length!==1||args[0].kind!=='borrow')fail('release must bind one actual resource');const row=binding(args[0].name);row.disposed=true;value.release=operation.release;}
   if(operation.releasedArguments?.length){for(const index of operation.releasedArguments){const argument=args[index];if(argument?.kind!=='borrow'||!['receiver-mut','http-client-mut','http-stream-mut'].includes(argument.type))fail('proven helper release must bind its actual exclusive resource input');binding(argument.name).disposed=true;}value.releasedArguments=[...operation.releasedArguments];if(operation.ret==='unit')value.release='local-proven-release';}
   return value;
@@ -114,7 +117,7 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
     const names=declaration.name.elements.map((element,index)=>{if(!ts.isBindingElement(element)||element.dotDotDotToken||element.propertyName||element.initializer||!ts.isIdentifier(element.name))fail('exact complete channel destructuring required');const id=newName(element.name.text);environment.set(id,{type:index?'receiver-owned':'sender-owned',moved:false,disposed:false});return id;});steps.push({kind:'channel-split',from:input.expression.text,names});continue;
    }
    if(!ts.isIdentifier(declaration.name))fail('ordinary resource local required');const id=newName(declaration.name.text),value=expression(declaration.initializer),carrier=httpResourceResult(value.type)??httpResourceOption(value.type),guarded=!!carrier&&hasGuard(statements[at+1],id),isOption=!!httpResourceOption(value.type);let cleanup=[],option=null;if(guarded){const next=statements[++at];if(isOption)option=optionGuard(next,id,value);else cleanup=guard(next,id,value.type);}
-   environment.set(id,{type:value.type,guarded,moved:false,disposed:false,used:false,root:value.root??null});steps.push({kind:'let',name:id,value,guarded,cleanup,option});continue;
+   environment.set(id,{type:value.type,guarded,moved:false,disposed:false,used:false,root:value.root??null,roots:httpResourceValueRoots(value)});steps.push({kind:'let',name:id,value,guarded,cleanup,option});continue;
   }
   if(ts.isExpressionStatement(statement)){const value=call(statement.expression);if(httpResourceResult(value.type)||httpResourceOwned(value.type))fail('owned values and Results cannot be discarded');steps.push({kind:'effect',value});continue;}
   if(ts.isIfStatement(statement)){
@@ -122,7 +125,7 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
   }
   if(at!==statements.length-1||!ts.isReturnStatement(statement)||!statement.expression)fail('complete terminal resource return required');const value=expression(statement.expression,{coldTail:allowColdTail});finish();tail={kind:value.kind==='http-resource-call'?'operation':'value',value};
  }
- if(!tail)fail('every resource path must return');const type=tail.kind==='branch'?tail.yes.type:tail.value.type,result=httpResourceResult(type);if(failures.some(error=>result?.error!==error))fail('propagated error families must agree with the complete return Result');if(alternatives.some(row=>row.type!==type))fail('every absent Option exit must match the complete successful return domain');const primaryRoots=tail.kind==='branch'?[...tail.yes.returnRoots,...tail.no.returnRoots]:tail.value.root?[tail.value.root]:[],returnRoots=[...new Set([...primaryRoots,...alternatives.flatMap(row=>row.returnRoots)])];for(const id of returnRoots){const row=environment.get(id);if(!row?.input||!['json-ref','str'].includes(row.type))fail('returned loan must retain a public immutable source input root');}if(!resourceExits.length)fail('every complete resource flow needs its actual exit states');return {steps,tail,type,lazy,captures:[],returnRoots,resourceExits};
+ if(!tail)fail('every resource path must return');const type=tail.kind==='branch'?tail.yes.type:tail.value.type,result=httpResourceResult(type);if(failures.some(error=>result?.error!==error))fail('propagated error families must agree with the complete return Result');if(alternatives.some(row=>row.type!==type))fail('every absent Option exit must match the complete successful return domain');const primaryRoots=tail.kind==='branch'?[...tail.yes.returnRoots,...tail.no.returnRoots]:httpResourceValueRoots(tail.value),returnRoots=[...new Set([...primaryRoots,...alternatives.flatMap(row=>row.returnRoots)])];for(const id of returnRoots){const row=environment.get(id);if(!row?.input||!['json-ref','str'].includes(row.type))fail('returned loan must retain a public immutable source input root');}if(!resourceExits.length)fail('every complete resource flow needs its actual exit states');return {steps,tail,type,lazy,captures:[],returnRoots,resourceExits};
 }
 
 function rustString(value){return '"'+[...value].map(character=>character==='"'?'\\"':character==='\\'?'\\\\':character==='\n'?'\\n':character==='\r'?'\\r':character==='\t'?'\\t':character==='\0'?'\\0':character.codePointAt(0)<32||character.codePointAt(0)===127?'\\u{'+character.codePointAt(0).toString(16)+'}':character).join('')+'"';}

@@ -107,3 +107,5 @@ integration and the remaining requirement ledger are still open.
 - Draft whole local helper composition, original call graph/order, cold future and returned-root flow, separate imported/local bindings and canonical complete native inverse proposals with full source histories and independent unrun receiving/native/refusal source.
 
 - Draft complete local helper input-release exit summaries, actual caller disposition and cleanup inverse rules with complete original source histories and independent unrun JS/strict TS/native/refusal source.
+
+- Draft complete multiple-input returned-root sets across helper calls, local views and Result/Option conversions, all-owner move/escape protection and full original source histories with independent unrun receiving/native/refusal source.
