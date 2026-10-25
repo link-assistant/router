@@ -492,7 +492,7 @@ function resolveRegisteredBuiltinEnclosingSourceBindings({modules,externalModule
   if(deriveBangContext){if(!isDeriveEnclosingNamespaceContext(deriveBangContext))throw new TypeError('Unsealed derive bang output context');modules=deriveEnclosingNamespaceModules(deriveBangContext,{deriveContext,modules,externalModules,compilationProfile:profileInput});}
   if(toolContext&&!isToolAttributeContext(toolContext))throw new TypeError('Unsealed tool attribute context');
   if(registeredAttributes)modules=modules.map(module=>{const all=originalSourceModuleItems(module);return {...module,items:all,allItems:all};});
-  const registered=registeredAttributes?createOriginalRegisteredBuiltinCallerAttributeScope():null,profile=compilationProfile(profileInput);
+  const registered=registeredAttributes?(configuredVariants?createTokenBoundRegisteredBuiltinCallerAttributeScope():createOriginalRegisteredBuiltinCallerAttributeScope()):null,profile=compilationProfile(profileInput);
   let enumNamespacePlan=null;
   const scopes=new Map(),containers=new Map(),tasks=[],macroUses=[],diagnostics=[];
   const diagnostic=(scope,message,span,extra={})=>{const value={kind:'module-binding',message,source:scope.file,module:[...scope.path],span,...extra};diagnostics.push(value);return value;};
@@ -628,7 +628,7 @@ function resolveRegisteredBuiltinEnclosingSourceBindings({modules,externalModule
             const variantConfiguration=configuredVariants?itemConfiguration(variant,profile):null;if(variantConfiguration?.status==='inactive')continue;
             const variantHead=header(variant,scope.path),token=variant[variantHead.at];
             if(!identifier(token))throw new Error('enum variant namespace needs source expansion');
-            const variantUncertain=uncertainty(configuredVariants?variantHead.attributes.filter(attribute=>!isInertConditionalAttribute(variantConfiguration.attributes.find(original=>original.span.start===attribute.span.start))&&!(attribute.name==='cfg'&&variantConfiguration.attributes.find(original=>original.span.start===attribute.span.start)?.evaluation?.value===true)):variantHead.attributes),variantItem={...item,term:'variant',start:token.start,end:variant.at(-1).end},variantExtra=uncertain.type || uncertain.conditional || variantUncertain.type || variantUncertain.conditional?{status:'unresolved',target:null}:{};
+            const variantUncertain=uncertainty(configuredVariants?variantHead.attributes.filter(attribute=>!isInertConditionalAttribute(variantConfiguration.attributes.find(original=>original.span.start===attribute.span.start))&&!(attribute.name==='cfg'&&variantConfiguration.attributes.find(original=>original.span.start===attribute.span.start)?.evaluation?.value===true)&&!(registered&&registered.at(module,item,attribute))):variantHead.attributes),variantItem={...item,term:'variant',start:token.start,end:variant.at(-1).end},variantExtra=uncertain.type || uncertain.conditional || variantUncertain.type || variantUncertain.conditional?{status:'unresolved',target:null}:{};
             enumScope.baseType ||= variantUncertain.type;enumScope.baseMacro ||= variantUncertain.macro;enumScope.baseBang ||= variantUncertain.bang;enumScope.baseAttribute ||= variantUncertain.attribute;
             add(enumScope,variantItem,token.text,'type',head.visibility,variantExtra);
             if(variant[variantHead.at+1]?.text!=='{')add(enumScope,variantItem,token.text,'value',head.visibility,variantExtra);
@@ -780,7 +780,7 @@ function resolveRegisteredBuiltinEnclosingSourceBindings({modules,externalModule
 export function resolveEnclosingNamespaceModuleBindings(options={}){return resolveRegisteredBuiltinEnclosingSourceBindings(options,false);}
 export function resolveRegisteredBuiltinEnclosingNamespaceModuleBindings(options={}){return resolveRegisteredBuiltinEnclosingSourceBindings(options,true);}
 
-import {createOriginalRegisteredBuiltinCallerAttributeScope} from './registered-builtin-caller-attribute-source.mjs';
+import {createOriginalRegisteredBuiltinCallerAttributeScope,createTokenBoundRegisteredBuiltinCallerAttributeScope} from './registered-builtin-caller-attribute-source.mjs';
 
 // Explicit configured-variant successor; old public resolver domains remain.
 export function resolveConfiguredVariantEnclosingNamespaceModuleBindings(options={}){return resolveRegisteredBuiltinEnclosingSourceBindings(options,true,true);}

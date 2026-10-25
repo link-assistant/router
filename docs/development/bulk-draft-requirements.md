@@ -101,6 +101,14 @@ existing unit/effect/ownership/disposal path. Three complete originals, both
 phases and independent target/native/literal/source/refusal and oracle cases
 remain unrun. Wider drop behavior and every unfinished requirement remain open.
 
+The [original builtin variant token draft](token-bound-variant-attributes-draft.md)
+joins actual nested stability attribute ranges to the existing complete source
+closure through a separate copied frame with exact original token boundaries.
+String contents, unknown attributes and live shadows retain refusals. Three
+complete originals, both phases and independent token/source/variant/tool and
+native string oracle cases remain unrun. Every unfinished requirement remains
+open.
+
 The [guarded async numeric draft](async-control-u64-draft.md) now qualifies
 actual dominating original u64 entry guards, native count parameters, canonical
 Rust inverse guards and fresh paired numeric signatures. Complete originals,
