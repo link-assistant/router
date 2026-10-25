@@ -6,7 +6,7 @@ import {httpResourceCallerName} from './http-resource-caller-flow.mjs';
 import {transportConcreteSyntaxSource,serializeConcreteSyntaxMeta,transportConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from '../concrete-syntax-meta.mjs';
 import {transportConcreteSourceEquations} from '../concrete-source-equations.mjs';
 const fail=message=>{throw new TypeError('Original native lexical bindings: '+message);};
-const nonBindings=new Set('_ as async await break const continue crate dyn else enum extern false fn for if impl in let loop match mod move mut pub ref return self Self static struct super trait true type unsafe use where while abstract become box do final gen macro override priv typeof unsized virtual yield try'.split(' '));
+const nonBindings=new Set('_ Some None Ok Err Box as async await break const continue crate dyn else enum extern false fn for if impl in let loop match mod move mut pub ref return self Self static struct super trait true type unsafe use where while abstract become box do final gen macro override priv typeof unsized virtual yield try'.split(' '));
 export function normalizeHttpResourceRustBindings(source){
  if(typeof source!=='string'||source.length>2097152)fail('bounded complete original native source required');
  const concrete=transportConcreteSyntaxSource(source,{language:'Rust'});if(transportConcreteSyntaxMeta(concrete.meta).source!==source)fail('original serialized and reparsed CST differs');
@@ -56,6 +56,12 @@ export function normalizeHttpResourceRustBindings(source){
   tick(depth);if(node?.kind!=='block'||!Array.isArray(node.statements)||node.statements.length>4096)fail('complete bounded original block required');const scope=new Map(outer);
   for(let index=0;index<node.statements.length;index++){
    const statement=node.statements[index],tailPosition=returnsHere&&index===node.statements.length-1&&!node.tail;tick(depth+1);
+   if(statement.kind==='let-option-else'){
+    if(statement.mutable)fail('mutable extracted Option payload requires a separate checked local-mutation rule');
+    if(scope.has('Some')||scope.has('None')||moduleNames.has('Some')||moduleNames.has('None'))fail('original Option constructor namespace is shadowed');
+    const fallback=statement.otherwise;if(fallback.tail||fallback.statements.length!==1||fallback.statements[0].kind!=='return'||fallback.statements[0].value?.kind!=='name'||fallback.statements[0].value.name!=='None')fail('one actual original None return with no other fallback effect required');
+    value(item,statement.value,scope,depth+1);spanEdit(item,statement.constructorSpan,'Some','','option-constructor');spanEdit(item,statement.openSpan,'(','','option-pattern-open');spanEdit(item,statement.closeSpan,')','','option-pattern-close');const span=statement.alternativeSpan;if(!span||span.start<statement.closeSpan.end||span.end>item.end-item.start)fail('complete original let-else alternative span required');const selected=[item.start+span.start,item.start+span.end];edits.push({span:selected,expected:source.slice(...selected),replacement:'?;'});selections.push({kind:'option-none-alternative',span:selected,source:source.slice(...selected),replacement:'?;'});declare(item,statement,scope,'let');continue;
+   }
    if(statement.kind==='let'){value(item,statement.value,scope,depth+1);declare(item,statement,scope,'let');continue;}
    if(statement.kind==='let-tuple'){value(item,statement.value,scope,depth+1);const names=new Set();for(const binding of statement.bindings){if(names.has(binding.name))fail('unique native tuple binders required');names.add(binding.name);declare(item,binding,scope,'tuple-let');}continue;}
    if(statement.kind==='assign'){const target=scope.get(statement.name);if(target===undefined)fail('assignment must select an actual original local');spanEdit(item,statement.nameSpan,statement.name,target,'assignment');value(item,statement.value,scope,depth+1);continue;}

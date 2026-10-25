@@ -679,3 +679,10 @@ keep their targets; whole-source/native checks remain mandatory. Three complete
 originals, both phases and independent branch/callback/generic/mutable/physical
 unit/refusal and native oracle source remain unrun. Wider control, namespace
 closure and every unfinished requirement remain open.
+
+The [native Option let-else draft](http-resource-native-option-patterns-draft.md)
+composes exact original Some/None fallback syntax, prior initializer scope and
+the existing checked propagation/move path. Prelude constructor patterns cannot
+be promoted into ordinary local bindings. Three complete originals, both phases
+and independent absent/range/text/source/refusal plus native drop oracle cases
+remain unrun. Wider patterns and every unfinished requirement remain open.

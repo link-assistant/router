@@ -66,3 +66,5 @@ mod native_bindings;
 mod native_local_types;
 #[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-native-control-oracle.rs"]
 mod native_control;
+#[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-native-option-patterns-oracle.rs"]
+mod native_option_patterns;
