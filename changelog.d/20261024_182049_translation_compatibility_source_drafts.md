@@ -146,3 +146,5 @@ integration and the remaining requirement ledger are still open.
 - Draft ordinary JavaScript return-doc obligations, actual original deferred generic type queries and complete native async return docs, with full source histories and independent unrun JS/strict TS/native lazy/value/source-refusal cases in existing gated CI discovery.
 
 - Draft original JS/TS do/while control, nearest-continue condition gates and canonical native inverses, with complete original histories and independent unrun execute-once, nested-loop, break/return and refusal source in gated CI discovery.
+
+- Draft complete conditional values in returns, locals and operation arguments with fresh arm ownership/resource joins, all borrowed roots and native expression inverses, retaining full original histories and independent unrun JS/strict TS/native/refusal source in gated CI discovery.

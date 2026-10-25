@@ -26,3 +26,5 @@ mod option_callbacks;
 mod cold_return_types;
 #[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-do-loops-oracle.rs"]
 mod do_loops;
+#[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-conditional-values-oracle.rs"]
+mod conditional_values;

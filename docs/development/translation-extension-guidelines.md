@@ -577,3 +577,10 @@ nested loops/callbacks, retain whole loop state/root obligations and recheck the
 complete ordinary native inverse. Keep semantic EOF edits in the language
 sequence at original coordinates. See the [post-test loop draft](http-resource-do-loops-draft.md);
 all new receiving and native cases remain unrun.
+
+Conditional value arms start from the same actual environment, join complete
+value/ownership/resource state and retain all possible borrowed roots. Keep
+selected-arm execution lazy in both targets and recheck the entire native
+projection; a type or root metadata field is not a permit. See the
+[conditional value draft](http-resource-conditional-values-draft.md); partial
+moves and all new receiving/native qualification remain open.

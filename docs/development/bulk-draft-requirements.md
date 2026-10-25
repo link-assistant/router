@@ -399,3 +399,11 @@ nested control isolation and complete canonical native inverses. Full originals
 and independent unrun JS/strict TS/native/refusal cases are retained; an
 eleventh oracle joins gated CI discovery. Wider loop/language domains,
 namespace/bootstrap, production parity and every unfinished requirement remain open.
+
+The [conditional value draft](http-resource-conditional-values-draft.md) adds
+whole actual ternary arms in returns/locals/arguments, identical incoming
+state/resource joins, all borrowed roots and complete native expression inverses.
+Full originals and independent unrun JS/strict TS/native/refusal cases are
+retained; a twelfth oracle joins gated CI discovery. Partial moves, broader
+language domains, namespace/bootstrap, production parity and every unfinished
+requirement remain open.
