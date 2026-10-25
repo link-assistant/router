@@ -868,3 +868,13 @@ complete source equations and independent JS/strict TS/native reconstruction,
 Option composition, root/source/meta/refusal cases are unrun. General loop
 outcomes, architecture/producer closure, wider effects/types, production adoption/
 parity and every unfinished requirement remain open.
+
+The [fresh owned packet adoption draft](owned-packet-adoption-draft.md)
+copies complete packet readback into a Git-bound source plan, composes an
+asynchronous complete original installer with fresh source/Git guards and rollback,
+and exposes a bounded cold CLI through canonical export and synchronization APIs.
+Every application replays all original proposers and complete packets; source-only
+receipts retain parity false and executable coverage null. Six complete source
+equations and independent actual-change, stale-plan, rollback, baseline and offline
+receiving cases are unrun. Actual production adoption, generation, architecture/
+producer closure, broader domains, parity and every unfinished requirement remain.

@@ -3,6 +3,17 @@
 These requirements supplement [CONTRIBUTING.md](../../CONTRIBUTING.md).
 The active source-only phase and all original gates remain mandatory.
 
+Bulk source packet installation must replay every original proposer and compare
+all complete physical packets, sources, graphs, CST and inverses before building
+its plan, then repeat that complete review when applying it. Preserve original
+Git/source guards, byte/worker bounds, atomic file replacements, rollback and
+external edits. Export the entire CLI/source dependency closure and qualify an
+offline receiving repository. Installation receipts retain runtime parity false
+and executable coverage gain null until independent whole application evidence
+exists. See the [unrun adoption draft](owned-packet-adoption-draft.md). During the
+active bulk draft phase, author the implementation and cases without running the
+planner, installer, CLI or validation.
+
 Generic derived outer-attribute source facts must retain the complete generated
 attribute definition/use suffix, actual method implementation owners, inherited
 predicate defaults, original ungated registration expansions and complete

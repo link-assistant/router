@@ -170,3 +170,16 @@ export function applyUnitRuntimeMaterialization(serialized,{root,manifestPath}={
 // Generic source transaction DATA APIs. The caller supplies its actual fresh
 // producer; these issue no compiler, semantic or runtime authority.
 export {installFreshUnitProposal as installFreshSourceProposal,source as readCurrentSourceProposalFile};
+
+// Separate complete asynchronous fresh-producer transaction. Legacy sync API stays intact.
+export async function installFreshAsyncSourceProposal(serialized,produce){
+ if(typeof serialized!=='string'||Buffer.byteLength(serialized)>LIMIT*3)fail('bounded serialized complete proposal required');const received=JSON.parse(serialized),fresh=await produce();if(JSON.stringify(received)!==JSON.stringify(fresh))fail('proposal differs from complete fresh source translation');
+ const changed=fresh.outputs.filter(row=>row.before!==row.after),written=[],installed=new Map(),originals=new Map();for(const row of fresh.inputs){if(originals.has(row.path)&&originals.get(row.path)!==row.source)fail('inconsistent original input snapshots');originals.set(row.path,row.source);}
+ const guardOriginals=()=>{if(git(fresh.root,['rev-parse','HEAD']).trim()!==fresh.baseRevision)fail('Git baseline changed during source installation');for(const [path,before]of originals)if(source(fresh.root,path)!==(installed.has(path)?installed.get(path):before))fail('original source changed during installation');};
+ guardOriginals();for(const row of fresh.outputs)if(source(fresh.root,row.path)!==row.before)fail('complete output set changed before installation');
+ try{
+  for(const row of changed){if(source(fresh.root,row.path)!==row.before)fail('target changed before installation');const full=physical(fresh.root,row.path);fs.mkdirSync(dirname(full),{recursive:true});const temporary=full+'.router-unit-'+randomUUID();try{fs.writeFileSync(temporary,row.after,{flag:'wx',mode:row.mode});if(row.before!==null)fs.chmodSync(temporary,row.mode);if(source(fresh.root,row.path)!==row.before)fail('target changed before atomic replacement');fs.renameSync(temporary,full);}finally{if(fs.existsSync(temporary))fs.unlinkSync(temporary);}written.push(row);installed.set(row.path,row.after);}
+  guardOriginals();for(const row of fresh.outputs)if(source(fresh.root,row.path)!==row.after)fail('complete target readback differs');
+ }catch(error){const rollback=[];for(const row of [...written].reverse())try{if(source(fresh.root,row.path)!==row.after){rollback.push(row.path+': external change retained');continue;}if(row.before===null)fs.unlinkSync(physical(fresh.root,row.path));else fs.writeFileSync(physical(fresh.root,row.path),row.before);}catch(caught){rollback.push(row.path+': '+caught.message);}error.rollbackFailures=rollback;throw error;}
+ return {schema:fresh.schema,baseRevision:fresh.baseRevision,changed:changed.map(row=>row.path),sourceAuthority:false,runtimeParity:false,rustExecuted:false};
+}

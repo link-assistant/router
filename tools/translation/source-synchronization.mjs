@@ -44,3 +44,5 @@ export {SOURCE_BOUND_OWNED_CORE_STAGES,proposeSourceBoundOwnedCoreStage,proposeS
 export {proposeSourceBoundOwnedCorePackets} from './propose-core-adoption-corpus.mjs';
 
 export {reviewSourceBoundOwnedCorePackets} from './source-bound-owned-packet-readback.mjs';
+
+export {planSourceBoundOwnedCorePacketAdoption,applySourceBoundOwnedCorePacketAdoption} from './source-bound-owned-packet-adoption.mjs';

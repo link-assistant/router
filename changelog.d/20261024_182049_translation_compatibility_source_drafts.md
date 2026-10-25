@@ -282,3 +282,10 @@ integration and the remaining requirement ledger are still open.
   preserving complete return-domain/root/resource joins and original native loop
   reconstruction. Retain three complete source equations and independent unrun
   JS/strict TS/native source, Option composition, borrowed-root and refusal cases.
+
+- Draft fresh bulk source packet adoption through a complete readback copy,
+  original asynchronous transaction copy, Git/source guards, atomic file
+  replacement, rollback and bounded cold CLI. Register complete canonical export
+  and synchronization APIs. Retain six complete source equations and independent
+  unrun actual-change, stale-plan, Git, rollback and offline receiving cases;
+  installation remains source-only and supplies no executable coverage result.

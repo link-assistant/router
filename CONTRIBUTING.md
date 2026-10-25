@@ -778,3 +778,9 @@ were moved intact to keep contribution files below 1,000 lines. During the
 active bulk draft phase, execute no tests, experiments or CI-triggering pushes;
 all original source checks, complete gates and fatal gated Rust CI remain
 required after every source requirement is drafted.
+
+Bulk source adoption follows the [fresh packet installation contract](docs/development/owned-packet-adoption-draft.md):
+replay complete original producers on plan and apply, retain original Git/source
+guards and rollback, and keep source installation separate from executable
+coverage and parity. The new CLI, installer and receiving cases remain unrun
+during the entire-requirement drafting phase.
