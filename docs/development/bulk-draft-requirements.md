@@ -213,6 +213,14 @@ TS/native value, ordering, identity, refusal and forged-meta source are retained
 General iterator protocols, async iteration, namespace/bootstrap, production
 parity and every unfinished requirement remain open.
 
+The [immediate read-only capture draft](http-resource-captures-draft.md) adds
+actual enclosing scalar/shared bindings, lexical parameter shadows, nested
+free-use summaries and complete native closure/source inverses. Full original
+histories and independent unrun JS/strict TS/native value, ordering, capture,
+refusal and forged-meta source are retained. Mutable/owned/async captures,
+generic signatures, namespace/bootstrap, production parity and every unfinished
+requirement remain open.
+
 The [local resource helper draft](http-resource-local-functions-draft.md) now
 checks actual callee bodies before callers, composes cold futures and single
 returned roots, preserves source order and separates imported/local binding

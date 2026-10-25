@@ -457,6 +457,14 @@ reproduction in the inverse; an iterator spelling cannot issue source or
 ownership authority. See the [shared iteration draft](http-resource-shared-iteration-draft.md).
 All new source and receiving qualification remains unrun during drafting.
 
+Qualify immediate callback captures from actual lexical bindings and complete
+checked child bodies. Keep captured cleanup ownership separate from callback
+locals; preserve all backing roots, moved/disposed state and parameter shadows.
+Nested free-use summaries must keep actual enclosing native parameter names.
+Never use a captured-data field as a saved owner or semantic verdict. See the
+[read-only capture draft](http-resource-captures-draft.md); all new qualification
+remains unrun during source drafting.
+
 Compose common operation families through their actual fully checked native and
 runtime sources, retaining callbacks/numeric domains with their original checker
 when unsupported. Option/Result containers move once. Local borrowed string

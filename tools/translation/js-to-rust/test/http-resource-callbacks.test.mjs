@@ -40,9 +40,9 @@ test('callback contracts are immutable DATA and fresh semantic source rejects fo
  const contract=httpResourceCallerContract('router_core_json_filter');assert.throws(()=>{contract.callbackContract.ret='json';},TypeError);assert.throws(()=>{contract.callbackContract.args[0]='u64';},TypeError);
  const result=translateHttpResourceCallerJavaScript(source,input(source)),meta=JSON.parse(result.meta);meta.functions.find(row=>row.name==='inlineSelected').flow.tail.value.args[1].flow.type='json';assert.throws(()=>readHttpResourceCallerMeta(JSON.stringify(meta),source,input(source)));
 });
-test('captures async callbacks wrong domains parameter annotations missing owned copies and standard constructor shadows refuse',limits,()=>{
+test('async callbacks wrong domains parameter annotations missing owned copies and standard constructor shadows refuse',limits,()=>{
  for(const body of [
-  '/** @param {Parameters<typeof copyValues>[0]} values @param {boolean} fallback */ export function bad(values,fallback){return filter(values,value=>fallback);}',
+
   '/** @param {Parameters<typeof copyValues>[0]} values */ export function bad(values){return filter(values,async value=>has(value,\'keep\'));}',
   '/** @param {Parameters<typeof copyValues>[0]} values */ export function bad(values){return map(values,value=>value);}',
   '/** @param {Parameters<typeof copyValues>[0]} values */ export function bad(values){return filter(values,value=>copy(value));}',
