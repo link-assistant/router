@@ -68,19 +68,19 @@ export function normalizeHttpResourceRustBindings(source){
   fail('this original expression needs an independent complete lexical binding rule: '+node.kind);
  }
  function block(item,node,outer,depth=0,returnsHere=false,unitTail=false){
-  tick(depth);if(node?.kind!=='block'||!Array.isArray(node.statements)||node.statements.length>4096)fail('complete bounded original block required');const scope=new Map(outer),addedUnit=unitTail&&!node.tail&&node.statements.at(-1)?.kind!=='return';if(addedUnit){const at=node.span?.end-1;if(!Number.isSafeInteger(at)||source[item.start+at]!=='}')fail('actual original unit body closing token required');insertControl(item,at,' () ',2,'unit-body-tail');}
+  tick(depth);if(node?.kind!=='block'||!Array.isArray(node.statements)||node.statements.length>4096)fail('complete bounded original block required');const scope=new Map(outer),omittedStatements=new Set();let omittedTail=false;const addedUnit=unitTail&&!node.tail&&node.statements.at(-1)?.kind!=='return';if(addedUnit){const at=node.span?.end-1;if(!Number.isSafeInteger(at)||source[item.start+at]!=='}')fail('actual original unit body closing token required');insertControl(item,at,' () ',2,'unit-body-tail');}
   for(let index=0;index<node.statements.length;index++){
-   const statement=node.statements[index],tailPosition=returnsHere&&!addedUnit&&index===node.statements.length-1&&!node.tail;tick(depth+1);
+   if(omittedStatements.has(index))continue;const statement=node.statements[index],tailPosition=returnsHere&&!addedUnit&&index===node.statements.length-1&&!node.tail;tick(depth+1);
    if(statement.kind==='discard-let'){value(item,statement.value,scope,depth+1);const literal=['boolean','integer','string','unit'].includes(statement.value.kind),span=literal?statement.statementSpan:statement.prefixSpan;if(!span||span.start<0||span.end>item.end-item.start||span.end<=span.start)fail('complete original discard statement boundary required');const selected=[item.start+span.start,item.start+span.end],expected=source.slice(...selected);edits.push({span:selected,expected,replacement:''});selections.push({kind:literal?'discarded-native-literal':'discarded-native-call-prefix',span:selected,source:expected,replacement:''});continue;}
    if(statement.kind==='if-option-let'){
     if(statement.mutable)fail('mutable extracted Option payload requires a separate checked local-mutation rule');
     if(scope.has('Some')||scope.has('None')||moduleNames.has('Some')||moduleNames.has('None'))fail('original Option constructor namespace is shadowed');
-    const fallback=statement.otherwise;if(fallback.tail||fallback.statements.length!==1||fallback.statements[0].kind!=='return'||fallback.statements[0].value?.kind!=='name'||fallback.statements[0].value.name!=='None')fail('one actual original None return with no other fallback effect required');
+    const implicit=selectHttpResourceImplicitNoneFallback(node,index);if(statement.otherwise===null&&!implicit)fail('a missing Option alternative requires one exact final None continuation and a returning success branch');const fallback=statement.otherwise??{tail:null,statements:[{kind:'return',value:{kind:'name',name:'None'}}]};if(fallback.tail||fallback.statements.length!==1||fallback.statements[0].kind!=='return'||fallback.statements[0].value?.kind!=='name'||fallback.statements[0].value.name!=='None')fail('one actual original None return with no other fallback effect required');
     value(item,statement.value,scope,depth+1);const inner=new Map(scope);declare(item,statement,inner,'let');
     spanEdit(item,statement.keywordSpan,'if','{','option-if-lexical-block');spanEdit(item,statement.constructorSpan,'Some','','option-if-constructor');spanEdit(item,statement.openSpan,'(','','option-if-pattern-open');spanEdit(item,statement.closeSpan,')','','option-if-pattern-close');
     const open=statement.yes.span?.start;if(!Number.isSafeInteger(open))fail('actual original Some branch opening required');spanEdit(item,{start:open,end:open+1},'{','?;','option-if-propagation');
-    const span=statement.alternativeSpan;if(!span||span.start<statement.yes.span.end||span.end>item.end-item.start)fail('complete original if-let fallback span required');const selected=[item.start+span.start,item.start+span.end],expected=source.slice(...selected);edits.push({span:selected,expected,replacement:''});selections.push({kind:'option-if-none-alternative',span:selected,source:expected,replacement:''});
-    block(item,statement.yes,inner,depth+1,tailPosition);continue;
+    const span=statement.alternativeSpan??implicit?.span;if(!span||span.start<statement.yes.span.end||span.end>item.end-item.start)fail('complete original if-let fallback span required');if(implicit){if(implicit.tail)omittedTail=true;else omittedStatements.add(implicit.index);}const selected=[item.start+span.start,item.start+span.end],expected=source.slice(...selected);edits.push({span:selected,expected,replacement:''});selections.push({kind:'option-if-none-alternative',span:selected,source:expected,replacement:''});
+    block(item,statement.yes,inner,depth+1,implicit?returnsHere:tailPosition);continue;
    }
    if(statement.kind==='let-option-else'){
     if(statement.mutable)fail('mutable extracted Option payload requires a separate checked local-mutation rule');
@@ -99,7 +99,7 @@ export function normalizeHttpResourceRustBindings(source){
    if(['break','continue'].includes(statement.kind))continue;
    fail('this original statement needs a complete lexical binding rule: '+statement.kind);
   }
-  if(node.tail)value(item,node.tail,scope,depth+1);
+  if(node.tail&&!omittedTail)value(item,node.tail,scope,depth+1);
  }
  for(const item of items){
   const reader=new HttpResourceBindingRustReader(rustTokens(source.slice(item.start,item.end))),fn=reader.function(),scope=new Map(),names=new Set();
@@ -112,4 +112,4 @@ export function normalizeHttpResourceRustBindings(source){
  return {schema:'router-http-resource-native-lexical-bindings-v1',before:source,after,edits,selections,annotations,controls,equation,trace:substituted.trace,sourceAuthority:false,semanticAuthority:false,namespaceAuthority:false,rustExecuted:false,receivingExecuted:false,crossInvocationCache:false};
 }
 
-import {selectHttpResourceGenericOptionIdentity} from './http-resource-generic-option-normalization.mjs';
+import {selectHttpResourceGenericOptionIdentity,selectHttpResourceImplicitNoneFallback} from './http-resource-generic-option-normalization.mjs';

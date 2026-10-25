@@ -43,8 +43,8 @@ export class HttpResourceBindingRustReader {
   this.tick(depth);
   if(this.eat('let')){
    const keyword=this.tokens[this.index-2],constructor=this.peek();this.expect('Some');this.expect('(');const open=this.tokens[this.index-1],mutable=this.eat('mut'),name=this.identifier(),nameSpan={start:this.lastIdentifier.start,end:this.lastIdentifier.end};this.expect(')');const close=this.tokens[this.index-1];this.expect('=');
-   const value=this.expression(environment,0,depth+1),yes=this.block(environment,depth+1),alternative=this.peek();this.expect('else');const otherwise=this.block(environment,depth+1);
-   return {kind:'if-option-let',name,nameSpan,mutable,value,yes,otherwise,keywordSpan:{start:keyword.start,end:keyword.end},constructorSpan:{start:constructor.start,end:constructor.end},openSpan:{start:open.start,end:open.end},closeSpan:{start:close.start,end:close.end},alternativeSpan:{start:alternative.start,end:otherwise.span.end},end:otherwise.span.end};
+   const value=this.expression(environment,0,depth+1),yes=this.block(environment,depth+1),alternative=this.peek(),otherwise=this.eat('else')?this.block(environment,depth+1):null;
+   return {kind:'if-option-let',name,nameSpan,mutable,value,yes,otherwise,keywordSpan:{start:keyword.start,end:keyword.end},constructorSpan:{start:constructor.start,end:constructor.end},openSpan:{start:open.start,end:open.end},closeSpan:{start:close.start,end:close.end},alternativeSpan:otherwise?{start:alternative.start,end:otherwise.span.end}:null,end:otherwise?.span.end??yes.span.end};
   }
   const condition=this.expression(environment,0,depth+1),yes=this.block(environment,depth+1);let no,missingElseAt=null,elseIf=null;
   if(this.eat('else')){if(this.eat('if')){const start=this.tokens[this.index-1].start,child=this.conditional(environment,depth+1);no={kind:'block',statements:[child],tail:null};elseIf={start,end:child.end,...(child.kind==='if-option-let'?{patternBlock:true}:{})};}else no=this.block(environment,depth+1);}else{no={kind:'block',statements:[],tail:null};missingElseAt=yes.span.end;}

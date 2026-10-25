@@ -850,3 +850,12 @@ source equations and independent precedence, generic forwarding, constructor,
 scope/source/literal/refusal cases are unrun. This drafts the preceding raw
 if-let grouping prerequisite; architecture/producer closure, wider language/
 effects, adoption/parity and every unfinished requirement remain open.
+
+The [implicit None continuation draft](http-resource-implicit-none-draft.md)
+supports actual no-else Option branches with a returning success arm and the
+exact final None continuation. Source-bound scope/return targets, complete CST
+inverses and genuine generic unchanged-payload headers remain. Four complete
+source equations and independent JS/strict TS/refusal/native drop source are
+unrun; resource oracle module 39 is drafted. Whole all-return-loop reconstruction,
+general fallthrough, architecture/producer closure, wider effects/types,
+production adoption/parity and every unfinished requirement remain open.

@@ -271,3 +271,9 @@ integration and the remaining requirement ledger are still open.
   lexical/control edits without weakening overlap checks, reject ungrouped native
   comparison chains and retain three complete source equations plus independent
   unrun truth-table, scope, constructor, generic, literal and refusal case source.
+
+- Draft original no-else Option branches with an exact final None continuation,
+  returning success arm, preserved lexical/return targets and precise generic
+  unchanged-payload composition. Retain four complete source equations and
+  independent unrun JS/strict TS/refusal/native drop source; resource oracle
+  module 39 is drafted. Whole all-return-loop reconstruction remains separate.
