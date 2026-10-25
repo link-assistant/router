@@ -205,6 +205,14 @@ histories and independent unrun JS/strict TS, repeated-round-trip and refusal
 cases are retained. Generic/owned/future signatures, namespace/bootstrap,
 production parity and every unfinished requirement remain open.
 
+The [shared JSON slice iteration draft](http-resource-shared-iteration-draft.md)
+adds actual const-element loops, shared and owned list loans, nearest-loop and
+function exits, complete native reader/projection inverses and original input
+domain initialization. Full original histories and independent unrun JS/strict
+TS/native value, ordering, identity, refusal and forged-meta source are retained.
+General iterator protocols, async iteration, namespace/bootstrap, production
+parity and every unfinished requirement remain open.
+
 The [local resource helper draft](http-resource-local-functions-draft.md) now
 checks actual callee bodies before callers, composes cold futures and single
 returned roots, preserves source order and separates imported/local binding

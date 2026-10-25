@@ -57,6 +57,7 @@ export class HttpResourceRustReader {
     const mutable=this.eat('mut'),name=this.identifier();if(mutable&&name.startsWith('__ro_'))fail('mutable compiler temporary is outside the emitted form');this.expect('=');const value=this.expression(local,0,depth+1);this.expect(';');if(name.startsWith('__ro_'))local.set(name,value);else statements.push({kind:'let',name,value,...(mutable?{mutable:true}:{})});continue;
    }
    if(this.peek().type==='ident'&&this.is('=',1)){const name=this.identifier();this.expect('=');const value=this.expression(local,0,depth+1);this.expect(';');statements.push({kind:'assign',name,value});continue;}
+   if(this.is('for')&&this.peek(1).type==='ident'&&this.is('in',2)&&(this.peek(3).type==='ident'&&this.is('{',4)||this.is('&',3)&&this.peek(4).type==='ident'&&this.is('{',5))){this.expect('for');const name=this.identifier();this.expect('in');const iterable=this.expression(local,0,depth+1),body=this.block(local,depth+1);statements.push({kind:'for-shared-json',name,iterable,body});continue;}
    if(this.eat('while')){const condition=this.expression(local,0,depth+1),body=this.block(local,depth+1);statements.push({kind:'while',condition,body});continue;}
    if(this.is('break')||this.is('continue')){const kind=this.next().text;this.expect(';');statements.push({kind});continue;}
    if(this.eat('return')){const value=this.expression(local,0,depth+1);this.expect(';');statements.push({kind:'return',value});continue;}

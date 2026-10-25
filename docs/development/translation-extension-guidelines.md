@@ -449,6 +449,14 @@ runtime closure histories with the original bounds. See the
 [deadline Result draft](http-deadline-results-draft.md); all new receiving and
 native qualification remains unrun during bulk drafting.
 
+For shared collection iteration, issue the element loan only from an actual
+qualified live slice or owned list, retain every backing root, and protect the
+owner throughout all loop exits. Keep input state, lexical loop locals and
+function return roots distinct. Preserve native syntax and fresh whole-source
+reproduction in the inverse; an iterator spelling cannot issue source or
+ownership authority. See the [shared iteration draft](http-resource-shared-iteration-draft.md).
+All new source and receiving qualification remains unrun during drafting.
+
 Compose common operation families through their actual fully checked native and
 runtime sources, retaining callbacks/numeric domains with their original checker
 when unsupported. Option/Result containers move once. Local borrowed string
