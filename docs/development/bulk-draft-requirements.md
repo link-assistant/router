@@ -859,3 +859,12 @@ source equations and independent JS/strict TS/refusal/native drop source are
 unrun; resource oracle module 39 is drafted. Whole all-return-loop reconstruction,
 general fallthrough, architecture/producer closure, wider effects/types,
 production adoption/parity and every unfinished requirement remain open.
+
+The [terminal returning loop draft](http-resource-returning-loops-draft.md)
+connects actual final infinite loops with complete checked function-return exits
+to native loop proposals and precise final return-domain/root joins. Break,
+continue, fallthrough, mixed domains and absent returns retain refusals. Three
+complete source equations and independent JS/strict TS/native reconstruction,
+Option composition, root/source/meta/refusal cases are unrun. General loop
+outcomes, architecture/producer closure, wider effects/types, production adoption/
+parity and every unfinished requirement remain open.

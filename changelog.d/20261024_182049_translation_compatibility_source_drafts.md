@@ -277,3 +277,8 @@ integration and the remaining requirement ledger are still open.
   unchanged-payload composition. Retain four complete source equations and
   independent unrun JS/strict TS/refusal/native drop source; resource oracle
   module 39 is drafted. Whole all-return-loop reconstruction remains separate.
+
+- Draft terminal actual infinite loops with only checked function-return exits,
+  preserving complete return-domain/root/resource joins and original native loop
+  reconstruction. Retain three complete source equations and independent unrun
+  JS/strict TS/native source, Option composition, borrowed-root and refusal cases.

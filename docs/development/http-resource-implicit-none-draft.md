@@ -29,8 +29,9 @@ absence and payload changes, alpha-renamed bindings, grouped absence, opaque
 generic payloads, drop timing, loop-local return targets and malformed or wider
 fallbacks. Resource oracle module 39 is drafted. None of these cases has run.
 
-Whole all-return-loop reconstruction remains a separate implementation draft
-prerequisite; loop-local normalization source is not a whole-function receiving
-claim. General fallthrough and branch joins, architecture/producer closure,
+Whole returning-loop reconstruction is drafted in the separate
+[terminal loop successor](http-resource-returning-loops-draft.md); it remains
+unrun, and loop-local normalization alone is not a whole-function receiving claim.
+General fallthrough and branch joins, architecture/producer closure,
 broader effects/types, production adoption/parity, receiving, original source/
 timing/profile and reverse freshness repairs and every CI gate remain unfinished.
