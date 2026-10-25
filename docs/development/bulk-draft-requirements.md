@@ -694,6 +694,13 @@ Three complete originals, both phases and independent target/native/refusal
 and real library oracle source remain unrun. Wider syntax, production parity
 and every unfinished requirement above remain open.
 
+The [native Result extraction match draft](http-resource-native-result-match-draft.md)
+retains original successful/error binders, exact captured errors and initializer
+scope through existing checked propagation and local type obligations. Two
+complete originals, both phases and independent target/native/error-family,
+source/refusal and oracle cases remain unrun. Wider Result behavior, production
+adoption/parity and every unfinished requirement remain open.
+
 The [native Option extraction match draft](http-resource-native-option-match-draft.md)
 retains exact original initializer and arm scope while composing successful
 identity/None-return arms with existing checked propagation. Four complete
