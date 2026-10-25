@@ -859,3 +859,11 @@ fixed types. Inherent-call proposals still need fresh complete Rust-source
 checking and exact paired target reproduction. The registry/AST observations are
 data only. See the [numeric inverse draft](docs/development/standard-numeric-inverse-draft.md).
 All new cases remain unrun until the entire bulk source draft is present.
+
+Text predicate method substitutions must preserve complete original operands,
+compiler-generated temporaries and surrounding source. Join actual checked Rust
+operation spans to native target method tokens, then freshly reproduce the full
+modified target. A JavaScript property spelling grants no receiver/trait proof.
+Retain full emitter/table source and invocation-local indexing; see the
+[text predicate inverse draft](docs/development/text-predicate-inverse-draft.md).
+All new source and oracle cases remain unrun during the complete drafting phase.

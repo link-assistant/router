@@ -842,3 +842,13 @@ are drafted and unrun. No trait/type permission comes from the factory spelling
 or runtime type literal. Wider aggregate operations, new global helper closure,
 namespace/producer bootstrap, opaque async resources, production adoption/parity
 and every other unfinished row remain open.
+
+The [text predicate inverse draft](text-predicate-inverse-draft.md) batches
+existing checked contains/prefix/suffix method-token substitutions. It preserves
+all actual compiler-generated temporaries, operand bytes and evaluation order,
+joins genuine original checked operation spans with native-selected target calls,
+and freshly recompiles the complete modified source. Complete original emitter
+source/table, source derivation, project/export integration and independent
+unrun JS/strict TS/Unicode/native oracle cases are retained. Its token index is
+invocation-local. Broader text/aggregate/owned/generic/async inverses, namespace
+bootstrap, production adoption/parity and every unfinished row remain open.

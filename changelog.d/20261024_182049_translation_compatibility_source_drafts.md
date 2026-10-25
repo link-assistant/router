@@ -65,3 +65,5 @@ integration and the remaining requirement ledger are still open.
 - Draft actual-import standard f64 inverse calls and checked sign refinements, shared source mechanics, reusable native-selected module extraction and independent unrun JS/TS/native oracle source.
 
 - Draft original fixed-runtime factory numeric call inverses, complete source derivations, project/export integration and independent unrun JS/TS/native boundary cases.
+
+- Draft bulk checked text predicate method-token inverses preserving original temporaries, complete source histories, JS/TS/project/export and unrun native oracle cases.

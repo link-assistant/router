@@ -2,9 +2,10 @@ import {fileURLToPath} from 'node:url';
 import {resolve} from 'node:path';
 import {prepareNativeSubstitutionCopy,writeNativeSubstitutionCopy} from './prepare-native-substitution-copy.mjs';
 import {prepareDerivedInverseModule} from './prepare-derived-inverse-module.mjs';
+import {prepareTextPredicateInverseSources} from './prepare-text-predicate-inverse-sources.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 export function prepareStandardNumericCallSources({root=ROOT}={}){
- const main=prepareNativeSubstitutionCopy({root,archive:'tools/translation/source-profiles/standard-numeric-calls/complete-originals-and-rules.json.gz',pin:'e891b8506a52b88410b2fa63f4de7e7e0f608ebf6b73ad95663cd21097827ee9',id:'router:standard-numeric-calls-complete-source-substitutions-v1'});
+ const main=prepareNativeSubstitutionCopy({root,archive:'tools/translation/source-profiles/standard-numeric-calls/complete-originals-and-rules.json.gz',pin:'e891b8506a52b88410b2fa63f4de7e7e0f608ebf6b73ad95663cd21097827ee9',id:'router:standard-numeric-calls-complete-source-substitutions-v1',laterPlans:[prepareTextPredicateInverseSources({root})]});
  const derived=prepareDerivedInverseModule({root,archive:'tools/translation/source-profiles/standard-numeric-calls/derived-functions.json.gz',pin:'b4cbf912d3b7162a63abb799bbb612916f8636518f73a496f20f291d4211f096',id:'router:standard-numeric-functions-source-extraction-v1'});
  return {...main,files:main.files.concat(derived.files),originalInputs:main.originalInputs.concat(derived.originalInputs)};
 }
