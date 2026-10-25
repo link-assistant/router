@@ -289,3 +289,9 @@ integration and the remaining requirement ledger are still open.
   and synchronization APIs. Retain six complete source equations and independent
   unrun actual-change, stale-plan, Git, rollback and offline receiving cases;
   installation remains source-only and supplies no executable coverage result.
+
+- Draft source-bound native local type proposals for None, nested Option and
+  contextual String-error Result initializers. Retain bounded own source records,
+  complete fresh JS/meta/native local-type obligations, four complete source
+  equations and independent unrun JS/strict TS/native/refusal cases; resource
+  oracle module 40 is drafted.

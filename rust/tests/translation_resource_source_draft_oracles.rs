@@ -82,3 +82,5 @@ mod native_if_let;
 mod option_constructors;
 #[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-implicit-none-oracle.rs"]
 mod implicit_none;
+#[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-written-locals-oracle.rs"]
+mod written_locals;

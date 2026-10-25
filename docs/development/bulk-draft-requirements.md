@@ -878,3 +878,12 @@ receipts retain parity false and executable coverage null. Six complete source
 equations and independent actual-change, stale-plan, rollback, baseline and offline
 receiving cases are unrun. Actual production adoption, generation, architecture/
 producer closure, broader domains, parity and every unfinished requirement remain.
+
+The [original written-local proposal draft](http-resource-written-locals-draft.md)
+uses freshly captured actual native annotations only to propose missing local
+None/Ok/Err contexts, retaining independent complete JS/meta and native local-type
+obligations. Complete source reproduction still applies; written hints cannot
+override actual value domains. Four complete source equations and independent
+local/nested/conditional/Result/getter/refusal/native source are unrun; resource
+oracle module 40 is drafted. Architecture/producer closure, wider domains,
+production adoption/parity and every unfinished requirement remain open.
