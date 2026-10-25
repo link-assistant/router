@@ -76,11 +76,11 @@ export class HttpResourceBindingRustReader {
   return {kind:'block',statements,tail,span:{start,end:this.tokens[this.index-1].end}};
  }
  expression(environment,minimum=0,depth=0){
-  this.tick(depth);let value=this.primary(environment,depth+1);
+  this.tick(depth);const expressionStart=this.peek().start;let value=this.primary(environment,depth+1);
   for(;;){
    if(this.eat('?')){value={kind:'effect-try',value};continue;}
    if(this.eat('.')){const name=this.identifier();if(this.eat('(')){const args=this.arguments(environment,depth+1);value={kind:'method',name,value,args};}else value={kind:'field',name,value};continue;}
-   const op=this.peek().text,precedence=PRECEDENCE.get(op);if(precedence===undefined||precedence<minimum)break;this.next();value={kind:'binary',op,left:value,right:this.expression(environment,precedence+1,depth+1)};
+   const op=this.peek().text,precedence=PRECEDENCE.get(op);if(precedence===undefined||precedence<minimum)break;this.next();const left=value,right=this.expression(environment,precedence+1,depth+1),comparison=operator=>['==','!=','<','<=','>','>='].includes(operator);if(comparison(op)&&[left,right].some(node=>node.kind==='binary'&&comparison(node.op)&&!node.groupSpans?.length))fail('original native chained comparisons require explicit value groups');value={kind:'binary',op,left,right,binarySpan:{start:expressionStart,end:this.tokens[this.index-1].end}};
   }return value;
  }
  arguments(environment,depth){const args=[];while(!this.eat(')')){args.push(this.expression(environment,0,depth+1));if(!this.is(')'))this.expect(',');}return args;}
@@ -88,8 +88,8 @@ export class HttpResourceBindingRustReader {
   this.tick(depth);
   if(this.eat('&'))return {kind:'borrow',mutable:this.eat('mut'),value:this.expression(environment,5,depth+1)};
   if(this.eat('*'))return {kind:'dereference',value:this.expression(environment,5,depth+1)};
-  if(this.eat('!'))return {kind:'not',value:this.expression(environment,5,depth+1)};
-  if(this.eat('(')){if(this.eat(')'))return {kind:'unit'};const value=this.expression(environment,0,depth+1);this.expect(')');return value;}
+  if(this.eat('!')){const start=this.tokens[this.index-1].start,value=this.expression(environment,5,depth+1);return {kind:'not',value,unarySpan:{start,end:this.tokens[this.index-1].end}};}
+  if(this.eat('(')){const start=this.tokens[this.index-1].start;if(this.eat(')'))return {kind:'unit'};const value=this.expression(environment,0,depth+1);this.expect(')');return {...value,groupSpans:[...(value.groupSpans??[]),{start,end:this.tokens[this.index-1].end}]};}
   if(this.is('{'))return this.block(environment,depth+1);
   if(this.eat('if')){const condition=this.expression(environment,0,depth+1),yes=this.block(environment,depth+1);this.expect('else');return {kind:'choose',condition,yes,no:this.block(environment,depth+1)};}
   if(this.eat('return')){const value=this.is(',')||this.is('}')?{kind:'unit'}:this.expression(environment,0,depth+1);return {kind:'return-expression',value};}

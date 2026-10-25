@@ -841,3 +841,12 @@ ABI. Seven complete source equations and independent JS/strict TS/refusal/native
 source remain unrun; resource oracle module 38 is drafted. Original noncanonical
 expression grouping remains a prerequisite for the raw if-let case. Architecture/
 producer closure, broader domains, adoption/parity and every unfinished row remain.
+
+The [original expression grouping draft](http-resource-native-groups-draft.md)
+retains actual parser group/unary/binary spans and composes canonical operator
+groups with original lexical substitutions. Required inner groups preserve the
+actual parse tree; ungrouped native comparison chains refuse. Three complete
+source equations and independent precedence, generic forwarding, constructor,
+scope/source/literal/refusal cases are unrun. This drafts the preceding raw
+if-let grouping prerequisite; architecture/producer closure, wider language/
+effects, adoption/parity and every unfinished requirement remain open.

@@ -39,8 +39,9 @@ phases and complete CST inverses. Independent JS/strict TS/native source covers
 Boolean changes, absence, Unicode owned strings, nested Options, owned lists,
 numeric boundaries, Result branches, malformed source, changed inputs and forged
 meta. Resource oracle module 38 is drafted. These cases have not run. Original
-noncanonical expression grouping remains a separate draft prerequisite for the
-raw if-let case; the next source batch must preserve that original equation.
+noncanonical expression grouping is drafted in the separate
+[grouping successor](http-resource-native-groups-draft.md), including the raw
+if-let case and its complete original equation. That source is also unrun.
 
 Wider Result inference and resource error construction, architecture and producer
 closure, general effects and types, production adoption/parity, original history

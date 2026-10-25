@@ -265,3 +265,9 @@ integration and the remaining requirement ledger are still open.
   Retain seven full source equations and independent unrun JS/strict TS/refusal/
   native oracle source. Noncanonical native grouping remains a separate source
   prerequisite; resource oracle module 38 is drafted.
+
+- Draft original unary/binary/value grouping spans and precedence-preserving
+  canonical native groups through complete CST/source inverses. Compose adjacent
+  lexical/control edits without weakening overlap checks, reject ungrouped native
+  comparison chains and retain three complete source equations plus independent
+  unrun truth-table, scope, constructor, generic, literal and refusal case source.
