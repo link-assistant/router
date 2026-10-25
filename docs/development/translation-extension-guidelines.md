@@ -498,6 +498,15 @@ native match syntax and complete source reproduction. See the
 [Result fallback draft](http-resource-result-fallbacks-draft.md); all new
 qualification remains unrun during source drafting.
 
+Absent Option loop exits must leave every successful-payload continuation and
+retain the actual nearest loop's ownership and cleanup state. Keep function
+returns distinct from loop exits and ignore controls owned by nested loops or
+callbacks. Preserve native control matches and actual binary chunk framing;
+an HTTP text carrier need not contain decoded response text. See the
+[Option loop draft](http-resource-option-loops-draft.md). Register independent
+native oracle source in the existing gated CI discovery and execute no Rust
+locally; all new qualification remains unrun during source drafting.
+
 Compose common operation families through their actual fully checked native and
 runtime sources, retaining callbacks/numeric domains with their original checker
 when unsupported. Option/Result containers move once. Local borrowed string

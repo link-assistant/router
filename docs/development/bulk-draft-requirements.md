@@ -256,6 +256,15 @@ forged-meta source are retained. Error inspection, outcome-sensitive release,
 namespace/bootstrap, production parity and every unfinished requirement remain
 open.
 
+The [Option loop and streaming draft](http-resource-option-loops-draft.md)
+adds complete absent break/continue branches, nearest-loop and function outcome
+joins, actual binary HTTP pull accumulation and native/source inverses. Full
+originals and independent unrun JS/strict TS/loopback/native scalar, EOF, binary,
+cleanup, refusal and forged-meta source are retained. Seven independent native
+oracle fixtures now join the existing gated Rust integration-test discovery.
+Broader streaming/protocol applications, namespace/bootstrap, production parity
+and every unfinished requirement remain open.
+
 The [local resource helper draft](http-resource-local-functions-draft.md) now
 checks actual callee bodies before callers, composes cold futures and single
 returned roots, preserves source order and separates imported/local binding

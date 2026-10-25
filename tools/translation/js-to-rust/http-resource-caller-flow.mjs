@@ -143,10 +143,17 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
   for(const statement of rows.slice(0,-1)){if(!ts.isExpressionStatement(statement))fail('explicit resource release required before error return');const value=call(statement.expression);if(!value.release)fail('only actual resource release may precede error return');cleanup.push(value);}
   finish();environment.clear();for(const [key,row]of saved)environment.set(key,row);failures.push(httpResourceResult(type).error);return {cleanup,fallback:null};
  }
+ function nearestLoopControl(rows){
+  let found=false;const visit=(node,level=0)=>{tick();if(level>160)fail('complete absent-branch source depth bound');if(ts.isBreakStatement(node)||ts.isContinueStatement(node)){found=true;return;}if(ts.isWhileStatement(node)||ts.isDoStatement(node)||ts.isForStatement(node)||ts.isForOfStatement(node)||ts.isForInStatement(node)||ts.isFunctionDeclaration(node)||ts.isFunctionExpression(node)||ts.isArrowFunction(node))return;ts.forEachChild(node,child=>visit(child,level+1));};for(const row of rows)visit(row);return found;
+ }
+ function completeAbruptFallback(flow,level=0){tick();if(level>64)fail('complete absent-branch outcome bound');if(flow.tail.kind==='fallthrough')return false;return flow.tail.kind!=='branch'||completeAbruptFallback(flow.tail.yes,level+1)&&completeAbruptFallback(flow.tail.no,level+1);}
  function optionGuard(node,id,value){
   if(!hasGuard(node,id)||node.elseStatement)fail('complete immediate same-Option absent guard required');const {right,operatorToken}=node.expression;
   if(!ts.isStringLiteral(right)||!(operatorToken.kind===ts.SyntaxKind.EqualsEqualsEqualsToken&&right.text==='None'||operatorToken.kind===ts.SyntaxKind.ExclamationEqualsEqualsToken&&right.text==='Some'))fail('actual original absent Option tag required');
   const rows=ts.isBlock(node.thenStatement)?node.thenStatement.statements:[node.thenStatement],last=rows.at(-1);let fallback,pass=false;
+  if(nearestLoopControl(rows)){
+   const loop=fragment?.scopeOnly?fragment.nearestLoop:fragment;if(!loop)fail('actual nearest loop required for an absent control branch');fallback=checkNested(ts,rows,[],imports,{lazy,allowColdTail:false,bindings:environment,moduleNames,budget,depth:depth+1,localFunctions,sourceAnnotations,fragment:{entry:loop.entry}});if(!completeAbruptFallback(fallback))fail('every absent loop branch must leave its successful payload continuation');resourceExits.push(...fallback.resourceExits);loopExits.push(...fallback.loopExits);functionReturns.push(...fallback.functionReturns);failures.push(...fallback.propagatedErrors);return {fallback,pass:false,loop:true};
+  }
   if(last&&ts.isReturnStatement(last)&&ts.isIdentifier(last.expression)&&last.expression.text===id){
    const saved=new Map([...environment].map(([key,row])=>[key,{...row}])),cleanup=[];
    for(const statement of rows.slice(0,-1)){if(!ts.isExpressionStatement(statement))fail('absent Option cleanup requires explicit releases');const effect=call(statement.expression);if(!effect.release)fail('only actual resource release may precede original None return');cleanup.push({kind:'effect',value:effect});}
@@ -250,6 +257,7 @@ export function emitHttpResourceCallerFlow(flow,{localFunctions=null}={}){
   if(row.kind==='channel-split')return 'let ('+row.names.map(id=>(mutable.has(id)?'mut ':'')+id).join(', ')+') = '+row.from+';';if(row.kind==='effect')return expression(row.value)+';';
   const cleanup=row.cleanup.map(value=>expression(value)+';').join(' '),value=expression(row.value);
   if(row.resultFallback)return 'let '+(mutable.has(row.name)?'mut ':'')+row.name+' = match '+value+' { Ok(__ro_http_value) => __ro_http_value, Err(_) => { return { '+emitHttpResourceCallerFlow(row.resultFallback,{localFunctions})+' }; } };';
+  if(row.option?.loop)return 'let '+(mutable.has(row.name)?'mut ':'')+row.name+' = match '+value+' { Some(__ro_http_some) => __ro_http_some, None => { '+emitHttpResourceCallerFlow(row.option.fallback,{localFunctions})+' } };';
   if(row.option)return 'let '+(mutable.has(row.name)?'mut ':'')+row.name+' = '+(row.option.pass?value+'?':'match '+value+' { Some(__ro_http_some) => __ro_http_some, None => { return { '+emitHttpResourceCallerFlow(row.option.fallback,{localFunctions})+' }; } }')+';';
   return 'let '+(mutable.has(row.name)?'mut ':'')+row.name+' = '+(row.guarded?(cleanup?'match '+value+' { Ok(__ro_http_value) => __ro_http_value, Err(__ro_http_error) => { '+cleanup+' return Err(__ro_http_error); } }':value+'?'):value)+';';
  });

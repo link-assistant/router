@@ -3,7 +3,8 @@ use std::fs;
 
 #[test]
 fn filesystem_unicode_errors_and_order_have_native_source_cases() {
-    let root = std::env::temp_dir().join(format!("router-filesystem-oracle-{}", std::process::id()));
+    let nonce = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos();
+    let root = std::env::temp_dir().join(format!("router-filesystem-oracle-{}-{nonce}", std::process::id()));
     fs::create_dir_all(&root).unwrap();
     let origin = root.join("origin");
     let target = root.join("target");
