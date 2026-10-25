@@ -51,3 +51,11 @@ cold/await boundaries, move/borrow flow, explicit receiver cleanup and complete
 CST inverses. Independent JS/strict TS/native oracle source is drafted and unrun.
 Rust forward/inverse and source-unit integration, broader async callbacks,
 public numeric guards, HTTP resources and every unfinished row remain open.
+
+The [canonical async resource inverse draft](async-control-inverse-draft.md)
+adds full original reader/consumer copies, actual tuple/mutable-borrow/async
+closure syntax proposals and fresh complete JS/meta/Rust reproduction. Full
+originals/CST inverses and independent handwritten native, JS/strict TS and
+refusal source are drafted and unrun. Source-unit installation, general Rust
+and pending-future syntax, broader numeric/HTTP boundaries, production adoption
+and every other unfinished row remain open.

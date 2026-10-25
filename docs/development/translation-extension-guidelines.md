@@ -218,3 +218,11 @@ and a single cancellable tail; no post-await side effect is admitted. Keep nativ
 Rust grammar/execution flags false until gated CI supplies evidence. See the
 [async control caller draft](async-control-callers-draft.md). All new source and
 independent regression/oracle cases remain unrun during bulk drafting.
+
+Canonical Rust resource inverses may erase syntax only to propose JS. Reissue
+all real source-bound control checks, round-trip checked semantic meta and
+reproduce the complete authoritative Rust syntax before returning. Preserve
+actual tuple moves, receiver cleanup, mutable reborrows and deadline captures.
+Reader observations and temporary substitution supply no semantic permission.
+See the [async inverse draft](async-control-inverse-draft.md). General native
+qualification and all new receiving cases remain unrun during bulk drafting.

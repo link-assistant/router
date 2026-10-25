@@ -26,3 +26,4 @@ export {translateOwnedCancellationRust} from './js-to-rust/owned-cancellation-ru
 export {OWNED_CANCELLATION_NATIVE_INPUTS,ownedCancellationUnitRuntimeSources,ownedCancellationUnitContext,translateOwnedCancellationUnit} from './owned-cancellation-unit.mjs';
 export {translateLocalDeclarativeProject} from './local-declarative-project.mjs';
 export {translateAsyncControlCallerJavaScript,translateAsyncControlCallerTypeScript,translateAsyncControlCallerConcreteSyntaxMeta,readAsyncControlCallerMeta} from './js-to-rust/async-control-callers.mjs';
+export {translateAsyncControlCallerRust} from './js-to-rust/async-control-rust.mjs';

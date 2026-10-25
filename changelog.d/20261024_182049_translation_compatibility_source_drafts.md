@@ -81,3 +81,5 @@ integration and the remaining requirement ledger are still open.
 - Draft plain-root declarative macro expansion using the complete original private engine, recursive forwarding, conservative hygiene/producer refusals, CST inverses and an original-compiler project adapter; independent JS/strict TS/native oracle source remains unrun. Split source-history and extension-guideline documentation without dropping obligations.
 
 - Draft source-bound cold cancellation/deadline/channel callers using the complete original control adapter, native role/move/borrow flow, explicit receiver cleanup, full CST inverses and independent unrun JS/strict TS/native oracle source.
+
+- Draft canonical async resource Rust inverse translation using complete original reader/consumer copies, tuple and mutable-borrow syntax, actual cleanup/capture proposals, fresh full JS/meta/Rust reproduction and independent unrun receiving/refusal source.
