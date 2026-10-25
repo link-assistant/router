@@ -1,5 +1,6 @@
 ### Added
 
+- Draft complete existing JSON collection callback composition, checked helper/inline arrow bodies, owning fold accumulators, typed native closures and independent unrun JS/strict TS/native ordering, short-circuit and refusal source.
 - Draft complete existing JSON list state operations with distinct owned Vec/shared slice domains, root/move checks, native and paired-source-unit mappings, and independent unrun JS/strict TS/native oracle cases.
 - Draft borrowed JSON index/alias and local-view rules with all-root owner protection, shared native lifetimes and independent unrun JS/strict TS/native identity and escape cases.
 - Draft existing owned JSON storage/parse composition in resource callers, with actual library/source joins, owned branch/loop state, native inverses and independent unrun JS/strict TS/native oracle/refusal cases.

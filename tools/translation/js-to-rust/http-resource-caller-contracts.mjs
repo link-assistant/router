@@ -7,11 +7,13 @@ import {HTTP_DEADLINE_RESULT_CONTRACTS} from '../http-deadline-result-contracts.
 import {HTTP_PROTOCOL_CONTRACTS} from '../http-protocol-contracts.mjs';
 import {asyncControlCallerContract} from './async-control-caller-flow.mjs';
 import {httpResourceSynchronousContracts} from './http-resource-synchronous-contracts.mjs';
+import {httpResourceCollectionContracts} from './http-resource-collection-contracts.mjs';
 const role=Object.freeze({'shared-cancellation':'cancel-ref','shared-sender':'sender-ref','exclusive-receiver':'receiver-mut','shared-http-client':'http-client-ref','exclusive-http-client':'http-client-mut','shared-http-stream':'http-stream-ref','exclusive-http-stream':'http-stream-mut'});
 const returns=Object.freeze({'http-client-text-result':'http-result:http-client-owned','http-stream-text-result':'http-result:http-stream-owned','owned-text-option-text-result':'http-result:option-text','json-text-result':'http-result:json','u64-text-result':'http-result:u64','bool-text-result':'http-result:bool','str-text-result':'http-result:str','text-text-result':'http-result:text-owned','control-http-stream-result':'result:http-result:http-stream-owned','control-http-option-text-result':'result:http-result:option-text','control-http-json-result':'result:http-result:json'});
 const operations=[
  ...ASYNC_CONTROL_CONTRACTS.map(row=>({...asyncControlCallerContract(row.javascriptName),family:'control',release:row.rustName==='dispose'?'receiver-owned':null})),
  ...httpResourceSynchronousContracts(),
+ ...httpResourceCollectionContracts(),
  ...HTTP_TRANSPORT_CONTRACTS.map(row=>({...row,family:'http-transport',args:row.parameters.map(value=>role[value]??value),ret:returns[row.returns]??row.returns,release:row.rustName==='client_dispose'?'http-client-owned':row.rustName==='close'?'http-stream-owned':null})),
  ...HTTP_DEADLINE_CONTRACTS.map(row=>({...row,family:'http-deadline',args:row.parameters.map(value=>role[value]??value),ret:returns[row.returns],release:null})),
  ...HTTP_DEADLINE_RESULT_CONTRACTS.map(row=>({...row,family:'http-deadline-result',args:[...row.parameters],ret:row.returns,release:null})),

@@ -32,6 +32,9 @@ export function projectHttpResourceRustFunctions(functions,{javascriptPath,runti
  }
  function expression(node,locals,asynchronous,depth=0){
   tick(depth);node=unwrap(node,depth+1);if(!node)fail('complete original HTTP expression required');
+  if(node.kind==='typed-lambda'){
+   if(!node.parameters.length||node.parameters.length>64)fail('complete typed native callback parameters required');const declared=new Map(),parameters=node.parameters.map(row=>{const id=name(row.name),type=httpResourceNativeDomain(row.type);if(declared.has(id))fail('unique actual native callback parameter required');declared.set(id,{guarded:false,type});return id;});return '('+parameters.join(', ')+') => '+body(node.body,declared,false,depth+1);
+  }
   if(['borrow','dereference'].includes(node.kind))return expression(borrowed(node,depth+1),locals,asynchronous,depth+1);
   if(node.kind==='name'){const id=name(node.name);return locals.get(id)?.guarded?id+'.field0':id;}
   if(node.kind==='unit')return 'null';if(node.kind==='integer'){if(node.type!=='u64')fail('closed unsigned count required');return node.value+'n';}if(node.kind==='boolean')return String(node.value);if(node.kind==='string')return JSON.stringify(node.value);

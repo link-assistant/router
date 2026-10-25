@@ -178,6 +178,15 @@ refusal and inverse source are retained. General iteration/callbacks, generic
 element domains, incompatible state joins, namespace/bootstrap, production
 parity and every unfinished requirement remain open.
 
+The [resource collection callback draft](http-resource-callbacks-draft.md)
+composes existing map/filter-map, filter, any/all, find and fold with whole
+helper and capture-free inline callback checking, actual owned accumulator
+domains, typed native closures and complete inverse rules. Full original
+histories and independent unrun JS/strict TS/native value, short-circuit,
+Some(Null), refusal and source-inverse cases are retained. General captures,
+typed-arrow inverses, generic iterators, namespace/bootstrap, production parity
+and every unfinished requirement remain open.
+
 The [local resource helper draft](http-resource-local-functions-draft.md) now
 checks actual callee bodies before callers, composes cold futures and single
 returned roots, preserves source order and separates imported/local binding

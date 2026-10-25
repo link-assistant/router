@@ -60,6 +60,17 @@ source checker. Array shapes, proxies, copied metadata and unproved iteration
 cannot supply ownership or a list domain. See the
 [unrun JSON list draft](http-resource-json-lists-draft.md).
 
+Collection callback domains come from the actual selected matching library.
+Require a complete checked local helper or recheck the original inline arrow
+body in its own actual parameter scope. Add forward callback references to the
+dependency graph; no outer binding may enter a capture-free callback. Preserve
+every return domain, owning accumulator move, element loan, Some(Null), original
+order and short-circuit behavior. Keep callback descriptors immutable DATA and
+reissue actual source semantics after the meta round trip. Native closure
+emission must respect binding references, avoid unused-name collisions and
+reserve standard Result/Option constructor bindings. See the
+[unrun callback draft](http-resource-callbacks-draft.md).
+
 ### Source synchronization exports during issue #759
 
 Keep every public synchronization CLI in the shared
