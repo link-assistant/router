@@ -173,3 +173,4 @@ integration and the remaining requirement ledger are still open.
 - Draft linear generic aliases and complete checked forwarding chains with independent native dependency/move/drop checks, full original inverses and unrun drop-counter/refusal oracle source.
 - Draft original numeric Option/Result payload ingress guards, guarded signed parameter domains and canonical native inverses, with full originals and independent unrun range/constructor/refusal oracle source.
 - Draft native Promise/PromiseLike type obligations and precise cold/eager return distinctions, retaining complete originals and independent unrun Awaited/alias/refusal source.
+- Draft actual generic deadline type equations and checked control-result witnesses, preserving complete original declaration/source joins and independent unrun constructor/refusal cases.

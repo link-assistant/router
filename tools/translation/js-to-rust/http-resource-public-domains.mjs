@@ -25,6 +25,6 @@ export function httpResourcePublicInputType(type,operation){
  if(type==='bytes-owned')return "Extract<ReturnType<typeof "+operation('std_fs_read')+">, {$: 'Ok'}>['field0']";
  if(!httpResourceOwnedSignatureDomain(type))throw new TypeError('Actual public input needs an independent source domain rule');
  const preferred={'text-owned':'router_text_repeat',json:'router_core_json_copy','json-list-owned':'router_state_json_values_copy'}[type],rows=httpResourceCallerOperationNames().map(httpResourceCallerContract),selected=preferred?rows.find(row=>row.javascriptName===preferred&&row.ret===type):rows.find(row=>row.ret===type&&!row.borrowedResult&&!row.nativeForm);
- if(!selected)throw new TypeError('Public owned domain needs an actual complete matching operation signature');
+ if(!selected){if(type.startsWith('result:')){const settled=httpResourcePublicInputType(type.slice(7),operation);return 'Awaited<ReturnType<typeof '+operation('router_async_with_deadline')+'<'+settled+'>>>'; }throw new TypeError('Public owned domain needs an actual complete matching operation signature');}
  const query='ReturnType<typeof '+operation(selected.javascriptName)+'>';return selected.async?'Awaited<'+query+'>':query;
 }

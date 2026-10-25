@@ -1,6 +1,6 @@
 // Written annotation DATA. Actual callback context and complete bodies govern
 // the native domains; no annotation or public source span issues permission.
-import {httpResourceCallerContract,httpResourceResult} from './http-resource-caller-contracts.mjs';
+import {httpResourceCallerContract,httpResourceResult,httpResourceCallerRustType} from './http-resource-caller-contracts.mjs';
 import {httpResourceOption} from './http-resource-options.mjs';
 const fail=message=>{throw new TypeError('Resource callback annotations: '+message);};
 export function captureHttpResourceCallbackAnnotations(ts,node,contract,imports,context,tick){
@@ -31,6 +31,7 @@ export function createHttpResourceWrittenAnnotationReader(ts,imports,tick,{alias
   if(ts.isTypeReferenceNode(type)&&ts.isIdentifier(type.typeName)&&['Promise','PromiseLike'].includes(type.typeName.text)){if(imports.has(type.typeName.text)||type.typeArguments?.length!==1)fail('one actual unshadowed native Promise/PromiseLike type argument required');const value=describe(type.typeArguments[0],depth+1,bindings);if(value.kind!=='domain')fail('one complete actual settled native value domain required');return {kind:type.typeName.text==='Promise'?'native-promise':'thenable',value};}
   if(ts.isTypeQueryNode(type)){
    if(!ts.isIdentifier(type.exprName)||!imports.has(type.exprName.text))fail('type query must name an actual imported operation');
+   if(imports.get(type.exprName.text)==='router_async_with_deadline'){if(typeof coldTypeCurrent!=='function'||(type.typeArguments?.length??0)>1)fail('complete original generic deadline declaration and bounded slot required');coldTypeCurrent('deadline');const value=type.typeArguments?.length?describe(type.typeArguments[0],depth+1,bindings):null;if(value&&value.kind!=='domain')fail('complete actual native deadline settled domain required');if(value)httpResourceCallerRustType('result:'+value.type);return {kind:'function',args:[domain('u64'),domain('cancel-ref'),value?{kind:'deadline-factory',args:[domain('cancel-owned')],value}:{kind:'unresolved-deadline-factory'}],returns:{kind:'future',value:value?domain('result:'+value.type):{kind:'unresolved-generic-value'}}};}
    if(imports.get(type.exprName.text)==='deferFilesystemFlow'){if(type.typeArguments?.length!==1||typeof coldTypeCurrent!=='function')fail('actual original cold-flow generic type and current declaration source required');coldTypeCurrent();const value=describe(type.typeArguments[0],depth+1,bindings);if(value.kind!=='domain')fail('the complete actual settled native value domain is required');return {kind:'function',args:[{kind:'cold-factory',value}],returns:{kind:'future',value}};}
    if(type.typeArguments?.length)fail('ordinary operation type queries cannot invent generic instantiations');return callable(httpResourceCallerContract(imports.get(type.exprName.text)));
   }

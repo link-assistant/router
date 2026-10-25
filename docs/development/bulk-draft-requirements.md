@@ -550,3 +550,11 @@ actual Awaited/alias domains and precise cold return obligations. Five full
 originals and independent unrun JS/strict TS/native/lexical/refusal cases are
 retained. Generic deadline typing, wider async domains, namespace/bootstrap,
 production parity and every unfinished requirement remain open.
+
+The [actual generic deadline type draft](http-resource-deadline-types-draft.md)
+adds complete original declaration/slot/constructor joins, known uninstantiated
+inputs, qualified control-result type witnesses and full native source inverses.
+Five complete originals, the original declaration asset and independent unrun
+JS/strict TS/native/source/refusal cases are retained. Generic callback execution,
+recursive numeric ingress, namespace/bootstrap, production parity and every
+unfinished requirement remain open.
