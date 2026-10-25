@@ -81,6 +81,16 @@ the complete TypeScript target and both CST/source inverses, and keep annotation
 sinks outside checked semantic meta. See the
 [unrun typed callback draft](http-resource-typed-callbacks-draft.md).
 
+Ordinary written returns constrain complete inferred bodies; they never create
+ownership. Preserve actual borrowed/owned strings and exact owning JSON/list
+operation domains. When original TypeScript types are erased, the JavaScript
+target must retain actual reusable input annotations. Use canonical native type
+printing with comments removed, correct mismatched existing type tags in the JS
+target, and combine all necessary input/return tags into one new block. Keep
+complete original TypeScript and source inverses, do not duplicate blocks on an
+unchanged round trip, and preserve restricted recursive obligations. See the
+[unrun function return/source doc draft](http-resource-function-returns-draft.md).
+
 ### Source synchronization exports during issue #759
 
 Keep every public synchronization CLI in the shared

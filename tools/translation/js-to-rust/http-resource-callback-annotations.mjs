@@ -5,6 +5,16 @@ const fail=message=>{throw new TypeError('Resource callback annotations: '+messa
 export function captureHttpResourceCallbackAnnotations(ts,node,contract,imports,context,tick){
  const written=node.type||node.parameters.some(parameter=>parameter.type);if(!written)return;
  if(!context||context.language!=='TypeScript'||node.getSourceFile()!==context.file||!Array.isArray(context.erase))fail('actual complete original TypeScript annotation context required');
+ const describe=createHttpResourceWrittenAnnotationReader(ts,imports,tick);
+ const edits=[];
+ for(let index=0;index<node.parameters.length;index++){const parameter=node.parameters[index];if(!parameter.type)continue;const actual=describe(parameter.type);if(actual.kind!=='domain'||actual.type!==contract.args[index])fail('written parameter must preserve its actual contextual native domain');edits.push({span:[parameter.name.end,parameter.type.end],replacement:''});}
+ if(node.type){const actual=describe(node.type);if(actual.kind!=='domain'||actual.type!==contract.ret)fail('written return annotation must preserve its complete actual callback domain');const colons=node.getChildren(context.file).filter(child=>child.kind===ts.SyntaxKind.ColonToken);if(colons.length!==1||colons[0].end>node.type.getStart(context.file))fail('actual native arrow return annotation boundary required');edits.push({span:[colons[0].getStart(context.file),node.type.end],replacement:''});}
+ context.erase.push(...edits);
+}
+
+
+// Fresh invocation-local type DATA reader, shared by source obligations only.
+export function createHttpResourceWrittenAnnotationReader(ts,imports,tick){
  const domain=type=>({kind:'domain',type});
  function callable(row){
   if(!row)fail('actual imported operation type required');const args=row.args.map(type=>type==='json-callback'?row.callbackContract?{kind:'function',args:row.callbackContract.args.map(domain),returns:domain(row.callbackContract.ret)}:fail('actual complete callback descriptor required'):domain(type));
@@ -24,8 +34,5 @@ export function captureHttpResourceCallbackAnnotations(ts,node,contract,imports,
   }
   fail('written callback type needs a separate original-source inverse rule');
  }
- const edits=[];
- for(let index=0;index<node.parameters.length;index++){const parameter=node.parameters[index];if(!parameter.type)continue;const actual=describe(parameter.type);if(actual.kind!=='domain'||actual.type!==contract.args[index])fail('written parameter must preserve its actual contextual native domain');edits.push({span:[parameter.name.end,parameter.type.end],replacement:''});}
- if(node.type){const actual=describe(node.type);if(actual.kind!=='domain'||actual.type!==contract.ret)fail('written return annotation must preserve its complete actual callback domain');const colons=node.getChildren(context.file).filter(child=>child.kind===ts.SyntaxKind.ColonToken);if(colons.length!==1||colons[0].end>node.type.getStart(context.file))fail('actual native arrow return annotation boundary required');edits.push({span:[colons[0].getStart(context.file),node.type.end],replacement:''});}
- context.erase.push(...edits);
+ return describe;
 }

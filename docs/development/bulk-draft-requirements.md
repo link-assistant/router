@@ -196,6 +196,15 @@ equivalence and refusal cases are retained. Broader aliases and generic/owned
 signatures, captures, namespace/bootstrap, production parity and every unfinished
 requirement remain open.
 
+The [original function return/source annotation draft](http-resource-function-returns-draft.md)
+adds ordinary synchronous written return obligations over complete inferred
+bodies and reusable canonical JS input/return docs when TypeScript types are
+erased. It preserves owning/shared results, old recursive obligations, original
+doc corrections and full comment-safe source inverses. Complete original
+histories and independent unrun JS/strict TS, repeated-round-trip and refusal
+cases are retained. Generic/owned/future signatures, namespace/bootstrap,
+production parity and every unfinished requirement remain open.
+
 The [local resource helper draft](http-resource-local-functions-draft.md) now
 checks actual callee bodies before callers, composes cold futures and single
 returned roots, preserves source order and separates imported/local binding

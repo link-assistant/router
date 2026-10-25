@@ -1,5 +1,6 @@
 ### Added
 
+- Draft ordinary checked TypeScript return annotations and canonical reusable JS input/return docs, sharing the original annotation reader and retaining full erasure/inverse histories with independent unrun round-trip/refusal cases.
 - Draft original TypeScript arrow annotation domains and native spans, nested Parameters/ReturnType queries, full JavaScript erasure inverses and independent unrun nested/loop/strict TS/refusal source.
 - Draft complete existing JSON collection callback composition, checked helper/inline arrow bodies, owning fold accumulators, typed native closures and independent unrun JS/strict TS/native ordering, short-circuit and refusal source.
 - Draft complete existing JSON list state operations with distinct owned Vec/shared slice domains, root/move checks, native and paired-source-unit mappings, and independent unrun JS/strict TS/native oracle cases.

@@ -15,6 +15,8 @@ import {httpResourceCallerContract,httpResourceCallerName,checkHttpResourceCalle
 import {selectAsyncControlCallerBody} from './async-control-u64-guards.mjs';
 import {orderHttpResourceLocalFunctions,httpResourceLocalContracts} from './http-resource-local-functions.mjs';
 import {captureHttpResourceRecursiveSignature,httpResourceRecursivePrototype} from './http-resource-recursive-signatures.mjs';
+import {captureHttpResourceFunctionReturnAnnotation} from './http-resource-function-returns.mjs';
+import {captureHttpResourceTypeScriptParameterDoc,finishHttpResourceTypeScriptDocs} from './http-resource-typescript-docs.mjs';
 const RUNTIME=new URL('../async-control-runtime.mjs',import.meta.url),DECLARATIONS=new URL('../async-control-runtime.d.mts',import.meta.url),FLOW=new URL('../extensions/filesystem-effects-runtime.mjs',import.meta.url);
 const fail=message=>{throw new TypeError('Async control caller source: '+message);};
 export function captureHttpResourceCallerInputs(input){
@@ -33,7 +35,7 @@ export function captureHttpResourceCallerInputs(input){
 export function analyzeHttpResourceCallerSource(stage,input){
  const context=captureHttpResourceCallerInputs(input),source=stage.source,language=stage.concreteSyntax.language,ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('lockfile TypeScript5.9.3 required');
  const file=ts.createSourceFile(context.sourcePath,source,ts.ScriptTarget.Latest,true,language==='TypeScript'?ts.ScriptKind.TS:ts.ScriptKind.JS);if(file.parseDiagnostics.length)fail('complete original native caller grammar required');if(source!==context.callerSource)fail('complete actual caller source snapshot differs');
- const imports=new Map(),locals=new Set(),functions=[],erase=[],annotate=[];
+ const imports=new Map(),locals=new Set(),functions=[],erase=[],annotate=[],typeDocsPrinter=language==='TypeScript'?ts.createPrinter({removeComments:true}):null;
  const name=httpResourceCallerName;
  for(const item of file.statements){
   if(ts.isImportDeclaration(item)){
@@ -57,19 +59,18 @@ export function analyzeHttpResourceCallerSource(stage,input){
  const rowsByName=new Map(),localFunctions=new Map(),callBindings=new Map(imports),lookup=id=>typeof id==='string'&&id.startsWith('local:')?localFunctions.get(id.slice(6)):httpResourceCallerContract(id);
  for(const group of orderHttpResourceLocalFunctions(ts,functions,{groups:true})){
   const plans=group.items.map(item=>{
-   if(!group.recursive&&item.type)fail('explicit return syntax outside recursive signature scope needs its own rule');
    const bodyPlan=selectAsyncControlCallerBody(ts,item,callBindings,file,lookup),guarded=new Set(bodyPlan.inputGuards.map(row=>row.name));
-  const parameters=item.parameters.map(parameter=>{
+  const javascriptDocs={parameters:[],needed:false,printer:typeDocsPrinter},parameters=item.parameters.map(parameter=>{
    if(!ts.isIdentifier(parameter.name)||parameter.questionToken||parameter.dotDotDotToken||parameter.initializer||parameter.modifiers?.length)fail('ordinary required caller parameter');const local=name(parameter.name.text);if(locals.has(local))fail('parameter shadows an actual runtime or module binding');
    const written=language==='TypeScript'?parameter.type:ts.getJSDocType(parameter);if(!written)fail('explicit native written input required');const domain=type(written,guarded.has(local)),text=written.getText(file);
-   if(language==='TypeScript')erase.push({span:[parameter.name.end,written.end],replacement:''});else annotate.push({span:[parameter.name.end,parameter.name.end],replacement:': '+text});return {name:local,type:domain};
+   if(language==='TypeScript')captureHttpResourceTypeScriptParameterDoc(ts,parameter,written,{file,erase,docs:javascriptDocs});else annotate.push({span:[parameter.name.end,parameter.name.end],replacement:': '+text});return {name:local,type:domain};
   });
   if(parameters.length>64||new Set(parameters.map(row=>row.name)).size!==parameters.length)fail('unique bounded actual caller parameters required');if(bodyPlan.inputGuards.some(guard=>!parameters.some(parameter=>parameter.name===guard.name&&parameter.type==='u64')))fail('entry guards must bind actual checked u64 parameters');const {statements,lazy,allowColdTail}=bodyPlan;
-   const signature=group.recursive?captureHttpResourceRecursiveSignature(ts,item,file,language):null;if(signature?.erase)erase.push(signature.erase);if(signature?.javascriptAnnotation)erase.push(signature.javascriptAnnotation);if(signature?.annotate)annotate.push(signature.annotate);return {item,parameters,signature,bodyPlan,statements,lazy,allowColdTail};
+   const signature=group.recursive?captureHttpResourceRecursiveSignature(ts,item,file,language):null;if(signature?.erase)erase.push(signature.erase);if(signature?.annotate)annotate.push(signature.annotate);return {item,parameters,signature,bodyPlan,statements,lazy,allowColdTail,javascriptDocs};
   });
   if(group.recursive)for(const plan of plans){localFunctions.set(plan.item.name.text,httpResourceRecursivePrototype(plan));callBindings.set(plan.item.name.text,'local:'+plan.item.name.text);}
   const checked=plans.map(plan=>{
-   const {item,parameters,signature,bodyPlan,statements,lazy,allowColdTail}=plan,flow=checkHttpResourceCallerFlow(ts,statements,parameters,imports,{lazy,allowColdTail,moduleNames:locals,localFunctions,sourceAnnotations:{language,file,erase}});if(signature&&(flow.type!==signature.domain||flow.returnRoots.length||flow.lazy))fail('every actual recursive body must satisfy its complete synchronous owned/scalar signature');
+   const {item,parameters,signature,bodyPlan,statements,lazy,allowColdTail,javascriptDocs}=plan,flow=checkHttpResourceCallerFlow(ts,statements,parameters,imports,{lazy,allowColdTail,moduleNames:locals,localFunctions,sourceAnnotations:{language,file,erase}});if(signature&&(flow.type!==signature.domain||flow.returnRoots.length||flow.lazy))fail('every actual recursive body must satisfy its complete synchronous owned/scalar signature');if(!signature)captureHttpResourceFunctionReturnAnnotation(ts,item,{language,file,imports,flow,lazy,erase});finishHttpResourceTypeScriptDocs(ts,item,{language,file,erase,docs:javascriptDocs});
    return {kind:'http-resource-caller-function',name:item.name.text,exported:item.modifiers?.some(modifier=>modifier.kind===ts.SyntaxKind.ExportKeyword)??false,parameters,inputGuards:bodyPlan.inputGuards,lazy,flow,returns:flow.type,recursiveSignature:signature,span:{start:item.getStart(file),end:item.end}};
   });
   for(const row of checked){rowsByName.set(row.name,row);localFunctions.set(row.name,httpResourceLocalContracts([row]).get(row.name));callBindings.set(row.name,'local:'+row.name);}
