@@ -49,7 +49,7 @@ test('captures async callbacks wrong domains parameter annotations missing owned
   '/** @param {Parameters<typeof copyValues>[0]} values */ export function bad(values){return fold(values,array([]),value=>copy(value));}',
   '/** @param {Parameters<typeof copyValues>[0]} values */ export function bad(values){return map(values,predicate);}/** @param {Parameters<typeof has>[0]} value */ function predicate(value){return has(value,\'keep\');}',
  ]){const value=imports+body;assert.throws(()=>translateHttpResourceCallerJavaScript(value,input(value)),body);}
- const typed=imports+'export function bad(values:Parameters<typeof copyValues>[0]){return filter(values,(value:Parameters<typeof has>[0])=>true);}';assert.throws(()=>translateHttpResourceCallerTypeScript(typed,input(typed,'caller.mts')));
+ const typed=imports+'export function bad(values:Parameters<typeof copyValues>[0]){return filter(values,(value:boolean)=>true);}';assert.throws(()=>translateHttpResourceCallerTypeScript(typed,input(typed,'caller.mts')));
  for(const name of ['Some','None','Ok','Err']){const value='export function '+name+'(){return null;}';assert.throws(()=>translateHttpResourceCallerJavaScript(value,input(value)),name);}
 });
 test('whole handwritten canonical native typed closures reproduce every original token',limits,()=>{

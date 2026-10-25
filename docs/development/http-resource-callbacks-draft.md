@@ -1,5 +1,8 @@
 # Resource collection callbacks: source draft
 
+The later [typed callback draft](http-resource-typed-callbacks-draft.md) extends
+this family's original explicit-arrow-type boundary.
+
 All implementation, receiving cases and native oracle source remain unrun.
 This family composes the actual existing map/filter-map, filter, any/all, find
 and fold libraries with the resource caller checker. Matching native/runtime

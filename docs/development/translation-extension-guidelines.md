@@ -71,6 +71,16 @@ emission must respect binding references, avoid unused-name collisions and
 reserve standard Result/Option constructor bindings. See the
 [unrun callback draft](http-resource-callbacks-draft.md).
 
+Explicit arrow annotations remain original-source obligations. Resolve their
+operation queries, nested callback parameters and list elements against actual
+imported APIs, and compare every written type with the native contextual domain
+before checking the complete callback body. Keep owning accumulators distinct
+from shared elements and Future returns distinct from their inner values. Erase
+only original native-selected annotation spans in the JavaScript target, retain
+the complete TypeScript target and both CST/source inverses, and keep annotation
+sinks outside checked semantic meta. See the
+[unrun typed callback draft](http-resource-typed-callbacks-draft.md).
+
 ### Source synchronization exports during issue #759
 
 Keep every public synchronization CLI in the shared

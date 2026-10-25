@@ -187,6 +187,15 @@ Some(Null), refusal and source-inverse cases are retained. General captures,
 typed-arrow inverses, generic iterators, namespace/bootstrap, production parity
 and every unfinished requirement remain open.
 
+The [original typed callback draft](http-resource-typed-callbacks-draft.md)
+adds actual imported operation/Parameters/ReturnType and list-element annotation
+rules, contextual owning/shared domain obligations, original native spans and
+complete JavaScript erasure inverses through nested branch/loop/callback flows.
+Full original source histories and independent unrun strict TS/JS, native token
+equivalence and refusal cases are retained. Broader aliases and generic/owned
+signatures, captures, namespace/bootstrap, production parity and every unfinished
+requirement remain open.
+
 The [local resource helper draft](http-resource-local-functions-draft.md) now
 checks actual callee bodies before callers, composes cold futures and single
 returned roots, preserves source order and separates imported/local binding
