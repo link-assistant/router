@@ -242,3 +242,11 @@ inverse, and freshly compare physical sources and retained originals at ancestor
 return. Descendant metadata remains DATA and supplies no semantic permission.
 See the [transitive history draft](transitive-source-history-draft.md). Whole-chain
 receiving and all new source regressions remain unrun during bulk drafting.
+
+Public async u64 inputs require actual dominating original entry guards. Written
+bigint/query types and copied metadata grant no range proof. Keep guard source,
+spans, polling position, maximum bounds and operation-specific limits separate;
+recheck the complete original body after checked meta round trips. Canonical
+Rust inverses must propose real JS guards before fresh checking. See the
+[guarded numeric draft](async-control-u64-draft.md). All new source and native
+oracle cases remain unrun during bulk drafting.

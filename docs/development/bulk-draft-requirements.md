@@ -75,3 +75,11 @@ Full original producer substitutions and independent unrun three-plan/source/
 inverse regressions are retained. Whole-chain receiving, remaining CI repairs,
 namespace/producer bootstrap, broader language/resource domains, production
 adoption/parity and every unfinished requirement remain open.
+
+The [guarded async numeric draft](async-control-u64-draft.md) now qualifies
+actual dominating original u64 entry guards, native count parameters, canonical
+Rust inverse guards and fresh paired numeric signatures. Complete originals,
+CST/source inverses and independent unrun JS/strict TS/native oracle/refusal
+source are retained. Broader numeric/control grammars, generic/recursive/async
+and HTTP resources, namespace/bootstrap, production adoption, receiving/CI
+repairs and every unfinished requirement remain open.

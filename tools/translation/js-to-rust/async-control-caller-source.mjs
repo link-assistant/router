@@ -7,6 +7,7 @@ import {ownershipCompiler} from './vendor/module-syntax.mjs';
 import {requireOwnedCancellationSources} from './owned-cancellation-contracts.mjs';
 import {ASYNC_CONTROL_NATIVE_SOURCE,ASYNC_CONTROL_RUNTIME_SOURCE,ASYNC_CONTROL_DECLARATIONS_SOURCE} from '../async-control-native-source.mjs';
 import {asyncControlCallerContract,asyncControlCallerName,checkAsyncControlCallerFlow} from './async-control-caller-flow.mjs';
+import {selectAsyncControlCallerBody} from './async-control-u64-guards.mjs';
 const RUNTIME=new URL('../async-control-runtime.mjs',import.meta.url),DECLARATIONS=new URL('../async-control-runtime.d.mts',import.meta.url),FLOW=new URL('../extensions/filesystem-effects-runtime.mjs',import.meta.url);
 const fail=message=>{throw new TypeError('Async control caller source: '+message);};
 export function captureAsyncControlCallerInputs(input){
@@ -39,29 +40,24 @@ export function analyzeAsyncControlCallerSource(stage,input){
   }
  }
  if(!functions.length||functions.length>4096)fail('complete bounded nonempty caller module required');
- const type=written=>{
-  if(written?.kind===ts.SyntaxKind.StringKeyword)return 'str';if(written?.kind===ts.SyntaxKind.BooleanKeyword)return 'bool';
-  // Bare bigint does not prove a u64 range. Counts initially come from closed
-  // exact u64 literals; public numeric domains need a separate checked guard.
+ const type=(written,guarded=false)=>{
+  if(written?.kind===ts.SyntaxKind.StringKeyword)return 'str';if(written?.kind===ts.SyntaxKind.BooleanKeyword)return 'bool';if(written?.kind===ts.SyntaxKind.BigIntKeyword){if(!guarded)fail('bare bigint does not prove a u64 range');return 'u64';}
+  // Numeric domains require their actual dominating original entry guard.
+  // A bare annotation or operation-derived query cannot supply that proof.
   if(ts.isIndexedAccessTypeNode(written)&&ts.isLiteralTypeNode(written.indexType)&&/^\d+$/u.test(written.indexType.literal.text??'')&&ts.isTypeReferenceNode(written.objectType)&&ts.isIdentifier(written.objectType.typeName)&&written.objectType.typeName.text==='Parameters'&&written.objectType.typeArguments?.length===1){
-   const query=written.objectType.typeArguments[0];if(!ts.isTypeQueryNode(query)||!ts.isIdentifier(query.exprName)||!imports.has(query.exprName.text))fail('resource type query requires its actual imported operation');const operation=asyncControlCallerContract(imports.get(query.exprName.text)),index=Number(written.indexType.literal.text),domain=operation?.args[index];if(['cancel-ref','sender-ref','receiver-mut'].includes(domain))return domain;
+   const query=written.objectType.typeArguments[0];if(!ts.isTypeQueryNode(query)||!ts.isIdentifier(query.exprName)||!imports.has(query.exprName.text))fail('resource type query requires its actual imported operation');const operation=asyncControlCallerContract(imports.get(query.exprName.text)),index=Number(written.indexType.literal.text),domain=operation?.args[index];if(['cancel-ref','sender-ref','receiver-mut'].includes(domain)||domain==='u64'&&guarded)return domain;
   }
   fail('written original primitive or operation-derived resource input required');
  };
  const rows=functions.map(item=>{
+  const bodyPlan=selectAsyncControlCallerBody(ts,item,imports,file,asyncControlCallerContract),guarded=new Set(bodyPlan.inputGuards.map(row=>row.name));
   const parameters=item.parameters.map(parameter=>{
    if(!ts.isIdentifier(parameter.name)||parameter.questionToken||parameter.dotDotDotToken||parameter.initializer||parameter.modifiers?.length)fail('ordinary required caller parameter');const local=name(parameter.name.text);if(locals.has(local))fail('parameter shadows an actual runtime or module binding');
-   const written=language==='TypeScript'?parameter.type:ts.getJSDocType(parameter);if(!written)fail('explicit native written input required');const domain=type(written),text=written.getText(file);
+   const written=language==='TypeScript'?parameter.type:ts.getJSDocType(parameter);if(!written)fail('explicit native written input required');const domain=type(written,guarded.has(local)),text=written.getText(file);
    if(language==='TypeScript')erase.push({span:[parameter.name.end,written.end],replacement:''});else annotate.push({span:[parameter.name.end,parameter.name.end],replacement:': '+text});return {name:local,type:domain};
   });
-  if(parameters.length>64||new Set(parameters.map(row=>row.name)).size!==parameters.length)fail('unique bounded actual caller parameters required');let statements=item.body.statements,lazy=false,allowColdTail=false;
-  if(statements.length===1&&ts.isReturnStatement(statements[0])&&ts.isCallExpression(statements[0].expression)&&ts.isIdentifier(statements[0].expression.expression)){
-   const call=statements[0].expression,imported=imports.get(call.expression.text);
-   if(imported==='deferFilesystemFlow'){
-    const callback=call.arguments[0];if(call.arguments.length!==1||call.typeArguments?.length||!ts.isArrowFunction(callback)||callback.parameters.length||callback.type||callback.typeParameters?.length||callback.modifiers?.length!==1||callback.modifiers[0].kind!==ts.SyntaxKind.AsyncKeyword||!ts.isBlock(callback.body))fail('one closed original deferred async body required');statements=callback.body.statements;lazy=true;
-   }else if(asyncControlCallerContract(imported)?.async){lazy=true;allowColdTail=true;}
-  }
-  const flow=checkAsyncControlCallerFlow(ts,statements,parameters,imports,{lazy,allowColdTail,moduleNames:locals});return {kind:'async-control-caller-function',name:item.name.text,exported:item.modifiers?.some(modifier=>modifier.kind===ts.SyntaxKind.ExportKeyword)??false,parameters,lazy,flow,returns:flow.type,span:{start:item.getStart(file),end:item.end}};
+  if(parameters.length>64||new Set(parameters.map(row=>row.name)).size!==parameters.length)fail('unique bounded actual caller parameters required');if(bodyPlan.inputGuards.some(guard=>!parameters.some(parameter=>parameter.name===guard.name&&parameter.type==='u64')))fail('entry guards must bind actual checked u64 parameters');const {statements,lazy,allowColdTail}=bodyPlan;
+  const flow=checkAsyncControlCallerFlow(ts,statements,parameters,imports,{lazy,allowColdTail,moduleNames:locals});return {kind:'async-control-caller-function',name:item.name.text,exported:item.modifiers?.some(modifier=>modifier.kind===ts.SyntaxKind.ExportKeyword)??false,parameters,inputGuards:bodyPlan.inputGuards,lazy,flow,returns:flow.type,span:{start:item.getStart(file),end:item.end}};
  });
  context.current();return {rows,source,context,language,erase,annotate,concreteSyntax:stage.concreteSyntax};
 }

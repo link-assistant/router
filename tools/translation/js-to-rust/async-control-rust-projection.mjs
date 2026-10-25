@@ -3,6 +3,7 @@
 import {posix} from 'node:path';
 import {ASYNC_CONTROL_CONTRACTS} from '../async-control-contracts.mjs';
 import {asyncControlCallerName} from './async-control-caller-flow.mjs';
+import {emitAsyncControlU64Guards} from './async-control-u64-guards.mjs';
 import {UnsupportedOwnedRustSource} from './async-control-rust-syntax.mjs';
 const fail=message=>{throw new UnsupportedOwnedRustSource('Async control proposal: '+message);};
 
@@ -16,7 +17,7 @@ export function projectAsyncControlRustFunctions(functions,{javascriptPath,runti
  }
  function inputType(text){
   text=text.replaceAll("&'a",'&');
-  if(text==='&str')return 'string';if(text==='bool')return 'boolean';
+  if(text==='&str')return 'string';if(text==='bool')return 'boolean';if(text==='u64')return 'bigint';
   const resources={'&crate::translation_async_control_core::Cancellation':['router_cancel_is_set',0],'&crate::translation_async_control_core::Sender':['router_async_send',0],'&mutcrate::translation_async_control_core::Receiver':['router_async_receive',0]};
   const resource=resources[text];if(!resource)fail('public input needs a matching original control ABI rule');return 'Parameters<typeof '+imported(resource[0])+'>['+resource[1]+']';
  }
@@ -74,7 +75,7 @@ export function projectAsyncControlRustFunctions(functions,{javascriptPath,runti
   if(!terminal)fail('every original control path needs a complete return');return '{\n'+lines.join('\n')+'\n}';
  }
  const sourceFunctions=functions.map(fn=>{
-  const parameters=fn.parameters.map(parameter=>({name:name(parameter.name),type:inputType(parameter.type)}));if(new Set(parameters.map(row=>row.name)).size!==parameters.length)fail('duplicate original caller parameters');const inner=body(fn.body,new Map(),fn.asynchronous),docs=parameters.map(row=>' * @param {'+row.type+'} '+row.name);
+  const parameters=fn.parameters.map(parameter=>({name:name(parameter.name),type:inputType(parameter.type)}));if(new Set(parameters.map(row=>row.name)).size!==parameters.length)fail('duplicate original caller parameters');const rawBody=body(fn.body,new Map(),fn.asynchronous),guards=emitAsyncControlU64Guards(fn.parameters.filter(parameter=>parameter.type==='u64').map(parameter=>name(parameter.name))),inner=guards?'{\n'+guards+'\n'+rawBody.slice(1):rawBody,docs=parameters.map(row=>' * @param {'+row.type+'} '+row.name);
   return (docs.length?'/**\n'+docs.join('\n')+'\n */\n':'')+(fn.exported?'export ':'')+'function '+name(fn.name)+'('+parameters.map(row=>row.name).join(', ')+') '+(fn.asynchronous?'{ return '+imported('deferFilesystemFlow',true)+'(async () => '+inner+'); }':inner);
  }).join('\n\n');
  const edge=target=>{const relative=posix.relative(posix.dirname(javascriptPath),target);return relative.startsWith('.')?relative:'./'+relative;},flowPath=posix.dirname(runtimePath)+'/extensions/filesystem-effects-runtime.mjs';

@@ -87,3 +87,5 @@ integration and the remaining requirement ledger are still open.
 - Draft physical JS/TS/Rust async-control source-unit synchronization, current paired borrow signatures, mirrored native/runtime source capture, original fresh atomic transactions and independent unrun receiving cases.
 
 - Draft complete transitive source-history forwarding through intermediate copy plans while preserving direct file membership, full CST inverses, fresh physical/original source guards and independent unrun regression source.
+
+- Draft source-bound u64 entry guards for async delay/capacity parameters, canonical Rust inverse guard proposals, paired numeric signatures and independent unrun JS/strict TS/native oracle/refusal source.
