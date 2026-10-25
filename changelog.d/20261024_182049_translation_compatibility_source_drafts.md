@@ -250,4 +250,11 @@ integration and the remaining requirement ledger are still open.
   exact source additions and actual Rust/JS/dts identity checks, with a source-only
   signature descriptor and no extra runtime asset. Retain eleven compiler source
   equations, complete library inverses and independent unrun receiving/drop cases;
-  generic caller lowering remains the next implementation prerequisite.
+  generic caller lowering is drafted in the following compiler batch.
+
+- Draft precise generic Option signatures, actual lexical template slots and
+  whole-value helper forwarding through JS/TS/meta/native paths, with freshly
+  joined library inputs and carrier-aware explicit argument docs. Preserve scalar
+  callback refusals, original pure Some/None/propagation body inverses and complete
+  paired-signature checking. Retain fourteen full source equations and independent
+  unrun receiving/refusal/native exact-once-drop case source.

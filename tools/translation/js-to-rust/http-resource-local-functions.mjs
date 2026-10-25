@@ -14,7 +14,7 @@ export function orderHttpResourceLocalFunctions(ts,functions,{groups=false}={}){
 export function httpResourceLocalContracts(rows){
  const contracts=new Map();let cells=0;
  for(const row of rows){
-  if(row.genericIdentity){contracts.set(row.name,{javascriptName:row.name,rustPath:row.name,args:['generic-identity'],ret:row.returns,async:false,local:true,genericIdentity:true,borrowedResult:false,rootArgument:null,rootArguments:[],release:null,releasedArguments:[],localRefusal:null,sourceAuthority:false,semanticAuthority:false});continue;}
+  if(row.genericIdentity){contracts.set(row.name,{javascriptName:row.name,rustPath:row.name,args:['generic-identity'],ret:row.returns,async:false,local:true,genericIdentity:true,genericCarrier:row.genericIdentity.carrier??null,borrowedResult:false,rootArgument:null,rootArguments:[],release:null,releasedArguments:[],localRefusal:null,sourceAuthority:false,semanticAuthority:false});continue;}
   const exits=row.flow.resourceExits;if(!Array.isArray(exits)||!exits.length)throw new TypeError('Complete original helper resource exits required');
   const releasedArguments=[];let partial=false;
   for(let index=0;index<row.parameters.length;index++){

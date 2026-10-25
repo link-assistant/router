@@ -818,6 +818,16 @@ Fresh optional source checks retain full original library rules, actual unchange
 bodies and declared generic carrier fields; a signature-only descriptor cannot
 be called as an unchecked operation. Eleven compiler source equations, complete
 three-language library inverses and independent refusal/receiving/native drop
-source remain unrun. Actual generic carrier lowering and the existing if-let
-generic regression still require implementation before verification; every other
-unfinished requirement remains open.
+source remain unrun. The following compiler successor drafts actual generic
+carrier lowering; every unfinished requirement remains open.
+
+The [generic Option carrier compiler draft](generic-option-carrier-draft.md)
+retains precise symbolic Option payloads, actual lexical template slots, fresh
+qualified library source joins and whole-value forwarding through JS, strict TS,
+meta and native emission. Scalar callbacks and unconstrained slots cannot use
+carrier helpers; explicit payload arguments retain whole-carrier docs. Pure
+original Some/None-return, let-else and propagation passthroughs retain complete
+original body inverses and require fresh whole-target reproduction. Fourteen
+complete source equations and independent receiving/refusal/native drop source
+are unrun. Broader patterns, architecture/producer closure, production adoption,
+parity and every unfinished requirement remain open.

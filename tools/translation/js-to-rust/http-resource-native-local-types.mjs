@@ -18,7 +18,7 @@ export function requireHttpResourceNativeLocalTypes(meta,normalization){
  }
  for(const annotation of annotations){
   tick(0);const owner=functions.get(annotation.function);if(!owner)fail('one actual original function owner required');const {fn,locals}=owner,found=locals.get(annotation.target)??[];
-  const expected=fn.genericIdentity&&annotation.type===fn.genericIdentity.typeParameter?'generic:'+annotation.type:httpResourceNativeDomain(annotation.type);
+  const generic=fn.genericIdentity,signature=generic?.carrier==='option'?'Option<'+generic.typeParameter+'>':generic?.typeParameter,expected=generic&&annotation.type===signature?(generic.carrier==='option'?'optional:generic:':'generic:')+generic.typeParameter:httpResourceNativeDomain(annotation.type);
   if(found.length!==1||found[0]!==expected)fail('written native type must match one independently checked original local value');
  }
 }
