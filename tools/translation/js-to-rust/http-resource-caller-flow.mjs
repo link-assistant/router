@@ -88,7 +88,7 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
   for(let index=0;index<operation.args.length;index++){
    const role=operation.args[index],argument=node.arguments[index];let value,candidate=argument,grouping=0;while(ts.isParenthesizedExpression(candidate)){if(++grouping>16)fail('bounded actual call argument grouping required');candidate=candidate.expression;}
    if(['json-callback','value-callback'].includes(role))value=collectionCallback(candidate,operation.callbackContract,role);
-   else if(ts.isCallExpression(candidate)||ts.isAwaitExpression(candidate)||ts.isBinaryExpression(candidate)||ts.isConditionalExpression(candidate)){
+   else if(ts.isCallExpression(candidate)||ts.isAwaitExpression(candidate)||ts.isBinaryExpression(candidate)||ts.isPrefixUnaryExpression(candidate)||ts.isConditionalExpression(candidate)||ts.isArrayLiteralExpression(candidate)&&role!=='empty-json-list'){
     value=expression(candidate,{level:level+1});if(role==='json-ref'&&value.type==='json')value={kind:'temporary-json-borrow',value,type:'json-ref'};else if(role==='json-list-ref'&&value.type==='json-list-owned')value={kind:'temporary-json-list-borrow',value,type:'json-list-ref'};else if(role==='bytes-ref'&&value.type==='bytes-owned')value={kind:'temporary-bytes-borrow',value,type:'bytes-ref'};
    }else value=operand(argument,role,{move:!isLoan(role)&&role!=='str'});
    if(value.type!==role)fail('actual complete operation argument domain differs');
@@ -116,6 +116,9 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
  function expression(node,flags={}){
   tick();const level=flags.level??depth;if(level>160)fail('complete scalar expression depth bound');if(ts.isParenthesizedExpression(node))return expression(node.expression,{...flags,level:level+1});
   if(ts.isPrefixUnaryExpression(node)&&node.operator===ts.SyntaxKind.ExclamationToken||ts.isBinaryExpression(node)&&[ts.SyntaxKind.AmpersandAmpersandToken,ts.SyntaxKind.BarBarToken].includes(node.operatorToken.kind))return condition(node,level+1);
+  if(ts.isArrayLiteralExpression(node)){
+   if(node.elements.length>4096||node.elements.some(value=>ts.isOmittedExpression(value)||ts.isSpreadElement(value)))fail('bounded dense original owned JSON list literal required');const elements=node.elements.map(value=>expression(value,{level:level+1}));if(elements.some(value=>value.type!=='json'||httpResourceValueRoots(value).length))fail('each original list element must be a complete owned JSON value');return {kind:'json-list-literal',elements,type:'json-list-owned'};
+  }
   if(ts.isConditionalExpression(node)){
    const test=condition(node.condition,level+1),entry=new Map(snapshotIncoming()),yes=expression(node.whenTrue,{...flags,level:level+1}),yesState=new Map(snapshotIncoming());environment.clear();for(const [id,row]of entry)environment.set(id,{...row,roots:httpResourceValueRoots(row)});const no=expression(node.whenFalse,{...flags,level:level+1}),noState=new Map(snapshotIncoming());requireLoopState(yesState,noState);if(yes.type!==no.type)fail('every actual conditional value arm must retain its complete native domain');const roots=[...new Set([...httpResourceValueRoots(yes),...httpResourceValueRoots(no)])];return {kind:'conditional',condition:test,yes,no,type:yes.type,root:roots[0]??null,roots};
   }
@@ -235,6 +238,7 @@ export function emitHttpResourceCallerFlow(flow,{localFunctions=null,continueCon
    return (value.owned?'&':'')+value.name;
   }
   if(value.kind==='integer')return value.value+'_u64';if(value.kind==='string')return rustString(value.value);if(value.kind==='boolean')return String(value.value);if(value.kind==='unit')return '()';if(value.kind==='empty-json-list')return '[]';
+  if(value.kind==='json-list-literal')return '::std::vec!['+value.elements.map(expression).join(', ')+']';
   if(value.kind==='conditional')return 'if '+expression(value.condition)+' { '+expression(value.yes)+' } else { '+expression(value.no)+' }';
   if(value.kind==='compare')return '('+expression(value.left)+' '+value.operator+' '+expression(value.right)+')';
   if(value.kind==='not')return '(!'+expression(value.value)+')';if(value.kind==='and'||value.kind==='or')return '('+expression(value.left)+(value.kind==='and'?' && ':' || ')+expression(value.right)+')';

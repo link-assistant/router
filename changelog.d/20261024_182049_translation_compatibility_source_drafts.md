@@ -152,3 +152,5 @@ integration and the remaining requirement ledger are still open.
 - Draft complete compiler export partitions with every original source/license, the existing logical compiler bound and unchanged per-file/global-byte/Git/deadline constraints, retaining full original exporter/CLI/receiving histories and independent unrun whole-closure and 2,049-input boundary cases.
 
 - Draft strict Boolean value negation and short-circuit locals/arguments/returns through original state checks and native inverses, with full source histories and independent unrun truth-table, lazy-failure, domain and forged-meta source in gated CI discovery.
+
+- Draft dense actual owned JSON list literals with ordered element/move checks, collection/shared-iteration composition and complete native vector inverses, retaining original histories and independent unrun JS/strict TS/native boundary and refusal source in gated CI discovery.

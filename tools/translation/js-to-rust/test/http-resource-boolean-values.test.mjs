@@ -13,10 +13,11 @@ export function equal(left:boolean,right:boolean){return (!left)===(!right);}
 export function lazyAnd(flag:boolean){return flag&&unwrap(err('selected right side'));}
 export function lazyOr(flag:boolean){return flag||unwrap(err('selected right side'));}
 export function argument(flag:boolean){return negated(flag&&true);}
+export function argumentNot(flag:boolean){return negated(!flag);}
 `;
 function input(value,sourcePath='caller.mts'){return {sourcePath,...httpResourceReceivingData([{path:sourcePath,source:value}])};}
 test('strict Boolean locals arguments and returns retain original short-circuit selection',limits,async()=>{
- const result=translateHttpResourceCallerTypeScript(source,input(source)),javascript=translateHttpResourceCallerJavaScript(result.javascript,input(result.javascript,'caller.mjs'));assert.ok(sameRustSourceSyntax(result.rust,javascript.rust));await verifyHttpResourceTargets(result,async api=>{for(const left of [false,true])for(const right of [false,true]){assert.equal(api.negated(left),!left);assert.equal(api.combined(left,right),(left&&right)||!left);assert.equal(api.equal(left,right),left===right);assert.equal(api.argument(left),!left);}assert.equal(api.lazyAnd(false),false);assert.equal(api.lazyOr(true),true);assert.throws(()=>api.lazyAnd(true),/selected right side/u);assert.throws(()=>api.lazyOr(false),/selected right side/u);});assert.equal(result.rustExecuted,false);
+ const result=translateHttpResourceCallerTypeScript(source,input(source)),javascript=translateHttpResourceCallerJavaScript(result.javascript,input(result.javascript,'caller.mjs'));assert.ok(sameRustSourceSyntax(result.rust,javascript.rust));await verifyHttpResourceTargets(result,async api=>{for(const left of [false,true])for(const right of [false,true]){assert.equal(api.negated(left),!left);assert.equal(api.combined(left,right),(left&&right)||!left);assert.equal(api.equal(left,right),left===right);assert.equal(api.argument(left),!left);assert.equal(api.argumentNot(left),left);}assert.equal(api.lazyAnd(false),false);assert.equal(api.lazyOr(true),true);assert.throws(()=>api.lazyAnd(true),/selected right side/u);assert.throws(()=>api.lazyOr(false),/selected right side/u);});assert.equal(result.rustExecuted,false);
  const inverse=translateHttpResourceCallerRust(result.rust,{...input(result.rust,'src/caller.rs'),javascriptPath:'caller.mjs'});assert.ok(sameRustSourceSyntax(result.rust,inverse.rust));
 });
 test('logical values cannot admit JavaScript truthiness or hide incompatible skipped-arm state',limits,()=>{

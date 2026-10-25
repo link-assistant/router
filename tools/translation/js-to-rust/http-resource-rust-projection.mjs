@@ -25,6 +25,7 @@ export function projectHttpResourceRustFunctions(functions,{javascriptPath,runti
  function domain(node,locals,depth=0){
   tick(depth);node=borrowed(node,depth+1);if(node.kind==='name')return locals.get(node.name)?.type??null;if(['boolean','string','integer'].includes(node.kind))return {boolean:'bool',string:'str',integer:node.type}[node.kind];
   if(node.kind==='field'&&node.name==='await')return domain(node.value,locals,depth+1);if(node.kind==='effect-try')return httpResourceResult(domain(node.value,locals,depth+1))?.value??null;
+  if(node.kind==='json-list-literal')return 'json-list-owned';
   if(node.kind==='choose'){if(node.yes.statements.length||node.no.statements.length||!node.yes.tail||!node.no.tail)return null;const yes=domain(node.yes.tail,locals,depth+1),no=domain(node.no.tail,locals,depth+1);return yes===no?yes:null;}
   if(node.kind==='call'){if(['Ok','Some'].includes(node.path)&&node.args.length===1){const value=unwrap(node.args[0],depth+1);return value?.kind==='name'?locals.get(value.name)?.fullType??null:null;}return operation(node.path).ret;}if(['json-array','json-null','json-scalar'].includes(node.kind))return 'json';if(node.kind==='binary'&&['&&','||','==','!=','<','<=','>','>='].includes(node.op))return 'bool';return null;
  }
@@ -36,6 +37,7 @@ export function projectHttpResourceRustFunctions(functions,{javascriptPath,runti
   if(['borrow','dereference'].includes(node.kind))return expression(borrowed(node,depth+1),locals,asynchronous,depth+1);
   if(node.kind==='name'){const id=name(node.name);return locals.get(id)?.guarded?id+'.field0':id;}
   if(node.kind==='choose'){if(node.yes.statements.length||node.no.statements.length||!node.yes.tail||!node.no.tail)fail('canonical conditional value requires complete expression-only native arms');return '('+expression(node.condition,locals,asynchronous,depth+1)+' ? '+expression(node.yes.tail,locals,asynchronous,depth+1)+' : '+expression(node.no.tail,locals,asynchronous,depth+1)+')';}
+  if(node.kind==='json-list-literal')return '['+node.elements.map(value=>expression(value,locals,asynchronous,depth+1)).join(', ')+']';
   if(node.kind==='unit')return 'null';if(node.kind==='integer'){if(node.type!=='u64')fail('closed unsigned count required');return node.value+'n';}if(node.kind==='boolean')return String(node.value);if(node.kind==='string')return JSON.stringify(node.value);
   if(node.kind==='json-null')return imported('json_macro_null')+'()';if(node.kind==='json-array'){if(node.elements.length)fail('nonempty JSON arrays require complete element source rules');return imported('json_macro_array')+'([])';}
   if(node.kind==='json-scalar'){const type=domain(node.value,locals,depth+1),form={str:'string',bool:'bool',u64:'u64'}[type];if(!form)fail('native JSON scalar needs an actual whole source scalar domain');return imported('json_macro_'+form)+'('+expression(node.value,locals,asynchronous,depth+1)+')';}

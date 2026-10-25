@@ -598,3 +598,10 @@ short-circuit operators. Preserve selected-side laziness, require actual Boolean
 domains and keep skipped-arm ownership state valid. See the
 [strict Boolean value draft](http-resource-boolean-values-draft.md); complete
 original histories and all receiving/native cases remain unrun.
+
+Owned list literals require dense bounded actual elements, complete JSON domains
+and left-to-right moves. Preserve original empty JSON-macro behavior, qualify
+fully written native constructors and reject unknown macro owners. Compose
+backing-root iteration and whole-target checking rather than treating a vector
+spelling as authority. See the [owned list literal draft](http-resource-list-literals-draft.md);
+all new source/runtime/native qualification remains unrun.

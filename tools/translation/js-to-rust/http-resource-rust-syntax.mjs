@@ -99,6 +99,7 @@ export class HttpResourceRustReader {
   if(token.type==='number'){this.next();const found=/^(0|[1-9][0-9]*)_(u64|i64)$/u.exec(token.text);if(!found||found[1].length>20||BigInt(found[1])>(found[2]==='i64'?9223372036854775807n:18446744073709551615n))fail('canonical bounded suffixed integer required');return {kind:'integer',value:found[1],type:found[2]};}
   if(this.eat('true'))return {kind:'boolean',value:true};if(this.eat('false'))return {kind:'boolean',value:false};
   const path=this.path();
+  if(path==='::std::vec!'){this.expect('[');const elements=[];while(!this.eat(']')){if(elements.length>=4096)fail('complete native owned JSON list element bound');elements.push(this.expression(environment,0,depth+1));if(!this.is(']'))this.expect(',');}return {kind:'json-list-literal',elements};}
   if(path==='crate::translation_core::json!')return this.jsonMacro(environment,depth+1);
   if(this.eat('('))return {kind:'call',path,args:this.arguments(environment,depth+1)};
   if(environment.has(path))return {kind:'temporary',name:path,value:environment.get(path)};

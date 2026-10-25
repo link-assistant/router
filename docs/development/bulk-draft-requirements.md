@@ -422,3 +422,10 @@ condition/state checker and native inverse. Full originals and independent unrun
 JS/strict TS/native/refusal cases are retained; a thirteenth oracle joins gated
 CI discovery. Wider language domains, namespace/bootstrap, production parity
 and every unfinished requirement remain open.
+
+The [owned list literal draft](http-resource-list-literals-draft.md) adds dense
+actual JSON list constructors, ordered owned element checks, collection/iteration
+composition and complete fully qualified native vector inverses. Full originals
+and independent unrun JS/strict TS/native/refusal cases are retained; a
+fourteenth oracle joins gated CI discovery. Wider collection/language domains,
+namespace/bootstrap, production parity and every unfinished requirement remain open.
