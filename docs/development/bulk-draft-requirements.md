@@ -740,3 +740,13 @@ Rust metadata and never issue stability-erasure spans. Four complete originals,
 both rule phases, independent JS/strict TS/refusal and native oracle source
 remain unrun. No-derive adoption, architecture/producer closure, broader language
 and effects, production parity and every unfinished requirement remain open.
+
+The [source-bound no-derive adoption draft](source-bound-core-adoption-draft.md)
+adds a separate private context for ordinary source graphs, avoiding derive
+archive/proof construction when no derive is present. Genuine crate-local
+struct/const/function imports retain their original declarations, tool ownership,
+source/profile joins and refusal rules. Actual derives delegate to the existing
+complete-output issuer. Retained Cargo strings grant no dependency authority.
+Four complete originals, both phases and independent JS/strict TS/native/refusal
+source remain unrun. Wider executable domains, architecture/producer closure,
+production parity and every unfinished requirement remain open.

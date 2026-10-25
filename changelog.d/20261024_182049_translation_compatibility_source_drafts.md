@@ -201,3 +201,8 @@ integration and the remaining requirement ledger are still open.
   stability metadata, source/profile joins and all executable checks. Retain
   four complete source equations and independent unrun JS/strict-TS/native and
   refusal case source; no whole translation or verification claim is made.
+
+- Draft a separate original-source adoption lane for no-derive modules and named
+  crate-local imports, avoiding derive archive/proof work and retaining explicit
+  missing dependency authority. Compose the selected primitive/base64 producers,
+  four complete source equations and independent unrun behavioral/refusal source.

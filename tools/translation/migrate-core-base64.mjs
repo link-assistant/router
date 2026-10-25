@@ -7,7 +7,7 @@ import {resolveModuleGraph} from './project.mjs';
 import {translationProgressReporter} from './translation-progress.mjs';
 import {originalSourceModuleItems} from './source-module-views.mjs';
 import {originalDeclarationHeader,originalUseDeclarationLeaves} from './module-bindings.mjs';
-import {createToolAwareEnclosingCoreAdoptionProducerContext as createCoreAdoptionProducerContext,finishToolAwareCoreAdoptionProducerContext as finishCoreAdoptionProducerContext,createToolAwareCoreAdoptionNonTraitImportSelector as createCoreAdoptionNonTraitImportSelector} from './core-adoption-producer-context.mjs';
+import {createSourceBoundToolAwareCoreAdoptionProducerContext as createCoreAdoptionProducerContext,finishSourceBoundToolAwareCoreAdoptionProducerContext as finishCoreAdoptionProducerContext,createSourceBoundToolAwareCoreAdoptionNonTraitImportSelector as createCoreAdoptionNonTraitImportSelector} from './core-adoption-producer-context.mjs';
 import {coreTypeProducerProblemsForModule} from './tool-aware-core-primitives-candidate.mjs';
 import {compilationProfile,itemConfiguration,PRODUCTION_PROFILE} from './cfg-profile.mjs';
 import {deriveDependencyProfile} from './derive-dependencies.mjs';

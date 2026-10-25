@@ -12,7 +12,7 @@ import {captureSourceModuleViews,originalSourceModuleItems} from './source-modul
 import {originalDeclarationHeader,originalUseDeclarationLeaves} from './module-bindings.mjs';
 import {compilationProfile as normalizeProfile,itemConfiguration,isInertConditionalAttribute} from './cfg-profile.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions,serializeConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
-import {createToolAwareEnclosingCoreAdoptionProducerContext as createCoreAdoptionProducerContext,coreAdoptionNamespaceAttributeClosed as coreAdoptionDeriveAttributeClosed,coreAdoptionProducerBindings,finishToolAwareCoreAdoptionProducerContext as finishCoreAdoptionProducerContext} from './core-adoption-producer-context.mjs';
+import {createSourceBoundToolAwareCoreAdoptionProducerContext as createCoreAdoptionProducerContext,coreAdoptionSourceBoundNamespaceAttributeClosed as coreAdoptionDeriveAttributeClosed,coreAdoptionProducerBindings,finishSourceBoundToolAwareCoreAdoptionProducerContext as finishCoreAdoptionProducerContext} from './core-adoption-producer-context.mjs';
 
 const hash=source=>createHash('sha256').update(source).digest('hex');
 const fail=message=>{throw new TypeError('Core borrowed-text migration: '+message);};

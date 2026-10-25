@@ -346,3 +346,107 @@ export function createToolAwareCoreAdoptionNonTraitImportSelector({modules,compi
  };
  return {select,verify};
 }
+
+// Additive original-source lane avoids derive archive work when no derive exists.
+
+export function createSourceBoundToolAwareCoreAdoptionProducerContext({modules,compilationProfile:inputProfile,dependencyInputs}){
+ const inputs=dependencySources(dependencyInputs);if(!inputs)return null;
+ const profile=compilationProfile(inputProfile);
+ // Unknown producers remain in original binding resolution. This scan does not
+ // expand macros or certify the absence of declarations they could generate.
+ const hasDerive=modules.some(module=>originalSourceModuleItems(module).some(item=>itemConfiguration(item.tokens,profile).attributes.some(attribute=>attribute.name==='derive')));
+ if(hasDerive)return createToolAwareEnclosingCoreAdoptionProducerContext({modules,compilationProfile:profile,dependencyInputs:inputs});
+ const externalModules=registeredStandardHostBindings(),tool=createConfiguredVariantEnclosingToolAttributeContext({modules,externalModules,compilationProfile:profile}),builtin=createTokenBoundRegisteredBuiltinCallerAttributeScope();
+ const origins=modules.map(module=>({module,file:module.file,path:[...module.path],source:module.source,view:module.sourceView,condition:module.configurationCondition,profile:JSON.stringify(module.compilationProfile)}));
+ const binding=resolveEnclosingNamespaceModuleBindings({modules,externalModules,toolContext:tool,compilationProfile:profile});
+ const state={modules,profile,dependencies:null,derive:null,bang:null,original:{modules},binding,selected:new Map(),tool,builtin,origins,sourceDependencyInputs:inputs};
+ const token=Object.freeze({schema:'private-source-bound-core-adoption-producer-context-v1'});contexts.set(token,state);return token;
+}
+
+export function coreAdoptionSourceBoundNamespaceAttributeClosed(context,source,file,localPath,item,attribute){
+ if(context===null||context===undefined)return false;const state=toolAwareCoreState(context);
+ const module=sourceModule(state,source,file,localPath);if(!module||module.configurationCondition!=='active')return false;
+ const actual=originalSourceModuleItems(module).find(row=>row.start===item.start&&row.end===item.end&&row.term===item.term&&row.name===item.name);
+ if(!actual||JSON.stringify(actual.tokens)!==JSON.stringify(item.tokens))return false;
+ const condition=itemConfiguration(actual.tokens,state.profile),selected=condition.attributes.find(row=>row.span.start===attribute.span.start&&row.span.end===attribute.span.end&&row.name===attribute.name&&JSON.stringify(row.tokens)===JSON.stringify(attribute.tokens));
+ if(condition.status!=='active'||!selected)return false;
+ if(toolAttributeAt(state.tool,module,actual,selected))return true;
+ // Namespace passivity preserves the stability/feature attribute in Rust.
+ // It is never an executable attribute erasure or generated body theorem.
+ if(state.builtin.at(module,actual,selected)){state.builtin.finish();return true;}
+ return !!state.derive&&coreAdoptionDeriveAttributeClosed(context,source,file,localPath,actual,selected);
+}
+export function coreAdoptionSourceBoundProducerClosedAttributeSpans(context,module){
+ if(context===null)return [];const state=toolAwareCoreState(context),spans=state.derive?coreAdoptionProducerClosedAttributeSpans(context,module):[];
+ if(!state.modules.includes(module)||module.configurationCondition!=='active')return spans;
+ const original=sourceModule(state,module.source,module.file,module.sourceView?.modulePath??module.path);if(!original)return spans;
+ for(const item of originalSourceModuleItems(original)){
+  const condition=itemConfiguration(item.tokens,state.profile);if(condition.status!=='active')continue;
+  for(const attribute of condition.attributes)if(toolAttributeAt(state.tool,original,item,attribute))spans.push({span:[attribute.span.start,attribute.span.end],expected:module.source.slice(attribute.span.start,attribute.span.end),position:'container',name:attribute.name});
+ }
+ toolAwareCoreState(context);return spans;
+}
+export function finishSourceBoundToolAwareCoreAdoptionProducerContext(context){
+ if(context===null)return null;const state=toolAwareCoreState(context),result=state.derive?finishCoreAdoptionProducerContext(context):{schema:'core-adoption-original-producer-effects-v1',producerMode:'original-source-without-derive-v1',dependencyInputs:{...state.sourceDependencyInputs},dependenciesDigest:null,deriveDependenciesVerified:false,compilationProfile:state.profile,deriveDiagnostics:[],bangDiagnostics:[],selections:[],runtimeAuthority:false,generatedImplBehavior:false},registeredSource=state.builtin.finish();
+ // Rejoin every selected original tool certificate, including certificates not
+ // exercised by a particular source proposal, against the complete graph.
+ for(const certificate of state.tool.certificates){
+  const module=state.original.modules.find(row=>row.file===certificate.source&&same(row.path,certificate.module));
+  const item=module&&originalSourceModuleItems(module).find(row=>row.start===certificate.itemSpan.start&&row.end===certificate.itemSpan.end);
+  if(!item||!toolAttributeAt(state.tool,module,item,certificate.attribute))fail('original tool certificate changed');
+ }
+ toolAwareCoreState(context);
+ return {...result,originalToolAttributeContext:state.tool,registeredBuiltinAttributeSource:registeredSource,sourceAuthority:false,semanticAuthority:false,executableAdmission:false,crossInvocationCache:false};
+}
+export function createSourceBoundToolAwareCoreAdoptionNonTraitImportSelector({modules,compilationProfile:inputProfile,context=null}){
+ const state=context===null?null:toolAwareCoreState(context),profile=compilationProfile(inputProfile);
+ if(state&&(JSON.stringify(state.profile)!==JSON.stringify(profile)||state.modules.length!==modules.length||state.modules.some((module,at)=>module!==modules[at])))fail('nontrait context source/profile differs');
+ const hash=source=>createHash('sha256').update(source).digest('hex'),nonTraits=new Set(['struct','enum','union','fn','const','static','mod']);
+ const inert=new Set(['cfg','doc','must_use','allow','warn','deny','forbid','expect','inline','cold','deprecated','track_caller']);
+ const origins=modules.map(module=>({module,file:module.file,path:[...module.path],source:module.source,view:module.sourceView,condition:module.configurationCondition,profile:JSON.stringify(module.compilationProfile)}));
+ const verify=()=>{if(state)toolAwareCoreState(context);if(modules.length!==origins.length||modules.some((module,at)=>module!==origins[at].module)||origins.some(row=>row.module.file!==row.file||row.module.source!==row.source||row.module.sourceView!==row.view||row.module.configurationCondition!==row.condition||JSON.stringify(row.module.compilationProfile)!==row.profile||!same(row.module.path,row.path)))fail('nontrait original graph changed');};
+ const scopeFor=module=>state.binding.scopes.filter(scope=>scope.file===module.file&&same(scope.path,module.path));
+ function attributesClosed(module,item,condition){
+  return condition.attributes.every(attribute=>{
+   if(inert.has(attribute.name))return true;
+   if(coreAdoptionSourceBoundNamespaceAttributeClosed(context,module.source,module.file,module.sourceView?.modulePath??module.path,item,attribute))return true;
+   if(attribute.name==='derive')return coreAdoptionDeriveAttributeClosed(context,module.source,module.file,module.sourceView?.modulePath??module.path,item,attribute);
+   // Container helpers must belong to this exact privately captured derive
+   // invocation and its original registration, not to their written name.
+   if(!state.derive)return false;
+   const input=deriveFootprintAt(state.derive,module,item),actual=input?.attributes.find(row=>row.position==='container'&&row.helpers&&row.span.start===attribute.span.start&&row.span.end===attribute.span.end&&JSON.stringify(row.tokens)===JSON.stringify(attribute.tokens));
+   if(!actual||input.dimensions.attributeMacroComplete!==true)return false;
+   const derives=condition.attributes.filter(row=>row.name==='derive');
+   return derives.length>0&&derives.every(row=>coreAdoptionDeriveAttributeClosed(context,module.source,module.file,module.sourceView?.modulePath??module.path,item,row))&&input.owners.some(owner=>registeredDeriveHelperSource({dependencies:state.dependencies,target:owner.target,helperName:actual.name}));
+  });
+ }
+ function closedOwner(module){
+  const scopes=scopeFor(module);if(scopes.length!==1||scopes[0].configurationCondition!=='active'||scopes[0].unresolvedTypeScope)return false;
+  return originalSourceModuleItems(module).every(item=>{
+   if(item.comment)return true;const condition=itemConfiguration(item.tokens,profile);if(condition.status==='inactive')return true;
+   if(condition.status!=='active'||!attributesClosed(module,item,condition))return false;
+   if(item.term==='use')try{return originalUseDeclarationLeaves(item,module.path).every(leaf=>!leaf.glob);}catch{return false;}
+   const header=originalDeclarationHeader(item,module.path);
+   return !!header&&header.kind===item.term||item.term==='impl';
+  });
+ }
+ const select=(module,item,leaf)=>{
+  verify();if(!state||!origins.some(row=>row.module===module)||module.configurationCondition!=='active'||leaf.glob||leaf.name==='_')return null;
+  const originals=originalSourceModuleItems(module).filter(row=>row.term==='use'&&row.start===item.start&&row.end===item.end);
+  if(originals.length!==1||JSON.stringify(originals[0].tokens)!==JSON.stringify(item.tokens)||!originalUseDeclarationLeaves(originals[0],module.path).some(row=>row.name===leaf.name&&same(row.segments,leaf.segments)))return null;
+  const scopes=scopeFor(module);if(scopes.length!==1)return null;
+  const bindings=scopes[0].bindings.filter(row=>row.name===leaf.name&&row.source===module.file&&row.span?.start===item.start&&row.span?.end===item.end);
+  if(!bindings.length||bindings.some(row=>row.status!=='resolved'||!nonTraits.has(row.kind)||row.target?.[0]!=='crate'||!row.declaration))return null;
+  const roles=[];
+  for(const binding of bindings){
+   const declaration=binding.declaration,owners=modules.filter(owner=>owner.file===declaration.source&&same(['crate',...owner.path,binding.target.at(-1)],binding.target));
+   if(owners.length!==1||!closedOwner(owners[0]))return null;const owner=owners[0];
+   const declared=originalSourceModuleItems(owner).filter(row=>row.start===declaration.span.start&&row.end===declaration.span.end&&row.term===binding.kind&&originalDeclarationHeader(row,owner.path)?.name===binding.target.at(-1));
+   if(declared.length!==1)return null;const selected=declared[0],condition=itemConfiguration(selected.tokens,profile);
+   if(condition.status!=='active'||!attributesClosed(owner,selected,condition))return null;
+   roles.push({kind:binding.kind,namespace:binding.namespace,target:[...binding.target],declaration:{file:owner.file,module:[...owner.path],sourceSha256:hash(owner.source),span:[selected.start,selected.end],original:owner.source.slice(selected.start,selected.end)},binding});
+  }
+  verify();state.builtin.finish();return {kind:'original-producer-closed-nontrait-candidate',import:{file:module.file,sourceSha256:hash(module.source),span:[item.start,item.end],segments:[...leaf.segments]},roles,namespaceComplete:false,originalDispatchProved:false,executableAdmission:false};
+ };
+ return {select,verify};
+}
