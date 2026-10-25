@@ -20,6 +20,7 @@ import {captureHttpResourceRecursiveSignature,httpResourceRecursivePrototype} fr
 import {captureHttpResourceFunctionReturnAnnotation} from './http-resource-function-returns.mjs';
 import {createHttpResourceWrittenAnnotationReader} from './http-resource-callback-annotations.mjs';
 import {httpResourcePublicInputDomain} from './http-resource-public-domains.mjs';
+import {expandHttpResourceTypeAliasSource} from './http-resource-type-aliases.mjs';
 import {requireHttpResourceFilesystemSources} from './http-resource-filesystem-source.mjs';
 import {captureHttpResourceTypeScriptParameterDoc,finishHttpResourceTypeScriptDocs} from './http-resource-typescript-docs.mjs';
 const RUNTIME=new URL('../async-control-runtime.mjs',import.meta.url),DECLARATIONS=new URL('../async-control-runtime.d.mts',import.meta.url),FLOW=new URL('../extensions/filesystem-effects-runtime.mjs',import.meta.url);
@@ -42,9 +43,10 @@ export function captureHttpResourceCallerInputs(input){
 export function analyzeHttpResourceCallerSource(stage,input){
  const context=captureHttpResourceCallerInputs(input),source=stage.source,language=stage.concreteSyntax.language,ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('lockfile TypeScript5.9.3 required');
  const file=ts.createSourceFile(context.sourcePath,source,ts.ScriptTarget.Latest,true,language==='TypeScript'?ts.ScriptKind.TS:ts.ScriptKind.JS);if(file.parseDiagnostics.length)fail('complete original native caller grammar required');if(source!==context.callerSource)fail('complete actual caller source snapshot differs');
- const imports=new Map(),locals=new Set(),functions=[],erase=[],annotate=[],typeDocsPrinter=language==='TypeScript'?ts.createPrinter({removeComments:true}):null;
+ const imports=new Map(),aliases=new Map(),locals=new Set(),functions=[],erase=[],annotate=[],typeDocsPrinter=language==='TypeScript'?ts.createPrinter({removeComments:true}):null;
  const name=httpResourceCallerName;
  for(const item of file.statements){
+  if(ts.isTypeAliasDeclaration(item)){if(language!=='TypeScript'||item.typeParameters?.length||item.modifiers?.some(modifier=>modifier.kind!==ts.SyntaxKind.ExportKeyword))fail('original nongeneric type-only alias required');const id=name(item.name.text);if(aliases.has(id)||aliases.size>=4096)fail('complete unique bounded original type aliases required');aliases.set(id,item);erase.push({span:[item.getStart(file),item.end],replacement:''});continue;}
   if(ts.isImportDeclaration(item)){
    if(item.modifiers?.length||item.attributes||!ts.isStringLiteral(item.moduleSpecifier)||!item.moduleSpecifier.text.startsWith('.')||item.importClause?.isTypeOnly||item.importClause?.name||!item.importClause?.namedBindings||!ts.isNamedImports(item.importClause.namedBindings))fail('transparent relative named runtime import required');
    const target=posix.normalize(posix.join(posix.dirname(context.sourcePath),item.moduleSpecifier.text));if(!target.startsWith(context.runtimeRoot+'/'))fail('actual registered runtime path required');
@@ -56,23 +58,23 @@ export function analyzeHttpResourceCallerSource(stage,input){
  if([...imports.values()].some(id=>httpResourceCallerContract(id)?.family==='option-callback'))context.requireOptionCallbackSources();
  requireHttpResourceFilesystemSources(imports,context);
  if(!functions.length||functions.length>4096)fail('complete bounded nonempty caller module required');
- let annotationCells=0;const describeInput=createHttpResourceWrittenAnnotationReader(ts,imports,()=>{if(++annotationCells>100000)fail('complete public signature source-cell bound');});
+ let annotationCells=0;const describeInput=createHttpResourceWrittenAnnotationReader(ts,imports,()=>{if(++annotationCells>100000)fail('complete public signature source-cell bound');},{aliases});for(const alias of aliases.values())describeInput(alias.type);
  const type=(written,guarded=false)=>{const actual=describeInput(written);if(actual.kind!=='domain'||!httpResourcePublicInputDomain(actual.type,{guarded}))fail('written actual shared or owned input domain and original u64 entry guard required');return actual.type;};
  const rowsByName=new Map(),localFunctions=new Map(),callBindings=new Map(imports),lookup=id=>typeof id==='string'&&id.startsWith('local:')?localFunctions.get(id.slice(6)):httpResourceCallerContract(id);
  for(const group of orderHttpResourceLocalFunctions(ts,functions,{groups:true})){
   const plans=group.items.map(item=>{
    const bodyPlan=selectAsyncControlCallerBody(ts,item,callBindings,file,lookup),guarded=new Set(bodyPlan.inputGuards.map(row=>row.name));
-  const javascriptDocs={parameters:[],needed:false,printer:typeDocsPrinter},parameters=item.parameters.map(parameter=>{
+  const javascriptDocs={parameters:[],needed:false,printer:typeDocsPrinter,expandType:aliases.size?written=>expandHttpResourceTypeAliasSource(ts,written,{file,aliases}):null},parameters=item.parameters.map(parameter=>{
    if(!ts.isIdentifier(parameter.name)||parameter.questionToken||parameter.dotDotDotToken||parameter.initializer||parameter.modifiers?.length)fail('ordinary required caller parameter');const local=name(parameter.name.text);if(locals.has(local))fail('parameter shadows an actual runtime or module binding');
    const written=language==='TypeScript'?parameter.type:ts.getJSDocType(parameter);if(!written)fail('explicit native written input required');const domain=type(written,guarded.has(local)),text=written.getText(file);
    if(language==='TypeScript')captureHttpResourceTypeScriptParameterDoc(ts,parameter,written,{file,erase,docs:javascriptDocs});else annotate.push({span:[parameter.name.end,parameter.name.end],replacement:': '+text});return {name:local,type:domain};
   });
   if(parameters.length>64||new Set(parameters.map(row=>row.name)).size!==parameters.length)fail('unique bounded actual caller parameters required');if(bodyPlan.inputGuards.some(guard=>!parameters.some(parameter=>parameter.name===guard.name&&parameter.type==='u64')))fail('entry guards must bind actual checked u64 parameters');const {statements,lazy,allowColdTail}=bodyPlan;
-   const signature=group.recursive?captureHttpResourceRecursiveSignature(ts,item,file,language,imports):null;if(signature?.erase)erase.push(signature.erase);if(signature?.annotate)annotate.push(signature.annotate);return {item,parameters,signature,bodyPlan,statements,lazy,allowColdTail,javascriptDocs};
+   const signature=group.recursive?captureHttpResourceRecursiveSignature(ts,item,file,language,imports,aliases):null;if(signature?.erase)erase.push(signature.erase);if(signature?.annotate)annotate.push(signature.annotate);return {item,parameters,signature,bodyPlan,statements,lazy,allowColdTail,javascriptDocs};
   });
   if(group.recursive)for(const plan of plans){localFunctions.set(plan.item.name.text,httpResourceRecursivePrototype(plan));callBindings.set(plan.item.name.text,'local:'+plan.item.name.text);}
   const checked=plans.map(plan=>{
-   const {item,parameters,signature,bodyPlan,statements,lazy,allowColdTail,javascriptDocs}=plan,flow=checkHttpResourceCallerFlow(ts,statements,parameters,imports,{lazy,allowColdTail,moduleNames:locals,localFunctions,sourceAnnotations:{language,file,erase}});if(signature&&(flow.type!==signature.domain||flow.returnRoots.length||flow.lazy))fail('every actual recursive body must satisfy its complete synchronous owned/scalar signature');if(!signature)captureHttpResourceFunctionReturnAnnotation(ts,item,{language,file,imports,flow,lazy,erase});finishHttpResourceTypeScriptDocs(ts,item,{language,file,erase,docs:javascriptDocs});
+   const {item,parameters,signature,bodyPlan,statements,lazy,allowColdTail,javascriptDocs}=plan,flow=checkHttpResourceCallerFlow(ts,statements,parameters,imports,{lazy,allowColdTail,moduleNames:locals,localFunctions,sourceAnnotations:{language,file,erase,aliases}});if(signature&&(flow.type!==signature.domain||flow.returnRoots.length||flow.lazy))fail('every actual recursive body must satisfy its complete synchronous owned/scalar signature');if(!signature)captureHttpResourceFunctionReturnAnnotation(ts,item,{language,file,imports,aliases,flow,lazy,erase});finishHttpResourceTypeScriptDocs(ts,item,{language,file,erase,docs:javascriptDocs});
    return {kind:'http-resource-caller-function',name:item.name.text,exported:item.modifiers?.some(modifier=>modifier.kind===ts.SyntaxKind.ExportKeyword)??false,parameters,inputGuards:bodyPlan.inputGuards,lazy,flow,returns:flow.type,recursiveSignature:signature,span:{start:item.getStart(file),end:item.end}};
   });
   for(const row of checked){rowsByName.set(row.name,row);localFunctions.set(row.name,httpResourceLocalContracts([row]).get(row.name));callBindings.set(row.name,'local:'+row.name);}

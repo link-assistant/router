@@ -136,3 +136,5 @@ integration and the remaining requirement ledger are still open.
 - Draft actual owning/scalar Result callback composition, complete original library source censuses and native callback inverses, with independent unrun JS/strict TS/native selection, ownership and refusal source registered in existing gated CI.
 - Draft actual Option map/chaining/lazy fallback callbacks, fresh optional native source qualification and original physical transaction fixtures, with independent unrun JS/strict TS/native and three-language source-unit cases and explicit contribution guidance.
 - Draft one-operation private native syntax reuse across all 146 original preparers, typed descendant forwarding, complete overlapping source histories, nested original guards and full descendant CLI status; preserve original family limits, semantic checks and deadlines with independent unrun receiving source.
+
+- Draft actual nongeneric TypeScript alias chains, complete original obligations, expanded JavaScript docs and adjacent erasure inverses, with full source histories and independent unrun callback, signature, ownership and numeric refusal source.

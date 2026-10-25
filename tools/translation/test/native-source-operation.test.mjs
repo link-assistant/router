@@ -1,10 +1,10 @@
 // Independent source-operation regression SOURCE. All cases remain unrun.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
+import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {gzipSync} from 'node:zlib';
+import {gzipSync,gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {prepareNativeSubstitutionCopy,withNativeSubstitutionOperation,nativeSubstitutionCopyHasChanges} from '../prepare-native-substitution-copy.mjs';
 import {prepareNativeTypedSubstitutionCopy} from '../prepare-native-typed-substitution-copy.mjs';
@@ -38,5 +38,5 @@ test('source status includes complete descendants while preserving every direct 
  const api=fixture(t);api.write('value.mjs',source(2));api.write('outer.mjs',source(1));const leaf=api.recipe('status-leaf','value.mjs',1,2)(),outer=api.recipe('status-parent','outer.mjs',0,1)([leaf]);assert.equal(outer.files.length,1);assert.equal(outer.descendantFiles.length,1);assert.equal(nativeSubstitutionCopyHasChanges(outer),false);const stale=structuredClone(outer);stale.descendantFiles[0].current=source(1);assert.equal(nativeSubstitutionCopyHasChanges(stale),true);
 });
 test('all three bounded complete-original groups retain every original driver copy and both source inverses',limits,()=>{
- const plan=prepareNativeSourceOperationPart1(),rows=nativeSourceHistoryFiles(plan);assert.equal(plan.files.length,64);assert.equal(rows.length,149);assert.ok(rows.some(row=>row.path.endsWith('/prepare-native-typed-substitution-copy.mjs')));assert.equal(nativeSubstitutionCopyHasChanges(plan),false);for(const row of rows){assert.equal(row.current,row.currentAfter);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}assert.equal(plan.sourceAuthority,false);assert.equal(plan.semanticAuthority,false);assert.equal(plan.receivingExecuted,false);
+ const plan=prepareNativeSourceOperationPart1(),rows=nativeSourceHistoryFiles(plan);assert.equal(plan.files.length,64);const originals=new Set([1,2,3].flatMap(part=>JSON.parse(gunzipSync(readFileSync(new URL('../source-profiles/native-source-operation/part-'+part+'/complete-originals-and-rules.json.gz',import.meta.url)))).files.map(row=>row.path)));assert.equal(originals.size,149);for(const path of originals)assert.ok(rows.some(row=>row.path===path),path);assert.ok(rows.length>=originals.size);assert.ok(rows.some(row=>row.path.endsWith('/prepare-native-typed-substitution-copy.mjs')));assert.equal(nativeSubstitutionCopyHasChanges(plan),false);for(const row of rows){assert.equal(row.current,row.currentAfter);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}assert.equal(plan.sourceAuthority,false);assert.equal(plan.semanticAuthority,false);assert.equal(plan.receivingExecuted,false);
 });

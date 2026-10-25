@@ -540,3 +540,11 @@ views must retain their original owner, cannot escape and must prevent that
 owner from moving while the view remains live. See the
 [common resource draft](http-resource-common-draft.md); all new source and
 receiving cases remain unrun during bulk drafting.
+
+Resolve type-only aliases from their complete actual native declarations in a
+separate type namespace. Check every original right-hand side, preserve all
+body/ownership/range obligations and expand docs before erasing aliases from
+JavaScript. Native spans may touch but cannot overlap. Preserve original TS and
+complete source inverses; never treat an alias spelling as semantic authority.
+See the [original alias draft](http-resource-type-aliases-draft.md); source-unit
+retention and every new qualification remain open.

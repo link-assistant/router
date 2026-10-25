@@ -6,7 +6,7 @@ const fail=message=>{throw new TypeError('Resource callback annotations: '+messa
 export function captureHttpResourceCallbackAnnotations(ts,node,contract,imports,context,tick){
  const written=node.type||node.parameters.some(parameter=>parameter.type);if(!written)return;
  if(!context||context.language!=='TypeScript'||node.getSourceFile()!==context.file||!Array.isArray(context.erase))fail('actual complete original TypeScript annotation context required');
- const describe=createHttpResourceWrittenAnnotationReader(ts,imports,tick);
+ const describe=createHttpResourceWrittenAnnotationReader(ts,imports,tick,{aliases:context.aliases});
  const edits=[];
  for(let index=0;index<node.parameters.length;index++){const parameter=node.parameters[index];if(!parameter.type)continue;const actual=describe(parameter.type);if(actual.kind!=='domain'||actual.type!==contract.args[index])fail('written parameter must preserve its actual contextual native domain');edits.push({span:[parameter.name.end,parameter.type.end],replacement:''});}
  if(node.type){const actual=describe(node.type);if(actual.kind!=='domain'||actual.type!==contract.ret)fail('written return annotation must preserve its complete actual callback domain');const colons=node.getChildren(context.file).filter(child=>child.kind===ts.SyntaxKind.ColonToken);if(colons.length!==1||colons[0].end>node.type.getStart(context.file))fail('actual native arrow return annotation boundary required');edits.push({span:[colons[0].getStart(context.file),node.type.end],replacement:''});}
@@ -15,8 +15,8 @@ export function captureHttpResourceCallbackAnnotations(ts,node,contract,imports,
 
 
 // Fresh invocation-local type DATA reader, shared by source obligations only.
-export function createHttpResourceWrittenAnnotationReader(ts,imports,tick){
- const domain=type=>({kind:'domain',type});
+export function createHttpResourceWrittenAnnotationReader(ts,imports,tick,{aliases=null}={}){
+ const activeAliases=new Set(),domain=type=>({kind:'domain',type});
  function callable(row){
   if(!row)fail('actual imported operation type required');const args=row.args.map(type=>['json-callback','value-callback'].includes(type)?row.callbackContract?{kind:'function',args:row.callbackContract.args.map(domain),returns:domain(row.callbackContract.ret)}:fail('actual complete callback descriptor required'):domain(type));
   return {kind:'function',args,returns:row.async?{kind:'future',value:domain(row.ret)}:domain(row.ret)};
@@ -26,6 +26,7 @@ export function createHttpResourceWrittenAnnotationReader(ts,imports,tick){
   const primitive=new Map([[ts.SyntaxKind.StringKeyword,'str'],[ts.SyntaxKind.BooleanKeyword,'bool'],[ts.SyntaxKind.BigIntKeyword,'u64']]);if(primitive.has(type.kind))return domain(primitive.get(type.kind));
   if(ts.isLiteralTypeNode(type)&&type.literal.kind===ts.SyntaxKind.NullKeyword)return domain('unit');
   if(ts.isTypeReferenceNode(type)&&ts.isIdentifier(type.typeName)&&type.typeName.text==='Awaited'&&type.typeArguments?.length===1){const actual=describe(type.typeArguments[0],depth+1);if(actual.kind!=='future'||actual.value?.kind!=='domain')fail('Awaited requires its actual imported operation future domain');return actual.value;}
+  if(ts.isTypeReferenceNode(type)&&ts.isIdentifier(type.typeName)&&aliases?.has(type.typeName.text)){const alias=aliases.get(type.typeName.text);if(type.typeArguments?.length||activeAliases.has(alias))fail('recursive or generic original type alias needs its own source rule');activeAliases.add(alias);try{return describe(alias.type,depth+1);}finally{activeAliases.delete(alias);}}
   if(ts.isTypeQueryNode(type)){if(!ts.isIdentifier(type.exprName)||!imports.has(type.exprName.text))fail('type query must name an actual imported operation');return callable(httpResourceCallerContract(imports.get(type.exprName.text)));}
   if(ts.isTypeReferenceNode(type)&&ts.isIdentifier(type.typeName)&&type.typeName.text==='Extract'&&type.typeArguments?.length===2){
    const actual=describe(type.typeArguments[0],depth+1),predicate=type.typeArguments[1],member=ts.isTypeLiteralNode(predicate)&&predicate.members.length===1?predicate.members[0]:null;if(actual.kind!=='domain'||!member||!ts.isPropertySignature(member)||member.questionToken||member.modifiers?.some(modifier=>modifier.kind!==ts.SyntaxKind.ReadonlyKeyword)||!ts.isIdentifier(member.name)||member.name.text!=='$'||!ts.isLiteralTypeNode(member.type)||!ts.isStringLiteral(member.type.literal))fail('Extract requires the actual single successful container tag predicate');const result=httpResourceResult(actual.type),option=httpResourceOption(actual.type),tag=member.type.literal.text;if(result&&tag==='Ok')return {kind:'successful-payload',type:result.value};if(option&&tag==='Some')return {kind:'successful-payload',type:option.value};fail('successful type query must retain its actual Result/Option constructor');

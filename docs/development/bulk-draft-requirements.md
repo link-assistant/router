@@ -361,3 +361,11 @@ assets. Independent unrun loopback, strict TS, settlement-edge and Rust oracle
 source is retained. General HTTP caller lowering/inverses/units, other async
 domains, namespace/bootstrap, production adoption/parity, remaining CI/receiving
 repairs and every unfinished requirement remain open.
+
+The [original TypeScript alias draft](http-resource-type-aliases-draft.md) adds
+actual nongeneric alias chains, all-alias source obligations and expanded JS
+docs with full erasure/CST inverses. Complete original substitutions and
+independent unrun signature, callback, ownership, numeric and refusal cases are
+retained. Subsequent source-unit alias retention, broader language domains,
+namespace/bootstrap, production parity and every unfinished requirement remain
+open.

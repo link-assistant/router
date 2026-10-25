@@ -28,7 +28,7 @@ function rustResult(row){return httpResourceCallerRustType(row.ret);}
 function flow(...args){return checkHttpResourceCallerFlow(...args);}
 function emitFlow(value){return emitHttpResourceCallerFlow(value);}
 function analyze(stage,input){return analyzeHttpResourceCallerSource(stage,input);}
-function edit(source,edits){let value=source,last=source.length+1;for(const row of [...edits].sort((a,b)=>b.span[0]-a.span[0])){if(row.span[1]>=last)fail('overlapping native type selections');value=value.slice(0,row.span[0])+row.replacement+value.slice(row.span[1]);last=row.span[0];}return value;}
+function edit(source,edits){let value=source,last=source.length+1;for(const row of [...edits].sort((a,b)=>b.span[0]-a.span[0])){if(row.span[1]>last)fail('overlapping native type selections');value=value.slice(0,row.span[0])+row.replacement+value.slice(row.span[1]);last=row.span[0];}return value;}
 function emit(rows){
  const localFunctions=httpResourceLocalContracts(rows);return rows.map(row=>{
   const borrowedText=hasHttpResourceBorrowedReference(row.returns),generics=borrowedText?"<'a>":'',roots=new Set(row.flow.returnRoots),parameters=row.parameters.map(parameter=>name(parameter.name)+': '+httpResourceCallerRustType(parameter.type,{borrowedLifetime:borrowedText&&roots.has(parameter.name)})).join(', '),returns=httpResourceCallerRustType(row.returns,{borrowedLifetime:borrowedText});
