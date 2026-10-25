@@ -92,6 +92,14 @@ independent unrun loopback/strict TS/native oracle/refusal source are retained.
 Physical source units, borrowed protocol results, mixed-error adapters, broader
 language/resource domains and every other unfinished requirement remain open.
 
+The [physical HTTP source-unit draft](http-resource-unit-draft.md) adds the
+closed profile, all actual native/Cargo mappings, mirrored opaque runtimes,
+fresh paired input proposals and original Git conflict/atomic installation
+contract in all three source directions. Full original substitutions and
+independent receiving/refusal source are retained and unrun. Broader HTTP/error
+and language domains, production adoption and every unfinished requirement
+remain open.
+
 The [closed HTTP deadline core draft](http-deadline-core-draft.md) adds three
 matching native/JS operations with actual settlement/Drop cleanup, late owned
 stream disposal, complete root/library source histories and additive receiving

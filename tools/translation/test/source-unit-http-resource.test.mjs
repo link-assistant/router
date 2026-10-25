@@ -1,0 +1,36 @@
+// Independent physical HTTP source-unit regression SOURCE; all cases unrun.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,rmSync,existsSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join,dirname} from 'node:path';
+import {pathToFileURL} from 'node:url';
+import {execFileSync} from 'node:child_process';
+import {planUnitSynchronization,applyUnitSynchronization} from '../synchronize-units.mjs';
+import {planUnitRuntimeMaterialization,applyUnitRuntimeMaterialization} from '../unit-runtime-materialization.mjs';
+import {HTTP_RESOURCE_NATIVE_INPUTS,httpResourceUnitRuntimeSources} from '../http-resource-unit.mjs';
+import {httpDeadlineReceivingData} from '../js-to-rust/test/http-deadline-receiving-data.mjs';
+import {HTTP_DEADLINE_NATIVE_SOURCE} from '../http-deadline-native-source.mjs';
+import {prepareHttpResourceUnitSources} from '../prepare-http-resource-unit-sources.mjs';
+const limits={timeout:60000};
+function fixture(t,{runtimes=true}={}){
+ const root=mkdtempSync(join(tmpdir(),'router-http-unit-'));t.after(()=>rmSync(root,{recursive:true,force:true}));const write=(path,source)=>{mkdirSync(dirname(join(root,path)),{recursive:true});writeFileSync(join(root,path),source);},read=path=>readFileSync(join(root,path),'utf8'),git=args=>execFileSync('git',['-C',root,'-c','core.hooksPath=/dev/null','-c','user.name=Router fixture','-c','user.email=fixture@example.invalid',...args],{stdio:'pipe',timeout:20000}),commit=()=>{git(['add','.']);git(['commit','--quiet','-m','Source baseline']);};git(['init','--quiet']);write('seed.txt','source baseline\n');commit();
+ const unit={id:'http-deadline',profile:'http-resource',authority:'auto',paths:{Rust:'rust/src/caller.rs',JavaScript:'js/src/caller.mjs',TypeScript:'ts/src/caller.ts'},runtimes:{JavaScript:'js/runtime',TypeScript:'ts/runtime'},meta:'translation/caller.json',nativeSources:HTTP_RESOURCE_NATIVE_INPUTS.map(path=>({path,sourcePath:path==='Cargo.lock'?path:'rust/'+path}))};
+ const data=httpDeadlineReceivingData(),native=new Map(data.files.filter(row=>!row.path.startsWith('runtime/')).map(row=>[row.path,row.source]));for(const row of unit.nativeSources)write(row.sourcePath,native.get(row.path));if(runtimes)for(const row of httpResourceUnitRuntimeSources(unit))write(row.path,row.source);
+ const source="import {router_http_deadline_send as send} from '../runtime/http-deadline-runtime.mjs';\n/** @param {Parameters<typeof send>[1]} client @param {Parameters<typeof send>[2]} value @param {Parameters<typeof send>[3]} token */\nexport function timed(client,value,token){return send(0n,client,value,token);}\n";write(unit.paths.JavaScript,source);write('units.json',JSON.stringify({schema:'router-source-unit-sync-v1',units:[unit]}));const options={root,manifestPath:'units.json'};return {root,unit,source,write,read,commit,options,plan:()=>planUnitSynchronization(options),apply:value=>applyUnitSynchronization(JSON.stringify(value),options)};
+}
+test('physical native JS and TS HTTP edits synchronize with complete mirrored opaque libraries',limits,async t=>{
+ const api=fixture(t),initial=api.plan();assert.equal(initial.units[0].authority,'JavaScript');api.apply(initial);api.commit();const native=api.read(api.unit.paths.Rust);assert.ok(native.includes('0_u64'));api.write(api.unit.paths.Rust,native.replace('0_u64','1_u64'));const rust=api.plan();assert.equal(rust.units[0].authority,'Rust');api.apply(rust);api.commit();const javascript=api.read(api.unit.paths.JavaScript);assert.ok(javascript.includes('1n'));api.write(api.unit.paths.JavaScript,javascript.replace('1n','2n'));api.apply(api.plan());api.commit();const typed=api.read(api.unit.paths.TypeScript);assert.ok(typed.includes('2n'));api.write(api.unit.paths.TypeScript,typed.replace('2n','0n'));const typescript=api.plan();assert.equal(typescript.units[0].authority,'TypeScript');api.apply(typescript);
+ const caller=await import(pathToFileURL(join(api.root,api.unit.paths.JavaScript))),transport=await import(pathToFileURL(join(api.root,'js/runtime/http-transport-runtime.mjs'))),control=await import(pathToFileURL(join(api.root,'js/runtime/async-control-runtime.mjs'))),result=transport.router_http_transport_client_new(0n,0n,0n,'');assert.equal(result.$,'Ok');try{assert.deepEqual(await caller.timed(result.field0,{$:'Null'},control.router_cancel_new()),{$:'Err',field0:{$:'Timeout'}});}finally{transport.router_http_transport_client_dispose(result.field0);}
+ assert.equal(typescript.rustExecuted,false);assert.equal(typescript.runtimeParity,false);assert.ok(typescript.inputs.some(row=>row.path==='rust/src/translation_http_deadline_core.rs'));assert.ok(typescript.outputs.some(row=>row.path==='js/runtime/http-deadline-runtime.mjs'));
+});
+test('fresh paired input proposals preserve original JS and join actual imported HTTP domains',limits,t=>{
+ const api=fixture(t);api.apply(api.plan());api.commit();const edited=api.source.replace(/\/\*\*[\s\S]*?\*\//gu,'').replace('0n','1n');api.write(api.unit.paths.JavaScript,edited);const plan=api.plan(),metadata=JSON.parse(plan.outputs.find(row=>row.path===api.unit.meta).after),history=metadata.semanticMeta.signatureProposalHistory;assert.equal(history.original,edited);assert.equal(history.equation.inverse,edited);assert.ok(history.edits.some(row=>row.replacement.includes('paired_http_input_')));api.apply(plan);assert.equal(api.read(api.unit.paths.JavaScript),edited);
+});
+test('HTTP runtime initialization retains every source mirror without translating unsupported application classes',limits,t=>{
+ const api=fixture(t,{runtimes:false});api.write(api.unit.paths.JavaScript,'export class UnsupportedApplication {}\n');const plan=planUnitRuntimeMaterialization(api.options);assert.ok(plan.outputs.some(row=>row.path==='js/runtime/http-deadline-runtime.mjs'));assert.ok(plan.outputs.some(row=>row.path==='ts/runtime/http-transport-runtime.d.mts'));applyUnitRuntimeMaterialization(JSON.stringify(plan),api.options);assert.equal(existsSync(join(api.root,api.unit.paths.Rust)),false);assert.equal(api.read(api.unit.paths.JavaScript),'export class UnsupportedApplication {}\n');
+});
+test('complete native mappings stale proposals source conflicts and source histories retain refusals',limits,t=>{
+ const api=fixture(t);api.apply(api.plan());api.commit();api.write(api.unit.paths.JavaScript,api.source.replace('0n','1n'));const plan=api.plan(),forged=structuredClone(plan);forged.outputs.find(row=>row.path===api.unit.paths.Rust).after+='\n// forged\n';assert.throws(()=>api.apply(forged),/fresh source translation/u);const native=api.read(api.unit.paths.Rust);api.write(api.unit.paths.Rust,native+'\n// concurrent\n');assert.throws(()=>api.plan(),/concurrent source edits/u);api.write(api.unit.paths.Rust,native);api.write('rust/src/translation_http_deadline_core.rs',HTTP_DEADLINE_NATIVE_SOURCE+'\n// changed\n');assert.throws(()=>api.plan());
+ const source=prepareHttpResourceUnitSources();assert.equal(source.files.length,7);assert.equal(source.receivingExecuted,false);for(const row of source.files){assert.equal(row.current,row.currentAfter);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}
+});

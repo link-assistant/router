@@ -29,3 +29,6 @@ export {translateAsyncControlCallerJavaScript,translateAsyncControlCallerTypeScr
 export {translateAsyncControlCallerRust} from './js-to-rust/async-control-rust.mjs';
 export {ASYNC_CONTROL_NATIVE_INPUTS,asyncControlUnitRuntimeSources,asyncControlUnitContext,translateAsyncControlUnit} from './async-control-unit.mjs';
 export {httpDeadlineRuntimeAssets,httpDeadlineRuntimeSources} from './http-deadline-runtime-sources.mjs';
+export {HTTP_RESOURCE_NATIVE_INPUTS,httpResourceUnitRuntimeSources,httpResourceUnitContext,translateHttpResourceUnit} from './http-resource-unit.mjs';
+export {translateHttpResourceCallerJavaScript,translateHttpResourceCallerTypeScript,translateHttpResourceCallerConcreteSyntaxMeta,readHttpResourceCallerMeta} from './js-to-rust/http-resource-callers.mjs';
+export {translateHttpResourceCallerRust} from './js-to-rust/http-resource-rust.mjs';

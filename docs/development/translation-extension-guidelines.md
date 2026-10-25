@@ -269,3 +269,11 @@ checker. Unknown borrowed roots and generic HTTP deadline callbacks remain
 refused until complete rules exist. See the
 [resource caller draft](http-resource-callers-draft.md). All new source and
 receiving cases remain unrun during bulk drafting.
+
+HTTP physical source units must capture complete native/Cargo and mirrored
+runtime inputs, retain the original Git conflict/atomic installation rules and
+freshly check all three authority directions. Paired annotations propose domains
+from a whole checked TS source; they never supply ownership or range authority.
+Runtime initialization alone cannot certify application translation. See the
+[physical HTTP unit draft](http-resource-unit-draft.md); all new receiving
+qualification remains unrun during bulk drafting.
