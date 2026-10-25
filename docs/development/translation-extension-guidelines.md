@@ -293,3 +293,11 @@ Result object cannot supply that proof. Retain complete native root/library and
 runtime closure histories with the original bounds. See the
 [deadline Result draft](http-deadline-results-draft.md); all new receiving and
 native qualification remains unrun during bulk drafting.
+
+Compose common operation families through their actual fully checked native and
+runtime sources, retaining callbacks/numeric domains with their original checker
+when unsupported. Option/Result containers move once. Local borrowed string
+views must retain their original owner, cannot escape and must prevent that
+owner from moving while the view remains live. See the
+[common resource draft](http-resource-common-draft.md); all new source and
+receiving cases remain unrun during bulk drafting.

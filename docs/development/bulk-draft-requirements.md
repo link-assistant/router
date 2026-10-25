@@ -100,6 +100,14 @@ independent receiving/refusal source are retained and unrun. Broader HTTP/error
 and language domains, production adoption and every unfinished requirement
 remain open.
 
+The [common resource operation draft](http-resource-common-draft.md) composes
+the actual text, callback-free primitive Result and JSON carrier libraries with
+explicit Option domains, whole container moves and local string-root tracking.
+Complete original source histories and independent unrun JS/strict TS/native
+oracle/refusal source are retained. Option guards, wider language/resource
+domains, namespace/bootstrap, production adoption and every unfinished
+requirement remain open.
+
 The [original-root HTTP text draft](http-resource-borrowed-text-draft.md) adds
 actual input-rooted borrowed protocol Results, local/branch root propagation,
 native lifetime emission and complete inverse reproduction. Complete original

@@ -31,7 +31,7 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
    }
    if(isLoan(row.type))fail('borrowed resources cannot be stored or escape this caller');
    if(result){if(row.used)fail('complete Result payload already consumed');if(move){row.used=true;row.moved=true;}return {kind:'result-variable',name:node.text,type:row.type,guarded:!!row.guarded,root:row.root??null};}
-   if(httpResourceOwned(row.type)&&move)row.moved=true;return {kind:'variable',name:node.text,type:row.type,root:row.root??null};
+   if(httpResourceOwned(row.type)&&move){if([...environment].some(([id,loan])=>id!==node.text&&!loan.moved&&!loan.disposed&&loan.root===node.text))fail('owned value cannot move while an original borrowed view remains live');row.moved=true;}return {kind:'variable',name:node.text,type:row.type,root:row.root??null};
   }
   if(ts.isPropertyAccessExpression(node)&&node.name.text==='field0'&&ts.isIdentifier(node.expression)){
    const row=binding(node.expression.text),result=httpResourceResult(row.type);if(!result||!row.guarded||row.used||result.value==='channel-pair')fail('actual guarded complete payload required');
@@ -62,7 +62,15 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
    }
    args.push(value);
   }
-  let root=null;if(operation.borrowedResult){const argument=args[operation.rootArgument],actual=argument?.kind==='borrow'?environment.get(argument.name):null;if(!actual?.input||actual.type!=='json-ref'||argument.type!=='json-ref')fail('borrowed protocol output must retain its actual public immutable JSON input root');root=argument.name;}
+  let root=null;if(operation.borrowedResult){
+   const argument=args[operation.rootArgument],actual=argument?.kind==='borrow'?environment.get(argument.name):null;
+   if(argument?.root)root=argument.root;
+   else if(argument?.kind==='string')root=null;
+   else if(actual?.input&&actual.type==='json-ref'&&argument.type==='json-ref')root=argument.name;
+   else if(actual?.type==='text-owned'&&argument.type==='str')root=argument.name;
+   else fail('borrowed output must retain its actual string or public immutable JSON root');
+   if(root){const owner=environment.get(root);if(!owner||owner.moved||owner.disposed||!['str','text-owned','json-ref'].includes(owner.type))fail('actual borrowed output owner is unavailable');}
+  }
   httpResourceCallerRustType(operation.ret);const value={kind:'http-resource-call',operation:operation.javascriptName,args,type:operation.ret,awaited:Boolean(awaited||implicitAwait),implicitAwait,root};
   if(operation.release){if(args.length!==1||args[0].kind!=='borrow')fail('release must bind one actual resource');const row=binding(args[0].name);row.disposed=true;value.release=operation.release;}
   return value;

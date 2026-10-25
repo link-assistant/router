@@ -99,3 +99,5 @@ integration and the remaining requirement ledger are still open.
 - Draft original-input-rooted HTTP borrowed text Results, checked local/branch root propagation, native lifetime emission and whole inverse reproduction with complete source histories and independent unrun native/refusal source.
 
 - Draft explicit by-value HTTP deadline Result adapters, all five control-error mappings, nested Result move/caller/inverse/unit rules, complete native root/runtime histories and independent unrun JS/strict TS/native/refusal source.
+
+- Draft shared text, callback-free primitive Result and JSON carrier composition in resource callers, explicit Option domains and local string-root loan tracking, with full original substitutions and independent unrun JS/strict TS/native/refusal source.
