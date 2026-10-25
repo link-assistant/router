@@ -576,3 +576,12 @@ JS/strict TS/native inverse, cancellation/cleanup/refusal cases and real native
 library oracle source remain unrun. Effectful or awaited callbacks, wider
 resource ownership, namespace/bootstrap, production adoption/parity and every
 unfinished requirement above remain open. No test or experiment ran.
+
+The [inline textual macro source draft](scoped-local-declarative-draft.md)
+copies the complete original source/project adapters for genuine inline module
+views, prior-definition inheritance, local shadows and complete source inverses.
+Three full original source copies, both substitution phases, independent
+JS/strict TS/refusal cases and native textual-scope oracle source remain unrun.
+Function-local/external-file inheritance, architecture namespace and attribute
+producer bootstrap, production qualification and every unfinished row remain
+open. Original root-only APIs and resource bounds retain their contracts.

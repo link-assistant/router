@@ -176,3 +176,4 @@ integration and the remaining requirement ledger are still open.
 - Draft actual generic deadline type equations and checked control-result witnesses, preserving complete original declaration/source joins and independent unrun constructor/refusal cases.
 - Draft source-typed recursive numeric ingress and exact native constructor/path guards, retaining complete originals and independent unrun ControlError/range/refusal oracle source.
 - Draft source-checked pure generic deadline callbacks through typed native async closures and whole-source inverses, with immutable capture/effect/ownership checks, complete original substitution history and independent unrun JS/TS/Rust cases.
+- Draft complete original macro source/project copies for inline textual scope inheritance and local shadowing, with unchanged private matcher/hygiene bounds, full CST inverses and independent unrun target/native oracle cases.
