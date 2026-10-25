@@ -28,7 +28,7 @@ test('post-test loops retain original lexical scalar type and terminal-source re
   'export function bad(){let count=0n;do{count=true;}while(false);return count;}',
   'export function bad(){do{return true;}while(1n);return false;}',
   'export function bad(){outer:do{continue outer;}while(false);return null;}',
-  'export function bad(){do return true;while(false);return false;}',
+  'export function bad(){do throw new Error("unqualified effect");while(false);return false;}',
   'export function bad(){do{const local=true;}while(local);return null;}',
  ]){const value=imports+body;assert.throws(()=>translateHttpResourceCallerTypeScript(value,input(value)),body);}
  const result=translateHttpResourceCallerTypeScript(source,input(source)),meta=JSON.parse(result.meta);meta.functions.find(row=>row.name==='continued').flow.steps.find(row=>row.kind==='do-while').condition.type='u64';assert.throws(()=>readHttpResourceCallerMeta(JSON.stringify(meta),source,input(source),{language:'TypeScript'}));

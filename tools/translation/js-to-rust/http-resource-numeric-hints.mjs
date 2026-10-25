@@ -17,7 +17,7 @@ export function collectHttpResourceNumericHints(ts,statements,{bindings,imports,
   if(ts.isReturnStatement(node)&&node.expression)impose(node.expression,numericReturnDomain);
   if(ts.isBinaryExpression(node)){
    if(node.operatorToken.kind===ts.SyntaxKind.EqualsToken)connect(node.left,node.right);
-   if([ts.SyntaxKind.EqualsEqualsEqualsToken,ts.SyntaxKind.ExclamationEqualsEqualsToken,ts.SyntaxKind.LessThanToken,ts.SyntaxKind.LessThanEqualsToken,ts.SyntaxKind.GreaterThanToken,ts.SyntaxKind.GreaterThanEqualsToken].includes(node.operatorToken.kind)){connect(node.left,node.right);connect(node.right,node.left);}
+   if([ts.SyntaxKind.EqualsEqualsEqualsToken,ts.SyntaxKind.ExclamationEqualsEqualsToken,ts.SyntaxKind.EqualsEqualsToken,ts.SyntaxKind.ExclamationEqualsToken,ts.SyntaxKind.LessThanToken,ts.SyntaxKind.LessThanEqualsToken,ts.SyntaxKind.GreaterThanToken,ts.SyntaxKind.GreaterThanEqualsToken].includes(node.operatorToken.kind)){connect(node.left,node.right);connect(node.right,node.left);}
   }
   const row=ts.isCallExpression(node)?operation(node):null;if(row)node.arguments.forEach((argument,index)=>impose(argument,row.args[index]));
   ts.forEachChild(node,child=>visit(child,depth+1));

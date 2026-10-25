@@ -520,3 +520,10 @@ applications; observations still grant no semantic or source permit. Two full
 originals, both ordered CST/source inverses and independent unrun handwritten
 native/JS/strict TS/refusal cases are retained. Every unfinished requirement and
 verification obligation remains open.
+
+The [common original statement draft](http-resource-common-statements-draft.md)
+batches checked single-statement loop bodies, bounded original empty statements,
+empty stacked switch labels and equal-domain nonstrict equality spellings.
+Six complete originals and independent unrun JS/strict TS/native/refusal cases
+are retained. Coercions, implicit void returns, broader effects/language domains,
+namespace/bootstrap, production parity and every unfinished requirement remain open.

@@ -49,7 +49,8 @@ export function analyzeHttpResourceCallerSource(stage,input){
  const file=ts.createSourceFile(context.sourcePath,source,ts.ScriptTarget.Latest,true,language==='TypeScript'?ts.ScriptKind.TS:ts.ScriptKind.JS);if(file.parseDiagnostics.length)fail('complete original native caller grammar required');if(source!==context.callerSource)fail('complete actual caller source snapshot differs');
  const imports=new Map(),aliases=new Map(),locals=new Set(),functions=[],erase=[],annotate=[],typeDocsPrinter=language==='TypeScript'?ts.createPrinter({removeComments:true}):null;
  const name=httpResourceCallerName;
- for(const item of file.statements){
+ let noops=0;for(const item of file.statements){
+  if(ts.isEmptyStatement(item)){if(++noops>100000)fail('complete original module empty-statement bound');continue;}
   if(ts.isTypeAliasDeclaration(item)){if(language!=='TypeScript'||item.modifiers?.some(modifier=>modifier.kind!==ts.SyntaxKind.ExportKeyword))fail('original type-only alias with checked template slots required');const id=name(item.name.text);if(aliases.has(id)||aliases.size>=4096)fail('complete unique bounded original type aliases required');aliases.set(id,item);erase.push({span:[item.getStart(file),item.end],replacement:''});continue;}
   if(ts.isImportDeclaration(item)){
    if(item.modifiers?.length||item.attributes||!ts.isStringLiteral(item.moduleSpecifier)||!item.moduleSpecifier.text.startsWith('.')||item.importClause?.isTypeOnly||item.importClause?.name||!item.importClause?.namedBindings||!ts.isNamedImports(item.importClause.namedBindings))fail('transparent relative named runtime import required');

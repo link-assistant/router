@@ -169,3 +169,4 @@ integration and the remaining requirement ledger are still open.
 - Draft source-checked executable generic identities, concrete ownership/root-preserving calls, scalar callback specialization and native/unit inverses with full originals and independent unrun refusal/oracle source.
 - Draft checked explicit identity type arguments and native-domain-preserving argument docs, retaining complete original controls and independent unrun nested/range/ownership source.
 - Draft native negation/unit proposal observations for complete Boolean JSON and generic unit inverses, retaining full originals and independent unrun malformed-source controls.
+- Draft common blockless loop bodies, original no-op statements and proved equal-domain comparison spellings in one batch, preserving complete originals and independent unrun native/refusal cases.
