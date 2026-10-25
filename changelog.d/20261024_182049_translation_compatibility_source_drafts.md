@@ -189,3 +189,4 @@ integration and the remaining requirement ledger are still open.
 - Draft original Rust local annotation obligations with one fresh flow index and retained i64 target witnesses, preserving complete source histories and independent unrun native/target/scope/refusal cases.
 - Draft original native final-return targets, empty else insertion and scoped else-if chains through source units, preserving full source inverses, complete body checks and independent unrun target/native/refusal cases.
 - Draft source-checked native Some/None let-else propagation and conservative prelude constructor-pattern refusals, preserving complete originals/inverses and independent unrun range, owned payload, source and native drop cases.
+- Draft original native omitted unit signatures, empty bodies and bare-return targets through the existing unit/cold/disposal contracts, retaining full source histories and independent unrun target/native/refusal cases.

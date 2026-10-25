@@ -48,14 +48,14 @@ export function normalizeHttpResourceRustBindings(source){
   if(node.kind==='choose'){value(item,node.condition,scope,depth+1);block(item,node.yes,scope,depth+1);block(item,node.no,scope,depth+1);return;}
   if(node.kind==='block'){block(item,node,scope,depth+1);return;}
   if(['typed-lambda','typed-async-lambda'].includes(node.kind)){
-   const inner=new Map(scope),parameters=new Set();for(const parameter of node.parameters){if(parameters.has(parameter.name))fail('unique actual native callback parameter required');parameters.add(parameter.name);declare(item,parameter,inner,'callback-parameter');}block(item,node.body,inner,depth+1,true);return;
+   const inner=new Map(scope),parameters=new Set();for(const parameter of node.parameters){if(parameters.has(parameter.name))fail('unique actual native callback parameter required');parameters.add(parameter.name);declare(item,parameter,inner,'callback-parameter');}block(item,node.body,inner,depth+1,true,node.body.statements.length===0&&!node.body.tail);return;
   }
   fail('this original expression needs an independent complete lexical binding rule: '+node.kind);
  }
- function block(item,node,outer,depth=0,returnsHere=false){
-  tick(depth);if(node?.kind!=='block'||!Array.isArray(node.statements)||node.statements.length>4096)fail('complete bounded original block required');const scope=new Map(outer);
+ function block(item,node,outer,depth=0,returnsHere=false,unitTail=false){
+  tick(depth);if(node?.kind!=='block'||!Array.isArray(node.statements)||node.statements.length>4096)fail('complete bounded original block required');const scope=new Map(outer),addedUnit=unitTail&&!node.tail&&node.statements.at(-1)?.kind!=='return';if(addedUnit){const at=node.span?.end-1;if(!Number.isSafeInteger(at)||source[item.start+at]!=='}')fail('actual original unit body closing token required');insertControl(item,at,' () ',2,'unit-body-tail');}
   for(let index=0;index<node.statements.length;index++){
-   const statement=node.statements[index],tailPosition=returnsHere&&index===node.statements.length-1&&!node.tail;tick(depth+1);
+   const statement=node.statements[index],tailPosition=returnsHere&&!addedUnit&&index===node.statements.length-1&&!node.tail;tick(depth+1);
    if(statement.kind==='let-option-else'){
     if(statement.mutable)fail('mutable extracted Option payload requires a separate checked local-mutation rule');
     if(scope.has('Some')||scope.has('None')||moduleNames.has('Some')||moduleNames.has('None'))fail('original Option constructor namespace is shadowed');
@@ -65,7 +65,7 @@ export function normalizeHttpResourceRustBindings(source){
    if(statement.kind==='let'){value(item,statement.value,scope,depth+1);declare(item,statement,scope,'let');continue;}
    if(statement.kind==='let-tuple'){value(item,statement.value,scope,depth+1);const names=new Set();for(const binding of statement.bindings){if(names.has(binding.name))fail('unique native tuple binders required');names.add(binding.name);declare(item,binding,scope,'tuple-let');}continue;}
    if(statement.kind==='assign'){const target=scope.get(statement.name);if(target===undefined)fail('assignment must select an actual original local');spanEdit(item,statement.nameSpan,statement.name,target,'assignment');value(item,statement.value,scope,depth+1);continue;}
-   if(['effect','return'].includes(statement.kind)){value(item,statement.value,scope,depth+1);if(statement.kind==='return'&&tailPosition){spanEdit(item,statement.returnSpan,'return','','tail-return-keyword');spanEdit(item,statement.semicolonSpan,';','','tail-return-semicolon');}continue;}
+   if(['effect','return'].includes(statement.kind)){value(item,statement.value,scope,depth+1);if(statement.kind==='return'){if(statement.bareReturn){spanEdit(item,statement.returnSpan,'return',tailPosition?'()':'return ()','unit-return-keyword');if(tailPosition)spanEdit(item,statement.semicolonSpan,';','','tail-return-semicolon');}else if(tailPosition){spanEdit(item,statement.returnSpan,'return','','tail-return-keyword');spanEdit(item,statement.semicolonSpan,';','','tail-return-semicolon');}}continue;}
    if(statement.kind==='if'){if(statement.missingElseAt!==null&&statement.missingElseAt!==undefined){if(source[item.start+statement.missingElseAt-1]!=='}')fail('actual original missing-else body boundary required');insertControl(item,statement.missingElseAt,' else {}',0,'empty-else');}if(statement.elseIf){if(source.slice(item.start+statement.elseIf.start,item.start+statement.elseIf.start+2)!=='if'||source[item.start+statement.elseIf.end-1]!=='}')fail('actual original else-if boundaries required');insertControl(item,statement.elseIf.start,'{ ',0,'else-if-open');insertControl(item,statement.elseIf.end,' }',1,'else-if-close');}value(item,statement.condition,scope,depth+1);block(item,statement.yes,scope,depth+1,tailPosition);block(item,statement.no,scope,depth+1,tailPosition);continue;}
    if(statement.kind==='while'){value(item,statement.condition,scope,depth+1);block(item,statement.body,scope,depth+1);continue;}
    if(['loop','lexical-scope'].includes(statement.kind)){block(item,statement.body,scope,depth+1,statement.kind==='lexical-scope'&&tailPosition);continue;}
@@ -77,7 +77,7 @@ export function normalizeHttpResourceRustBindings(source){
  }
  for(const item of items){
   const reader=new HttpResourceBindingRustReader(rustTokens(source.slice(item.start,item.end))),fn=reader.function(),scope=new Map(),names=new Set();
-  if(fn.name!==item.name)fail('actual original function owner differs');for(const parameter of fn.parameters){if(names.has(parameter.name))fail('unique original function parameter required');names.add(parameter.name);declare(item,parameter,scope,'parameter');}block(item,fn.body,scope,0,true);
+  if(fn.name!==item.name)fail('actual original function owner differs');for(const parameter of fn.parameters){if(names.has(parameter.name))fail('unique original function parameter required');names.add(parameter.name);declare(item,parameter,scope,'parameter');}if(fn.unitReturnInsertionAt!==null&&fn.unitReturnInsertionAt!==undefined){if(source[item.start+fn.unitReturnInsertionAt]!=='{')fail('actual original omitted unit signature boundary required');insertControl(item,fn.unitReturnInsertionAt,' -> () ',0,'unit-function-signature');}block(item,fn.body,scope,0,true,fn.returns==='()');
  }
  const groupedControls=new Map();for(const control of controls){if(!groupedControls.has(control.at))groupedControls.set(control.at,[]);groupedControls.get(control.at).push(control);}for(const [at,rows]of groupedControls)edits.push({span:[at,at],expected:'',replacement:rows.sort((left,right)=>left.priority-right.priority).map(row=>row.replacement).join('')});
  edits.sort((left,right)=>left.span[0]-right.span[0]);for(let index=1;index<edits.length;index++)if(edits[index-1].span[1]>edits[index].span[0])fail('original binding edit overlap');

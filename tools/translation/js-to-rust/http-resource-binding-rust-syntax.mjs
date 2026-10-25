@@ -37,7 +37,7 @@ export class HttpResourceBindingRustReader {
   while(this.eat('#'))this.group('[',']');const exported=this.eat('pub'),asynchronous=this.eat('async');this.expect('fn');const name=this.identifier();
   let genericParameters=null;if(this.eat('<')){if(!this.eat("'a"))genericParameters=[this.identifier()];this.expect('>');}this.expect('(');const parameters=[];
   while(!this.eat(')')){const name=this.identifier(),nameSpan={start:this.lastIdentifier.start,end:this.lastIdentifier.end};this.expect(':');const type=this.typeUntil([',',')']);parameters.push({name,type,nameSpan});if(!this.is(')'))this.expect(',');}
-  this.expect('->');const returns=this.typeUntil(['{']),body=this.block(new Map(),0);if(this.peek().type!=='end')fail('complete function item was not consumed');return {name,exported,asynchronous,parameters,returns,body,...(genericParameters?{genericParameters}:{})};
+  const unitReturnInsertionAt=this.is('{')?this.peek().start:null;if(unitReturnInsertionAt===null)this.expect('->');const returns=unitReturnInsertionAt===null?this.typeUntil(['{']):'()',body=this.block(new Map(),0);if(this.peek().type!=='end')fail('complete function item was not consumed');return {name,exported,asynchronous,parameters,returns,body,unitReturnInsertionAt,...(genericParameters?{genericParameters}:{})};
  }
  conditional(environment,depth){
   this.tick(depth);const condition=this.expression(environment,0,depth+1),yes=this.block(environment,depth+1);let no,missingElseAt=null,elseIf=null;
@@ -61,7 +61,7 @@ export class HttpResourceBindingRustReader {
    if(this.eat('loop')){const body=this.block(local,depth+1);statements.push({kind:'loop',body});continue;}
    if(this.eat('while')){const condition=this.expression(local,0,depth+1),body=this.block(local,depth+1);statements.push({kind:'while',condition,body});continue;}
    if(this.is('break')||this.is('continue')){const kind=this.next().text;this.expect(';');statements.push({kind});continue;}
-   if(this.eat('return')){const keyword=this.tokens[this.index-1],value=this.expression(local,0,depth+1),semicolon=this.peek();this.expect(';');statements.push({kind:'return',value,returnSpan:{start:keyword.start,end:keyword.end},semicolonSpan:{start:semicolon.start,end:semicolon.end}});continue;}
+   if(this.eat('return')){const keyword=this.tokens[this.index-1],bareReturn=this.is(';'),value=bareReturn?{kind:'unit'}:this.expression(local,0,depth+1),semicolon=this.peek();this.expect(';');statements.push({kind:'return',value,bareReturn,returnSpan:{start:keyword.start,end:keyword.end},semicolonSpan:{start:semicolon.start,end:semicolon.end}});continue;}
    if(this.is('assert!')||this.is('for')||this.is('__ro_domain')||this.is('if')&&this.is('let',1)){this.skipGuard();continue;}
    if(this.eat('if')){statements.push(this.conditional(local,depth+1));continue;}
    const value=this.expression(local,0,depth+1);if(this.eat(';')){statements.push({kind:'effect',value});continue;}tail=value;this.expect('}');break;

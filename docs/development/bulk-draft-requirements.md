@@ -686,3 +686,10 @@ the existing checked propagation/move path. Prelude constructor patterns cannot
 be promoted into ordinary local bindings. Three complete originals, both phases
 and independent absent/range/text/source/refusal plus native drop oracle cases
 remain unrun. Wider patterns and every unfinished requirement remain open.
+
+The [native unit spelling draft](http-resource-native-unit-draft.md) retains
+original omitted unit signatures, empty bodies and actual bare-return targets,
+including cold callbacks and the existing cancellation/disposal contracts.
+Three complete originals, both phases and independent target/native/refusal
+and real library oracle source remain unrun. Wider syntax, production parity
+and every unfinished requirement above remain open.
