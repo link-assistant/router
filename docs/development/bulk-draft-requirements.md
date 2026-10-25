@@ -108,6 +108,14 @@ oracle/refusal source are retained. Option guards, wider language/resource
 domains, namespace/bootstrap, production adoption and every unfinished
 requirement remain open.
 
+The [scalar loop draft](http-resource-scalar-loops-draft.md) adds actual mutable
+Boolean/u64 locals, assignments, whole while-fragment ownership/type invariants,
+scope-correct native mutability and complete reader/inverse rules. Full original
+source histories and independent unrun JS/strict TS/native oracle/refusal source
+are retained. Abrupt/exception exits, general resource/collection loops and
+mutation, wider language domains, namespace/bootstrap, production adoption/parity
+and every unfinished requirement remain open.
+
 The [local resource helper draft](http-resource-local-functions-draft.md) now
 checks actual callee bodies before callers, composes cold futures and single
 returned roots, preserves source order and separates imported/local binding

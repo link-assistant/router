@@ -113,3 +113,5 @@ integration and the remaining requirement ledger are still open.
 - Draft explicit synchronous recursive helper groups with actual written return obligations, complete scalar/owned body checks, native annotation/source inverses and independent unrun JS/strict TS/native/refusal source.
 
 - Draft source-qualified unsigned fixed-width and primitive Option caller composition, strict primitive comparisons, guarded recursive arithmetic and full native/unit/source histories with independent unrun JS/strict TS/native/refusal source.
+
+- Draft checked scalar let/assignment/while fragments, full incoming loopback resource/type invariants, lexical mutability scopes and canonical whole native inverse rules, with complete originals and independent unrun receiving/native/refusal source.

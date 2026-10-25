@@ -295,6 +295,15 @@ Keep original public entry guards, recursive body checks and whole inverse
 reproduction. See the [fixed-width caller draft](http-resource-numeric-draft.md);
 all new source and native qualification remains unrun during bulk drafting.
 
+Scalar loops must preserve every incoming ownership/resource/loan and primitive
+type fact at every loopback, clean iteration-local resources and distinguish
+fallthrough from whole function exits. Only real mutable Boolean/u64 locals may
+receive checked same-domain assignments. Keep lexical mutability scopes and
+complete native reader/projection reproduction; abrupt and exception paths need
+separate complete joins. See the
+[scalar loop draft](http-resource-scalar-loops-draft.md); all new source and
+native qualification remains unrun during bulk drafting.
+
 Returned helper loans must retain every possible actual argument root through
 branches and nested Result/Option values. Protect every backing local owner
 from moves and refuse any borrowed return that may outlive one. Static literal
