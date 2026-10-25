@@ -221,6 +221,15 @@ refusal and forged-meta source are retained. Mutable/owned/async captures,
 generic signatures, namespace/bootstrap, production parity and every unfinished
 requirement remain open.
 
+The [original owned and settled signature draft](http-resource-owned-signatures-draft.md)
+adds actual operation-derived owning String/JSON/list/container inputs,
+Awaited descriptors, cold future return obligations, owning recursive groups
+and shared native/paired signature proposals. Full original histories and
+independent unrun JS/strict TS/native value, move, recursion, refusal and
+forged-meta source are retained. Generic/method/resource-state recursion,
+namespace/bootstrap, production parity and every unfinished requirement remain
+open.
+
 The [local resource helper draft](http-resource-local-functions-draft.md) now
 checks actual callee bodies before callers, composes cold futures and single
 returned roots, preserves source order and separates imported/local binding

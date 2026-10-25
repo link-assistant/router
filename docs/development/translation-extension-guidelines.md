@@ -465,6 +465,15 @@ Never use a captured-data field as a saved owner or semantic verdict. See the
 [read-only capture draft](http-resource-captures-draft.md); all new qualification
 remains unrun during source drafting.
 
+Public owning signatures must select actual complete operation domains and
+preserve call-site moves; a shared value cannot become owned through a written
+annotation. Awaited describes only an actual operation's settled future payload.
+Keep numeric entry guards, resource disposal, recursive whole-body checks and
+cold future boundaries independent. Share native and paired-source proposals,
+then freshly check their complete source. See the
+[owned signature draft](http-resource-owned-signatures-draft.md); all new
+qualification remains unrun during source drafting.
+
 Compose common operation families through their actual fully checked native and
 runtime sources, retaining callbacks/numeric domains with their original checker
 when unsupported. Option/Result containers move once. Local borrowed string

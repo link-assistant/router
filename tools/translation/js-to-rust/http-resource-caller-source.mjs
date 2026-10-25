@@ -16,6 +16,8 @@ import {selectAsyncControlCallerBody} from './async-control-u64-guards.mjs';
 import {orderHttpResourceLocalFunctions,httpResourceLocalContracts} from './http-resource-local-functions.mjs';
 import {captureHttpResourceRecursiveSignature,httpResourceRecursivePrototype} from './http-resource-recursive-signatures.mjs';
 import {captureHttpResourceFunctionReturnAnnotation} from './http-resource-function-returns.mjs';
+import {createHttpResourceWrittenAnnotationReader} from './http-resource-callback-annotations.mjs';
+import {httpResourcePublicInputDomain} from './http-resource-public-domains.mjs';
 import {captureHttpResourceTypeScriptParameterDoc,finishHttpResourceTypeScriptDocs} from './http-resource-typescript-docs.mjs';
 const RUNTIME=new URL('../async-control-runtime.mjs',import.meta.url),DECLARATIONS=new URL('../async-control-runtime.d.mts',import.meta.url),FLOW=new URL('../extensions/filesystem-effects-runtime.mjs',import.meta.url);
 const fail=message=>{throw new TypeError('Async control caller source: '+message);};
@@ -47,15 +49,8 @@ export function analyzeHttpResourceCallerSource(stage,input){
   }
  }
  if(!functions.length||functions.length>4096)fail('complete bounded nonempty caller module required');
- const type=(written,guarded=false)=>{
-  if(written?.kind===ts.SyntaxKind.StringKeyword)return 'str';if(written?.kind===ts.SyntaxKind.BooleanKeyword)return 'bool';if(written?.kind===ts.SyntaxKind.BigIntKeyword){if(!guarded)fail('bare bigint does not prove a u64 range');return 'u64';}
-  // Numeric domains require their actual dominating original entry guard.
-  // A bare annotation or operation-derived query cannot supply that proof.
-  if(ts.isIndexedAccessTypeNode(written)&&ts.isLiteralTypeNode(written.indexType)&&/^\d+$/u.test(written.indexType.literal.text??'')&&ts.isTypeReferenceNode(written.objectType)&&ts.isIdentifier(written.objectType.typeName)&&written.objectType.typeName.text==='Parameters'&&written.objectType.typeArguments?.length===1){
-   const query=written.objectType.typeArguments[0];if(!ts.isTypeQueryNode(query)||!ts.isIdentifier(query.exprName)||!imports.has(query.exprName.text))fail('resource type query requires its actual imported operation');const operation=httpResourceCallerContract(imports.get(query.exprName.text)),index=Number(written.indexType.literal.text),domain=operation?.args[index];if(['cancel-ref','sender-ref','receiver-mut','http-client-ref','http-client-mut','http-stream-ref','http-stream-mut','json-ref','json-list-ref'].includes(domain)||domain==='u64'&&guarded)return domain;
-  }
-  fail('written original primitive or operation-derived resource input required');
- };
+ let annotationCells=0;const describeInput=createHttpResourceWrittenAnnotationReader(ts,imports,()=>{if(++annotationCells>100000)fail('complete public signature source-cell bound');});
+ const type=(written,guarded=false)=>{const actual=describeInput(written);if(actual.kind!=='domain'||!httpResourcePublicInputDomain(actual.type,{guarded}))fail('written actual shared or owned input domain and original u64 entry guard required');return actual.type;};
  const rowsByName=new Map(),localFunctions=new Map(),callBindings=new Map(imports),lookup=id=>typeof id==='string'&&id.startsWith('local:')?localFunctions.get(id.slice(6)):httpResourceCallerContract(id);
  for(const group of orderHttpResourceLocalFunctions(ts,functions,{groups:true})){
   const plans=group.items.map(item=>{
@@ -66,7 +61,7 @@ export function analyzeHttpResourceCallerSource(stage,input){
    if(language==='TypeScript')captureHttpResourceTypeScriptParameterDoc(ts,parameter,written,{file,erase,docs:javascriptDocs});else annotate.push({span:[parameter.name.end,parameter.name.end],replacement:': '+text});return {name:local,type:domain};
   });
   if(parameters.length>64||new Set(parameters.map(row=>row.name)).size!==parameters.length)fail('unique bounded actual caller parameters required');if(bodyPlan.inputGuards.some(guard=>!parameters.some(parameter=>parameter.name===guard.name&&parameter.type==='u64')))fail('entry guards must bind actual checked u64 parameters');const {statements,lazy,allowColdTail}=bodyPlan;
-   const signature=group.recursive?captureHttpResourceRecursiveSignature(ts,item,file,language):null;if(signature?.erase)erase.push(signature.erase);if(signature?.annotate)annotate.push(signature.annotate);return {item,parameters,signature,bodyPlan,statements,lazy,allowColdTail,javascriptDocs};
+   const signature=group.recursive?captureHttpResourceRecursiveSignature(ts,item,file,language,imports):null;if(signature?.erase)erase.push(signature.erase);if(signature?.annotate)annotate.push(signature.annotate);return {item,parameters,signature,bodyPlan,statements,lazy,allowColdTail,javascriptDocs};
   });
   if(group.recursive)for(const plan of plans){localFunctions.set(plan.item.name.text,httpResourceRecursivePrototype(plan));callBindings.set(plan.item.name.text,'local:'+plan.item.name.text);}
   const checked=plans.map(plan=>{

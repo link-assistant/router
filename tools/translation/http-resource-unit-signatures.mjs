@@ -4,6 +4,7 @@ import {posix} from 'node:path';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {translateHttpResourceCallerTypeScript} from './js-to-rust/http-resource-callers.mjs';
 import {httpResourceCallerContract} from './js-to-rust/http-resource-caller-contracts.mjs';
+import {httpResourcePublicInputType} from './js-to-rust/http-resource-public-domains.mjs';
 import {transportConcreteSourceEquations} from './concrete-source-equations.mjs';
 import {createRulePipeline} from './rule-pipeline.mjs';
 const fail=message=>{throw new TypeError('Async unit signatures: '+message);};
@@ -13,10 +14,7 @@ export function projectHttpResourceUnitJavaScript(source,{unit,current,options}=
  const typed=translateHttpResourceCallerTypeScript(current.TypeScript,{...options,sourcePath:unit.paths.TypeScript,runtimeRoot:unit.runtimes.TypeScript,declarationRoot:unit.runtimes.TypeScript}),rows=JSON.parse(typed.meta).functions,used=new Set(),imports=new Map(),edits=[];let cells=0,sequence=0;
  const visit=(node,depth=0)=>{if(++cells>200000||depth>256)fail('complete original identifier census bound');if(ts.isIdentifier(node))used.add(node.text);ts.forEachChild(node,child=>visit(child,depth+1));};visit(file);
  const operation=name=>{if(!imports.has(name)){const row=httpResourceCallerContract(name);if(!row)fail('actual paired input operation required');let local;do{local='paired_http_input_'+sequence++;}while(used.has(local));used.add(local);imports.set(name,{local,module:row.runtimeModule});}return imports.get(name).local;};
- const type=domain=>{
-  if(domain==='str')return 'string';if(domain==='bool')return 'boolean';if(domain==='u64')return 'bigint';const row={'cancel-ref':['router_cancel_is_set',0],'sender-ref':['router_async_send',0],'receiver-mut':['router_async_receive',0],'http-client-ref':['router_http_transport_open',0],'http-client-mut':['router_http_transport_client_dispose',0],'http-stream-ref':['router_http_transport_head',0],'http-stream-mut':['router_http_transport_read',0],'json-ref':['router_http_status',0],'json-list-ref':['router_state_json_values_copy',0]}[domain];
-  if(!row)fail('paired public domain needs an independent source input rule');return 'Parameters<typeof '+operation(row[0])+'>['+row[1]+']';
- };
+ const type=domain=>httpResourcePublicInputType(domain,operation);
  for(const fn of missing){
   const matches=rows.filter(row=>row.name===fn.name?.text);if(matches.length!==1||matches[0].parameters.length!==fn.parameters.length)fail('actual paired function identity/arity differs');const docs=[];
   fn.parameters.forEach((parameter,index)=>{if(!ts.isIdentifier(parameter.name)||parameter.name.text!==matches[0].parameters[index].name)fail('actual paired parameter identity differs');if(!ts.getJSDocType(parameter))docs.push(' * @param {'+type(matches[0].parameters[index].type)+'} '+parameter.name.text);});

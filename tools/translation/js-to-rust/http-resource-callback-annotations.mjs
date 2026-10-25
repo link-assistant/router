@@ -23,6 +23,8 @@ export function createHttpResourceWrittenAnnotationReader(ts,imports,tick){
  function describe(type,depth=0){
   tick();if(!type||depth>32)fail('complete bounded original callback type required');if(ts.isParenthesizedTypeNode(type))return describe(type.type,depth+1);
   const primitive=new Map([[ts.SyntaxKind.StringKeyword,'str'],[ts.SyntaxKind.BooleanKeyword,'bool'],[ts.SyntaxKind.BigIntKeyword,'u64']]);if(primitive.has(type.kind))return domain(primitive.get(type.kind));
+  if(ts.isLiteralTypeNode(type)&&type.literal.kind===ts.SyntaxKind.NullKeyword)return domain('unit');
+  if(ts.isTypeReferenceNode(type)&&ts.isIdentifier(type.typeName)&&type.typeName.text==='Awaited'&&type.typeArguments?.length===1){const actual=describe(type.typeArguments[0],depth+1);if(actual.kind!=='future'||actual.value?.kind!=='domain')fail('Awaited requires its actual imported operation future domain');return actual.value;}
   if(ts.isTypeQueryNode(type)){if(!ts.isIdentifier(type.exprName)||!imports.has(type.exprName.text))fail('type query must name an actual imported operation');return callable(httpResourceCallerContract(imports.get(type.exprName.text)));}
   if(ts.isTypeReferenceNode(type)&&ts.isIdentifier(type.typeName)&&['Parameters','ReturnType'].includes(type.typeName.text)&&type.typeArguments?.length===1){
    const owner=describe(type.typeArguments[0],depth+1);if(owner.kind!=='function')fail('Parameters and ReturnType require an actual function type');return type.typeName.text==='Parameters'?{kind:'parameters',values:owner.args}:owner.returns;

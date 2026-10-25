@@ -4,6 +4,7 @@ import {posix} from 'node:path';
 import {httpResourceCallerOperationNames,httpResourceCallerContract,httpResourceResult} from './http-resource-caller-contracts.mjs';
 import {httpResourceOption} from './http-resource-options.mjs';
 import {httpResourceNativeDomain} from './http-resource-native-domains.mjs';
+import {httpResourcePublicInputType,httpResourceOwnedSignatureDomain} from './http-resource-public-domains.mjs';
 import {httpResourceCallerName} from './http-resource-caller-flow.mjs';
 import {emitAsyncControlU64Guards} from './async-control-u64-guards.mjs';
 import {UnsupportedOwnedRustSource} from './http-resource-rust-syntax.mjs';
@@ -17,11 +18,7 @@ export function projectHttpResourceRustFunctions(functions,{javascriptPath,runti
  function imported(id){
   if(!imports.has(id)){const operation=httpResourceCallerContract(id);if(!operation&&id!=='deferFilesystemFlow')fail('actual registered import proposal required');let local;do{local='http_operation_'+sequence++;}while(used.has(local));used.add(local);imports.set(id,{name:id,local,module:operation?.runtimeModule??'extensions/filesystem-effects-runtime.mjs'});}return imports.get(id).local;
  }
- function inputType(text){
-  text=text.replaceAll("&'a",'&');if(text==='&str')return 'string';if(text==='bool')return 'boolean';if(text==='u64')return 'bigint';
-  const resource={'&crate::translation_async_control_core::Cancellation':['router_cancel_is_set',0],'&crate::translation_async_control_core::Sender':['router_async_send',0],'&mutcrate::translation_async_control_core::Receiver':['router_async_receive',0],'&crate::translation_http_transport_core::Client':['router_http_transport_open',0],'&mutcrate::translation_http_transport_core::Client':['router_http_transport_client_dispose',0],'&crate::translation_http_transport_core::Stream':['router_http_transport_head',0],'&mutcrate::translation_http_transport_core::Stream':['router_http_transport_read',0],'&crate::translation_core::Json':['router_http_status',0],'&[crate::translation_core::Json]':['router_state_json_values_copy',0]}[text];
-  if(!resource)fail('public input needs a matching actual ABI source rule');return 'Parameters<typeof '+imported(resource[0])+'>['+resource[1]+']';
- }
+ function inputType(text){return httpResourcePublicInputType(httpResourceNativeDomain(text),imported);}
  function unwrap(node,depth=0){tick(depth);return node?.kind==='temporary'?unwrap(node.value,depth+1):node;}
  function borrowed(node,depth=0){node=unwrap(node,depth);return ['borrow','dereference'].includes(node?.kind)?borrowed(node.value,depth+1):node;}
  function operation(path){if(localProposals.has(path))return localProposals.get(path);const rows=httpResourceCallerOperationNames().map(httpResourceCallerContract).filter(row=>!row.nativeForm&&row.rustPath===path);if(rows.length!==1)fail('one actual complete native HTTP operation path required');return rows[0];}
@@ -82,7 +79,7 @@ export function projectHttpResourceRustFunctions(functions,{javascriptPath,runti
  }
  const sourceFunctions=functions.map(fn=>{
   const parameters=fn.parameters.map(parameter=>({name:name(parameter.name),type:inputType(parameter.type)})),locals=new Map(fn.parameters.map(parameter=>[parameter.name,{guarded:false,type:httpResourceNativeDomain(parameter.type)}]));if(new Set(parameters.map(row=>row.name)).size!==parameters.length)fail('duplicate original caller parameters');
-  const rawBody=body(fn.body,locals,fn.asynchronous),guards=emitAsyncControlU64Guards(fn.parameters.filter(parameter=>parameter.type==='u64').map(parameter=>name(parameter.name))),inner=guards?'{\n'+guards+'\n'+rawBody.slice(1):rawBody,docs=parameters.map(row=>' * @param {'+row.type+'} '+row.name),returnType={bool:'boolean',u64:'bigint','text-owned':'string',unit:'null'}[httpResourceNativeDomain(fn.returns)];if(returnType)docs.push(' * @returns {'+returnType+'}');
+  const rawBody=body(fn.body,locals,fn.asynchronous),guards=emitAsyncControlU64Guards(fn.parameters.filter(parameter=>parameter.type==='u64').map(parameter=>name(parameter.name))),inner=guards?'{\n'+guards+'\n'+rawBody.slice(1):rawBody,docs=parameters.map(row=>' * @param {'+row.type+'} '+row.name),returnType={bool:'boolean',u64:'bigint','text-owned':'string',unit:'null'}[httpResourceNativeDomain(fn.returns)]??(!fn.asynchronous&&httpResourceOwnedSignatureDomain(httpResourceNativeDomain(fn.returns))?httpResourcePublicInputType(httpResourceNativeDomain(fn.returns),imported):null);if(returnType)docs.push(' * @returns {'+returnType+'}');
   return (docs.length?'/**\n'+docs.join('\n')+'\n */\n':'')+(fn.exported?'export ':'')+'function '+name(fn.name)+'('+parameters.map(row=>row.name).join(', ')+') '+(fn.asynchronous?'{ return '+imported('deferFilesystemFlow')+'(async () => '+inner+'); }':inner);
  }).join('\n\n');
  const edge=target=>{const value=posix.relative(posix.dirname(javascriptPath),target);return value.startsWith('.')?value:'./'+value;},source=[...imports.values()].map(row=>'import { '+row.name+' as '+row.local+' } from '+JSON.stringify(edge(runtimeRoot+'/'+row.module))+';').join('\n')+'\n\n'+sourceFunctions+'\n';if(source.length>2097152)fail('complete canonical HTTP source proposal bound');return {source,imports:[...imports.values()],sourceAuthority:false,semanticAuthority:false};
