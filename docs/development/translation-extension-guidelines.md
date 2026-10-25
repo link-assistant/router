@@ -259,3 +259,13 @@ preexisting cancellation must not consume the original stream. Retain full
 root/library CST histories, fresh runtime closure and independent native cases;
 see the [closed HTTP deadline draft](http-deadline-core-draft.md). All new source
 and receiving qualification remains unrun during bulk drafting.
+
+HTTP callers must keep native string errors separate from cancellation errors,
+retain nested Results and release local clients/streams on every original exit.
+Bind imports to their complete actual module sources; freshly recheck entire
+JS/TS bodies after semantic meta serialization. Canonical native proposals must
+reproduce the entire authoritative Rust source through the independent caller
+checker. Unknown borrowed roots and generic HTTP deadline callbacks remain
+refused until complete rules exist. See the
+[resource caller draft](http-resource-callers-draft.md). All new source and
+receiving cases remain unrun during bulk drafting.

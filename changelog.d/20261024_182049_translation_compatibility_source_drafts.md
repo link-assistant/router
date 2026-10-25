@@ -91,3 +91,5 @@ integration and the remaining requirement ledger are still open.
 - Draft source-bound u64 entry guards for async delay/capacity parameters, canonical Rust inverse guard proposals, paired numeric signatures and independent unrun JS/strict TS/native oracle/refusal source.
 
 - Draft fixed native/JS HTTP deadline operations with known-child settlement, explicit interrupted-read and late owned-stream cleanup, complete native root/library source construction, additive receiving closure and independent unrun loopback/strict TS/native oracle source.
+
+- Draft source-bound HTTP resource caller lowering, distinct nested error families, explicit client/stream cleanup, canonical native inverse reproduction and full original substitution histories; independent loopback, strict TS, native oracle and refusal source remains unrun.

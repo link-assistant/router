@@ -84,6 +84,14 @@ source are retained. Broader numeric/control grammars, generic/recursive/async
 and HTTP resources, namespace/bootstrap, production adoption, receiving/CI
 repairs and every unfinished requirement remain open.
 
+The [HTTP resource caller draft](http-resource-callers-draft.md) now provides
+whole cold caller lowering, actual client/stream loans, all-exit cleanup,
+distinct error-family propagation and canonical native inverse reproduction.
+Full original adapter/reader copies, source substitutions, CST inverses and
+independent unrun loopback/strict TS/native oracle/refusal source are retained.
+Physical source units, borrowed protocol results, mixed-error adapters, broader
+language/resource domains and every other unfinished requirement remain open.
+
 The [closed HTTP deadline core draft](http-deadline-core-draft.md) adds three
 matching native/JS operations with actual settlement/Drop cleanup, late owned
 stream disposal, complete root/library source histories and additive receiving
