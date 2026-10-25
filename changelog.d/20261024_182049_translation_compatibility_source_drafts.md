@@ -138,3 +138,5 @@ integration and the remaining requirement ledger are still open.
 - Draft one-operation private native syntax reuse across all 146 original preparers, typed descendant forwarding, complete overlapping source histories, nested original guards and full descendant CLI status; preserve original family limits, semantic checks and deadlines with independent unrun receiving source.
 
 - Draft actual nongeneric TypeScript alias chains, complete original obligations, expanded JavaScript docs and adjacent erasure inverses, with full source histories and independent unrun callback, signature, ownership and numeric refusal source.
+
+- Draft fresh exported TypeScript alias retention across JavaScript/Rust source-unit edits, complete target reproduction and actual import conflict handling, with full original histories and independent unrun physical three-language and forged-plan source.

@@ -37,7 +37,10 @@ Result/Option callbacks and original nongeneric TypeScript aliases. Follow the
 complete source histories, private source
 joins and open limits in [the extension guidelines](docs/development/translation-extension-guidelines.md).
 Independent JS/strict TS/native and physical source-unit cases are drafted;
-none supplies current coverage, parity or CI evidence. New native oracle source
+none supplies current coverage, parity or CI evidence. Preserve exported typed
+aliases across later JS/Rust edits using fresh original and whole-target checks;
+see [paired alias retention](docs/development/http-resource-unit-type-aliases-draft.md).
+New native oracle source
 joins the existing gated Rust discovery and must never execute locally.
 
 The [native source-operation draft](docs/development/native-source-operation-draft.md)

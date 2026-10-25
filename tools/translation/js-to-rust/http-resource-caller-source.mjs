@@ -55,6 +55,7 @@ export function analyzeHttpResourceCallerSource(stage,input){
    if(!ts.isFunctionDeclaration(item)||!item.name||!item.body||item.asteriskToken||item.typeParameters?.length||item.modifiers?.some(modifier=>modifier.kind!==ts.SyntaxKind.ExportKeyword))fail('ordinary synchronous cold wrapper with inferred return required');const local=name(item.name.text);if(locals.has(local))fail('competing caller/module binding');locals.add(local);functions.push(item);
   }
  }
+ if([...aliases.keys()].some(id=>imports.has(id)))fail('a type-only alias cannot compete with an actual imported operation binding');
  if([...imports.values()].some(id=>httpResourceCallerContract(id)?.family==='option-callback'))context.requireOptionCallbackSources();
  requireHttpResourceFilesystemSources(imports,context);
  if(!functions.length||functions.length>4096)fail('complete bounded nonempty caller module required');

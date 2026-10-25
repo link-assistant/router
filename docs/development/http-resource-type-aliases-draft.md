@@ -17,7 +17,8 @@ full 149 original paths while also checking new descendant families.
 Independent source covers forward chains, recursive function signatures,
 callback obligations, owning and shared values, adjacent spans, numeric guards,
 source inverses and forged meta. Nothing has executed during bulk drafting.
-Exported aliases on subsequent JavaScript/Rust source-unit edits still need a
-fresh paired-source retention rule. Generic/method and wider language domains,
+The [paired source-unit retention draft](http-resource-unit-type-aliases-draft.md)
+now carries exported aliases across subsequent JavaScript/Rust edits with fresh
+whole target checks. Generic/method and wider language domains,
 namespace/bootstrap, full production parity, all CI repairs and the remaining
 bulk requirements stay open.

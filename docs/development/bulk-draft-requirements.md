@@ -369,3 +369,11 @@ independent unrun signature, callback, ownership, numeric and refusal cases are
 retained. Subsequent source-unit alias retention, broader language domains,
 namespace/bootstrap, production parity and every unfinished requirement remain
 open.
+
+The [paired TypeScript alias retention draft](http-resource-unit-type-aliases-draft.md)
+adds fresh original type-only declarations and actual import rejoining after JS
+or Rust authority edits, whole target reproduction and full old/generated CST
+inverses. Complete originals and independent unrun physical three-language,
+import-conflict, source and forged-plan cases are retained. Generic/method
+domains, namespace/bootstrap, production parity and every unfinished requirement
+remain open.

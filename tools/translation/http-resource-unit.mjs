@@ -6,6 +6,7 @@ import {translateHttpResourceCallerJavaScript,translateHttpResourceCallerTypeScr
 
 import {translateHttpResourceCallerRust as translateOwnedStateRust} from './js-to-rust/http-resource-rust.mjs';
 import {projectHttpResourceUnitJavaScript} from './http-resource-unit-signatures.mjs';
+import {retainHttpResourceUnitTypeAliases} from './http-resource-unit-type-aliases.mjs';
 export const OWNED_STATE_NATIVE_INPUTS=Object.freeze([
  'src/translation_integer_core.rs','src/translation_primitive_option_core.rs','src/translation_http_deadline_results_core.rs','src/translation_text_core.rs','src/translation_owned_results_core.rs','src/translation_http_protocol_core.rs','src/translation_http_transport_core.rs','src/translation_http_deadline_core.rs','src/upstream_guard.rs','src/translation_async_control_core.rs','src/lib.rs','src/translation_core.rs','src/translation_core/primitives.rs','src/translation_core/json_collections.rs','src/translation_collections_core.rs','src/translation_state_core.rs','src/translation_carriers_core.rs','Cargo.toml','Cargo.lock',
 ]);
@@ -36,7 +37,8 @@ export function translateOwnedStateUnit({unit,language,current,nativeSources,run
  else if(language==='JavaScript'){
   const proposal=projectHttpResourceUnitJavaScript(current.JavaScript,{unit,current,options});history=proposal.history;const proposed={...options,files:options.files.map(row=>row.path===sourcePath?{path:row.path,source:proposal.source}:row)};result=translateHttpResourceCallerJavaScript(proposal.source,proposed);
  }else fail('one actual source language required');
- return {Rust:language==='Rust'?current.Rust:result.rust,JavaScript:language==='JavaScript'?current.JavaScript:result.javascript,TypeScript:language==='TypeScript'?current.TypeScript:result.typescript,meta:{semanticMeta:result.meta,httpResourceRustSourceHistory:result.httpResourceRustSourceHistory??null,signatureProposalHistory:history,nativeSourceInputs:result.nativeSourceInputs,flowSourceInput:result.flowSourceInput},generatedFrom:language==='Rust'?unit.paths.JavaScript:unit.paths[language],runtimeBefore:runtimeRoot,profile:'router-http-resource-unit-v1',sourceAuthority:false,semanticAuthority:false,nativeRustGrammarChecked:false,runtimeParity:false,rustExecuted:false,receivingExecuted:false};
+ const aliasProposal=language==='TypeScript'?{source:current.TypeScript,history:null}:retainHttpResourceUnitTypeAliases(result.typescript,{unit,current,options,expectedRust:language==='Rust'?current.Rust:result.rust});
+ return {Rust:language==='Rust'?current.Rust:result.rust,JavaScript:language==='JavaScript'?current.JavaScript:result.javascript,TypeScript:aliasProposal.source,meta:{semanticMeta:result.meta,httpResourceRustSourceHistory:result.httpResourceRustSourceHistory??null,signatureProposalHistory:history,typeAliasProposalHistory:aliasProposal.history,nativeSourceInputs:result.nativeSourceInputs,flowSourceInput:result.flowSourceInput},generatedFrom:language==='Rust'?unit.paths.JavaScript:unit.paths[language],runtimeBefore:runtimeRoot,profile:'router-http-resource-unit-v1',sourceAuthority:false,semanticAuthority:false,nativeRustGrammarChecked:false,runtimeParity:false,rustExecuted:false,receivingExecuted:false};
 }
 
 export {OWNED_STATE_NATIVE_INPUTS as OWNED_OUTCOME_NATIVE_INPUTS,ownedStateUnitRuntimeSources as ownedOutcomeUnitRuntimeSources,ownedStateUnitContext as ownedOutcomeUnitContext,translateOwnedStateUnit as translateOwnedOutcomeUnit};

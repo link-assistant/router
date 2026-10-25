@@ -548,3 +548,10 @@ JavaScript. Native spans may touch but cannot overlap. Preserve original TS and
 complete source inverses; never treat an alias spelling as semantic authority.
 See the [original alias draft](http-resource-type-aliases-draft.md); source-unit
 retention and every new qualification remain open.
+
+Retain exported type-only declarations across later source-unit authority edits.
+Recheck the whole old typed source, rejoin only actual imported operation query
+bindings and freshly check the whole new target against authoritative native
+syntax. Preserve both full source inverses and transaction/conflict safeguards.
+See the [paired alias retention draft](http-resource-unit-type-aliases-draft.md);
+no new receiving evidence is claimed.
