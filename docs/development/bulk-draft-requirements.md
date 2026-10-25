@@ -830,3 +830,15 @@ Project/export integration and independent strict target/IEEE/zero/import/refusa
 history plus native oracle source are drafted and unrun. Broader domains,
 namespace bootstrap, production qualification and every other open row remain
 unfinished.
+
+The [standard numeric inverse draft](standard-numeric-inverse-draft.md) adds
+actual original immutable fixed-runtime factory associations through the real
+contract registry, including fixed widths and distinct pointer-sized encodings.
+Complete-body proposals reconstruct inherent calls, then require fresh whole
+Rust frontend checking, unchanged census/guards and complete target reproduction.
+All three original inverse functions, complete source equations, JS/strict TS
+boundary/refusal cases, project/export integration and native Rust oracle source
+are drafted and unrun. No trait/type permission comes from the factory spelling
+or runtime type literal. Wider aggregate operations, new global helper closure,
+namespace/producer bootstrap, opaque async resources, production adoption/parity
+and every other unfinished row remain open.

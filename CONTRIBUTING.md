@@ -851,3 +851,11 @@ semantic permission. Reuse native-selected function extraction and shared source
 mechanics when new rules would otherwise grow full copies; retain complete
 originals, exact native selections, both CST equations and final binding closure.
 See the [standard floating draft](docs/development/standard-floating-inverse-draft.md).
+
+Numeric inverse proposals must join the original named factory import, immutable
+native-selected instantiation, exact registered operation/primitive encoding and
+whole-function lexical bindings. Keep `usize`/`isize` distinct from equal-width
+fixed types. Inherent-call proposals still need fresh complete Rust-source
+checking and exact paired target reproduction. The registry/AST observations are
+data only. See the [numeric inverse draft](docs/development/standard-numeric-inverse-draft.md).
+All new cases remain unrun until the entire bulk source draft is present.
