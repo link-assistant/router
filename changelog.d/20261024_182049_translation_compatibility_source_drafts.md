@@ -1,5 +1,6 @@
 ### Added
 
+- Draft borrowed JSON index/alias and local-view rules with all-root owner protection, shared native lifetimes and independent unrun JS/strict TS/native identity and escape cases.
 - Draft existing owned JSON storage/parse composition in resource callers, with actual library/source joins, owned branch/loop state, native inverses and independent unrun JS/strict TS/native oracle/refusal cases.
 - Draft continuing lexical branch/state joins, single-statement and else-if source rules, scope-aware native mutability and independent unrun JS/strict TS/native oracle cases; repair exact native function recipe boundaries without widening source authority.
 - Draft complete resource loop break/continue and function-return flows, Result/Option propagation, distinct exit summaries and native inverses, with independent unrun JS/strict TS/native oracle and refusal source.

@@ -22,7 +22,7 @@ test('actual immutable input roots survive checked meta and both target language
 test('a local owned copy or mismatched borrowed source cannot supply an escaping input root',limits,()=>{
  for(const body of [
   "/** @param {Parameters<typeof encoded>[0]} value */ export function bad(value){const local=copy(value);return encoded(local);}",
-  "/** @param {Parameters<typeof encoded>[0]} value */ export function bad(value){const alias=value;return encoded(alias);}",
+  "/** @param {Parameters<typeof encoded>[0]} value */ export function bad(value){const local=copy(value);const alias=local;return encoded(alias);}",
   "/** @param {Parameters<typeof encoded>[0]} value */ export function bad(value){const result=encoded(value);return result.field0;}",
  ]){const candidate=imports+body;assert.throws(()=>translateHttpResourceCallerJavaScript(candidate,input(candidate)),body);}
 });

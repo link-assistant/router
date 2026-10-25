@@ -42,6 +42,15 @@ assignments, loop/branch state joins, Some(Null) versus None, and the existing
 bounded successful-resource contract. List and callback shapes need independent
 rules. See the [unrun JSON resource draft](http-resource-json-state-draft.md).
 
+Borrowed JSON projections and aliases retain their actual original input or
+local owned roots, including every possible helper-result root. Local JSON-backed
+text/JSON views may be copied into owned results, but cannot escape their owners.
+Moves and replacements must check every live view; completed lexical scopes
+remove only their own views. Native returned lifetimes follow the checked root
+set through the separate structural shared-reference query. Preserve the old
+text-only query and refuse unproved temporary loans. See the
+[unrun JSON view draft](http-resource-json-views-draft.md).
+
 ### Source synchronization exports during issue #759
 
 Keep every public synchronization CLI in the shared

@@ -161,6 +161,14 @@ retained. Borrowed JSON views, list/callback domains, incompatible state joins,
 namespace/bootstrap, production parity and every unfinished requirement remain
 open.
 
+The [borrowed JSON resource draft](http-resource-json-views-draft.md) adds the
+actual native index facade, shared input aliases, local JSON-backed views,
+complete multi-root protection and native JSON/text reference lifetimes. Full
+original source histories and independent unrun JS/strict TS/native identity,
+value, refusal and inverse source are retained. Temporary loans, borrowed list
+iteration, incompatible state joins, namespace/bootstrap, production parity and
+every unfinished requirement remain open.
+
 The [local resource helper draft](http-resource-local-functions-draft.md) now
 checks actual callee bodies before callers, composes cold futures and single
 returned roots, preserves source order and separates imported/local binding
