@@ -852,3 +852,13 @@ source/table, source derivation, project/export integration and independent
 unrun JS/strict TS/Unicode/native oracle cases are retained. Its token index is
 invocation-local. Broader text/aggregate/owned/generic/async inverses, namespace
 bootstrap, production adoption/parity and every unfinished row remain open.
+
+The [composed inverse draft](composite-inverse-draft.md) schedules existing
+literal, original text-method and scalar/numeric/control rules in at most three
+complete batches. Mixed literal/method edits in one function are staged; each
+layer joins the complete current original source and retains full adjacent
+inverses, followed by a new complete final semantic-meta/compiler recheck.
+Actual native target syntax supplies scheduling data only. Complete derivation,
+project/export integration and independent unrun mixed JS/strict TS/source/conflict
+regression source are retained. Broader source domains, namespace/bootstrap,
+production adoption/parity and all other incomplete rows remain open.

@@ -20,3 +20,4 @@ export {proposeForwardFloatingBodySynchronization} from './forward-floating-body
 export {proposeForwardStandardFloatingBodySynchronization} from './forward-standard-floating-body-synchronization.mjs';
 export {proposeForwardStandardNumericBodySynchronization} from './forward-standard-numeric-body-synchronization.mjs';
 export {proposeForwardTextPredicateSynchronization} from './forward-text-predicate-synchronization.mjs';
+export {proposeForwardCompositeSynchronization} from './forward-composite-synchronization.mjs';

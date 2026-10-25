@@ -867,3 +867,12 @@ modified target. A JavaScript property spelling grants no receiver/trait proof.
 Retain full emitter/table source and invocation-local indexing; see the
 [text predicate inverse draft](docs/development/text-predicate-inverse-draft.md).
 All new source and oracle cases remain unrun during the complete drafting phase.
+
+Compose eligible source substitutions in complete rule-family batches. The
+`composite-bodies` inverse mode stages existing literal, text-method and numeric
+control rules, rejoins each complete current source and retains adjacent full
+inverses. Native AST scheduling is data only; require a new full final compiler
+and semantic-meta check, unchanged census and whole target reproduction. Keep
+three deterministic layer batches, existing deadlines and a 192 MiB retained raw
+source budget. See the [composition draft](docs/development/composite-inverse-draft.md).
+The implementation and all new cases remain unrun during bulk source drafting.

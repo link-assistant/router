@@ -67,3 +67,5 @@ integration and the remaining requirement ledger are still open.
 - Draft original fixed-runtime factory numeric call inverses, complete source derivations, project/export integration and independent unrun JS/TS/native boundary cases.
 
 - Draft bulk checked text predicate method-token inverses preserving original temporaries, complete source histories, JS/TS/project/export and unrun native oracle cases.
+
+- Draft deterministic batched composition of existing literal, text and numeric/control inverses, retaining full adjacent sources and final complete checking; all mixed regression source is unrun.

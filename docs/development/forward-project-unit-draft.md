@@ -24,7 +24,7 @@ The explicit manifest has exactly these fields:
 Language authority can be `auto`, `Rust`, `JavaScript` or `TypeScript`. Inverse
 selection is `return-expressions`, `literals`, `scalar-bodies`, `control-bodies`
 `imperative-bodies`, `range-bodies`, `floating-bodies` or
-`standard-floating-bodies`, `standard-numeric-bodies`, and `text-predicates`. Distinct canonical paths and
+`standard-floating-bodies`, `standard-numeric-bodies`, `text-predicates`, and `composite-bodies`. Distinct canonical paths and
 physical `js/src` and `ts/src` locations are required. No unchecked, runtime-only
 or force-overwrite mode exists.
 
