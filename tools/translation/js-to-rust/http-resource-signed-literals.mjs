@@ -11,6 +11,8 @@ export function httpResourceNumericSourceHint(ts,node,{environment,imports,local
  if(depth>160)fail('complete numeric source-hint grouping bound');if(ts.isParenthesizedExpression(node)||ts.isAsExpression(node)||ts.isTypeAssertionExpression(node)||ts.isSatisfiesExpression(node)||ts.isNonNullExpression(node))return httpResourceNumericSourceHint(ts,node.expression,{environment,imports,localFunctions,contract},depth+1);
  let type=null;if(ts.isIdentifier(node))type=environment.get(node.text)?.type;
  else if(ts.isPrefixUnaryExpression(node)&&node.operator===ts.SyntaxKind.MinusToken&&ts.isBigIntLiteral(node.operand))type='i64';
- else if(ts.isCallExpression(node)&&ts.isIdentifier(node.expression)){const row=imports.has(node.expression.text)?contract(imports.get(node.expression.text)):localFunctions?.get(node.expression.text);type=row?.ret;}
+ else if(ts.isCallExpression(node)){const callee=selectHttpResourceCallableSource(ts,node.expression);if(callee&&ts.isIdentifier(callee)){const row=imports.has(callee.text)?contract(imports.get(callee.text)):localFunctions?.get(callee.text);type=row?.ret;}}
  return ['u64','i64'].includes(type)?type:null;
 }
+
+import {selectHttpResourceCallableSource} from './http-resource-source-grouping.mjs';

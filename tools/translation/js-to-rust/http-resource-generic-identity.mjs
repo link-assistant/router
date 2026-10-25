@@ -20,9 +20,10 @@ export function captureHttpResourceGenericIdentity(ts,item,{language,file,name,m
    if(language!=='TypeScript'||node.type&&!slot(ts,node.type,typeParameter))fail('generic type wrapper must retain the actual same lexical slot');const value=term(node.expression,depth+1),span=ts.isTypeAssertionExpression(node)?[node.getStart(file),node.expression.getStart(file)]:[node.expression.end,node.end];erase.push({span,replacement:''});return value;
   }
   if(ts.isIdentifier(node)){if(live.get(node.text)!==true)fail('every actual generic value must move exactly once from its live original binding');live.set(node.text,false);return {kind:'variable',name:node.text,type,root:null,roots:[]};}
-  if(ts.isCallExpression(node)&&ts.isIdentifier(node.expression)&&localFunctions?.get(node.expression.text)?.genericIdentity&&node.arguments.length===1){
+  const callee=ts.isCallExpression(node)?selectHttpResourceCallableSource(ts,node.expression,()=>tick(depth)):null;
+  if(callee&&ts.isIdentifier(callee)&&localFunctions?.get(callee.text)?.genericIdentity&&node.arguments.length===1){
    if(node.typeArguments?.length){if(language!=='TypeScript'||node.typeArguments.length!==1||!slot(ts,node.typeArguments[0],typeParameter))fail('a generic forwarding call must retain its actual lexical slot');const children=node.getChildren(file),less=children.filter(child=>child.kind===ts.SyntaxKind.LessThanToken),greater=children.filter(child=>child.kind===ts.SyntaxKind.GreaterThanToken);if(less.length!==1||greater.length!==1)fail('complete actual generic forwarding type argument boundary required');erase.push({span:[less[0].getStart(file),greater[0].end],replacement:''});}
-   return {kind:'http-resource-call',operation:node.expression.text,args:[term(node.arguments[0],depth+1)],type,awaited:false,implicitAwait:false,root:null,roots:[],local:true,genericIdentity:true};
+   return {kind:'http-resource-call',operation:callee.text,args:[term(node.arguments[0],depth+1)],type,awaited:false,implicitAwait:false,root:null,roots:[],local:true,genericIdentity:true};
   }
   fail('generic value expressions require an original live move or whole checked unchanged-value helper');
  }
@@ -64,3 +65,5 @@ export function createHttpResourceNativeGenericIdentityVerifier(functions){
  }
  return verify;
 }
+
+import {selectHttpResourceCallableSource} from './http-resource-source-grouping.mjs';

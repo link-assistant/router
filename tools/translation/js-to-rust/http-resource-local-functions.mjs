@@ -1,7 +1,7 @@
 // Per-invocation source proposals only. Callers must check every whole body.
 export function orderHttpResourceLocalFunctions(ts,functions,{groups=false}={}){
  const declared=new Map(functions.map(item=>[item.name.text,item])),positions=new Map(functions.map((item,index)=>[item.name.text,index])),edges=new Map();let cells=0;
- for(const item of functions){const calls=new Set();const visit=(node,depth=0)=>{if(++cells>200000||depth>256)throw new TypeError('Complete local caller source census bound');if(ts.isCallExpression(node)&&ts.isIdentifier(node.expression)&&declared.has(node.expression.text))calls.add(node.expression.text);if(ts.isCallExpression(node))for(const argument of node.arguments){let callback=argument,groups=0;while(ts.isParenthesizedExpression(callback)){if(++groups>16)throw new TypeError('Complete callback reference grouping bound');callback=callback.expression;}if(ts.isIdentifier(callback)&&declared.has(callback.text))calls.add(callback.text);}ts.forEachChild(node,child=>visit(child,depth+1));};visit(item.body);edges.set(item.name.text,[...calls]);}
+ for(const item of functions){const calls=new Set();const visit=(node,depth=0)=>{if(++cells>200000||depth>256)throw new TypeError('Complete local caller source census bound');if(ts.isCallExpression(node)){const callee=selectHttpResourceCallableSource(ts,node.expression);if(callee&&ts.isIdentifier(callee)&&declared.has(callee.text))calls.add(callee.text);}if(ts.isCallExpression(node))for(const argument of node.arguments){let callback=argument,groups=0;while(ts.isParenthesizedExpression(callback)){if(++groups>16)throw new TypeError('Complete callback reference grouping bound');callback=callback.expression;}if(ts.isIdentifier(callback)&&declared.has(callback.text))calls.add(callback.text);}ts.forEachChild(node,child=>visit(child,depth+1));};visit(item.body);edges.set(item.name.text,[...calls]);}
  const indices=new Map(),low=new Map(),stack=[],active=new Set(),ordered=[];let sequence=0;
  function visit(name,depth=0){
   if(depth>64)throw new TypeError('Complete local call graph depth bound');indices.set(name,sequence);low.set(name,sequence++);stack.push(name);active.add(name);
@@ -26,3 +26,5 @@ export function httpResourceLocalContracts(rows){
  }
  return contracts;
 }
+
+import {selectHttpResourceCallableSource} from './http-resource-source-grouping.mjs';

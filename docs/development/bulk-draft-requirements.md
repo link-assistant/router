@@ -639,3 +639,11 @@ copies, both phases, independent lifecycle/refusal/scope/project target cases
 and native macro oracle source remain unrun. Architecture exports, derived and
 conditional producers, bootstrap, production qualification and every unfinished
 requirement above remain open. No tests or experiments ran.
+
+The [original grouped call draft](http-resource-call-grouping-draft.md) composes
+actual operation/helper names, generic forwarding, numeric hints and deferred
+body selection while preserving original type obligations and raw source bounds.
+Entry no-ops no longer interrupt complete guard selection. Seven complete
+originals, both rule phases and independent direct JS/strict TS/native inverse,
+refusal and oracle source remain unrun. Every unfinished requirement above
+remains open; no tests, experiments or fresh coverage measurements ran.

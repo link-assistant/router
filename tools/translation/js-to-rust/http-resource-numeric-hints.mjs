@@ -6,7 +6,7 @@ export function collectHttpResourceNumericHints(ts,statements,{bindings,imports,
  const hints=new Map(),edges=[],constraints=[];let nodes=0;
  for(const [name,row]of bindings)if(['u64','i64'].includes(row.type))hints.set(name,row.type);
  const unwrap=node=>{let depth=0;while(node&&ts.isParenthesizedExpression(node)){tick();if(++depth>160)fail('complete native grouping bound');node=node.expression;}return node;};
- const operation=node=>{node=unwrap(node);return node&&ts.isCallExpression(node)&&ts.isIdentifier(node.expression)?imports.has(node.expression.text)?contract(imports.get(node.expression.text)):localFunctions?.get(node.expression.text):null;};
+ const operation=node=>{node=unwrap(node);const callee=node&&ts.isCallExpression(node)?selectHttpResourceCallableSource(ts,node.expression,tick):null;return callee&&ts.isIdentifier(callee)?imports.has(callee.text)?contract(imports.get(callee.text)):localFunctions?.get(callee.text):null;};
  const numeric=type=>['u64','i64'].includes(type)?type:null;
  function impose(node,type,depth=0){tick();if(depth>160)fail('complete conditional numeric constraint depth bound');node=unwrap(node);if(!numeric(type)||!node)return;if(ts.isIdentifier(node))constraints.push([node.text,type]);else if(ts.isConditionalExpression(node)){impose(node.whenTrue,type,depth+1);impose(node.whenFalse,type,depth+1);}}
  function connect(left,right){left=unwrap(left);right=unwrap(right);if(!left||!right)return;if(ts.isIdentifier(left)&&ts.isIdentifier(right))edges.push([left.text,right.text]);const row=operation(right);if(row)impose(left,row.ret);if(ts.isPrefixUnaryExpression(right)&&right.operator===ts.SyntaxKind.MinusToken&&ts.isBigIntLiteral(right.operand))impose(left,'i64');}
@@ -28,3 +28,5 @@ export function collectHttpResourceNumericHints(ts,statements,{bindings,imports,
  let changed=true,round=0;while(changed){tick();if(++round>8192)fail('complete finite numeric constraint convergence bound');changed=false;for(const [left,right]of edges){tick();if(hints.has(left))changed=assign(right,hints.get(left))||changed;if(hints.has(right))changed=assign(left,hints.get(right))||changed;}}
  return hints;
 }
+
+import {selectHttpResourceCallableSource} from './http-resource-source-grouping.mjs';
