@@ -18,6 +18,7 @@ import {captureHttpResourceRecursiveSignature,httpResourceRecursivePrototype} fr
 import {captureHttpResourceFunctionReturnAnnotation} from './http-resource-function-returns.mjs';
 import {createHttpResourceWrittenAnnotationReader} from './http-resource-callback-annotations.mjs';
 import {httpResourcePublicInputDomain} from './http-resource-public-domains.mjs';
+import {requireHttpResourceFilesystemSources} from './http-resource-filesystem-source.mjs';
 import {captureHttpResourceTypeScriptParameterDoc,finishHttpResourceTypeScriptDocs} from './http-resource-typescript-docs.mjs';
 const RUNTIME=new URL('../async-control-runtime.mjs',import.meta.url),DECLARATIONS=new URL('../async-control-runtime.d.mts',import.meta.url),FLOW=new URL('../extensions/filesystem-effects-runtime.mjs',import.meta.url);
 const fail=message=>{throw new TypeError('Async control caller source: '+message);};
@@ -31,7 +32,7 @@ export function captureHttpResourceCallerInputs(input){
  const nativeInputs=observeHttpDeadlineSources(files,{runtimeRoot,declarationRoot}).records.concat(requireOwnedIntegerSources(files,{runtimeRoot,declarationRoot}),requireOwnedPrimitiveOptionSources(files,{runtimeRoot,declarationRoot}),requireOwnedStateSources(files)),expected=httpDeadlineRuntimeSources(runtimeRoot,declarationRoot);
  for(const row of expected)if(files.get(row.path)!==row.source)fail('complete actual HTTP runtime/declaration closure differs: '+row.path);
  const current=()=>{requireOwnedCoreSourceCurrent(privateContext);for(const row of httpDeadlineRuntimeSources(runtimeRoot,declarationRoot))if(files.get(row.path)!==row.source)fail('current HTTP runtime/declaration source changed');if(readFileSync(FLOW,'utf8')!==flowSource)fail('current complete cold-flow source changed');observeHttpDeadlineSources(files,{runtimeRoot,declarationRoot});requireOwnedIntegerSources(files,{runtimeRoot,declarationRoot});requireOwnedPrimitiveOptionSources(files,{runtimeRoot,declarationRoot});requireOwnedStateSources(files);};
- current();return {sourcePath,callerSource,runtimePath,runtimeRoot,declarationRoot,flowRuntimePath,flowSource,nativeInputs,current};
+ current();return {sourcePath,callerSource,runtimePath,runtimeRoot,declarationRoot,flowRuntimePath,flowSource,filesystemDeclarationSource:files.get(declarationRoot+'/extensions/filesystem-effects-runtime.d.mts'),nativeInputs,current};
 }
 
 export function analyzeHttpResourceCallerSource(stage,input){
@@ -43,11 +44,12 @@ export function analyzeHttpResourceCallerSource(stage,input){
   if(ts.isImportDeclaration(item)){
    if(item.modifiers?.length||item.attributes||!ts.isStringLiteral(item.moduleSpecifier)||!item.moduleSpecifier.text.startsWith('.')||item.importClause?.isTypeOnly||item.importClause?.name||!item.importClause?.namedBindings||!ts.isNamedImports(item.importClause.namedBindings))fail('transparent relative named runtime import required');
    const target=posix.normalize(posix.join(posix.dirname(context.sourcePath),item.moduleSpecifier.text));if(!target.startsWith(context.runtimeRoot+'/'))fail('actual registered runtime path required');
-   for(const element of item.importClause.namedBindings.elements){const local=name(element.name.text),imported=element.propertyName?.text??local;if(element.isTypeOnly||locals.has(local))fail('competing or type-only runtime binding');const operation=httpResourceCallerContract(imported);if(target===context.flowRuntimePath?imported!=='deferFilesystemFlow':!operation||target!==context.runtimeRoot+'/'+operation.runtimeModule)fail('actual operation import owner differs');locals.add(local);imports.set(local,imported);}
+   for(const element of item.importClause.namedBindings.elements){const local=name(element.name.text),imported=element.propertyName?.text??local;if(element.isTypeOnly||locals.has(local))fail('competing or type-only runtime binding');const operation=httpResourceCallerContract(imported);if(imported==='deferFilesystemFlow'?target!==context.flowRuntimePath:!operation||target!==context.runtimeRoot+'/'+operation.runtimeModule)fail('actual operation import owner differs');locals.add(local);imports.set(local,imported);}
   }else{
    if(!ts.isFunctionDeclaration(item)||!item.name||!item.body||item.asteriskToken||item.typeParameters?.length||item.modifiers?.some(modifier=>modifier.kind!==ts.SyntaxKind.ExportKeyword))fail('ordinary synchronous cold wrapper with inferred return required');const local=name(item.name.text);if(locals.has(local))fail('competing caller/module binding');locals.add(local);functions.push(item);
   }
  }
+ requireHttpResourceFilesystemSources(imports,context);
  if(!functions.length||functions.length>4096)fail('complete bounded nonempty caller module required');
  let annotationCells=0;const describeInput=createHttpResourceWrittenAnnotationReader(ts,imports,()=>{if(++annotationCells>100000)fail('complete public signature source-cell bound');});
  const type=(written,guarded=false)=>{const actual=describeInput(written);if(actual.kind!=='domain'||!httpResourcePublicInputDomain(actual.type,{guarded}))fail('written actual shared or owned input domain and original u64 entry guard required');return actual.type;};

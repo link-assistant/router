@@ -230,6 +230,15 @@ forged-meta source are retained. Generic/method/resource-state recursion,
 namespace/bootstrap, production parity and every unfinished requirement remain
 open.
 
+The [actual filesystem composition draft](http-resource-filesystem-draft.md)
+adds eighteen original string-path std/tokio operations, fresh independent
+filesystem semantic qualification, distinct I/O Results, deferred async bodies
+and additive current declarations/source-unit assets. Full originals and
+independent unrun JS/strict TS/native ordering, Unicode, failure, polling,
+signature, refusal and forged-meta source are retained. Byte vectors and broader
+filesystem APIs, namespace/bootstrap, production parity and every unfinished
+requirement remain open.
+
 The [local resource helper draft](http-resource-local-functions-draft.md) now
 checks actual callee bodies before callers, composes cold futures and single
 returned roots, preserves source order and separates imported/local binding

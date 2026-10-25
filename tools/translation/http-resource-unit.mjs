@@ -1,7 +1,7 @@
 // Adapter DATA is never a source permit. Actual native libraries, runtimes and
 // the authoritative whole caller re-enter the original private source checker.
 import {posix} from 'node:path';
-import {httpDeadlineResultRuntimeSources as ownedStateRuntimeSources} from './http-deadline-result-runtime-sources.mjs';
+import {httpResourceFilesystemRuntimeSources as ownedStateRuntimeSources} from './http-resource-filesystem-runtime-sources.mjs';
 import {translateHttpResourceCallerJavaScript,translateHttpResourceCallerTypeScript} from './js-to-rust/http-resource-callers.mjs';
 
 import {translateHttpResourceCallerRust as translateOwnedStateRust} from './js-to-rust/http-resource-rust.mjs';

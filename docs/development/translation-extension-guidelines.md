@@ -474,6 +474,14 @@ then freshly check their complete source. See the
 [owned signature draft](http-resource-owned-signatures-draft.md); all new
 qualification remains unrun during source drafting.
 
+When composing existing filesystem adapters, retain their original independent
+standard-library semantic checks and complete runtime/declaration sources.
+Preserve structured I/O errors separately from text/control errors, use actual
+fully qualified native paths, and reject eager filesystem async calls outside
+the real deferred caller body. Runtime tables cannot waive a namespace refusal
+or supply cold polling. See the [filesystem composition draft](http-resource-filesystem-draft.md);
+all new receiving qualification remains unrun during source drafting.
+
 Compose common operation families through their actual fully checked native and
 runtime sources, retaining callbacks/numeric domains with their original checker
 when unsupported. Option/Result containers move once. Local borrowed string

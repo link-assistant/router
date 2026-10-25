@@ -82,6 +82,7 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
   if(!ts.isCallExpression(node)||!ts.isIdentifier(node.expression)||node.typeArguments?.length||!imports.has(node.expression.text)&&!localFunctions?.has(node.expression.text))fail('one actual imported or checked local operation required');
   const operation=imports.has(node.expression.text)?httpResourceCallerContract(imports.get(node.expression.text)):localFunctions?.get(node.expression.text);if(!operation)fail('unregistered actual operation');if(operation.localRefusal)fail(operation.localRefusal);
   if(operation.args.includes('deferred-callback'))fail('generic deadline callbacks use the separate control lane; HTTP resources require closed settled operations');
+  if(operation.family==='filesystem'&&coldTail&&!awaited)fail('eager filesystem operations require the actual enclosing deferred async body');
   const implicitAwait=operation.async&&!awaited&&coldTail;if(Boolean(operation.async)!==Boolean(awaited||implicitAwait)||operation.async&&!lazy)fail('future must be immediately awaited inside a cold caller');
   if(node.arguments.length!==operation.args.length)fail('complete actual operation arity differs');const loans=new Map(),args=[];
   for(let index=0;index<operation.args.length;index++){
