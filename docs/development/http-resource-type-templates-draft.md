@@ -26,3 +26,8 @@ wrong arity, unsupported unused declarations and forged meta. All tests,
 translator/preparer execution, strict diagnostics and CI remain deferred until
 the entire bulk requirement draft is complete. Wider generics/methods,
 namespace/bootstrap, production parity and all other unfinished work stay open.
+
+The [bound/default successor](http-resource-type-bounds-draft.md) extends the
+earlier refusals for exact source-qualified constraints and trailing defaults.
+Generic executable functions, variance and wider language domains remain open;
+no new source draft has been executed or qualified.

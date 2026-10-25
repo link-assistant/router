@@ -613,3 +613,10 @@ guard; a bigint type, unsigned guard or detached numeric hint cannot supply it.
 Preserve exact limits, native inverse guards, private current library joins and
 explicit payload-container refusals. See the [signed family draft](http-resource-signed-numbers-draft.md);
 all new source/runtime/native qualification remains unrun.
+
+Generic aliases must check every actual argument against its complete original
+constraint, validate unused defaults and retain earlier-slot lexical scope.
+Unconstrained slots cannot borrow global aliases. Rebind operation queries in
+constraints/defaults as well as the alias body after source-unit edits, then
+recheck the whole target. See the [bound/default draft](http-resource-type-bounds-draft.md);
+all new source/receiving qualification remains unrun.

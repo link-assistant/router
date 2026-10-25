@@ -31,7 +31,7 @@ export function retainHttpResourceUnitTypeAliases(source,{unit,current,options,e
  }
  const retained=[];
  for(const alias of aliases){
-  const begin=alias.getFullStart(),end=alias.end,edits=[];visit(alias.type,node=>{if(!ts.isTypeQueryNode(node))return;if(!ts.isIdentifier(node.exprName))fail('actual original operation query identifier required');const start=node.exprName.getStart(original),replacement=operation(node.exprName.text);if(replacement!==node.exprName.text)edits.push({span:[start,node.exprName.end],expected:node.exprName.text,replacement});});
+  const begin=alias.getFullStart(),end=alias.end,edits=[];visit(alias,node=>{if(!ts.isTypeQueryNode(node))return;if(!ts.isIdentifier(node.exprName))fail('actual original operation query identifier required');const start=node.exprName.getStart(original),replacement=operation(node.exprName.text);if(replacement!==node.exprName.text)edits.push({span:[start,node.exprName.end],expected:node.exprName.text,replacement});});
   let text=previous.slice(begin,end),last=end;for(const edit of edits.sort((left,right)=>right.span[0]-left.span[0])){if(edit.span[0]<begin||edit.span[1]>last||previous.slice(...edit.span)!==edit.expected)fail('disjoint complete original alias query spans required');text=text.slice(0,edit.span[0]-begin)+edit.replacement+text.slice(edit.span[1]-begin);last=edit.span[0];}retained.push({span:[begin,end],original:previous.slice(begin,end),source:text});queryEdits.push(...edits);
  }
  const proposed=extraImports.join('\n')+(extraImports.length?'\n':'')+retained.map(row=>row.source).join('\n')+'\n'+source;

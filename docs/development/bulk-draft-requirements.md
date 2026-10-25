@@ -443,3 +443,11 @@ The signed numeric source review now also retains a complete successor for
 grouped actual-call argument selection and bounded conditional constraints, with
 full originals/CST inverses and independent unrun cases. Every unfinished bulk
 requirement and every verification obligation remain open.
+
+The [original generic bound/default draft](http-resource-type-bounds-draft.md)
+adds exact actual type-argument constraints, trailing/earlier-slot defaults,
+bounded callable/indexed template domains and full declaration query retention
+across JS/Rust source-unit edits. Complete originals and independent unrun
+JS/strict TS/physical transaction and refusal cases are retained. Generic
+executable functions, general constraints/variance/methods, namespace/bootstrap,
+production parity and every unfinished requirement remain open.

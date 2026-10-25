@@ -158,3 +158,5 @@ integration and the remaining requirement ledger are still open.
 - Draft source-qualified signed integer operations and Option/Result callbacks, exact original entry guards, local literal constraints, mutable/recursive/cold return composition and complete native inverses, with full original histories and independent unrun JS/strict TS/native limit, overflow, division, callback and refusal source in gated CI discovery.
 
 - Draft source-review corrections for grouped numeric calls and bounded conditional constraints, retaining complete originals/inverses and independent unrun grouped/deep source cases.
+
+- Draft original generic alias constraints/defaults, exact actual descriptor obligations, earlier-slot scope and complete constraint/default query retention across JS/Rust source-unit edits, with full originals and independent unrun strict-target, physical transaction and refusal source.

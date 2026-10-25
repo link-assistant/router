@@ -35,6 +35,8 @@ read-only captures, owning and settled signatures, actual standard filesystem
 and byte operations, complete Result fallbacks, Option loop/stream exits and
 Result/Option callbacks, original TypeScript aliases/templates, post-test loops,
 conditional values, strict Boolean values and source-qualified signed integers.
+Generic alias constraints/defaults and their full source-unit query bindings
+follow [the bound/default rules](docs/development/http-resource-type-bounds-draft.md).
 Follow the
 complete source histories, private source
 joins and open limits in [the extension guidelines](docs/development/translation-extension-guidelines.md).
