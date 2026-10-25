@@ -629,3 +629,13 @@ architecture globs and same-scope cycles retain their obligations. Five complete
 source copies, both phases, independent context/source/refusal/project cases and
 ordinary native tool/derive oracle source remain unrun. Every unfinished row
 above remains open; no validation or fresh coverage evidence is claimed.
+
+The [passive macro attribute draft](passive-macro-attributes-draft.md) carries
+original passive builtin definition/output attributes through separate complete
+engine/source/project copies. One closed synchronous source frame checks exact
+original items and actual generated domains; old APIs, hygiene, source ordering,
+unknown producer refusals and original bounds remain. Five complete source
+copies, both phases, independent lifecycle/refusal/scope/project target cases
+and native macro oracle source remain unrun. Architecture exports, derived and
+conditional producers, bootstrap, production qualification and every unfinished
+requirement above remain open. No tests or experiments ran.
