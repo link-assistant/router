@@ -458,3 +458,12 @@ function returns and canonical native block inverses. Complete originals and
 independent unrun JS/strict TS/native/refusal cases are retained; a sixteenth
 oracle joins gated CI discovery. Shadowing, exceptions, broader language domains,
 namespace/bootstrap, production parity and every unfinished requirement remain open.
+
+The [original scalar for-header draft](http-resource-for-headers-draft.md) adds
+actual initializer/condition/update rules, scoped header lifetimes, all nearest
+continue/fallthrough suffixes and range-proven unit counter updates. Source
+review also connects existing numeric constraints to declaration literals.
+Complete originals and independent unrun JS/strict TS/native/boundary/refusal
+cases are retained; a seventeenth oracle joins gated CI discovery. General
+Number/range loops, broader language domains, namespace/bootstrap, production
+parity and every unfinished requirement remain open.

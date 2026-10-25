@@ -36,3 +36,5 @@ mod list_literals;
 mod signed_numbers;
 #[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-lexical-scopes-oracle.rs"]
 mod lexical_scopes;
+#[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-for-headers-oracle.rs"]
+mod for_headers;

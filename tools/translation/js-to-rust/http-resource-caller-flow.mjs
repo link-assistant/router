@@ -3,6 +3,7 @@
 import {httpResourceCallerContract as actualHttpResourceContract,httpResourceCallerRustType as actualHttpResourceRustType,httpResourceOwned,httpResourceBorrowRole,httpResourceNeedsDisposal,httpResourceResult,httpResourceResultOwnsDisposal} from './http-resource-caller-contracts.mjs';
 import {httpResourceOption} from './http-resource-options.mjs';
 import {collectHttpResourceNumericHints} from './http-resource-numeric-hints.mjs';
+import {observeHttpResourceForIncrement,requireHttpResourceForCounterUnassigned} from './http-resource-for-headers.mjs';
 import {httpResourceValueRoots} from './http-resource-root-sets.mjs';
 import {captureHttpResourceCallbackAnnotations} from './http-resource-callback-annotations.mjs';
 import {httpResourceSignedLiteral,httpResourceNumericSourceHint} from './http-resource-signed-literals.mjs';
@@ -172,6 +173,13 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
   alternatives.push({type:fallback.type,returnRoots:fallback.returnRoots});return {fallback,pass};
  }
  const numericHints=collectHttpResourceNumericHints(ts,statements,{bindings:environment,imports,localFunctions,contract:httpResourceCallerContract,numericReturnDomain,tick,inlineExpression});
+ function forHeaderEffect(node){
+  tick();let groups=0;while(ts.isParenthesizedExpression(node)){if(++groups>160)fail('bounded complete original for header grouping required');node=node.expression;}
+  if(ts.isBinaryExpression(node)&&node.operatorToken.kind===ts.SyntaxKind.EqualsToken){
+   if(!ts.isIdentifier(node.left))fail('one actual scalar for-header assignment required');const name=node.left.text,row=environment.get(name);if(!row||!row.mutable||row.input||row.moved||row.disposed||!['bool','u64','i64'].includes(row.type))fail('for-header assignment requires a live mutable native scalar local');const value=expression(node.right,{numberDomain:row.type==='i64'?'i64':null});if(value.type!==row.type||httpResourceValueRoots(value).length)fail('for-header assignment must preserve its complete actual scalar domain');return {kind:'assign',name,value};
+  }
+  const value=call(node);if(httpResourceResult(value.type)||httpResourceOption(value.type)||httpResourceOwned(value.type))fail('for-header effects cannot discard owned values or whole outcomes');return {kind:'effect',value};
+ }
  for(let at=0;at<statements.length;at++){
   tick();const statement=statements[at];if(tail)fail('statement follows complete resource return');
   if(ts.isVariableStatement(statement)){
@@ -180,7 +188,7 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
     const input=declaration.initializer;if(!ts.isPropertyAccessExpression(input)||input.name.text!=='field0'||!ts.isIdentifier(input.expression))fail('original guarded channel pair split required');const row=binding(input.expression.text);if(row.type!=='result:channel-pair'||!row.guarded||row.used||declaration.name.elements.length!==2)fail('one complete guarded channel pair required');row.used=true;row.moved=true;
     const names=declaration.name.elements.map((element,index)=>{if(!ts.isBindingElement(element)||element.dotDotDotToken||element.propertyName||element.initializer||!ts.isIdentifier(element.name))fail('exact complete channel destructuring required');const id=newName(element.name.text);environment.set(id,{type:index?'receiver-owned':'sender-owned',moved:false,disposed:false});return id;});steps.push({kind:'channel-split',from:input.expression.text,names});continue;
    }
-   if(!ts.isIdentifier(declaration.name))fail('ordinary resource local required');const id=newName(declaration.name.text),value=expression(declaration.initializer),carrier=httpResourceResult(value.type)??httpResourceOption(value.type),guarded=!!carrier&&hasGuard(statements[at+1],id),isOption=!!httpResourceOption(value.type);let cleanup=[],option=null,resultFallback=null;if(guarded){const next=statements[++at];if(isOption)option=optionGuard(next,id,value);else{const actual=guard(next,id,value.type);cleanup=actual.cleanup;resultFallback=actual.fallback;}}
+   if(!ts.isIdentifier(declaration.name))fail('ordinary resource local required');const id=newName(declaration.name.text),value=expression(declaration.initializer,{numberDomain:numericHints.get(id)??null}),carrier=httpResourceResult(value.type)??httpResourceOption(value.type),guarded=!!carrier&&hasGuard(statements[at+1],id),isOption=!!httpResourceOption(value.type);let cleanup=[],option=null,resultFallback=null;if(guarded){const next=statements[++at];if(isOption)option=optionGuard(next,id,value);else{const actual=guard(next,id,value.type);cleanup=actual.cleanup;resultFallback=actual.fallback;}}
    if(mutable&&!['bool','u64','i64','text-owned','json','json-list-owned','bytes-owned'].includes(value.type))fail('mutable locals require an actual scalar, owned String, JSON, JSON list or octet vector domain');environment.set(id,{type:value.type,mutable,guarded,moved:false,disposed:false,used:false,root:value.root??null,roots:httpResourceValueRoots(value)});steps.push({kind:'let',name:id,value,mutable,guarded,cleanup,option,resultFallback});continue;
   }
   if(ts.isBlock(statement)){
@@ -192,6 +200,16 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
   if(ts.isForOfStatement(statement)){
    const declaration=statement.initializer;if(statement.awaitModifier||!ts.isBlock(statement.statement)||!ts.isVariableDeclarationList(declaration)||(declaration.flags&ts.NodeFlags.BlockScoped)!==ts.NodeFlags.Const||declaration.declarations.length!==1)fail('one synchronous const element and complete shared-slice loop block required');const element=declaration.declarations[0];if(!ts.isIdentifier(element.name)||element.initializer||element.type||element.exclamationToken)fail('ordinary inferred original slice element required');const id=newName(element.name.text);let source=statement.expression,groups=0;while(ts.isParenthesizedExpression(source)){if(++groups>16)fail('bounded original slice grouping required');source=source.expression;}if(!ts.isIdentifier(source))fail('shared iteration requires an actual live list binding');const iterable=operand(source,'json-list-ref',{move:false}),entry=new Map(snapshotIncoming()),roots=httpResourceValueRoots(iterable);if(!roots.length){const actual=binding(source.text);if(actual.type!=='json-list-owned')fail('shared slice requires its actual original input roots');roots.push(source.text);}for(const root of roots)if(!environment.has(root)||environment.get(root).moved||environment.get(root).disposed)fail('every actual slice owner must remain live');const iterationBindings=new Map(snapshotIncoming());iterationBindings.set(id,{type:'json-ref',input:false,mutable:false,moved:false,disposed:false,used:false,root:roots[0],roots:[...roots]});
    const body=checkNested(ts,statement.statement.statements,[],imports,{lazy,allowColdTail:false,bindings:iterationBindings,moduleNames,budget,depth:depth+1,localFunctions,sourceAnnotations,fragment:{entry}});if(body.type!=='unit'||body.returnRoots.length)fail('complete shared iteration control fragment required');resourceExits.push(...body.resourceExits);functionReturns.push(...body.functionReturns);failures.push(...body.propagatedErrors);steps.push({kind:'for-shared-json',name:id,iterable,body});continue;
+  }
+  if(ts.isForStatement(statement)&&(statement.initializer||statement.condition||statement.incrementor)){
+   if(!ts.isBlock(statement.statement))fail('a complete actual scalar for-loop block is required');let initializer=null,local=null;
+   if(statement.initializer){const source=statement.initializer;if(ts.isVariableDeclarationList(source)){
+    const kind=source.flags&ts.NodeFlags.BlockScoped;if(![ts.NodeFlags.Const,ts.NodeFlags.Let].includes(kind)||source.declarations.length!==1)fail('one actual block-scoped scalar for initializer required');const declaration=source.declarations[0];if(!ts.isIdentifier(declaration.name)||!declaration.initializer||declaration.type||declaration.exclamationToken)fail('one original inferred nonshadowing scalar for initializer required');const id=newName(declaration.name.text),value=expression(declaration.initializer,{numberDomain:numericHints.get(id)??null});if(!['bool','u64','i64'].includes(value.type)||httpResourceValueRoots(value).length)fail('for initializer must retain a complete native scalar domain');local=id;environment.set(id,{type:value.type,mutable:kind===ts.NodeFlags.Let,input:false,moved:false,disposed:false,used:false,root:null,roots:[]});initializer={kind:'let',name:id,value};
+   }else initializer=forHeaderEffect(source);}
+   const entry=new Map(snapshotIncoming()),test=statement.condition?condition(statement.condition):{kind:'boolean',value:true,type:'bool'};requireLoopState(entry,environment);const observed=statement.incrementor?observeHttpResourceForIncrement(ts,statement.incrementor,statement.condition,{environment,tick}):null;let increment=null;
+   if(observed){const operation=httpResourceCallerContract(observed.operation);if(!operation||operation.async||operation.ret!==observed.type||operation.args.join('\0')!==[observed.type,observed.type].join('\0'))fail('the actual complete original integer update operation is required');increment={kind:'assign',name:observed.name,value:{kind:'http-resource-call',operation:operation.javascriptName,args:[{kind:'variable',name:observed.name,type:observed.type,root:null,roots:[]},{kind:'integer',value:'1',type:observed.type}],type:observed.type,awaited:false,implicitAwait:false,root:null,roots:[],local:false}};}
+   else if(statement.incrementor)increment=forHeaderEffect(statement.incrementor);requireLoopState(entry,environment);
+   const body=checkNested(ts,statement.statement.statements,[],imports,{lazy,allowColdTail:false,bindings:environment,moduleNames,budget,depth:depth+1,localFunctions,sourceAnnotations,fragment:{entry}});if(body.type!=='unit'||body.returnRoots.length)fail('complete scalar for-loop control fragment required');if(observed)requireHttpResourceForCounterUnassigned(body,observed.name,tick);resourceExits.push(...body.resourceExits);functionReturns.push(...body.functionReturns);failures.push(...body.propagatedErrors);steps.push({kind:'scalar-for',initializer,condition:test,increment,body});if(local)environment.delete(local);continue;
   }
   if(ts.isWhileStatement(statement)||ts.isDoStatement(statement)||ts.isForStatement(statement)&&!statement.initializer&&!statement.condition&&!statement.incrementor){
    if(!ts.isBlock(statement.statement))fail('complete original loop block required');const entry=new Map([...environment].map(([id,row])=>[id,{...row,roots:httpResourceValueRoots(row)}])),test=ts.isForStatement(statement)?{kind:'boolean',value:true,type:'bool'}:condition(statement.expression);requireLoopState(entry,environment);
@@ -225,7 +243,7 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
 }
 
 function rustString(value){return '"'+[...value].map(character=>character==='"'?'\\"':character==='\\'?'\\\\':character==='\n'?'\\n':character==='\r'?'\\r':character==='\t'?'\\t':character==='\0'?'\\0':character.codePointAt(0)<32||character.codePointAt(0)===127?'\\u{'+character.codePointAt(0).toString(16)+'}':character).join('')+'"';}
-export function emitHttpResourceCallerFlow(flow,{localFunctions=null,continueCondition=null}={}){
+export function emitHttpResourceCallerFlow(flow,{localFunctions=null,continueCondition=null,continueUpdate=null}={}){
  function callbackSource(value){
   const referenced=new Set(),names=new Set([...value.parameters.map(row=>row.name),...(localFunctions?.keys()??[])]);let visited=0;
   function visit(node,collectReferences=true){
@@ -259,8 +277,9 @@ export function emitHttpResourceCallerFlow(flow,{localFunctions=null,continueCon
   }
   fail('unproved complete HTTP resource emission node');
  }
+ function updateSource(row){if(!row)return '';if(row.kind==='assign')return row.name+' = '+expression(row.value)+';';if(row.kind==='effect')return expression(row.value)+';';if(row.kind==='let')return 'let '+(mutable.has(row.name)?'mut ':'')+row.name+' = '+expression(row.value)+';';fail('complete original for-header emission required');}
  // Mutability follows actual exclusive uses throughout all child branches.
- const declared=new Set(flow.steps.flatMap(row=>row.kind==='let'?[row.name]:row.kind==='channel-split'?row.names:[])),mutable=new Set();let cells=0;
+ const declared=new Set(flow.steps.flatMap(row=>row.kind==='let'?[row.name]:row.kind==='scalar-for'&&row.initializer?.kind==='let'?[row.initializer.name]:row.kind==='channel-split'?row.names:[])),mutable=new Set();let cells=0;
  function collect(value,depth=0,hidden=new Set()){
   if(++cells>100000||depth>160)fail('complete emission walk bound');if(!value||typeof value!=='object')return;
   if(value.kind==='inline-callback'){hidden=new Set(hidden);for(const row of value.parameters)hidden.add(row.name);}
@@ -270,8 +289,9 @@ export function emitHttpResourceCallerFlow(flow,{localFunctions=null,continueCon
  }
  collect(flow);
  const lines=flow.steps.map(row=>{
-  if(row.kind==='lexical-scope')return '{\n'+emitHttpResourceCallerFlow(row.body,{localFunctions,continueCondition})+'\n}';
-  if(row.kind==='scoped-if')return 'if '+expression(row.condition)+' {\n'+emitHttpResourceCallerFlow(row.yes,{localFunctions,continueCondition})+'\n} else {\n'+emitHttpResourceCallerFlow(row.no,{localFunctions,continueCondition})+'\n}';
+  if(row.kind==='lexical-scope')return '{\n'+emitHttpResourceCallerFlow(row.body,{localFunctions,continueCondition,continueUpdate})+'\n}';
+  if(row.kind==='scoped-if')return 'if '+expression(row.condition)+' {\n'+emitHttpResourceCallerFlow(row.yes,{localFunctions,continueCondition,continueUpdate})+'\n} else {\n'+emitHttpResourceCallerFlow(row.no,{localFunctions,continueCondition,continueUpdate})+'\n}';
+  if(row.kind==='scalar-for'){const body=emitHttpResourceCallerFlow(row.body,{localFunctions,continueUpdate:row.increment}),suffix=row.increment&&httpResourceLoopFallsThrough(row.body)?'\n'+updateSource(row.increment):'';return '{\n'+(row.initializer?updateSource(row.initializer)+'\n':'')+'while '+expression(row.condition)+' {\n'+body+suffix+'\n}\n}';}
   if(row.kind==='for-shared-json')return 'for '+row.name+' in '+expression(row.iterable)+' {\n'+emitHttpResourceCallerFlow(row.body,{localFunctions})+'\n}';
   if(row.kind==='loop')return 'loop {\n'+emitHttpResourceCallerFlow(row.body,{localFunctions})+'\n}';
   if(row.kind==='do-while'){const body=emitHttpResourceCallerFlow(row.body,{localFunctions,continueCondition:row.condition}),gate=httpResourceLoopFallsThrough(row.body)?'\nif '+expression(row.condition)+' { } else { break; }':'';return 'loop {\n'+body+gate+'\n}';}
@@ -279,11 +299,11 @@ export function emitHttpResourceCallerFlow(flow,{localFunctions=null,continueCon
   if(row.kind==='channel-split')return 'let ('+row.names.map(id=>(mutable.has(id)?'mut ':'')+id).join(', ')+') = '+row.from+';';if(row.kind==='effect')return expression(row.value)+';';
   const cleanup=row.cleanup.map(value=>expression(value)+';').join(' '),value=expression(row.value);
   if(row.resultFallback)return 'let '+(mutable.has(row.name)?'mut ':'')+row.name+' = match '+value+' { Ok(__ro_http_value) => __ro_http_value, Err(_) => { return { '+emitHttpResourceCallerFlow(row.resultFallback,{localFunctions})+' }; } };';
-  if(row.option?.loop)return 'let '+(mutable.has(row.name)?'mut ':'')+row.name+' = match '+value+' { Some(__ro_http_some) => __ro_http_some, None => { '+emitHttpResourceCallerFlow(row.option.fallback,{localFunctions,continueCondition})+' } };';
+  if(row.option?.loop)return 'let '+(mutable.has(row.name)?'mut ':'')+row.name+' = match '+value+' { Some(__ro_http_some) => __ro_http_some, None => { '+emitHttpResourceCallerFlow(row.option.fallback,{localFunctions,continueCondition,continueUpdate})+' } };';
   if(row.option)return 'let '+(mutable.has(row.name)?'mut ':'')+row.name+' = '+(row.option.pass?value+'?':'match '+value+' { Some(__ro_http_some) => __ro_http_some, None => { return { '+emitHttpResourceCallerFlow(row.option.fallback,{localFunctions})+' }; } }')+';';
   return 'let '+(mutable.has(row.name)?'mut ':'')+row.name+' = '+(row.guarded?(cleanup?'match '+value+' { Ok(__ro_http_value) => __ro_http_value, Err(__ro_http_error) => { '+cleanup+' return Err(__ro_http_error); } }':value+'?'):value)+';';
  });
- const tail=flow.tail;if(tail.kind==='scope'){lines.push('{\n'+emitHttpResourceCallerFlow(tail.body,{localFunctions,continueCondition})+'\n}');return lines.join('\n');}if(tail.kind==='fallthrough')return lines.join('\n');if(['break','continue'].includes(tail.kind)){if(tail.kind==='continue'&&continueCondition)lines.push('if '+expression(continueCondition)+' { } else { break; }');lines.push(tail.kind+';');return lines.join('\n');}if(tail.kind==='return'){lines.push('return '+expression(tail.value)+';');return lines.join('\n');}lines.push(tail.kind==='branch'?'if '+expression(tail.condition)+' { '+emitHttpResourceCallerFlow(tail.yes,{localFunctions,continueCondition})+' } else { '+emitHttpResourceCallerFlow(tail.no,{localFunctions,continueCondition})+' }':expression(tail.value));return lines.join('\n');
+ const tail=flow.tail;if(tail.kind==='scope'){lines.push('{\n'+emitHttpResourceCallerFlow(tail.body,{localFunctions,continueCondition,continueUpdate})+'\n}');return lines.join('\n');}if(tail.kind==='fallthrough')return lines.join('\n');if(['break','continue'].includes(tail.kind)){if(tail.kind==='continue'&&continueUpdate)lines.push(updateSource(continueUpdate));if(tail.kind==='continue'&&continueCondition)lines.push('if '+expression(continueCondition)+' { } else { break; }');lines.push(tail.kind+';');return lines.join('\n');}if(tail.kind==='return'){lines.push('return '+expression(tail.value)+';');return lines.join('\n');}lines.push(tail.kind==='branch'?'if '+expression(tail.condition)+' { '+emitHttpResourceCallerFlow(tail.yes,{localFunctions,continueCondition,continueUpdate})+' } else { '+emitHttpResourceCallerFlow(tail.no,{localFunctions,continueCondition,continueUpdate})+' }':expression(tail.value));return lines.join('\n');
 }
 
 function httpResourceLoopFallsThrough(flow,depth=0){if(depth>64)fail('complete do-loop fallthrough bound');return flow.tail.kind==='fallthrough'||flow.tail.kind==='branch'&&(httpResourceLoopFallsThrough(flow.tail.yes,depth+1)||httpResourceLoopFallsThrough(flow.tail.no,depth+1));}
