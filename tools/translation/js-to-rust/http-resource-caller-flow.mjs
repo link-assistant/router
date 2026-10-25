@@ -134,6 +134,7 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
   if(isHttpResourceTypeWrapper(ts,node)){const numberDomain=httpResourceAssertionNumericDomain(ts,node,imports,sourceAnnotations,tick,flags.numberDomain??null),value=expression(node.expression,{...flags,numberDomain,level:level+1});captureHttpResourceTypeWrapper(ts,node,value.type,imports,sourceAnnotations,tick);return value;}
   if(ts.isPrefixUnaryExpression(node)&&node.operator===ts.SyntaxKind.ExclamationToken||ts.isBinaryExpression(node)&&[ts.SyntaxKind.AmpersandAmpersandToken,ts.SyntaxKind.BarBarToken].includes(node.operatorToken.kind))return condition(node,level+1);
   if(ts.isArrayLiteralExpression(node)){
+   const octets=observeHttpResourceByteLiteral(ts,node,tick);if(octets)return octets;
    if(node.elements.length>4096||node.elements.some(value=>ts.isOmittedExpression(value)||ts.isSpreadElement(value)))fail('bounded dense original owned JSON list literal required');const elements=node.elements.map(value=>expression(value,{level:level+1}));if(elements.some(value=>value.type!=='json'||httpResourceValueRoots(value).length))fail('each original list element must be a complete owned JSON value');return {kind:'json-list-literal',elements,type:'json-list-owned'};
   }
   if(ts.isConditionalExpression(node)){
@@ -290,6 +291,7 @@ export function emitHttpResourceCallerFlow(flow,{localFunctions=null,continueCon
    return (value.owned?'&':'')+value.name;
   }
   if(value.kind==='integer')return value.value+'_'+value.type;if(value.kind==='string')return rustString(value.value);if(value.kind==='boolean')return String(value.value);if(value.kind==='unit')return '()';if(value.kind==='empty-json-list')return '[]';
+  if(value.kind==='bytes-literal')return '::std::vec!['+value.values.map(value=>value+'_u8').join(', ')+']';
   if(value.kind==='json-list-literal')return '::std::vec!['+value.elements.map(expression).join(', ')+']';
   if(value.kind==='conditional')return 'if '+expression(value.condition)+' { '+expression(value.yes)+' } else { '+expression(value.no)+' }';
   if(value.kind==='text-compare'){const side=row=>row.type==='text-owned'?'&*('+expression(row)+')':expression(row);return '('+side(value.left)+' '+value.operator+' '+side(value.right)+')';}
@@ -337,3 +339,5 @@ function httpResourceLoopFallsThrough(flow,depth=0){if(depth>64)fail('complete d
 import {observeHttpResourcePureDeadlineArrow,requireHttpResourcePureDeadlineFlow,httpResourceDeadlineHasAwaitedTail} from './http-resource-pure-deadlines.mjs';
 
 import {selectHttpResourceCallableSource} from './http-resource-source-grouping.mjs';
+
+import {observeHttpResourceByteLiteral} from './http-resource-byte-literals.mjs';

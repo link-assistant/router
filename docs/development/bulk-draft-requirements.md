@@ -647,3 +647,10 @@ Entry no-ops no longer interrupt complete guard selection. Seven complete
 originals, both rule phases and independent direct JS/strict TS/native inverse,
 refusal and oracle source remain unrun. Every unfinished requirement above
 remains open; no tests, experiments or fresh coverage measurements ran.
+
+The [owned byte literal draft](http-resource-byte-literals-draft.md) checks dense
+original bounded BigInt arrays, retains explicit native u8 widths and composes
+existing ownership, temporary shared loans and JSON-byte parsing in both source
+directions. Four complete originals, both rule phases and independent direct
+JS/strict TS/native inverse/refusal and real-library oracle source remain unrun.
+Empty/calculated/wider vectors and every unfinished requirement remain open.

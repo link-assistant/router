@@ -58,3 +58,5 @@ mod cancellable_deadlines;
 mod explicit_deadlines;
 #[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-call-grouping-oracle.rs"]
 mod call_grouping;
+#[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-byte-literals-oracle.rs"]
+mod byte_literals;
