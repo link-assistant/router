@@ -86,11 +86,14 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
   captureHttpResourceCallbackAnnotations(ts,node,contract,imports,sourceAnnotations,tick);const callbackBindings=new Map([...environment].map(([id,row])=>[id,{...row,input:false,mutable:false,captured:true,roots:httpResourceValueRoots(row)}]));for(const parameter of callbackParameters)callbackBindings.set(parameter.name,{type:parameter.type,input:true,mutable:false,moved:false,disposed:false,used:false,root:['str','json-ref','json-list-ref','bytes-ref'].includes(parameter.type)?parameter.name:null,roots:['str','json-ref','json-list-ref','bytes-ref'].includes(parameter.type)?[parameter.name]:[]});const block=ts.isBlock(node.body),flow=checkNested(ts,block?node.body.statements:[],callbackParameters,imports,{lazy:false,allowColdTail:false,bindings:callbackBindings,moduleNames,budget,depth:depth+1,localFunctions,sourceAnnotations,inlineExpression:block?null:node.body,numericReturnDomain:contract.ret==='i64'?'i64':null});
   if(flow.type!==contract.ret||flow.returnRoots.length||flow.lazy)fail('every original callback exit must satisfy its complete synchronous owned return contract');return {kind:'inline-callback',type:callbackType,parameters:callbackParameters,returns:contract.ret,flow};
  }
+ function deadlineCallback(node){
+  if(typeof sourceAnnotations?.coldTypeCurrent!=='function')fail('complete actual generic deadline declaration source required');sourceAnnotations.coldTypeCurrent('deadline');const selected=observeHttpResourcePureDeadlineArrow(ts,node,{name:httpResourceCallerName,moduleNames,tick}),callbackBindings=new Map([...environment].map(([id,row])=>[id,{...row,input:false,mutable:false,captured:true,roots:httpResourceValueRoots(row)}]));for(const parameter of selected.parameters)callbackBindings.set(parameter.name,{type:parameter.type,input:true,mutable:false,moved:false,disposed:false,used:false,root:null,roots:[]});
+  const flow=checkNested(ts,selected.block?node.body.statements:[],selected.parameters,imports,{lazy:false,allowColdTail:false,bindings:callbackBindings,moduleNames,budget,depth:depth+1,localFunctions,sourceAnnotations,inlineExpression:selected.block?null:node.body});requireHttpResourcePureDeadlineFlow(flow,{environment,contract:httpResourceCallerContract,localFunctions,tick,child:selected.parameters[0].name});captureHttpResourceCallbackAnnotations(ts,node,{args:['cancel-owned'],ret:flow.type,nativeAsyncReturn:true},imports,sourceAnnotations,tick);return {kind:'inline-deadline-callback',type:'deferred-callback',parameters:selected.parameters,returns:flow.type,flow};
+ }
  function call(node,{coldTail=false,level=depth,numberDomain=null}={}){
   tick();if(level>160)fail('complete nested resource operation depth bound');let awaited=ts.isAwaitExpression(node);if(awaited)node=node.expression;
   if(!ts.isCallExpression(node)||!ts.isIdentifier(node.expression)||!imports.has(node.expression.text)&&!localFunctions?.has(node.expression.text))fail('one actual imported or checked local operation required');
   const operation=imports.has(node.expression.text)?httpResourceCallerContract(imports.get(node.expression.text)):localFunctions?.get(node.expression.text);if(!operation)fail('unregistered actual operation');if(operation.localRefusal)fail(operation.localRefusal);if(node.typeArguments?.length&&!operation.genericIdentity)fail('only a complete actual generic identity accepts original type arguments');
-  if(operation.args.includes('deferred-callback'))fail('generic deadline callbacks use the separate control lane; HTTP resources require closed settled operations');
   if(operation.family==='filesystem'&&coldTail&&!awaited)fail('eager filesystem operations require the actual enclosing deferred async body');
   const implicitAwait=operation.async&&!awaited&&coldTail;if(Boolean(operation.async)!==Boolean(awaited||implicitAwait)||operation.async&&!lazy)fail('future must be immediately awaited inside a cold caller');
   if(node.arguments.length!==operation.args.length)fail('complete actual operation arity differs');
@@ -98,7 +101,8 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
   const loans=new Map(),args=[];
   for(let index=0;index<operation.args.length;index++){
    const role=operation.args[index],argument=node.arguments[index];let value,candidate=argument,grouping=0;while(ts.isParenthesizedExpression(candidate)){if(++grouping>16)fail('bounded actual call argument grouping required');candidate=candidate.expression;}
-   if(['json-callback','value-callback'].includes(role))value=collectionCallback(candidate,operation.callbackContract,role);
+   if(role==='deferred-callback'){if(operation.javascriptName!=='router_async_with_deadline')fail('actual generic deadline owner required');value=deadlineCallback(candidate);}
+   else if(['json-callback','value-callback'].includes(role))value=collectionCallback(candidate,operation.callbackContract,role);
    else if(ts.isCallExpression(candidate)||ts.isAwaitExpression(candidate)||ts.isBinaryExpression(candidate)||ts.isPrefixUnaryExpression(candidate)||ts.isConditionalExpression(candidate)||isHttpResourceTypeWrapper(ts,candidate)||ts.isArrayLiteralExpression(candidate)&&role!=='empty-json-list'){
     value=expression(argument,{level:level+1,numberDomain:role==='i64'?'i64':null});if(role==='json-ref'&&value.type==='json')value={kind:'temporary-json-borrow',value,type:'json-ref'};else if(role==='json-list-ref'&&value.type==='json-list-owned')value={kind:'temporary-json-list-borrow',value,type:'json-list-ref'};else if(role==='bytes-ref'&&value.type==='bytes-owned')value={kind:'temporary-bytes-borrow',value,type:'bytes-ref'};
    }else value=operand(argument,role,{move:!isLoan(role)&&role!=='str'});
@@ -119,7 +123,7 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
    }
    for(const root of returnedRoots){const owner=environment.get(root);if(!owner||owner.moved||owner.disposed||!['str','text-owned','json','json-ref','json-list-owned','json-list-ref','bytes-owned','bytes-ref'].includes(owner.type))fail('actual borrowed output owner is unavailable');}
   }const roots=[...returnedRoots],root=roots[0]??null;
-  httpResourceCallerRustType(operation.ret);const value={kind:'http-resource-call',operation:operation.javascriptName,args,type:operation.ret,awaited:Boolean(awaited||implicitAwait),implicitAwait,root,roots,local:!!operation.local};
+  const returns=operation.args.includes('deferred-callback')?'result:'+args[operation.args.indexOf('deferred-callback')].returns:operation.ret;httpResourceCallerRustType(returns);const value={kind:'http-resource-call',operation:operation.javascriptName,args,type:returns,awaited:Boolean(awaited||implicitAwait),implicitAwait,root,roots,local:!!operation.local};
   if(operation.release){if(args.length!==1||args[0].kind!=='borrow')fail('release must bind one actual resource');const row=binding(args[0].name);row.disposed=true;value.release=operation.release;}
   if(operation.releasedArguments?.length){for(const index of operation.releasedArguments){const argument=args[index];if(argument?.kind!=='borrow'||!['receiver-mut','http-client-mut','http-stream-mut'].includes(argument.type))fail('proven helper release must bind its actual exclusive resource input');binding(argument.name).disposed=true;}value.releasedArguments=[...operation.releasedArguments];if(operation.ret==='unit')value.release='local-proven-release';}
   return value;
@@ -267,13 +271,13 @@ export function emitHttpResourceCallerFlow(flow,{localFunctions=null,continueCon
   const referenced=new Set(),names=new Set([...value.parameters.map(row=>row.name),...(localFunctions?.keys()??[])]);let visited=0;
   function visit(node,collectReferences=true){
    if(!node||typeof node!=='object')return;if(++visited>100000)fail('complete callback binding emission bound');if(typeof node.name==='string')names.add(node.name);
-   if(collectReferences&&['borrow','variable','payload','result-variable','optional-variable'].includes(node.kind))referenced.add(node.name);if(node.kind==='inline-callback'){if(collectReferences)for(const capture of node.flow.captures)referenced.add(capture.name);collectReferences=false;}
+   if(collectReferences&&['borrow','variable','payload','result-variable','optional-variable'].includes(node.kind))referenced.add(node.name);if(['inline-callback','inline-deadline-callback'].includes(node.kind)){if(collectReferences)for(const capture of node.flow.captures)referenced.add(capture.name);collectReferences=false;}
    for(const [key,child]of Object.entries(node)){if(['resourceExits','loopExits','scopeFallthroughs','functionReturns','propagatedErrors'].includes(key))continue;if(child&&typeof child==='object'){if(Array.isArray(child))for(const item of child)visit(item,collectReferences);else visit(child,collectReferences);}}
   }visit(value.flow);
-  const parameters=value.parameters.map(row=>{let name=row.name;if(!referenced.has(name)&&!name.startsWith('_')){name='_'+name;while(names.has(name))name+='_';names.add(name);}return name+': '+httpResourceCallerRustType(row.type);});return '|'+parameters.join(', ')+'| { '+emitHttpResourceCallerFlow(value.flow,{localFunctions})+' }';
+  const parameters=value.parameters.map(row=>{let name=row.name;if(!referenced.has(name)&&!name.startsWith('_')){name='_'+name;while(names.has(name))name+='_';names.add(name);}return name+': '+httpResourceCallerRustType(row.type);});return '|'+parameters.join(', ')+'| '+(value.kind==='inline-deadline-callback'?'async move ':'')+'{ '+emitHttpResourceCallerFlow(value.flow,{localFunctions})+' }';
  }
  function expression(value){
-  if(value.kind==='function-reference')return value.name;if(value.kind==='inline-callback')return callbackSource(value);
+  if(value.kind==='function-reference')return value.name;if(['inline-callback','inline-deadline-callback'].includes(value.kind))return callbackSource(value);
   if(value.kind==='variable'||value.kind==='payload')return value.name;
   if(value.kind==='option-none')return 'None';if(value.kind==='optional-variable')return value.guarded?'Some('+value.name+')':value.name;
   if(value.kind==='result-variable')return value.guarded?'Ok('+value.name+')':value.name;
@@ -302,7 +306,7 @@ export function emitHttpResourceCallerFlow(flow,{localFunctions=null,continueCon
  const declared=new Set(flow.steps.flatMap(row=>row.kind==='let'?[row.name]:row.kind==='channel-split'?row.names:[])),mutable=new Set();let cells=0;
  function collect(value,depth=0,hidden=new Set()){
   if(++cells>100000||depth>160)fail('complete emission walk bound');if(!value||typeof value!=='object')return;
-  if(value.kind==='inline-callback'){hidden=new Set(hidden);for(const row of value.parameters)hidden.add(row.name);}
+  if(['inline-callback','inline-deadline-callback'].includes(value.kind)){hidden=new Set(hidden);for(const row of value.parameters)hidden.add(row.name);}
   if(value.kind==='scalar-for'){hidden=new Set(hidden);for(const name of httpResourceHeaderBindingNames(value.initializer))hidden.add(name);}
   if(value!==flow&&Array.isArray(value.steps)&&value.tail){hidden=new Set(hidden);for(const step of value.steps)if(step.kind==='let')hidden.add(step.name);else if(step.kind==='channel-split')for(const name of step.names)hidden.add(name);}
   if(value.kind==='assign'&&declared.has(value.name)&&!hidden.has(value.name))mutable.add(value.name);if(value.kind==='borrow'&&declared.has(value.name)&&!hidden.has(value.name)&&value.owned&&['receiver-mut','http-client-mut','http-stream-mut'].includes(value.type))mutable.add(value.name);
@@ -328,3 +332,5 @@ export function emitHttpResourceCallerFlow(flow,{localFunctions=null,continueCon
 }
 
 function httpResourceLoopFallsThrough(flow,depth=0){if(depth>64)fail('complete do-loop fallthrough bound');return flow.tail.kind==='fallthrough'||flow.tail.kind==='branch'&&(httpResourceLoopFallsThrough(flow.tail.yes,depth+1)||httpResourceLoopFallsThrough(flow.tail.no,depth+1));}
+
+import {observeHttpResourcePureDeadlineArrow,requireHttpResourcePureDeadlineFlow} from './http-resource-pure-deadlines.mjs';

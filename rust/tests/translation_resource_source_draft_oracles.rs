@@ -50,3 +50,5 @@ mod generic_linear;
 mod container_guards;
 #[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-nested-guards-oracle.rs"]
 mod nested_guards;
+#[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-pure-deadlines-oracle.rs"]
+mod pure_deadlines;

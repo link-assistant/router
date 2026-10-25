@@ -34,7 +34,7 @@ test('a generic type witness cannot grant an uninstantiated domain unsupported f
   'export function bad(value:Awaited<ReturnType<typeof deadline>>){return value;}',
   'export function bad(value:Parameters<typeof deadline<boolean>>[2]){return value;}',
   'export function bad(value:Awaited<ReturnType<typeof deadline<boolean,bigint>>>){return value;}',
-  'export function bad(cancellation:Parameters<typeof isSet>[0]){return defer(async()=>{return await deadline(1n,cancellation,async child=>true);});}',
+  'export function bad(cancellation:Parameters<typeof isSet>[0]){return defer(async()=>{return await deadline(1n,cancellation,async child=>{await deadline(1n,child,async nested=>true);return true;});});}',
  ]){const value=imports+body;assert.throws(()=>translateHttpResourceCallerTypeScript(value,input(value)),body);}
  const result=translateHttpResourceCallerTypeScript(source,input(source)),meta=JSON.parse(result.meta);meta.functions.find(row=>row.name==='nested').parameters[0].type='optional:bool';assert.throws(()=>readHttpResourceCallerMeta(JSON.stringify(meta),source,input(source),{language:'TypeScript'}));
 });

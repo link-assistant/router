@@ -566,3 +566,13 @@ results. Five complete originals and independent unrun JS/strict TS/native/path/
 refusal cases are retained; a twenty-third oracle uses real native ControlError.
 Numeric collections, wider async effects, namespace/bootstrap, production parity
 and every unfinished requirement remain open.
+
+The [pure generic deadline source draft](http-resource-pure-deadlines-draft.md)
+connects actual single-expression async factories, their contextual child input,
+checked immutable captures, pure operation trees and owning non-resource Result
+slots to native typed async closures and fresh whole-source inverse checking.
+Seven complete original sources and both substitution phases are retained;
+JS/strict TS/native inverse, cancellation/cleanup/refusal cases and real native
+library oracle source remain unrun. Effectful or awaited callbacks, wider
+resource ownership, namespace/bootstrap, production adoption/parity and every
+unfinished requirement above remain open. No test or experiment ran.
