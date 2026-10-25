@@ -273,6 +273,14 @@ Unicode, saturation, move, helper, refusal and forged-meta source are retained.
 General Option and borrowed-output callbacks, namespace/bootstrap, production
 parity and every unfinished requirement remain open.
 
+The [actual Option callback/source-unit draft](http-resource-option-callbacks-draft.md)
+adds actual primitive map/chaining/lazy fallbacks, fresh optional native source
+censuses and original physical receiving transactions with complete extra native
+mappings. Full originals and independent unrun JS/strict TS/native callback,
+Unicode, arity, source, physical three-language edit, conflict and forged-meta
+cases are retained. Borrowed-output callbacks, namespace/bootstrap, production
+parity and every unfinished requirement remain open.
+
 The [local resource helper draft](http-resource-local-functions-draft.md) now
 checks actual callee bodies before callers, composes cold futures and single
 returned roots, preserves source order and separates imported/local binding

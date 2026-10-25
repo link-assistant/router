@@ -10,6 +10,7 @@ import {requireOwnedIntegerSources} from './owned-integer-contracts.mjs';
 import {requireOwnedPrimitiveOptionSources} from './owned-primitive-option-contracts.mjs';
 import {requireOwnedStateSources} from './owned-state-contracts.mjs';
 import {requireOwnedResultSources} from './owned-result-source-contracts.mjs';
+import {requireOwnedPrimitiveOptionCallbackSources} from './owned-primitive-option-callback-contracts.mjs';
 import {httpDeadlineResultRuntimeSources as httpDeadlineRuntimeSources} from '../http-deadline-result-runtime-sources.mjs';
 import {ASYNC_CONTROL_NATIVE_SOURCE,ASYNC_CONTROL_RUNTIME_SOURCE,ASYNC_CONTROL_DECLARATIONS_SOURCE} from '../async-control-native-source.mjs';
 import {httpResourceCallerContract,httpResourceCallerName,checkHttpResourceCallerFlow} from './http-resource-caller-flow.mjs';
@@ -32,8 +33,10 @@ export function captureHttpResourceCallerInputs(input){
  if(flowSource!==readFileSync(FLOW,'utf8')||flowSource!==readFileSync(new URL('../source-profiles/async-control-callers/originals/filesystem-effects-runtime.mjs.txt',import.meta.url),'utf8'))fail('complete original cold-flow library differs');
  const nativeInputs=observeHttpDeadlineSources(files,{runtimeRoot,declarationRoot}).records.concat(requireOwnedIntegerSources(files,{runtimeRoot,declarationRoot}),requireOwnedPrimitiveOptionSources(files,{runtimeRoot,declarationRoot}),requireOwnedStateSources(files),requireOwnedResultSources(files,{runtimeRoot,declarationRoot})),expected=httpDeadlineRuntimeSources(runtimeRoot,declarationRoot);
  for(const row of expected)if(files.get(row.path)!==row.source)fail('complete actual HTTP runtime/declaration closure differs: '+row.path);
- const current=()=>{requireOwnedCoreSourceCurrent(privateContext);for(const row of httpDeadlineRuntimeSources(runtimeRoot,declarationRoot))if(files.get(row.path)!==row.source)fail('current HTTP runtime/declaration source changed');if(readFileSync(FLOW,'utf8')!==flowSource)fail('current complete cold-flow source changed');observeHttpDeadlineSources(files,{runtimeRoot,declarationRoot});requireOwnedIntegerSources(files,{runtimeRoot,declarationRoot});requireOwnedPrimitiveOptionSources(files,{runtimeRoot,declarationRoot});requireOwnedStateSources(files);requireOwnedResultSources(files,{runtimeRoot,declarationRoot});};
- current();return {sourcePath,callerSource,runtimePath,runtimeRoot,declarationRoot,flowRuntimePath,flowSource,filesystemDeclarationSource:files.get(declarationRoot+'/extensions/filesystem-effects-runtime.d.mts'),nativeInputs,current};
+ let optionCallbacksSelected=false;
+ const requireOptionCallbackSources=()=>{const records=requireOwnedPrimitiveOptionCallbackSources(files,{runtimeRoot,declarationRoot});if(!optionCallbacksSelected)nativeInputs.push(...records);optionCallbacksSelected=true;};
+ const current=()=>{if(optionCallbacksSelected)requireOwnedPrimitiveOptionCallbackSources(files,{runtimeRoot,declarationRoot});requireOwnedCoreSourceCurrent(privateContext);for(const row of httpDeadlineRuntimeSources(runtimeRoot,declarationRoot))if(files.get(row.path)!==row.source)fail('current HTTP runtime/declaration source changed');if(readFileSync(FLOW,'utf8')!==flowSource)fail('current complete cold-flow source changed');observeHttpDeadlineSources(files,{runtimeRoot,declarationRoot});requireOwnedIntegerSources(files,{runtimeRoot,declarationRoot});requireOwnedPrimitiveOptionSources(files,{runtimeRoot,declarationRoot});requireOwnedStateSources(files);requireOwnedResultSources(files,{runtimeRoot,declarationRoot});};
+ current();return {sourcePath,callerSource,runtimePath,runtimeRoot,declarationRoot,flowRuntimePath,flowSource,filesystemDeclarationSource:files.get(declarationRoot+'/extensions/filesystem-effects-runtime.d.mts'),nativeInputs,requireOptionCallbackSources,current};
 }
 
 export function analyzeHttpResourceCallerSource(stage,input){
@@ -50,6 +53,7 @@ export function analyzeHttpResourceCallerSource(stage,input){
    if(!ts.isFunctionDeclaration(item)||!item.name||!item.body||item.asteriskToken||item.typeParameters?.length||item.modifiers?.some(modifier=>modifier.kind!==ts.SyntaxKind.ExportKeyword))fail('ordinary synchronous cold wrapper with inferred return required');const local=name(item.name.text);if(locals.has(local))fail('competing caller/module binding');locals.add(local);functions.push(item);
   }
  }
+ if([...imports.values()].some(id=>httpResourceCallerContract(id)?.family==='option-callback'))context.requireOptionCallbackSources();
  requireHttpResourceFilesystemSources(imports,context);
  if(!functions.length||functions.length>4096)fail('complete bounded nonempty caller module required');
  let annotationCells=0;const describeInput=createHttpResourceWrittenAnnotationReader(ts,imports,()=>{if(++annotationCells>100000)fail('complete public signature source-cell bound');});

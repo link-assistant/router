@@ -20,3 +20,5 @@ mod result_fallbacks;
 mod option_loops;
 #[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-outcome-callbacks-oracle.rs"]
 mod outcome_callbacks;
+#[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-option-callbacks-oracle.rs"]
+mod option_callbacks;

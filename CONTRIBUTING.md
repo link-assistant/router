@@ -30,6 +30,15 @@ draft is not a passing gate, a coverage result or completed delivery. Preserve
 the existing checks and deadlines for the later verification phase, and never
 run Rust tools locally for this task.
 
+Current source-only resource extensions include shared collection iteration,
+read-only captures, owning and settled signatures, actual standard filesystem
+and byte operations, complete Result fallbacks, Option loop/stream exits and
+Result/Option callbacks. Follow the complete source histories, private source
+joins and open limits in [the extension guidelines](docs/development/translation-extension-guidelines.md).
+Independent JS/strict TS/native and physical source-unit cases are drafted;
+none supplies current coverage, parity or CI evidence. New native oracle source
+joins the existing gated Rust discovery and must never execute locally.
+
 The [owned project transaction draft](docs/development/owned-project-unit-draft.md)
 uses physical JS/TS module trees and one packaged Rust file. Keep dependency
 edits in authority/conflict selection, reconstruct actual module bindings from

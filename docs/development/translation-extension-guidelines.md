@@ -515,6 +515,14 @@ source syntax cannot grant a new operation or a borrowed return lifetime. See
 the [Result callback draft](http-resource-outcome-callbacks-draft.md); all new
 qualification remains unrun during source drafting.
 
+Optional operation libraries require fresh complete native/runtime/declaration
+censuses whenever selected. Keep older source contexts intact and use explicit
+additional native mappings within original source-unit bounds. Copy complete
+private transaction fixtures with full inverses, then draft independent changes
+in all three physical source trees. A selection flag must never save semantic
+authority. See the [Option callback/source-unit draft](http-resource-option-callbacks-draft.md);
+all new qualification remains unrun during source drafting.
+
 Compose common operation families through their actual fully checked native and
 runtime sources, retaining callbacks/numeric domains with their original checker
 when unsupported. Option/Result containers move once. Local borrowed string
