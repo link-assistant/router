@@ -873,3 +873,13 @@ full immutable predecessor snapshots, source/export closure and independent
 unrun caller/refusal/native oracle cases are drafted. Forward Rust caller and
 canonical inverse integration, async future/Drop/channel/HTTP qualification,
 production adoption/parity and every other unfinished row remain open.
+
+The [canonical cancellation inverse draft](owned-cancellation-inverse-draft.md)
+adds complete original Rust inverse/projection copies with real registered
+synchronous resource calls and operation-derived borrowed/owned type proposals.
+Every full Rust input retains its CST inverse, and projected JS receives the
+separate private move/borrow checks, serialized/reparsed semantic meta and exact
+complete Rust reproduction. Immutable predecessors, public/export integration
+and independent unrun ownership/borrow/source/refusal/typed restoration cases are
+drafted. General forward Rust/project adoption, async future/Drop/channel/HTTP
+qualification, production parity and every unfinished requirement remain open.

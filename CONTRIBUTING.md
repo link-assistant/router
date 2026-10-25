@@ -885,3 +885,11 @@ mutable handles, futures and exclusive channel/HTTP resources need their own
 rules. Keep the original private issuers and codecs separate; see the
 [cancellation caller draft](docs/development/owned-cancellation-draft.md). All new
 caller, strict TS and Rust oracle source remains unrun during bulk drafting.
+
+Canonical resource Rust inverses must restore JS proposals through the same
+private source profile, reissue all move/borrow checks after semantic meta
+serialization/reparse and reproduce the complete original Rust syntax. Preserve
+support code and native library exclusions. Catalog paths and erased borrow
+syntax are candidate data only; see the
+[cancellation inverse draft](docs/development/owned-cancellation-inverse-draft.md).
+All source and receiving cases remain unrun during bulk drafting.

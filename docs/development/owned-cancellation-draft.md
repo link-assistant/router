@@ -50,7 +50,9 @@ private contexts. Native Rust oracle source covers moves, clone sharing and
 surviving clone state after another clone drops. These cases do not qualify
 abandoned async futures or general Drop behavior.
 
-Complete forward Rust caller qualification, canonical Rust source inversion,
+The [canonical cancellation inverse](owned-cancellation-inverse-draft.md) now
+drafts full Rust-source restoration through the same private source profile.
+Complete general forward Rust caller qualification,
 project unit integration, async/future/cancellation scopes, sender/receiver/HTTP
 resources, receiving/export verification, production adoption/parity and the
 other open bulk ledger requirements still need their remaining source draft.

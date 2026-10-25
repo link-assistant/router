@@ -22,3 +22,4 @@ export {proposeForwardStandardNumericBodySynchronization} from './forward-standa
 export {proposeForwardTextPredicateSynchronization} from './forward-text-predicate-synchronization.mjs';
 export {proposeForwardCompositeSynchronization} from './forward-composite-synchronization.mjs';
 export {createOwnedCancellationContext,ownedCancellationRuntimeSources,translateOwnedCancellationJavaScript,translateOwnedCancellationTypeScript,translateOwnedCancellationConcreteSyntaxMeta,emitOwnedCancellationRust,prepareOwnedCancellationRuntime,evaluateOwnedCancellation,evaluateOwnedCancellationBatch,readOwnedCancellationMeta} from './js-to-rust/owned-cancellation.mjs';
+export {translateOwnedCancellationRust} from './js-to-rust/owned-cancellation-rust.mjs';
