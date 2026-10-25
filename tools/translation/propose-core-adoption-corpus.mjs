@@ -425,3 +425,56 @@ export async function proposeCoreLiteralGzipPackets(input,progressInput=undefine
   return {schema:index.schema,complete:true,sequence:name,output:target.physical,index:'index.json',sourceFiles:original.rows.length,changedFiles:changes.length,stages:stages.map(({name,summary})=>({name,...summary})),packetCount:index.packets.length,packetBytes:index.packetBytes,outputBytes:preparedStorage.storedOutputBytes,semanticAdmission:false,logicalOutputBytes:write.bytes,packetStorage:'gzip',storageIndex:'packet-storage.json',storageSha256:preparedStorage.sha256};
  }catch(error){try{write.failure(error,stage);}catch(reportFailure){const failure=new Error('stream sequence failed and its incomplete receipt could not be written');failure.cause=error;failure.reportFailure=reportFailure;throw failure;}throw error;}
 }
+
+// Explicit bounded physical source packets; complete original producer helpers
+// above keep their APIs, full inverses, exclusive lifetime and failure receipts.
+import {formattingPacketIO as sourceBoundPacketIO} from './formatting-packet-io.mjs';
+function sourceBoundOwnedPacketStages(stages){
+ if(!Array.isArray(stages)||types.isProxy(stages)||Object.getPrototypeOf(stages)!==Array.prototype||!stages.length||stages.length>21||Reflect.ownKeys(stages).length!==stages.length+1)fail('bounded dense owned stage sequence required');
+ const names=[];for(let at=0;at<stages.length;at++){const field=Object.getOwnPropertyDescriptor(stages,String(at));if(!field||!Object.hasOwn(field,'value')||typeof field.value!=='string'||names.includes(field.value))fail('unique own owned stage names required');names.push(field.value);}return names;
+}
+function sourceBoundOwnedPacketWriter(target,storage,progress){
+ const original=writer(target,storage,progress),guard=text=>{if(typeof text!=='string'||original.bytes+Buffer.byteLength(text)>500000000-FAILURE_RESERVE)fail('complete task-owned source evidence exceeds 500 MB; no partial result can be completed');};
+ return {json(path,value){const text=JSON.stringify(value)+'\n';guard(text);return original.jsonText(path,text);},text(path,text){guard(text);return original.text(path,text);},get records(){return original.records;},get bytes(){return original.bytes;},prepareGzip(text){guard(text);return original.prepareGzip(text);},completeGzip(text,prepared){return original.completeGzip(text,prepared);},failure(error,stage){return original.failure(error,stage);}};
+}
+export async function proposeSourceBoundOwnedCorePackets(input,stages,progressInput){
+ const requested=options(input),names=sourceBoundOwnedPacketStages(stages),progress=progressInput==null?null:translationProgressReporter(progressInput);
+ const bulk=await import('./source-bound-owned-core-bulk.mjs'),storage=await loadPacketStorageModule();
+ if(names.some(name=>!bulk.SOURCE_BOUND_OWNED_CORE_STAGES.includes(name)))fail('unknown fixed owned stage');
+ const root=realpathSync(resolve(requested.root)),original=snapshot(root),dependencies=sourceBoundPacketIO.sequenceDependencies(root);
+ if(!dependencies.inputs||dependencies.rows.some(row=>row.absent))fail('complete actual package/workspace Cargo inputs required');
+ const target=destination(root,requested.output),write=sourceBoundOwnedPacketWriter(target,storage,progress),receipts=[],iterator=bulk.proposeSourceBoundOwnedCoreStages({entry:rootEntry(root),files:original.files,dependencyInputs:dependencies.inputs,compilationProfile:PRODUCTION_PROFILE,stages:names});
+ const sequence='source-bound-owned:'+names.join(',');let stage='original-source-capture',after=original.files,next=null;
+ try{
+  // Explicitly release whole packet references before awaiting another graph.
+  while(!(next=await iterator.next()).done){
+   {
+    let packet=next.value;next=null;stage=packet.stage;
+    rejoin(original);dependencies.verify();
+    if(packet.index!==receipts.length||packet.stage!==names[receipts.length]||packet.executableAdmission!==false||packet.applicationSourcesInstalled!==false)fail('whole source-bound stage association differs');
+    const prefix='owned/'+numbered(packet.index)+'-'+packet.stage,run=createRulePipeline([
+     {phase:'language',rules:[{id:'owned-source-packets:retain-complete-original-'+packet.stage,apply:()=>packet.proposal}]},
+     {phase:'repository',rules:[{id:'router:partition-complete-'+packet.stage+'-source-evidence',apply:proposal=>{
+      const packets=completeAdoptionPackets(proposal,write,after,prefix,progress);
+      return {files:Object.assign(Object.create(null),proposal.after),packets,summary:{sourceFiles:Object.keys(proposal.before).length,changedFiles:Object.keys(proposal.before).filter(path=>proposal.before[path]!==proposal.after[path]).length,executableCoverageGain:null}};
+     }}]},
+    ]).run(null);
+    after=run.value.files;receipts.push({name:stage,packets:run.value.packets,summary:run.value.summary,trace:run.trace});packet=null;
+    if(write.bytes>500000000)fail('complete task-owned source evidence exceeds 500 MB; no partial result can be completed');
+   }
+  }
+  next=null;if(receipts.length!==names.length)fail('incomplete owned stage sequence');stage='final-source-and-index';
+  const dependencyInputs=dependencies.rows.map((row,at)=>write.json('dependency-inputs/'+numbered(at)+'.json',row)),inputs=original.rows.map((row,at)=>write.json('inputs/'+numbered(at)+'.json',row)),census=write.json('inputs/census.json',{root,rows:original.census,sourceFiles:original.rows.length,sourceUnits:original.units}),changes=[];
+  for(const [path,source]of Object.entries(after)){pathName(path);if(!Object.hasOwn(original.files,path))fail('unexpected adopted source path');if(source!==original.files[path])changes.push({path,beforeSha256:hash(original.files[path]),afterSha256:hash(source),source:write.text('after/'+path,source)});}
+  if(Object.keys(after).length!==original.rows.length)fail('adopted source path census differs');
+  const index={schema:'router-core-adoption-sequence-packets-v1',complete:true,sequence,entry:rootEntry(root),sourceRoot:root,compilationProfile:PRODUCTION_PROFILE,limits:L,inputs,dependencyInputs,census,stages:receipts,changes,packets:[...write.records],packetBytes:write.bytes,semanticAdmission:false,installation:'source proposal only; no application installation or executable authority',sourceChain:'complete original source maps and per-file inverses in stage order; source inverse is not reverse execution',hostBoundary:'original exclusive packet output and complete physical source/Cargo guards; no arbitrary concurrent same-UID writer or hostile-intrinsic-total claim',memory:'whole original proposer retained for one stage; only next source strings and packet references cross stage boundaries; live heap/RSS receiving qualification required'};
+  const text=JSON.stringify(index)+'\n',prepared=write.prepareGzip(text);
+  if(prepared.storedOutputBytes>500000000||write.bytes+Buffer.byteLength(text)>500000000)fail('complete task-owned source evidence exceeds 500 MB');
+  if(progress)progress({stage:'fingerprint',state:'start',phase:'final-source-and-index'});
+  rejoin(original);dependencies.verify();write.completeGzip(text,prepared);
+  return {schema:index.schema,complete:true,sequence,output:target.physical,index:'index.json',sourceFiles:original.rows.length,changedFiles:changes.length,stages:receipts.map(({name,summary})=>({name,...summary})),packetCount:index.packets.length,logicalOutputBytes:write.bytes,outputBytes:prepared.storedOutputBytes,packetStorage:'gzip',storageIndex:'packet-storage.json',storageSha256:prepared.sha256,semanticAdmission:false,applicationSourcesInstalled:false,executableCoverageGain:null};
+ }catch(error){
+  let failed=error;try{await iterator.return();}catch(closeError){failed=new AggregateError([error,closeError],'owned source proposal and iterator close failed');}
+  try{write.failure(failed,stage);}catch(reportFailure){const failure=new Error('owned source proposal failed and its incomplete receipt could not be written');failure.cause=failed;failure.reportFailure=reportFailure;throw failure;}throw failed;
+ }
+}

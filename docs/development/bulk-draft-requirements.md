@@ -769,3 +769,11 @@ inputs from mutated output DATA; original source/Cargo/profile/stage changes
 refuse across yields. Twenty-seven complete originals, both phases and independent
 JS/strict TS/native/refusal source remain unrun. All-stage receiving, architecture/
 producer closure, broader domains, production parity and every open row remain.
+
+The [physical owned-core packet draft](source-bound-owned-packets-draft.md)
+connects the bulk stage stream to original complete packet partitions, full
+source/Cargo rejoins, gzip storage, inverse checks and exclusive failure receipts.
+Per-packet evidence bounds retain all data or refuse completion; no application
+sources are installed. Three complete originals, both phases and independent
+physical/storage/refusal source remain unrun. Complete independent stage readback,
+receiving, wider domains, production parity and every open requirement remain.

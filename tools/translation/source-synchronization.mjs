@@ -40,3 +40,5 @@ export {proposeSourceBackedCoreAdoptionSequence as proposeSourceBoundCoreAdoptio
 export {proposePhysicalCoreAdoptionSequence as proposeSourceBoundPhysicalCoreAdoptionSequence,reviewPhysicalCoreAdoptionSequence as reviewSourceBoundPhysicalCoreAdoptionSequence} from './source-bound-physical-core-adoption-sequence.mjs';
 
 export {SOURCE_BOUND_OWNED_CORE_STAGES,proposeSourceBoundOwnedCoreStage,proposeSourceBoundOwnedCoreStages} from './source-bound-owned-core-bulk.mjs';
+
+export {proposeSourceBoundOwnedCorePackets} from './propose-core-adoption-corpus.mjs';

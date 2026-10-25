@@ -216,3 +216,8 @@ integration and the remaining requirement ledger are still open.
   operation stages, a shared-issuer facade and bounded whole-proposal async
   orchestration. Preserve original selectors/refusals, full source joins and
   inverses; add independent unrun combined target/native and mutation cases.
+
+- Draft bounded physical gzip packet output for the 21-stage source-bound owned
+  adopter stream, preserving complete source/Cargo joins, original partitions,
+  inverses, failure receipts and final guards. Retain three complete source
+  equations and independent unrun storage/physical/refusal case source.
