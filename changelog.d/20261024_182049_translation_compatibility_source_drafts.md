@@ -156,3 +156,5 @@ integration and the remaining requirement ledger are still open.
 - Draft dense actual owned JSON list literals with ordered element/move checks, collection/shared-iteration composition and complete native vector inverses, retaining original histories and independent unrun JS/strict TS/native boundary and refusal source in gated CI discovery.
 
 - Draft source-qualified signed integer operations and Option/Result callbacks, exact original entry guards, local literal constraints, mutable/recursive/cold return composition and complete native inverses, with full original histories and independent unrun JS/strict TS/native limit, overflow, division, callback and refusal source in gated CI discovery.
+
+- Draft source-review corrections for grouped numeric calls and bounded conditional constraints, retaining complete originals/inverses and independent unrun grouped/deep source cases.

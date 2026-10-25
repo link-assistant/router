@@ -5,10 +5,10 @@ const fail=message=>{throw new TypeError('Resource original numeric constraints:
 export function collectHttpResourceNumericHints(ts,statements,{bindings,imports,localFunctions,contract,numericReturnDomain,tick,inlineExpression=null}){
  const hints=new Map(),edges=[],constraints=[];let nodes=0;
  for(const [name,row]of bindings)if(['u64','i64'].includes(row.type))hints.set(name,row.type);
- const unwrap=node=>{let depth=0;while(node&&ts.isParenthesizedExpression(node)){tick();if(++depth>32)fail('complete native grouping bound');node=node.expression;}return node;};
+ const unwrap=node=>{let depth=0;while(node&&ts.isParenthesizedExpression(node)){tick();if(++depth>160)fail('complete native grouping bound');node=node.expression;}return node;};
  const operation=node=>{node=unwrap(node);return node&&ts.isCallExpression(node)&&ts.isIdentifier(node.expression)?imports.has(node.expression.text)?contract(imports.get(node.expression.text)):localFunctions?.get(node.expression.text):null;};
  const numeric=type=>['u64','i64'].includes(type)?type:null;
- function impose(node,type){node=unwrap(node);if(!numeric(type)||!node)return;if(ts.isIdentifier(node))constraints.push([node.text,type]);else if(ts.isConditionalExpression(node)){impose(node.whenTrue,type);impose(node.whenFalse,type);}}
+ function impose(node,type,depth=0){tick();if(depth>160)fail('complete conditional numeric constraint depth bound');node=unwrap(node);if(!numeric(type)||!node)return;if(ts.isIdentifier(node))constraints.push([node.text,type]);else if(ts.isConditionalExpression(node)){impose(node.whenTrue,type,depth+1);impose(node.whenFalse,type,depth+1);}}
  function connect(left,right){left=unwrap(left);right=unwrap(right);if(!left||!right)return;if(ts.isIdentifier(left)&&ts.isIdentifier(right))edges.push([left.text,right.text]);const row=operation(right);if(row)impose(left,row.ret);if(ts.isPrefixUnaryExpression(right)&&right.operator===ts.SyntaxKind.MinusToken&&ts.isBigIntLiteral(right.operand))impose(left,'i64');}
  function visit(node,depth=0){
   tick();if(++nodes>100000||depth>160)fail('complete original numeric constraint census bound');
@@ -19,7 +19,7 @@ export function collectHttpResourceNumericHints(ts,statements,{bindings,imports,
    if(node.operatorToken.kind===ts.SyntaxKind.EqualsToken)connect(node.left,node.right);
    if([ts.SyntaxKind.EqualsEqualsEqualsToken,ts.SyntaxKind.ExclamationEqualsEqualsToken,ts.SyntaxKind.LessThanToken,ts.SyntaxKind.LessThanEqualsToken,ts.SyntaxKind.GreaterThanToken,ts.SyntaxKind.GreaterThanEqualsToken].includes(node.operatorToken.kind)){connect(node.left,node.right);connect(node.right,node.left);}
   }
-  const row=operation(node);if(row)node.arguments.forEach((argument,index)=>impose(argument,row.args[index]));
+  const row=ts.isCallExpression(node)?operation(node):null;if(row)node.arguments.forEach((argument,index)=>impose(argument,row.args[index]));
   ts.forEachChild(node,child=>visit(child,depth+1));
  }
  for(const statement of statements)visit(statement);if(inlineExpression){impose(inlineExpression,numericReturnDomain);visit(inlineExpression);}

@@ -438,3 +438,8 @@ JS/strict TS/native/boundary/refusal cases are retained; a fifteenth oracle join
 gated CI discovery. Signed payload-container guards, wider language/numeric
 domains, namespace/bootstrap, production parity and every unfinished requirement
 remain open.
+
+The signed numeric source review now also retains a complete successor for
+grouped actual-call argument selection and bounded conditional constraints, with
+full originals/CST inverses and independent unrun cases. Every unfinished bulk
+requirement and every verification obligation remain open.

@@ -35,3 +35,9 @@ wrong domains and forged meta. A fifteenth independent native oracle joins
 existing gated CI discovery. No compiler, translator, preparer, diagnostic,
 test, runtime or Rust tool executed for this draft. Every remaining bulk
 requirement and receiving/freshness/CI qualification stays open.
+
+Source review also drafted actual-call-only argument selection for grouped call
+expressions and a complete depth/cell bound for recursively imposed conditional
+constraints. The complete first helper source and both inverses remain in the
+`numeric-source-constraint-bounds` profile. Independent grouped-call and deeply
+nested source cases remain unrun; this is source review, not receiving evidence.
