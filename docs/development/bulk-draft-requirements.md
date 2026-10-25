@@ -505,3 +505,10 @@ signature proposals. Eight complete originals and independent unrun JS/strict TS
 native/refusal cases are retained; a twentieth oracle joins gated CI discovery.
 General executable generics, explicit instantiation, methods/classes/interfaces,
 namespace/bootstrap, production parity and every unfinished requirement remain open.
+
+The [original explicit identity call draft](http-resource-generic-calls-draft.md)
+adds one actual checked type argument, alias/current-operation obligations and
+native-domain-preserving argument docs across JS erasure. Four complete originals
+and independent unrun JS/strict TS/native/range/ownership/refusal cases are
+retained. General generic bodies, higher-order instantiation, namespace/bootstrap,
+production parity and every unfinished requirement remain open.

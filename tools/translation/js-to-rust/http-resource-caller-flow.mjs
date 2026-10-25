@@ -6,6 +6,7 @@ import {collectHttpResourceNumericHints} from './http-resource-numeric-hints.mjs
 import {observeHttpResourceForIncrement,requireHttpResourceForCounterUnassigned} from './http-resource-for-headers.mjs';
 import {httpResourceHeaderBindingNames,httpResourceHeaderMutationNames} from './http-resource-declaration-lists.mjs';
 import {observeHttpResourceSwitchSource,joinHttpResourceSwitchConditions} from './http-resource-switch-source.mjs';
+import {httpResourceGenericCallNumericDomain,captureHttpResourceGenericCallType} from './http-resource-generic-call-annotations.mjs';
 import {httpResourceLocalNumericDomain,captureHttpResourceLocalAnnotation,isHttpResourceTypeWrapper,httpResourceAssertionNumericDomain,captureHttpResourceTypeWrapper,httpResourceWrittenNumericDomain,captureHttpResourceParenthesizedDoc} from './http-resource-local-annotations.mjs';
 import {httpResourceValueRoots} from './http-resource-root-sets.mjs';
 import {captureHttpResourceCallbackAnnotations} from './http-resource-callback-annotations.mjs';
@@ -87,13 +88,13 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
  }
  function call(node,{coldTail=false,level=depth,numberDomain=null}={}){
   tick();if(level>160)fail('complete nested resource operation depth bound');let awaited=ts.isAwaitExpression(node);if(awaited)node=node.expression;
-  if(!ts.isCallExpression(node)||!ts.isIdentifier(node.expression)||node.typeArguments?.length||!imports.has(node.expression.text)&&!localFunctions?.has(node.expression.text))fail('one actual imported or checked local operation required');
-  const operation=imports.has(node.expression.text)?httpResourceCallerContract(imports.get(node.expression.text)):localFunctions?.get(node.expression.text);if(!operation)fail('unregistered actual operation');if(operation.localRefusal)fail(operation.localRefusal);
+  if(!ts.isCallExpression(node)||!ts.isIdentifier(node.expression)||!imports.has(node.expression.text)&&!localFunctions?.has(node.expression.text))fail('one actual imported or checked local operation required');
+  const operation=imports.has(node.expression.text)?httpResourceCallerContract(imports.get(node.expression.text)):localFunctions?.get(node.expression.text);if(!operation)fail('unregistered actual operation');if(operation.localRefusal)fail(operation.localRefusal);if(node.typeArguments?.length&&!operation.genericIdentity)fail('only a complete actual generic identity accepts original type arguments');
   if(operation.args.includes('deferred-callback'))fail('generic deadline callbacks use the separate control lane; HTTP resources require closed settled operations');
   if(operation.family==='filesystem'&&coldTail&&!awaited)fail('eager filesystem operations require the actual enclosing deferred async body');
   const implicitAwait=operation.async&&!awaited&&coldTail;if(Boolean(operation.async)!==Boolean(awaited||implicitAwait)||operation.async&&!lazy)fail('future must be immediately awaited inside a cold caller');
   if(node.arguments.length!==operation.args.length)fail('complete actual operation arity differs');
-  if(operation.genericIdentity){const argument=expression(node.arguments[0],{level:level+1,numberDomain}),roots=httpResourceValueRoots(argument);httpResourceCallerRustType(argument.type);return {kind:'http-resource-call',operation:operation.javascriptName,args:[argument],type:argument.type,awaited:false,implicitAwait:false,root:roots[0]??null,roots,local:true,genericIdentity:true};}
+  if(operation.genericIdentity){const selected=httpResourceGenericCallNumericDomain(ts,node,imports,sourceAnnotations,tick,numberDomain),argument=expression(node.arguments[0],{level:level+1,numberDomain:selected}),roots=httpResourceValueRoots(argument);httpResourceCallerRustType(argument.type);captureHttpResourceGenericCallType(ts,node,argument.type,imports,sourceAnnotations,tick);return {kind:'http-resource-call',operation:operation.javascriptName,args:[argument],type:argument.type,awaited:false,implicitAwait:false,root:roots[0]??null,roots,local:true,genericIdentity:true};}
   const loans=new Map(),args=[];
   for(let index=0;index<operation.args.length;index++){
    const role=operation.args[index],argument=node.arguments[index];let value,candidate=argument,grouping=0;while(ts.isParenthesizedExpression(candidate)){if(++grouping>16)fail('bounded actual call argument grouping required');candidate=candidate.expression;}

@@ -54,7 +54,7 @@ test('generic syntax metadata and annotations cannot replace the exact complete 
  ]){const value=imports+declaration+'\nexport function used(){return identity(true);}';assert.throws(()=>translateHttpResourceCallerTypeScript(value,input(value)),declaration);}
  for(const body of [
   'export function bad(){const value=make("x");const moved=identity(value);return [value,moved];}',
-  'export function bad(){return identity<boolean>(true);}',
+  'export function bad(){return identity<boolean,bigint>(true);}',
  ]){const value=imports+'function identity<T>(value:T):T{return value;}\n'+body;assert.throws(()=>translateHttpResourceCallerTypeScript(value,input(value)),body);}
  const forged=imports+'/** @template T @param {T} value @returns {T} */ function identity(value){return true;}';assert.throws(()=>translateHttpResourceCallerJavaScript(forged,input(forged,'caller.mjs')));
  const result=translateHttpResourceCallerTypeScript(source,input(source)),meta=JSON.parse(result.meta);meta.functions.find(row=>row.name==='identity').genericIdentity.parameter='other';assert.throws(()=>readHttpResourceCallerMeta(JSON.stringify(meta),source,input(source),{language:'TypeScript'}));

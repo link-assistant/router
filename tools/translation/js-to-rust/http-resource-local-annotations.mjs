@@ -37,3 +37,6 @@ export function captureHttpResourceTypeWrapper(ts,node,type,imports,context,tick
  if(ts.isTypeAssertionExpression(node))context.erase.push({span:[node.getStart(context.file),node.expression.getStart(context.file)],replacement:prefix},{span:[node.end,node.end],replacement:')'});
  else context.erase.push({span:[node.getStart(context.file),node.getStart(context.file)],replacement:prefix},{span:[node.expression.end,node.end],replacement:')'});
 }
+
+// Shared source-obligation helpers; neither result is executable authority.
+export {requireType as requireHttpResourceWrittenValueType,docSource as httpResourceWrittenDocSource};
