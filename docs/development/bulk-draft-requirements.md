@@ -785,3 +785,11 @@ source, graph, CST and inverse packet. Exact traces, changes and full packet
 membership remain required. Four complete originals, both phases and independent
 consistent-hash forgery/physical/refusal source cases remain unrun. No source
 review grants executable or reverse authority; all unfinished requirements remain.
+
+The [reusable owned-core CLI draft](owned-core-cli-draft.md) copies the original
+bounded cold worker for explicit source proposal and complete fresh readback,
+registering its script in the canonical export entrypoint list. Whole worker
+heap/time/output bounds and original source-unit APIs remain intact. Three full
+originals, both phases and independent CLI/offline receiving/refusal source remain
+unrun. Packaging and source review grant no executable parity; every unfinished
+receiving, language/resource, adoption and CI obligation remains open.

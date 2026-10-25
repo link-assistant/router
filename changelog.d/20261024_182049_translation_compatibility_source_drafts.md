@@ -226,3 +226,8 @@ integration and the remaining requirement ledger are still open.
   execution, exact decoded metadata/source/graph/CST comparisons and physical
   source/workspace Cargo rejoins. Preserve complete inverse and inventory checks,
   account for control-index evidence bytes and add unrun consistent-hash forgery cases.
+
+- Draft reusable bounded CLI proposal/readback for bulk owned-core source stages
+  by copying the original cold worker controller and registering complete export
+  closure. Retain source-only receipts, three complete source equations and
+  independent unrun CLI/refusal/offline receiving case source.
