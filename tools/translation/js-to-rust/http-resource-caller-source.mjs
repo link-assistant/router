@@ -25,6 +25,7 @@ import {validateHttpResourceTypeAliasTemplates} from './http-resource-type-alias
 import {requireHttpResourceFilesystemSources} from './http-resource-filesystem-source.mjs';
 import {requireHttpResourceColdTypeSource} from './http-resource-cold-type-source.mjs';
 import {captureHttpResourceTypeScriptParameterDoc,finishHttpResourceTypeScriptDocs} from './http-resource-typescript-docs.mjs';
+import {hasHttpResourceGenericIdentitySource,captureHttpResourceGenericIdentity} from './http-resource-generic-identity.mjs';
 const RUNTIME=new URL('../async-control-runtime.mjs',import.meta.url),DECLARATIONS=new URL('../async-control-runtime.d.mts',import.meta.url),FLOW=new URL('../extensions/filesystem-effects-runtime.mjs',import.meta.url);
 const fail=message=>{throw new TypeError('Async control caller source: '+message);};
 export function captureHttpResourceCallerInputs(input){
@@ -55,7 +56,7 @@ export function analyzeHttpResourceCallerSource(stage,input){
    const target=posix.normalize(posix.join(posix.dirname(context.sourcePath),item.moduleSpecifier.text));if(!target.startsWith(context.runtimeRoot+'/'))fail('actual registered runtime path required');
    for(const element of item.importClause.namedBindings.elements){const local=name(element.name.text),imported=element.propertyName?.text??local;if(element.isTypeOnly||locals.has(local))fail('competing or type-only runtime binding');const operation=httpResourceCallerContract(imported);if(imported==='deferFilesystemFlow'?target!==context.flowRuntimePath:!operation||target!==context.runtimeRoot+'/'+operation.runtimeModule)fail('actual operation import owner differs');locals.add(local);imports.set(local,imported);}
   }else{
-   if(!ts.isFunctionDeclaration(item)||!item.name||!item.body||item.asteriskToken||item.typeParameters?.length||item.modifiers?.some(modifier=>modifier.kind!==ts.SyntaxKind.ExportKeyword))fail('ordinary synchronous cold wrapper with inferred return required');const local=name(item.name.text);if(locals.has(local))fail('competing caller/module binding');locals.add(local);functions.push(item);
+   if(!ts.isFunctionDeclaration(item)||!item.name||!item.body||item.asteriskToken||item.modifiers?.some(modifier=>modifier.kind!==ts.SyntaxKind.ExportKeyword))fail('ordinary synchronous cold wrapper with inferred return required');const local=name(item.name.text);if(locals.has(local))fail('competing caller/module binding');locals.add(local);functions.push(item);
   }
  }
  if([...aliases.keys()].some(id=>imports.has(id)))fail('a type-only alias cannot compete with an actual imported operation binding');
@@ -66,6 +67,7 @@ export function analyzeHttpResourceCallerSource(stage,input){
  const type=(written,guardType=null)=>{const actual=createHttpResourceWrittenAnnotationReader(ts,imports,()=>{if(++annotationCells>100000)fail('complete numeric input source-cell bound');},{aliases,coldTypeCurrent:context.requireColdTypeSources,numericDomain:guardType})(written);if(actual.kind!=='domain'||!httpResourcePublicInputDomain(actual.type,{guarded:guardType===actual.type}))fail('actual public input domain and matching original native integer entry guard required');return actual.type;};
  const rowsByName=new Map(),localFunctions=new Map(),callBindings=new Map(imports),lookup=id=>typeof id==='string'&&id.startsWith('local:')?localFunctions.get(id.slice(6)):httpResourceCallerContract(id);
  for(const group of orderHttpResourceLocalFunctions(ts,functions,{groups:true})){
+  if(group.items.some(item=>hasHttpResourceGenericIdentitySource(ts,item))){if(group.recursive||group.items.length!==1)fail('generic executable recursion requires a separate complete original-source rule');const row=captureHttpResourceGenericIdentity(ts,group.items[0],{language,file,name,moduleNames:locals,erase,annotate});rowsByName.set(row.name,row);localFunctions.set(row.name,httpResourceLocalContracts([row]).get(row.name));callBindings.set(row.name,'local:'+row.name);continue;}
   const plans=group.items.map(item=>{
    const bodyPlan=selectAsyncControlCallerBody(ts,item,callBindings,file,lookup),guarded=new Map(bodyPlan.inputGuards.map(row=>[row.name,row.type]));
   const javascriptDocs={parameters:[],needed:false,printer:typeDocsPrinter,expandType:aliases.size?written=>expandHttpResourceTypeAliasSource(ts,written,{file,aliases}):null},parameters=item.parameters.map(parameter=>{

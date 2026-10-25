@@ -166,3 +166,4 @@ integration and the remaining requirement ledger are still open.
 - Draft whole actual declaration lists, ordered comma header effects and per-scope counter mutability, with complete original controls and independent unrun ordering/ownership/refusal cases.
 - Draft exact scalar text equality and read-only owned String captures, preserving actual move/root checks, full originals and independent unrun Unicode/native/refusal source.
 - Draft original terminal scalar switches, stacked labels and complete returning case trees, retaining shared-scope rules, full originals and independent unrun native/refusal cases.
+- Draft source-checked executable generic identities, concrete ownership/root-preserving calls, scalar callback specialization and native/unit inverses with full originals and independent unrun refusal/oracle source.

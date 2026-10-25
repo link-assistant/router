@@ -17,6 +17,7 @@ export function projectHttpResourceUnitJavaScript(source,{unit,current,options}=
  const type=domain=>httpResourcePublicInputType(domain,operation);
  for(const fn of missing){
   const matches=rows.filter(row=>row.name===fn.name?.text);if(matches.length!==1||matches[0].parameters.length!==fn.parameters.length)fail('actual paired function identity/arity differs');const docs=[];
+  if(matches[0].genericIdentity){const actual=matches[0].genericIdentity,parameter=fn.parameters[0];if(fn.parameters.length!==1||!ts.isIdentifier(parameter.name)||parameter.name.text!==actual.parameter)fail('actual paired generic input identity differs');const start=fn.getStart(file);edits.push({span:[start,start],expected:'',replacement:'/**\n * @template '+actual.typeParameter+'\n * @param {'+actual.typeParameter+'} '+actual.parameter+'\n * @returns {'+actual.typeParameter+'}\n */\n'});continue;}
   fn.parameters.forEach((parameter,index)=>{if(!ts.isIdentifier(parameter.name)||parameter.name.text!==matches[0].parameters[index].name)fail('actual paired parameter identity differs');if(!ts.getJSDocType(parameter))docs.push(' * @param {'+type(matches[0].parameters[index].type)+'} '+parameter.name.text);});
   const start=fn.getStart(file);edits.push({span:[start,start],expected:'',replacement:'/**\n'+docs.join('\n')+'\n */\n'});
  }

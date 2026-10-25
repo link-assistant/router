@@ -497,3 +497,11 @@ originals and independent unrun JS/strict TS/native/Unicode/TDZ/refusal cases ar
 retained; a nineteenth oracle joins gated CI discovery. Continuing switches,
 fallthrough/dynamic labels, namespace/bootstrap, production parity and every
 unfinished requirement remain open.
+
+The [original executable generic identity draft](http-resource-generic-identity-draft.md)
+adds a complete unchanged-input theorem, actual concrete ownership/root joins,
+scalar callback specialization, genuine native generic inverses and fresh paired
+signature proposals. Eight complete originals and independent unrun JS/strict TS/
+native/refusal cases are retained; a twentieth oracle joins gated CI discovery.
+General executable generics, explicit instantiation, methods/classes/interfaces,
+namespace/bootstrap, production parity and every unfinished requirement remain open.

@@ -44,9 +44,9 @@ export class HttpResourceRustReader {
  typeUntil(stops){const result=[];let depth=0;while(!(depth===0&&stops.includes(this.peek().text))){const token=this.next();if(['<','[','('].includes(token.text))depth++;if(['>',']',')'].includes(token.text))depth--;if(token.text==='>>')depth-=2;if(depth<0)fail('Rust type delimiters differ');result.push(token.text);}return result.join('');}
  function(){
   while(this.eat('#'))this.group('[',']');const exported=this.eat('pub'),asynchronous=this.eat('async');this.expect('fn');const name=this.identifier();
-  if(this.eat('<')){this.expect("'a");this.expect('>');}this.expect('(');const parameters=[];
+  let genericParameters=null;if(this.eat('<')){if(!this.eat("'a"))genericParameters=[this.identifier()];this.expect('>');}this.expect('(');const parameters=[];
   while(!this.eat(')')){const name=this.identifier();this.expect(':');const type=this.typeUntil([',',')']);parameters.push({name,type});if(!this.is(')'))this.expect(',');}
-  this.expect('->');const returns=this.typeUntil(['{']),body=this.block(new Map(),0);if(this.peek().type!=='end')fail('complete function item was not consumed');return {name,exported,asynchronous,parameters,returns,body};
+  this.expect('->');const returns=this.typeUntil(['{']),body=this.block(new Map(),0);if(this.peek().type!=='end')fail('complete function item was not consumed');return {name,exported,asynchronous,parameters,returns,body,...(genericParameters?{genericParameters}:{})};
  }
  block(environment,depth){
   this.tick(depth);this.expect('{');const local=new Map(environment),statements=[];let tail=null;

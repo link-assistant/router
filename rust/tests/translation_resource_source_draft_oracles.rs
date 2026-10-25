@@ -42,3 +42,5 @@ mod for_headers;
 mod text_equality;
 #[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-switches-oracle.rs"]
 mod switches;
+#[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-generic-identity-oracle.rs"]
+mod generic_identity;
