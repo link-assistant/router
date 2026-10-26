@@ -116,3 +116,5 @@ export {proposeOriginalX86MetadataTypeMacroSources} from './architecture-x86-met
 export {originalNamespaceAttributeExpressionInvocationPositions,originalNamespaceAttributeExpressionPositionFacts,captureOriginalNamespaceAttributeInvocationInput,originalNamespaceAttributeInvocationInputFacts,captureOriginalNamespaceAttributeInvocationExpression,originalNamespaceAttributeInvocationExpressionFacts} from './original-namespace-parser.mjs';
 
 export {proposeOriginalAttributeConcatLiteralSource} from './derive-clap-concat.mjs';
+
+export {originalFreshPrimitiveNamespaceSourcesWithDocumentation} from './extensions/primitive-namespace-sources.mjs';

@@ -142,6 +142,13 @@ whole-file inverses. Three complete compiler equations and independent unrun
 source/refusal/native cases are drafted. Actual macro/visitor/owner/global
 qualification and every unfinished requirement remain open.
 
+The [architecture documentation asset draft](architecture-documentation-assets-draft.md)
+copies the complete fresh reader over the same original tar, retaining every
+135 Rust member plus one exact documentation source and original license guards.
+Three complete compiler equations and independent unrun census/hash/blob cases
+are drafted. Actual include-str consumers, owner/file-origin/global closure and
+every unfinished source/production/verification requirement remain open.
+
 The [Option guard draft](http-resource-option-guards-draft.md) adds whole absent
 branches, every-exit resource cleanup, explicit fallback domains, Some payload
 moves, same-Option propagation and complete canonical native inverse rules.
