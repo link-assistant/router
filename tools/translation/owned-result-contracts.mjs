@@ -4,5 +4,7 @@ export const OWNED_RESULT_CONTRACTS=Object.freeze(rows.map(row=>Object.freeze({.
 export const ownedResultContract=name=>OWNED_RESULT_CONTRACTS.find(row=>row.rustName===name||row.javascriptName===name)??null;
 export function emitOwnedResultDeclarations(){
  const option=value=>"Readonly<{$:'None'}>|Readonly<{$:'Some';field0:"+value+'}>',result=value=>"Readonly<{$:'Ok';field0:"+value+"}>|Readonly<{$:'Err';field0:string}>",types={bool:'boolean',u64:'bigint',i64:'bigint',str:'string','text-owned':'string',text:'string'};for(const domain of ['bool','u64','i64','str','text']){types[domain+'-text-result']=result(types[domain]);types[domain==='str'?'str-option-ref':domain==='text'?'text-owned-option':domain+'-option']=option(types[domain]);}types['text-owned-option']=option('string');
- return OWNED_RESULT_CONTRACTS.map(row=>'export declare function '+row.javascriptName+'('+row.parameters.map((role,index)=>'argument'+index+':'+(role==='callback'?'('+row.callbackParameters.map((domain,at)=>'value'+at+':'+types[domain]).join(',')+')=>('+types[row.callbackReturns]+')':types[role])).join(',')+'): '+types[row.returns]+';').join('\n')+'\n';
+ return OWNED_RESULT_CONTRACTS.map(row=>'export declare function '+row.javascriptName+'('+row.parameters.map((role,index)=>'argument'+index+':'+(role==='callback'?'('+row.callbackParameters.map((domain,at)=>'value'+at+':'+types[domain]).join(',')+')=>('+types[row.callbackReturns]+')':types[role])).join(',')+'): '+types[row.returns]+';').join('\n')+'\n'+GENERIC_TEXT_RESULT_TYPESCRIPT_FRAGMENT;
 }
+
+import {GENERIC_TEXT_RESULT_TYPESCRIPT_FRAGMENT} from './generic-text-result-source-fragments.mjs';

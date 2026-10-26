@@ -287,3 +287,6 @@ export const router_owned_result_text_to_text_and_then=(argument0,argument1)=>in
 export const router_owned_result_text_map_err=(argument0,argument1)=>invokePrimitiveResultCallback("text","text","map_err",argument0,argument1);
 export const router_owned_result_text_unwrap_or_else=(argument0,argument1)=>invokePrimitiveResultCallback("text","text","unwrap_or_else",argument0,argument1);
 export const router_owned_result_text_or_else=(argument0,argument1)=>invokePrimitiveResultCallback("text","text","or_else",argument0,argument1);
+
+// The complete Result and both payload alternatives remain opaque here.
+export function router_text_result_identity(value) { return value; }

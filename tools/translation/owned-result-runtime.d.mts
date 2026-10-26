@@ -118,3 +118,6 @@ export declare function router_owned_result_text_to_text_and_then(argument0:Read
 export declare function router_owned_result_text_map_err(argument0:Readonly<{$:'Ok';field0:string}>|Readonly<{$:'Err';field0:string}>,argument1:(value0:string)=>(string)): Readonly<{$:'Ok';field0:string}>|Readonly<{$:'Err';field0:string}>;
 export declare function router_owned_result_text_unwrap_or_else(argument0:Readonly<{$:'Ok';field0:string}>|Readonly<{$:'Err';field0:string}>,argument1:(value0:string)=>(string)): string;
 export declare function router_owned_result_text_or_else(argument0:Readonly<{$:'Ok';field0:string}>|Readonly<{$:'Err';field0:string}>,argument1:(value0:string)=>(Readonly<{$:'Ok';field0:string}>|Readonly<{$:'Err';field0:string}>)): Readonly<{$:'Ok';field0:string}>|Readonly<{$:'Err';field0:string}>;
+
+export type GenericTextResult<T> = Readonly<{$:"Ok";field0:T}> | Readonly<{$:"Err";field0:string}>;
+export declare function router_text_result_identity<T>(value:GenericTextResult<T>):GenericTextResult<T>;

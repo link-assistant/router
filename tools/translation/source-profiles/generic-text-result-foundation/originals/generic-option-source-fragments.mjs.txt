@@ -1,0 +1,7 @@
+// Source rule fragments, not compiler or runtime permission.
+export const GENERIC_OPTION_RUST_FRAGMENT='\n/// Preserve an entire generic Option without observing or dropping its payload.\npub fn option_identity<T>(value: Option<T>) -> Option<T> {\n    value\n}\n';
+export const GENERIC_OPTION_JAVASCRIPT_FRAGMENT='\n// The carrier and payload remain opaque to this shared identity operation.\nexport function router_option_identity(value) { return value; }\n';
+export const GENERIC_OPTION_TYPESCRIPT_FRAGMENT='\nexport type GenericOption<T> = Readonly<{$:"None"}> | Readonly<{$:"Some";field0:T}>;\nexport declare function router_option_identity<T>(value:GenericOption<T>):GenericOption<T>;\n';
+export const GENERIC_OPTION_SIGNATURE_CONTRACT=Object.freeze({rustName:'option_identity',javascriptName:'router_option_identity',rustPath:'crate::translation_primitive_option_core::option_identity',runtimeModule:'primitive-option-runtime.mjs',family:'generic-option-signature',args:Object.freeze(['generic-option']),ret:'generic-option',async:false,release:null,signatureOnly:true,sourceAuthority:false,semanticAuthority:false});
+
+export const GENERIC_OPTION_LIBRARY_PIN="eed5e34a26124c293e5e9932cf3efd5af8c6e297ed8dba951321536accb7d7fc";

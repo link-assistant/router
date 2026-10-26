@@ -734,3 +734,8 @@ pub fn text_or_else(value: Result<String, String>, callback: impl FnOnce(String)
     checked_result(&value, |value| { checked_text(&value); });
     match value { Ok(value) => Ok(value), Err(error) => { let output = callback(error); checked_result(&output, |value| { checked_text(&value); }); output } }
 }
+
+/// Preserve a complete generic String-error Result without observing its payload.
+pub fn text_result_identity<T>(value: Result<T, String>) -> Result<T, String> {
+    value
+}

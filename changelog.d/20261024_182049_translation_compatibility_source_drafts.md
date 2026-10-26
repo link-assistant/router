@@ -295,3 +295,9 @@ integration and the remaining requirement ledger are still open.
   complete fresh JS/meta/native local-type obligations, four complete source
   equations and independent unrun JS/strict TS/native/refusal cases; resource
   oracle module 40 is drafted.
+
+- Draft a generic String-error Result ABI in existing native/runtime assets by
+  copying complete Option source-proof and library-producer implementations.
+  Preserve the original native-copy pin/stages plus a full generic suffix history,
+  retain ten complete source equations and add independent unrun identity, error,
+  mirror, history and native drop source. Generic caller lowering remains open.

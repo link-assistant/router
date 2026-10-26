@@ -860,6 +860,14 @@ unrun; resource oracle module 39 is drafted. Whole all-return-loop reconstructio
 general fallthrough, architecture/producer closure, wider effects/types,
 production adoption/parity and every unfinished requirement remain open.
 
+The [generic String-error Result ABI draft](generic-text-result-foundation-draft.md)
+copies the complete Option proof/producer approach into existing Result assets,
+retaining actual unchanged native/JS bodies, precise readonly fields and full
+three-language original additions. The original native-copy stages and pins
+compose with a separate generic suffix history. Ten complete source equations
+and independent mirror/source/history/opaque/drop cases are unrun. Generic Result
+caller lowering remains a prerequisite; all unfinished requirements stay open.
+
 The [terminal returning loop draft](http-resource-returning-loops-draft.md)
 connects actual final infinite loops with complete checked function-return exits
 to native loop proposals and precise final return-domain/root joins. Break,

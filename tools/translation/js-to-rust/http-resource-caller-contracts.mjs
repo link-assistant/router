@@ -15,6 +15,7 @@ const role=Object.freeze({'shared-cancellation':'cancel-ref','shared-sender':'se
 const returns=Object.freeze({'http-client-text-result':'http-result:http-client-owned','http-stream-text-result':'http-result:http-stream-owned','owned-text-option-text-result':'http-result:option-text','json-text-result':'http-result:json','u64-text-result':'http-result:u64','bool-text-result':'http-result:bool','str-text-result':'http-result:str','text-text-result':'http-result:text-owned','control-http-stream-result':'result:http-result:http-stream-owned','control-http-option-text-result':'result:http-result:option-text','control-http-json-result':'result:http-result:json'});
 const operations=[
  GENERIC_OPTION_SIGNATURE_CONTRACT,
+ GENERIC_TEXT_RESULT_SIGNATURE_CONTRACT,
  ...ASYNC_CONTROL_CONTRACTS.map(row=>({...asyncControlCallerContract(row.javascriptName),family:'control',release:row.rustName==='dispose'?'receiver-owned':null})),
  ...httpResourceSynchronousContracts(),
  ...httpResourceCollectionContracts(),
@@ -46,3 +47,5 @@ export function httpResourceCallerRustType(type,{borrowedLifetime=false}={},dept
 }
 
 import {GENERIC_OPTION_SIGNATURE_CONTRACT} from '../generic-option-source-fragments.mjs';
+
+import {GENERIC_TEXT_RESULT_SIGNATURE_CONTRACT} from '../generic-text-result-source-fragments.mjs';
