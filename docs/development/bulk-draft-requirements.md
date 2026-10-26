@@ -132,3 +132,10 @@ Eleven compiler equations, complete adjacent native histories and independent
 unrun vectors/JS/strict TS/reverse/native/refusal cases are drafted. Production
 adoption, full parity, source-bank/export freshness, synchronization and all
 remaining source and verification requirements remain unfinished.
+
+The [normal ungated registry draft](normal-ungated-registry-draft.md) copies full
+native catalogue/constructor/lookup readers to discover ordinary ungated entries
+from the actual complete array in one inspection. Four compiler equations and
+independent unrun source/refusal cases are drafted. Unsafe/gated/internal entries,
+actual new parsed callers, attribute behavior/effects and every remaining source,
+translation, parity, synchronization, CI and receiving requirement stay open.

@@ -139,3 +139,6 @@ export {createOriginalParsedModuleMacroUseCallerScope,createOriginalParsedInnerL
 export {originalNamespaceFunctionNestedAttributeSelectors,captureOriginalNamespaceFunctionNestedAttributeHeader,originalNamespaceFunctionNestedAttributeHeaderFacts} from './original-namespace-parser.mjs';
 
 export {captureOriginalNamespaceDataItem,originalNamespaceDataItemFacts,originalNamespaceDataAttributeSelectors,captureOriginalNamespaceDataAttributeHeader,originalNamespaceDataAttributeHeaderFacts} from './original-namespace-parser.mjs';
+
+export {originalNormalUngatedBuiltinAttributeRegistrations} from './derive-ancestor-attribute-scope.mjs';
+export {originalNormalUngatedBuiltinLookupSources} from './registered-builtin-caller-attribute-source.mjs';
