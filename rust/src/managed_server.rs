@@ -8,7 +8,6 @@ use std::process::{Child, ExitCode, Stdio};
 use std::thread;
 use std::time::{Duration, Instant};
 
-use base64::Engine as _;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 

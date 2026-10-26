@@ -1,4 +1,3 @@
-use base64::Engine as _;
 use serde_json::Value;
 
 use super::{
@@ -466,9 +465,7 @@ pub(super) fn openai_claim(token: &SubscriptionToken, key: &str) -> Option<Strin
 
 pub(super) fn openai_claims(token: &str) -> Option<Value> {
     let payload = token.split('.').nth(1)?;
-    let bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD
-        .decode(payload)
-        .ok()?;
+    let bytes = crate::translation_core::base64_url_no_pad_decode_text(payload).ok()?;
     let claims: Value = serde_json::from_slice(&bytes).ok()?;
     claims
         .get("https://api.openai.com/auth")?

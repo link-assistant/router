@@ -351,7 +351,7 @@ async fn persist(
 fn random_urlsafe() -> String {
     let mut bytes = [0_u8; 32];
     getrandom::fill(&mut bytes).expect("operating system randomness is available");
-    base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(bytes)
+    crate::translation_core::base64_url_no_pad_encode_array32(bytes)
 }
 
 #[cfg(unix)]

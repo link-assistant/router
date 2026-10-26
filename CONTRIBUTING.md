@@ -63,6 +63,13 @@ those strings cannot establish a dependency owner or generated implementation.
 Original stability attributes must stay in Rust: namespace passivity never
 authorizes removing stability or feature metadata from executable source.
 
+Use the [compatibility-core contract](docs/development/compatibility-core.md)
+when adopting production operations. Preserve borrowed and moved operands in
+both directions and measure complete executable callers. Complete pinned
+[source recipes](docs/development/production-core-base64-adoption-draft.md)
+retain CST inverses and the two substitution sequences; their lexical/source
+checks grant no semantic admission and remain unrun during this drafting phase.
+
 Keep the next complete source map independent of mutable yielded proposal data.
 Rejoin original source, Cargo, profile and stage inputs across asynchronous
 boundaries, and release whole prior proposals before constructing another graph.

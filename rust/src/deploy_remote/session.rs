@@ -12,6 +12,7 @@ use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
+#[cfg(test)]
 use base64::Engine as _;
 use link_assistant_router::deploy_config::{
     Merged, ResolvedDeploy, SshSettings, env_fingerprint, value_fingerprint,
@@ -24,7 +25,7 @@ pub const DEADLINE_EXIT: u8 = 12;
 pub const EVENT_PREFIX: &crate::translation_core::Str = "ROUTER_DEPLOY_EVENT ";
 
 fn encode(value: &crate::translation_core::Str) -> String {
-    base64::engine::general_purpose::STANDARD.encode(value)
+    crate::translation_core::base64_standard_encode_text(value)
 }
 
 /// Extra OpenSSH options, inserted before `--`. Empty without settings.

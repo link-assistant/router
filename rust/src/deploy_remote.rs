@@ -9,6 +9,7 @@ use std::ffi::OsStr;
 use std::io::Write as _;
 use std::process::{ExitCode, Stdio};
 
+#[cfg(test)]
 use base64::Engine as _;
 use link_assistant_router::cli::DeployArgs;
 use link_assistant_router::deploy_config::{Merged, ResolvedDeploy};
@@ -349,7 +350,7 @@ fn run_with_ssh(args: &DeployArgs, token_secret: &crate::translation_core::Str, 
     // reducing exposure, this keeps the non-serving placeholder (which may
     // contain NUL) out of a shell variable on those paths.
     let encoded =
-        base64::engine::general_purpose::STANDARD.encode(transported_secret(mode, token_secret));
+        crate::translation_core::base64_standard_encode_text(transported_secret(mode, token_secret));
     let payload = prepared.payload.clone();
     // Written from a thread so a session that never connects cannot block
     // the deadline on a full pipe.

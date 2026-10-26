@@ -598,3 +598,15 @@ through the real source pipeline and has zero application items. Its CI-only
 oracle uses the same complete 15 encode and 252 decode vectors. Local Rust is
 unrun. Source drafting, focused receiving, actual generated output installation,
 current bank/export freshness and complete parity remain distinct obligations.
+
+## Production source-adoption draft
+
+The [production base64 batch](production-core-base64-adoption-draft.md) drafts
+eleven actual caller migrations through existing concrete owned APIs, with full
+pinned originals, unchanged operand conventions, two ordered source rule
+sequences and complete serialized/reparsed Rust CST inverses. Lexical source
+recipes grant no semantic, namespace, ownership or executable permission; actual
+caller translation, native parity and receiving qualification remain required.
+All new implementation and independent JS/native oracle source are unrun under
+the current source-only phase. Broader source drafting and every original
+verification obligation stay open.

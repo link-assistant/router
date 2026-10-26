@@ -779,3 +779,12 @@ file inverse proposals. Five source equations and independent unrun actual-sourc
 private receipt, renderer and native statement-selection cases are drafted. All
 owner/attribute/export/type-prefix and runtime/parity qualifications stay open,
 along with every unfinished source/receiving/verification requirement.
+
+The [production base64 adoption draft](production-core-base64-adoption-draft.md)
+routes eleven actual calls through seven existing owned APIs across nine
+production files, removes one unneeded parent import and preserves native test
+imports. Complete original recipes, unchanged operand conventions, separate
+language/repository rules, whole CST inverses and independent unrun source/native
+cases are drafted. This source construction grants no semantic, ownership or
+executable authority. Actual caller qualification, coverage/parity, receiving and
+every unfinished source/verification requirement remain open.
