@@ -139,3 +139,10 @@ from the actual complete array in one inspection. Four compiler equations and
 independent unrun source/refusal cases are drafted. Unsafe/gated/internal entries,
 actual new parsed callers, attribute behavior/effects and every remaining source,
 translation, parity, synchronization, CI and receiving requirement stay open.
+
+The [normal ungated caller draft](normal-ungated-callers-draft.md) joins actual
+private item/function/data header families to discovered ordinary native names,
+with private fresh receipts and one bounded within-operation native frame.
+Three compiler equations and independent unrun source/private/refusal cases are
+drafted. Actual native-parsed caller presence, behavior/effect consumers, all
+owner/global closure and every unfinished delivery requirement remain open.

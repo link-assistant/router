@@ -142,3 +142,5 @@ export {captureOriginalNamespaceDataItem,originalNamespaceDataItemFacts,original
 
 export {originalNormalUngatedBuiltinAttributeRegistrations} from './derive-ancestor-attribute-scope.mjs';
 export {originalNormalUngatedBuiltinLookupSources} from './registered-builtin-caller-attribute-source.mjs';
+
+export {captureOriginalNormalUngatedItemBuiltinCaller,captureOriginalNormalUngatedFunctionNestedBuiltinCaller,captureOriginalNormalUngatedDataBuiltinCaller,originalNormalUngatedParsedBuiltinCallerFacts} from './registered-builtin-caller-attribute-source.mjs';
