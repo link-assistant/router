@@ -249,3 +249,9 @@ scalar/borrow roots and parameter declaration witnesses in seven reverse paths.
 Eighteen compiler/library equations and independent unrun JS/strict TS/private/
 native cases are drafted. No original equivalence, caller, receiving, freshness,
 parity or completion qualification is claimed; all remaining requirements stay open.
+
+The [shared optional catalogue draft](optional-json-catalogue-draft.md) derives
+opaque reader records from the finite direct catalogue, preserving exact member,
+type and root data without another copied type list. Two compiler equations and
+independent unrun contract/refusal/inverse cases are drafted. Actual exports,
+caller qualification, freshness, parity and every delivery obligation stay open.
