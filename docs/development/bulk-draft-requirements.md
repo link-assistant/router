@@ -316,6 +316,12 @@ source. Three compiler equations and independent unrun source-reader/ABI cases
 are drafted. Receiving, fixed-width reverse typing, source banks/exports,
 production/native closure, synchronization, parity and all delivery work stay open.
 
+The [fixed-width bitwise reverse draft](reverse-fixed-bitwise-draft.md) adds ten
+explicit imported native scalar ABIs, checked helper metadata and bounded decimal
+literals across seven reverse paths. Eighteen compiler/library equations and
+independent unrun receiving/strict TS/interpreter cases are drafted. Forward type
+projection, native closure, production, parity and all delivery work stay open.
+
 The [positive generic draft](positive-generics-draft.md) adds free/associated
 turbofish and bounded const argument/default parsing without consuming enclosing
 angle tokens. Two compiler equations and independent unrun source/refusal/native
