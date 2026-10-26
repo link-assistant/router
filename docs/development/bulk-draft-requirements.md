@@ -235,3 +235,10 @@ const items from const/async/async-move expressions, retaining array/tail source
 opaque roles and recursive scope obligations. Two compiler equations and
 independent unrun source/native cases are drafted. Actual evaluation/lowering,
 native namespace qualification and every remaining delivery requirement stay open.
+
+The [shared reverse JSON type draft](reverse-json-type-witnesses-draft.md) derives
+optional result witnesses from the common catalogue in seven actual emitters,
+preserving each independent source/input/ownership boundary. Nine compiler
+equations and independent unrun receiving/strict TS/runtime cases are drafted.
+No timing, receiving, full translation or parity qualification is claimed; all
+remaining source and delivery requirements remain unfinished.

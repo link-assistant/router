@@ -34,3 +34,6 @@ export function ownedJsonReaderRustCall(name,args){
 const optionalInputOperation=Object.freeze({name:'router_core_json_option_as_str',input:'json-option-input',ret:'str-option-ref',root:0});
 export const ownedJsonOptionalReaderOperation=name=>name===optionalInputOperation.name?optionalInputOperation:null;
 export function ownedJsonOptionalReaderRustCall(name,argument){if(!ownedJsonOptionalReaderOperation(name)||typeof argument!=='string'||!/^__ro_arg_[0-9]+$/u.test(argument))throw TypeError('Owned optional JSON: fixed operation and bound input required');return 'match '+argument+' { Some(value) => ::serde_json::Value::as_str(value), None => None }';}
+
+// Finite optional declaration witness only. This cannot issue a checked caller.
+export function ownedJsonReaderTypeWitness(type){return typeof type==='string'&&ownedJsonOptionalPayload(type)?operations.find(row=>row.ret===type)?.name??null:null;}

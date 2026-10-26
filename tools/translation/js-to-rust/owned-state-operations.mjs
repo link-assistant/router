@@ -5,7 +5,7 @@ import {posix} from 'node:path';
 import {analyzeOriginalOwnedCoreSource,requireOwnedCoreSourceCurrent,ownedPlainData,ownedCoreSourceData,withOwnedRuntimeImportEdges} from './owned-state-source.mjs';
 import {originalNamespaceTraversalIntrinsicsUnchanged,originalStaticSourceIntrinsicsUnchanged} from '../original-json-intrinsics.mjs';
 import {ownedBase64Operation,ownedBase64RustCall,ownedBase64RustTypes,ownedBase64TypeScriptTypes} from './owned-base64-source.mjs';
-import {ownedJsonReaderOperation,ownedJsonBorrowed,ownedJsonRustTypes,ownedJsonTypeScriptTypes,ownedJsonReaderRustCall} from './owned-json-source.mjs';
+import {ownedJsonReaderOperation,ownedJsonBorrowed,ownedJsonRustTypes,ownedJsonTypeScriptTypes,ownedJsonReaderRustCall,ownedJsonReaderTypeWitness} from './owned-json-source.mjs';
 import {ownedIterationOperation as ownedCollectionOperation,ownedIterationOnlyOperation,ownedCollectionOptionalPayload as ownedJsonOptionalPayload,ownedCollectionRustTypes,ownedCollectionTypeScriptTypes} from './owned-iteration-contracts.mjs';
 import {emitOwnedIterationCall,evaluateOwnedIterationCall} from './owned-iteration-emission.mjs';
 import {ownedStateOperation} from './owned-state-contracts.mjs';
@@ -169,6 +169,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  function publicTypeScriptType(type){
   const options={'json-option-ref':'serde_json_value_get_string','str-option-ref':'serde_json_value_as_str','bool-option':'serde_json_value_as_bool','u64-option':'serde_json_value_as_u64','i64-option':'serde_json_value_as_i64','json-owned-option':'router_core_json_find'};
   if(Object.hasOwn(options,type)){const name=options[type];imports.add(name);return 'ReturnType<typeof __ro_'+name+'>';}
+  const witness=ownedJsonReaderTypeWitness(type);if(witness){imports.add(witness);return 'ReturnType<typeof __ro_'+witness+'>';}
   if(type==='i64'){imports.add('json_macro_i64');return 'Parameters<typeof __ro_json_macro_i64>[0]';}
   if(type==='map-ref'){imports.add('router_core_json_map_index');return 'Parameters<typeof __ro_router_core_json_map_index>[0]';}
   if(type==='u64'){imports.add('router_state_json_with_index');return 'Parameters<typeof __ro_router_state_json_with_index>[1]';}

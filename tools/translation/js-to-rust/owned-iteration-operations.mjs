@@ -5,7 +5,7 @@ import {posix} from 'node:path';
 import {analyzeOriginalOwnedCoreSource,requireOwnedCoreSourceCurrent,ownedPlainData,ownedCoreSourceData,withOwnedRuntimeImportEdges} from './owned-iteration-source.mjs';
 import {originalNamespaceTraversalIntrinsicsUnchanged,originalStaticSourceIntrinsicsUnchanged} from '../original-json-intrinsics.mjs';
 import {ownedBase64Operation,ownedBase64RustCall,ownedBase64RustTypes,ownedBase64TypeScriptTypes} from './owned-base64-source.mjs';
-import {ownedJsonReaderOperation,ownedJsonBorrowed,ownedJsonRustTypes,ownedJsonTypeScriptTypes,ownedJsonReaderRustCall} from './owned-json-source.mjs';
+import {ownedJsonReaderOperation,ownedJsonBorrowed,ownedJsonRustTypes,ownedJsonTypeScriptTypes,ownedJsonReaderRustCall,ownedJsonReaderTypeWitness} from './owned-json-source.mjs';
 import {ownedIterationOperation as ownedCollectionOperation,ownedIterationOnlyOperation,ownedCollectionOptionalPayload as ownedJsonOptionalPayload,ownedCollectionRustTypes,ownedCollectionTypeScriptTypes} from './owned-iteration-contracts.mjs';
 import {emitOwnedIterationCall,evaluateOwnedIterationCall} from './owned-iteration-emission.mjs';
 import {ownedJsonOptionalReaderOperation,ownedJsonOptionalReaderRustCall} from './owned-json-source.mjs';
@@ -163,6 +163,8 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  const context=issued.get(program[0]).context;requireOwnedCoreSourceCurrent(context);const sourceData=ownedCoreSourceData(context);
  if(program.some(item=>issued.get(item).context!==context))fail('mixed receiving contexts');
  let sequence=0;const imports=new Set();
+ function publicTypeScriptType(type){const witness=ownedJsonReaderTypeWitness(type);if(witness){imports.add(witness);return 'ReturnType<typeof __ro_'+witness+'>';}return TS_TYPES[type];}
+
  function expr(value,borrowOwned=false){
   switch(value.kind){
    case 'json-collection-call':return emitOwnedIterationCall(value,{rust,expr,body,rustName,imports,sequence:()=>sequence++});
@@ -247,7 +249,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
    const type=rust?rustTypes[param.type].replace("'a ",explicit&&param.name===item.resultRoot?"'a ":''):TS_TYPES[param.type];
    return (rust?param.rust:param.name)+': '+type;
   }).join(', ');
-  const returns=rust?rustTypes[item.returns].replace("'a ",item.resultRoot===null?"'static ":explicit?"'a ":''):TS_TYPES[item.returns];
+  const returns=rust?rustTypes[item.returns].replace("'a ",item.resultRoot===null?"'static ":explicit?"'a ":''):publicTypeScriptType(item.returns);
   const signature=rust?'#[must_use]\n#[rustfmt::skip]\n'+(item.exported?'pub ':'')+'fn '+item.name+(explicit?"<'a>":'')+'(':(item.exported?'export ':'')+'function '+item.javascript+'(';
   return signature+parameters+')'+(rust?' -> ':': ')+returns+' {\n'+body(item.body,4)+'\n}';
  }).join('\n\n');
