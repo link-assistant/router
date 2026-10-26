@@ -254,10 +254,10 @@ export function proposeModuleMacroUseTrackedLocalDeclarativeSources(options){
  });
 }
 
-import {types} from 'node:util';
-import {resolveModuleGraph} from './project.mjs';
-import {originalSourceModuleItems} from './source-module-views.mjs';
-import {isTrackedModulePathPlan} from './module-paths.mjs';
+
+
+
+
 
 import {compilationProfile,itemConfiguration,isAbsentConditionalAttribute} from './cfg-profile.mjs';
 import {originalFreshConditionalAttributeSourceInputs} from './conditional-attributes.mjs';
@@ -372,16 +372,16 @@ export function proposeInnerLintModuleMacroUseTrackedLocalDeclarativeSources(opt
  });
 }
 
-import {types} from 'node:util';
-import {resolveModuleGraph} from './project.mjs';
-import {originalSourceModuleItems} from './source-module-views.mjs';
-import {isTrackedModulePathPlan} from './module-paths.mjs';
 
-import {compilationProfile,itemConfiguration,isAbsentConditionalAttribute} from './cfg-profile.mjs';
-import {originalFreshConditionalAttributeSourceInputs} from './conditional-attributes.mjs';
-import {originalTextualConfigurationSourcePlan} from './derive-ancestor-attribute-scope.mjs';
-import {createOriginalPassiveBuiltinCallerAttributeScope,createModuleMacroUseBuiltinCallerAttributeScope} from './registered-builtin-caller-attribute-source.mjs';
-import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
+
+
+
+
+
+
+
+
+
 
 // Profile-selected source proposals only. Unknown and inner producers retain
 // their original source; this adapter issues no original-program permission.
@@ -491,16 +491,16 @@ export function proposeLiteralDocInnerLintModuleMacroUseTrackedLocalDeclarativeS
  });
 }
 
-import {types} from 'node:util';
-import {resolveModuleGraph} from './project.mjs';
-import {originalSourceModuleItems} from './source-module-views.mjs';
-import {isTrackedModulePathPlan} from './module-paths.mjs';
 
-import {compilationProfile,itemConfiguration,isAbsentConditionalAttribute} from './cfg-profile.mjs';
-import {originalFreshConditionalAttributeSourceInputs} from './conditional-attributes.mjs';
-import {originalTextualConfigurationSourcePlan} from './derive-ancestor-attribute-scope.mjs';
-import {createOriginalPassiveBuiltinCallerAttributeScope,createModuleMacroUseBuiltinCallerAttributeScope} from './registered-builtin-caller-attribute-source.mjs';
-import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
+
+
+
+
+
+
+
+
+
 
 // Profile-selected source proposals only. Unknown and inner producers retain
 // their original source; this adapter issues no original-program permission.

@@ -36,7 +36,7 @@ function nativeOwner(ts,file,edit,select){
  if(owner.kind==='end-of-module'){
   need(start===file.text.length&&end===start&&expected==='','native module-end append');return {kind:owner.kind,span:[start,end]};
  }
- const matches=select(owner);need(matches.length===1,'unique native-selected original owner');const node=matches[0];
+ let matches=select(owner);if(Object.hasOwn(owner,'span')){need(owner.kind==='import'&&Array.isArray(owner.span)&&owner.span.length===2&&owner.span.every(Number.isSafeInteger),'complete original import declaration span required');matches=matches.filter(node=>node.getStart(file)===owner.span[0]&&node.end===owner.span[1]);}need(matches.length===1,'unique native-selected original owner');const node=matches[0];
  need(start>=node.getStart(file)&&end<=node.end,'whole edit belongs to original native owner');
   return {kind:owner.kind,name:owner.name,...(owner.kind==='call'?{argument:owner.argument}:{}),span:[node.getStart(file),node.end],editSpan:[start,end]};
 }

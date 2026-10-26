@@ -685,3 +685,10 @@ failure remain; public metadata grants no namespace/body authority. Eight comple
 source equations and independent JS/strict TS/multi-file native/refusal cases are
 unrun. Line comment attachment/normalization, wider docs, architecture/export/
 bootstrap closure and every unfinished requirement remain open.
+
+The [copied import closure draft](copy-import-closure-draft.md) removes repeated
+import declarations discovered in source review, retains exact native import
+span selection and adds duplicate binding refusals to both original source
+checks. Four complete source equations and independent unrun regression source
+are drafted. No tests, experiments or draft tools ran; every remaining source,
+receiving, parity and validation requirement stays open.

@@ -334,3 +334,7 @@ integration and the remaining requirement ledger are still open.
 - Draft actual literal documentation consumers for original/generated/inner
   source, native binding observation and checked projects; keep one synchronous
   source frame and close scopes even after final native-guard failure (unrun).
+
+- Draft exact native import span selection, removal of copied repeated bindings,
+  and duplicate declaration refusals in both complete native source checks.
+  Four full source equations and independent regression cases remain unrun.

@@ -10,7 +10,9 @@ export function verifyNativeCopiedSourceBindings(ts,path,source){
  const diagnostics=program.getSemanticDiagnostics(file);
  const missing=diagnostics.filter(row=>[2304,2552,18004,2580].includes(row.code));
  if(missing.length)throw new TypeError('Native copied-source unbound identifier: '+missing.map(row=>ts.flattenDiagnosticMessageText(row.messageText,' ')).join('; '));
- const uninitialized=diagnostics.filter(row=>row.code===2448);
+ const duplicate=diagnostics.filter(row=>[2300,2395,2440,2451].includes(row.code));
+if(duplicate.length)throw new TypeError('Native copied-source duplicate declaration: '+duplicate.map(row=>ts.flattenDiagnosticMessageText(row.messageText,' ')).join('; '));
+const uninitialized=diagnostics.filter(row=>row.code===2448);
  if(uninitialized.length)throw new TypeError('Native copied-source initialization: '+uninitialized.map(row=>ts.flattenDiagnosticMessageText(row.messageText,' ')).join('; '));
  return {typescriptVersion:ts.version,sourcePath:candidate,unboundIdentifiers:[],nativeSemanticScopeChecked:true,strictTypecheck:false,semanticAuthority:false};
 }
@@ -31,6 +33,8 @@ export function verifyNativeCopiedSourceBindingBatch(ts,rows){
  for(const row of captured){if(row.standalone)continue;const candidate=row.candidate,file=program.getSourceFile(candidate);if(!file)throw new TypeError('Native copied-source candidate was not parsed');results[row.index]=(()=>{const diagnostics=program.getSemanticDiagnostics(file);
 const missing=diagnostics.filter(row=>[2304,2552,18004,2580].includes(row.code));
 if(missing.length)throw new TypeError('Native copied-source unbound identifier: '+missing.map(row=>ts.flattenDiagnosticMessageText(row.messageText,' ')).join('; '));
+const duplicate=diagnostics.filter(row=>[2300,2395,2440,2451].includes(row.code));
+if(duplicate.length)throw new TypeError('Native copied-source duplicate declaration: '+duplicate.map(row=>ts.flattenDiagnosticMessageText(row.messageText,' ')).join('; '));
 const uninitialized=diagnostics.filter(row=>row.code===2448);
 if(uninitialized.length)throw new TypeError('Native copied-source initialization: '+uninitialized.map(row=>ts.flattenDiagnosticMessageText(row.messageText,' ')).join('; '));
 return {typescriptVersion:ts.version,sourcePath:candidate,unboundIdentifiers:[],nativeSemanticScopeChecked:true,strictTypecheck:false,semanticAuthority:false};})();}
