@@ -89,3 +89,5 @@ export {proposeOriginalArchitectureTypeMacroSources} from './architecture-type-m
 export {createOriginalStructuredDocumentationSourceScope,withOriginalStructuredDocumentationSourceScope} from './registered-builtin-caller-attribute-source.mjs';
 export {proposeStructuredDocumentationActiveConditionalSources,proposeStructuredDocumentationCommentTrackedSources,proposeStructuredDocumentationConfiguredTrackedSources,proposeStructuredDocumentationGeneratedTrackedLocalDeclarativeSources} from './structured-documentation-tracked-source.mjs';
 export {translateStructuredDocumentationTrackedLocalDeclarativeProject} from './structured-documentation-tracked-local-declarative-project.mjs';
+
+export {originalNamespaceFunctionInvocationPositions} from './original-namespace-parser.mjs';

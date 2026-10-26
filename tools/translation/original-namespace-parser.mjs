@@ -277,3 +277,10 @@ export function originalNamespaceInvocationExpressionFacts(proof,input,position,
  intrinsicGuard();const record=expressionCaptures.get(proof);if(!record||record.input!==input||record.position!==position||record.token!==token)fail('copied or foreign original expression capture');
  currentInvocationInput(input,position,token,options);identity(record.parser);positive(record.parser,record.ast);return record.facts;
 }
+
+// One genuine complete function frame, fresh full checks before and after.
+// Returned facts remain DATA; every receipt keeps the old private association.
+export function originalNamespaceFunctionInvocationPositions(token,options){
+ intrinsicGuard();const state=frames.get(token);if(!state)fail('copied or foreign function frame');fresh(state,options);const rows=[];for(let index=0;index<state.parser.invocations.length;index++){intrinsicGuard();const node=state.parser.invocations[index];if(nodes.get(node)!==state.parser||!['Expr','Ty','Stmts'].includes(node.fields.position))fail('unproved private expansion position');
+ const proof=Object.freeze({schema:'private-original-namespace-position-v1'}),facts=freeze({schema:'original-namespace-position-v1',source:state.facts.source,invocation:node,position:node.fields.position,ordinaryGeneratedImportsAndProcStubsRemainBlockLocal:true,enclosingAttributeBindingsUnchanged:false,unresolvedGlobalMacroExportKindsRetained:true,outerAttributeTransformationsResolved:false,globalBangComplete:false,globalBangExportsRemainPending:true,macroOwnerResolved:false,typeAuthority:false,runtimeAuthority:false,sourcePlan:state.sourcePlan});confinements.set(proof,{token,state,index,node,facts});rows.push({index,proof,facts});}fresh(state,options);intrinsicGuard();return freeze(rows);
+}

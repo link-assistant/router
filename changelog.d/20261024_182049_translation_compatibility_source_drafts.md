@@ -377,3 +377,8 @@ integration and the remaining requirement ledger are still open.
   predicates, inner/current/generated/source/project consumers and full native
   parser/CST inverses. Nine source equations and independent source/JS/strict TS/
   stable Rust/refusal cases remain unrun; doc feature semantics stay unqualified.
+
+- Draft native function invocation-position batches with complete current frame
+  checks at both boundaries and unchanged private legacy receipt associations.
+  Three source equations and independent position/refusal/source-change cases
+  remain unrun; global macro/attribute effects and all authority stay separate.

@@ -756,3 +756,10 @@ consumers. Nine source equations and independent unrun JS/strict TS/refusal/
 stable native cases are drafted. Doc predicates never select availability;
 feature/field semantics, architecture/bootstrap, wider language, production,
 parity and all unfinished source/verification requirements remain open.
+
+The [native invocation-position batch draft](namespace-position-batch-draft.md)
+copies the genuine private position issuer, checks its entire original function
+frame before/after collection and keeps every legacy proof association and open
+export/attribute effect. Three source equations and independent unrun mixed,
+legacy/member/fake/foreign/source-change cases are drafted. No authority, cache
+or timing qualification is introduced; every unfinished requirement remains.
