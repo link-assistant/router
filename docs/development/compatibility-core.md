@@ -1,5 +1,11 @@
 # Translate application code through a compatibility core
 
+The [ASCII and split source draft](text-ascii-split-draft.md) extends the existing
+text contract catalog in both directions. Keep ASCII whitespace and casing
+distinct from Unicode operations, preserve receiver-root split/trim borrowing,
+and qualify actual application input/resource domains before migration. The
+drafted cases remain unrun during the entire-requirement source drafting phase.
+
 Prioritize rules that remove common blockers in actual Router functions. Rank
 the generated project diagnostics before selecting a batch, then measure newly
 executable application functions after regeneration. A function's first refusal

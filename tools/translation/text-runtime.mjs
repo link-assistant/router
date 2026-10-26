@@ -51,3 +51,30 @@ import {createHash as createTextSha256} from 'node:crypto';
 export function router_text_sha256_base64_url_no_pad(value){
  string(value);return createTextSha256('sha256').update(value,'utf8').digest('base64url');
 }
+
+// ASCII transformations preserve every non-ASCII scalar and UTF-8 byte length.
+function asciiMapped(value,upper){
+ string(value);let output='',from=0;const base=upper?97:65,alphabet=upper?'ABCDEFGHIJKLMNOPQRSTUVWXYZ':'abcdefghijklmnopqrstuvwxyz';
+ for(let at=0;at<value.length;at++){const code=call(charCode,value,[at]);if(code>=base&&code<base+26){output+=part(value,from,at)+alphabet[code-base];from=at+1;}}
+ return from===0?value:output+part(value,from);
+}
+function asciiWhitespace(code){return code===9||code===10||code===12||code===13||code===32;}
+function asciiTrimmed(value,left,right){
+ string(value);let start=0,end=value.length;if(left)while(start<end&&asciiWhitespace(call(charCode,value,[start])))start++;if(right)while(end>start&&asciiWhitespace(call(charCode,value,[end-1])))end--;return part(value,start,end);
+}
+function asciiSplitSide(value,pattern,last,right){
+ string(value);string(pattern);const at=call(last?lastIndexOf:indexOf,value,[pattern]);return at<0?option(null,false):option(right?part(value,at+pattern.length):part(value,0,at));
+}
+export function router_text_to_ascii_lowercase(value){return asciiMapped(value,false);}
+export function router_text_to_ascii_uppercase(value){return asciiMapped(value,true);}
+export function router_text_is_ascii(value){string(value);for(let at=0;at<value.length;at++)if(call(charCode,value,[at])>127)return false;return true;}
+export function router_text_eq_ignore_ascii_case(value,other){
+ string(value);string(other);if(value.length!==other.length)return false;for(let at=0;at<value.length;at++){let left=call(charCode,value,[at]),right=call(charCode,other,[at]);if(left>=65&&left<=90)left+=32;if(right>=65&&right<=90)right+=32;if(left!==right)return false;}return true;
+}
+export function router_text_trim_ascii(value){return asciiTrimmed(value,true,true);}
+export function router_text_trim_ascii_start(value){return asciiTrimmed(value,true,false);}
+export function router_text_trim_ascii_end(value){return asciiTrimmed(value,false,true);}
+export function router_text_split_once_left(value,pattern){return asciiSplitSide(value,pattern,false,false);}
+export function router_text_split_once_right(value,pattern){return asciiSplitSide(value,pattern,false,true);}
+export function router_text_rsplit_once_left(value,pattern){return asciiSplitSide(value,pattern,true,false);}
+export function router_text_rsplit_once_right(value,pattern){return asciiSplitSide(value,pattern,true,true);}

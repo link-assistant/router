@@ -107,6 +107,13 @@ unrun legacy/effect/source/JS/strict TS/native cases are drafted. Value macros,
 visitor/global/owner qualification, wider attributes and every unfinished
 source/production/verification requirement remain open.
 
+The [ASCII and split draft](text-ascii-split-draft.md) adds eleven concrete text
+operations through the shared forward/reverse/interpreter catalog, matching
+native/runtime/declaration source, receiver-root loans and original resource
+bounds. Nine complete source equations, adjacent native histories and independent
+unrun fixed-vector/JS/strict TS/inverse/native cases are drafted. Actual production
+adoption and every unfinished source/verification requirement remain open.
+
 The [Option guard draft](http-resource-option-guards-draft.md) adds whole absent
 branches, every-exit resource cleanup, explicit fallback domains, Some payload
 moves, same-Option propagation and complete canonical native inverse rules.

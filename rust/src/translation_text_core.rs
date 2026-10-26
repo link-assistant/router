@@ -167,3 +167,76 @@ pub fn sha256_base64_url_no_pad(value: &str) -> String {
         ::sha2::Sha256::digest(value.as_bytes()),
     )
 }
+
+/// ASCII-only casing; non-ASCII scalar values remain unchanged.
+#[must_use]
+pub fn to_ascii_lowercase(value: &str) -> String {
+    checked(value);
+    value.to_ascii_lowercase()
+}
+
+#[must_use]
+pub fn to_ascii_uppercase(value: &str) -> String {
+    checked(value);
+    value.to_ascii_uppercase()
+}
+
+#[must_use]
+pub fn is_ascii(value: &str) -> bool {
+    checked(value);
+    value.is_ascii()
+}
+
+#[must_use]
+pub fn eq_ignore_ascii_case(value: &str, other: &str) -> bool {
+    checked(value);
+    checked(other);
+    value.eq_ignore_ascii_case(other)
+}
+
+/// Rust ASCII whitespace excludes vertical tab and nonbreaking space.
+#[must_use]
+pub fn trim_ascii(value: &str) -> &str {
+    checked(value);
+    value.trim_ascii()
+}
+
+#[must_use]
+pub fn trim_ascii_start(value: &str) -> &str {
+    checked(value);
+    value.trim_ascii_start()
+}
+
+#[must_use]
+pub fn trim_ascii_end(value: &str) -> &str {
+    checked(value);
+    value.trim_ascii_end()
+}
+
+#[must_use]
+pub fn split_once_left<'a>(value: &'a str, pattern: &str) -> Option<&'a str> {
+    checked(value);
+    checked(pattern);
+    value.split_once(pattern).map(|(left, _)| left)
+}
+
+#[must_use]
+pub fn split_once_right<'a>(value: &'a str, pattern: &str) -> Option<&'a str> {
+    checked(value);
+    checked(pattern);
+    value.split_once(pattern).map(|(_, right)| right)
+}
+
+#[must_use]
+pub fn rsplit_once_left<'a>(value: &'a str, pattern: &str) -> Option<&'a str> {
+    checked(value);
+    checked(pattern);
+    value.rsplit_once(pattern).map(|(left, _)| left)
+}
+
+#[must_use]
+pub fn rsplit_once_right<'a>(value: &'a str, pattern: &str) -> Option<&'a str> {
+    checked(value);
+    checked(pattern);
+    value.rsplit_once(pattern).map(|(_, right)| right)
+}

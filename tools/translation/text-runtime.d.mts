@@ -21,3 +21,14 @@ export declare function router_text_slice_bytes(argument0:string,argument1:bigin
 export declare function router_text_strip_prefix(argument0:string,argument1:string): TextSliceOption;
 export declare function router_text_strip_suffix(argument0:string,argument1:string): TextSliceOption;
 export declare function router_text_sha256_base64_url_no_pad(argument0:string): string;
+export declare function router_text_to_ascii_lowercase(argument0:string): string;
+export declare function router_text_to_ascii_uppercase(argument0:string): string;
+export declare function router_text_is_ascii(argument0:string): boolean;
+export declare function router_text_eq_ignore_ascii_case(argument0:string,argument1:string): boolean;
+export declare function router_text_trim_ascii(argument0:string): string;
+export declare function router_text_trim_ascii_start(argument0:string): string;
+export declare function router_text_trim_ascii_end(argument0:string): string;
+export declare function router_text_split_once_left(argument0:string,argument1:string): TextSliceOption;
+export declare function router_text_split_once_right(argument0:string,argument1:string): TextSliceOption;
+export declare function router_text_rsplit_once_left(argument0:string,argument1:string): TextSliceOption;
+export declare function router_text_rsplit_once_right(argument0:string,argument1:string): TextSliceOption;
