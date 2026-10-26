@@ -68,6 +68,14 @@ are drafted. Native cells/bytes remain inside original bounds; actual namespace,
 configuration, macro/attribute/derive/global export and type-prefix closure stay
 unqualified, along with every unfinished source/verification requirement.
 
+The [architecture builtin metadata draft](architecture-builtin-draft.md) copies
+complete actual builtin registry/parser premises, bounded SIMD metadata and a
+restoring explicit source-domain operation into the full original/generated
+project path. Four complete compiler equations and independent unrun grammar,
+legacy/refusal, operation and JS/strict TS source cases are drafted. No compiler
+feature or layout is qualified; macro documentation, all producer/global/type-
+prefix closure and every unfinished source/verification requirement remain open.
+
 The [Option guard draft](http-resource-option-guards-draft.md) adds whole absent
 branches, every-exit resource cleanup, explicit fallback domains, Some payload
 moves, same-Option propagation and complete canonical native inverse rules.

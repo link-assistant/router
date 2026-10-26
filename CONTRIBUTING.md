@@ -76,6 +76,11 @@ A finite source fusion recipe does not prove the original type or method owner.
 Preserve broad native input behavior separately from the translated text bound,
 and rejoin adjacent complete caller histories rather than replacing old originals.
 
+Keep [architecture builtin metadata](docs/development/architecture-builtin-draft.md)
+inside its explicit restoring source operation. Recognizing `repr(simd)` supplies
+no compiler-feature, layout or runtime qualification; retain those obligations
+and the default source domain alongside complete original/generated CST histories.
+
 Keep the next complete source map independent of mutable yielded proposal data.
 Rejoin original source, Cargo, profile and stage inputs across asynchronous
 boundaries, and release whole prior proposals before constructing another graph.
