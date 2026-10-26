@@ -352,3 +352,8 @@ integration and the remaining requirement ledger are still open.
   original payload/order/style joins, independent expanded header checking and
   five-domain project composition. Five complete source equations and native/
   JS/strict TS/refusal cases are drafted and unrun.
+
+- Draft complete original native/active/configured generated-source histories,
+  surviving header checks, original generated-inner refusals, aggregate resource
+  charging and checked project integration. Six source equations and independent
+  source/JS/strict TS/native/refusal cases remain unrun.

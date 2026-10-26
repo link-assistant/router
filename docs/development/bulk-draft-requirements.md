@@ -716,3 +716,11 @@ composition. Five full source equations and independent unrun source/JS/strict
 TS/refusal/native multi-file cases are drafted. Generated/wider producers,
 architecture/bootstrap, production adoption/parity and every unfinished source
 and verification requirement remain open; no draft tool executed.
+
+The [generated conditional draft](generated-conditional-normalization-draft.md)
+adds original native/generated conditional histories, independent surviving
+header checks, preserved generated-inner refusals, aggregate raw-source/cell
+charging and copied checked project routing. Six full source equations and
+independent unrun JS/strict TS/refusal/native source cases are drafted. Wider
+producers, architecture/bootstrap, production parity and every unfinished
+source/receiving/verification requirement remain open; no draft tool ran.
