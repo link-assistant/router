@@ -46,3 +46,6 @@ export {proposeSourceBoundOwnedCorePackets} from './propose-core-adoption-corpus
 export {reviewSourceBoundOwnedCorePackets} from './source-bound-owned-packet-readback.mjs';
 
 export {planSourceBoundOwnedCorePacketAdoption,applySourceBoundOwnedCorePacketAdoption} from './source-bound-owned-packet-adoption.mjs';
+
+export {proposeTrackedLocalDeclarativeSources} from './tracked-local-declarative-source.mjs';
+export {translateTrackedLocalDeclarativeProject} from './tracked-local-declarative-project.mjs';

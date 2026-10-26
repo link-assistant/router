@@ -316,3 +316,6 @@ integration and the remaining requirement ledger are still open.
 - Draft generic constructor contexts from genuine written/enclosing types and
   original native call selections, retaining independent value/type checks,
   complete source inverses and unrun JS/TypeScript/native/refusal cases.
+- Draft ordinary textual macro inheritance across actual tracked external module
+  files with fresh source graphs, complete physical inverses, an exported checked
+  project entry and unrun independent JS/TypeScript/multi-file native cases.

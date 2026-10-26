@@ -932,3 +932,12 @@ original type obligations, complete meta/source checks and inverses remain.
 Seven complete source equations and independent JS/strict TS/native/refusal cases
 are unrun; resource oracle module 42 is drafted. Wider inference and every
 unfinished architecture, production adoption/parity and delivery row remain open.
+
+The [tracked external textual inheritance draft](tracked-local-declarative-draft.md)
+copies the complete scoped adapter across actual original module edges, retaining
+one private engine/source frame, definition timing, child-local shadows, fresh
+physical snapshots and complete file inverses. The new exported project entry
+checks expanded source through the existing frontend; original equivalence and
+coverage remain unqualified. Four complete source equations and independent
+JS/strict TS/multi-file native/refusal cases are unrun. Macro_use/export,
+architecture type/producer closure and every unfinished row remain open.
