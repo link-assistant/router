@@ -92,3 +92,6 @@ export function router_text_rsplit_once_left_or_self(value,pattern){const result
 export function router_text_rsplit_once_left_or_empty(value,pattern){const result=router_text_rsplit_once_left(value,pattern);return result.$==='Some'?result.field0:'';}
 export function router_text_rsplit_once_right_or_self(value,pattern){const result=router_text_rsplit_once_right(value,pattern);return result.$==='Some'?result.field0:value;}
 export function router_text_rsplit_once_right_or_empty(value,pattern){const result=router_text_rsplit_once_right(value,pattern);return result.$==='Some'?result.field0:'';}
+
+// Primitive immutable JS text is the value ABI of an independent native String.
+export function router_text_to_owned(value){string(value);return value;}

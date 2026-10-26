@@ -44,3 +44,4 @@ export declare function router_text_rsplit_once_left_or_self(argument0:string,ar
 export declare function router_text_rsplit_once_left_or_empty(argument0:string,argument1:string): string;
 export declare function router_text_rsplit_once_right_or_self(argument0:string,argument1:string): string;
 export declare function router_text_rsplit_once_right_or_empty(argument0:string,argument1:string): string;
+export declare function router_text_to_owned(argument0:string): string;

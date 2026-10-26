@@ -167,3 +167,10 @@ models Item/MacCall child block modules from genuine header expressions. Four
 compiler equations and independent unrun source/private/native/refusal cases
 are drafted. Actual native receiver/module/visitor mapping, type isolation,
 global closure and all remaining translation/delivery requirements remain open.
+
+The [owned text copy draft](text-owned-copy-draft.md) adds one paired owned
+contract and common text to_owned/to_string/owned clone adoption, with actual
+literal receivers and shared forward/reverse mappings. Twelve compiler equations,
+full adjacent native histories and independent unrun JS/strict TS/reverse/native/
+refusal cases are drafted. Production adoption, original equivalence/parity,
+source-bank/export freshness and all remaining delivery requirements stay open.

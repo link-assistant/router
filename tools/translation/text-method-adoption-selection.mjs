@@ -14,7 +14,6 @@ export function selectTextMethodAdoption(source,item,_scoped,modulePath,_names,h
  }
  if(tokens[open]?.text!=='(')return result('complete written input list required');const endParameters=close(tokens,open);if(endParameters<0)return result('complete original inputs required');let body=endParameters+1;while(body<tokens.length&&tokens[body].text!=='{')body++;if(body>=tokens.length||close(tokens,body)!==tokens.length-1)return result('complete original function body required');
  const domains=new Map(),parameters=new Set();for(const row of split(tokens.slice(open+1,endParameters))){if(!ident(row[0])||row[1]?.text!==':'||parameters.has(row[0].text))return result('distinct immutable input bindings required');parameters.add(row[0].text);if(borrowed(text(row.slice(2))))domains.set(row[0].text,'str');else if(text(row.slice(2))==='String')domains.set(row[0].text,'text-owned');}
- if(!domains.size)return result('an actual written immutable str or owned String input is required');
  const localNames=new Set(),projectionPipes=new Set();let work=0;
  // Only this complete destructuring identity closure can be substituted.
  // These are source candidates; actual owner/type/effect checks still follow.
@@ -33,7 +32,7 @@ export function selectTextMethodAdoption(source,item,_scoped,modulePath,_names,h
   }
  }
  function literal(at,characterPattern=false){
-  const row=tokens[at];if(characterPattern&&row?.type==='string'&&row.text.startsWith("'")){const scalar=decodeRustCharacter(row.text,{start:row.start,end:row.end});return {after:at+1,replacement:'"\\u{'+scalar.codePointAt(0).toString(16)+'}"',domain:'str',operations:[],characterPattern:true,languageEdits:[{span:[row.start,row.end],expected:row.text,replacement:'"\\u{'+scalar.codePointAt(0).toString(16)+'}"'}]};}return row?.type==='string'&&/^(?:"|r#{0,255}")/u.test(row.text)?{after:at+1,replacement:source.slice(row.start,row.end),domain:'str',operations:[]}:null;
+  const row=tokens[at],prefix=tokens[at-1];if(row&&prefix&&prefix.end===row.start&&['b','c'].includes(prefix.text))return null;if(characterPattern&&row?.type==='string'&&row.text.startsWith("'")){const scalar=decodeRustCharacter(row.text,{start:row.start,end:row.end});return {after:at+1,replacement:'"\\u{'+scalar.codePointAt(0).toString(16)+'}"',domain:'str',operations:[],characterPattern:true,languageEdits:[{span:[row.start,row.end],expected:row.text,replacement:'"\\u{'+scalar.codePointAt(0).toString(16)+'}"'}]};}return row?.type==='string'&&/^(?:"|r#{0,255}")/u.test(row.text)?{after:at+1,replacement:source.slice(row.start,row.end),domain:'str',operations:[]}:null;
  }
  function count(at){
   const row=tokens[at];if(row?.type!=='number')return null;const match=/^(0|[1-9][0-9_]{0,25})(?:_?(?:usize|u64))?$/u.exec(row.text);if(!match)return null;const digits=match[1].replaceAll('_','');if(digits.length>20||BigInt(digits)>18446744073709551615n)return null;return {after:at+1,replacement:digits+'_u64',domain:'u64',operations:[]};
@@ -41,7 +40,7 @@ export function selectTextMethodAdoption(source,item,_scoped,modulePath,_names,h
  function expression(at,depth=0,characterPattern=false){
   if(++work>200000||depth>64)return null;const initial=tokens[at];const initialDomain=domains.get(initial?.text);let value=['str','text-owned'].includes(initialDomain)?{after:at+1,replacement:initial.text,domain:initialDomain,operations:[]}:literal(at,characterPattern);if(!value)return null;if(value.characterPattern)return value;
   while(tokens[value.after]?.text==='.'&&ident(tokens[value.after+1])&&tokens[value.after+2]?.text==='('){
-   if(++work>200000)return null;const cursor=value.after,method=tokens[cursor+1].text,end=close(tokens,cursor+2);if(end<0)return null;if(method==='as_str'&&value.domain==='text-owned'&&end===cursor+3){value={...value,after:end+1,replacement:'&('+value.replacement+')',domain:'str'};continue;}const projection=projectedSplit(cursor);let operation=projection?.operation??(plainMethods.has(method)?method:countMethods.get(method)),after=projection?.after??end+1;
+   if(++work>200000)return null;const cursor=value.after,method=tokens[cursor+1].text,end=close(tokens,cursor+2);if(end<0)return null;if(method==='as_str'&&value.domain==='text-owned'&&end===cursor+3){value={...value,after:end+1,replacement:'&('+value.replacement+')',domain:'str'};continue;}const projection=projectedSplit(cursor);const copying=['to_owned','to_string'].includes(method)||method==='clone'&&value.domain==='text-owned';let operation=copying?'to_owned':projection?.operation??(plainMethods.has(method)?method:countMethods.get(method)),after=projection?.after??end+1;
    if(!operation||!['str','text-owned'].includes(value.domain))break;const pieces=split(tokens.slice(cursor+3,end)),args=[];
    if(countMethods.has(method)){
     if(method==='len'&&pieces.length||method==='chars'&&pieces.length)break;

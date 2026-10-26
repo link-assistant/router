@@ -302,3 +302,10 @@ pub fn rsplit_once_right_or_empty<'a>(value: &'a str, pattern: &str) -> &'a str 
     rsplit_once_right(value, pattern).unwrap_or("")
 }
 
+
+/// Copy a bounded UTF-8 value into independent owned String storage.
+#[must_use]
+pub fn to_owned(value: &str) -> String {
+    checked(value);
+    value.to_owned()
+}
