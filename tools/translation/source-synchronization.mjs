@@ -162,3 +162,6 @@ export {expandCanonicalJsonReaderDefault} from './canonical-json-reader-default-
 export {proposeCoreJsonReadersCorpus,iterateCoreJsonReadersCorpusPackets} from './migrate-core-json-readers.mjs';
 export {expandCanonicalJsonOptionTerminal,expandCanonicalJsonReaderClosure,expandCanonicalJsonOptionPredicate,expandCanonicalJsonOptionFilter} from './canonical-json-option-terminal-normalization.mjs';
 export {JSON_VALUE_PREDICATES,canonicalJsonPredicateMember} from './json-value-predicates.mjs';
+
+export {primitiveOperatorRuntimeSources} from './primitive-operator-runtime-sources.mjs';
+export {sourceUnitPrimitiveOperators} from './primitive-source-unit-options.mjs';

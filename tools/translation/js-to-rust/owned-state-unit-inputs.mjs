@@ -18,6 +18,7 @@ export function projectOwnedStateUnitJavaScript(source,{context,sourcePath,paire
  const relative=family=>{const path=posix.relative(posix.dirname(sourcePath),data.runtimeRoot+'/'+family+'-runtime.mjs');return path.startsWith('.')?path:'./'+path;};
  function operation(name,family,index){const key=family+':'+name;if(!imports.has(key))imports.set(key,{name,family,local:'paired_input_'+name});return 'Parameters<typeof '+imports.get(key).local+'>['+index+']';}
  function type(domain){
+  const scalar=data.primitiveOperators===true?primitiveBitwiseType(domain):null;if(scalar)return 'import('+JSON.stringify(relative('primitive-operator'))+').'+scalar.alias;
   const json='import('+JSON.stringify(relative('json-macro'))+').JsonValue';
   if(domain==='json-ref')return json;if(domain==='json-list-ref')return 'readonly '+json+'[]';if(domain==='str')return 'string';if(domain==='bool')return 'boolean';
   if(domain==='i64')return operation('json_macro_i64','json-macro',0);
@@ -39,3 +40,5 @@ export function projectOwnedStateUnitJavaScript(source,{context,sourcePath,paire
  const files=data.files.filter(row=>row.path!==sourcePath&&row.path!==pairedTypeScriptPath).concat([{path:sourcePath,source:run.value.source}]),derived=createOwnedStateContext({...data,files});
  requireOwnedCoreSourceCurrent(context);requireOwnedCoreSourceCurrent(previousContext);return {source:run.value.source,context:derived,history:{original:source,pairedTypeScript:{path:pairedTypeScriptPath,source:previous},edits,equation:run.value.equation,trace:run.trace,sourceAuthority:false,semanticAuthority:false}};
 }
+
+import {primitiveBitwiseType} from '../primitive-bitwise-types.mjs';

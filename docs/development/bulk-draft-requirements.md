@@ -362,3 +362,11 @@ pointers and associated bounds in the private positive grammar. Two complete
 source equations and independent unrun source/refusal/native oracle cases are
 drafted. Actual native/type/owner/global/effect closure and all remaining source,
 production, reverse/sync/freshness, parity and delivery obligations remain open.
+
+The [primitive source-unit integration draft](primitive-unit-integration-draft.md)
+connects explicit primitive contexts to actual state/outcome/cancellation units,
+paired JS signatures, mirrored runtimes and all three transaction paths. Shared
+native relocation retains literal/type/JSDoc edges and complete inverses. Fourteen
+whole source equations and unrun unit/strict TS/receiving/export/refusal cases are
+drafted. All remaining source/native/production/sync/freshness/parity/delivery
+obligations stay open.

@@ -44,6 +44,7 @@ function baselines(root,revision,names){
 function descriptor(value){
  if(!value||value.schema!==SCHEMA||!Array.isArray(value.units)||!value.units.length||value.units.length>256)fail('bounded nonempty unit descriptor required');const ids=new Set(),paths=new Set();
  for(const unit of value.units){
+  sourceUnitPrimitiveOperators(unit);
   if(!unit||typeof unit.id!=='string'||!/^[_a-zA-Z0-9-]{1,96}$/u.test(unit.id)||ids.has(unit.id)||!['portable','portable-project','filesystem','filesystem-control','owned-state','owned-outcome','owned-project'].includes(unit.profile)||!['auto',...languages].includes(unit.authority??'auto'))fail('unique source unit and known profile required');ids.add(unit.id);
   for(const language of languages){const name=relative(unit.paths?.[language]);if(paths.has(name))fail('source units cannot overlap');paths.add(name);if(!name.endsWith(language==='Rust'?'.rs':language==='TypeScript'?'.ts':'.mjs'))fail('language extension differs');}
   const owned=ownedUnitProfile(unit.profile);if(owned){
@@ -67,14 +68,7 @@ function choose(unit,current,previous,dependencyChanges=new Set()){
  if(changed.length===1){if(current[changed[0]]===null)fail('source deletion is not an implicit translation request');return changed[0];}
  const available=languages.filter(language=>current[language]!==null);if(available.length!==1)fail('unchanged multi-language unit needs an explicit authority: '+unit.id);return available[0];
 }
-function relocate(text,from,to,runtimeBefore,runtimeAfter,language){
- const ts=ownershipCompiler(),file=ts.createSourceFile(from,text,ts.ScriptTarget.Latest,true,language==='TypeScript'?ts.ScriptKind.TS:ts.ScriptKind.JS),edits=[];if(file.parseDiagnostics.length)fail('complete generated native target syntax differs');
- for(const node of file.statements)if((ts.isImportDeclaration(node)||ts.isExportDeclaration(node))&&node.moduleSpecifier){
-  const literal=node.moduleSpecifier;if(!ts.isStringLiteral(literal))fail('literal target module edge required');if(literal.text.startsWith('node:'))continue;if(!literal.text.startsWith('.'))fail('unbound package import in source-unit target');const before=posix.normalize(posix.join(posix.dirname(from),literal.text));
-  if(!before.startsWith(runtimeBefore+'/'))fail('target import escapes declared runtime closure');const full=runtimeAfter+before.slice(runtimeBefore.length),relative=posix.relative(posix.dirname(to),full),replacement=JSON.stringify(relative.startsWith('.')?relative:'./'+relative);edits.push({span:[literal.getStart(file),literal.end],expected:literal.getText(file),replacement});
- }
- let after=text;for(const row of [...edits].sort((a,b)=>b.span[0]-a.span[0]))after=after.slice(0,row.span[0])+row.replacement+after.slice(row.span[1]);const equation=transportConcreteSourceEquations([{before:text,after,language}])[0];if(equation.inverse!==text)fail('whole native target import inverse differs');return {source:after,edits,equation};
-}
+function relocate(text,from,to,runtimeBefore,runtimeAfter,language,runtimeRoots){return relocateSourceUnitRuntimeTarget(text,from,to,runtimeBefore,runtimeAfter,language,runtimeRoots);}
 function translate(unit,language,text,runtime,dependencies=[],ownedStateInputs=null){
  if(unit.profile==='filesystem-control'&&language==='Rust'){const result=translateFilesystemControlRust(text,{sourcePath:unit.paths.Rust,javascriptPath:unit.paths.JavaScript,runtimePath:unit.runtimes.JavaScript+'/effects.mjs',runtimeSource:runtime.javascript});return {Rust:text,JavaScript:result.javascript,TypeScript:result.typescript,meta:{semanticMeta:result.meta,filesystemRustSourceHistory:result.filesystemRustSourceHistory},generatedFrom:unit.paths.JavaScript,runtimeBefore:unit.runtimes.JavaScript};}
  const owned=ownedUnitProfile(unit.profile);if(owned){if(!ownedStateInputs)fail('complete actual owned unit inputs required');return owned.translate(ownedStateInputs);}
@@ -120,7 +114,7 @@ export function planUnitSynchronization({root,manifestPath}={}){
      for(const target of languages){if(target===language)continue;const rows=target==='Rust'?[{path:unit.paths.Rust,source:result.Rust,language:'Rust'}]:result.projectSources.filter(row=>row.language===target),expected=[unit.paths[target],...(unit.dependencies?.[target]??[])];if(rows.length!==expected.length||expected.some(path=>rows.filter(row=>row.path===path).length!==1))fail('complete project target census differs');for(const row of rows){const concrete=transportConcreteSyntaxSource(row.source,{language:target});if(transportConcreteSyntaxMeta(concrete.meta).source!==row.source)fail('complete project target CST differs');output(row.path,row.source,'translated-source');targetEquations.push({language:target,path:row.path,concreteSyntax:concrete.meta,equation:row.equation??null});}}
      const unitAssets=runtimeAssetsForSourceUnit(unit,assets,runtime);for(const target of ['JavaScript','TypeScript'])for(const [name,text]of unitAssets)output(unit.runtimes[target]+'/'+name,text,'runtime-closure');return {...result,targetEquations};
     }
-    for(const target of languages){if(target===language)continue;let after=result[target];if(target!=='Rust'){const row=relocate(after,result.generatedFrom,unit.paths[target],result.runtimeBefore,unit.runtimes[target],target);after=row.source;targetEquations.push({language:target,...row});}const concrete=transportConcreteSyntaxSource(after,{language:target});if(transportConcreteSyntaxMeta(concrete.meta).source!==after)fail('complete target CST roundtrip differs');output(unit.paths[target],after,'translated-source');targetEquations.push({language:target,concreteSyntax:concrete.meta});}
+    for(const target of languages){if(target===language)continue;let after=result[target];if(target!=='Rust'){const row=relocate(after,result.targetOrigins?.[target]??result.generatedFrom,unit.paths[target],result.runtimeBefore,unit.runtimes[target],target,sourceUnitPrimitiveOperators(unit)?[...new Set([unit.runtimes.JavaScript,unit.runtimes.TypeScript])]:undefined);after=row.source;targetEquations.push({language:target,...row});}const concrete=transportConcreteSyntaxSource(after,{language:target});if(transportConcreteSyntaxMeta(concrete.meta).source!==after)fail('complete target CST roundtrip differs');output(unit.paths[target],after,'translated-source');targetEquations.push({language:target,concreteSyntax:concrete.meta});}
     const unitAssets=runtimeAssetsForSourceUnit(unit,assets,runtime);for(const target of ['JavaScript','TypeScript'])for(const [name,text]of unitAssets)output(unit.runtimes[target]+'/'+name,text,'runtime-closure');return {...result,targetEquations};
    }}]},
   ]).run(original);
@@ -141,3 +135,6 @@ export function applyUnitSynchronization(serialized,{root,manifestPath}={}){
  }catch(error){const rollback=[];for(const row of [...written].reverse())try{if(source(fresh.root,row.path)!==row.after){rollback.push(row.path+': external change retained');continue;}if(row.before===null)fs.unlinkSync(physical(fresh.root,row.path));else fs.writeFileSync(physical(fresh.root,row.path),row.before);}catch(caught){rollback.push(row.path+': '+caught.message);}error.rollbackFailures=rollback;throw error;}
  return {schema:SCHEMA,baseRevision:fresh.baseRevision,changed:changed.map(row=>row.path),sourceAuthority:false,runtimeParity:false,rustExecuted:false};
 }
+
+import {sourceUnitPrimitiveOperators} from './primitive-source-unit-options.mjs';
+import {relocateSourceUnitRuntimeTarget} from './source-unit-runtime-relocation.mjs';

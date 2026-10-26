@@ -8,3 +8,9 @@ function source(name){
 export function primitiveOperatorRuntimeAssetPair(){return new Map(['primitive-operator-runtime.mjs','primitive-operator-runtime.d.mts'].map(name=>[name,source(name)]));}
 
 export function primitiveOperatorDeclarationSource(){return source('primitive-operator-runtime.d.mts');}
+
+// Fresh complete source rows; receiving contexts reissue their own authority.
+export function primitiveOperatorRuntimeSources(runtimeRoot='runtime',declarationRoot=runtimeRoot){
+ for(const root of [runtimeRoot,declarationRoot])if(typeof root!=='string'||!root||root.length>4096||root.startsWith('/')||root.includes('\\')||/[\x00-\x1f\x7f:]/u.test(root)||root.split('/').some(part=>!part||part==='.'||part==='..'))throw new TypeError('Primitive runtime roots must be bounded safe relative paths');
+ return [...primitiveOperatorRuntimeAssetPair()].map(([name,source])=>({path:(name.endsWith('.d.mts')?declarationRoot:runtimeRoot)+'/'+name,source}));
+}

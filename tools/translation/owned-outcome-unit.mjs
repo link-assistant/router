@@ -12,7 +12,7 @@ const fail=message=>{throw new TypeError('Owned state source unit: '+message);};
 /** Complete declared runtime closure, including byte-equal physical mirrors. */
 export function ownedStateUnitRuntimeSources(unit){
  const javascript=unit.runtimes.JavaScript,typescript=unit.runtimes.TypeScript;if(javascript!==typescript&&(javascript.startsWith(typescript+'/')||typescript.startsWith(javascript+'/')))fail('owned runtime roots must not contain each other');
- const rows=ownedStateRuntimeSources(javascript,typescript),sources=new Map(rows.map(row=>[row.path,row.source]));
+ const rows=appendSourceUnitPrimitiveRuntimeSources(unit,ownedStateRuntimeSources(javascript,typescript)),sources=new Map(rows.map(row=>[row.path,row.source]));
  if(javascript!==typescript)for(const row of rows){const root=row.path.startsWith(javascript+'/')?javascript:typescript,other=root===javascript?typescript:javascript;sources.set(other+row.path.slice(root.length),row.source);}
  return [...sources].map(([path,source])=>({path,source}));
 }
@@ -23,10 +23,10 @@ export function ownedStateUnitContext({unit,current,nativeSources,runtimeSources
  if(posix.basename(unit.runtimes.JavaScript)!==posix.basename(unit.runtimes.TypeScript)||suffix(unit.paths.JavaScript,sourceRoot)?.replace(/\.mjs$/u,'.ts')!==suffix(unit.paths.TypeScript,typedRoot))fail('owned state currently requires mirrored JS/TS source and runtime paths');
  const actual=new Map(runtimeSources.map(row=>[row.path,row.source]));for(const row of ownedStateUnitRuntimeSources(unit))if(actual.get(row.path)!==row.source)fail('complete actual current runtime mirror differs: '+row.path);
  const files=[...nativeSources,...runtimeSources];for(const language of ['Rust','JavaScript','TypeScript'])if(current[language]!==null)files.push({path:unit.paths[language],source:current[language]});
- return createOwnedStateContext({runtimeRoot:unit.runtimes.JavaScript,declarationRoot:unit.runtimes.TypeScript,files});
+ return createOwnedStateContext({runtimeRoot:unit.runtimes.JavaScript,declarationRoot:unit.runtimes.TypeScript,files,...(sourceUnitPrimitiveOperators(unit)?{primitiveOperators:true}:{})});
 }
 export function translateOwnedStateUnit({unit,language,current,nativeSources,runtimeSources}={}){
- const context=ownedStateUnitContext({unit,current,nativeSources,runtimeSources}),options={context,sourcePath:unit.paths[language]};let result,history=null;
+ const context=ownedStateUnitContext({unit,current,nativeSources,runtimeSources}),options={context,sourcePath:unit.paths[language],...(sourceUnitPrimitiveOperators(unit)?{typescriptOutputPath:unit.paths.TypeScript}:{})};let result,history=null;
  if(language==='Rust')result=translateOwnedStateRust(current.Rust,{...options,javascriptPath:unit.paths.JavaScript});
  else if(language==='TypeScript'){
   const data=ownedCoreSourceData(context),derived=createOwnedStateContext({...data,files:data.files.filter(row=>row.path!==unit.paths.JavaScript)});
@@ -38,7 +38,9 @@ export function translateOwnedStateUnit({unit,language,current,nativeSources,run
   result=translateOwnedStateJavaScript(projected.source,{...options,context:derived});
  }else fail('one actual source language required');
  requireOwnedCoreSourceCurrent(context);
- return {Rust:language==='Rust'?current.Rust:result.rust,JavaScript:language==='JavaScript'?current.JavaScript:result.javascript,TypeScript:language==='TypeScript'?current.TypeScript:result.typescript,meta:{semanticMeta:result.meta,ownedRustSourceHistory:result.ownedRustSourceHistory??null,signatureProposalHistory:history,typeScriptSourceHistory:result.ownedCollectionTypeScriptHistory??null},generatedFrom:unit.paths.JavaScript,runtimeBefore:unit.runtimes.JavaScript,profile:'router-owned-json-outcome-v1',runtimeParity:false,rustExecuted:false};
+ return {Rust:language==='Rust'?current.Rust:result.rust,JavaScript:language==='JavaScript'?current.JavaScript:result.javascript,TypeScript:language==='TypeScript'?current.TypeScript:result.typescript,meta:{semanticMeta:result.meta,ownedRustSourceHistory:result.ownedRustSourceHistory??null,signatureProposalHistory:history,typeScriptSourceHistory:result.ownedCollectionTypeScriptHistory??null},...(sourceUnitPrimitiveOperators(unit)?{primitiveOperators:true,targetOrigins:{JavaScript:unit.paths.JavaScript,TypeScript:unit.paths.TypeScript}}:{}),generatedFrom:unit.paths.JavaScript,runtimeBefore:unit.runtimes.JavaScript,profile:'router-owned-json-outcome-v1',runtimeParity:false,rustExecuted:false};
 }
 
 export {OWNED_STATE_NATIVE_INPUTS as OWNED_OUTCOME_NATIVE_INPUTS,ownedStateUnitRuntimeSources as ownedOutcomeUnitRuntimeSources,ownedStateUnitContext as ownedOutcomeUnitContext,translateOwnedStateUnit as translateOwnedOutcomeUnit};
+
+import {sourceUnitPrimitiveOperators,appendSourceUnitPrimitiveRuntimeSources} from './primitive-source-unit-options.mjs';
