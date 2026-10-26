@@ -222,3 +222,10 @@ separates actual immutable let binders from their written type paths, preserving
 the original source-role and canonical-owner checks. Two compiler equations and
 independent unrun qualified/import/conflict/refusal cases are drafted. All
 broader translation, namespace, parity and delivery requirements remain open.
+
+The [JSON reader span join draft](json-reader-span-joins-draft.md) removes
+per-edit full mapping filters and repeated inverse string reconstruction,
+retaining every exact check, staged CST boundary and complete source inverse.
+Two compiler equations and independent unrun bulk/empty-stage cases are drafted.
+No performance, deadline or completion qualification is claimed; every remaining
+source, translation, parity and delivery obligation stays open.
