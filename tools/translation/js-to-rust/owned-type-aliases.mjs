@@ -29,6 +29,7 @@ export function expandOwnedTypeAliases(source,{sourcePath='owned-aliases.mts'}={
    if(ts.isTypeReferenceNode(node)){
     if(!ts.isIdentifier(node.typeName))fail('qualified type aliases require a separately checked namespace profile');const symbol=checker.getSymbolAtLocation(node.typeName),target=aliases.get(symbol);if(target)dependencies.add(target);else if(!parameters.has(symbol)&&!symbol?.declarations?.length&&!['ReturnType','Parameters'].includes(node.typeName.text))fail('unresolved actual alias type binding');if(node.typeArguments)for(const argument of node.typeArguments)validate(argument,depth+1);return;
    }
+   if(ts.isImportTypeNode(node)){if(node.isTypeOf||node.typeArguments?.length||node.attributes||!ts.isLiteralTypeNode(node.argument)||!ts.isStringLiteral(node.argument.literal)||!node.qualifier||!ts.isIdentifier(node.qualifier)||node.argument.literal.text.length>4096)fail('closed static import type alias required');return;}
    if(ts.isTypeQueryNode(node)){const declarations=ts.isIdentifier(node.exprName)?checker.getSymbolAtLocation(node.exprName)?.declarations:null;if(!declarations?.length||declarations.some(ts.isTypeParameterDeclaration))fail('actual named value type query binding required');return;}
    if(ts.isArrayTypeNode(node)||ts.isParenthesizedTypeNode(node)){validate(node.elementType??node.type,depth+1);return;}
    if(ts.isTypeOperatorNode(node)&&node.operator===ts.SyntaxKind.ReadonlyKeyword){validate(node.type,depth+1);return;}

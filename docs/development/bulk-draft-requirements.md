@@ -384,3 +384,10 @@ Rust inverse copies, including multi-module scalar restoration. Three complete
 source equations and unrun width/envelope/meta/batch/refusal/native oracle cases
 are drafted. Public native scalar exports and every remaining source/native/
 production/sync/freshness/parity/delivery obligation remain open.
+
+The [closed import alias draft](closed-import-aliases-draft.md) preserves closed
+static import type leaves through actual local/generic alias substitution and
+shares bounded transparent type parentheses across all seven receiving paths.
+Ten complete source equations and unrun native-domain/alias/meta/refusal/depth
+cases are drafted. Public native scalar exports and all remaining source/native/
+production/sync/freshness/parity/delivery obligations remain unfinished.

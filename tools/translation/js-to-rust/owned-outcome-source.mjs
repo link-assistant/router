@@ -367,8 +367,7 @@ function originalOwnedCoreImport(handle,path,node,analysis){
 
 function originalOwnedCoreType(handle,path,type,analysis){
  const {ts,file}=analysis,privateState=traversals.get(analysis);if(privateState?.handle!==handle)fail('foreign type traversal');const state=privateState.state;
- if(!type)fail('written input domain required');
- if(ts.isParenthesizedTypeNode(type))return originalOwnedCoreType(handle,path,type.type,analysis);
+ if(!type)fail('written input domain required');type=ownedParenthesizedType(ts,type);
  const localType=ownedLocalWrittenType(type,analysis);if(localType!==null)return localType;
  const stateType=ownedStateWrittenType(ts,type,analysis,node=>originalOwnedCoreImport(handle,path,node,analysis));if(stateType!==null)return stateType;
  if(type.kind===ts.SyntaxKind.StringKeyword)return 'str';
@@ -966,3 +965,5 @@ import {primitiveOperatorRuntimeAssetPair} from '../primitive-operator-runtime-s
 import {ownedPrimitiveOperatorOperation,readOwnedPrimitiveOperatorCall} from './owned-primitive-operator-source.mjs';
 
 import {primitiveBitwiseType,primitiveBitwiseAlias} from '../primitive-bitwise-types.mjs';
+
+import {ownedParenthesizedType} from './owned-type-parentheses.mjs';
