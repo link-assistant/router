@@ -112,3 +112,5 @@ export {translateExpressionDocumentationTrackedLocalDeclarativeProject} from './
 export {captureOriginalNamespaceDocumentationExpression} from './original-namespace-parser.mjs';
 
 export {proposeOriginalX86MetadataTypeMacroSources} from './architecture-x86-metadata-sources.mjs';
+
+export {originalNamespaceAttributeExpressionInvocationPositions,originalNamespaceAttributeExpressionPositionFacts,captureOriginalNamespaceAttributeInvocationInput,originalNamespaceAttributeInvocationInputFacts,captureOriginalNamespaceAttributeInvocationExpression,originalNamespaceAttributeInvocationExpressionFacts} from './original-namespace-parser.mjs';

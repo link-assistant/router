@@ -128,6 +128,13 @@ compiler equations and independent unrun actual-source/refusal cases are drafted
 Physical views retain no actual namespace/configuration authority; owner/global/
 derive/type-prefix closure and every unfinished requirement remain open.
 
+The [attribute invocation draft](attribute-invocation-source-draft.md) copies
+seven complete private position/input/expression issuer paths over genuine
+attribute frames and joins real doc consumers. Four complete source equations
+and independent unrun root/inner/member/foreign/refusal cases are drafted. Syntax
+positions grant no visitor, import-confinement, macro-owner or global closure;
+all unfinished source/production/verification requirements remain open.
+
 The [Option guard draft](http-resource-option-guards-draft.md) adds whole absent
 branches, every-exit resource cleanup, explicit fallback domains, Some payload
 moves, same-Option propagation and complete canonical native inverse rules.
