@@ -99,6 +99,14 @@ complete source equations and independent unrun source/request cases are drafted
 Actual caller/visitor/value-macro/global qualification, inner/doc consumers and
 every unfinished source/production/verification requirement remain open.
 
+The [expression documentation consumer draft](expression-documentation-draft.md)
+copies complete doc/builtin/project consumers, captures original root/inner/
+member expressions and joins complete native visitor premises under a restoring
+explicit operation. Eight complete compiler source equations and independent
+unrun legacy/effect/source/JS/strict TS/native cases are drafted. Value macros,
+visitor/global/owner qualification, wider attributes and every unfinished
+source/production/verification requirement remain open.
+
 The [Option guard draft](http-resource-option-guards-draft.md) adds whole absent
 branches, every-exit resource cleanup, explicit fallback domains, Some payload
 moves, same-Option propagation and complete canonical native inverse rules.

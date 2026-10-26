@@ -107,3 +107,6 @@ export {captureOriginalNamespaceAttributeExpression,originalNamespaceAttributeEx
 export {documentationArgumentMayExportMacros,captureOriginalDocExpressionSourceEffects} from './original-doc-expression-effects.mjs';
 
 export {captureOriginalAttributeExpressionConfinementSource,originalAttributeExpressionConfinementSourceFacts,captureOriginalAttributeExpressionConfinementFrame} from './attribute-expression-confinement-source.mjs';
+
+export {translateExpressionDocumentationTrackedLocalDeclarativeProject} from './expression-documentation-tracked-local-declarative-project.mjs';
+export {captureOriginalNamespaceDocumentationExpression} from './original-namespace-parser.mjs';

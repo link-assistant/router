@@ -1,5 +1,5 @@
 // Original syntax/effect observations only. No macro or attribute owner permit.
-import {captureOriginalNamespaceAttributeExpression,originalNamespaceAttributeExpressionFacts} from './original-namespace-parser.mjs';
+import {captureOriginalNamespaceDocumentationExpression as captureOriginalNamespaceAttributeExpression,originalNamespaceAttributeExpressionFacts} from './original-namespace-parser.mjs';
 
 /** Every call captures and rechecks a genuine original equality-expression. */
 export function captureOriginalDocExpressionSourceEffects(options){

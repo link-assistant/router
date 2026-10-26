@@ -802,3 +802,10 @@ replay complete original producers on plan and apply, retain original Git/source
 guards and rollback, and keep source installation separate from executable
 coverage and parity. The new CLI, installer and receiving cases remain unrun
 during the entire-requirement drafting phase.
+
+Documentation-expression extensions follow the
+[original source consumer contract](docs/development/expression-documentation-draft.md):
+retain genuine root/inner/member source associations, distinct private parser
+frames, whole native premises and CST inverses. A metadata consumer must keep
+argument macro effects and ownership unresolved until separately qualified;
+stripping documentation source alone does not establish runtime equivalence.

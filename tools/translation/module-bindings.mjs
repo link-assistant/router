@@ -524,11 +524,12 @@ function resolveRegisteredBuiltinEnclosingSourceBindings({modules,externalModule
       if(tokensOf(item)[1]?.text==='!'&&condition.status==='active'&&condition.attributes.every(attribute=>attribute.name==='cfg'||isInertConditionalAttribute(attribute)))continue;
       const innerLint=inertInnerLintItem(item,module.source,module.sourceView,profile);
       if(innerLint){scope.innerBuiltinNames.push(...innerLint.attributes.map(attribute=>({name:attribute.name,span:attribute.span})));continue;}
+      const documentationMacroFrontier=condition.attributes.find(documentationArgumentMayExportMacros);if(documentationMacroFrontier){scope.baseMacro=scope.baseBang=scope.baseAttribute=true;const root=scopes.get('crate');if(root)root.baseMacro=root.baseBang=root.baseAttribute=true;diagnostic(scope,'documentation equality expression may introduce crate-root macros; original argument expansion remains unresolved',documentationMacroFrontier.span,{globalMacroKindUnresolved:true});}
       const innerBuiltin=builtinInnerSourceItem(item,module.source,module.sourceView,profile);
       if(innerBuiltin){scope.innerBuiltinNames.push({name:innerBuiltin.name,span:innerBuiltin.span});continue;}
       try {
         const tokens=tokensOf(item),head=header(tokens,scope.path),moduleAttribute=tokens[head.at]?.text==='mod';
-        const documentationMacroFrontier=head.attributes.find(documentationArgumentMayExportMacros);if(documentationMacroFrontier){scope.baseMacro=scope.baseBang=scope.baseAttribute=true;const root=scopes.get('crate');if(root)root.baseMacro=root.baseBang=root.baseAttribute=true;diagnostic(scope,'documentation equality expression may introduce crate-root macros; original argument expansion remains unresolved',documentationMacroFrontier.span,{globalMacroKindUnresolved:true});}
+        
         const nestedExport=nestedExportUncertainty(tokens,head.at,profile,span=>deriveContext&&deriveFootprintHelperAttributeAt(deriveContext,module,item,span)||deriveBangContext&&deriveEnclosingNamespaceHelperAttributeAt(deriveBangContext,deriveContext,module,item,span)||registered&&registered.at(module,item,{name:module.source.slice(span.start,span.end).match(/^#\s*\[\s*([A-Za-z_][A-Za-z0-9_]*)/u)?.[1],span}));
         if(nestedExport){scope.baseMacro=scope.baseBang=scope.baseAttribute=true;const root=scopes.get('crate');if(root)root.baseMacro=root.baseBang=root.baseAttribute=true;diagnostic(scope,'nested source attribute can introduce crate-root exported macros; expansion remains unresolved',nestedExport);}
         const macroUse=moduleAttribute&&head.attributes.some(attribute=>attribute.name==='macro_use'&&attribute.tokens.length===1)&&condition.status==='active'&&scope.configurationCondition==='active';
