@@ -37,7 +37,7 @@ function intrinsicGuard(){
 function sameSnapshot(left,right){if(left===right)return true;if(left===null||right===null||typeof left!=='object'||typeof right!=='object'||Array.isArray(left)!==Array.isArray(right))return false;const a=Object.getOwnPropertyDescriptors(left),b=Object.getOwnPropertyDescriptors(right),keys=Reflect.ownKeys(a),other=Reflect.ownKeys(b);if(keys.length!==other.length)return false;for(let at=0;at<keys.length;at++){const key=keys[at];if(key!==other[at]||!Object.hasOwn(a[key],'value')||!Object.hasOwn(b[key],'value')||!sameSnapshot(a[key].value,b[key].value))return false;}return true;}
 const isName=token=>token?.type==='ident'&&/^[\p{XID_Start}_][\p{XID_Continue}_]*$/u.test(token.text);
 export const ORIGINAL_NAMESPACE_PARSER_LIMITS=Object.freeze({sourceBytes:256000,tokens:32000,nodes:50000,depth:96,members:512});
-const nodeKinds=new Set(['TypeAlias','ConstItem','StaticItem','ExternCrate','DataItem','DataField','DataVariant','Function','Parameter','Generics','GenericParameter','Where','Bound','ReferenceType','PointerType','TupleType','SliceType','ArrayType','PathType','NeverType','InferType','FunctionType','TypeArguments','AssociatedTypeArgument','Lifetime','BoundType','OpaqueBang','Attribute','Block','Statement','Let','Use','UseTree','MacroDefinition','Path','Literal','Unary','Binary','Call','Index','Field','Try','Cast','Tuple','Array','RepeatArray','Struct','StructField','If','Match','Arm','Closure','Jump','Loop','While','For','Pattern','PatternField','Empty']);
+const nodeKinds=new Set(['TypeAlias','ConstItem','StaticItem','ExternCrate','DataItem','DataField','DataVariant','Function','Parameter','Generics','GenericParameter','Where','Bound','ReferenceType','PointerType','TupleType','SliceType','ArrayType','PathType','NeverType','InferType','FunctionType','TypeArguments','AssociatedTypeArgument','Lifetime','BoundType','OpaqueBang','Attribute','Block','Statement','Let','LetCondition','Use','UseTree','MacroDefinition','Path','Literal','Unary','Binary','Call','Index','Field','Try','Cast','Tuple','Array','RepeatArray','Struct','StructField','If','Match','Arm','Closure','Jump','Loop','While','For','Pattern','PatternField','Empty']);
 function normalize(raw){
  const result=[];
  for(let at=0;at<raw.length;at++){
@@ -191,7 +191,13 @@ class NamespaceParser{
   }c.expect('}');return this.node('Block',start,{innerAttributes,statements});
  });}
  functionAhead(){const c=this.cursor;let at=c.index;if(c.tokens[at]?.text==='pub'){at++;if(c.tokens[at]?.text==='('){let depth=1;for(at++;at<c.tokens.length&&depth;at++){if(c.tokens[at].text==='(')depth++;if(c.tokens[at].text===')')depth--;}}}for(const q of ['const','async','unsafe'])if(c.tokens[at]?.text===q)at++;if(c.tokens[at]?.text==='extern'){at++;if(c.tokens[at]?.type==='string')at++;}return c.tokens[at]?.text==='fn';}
- expression(minimum=0,structAllowed=true,statementStart=false){return this.enter(()=>{const c=this.cursor,start=c.peek()?.start;let left=this.prefix(structAllowed,statementStart);
+ condition(){const context={letSeen:false,lowerOperatorSeen:false};return this.expression(0,false,false,context,true);}
+ expression(minimum=0,structAllowed=true,statementStart=false,conditionContext=null,allowLet=false){return this.enter(()=>{const c=this.cursor,start=c.peek()?.start;let left;
+  if(c.is('let')){
+   if(!conditionContext||!allowLet||conditionContext.lowerOperatorSeen)fail('let expression requires a direct original if/while conjunction condition');
+   c.take();const pattern=this.pattern();c.expect('=');const value=this.expression(5,false);conditionContext.letSeen=true;
+   left=this.node('LetCondition',start,{pattern,value,bindingsResolved:false,editionResolved:false,featureAvailabilityResolved:false});
+  }else left=this.prefix(structAllowed,statementStart);
   if(left.kind==='OpaqueBang'&&left.fields.position==='Stmts')return left;
   while(c.peek()){
    if(c.is('(')){c.take();const args=[];while(!c.is(')')){args.push(this.expression());if(!c.eat(','))break;}c.expect(')');left=this.node('Call',start,{callee:left,args});continue;}
@@ -201,8 +207,8 @@ class NamespaceParser{
    if(c.is('as')){if(12<minimum)break;c.take();left=this.node('Cast',start,{value:left,type:this.type()});continue;}
    let operation=c.peek().text,width=1;if(['&','>'].includes(operation)&&c.peek(1)?.text===operation&&c.peek().end===c.peek(1).start){operation+=operation;width=2;}
    const priorities={'=':1,'+=':1,'-=':1,'*=':1,'/=':1,'..':2,'..=':2,'||':3,'&&':4,'==':5,'!=':5,'<':6,'>':6,'<=':6,'>=':6,'|':7,'^':8,'&':9,'<<':10,'>>':10,'+':11,'-':11,'*':12,'/':12,'%':12};
-   const precedence=priorities[operation];if(precedence===undefined||precedence<minimum)break;for(let at=0;at<width;at++)c.take();
-   const right=operation==='..'&&[']',')',',',';','}'].includes(c.peek()?.text)?null:this.expression(precedence+(precedence===1?0:1),structAllowed);left=this.node('Binary',start,{operation,left,right});
+   const precedence=priorities[operation];if(precedence===undefined||precedence<minimum)break;if(conditionContext&&precedence<4){if(conditionContext.letSeen)fail('original let condition requires conjunction without outer lazy-or, range or assignment');conditionContext.lowerOperatorSeen=true;}for(let at=0;at<width;at++)c.take();
+   const right=operation==='..'&&[']',')',',',';','}'].includes(c.peek()?.text)?null:this.expression(precedence+(precedence===1?0:1),structAllowed,false,conditionContext,allowLet&&operation==='&&');left=this.node('Binary',start,{operation,left,right});
   }
   return left;
  });}
@@ -210,11 +216,11 @@ class NamespaceParser{
   if(c.is('{'))result=this.block();
   else if(c.eat('const'))result=this.node('Unary',start,{operation:'const-block',value:this.block()});
   else if(c.eat('async')){const moved=!!c.eat('move');result=this.node('Unary',start,{operation:'async-block',moved,value:this.block()});}
-  else if(c.eat('if')){const condition=this.expression(0,false),then=this.block(),otherwise=c.eat('else')?(c.is('if')?this.expression(0,false):this.block()):null;result=this.node('If',start,{condition,then,otherwise});}
+  else if(c.eat('if')){const condition=this.condition(),then=this.block(),otherwise=c.eat('else')?(c.is('if')?this.expression(0,false):this.block()):null;result=this.node('If',start,{condition,then,otherwise});}
   else if(c.eat('match')){const subject=this.expression(0,false);c.expect('{');const arms=[];while(!c.is('}')){const at=c.peek()?.start,attrs=this.attributes(),pattern=this.pattern(),guard=c.eat('if')?this.expression(0,false):null;c.expect('=>');const body=this.expression();arms.push(this.node('Arm',at,{attributes:attrs,pattern,guard,body}));if(!c.eat(',')&&!c.is('}')&&!['Block','If','Match'].includes(body.kind))fail('complete original match arm separator required');}c.expect('}');result=this.node('Match',start,{subject,arms});}
   else if(c.is('return')||c.is('break')||c.is('continue')){const operation=c.take().text,label=operation!=='return'&&c.peek()?.type==='char'&&c.peek().text.startsWith("'")?this.lifetime(true).fields.original:null,value=operation!=='continue'&&![null,';',',','}'].includes(c.peek()?.text??null)?this.expression():null;result=this.node('Jump',start,{operation,label,value});}
   else if(c.eat('loop'))result=this.node('Loop',start,{body:this.block()});
-  else if(c.eat('while')){const condition=this.expression(0,false),body=this.block();result=this.node('While',start,{condition,body});}
+  else if(c.eat('while')){const condition=this.condition(),body=this.block();result=this.node('While',start,{condition,body});}
   else if(c.eat('for')){const pattern=this.pattern(false);c.expect('in');const iterator=this.expression(0,false),body=this.block();result=this.node('For',start,{pattern,iterator,body});}
   else if(c.is('|')||c.is('||')||c.is('move')){const moved=!!c.eat('move'),parameters=[];if(!c.eat('||')){c.expect('|');while(!c.is('|')){const at=c.peek()?.start,pattern=this.pattern(false),type=c.eat(':')?this.type():null;parameters.push(this.node('Parameter',at,{pattern,type}));if(!c.eat(','))break;}c.expect('|');}const resultType=c.eat('->')?this.type():null,body=this.expression();result=this.node('Closure',start,{moved,parameters,resultType,body});}
   else if(c.is('&')||c.is('*')||c.is('!')||c.is('-')){const operation=c.take().text,mutable=operation==='&'&&!!c.eat('mut');result=this.node('Unary',start,{operation,mutable,value:this.expression(13)});}

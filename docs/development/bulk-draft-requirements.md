@@ -255,3 +255,9 @@ opaque reader records from the finite direct catalogue, preserving exact member,
 type and root data without another copied type list. Two compiler equations and
 independent unrun contract/refusal/inverse cases are drafted. Actual exports,
 caller qualification, freshness, parity and every delivery obligation stay open.
+
+The [conditional pattern draft](condition-patterns-draft.md) adds direct if/while
+let and conjunction syntax in one bounded positive parse, preserving original
+patterns, scrutinees and recursive block obligations. Two compiler equations and
+independent unrun source/refusal/native cases are drafted. Actual bindings,
+native ownership/effects, target lowering and every delivery obligation stay open.
