@@ -261,3 +261,9 @@ let and conjunction syntax in one bounded positive parse, preserving original
 patterns, scrutinees and recursive block obligations. Two compiler equations and
 independent unrun source/refusal/native cases are drafted. Actual bindings,
 native ownership/effects, target lowering and every delivery obligation stay open.
+
+The [optional JSON terminal draft](json-option-terminals-draft.md) composes closed
+field/reader callbacks, eager fallbacks and presence checks in the shared source
+selector, with complete staged CST and inverse mappings. Three compiler equations
+and independent unrun source/JS/strict TS/native cases are drafted. Actual caller,
+native closure, reverse/sync, freshness, parity and all delivery work stay open.
