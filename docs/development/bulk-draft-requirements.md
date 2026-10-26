@@ -279,3 +279,9 @@ collection readers, closed map/array field callbacks and JSON filters, and retai
 their immutable alias roles and existing lazy-error implementation. Four compiler
 equations and independent unrun JS/strict TS/native cases are drafted. Actual
 callers, native closure, broader effects, reverse/sync and all delivery work stay open.
+
+The [positive character draft](positive-characters-draft.md) distinguishes masked
+character tokens from strings and validates Unicode scalar expressions/patterns
+under the existing primitive guards. Two compiler equations and independent
+unrun source/refusal/native cases are drafted. Original native/type/owner closure,
+production translation, synchronization, parity and all delivery work stay open.

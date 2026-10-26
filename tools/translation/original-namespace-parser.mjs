@@ -44,6 +44,7 @@ function normalize(raw){
   const token=raw[at];
   if(token.type==='comment')continue;
   if(token.type==='punct'&&token.text==='.'&&raw[at+1]?.type==='punct'&&raw[at+1].text==='.'&&token.end===raw[at+1].start){const second=raw[++at],third=raw[at+1],inclusive=third?.type==='punct'&&third.text==='='&&second.end===third.start;if(inclusive)at++;result.push({...token,text:inclusive?'..=':'..',end:inclusive?third.end:second.end,originalPunctuation:inclusive?[token,second,third]:[token,second]});}
+  else if(token.type==='string'&&token.text.startsWith("'"))result.push({...token,type:'character-literal'});
   else if(token.type==='ident'&&token.text.endsWith('!')){result.push({...token,text:token.text.slice(0,-1),end:token.end-1});result.push({type:'punct',text:'!',start:token.end-1,end:token.end});}
   else if(token.type==='punct'&&['>>','>>>','&&'].includes(token.text)){for(let index=0;index<token.text.length;index++)result.push({...token,text:token.text[index],start:token.start+index,end:token.start+index+1});}
   else result.push({...token});
@@ -88,6 +89,14 @@ class NamespaceParser{
  enter(run){if(++this.depth>ORIGINAL_NAMESPACE_PARSER_LIMITS.depth)fail('positive grammar depth bound');try{return run();}finally{this.depth--;}}
  name(path=false){const first=this.cursor.take();if(first.text==='r'&&this.cursor.is('#')&&isName(this.cursor.peek(1))&&first.end===this.cursor.peek().start&&this.cursor.peek().end===this.cursor.peek(1).start){this.cursor.take();const raw=this.cursor.take().text;if(['_','crate','self','Self','super'].includes(raw)||raw.normalize('NFC')!==raw)fail('unproved raw identifier');return raw;}if(!isName(first)||!(isPlainSourceIdentifier(first.text)||path&&['self','Self','crate','super'].includes(first.text)))fail('original identifier required at '+first.start);return first.text;}
  lifetime(label=false){const token=this.cursor.take(),name=token.text.slice(1);if(token.type!=='char'||token.text[0]!=="'"||!(/^[\p{XID_Start}_][\p{XID_Continue}_]*$/u.test(name))||name.normalize('NFC')!==name||!(isPlainSourceIdentifier(name)||!label&&['static','_'].includes(name))||label&&name==='_')fail('original lifetime or label identifier required');return this.node('Lifetime',token.start,{original:token.text});}
+ characterLiteral(){
+  const token=this.cursor.take();if(token.type!=='character-literal'||!token.text.startsWith("'")||!token.text.endsWith("'"))fail('complete original Unicode scalar character literal required');const content=token.text.slice(1,-1);let scalar=null;
+  if(content.charCodeAt(0)===92){
+   const simple={39:39,34:34,110:10,114:13,116:9,92:92,48:0},escaped=content.charCodeAt(1);if(content.length===2&&Object.hasOwn(simple,escaped))scalar=simple[escaped];
+   else{let digits;if(content[1]==='x'&&/^[0-7][0-9a-fA-F]$/u.test(content.slice(2)))digits=content.slice(2);else if(content[1]==='u'&&content[2]==='{'&&content.slice(-1)==='}'&&/^(?:[0-9a-fA-F]_*){1,6}$/u.test(content.slice(3,-1)))digits=content.slice(3,-1);else fail('valid original Rust character escape required');scalar=0;for(let at=0;at<digits.length;at++){const unit=digits.charCodeAt(at);if(unit===95)continue;scalar=scalar*16+(unit>=48&&unit<=57?unit-48:unit>=65&&unit<=70?unit-55:unit-87);}}
+  }else{if([10,13,9,39,92].includes(content.charCodeAt(0)))fail('unescaped original Rust character delimiter or control');if(content.length===1)scalar=content.charCodeAt(0);else if(content.length===2){const high=content.charCodeAt(0),low=content.charCodeAt(1);if(high>=0xd800&&high<=0xdbff&&low>=0xdc00&&low<=0xdfff)scalar=0x10000+(high-0xd800)*1024+low-0xdc00;}}
+  if(scalar===null||scalar>0x10ffff||scalar>=0xd800&&scalar<=0xdfff)fail('one original Rust Unicode scalar character required');return {original:token.text,literalKind:'character',scalarValue:scalar};
+ }
  originalTree(open,depth=0){
   if(depth>ORIGINAL_NAMESPACE_PARSER_LIMITS.depth)fail('original TT depth bound');
   const c=this.cursor,start=c.peek()?.start;if(!Object.hasOwn(pairs,c.peek()?.text))fail('complete original TT group required');const close=pairs[c.take().text];
@@ -146,6 +155,7 @@ class NamespaceParser{
   else if(c.is('mut')||c.is('ref')){const qualifier=c.take().text;result=this.node('Pattern',start,{variant:'binding-qualifier',qualifier,value:this.pattern(false)});}
   else if(c.eat('(')){const values=[];while(!c.is(')')){values.push(this.pattern());if(!c.eat(','))break;}c.expect(')');result=this.node('Pattern',start,{variant:'tuple',values});}
   else if(c.eat('_'))result=this.node('Pattern',start,{variant:'wildcard'});
+  else if(c.peek()?.type==='character-literal')result=this.node('Pattern',start,{variant:'literal',...this.characterLiteral()});
   else if(['number','string'].includes(c.peek()?.type)||c.is('true')||c.is('false'))result=this.node('Pattern',start,{variant:'literal',original:c.take().text});
   else{const path=this.path();let values=[];if(c.eat('(')){while(!c.is(')')){values.push(this.pattern());if(!c.eat(','))break;}c.expect(')');result=this.node('Pattern',start,{variant:'tuple-constructor',path,values});}else if(c.eat('{')){while(!c.is('}')){const at=c.peek().start;if(c.eat('..')){values.push(this.node('PatternField',at,{rest:true}));break;}const name=this.name(),value=c.eat(':')?this.pattern():null;values.push(this.node('PatternField',at,{name,value}));if(!c.eat(','))break;}c.expect('}');result=this.node('Pattern',start,{variant:'struct',path,values});}else result=this.node('Pattern',start,{variant:'path',path});}
   if(or&&c.eat('|'))result=this.node('Pattern',start,{variant:'or',left:result,right:this.pattern()});return result;
@@ -228,6 +238,7 @@ class NamespaceParser{
   else if(c.eat('(')){const values=[];let comma=false;while(!c.is(')')){values.push(this.expression());if(!c.eat(','))break;comma=true;}c.expect(')');result=this.node('Tuple',start,{values,comma});}
   else if(c.eat('[')){const values=[];let count=null;if(!c.is(']')){values.push(this.expression());if(c.eat(';'))count=this.expression();else while(c.eat(',')&&!c.is(']'))values.push(this.expression());}c.expect(']');result=this.node(count?'RepeatArray':'Array',start,{values,count});}
   else if(c.is('..')||c.is('..=')){const operation=c.take().text,right=operation==='..'&&[']',')',',',';','}'].includes(c.peek()?.text)?null:this.expression(3);result=this.node('Binary',start,{operation,left:null,right});}
+  else if(c.peek()?.type==='character-literal')result=this.node('Literal',start,this.characterLiteral());
   else if(['number','string'].includes(c.peek()?.type)||c.is('true')||c.is('false'))result=this.node('Literal',start,{original:c.take().text});
   else{result=this.path();if(c.is('!')){result=this.opaque(result,'Expr');const next=c.peek()?.text,brace=result.fields.tree.delimiter==='{';if(statementStart&&(brace&&!['.','?'].includes(next)||next===';'||next===undefined))result.fields.position='Stmts';}else if(c.is('{')&&structAllowed){c.take();const fields=[];while(!c.is('}')){const at=c.peek()?.start,attrs=this.attributes();if(c.eat('..')){fields.push(this.node('StructField',at,{attributes:attrs,rest:this.expression()}));break;}const name=this.name(),value=c.eat(':')?this.expression():null;fields.push(this.node('StructField',at,{attributes:attrs,name,value}));if(!c.eat(','))break;}c.expect('}');result=this.node('Struct',start,{path:result,fields});}}
   if(attributes.length)result=this.node('Unary',start,{operation:'source-attributes',attributes,value:result});return result;
