@@ -70,3 +70,6 @@ export {translateLineDocConfiguredTrackedLocalDeclarativeProject} from './line-d
 export {createOriginalCommentDocumentationSourceScope} from './registered-builtin-caller-attribute-source.mjs';
 export {proposeCommentDocumentationTrackedTextualSources} from './tracked-local-declarative-source.mjs';
 export {translateCommentDocConfiguredTrackedLocalDeclarativeProject} from './comment-doc-configured-tracked-local-declarative-project.mjs';
+
+export {proposeActiveConditionalTrackedTextualSources} from './tracked-local-declarative-source.mjs';
+export {translateActiveConditionalCommentDocTrackedLocalDeclarativeProject} from './active-conditional-comment-doc-tracked-local-declarative-project.mjs';

@@ -259,7 +259,7 @@ export function proposeModuleMacroUseTrackedLocalDeclarativeSources(options){
 
 
 
-import {compilationProfile,itemConfiguration,isAbsentConditionalAttribute} from './cfg-profile.mjs';
+import {compilationProfile,itemConfiguration,isAbsentConditionalAttribute,evaluateConfiguration} from './cfg-profile.mjs';
 import {originalFreshConditionalAttributeSourceInputs} from './conditional-attributes.mjs';
 import {originalTextualConfigurationSourcePlan} from './derive-ancestor-attribute-scope.mjs';
 import {createOriginalPassiveBuiltinCallerAttributeScope,createModuleMacroUseBuiltinCallerAttributeScope} from './registered-builtin-caller-attribute-source.mjs';
@@ -658,4 +658,57 @@ export function proposeCommentDocumentationTrackedTextualSources(options){
    }}]},
   ]).run(null);const scope=docs;docs=null;const documentationSource=scope.finish();current();return {...result.value,documentationSource,ruleTrace:result.trace};
  }finally{try{try{passive.finish();}finally{try{moduleUse.finish();}finally{try{inner.finish();}finally{if(docs){const scope=docs;docs=null;scope.finish();}}}}}finally{if(native){originalTextualConfigurationSourcePlan();originalFreshConditionalAttributeSourceInputs();}current();}}
+}
+
+import {inspectConditionalAttribute} from './conditional-attributes.mjs';
+import {originalActiveTextualConfigurationSourcePlan} from './derive-ancestor-attribute-scope.mjs';
+
+// Full source proposal only. Current native builtin configuration recipes,
+// original token intervals and independently checked expanded headers are
+// required; complete checked targets and original equivalence remain separate.
+export function proposeActiveConditionalTrackedTextualSources(options){
+ const {entry,originals,current,profile}=captureTrackedDeclarativeSources(options),files=[],selections=[],refusals=[];
+ const passive=createOriginalPassiveBuiltinCallerAttributeScope(),moduleUse=createModuleMacroUseBuiltinCallerAttributeScope(),inner=createOriginalInnerLintCallerAttributeScope(),docs=createOriginalCommentDocumentationSourceScope();
+ let native=null,conditionalSource=null,cells=0,attributes=0,parsedBytes=0,retained=0;
+ const tick=()=>need(++cells<=200000,'complete active conditional source-cell bound');
+ const prove=()=>{native??=originalActiveTextualConfigurationSourcePlan();conditionalSource??=originalFreshConditionalAttributeSourceInputs();need(native.retainedSourceBytes+conditionalSource.retainedSourceBytes<=8388608,'complete native active condition source bound');};
+ function safeHeader(module,item){
+  tick();if(innerAttribute(item))return !!(inner.at(module,item)??docs.innerItem(module,item));const condition=itemConfiguration(item.tokens,module.compilationProfile);if(condition.diagnostics.length||condition.status==='unknown')return false;
+  for(const attribute of condition.attributes){tick();if(attribute.name==='cfg'){if(typeof attribute.evaluation?.value!=='boolean'||attribute.evaluation.diagnostics.length)return false;prove();continue;}if(attribute.name==='cfg_attr')return false;if(!(attribute.name==='doc'?docs.attribute(module,item,attribute):attribute.name==='macro_use'?moduleUse.at(module,item,attribute):passive.at(module,item,attribute)))return false;}return true;
+ }
+ function expand(body,module,style,depth=0){
+  tick();need(depth<=64&&body[0]?.type==='ident'&&body[0].text==='cfg_attr','complete bounded plain original cfg_attr required');const inspected=inspectConditionalAttribute(body),predicate=evaluateConfiguration(inspected.predicate,profile);need(typeof predicate.value==='boolean'&&!predicate.diagnostics.length,'explicit original conditional predicate must be known');prove();
+  const evidence={span:{start:body[0].start,end:body.at(-1).end},original:module.source.slice(body[0].start,body.at(-1).end),predicate,outputs:[],sourceAuthority:false,semanticAuthority:false};if(!predicate.value)return {replacement:'',evidence};const output=[];
+  for(const attribute of inspected.attributes){
+   tick();need(++attributes<=4096,'complete active conditional expanded-attribute bound');const tokens=body.filter(token=>token.start>=attribute.span.start&&token.end<=attribute.span.end);need(tokens.length&&tokens[0].start===attribute.span.start&&tokens.at(-1).end===attribute.span.end&&tokens.length===attribute.tokens.length&&tokens.every((token,index)=>token.text===attribute.tokens[index]),'whole actual original conditional payload tokens required');
+   if(tokens[0]?.text==='cfg_attr'){const nested=expand(tokens,module,style,depth+1);output.push(nested.replacement);evidence.outputs.push(nested.evidence);}else{need(!['crate_name','crate_type'].includes(tokens[0]?.text),'native cfg_attr crate-name/type errors cannot be rewritten away');const original=module.source.slice(attribute.span.start,attribute.span.end),replacement='#'+(style==='inner'?'!':'')+'['+original+']';output.push(replacement);evidence.outputs.push({span:{...attribute.span},original,replacement,ownerResolved:false,sourceAuthority:false,semanticAuthority:false});}
+  }
+  const replacement=output.join('');need(Buffer.byteLength(replacement)<=256000,'complete expanded conditional header bound');return {replacement,evidence};
+ }
+ function proposal(module,item){
+  tick();const condition=itemConfiguration(item.tokens,module.compilationProfile),conditional=condition.attributes.filter(attribute=>attribute.name==='cfg_attr');if(!conditional.length)return {closed:safeHeader(module,item),edits:[],selections:[]};const edits=[],selected=[],style=innerAttribute(item)?'inner':'outer';
+  for(const attribute of conditional){const actual=item.tokens.filter(token=>token.type!=='comment'&&token.start>=attribute.span.start&&token.end<=attribute.span.end),begin=style==='inner'?3:2;need(actual[0]?.text==='#'&&actual[style==='inner'?2:1]?.text==='['&&actual.at(-1)?.text===']','whole original cfg_attr boundary required');const result=expand(actual.slice(begin,-1),module,style);edits.push({span:[attribute.span.start,attribute.span.end],expected:module.source.slice(attribute.span.start,attribute.span.end),replacement:result.replacement});selected.push({sourcePath:module.file,module:[...module.path],style,span:{...attribute.span},original:module.source.slice(attribute.span.start,attribute.span.end),expansion:result.evidence,sourceAuthority:false,semanticAuthority:false,namespaceAuthority:false});}
+  let fragment=module.source.slice(item.start,item.end);for(const edit of [...edits].reverse())fragment=fragment.slice(0,edit.span[0]-item.start)+edit.replacement+fragment.slice(edit.span[1]-item.start);parsedBytes+=Buffer.byteLength(fragment);need(parsedBytes<=33554432,'complete independently reparsed conditional header source bound');const captured=captureSourceModuleViews({source:fragment,sourcePath:module.file,compilationProfile:profile}),view=captured.views[0],rows=originalModuleViewItems(view,fragment);need(style==='inner'?rows.every(innerAttribute):rows.length===1&&!innerAttribute(rows[0]),'expanded conditional source retains its original item style');const carrier={file:module.file,path:module.path,source:fragment,sourceView:view,compilationProfile:profile};if(!rows.every(row=>safeHeader(carrier,row)))return {closed:false,edits:[],selections:[]};return {closed:true,edits,selections:selected};
+ }
+ try{
+  const run=createRulePipeline([
+   {phase:'language',rules:[{id:'rust:expand-current-explicit-conditional-attributes-in-original-payload-order',apply:()=>{
+    current();for(const [sourcePath,before]of originals){
+     const captured=before.includes('cfg_attr')?captureSourceModuleViews({source:before,sourcePath,compilationProfile:profile}):{views:[]},planned=new Map(),blocked=new Set(),edits=[];
+     const refuse=(module,item,message)=>refusals.push({sourcePath,module:[...module.path],span:span(item),original:before.slice(item.start,item.end),message,sourceAuthority:false,semanticAuthority:false});
+     for(const view of captured.views){
+      tick();const module={file:sourcePath,path:view.modulePath,source:before,sourceView:view,compilationProfile:profile},items=originalModuleViewItems(view,before);let closed=!blocked.has(view.parentDigest),leading=true;
+      if(view.parentDigest){const parent=captured.views.find(row=>row.digest===view.parentDigest),owner=originalModuleViewItems(parent,before).find(item=>item.start===view.declaration.span.start&&item.end===view.declaration.span.end);need(owner,'actual original conditional parent module required');closed=closed&&planned.get(owner)?.closed===true;}
+      for(const item of items){let value;try{value=proposal(module,item);if(innerAttribute(item)&&!leading)value={closed:false,edits:[],selections:[]};}catch(error){if(!(error instanceof TypeError))throw error;value={closed:false,edits:[],selections:[],message:error.message};}planned.set(item,value);if(innerAttribute(item)&&!value.closed)closed=false;if(!innerAttribute(item))leading=false;}
+      if(!closed)blocked.add(view.digest);
+      for(const item of items){const value=planned.get(item),conditional=itemConfiguration(item.tokens,profile).attributes.some(attribute=>attribute.name==='cfg_attr');if(!conditional)continue;if(!closed||!value.closed){refuse(module,item,value.message??'An original enclosing, conditional or expanded attribute producer remains unresolved');continue;}edits.push(...value.edits);selections.push(...value.selections);}
+     }
+     edits.sort((left,right)=>left.span[0]-right.span[0]);let end=-1,after=before;for(const edit of edits){tick();need(edit.span[0]>=end&&before.slice(...edit.span)===edit.expected,'actual nonoverlapping conditional attribute intervals required');end=edit.span[1];}for(const edit of [...edits].reverse())after=after.slice(0,edit.span[0])+edit.replacement+after.slice(edit.span[1]);need(Buffer.byteLength(after)<=8388608,'complete active conditional physical source bound');retained+=Buffer.byteLength(before)+Buffer.byteLength(after);need(retained<=201326592,'complete original and active conditional raw-source bound');const concrete=transportConcreteSyntaxSource(before,{language:'Rust'}),substituted=applyConcreteSyntaxSubstitutions(concrete.document,{languageRules:[{id:'rust:substitute-only-complete-source-selected-known-cfg-attr-spans',edits}],repositoryRules:[{id:'router:preserve-complete-original-profile-source-and-unresolved-producer-domains',edits:[]}]}),reparsed=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(substituted.value)).source;need(reparsed===after,'complete active conditional source CST inverse differs');const history=transportConcreteSourceEquations([{before,after,language:'Rust'}])[0];need(history.inverse===before,'complete original active conditional source inverse differs');files.push({sourcePath,before,after,edits,history,trace:substituted.trace,sourceAuthority:false,semanticAuthority:false});
+    }current();return files;
+   }}]},
+   {phase:'repository',rules:[{id:'router:retain-complete-original-and-source-selected-active-conditional-histories',apply:()=>{
+    current();return {schema:'active-conditional-tracked-textual-source-proposal-v1',entry,compilationProfile:profile,sourceInputs:[...originals].map(([path,source])=>({path,source})),files,selections,refusals,status:refusals.length?'partial-source-proposal':'source-proposal',originalCompilerSource:native,conditionalAttributeSource:conditionalSource,originalSourceEquivalenceQualified:false,originalApplicationCoverageQualified:false,compilerDiagnosticTracePreserved:false,sourceAuthority:false,semanticAuthority:false,namespaceAuthority:false,runtimeAuthority:false,crossInvocationCache:false,receivingExecuted:false};
+   }}]},
+  ]).run(null);current();return {...run.value,ruleTrace:run.trace};
+ }finally{try{try{passive.finish();}finally{try{moduleUse.finish();}finally{try{inner.finish();}finally{docs.finish();}}}}finally{if(native){originalActiveTextualConfigurationSourcePlan();originalFreshConditionalAttributeSourceInputs();}current();}}
 }

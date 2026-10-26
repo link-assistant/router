@@ -708,3 +708,11 @@ projection preserves genuine block docs and ordinary comment distinctions.
 Six complete source equations and independent unrun native/JS/strict TS/refusal
 case source are drafted. Every remaining source, namespace, production, parity,
 receiving and verification obligation remains open; no draft tool executed.
+
+The [active conditional draft](active-conditional-normalization-draft.md) adds
+actual recursive cfg_attr source intervals, explicit known predicates, payload
+order/style, independently checked expanded headers and five-domain project
+composition. Five full source equations and independent unrun source/JS/strict
+TS/refusal/native multi-file cases are drafted. Generated/wider producers,
+architecture/bootstrap, production adoption/parity and every unfinished source
+and verification requirement remain open; no draft tool executed.

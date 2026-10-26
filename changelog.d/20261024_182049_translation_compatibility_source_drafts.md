@@ -347,3 +347,8 @@ integration and the remaining requirement ledger are still open.
   joins, multiline/nested module attachment, macro lexical projection and full
   project histories. Six source equations and independent target/native cases
   are drafted and unrun.
+
+- Draft source-bound recursive active cfg_attr expansion, explicit profile and
+  original payload/order/style joins, independent expanded header checking and
+  five-domain project composition. Five complete source equations and native/
+  JS/strict TS/refusal cases are drafted and unrun.
