@@ -4,7 +4,7 @@ export function selectHttpResourceGenericOptionIdentity(fn,{constructorShadowed=
  const input=fn.parameters[0].name,body=fn.body;
  const absent=block=>block&&!block.tail&&block.statements.length===1&&block.statements[0].kind==='return'&&block.statements[0].value?.kind==='name'&&block.statements[0].value.name==='None';
  const returned=block=>!block.statements.length?block.tail:!block.tail&&block.statements.length===1&&block.statements[0].kind==='return'?block.statements[0].value:null;
- const some=(node,binder)=>node?.kind==='call'&&node.path==='Some'&&node.args.length===1&&node.args[0].kind==='name'&&node.args[0].name===binder;
+ const some=(node,binder)=>node?.kind==='call'&&node.path==='Some'&&!node.typeArguments&&node.args.length===1&&node.args[0].kind==='name'&&node.args[0].name===binder;
  const original=node=>node?.kind==='name'&&node.name===input;
  const binding=row=>!row.mutable&&!nonBindings.has(row.name)&&(row.type===null||row.type===undefined||row.type===type);
  if(body.statements.length===1&&!body.tail){const branch=body.statements[0];if(branch.kind==='if-option-let'&&binding(branch)&&original(branch.value)&&absent(branch.otherwise)&&some(returned(branch.yes),branch.name))return true;}

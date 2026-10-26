@@ -307,3 +307,6 @@ integration and the remaining requirement ledger are still open.
   emission and physical paired signatures. Retain nested String-error Result
   formats, actual borrowed signature roots, thirteen complete source equations
   and independent unrun behavioral, native, source/meta and refusal cases.
+- Draft original local Rust generic-call arguments with retained token spans,
+  independent fresh meta/type obligations, full source inverses and unrun
+  JS/TypeScript/refusal/native drop cases; no coverage or parity claim.

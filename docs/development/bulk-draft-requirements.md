@@ -905,3 +905,12 @@ override actual value domains. Four complete source equations and independent
 local/nested/conditional/Result/getter/refusal/native source are unrun; resource
 oracle module 40 is drafted. Architecture/producer closure, wider domains,
 production adoption/parity and every unfinished requirement remain open.
+
+The [original local generic argument draft](http-resource-native-generic-arguments-draft.md)
+retains actual turbofish token spans and all generic call ordinals, then checks
+written arguments against fresh whole JS/meta calls and genuine local helper
+bodies. Full token boundaries, lexical slots, carrier payloads and source inverses
+remain; constructors and discarded typed arms cannot disappear unchecked. Six
+complete source equations and independent JS/strict TS/native/refusal source are
+unrun; resource oracle module 41 is drafted. Constructor proposal context and all
+unfinished architecture, production adoption/parity and delivery rows remain open.

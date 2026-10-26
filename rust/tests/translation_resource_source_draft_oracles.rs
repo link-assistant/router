@@ -84,3 +84,5 @@ mod option_constructors;
 mod implicit_none;
 #[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-written-locals-oracle.rs"]
 mod written_locals;
+#[path = "../../tools/translation/js-to-rust/test/fixtures/http-resource-native-generic-arguments-oracle.rs"]
+mod native_generic_arguments;

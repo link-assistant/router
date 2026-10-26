@@ -24,6 +24,7 @@ export function translateHttpResourceShadowCallerRust(source,input){
    {id:'rust:substitute-bound-resources-results-and-control-into-source-proposals',apply:functions=>{projection=project(functions,{javascriptPath,runtimeRoot:data.runtimeRoot,annotationHints:lexicalBindings?.annotations??[]});return projection.source;}},
    {id:'meta:freshly-check-whole-JS-resource-flow-and-reparsed-http-program',apply:javascript=>translateHttpResourceCallerJavaScript(javascript,{sourcePath:javascriptPath,runtimeRoot:data.runtimeRoot,declarationRoot:data.declarationRoot,files:data.files.filter(row=>row.path!==javascriptPath).concat([{path:javascriptPath,source:javascript}])})},
    {id:'meta:check-every-actual-native-local-type-against-the-complete-fresh-body',apply:result=>{requireHttpResourceNativeLocalTypes(result.meta,lexicalBindings);return result;}},
+   {id:'meta:check-every-original-native-generic-argument-against-the-fresh-call',apply:result=>{requireHttpResourceNativeGenericArguments(result.meta,lexicalBindings);return result;}},
    {id:'rust:require-complete-authoritative-source-reproduction',apply:result=>{if(!sameRustSourceSyntax(normalizedSource,result.rust))fail('fresh checked HTTP proposal does not reproduce the complete normalized authoritative Rust source');return result;}},
   ]},
   {phase:'repository',rules:[{id:'router:retain-whole-http-resource-source-and-inverse-history',apply:result=>({...result,originalRust:source,httpResourceRustSourceHistory:{sourcePath,javascriptPath,source,normalizedSource,lexicalBindings,normalizationRefusal,concreteSyntax:concrete.meta,projection,originalJavaScript:data.files.find(row=>row.path===javascriptPath)?.source??null,equation:transportConcreteSourceEquations([{before:source,after:result.rust,language:'Rust'}])[0],sourceAuthority:false,semanticAuthority:false},runtimeParity:false,wholeRouterSynchronization:false,rustExecuted:false})}]},
@@ -33,3 +34,5 @@ export function translateHttpResourceShadowCallerRust(source,input){
 import {normalizeHttpResourceRustBindings} from './http-resource-native-bindings.mjs';
 
 import {requireHttpResourceNativeLocalTypes} from './http-resource-native-local-types.mjs';
+
+import {requireHttpResourceNativeGenericArguments} from './http-resource-native-generic-arguments.mjs';

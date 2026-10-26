@@ -28,7 +28,17 @@ export class HttpResourceBindingRustReader {
  expect(text){if(!this.eat(text))fail('expected '+text+' in complete owned Rust source');}
  tick(depth){if(++this.cells>100000||depth>160)fail('original owned source node/depth bound exceeded');}
  identifier(){const node=this.next();if(node.type!=='ident'||! /^[A-Za-z_][A-Za-z0-9_]*$/u.test(node.text))fail('ordinary original Rust identifier required');this.lastIdentifier=node;return node.text;}
- path(){let value=this.eat('::')?'::':'';const first=this.next();if(first.type!=='ident')fail('ordinary Rust path required');value+=first.text;while(this.eat('::'))value+='::'+this.next().text;return value;}
+ path(){let value=this.eat('::')?'::':'';const first=this.next();if(first.type!=='ident')fail('ordinary Rust path required');value+=first.text;while(this.is('::')&&!this.is('<',1)){this.next();const next=this.next();if(next.type!=='ident')fail('ordinary complete Rust path segment required');value+='::'+next.text;}return value;}
+ explicitTypeArguments(depth){
+  this.tick(depth);const start=this.peek().start;this.expect('::');this.expect('<');const stack=['>'],pairs={'<':'>','(':')','[':']','{':'}'},args=[];let current=[],count=0;
+  for(;;){
+   this.tick(depth+stack.length);if(++count>4096)fail('complete original generic argument token bound');const next=this.peek();if(next.type==='punct'&&next.text==='>>'){this.tokens.splice(this.index,1,{...next,text:'>',end:next.start+1},{...next,text:'>',start:next.start+1});continue;}const token=this.next(),text=token.text;
+   if(token.type==='punct'&&text===','&&stack.length===1){if(!current.length||args.length>=32)fail('complete bounded original type arguments required');args.push(current);current=[];continue;}
+   if(token.type==='punct'&&pairs[text])stack.push(pairs[text]);
+   else if(token.type==='punct'&&['>',')',']','}'].includes(text)){if(stack.pop()!==text)fail('complete original type argument delimiters differ');if(!stack.length){if(current.length)args.push(current);if(!args.length||args.length>32)fail('nonempty bounded original type arguments required');return {typeArguments:args,typeArgumentsSpan:{start,end:token.end}};}}
+   current.push({...token});
+  }
+ }
  group(open,close){this.expect(open);const result=[],stack=[close],pairs={'(':')','[':']','{':'}'};while(stack.length){const token=this.next();if(token.type==='punct'){if(pairs[token.text])stack.push(pairs[token.text]);else if([')',']','}'].includes(token.text)&&stack.pop()!==token.text)fail('complete Rust delimiters differ');}if(stack.length)result.push(token);}return result;}
  skipGuard(){throw new TypeError('Original skipped guards require the unchanged canonical lane');}
 
@@ -107,9 +117,10 @@ export class HttpResourceBindingRustReader {
   if(token.type==='number'){this.next();const found=/^(0|[1-9][0-9]*)_(u64|i64)$/u.exec(token.text);if(!found||found[1].length>20||BigInt(found[1])>(found[2]==='i64'?9223372036854775807n:18446744073709551615n))fail('canonical bounded suffixed integer required');return {kind:'integer',value:found[1],type:found[2]};}
   if(this.eat('true'))return {kind:'boolean',value:true};if(this.eat('false'))return {kind:'boolean',value:false};
   const pathStart=this.peek().start,path=this.path(),nameSpan={start:pathStart,end:this.tokens[this.index-1].end};
+  const explicit=this.is('::')&&this.is('<',1)?this.explicitTypeArguments(depth+1):null;if(explicit&&(path.endsWith('!')||!this.is('(')))fail('explicit original type arguments require an actual ordinary function call');
   if(path==='::std::vec!'){this.expect('[');if(this.peek().type==='number'&&/_u8$/u.test(this.peek().text)){const values=[];while(!this.eat(']')){this.tick(depth+1);if(values.length>=4096)fail('complete native octet literal element bound');const token=this.next(),found=token.type==='number'&&/^(0|[1-9][0-9]{0,2})_u8$/u.exec(token.text);if(!found||BigInt(found[1])>255n)fail('complete native canonical octet literal required');values.push(found[1]);if(!this.is(']'))this.expect(',');}return {kind:'bytes-literal',values};}const elements=[];while(!this.eat(']')){if(elements.length>=4096)fail('complete native owned JSON list element bound');elements.push(this.expression(environment,0,depth+1));if(!this.is(']'))this.expect(',');}return {kind:'json-list-literal',elements};}
   if(path==='crate::translation_core::json!')return this.jsonMacro(environment,depth+1);
-  if(this.eat('('))return {kind:'call',path,nameSpan,args:this.arguments(environment,depth+1)};
+  if(this.eat('('))return {kind:'call',path,nameSpan,...(explicit??{}),args:this.arguments(environment,depth+1)};
   if(environment.has(path))return {kind:'temporary',name:path,nameSpan,value:environment.get(path)};
   return {kind:'name',name:path,nameSpan};
  }

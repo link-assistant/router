@@ -11,10 +11,11 @@ export function normalizeHttpResourceRustBindings(source){
  if(typeof source!=='string'||source.length>2097152)fail('bounded complete original native source required');
  const concrete=transportConcreteSyntaxSource(source,{language:'Rust'});if(transportConcreteSyntaxMeta(concrete.meta).source!==source)fail('original serialized and reparsed CST differs');
  const items=sourceItems(source).filter(row=>row.term!=='comment');if(!items.length||items.length>4096||items.some(row=>row.term!=='fn'))fail('complete ordinary native function module required');
- const used=new Set(),moduleNames=new Set(),edits=[],selections=[],annotations=[],controls=[];let cells=0,sequence=0;
+ const used=new Set(),moduleNames=new Set(),originalFunctions=new Map(),genericOrdinals=new Map(),edits=[],selections=[],annotations=[],genericCalls=[],controls=[];let cells=0,sequence=0;
  const tick=(depth=0)=>{if(++cells>100000||depth>160)fail('complete native binding walk bound');};
  for(const token of rustTokens(source)){tick();if(token.type==='ident')used.add(token.text);}
  for(const item of items){if(moduleNames.has(item.name))fail('unique actual native function name required');httpResourceCallerName(item.name);moduleNames.add(item.name);}
+ for(const item of items){tick();const fn=new HttpResourceBindingRustReader(rustTokens(source.slice(item.start,item.end))).function();if(fn.name!==item.name)fail('actual original function owner differs');originalFunctions.set(fn.name,fn);}
  function spanEdit(item,span,expected,replacement,kind){
   tick();if(!span||!Number.isSafeInteger(span.start)||!Number.isSafeInteger(span.end)||span.start<0||span.end<=span.start||span.end>item.end-item.start)fail('actual original binding token span required');
   const selected=[item.start+span.start,item.start+span.end];if(source.slice(...selected)!==expected)fail('exact original binding token changed');
@@ -44,13 +45,15 @@ export function normalizeHttpResourceRustBindings(source){
   if(node.kind==='json-scalar'){value(item,node.value,scope,depth+1);return;}
   if(node.kind==='call'){
    if(scope.has(node.path))fail('a bare call resolves to an actual local value rather than an imported or checked function');
+   const callee=originalFunctions.get(node.path);let ordinal=null;if(callee?.genericParameters){if(!genericOrdinals.has(item.name))genericOrdinals.set(item.name,new Map());const counts=genericOrdinals.get(item.name);ordinal=counts.get(node.path)??0;counts.set(node.path,ordinal+1);}
+   if(node.typeArguments){if(ordinal===null||node.typeArguments.length!==1)fail('explicit arguments require one actual local generic function slot');const span=node.typeArgumentsSpan;if(!span||span.start<node.nameSpan.end||span.end>item.end-item.start)fail('complete original generic argument span required');const selected=[item.start+span.start,item.start+span.end],expected=source.slice(...selected);edits.push({span:selected,expected,replacement:''});genericCalls.push({function:item.name,operation:node.path,ordinal,typeArguments:node.typeArguments,span:selected,original:expected,sourceAuthority:false,semanticAuthority:false});selections.push({kind:'original-local-generic-arguments',span:selected,source:expected,replacement:''});}
    for(const argument of node.args)value(item,argument,scope,depth+1);return;
   }
   if(node.kind==='match'&&node.arms.some(arm=>arm.pattern.startsWith('Ok('))){
    if(scope.has('Ok')||scope.has('Err')||moduleNames.has('Ok')||moduleNames.has('Err')||node.arms.length!==2)fail('complete unshadowed original Result match required');
    const ok=node.arms.find(arm=>/^Ok\(([A-Za-z_][A-Za-z0-9_]*)\)$/u.test(arm.pattern)),err=node.arms.find(arm=>/^Err\(([A-Za-z_][A-Za-z0-9_]*)\)$/u.test(arm.pattern));if(!ok||!err||[ok,err].some(arm=>arm.patternTokens.length!==4||arm.patternTokens[0].type!=='ident'||arm.patternTokens[2].type!=='ident'))fail('one actual Ok binder and one actual Err binder required');
    const successName=ok.patternTokens[2].text,errorName=err.patternTokens[2].text,success=ok.value.kind==='block'&&!ok.value.statements.length?ok.value.tail:ok.value,failure=err.value.kind==='block'&&!err.value.tail&&err.value.statements.length===1&&err.value.statements[0].kind==='return'?err.value.statements[0].value:err.value.kind==='return-expression'?err.value.value:null;
-   if(nonBindings.has(successName)||nonBindings.has(errorName)||success?.kind!=='name'||success.name!==successName||failure?.kind!=='call'||failure.path!=='Err'||failure.args.length!==1||failure.args[0].kind!=='name'||failure.args[0].name!==errorName)fail('original Result match must return its exact successful value or exact captured error');
+   if(nonBindings.has(successName)||nonBindings.has(errorName)||success?.kind!=='name'||success.name!==successName||failure?.kind!=='call'||failure.path!=='Err'||failure.typeArguments||failure.args.length!==1||failure.args[0].kind!=='name'||failure.args[0].name!==errorName)fail('original Result match must return its exact successful value or exact captured error');
    value(item,node.value,scope,depth+1);const full=node.matchSpan,input=node.inputSpan;if(!full||!input||full.start>=input.start||input.end>=full.end||full.end>item.end-item.start)fail('complete original Result match and initializer spans required');for(const [span,replacement,kind]of [[[item.start+full.start,item.start+input.start],'','result-match-prefix'],[[item.start+input.end,item.start+full.end],'?','result-match-arms']]){const expected=source.slice(...span);edits.push({span,expected,replacement});selections.push({kind,span,source:expected,replacement});}return;
   }
   if(node.kind==='match'){
@@ -102,14 +105,14 @@ export function normalizeHttpResourceRustBindings(source){
   if(node.tail&&!omittedTail)value(item,node.tail,scope,depth+1);
  }
  for(const item of items){
-  const reader=new HttpResourceBindingRustReader(rustTokens(source.slice(item.start,item.end))),fn=reader.function(),scope=new Map(),names=new Set();
+  const fn=originalFunctions.get(item.name),scope=new Map(),names=new Set();
   if(fn.name!==item.name)fail('actual original function owner differs');for(const parameter of fn.parameters){if(names.has(parameter.name))fail('unique original function parameter required');names.add(parameter.name);declare(item,parameter,scope,'parameter');}if(fn.unitReturnInsertionAt!==null&&fn.unitReturnInsertionAt!==undefined){if(source[item.start+fn.unitReturnInsertionAt]!=='{')fail('actual original omitted unit signature boundary required');insertControl(item,fn.unitReturnInsertionAt,' -> () ',0,'unit-function-signature');}if(selectHttpResourceGenericOptionIdentity(fn,{constructorShadowed:scope.has('Some')||scope.has('None')||moduleNames.has('Some')||moduleNames.has('None'),nonBindings})){const span=fn.body.span;if(!span||span.start<0||span.end>item.end-item.start)fail('complete original generic Option body span required');const selected=[item.start+span.start,item.start+span.end],expected=source.slice(...selected),replacement='{ '+scope.get(fn.parameters[0].name)+' }';edits.push({span:selected,expected,replacement});selections.push({kind:'generic-option-unchanged-payload-body',span:selected,source:expected,replacement});}else block(item,fn.body,scope,0,true,fn.returns==='()');
  }
  const groupedControls=new Map();for(const control of controls){if(!groupedControls.has(control.at))groupedControls.set(control.at,[]);groupedControls.get(control.at).push(control);}for(const [at,rows]of groupedControls){const replacement=rows.sort((left,right)=>left.priority-right.priority).map(row=>row.replacement).join(''),original=edits.filter(edit=>edit.span[0]===at);if(original.length>1)fail('one actual replacement may receive a source-bound control prefix');if(original.length)original[0].replacement=replacement+original[0].replacement;else edits.push({span:[at,at],expected:'',replacement});}
  edits.sort((left,right)=>left.span[0]-right.span[0]);for(let index=1;index<edits.length;index++)if(edits[index-1].span[1]>edits[index].span[0])fail('original binding edit overlap');
  const substituted=applyConcreteSyntaxSubstitutions(concrete.document,{languageRules:[{id:'rust:normalize-actual-lexical-bindings-local-types-and-control-spellings',edits}],repositoryRules:[{id:'router:retain-portable-collision-free-local-names',edits:[]}]}),after=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(substituted.value)).source,equation=transportConcreteSourceEquations([{before:source,after,language:'Rust'}])[0];
  if(equation.inverse!==source)fail('complete original binding source inverse differs');
- return {schema:'router-http-resource-native-lexical-bindings-v1',before:source,after,edits,selections,annotations,controls,equation,trace:substituted.trace,sourceAuthority:false,semanticAuthority:false,namespaceAuthority:false,rustExecuted:false,receivingExecuted:false,crossInvocationCache:false};
+ return {schema:'router-http-resource-native-lexical-bindings-v1',before:source,after,edits,selections,annotations,genericCalls,controls,equation,trace:substituted.trace,sourceAuthority:false,semanticAuthority:false,namespaceAuthority:false,rustExecuted:false,receivingExecuted:false,crossInvocationCache:false};
 }
 
 import {selectHttpResourceGenericOptionIdentity,selectHttpResourceImplicitNoneFallback} from './http-resource-generic-option-normalization.mjs';
