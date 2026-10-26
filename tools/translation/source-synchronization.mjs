@@ -130,3 +130,6 @@ export {proposeOriginalArchitectureDocIncludeWithFileTokenSource} from './derive
 export {captureOriginalNamespaceAttributeHeader,originalNamespaceAttributeHeaderFacts} from './original-namespace-parser.mjs';
 
 export {withOriginalNamespaceAttributeHeaderSourceOperation} from './original-namespace-parser.mjs';
+
+export {createOriginalParsedBuiltinCallerAttributeScope,withOriginalParsedBuiltinCallerSources,originalParsedBuiltinCallerAttributeFacts} from './registered-builtin-caller-attribute-source.mjs';
+export {translateParsedBuiltinHeaderTrackedLocalDeclarativeProject} from './parsed-builtin-header-tracked-local-declarative-project.mjs';

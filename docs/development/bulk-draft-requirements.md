@@ -74,3 +74,10 @@ current private source/AST and native guards. Four compiler equations and
 independent unrun source/restoration/native-change/refusal cases are drafted.
 No measured performance or owner/parity result is claimed; all unfinished
 requirements remain open.
+
+The [parsed builtin caller draft](parsed-builtin-callers-draft.md) joins genuine
+header receipts to all fifteen original grammars and native registrations under
+an explicit restoring operation, with narrow private outer-name receipts and
+complete project integration. Four compiler equations and independent unrun
+source/private/JS/strict TS/native namespace cases are drafted. Caller presence,
+argument/global/runtime semantics and every unfinished requirement remain open.
