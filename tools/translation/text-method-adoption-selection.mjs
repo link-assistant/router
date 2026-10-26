@@ -5,8 +5,8 @@ const countMethods=new Map([['len','len_utf8'],['chars','len_chars'],['matches',
 const plainMethods=new Set(['trim','trim_start','trim_end','is_empty','contains','starts_with','ends_with','replace','replacen','repeat','strip_prefix','strip_suffix','to_ascii_lowercase','to_ascii_uppercase','is_ascii','eq_ignore_ascii_case','trim_ascii','trim_ascii_start','trim_ascii_end']);
 const borrowed=source=>/^&(?:'[a-zA-Z_][a-zA-Z0-9_]*)?(?:str|crate::translation_core::Str)$/u.test(source);
 export function selectTextMethodAdoption(source,item,_scoped,modulePath,_names,helpers){
- const {originalDeclarationHeader,close,split,text,ident}=helpers,tokens=item.tokens.filter(row=>row.type!=='comment'),indices=new Map(tokens.map((token,index)=>[token,index])),header=originalDeclarationHeader(item,modulePath),name=tokens.findIndex(row=>row.start===header?.nameSpan?.start),edits=[],selections=[],skipped=[];
- const result=reason=>({edits:reason?[]:edits,selections:reason?[]:selections,skipped:reason?[...skipped,{function:item.name,reason}]:skipped});
+ const {originalDeclarationHeader,close,split,text,ident}=helpers,tokens=item.tokens.filter(row=>row.type!=='comment'),indices=new Map(tokens.map((token,index)=>[token,index])),header=originalDeclarationHeader(item,modulePath),name=tokens.findIndex(row=>row.start===header?.nameSpan?.start),edits=[],languageEdits=[],selections=[],skipped=[];
+ const result=reason=>({edits:reason?[]:edits,languageEdits:reason?[]:languageEdits,selections:reason?[]:selections,skipped:reason?[...skipped,{function:item.name,reason}]:skipped});
  if(name<0||tokens.length>200000||tokens.slice(0,name).some(row=>['unsafe','async','const','extern'].includes(row.text)))return result('complete ordinary synchronous text function required');
  let open=name+1;if(tokens[open]?.text==='<'){
   let end=open+1;while(end<tokens.length&&tokens[end].text!=='>')end++;
@@ -32,14 +32,14 @@ export function selectTextMethodAdoption(source,item,_scoped,modulePath,_names,h
    const binding=tokens[at+1];if(!ident(binding)||binding.text==='mut'||parameters.has(binding.text)||localNames.has(binding.text)||!['=',':'].includes(tokens[at+2]?.text))return result('shadowing mutable or destructured local requires separate binding scope');localNames.add(binding.text);
   }
  }
- function literal(at){
-  const row=tokens[at];return row?.type==='string'&&/^(?:"|r#{0,255}")/u.test(row.text)?{after:at+1,replacement:source.slice(row.start,row.end),domain:'str',operations:[]}:null;
+ function literal(at,characterPattern=false){
+  const row=tokens[at];if(characterPattern&&row?.type==='string'&&row.text.startsWith("'")){const scalar=decodeRustCharacter(row.text,{start:row.start,end:row.end});return {after:at+1,replacement:'"\\u{'+scalar.codePointAt(0).toString(16)+'}"',domain:'str',operations:[],characterPattern:true,languageEdits:[{span:[row.start,row.end],expected:row.text,replacement:'"\\u{'+scalar.codePointAt(0).toString(16)+'}"'}]};}return row?.type==='string'&&/^(?:"|r#{0,255}")/u.test(row.text)?{after:at+1,replacement:source.slice(row.start,row.end),domain:'str',operations:[]}:null;
  }
  function count(at){
   const row=tokens[at];if(row?.type!=='number')return null;const match=/^(0|[1-9][0-9_]{0,25})(?:_?(?:usize|u64))?$/u.exec(row.text);if(!match)return null;const digits=match[1].replaceAll('_','');if(digits.length>20||BigInt(digits)>18446744073709551615n)return null;return {after:at+1,replacement:digits+'_u64',domain:'u64',operations:[]};
  }
- function expression(at,depth=0){
-  if(++work>200000||depth>64)return null;const initial=tokens[at];const initialDomain=domains.get(initial?.text);let value=['str','text-owned'].includes(initialDomain)?{after:at+1,replacement:initial.text,domain:initialDomain,operations:[]}:literal(at);if(!value)return null;
+ function expression(at,depth=0,characterPattern=false){
+  if(++work>200000||depth>64)return null;const initial=tokens[at];const initialDomain=domains.get(initial?.text);let value=['str','text-owned'].includes(initialDomain)?{after:at+1,replacement:initial.text,domain:initialDomain,operations:[]}:literal(at,characterPattern);if(!value)return null;if(value.characterPattern)return value;
   while(tokens[value.after]?.text==='.'&&ident(tokens[value.after+1])&&tokens[value.after+2]?.text==='('){
    if(++work>200000)return null;const cursor=value.after,method=tokens[cursor+1].text,end=close(tokens,cursor+2);if(end<0)return null;const projection=projectedSplit(cursor);let operation=projection?.operation??(plainMethods.has(method)?method:countMethods.get(method)),after=projection?.after??end+1;
    if(!operation||!['str','text-owned'].includes(value.domain))break;const pieces=split(tokens.slice(cursor+3,end)),args=[];
@@ -51,15 +51,15 @@ export function selectTextMethodAdoption(source,item,_scoped,modulePath,_names,h
    }
    const row=textContract(operation);if(!row||pieces.length!==row.parameters.length-1)break;let valid=true;
    for(let index=0;index<pieces.length;index++){
-    const piece=pieces[index],start=indices.get(piece[0]),argument=row.parameters[index+1]==='u64'?count(start):expression(start,depth+1);
+    const piece=pieces[index],start=indices.get(piece[0]),argument=row.parameters[index+1]==='u64'?count(start):expression(start,depth+1,index===0&&['contains','starts_with','ends_with','replace','replacen','strip_prefix','strip_suffix','matches','split_once','rsplit_once'].includes(method));
     if(!argument||argument.after!==start+piece.length||argument.domain!==row.parameters[index+1]){valid=false;break;}args.push(argument);
    }
-   if(!valid)break;value={after,replacement:row.rustPath+'('+[value.domain==='text-owned'?'&('+value.replacement+')':value.replacement,...args.map(argument=>argument.replacement)].join(', ')+')',domain:row.returns,operations:[...value.operations,...args.flatMap(argument=>argument.operations),row.rustName]};
+   if(!valid)break;value={after,replacement:row.rustPath+'('+[value.domain==='text-owned'?'&('+value.replacement+')':value.replacement,...args.map(argument=>argument.replacement)].join(', ')+')',domain:row.returns,operations:[...value.operations,...args.flatMap(argument=>argument.operations),row.rustName],languageEdits:[...(value.languageEdits??[]),...args.flatMap(argument=>argument.languageEdits??[])]};
   }
   return value;
  }
  function append(at,value){
-  if(!value?.operations.length)return;const span=[tokens[at].start,tokens[value.after-1].end];edits.push({span,expected:source.slice(...span),replacement:value.replacement});selections.push({function:item.name,functionSpan:[item.start,item.end],span,operation:value.operations.at(-1),operations:value.operations,receiver:tokens[at].text,domain:'str',oldTraitDispatchProved:false,oldDropTimingProved:false,executableAdmission:false,evaluationOrder:['immutable-str-receiver-once','source-arguments-left-to-right','same-native-operation-chain']});
+  if(!value?.operations.length)return;const span=[tokens[at].start,tokens[value.after-1].end];edits.push({span,expected:source.slice(...span),replacement:value.replacement});languageEdits.push(...value.languageEdits??[]);selections.push({function:item.name,functionSpan:[item.start,item.end],span,operation:value.operations.at(-1),operations:value.operations,receiver:tokens[at].text,domain:'str',oldTraitDispatchProved:false,oldDropTimingProved:false,executableAdmission:false,evaluationOrder:['immutable-str-receiver-once','source-arguments-left-to-right','same-native-operation-chain']});
  }
  for(let at=body+1;at<tokens.length-1;at++){
   if(++work>200000)return result('complete adoption expression scan bound exceeded');
@@ -71,3 +71,5 @@ export function selectTextMethodAdoption(source,item,_scoped,modulePath,_names,h
  }
  return result(edits.length?null:'no closed immutable text method expression');
 }
+
+import {decodeRustCharacter} from './extensions/rust-character.mjs';

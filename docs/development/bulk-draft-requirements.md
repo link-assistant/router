@@ -95,3 +95,11 @@ genuine original headers to separate native premise domains. Three compiler
 equations and independent unrun source/private/JS/strict TS/native cases are
 drafted. Only conditional builtin-name lookup is selected; caller ownership,
 argument/global/runtime semantics and every unfinished requirement remain open.
+
+The [scalar character pattern draft](text-character-pattern-adoption-draft.md)
+copies the complete text selector and proposer to cover ten method shapes using
+the existing paired helpers. Literal conversion runs in language rules and
+qualified calls in repository rules, with rebased spans and full inverses.
+Three compiler equations and independent unrun JS/strict TS/native/refusal
+cases are drafted. Actual production adoption, source-bank/export freshness,
+semantic/parity/coverage qualification and every requirement remain unfinished.
