@@ -135,3 +135,5 @@ export {createOriginalParsedBuiltinCallerAttributeScope,withOriginalParsedBuilti
 export {translateParsedBuiltinHeaderTrackedLocalDeclarativeProject} from './parsed-builtin-header-tracked-local-declarative-project.mjs';
 
 export {createOriginalParsedModuleMacroUseCallerScope,createOriginalParsedInnerLintCallerScope,createOriginalParsedDocumentationCallerScope,originalParsedMetadataBuiltinCallerFacts} from './registered-builtin-caller-attribute-source.mjs';
+
+export {originalNamespaceFunctionNestedAttributeSelectors,captureOriginalNamespaceFunctionNestedAttributeHeader,originalNamespaceFunctionNestedAttributeHeaderFacts} from './original-namespace-parser.mjs';

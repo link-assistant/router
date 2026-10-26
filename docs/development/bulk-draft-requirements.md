@@ -110,3 +110,10 @@ borrow bridges through existing paired helpers. Two compiler equations and
 independent unrun source/JS/strict TS/native/refusal cases are drafted. No custom
 owner, dispatch/Drop, production coverage, parity or completion result is claimed;
 all remaining requirement and verification obligations remain open.
+
+The [function nested attribute draft](function-nested-attributes-draft.md) copies
+the complete header issuer/reader for attributes on actual ordinary/method and
+lifetime/type/const generic parameters under a genuine complete function frame.
+Three compiler equations and independent unrun source/private/refusal cases are
+drafted. Field/variant attributes, native nested builtin consumers, owner/effect
+closure and all production/reverse/synchronization/CI/receiving work remain open.
