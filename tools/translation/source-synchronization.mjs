@@ -91,3 +91,5 @@ export {proposeStructuredDocumentationActiveConditionalSources,proposeStructured
 export {translateStructuredDocumentationTrackedLocalDeclarativeProject} from './structured-documentation-tracked-local-declarative-project.mjs';
 
 export {originalNamespaceFunctionInvocationPositions} from './original-namespace-parser.mjs';
+
+export {withOriginalNamespaceParserSourceOperation} from './namespace-parser-source.mjs';

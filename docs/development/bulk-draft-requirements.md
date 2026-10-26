@@ -763,3 +763,11 @@ frame before/after collection and keeps every legacy proof association and open
 export/attribute effect. Three source equations and independent unrun mixed,
 legacy/member/fake/foreign/source-change cases are drafted. No authority, cache
 or timing qualification is introduced; every unfinished requirement remains.
+
+The [current namespace source operation draft](namespace-source-operation-draft.md)
+retains private source receipts while rechecking complete current parser and
+enclosing archives, and shares the unchanged full builder only within a bounded
+synchronous operation. Four source equations and independent unrun guard,
+identity/nesting/error/refusal source cases are drafted. No enduring cache,
+receiving/timing/CI qualification or completion is claimed; every open source,
+architecture, production, parity and verification requirement remains.

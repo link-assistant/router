@@ -28,32 +28,8 @@ function originalFunction(origin,name,selector=null,rootsBySource=new Map()){
  }}visit(roots);if(hits.length!==1)fail('complete callback absent or ambiguous: '+name);return hits[0];
 }
 function recipe(callback,original,role){const all=words(callback.original),selected=words(original),at=all.indexOf(selected);if(at<0||all.indexOf(selected,at+1)>=0)fail('actual original route differs: '+role);return {callback,original,role};}
-export function originalNamespaceParserSourcePlan(){
- const sources=pins.map(pin=>{const packed=readFileSync(new URL('./source-profiles/'+pin.archive,import.meta.url));if(packed.length!==pin.archiveBytes||hash(packed)!==pin.archiveSha256)fail('complete original archive changed');const raw=gunzipSync(packed,{maxOutputLength:256000});if(raw.length!==pin.bytes||hash(raw)!==pin.sha256)fail('complete original source changed');return freeze({...pin,source:new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(raw)});});
- const [statement,parser,expand,resolver,macros]=sources,rootsBySource=new Map();
- const select=(origin,name,selector=null)=>originalFunction(origin,name,selector,rootsBySource);
- const functions={statement:select(statement,'parse_stmt_mac'),complete:select(expand,'parse_ast_fragment','let mut parser = self.cx.new_parser_from_tts(toks)'),body:select(parser,'parse_fn_body'),parse:select(expand,'parse_ast_fragment','this: &mut Parser'),collect:select(expand,'collect_bang'),blockNeeds:select(resolver,'block_needs_anonymous_module'),block:select(resolver,'visit_block'),define:select(resolver,'define_macro'),stub:select(resolver,'proc_macro_stub'),subnamespace:select(macros,'sub_namespace_match'),compile:select(macros,'compile_macro')};
- const recipes=[
-  recipe(functions.statement,'Delimiter::Brace => MacStmtStyle::Braces,','actual original statement macro delimiter classification'),
-  recipe(functions.statement,'let kind = if (style == MacStmtStyle::Braces && !matches!(self.token.kind, token::Dot | token::Question)) || matches!(self.token.kind, token::Semi | token::Eof | token::CloseInvisible(InvisibleOrigin::MetaVar(MetaVarKind::Stmt))) { StmtKind::MacCall(P(MacCallStmt { mac, style, attrs, tokens: None })) }','exact Stmts classification; CloseBrace with parens is an expression tail'),
-  recipe(functions.complete,'ensure_complete_parse(&parser, path, kind.name(), span);','complete expansion fragment parse before its AST is returned'),
-  recipe(functions.body,'self.parse_block_common(self.token.span, BlockCheckMode::Default, None).map(|(attrs, body)| (attrs, Some(body)))?','original function body is one Block'),
-  recipe(functions.body,'attrs.extend(inner_attrs);','only original parsed body inner attributes join function attributes'),
-  recipe(functions.parse,'AstFragmentKind::Expr => AstFragment::Expr(this.parse_expr()?),','expression-position result remains an expression AST'),
-  recipe(functions.parse,'AstFragmentKind::Ty => AstFragment::Ty(this.parse_ty()?),','type-position result remains a type AST'),
-  recipe(functions.collect,'self.collect(kind, InvocationKind::Bang { mac, span })','actual original call plus delegated fragment kind'),
-  recipe(functions.blockNeeds,'matches!(statement.kind, StmtKind::Item(_) | StmtKind::MacCall(_))','original item and statement-macro bodies require anonymous block module'),
-  recipe(functions.block,'let orig_current_module = self.parent_scope.module; let orig_current_macro_rules_scope = self.parent_scope.macro_rules; self.build_reduced_graph_for_block(block); visit::walk_block(self, block); self.parent_scope.module = orig_current_module; self.parent_scope.macro_rules = orig_current_macro_rules_scope;','block-local module/import/textual scopes restore after full walk'),
-  recipe(functions.define,'self.r.define(self.r.graph_root, ident, MacroNS, import_binding);','macro_rules macro_export retains global macro binding'),
-  recipe(functions.define,'self.r.define(module, ident, MacroNS, (res, vis, span, expansion));','ordinary and procedural stub definitions stay in their actual current module'),
-  recipe(functions.stub,'return Some((MacroKind::Attr, fn_ident, item.span));','procedural attribute stub is retained even before later compilation rejection'),
-  recipe(functions.compile,'if let Some(builtin_name) = ext.builtin_name { if let Some(builtin_ext_kind) = self.builtin_macros.get(&builtin_name) { ext.kind = builtin_ext_kind.clone(); rule_spans = Vec::new(); }','original builtin replacement branch remains pending without genuine output ownership'),
-  recipe(functions.subnamespace,'MacroKind::Bang => SubNS::Bang, MacroKind::Attr | MacroKind::Derive => SubNS::AttrLike,','actual assigned macro kind selects its namespace; unknown generated kinds stay unresolved'),
- ];
- const enclosing=requireOriginalConditionalAncestorSourcePlan(originalConditionalAncestorSourcePlan());
- const value=freeze({schema:'original-namespace-parser-dimension-source-v1',sources,functions,recipes,enclosing,wholeCompilerExecuted:false,callerOwnerResolved:false,namespaceAuthority:false,runtimeAuthority:false});plans.add(value);return value;
-}
-export function requireOriginalNamespaceParserSourcePlan(plan){if(!plans.has(plan))fail('copied or foreign source plan');return plan;}
+export function originalNamespaceParserSourcePlan(){return originalNamespaceParserSourcePlanForOperation();}
+export function requireOriginalNamespaceParserSourcePlan(plan){if(!plans.has(plan))fail('copied or foreign source plan');currentOriginalNamespaceParserSourceInputs();return plan;}
 
 //603: a separate, lazy source-only containment lane. No old plan/cache/body changes.
 let generatedContainmentPlans=null;
@@ -79,3 +55,48 @@ export async function requireOriginalGeneratedItemContainmentSourcePlan(value){
 
 // Separate synchronous source qualification; the original async API remains async.
 export function originalGeneratedItemContainmentSourcePlanSync(){const {value,guard}=generatedContainmentData();guard();return value;}
+
+import {types as namespaceSourceOperationTypes} from 'node:util';
+import {originalAncestorAttributeSourceInputsCurrent} from './derive-ancestor-attribute-scope.mjs';
+
+function buildFreshOriginalNamespaceParserSourcePlan(){
+ const sources=pins.map(pin=>{const packed=readFileSync(new URL('./source-profiles/'+pin.archive,import.meta.url));if(packed.length!==pin.archiveBytes||hash(packed)!==pin.archiveSha256)fail('complete original archive changed');const raw=gunzipSync(packed,{maxOutputLength:256000});if(raw.length!==pin.bytes||hash(raw)!==pin.sha256)fail('complete original source changed');return freeze({...pin,source:new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(raw)});});
+ const [statement,parser,expand,resolver,macros]=sources,rootsBySource=new Map();
+ const select=(origin,name,selector=null)=>originalFunction(origin,name,selector,rootsBySource);
+ const functions={statement:select(statement,'parse_stmt_mac'),complete:select(expand,'parse_ast_fragment','let mut parser = self.cx.new_parser_from_tts(toks)'),body:select(parser,'parse_fn_body'),parse:select(expand,'parse_ast_fragment','this: &mut Parser'),collect:select(expand,'collect_bang'),blockNeeds:select(resolver,'block_needs_anonymous_module'),block:select(resolver,'visit_block'),define:select(resolver,'define_macro'),stub:select(resolver,'proc_macro_stub'),subnamespace:select(macros,'sub_namespace_match'),compile:select(macros,'compile_macro')};
+ const recipes=[
+  recipe(functions.statement,'Delimiter::Brace => MacStmtStyle::Braces,','actual original statement macro delimiter classification'),
+  recipe(functions.statement,'let kind = if (style == MacStmtStyle::Braces && !matches!(self.token.kind, token::Dot | token::Question)) || matches!(self.token.kind, token::Semi | token::Eof | token::CloseInvisible(InvisibleOrigin::MetaVar(MetaVarKind::Stmt))) { StmtKind::MacCall(P(MacCallStmt { mac, style, attrs, tokens: None })) }','exact Stmts classification; CloseBrace with parens is an expression tail'),
+  recipe(functions.complete,'ensure_complete_parse(&parser, path, kind.name(), span);','complete expansion fragment parse before its AST is returned'),
+  recipe(functions.body,'self.parse_block_common(self.token.span, BlockCheckMode::Default, None).map(|(attrs, body)| (attrs, Some(body)))?','original function body is one Block'),
+  recipe(functions.body,'attrs.extend(inner_attrs);','only original parsed body inner attributes join function attributes'),
+  recipe(functions.parse,'AstFragmentKind::Expr => AstFragment::Expr(this.parse_expr()?),','expression-position result remains an expression AST'),
+  recipe(functions.parse,'AstFragmentKind::Ty => AstFragment::Ty(this.parse_ty()?),','type-position result remains a type AST'),
+  recipe(functions.collect,'self.collect(kind, InvocationKind::Bang { mac, span })','actual original call plus delegated fragment kind'),
+  recipe(functions.blockNeeds,'matches!(statement.kind, StmtKind::Item(_) | StmtKind::MacCall(_))','original item and statement-macro bodies require anonymous block module'),
+  recipe(functions.block,'let orig_current_module = self.parent_scope.module; let orig_current_macro_rules_scope = self.parent_scope.macro_rules; self.build_reduced_graph_for_block(block); visit::walk_block(self, block); self.parent_scope.module = orig_current_module; self.parent_scope.macro_rules = orig_current_macro_rules_scope;','block-local module/import/textual scopes restore after full walk'),
+  recipe(functions.define,'self.r.define(self.r.graph_root, ident, MacroNS, import_binding);','macro_rules macro_export retains global macro binding'),
+  recipe(functions.define,'self.r.define(module, ident, MacroNS, (res, vis, span, expansion));','ordinary and procedural stub definitions stay in their actual current module'),
+  recipe(functions.stub,'return Some((MacroKind::Attr, fn_ident, item.span));','procedural attribute stub is retained even before later compilation rejection'),
+  recipe(functions.compile,'if let Some(builtin_name) = ext.builtin_name { if let Some(builtin_ext_kind) = self.builtin_macros.get(&builtin_name) { ext.kind = builtin_ext_kind.clone(); rule_spans = Vec::new(); }','original builtin replacement branch remains pending without genuine output ownership'),
+  recipe(functions.subnamespace,'MacroKind::Bang => SubNS::Bang, MacroKind::Attr | MacroKind::Derive => SubNS::AttrLike,','actual assigned macro kind selects its namespace; unknown generated kinds stay unresolved'),
+ ];
+ const enclosing=requireOriginalConditionalAncestorSourcePlan(originalConditionalAncestorSourcePlan());
+ const value=freeze({schema:'original-namespace-parser-dimension-source-v1',sources,functions,recipes,enclosing,wholeCompilerExecuted:false,callerOwnerResolved:false,namespaceAuthority:false,runtimeAuthority:false});plans.add(value);return value;
+}
+
+// Actual current pinned inputs and native operations are checked even for a
+// previously issued source receipt. Sharing ends with this synchronous call.
+function currentOriginalNamespaceParserSourceInputs(){
+ const native=containmentNative;if(!native.originalStaticSourceIntrinsicsUnchanged()||!native.originalDataFreezeIntrinsicsUnchanged())fail('original namespace source operations changed');const enclosing=originalAncestorAttributeSourceInputsCurrent();let retained=enclosing.retainedSourceBytes;
+ for(const pin of pins){const packed=readFileSync(new URL('./source-profiles/'+pin.archive,import.meta.url));if(packed.length!==pin.archiveBytes||hash(packed)!==pin.archiveSha256)fail('complete current namespace parser source archive changed');retained+=pin.archiveBytes+pin.bytes;if(retained>8388608)fail('complete namespace parser and enclosing native input bound');}if(!native.originalStaticSourceIntrinsicsUnchanged()||!native.originalDataFreezeIntrinsicsUnchanged())fail('original namespace source operations changed');return retained;
+}
+let namespaceParserSourceOperation=null,namespaceParserSourceOperationDepth=0;
+function originalNamespaceParserSourcePlanForOperation(){
+ currentOriginalNamespaceParserSourceInputs();if(namespaceParserSourceOperation?.plan)return namespaceParserSourceOperation.plan;const plan=buildFreshOriginalNamespaceParserSourcePlan();currentOriginalNamespaceParserSourceInputs();if(namespaceParserSourceOperation)namespaceParserSourceOperation.plan=plan;return plan;
+}
+export function withOriginalNamespaceParserSourceOperation(operation){
+ const types=namespaceSourceOperationTypes;currentOriginalNamespaceParserSourceInputs();if(typeof operation!=='function'||types.isProxy(operation)||types.isAsyncFunction(operation))fail('one ordinary synchronous namespace source operation required');if(namespaceParserSourceOperationDepth>=64)fail('namespace source-operation nesting bound');const prior=namespaceParserSourceOperation,state={plan:null};namespaceParserSourceOperation=state;namespaceParserSourceOperationDepth++;
+ try{const result=operation();if(types.isPromise(result)||result!==null&&['object','function'].includes(typeof result)&&types.isProxy(result))fail('namespace source operation must finish synchronously');if(result!==null&&['object','function'].includes(typeof result)){const then=Object.getOwnPropertyDescriptor(result,'then');if(then&&(!Object.hasOwn(then,'value')||typeof then.value==='function'))fail('namespace source operation cannot return an own thenable/accessor');}return result;}
+ finally{try{if(state.plan)requireOriginalNamespaceParserSourcePlan(state.plan);else currentOriginalNamespaceParserSourceInputs();}finally{state.plan=null;namespaceParserSourceOperation=prior;namespaceParserSourceOperationDepth--;}}
+}

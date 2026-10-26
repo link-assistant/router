@@ -382,3 +382,8 @@ integration and the remaining requirement ledger are still open.
   checks at both boundaries and unchanged private legacy receipt associations.
   Three source equations and independent position/refusal/source-change cases
   remain unrun; global macro/attribute effects and all authority stay separate.
+
+- Draft current complete parser/enclosing archive checks for existing native
+  source-plan receipts and synchronous reuse of the original complete builder.
+  Four source equations and independent guard/lifecycle/refusal cases are unrun;
+  no cache survives the operation and receiving/timing qualification stays open.
