@@ -77,3 +77,11 @@ export function expandCanonicalJsonReaderClosure(receiver,binder,body,input,payl
  const some='::core::option::Option::Some',none='::core::option::Option::None',prefix='{ let '+input+' = '+receiver+'; if let ',called='{ let '+binder+' = '+payload+'; '+body+' }',source=prefix+some+'('+payload+') = '+input+' { '+called+' } else { '+none+' } }',noneStart=(prefix+some+'('+payload+') = '+input+' { '+called+' } else { ').length,paths=[{span:[prefix.length,prefix.length+some.length],expected:some,replacement:C+'Maybe::Some'},{span:[noneStart,noneStart+none.length],expected:none,replacement:C+'Maybe::None'}];
  return {source,paths,repository:optionGeneratedPaths(source,paths),evaluationOrder:['receiver-once','Some-bind-and-run-body-once','None-without-body'],executableAdmission:false};
 }
+
+// Closed noncapturing predicate equation, consumed only by the source adopter.
+import {canonicalJsonPredicateMember} from './json-value-predicates.mjs';
+export function expandCanonicalJsonOptionPredicate(receiver,method,predicate,negated,input,payload){
+ optionSourceOperands(receiver,input,payload);if(!['is_some_and','is_none_or'].includes(method)||!canonicalJsonPredicateMember(predicate)||typeof negated!=='boolean')throw new TypeError('Fixed canonical JSON Option predicate required');
+ const some='::core::option::Option::Some',callee='::serde_json::Value::'+predicate,prefix='{ let '+input+' = '+receiver+'; if let ',branch=prefix+some+'('+payload+') = '+input+' { '+(negated?'!':''),source=branch+callee+'('+payload+') } else { '+(method==='is_none_or'?'true':'false')+' } }',paths=[{span:[prefix.length,prefix.length+some.length],expected:some,replacement:C+'Maybe::Some'},{span:[branch.length,branch.length+callee.length],expected:callee,replacement:C+'Json::'+predicate}];
+ return {source,paths,repository:optionGeneratedPaths(source,paths),evaluationOrder:['receiver-once','Some-predicate-once','None-without-predicate'],executableAdmission:false};
+}

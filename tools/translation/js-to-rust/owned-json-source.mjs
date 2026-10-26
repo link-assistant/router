@@ -14,6 +14,7 @@ const rows=[
  ['value_as_array',['json-ref'],'array-option-ref','as_array',0],
  ['value_as_object',['json-ref'],'map-option-ref','as_object',0],
  ['value_is_null',['json-ref'],'bool','is_null',null],
+ ...JSON_VALUE_PREDICATES.filter(method=>method!=='is_null').map(method=>['value_'+method,['json-ref'],'bool',method,null]),
 ];
 const operations=Object.freeze(rows.map(([name,args,ret,method,root])=>Object.freeze({name:'serde_json_'+name,args:Object.freeze(args),ret,method,root})));
 export const ownedJsonReaderOperation=name=>operations.find(row=>row.name===name)??null;
@@ -35,3 +36,5 @@ const optionalInputOperations=Object.freeze(operations.filter(row=>row.name.star
 export const ownedJsonOptionalReaderOperation=name=>optionalInputOperations.find(row=>row.name===name)??null;
 export function ownedJsonOptionalReaderRustCall(name,argument){const row=ownedJsonOptionalReaderOperation(name);if(!row||typeof argument!=='string'||!/^__ro_arg_[0-9]+$/u.test(argument))throw TypeError('Owned optional JSON: fixed operation and bound input required');return 'match '+argument+' { Some(value) => ::serde_json::Value::'+row.member+'(value), None => None }';}
 export function ownedJsonReaderTypeWitness(type){return typeof type==='string'&&ownedJsonOptionalPayload(type)?operations.find(row=>row.ret===type)?.name??null:null;}
+
+import {JSON_VALUE_PREDICATES} from '../json-value-predicates.mjs';

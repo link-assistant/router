@@ -132,8 +132,8 @@ function selectReaders(source,item,module,scoped,imports,names){
  const {parameters}=parsed,owners=new Set([...scoped.jsonNames]);
  const problem=shadowProblem(tokens,body,parameters,owners);if(problem)return skip(problem);
  let serial=0;const fresh=()=>{let value;do{if(serial>=200000)fail('hygiene bound');value='__router_json_reader_'+serial++;}while(names.has(value));names.add(value);return value;};
- function owner(args){
-  const member=args.at(-1)?.text;if(!canonicalJsonReaderMember(member)||args.at(-2)?.text!=='::')return null;
+ function owner(args,accept=canonicalJsonReaderMember){
+  const member=args.at(-1)?.text;if(!accept(member)||args.at(-2)?.text!=='::')return null;
   const prefix=words(args.slice(0,-2));if(prefix===C+'Json'||['serde_json::Value','::serde_json::Value'].includes(prefix))return {member,qualified:prefix,import:null};
   if(args.length!==3||!ident(args[0]))return null;const selected=imports.select(module,args[0].text);return selected?{member,qualified:prefix,import:selected}:null;
  }
@@ -144,6 +144,12 @@ function selectReaders(source,item,module,scoped,imports,names){
   if(member==='get'&&parameters.length===1){const key=parameters[0],known=aliasWalk.lookup(key.text)?.keyRole,string=key.type==='string'&&/^(?:"|r#*")/u.test(key.text)||ident(key)&&known==='str',index=ident(key)&&known==='usize'||key.type==='number'&&/^(?:0|[1-9][0-9_]*)(?:_?usize)?$/u.test(key.text);if(!string&&!index)return null;role='optional-json';}
   else if(canonicalJsonReaderMember(member)&&!parameters.length)role=member==='as_object'?'optional-map':member==='as_array'?'optional-array':'optional-scalar';else return null;
   return {binder,body:source.slice(original[0].start,original.at(-1).end),role,member,qualified:'canonical shared Json callback candidate',import:null,sourceSpan:[args[0].start,args.at(-1).end],callbackSource:source.slice(args[0].start,args.at(-1).end),executableAdmission:false};
+ }
+
+ function predicateCallback(args){
+  if(args[0]?.text!=='|'||!ident(args[1])||!isPlainSourceIdentifier(args[1].text)||args[2]?.text!=='|')return null;const binder=args[1].text,original=args.slice(3);let body=original;if(body[0]?.text==='{'){if(close(body,0)!==body.length-1)return null;body=body.slice(1,-1);}const negated=body[0]?.text==='!';if(negated)body=body.slice(1);
+  if(body.length!==5||body[0].text!==binder||body[1].text!=='.'||!canonicalJsonPredicateMember(body[2].text)||body[3].text!=='('||body[4].text!==')')return null;
+  return {member:body[2].text,negated,binder,qualified:'canonical shared Json predicate callback candidate',import:null,sourceSpan:[args[0].start,args.at(-1).end],callbackSource:source.slice(args[0].start,args.at(-1).end),executableAdmission:false};
  }
 
  for(let at=body+1;at<tokens.length-1;at++){
@@ -168,6 +174,14 @@ function selectReaders(source,item,module,scoped,imports,names){
     last={...last,span:[first.start,tokens[end].end],receiverSpan:[first.start,tokens[cursor].start],end,fallback:{method,defaultSource:expanded.defaultSource,borrowedDefault:expanded.borrowedDefault,locals:[input,payload],originalSpan:[tokens[cursor].start,tokens[end].end]}};role='scalar';cursor=end+1;continue;
    }
 
+
+   if(role==='optional-json'&&['is_some_and','is_none_or'].includes(method)){
+    const direct=owner(args,canonicalJsonPredicateMember),predicate=direct?{...direct,negated:false}:predicateCallback(args);if(!predicate)break;
+    if(item.tokens.some(token=>token.type==='comment'&&token.start>=tokens[cursor].start&&token.end<=tokens[end].end))break;
+    const receiver=rendered+source.slice(retainedTo,tokens[cursor].start),input=fresh(),payload=fresh(),expanded=expandCanonicalJsonOptionPredicate(receiver,method,predicate.member,predicate.negated,input,payload),offset=('{ let '+input+' = ').length;
+    generatedPaths=[...generatedPaths.map(path=>({...path,span:path.span.map(position=>position+offset)})),...expanded.paths].sort((left,right)=>left.span[0]-right.span[0]);rendered=expanded.source;retainedTo=tokens[end].end;
+    last={span:[first.start,tokens[end].end],receiverSpan:[first.start,tokens[cursor].start],selected:predicate,end,terminal:{method,predicate:predicate.member,negated:predicate.negated,source:predicate,locals:[input,payload],evaluationOrder:expanded.evaluationOrder,originalSpan:[tokens[cursor].start,tokens[end].end]}};role='scalar';cursor=end+1;continue;
+   }
    if(role.startsWith('optional-')&&(['is_some','is_none'].includes(method)&&!args.length||method==='unwrap_or'&&last&&args.length&&split(args).length===1)){
     if(item.tokens.some(token=>token.type==='comment'&&token.start>=tokens[cursor].start&&token.end<=tokens[end].end))break;
     const receiver=rendered+source.slice(retainedTo,tokens[cursor].start),input=fresh(),payload=fresh(),fallbackName=method==='unwrap_or'?fresh():null,fallback=method==='unwrap_or'?source.slice(args[0].start,(args.at(-1).text===','?args.at(-2):args.at(-1)).end):null,expanded=expandCanonicalJsonOptionTerminal(receiver,method,fallback,input,payload,fallbackName),offset=('{ let '+input+' = ').length;
@@ -301,3 +315,6 @@ import {createJsonReaderSourceAliasWalk} from './json-reader-source-aliases.mjs'
 
 import {expandCanonicalJsonOptionTerminal,expandCanonicalJsonReaderClosure} from './canonical-json-option-terminal-normalization.mjs';
 import {isPlainSourceIdentifier} from './module-paths.mjs';
+
+import {canonicalJsonPredicateMember} from './json-value-predicates.mjs';
+import {expandCanonicalJsonOptionPredicate} from './canonical-json-option-terminal-normalization.mjs';

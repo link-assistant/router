@@ -267,3 +267,9 @@ field/reader callbacks, eager fallbacks and presence checks in the shared source
 selector, with complete staged CST and inverse mappings. Three compiler equations
 and independent unrun source/JS/strict TS/native cases are drafted. Actual caller,
 native closure, reverse/sync, freshness, parity and all delivery work stay open.
+
+The [JSON predicate draft](json-predicates-draft.md) shares nine kind/number names,
+adds eight reverse ABI records across seven existing checked paths, and drafts
+closed optional-predicate equations. Five compiler equations and independent
+unrun forward/strict TS/seven-receiver/native cases are present. Production,
+native closure, synchronization, freshness, parity and all delivery work stay open.
