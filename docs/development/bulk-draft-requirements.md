@@ -732,3 +732,11 @@ selection/nesting bounds. Five complete source equations and independent unrun
 lifecycle/native-guard/generated-call cases are drafted. No across-operation
 cache or qualification is introduced; all unfinished source/parity/receiving/
 verification requirements remain open and no draft tool executed.
+
+The [common builtin consumer draft](common-builtin-consumers-draft.md) joins
+fifteen actual registry/parser source forms, bounded leading metadata grammars,
+four copied source adapters and generated/project consumers under a restoring
+explicit resolver scope. Eight complete source equations and independent unrun
+legacy/refusal/JS/strict TS/native layout/caller-location source cases are drafted.
+No layout/CPU/runtime qualification is inferred; wider producers, architecture/
+bootstrap, production parity and every unfinished source/verification row remain.

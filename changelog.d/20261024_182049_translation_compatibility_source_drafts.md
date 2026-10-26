@@ -362,3 +362,8 @@ integration and the remaining requirement ledger are still open.
   input rechecks on every exit, independent nesting and generated-call routing.
   Five source equations and independent lifecycle/refusal cases remain unrun;
   no across-operation cache or performance qualification is introduced.
+
+- Draft fifteen original builtin metadata registrations, bounded actual leading
+  attribute grammars, four copied source adapters and scoped generated/project
+  consumers. Eight full source equations and independent source/JS/strict TS/
+  native boundary cases are unrun; layout/CPU/caller-location remain unqualified.
