@@ -416,3 +416,122 @@ export function proposeInnerLintConfiguredTrackedTextualSources(options){
   }current();return {schema:'inner-lint-configured-tracked-textual-source-proposal-v1',entry,compilationProfile:profile??null,files,selections,refusals,status:refusals.length?'partial-source-proposal':'source-proposal',originalCompilerSource:native,conditionalAttributeSource:conditionalSource,compilerDiagnosticTracePreserved:false,originalSourceEquivalenceQualified:false,sourceAuthority:false,semanticAuthority:false,namespaceAuthority:false,runtimeAuthority:false,crossInvocationCache:false,receivingExecuted:false};
  }finally{try{try{passive.finish();}finally{try{moduleUse.finish();}finally{inner.finish();}}}finally{if(native){originalTextualConfigurationSourcePlan();originalFreshConditionalAttributeSourceInputs();}current();}}
 }
+
+import {withLiteralDocInnerLintModuleMacroUseAttributeValidation} from './passive-macro-attribute-source.mjs';
+import {createOriginalLiteralDocumentationSourceScope} from './registered-builtin-caller-attribute-source.mjs';
+
+export function proposeLiteralDocInnerLintModuleMacroUseTrackedLocalDeclarativeSources(options){
+ return withLiteralDocInnerLintModuleMacroUseAttributeValidation(validator=>{
+ const {input,entry,paths,originals,current}=captureTrackedDeclarativeSources(options);let graph,engine,edits=[],definitions=[],refusals=[],files=[],rootCalls=0,renderedBytes=0,renderedCells=0;
+ const refuse=(module,item,kind,message)=>refusals.push({kind,sourcePath:module.file,module:[...module.path],span:span(item),source:module.source.slice(item.start,item.end),message,sourceAuthority:false,semanticAuthority:false});
+ const result=createRulePipeline([
+  {phase:'language',rules:[
+   {id:'literal-doc-inner-lint-module-macro-use-tracked-local-declarative:serialize-and-reparse-complete-original-cst',apply:()=>{
+    current();graph=resolveModuleGraph({entry,paths,readSource:name=>{need(originals.has(name),'module graph requested uncaptured source');return originals.get(name);},compilationProfile:input.compilationProfile});current();
+    for(const row of graph.diagnostics)refusals.push({kind:'original-module-graph',sourcePath:row.file??entry,module:row.module??[],span:row.span??null,source:originals.get(row.file??entry)??null,message:row.message,sourceAuthority:false,semanticAuthority:false});
+    return graph;
+   }},
+   {id:'literal-doc-inner-lint-module-macro-use-tracked-local-declarative:select-actual-prior-textual-definitions-and-private-inputs',apply:()=>{
+    // An inner attribute may rewrite the whole crate. No spelling is presumed
+    // inert, and a textual definition cannot discharge that enclosing effect.
+    const modules=new Map(graph.modules.map(module=>[JSON.stringify(module.path),module])),childrenByOwner=new Map();for(const edge of graph.edges){const key=JSON.stringify(edge.module.slice(0,-1));if(!childrenByOwner.has(key))childrenByOwner.set(key,[]);childrenByOwner.get(key).push(edge);}
+    function visit(module,inherited,depth=0){
+     const view=module.sourceView,before=module.source,sourcePath=module.file;
+     need(depth<=64,'whole-file original inline scope depth bound');const items=originalSourceModuleItems(module),initialRefusals=refusals.length;
+     if(module.configurationCondition!=='active'||view.configurationCondition!=='active'||items.some(item=>innerAttribute(item)&&!validator.inner(module,item))){for(const item of items)refuse(module,item,'enclosing-attribute','Whole original module attributes or configuration need an independent owner/effect rule');return {closed:false,visible:new Map()};}
+     const visible=new Map(inherited);let previous=view.bodySpan.start;
+     for(const item of items){
+     const prefix=validator.header(module,item),lastAttribute=prefix.attributes.at(-1)?.span.end??item.start,fragment=before.slice(item.start,item.end),hasDocumentation=documentation(before.slice(previous,item.start)),kind=prefix.closed?rootKind({...item,tokens:item.tokens.filter(token=>token.start>=lastAttribute)}):null;previous=item.end;
+     if(prefix.inner)continue;
+     if(['macro_rules!','macro_rules','macro'].includes(kind)){
+      try{
+       need(!hasDocumentation&&prefix.closed,'Macro declaration attributes remain unresolved');
+       const trees=originalMacroTrees(fragment);let begin=0;while(trees[begin]?.text==='#'&&trees[begin+1]?.delimiter==='[')begin+=2;const name=trees[begin+2]?.text;need(trees[begin]?.text==='macro_rules'&&trees[begin+1]?.text==='!'&&/^[A-Za-z_][A-Za-z0-9_]*$/u.test(name??''),'plain original macro_rules declaration required');
+       engine??=createAttributedLocalDeclarativeMacroEngine(null,originalMacroLiteralGrammar());const definition=engine.compileDeclarativeMacro(fragment,{name,owner:['crate',...module.path]}),header=engine.declarativeDefinitionHeader(definition);
+       need(header.kind==='macro_rules'&&header.visibility===null&&header.attributes.length===prefix.attributes.length&&header.span.start===trees[0].span.start,'complete plain original macro declaration header required');
+       need(header.span.end===trees.at(-1)?.span.end||trees.at(-1)?.text===';'&&header.span.end===trees.at(-2)?.span.end,'unresolved source outside the macro declaration');
+       visible.set(name,definition);definitions.push({name,sourcePath,module:[...module.path],span:span(item),source:fragment,sourceSha256:hash(fragment),definition,header,ownerVerified:false,semanticAuthority:false});
+      }catch(error){if(!(error instanceof TypeError))throw error;visible.clear();refuse(module,item,'definition',error.message);}
+      continue;
+     }
+     if(attributes(item)&&!prefix.closed||hasDocumentation){visible.clear();refuse(module,item,'attribute-producer','An unresolved attributed source item can change later textual bindings');continue;}
+     // A child inherits only definitions visible at its actual declaration.
+     // The source-checked word macro_use branch retains the final child scope.
+     // Ordinary children restore the parent; unknown producers retain refusals.
+     if(kind==='mod'){const children=(childrenByOwner.get(JSON.stringify(module.path))??[]).filter(edge=>edge.from===module.file&&(edge.span??edge.pathSelection?.span)?.start===item.start&&(edge.span??edge.pathSelection?.span)?.end===item.end);need(children.length<=1,'unique actual tracked child module edge');if(children.length){const edge=children[0],child=modules.get(JSON.stringify(edge.module));need(child&&child.file===edge.to&&(!edge.pathSelection||isTrackedModulePathPlan(edge.pathSelection)),'actual fresh child file/view and private path selection required');const childScope=visit(child,visible,depth+1);if(!childScope.closed)visible.clear();else if(prefix.macroUse){visible.clear();for(const [name,definition]of childScope.visible)visible.set(name,definition);}}else{visible.clear();refuse(module,item,'module-edge','Original module lacks a complete tracked child source');}continue;}
+     if(inertTerms.has(kind))continue;
+     if(fragment.trim()===';')continue;
+     try{
+      const invocations=originalTopLevelMacroInvocations(fragment);need(invocations.length===1,'one complete original root invocation required');const invocation=invocations[0];
+      need(invocation.path.length===1&&fragment.slice(0,invocation.sourceSpan.start).trim()===''&&['',';'].includes(fragment.slice(invocation.sourceSpan.end).trim()),'plain unqualified root invocation required');
+      const definition=visible.get(invocation.path[0]);need(definition,'no preceding unambiguous original textual definition');
+      need(++rootCalls<=128,'whole-file root expansion count budget');const proof=engine.expandDeclarativeMacro(definition,invocation.trees);engine.declarativeExpansionOriginalInput(proof,invocation.trees);
+      const rendered=engine.renderLocalDeclarativeExpansion(proof,name=>visible.get(name)??null),passiveAttributes=validator.generated(rendered.source,{sourcePath});
+      renderedBytes+=rendered.renderedRawBytes;renderedCells+=rendered.renderCells;need(renderedBytes<=8388608&&renderedCells<=200000,'whole-file rendered raw-source and tree-cell budgets');
+      // Resolve generated items while still inside the same source transaction.
+      // All original definitions stay in place for unexpanded ordinary bodies.
+      const replacement=fragment.slice(0,invocation.sourceSpan.start)+rendered.source+fragment.slice(invocation.sourceSpan.end);
+      edits.push({sourcePath,module:[...module.path],span:span(item),before:fragment,after:replacement,name:invocation.path[0],definitionDigest:definition.digest,originalInput:invocation,expansion:rendered,passiveAttributes,sourceAuthority:false,semanticAuthority:false});
+     }catch(error){if(!(error instanceof TypeError))throw error;visible.clear();refuse(module,item,'invocation',error.message);}
+     }return {closed:refusals.length===initialRefusals,visible};
+    }if(!graph.diagnostics.length){const rootModule=modules.get('[]');need(rootModule&&rootModule.file===entry,'actual complete original root module required');visit(rootModule,new Map());}
+    return edits;
+   }},
+   {id:'literal-doc-inner-lint-module-macro-use-tracked-local-declarative:substitute-only-complete-actual-root-call-spans',apply:()=>{
+    current();let retained=0;for(const [sourcePath,before]of originals){const selected=edits.filter(edit=>edit.sourcePath===sourcePath).sort((left,right)=>left.span.start-right.span.start);let end=0,after=before;
+     for(const edit of selected){need(edit.span.start>=end&&before.slice(edit.span.start,edit.span.end)===edit.before,'overlapping or stale original invocation');end=edit.span.end;}
+     for(const edit of [...selected].reverse())after=after.slice(0,edit.span.start)+edit.after+after.slice(edit.span.end);need(Buffer.byteLength(after)<=8388608,'complete expanded source byte budget');retained+=Buffer.byteLength(before)+Buffer.byteLength(after);need(retained<=201326592,'complete original and expanded raw-source budget');const history=transportConcreteSourceEquations([{before,after,language:'Rust'}])[0];need(history.inverse===before,'complete original physical source inverse differs');files.push({sourcePath,before,after,history,edits:selected,definitions:definitions.filter(row=>row.sourcePath===sourcePath),refusals:refusals.filter(row=>row.sourcePath===sourcePath),sourceAuthority:false,semanticAuthority:false});
+    }current();return files;
+   }},
+  ]},
+  {phase:'repository',rules:[{id:'router:retain-complete-original-expanded-cst-and-refusals',apply:()=>{
+   current();return {schema:'literal-doc-inner-lint-module-macro-use-tracked-local-declarative-source-proposal-v1',entry,sourceInputs:[...originals].map(([path,source])=>({path,source})),files,definitions,edits,refusals,originalGraph:{modules:graph.modules.map(module=>({file:module.file,path:module.path,sourceView:module.sourceView,configurationCondition:module.configurationCondition})),edges:graph.edges,diagnostics:graph.diagnostics,concreteSyntaxMeta:graph.concreteSyntaxMeta},status:refusals.length?'partial-source-proposal':'source-proposal',scope:'source-bound-word-module-macro-use-with-complete-tracked-textual-scopes',sourceAuthority:false,semanticAuthority:false,namespaceAuthority:false,runtimeAuthority:false,crossInvocationCache:false,receivingExecuted:false};
+  }}]},
+ ]).run(null);current();return {...result.value,ruleTrace:result.trace};
+ });
+}
+
+import {types} from 'node:util';
+import {resolveModuleGraph} from './project.mjs';
+import {originalSourceModuleItems} from './source-module-views.mjs';
+import {isTrackedModulePathPlan} from './module-paths.mjs';
+
+import {compilationProfile,itemConfiguration,isAbsentConditionalAttribute} from './cfg-profile.mjs';
+import {originalFreshConditionalAttributeSourceInputs} from './conditional-attributes.mjs';
+import {originalTextualConfigurationSourcePlan} from './derive-ancestor-attribute-scope.mjs';
+import {createOriginalPassiveBuiltinCallerAttributeScope,createModuleMacroUseBuiltinCallerAttributeScope} from './registered-builtin-caller-attribute-source.mjs';
+import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
+
+// Profile-selected source proposals only. Unknown and inner producers retain
+// their original source; this adapter issues no original-program permission.
+
+export function proposeLiteralDocInnerLintConfiguredTrackedTextualSources(options){
+ const {input,entry,paths,originals,current,profile}=captureTrackedDeclarativeSources(options),files=[],selections=[],refusals=[];let native=null,conditionalSource=null,retained=0,cells=0;
+ const proveNative=()=>{native??=originalTextualConfigurationSourcePlan();conditionalSource??=originalFreshConditionalAttributeSourceInputs();need(native.retainedSourceBytes+conditionalSource.retainedSourceBytes<=8388608,'complete native configuration grammar source byte bound');};
+ const passive=createOriginalPassiveBuiltinCallerAttributeScope(),moduleUse=createModuleMacroUseBuiltinCallerAttributeScope(),inner=createOriginalInnerLintCallerAttributeScope(),docs=createOriginalLiteralDocumentationSourceScope(),tick=()=>{if(++cells>200000)need(false,'complete configured textual source-cell bound');};
+ try{
+  current();for(const [sourcePath,before]of originals){
+   const captured=captureSourceModuleViews({source:before,sourcePath,compilationProfile:profile}),rows=[],blocked=[];for(const view of captured.views){const items=originalModuleViewItems(view,before),module={file:sourcePath,path:view.modulePath,source:before,sourceView:view,compilationProfile:view.compilationProfile};if(items.some(item=>innerAttribute(item)&&!inner.at(module,item)&&!docs.innerItem(module,item)))blocked.push(view.bodySpan);let previous=view.bodySpan.start;for(const item of items){rows.push({module,item,preceding:before.slice(previous,item.start)});previous=item.end;}}
+   rows.sort((left,right)=>left.item.start-right.item.start||right.item.end-left.item.end);const edits=[];let discardedUntil=-1;
+   const refuse=(row,message)=>refusals.push({sourcePath,module:row.module.path,span:span(row.item),original:before.slice(row.item.start,row.item.end),message,sourceAuthority:false,semanticAuthority:false});
+   for(const row of rows){
+    tick();const {module,item}=row;if(item.start<discardedUntil)continue;const condition=itemConfiguration(item.tokens,module.compilationProfile),conditional=condition.attributes.filter(attribute=>['cfg','cfg_attr'].includes(attribute.name));if(!conditional.length)continue;
+    if(blocked.some(bound=>bound.start<=item.start&&bound.end>=item.end)||innerAttribute(item)){refuse(row,'Inner source producers require their separate complete original source rule');continue;}
+    if(condition.diagnostics.length||condition.status==='unknown'){refuse(row,'The original condition or conditional attribute expansion remains unknown');continue;}
+    if(condition.status==='inactive'){
+     if(documentation(row.preceding)){refuse(row,'Dropping a documented item needs its complete original doc attachment rule');continue;}
+     proveNative();const selected={span:[item.start,item.end],expected:before.slice(item.start,item.end),replacement:''};edits.push(selected);selections.push({sourcePath,module:module.path,kind:'inactive-original-item',...selected,condition,sourceAuthority:false,semanticAuthority:false});discardedUntil=item.end;continue;
+    }
+    let closed=true;for(const attribute of condition.attributes){
+     tick();if(attribute.name==='cfg'){if(attribute.evaluation?.value!==true||attribute.evaluation.diagnostics.length)closed=false;continue;}
+     if(attribute.name==='cfg_attr'){if(!isAbsentConditionalAttribute(attribute))closed=false;continue;}
+     if(!(attribute.name==='doc'?docs.attribute(module,item,attribute):attribute.name==='macro_use'?moduleUse.at(module,item,attribute):passive.at(module,item,attribute)))closed=false;
+    }
+    if(!closed){refuse(row,'Other original attributes or active conditional producers need their separate source rules');continue;}
+    for(const attribute of conditional){proveNative();const selected={span:[attribute.span.start,attribute.span.end],expected:before.slice(attribute.span.start,attribute.span.end),replacement:''};edits.push(selected);selections.push({sourcePath,module:module.path,kind:attribute.name==='cfg'?'active-original-cfg':'absent-original-cfg-attr',...selected,condition:attribute.evaluation,sourceAuthority:false,semanticAuthority:false});}
+   }
+   edits.sort((left,right)=>left.span[0]-right.span[0]);let end=-1;for(const edit of edits){need(edit.span[0]>=end&&before.slice(...edit.span)===edit.expected,'nonoverlapping actual original configuration spans required');end=edit.span[1];}let after=before;for(const edit of [...edits].reverse())after=after.slice(0,edit.span[0])+edit.replacement+after.slice(edit.span[1]);need(Buffer.byteLength(after)<=8388608,'complete configured physical source bound');retained+=Buffer.byteLength(before)+Buffer.byteLength(after);need(retained<=201326592,'complete original and configured raw-source bound');
+   const concrete=transportConcreteSyntaxSource(before,{language:'Rust'}),run=applyConcreteSyntaxSubstitutions(concrete.document,{languageRules:[{id:'rust:select-only-proved-inactive-items-and-active-or-absent-outer-condition-spans',edits}],repositoryRules:[{id:'router:retain-complete-profile-source-and-explicit-unresolved-producers',edits:[]}]}),reparsed=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(run.value)).source;need(reparsed===after,'complete configured CST source differs');const history=transportConcreteSourceEquations([{before,after,language:'Rust'}])[0];need(history.inverse===before,'complete original conditional source inverse differs');files.push({sourcePath,before,after,edits,history,trace:run.trace,sourceAuthority:false,semanticAuthority:false});
+  }current();return {schema:'literal-doc-inner-lint-configured-tracked-textual-source-proposal-v1',entry,compilationProfile:profile??null,files,selections,refusals,status:refusals.length?'partial-source-proposal':'source-proposal',originalCompilerSource:native,conditionalAttributeSource:conditionalSource,compilerDiagnosticTracePreserved:false,originalSourceEquivalenceQualified:false,sourceAuthority:false,semanticAuthority:false,namespaceAuthority:false,runtimeAuthority:false,crossInvocationCache:false,receivingExecuted:false};
+ }finally{try{try{passive.finish();}finally{try{moduleUse.finish();}finally{try{inner.finish();}finally{docs.finish();}}}}finally{if(native){originalTextualConfigurationSourcePlan();originalFreshConditionalAttributeSourceInputs();}current();}}
+}

@@ -60,3 +60,6 @@ export {proposeInnerLintModuleMacroUseTrackedLocalDeclarativeSources,proposeInne
 export {translateInnerLintConfiguredTrackedLocalDeclarativeProject} from './inner-lint-configured-tracked-local-declarative-project.mjs';
 
 export {createOriginalLiteralDocumentationSourceScope} from './registered-builtin-caller-attribute-source.mjs';
+
+export {proposeLiteralDocInnerLintModuleMacroUseTrackedLocalDeclarativeSources,proposeLiteralDocInnerLintConfiguredTrackedTextualSources} from './tracked-local-declarative-source.mjs';
+export {translateLiteralDocInnerLintConfiguredTrackedLocalDeclarativeProject} from './literal-doc-inner-lint-configured-tracked-local-declarative-project.mjs';

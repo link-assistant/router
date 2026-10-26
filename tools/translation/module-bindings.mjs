@@ -10,7 +10,7 @@ import {deriveFootprintAt,deriveFootprintHelperAttributeAt,isDeriveFootprintCont
 import {deriveBangModules,deriveBangOutputAt,deriveBangHelperAttributeAt,isDeriveBangContext} from './derive-bang-context.mjs';
 import {proveDeriveEmptyEnclosingEffect,deriveEmptyEnclosingEffectFacts} from './derive-output-effects.mjs';
 import {toolAttributeAt,isToolAttributeContext,inertInnerLintItem} from './tool-attributes.mjs';
-import {builtinInnerSourceItem} from './inner-source-attributes.mjs';
+import {builtinLiteralDocumentationInnerSourceItem as builtinInnerSourceItem} from './inner-source-attributes.mjs';
 const namespaces=['type','value','macro'];
 const identifier=token=>token?.type==='ident' && /^[\p{L}_][\p{L}\p{N}_]*$/u.test(token.text);
 const key=path=>path.join('::');

@@ -240,7 +240,7 @@ export function createOriginalInnerLintCallerAttributeScope(){
   }
   closure??=registeredInnerLintCallerFacts('allow');for(const attribute of attributes)if(!closure.facts.registrations.some(row=>row.name===attribute.name))fail('complete actual inner lint builtin registration absent');const row={source:module.file,module:[...module.path],span:{start:actual.start,end:actual.end},original:module.source.slice(actual.start,actual.end),attributes,originalInnerStyleVerified:true,sourceAuthority:false,semanticAuthority:false};selected.push(row);return row;
  }
- return {at,finish(){tick();try{if(!closure)return null;closure.current();return {schema:'original-inner-lint-caller-source-scope-v1',selected,sources:closure.facts.sources.map(row=>({path:row.path,sourceSha256:row.sourceSha256,profileSha256:row.profileSha256})),trace:closure.facts.trace,sourceAuthority:false,namespaceAuthority:false,runtimeAuthority:false,crossInvocationCache:false};}finally{active=false;closure=null;}}};
+ return {at,finish(){try{tick();if(!closure)return null;closure.current();return {schema:'original-inner-lint-caller-source-scope-v1',selected,sources:closure.facts.sources.map(row=>({path:row.path,sourceSha256:row.sourceSha256,profileSha256:row.profileSha256})),trace:closure.facts.trace,sourceAuthority:false,namespaceAuthority:false,runtimeAuthority:false,crossInvocationCache:false};}finally{active=false;closure=null;}}};
 }
 
 import {originalLiteralDocumentationBuiltinAttributeRegistrations} from './derive-ancestor-attribute-scope.mjs';
@@ -306,5 +306,19 @@ export function createOriginalLiteralDocumentationSourceScope(){
   let captured=sources.get(sourcePath);if(captured&&captured.source!==source)fail('complete original documentation source changed within its scope');if(!captured){sourceBytes+=Buffer.byteLength(source);if(sourceBytes>134217728)fail('complete original documentation source corpus bound');const concrete=transportConcreteSyntaxSource(source,{language:'Rust'});if(transportConcreteSyntaxMeta(concrete.meta).source!==source)fail('complete original documentation source CST inverse differs');const comments=new Map();for(const token of rustTokens(source)){tick();if(token.type==='comment')comments.set(token.start,token);}captured={sourcePath,source,concreteSyntax:concrete.meta,comments};sources.set(sourcePath,captured);}
   const token=captured.comments.get(start);if(!token||token.end!==end)return null;const original=source.slice(start,end),inner=original.startsWith('//!'),outer=original.startsWith('///')&&!original.startsWith('////');if(!inner&&!outer||source[end]==='\r')return null;const value=original.slice(3);if(/[\u0000-\u001f]/u.test(value))return null;prove();const row={source:sourcePath,span:{start,end},original,style:inner?'inner':'outer',value,literalSyntax:JSON.stringify(value),lexicalOnly:true,callerOwnerResolved:false,sourceAuthority:false,semanticAuthority:false,namespaceAuthority:false};selected.push(row);return row;
  }
- return {attribute,innerItem,line,finish(){tick();try{if(closure)closure.current();if(native)native.current();return {schema:'original-literal-documentation-source-scope-v1',selected,sourceInputs:[...sources.values()].map(({sourcePath,source,concreteSyntax})=>({sourcePath,source,concreteSyntax,inverse:source})),nativeSources:native?.facts??null,sourceAuthority:false,namespaceAuthority:false,runtimeAuthority:false,crossInvocationCache:false};}finally{active=false;closure=null;native=null;sources.clear();}}};
+ return {attribute,innerItem,line,finish(){try{tick();if(closure)closure.current();if(native)native.current();return {schema:'original-literal-documentation-source-scope-v1',selected,sourceInputs:[...sources.values()].map(({sourcePath,source,concreteSyntax})=>({sourcePath,source,concreteSyntax,inverse:source})),nativeSources:native?.facts??null,sourceAuthority:false,namespaceAuthority:false,runtimeAuthority:false,crossInvocationCache:false};}finally{active=false;closure=null;native=null;sources.clear();}}};
+}
+
+import {types} from 'node:util';
+
+// Private synchronous current frame only. It never crosses an invocation or
+// exposes its source scope to callbacks. Old standalone observers stay fresh.
+let literalDocumentationOperation=null,literalDocumentationOperationDepth=0;
+export function withOriginalLiteralDocumentationSourceScope(operation){
+ if(typeof operation!=='function'||types.isProxy(operation)||types.isAsyncFunction(operation))fail('one complete synchronous literal documentation operation required');if(literalDocumentationOperationDepth>=64)fail('literal documentation operation nesting bound');const prior=literalDocumentationOperation,scope=createOriginalLiteralDocumentationSourceScope();literalDocumentationOperation=scope;literalDocumentationOperationDepth++;
+ try{const result=operation();if(types.isPromise(result)||result&&typeof result==='object'&&types.isProxy(result))fail('literal documentation operation must finish synchronously');if(result&&typeof result==='object'){const then=Object.getOwnPropertyDescriptor(result,'then');if(then&&(!Object.hasOwn(then,'value')||typeof then.value==='function'))fail('literal documentation operation cannot return an own thenable/accessor');}return result;}
+ finally{try{scope.finish();}finally{literalDocumentationOperation=prior;literalDocumentationOperationDepth--;}}
+}
+export function originalLiteralDocumentationInnerItem(module,item){
+ if(literalDocumentationOperation)return literalDocumentationOperation.innerItem(module,item);const scope=createOriginalLiteralDocumentationSourceScope();try{return scope.innerItem(module,item);}finally{scope.finish();}
 }

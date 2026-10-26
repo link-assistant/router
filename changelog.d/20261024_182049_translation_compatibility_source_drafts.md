@@ -331,3 +331,6 @@ integration and the remaining requirement ledger are still open.
 - Draft fresh original literal-doc registry/parser and line-comment lexer/reader/
   AST source scopes, with complete originals, closed lifetimes and unrun source/
   native cases; retain the remaining compiler consumer obligation explicitly.
+- Draft actual literal documentation consumers for original/generated/inner
+  source, native binding observation and checked projects; keep one synchronous
+  source frame and close scopes even after final native-guard failure (unrun).

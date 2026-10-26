@@ -676,3 +676,12 @@ Public rows grant no caller/type/namespace permission. Four complete source
 equations and independent literal/style/source/span/refusal/128-comment/native
 cases are unrun. Actual macro/configuration/project consumers, doc attachment,
 architecture/export/bootstrap closure and every unfinished requirement remain.
+
+The [literal documentation consumers draft](literal-documentation-consumers-draft.md)
+connects actual inner/source/generated literal docs to copied source/configuration/
+project frames and an additive native inner observer. Complete source/profile
+joins, full histories, one synchronous current frame and closure on final-guard
+failure remain; public metadata grants no namespace/body authority. Eight complete
+source equations and independent JS/strict TS/multi-file native/refusal cases are
+unrun. Line comment attachment/normalization, wider docs, architecture/export/
+bootstrap closure and every unfinished requirement remain open.
