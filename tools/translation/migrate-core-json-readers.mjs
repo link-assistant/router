@@ -84,14 +84,14 @@ function importedJsonTargets(modules,profile,context){
 const words=tokens=>tokens.map(token=>token.text).join('');
 function parametersOf(tokens,start,end,scoped,imports,module){
  const parameters=new Map(),keys=new Set();
- const json=type=>type===C+'Json'||type==='serde_json::Value'||ident({type:'ident',text:type})&&scoped.jsonNames.has(type)&&imports.select(module,type)!==null;
+ const json=type=>type===C+'Json'||['serde_json::Value','::serde_json::Value'].includes(type)||ident({type:'ident',text:type})&&scoped.jsonNames.has(type)&&imports.select(module,type)!==null;
  for(const row of split(tokens.slice(start,end))){
   if(row.length<3||!ident(row[0])||row[1].text!==':'||parameters.has(row[0].text))return null;
-  const type=words(row.slice(2));let role=null;
-  if(type.startsWith('&')&&json(type.slice(1)))role='json';
-  else if(type.startsWith(C+'Maybe<&')&&type.endsWith('>')&&json(type.slice((C+'Maybe<&').length,-1)))role='optional-json';
-  if(type==='&'+C+'Str')keys.add(row[0].text);
-  parameters.set(row[0].text,{role,type,span:[row[0].start,row.at(-1).end],sourceName:row[0].text});
+  const originalType=row.slice(2).map(token=>token.text+(token.type==='char'&&token.text.startsWith("'")?' ':'')).join(''),type=originalType.replace(/&'[\p{ID_Start}_][\p{ID_Continue}_]*\s+/gu,'&').replace(/\s+/gu,''),optional=/^(?:(?:::)?(?:std|core)::option::Option|Option|crate::translation_core::Maybe)<([\s\S]+)>$/u.exec(type),payload=optional?optional[1]:type;let role=null;
+  if(payload.startsWith('&')&&json(payload.slice(1)))role=optional?'optional-json':'json';
+  if(!optional&&['&str','&'+C+'Str','&::std::primitive::str','&::core::primitive::str','&std::primitive::str','&core::primitive::str'].includes(type))keys.add(row[0].text);
+  if(!optional&&['usize','::std::primitive::usize','::core::primitive::usize'].includes(type))keys.add(row[0].text);
+  parameters.set(row[0].text,{role,type,originalType,keyRole:keys.has(row[0].text)?(type.startsWith('&')?'str':'usize'):null,span:[row[0].start,row.at(-1).end],sourceName:row[0].text});
  }
  return {parameters,keys};
 }
@@ -121,32 +121,46 @@ function shadowProblem(tokens,body,parameters,owners){
 function selectReaders(source,item,module,scoped,imports,names){
  const tokens=item.tokens.filter(token=>token.type!=='comment'),header=originalDeclarationHeader(item,module.path),name=tokens.findIndex(token=>token.start===header?.nameSpan?.start),edits=[],selections=[];
  const skip=reason=>({edits,selections,preserved:[{function:item.name,span:[item.start,item.end],reason}]});
- if(name<0||tokens[name+1]?.text!=='(')return skip('complete ordinary nongeneric function required');
- const endParams=close(tokens,name+1);let body=endParams+1;while(body<tokens.length&&tokens[body].text!=='{')body++;
- if(endParams<0||body>=tokens.length||close(tokens,body)!==tokens.length-1||tokens.length>200000||tokens.slice(0,name).some(token=>['async','unsafe','extern','const'].includes(token.text))||tokens.slice(endParams+1,body).some(token=>token.text==='where'||token.text.startsWith("'")))return skip('bounded complete ordinary function with elided source lifetimes required');
- const parsed=parametersOf(tokens,name+2,endParams,scoped,imports,module);if(!parsed)return skip('simple distinct immutable source formal parameters required');
- const {parameters,keys}=parsed,owners=new Set([...scoped.jsonNames]);
+ if(name<0)return skip('complete ordinary source function required');let open=name+1;
+ if(tokens[open]?.text==='<'){let end=open+1;while(end<tokens.length&&tokens[end].text!=='>')end++;const rows=split(tokens.slice(open+1,end));if(end>=tokens.length||!rows.length||rows.some(row=>row.length!==1||row[0].type!=='char'||!/^'[\p{ID_Start}_][\p{ID_Continue}_]*$/u.test(row[0].text)||["'static","'_"].includes(row[0].text))||new Set(rows.map(row=>row[0].text)).size!==rows.length)return skip('only distinct unbounded source lifetime parameters are selected');open=end+1;}
+ if(tokens[open]?.text!=='(')return skip('complete ordinary input list required');
+ const endParams=close(tokens,open);let body=endParams+1;while(body<tokens.length&&tokens[body].text!=='{')body++;
+ if(endParams<0||body>=tokens.length||close(tokens,body)!==tokens.length-1||tokens.length>200000||tokens.slice(0,name).some(token=>['async','unsafe','extern','const'].includes(token.text))||tokens.slice(endParams+1,body).some(token=>token.text==='where'))return skip('bounded complete ordinary function without generic bounds required');
+ const parsed=parametersOf(tokens,open+1,endParams,scoped,imports,module);if(!parsed)return skip('simple distinct immutable source formal parameters required');
+ const {parameters}=parsed,owners=new Set([...scoped.jsonNames]);
  const problem=shadowProblem(tokens,body,parameters,owners);if(problem)return skip(problem);
  let serial=0;const fresh=()=>{let value;do{if(serial>=200000)fail('hygiene bound');value='__router_json_reader_'+serial++;}while(names.has(value));names.add(value);return value;};
  function owner(args){
   const member=args.at(-1)?.text;if(!canonicalJsonReaderMember(member)||args.at(-2)?.text!=='::')return null;
-  const prefix=words(args.slice(0,-2));if(prefix===C+'Json'||prefix==='serde_json::Value')return {member,qualified:prefix,import:null};
+  const prefix=words(args.slice(0,-2));if(prefix===C+'Json'||['serde_json::Value','::serde_json::Value'].includes(prefix))return {member,qualified:prefix,import:null};
   if(args.length!==3||!ident(args[0]))return null;const selected=imports.select(module,args[0].text);return selected?{member,qualified:prefix,import:selected}:null;
  }
  for(let at=body+1;at<tokens.length-1;at++){
   const macro=macroAt(tokens,at,'json')??macroAt(tokens,at,'format');if(macro){at=macro.end;continue;}
   const first=tokens[at],parameter=parameters.get(first.text);if(!parameter?.role||['.','::'].includes(tokens[at-1]?.text))continue;
-  let cursor=at+1,role=parameter.role;
-  while(cursor<tokens.length-1&&tokens[cursor]?.text==='.'&&ident(tokens[cursor+1])&&tokens[cursor+2]?.text==='('){
+  let cursor=at+1,role=parameter.role,rendered='',retainedTo=first.start,generatedPaths=[],last=null;const readers=[];
+  for(let steps=0;steps<32&&cursor<tokens.length-1;steps++){
+   if(tokens[cursor]?.text==='?'&&role.startsWith('optional-')){role=role.slice(9);cursor++;continue;}
+   if(tokens[cursor]?.text!=='.'||!ident(tokens[cursor+1])||tokens[cursor+2]?.text!=='(')break;
    const end=close(tokens,cursor+2);if(end<0)break;const method=tokens[cursor+1].text,args=tokens.slice(cursor+3,end);
-   if(method==='get'&&role==='json'&&args.length===1&&(args[0].type==='string'||ident(args[0])&&keys.has(args[0].text))){role='optional-json';cursor=end+1;continue;}
+   if(method==='get'&&['json','map','array'].includes(role)&&args.length===1){
+    const key=args[0],known=parameters.get(key.text)?.keyRole,string=key.type==='string'&&/^(?:"|r#*")/u.test(key.text)||ident(key)&&known==='str',index=ident(key)&&known==='usize'||key.type==='number'&&/^(?:0|[1-9][0-9_]*)(?:usize)?$/u.test(key.text);
+    if(!((role==='json'&&(string||index))||(role==='map'&&string)||(role==='array'&&index)))break;
+    role='optional-json';cursor=end+1;continue;
+   }
    if(method==='unwrap_or'&&role==='optional-json'&&args.length===1&&parameters.get(args[0].text)?.role==='json'){role='json';cursor=end+1;continue;}
    if(method!=='and_then'||role!=='optional-json')break;const selected=owner(args);if(!selected)break;
    const span=[first.start,tokens[end].end],receiverSpan=[first.start,tokens[cursor].start];
    if(item.tokens.some(token=>token.type==='comment'&&token.start>=tokens[cursor].start&&token.end<=span[1]))break;
-   const receiver=source.slice(...receiverSpan),input=fresh(),payload=fresh(),expanded=expandCanonicalJsonReader(receiver,selected.member,input,payload);
-   edits.push({span,expected:source.slice(...span),replacement:expanded.source,repository:expanded.repository,generatedPaths:expanded.paths});
-   selections.push({function:item.name,functionSpan:[item.start,item.end],span,receiver:{span:receiverSpan,source:receiver,formal:parameter},member:selected.member,owner:selected,locals:[input,payload],nativeEquation:'canonical Option<&Json>::and_then with one inert canonical JSON reader function item',executableAdmission:false,loanBoundary:'same shared input root; no owned temporary introduced'});at=end;break;
+   const receiver=rendered+source.slice(retainedTo,receiverSpan[1]),input=fresh(),payload=fresh(),expanded=expandCanonicalJsonReader(receiver,selected.member,input,payload),offset=('{ let '+input+' = ').length;
+   generatedPaths=[...generatedPaths.map(path=>({...path,span:path.span.map(position=>position+offset)})),...expanded.paths].sort((left,right)=>left.span[0]-right.span[0]);
+   rendered=expanded.source;retainedTo=span[1];last={span,receiverSpan,selected,end};readers.push({member:selected.member,owner:selected,originalSpan:[tokens[cursor].start,tokens[end].end],locals:[input,payload]});
+   role=selected.member==='as_object'?'optional-map':selected.member==='as_array'?'optional-array':'optional-scalar';cursor=end+1;
+  }
+  if(last){
+   let repository=rendered;for(const path of [...generatedPaths].reverse()){if(repository.slice(...path.span)!==path.expected)fail('nested generated reader path differs');repository=repository.slice(0,path.span[0])+path.replacement+repository.slice(path.span[1]);}
+   edits.push({span:last.span,expected:source.slice(...last.span),replacement:rendered,repository,generatedPaths});
+   selections.push({function:item.name,functionSpan:[item.start,item.end],span:last.span,receiver:{span:last.receiverSpan,source:source.slice(...last.receiverSpan),formal:parameter},member:last.selected.member,owner:last.selected,readers,locals:readers.flatMap(row=>row.locals),nativeEquation:'canonical Option<&Json>::and_then with inert canonical JSON reader function items; intermediate try operators retain source order',executableAdmission:false,loanBoundary:'same shared input root; no owned temporary introduced'});at=last.end;
   }
  }
  return {edits,selections,preserved:selections.length?[]:[{function:item.name,span:[item.start,item.end],reason:'no closed canonical shared Json Option reader function item'}]};

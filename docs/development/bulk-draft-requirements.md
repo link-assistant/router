@@ -181,3 +181,10 @@ explicit language Option equation followed by repository-owned path bindings.
 Four compiler equations and independent unrun source/JS/strict TS/native/refusal
 cases are drafted. Original equivalence, actual production gains, freshness,
 parity, reverse synchronization and every remaining delivery requirement stay open.
+
+The [JSON reader domain draft](json-reader-domains-draft.md) covers nine existing
+read-only JSON contracts, written lifetimes, standard Option signatures and
+composed object/array try/read chains in both actual proposal entry points.
+Three compiler equations and independent unrun source/JS/strict TS/native cases
+are drafted. Native equivalence, caller qualification, freshness, parity, reverse
+synchronization and every remaining delivery requirement remain unfinished.
