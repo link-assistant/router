@@ -771,3 +771,11 @@ synchronous operation. Four source equations and independent unrun guard,
 identity/nesting/error/refusal source cases are drafted. No enduring cache,
 receiving/timing/CI qualification or completion is claimed; every open source,
 architecture, production, parity and verification requirement remains.
+
+The [architecture generated output draft](architecture-type-output-sources-draft.md)
+copies complete actual output rendering, native EOF rules, generated CST/synthetic
+item domains, original function/member/opaque-position issuers and whole original
+file inverse proposals. Five source equations and independent unrun actual-source,
+private receipt, renderer and native statement-selection cases are drafted. All
+owner/attribute/export/type-prefix and runtime/parity qualifications stay open,
+along with every unfinished source/receiving/verification requirement.

@@ -93,3 +93,5 @@ export {translateStructuredDocumentationTrackedLocalDeclarativeProject} from './
 export {originalNamespaceFunctionInvocationPositions} from './original-namespace-parser.mjs';
 
 export {withOriginalNamespaceParserSourceOperation} from './namespace-parser-source.mjs';
+
+export {proposeOriginalArchitectureTypeOutputSources} from './architecture-type-output-sources.mjs';

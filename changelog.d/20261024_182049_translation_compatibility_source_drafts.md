@@ -387,3 +387,8 @@ integration and the remaining requirement ledger are still open.
   source-plan receipts and synchronous reuse of the original complete builder.
   Four source equations and independent guard/lifecycle/refusal cases are unrun;
   no cache survives the operation and receiving/timing qualification stays open.
+
+- Draft actual architecture output rendering with native EOF rules, complete
+  generated CST and synthetic item units, original function/position receipts,
+  whole original-file inverses and aggregate budgets. Five source equations and
+  independent native-source/refusal cases are unrun; closure/parity stay open.
