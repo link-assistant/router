@@ -121,6 +121,13 @@ source/refusal/JS/strict TS/native original/adopted cases are drafted. Original
 whole-function admission, resource limits and unqualified dispatch/Drop metadata
 remain; actual production adoption and every unfinished requirement stay open.
 
+The [actual x86 metadata draft](architecture-x86-metadata-draft.md) copies the
+whole original lookup/output pipeline and joins real original/expanded files to
+root/inner/member doc, builtin, lint and macro-use source consumers. Three full
+compiler equations and independent unrun actual-source/refusal cases are drafted.
+Physical views retain no actual namespace/configuration authority; owner/global/
+derive/type-prefix closure and every unfinished requirement remain open.
+
 The [Option guard draft](http-resource-option-guards-draft.md) adds whole absent
 branches, every-exit resource cleanup, explicit fallback domains, Some payload
 moves, same-Option propagation and complete canonical native inverse rules.

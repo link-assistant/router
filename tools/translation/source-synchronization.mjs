@@ -110,3 +110,5 @@ export {captureOriginalAttributeExpressionConfinementSource,originalAttributeExp
 
 export {translateExpressionDocumentationTrackedLocalDeclarativeProject} from './expression-documentation-tracked-local-declarative-project.mjs';
 export {captureOriginalNamespaceDocumentationExpression} from './original-namespace-parser.mjs';
+
+export {proposeOriginalX86MetadataTypeMacroSources} from './architecture-x86-metadata-sources.mjs';
