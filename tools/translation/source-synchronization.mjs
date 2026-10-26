@@ -63,3 +63,6 @@ export {createOriginalLiteralDocumentationSourceScope} from './registered-builti
 
 export {proposeLiteralDocInnerLintModuleMacroUseTrackedLocalDeclarativeSources,proposeLiteralDocInnerLintConfiguredTrackedTextualSources} from './tracked-local-declarative-source.mjs';
 export {translateLiteralDocInnerLintConfiguredTrackedLocalDeclarativeProject} from './literal-doc-inner-lint-configured-tracked-local-declarative-project.mjs';
+
+export {proposeLineDocumentationTrackedTextualSources} from './tracked-local-declarative-source.mjs';
+export {translateLineDocConfiguredTrackedLocalDeclarativeProject} from './line-doc-configured-tracked-local-declarative-project.mjs';

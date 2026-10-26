@@ -11,7 +11,7 @@ import {createRulePipeline} from './rule-pipeline.mjs';
 const hash=source=>createHash('sha256').update(source).digest('hex');
 const need=(value,message)=>{if(!value)throw new TypeError('Local declarative source: '+message);};
 const inertTerms=new Set(['fn','struct','enum','union','impl','trait','mod','use','type','const','static']);
-const documentation=source=>/\/\/[!\/]|\/\*[*!]/u.test(source);
+const documentation=source=>rustTokens(source).some(token=>token.type==='comment'&&originalDocumentationComment(token.text));
 const attributes=item=>item.tokens.find(token=>token.type!=='comment')?.text==='#';
 const innerAttribute=item=>item.tokens[0]?.text==='#'&&item.tokens[1]?.text==='!';
 const span=item=>({start:item.start,end:item.end});
@@ -534,4 +534,68 @@ export function proposeLiteralDocInnerLintConfiguredTrackedTextualSources(option
    const concrete=transportConcreteSyntaxSource(before,{language:'Rust'}),run=applyConcreteSyntaxSubstitutions(concrete.document,{languageRules:[{id:'rust:select-only-proved-inactive-items-and-active-or-absent-outer-condition-spans',edits}],repositoryRules:[{id:'router:retain-complete-profile-source-and-explicit-unresolved-producers',edits:[]}]}),reparsed=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(run.value)).source;need(reparsed===after,'complete configured CST source differs');const history=transportConcreteSourceEquations([{before,after,language:'Rust'}])[0];need(history.inverse===before,'complete original conditional source inverse differs');files.push({sourcePath,before,after,edits,history,trace:run.trace,sourceAuthority:false,semanticAuthority:false});
   }current();return {schema:'literal-doc-inner-lint-configured-tracked-textual-source-proposal-v1',entry,compilationProfile:profile??null,files,selections,refusals,status:refusals.length?'partial-source-proposal':'source-proposal',originalCompilerSource:native,conditionalAttributeSource:conditionalSource,compilerDiagnosticTracePreserved:false,originalSourceEquivalenceQualified:false,sourceAuthority:false,semanticAuthority:false,namespaceAuthority:false,runtimeAuthority:false,crossInvocationCache:false,receivingExecuted:false};
  }finally{try{try{passive.finish();}finally{try{moduleUse.finish();}finally{try{inner.finish();}finally{docs.finish();}}}}finally{if(native){originalTextualConfigurationSourcePlan();originalFreshConditionalAttributeSourceInputs();}current();}}
+}
+
+import {rustTokens} from './rust-structure.mjs';
+
+function originalDocumentationComment(source){return source.startsWith('//!')||source.startsWith('///')&&!source.startsWith('////')||source.startsWith('/*!')||source.startsWith('/**')&&!['*','/'].includes(source[3]);}
+
+// Source-only attachment proposal. The existing compiler still checks the
+// complete reconstructed program; no source row is a namespace/type permit.
+export function proposeLineDocumentationTrackedTextualSources(options){
+ const {entry,originals,current,profile}=captureTrackedDeclarativeSources(options),files=[],selections=[],refusals=[];
+ let docs=createOriginalLiteralDocumentationSourceScope(),native=null,conditionalSource=null,cells=0,retained=0;
+ const passive=createOriginalPassiveBuiltinCallerAttributeScope(),moduleUse=createModuleMacroUseBuiltinCallerAttributeScope(),inner=createOriginalInnerLintCallerAttributeScope();
+ const tick=()=>need(++cells<=200000,'complete line documentation source-cell bound');
+ const conditional=()=>{native??=originalTextualConfigurationSourcePlan();conditionalSource??=originalFreshConditionalAttributeSourceInputs();need(native.retainedSourceBytes+conditionalSource.retainedSourceBytes<=8388608,'complete native condition source bound');};
+ function header(module,item){
+  tick();if(innerAttribute(item))return !!(inner.at(module,item)??docs.innerItem(module,item));
+  const condition=itemConfiguration(item.tokens,module.compilationProfile);if(condition.status==='unknown'||condition.diagnostics.length)return false;
+  for(const attribute of condition.attributes){
+   tick();if(attribute.name==='cfg'){if(typeof attribute.evaluation?.value!=='boolean'||attribute.evaluation.diagnostics.length)return false;conditional();continue;}
+   if(attribute.name==='cfg_attr'){if(!isAbsentConditionalAttribute(attribute))return false;conditional();continue;}
+   if(!(attribute.name==='doc'?docs.attribute(module,item,attribute):attribute.name==='macro_use'?moduleUse.at(module,item,attribute):passive.at(module,item,attribute)))return false;
+  }return true;
+ }
+ try{
+  const result=createRulePipeline([
+   {phase:'language',rules:[{id:'rust:attach-only-actual-module-gap-line-doc-tokens-to-original-items',apply:()=>{
+    current();for(const [sourcePath,before]of originals){
+     const docTokens=rustTokens(before).filter(token=>{tick();return token.type==='comment'&&originalDocumentationComment(token.text);});
+     const captured=docTokens.length?captureSourceModuleViews({source:before,sourcePath,compilationProfile:profile}):{views:[]},viewByDigest=new Map(captured.views.map(view=>[view.digest,view])),gaps=[],blocked=new Set(),headers=new Map(),edits=[];
+     const refuse=(token,module,message)=>{tick();refusals.push({sourcePath,module:[...module],span:{start:token.start,end:token.end},original:before.slice(token.start,token.end),message,sourceAuthority:false,semanticAuthority:false});};
+     for(const view of captured.views){
+      tick();const items=originalModuleViewItems(view,before),module={file:sourcePath,path:view.modulePath,source:before,sourceView:view,compilationProfile:view.compilationProfile};
+      let closed=!blocked.has(view.parentDigest);if(view.parentDigest){const parent=viewByDigest.get(view.parentDigest),parentRows=originalModuleViewItems(parent,before),owner=parentRows.find(item=>item.start===view.declaration.span.start&&item.end===view.declaration.span.end);need(owner,'complete original parent declaration required');closed=closed&&headers.get(owner)===true;}
+      const itemHeaders=new Map();for(const item of items){tick();const selected=header(module,item);itemHeaders.set(item,selected);headers.set(item,selected);if(innerAttribute(item)&&!selected)closed=false;}
+      if(!closed)blocked.add(view.digest);let previous=view.bodySpan.start,leading=true;
+      for(const item of items){gaps.push({start:previous,end:item.start,module,next:item,leading,closed:closed&&itemHeaders.get(item)});if(!innerAttribute(item))leading=false;previous=item.end;}
+      gaps.push({start:previous,end:view.bodySpan.end,module,next:null,leading,closed});
+     }
+     gaps.sort((left,right)=>left.start-right.start||left.end-right.end);let previousEnd=-1;for(const gap of gaps){tick();need(gap.start>=previousEnd&&gap.end>=gap.start,'disjoint actual original module gaps required');previousEnd=gap.end;}
+     let gapIndex=0,tokenIndex=0;
+     while(tokenIndex<docTokens.length){
+      tick();const token=docTokens[tokenIndex];while(gapIndex<gaps.length&&gaps[gapIndex].end<=token.start)gapIndex++;
+      const gap=gaps[gapIndex];if(!gap||token.start<gap.start||token.end>gap.end){refuse(token,[],'Documentation outside a complete module gap needs its own original attachment rule');tokenIndex++;continue;}
+      const group=[];while(tokenIndex<docTokens.length&&docTokens[tokenIndex].start>=gap.start&&docTokens[tokenIndex].end<=gap.end)group.push(docTokens[tokenIndex++]);
+      let closed=gap.closed,outer=false;const candidates=[];
+      for(const comment of group){
+       tick();const row=docs.line({sourcePath,source:before,start:comment.start,end:comment.end});
+       if(!row){closed=false;refuse(comment,gap.module.path,'Block, CR or control-bearing documentation needs a separate original source rule');continue;}
+       if(row.style==='inner'&&(!gap.leading||outer)){closed=false;refuse(comment,gap.module.path,'Inner documentation must precede ordinary module items and outer documentation');continue;}
+       if(row.style==='outer'){outer=true;if(!gap.next||innerAttribute(gap.next)){closed=false;refuse(comment,gap.module.path,'Outer documentation needs its actual following original ordinary item');continue;}}
+       candidates.push({...row,module:[...gap.module.path],attachment:row.style==='inner'?{kind:'module',span:{...gap.module.sourceView.bodySpan}}:{kind:'item',span:span(gap.next)},replacement:'#'+(row.style==='inner'?'!':'')+'[doc='+row.literalSyntax+']'});
+      }
+      if(!gap.closed)for(const comment of group)refuse(comment,gap.module.path,'An original enclosing or target attribute producer remains unresolved');
+      if(closed)for(const row of candidates){const edit={span:[row.span.start,row.span.end],expected:row.original,replacement:row.replacement};edits.push(edit);selections.push({...row,sourcePath,...edit,sourceAuthority:false,semanticAuthority:false,namespaceAuthority:false});}
+     }
+     edits.sort((left,right)=>left.span[0]-right.span[0]);let end=-1,after=before;for(const edit of edits){need(edit.span[0]>=end&&before.slice(...edit.span)===edit.expected,'actual nonoverlapping documentation spans required');end=edit.span[1];}for(const edit of [...edits].reverse())after=after.slice(0,edit.span[0])+edit.replacement+after.slice(edit.span[1]);need(Buffer.byteLength(after)<=8388608,'complete normalized documentation file bound');retained+=Buffer.byteLength(before)+Buffer.byteLength(after);need(retained<=201326592,'complete original and normalized documentation raw-source bound');
+     const concrete=transportConcreteSyntaxSource(before,{language:'Rust'}),substituted=applyConcreteSyntaxSubstitutions(concrete.document,{languageRules:[{id:'rust:substitute-source-proved-module-line-doc-tokens-with-exact-literal-attributes',edits}],repositoryRules:[{id:'router:retain-complete-original-attachment-profile-and-refusals',edits:[]}]}),reparsed=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(substituted.value)).source;need(reparsed===after,'complete normalized documentation CST source differs');const history=transportConcreteSourceEquations([{before,after,language:'Rust'}])[0];need(history.inverse===before,'complete original documentation source inverse differs');files.push({sourcePath,before,after,edits,history,trace:substituted.trace,sourceAuthority:false,semanticAuthority:false});
+    }current();return files;
+   }}]},
+   {phase:'repository',rules:[{id:'router:package-complete-line-documentation-original-and-normalized-source-domains',apply:()=>{
+    current();return {schema:'line-documentation-tracked-textual-source-proposal-v1',entry,compilationProfile:profile,sourceInputs:[...originals].map(([path,source])=>({path,source})),files,selections,refusals,status:refusals.length?'partial-source-proposal':'source-proposal',originalCompilerSource:native,conditionalAttributeSource:conditionalSource,originalSourceEquivalenceQualified:false,originalApplicationCoverageQualified:false,compilerDiagnosticTracePreserved:false,sourceAuthority:false,semanticAuthority:false,namespaceAuthority:false,runtimeAuthority:false,crossInvocationCache:false,receivingExecuted:false};
+   }}]},
+  ]).run(null);const scope=docs;docs=null;const documentationSource=scope.finish();current();return {...result.value,documentationSource,ruleTrace:result.trace};
+ }finally{try{try{passive.finish();}finally{try{moduleUse.finish();}finally{try{inner.finish();}finally{if(docs){const scope=docs;docs=null;scope.finish();}}}}}finally{if(native){originalTextualConfigurationSourcePlan();originalFreshConditionalAttributeSourceInputs();}current();}}
 }

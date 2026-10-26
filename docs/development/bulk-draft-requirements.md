@@ -692,3 +692,11 @@ span selection and adds duplicate binding refusals to both original source
 checks. Four complete source equations and independent unrun regression source
 are drafted. No tests, experiments or draft tools ran; every remaining source,
 receiving, parity and validation requirement stays open.
+
+The [module line documentation draft](line-documentation-normalization-draft.md)
+adds actual token/module-gap attachment, literal payload substitution, enclosing
+attribute refusal, full original inverses and four-domain checked project
+composition. Four complete source equations and independent unrun JS/strict TS,
+module/configuration/refusal/freshness/native oracle source are drafted. Wider
+documentation and all remaining language, namespace/bootstrap, production,
+receiving, parity and validation requirements stay open; no draft tools ran.

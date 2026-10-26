@@ -338,3 +338,7 @@ integration and the remaining requirement ledger are still open.
 - Draft exact native import span selection, removal of copied repeated bindings,
   and duplicate declaration refusals in both complete native source checks.
   Four full source equations and independent regression cases remain unrun.
+
+- Draft original module-gap line documentation attachment, exact literal payload
+  substitutions and complete original/doc/configured/expanded project joins.
+  Four complete source equations and independent receiving/native cases are unrun.
