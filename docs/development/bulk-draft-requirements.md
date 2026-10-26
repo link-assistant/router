@@ -82,6 +82,13 @@ complete project integration. Four compiler equations and independent unrun
 source/private/JS/strict TS/native namespace cases are drafted. Caller presence,
 argument/global/runtime semantics and every unfinished requirement remain open.
 
+The [parsed native source operation draft](parsed-native-source-operation-draft.md)
+copies the complete native source reader for bounded within-operation sharing
+across four separate premise domains, retaining fresh current checks, nested
+invalidation and the original combined input bound. Two compiler equations and
+independent unrun source/lifecycle/refusal cases are drafted. No performance,
+owner/parity/coverage or completion result is claimed; all requirements stay open.
+
 The [parsed metadata builtin draft](parsed-metadata-builtins-draft.md) copies
 complete inner lint, module macro_use and documentation consumers, joining
 genuine original headers to separate native premise domains. Three compiler
