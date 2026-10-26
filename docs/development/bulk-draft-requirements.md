@@ -229,3 +229,9 @@ retaining every exact check, staged CST boundary and complete source inverse.
 Two compiler equations and independent unrun bulk/empty-stage cases are drafted.
 No performance, deadline or completion qualification is claimed; every remaining
 source, translation, parity and delivery obligation stays open.
+
+The [qualified block draft](const-async-blocks-draft.md) distinguishes original
+const items from const/async/async-move expressions, retaining array/tail source,
+opaque roles and recursive scope obligations. Two compiler equations and
+independent unrun source/native cases are drafted. Actual evaluation/lowering,
+native namespace qualification and every remaining delivery requirement stay open.

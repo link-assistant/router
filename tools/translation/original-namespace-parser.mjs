@@ -158,7 +158,7 @@ class NamespaceParser{
  }
  localItemKeyword(){
   const c=this.cursor;let at=c.index;if(c.tokens[at]?.text==='pub'){at++;if(c.tokens[at]?.text==='('){let depth=1;for(at++;at<c.tokens.length&&depth;at++){if(c.tokens[at].text==='(')depth++;else if(c.tokens[at].text===')')depth--;}if(depth)return null;}}
-  const word=c.tokens[at]?.text;return ['struct','enum','type','const','static','use'].includes(word)?word:word==='extern'&&c.tokens[at+1]?.text==='crate'?'extern-crate':null;
+  const word=c.tokens[at]?.text;if(word==='const'&&c.tokens[at+1]?.text==='{')return null;return ['struct','enum','type','const','static','use'].includes(word)?word:word==='extern'&&c.tokens[at+1]?.text==='crate'?'extern-crate':null;
  }
  localItem(attributes){
   const c=this.cursor,keyword=this.localItemKeyword();if(['struct','enum'].includes(keyword))return this.dataItem(attributes);
@@ -208,6 +208,8 @@ class NamespaceParser{
  });}
  prefix(structAllowed,statementStart=false){const c=this.cursor,start=c.peek()?.start,attributes=this.attributes();let result;
   if(c.is('{'))result=this.block();
+  else if(c.eat('const'))result=this.node('Unary',start,{operation:'const-block',value:this.block()});
+  else if(c.eat('async')){const moved=!!c.eat('move');result=this.node('Unary',start,{operation:'async-block',moved,value:this.block()});}
   else if(c.eat('if')){const condition=this.expression(0,false),then=this.block(),otherwise=c.eat('else')?(c.is('if')?this.expression(0,false):this.block()):null;result=this.node('If',start,{condition,then,otherwise});}
   else if(c.eat('match')){const subject=this.expression(0,false);c.expect('{');const arms=[];while(!c.is('}')){const at=c.peek()?.start,attrs=this.attributes(),pattern=this.pattern(),guard=c.eat('if')?this.expression(0,false):null;c.expect('=>');const body=this.expression();arms.push(this.node('Arm',at,{attributes:attrs,pattern,guard,body}));if(!c.eat(',')&&!c.is('}')&&!['Block','If','Match'].includes(body.kind))fail('complete original match arm separator required');}c.expect('}');result=this.node('Match',start,{subject,arms});}
   else if(c.is('return')||c.is('break')||c.is('continue')){const operation=c.take().text,label=operation!=='return'&&c.peek()?.type==='char'&&c.peek().text.startsWith("'")?this.lifetime(true).fields.original:null,value=operation!=='continue'&&![null,';',',','}'].includes(c.peek()?.text??null)?this.expression():null;result=this.node('Jump',start,{operation,label,value});}
