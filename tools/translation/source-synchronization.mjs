@@ -49,3 +49,6 @@ export {planSourceBoundOwnedCorePacketAdoption,applySourceBoundOwnedCorePacketAd
 
 export {proposeTrackedLocalDeclarativeSources} from './tracked-local-declarative-source.mjs';
 export {translateTrackedLocalDeclarativeProject} from './tracked-local-declarative-project.mjs';
+
+export {proposeModuleMacroUseTrackedLocalDeclarativeSources} from './tracked-local-declarative-source.mjs';
+export {translateModuleMacroUseTrackedLocalDeclarativeProject} from './module-macro-use-tracked-local-declarative-project.mjs';

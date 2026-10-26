@@ -941,3 +941,12 @@ checks expanded source through the existing frontend; original equivalence and
 coverage remain unqualified. Four complete source equations and independent
 JS/strict TS/multi-file native/refusal cases are unrun. Macro_use/export,
 architecture type/producer closure and every unfinished row remain open.
+
+The [original word module macro_use draft](tracked-module-macro-use-draft.md)
+joins fresh actual builtin/parser/resolver sources to a closed word-only module
+attribute frame and complete tracked child textual scope export. Ordinary scopes,
+original order, unsupported producers, full physical inverses and fresh checked
+project source remain. Seven complete source equations and independent JS/strict
+TS/multi-file native/refusal cases are unrun. General exports, documentation/
+conditional producer prerequisites, architecture closure and every unfinished
+requirement above remain open.

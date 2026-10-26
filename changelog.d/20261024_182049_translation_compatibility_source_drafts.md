@@ -319,3 +319,6 @@ integration and the remaining requirement ledger are still open.
 - Draft ordinary textual macro inheritance across actual tracked external module
   files with fresh source graphs, complete physical inverses, an exported checked
   project entry and unrun independent JS/TypeScript/multi-file native cases.
+- Draft plain module macro_use with fresh original builtin/parser/resolver source
+  joins, closed synchronous attribute scopes, tracked textual export and unrun
+  JS/TypeScript/multi-file native/refusal coverage source.

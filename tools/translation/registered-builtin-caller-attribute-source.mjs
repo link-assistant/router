@@ -40,7 +40,7 @@ function sourceFrame(){
  }
  function templates(){const bytes=read(new URL('./source-profiles/builtin-derived-attributes/proof-templates.json',import.meta.url),65536);if(hash(bytes)!=='b78455190de277446b836bfabfe0814177e087ac4836d4f3b7503d353de22445')fail('complete source templates changed');const parser=read(new URL('./source-profiles/registered-builtin-caller-attributes/parser-callbacks.json',import.meta.url),65536);if(hash(parser)!=='e6705daeb0aaf4cdb1f47170d927e2c59ae6f8a5cddfeb53702cb02cec09bd1e')fail('complete original parser callbacks changed');return {...JSON.parse(bytes.toString('utf8')),...JSON.parse(parser.toString('utf8'))};}
  function finish(){for(const {url,bytes}of inputs.values())if(!readFileSync(url).equals(bytes))fail('complete source changed during conditional proof');guard();return [...sources.values()];}
- return {source,templates,finish};
+ return {source,templates,finish,retainedSourceBytes:()=>retained};
 }
 function functions(origin){
  const roots=originalMacroTrees(origin.source,{maxBytes:256000,maxTokens:32000,maxDepth:64}),rows=[];
@@ -169,3 +169,38 @@ export function createSourceMetadataBuiltinCallerAttributeScope(){
  return {at,finish(){if(!closure)return null;closure.current();return {schema:'original-registered-builtin-caller-scope-source-v1',selected,sources:closure.facts.sources.map(row=>({path:row.path,sourceSha256:row.sourceSha256,profileSha256:row.profileSha256})),trace:closure.facts.trace,sourceAuthority:false,namespaceAuthority:false,runtimeAuthority:false,crossInvocationCache:false};}};
 }
 export function originalSourceMetadataBuiltinCallerAttributeAt(module,item,attribute){const scope=createSourceMetadataBuiltinCallerAttributeScope();const selected=scope.at(module,item,attribute);scope.finish();return selected;}
+
+import {originalModuleMacroUseBuiltinAttributeRegistrations,originalModuleMacroUseSourcePlan} from './derive-ancestor-attribute-scope.mjs';
+import {originalDeclarationHeader} from './module-bindings.mjs';
+
+function registeredModuleMacroUseCallerFacts(name){
+ guard();if(!['macro_use'].includes(name))fail('one actual registered caller attribute domain required');const frame=sourceFrame(),templates=frame.templates(),catalogue=originalModuleMacroUseBuiltinAttributeRegistrations(),originals=new Map(),inventories=new Map();
+ const origin=(group,path)=>{const key=group+'\0'+path;if(!originals.has(key))originals.set(key,frame.source(group,path));return originals.get(key);};const inventory=row=>{if(!inventories.has(row))inventories.set(row,functions(row));return inventories.get(row);};
+ const select=(key,group='builtin-derive-bang')=>{const template=templates[key],row=origin(group,template.path);return exactFunction(template,inventory(row));};
+ const callbacks={attributeIdent:select('attributeIdent'),mkAttrFromItem:select('mkAttrFromItem'),segmentFromIdent:select('segmentFromIdent'),builtinNameLookup:select('builtinNameLookup','macro-producer-kind'),collectAttribute:select('collectAttribute','macro-producer-kind')};
+ const attributeInventory=inventory(origin('builtin-derive-bang',templates.attributeIdent.path)),attributeOwner=containingType(attributeInventory,callbacks.attributeIdent,'implAttributeExtforAttribute'),segmentOwner=containingType(inventory(origin('builtin-derive-bang',templates.segmentFromIdent.path)),callbacks.segmentFromIdent,'implPathSegment');
+ const parser={};for(const key of ['parse_attribute','parse_attr_item','parse_path','parse_path_inner','parse_path_segments','parse_path_segment','parse_path_segment_ident','parse_ident','parse_ident_common','ident_or_err','parse_attr_args','parse_delim_args_inner']){const template=templates[key],source=origin('registered-builtin-caller-attributes',template.path),callback=exactFunction(template,inventory(source));parser[key]={...callback,owner:containingType(inventory(source),callback,template.owner)};}
+ const builtin=origin('macro-producer-kind',templates.builtinMap.path),catalogueOriginal=origin('derive-ancestor-scope',templates.builtinMap.path);if(builtin.source!==catalogue.source||builtin.sourceSha256!==catalogue.sourceSha256||catalogueOriginal.source!==catalogue.source)fail('fresh current registered attribute map/catalogue source differs');
+ const map=wholeStatic(builtin,'BUILTIN_ATTRIBUTE_MAP',templates.builtinMap.original),registrations=catalogue.registrations.map(({name,registration})=>{const output=registration.expansion.trees;if(output.length!==2||output[0].text!=='BuiltinAttribute'||output[1].delimiter!=='{')fail('actual original ungated constructor differs');const names=fields(output[1].children).filter(row=>row.name==='name');if(names.length!==1||syntaxText(names[0].expression)!=='sym::'+name)fail('actual original registered symbol differs');return {name,registration,expandedNameField:names[0]};});if(registrations.map(row=>row.name).join(',')!=='macro_use')fail('complete original registered symbol set differs');
+ // Whole pinned parser callbacks establish the ordinary non-interpolated,
+ // nonraw, nonqualified path. The bounded caller grammar below supplies those
+ // exact branch preconditions. No generic macro token input is an original attr.
+ const run=createRulePipeline([
+  {phase:'language',rules:[{id:'rust:join-original-written-attribute-parser-normal-item-and-single-segment-ident',apply:()=>({parser,callbacks,owners:{attributeOwner,segmentOwner}})}]},
+  {phase:'repository',rules:[{id:'router:join-complete-unconditional-registry-before-custom-attribute-selection',apply:value=>({...value,map,registrations})}]},
+ ]).run(null),sources=frame.finish(),moduleMacroUseSource=originalModuleMacroUseSourcePlan();if(frame.retainedSourceBytes()+moduleMacroUseSource.retainedSourceBytes>8388608)fail('complete parser registry and resolver source closure exceeds its original byte bound');
+ const facts=freeze({schema:'original-written-registered-builtin-attribute-source-v1',name,...run.value,sources,moduleMacroUseSource,trace:run.trace,conditionalConclusion:{requiresOriginalPlainOuterAttribute:true,requiresActualModuleWord:true,requiresOrdinarySingleSegmentIdentifier:true,requiresOriginalLiteralOrEmptyArguments:true,normalItemRetainsParsedPath:true,singleSegmentIdentPreserved:true,builtinLookupPrecedesCustomAttributeSelection:true},callerOwnerResolved:false,namespaceAuthority:false,runtimeAuthority:false,wholeCompilerExecuted:false,crossInvocationCache:false});return {facts,current:()=>{frame.finish();originalModuleMacroUseSourcePlan();}};
+}
+
+export function createModuleMacroUseBuiltinCallerAttributeScope(){
+ let closure=null,cells=0;const selected=[];const tick=()=>{if(++cells>200000)fail('complete original registered attribute source-cell bound');};
+ function at(module,item,attribute){
+  tick();if(!attribute||!['macro_use'].includes(attribute.name)||typeof module?.source!=='string')return null;const span=attribute.span;if(!span||!Number.isSafeInteger(span.start)||!Number.isSafeInteger(span.end)||span.start<item.start||span.end>item.end)return null;
+  const actual=originalSourceModuleItems(module).find(row=>row.start===item.start&&row.end===item.end);if(!actual||actual.tokens.length!==item.tokens.length||actual.tokens.some((token,index)=>['text','type','start','end'].some(key=>token[key]!==item.tokens[index][key])))fail('complete actual original attribute item differs');
+  const originalTokens=actual.tokens.filter(token=>token.type!=='comment'),first=originalTokens.findIndex(token=>token.start===span.start),last=originalTokens.findIndex(token=>token.end===span.end);if(first<0||last<=first||originalTokens[first].type!=='punct'||originalTokens[first].text!=='#'||originalTokens[first+1]?.type!=='punct'||originalTokens[first+1].text!=='['||originalTokens[last].type!=='punct'||originalTokens[last].text!==']')return null;
+  const source=module.source.slice(span.start,span.end),trees=originalMacroTrees(source,{maxBytes:256000,maxTokens:32000,maxDepth:64});if(trees.length!==2||trees[0].text!=='#'||trees[1].delimiter!=='[')return null;const body=trees[1].children;if(body[0]?.kind!=='token'||body[0].text!==attribute.name)return null;
+  if(body.length!==1||originalDeclarationHeader(actual,module.path)?.kind!=='mod')return null;
+  closure??=registeredModuleMacroUseCallerFacts('macro_use');const registration=closure.facts.registrations.find(row=>row.name===attribute.name);if(!registration)fail('fresh actual builtin registration absent');const row={source:module.file,module:[...module.path],span:{...span},original:source,name:attribute.name,originalTokenBoundsVerified:true,sourceAuthority:false,semanticAuthority:false};selected.push(row);return row;
+ }
+ return {at,finish(){if(!closure)return null;closure.current();return {schema:'original-registered-builtin-caller-scope-source-v1',selected,sources:closure.facts.sources.map(row=>({path:row.path,sourceSha256:row.sourceSha256,profileSha256:row.profileSha256})),trace:closure.facts.trace,sourceAuthority:false,namespaceAuthority:false,runtimeAuthority:false,crossInvocationCache:false};}};
+}

@@ -24,3 +24,24 @@ export function withPassiveMacroAttributeValidation(operation){
  try{const result=operation(validator);if(types.isPromise(result)||result&&typeof result==='object'&&types.isProxy(result))fail('source operation must finish synchronously');if(result&&typeof result==='object'){const then=Object.getOwnPropertyDescriptor(result,'then');if(then&&(!Object.hasOwn(then,'value')||typeof then.value==='function'))fail('source operation cannot return an own thenable/accessor');}return result;}
  finally{try{scope.finish();}finally{active=false;scope=null;records.length=0;}}
 }
+
+import {createModuleMacroUseBuiltinCallerAttributeScope} from './registered-builtin-caller-attribute-source.mjs';
+
+export function withModuleMacroUseAttributeValidation(operation){
+ if(typeof operation!=='function'||types.isProxy(operation)||types.isAsyncFunction(operation))fail('one complete synchronous source operation required');let active=true,scope=createOriginalPassiveBuiltinCallerAttributeScope(),moduleScope=createModuleMacroUseBuiltinCallerAttributeScope(),cells=0;const records=[];
+ const tick=()=>{if(!active)fail('original source operation is closed');if(++cells>200000)fail('complete source attribute operation cell bound');};
+ const validator={
+  header(module,item){
+   tick();const condition=itemConfiguration(item.tokens,module.compilationProfile);if(condition.status!=='active')return {closed:false,attributes:[]};const selected=[];if(condition.attributes.filter(row=>row.name==='macro_use').length>1)return {closed:false,attributes:[]};
+   for(const attribute of condition.attributes){tick();const actual=attribute.name==='macro_use'?moduleScope.at(module,item,attribute):scope.at(module,item,attribute);if(!actual)return {closed:false,attributes:[]};selected.push(actual);}return {closed:true,attributes:selected,macroUse:selected.some(row=>row.name==='macro_use'),sourceAuthority:false,semanticAuthority:false};
+  },
+  generated(source,{sourcePath}={}){
+   tick();if(typeof source!=='string')fail('complete actual generated source required');if(!source.includes('#'))return {attributes:[],sourceAuthority:false,semanticAuthority:false};
+   const trees=originalMacroTrees(source,{maxBytes:256000,maxTokens:32000,maxDepth:64}),captured=captureSourceModuleViews({source,sourcePath}),owners=[];for(const view of captured.views){const module={file:sourcePath,path:view.modulePath,source,sourceView:view,compilationProfile:view.compilationProfile};for(const item of originalModuleViewItems(view,source))owners.push({module,item});}owners.sort((left,right)=>(left.item.end-left.item.start)-(right.item.end-right.item.start));const selected=[];
+   function visit(nodes,depth=0){if(depth>64)fail('complete generated attribute delimiter bound');for(let index=0;index<nodes.length;index++){tick();const node=nodes[index];if(node.kind==='token'&&node.text==='#'){const group=nodes[++index];if(group?.delimiter!=='[')fail('generated raw identifiers or non-outer attributes need an independent source rule');const name=group.children[0]?.text,span={start:node.span.start,end:group.span.end},owner=owners.find(row=>row.item.start<=span.start&&row.item.end>=span.end);if(!owner)fail('generated attribute lacks its complete actual generated item');const actual=scope.at(owner.module,owner.item,{name,span});if(!actual)fail('every surviving generated attribute needs its original passive builtin source closure');selected.push({...actual,sourceDomain:'generated-expansion',originalCallerOwnerResolved:false});continue;}if(node.kind==='group')visit(node.children,depth+1);}}
+   visit(trees);const result={attributes:selected,sourceAuthority:false,semanticAuthority:false,namespaceAuthority:false};records.push(result);return result;
+  },
+ };
+ try{const result=operation(validator);if(types.isPromise(result)||result&&typeof result==='object'&&types.isProxy(result))fail('source operation must finish synchronously');if(result&&typeof result==='object'){const then=Object.getOwnPropertyDescriptor(result,'then');if(then&&(!Object.hasOwn(then,'value')||typeof then.value==='function'))fail('source operation cannot return an own thenable/accessor');}return result;}
+ finally{try{try{scope.finish();}finally{moduleScope.finish();}}finally{active=false;scope=null;moduleScope=null;records.length=0;}}
+}
