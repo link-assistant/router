@@ -16,7 +16,7 @@ import {checkPinnedSharedBody,checkedSharedMatchPlace,requirePinnedSharedBody,or
 import {STANDARD_OPTION_COPY_SOURCE,SHARED_REFERENCE_COPY_SOURCE,sharedReferenceCopyIdentity,originalPrimitiveCopySource} from '../shared-reference-copy-source.mjs';
 import {pinnedPrimitiveIdentityFrom,parsePrimitiveIdentityFromBody,requirePrimitiveIdentityFromBody,requirePrimitiveIdentityFromEvidence} from './primitive-identity-from-source.mjs'; import {prepareOriginalPrimitiveIdentityBoundary,originalPrimitiveIdentityParameterGuard} from './primitive-identity-boundary.mjs';
 import {pinnedPrimitiveFrom,parsePrimitiveFromBody,requirePrimitiveFromBody,hasSourceFixedFrom} from './primitive-from-source.mjs';
-import {parsePrimitiveComparison,checkedPrimitiveCast,checkedPrimitiveShift,requirePrimitiveOperator} from './primitive-operators.mjs';
+import {parsePrimitiveComparison,checkedPrimitiveCast,checkedPrimitiveShift,checkedPrimitiveBitwise,requirePrimitiveOperator} from './primitive-operators.mjs';
 import {sourcePrimitiveAlias} from './primitive-type-aliases.mjs';
 import {capturePrimitiveBoolFromScope,requirePrimitiveBoolFromScope,pinnedPrimitiveBoolFrom,parsePrimitiveBoolFromBody,requirePrimitiveBoolFromBody} from './primitive-bool-from-source.mjs';
 import {captureSourceConversionScope} from './source-conversion-scope.mjs';
@@ -545,7 +545,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
     const character=checkCharacterExpression(this,node,env,path,expected);if(character)return character;
     if(node.k==='routerTextPattern'&&['contains','starts_with'].includes(node.op)&&node.args?.length===1&&node.args[0].k==='routerTextReference'&&node.args[0].sourceAmpersand)return super.expr(this.prepareOriginalStringPatternBorrow(node,env,path),env,path,expected,allowLiteral);
     if(node.k==='routerStaticArrayElementBorrow')return checkStaticArrayElement(this,node,env,path,expected);
-    if(node.k==='routerPrimitiveShift')return checkedPrimitiveShift(this,node,env,path,expected);
+    if(node.k==='routerPrimitiveShift')return checkedPrimitiveShift(this,node,env,path,expected);if(node.k==='routerPrimitiveBitwise')return checkedPrimitiveBitwise(this,node,env,path,expected);
     if(node.k==='routerReverseStringFind'){
       const object=this.expr(node.object,env,path),inherent=this.resolvedMethod(object.type,'rfind','shared');
       if(inherent)return this.methodCall(inherent,node.object,node.args,env,path,expected,node.span);
@@ -866,10 +866,10 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
     if(node.k==='routerPinnedSharedBody')return this.expr(requireOriginalSharedEmission(this,node));
     if(node.k==='routerStaticArrayElement'){const proof=requireStaticArrayElement(node,this.program,HostChecker);this.staticArrayElements=true;return `ml_static_array_element(${JSON.stringify(proof.storageKey)}, () => ${this.expr(node.array)}, ${this.expr(node.index)})`;}
     if(node.k==='routerSourceUnitEnumCast')return this.expr(requireUnitEnumCast(node,this.program,HostChecker));
-    if(['routerPrimitiveIntegerCast','routerPrimitiveIntegerShift'].includes(node.k)){
+    if(['routerPrimitiveIntegerCast','routerPrimitiveIntegerShift','routerPrimitiveScalarBitwise'].includes(node.k)){
       const proof=requirePrimitiveOperator(node);this.primitiveOperators=true;
-      this.state.encode('rust-primitive-integer-operators','Actual by-value primitive integer cast and shift nodes, exact two-complement BigInt ABI and checked shift counts; no trait or pointer authority.');
-      if(node.k==='routerPrimitiveIntegerCast')return `ml_integer_cast(${this.expr(node.value)}, ${node.value.type.bits}, ${node.value.type.signed}, ${node.type.bits}, ${node.type.signed})`;
+      this.state.encode('rust-primitive-integer-operators','Actual by-value primitive casts, shifts and eager bool/fixed-integer bitwise operations; exact BigInt ABI and checked counts; no trait or pointer authority.');
+      if(node.k==='routerPrimitiveScalarBitwise')return `ml_primitive_bitwise(${this.expr(node.left)}, ${this.expr(node.right)}, ${JSON.stringify(proof.operation)}, ${node.type.kind==='bool'?'null':node.type.bits}, ${node.type.kind==='bool'?'null':node.type.signed})`;if(node.k==='routerPrimitiveIntegerCast')return `ml_integer_cast(${this.expr(node.value)}, ${node.value.type.bits}, ${node.value.type.signed}, ${node.type.bits}, ${node.type.signed})`;
       return `ml_integer_shift(${this.expr(node.left)}, ${this.expr(node.right)}, ${node.type.bits}, ${node.type.signed}, ${node.right.type.bits}, ${node.right.type.signed}, ${JSON.stringify(proof.operation)})`;
     }
     if(node.k==='routerPinnedStandardBody'){requirePinnedStandardEmission(this,node,HostRustParser,HostChecker);return this.expr(node.body);}
@@ -933,7 +933,7 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
   }
   file() {
     const result=super.file(),preludes=[...result.preludes];
-    if(this.primitiveOperators)preludes.unshift(`import { integerCast as ml_integer_cast, integerShift as ml_integer_shift } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'primitive-operator-runtime.mjs'))};`);
+    if(this.primitiveOperators)preludes.unshift(`import { integerCast as ml_integer_cast, integerShift as ml_integer_shift, primitiveBitwise as ml_primitive_bitwise } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'primitive-operator-runtime.mjs'))};`);
     if(this.primitiveBoolFrom)preludes.unshift(`import { primitiveBoolFrom as ml_primitive_bool_from } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'primitive-bool-from-runtime.mjs'))};`);
     if(this.stringIterators)preludes.unshift(`import { stringLines as ml_str_lines, stringWhitespace as ml_str_split_whitespace, stringNext as ml_str_next, stringJoin as ml_str_join } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'string-iterator-runtime.mjs'))};`);
     if(this.csvStrings)preludes.unshift(`import { stringSplitCharacter as ml_csv_split, stringSplitNext as ml_csv_split_next, allocateStringItem as ml_csv_allocate } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'csv-string-runtime.mjs'))};`);

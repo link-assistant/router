@@ -245,7 +245,7 @@ class NamespaceParser{
    if(c.eat('?')){left=this.node('Try',start,{value:left});continue;}
    if(c.is('as')){if(12<minimum)break;c.take();left=this.node('Cast',start,{value:left,type:this.type()});continue;}
    let operation=c.peek().text,width=1;if(['&','>'].includes(operation)&&c.peek(1)?.text===operation&&c.peek().end===c.peek(1).start){operation+=operation;width=2;}
-   const priorities={'=':1,'+=':1,'-=':1,'*=':1,'/=':1,'..':2,'..=':2,'||':3,'&&':4,'==':5,'!=':5,'<':6,'>':6,'<=':6,'>=':6,'|':7,'^':8,'&':9,'<<':10,'>>':10,'+':11,'-':11,'*':12,'/':12,'%':12};
+   const priorities={'=':1,'+=':1,'-=':1,'*=':1,'/=':1,'%=':1,'&=':1,'|=':1,'^=':1,'<<=':1,'>>=':1,'..':2,'..=':2,'||':3,'&&':4,'==':5,'!=':5,'<':6,'>':6,'<=':6,'>=':6,'|':7,'^':8,'&':9,'<<':10,'>>':10,'+':11,'-':11,'*':12,'/':12,'%':12};
    const precedence=priorities[operation];if(precedence===undefined||precedence<minimum)break;if(conditionContext&&precedence<4){if(conditionContext.letSeen)fail('original let condition requires conjunction without outer lazy-or, range or assignment');conditionContext.lowerOperatorSeen=true;}for(let at=0;at<width;at++)c.take();
    const right=operation==='..'&&[']',')',',',';','}'].includes(c.peek()?.text)?null:this.expression(precedence+(precedence===1?0:1),structAllowed,false,conditionContext,allowLet&&operation==='&&');left=this.node('Binary',start,{operation,left,right});
   }

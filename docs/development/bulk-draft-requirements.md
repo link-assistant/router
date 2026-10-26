@@ -298,6 +298,12 @@ parser bounds. Two compiler equations and independent unrun syntax/refusal/nativ
 boundary cases are drafted. Native/type/binding closure, target semantics,
 whole production translation, parity and all delivery obligations stay open.
 
+The [primitive bitwise draft](primitive-bitwise-draft.md) adds checked eager bool/
+fixed-integer operations and scalar compound assignments through original tokens,
+Host meta, target/runtime declarations and bounded const evaluation. Nine compiler
+equations and independent unrun JS/strict TS/native cases are drafted. Reverse
+helper recognition, actual callers, native closure and every delivery task stay open.
+
 The [positive generic draft](positive-generics-draft.md) adds free/associated
 turbofish and bounded const argument/default parsing without consuming enclosing
 angle tokens. Two compiler equations and independent unrun source/refusal/native

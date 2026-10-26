@@ -111,7 +111,7 @@ export function tokenizeRust(source) {
   }
   // Preserve source qualification, including const fn. Eligibility is checked
   // by the semantic frontend rather than erased during lexical normalization.
-  const tokens=parsed.tokens.flatMap(token => {
+  const mapped=parsed.tokens.flatMap(token => {
     const start=starts[token.start]??source.length,end=ends[token.end-1]??source.length,character=characters.get(start),number=numbers.get(start);
     if(number&&number.end===end)return {...token,...number,start,end};
     // Rust permits the joint punctuation `>=` to close a generic type and
@@ -120,6 +120,8 @@ export function tokenizeRust(source) {
     if(token.kind==='punct'&&token.value==='>=')return [{...token,value:'>',start,end:start+1},{...token,value:'=',start:start+1,end}];
     return character&&character.end===end?{...token,kind:'rustChar',value:character.value,raw:character.raw,start,end}:{...token,start,end};
   });
+  const tokens=[],assignments=new Set(['&=','|=','^=','<<=','>>=']);
+  for(let at=0;at<mapped.length;at++){const first=mapped[at];let spelling=first.value,last=at,chosen=null;if(first.kind==='punct')for(let distance=1;distance<=2&&at+distance<mapped.length;distance++){const next=mapped[at+distance];if(next.kind!=='punct'||mapped[at+distance-1].end!==next.start)break;spelling+=next.value;if(assignments.has(spelling)&&source.slice(first.start,next.end)===spelling){last=at+distance;chosen={...first,value:spelling,end:next.end};}}tokens.push(chosen??first);at=last;}
   tokenSources.set(tokens,Object.freeze({source,tokens:tokenSnapshot(tokens)}));
   return tokens;
 }

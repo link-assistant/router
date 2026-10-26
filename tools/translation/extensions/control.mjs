@@ -16,7 +16,7 @@ const LOOP = Symbol('loop depth');
 // join. Nested operands, subjects, guards and value matches get no permission.
 const statementMatches = new WeakSet();
 export const checkingStatementMatch = node => statementMatches.has(node);
-const compound = { '+=': 'add', '-=': 'sub', '*=': 'mul', '/=': 'div', '%=': 'rem' };
+const compound = { '+=': 'add', '-=': 'sub', '*=': 'mul', '/=': 'div', '%=': 'rem', '&=':'&', '|=':'|', '^=':'^', '<<=':'<<', '>>=':'>>' };
 const range = (start, end) => ({ start: start.start, end: end.end });
 // The Host frontend qualifies actual Rust f64 types before this layer. Its
 // by-value primitive has no aggregate alias/storage obligation; plain portable
@@ -108,7 +108,7 @@ export class ControlRustParser extends StringRustParser {
         if (expr.k !== 'name' || expr.path.length !== 1) throw unsupported('assignment target', 'only scalar local bindings are assignable', expr.span);
         const op = c.next().value;
         const right = this.expr(path);
-        const value = op === '=' ? right : { k: 'binary', op: compound[op], left: expr, right, span: range(start, c.peek()) };
+        const operation=compound[op],value=op==='='?right:['&','|','^'].includes(operation)?{k:'routerPrimitiveBitwise',operation,left:expr,right,span:range(start,c.peek())}:['<<','>>'].includes(operation)?{k:'routerPrimitiveShift',operation,left:expr,right,span:range(start,c.peek())}:{k:'binary',op:operation,left:expr,right,span:range(start,c.peek())};
         c.expect(';', 'assignment');
         statements.push({ k: 'routerSet', target: expr, value, span: range(start, c.peek()) });
         continue;
