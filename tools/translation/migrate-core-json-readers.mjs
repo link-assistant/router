@@ -109,7 +109,8 @@ function shadowProblem(tokens,body,parameters,owners){
   }
   if(word==='let'){
    let end=at+1;while(end<tokens.length&&!['=',';'].includes(tokens[end].text))end++;
-   if(tokens.slice(at+1,end).some(token=>ident(token)&&reserved.has(token.text)))return 'formal or canonical owner shadowed by local pattern';
+   const pattern=tokens.slice(at+1,end),ordinary=['{',';','}'].includes(tokens[at-1]?.text),plain=ident(pattern[0])&&pattern[0].text!=='mut'&&(pattern.length===1||pattern[1]?.text===':'),canonical=new Set([...owners,'serde_json','core','crate','translation_core']);
+   if(pattern.some(token=>ident(token)&&canonical.has(token.text))||(!ordinary||!plain)&&pattern.some(token=>ident(token)&&reserved.has(token.text)))return 'formal or canonical owner shadowed by local pattern';
   }
   if(word==='|'&&['=','(',',','return','{','=>'].includes(tokens[at-1]?.text)){
    let end=at+1;while(end<tokens.length&&tokens[end].text!=='|')end++;
@@ -135,20 +136,22 @@ function selectReaders(source,item,module,scoped,imports,names){
   const prefix=words(args.slice(0,-2));if(prefix===C+'Json'||['serde_json::Value','::serde_json::Value'].includes(prefix))return {member,qualified:prefix,import:null};
   if(args.length!==3||!ident(args[0]))return null;const selected=imports.select(module,args[0].text);return selected?{member,qualified:prefix,import:selected}:null;
  }
+ const aliasWalk=createJsonReaderSourceAliasWalk({source,tokens,body,parameters,owners,close,ident,canonicalReader:owner,typedParameters:piece=>parametersOf(piece,0,piece.length,scoped,imports,module)});
  for(let at=body+1;at<tokens.length-1;at++){
+  aliasWalk.advance(at);
   const macro=macroAt(tokens,at,'json')??macroAt(tokens,at,'format');if(macro){at=macro.end;continue;}
-  const first=tokens[at],parameter=parameters.get(first.text);if(!parameter?.role||['.','::'].includes(tokens[at-1]?.text))continue;
+  const first=tokens[at],parameter=aliasWalk.lookup(first.text);if(!parameter?.role||['.','::'].includes(tokens[at-1]?.text))continue;
   let cursor=at+1,role=parameter.role,rendered='',retainedTo=first.start,generatedPaths=[],last=null;const readers=[];
   for(let steps=0;steps<32&&cursor<tokens.length-1;steps++){
    if(tokens[cursor]?.text==='?'&&role.startsWith('optional-')){role=role.slice(9);cursor++;continue;}
    if(tokens[cursor]?.text!=='.'||!ident(tokens[cursor+1])||tokens[cursor+2]?.text!=='(')break;
    const end=close(tokens,cursor+2);if(end<0)break;const method=tokens[cursor+1].text,args=tokens.slice(cursor+3,end);
    if(method==='get'&&['json','map','array'].includes(role)&&args.length===1){
-    const key=args[0],known=parameters.get(key.text)?.keyRole,string=key.type==='string'&&/^(?:"|r#*")/u.test(key.text)||ident(key)&&known==='str',index=ident(key)&&known==='usize'||key.type==='number'&&/^(?:0|[1-9][0-9_]*)(?:usize)?$/u.test(key.text);
+    const key=args[0],known=aliasWalk.lookup(key.text)?.keyRole,string=key.type==='string'&&/^(?:"|r#*")/u.test(key.text)||ident(key)&&known==='str',index=ident(key)&&known==='usize'||key.type==='number'&&/^(?:0|[1-9][0-9_]*)(?:_?usize)?$/u.test(key.text);
     if(!((role==='json'&&(string||index))||(role==='map'&&string)||(role==='array'&&index)))break;
     role='optional-json';cursor=end+1;continue;
    }
-   if(method==='unwrap_or'&&role==='optional-json'&&args.length===1&&parameters.get(args[0].text)?.role==='json'){role='json';cursor=end+1;continue;}
+   if(method==='unwrap_or'&&role==='optional-json'&&args.length===1&&aliasWalk.lookup(args[0].text)?.role==='json'){role='json';cursor=end+1;continue;}
    if(method==='unwrap_or_default'&&role==='optional-scalar'&&last&&!args.length&&['as_str','as_bool','as_u64','as_i64','as_f64','as_null'].includes(last.selected.member)){
     if(item.tokens.some(token=>token.type==='comment'&&token.start>=tokens[cursor].start&&token.end<=tokens[end].end))break;
     const receiver=rendered+source.slice(retainedTo,tokens[cursor].start),input=fresh(),payload=fresh(),expanded=expandCanonicalJsonReaderDefault(receiver,last.selected.member,input,payload),offset=('{ let '+input+' = ').length;
@@ -166,10 +169,10 @@ function selectReaders(source,item,module,scoped,imports,names){
   if(last){
    let repository=rendered;for(const path of [...generatedPaths].reverse()){if(repository.slice(...path.span)!==path.expected)fail('nested generated reader path differs');repository=repository.slice(0,path.span[0])+path.replacement+repository.slice(path.span[1]);}
    edits.push({span:last.span,expected:source.slice(...last.span),replacement:rendered,repository,generatedPaths});
-   selections.push({function:item.name,functionSpan:[item.start,item.end],span:last.span,receiver:{span:last.receiverSpan,source:source.slice(...last.receiverSpan),formal:parameter},member:last.selected.member,owner:last.selected,readers,fallback:last.fallback??null,locals:[...readers.flatMap(row=>row.locals),...(last.fallback?.locals??[])],nativeEquation:'canonical Option<&Json>::and_then with inert canonical JSON reader function items; intermediate try operators retain source order',executableAdmission:false,loanBoundary:'same shared input root; no owned temporary introduced'});at=last.end;
+   selections.push({function:item.name,functionSpan:[item.start,item.end],span:last.span,receiver:{span:last.receiverSpan,source:source.slice(...last.receiverSpan),formal:parameter},sourceAliasOrigins:parameter.aliasOrigins??[],member:last.selected.member,owner:last.selected,readers,fallback:last.fallback??null,locals:[...readers.flatMap(row=>row.locals),...(last.fallback?.locals??[])],nativeEquation:'canonical Option<&Json>::and_then with inert canonical JSON reader function items; intermediate try operators retain source order',executableAdmission:false,loanBoundary:'same shared input root; no owned temporary introduced'});at=last.end;
   }
  }
- return {edits,selections,preserved:selections.length?[]:[{function:item.name,span:[item.start,item.end],reason:'no closed canonical shared Json Option reader function item'}]};
+ aliasWalk.finish();return {edits,selections,preserved:selections.length?[]:[{function:item.name,span:[item.start,item.end],reason:'no closed canonical shared Json Option reader function item'}]};
 }
 function mapping(source,after,edits){
  const rows=[];let old=0,current=0;
@@ -277,3 +280,5 @@ export function iterateCoreJsonReadersCorpusPackets(options={}){
 }
 
 import {expandCanonicalJsonReaderDefault} from './canonical-json-reader-default-normalization.mjs';
+
+import {createJsonReaderSourceAliasWalk} from './json-reader-source-aliases.mjs';

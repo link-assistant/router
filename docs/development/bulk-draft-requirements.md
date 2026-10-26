@@ -202,3 +202,10 @@ constructors, rebased generated paths and complete staged inverses. Four compile
 equations and independent unrun JS/strict TS/native/refusal sources are drafted.
 Default/Drop equivalence, caller admission, freshness, parity, synchronization
 and every remaining delivery requirement remain unfinished.
+
+The [immutable JSON reader alias draft](json-reader-aliases-draft.md) adds bounded
+lexical environments, delayed immutable bindings, parent restoration and exact
+source origins to both existing reader proposal entry points. Three compiler
+equations and independent unrun source/JS/strict TS/native cases are drafted.
+Native equivalence, broader mutation/alias forms, production qualification and
+every remaining source and delivery requirement remain unfinished.
