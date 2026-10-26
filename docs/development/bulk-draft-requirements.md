@@ -135,6 +135,13 @@ and independent unrun root/inner/member/foreign/refusal cases are drafted. Synta
 positions grant no visitor, import-confinement, macro-owner or global closure;
 all unfinished source/production/verification requirements remain open.
 
+The [attribute concat draft](attribute-concat-source-draft.md) copies complete
+fresh native/literal source implementations and joins genuine original doc
+argument receipts to conditional literal output, exact CST substitutions and
+whole-file inverses. Three complete compiler equations and independent unrun
+source/refusal/native cases are drafted. Actual macro/visitor/owner/global
+qualification and every unfinished requirement remain open.
+
 The [Option guard draft](http-resource-option-guards-draft.md) adds whole absent
 branches, every-exit resource cleanup, explicit fallback domains, Some payload
 moves, same-Option propagation and complete canonical native inverse rules.
