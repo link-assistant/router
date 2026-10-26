@@ -114,6 +114,13 @@ bounds. Nine complete source equations, adjacent native histories and independen
 unrun fixed-vector/JS/strict TS/inverse/native cases are drafted. Actual production
 adoption and every unfinished source/verification requirement remain open.
 
+The [ASCII method adoption draft](text-ascii-adoption-draft.md) extends the shared
+source selector with seven methods, four exact split projections and recognized
+owned receiver borrowing. Two complete compiler equations and independent unrun
+source/refusal/JS/strict TS/native original/adopted cases are drafted. Original
+whole-function admission, resource limits and unqualified dispatch/Drop metadata
+remain; actual production adoption and every unfinished requirement stay open.
+
 The [Option guard draft](http-resource-option-guards-draft.md) adds whole absent
 branches, every-exit resource cleanup, explicit fallback domains, Some payload
 moves, same-Option propagation and complete canonical native inverse rules.
