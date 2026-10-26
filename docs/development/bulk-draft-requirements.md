@@ -297,3 +297,9 @@ slice/rest, at-binding, alternative and field syntax under the existing private
 parser bounds. Two compiler equations and independent unrun syntax/refusal/native
 boundary cases are drafted. Native/type/binding closure, target semantics,
 whole production translation, parity and all delivery obligations stay open.
+
+The [positive generic draft](positive-generics-draft.md) adds free/associated
+turbofish and bounded const argument/default parsing without consuming enclosing
+angle tokens. Two compiler equations and independent unrun source/refusal/native
+cases are drafted. Native const/type/owner closure, actual target semantics,
+whole production translation, parity and all delivery obligations stay open.

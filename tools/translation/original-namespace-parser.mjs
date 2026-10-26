@@ -105,10 +105,10 @@ class NamespaceParser{
  }
  attributes(mode='outer'){const result=[],c=this.cursor;while(c.is('#')){if(mode==='inner'&&c.peek(1)?.text!=='!')break;const start=c.take().start,inner=!!c.eat('!');if(inner&&mode!=='inner')fail('inner attribute outside original initial block attribute position');if(!c.is('['))fail('original attribute bracket required');const tree=this.originalTree('[');result.push(this.node('Attribute',start,{inner,tree,ownerResolved:false}));}return result;}
  path(type=false){const c=this.cursor,start=c.peek()?.start,segments=[],segmentArguments=[],absolute=!!c.eat('::');
-  do{segments.push(this.name(true));segmentArguments.push(type&&c.is('<')?this.typeArguments():null);if(!c.is('::')||!type&&c.peek(1)?.text==='<')break;c.take();}while(true);
+  do{segments.push(this.name(true));let arguments_=null;if(type&&c.is('<'))arguments_=this.typeArguments();else if(c.is('::')&&c.peek(1)?.text==='<'){c.take();arguments_=this.typeArguments();}segmentArguments.push(arguments_);if(!c.eat('::'))break;}while(true);
   return this.node(type?'PathType':'Path',start,{absolute,segments,segmentArguments});
  }
- opaque(path,position){const c=this.cursor,start=path.span.start;c.expect('!');const open=c.peek()?.text,tree=this.originalTree(open),node=this.node('OpaqueBang',start,{path,position,tree,ownerResolved:false,globalBangEffect:'unresolved',runtimeEffect:'unresolved'});this.invocations.push(node);return node;}
+ opaque(path,position){if(path.fields.segmentArguments.some(value=>value!==null))fail('original macro path cannot contain generic arguments');const c=this.cursor,start=path.span.start;c.expect('!');const open=c.peek()?.text,tree=this.originalTree(open),node=this.node('OpaqueBang',start,{path,position,tree,ownerResolved:false,globalBangEffect:'unresolved',runtimeEffect:'unresolved'});this.invocations.push(node);return node;}
  type(){return this.enter(()=>{const c=this.cursor,start=c.peek()?.start,attributes=this.attributes();let result;
   if(c.eat('&')){let lifetime=null;if(c.peek()?.type==='char'&&c.peek().text.startsWith("'"))lifetime=this.lifetime();const mutable=!!c.eat('mut');result=this.node('ReferenceType',start,{lifetime,mutable,pointee:this.type()});}
   else if(c.eat('*')){const qualifier=c.take().text;if(!['const','mut'].includes(qualifier))fail('pointer qualifier required');result=this.node('PointerType',start,{qualifier,pointee:this.type()});}
@@ -121,17 +121,23 @@ class NamespaceParser{
   else {result=this.path(true);if(c.is('!'))result=this.opaque(result,'Ty');}
   if(attributes.length)result=this.node('BoundType',start,{attributes,value:result});return result;
  });}
+ constArgument(){return this.enter(()=>{const c=this.cursor,start=c.peek()?.start;
+  if(c.is('{'))return this.block();if(c.peek()?.type==='character-literal')return this.node('Literal',start,this.characterLiteral());
+  if(c.peek()?.type==='number'||c.is('true')||c.is('false'))return this.node('Literal',start,{original:c.take().text});
+  if(c.eat('-')){if(c.peek()?.type!=='number')fail('one negative literal or braced original const argument required');const value=this.node('Literal',c.peek().start,{original:c.take().text});return this.node('Unary',start,{operation:'-',mutable:false,value});}
+  return this.path();
+ });}
  typeArguments(){const c=this.cursor,start=c.expect('<').start,values=[];while(!c.is('>')){
   if(c.peek()?.type==='char'&&c.peek().text.startsWith("'"))values.push(this.lifetime());
   else if(isName(c.peek())&&c.peek(1)?.text==='='){const at=c.peek().start,name=this.name();c.take();values.push(this.node('AssociatedTypeArgument',at,{name,value:this.type()}));}
-  else if(c.peek()?.type==='number'||c.is('{'))values.push(this.expression(0,false));
+  else if(c.peek()?.type==='number'||c.peek()?.type==='character-literal'||c.is('true')||c.is('false')||c.is('-')||c.is('{'))values.push(this.constArgument());
   else values.push(this.type());
   if(!c.eat(','))break;
  }c.expect('>');return this.node('TypeArguments',start,{values});}
  bounds(){const c=this.cursor,result=[];do{const start=c.peek()?.start,optional=!!c.eat('?');if(c.peek()?.type==='char'&&c.peek().text.startsWith("'"))result.push(this.node('Bound',start,{optional,lifetime:this.lifetime()}));else result.push(this.node('Bound',start,{optional,type:this.type()}));}while(c.eat('+'));return result;}
  generics(){const c=this.cursor,start=c.expect('<').start,parameters=[];while(!c.is('>')){const at=c.peek()?.start,attributes=this.attributes();let lifetime=null,constant=false,name=null,type=null,bounds=[],default_=null;
   if(c.peek()?.type==='char'&&c.peek().text.startsWith("'"))lifetime=this.lifetime().fields.original;else{constant=!!c.eat('const');name=this.name();}
-  if(c.eat(':')){if(constant)type=this.type();else bounds=this.bounds();}if(c.eat('='))default_=constant?this.expression(0,false):this.type();parameters.push(this.node('GenericParameter',at,{attributes,lifetime,constant,name,type,bounds,default:default_}));if(!c.eat(','))break;
+  if(c.eat(':')){if(constant)type=this.type();else bounds=this.bounds();}if(c.eat('='))default_=constant?this.constArgument():this.type();parameters.push(this.node('GenericParameter',at,{attributes,lifetime,constant,name,type,bounds,default:default_}));if(!c.eat(','))break;
  }c.expect('>');return this.node('Generics',start,{parameters});}
  where(){const c=this.cursor;if(!c.is('where'))return null;const start=c.take().start,clauses=[];while(!c.is('{')&&!c.is(';')){const type=this.type();c.expect(':');clauses.push(this.node('Bound',type.span.start,{type,bounds:this.bounds()}));if(!c.eat(','))break;}return this.node('Where',start,{clauses});}
  function(attributes=[],context='free'){const c=this.cursor,start=attributes[0]?.span.start??c.peek()?.start;let visibility=null;if(c.eat('pub')){visibility='pub';if(c.is('('))visibility=this.originalTree('(');}
