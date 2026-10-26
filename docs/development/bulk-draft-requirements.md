@@ -341,3 +341,10 @@ across all seven profiles. Seventeen complete source equations, unrun matrix,
 meta/CST/strict TS/refusal/order cases and native oracle source are drafted.
 All complete module/inverse, production, native closure, synchronization,
 freshness, parity, remaining source and delivery obligations stay open.
+
+The [canonical primitive Rust inverse draft](primitive-rust-inverse-draft.md)
+projects the scalar families through state/outcome/cancellation Rust observations
+and their actual private JavaScript/meta/reproduction paths. Ten complete source
+equations and independent unrun matrix/boolean/meta/inverse/refusal cases are
+drafted. Arbitrary/complete forward modules and every remaining production,
+native closure, synchronization, freshness, parity and delivery obligation stay open.

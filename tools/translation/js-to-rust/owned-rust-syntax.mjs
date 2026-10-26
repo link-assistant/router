@@ -18,9 +18,9 @@ export function ownedRustString(text){
  }
  if(/\p{Surrogate}/u.test(output))fail('Rust string must contain Unicode scalar values');return output;
 }
-const PRECEDENCE=new Map([['||',1],['&&',2],['==',3],['!=',3],['<',4],['<=',4],['>',4],['>=',4]]);
+const PRECEDENCE=new Map([['||',1],['&&',2],['==',3],['!=',3],['<',4],['<=',4],['>',4],['>=',4],['|',5],['^',6],['&',7],['<<',8],['>>',8]]);
 export class OwnedRustReader {
- constructor(tokens){if(!Array.isArray(tokens)||tokens.length>200000)fail('bounded complete Rust tokens required');this.tokens=tokens.filter(token=>token.type!=='comment');this.index=0;this.cells=0;}
+ constructor(tokens,{primitiveOperators=false}={}){this.primitiveOperators=primitiveOperators===true;if(!Array.isArray(tokens)||tokens.length>200000)fail('bounded complete Rust tokens required');this.tokens=tokens.filter(token=>token.type!=='comment');this.index=0;this.cells=0;}
  peek(ahead=0){return this.tokens[this.index+ahead]??{text:'',type:'end'};}
  is(text,ahead=0){return this.peek(ahead).text===text&&this.peek(ahead).type!=='string';}
  next(){const value=this.peek();if(value.type==='end')fail('unexpected end of complete Rust source');this.index++;return value;}
@@ -46,13 +46,13 @@ export class OwnedRustReader {
   while(this.eat('#'))this.group('[',']');const exported=this.eat('pub');this.expect('fn');const name=this.identifier();
   if(this.eat('<')){this.expect("'a");this.expect('>');}this.expect('(');const parameters=[];
   while(!this.eat(')')){const name=this.identifier();this.expect(':');const type=this.typeUntil([',',')']);parameters.push({name,type});if(!this.is(')'))this.expect(',');}
-  this.expect('->');const returns=this.typeUntil(['{']),body=this.block(new Map(),0);if(this.peek().type!=='end')fail('complete function item was not consumed');return {name,exported,parameters,returns,body};
+  this.expect('->');const returns=this.typeUntil(['{']),environment=this.primitiveOperators?new Map(parameters.map(param=>[param.name,{kind:'name',name:param.name,type:param.type==='bool'?'bool':ownedRustPrimitiveType(param.type)?.name??null}])):new Map(),body=this.block(environment,0);if(this.peek().type!=='end')fail('complete function item was not consumed');return {name,exported,parameters,returns,body};
  }
  block(environment,depth){
   this.tick(depth);this.expect('{');const local=new Map(environment),statements=[];let tail=null;
   while(!this.eat('}')){
    this.tick(depth);
-   if(this.eat('let')){const mutable=this.eat('mut'),name=this.identifier();if(mutable&&name.startsWith('__ro_'))fail('mutable compiler temporary is outside the emitted form');this.expect('=');const value=this.expression(local,0,depth+1);this.expect(';');if(name.startsWith('__ro_'))local.set(name,value);else statements.push({kind:'let',name,value,...(mutable?{mutable:true}:{})});continue;}
+   if(this.eat('let')){const mutable=this.eat('mut'),name=this.identifier();if(mutable&&name.startsWith('__ro_'))fail('mutable compiler temporary is outside the emitted form');this.expect('=');const value=this.expression(local,0,depth+1);this.expect(';');if(name.startsWith('__ro_'))local.set(name,value);else {statements.push({kind:'let',name,value,...(mutable?{mutable:true}:{})});if(this.primitiveOperators)local.set(name,{kind:'name',name,type:ownedRustPrimitiveObservationType(value)});}continue;}
    if(this.peek().type==='ident'&&this.is('=',1)){const name=this.identifier();this.expect('=');const value=this.expression(local,0,depth+1);this.expect(';');statements.push({kind:'assign',name,value});continue;}
    if(this.eat('return')){const value=this.expression(local,0,depth+1);this.expect(';');statements.push({kind:'return',value});continue;}
    if(this.is('assert!')||this.is('for')||this.is('__ro_domain')||this.is('if')&&this.is('let',1)){this.skipGuard();continue;}
@@ -65,14 +65,15 @@ export class OwnedRustReader {
   this.tick(depth);let value=this.primary(environment,depth+1);
   for(;;){
    if(this.eat('.')){const name=this.identifier();if(this.eat('(')){const args=this.arguments(environment,depth+1);value={kind:'method',name,value,args};}else value={kind:'field',name,value};continue;}
-   const op=this.peek().text,precedence=PRECEDENCE.get(op);if(precedence===undefined||precedence<minimum)break;this.next();value={kind:'binary',op,left:value,right:this.expression(environment,precedence+1,depth+1)};
+   if(this.primitiveOperators&&minimum<=9&&this.eat('as')){const target=this.path();if(!ownedRustPrimitiveType(target))fail('canonical cast target requires an absolute native primitive');value={kind:'primitive-cast',value,target};continue;}
+   const op=this.peek().text;if(['&','|','^','<<','>>'].includes(op)&&!this.primitiveOperators)fail('explicit primitive source profile required');const precedence=PRECEDENCE.get(op);if(precedence===undefined||precedence<minimum)break;this.next();value={kind:'binary',op,left:value,right:this.expression(environment,precedence+1,depth+1)};
   }return value;
  }
  arguments(environment,depth){const args=[];while(!this.eat(')')){args.push(this.expression(environment,0,depth+1));if(!this.is(')'))this.expect(',');}return args;}
  primary(environment,depth){
   this.tick(depth);
-  if(this.eat('&'))return {kind:'borrow',value:this.expression(environment,5,depth+1)};
-  if(this.eat('!'))return {kind:'not',value:this.expression(environment,5,depth+1)};
+  if(this.eat('&'))return {kind:'borrow',value:this.expression(environment,10,depth+1)};
+  if(this.eat('!'))return {kind:'not',value:this.expression(environment,10,depth+1)};
   if(this.eat('(')){const value=this.expression(environment,0,depth+1);this.expect(')');return value;}
   if(this.is('{'))return this.block(environment,depth+1);
   if(this.eat('if')){const condition=this.expression(environment,0,depth+1),yes=this.block(environment,depth+1);this.expect('else');return {kind:'choose',condition,yes,no:this.block(environment,depth+1)};}
@@ -82,10 +83,10 @@ export class OwnedRustReader {
    return {kind:'match',value,arms};
   }
   if(this.eat('|')){const parameters=[];while(!this.eat('|')){parameters.push(this.identifier());if(!this.is('|'))this.expect(',');}return {kind:'lambda',parameters,body:this.block(environment,depth+1)};}
-  if(this.eat('-')){const token=this.next(),found=token.type==='number'&&/^(0|[1-9][0-9]{0,18})_i64$/u.exec(token.text);if(!found||BigInt(found[1])>9223372036854775808n)fail('canonical bounded negative i64 literal required');return {kind:'integer',value:(-BigInt(found[1])).toString(),type:'i64'};}
+  if(this.eat('-')){const token=this.next();if(this.primitiveOperators){const literal=ownedRustPrimitiveLiteral(token.text,true);if(!literal)fail('canonical bounded negative native integer literal required');return literal;}const found=token.type==='number'&&/^(0|[1-9][0-9]{0,18})_i64$/u.exec(token.text);if(!found||BigInt(found[1])>9223372036854775808n)fail('canonical bounded negative i64 literal required');return {kind:'integer',value:(-BigInt(found[1])).toString(),type:'i64'};}
   const token=this.peek();
   if(token.type==='string'){this.next();return {kind:'string',value:ownedRustString(token.text)};}
-  if(token.type==='number'){this.next();const found=/^(0|[1-9][0-9]*)_(u64|i64)$/u.exec(token.text);if(!found||found[1].length>20||BigInt(found[1])>(found[2]==='i64'?9223372036854775807n:18446744073709551615n))fail('canonical bounded suffixed integer required');return {kind:'integer',value:found[1],type:found[2]};}
+  if(token.type==='number'){this.next();if(this.primitiveOperators){const literal=ownedRustPrimitiveLiteral(token.text,false);if(!literal)fail('canonical bounded native integer literal required');return literal;}const found=/^(0|[1-9][0-9]*)_(u64|i64)$/u.exec(token.text);if(!found||found[1].length>20||BigInt(found[1])>(found[2]==='i64'?9223372036854775807n:18446744073709551615n))fail('canonical bounded suffixed integer required');return {kind:'integer',value:found[1],type:found[2]};}
   if(this.eat('true'))return {kind:'boolean',value:true};if(this.eat('false'))return {kind:'boolean',value:false};
   const path=this.path();
   if(path==='crate::translation_core::json!')return this.jsonMacro(environment,depth+1);
@@ -100,4 +101,6 @@ export class OwnedRustReader {
   else fail('canonical owned JSON aggregate macro required');this.expect(')');return value;
  }
 }
-export function readOwnedRustFunction(source){if(typeof source!=='string'||source.length>2097152)fail('bounded complete original Rust function required');return new OwnedRustReader(rustTokens(source)).function();}
+export function readOwnedRustFunction(source,{primitiveOperators=false}={}){if(typeof source!=='string'||source.length>2097152)fail('bounded complete original Rust function required');return new OwnedRustReader(rustTokens(source),{primitiveOperators}).function();}
+
+import {ownedRustPrimitiveType,ownedRustPrimitiveLiteral,ownedRustPrimitiveObservationType} from './owned-rust-primitive-projection.mjs';

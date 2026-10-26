@@ -66,13 +66,14 @@ export function ownedRustNameProposals(source,path){
  return result;
 }
 /** Catalog rows and AST observations cannot grant native binding authority. */
-export function projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot,nameProposals=[],resultTypeLibrary='primitive-result'}={}){
+export function projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot,nameProposals=[],primitiveOperators=false,resultTypeLibrary='primitive-result'}={}){
  if(!['primitive-result','owned-result'].includes(resultTypeLibrary))fail('unknown Result type proposal library');const resultTypePrefix=resultTypeLibrary==='owned-result'?'router_owned_result_':'router_result_';
  const imports=new Map(),localNames=new Map(functions.map(fn=>[fn.name,nameProposals.find(proposal=>proposal.rust===fn.name)?.javascript??fn.name]));let cells=0;
  const tick=depth=>{if(++cells>100000||depth>160)fail('original owned projection node/depth budget exceeded');};
  const relative=name=>{const value=posix.relative(posix.dirname(javascriptPath),runtimeRoot+'/'+name+'-runtime.mjs');return value.startsWith('.')?value:'./'+value;};
  function imported(name,family){const key=family+':'+name;if(!imports.has(key))imports.set(key,{name,family,local:'original_'+name});return imports.get(key).local;}
  function type(text){
+  const scalar=primitiveOperators&&text.startsWith('::core::primitive::')?ownedRustPrimitiveType(text):null;if(scalar)return 'import('+JSON.stringify(relative('primitive-operator'))+').'+scalar.alias;
   text=text.replaceAll("&'a",'&');
   if(text==='&crate::translation_async_control_core::Cancellation')return 'Parameters<typeof '+imported('router_cancel_is_set','async-control')+'>[0]';
   const scalar=/^&\[(u64|i64|bool)\]$/u.exec(text);if(scalar)return 'readonly ('+type(scalar[1])+')[]';
@@ -91,6 +92,7 @@ export function projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot,
   fail('public Rust input needs a matching canonical owned ABI rule: '+text);
  }
  function returnType(text){
+  const scalar=primitiveOperators&&text.startsWith('::core::primitive::')?ownedRustPrimitiveType(text):null;if(scalar)return 'import('+JSON.stringify(relative('primitive-operator'))+').'+scalar.alias;
   const values={
    'crate::translation_core::Json':['router_core_json_find','json-iteration'],
    '&crate::translation_core::Json':['serde_json_value_get_string','json'],
@@ -104,6 +106,7 @@ export function projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot,
   const next=(value,lower=false)=>expression(value,names,depth+1,lower);
   const args=(values,roles=[])=>values.map((value,index)=>next(adapter(value,roles[index]))).join(', ');
   const call=(name,family,values,roles)=>imported(name,family)+'('+args(values,roles)+')';
+  const primitive=projectOwnedRustPrimitiveObservation(node,{enabled:primitiveOperators,imported,expression:next});if(primitive!==null)return primitive;
   switch(node.kind){
    case 'temporary':return next(node.value,lowering);
    case 'borrow':return next(node.value,lowering);
@@ -193,3 +196,5 @@ export function projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot,
  const javascript=prelude+'\n\n'+bodies.join('\n\n')+'\n';if(javascript.length>2097152)fail('whole JavaScript proposal exceeds original source bound');
  return {javascript,imports:[...imports.values()],nameProposals,sourceAuthority:false,semanticAuthority:false};
 }
+
+import {ownedRustPrimitiveType,projectOwnedRustPrimitiveObservation} from './owned-rust-primitive-projection.mjs';
