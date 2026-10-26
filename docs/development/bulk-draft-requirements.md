@@ -391,3 +391,10 @@ shares bounded transparent type parentheses across all seven receiving paths.
 Ten complete source equations and unrun native-domain/alias/meta/refusal/depth
 cases are drafted. Public native scalar exports and all remaining source/native/
 production/sync/freshness/parity/delivery obligations remain unfinished.
+
+The [primitive declaration mirror draft](primitive-declaration-mirrors-draft.md)
+joins actual native alias symbols to the canonical declaration or a complete
+byte-equal runtime mirror for named and inline imports in every receiving path.
+Nine complete source equations and unrun symbol/meta/runtime/changed-mirror
+refusals are drafted. Public native exports and all remaining source/native/
+production/sync/freshness/parity/delivery obligations remain unfinished.

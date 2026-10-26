@@ -355,6 +355,7 @@ function originalOwnedCoreImport(handle,path,node,analysis){
    const typesOnly=spec.isTypeOnly||declaration.importClause?.isTypeOnly;
    const actual=typesOnly?syntax.get(state.data.declarationRoot+'/'+posix.basename(target).replace(/\.mjs$/u,'.d.mts')):syntax.get(target);
    const exported=actual?.statements.some(item=>item.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword)&&((item.name?.text===name)||(ts.isVariableStatement(item)&&item.declarationList.declarations.some(node=>ts.isIdentifier(node.name)&&node.name.text===name))));
+   if(typesOnly&&target===state.data.runtimeRoot+'/primitive-operator-runtime.mjs'&&primitiveBitwiseAlias(name)&&!ownedNativeScalarDeclaration(ts,checker,syntax,state.files,{canonicalPath:state.data.declarationRoot+'/primitive-operator-runtime.d.mts',mirrorPath:state.data.runtimeRoot+'/primitive-operator-runtime.d.mts',name,symbol}))fail('native scalar named import requires its actual current declaration symbol');
    if(!exported)fail('original runtime has no such export');return {target,name,links,local:node.text,typeOnly:!!typesOnly};
   }
   const next=syntax.get(target);if(!next||next.statements.length!==1)fail('only a single transparent reexport declaration');let selected=null;
@@ -387,7 +388,7 @@ function originalOwnedCoreType(handle,path,type,analysis){
  }
  if(ts.isImportTypeNode(type)&&!type.isTypeOf&&ts.isLiteralTypeNode(type.argument)&&ts.isStringLiteral(type.argument.literal)&&type.qualifier&&ts.isIdentifier(type.qualifier)&&primitiveBitwiseAlias(type.qualifier.text)&&!type.typeArguments&&!type.attributes){
   requireOwnedCoreSourceCurrent(handle);const row=primitiveBitwiseAlias(type.qualifier.text),target=relative(path,type.argument.literal.text),runtime=state.data.runtimeRoot+'/primitive-operator-runtime.mjs',declaration=state.data.declarationRoot+'/primitive-operator-runtime.d.mts';if(state.data.primitiveOperators!==true||![runtime,state.data.declarationRoot+'/primitive-operator-runtime.mjs'].includes(target))fail('unregistered native scalar type import');
-  const actual=analysis.syntax.get(declaration),exported=actual?.statements.find(item=>ts.isTypeAliasDeclaration(item)&&item.name.text===row.alias&&item.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword)),symbol=analysis.checker.getSymbolAtLocation(type.qualifier);if(!exported||symbol?.declarations?.length!==1||symbol.declarations[0]!==exported)fail('native scalar type import requires its actual current exported declaration symbol');requireOwnedCoreSourceCurrent(handle);return row.name;
+  const selected=ownedNativeScalarDeclaration(ts,analysis.checker,analysis.syntax,state.files,{canonicalPath:declaration,mirrorPath:state.data.runtimeRoot+'/primitive-operator-runtime.d.mts',name:row.alias,symbol:analysis.checker.getSymbolAtLocation(type.qualifier)});if(!selected)fail('native scalar type import requires its actual current canonical or byte-equal mirrored declaration symbol');requireOwnedCoreSourceCurrent(handle);return row.name;
  }
  if(ts.isImportTypeNode(type)&&!type.isTypeOf&&ts.isLiteralTypeNode(type.argument)&&ts.isStringLiteral(type.argument.literal)&&type.qualifier?.text==='JsonValue'&&!type.typeArguments){
   if(originalImportTarget(path,type.argument.literal.text,analysis,state)!==state.data.runtimeRoot+'/json-macro-runtime.mjs')fail('unregistered type import');return 'json-ref';
@@ -979,3 +980,5 @@ import {ownedPrimitiveOperatorOperation,readOwnedPrimitiveOperatorCall} from './
 import {primitiveBitwiseType,primitiveBitwiseAlias} from '../primitive-bitwise-types.mjs';
 
 import {ownedParenthesizedType} from './owned-type-parentheses.mjs';
+
+import {ownedNativeScalarDeclaration} from './owned-native-scalar-declaration.mjs';
