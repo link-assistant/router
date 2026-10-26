@@ -146,3 +146,10 @@ with private fresh receipts and one bounded within-operation native frame.
 Three compiler equations and independent unrun source/private/refusal cases are
 drafted. Actual native-parsed caller presence, behavior/effect consumers, all
 owner/global closure and every unfinished delivery requirement remain open.
+
+The [shared header expression draft](header-expression-draft.md) reuses actual
+equality ASTs from genuine item/function/data headers and copies seven complete
+private macro position/input/capture paths with original tree identity. Three
+compiler equations and independent unrun source/private/refusal cases are
+drafted. Actual owner/visitor/global qualification, adapted value consumers and
+every remaining production/reverse/sync/freshness/CI requirement stay unfinished.

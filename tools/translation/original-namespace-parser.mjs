@@ -471,3 +471,62 @@ export function captureOriginalNamespaceDataAttributeHeader(dataToken,options,se
 export function originalNamespaceDataAttributeHeaderFacts(token,dataToken,options,selector){
  intrinsicGuard();const state=dataAttributeHeaderFrames.get(token);if(!state)fail('copied or foreign attribute header frame');const now=dataAttributeHeaderInput(dataToken,options,selector),prior=state.input;if(now.dataToken!==prior.dataToken||now.domain!==prior.domain||now.ownerIndex!==prior.ownerIndex||now.variantIndex!==prior.variantIndex||now.attributeIndex!==prior.attributeIndex||now.owner!==prior.owner||now.attribute!==prior.attribute)fail('original data item/nested attribute association changed');if(now.item!==prior.item||now.memberIndex!==prior.memberIndex||now.selected.start!==prior.selected.start||now.selected.end!==prior.selected.end||now.carrier.sourceView!==prior.carrier.sourceView||now.carrier.source!==prior.carrier.source||now.carrier.file!==prior.carrier.file||!sameSnapshot(now.carrier.path,prior.carrier.path)||!sameSnapshot(now.carrier.compilationProfile,prior.carrier.compilationProfile)||!sameSnapshot(now.attributeSpan,prior.attributeSpan)||!sameSnapshot(now.bodySpan,prior.bodySpan)||now.attributeStyle!==prior.attributeStyle)fail('original attribute/module/profile association changed');identity(state.parser);positive(state.parser,state.ast);identity(prior.headerParser);positive(prior.headerParser,prior.leadingAttributes);requireOriginalNamespaceParserSourcePlan(state.sourcePlan);attributeHeaderConcreteCurrent(state.facts.concreteSyntax,prior.carrier.source);return state.facts;
 }
+
+// One distinct equality-expression family over genuine original header families.
+const headerExpressionFrames=new WeakMap(),headerExpressionConfinements=new WeakMap(),headerInvocationInputs=new WeakMap(),headerInvocationExpressionCaptures=new WeakMap();
+function headerExpressionRequest(request){
+ intrinsicGuard();const keys=['domain','headerToken','parentToken','options','selector'];if(!request||typeof request!=='object'||types.isProxy(request)||Reflect.ownKeys(request).length!==keys.length||!keys.every(key=>Object.hasOwn(request,key)))fail('exact original header expression request required');const result={domain:ownData(request,'domain'),headerToken:ownData(request,'headerToken'),parentToken:ownData(request,'parentToken'),options:ownData(request,'options'),selector:ownData(request,'selector')};if(!['item','function-nested','data-nested'].includes(result.domain)||result.domain==='item'&&(result.parentToken!==null||result.selector!==null))fail('original header expression domain differs');return result;
+}
+function headerExpressionParent(request){
+ let facts,state;if(request.domain==='item'){facts=originalNamespaceAttributeHeaderFacts(request.headerToken,request.options);state=attributeHeaderFrames.get(request.headerToken);}else if(request.domain==='function-nested'){facts=originalNamespaceFunctionNestedAttributeHeaderFacts(request.headerToken,request.parentToken,request.options,request.selector);state=functionNestedAttributeHeaderFrames.get(request.headerToken);}else{facts=originalNamespaceDataAttributeHeaderFacts(request.headerToken,request.parentToken,request.options,request.selector);state=dataAttributeHeaderFrames.get(request.headerToken);}if(!state||state.ast.arguments.kind!=='Equality'||!state.ast.arguments.expression||nodes.get(state.ast.arguments.expression)!==state.parser)fail('genuine complete original equality header required');identity(state.parser);positive(state.parser,state.ast);return {facts,state};
+}
+function currentHeaderExpression(token,request){
+ intrinsicGuard();const state=headerExpressionFrames.get(token);if(!state)fail('copied or foreign header expression frame');const now=headerExpressionRequest(request),prior=state.request;for(const key of ['domain','headerToken','parentToken','options','selector'])if(now[key]!==prior[key])fail('original header expression request association changed');const parent=headerExpressionParent(now);if(parent.state!==state.parent||parent.state.parser!==state.parser||parent.state.ast.arguments.expression!==state.ast)fail('actual original header expression parent changed');identity(state.parser);positive(state.parser,state.ast);requireOriginalNamespaceParserSourcePlan(state.sourcePlan);return state;
+}
+export function captureOriginalNamespaceHeaderExpression(request){
+ const captured=headerExpressionRequest(request),parent=headerExpressionParent(captured),state=parent.state,ast=state.ast.arguments.expression,valueSpan=state.ast.arguments.valueSpan;if(!valueSpan||valueSpan.start<state.input.bodySpan.start||valueSpan.end!==state.input.bodySpan.end||ast.span.start<valueSpan.start||ast.span.end>valueSpan.end)fail('complete original header equality value span required');const source=state.input.carrier.source,token=Object.freeze({schema:'private-original-namespace-header-expression-v1'}),facts=freeze({schema:'original-namespace-header-expression-v1',source:{...parent.facts.source,headerDomain:captured.domain,valueSpan:{...valueSpan},originalValue:source.slice(valueSpan.start,valueSpan.end)},concreteSyntax:parent.facts.concreteSyntax,ast,opaqueInvocations:state.parser.invocations,originalDocumentation:state.input.raw.filter(part=>part.type==='comment'&&part.start>=valueSpan.start&&part.end<=valueSpan.end).map(part=>({...part})),sourcePlan:state.sourcePlan,completeOriginalAttributeExpressionParsed:true,completeOriginalHeaderExpressionSelected:true,nativeCallerGrammarQualified:false,callerOwnerResolved:false,callerScopeComplete:false,attributeTransformationsResolved:false,attributeValueSemanticsQualified:false,attributeMacroOwnerResolved:false,nativeExpressionVisitorConfinementQualified:false,ordinaryGeneratedImportsAndProcStubsRemainExpressionLocal:false,globalBangComplete:false,globalExportsClosed:false,sourceAuthority:false,namespaceAuthority:false,typeAuthority:false,runtimeAuthority:false,wholeCompilerExecuted:false,receivingExecuted:false});headerExpressionFrames.set(token,{request:captured,parent:state,input:state.input,parser:state.parser,ast,sourcePlan:state.sourcePlan,facts});currentHeaderExpression(token,request);return token;
+}
+export function originalNamespaceHeaderExpressionFacts(token,request){return currentHeaderExpression(token,request).facts;}
+
+
+export function originalNamespaceHeaderExpressionInvocationPositions(token,options){
+ intrinsicGuard();const state=headerExpressionFrames.get(token);if(!state)fail('copied or foreign attribute expression frame');originalNamespaceHeaderExpressionFacts(token,options);const rows=[];for(let index=0;index<state.parser.invocations.length;index++){intrinsicGuard();const node=state.parser.invocations[index];if(nodes.get(node)!==state.parser||!['Expr','Ty','Stmts'].includes(node.fields.position))fail('unproved private expansion position');
+ const proof=Object.freeze({schema:'private-original-namespace-header-position-v1'}),facts=freeze({schema:'original-namespace-header-position-v1',source:state.facts.source,invocation:node,position:node.fields.position,nativeExpressionVisitorConfinementQualified:false,ordinaryGeneratedImportsAndProcStubsRemainExpressionLocal:false,enclosingAttributeBindingsUnchanged:false,unresolvedGlobalMacroExportKindsRetained:true,outerAttributeTransformationsResolved:false,globalBangComplete:false,globalBangExportsRemainPending:true,macroOwnerResolved:false,typeAuthority:false,runtimeAuthority:false,sourcePlan:state.sourcePlan});headerExpressionConfinements.set(proof,{token,state,index,node,facts});rows.push({index,proof,facts});}originalNamespaceHeaderExpressionFacts(token,options);intrinsicGuard();return freeze(rows);
+}
+
+export function originalNamespaceHeaderExpressionPositionFacts(proof,token,options){intrinsicGuard();const record=headerExpressionConfinements.get(proof);if(!record||record.token!==token)fail('copied or foreign confinement proof');originalNamespaceHeaderExpressionFacts(token,options);if(record.state.parser.invocations[record.index]!==record.node)fail('private original invocation changed');return record.facts;}
+
+
+// A source-fragment lane over the exact whole original invocation, never a
+// rendered expansion or a caller-supplied AST/parser callback.
+
+export function captureOriginalNamespaceHeaderInvocationInput(position,token,options){
+ const positionFacts=originalNamespaceHeaderExpressionPositionFacts(position,token,options),state=headerExpressionFrames.get(token),node=positionFacts.invocation;
+ const original=state.input.carrier.source.slice(node.span.start,node.span.end),invocation=originalMacroInvocation(original);intrinsicGuard();
+ if(invocation.path.length!==node.fields.path.fields.segments.length||invocation.path.some((part,index)=>part!==node.fields.path.fields.segments[index]))fail('original invocation path changed');
+ const proof=Object.freeze({schema:'private-original-namespace-header-invocation-input-v1'}),facts=freeze({schema:'original-namespace-header-invocation-input-v1',source:state.facts.source,invocationSpan:node.span,original,trees:invocation.trees,originalTree:node.fields.tree,callerMacroOwnerResolved:false,namespaceAuthority:false,runtimeAuthority:false});
+ headerInvocationInputs.set(proof,{position,token,node,invocation,facts});return proof;
+}
+
+function currentHeaderInvocationInput(input,position,token,options){
+ intrinsicGuard();const state=headerInvocationInputs.get(input);if(!state||state.position!==position||state.token!==token)fail('copied or foreign original invocation input');
+ const actual=originalNamespaceHeaderExpressionPositionFacts(position,token,options);if(actual.invocation!==state.node||headerExpressionFrames.get(token).input.carrier.source.slice(state.node.span.start,state.node.span.end)!==state.facts.original)fail('original invocation/frame association changed');return state;
+}
+
+export function originalNamespaceHeaderInvocationInputFacts(input,position,token,options){return currentHeaderInvocationInput(input,position,token,options).facts;}
+
+export function captureOriginalNamespaceHeaderInvocationExpression(input,position,token,options,providedTrees){
+ intrinsicGuard();const selected=captureTrees(providedTrees),context=currentHeaderInvocationInput(input,position,token,options),trees=context.invocation.trees,matches=[];
+ for(let at=0;at+selected.length<=trees.length;at++)if(trees[at]===selected[0]&&selected.every((tree,index)=>tree===trees[at+index]))matches.push(at);
+ if(matches.length!==1)fail('capture is not one exact contiguous original invocation sequence');
+ const source=headerExpressionFrames.get(token).input.carrier.source,offset=context.node.span.start,start=offset+selected[0].span.start,end=offset+selected.at(-1).span.end,raw=headerExpressionFrames.get(token).input.raw.filter(part=>part.start>=start&&part.end<=end);
+ if(!raw.length||raw.length>ORIGINAL_NAMESPACE_PARSER_LIMITS.tokens||raw[0].start!==start||raw.at(-1).end!==end)fail('complete original expression token boundaries/bound');
+ intrinsicGuard();const parser=new NamespaceParser(source,freeze(raw));identity(parser);const ast=parser.expression();if(parser.cursor.peek()!==null)fail('full original capture expression EOF required');identity(parser);positive(parser,ast);freeze(ast);
+ const proof=Object.freeze({schema:'private-original-namespace-header-invocation-expression-v1'}),facts=freeze({schema:'original-namespace-header-invocation-expression-v1',source:headerExpressionFrames.get(token).facts.source,span:{start,end},original:source.slice(start,end),trees:selected,originalTokens:raw,ast,documentation:raw.filter(part=>part.type==='comment'&&(part.text.startsWith('///')||part.text.startsWith('//!')||part.text.startsWith('/**')||part.text.startsWith('/*!'))),opaqueInvocations:parser.invocations,fullOriginalExpressionParsed:true,typeAuthority:false,runtimeAuthority:false,namespaceAuthority:false});
+ currentHeaderInvocationInput(input,position,token,options);identity(parser);positive(parser,ast);headerInvocationExpressionCaptures.set(proof,{input,position,token,parser,ast,facts});return proof;
+}
+
+export function originalNamespaceHeaderInvocationExpressionFacts(proof,input,position,token,options){
+ intrinsicGuard();const record=headerInvocationExpressionCaptures.get(proof);if(!record||record.input!==input||record.position!==position||record.token!==token)fail('copied or foreign original expression capture');
+ currentHeaderInvocationInput(input,position,token,options);identity(record.parser);positive(record.parser,record.ast);return record.facts;
+}
