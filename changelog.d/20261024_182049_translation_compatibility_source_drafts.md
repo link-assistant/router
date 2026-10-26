@@ -322,3 +322,6 @@ integration and the remaining requirement ledger are still open.
 - Draft plain module macro_use with fresh original builtin/parser/resolver source
   joins, closed synchronous attribute scopes, tracked textual export and unrun
   JS/TypeScript/multi-file native/refusal coverage source.
+- Draft explicit-profile outer configuration source substitutions with fresh
+  grammar/compiler joins, complete staged file inverses, immutable profile guards
+  and unrun JS/TypeScript/multi-file native/refusal cases.

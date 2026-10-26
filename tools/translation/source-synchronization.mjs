@@ -52,3 +52,6 @@ export {translateTrackedLocalDeclarativeProject} from './tracked-local-declarati
 
 export {proposeModuleMacroUseTrackedLocalDeclarativeSources} from './tracked-local-declarative-source.mjs';
 export {translateModuleMacroUseTrackedLocalDeclarativeProject} from './module-macro-use-tracked-local-declarative-project.mjs';
+
+export {proposeConfiguredTrackedTextualSources} from './tracked-local-declarative-source.mjs';
+export {translateConfiguredTrackedLocalDeclarativeProject} from './configured-tracked-local-declarative-project.mjs';

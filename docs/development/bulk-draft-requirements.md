@@ -950,3 +950,12 @@ project source remain. Seven complete source equations and independent JS/strict
 TS/multi-file native/refusal cases are unrun. General exports, documentation/
 conditional producer prerequisites, architecture closure and every unfinished
 requirement above remain open.
+
+The [explicit configuration textual draft](configured-tracked-textual-draft.md)
+selects only actual proved inactive item and active/false outer condition spans,
+retaining unknown/inner/producer refusals and full original/configured/expanded
+physical inverses. Fresh native grammar/compiler sources and immutable explicit
+profiles govern the copied checked project path; diagnostics and original
+application equivalence remain unqualified. Six complete source equations and
+independent JS/strict TS/multi-file native/refusal cases are unrun. Inner/docs/
+active conditional producers, architecture closure and every unfinished row remain.
