@@ -291,3 +291,9 @@ source-bound bulk adopters to one current candidate implementation, preserving
 each outer guard/proof context and adding explicit synchronization facade APIs.
 Five compiler equations and independent unrun bulk/packet/guard/source cases are
 drafted. Export production, receiving, native closure and all delivery work stay open.
+
+The [positive pattern draft](positive-patterns-draft.md) adds shared range,
+slice/rest, at-binding, alternative and field syntax under the existing private
+parser bounds. Two compiler equations and independent unrun syntax/refusal/native
+boundary cases are drafted. Native/type/binding closure, target semantics,
+whole production translation, parity and all delivery obligations stay open.

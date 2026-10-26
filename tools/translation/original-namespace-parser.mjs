@@ -150,14 +150,37 @@ class NamespaceParser{
   }
   c.expect(')');const result=c.eat('->')?this.type():null,where=this.where();let body=null;if(c.eat(';')){if(context!=='trait')fail('original ordinary function body required');}else body=this.block();return this.node('Function',start,{attributes,visibility,qualifiers,name,generics,parameters,result,where,body});
  }
- pattern(or=true){return this.enter(()=>{const c=this.cursor,start=c.peek()?.start;let result;
+ patternBound(){return this.enter(()=>{const c=this.cursor,start=c.peek()?.start;
+  if(c.eat('-')){if(c.peek()?.type!=='number')fail('negative original numeric pattern bound required');c.take();return this.node('Pattern',start,{variant:'literal',original:this.source.slice(start,c.tokens[c.index-1].end),negativeNumber:true});}
+  if(c.peek()?.type==='character-literal')return this.node('Pattern',start,{variant:'literal',...this.characterLiteral()});
+  if(c.peek()?.type==='number')return this.node('Pattern',start,{variant:'literal',original:c.take().text});
+  return this.node('Pattern',start,{variant:'path',path:this.path()});
+ });}
+ patternSequence(close){
+  const c=this.cursor,values=[];let rests=0;const rest=value=>value.fields.variant==='rest'||['binding','binding-qualifier'].includes(value.fields.variant)&&rest(value.fields.value);
+  while(!c.is(close)){const value=this.pattern(true,true);if(rest(value)&&++rests>1)fail('at most one direct original sequence rest pattern');values.push(value);if(!c.eat(','))break;}c.expect(close);return values;
+ }
+ pattern(or=true,allowRest=false){return this.enter(()=>{const c=this.cursor,start=c.peek()?.start;let result;
+  if(or&&c.eat('|'))return this.node('Pattern',start,{variant:'leading-or',value:this.pattern(),bindingsResolved:false});
   if(c.eat('&')){const mutable=!!c.eat('mut');result=this.node('Pattern',start,{variant:'reference',mutable,value:this.pattern(false)});}
-  else if(c.is('mut')||c.is('ref')){const qualifier=c.take().text;result=this.node('Pattern',start,{variant:'binding-qualifier',qualifier,value:this.pattern(false)});}
-  else if(c.eat('(')){const values=[];while(!c.is(')')){values.push(this.pattern());if(!c.eat(','))break;}c.expect(')');result=this.node('Pattern',start,{variant:'tuple',values});}
+  else if(c.is('mut')||c.is('ref')){const qualifier=c.take().text;result=this.node('Pattern',start,{variant:'binding-qualifier',qualifier,value:this.pattern(false,allowRest)});}
+  else if(c.eat('('))result=this.node('Pattern',start,{variant:'tuple',values:this.patternSequence(')')});
+  else if(c.eat('['))result=this.node('Pattern',start,{variant:'slice',values:this.patternSequence(']'),bindingsResolved:false});
+  else if(c.eat('..')){if(!allowRest)fail('original rest requires an enclosing tuple or slice pattern');result=this.node('Pattern',start,{variant:'rest',bindingsResolved:false});}
+  else if(c.eat('..='))result=this.node('Pattern',start,{variant:'range',operation:'..=',lower:null,upper:this.patternBound(),boundsResolved:false,patternTypeResolved:false});
+  else if(c.is('-'))result=this.patternBound();
   else if(c.eat('_'))result=this.node('Pattern',start,{variant:'wildcard'});
   else if(c.peek()?.type==='character-literal')result=this.node('Pattern',start,{variant:'literal',...this.characterLiteral()});
   else if(['number','string'].includes(c.peek()?.type)||c.is('true')||c.is('false'))result=this.node('Pattern',start,{variant:'literal',original:c.take().text});
-  else{const path=this.path();let values=[];if(c.eat('(')){while(!c.is(')')){values.push(this.pattern());if(!c.eat(','))break;}c.expect(')');result=this.node('Pattern',start,{variant:'tuple-constructor',path,values});}else if(c.eat('{')){while(!c.is('}')){const at=c.peek().start;if(c.eat('..')){values.push(this.node('PatternField',at,{rest:true}));break;}const name=this.name(),value=c.eat(':')?this.pattern():null;values.push(this.node('PatternField',at,{name,value}));if(!c.eat(','))break;}c.expect('}');result=this.node('Pattern',start,{variant:'struct',path,values});}else result=this.node('Pattern',start,{variant:'path',path});}
+  else{const path=this.path();let values=[];if(c.eat('(')){values=this.patternSequence(')');result=this.node('Pattern',start,{variant:'tuple-constructor',path,values});}
+   else if(c.eat('{')){while(!c.is('}')){const at=c.peek().start;if(c.eat('..')){values.push(this.node('PatternField',at,{rest:true}));c.eat(',');break;}
+    if(c.is('ref')||c.is('mut')){const value=this.pattern(false);let binding=value;while(binding.fields.variant==='binding-qualifier')binding=binding.fields.value;if(binding.fields.variant!=='path'||binding.fields.path.fields.absolute||binding.fields.path.fields.segments.length!==1)fail('ordinary original qualified shorthand field binding required');values.push(this.node('PatternField',at,{name:binding.fields.path.fields.segments[0],value,shorthand:true,bindingsResolved:false}));}
+    else{const numeric=c.peek()?.type==='number'&&/^(?:0|[1-9][0-9]*)$/u.test(c.peek().text),name=numeric?c.take().text:this.name(),colon=!!c.eat(':');if(numeric&&!colon)fail('original numeric field requires its explicit pattern');const value=colon?this.pattern():null;values.push(this.node('PatternField',at,{name,value}));}if(!c.eat(','))break;
+   }c.expect('}');result=this.node('Pattern',start,{variant:'struct',path,values});}else result=this.node('Pattern',start,{variant:'path',path});}
+  if(c.eat('@')){if(result.fields.variant!=='path'||result.fields.path.fields.absolute||result.fields.path.fields.segments.length!==1||!isPlainSourceIdentifier(result.fields.path.fields.segments[0]))fail('ordinary original binding identifier required before @');result=this.node('Pattern',start,{variant:'binding',name:result.fields.path.fields.segments[0],value:this.pattern(false,allowRest),bindingsResolved:false});}
+  if(c.is('..')||c.is('..=')){
+   const shape=result.fields.variant,literal=result.fields.literalKind==='character'||result.fields.negativeNumber||/^[0-9]/u.test(result.fields.original??'');if(shape!=='path'&&!(shape==='literal'&&literal))fail('original range requires numeric, character or unresolved constant-path bounds');const operation=c.take().text,empty=[',',')',']','}','|','if','=>','=',';'].includes(c.peek()?.text),upper=operation==='..'&&empty?null:this.patternBound();result=this.node('Pattern',start,{variant:'range',operation,lower:result,upper,boundsResolved:false,patternTypeResolved:false});
+  }
   if(or&&c.eat('|'))result=this.node('Pattern',start,{variant:'or',left:result,right:this.pattern()});return result;
  });}
  useTree(prefix=[]){const c=this.cursor,start=c.peek()?.start;let absolute=!!c.eat('::'),segments=[...prefix],children=[],glob=false,alias=null;
