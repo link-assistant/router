@@ -405,3 +405,11 @@ proposes complete target-coordinate type source with full CST/inverses. Two
 whole source equations and unrun symbol/source/refusal cases are drafted. Public
 packaging/root-interface/redistribution consumers and all remaining source/native/
 production/sync/freshness/parity/delivery obligations remain unfinished.
+
+The [public native alias packaging draft](public-native-alias-integration-draft.md)
+connects actual native scalar alias symbols to Rust/TS public packaging,
+canonical root interfaces, empty-body inverses and complete receiving module
+redistribution. Eight whole source equations and unrun width/restoration/strict
+TS/type-only/refusal/native oracle cases are drafted. Generic/optional native
+public aliases and every remaining source/native/production/sync/freshness/
+parity/delivery obligation remain unfinished.
