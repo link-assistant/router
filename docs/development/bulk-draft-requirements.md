@@ -76,6 +76,14 @@ legacy/refusal, operation and JS/strict TS source cases are drafted. No compiler
 feature or layout is qualified; macro documentation, all producer/global/type-
 prefix closure and every unfinished source/verification requirement remain open.
 
+The [original attribute expression draft](attribute-expression-source-draft.md)
+copies the private whole-source capture pattern into a distinct direct equality-
+expression family, retaining actual root/member association, original spans,
+complete CST, EOF, native source/AST guards and original combined bounds. Three
+complete source equations and independent unrun refusal/source cases are drafted.
+Builtin doc consumers, native visitor confinement, wider attributes and every
+unfinished producer/production/source/verification requirement remain open.
+
 The [Option guard draft](http-resource-option-guards-draft.md) adds whole absent
 branches, every-exit resource cleanup, explicit fallback domains, Some payload
 moves, same-Option propagation and complete canonical native inverse rules.
