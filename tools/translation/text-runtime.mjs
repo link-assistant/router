@@ -78,3 +78,17 @@ export function router_text_split_once_left(value,pattern){return asciiSplitSide
 export function router_text_split_once_right(value,pattern){return asciiSplitSide(value,pattern,false,true);}
 export function router_text_rsplit_once_left(value,pattern){return asciiSplitSide(value,pattern,true,false);}
 export function router_text_rsplit_once_right(value,pattern){return asciiSplitSide(value,pattern,true,true);}
+
+// Existing paired Option slices provide total, bounded root-zero fallbacks.
+export function router_text_strip_prefix_or_self(value,pattern){const result=router_text_strip_prefix(value,pattern);return result.$==='Some'?result.field0:value;}
+export function router_text_strip_prefix_or_empty(value,pattern){const result=router_text_strip_prefix(value,pattern);return result.$==='Some'?result.field0:'';}
+export function router_text_strip_suffix_or_self(value,pattern){const result=router_text_strip_suffix(value,pattern);return result.$==='Some'?result.field0:value;}
+export function router_text_strip_suffix_or_empty(value,pattern){const result=router_text_strip_suffix(value,pattern);return result.$==='Some'?result.field0:'';}
+export function router_text_split_once_left_or_self(value,pattern){const result=router_text_split_once_left(value,pattern);return result.$==='Some'?result.field0:value;}
+export function router_text_split_once_left_or_empty(value,pattern){const result=router_text_split_once_left(value,pattern);return result.$==='Some'?result.field0:'';}
+export function router_text_split_once_right_or_self(value,pattern){const result=router_text_split_once_right(value,pattern);return result.$==='Some'?result.field0:value;}
+export function router_text_split_once_right_or_empty(value,pattern){const result=router_text_split_once_right(value,pattern);return result.$==='Some'?result.field0:'';}
+export function router_text_rsplit_once_left_or_self(value,pattern){const result=router_text_rsplit_once_left(value,pattern);return result.$==='Some'?result.field0:value;}
+export function router_text_rsplit_once_left_or_empty(value,pattern){const result=router_text_rsplit_once_left(value,pattern);return result.$==='Some'?result.field0:'';}
+export function router_text_rsplit_once_right_or_self(value,pattern){const result=router_text_rsplit_once_right(value,pattern);return result.$==='Some'?result.field0:value;}
+export function router_text_rsplit_once_right_or_empty(value,pattern){const result=router_text_rsplit_once_right(value,pattern);return result.$==='Some'?result.field0:'';}

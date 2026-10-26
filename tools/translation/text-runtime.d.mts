@@ -32,3 +32,15 @@ export declare function router_text_split_once_left(argument0:string,argument1:s
 export declare function router_text_split_once_right(argument0:string,argument1:string): TextSliceOption;
 export declare function router_text_rsplit_once_left(argument0:string,argument1:string): TextSliceOption;
 export declare function router_text_rsplit_once_right(argument0:string,argument1:string): TextSliceOption;
+export declare function router_text_strip_prefix_or_self(argument0:string,argument1:string): string;
+export declare function router_text_strip_prefix_or_empty(argument0:string,argument1:string): string;
+export declare function router_text_strip_suffix_or_self(argument0:string,argument1:string): string;
+export declare function router_text_strip_suffix_or_empty(argument0:string,argument1:string): string;
+export declare function router_text_split_once_left_or_self(argument0:string,argument1:string): string;
+export declare function router_text_split_once_left_or_empty(argument0:string,argument1:string): string;
+export declare function router_text_split_once_right_or_self(argument0:string,argument1:string): string;
+export declare function router_text_split_once_right_or_empty(argument0:string,argument1:string): string;
+export declare function router_text_rsplit_once_left_or_self(argument0:string,argument1:string): string;
+export declare function router_text_rsplit_once_left_or_empty(argument0:string,argument1:string): string;
+export declare function router_text_rsplit_once_right_or_self(argument0:string,argument1:string): string;
+export declare function router_text_rsplit_once_right_or_empty(argument0:string,argument1:string): string;

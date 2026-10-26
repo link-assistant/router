@@ -49,6 +49,10 @@ export function selectTextMethodAdoption(source,item,_scoped,modulePath,_names,h
      if(!['.','count','(',')','as','u64'].every((word,index)=>tokens[after+index]?.text===word))break;after+=6;
     }else{if(tokens[after]?.text!=='as'||tokens[after+1]?.text!=='u64')break;after+=2;}
    }
+   if(['strip_prefix','strip_suffix','split_once_left','split_once_right','rsplit_once_left','rsplit_once_right'].includes(operation)&&tokens[after]?.text==='.'&&tokens[after+2]?.text==='('){
+    if(tokens[after+1]?.text==='unwrap_or_default'&&tokens[after+3]?.text===')'){operation+='_or_empty';after+=4;}
+    else if(tokens[after+1]?.text==='unwrap_or'&&ident(tokens[after+3])&&tokens[after+4]?.text===')'&&value.domain==='str'&&ident(initial)&&value.replacement===initial.text&&tokens[after+3].text===initial.text){operation+='_or_self';after+=5;}
+   }
    const row=textContract(operation);if(!row||pieces.length!==row.parameters.length-1)break;let valid=true;
    for(let index=0;index<pieces.length;index++){
     const piece=pieces[index],start=indices.get(piece[0]),argument=row.parameters[index+1]==='u64'?count(start):expression(start,depth+1,index===0&&['contains','starts_with','ends_with','replace','replacen','strip_prefix','strip_suffix','matches','split_once','rsplit_once'].includes(method));

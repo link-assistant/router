@@ -124,3 +124,11 @@ data receipts and header consumers at generic, field, variant and variant-field
 sites. Three compiler equations and independent unrun syntax/private/refusal and
 native oracle cases are drafted. Native legality, builtin/derive/owner/effect
 closure, lowering and every remaining production/reverse/CI requirement stay open.
+
+The [borrowed text fallback draft](text-option-fallbacks-draft.md) adds twelve
+paired native/JS/TS operations, shared forward/reverse registrations and exact
+source fallback fusion under the existing root-zero borrow and scalar bounds.
+Eleven compiler equations, complete adjacent native histories and independent
+unrun vectors/JS/strict TS/reverse/native/refusal cases are drafted. Production
+adoption, full parity, source-bank/export freshness, synchronization and all
+remaining source and verification requirements remain unfinished.

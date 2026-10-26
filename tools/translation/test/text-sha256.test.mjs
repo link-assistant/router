@@ -27,7 +27,7 @@ test('the hashing operation validates primitive scalar UTF8 before hashing and r
  assert.throws(()=>challenge('x'.repeat(1048577)),/input bound/u);assert.equal(challenge('x'.repeat(1048576)).length,43);assert.equal(challenge('π\0🙂').length,43);assert.notEqual(challenge('é'),challenge('e\u0301'));
 });
 test('one registry row reaches actual native source forward JavaScript and independently strict TypeScript',limits,async()=>{
- const row=textContract('sha256_base64_url_no_pad');assert.equal(row.parameters[0],'str');assert.equal(row.returns,'text-owned');assert.equal(row.rustPath,'crate::translation_text_core::sha256_base64_url_no_pad');assert.equal(TEXT_CONTRACTS.length,32);assert.equal(emitTextDeclarations(),TEXT_DECLARATIONS_SOURCE);
+ const row=textContract('sha256_base64_url_no_pad');assert.equal(row.parameters[0],'str');assert.equal(row.returns,'text-owned');assert.equal(row.rustPath,'crate::translation_text_core::sha256_base64_url_no_pad');assert.equal(TEXT_CONTRACTS.length,44);assert.equal(emitTextDeclarations(),TEXT_DECLARATIONS_SOURCE);
  assert.equal(TEXT_NATIVE_SOURCE,readFileSync(new URL('../../../rust/src/translation_text_core.rs',import.meta.url),'utf8'));const result=project();assert.ok(result.meta.executable.some(row=>row.name==='challenge'),JSON.stringify(result.meta.refused));await verifyTypedTargets(result,api=>{for(const row of vectors)assert.equal(api.challenge(row.input),row.expected);},{childTimeoutMs:20000});assert.equal(result.meta.runtimeParity,false);
 });
 test('wrong actual native sources and operand/result domains remain refused',limits,()=>{

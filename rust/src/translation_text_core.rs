@@ -240,3 +240,65 @@ pub fn rsplit_once_right<'a>(value: &'a str, pattern: &str) -> Option<&'a str> {
     checked(pattern);
     value.rsplit_once(pattern).map(|(_, right)| right)
 }
+
+/// Total borrowed text fallbacks; every result retains the input value lifetime.
+#[must_use]
+pub fn strip_prefix_or_self<'a>(value: &'a str, pattern: &str) -> &'a str {
+    strip_prefix(value, pattern).unwrap_or(value)
+}
+
+#[must_use]
+pub fn strip_prefix_or_empty<'a>(value: &'a str, pattern: &str) -> &'a str {
+    strip_prefix(value, pattern).unwrap_or("")
+}
+
+#[must_use]
+pub fn strip_suffix_or_self<'a>(value: &'a str, pattern: &str) -> &'a str {
+    strip_suffix(value, pattern).unwrap_or(value)
+}
+
+#[must_use]
+pub fn strip_suffix_or_empty<'a>(value: &'a str, pattern: &str) -> &'a str {
+    strip_suffix(value, pattern).unwrap_or("")
+}
+
+#[must_use]
+pub fn split_once_left_or_self<'a>(value: &'a str, pattern: &str) -> &'a str {
+    split_once_left(value, pattern).unwrap_or(value)
+}
+
+#[must_use]
+pub fn split_once_left_or_empty<'a>(value: &'a str, pattern: &str) -> &'a str {
+    split_once_left(value, pattern).unwrap_or("")
+}
+
+#[must_use]
+pub fn split_once_right_or_self<'a>(value: &'a str, pattern: &str) -> &'a str {
+    split_once_right(value, pattern).unwrap_or(value)
+}
+
+#[must_use]
+pub fn split_once_right_or_empty<'a>(value: &'a str, pattern: &str) -> &'a str {
+    split_once_right(value, pattern).unwrap_or("")
+}
+
+#[must_use]
+pub fn rsplit_once_left_or_self<'a>(value: &'a str, pattern: &str) -> &'a str {
+    rsplit_once_left(value, pattern).unwrap_or(value)
+}
+
+#[must_use]
+pub fn rsplit_once_left_or_empty<'a>(value: &'a str, pattern: &str) -> &'a str {
+    rsplit_once_left(value, pattern).unwrap_or("")
+}
+
+#[must_use]
+pub fn rsplit_once_right_or_self<'a>(value: &'a str, pattern: &str) -> &'a str {
+    rsplit_once_right(value, pattern).unwrap_or(value)
+}
+
+#[must_use]
+pub fn rsplit_once_right_or_empty<'a>(value: &'a str, pattern: &str) -> &'a str {
+    rsplit_once_right(value, pattern).unwrap_or("")
+}
+
