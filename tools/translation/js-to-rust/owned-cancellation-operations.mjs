@@ -247,6 +247,9 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
    case 'option-some':if(value.type==='json-owned-option'){imports.add('router_carrier_json_some');return rust?'Some(__ro_copy(&'+expr(value.value)+'))':'__ro_router_carrier_json_some('+expr(value.value)+')';}return rust?'Some('+expr(value.value)+')':"({$:'Some',field0:"+expr(value.value)+'})';
    case 'option-test':return rust?'('+expr(value.value)+').is_'+(value.some?'some':'none')+'()':'('+expr(value.value)+'.$ === '+JSON.stringify(value.some?'Some':'None')+')';
    case 'option-field':return rust?'(match '+expr(value.value)+' { Some(value) => value, None => unreachable!("checked original Some branch") })':expr(value.value)+'.field0';
+   case 'primitive-bitwise-call':{
+    if(value.name!=='primitiveBitwise'||value.type!=='bool'||value.args.length!==2||value.args.some(argument=>argument.type!=='bool')||!ownedBooleanBitwiseOperator(value.operation))fail('checked boolean bitwise contract differs');imports.add(value.name);if(!rust)return '__ro_primitiveBitwise('+value.args.map(argument=>expr(argument)).join(', ')+', '+JSON.stringify(value.operation)+', null, null)';const names=value.args.map(()=> '__ro_arg_'+sequence++),bindings=value.args.map((argument,index)=>'let '+names[index]+' = '+expr(argument)+';');return '{ '+bindings.join(' ')+' '+ownedBooleanBitwiseRustCall(value.operation,names)+' }';
+   }
    case 'json-option-call':{
     const op=ownedJsonOptionalReaderOperation(value.name);if(!op||value.type!==op.ret||value.args.length!==1||value.args[0].type!==op.input)fail('checked optional Json operation differs');imports.add(value.name);
     if(!rust)return '__ro_'+value.name+'('+expr(value.args[0])+')';
@@ -324,8 +327,8 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  const output=outputPath??program[0].source.path,relative=(name,base=sourceData.runtimeRoot)=>{const path=posix.relative(posix.dirname(output),base+'/'+name);return path.startsWith('.')?path:'./'+path;};
  const lines=['import type {JsonValue} from '+JSON.stringify(relative('json-macro-runtime.mjs',[...imports].some(ownedAsciiOperation)?sourceData.declarationRoot:sourceData.runtimeRoot))+';'];
  if([...imports].some(name=>ownedBase64Operation(name)))lines.push('import type {Base64Error,Base64Result} from '+JSON.stringify(relative('base64-runtime.mjs'))+';');
- for(const family of ['json-update','json-macro','base64','json','json-option','string-iterator','json-collections','json-iteration','json-state','json-fields','owned-outcome','integer','sse','text','primitive-option','primitive-option-callback','primitive-result','owned-result','http-protocol','async-control']){
-  const names=[...imports].filter(name=>(ownedCancellationOperation(name)?'async-control':ownedPrimitiveResultOperation(name)?ownedPrimitiveResultOperation(name).runtimeModule.slice(0,-12):ownedPrimitiveOptionCallbackOperation(name)?'primitive-option-callback':ownedPrimitiveOptionOperation(name)?'primitive-option':ownedTextOperation(name)?'text':ownedSseOperation(name)?'sse':ownedIntegerOperation(name)?'integer':ownedOutcomeOperation(name)?'owned-outcome':ownedJsonFieldOperation(name)?'json-fields':ownedStateOperation(name)?'json-state':ownedIterationOnlyOperation(name)?'json-iteration':ownedCollectionOperation(name)?'json-collections':ownedAsciiOperation(name)?'string-iterator':ownedJsonOptionalReaderOperation(name)?'json-option':ownedBase64Operation(name)?'base64':ownedJsonReaderOperation(name)?'json':name.startsWith('json_macro_')?'json-macro':'json-update')===family);
+ for(const family of ['primitive-operator','json-update','json-macro','base64','json','json-option','string-iterator','json-collections','json-iteration','json-state','json-fields','owned-outcome','integer','sse','text','primitive-option','primitive-option-callback','primitive-result','owned-result','http-protocol','async-control']){
+  const names=[...imports].filter(name=>(ownedBooleanBitwiseOperation(name)?'primitive-operator':ownedCancellationOperation(name)?'async-control':ownedPrimitiveResultOperation(name)?ownedPrimitiveResultOperation(name).runtimeModule.slice(0,-12):ownedPrimitiveOptionCallbackOperation(name)?'primitive-option-callback':ownedPrimitiveOptionOperation(name)?'primitive-option':ownedTextOperation(name)?'text':ownedSseOperation(name)?'sse':ownedIntegerOperation(name)?'integer':ownedOutcomeOperation(name)?'owned-outcome':ownedJsonFieldOperation(name)?'json-fields':ownedStateOperation(name)?'json-state':ownedIterationOnlyOperation(name)?'json-iteration':ownedCollectionOperation(name)?'json-collections':ownedAsciiOperation(name)?'string-iterator':ownedJsonOptionalReaderOperation(name)?'json-option':ownedBase64Operation(name)?'base64':ownedJsonReaderOperation(name)?'json':name.startsWith('json_macro_')?'json-macro':'json-update')===family);
   if(names.length)lines.push('import { '+names.map(name=>name+' as __ro_'+name).join(', ')+' } from '+JSON.stringify(relative(family+'-runtime.mjs'))+';');
  }
  return lines.join('\n')+'\n\n'+code+'\n';
@@ -371,6 +374,7 @@ fn __ro_with_field(base: &crate::translation_core::Json, key: &str, value: &crat
 /** Prepare only the actual registered module, after fresh complete source joins. */
 export async function prepareOwnedCoreRuntime(input){
  const program=checkOwnedCoreProgram(input),modules={update:await import('../json-update-runtime.mjs'),macro:await import('../json-macro-runtime.mjs')};
+ if(program.some(item=>item.hostCalls.some(call=>ownedBooleanBitwiseOperation(call.name))))modules.primitive=await import('../extensions/primitive-operator-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedCancellationOperation(call.name))))modules.cancellation=await import('../async-control-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedIntegerOperation(call.name))))modules.integer=await import('../integer-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedSseOperation(call.name))))modules.sse=await import('../sse-runtime.mjs');
@@ -430,6 +434,7 @@ export function evaluateOwnedCoreProgram(input,name,args,token){
    case 'option-some':if(value.type==='json-owned-option')return state.modules.outcome.router_carrier_json_some(get(value.value,scope));return {$:'Some',field0:get(value.value,scope)};
    case 'option-test':return get(value.value,scope).$===(value.some?'Some':'None');
    case 'option-field':return get(value.value,scope).field0;
+   case 'primitive-bitwise-call':{if(!state.modules.primitive||!ownedBooleanBitwiseOperation(value.name)||!ownedBooleanBitwiseOperator(value.operation))fail('unissued boolean primitive runtime');return Reflect.apply(state.modules.primitive.primitiveBitwise,undefined,[get(value.args[0],scope),get(value.args[1],scope),value.operation,null,null]);}
    case 'json-option-call':{if(!state.modules.optional||!ownedJsonOptionalReaderOperation(value.name))fail('unissued optional Json runtime');return Reflect.apply(state.modules.optional[value.name],undefined,[get(value.args[0],scope)]); }
    case 'json-reader-call':return Reflect.apply(state.modules.json[value.name],undefined,value.args.map(value=>get(value,scope)));
    case 'owned-call':{const module=value.name.startsWith('json_macro_')?state.modules.macro:state.modules.update;return Reflect.apply(module[value.name],undefined,value.args.map(value=>get(value,scope)));}
@@ -501,6 +506,7 @@ function evaluateOwnedCorePrepared(program,name,args,state){
    case 'option-some':if(value.type==='json-owned-option')return state.modules.outcome.router_carrier_json_some(get(value.value,scope));return {$:'Some',field0:get(value.value,scope)};
    case 'option-test':return get(value.value,scope).$===(value.some?'Some':'None');
    case 'option-field':return get(value.value,scope).field0;
+   case 'primitive-bitwise-call':{if(!state.modules.primitive||!ownedBooleanBitwiseOperation(value.name)||!ownedBooleanBitwiseOperator(value.operation))fail('unissued boolean primitive runtime');return Reflect.apply(state.modules.primitive.primitiveBitwise,undefined,[get(value.args[0],scope),get(value.args[1],scope),value.operation,null,null]);}
    case 'json-option-call':{if(!state.modules.optional||!ownedJsonOptionalReaderOperation(value.name))fail('unissued optional Json runtime');return Reflect.apply(state.modules.optional[value.name],undefined,[get(value.args[0],scope)]); }
    case 'json-reader-call':return Reflect.apply(state.modules.json[value.name],undefined,value.args.map(value=>get(value,scope)));
    case 'owned-call':{const module=value.name.startsWith('json_macro_')?state.modules.macro:state.modules.update;return Reflect.apply(module[value.name],undefined,value.args.map(value=>get(value,scope)));}
@@ -554,3 +560,5 @@ export function evaluateOwnedCoreBatch(input,calls,token){
  }
  return results;
 }
+
+import {ownedBooleanBitwiseOperation,ownedBooleanBitwiseOperator,ownedBooleanBitwiseRustCall} from './owned-boolean-bitwise-source.mjs';

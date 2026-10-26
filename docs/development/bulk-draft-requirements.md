@@ -304,6 +304,12 @@ Host meta, target/runtime declarations and bounded const evaluation. Nine compil
 equations and independent unrun JS/strict TS/native cases are drafted. Reverse
 helper recognition, actual callers, native closure and every delivery task stay open.
 
+The [boolean bitwise reverse draft](reverse-boolean-bitwise-draft.md) adds an
+explicit current-source helper context across seven checked reverse paths,
+preserving default contexts and paired target/interpreter order. Eighteen source
+equations and independent unrun receiving/strict TS/refusal cases are drafted.
+Fixed-width reverse typing, production, native closure and all delivery work stay open.
+
 The [positive generic draft](positive-generics-draft.md) adds free/associated
 turbofish and bounded const argument/default parsing without consuming enclosing
 angle tokens. Two compiler equations and independent unrun source/refusal/native
