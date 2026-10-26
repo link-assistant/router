@@ -77,3 +77,5 @@ export {translateActiveConditionalCommentDocTrackedLocalDeclarativeProject} from
 export {proposeGeneratedConditionalSource} from './generated-conditional-source.mjs';
 export {proposeConfiguredGeneratedTrackedLocalDeclarativeSources} from './tracked-local-declarative-source.mjs';
 export {translateConfiguredGeneratedTrackedLocalDeclarativeProject} from './configured-generated-tracked-local-declarative-project.mjs';
+
+export {withOriginalConditionalSourceOperation} from './conditional-source-operation.mjs';

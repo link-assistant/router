@@ -253,3 +253,12 @@ source/CST inverse and `--check` preserve all existing producer bodies.
 `originalExternalPackageDefaultSourceData` reuses the actual fresh Cargo parsing
 and activation rules. It returns no project module or namespace, test, unit or
 runtime authority; every unproved configuration atom remains unknown.
+
+The explicit synchronous conditional source operation groups complete native
+recipe inputs for one genuine source expansion. Each selected family must be
+loaded from its actual current full inputs and freshly reissued when that
+operation ends, including errors. Combined native input and selection/nesting
+bounds remain; nested scopes restore their parent and clear all references on
+all exits. No frame is passed to callbacks. No source/hash/owner/verdict/result
+cache crosses operations, and sharing source DATA grants no compiler authority.
+The implementation and independent lifecycle cases are source drafted, unrun.

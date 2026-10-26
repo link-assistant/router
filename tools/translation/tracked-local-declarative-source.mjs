@@ -260,8 +260,8 @@ export function proposeModuleMacroUseTrackedLocalDeclarativeSources(options){
 
 
 import {compilationProfile,itemConfiguration,isAbsentConditionalAttribute,evaluateConfiguration} from './cfg-profile.mjs';
-import {originalFreshConditionalAttributeSourceInputs} from './conditional-attributes.mjs';
-import {originalTextualConfigurationSourcePlan} from './derive-ancestor-attribute-scope.mjs';
+import {originalFreshConditionalAttributeSourceInputs} from './conditional-source-operation.mjs';
+import {originalTextualConfigurationSourcePlan} from './conditional-source-operation.mjs';
 import {createOriginalPassiveBuiltinCallerAttributeScope,createModuleMacroUseBuiltinCallerAttributeScope} from './registered-builtin-caller-attribute-source.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
 
@@ -661,7 +661,7 @@ export function proposeCommentDocumentationTrackedTextualSources(options){
 }
 
 import {inspectConditionalAttribute} from './conditional-attributes.mjs';
-import {originalActiveTextualConfigurationSourcePlan} from './derive-ancestor-attribute-scope.mjs';
+import {originalActiveTextualConfigurationSourcePlan} from './conditional-source-operation.mjs';
 
 // Full source proposal only. Current native builtin configuration recipes,
 // original token intervals and independently checked expanded headers are

@@ -93,6 +93,7 @@ export function withLiteralDocInnerLintModuleMacroUseAttributeValidation(operati
 import {proposeGeneratedConditionalSource} from './generated-conditional-source.mjs';
 
 export function withConfiguredLiteralDocMacroAttributeValidation(operation){
+ return withOriginalConditionalSourceOperation(()=>{
  if(typeof operation!=='function'||types.isProxy(operation)||types.isAsyncFunction(operation))fail('one complete synchronous source operation required');let active=true,scope=createOriginalPassiveBuiltinCallerAttributeScope(),moduleScope=createModuleMacroUseBuiltinCallerAttributeScope(),innerScope=createOriginalInnerLintCallerAttributeScope(),docScope=createOriginalLiteralDocumentationSourceScope(),cells=0;const records=[];
  const tick=()=>{if(!active)fail('original source operation is closed');if(++cells>200000)fail('complete source attribute operation cell bound');};
  const validator={
@@ -110,4 +111,7 @@ export function withConfiguredLiteralDocMacroAttributeValidation(operation){
  };
  try{const result=operation(validator);if(types.isPromise(result)||result&&typeof result==='object'&&types.isProxy(result))fail('source operation must finish synchronously');if(result&&typeof result==='object'){const then=Object.getOwnPropertyDescriptor(result,'then');if(then&&(!Object.hasOwn(then,'value')||typeof then.value==='function'))fail('source operation cannot return an own thenable/accessor');}return result;}
  finally{try{try{scope.finish();}finally{try{moduleScope.finish();}finally{try{innerScope.finish();}finally{docScope.finish();}}}}finally{active=false;scope=null;moduleScope=null;innerScope=null;docScope=null;records.length=0;}}
+ });
 }
+
+import {withOriginalConditionalSourceOperation} from './conditional-source-operation.mjs';

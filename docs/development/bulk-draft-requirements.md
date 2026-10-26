@@ -724,3 +724,11 @@ charging and copied checked project routing. Six full source equations and
 independent unrun JS/strict TS/refusal/native source cases are drafted. Wider
 producers, architecture/bootstrap, production parity and every unfinished
 source/receiving/verification requirement remain open; no draft tool ran.
+
+The [conditional source operation draft](conditional-source-operation-draft.md)
+shares current complete native recipe inputs only inside one synchronous macro
+expansion, reissues every selected family on all exits and preserves raw-input,
+selection/nesting bounds. Five complete source equations and independent unrun
+lifecycle/native-guard/generated-call cases are drafted. No across-operation
+cache or qualification is introduced; all unfinished source/parity/receiving/
+verification requirements remain open and no draft tool executed.

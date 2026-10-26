@@ -357,3 +357,8 @@ integration and the remaining requirement ledger are still open.
   surviving header checks, original generated-inner refusals, aggregate resource
   charging and checked project integration. Six source equations and independent
   source/JS/strict TS/native/refusal cases remain unrun.
+
+- Draft bounded synchronous native conditional source scopes, fresh complete
+  input rechecks on every exit, independent nesting and generated-call routing.
+  Five source equations and independent lifecycle/refusal cases remain unrun;
+  no across-operation cache or performance qualification is introduced.
