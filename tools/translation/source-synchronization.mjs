@@ -66,3 +66,7 @@ export {translateLiteralDocInnerLintConfiguredTrackedLocalDeclarativeProject} fr
 
 export {proposeLineDocumentationTrackedTextualSources} from './tracked-local-declarative-source.mjs';
 export {translateLineDocConfiguredTrackedLocalDeclarativeProject} from './line-doc-configured-tracked-local-declarative-project.mjs';
+
+export {createOriginalCommentDocumentationSourceScope} from './registered-builtin-caller-attribute-source.mjs';
+export {proposeCommentDocumentationTrackedTextualSources} from './tracked-local-declarative-source.mjs';
+export {translateCommentDocConfiguredTrackedLocalDeclarativeProject} from './comment-doc-configured-tracked-local-declarative-project.mjs';

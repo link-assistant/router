@@ -700,3 +700,11 @@ composition. Four complete source equations and independent unrun JS/strict TS,
 module/configuration/refusal/freshness/native oracle source are drafted. Wider
 documentation and all remaining language, namespace/bootstrap, production,
 receiving, parity and validation requirements stay open; no draft tools ran.
+
+The [line/block documentation draft](comment-documentation-normalization-draft.md)
+adds complete native block-lexer/parser/AST source joins, exact nested/multiline
+payloads, actual module attachment and checked project consumers. Macro lexical
+projection preserves genuine block docs and ordinary comment distinctions.
+Six complete source equations and independent unrun native/JS/strict TS/refusal
+case source are drafted. Every remaining source, namespace, production, parity,
+receiving and verification obligation remains open; no draft tool executed.

@@ -14,11 +14,11 @@ export function originalMacroTrees(source,{maxBytes=128000,maxTokens=16000,maxDe
   const tokens=[];
   for(const token of rustTokens(source)) {
     if(token.type==='comment') {
-      if(token.text.startsWith('/*!')||token.text.startsWith('/**'))throw new TypeError('Declarative macro block documentation requires a separate lexical proof');
-      if(token.text.startsWith('//!')||token.text.startsWith('///')&&!token.text.startsWith('////')) {
-        const value=token.text.slice(3);
-        if(/[\u0000-\u001f]/u.test(value))throw new TypeError('Declarative macro documentation escape profile exceeded');
-        for(const text of ['#',...(token.text.startsWith('//!')?['!']:[]),'[','doc','=',JSON.stringify(value),']'])tokens.push({kind:'token',text,type:text.startsWith('"')?'string':'generated-doc',span:{start:token.start,end:token.end},sourceSha256,sourceFeature:'original-line-doc-comment'});
+      const block=token.text.startsWith('/*!')||token.text.startsWith('/**')&&!['*','/'].includes(token.text[3]);
+      if(block||token.text.startsWith('//!')||token.text.startsWith('///')&&!token.text.startsWith('////')) {
+        if(block&&!token.text.endsWith('*/'))throw new TypeError('Declarative macro documentation is unterminated');const value=block?token.text.slice(3,-2):token.text.slice(3);
+        if(/[\u0000-\u0008\u000b-\u001f]/u.test(value))throw new TypeError('Declarative macro documentation escape profile exceeded');
+        for(const text of ['#',...(token.text.startsWith('//!')||token.text.startsWith('/*!')?['!']:[]),'[','doc','=',JSON.stringify(value),']'])tokens.push({kind:'token',text,type:text.startsWith('"')?'string':'generated-doc',span:{start:token.start,end:token.end},sourceSha256,sourceFeature:block?'original-block-doc-comment':'original-line-doc-comment'});
       }
       continue;
     }

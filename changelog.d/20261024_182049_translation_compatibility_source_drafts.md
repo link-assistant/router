@@ -342,3 +342,8 @@ integration and the remaining requirement ledger are still open.
 - Draft original module-gap line documentation attachment, exact literal payload
   substitutions and complete original/doc/configured/expanded project joins.
   Four complete source equations and independent receiving/native cases are unrun.
+
+- Draft fresh line/block documentation source scopes, original native payload
+  joins, multiline/nested module attachment, macro lexical projection and full
+  project histories. Six source equations and independent target/native cases
+  are drafted and unrun.
