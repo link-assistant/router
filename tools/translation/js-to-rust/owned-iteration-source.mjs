@@ -323,11 +323,11 @@ function originalOwnedCoreImport(handle,path,node,analysis){
   const source=state.files.get(target);if(source===undefined)fail('import target missing');links.push({path:target,name,source,from:{path:ownerFile.fileName,span:[ownerDeclaration.getStart(ownerFile),ownerDeclaration.end]}});
   if(target===state.data.runtimeRoot+'/primitive-operator-runtime.mjs'||target===state.data.runtimeRoot+'/json-update-runtime.mjs'||target===state.data.runtimeRoot+'/json-macro-runtime.mjs'||target===state.data.runtimeRoot+'/base64-runtime.mjs'||target===state.data.runtimeRoot+'/json-runtime.mjs'||target===state.data.runtimeRoot+'/json-option-runtime.mjs'||target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'||target===state.data.runtimeRoot+'/json-collections-runtime.mjs'||target===state.data.runtimeRoot+'/json-iteration-runtime.mjs'){
    if(target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'&&!ownedAsciiOperation(name))fail('unregistered ASCII runtime export');
-   if(target===state.data.runtimeRoot+'/primitive-operator-runtime.mjs'&&(state.data.primitiveOperators!==true||name!=='primitiveBitwise'&&!((spec.isTypeOnly||declaration.importClause?.isTypeOnly)&&primitiveBitwiseAlias(name))))fail('unregistered primitive operator context or export');
+   if(target===state.data.runtimeRoot+'/primitive-operator-runtime.mjs'&&(state.data.primitiveOperators!==true||!ownedPrimitiveOperatorOperation(name)&&!((spec.isTypeOnly||declaration.importClause?.isTypeOnly)&&primitiveBitwiseAlias(name))))fail('unregistered primitive operator context or export');
    const typesOnly=spec.isTypeOnly||declaration.importClause?.isTypeOnly;
    const actual=typesOnly?syntax.get(state.data.declarationRoot+'/'+posix.basename(target).replace(/\.mjs$/u,'.d.mts')):syntax.get(target);
    const exported=actual?.statements.some(item=>item.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword)&&((item.name?.text===name)||(ts.isVariableStatement(item)&&item.declarationList.declarations.some(node=>ts.isIdentifier(node.name)&&node.name.text===name))));
-   if(!exported)fail('original runtime has no such export');return {target,name,links,local:node.text};
+   if(!exported)fail('original runtime has no such export');return {target,name,links,local:node.text,typeOnly:!!typesOnly};
   }
   const next=syntax.get(target);if(!next||next.statements.length!==1)fail('only a single transparent reexport declaration');let selected=null;
   for(const item of next.statements){
@@ -579,10 +579,8 @@ function checkFunction(context,path,declaration,analysis){
     hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});requireOwnedCoreSourceCurrent(context);
     return {kind:'ascii-call',name:binding.name,args,type:ascii.ret,root:null};
    }
-   if(binding.name==='primitiveBitwise'&&binding.target===analysis.runtimeRoot+'/primitive-operator-runtime.mjs'){
-    requireOwnedCoreSourceCurrent(context);if(node.arguments.length!==5||!ts.isStringLiteral(node.arguments[2])||!ownedBooleanBitwiseOperator(node.arguments[2].text))fail('fixed eager primitive bitwise metadata required');
-    const boolean=node.arguments[3].kind===ts.SyntaxKind.NullKeyword&&node.arguments[4].kind===ts.SyntaxKind.NullKeyword,domain=boolean?null:ts.isNumericLiteral(node.arguments[3])&&[ts.SyntaxKind.TrueKeyword,ts.SyntaxKind.FalseKeyword].includes(node.arguments[4].kind)?primitiveBitwiseMetadata(node.arguments[3].text,node.arguments[4].kind===ts.SyntaxKind.TrueKeyword):null;if(!boolean&&!domain)fail('literal registered fixed integer width/sign required');
-    const args=node.arguments.slice(0,2).map(argument=>{const negative=ts.isPrefixUnaryExpression(argument)&&argument.operator===ts.SyntaxKind.MinusToken&&ts.isBigIntLiteral(argument.operand),literal=ts.isBigIntLiteral(argument)?argument:negative?argument.operand:null;if(domain&&literal){const value=primitiveBitwiseLiteral(literal.text,negative,domain.name);if(value===null)fail('fixed primitive literal outside its exact domain');return {kind:'integer',value,type:domain.name,root:null};}return expression(argument,scope,depth+1);});const type=domain?.name??'bool';if(args.some(value=>!primitiveBitwiseCompatible(value.type,type)))fail('primitive bitwise operands require their exact written scalar domains');hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});requireOwnedCoreSourceCurrent(context);return {kind:'primitive-bitwise-call',name:binding.name,args,operation:node.arguments[2].text,type,root:null,...(domain?{bits:domain.bits,signed:domain.signed}:{})};
+   if(ownedPrimitiveOperatorOperation(binding.name)&&binding.target===analysis.runtimeRoot+'/primitive-operator-runtime.mjs'){
+    requireOwnedCoreSourceCurrent(context);if(binding.typeOnly)fail('primitive runtime call cannot use a type-only import');const value=readOwnedPrimitiveOperatorCall(ts,node,binding.name,argument=>expression(argument,scope,depth+1));hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});requireOwnedCoreSourceCurrent(context);return value;
    }
    const optional=ownedJsonOptionalReaderOperation(binding.name);
    if(optional&&binding.target===analysis.runtimeRoot+'/json-option-runtime.mjs'){
@@ -777,6 +775,6 @@ export function ownedPrimitiveOperatorRuntimeSources(runtimeRoot='runtime',decla
  }finally{runtimeImportEpochClose(__runtimeEpoch);}
 }
 import {primitiveOperatorRuntimeAssetPair} from '../primitive-operator-runtime-sources.mjs';
-import {ownedBooleanBitwiseOperator} from './owned-boolean-bitwise-source.mjs';
+import {ownedPrimitiveOperatorOperation,readOwnedPrimitiveOperatorCall} from './owned-primitive-operator-source.mjs';
 
-import {primitiveBitwiseType,primitiveBitwiseAlias,primitiveBitwiseMetadata,primitiveBitwiseLiteral,primitiveBitwiseCompatible} from '../primitive-bitwise-types.mjs';
+import {primitiveBitwiseType,primitiveBitwiseAlias} from '../primitive-bitwise-types.mjs';

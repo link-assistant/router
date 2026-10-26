@@ -334,3 +334,10 @@ forward annotations and all seven reverse static import-type paths. Twelve
 whole source equations and independent unrun layout/strict TS/meta/receiving
 cases are drafted. Complete generated module recognition, all remaining source,
 native closure, synchronization, freshness, parity and delivery remain open.
+
+The [shared reverse primitive draft](reverse-primitive-operators-draft.md) uses
+one bitwise/cast/shift recognizer and one cast/shift emission/evaluation helper
+across all seven profiles. Seventeen complete source equations, unrun matrix,
+meta/CST/strict TS/refusal/order cases and native oracle source are drafted.
+All complete module/inverse, production, native closure, synchronization,
+freshness, parity, remaining source and delivery obligations stay open.
