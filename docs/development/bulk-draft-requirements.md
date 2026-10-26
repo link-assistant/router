@@ -155,6 +155,13 @@ handler/parser/path/loader/output callbacks. Three complete compiler equations
 and independent unrun source/request cases are drafted. Actual Span/file-loader/
 macro-owner joins, document consumers and every unfinished requirement stay open.
 
+The [actual architecture doc include draft](architecture-doc-include-draft.md)
+copies the complete genuine attribute substitution path and joins the exact
+whole original module/document archive bytes and sixteen native inputs. Three
+complete source equations and independent unrun CST/native/archive/refusal cases
+are drafted. Actual owner/Span/path/visitor/global qualification and every
+unfinished source/production/verification requirement remain open.
+
 The [Option guard draft](http-resource-option-guards-draft.md) adds whole absent
 branches, every-exit resource cleanup, explicit fallback domains, Some payload
 moves, same-Option propagation and complete canonical native inverse rules.

@@ -120,3 +120,5 @@ export {proposeOriginalAttributeConcatLiteralSource} from './derive-clap-concat.
 export {originalFreshPrimitiveNamespaceSourcesWithDocumentation} from './extensions/primitive-namespace-sources.mjs';
 
 export {captureOriginalIncludeStrNativeSource,originalIncludeStrNativeSourceFacts,captureOriginalIncludeStrNativeFrame} from './include-str-native-source.mjs';
+
+export {proposeOriginalArchitectureDocIncludeSource} from './derive-clap-concat.mjs';
