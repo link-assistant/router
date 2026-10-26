@@ -92,6 +92,13 @@ literal/qualified/nested/root/refusal cases are drafted. No owner or global
 closure is inferred; builtin doc/visitor consumers, every broader producer and
 all unfinished source/production/verification requirements remain open.
 
+The [native attribute expression confinement draft](attribute-expression-confinement-draft.md)
+copies the complete fresh native source reader and retains fourteen full parser/
+walker/collector/fragment callbacks and two complete receiver containers. Three
+complete source equations and independent unrun source/request cases are drafted.
+Actual caller/visitor/value-macro/global qualification, inner/doc consumers and
+every unfinished source/production/verification requirement remain open.
+
 The [Option guard draft](http-resource-option-guards-draft.md) adds whole absent
 branches, every-exit resource cleanup, explicit fallback domains, Some payload
 moves, same-Option propagation and complete canonical native inverse rules.

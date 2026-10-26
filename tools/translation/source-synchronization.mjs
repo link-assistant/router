@@ -105,3 +105,5 @@ export {translateArchitectureMetadataTrackedLocalDeclarativeProject} from './arc
 export {captureOriginalNamespaceAttributeExpression,originalNamespaceAttributeExpressionFacts,originalNamespaceAttributeExpressionSourceGuard} from './original-namespace-parser.mjs';
 
 export {documentationArgumentMayExportMacros,captureOriginalDocExpressionSourceEffects} from './original-doc-expression-effects.mjs';
+
+export {captureOriginalAttributeExpressionConfinementSource,originalAttributeExpressionConfinementSourceFacts,captureOriginalAttributeExpressionConfinementFrame} from './attribute-expression-confinement-source.mjs';
