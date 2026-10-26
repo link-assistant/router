@@ -2,10 +2,19 @@
 
 Use JavaScript to express and test new behavior before changing Rust. This keeps fast feedback independent of compiling the Rust dependency tree. Router already publishes a JavaScript operations package, but that package alone is not a replacement for the complete Rust runtime. The parity manifest records what is generated, ported, partial, carried or missing. A green inventory check means the inventory is consistent; only its strict mode can establish complete parity.
 
-## Draft with focused JavaScript checks
+During the current issue #759/#772 source-only phase, bulk draft the entire
+remaining requirement set before running any test or experiment. Draft complete
+independent JavaScript/TypeScript and Rust oracle sources, but execute no parser,
+translator, preparer, diagnostic, generation, benchmark or CI-triggering push.
+Automated source writing and coherent local commits remain allowed. This phase
+instruction supersedes the usual feedback cadence below; after every source
+requirement is drafted, all original checks and deadlines remain mandatory.
 
-Run complete small Node/Bun test files and strict TypeScript checks while
-implementing a batch. Read the corresponding Rust and generated bodies, collect
+## Verify the completed source draft in JavaScript
+
+After the entire required source draft is present, run complete small Node/Bun
+test files and strict TypeScript checks. Read the corresponding Rust and
+generated bodies, collect
 related failures and fix shared substitution rules before full regeneration.
 Use separate reusable language and repository formatting/quality sequences as
 described in [the rule-layer contract](translation-rules.md). Add matching Rust
