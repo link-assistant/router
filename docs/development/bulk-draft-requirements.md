@@ -868,6 +868,16 @@ compose with a separate generic suffix history. Ten complete source equations
 and independent mirror/source/history/opaque/drop cases are unrun. Generic Result
 caller lowering remains a prerequisite; all unfinished requirements stay open.
 
+The [reusable generic Result carrier draft](generic-result-carrier-draft.md)
+shares Option/Result descriptor rules across genuine type-query source selection,
+precise symbolic signatures, unchanged-value helpers, concrete calls, native
+projection/emission, original local obligations and paired physical signatures.
+Actual borrowed carrier docs retain their roots; nested supported String-error
+Result signatures reuse the actual generic ABI. Thirteen complete source equations
+and independent JS/strict TS/native/opaque/nested/refusal cases are unrun. General
+error/generic/body and direct imported ABI value-call qualification remain open,
+along with every unfinished architecture, adoption, parity and delivery requirement.
+
 The [terminal returning loop draft](http-resource-returning-loops-draft.md)
 connects actual final infinite loops with complete checked function-return exits
 to native loop proposals and precise final return-domain/root joins. Break,

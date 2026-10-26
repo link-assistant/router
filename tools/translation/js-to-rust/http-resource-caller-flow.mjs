@@ -98,7 +98,7 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
   if(operation.family==='filesystem'&&coldTail&&!awaited)fail('eager filesystem operations require the actual enclosing deferred async body');
   const implicitAwait=operation.async&&!awaited&&coldTail;if(Boolean(operation.async)!==Boolean(awaited||implicitAwait)||operation.async&&!lazy)fail('future must be immediately awaited inside a cold caller');
   if(node.arguments.length!==operation.args.length)fail('complete actual operation arity differs');
-  if(operation.genericIdentity){const selected=httpResourceGenericCallNumericDomain(ts,node,imports,sourceAnnotations,tick,numberDomain),argument=expression(node.arguments[0],{level:level+1,numberDomain:selected}),roots=httpResourceValueRoots(argument);httpResourceCallerRustType(argument.type);if(operation.genericCarrier&&!httpResourceOption(argument.type))fail('the whole actual Option carrier must satisfy this generic helper');captureHttpResourceGenericCallType(ts,node,argument.type,imports,sourceAnnotations,tick,{carrier:operation.genericCarrier});return {kind:'http-resource-call',operation:operation.javascriptName,args:[argument],type:argument.type,awaited:false,implicitAwait:false,root:roots[0]??null,roots,local:true,genericIdentity:true};}
+  if(operation.genericIdentity){const selected=httpResourceGenericCallNumericDomain(ts,node,imports,sourceAnnotations,tick,numberDomain),argument=expression(node.arguments[0],{level:level+1,numberDomain:selected}),roots=httpResourceValueRoots(argument);httpResourceCallerRustType(argument.type);if(operation.genericCarrier&&!httpResourceGenericCarrierPayload(operation.genericCarrier,argument.type))fail('the whole actual carrier must satisfy this generic helper');captureHttpResourceGenericCallType(ts,node,argument.type,imports,sourceAnnotations,tick,{carrier:operation.genericCarrier});return {kind:'http-resource-call',operation:operation.javascriptName,args:[argument],type:argument.type,awaited:false,implicitAwait:false,root:roots[0]??null,roots,local:true,genericIdentity:true};}
   const loans=new Map(),args=[];
   for(let index=0;index<operation.args.length;index++){
    const role=operation.args[index],argument=node.arguments[index];let value,candidate=argument,grouping=0;if(['deferred-callback','json-callback','value-callback'].includes(role))candidate=selectHttpResourceCallableSource(ts,argument,tick);else while(ts.isParenthesizedExpression(candidate)){if(++grouping>16)fail('bounded actual call argument grouping required');candidate=candidate.expression;}
@@ -344,3 +344,5 @@ import {selectHttpResourceCallableSource} from './http-resource-source-grouping.
 import {observeHttpResourceByteLiteral} from './http-resource-byte-literals.mjs';
 
 import {httpResourceOptionWrittenContext,captureHttpResourceOptionLiteral} from './http-resource-option-constructors.mjs';
+
+import {httpResourceGenericCarrierPayload} from './http-resource-generic-carriers.mjs';

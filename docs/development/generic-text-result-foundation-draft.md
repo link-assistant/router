@@ -3,7 +3,8 @@
 All implementation, source producer and regression source is drafted and unrun.
 No tests, experiments, diagnostics, translation, preparation, regeneration, Rust
 tools, push or CI ran. Every unfinished [ledger requirement](bulk-draft-requirements.md)
-remains open. Generic Result caller lowering remains an implementation prerequisite.
+remains open. Generic Result caller lowering is drafted in the
+[reusable carrier successor](generic-result-carrier-draft.md), which is also unrun.
 
 The existing owned Result native/runtime/declaration assets gain an unchanged
 `Result<T, String>` operation with a precise readonly Ok<T>/Err<string> signature.
@@ -35,8 +36,8 @@ source-only call refusal, complete library inverses, original native history and
 actual Rust exact-once payload drop timing. No source result counts as executable
 application coverage.
 
-The next compiler batch must preserve precise generic Result signatures through
-actual type queries, aliases, unchanged-value helpers, JS/TS/meta/native emission,
+The compiler successor drafts precise generic Result signatures through actual
+type queries, aliases, unchanged-value helpers, JS/TS/meta/native emission,
 physical paired signatures and explicit call arguments. Broader error types,
 architecture/producer closure, production adoption/parity, complete receiving,
 original source/timing/profile/reverse freshness repairs and every CI gate remain

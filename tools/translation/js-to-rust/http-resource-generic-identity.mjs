@@ -9,10 +9,10 @@ export function captureHttpResourceGenericIdentity(ts,item,{language,file,name,m
  const tags=ts.getJSDocTags(item).filter(tag=>ts.isJSDocTemplateTag(tag)),parameters=language==='TypeScript'?item.typeParameters:tags.length===1?tags[0].typeParameters:null;
  if(!parameters||parameters.length!==1||tags.length>1||tags.some(tag=>tag.constraint))fail('one actual unconstrained original template required');const parameter=parameters[0];if(parameter.constraint||parameter.default||parameter.modifiers?.length)fail('generic identity constraints/defaults require a separate original-source rule');const typeParameter=portableType(parameter.name.text),input=item.parameters[0];
  if(!ts.isIdentifier(input.name)||input.modifiers?.length||input.questionToken||input.dotDotDotToken||input.initializer)fail('one original required generic value parameter required');const id=name(input.name.text);if(moduleNames.has(id))fail('generic input cannot shadow the actual module');
- const inputType=language==='TypeScript'?input.type:ts.getJSDocType(input),outputType=language==='TypeScript'?item.type:ts.getJSDocReturnType(item),bare=slot(ts,inputType,typeParameter)&&slot(ts,outputType,typeParameter),optionType='optional:generic:'+typeParameter;
- const describesOption=node=>{if(typeof readType!=='function'||!node)return false;const actual=readType(node,typeParameter);return actual.kind==='domain'&&actual.type===optionType;};
- if(!bare&&(!describesOption(inputType)||!describesOption(outputType)||typeParameter==='ReturnType'))fail('both original signatures must name their same actual lexical generic slot or qualified Option carrier');
- const carrier=bare?null:'option',type=carrier?optionType:'generic:'+typeParameter,valueSlot=node=>carrier?describesOption(node):slot(ts,node,typeParameter),doc=node=>{if(!carrier)return typeParameter;if(typeof writtenDoc!=='function')fail('complete source-bound generic carrier doc required');return writtenDoc(node,typeParameter);},inputDoc=doc(inputType),outputDoc=doc(outputType);
+ const inputType=language==='TypeScript'?input.type:ts.getJSDocType(input),outputType=language==='TypeScript'?item.type:ts.getJSDocReturnType(item),bare=slot(ts,inputType,typeParameter)&&slot(ts,outputType,typeParameter);
+ const describe=node=>{if(typeof readType!=='function'||!node)return null;const actual=readType(node,typeParameter);return actual.kind==='domain'?actual.type:null;},signature=bare?httpResourceGenericSignature(null,typeParameter):httpResourceGenericSignatureForDomain(typeParameter,describe(inputType));
+ if(!signature||!bare&&(describe(outputType)!==signature.type||typeParameter==='ReturnType'))fail('both original signatures must name their same lexical generic slot or actual qualified carrier');
+ const {carrier,type}=signature,valueSlot=node=>carrier?describe(node)===type:slot(ts,node,typeParameter),doc=node=>{if(!carrier)return typeParameter;if(typeof writtenDoc!=='function')fail('complete source-bound generic carrier doc required');return writtenDoc(node,typeParameter);},inputDoc=doc(inputType),outputDoc=doc(outputType);
  if(item.body.statements.length>4096)fail('complete original generic body statement bound');let cells=0;const live=new Map([[id,true]]),steps=[],tick=depth=>{if(++cells>100000||depth>160)fail('complete original generic linear source bound');},statements=item.body.statements.filter(statement=>{tick(0);return !ts.isEmptyStatement(statement);});
  function term(node,depth=0){
   tick(depth);if(!node||node.getSourceFile()!==file)fail('complete actual generic value node required');
@@ -55,7 +55,7 @@ export function createHttpResourceNativeGenericIdentityVerifier(functions){
  for(const fn of functions){if(available.has(fn.name))fail('unique actual native generic helper binding required');available.set(fn.name,fn);}
  const tick=depth=>{if(++cells>100000||depth>160)fail('complete original native generic dependency bound');};
  function verify(fn,dependencyDepth=0){
-  tick(dependencyDepth);if(dependencyDepth>64||available.get(fn.name)!==fn||active.has(fn.name))fail('actual acyclic original generic helper dependency required');if(completed.has(fn.name))return completed.get(fn.name);const typeParameter=portableType(fn.genericParameters?.[0]),carrier=fn.parameters.length===1&&fn.parameters[0].type==='Option<'+typeParameter+'>'?'option':null,sourceType=carrier?'Option<'+typeParameter+'>':typeParameter;
+  tick(dependencyDepth);if(dependencyDepth>64||available.get(fn.name)!==fn||active.has(fn.name))fail('actual acyclic original generic helper dependency required');if(completed.has(fn.name))return completed.get(fn.name);const typeParameter=portableType(fn.genericParameters?.[0]),signature=httpResourceNativeGenericSignature(typeParameter,fn.parameters[0]?.type);if(!signature)fail('complete actual native generic carrier signature required');const {carrier,sourceType}=signature;
   if(fn.genericParameters.length!==1||fn.asynchronous||fn.parameters.length!==1||fn.parameters[0].type!==sourceType||fn.returns!==sourceType||fn.body.statements.length>4096||!fn.body.tail||carrier&&typeParameter==='ReturnType')fail('complete canonical native unchanged-input signature and body required');active.add(fn.name);
   const parameter=fn.parameters[0].name,live=new Map([[parameter,true]]),steps=[];
   function term(node,depth=0){
@@ -64,9 +64,11 @@ export function createHttpResourceNativeGenericIdentityVerifier(functions){
    fail('native generic term must retain an actual live value or complete checked unchanged-value helper');
   }
   for(const statement of fn.body.statements){tick(0);if(statement.kind!=='let'||statement.mutable||live.has(statement.name)||available.has(statement.name))fail('native generic locals must be actual fresh immutable linear bindings');const value=term(statement.value);live.set(statement.name,true);steps.push('const '+statement.name+' = '+value+';');}
-  const returned=term(fn.body.tail);if([...live.values()].some(Boolean))fail('every native generic binding must move into the same returned original value');const result={typeParameter,parameter,carrier,sourceType,type:carrier?'optional:generic:'+typeParameter:'generic:'+typeParameter,javascriptBody:'{ '+(steps.length?steps.join(' ')+' ':'')+'return '+returned+'; }',sourceAuthority:false,semanticAuthority:false};active.delete(fn.name);completed.set(fn.name,result);return result;
+  const returned=term(fn.body.tail);if([...live.values()].some(Boolean))fail('every native generic binding must move into the same returned original value');const result={typeParameter,parameter,carrier,sourceType,type:signature.type,javascriptBody:'{ '+(steps.length?steps.join(' ')+' ':'')+'return '+returned+'; }',sourceAuthority:false,semanticAuthority:false};active.delete(fn.name);completed.set(fn.name,result);return result;
  }
  return verify;
 }
 
 import {selectHttpResourceCallableSource} from './http-resource-source-grouping.mjs';
+
+import {httpResourceGenericSignature,httpResourceGenericSignatureForDomain,httpResourceNativeGenericSignature} from './http-resource-generic-carriers.mjs';

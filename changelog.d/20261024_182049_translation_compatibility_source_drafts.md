@@ -301,3 +301,9 @@ integration and the remaining requirement ledger are still open.
   Preserve the original native-copy pin/stages plus a full generic suffix history,
   retain ten complete source equations and add independent unrun identity, error,
   mirror, history and native drop source. Generic caller lowering remains open.
+
+- Draft reusable Option/Result carrier descriptor sequences through fresh ABI
+  joins, precise generic signatures, whole-value helper checking, JS/TS/native
+  emission and physical paired signatures. Retain nested String-error Result
+  formats, actual borrowed signature roots, thirteen complete source equations
+  and independent unrun behavioral, native, source/meta and refusal cases.
