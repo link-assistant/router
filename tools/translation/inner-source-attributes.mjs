@@ -46,3 +46,18 @@ export function builtinLiteralDocumentationInnerSourceItem(item,source,view,prof
   }
   return body.length?{name,span:attribute.span,preludeControl:false}:null;
 }
+
+import {originalStructuredDocumentationInnerItem} from './registered-builtin-caller-attribute-source.mjs';
+
+export function builtinStructuredDocumentationInnerSourceItem(item,source,view,profile){
+  const actual=(view?originalModuleViewItems(view,source):sourceItems(source)).find(candidate=>candidate.start===item.start&&candidate.end===item.end);
+  if(!actual)return null;
+  const tokens=actual.tokens.filter(token=>token.type!=='comment');
+  if(tokens[0]?.text!=='#'||tokens[1]?.text!=='!'||tokens[2]?.text!=='['||tokens.at(-1)?.text!==']')return null;
+  const condition=itemConfiguration(tokens,profile);
+  if(condition.status!=='active'||condition.attributes.length!==1)return null;
+  const attribute=condition.attributes[0],name=tokens[3]?.text;
+  if(['no_std','no_core','no_implicit_prelude'].includes(name)&&tokens.length===5)return {name,span:attribute.span,preludeControl:name};
+  if(name==='doc'){const module={file:view?.sourcePath??'original-inner-literal-doc.rs',path:view?.modulePath??[],source,...(view?{sourceView:view}:{}),compilationProfile:profile},actual=originalStructuredDocumentationInnerItem(module,item);if(actual)return {name,span:attribute.span,preludeControl:false};return null;}
+  return null;
+}

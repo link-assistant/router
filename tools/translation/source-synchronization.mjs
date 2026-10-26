@@ -85,3 +85,7 @@ export {proposeCommonBuiltinActiveConditionalSources,proposeCommonBuiltinComment
 export {translateCommonBuiltinTrackedLocalDeclarativeProject} from './common-builtin-tracked-local-declarative-project.mjs';
 
 export {proposeOriginalArchitectureTypeMacroSources} from './architecture-type-macro-sources.mjs';
+
+export {createOriginalStructuredDocumentationSourceScope,withOriginalStructuredDocumentationSourceScope} from './registered-builtin-caller-attribute-source.mjs';
+export {proposeStructuredDocumentationActiveConditionalSources,proposeStructuredDocumentationCommentTrackedSources,proposeStructuredDocumentationConfiguredTrackedSources,proposeStructuredDocumentationGeneratedTrackedLocalDeclarativeSources} from './structured-documentation-tracked-source.mjs';
+export {translateStructuredDocumentationTrackedLocalDeclarativeProject} from './structured-documentation-tracked-local-declarative-project.mjs';

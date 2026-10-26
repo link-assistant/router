@@ -748,3 +748,11 @@ Four source equations and independent unrun source/native cases are drafted.
 Generated names remain observations: macro ownership, complete attribute/derive/
 export closure and type-prefix absence remain unqualified. Every unfinished
 source/production/parity/receiving/verification requirement remains open.
+
+The [structured documentation draft](structured-documentation-consumers-draft.md)
+adds complete original doc registry/parser premises, bounded list/alias/HTML/cfg
+metadata, a source-backed inner observer and copied original/generated/project
+consumers. Nine source equations and independent unrun JS/strict TS/refusal/
+stable native cases are drafted. Doc predicates never select availability;
+feature/field semantics, architecture/bootstrap, wider language, production,
+parity and all unfinished source/verification requirements remain open.

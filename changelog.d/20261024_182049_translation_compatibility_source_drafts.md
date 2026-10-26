@@ -372,3 +372,8 @@ integration and the remaining requirement ledger are still open.
   types! expansion, private input lineage, complete selected CST inverses and
   explicit remaining producer obligations. Four source equations and independent
   source/native cases remain unrun; no type-prefix or export closure is claimed.
+
+- Draft source-backed structured doc metadata, explicit non-availability of doc
+  predicates, inner/current/generated/source/project consumers and full native
+  parser/CST inverses. Nine source equations and independent source/JS/strict TS/
+  stable Rust/refusal cases remain unrun; doc feature semantics stay unqualified.
