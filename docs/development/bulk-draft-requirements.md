@@ -160,3 +160,10 @@ async file-token join, for genuine item/function/data header expression receipts
 Three compiler equations and independent unrun source/native-closure/refusal
 cases are drafted. Owner/effect/Span bridges, whole-source/application parity and
 all remaining production/reverse/sync/freshness/CI requirements stay unfinished.
+
+The [expression block scope draft](expression-block-scopes-draft.md) retains
+thirteen native inputs, forty full callbacks and seven receiver containers and
+models Item/MacCall child block modules from genuine header expressions. Four
+compiler equations and independent unrun source/private/native/refusal cases
+are drafted. Actual native receiver/module/visitor mapping, type isolation,
+global closure and all remaining translation/delivery requirements remain open.
