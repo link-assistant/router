@@ -796,3 +796,12 @@ source equations, a separate native append inverse and independent unrun
 JS/strict TS/native/refusal cases are drafted. Native input behavior stays broad;
 the translated text domain keeps its existing bound. Production adoption, actual
 caller qualification and every unfinished source/verification row remain open.
+
+The [production PKCE draft](production-pkce-adoption-draft.md) adopts the concrete
+text SHA-256 operation in three real authentication calculations, retains the
+original native test calculations and joins complete adjacent production-source
+histories. Four complete compiler equations, full actual Rust originals/CSTs,
+current native/Cargo guards and independent unrun source/refusal cases are
+drafted. Lexical recipe metadata supplies no binding/type/ownership/executable
+authority. Actual caller qualification and every unfinished source/verification
+requirement remain open.

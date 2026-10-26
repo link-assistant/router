@@ -70,6 +70,12 @@ both directions and measure complete executable callers. Complete pinned
 retain CST inverses and the two substitution sequences; their lexical/source
 checks grant no semantic admission and remain unrun during this drafting phase.
 
+For [PKCE source adoption](docs/development/production-pkce-adoption-draft.md),
+retain the complete original digest/encoding expression and native test oracle.
+A finite source fusion recipe does not prove the original type or method owner.
+Preserve broad native input behavior separately from the translated text bound,
+and rejoin adjacent complete caller histories rather than replacing old originals.
+
 Keep the next complete source map independent of mutable yielded proposal data.
 Rejoin original source, Cargo, profile and stage inputs across asynchronous
 boundaries, and release whole prior proposals before constructing another graph.

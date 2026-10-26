@@ -26,9 +26,9 @@ function fixture(change,run){
 }
 test('complete actual batch retains eleven calls ten physical files both phases and full CST inverses',limits,()=>{
  const result=prepareProductionCoreBase64AdoptionSources();assert.equal(result.files.length,10);assert.equal(result.files.flatMap(row=>row.selections).length,11);
- for(const row of result.files){assert.equal(row.current,row.after);assert.equal(row.inverse,row.before);assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.before);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);assert.deepEqual(row.trace.map(phase=>phase.phase),['language','repository']);for(const selected of row.selections){assert.equal(row.before.slice(...selected.span),selected.expected);assert.equal(selected.replacement,'crate::translation_core::'+selected.operation+'('+selected.operand+')');}}
+ for(const row of result.files){assert.equal(row.current,row.currentAfter);assert.equal(row.inverse,row.before);assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.before);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);assert.deepEqual(row.trace.map(phase=>phase.phase),['language','repository']);for(const selected of row.selections){assert.equal(row.before.slice(...selected.span),selected.expected);assert.equal(selected.replacement,'crate::translation_core::'+selected.operation+'('+selected.operand+')');}}
  for(const key of ['semanticAuthority','namespaceAuthority','ownershipAuthority','executableAdmission','runtimeParity','receivingExecuted','crossInvocationCache'])assert.equal(result[key],false,key);
- assert.equal(result.guards.length,2);assert.ok(result.guards.every(row=>row.source.length>0&&sha(row.source)===row.sha256));
+ assert.equal(result.guards.length,5);assert.ok(result.guards.every(row=>row.source.length>0&&sha(row.source)===row.sha256));
  const ownership=new Set(result.files.flatMap(row=>row.selections.map(selected=>selected.ownership)));assert.deepEqual(ownership,new Set(['borrow-text','borrow-bytes','move-text','move-bytes','copy-array32']));
 });
 test('unapplied originals produce the same complete review proposal without writing source',limits,()=>fixture(null,(options,profile)=>{

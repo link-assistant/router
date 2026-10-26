@@ -52,3 +52,9 @@ No new executable coverage percentage is established. Broader production caller
 lowering, architecture and macro owner/export closure, every other language and
 effect domain, source-history/profile/reverse/strict-parity repairs, exported
 receiving qualification and all original verification obligations remain open.
+
+The later [production PKCE draft](production-pkce-adoption-draft.md) retains the
+complete adjacent Claude source history and final current output separately from
+this stage's original/output CSTs. Its native text and Cargo guards are rejoined
+with this batch's original facade/leaf guards. No authority or current coverage
+claim follows from this additional source-history composition.

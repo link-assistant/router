@@ -44,7 +44,8 @@ boundaries. The existing twenty text operations and their cases remain; the
 complete declaration/body census expands to twenty-one. Rust oracles run only
 in CI after all required JavaScript stages pass for the same SHA.
 
-Production authentication adoption and its current complete source-history joins
-remain a next source batch. Broader caller/language/effect coverage, architecture
+The later [PKCE source draft](production-pkce-adoption-draft.md) adds actual
+authentication adoption and complete adjacent source-history joins, all unrun.
+Broader caller/language/effect coverage, architecture
 and macro closure, current corpus/profile/reverse freshness, strict parity,
 receiving-export qualification and the complete original gates remain open.
