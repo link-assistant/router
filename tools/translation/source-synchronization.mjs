@@ -157,3 +157,8 @@ export {expandCanonicalJsonClone} from './canonical-json-clone-normalization.mjs
 export {captureOriginalBlockLocalItemSource,originalBlockLocalItemSourceFacts,captureOriginalBlockLocalItemFrame,assertOriginalBlockLocalItemInputsCurrent} from './block-local-item-source.mjs';
 
 export {expandCanonicalJsonReaderDefault} from './canonical-json-reader-default-normalization.mjs';
+
+// Explicit source-proposal DATA APIs; none installs or admits application code.
+export {proposeCoreJsonReadersCorpus,iterateCoreJsonReadersCorpusPackets} from './migrate-core-json-readers.mjs';
+export {expandCanonicalJsonOptionTerminal,expandCanonicalJsonReaderClosure,expandCanonicalJsonOptionPredicate,expandCanonicalJsonOptionFilter} from './canonical-json-option-terminal-normalization.mjs';
+export {JSON_VALUE_PREDICATES,canonicalJsonPredicateMember} from './json-value-predicates.mjs';

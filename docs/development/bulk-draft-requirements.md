@@ -285,3 +285,9 @@ character tokens from strings and validates Unicode scalar expressions/patterns
 under the existing primitive guards. Two compiler equations and independent
 unrun source/refusal/native cases are drafted. Original native/type/owner closure,
 production translation, synchronization, parity and all delivery work stay open.
+
+The [shared JSON selector draft](shared-json-selector-draft.md) joins ordinary and
+source-bound bulk adopters to one current candidate implementation, preserving
+each outer guard/proof context and adding explicit synchronization facade APIs.
+Five compiler equations and independent unrun bulk/packet/guard/source cases are
+drafted. Export production, receiving, native closure and all delivery work stay open.

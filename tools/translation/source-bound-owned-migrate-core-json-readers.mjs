@@ -118,39 +118,7 @@ function shadowProblem(tokens,body,parameters,owners){
  }
  return null;
 }
-function selectReaders(source,item,module,scoped,imports,names){
- const tokens=item.tokens.filter(token=>token.type!=='comment'),header=originalDeclarationHeader(item,module.path),name=tokens.findIndex(token=>token.start===header?.nameSpan?.start),edits=[],selections=[];
- const skip=reason=>({edits,selections,preserved:[{function:item.name,span:[item.start,item.end],reason}]});
- if(name<0||tokens[name+1]?.text!=='(')return skip('complete ordinary nongeneric function required');
- const endParams=close(tokens,name+1);let body=endParams+1;while(body<tokens.length&&tokens[body].text!=='{')body++;
- if(endParams<0||body>=tokens.length||close(tokens,body)!==tokens.length-1||tokens.length>200000||tokens.slice(0,name).some(token=>['async','unsafe','extern','const'].includes(token.text))||tokens.slice(endParams+1,body).some(token=>token.text==='where'||token.text.startsWith("'")))return skip('bounded complete ordinary function with elided source lifetimes required');
- const parsed=parametersOf(tokens,name+2,endParams,scoped,imports,module);if(!parsed)return skip('simple distinct immutable source formal parameters required');
- const {parameters,keys}=parsed,owners=new Set([...scoped.jsonNames]);
- const problem=shadowProblem(tokens,body,parameters,owners);if(problem)return skip(problem);
- let serial=0;const fresh=()=>{let value;do{if(serial>=200000)fail('hygiene bound');value='__router_json_reader_'+serial++;}while(names.has(value));names.add(value);return value;};
- function owner(args){
-  const member=args.at(-1)?.text;if(!canonicalJsonReaderMember(member)||args.at(-2)?.text!=='::')return null;
-  const prefix=words(args.slice(0,-2));if(prefix===C+'Json'||prefix==='serde_json::Value')return {member,qualified:prefix,import:null};
-  if(args.length!==3||!ident(args[0]))return null;const selected=imports.select(module,args[0].text);return selected?{member,qualified:prefix,import:selected}:null;
- }
- for(let at=body+1;at<tokens.length-1;at++){
-  const macro=macroAt(tokens,at,'json')??macroAt(tokens,at,'format');if(macro){at=macro.end;continue;}
-  const first=tokens[at],parameter=parameters.get(first.text);if(!parameter?.role||['.','::'].includes(tokens[at-1]?.text))continue;
-  let cursor=at+1,role=parameter.role;
-  while(cursor<tokens.length-1&&tokens[cursor]?.text==='.'&&ident(tokens[cursor+1])&&tokens[cursor+2]?.text==='('){
-   const end=close(tokens,cursor+2);if(end<0)break;const method=tokens[cursor+1].text,args=tokens.slice(cursor+3,end);
-   if(method==='get'&&role==='json'&&args.length===1&&(args[0].type==='string'||ident(args[0])&&keys.has(args[0].text))){role='optional-json';cursor=end+1;continue;}
-   if(method==='unwrap_or'&&role==='optional-json'&&args.length===1&&parameters.get(args[0].text)?.role==='json'){role='json';cursor=end+1;continue;}
-   if(method!=='and_then'||role!=='optional-json')break;const selected=owner(args);if(!selected)break;
-   const span=[first.start,tokens[end].end],receiverSpan=[first.start,tokens[cursor].start];
-   if(item.tokens.some(token=>token.type==='comment'&&token.start>=tokens[cursor].start&&token.end<=span[1]))break;
-   const receiver=source.slice(...receiverSpan),input=fresh(),payload=fresh(),expanded=expandCanonicalJsonReader(receiver,selected.member,input,payload);
-   edits.push({span,expected:source.slice(...span),replacement:expanded.source,repository:expanded.repository,generatedPaths:expanded.paths});
-   selections.push({function:item.name,functionSpan:[item.start,item.end],span,receiver:{span:receiverSpan,source:receiver,formal:parameter},member:selected.member,owner:selected,locals:[input,payload],nativeEquation:'canonical Option<&Json>::and_then with one inert canonical JSON reader function item',executableAdmission:false,loanBoundary:'same shared input root; no owned temporary introduced'});at=end;break;
-  }
- }
- return {edits,selections,preserved:selections.length?[]:[{function:item.name,span:[item.start,item.end],reason:'no closed canonical shared Json Option reader function item'}]};
-}
+function selectReaders(source,item,module,scoped,imports,names){return selectCanonicalJsonReaderSourceCandidates(source,item,module,scoped,imports,names);}
 function mapping(source,after,edits){
  const rows=[];let old=0,current=0;
  for(const edit of edits){if(old<edit.span[0]){const size=edit.span[0]-old;rows.push({kind:'unchanged',before:[old,edit.span[0]],after:[current,current+size]});current+=size;}rows.push({kind:'substitution',before:[...edit.span],after:[current,current+edit.replacement.length],expected:edit.expected,replacement:edit.replacement});old=edit.span[1];current+=edit.replacement.length;}
@@ -255,3 +223,5 @@ export function iterateCoreJsonReadersCorpusPackets(options={}){
  const iterator=packets();
  return {next:()=>iterator.next(),return:()=>iterator.return(),verify(){if(!finished)fail('unfinished packet stream');verifyOriginal();}};
 }
+
+import {selectCanonicalJsonReaderSourceCandidates} from './canonical-json-reader-source-selection.mjs';
