@@ -348,3 +348,10 @@ and their actual private JavaScript/meta/reproduction paths. Ten complete source
 equations and independent unrun matrix/boolean/meta/inverse/refusal cases are
 drafted. Arbitrary/complete forward modules and every remaining production,
 native closure, synchronization, freshness, parity and delivery obligation stay open.
+
+The [positive scoped-item draft](positive-scoped-items-draft.md) retains complete
+nested module/trait/impl/foreign bodies, members, associated declarations,
+attributes and original macro positions under the private positive grammar.
+Two complete source equations, unrun source/refusal cases and a CI-only native
+oracle are drafted. All actual native owner/effect/global closure, remaining
+source, production, reverse/sync/freshness, parity and delivery stay unfinished.

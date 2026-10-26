@@ -37,7 +37,7 @@ function intrinsicGuard(){
 function sameSnapshot(left,right){if(left===right)return true;if(left===null||right===null||typeof left!=='object'||typeof right!=='object'||Array.isArray(left)!==Array.isArray(right))return false;const a=Object.getOwnPropertyDescriptors(left),b=Object.getOwnPropertyDescriptors(right),keys=Reflect.ownKeys(a),other=Reflect.ownKeys(b);if(keys.length!==other.length)return false;for(let at=0;at<keys.length;at++){const key=keys[at];if(key!==other[at]||!Object.hasOwn(a[key],'value')||!Object.hasOwn(b[key],'value')||!sameSnapshot(a[key].value,b[key].value))return false;}return true;}
 const isName=token=>token?.type==='ident'&&/^[\p{XID_Start}_][\p{XID_Continue}_]*$/u.test(token.text);
 export const ORIGINAL_NAMESPACE_PARSER_LIMITS=Object.freeze({sourceBytes:256000,tokens:32000,nodes:50000,depth:96,members:512});
-const nodeKinds=new Set(['TypeAlias','ConstItem','StaticItem','ExternCrate','DataItem','DataField','DataVariant','Function','Parameter','Generics','GenericParameter','Where','Bound','ReferenceType','PointerType','TupleType','SliceType','ArrayType','PathType','NeverType','InferType','FunctionType','TypeArguments','AssociatedTypeArgument','Lifetime','BoundType','OpaqueBang','Attribute','Block','Statement','Let','LetCondition','Use','UseTree','MacroDefinition','Path','Literal','Unary','Binary','Call','Index','Field','Try','Cast','Tuple','Array','RepeatArray','Struct','StructField','If','Match','Arm','Closure','Jump','Loop','While','For','Pattern','PatternField','Empty']);
+const nodeKinds=new Set(['ModuleItem','TraitItem','ImplItem','ForeignModule','ForeignStatic','AssociatedType','AssociatedConst','ScopedItems','TypeAlias','ConstItem','StaticItem','ExternCrate','DataItem','DataField','DataVariant','Function','Parameter','Generics','GenericParameter','Where','Bound','ReferenceType','PointerType','TupleType','SliceType','ArrayType','PathType','NeverType','InferType','FunctionType','TypeArguments','AssociatedTypeArgument','Lifetime','BoundType','OpaqueBang','Attribute','Block','Statement','Let','LetCondition','Use','UseTree','MacroDefinition','Path','Literal','Unary','Binary','Call','Index','Field','Try','Cast','Tuple','Array','RepeatArray','Struct','StructField','If','Match','Arm','Closure','Jump','Loop','While','For','Pattern','PatternField','Empty']);
 function normalize(raw){
  const result=[];
  for(let at=0;at<raw.length;at++){
@@ -139,7 +139,7 @@ class NamespaceParser{
   if(c.peek()?.type==='char'&&c.peek().text.startsWith("'"))lifetime=this.lifetime().fields.original;else{constant=!!c.eat('const');name=this.name();}
   if(c.eat(':')){if(constant)type=this.type();else bounds=this.bounds();}if(c.eat('='))default_=constant?this.constArgument():this.type();parameters.push(this.node('GenericParameter',at,{attributes,lifetime,constant,name,type,bounds,default:default_}));if(!c.eat(','))break;
  }c.expect('>');return this.node('Generics',start,{parameters});}
- where(){const c=this.cursor;if(!c.is('where'))return null;const start=c.take().start,clauses=[];while(!c.is('{')&&!c.is(';')){const type=this.type();c.expect(':');clauses.push(this.node('Bound',type.span.start,{type,bounds:this.bounds()}));if(!c.eat(','))break;}return this.node('Where',start,{clauses});}
+ where(stops=['{',';']){const c=this.cursor;if(!c.is('where'))return null;const start=c.take().start,clauses=[];while(!stops.includes(c.peek()?.text)){const type=this.type();c.expect(':');clauses.push(this.node('Bound',type.span.start,{type,bounds:this.bounds()}));if(!c.eat(','))break;}return this.node('Where',start,{clauses});}
  function(attributes=[],context='free'){const c=this.cursor,start=attributes[0]?.span.start??c.peek()?.start;let visibility=null;if(c.eat('pub')){visibility='pub';if(c.is('('))visibility=this.originalTree('(');}
   const qualifiers=[];for(const name of ['const','async','unsafe'])if(c.eat(name))qualifiers.push(name);if(c.eat('extern')){qualifiers.push('extern');if(c.peek()?.type==='string')qualifiers.push(c.take().text);}c.expect('fn');const name=this.name(),generics=c.is('<')?this.generics():null;c.expect('(');const parameters=[];
   const selfSpelling=value=>value.kind==='Pattern'&&value.fields.variant==='path'&&value.fields.path.fields.segments.length===1&&value.fields.path.fields.segments[0]==='self';
@@ -147,14 +147,14 @@ class NamespaceParser{
   const containsSelf=value=>value&&typeof value==='object'&&(value.kind==='Pattern'&&selfSpelling(value)||Object.values(value).some(containsSelf));
   while(!c.is(')')){const at=c.peek()?.start,attrs=this.attributes();let pattern;
    let receiverAt=c.index;if(c.tokens[receiverAt]?.text==='&'){receiverAt++;if(c.tokens[receiverAt]?.type==='char')receiverAt++;if(c.tokens[receiverAt]?.text==='mut')receiverAt++;}
-   if(context!=='free'&&parameters.length===0&&c.is('&')&&c.tokens[receiverAt]?.text==='self'){
+   if(['trait','impl'].includes(context)&&parameters.length===0&&c.is('&')&&c.tokens[receiverAt]?.text==='self'){
     c.take();const lifetime=c.peek()?.type==='char'?this.lifetime():null,mutable=!!c.eat('mut'),path=this.path();pattern=this.node('Pattern',at,{variant:'reference',lifetime,mutable,value:this.node('Pattern',path.span.start,{variant:'path',path})});
    }else pattern=this.pattern(false);
    const type=c.eat(':')?this.type():null,owned=bareSelf(pattern)||pattern.fields.variant==='binding-qualifier'&&pattern.fields.qualifier==='mut'&&bareSelf(pattern.fields.value),shared=pattern.fields.variant==='reference'&&bareSelf(pattern.fields.value),receiver=owned||shared;
-   if(containsSelf(pattern)&&(!receiver||context==='free'||parameters.length!==0)||!type&&!receiver||shared&&type)fail('typed ordinary parameter or exact first original method receiver required');
+   if(containsSelf(pattern)&&(!receiver||['free','foreign'].includes(context)||parameters.length!==0)||!type&&!receiver||shared&&type)fail('typed ordinary parameter or exact first original method receiver required');
    parameters.push(this.node('Parameter',at,{attributes:attrs,pattern,type}));if(!c.eat(','))break;
   }
-  c.expect(')');const result=c.eat('->')?this.type():null,where=this.where();let body=null;if(c.eat(';')){if(context!=='trait')fail('original ordinary function body required');}else body=this.block();return this.node('Function',start,{attributes,visibility,qualifiers,name,generics,parameters,result,where,body});
+  c.expect(')');const result=c.eat('->')?this.type():null,where=this.where();let body=null;if(c.eat(';')){if(!['trait','foreign'].includes(context))fail('original ordinary function body required');}else{if(context==='foreign')fail('foreign function body is outside the original declaration grammar');body=this.block();}return this.node('Function',start,{attributes,visibility,qualifiers,name,generics,parameters,result,where,body});
  }
  patternBound(){return this.enter(()=>{const c=this.cursor,start=c.peek()?.start;
   if(c.eat('-')){if(c.peek()?.type!=='number')fail('negative original numeric pattern bound required');c.take();return this.node('Pattern',start,{variant:'literal',original:this.source.slice(start,c.tokens[c.index-1].end),negativeNumber:true});}
@@ -195,12 +195,46 @@ class NamespaceParser{
   else{segments.push(this.name(true));if(c.eat('::'))children.push(this.useTree(segments));else if(c.eat('as'))alias=c.eat('_')?'_':this.name();}
   return this.node('UseTree',start,{absolute,segments,children,glob,alias,namespaceResolved:false});
  }
+ scopedMacroDefinition(attributes){const c=this.cursor,start=attributes[0]?.span.start??c.peek()?.start;c.expect('macro_rules');c.expect('!');const name=this.name(),open=c.peek()?.text,tree=this.originalTree(open);if(open==='{')c.eat(';');else c.expect(';');return this.node('MacroDefinition',start,{attributes,name,tree,sourceKeyword:'macro_rules',macroKind:'unresolved-until-original-attribute-owners',globalBangEffect:'unresolved'});}
+ scopedMembers(context){return this.enter(()=>{const c=this.cursor,start=c.expect('{').start,members=[],innerAttributes=[];while(c.is('#')&&c.peek(1)?.text==='!')innerAttributes.push(...this.attributes('inner'));
+  while(!c.is('}')){if(!c.peek()||members.length>=ORIGINAL_NAMESPACE_PARSER_LIMITS.members)fail('complete scoped member count/body bound');const before=c.index,attributes=this.attributes(),at=attributes[0]?.span.start??c.peek()?.start;let member;
+   if(c.eat(';'))member=this.node('Empty',at,{attributes});
+   else if(this.functionAhead())member=this.function(attributes,context==='trait'?'trait':context==='foreign'?'foreign':context==='module'?'free':'impl');
+   else if((context==='trait'||context==='impl')&&this.localItemKeyword()==='type'){
+    const visibility=this.dataVisibility();c.expect('type');const name=this.name(),generics=c.is('<')?this.generics():null,bounds=c.eat(':')?this.bounds():[],whereBefore=this.where(['=',';']),value=c.eat('=')?this.type():null,whereAfter=this.where();if(context==='impl'&&!value)fail('complete implementation associated type value required');c.expect(';');member=this.node('AssociatedType',at,{attributes,visibility,name,generics,bounds,whereBefore,value,whereAfter,typeOwnerResolved:false});
+   }else if((context==='trait'||context==='impl')&&this.localItemKeyword()==='const'){
+    const visibility=this.dataVisibility();c.expect('const');const name=this.name();c.expect(':');const type=this.type(),value=c.eat('=')?this.expression():null;if(context==='impl'&&!value)fail('complete implementation associated const initializer required');c.expect(';');member=this.node('AssociatedConst',at,{attributes,visibility,name,type,value,nativeInitializerResolved:false});
+   }else if(context==='foreign'&&this.localItemKeyword()==='static'){
+    const visibility=this.dataVisibility();c.expect('static');const mutable=!!c.eat('mut'),name=this.name();c.expect(':');const type=this.type();c.expect(';');member=this.node('ForeignStatic',at,{attributes,visibility,mutable,name,type,foreignOwnerResolved:false,runtimeAuthority:false});
+   }else if(context!=='foreign'&&c.is('macro_rules'))member=this.scopedMacroDefinition(attributes);
+   else if(context==='module'&&this.localItemKeyword())member=this.localItem(attributes);
+   else if(context!=='foreign'){
+    const path=this.path();if(!c.is('!'))fail('original scoped item declaration or opaque item macro required');member=this.opaque(path,'Items');const brace=member.fields.tree.delimiter==='{';if(brace)c.eat(';');else c.expect(';');if(attributes.length)member=this.node('Unary',at,{operation:'source-attributes',attributes,value:member});
+   }else fail('complete original foreign declaration required');
+   if(c.index<=before)fail('scoped item grammar made no token progress');members.push(member);
+  }c.expect('}');return this.node('ScopedItems',start,{context,innerAttributes,members,namespaceOwnerResolved:false,globalBangEffect:'unresolved'});
+ });}
+ scopedItem(attributes,keyword){return this.enter(()=>{const c=this.cursor,start=attributes[0]?.span.start??c.peek()?.start,visibility=this.dataVisibility(),qualifiers=[];if(c.eat('unsafe'))qualifiers.push('unsafe');if(c.eat('auto'))qualifiers.push('auto');
+  if(keyword==='mod'){
+   if(qualifiers.length)fail('module qualifier requires a separate original grammar');c.expect('mod');const name=this.name(),external=!!c.eat(';'),body=external?null:this.scopedMembers('module');return this.node('ModuleItem',start,{attributes,visibility,name,external,body,moduleOwnerResolved:false,sourceFileResolved:false,globalBangEffect:'unresolved'});
+  }
+  if(keyword==='trait'){
+   c.expect('trait');const name=this.name(),generics=c.is('<')?this.generics():null,bounds=c.eat(':')?this.bounds():[],where=this.where(),body=this.scopedMembers('trait');return this.node('TraitItem',start,{attributes,visibility,qualifiers,name,generics,bounds,where,body,traitOwnerResolved:false,globalBangEffect:'unresolved'});
+  }
+  if(keyword==='impl'){
+   if(visibility||qualifiers.includes('auto'))fail('original implementation visibility/qualifier unsupported');c.expect('impl');const generics=c.is('<')?this.generics():null,negative=!!c.eat('!'),first=this.type(),trait=c.eat('for')?first:null,receiver=trait?this.type():first;if(negative&&!trait||trait&&trait.kind!=='PathType')fail('complete ordinary trait path required');const where=this.where(),body=this.scopedMembers('impl');return this.node('ImplItem',start,{attributes,qualifiers,generics,negative,trait,receiver,where,body,implOwnerResolved:false,receiverOwnerResolved:false,globalBangEffect:'unresolved'});
+  }
+  if(keyword==='extern-block'){
+   if(visibility||qualifiers.includes('auto'))fail('original foreign block visibility/qualifier unsupported');c.expect('extern');const abi=c.peek()?.type==='string'?c.take().text:null,body=this.scopedMembers('foreign');return this.node('ForeignModule',start,{attributes,qualifiers,abi,body,foreignOwnerResolved:false,runtimeAuthority:false});
+  }
+  fail('complete scoped original item required');
+ });}
  localItemKeyword(){
   const c=this.cursor;let at=c.index;if(c.tokens[at]?.text==='pub'){at++;if(c.tokens[at]?.text==='('){let depth=1;for(at++;at<c.tokens.length&&depth;at++){if(c.tokens[at].text==='(')depth++;else if(c.tokens[at].text===')')depth--;}if(depth)return null;}}
-  const word=c.tokens[at]?.text;if(word==='const'&&c.tokens[at+1]?.text==='{')return null;return ['struct','enum','type','const','static','use'].includes(word)?word:word==='extern'&&c.tokens[at+1]?.text==='crate'?'extern-crate':null;
+  if(c.tokens[at]?.text==='unsafe')at++;if(c.tokens[at]?.text==='auto')at++;const word=c.tokens[at]?.text;if(word==='const'&&c.tokens[at+1]?.text==='{')return null;if(['mod','trait','impl'].includes(word))return word;if(word==='extern')return c.tokens[at+1]?.text==='crate'?'extern-crate':c.tokens[at+1]?.type==='string'&&c.tokens[at+2]?.text==='{'||c.tokens[at+1]?.text==='{'?'extern-block':null;return ['struct','enum','type','const','static','use'].includes(word)?word:null;
  }
  localItem(attributes){
-  const c=this.cursor,keyword=this.localItemKeyword();if(['struct','enum'].includes(keyword))return this.dataItem(attributes);
+  const c=this.cursor,keyword=this.localItemKeyword();if(['mod','trait','impl','extern-block'].includes(keyword))return this.scopedItem(attributes,keyword);if(['struct','enum'].includes(keyword))return this.dataItem(attributes);
   const start=attributes[0]?.span.start??c.peek()?.start,visibility=this.dataVisibility();
   if(keyword==='use'){c.expect('use');const tree=this.useTree();c.expect(';');return this.node('Use',start,{attributes,visibility,tree,namespaceResolved:false});}
   if(keyword==='extern-crate'){
