@@ -149,6 +149,12 @@ function selectReaders(source,item,module,scoped,imports,names){
     role='optional-json';cursor=end+1;continue;
    }
    if(method==='unwrap_or'&&role==='optional-json'&&args.length===1&&parameters.get(args[0].text)?.role==='json'){role='json';cursor=end+1;continue;}
+   if(method==='unwrap_or_default'&&role==='optional-scalar'&&last&&!args.length&&['as_str','as_bool','as_u64','as_i64','as_f64','as_null'].includes(last.selected.member)){
+    if(item.tokens.some(token=>token.type==='comment'&&token.start>=tokens[cursor].start&&token.end<=tokens[end].end))break;
+    const receiver=rendered+source.slice(retainedTo,tokens[cursor].start),input=fresh(),payload=fresh(),expanded=expandCanonicalJsonReaderDefault(receiver,last.selected.member,input,payload),offset=('{ let '+input+' = ').length;
+    generatedPaths=[...generatedPaths.map(path=>({...path,span:path.span.map(position=>position+offset)})),...expanded.paths].sort((left,right)=>left.span[0]-right.span[0]);rendered=expanded.source;retainedTo=tokens[end].end;
+    last={...last,span:[first.start,tokens[end].end],receiverSpan:[first.start,tokens[cursor].start],end,fallback:{method,defaultSource:expanded.defaultSource,borrowedDefault:expanded.borrowedDefault,locals:[input,payload],originalSpan:[tokens[cursor].start,tokens[end].end]}};role='scalar';cursor=end+1;continue;
+   }
    if(method!=='and_then'||role!=='optional-json')break;const selected=owner(args);if(!selected)break;
    const span=[first.start,tokens[end].end],receiverSpan=[first.start,tokens[cursor].start];
    if(item.tokens.some(token=>token.type==='comment'&&token.start>=tokens[cursor].start&&token.end<=span[1]))break;
@@ -160,7 +166,7 @@ function selectReaders(source,item,module,scoped,imports,names){
   if(last){
    let repository=rendered;for(const path of [...generatedPaths].reverse()){if(repository.slice(...path.span)!==path.expected)fail('nested generated reader path differs');repository=repository.slice(0,path.span[0])+path.replacement+repository.slice(path.span[1]);}
    edits.push({span:last.span,expected:source.slice(...last.span),replacement:rendered,repository,generatedPaths});
-   selections.push({function:item.name,functionSpan:[item.start,item.end],span:last.span,receiver:{span:last.receiverSpan,source:source.slice(...last.receiverSpan),formal:parameter},member:last.selected.member,owner:last.selected,readers,locals:readers.flatMap(row=>row.locals),nativeEquation:'canonical Option<&Json>::and_then with inert canonical JSON reader function items; intermediate try operators retain source order',executableAdmission:false,loanBoundary:'same shared input root; no owned temporary introduced'});at=last.end;
+   selections.push({function:item.name,functionSpan:[item.start,item.end],span:last.span,receiver:{span:last.receiverSpan,source:source.slice(...last.receiverSpan),formal:parameter},member:last.selected.member,owner:last.selected,readers,fallback:last.fallback??null,locals:[...readers.flatMap(row=>row.locals),...(last.fallback?.locals??[])],nativeEquation:'canonical Option<&Json>::and_then with inert canonical JSON reader function items; intermediate try operators retain source order',executableAdmission:false,loanBoundary:'same shared input root; no owned temporary introduced'});at=last.end;
   }
  }
  return {edits,selections,preserved:selections.length?[]:[{function:item.name,span:[item.start,item.end],reason:'no closed canonical shared Json Option reader function item'}]};
@@ -269,3 +275,5 @@ export function iterateCoreJsonReadersCorpusPackets(options={}){
  const iterator=packets();
  return {next:()=>iterator.next(),return:()=>iterator.return(),verify(){if(!finished)fail('unfinished packet stream');verifyOriginal();}};
 }
+
+import {expandCanonicalJsonReaderDefault} from './canonical-json-reader-default-normalization.mjs';

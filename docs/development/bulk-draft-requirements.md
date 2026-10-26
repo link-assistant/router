@@ -195,3 +195,10 @@ retaining a source model and four further whole native macro-use/crate callbacks
 Five compiler equations and independent unrun source/native cases are drafted.
 Actual native AST/visitor/scope/owner/global closure, production translation and
 every remaining source and verification requirement remain unfinished.
+
+The [JSON reader default draft](json-reader-defaults-draft.md) composes six known
+scalar unwrap_or_default forms with explicit language branches, repository-owned
+constructors, rebased generated paths and complete staged inverses. Four compiler
+equations and independent unrun JS/strict TS/native/refusal sources are drafted.
+Default/Drop equivalence, caller admission, freshness, parity, synchronization
+and every remaining delivery requirement remain unfinished.

@@ -155,3 +155,5 @@ export {proposeOriginalHeaderExpressionBlockScopes} from './expression-block-sco
 export {expandCanonicalJsonClone} from './canonical-json-clone-normalization.mjs';
 
 export {captureOriginalBlockLocalItemSource,originalBlockLocalItemSourceFacts,captureOriginalBlockLocalItemFrame,assertOriginalBlockLocalItemInputsCurrent} from './block-local-item-source.mjs';
+
+export {expandCanonicalJsonReaderDefault} from './canonical-json-reader-default-normalization.mjs';
