@@ -124,3 +124,5 @@ export {captureOriginalIncludeStrNativeSource,originalIncludeStrNativeSourceFact
 export {proposeOriginalArchitectureDocIncludeSource} from './derive-clap-concat.mjs';
 
 export {captureOriginalMacroFileTokenContext,originalMacroFileTokenContextFacts} from './original-file-context-source.mjs';
+
+export {proposeOriginalArchitectureDocIncludeWithFileTokenSource} from './derive-clap-concat.mjs';

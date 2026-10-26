@@ -53,3 +53,10 @@ complete original issuer paths into a distinct macro identifier domain, retainin
 fifteen current native inputs and 102 constructor programs. Three compiler
 equations and independent unrun source/private/refusal cases are drafted. Actual
 Span/resolver/macro-owner authority and all unfinished requirements remain open.
+
+The [architecture document/file-token draft](architecture-doc-file-token-draft.md)
+copies the full substitution path into an additive async entry, joins the exact
+ordinary macro token constructor equation and rechecks original inputs after
+every await. Three compiler equations and independent unrun source/refusal cases
+are drafted. Actual Span/resolver/owner/global qualification and every unfinished
+requirement remain open.
