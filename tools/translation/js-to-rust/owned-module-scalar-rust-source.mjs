@@ -16,7 +16,7 @@ import {ownedRootScalarTypeSource} from './owned-root-scalar-types.mjs';
 import {packageOwnedModuleAPI} from './owned-module-scalar-public-api.mjs';
 export {UnsupportedOwnedRustSource};
 const fail=message=>{throw new UnsupportedOwnedRustSource(message);};
-function originalFunctions(source){
+function originalFunctions(source,{primitiveOperators=false}={}){
  const items=sourceItems(source).filter(item=>item.term!=='comment'),helpers=sourceItems(RUST_SUPPORT).filter(item=>item.term!=='comment');
  if(!items.length)return [];
  if(items.length<=helpers.length||items.length>4099)fail('complete canonical support and bounded nonempty caller items required');
@@ -25,7 +25,7 @@ function originalFunctions(source){
   if(item.term!==original.term||item.name!==original.name||!sameRustSourceSyntax(source.slice(item.start,item.end),RUST_SUPPORT.slice(original.start,original.end)))fail('complete original canonical support differs');
  }
  const functions=items.slice(helpers.length);if(functions.some(item=>item.term!=='fn'))fail('unknown complete Rust root declaration');
- return functions.map(item=>({...readOwnedRustFunction(source.slice(item.start,item.end)),span:[item.start,item.end]}));
+ return functions.map(item=>({...readOwnedRustFunction(source.slice(item.start,item.end),{primitiveOperators}),span:[item.start,item.end]}));
 }
 function pairPaths(path,data){
  const root=posix.dirname(data.runtimeRoot),typed=posix.dirname(data.declarationRoot);if(root!=='.'&&!path.startsWith(root+'/'))fail('JavaScript proposal must stay inside its actual declared source root');
@@ -39,8 +39,8 @@ export function translateOwnedStateRust(source,{context,sourcePath,javascriptPat
  const previousJavaScript=data.files.find(row=>row.path===javascriptPath)?.source??null,pairs=pairPaths(javascriptPath,data),previousPairs=data.files.filter(row=>pairs.includes(row.path));let originalConcrete,projection,derivedContext,envelope;
  const run=createRulePipeline([
   {phase:'language',rules:[
-   {id:'rust:serialize-reparse-complete-original-owned-source-CST',apply:()=>{originalConcrete=transportConcreteSyntaxSource(source,{language:'Rust'});if(transportConcreteSyntaxMeta(originalConcrete.meta).source!==source)fail('whole original Rust CST differs');envelope=readOwnedModuleRustEnvelope(originalConcrete.source);return originalFunctions(envelope.inner);}},
-   {id:'rust:substitute-canonical-owned-calls-types-and-control-into-JavaScript-proposals',apply:functions=>{projection=projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot:data.runtimeRoot,nameProposals:ownedRustNameProposals(previousJavaScript,javascriptPath)});return projection.javascript;}},
+   {id:'rust:serialize-reparse-complete-original-owned-source-CST',apply:()=>{originalConcrete=transportConcreteSyntaxSource(source,{language:'Rust'});if(transportConcreteSyntaxMeta(originalConcrete.meta).source!==source)fail('whole original Rust CST differs');envelope=readOwnedModuleRustEnvelope(originalConcrete.source);return originalFunctions(envelope.inner,{primitiveOperators:data.primitiveOperators===true});}},
+   {id:'rust:substitute-canonical-owned-calls-types-and-control-into-JavaScript-proposals',apply:functions=>{projection=projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot:data.runtimeRoot,primitiveOperators:data.primitiveOperators===true,nameProposals:ownedRustNameProposals(previousJavaScript,javascriptPath)});return projection.javascript;}},
    {id:'meta:fresh-private-owned-source-check-serialize-reparse-and-reissue',apply:javascript=>{
     const files=data.files.filter(row=>row.path!==javascriptPath&&!pairs.includes(row.path)).concat([{path:javascriptPath,source:javascript}]);
     derivedContext=createOwnedStateContext({...data,files});return translateOwnedStateJavaScript(javascript,{context:derivedContext,sourcePath:javascriptPath,typescriptOutputPath});

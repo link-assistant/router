@@ -377,3 +377,10 @@ project signatures, scalar JSDoc redistribution and actual complete receiving
 rechecks. Seven whole source equations and unrun module/local-call/three-language/
 strict TS/refusal cases are drafted. Public native scalar export aliases and all
 remaining source/native/production/sync/freshness/parity/delivery work stay open.
+
+The [packaged primitive module inverse draft](primitive-module-inverse-draft.md)
+propagates explicit primitive parsing/projecting through both complete module
+Rust inverse copies, including multi-module scalar restoration. Three complete
+source equations and unrun width/envelope/meta/batch/refusal/native oracle cases
+are drafted. Public native scalar exports and every remaining source/native/
+production/sync/freshness/parity/delivery obligation remain open.
