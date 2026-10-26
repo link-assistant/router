@@ -133,3 +133,5 @@ export {withOriginalNamespaceAttributeHeaderSourceOperation} from './original-na
 
 export {createOriginalParsedBuiltinCallerAttributeScope,withOriginalParsedBuiltinCallerSources,originalParsedBuiltinCallerAttributeFacts} from './registered-builtin-caller-attribute-source.mjs';
 export {translateParsedBuiltinHeaderTrackedLocalDeclarativeProject} from './parsed-builtin-header-tracked-local-declarative-project.mjs';
+
+export {createOriginalParsedModuleMacroUseCallerScope,createOriginalParsedInnerLintCallerScope,createOriginalParsedDocumentationCallerScope,originalParsedMetadataBuiltinCallerFacts} from './registered-builtin-caller-attribute-source.mjs';

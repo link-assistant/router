@@ -81,3 +81,10 @@ an explicit restoring operation, with narrow private outer-name receipts and
 complete project integration. Four compiler equations and independent unrun
 source/private/JS/strict TS/native namespace cases are drafted. Caller presence,
 argument/global/runtime semantics and every unfinished requirement remain open.
+
+The [parsed metadata builtin draft](parsed-metadata-builtins-draft.md) copies
+complete inner lint, module macro_use and documentation consumers, joining
+genuine original headers to separate native premise domains. Three compiler
+equations and independent unrun source/private/JS/strict TS/native cases are
+drafted. Only conditional builtin-name lookup is selected; caller ownership,
+argument/global/runtime semantics and every unfinished requirement remain open.
