@@ -367,3 +367,8 @@ integration and the remaining requirement ledger are still open.
   attribute grammars, four copied source adapters and scoped generated/project
   consumers. Eight full source equations and independent source/JS/strict TS/
   native boundary cases are unrun; layout/CPU/caller-location remain unqualified.
+
+- Draft fresh complete namespace inputs and original recursive architecture
+  types! expansion, private input lineage, complete selected CST inverses and
+  explicit remaining producer obligations. Four source equations and independent
+  source/native cases remain unrun; no type-prefix or export closure is claimed.

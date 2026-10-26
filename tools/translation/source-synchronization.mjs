@@ -83,3 +83,5 @@ export {withOriginalConditionalSourceOperation} from './conditional-source-opera
 export {createOriginalCommonBuiltinCallerAttributeScope,withOriginalCommonBuiltinCallerSources} from './registered-builtin-caller-attribute-source.mjs';
 export {proposeCommonBuiltinActiveConditionalSources,proposeCommonBuiltinCommentTrackedSources,proposeCommonBuiltinConfiguredTrackedSources,proposeCommonBuiltinGeneratedTrackedLocalDeclarativeSources} from './common-builtin-tracked-source.mjs';
 export {translateCommonBuiltinTrackedLocalDeclarativeProject} from './common-builtin-tracked-local-declarative-project.mjs';
+
+export {proposeOriginalArchitectureTypeMacroSources} from './architecture-type-macro-sources.mjs';

@@ -740,3 +740,11 @@ explicit resolver scope. Eight complete source equations and independent unrun
 legacy/refusal/JS/strict TS/native layout/caller-location source cases are drafted.
 No layout/CPU/runtime qualification is inferred; wider producers, architecture/
 bootstrap, production parity and every unfinished source/verification row remain.
+
+The [original architecture type-macro draft](architecture-type-macro-sources-draft.md)
+adds fresh complete pinned namespace inputs and actual recursive types! input/
+output expansion with full selected-file CST inverses and private lineage.
+Four source equations and independent unrun source/native cases are drafted.
+Generated names remain observations: macro ownership, complete attribute/derive/
+export closure and type-prefix absence remain unqualified. Every unfinished
+source/production/parity/receiving/verification requirement remains open.
