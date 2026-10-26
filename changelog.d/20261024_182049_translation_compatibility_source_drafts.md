@@ -328,3 +328,6 @@ integration and the remaining requirement ledger are still open.
 - Draft original inner lint parser/registry scopes and tracked configuration/
   macro/project successors that preserve every lint byte, with unrun independent
   JS/TypeScript/multi-file native/refusal source.
+- Draft fresh original literal-doc registry/parser and line-comment lexer/reader/
+  AST source scopes, with complete originals, closed lifetimes and unrun source/
+  native cases; retain the remaining compiler consumer obligation explicitly.

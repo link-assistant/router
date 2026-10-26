@@ -58,3 +58,5 @@ export {translateConfiguredTrackedLocalDeclarativeProject} from './configured-tr
 
 export {proposeInnerLintModuleMacroUseTrackedLocalDeclarativeSources,proposeInnerLintConfiguredTrackedTextualSources} from './tracked-local-declarative-source.mjs';
 export {translateInnerLintConfiguredTrackedLocalDeclarativeProject} from './inner-lint-configured-tracked-local-declarative-project.mjs';
+
+export {createOriginalLiteralDocumentationSourceScope} from './registered-builtin-caller-attribute-source.mjs';
