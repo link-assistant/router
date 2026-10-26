@@ -50,11 +50,16 @@ export function requireHttpResourceNativeGenericArguments(meta,normalization){
   if(!consumed.has(selection.function))consumed.set(selection.function,new Map());const owner=consumed.get(selection.function);if(!owner.has(selection.operation))owner.set(selection.operation,new Set());const positions=owner.get(selection.operation);if(positions.has(ordinal))fail('each original generic argument selection must join once');positions.add(ordinal);
   const call=matches[ordinal];if(call.genericIdentity!==true||!Array.isArray(call.args)||call.args.length!==1||call.type!==call.args[0]?.type)fail('complete freshly checked unchanged-value call required');
   const carrier=callee.carrier??callee.genericCarrier??null,expected=carrier?httpResourceGenericCarrierPayload(carrier,call.args[0].type)?.value:call.args[0].type;if(typeof expected!=='string')fail('actual full carrier must satisfy the genuine callee');
-  if(!Array.isArray(selection.typeArguments)||selection.typeArguments.length!==1)fail('one actual original generic argument required');const tokens=selection.typeArguments[0],actual=tokenCells(tokens);if(actual.length===1&&actual[0][0]==='ident'&&actual[0][1]==='_'&&!actual[0][2])continue;
-  const slot=caller.genericIdentity?.typeParameter??null,written=writtenDomain(tokens.map(token=>token.text).join(''),slot),canonical=tokenCells(rustTokens(nativeDomain(written,slot)).filter(token=>token.type!=='comment'));
-  if(JSON.stringify(actual)!==JSON.stringify(canonical)||written!==expected)fail('original written type must exactly match the independently checked actual argument');
+  if(!Array.isArray(selection.typeArguments)||selection.typeArguments.length!==1)fail('one actual original generic argument required');const written=readHttpResourceNativeGenericArgumentType(selection.typeArguments[0],{slot:caller.genericIdentity?.typeParameter??null});if(written===null)continue;
+  if(written!==expected)fail('original written type must exactly match the independently checked actual argument');
  }
 }
 
 import {httpResourceCallerContract,httpResourceCallerOperationNames} from './http-resource-caller-contracts.mjs';
 import {httpResourceGenericLibraryOperation,indexHttpResourceGenericLibraryOperations} from './http-resource-generic-library-calls.mjs';
+
+// Parsing and canonical-token comparison only. This result remains source DATA.
+export function readHttpResourceNativeGenericArgumentType(tokens,{slot=null}={}){
+ const actual=tokenCells(tokens);if(actual.length===1&&actual[0][0]==='ident'&&actual[0][1]==='_'&&!actual[0][2])return null;
+ const type=writtenDomain(tokens.map(token=>token.text).join(''),slot),canonical=tokenCells(rustTokens(nativeDomain(type,slot)).filter(token=>token.type!=='comment'));if(JSON.stringify(actual)!==JSON.stringify(canonical))fail('complete original argument tokens must retain their exact native type');return type;
+}

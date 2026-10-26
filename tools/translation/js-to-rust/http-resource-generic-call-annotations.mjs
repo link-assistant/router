@@ -22,3 +22,13 @@ export function captureHttpResourceGenericDeadlineCallType(ts,node,type,imports,
 import {httpResourceCallerContract} from './http-resource-caller-contracts.mjs';
 
 import {httpResourceGenericCarrier,httpResourceGenericCarrierPayload} from './http-resource-generic-carriers.mjs';
+
+// A genuine written argument or enclosing unchanged-value target can propose a
+// constructor domain. Payloads, moves and all written types still check later.
+export function httpResourceGenericCallValueContext(ts,node,imports,context,tick,{carrier=null,fallback=null}={}){
+ const annotation=written(node,context);if(!annotation)return fallback;
+ const actual=createHttpResourceWrittenAnnotationReader(ts,imports,tick,{aliases:context.aliases,coldTypeCurrent:context.coldTypeCurrent,numericDomain:fallback==='i64'||fallback?.endsWith(':i64')?'i64':null})(annotation);if(actual.kind!=='domain')fail('complete actual explicit generic value domain required');const payload=carrier&&actual.type==='str'?'text-owned':actual.type;return carrier?httpResourceGenericCarrierDomain(carrier,payload):payload;
+}
+
+import {createHttpResourceWrittenAnnotationReader} from './http-resource-callback-annotations.mjs';
+import {httpResourceGenericCarrierDomain} from './http-resource-generic-carriers.mjs';

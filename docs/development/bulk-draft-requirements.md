@@ -923,3 +923,12 @@ obligations share invocation-local source indexes; public descriptors grant no
 permission. Nine complete source equations and independent JS/strict TS/native/
 source/refusal/drop cases are unrun. Generic constructor hints and every unfinished
 architecture, production adoption/parity and delivery requirement remain open.
+
+The [generic constructor context draft](http-resource-generic-constructor-context-draft.md)
+propagates genuine written or enclosing unchanged-value contexts into None and
+String-error constructors, and proposes missing native local call contexts from
+fresh original generic argument selections. Actual values, token boundaries,
+original type obligations, complete meta/source checks and inverses remain.
+Seven complete source equations and independent JS/strict TS/native/refusal cases
+are unrun; resource oracle module 42 is drafted. Wider inference and every
+unfinished architecture, production adoption/parity and delivery row remain open.

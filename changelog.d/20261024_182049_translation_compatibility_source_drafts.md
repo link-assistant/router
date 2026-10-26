@@ -313,3 +313,6 @@ integration and the remaining requirement ledger are still open.
 - Draft qualified shared generic Option/Result value calls with current complete
   library joins, generic forwarding bodies, precise borrowed roots and native
   inverses; add invocation-local descriptor indexes and unrun independent cases.
+- Draft generic constructor contexts from genuine written/enclosing types and
+  original native call selections, retaining independent value/type checks,
+  complete source inverses and unrun JS/TypeScript/native/refusal cases.
