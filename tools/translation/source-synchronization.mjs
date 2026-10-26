@@ -151,3 +151,5 @@ export {proposeOriginalHeaderConcatLiteralSource,proposeOriginalArchitectureHead
 
 export {captureOriginalExpressionBlockScopeSource,originalExpressionBlockScopeSourceFacts,captureOriginalExpressionBlockScopeFrame,assertOriginalExpressionBlockScopeInputsCurrent} from './expression-block-scope-source.mjs';
 export {proposeOriginalHeaderExpressionBlockScopes} from './expression-block-scope-model.mjs';
+
+export {expandCanonicalJsonClone} from './canonical-json-clone-normalization.mjs';

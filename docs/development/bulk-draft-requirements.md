@@ -174,3 +174,10 @@ literal receivers and shared forward/reverse mappings. Twelve compiler equations
 full adjacent native histories and independent unrun JS/strict TS/reverse/native/
 refusal cases are drafted. Production adoption, original equivalence/parity,
 source-bank/export freshness and all remaining delivery requirements stay open.
+
+The [JSON clone chain draft](json-clone-chains-draft.md) extends the complete copy
+selector through bounded shared readers and optional cloned calls, with an
+explicit language Option equation followed by repository-owned path bindings.
+Four compiler equations and independent unrun source/JS/strict TS/native/refusal
+cases are drafted. Original equivalence, actual production gains, freshness,
+parity, reverse synchronization and every remaining delivery requirement stay open.
