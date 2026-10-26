@@ -398,3 +398,10 @@ byte-equal runtime mirror for named and inline imports in every receiving path.
 Nine complete source equations and unrun symbol/meta/runtime/changed-mirror
 refusals are drafted. Public native exports and all remaining source/native/
 production/sync/freshness/parity/delivery obligations remain unfinished.
+
+The [public native alias source draft](public-native-alias-source-draft.md)
+rebuilds fresh receiving native symbols for direct/chained scalar alias DATA and
+proposes complete target-coordinate type source with full CST/inverses. Two
+whole source equations and unrun symbol/source/refusal cases are drafted. Public
+packaging/root-interface/redistribution consumers and all remaining source/native/
+production/sync/freshness/parity/delivery obligations remain unfinished.
