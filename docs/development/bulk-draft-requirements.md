@@ -216,3 +216,9 @@ to the source-bound reverse table, retaining scalar values and borrowed roots.
 Two compiler equations and independent unrun JS/strict TS/interpreter/native
 cases are drafted. Actual whole callers, source banks/exports, full reverse/sync/
 parity and every remaining source and verification requirement remain unfinished.
+
+The [JSON alias annotation correction](json-alias-binding-patterns-draft.md)
+separates actual immutable let binders from their written type paths, preserving
+the original source-role and canonical-owner checks. Two compiler equations and
+independent unrun qualified/import/conflict/refusal cases are drafted. All
+broader translation, namespace, parity and delivery requirements remain open.

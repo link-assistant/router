@@ -110,7 +110,8 @@ function shadowProblem(tokens,body,parameters,owners){
   if(word==='let'){
    let end=at+1;while(end<tokens.length&&!['=',';'].includes(tokens[end].text))end++;
    const pattern=tokens.slice(at+1,end),ordinary=['{',';','}'].includes(tokens[at-1]?.text),plain=ident(pattern[0])&&pattern[0].text!=='mut'&&(pattern.length===1||pattern[1]?.text===':'),canonical=new Set([...owners,'serde_json','core','crate','translation_core']);
-   if(pattern.some(token=>ident(token)&&canonical.has(token.text))||(!ordinary||!plain)&&pattern.some(token=>ident(token)&&reserved.has(token.text)))return 'formal or canonical owner shadowed by local pattern';
+   const binders=plain?pattern.slice(0,1):pattern;
+   if(binders.some(token=>ident(token)&&canonical.has(token.text))||(!ordinary||!plain)&&binders.some(token=>ident(token)&&reserved.has(token.text)))return 'formal or canonical owner shadowed by local pattern';
   }
   if(word==='|'&&['=','(',',','return','{','=>'].includes(tokens[at-1]?.text)){
    let end=at+1;while(end<tokens.length&&tokens[end].text!=='|')end++;
