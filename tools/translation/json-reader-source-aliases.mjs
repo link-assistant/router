@@ -30,7 +30,13 @@ export function createJsonReaderSourceAliasWalk({source,tokens,body,parameters,o
    if(piece[at].text!=='.'||!ident(piece[at+1])||piece[at+2]?.text!=='(')return null;const end=close(piece,at+2);if(end<0)return null;const method=piece[at+1].text,args=piece.slice(at+3,end);
    if(method==='get'&&key(args,value.role,env)){value.role='optional-json';value.keyRole=null;}
    else if(['as_object','as_array'].includes(method)&&value.role==='json'&&!args.length){value.role=method==='as_object'?'optional-map':'optional-array';value.keyRole=null;}
-   else if(method==='and_then'&&value.role==='optional-json'){const selected=canonicalReader(args);if(!selected||!['as_object','as_array'].includes(selected.member))return null;value.role=selected.member==='as_object'?'optional-map':'optional-array';value.keyRole=null;}
+   else if(method==='and_then'&&['optional-json','optional-map','optional-array'].includes(value.role)){
+    const selected=value.role==='optional-json'?canonicalReader(args):null;if(selected&&['as_object','as_array'].includes(selected.member))value.role=selected.member==='as_object'?'optional-map':'optional-array';
+    else{if(args[0]?.text!=='|'||!ident(args[1])||args[2]?.text!=='|')return null;const binder=args[1].text;let body=args.slice(3);if(body[0]?.text==='{'){if(close(body,0)!==body.length-1)return null;body=body.slice(1,-1);}if(body[0]?.text!==binder||body[1]?.text!=='.'||body[2]?.text!=='get'||body[3]?.text!=='('||close(body,3)!==body.length-1||!key(body.slice(4,-1),value.role.slice(9),env))return null;value.role='optional-json';}value.keyRole=null;
+   }
+   else if(method==='filter'&&value.role==='optional-json'){
+    if(args[0]?.text!=='|'||!ident(args[1])||args[2]?.text!=='|')return null;const binder=args[1].text;let body=args.slice(3);if(body[0]?.text==='{'){if(close(body,0)!==body.length-1)return null;body=body.slice(1,-1);}if(body[0]?.text==='!')body=body.slice(1);if(body.length!==5||body[0].text!==binder||body[1].text!=='.'||!canonicalJsonPredicateMember(body[2].text)||body[3].text!=='('||body[4].text!==')')return null;
+   }
    else if(method==='unwrap_or'&&value.role==='optional-json'&&args.length===1&&ident(args[0])&&!blocked.has(args[0].text)&&env.get(args[0].text)?.role==='json')value.role='json';
    else return null;at=end+1;
   }
@@ -51,3 +57,5 @@ export function createJsonReaderSourceAliasWalk({source,tokens,body,parameters,o
   if(token.text==='let')planLet(at);const next=pending.get(at);if(next){next.target.set(next.name,next.value);pending.delete(at);}
  }};
 }
+
+import {canonicalJsonPredicateMember} from './json-value-predicates.mjs';

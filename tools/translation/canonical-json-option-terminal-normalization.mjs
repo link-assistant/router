@@ -85,3 +85,10 @@ export function expandCanonicalJsonOptionPredicate(receiver,method,predicate,neg
  const some='::core::option::Option::Some',callee='::serde_json::Value::'+predicate,prefix='{ let '+input+' = '+receiver+'; if let ',branch=prefix+some+'('+payload+') = '+input+' { '+(negated?'!':''),source=branch+callee+'('+payload+') } else { '+(method==='is_none_or'?'true':'false')+' } }',paths=[{span:[prefix.length,prefix.length+some.length],expected:some,replacement:C+'Maybe::Some'},{span:[branch.length,branch.length+callee.length],expected:callee,replacement:C+'Json::'+predicate}];
  return {source,paths,repository:optionGeneratedPaths(source,paths),evaluationOrder:['receiver-once','Some-predicate-once','None-without-predicate'],executableAdmission:false};
 }
+
+export function expandCanonicalJsonOptionFilter(receiver,predicate,negated,input,payload){
+ optionSourceOperands(receiver,input,payload);if(!canonicalJsonPredicateMember(predicate)||typeof negated!=='boolean')throw new TypeError('Fixed shared JSON filter predicate required');
+ const pieces=[],paths=[];let length=0;const push=text=>{pieces.push(text);length+=text.length;},path=(expected,replacement)=>{paths.push({span:[length,length+expected.length],expected,replacement});push(expected);},some='::core::option::Option::Some',none='::core::option::Option::None',callee='::serde_json::Value::'+predicate;
+ push('{ let '+input+' = '+receiver+'; if let ');path(some,C+'Maybe::Some');push('('+payload+') = '+input+' { if '+(negated?'!':''));path(callee,C+'Json::'+predicate);push('('+payload+') { ');path(some,C+'Maybe::Some');push('('+payload+') } else { ');path(none,C+'Maybe::None');push(' } } else { ');path(none,C+'Maybe::None');push(' } }');const source=pieces.join('');
+ return {source,paths,repository:optionGeneratedPaths(source,paths),evaluationOrder:['receiver-once','Some-predicate-once','preserve-matching-shared-payload','None-without-predicate'],executableAdmission:false};
+}

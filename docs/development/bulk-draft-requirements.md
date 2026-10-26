@@ -273,3 +273,9 @@ adds eight reverse ABI records across seven existing checked paths, and drafts
 closed optional-predicate equations. Five compiler equations and independent
 unrun forward/strict TS/seven-receiver/native cases are present. Production,
 native closure, synchronization, freshness, parity and all delivery work stay open.
+
+The [JSON collection-chain draft](json-collection-chains-draft.md) walks direct
+collection readers, closed map/array field callbacks and JSON filters, and retains
+their immutable alias roles and existing lazy-error implementation. Four compiler
+equations and independent unrun JS/strict TS/native cases are drafted. Actual
+callers, native closure, broader effects, reverse/sync and all delivery work stay open.

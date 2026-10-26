@@ -138,11 +138,11 @@ function selectReaders(source,item,module,scoped,imports,names){
   if(args.length!==3||!ident(args[0]))return null;const selected=imports.select(module,args[0].text);return selected?{member,qualified:prefix,import:selected}:null;
  }
  const aliasWalk=createJsonReaderSourceAliasWalk({source,tokens,body,parameters,owners,close,ident,canonicalReader:owner,typedParameters:piece=>parametersOf(piece,0,piece.length,scoped,imports,module)});
- function callback(args){
+ function callback(args,inputRole){
   if(args[0]?.text!=='|'||!ident(args[1])||!isPlainSourceIdentifier(args[1].text)||args[2]?.text!=='|')return null;const binder=args[1].text,original=args.slice(3);let body=original;if(body[0]?.text==='{'){if(close(body,0)!==body.length-1)return null;body=body.slice(1,-1);}
   if(body[0]?.text!==binder||body[1]?.text!=='.'||!ident(body[2])||body[3]?.text!=='('||close(body,3)!==body.length-1)return null;const member=body[2].text,parameters=body.slice(4,-1);let role;
-  if(member==='get'&&parameters.length===1){const key=parameters[0],known=aliasWalk.lookup(key.text)?.keyRole,string=key.type==='string'&&/^(?:"|r#*")/u.test(key.text)||ident(key)&&known==='str',index=ident(key)&&known==='usize'||key.type==='number'&&/^(?:0|[1-9][0-9_]*)(?:_?usize)?$/u.test(key.text);if(!string&&!index)return null;role='optional-json';}
-  else if(canonicalJsonReaderMember(member)&&!parameters.length)role=member==='as_object'?'optional-map':member==='as_array'?'optional-array':'optional-scalar';else return null;
+  if(member==='get'&&parameters.length===1){const key=parameters[0],known=aliasWalk.lookup(key.text)?.keyRole,string=key.type==='string'&&/^(?:"|r#*")/u.test(key.text)||ident(key)&&known==='str',index=ident(key)&&known==='usize'||key.type==='number'&&/^(?:0|[1-9][0-9_]*)(?:_?usize)?$/u.test(key.text);if(!((inputRole==='json'&&(string||index))||(inputRole==='map'&&string)||(inputRole==='array'&&index)))return null;role='optional-json';}
+  else if(inputRole==='json'&&canonicalJsonReaderMember(member)&&!parameters.length)role=member==='as_object'?'optional-map':member==='as_array'?'optional-array':'optional-scalar';else return null;
   return {binder,body:source.slice(original[0].start,original.at(-1).end),role,member,qualified:'canonical shared Json callback candidate',import:null,sourceSpan:[args[0].start,args.at(-1).end],callbackSource:source.slice(args[0].start,args.at(-1).end),executableAdmission:false};
  }
 
@@ -166,6 +166,7 @@ function selectReaders(source,item,module,scoped,imports,names){
     if(!((role==='json'&&(string||index))||(role==='map'&&string)||(role==='array'&&index)))break;
     role='optional-json';cursor=end+1;continue;
    }
+   if(role==='json'&&canonicalJsonReaderMember(method)&&!args.length){role=method==='as_object'?'optional-map':method==='as_array'?'optional-array':'optional-scalar';cursor=end+1;continue;}
    if(method==='unwrap_or'&&role==='optional-json'&&args.length===1&&aliasWalk.lookup(args[0].text)?.role==='json'){role='json';cursor=end+1;continue;}
    if(method==='unwrap_or_default'&&role==='optional-scalar'&&last&&!args.length&&['as_str','as_bool','as_u64','as_i64','as_f64','as_null'].includes(last.selected.member)){
     if(item.tokens.some(token=>token.type==='comment'&&token.start>=tokens[cursor].start&&token.end<=tokens[end].end))break;
@@ -175,6 +176,13 @@ function selectReaders(source,item,module,scoped,imports,names){
    }
 
 
+
+   if(method==='filter'&&role==='optional-json'){
+    const predicate=predicateCallback(args);if(!predicate)break;if(item.tokens.some(token=>token.type==='comment'&&token.start>=tokens[cursor].start&&token.end<=tokens[end].end))break;
+    const receiver=rendered+source.slice(retainedTo,tokens[cursor].start),input=fresh(),payload=fresh(),expanded=expandCanonicalJsonOptionFilter(receiver,predicate.member,predicate.negated,input,payload),offset=('{ let '+input+' = ').length;
+    generatedPaths=[...generatedPaths.map(path=>({...path,span:path.span.map(position=>position+offset)})),...expanded.paths].sort((left,right)=>left.span[0]-right.span[0]);rendered=expanded.source;retainedTo=tokens[end].end;
+    last={span:[first.start,tokens[end].end],receiverSpan:[first.start,tokens[cursor].start],selected:predicate,end};readers.push({member:'filter',owner:predicate,callback:predicate,originalSpan:[tokens[cursor].start,tokens[end].end],locals:[input,payload],evaluationOrder:expanded.evaluationOrder});cursor=end+1;continue;
+   }
    if(role==='optional-json'&&['is_some_and','is_none_or'].includes(method)){
     const direct=owner(args,canonicalJsonPredicateMember),predicate=direct?{...direct,negated:false}:predicateCallback(args);if(!predicate)break;
     if(item.tokens.some(token=>token.type==='comment'&&token.start>=tokens[cursor].start&&token.end<=tokens[end].end))break;
@@ -188,7 +196,7 @@ function selectReaders(source,item,module,scoped,imports,names){
     generatedPaths=[...generatedPaths.map(path=>({...path,span:path.span.map(position=>position+offset)})),...expanded.paths].sort((left,right)=>left.span[0]-right.span[0]);rendered=expanded.source;retainedTo=tokens[end].end;
     const previous=last??{selected:{member:method,qualified:'::core::option::Option',import:null}};last={...previous,span:[first.start,tokens[end].end],receiverSpan:[first.start,tokens[cursor].start],end,terminal:{method,fallbackSource:fallback,locals:[input,payload,...(fallbackName?[fallbackName]:[])],evaluationOrder:expanded.evaluationOrder,originalSpan:[tokens[cursor].start,tokens[end].end]}};role='scalar';cursor=end+1;continue;
    }
-   if(method!=='and_then'||role!=='optional-json')break;const direct=owner(args),closure=direct?null:callback(args),selected=direct??closure;if(!selected)break;
+   if(method!=='and_then'||!['optional-json','optional-map','optional-array'].includes(role))break;const direct=role==='optional-json'?owner(args):null,closure=direct?null:callback(args,role.slice(9)),selected=direct??closure;if(!selected)break;
    const span=[first.start,tokens[end].end],receiverSpan=[first.start,tokens[cursor].start];
    if(item.tokens.some(token=>token.type==='comment'&&token.start>=tokens[cursor].start&&token.end<=span[1]))break;
    const receiver=rendered+source.slice(retainedTo,receiverSpan[1]),input=fresh(),payload=fresh(),expanded=closure?expandCanonicalJsonReaderClosure(receiver,closure.binder,closure.body,input,payload):expandCanonicalJsonReader(receiver,selected.member,input,payload),offset=('{ let '+input+' = ').length;
@@ -199,7 +207,7 @@ function selectReaders(source,item,module,scoped,imports,names){
   if(last){
    let repository=rendered;for(const path of [...generatedPaths].reverse()){if(repository.slice(...path.span)!==path.expected)fail('nested generated reader path differs');repository=repository.slice(0,path.span[0])+path.replacement+repository.slice(path.span[1]);}
    edits.push({span:last.span,expected:source.slice(...last.span),replacement:rendered,repository,generatedPaths});
-   selections.push({function:item.name,functionSpan:[item.start,item.end],span:last.span,receiver:{span:last.receiverSpan,source:source.slice(...last.receiverSpan),formal:parameter},sourceAliasOrigins:parameter.aliasOrigins??[],member:last.selected.member,owner:last.selected,readers,fallback:last.fallback??null,terminal:last.terminal??null,locals:[...readers.flatMap(row=>row.locals),...(last.fallback?.locals??[]),...(last.terminal?.locals??[])],nativeEquation:'canonical shared JSON Option reader and closed field-callback equations, presence checks and eager fallbacks; intermediate try operators retain source order',executableAdmission:false,loanBoundary:'same shared input root; no owned temporary introduced'});at=last.end;
+   selections.push({function:item.name,functionSpan:[item.start,item.end],span:last.span,receiver:{span:last.receiverSpan,source:source.slice(...last.receiverSpan),formal:parameter},sourceAliasOrigins:parameter.aliasOrigins??[],member:last.selected.member,owner:last.selected,readers,fallback:last.fallback??null,terminal:last.terminal??null,locals:[...readers.flatMap(row=>row.locals),...(last.fallback?.locals??[]),...(last.terminal?.locals??[])],nativeEquation:'canonical shared JSON Option reader, closed collection/field callbacks and filters, presence checks and eager fallbacks; intermediate try operators retain source order',executableAdmission:false,loanBoundary:'same shared input root; no owned temporary introduced'});at=last.end;
   }
  }
  aliasWalk.finish();return {edits,selections,preserved:selections.length?[]:[{function:item.name,span:[item.start,item.end],reason:'no closed canonical shared Json Option reader function item'}]};
@@ -318,3 +326,5 @@ import {isPlainSourceIdentifier} from './module-paths.mjs';
 
 import {canonicalJsonPredicateMember} from './json-value-predicates.mjs';
 import {expandCanonicalJsonOptionPredicate} from './canonical-json-option-terminal-normalization.mjs';
+
+import {expandCanonicalJsonOptionFilter} from './canonical-json-option-terminal-normalization.mjs';
