@@ -47,3 +47,9 @@ source-callsite/Span, visitor, global export and type-prefix closure, wider
 language/production parity, reverse/synchronization/freshness/CI repairs and
 receiving qualification remain unfinished. Every requirement in the table stays
 open; no current completion percentage or newly executable coverage is claimed.
+
+The [macro file-token source draft](macro-file-token-context-draft.md) copies four
+complete original issuer paths into a distinct macro identifier domain, retaining
+fifteen current native inputs and 102 constructor programs. Three compiler
+equations and independent unrun source/private/refusal cases are drafted. Actual
+Span/resolver/macro-owner authority and all unfinished requirements remain open.

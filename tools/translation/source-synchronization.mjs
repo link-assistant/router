@@ -122,3 +122,5 @@ export {originalFreshPrimitiveNamespaceSourcesWithDocumentation} from './extensi
 export {captureOriginalIncludeStrNativeSource,originalIncludeStrNativeSourceFacts,captureOriginalIncludeStrNativeFrame} from './include-str-native-source.mjs';
 
 export {proposeOriginalArchitectureDocIncludeSource} from './derive-clap-concat.mjs';
+
+export {captureOriginalMacroFileTokenContext,originalMacroFileTokenContextFacts} from './original-file-context-source.mjs';
