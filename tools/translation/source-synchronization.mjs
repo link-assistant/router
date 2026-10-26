@@ -97,3 +97,5 @@ export {withOriginalNamespaceParserSourceOperation} from './namespace-parser-sou
 export {proposeOriginalArchitectureTypeOutputSources} from './architecture-type-output-sources.mjs';
 
 export {captureOriginalTextualMacroLookupSource,originalTextualMacroLookupSourceFacts} from './textual-macro-lookup-source.mjs';
+
+export {proposeOriginalX86TypeMacroLookupSources} from './architecture-x86-lookup-sources.mjs';

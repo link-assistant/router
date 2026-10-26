@@ -60,6 +60,14 @@ Three complete source equations and independent unrun source/native scope cases
 are drafted. Actual architecture caller ownership, candidate/export/attribute/
 derive closure and every unfinished source/verification requirement remain open.
 
+The [actual x86 lookup integration draft](architecture-x86-lookup-draft.md) copies
+the complete original output/CST/private-frame pipeline and joins actual root,
+definition and caller prefixes to eleven whole native lookup callbacks. Four
+complete compiler source equations and independent unrun source/refusal cases
+are drafted. Native cells/bytes remain inside original bounds; actual namespace,
+configuration, macro/attribute/derive/global export and type-prefix closure stay
+unqualified, along with every unfinished source/verification requirement.
+
 The [Option guard draft](http-resource-option-guards-draft.md) adds whole absent
 branches, every-exit resource cleanup, explicit fallback domains, Some payload
 moves, same-Option propagation and complete canonical native inverse rules.
