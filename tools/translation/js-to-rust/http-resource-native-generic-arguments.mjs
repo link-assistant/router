@@ -32,26 +32,29 @@ function tokenCells(tokens){
 }
 export function requireHttpResourceNativeGenericArguments(meta,normalization){
  const selections=normalization?.genericCalls??[];if(!Array.isArray(selections)||selections.length>100000)fail('complete bounded original generic selections required');if(!selections.length)return;
- if(typeof meta!=='string'||meta.length>16777216)fail('complete bounded fresh checked meta required');const data=JSON.parse(meta);if(!Array.isArray(data.functions)||data.functions.length>4096)fail('complete fresh checked function module required');const functions=new Map(),calls=new Map();let cells=0;
+ if(typeof meta!=='string'||meta.length>16777216)fail('complete bounded fresh checked meta required');const data=JSON.parse(meta);if(!Array.isArray(data.functions)||data.functions.length>4096)fail('complete fresh checked function module required');const genericLibraries=indexHttpResourceGenericLibraryOperations(httpResourceCallerOperationNames().map(httpResourceCallerContract)),functions=new Map(),calls=new Map();let cells=0;
  const tick=depth=>{if(++cells>100000||depth>160)fail('complete original generic obligation walk bound');};
  for(const fn of data.functions){tick(0);if(typeof fn.name!=='string'||functions.has(fn.name))fail('one actual original function owner required');functions.set(fn.name,fn);}
  for(const fn of data.functions){
   const operations=new Map();calls.set(fn.name,operations);
   function visit(node,depth=0){
    tick(depth);if(!node||typeof node!=='object')return;
-   if(node.kind==='http-resource-call'&&node.local===true&&functions.get(node.operation)?.genericIdentity){if(!operations.has(node.operation))operations.set(node.operation,[]);operations.get(node.operation).push(node);}
+   if(node.kind==='http-resource-call'){const library=node.local===false&&node.sourceGenericLibrary===true?httpResourceGenericLibraryOperation(httpResourceCallerContract(node.operation)):null,key=node.local===true&&functions.get(node.operation)?.genericIdentity?node.operation:library?.rustPath;if(key){if(!operations.has(key))operations.set(key,[]);operations.get(key).push(node);}}
    for(const [key,value]of Object.entries(node)){if(summaries.has(key))continue;if(Array.isArray(value))for(const row of value)visit(row,depth+1);else if(value&&typeof value==='object')visit(value,depth+1);}
   }visit(fn.flow);
  }
  const consumed=new Map();
  for(const selection of selections){
-  tick(0);const caller=functions.get(selection.function),callee=functions.get(selection.operation),matches=calls.get(selection.function)?.get(selection.operation),ordinal=selection.ordinal;
-  if(!caller||!callee?.genericIdentity||!Number.isSafeInteger(ordinal)||ordinal<0||!matches||ordinal>=matches.length)fail('one actual original local generic call required');
+  tick(0);const caller=functions.get(selection.function),local=functions.get(selection.operation),library=genericLibraries.get(selection.operation),callee=local?.genericIdentity??library,matches=calls.get(selection.function)?.get(selection.operation),ordinal=selection.ordinal;
+  if(!caller||!callee||!Number.isSafeInteger(ordinal)||ordinal<0||!matches||ordinal>=matches.length)fail('one actual original local generic call required');
   if(!consumed.has(selection.function))consumed.set(selection.function,new Map());const owner=consumed.get(selection.function);if(!owner.has(selection.operation))owner.set(selection.operation,new Set());const positions=owner.get(selection.operation);if(positions.has(ordinal))fail('each original generic argument selection must join once');positions.add(ordinal);
   const call=matches[ordinal];if(call.genericIdentity!==true||!Array.isArray(call.args)||call.args.length!==1||call.type!==call.args[0]?.type)fail('complete freshly checked unchanged-value call required');
-  const carrier=callee.genericIdentity.carrier??null,expected=carrier?httpResourceGenericCarrierPayload(carrier,call.args[0].type)?.value:call.args[0].type;if(typeof expected!=='string')fail('actual full carrier must satisfy the genuine callee');
+  const carrier=callee.carrier??callee.genericCarrier??null,expected=carrier?httpResourceGenericCarrierPayload(carrier,call.args[0].type)?.value:call.args[0].type;if(typeof expected!=='string')fail('actual full carrier must satisfy the genuine callee');
   if(!Array.isArray(selection.typeArguments)||selection.typeArguments.length!==1)fail('one actual original generic argument required');const tokens=selection.typeArguments[0],actual=tokenCells(tokens);if(actual.length===1&&actual[0][0]==='ident'&&actual[0][1]==='_'&&!actual[0][2])continue;
   const slot=caller.genericIdentity?.typeParameter??null,written=writtenDomain(tokens.map(token=>token.text).join(''),slot),canonical=tokenCells(rustTokens(nativeDomain(written,slot)).filter(token=>token.type!=='comment'));
   if(JSON.stringify(actual)!==JSON.stringify(canonical)||written!==expected)fail('original written type must exactly match the independently checked actual argument');
  }
 }
+
+import {httpResourceCallerContract,httpResourceCallerOperationNames} from './http-resource-caller-contracts.mjs';
+import {httpResourceGenericLibraryOperation,indexHttpResourceGenericLibraryOperations} from './http-resource-generic-library-calls.mjs';

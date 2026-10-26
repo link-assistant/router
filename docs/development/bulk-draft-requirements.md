@@ -914,3 +914,12 @@ remain; constructors and discarded typed arms cannot disappear unchecked. Six
 complete source equations and independent JS/strict TS/native/refusal source are
 unrun; resource oracle module 41 is drafted. Constructor proposal context and all
 unfinished architecture, production adoption/parity and delivery rows remain open.
+
+The [qualified generic shared library call draft](http-resource-generic-library-calls-draft.md)
+connects actual imported Option/Result identity libraries to concrete and genuine
+generic forwarding bodies, preserving complete fresh library proofs, payloads,
+moves and borrowed roots. Native aliases, qualified paths and original turbofish
+obligations share invocation-local source indexes; public descriptors grant no
+permission. Nine complete source equations and independent JS/strict TS/native/
+source/refusal/drop cases are unrun. Generic constructor hints and every unfinished
+architecture, production adoption/parity and delivery requirement remain open.

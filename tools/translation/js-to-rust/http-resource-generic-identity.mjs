@@ -4,7 +4,7 @@ const fail=message=>{throw new TypeError('Resource original generic identity: '+
 export function hasHttpResourceGenericIdentitySource(ts,item){return !!item.typeParameters?.length||ts.getJSDocTags(item).some(tag=>ts.isJSDocTemplateTag(tag));}
 function portableType(name){if(typeof name!=='string'||! /^[A-Z][A-Za-z0-9]*$/u.test(name)||['Self','String','Result','Option','Vec'].includes(name))fail('one portable original generic type parameter required');return name;}
 function slot(ts,node,name){return !!node&&ts.isTypeReferenceNode(node)&&ts.isIdentifier(node.typeName)&&node.typeName.text===name&&!node.typeArguments?.length;}
-export function captureHttpResourceGenericIdentity(ts,item,{language,file,name,moduleNames,erase,annotate,localFunctions=null,readType=null,writtenDoc=null}){
+export function captureHttpResourceGenericIdentity(ts,item,{language,file,name,moduleNames,erase,annotate,localFunctions=null,imports=null,genericLibraryCurrent=null,readType=null,writtenDoc=null}){
  if(item.getSourceFile()!==file||!item.body||item.asteriskToken||item.parameters.length!==1||item.modifiers?.some(modifier=>modifier.kind!==ts.SyntaxKind.ExportKeyword))fail('actual synchronous ordinary single-input generic identity required');
  const tags=ts.getJSDocTags(item).filter(tag=>ts.isJSDocTemplateTag(tag)),parameters=language==='TypeScript'?item.typeParameters:tags.length===1?tags[0].typeParameters:null;
  if(!parameters||parameters.length!==1||tags.length>1||tags.some(tag=>tag.constraint))fail('one actual unconstrained original template required');const parameter=parameters[0];if(parameter.constraint||parameter.default||parameter.modifiers?.length)fail('generic identity constraints/defaults require a separate original-source rule');const typeParameter=portableType(parameter.name.text),input=item.parameters[0];
@@ -21,11 +21,11 @@ export function captureHttpResourceGenericIdentity(ts,item,{language,file,name,m
    if(language!=='TypeScript'||node.type&&!valueSlot(node.type)||carrier&&ts.isNonNullExpression(node))fail('generic type wrapper must retain the complete actual signature domain');const value=term(node.expression,depth+1),span=ts.isTypeAssertionExpression(node)?[node.getStart(file),node.expression.getStart(file)]:[node.expression.end,node.end];erase.push({span,replacement:''});return value;
   }
   if(ts.isIdentifier(node)){if(live.get(node.text)!==true)fail('every actual generic value must move exactly once from its live original binding');live.set(node.text,false);return {kind:'variable',name:node.text,type,root:null,roots:[]};}
-  const callee=ts.isCallExpression(node)?selectHttpResourceCallableSource(ts,node.expression,()=>tick(depth)):null,operation=callee&&ts.isIdentifier(callee)?localFunctions?.get(callee.text):null;
+  const callee=ts.isCallExpression(node)?selectHttpResourceCallableSource(ts,node.expression,()=>tick(depth)):null,selected=callee&&ts.isIdentifier(callee)?localFunctions?.get(callee.text)??(imports?.has(callee.text)?httpResourceCallerContract(imports.get(callee.text)):null):null,operation=selected?.signatureOnly?requireHttpResourceGenericLibraryOperation(selected,genericLibraryCurrent):selected;
   if(operation?.genericIdentity&&node.arguments.length===1){
    if(operation.genericCarrier&&!carrier||operation.genericCarrier&&operation.genericCarrier!==carrier)fail('a carrier helper cannot consume an unconstrained scalar slot');
    if(node.typeArguments?.length){const annotation=node.typeArguments[0],valid=operation.genericCarrier?slot(ts,annotation,typeParameter):valueSlot(annotation);if(language!=='TypeScript'||node.typeArguments.length!==1||!valid)fail('a generic forwarding call must retain its actual instantiated whole value domain');const children=node.getChildren(file),less=children.filter(child=>child.kind===ts.SyntaxKind.LessThanToken),greater=children.filter(child=>child.kind===ts.SyntaxKind.GreaterThanToken);if(less.length!==1||greater.length!==1)fail('complete actual generic forwarding type argument boundary required');erase.push({span:[less[0].getStart(file),greater[0].end],replacement:''});}
-   return {kind:'http-resource-call',operation:callee.text,args:[term(node.arguments[0],depth+1)],type,awaited:false,implicitAwait:false,root:null,roots:[],local:true,genericIdentity:true};
+   return {kind:'http-resource-call',operation:operation.javascriptName,args:[term(node.arguments[0],depth+1)],type,awaited:false,implicitAwait:false,root:null,roots:[],local:!!operation.local,genericIdentity:true,...(operation.sourceGenericLibrary?{sourceGenericLibrary:true}:{})};
   }
   fail('generic value expressions require an original live move or whole checked unchanged-value helper');
  }
@@ -50,7 +50,7 @@ export function captureHttpResourceGenericIdentity(ts,item,{language,file,name,m
 export function requireHttpResourceNativeGenericIdentity(fn,{functions=[fn]}={}){return createHttpResourceNativeGenericIdentityVerifier(functions)(fn);}
 
 // Invocation-local original-function closure only. Results remain source DATA.
-export function createHttpResourceNativeGenericIdentityVerifier(functions){
+export function createHttpResourceNativeGenericIdentityVerifier(functions,{libraryOperation=null}={}){
  if(!Array.isArray(functions)||functions.length>4096)fail('complete bounded original native function module required');const available=new Map(),completed=new Map(),active=new Set();let cells=0;
  for(const fn of functions){if(available.has(fn.name))fail('unique actual native generic helper binding required');available.set(fn.name,fn);}
  const tick=depth=>{if(++cells>100000||depth>160)fail('complete original native generic dependency bound');};
@@ -61,6 +61,7 @@ export function createHttpResourceNativeGenericIdentityVerifier(functions){
   function term(node,depth=0){
    tick(depth);if(node?.kind==='name'){if(live.get(node.name)!==true)fail('native generic value must move once from its actual live binding');live.set(node.name,false);return node.name;}
    if(node?.kind==='call'&&node.args.length===1&&available.get(node.path)?.genericParameters){const child=verify(available.get(node.path),dependencyDepth+1);if(child.carrier&&!carrier||child.carrier&&child.carrier!==carrier)fail('native carrier helper cannot consume an unconstrained original slot');return node.path+'('+term(node.args[0],depth+1)+')';}
+   const library=node?.kind==='call'&&node.args.length===1&&typeof libraryOperation==='function'?libraryOperation(node.path):null;if(library?.sourceGenericLibrary&&library.genericIdentity){if(!carrier||library.genericCarrier!==carrier)fail('a native generic library must receive its complete actual carrier');return library.javascriptName+'('+term(node.args[0],depth+1)+')';}
    fail('native generic term must retain an actual live value or complete checked unchanged-value helper');
   }
   for(const statement of fn.body.statements){tick(0);if(statement.kind!=='let'||statement.mutable||live.has(statement.name)||available.has(statement.name))fail('native generic locals must be actual fresh immutable linear bindings');const value=term(statement.value);live.set(statement.name,true);steps.push('const '+statement.name+' = '+value+';');}
@@ -72,3 +73,6 @@ export function createHttpResourceNativeGenericIdentityVerifier(functions){
 import {selectHttpResourceCallableSource} from './http-resource-source-grouping.mjs';
 
 import {httpResourceGenericSignature,httpResourceGenericSignatureForDomain,httpResourceNativeGenericSignature} from './http-resource-generic-carriers.mjs';
+
+import {httpResourceCallerContract} from './http-resource-caller-contracts.mjs';
+import {requireHttpResourceGenericLibraryOperation} from './http-resource-generic-library-calls.mjs';

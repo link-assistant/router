@@ -13,17 +13,20 @@ import {createHttpResourceNativeGenericIdentityVerifier} from './http-resource-g
 const fail=message=>{throw new UnsupportedOwnedRustSource('Async control proposal: '+message);};
 
 export function projectHttpResourceRustFunctions(functions,{javascriptPath,runtimeRoot,annotationHints=[]}={}){
- const verifyGeneric=createHttpResourceNativeGenericIdentityVerifier(functions),imports=new Map(),used=new Set(),localProposals=new Map();for(const fn of functions){if(localProposals.has(fn.name))fail('unique actual native local function required');if(fn.genericParameters){const actual=verifyGeneric(fn);localProposals.set(fn.name,{local:true,javascriptName:fn.name,rustPath:fn.name,args:['generic-identity'],ret:actual.type,async:false,release:null,genericIdentity:true,genericCarrier:actual.carrier});continue;}localProposals.set(fn.name,{local:true,javascriptName:fn.name,rustPath:fn.name,args:fn.parameters.map(parameter=>httpResourceNativeDomain(parameter.type)),ret:httpResourceNativeDomain(fn.returns),async:fn.asynchronous,release:null});}let cells=0,sequence=0;
+ const imports=new Map(),used=new Set(),localProposals=new Map();let cells=0,sequence=0;
  const tick=depth=>{if(++cells>100000||depth>160)fail('complete canonical HTTP source projection bound');};
  const name=value=>{try{return httpResourceCallerName(value);}catch(error){if(!(error instanceof TypeError))throw error;fail(error.message);}};
  const reserve=(value,depth=0)=>{tick(depth);if(typeof value==='string')used.add(value);else if(value&&typeof value==='object')for(const child of Object.values(value))reserve(child,depth+1);};reserve(functions);
  function imported(id){
   if(!imports.has(id)){const operation=httpResourceCallerContract(id);if(!operation&&id!=='deferFilesystemFlow')fail('actual registered import proposal required');let local;do{local='http_operation_'+sequence++;}while(used.has(local));used.add(local);imports.set(id,{name:id,local,module:operation?.runtimeModule??'extensions/filesystem-effects-runtime.mjs'});}return imports.get(id).local;
  }
+ const allOperations=httpResourceCallerOperationNames().map(httpResourceCallerContract),nativeGenericLibraries=indexHttpResourceGenericLibraryOperations(allOperations),nativeOperations=new Map();for(const row of allOperations){if(row.nativeForm)continue;if(!nativeOperations.has(row.rustPath))nativeOperations.set(row.rustPath,[]);nativeOperations.get(row.rustPath).push(row);}
+ const verifyGeneric=createHttpResourceNativeGenericIdentityVerifier(functions,{libraryOperation:path=>{const actual=nativeGenericLibraries.get(path);return actual?{...actual,javascriptName:imported(actual.javascriptName)}:null;}});
+ for(const fn of functions){if(localProposals.has(fn.name))fail('unique actual native local function required');if(fn.genericParameters){const actual=verifyGeneric(fn);localProposals.set(fn.name,{local:true,javascriptName:fn.name,rustPath:fn.name,args:['generic-identity'],ret:actual.type,async:false,release:null,genericIdentity:true,genericCarrier:actual.carrier});continue;}localProposals.set(fn.name,{local:true,javascriptName:fn.name,rustPath:fn.name,args:fn.parameters.map(parameter=>httpResourceNativeDomain(parameter.type)),ret:httpResourceNativeDomain(fn.returns),async:fn.asynchronous,release:null});}
  function inputType(text){return httpResourcePublicInputType(httpResourceNativeDomain(text),imported);}
  function unwrap(node,depth=0){tick(depth);return node?.kind==='temporary'?unwrap(node.value,depth+1):node;}
  function borrowed(node,depth=0){node=unwrap(node,depth);return ['borrow','dereference'].includes(node?.kind)?borrowed(node.value,depth+1):node;}
- function operation(path){if(localProposals.has(path))return localProposals.get(path);const rows=httpResourceCallerOperationNames().map(httpResourceCallerContract).filter(row=>!row.nativeForm&&row.rustPath===path);if(rows.length!==1)fail('one actual complete native HTTP operation path required');return rows[0];}
+ function operation(path){if(localProposals.has(path))return localProposals.get(path);const rows=nativeOperations.get(path)??[];if(rows.length!==1)fail('one actual complete native HTTP operation path required');return rows[0].signatureOnly?httpResourceGenericLibraryOperation(rows[0]):rows[0];}
  function domain(node,locals,depth=0){
   tick(depth);node=borrowed(node,depth+1);if(node.kind==='name')return locals.get(node.name)?.type??null;if(['boolean','string','integer'].includes(node.kind))return {boolean:'bool',string:'str',integer:node.type}[node.kind];
   if(node.kind==='not')return 'bool';if(node.kind==='unit')return 'unit';if(node.kind==='field'&&node.name==='await')return domain(node.value,locals,depth+1);if(node.kind==='effect-try')return httpResourceResult(domain(node.value,locals,depth+1))?.value??null;
@@ -102,3 +105,5 @@ export function projectHttpResourceRustFunctions(functions,{javascriptPath,runti
 import {indexHttpResourceWrittenLocalHints} from './http-resource-written-locals.mjs';
 
 import {httpResourceGenericCarrier} from './http-resource-generic-carriers.mjs';
+
+import {httpResourceGenericLibraryOperation,indexHttpResourceGenericLibraryOperations} from './http-resource-generic-library-calls.mjs';

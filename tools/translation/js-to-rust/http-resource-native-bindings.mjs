@@ -11,6 +11,7 @@ export function normalizeHttpResourceRustBindings(source){
  if(typeof source!=='string'||source.length>2097152)fail('bounded complete original native source required');
  const concrete=transportConcreteSyntaxSource(source,{language:'Rust'});if(transportConcreteSyntaxMeta(concrete.meta).source!==source)fail('original serialized and reparsed CST differs');
  const items=sourceItems(source).filter(row=>row.term!=='comment');if(!items.length||items.length>4096||items.some(row=>row.term!=='fn'))fail('complete ordinary native function module required');
+ const genericLibraries=indexHttpResourceGenericLibraryOperations(httpResourceCallerOperationNames().map(httpResourceCallerContract));
  const used=new Set(),moduleNames=new Set(),originalFunctions=new Map(),genericOrdinals=new Map(),edits=[],selections=[],annotations=[],genericCalls=[],controls=[];let cells=0,sequence=0;
  const tick=(depth=0)=>{if(++cells>100000||depth>160)fail('complete native binding walk bound');};
  for(const token of rustTokens(source)){tick();if(token.type==='ident')used.add(token.text);}
@@ -45,8 +46,8 @@ export function normalizeHttpResourceRustBindings(source){
   if(node.kind==='json-scalar'){value(item,node.value,scope,depth+1);return;}
   if(node.kind==='call'){
    if(scope.has(node.path))fail('a bare call resolves to an actual local value rather than an imported or checked function');
-   const callee=originalFunctions.get(node.path);let ordinal=null;if(callee?.genericParameters){if(!genericOrdinals.has(item.name))genericOrdinals.set(item.name,new Map());const counts=genericOrdinals.get(item.name);ordinal=counts.get(node.path)??0;counts.set(node.path,ordinal+1);}
-   if(node.typeArguments){if(ordinal===null||node.typeArguments.length!==1)fail('explicit arguments require one actual local generic function slot');const span=node.typeArgumentsSpan;if(!span||span.start<node.nameSpan.end||span.end>item.end-item.start)fail('complete original generic argument span required');const selected=[item.start+span.start,item.start+span.end],expected=source.slice(...selected);edits.push({span:selected,expected,replacement:''});genericCalls.push({function:item.name,operation:node.path,ordinal,typeArguments:node.typeArguments,span:selected,original:expected,sourceAuthority:false,semanticAuthority:false});selections.push({kind:'original-local-generic-arguments',span:selected,source:expected,replacement:''});}
+   const callee=originalFunctions.get(node.path),library=genericLibraries.get(node.path);let ordinal=null;if(callee?.genericParameters||library){if(!genericOrdinals.has(item.name))genericOrdinals.set(item.name,new Map());const counts=genericOrdinals.get(item.name);ordinal=counts.get(node.path)??0;counts.set(node.path,ordinal+1);}
+   if(node.typeArguments){if(ordinal===null||node.typeArguments.length!==1)fail('explicit arguments require one actual source-qualified generic function slot');const span=node.typeArgumentsSpan;if(!span||span.start<node.nameSpan.end||span.end>item.end-item.start)fail('complete original generic argument span required');const selected=[item.start+span.start,item.start+span.end],expected=source.slice(...selected);edits.push({span:selected,expected,replacement:''});genericCalls.push({function:item.name,operation:node.path,ordinal,typeArguments:node.typeArguments,span:selected,original:expected,sourceAuthority:false,semanticAuthority:false});selections.push({kind:'original-local-generic-arguments',span:selected,source:expected,replacement:''});}
    for(const argument of node.args)value(item,argument,scope,depth+1);return;
   }
   if(node.kind==='match'&&node.arms.some(arm=>arm.pattern.startsWith('Ok('))){
@@ -116,3 +117,6 @@ export function normalizeHttpResourceRustBindings(source){
 }
 
 import {selectHttpResourceGenericOptionIdentity,selectHttpResourceImplicitNoneFallback} from './http-resource-generic-option-normalization.mjs';
+
+import {httpResourceCallerContract,httpResourceCallerOperationNames} from './http-resource-caller-contracts.mjs';
+import {indexHttpResourceGenericLibraryOperations} from './http-resource-generic-library-calls.mjs';

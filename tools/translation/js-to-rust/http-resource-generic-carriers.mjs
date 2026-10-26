@@ -3,8 +3,8 @@
 import {httpResourceOption} from './http-resource-options.mjs';
 import {httpResourceResult} from './http-resource-caller-contracts.mjs';
 const rows=Object.freeze([
- Object.freeze({carrier:'option',family:'generic-option-signature',operation:'router_option_identity',rustPrefix:'Option<',rustSuffix:'>',metaPrefix:'optional:',sourceAuthority:false,semanticAuthority:false}),
- Object.freeze({carrier:'text-result',family:'generic-text-result-signature',operation:'router_text_result_identity',rustPrefix:'Result<',rustSuffix:',String>',metaPrefix:'http-result:',sourceAuthority:false,semanticAuthority:false}),
+ Object.freeze({carrier:'option',family:'generic-option-signature',operation:'router_option_identity',rustPath:'crate::translation_primitive_option_core::option_identity',argumentRole:'generic-option',rustPrefix:'Option<',rustSuffix:'>',metaPrefix:'optional:',sourceAuthority:false,semanticAuthority:false}),
+ Object.freeze({carrier:'text-result',family:'generic-text-result-signature',operation:'router_text_result_identity',rustPath:'crate::translation_owned_results_core::text_result_identity',argumentRole:'generic-text-result',rustPrefix:'Result<',rustSuffix:',String>',metaPrefix:'http-result:',sourceAuthority:false,semanticAuthority:false}),
 ]);
 export const httpResourceGenericCarrier=carrier=>rows.find(row=>row.carrier===carrier)??null;
 export const httpResourceGenericCarrierByFamily=family=>rows.find(row=>row.family===family)??null;

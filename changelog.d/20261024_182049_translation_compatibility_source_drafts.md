@@ -310,3 +310,6 @@ integration and the remaining requirement ledger are still open.
 - Draft original local Rust generic-call arguments with retained token spans,
   independent fresh meta/type obligations, full source inverses and unrun
   JS/TypeScript/refusal/native drop cases; no coverage or parity claim.
+- Draft qualified shared generic Option/Result value calls with current complete
+  library joins, generic forwarding bodies, precise borrowed roots and native
+  inverses; add invocation-local descriptor indexes and unrun independent cases.
