@@ -6,3 +6,5 @@ function source(name){
  }finally{closeSync(descriptor);}
 }
 export function primitiveOperatorRuntimeAssetPair(){return new Map(['primitive-operator-runtime.mjs','primitive-operator-runtime.d.mts'].map(name=>[name,source(name)]));}
+
+export function primitiveOperatorDeclarationSource(){return source('primitive-operator-runtime.d.mts');}

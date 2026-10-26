@@ -310,6 +310,12 @@ preserving default contexts and paired target/interpreter order. Eighteen source
 equations and independent unrun receiving/strict TS/refusal cases are drafted.
 Fixed-width reverse typing, production, native closure and all delivery work stay open.
 
+The [shared primitive declaration draft](primitive-declarations-draft.md) joins
+both forward asset factories and reverse contexts to one bounded physical ABI
+source. Three compiler equations and independent unrun source-reader/ABI cases
+are drafted. Receiving, fixed-width reverse typing, source banks/exports,
+production/native closure, synchronization, parity and all delivery work stay open.
+
 The [positive generic draft](positive-generics-draft.md) adds free/associated
 turbofish and bounded const argument/default parsing without consuming enclosing
 angle tokens. Two compiler equations and independent unrun source/refusal/native
