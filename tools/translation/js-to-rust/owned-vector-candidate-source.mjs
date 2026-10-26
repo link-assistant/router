@@ -164,7 +164,7 @@ function originalImportTarget(from,specifier,analysis,state){
  const target=relative(from,specifier);
  // A paired TS import resolves its genuine .d.mts in declarationRoot. Its
  // fixed runtime counterpart remains the independently checked JS callee.
- if(traversals.get(analysis)?.paired&&posix.dirname(target)===state.data.declarationRoot&&['json-update-runtime.mjs','json-macro-runtime.mjs','base64-runtime.mjs','json-runtime.mjs','json-option-runtime.mjs'].includes(posix.basename(target))){
+ if(traversals.get(analysis)?.paired&&posix.dirname(target)===state.data.declarationRoot&&['primitive-operator-runtime.mjs','json-update-runtime.mjs','json-macro-runtime.mjs','base64-runtime.mjs','json-runtime.mjs','json-option-runtime.mjs'].includes(posix.basename(target))){
   const runtime=state.data.runtimeRoot+'/'+posix.basename(target);
   if(state.files.has(target)&&state.files.get(target)!==state.files.get(runtime))fail('paired runtime counterpart differs');return runtime;
  }
@@ -211,6 +211,10 @@ function originalOwnedCoreType(handle,path,type,analysis){
   if(binding.target===state.data.runtimeRoot+'/primitive-operator-runtime.mjs'&&primitiveBitwiseAlias(binding.name)&&!type.typeArguments)return primitiveBitwiseAlias(binding.name).name;
   if(binding.target===state.data.runtimeRoot+'/json-macro-runtime.mjs'&&binding.name==='JsonValue'&&!type.typeArguments)return 'json-ref';
   if(binding.target===state.data.runtimeRoot+'/base64-runtime.mjs'&&!type.typeArguments){if(binding.name==='Base64Error')return 'base64-error-ref';if(binding.name==='Base64Result')return 'base64-result';}
+ }
+ if(ts.isImportTypeNode(type)&&!type.isTypeOf&&ts.isLiteralTypeNode(type.argument)&&ts.isStringLiteral(type.argument.literal)&&type.qualifier&&ts.isIdentifier(type.qualifier)&&primitiveBitwiseAlias(type.qualifier.text)&&!type.typeArguments&&!type.attributes){
+  requireOwnedCoreSourceCurrent(handle);const row=primitiveBitwiseAlias(type.qualifier.text),target=relative(path,type.argument.literal.text),runtime=state.data.runtimeRoot+'/primitive-operator-runtime.mjs',declaration=state.data.declarationRoot+'/primitive-operator-runtime.d.mts';if(state.data.primitiveOperators!==true||![runtime,state.data.declarationRoot+'/primitive-operator-runtime.mjs'].includes(target))fail('unregistered native scalar type import');
+  const actual=analysis.syntax.get(declaration),exported=actual?.statements.find(item=>ts.isTypeAliasDeclaration(item)&&item.name.text===row.alias&&item.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword)),symbol=analysis.checker.getSymbolAtLocation(type.qualifier);if(!exported||symbol?.declarations?.length!==1||symbol.declarations[0]!==exported)fail('native scalar type import requires its actual current exported declaration symbol');requireOwnedCoreSourceCurrent(handle);return row.name;
  }
  if(ts.isImportTypeNode(type)&&!type.isTypeOf&&ts.isLiteralTypeNode(type.argument)&&ts.isStringLiteral(type.argument.literal)&&type.qualifier?.text==='JsonValue'&&!type.typeArguments){
   if(originalImportTarget(path,type.argument.literal.text,analysis,state)!==state.data.runtimeRoot+'/json-macro-runtime.mjs')fail('unregistered type import');return 'json-ref';

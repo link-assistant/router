@@ -327,3 +327,10 @@ turbofish and bounded const argument/default parsing without consuming enclosing
 angle tokens. Two compiler equations and independent unrun source/refusal/native
 cases are drafted. Native const/type/owner closure, actual target semantics,
 whole production translation, parity and all delivery obligations stay open.
+
+The [native scalar TS projection draft](forward-native-scalars-draft.md) carries
+already checked native integer identities through the actual standalone/project
+forward annotations and all seven reverse static import-type paths. Twelve
+whole source equations and independent unrun layout/strict TS/meta/receiving
+cases are drafted. Complete generated module recognition, all remaining source,
+native closure, synchronization, freshness, parity and delivery remain open.

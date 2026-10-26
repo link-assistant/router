@@ -6,14 +6,14 @@ function dataEntries(declarations) {
   if(!(declarations instanceof Map))throw new TypeError('Type layouts require the actual checked declaration Map');
   return [...declarations].filter(([,entry])=>entry.k === 'data').sort(([left],[right])=>left < right?-1:left > right?1:0);
 }
-function normalizeType(type,declarations) {
+function normalizeType(type,declarations,nativeScalarModule=null) {
   if(!type || typeof type !== 'object')throw new TypeError('Checked type layout is missing');
   if(PRIMITIVES.has(type.kind))return {kind:type.kind};
   if(type.kind === 'fixed') {
     if(![8,16,32,64,128].includes(type.bits) || typeof type.signed !== 'boolean')throw new TypeError('Invalid checked machine-integer layout');
-    return {kind:'fixed',bits:type.bits,signed:type.signed};
+    const nativeScalarTypeScript=nativeScalarTypeScriptType(type,nativeScalarModule);return {kind:'fixed',bits:type.bits,signed:type.signed,...(nativeScalarTypeScript?{nativeScalarTypeScript}:{})};
   }
-  if(type.kind === 'array')return {kind:'array',element:normalizeType(type.element,declarations),...(fixedArrayLength(type)!==null?{rustFixedArray:{length:fixedArrayLength(type)}}:{})};
+  if(type.kind === 'array')return {kind:'array',element:normalizeType(type.element,declarations,nativeScalarModule),...(fixedArrayLength(type)!==null?{rustFixedArray:{length:fixedArrayLength(type)}}:{})};
   let name;
   if(type.kind === 'data')name=type.name;
   else if(type.kind === 'named')name=(type.path[0] === 'crate'?type.path.slice(1):type.path).join('.');
@@ -21,21 +21,22 @@ function normalizeType(type,declarations) {
   if(typeof name !== 'string' || declarations.get(name)?.k !== 'data')throw new TypeError(`Unknown checked data layout: ${name}`);
   return {kind:'data',name};
 }
-function fieldsOf(ctor,declarations) {
+function fieldsOf(ctor,declarations,nativeScalarModule=null) {
   if(!Array.isArray(ctor.fields))throw new TypeError('Constructor layout has no field list');
   const names=new Set();return ctor.fields.map((field,index)=>{
     const name=field.name ?? `field${index}`;
     if(typeof name !== 'string' || name === '$' || names.has(name))throw new TypeError('Constructor layout has an invalid or duplicate field name');
-    names.add(name);return {name,type:normalizeType(field.type,declarations)};
+    names.add(name);return {name,type:normalizeType(field.type,declarations,nativeScalarModule)};
   });
 }
-export function valueSchema(declarations) {
+export function valueSchema(declarations,{nativeScalarModule=null}={}) {
+  nativeScalarTypeScriptModule(nativeScalarModule);
   const entries=dataEntries(declarations),types=Object.create(null);
   for(const [name,entry] of entries) {
     if(!Array.isArray(entry.ctors))throw new TypeError(`Data layout ${name} has no constructors`);
     const names=new Set(),ctors=entry.ctors.map(ctor=>{
       if(typeof ctor.name !== 'string' || names.has(ctor.name))throw new TypeError('Data layout has an invalid or duplicate constructor');
-      names.add(ctor.name);return {name:ctor.name,fields:fieldsOf(ctor,declarations)};
+      names.add(ctor.name);return {name:ctor.name,fields:fieldsOf(ctor,declarations,nativeScalarModule)};
     });
     types[name]={kind:'data',name,ctors};
   }
@@ -60,7 +61,8 @@ export function recursiveDataNames(declarations) {
 }
 function render(type,schema,aliases,active=new Set()) {
   switch(type.kind) {
-    case 'fixed':case 'nat':case 'int':return 'bigint';
+    case 'fixed':return type.nativeScalarTypeScript??'bigint';
+    case 'nat':case 'int':return 'bigint';
     case 'float':return 'number';
     case 'bool':return 'boolean';
     case 'string':case 'char':return 'string';
@@ -77,17 +79,19 @@ function render(type,schema,aliases,active=new Set()) {
     default:throw new TypeError(`Unsupported checked type layout: ${type.kind}`);
   }
 }
-export function typeScriptType(type,declarations,{aliases=recursiveDataNames(declarations)}={}) {
+export function typeScriptType(type,declarations,{aliases=recursiveDataNames(declarations),nativeScalarModule=null}={}) {
   if(!(aliases instanceof Set))throw new TypeError('TypeScript alias selection must be a Set');
-  const schema=valueSchema(declarations);
+  const schema=valueSchema(declarations,{nativeScalarModule});
   for(const name of aliases)if(!Object.hasOwn(schema.types,name))throw new TypeError(`Unknown TypeScript data alias: ${name}`);
-  return render(normalizeType(type,declarations),schema,aliases);
+  return render(normalizeType(type,declarations,nativeScalarModule),schema,aliases);
 }
-export function typeScriptAliases(declarations) {
-  const schema=valueSchema(declarations),names=Object.keys(schema.types),aliases=new Set(names);
+export function typeScriptAliases(declarations,{nativeScalarModule=null}={}) {
+  const schema=valueSchema(declarations,{nativeScalarModule}),names=Object.keys(schema.types),aliases=new Set(names);
   return names.map(name=>{
     const entry=schema.types[name];
     const body=entry.ctors.map(ctor=>'Readonly<{ readonly "$": '+JSON.stringify(ctor.name)+ctor.fields.map(field=>`; readonly ${JSON.stringify(field.name)}: ${render(field.type,schema,aliases)}`).join('')+' }>').join(' | ') || 'never';
     return `type ${dataAliasName(name)} = ${body};`;
   }).join('\n');
 }
+
+import {nativeScalarTypeScriptModule,nativeScalarTypeScriptType} from './native-scalar-typescript.mjs';
