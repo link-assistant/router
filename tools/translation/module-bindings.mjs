@@ -143,7 +143,7 @@ const standardDerives=new Set(['Clone','Copy','Debug','Default','PartialEq','Eq'
 function uncertainty(attributes,{moduleAttribute=false}={}) {
   // Built-in #[path = "..."] selects a module file, never arbitrary item
   // expansion. The tracked graph still owns that file and cfg resolution.
-  const unknown=attributes.some(attribute=>!harmless.has(attribute.name) && !['cfg','derive','macro_export','macro_use'].includes(attribute.name) && !(attribute.name==='path' && moduleAttribute && attribute.pathLiteral) || attribute.name==='derive' && attribute.tokens.filter(token=>/^[\p{L}_][\p{L}\p{N}_]*$/u.test(token)).slice(1).some(name=>!standardDerives.has(name)));
+  const unknown=attributes.some(attribute=>attribute.tokens?.[1]==='::'||!harmless.has(attribute.name) && !['cfg','derive','macro_export','macro_use'].includes(attribute.name) && !(attribute.name==='path' && moduleAttribute && attribute.pathLiteral) || attribute.name==='derive' && attribute.tokens.filter(token=>/^[\p{L}_][\p{L}\p{N}_]*$/u.test(token)).slice(1).some(name=>!standardDerives.has(name)));
   return {type:unknown,bang:unknown || attributes.some(attribute=>attribute.name==='macro_use'),attribute:unknown,macro:unknown || attributes.some(attribute=>attribute.name==='macro_use'),conditional:attributes.some(attribute=>['cfg','cfg_attr'].includes(attribute.name))};
 }
 function nestedExportUncertainty(tokens,start,profile,helperAttributeClosed=()=>false) {
@@ -156,6 +156,7 @@ function nestedExportUncertainty(tokens,start,profile,helperAttributeClosed=()=>
     const end=close(tokens,bracket),body=tokens.slice(bracket+1,end);
     const original=itemConfiguration(tokens.slice(at,end+1),profile).attributes[0];
     if(isInertConditionalAttribute(original)){at=end;continue;}
+    if(documentationArgumentMayExportMacros({name:body[0]?.text,tokens:body.map(token=>token.text)}))return {start:tokens[at].start,end:tokens[end].end};
     if(helperAttributeClosed({start:tokens[at].start,end:tokens[end].end})){at=end;continue;}
     if(body.some(token=>identifier(token)&&token.text==='macro_export')||uncertainty([{name:body[0]?.text,tokens:body.map(token=>token.text)}]).macro)return {start:tokens[at].start,end:tokens[end].end};
     at=end;
@@ -527,8 +528,9 @@ function resolveRegisteredBuiltinEnclosingSourceBindings({modules,externalModule
       if(innerBuiltin){scope.innerBuiltinNames.push({name:innerBuiltin.name,span:innerBuiltin.span});continue;}
       try {
         const tokens=tokensOf(item),head=header(tokens,scope.path),moduleAttribute=tokens[head.at]?.text==='mod';
+        const documentationMacroFrontier=head.attributes.find(documentationArgumentMayExportMacros);if(documentationMacroFrontier){scope.baseMacro=scope.baseBang=scope.baseAttribute=true;const root=scopes.get('crate');if(root)root.baseMacro=root.baseBang=root.baseAttribute=true;diagnostic(scope,'documentation equality expression may introduce crate-root macros; original argument expansion remains unresolved',documentationMacroFrontier.span,{globalMacroKindUnresolved:true});}
         const nestedExport=nestedExportUncertainty(tokens,head.at,profile,span=>deriveContext&&deriveFootprintHelperAttributeAt(deriveContext,module,item,span)||deriveBangContext&&deriveEnclosingNamespaceHelperAttributeAt(deriveBangContext,deriveContext,module,item,span)||registered&&registered.at(module,item,{name:module.source.slice(span.start,span.end).match(/^#\s*\[\s*([A-Za-z_][A-Za-z0-9_]*)/u)?.[1],span}));
-        if(nestedExport){scope.baseMacro=scope.baseBang=true;diagnostic(scope,'nested source attribute can introduce crate-root exported macros; expansion remains unresolved',nestedExport);}
+        if(nestedExport){scope.baseMacro=scope.baseBang=scope.baseAttribute=true;const root=scopes.get('crate');if(root)root.baseMacro=root.baseBang=root.baseAttribute=true;diagnostic(scope,'nested source attribute can introduce crate-root exported macros; expansion remains unresolved',nestedExport);}
         const macroUse=moduleAttribute&&head.attributes.some(attribute=>attribute.name==='macro_use'&&attribute.tokens.length===1)&&condition.status==='active'&&scope.configurationCondition==='active';
         const effectiveAttributes=head.attributes.filter(attribute=>!isInertConditionalAttribute(condition.attributes.find(original=>original.span.start===attribute.span.start))&&!(attribute.name==='cfg'&&condition.attributes.find(original=>original.span.start===attribute.span.start)?.evaluation?.value===true)&&!(macroUse&&attribute.name==='macro_use'&&attribute.tokens.length===1)&&!(toolContext&&toolAttributeAt(toolContext,module,item,attribute))&&!(registered&&registered.at(module,item,attribute))),uncertain=uncertainty(effectiveAttributes,{moduleAttribute});
         const deriveCertificate=deriveContext&&['struct','enum'].includes(item.term)?deriveFootprintAt(deriveContext,module,item):null;
@@ -784,3 +786,5 @@ import {createOriginalRegisteredBuiltinCallerAttributeScope,createSourceMetadata
 
 // Explicit configured-variant successor; old public resolver domains remain.
 export function resolveConfiguredVariantEnclosingNamespaceModuleBindings(options={}){return resolveRegisteredBuiltinEnclosingSourceBindings(options,true,true);}
+
+import {documentationArgumentMayExportMacros} from './documentation-argument-uncertainty.mjs';

@@ -84,6 +84,14 @@ complete source equations and independent unrun refusal/source cases are drafted
 Builtin doc consumers, native visitor confinement, wider attributes and every
 unfinished producer/production/source/verification requirement remain open.
 
+The [documentation argument effect draft](doc-argument-effects-draft.md) retains
+nonliteral doc-expression macro uncertainty on local and root scopes, repairs
+qualified builtin-spelling classification and adds genuine positive expression
+frontier observations. Three complete source equations and independent unrun
+literal/qualified/nested/root/refusal cases are drafted. No owner or global
+closure is inferred; builtin doc/visitor consumers, every broader producer and
+all unfinished source/production/verification requirements remain open.
+
 The [Option guard draft](http-resource-option-guards-draft.md) adds whole absent
 branches, every-exit resource cleanup, explicit fallback domains, Some payload
 moves, same-Option propagation and complete canonical native inverse rules.

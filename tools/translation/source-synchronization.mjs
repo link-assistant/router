@@ -103,3 +103,5 @@ export {proposeOriginalX86TypeMacroLookupSources} from './architecture-x86-looku
 export {translateArchitectureMetadataTrackedLocalDeclarativeProject} from './architecture-metadata-tracked-local-declarative-project.mjs';
 
 export {captureOriginalNamespaceAttributeExpression,originalNamespaceAttributeExpressionFacts,originalNamespaceAttributeExpressionSourceGuard} from './original-namespace-parser.mjs';
+
+export {documentationArgumentMayExportMacros,captureOriginalDocExpressionSourceEffects} from './original-doc-expression-effects.mjs';
