@@ -167,6 +167,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  if(program.some(item=>issued.get(item).context!==context))fail('mixed receiving contexts');
  let sequence=0;const imports=new Set();
  function publicTypeScriptType(type){
+  if(type==='json-option-input'){imports.add('router_core_json_option_as_str');return TS_TYPES[type];}
   const options={'json-option-ref':'serde_json_value_get_string','str-option-ref':'serde_json_value_as_str','bool-option':'serde_json_value_as_bool','u64-option':'serde_json_value_as_u64','i64-option':'serde_json_value_as_i64','json-owned-option':'router_core_json_find'};
   if(Object.hasOwn(options,type)){const name=options[type];imports.add(name);return 'ReturnType<typeof __ro_'+name+'>';}
   const witness=ownedJsonReaderTypeWitness(type);if(witness){imports.add(witness);return 'ReturnType<typeof __ro_'+witness+'>';}

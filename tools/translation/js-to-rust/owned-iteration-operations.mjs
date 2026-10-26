@@ -163,7 +163,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  const context=issued.get(program[0]).context;requireOwnedCoreSourceCurrent(context);const sourceData=ownedCoreSourceData(context);
  if(program.some(item=>issued.get(item).context!==context))fail('mixed receiving contexts');
  let sequence=0;const imports=new Set();
- function publicTypeScriptType(type){const witness=ownedJsonReaderTypeWitness(type);if(witness){imports.add(witness);return 'ReturnType<typeof __ro_'+witness+'>';}return TS_TYPES[type];}
+ function publicTypeScriptType(type){if(type==='json-option-input'){imports.add('router_core_json_option_as_str');return TS_TYPES[type];}const witness=ownedJsonReaderTypeWitness(type);if(witness){imports.add(witness);return 'ReturnType<typeof __ro_'+witness+'>';}return TS_TYPES[type];}
 
  function expr(value,borrowOwned=false){
   switch(value.kind){
@@ -246,7 +246,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
   const rustTypes=item.hostCalls.some(call=>ownedAsciiOperation(call.name))?{...RUST_TYPES,str:"&'a crate::translation_core::Str"}:RUST_TYPES;
   const borrowed=type=>['json-ref','map-ref','str','bytes-ref','base64-error-ref','json-option-input','json-list-ref'].includes(type)||ownedJsonBorrowed(type),loan=borrowed(item.returns),explicit=loan&&item.resultRoot!==null&&item.params.filter(param=>borrowed(param.type)).length>1;
   const parameters=item.params.map(param=>{
-   const type=rust?rustTypes[param.type].replace("'a ",explicit&&param.name===item.resultRoot?"'a ":''):TS_TYPES[param.type];
+   const type=rust?rustTypes[param.type].replace("'a ",explicit&&param.name===item.resultRoot?"'a ":''):publicTypeScriptType(param.type);
    return (rust?param.rust:param.name)+': '+type;
   }).join(', ');
   const returns=rust?rustTypes[item.returns].replace("'a ",item.resultRoot===null?"'static ":explicit?"'a ":''):publicTypeScriptType(item.returns);

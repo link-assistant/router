@@ -540,7 +540,7 @@ function checkFunction(context,path,declaration,analysis){
     const argument=expression(node.arguments[0],scope,depth+1,true);
     if(argument.type!==optional.input||!params.some(param=>param.type===optional.input&&param.name===argument.root))fail('opaque optional Json root differs');
     hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end],inputRoot:argument.root});requireOwnedCoreSourceCurrent(context);
-    return {kind:'json-option-call',name:binding.name,args:[argument],type:optional.ret,root:argument.root};
+    return {kind:'json-option-call',name:binding.name,args:[argument],type:optional.ret,root:optional.root===null?null:argument.root};
    }
    const reader=ownedJsonReaderOperation(binding.name);
    if(reader&&binding.target===analysis.runtimeRoot+'/json-runtime.mjs'){

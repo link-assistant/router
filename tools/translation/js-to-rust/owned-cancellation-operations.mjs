@@ -190,6 +190,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  if(program.some(item=>issued.get(item).context!==context))fail('mixed receiving contexts');
  let sequence=0;const imports=new Set();let resultTypePrefix=null;const resultTypeNamespace=()=>{if(resultTypePrefix!==null)return resultTypePrefix;if(!sourceData.files.some(row=>row.path==='src/translation_owned_results_core.rs'))return resultTypePrefix='router_result_';try{requireOwnedResultSources(new Map(sourceData.files.map(row=>[row.path,row.source])),sourceData);resultTypePrefix='router_owned_result_';}catch{resultTypePrefix='router_result_';}return resultTypePrefix;};
  function publicTypeScriptType(type,parameter=false){
+  if(type==='json-option-input'){imports.add('router_core_json_option_as_str');return TS_TYPES[type];}
   if(type===CANCELLATION_OWNED){imports.add('router_cancel_new');return 'ReturnType<typeof __ro_router_cancel_new>';}if(type===CANCELLATION_SHARED){imports.add('router_cancel_is_set');return 'Parameters<typeof __ro_router_cancel_is_set>[0]';}
   const slice=ownedPrimitiveSliceElement(type);if(slice)return 'readonly ('+publicTypeScriptType(slice,true)+')[]';
   if(parameter&&type==='text-owned'){imports.add('router_owned_result_text_ok');return 'Parameters<typeof __ro_router_owned_result_text_ok>[0]';}

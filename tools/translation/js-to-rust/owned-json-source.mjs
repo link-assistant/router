@@ -31,9 +31,17 @@ export function ownedJsonReaderRustCall(name,args){
 }
 
 // Separate NEW checked-carrier operation; the original eight readers are exact.
-const optionalInputOperation=Object.freeze({name:'router_core_json_option_as_str',input:'json-option-input',ret:'str-option-ref',root:0});
-export const ownedJsonOptionalReaderOperation=name=>name===optionalInputOperation.name?optionalInputOperation:null;
-export function ownedJsonOptionalReaderRustCall(name,argument){if(!ownedJsonOptionalReaderOperation(name)||typeof argument!=='string'||!/^__ro_arg_[0-9]+$/u.test(argument))throw TypeError('Owned optional JSON: fixed operation and bound input required');return 'match '+argument+' { Some(value) => ::serde_json::Value::as_str(value), None => None }';}
-
-// Finite optional declaration witness only. This cannot issue a checked caller.
+const optionalInputOperations=Object.freeze([
+ Object.freeze({name:'router_core_json_option_as_str',member:'as_str',input:'json-option-input',ret:'str-option-ref',root:0}),
+ Object.freeze({name:'router_core_json_option_as_bool',member:'as_bool',input:'json-option-input',ret:'bool-option',root:null}),
+ Object.freeze({name:'router_core_json_option_as_u64',member:'as_u64',input:'json-option-input',ret:'u64-option',root:null}),
+ Object.freeze({name:'router_core_json_option_as_i64',member:'as_i64',input:'json-option-input',ret:'i64-option',root:null}),
+ Object.freeze({name:'router_core_json_option_as_f64',member:'as_f64',input:'json-option-input',ret:'f64-option',root:null}),
+ Object.freeze({name:'router_core_json_option_as_null',member:'as_null',input:'json-option-input',ret:'unit-option',root:null}),
+ Object.freeze({name:'router_core_json_option_as_number',member:'as_number',input:'json-option-input',ret:'number-option-ref',root:0}),
+ Object.freeze({name:'router_core_json_option_as_array',member:'as_array',input:'json-option-input',ret:'array-option-ref',root:0}),
+ Object.freeze({name:'router_core_json_option_as_object',member:'as_object',input:'json-option-input',ret:'map-option-ref',root:0}),
+]);
+export const ownedJsonOptionalReaderOperation=name=>optionalInputOperations.find(row=>row.name===name)??null;
+export function ownedJsonOptionalReaderRustCall(name,argument){const row=ownedJsonOptionalReaderOperation(name);if(!row||typeof argument!=='string'||!/^__ro_arg_[0-9]+$/u.test(argument))throw TypeError('Owned optional JSON: fixed operation and bound input required');return 'match '+argument+' { Some(value) => ::serde_json::Value::'+row.member+'(value), None => None }';}
 export function ownedJsonReaderTypeWitness(type){return typeof type==='string'&&ownedJsonOptionalPayload(type)?operations.find(row=>row.ret===type)?.name??null:null;}

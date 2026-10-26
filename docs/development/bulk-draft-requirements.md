@@ -242,3 +242,10 @@ preserving each independent source/input/ownership boundary. Nine compiler
 equations and independent unrun receiving/strict TS/runtime cases are drafted.
 No timing, receiving, full translation or parity qualification is claimed; all
 remaining source and delivery requirements remain unfinished.
+
+The [immutable optional JSON reader draft](optional-json-readers-draft.md)
+extends the original full-validator boundary to nine concrete readers, matching
+scalar/borrow roots and parameter declaration witnesses in seven reverse paths.
+Eighteen compiler/library equations and independent unrun JS/strict TS/private/
+native cases are drafted. No original equivalence, caller, receiving, freshness,
+parity or completion qualification is claimed; all remaining requirements stay open.
