@@ -209,3 +209,10 @@ source origins to both existing reader proposal entry points. Three compiler
 equations and independent unrun source/JS/strict TS/native cases are drafted.
 Native equivalence, broader mutation/alias forms, production qualification and
 every remaining source and delivery requirement remain unfinished.
+
+The [reverse JSON reader domain draft](reverse-json-reader-domains-draft.md) adds
+five existing read-only operations and matching optional payload/native/TS types
+to the source-bound reverse table, retaining scalar values and borrowed roots.
+Two compiler equations and independent unrun JS/strict TS/interpreter/native
+cases are drafted. Actual whole callers, source banks/exports, full reverse/sync/
+parity and every remaining source and verification requirement remain unfinished.
