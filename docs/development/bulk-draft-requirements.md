@@ -355,3 +355,10 @@ attributes and original macro positions under the private positive grammar.
 Two complete source equations, unrun source/refusal cases and a CI-only native
 oracle are drafted. All actual native owner/effect/global closure, remaining
 source, production, reverse/sync/freshness, parity and delivery stay unfinished.
+
+The [qualified type/path draft](positive-qualified-types-draft.md) retains
+qualified associated paths, higher-ranked lifetimes, Fn arguments, ABI function
+pointers and associated bounds in the private positive grammar. Two complete
+source equations and independent unrun source/refusal/native oracle cases are
+drafted. Actual native/type/owner/global/effect closure and all remaining source,
+production, reverse/sync/freshness, parity and delivery obligations remain open.
