@@ -103,3 +103,10 @@ qualified calls in repository rules, with rebased spans and full inverses.
 Three compiler equations and independent unrun JS/strict TS/native/refusal
 cases are drafted. Actual production adoption, source-bank/export freshness,
 semantic/parity/coverage qualification and every requirement remain unfinished.
+
+The [owned text receiver draft](text-owned-receiver-adoption-draft.md) copies the
+complete selector for immutable written String parameters and exact as_str
+borrow bridges through existing paired helpers. Two compiler equations and
+independent unrun source/JS/strict TS/native/refusal cases are drafted. No custom
+owner, dispatch/Drop, production coverage, parity or completion result is claimed;
+all remaining requirement and verification obligations remain open.
