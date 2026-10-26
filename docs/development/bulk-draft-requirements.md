@@ -117,3 +117,10 @@ lifetime/type/const generic parameters under a genuine complete function frame.
 Three compiler equations and independent unrun source/private/refusal cases are
 drafted. Field/variant attributes, native nested builtin consumers, owner/effect
 closure and all production/reverse/synchronization/CI/receiving work remain open.
+
+The [whole data item draft](original-data-items-draft.md) composes the existing
+private grammar for named/tuple/unit structs and enums, with separate genuine
+data receipts and header consumers at generic, field, variant and variant-field
+sites. Three compiler equations and independent unrun syntax/private/refusal and
+native oracle cases are drafted. Native legality, builtin/derive/owner/effect
+closure, lowering and every remaining production/reverse/CI requirement stay open.
