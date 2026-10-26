@@ -67,3 +67,10 @@ empty/delimited/equality arguments on root/inner/member headers. Three compiler
 equations and independent unrun source/path/private/refusal cases are drafted.
 Native builtin consumers, actual ownership/global closure and all unfinished
 requirements remain open.
+
+The [header source operation draft](attribute-header-operation-draft.md) reuses
+one already checked physical CST per synchronous operation while preserving
+current private source/AST and native guards. Four compiler equations and
+independent unrun source/restoration/native-change/refusal cases are drafted.
+No measured performance or owner/parity result is claimed; all unfinished
+requirements remain open.

@@ -128,3 +128,5 @@ export {captureOriginalMacroFileTokenContext,originalMacroFileTokenContextFacts}
 export {proposeOriginalArchitectureDocIncludeWithFileTokenSource} from './derive-clap-concat.mjs';
 
 export {captureOriginalNamespaceAttributeHeader,originalNamespaceAttributeHeaderFacts} from './original-namespace-parser.mjs';
+
+export {withOriginalNamespaceAttributeHeaderSourceOperation} from './original-namespace-parser.mjs';
