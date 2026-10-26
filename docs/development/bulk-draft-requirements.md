@@ -370,3 +370,10 @@ native relocation retains literal/type/JSDoc edges and complete inverses. Fourte
 whole source equations and unrun unit/strict TS/receiving/export/refusal cases are
 drafted. All remaining source/native/production/sync/freshness/parity/delivery
 obligations stay open.
+
+The [primitive multi-module unit draft](primitive-project-integration-draft.md)
+extends explicit primitive contexts through the owned-project graph, paired
+project signatures, scalar JSDoc redistribution and actual complete receiving
+rechecks. Seven whole source equations and unrun module/local-call/three-language/
+strict TS/refusal cases are drafted. Public native scalar export aliases and all
+remaining source/native/production/sync/freshness/parity/delivery work stay open.

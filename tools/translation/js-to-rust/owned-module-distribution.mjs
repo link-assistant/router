@@ -22,7 +22,7 @@ function bindingProgram(source,path,language){
  return {ts,file,checker:program.getTypeChecker()};
 }
 export function distributeOwnedModuleSource({baseline,result,language,bundlePath,entry,modulePaths,runtimePaths,pathMap,previousSources,runtimeMap}={}){
- const annotationRuntimeRoot=language==='JavaScript'&&result.program.length?ownedCoreSourceData(ownedCoreContext(result.program[0])).runtimeRoot:null;
+ const annotationData=language==='JavaScript'&&result.program.length?ownedCoreSourceData(ownedCoreContext(result.program[0])):null,annotationRuntimeRoot=annotationData?.runtimeRoot??null;
  const original=ownedModuleOriginalDeclarations(baseline).map(row=>({...row,path:pathMap?.get(row.path)??row.path})),originalByNative=new Map(original.map(row=>[row.native,row])),source=language==='TypeScript'?result.typescript:result.javascript,{ts,file,checker}=bindingProgram(source,bundlePath,language),functions=file.statements.filter(ts.isFunctionDeclaration),owners=new Map(),symbols=new Map(),allNames=new Set();
  if(!['JavaScript','TypeScript'].includes(language)||!Array.isArray(modulePaths)||modulePaths.length>128||!modulePaths.includes(entry)||new Set(modulePaths).size!==modulePaths.length||!(runtimePaths instanceof Set))fail('complete explicit receiving module/runtime census required');
  if(pathMap!==undefined&&(!(pathMap instanceof Map)||pathMap.size!==baseline.moduleSourceHistory.modules.length||new Set(pathMap.values()).size!==pathMap.size||baseline.moduleSourceHistory.modules.some(row=>!pathMap.has(row.path))))fail('complete bijective source path proposal required');
@@ -50,7 +50,7 @@ export function distributeOwnedModuleSource({baseline,result,language,bundlePath
    }visit(node);
    for(const modifier of node.modifiers??[])if(modifier.kind===ts.SyntaxKind.ExportKeyword)edits.push({span:[modifier.getStart(file)-start,modifier.end-start],expected:modifier.getText(file),replacement:''});
    if(path!==entry)edits.push({span:[node.getStart(file)-start,node.getStart(file)-start],expected:'',replacement:'export '});
-   if(language==='JavaScript'){const docs=ownedModuleJavaScriptDocs(owner.item,{ts,node,path,runtimeRoot:annotationRuntimeRoot,runtimePaths,runtimeMap,edge});if(docs)edits.push({span:[node.getStart(file)-start,node.getStart(file)-start],expected:'',replacement:docs,kind:'fresh-checked-item-signature-proposal'});}
+   if(language==='JavaScript'){const docs=ownedModuleJavaScriptDocs(owner.item,{ts,node,path,runtimeRoot:annotationRuntimeRoot,runtimePaths,runtimeMap,edge,primitiveOperators:annotationData?.primitiveOperators===true});if(docs)edits.push({span:[node.getStart(file)-start,node.getStart(file)-start],expected:'',replacement:docs,kind:'fresh-checked-item-signature-proposal'});}
    const after=substitute(chunk,edits);body.push(after);selections.push({sourceSpan:[start,end],before:chunk,after,nativeSelections:edits});functionNames.push({path,name:owner.name,linked:owner.item.javascript});
   }
   const runtimeModulePath=target=>language==='TypeScript'?target.replace(/\.mts$/u,'.mjs').replace(/\.ts$/u,'.js'):target,edgeSpecifier=row=>relative(path,row.kind==='function'?runtimeModulePath(row.path):row.path);

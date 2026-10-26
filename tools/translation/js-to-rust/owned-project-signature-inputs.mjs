@@ -22,6 +22,7 @@ export function projectOwnedStateUnitJavaScript(source,{context,sourcePath,paire
  const relative=family=>{const path=posix.relative(posix.dirname(sourcePath),data.runtimeRoot+'/'+family+'-runtime.mjs');return path.startsWith('.')?path:'./'+path;};
  function operation(name,family,index){const key=family+':'+name;if(!imports.has(key)){let local='paired_input_'+name,serial=0;while(allNames.has(local))local='paired_input_'+name+'_'+serial++;allNames.add(local);imports.set(key,{name,family,local});}return 'Parameters<typeof '+imports.get(key).local+'>['+index+']';}
  function type(domain){
+  const scalar=data.primitiveOperators===true?primitiveBitwiseType(domain):null;if(scalar)return 'import('+JSON.stringify(relative('primitive-operator'))+').'+scalar.alias;
   const json='import('+JSON.stringify(relative('json-macro'))+').JsonValue';
   if(domain==='json-ref'||domain==='json')return json;if(domain==='json-list-ref'||domain==='json-list-owned')return 'readonly '+json+'[]';if(domain==='str'||domain==='text-owned')return 'string';if(domain==='bool')return 'boolean';if(domain==='bytes-ref')return 'readonly bigint[]';if(domain==='base64-error-ref')return operation('base64ErrorText','base64',0);
   if(domain==='json-text-result')return operation('router_carrier_json_result_copy','owned-outcome',0);
@@ -77,3 +78,5 @@ export function projectOwnedModuleJavaScript(project,{context,pairedPaths}={}){
   return {project:{entry:project.entry,language:'JavaScript',modules},context:derived,pairedRootRustSource:qualified?.result.rust??null,history:{schema:'router-owned-project-signature-proposals-v1',modules:histories,pairedModuleHistory:qualified?.result.moduleSourceHistory??null,pairedSemanticMeta:qualified?.result.meta??null,pairedAliasHistory:qualified?.result.ownedTypeAliasSourceHistory??null,sourceAuthority:false,semanticAuthority:false,runtimeAuthority:false}};
  }finally{signatureProjectBatches.delete(receiving);signatureProjectBatches.delete(derived);}
 }
+
+import {primitiveBitwiseType} from '../primitive-bitwise-types.mjs';
