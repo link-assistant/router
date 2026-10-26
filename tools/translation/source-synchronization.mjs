@@ -153,3 +153,5 @@ export {captureOriginalExpressionBlockScopeSource,originalExpressionBlockScopeSo
 export {proposeOriginalHeaderExpressionBlockScopes} from './expression-block-scope-model.mjs';
 
 export {expandCanonicalJsonClone} from './canonical-json-clone-normalization.mjs';
+
+export {captureOriginalBlockLocalItemSource,originalBlockLocalItemSourceFacts,captureOriginalBlockLocalItemFrame,assertOriginalBlockLocalItemInputsCurrent} from './block-local-item-source.mjs';

@@ -188,3 +188,10 @@ composed object/array try/read chains in both actual proposal entry points.
 Three compiler equations and independent unrun source/JS/strict TS/native cases
 are drafted. Native equivalence, caller qualification, freshness, parity, reverse
 synchronization and every remaining delivery requirement remain unfinished.
+
+The [block local item draft](block-local-items-draft.md) composes original data,
+type/const/static/extern-crate and visible use syntax inside positive blocks,
+retaining a source model and four further whole native macro-use/crate callbacks.
+Five compiler equations and independent unrun source/native cases are drafted.
+Actual native AST/visitor/scope/owner/global closure, production translation and
+every remaining source and verification requirement remain unfinished.
