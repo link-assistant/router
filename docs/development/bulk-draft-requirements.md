@@ -153,3 +153,10 @@ private macro position/input/capture paths with original tree identity. Three
 compiler equations and independent unrun source/private/refusal cases are
 drafted. Actual owner/visitor/global qualification, adapted value consumers and
 every remaining production/reverse/sync/freshness/CI requirement stay unfinished.
+
+The [shared header value consumer draft](header-value-consumers-draft.md) copies
+the complete concat and exact architecture include-str proposals, including the
+async file-token join, for genuine item/function/data header expression receipts.
+Three compiler equations and independent unrun source/native-closure/refusal
+cases are drafted. Owner/effect/Span bridges, whole-source/application parity and
+all remaining production/reverse/sync/freshness/CI requirements stay unfinished.
