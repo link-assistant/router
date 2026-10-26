@@ -20,3 +20,4 @@ export declare function router_text_drop_chars(argument0:string,argument1:bigint
 export declare function router_text_slice_bytes(argument0:string,argument1:bigint,argument2:bigint): TextSliceOption;
 export declare function router_text_strip_prefix(argument0:string,argument1:string): TextSliceOption;
 export declare function router_text_strip_suffix(argument0:string,argument1:string): TextSliceOption;
+export declare function router_text_sha256_base64_url_no_pad(argument0:string): string;

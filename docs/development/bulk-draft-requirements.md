@@ -788,3 +788,11 @@ language/repository rules, whole CST inverses and independent unrun source/nativ
 cases are drafted. This source construction grants no semantic, ownership or
 executable authority. Actual caller qualification, coverage/parity, receiving and
 every unfinished source/verification requirement remain open.
+
+The [text SHA-256 draft](text-sha256-draft.md) extends the existing concrete text
+family through its forward, reverse, runtime/declaration and interpreter paths,
+with a matching native wrapper and shared fixed-vector source. Six complete
+source equations, a separate native append inverse and independent unrun
+JS/strict TS/native/refusal cases are drafted. Native input behavior stays broad;
+the translated text domain keeps its existing bound. Production adoption, actual
+caller qualification and every unfinished source/verification row remain open.

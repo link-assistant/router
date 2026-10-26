@@ -610,3 +610,10 @@ caller translation, native parity and receiving qualification remain required.
 All new implementation and independent JS/native oracle source are unrun under
 the current source-only phase. Broader source drafting and every original
 verification obligation stay open.
+
+The [SHA-256 text draft](text-sha256-draft.md) adds one concrete borrowed-text to
+owned-text operation through the existing text family. It keeps native hash and
+base64 internals outside application translation and the existing bounded scalar
+domain for translated callers. Shared fixed vectors, both translation directions
+and native edge-case oracle source are drafted and unrun; no caller, parity,
+runtime or receiving qualification follows from the additional catalog row.

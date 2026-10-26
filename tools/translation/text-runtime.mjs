@@ -45,3 +45,9 @@ export const router_text_drop_chars=(value,limit)=>cut(value,limit,true);
 export function router_text_slice_bytes(value,start,end){const info=string(value);start=count(start);end=count(end);if(start>end||end>HostBigInt(info.bytes))return option(null,false);const from=boundary(value,HostNumber(start)),to=boundary(value,HostNumber(end));return from<0||to<0?option(null,false):option(part(value,from,to));}
 export function router_text_strip_prefix(value,pattern){string(value);string(pattern);return call(starts,value,[pattern])?option(part(value,pattern.length)):option(null,false);}
 export function router_text_strip_suffix(value,pattern){string(value);string(pattern);return call(ends,value,[pattern])?option(part(value,0,value.length-pattern.length)):option(null,false);}
+
+import {createHash as createTextSha256} from 'node:crypto';
+// Scalar validation and the existing 1 MiB translated-input bound precede hashing.
+export function router_text_sha256_base64_url_no_pad(value){
+ string(value);return createTextSha256('sha256').update(value,'utf8').digest('base64url');
+}

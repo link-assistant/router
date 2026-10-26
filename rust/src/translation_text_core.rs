@@ -156,3 +156,14 @@ pub fn strip_suffix<'a>(value: &'a str, pattern: &str) -> Option<&'a str> {
     checked(pattern);
     value.strip_suffix(pattern)
 }
+
+/// SHA-256 of scalar UTF-8 text, encoded with the unpadded URL alphabet.
+/// Native dependency internals remain outside application translation.
+#[must_use]
+pub fn sha256_base64_url_no_pad(value: &str) -> String {
+    use ::sha2::Digest as _;
+    ::base64::Engine::encode(
+        &::base64::engine::general_purpose::URL_SAFE_NO_PAD,
+        ::sha2::Sha256::digest(value.as_bytes()),
+    )
+}
