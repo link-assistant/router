@@ -95,3 +95,5 @@ export {originalNamespaceFunctionInvocationPositions} from './original-namespace
 export {withOriginalNamespaceParserSourceOperation} from './namespace-parser-source.mjs';
 
 export {proposeOriginalArchitectureTypeOutputSources} from './architecture-type-output-sources.mjs';
+
+export {captureOriginalTextualMacroLookupSource,originalTextualMacroLookupSourceFacts} from './textual-macro-lookup-source.mjs';

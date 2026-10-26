@@ -53,6 +53,13 @@ refusal source are retained. Wider numeric/language/resource domains, loops and
 mutation, namespace/bootstrap, production adoption/parity and every unfinished
 requirement remain open.
 
+The [textual macro lookup draft](textual-macro-lookup-draft.md) retains eleven whole
+native resolver callbacks, complete fresh pinned sources/CSTs, both actual
+modularized/textual disambiguation conditions and private identity-only requests.
+Three complete source equations and independent unrun source/native scope cases
+are drafted. Actual architecture caller ownership, candidate/export/attribute/
+derive closure and every unfinished source/verification requirement remain open.
+
 The [Option guard draft](http-resource-option-guards-draft.md) adds whole absent
 branches, every-exit resource cleanup, explicit fallback domains, Some payload
 moves, same-Option propagation and complete canonical native inverse rules.

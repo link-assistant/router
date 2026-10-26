@@ -494,3 +494,10 @@ export function createOriginalStructuredDocumentationSourceScope(){
  }
  return {attribute,innerItem,comment,finish(){try{tick();if(closure)closure.current();if(native)native.current();return {schema:'original-structured-documentation-source-scope-v1',selected,sourceInputs:[...sources.values()].map(({sourcePath,source,concreteSyntax})=>({sourcePath,source,concreteSyntax,inverse:source})),nativeSources:native?.facts??null,sourceAuthority:false,namespaceAuthority:false,runtimeAuthority:false,crossInvocationCache:false};}finally{active=false;closure=null;native=null;sources.clear();}}};
 }
+
+// This public development reader inventories source DATA only. A public digest
+// is not a source-owner proof; the receiving native plan pins every full input.
+export function originalRustFunctionInventoryData(input){
+ guard();if(!input||typeof input!=='object'||sourceInventoryTypes.isProxy(input)||Object.getPrototypeOf(input)!==Object.prototype)fail('ordinary complete source inventory DATA required');const names=['path','source','sourceSha256'],fields=Object.getOwnPropertyDescriptors(input);if(Reflect.ownKeys(fields).length!==names.length||names.some(name=>!fields[name]||!Object.hasOwn(fields[name],'value')))fail('closed own inventory source DATA required');const origin=Object.fromEntries(names.map(name=>[name,fields[name].value]));if(names.some(name=>typeof origin[name]!=='string')||origin.path.length>4096||Buffer.byteLength(origin.source)>256000||hash(origin.source)!==origin.sourceSha256)fail('bounded complete source inventory DATA differs');const result=functions(origin);guard();return freeze({...result,sourceAuthority:false,namespaceAuthority:false,runtimeAuthority:false});
+}
+import {types as sourceInventoryTypes} from 'node:util';
