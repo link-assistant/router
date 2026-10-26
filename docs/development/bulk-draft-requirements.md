@@ -60,3 +60,10 @@ ordinary macro token constructor equation and rechecks original inputs after
 every await. Three compiler equations and independent unrun source/refusal cases
 are drafted. Actual Span/resolver/owner/global qualification and every unfinished
 requirement remain open.
+
+The [attribute header source draft](attribute-header-source-draft.md) copies the
+complete private source capture pattern and directly parses actual path and
+empty/delimited/equality arguments on root/inner/member headers. Three compiler
+equations and independent unrun source/path/private/refusal cases are drafted.
+Native builtin consumers, actual ownership/global closure and all unfinished
+requirements remain open.

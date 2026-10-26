@@ -809,3 +809,10 @@ retain genuine root/inner/member source associations, distinct private parser
 frames, whole native premises and CST inverses. A metadata consumer must keep
 argument macro effects and ownership unresolved until separately qualified;
 stripping documentation source alone does not establish runtime equivalence.
+
+Attribute owner extensions require
+[genuine original header paths](docs/development/attribute-header-source-draft.md)
+and their actual argument/member associations before joining the current native
+parser and builtin catalogue. Keep value-macro/global effects separate, preserve
+the original complete CST and private frame checks, and retain source-only
+status until independent owner, receiving and parity requirements are verified.
