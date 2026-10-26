@@ -149,6 +149,12 @@ Three complete compiler equations and independent unrun census/hash/blob cases
 are drafted. Actual include-str consumers, owner/file-origin/global closure and
 every unfinished source/production/verification requirement remain open.
 
+The [native include-str draft](include-str-native-source-draft.md) copies a fresh
+complete reader retaining sixteen original inputs and sixteen whole native
+handler/parser/path/loader/output callbacks. Three complete compiler equations
+and independent unrun source/request cases are drafted. Actual Span/file-loader/
+macro-owner joins, document consumers and every unfinished requirement stay open.
+
 The [Option guard draft](http-resource-option-guards-draft.md) adds whole absent
 branches, every-exit resource cleanup, explicit fallback domains, Some payload
 moves, same-Option propagation and complete canonical native inverse rules.

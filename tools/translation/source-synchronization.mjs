@@ -118,3 +118,5 @@ export {originalNamespaceAttributeExpressionInvocationPositions,originalNamespac
 export {proposeOriginalAttributeConcatLiteralSource} from './derive-clap-concat.mjs';
 
 export {originalFreshPrimitiveNamespaceSourcesWithDocumentation} from './extensions/primitive-namespace-sources.mjs';
+
+export {captureOriginalIncludeStrNativeSource,originalIncludeStrNativeSourceFacts,captureOriginalIncludeStrNativeFrame} from './include-str-native-source.mjs';
