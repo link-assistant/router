@@ -325,3 +325,6 @@ integration and the remaining requirement ledger are still open.
 - Draft explicit-profile outer configuration source substitutions with fresh
   grammar/compiler joins, complete staged file inverses, immutable profile guards
   and unrun JS/TypeScript/multi-file native/refusal cases.
+- Draft original inner lint parser/registry scopes and tracked configuration/
+  macro/project successors that preserve every lint byte, with unrun independent
+  JS/TypeScript/multi-file native/refusal source.

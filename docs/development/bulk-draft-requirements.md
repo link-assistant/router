@@ -959,3 +959,12 @@ profiles govern the copied checked project path; diagnostics and original
 application equivalence remain unqualified. Six complete source equations and
 independent JS/strict TS/multi-file native/refusal cases are unrun. Inner/docs/
 active conditional producers, architecture closure and every unfinished row remain.
+
+The [original inner lint textual draft](inner-lint-tracked-textual-draft.md)
+joins actual current inner parser/style/builtin sources to closed lint-only
+source scopes, preserving every original lint byte while tracked macro and
+configuration successors inspect the remaining source. Complete original and
+intermediate inverses and the existing checked project path remain. Six complete
+source equations and independent JS/strict TS/multi-file native/refusal cases are
+unrun. Documentation, wider producers, architecture/export/bootstrap closure and
+every unfinished requirement above remain open.

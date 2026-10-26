@@ -55,3 +55,6 @@ export {translateModuleMacroUseTrackedLocalDeclarativeProject} from './module-ma
 
 export {proposeConfiguredTrackedTextualSources} from './tracked-local-declarative-source.mjs';
 export {translateConfiguredTrackedLocalDeclarativeProject} from './configured-tracked-local-declarative-project.mjs';
+
+export {proposeInnerLintModuleMacroUseTrackedLocalDeclarativeSources,proposeInnerLintConfiguredTrackedTextualSources} from './tracked-local-declarative-source.mjs';
+export {translateInnerLintConfiguredTrackedLocalDeclarativeProject} from './inner-lint-configured-tracked-local-declarative-project.mjs';
