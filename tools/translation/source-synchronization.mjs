@@ -196,3 +196,5 @@ export {readClosedMatchArmSourceBounds} from './match-arm-source.mjs';
 export {readReturnSourceOperandBounds} from './return-operand-source.mjs';
 
 export {isTextTargetSourceContext,readTextTargetSourceContext,readCarrierTextConstructorTargetSource} from './carrier-text-target-source.mjs';
+
+export {readTextBuilderAppendStatementSource} from './text-builder-append-statement-source.mjs';

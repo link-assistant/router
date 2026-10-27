@@ -276,3 +276,9 @@ and matching closed constructor position. Borrowed/scalar success payloads and
 unknown aliases retain original conversions; constructor spellings grant no
 binding/type/Into permission. Recognize complete else-if syntax independently of
 whether a text target was selected. See [the unrun draft](carrier-text-target-source-draft.md).
+
+String append operator proposals require whole local statements and the original
+closed borrowed suffix source reader. Refuse aliases, self-use and other owners
+before consuming the builder; lexical Add/AddAssign spellings grant no native
+trait/loan/drop/effect proof. Preserve paired source inverses and explicit bounded
+core limitations. See [the unrun draft](text-builder-operators-source-draft.md).

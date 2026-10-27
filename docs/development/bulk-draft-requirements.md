@@ -531,3 +531,10 @@ positions across branches/locals/returns/matches without inferred type or owner
 permission. Five equations and independent unrun two-API/eight-caller/eleven-edit
 JS/strict TS/native/bounds/refusal/export source are drafted. Wider generics/
 namespace/production/reverse/sync/freshness/parity/receiving/delivery remain OPEN.
+
+The [closed String append operator draft](text-builder-operators-source-draft.md)
+reuses paired consuming append for complete += and local = local + borrowed
+suffix statements with original scopes and nested source histories. Four equations
+and independent unrun two-adopter/seven-caller/eight-edit JS/strict TS/paired
+mutable inverse/native capacity/refusal/export source are drafted. Wider mutation/
+namespace/production/reverse/sync/freshness/parity/receiving/delivery remain OPEN.
