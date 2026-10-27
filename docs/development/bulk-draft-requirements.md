@@ -386,3 +386,10 @@ range helper across shared support and retained inverse API copies. Nine equatio
 and independent unrun ten-width paired/six-API/refusal/native/export source are
 drafted. Full generated-module/resource/owned-text/namespace/production/freshness/
 parity/receiving/delivery requirements remain OPEN.
+
+The [whole-module owned formatting draft](forward-owned-format-source-draft.md)
+adds a source-derived inverse API and explicit physical-source-unit registration,
+with stable primitive argument substitution in the actual forward formatter.
+Six whole equations and independent unrun paired thirteen-caller/source/order/
+native/refusal/export cases are drafted. Physical-unit qualification and all
+wider namespace/resource/carrier/production/freshness/parity/delivery rows remain OPEN.

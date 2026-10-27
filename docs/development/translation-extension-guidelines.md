@@ -165,3 +165,9 @@ Whole emitted-module inverse rules must preserve the original adjacent type/rang
 parameter guards byte for byte, authenticate the actual helper against complete
 current source and reproduce the entire requested target after fresh checking.
 A prefix observation grants no type or helper authority; see [the unrun fixed ingress draft](forward-fixed-guard-source-draft.md).
+
+Owned formatting inverse proposals must recheck actual original ownership and
+Display, keep guards/helper/export sources exact and reproduce the whole target.
+Avoid formatter temporaries only for stable checked Copy/borrowed operands when
+all explicit argument sources are stable; retain computed/owned argument order.
+See [the unrun whole-module format draft](forward-owned-format-source-draft.md).

@@ -173,3 +173,5 @@ export {SOURCE_BOUND_CORE_FIXED_POINT_LIMITS,proposeSourceBoundOwnedCoreFixedPoi
 export {proposeSourceBoundCoreFixedPointPackets} from './propose-core-adoption-corpus.mjs';
 export {reviewSourceBoundCoreFixedPointPackets} from './source-bound-fixed-point-packet-readback.mjs';
 export {planSourceBoundCoreFixedPointPacketAdoption,applySourceBoundCoreFixedPointPacketAdoption} from './source-bound-fixed-point-packet-adoption.mjs';
+
+export {proposeForwardOwnedFormatBodySynchronization} from './forward-owned-format-body-synchronization.mjs';
