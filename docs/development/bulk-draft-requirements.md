@@ -393,3 +393,10 @@ with stable primitive argument substitution in the actual forward formatter.
 Six whole equations and independent unrun paired thirteen-caller/source/order/
 native/refusal/export cases are drafted. Physical-unit qualification and all
 wider namespace/resource/carrier/production/freshness/parity/delivery rows remain OPEN.
+
+The [mixed owned synchronization draft](owned-composite-source-draft.md) composes
+literal and text-predicate rules with whole-module owned formatting/numeric/
+control edits, retaining every adjacent source inverse and final whole-target
+reproduction. Four equations and independent unrun mixed paired/physical-source/
+strict TS/conflict/source/refusal cases are drafted. Complete source coverage,
+receiving, namespace, regeneration, reverse freshness, parity and delivery remain OPEN.

@@ -175,3 +175,5 @@ export {reviewSourceBoundCoreFixedPointPackets} from './source-bound-fixed-point
 export {planSourceBoundCoreFixedPointPacketAdoption,applySourceBoundCoreFixedPointPacketAdoption} from './source-bound-fixed-point-packet-adoption.mjs';
 
 export {proposeForwardOwnedFormatBodySynchronization} from './forward-owned-format-body-synchronization.mjs';
+
+export {proposeForwardOwnedCompositeSynchronization} from './forward-owned-composite-synchronization.mjs';

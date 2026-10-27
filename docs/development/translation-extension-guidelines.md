@@ -171,3 +171,7 @@ Display, keep guards/helper/export sources exact and reproduce the whole target.
 Avoid formatter temporaries only for stable checked Copy/borrowed operands when
 all explicit argument sources are stable; retain computed/owned argument order.
 See [the unrun whole-module format draft](forward-owned-format-source-draft.md).
+
+Mixed owned formatting synchronization uses separately checked whole-source
+layers and adjacent inverses; preserve the original complete input/census,
+retained-source limits and final fresh whole-target comparison. See [the unrun mixed draft](owned-composite-source-draft.md).
