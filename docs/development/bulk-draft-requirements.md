@@ -538,3 +538,11 @@ suffix statements with original scopes and nested source histories. Four equatio
 and independent unrun two-adopter/seven-caller/eight-edit JS/strict TS/paired
 mutable inverse/native capacity/refusal/export source are drafted. Wider mutation/
 namespace/production/reverse/sync/freshness/parity/receiving/delivery remain OPEN.
+
+The [builder owning carrier return draft](text-builder-carrier-return-source-draft.md)
+reuses exact written constructor/branch/return target positions for existing
+String builders, retaining receiver escape refusal and a combined local work
+budget. Three equations and independent unrun two-API/nine-caller/ten-edit JS/
+strict TS/native/exclusive move/empty path/refusal/export source are drafted.
+Wider mutation/namespace/production/reverse/sync/freshness/parity/receiving/delivery
+requirements remain OPEN.

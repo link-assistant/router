@@ -22,7 +22,7 @@ export function createTextBranchTargetSource(tokens,{close}){
   if(context!=='text-owned'){const payload=readCarrierTextConstructorTargetSource(tokens,start,end,context,{close});if(payload)expression(payload.start,payload.end,depth+1,'text-owned');return true;}
   targets.set(tokens[start].start,end);return true;
  }
- return {block(open,end,context='text-owned'){tail(open,end,0,context);},expression(start,end,context='text-owned'){expression(start,end,0,context);},matches(start,end){return targets.get(start)===end;}};
+ return {block(open,end,context='text-owned'){tail(open,end,0,context);},expression(start,end,context='text-owned'){expression(start,end,0,context);},matches(start,end){return targets.get(start)===end;},sourceCells(){return work;}};
 }
 
 import {readClosedMatchArmSourceBounds} from './match-arm-source.mjs';

@@ -282,3 +282,9 @@ closed borrowed suffix source reader. Refuse aliases, self-use and other owners
 before consuming the builder; lexical Add/AddAssign spellings grant no native
 trait/loan/drop/effect proof. Preserve paired source inverses and explicit bounded
 core limitations. See [the unrun draft](text-builder-operators-source-draft.md).
+
+Builder carrier returns must select exact original owning payload positions with
+the existing target reader; other receiver uses still require whole-function
+refusal. Annotation/constructor/branch source context grants no move/drop/type
+permission. Include target and return selection work in the local builder budget
+and retain full original semantic checks. See [the unrun draft](text-builder-carrier-return-source-draft.md).
