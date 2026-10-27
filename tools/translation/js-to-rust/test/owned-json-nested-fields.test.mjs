@@ -10,6 +10,9 @@ import {ownedStateReceivingData} from './owned-state-receiving-data.mjs';
 import {createOwnedStateContext,translateOwnedStateJavaScript,translateOwnedStateTypeScript,readOwnedStateMeta,emitOwnedStateRust,prepareOwnedStateRuntime,evaluateOwnedState,evaluateOwnedStateBatch} from '../owned-state.mjs';
 import {translateOwnedStateRust} from '../owned-rust.mjs';
 import {JSON_FIELDS_NATIVE_SOURCE} from '../../json-fields-native-source.mjs';
+import {TEXT_NATIVE_SOURCE} from '../../text-native-source.mjs';
+import {PRIMITIVE_OPTION_NATIVE_SOURCE} from '../../primitive-option-native-source.mjs';
+import {INTEGER_NATIVE_SOURCE} from '../../integer-native-source.mjs';
 import {prepareJsonFieldSources} from '../../prepare-json-field-sources.mjs';
 import {prepareJsonFieldsCore} from '../../prepare-json-fields-core.mjs';
 import {json_macro_null as nil,json_macro_bool as bool,json_macro_string as text,json_macro_object as object,json_macro_array as array,json_macro_u64 as unsigned,json_macro_i64 as signed} from '../../json-macro-runtime.mjs';
@@ -21,7 +24,7 @@ const name=(base,depth)=>base.replace('_field','_field'+depth),wrap=(depth,leaf)
 const imports=[2,3,4].flatMap(depth=>forms.map(([base])=>'router_field_'+name(base,depth)+' as '+name(base,depth)));
 const source='import {'+imports.join(',')+"} from './runtime/json-fields-runtime.mjs';\n"+[2,3,4].flatMap(depth=>forms.map(([base,kind])=>{const operation=name(base,depth),extra=keys.slice(1,depth).map((_,index)=>'key'+index),fallback=['bool','u64','i64'].includes(kind),params=['value',...extra,...(fallback?['other']:[])],documentation="/** @param {import('./runtime/json-macro-runtime.mjs').JsonValue} value "+extra.map(key=>'@param {string} '+key+' ').join('')+(fallback?'@param {Parameters<typeof '+operation+'>['+(depth+1)+']} other ':'')+'*/\n';return documentation+'export function call_'+operation+'('+params.join(',')+'){return '+operation+'(value,\'0\','+extra.concat(fallback?['other']:[]).join(',')+');}\n';})).join('');
 
-function data(files=[{path:'caller.mjs',source}]){const input=ownedStateReceivingData(files);input.files.find(row=>row.path==='src/lib.rs').source+='pub mod translation_json_fields_core;\n';input.files.push({path:'src/translation_json_fields_core.rs',source:JSON_FIELDS_NATIVE_SOURCE});return input;}
+function data(files=[{path:'caller.mjs',source}]){const input=ownedStateReceivingData(files);input.files.find(row=>row.path==='src/lib.rs').source+='pub mod translation_json_fields_core;\npub mod translation_text_core;\npub mod translation_primitive_option_core;\npub mod translation_integer_core;\n';input.files.push({path:'src/translation_json_fields_core.rs',source:JSON_FIELDS_NATIVE_SOURCE},{path:'src/translation_text_core.rs',source:TEXT_NATIVE_SOURCE},{path:'src/translation_primitive_option_core.rs',source:PRIMITIVE_OPTION_NATIVE_SOURCE},{path:'src/translation_integer_core.rs',source:INTEGER_NATIVE_SOURCE});return input;}
 function draft(){const input=data(),context=createOwnedStateContext(input),result=translateOwnedStateJavaScript(source,{context,sourcePath:'caller.mjs'});return {input,context,result};}
 async function targets(t,row){
  const directory=mkdtempSync(join(tmpdir(),'router-owned-json-fields-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));const write=(path,source)=>{mkdirSync(dirname(join(directory,path)),{recursive:true});writeFileSync(join(directory,path),source);};for(const file of row.input.files.filter(file=>/\.(mjs|mts|ts)$/u.test(file.path)))write(file.path,file.source);write('typed.mts',row.result.typescript);

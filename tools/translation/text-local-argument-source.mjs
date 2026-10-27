@@ -8,14 +8,14 @@ const fail=message=>{throw new TypeError('Text local argument source: '+message)
 export function createTextLocalArgumentSource(rows,parameters,allParameters=new Set(parameters.keys())){
  if(!rows.some(row=>row.text==='let'||row.text==='for'))return {at(){return parameters;},evidence(){return null;},selectedCall(){}};
  if(!textLocalCensus(rows,allParameters))return null;
- return createChronologicalLocalSource(rows,parameters,{...createWrittenLocalAliasRules({readWrittenDomain:readTextWrittenAliasDomain,readOperand:readTextAliasOperand,acceptResult:event=>['str','text-owned'].includes(event.returnsKind)?event.returnsKind:null}),initializerSizes:[1,5],aliasKind:'complete-immutable-text-alias',resultKind:'complete-selected-text-result-alias'});
+ return createChronologicalLocalSource(rows,parameters,{...createWrittenLocalAliasRules({readWrittenDomain:readTextWrittenAliasDomain,readOperand:readTextStageAliasOperand,acceptResult:event=>['str','text-owned'].includes(event.returnsKind)?event.returnsKind:null}),initializerSizes:[1,5],initializerEnd:primitiveLocalInitializerEnd,aliasKind:'complete-immutable-text-alias',resultKind:'complete-selected-text-result-alias'});
 }
 
 const ident=token=>token?.type==='ident'&&/^[\p{ID_Start}_][\p{ID_Continue}_]*$/u.test(token.text);
 const borrowedType=source=>/^&(?:'[a-zA-Z_][a-zA-Z0-9_]*)?(?:str|crate::translation_core::Str)$/u.test(source);
 
 function textLocalCensus(rows,parameters){
- return censusLocalAliasBindings(rows,parameters,{protectedNames:['std','core','crate','self','Self','translation_core','translation_text_core','String','str','Str','Text','u64','usize','bool','Some','None','Option']}).reason===null;
+ return censusLocalAliasBindings(rows,parameters,{protectedNames:['std','core','crate','self','Self','translation_core','translation_text_core','translation_json_fields_core','String','str','Str','Text','u64','usize','bool','Some','None','Option']}).reason===null;
 }
 export function readTextAliasOperand(rows,bindings,written=null){
  if(rows.length===1&&ident(rows[0])&&['str','text-owned','usize-count'].includes(bindings.get(rows[0].text)))return {kind:bindings.get(rows[0].text),binding:rows[0].text};
@@ -25,4 +25,10 @@ export function readTextAliasOperand(rows,bindings,written=null){
  if(rows.length===5&&ident(rows[0])&&bindings.get(rows[0].text)==='text-owned'&&['.','as_str','(',')'].every((word,at)=>rows[at+1]?.text===word))return {kind:'str',binding:rows[0].text,bridge:'as_str'};return null;
 }
 
-export function readTextWrittenAliasDomain(rows){const value=rows.map(row=>row.text).join('');if(borrowedType(value))return 'str';if(/^(?:(?:::)?std::string::)?String$/u.test(value)||value==='crate::translation_core::Text')return 'text-owned';if(/^(?:(?:::)?(?:std|core)::primitive::)?usize$/u.test(value))return 'usize-count';return null;}
+export function readTextWrittenAliasDomain(rows){const value=rows.map(row=>row.text).join('');if(borrowedType(value))return 'str';if(/^(?:(?:::)?std::string::)?String$/u.test(value)||value==='crate::translation_core::Text')return 'text-owned';if(/^(?:(?:::)?(?:std|core)::primitive::)?usize$/u.test(value))return 'usize-count';return readJsonFieldReferenceSourceRole(rows);}
+
+function readTextStageAliasOperand(rows,bindings,written=null){
+ const original=readTextAliasOperand(rows,bindings,written);if(original)return original;if(rows.length===1&&ident(rows[0])&&bindings.get(rows[0].text)==='json-reference')return {kind:'json-reference',binding:rows[0].text};const field=readJsonFieldCallSource(rows,bindings);return field?.kind==='payload'&&field.domain==='str'?{kind:'str',binding:null,bridge:'complete-qualified-json-field-source'}:null;
+}
+import {readJsonFieldCallSource,readJsonFieldReferenceSourceRole} from './json-field-call-source.mjs';
+import {primitiveLocalInitializerEnd} from './primitive-local-expression-source.mjs';

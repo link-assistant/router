@@ -64,7 +64,7 @@ export function selectPrimitiveOptionCallbackMethodAdoption(source,item,_scoped,
   if(!primitiveBitwiseType(wanted.domain))return null;const literal=readFixedIntegerLiteralSource(piece,wanted.domain);return literal?{replacement:literal.decimal+'_'+wanted.domain,operations:[]}:null;
  }
  function expression(at,depth=0){
-  if(++work>200000||depth>64)return null;const token=tokens[at],known=env.get(token?.text);let value=known?{...known,replacement:token.text,after:at+1,operations:[]}:null;if(!value&&token?.text==='crate'&&tokens[at+1]?.text==='::'&&tokens[at+2]?.text==='translation_integer_core'&&tokens[at+3]?.text==='::'&&tokens[at+5]?.text==='('){const end=close(tokens,at+5),selected=end>=0&&end-at<12?readIntegerCarrierCallSource(tokens.slice(at,end+1),{get:name=>encodeCarrierRole(env.get(name))}):null;if(selected)value={...selected,replacement:source.slice(token.start,tokens[end].end),after:end+1,operations:[]};}if(!value)return null;
+  if(++work>200000||depth>64)return null;const token=tokens[at],known=env.get(token?.text);let value=known?{...known,replacement:token.text,after:at+1,operations:[]}:null;if(!value&&token?.text==='crate'&&tokens[at+1]?.text==='::'&&tokens[at+2]?.text==='translation_integer_core'&&tokens[at+3]?.text==='::'&&tokens[at+5]?.text==='('){const end=close(tokens,at+5),selected=end>=0&&end-at<12?readIntegerCarrierCallSource(tokens.slice(at,end+1),{get:name=>encodeCarrierRole(env.get(name))}):null;if(selected)value={...selected,replacement:source.slice(token.start,tokens[end].end),after:end+1,operations:[]};}if(!value&&token?.text==='crate'&&tokens[at+1]?.text==='::'&&tokens[at+2]?.text==='translation_json_fields_core'&&tokens[at+3]?.text==='::'&&tokens[at+5]?.text==='('){const end=close(tokens,at+5),selected=end>=0&&end-at<32?readJsonFieldCarrierCallSource(tokens.slice(at,end+1),{get:name=>encodeCarrierRole(env.get(name))}):null;if(selected)value={...selected,replacement:source.slice(token.start,tokens[end].end),after:end+1,operations:[]};}if(!value)return null;
   if(value.kind==='json'){
    const reader={as_bool:'bool',as_u64:'u64',as_i64:'i64',as_str:'str'}[tokens[value.after+1]?.text];if(reader&&tokens[value.after]?.text==='.'&&tokens[value.after+2]?.text==='('&&tokens[value.after+3]?.text===')')value={replacement:source.slice(token.start,tokens[value.after+3].end),after:value.after+4,kind:'option',domain:reader,operations:[]};
   }
@@ -96,3 +96,5 @@ export function selectPrimitiveOptionCallbackMethodAdoption(source,item,_scoped,
 }
 
 import {localAliasDeclaration} from './local-alias-binding-source.mjs';
+
+import {readJsonFieldCarrierCallSource} from './primitive-carrier-local-source.mjs';

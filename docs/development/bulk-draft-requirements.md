@@ -758,3 +758,11 @@ three reverse checkers and12 JS/TS equations are drafted with independent unrun
 runtime/caller/bulk/JS/strict TS/reverse/history/export/native lifetime-oracle
 source. Every wider source/native/production/sync/freshness/parity/delivery
 requirement remains unfinished.
+
+The [JSON field stage-join draft](json-field-stage-joins-source-draft.md) derives
+current bounded scalar field results for later text and both Option rule
+families, including immutable typed aliases. Seven complete compiler equations
+and independent unrun shared-reader/six-API/consecutive-stage/JS/strict TS/
+reverse/interpreter/history/export/native oracle source are drafted. Library
+ABIs and whole-function authority checks remain unchanged. Wider source/native/
+production/sync/freshness/parity/delivery requirements remain unfinished.

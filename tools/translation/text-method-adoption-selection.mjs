@@ -16,7 +16,7 @@ export function selectTextMethodAdoption(source,item,_scoped,modulePath,_names,h
   if(end>=tokens.length||!/^<(?:'[a-zA-Z_][a-zA-Z0-9_]*,?)+>$/u.test(text(tokens.slice(open,end+1))))return result('only written unconstrained lifetime parameters are source candidates');open=end+1;
  }
  if(tokens[open]?.text!=='(')return result('complete written input list required');const endParameters=close(tokens,open);if(endParameters<0)return result('complete original inputs required');let body=endParameters+1;while(body<tokens.length&&tokens[body].text!=='{')body++;if(body>=tokens.length||close(tokens,body)!==tokens.length-1)return result('complete original function body required');
- const domains=new Map(),parameters=new Set();for(const row of split(tokens.slice(open+1,endParameters))){if(!ident(row[0])||row[1]?.text!==':'||parameters.has(row[0].text))return result('distinct immutable input bindings required');parameters.add(row[0].text);if(borrowed(text(row.slice(2))))domains.set(row[0].text,'str');else if(text(row.slice(2))==='String')domains.set(row[0].text,'text-owned');else if(text(row.slice(2))==='usize')domains.set(row[0].text,'usize-count');}
+ const domains=new Map(),parameters=new Set();for(const row of split(tokens.slice(open+1,endParameters))){if(!ident(row[0])||row[1]?.text!==':'||parameters.has(row[0].text))return result('distinct immutable input bindings required');parameters.add(row[0].text);if(borrowed(text(row.slice(2))))domains.set(row[0].text,'str');else if(text(row.slice(2))==='String')domains.set(row[0].text,'text-owned');else if(text(row.slice(2))==='usize')domains.set(row[0].text,'usize-count');else if(readJsonFieldReferenceSourceRole(row.slice(2),_scoped))domains.set(row[0].text,'json-reference');}
  const localNames=new Set(),projectionPipes=new Set();let work=0;
  // Only this complete destructuring identity closure can be substituted.
  // These are source candidates; actual owner/type/effect checks still follow.
@@ -46,7 +46,7 @@ export function selectTextMethodAdoption(source,item,_scoped,modulePath,_names,h
   const row=tokens[at];if(ident(row)&&activeDomains.get(row.text)==='usize-count')return {after:at+1,replacement:'('+row.text+' as u64)',domain:'u64',operations:[]};const literal=readNativeCountLiteralSource(row?[row]:[]);return literal?{after:at+1,replacement:literal.magnitude+'_u64',domain:'u64',operations:[]}:null;
  }
  function expression(at,depth=0,characterPattern=false){
-  if(++work>200000||depth>64)return null;const initial=tokens[at];const initialDomain=activeDomains.get(initial?.text);let value=['str','text-owned'].includes(initialDomain)?{after:at+1,replacement:initial.text,domain:initialDomain,operations:[]}:literal(at,characterPattern);if(!value)return null;if(value.characterPattern)return value;
+  if(++work>200000||depth>64)return null;const initial=tokens[at];const initialDomain=activeDomains.get(initial?.text);let value=['str','text-owned'].includes(initialDomain)?{after:at+1,replacement:initial.text,domain:initialDomain,operations:[]}:literal(at,characterPattern);if(!value&&initial?.text==='crate'&&tokens[at+1]?.text==='::'&&tokens[at+2]?.text==='translation_json_fields_core'&&tokens[at+3]?.text==='::'&&tokens[at+5]?.text==='('){const end=close(tokens,at+5),selected=end>=0&&end-at<32?readJsonFieldCallSource(tokens.slice(at,end+1),activeDomains):null;if(selected?.kind==='payload'&&selected.domain==='str')value={after:end+1,replacement:source.slice(initial.start,tokens[end].end),domain:'str',operations:[]};}if(!value)return null;if(value.characterPattern)return value;
   while(tokens[value.after]?.text==='.'&&ident(tokens[value.after+1])&&tokens[value.after+2]?.text==='('){
    if(++work>200000)return null;const cursor=value.after,method=tokens[cursor+1].text,end=close(tokens,cursor+2);if(end<0)return null;if(method==='as_str'&&value.domain==='text-owned'&&end===cursor+3){value={...value,after:end+1,replacement:'&('+value.replacement+')',domain:'str'};continue;}const projection=projectedSplit(cursor)??projectedIndex(cursor);const copying=['to_owned','to_string'].includes(method)||method==='clone'&&value.domain==='text-owned';let operation=copying?'to_owned':projection?.operation??(plainMethods.has(method)?method:countMethods.get(method)),after=projection?.after??end+1;
    if(!operation||!['str','text-owned'].includes(value.domain))break;const pieces=split(tokens.slice(cursor+3,end)),args=[];
@@ -86,3 +86,5 @@ export function selectTextMethodAdoption(source,item,_scoped,modulePath,_names,h
 import {decodeRustCharacter} from './extensions/rust-character.mjs';
 
 import {localAliasDeclaration} from './local-alias-binding-source.mjs';
+
+import {readJsonFieldCallSource,readJsonFieldReferenceSourceRole} from './json-field-call-source.mjs';

@@ -659,3 +659,12 @@ serialize/reparse its CST and propagate fresh full-source guards through every
 parent/adjacent history. Copied source is data and grants no namespace, type,
 ownership or executable authority. No cross-operation validation cache is
 allowed. See the [unrun nested field draft](json-nested-fields-source-draft.md).
+
+Consecutive adoption stages must derive result roles from the current complete
+qualified source call and actual known operands. Never save a preceding stage's
+owner, type or execution verdict. Exact helper path/arity/key/fallback/native
+widths constrain lexical source candidates; typed annotations alone cannot infer
+local values. Delay alias facts until the full initializer semicolon and retain
+scope exits and full CST inverses. Reuse actual matching library abstractions
+and whole-function checks. See the
+[unrun stage-join draft](json-field-stage-joins-source-draft.md).
