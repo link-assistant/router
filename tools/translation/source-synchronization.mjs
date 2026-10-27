@@ -182,3 +182,5 @@ export {originalNamespaceAttributeHeaderSites} from './original-namespace-parser
 export {captureGeneratedItemHeaderSources,proposeGeneratedDeclarationSourceUnit} from './generated-item-header-source.mjs';
 
 export {withSharedOriginalParsedBuiltinCallerSources} from './registered-builtin-caller-attribute-source.mjs';
+
+export {captureGeneratedHeaderExpressionSources} from './generated-header-expression-source.mjs';

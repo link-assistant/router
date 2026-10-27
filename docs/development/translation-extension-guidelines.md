@@ -225,3 +225,10 @@ A conditional generated builtin name lookup must retain its original native-call
 presence premise and false legality/effect/export/owner conclusions. Share only
 the active complete source operation, rejoin every receipt/current input and clear
 state on all exits; see [the unrun generated builtin draft](generated-builtin-source-draft.md).
+
+Generated equality-header producers must use original private header/expression/
+position/input issuers, preserve value trivia and complete opaque invocation CST,
+and rejoin all inputs before returning DATA. Count expressions/invocations in the
+combined record/cell bounds; propagate budget failures. Macro ownership, legality,
+expansion/export effects and native visitor confinement remain separate pending
+obligations. See [the unrun source draft](generated-header-expression-source-draft.md).

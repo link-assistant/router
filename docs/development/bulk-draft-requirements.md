@@ -473,3 +473,10 @@ expansion paths. Six equations and independent unrun actual/private/lifecycle/
 argument/refusal/real-x86/export source are drafted. Original caller grammar,
 owner/hygiene/attribute effects/export/type-prefix closure and all wider
 production/translation/sync/freshness/parity/receiving/delivery rows remain OPEN.
+
+The [generated equality-header expression draft](generated-header-expression-source-draft.md)
+retains actual native value/invocation inputs in both architecture expansion paths
+with combined record/cell bounds and whole source/CST inverses. Six equations and
+independent unrun source/native/lifecycle/refusal/export cases are drafted. Actual
+macro owner/hygiene/expansion/effect/export/type-prefix closure and all wider
+production/translation/sync/freshness/parity/receiving/delivery rows remain OPEN.
