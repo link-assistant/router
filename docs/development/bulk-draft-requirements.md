@@ -495,3 +495,11 @@ combined per-function work bounds. Four equations and independent unrun two-API/
 seven-caller/eight-edit JS/strict TS/native/refusal/export source are drafted.
 Wider mutation/iteration/namespace/production/reverse/sync/freshness/parity/
 receiving/delivery requirements remain OPEN.
+
+The [primitive Display builder temporary draft](text-builder-display-source-draft.md)
+reuses original primitive/core rules for explicit temporary format borrows,
+retains all nested histories and supplies the matching whole emitted consuming
+call inverse. Four equations and independent unrun two-adopter/twelve-caller/
+twelve-edit/all-width/bool/JS/strict TS/paired inverse/native/refusal/export source
+are drafted. Namespace/production/wider mutation/reverse/sync/freshness/parity/
+receiving/delivery requirements remain OPEN.

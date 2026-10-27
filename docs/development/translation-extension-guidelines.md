@@ -245,3 +245,10 @@ source/CST mappings and inverse; bound cumulative nested work. Rewrite selected
 From initializer arguments explicitly, keep the builder unknown and do not treat
 temporary wrapper types as original loan/drop/binding permission. See
 [the unrun source draft](text-builder-method-operands-source-draft.md).
+
+Temporary builder Display borrows require original primitive/core source rules
+and an independently checked complete canonical format candidate. Retain every
+inner history, refuse live-builder identifiers before consuming it and keep all
+macro/argument/trait/loan premises separate. Reverse borrowed-format construction
+must rejoin actual imports/library sources and fresh whole target reproduction.
+See [the unrun source draft](text-builder-display-source-draft.md).

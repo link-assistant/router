@@ -16,7 +16,7 @@ export function createConsumingTextCallSource({entry,source,file}){
  }
  return {
   has(name){return bindings.has(name);},
-  lower(name,args){const binding=bindings.get(name);if(!binding||!Array.isArray(args)||args.length!==binding.arity||args.some(value=>typeof value!=='string'))fail('complete actual imported consuming text call arity required');library??=current();used.add(name);return binding.path+'('+args.join(', ')+')';},
+  lower(name,args){const binding=bindings.get(name);if(!binding||!Array.isArray(args)||args.length!==binding.arity||args.some(value=>typeof value!=='string'))fail('complete actual imported consuming text call arity required');library??=current();used.add(name);const original=[...args];if(binding.operation==='append_owned'&&readCoreFormattingMacroSource(rustTokens(original[1]).filter(row=>row.type!=='comment')))original[1]='&('+original[1]+')';return binding.path+'('+original.join(', ')+')';},
   assertFunctionScope(row){
    const bind=node=>{if(ts.isIdentifier(node)){if(bindings.has(node.text))fail('consuming text import is shadowed by an actual lexical binding');return;}if(ts.isObjectBindingPattern(node)||ts.isArrayBindingPattern(node))for(const element of node.elements)if(ts.isBindingElement(element))bind(element.name);};
    for(const parameter of row.parameters)if(bindings.has(parameter))fail('consuming text import is shadowed by an actual parameter');let cells=0;const visit=(node,depth=0)=>{if(++cells>100000||depth>160)fail('complete consuming text binding source census bound');if(ts.isVariableDeclaration(node)||ts.isParameter(node)||ts.isBindingElement(node))bind(node.name);if((ts.isFunctionDeclaration(node)||ts.isFunctionExpression(node)||ts.isClassDeclaration(node)||ts.isClassExpression(node))&&node.name)bind(node.name);ts.forEachChild(node,child=>visit(child,depth+1));};visit(row.expression);
@@ -25,3 +25,6 @@ export function createConsumingTextCallSource({entry,source,file}){
   verify(){if(library){const fresh=current();for(let at=0;at<library.files.length;at++)if(library.files[at].path!==fresh.files[at].path||library.files[at].currentAfter!==fresh.files[at].currentAfter)fail('complete current consuming text library changed during source proposal');}},
  };
 }
+
+import {readCoreFormattingMacroSource} from './core-formatting-macro-source.mjs';
+import {rustTokens} from './rust-structure.mjs';
