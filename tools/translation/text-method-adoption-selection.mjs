@@ -79,6 +79,7 @@ export function selectTextMethodAdoption(source,item,_scoped,modulePath,_names,h
  }
  for(let at=body+1;at<tokens.length-1;at++){const excluded=opaqueTokenEnds.get(at);if(excluded!==undefined){at=excluded-1;continue;}
   if(++work>200000)return result('complete adoption expression scan bound exceeded');activeDomains=localArguments.at(tokens[at].start);
+  if(tokens[at].text==='return'&&declaredTextOutput==='text-owned'){const operand=readReturnSourceOperandBounds(tokens,at,tokens.length-1,{close});if(operand){work+=operand.visited;if(work>200000)return result('complete owning return source scan bound exceeded');textTargets.expression(operand.start,operand.end);}}
   if(tokens[at].text==='let'){
    const initializer=readLocalAliasInitializer(tokens,at,readTextWrittenAliasDomain);if(!initializer)continue;const equal=initializer.start-1;
    if(tokens[equal]?.text!=='=')continue;if(initializer.domain==='text-owned'){let last=equal+1;for(;last<tokens.length-1&&tokens[last].text!==';';last++){if(['(','[','{'].includes(tokens[last].text)){const end=close(tokens,last);if(end<last)break;last=end;}}if(tokens[last]?.text===';')textTargets.expression(equal+1,last);}activeDomains=localArguments.at(tokens[equal+1]?.start);const value=expression(equal+1,0,false,initializer.domain);if(!value||tokens[value.after]?.text!==';'){at=equal;continue;}if(value.operations.length)localArguments.selectedCall({span:[tokens[equal+1].start,tokens[value.after-1].end],terminator:tokens[value.after],operation:value.operations.at(-1),returnsKind:value.domain});append(equal+1,value);at=value.after-1;continue;
@@ -113,3 +114,5 @@ import {createTextBranchTargetSource} from './text-branch-target-source.mjs';
 import {readTextConstructorSourcePrefix} from './text-constructor-source.mjs';
 
 import {selectTextBuilderAdoption} from './text-builder-adoption-selection.mjs';
+
+import {readReturnSourceOperandBounds} from './return-operand-source.mjs';

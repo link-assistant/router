@@ -264,3 +264,9 @@ candidate. Keep binding/constructor/guard/macros out of a nonbinding pattern lan
 qualified spellings and result annotations prove neither pattern types nor Into
 ownership, exhaustiveness or namespace closure. Reuse full original caller checks
 and source/CST inverses. See [the unrun source draft](match-text-target-source-draft.md).
+
+Return operand bounds never prove the enclosing function or expected output type.
+Select explicit owning result contexts only inside the actual nonopaque function
+scan; preserve callback exclusions and reuse original branch/conversion rules.
+Count complete balanced operands against the shared work bound and retain whole
+source/CST inverses. See [the unrun draft](return-text-target-source-draft.md).

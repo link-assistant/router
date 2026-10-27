@@ -517,3 +517,10 @@ closed pattern/arm bounds and original conversion rules. Four equations and
 independent unrun two-API/six-caller/thirteen-edit JS/strict TS/native/scope/refusal/
 export cases are drafted. Pattern binding/guard and all wider language/namespace/
 production/reverse/sync/freshness/parity/receiving/delivery requirements remain OPEN.
+
+The [explicit return owning-text draft](return-text-target-source-draft.md) reuses
+shared balanced return bounds and existing expected target/conversion rules for
+return-if/match/groups/early branches while keeping opaque callback targets
+separate. Four equations and independent unrun two-API/five-caller/ten-edit JS/
+strict TS/native/bounds/refusal/export source are drafted. Wider language/
+namespace/production/reverse/sync/freshness/parity/receiving/delivery remain OPEN.
