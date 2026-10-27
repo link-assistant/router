@@ -6,6 +6,7 @@ const hostObject=Object,hostReflect=Reflect,hostRangeError=RangeError;
 function host(){if(Object!==hostObject||Reflect!==hostReflect||RangeError!==hostRangeError||types.isProxy!==proxy||Object.getPrototypeOf!==prototype||Object.getOwnPropertyDescriptors!==descriptors||Reflect.ownKeys!==keys||Object.hasOwn!==own||Object.freeze!==freeze||Reflect.apply!==apply)throw new TypeError('Original primitive Option host operations required');}
 function payload(value,domain){
  host();if(domain==='str'){textBytes(value);return value;}if(domain==='bool'){if(typeof value!=='boolean')throw new TypeError('Primitive Option bool required');return value;}
+ if(own(ADDITIONAL_OPTION_BOUNDS,domain)){const bounds=ADDITIONAL_OPTION_BOUNDS[domain];if(typeof value!=='bigint'||value<bounds[0]||value>bounds[1])throw new TypeError('Primitive Option '+domain+' required');return value;}
  if(typeof value!=='bigint'||value<(domain==='i64'?-9223372036854775808n:0n)||value>(domain==='i64'?9223372036854775807n:18446744073709551615n))throw new TypeError('Primitive Option '+domain+' required');return value;
 }
 function option(value,domain){
@@ -60,3 +61,78 @@ export const router_option_str_expect=(argument0,argument1)=>operate("str","expe
 
 // The carrier and payload remain opaque to this shared identity operation.
 export function router_option_identity(value) { return value; }
+
+// Fixed ABI bounds, not a saved source/owner/checker/result cache.
+const ADDITIONAL_OPTION_BOUNDS=freeze({__proto__:null,u8:freeze([0n,255n]),i8:freeze([-128n,127n]),u16:freeze([0n,65535n]),i16:freeze([-32768n,32767n]),u32:freeze([0n,4294967295n]),i32:freeze([-2147483648n,2147483647n]),u128:freeze([0n,340282366920938463463374607431768211455n]),i128:freeze([-170141183460469231731687303715884105728n,170141183460469231731687303715884105727n])});
+export const router_option_u8_some=(argument0)=>operate("u8","some",[argument0]);
+export const router_option_u8_none=()=>operate("u8","none",[]);
+export const router_option_u8_is_some=(argument0)=>operate("u8","is_some",[argument0]);
+export const router_option_u8_is_none=(argument0)=>operate("u8","is_none",[argument0]);
+export const router_option_u8_unwrap_or=(argument0,argument1)=>operate("u8","unwrap_or",[argument0,argument1]);
+export const router_option_u8_unwrap=(argument0)=>operate("u8","unwrap",[argument0]);
+export const router_option_u8_expect=(argument0,argument1)=>operate("u8","expect",[argument0,argument1]);
+export const router_option_u8_and=(argument0,argument1)=>operate("u8","and",[argument0,argument1]);
+export const router_option_u8_or=(argument0,argument1)=>operate("u8","or",[argument0,argument1]);
+export const router_option_i8_some=(argument0)=>operate("i8","some",[argument0]);
+export const router_option_i8_none=()=>operate("i8","none",[]);
+export const router_option_i8_is_some=(argument0)=>operate("i8","is_some",[argument0]);
+export const router_option_i8_is_none=(argument0)=>operate("i8","is_none",[argument0]);
+export const router_option_i8_unwrap_or=(argument0,argument1)=>operate("i8","unwrap_or",[argument0,argument1]);
+export const router_option_i8_unwrap=(argument0)=>operate("i8","unwrap",[argument0]);
+export const router_option_i8_expect=(argument0,argument1)=>operate("i8","expect",[argument0,argument1]);
+export const router_option_i8_and=(argument0,argument1)=>operate("i8","and",[argument0,argument1]);
+export const router_option_i8_or=(argument0,argument1)=>operate("i8","or",[argument0,argument1]);
+export const router_option_u16_some=(argument0)=>operate("u16","some",[argument0]);
+export const router_option_u16_none=()=>operate("u16","none",[]);
+export const router_option_u16_is_some=(argument0)=>operate("u16","is_some",[argument0]);
+export const router_option_u16_is_none=(argument0)=>operate("u16","is_none",[argument0]);
+export const router_option_u16_unwrap_or=(argument0,argument1)=>operate("u16","unwrap_or",[argument0,argument1]);
+export const router_option_u16_unwrap=(argument0)=>operate("u16","unwrap",[argument0]);
+export const router_option_u16_expect=(argument0,argument1)=>operate("u16","expect",[argument0,argument1]);
+export const router_option_u16_and=(argument0,argument1)=>operate("u16","and",[argument0,argument1]);
+export const router_option_u16_or=(argument0,argument1)=>operate("u16","or",[argument0,argument1]);
+export const router_option_i16_some=(argument0)=>operate("i16","some",[argument0]);
+export const router_option_i16_none=()=>operate("i16","none",[]);
+export const router_option_i16_is_some=(argument0)=>operate("i16","is_some",[argument0]);
+export const router_option_i16_is_none=(argument0)=>operate("i16","is_none",[argument0]);
+export const router_option_i16_unwrap_or=(argument0,argument1)=>operate("i16","unwrap_or",[argument0,argument1]);
+export const router_option_i16_unwrap=(argument0)=>operate("i16","unwrap",[argument0]);
+export const router_option_i16_expect=(argument0,argument1)=>operate("i16","expect",[argument0,argument1]);
+export const router_option_i16_and=(argument0,argument1)=>operate("i16","and",[argument0,argument1]);
+export const router_option_i16_or=(argument0,argument1)=>operate("i16","or",[argument0,argument1]);
+export const router_option_u32_some=(argument0)=>operate("u32","some",[argument0]);
+export const router_option_u32_none=()=>operate("u32","none",[]);
+export const router_option_u32_is_some=(argument0)=>operate("u32","is_some",[argument0]);
+export const router_option_u32_is_none=(argument0)=>operate("u32","is_none",[argument0]);
+export const router_option_u32_unwrap_or=(argument0,argument1)=>operate("u32","unwrap_or",[argument0,argument1]);
+export const router_option_u32_unwrap=(argument0)=>operate("u32","unwrap",[argument0]);
+export const router_option_u32_expect=(argument0,argument1)=>operate("u32","expect",[argument0,argument1]);
+export const router_option_u32_and=(argument0,argument1)=>operate("u32","and",[argument0,argument1]);
+export const router_option_u32_or=(argument0,argument1)=>operate("u32","or",[argument0,argument1]);
+export const router_option_i32_some=(argument0)=>operate("i32","some",[argument0]);
+export const router_option_i32_none=()=>operate("i32","none",[]);
+export const router_option_i32_is_some=(argument0)=>operate("i32","is_some",[argument0]);
+export const router_option_i32_is_none=(argument0)=>operate("i32","is_none",[argument0]);
+export const router_option_i32_unwrap_or=(argument0,argument1)=>operate("i32","unwrap_or",[argument0,argument1]);
+export const router_option_i32_unwrap=(argument0)=>operate("i32","unwrap",[argument0]);
+export const router_option_i32_expect=(argument0,argument1)=>operate("i32","expect",[argument0,argument1]);
+export const router_option_i32_and=(argument0,argument1)=>operate("i32","and",[argument0,argument1]);
+export const router_option_i32_or=(argument0,argument1)=>operate("i32","or",[argument0,argument1]);
+export const router_option_u128_some=(argument0)=>operate("u128","some",[argument0]);
+export const router_option_u128_none=()=>operate("u128","none",[]);
+export const router_option_u128_is_some=(argument0)=>operate("u128","is_some",[argument0]);
+export const router_option_u128_is_none=(argument0)=>operate("u128","is_none",[argument0]);
+export const router_option_u128_unwrap_or=(argument0,argument1)=>operate("u128","unwrap_or",[argument0,argument1]);
+export const router_option_u128_unwrap=(argument0)=>operate("u128","unwrap",[argument0]);
+export const router_option_u128_expect=(argument0,argument1)=>operate("u128","expect",[argument0,argument1]);
+export const router_option_u128_and=(argument0,argument1)=>operate("u128","and",[argument0,argument1]);
+export const router_option_u128_or=(argument0,argument1)=>operate("u128","or",[argument0,argument1]);
+export const router_option_i128_some=(argument0)=>operate("i128","some",[argument0]);
+export const router_option_i128_none=()=>operate("i128","none",[]);
+export const router_option_i128_is_some=(argument0)=>operate("i128","is_some",[argument0]);
+export const router_option_i128_is_none=(argument0)=>operate("i128","is_none",[argument0]);
+export const router_option_i128_unwrap_or=(argument0,argument1)=>operate("i128","unwrap_or",[argument0,argument1]);
+export const router_option_i128_unwrap=(argument0)=>operate("i128","unwrap",[argument0]);
+export const router_option_i128_expect=(argument0,argument1)=>operate("i128","expect",[argument0,argument1]);
+export const router_option_i128_and=(argument0,argument1)=>operate("i128","and",[argument0,argument1]);
+export const router_option_i128_or=(argument0,argument1)=>operate("i128","or",[argument0,argument1]);

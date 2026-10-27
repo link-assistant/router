@@ -58,3 +58,10 @@ and signs as source DATA. An unsuffixed literal needs a concrete matching native
 context; a host's pointer width is no substitute. Draft independent nondecimal,
 signed MIN, overflow, malformed, typed-alias and full caller cases alongside
 both directions, then qualify them only when execution is authorized.
+
+To compose consecutive families, derive a finite result domain afresh from an
+actual complete qualified compatibility call and matching known operands in the
+current source. Keep the reader bounded and preserve its original call text.
+Never import a preceding stage's saved result or successful verdict as authority.
+Recheck the entire combined caller, both emitted targets and its complete inverse
+against current native/runtime sources, with independent native caller oracles.

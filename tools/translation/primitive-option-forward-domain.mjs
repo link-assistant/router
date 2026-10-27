@@ -1,10 +1,11 @@
 // Actual caller checking supplies authority; these finite type equations do not.
 import {BOOL,fixed,sameType} from './checked-types.mjs';
+import {primitiveBitwiseType} from './primitive-bitwise-types.mjs';
 import {SOURCE_STR,SOURCE_STRING} from './extensions/source-contract-types.mjs';
 import {requireBorrowedString} from './extensions/string-iterators.mjs';
 import {requireOriginalPrimitiveTryFromChecker} from './extensions/host-contracts.mjs';
 import {typeError,unsupported} from './vendor/meta-language/translation/diagnostics.js';
-const payload=domain=>domain==='str'?SOURCE_STR:domain==='bool'?BOOL:['u64','i64'].includes(domain)?{...fixed(64,domain==='i64'),rustPrimitiveName:domain,rustSourceType:true}:null;
+const payload=domain=>{if(domain==='str')return SOURCE_STR;if(domain==='bool')return BOOL;const row=primitiveBitwiseType(domain);return row?{...fixed(row.bits,row.signed),rustPrimitiveName:domain,rustSourceType:true}:null;};
 export function checkForwardPrimitiveOption(checker,node,env,path,expected,row,{current,carrier}){
  requireOriginalPrimitiveTryFromChecker(checker);current();const base=payload(row.domain);if(!base||node.args.length!==row.parameters.length)throw typeError('Actual primitive Option operation domain or arity differs',node.span);
  const requirePayload=(type,span)=>{
@@ -12,7 +13,7 @@ export function checkForwardPrimitiveOption(checker,node,env,path,expected,row,{
   else if(!sameType(type,base)||type.rustReference||type.rustOwnership||type.patternOwnershipRefusal||type.rustBorrowingUnresolved||type.rustGenericIdentityUnresolved||row.domain!=='bool'&&type.rustPrimitiveName!==row.domain)throw unsupported('primitive Option payload','requires its complete actual Copy primitive source type',span);
   checker.expectedOwnership(type,base,path,span);checker.expectedPrimitiveIdentity(type,base,path,span);
  };
- const optional=role=>['bool-option','u64-option','i64-option','str-option-ref'].includes(role),wantedOption=()=>checker.instantiations.option(base,node.span);
+ const optional=role=>role===(row.domain==='str'?'str-option-ref':row.domain+'-option'),wantedOption=()=>checker.instantiations.option(base,node.span);
  const args=node.args.map((syntax,index)=>{
   const role=row.parameters[index],wanted=optional(role)?wantedOption():role==='str'?SOURCE_STR:payload(role);if(!wanted)throw typeError('Unknown primitive Option operand role',syntax.span);const value=checker.expr(syntax,env,path,wanted);current();
   if(optional(role))carrier(checker,value.type,'Option',path,syntax.span,(_checker,type,span)=>requirePayload(type,span));

@@ -196,3 +196,371 @@ pub fn str_expect(value: Option<&str>, other: &str) -> String {
 pub fn option_identity<T>(value: Option<T>) -> Option<T> {
     value
 }
+
+#[must_use]
+pub fn u8_some(value: u8) -> Option<u8> {
+    Some(value)
+}
+
+#[must_use]
+pub fn u8_none() -> Option<u8> {
+    None
+}
+
+#[must_use]
+pub fn u8_is_some(value: Option<u8>) -> bool {
+    value.is_some()
+}
+
+#[must_use]
+pub fn u8_is_none(value: Option<u8>) -> bool {
+    value.is_none()
+}
+
+#[must_use]
+pub fn u8_unwrap_or(value: Option<u8>, other: u8) -> u8 {
+    value.unwrap_or(other)
+}
+
+#[must_use]
+pub fn u8_unwrap(value: Option<u8>) -> u8 {
+    value.unwrap()
+}
+
+#[must_use]
+pub fn u8_expect(value: Option<u8>, other: &str) -> u8 {
+    checked_text(other);
+    value.expect(other)
+}
+
+#[must_use]
+pub fn u8_and(value: Option<u8>, other: Option<u8>) -> Option<u8> {
+    value.and(other)
+}
+
+#[must_use]
+pub fn u8_or(value: Option<u8>, other: Option<u8>) -> Option<u8> {
+    value.or(other)
+}
+
+#[must_use]
+pub fn i8_some(value: i8) -> Option<i8> {
+    Some(value)
+}
+
+#[must_use]
+pub fn i8_none() -> Option<i8> {
+    None
+}
+
+#[must_use]
+pub fn i8_is_some(value: Option<i8>) -> bool {
+    value.is_some()
+}
+
+#[must_use]
+pub fn i8_is_none(value: Option<i8>) -> bool {
+    value.is_none()
+}
+
+#[must_use]
+pub fn i8_unwrap_or(value: Option<i8>, other: i8) -> i8 {
+    value.unwrap_or(other)
+}
+
+#[must_use]
+pub fn i8_unwrap(value: Option<i8>) -> i8 {
+    value.unwrap()
+}
+
+#[must_use]
+pub fn i8_expect(value: Option<i8>, other: &str) -> i8 {
+    checked_text(other);
+    value.expect(other)
+}
+
+#[must_use]
+pub fn i8_and(value: Option<i8>, other: Option<i8>) -> Option<i8> {
+    value.and(other)
+}
+
+#[must_use]
+pub fn i8_or(value: Option<i8>, other: Option<i8>) -> Option<i8> {
+    value.or(other)
+}
+
+#[must_use]
+pub fn u16_some(value: u16) -> Option<u16> {
+    Some(value)
+}
+
+#[must_use]
+pub fn u16_none() -> Option<u16> {
+    None
+}
+
+#[must_use]
+pub fn u16_is_some(value: Option<u16>) -> bool {
+    value.is_some()
+}
+
+#[must_use]
+pub fn u16_is_none(value: Option<u16>) -> bool {
+    value.is_none()
+}
+
+#[must_use]
+pub fn u16_unwrap_or(value: Option<u16>, other: u16) -> u16 {
+    value.unwrap_or(other)
+}
+
+#[must_use]
+pub fn u16_unwrap(value: Option<u16>) -> u16 {
+    value.unwrap()
+}
+
+#[must_use]
+pub fn u16_expect(value: Option<u16>, other: &str) -> u16 {
+    checked_text(other);
+    value.expect(other)
+}
+
+#[must_use]
+pub fn u16_and(value: Option<u16>, other: Option<u16>) -> Option<u16> {
+    value.and(other)
+}
+
+#[must_use]
+pub fn u16_or(value: Option<u16>, other: Option<u16>) -> Option<u16> {
+    value.or(other)
+}
+
+#[must_use]
+pub fn i16_some(value: i16) -> Option<i16> {
+    Some(value)
+}
+
+#[must_use]
+pub fn i16_none() -> Option<i16> {
+    None
+}
+
+#[must_use]
+pub fn i16_is_some(value: Option<i16>) -> bool {
+    value.is_some()
+}
+
+#[must_use]
+pub fn i16_is_none(value: Option<i16>) -> bool {
+    value.is_none()
+}
+
+#[must_use]
+pub fn i16_unwrap_or(value: Option<i16>, other: i16) -> i16 {
+    value.unwrap_or(other)
+}
+
+#[must_use]
+pub fn i16_unwrap(value: Option<i16>) -> i16 {
+    value.unwrap()
+}
+
+#[must_use]
+pub fn i16_expect(value: Option<i16>, other: &str) -> i16 {
+    checked_text(other);
+    value.expect(other)
+}
+
+#[must_use]
+pub fn i16_and(value: Option<i16>, other: Option<i16>) -> Option<i16> {
+    value.and(other)
+}
+
+#[must_use]
+pub fn i16_or(value: Option<i16>, other: Option<i16>) -> Option<i16> {
+    value.or(other)
+}
+
+#[must_use]
+pub fn u32_some(value: u32) -> Option<u32> {
+    Some(value)
+}
+
+#[must_use]
+pub fn u32_none() -> Option<u32> {
+    None
+}
+
+#[must_use]
+pub fn u32_is_some(value: Option<u32>) -> bool {
+    value.is_some()
+}
+
+#[must_use]
+pub fn u32_is_none(value: Option<u32>) -> bool {
+    value.is_none()
+}
+
+#[must_use]
+pub fn u32_unwrap_or(value: Option<u32>, other: u32) -> u32 {
+    value.unwrap_or(other)
+}
+
+#[must_use]
+pub fn u32_unwrap(value: Option<u32>) -> u32 {
+    value.unwrap()
+}
+
+#[must_use]
+pub fn u32_expect(value: Option<u32>, other: &str) -> u32 {
+    checked_text(other);
+    value.expect(other)
+}
+
+#[must_use]
+pub fn u32_and(value: Option<u32>, other: Option<u32>) -> Option<u32> {
+    value.and(other)
+}
+
+#[must_use]
+pub fn u32_or(value: Option<u32>, other: Option<u32>) -> Option<u32> {
+    value.or(other)
+}
+
+#[must_use]
+pub fn i32_some(value: i32) -> Option<i32> {
+    Some(value)
+}
+
+#[must_use]
+pub fn i32_none() -> Option<i32> {
+    None
+}
+
+#[must_use]
+pub fn i32_is_some(value: Option<i32>) -> bool {
+    value.is_some()
+}
+
+#[must_use]
+pub fn i32_is_none(value: Option<i32>) -> bool {
+    value.is_none()
+}
+
+#[must_use]
+pub fn i32_unwrap_or(value: Option<i32>, other: i32) -> i32 {
+    value.unwrap_or(other)
+}
+
+#[must_use]
+pub fn i32_unwrap(value: Option<i32>) -> i32 {
+    value.unwrap()
+}
+
+#[must_use]
+pub fn i32_expect(value: Option<i32>, other: &str) -> i32 {
+    checked_text(other);
+    value.expect(other)
+}
+
+#[must_use]
+pub fn i32_and(value: Option<i32>, other: Option<i32>) -> Option<i32> {
+    value.and(other)
+}
+
+#[must_use]
+pub fn i32_or(value: Option<i32>, other: Option<i32>) -> Option<i32> {
+    value.or(other)
+}
+
+#[must_use]
+pub fn u128_some(value: u128) -> Option<u128> {
+    Some(value)
+}
+
+#[must_use]
+pub fn u128_none() -> Option<u128> {
+    None
+}
+
+#[must_use]
+pub fn u128_is_some(value: Option<u128>) -> bool {
+    value.is_some()
+}
+
+#[must_use]
+pub fn u128_is_none(value: Option<u128>) -> bool {
+    value.is_none()
+}
+
+#[must_use]
+pub fn u128_unwrap_or(value: Option<u128>, other: u128) -> u128 {
+    value.unwrap_or(other)
+}
+
+#[must_use]
+pub fn u128_unwrap(value: Option<u128>) -> u128 {
+    value.unwrap()
+}
+
+#[must_use]
+pub fn u128_expect(value: Option<u128>, other: &str) -> u128 {
+    checked_text(other);
+    value.expect(other)
+}
+
+#[must_use]
+pub fn u128_and(value: Option<u128>, other: Option<u128>) -> Option<u128> {
+    value.and(other)
+}
+
+#[must_use]
+pub fn u128_or(value: Option<u128>, other: Option<u128>) -> Option<u128> {
+    value.or(other)
+}
+
+#[must_use]
+pub fn i128_some(value: i128) -> Option<i128> {
+    Some(value)
+}
+
+#[must_use]
+pub fn i128_none() -> Option<i128> {
+    None
+}
+
+#[must_use]
+pub fn i128_is_some(value: Option<i128>) -> bool {
+    value.is_some()
+}
+
+#[must_use]
+pub fn i128_is_none(value: Option<i128>) -> bool {
+    value.is_none()
+}
+
+#[must_use]
+pub fn i128_unwrap_or(value: Option<i128>, other: i128) -> i128 {
+    value.unwrap_or(other)
+}
+
+#[must_use]
+pub fn i128_unwrap(value: Option<i128>) -> i128 {
+    value.unwrap()
+}
+
+#[must_use]
+pub fn i128_expect(value: Option<i128>, other: &str) -> i128 {
+    checked_text(other);
+    value.expect(other)
+}
+
+#[must_use]
+pub fn i128_and(value: Option<i128>, other: Option<i128>) -> Option<i128> {
+    value.and(other)
+}
+
+#[must_use]
+pub fn i128_or(value: Option<i128>, other: Option<i128>) -> Option<i128> {
+    value.or(other)
+}

@@ -726,3 +726,11 @@ carriers and full adjacent Rust source histories. Seventeen JS/TS equations plus
 native source and independent unrun caller/JS/strict TS/reverse/export/oracle
 cases are drafted. Every wider source/native/production/sync/freshness/parity/
 delivery requirement remains unfinished.
+
+The [primitive Option width draft](primitive-option-width-source-draft.md) copies
+72 interfaces from complete original templates, retains all106 finite interfaces
+and generic identity, and joins local/inline checked arithmetic results through
+fresh shared source rules. Twelve JS/TS equations, native source histories and
+independent unrun runtime/four-API/consecutive-stage/JS/strict TS/reverse/export/
+oracle cases are drafted. Wider callbacks/Result and every source/native/
+production/sync/freshness/parity/delivery requirement remain unfinished.
