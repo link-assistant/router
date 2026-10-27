@@ -1,5 +1,6 @@
 // Complete original bounded alias census copy; never type/owner authority.
-export function censusLocalAliasBindings(rows,parameters,{protectedNames=[],unicode=true}={}){
+export function censusLocalAliasBindings(rows,parameters,{protectedNames=[],unicode=true,opaqueRegions=[]}={}){
+ rows=outsideOpaqueSourceTokens(rows,opaqueRegions);
  if(!rows.some(row=>row.text==='let'||row.text==='for'))return {reason:null,count:0};if(rows.length>200000)return {reason:'complete local-binding token bound'};
  if(rows.some(row=>row.text==='match'))return {reason:'local-bearing pattern scope needs a separate source rule'};
  const names=new Set(parameters),protectedBindings=new Set(protectedNames);let count=0;
@@ -18,3 +19,5 @@ export function localAliasDeclaration(rows,at){
 // The iterator expression and element domain stay unproved. This selects only
 // one original plain pattern name; no loop value or result facts are issued.
 export function localAliasForBinding(rows,at){const token=rows[at+1];if(rows[at]?.text!=='for'||token?.type!=='ident'||rows[at+2]?.text!=='in'||!/^[_\p{ID_Start}][\p{ID_Continue}_]*$/u.test(token.text)||['mut','ref','self','Self'].includes(token.text))return null;return {name:token.text,token,wildcard:token.text==='_'};}
+
+import {outsideOpaqueSourceTokens} from './opaque-source-token-regions.mjs';

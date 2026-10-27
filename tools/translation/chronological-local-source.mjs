@@ -1,7 +1,7 @@
 // Invocation-local lexical source DATA; family callers retain their own census.
 const fail=message=>{throw new TypeError('Chronological local source: '+message);};
-export function createChronologicalLocalSource(rows,parameters,{readOperand,acceptResult,initializerSizes,initializerStart=null,initializerEnd=null,aliasKind,resultKind}){
- if(rows.length>200000)fail('complete local token bound');const frames=[new Map()],activeFrames=new Set(frames),pending=new Map(),initializers=new Map();let cursor=0,last=-1,cells=0;
+export function createChronologicalLocalSource(rows,parameters,{readOperand,acceptResult,initializerSizes,initializerStart=null,initializerEnd=null,aliasKind,resultKind,opaqueRegions=[]}){
+ if(rows.length>200000)fail('complete local token bound');const opaqueTokenEnds=opaqueSourceTokenEnds(rows,opaqueRegions),frames=[new Map()],activeFrames=new Set(frames),pending=new Map(),initializers=new Map();let cursor=0,last=-1,cells=0;
  const tick=()=>{if(++cells>200000)fail('complete local source cell bound');};
  function found(name){tick();for(let at=frames.length-1;at>=0;at--){tick();if(frames[at].has(name))return frames[at].get(name);}return parameters.has(name)?{kind:parameters.get(name),evidence:null}:null;}
  const bindings={has(name){return Boolean(found(name)?.kind);},get(name){return found(name)?.kind;},[Symbol.iterator](){
@@ -10,7 +10,7 @@ export function createChronologicalLocalSource(rows,parameters,{readOperand,acce
  function enterLocal(at){
   const binding=localAliasDeclaration(rows,at);if(!binding)fail('complete ordinary local declaration required');const name=binding.name,frame=frames.at(-1);frame.set(name,{kind:null,evidence:null});if(binding.mutable)return;
   const start=initializerStart?initializerStart(at,rows):binding.initializerStart;if(!Number.isSafeInteger(start)||start<=at+2||start>=rows.length)return;const first=rows[start];let end=null;
-  if(initializerEnd){const selected=initializerEnd(start,rows,tick);if(selected!==null){if(!Number.isSafeInteger(selected)||selected<=start||selected-start>256||rows[selected]?.text!==';')fail('bounded complete initializer terminator required');end=selected;}}else{
+  if(initializerEnd){const selected=initializerEnd(start,rows,tick,{opaqueTokenEnds});if(selected!==null){if(!Number.isSafeInteger(selected)||selected<=start||selected-start>256||rows[selected]?.text!==';')fail('bounded complete initializer terminator required');end=selected;}}else{
   for(const size of initializerSizes){tick();if(!Number.isSafeInteger(size)||size<1||size>256)fail('bounded initializer selection size required');if(rows[start+size]?.text===';'){end=start+size;break;}}
   }
   const declaration={name,frame,start:first.start,declarationStart:rows[at].start};initializers.set(first.start,declaration);
@@ -21,7 +21,7 @@ export function createChronologicalLocalSource(rows,parameters,{readOperand,acce
  return {
   at(position){
    if(!Number.isSafeInteger(position)||position<last)fail('monotonic original call source position required');last=position;
-   while(cursor<rows.length&&rows[cursor].start<position){tick();const row=rows[cursor];
+   while(cursor<rows.length&&rows[cursor].start<position){tick();const excluded=opaqueTokenEnds.get(cursor);if(excluded!==undefined){if(position<rows[excluded-1].end)fail('outer local source query lies inside an excluded callback scope');cursor=excluded;continue;}const row=rows[cursor];
     if(row.text==='{'){if(frames.length>=256)fail('complete local lexical depth bound');const frame=new Map();frames.push(frame);activeFrames.add(frame);}
     else if(row.text==='}'){if(frames.length<=1)fail('original local lexical group differs');activeFrames.delete(frames.pop());}
     else if(row.text==='let')enterLocal(cursor);
@@ -39,3 +39,5 @@ export function createChronologicalLocalSource(rows,parameters,{readOperand,acce
 }
 
 import {localAliasDeclaration} from './local-alias-binding-source.mjs';
+
+import {opaqueSourceTokenEnds} from './opaque-source-token-regions.mjs';

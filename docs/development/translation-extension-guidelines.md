@@ -862,3 +862,10 @@ call, never an enclosing return assumption. Preserve original question-mark/dot
 spans, payload domains, argument order and the independent whole-function Try,
 source binding and From checks. See the
 [unrun core Try projection draft](core-try-projection-source-draft.md).
+
+Outer source rules must isolate actual callback scopes before collecting local
+bindings or selecting receivers. Preserve complete original callback tokens for
+whole initializer and semantic checks; a skipped lexical region grants no body,
+owner, type, capture or execution permission. Keep region boundaries bounded,
+disjoint and tied to actual complete qualified syntax. See the
+[unrun callback scope draft](qualified-callback-scope-source-draft.md).

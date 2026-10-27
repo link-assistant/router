@@ -4,9 +4,9 @@ import {readNativeIntegerLiteralSource} from './native-integer-literal-source.mj
 const binary=new Map([['|',1],['^',2],['&',3],['<<',4],['>>',4],['+',5],['-',5],['*',6],['/',6],['%',6]]);
 // Select only a complete shallow initializer; closures/blocks stay on the
 // original separately selected result-call lane. Charge the enclosing budget.
-export function primitiveLocalInitializerEnd(start,rows,tick){
+export function primitiveLocalInitializerEnd(start,rows,tick,{opaqueTokenEnds=null}={}){
  const groups=[];for(let at=start;at<rows.length&&at-start<=256;at++){
-  tick();const word=rows[at].text;if(word===';'&&!groups.length)return at;if(['{','}'].includes(word))return null;if(word==='('||word==='[')groups.push(word==='('?')':']');else if(word===')'||word===']'){if(groups.pop()!==word)return null;}
+  tick();const opaqueEnd=opaqueTokenEnds?.get(at);if(opaqueEnd!==undefined){at=opaqueEnd-1;continue;}const word=rows[at].text;if(word===';'&&!groups.length)return at;if(['{','}'].includes(word))return null;if(word==='('||word==='[')groups.push(word==='('?')':']');else if(word===')'||word===']'){if(groups.pop()!==word)return null;}
  }return null;
 }
 export function readPrimitiveLocalExpression(rows,bindings,{readAtom,declared=null}){

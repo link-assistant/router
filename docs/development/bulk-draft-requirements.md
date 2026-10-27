@@ -211,3 +211,11 @@ and integer/local receivers. Four equations and independent unrun two-API/
 six-caller/refusal/restaging/JS/strict TS/invalid-context/native/export source are
 drafted. Actual Try/type/source checks remain independent and all unfinished
 namespace/production/reverse/sync/freshness/parity/delivery rows remain OPEN.
+
+The [qualified callback scope draft](qualified-callback-scope-source-draft.md)
+isolates actual known inline callback arguments from outer integer/local source
+inference while preserving full callback source for the independent checker.
+Ten equations and independent unrun syntax/shadow/refusal/two-API/three-caller/
+restaging/JS/strict TS/invalid-callback/native/export source are drafted. Wider
+callback bodies and all unfinished namespace/production/reverse/sync/freshness/
+parity/delivery rows remain OPEN.
