@@ -141,6 +141,10 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
   if(ts.isConditionalExpression(node)){
    const test=condition(node.condition,level+1),entry=new Map(snapshotIncoming()),yes=expression(node.whenTrue,{...flags,comparison:false,level:level+1}),yesState=new Map(snapshotIncoming());environment.clear();for(const [id,row]of entry)environment.set(id,{...row,roots:httpResourceValueRoots(row)});const no=expression(node.whenFalse,{...flags,comparison:false,level:level+1}),noState=new Map(snapshotIncoming());requireLoopState(yesState,noState);if(yes.type!==no.type)fail('every actual conditional value arm must retain its complete native domain');const roots=[...new Set([...httpResourceValueRoots(yes),...httpResourceValueRoots(no)])];return {kind:'conditional',condition:test,yes,no,type:yes.type,root:roots[0]??null,roots};
   }
+  const expressionBlock=observeHttpResourceExpressionBlock(ts,node,{sourceFile:sourceAnnotations?.file,tick});if(expressionBlock){
+   const written=expressionBlock.arrow.type??ts.getJSDocReturnType(expressionBlock.arrow),numericContext=httpResourceWrittenNumericDomain(ts,written,expressionBlock.arrow,imports,sourceAnnotations,tick,flags.numberDomain??null),blockBindings=new Map([...environment].map(([id,row])=>[id,{...row,input:false,mutable:false,captured:true,roots:httpResourceValueRoots(row)}])),flow=checkNested(ts,expressionBlock.block?expressionBlock.body.statements:[],[],imports,{lazy:false,allowColdTail:false,bindings:blockBindings,moduleNames,budget,depth:depth+1,localFunctions,sourceAnnotations,inlineExpression:expressionBlock.block?null:expressionBlock.body,declaredReturnDomain:flags.expectedType??null,numericReturnDomain:numericContext});
+   if(flow.lazy||flow.returnRoots.length||!httpResourceOwnedSignatureDomain(flow.type))fail('expression blocks require complete synchronous owned/scalar exits and read-only outer captures');captureHttpResourceCallbackAnnotations(ts,expressionBlock.arrow,{args:[],ret:flow.type},imports,sourceAnnotations,tick);return {kind:'source-expression-block',flow,type:flow.type,root:null,roots:[]};
+  }
   const primitiveDisplay=observeHttpResourcePrimitiveDisplayCall(ts,node,{imports,moduleNames,environment,sourceFile:sourceAnnotations?.file,tick});if(primitiveDisplay){const value=expression(primitiveDisplay.argument,{level:level+1,comparison:true});if(!httpResourcePrimitiveDisplayDomain(value.type))fail('primitive display requires an actual closed bool integer or text argument');return {kind:'primitive-display',value,type:'text-owned',root:null,roots:[]};}
   if(ts.isCallExpression(node)||ts.isAwaitExpression(node))return call(node,flags);
   if(ts.isBinaryExpression(node)){
@@ -299,6 +303,7 @@ export function emitHttpResourceCallerFlow(flow,{localFunctions=null,continueCon
   if(value.kind==='text-compare'){const side=row=>row.type==='text-owned'?'&*('+expression(row)+')':expression(row);return '('+side(value.left)+' '+value.operator+' '+side(value.right)+')';}
   if(value.kind==='compare')return '('+expression(value.left)+' '+value.operator+' '+expression(value.right)+')';
   if(value.kind==='not')return '(!'+expression(value.value)+')';if(value.kind==='and'||value.kind==='or')return '('+expression(value.left)+(value.kind==='and'?' && ':' || ')+expression(value.right)+')';
+  if(value.kind==='source-expression-block'){if(value.flow.type!==value.type||!httpResourceOwnedSignatureDomain(value.type))fail('actual complete expression block domain required');return '(|| -> '+httpResourceCallerRustType(value.type)+' { '+emitHttpResourceCallerFlow(value.flow,{localFunctions})+' })()';}
   if(value.kind==='primitive-display'){if(!httpResourcePrimitiveDisplayDomain(value.value.type))fail('actual closed primitive display emission argument required');return 'crate::translation_core::format!("{}", '+expression(value.value)+')';}
   if(value.kind==='http-resource-call'){
    const operation=value.local?localFunctions?.get(value.operation):httpResourceCallerContract(value.operation);if(!operation)fail('unregistered complete emission operation');
@@ -356,3 +361,6 @@ import {httpResourceGenericCallValueContext} from './http-resource-generic-call-
 import {observeHttpResourcePrimitiveDisplayCall,httpResourcePrimitiveDisplayDomain} from './http-resource-primitive-display.mjs';
 
 import {resourceInteger,RESOURCE_INTEGER_DOMAINS} from './http-resource-integer-domains.mjs';
+
+import {observeHttpResourceExpressionBlock} from './http-resource-expression-blocks.mjs';
+import {httpResourceOwnedSignatureDomain} from './http-resource-public-domains.mjs';

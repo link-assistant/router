@@ -142,3 +142,8 @@ See the [scalar inverse draft](forward-literal-synchronization-draft.md).
 Read [the additional source contracts](translation-extension-source-contracts-1.md)
 as part of these guidelines. They retain every detailed rule, source-origin,
 ownership, export and verification requirement previously included here.
+
+Source expression invocations require their actual native AST/file, complete
+fresh body checks, read-only captures and child-return-safe native closures.
+Keep explicit checked text conversion witnesses and every unsupported capture/
+output refusal. See [the unrun expression block draft](source-expression-blocks-draft.md).

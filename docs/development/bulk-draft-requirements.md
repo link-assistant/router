@@ -352,3 +352,11 @@ the independently checked signature for all ten widths. Five equations and
 independent unrun30-caller/JS/strict TS/native inverse/oracle/mutation/refusal/export
 source are drafted. All wider loop/generic and unfinished namespace/production/
 reverse/sync/freshness/parity/delivery requirements remain OPEN.
+
+The [source expression block draft](source-expression-blocks-draft.md) checks real
+zero-argument sync source invocations through the existing full body/capture
+checker, emits child-return-safe native closures and retains text String emission
+witnesses. Seven equations and independent unrun eight-caller paired/native,
+three-forward-formatter/JS/strict TS/oracle/refusal/export source are drafted.
+Mutable captures/borrowed outputs and every wider namespace/production/reverse/
+sync/freshness/parity/delivery requirement remain OPEN.

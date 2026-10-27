@@ -9,7 +9,7 @@ export function captureHttpResourceCallbackAnnotations(ts,node,contract,imports,
  const describe=(written,numericDomain)=>createHttpResourceWrittenAnnotationReader(ts,imports,tick,{aliases:context.aliases,coldTypeCurrent:context.coldTypeCurrent,numericDomain})(written);
  const edits=[];
  for(let index=0;index<node.parameters.length;index++){const parameter=node.parameters[index];if(!parameter.type)continue;const actual=describe(parameter.type,contract.args[index]);if(actual.kind!=='domain'||actual.type!==contract.args[index])fail('written parameter must preserve its actual contextual native domain');edits.push({span:[parameter.name.end,parameter.type.end],replacement:''});}
- if(node.type){const actual=describe(node.type,contract.ret);const valid=contract.nativeAsyncReturn?actual.kind==='native-promise'&&actual.value?.kind==='domain'&&actual.value.type===contract.ret:actual.kind==='domain'&&actual.type===contract.ret;if(!valid)fail('written return annotation must preserve its complete actual callback domain and native Promise boundary');const colons=node.getChildren(context.file).filter(child=>child.kind===ts.SyntaxKind.ColonToken);if(colons.length!==1||colons[0].end>node.type.getStart(context.file))fail('actual native arrow return annotation boundary required');edits.push({span:[colons[0].getStart(context.file),node.type.end],replacement:''});}
+ if(node.type){const actual=describe(node.type,contract.ret);const resolved=resolveHttpResourceTypeAlias(ts,node.type,context.aliases,tick),primitive=!contract.nativeAsyncReturn&&resolved.kind===ts.SyntaxKind.StringKeyword&&['str','text-owned'].includes(contract.ret),valid=contract.nativeAsyncReturn?actual.kind==='native-promise'&&actual.value?.kind==='domain'&&actual.value.type===contract.ret:primitive||actual.kind==='domain'&&actual.type===contract.ret;if(!valid)fail('written return annotation must preserve its complete actual callback domain and native Promise boundary');const colons=node.getChildren(context.file).filter(child=>child.kind===ts.SyntaxKind.ColonToken);if(colons.length!==1||colons[0].end>node.type.getStart(context.file))fail('actual native arrow return annotation boundary required');edits.push({span:[colons[0].getStart(context.file),node.type.end],replacement:''});}
  context.erase.push(...edits);
 }
 
@@ -60,3 +60,5 @@ import {httpResourceOwnedSignatureDomain} from './http-resource-public-domains.m
 import {httpResourceGenericCarrierByFamily,httpResourceGenericCarrierDomain} from './http-resource-generic-carriers.mjs';
 
 import {resourceInteger} from './http-resource-integer-domains.mjs';
+
+import {resolveHttpResourceTypeAlias} from './http-resource-type-aliases.mjs';

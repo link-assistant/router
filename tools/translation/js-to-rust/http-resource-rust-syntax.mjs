@@ -83,7 +83,7 @@ export class HttpResourceRustReader {
   if(this.eat('&'))return {kind:'borrow',mutable:this.eat('mut'),value:this.expression(environment,5,depth+1)};
   if(this.eat('*'))return {kind:'dereference',value:this.expression(environment,5,depth+1)};
   if(this.eat('!'))return {kind:'not',value:this.expression(environment,5,depth+1)};
-  if(this.eat('(')){if(this.eat(')'))return {kind:'unit'};const value=this.expression(environment,0,depth+1);this.expect(')');return value;}
+  if(this.eat('(')){if(this.eat('||')){this.expect('->');const returns=this.typeUntil(['{']),body=this.block(environment,depth+1);this.expect(')');this.expect('(');this.expect(')');return {kind:'source-expression-block',returns,body};}if(this.eat(')'))return {kind:'unit'};const value=this.expression(environment,0,depth+1);this.expect(')');return value;}
   if(this.is('{'))return this.block(environment,depth+1);
   if(this.eat('if')){const condition=this.expression(environment,0,depth+1),yes=this.block(environment,depth+1);this.expect('else');return {kind:'choose',condition,yes,no:this.block(environment,depth+1)};}
   if(this.eat('match')){
