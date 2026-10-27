@@ -948,3 +948,8 @@ retain both CST sequences/inverses and allocate fresh neutral/actual parameters.
 An enclosing expected return role is DATA only; do not insert a return annotation
 or admit a missing/incompatible callee. Keep the closed core adapter's own domain,
 whole-function checks and32 body-plan budget. See [the unrun general draft](qualified-function-item-source-draft.md).
+
+Canonical formatting macro source composition uses the additive copied CST lane;
+preserve the old call-only API. Only the exact core format!(...) header may leave
+the unknown-producer refusal, and its arguments stay visible to every source
+scan and independent check. See [the unrun macro draft](layered-format-macro-source-draft.md).

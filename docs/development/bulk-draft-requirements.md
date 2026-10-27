@@ -312,3 +312,9 @@ context-only return candidates and unchanged independent callee/type checks.
 Five equations and independent unrun six-API/fourteen-caller/hygiene/refusal/
 JS/strict TS/native/export source are drafted. Every unfinished namespace and
 production/reverse/sync/freshness/parity/delivery requirement remains OPEN.
+
+The [layered format macro draft](layered-format-macro-source-draft.md) copies the
+complete CST engine for exact canonical format! transport and keeps macro
+arguments visible in all six source selectors. Twenty-five equations and unrun
+old/new-API/header/refusal/twelve-adopter/six-caller/JS/strict TS/export source are
+drafted. All wider namespace/production/reverse/sync/parity/delivery rows stay OPEN.

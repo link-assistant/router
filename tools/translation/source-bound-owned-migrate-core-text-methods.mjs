@@ -15,7 +15,7 @@ import {createCoreAdoptionProducerContext,finishCoreAdoptionProducerContext,crea
 import {coreTypeProducerProblemsForModule} from './source-bound-owned-migrate-core-primitives.mjs';
 import {compilationProfile,itemConfiguration,PRODUCTION_PROFILE} from './cfg-profile.mjs';
 import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE,ROUTER_CORE_JSON_COLLECTIONS_SOURCE} from './router-core-source-data.mjs';
-import {applyLayeredCoreAdoptionSource} from './layered-core-adoption-source.mjs';
+import {applyLayeredCoreOrFormatAdoptionSource as applyLayeredCoreAdoptionSource} from './layered-core-format-adoption-source.mjs';
 
 const C='crate::translation_core::',hash=source=>createHash('sha256').update(source).digest('hex');
 const fail=reason=>{throw new TypeError('Text method adoption: '+reason);};
@@ -85,7 +85,7 @@ function select(source,item,scoped,modulePath,names){
  return selectTextMethodAdoption(source,item,scoped,modulePath,names,{originalDeclarationHeader,close,split,text,ident,macroAt,createLegacyJsonReaderNormalizer,optionNormalizationProblem});
 }
 function apply(source,edits,languageEdits=[]){
- return applyLayeredCoreAdoptionSource(source,edits,{languageRule:'text-methods:retain-complete-original-reader-and-evaluation-order',repositoryRule:'router-core:adopt-qualified-typed-text-method-operations',bindings:[{native:'crate::translation_text_core::',neutral:'::translation_compatibility_text::'}],scalarEdits:languageEdits});
+ return applyLayeredCoreAdoptionSource(source,edits,{languageRule:'text-methods:retain-complete-original-reader-and-evaluation-order',repositoryRule:'router-core:adopt-qualified-typed-text-method-operations',bindings:[{native:'crate::translation_core::',neutral:'::translation_compatibility_format::'},{native:'crate::translation_text_core::',neutral:'::translation_compatibility_text::'}],scalarEdits:languageEdits});
 }
 export function proposeCoreTextMethodCorpus(options={}){
  const supplied=record(options,['entry','files','compilationProfile','dependencyInputs'],4,'options'),{entry='src/lib.rs',files:input,compilationProfile:inputProfile=PRODUCTION_PROFILE,dependencyInputs:requestedDependencies}=supplied.value,captured=filesSnapshot(input),files=captured.value,profile=compilationProfile(inputProfile),dependencies=requestedDependencies===undefined?null:record(requestedDependencies,['manifest','lock'],2,'dependency inputs'),dependencyInputs=dependencies?.value;

@@ -30,11 +30,12 @@ export function selectTextMethodAdoption(source,item,_scoped,modulePath,_names,h
   if(!['.','map','(','|'].every((word,index)=>tokens[end+1+index]?.text===word)||tokens[end+6]?.text!=='|'||tokens[end+8]?.text!=='as'||tokens[end+9]?.text!=='u64'||tokens[end+10]?.text!==')')return null;
   const binding=tokens[end+5],output=tokens[end+7];if(!ident(binding)||binding.text==='_'||!ident(output)||output.text!==binding.text)return null;return {operation:tokens[cursor+1].text,after:end+11,pipes:[end+4,end+6]};
  }
+ const formattingHeaders=coreFormattingMacroSourceHeaders(tokens);
  const opaqueRegions=coreCarrierCallbackSourceRegions(tokens.slice(body+1,-1)),opaqueTokenEnds=opaqueSourceTokenEnds(tokens,opaqueRegions);
  for(let at=body+1;at<tokens.length-1;at++){const excluded=opaqueTokenEnds.get(at);if(excluded!==undefined){at=excluded-1;continue;}if(++work>200000)return result('complete split projection source scan bound exceeded');if(tokens[at].text!=='.')continue;const projection=projectedSplit(at)??projectedIndex(at);if(projection)for(const pipe of projection.pipes)projectionPipes.add(pipe);}
  for(let at=body+1;at<tokens.length-1;at++){const excluded=opaqueTokenEnds.get(at);if(excluded!==undefined){at=excluded-1;continue;}
   const word=tokens[at].text;if(++work>200000)return result('complete source scan bound exceeded');
-  if(word==='#'||['unsafe','async','await','yield','loop','fn','mod','use','extern','macro_rules','trait','impl','struct','enum','union','type','const','static','move'].includes(word)||word==='|'&&!projectionPipes.has(at)||word==='||'&&['=','(',',','{','return','move','=>'].includes(tokens[at-1]?.text)||word!=='!'&&word.endsWith('!')||word==='!'&&ident(tokens[at-1])&&['(','[','{'].includes(tokens[at+1]?.text))return result('unknown local source producer, closure or macro');
+  if(word==='#'||['unsafe','async','await','yield','loop','fn','mod','use','extern','macro_rules','trait','impl','struct','enum','union','type','const','static','move'].includes(word)||word==='|'&&!projectionPipes.has(at)||word==='||'&&['=','(',',','{','return','move','=>'].includes(tokens[at-1]?.text)||word!=='!'&&word.endsWith('!')||word==='!'&&ident(tokens[at-1])&&['(','[','{'].includes(tokens[at+1]?.text)&&!formattingHeaders.has(tokens[at].start))return result('unknown local source producer, closure or macro');
   if(word==='let'){
    const declaration=localAliasDeclaration(tokens,at),binding=declaration?.token;if(!declaration||parameters.has(binding.text)||localNames.has(binding.text))return result('shadowing mutable or destructured local requires separate binding scope');localNames.add(binding.text);
   }
@@ -97,3 +98,5 @@ import {readTextCoreCallSource} from './text-core-call-source.mjs';
 import {readPrimitiveCoreParameterSourceRole} from './primitive-core-call-source.mjs';
 import {coreCarrierCallbackSourceRegions} from './core-carrier-callback-source-regions.mjs';
 import {opaqueSourceTokenEnds} from './opaque-source-token-regions.mjs';
+
+import {coreFormattingMacroSourceHeaders} from './core-formatting-macro-source.mjs';

@@ -15,10 +15,11 @@ export function selectOwnedResultMethodAdoption(source,item,scoped,modulePath,_n
  const callbackFunctionSource=createKnownCoreCallbackFunctionSource(source,tokens,_names);
  const qualifiedCallbackFunctionSource=createQualifiedCallbackFunctionSource(source,tokens,_names);
  const parameterDomains=new Map(),parameters=new Set();for(const row of split(tokens.slice(open+1,endParameters))){if(!ident(row[0])||row[1]?.text!==':'||parameters.has(row[0].text))return result('distinct immutable typed input bindings required');parameters.add(row[0].text);const actual=role(row.slice(2),scoped);if(actual)parameterDomains.set(row[0].text,actual);}const declared=role(tokens.slice(endParameters+2,body),scoped),locals=new Set();
+ const formattingHeaders=coreFormattingMacroSourceHeaders(tokens);
  const opaqueRegions=coreCarrierCallbackSourceRegions(tokens.slice(body+1,-1)),opaqueTokenEnds=opaqueSourceTokenEnds(tokens,opaqueRegions);
  for(let at=body+1;at<tokens.length-1;at++){
   const excluded=opaqueTokenEnds.get(at);if(excluded!==undefined){at=excluded-1;continue;}
-  if(++work>200000)return result('complete source scan bound exceeded');const word=tokens[at].text;if(word==='#'||['async','unsafe','await','yield','fn','mod','use','extern','macro_rules','macro','trait','impl','struct','enum','union','type','const','static'].includes(word)||word!=='!'&&word.endsWith('!')||word==='!'&&ident(tokens[at-1])&&['(','[','{'].includes(tokens[at+1]?.text))return result('unresolved local declaration macro or producer');
+  if(++work>200000)return result('complete source scan bound exceeded');const word=tokens[at].text;if(word==='#'||['async','unsafe','await','yield','fn','mod','use','extern','macro_rules','macro','trait','impl','struct','enum','union','type','const','static'].includes(word)||word!=='!'&&word.endsWith('!')||word==='!'&&ident(tokens[at-1])&&['(','[','{'].includes(tokens[at+1]?.text)&&!formattingHeaders.has(tokens[at].start))return result('unresolved local declaration macro or producer');
   if(word==='let'){const declaration=localAliasDeclaration(tokens,at),binding=declaration?.token;if(!declaration||parameters.has(binding.text)||locals.has(binding.text))return result('mutable shadowed or destructured binding requires separate source rules');locals.add(binding.text);}
  }
  const localArguments=createPrimitiveCarrierLocalSource(tokens.slice(body+1,-1),parameterDomains,parameters,{opaqueRegions,readWrittenRole:tokens=>role(tokens,scoped)});if(!localArguments)return result('complete owned carrier local scope requires separate source selection');let env=parameterDomains;
@@ -85,3 +86,5 @@ import {opaqueSourceTokenEnds} from './opaque-source-token-regions.mjs';
 import {createKnownCoreCallbackFunctionSource} from './known-core-callback-function-source.mjs';
 
 import {createQualifiedCallbackFunctionSource} from './qualified-callback-function-source.mjs';
+
+import {coreFormattingMacroSourceHeaders} from './core-formatting-macro-source.mjs';
