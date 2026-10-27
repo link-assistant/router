@@ -249,3 +249,10 @@ two-API/six-caller/refusal/JS/strict TS/invalid-context/native-storage/order/exp
 source are drafted. Actual Try/type/binding checks remain independent and all
 unfinished namespace/production/reverse/sync/freshness/parity/delivery rows stay
 OPEN.
+
+The [text carrier join draft](text-carrier-join-source-draft.md) shares closed
+encoded/written carrier roles and actual Try/core/callback text payloads through
+text adopters and chronological locals. Five equations and independent unrun
+two-API/eight-caller/domain/refusal/JS/strict TS/native/export source are drafted.
+Actual type/binding/Try/ownership checks stay independent and all unfinished
+namespace/production/reverse/sync/freshness/parity/delivery rows remain OPEN.

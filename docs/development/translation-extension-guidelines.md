@@ -893,3 +893,9 @@ role and one original question mark. Preserve complete grouped source, payload
 domains and independent binding/Try/From/borrow/owning checks; a written source
 role is never semantic authority. See the
 [unrun binding Try draft](carrier-binding-try-source-draft.md).
+
+Share closed lexical role decoding across numeric and text source consumers,
+including actual carrier payloads and borrowed/owning distinctions. Keep every
+real type/binding/Try/ownership check independent and preserve callback partitions
+and original source inverses. See the
+[unrun text carrier join draft](text-carrier-join-source-draft.md).
