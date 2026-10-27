@@ -277,3 +277,10 @@ rules, with explicit depth/round/complete-proposal byte limits. Twelve equations
 and independent unrun four-adapter/six-API/six-caller/refusal/JS/strict TS/paired
 reverse/native/export source are drafted. Every unfinished namespace/production/
 reverse/sync/freshness/parity/delivery row remains OPEN.
+
+The [integer method chain draft](integer-method-chain-source-draft.md) composes
+consecutive known scalar methods in one original substitution with bounded link
+count and unchanged argument order. Two equations and independent unrun two-API/
+six-caller/chain/refusal/JS/strict TS/paired reverse/native-order/export source are
+drafted. Every unfinished namespace/production/reverse/sync/freshness/parity/
+delivery row remains OPEN.

@@ -916,3 +916,9 @@ depth, bounded full child history and an unchanged source round. Preserve all
 actual core bindings in both phases and keep full original caller checks; stable
 source grants no complete-language or semantic permission. See the
 [unrun nested carrier body draft](callback-carrier-body-source-draft.md).
+
+Compose consecutive known scalar methods as one source chain where possible,
+retaining every link and original evaluation order. Stop at domain transitions,
+bound complete chains and retain independent dispatch/type/source checks. No
+source-round reduction is measured performance evidence. See the
+[unrun integer chain draft](integer-method-chain-source-draft.md).
