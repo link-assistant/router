@@ -875,3 +875,9 @@ than manually rewriting each caller. Preserve old API domains, actual Rust
 callee spelling, complete closure source, arity/current-scope joins and all
 independent body/type/owner/Try checks. See the
 [unrun shared callback draft](core-callback-composition-source-draft.md).
+
+Original method callback syntax may identify a lexical source region without
+proving method dispatch. Keep full original bodies for actual lowering and
+independent checks; collapse contained scopes, reject crossing spans and preserve
+all outer binding refusals. See the
+[unrun carrier method scope draft](carrier-method-scope-source-draft.md).

@@ -36,3 +36,10 @@ export function readQualifiedSourceMacroTokens(rows){
   const word=rows[at].text;if(pairs[word]){if(groups.length>=16)return null;groups.push(pairs[word]);}else if([')',']','}'].includes(word)){if(groups.pop()!==word)return null;if(!groups.length){if(at!==rows.length-1)return null;return {path,delimiter,open,body:rows.slice(open+1,at),macroOwnerProved:false,macroArgumentsChecked:false,sourceAuthority:false,semanticAuthority:false};}}
  }return null;
 }
+
+// Complete original parenthesized source prefix, with the existing bounded
+// call token-tree limits. Its contents and any callee remain semantically open.
+export function readParenthesizedSourcePrefixTokens(rows,start=0){
+ if(!Array.isArray(rows)||!Number.isSafeInteger(start)||start<0||rows[start]?.text!=='(')return null;const pairs={'(':')','[':']','{':'}'},groups=[];
+ for(let at=start;at<rows.length&&at-start<128;at++){const word=rows[at].text;if(pairs[word]){if(groups.length>=17)return null;groups.push(pairs[word]);}else if([')',']','}'].includes(word)){if(groups.pop()!==word)return null;if(!groups.length)return {start,end:at+1,tokens:rows.slice(start,at+1),body:rows.slice(start+1,at),sourceAuthority:false,semanticAuthority:false};}}return null;
+}

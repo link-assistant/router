@@ -18,7 +18,7 @@ export function selectPrimitiveOptionMethodAdoption(source,item,_scoped,modulePa
  const parameterDomains=new Map(),parameters=new Set();for(const row of split(tokens.slice(open+1,endParameters))){if(!ident(row[0])||row[1]?.text!==':'||parameters.has(row[0].text))return result('distinct immutable typed input bindings required');parameters.add(row[0].text);const value=role(row.slice(2),_scoped);if(value)parameterDomains.set(row[0].text,value);}
  const returnsStringError=/^(?:(?:::)?(?:std|core)::result::Result|Result)<[\s\S]+,(?:(?:::)?std::string::)?String>$/u.test(words(tokens.slice(endParameters+2,body)).replace(/\s+/gu,''));
  const localNames=new Set();let work=0;
- const opaqueRegions=qualifiedCoreCallbackSourceRegions(tokens.slice(body+1,-1)),opaqueTokenEnds=opaqueSourceTokenEnds(tokens,opaqueRegions);
+ const opaqueRegions=coreCarrierCallbackSourceRegions(tokens.slice(body+1,-1)),opaqueTokenEnds=opaqueSourceTokenEnds(tokens,opaqueRegions);
  for(let at=body+1;at<tokens.length-1;at++){
   const excluded=opaqueTokenEnds.get(at);if(excluded!==undefined){at=excluded-1;continue;}
   const word=tokens[at].text;if(++work>200000)return result('complete source scan bound exceeded');
@@ -66,5 +66,5 @@ import {readJsonFieldCarrierCallSource} from './primitive-carrier-local-source.m
 import {readCoreCarrierCallSource} from './core-carrier-call-source.mjs';
 
 import {readCoreCallbackCallSource} from './core-callback-call-source.mjs';
-import {qualifiedCoreCallbackSourceRegions} from './qualified-core-callback-source-regions.mjs';
+import {coreCarrierCallbackSourceRegions} from './core-carrier-callback-source-regions.mjs';
 import {opaqueSourceTokenEnds} from './opaque-source-token-regions.mjs';

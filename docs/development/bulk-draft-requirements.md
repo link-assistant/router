@@ -227,3 +227,10 @@ equations and independent unrun ten-API/eight-caller/refusal/JS/strict TS/invali
 body/native/export source are drafted. Actual semantic checks stay independent;
 all unfinished namespace/production/reverse/sync/freshness/parity/delivery rows
 remain OPEN.
+
+The [carrier method scope draft](carrier-method-scope-source-draft.md) composes
+original common inline method callbacks with known qualified scopes, preventing
+callback-local bindings from leaking into outer source rules. Nine equations and
+independent unrun grammar/coordinates/shadow/refusal/eight-API/three-chain/JS/
+strict TS/invalid-type/native/export source are drafted. Every unfinished
+namespace/production/reverse/sync/freshness/parity/delivery row remains OPEN.

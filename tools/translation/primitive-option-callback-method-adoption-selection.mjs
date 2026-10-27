@@ -56,7 +56,7 @@ export function selectPrimitiveOptionCallbackMethodAdoption(source,item,_scoped,
   if(['unwrap_or_else','or_else'].includes(method)&&value.domain!==input)return null;return {domain:value.domain,replacement,...(textSourceHistory?{textSourceHistory}: {})};
  }
 
- const opaqueRegions=qualifiedCoreCallbackSourceRegions(tokens.slice(body+1,-1)),opaqueTokenEnds=opaqueSourceTokenEnds(tokens,opaqueRegions);
+ const opaqueRegions=coreCarrierCallbackSourceRegions(tokens.slice(body+1,-1)),opaqueTokenEnds=opaqueSourceTokenEnds(tokens,opaqueRegions);
  for(let at=body+1;at<tokens.length-1;at++){
   const excluded=opaqueTokenEnds.get(at);if(excluded!==undefined){at=excluded-1;continue;}
   const word=tokens[at].text;if(++work>200000)return result('complete source scan bound exceeded');
@@ -120,5 +120,5 @@ import {readCarrierConditionalSource} from './carrier-conditional-source.mjs';
 import {readCarrierBranchLocalSource} from './carrier-branch-local-source.mjs';
 
 import {readCoreCallbackCallSource} from './core-callback-call-source.mjs';
-import {qualifiedCoreCallbackSourceRegions} from './qualified-core-callback-source-regions.mjs';
+import {coreCarrierCallbackSourceRegions} from './core-carrier-callback-source-regions.mjs';
 import {opaqueSourceTokenEnds} from './opaque-source-token-regions.mjs';

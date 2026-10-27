@@ -6,7 +6,7 @@ export function selectIntegerMethodAdoption(source,item,scoped,modulePath,_names
  const result=reason=>({edits,selections,skipped:reason?[...skipped,{function:item.name,reason}]:skipped});if(name<0||tokens.length>200000||tokens[name+1]?.text!=='(')return result('complete ordinary nongeneric numeric function required');
  if(tokens.slice(0,name).some(row=>['unsafe','async','const','extern'].includes(row.text)))return result('ordinary synchronous source function required');const endParameters=close(tokens,name+1);if(endParameters<0)return result('complete original input list required');let body=endParameters+1;while(body<tokens.length&&tokens[body].text!=='{')body++;if(body>=tokens.length||close(tokens,body)!==tokens.length-1)return result('complete original native function body required');
  const domains=new Map(),parameters=new Set();for(const row of split(tokens.slice(name+2,endParameters))){if(!ident(row[0])||row[1]?.text!==':'||parameters.has(row[0].text))return result('distinct immutable original parameters required');parameters.add(row[0].text);const domain=readPrimitiveCoreParameterSourceRole(row.slice(2),scoped);if(domain)domains.set(row[0].text,domain);}
- const opaqueRegions=qualifiedCoreCallbackSourceRegions(tokens.slice(body+1,-1)),opaqueTokenEnds=opaqueSourceTokenEnds(tokens,opaqueRegions);
+ const opaqueRegions=coreCarrierCallbackSourceRegions(tokens.slice(body+1,-1)),opaqueTokenEnds=opaqueSourceTokenEnds(tokens,opaqueRegions);
  let work=0;for(let at=body+1;at<tokens.length-1;at++){
   const excluded=opaqueTokenEnds.get(at);if(excluded!==undefined){at=excluded-1;continue;}const word=tokens[at].text;if(++work>200000)return result('complete source scan bound exceeded');
   if(word==='#'||['unsafe','async','await','yield','loop','fn','mod','use','extern','macro_rules','trait','impl','struct','enum','union','type','const','static','move','|','||'].includes(word)||word.endsWith('!')||word==='!'&&ident(tokens[at-1])&&['(','[','{'].includes(tokens[at+1]?.text))return result('local producer closure or unknown macro uncertainty');
@@ -27,5 +27,5 @@ import {readPrimitiveLocalExpression} from './primitive-local-expression-source.
 
 import {splitRustTryDotSourceTokens} from './rust-try-token-source.mjs';
 
-import {qualifiedCoreCallbackSourceRegions} from './qualified-core-callback-source-regions.mjs';
+import {coreCarrierCallbackSourceRegions} from './core-carrier-callback-source-regions.mjs';
 import {opaqueSourceTokenEnds} from './opaque-source-token-regions.mjs';

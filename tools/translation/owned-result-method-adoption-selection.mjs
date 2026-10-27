@@ -12,7 +12,7 @@ export function selectOwnedResultMethodAdoption(source,item,scoped,modulePath,_n
  let open=name+1;if(tokens[open]?.text==='<'){let end=open+1;while(end<tokens.length&&tokens[end].text!=='>')end++;if(!/^<(?:'[a-zA-Z_][a-zA-Z0-9_]*\s*,?)+>$/u.test(words(tokens.slice(open,end+1))))return result('only closed source lifetime parameters supported');open=end+1;}
  if(tokens[open]?.text!=='(')return result('complete immutable typed input list required');const endParameters=close(tokens,open);if(endParameters<0)return result('complete parameter delimiters required');let body=endParameters+1;while(body<tokens.length&&tokens[body].text!=='{')body++;if(body>=tokens.length||close(tokens,body)!==tokens.length-1)return result('one complete ordinary source body required');
  const parameterDomains=new Map(),parameters=new Set();for(const row of split(tokens.slice(open+1,endParameters))){if(!ident(row[0])||row[1]?.text!==':'||parameters.has(row[0].text))return result('distinct immutable typed input bindings required');parameters.add(row[0].text);const actual=role(row.slice(2),scoped);if(actual)parameterDomains.set(row[0].text,actual);}const declared=role(tokens.slice(endParameters+2,body),scoped),locals=new Set();
- const opaqueRegions=qualifiedCoreCallbackSourceRegions(tokens.slice(body+1,-1)),opaqueTokenEnds=opaqueSourceTokenEnds(tokens,opaqueRegions);
+ const opaqueRegions=coreCarrierCallbackSourceRegions(tokens.slice(body+1,-1)),opaqueTokenEnds=opaqueSourceTokenEnds(tokens,opaqueRegions);
  for(let at=body+1;at<tokens.length-1;at++){
   const excluded=opaqueTokenEnds.get(at);if(excluded!==undefined){at=excluded-1;continue;}
   if(++work>200000)return result('complete source scan bound exceeded');const word=tokens[at].text;if(word==='#'||['async','unsafe','await','yield','fn','mod','use','extern','macro_rules','macro','trait','impl','struct','enum','union','type','const','static'].includes(word)||word!=='!'&&word.endsWith('!')||word==='!'&&ident(tokens[at-1])&&['(','[','{'].includes(tokens[at+1]?.text))return result('unresolved local declaration macro or producer');
@@ -75,5 +75,5 @@ import {readCarrierConditionalSource} from './carrier-conditional-source.mjs';
 import {readCarrierBranchLocalSource} from './carrier-branch-local-source.mjs';
 
 import {readCoreCallbackCallSource} from './core-callback-call-source.mjs';
-import {qualifiedCoreCallbackSourceRegions} from './qualified-core-callback-source-regions.mjs';
+import {coreCarrierCallbackSourceRegions} from './core-carrier-callback-source-regions.mjs';
 import {opaqueSourceTokenEnds} from './opaque-source-token-regions.mjs';
