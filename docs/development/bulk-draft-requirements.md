@@ -518,3 +518,10 @@ callback failures while still executing every final freshness fence and cleanup.
 Two complete equations and unrun receiving simultaneous-error/nested-poisoning/
 null-throw/source-history cases are drafted. Every remaining source/native/
 production/sync/freshness/parity/delivery requirement remains unfinished.
+
+The [async terminal guard draft](async-control-guards-draft.md) adds checked
+remaining-tail continuations, single return branches and terminal else-if chains
+under the original resource/domain/cell/depth rules. Two complete equations and
+unrun truth-table/cleanup/cold cancellation/strict TS/meta/source/inverse/
+refusal/native oracle sources are drafted. Every remaining source/native/
+production/sync/freshness/parity/delivery requirement remains unfinished.
