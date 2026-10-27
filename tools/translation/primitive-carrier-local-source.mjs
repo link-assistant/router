@@ -6,10 +6,11 @@ import {createChronologicalLocalSource} from './chronological-local-source.mjs';
 import {createWrittenLocalAliasRules,readLocalAliasInitializer} from './local-alias-written-source.mjs';
 import {censusLocalAliasBindings} from './local-alias-binding-source.mjs';
 const fail=message=>{throw new TypeError('Primitive carrier local source: '+message);};
-export function createPrimitiveCarrierLocalSource(rows,parameters,allParameters,{readWrittenRole}){
+export function createPrimitiveCarrierLocalSource(rows,parameters,allParameters,{readWrittenRole,opaqueRegions=null}){
+ if(opaqueRegions===null)opaqueRegions=qualifiedCoreCallbackSourceRegions(rows);
  if(!rows.some(row=>row.text==='let'||row.text==='for'))return {at(){return parameters;},evidence(){return null;},selectedCall(){}};
- if(!carrierLocalCensus(rows,allParameters))return null;const initial=new Map([...parameters].flatMap(([name,role])=>{const domain=encodeCarrierRole(role);return domain?[[name,domain]]:[];}));
- const source=createChronologicalLocalSource(rows,initial,{...createWrittenLocalAliasRules({readWrittenDomain:operand=>encodeCarrierRole(readWrittenRole(operand)),readOperand:(operand,bindings,declared)=>{const value=readCarrierAliasOperand(operand,bindings,decodeCarrierRole(declared));return value?{kind:encodeCarrierRole(value),binding:value.binding??null}:null;},acceptResult:event=>encodeCarrierRole(event.resultRole)}),initializerSizes:[1,2,3,4,5,6,7,8,9,10,11,12],initializerEnd:primitiveLocalInitializerEnd,aliasKind:'complete-immutable-carrier-alias',resultKind:'complete-selected-carrier-result-alias'});let current=null;
+ if(!carrierLocalCensus(rows,allParameters,opaqueRegions))return null;const initial=new Map([...parameters].flatMap(([name,role])=>{const domain=encodeCarrierRole(role);return domain?[[name,domain]]:[];}));
+ const source=createChronologicalLocalSource(rows,initial,{...createWrittenLocalAliasRules({readWrittenDomain:operand=>encodeCarrierRole(readWrittenRole(operand)),readOperand:(operand,bindings,declared)=>{const value=readCarrierAliasOperand(operand,bindings,decodeCarrierRole(declared));return value?{kind:encodeCarrierRole(value),binding:value.binding??null}:null;},acceptResult:event=>encodeCarrierRole(event.resultRole)}),initializerSizes:[1,2,3,4,5,6,7,8,9,10,11,12],initializerEnd:primitiveLocalInitializerEnd,aliasKind:'complete-immutable-carrier-alias',resultKind:'complete-selected-carrier-result-alias',opaqueRegions});let current=null;
  const visible={has(name){return decodeCarrierRole(current.get(name))!==null;},get(name){return decodeCarrierRole(current.get(name))??undefined;},*[Symbol.iterator](){for(const [name,domain]of current){const role=decodeCarrierRole(domain);if(role)yield [name,role];}}};
  return {at(position){current=source.at(position);return visible;},evidence:name=>source.evidence(name),selectedCall:event=>source.selectedCall(event)};
 }
@@ -18,8 +19,8 @@ const ident=token=>token?.type==='ident'&&/^[\p{ID_Start}_][\p{ID_Continue}_]*$/
 const carrierDomain=/^(?:payload:(?:bool|[ui](?:8|16|32|64|128)|str|text-owned|owned-str)|option:(?:bool|[ui](?:8|16|32|64|128)|str|text-owned)|result:(?:bool|u64|i64|str|text)|json:json)$/u;
 export function encodeCarrierRole(role){const value=role&&role.kind+':'+role.domain;return typeof value==='string'&&carrierDomain.test(value)?value:null;}
 export function decodeCarrierRole(value){if(typeof value!=='string'||!carrierDomain.test(value))return null;const [kind,domain]=value.split(':');return {kind,domain};}
-function carrierLocalCensus(rows,parameters){
- return censusLocalAliasBindings(rows,parameters,{protectedNames:['std','core','crate','self','Self','translation_core','translation_json_fields_core','translation_integer_core','translation_primitive_option_core','translation_primitive_option_callbacks_core','translation_primitive_results_core','translation_owned_results_core','Option','Some','None','Result','Ok','Err','String','str','u64','i64','bool',...['u','i'].flatMap(prefix=>[8,16,32,64,128].map(bits=>prefix+bits))]}).reason===null;
+function carrierLocalCensus(rows,parameters,opaqueRegions=[]){
+ return censusLocalAliasBindings(rows,parameters,{opaqueRegions,protectedNames:['std','core','crate','self','Self','translation_core','translation_json_fields_core','translation_integer_core','translation_primitive_option_core','translation_primitive_option_callbacks_core','translation_primitive_results_core','translation_owned_results_core','Option','Some','None','Result','Ok','Err','String','str','u64','i64','bool',...['u','i'].flatMap(prefix=>[8,16,32,64,128].map(bits=>prefix+bits))]}).reason===null;
 }
 function scalarOperand(rows,bindings,wanted){
  const numeric=readCarrierNumericExpressionSource(rows,bindings,wanted);if(numeric)return numeric;
@@ -28,7 +29,7 @@ function scalarOperand(rows,bindings,wanted){
  if(rows.length===5&&rows[1].text==='.'&&['to_owned','to_string'].includes(rows[2].text)&&rows[3].text==='('&&rows[4].text===')'){const value=scalarOperand(rows.slice(0,1),bindings,null);if(value?.kind==='payload'&&value.domain==='str')return {kind:'payload',domain:'text-owned'};}return null;
 }
 export function readCarrierAliasOperand(rows,bindings,wanted=null){
- if(!rows.length)return null;const callback=readPrimitiveOptionCallbackCallSource(rows,{get:name=>decodeCarrierRole(bindings.get(name))});if(callback)return callback;const core=readCoreCarrierCallSource(rows,{get:name=>decodeCarrierRole(bindings.get(name))});if(core)return core;const field=readJsonFieldCarrierCallSource(rows,bindings);if(field)return field;const numeric=readCarrierNumericExpressionSource(rows,bindings,wanted);if(numeric)return numeric;if(rows.length>256)return null;const scalar=scalarOperand(rows,bindings,wanted);if(scalar)return scalar;const integer=readIntegerCarrierCallSource(rows,bindings);if(integer)return integer;
+ if(!rows.length)return null;const callback=readCoreCallbackCallSource(rows,{get:name=>decodeCarrierRole(bindings.get(name))});if(callback)return callback;const core=readCoreCarrierCallSource(rows,{get:name=>decodeCarrierRole(bindings.get(name))});if(core)return core;const field=readJsonFieldCarrierCallSource(rows,bindings);if(field)return field;const numeric=readCarrierNumericExpressionSource(rows,bindings,wanted);if(numeric)return numeric;if(rows.length>256)return null;const scalar=scalarOperand(rows,bindings,wanted);if(scalar)return scalar;const integer=readIntegerCarrierCallSource(rows,bindings);if(integer)return integer;
  if(rows.length===5&&ident(rows[0])&&decodeCarrierRole(bindings.get(rows[0].text))?.kind==='json'&&rows[1].text==='.'&&rows[3].text==='('&&rows[4].text===')'){const domain={as_bool:'bool',as_u64:'u64',as_i64:'i64',as_str:'str'}[rows[2].text];if(domain)return {kind:'option',domain};}
  const text=rows.map(row=>row.text).join('');if(/^(?:(?:::)?(?:std|core)::option::Option::|Option::)?None$/u.test(text))return wanted?.kind==='option'?wanted:null;
  const open=rows.findIndex(row=>row.text==='(');if(open<1||rows.at(-1).text!==')')return null;const path=rows.slice(0,open).map(row=>row.text).join(''),constructor=/^(?:(?:::)?(?:std|core)::option::Option::|Option::)?Some$/u.test(path)?'Some':/^(?:(?:::)?(?:std|core)::result::Result::|Result::)?(Ok|Err)$/u.exec(path)?.[1];if(!constructor)return null;
@@ -58,4 +59,5 @@ export function readCarrierNumericExpressionSource(rows,bindings,wanted=null){
  return readPrimitiveRoleExpressionSource(rows,{get:name=>decodeCarrierRole(bindings.get(name))},wanted);
 }
 
-import {readPrimitiveOptionCallbackCallSource} from './primitive-option-callback-call-source.mjs';
+import {readCoreCallbackCallSource} from './core-callback-call-source.mjs';
+import {qualifiedCoreCallbackSourceRegions} from './qualified-core-callback-source-regions.mjs';

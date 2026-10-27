@@ -869,3 +869,9 @@ whole initializer and semantic checks; a skipped lexical region grants no body,
 owner, type, capture or execution permission. Keep region boundaries bounded,
 disjoint and tied to actual complete qualified syntax. See the
 [unrun callback scope draft](qualified-callback-scope-source-draft.md).
+
+Compose shared closed callback return roles across actual core families rather
+than manually rewriting each caller. Preserve old API domains, actual Rust
+callee spelling, complete closure source, arity/current-scope joins and all
+independent body/type/owner/Try checks. See the
+[unrun shared callback draft](core-callback-composition-source-draft.md).

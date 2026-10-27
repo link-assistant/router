@@ -28,7 +28,7 @@ export function selectPrimitiveOptionCallbackMethodAdoption(source,item,_scoped,
   const literal=readFixedIntegerLiteralSource(piece,wanted?.kind==='payload'?wanted.domain:null);if(literal&&primitiveBitwiseType(literal.domain))return {kind:'payload',domain:literal.domain};
   if(piece[0].text==='Some'&&piece[1]?.text==='('&&close(piece,1)===piece.length-1){const value=inferred(piece.slice(2,-1),scope,wanted&&{kind:'payload',domain:wanted.domain},depth+1);return value?.kind==='payload'?{kind:'option',domain:value.domain}:null;}
   if(piece.length===1&&piece[0].text==='None')return wanted?.kind==='option'?wanted:null;
-  const core=readCoreCarrierCallSource(piece,scope);if(core)return core;
+  const core=(readCoreCarrierCallSource(piece,scope)??readCoreCallbackCallSource(piece,scope));if(core)return core;
   if((work+=Math.min(piece.length,257))>200000)return null;const numeric=readPrimitiveRoleExpressionSource(piece,scope,wanted);if(numeric)return numeric;
   const conditional=readCarrierConditionalSource(piece,scope,wanted,{readExpression:(part,expected)=>inferred(part,scope,expected,depth+1),readBranch:(part,expected)=>readCarrierBranchLocalSource(part,scope,expected,{readExpression:(body,visible,output)=>inferred(body,visible,output,depth+1),readWrittenRole:tokens=>role(tokens,_scoped)})});if(conditional)return conditional;
   if(piece.length>4&&piece.at(-4).text==='.'&&['to_owned','to_string'].includes(piece.at(-3).text)&&piece.at(-2).text==='('&&piece.at(-1).text===')'){const base=inferred(piece.slice(0,-4),scope,null,depth+1);if(base?.kind==='payload'&&['str','text-owned'].includes(base.domain))return {kind:'payload',domain:'text-owned'};}
@@ -56,12 +56,14 @@ export function selectPrimitiveOptionCallbackMethodAdoption(source,item,_scoped,
   if(['unwrap_or_else','or_else'].includes(method)&&value.domain!==input)return null;return {domain:value.domain,replacement,...(textSourceHistory?{textSourceHistory}: {})};
  }
 
+ const opaqueRegions=qualifiedCoreCallbackSourceRegions(tokens.slice(body+1,-1)),opaqueTokenEnds=opaqueSourceTokenEnds(tokens,opaqueRegions);
  for(let at=body+1;at<tokens.length-1;at++){
+  const excluded=opaqueTokenEnds.get(at);if(excluded!==undefined){at=excluded-1;continue;}
   const word=tokens[at].text;if(++work>200000)return result('complete source scan bound exceeded');
   if(word==='#'||['async','unsafe','await','yield','fn','mod','use','extern','macro_rules','macro','trait','impl','struct','enum','union','type','const','static'].includes(word)||word!=='!'&&word.endsWith('!')||word==='!'&&ident(tokens[at-1])&&['(','[','{'].includes(tokens[at+1]?.text))return result('unknown producer closure pattern or macro scope');
   if(word==='let'){const declaration=localAliasDeclaration(tokens,at),binding=declaration?.token;if(!declaration||parameters.has(binding.text)||localNames.has(binding.text))return result('shadowed mutable or destructured local requires separate binding rules');localNames.add(binding.text);}
  }
- const localArguments=createPrimitiveCarrierLocalSource(tokens.slice(body+1,-1),parameterDomains,parameters,{readWrittenRole:tokens=>role(tokens,_scoped)});if(!localArguments)return result('complete carrier local scope requires separate source selection');let env=parameterDomains;
+ const localArguments=createPrimitiveCarrierLocalSource(tokens.slice(body+1,-1),parameterDomains,parameters,{opaqueRegions,readWrittenRole:tokens=>role(tokens,_scoped)});if(!localArguments)return result('complete carrier local scope requires separate source selection');let env=parameterDomains;
  function operand(piece,wanted,depth){
   if(!piece.length)return null;const start=indices.get(piece[0]),value=expression(start,depth+1);if(value&&value.after===start+piece.length&&value.kind===wanted.kind&&value.domain===wanted.domain)return value;
   if(wanted.kind!=='payload')return null;const raw=source.slice(piece[0].start,piece.at(-1).end);
@@ -70,7 +72,7 @@ export function selectPrimitiveOptionCallbackMethodAdoption(source,item,_scoped,
   if(!primitiveBitwiseType(wanted.domain))return null;const literal=readFixedIntegerLiteralSource(piece,wanted.domain);return literal?{replacement:literal.decimal+'_'+wanted.domain,operations:[]}:null;
  }
  function expression(at,depth=0){
-  if(++work>200000||depth>64)return null;const token=tokens[at],known=env.get(token?.text);let value=known?{...known,replacement:token.text,after:at+1,operations:[]}:null;if(!value&&token?.text==='crate'&&tokens[at+1]?.text==='::'&&tokens[at+2]?.text==='translation_integer_core'&&tokens[at+3]?.text==='::'&&tokens[at+5]?.text==='('){const end=close(tokens,at+5),selected=end>=0&&end-at<12?readIntegerCarrierCallSource(tokens.slice(at,end+1),{get:name=>encodeCarrierRole(env.get(name))}):null;if(selected)value={...selected,replacement:source.slice(token.start,tokens[end].end),after:end+1,operations:[]};}if(!value&&token?.text==='crate'&&tokens[at+1]?.text==='::'&&tokens[at+2]?.text==='translation_json_fields_core'&&tokens[at+3]?.text==='::'&&tokens[at+5]?.text==='('){const end=close(tokens,at+5),selected=end>=0&&end-at<32?readJsonFieldCarrierCallSource(tokens.slice(at,end+1),{get:name=>encodeCarrierRole(env.get(name))}):null;if(selected)value={...selected,replacement:source.slice(token.start,tokens[end].end),after:end+1,operations:[]};}if(!value&&token?.text==='crate'&&tokens[at+1]?.text==='::'&&tokens[at+3]?.text==='::'&&tokens[at+5]?.text==='('){const end=close(tokens,at+5),selected=end>=0&&end-at<128?readCoreCarrierCallSource(tokens.slice(at,end+1),env):null;if(selected)value={...selected,replacement:source.slice(token.start,tokens[end].end),after:end+1,operations:[]};}if(!value)return null;
+  if(++work>200000||depth>64)return null;const token=tokens[at],known=env.get(token?.text);let value=known?{...known,replacement:token.text,after:at+1,operations:[]}:null;if(!value&&token?.text==='crate'&&tokens[at+1]?.text==='::'&&tokens[at+2]?.text==='translation_integer_core'&&tokens[at+3]?.text==='::'&&tokens[at+5]?.text==='('){const end=close(tokens,at+5),selected=end>=0&&end-at<12?readIntegerCarrierCallSource(tokens.slice(at,end+1),{get:name=>encodeCarrierRole(env.get(name))}):null;if(selected)value={...selected,replacement:source.slice(token.start,tokens[end].end),after:end+1,operations:[]};}if(!value&&token?.text==='crate'&&tokens[at+1]?.text==='::'&&tokens[at+2]?.text==='translation_json_fields_core'&&tokens[at+3]?.text==='::'&&tokens[at+5]?.text==='('){const end=close(tokens,at+5),selected=end>=0&&end-at<32?readJsonFieldCarrierCallSource(tokens.slice(at,end+1),{get:name=>encodeCarrierRole(env.get(name))}):null;if(selected)value={...selected,replacement:source.slice(token.start,tokens[end].end),after:end+1,operations:[]};}if(!value&&token?.text==='crate'&&tokens[at+1]?.text==='::'&&tokens[at+3]?.text==='::'&&tokens[at+5]?.text==='('){const end=close(tokens,at+5),selected=end>=0&&end-at<128?(readCoreCarrierCallSource(tokens.slice(at,end+1),env)??readCoreCallbackCallSource(tokens.slice(at,end+1),env)):null;if(selected)value={...selected,replacement:source.slice(token.start,tokens[end].end),after:end+1,operations:[]};}if(!value)return null;
   if(value.kind==='json'){
    const reader={as_bool:'bool',as_u64:'u64',as_i64:'i64',as_str:'str'}[tokens[value.after+1]?.text];if(reader&&tokens[value.after]?.text==='.'&&tokens[value.after+2]?.text==='('&&tokens[value.after+3]?.text===')')value={replacement:source.slice(token.start,tokens[value.after+3].end),after:value.after+4,kind:'option',domain:reader,operations:[]};
   }
@@ -93,6 +95,7 @@ export function selectPrimitiveOptionCallbackMethodAdoption(source,item,_scoped,
  }
  function append(at,value){if(!value?.operations.length)return;const span=[tokens[at].start,tokens[value.after-1].end];edits.push({span,expected:source.slice(...span),replacement:value.replacement});selections.push({function:item.name,functionSpan:[item.start,item.end],span,operation:value.operations.at(-1),operations:value.operations,domain:value.domain,...(value.callbackTextSourceHistories?.length?{callbackTextSourceHistories:value.callbackTextSourceHistories}:{}),oldTraitDispatchProved:false,oldDropTimingProved:false,executableAdmission:false,...(localArguments.evidence(tokens[at].text)?{localReceiverSource:localArguments.evidence(tokens[at].text)}:{}),evaluationOrder:['actual-immutable-Option-receiver-once','already-evaluated-parameters-or-closed-literals-left-to-right']});}
  for(let at=body+1;at<tokens.length-1;at++){
+  const excluded=opaqueTokenEnds.get(at);if(excluded!==undefined){at=excluded-1;continue;}
   if(++work>200000)return result('complete source expression bound exceeded');env=localArguments.at(tokens[at].start);
   if(tokens[at].text==='let'){
    const initializer=readCarrierLocalInitializer(tokens,at,part=>role(part,_scoped));if(!initializer)continue;const equal=initializer.start-1,written=initializer.written;env=localArguments.at(tokens[initializer.start]?.start);const value=expression(equal+1);if(value&&tokens[value.after]?.text===';'){if((!written||written.kind===value.kind&&written.domain===value.domain)&&value.operations.length)localArguments.selectedCall({span:[tokens[equal+1].start,tokens[value.after-1].end],terminator:tokens[value.after],operation:value.operations.at(-1),resultRole:{kind:value.kind,domain:value.domain}});append(equal+1,value);at=value.after-1;}else at=equal;continue;
@@ -115,3 +118,7 @@ import {readPrimitiveRoleExpressionSource} from './primitive-carrier-expression-
 import {readCarrierConditionalSource} from './carrier-conditional-source.mjs';
 
 import {readCarrierBranchLocalSource} from './carrier-branch-local-source.mjs';
+
+import {readCoreCallbackCallSource} from './core-callback-call-source.mjs';
+import {qualifiedCoreCallbackSourceRegions} from './qualified-core-callback-source-regions.mjs';
+import {opaqueSourceTokenEnds} from './opaque-source-token-regions.mjs';

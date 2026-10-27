@@ -219,3 +219,11 @@ Ten equations and independent unrun syntax/shadow/refusal/two-API/three-caller/
 restaging/JS/strict TS/invalid-callback/native/export source are drafted. Wider
 callback bodies and all unfinished namespace/production/reverse/sync/freshness/
 parity/delivery rows remain OPEN.
+
+The [shared callback composition draft](core-callback-composition-source-draft.md)
+composes declared Option/primitive Result/owning Result callback returns and Try
+payload source through four carrier adopters and actual local readers. Eight
+equations and independent unrun ten-API/eight-caller/refusal/JS/strict TS/invalid-
+body/native/export source are drafted. Actual semantic checks stay independent;
+all unfinished namespace/production/reverse/sync/freshness/parity/delivery rows
+remain OPEN.
