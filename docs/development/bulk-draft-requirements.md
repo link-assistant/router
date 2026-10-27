@@ -749,3 +749,12 @@ u64/i64 fallbacks, preserving all10 field interfaces and the earlier borrowed
 reader history. Eleven JS/TS equations and independent unrun runtime/caller/
 bulk/JS/strict TS/reverse/history/export/native oracle source are drafted. Every
 wider source/native/production/sync/freshness/parity/delivery requirement stays open.
+
+The [nested JSON field draft](json-nested-fields-source-draft.md) copies27
+interfaces at depths two through four from nine original readers/defaults,
+retaining all37 current interfaces and every native predecessor history. Shared
+root traversal, full private-helper source dependencies, both adopter APIs,
+three reverse checkers and12 JS/TS equations are drafted with independent unrun
+runtime/caller/bulk/JS/strict TS/reverse/history/export/native lifetime-oracle
+source. Every wider source/native/production/sync/freshness/parity/delivery
+requirement remains unfinished.

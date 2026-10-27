@@ -75,10 +75,11 @@ export function prepareNativeSubstitutionCopy({root,archive,pin,id,laterPlans=[]
    if(!candidates.length)continue;const next=candidates[0];if(next.before!==currentAfter){const overlap=nativeSourceHistoryOverlap({before,after,language:language.after,currentAfter,laterHistories,parallelHistories},next);need(overlap&&next.inverse===next.before,'complete adjacent or overlapping source history join');parsed(ts,path,next.currentAfter??next.after);parallelHistories.push({...next,overlapEquation:overlap.equation});continue;}need(next.inverse===next.before,'complete adjacent source history inverse');
    const end=next.currentAfter??next.after;parsed(ts,path,end);
    const equation=transportConcreteSourceEquations([{before:currentAfter,after:end,language:'JavaScript'}])[0];need(equation.inverse===currentAfter,'complete later source inverse');
-   laterHistories.push({id:later.id,before:currentAfter,after:end,equation,stages:next.stages,laterHistories:next.laterHistories??[],parallelHistories:next.parallelHistories??[],path:next.path,...(next.originalPath?{originalPath:next.originalPath,originalSource:next.before}:{}),sourceAuthority:false,semanticAuthority:false});currentAfter=end;
+   laterHistories.push({id:later.id,before:currentAfter,after:end,equation,stages:next.stages,laterHistories:next.laterHistories??[],parallelHistories:next.parallelHistories??[],sourceDependencies:next.sourceDependencies??[],path:next.path,...(next.originalPath?{originalPath:next.originalPath,originalSource:next.before}:{}),sourceAuthority:false,semanticAuthority:false});currentAfter=end;
   }
+  const sourceDependencies=collectNativeCopiedFunctionDependencies(ts,root,path,after,row.completeSourceDependencies??[],originalGuards);
   const current=currentSource(path,Boolean(row.originalPath&&row.originalPath!==row.path));need(current===null||current===before||current===after||current===currentAfter,'unknown physical copied implementation');
-  files.push({path:row.path,...(row.originalPath?{originalPath:row.originalPath}:{}),before,language:language.after,after,current,currentAfter,laterHistories,parallelHistories,stages,trace:run.trace,nativeSelections:{language:language.selections,repository:repository.selections},inverse:before});
+  files.push({path:row.path,...(row.originalPath?{originalPath:row.originalPath}:{}),before,language:language.after,after,current,currentAfter,laterHistories,parallelHistories,sourceDependencies,stages,trace:run.trace,nativeSelections:{language:language.selections,repository:repository.selections},inverse:before});
  }
  const bindings=verifyNativeCopiedSourceBindingBatch(ts,files.map(row=>({path:resolve(root,row.path),source:row.currentAfter})));
  files.forEach((row,index)=>{row.nativeBindings=bindings[index];need(currentSource(resolve(root,row.path),Boolean(row.originalPath&&row.originalPath!==row.path))===row.current,'physical source changed during construction');});
@@ -113,3 +114,11 @@ export function withNativeSubstitutionOperation(operation){
 export function nativeSubstitutionCopyHasChanges(plan){return nativeSourceHistoryFiles(plan).some(row=>row.current!==(row.currentAfter??row.after));}
 
 import {createNativeSourceOwnerIndex} from './native-source-owner-index.mjs';
+
+// Complete archived source, native declaration spans and exact copied code are
+// DATA. They never supply namespace, binding, type or executable authority.
+function collectNativeCopiedFunctionDependencies(ts,root,path,after,dependencies,guards){
+ need(Array.isArray(dependencies)&&dependencies.length<=16,'bounded complete copied function dependencies');if(!dependencies.length)return [];const target=parsed(ts,path,after),rows=[];
+ for(const dependency of dependencies){need(dependency&&typeof dependency.source==='string'&&hash(dependency.source)===dependency.sha256&&dependency.owner?.kind==='function'&&typeof dependency.owner.name==='string'&&typeof dependency.copiedSource==='string','complete selected original function dependency');const originalPath=localPath(root,dependency.path);need(readFileSync(originalPath,'utf8')===dependency.source,'complete copied function original differs');const original=parsed(ts,originalPath,dependency.source),select=file=>file.statements.filter(node=>ts.isFunctionDeclaration(node)&&node.name?.text===dependency.owner.name),sources=select(original),copies=select(target);need(sources.length===1&&copies.length===1&&sources[0].getText(original)===dependency.copiedSource&&copies[0].getText(target)===dependency.copiedSource,'whole actual copied function declarations differ');guards.push({path:originalPath,source:dependency.source});rows.push({path:dependency.path,source:dependency.source,owner:dependency.owner,copiedSource:dependency.copiedSource,sourceSpan:[sources[0].getStart(original),sources[0].end],targetSpan:[copies[0].getStart(target),copies[0].end],sourceAuthority:false,semanticAuthority:false});}
+ const equations=transportConcreteSourceEquations(rows.map(row=>({before:row.source,after:row.source,language:'JavaScript'})));return rows.map((row,index)=>({...row,sourceEquation:equations[index]}));
+}

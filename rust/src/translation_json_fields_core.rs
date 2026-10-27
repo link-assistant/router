@@ -82,3 +82,222 @@ pub fn json_i64_field_or(value: &Json, key: &str, other: i64) -> i64 {
     })
     .unwrap_or(other)
 }
+
+#[must_use]
+pub fn json_field2<'a>(value: &'a Json, key: &str, second: &str) -> Option<&'a Json> {
+    value.get(key).and_then(|value| value.get(second))
+}
+
+#[must_use]
+pub fn json_str_field2<'a>(value: &'a Json, key: &str, second: &str) -> Option<&'a str> {
+    match value.get(key).and_then(|value| value.get(second)) {
+        Some(value) => value.as_str(),
+        None => None,
+    }
+}
+
+#[must_use]
+pub fn json_str_field2_or_empty<'a>(value: &'a Json, key: &str, second: &str) -> &'a str {
+    (match value.get(key).and_then(|value| value.get(second)) {
+        Some(value) => value.as_str(),
+        None => None,
+    })
+    .unwrap_or("")
+}
+
+#[must_use]
+pub fn json_bool_field2(value: &Json, key: &str, second: &str) -> Option<bool> {
+    match value.get(key).and_then(|value| value.get(second)) {
+        Some(value) => value.as_bool(),
+        None => None,
+    }
+}
+
+#[must_use]
+pub fn json_bool_field2_or(value: &Json, key: &str, second: &str, other: bool) -> bool {
+    (match value.get(key).and_then(|value| value.get(second)) {
+        Some(value) => value.as_bool(),
+        None => None,
+    })
+    .unwrap_or(other)
+}
+
+#[must_use]
+pub fn json_u64_field2(value: &Json, key: &str, second: &str) -> Option<u64> {
+    match value.get(key).and_then(|value| value.get(second)) {
+        Some(value) => value.as_u64(),
+        None => None,
+    }
+}
+
+#[must_use]
+pub fn json_u64_field2_or(value: &Json, key: &str, second: &str, other: u64) -> u64 {
+    (match value.get(key).and_then(|value| value.get(second)) {
+        Some(value) => value.as_u64(),
+        None => None,
+    })
+    .unwrap_or(other)
+}
+
+#[must_use]
+pub fn json_i64_field2(value: &Json, key: &str, second: &str) -> Option<i64> {
+    match value.get(key).and_then(|value| value.get(second)) {
+        Some(value) => value.as_i64(),
+        None => None,
+    }
+}
+
+#[must_use]
+pub fn json_i64_field2_or(value: &Json, key: &str, second: &str, other: i64) -> i64 {
+    (match value.get(key).and_then(|value| value.get(second)) {
+        Some(value) => value.as_i64(),
+        None => None,
+    })
+    .unwrap_or(other)
+}
+
+#[must_use]
+pub fn json_field3<'a>(value: &'a Json, key: &str, second: &str, third: &str) -> Option<&'a Json> {
+    value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third))
+}
+
+#[must_use]
+pub fn json_str_field3<'a>(value: &'a Json, key: &str, second: &str, third: &str) -> Option<&'a str> {
+    match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)) {
+        Some(value) => value.as_str(),
+        None => None,
+    }
+}
+
+#[must_use]
+pub fn json_str_field3_or_empty<'a>(value: &'a Json, key: &str, second: &str, third: &str) -> &'a str {
+    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)) {
+        Some(value) => value.as_str(),
+        None => None,
+    })
+    .unwrap_or("")
+}
+
+#[must_use]
+pub fn json_bool_field3(value: &Json, key: &str, second: &str, third: &str) -> Option<bool> {
+    match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)) {
+        Some(value) => value.as_bool(),
+        None => None,
+    }
+}
+
+#[must_use]
+pub fn json_bool_field3_or(value: &Json, key: &str, second: &str, third: &str, other: bool) -> bool {
+    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)) {
+        Some(value) => value.as_bool(),
+        None => None,
+    })
+    .unwrap_or(other)
+}
+
+#[must_use]
+pub fn json_u64_field3(value: &Json, key: &str, second: &str, third: &str) -> Option<u64> {
+    match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)) {
+        Some(value) => value.as_u64(),
+        None => None,
+    }
+}
+
+#[must_use]
+pub fn json_u64_field3_or(value: &Json, key: &str, second: &str, third: &str, other: u64) -> u64 {
+    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)) {
+        Some(value) => value.as_u64(),
+        None => None,
+    })
+    .unwrap_or(other)
+}
+
+#[must_use]
+pub fn json_i64_field3(value: &Json, key: &str, second: &str, third: &str) -> Option<i64> {
+    match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)) {
+        Some(value) => value.as_i64(),
+        None => None,
+    }
+}
+
+#[must_use]
+pub fn json_i64_field3_or(value: &Json, key: &str, second: &str, third: &str, other: i64) -> i64 {
+    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)) {
+        Some(value) => value.as_i64(),
+        None => None,
+    })
+    .unwrap_or(other)
+}
+
+#[must_use]
+pub fn json_field4<'a>(value: &'a Json, key: &str, second: &str, third: &str, fourth: &str) -> Option<&'a Json> {
+    value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth))
+}
+
+#[must_use]
+pub fn json_str_field4<'a>(value: &'a Json, key: &str, second: &str, third: &str, fourth: &str) -> Option<&'a str> {
+    match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth)) {
+        Some(value) => value.as_str(),
+        None => None,
+    }
+}
+
+#[must_use]
+pub fn json_str_field4_or_empty<'a>(value: &'a Json, key: &str, second: &str, third: &str, fourth: &str) -> &'a str {
+    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth)) {
+        Some(value) => value.as_str(),
+        None => None,
+    })
+    .unwrap_or("")
+}
+
+#[must_use]
+pub fn json_bool_field4(value: &Json, key: &str, second: &str, third: &str, fourth: &str) -> Option<bool> {
+    match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth)) {
+        Some(value) => value.as_bool(),
+        None => None,
+    }
+}
+
+#[must_use]
+pub fn json_bool_field4_or(value: &Json, key: &str, second: &str, third: &str, fourth: &str, other: bool) -> bool {
+    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth)) {
+        Some(value) => value.as_bool(),
+        None => None,
+    })
+    .unwrap_or(other)
+}
+
+#[must_use]
+pub fn json_u64_field4(value: &Json, key: &str, second: &str, third: &str, fourth: &str) -> Option<u64> {
+    match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth)) {
+        Some(value) => value.as_u64(),
+        None => None,
+    }
+}
+
+#[must_use]
+pub fn json_u64_field4_or(value: &Json, key: &str, second: &str, third: &str, fourth: &str, other: u64) -> u64 {
+    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth)) {
+        Some(value) => value.as_u64(),
+        None => None,
+    })
+    .unwrap_or(other)
+}
+
+#[must_use]
+pub fn json_i64_field4(value: &Json, key: &str, second: &str, third: &str, fourth: &str) -> Option<i64> {
+    match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth)) {
+        Some(value) => value.as_i64(),
+        None => None,
+    }
+}
+
+#[must_use]
+pub fn json_i64_field4_or(value: &Json, key: &str, second: &str, third: &str, fourth: &str, other: i64) -> i64 {
+    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth)) {
+        Some(value) => value.as_i64(),
+        None => None,
+    })
+    .unwrap_or(other)
+}

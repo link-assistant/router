@@ -1,0 +1,1 @@
+- Draft27 copied nested JSON reader/default interfaces, shared canonical traversal, exact helper-source provenance, both adoption APIs, actual forward/three reverse paths, full native CST histories and independent unrun JS/strict TS/reverse/export/native lifetime case source. Full translation and parity remain unfinished (#759, #772).

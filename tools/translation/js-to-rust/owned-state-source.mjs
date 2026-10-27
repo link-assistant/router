@@ -581,7 +581,7 @@ function checkFunction(context,path,declaration,analysis){
    const fieldOperation=ownedJsonFieldOperation(binding.name);
    if(fieldOperation&&binding.target===analysis.runtimeRoot+'/json-fields-runtime.mjs'){
     requireOwnedCoreSourceCurrent(context);const args=node.arguments.map((argument,index)=>expression(argument,scope,depth+1,false,fieldOperation.args[index]));
-    if(args.length!==fieldOperation.args.length||!json(args[0].type)||(fieldOperation.args[1]==='str'?!['str','text-owned'].includes(args[1].type):!['u64','usize'].includes(args[1].type))||fieldOperation.args.slice(2).some((role,index)=>args[index+2].type!==role))fail('actual JSON field operand domains differ');
+    if(args.length!==fieldOperation.args.length||!json(args[0].type)||(fieldOperation.args[1]==='str'?!['str','text-owned'].includes(args[1].type):!['u64','usize'].includes(args[1].type))||fieldOperation.args.slice(2).some((role,index)=>role==='str'?!['str','text-owned'].includes(args[index+2].type):args[index+2].type!==role))fail('actual JSON field operand domains differ');
     const root=fieldOperation.root===null?null:args[0].root;if(fieldOperation.root!==null&&!root)fail('borrowed JSON field requires a live actual input root');
     hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});requireOwnedCoreSourceCurrent(context);
     return {kind:'json-field-call',name:binding.name,args,type:fieldOperation.ret,root};

@@ -19,7 +19,7 @@ export function requireOwnedJsonFieldSources(files,{runtimeRoot,declarationRoot}
 export function emitOwnedJsonFieldCall(value,{rust,expr,imports,sequence}){
  const row=jsonFieldContract(value.name);if(!row||row.ret!==value.type||value.args.length!==row.args.length)throw new TypeError('Complete actual checked JSON field operation differs');imports.add(value.name);
  if(!rust)return '__ro_'+value.name+'('+value.args.map(argument=>expr(argument)).join(', ')+')';
- const names=value.args.map(()=> '__ro_field_'+sequence()),bindings=value.args.map((argument,index)=>'let '+names[index]+' = '+(index===0&&argument.type==='json'||index===1&&row.args[index]==='str'&&argument.type==='text-owned'?(argument.kind==='variable'?expr(argument,true):'&'+expr(argument)):expr(argument))+';');
+ const names=value.args.map(()=> '__ro_field_'+sequence()),bindings=value.args.map((argument,index)=>'let '+names[index]+' = '+(index===0&&argument.type==='json'||index>0&&row.args[index]==='str'&&argument.type==='text-owned'?(argument.kind==='variable'?expr(argument,true):'&'+expr(argument)):expr(argument))+';');
  return '{ '+bindings.join(' ')+' '+row.rustPath+'('+names.join(', ')+') }';
 }
 export function evaluateOwnedJsonFieldCall(value,{state,scope,get}){const row=jsonFieldContract(value.name);if(!row||!state.modules.fields)throw new TypeError('Unissued JSON field runtime');return Reflect.apply(state.modules.fields[value.name],undefined,value.args.map(argument=>get(argument,scope)));}

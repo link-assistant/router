@@ -649,3 +649,13 @@ argument domains. Do not infer annotated/unknown initializers, expose a binding
 before its declaration, leak an ended scope or turn a selected return ABI into
 an original trait permit. Preserve whole source, real spans, current input and
 complete function/ownership checks. All new receiving/native cases are unrun.
+
+Nested JSON source substitutions must preserve literal string-key behavior,
+including numeric object keys, and receiver-only borrowed-result lifetimes.
+Reuse the real canonical readers and scalar validators; check every added key
+and eager fallback in its actual domain. When copying a private source helper,
+retain its complete immutable original and exact native selected declaration,
+serialize/reparse its CST and propagate fresh full-source guards through every
+parent/adjacent history. Copied source is data and grants no namespace, type,
+ownership or executable authority. No cross-operation validation cache is
+allowed. See the [unrun nested field draft](json-nested-fields-source-draft.md).
