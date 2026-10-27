@@ -691,3 +691,11 @@ a borrow for an actual owned receiver, preserve shared aliases and lexical scope
 and leave move/loan/escape decisions to the whole original checker. Reuse paired
 library implementations and keep reverse local borrowed-view gaps explicit; see
 the [unrun owned receiver draft](json-owned-receiver-source-draft.md).
+
+When adding an existing field abstraction to the resource caller lane, reuse
+its actual typed catalog and the complete local-loan/root/scope checker. Observe
+full native/root/runtime/declaration sources on actual import and recheck them
+at operation exit; table metadata grants no permission. Preserve every local
+view escape, owner move/replacement, temporary and multi-root refusal. Keep all
+flat runtime imports exact and retain original closure bounds. See the
+[unrun resource field draft](http-resource-json-fields-source-draft.md).

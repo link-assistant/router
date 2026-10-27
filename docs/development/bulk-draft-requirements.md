@@ -790,3 +790,11 @@ compiler equations plus independent unrun constructor/two-API/consecutive-stage/
 JS/strict TS/reverse-scalar/interpreter/native/export source are drafted. Reverse
 local borrowed views, wider constructors/carriers and all source/native/
 production/sync/freshness/parity/delivery requirements remain unfinished.
+
+The [resource JSON field draft](http-resource-json-fields-source-draft.md) binds
+all37 existing field interfaces to the separate full local-loan/multi-root/scope
+checker, with fresh full field library guards and both flat JSON imports. Four
+complete compiler equations and independent unrun all-interface/JS/strict TS/
+full-native-inverse/local-view/escape/move/mutation/counterfeit/export source are
+drafted. The older restricted lanes retain their scope and every wider source/
+native/production/sync/freshness/parity/delivery requirement remains unfinished.
