@@ -429,3 +429,11 @@ scalars, and fixes vector comparison dispatch. Ten complete source equations and
 unrun all-width/profile/comparison/mutation/restoration/refusal/native oracle
 cases are drafted. Every remaining source/native/production/sync/freshness/
 parity/delivery obligation remains unfinished.
+
+The [forward primitive body draft](forward-primitive-body-draft.md) connects actual
+original cast/shift/bitwise imports to the existing complete-project body
+synchronizer, retaining fresh runtime source/CST, full native rechecking, census
+and entire requested target reproduction. Four whole source equations and unrun
+JS/TS ten-width cast/count, eager bool, strict TS/refusal/native oracle sources
+are drafted. Broader generated modules and all remaining source/native/
+production/sync/freshness/parity/delivery obligations remain unfinished.

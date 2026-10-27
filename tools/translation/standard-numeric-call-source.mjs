@@ -40,7 +40,7 @@ function assertUnshadowed(ts,row,names){
 export function createStandardNumericCallSource({entry,source,file}){
  const ts=ownershipCompiler();need(file?.text===source&&!file.parseDiagnostics.length,'complete actual original native target file');
  const floats=createStandardFloatingCallSource({entry,source,file}),relative=posix.relative(posix.dirname(entry),'runtime/fixed-integer-runtime.mjs'),expected=relative.startsWith('.')?relative:'./'+relative;
- const factories=new Map(),bindings=new Map(),used=new Set();
+ const primitive=createPrimitiveOperatorCallSource({entry,source,file}),factories=new Map(),bindings=new Map(),used=new Set();
  for(const node of file.statements){
   if(!ts.isImportDeclaration(node)||!ts.isStringLiteral(node.moduleSpecifier)||node.moduleSpecifier.text!==expected)continue;
   const clause=node.importClause;need(clause&&!clause.isTypeOnly&&clause.namedBindings&&ts.isNamedImports(clause.namedBindings),'ordinary original fixed runtime named import');
@@ -70,12 +70,17 @@ export function createStandardNumericCallSource({entry,source,file}){
  const names=new Set([...bindings.keys(),...factories.keys()]);
  return {
   has(name){return bindings.has(name)||floats.has(name);},
-  assertFunctionScope(row){floats.assertFunctionScope(row);assertUnshadowed(ts,row,names);},
+  primitiveActive:primitive.active,
+  hasPrimitive(name){return primitive.has(name);},
+  lowerPrimitive(name,node,read){return primitive.lower(name,node,read);},
+  assertFunctionScope(row){floats.assertFunctionScope(row);primitive.assertFunctionScope(row);assertUnshadowed(ts,row,names);},
   lower(name,args){
    if(!bindings.has(name))return floats.lower(name,args);
    const binding=bindings.get(name);need(Array.isArray(args)&&args.length===binding.arity&&args.length>=1&&args.every(value=>typeof value==='string'),'complete actual fixed inherent call arity');
    used.add(name);return '('+args[0]+').'+binding.method+'('+args.slice(1).join(', ')+')';
   },
-  evidence(){return {schema:'original-standard-numeric-import-observations-v1',entry,floating:floats.evidence(),bindings:[...used].sort().map(name=>bindings.get(name)),sourceAuthority:false,semanticAuthority:false};},
+  evidence(){return {schema:'original-standard-numeric-import-observations-v1',entry,floating:floats.evidence(),...(primitive.active?{primitiveOperators:primitive.evidence()}:{}),bindings:[...used].sort().map(name=>bindings.get(name)),sourceAuthority:false,semanticAuthority:false};},
  };
 }
+
+import {createPrimitiveOperatorCallSource} from './primitive-operator-call-source.mjs';
