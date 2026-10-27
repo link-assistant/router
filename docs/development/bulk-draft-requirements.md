@@ -546,3 +546,11 @@ budget. Three equations and independent unrun two-API/nine-caller/ten-edit JS/
 strict TS/native/exclusive move/empty path/refusal/export source are drafted.
 Wider mutation/namespace/production/reverse/sync/freshness/parity/receiving/delivery
 requirements remain OPEN.
+
+The [shared closed match local scope draft](closed-match-local-source-draft.md)
+replaces blanket local-match refusal with a complete nonbinding source inventory,
+activates all seven existing local readers for match-only scopes and distinguishes
+or-pattern pipes from closures in text/integer/builder scans. Fifteen equations
+and independent unrun paired APIs/actual callers/all-reader/JS/strict TS/native/
+opaque/scope/refusal/export source are drafted. Wider pattern/namespace/production/
+reverse/sync/freshness/parity/receiving/delivery requirements remain OPEN.

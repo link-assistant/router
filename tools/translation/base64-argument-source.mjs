@@ -8,8 +8,8 @@ export function readConcreteBase64Argument(rows,bindings){
  if(rows.length===5&&ident(rows[0])&&rows[1].text==='.'&&ident(rows[2])&&rows[3].text==='('&&rows[4].text===')'&&bindings.has(rows[0].text)){const input=bindings.get(rows[0].text),method=rows[2].text,kind=method==='as_bytes'&&['text','owned-text'].includes(input)?'bytes':method==='as_str'&&input==='owned-text'?'text':method==='as_slice'&&input==='owned-bytes'?'bytes':null;if(kind)return {kind,binding:rows[0].text,bridge:method,inputKind:input,argumentEvaluated:'once'};}
  return null;
 }
-// Only the newly admitted local-bearing lane uses this stricter census. Old
-// no-let inputs retain their original selector/refusals and full source guards.
+// Local-bearing and match-pattern inputs use the complete shared census.
+// Inputs without either retain their original selectors and full source guards.
 export function simpleBase64LocalBindings(rows,parameters){
  return censusLocalAliasBindings(rows,parameters.keys(),{unicode:false,protectedNames:['base64','String','Vec','str','u8','std','core','translation_core','Str','Text']});
 }

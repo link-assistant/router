@@ -8,9 +8,9 @@ export function selectIntegerMethodAdoption(source,item,scoped,modulePath,_names
  const domains=new Map(),parameters=new Set();for(const row of split(tokens.slice(name+2,endParameters))){if(!ident(row[0])||row[1]?.text!==':'||parameters.has(row[0].text))return result('distinct immutable original parameters required');parameters.add(row[0].text);const domain=readPrimitiveCoreParameterSourceRole(row.slice(2),scoped);if(domain)domains.set(row[0].text,domain);}
  const formattingHeaders=coreFormattingMacroSourceHeaders(tokens);
  const opaqueRegions=coreCarrierCallbackSourceRegions(tokens.slice(body+1,-1)),opaqueTokenEnds=opaqueSourceTokenEnds(tokens,opaqueRegions);
- let work=0;for(let at=body+1;at<tokens.length-1;at++){
+ const matchSource=collectClosedMatchPatternSource(tokens,{opaqueRegions});if(matchSource.refusals.length)return result('complete closed nonbinding primitive match scope required');let work=matchSource.visited;for(let at=body+1;at<tokens.length-1;at++){
   const excluded=opaqueTokenEnds.get(at);if(excluded!==undefined){at=excluded-1;continue;}const word=tokens[at].text;if(++work>200000)return result('complete source scan bound exceeded');
-  if(word==='#'||['unsafe','async','await','yield','loop','fn','mod','use','extern','macro_rules','trait','impl','struct','enum','union','type','const','static','move','|','||'].includes(word)||word.endsWith('!')||word==='!'&&ident(tokens[at-1])&&['(','[','{'].includes(tokens[at+1]?.text)&&!formattingHeaders.has(tokens[at].start))return result('local producer closure or unknown macro uncertainty');
+  if(word==='#'||['unsafe','async','await','yield','loop','fn','mod','use','extern','macro_rules','trait','impl','struct','enum','union','type','const','static','move'].includes(word)||word==='|'&&!matchSource.positions.has(tokens[at].start)||word==='||'&&['=','(',',','{','return','move','=>'].includes(tokens[at-1]?.text)||word!=='!'&&word.endsWith('!')||word==='!'&&ident(tokens[at-1])&&['(','[','{'].includes(tokens[at+1]?.text)&&!formattingHeaders.has(tokens[at].start))return result('local producer closure or unknown macro uncertainty');
   if(word==='let'||word==='for'){let end=at+1;for(;end<tokens.length&&!['=',':',';','in','{','}'].includes(tokens[end].text);end++){if(++work>200000)return result('complete binding scan bound exceeded');if(domains.has(tokens[end].text))return result('local pattern shadows an actual primitive input');}}
  }
  const localArguments=createPrimitiveLocalArgumentSource(tokens.slice(body+1,-1),domains,parameters,{opaqueRegions});
@@ -43,3 +43,5 @@ import {primitiveBitwiseType} from './primitive-bitwise-types.mjs';
 import {coreFormattingMacroSourceHeaders} from './core-formatting-macro-source.mjs';
 
 import {splitRustMacroBangSourceTokens} from './rust-macro-token-source.mjs';
+
+import {collectClosedMatchPatternSource} from './match-arm-source.mjs';

@@ -288,3 +288,9 @@ the existing target reader; other receiver uses still require whole-function
 refusal. Annotation/constructor/branch source context grants no move/drop/type
 permission. Include target and return selection work in the local builder budget
 and retain full original semantic checks. See [the unrun draft](text-builder-carrier-return-source-draft.md).
+
+Local readers must census match patterns even on a no-let fast path. Admit only
+complete closed nonbinding arms with exact source pipe positions; retain unknown
+binding/guard/constructor/macro refusals and opaque callback boundaries. Fold
+fresh inventory work into actual scan budgets and never treat it as native scope,
+type or ownership authority. See [the unrun draft](closed-match-local-source-draft.md).

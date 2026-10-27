@@ -7,7 +7,7 @@ import {readNativeCountLiteralSource} from './native-integer-literal-source.mjs'
 const fail=message=>{throw new TypeError('Text local argument source: '+message);};
 export function createTextLocalArgumentSource(rows,parameters,allParameters=new Set(parameters.keys()),{jsonNames=null,opaqueRegions=null}={}){
  if(opaqueRegions===null)opaqueRegions=coreCarrierCallbackSourceRegions(rows);
- if(!rows.some(row=>row.text==='let'||row.text==='for'))return {at(){return parameters;},evidence(){return null;},selectedCall(){}};
+ if(!rows.some(row=>row.text==='let'||row.text==='for'||row.text==='match'))return {at(){return parameters;},evidence(){return null;},selectedCall(){}};
  if(!textLocalCensus(rows,allParameters,opaqueRegions))return null;
  return createChronologicalLocalSource(rows,parameters,{...createWrittenLocalAliasRules({readWrittenDomain:operand=>readTextWrittenAliasDomain(operand)??readJsonReceiverWrittenSourceRole(operand,{jsonNames}),readOperand:(operand,bindings,declared)=>readTextStageAliasOperand(operand,bindings,declared,jsonNames),acceptResult:event=>['str','text-owned'].includes(event.returnsKind)?event.returnsKind:null}),initializerSizes:[1,5],initializerEnd:primitiveLocalInitializerEnd,aliasKind:'complete-immutable-text-alias',resultKind:'complete-selected-text-result-alias',opaqueRegions});
 }

@@ -8,7 +8,7 @@ import {censusLocalAliasBindings} from './local-alias-binding-source.mjs';
 const fail=message=>{throw new TypeError('Primitive carrier local source: '+message);};
 export function createPrimitiveCarrierLocalSource(rows,parameters,allParameters,{readWrittenRole,opaqueRegions=null}){
  if(opaqueRegions===null)opaqueRegions=coreCarrierCallbackSourceRegions(rows);
- if(!rows.some(row=>row.text==='let'||row.text==='for'))return {at(){return parameters;},evidence(){return null;},selectedCall(){}};
+ if(!rows.some(row=>row.text==='let'||row.text==='for'||row.text==='match'))return {at(){return parameters;},evidence(){return null;},selectedCall(){}};
  if(!carrierLocalCensus(rows,allParameters,opaqueRegions))return null;const initial=new Map([...parameters].flatMap(([name,role])=>{const domain=encodeCarrierRole(role);return domain?[[name,domain]]:[];}));
  const source=createChronologicalLocalSource(rows,initial,{...createWrittenLocalAliasRules({readWrittenDomain:operand=>encodeCarrierRole(readWrittenRole(operand)),readOperand:(operand,bindings,declared)=>{const value=readCarrierAliasOperand(operand,bindings,decodeCarrierRole(declared));return value?{kind:encodeCarrierRole(value),binding:value.binding??null}:null;},acceptResult:event=>encodeCarrierRole(event.resultRole)}),initializerSizes:[1,2,3,4,5,6,7,8,9,10,11,12],initializerEnd:primitiveLocalInitializerEnd,aliasKind:'complete-immutable-carrier-alias',resultKind:'complete-selected-carrier-result-alias',opaqueRegions});let current=null;
  const visible={has(name){return decodeCarrierRole(current.get(name))!==null;},get(name){return decodeCarrierRole(current.get(name))??undefined;},*[Symbol.iterator](){for(const [name,domain]of current){const role=decodeCarrierRole(domain);if(role)yield [name,role];}}};

@@ -7,7 +7,7 @@ import {createWrittenLocalAliasRules} from './local-alias-written-source.mjs';
 import {censusLocalAliasBindings} from './local-alias-binding-source.mjs';
 const fail=message=>{throw new TypeError('Primitive local argument source: '+message);};
 export function createPrimitiveLocalArgumentSource(rows,parameters,allParameters=new Set(parameters.keys()),{opaqueRegions=[]}={}){
- if(!rows.some(row=>row.text==='let'||row.text==='for')||!primitiveLocalCensus(rows,allParameters,opaqueRegions))return null;
+ if(!rows.some(row=>row.text==='let'||row.text==='for'||row.text==='match')||!primitiveLocalCensus(rows,allParameters,opaqueRegions))return null;
  return createChronologicalLocalSource(rows,parameters,{...createWrittenLocalAliasRules({readWrittenDomain:operand=>readPrimitiveWrittenAliasDomain(operand)??readPrimitiveCoreParameterSourceRole(operand),readOperand:(operand,bindings,declared)=>readPrimitiveCoreRoleSource(operand,bindings)??readPrimitiveLocalExpression(operand,bindings,{readAtom:readPrimitiveAliasOperand,declared}),acceptResult:event=>primitiveBitwiseType(event.returnsKind)?.name??null}),initializerSizes:[1,2,3],initializerEnd:primitiveLocalInitializerEnd,aliasKind:'complete-immutable-primitive-alias',resultKind:'complete-selected-primitive-result-alias',opaqueRegions});
 }
 
