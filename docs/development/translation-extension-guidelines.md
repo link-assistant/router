@@ -942,3 +942,9 @@ including retained resolver copies. Never reuse a context with changed inputs
 or invoke external DATA callbacks. See [the unrun source draft](tool-prefix-external-source-draft.md);
 global namespace closure remains required and unchanged eight same-SHA JS gates
 precede fatal CI-only Rust. No local execution or CI feedback review while drafting.
+
+General qualified callback reification must call the exact original function path,
+retain both CST sequences/inverses and allocate fresh neutral/actual parameters.
+An enclosing expected return role is DATA only; do not insert a return annotation
+or admit a missing/incompatible callee. Keep the closed core adapter's own domain,
+whole-function checks and32 body-plan budget. See [the unrun general draft](qualified-function-item-source-draft.md).

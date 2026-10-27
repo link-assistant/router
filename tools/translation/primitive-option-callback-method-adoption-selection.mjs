@@ -20,6 +20,7 @@ export function selectPrimitiveOptionCallbackMethodAdoption(source,item,_scoped,
  const parameterDomains=new Map(),parameters=new Set();for(const row of split(tokens.slice(open+1,endParameters))){if(!ident(row[0])||row[1]?.text!==':'||parameters.has(row[0].text))return result('distinct immutable typed input bindings required');parameters.add(row[0].text);const value=role(row.slice(2),_scoped);if(value)parameterDomains.set(row[0].text,value);}
  const localNames=new Set();let work=0,callbackTextCount=0;
  const callbackFunctionSource=createKnownCoreCallbackFunctionSource(source,tokens,_names);
+ const qualifiedCallbackFunctionSource=createQualifiedCallbackFunctionSource(source,tokens,_names);
  const declaredOutput=role(tokens.slice(endParameters+2,body),_scoped);
  function inferred(piece,scope,wanted,depth=0){
   if(++work>200000||depth>64||!piece.length)return null;
@@ -37,7 +38,7 @@ export function selectPrimitiveOptionCallbackMethodAdoption(source,item,_scoped,
   return null;
  }
  function callbackOperand(piece,input,method){
-  const lazy=['unwrap_or_else','or_else','ok_or_else'].includes(method),functionItem=callbackTextCount<32?callbackFunctionSource(piece,lazy?[]:[input]):null;if(functionItem){callbackTextCount++;const output=functionItem.role,kind=['and_then','or_else'].includes(method)?'option':'payload',wanted=['is_some_and','is_none_or'].includes(method)?'bool':method==='ok_or_else'?'text-owned':['unwrap_or_else','or_else'].includes(method)?input:null;if(output.kind!==kind||wanted&&output.domain!==wanted)return null;return {domain:output.domain,replacement:functionItem.replacement,textSourceHistory:functionItem.sourceHistory};}
+  const lazy=['unwrap_or_else','or_else','ok_or_else'].includes(method),expectedFunctionRole=['is_some_and','is_none_or'].includes(method)?{kind:'payload',domain:'bool'}:method==='ok_or_else'?{kind:'payload',domain:'text-owned'}:method==='or_else'?{kind:'option',domain:input}:method==='unwrap_or_else'?{kind:'payload',domain:input}:declaredOutput?.kind==='option'?{kind:method==='map'?'payload':'option',domain:declaredOutput.domain}:null,functionItem=callbackTextCount<32?(callbackFunctionSource(piece,lazy?[]:[input])??qualifiedCallbackFunctionSource(piece,lazy?[]:[input],expectedFunctionRole)):null;if(functionItem){callbackTextCount++;const output=functionItem.role,kind=['and_then','or_else'].includes(method)?'option':'payload',wanted=['is_some_and','is_none_or'].includes(method)?'bool':method==='ok_or_else'?'text-owned':['unwrap_or_else','or_else'].includes(method)?input:null;if(output.kind!==kind||wanted&&output.domain!==wanted)return null;return {domain:output.domain,replacement:functionItem.replacement,textSourceHistory:functionItem.sourceHistory};}
   let at=piece[0]?.text==='move'?1:0,names=[];if(piece[at]?.text==='||')at++;else if(piece[at]?.text==='|'){
    const end=piece.findIndex((token,index)=>index>at&&token.text==='|');if(end<0)return null;const arguments_=split(piece.slice(at+1,end));if(arguments_.length!==1||!ident(arguments_[0][0])||arguments_[0].length>1&&arguments_[0][1].text!==':')return null;const argument=arguments_[0],written=argument.length>1?role(argument.slice(2),_scoped):null;if(argument.length>1&&(!written||written.kind!=='payload'||written.domain!==input))return null;names=[argument[0].text];at=end+1;
   }else return null;
@@ -131,3 +132,5 @@ import {coreCarrierCallbackSourceRegions} from './core-carrier-callback-source-r
 import {opaqueSourceTokenEnds} from './opaque-source-token-regions.mjs';
 
 import {createKnownCoreCallbackFunctionSource} from './known-core-callback-function-source.mjs';
+
+import {createQualifiedCallbackFunctionSource} from './qualified-callback-function-source.mjs';

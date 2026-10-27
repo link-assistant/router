@@ -305,3 +305,10 @@ contexts to complete original resolver inputs in the main and five retained
 resolver copies. Nine equations and independent unrun constructor/resolver/
 mutation/refusal/native/export source are drafted. All global namespace and
 production/reverse/sync/freshness/parity/delivery requirements remain OPEN.
+
+The [general qualified function draft](qualified-function-item-source-draft.md)
+reuses a complete original CST engine for same-path callback reification, with
+context-only return candidates and unchanged independent callee/type checks.
+Five equations and independent unrun six-API/fourteen-caller/hygiene/refusal/
+JS/strict TS/native/export source are drafted. Every unfinished namespace and
+production/reverse/sync/freshness/parity/delivery requirement remains OPEN.
