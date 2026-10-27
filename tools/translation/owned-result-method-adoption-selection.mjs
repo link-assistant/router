@@ -12,6 +12,7 @@ export function selectOwnedResultMethodAdoption(source,item,scoped,modulePath,_n
  const result=reason=>({edits:reason?[]:edits,selections:reason?[]:selections,skipped:reason?[{function:item.name,reason}]:[]});if(name<0||tokens.length>200000||tokens.slice(0,name).some(token=>['async','unsafe','const','extern'].includes(token.text)))return result('ordinary complete primitive Result source required');
  let open=name+1;if(tokens[open]?.text==='<'){let end=open+1;while(end<tokens.length&&tokens[end].text!=='>')end++;if(!/^<(?:'[a-zA-Z_][a-zA-Z0-9_]*\s*,?)+>$/u.test(words(tokens.slice(open,end+1))))return result('only closed source lifetime parameters supported');open=end+1;}
  if(tokens[open]?.text!=='(')return result('complete immutable typed input list required');const endParameters=close(tokens,open);if(endParameters<0)return result('complete parameter delimiters required');let body=endParameters+1;while(body<tokens.length&&tokens[body].text!=='{')body++;if(body>=tokens.length||close(tokens,body)!==tokens.length-1)return result('one complete ordinary source body required');
+ const callbackFunctionSource=createKnownCoreCallbackFunctionSource(source,tokens,_names);
  const parameterDomains=new Map(),parameters=new Set();for(const row of split(tokens.slice(open+1,endParameters))){if(!ident(row[0])||row[1]?.text!==':'||parameters.has(row[0].text))return result('distinct immutable typed input bindings required');parameters.add(row[0].text);const actual=role(row.slice(2),scoped);if(actual)parameterDomains.set(row[0].text,actual);}const declared=role(tokens.slice(endParameters+2,body),scoped),locals=new Set();
  const opaqueRegions=coreCarrierCallbackSourceRegions(tokens.slice(body+1,-1)),opaqueTokenEnds=opaqueSourceTokenEnds(tokens,opaqueRegions);
  for(let at=body+1;at<tokens.length-1;at++){
@@ -31,6 +32,7 @@ export function selectOwnedResultMethodAdoption(source,item,scoped,modulePath,_n
   if(piece.length>4&&piece.at(-4).text==='.'&&['to_owned','to_string'].includes(piece.at(-3).text)&&piece.at(-2).text==='('&&piece.at(-1).text===')'){const value=infer(piece.slice(0,-4),scope,{kind:'payload',domain:'str'},depth+1);return ['str','text-owned'].includes(value?.domain)?{kind:'payload',domain:'text-owned'}:null;}return null;
  }
  function callback(piece,input,method){
+  const incomingDomain=['map_err','or_else','unwrap_or_else'].includes(method)?'text-owned':input==='text'?'text-owned':input,functionItem=callbackTextCount<32?callbackFunctionSource(piece,[incomingDomain]):null;if(functionItem){callbackTextCount++;const output=functionItem.role,kind=['and_then','or_else'].includes(method)?'result':'payload',wanted=method==='map_err'?'text-owned':method==='or_else'?input:method==='unwrap_or_else'?input==='text'?'text-owned':input:null;if(output.kind!==kind||wanted&&output.domain!==wanted)return null;return {domain:output.domain,replacement:functionItem.replacement,textSourceHistory:functionItem.sourceHistory};}
   let at=piece[0]?.text==='move'?1:0;const argument=piece[at];if(argument?.text!=='|')return null;const end=piece.findIndex((token,index)=>index>at&&token.text==='|');if(end<0)return null;const params=split(piece.slice(at+1,end));if(params.length!==1||!ident(params[0][0])||params[0].length>1&&params[0][1].text!==':'||['Result','Ok','Err','String'].includes(params[0][0].text))return null;
   const incoming=['map_err','or_else','unwrap_or_else'].includes(method)?'text-owned':input==='text'?'text-owned':input,annotation=params[0].length>1?role(params[0].slice(2),scoped):null;if(annotation&&(annotation.kind!=='payload'||annotation.domain!==incoming))return null;const scope=new Map(env);scope.set(params[0][0].text,{kind:'payload',domain:incoming});at=end+1;let written=null;
   if(piece[at]?.text==='->'){const start=++at;while(at<piece.length&&piece[at].text!=='{')at++;written=role(piece.slice(start,at),scoped);if(!written)return null;}
@@ -78,3 +80,5 @@ import {readCarrierBranchLocalSource} from './carrier-branch-local-source.mjs';
 import {readCoreCallbackCallSource} from './core-callback-call-source.mjs';
 import {coreCarrierCallbackSourceRegions} from './core-carrier-callback-source-regions.mjs';
 import {opaqueSourceTokenEnds} from './opaque-source-token-regions.mjs';
+
+import {createKnownCoreCallbackFunctionSource} from './known-core-callback-function-source.mjs';

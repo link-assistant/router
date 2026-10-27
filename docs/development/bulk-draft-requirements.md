@@ -291,3 +291,10 @@ text/bool equality candidates. Five equations and independent unrun six-API/
 twelve-caller/refusal/JS/strict TS/paired reverse/native-order/export source are
 drafted. Every unfinished namespace/production/reverse/sync/freshness/parity/
 delivery row remains OPEN; source occurrences are not executable coverage.
+
+The [core function item draft](core-function-item-source-draft.md) reifies known
+callback function items through their exact original core paths and fresh names.
+Six equations and independent unrun grammar/domain/refusal/hygiene/budget/six-API/
+ten-caller/JS/strict TS/native/export source are drafted. Actual binding/type/
+ownership checks remain independent and every unfinished namespace/production/
+reverse/sync/freshness/parity/delivery row remains OPEN.

@@ -43,3 +43,8 @@ export function readParenthesizedSourcePrefixTokens(rows,start=0){
  if(!Array.isArray(rows)||!Number.isSafeInteger(start)||start<0||rows[start]?.text!=='(')return null;const pairs={'(':')','[':']','{':'}'},groups=[];
  for(let at=start;at<rows.length&&at-start<128;at++){const word=rows[at].text;if(pairs[word]){if(groups.length>=17)return null;groups.push(pairs[word]);}else if([')',']','}'].includes(word)){if(groups.pop()!==word)return null;if(!groups.length)return {start,end:at+1,tokens:rows.slice(start,at+1),body:rows.slice(start+1,at),sourceAuthority:false,semanticAuthority:false};}}return null;
 }
+
+// Complete qualified function-item path syntax only; no lookup/type authority.
+export function readQualifiedSourcePathTokens(rows){
+ if(!Array.isArray(rows)||rows.length<3||rows.length>15||rows.length%2!==1)return null;const path=[];for(let at=0;at<rows.length;at++){if(at%2){if(rows[at].text!=='::')return null;}else{if(!ident(rows[at])||path.length>=8)return null;path.push(rows[at].text);}}return {path,sourceAuthority:false,semanticAuthority:false};
+}

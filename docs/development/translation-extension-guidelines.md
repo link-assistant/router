@@ -928,3 +928,9 @@ Retain None defaults, Some(false/zero) behavior, callback selection and original
 evaluation order. Scalar equality source roles prove no PartialEq/type owner;
 text ordering needs its own contract. See the
 [unrun Option predicate draft](option-predicate-source-draft.md).
+
+Function-item callback reification must preserve the same original function path,
+match real input/result candidates and use fresh source-bound parameters. Never
+redirect a standard spelling or use a declared signature as owner authority.
+Keep complete child/parent CST inverses and existing proposal limits. See the
+[unrun core function item draft](core-function-item-source-draft.md).
