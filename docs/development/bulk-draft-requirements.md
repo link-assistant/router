@@ -373,3 +373,9 @@ operand order and owner loans. Five equations and independent unrun eight-paired
 four-forward/JS/strict TS/native inverse/oracle/refusal/export cases are drafted.
 Generated modules/guards and every remaining namespace/production/reverse/sync/
 freshness/parity/delivery requirement remain OPEN.
+
+The [contextual text Into draft](contextual-text-into-source-draft.md) reuses the
+existing native text allocation interface only for explicit owning destination
+contexts. Two equations and independent unrun two-API/six-caller/context/refusal/
+JS/strict TS/native/export cases are drafted. Ambiguous/callback/owning conversions
+and every wider namespace/production/reverse/sync/parity/delivery row stay OPEN.
