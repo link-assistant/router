@@ -16,4 +16,6 @@ export const TRANSLATOR_ENTRYPOINTS=Object.freeze([
  'scripts/sync-router-project-unit.mjs',
  'scripts/router-owned-core-stages.mjs',
  'scripts/adopt-router-owned-core-packets.mjs',
+ 'scripts/router-core-fixed-point-stages.mjs',
+ 'scripts/adopt-router-core-fixed-point-packets.mjs',
 ]);

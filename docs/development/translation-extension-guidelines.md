@@ -800,3 +800,10 @@ comparisons, callback returns and chronological aliases, and charge attempted
 operand lengths to existing source budgets. Preserve evaluation order, original
 widths and independent overflow/type/ownership checks. See the
 [unrun expression call draft](primitive-expression-call-source-draft.md).
+
+When installing repeated-stage source proposals, require a full unchanged round,
+retain every original stage/graph/CST section and independently rerun all actual
+proposers during readback and application planning. Preserve round identities,
+source/Cargo/Git guards, evidence/plan bounds and original rollback behavior.
+Stabilization never certifies coverage or reverse execution. See the
+[unrun fixed-point packet draft](fixed-point-packet-source-draft.md).

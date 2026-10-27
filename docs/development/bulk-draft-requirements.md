@@ -903,3 +903,11 @@ compiler equations and independent unrun six-API/nine-caller/JS/strict TS/paired
 reverse/native/export cases are drafted. Wider expressions, namespace/production
 adoption and every unfinished source/reverse/sync/freshness/parity/delivery row
 remain OPEN; no verification or coverage gain is claimed.
+
+The [fixed-point packet draft](fixed-point-packet-source-draft.md) adds complete
+physical source packets, independently fresh repeated-stage readback, exact
+inverse installation plans and copied guarded CLIs. Eight compiler equations and
+independent unrun three-round/packet/forgery/transaction/concurrency/protocol/CLI/
+export cases are drafted. Full-corpus storage/performance, generated asset and
+reverse synchronization, namespace/production/freshness/parity and every
+unfinished source/verification/delivery row remain OPEN.

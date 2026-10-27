@@ -169,3 +169,7 @@ export {sourceUnitPrimitiveOperators} from './primitive-source-unit-options.mjs'
 export {OWNED_PROJECT_NATIVE_INPUTS,ownedProjectUnitRuntimeSources,translateOwnedProjectUnit} from './owned-project-unit.mjs';
 
 export {SOURCE_BOUND_CORE_FIXED_POINT_LIMITS,proposeSourceBoundOwnedCoreFixedPointStages,collectSourceBoundOwnedCoreFixedPoint} from './source-bound-owned-core-fixed-point.mjs';
+
+export {proposeSourceBoundCoreFixedPointPackets} from './propose-core-adoption-corpus.mjs';
+export {reviewSourceBoundCoreFixedPointPackets} from './source-bound-fixed-point-packet-readback.mjs';
+export {planSourceBoundCoreFixedPointPacketAdoption,applySourceBoundCoreFixedPointPacketAdoption} from './source-bound-fixed-point-packet-adoption.mjs';

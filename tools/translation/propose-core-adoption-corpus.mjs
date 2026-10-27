@@ -478,3 +478,49 @@ export async function proposeSourceBoundOwnedCorePackets(input,stages,progressIn
   try{write.failure(failed,stage);}catch(reportFailure){const failure=new Error('owned source proposal failed and its incomplete receipt could not be written');failure.cause=failed;failure.reportFailure=reportFailure;throw failure;}throw failed;
  }
 }
+
+// Additive full source packet composition. The old one-pass protocol stays intact.
+export async function proposeSourceBoundCoreFixedPointPackets(input,stages,progressInput){
+ const requested=options(input),names=sourceBoundOwnedPacketStages(stages),progress=progressInput==null?null:translationProgressReporter(progressInput);
+ const bulk=await import('./source-bound-owned-core-fixed-point.mjs'),storage=await loadPacketStorageModule();
+ if(names.some(name=>!bulk.SOURCE_BOUND_OWNED_CORE_STAGES.includes(name)))fail('unknown fixed owned stage');
+ const root=realpathSync(resolve(requested.root)),original=snapshot(root),dependencies=sourceBoundPacketIO.sequenceDependencies(root);
+ if(!dependencies.inputs||dependencies.rows.some(row=>row.absent))fail('complete actual package/workspace Cargo inputs required');
+ const target=destination(root,requested.output),write=sourceBoundOwnedPacketWriter(target,storage,progress),receipts=[],iterator=bulk.proposeSourceBoundOwnedCoreFixedPointStages({entry:rootEntry(root),files:original.files,dependencyInputs:dependencies.inputs,compilationProfile:PRODUCTION_PROFILE,stages:names});
+ const sequence='source-bound-owned-fixed-point:'+names.join(',');let stage='original-source-capture',after=original.files,next=null,terminal=null,terminalPacket=null;
+ try{
+  // Explicitly release whole packet references before awaiting another graph.
+  while(!(next=await iterator.next()).done){
+   {
+    let packet=next.value;next=null;stage=packet.stage??"fixed-point-receipt";
+    rejoin(original);dependencies.verify();
+    if(packet.schema==='source-bound-owned-core-fixed-point-receipt-v1'){
+     if(terminal||packet.stabilized!==true||packet.iterations!==receipts.length||packet.rounds!==receipts.length/names.length||JSON.stringify(packet.stages)!==JSON.stringify(names))fail('complete unchanged-round receipt association differs');terminal={...packet,stages:[...packet.stages]};terminalPacket=write.json('composition/fixed-point.json',terminal);packet=null;continue;
+    }
+    if(terminal||packet.schema!=='source-bound-owned-core-fixed-point-stage-v1'||packet.index!==receipts.length||packet.stage!==names[receipts.length%names.length]||packet.round!==Math.floor(receipts.length/names.length)||packet.stageIndex!==receipts.length%names.length||packet.executableAdmission!==false||packet.applicationSourcesInstalled!==false)fail('whole fixed-point source stage association differs');
+    const prefix='owned/'+numbered(packet.index)+'-'+packet.stage,run=createRulePipeline([
+     {phase:'language',rules:[{id:'owned-source-packets:retain-complete-original-'+packet.stage,apply:()=>packet.proposal}]},
+     {phase:'repository',rules:[{id:'router:partition-complete-'+packet.stage+'-source-evidence',apply:proposal=>{
+      const packets=completeAdoptionPackets(proposal,write,after,prefix,progress);
+      return {files:Object.assign(Object.create(null),proposal.after),packets,summary:{sourceFiles:Object.keys(proposal.before).length,changedFiles:Object.keys(proposal.before).filter(path=>proposal.before[path]!==proposal.after[path]).length,executableCoverageGain:null}};
+     }}]},
+    ]).run(null);
+    after=run.value.files;receipts.push({name:stage,round:packet.round,stageIndex:packet.stageIndex,packets:run.value.packets,summary:run.value.summary,trace:run.trace});packet=null;
+    if(write.bytes>500000000)fail('complete task-owned source evidence exceeds 500 MB; no partial result can be completed');
+   }
+  }
+  next=null;if(!terminal||!terminalPacket||receipts.length!==terminal.iterations)fail('complete unchanged-round source receipt required');receipts.push({name:'fixed-point-receipt',packet:terminalPacket});stage='final-source-and-index';
+  const dependencyInputs=dependencies.rows.map((row,at)=>write.json('dependency-inputs/'+numbered(at)+'.json',row)),inputs=original.rows.map((row,at)=>write.json('inputs/'+numbered(at)+'.json',row)),census=write.json('inputs/census.json',{root,rows:original.census,sourceFiles:original.rows.length,sourceUnits:original.units}),changes=[];
+  for(const [path,source]of Object.entries(after)){pathName(path);if(!Object.hasOwn(original.files,path))fail('unexpected adopted source path');if(source!==original.files[path])changes.push({path,beforeSha256:hash(original.files[path]),afterSha256:hash(source),source:write.text('after/'+path,source)});}
+  if(Object.keys(after).length!==original.rows.length)fail('adopted source path census differs');
+  const index={schema:'router-core-adoption-sequence-packets-v1',complete:true,sequence,entry:rootEntry(root),sourceRoot:root,compilationProfile:PRODUCTION_PROFILE,limits:L,inputs,dependencyInputs,census,stages:receipts,changes,packets:[...write.records],packetBytes:write.bytes,semanticAdmission:false,installation:'source proposal only; no application installation or executable authority',sourceChain:'complete original source maps and per-file inverses in stage order; source inverse is not reverse execution',hostBoundary:'original exclusive packet output and complete physical source/Cargo guards; no arbitrary concurrent same-UID writer or hostile-intrinsic-total claim',memory:'whole original proposer retained for one stage; only next source strings and packet references cross stage boundaries; live heap/RSS receiving qualification required'};
+  const text=JSON.stringify(index)+'\n',prepared=write.prepareGzip(text);
+  if(prepared.storedOutputBytes>500000000||write.bytes+Buffer.byteLength(text)+prepared.bytes>500000000)fail('complete task-owned source evidence exceeds 500 MB');
+  if(progress)progress({stage:'fingerprint',state:'start',phase:'final-source-and-index'});
+  rejoin(original);dependencies.verify();write.completeGzip(text,prepared);
+  return {schema:index.schema,complete:true,sequence,output:target.physical,index:'index.json',sourceFiles:original.rows.length,changedFiles:changes.length,stages:receipts.filter(row=>row.name!=='fixed-point-receipt').map(({name,round,stageIndex,summary})=>({name,round,stageIndex,...summary})),composition:{rounds:terminal.rounds,iterations:terminal.iterations,stabilized:true,coverageComplete:false,runtimeParity:false},packetCount:index.packets.length,logicalOutputBytes:write.bytes,outputBytes:prepared.storedOutputBytes,packetStorage:'gzip',storageIndex:'packet-storage.json',storageSha256:prepared.sha256,semanticAdmission:false,applicationSourcesInstalled:false,executableCoverageGain:null};
+ }catch(error){
+  let failed=error;try{await iterator.return();}catch(closeError){failed=new AggregateError([error,closeError],'owned source proposal and iterator close failed');}
+  try{write.failure(failed,stage);}catch(reportFailure){const failure=new Error('owned source proposal failed and its incomplete receipt could not be written');failure.cause=failed;failure.reportFailure=reportFailure;throw failure;}throw failed;
+ }
+}
