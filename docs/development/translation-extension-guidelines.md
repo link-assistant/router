@@ -683,3 +683,11 @@ an early return. Lexical Option payload projection retains source question marks
 and grants no FromResidual/type/ownership authority. Use current full sources,
 both CST phases and independent native/effect cases; see the
 [unrun JSON Try draft](json-field-try-source-draft.md).
+
+Owned JSON receiver source roles must come from actual known inputs or complete
+recognized copy/decode constructors with matching argument domains and successful
+Option extraction. A written local type only constrains that derivation. Insert
+a borrow for an actual owned receiver, preserve shared aliases and lexical scope,
+and leave move/loan/escape decisions to the whole original checker. Reuse paired
+library implementations and keep reverse local borrowed-view gaps explicit; see
+the [unrun owned receiver draft](json-owned-receiver-source-draft.md).

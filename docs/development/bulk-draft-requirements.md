@@ -782,3 +782,11 @@ complete compiler equations plus independent unrun two-API/consecutive-stage/
 JS/strict TS/reverse-control/interpreter/native pointer/effect/export source are
 drafted. All wider source/native/production/sync/freshness/parity/delivery
 requirements remain unfinished.
+
+The [owned JSON receiver draft](json-owned-receiver-source-draft.md) derives
+source roles from exact canonical owned inputs/copies/decodes and actual aliases,
+then adds real receiver borrows through field/text substitutions. Seven complete
+compiler equations plus independent unrun constructor/two-API/consecutive-stage/
+JS/strict TS/reverse-scalar/interpreter/native/export source are drafted. Reverse
+local borrowed views, wider constructors/carriers and all source/native/
+production/sync/freshness/parity/delivery requirements remain unfinished.

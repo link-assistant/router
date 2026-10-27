@@ -16,7 +16,7 @@ export function selectTextMethodAdoption(source,item,_scoped,modulePath,_names,h
   if(end>=tokens.length||!/^<(?:'[a-zA-Z_][a-zA-Z0-9_]*,?)+>$/u.test(text(tokens.slice(open,end+1))))return result('only written unconstrained lifetime parameters are source candidates');open=end+1;
  }
  if(tokens[open]?.text!=='(')return result('complete written input list required');const endParameters=close(tokens,open);if(endParameters<0)return result('complete original inputs required');let body=endParameters+1;while(body<tokens.length&&tokens[body].text!=='{')body++;if(body>=tokens.length||close(tokens,body)!==tokens.length-1)return result('complete original function body required');
- const domains=new Map(),parameters=new Set();for(const row of split(tokens.slice(open+1,endParameters))){if(!ident(row[0])||row[1]?.text!==':'||parameters.has(row[0].text))return result('distinct immutable input bindings required');parameters.add(row[0].text);if(borrowed(text(row.slice(2))))domains.set(row[0].text,'str');else if(text(row.slice(2))==='String')domains.set(row[0].text,'text-owned');else if(text(row.slice(2))==='usize')domains.set(row[0].text,'usize-count');else if(readJsonFieldReferenceSourceRole(row.slice(2),_scoped))domains.set(row[0].text,'json-reference');}
+ const domains=new Map(),parameters=new Set();for(const row of split(tokens.slice(open+1,endParameters))){if(!ident(row[0])||row[1]?.text!==':'||parameters.has(row[0].text))return result('distinct immutable input bindings required');parameters.add(row[0].text);if(borrowed(text(row.slice(2))))domains.set(row[0].text,'str');else if(text(row.slice(2))==='String')domains.set(row[0].text,'text-owned');else if(text(row.slice(2))==='usize')domains.set(row[0].text,'usize-count');else{const receiverRole=readJsonReceiverWrittenSourceRole(row.slice(2),_scoped??{});if(receiverRole)domains.set(row[0].text,receiverRole);}}
  const localNames=new Set(),projectionPipes=new Set();let work=0;
  // Only this complete destructuring identity closure can be substituted.
  // These are source candidates; actual owner/type/effect checks still follow.
@@ -38,7 +38,7 @@ export function selectTextMethodAdoption(source,item,_scoped,modulePath,_names,h
    const declaration=localAliasDeclaration(tokens,at),binding=declaration?.token;if(!declaration||parameters.has(binding.text)||localNames.has(binding.text))return result('shadowing mutable or destructured local requires separate binding scope');localNames.add(binding.text);
   }
  }
- const localArguments=createTextLocalArgumentSource(tokens.slice(body+1,-1),domains,parameters);if(!localArguments)return result('complete text local scope requires separate source selection');let activeDomains=domains;
+ const localArguments=createTextLocalArgumentSource(tokens.slice(body+1,-1),domains,parameters,{jsonNames:_scoped?.jsonNames??null});if(!localArguments)return result('complete text local scope requires separate source selection');let activeDomains=domains;
  function literal(at,characterPattern=false){
   const row=tokens[at],prefix=tokens[at-1];if(row&&prefix&&prefix.end===row.start&&['b','c'].includes(prefix.text))return null;if(characterPattern&&row?.type==='string'&&row.text.startsWith("'")){const scalar=decodeRustCharacter(row.text,{start:row.start,end:row.end});return {after:at+1,replacement:'"\\u{'+scalar.codePointAt(0).toString(16)+'}"',domain:'str',operations:[],characterPattern:true,languageEdits:[{span:[row.start,row.end],expected:row.text,replacement:'"\\u{'+scalar.codePointAt(0).toString(16)+'}"'}]};}return row?.type==='string'&&/^(?:"|r#{0,255}")/u.test(row.text)?{after:at+1,replacement:source.slice(row.start,row.end),domain:'str',operations:[]}:null;
  }
@@ -87,4 +87,5 @@ import {decodeRustCharacter} from './extensions/rust-character.mjs';
 
 import {localAliasDeclaration} from './local-alias-binding-source.mjs';
 
-import {readJsonFieldCallSource,readJsonFieldReferenceSourceRole} from './json-field-call-source.mjs';
+import {readJsonFieldCallSource} from './json-field-call-source.mjs';
+import {readJsonReceiverWrittenSourceRole} from './json-receiver-source.mjs';
