@@ -828,3 +828,10 @@ constraints and separate branch scope, then classify the complete final
 expression. Unknown or mutable declarations grant no source role; real moves,
 borrows and effects remain checker obligations. See the
 [unrun branch-local draft](carrier-branch-local-source-draft.md).
+
+Keep lazy Option errors as actual zero-argument String callbacks. Validate the
+receiver and callable every time, execute the error callback only for None and
+validate its result only there. Build a genuine Result type, preserve Some false/
+zero/empty payloads, source scopes, borrowing and trailing try flow; retain old
+restricted-lane refusals. See the
+[unrun lazy Option error draft](option-lazy-error-source-draft.md).

@@ -6,6 +6,7 @@ const ownedCaptures=new Set(['base64-result','json','json-list-owned','json-text
 const fail=message=>{throw new TypeError('Owned primitive Option callback: '+message);};
 export function checkOwnedPrimitiveOptionCallback(node,binding,scope,depth,helpers){
  const row=primitiveOptionCallbackContract(binding.name);if(!row||binding.target!==helpers.runtimeRoot+'/primitive-option-callback-runtime.mjs')return null;
+ if(row.method==='ok_or_else')fail('lazy Option errors require the complete resource ownership lane');
  if(row.input==='text-owned'||row.output==='text-owned')fail('owning optional text callbacks require the complete resource ownership lane');
  const {ts,file}=helpers;helpers.current();if(node.arguments.length!==2)fail('complete actual receiver and callback arguments required');const receiver=helpers.expression(node.arguments[0],scope,depth+1,false,option(row.input)),callback=node.arguments[1];
  if(receiver.type!==option(row.input)||!ts.isArrowFunction(callback)||callback.modifiers?.length||callback.typeParameters?.length||callback.parameters.length!==row.callbackParameters.length)fail('actual optional domain and ordinary fixed callback required');

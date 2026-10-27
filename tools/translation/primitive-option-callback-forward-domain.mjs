@@ -16,7 +16,7 @@ export function checkForwardPrimitiveOptionCallback(checker,node,env,path,expect
   else if(!sameType(actual,wanted)||actual.rustReference||actual.rustOwnership||actual.patternOwnershipRefusal||actual.rustBorrowingUnresolved||actual.rustGenericIdentityUnresolved||domain!=='bool'&&actual.rustPrimitiveName!==domain)throw unsupported('primitive Option callback payload','requires its actual Copy primitive identity',span);
   checker.expectedOwnership(actual,wanted,path,span);checker.expectedPrimitiveIdentity(actual,wanted,path,span);
  };
- const resultType=domain=>domain.endsWith('-option')||domain==='str-option-ref'?checker.instantiations.option(primitive(domain==='str-option-ref'?'str':domain.slice(0,-7)),node.span):domain==='text-owned'?{...SOURCE_STRING,rustSourceType:true}:primitive(domain);
+ const resultType=domain=>['bool-text-result','u64-text-result','i64-text-result','str-text-result','text-text-result'].includes(domain)?checker.instantiations.result(primitive(domain==='text-text-result'?'text-owned':domain.slice(0,-12)),primitive('text-owned'),node.span):domain.endsWith('-option')||domain==='str-option-ref'?checker.instantiations.option(primitive(domain==='str-option-ref'?'str':domain.slice(0,-7)),node.span):domain==='text-owned'?{...SOURCE_STRING,rustSourceType:true}:primitive(domain);
  const receiver=checker.expr(node.args[0],env,path,checker.instantiations.option(primitive(row.input),node.span));current();
  carrier(checker,receiver.type,'Option',path,node.args[0].span,(_checker,type,span)=>assertPrimitive(type,row.input,span));
  const wanted=resultType(row.callbackReturns);if(!wanted)throw typeError('Unknown callback result domain',node.span);

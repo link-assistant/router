@@ -932,3 +932,11 @@ chronological reader. Six compiler equations and independent unrun six-API/
 seven-caller/annotation/refusal/owning/JS/strict TS/paired reverse/native/export
 cases are drafted. Wider locals/control and every unfinished namespace/
 production/reverse/sync/freshness/parity/delivery row remain OPEN.
+
+The [lazy Option error draft](option-lazy-error-source-draft.md) adds five paired
+lazy String-error conversions with actual Result type/source/forward/resource
+mappings. Ten compiler equations, five native copies and independent unrun ABI/
+callback/early-error/two-API/six-caller/JS/strict TS/paired reverse/native/export
+cases are drafted. Broader domains, borrowed resource results, eager conversions,
+qualified callback local joins and every unfinished namespace/production/reverse/
+sync/freshness/parity/delivery row remain OPEN.

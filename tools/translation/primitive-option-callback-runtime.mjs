@@ -62,6 +62,7 @@ export const router_option_str_expect=(argument0,argument1)=>operate("str","expe
 // Direct ABI calls still validate every actual operand and callback result.
 function invokePrimitiveOptionCallback(value,callback,input,output,method){
  const observed=option(value,input);if(typeof callback!=='function'||apply(proxy,types,[callback]))throw new TypeError('Actual ordinary primitive Option callback required');
+ if(method==='ok_or_else')return observed.some?freeze({$:'Ok',field0:observed.value}):freeze({$:'Err',field0:payload(callback(),'text-owned')});
  if(method==='or_else'){if(observed.some)return some(observed.value);const found=option(callback(),output);return found.some?some(found.value):none();}
  if(method==='unwrap_or_else')return observed.some?observed.value:payload(callback(),output);
  if(!observed.some)return none();const returned=callback(observed.value);
@@ -122,3 +123,8 @@ export const router_option_callback_text_owned_to_text_owned_map=(value,callback
 export const router_option_callback_text_owned_to_text_owned_and_then=(value,callback)=>invokePrimitiveOptionCallback(value,callback,"text-owned","text-owned","and_then");
 export const router_option_callback_text_owned_unwrap_or_else=(value,callback)=>invokePrimitiveOptionCallback(value,callback,"text-owned","text-owned","unwrap_or_else");
 export const router_option_callback_text_owned_or_else=(value,callback)=>invokePrimitiveOptionCallback(value,callback,"text-owned","text-owned","or_else");
+export const router_option_callback_bool_ok_or_else=(value,callback)=>invokePrimitiveOptionCallback(value,callback,"bool","text-owned","ok_or_else");
+export const router_option_callback_u64_ok_or_else=(value,callback)=>invokePrimitiveOptionCallback(value,callback,"u64","text-owned","ok_or_else");
+export const router_option_callback_i64_ok_or_else=(value,callback)=>invokePrimitiveOptionCallback(value,callback,"i64","text-owned","ok_or_else");
+export const router_option_callback_str_ok_or_else=(value,callback)=>invokePrimitiveOptionCallback(value,callback,"str","text-owned","ok_or_else");
+export const router_option_callback_text_owned_ok_or_else=(value,callback)=>invokePrimitiveOptionCallback(value,callback,"text-owned","text-owned","ok_or_else");

@@ -640,3 +640,65 @@ pub fn text_owned_or_else(
         output
     })
 }
+
+#[must_use]
+pub fn bool_ok_or_else(
+    value: Option<bool>,
+    callback: impl FnOnce() -> String,
+) -> Result<bool, String> {
+    value.ok_or_else(|| {
+        let error = callback();
+        checked_text(&error);
+        error
+    })
+}
+
+#[must_use]
+pub fn u64_ok_or_else(
+    value: Option<u64>,
+    callback: impl FnOnce() -> String,
+) -> Result<u64, String> {
+    value.ok_or_else(|| {
+        let error = callback();
+        checked_text(&error);
+        error
+    })
+}
+
+#[must_use]
+pub fn i64_ok_or_else(
+    value: Option<i64>,
+    callback: impl FnOnce() -> String,
+) -> Result<i64, String> {
+    value.ok_or_else(|| {
+        let error = callback();
+        checked_text(&error);
+        error
+    })
+}
+
+#[must_use]
+pub fn str_ok_or_else<'input>(
+    value: Option<&'input str>,
+    callback: impl FnOnce() -> String,
+) -> Result<&'input str, String> {
+    checked_option_text(value);
+    value.ok_or_else(|| {
+        let error = callback();
+        checked_text(&error);
+        error
+    })
+}
+
+#[must_use]
+pub fn text_owned_ok_or_else(
+    value: Option<String>,
+    callback: impl FnOnce() -> String,
+) -> Result<String, String> {
+    checked_option_text(value.as_deref());
+    value.ok_or_else(|| {
+        let error = callback();
+        checked_text(&error);
+        error
+    })
+}
