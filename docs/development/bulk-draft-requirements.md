@@ -668,3 +668,10 @@ retaining unknown iterator values and all shadow/ownership/native gates.
 Eighteen complete equations and independent unrun scope/pattern/bulk/JS/strict
 TS/export/native-oracle source is drafted. All wider source/native/production/
 sync/freshness/parity/delivery requirements remain unfinished.
+
+The [explicit Git sync baseline draft](explicit-sync-baseline-source-draft.md)
+shares immutable local-ancestor selection across both complete unit APIs and
+the forward-project API, retaining complete source retranslation and all
+conflict/apply guards. Five complete equations and unrun committed JS/TS/Rust/
+concurrency/deletion/stale/replacement-ref/JS/strict TS cases are drafted. Every
+wider source/native/production/sync/freshness/parity/delivery requirement stays open.

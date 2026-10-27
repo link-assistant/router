@@ -91,3 +91,9 @@ and install with the same manifest and `--apply PLAN`. Neither command has been
 run during drafting. The regression source is also unrun. Full production unit
 coverage, additional profiles, native feature parity, receiving qualification
 and complete same-SHA CI remain open requirements.
+
+The later [explicit Git baseline draft](explicit-sync-baseline-source-draft.md)
+adds optional top-level `baselineRevision` to distinguish already committed
+source edits from the last synchronized checkpoint. The original current-HEAD
+default remains. Complete source reload/retranslation and conflict/deletion/
+apply guards remain mandatory; all new cases and full delivery stay unverified.
