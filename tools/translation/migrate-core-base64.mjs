@@ -16,6 +16,7 @@ import {deriveDependencyProfile} from './derive-dependencies.mjs';
 import {captureOriginalExternalTraitPackage,originalExternalTraitPackageInputs} from './extensions/external-trait-sources.mjs';
 import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_BASE64_SOURCE} from './router-core-source-data.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
+import {planLayeredCoreAdoptionSource} from './layered-core-adoption-source.mjs';
 const fail=message=>{throw new TypeError('Owned base64 adoption: '+message);},hash=value=>createHash('sha256').update(value).digest('hex');
 const inert=new Set(['cfg','doc','must_use','allow','warn','deny','forbid','expect','inline','cold','deprecated','track_caller','test']);
 const ident=token=>token?.type==='ident'&&/^[A-Za-z_][A-Za-z_0-9]*$/u.test(token.text),words=rows=>rows.map(row=>row.text).join('');
@@ -93,9 +94,8 @@ function fileProposal(source,modules,all,profile,context,nonTrait,progress=null)
  }
  edits.sort((a,b)=>a.span[0]-b.span[0]);for(let at=1;at<edits.length;at++)if(edits[at-1].span[1]>edits[at].span[0])fail('overlap');
  if(progress)progress({stage:'project-serialize',state:'start',source:file,phase:'base64-edited-CST-roundtrip'});
- const nativePrefix='::translation_compatibility_core::',repositoryPrefix='crate::translation_core::',languageEdits=edits.map(edit=>{if(!edit.replacement.startsWith(repositoryPrefix))fail('actual selected compatibility operation prefix differs');return {...edit,replacement:nativePrefix+edit.replacement.slice(repositoryPrefix.length)};}),repositoryEdits=[];let languageDelta=0;
- for(let at=0;at<edits.length;at++){const original=edits[at],selected=languageEdits[at],start=original.span[0]+languageDelta;repositoryEdits.push({span:[start,start+nativePrefix.length],expected:nativePrefix,replacement:repositoryPrefix});languageDelta+=selected.replacement.length-(original.span[1]-original.span[0]);}
- const applied=applyConcreteSyntaxSubstitutions(before.document,{languageRules:[{id:'base64:concrete-native-unit-binding-and-once-only-argument',edits:languageEdits}],repositoryRules:[{id:'router-core:adopt-qualified-owned-base64',edits:repositoryEdits}]}),after=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(applied.value)),mapping=[];let old=0,current=0;
+ const layered=planLayeredCoreAdoptionSource(source,edits,{languageRule:'base64:concrete-native-unit-binding-and-once-only-argument',repositoryRule:'router-core:adopt-qualified-owned-base64',bindings:[{native:'crate::translation_core::',neutral:'::translation_compatibility_core::'}]});
+ const applied=applyConcreteSyntaxSubstitutions(before.document,{languageRules:layered.languageRules,repositoryRules:layered.repositoryRules}),after=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(applied.value)),mapping=[];let old=0,current=0;
  if(progress)progress({stage:'project-serialize',state:'end',source:file,phase:'base64-edited-CST-roundtrip'});
  if(progress)progress({stage:'project-serialize',state:'start',source:file,phase:'base64-whole-source-inverse'});
  for(const edit of edits){if(edit.span[0]>old){const length=edit.span[0]-old;mapping.push({kind:'unchanged',before:[old,edit.span[0]],after:[current,current+length]});current+=length;}mapping.push({kind:'substitution',before:edit.span,after:[current,current+edit.replacement.length],expected:edit.expected,replacement:edit.replacement});current+=edit.replacement.length;old=edit.span[1];}if(old<source.length)mapping.push({kind:'unchanged',before:[old,source.length],after:[current,current+source.length-old]});let restored=after.source;for(const row of [...mapping].reverse())if(row.kind==='substitution')restored=restored.slice(0,row.after[0])+row.expected+restored.slice(row.after[1]);if(restored!==source)fail('full inverse changed');

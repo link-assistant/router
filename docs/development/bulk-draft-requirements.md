@@ -601,3 +601,9 @@ original/recipe inclusion and five actual public bulk stages in an isolated
 compiler tree. Reusable guidance describes the same bounded source/rule pattern.
 Every receiving, target, native, freshness and full-delivery result remains
 unrun/unverified; the complete requirement set remains unfinished.
+
+The [shared scalar/call source draft](layered-literal-adoption-draft.md) copies
+text's full scalar rebasing into the common planner and connects both text and
+base64 APIs, for twelve actual adapters. Six whole equations and unrun Unicode/
+scalar/order/CST/inverse/refusal cases are drafted. All wider source/native/
+production/sync/freshness/parity/delivery requirements remain unfinished.
