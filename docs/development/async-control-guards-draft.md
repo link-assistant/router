@@ -20,8 +20,10 @@ cold polling rule remains. A comparison does not qualify a missing input range
 guard, and a guard return cannot drop or return an already consumed channel pair.
 No broader conditional deadline callback or pending-future permission is added.
 
-The existing emitter writes canonical complete if/else branches. Its independent
-Rust consumer still projects the full canonical source, freshly checks the
+The emitter retains complete if/else branches and, through the later
+[authoritative native guard draft](async-native-guards-draft.md), emits actual
+guard returns with checked remaining tails. Its independent Rust consumer
+projects the full supported original source, freshly checks the
 complete JS proposal and reproduces every original Rust token. The originating
 JS/TS source remains intact with its whole CST, semantic-meta and inverse
 history. Arbitrary original Rust control syntax outside that canonical inverse

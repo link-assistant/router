@@ -531,3 +531,10 @@ conversion with bounded exact decimal selection. Two complete equations and
 unrun native-AST/host-conversion-observer/strict TS/boundary/refusal source cases
 are drafted. Every remaining source/native/production/sync/freshness/parity/
 delivery requirement remains unfinished.
+
+The [authoritative native guard draft](async-native-guards-draft.md) retains
+actual Rust guard/return form through full receiving JS/meta checks and unchanged
+complete native token reproduction. Four whole equations and unrun original
+Rust/Boolean/u64/cold cancellation/strict TS/meta/inverse/refusal/native oracle
+sources are drafted. Broader native printer/control forms and every remaining
+source/native/production/sync/freshness/parity/delivery requirement stay open.

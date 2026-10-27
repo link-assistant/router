@@ -110,7 +110,7 @@ export function checkAsyncControlCallerFlow(ts,statements,parameters,imports,{la
 }
 
 function rustString(value){return '"'+[...value].map(character=>character==='"'?'\\"':character==='\\'?'\\\\':character==='\n'?'\\n':character==='\r'?'\\r':character==='\t'?'\\t':character==='\0'?'\\0':character.codePointAt(0)<32||character.codePointAt(0)===127?'\\u{'+character.codePointAt(0).toString(16)+'}':character).join('')+'"';}
-export function emitAsyncControlCallerFlow(flow,{rename=new Map(),state={sequence:0}}={}){
+export function emitAsyncControlCallerFlow(flow,{rename=new Map(),state={sequence:0},tailReturn=false}={}){
  const name=value=>rename.get(value)??value;
  function expression(value){
   if(value.kind==='variable'||value.kind==='payload')return name(value.name);
@@ -131,5 +131,8 @@ export function emitAsyncControlCallerFlow(flow,{rename=new Map(),state={sequenc
   const result=row.value.type.startsWith('result:'),cleanup=row.cleanup.map(value=>expression(value)+';').join(' '),value=expression(row.value)+(result&&!cleanup?'?':'');
   return 'let '+(row.value.type==='receiver-owned'?'mut ':'')+row.name+' = '+(result&&cleanup?'match '+expression(row.value)+' { Ok(__ro_control_value) => __ro_control_value, Err(__ro_control_error) => { '+cleanup+' return Err(__ro_control_error); } }':value)+';';
  });
- const tail=flow.tail;lines.push(tail.kind==='branch'?'if '+expression(tail.condition)+' { '+emitAsyncControlCallerFlow(tail.yes,{rename,state})+' } else { '+emitAsyncControlCallerFlow(tail.no,{rename,state})+' }':expression(tail.value));return lines.join('\n');
+ const tail=flow.tail;if(tail.kind==='branch'){
+  if(tail.sourceContinuation)lines.push('if '+expression(tail.condition)+' { '+emitAsyncControlCallerFlow(tail.yes,{rename,state,tailReturn:true})+' }',emitAsyncControlCallerFlow(tail.no,{rename,state,tailReturn}));
+  else lines.push('if '+expression(tail.condition)+' { '+emitAsyncControlCallerFlow(tail.yes,{rename,state,tailReturn})+' } else { '+emitAsyncControlCallerFlow(tail.no,{rename,state,tailReturn})+' }');
+ }else lines.push(tailReturn?'return '+expression(tail.value)+';':expression(tail.value));return lines.join('\n');
 }

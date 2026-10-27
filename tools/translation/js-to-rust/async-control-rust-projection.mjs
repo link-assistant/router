@@ -65,6 +65,7 @@ export function projectAsyncControlRustFunctions(functions,{javascriptPath,runti
     const value=unwrap(statement.value,depth+1);if(statement.bindings.length!==2||value?.kind!=='name'||!locals.has(value.name))fail('complete canonical guarded channel split required');const names=statement.bindings.map(row=>name(row.name));lines.push('const ['+names.join(', ')+'] = '+name(value.name)+'.field0;');continue;
    }
    if(statement.kind==='effect'){lines.push(expression(statement.value,locals,asynchronous,depth+1)+';');continue;}
+   if(statement.kind==='if-guard'){if(index===block.statements.length-1&&!block.tail)fail('native terminal guard requires its complete remaining return path');lines.push('if ('+expression(statement.condition,locals,asynchronous,depth+1)+') '+body(statement.yes,locals,asynchronous,depth+1));continue;}
    if(statement.kind==='if'){
     if(index!==block.statements.length-1||block.tail)fail('canonical control branches must terminate the whole block');lines.push('if ('+expression(statement.condition,locals,asynchronous,depth+1)+') '+body(statement.yes,locals,asynchronous,depth+1)+' else '+body(statement.no,locals,asynchronous,depth+1));terminal=true;continue;
    }
