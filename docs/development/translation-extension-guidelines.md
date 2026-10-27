@@ -232,3 +232,9 @@ and rejoin all inputs before returning DATA. Count expressions/invocations in th
 combined record/cell bounds; propagate budget failures. Macro ownership, legality,
 expansion/export effects and native visitor confinement remain separate pending
 obligations. See [the unrun source draft](generated-header-expression-source-draft.md).
+
+Builder suffix composition must reuse original closed operand/condition readers,
+retain each complete source expression once and keep the mutable builder unknown
+in chronological alias selection. Shared views of separate owned parameters are
+source proposals, never loan/drop permission. Refuse unresolved/mixed/escaping/
+self-borrowing functions whole; see [the unrun operand draft](text-builder-operands-source-draft.md).

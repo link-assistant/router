@@ -480,3 +480,10 @@ with combined record/cell bounds and whole source/CST inverses. Six equations an
 independent unrun source/native/lifecycle/refusal/export cases are drafted. Actual
 macro owner/hygiene/expansion/effect/export/type-prefix closure and all wider
 production/translation/sync/freshness/parity/receiving/delivery rows remain OPEN.
+
+The [borrowed builder operand draft](text-builder-operands-source-draft.md)
+composes original aliases, qualified core calls, shared owned-input views,
+parentheses and complete borrowed conditional suffixes while keeping the builder
+unknown. Four equations and independent unrun two-API/four-caller/five-edit/JS/
+strict TS/native/refusal/export source are drafted. Wider mutation/iteration,
+namespace/production/reverse/sync/freshness/parity/receiving/delivery remain OPEN.

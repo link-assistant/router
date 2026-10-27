@@ -184,3 +184,5 @@ export {captureGeneratedItemHeaderSources,proposeGeneratedDeclarationSourceUnit}
 export {withSharedOriginalParsedBuiltinCallerSources} from './registered-builtin-caller-attribute-source.mjs';
 
 export {captureGeneratedHeaderExpressionSources} from './generated-header-expression-source.mjs';
+
+export {readTextBuilderBorrowedOperandSource} from './text-builder-operand-source.mjs';
