@@ -620,3 +620,10 @@ retaining their single-use/default/shared-receiver rules. Five whole equations
 and unrun scope/chain/Unicode/bulk/receiving JS/strict TS/native-oracle cases are
 drafted. All wider source/native/production/sync/freshness/parity/delivery
 requirements remain unfinished.
+
+The [native text count draft](text-count-local-source-draft.md) reuses the shared
+text source engine for actual usize parameter/local/length count DATA and
+once-only native core casts. Three whole equations and unrun bounds/annotation/
+scope/UTF-8/bulk/receiving JS/strict TS/native-oracle cases are drafted. Wider
+count forms and all source/native/production/sync/freshness/parity/delivery
+requirements remain unfinished.
