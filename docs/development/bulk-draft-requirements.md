@@ -414,3 +414,10 @@ tails with exact terminal conversion positions. Three whole equations and
 independent unrun two APIs/four callers/nine edits/JS/strict TS/native/refusal/
 export source are drafted. Every wider control/namespace/production/reverse/sync/
 freshness/parity/receiving/delivery requirement remains OPEN.
+
+The [exact text constructor draft](text-constructor-source-draft.md) composes
+closed String new/from source forms, actual borrowed arguments and chronological
+local alias/method chains through the existing text core. Three equations and
+independent unrun two APIs/six callers/seven edits/JS/strict TS/native/refusal/
+export source are drafted. Wider constructor, owner/namespace, production,
+reverse/sync/freshness/parity/receiving/delivery obligations remain OPEN.

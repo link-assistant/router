@@ -185,3 +185,8 @@ Expected text source context may propagate only through complete explicit String
 expression roots and their exact branch tails. It grants no Into/type/ownership
 permission; preserve missing/ambiguous destination refusals and whole caller checks.
 See [the unrun branch target draft](text-branch-target-source-draft.md).
+
+Text constructor source candidates must retain false original trait/drop/owner
+flags and recheck actual complete source independently. Preserve owning transfer
+and wrong-owner refusals; reuse chronological local events and existing core ABI.
+See [the unrun constructor draft](text-constructor-source-draft.md).
