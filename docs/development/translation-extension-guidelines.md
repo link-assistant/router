@@ -780,3 +780,10 @@ or semantic permission. Stream complete packets, retain only current strings and
 bounded scalar receipts, preserve observer failures and every original resource
 limit. Keep old APIs/schemas and canonical commands intact until qualification.
 See the [unrun bounded composition draft](core-fixed-point-source-draft.md).
+
+Seed integer source roles from exact current scalar helpers and matching lexical
+arguments. Preserve the entire inline receiver once, widths, evaluation order
+and local semicolon scope; text, borrowed and unknown/effectful results remain
+unselected. Use bounded stage composition for later prerequisites and recheck
+whole functions. See the
+[unrun primitive core call draft](primitive-core-call-source-draft.md).

@@ -880,3 +880,11 @@ one-pass APIs and CI commands. Three compiler equations and independent unrun
 control/real-adopter/packet-inverse/JS/strict TS/native/export source are drafted.
 Actual full-corpus performance/composition and every source/native/production/
 sync/freshness/parity/delivery requirement remain OPEN; all verification is UNRUN.
+
+The [primitive core call draft](primitive-core-call-source-draft.md) joins exact
+current scalar library results to inline/local integer source rules and bounded
+JSON-to-integer restaging. Four compiler equations and independent unrun two-API/
+4-caller/role/refusal/fixed-point/JS/strict TS/native/export source are drafted.
+Wider carrier aliases, compound/chained expressions and all source/native/
+production/sync/freshness/parity/delivery requirements remain OPEN; all
+verification remains UNRUN.
