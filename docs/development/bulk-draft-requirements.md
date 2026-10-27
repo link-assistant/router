@@ -607,3 +607,9 @@ text's full scalar rebasing into the common planner and connects both text and
 base64 APIs, for twelve actual adapters. Six whole equations and unrun Unicode/
 scalar/order/CST/inverse/refusal cases are drafted. All wider source/native/
 production/sync/freshness/parity/delivery requirements remain unfinished.
+
+The [owned Result local draft](owned-result-local-source-draft.md) reuses the
+shared carrier and layered source engines in both owned String Result adapters.
+Five whole equations and unrun constructor/scope/capture/Unicode/bulk/receiving
+JS/strict TS/native-oracle cases are drafted. All wider source/native/production/
+sync/freshness/parity/delivery requirements remain unfinished.

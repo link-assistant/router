@@ -14,11 +14,11 @@ export function createPrimitiveCarrierLocalSource(rows,parameters,allParameters,
 }
 
 const ident=token=>token?.type==='ident'&&/^[\p{ID_Start}_][\p{ID_Continue}_]*$/u.test(token.text);
-const carrierDomain=/^(?:payload:(?:bool|u64|i64|str|text-owned|owned-str)|(?:option|result):(?:bool|u64|i64|str)|json:json)$/u;
+const carrierDomain=/^(?:payload:(?:bool|u64|i64|str|text-owned|owned-str)|option:(?:bool|u64|i64|str|text-owned)|result:(?:bool|u64|i64|str|text)|json:json)$/u;
 export function encodeCarrierRole(role){const value=role&&role.kind+':'+role.domain;return typeof value==='string'&&carrierDomain.test(value)?value:null;}
 export function decodeCarrierRole(value){if(typeof value!=='string'||!carrierDomain.test(value))return null;const [kind,domain]=value.split(':');return {kind,domain};}
 function carrierLocalCensus(rows,parameters){
- if(rows.length>200000||rows.some(row=>['match','for'].includes(row.text)))return false;const names=new Set(parameters),protectedNames=new Set(['std','core','crate','self','Self','translation_core','translation_primitive_option_core','translation_primitive_option_callbacks_core','translation_primitive_results_core','Option','Some','None','Result','Ok','Err','String','str','u64','i64','bool']);let count=0;
+ if(rows.length>200000||rows.some(row=>['match','for'].includes(row.text)))return false;const names=new Set(parameters),protectedNames=new Set(['std','core','crate','self','Self','translation_core','translation_primitive_option_core','translation_primitive_option_callbacks_core','translation_primitive_results_core','translation_owned_results_core','Option','Some','None','Result','Ok','Err','String','str','u64','i64','bool']);let count=0;
  for(let at=0;at<rows.length;at++)if(rows[at].text==='let'){const name=rows[at+1];if(!ident(name)||['mut','ref','_'].includes(name.text)||!['=',':'].includes(rows[at+2]?.text)||names.has(name.text)||protectedNames.has(name.text)||++count>4096)return false;names.add(name.text);}return true;
 }
 function scalarOperand(rows,bindings,wanted){
@@ -32,5 +32,5 @@ export function readCarrierAliasOperand(rows,bindings,wanted=null){
  const text=rows.map(row=>row.text).join('');if(/^(?:(?:::)?(?:std|core)::option::Option::|Option::)?None$/u.test(text))return wanted?.kind==='option'?wanted:null;
  const open=rows.findIndex(row=>row.text==='(');if(open<1||rows.at(-1).text!==')')return null;const path=rows.slice(0,open).map(row=>row.text).join(''),constructor=/^(?:(?:::)?(?:std|core)::option::Option::|Option::)?Some$/u.test(path)?'Some':/^(?:(?:::)?(?:std|core)::result::Result::|Result::)?(Ok|Err)$/u.exec(path)?.[1];if(!constructor)return null;
  const value=scalarOperand(rows.slice(open+1,-1),bindings,constructor==='Err'?null:wanted&&{kind:'payload',domain:wanted.domain});if(constructor==='Err')return wanted?.kind==='result'&&value?.kind==='payload'&&value.domain==='text-owned'?wanted:null;
- return value?.kind==='payload'&&['bool','u64','i64','str'].includes(value.domain)?{kind:constructor==='Some'?'option':'result',domain:value.domain}:null;
+ return value?.kind==='payload'&&['bool','u64','i64','str','text-owned'].includes(value.domain)?{kind:constructor==='Some'?'option':'result',domain:constructor==='Ok'&&value.domain==='text-owned'?'text':value.domain}:null;
 }
