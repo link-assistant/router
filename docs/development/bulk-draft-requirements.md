@@ -421,3 +421,11 @@ legacy target helpers to their actual remaining closure. Six whole compiler
 source equations and unrun width/body/public-restoration/strict TS/refusal/native
 oracle cases are drafted. Optional native aliases and all remaining source/
 native/production/sync/freshness/parity/delivery obligations stay unfinished.
+
+The [native scalar flow draft](native-scalar-flow-draft.md) shares bounded
+native literal joins and exact comparisons across seven reverse profiles,
+extends the three existing mutable-local profiles to root-free native Copy
+scalars, and fixes vector comparison dispatch. Ten complete source equations and
+unrun all-width/profile/comparison/mutation/restoration/refusal/native oracle
+cases are drafted. Every remaining source/native/production/sync/freshness/
+parity/delivery obligation remains unfinished.

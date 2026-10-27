@@ -440,7 +440,7 @@ export function analyzeOriginalOwnedCoreSource(context,path){
  requireOwnedCoreSourceCurrent(context);return {program,diagnostics,items,source,path};
 }
 function checkFunction(context,path,declaration,analysis){
- const {ts,file,source,checker}=analysis;
+ const {ts,file,source,checker}=analysis,nativeScalars=contexts.get(context).data.primitiveOperators===true;
  if(!declaration.name||!declaration.body||declaration.asteriskToken||declaration.typeParameters||declaration.modifiers?.some(mod=>mod.kind!==ts.SyntaxKind.ExportKeyword))fail('ordinary original named function required');
  const name=rustName(declaration.name.text),params=[],environment=new Map();let cells=0,paired=pairedFunction(context,path,declaration,analysis);
  const tick=depth=>{if(++cells>100000||depth>160)fail('whole function flow budget');};
@@ -647,9 +647,9 @@ function checkFunction(context,path,declaration,analysis){
   if(ts.isPrefixUnaryExpression(node)&&node.operator===ts.SyntaxKind.ExclamationToken){const value=expression(node.operand,scope,depth+1);if(value.type!=='bool')fail('boolean negation only');return {kind:'not',value,type:'bool',root:null};}
   if(ts.isBinaryExpression(node)&&[ts.SyntaxKind.AmpersandAmpersandToken,ts.SyntaxKind.BarBarToken,ts.SyntaxKind.EqualsEqualsEqualsToken,ts.SyntaxKind.ExclamationEqualsEqualsToken,ts.SyntaxKind.LessThanToken,ts.SyntaxKind.LessThanEqualsToken,ts.SyntaxKind.GreaterThanToken,ts.SyntaxKind.GreaterThanEqualsToken].includes(node.operatorToken.kind)){
    const optional=optionTest(node,scope,depth);if(optional)return optional;
-   const left=expression(node.left,scope,depth+1),right=expression(node.right,scope,depth+1),op=node.operatorToken.getText(file);
-   if(['<','<=','>','>='].includes(op)){if(!['usize','u64','i64'].includes(left.type)||left.type!==right.type)fail('ordered comparison requires identical checked integer domains');}
-   else if(['&&','||'].includes(op)?left.type!=='bool'||right.type!=='bool':!['bool','str','usize'].includes(left.type)||left.type!==right.type)fail('identity/coercion comparison outside owned profile');
+   const left=expression(node.left,scope,depth+1),right=expression(node.right,scope,depth+1),op=node.operatorToken.getText(file);joinOwnedNativeScalarOperands(left,right,nativeScalars);
+   if(['<','<=','>','>='].includes(op)){if((!['usize','u64','i64'].includes(left.type)&&!ownedNativeIntegerDomain(left.type,nativeScalars))||left.type!==right.type)fail('ordered comparison requires identical checked integer domains');}
+   else if(['&&','||'].includes(op)?left.type!=='bool'||right.type!=='bool':(!['bool','str','usize'].includes(left.type)&&!ownedNativeIntegerDomain(left.type,nativeScalars))||left.type!==right.type)fail('identity/coercion comparison outside owned profile');
    return {kind:'binary',op,left,right,type:'bool',root:null};
   }
   fail('unimplemented expression '+ts.SyntaxKind[node.kind]);
@@ -783,3 +783,5 @@ import {primitiveBitwiseType,primitiveBitwiseAlias} from '../primitive-bitwise-t
 import {ownedParenthesizedType} from './owned-type-parentheses.mjs';
 
 import {ownedNativeScalarDeclaration} from './owned-native-scalar-declaration.mjs';
+
+import {ownedNativeIntegerDomain,joinOwnedNativeScalarOperands} from './owned-native-scalar-flow.mjs';

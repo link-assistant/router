@@ -294,7 +294,7 @@ export function analyzeOriginalOwnedCoreSource(context,path){
  }finally{analysis.vectorProfiles?.clear();}
 }
 function checkFunction(context,path,declaration,analysis){
- const {ts,file,source,checker}=analysis;
+ const {ts,file,source,checker}=analysis,nativeScalars=contexts.get(context).data.primitiveOperators===true;
  if(!declaration.name||!declaration.body||declaration.asteriskToken||declaration.typeParameters||declaration.modifiers?.some(mod=>mod.kind!==ts.SyntaxKind.ExportKeyword))fail('ordinary original named function required');
  const name=rustName(declaration.name.text),params=[],environment=new Map();let cells=0,paired=pairedFunction(context,path,declaration,analysis);
  const vectorCandidate=checkOriginalOwnedVectorFunction(path,declaration,analysis,paired,name);if(vectorCandidate)return vectorCandidate;
@@ -455,10 +455,11 @@ function checkFunction(context,path,declaration,analysis){
    if(cond.type!=='bool'||yes.type!==no.type||yes.type==='str'&&!loan||yes.root!==no.root&&!loan&&yes.kind!=='option-none'&&no.kind!=='option-none')fail('conditional result or loan differs');mergeMoves(scope,a,b);return {kind:'choose',cond,then:yes,else:no,type:yes.type,root:loan?loan.root:yes.kind==='option-none'?no.root:yes.root};
   }
   if(ts.isPrefixUnaryExpression(node)&&node.operator===ts.SyntaxKind.ExclamationToken){const value=expression(node.operand,scope,depth+1);if(value.type!=='bool')fail('boolean negation only');return {kind:'not',value,type:'bool',root:null};}
-  if(ts.isBinaryExpression(node)&&[ts.SyntaxKind.AmpersandAmpersandToken,ts.SyntaxKind.BarBarToken,ts.SyntaxKind.EqualsEqualsEqualsToken,ts.SyntaxKind.ExclamationEqualsEqualsToken].includes(node.operatorToken.kind)){
+  if(ts.isBinaryExpression(node)&&[ts.SyntaxKind.AmpersandAmpersandToken,ts.SyntaxKind.BarBarToken,ts.SyntaxKind.EqualsEqualsEqualsToken,ts.SyntaxKind.ExclamationEqualsEqualsToken,ts.SyntaxKind.LessThanToken,ts.SyntaxKind.LessThanEqualsToken,ts.SyntaxKind.GreaterThanToken,ts.SyntaxKind.GreaterThanEqualsToken].includes(node.operatorToken.kind)){
    const optional=optionTest(node,scope,depth);if(optional)return optional;
-   const left=expression(node.left,scope,depth+1),right=expression(node.right,scope,depth+1),op=node.operatorToken.getText(file);
-   if(['&&','||'].includes(op)?left.type!=='bool'||right.type!=='bool':!['bool','str','usize'].includes(left.type)||left.type!==right.type)fail('identity/coercion comparison outside owned profile');
+   const left=expression(node.left,scope,depth+1),right=expression(node.right,scope,depth+1),op=node.operatorToken.getText(file);joinOwnedNativeScalarOperands(left,right,nativeScalars);
+   if(['<','<=','>','>='].includes(op)){if(!ownedNativeIntegerDomain(left.type,nativeScalars)||left.type!==right.type)fail('ordered comparison requires identical checked integer domains');}
+   else if(['&&','||'].includes(op)?left.type!=='bool'||right.type!=='bool':(!['bool','str','usize'].includes(left.type)&&!ownedNativeIntegerDomain(left.type,nativeScalars))||left.type!==right.type)fail('identity/coercion comparison outside owned profile');
    return {kind:'binary',op,left,right,type:'bool',root:null};
   }
   fail('unimplemented expression '+ts.SyntaxKind[node.kind]);
@@ -565,3 +566,5 @@ import {primitiveBitwiseType,primitiveBitwiseAlias} from '../primitive-bitwise-t
 import {ownedParenthesizedType} from './owned-type-parentheses.mjs';
 
 import {ownedNativeScalarDeclaration} from './owned-native-scalar-declaration.mjs';
+
+import {ownedNativeIntegerDomain,joinOwnedNativeScalarOperands} from './owned-native-scalar-flow.mjs';

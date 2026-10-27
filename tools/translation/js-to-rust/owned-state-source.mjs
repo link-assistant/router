@@ -444,7 +444,7 @@ export function analyzeOriginalOwnedCoreSource(context,path){
  requireOwnedCoreSourceCurrent(context);return {program,diagnostics,items,source,path};
 }
 function checkFunction(context,path,declaration,analysis){
- const {ts,file,source,checker}=analysis;
+ const {ts,file,source,checker}=analysis,nativeScalars=contexts.get(context).data.primitiveOperators===true;
  if(!declaration.name||!declaration.body||declaration.asteriskToken||declaration.typeParameters||declaration.modifiers?.some(mod=>mod.kind!==ts.SyntaxKind.ExportKeyword))fail('ordinary original named function required');
  const name=rustName(declaration.name.text),params=[],environment=new Map();let cells=0,paired=pairedFunction(context,path,declaration,analysis);
  const tick=depth=>{if(++cells>100000||depth>160)fail('whole function flow budget');};
@@ -669,10 +669,10 @@ function checkFunction(context,path,declaration,analysis){
   if(ts.isPrefixUnaryExpression(node)&&node.operator===ts.SyntaxKind.ExclamationToken){const value=expression(node.operand,scope,depth+1);if(value.type!=='bool')fail('boolean negation only');return {kind:'not',value,type:'bool',root:null};}
   if(ts.isBinaryExpression(node)&&[ts.SyntaxKind.AmpersandAmpersandToken,ts.SyntaxKind.BarBarToken,ts.SyntaxKind.EqualsEqualsEqualsToken,ts.SyntaxKind.ExclamationEqualsEqualsToken,ts.SyntaxKind.LessThanToken,ts.SyntaxKind.LessThanEqualsToken,ts.SyntaxKind.GreaterThanToken,ts.SyntaxKind.GreaterThanEqualsToken].includes(node.operatorToken.kind)){
    const optional=optionTest(node,scope,depth);if(optional)return optional;
-   const left=expression(node.left,scope,depth+1),right=expression(node.right,scope,depth+1),op=node.operatorToken.getText(file);
+   const left=expression(node.left,scope,depth+1),right=expression(node.right,scope,depth+1),op=node.operatorToken.getText(file);joinOwnedNativeScalarOperands(left,right,nativeScalars);
    for(const [literal,other]of [[left,right],[right,left]])if(literal.kind==='integer'&&literal.type==='usize'&&['u64','i64'].includes(other.type)&&(other.type==='u64'||BigInt(literal.value)<=9223372036854775807n))literal.type=other.type;
-   if(['<','<=','>','>='].includes(op)){if(!['usize','u64','i64'].includes(left.type)||left.type!==right.type)fail('ordered comparison requires identical checked integer domains');}
-   else if(['&&','||'].includes(op)?left.type!=='bool'||right.type!=='bool':!['bool','str','usize','u64','i64'].includes(left.type)||left.type!==right.type)fail('identity/coercion comparison outside owned profile');
+   if(['<','<=','>','>='].includes(op)){if((!['usize','u64','i64'].includes(left.type)&&!ownedNativeIntegerDomain(left.type,nativeScalars))||left.type!==right.type)fail('ordered comparison requires identical checked integer domains');}
+   else if(['&&','||'].includes(op)?left.type!=='bool'||right.type!=='bool':(!['bool','str','usize','u64','i64'].includes(left.type)&&!ownedNativeIntegerDomain(left.type,nativeScalars))||left.type!==right.type)fail('identity/coercion comparison outside owned profile');
    return {kind:'binary',op,left,right,type:'bool',root:null};
   }
   fail('unimplemented expression '+ts.SyntaxKind[node.kind]);
@@ -703,7 +703,7 @@ function checkFunction(context,path,declaration,analysis){
    if(ts.isVariableStatement(statement)){
     const declarationKind=statement.declarationList.flags&ts.NodeFlags.BlockScoped,mutable=declarationKind===ts.NodeFlags.Let;if(statement.modifiers?.length||!mutable&&declarationKind!==ts.NodeFlags.Const)fail('only fresh lexical const or owned let declarations');
     for(const declaration of statement.declarationList.declarations){
-     if(!declaration.initializer||declaration.exclamationToken||declaration.type)fail('unsupported local declaration');const value=expression(declaration.initializer,scope,depth+1);if(mutable&&(!['json','json-list-owned'].includes(value.type)||value.root!==null))fail('mutable local requires a fresh owned JSON or Vec value');
+     if(!declaration.initializer||declaration.exclamationToken||declaration.type)fail('unsupported local declaration');const value=expression(declaration.initializer,scope,depth+1);if(mutable&&((!['json','json-list-owned'].includes(value.type)&&!ownedNativeCopyScalarDomain(value.type,nativeScalars))||value.root!==null))fail('mutable local requires a fresh owned JSON or Vec value');
      if(paired){
       const evidence=paired.evidence.locals.filter(item=>item.javascriptSpan[0]===declaration.getStart(file)&&item.javascriptSpan[1]===declaration.end);if(evidence.length!==1)fail('actual paired local span differs');
       const span=evidence[0].typeSpan;
@@ -719,7 +719,7 @@ function checkFunction(context,path,declaration,analysis){
     }
    }else if(ts.isExpressionStatement(statement)&&ts.isBinaryExpression(statement.expression)&&statement.expression.operatorToken.kind===ts.SyntaxKind.EqualsToken&&ts.isIdentifier(statement.expression.left)){
     const assignment=statement.expression,entry=scope.get(assignment.left.text);
-    if(!entry?.mutable||!['json','json-list-owned'].includes(entry.type)||checker.getSymbolAtLocation(assignment.left)!==entry.symbol)fail('assignment requires the actual mutable owned JSON or Vec binding');
+    if(!entry?.mutable||(!['json','json-list-owned'].includes(entry.type)&&!ownedNativeCopyScalarDomain(entry.type,nativeScalars))||checker.getSymbolAtLocation(assignment.left)!==entry.symbol)fail('assignment requires the actual mutable owned JSON or Vec binding');
     const value=expression(assignment.right,scope,depth+1);if(value.type!==entry.type||value.root!==null)fail('assigned owned domain or loan differs');
     body.push({kind:'assign',name:assignment.left.text,value});
    }else if(ts.isReturnStatement(statement)&&statement.expression){
@@ -811,3 +811,5 @@ import {primitiveBitwiseType,primitiveBitwiseAlias} from '../primitive-bitwise-t
 import {ownedParenthesizedType} from './owned-type-parentheses.mjs';
 
 import {ownedNativeScalarDeclaration} from './owned-native-scalar-declaration.mjs';
+
+import {ownedNativeIntegerDomain,ownedNativeCopyScalarDomain,joinOwnedNativeScalarOperands} from './owned-native-scalar-flow.mjs';
