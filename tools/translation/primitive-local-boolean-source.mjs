@@ -20,7 +20,9 @@ export function readPrimitiveLocalBooleanSource(rows,scope){
   const part=rows.slice(start,end);
   if(part.length===1){if(['true','false'].includes(part[0].text))return true;const role=scope.get(part[0].text);return role?.kind==='payload'&&role.domain==='bool';}
   const core=readCoreCarrierCallSource(part,scope);if(core?.kind==='payload'&&core.domain==='bool')return true;
-  return readPrimitiveLocalComparisonSource(part,primitive,{readAtom:readPrimitiveAliasOperand})!==null;
+  return readPrimitiveLocalComparisonSource(part,primitive,{readAtom:readPrimitiveAliasOperand})!==null||readScalarEqualitySource(part,scope)!==null;
  }
  return selected(0,rows.length,0)?{kind:'payload',domain:'bool',binding:rows.length===1&&scope.get(rows[0].text)?.kind==='payload'&&scope.get(rows[0].text).domain==='bool'?rows[0].text:null,bridge:'complete-native-boolean-expression-source',operandsUnevaluated:true,shortCircuitSourceRetained:true,sourceAuthority:false,semanticAuthority:false,executableAdmission:false}:null;
 }
+
+import {readScalarEqualitySource} from './scalar-equality-source.mjs';

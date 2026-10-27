@@ -284,3 +284,10 @@ count and unchanged argument order. Two equations and independent unrun two-API/
 six-caller/chain/refusal/JS/strict TS/paired reverse/native-order/export source are
 drafted. Every unfinished namespace/production/reverse/sync/freshness/parity/
 delivery row remains OPEN.
+
+The [Option predicate draft](option-predicate-source-draft.md) composes native
+is_some_and/is_none_or source through existing bool map/fallback APIs and closed
+text/bool equality candidates. Five equations and independent unrun six-API/
+twelve-caller/refusal/JS/strict TS/paired reverse/native-order/export source are
+drafted. Every unfinished namespace/production/reverse/sync/freshness/parity/
+delivery row remains OPEN; source occurrences are not executable coverage.

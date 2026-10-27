@@ -922,3 +922,9 @@ retaining every link and original evaluation order. Stop at domain transitions,
 bound complete chains and retain independent dispatch/type/source checks. No
 source-round reduction is measured performance evidence. See the
 [unrun integer chain draft](integer-method-chain-source-draft.md).
+
+Prefer composition of existing paired operations for common source predicates.
+Retain None defaults, Some(false/zero) behavior, callback selection and original
+evaluation order. Scalar equality source roles prove no PartialEq/type owner;
+text ordering needs its own contract. See the
+[unrun Option predicate draft](option-predicate-source-draft.md).

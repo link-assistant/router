@@ -3,7 +3,7 @@
 import {qualifiedCoreCallbackSourceRegions} from './qualified-core-callback-source-regions.mjs';
 import {readParenthesizedSourcePrefixTokens} from './qualified-source-call-tokens.mjs';
 import {readInlineClosureSourceTokens} from './inline-closure-source-tokens.mjs';
-const arities=new Map([['map',[1]],['and_then',[1]],['map_err',[1]],['or_else',[0,1]],['unwrap_or_else',[0,1]],['ok_or_else',[0]],['filter',[1]]]);
+const arities=new Map([['map',[1]],['and_then',[1]],['map_err',[1]],['or_else',[0,1]],['unwrap_or_else',[0,1]],['ok_or_else',[0]],['filter',[1]],['is_some_and',[1]],['is_none_or',[1]]]);
 export function coreCarrierCallbackSourceRegions(rows){
  const regions=qualifiedCoreCallbackSourceRegions(rows),pending=new Map(regions.map(row=>[row.start,row.end]));let work=0;
  for(let at=0;at<rows.length;at++){
