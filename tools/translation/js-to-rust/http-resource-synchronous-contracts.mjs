@@ -10,6 +10,7 @@ export function httpResourceSynchronousContracts(){
  const result=[];
  for(const [family,rows,runtimeModule]of [['text',TEXT_CONTRACTS,'text-runtime.mjs'],['owned-result',OWNED_RESULT_CONTRACTS,'owned-result-runtime.mjs'],['json-carrier',OWNED_OUTCOME_CONTRACTS,'owned-outcome-runtime.mjs'],['integer',INTEGER_CONTRACTS,'integer-runtime.mjs'],['primitive-option',PRIMITIVE_OPTION_CONTRACTS,'primitive-option-runtime.mjs'],['json-state',JSON_STATE_CONTRACTS,'json-state-runtime.mjs'],['json-field',JSON_FIELD_CONTRACTS.map(row=>({...row,parameters:row.args,returns:row.ret})),'json-fields-runtime.mjs']]){
   for(const row of rows){
+   if(family==='primitive-option'&&row.domain==='str'&&['ok_or','ok_or_text'].includes(row.method))continue;
    // Wider numeric and callback domains keep their original separate checker.
    // No erased callback or guessed numeric type may enter this closed lane.
    if(!row.parameters.every(type=>Object.hasOwn(domains,type))||!Object.hasOwn(domains,row.returns))continue;

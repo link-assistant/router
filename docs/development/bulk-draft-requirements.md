@@ -196,3 +196,11 @@ equations and independent unrun eight-API/four-caller/refusal/restaging/JS/stric
 TS/invalid-nonadmission/native/export cases are drafted. Real callback/Try/type/
 owner checks remain separate; every unfinished namespace/production/reverse/
 sync/freshness/parity/delivery row stays OPEN.
+
+The [eager Option error draft](option-eager-error-source-draft.md) adds ten paired
+eager or borrowed-to-String error conversions, real Result mappings and fresh
+generic/native source successors. Thirteen equations and independent unrun ABI/
+order/refusal/two-API/seven-caller/JS/strict TS/paired reverse/native/no-Rust-source/
+export cases are drafted. Wider Try/errors, borrowed resource results and every
+unfinished namespace/production/reverse/sync/freshness/parity/delivery row stay
+OPEN; no coverage is claimed.

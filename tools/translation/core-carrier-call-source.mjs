@@ -16,6 +16,7 @@ export function readCoreCarrierCallSource(rows,bindings){
  function operand(part,wanted,depth){
   if(++work>256||depth>8||!part.length)return false;const formatting=readCoreFormattingMacroSource(part);if(formatting)return same(formatting,wanted);const first=part[0],known=part.length===1&&ident(first)?bindings.get(first.text):null;if(same(known,wanted))return true;const group=readParenthesizedSourceOperandTokens(part);if(group)return operand(group,wanted,depth+1);if(wanted.kind==='payload'&&wanted.domain==='str'&&part[0]?.text==='&')return operand(part.slice(1),{kind:'payload',domain:'text-owned'},depth+1);
   if(wanted.kind==='payload'){
+   if(wanted.domain==='text-owned'&&part.length===5&&part[0].type==='string'&&/^(?:"|r#{0,255}")/u.test(part[0].text)&&part[1].text==='.'&&['to_owned','to_string'].includes(part[2].text)&&part[3].text==='('&&part[4].text===')')return true;
    if(wanted.domain==='str'){
     if(part.length===1&&first.type==='string'&&/^(?:"|r#{0,255}")/u.test(first.text))return true;
     if(part.length===2&&first.text==='&'&&ident(part[1])&&same(bindings.get(part[1].text),{kind:'payload',domain:'text-owned'}))return true;

@@ -849,3 +849,10 @@ unchecked body/type/owner/Try flags and independent whole-function admission.
 Unknown callback bodies must remain nonexecutable after any source restaging.
 See the
 [unrun callback call role draft](callback-call-role-source-draft.md).
+
+Preserve eager error evaluation and validate its actual domain on every Option
+branch. Borrowed-error conversion to String needs the real direct Try and
+written Result error obligation; a source role never proves From or ownership.
+Keep old restricted/borrowed-result refusals and extend complete generic identity
+source histories with small fresh runtime/declaration/native successors. See the
+[unrun eager Option error draft](option-eager-error-source-draft.md).

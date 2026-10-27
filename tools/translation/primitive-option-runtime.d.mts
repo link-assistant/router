@@ -114,6 +114,16 @@ export declare function router_option_text_owned_or(argument0:Readonly<{$:'None'
 export declare function router_option_text_owned_unwrap_or_default(argument0:Readonly<{$:'None'}>|Readonly<{$:'Some';field0:string}>): string;
 export declare function router_option_text_owned_filter_nonempty(argument0:Readonly<{$:'None'}>|Readonly<{$:'Some';field0:string}>,argument1:boolean): Readonly<{$:'None'}>|Readonly<{$:'Some';field0:string}>;
 export declare function router_option_str_filter_nonempty(argument0:Readonly<{$:'None'}>|Readonly<{$:'Some';field0:string}>,argument1:boolean): Readonly<{$:'None'}>|Readonly<{$:'Some';field0:string}>;
+export declare function router_option_bool_ok_or(argument0:Readonly<{$:'None'}>|Readonly<{$:'Some';field0:boolean}>,argument1:string): Readonly<{$:'Ok';field0:boolean}>|Readonly<{$:'Err';field0:string}>;
+export declare function router_option_bool_ok_or_text(argument0:Readonly<{$:'None'}>|Readonly<{$:'Some';field0:boolean}>,argument1:string): Readonly<{$:'Ok';field0:boolean}>|Readonly<{$:'Err';field0:string}>;
+export declare function router_option_u64_ok_or(argument0:Readonly<{$:'None'}>|Readonly<{$:'Some';field0:bigint}>,argument1:string): Readonly<{$:'Ok';field0:bigint}>|Readonly<{$:'Err';field0:string}>;
+export declare function router_option_u64_ok_or_text(argument0:Readonly<{$:'None'}>|Readonly<{$:'Some';field0:bigint}>,argument1:string): Readonly<{$:'Ok';field0:bigint}>|Readonly<{$:'Err';field0:string}>;
+export declare function router_option_i64_ok_or(argument0:Readonly<{$:'None'}>|Readonly<{$:'Some';field0:bigint}>,argument1:string): Readonly<{$:'Ok';field0:bigint}>|Readonly<{$:'Err';field0:string}>;
+export declare function router_option_i64_ok_or_text(argument0:Readonly<{$:'None'}>|Readonly<{$:'Some';field0:bigint}>,argument1:string): Readonly<{$:'Ok';field0:bigint}>|Readonly<{$:'Err';field0:string}>;
+export declare function router_option_str_ok_or(argument0:Readonly<{$:'None'}>|Readonly<{$:'Some';field0:string}>,argument1:string): Readonly<{$:'Ok';field0:string}>|Readonly<{$:'Err';field0:string}>;
+export declare function router_option_str_ok_or_text(argument0:Readonly<{$:'None'}>|Readonly<{$:'Some';field0:string}>,argument1:string): Readonly<{$:'Ok';field0:string}>|Readonly<{$:'Err';field0:string}>;
+export declare function router_option_text_owned_ok_or(argument0:Readonly<{$:'None'}>|Readonly<{$:'Some';field0:string}>,argument1:string): Readonly<{$:'Ok';field0:string}>|Readonly<{$:'Err';field0:string}>;
+export declare function router_option_text_owned_ok_or_text(argument0:Readonly<{$:'None'}>|Readonly<{$:'Some';field0:string}>,argument1:string): Readonly<{$:'Ok';field0:string}>|Readonly<{$:'Err';field0:string}>;
 
 export type GenericOption<T> = Readonly<{$:"None"}> | Readonly<{$:"Some";field0:T}>;
 export declare function router_option_identity<T>(value:GenericOption<T>):GenericOption<T>;

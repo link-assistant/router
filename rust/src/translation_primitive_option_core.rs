@@ -627,3 +627,67 @@ pub fn str_filter_nonempty(value: Option<&str>, trim_whitespace: bool) -> Option
     checked_str_option(value);
     value.filter(|text| if trim_whitespace { !text.trim().is_empty() } else { !text.is_empty() })
 }
+
+#[must_use]
+pub fn bool_ok_or(value: Option<bool>, error: String) -> Result<bool, String> {
+    checked_text(&error);
+    value.ok_or(error)
+}
+
+#[must_use]
+pub fn bool_ok_or_text(value: Option<bool>, error: &str) -> Result<bool, String> {
+    checked_text(error);
+    value.ok_or_else(|| error.to_owned())
+}
+
+#[must_use]
+pub fn u64_ok_or(value: Option<u64>, error: String) -> Result<u64, String> {
+    checked_text(&error);
+    value.ok_or(error)
+}
+
+#[must_use]
+pub fn u64_ok_or_text(value: Option<u64>, error: &str) -> Result<u64, String> {
+    checked_text(error);
+    value.ok_or_else(|| error.to_owned())
+}
+
+#[must_use]
+pub fn i64_ok_or(value: Option<i64>, error: String) -> Result<i64, String> {
+    checked_text(&error);
+    value.ok_or(error)
+}
+
+#[must_use]
+pub fn i64_ok_or_text(value: Option<i64>, error: &str) -> Result<i64, String> {
+    checked_text(error);
+    value.ok_or_else(|| error.to_owned())
+}
+
+#[must_use]
+pub fn str_ok_or<'input>(value: Option<&'input str>, error: String) -> Result<&'input str, String> {
+    checked_str_option(value);
+    checked_text(&error);
+    value.ok_or(error)
+}
+
+#[must_use]
+pub fn str_ok_or_text<'input>(value: Option<&'input str>, error: &str) -> Result<&'input str, String> {
+    checked_str_option(value);
+    checked_text(error);
+    value.ok_or_else(|| error.to_owned())
+}
+
+#[must_use]
+pub fn text_owned_ok_or(value: Option<String>, error: String) -> Result<String, String> {
+    checked_str_option(value.as_deref());
+    checked_text(&error);
+    value.ok_or(error)
+}
+
+#[must_use]
+pub fn text_owned_ok_or_text(value: Option<String>, error: &str) -> Result<String, String> {
+    checked_str_option(value.as_deref());
+    checked_text(error);
+    value.ok_or_else(|| error.to_owned())
+}

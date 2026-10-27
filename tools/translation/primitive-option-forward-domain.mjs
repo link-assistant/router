@@ -20,8 +20,9 @@ export function checkForwardPrimitiveOption(checker,node,env,path,expected,row,{
   if(optional(role))carrier(checker,value.type,'Option',path,syntax.span,(_checker,type,span)=>requirePayload(type,span));
   else if(role==='str'){requireBorrowedString(value.type,syntax.span);if(value.type.patternOwnershipRefusal)throw unsupported('primitive Option message/fallback','requires an actual borrowed str',syntax.span);}
   else if(role==='bool'&&row.domain!=='bool'){const type=value.type;if(!sameType(type,BOOL)||type.rustReference||type.rustOwnership||type.patternOwnershipRefusal||type.rustBorrowingUnresolved||type.rustGenericIdentityUnresolved)throw unsupported('optional text filter mode','requires actual by-value bool',syntax.span);checker.expectedOwnership(type,BOOL,path,syntax.span);}
+  else if(role==='text-owned'){if(!ownedString(value.type))throw unsupported('Option owning error','requires the actual standard owning String type',syntax.span);checker.expectedOwnership(value.type,payload('text-owned'),path,syntax.span);checker.expectedPrimitiveIdentity(value.type,payload('text-owned'),path,syntax.span);}
   else requirePayload(value.type,syntax.span);return value;
  });
- const type=optional(row.returns)?wantedOption():row.returns==='text-owned'?{...SOURCE_STRING,rustSourceType:true}:row.returns==='bool'?BOOL:payload(row.returns);if(!type)throw typeError('Unknown primitive Option result',node.span);
+ const type=row.returns.endsWith('-text-result')?checker.instantiations.result(base,payload('text-owned'),node.span):optional(row.returns)?wantedOption():row.returns==='text-owned'?{...SOURCE_STRING,rustSourceType:true}:row.returns==='bool'?BOOL:payload(row.returns);if(!type)throw typeError('Unknown primitive Option result',node.span);
  if(expected){if(!sameType(type,expected))throw typeError('Actual primitive Option return differs',node.span);checker.expectedOwnership(type,expected,path,node.span);checker.expectedPrimitiveIdentity(type,expected,path,node.span);}requireOriginalPrimitiveTryFromChecker(checker);current();return {k:'routerHostCall',id:row.javascriptName,args,type,span:node.span,constEligible:false};
 }

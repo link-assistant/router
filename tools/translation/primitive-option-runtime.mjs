@@ -18,6 +18,7 @@ function option(value,domain){
 const none=()=>freeze({$:'None'}),some=value=>freeze({$:'Some',field0:value});
 function operate(domain,method,args){
  host();if(method==='some')return some(payload(args[0],domain));if(method==='none')return none();const value=option(args[0],domain);
+ if(method==='ok_or'||method==='ok_or_text'){const error=payload(args[1],'text-owned');return value.some?freeze({$:'Ok',field0:value.value}):freeze({$:'Err',field0:error});}
  if(method==='filter_nonempty'){payload(args[1],'bool');return value.some&&(args[1]?filteredTextTrim(value.value).length>0:value.value.length>0)?some(value.value):none();}if(method==='unwrap_or_default')return value.some?value.value:'';
  if(method==='is_some')return value.some;if(method==='is_none')return !value.some;
  if(method==='unwrap_or'){const other=payload(args[1],domain);return value.some?value.value:other;}
@@ -149,3 +150,13 @@ export const router_option_text_owned_or=(argument0,argument1)=>operate("text-ow
 export const router_option_text_owned_unwrap_or_default=(argument0)=>operate("text-owned","unwrap_or_default",[argument0]);
 export const router_option_text_owned_filter_nonempty=(argument0,argument1)=>operate("text-owned","filter_nonempty",[argument0,argument1]);
 export const router_option_str_filter_nonempty=(argument0,argument1)=>operate("str","filter_nonempty",[argument0,argument1]);
+export const router_option_bool_ok_or=(argument0,argument1)=>operate("bool","ok_or",[argument0,argument1]);
+export const router_option_bool_ok_or_text=(argument0,argument1)=>operate("bool","ok_or_text",[argument0,argument1]);
+export const router_option_u64_ok_or=(argument0,argument1)=>operate("u64","ok_or",[argument0,argument1]);
+export const router_option_u64_ok_or_text=(argument0,argument1)=>operate("u64","ok_or_text",[argument0,argument1]);
+export const router_option_i64_ok_or=(argument0,argument1)=>operate("i64","ok_or",[argument0,argument1]);
+export const router_option_i64_ok_or_text=(argument0,argument1)=>operate("i64","ok_or_text",[argument0,argument1]);
+export const router_option_str_ok_or=(argument0,argument1)=>operate("str","ok_or",[argument0,argument1]);
+export const router_option_str_ok_or_text=(argument0,argument1)=>operate("str","ok_or_text",[argument0,argument1]);
+export const router_option_text_owned_ok_or=(argument0,argument1)=>operate("text-owned","ok_or",[argument0,argument1]);
+export const router_option_text_owned_ok_or_text=(argument0,argument1)=>operate("text-owned","ok_or_text",[argument0,argument1]);
