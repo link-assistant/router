@@ -421,3 +421,10 @@ local alias/method chains through the existing text core. Three equations and
 independent unrun two APIs/six callers/seven edits/JS/strict TS/native/refusal/
 export source are drafted. Wider constructor, owner/namespace, production,
 reverse/sync/freshness/parity/receiving/delivery obligations remain OPEN.
+
+The [closed String builder draft](text-builder-source-draft.md) adds whole
+push_str/clear source proposals through existing text/format operations, retaining
+receiver order, same-local reinitialization and complete unsupported-function
+refusals. Three equations and independent unrun two APIs/five callers/nine edits/
+JS/strict TS/native/refusal/export source are drafted. Wider suffixes/aliases/
+capacity/owner closure, production, reverse/sync/freshness/parity/delivery remain OPEN.

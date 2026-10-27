@@ -190,3 +190,8 @@ Text constructor source candidates must retain false original trait/drop/owner
 flags and recheck actual complete source independently. Preserve owning transfer
 and wrong-owner refusals; reuse chronological local events and existing core ABI.
 See [the unrun constructor draft](text-constructor-source-draft.md).
+
+Mutable String builder proposals require a complete receiver-use census and
+whole-function refusal on unsupported aliases/mutations/suffixes. Preserve original
+order and false owner/drop flags; no allocator/capacity/runtime parity is implied.
+See [the unrun builder draft](text-builder-source-draft.md).

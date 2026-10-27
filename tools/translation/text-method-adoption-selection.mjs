@@ -16,6 +16,7 @@ export function selectTextMethodAdoption(source,item,_scoped,modulePath,_names,h
   if(end>=tokens.length||!/^<(?:'[a-zA-Z_][a-zA-Z0-9_]*,?)+>$/u.test(text(tokens.slice(open,end+1))))return result('only written unconstrained lifetime parameters are source candidates');open=end+1;
  }
  if(tokens[open]?.text!=='(')return result('complete written input list required');const endParameters=close(tokens,open);if(endParameters<0)return result('complete original inputs required');let body=endParameters+1;while(body<tokens.length&&tokens[body].text!=='{')body++;if(body>=tokens.length||close(tokens,body)!==tokens.length-1)return result('complete original function body required');
+ if(tokens.some((row,index)=>row.text==='let'&&tokens[index+1]?.text==='mut'))return selectTextBuilderAdoption(source,item,tokens,{open,endParameters,body},helpers);
  const declaredTextOutput=tokens[endParameters+1]?.text==='->'?readTextWrittenAliasDomain(tokens.slice(endParameters+2,body)):null;
  const textTargets=createTextBranchTargetSource(tokens,{close});if(declaredTextOutput==='text-owned')textTargets.block(body,tokens.length-1);
  const domains=new Map(),parameters=new Set();for(const row of split(tokens.slice(open+1,endParameters))){if(!ident(row[0])||row[1]?.text!==':'||parameters.has(row[0].text))return result('distinct immutable input bindings required');parameters.add(row[0].text);if(borrowed(text(row.slice(2))))domains.set(row[0].text,'str');else if(text(row.slice(2))==='String')domains.set(row[0].text,'text-owned');else if(text(row.slice(2))==='usize')domains.set(row[0].text,'usize-count');else{const receiverRole=readJsonReceiverWrittenSourceRole(row.slice(2),_scoped??{})??readPrimitiveCoreParameterSourceRole(row.slice(2),_scoped);if(receiverRole)domains.set(row[0].text,receiverRole);}}
@@ -110,3 +111,5 @@ import {splitRustMacroBangSourceTokens} from './rust-macro-token-source.mjs';
 import {createTextBranchTargetSource} from './text-branch-target-source.mjs';
 
 import {readTextConstructorSourcePrefix} from './text-constructor-source.mjs';
+
+import {selectTextBuilderAdoption} from './text-builder-adoption-selection.mjs';
