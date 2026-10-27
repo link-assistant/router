@@ -14,8 +14,8 @@ export function selectOwnedCarrierAdoption(source,item,scoped,modulePath,names,h
  }
  const localArguments=createOwnedJsonLocalSource(tokens.slice(body+1,-1),roles,seen),localUses=new Map();
  const uses=new Map();for(let at=body+1;at<tokens.length-1;at++){
-  const macro=macroAt(tokens,at,'json')??macroAt(tokens,at,'format');if(macro)return result('macro expansion requires a separate complete source scope');const word=tokens[at].text;
-  if(word==='#'||['unsafe','async','await','yield','for','while','loop','fn','mod','use','extern','macro_rules','trait','impl','struct','enum','union','type','const','static','move'].includes(word)||word.endsWith('!')||word==='!'&&ident(tokens[at-1])&&['(','[','{'].includes(tokens[at+1]?.text))return result('local producer effect loop or unknown macro uncertainty');
+  const macro=macroAt(tokens,at,'json')??macroAt(tokens,at,'format');if(macro)return result('macro expansion requires a separate complete source scope');const word=tokens[at].text;if(word==='for'&&!localArguments)return result('ordinary unshadowed complete iterator pattern source required');
+  if(word==='#'||['unsafe','async','await','yield','while','loop','fn','mod','use','extern','macro_rules','trait','impl','struct','enum','union','type','const','static','move'].includes(word)||word.endsWith('!')||word==='!'&&ident(tokens[at-1])&&['(','[','{'].includes(tokens[at+1]?.text))return result('local producer effect loop or unknown macro uncertainty');
   if(roles.has(word))uses.set(word,(uses.get(word)??0)+1);if(ident(tokens[at])&&tokens[at-1]?.text!=='let')localUses.set(word,(localUses.get(word)??0)+1);
  }
  const errorLiteral=args=>{

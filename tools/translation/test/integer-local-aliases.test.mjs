@@ -27,7 +27,7 @@ test('native suffixes and primitive bounds require a genuine bounded domain',lim
  for(const value of ['256_u8','-129_i8','18446744073709551616_u64','-9223372036854775809_i64','340282366920938463463374607431768211456_u128','-0_u64','1','1.0','custom()','value.as_ref()','u64::OTHER'])assert.equal(readPrimitiveAliasOperand(tokens(value),new Map()),null,value);
 });
 test('failed new alias census retains the original parameter-only lane',limits,()=>{
- for(const body of ['let (first,second)=pair;','let value=value;','let alias=value;let alias=value;','let u64=value;','for other in collection {}'])assert.equal(createPrimitiveLocalArgumentSource(tokens(body),new Map([['value','u64']])),null,body);
+ for(const body of ['let (first,second)=pair;','let value=value;','let alias=value;let alias=value;','let u64=value;','for (other,index) in collection {}'])assert.equal(createPrimitiveLocalArgumentSource(tokens(body),new Map([['value','u64']])),null,body);
  assert.equal(createPrimitiveLocalArgumentSource(tokens('let text=value;'),new Map([['value','u64']]),new Set(['value','text'])),null);
 });
 for(const [name,propose]of [['ordinary',proposeCoreIntegerMethodCorpus],['source-bound',proposeSourceBoundInteger]])test(name+' aliases selected primitive results and closed native literals use complete CST substitutions',limits,()=>{

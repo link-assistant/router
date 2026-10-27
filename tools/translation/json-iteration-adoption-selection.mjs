@@ -21,7 +21,7 @@ export function selectJsonIterationAdoption(source,item,scoped,modulePath,names,
  const shadowed=new Set();let uncertainLoop=false;
  const note=(start,end)=>{for(let at=start;at<end;at++)if(parameterDomains.has(tokens[at].text))shadowed.add(tokens[at].text);};
  for(let index=body+1;index<tokens.length;index++){
-  if(['for','while','loop'].includes(tokens[index].text))uncertainLoop=true;
+  if(['while','loop'].includes(tokens[index].text)||tokens[index].text==='for'&&!localArguments)uncertainLoop=true;
   if(tokens[index].text==='let'){let end=index+1;while(end<tokens.length&&!['=',':',';','{','}'].includes(tokens[end].text))end++;note(index+1,end);}
   if(tokens[index].text==='|'&&['=','(',',','return','{','=>','move'].includes(tokens[index-1]?.text)){let end=index+1;while(end<tokens.length&&tokens[end].text!=='|')end++;note(index+1,end);}
   if(tokens[index].text==='=>'){let start=index-1;while(start>body&&!['{','}',',',';'].includes(tokens[start-1].text))start--;note(start,index);}

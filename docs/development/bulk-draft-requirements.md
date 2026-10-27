@@ -661,3 +661,10 @@ closed loop prefixes. Eleven complete equations and unrun domain/mismatch/scope/
 scalar-boundary/bulk/receiving JS/strict TS/export/native-oracle source is drafted.
 All wider source/native/production/sync/freshness/parity/delivery requirements
 remain unfinished.
+
+The [ordinary for alias draft](for-alias-scope-source-draft.md) shares complete
+plain/wildcard pattern census rules across seven families and actual selectors,
+retaining unknown iterator values and all shadow/ownership/native gates.
+Eighteen complete equations and independent unrun scope/pattern/bulk/JS/strict
+TS/export/native-oracle source is drafted. All wider source/native/production/
+sync/freshness/parity/delivery requirements remain unfinished.

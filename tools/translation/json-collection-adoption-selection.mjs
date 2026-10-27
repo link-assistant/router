@@ -18,7 +18,7 @@ export function selectJsonCollectionAdoption(source,item,scoped,modulePath,names
   // profile. A declaration anywhere with that spelling remains uncertain.
   const receiver=tokens[at].text;let receiverShadow=false;
   for(let index=body+1;index<tokens.length;index++){
-   if(['for','while','loop'].includes(tokens[index].text))receiverShadow=true;
+   if(['while','loop'].includes(tokens[index].text)||tokens[index].text==='for'&&!localArguments)receiverShadow=true;
    if(tokens[index].text==='let'){let end=index+1;while(end<tokens.length&&!['=',';','{','}'].includes(tokens[end].text))end++;if(!localArguments?.names.has(tokens[index+1]?.text)&&tokens.slice(index+1,end).some(token=>token.text===receiver))receiverShadow=true;}
    if(tokens[index].text==='=>'){let start=index-1;while(start>body&&!['{','}',',',';'].includes(tokens[start-1].text))start--;if(tokens.slice(start,index).some(token=>token.text===receiver))receiverShadow=true;}
   }

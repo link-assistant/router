@@ -33,7 +33,6 @@ export function selectTextMethodAdoption(source,item,_scoped,modulePath,_names,h
  for(let at=body+1;at<tokens.length-1;at++){
   const word=tokens[at].text;if(++work>200000)return result('complete source scan bound exceeded');
   if(word==='#'||['unsafe','async','await','yield','loop','fn','mod','use','extern','macro_rules','trait','impl','struct','enum','union','type','const','static','move'].includes(word)||word==='|'&&!projectionPipes.has(at)||word==='||'&&['=','(',',','{','return','move','=>'].includes(tokens[at-1]?.text)||word!=='!'&&word.endsWith('!')||word==='!'&&ident(tokens[at-1])&&['(','[','{'].includes(tokens[at+1]?.text))return result('unknown local source producer, closure or macro');
-  if(word==='for')return result('iterator binding scope requires a separate adoption sequence');
   if(word==='let'){
    const declaration=localAliasDeclaration(tokens,at),binding=declaration?.token;if(!declaration||parameters.has(binding.text)||localNames.has(binding.text))return result('shadowing mutable or destructured local requires separate binding scope');localNames.add(binding.text);
   }

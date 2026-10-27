@@ -5,7 +5,7 @@ import {createWrittenLocalAliasRules} from './local-alias-written-source.mjs';
 import {censusLocalAliasBindings} from './local-alias-binding-source.mjs';
 const fail=message=>{throw new TypeError('Primitive local argument source: '+message);};
 export function createPrimitiveLocalArgumentSource(rows,parameters,allParameters=new Set(parameters.keys())){
- if(!rows.some(row=>row.text==='let')||!primitiveLocalCensus(rows,allParameters))return null;
+ if(!rows.some(row=>row.text==='let'||row.text==='for')||!primitiveLocalCensus(rows,allParameters))return null;
  return createChronologicalLocalSource(rows,parameters,{...createWrittenLocalAliasRules({readWrittenDomain:readPrimitiveWrittenAliasDomain,readOperand:readPrimitiveAliasOperand,acceptResult:event=>primitiveBitwiseType(event.returnsKind)?.name??null}),initializerSizes:[1,2,3],aliasKind:'complete-immutable-primitive-alias',resultKind:'complete-selected-primitive-result-alias'});
 }
 

@@ -15,7 +15,7 @@ export function selectPrimitiveOptionMethodAdoption(source,item,_scoped,modulePa
  const localNames=new Set();let work=0;
  for(let at=body+1;at<tokens.length-1;at++){
   const word=tokens[at].text;if(++work>200000)return result('complete source scan bound exceeded');
-  if(word==='#'||['async','unsafe','await','yield','fn','mod','use','extern','macro_rules','macro','trait','impl','struct','enum','union','type','const','static','move','for','|'].includes(word)||word==='||'&&['=','(',',','return','{','=>'].includes(tokens[at-1]?.text)||word!=='!'&&word.endsWith('!')||word==='!'&&ident(tokens[at-1])&&['(','[','{'].includes(tokens[at+1]?.text))return result('unknown producer closure pattern or macro scope');
+  if(word==='#'||['async','unsafe','await','yield','fn','mod','use','extern','macro_rules','macro','trait','impl','struct','enum','union','type','const','static','move','|'].includes(word)||word==='||'&&['=','(',',','return','{','=>'].includes(tokens[at-1]?.text)||word!=='!'&&word.endsWith('!')||word==='!'&&ident(tokens[at-1])&&['(','[','{'].includes(tokens[at+1]?.text))return result('unknown producer closure pattern or macro scope');
   if(word==='let'){const declaration=localAliasDeclaration(tokens,at),binding=declaration?.token;if(!declaration||parameters.has(binding.text)||localNames.has(binding.text))return result('shadowed mutable or destructured local requires separate binding rules');localNames.add(binding.text);}
  }
  const localArguments=createPrimitiveCarrierLocalSource(tokens.slice(body+1,-1),parameterDomains,parameters,{readWrittenRole:tokens=>role(tokens,_scoped)});if(!localArguments)return result('complete carrier local scope requires separate source selection');let env=parameterDomains;

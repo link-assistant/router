@@ -6,7 +6,7 @@ import {censusLocalAliasBindings} from './local-alias-binding-source.mjs';
 import {primitiveBitwiseLiteral} from './primitive-bitwise-types.mjs';
 const fail=message=>{throw new TypeError('Text local argument source: '+message);};
 export function createTextLocalArgumentSource(rows,parameters,allParameters=new Set(parameters.keys())){
- if(!rows.some(row=>row.text==='let'))return {at(){return parameters;},evidence(){return null;},selectedCall(){}};
+ if(!rows.some(row=>row.text==='let'||row.text==='for'))return {at(){return parameters;},evidence(){return null;},selectedCall(){}};
  if(!textLocalCensus(rows,allParameters))return null;
  return createChronologicalLocalSource(rows,parameters,{...createWrittenLocalAliasRules({readWrittenDomain:readTextWrittenAliasDomain,readOperand:readTextAliasOperand,acceptResult:event=>['str','text-owned'].includes(event.returnsKind)?event.returnsKind:null}),initializerSizes:[1,5],aliasKind:'complete-immutable-text-alias',resultKind:'complete-selected-text-result-alias'});
 }

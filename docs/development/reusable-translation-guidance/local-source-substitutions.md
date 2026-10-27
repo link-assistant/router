@@ -46,3 +46,8 @@ native type tokens from a concrete initializer and requires exact family-domain
 agreement for both operands and selected whole results. An annotation cannot
 supply a missing value. Keep mutable/unknown/custom/shadowed domains unproved;
 retain the independent complete checker and native/source gates afterward.
+
+Ordinary for source can retain independent aliases only after the complete
+plain/wildcard pattern census excludes all real parameter/local/namespace
+shadowing. Keep iterator domains unknown and preserve actual body frames,
+mutation and exits. Never use a source census as checked loop/type/owner proof.
