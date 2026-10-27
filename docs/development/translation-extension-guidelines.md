@@ -214,3 +214,9 @@ Generated consuming text call inverses must rejoin the complete current original
 library and actual relative named import, reject shadow/arity/owner ambiguity and
 retain whole-project checking/target reproduction. Reissue source only on use and
 before publication; see [the unrun call inverse draft](consuming-text-call-source-draft.md).
+
+Generated declaration/header source summaries never establish original macro or
+attribute ownership, export closure or type-prefix absence. Preserve every raw
+item/parent inverse and unresolved producer, reissue native headers from genuine
+views, bound combined work and clear operation-local raw/owner data on all exits.
+See [the unrun generated header draft](generated-header-source-draft.md).

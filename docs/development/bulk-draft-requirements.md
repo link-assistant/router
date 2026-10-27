@@ -457,3 +457,11 @@ runtime/declaration/catalog source before qualified native proposals. Four compi
 equations plus three library equations and independent unrun whole/mixed paired/
 physical-source/strict TS/owned-witness/refusal cases are drafted. Wider borrowing,
 namespace/production/reverse/sync/freshness/parity/receiving/delivery remain OPEN.
+
+The [generated declaration/header source draft](generated-header-source-draft.md)
+adds complete nonfunction declaration units, actual native leading-header sites,
+associated-member inspection and operation-local raw/owner sharing to both real
+architecture expansion paths. Six equations and independent unrun real/synthetic/
+lifecycle/source/native/refusal/export cases are drafted. Macro owner/hygiene,
+attribute semantics, export/type-prefix closure and every production/translation/
+sync/freshness/parity/receiving/delivery obligation remain OPEN and unqualified.

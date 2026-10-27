@@ -177,3 +177,6 @@ export {planSourceBoundCoreFixedPointPacketAdoption,applySourceBoundCoreFixedPoi
 export {proposeForwardOwnedFormatBodySynchronization} from './forward-owned-format-body-synchronization.mjs';
 
 export {proposeForwardOwnedCompositeSynchronization} from './forward-owned-composite-synchronization.mjs';
+
+export {originalNamespaceAttributeHeaderSites} from './original-namespace-parser.mjs';
+export {captureGeneratedItemHeaderSources,proposeGeneratedDeclarationSourceUnit} from './generated-item-header-source.mjs';
