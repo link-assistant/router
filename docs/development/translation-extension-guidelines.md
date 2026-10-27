@@ -856,3 +856,9 @@ written Result error obligation; a source role never proves From or ownership.
 Keep old restricted/borrowed-result refusals and extend complete generic identity
 source histories with small fresh runtime/declaration/native successors. See the
 [unrun eager Option error draft](option-eager-error-source-draft.md).
+
+Try source roles require one actual original suffix on a closed known carrier
+call, never an enclosing return assumption. Preserve original question-mark/dot
+spans, payload domains, argument order and the independent whole-function Try,
+source binding and From checks. See the
+[unrun core Try projection draft](core-try-projection-source-draft.md).

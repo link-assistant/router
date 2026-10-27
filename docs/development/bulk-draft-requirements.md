@@ -204,3 +204,10 @@ order/refusal/two-API/seven-caller/JS/strict TS/paired reverse/native/no-Rust-so
 export cases are drafted. Wider Try/errors, borrowed resource results and every
 unfinished namespace/production/reverse/sync/freshness/parity/delivery row stay
 OPEN; no coverage is claimed.
+
+The [core Try projection draft](core-try-projection-source-draft.md) composes
+actual Option/Result question marks through qualified calls, scalar expressions
+and integer/local receivers. Four equations and independent unrun two-API/
+six-caller/refusal/restaging/JS/strict TS/invalid-context/native/export source are
+drafted. Actual Try/type/source checks remain independent and all unfinished
+namespace/production/reverse/sync/freshness/parity/delivery rows remain OPEN.
