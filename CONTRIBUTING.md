@@ -22,8 +22,14 @@ For the active issue #759 drafting phase, the user's latest instruction is to
 bulk draft every remaining requirement before running any tests or experiments.
 Continue source review, implementation, independent test-source drafting and
 documentation together. Defer test execution, benchmarks, compiler diagnostics,
-trial translation, freshness regeneration and CI-triggering pushes until the
-complete source batch is drafted. Automated source writing may construct the
+trial translation and freshness regeneration. No local tests or compilation
+are authorized. The user's 2026-10-27 update permits coherent source checkpoint
+pushes every few hours even if CI starts. During drafting, do not inspect CI
+statuses, logs, artifacts or review feedback, wait on CI completion, or begin
+CI-driven fixes. This overrides earlier no-push/completed-cycle requirements
+for the active phase only; preserve every same-SHA JavaScript gate before
+fatal Rust CI. See [the publication policy](docs/development/bulk-draft-publication.md).
+Automated source writing may construct the
 implementation draft; it does not qualify the generated code. Track work in
 [the bulk draft ledger](docs/development/bulk-draft-requirements.md); an unchecked
 draft is not a passing gate, a coverage result or completed delivery. Preserve
@@ -793,8 +799,10 @@ Follow the [complete extension guidelines](docs/development/translation-extensio
 for synchronization exports, inverse families, opaque resources, source units,
 producer composition and local declarative expansion. The detailed requirements
 were moved intact to keep contribution files below 1,000 lines. During the
-active bulk draft phase, execute no tests, experiments or CI-triggering pushes;
-all original source checks, complete gates and fatal gated Rust CI remain
+active bulk draft phase, execute no local tests, compilation or experiments.
+Periodic authorized source pushes are allowed; do not inspect or fix CI feedback
+until the full source draft exists. All original source checks, complete gates
+and fatal gated Rust CI remain
 required after every source requirement is drafted.
 
 Bulk source adoption follows the [fresh packet installation contract](docs/development/owned-packet-adoption-draft.md):

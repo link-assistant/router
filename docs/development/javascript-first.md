@@ -5,15 +5,22 @@ Use JavaScript to express and test new behavior before changing Rust. This keeps
 During the current issue #759/#772 source-only phase, bulk draft the entire
 remaining requirement set before running any test or experiment. Draft complete
 independent JavaScript/TypeScript and Rust oracle sources, but execute no parser,
-translator, preparer, diagnostic, generation, benchmark or CI-triggering push.
-Automated source writing and coherent local commits remain allowed. This phase
-instruction supersedes the usual feedback cadence below; after every source
-requirement is drafted, all original checks and deadlines remain mandatory.
+translator, preparer, diagnostic, generation or benchmark locally. No local
+tests or compilation are authorized. The user's 2026-10-27 update allows coherent
+source checkpoint pushes every few hours, even when CI starts; do not inspect
+CI status/logs/artifacts/review feedback, wait for completion, or begin CI-driven
+repairs until every requirement is fully source drafted. Source writing and SCM
+operations remain allowed. This overrides the earlier publication/feedback
+cadence during drafting; every original check, deadline and same-SHA JavaScript
+gate before fatal Rust CI remains mandatory. See
+[the publication policy](bulk-draft-publication.md).
 
 ## Verify the completed source draft in JavaScript
 
-After the entire required source draft is present, run complete small Node/Bun
-test files and strict TypeScript checks. Read the corresponding Rust and
+After the entire required source draft is present, complete small Node/Bun test
+files and strict TypeScript checks still require evidence. The current no-local-
+tests/compilation instruction remains until separately authorized; use CI for
+authorized execution. Read the corresponding Rust and
 generated bodies, collect
 related failures and fix shared substitution rules before full regeneration.
 Use separate reusable language and repository formatting/quality sequences as
@@ -85,6 +92,11 @@ JavaScript success before Rust. No generic conditional caller or bypass input is
 permitted.
 
 ## Integrate one repair batch per completed CI cycle
+
+During the active bulk-draft publication exception, push coherent source
+checkpoints about every three hours without waiting for or inspecting CI.
+The cycle-based repair rules below resume only after every requirement is
+fully source drafted; do not use CI feedback to steer the drafting phase.
 
 During active issue #759 development, create reviewable checkpoint commits at
 least once every six hours. Commit coherent source batches while larger

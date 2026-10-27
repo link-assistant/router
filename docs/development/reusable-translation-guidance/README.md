@@ -103,7 +103,12 @@ requirement ledger and draft implementations, forward/reverse mappings, runtime
 declarations, regression source and documentation together. Automated source
 writing may construct draft files; it does not qualify them. Defer tests,
 benchmarks, verification compiler runs, exploratory execution, freshness
-regeneration and CI-triggering publication until that complete draft exists.
+regeneration until that complete draft exists. Treat publication authorization
+separately: when the receiving user explicitly permits periodic source pushes
+while deferring feedback, publish only coherent checkpoints at their cadence
+and do not inspect CI status, logs, artifacts or review feedback or begin CI
+repairs until the complete draft exists. Do not infer this exception for a
+receiving project. Preserve every same-SHA JavaScript gate before fatal Rust CI.
 Keep all original verification obligations and deadlines for the later phase.
 Record partial source coverage and unverified changes explicitly; neither a
 rule catalogue, an output proposal nor a source/CST inverse establishes runtime

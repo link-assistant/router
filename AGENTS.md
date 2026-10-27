@@ -13,11 +13,17 @@ writing to construct the implementation draft is allowed; executing that draft
 for validation is deferred. Draft independent regression cases and
 Rust oracle source without executing them. Record all new changes as unverified
 and maintain the remaining requirements in
-[the bulk draft ledger](docs/development/bulk-draft-requirements.md). Do not push
-a drafting checkpoint that would start CI during this phase. This instruction
-supersedes the usual focused-test cadence below; the original complete gates,
-case deadlines and JavaScript-before-Rust requirements remain required after
-the entire source draft is complete. No local Rust tools are authorized.
+[the bulk draft ledger](docs/development/bulk-draft-requirements.md). The user's
+2026-10-27 update authorizes periodic source checkpoint pushes every few hours,
+even when those pushes start CI. Aim for a coherent checkpoint about every
+three hours while actively drafting. Do not inspect CI statuses, logs, artifacts
+or review feedback, wait for CI completion, or begin CI-driven repairs until
+every requirement is fully source drafted. This overrides earlier no-push and
+completed-CI-cycle prerequisites during drafting; it does not change workflows
+or permit bypassing the eight same-SHA JavaScript gates before fatal Rust CI.
+No local tests or compilation are authorized. Source writing and SCM operations
+remain allowed; all checkpoint changes remain unverified. See
+[the publication policy](docs/development/bulk-draft-publication.md).
 
 Run the complete local JavaScript gate with `node scripts/check-js-first-local.mjs`. Resolve the full set of failures together, rerun the gate and inspect every stage. Inventory validation alone does not establish parity. Rust verification requires the complete gate, including strict parity, forward translation and reverse regeneration checks, to pass for the current SHA and file contents.
 
@@ -33,13 +39,13 @@ Local commit hooks must not invoke Rust tools or automatically remove build cach
 
 ## Coordination and publication
 
-Workers use isolated worktrees and draft commits only in their own worktrees. The integration coordinator combines and checks their complete batch. Only the designated push gate owner may push a branch or create/update its pull request. That owner collects the entire completed CI failure set before dispatching one coordinated repair batch. Do not push speculative follow-ups, cancel an existing CI run, or bypass a failed JavaScript gate to start Rust.
+Workers use isolated worktrees and draft commits only in their own worktrees. The integration coordinator combines and checks their complete batch. Only the designated push gate owner may push a branch or create/update its pull request. Outside the active source-only publication exception above, that owner collects the entire completed CI failure set before dispatching one coordinated repair batch. Do not push speculative follow-ups, cancel an existing CI run, or bypass a failed JavaScript gate to start Rust.
 
 While issue #759 is actively being developed, create reviewable checkpoint commits at least once every six hours. Commit coherent source changes while broader translation, generation or parity work remains unfinished, and record passed, failed and unrun checks accurately. Workers commit in their assigned worktrees; the coordinator integrates completed changes. The checkpoint cadence does not waive the existing publication or same-commit JavaScript-first CI requirements.
 
 An explicit user request for a draft checkpoint to obtain CI feedback authorizes that checkpoint before the complete local gate is green. The designated push owner still reviews the coherent source batch, collects every completed CI failure before the next push, and records failed and unrun checks against the exact SHA. Such a feedback checkpoint does not establish completion or release readiness. Every required JavaScript CI stage must pass for that same SHA before any Rust job starts; Rust failures then remain fatal. Continue independent source drafting while CI runs without changing its published head.
 
-For active issue #759, the user has given standing authorization for the designated push owner to push the coordinated repair batch and update its draft pull request without another approval request. Wait for the published head's entire CI cycle to finish, collect and handle every failure, and then publish the reviewed fixes promptly for fresh feedback. This authorization preserves the single publisher, honest failed/unrun evidence and same-SHA JavaScript gate before Rust execution.
+For active issue #759, the user has given standing authorization for the designated push owner to push the coordinated repair batch and update its draft pull request without another approval request. After the complete bulk draft exists, collect the published head's complete CI cycle and coordinate repairs before publishing fixes. During drafting, use periodic source checkpoints without inspecting or reacting to CI feedback. This authorization preserves the single publisher, honest failed/unrun evidence and same-SHA JavaScript gate before Rust execution.
 
 The user explicitly requested the 2026-10-19 checkpoint push and merge of PR #761, followed by a new continuation pull request. Record the remaining work in [the continuation ledger](docs/development/issue-759-continuation.md), keep issue #759 open, and use normal repository merge protections. This checkpoint rollover does not certify complete translation or parity and does not unlock Rust CI before all required JavaScript stages pass for the same SHA.
 
@@ -49,7 +55,7 @@ For issue #759, the user's latest 2026-10-21 instruction requires existing subag
 
 ## Repository conventions
 
-Translation extensions use ordered substitution rules with separately declared reusable language and repository format/quality sequences. Preserve the checked, serialized and reparsed meta boundary in both directions. Read [the rule-layer contract](docs/development/translation-rules.md); add shared behavioral and refusal regressions rather than manually editing generated outputs. Add Rust edge-case test source where needed, but issue #759 forbids every local Rust tool invocation, including Cargo, Clippy, rustfmt, rustc, rust-script and hooks; the bounded exception above does not apply. Obtain Rust results in CI only after all JavaScript stages pass for the same SHA. After the entire remaining requirement set is source drafted, execute complete focused JavaScript files and strict TypeScript checks; the complete gate remains mandatory before claiming verified completion or release readiness. During the current source-only phase, draft those cases without executing them. Authorized feedback checkpoints keep their explicit failed/unrun status and remain deferred while a push would start CI during this phase.
+Translation extensions use ordered substitution rules with separately declared reusable language and repository format/quality sequences. Preserve the checked, serialized and reparsed meta boundary in both directions. Read [the rule-layer contract](docs/development/translation-rules.md); add shared behavioral and refusal regressions rather than manually editing generated outputs. Add Rust edge-case test source where needed, but issue #759 forbids every local Rust tool invocation, including Cargo, Clippy, rustfmt, rustc, rust-script and hooks; the bounded exception above does not apply. Obtain Rust results in CI only after all JavaScript stages pass for the same SHA. After the entire remaining requirement set is source drafted, all complete focused JavaScript/strict TypeScript and full-gate obligations still require evidence before any verified-completion claim; the current prohibition on local tests and compilation remains until separately authorized. Draft cases without executing them. Periodic source checkpoints may start CI, but leave its feedback uninspected until drafting is complete and record local checks as unrun and CI as not inspected.
 
 Prioritize rules that remove common blockers in actual Router functions. The user authorizes a shared Rust/JavaScript compatibility core with intentionally untranslated library internals and repository rules that map qualified application usages to those abstractions. Follow [the compatibility-core contract](docs/development/compatibility-core.md): implement matching behavior, preserve explicit boundaries, verify shared cases and measure actual application coverage instead of counting API declarations or preserved source as executable code.
 

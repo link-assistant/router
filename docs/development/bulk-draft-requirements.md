@@ -3,8 +3,14 @@
 The user requires all remaining implementation work to be drafted before any
 further tests or experiments. Source review and source editing continue; all
 new runtime, rule, test and workflow changes remain unverified. Do not start
-trial generation, verification compiler checks, benchmarks, local tests or CI
-during this phase. Automated source writing may construct implementation files,
+trial generation, verification compiler checks, benchmarks, local tests or
+compilation during this phase. The user's 2026-10-27 update permits periodic
+source checkpoint pushes every few hours even when they start CI. Do not inspect
+CI status/logs/artifacts/review feedback, wait for completion, or begin CI-driven
+repairs until the entire source draft exists. Preserve every same-SHA JavaScript
+gate before fatal Rust CI; checkpoints certify no coverage or passing checks.
+See [the publication policy](bulk-draft-publication.md).
+Automated source writing may construct implementation files,
 with all resulting changes marked unverified. No local Rust tools are permitted
 in any phase of this task.
 
@@ -29,7 +35,7 @@ present; verification and delivery remain separate later obligations.
 | CI repairs | Collected whole published cycle; selected local repairs | Draft the remaining source-history, native parser, timing, profile freshness, reverse freshness and strict parity repairs without changing workloads or deadlines. |
 | JavaScript-first CI | All required same-SHA JS stages gate fatal Rust jobs | Preserve all eight stages, complete matrix membership, original commands and deadlines; no Rust bypass or swallowed failures. |
 | Reusable delivery | Exported compiler, source provenance and adoption tooling | Include every new runtime/rule/source dependency, notices and receiving instructions; no qualification claim from an export alone. |
-| Resource and publication discipline | Single publisher; coordinator works alone | Continue alone, avoid extra dependency trees, create coherent commits without Rust hooks and defer CI-triggering pushes until drafting is complete. |
+| Resource and publication discipline | Single publisher; coordinator works alone | Continue alone, avoid extra dependency trees, commit without execution hooks, push source checkpoints every few hours, and defer CI inspection/repairs until drafting is complete. |
 
 Complete source-family records and their open limitations are retained in
 [history part one](bulk-draft-source-history-1.md) and

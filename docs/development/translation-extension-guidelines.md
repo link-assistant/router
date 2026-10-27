@@ -124,7 +124,10 @@ expression or whole Router support.
 Independent exported receiving cases, complete original histories and behavioral
 regressions must be drafted with implementation. Under the user's active bulk
 draft instruction, execute none until every requirement has its full source
-draft; no CI-triggering push or local Rust tool is allowed during this phase.
+draft. No local tests, compilation or Rust tools are allowed. The user now
+authorizes periodic source checkpoint pushes even if CI starts, while CI
+feedback inspection and repairs remain deferred until drafting is complete;
+see [the publication policy](bulk-draft-publication.md).
 Record exported source, receiving evidence, whole-gate evidence and production
 parity separately. See the [export draft](synchronization-export-draft.md).
 
