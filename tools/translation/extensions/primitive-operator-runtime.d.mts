@@ -20,5 +20,7 @@ export declare function primitiveNot(value:bigint,bits:number,signed:boolean):bi
 export type RustIntegerMethod="saturating_add"|"saturating_sub"|"saturating_mul"|"wrapping_add"|"wrapping_sub"|"min"|"max"|"clamp";
 export declare function primitiveIntegerMethod(value:bigint,other:bigint,upper:bigint|null,bits:number,signed:boolean,method:RustIntegerMethod):bigint;
 
-export type RustIntegerArithmetic="add"|"sub"|"mul"|"div"|"rem";
-export declare function integerArithmetic(left:bigint,right:bigint,bits:number,signed:boolean,operation:RustIntegerArithmetic):bigint;
+export type RustIntegerArithmetic="add"|"sub"|"mul"|"div"|"rem"|"neg";
+export declare function integerArithmetic(left:bigint,right:bigint,bits:number,signed:boolean,operation:Exclude<RustIntegerArithmetic,"neg">):bigint;
+
+export declare function integerArithmetic(value:bigint,right:null,bits:number,signed:true,operation:"neg"):bigint;

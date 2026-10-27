@@ -498,3 +498,10 @@ complete project synchronization. Eighteen whole equations and unrun boundary/
 exact-error/order/strict TS/meta/inverse/sync/refusal/native oracle sources are
 drafted. Every remaining source/native/production/sync/freshness/parity/delivery
 requirement remains unfinished.
+
+The [shared checked signed negation draft](native-integer-negation-draft.md)
+extends the existing arithmetic carrier across five signed widths, forward/meta,
+seven reverse profiles, exact checked Rust inverses and full-project sync. Ten
+whole equations and unrun boundary/exact-error/order/strict TS/inverse/source/
+refusal/native oracle cases are drafted. Every remaining source/native/
+production/sync/freshness/parity/delivery requirement remains unfinished.

@@ -114,7 +114,7 @@ function nativeArithmeticRustMacroMessage(name, message) {
 
 // Exact checked-profile arithmetic, independent of Rust debug/release settings.
 export function integerArithmetic(left,right,bits,signed,operation){
- bound(left,bits,signed);bound(right,bits,signed);if(!['add','sub','mul','div','rem'].includes(operation))throw new TypeError('Invalid Rust checked integer arithmetic');
+ bound(left,bits,signed);if(operation==='neg'){if(signed!==true||right!==null)throw new TypeError('Checked native negation requires signed input and a null second argument');const minimum=-(1n<<BigInt(bits-1));if(left===minimum)throw new RangeError(nativeArithmeticOverflowMessage('neg'));return -left;}bound(right,bits,signed);if(!['add','sub','mul','div','rem'].includes(operation))throw new TypeError('Invalid Rust checked integer arithmetic');
  const limit=1n<<BigInt(signed?bits-1:bits),minimum=signed?-limit:0n;
  if(['div','rem'].includes(operation)){if(right===0n)throw new RangeError(nativeArithmeticZeroDivisorMessage(operation,{kind:'fixed'}));if(signed&&left===minimum&&right===-1n)throw new RangeError(nativeArithmeticOverflowMessage(operation));}
  const value=operation==='add'?left+right:operation==='sub'?left-right:operation==='mul'?left*right:operation==='div'?left/right:left%right;
