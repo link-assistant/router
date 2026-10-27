@@ -475,3 +475,11 @@ inverses and whole-project synchronization. Eighteen whole source equations and
 unrun boundary/strict TS/meta/sync/inverse/legacy/refusal/native oracle cases are
 drafted. All remaining native owner/global closure, source/production/sync/
 freshness/parity/delivery requirements remain unfinished.
+
+The [fresh wrapping source draft](fixed-wrapping-operation-draft.md) removes
+cross-operation raw/token/item/proof caches and groups current pinned native
+inputs inside bounded synchronous compiler operations. Six complete equations
+and unrun independent receiving archive/license/manifest mutation, decoded
+metadata, private identity, nesting/invalidation, cleanup and refusal sources
+are drafted. Every remaining source/native/production/sync/freshness/parity/
+delivery obligation remains unfinished.

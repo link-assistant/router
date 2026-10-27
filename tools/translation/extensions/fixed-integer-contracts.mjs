@@ -1,5 +1,5 @@
 // Primitive arithmetic instantiations from actual checked fixed types.
-import {pinnedFixedWrapping,requireFixedWrappingProof} from './fixed-wrapping-source.mjs';
+import {pinnedFixedWrapping,requireFixedWrappingProof,withFixedWrappingSourceOperation} from './fixed-wrapping-source.mjs';
 import {valueSchema} from '../type-layout.mjs';
 import {encodeMonomorphicType,monomorphicTypeName} from '../monomorphic.mjs';
 const freeze=value=>{if(value && typeof value==='object'){for(const item of Object.values(value))freeze(item);Object.freeze(value);}return value;};
@@ -14,6 +14,7 @@ const assumptions=[
   'No Rust execution or whole-program Router parity is established by these source-derived contracts.',
 ];
 export function fixedIntegerContracts(type,declarations=new Map(),{span={start:0,end:0}}={}) {
+ return withFixedWrappingSourceOperation(()=>{
   if(type?.kind!=='fixed'||![8,16,32,64,128].includes(type.bits)||typeof type.signed!=='boolean')throw new TypeError('Fixed arithmetic requires an actual checked integer type');
   const portable={kind:'fixed',bits:type.bits,signed:type.signed},fixed={...portable,...(type.rustPrimitiveName?{rustPrimitiveName:type.rustPrimitiveName}:{})};
   const name=monomorphicTypeName('Option',[fixed]),option={kind:'named',path:[name]};
@@ -38,4 +39,5 @@ export function fixedIntegerContracts(type,declarations=new Map(),{span={start:0
     };
   });
   return freeze({type:fixed,data,option,contracts});
+ });
 }

@@ -262,3 +262,14 @@ bounds remain; nested scopes restore their parent and clear all references on
 all exits. No frame is passed to callbacks. No source/hash/owner/verdict/result
 cache crosses operations, and sharing source DATA grants no compiler authority.
 The implementation and independent lifecycle cases are source drafted, unrun.
+
+`withFixedWrappingSourceOperation` groups only current original wrapping source
+inputs for one synchronous compiler operation. Nested private selection frames
+share one bounded raw dataset and rejoin the manifest and all selected archives
+on every exit. Source failure invalidates the whole active root even if a nested
+caller catches it and restores files. Genuine proof identity is separately
+required by its original issuer; decoded metadata must instead reissue exact
+fresh source evidence and grants no executable authority. No source/token/item/
+verdict/result map crosses operations. Complete SourceFile recipe selection is
+native source construction DATA under the unchanged span/CST/inverse guards.
+All new lifecycle, source-history and receiving cases are source drafted, unrun.

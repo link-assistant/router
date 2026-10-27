@@ -26,7 +26,7 @@ test('complete Rust1.89 macro intrinsic primitive-owner and license pins remain 
 test('primitive wrapping specialization consumes actual Self width signature body and generic intrinsic',()=>{
   for(const bits of [8,16,32,64,128])for(const signed of [false,true])for(const method of ['wrapping_add','wrapping_sub']){
     const fixed=type(bits,signed),proof=pinnedFixedWrapping(fixed,method),contract=fixedIntegerContracts(fixed).contracts.find(entry=>entry.rustPath.at(-1)===method);
-    assert.equal(requireFixedWrappingProof(proof,fixed,method),proof);assert.equal(contract.sourceWrappingProof,proof);assert.equal(proof.checkedBody.width,bits);assert.equal(proof.checkedBody.signed,signed);assert.equal(proof.checkedBody.parameters.every(parameter=>parameter.type===fixed.rustPrimitiveName),true);assert.equal(proof.checkedBody.ret,fixed.rustPrimitiveName);
+    assert.equal(requireFixedWrappingProof(proof,fixed,method),proof);assert.deepEqual(contract.sourceWrappingProof,proof);assert.equal(proof.checkedBody.width,bits);assert.equal(proof.checkedBody.signed,signed);assert.equal(proof.checkedBody.parameters.every(parameter=>parameter.type===fixed.rustPrimitiveName),true);assert.equal(proof.checkedBody.ret,fixed.rustPrimitiveName);
     assert.equal(contract.constSince,'1.32.0');assert.equal(contract.constEligible,true);assert.equal(contract.ret.kind,'fixed');assert.equal(proof.runtimeParity,false);
   }
 });
