@@ -1,15 +1,13 @@
 // One function's chronological source-selection DATA. No owner/type permit.
 import {readPrimitiveAliasOperand} from './primitive-local-argument-source.mjs';
 import {createChronologicalLocalSource} from './chronological-local-source.mjs';
+import {createWrittenLocalAliasRules} from './local-alias-written-source.mjs';
 import {censusLocalAliasBindings} from './local-alias-binding-source.mjs';
 const fail=message=>{throw new TypeError('Primitive carrier local source: '+message);};
 export function createPrimitiveCarrierLocalSource(rows,parameters,allParameters,{readWrittenRole}){
  if(!rows.some(row=>row.text==='let'))return {at(){return parameters;},evidence(){return null;},selectedCall(){}};
- if(!carrierLocalCensus(rows,allParameters))return null;const declarations=new Map(),initial=new Map([...parameters].flatMap(([name,role])=>{const domain=encodeCarrierRole(role);return domain?[[name,domain]]:[];}));
- function initializerStart(at,original){
-  if(original[at+2]?.text==='=')return at+3;if(original[at+2]?.text!==':')return null;let end=at+3;while(end<original.length&&end-at<=67&&!['=',';','{','}'].includes(original[end].text))end++;if(end-at>67||original[end]?.text!=='=')return null;const declared=readWrittenRole(original.slice(at+3,end)),domain=encodeCarrierRole(declared);if(!domain||!original[end+1])return null;declarations.set(original[end+1].start,declared);return end+1;
- }
- const source=createChronologicalLocalSource(rows,initial,{initializerSizes:[1,2,3,4,5,6,7,8,9,10,11,12],initializerStart,aliasKind:'complete-immutable-carrier-alias',resultKind:'complete-selected-carrier-result-alias',acceptResult:event=>encodeCarrierRole(event.resultRole),readOperand:(operand,bindings)=>{const declared=declarations.get(operand[0]?.start)??null,value=readCarrierAliasOperand(operand,bindings,declared);return value&&(!declared||value.kind===declared.kind&&value.domain===declared.domain)?{kind:encodeCarrierRole(value),binding:value.binding??null}:null;}});let current=null;
+ if(!carrierLocalCensus(rows,allParameters))return null;const initial=new Map([...parameters].flatMap(([name,role])=>{const domain=encodeCarrierRole(role);return domain?[[name,domain]]:[];}));
+ const source=createChronologicalLocalSource(rows,initial,{...createWrittenLocalAliasRules({readWrittenDomain:operand=>encodeCarrierRole(readWrittenRole(operand)),readOperand:(operand,bindings,declared)=>{const value=readCarrierAliasOperand(operand,bindings,decodeCarrierRole(declared));return value?{kind:encodeCarrierRole(value),binding:value.binding??null}:null;},acceptResult:event=>encodeCarrierRole(event.resultRole)}),initializerSizes:[1,2,3,4,5,6,7,8,9,10,11,12],aliasKind:'complete-immutable-carrier-alias',resultKind:'complete-selected-carrier-result-alias'});let current=null;
  const visible={has(name){return decodeCarrierRole(current.get(name))!==null;},get(name){return decodeCarrierRole(current.get(name))??undefined;},*[Symbol.iterator](){for(const [name,domain]of current){const role=decodeCarrierRole(domain);if(role)yield [name,role];}}};
  return {at(position){current=source.at(position);return visible;},evidence:name=>source.evidence(name),selectedCall:event=>source.selectedCall(event)};
 }

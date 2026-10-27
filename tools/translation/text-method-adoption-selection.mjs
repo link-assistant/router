@@ -1,7 +1,8 @@
 // Candidate source equations only. Every selected whole function must later
 // pass the original semantic, type, ownership, source and emission checks.
 import {textContract} from './text-contracts.mjs';
-import {createTextLocalArgumentSource} from './text-local-argument-source.mjs';
+import {createTextLocalArgumentSource,readTextWrittenAliasDomain} from './text-local-argument-source.mjs';
+import {readLocalAliasInitializer} from './local-alias-written-source.mjs';
 const countMethods=new Map([['len','len_utf8'],['chars','len_chars'],['matches','matches_count']]);
 const plainMethods=new Set(['trim','trim_start','trim_end','is_empty','contains','starts_with','ends_with','replace','replacen','repeat','strip_prefix','strip_suffix','to_ascii_lowercase','to_ascii_uppercase','is_ascii','eq_ignore_ascii_case','trim_ascii','trim_ascii_start','trim_ascii_end']);
 const borrowed=source=>/^&(?:'[a-zA-Z_][a-zA-Z0-9_]*)?(?:str|crate::translation_core::Str)$/u.test(source);
@@ -74,7 +75,7 @@ export function selectTextMethodAdoption(source,item,_scoped,modulePath,_names,h
  for(let at=body+1;at<tokens.length-1;at++){
   if(++work>200000)return result('complete adoption expression scan bound exceeded');activeDomains=localArguments.at(tokens[at].start);
   if(tokens[at].text==='let'){
-   const name=tokens[at+1].text;let equal=at+2;if(tokens[equal].text===':'){equal++;while(equal<tokens.length&&!['=',';','{','}'].includes(tokens[equal].text))equal++;if(!borrowed(text(tokens.slice(at+3,equal))))continue;}
+   const initializer=readLocalAliasInitializer(tokens,at,readTextWrittenAliasDomain);if(!initializer)continue;const equal=initializer.start-1;
    if(tokens[equal]?.text!=='=')continue;activeDomains=localArguments.at(tokens[equal+1]?.start);const value=expression(equal+1);if(!value||tokens[value.after]?.text!==';'){at=equal;continue;}if(value.operations.length)localArguments.selectedCall({span:[tokens[equal+1].start,tokens[value.after-1].end],terminator:tokens[value.after],operation:value.operations.at(-1),returnsKind:value.domain});append(equal+1,value);at=value.after-1;continue;
   }
   if(['.','::'].includes(tokens[at-1]?.text))continue;const value=expression(at);if(value?.operations.length){append(at,value);at=value.after-1;}

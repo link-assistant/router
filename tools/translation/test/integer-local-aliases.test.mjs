@@ -38,11 +38,11 @@ for(const [name,propose]of [['ordinary',proposeCoreIntegerMethodCorpus],['source
   'pub fn maximum()->u64{let first=u64::MAX;first.wrapping_add(1)}',
  ].join('\n')),row=rejoin(propose(request),request.files['src/lib.rs']);assert.equal(row.edits.length,5);assert.deepEqual(row.selections.map(part=>part.operation),['u64_saturating_add','u64_saturating_mul','u64_saturating_add','i64_saturating_abs','u64_wrapping_add']);assert.equal(row.selections[1].localReceiverSource.kind,'complete-selected-primitive-result-alias');for(const selected of row.selections){assert.equal(selected.oldTraitDispatchProved,false);assert.equal(selected.executableAdmission,false);if(selected.localReceiverSource){assert.equal(selected.localReceiverSource.semanticAuthority,false);assert.ok(request.files['src/lib.rs'].slice(...selected.localReceiverSource.span).startsWith('let '));}}assert.deepEqual(row.trace.map(part=>part.phase),['language','repository']);
 });
-for(const [name,propose]of [['ordinary',proposeCoreIntegerMethodCorpus],['source-bound',proposeSourceBoundInteger]])test(name+' unknown forward scoped annotated and Option aliases grant no numeric receiver',limits,()=>{
+for(const [name,propose]of [['ordinary',proposeCoreIntegerMethodCorpus],['source-bound',proposeSourceBoundInteger]])test(name+' unknown forward scoped mismatched and Option aliases grant no numeric receiver',limits,()=>{
  for(const body of [
   'pub fn f(value:u64)->u64{let first=later.saturating_add(1);let later=value;first}',
   'pub fn f(value:u64)->u64{{let inner=value;}inner.saturating_add(1)}',
-  'pub fn f(value:u64)->u64{let alias:u64=value;alias.saturating_add(1)}',
+  'pub fn f(value:u64)->u64{let alias:i64=value;alias.saturating_add(1)}',
   'pub fn f(value:u64)->u64{let alias=unknown();alias.saturating_add(1)}',
   'pub fn f()->u64{let alias=1;alias.saturating_add(1)}',
  ]){const request=input(body),row=rejoin(propose(request),request.files['src/lib.rs']);assert.equal(row.edits.length,0,body);}

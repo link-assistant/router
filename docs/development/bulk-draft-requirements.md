@@ -654,3 +654,10 @@ both existing closed fold-loop adapters. Four complete equations and unrun
 prefix/vector/consuming-refusal/order/empty/Unicode/bulk/receiving JS/strict TS/
 native-oracle cases are drafted. All wider source/native/production/sync/
 freshness/parity/delivery requirements remain unfinished.
+
+The [written immutable local draft](written-local-alias-source-draft.md) shares
+bounded declaration and matching-initializer rules across seven families and
+closed loop prefixes. Eleven complete equations and unrun domain/mismatch/scope/
+scalar-boundary/bulk/receiving JS/strict TS/export/native-oracle source is drafted.
+All wider source/native/production/sync/freshness/parity/delivery requirements
+remain unfinished.

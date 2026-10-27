@@ -40,3 +40,9 @@ family regression and native oracle sources retain target behavior obligations.
 All these cases are unrun during the user's active bulk-draft phase. Respect the
 receiving user's testing and publication instructions separately; never export
 Router's standing push authorization as receiving permission.
+
+For written immutable locals, `local-alias-written-source.mjs` separates bounded
+native type tokens from a concrete initializer and requires exact family-domain
+agreement for both operands and selected whole results. An annotation cannot
+supply a missing value. Keep mutable/unknown/custom/shadowed domains unproved;
+retain the independent complete checker and native/source gates afterward.

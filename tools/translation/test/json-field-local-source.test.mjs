@@ -35,12 +35,12 @@ const source=[
 for(const [name,propose]of [['ordinary',proposeCoreJsonFieldCorpus],['source-bound',proposeSourceBoundFields]])test(name+' actual local and direct view/index readers preserve complete source and both real phases',limits,()=>{
  const request=input(source),proposal=propose(request),row=rejoin(proposal,request.files['src/lib.rs']);assert.equal(row.edits.length,7);assert.deepEqual(row.selections.map(part=>part.operation),['json_field','json_field','json_field','json_field','json_index','json_index','json_str_field']);assert.ok(row.after.source.includes('json_index(value, (index as u64))'));assert.ok(row.after.source.includes('json_field(value, key.as_str())'));for(const selected of row.selections){assert.equal(selected.oldTraitDispatchProved,false);assert.equal(selected.executableAdmission,false);if(selected.localReceiverSource)assert.equal(selected.localReceiverSource.semanticAuthority,false);if(selected.localKeySource)assert.equal(selected.localKeySource.sourceAuthority,false);}assert.equal(proposal.after['src/translation_json_fields_core.rs'],JSON_FIELDS_NATIVE_SOURCE);
 });
-for(const [name,propose]of [['ordinary',proposeCoreJsonFieldCorpus],['source-bound',proposeSourceBoundFields]])test(name+' callback shadowing unknown/future/typed/ended locals and invalid key domains stay unproved',limits,()=>{
+for(const [name,propose]of [['ordinary',proposeCoreJsonFieldCorpus],['source-bound',proposeSourceBoundFields]])test(name+' callback shadowing unknown/future/mismatched/ended locals and invalid key domains stay unproved',limits,()=>{
  for(const body of [
   `pub fn f(value:&${T})->${M}<&${T}>{let receiver=unknown();receiver.get("label")}`,
   `pub fn f(value:&${T})->${M}<&${T}>{let output=later.get("label");let later=value;output}`,
   `pub fn f(value:&${T})->${M}<&${T}>{{let hidden=value;}hidden.get("label")}`,
-  `pub fn f(value:&${T})->${M}<&${T}>{let receiver:&${T}=value;receiver.get("label")}`,
+  `pub fn f(value:&${T})->${M}<&${T}>{let receiver:&str=value;receiver.get("label")}`,
   `pub fn f(value:&${T})->${M}<&${T}>{let receiver=value;unknown(|receiver|receiver.get("label"))}`,
   `pub fn f(value:&${T},index:u64)->${M}<&${T}>{value.get(index)}`,
   `pub fn f(value:&${T},key:String)->${M}<&${T}>{value.get(key)}`,

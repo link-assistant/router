@@ -30,7 +30,7 @@ for(const [name,propose]of [['ordinary',ordinary],['source-bound',sourceBound]])
 });
 for(const [name,propose]of [['ordinary',ordinary],['source-bound',sourceBound]])test(name+' consuming vectors unknown prefixes mutable aliases and broader loops remain untouched',limits,()=>{
  const make=(type,prefix,receiver,update=append,tail='result')=>`pub fn f(values:${type},initial:${T})->${T}{${prefix}let mut result=initial;for value in ${receiver}{result=${update};}${tail}}`;for(const source of [
- make(`Vec<${T}>`,'','values'),make(`Vec<${T}>`,'let items=values;','items'),make(`&[${T}]`,'let items=unknown();','items'),make(`&[${T}]`,'let items:&['+T+']=values;','items'),make(`&[${T}]`,'let mut items=values;','items'),make(`&[${T}]`,'let result=values;','values'),make(`&[${T}]`,'let items=values;let items=values;','items'),make(`&[${T}]`,'','values',append+';break'),make(`&[${T}]`,'','values',append,'initial'),make('Other','','values.iter()'),
+ make(`Vec<${T}>`,'','values'),make(`Vec<${T}>`,'let items=values;','items'),make(`&[${T}]`,'let items=unknown();','items'),make(`&[${T}]`,'let items:&[bool]=values;','items'),make(`&[${T}]`,'let mut items=values;','items'),make(`&[${T}]`,'let result=values;','values'),make(`&[${T}]`,'let items=values;let items=values;','items'),make(`&[${T}]`,'','values',append+';break'),make(`&[${T}]`,'','values',append,'initial'),make('Other','','values.iter()'),
  ]){const request=input(source),row=rejoin(propose(request),request.files['src/lib.rs']);assert.equal(row.edits.length,0,source);}
 });
 test('actual fixed loop stage receives empty ordered false null Unicode and fallback behaviors in JS and strict TS',limits,async()=>{

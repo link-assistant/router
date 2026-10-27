@@ -39,11 +39,11 @@ const variants=[['ordinary map','map',ordinaryMap],['source-bound map','map',sou
 for(const [name,family,propose]of variants)test(name+' actual aliases vector borrows and complete original callbacks retain both source phases',limits,()=>{
  const request=input(family==='map'?mapped:iterated,family),proposal=propose(request),row=rejoin(proposal,request.files['src/lib.rs']);assert.equal(row.edits.length,3);assert.equal(row.selections.find(part=>part.function==='owned').receiverRole,'json-vector');assert.equal(row.selections.find(part=>part.function==='alias').localReceiverSource.domain,'json-slice');assert.ok(row.after.source.includes('values.as_slice()'));assert.ok(row.after.source.includes('let items=values.as_slice();'));for(const selected of row.selections){assert.equal(selected.oldTraitDispatchProved,false);assert.equal(selected.executableAdmission,false);if(selected.localReceiverSource)assert.equal(selected.localReceiverSource.semanticAuthority,false);}
 });
-for(const [name,family,propose]of variants)test(name+' unknown future annotated ended-scope receivers mutation and custom vector identities remain unproved',limits,()=>{
+for(const [name,family,propose]of variants)test(name+' unknown future mismatched ended-scope receivers mutation and custom vector identities remain unproved',limits,()=>{
  const ending=family==='map'?'.iter().map(|value|{value.clone()}).collect()':'.iter().any(|value|value.is_null())',ret=family==='map'?'Vec<'+T+'>':'bool';for(const body of [
   `pub fn f(values:&[${T}])->${ret}{let items=unknown();items${ending}}`,
   `pub fn f(values:&[${T}])->${ret}{{let items=values;}items${ending}}`,
-  `pub fn f(values:&[${T}])->${ret}{let items:&[${T}]=values;items${ending}}`,
+  `pub fn f(values:&[${T}])->${ret}{let items:&[bool]=values;items${ending}}`,
   `pub fn f(values:&[${T}])->${ret}{let output=later${ending};let later=values;output}`,
   `pub fn f(values:&[${T}])->${ret}{let mut items=values;items${ending}}`,
   `pub fn f(values:Other)->${ret}{values${ending}}`,
