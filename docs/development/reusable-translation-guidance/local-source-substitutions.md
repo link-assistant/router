@@ -35,7 +35,7 @@ caller sources, then independently verify emitted JS and strict TS behavior,
 canonical/profile/owned/reverse freshness and fatal gated native CI.
 
 Router's independent `shared-adoption-export-closure.test.mjs` source covers
-six real public bulk stages in an isolated compiler export, while the separate
+seven real public bulk stages in an isolated compiler export, while the separate
 family regression and native oracle sources retain target behavior obligations.
 All these cases are unrun during the user's active bulk-draft phase. Respect the
 receiving user's testing and publication instructions separately; never export

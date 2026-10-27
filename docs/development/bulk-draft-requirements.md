@@ -647,3 +647,10 @@ without discarding independent immutable aliases. Fourteen whole equations and
 unrun seven-tracker/source/caller/JS/strict TS/native-oracle cases are drafted.
 All broader source/native/production/sync/freshness/parity/delivery requirements
 remain unfinished.
+
+The [JSON loop alias draft](json-loop-alias-source-draft.md) reuses shared
+chronological slice/vector facts and genuine layered source substitutions in
+both existing closed fold-loop adapters. Four complete equations and unrun
+prefix/vector/consuming-refusal/order/empty/Unicode/bulk/receiving JS/strict TS/
+native-oracle cases are drafted. All wider source/native/production/sync/
+freshness/parity/delivery requirements remain unfinished.
