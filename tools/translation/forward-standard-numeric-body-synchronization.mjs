@@ -19,7 +19,7 @@ function lowerStandardNumericExpression(row,parameters,arithmetic,calls,standard
 
 function lowerStandardNumericBody(change,parameters,arithmetic,calls,proof,iterator,standard){
  const row=change.after,ts=ownershipCompiler(),before=change.before,original=[...before.expression.statements],requested=[...row.expression.statements],hints=originalFloatingLocalTypes(proof);let guards=0;standard.assertFunctionScope(row);
- for(const statement of original){if(!ts.isExpressionStatement(statement)||!ts.isCallExpression(statement.expression)||!ts.isIdentifier(statement.expression.expression)||statement.expression.expression.text!=='ml_fixed'||!arithmetic.names.has('ml_fixed')||statement.expression.arguments.length!==4||!ts.isIdentifier(statement.expression.arguments[0])||!parameters.has(statement.expression.arguments[0].text))break;need(requested[guards]&&statement.getText(before.file)===requested[guards].getText(row.file),'original native parameter guards must remain exact');guards++;}
+ guards=countUnchangedForwardFixedParameterGuards(ts,{before,after:row,parameters,arithmetic});
  const expression=(node,scope)=>lowerStandardNumericExpression({...row,expression:node},scope,arithmetic,calls,standard);let cells=0;
  const block=(statements,outer,outerMutable,loopDepth,depth=0)=>{
   need(++cells<=100000&&depth<=128,'bounded complete scalar imperative block');const scope=new Map(outer),mutable=new Set(outerMutable),parts=[];let terminated=false;
@@ -73,3 +73,5 @@ export function proposeForwardStandardNumericBodySynchronization(options){
   }}]},
  ]).run(null);current();return {...result.value,ruleTrace:result.trace};
 }
+
+import {countUnchangedForwardFixedParameterGuards} from './forward-fixed-guard-source.mjs';

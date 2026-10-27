@@ -160,3 +160,8 @@ templates and metadata cannot supply admission. See [the unrun concatenation dra
 Borrowed text Into adoption needs an explicit actual owning destination context;
 preserve ambiguous targets and owning transfers until separately implemented.
 Written String spelling proves no trait/type owner. See [the unrun Into draft](contextual-text-into-source-draft.md).
+
+Whole emitted-module inverse rules must preserve the original adjacent type/range
+parameter guards byte for byte, authenticate the actual helper against complete
+current source and reproduce the entire requested target after fresh checking.
+A prefix observation grants no type or helper authority; see [the unrun fixed ingress draft](forward-fixed-guard-source-draft.md).

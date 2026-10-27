@@ -379,3 +379,10 @@ existing native text allocation interface only for explicit owning destination
 contexts. Two equations and independent unrun two-API/six-caller/context/refusal/
 JS/strict TS/native/export cases are drafted. Ambiguous/callback/owning conversions
 and every wider namespace/production/reverse/sync/parity/delivery row stay OPEN.
+
+The [whole-module fixed ingress prefix draft](forward-fixed-guard-source-draft.md)
+composes the actual existing Host type check with its adjacent authenticated
+range helper across shared support and retained inverse API copies. Nine equations
+and independent unrun ten-width paired/six-API/refusal/native/export source are
+drafted. Full generated-module/resource/owned-text/namespace/production/freshness/
+parity/receiving/delivery requirements remain OPEN.

@@ -298,7 +298,7 @@ const CONTROL_RESERVED=new Set('as break const continue crate else enum extern f
 function lowerControlBody(change,parameters,arithmetic,calls){
  const row=change.after,ts=ownershipCompiler(),before=change.before,original=[...before.expression.statements],requested=[...row.expression.statements];let guards=0;
  // Only unchanged actual original input-range guard statements are erased.
- for(const statement of original){if(!ts.isExpressionStatement(statement)||!ts.isCallExpression(statement.expression)||!ts.isIdentifier(statement.expression.expression)||statement.expression.expression.text!=='ml_fixed'||!arithmetic.names.has('ml_fixed')||statement.expression.arguments.length!==4||!ts.isIdentifier(statement.expression.arguments[0])||!parameters.has(statement.expression.arguments[0].text))break;need(requested[guards]&&statement.getText(before.file)===requested[guards].getText(row.file),'original native parameter guards must remain exact');guards++;}
+ guards=countUnchangedForwardFixedParameterGuards(ts,{before,after:row,parameters,arithmetic});
  let cells=0;const expression=(node,scope)=>lowerReturnExpression({...row,expression:node},scope,arithmetic,calls);
  const block=(statements,outer,depth=0)=>{need(++cells<=100000&&depth<=128&&statements.length>0,'bounded complete value-returning scalar block');const scope=new Map(outer),parts=[];
   for(let index=0;index<statements.length;index++){
@@ -347,3 +347,5 @@ export function proposeForwardControlBodySynchronization(options){
   }}]},
  ]).run(null);current();return {...result.value,ruleTrace:result.trace};
 }
+
+import {countUnchangedForwardFixedParameterGuards} from './forward-fixed-guard-source.mjs';
