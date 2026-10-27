@@ -564,3 +564,66 @@ pub fn i128_and(value: Option<i128>, other: Option<i128>) -> Option<i128> {
 pub fn i128_or(value: Option<i128>, other: Option<i128>) -> Option<i128> {
     value.or(other)
 }
+
+#[must_use]
+pub fn text_owned_some(value: String) -> Option<String> {
+    checked_text(&value);
+    Some(value)
+}
+
+#[must_use]
+pub fn text_owned_none() -> Option<String> {
+    None
+}
+
+#[must_use]
+pub fn text_owned_unwrap_or(value: Option<String>, other: String) -> String {
+    checked_str_option(value.as_deref());
+    checked_text(&other);
+    value.unwrap_or(other)
+}
+
+#[must_use]
+pub fn text_owned_unwrap(value: Option<String>) -> String {
+    checked_str_option(value.as_deref());
+    value.unwrap()
+}
+
+#[must_use]
+pub fn text_owned_expect(value: Option<String>, other: &str) -> String {
+    checked_str_option(value.as_deref());
+    checked_text(other);
+    value.expect(other)
+}
+
+#[must_use]
+pub fn text_owned_and(value: Option<String>, other: Option<String>) -> Option<String> {
+    checked_str_option(value.as_deref());
+    checked_str_option(other.as_deref());
+    value.and(other)
+}
+
+#[must_use]
+pub fn text_owned_or(value: Option<String>, other: Option<String>) -> Option<String> {
+    checked_str_option(value.as_deref());
+    checked_str_option(other.as_deref());
+    value.or(other)
+}
+
+#[must_use]
+pub fn text_owned_unwrap_or_default(value: Option<String>) -> String {
+    checked_str_option(value.as_deref());
+    value.unwrap_or_default()
+}
+
+#[must_use]
+pub fn text_owned_filter_nonempty(value: Option<String>, trim_whitespace: bool) -> Option<String> {
+    checked_str_option(value.as_deref());
+    value.filter(|text| if trim_whitespace { !text.trim().is_empty() } else { !text.is_empty() })
+}
+
+#[must_use]
+pub fn str_filter_nonempty(value: Option<&str>, trim_whitespace: bool) -> Option<&str> {
+    checked_str_option(value);
+    value.filter(|text| if trim_whitespace { !text.trim().is_empty() } else { !text.is_empty() })
+}

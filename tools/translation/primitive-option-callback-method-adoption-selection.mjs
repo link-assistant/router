@@ -1,14 +1,15 @@
 // Proposal-only source substitutions. Installation requires every actual whole
 // function to pass the original type/ownership/source/emission checks afresh.
 import {primitiveOptionContract} from './primitive-option-contracts.mjs';
+import {readOptionalTextFilterSource} from './optional-text-filter-source.mjs';
 import {readFixedIntegerLiteralSource} from './native-integer-literal-source.mjs';
 import {primitiveBitwiseType} from './primitive-bitwise-types.mjs';
 import {readPrimitiveWrittenAliasDomain} from './primitive-local-argument-source.mjs';
 import {createPrimitiveCarrierLocalSource,readCarrierLocalInitializer,readIntegerCarrierCallSource,encodeCarrierRole} from './primitive-carrier-local-source.mjs';
 import {primitiveOptionCallbackContract} from './primitive-option-callback-contracts.mjs';
-const methods=new Set(['is_some','is_none','unwrap_or','unwrap','expect','and','or','map','and_then','unwrap_or_else']);
+const methods=new Set(['filter','unwrap_or_default','is_some','is_none','unwrap_or','unwrap','expect','and','or','map','and_then','unwrap_or_else']);
 const words=tokens=>tokens.map(token=>token.text+(token.text.startsWith("'")?' ':'')).join('');
-function scalarRole(source){source=source.replace(/&'[a-zA-Z_][a-zA-Z0-9_]*\s+/gu,'&').replace(/\s+/gu,'');if(source==='bool')return {kind:'payload',domain:source};const primitive=readPrimitiveWrittenAliasDomain([{text:source}]);if(primitive)return {kind:'payload',domain:primitive};if(['&str','&crate::translation_core::Str','&::std::primitive::str','&::core::primitive::str'].includes(source))return {kind:'payload',domain:'str'};return null;}
+function scalarRole(source){source=source.replace(/&'[a-zA-Z_][a-zA-Z0-9_]*\s+/gu,'&').replace(/\s+/gu,'');if(['String','std::string::String','::std::string::String'].includes(source))return {kind:'payload',domain:'text-owned'};if(source==='bool')return {kind:'payload',domain:source};const primitive=readPrimitiveWrittenAliasDomain([{text:source}]);if(primitive)return {kind:'payload',domain:primitive};if(['&str','&crate::translation_core::Str','&::std::primitive::str','&::core::primitive::str'].includes(source))return {kind:'payload',domain:'str'};return null;}
 function role(tokens,scoped){const source=words(tokens),optional=/^(?:(?:::)?(?:std|core)::option::Option|Option|crate::translation_core::Maybe)<([\s\S]+)>$/u.exec(source),payload=scalarRole(optional?optional[1]:source);if(payload)return {...payload,kind:optional?'option':'payload'};const normalized=source.replace(/&'[a-zA-Z_][a-zA-Z0-9_]*\s+/gu,'&').replace(/\s+/gu,'');if(!optional&&normalized.startsWith('&')&&(['crate::translation_core::Json','serde_json::Value','::serde_json::Value'].includes(normalized.slice(1))||scoped?.jsonNames.has(normalized.slice(1))))return {kind:'json',domain:'json'};return null;}
 export function selectPrimitiveOptionCallbackMethodAdoption(source,item,_scoped,modulePath,_names,helpers){
  const {originalDeclarationHeader,close,split,ident}=helpers,tokens=item.tokens.filter(token=>token.type!=='comment'),indices=new Map(tokens.map((token,index)=>[token,index])),header=originalDeclarationHeader(item,modulePath),name=tokens.findIndex(token=>token.start===header?.nameSpan?.start),edits=[],selections=[];
@@ -69,20 +70,20 @@ export function selectPrimitiveOptionCallbackMethodAdoption(source,item,_scoped,
    const reader={as_bool:'bool',as_u64:'u64',as_i64:'i64',as_str:'str'}[tokens[value.after+1]?.text];if(reader&&tokens[value.after]?.text==='.'&&tokens[value.after+2]?.text==='('&&tokens[value.after+3]?.text===')')value={replacement:source.slice(token.start,tokens[value.after+3].end),after:value.after+4,kind:'option',domain:reader,operations:[]};
   }
   while(value.kind==='option'&&tokens[value.after]?.text==='.'&&ident(tokens[value.after+1])&&tokens[value.after+2]?.text==='('){
-   if(++work>200000)return null;const cursor=value.after,method=tokens[cursor+1].text;if(!methods.has(method))break;const end=close(tokens,cursor+2);if(end<0)return null;let after=end+1;
+   if(++work>200000)return null;const cursor=value.after,method=tokens[cursor+1].text;if(!methods.has(method))break;if(method==='filter'&&['str','text-owned'].includes(value.domain)){const end=close(tokens,cursor+2),filter=end<0?null:readOptionalTextFilterSource(tokens.slice(cursor+3,end)),row=primitiveOptionContract((value.domain==='str'?'str':'text_owned')+'_filter_nonempty');if(!filter||!row)break;value={...value,replacement:row.rustPath+'('+value.replacement+', '+String(filter.trimWhitespace)+')',after:end+1,operations:[...value.operations,row.rustName]};continue;}const end=close(tokens,cursor+2);if(end<0)return null;let after=end+1;
    if(['map','and_then','unwrap_or_else'].includes(method)){
     const pieces=split(tokens.slice(cursor+3,end));if(pieces.length!==1)break;const callback=callbackOperand(pieces[0],value.domain,method);if(!callback)break;
     if(value.domain==='str'&&method==='unwrap_or_else'){if(tokens[after]?.text!=='.'||!['to_owned','to_string'].includes(tokens[after+1]?.text)||tokens[after+2]?.text!=='('||tokens[after+3]?.text!==')')break;after+=4;}
     const row=primitiveOptionCallbackContract(method==='unwrap_or_else'?value.domain+'_'+method:value.domain+'_to_'+callback.domain+'_'+method);if(!row)break;
     value={replacement:row.rustPath+'('+value.replacement+', '+callback.replacement+')',kind:method==='unwrap_or_else'?'payload':'option',domain:method==='unwrap_or_else'&&value.domain==='str'?'owned-str':callback.domain,after,operations:[...value.operations,row.rustName]};continue;
    }
-   const row=primitiveOptionContract(value.domain+'_'+method);if(!row)break;
+   const row=primitiveOptionContract(value.domain.replace('-','_')+'_'+method);if(!row)break;
 
    if(value.domain==='str'&&['unwrap_or','unwrap','expect'].includes(method)){
     if(tokens[after]?.text!=='.'||!['to_owned','to_string'].includes(tokens[after+1]?.text)||tokens[after+2]?.text!=='('||tokens[after+3]?.text!==')')break;after+=4;
    }
    const pieces=split(tokens.slice(cursor+3,end));if(pieces.length!==row.parameters.length-1)break;const args=pieces.map((piece,index)=>{const role=row.parameters[index+1],kind=role===(value.domain==='str'?'str-option-ref':value.domain+'-option')?'option':'payload',domain=role==='str'?'str':kind==='option'?value.domain:role;return operand(piece,{kind,domain},depth);});if(args.some(argument=>!argument))break;
-   const optional=row.returns===(value.domain==='str'?'str-option-ref':value.domain+'-option');value={replacement:row.rustPath+'('+[value.replacement,...args.map(argument=>argument.replacement)].join(', ')+')',kind:optional?'option':'payload',domain:optional?value.domain:row.returns==='text-owned'?'owned-str':row.returns,after,operations:[...value.operations,...args.flatMap(argument=>argument.operations),row.rustName]};
+   const optional=row.returns===(value.domain==='str'?'str-option-ref':value.domain+'-option');value={replacement:row.rustPath+'('+[value.replacement,...args.map(argument=>argument.replacement)].join(', ')+')',kind:optional?'option':'payload',domain:optional?value.domain:row.returns==='text-owned'?(value.domain==='text-owned'?'text-owned':'owned-str'):row.returns,after,operations:[...value.operations,...args.flatMap(argument=>argument.operations),row.rustName]};
   }return value;
  }
  function append(at,value){if(!value?.operations.length)return;const span=[tokens[at].start,tokens[value.after-1].end];edits.push({span,expected:source.slice(...span),replacement:value.replacement});selections.push({function:item.name,functionSpan:[item.start,item.end],span,operation:value.operations.at(-1),operations:value.operations,domain:value.domain,oldTraitDispatchProved:false,oldDropTimingProved:false,executableAdmission:false,...(localArguments.evidence(tokens[at].text)?{localReceiverSource:localArguments.evidence(tokens[at].text)}:{}),evaluationOrder:['actual-immutable-Copy-Option-receiver-once','already-evaluated-parameters-or-closed-literals-left-to-right']});}

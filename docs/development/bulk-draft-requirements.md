@@ -829,3 +829,12 @@ within one source operation. Ten compiler equations and independent unrun ABI/
 two-API/bulk/JS/strict TS/two-reverse-lane/native storage/lifetime/export source
 are drafted. Every wider source/native/production/sync/freshness/parity/delivery
 requirement remains OPEN and all verification remains UNRUN.
+
+The [optional text draft](optional-text-source-draft.md) adds10 paired consuming
+String/Option<String> and borrowed-filter interfaces, retains116 finite Option
+APIs and composes unchanged generic identity through complete old/current
+three-language source histories. Sixteen compiler equations and independent
+unrun runtime/two-API/bulk/JS/strict TS/resource-reverse/native/history/export
+source are drafted. Older restricted reverse lanes, wider callbacks/shared
+inspection and all source/native/production/sync/freshness/parity/delivery
+requirements remain OPEN; all verification remains UNRUN.

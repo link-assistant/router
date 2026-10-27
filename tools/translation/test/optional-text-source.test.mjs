@@ -1,0 +1,57 @@
+// Independent optional text and generic identity composition SOURCE. All UNRUN.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {repositorySourceURL} from './fixtures/repository-paths.mjs';
+import * as option from '../primitive-option-runtime.mjs';
+import {PRIMITIVE_OPTION_CONTRACTS,emitPrimitiveOptionDeclarations} from '../primitive-option-contracts.mjs';
+import {PRIMITIVE_OPTION_NATIVE_SOURCE} from '../primitive-option-native-source.mjs';
+import {INTEGER_NATIVE_SOURCE} from '../integer-native-source.mjs';
+import {proposeCorePrimitiveOptionMethodCorpus as ordinary} from '../migrate-core-primitive-option-methods.mjs';
+import {proposeCorePrimitiveOptionMethodCorpus as sourceBound} from '../source-bound-owned-migrate-core-primitive-option-methods.mjs';
+import {proposeCorePrimitiveOptionCallbackMethodCorpus as ordinaryCallback} from '../migrate-core-primitive-option-callback-methods.mjs';
+import {proposeCorePrimitiveOptionCallbackMethodCorpus as sourceCallback} from '../source-bound-owned-migrate-core-primitive-option-callback-methods.mjs';
+import {PRIMITIVE_OPTION_CALLBACK_NATIVE_SOURCE} from '../primitive-option-callback-native-source.mjs';
+import {TEXT_NATIVE_SOURCE} from '../text-native-source.mjs';
+import {proposeSourceBoundOwnedCoreStage} from '../source-bound-owned-core-bulk.mjs';
+import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE,ROUTER_CORE_RANGES_SOURCE,ROUTER_CORE_JSON_COLLECTIONS_SOURCE,ROUTER_CORE_BASE64_SOURCE} from '../router-core-source-data.mjs';
+import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
+import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
+import {translateProject} from '../project.mjs';
+import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
+import {verifyTypedTargets} from './text-typed-targets.mjs';
+import {prepareOptionalTextSources,prepareOptionalTextNativeSource} from '../prepare-optional-text-sources.mjs';
+import {preparePrimitiveOptionWidthNativeSource} from '../primitive-option-width-native-source.mjs';
+import {currentOptionalTextGenericLibraryHistory} from '../optional-text-generic-source-history.mjs';
+import {readOptionalTextFilterSource} from '../optional-text-filter-source.mjs';
+import {rustTokens} from '../rust-structure.mjs';
+const limits={timeout:60000},root=new URL('../../../',import.meta.url),cargo={manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')},none={$:'None'},some=field0=>({$:'Some',field0});
+const leaves=[['',false,false],[' ',true,false],['\u0085\u00a0\u1680\u200a\u202f\u3000',true,false],['\ufeff',true,true],['\u180e',true,true],['\0',true,true],[' é😀 \n',true,true]];
+for(const trim of [false,true])test('owned and borrowed nonempty filters retain original Rust string domains mode '+trim,limits,()=>{
+ for(const [value,nonempty,nonblank]of leaves){const wanted=(trim?nonblank:nonempty)?some(value):none;assert.deepEqual(option.router_option_text_owned_filter_nonempty(some(value),trim),wanted);assert.deepEqual(option.router_option_str_filter_nonempty(some(value),trim),wanted);}assert.deepEqual(option.router_option_text_owned_filter_nonempty(none,trim),none);for(const mode of [0,1,'true',null,{}])assert.throws(()=>option.router_option_text_owned_filter_nonempty(none,mode));assert.throws(()=>option.router_option_text_owned_filter_nonempty(some('é'.repeat(524289)),trim));
+});
+test('nine actual owning Option<String> operations preserve empty presence eager validation native panic and Unicode',limits,()=>{
+ for(const value of ['', 'é😀', '\0']){const present=option.router_option_text_owned_some(value);assert.deepEqual(present,some(value));assert.equal(option.router_option_text_owned_unwrap(present),value);assert.equal(option.router_option_text_owned_unwrap_or(present,'other'),value);assert.equal(option.router_option_text_owned_expect(present,'message'),value);assert.deepEqual(option.router_option_text_owned_and(present,some('next')),some('next'));assert.deepEqual(option.router_option_text_owned_or(present,some('next')),some(value));assert.equal(option.router_option_text_owned_unwrap_or_default(present),value);}assert.deepEqual(option.router_option_text_owned_none(),none);assert.equal(option.router_option_text_owned_unwrap_or_default(none),'');assert.equal(option.router_option_text_owned_unwrap_or(none,'fallback'),'fallback');assert.throws(()=>option.router_option_text_owned_unwrap(none),error=>error.message==='called `Option::unwrap()` on a `None` value');assert.throws(()=>option.router_option_text_owned_expect(none,'é😀'),error=>error.message==='é😀');for(const invalid of [0,{},new String('x'),'\ud800']){assert.throws(()=>option.router_option_text_owned_some(invalid));assert.throws(()=>option.router_option_text_owned_unwrap_or(some('ok'),invalid));assert.throws(()=>option.router_option_text_owned_and(none,some(invalid)));}let touched=0;const accessor=Object.defineProperty({},'$',{enumerable:true,get(){touched++;return 'Some';}});assert.throws(()=>option.router_option_text_owned_filter_nonempty(accessor,false));assert.throws(()=>option.router_option_text_owned_filter_nonempty(new Proxy(some('ok'),{getPrototypeOf(){touched++;return Object.prototype;}}),false));assert.equal(touched,0);
+});
+const bodies=`pub fn filter(value:Option<String>)->Option<String>{value.filter(|v|!v.is_empty())}
+pub fn blank(value:Option<String>)->Option<String>{value.filter(|v|{!v.trim().is_empty()})}
+pub fn owned_default(value:Option<String>)->String{value.filter(|v|!v.is_empty()).unwrap_or_default()}
+pub fn choose(value:Option<String>,other:String)->String{value.unwrap_or(other)}
+pub fn both(value:Option<String>,other:Option<String>)->Option<String>{value.and(other)}
+pub fn either(value:Option<String>,other:Option<String>)->Option<String>{value.or(other)}
+pub fn borrowed<'a>(value:Option<&'a str>)->Option<&'a str>{value.filter(|v|!v.trim().is_empty())}
+`;
+for(const [label,propose,callbacks]of [['ordinary',ordinary,false],['source-bound',sourceBound,false],['ordinary callbacks',ordinaryCallback,true],['source-bound callbacks',sourceCallback,true]])test(label+' selects all7 consuming or borrowed source forms without admitting arbitrary predicates',limits,()=>{
+ const request=input(bodies,callbacks),row=rejoin(propose(request),request.files['src/lib.rs']);assert.equal(row.edits.length,7);assert.ok(row.selections.every(row=>row.oldTraitDispatchProved===false&&row.executableAdmission===false));for(const predicate of ['|v|v.is_empty()','|v|!other.is_empty()','|v|{effect();!v.is_empty()}','custom']){const request=input(`pub fn candidate(value:Option<String>)->Option<String>{value.filter(${predicate})}`,callbacks);assert.equal(rejoin(propose(request),request.files['src/lib.rs']).edits.length,0);}
+});
+test('the fixed primitive Option stage receives original owning and borrowed source in JS and strict TS',limits,async()=>{
+ const request=input(bodies,true),proposal=await proposeSourceBoundOwnedCoreStage('primitive-option-methods',request),files=proposal.after,result=translateProject({entry:request.entry,paths:Object.keys(files),readSource:path=>files[path],compilationProfile:PRODUCTION_PROFILE,cargoManifest:cargo.manifest,deriveDependencies:loadDeriveDependencyProof(cargo)});await verifyTypedTargets(result,api=>{for(const [value,nonempty,nonblank]of leaves){assert.deepEqual(api.filter(some(value)),nonempty?some(value):none);assert.deepEqual(api.blank(some(value)),nonblank?some(value):none);assert.equal(api.owned_default(some(value)),nonempty?value:'');assert.deepEqual(api.borrowed(some(value)),nonblank?some(value):none);}assert.equal(api.choose(none,'é😀'),'é😀');assert.deepEqual(api.both(none,some('other')),none);assert.deepEqual(api.either(none,some('other')),some('other'));},{childTimeoutMs:20000});
+});
+test('exact closed predicate DATA rejects captures statements patterns types and positive conditions',limits,()=>{
+ const rows=source=>rustTokens(source).filter(row=>row.type!=='comment');assert.equal(readOptionalTextFilterSource(rows('|v| !v.is_empty()')).trimWhitespace,false);assert.equal(readOptionalTextFilterSource(rows('|v| {!v.trim().is_empty()}')).trimWhitespace,true);for(const source of ['|v|v.is_empty()','|v|!other.is_empty()','|v|{effect();!v.is_empty()}','|&v|!v.is_empty()','|v:&str|!v.is_empty()','||true'])assert.equal(readOptionalTextFilterSource(rows(source)),null);
+});
+test('all116 finite APIs preserve the unchanged generic identity and complete native and compiler histories',limits,()=>{
+ assert.equal(PRIMITIVE_OPTION_CONTRACTS.length,116);assert.equal(PRIMITIVE_OPTION_CONTRACTS.filter(row=>row.domain==='text-owned').length,9);assert.equal(readFileSync(new URL('../primitive-option-runtime.d.mts',import.meta.url),'utf8'),emitPrimitiveOptionDeclarations());const plan=prepareOptionalTextSources();assert.equal(plan.files.length,16);for(const row of plan.files){assert.equal(row.current,row.currentAfter);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}const native=prepareOptionalTextNativeSource().files[0],previous=preparePrimitiveOptionWidthNativeSource().files[0];assert.equal(native.templateInputs.length,10);assert.equal(native.after,PRIMITIVE_OPTION_NATIVE_SOURCE);assert.equal(previous.after,native.before);assert.equal(previous.currentAfter,native.after);assert.equal(native.nativeRustGrammarChecked,false);const generic=currentOptionalTextGenericLibraryHistory({source:PRIMITIVE_OPTION_NATIVE_SOURCE});assert.equal(generic.files.length,3);for(const row of generic.files){assert.equal(row.current,row.currentAfter);assert.equal(row.inverse,row.before);}const present=some(Object.freeze({opaque:true}));assert.strictEqual(option.router_option_identity(present),present);assert.equal(plan.receivingExecuted,false);
+});
+function input(body=bodies,callbacks=false){const modules={translation_integer_core:INTEGER_NATIVE_SOURCE,translation_primitive_option_core:PRIMITIVE_OPTION_NATIVE_SOURCE,...(callbacks?{translation_text_core:TEXT_NATIVE_SOURCE,translation_primitive_option_callbacks_core:PRIMITIVE_OPTION_CALLBACK_NATIVE_SOURCE}:{})},files={'src/lib.rs':'pub mod translation_core;\n'+Object.keys(modules).map(name=>'pub mod '+name+';').join('\n')+'\n// Ω😀 actual additional Option source\n'+body,'src/translation_core.rs':ROUTER_FORMATTING_FACADE_SOURCE,'src/translation_core/primitives.rs':ROUTER_CORE_PRIMITIVES_SOURCE,'src/translation_core/ranges.rs':ROUTER_CORE_RANGES_SOURCE,'src/translation_core/json_collections.rs':ROUTER_CORE_JSON_COLLECTIONS_SOURCE,'src/translation_core/base64.rs':ROUTER_CORE_BASE64_SOURCE};for(const [name,source]of Object.entries(modules))files['src/'+name+'.rs']=source;return {entry:'src/lib.rs',files,dependencyInputs:{...cargo},compilationProfile:PRODUCTION_PROFILE};}
+function rejoin(proposal,source){const row=proposal.proposals.find(row=>row.file==='src/lib.rs');assert.equal(transportConcreteSyntaxMeta(row.before.meta).source,source);assert.equal(transportConcreteSyntaxMeta(row.after.meta).source,row.after.source);let inverse=row.after.source;for(const part of [...row.mapping].reverse())if(part.kind==='substitution')inverse=inverse.slice(0,part.after[0])+part.expected+inverse.slice(part.after[1]);assert.equal(inverse,source);assert.deepEqual(row.trace.map(part=>part.phase),['language','repository']);assert.equal(proposal.executableAdmission,false);return row;}

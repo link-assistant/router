@@ -5,7 +5,7 @@ const proxy=types.isProxy,prototype=Object.getPrototypeOf,descriptors=Object.get
 const hostObject=Object,hostReflect=Reflect,hostRangeError=RangeError;
 function host(){if(Object!==hostObject||Reflect!==hostReflect||RangeError!==hostRangeError||types.isProxy!==proxy||Object.getPrototypeOf!==prototype||Object.getOwnPropertyDescriptors!==descriptors||Reflect.ownKeys!==keys||Object.hasOwn!==own||Object.freeze!==freeze||Reflect.apply!==apply)throw new TypeError('Original primitive Option host operations required');}
 function payload(value,domain){
- host();if(domain==='str'){textBytes(value);return value;}if(domain==='bool'){if(typeof value!=='boolean')throw new TypeError('Primitive Option bool required');return value;}
+ host();if(domain==='str'||domain==='text-owned'){textBytes(value);return value;}if(domain==='bool'){if(typeof value!=='boolean')throw new TypeError('Primitive Option bool required');return value;}
  if(own(ADDITIONAL_OPTION_BOUNDS,domain)){const bounds=ADDITIONAL_OPTION_BOUNDS[domain];if(typeof value!=='bigint'||value<bounds[0]||value>bounds[1])throw new TypeError('Primitive Option '+domain+' required');return value;}
  if(typeof value!=='bigint'||value<(domain==='i64'?-9223372036854775808n:0n)||value>(domain==='i64'?9223372036854775807n:18446744073709551615n))throw new TypeError('Primitive Option '+domain+' required');return value;
 }
@@ -18,6 +18,7 @@ function option(value,domain){
 const none=()=>freeze({$:'None'}),some=value=>freeze({$:'Some',field0:value});
 function operate(domain,method,args){
  host();if(method==='some')return some(payload(args[0],domain));if(method==='none')return none();const value=option(args[0],domain);
+ if(method==='filter_nonempty'){payload(args[1],'bool');return value.some&&(args[1]?filteredTextTrim(value.value).length>0:value.value.length>0)?some(value.value):none();}if(method==='unwrap_or_default')return value.some?value.value:'';
  if(method==='is_some')return value.some;if(method==='is_none')return !value.some;
  if(method==='unwrap_or'){const other=payload(args[1],domain);return value.some?value.value:other;}
  if(method==='and'||method==='or'){const other=option(args[1],domain),selected=method==='and'?(value.some?other:value):(value.some?value:other);return selected.some?some(selected.value):none();}
@@ -136,3 +137,15 @@ export const router_option_i128_unwrap=(argument0)=>operate("i128","unwrap",[arg
 export const router_option_i128_expect=(argument0,argument1)=>operate("i128","expect",[argument0,argument1]);
 export const router_option_i128_and=(argument0,argument1)=>operate("i128","and",[argument0,argument1]);
 export const router_option_i128_or=(argument0,argument1)=>operate("i128","or",[argument0,argument1]);
+
+import {router_text_trim as filteredTextTrim} from './text-runtime.mjs';
+export const router_option_text_owned_some=(argument0)=>operate("text-owned","some",[argument0]);
+export const router_option_text_owned_none=()=>operate("text-owned","none",[]);
+export const router_option_text_owned_unwrap_or=(argument0,argument1)=>operate("text-owned","unwrap_or",[argument0,argument1]);
+export const router_option_text_owned_unwrap=(argument0)=>operate("text-owned","unwrap",[argument0]);
+export const router_option_text_owned_expect=(argument0,argument1)=>operate("text-owned","expect",[argument0,argument1]);
+export const router_option_text_owned_and=(argument0,argument1)=>operate("text-owned","and",[argument0,argument1]);
+export const router_option_text_owned_or=(argument0,argument1)=>operate("text-owned","or",[argument0,argument1]);
+export const router_option_text_owned_unwrap_or_default=(argument0)=>operate("text-owned","unwrap_or_default",[argument0]);
+export const router_option_text_owned_filter_nonempty=(argument0,argument1)=>operate("text-owned","filter_nonempty",[argument0,argument1]);
+export const router_option_str_filter_nonempty=(argument0,argument1)=>operate("str","filter_nonempty",[argument0,argument1]);

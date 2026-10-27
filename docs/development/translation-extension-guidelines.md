@@ -732,3 +732,12 @@ for a complete direct initializer at its real semicolon, constrained by written
 types; do not admit arbitrary fallbacks or lifetime escapes. Retain every native
 history and both CST phases; see the
 [unrun owned value field draft](json-owned-value-field-source-draft.md).
+
+Consuming optional owning text must retain actual standard Option/String source
+identity, eager operand order, moves, original text bounds and Some-empty. Exact
+closed predicates preserve original text and Rust whitespace. Use the full
+resource ownership lane; older restricted lanes keep an explicit refusal until
+complete moves/loans are implemented. Compose complete immutable generic library
+histories and unchanged identity bodies without replaying unrelated compiler
+modules or needing a Rust checkout for source DATA. See the
+[unrun optional text draft](optional-text-source-draft.md).

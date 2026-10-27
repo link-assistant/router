@@ -40,7 +40,7 @@ export function checkForwardOwnedExtra(checker,node,env,path,expected,row,{canon
  if(row.family==='http-protocol')return checkForwardPrimitiveResult(checker,node,env,path,expected,row,{current,carrier:forwardOwnedCarrier,ownedString:forwardOwnedString,canonical});
  if(row.family==='primitive-result')return checkForwardPrimitiveResult(checker,node,env,path,expected,row,{current,carrier:forwardOwnedCarrier,ownedString:forwardOwnedString});
  if(row.family==='primitive-option-callback')return checkForwardPrimitiveOptionCallback(checker,node,env,path,expected,row,{current,carrier:forwardOwnedCarrier});
- if(row.family==='primitive-option')return checkForwardPrimitiveOption(checker,node,env,path,expected,row,{current,carrier:forwardOwnedCarrier});
+ if(row.family==='primitive-option')return checkForwardPrimitiveOption(checker,node,env,path,expected,row,{current,carrier:forwardOwnedCarrier,ownedString:forwardOwnedString});
  requireOriginalPrimitiveTryFromChecker(checker);current();if(node.args.length!==row.parameters.length)throw typeError('actual owned field/carrier arity differs',node.span);
  const args=node.args.map((syntax,index)=>{
   const role=row.parameters[index],shared=role==='shared-json'||role==='shared-json-result'||role==='shared-json-option',borrow=shared&&syntax.k==='routerTextReference',primitive=(row.family==='integer'||['u64','i64'].includes(role))?primitiveBitwiseType(role):null,wanted=primitive?{...fixed(primitive.bits,primitive.signed),rustPrimitiveName:role,rustSourceType:true}:role==='bool'?BOOL:undefined,value=checker.expr(borrow?syntax.value:syntax,env,path,wanted);current();
