@@ -568,3 +568,9 @@ whole equations and unrun scope/timing/span/boundary/bulk/fresh-project/strict T
 refusal/native oracle sources are drafted. Both source substitution phases are
 active; complete source/native/production/sync/freshness/parity/delivery
 requirements remain unfinished.
+
+The [shared chronological source draft](chronological-local-source-draft.md)
+consolidates the complete alias engine while preserving separate base64/integer
+operand, census and result rules. Four whole equations and unrun invocation/
+family-isolation/timing/source-history cases are drafted. Complete source/native/
+production/sync/freshness/parity/delivery obligations remain unfinished.
