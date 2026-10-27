@@ -67,3 +67,26 @@ export const router_field_json_text_field3=(value,key,second,third)=>then(nested
 export const router_field_json_text_field3_or_empty=(value,key,second,third)=>{const selected=then(nestedFields(value,[key,second,third]),string);return selected.$==='Some'?selected.field0:'';};
 export const router_field_json_text_field4=(value,key,second,third,fourth)=>then(nestedFields(value,[key,second,third,fourth]),string);
 export const router_field_json_text_field4_or_empty=(value,key,second,third,fourth)=>{const selected=then(nestedFields(value,[key,second,third,fourth]),string);return selected.$==='Some'?selected.field0:'';};
+
+const whitespace=code=>code>=9&&code<=13||code===32||code===0x85||code===0xa0||code===0x1680||code>=0x2000&&code<=0x200a||code===0x2028||code===0x2029||code===0x202f||code===0x205f||code===0x3000;
+// Match native str::is_empty/trim predicates without trimming returned storage.
+function nonemptyTextField(value,trimWhitespace){
+ if(typeof trimWhitespace!=='boolean')throw new TypeError('Actual bool whitespace filter mode required');if(value.$==='None')return value;const text=value.field0;if(!trimWhitespace)return text.length?value:none;for(let at=0;at<text.length;at++)if(!whitespace(text.charCodeAt(at)))return value;return none;
+}
+
+export const router_field_json_str_field_nonempty=(value,key,trimWhitespace)=>nonemptyTextField(then(field(value,key),string),trimWhitespace);
+export const router_field_json_str_field_nonempty_or_empty=(value,key,trimWhitespace)=>{const selected=nonemptyTextField(then(field(value,key),string),trimWhitespace);return selected.$==='Some'?selected.field0:'';};
+export const router_field_json_text_field_nonempty=(value,key,trimWhitespace)=>nonemptyTextField(then(field(value,key),string),trimWhitespace);
+export const router_field_json_text_field_nonempty_or_empty=(value,key,trimWhitespace)=>{const selected=nonemptyTextField(then(field(value,key),string),trimWhitespace);return selected.$==='Some'?selected.field0:'';};
+export const router_field_json_str_field2_nonempty=(value,key,second,trimWhitespace)=>nonemptyTextField(then(nestedFields(value,[key,second]),string),trimWhitespace);
+export const router_field_json_str_field2_nonempty_or_empty=(value,key,second,trimWhitespace)=>{const selected=nonemptyTextField(then(nestedFields(value,[key,second]),string),trimWhitespace);return selected.$==='Some'?selected.field0:'';};
+export const router_field_json_text_field2_nonempty=(value,key,second,trimWhitespace)=>nonemptyTextField(then(nestedFields(value,[key,second]),string),trimWhitespace);
+export const router_field_json_text_field2_nonempty_or_empty=(value,key,second,trimWhitespace)=>{const selected=nonemptyTextField(then(nestedFields(value,[key,second]),string),trimWhitespace);return selected.$==='Some'?selected.field0:'';};
+export const router_field_json_str_field3_nonempty=(value,key,second,third,trimWhitespace)=>nonemptyTextField(then(nestedFields(value,[key,second,third]),string),trimWhitespace);
+export const router_field_json_str_field3_nonempty_or_empty=(value,key,second,third,trimWhitespace)=>{const selected=nonemptyTextField(then(nestedFields(value,[key,second,third]),string),trimWhitespace);return selected.$==='Some'?selected.field0:'';};
+export const router_field_json_text_field3_nonempty=(value,key,second,third,trimWhitespace)=>nonemptyTextField(then(nestedFields(value,[key,second,third]),string),trimWhitespace);
+export const router_field_json_text_field3_nonempty_or_empty=(value,key,second,third,trimWhitespace)=>{const selected=nonemptyTextField(then(nestedFields(value,[key,second,third]),string),trimWhitespace);return selected.$==='Some'?selected.field0:'';};
+export const router_field_json_str_field4_nonempty=(value,key,second,third,fourth,trimWhitespace)=>nonemptyTextField(then(nestedFields(value,[key,second,third,fourth]),string),trimWhitespace);
+export const router_field_json_str_field4_nonempty_or_empty=(value,key,second,third,fourth,trimWhitespace)=>{const selected=nonemptyTextField(then(nestedFields(value,[key,second,third,fourth]),string),trimWhitespace);return selected.$==='Some'?selected.field0:'';};
+export const router_field_json_text_field4_nonempty=(value,key,second,third,fourth,trimWhitespace)=>nonemptyTextField(then(nestedFields(value,[key,second,third,fourth]),string),trimWhitespace);
+export const router_field_json_text_field4_nonempty_or_empty=(value,key,second,third,fourth,trimWhitespace)=>{const selected=nonemptyTextField(then(nestedFields(value,[key,second,third,fourth]),string),trimWhitespace);return selected.$==='Some'?selected.field0:'';};

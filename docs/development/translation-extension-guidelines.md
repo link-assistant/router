@@ -715,3 +715,11 @@ bytes. Keep authoritative tokens/CST, literal contents and shared lexer unchange
 Preserve original refusal/work bounds, source inverses and full semantic checks;
 a split token grants no grammar, trait, ownership or executable authority. See
 the [unrun scoped token draft](rust-try-token-source-draft.md).
+
+Closed JSON text filters must preserve the original selected storage and Rust
+whitespace behavior. Retain full copied-declaration originals, actual native
+owners and exact target copies through every descendant; variables are source
+provenance only. Keep actual bool/key validation, original JSON string domains,
+borrowed root restrictions, owning type checks and both CST phases. Arbitrary
+callbacks/captures/effects remain separate obligations. See the
+[unrun filtered field draft](json-filtered-field-source-draft.md).

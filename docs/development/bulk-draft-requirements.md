@@ -813,3 +813,11 @@ selectors, retaining original UTF-16 spans, lexer and authoritative CST. Four
 complete compiler equations and independent unrun lexical/span/two-API/bulk/
 JS/strict TS/history/export source are drafted. Every wider source/native/
 production/sync/freshness/parity/delivery requirement remains unfinished.
+
+The [filtered JSON field draft](json-filtered-field-source-draft.md) adds16 paired
+borrowed/owned optional/default interfaces, two exact nonempty/nonblank predicate
+modes, full original whitespace declaration provenance and retained61-interface
+histories. Eight compiler equations and independent unrun ABI/two-API/40-caller/
+bulk/JS/strict TS/two-reverse-lane/native storage/lifetime/export source are
+drafted. Every wider source/native/production/sync/freshness/parity/delivery
+requirement remains OPEN and all verification remains UNRUN.

@@ -377,3 +377,259 @@ pub fn json_text_field4_or_empty(value: &Json, key: &str, second: &str, third: &
     .unwrap_or("")
     .to_owned()
 }
+
+#[must_use]
+pub fn json_str_field_nonempty<'a>(value: &'a Json, key: &str, trim_whitespace: bool) -> Option<&'a str> {
+    (match value.get(key) {
+        Some(value) => value.as_str(),
+        None => None,
+    })
+    .filter(|value| {
+        if trim_whitespace {
+            !value.trim().is_empty()
+        } else {
+            !value.is_empty()
+        }
+    })
+}
+
+#[must_use]
+pub fn json_str_field_nonempty_or_empty<'a>(value: &'a Json, key: &str, trim_whitespace: bool) -> &'a str {
+    (match value.get(key) {
+        Some(value) => value.as_str(),
+        None => None,
+    })
+    .filter(|value| {
+        if trim_whitespace {
+            !value.trim().is_empty()
+        } else {
+            !value.is_empty()
+        }
+    })
+    .unwrap_or("")
+}
+
+#[must_use]
+pub fn json_text_field_nonempty(value: &Json, key: &str, trim_whitespace: bool) -> Option<String> {
+    (match value.get(key) {
+        Some(value) => value.as_str(),
+        None => None,
+    })
+    .filter(|value| {
+        if trim_whitespace {
+            !value.trim().is_empty()
+        } else {
+            !value.is_empty()
+        }
+    })
+    .map(str::to_owned)
+}
+
+#[must_use]
+pub fn json_text_field_nonempty_or_empty(value: &Json, key: &str, trim_whitespace: bool) -> String {
+    (match value.get(key) {
+        Some(value) => value.as_str(),
+        None => None,
+    })
+    .filter(|value| {
+        if trim_whitespace {
+            !value.trim().is_empty()
+        } else {
+            !value.is_empty()
+        }
+    })
+    .unwrap_or("")
+    .to_owned()
+}
+
+#[must_use]
+pub fn json_str_field2_nonempty<'a>(value: &'a Json, key: &str, second: &str, trim_whitespace: bool) -> Option<&'a str> {
+    (match value.get(key).and_then(|value| value.get(second)) {
+        Some(value) => value.as_str(),
+        None => None,
+    })
+    .filter(|value| {
+        if trim_whitespace {
+            !value.trim().is_empty()
+        } else {
+            !value.is_empty()
+        }
+    })
+}
+
+#[must_use]
+pub fn json_str_field2_nonempty_or_empty<'a>(value: &'a Json, key: &str, second: &str, trim_whitespace: bool) -> &'a str {
+    (match value.get(key).and_then(|value| value.get(second)) {
+        Some(value) => value.as_str(),
+        None => None,
+    })
+    .filter(|value| {
+        if trim_whitespace {
+            !value.trim().is_empty()
+        } else {
+            !value.is_empty()
+        }
+    })
+    .unwrap_or("")
+}
+
+#[must_use]
+pub fn json_text_field2_nonempty(value: &Json, key: &str, second: &str, trim_whitespace: bool) -> Option<String> {
+    (match value.get(key).and_then(|value| value.get(second)) {
+        Some(value) => value.as_str(),
+        None => None,
+    })
+    .filter(|value| {
+        if trim_whitespace {
+            !value.trim().is_empty()
+        } else {
+            !value.is_empty()
+        }
+    })
+    .map(str::to_owned)
+}
+
+#[must_use]
+pub fn json_text_field2_nonempty_or_empty(value: &Json, key: &str, second: &str, trim_whitespace: bool) -> String {
+    (match value.get(key).and_then(|value| value.get(second)) {
+        Some(value) => value.as_str(),
+        None => None,
+    })
+    .filter(|value| {
+        if trim_whitespace {
+            !value.trim().is_empty()
+        } else {
+            !value.is_empty()
+        }
+    })
+    .unwrap_or("")
+    .to_owned()
+}
+
+#[must_use]
+pub fn json_str_field3_nonempty<'a>(value: &'a Json, key: &str, second: &str, third: &str, trim_whitespace: bool) -> Option<&'a str> {
+    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)) {
+        Some(value) => value.as_str(),
+        None => None,
+    })
+    .filter(|value| {
+        if trim_whitespace {
+            !value.trim().is_empty()
+        } else {
+            !value.is_empty()
+        }
+    })
+}
+
+#[must_use]
+pub fn json_str_field3_nonempty_or_empty<'a>(value: &'a Json, key: &str, second: &str, third: &str, trim_whitespace: bool) -> &'a str {
+    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)) {
+        Some(value) => value.as_str(),
+        None => None,
+    })
+    .filter(|value| {
+        if trim_whitespace {
+            !value.trim().is_empty()
+        } else {
+            !value.is_empty()
+        }
+    })
+    .unwrap_or("")
+}
+
+#[must_use]
+pub fn json_text_field3_nonempty(value: &Json, key: &str, second: &str, third: &str, trim_whitespace: bool) -> Option<String> {
+    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)) {
+        Some(value) => value.as_str(),
+        None => None,
+    })
+    .filter(|value| {
+        if trim_whitespace {
+            !value.trim().is_empty()
+        } else {
+            !value.is_empty()
+        }
+    })
+    .map(str::to_owned)
+}
+
+#[must_use]
+pub fn json_text_field3_nonempty_or_empty(value: &Json, key: &str, second: &str, third: &str, trim_whitespace: bool) -> String {
+    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)) {
+        Some(value) => value.as_str(),
+        None => None,
+    })
+    .filter(|value| {
+        if trim_whitespace {
+            !value.trim().is_empty()
+        } else {
+            !value.is_empty()
+        }
+    })
+    .unwrap_or("")
+    .to_owned()
+}
+
+#[must_use]
+pub fn json_str_field4_nonempty<'a>(value: &'a Json, key: &str, second: &str, third: &str, fourth: &str, trim_whitespace: bool) -> Option<&'a str> {
+    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth)) {
+        Some(value) => value.as_str(),
+        None => None,
+    })
+    .filter(|value| {
+        if trim_whitespace {
+            !value.trim().is_empty()
+        } else {
+            !value.is_empty()
+        }
+    })
+}
+
+#[must_use]
+pub fn json_str_field4_nonempty_or_empty<'a>(value: &'a Json, key: &str, second: &str, third: &str, fourth: &str, trim_whitespace: bool) -> &'a str {
+    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth)) {
+        Some(value) => value.as_str(),
+        None => None,
+    })
+    .filter(|value| {
+        if trim_whitespace {
+            !value.trim().is_empty()
+        } else {
+            !value.is_empty()
+        }
+    })
+    .unwrap_or("")
+}
+
+#[must_use]
+pub fn json_text_field4_nonempty(value: &Json, key: &str, second: &str, third: &str, fourth: &str, trim_whitespace: bool) -> Option<String> {
+    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth)) {
+        Some(value) => value.as_str(),
+        None => None,
+    })
+    .filter(|value| {
+        if trim_whitespace {
+            !value.trim().is_empty()
+        } else {
+            !value.is_empty()
+        }
+    })
+    .map(str::to_owned)
+}
+
+#[must_use]
+pub fn json_text_field4_nonempty_or_empty(value: &Json, key: &str, second: &str, third: &str, fourth: &str, trim_whitespace: bool) -> String {
+    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth)) {
+        Some(value) => value.as_str(),
+        None => None,
+    })
+    .filter(|value| {
+        if trim_whitespace {
+            !value.trim().is_empty()
+        } else {
+            !value.is_empty()
+        }
+    })
+    .unwrap_or("")
+    .to_owned()
+}
