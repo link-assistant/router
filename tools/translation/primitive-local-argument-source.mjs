@@ -13,7 +13,7 @@ export function createPrimitiveLocalArgumentSource(rows,parameters,allParameters
 
 const ident=token=>token?.type==='ident'&&/^[\p{ID_Start}_][\p{ID_Continue}_]*$/u.test(token.text);
 function primitiveLocalCensus(rows,parameters,opaqueRegions=[]){
- return censusLocalAliasBindings(rows,parameters,{opaqueRegions,protectedNames:['std','core','crate','self','Self','translation_core','translation_integer_core','Some','None','Option',...['u','i'].flatMap(prefix=>[8,16,32,64,128].map(bits=>prefix+bits))]}).reason===null;
+ return censusLocalAliasBindings(rows,parameters,{opaqueRegions,protectedNames:['std','core','crate','self','Self','translation_core','translation_integer_core','bool','Some','None','Option',...['u','i'].flatMap(prefix=>[8,16,32,64,128].map(bits=>prefix+bits))]}).reason===null;
 }
 export function readPrimitiveAliasOperand(rows,bindings,written=null){
  const core=readPrimitiveCoreCallSource(rows,bindings);if(core)return core;

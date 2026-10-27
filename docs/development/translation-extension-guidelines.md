@@ -953,3 +953,9 @@ Canonical formatting macro source composition uses the additive copied CST lane;
 preserve the old call-only API. Only the exact core format!(...) header may leave
 the unknown-producer refusal, and its arguments stay visible to every source
 scan and independent check. See [the unrun macro draft](layered-format-macro-source-draft.md).
+
+Primitive Display adoption must keep exact checked core formatting, original
+receiver/argument order, primitive namespace shadow refusals and the complete
+chain bound. Written scalar roles never prove ToString/Display or macro ownership.
+Keep wider reverse formatting open until implemented and qualified. See
+[the unrun primitive display draft](primitive-display-source-draft.md).

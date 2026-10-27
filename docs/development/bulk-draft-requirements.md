@@ -318,3 +318,10 @@ complete CST engine for exact canonical format! transport and keeps macro
 arguments visible in all six source selectors. Twenty-five equations and unrun
 old/new-API/header/refusal/twelve-adopter/six-caller/JS/strict TS/export source are
 drafted. All wider namespace/production/reverse/sync/parity/delivery rows stay OPEN.
+
+The [primitive display draft](primitive-display-source-draft.md) routes bool and
+all ten fixed integer widths through the existing checked core formatting
+abstraction, preserving source order and primitive namespace refusals. Seventeen
+equations and independent unrun width/edge/literal/alias/chain/six-API/nineteen-
+caller/JS/strict TS/native/export source are drafted. Every wider namespace,
+production/reverse/sync/freshness/parity/delivery requirement remains OPEN.
