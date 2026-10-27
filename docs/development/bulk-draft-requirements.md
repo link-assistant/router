@@ -855,3 +855,12 @@ unrun18-ABI/two-API/18-caller/bulk/JS/strict TS/resource-reverse/native move/sto
 export source are drafted. Captured owner transfer, older restricted reverse
 lanes, wider callback lowering and all source/native/production/sync/freshness/
 parity/delivery requirements remain OPEN. All verification remains UNRUN.
+
+The [callback text-body draft](callback-text-body-source-draft.md) reuses the
+existing text engine on full original callback bodies, retaining source-only
+wrapper types, four complete copied helper dependencies, chronological locals,
+grouped immutable borrows and child/full-parent inverses in both phases. Seven
+compiler equations and independent unrun two-API/9-caller/bulk/JS/strict TS/
+resource-reverse/native/export source are drafted. Every wider source/native/
+production/sync/freshness/parity/delivery requirement remains OPEN; all
+verification remains UNRUN.

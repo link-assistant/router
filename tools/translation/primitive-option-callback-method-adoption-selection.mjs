@@ -17,7 +17,7 @@ export function selectPrimitiveOptionCallbackMethodAdoption(source,item,_scoped,
  let open=name+1;if(tokens[open]?.text==='<'){let end=open+1;while(end<tokens.length&&tokens[end].text!=='>')end++;if(!/^<(?:'[a-zA-Z_][a-zA-Z0-9_]*\s*,?)+>$/u.test(words(tokens.slice(open,end+1))))return result('only closed lifetime parameters may precede primitive Option inputs');open=end+1;}
  if(tokens[open]?.text!=='(')return result('ordinary complete input list required');const endParameters=close(tokens,open);if(endParameters<0)return result('complete original input delimiters required');let body=endParameters+1;while(body<tokens.length&&tokens[body].text!=='{')body++;if(body>=tokens.length||close(tokens,body)!==tokens.length-1)return result('one complete original source body required');
  const parameterDomains=new Map(),parameters=new Set();for(const row of split(tokens.slice(open+1,endParameters))){if(!ident(row[0])||row[1]?.text!==':'||parameters.has(row[0].text))return result('distinct immutable typed input bindings required');parameters.add(row[0].text);const value=role(row.slice(2),_scoped);if(value)parameterDomains.set(row[0].text,value);}
- const localNames=new Set();let work=0;
+ const localNames=new Set();let work=0,callbackTextCount=0;
  const declaredOutput=role(tokens.slice(endParameters+2,body),_scoped);
  function inferred(piece,scope,wanted,depth=0){
   if(++work>200000||depth>64||!piece.length)return null;
@@ -38,19 +38,20 @@ export function selectPrimitiveOptionCallbackMethodAdoption(source,item,_scoped,
   }else return null;
   if(names.length!==(['unwrap_or_else','or_else'].includes(method)?0:1)||names.some(name=>['Some','None','Option'].includes(name)))return null;
   let written=null;if(piece[at]?.text==='->'){const start=at+1;at=start;while(at<piece.length&&piece[at].text!=='{')at++;written=role(piece.slice(start,at),_scoped);if(!written)return null;}
-  const scope=new Map(env);for(const name of names)scope.set(name,{kind:'payload',domain:input});const wanted=method==='or_else'?{kind:'option',domain:input}:method==='unwrap_or_else'?{kind:'payload',domain:input}:written??(declaredOutput?.kind==='option'?{kind:method==='map'?'payload':'option',domain:declaredOutput.domain}:null);let value;
-  if(piece[at]?.text==='{'){
-   if(close(piece,at)!==piece.length-1)return null;
+  if(!piece[at])return null;const scope=new Map(env);for(const name of names)scope.set(name,{kind:'payload',domain:input});const wanted=method==='or_else'?{kind:'option',domain:input}:method==='unwrap_or_else'?{kind:'payload',domain:input}:written??(declaredOutput?.kind==='option'?{kind:method==='map'?'payload':'option',domain:declaredOutput.domain}:null);let value,textSourceHistory=null,replacement=source.slice(piece[0].start,piece.at(-1).end),bodyTokens=piece.slice(at);if(callbackTextCount<32){const body=source.slice(piece[at].start,piece.at(-1).end),selected=proposeCallbackTextBodySource(body,scope);if(selected){callbackTextCount++;textSourceHistory=selected;replacement=source.slice(piece[0].start,piece[at].start)+selected.after.source;bodyTokens=rustTokens(selected.after.source).filter(row=>row.type!=='comment');}}
+  if(bodyTokens[0]?.text==='{'){
+   if(close(bodyTokens,0)!==bodyTokens.length-1)return null;
    if(written)value=written;
-   else{const body=piece.slice(at+1,-1),returned=[];let start=0;
+   else{const body=bodyTokens.slice(1,-1),returned=[],locals=createPrimitiveCarrierLocalSource(body,scope,new Set(scope.keys()),{readWrittenRole:tokens=>role(tokens,_scoped)});if(!locals)return null;let start=0;
     for(let index=0;index<body.length;index++)if(body[index].text==='return'){
-     let end=index+1;for(;end<body.length&&body[end].text!==';';end++)if(['(','['].includes(body[end].text)){const last=close(body,end);if(last<0)return null;end=last;}const candidate=inferred(body.slice(index+1,end),scope,wanted);if(!candidate)return null;returned.push(candidate);index=end;start=end+1;
+     let end=index+1;for(;end<body.length&&body[end].text!==';';end++)if(['(','['].includes(body[end].text)){const last=close(body,end);if(last<0)return null;end=last;}const candidate=inferred(body.slice(index+1,end),locals.at(body[index+1]?.start??body[index].end),wanted);if(!candidate)return null;returned.push(candidate);index=end;start=end+1;
     }
-    const tail=body.slice(start);if(!returned.length)value=inferred(tail,scope,wanted);else if(returned.every(row=>row.kind===returned[0].kind&&row.domain===returned[0].domain)&&tail.every(token=>['}',';'].includes(token.text)))value=returned[0];
+    if(!returned.length)for(let cursor=0;cursor<body.length;cursor++){if(['(','[','{'].includes(body[cursor].text)){const end=close(body,cursor);if(end<0)return null;cursor=end;}else if(body[cursor].text===';')start=cursor+1;}
+    const tail=body.slice(start);if(!returned.length)value=inferred(tail,tail.length?locals.at(tail[0].start):scope,wanted);else if(returned.every(row=>row.kind===returned[0].kind&&row.domain===returned[0].domain)&&tail.every(token=>['}',';'].includes(token.text)))value=returned[0];
    }
-  }else value=inferred(piece.slice(at),scope,wanted);
+  }else value=inferred(bodyTokens,scope,wanted);
   if(!value||written&&(value.kind!==written.kind||value.domain!==written.domain)||value.kind!==(['and_then','or_else'].includes(method)?'option':'payload'))return null;
-  if(['unwrap_or_else','or_else'].includes(method)&&value.domain!==input)return null;return {domain:value.domain,replacement:source.slice(piece[0].start,piece.at(-1).end)};
+  if(['unwrap_or_else','or_else'].includes(method)&&value.domain!==input)return null;return {domain:value.domain,replacement,...(textSourceHistory?{textSourceHistory}: {})};
  }
 
  for(let at=body+1;at<tokens.length-1;at++){
@@ -77,7 +78,7 @@ export function selectPrimitiveOptionCallbackMethodAdoption(source,item,_scoped,
     const pieces=split(tokens.slice(cursor+3,end));if(pieces.length!==1)break;const callback=callbackOperand(pieces[0],value.domain,method);if(!callback)break;
     if(value.domain==='str'&&method==='unwrap_or_else'){if(tokens[after]?.text!=='.'||!['to_owned','to_string'].includes(tokens[after+1]?.text)||tokens[after+2]?.text!=='('||tokens[after+3]?.text!==')')break;after+=4;}
     const row=primitiveOptionCallbackContract(['unwrap_or_else','or_else'].includes(method)?value.domain.replace('-','_')+'_'+method:value.domain.replace('-','_')+'_to_'+callback.domain.replace('-','_')+'_'+method);if(!row)break;
-    value={replacement:row.rustPath+'('+value.replacement+', '+callback.replacement+')',kind:method==='unwrap_or_else'?'payload':'option',domain:method==='unwrap_or_else'&&value.domain==='str'?'owned-str':callback.domain,after,operations:[...value.operations,row.rustName]};continue;
+    value={replacement:row.rustPath+'('+value.replacement+', '+callback.replacement+')',kind:method==='unwrap_or_else'?'payload':'option',domain:method==='unwrap_or_else'&&value.domain==='str'?'owned-str':callback.domain,after,operations:[...value.operations,row.rustName],callbackTextSourceHistories:[...(value.callbackTextSourceHistories??[]),...(callback.textSourceHistory?[callback.textSourceHistory]:[])]};continue;
    }
    const row=primitiveOptionContract(value.domain.replace('-','_')+'_'+method);if(!row)break;
 
@@ -85,10 +86,10 @@ export function selectPrimitiveOptionCallbackMethodAdoption(source,item,_scoped,
     if(tokens[after]?.text!=='.'||!['to_owned','to_string'].includes(tokens[after+1]?.text)||tokens[after+2]?.text!=='('||tokens[after+3]?.text!==')')break;after+=4;
    }
    const pieces=split(tokens.slice(cursor+3,end));if(pieces.length!==row.parameters.length-1)break;const args=pieces.map((piece,index)=>{const role=row.parameters[index+1],kind=role===(value.domain==='str'?'str-option-ref':value.domain+'-option')?'option':'payload',domain=role==='str'?'str':kind==='option'?value.domain:role;return operand(piece,{kind,domain},depth);});if(args.some(argument=>!argument))break;
-   const optional=row.returns===(value.domain==='str'?'str-option-ref':value.domain+'-option');value={replacement:row.rustPath+'('+[value.replacement,...args.map(argument=>argument.replacement)].join(', ')+')',kind:optional?'option':'payload',domain:optional?value.domain:row.returns==='text-owned'?(value.domain==='text-owned'?'text-owned':'owned-str'):row.returns,after,operations:[...value.operations,...args.flatMap(argument=>argument.operations),row.rustName]};
+   const optional=row.returns===(value.domain==='str'?'str-option-ref':value.domain+'-option');value={replacement:row.rustPath+'('+[value.replacement,...args.map(argument=>argument.replacement)].join(', ')+')',kind:optional?'option':'payload',domain:optional?value.domain:row.returns==='text-owned'?(value.domain==='text-owned'?'text-owned':'owned-str'):row.returns,after,operations:[...value.operations,...args.flatMap(argument=>argument.operations),row.rustName],callbackTextSourceHistories:[...(value.callbackTextSourceHistories??[]),...args.flatMap(argument=>argument.callbackTextSourceHistories??[])]};
   }return value;
  }
- function append(at,value){if(!value?.operations.length)return;const span=[tokens[at].start,tokens[value.after-1].end];edits.push({span,expected:source.slice(...span),replacement:value.replacement});selections.push({function:item.name,functionSpan:[item.start,item.end],span,operation:value.operations.at(-1),operations:value.operations,domain:value.domain,oldTraitDispatchProved:false,oldDropTimingProved:false,executableAdmission:false,...(localArguments.evidence(tokens[at].text)?{localReceiverSource:localArguments.evidence(tokens[at].text)}:{}),evaluationOrder:['actual-immutable-Copy-Option-receiver-once','already-evaluated-parameters-or-closed-literals-left-to-right']});}
+ function append(at,value){if(!value?.operations.length)return;const span=[tokens[at].start,tokens[value.after-1].end];edits.push({span,expected:source.slice(...span),replacement:value.replacement});selections.push({function:item.name,functionSpan:[item.start,item.end],span,operation:value.operations.at(-1),operations:value.operations,domain:value.domain,...(value.callbackTextSourceHistories?.length?{callbackTextSourceHistories:value.callbackTextSourceHistories}:{}),oldTraitDispatchProved:false,oldDropTimingProved:false,executableAdmission:false,...(localArguments.evidence(tokens[at].text)?{localReceiverSource:localArguments.evidence(tokens[at].text)}:{}),evaluationOrder:['actual-immutable-Option-receiver-once','already-evaluated-parameters-or-closed-literals-left-to-right']});}
  for(let at=body+1;at<tokens.length-1;at++){
   if(++work>200000)return result('complete source expression bound exceeded');env=localArguments.at(tokens[at].start);
   if(tokens[at].text==='let'){
@@ -103,3 +104,6 @@ import {localAliasDeclaration} from './local-alias-binding-source.mjs';
 import {readJsonFieldCarrierCallSource} from './primitive-carrier-local-source.mjs';
 
 import {readCoreCarrierCallSource} from './core-carrier-call-source.mjs';
+
+import {proposeCallbackTextBodySource} from './callback-text-body-source.mjs';
+import {rustTokens} from './rust-structure.mjs';

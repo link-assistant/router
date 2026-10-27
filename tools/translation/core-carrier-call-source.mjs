@@ -1,5 +1,5 @@
 // Repository core call source roles. Full source/type/ownership checks follow.
-import {readQualifiedSourceCallTokens} from './qualified-source-call-tokens.mjs';
+import {readQualifiedSourceCallTokens,readParenthesizedSourceOperandTokens} from './qualified-source-call-tokens.mjs';
 import {primitiveOptionContract} from './primitive-option-contracts.mjs';
 import {integerContract} from './integer-contracts.mjs';
 import {textContract} from './text-contracts.mjs';
@@ -11,7 +11,7 @@ const ident=row=>row?.type==='ident'&&/^[\p{ID_Start}_][\p{ID_Continue}_]*$/u.te
 export function readCoreCarrierCallSource(rows,bindings){
  let work=0;
  function operand(part,wanted,depth){
-  if(++work>256||depth>8||!part.length)return false;const first=part[0],known=part.length===1&&ident(first)?bindings.get(first.text):null;if(same(known,wanted))return true;
+  if(++work>256||depth>8||!part.length)return false;const first=part[0],known=part.length===1&&ident(first)?bindings.get(first.text):null;if(same(known,wanted))return true;const group=readParenthesizedSourceOperandTokens(part);if(group)return operand(group,wanted,depth+1);if(wanted.kind==='payload'&&wanted.domain==='str'&&part[0]?.text==='&')return operand(part.slice(1),{kind:'payload',domain:'text-owned'},depth+1);
   if(wanted.kind==='payload'){
    if(wanted.domain==='str'){
     if(part.length===1&&first.type==='string'&&/^(?:"|r#{0,255}")/u.test(first.text))return true;

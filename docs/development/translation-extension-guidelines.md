@@ -757,3 +757,11 @@ move restrictions; borrowed captures may produce independently owned copies.
 Keep new borrowed outputs from owned callback inputs outside this family, retain
 original native templates and both CST phases. See the
 [unrun owning callback draft](optional-text-callback-source-draft.md).
+
+Reuse existing source selectors inside callback bodies through bounded wrappers
+and rebase only body-owned edits. Temporary types/functions select DATA proposals
+and prove no real owner or semantics; recheck the original whole caller. Retain
+child histories through subsequent operations, exact copied helper originals,
+chronological local roles, grouped immutable borrows and both inner/outer CST
+phases. Do not execute or admit a temporary wrapper. See the
+[unrun callback body draft](callback-text-body-source-draft.md).
