@@ -734,3 +734,11 @@ fresh shared source rules. Twelve JS/TS equations, native source histories and
 independent unrun runtime/four-API/consecutive-stage/JS/strict TS/reverse/export/
 oracle cases are drafted. Wider callbacks/Result and every source/native/
 production/sync/freshness/parity/delivery requirement remain unfinished.
+
+The [borrowed JSON string default draft](json-string-default-source-draft.md)
+copies the actual field/scalar reader into the common empty-default source form,
+retaining JSON receiver borrow identity and other fallback evaluation. A reusable
+bounded native Rust function-copy producer, eight JS/TS equations and independent
+unrun runtime/caller/bulk/JS/strict TS/reverse/freshness/export/pointer-oracle
+source are drafted. Every wider source/native/production/sync/freshness/parity/
+delivery requirement remains unfinished.

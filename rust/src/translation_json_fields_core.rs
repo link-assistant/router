@@ -46,3 +46,12 @@ pub fn json_i64_field(value: &Json, key: &str) -> Option<i64> {
         None => None,
     }
 }
+
+#[must_use]
+pub fn json_str_field_or_empty<'a>(value: &'a Json, key: &str) -> &'a str {
+    (match value.get(key) {
+        Some(value) => value.as_str(),
+        None => None,
+    })
+    .unwrap_or("")
+}

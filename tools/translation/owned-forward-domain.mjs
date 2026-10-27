@@ -58,7 +58,8 @@ export function checkForwardOwnedExtra(checker,node,env,path,expected,row,{canon
   if(expected)compatible(checker,type,expected,path,node.span);requireOriginalPrimitiveTryFromChecker(checker);current();return {k:'routerHostCall',id:row.javascriptName,args,type,span:node.span,constEligible:false};
  }
  const json={...checker.hostType(JSON_TYPES.value,path,node.span),rustSourceType:true};canonical(checker,json,node.span,false);let type;
- if(row.returns==='json')type=json;
+ if(row.returns==='str')type=SOURCE_STR;
+ else if(row.returns==='json')type=json;
  else if(row.returns==='json-text-result')type=checker.instantiations.result(json,{...SOURCE_STRING,rustSourceType:true},node.span);
  else if(row.returns==='json-owned-option')type=checker.instantiations.option(json,node.span);
  else{

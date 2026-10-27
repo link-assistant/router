@@ -65,3 +65,11 @@ current source. Keep the reader bounded and preserve its original call text.
 Never import a preceding stage's saved result or successful verdict as authority.
 Recheck the entire combined caller, both emitted targets and its complete inverse
 against current native/runtime sources, with independent native caller oracles.
+
+Native compatibility additions can reuse `native-rust-function-copies.mjs` to
+copy complete original functions with bounded exact source edits, then rename
+actual name tokens in a separate repository phase. Keep every original function,
+full library inverse, current physical input and target-language CST. The
+result is source DATA; it cannot certify Rust grammar, dispatch, namespace,
+ownership or target behavior. Draft independent native and emitted-target cases
+for the whole caller instead of inferring parity from the copy operation.

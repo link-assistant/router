@@ -9,3 +9,5 @@ export const router_field_json_str_field=(value,key)=>then(field(value,key),stri
 export const router_field_json_bool_field=(value,key)=>then(field(value,key),boolean);
 export const router_field_json_u64_field=(value,key)=>then(field(value,key),unsigned);
 export const router_field_json_i64_field=(value,key)=>then(field(value,key),signed);
+
+export const router_field_json_str_field_or_empty=(value,key)=>{const selected=then(field(value,key),string);return selected.$==='Some'?selected.field0:'';};
