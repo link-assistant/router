@@ -765,3 +765,10 @@ child histories through subsequent operations, exact copied helper originals,
 chronological local roles, grouped immutable borrows and both inner/outer CST
 phases. Do not execute or admit a temporary wrapper. See the
 [unrun callback body draft](callback-text-body-source-draft.md).
+
+Reuse shared callback body rules for Result success and owning String error
+paths. Preserve child histories across later operations and derive local result
+roles from current complete initializers. Keep qualified Result constructor
+inputs distinct from standard Ok/Err payload roles and require the full actual
+caller checks. Source wrappers and metadata grant no callee or ownership permit.
+See the [unrun Result callback draft](result-callback-text-source-draft.md).

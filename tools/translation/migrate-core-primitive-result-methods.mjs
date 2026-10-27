@@ -84,7 +84,7 @@ function select(source,item,scoped,modulePath,names){
  return selectPrimitiveResultMethodAdoption(source,item,scoped,modulePath,names,{originalDeclarationHeader,close,split,text,ident,macroAt,createLegacyJsonReaderNormalizer,optionNormalizationProblem});
 }
 function apply(source,edits){
- return applyLayeredCoreAdoptionSource(source,edits,{languageRule:'primitive-result-methods:retain-complete-original-reader-and-evaluation-order',repositoryRule:'router-core:adopt-qualified-typed-primitive-result-method-operations',bindings:[{"native":"crate::translation_primitive_results_core::","neutral":"::translation_compatibility_primitive_results::"}]});
+ return applyLayeredCoreAdoptionSource(source,edits,{languageRule:'primitive-result-methods:retain-complete-original-reader-and-evaluation-order',repositoryRule:'router-core:adopt-qualified-typed-primitive-result-method-operations',bindings:[{native:'crate::translation_text_core::',neutral:'::translation_compatibility_text::'},{"native":"crate::translation_primitive_results_core::","neutral":"::translation_compatibility_primitive_results::"}]});
 }
 export function proposeCorePrimitiveResultMethodCorpus(options={}){
  const supplied=record(options,['entry','files','compilationProfile','dependencyInputs'],4,'options'),{entry='src/lib.rs',files:input,compilationProfile:inputProfile=PRODUCTION_PROFILE,dependencyInputs:requestedDependencies}=supplied.value,captured=filesSnapshot(input),files=captured.value,profile=compilationProfile(inputProfile),dependencies=requestedDependencies===undefined?null:record(requestedDependencies,['manifest','lock'],2,'dependency inputs'),dependencyInputs=dependencies?.value;

@@ -864,3 +864,11 @@ compiler equations and independent unrun two-API/9-caller/bulk/JS/strict TS/
 resource-reverse/native/export source are drafted. Every wider source/native/
 production/sync/freshness/parity/delivery requirement remains OPEN; all
 verification remains UNRUN.
+
+The [Result callback text draft](result-callback-text-source-draft.md) reuses the
+same full-body text adapter in primitive/owning Result success/error/recovery
+rules, preserving local source roles, qualified constructor/results and child/
+parent inverses. Eight compiler equations and independent unrun four-API/
+13-caller/consecutive-bulk/JS/strict TS/resource-reverse/native/export source are
+drafted. Every wider source/native/production/sync/freshness/parity/delivery
+requirement remains OPEN and all verification remains UNRUN.
