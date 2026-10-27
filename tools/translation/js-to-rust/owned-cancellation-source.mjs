@@ -26,6 +26,7 @@ import {ownedIntegerLiteral,narrowOwnedNumericLiteral} from './owned-numeric-lit
 import {ownedStateOperation,ownedStateCompatible,ownedStateWrittenType,requireOwnedStateSources as requireOwnedCollectionLeaf} from './owned-state-contracts.mjs';
 import {ownedOutcomeOperation,ownedOutcomeType,ownedOutcomeCompatible,requireOwnedOutcomeSources} from './owned-outcome-contracts.mjs';
 import {ownedIntegerOperation,requireOwnedIntegerSources} from './owned-integer-contracts.mjs';
+import {ownedIntegerOptionalPayload} from './owned-integer-optional-types.mjs';
 import {ownedSseOperation,requireOwnedSseSources} from './owned-sse-contracts.mjs';
 import {ownedTextOperation,requireOwnedTextSources} from './owned-text-contracts.mjs';
 import {ownedPrimitiveOptionOperation,ownedPrimitiveOptionAbsent,requireOwnedPrimitiveOptionSources} from './owned-primitive-option-contracts.mjs';
@@ -508,7 +509,7 @@ function checkFunction(context,path,declaration,analysis){
   if(ownedCancellationOwned(type))fail('owned cancellation public inputs require a separate ownership boundary');
   if(type==='base64-result')fail('native base64 result input control is not implemented');
   if(ownedPrimitiveResultType(type)||type==='text-owned-option'){if(!primitiveResultPublicInputs){const actual=ownedCoreSourceData(context);requireOwnedResultPublicInputSources(new Map(actual.files.map(row=>[row.path,row.source])),actual);primitiveResultPublicInputs=true;}}
-  if(ownedJsonOptionalPayload(type)&&type!=='json-owned-option'&&type!=='text-owned-option'){if(!['bool-option','u64-option','i64-option','str-option-ref'].includes(type))fail('optional public parameter needs its independent actual carrier boundary');if(!primitiveOptionPublicInputs){const actual=ownedCoreSourceData(context);requireOwnedPrimitiveOptionSources(new Map(actual.files.map(row=>[row.path,row.source])),actual);primitiveOptionPublicInputs=true;}}
+  if(ownedJsonOptionalPayload(type)&&type!=='json-owned-option'&&type!=='text-owned-option'){if(ownedIntegerOptionalPayload(type)){if(!nativeScalars)fail('additional integer option inputs require the actual primitive profile');const actual=ownedCoreSourceData(context);requireOwnedIntegerSources(new Map(actual.files.map(row=>[row.path,row.source])),actual);}else{if(!['bool-option','u64-option','i64-option','str-option-ref'].includes(type))fail('optional public parameter needs its independent actual carrier boundary');if(!primitiveOptionPublicInputs){const actual=ownedCoreSourceData(context);requireOwnedPrimitiveOptionSources(new Map(actual.files.map(row=>[row.path,row.source])),actual);primitiveOptionPublicInputs=true;}}}
   // A real owned String input keeps its native by-value parameter domain.
   const identifier=param.name;
   const sourceName=bind(identifier,{type,root:['json-ref','map-ref','str','bytes-ref','base64-error-ref'].includes(type)||ownedJsonBorrowed(type)||type==='json-option-input'||type==='json-list-ref'||ownedPrimitiveSliceElement(type)!==null||type===CANCELLATION_SHARED?identifier.text:null,input:true},environment);

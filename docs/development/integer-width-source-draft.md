@@ -5,6 +5,10 @@ drafted and unrun. Registered interfaces and copied code are not executable
 production coverage. Full translation, native/target parity, freshness,
 receiving qualification and whole-project synchronization remain unfinished.
 
+This records the preceding scalar stage. The subsequent
+[checked-width source draft](integer-checked-width-source-draft.md) extends the
+current catalog to150 interfaces and retains this entire scalar history.
+
 The complete original thirty u64/i64 interfaces stay in place. Seventy-six
 scalar-returning operations for u8/i8/u16/i16/u32/i32/u128/i128 are copied from
 their actual complete unsigned/signed native and JavaScript templates. General

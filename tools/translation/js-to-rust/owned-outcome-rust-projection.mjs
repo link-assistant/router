@@ -3,6 +3,7 @@
 import {posix} from 'node:path';
 import {OWNED_OUTCOME_CONTRACTS} from '../owned-outcome-contracts.mjs';
 import {INTEGER_CONTRACTS} from '../integer-contracts.mjs';
+import {ownedRustIntegerOptionalType,ownedIntegerOptionalWitness} from './owned-integer-optional-types.mjs';
 import {TEXT_CONTRACTS} from '../text-contracts.mjs';
 import {PRIMITIVE_OPTION_CONTRACTS} from '../primitive-option-contracts.mjs';
 import {PRIMITIVE_OPTION_CALLBACK_CONTRACTS} from '../primitive-option-callback-contracts.mjs';
@@ -72,7 +73,8 @@ export function projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot,
  function type(text){
   const scalar=primitiveOperators&&text.startsWith('::core::primitive::')?ownedRustPrimitiveType(text):null;if(scalar)return 'import('+JSON.stringify(relative('primitive-operator'))+').'+scalar.alias;
   text=text.replaceAll("&'a",'&');
-  const scalar=/^&\[(u64|i64|bool)\]$/u.exec(text);if(scalar)return 'readonly ('+type(scalar[1])+')[]';
+  const integerOption=primitiveOperators?ownedRustIntegerOptionalType(text):null;if(integerOption)return 'ReturnType<typeof '+imported(ownedIntegerOptionalWitness(integerOption),'integer')+'>';
+  const scalarSlice=/^&\[(u64|i64|bool)\]$/u.exec(text);if(scalarSlice)return 'readonly ('+type(scalarSlice[1])+')[]';
   if(text==='&crate::translation_core::Json')return 'import('+JSON.stringify(relative('json-macro'))+').JsonValue';
   if(text==='&[crate::translation_core::Json]')return 'Parameters<typeof '+imported('router_state_json_values_copy','json-state')+'>[0]';
   if(text==='&::serde_json::Map<::std::string::String,crate::translation_core::Json>')return 'Parameters<typeof '+imported('router_core_json_map_index','json-update')+'>[0]';
@@ -89,6 +91,7 @@ export function projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot,
  }
  function returnType(text){
   const scalar=primitiveOperators&&text.startsWith('::core::primitive::')?ownedRustPrimitiveType(text):null;if(scalar)return 'import('+JSON.stringify(relative('primitive-operator'))+').'+scalar.alias;
+  const integerOption=primitiveOperators?ownedRustIntegerOptionalType(text):null;if(integerOption)return type(text);
   const values={
    'crate::translation_core::Json':['router_core_json_find','json-iteration'],
    '&crate::translation_core::Json':['serde_json_value_get_string','json'],

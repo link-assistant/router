@@ -529,3 +529,223 @@ pub fn i128_clamp(value: i128, other: i128, upper: i128) -> i128 {
 pub fn i128_saturating_abs(value: i128) -> i128 {
     value.saturating_abs()
 }
+
+#[must_use]
+pub fn u8_checked_add(value: u8, other: u8) -> Option<u8> {
+    value.checked_add(other)
+}
+
+#[must_use]
+pub fn u8_checked_sub(value: u8, other: u8) -> Option<u8> {
+    value.checked_sub(other)
+}
+
+#[must_use]
+pub fn u8_checked_mul(value: u8, other: u8) -> Option<u8> {
+    value.checked_mul(other)
+}
+
+#[must_use]
+pub fn u8_checked_div(value: u8, other: u8) -> Option<u8> {
+    value.checked_div(other)
+}
+
+#[must_use]
+pub fn u8_checked_rem(value: u8, other: u8) -> Option<u8> {
+    value.checked_rem(other)
+}
+
+#[must_use]
+pub fn i8_checked_add(value: i8, other: i8) -> Option<i8> {
+    value.checked_add(other)
+}
+
+#[must_use]
+pub fn i8_checked_sub(value: i8, other: i8) -> Option<i8> {
+    value.checked_sub(other)
+}
+
+#[must_use]
+pub fn i8_checked_mul(value: i8, other: i8) -> Option<i8> {
+    value.checked_mul(other)
+}
+
+#[must_use]
+pub fn i8_checked_div(value: i8, other: i8) -> Option<i8> {
+    value.checked_div(other)
+}
+
+#[must_use]
+pub fn i8_checked_rem(value: i8, other: i8) -> Option<i8> {
+    value.checked_rem(other)
+}
+
+#[must_use]
+pub fn i8_checked_abs(value: i8) -> Option<i8> {
+    value.checked_abs()
+}
+
+#[must_use]
+pub fn u16_checked_add(value: u16, other: u16) -> Option<u16> {
+    value.checked_add(other)
+}
+
+#[must_use]
+pub fn u16_checked_sub(value: u16, other: u16) -> Option<u16> {
+    value.checked_sub(other)
+}
+
+#[must_use]
+pub fn u16_checked_mul(value: u16, other: u16) -> Option<u16> {
+    value.checked_mul(other)
+}
+
+#[must_use]
+pub fn u16_checked_div(value: u16, other: u16) -> Option<u16> {
+    value.checked_div(other)
+}
+
+#[must_use]
+pub fn u16_checked_rem(value: u16, other: u16) -> Option<u16> {
+    value.checked_rem(other)
+}
+
+#[must_use]
+pub fn i16_checked_add(value: i16, other: i16) -> Option<i16> {
+    value.checked_add(other)
+}
+
+#[must_use]
+pub fn i16_checked_sub(value: i16, other: i16) -> Option<i16> {
+    value.checked_sub(other)
+}
+
+#[must_use]
+pub fn i16_checked_mul(value: i16, other: i16) -> Option<i16> {
+    value.checked_mul(other)
+}
+
+#[must_use]
+pub fn i16_checked_div(value: i16, other: i16) -> Option<i16> {
+    value.checked_div(other)
+}
+
+#[must_use]
+pub fn i16_checked_rem(value: i16, other: i16) -> Option<i16> {
+    value.checked_rem(other)
+}
+
+#[must_use]
+pub fn i16_checked_abs(value: i16) -> Option<i16> {
+    value.checked_abs()
+}
+
+#[must_use]
+pub fn u32_checked_add(value: u32, other: u32) -> Option<u32> {
+    value.checked_add(other)
+}
+
+#[must_use]
+pub fn u32_checked_sub(value: u32, other: u32) -> Option<u32> {
+    value.checked_sub(other)
+}
+
+#[must_use]
+pub fn u32_checked_mul(value: u32, other: u32) -> Option<u32> {
+    value.checked_mul(other)
+}
+
+#[must_use]
+pub fn u32_checked_div(value: u32, other: u32) -> Option<u32> {
+    value.checked_div(other)
+}
+
+#[must_use]
+pub fn u32_checked_rem(value: u32, other: u32) -> Option<u32> {
+    value.checked_rem(other)
+}
+
+#[must_use]
+pub fn i32_checked_add(value: i32, other: i32) -> Option<i32> {
+    value.checked_add(other)
+}
+
+#[must_use]
+pub fn i32_checked_sub(value: i32, other: i32) -> Option<i32> {
+    value.checked_sub(other)
+}
+
+#[must_use]
+pub fn i32_checked_mul(value: i32, other: i32) -> Option<i32> {
+    value.checked_mul(other)
+}
+
+#[must_use]
+pub fn i32_checked_div(value: i32, other: i32) -> Option<i32> {
+    value.checked_div(other)
+}
+
+#[must_use]
+pub fn i32_checked_rem(value: i32, other: i32) -> Option<i32> {
+    value.checked_rem(other)
+}
+
+#[must_use]
+pub fn i32_checked_abs(value: i32) -> Option<i32> {
+    value.checked_abs()
+}
+
+#[must_use]
+pub fn u128_checked_add(value: u128, other: u128) -> Option<u128> {
+    value.checked_add(other)
+}
+
+#[must_use]
+pub fn u128_checked_sub(value: u128, other: u128) -> Option<u128> {
+    value.checked_sub(other)
+}
+
+#[must_use]
+pub fn u128_checked_mul(value: u128, other: u128) -> Option<u128> {
+    value.checked_mul(other)
+}
+
+#[must_use]
+pub fn u128_checked_div(value: u128, other: u128) -> Option<u128> {
+    value.checked_div(other)
+}
+
+#[must_use]
+pub fn u128_checked_rem(value: u128, other: u128) -> Option<u128> {
+    value.checked_rem(other)
+}
+
+#[must_use]
+pub fn i128_checked_add(value: i128, other: i128) -> Option<i128> {
+    value.checked_add(other)
+}
+
+#[must_use]
+pub fn i128_checked_sub(value: i128, other: i128) -> Option<i128> {
+    value.checked_sub(other)
+}
+
+#[must_use]
+pub fn i128_checked_mul(value: i128, other: i128) -> Option<i128> {
+    value.checked_mul(other)
+}
+
+#[must_use]
+pub fn i128_checked_div(value: i128, other: i128) -> Option<i128> {
+    value.checked_div(other)
+}
+
+#[must_use]
+pub fn i128_checked_rem(value: i128, other: i128) -> Option<i128> {
+    value.checked_rem(other)
+}
+
+#[must_use]
+pub fn i128_checked_abs(value: i128) -> Option<i128> {
+    value.checked_abs()
+}

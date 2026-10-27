@@ -21,6 +21,7 @@ export function projectOwnedStateUnitJavaScript(source,{context,sourcePath,paire
  function operation(name,family,index){const key=family+':'+name;if(!imports.has(key))imports.set(key,{name,family,local:'paired_input_'+name});return 'Parameters<typeof '+imports.get(key).local+'>['+index+']';}
  function type(domain){
   const scalar=data.primitiveOperators===true?primitiveBitwiseType(domain):null;if(scalar)return 'import('+JSON.stringify(relative('primitive-operator'))+').'+scalar.alias;
+  const integerOption=data.primitiveOperators===true?ownedIntegerOptionalWitness(domain):null;if(integerOption){operation(integerOption,'integer',0);return 'ReturnType<typeof '+imports.get('integer:'+integerOption).local+'>';}
   const slice=ownedPrimitiveSliceElement(domain);if(slice)return 'readonly ('+type(slice)+')[]';
   const json='import('+JSON.stringify(relative('json-macro'))+').JsonValue';
   if(domain==='json-ref')return json;if(domain==='json-list-ref')return 'readonly '+json+'[]';if(domain==='str')return 'string';if(domain==='bool')return 'boolean';
@@ -31,6 +32,7 @@ export function projectOwnedStateUnitJavaScript(source,{context,sourcePath,paire
   fail('paired public input needs its own source-bound signature rule: '+domain);
  }
  function returnType(domain){
+  const integerOption=data.primitiveOperators===true?ownedIntegerOptionalWitness(domain):null;if(integerOption){operation(integerOption,'integer',0);return 'ReturnType<typeof '+imports.get('integer:'+integerOption).local+'>';}
   const operations={'json-text-result':['router_carrier_json_ok','owned-outcome'],'json-owned-option':['router_carrier_json_some','owned-outcome'],'json-option-ref':['serde_json_value_get_string','json'],'str-option-ref':['serde_json_value_as_str','json'],'bool-option':['serde_json_value_as_bool','json'],'u64-option':['serde_json_value_as_u64','json'],'i64-option':['serde_json_value_as_i64','json']},row=operations[domain];if(!row)fail('constructor return requires its actual registered carrier domain');operation(row[0],row[1],0);return 'ReturnType<typeof '+imports.get(row[1]+':'+row[0]).local+'>';
  }
  for(const declaration of missing){
@@ -53,3 +55,4 @@ export function projectOwnedStateUnitJavaScript(source,{context,sourcePath,paire
 export {projectOwnedStateUnitJavaScript as projectOwnedOutcomeUnitJavaScript};
 
 import {primitiveBitwiseType} from '../primitive-bitwise-types.mjs';
+import {ownedIntegerOptionalWitness} from './owned-integer-optional-types.mjs';

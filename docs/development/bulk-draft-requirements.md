@@ -718,3 +718,11 @@ widths, explicit count bounds, source spelling and original whole-function
 checks. Twelve complete compiler equations and independent unrun lexical,
 adopter/bulk/JS/strict TS/export/native oracle source are drafted. Every wider
 source/native/production/sync/freshness/parity/delivery requirement stays open.
+
+The [checked integer width draft](integer-checked-width-source-draft.md) copies
+44 additional checked operations from complete existing templates and retains
+all150 scalar/checked interfaces, native payload identity, forward/reverse
+carriers and full adjacent Rust source histories. Seventeen JS/TS equations plus
+native source and independent unrun caller/JS/strict TS/reverse/export/oracle
+cases are drafted. Every wider source/native/production/sync/freshness/parity/
+delivery requirement remains unfinished.
