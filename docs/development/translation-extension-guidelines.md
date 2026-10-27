@@ -887,3 +887,9 @@ full intermediate source, child inverse, temporary wrapper and enclosing caller
 inverse. An unchanged source round grants no complete-language or semantic
 permission. Keep existing body/selector limits and fresh independent checks. See
 the [unrun shared callback body draft](callback-core-body-source-draft.md).
+
+Project bare binding Try source only from an actual current lexical carrier
+role and one original question mark. Preserve complete grouped source, payload
+domains and independent binding/Try/From/borrow/owning checks; a written source
+role is never semantic authority. See the
+[unrun binding Try draft](carrier-binding-try-source-draft.md).

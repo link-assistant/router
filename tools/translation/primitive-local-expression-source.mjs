@@ -15,11 +15,11 @@ export function readPrimitiveLocalExpression(rows,bindings,{readAtom,declared=nu
   if(!tick())return null;const known=readAtom(part,bindings);if(known){domains.add(known.kind);return {kind:'atom',part,value:known};}const literal=readNativeIntegerLiteralSource(part);return literal&&!literal.suffix?{kind:'atom',part,value:null}:null;
  }
  function unary(depth){
-  if(!tick()||depth>64)return null;const word=rows[at]?.text;if(word==='('){at++;const value=expression(0,depth+1);if(!value||rows[at++]?.text!==')')return null;return {kind:'group',value};}
+  if(!tick()||depth>64)return null;const word=rows[at]?.text;if(word==='('){const group=readParenthesizedSourcePrefixTokens(rows,at);if(group&&rows[group.end]?.text==='?'){const part=rows.slice(at,group.end+1);at=group.end+1;return atom(part);}at++;const value=expression(0,depth+1);if(!value||rows[at++]?.text!==')')return null;return {kind:'group',value};}
   if(word==='-'||word==='!'){
    if(word==='-'&&rows[at+1]?.type==='number'){const part=rows.slice(at,at+2);at+=2;return atom(part);}at++;const value=unary(depth+1);return value?{kind:'unary',operator:word,value}:null;
   }
-  if(!rows[at])return null;const call=readQualifiedSourceCallPrefixTokens(rows,at);if(call){const end=call.end+(rows[call.end]?.text==='?'?1:0),part=rows.slice(at,end);at=end;return atom(part);}let end=at+(rows[at].text==='::'?1:0),size=1;if(rows[end]?.type==='ident'){end++;while(end-at<=15&&rows[end]?.text==='::'&&rows[end+1]?.type==='ident')end+=2;if(end-at>=3&&['MIN','MAX'].includes(rows[end-1]?.text))size=end-at;}const part=rows.slice(at,at+size);at+=size;return atom(part);
+  if(!rows[at])return null;const call=readQualifiedSourceCallPrefixTokens(rows,at);if(call){const end=call.end+(rows[call.end]?.text==='?'?1:0),part=rows.slice(at,end);at=end;return atom(part);}let end=at+(rows[at].text==='::'?1:0),size=1;if(rows[end]?.type==='ident'){end++;while(end-at<=15&&rows[end]?.text==='::'&&rows[end+1]?.type==='ident')end+=2;if(end-at>=3&&['MIN','MAX'].includes(rows[end-1]?.text))size=end-at;}const endAtom=at+size+(rows[at+size]?.text==='?'?1:0),part=rows.slice(at,endAtom);at=endAtom;return atom(part);
  }
  function expression(minimum,depth){
   let value=unary(depth);if(!value)return null;for(;;){const precedence=binary.get(rows[at]?.text);if(precedence===undefined||precedence<minimum)break;if(!tick())return null;const operator=rows[at++].text,right=expression(precedence+1,depth+1);if(!right)return null;value={kind:'binary',operator,left:value,right};}return value;
@@ -31,4 +31,4 @@ export function readPrimitiveLocalExpression(rows,bindings,{readAtom,declared=nu
  if(!qualify(tree))return null;return tree.kind==='atom'&&tree.value?tree.value:{kind:domain,binding:null,bridge:'complete-native-primitive-expression'};
 }
 
-import {readQualifiedSourceCallPrefixTokens} from './qualified-source-call-tokens.mjs';
+import {readQualifiedSourceCallPrefixTokens,readParenthesizedSourcePrefixTokens} from './qualified-source-call-tokens.mjs';

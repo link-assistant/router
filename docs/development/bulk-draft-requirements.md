@@ -241,3 +241,11 @@ adopters, retaining complete child/source histories and unchanged-round bounds.
 Twelve equations and independent unrun ten-width/six-API/ten-caller/boundary/JS/
 strict TS/paired reverse/native/export source are drafted. Every unfinished
 namespace/production/reverse/sync/freshness/parity/delivery row remains OPEN.
+
+The [carrier binding Try draft](carrier-binding-try-source-draft.md) composes
+actual lexical Option/Result question marks through shared local/boolean/numeric
+source and direct/grouped integer receivers. Six equations and independent unrun
+two-API/six-caller/refusal/JS/strict TS/invalid-context/native-storage/order/export
+source are drafted. Actual Try/type/binding checks remain independent and all
+unfinished namespace/production/reverse/sync/freshness/parity/delivery rows stay
+OPEN.
