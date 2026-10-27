@@ -45,3 +45,97 @@ export const router_integer_i64_checked_div=(value,other)=>calculate(true,"check
 export const router_integer_i64_checked_rem=(value,other)=>calculate(true,"checked_rem",[value,other]);
 export const router_integer_i64_checked_abs=(value)=>calculate(true,"checked_abs",[value]);
 export const router_integer_i64_saturating_abs=(value)=>calculate(true,"saturating_abs",[value]);
+
+// Constant finite ABI metadata; this is no saved source/checker result.
+const INTEGER_ADDITIONAL_WIDTHS=Object.freeze([8,16,32,128].map(bits=>{const width=1n<<BigInt(bits),half=width>>1n;return Object.freeze({bits,UMAX:width-1n,IMIN:-half,IMAX:half-1n,WIDTH:width});}));
+function calculateIntegerWidth(bits,signed,method,args){
+ const {UMAX,IMIN,IMAX,WIDTH}=INTEGER_ADDITIONAL_WIDTHS.find(row=>row.bits===bits);
+ function value(input,signed){if(typeof input!=='bigint'||input<(signed?IMIN:0n)||input>(signed?IMAX:UMAX))throw new TypeError('Actual fixed-width '+(signed?'i':'u')+bits+' primitive required');return input;}
+ const values=args.map(input=>value(input,signed)),a=values[0],b=values[1],lower=signed?IMIN:0n,upper=signed?IMAX:UMAX;
+ if(method==='min')return a<b?a:b;if(method==='max')return a>b?a:b;if(method==='clamp'){if(b>values[2])throw new RangeError('Native clamp minimum exceeds maximum');return a<b?b:a>values[2]?values[2]:a;}
+ const [mode,operation]=method.split('_');let result;
+ if(operation==='abs')result=a<0n?-a:a;
+ else if(operation==='add')result=a+b;else if(operation==='sub')result=a-b;else if(operation==='mul')result=a*b;
+ else if(operation==='div'||operation==='rem'){if(b===0n||signed&&a===IMIN&&b===-1n)return none;result=operation==='div'?a/b:a%b;}
+ else throw new TypeError('Unregistered fixed-width operation');
+ if(mode==='checked')return result<lower||result>upper?none:some(result);
+ if(mode==='saturating')return result<lower?lower:result>upper?upper:result;
+ if(mode==='wrapping'){const unsigned=((result%WIDTH)+WIDTH)%WIDTH;return signed&&unsigned>IMAX?unsigned-WIDTH:unsigned;}
+ throw new TypeError('Unregistered fixed-width arithmetic mode');
+}
+export const router_integer_u8_saturating_add=(value,other)=>calculateIntegerWidth(8,false,"saturating_add",[value,other]);
+export const router_integer_u8_saturating_sub=(value,other)=>calculateIntegerWidth(8,false,"saturating_sub",[value,other]);
+export const router_integer_u8_saturating_mul=(value,other)=>calculateIntegerWidth(8,false,"saturating_mul",[value,other]);
+export const router_integer_u8_wrapping_add=(value,other)=>calculateIntegerWidth(8,false,"wrapping_add",[value,other]);
+export const router_integer_u8_wrapping_sub=(value,other)=>calculateIntegerWidth(8,false,"wrapping_sub",[value,other]);
+export const router_integer_u8_wrapping_mul=(value,other)=>calculateIntegerWidth(8,false,"wrapping_mul",[value,other]);
+export const router_integer_u8_min=(value,other)=>calculateIntegerWidth(8,false,"min",[value,other]);
+export const router_integer_u8_max=(value,other)=>calculateIntegerWidth(8,false,"max",[value,other]);
+export const router_integer_u8_clamp=(value,other,upper)=>calculateIntegerWidth(8,false,"clamp",[value,other,upper]);
+export const router_integer_i8_saturating_add=(value,other)=>calculateIntegerWidth(8,true,"saturating_add",[value,other]);
+export const router_integer_i8_saturating_sub=(value,other)=>calculateIntegerWidth(8,true,"saturating_sub",[value,other]);
+export const router_integer_i8_saturating_mul=(value,other)=>calculateIntegerWidth(8,true,"saturating_mul",[value,other]);
+export const router_integer_i8_wrapping_add=(value,other)=>calculateIntegerWidth(8,true,"wrapping_add",[value,other]);
+export const router_integer_i8_wrapping_sub=(value,other)=>calculateIntegerWidth(8,true,"wrapping_sub",[value,other]);
+export const router_integer_i8_wrapping_mul=(value,other)=>calculateIntegerWidth(8,true,"wrapping_mul",[value,other]);
+export const router_integer_i8_min=(value,other)=>calculateIntegerWidth(8,true,"min",[value,other]);
+export const router_integer_i8_max=(value,other)=>calculateIntegerWidth(8,true,"max",[value,other]);
+export const router_integer_i8_clamp=(value,other,upper)=>calculateIntegerWidth(8,true,"clamp",[value,other,upper]);
+export const router_integer_i8_saturating_abs=(value)=>calculateIntegerWidth(8,true,"saturating_abs",[value]);
+export const router_integer_u16_saturating_add=(value,other)=>calculateIntegerWidth(16,false,"saturating_add",[value,other]);
+export const router_integer_u16_saturating_sub=(value,other)=>calculateIntegerWidth(16,false,"saturating_sub",[value,other]);
+export const router_integer_u16_saturating_mul=(value,other)=>calculateIntegerWidth(16,false,"saturating_mul",[value,other]);
+export const router_integer_u16_wrapping_add=(value,other)=>calculateIntegerWidth(16,false,"wrapping_add",[value,other]);
+export const router_integer_u16_wrapping_sub=(value,other)=>calculateIntegerWidth(16,false,"wrapping_sub",[value,other]);
+export const router_integer_u16_wrapping_mul=(value,other)=>calculateIntegerWidth(16,false,"wrapping_mul",[value,other]);
+export const router_integer_u16_min=(value,other)=>calculateIntegerWidth(16,false,"min",[value,other]);
+export const router_integer_u16_max=(value,other)=>calculateIntegerWidth(16,false,"max",[value,other]);
+export const router_integer_u16_clamp=(value,other,upper)=>calculateIntegerWidth(16,false,"clamp",[value,other,upper]);
+export const router_integer_i16_saturating_add=(value,other)=>calculateIntegerWidth(16,true,"saturating_add",[value,other]);
+export const router_integer_i16_saturating_sub=(value,other)=>calculateIntegerWidth(16,true,"saturating_sub",[value,other]);
+export const router_integer_i16_saturating_mul=(value,other)=>calculateIntegerWidth(16,true,"saturating_mul",[value,other]);
+export const router_integer_i16_wrapping_add=(value,other)=>calculateIntegerWidth(16,true,"wrapping_add",[value,other]);
+export const router_integer_i16_wrapping_sub=(value,other)=>calculateIntegerWidth(16,true,"wrapping_sub",[value,other]);
+export const router_integer_i16_wrapping_mul=(value,other)=>calculateIntegerWidth(16,true,"wrapping_mul",[value,other]);
+export const router_integer_i16_min=(value,other)=>calculateIntegerWidth(16,true,"min",[value,other]);
+export const router_integer_i16_max=(value,other)=>calculateIntegerWidth(16,true,"max",[value,other]);
+export const router_integer_i16_clamp=(value,other,upper)=>calculateIntegerWidth(16,true,"clamp",[value,other,upper]);
+export const router_integer_i16_saturating_abs=(value)=>calculateIntegerWidth(16,true,"saturating_abs",[value]);
+export const router_integer_u32_saturating_add=(value,other)=>calculateIntegerWidth(32,false,"saturating_add",[value,other]);
+export const router_integer_u32_saturating_sub=(value,other)=>calculateIntegerWidth(32,false,"saturating_sub",[value,other]);
+export const router_integer_u32_saturating_mul=(value,other)=>calculateIntegerWidth(32,false,"saturating_mul",[value,other]);
+export const router_integer_u32_wrapping_add=(value,other)=>calculateIntegerWidth(32,false,"wrapping_add",[value,other]);
+export const router_integer_u32_wrapping_sub=(value,other)=>calculateIntegerWidth(32,false,"wrapping_sub",[value,other]);
+export const router_integer_u32_wrapping_mul=(value,other)=>calculateIntegerWidth(32,false,"wrapping_mul",[value,other]);
+export const router_integer_u32_min=(value,other)=>calculateIntegerWidth(32,false,"min",[value,other]);
+export const router_integer_u32_max=(value,other)=>calculateIntegerWidth(32,false,"max",[value,other]);
+export const router_integer_u32_clamp=(value,other,upper)=>calculateIntegerWidth(32,false,"clamp",[value,other,upper]);
+export const router_integer_i32_saturating_add=(value,other)=>calculateIntegerWidth(32,true,"saturating_add",[value,other]);
+export const router_integer_i32_saturating_sub=(value,other)=>calculateIntegerWidth(32,true,"saturating_sub",[value,other]);
+export const router_integer_i32_saturating_mul=(value,other)=>calculateIntegerWidth(32,true,"saturating_mul",[value,other]);
+export const router_integer_i32_wrapping_add=(value,other)=>calculateIntegerWidth(32,true,"wrapping_add",[value,other]);
+export const router_integer_i32_wrapping_sub=(value,other)=>calculateIntegerWidth(32,true,"wrapping_sub",[value,other]);
+export const router_integer_i32_wrapping_mul=(value,other)=>calculateIntegerWidth(32,true,"wrapping_mul",[value,other]);
+export const router_integer_i32_min=(value,other)=>calculateIntegerWidth(32,true,"min",[value,other]);
+export const router_integer_i32_max=(value,other)=>calculateIntegerWidth(32,true,"max",[value,other]);
+export const router_integer_i32_clamp=(value,other,upper)=>calculateIntegerWidth(32,true,"clamp",[value,other,upper]);
+export const router_integer_i32_saturating_abs=(value)=>calculateIntegerWidth(32,true,"saturating_abs",[value]);
+export const router_integer_u128_saturating_add=(value,other)=>calculateIntegerWidth(128,false,"saturating_add",[value,other]);
+export const router_integer_u128_saturating_sub=(value,other)=>calculateIntegerWidth(128,false,"saturating_sub",[value,other]);
+export const router_integer_u128_saturating_mul=(value,other)=>calculateIntegerWidth(128,false,"saturating_mul",[value,other]);
+export const router_integer_u128_wrapping_add=(value,other)=>calculateIntegerWidth(128,false,"wrapping_add",[value,other]);
+export const router_integer_u128_wrapping_sub=(value,other)=>calculateIntegerWidth(128,false,"wrapping_sub",[value,other]);
+export const router_integer_u128_wrapping_mul=(value,other)=>calculateIntegerWidth(128,false,"wrapping_mul",[value,other]);
+export const router_integer_u128_min=(value,other)=>calculateIntegerWidth(128,false,"min",[value,other]);
+export const router_integer_u128_max=(value,other)=>calculateIntegerWidth(128,false,"max",[value,other]);
+export const router_integer_u128_clamp=(value,other,upper)=>calculateIntegerWidth(128,false,"clamp",[value,other,upper]);
+export const router_integer_i128_saturating_add=(value,other)=>calculateIntegerWidth(128,true,"saturating_add",[value,other]);
+export const router_integer_i128_saturating_sub=(value,other)=>calculateIntegerWidth(128,true,"saturating_sub",[value,other]);
+export const router_integer_i128_saturating_mul=(value,other)=>calculateIntegerWidth(128,true,"saturating_mul",[value,other]);
+export const router_integer_i128_wrapping_add=(value,other)=>calculateIntegerWidth(128,true,"wrapping_add",[value,other]);
+export const router_integer_i128_wrapping_sub=(value,other)=>calculateIntegerWidth(128,true,"wrapping_sub",[value,other]);
+export const router_integer_i128_wrapping_mul=(value,other)=>calculateIntegerWidth(128,true,"wrapping_mul",[value,other]);
+export const router_integer_i128_min=(value,other)=>calculateIntegerWidth(128,true,"min",[value,other]);
+export const router_integer_i128_max=(value,other)=>calculateIntegerWidth(128,true,"max",[value,other]);
+export const router_integer_i128_clamp=(value,other,upper)=>calculateIntegerWidth(128,true,"clamp",[value,other,upper]);
+export const router_integer_i128_saturating_abs=(value)=>calculateIntegerWidth(128,true,"saturating_abs",[value]);

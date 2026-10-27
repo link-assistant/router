@@ -703,3 +703,11 @@ operands, preserving actual spelling/trivia and all original semantic checks.
 Four complete equations and unrun domain/path/span/two-API/bulk/JS/strict TS/
 export/native oracle source is drafted. All wider source/native/production/
 sync/freshness/parity/delivery requirements remain unfinished.
+
+The [automated scalar integer width draft](integer-width-source-draft.md) copies
+76 real scalar operations from complete existing native/runtime templates,
+retains all original30 APIs, and drafts matching declarations, all ten forward
+widths and guarded reverse paths. Ten JS/TS equations plus a full native source
+descendant and unrun runtime/bulk/JS/strict TS/reverse/export/native oracle source
+are drafted. Broader checked carriers and every wider source/native/production/
+sync/freshness/parity/delivery requirement remain unfinished.

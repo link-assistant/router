@@ -699,7 +699,7 @@ function checkFunction(context,path,declaration,analysis){
     hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});requireOwnedCoreSourceCurrent(context);return {kind:'text-call',name:binding.name,args,type:textOperation.ret,root,...(staticString?{staticString:true}:{})};
    }
    const integerOperation=ownedIntegerOperation(binding.name);
-   if(integerOperation&&binding.target===analysis.runtimeRoot+'/integer-runtime.mjs'){
+   if(integerOperation&&binding.target===analysis.runtimeRoot+'/integer-runtime.mjs'){if(!nativeScalars&&integerOperation.args.some(type=>!['u64','i64'].includes(type)))fail('additional integer widths require the actual primitive operator source profile');
     requireOwnedCoreSourceCurrent(context);const args=node.arguments.map((argument,index)=>expression(argument,scope,depth+1,false,integerOperation.args[index]));
     if(args.length!==integerOperation.args.length||args.some((argument,index)=>argument.type!==integerOperation.args[index]))fail('actual fixed-width integer operands differ');
     hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});requireOwnedCoreSourceCurrent(context);return {kind:'integer-call',name:binding.name,args,type:integerOperation.ret,root:null};
