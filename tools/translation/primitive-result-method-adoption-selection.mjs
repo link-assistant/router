@@ -10,7 +10,7 @@ function scalarRole(source){source=source.replace(/&'[a-zA-Z_][a-zA-Z0-9_]*\s+/g
 function role(tokens,scoped){const source=words(tokens),normalized=source.replace(/&'[a-zA-Z_][a-zA-Z0-9_]*\s+/gu,'&').replace(/\s+/gu,''),result=/^(?:(?:::)?(?:std|core)::result::Result|Result)<([\s\S]+),(?:(?:::)?std::string::)?String>$/u.exec(normalized),optional=/^(?:(?:::)?(?:std|core)::option::Option|Option|crate::translation_core::Maybe)<([\s\S]+)>$/u.exec(normalized),payload=scalarRole(optional?optional[1]:result?result[1]:source);return payload&&(!result||payload.domain!=='text-owned')?{...payload,kind:optional?'option':result?'result':'payload'}:null;}
 export function selectPrimitiveResultMethodAdoption(source,item,scoped,modulePath,_names,helpers){
  const proposeCallbackBody=helpers.callbackBodyProposer??proposeCallbackCoreBodySource;
- const {originalDeclarationHeader,close,split,ident}=helpers,tokens=item.tokens.filter(token=>token.type!=='comment'),header=originalDeclarationHeader(item,modulePath),name=tokens.findIndex(token=>token.start===header?.nameSpan?.start),edits=[],selections=[];let work=0,callbackTextCount=0;
+ const {originalDeclarationHeader,close,split,ident}=helpers,tokens=splitRustMacroBangSourceTokens(item.tokens.filter(token=>token.type!=='comment'),source),header=originalDeclarationHeader(item,modulePath),name=tokens.findIndex(token=>token.start===header?.nameSpan?.start),edits=[],selections=[];let work=0,callbackTextCount=0;
  const result=reason=>({edits:reason?[]:edits,selections:reason?[]:selections,skipped:reason?[{function:item.name,reason}]:[]});if(name<0||tokens.length>200000||tokens.slice(0,name).some(token=>['async','unsafe','const','extern'].includes(token.text)))return result('ordinary complete primitive Result source required');
  let open=name+1;if(tokens[open]?.text==='<'){let end=open+1;while(end<tokens.length&&tokens[end].text!=='>')end++;if(!/^<(?:'[a-zA-Z_][a-zA-Z0-9_]*\s*,?)+>$/u.test(words(tokens.slice(open,end+1))))return result('only closed source lifetime parameters supported');open=end+1;}
  if(tokens[open]?.text!=='(')return result('complete immutable typed input list required');const endParameters=close(tokens,open);if(endParameters<0)return result('complete parameter delimiters required');let body=endParameters+1;while(body<tokens.length&&tokens[body].text!=='{')body++;if(body>=tokens.length||close(tokens,body)!==tokens.length-1)return result('one complete ordinary source body required');
@@ -86,3 +86,5 @@ import {createKnownCoreCallbackFunctionSource} from './known-core-callback-funct
 import {createQualifiedCallbackFunctionSource} from './qualified-callback-function-source.mjs';
 
 import {coreFormattingMacroSourceHeaders} from './core-formatting-macro-source.mjs';
+
+import {splitRustMacroBangSourceTokens} from './rust-macro-token-source.mjs';

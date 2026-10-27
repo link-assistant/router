@@ -8,7 +8,7 @@ const countMethods=new Map([['len','len_utf8'],['chars','len_chars'],['matches',
 const plainMethods=new Set(['trim','trim_start','trim_end','is_empty','contains','starts_with','ends_with','replace','replacen','repeat','strip_prefix','strip_suffix','to_ascii_lowercase','to_ascii_uppercase','is_ascii','eq_ignore_ascii_case','trim_ascii','trim_ascii_start','trim_ascii_end']);
 const borrowed=source=>/^&(?:'[a-zA-Z_][a-zA-Z0-9_]*)?(?:str|crate::translation_core::Str)$/u.test(source);
 export function selectTextMethodAdoption(source,item,_scoped,modulePath,_names,helpers){
- const {originalDeclarationHeader,close,split,text,ident}=helpers,tokens=splitRustTryDotSourceTokens(item.tokens.filter(row=>row.type!=='comment'),source),indices=new Map(tokens.map((token,index)=>[token,index])),header=originalDeclarationHeader(item,modulePath),name=tokens.findIndex(row=>row.start===header?.nameSpan?.start),edits=[],languageEdits=[],selections=[],skipped=[];
+ const {originalDeclarationHeader,close,split,text,ident}=helpers,tokens=splitRustMacroBangSourceTokens(splitRustTryDotSourceTokens(item.tokens.filter(row=>row.type!=='comment'),source),source),indices=new Map(tokens.map((token,index)=>[token,index])),header=originalDeclarationHeader(item,modulePath),name=tokens.findIndex(row=>row.start===header?.nameSpan?.start),edits=[],languageEdits=[],selections=[],skipped=[];
  const result=reason=>({edits:reason?[]:edits,languageEdits:reason?[]:languageEdits,selections:reason?[]:selections,skipped:reason?[...skipped,{function:item.name,reason}]:skipped});
  if(name<0||tokens.length>200000||tokens.slice(0,name).some(row=>['unsafe','async','const','extern'].includes(row.text)))return result('complete ordinary synchronous text function required');
  let open=name+1;if(tokens[open]?.text==='<'){
@@ -102,3 +102,5 @@ import {opaqueSourceTokenEnds} from './opaque-source-token-regions.mjs';
 import {coreFormattingMacroSourceHeaders} from './core-formatting-macro-source.mjs';
 
 import {readCoreFormattingMacroSource} from './core-formatting-macro-source.mjs';
+
+import {splitRustMacroBangSourceTokens} from './rust-macro-token-source.mjs';

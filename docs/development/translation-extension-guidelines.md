@@ -959,3 +959,8 @@ receiver/argument order, primitive namespace shadow refusals and the complete
 chain bound. Written scalar roles never prove ToString/Display or macro ownership.
 Keep wider reverse formatting open until implemented and qualified. See
 [the unrun primitive display draft](primitive-display-source-draft.md).
+
+Use the [native macro token source view](rust-macro-token-source-draft.md) when
+candidate readers expect separate bang punctuation: the retained actual lexer
+attaches it to identifiers. Preserve original slices/spans and keep native lexer,
+CST and semantic/owner checks intact. Normalized rows are DATA, never permissions.

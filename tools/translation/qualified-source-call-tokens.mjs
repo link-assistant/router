@@ -29,6 +29,7 @@ export function readQualifiedSourceCallPrefixTokens(rows,start=0){
 // Generic complete qualified macro token-tree syntax only. Macro argument
 // grammar, hygiene, owner and return type are separate actual checker duties.
 export function readQualifiedSourceMacroTokens(rows){
+ rows=Array.isArray(rows)?splitRustMacroBangSourceTokens(rows):rows;
  if(!Array.isArray(rows)||rows.length<6||rows.length>256)return null;let at=0;const path=[];
  for(;;){if(!ident(rows[at])||path.length>=8)return null;path.push(rows[at++].text);if(rows[at]?.text!=='::')break;at++;}
  const pairs={'(':')','[':']','{':'}'};if(path.length<2||rows[at++]?.text!=='!'||!pairs[rows[at]?.text])return null;const open=at,delimiter=rows[at].text,groups=[];
@@ -48,3 +49,5 @@ export function readParenthesizedSourcePrefixTokens(rows,start=0){
 export function readQualifiedSourcePathTokens(rows){
  if(!Array.isArray(rows)||rows.length<3||rows.length>15||rows.length%2!==1)return null;const path=[];for(let at=0;at<rows.length;at++){if(at%2){if(rows[at].text!=='::')return null;}else{if(!ident(rows[at])||path.length>=8)return null;path.push(rows[at].text);}}return {path,sourceAuthority:false,semanticAuthority:false};
 }
+
+import {splitRustMacroBangSourceTokens} from './rust-macro-token-source.mjs';

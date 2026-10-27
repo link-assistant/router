@@ -325,3 +325,9 @@ abstraction, preserving source order and primitive namespace refusals. Seventeen
 equations and independent unrun width/edge/literal/alias/chain/six-API/nineteen-
 caller/JS/strict TS/native/export source are drafted. Every wider namespace,
 production/reverse/sync/freshness/parity/delivery requirement remains OPEN.
+
+The [native macro token draft](rust-macro-token-source-draft.md) retains the actual
+upstream attached-bang lexer shape and adds a shared original-span source view
+across macro readers, six selectors and the copied CST macro lane. Eleven
+equations and independent unrun lexer/Unicode/mutation/core/callback/export source
+are drafted. Every wider namespace/production/reverse/sync/parity row stays OPEN.

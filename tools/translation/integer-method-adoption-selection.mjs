@@ -2,7 +2,7 @@
 import {integerContract} from './integer-contracts.mjs';
 import {createPrimitiveLocalArgumentSource,readPrimitiveWrittenAliasDomain,readPrimitiveAliasOperand} from './primitive-local-argument-source.mjs';
 export function selectIntegerMethodAdoption(source,item,scoped,modulePath,_names,helpers){
- const {originalDeclarationHeader,close,split,ident}=helpers,tokens=splitRustTryDotSourceTokens(item.tokens.filter(row=>row.type!=='comment'),source),header=originalDeclarationHeader(item,modulePath),name=tokens.findIndex(row=>row.start===header?.nameSpan?.start),edits=[],selections=[],skipped=[];
+ const {originalDeclarationHeader,close,split,ident}=helpers,tokens=splitRustMacroBangSourceTokens(splitRustTryDotSourceTokens(item.tokens.filter(row=>row.type!=='comment'),source),source),header=originalDeclarationHeader(item,modulePath),name=tokens.findIndex(row=>row.start===header?.nameSpan?.start),edits=[],selections=[],skipped=[];
  const result=reason=>({edits,selections,skipped:reason?[...skipped,{function:item.name,reason}]:skipped});if(name<0||tokens.length>200000||tokens[name+1]?.text!=='(')return result('complete ordinary nongeneric numeric function required');
  if(tokens.slice(0,name).some(row=>['unsafe','async','const','extern'].includes(row.text)))return result('ordinary synchronous source function required');const endParameters=close(tokens,name+1);if(endParameters<0)return result('complete original input list required');let body=endParameters+1;while(body<tokens.length&&tokens[body].text!=='{')body++;if(body>=tokens.length||close(tokens,body)!==tokens.length-1)return result('complete original native function body required');
  const domains=new Map(),parameters=new Set();for(const row of split(tokens.slice(name+2,endParameters))){if(!ident(row[0])||row[1]?.text!==':'||parameters.has(row[0].text))return result('distinct immutable original parameters required');parameters.add(row[0].text);const domain=readPrimitiveCoreParameterSourceRole(row.slice(2),scoped);if(domain)domains.set(row[0].text,domain);}
@@ -41,3 +41,5 @@ import {opaqueSourceTokenEnds} from './opaque-source-token-regions.mjs';
 import {primitiveBitwiseType} from './primitive-bitwise-types.mjs';
 
 import {coreFormattingMacroSourceHeaders} from './core-formatting-macro-source.mjs';
+
+import {splitRustMacroBangSourceTokens} from './rust-macro-token-source.mjs';
