@@ -14,15 +14,17 @@ function path(value){
 }
 function parsed(source,language,name){
  need(typeof source==='string'&&Buffer.byteLength(source)<=FILE,'bounded complete source required');need(['JavaScript','TypeScript'].includes(language),'explicit native target language required');
- const concrete=transportConcreteSyntaxSource(source,{language});need(transportConcreteSyntaxMeta(concrete.meta).source===source,'complete runtime mapping CST inverse');
- const ts=ownershipCompiler(),file=ts.createSourceFile(name,source,ts.ScriptTarget.Latest,true,language==='TypeScript'?ts.ScriptKind.TS:ts.ScriptKind.JS);need(!file.parseDiagnostics.length,'complete native runtime source grammar');
- const nodes=[];let cells=0;
+ const concrete=transportConcreteSyntaxSource(source,{language}),reparsed=transportConcreteSyntaxMeta(concrete.meta);need(reparsed.source===source,'complete runtime mapping CST inverse');
+ const ts=ownershipCompiler(),file=ts.createSourceFile(name,reparsed.source,ts.ScriptTarget.Latest,true,language==='TypeScript'?ts.ScriptKind.TS:ts.ScriptKind.JS);need(!file.parseDiagnostics.length,'complete native runtime source grammar');
+ const nodes=[],seen=new WeakSet(),spans=new Set();let cells=0;
+ const literal=node=>{need(ts.isStringLiteral(node),'literal registered native module edge');const start=node.getStart(file),key=start+':'+node.end;need(start>=0&&node.end>=start&&node.end<=source.length&&node.getText(file)===source.slice(start,node.end),'actual complete native runtime edge span');if(spans.has(key))return;spans.add(key);nodes.push(node);};
  const visit=(node,depth=0)=>{
-  need(++cells<=200000&&depth<=256,'complete runtime edge census bound');
-  if((ts.isImportDeclaration(node)||ts.isExportDeclaration(node))&&node.moduleSpecifier){need(ts.isStringLiteral(node.moduleSpecifier),'literal registered static module edge');nodes.push(node.moduleSpecifier);}
-  if(ts.isCallExpression(node)&&node.expression.kind===ts.SyntaxKind.ImportKeyword){need(node.arguments.length===1&&ts.isStringLiteral(node.arguments[0]),'literal registered dynamic module edge');nodes.push(node.arguments[0]);}
-  if(ts.isImportTypeNode(node)){need(ts.isLiteralTypeNode(node.argument)&&ts.isStringLiteral(node.argument.literal),'literal registered native type edge');nodes.push(node.argument.literal);}
-  ts.forEachChild(node,child=>visit(child,depth+1));
+  if(seen.has(node))return;seen.add(node);need(++cells<=200000&&depth<=256,'complete runtime edge census bound');
+  if((ts.isImportDeclaration(node)||ts.isExportDeclaration(node))&&node.moduleSpecifier){literal(node.moduleSpecifier);}
+  if(ts.isCallExpression(node)&&node.expression.kind===ts.SyntaxKind.ImportKeyword){need(node.arguments.length===1,'one literal registered dynamic module edge');literal(node.arguments[0]);}
+  if(ts.isImportTypeNode(node)){need(ts.isLiteralTypeNode(node.argument),'literal registered native type edge');literal(node.argument.literal);}
+  if(ts.isJSDocImportTag(node))literal(node.moduleSpecifier);
+  ts.forEachChild(node,child=>visit(child,depth+1));for(const doc of node.jsDoc??[])visit(doc,depth+1);
  };
  visit(file);return {file,nodes};
 }

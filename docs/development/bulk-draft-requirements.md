@@ -437,3 +437,10 @@ and entire requested target reproduction. Four whole source equations and unrun
 JS/TS ten-width cast/count, eager bool, strict TS/refusal/native oracle sources
 are drafted. Broader generated modules and all remaining source/native/
 production/sync/freshness/parity/delivery obligations remain unfinished.
+
+The [physical primitive project draft](forward-primitive-project-draft.md)
+composes the actual helper inverse with Git-aware rust/src/js/src/ts/src source
+transactions and extends runtime relocation to native JSDoc queries/import tags.
+Two compiler source equations and unrun width/strict-consumer/mirror/composite/
+concurrency/tamper/staleness/source-refusal cases are drafted. All remaining
+source/native/production/sync/freshness/parity/delivery requirements stay open.
