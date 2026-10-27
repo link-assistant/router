@@ -263,3 +263,10 @@ needed by numeric source consumers. Six equations and independent unrun width/
 domain/refusal/six-API/three-caller/JS/strict TS/native/export source are drafted.
 Actual capture/binding/type/ownership checks remain independent; all unfinished
 namespace/production/reverse/sync/freshness/parity/delivery rows remain OPEN.
+
+The [core/callback operand draft](core-callback-operand-source-draft.md) composes
+known callback return candidates inside actual core arguments, preserving source
+and evaluation order. Two equations and independent unrun six-API/five-caller/
+domain/refusal/JS/strict TS/invalid-body/native/export source are drafted. Actual
+body/type/source checks stay independent and all unfinished namespace/production/
+reverse/sync/freshness/parity/delivery rows remain OPEN.

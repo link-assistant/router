@@ -905,3 +905,8 @@ mixed local prerequisites across text and numeric body engines. Unsupported
 source roles must not become synthetic types through inherited object keys.
 These declarations prove no original type, capture or owning move. See the
 [unrun callback parameter draft](callback-source-parameters-draft.md).
+
+Compose known core/callback operand source roles without inventing caller locals
+or granting callback/body authority. Preserve complete original argument order,
+strict source-subexpression descent, reader limits and independent actual checks.
+See the [unrun operand draft](core-callback-operand-source-draft.md).

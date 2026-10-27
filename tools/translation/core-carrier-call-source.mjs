@@ -29,7 +29,7 @@ export function readCoreCarrierCallSource(rows,bindings){
    const text=part.map(row=>row.text).join('');if(/^(?:(?:::)?(?:std|core)::option::Option::|Option::)?None$/u.test(text))return true;const open=part.findIndex(row=>row.text==='(');if(open>0&&part.at(-1)?.text===')'&&/^(?:(?:::)?(?:std|core)::option::Option::|Option::)?Some$/u.test(part.slice(0,open).map(row=>row.text).join(''))&&operand(part.slice(open+1,-1),{kind:'payload',domain:wanted.domain},depth+1))return true;
   }
   if(wanted.kind==='result'){const open=part.findIndex(row=>row.text==='('),constructor=open>0&&part.at(-1)?.text===')'?/^(?:(?:::)?(?:std|core)::result::Result::|Result::)?(Ok|Err)$/u.exec(part.slice(0,open).map(row=>row.text).join(''))?.[1]:null;if(constructor&&operand(part.slice(open+1,-1),{kind:'payload',domain:constructor==='Err'||wanted.domain==='text'?'text-owned':wanted.domain},depth+1))return true;}
-  return same(call(part,depth+1),wanted);
+  return same(call(part,depth+1),wanted)||same(readCoreCallbackCallSource(part,bindings),wanted);
  }
  function call(part,depth){
   if(++work>256||depth>8||!part.length)return null;const bindingTry=readCarrierBindingTrySource(part,bindings);if(bindingTry)return bindingTry;const tried=part.at(-1)?.text==='?',plain=tried?part.slice(0,-1):part,parsed=readQualifiedSourceCallTokens(plain);if(!parsed||parsed.path.length!==3||parsed.path[0]!=='crate')return null;const [,module,name]=parsed.path,row=module==='translation_primitive_option_core'?primitiveOptionContract(name):module==='translation_integer_core'?integerContract(name):module==='translation_text_core'?textContract(name):module==='translation_primitive_results_core'?primitiveResultContract(name):module==='translation_owned_results_core'?ownedResultContract(name):null;if(!row||row.parameters.length!==parsed.args.length)return null;const wanted=row.parameters.map(role);if(wanted.some(row=>!row)||parsed.args.some((part,index)=>!operand(part,wanted[index],depth+1)))return null;let result=role(row.returns);if(!result)return null;if(tried){if(!['option','result'].includes(result.kind))return null;result={kind:'payload',domain:result.domain==='text'?'text-owned':result.domain};}return {...result,operation:row.rustName,module,tryProjection:tried,tryTypeProved:false,sourceBindingProved:false,sourceAuthority:false,semanticAuthority:false,executableAdmission:false};
@@ -43,3 +43,5 @@ import {readCoreFormattingMacroSource} from './core-formatting-macro-source.mjs'
 export function readCoreCarrierContractSourceRole(domain){return typeof domain==='string'?role(domain):null;}
 
 import {readCarrierBindingTrySource} from './carrier-binding-try-source.mjs';
+
+import {readCoreCallbackCallSource} from './core-callback-call-source.mjs';
