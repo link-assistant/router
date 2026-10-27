@@ -180,3 +180,8 @@ Callback source wrappers may retain an explicit expected owning text destination
 only as temporary DATA. Keep complete block bodies, avoid inheriting an outer
 target into nested callbacks, and recheck the entire original caller independently.
 See [the unrun callback target draft](callback-text-target-source-draft.md).
+
+Expected text source context may propagate only through complete explicit String
+expression roots and their exact branch tails. It grants no Into/type/ownership
+permission; preserve missing/ambiguous destination refusals and whole caller checks.
+See [the unrun branch target draft](text-branch-target-source-draft.md).

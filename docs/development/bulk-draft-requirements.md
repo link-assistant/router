@@ -407,3 +407,10 @@ bounded callback source composer without granting type/trait authority. Six
 whole equations and independent unrun four APIs/six callers/JS/strict TS/native/
 wrapper/refusal/export sources are drafted. All wider closure/capture/namespace/
 production/reverse/freshness/parity/receiving/delivery requirements remain OPEN.
+
+The [explicit text branch destination draft](text-branch-target-source-draft.md)
+propagates String source context through complete if/else and expression block
+tails with exact terminal conversion positions. Three whole equations and
+independent unrun two APIs/four callers/nine edits/JS/strict TS/native/refusal/
+export source are drafted. Every wider control/namespace/production/reverse/sync/
+freshness/parity/receiving/delivery requirement remains OPEN.
