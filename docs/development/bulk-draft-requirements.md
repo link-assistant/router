@@ -483,3 +483,10 @@ and unrun independent receiving archive/license/manifest mutation, decoded
 metadata, private identity, nesting/invalidation, cleanup and refusal sources
 are drafted. Every remaining source/native/production/sync/freshness/parity/
 delivery obligation remains unfinished.
+
+The [source-bound wrapping constant draft](constant-wrapping-draft.md) adds exact
+fixed wrapping add/sub evaluation through the actual pinned member/intrinsic
+and original bounded evaluator. Two complete equations and unrun ten-domain
+constant/JS/strict TS/meta/source/private/budget/refusal/native oracle cases are
+drafted. All remaining source/native/production/sync/freshness/parity/delivery
+requirements remain unfinished.

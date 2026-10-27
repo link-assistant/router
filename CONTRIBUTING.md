@@ -816,3 +816,14 @@ and their actual argument/member associations before joining the current native
 parser and builtin catalogue. Keep value-macro/global effects separate, preserve
 the original complete CST and private frame checks, and retain source-only
 status until independent owner, receiving and parity requirements are verified.
+
+When sharing repeated pinned primitive inputs, use one explicit synchronous
+source operation, freshly rejoin every selected complete input on every exit
+and clear all references when it closes. A caught nested source failure must
+invalidate its parent scope; restored bytes cannot revive a saved verdict.
+Decoded source metadata must independently reissue exact current source evidence
+and cannot replace private issuer identities or whole-function checks. Constant
+evaluation must keep source-proved const eligibility, evaluation order and all
+original budgets; runtime purity alone grants no Rust const permission. These
+new wrapping operation/constant paths and their receiving sources remain unrun
+throughout the active bulk drafting phase.

@@ -90,8 +90,8 @@ test('late source type aliases determine real width and shadowed associated owne
   const forged=project('struct u64{value:u8}pub fn fake(x:u64)->u64{u64::wrapping_add(x,x)}');assert.equal(forged.meta.executable.some(entry=>entry.name==='fake'),false);
 });
 
-test('constant evaluation outside its admitted host profile remains explicit rather than claiming formatter constants',()=>{
-  const result=project('const WRAPPED:u8=255u8.wrapping_add(1);pub fn ordinary(x:u8)->u8{x.wrapping_add(1)}');
+test('unproved saturating constant evaluation remains an explicit refusal outside the source wrapping profile',()=>{
+  const result=project('const WRAPPED:u8=255u8.saturating_add(1);pub fn ordinary(x:u8)->u8{x.wrapping_add(1)}');
   assert.equal(result.meta.executable.some(entry=>entry.name==='ordinary'),true);assert.equal(result.meta.executable.some(entry=>entry.name==='WRAPPED'),false);assert.equal(result.meta.refused.some(entry=>entry.name==='WRAPPED'),true);
 });
 
