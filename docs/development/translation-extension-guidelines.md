@@ -934,3 +934,11 @@ match real input/result candidates and use fresh source-bound parameters. Never
 redirect a standard spelling or use a declared signature as owner authority.
 Keep complete child/parent CST inverses and existing proposal limits. See the
 [unrun core function item draft](core-function-item-source-draft.md).
+
+Tool-prefix candidates must inspect original module and extern-prelude precedence
+before issuing a tool certificate. Bind every private tool context to complete
+original graph/source/view/profile/external DATA on each resolver consumption,
+including retained resolver copies. Never reuse a context with changed inputs
+or invoke external DATA callbacks. See [the unrun source draft](tool-prefix-external-source-draft.md);
+global namespace closure remains required and unchanged eight same-SHA JS gates
+precede fatal CI-only Rust. No local execution or CI feedback review while drafting.

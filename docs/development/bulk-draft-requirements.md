@@ -298,3 +298,10 @@ Six equations and independent unrun grammar/domain/refusal/hygiene/budget/six-AP
 ten-caller/JS/strict TS/native/export source are drafted. Actual binding/type/
 ownership checks remain independent and every unfinished namespace/production/
 reverse/sync/freshness/parity/delivery row remains OPEN.
+
+The [tool prefix input draft](tool-prefix-external-source-draft.md) closes explicit
+external-prelude omissions across all six tool constructors and binds sealed
+contexts to complete original resolver inputs in the main and five retained
+resolver copies. Nine equations and independent unrun constructor/resolver/
+mutation/refusal/native/export source are drafted. All global namespace and
+production/reverse/sync/freshness/parity/delivery requirements remain OPEN.

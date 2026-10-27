@@ -77,11 +77,12 @@ export function createToolAttributeContext({modules,externalModules=new Map(),de
       candidates.set(id(module,item,attribute),freeze({source:module.file,module:[...module.path],sourceSha256:hash(module.source),itemSpan:{start:item.start,end:item.end},itemSha256:hash(module.source.slice(item.start,item.end)),attribute}));
     }
   }
+  const association={external:captureToolExternalNamespaceInputs(externalModules),profile:JSON.stringify(profile)};
   const byId=new Map(),diagnostics=[];
   if(candidates.size){
     // This provisional context never escapes this function. Project only the
     // candidate attributes, then independently resolve every actual binding.
-    const projection=Object.freeze({});contexts.set(projection,{byId:candidates,byScope,provisional:true});
+    const projection=Object.freeze({});contexts.set(projection,{byId:candidates,byScope,association,provisional:true});
     let baseline;
     try{baseline=resolveModuleBindings({modules:originals,externalModules,deriveContext,toolContext:projection,compilationProfile:profile});}
     finally{contexts.delete(projection);}
@@ -89,7 +90,7 @@ export function createToolAttributeContext({modules,externalModules=new Map(),de
     for(const [key,candidate]of candidates){
       const ancestors=candidate.module.map((_,index)=>scopes.get(scopeKey(candidate.module.slice(0,index+1))));ancestors.unshift(scopes.get('crate'));
       const disabledPrelude=originals.some(module=>module.path.every((name,index)=>candidate.module[index]===name)&&originalSourceModuleItems(module).some(item=>builtinInnerSourceItem(item,module.source,module.sourceView,profile)?.preludeControl==='no_implicit_prelude'));
-      if(disabledPrelude||ancestors.some(scope=>!scope||scope.configurationCondition!=='active'||scope.unresolvedTypeScope!==false||scope.bindings.some(binding=>binding.namespace==='type'&&binding.name==='rustfmt')||scope.unresolvedImports.some(entry=>entry.glob||entry.name==='rustfmt'))){
+      if(disabledPrelude||externalToolPrefixIsPresent(baseline,externalModules)||ancestors.some(scope=>!scope||scope.configurationCondition!=='active'||scope.unresolvedTypeScope!==false||scope.bindings.some(binding=>binding.namespace==='type'&&binding.name==='rustfmt')||scope.unresolvedImports.some(entry=>entry.glob||entry.name==='rustfmt'))){
         diagnostics.push({source:candidate.source,span:candidate.attribute.span,message:'Original tool prefix lacks closed active tool-prelude ownership'});continue;
       }
       const evidence={schema:'original-tool-attribute-v1',profile:TOOL_ATTRIBUTE_PROFILE,sourceInputsVerified:true,...candidate,owner:{namespace:'tool-prelude',path:['rustfmt']},dimensions:{typeNamespaceComplete:true,valueNamespaceComplete:true,attributeMacroComplete:true,bangMacroComplete:true},runtimeBehavior:false};
@@ -97,7 +98,7 @@ export function createToolAttributeContext({modules,externalModules=new Map(),de
     }
   }
   const evidence={schema:'original-tool-context-v1',compilationProfile:profile,certificates:[...byId.values()],diagnostics};
-  const context=freeze({...evidence,digest:hash(JSON.stringify(evidence))});contexts.set(context,{byId,byScope,provisional:false});return context;
+  const context=freeze({...evidence,digest:hash(JSON.stringify(evidence))});contexts.set(context,{byId,byScope,association,provisional:false});return context;
 }
 export const isToolAttributeContext=context=>!!context&&contexts.has(context);
 export const isToolAttributeCertificate=certificate=>!!certificate&&certificates.has(certificate);
@@ -131,11 +132,12 @@ export function createEnclosingToolAttributeContext({modules,externalModules=new
       candidates.set(id(module,item,attribute),freeze({source:module.file,module:[...module.path],sourceSha256:hash(module.source),itemSpan:{start:item.start,end:item.end},itemSha256:hash(module.source.slice(item.start,item.end)),attribute}));
     }
   }
+  const association={external:captureToolExternalNamespaceInputs(externalModules),profile:JSON.stringify(profile)};
   const byId=new Map(),diagnostics=[];
   if(candidates.size){
     // This provisional context never escapes this function. Project only the
     // candidate attributes, then independently resolve every actual binding.
-    const projection=Object.freeze({});contexts.set(projection,{byId:candidates,byScope,provisional:true});
+    const projection=Object.freeze({});contexts.set(projection,{byId:candidates,byScope,association,provisional:true});
     let baseline;
     try{baseline=resolveEnclosingNamespaceModuleBindings({modules:complete,externalModules,deriveContext,deriveBangContext,toolContext:projection,compilationProfile:profile});}
     finally{contexts.delete(projection);}
@@ -143,7 +145,7 @@ export function createEnclosingToolAttributeContext({modules,externalModules=new
     for(const [key,candidate]of candidates){
       const ancestors=candidate.module.map((_,index)=>scopes.get(scopeKey(candidate.module.slice(0,index+1))));ancestors.unshift(scopes.get('crate'));
       const disabledPrelude=originals.some(module=>module.path.every((name,index)=>candidate.module[index]===name)&&originalSourceModuleItems(module).some(item=>builtinInnerSourceItem(item,module.source,module.sourceView,profile)?.preludeControl==='no_implicit_prelude'));
-      if(disabledPrelude||ancestors.some(scope=>!scope||scope.configurationCondition!=='active'||scope.unresolvedTypeScope!==false||scope.bindings.some(binding=>binding.namespace==='type'&&binding.name==='rustfmt')||scope.unresolvedImports.some(entry=>entry.glob||entry.name==='rustfmt'))){
+      if(disabledPrelude||externalToolPrefixIsPresent(baseline,externalModules)||ancestors.some(scope=>!scope||scope.configurationCondition!=='active'||scope.unresolvedTypeScope!==false||scope.bindings.some(binding=>binding.namespace==='type'&&binding.name==='rustfmt')||scope.unresolvedImports.some(entry=>entry.glob||entry.name==='rustfmt'))){
         diagnostics.push({source:candidate.source,span:candidate.attribute.span,message:'Original tool prefix lacks closed active tool-prelude ownership'});continue;
       }
       const evidence={schema:'original-tool-attribute-v1',profile:TOOL_ATTRIBUTE_PROFILE,sourceInputsVerified:true,...candidate,owner:{namespace:'tool-prelude',path:['rustfmt']},dimensions:{typeNamespaceComplete:true,valueNamespaceComplete:true,attributeMacroComplete:true,bangMacroComplete:true},runtimeBehavior:false};
@@ -151,7 +153,7 @@ export function createEnclosingToolAttributeContext({modules,externalModules=new
     }
   }
   const evidence={schema:'original-tool-context-v1',compilationProfile:profile,certificates:[...byId.values()],diagnostics};
-  const context=freeze({...evidence,digest:hash(JSON.stringify(evidence))});contexts.set(context,{byId,byScope,provisional:false});return context;
+  const context=freeze({...evidence,digest:hash(JSON.stringify(evidence))});contexts.set(context,{byId,byScope,association,provisional:false});return context;
 }
 
 // Complete original tool constructors with the source-registered namespace entry.
@@ -167,11 +169,12 @@ export function createRegisteredBuiltinToolAttributeContext({modules,externalMod
       candidates.set(id(module,item,attribute),freeze({source:module.file,module:[...module.path],sourceSha256:hash(module.source),itemSpan:{start:item.start,end:item.end},itemSha256:hash(module.source.slice(item.start,item.end)),attribute}));
     }
   }
+  const association={external:captureToolExternalNamespaceInputs(externalModules),profile:JSON.stringify(profile)};
   const byId=new Map(),diagnostics=[];
   if(candidates.size){
     // This provisional context never escapes this function. Project only the
     // candidate attributes, then independently resolve every actual binding.
-    const projection=Object.freeze({});contexts.set(projection,{byId:candidates,byScope,provisional:true});
+    const projection=Object.freeze({});contexts.set(projection,{byId:candidates,byScope,association,provisional:true});
     let baseline;
     try{baseline=resolveRegisteredBuiltinEnclosingNamespaceModuleBindings({modules:originals,externalModules,deriveContext,toolContext:projection,compilationProfile:profile});}
     finally{contexts.delete(projection);}
@@ -179,7 +182,7 @@ export function createRegisteredBuiltinToolAttributeContext({modules,externalMod
     for(const [key,candidate]of candidates){
       const ancestors=candidate.module.map((_,index)=>scopes.get(scopeKey(candidate.module.slice(0,index+1))));ancestors.unshift(scopes.get('crate'));
       const disabledPrelude=originals.some(module=>module.path.every((name,index)=>candidate.module[index]===name)&&originalSourceModuleItems(module).some(item=>builtinInnerSourceItem(item,module.source,module.sourceView,profile)?.preludeControl==='no_implicit_prelude'));
-      if(disabledPrelude||ancestors.some(scope=>!scope||scope.configurationCondition!=='active'||scope.unresolvedTypeScope!==false||scope.bindings.some(binding=>binding.namespace==='type'&&binding.name==='rustfmt')||scope.unresolvedImports.some(entry=>entry.glob||entry.name==='rustfmt'))){
+      if(disabledPrelude||externalToolPrefixIsPresent(baseline,externalModules)||ancestors.some(scope=>!scope||scope.configurationCondition!=='active'||scope.unresolvedTypeScope!==false||scope.bindings.some(binding=>binding.namespace==='type'&&binding.name==='rustfmt')||scope.unresolvedImports.some(entry=>entry.glob||entry.name==='rustfmt'))){
         diagnostics.push({source:candidate.source,span:candidate.attribute.span,message:'Original tool prefix lacks closed active tool-prelude ownership'});continue;
       }
       const evidence={schema:'original-tool-attribute-v1',profile:TOOL_ATTRIBUTE_PROFILE,sourceInputsVerified:true,...candidate,owner:{namespace:'tool-prelude',path:['rustfmt']},dimensions:{typeNamespaceComplete:true,valueNamespaceComplete:true,attributeMacroComplete:true,bangMacroComplete:true},runtimeBehavior:false};
@@ -187,7 +190,7 @@ export function createRegisteredBuiltinToolAttributeContext({modules,externalMod
     }
   }
   const evidence={schema:'original-tool-context-v1',compilationProfile:profile,certificates:[...byId.values()],diagnostics};
-  const context=freeze({...evidence,digest:hash(JSON.stringify(evidence))});contexts.set(context,{byId,byScope,provisional:false});return context;
+  const context=freeze({...evidence,digest:hash(JSON.stringify(evidence))});contexts.set(context,{byId,byScope,association,provisional:false});return context;
 }
 
 export function createRegisteredBuiltinEnclosingToolAttributeContext({modules,externalModules=new Map(),deriveContext=null,deriveBangContext=null,compilationProfile:input=null}={}){
@@ -205,11 +208,12 @@ export function createRegisteredBuiltinEnclosingToolAttributeContext({modules,ex
       candidates.set(id(module,item,attribute),freeze({source:module.file,module:[...module.path],sourceSha256:hash(module.source),itemSpan:{start:item.start,end:item.end},itemSha256:hash(module.source.slice(item.start,item.end)),attribute}));
     }
   }
+  const association={external:captureToolExternalNamespaceInputs(externalModules),profile:JSON.stringify(profile)};
   const byId=new Map(),diagnostics=[];
   if(candidates.size){
     // This provisional context never escapes this function. Project only the
     // candidate attributes, then independently resolve every actual binding.
-    const projection=Object.freeze({});contexts.set(projection,{byId:candidates,byScope,provisional:true});
+    const projection=Object.freeze({});contexts.set(projection,{byId:candidates,byScope,association,provisional:true});
     let baseline;
     try{baseline=resolveRegisteredBuiltinEnclosingNamespaceModuleBindings({modules:complete,externalModules,deriveContext,deriveBangContext,toolContext:projection,compilationProfile:profile});}
     finally{contexts.delete(projection);}
@@ -217,7 +221,7 @@ export function createRegisteredBuiltinEnclosingToolAttributeContext({modules,ex
     for(const [key,candidate]of candidates){
       const ancestors=candidate.module.map((_,index)=>scopes.get(scopeKey(candidate.module.slice(0,index+1))));ancestors.unshift(scopes.get('crate'));
       const disabledPrelude=originals.some(module=>module.path.every((name,index)=>candidate.module[index]===name)&&originalSourceModuleItems(module).some(item=>builtinInnerSourceItem(item,module.source,module.sourceView,profile)?.preludeControl==='no_implicit_prelude'));
-      if(disabledPrelude||ancestors.some(scope=>!scope||scope.configurationCondition!=='active'||scope.unresolvedTypeScope!==false||scope.bindings.some(binding=>binding.namespace==='type'&&binding.name==='rustfmt')||scope.unresolvedImports.some(entry=>entry.glob||entry.name==='rustfmt'))){
+      if(disabledPrelude||externalToolPrefixIsPresent(baseline,externalModules)||ancestors.some(scope=>!scope||scope.configurationCondition!=='active'||scope.unresolvedTypeScope!==false||scope.bindings.some(binding=>binding.namespace==='type'&&binding.name==='rustfmt')||scope.unresolvedImports.some(entry=>entry.glob||entry.name==='rustfmt'))){
         diagnostics.push({source:candidate.source,span:candidate.attribute.span,message:'Original tool prefix lacks closed active tool-prelude ownership'});continue;
       }
       const evidence={schema:'original-tool-attribute-v1',profile:TOOL_ATTRIBUTE_PROFILE,sourceInputsVerified:true,...candidate,owner:{namespace:'tool-prelude',path:['rustfmt']},dimensions:{typeNamespaceComplete:true,valueNamespaceComplete:true,attributeMacroComplete:true,bangMacroComplete:true},runtimeBehavior:false};
@@ -225,7 +229,7 @@ export function createRegisteredBuiltinEnclosingToolAttributeContext({modules,ex
     }
   }
   const evidence={schema:'original-tool-context-v1',compilationProfile:profile,certificates:[...byId.values()],diagnostics};
-  const context=freeze({...evidence,digest:hash(JSON.stringify(evidence))});contexts.set(context,{byId,byScope,provisional:false});return context;
+  const context=freeze({...evidence,digest:hash(JSON.stringify(evidence))});contexts.set(context,{byId,byScope,association,provisional:false});return context;
 }
 
 // Complete copied constructors for exact original enum variant configuration.
@@ -241,11 +245,12 @@ export function createConfiguredVariantToolAttributeContext({modules,externalMod
       candidates.set(id(module,item,attribute),freeze({source:module.file,module:[...module.path],sourceSha256:hash(module.source),itemSpan:{start:item.start,end:item.end},itemSha256:hash(module.source.slice(item.start,item.end)),attribute}));
     }
   }
+  const association={external:captureToolExternalNamespaceInputs(externalModules),profile:JSON.stringify(profile)};
   const byId=new Map(),diagnostics=[];
   if(candidates.size){
     // This provisional context never escapes this function. Project only the
     // candidate attributes, then independently resolve every actual binding.
-    const projection=Object.freeze({});contexts.set(projection,{byId:candidates,byScope,provisional:true});
+    const projection=Object.freeze({});contexts.set(projection,{byId:candidates,byScope,association,provisional:true});
     let baseline;
     try{baseline=resolveConfiguredVariantEnclosingNamespaceModuleBindings({modules:originals,externalModules,deriveContext,toolContext:projection,compilationProfile:profile});}
     finally{contexts.delete(projection);}
@@ -253,7 +258,7 @@ export function createConfiguredVariantToolAttributeContext({modules,externalMod
     for(const [key,candidate]of candidates){
       const ancestors=candidate.module.map((_,index)=>scopes.get(scopeKey(candidate.module.slice(0,index+1))));ancestors.unshift(scopes.get('crate'));
       const disabledPrelude=originals.some(module=>module.path.every((name,index)=>candidate.module[index]===name)&&originalSourceModuleItems(module).some(item=>builtinInnerSourceItem(item,module.source,module.sourceView,profile)?.preludeControl==='no_implicit_prelude'));
-      if(disabledPrelude||ancestors.some(scope=>!scope||scope.configurationCondition!=='active'||scope.unresolvedTypeScope!==false||scope.bindings.some(binding=>binding.namespace==='type'&&binding.name==='rustfmt')||scope.unresolvedImports.some(entry=>entry.glob||entry.name==='rustfmt'))){
+      if(disabledPrelude||externalToolPrefixIsPresent(baseline,externalModules)||ancestors.some(scope=>!scope||scope.configurationCondition!=='active'||scope.unresolvedTypeScope!==false||scope.bindings.some(binding=>binding.namespace==='type'&&binding.name==='rustfmt')||scope.unresolvedImports.some(entry=>entry.glob||entry.name==='rustfmt'))){
         diagnostics.push({source:candidate.source,span:candidate.attribute.span,message:'Original tool prefix lacks closed active tool-prelude ownership'});continue;
       }
       const evidence={schema:'original-tool-attribute-v1',profile:TOOL_ATTRIBUTE_PROFILE,sourceInputsVerified:true,...candidate,owner:{namespace:'tool-prelude',path:['rustfmt']},dimensions:{typeNamespaceComplete:true,valueNamespaceComplete:true,attributeMacroComplete:true,bangMacroComplete:true},runtimeBehavior:false};
@@ -261,7 +266,7 @@ export function createConfiguredVariantToolAttributeContext({modules,externalMod
     }
   }
   const evidence={schema:'original-tool-context-v1',compilationProfile:profile,certificates:[...byId.values()],diagnostics};
-  const context=freeze({...evidence,digest:hash(JSON.stringify(evidence))});contexts.set(context,{byId,byScope,provisional:false});return context;
+  const context=freeze({...evidence,digest:hash(JSON.stringify(evidence))});contexts.set(context,{byId,byScope,association,provisional:false});return context;
 }
 
 export function createConfiguredVariantEnclosingToolAttributeContext({modules,externalModules=new Map(),deriveContext=null,deriveBangContext=null,compilationProfile:input=null}={}){
@@ -279,11 +284,12 @@ export function createConfiguredVariantEnclosingToolAttributeContext({modules,ex
       candidates.set(id(module,item,attribute),freeze({source:module.file,module:[...module.path],sourceSha256:hash(module.source),itemSpan:{start:item.start,end:item.end},itemSha256:hash(module.source.slice(item.start,item.end)),attribute}));
     }
   }
+  const association={external:captureToolExternalNamespaceInputs(externalModules),profile:JSON.stringify(profile)};
   const byId=new Map(),diagnostics=[];
   if(candidates.size){
     // This provisional context never escapes this function. Project only the
     // candidate attributes, then independently resolve every actual binding.
-    const projection=Object.freeze({});contexts.set(projection,{byId:candidates,byScope,provisional:true});
+    const projection=Object.freeze({});contexts.set(projection,{byId:candidates,byScope,association,provisional:true});
     let baseline;
     try{baseline=resolveConfiguredVariantEnclosingNamespaceModuleBindings({modules:complete,externalModules,deriveContext,deriveBangContext,toolContext:projection,compilationProfile:profile});}
     finally{contexts.delete(projection);}
@@ -291,7 +297,7 @@ export function createConfiguredVariantEnclosingToolAttributeContext({modules,ex
     for(const [key,candidate]of candidates){
       const ancestors=candidate.module.map((_,index)=>scopes.get(scopeKey(candidate.module.slice(0,index+1))));ancestors.unshift(scopes.get('crate'));
       const disabledPrelude=originals.some(module=>module.path.every((name,index)=>candidate.module[index]===name)&&originalSourceModuleItems(module).some(item=>builtinInnerSourceItem(item,module.source,module.sourceView,profile)?.preludeControl==='no_implicit_prelude'));
-      if(disabledPrelude||ancestors.some(scope=>!scope||scope.configurationCondition!=='active'||scope.unresolvedTypeScope!==false||scope.bindings.some(binding=>binding.namespace==='type'&&binding.name==='rustfmt')||scope.unresolvedImports.some(entry=>entry.glob||entry.name==='rustfmt'))){
+      if(disabledPrelude||externalToolPrefixIsPresent(baseline,externalModules)||ancestors.some(scope=>!scope||scope.configurationCondition!=='active'||scope.unresolvedTypeScope!==false||scope.bindings.some(binding=>binding.namespace==='type'&&binding.name==='rustfmt')||scope.unresolvedImports.some(entry=>entry.glob||entry.name==='rustfmt'))){
         diagnostics.push({source:candidate.source,span:candidate.attribute.span,message:'Original tool prefix lacks closed active tool-prelude ownership'});continue;
       }
       const evidence={schema:'original-tool-attribute-v1',profile:TOOL_ATTRIBUTE_PROFILE,sourceInputsVerified:true,...candidate,owner:{namespace:'tool-prelude',path:['rustfmt']},dimensions:{typeNamespaceComplete:true,valueNamespaceComplete:true,attributeMacroComplete:true,bangMacroComplete:true},runtimeBehavior:false};
@@ -299,5 +305,21 @@ export function createConfiguredVariantEnclosingToolAttributeContext({modules,ex
     }
   }
   const evidence={schema:'original-tool-context-v1',compilationProfile:profile,certificates:[...byId.values()],diagnostics};
-  const context=freeze({...evidence,digest:hash(JSON.stringify(evidence))});contexts.set(context,{byId,byScope,provisional:false});return context;
+  const context=freeze({...evidence,digest:hash(JSON.stringify(evidence))});contexts.set(context,{byId,byScope,association,provisional:false});return context;
 }
+
+// Module and extern-prelude lookup precede tool lookup in retained native
+// rustc_resolve ident.rs. Descendant explicit tables also expose that prefix.
+function externalToolPrefixIsPresent(baseline,externalModules){
+ return !Array.isArray(baseline.externPrelude)||baseline.externPrelude.some(binding=>binding.namespace==='type'&&binding.name==='rustfmt')||[...externalModules.keys()].some(path=>path.split('::')[0]==='rustfmt');
+}
+// A private certificate remains tied to its complete original resolver inputs.
+// Recompute the complete external DATA association on EACH consumption.
+export function assertToolAttributeContextInputs(context,{modules,externalModules,compilationProfile:input=null}={}){
+ const state=contexts.get(context);if(!state||!Array.isArray(modules)||!(externalModules instanceof Map))throw new TypeError('Tool context requires its original complete source composition');
+ if(state.association.profile!==JSON.stringify(compilationProfile(input))||state.association.external!==captureToolExternalNamespaceInputs(externalModules))throw new TypeError('Tool source profile or external namespaces changed');
+ if(modules.length!==state.byScope.size)throw new TypeError('Tool original module set changed');const seen=new Set();
+ for(const module of modules){const key=moduleScopeKey(module),owner=state.byScope.get(key);if(seen.has(key)||!owner||owner.source!==module.source||owner.sourceView!==module.sourceView)throw new TypeError('Tool original module source or view changed');seen.add(key);originalSourceModuleItems(module);}
+ return context;
+}
+import {captureToolExternalNamespaceInputs} from './tool-context-inputs.mjs';
