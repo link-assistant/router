@@ -180,3 +180,5 @@ export {proposeForwardOwnedCompositeSynchronization} from './forward-owned-compo
 
 export {originalNamespaceAttributeHeaderSites} from './original-namespace-parser.mjs';
 export {captureGeneratedItemHeaderSources,proposeGeneratedDeclarationSourceUnit} from './generated-item-header-source.mjs';
+
+export {withSharedOriginalParsedBuiltinCallerSources} from './registered-builtin-caller-attribute-source.mjs';

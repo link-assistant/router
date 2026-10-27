@@ -12,7 +12,7 @@ const need=(value,message)=>{if(!value)throw new TypeError('Original architectur
 export function proposeOriginalX86TypeMacroLookupSources(options){
  need(options&&typeof options==='object'&&!types.isProxy(options)&&Object.getPrototypeOf(options)===Object.prototype,'ordinary explicit source options required');const fields=Object.getOwnPropertyDescriptors(options);need(Reflect.ownKeys(fields).length===1&&Object.hasOwn(fields,'paths')&&Object.hasOwn(fields.paths,'value'),'only own complete selected source paths allowed');const paths=fields.paths.value;need(Array.isArray(paths)&&!types.isProxy(paths)&&Object.getPrototypeOf(paths)===Array.prototype&&paths.length>0&&paths.length<=32,'bounded dense original source paths required');const entries=Object.getOwnPropertyDescriptors(paths);need(Reflect.ownKeys(entries).length===paths.length+1,'dense own source path array required');const selected=[];for(let index=0;index<paths.length;index++){need(entries[index]&&Object.hasOwn(entries[index],'value'),'own original source path required');const path=entries[index].value;need(typeof path==='string'&&path.startsWith('crates/core_arch/src/')&&path.endsWith('.rs')&&!/[\\\0:]/u.test(path)&&path.split('/').every(part=>part&&part!=='.'&&part!=='..'),'actual original architecture source path required');selected.push(path);}need(new Set(selected).size===selected.length,'unique complete original source paths required');
  need(selected.length===1&&selected[0]==='crates/core_arch/src/x86/mod.rs','exact original x86 source-prefix domain required');
- return withOriginalNamespaceParserSourceOperation(()=>{
+ return withSharedOriginalParsedBuiltinCallerSources(()=>withOriginalNamespaceParserSourceOperation(()=>{
  const nativeLookupFrame=captureOriginalTextualMacroLookupFrame(),nativeLookupFacts=nativeLookupFrame.facts;
  const originals=originalFreshPrimitiveNamespaceSources(),definitionPath='crates/core_arch/src/macros.rs',definitionInput=originals.get(definitionPath);need(definitionInput,'complete original types macro source required');const sourceInputs=new Map(),calls=[],names=[],remainingProducerObligations=[];const eofRule=originalMacroEofRule(),generatedContainmentSource=originalGeneratedItemContainmentSourcePlanSync(),generatedCandidates=[],namespaceFrames=[],parserRefusals=[],wholeFileProposals=[],fatalBudgets=new WeakSet();let retained=0,roots=0,expansions=0,cells=0,engine,definition,renderedRawBytes=0,renderedCells=0,headerFrames=0;const bounded=(value,message)=>{if(!value){const error=new TypeError('Original architecture type output: '+message);fatalBudgets.add(error);throw error;}};
  cells+=nativeLookupFacts.nativeInventoryCells;need(cells<=200000,'combined original source-cell bound');
@@ -71,7 +71,7 @@ export function proposeOriginalX86TypeMacroLookupSources(options){
   }}]},
  ]).run(null);
  const current=originalFreshPrimitiveNamespaceSources();need(current.size===originals.size,'complete original namespace source universe changed');for(const [path,pin]of originals){const now=current.get(path);need(now&&now.source===pin.source&&now.sha256===pin.sha256,'complete original namespace source input changed');}for(const frame of namespaceFrames)need(originalNamespaceFunctionFacts(frame.token,frame.options)===frame.facts,'actual generated function frame changed during source proposal');requireOriginalMacroEofRule(eofRule);const finalNativeLookup=originalTextualMacroLookupSourceFacts(nativeLookupFrame.token);need(finalNativeLookup.sources.length===nativeLookupFacts.sources.length&&nativeLookupFacts.sources.every(row=>finalNativeLookup.sources.some(current=>current.path===row.path&&current.source===row.source&&current.sourceSha256===row.sourceSha256)),'complete native textual lookup source changed');return {...run.value,ruleTrace:run.trace};
- });
+ }));
 }
 
 import {renderOriginalArchitectureOutputTrees} from './architecture-type-output-renderer.mjs';
@@ -85,3 +85,5 @@ import {transportConcreteSourceEquations} from './concrete-source-equations.mjs'
 import {captureOriginalTextualMacroLookupFrame,originalTextualMacroLookupSourceFacts} from './textual-macro-lookup-source.mjs';
 
 import {captureGeneratedItemHeaderSources,proposeGeneratedDeclarationSourceUnit} from './generated-item-header-source.mjs';
+
+import {withSharedOriginalParsedBuiltinCallerSources} from './registered-builtin-caller-attribute-source.mjs';

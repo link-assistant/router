@@ -220,3 +220,8 @@ attribute ownership, export closure or type-prefix absence. Preserve every raw
 item/parent inverse and unresolved producer, reissue native headers from genuine
 views, bound combined work and clear operation-local raw/owner data on all exits.
 See [the unrun generated header draft](generated-header-source-draft.md).
+
+A conditional generated builtin name lookup must retain its original native-caller
+presence premise and false legality/effect/export/owner conclusions. Share only
+the active complete source operation, rejoin every receipt/current input and clear
+state on all exits; see [the unrun generated builtin draft](generated-builtin-source-draft.md).

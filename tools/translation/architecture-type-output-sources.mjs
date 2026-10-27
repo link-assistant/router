@@ -11,7 +11,7 @@ import {createRulePipeline} from './rule-pipeline.mjs';
 const need=(value,message)=>{if(!value)throw new TypeError('Original architecture types source: '+message);};
 export function proposeOriginalArchitectureTypeOutputSources(options){
  need(options&&typeof options==='object'&&!types.isProxy(options)&&Object.getPrototypeOf(options)===Object.prototype,'ordinary explicit source options required');const fields=Object.getOwnPropertyDescriptors(options);need(Reflect.ownKeys(fields).length===1&&Object.hasOwn(fields,'paths')&&Object.hasOwn(fields.paths,'value'),'only own complete selected source paths allowed');const paths=fields.paths.value;need(Array.isArray(paths)&&!types.isProxy(paths)&&Object.getPrototypeOf(paths)===Array.prototype&&paths.length>0&&paths.length<=32,'bounded dense original source paths required');const entries=Object.getOwnPropertyDescriptors(paths);need(Reflect.ownKeys(entries).length===paths.length+1,'dense own source path array required');const selected=[];for(let index=0;index<paths.length;index++){need(entries[index]&&Object.hasOwn(entries[index],'value'),'own original source path required');const path=entries[index].value;need(typeof path==='string'&&path.startsWith('crates/core_arch/src/')&&path.endsWith('.rs')&&!/[\\\0:]/u.test(path)&&path.split('/').every(part=>part&&part!=='.'&&part!=='..'),'actual original architecture source path required');selected.push(path);}need(new Set(selected).size===selected.length,'unique complete original source paths required');
- return withOriginalNamespaceParserSourceOperation(()=>{
+ return withSharedOriginalParsedBuiltinCallerSources(()=>withOriginalNamespaceParserSourceOperation(()=>{
  const originals=originalFreshPrimitiveNamespaceSources(),definitionPath='crates/core_arch/src/macros.rs',definitionInput=originals.get(definitionPath);need(definitionInput,'complete original types macro source required');const sourceInputs=new Map(),calls=[],names=[],remainingProducerObligations=[];const eofRule=originalMacroEofRule(),generatedContainmentSource=originalGeneratedItemContainmentSourcePlanSync(),generatedCandidates=[],namespaceFrames=[],parserRefusals=[],wholeFileProposals=[],fatalBudgets=new WeakSet();let retained=0,roots=0,expansions=0,cells=0,engine,definition,renderedRawBytes=0,renderedCells=0,headerFrames=0;const bounded=(value,message)=>{if(!value){const error=new TypeError('Original architecture type output: '+message);fatalBudgets.add(error);throw error;}};
  const tick=()=>need(++cells<=200000,'complete original architecture source-cell bound');
  function source(path){tick();const pin=originals.get(path);need(pin&&typeof pin.source==='string'&&Buffer.byteLength(pin.source)<=8000000,'complete original architecture source input required');if(!sourceInputs.has(path)){retained+=Buffer.byteLength(pin.source);need(retained<=134217728,'complete original architecture input raw-source bound');const concrete=transportConcreteSyntaxSource(pin.source,{language:'Rust'});need(transportConcreteSyntaxMeta(concrete.meta).source===pin.source,'complete original architecture source CST inverse differs');sourceInputs.set(path,{...pin,concreteSyntax:concrete.meta,inverse:pin.source});}return pin.source;}
@@ -55,7 +55,7 @@ export function proposeOriginalArchitectureTypeOutputSources(options){
   }}]},
  ]).run(null);
  const current=originalFreshPrimitiveNamespaceSources();need(current.size===originals.size,'complete original namespace source universe changed');for(const [path,pin]of originals){const now=current.get(path);need(now&&now.source===pin.source&&now.sha256===pin.sha256,'complete original namespace source input changed');}for(const frame of namespaceFrames)need(originalNamespaceFunctionFacts(frame.token,frame.options)===frame.facts,'actual generated function frame changed during source proposal');requireOriginalMacroEofRule(eofRule);return {...run.value,ruleTrace:run.trace};
- });
+ }));
 }
 
 import {renderOriginalArchitectureOutputTrees} from './architecture-type-output-renderer.mjs';
@@ -67,3 +67,5 @@ import {captureOriginalNamespaceFunction,originalNamespaceFunctionFacts,original
 import {transportConcreteSourceEquations} from './concrete-source-equations.mjs';
 
 import {captureGeneratedItemHeaderSources,proposeGeneratedDeclarationSourceUnit} from './generated-item-header-source.mjs';
+
+import {withSharedOriginalParsedBuiltinCallerSources} from './registered-builtin-caller-attribute-source.mjs';

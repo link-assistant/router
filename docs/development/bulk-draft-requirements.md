@@ -465,3 +465,11 @@ architecture expansion paths. Six equations and independent unrun real/synthetic
 lifecycle/source/native/refusal/export cases are drafted. Macro owner/hygiene,
 attribute semantics, export/type-prefix closure and every production/translation/
 sync/freshness/parity/receiving/delivery obligation remain OPEN and unqualified.
+
+The [conditional generated builtin draft](generated-builtin-source-draft.md)
+reissues actual parsed header receipts through the original normal/ungated native
+lookup issuer and shares one complete source operation across both architecture
+expansion paths. Six equations and independent unrun actual/private/lifecycle/
+argument/refusal/real-x86/export source are drafted. Original caller grammar,
+owner/hygiene/attribute effects/export/type-prefix closure and all wider
+production/translation/sync/freshness/parity/receiving/delivery rows remain OPEN.

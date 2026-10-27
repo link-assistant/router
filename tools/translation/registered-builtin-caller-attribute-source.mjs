@@ -822,3 +822,14 @@ export function captureOriginalNormalUngatedDataBuiltinCaller(headerToken,dataTo
 export function originalNormalUngatedParsedBuiltinCallerFacts(token){guard();const state=normalUngatedParsedCallerProofs.get(token);if(!state)fail('copied or foreign normal ungated parsed caller receipt');return normalUngatedParsedCallerFacts(state);}
 
 import {originalNamespaceFunctionNestedAttributeHeaderFacts,originalNamespaceDataAttributeHeaderFacts} from './original-namespace-parser.mjs';
+
+// Reuse only the current synchronous private source operation. No frame is
+// passed to callbacks and every outer source/root check still runs on exit.
+let sharedParsedBuiltinCallerDepth=0;
+export function withSharedOriginalParsedBuiltinCallerSources(operation){
+ guard();if(typeof operation!=='function'||types.isProxy(operation)||types.isAsyncFunction(operation))fail('ordinary synchronous shared builtin source operation required');if(sharedParsedBuiltinCallerDepth>=64)fail('shared builtin source operation nesting bound');sharedParsedBuiltinCallerDepth++;
+ try{
+  if(!parsedBuiltinCallerOperation?.active)return withOriginalParsedBuiltinCallerSources(operation);
+  const owner=parsedBuiltinCallerOperation,result=operation();guard();if(parsedBuiltinCallerOperation!==owner||!owner.active)fail('original shared builtin source operation changed');if(types.isPromise(result)||result!==null&&['object','function'].includes(typeof result)&&types.isProxy(result))fail('shared builtin source operation must finish synchronously');if(result!==null&&['object','function'].includes(typeof result)){const then=Object.getOwnPropertyDescriptor(result,'then');if(then&&(!Object.hasOwn(then,'value')||typeof then.value==='function'))fail('shared builtin source operation cannot return an own thenable/accessor');}return result;
+ }finally{sharedParsedBuiltinCallerDepth--;}
+}
