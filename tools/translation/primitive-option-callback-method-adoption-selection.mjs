@@ -29,6 +29,7 @@ export function selectPrimitiveOptionCallbackMethodAdoption(source,item,_scoped,
   if(piece[0].text==='Some'&&piece[1]?.text==='('&&close(piece,1)===piece.length-1){const value=inferred(piece.slice(2,-1),scope,wanted&&{kind:'payload',domain:wanted.domain},depth+1);return value?.kind==='payload'?{kind:'option',domain:value.domain}:null;}
   if(piece.length===1&&piece[0].text==='None')return wanted?.kind==='option'?wanted:null;
   const core=readCoreCarrierCallSource(piece,scope);if(core)return core;
+  if((work+=Math.min(piece.length,257))>200000)return null;const numeric=readPrimitiveRoleExpressionSource(piece,scope,wanted);if(numeric)return numeric;
   if(piece.length>4&&piece.at(-4).text==='.'&&['to_owned','to_string'].includes(piece.at(-3).text)&&piece.at(-2).text==='('&&piece.at(-1).text===')'){const base=inferred(piece.slice(0,-4),scope,null,depth+1);if(base?.kind==='payload'&&['str','text-owned'].includes(base.domain))return {kind:'payload',domain:'text-owned'};}
   return null;
  }
@@ -107,3 +108,5 @@ import {readCoreCarrierCallSource} from './core-carrier-call-source.mjs';
 
 import {proposeCallbackTextBodySource} from './callback-text-body-source.mjs';
 import {rustTokens} from './rust-structure.mjs';
+
+import {readPrimitiveRoleExpressionSource} from './primitive-carrier-expression-source.mjs';

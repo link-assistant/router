@@ -22,12 +22,13 @@ function carrierLocalCensus(rows,parameters){
  return censusLocalAliasBindings(rows,parameters,{protectedNames:['std','core','crate','self','Self','translation_core','translation_json_fields_core','translation_integer_core','translation_primitive_option_core','translation_primitive_option_callbacks_core','translation_primitive_results_core','translation_owned_results_core','Option','Some','None','Result','Ok','Err','String','str','u64','i64','bool',...['u','i'].flatMap(prefix=>[8,16,32,64,128].map(bits=>prefix+bits))]}).reason===null;
 }
 function scalarOperand(rows,bindings,wanted){
+ const numeric=readCarrierNumericExpressionSource(rows,bindings,wanted);if(numeric)return numeric;
  if(rows.length===1){const row=rows[0],known=ident(row)&&decodeCarrierRole(bindings.get(row.text));if(known)return {...known,binding:row.text};if(['true','false'].includes(row.text))return {kind:'payload',domain:'bool'};if(row.type==='string'&&/^(?:"|r#{0,255}")/u.test(row.text))return {kind:'payload',domain:'str'};}
  const literal=readPrimitiveAliasOperand(rows,new Map(),wanted?.kind==='payload'&&primitiveBitwiseType(wanted.domain)?wanted.domain:null);if(literal&&primitiveBitwiseType(literal.kind))return {kind:'payload',domain:literal.kind};
  if(rows.length===5&&rows[1].text==='.'&&['to_owned','to_string'].includes(rows[2].text)&&rows[3].text==='('&&rows[4].text===')'){const value=scalarOperand(rows.slice(0,1),bindings,null);if(value?.kind==='payload'&&value.domain==='str')return {kind:'payload',domain:'text-owned'};}return null;
 }
 export function readCarrierAliasOperand(rows,bindings,wanted=null){
- if(!rows.length)return null;const core=readCoreCarrierCallSource(rows,{get:name=>decodeCarrierRole(bindings.get(name))});if(core)return core;const field=readJsonFieldCarrierCallSource(rows,bindings);if(field)return field;if(rows.length>12)return null;const scalar=scalarOperand(rows,bindings,wanted);if(scalar)return scalar;const integer=readIntegerCarrierCallSource(rows,bindings);if(integer)return integer;
+ if(!rows.length)return null;const core=readCoreCarrierCallSource(rows,{get:name=>decodeCarrierRole(bindings.get(name))});if(core)return core;const field=readJsonFieldCarrierCallSource(rows,bindings);if(field)return field;const numeric=readCarrierNumericExpressionSource(rows,bindings,wanted);if(numeric)return numeric;if(rows.length>256)return null;const scalar=scalarOperand(rows,bindings,wanted);if(scalar)return scalar;const integer=readIntegerCarrierCallSource(rows,bindings);if(integer)return integer;
  if(rows.length===5&&ident(rows[0])&&decodeCarrierRole(bindings.get(rows[0].text))?.kind==='json'&&rows[1].text==='.'&&rows[3].text==='('&&rows[4].text===')'){const domain={as_bool:'bool',as_u64:'u64',as_i64:'i64',as_str:'str'}[rows[2].text];if(domain)return {kind:'option',domain};}
  const text=rows.map(row=>row.text).join('');if(/^(?:(?:::)?(?:std|core)::option::Option::|Option::)?None$/u.test(text))return wanted?.kind==='option'?wanted:null;
  const open=rows.findIndex(row=>row.text==='(');if(open<1||rows.at(-1).text!==')')return null;const path=rows.slice(0,open).map(row=>row.text).join(''),constructor=/^(?:(?:::)?(?:std|core)::option::Option::|Option::)?Some$/u.test(path)?'Some':/^(?:(?:::)?(?:std|core)::result::Result::|Result::)?(Ok|Err)$/u.exec(path)?.[1];if(!constructor)return null;
@@ -50,3 +51,9 @@ import {readJsonFieldCallSource} from './json-field-call-source.mjs';
 import {primitiveLocalInitializerEnd} from './primitive-local-expression-source.mjs';
 
 import {readCoreCarrierCallSource} from './core-carrier-call-source.mjs';
+
+import {readPrimitiveRoleExpressionSource} from './primitive-carrier-expression-source.mjs';
+// Decode only this operation's own lexical roles. No result is cached.
+export function readCarrierNumericExpressionSource(rows,bindings,wanted=null){
+ return readPrimitiveRoleExpressionSource(rows,{get:name=>decodeCarrierRole(bindings.get(name))},wanted);
+}

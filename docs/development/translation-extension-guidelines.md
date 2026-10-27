@@ -793,3 +793,10 @@ not from a written imported name. Retain actual binder/owner/attribute/condition
 joins and generic/default punctuation. A non-trait declaration candidate never
 expands an alias or grants trait, type or body authority. See the
 [unrun local type alias draft](local-type-alias-source-draft.md).
+
+Compose numeric source expressions through the existing precedence parser and
+closed qualified call reader. Carry current lexical domains through matching
+comparisons, callback returns and chronological aliases, and charge attempted
+operand lengths to existing source budgets. Preserve evaluation order, original
+widths and independent overflow/type/ownership checks. See the
+[unrun expression call draft](primitive-expression-call-source-draft.md).

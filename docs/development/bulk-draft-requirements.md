@@ -895,3 +895,11 @@ paths and local declaration/re-export walking. Six full source equations and
 independent unrun source/private/refusal/JS/strict TS/native/export cases are
 drafted. Alias expansion, broader namespace/architecture/owner closure and every
 unfinished source/production/reverse/sync/freshness/delivery row remain OPEN.
+
+The [primitive expression call draft](primitive-expression-call-source-draft.md)
+composes qualified scalar atoms through native arithmetic, grouped integer
+receivers/arguments and carrier numeric comparison/callback inference. Ten full
+compiler equations and independent unrun six-API/nine-caller/JS/strict TS/paired
+reverse/native/export cases are drafted. Wider expressions, namespace/production
+adoption and every unfinished source/reverse/sync/freshness/parity/delivery row
+remain OPEN; no verification or coverage gain is claimed.

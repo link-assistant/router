@@ -14,3 +14,14 @@ export function readParenthesizedSourceOperandTokens(rows){
  for(let at=0;at<rows.length;at++){const word=rows[at].text;if(['(','[','{'].includes(word)){if(groups.length>=16)return null;groups.push({'(':')','[':']','{':'}'}[word]);}else if([')',']','}'].includes(word)){if(groups.pop()!==word||!groups.length&&at!==rows.length-1)return null;}}
  return groups.length?null:rows.slice(1,-1);
 }
+
+// Consume one complete qualified call from a larger expression. Delimiter and
+// call grammar retain the exact complete-call reader's original closed limits.
+export function readQualifiedSourceCallPrefixTokens(rows,start=0){
+ if(!Array.isArray(rows)||!Number.isSafeInteger(start)||start<0||start>=rows.length||!ident(rows[start]))return null;let at=start,segments=0;
+ for(;;){if(!ident(rows[at])||++segments>8)return null;at++;if(rows[at]?.text!=='::')break;at++;}
+ if(segments<2||rows[at]?.text!=='(')return null;const groups=[],pairs={'(':')','[':']','{':'}'};
+ for(;at<rows.length&&at-start<128;at++){
+  const word=rows[at].text;if(pairs[word]){if(groups.length>=17)return null;groups.push(pairs[word]);}else if([')',']','}'].includes(word)){if(groups.pop()!==word)return null;if(!groups.length){const end=at+1,tokens=rows.slice(start,end),call=readQualifiedSourceCallTokens(tokens);return call?{start,end,tokens,call,sourceAuthority:false,semanticAuthority:false}:null;}}
+ }return null;
+}
