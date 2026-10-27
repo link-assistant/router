@@ -204,3 +204,8 @@ Consuming text calls require actual original owned String and fresh move/loan
 checks; a primitive JS string/annotation supplies no permission. Preserve native
 buffer/capacity and explicit UTF-8 bounds; qualify JS validation costs separately.
 See [the unrun consuming text draft](text-consuming-source-draft.md).
+
+Builder suffix aliases must come from the original chronological reader after
+complete initializers and inside the actual lexical scope. Keep mutable builders
+unknown in that reader and refuse escaping/self-borrowed aliases as complete
+functions; see [the unrun suffix alias draft](text-builder-alias-source-draft.md).

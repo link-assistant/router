@@ -443,3 +443,10 @@ CST construction and independent unrun runtime/JS/strict TS/ownership/canonical
 inverse/native capacity/bounds/export sources are drafted. JS prefix validation
 cost and original unbounded application equivalence remain OPEN, along with all
 wider namespace/production/reverse/sync/freshness/parity/receiving/delivery rows.
+
+The [chronological builder suffix draft](text-builder-alias-source-draft.md)
+reuses the original lexical text alias reader for borrowed suffixes and initial
+From values, retaining exact scopes and initializer evidence. Two equations and
+independent unrun two APIs/five callers/six edits/JS/strict TS/native/refusal/
+export source are drafted. Wider iteration/namespace/production/reverse/sync/
+freshness/parity/receiving/delivery requirements remain OPEN.
