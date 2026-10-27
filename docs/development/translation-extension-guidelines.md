@@ -175,3 +175,8 @@ See [the unrun whole-module format draft](forward-owned-format-source-draft.md).
 Mixed owned formatting synchronization uses separately checked whole-source
 layers and adjacent inverses; preserve the original complete input/census,
 retained-source limits and final fresh whole-target comparison. See [the unrun mixed draft](owned-composite-source-draft.md).
+
+Callback source wrappers may retain an explicit expected owning text destination
+only as temporary DATA. Keep complete block bodies, avoid inheriting an outer
+target into nested callbacks, and recheck the entire original caller independently.
+See [the unrun callback target draft](callback-text-target-source-draft.md).

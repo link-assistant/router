@@ -400,3 +400,10 @@ control edits, retaining every adjacent source inverse and final whole-target
 reproduction. Four equations and independent unrun mixed paired/physical-source/
 strict TS/conflict/source/refusal cases are drafted. Complete source coverage,
 receiving, namespace, regeneration, reverse freshness, parity and delivery remain OPEN.
+
+The [explicit callback text target draft](callback-text-target-source-draft.md)
+propagates original declared owning payload destinations through the existing
+bounded callback source composer without granting type/trait authority. Six
+whole equations and independent unrun four APIs/six callers/JS/strict TS/native/
+wrapper/refusal/export sources are drafted. All wider closure/capture/namespace/
+production/reverse/freshness/parity/receiving/delivery requirements remain OPEN.

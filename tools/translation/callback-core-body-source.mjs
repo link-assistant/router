@@ -3,12 +3,12 @@
 import {proposeCallbackTextBodySource} from './callback-text-body-source.mjs';
 import {proposeCallbackIntegerBodySource} from './callback-integer-body-source.mjs';
 import {applyLayeredCoreOrFormatAdoptionSource as applyLayeredCoreAdoptionSource} from './layered-core-format-adoption-source.mjs';
-export function proposeCallbackCoreBodySource(body,scope,{sourceDepth=0}={}){
+export function proposeCallbackCoreBodySource(body,scope,{sourceDepth=0,expectedOutput=null}={}){
  if(!Number.isSafeInteger(sourceDepth)||sourceDepth<0)throw new TypeError('Bounded callback source depth required');if(sourceDepth>=8)return null;
- if(typeof body!=='string'||body.length>65536||!body.includes('.')||!(scope instanceof Map)||scope.size>64)return null;let current=body,stable=false;const stages=[];let retained=0;const carrier=family=>(body,visible)=>proposeCallbackCarrierBodySource(body,visible,{family,callbackBodyProposer:(child,childScope)=>proposeCallbackCoreBodySource(child,childScope,{sourceDepth:sourceDepth+1})});
+ if(typeof body!=='string'||body.length>65536||!body.includes('.')||!(scope instanceof Map)||scope.size>64)return null;let current=body,stable=false;const stages=[];let retained=0;const carrier=family=>(body,visible)=>proposeCallbackCarrierBodySource(body,visible,{family,callbackBodyProposer:(child,childScope,childOptions={})=>proposeCallbackCoreBodySource(child,childScope,{sourceDepth:sourceDepth+1,expectedOutput:childOptions.expectedOutput??null})});
  for(let round=0;round<4;round++){
   let changed=false;for(const [name,propose]of [['text',proposeCallbackTextBodySource],['integer',proposeCallbackIntegerBodySource],...['option-methods','option-callback-methods','primitive-result-methods','owned-result-methods'].map(family=>[family,carrier(family)])]){
-   const before=current,proposal=propose(before,scope);if(!proposal)continue;if(proposal.before.source!==before||typeof proposal.after.source!=='string'||proposal.after.source.length>65536)throw new TypeError('Complete bounded callback core child source differs');if(proposal.after.source===before)continue;
+   const before=current,proposal=propose(before,scope,{expectedOutput});if(!proposal)continue;if(proposal.before.source!==before||typeof proposal.after.source!=='string'||proposal.after.source.length>65536)throw new TypeError('Complete bounded callback core child source differs');if(proposal.after.source===before)continue;
    if((retained+=Buffer.byteLength(JSON.stringify(proposal),'utf8'))>8388608)throw new TypeError('Complete callback body source history byte bound');current=proposal.after.source;changed=true;stages.push({round,name,proposal,sourceAuthority:false,semanticAuthority:false,executableAdmission:false});
   }if(!changed){stable=true;break;}
  }if(!stable)throw new TypeError('Complete callback core unchanged round required within four rounds');if(!stages.length)return null;
