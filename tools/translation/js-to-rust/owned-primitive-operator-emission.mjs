@@ -3,6 +3,7 @@ import {primitiveBitwiseType,primitiveBitwiseCompatible} from '../primitive-bitw
 const fail=()=>{throw new TypeError('Owned primitive operator carrier differs');};
 export function ownedPrimitiveOperatorCallMetadata(value){
  const target=primitiveBitwiseType(value.type);if(!target||value.bits!==target.bits||value.signed!==target.signed||value.root!==null||!Array.isArray(value.args))fail();
+ if(value.kind==='primitive-not-call'){if(value.name!=='primitiveNot'||value.args.length!==1||!primitiveBitwiseCompatible(value.args[0].type,target.name))fail();return {target,after:[target.bits,target.signed]};}
  if(value.kind==='primitive-cast-call'){
   const input=primitiveBitwiseType(value.inputType);if(value.name!=='integerCast'||!input||value.inputBits!==input.bits||value.inputSigned!==input.signed||value.args.length!==1||!primitiveBitwiseCompatible(value.args[0].type,input.name))fail();return {target,input,after:[input.bits,input.signed,target.bits,target.signed]};
  }
@@ -12,6 +13,7 @@ export function emitOwnedPrimitiveOperatorCall(value,{rust,expression,argumentNa
  const metadata=ownedPrimitiveOperatorCallMetadata(value),expressions=value.args.map(expression);
  if(!rust)return '__ro_'+value.name+'('+expressions.concat(metadata.after.map(value=>JSON.stringify(value))).join(', ')+')';
  const names=value.args.map(argumentName);if(names.some(name=>typeof name!=='string'||!/^__ro_arg_[0-9]+$/u.test(name))||new Set(names).size!==names.length)fail();const bindings=expressions.map((text,index)=>'let '+names[index]+' = '+text+';').join(' ');
+ if(value.kind==='primitive-not-call')return '{ '+bindings+' (!'+names[0]+') }';
  if(value.kind==='primitive-cast-call')return '{ '+bindings+' '+(metadata.input.name===metadata.target.name?names[0]:'('+names[0]+' as '+metadata.target.rust+')')+' }';
  // Cast the already evaluated scalar count to u128. Every negative signed
  // count becomes too large; all unsigned and i128 positive counts stay exact.

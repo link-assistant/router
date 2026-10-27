@@ -3,7 +3,7 @@
 import {primitiveBitwiseMetadata,primitiveBitwiseLiteral,primitiveBitwiseCompatible} from '../primitive-bitwise-types.mjs';
 import {ownedBooleanBitwiseOperator} from './owned-boolean-bitwise-source.mjs';
 const fail=message=>{throw new TypeError('Owned primitive operator source: '+message);};
-export const ownedPrimitiveOperatorOperation=name=>typeof name==='string'&&['primitiveBitwise','integerCast','integerShift'].includes(name);
+export const ownedPrimitiveOperatorOperation=name=>typeof name==='string'&&['primitiveBitwise','integerCast','integerShift','primitiveNot'].includes(name);
 export function readOwnedPrimitiveOperatorCall(ts,node,name,read){
  if(!ownedPrimitiveOperatorOperation(name)||node.typeArguments?.length)fail('unregistered or generic primitive operator');
  const width=(bits,signed)=>ts.isNumericLiteral(bits)&&[ts.SyntaxKind.TrueKeyword,ts.SyntaxKind.FalseKeyword].includes(signed.kind)?primitiveBitwiseMetadata(bits.text,signed.kind===ts.SyntaxKind.TrueKeyword):null;
@@ -14,6 +14,9 @@ export function readOwnedPrimitiveOperatorCall(ts,node,name,read){
   if(node.arguments.length!==5||!ts.isStringLiteral(node.arguments[2])||!ownedBooleanBitwiseOperator(node.arguments[2].text))fail('fixed eager primitive bitwise metadata required');
   const boolean=node.arguments[3].kind===ts.SyntaxKind.NullKeyword&&node.arguments[4].kind===ts.SyntaxKind.NullKeyword,domain=boolean?null:width(node.arguments[3],node.arguments[4]);if(!boolean&&!domain)fail('literal registered fixed integer width/sign required');
   const args=node.arguments.slice(0,2).map(argument=>operand(argument,domain)),type=domain?.name??'bool';if(args.some(value=>!primitiveBitwiseCompatible(value.type,type)))fail('primitive bitwise operands require exact scalar domains');return {kind:'primitive-bitwise-call',name,args,operation:node.arguments[2].text,type,root:null,...(domain?{bits:domain.bits,signed:domain.signed}:{})};
+ }
+ if(name==='primitiveNot'){
+  if(node.arguments.length!==3)fail('three exact complement arguments required');const input=width(node.arguments[1],node.arguments[2]);if(!input)fail('literal native complement domain required');const value=operand(node.arguments[0],input);if(!primitiveBitwiseCompatible(value.type,input.name))fail('complement operand differs from its written native domain');return {kind:'primitive-not-call',name,args:[value],type:input.name,bits:input.bits,signed:input.signed,root:null};
  }
  if(name==='integerCast'){
   if(node.arguments.length!==5)fail('five exact cast arguments required');const input=width(node.arguments[1],node.arguments[2]),target=width(node.arguments[3],node.arguments[4]);if(!input||!target)fail('literal native input and target cast domains required');const value=operand(node.arguments[0],input);if(!primitiveBitwiseCompatible(value.type,input.name))fail('cast operand differs from its written input domain');

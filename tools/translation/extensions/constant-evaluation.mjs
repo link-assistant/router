@@ -67,7 +67,7 @@ function children(node) {
     case 'if':return [node.cond,node.then,node.else];
     case 'binary':return [node.left,node.right];
     case 'routerPrimitiveIntegerShift':case 'routerPrimitiveScalarBitwise':return [node.left,node.right];
-    case 'routerPrimitiveIntegerCast':return [node.value];
+    case 'routerPrimitiveIntegerCast':case 'routerPrimitiveIntegerNot':return [node.value];
     case 'unary':case 'cast':return [node.arg];
     case 'ctor':case 'call':case 'routerHostCall':return node.args;
     case 'array':return node.items;
@@ -163,7 +163,7 @@ class Evaluator {
       if(arm.pattern.k==='ctor'){this.layout(arm.pattern.data);if(node.scrutinee?.type?.name!==arm.pattern.data)refuse('constant match constructor owner differs from its checked subject',node);}
     }
     if(node.k==='routerSharedArrayLiteral'&&!node.arrayBorrowProof?.verified)refuse('constant array reference requires its separate source borrow proof',node);
-    if(['routerPrimitiveIntegerCast','routerPrimitiveIntegerShift','routerPrimitiveScalarBitwise'].includes(node.k))requirePrimitiveOperator(node);
+    if(['routerPrimitiveIntegerCast','routerPrimitiveIntegerShift','routerPrimitiveScalarBitwise','routerPrimitiveIntegerNot'].includes(node.k))requirePrimitiveOperator(node);
     const operands=children(node);if(!Array.isArray(operands))refuse('constant operands must be a checked array',node);
     for(const operand of operands)this.eligibleNode(operand,depth+1);
   }
@@ -220,6 +220,9 @@ class Evaluator {
         const proof=requirePrimitiveOperator(node),left=this.evaluate(node.left,env,depth+1),right=this.evaluate(node.right,env,depth+1);
         if(proof.domain==='bool')return result(proof.operation==='&'?left.value&&right.value:proof.operation==='|'?left.value||right.value:left.value!==right.value);
         return result(this.exactInteger(proof.operation==='&'?left.value&right.value:proof.operation==='|'?left.value|right.value:left.value^right.value,node.type,node));
+      }
+      case 'routerPrimitiveIntegerNot':{
+        requirePrimitiveOperator(node);const value=this.evaluate(node.value,env,depth+1),bits=~value.value;return result(node.type.signed?BigInt.asIntN(node.type.bits,bits):BigInt.asUintN(node.type.bits,bits));
       }
       case 'routerPrimitiveIntegerCast':{
         requirePrimitiveOperator(node);const value=this.evaluate(node.value,env,depth+1);

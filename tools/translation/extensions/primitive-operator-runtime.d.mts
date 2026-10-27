@@ -14,3 +14,5 @@ export type RustU64=bigint;
 export type RustI64=bigint;
 export type RustU128=bigint;
 export type RustI128=bigint;
+
+export declare function primitiveNot(value:bigint,bits:number,signed:boolean):bigint;

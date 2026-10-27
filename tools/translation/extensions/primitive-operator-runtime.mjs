@@ -23,3 +23,7 @@ export function primitiveBitwise(left,right,operation,bits,signed){
  if(bits===null&&signed===null){if(typeof left!=='boolean'||typeof right!=='boolean')throw new TypeError('Rust bool bitwise operands must be booleans');return operation==='&'?left&&right:operation==='|'?left||right:left!==right;}
  bound(left,bits,signed);bound(right,bits,signed);const result=operation==='&'?left&right:operation==='|'?left|right:left^right;return signed?BigInt.asIntN(bits,result):BigInt.asUintN(bits,result);
 }
+
+export function primitiveNot(value,bits,signed){
+ bound(value,bits,signed);const result=~value;return signed?BigInt.asIntN(bits,result):BigInt.asUintN(bits,result);
+}

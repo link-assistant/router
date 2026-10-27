@@ -444,3 +444,11 @@ transactions and extends runtime relocation to native JSDoc queries/import tags.
 Two compiler source equations and unrun width/strict-consumer/mirror/composite/
 concurrency/tamper/staleness/source-refusal cases are drafted. All remaining
 source/native/production/sync/freshness/parity/delivery requirements stay open.
+
+The [native complement draft](native-complement-draft.md) carries actual fixed
+integer negation of bits through forward checked meta, constant evaluation,
+shared runtime, all seven reverse source/emit/interpreter paths, canonical Rust
+inverses and whole-project synchronization. Seventeen source equations and unrun
+width/ordering/constant/meta/strict TS/inverse/sync/refusal/native oracle cases
+are drafted. All remaining source/native/production/sync/freshness/parity/delivery
+requirements remain unfinished.

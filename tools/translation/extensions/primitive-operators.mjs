@@ -1,6 +1,6 @@
 // Rust primitive operators lower through checked common meta. Trait operators,
 // pointer widths and borrowed operands require separate source contracts.
-import {rustFixedType} from '../checked-types.mjs';
+import {rustFixedType,BOOL} from '../checked-types.mjs';
 import {unsupported,typeError} from '../vendor/meta-language/translation/diagnostics.js';
 export function actualFixedOperand(type,span){
   const primitive=rustFixedType(type?.rustPrimitiveName);
@@ -23,7 +23,9 @@ export function requirePrimitiveOperator(node){
   if(node.k==='routerPrimitiveScalarBitwise')return requirePrimitiveBitwise(node);
   actualFixedOperand(node.type,node.span);
   const proof=node.operationProof;
-  if(node.k==='routerPrimitiveIntegerCast'){
+  if(node.k==='routerPrimitiveIntegerNot'){
+    actualFixedOperand(node.value?.type,node.span);if(proof?.kind!=='rust-fixed-not'||proof.input!==node.type.rustPrimitiveName||proof.input!==node.value.type.rustPrimitiveName||proof.evaluation!=='once'||proof.runtimeParity!==false)throw new TypeError('Missing checked primitive integer complement');
+  }else if(node.k==='routerPrimitiveIntegerCast'){
     actualFixedOperand(node.value?.type,node.span);
     if(proof?.kind!=='rust-integer-as'||proof.input!==node.value.type.rustPrimitiveName||proof.target!==node.type.rustPrimitiveName||proof.truncation!=='two-complement-target-width'||proof.runtimeParity!==false)throw new TypeError('Missing checked primitive cast');
   }else if(node.k==='routerPrimitiveIntegerShift'){
@@ -67,3 +69,10 @@ export function checkedPrimitiveBitwise(checker,node,env,path,expected){
 export function requirePrimitiveBitwise(node){
  if(node?.k!=='routerPrimitiveScalarBitwise')throw new TypeError('Missing checked primitive bitwise node');const domain=bitwiseDomain(node.type,node.span),proof=node.operationProof;if(bitwiseDomain(node.left?.type,node.span)!==domain||bitwiseDomain(node.right?.type,node.span)!==domain||proof?.kind!=='rust-scalar-bitwise'||proof.domain!==domain||!['&','|','^'].includes(proof.operation)||proof.evaluation!=='eager-left-then-right-once'||proof.runtimeParity!==false)throw new TypeError('Missing checked primitive bitwise operation');return proof;
 }
+
+export function checkedPrimitiveNot(checker,node,env,path,expected){
+ const value=checker.expr(node.arg,env,path,['bool','fixed'].includes(expected?.kind)?expected:undefined);
+ if(value.type.kind==='bool')return {k:'unary',op:'not',arg:coerce(value,BOOL,checker.language,node.span),type:BOOL};
+ actualFixedOperand(value.type,node.span);return {k:'routerPrimitiveIntegerNot',value,type:value.type,span:node.span,constEligible:true,operationProof:{kind:'rust-fixed-not',input:value.type.rustPrimitiveName,evaluation:'once',runtimeParity:false}};
+}
+import {coerce} from '../checked-coercions.mjs';

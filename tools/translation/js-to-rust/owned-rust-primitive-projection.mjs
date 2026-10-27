@@ -16,7 +16,7 @@ export function ownedRustPrimitiveObservationType(node){
   if(node.kind==='name'||node.kind==='integer')return node.type==='bool'?'bool':primitiveBitwiseType(node.type)?.name??null;
   if(node.kind==='boolean')return 'bool';
   if(node.kind==='primitive-cast')return ownedRustPrimitiveType(node.target)?.name??null;
-  if(node.kind==='not')return visit(node.value,depth+1)==='bool'?'bool':null;
+  if(node.kind==='not'){const type=visit(node.value,depth+1);return type==='bool'||primitiveBitwiseType(type)?type:null;}
   if(node.kind==='binary'){
    const left=visit(node.left,depth+1),right=visit(node.right,depth+1);if(!left||!right)return null;
    if(['&','|','^'].includes(node.op))return left===right?left:null;
@@ -29,6 +29,7 @@ export function ownedRustPrimitiveObservationType(node){
 }
 export function projectOwnedRustPrimitiveObservation(node,{enabled,imported,expression}){
  if(!enabled)return null;const type=ownedRustPrimitiveObservationType(node),row=primitiveBitwiseType(type),call=(name,args)=>imported(name,'primitive-operator')+'('+args.join(', ')+')';
+ if(node.kind==='not'&&row)return call('primitiveNot',[expression(node.value),row.bits,row.signed]);
  if(node.kind==='block'&&!node.statements.length&&node.tail?.kind==='temporary'&&row)return call('integerCast',[expression(node.tail),row.bits,row.signed,row.bits,row.signed]);
  if(node.kind==='primitive-cast'){
   const input=primitiveBitwiseType(ownedRustPrimitiveObservationType(node.value));if(!input||!row)throw new TypeError('Canonical cast needs actual native scalar observations');return call('integerCast',[expression(node.value),input.bits,input.signed,row.bits,row.signed]);
