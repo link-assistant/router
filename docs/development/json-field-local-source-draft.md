@@ -34,3 +34,8 @@ keys and index boundaries, both APIs, the fixed bulk stage, fresh receiving JS
 and strict TS, native borrowed field identity and complete source histories.
 Every wider source/native/production/sync/freshness/parity/delivery requirement
 remains unfinished.
+
+The later [shared declaration draft](local-alias-binding-source-draft.md) keeps
+unrelated mutable locals opaque while preserving independent immutable alias
+facts. It supplies no mutable-value facts or type/owner/executable permission;
+all new cases and whole-project requirements remain unrun and unfinished.

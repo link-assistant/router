@@ -34,7 +34,7 @@ export function selectTextMethodAdoption(source,item,_scoped,modulePath,_names,h
   if(word==='#'||['unsafe','async','await','yield','loop','fn','mod','use','extern','macro_rules','trait','impl','struct','enum','union','type','const','static','move'].includes(word)||word==='|'&&!projectionPipes.has(at)||word==='||'&&['=','(',',','{','return','move','=>'].includes(tokens[at-1]?.text)||word!=='!'&&word.endsWith('!')||word==='!'&&ident(tokens[at-1])&&['(','[','{'].includes(tokens[at+1]?.text))return result('unknown local source producer, closure or macro');
   if(word==='for')return result('iterator binding scope requires a separate adoption sequence');
   if(word==='let'){
-   const binding=tokens[at+1];if(!ident(binding)||binding.text==='mut'||parameters.has(binding.text)||localNames.has(binding.text)||!['=',':'].includes(tokens[at+2]?.text))return result('shadowing mutable or destructured local requires separate binding scope');localNames.add(binding.text);
+   const declaration=localAliasDeclaration(tokens,at),binding=declaration?.token;if(!declaration||parameters.has(binding.text)||localNames.has(binding.text))return result('shadowing mutable or destructured local requires separate binding scope');localNames.add(binding.text);
   }
  }
  const localArguments=createTextLocalArgumentSource(tokens.slice(body+1,-1),domains,parameters);if(!localArguments)return result('complete text local scope requires separate source selection');let activeDomains=domains;
@@ -83,3 +83,5 @@ export function selectTextMethodAdoption(source,item,_scoped,modulePath,_names,h
 }
 
 import {decodeRustCharacter} from './extensions/rust-character.mjs';
+
+import {localAliasDeclaration} from './local-alias-binding-source.mjs';

@@ -48,3 +48,8 @@ boundaries, exact encodings/errors, namespace/shadow/pattern/refusal controls,
 and a fresh whole-project JS/strict TS receiving caller. Native oracle source
 is written for later gated CI. Every new case and remaining source/native/
 production/sync/freshness/parity/delivery obligation remains unverified.
+
+The later [shared declaration draft](local-alias-binding-source-draft.md) keeps
+unrelated mutable locals opaque while preserving independent immutable alias
+facts. It supplies no mutable-value facts or type/owner/executable permission;
+all new cases and whole-project requirements remain unrun and unfinished.

@@ -1,6 +1,7 @@
 // One function's chronological source-selection DATA. No owner/type permit.
 
 import {createChronologicalLocalSource} from './chronological-local-source.mjs';
+import {censusLocalAliasBindings} from './local-alias-binding-source.mjs';
 import {primitiveBitwiseLiteral} from './primitive-bitwise-types.mjs';
 const fail=message=>{throw new TypeError('Text local argument source: '+message);};
 export function createTextLocalArgumentSource(rows,parameters,allParameters=new Set(parameters.keys())){
@@ -15,8 +16,7 @@ function textInitializerStart(at,rows){
  if(rows[at+2]?.text==='=')return at+3;if(rows[at+2]?.text!==':')return null;let end=at+3;while(end<rows.length&&end-at<=67&&!['=',';','{','}'].includes(rows[end].text))end++;if(end-at>67||rows[end]?.text!=='='||!borrowedType(rows.slice(at+3,end).map(row=>row.text).join('')))return null;return end+1;
 }
 function textLocalCensus(rows,parameters){
- if(rows.length>200000||rows.some(row=>['for','match'].includes(row.text)))return false;const names=new Set(parameters),protectedNames=new Set(['std','core','crate','self','Self','translation_core','translation_text_core','String','str','Str','Text','u64','usize','bool','Some','None','Option']);let count=0;
- for(let at=0;at<rows.length;at++)if(rows[at].text==='let'){const name=rows[at+1];if(!ident(name)||['mut','ref','_'].includes(name.text)||!['=',':'].includes(rows[at+2]?.text)||names.has(name.text)||protectedNames.has(name.text)||++count>4096)return false;names.add(name.text);}return true;
+ return censusLocalAliasBindings(rows,parameters,{protectedNames:['std','core','crate','self','Self','translation_core','translation_text_core','String','str','Str','Text','u64','usize','bool','Some','None','Option']}).reason===null;
 }
 export function readTextAliasOperand(rows,bindings){
  if(rows.length===1&&ident(rows[0])&&['str','text-owned','usize-count'].includes(bindings.get(rows[0].text)))return {kind:bindings.get(rows[0].text),binding:rows[0].text};

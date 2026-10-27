@@ -41,3 +41,8 @@ and strict TS, native callback counts/error ownership and source-history joins.
 Unsupported initializer walks continue monotonically at their original RHS;
 the shared text selector retains the same source-order rule. Every case and wider source/native/production/sync/freshness/parity/delivery
 requirement remains unverified.
+
+The later [shared declaration draft](local-alias-binding-source-draft.md) keeps
+unrelated mutable locals opaque while preserving independent immutable alias
+facts. It supplies no mutable-value facts or type/owner/executable permission;
+all new cases and whole-project requirements remain unrun and unfinished.

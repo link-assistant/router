@@ -32,3 +32,8 @@ actual selected result chains, repeated-use/default/unknown refusals, both APIs,
 the fixed bulk stage, receiving JS and strict TS, native JSON branch values and
 whole source/CST inverses. All wider source/native/production/sync/freshness/
 parity/delivery requirements remain unfinished.
+
+The later [shared declaration draft](local-alias-binding-source-draft.md) keeps
+unrelated mutable locals opaque while preserving independent immutable alias
+facts. It supplies no mutable-value facts or type/owner/executable permission;
+all new cases and whole-project requirements remain unrun and unfinished.

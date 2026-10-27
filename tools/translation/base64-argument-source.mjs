@@ -11,12 +11,7 @@ export function readConcreteBase64Argument(rows,bindings){
 // Only the newly admitted local-bearing lane uses this stricter census. Old
 // no-let inputs retain their original selector/refusals and full source guards.
 export function simpleBase64LocalBindings(rows,parameters){
- if(!rows.some(row=>row.text==='let'))return {reason:null,count:0};if(rows.length>200000)return {reason:'complete local-binding token bound'};
- if(rows.some(row=>['match','for'].includes(row.text)))return {reason:'local-bearing pattern scope needs a separate source rule'};
- const names=new Set(parameters.keys()),protectedNames=new Set(['base64','String','Vec','str','u8','std','core','translation_core','Str','Text']);let count=0;
- for(let at=0;at<rows.length;at++)if(rows[at].text==='let'){
-  const name=rows[at+1],next=rows[at+2];if(!ident(name)||!['=',':'].includes(next?.text)||['mut','ref','self','Self','_'].includes(name.text))return {reason:'one ordinary immutable local identifier required'};
-  if(names.has(name.text)||protectedNames.has(name.text))return {reason:'local can shadow a concrete parameter or namespace'};if(++count>4096)return {reason:'complete local binding count bound'};names.add(name.text);
- }
- return {reason:null,count};
+ return censusLocalAliasBindings(rows,parameters.keys(),{unicode:false,protectedNames:['base64','String','Vec','str','u8','std','core','translation_core','Str','Text']});
 }
+
+import {censusLocalAliasBindings} from './local-alias-binding-source.mjs';

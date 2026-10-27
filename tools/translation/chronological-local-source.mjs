@@ -8,8 +8,8 @@ export function createChronologicalLocalSource(rows,parameters,{readOperand,acce
   const visible=new Map();for(const [name,kind]of parameters){tick();visible.set(name,kind);}for(const frame of frames)for(const [name,value]of frame){tick();if(value.kind)visible.set(name,value.kind);else visible.delete(name);}return visible[Symbol.iterator]();
  }};
  function enterLocal(at){
-  const name=rows[at+1]?.text,frame=frames.at(-1);frame.set(name,{kind:null,evidence:null});
-  const start=initializerStart?initializerStart(at,rows):rows[at+2]?.text==='='?at+3:null;if(!Number.isSafeInteger(start)||start<=at+2||start>=rows.length)return;const first=rows[start];let end=null;
+  const binding=localAliasDeclaration(rows,at);if(!binding)fail('complete ordinary local declaration required');const name=binding.name,frame=frames.at(-1);frame.set(name,{kind:null,evidence:null});if(binding.mutable)return;
+  const start=initializerStart?initializerStart(at,rows):binding.initializerStart;if(!Number.isSafeInteger(start)||start<=at+2||start>=rows.length)return;const first=rows[start];let end=null;
   for(const size of initializerSizes){tick();if(!Number.isSafeInteger(size)||size<1||size>256)fail('bounded initializer selection size required');if(rows[start+size]?.text===';'){end=start+size;break;}}
   const declaration={name,frame,start:first.start,declarationStart:rows[at].start};initializers.set(first.start,declaration);
   if(end===null)return;const value=readOperand(rows.slice(start,end),bindings);if(!value)return;
@@ -35,3 +35,5 @@ export function createChronologicalLocalSource(rows,parameters,{readOperand,acce
   },
  };
 }
+
+import {localAliasDeclaration} from './local-alias-binding-source.mjs';

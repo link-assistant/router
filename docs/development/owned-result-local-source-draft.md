@@ -32,3 +32,8 @@ constructor/error domains, source timing/scope/captures, both APIs, the fixed
 bulk stage, whole receiving JS and strict TS, native callback counts/owned moves
 and complete source histories. Every wider source/native/production/sync/
 freshness/parity/delivery requirement remains unfinished.
+
+The later [shared declaration draft](local-alias-binding-source-draft.md) keeps
+unrelated mutable locals opaque while preserving independent immutable alias
+facts. It supplies no mutable-value facts or type/owner/executable permission;
+all new cases and whole-project requirements remain unrun and unfinished.

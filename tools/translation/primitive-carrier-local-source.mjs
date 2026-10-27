@@ -1,6 +1,7 @@
 // One function's chronological source-selection DATA. No owner/type permit.
 import {readPrimitiveAliasOperand} from './primitive-local-argument-source.mjs';
 import {createChronologicalLocalSource} from './chronological-local-source.mjs';
+import {censusLocalAliasBindings} from './local-alias-binding-source.mjs';
 const fail=message=>{throw new TypeError('Primitive carrier local source: '+message);};
 export function createPrimitiveCarrierLocalSource(rows,parameters,allParameters,{readWrittenRole}){
  if(!rows.some(row=>row.text==='let'))return {at(){return parameters;},evidence(){return null;},selectedCall(){}};
@@ -18,8 +19,7 @@ const carrierDomain=/^(?:payload:(?:bool|u64|i64|str|text-owned|owned-str)|optio
 export function encodeCarrierRole(role){const value=role&&role.kind+':'+role.domain;return typeof value==='string'&&carrierDomain.test(value)?value:null;}
 export function decodeCarrierRole(value){if(typeof value!=='string'||!carrierDomain.test(value))return null;const [kind,domain]=value.split(':');return {kind,domain};}
 function carrierLocalCensus(rows,parameters){
- if(rows.length>200000||rows.some(row=>['match','for'].includes(row.text)))return false;const names=new Set(parameters),protectedNames=new Set(['std','core','crate','self','Self','translation_core','translation_primitive_option_core','translation_primitive_option_callbacks_core','translation_primitive_results_core','translation_owned_results_core','Option','Some','None','Result','Ok','Err','String','str','u64','i64','bool']);let count=0;
- for(let at=0;at<rows.length;at++)if(rows[at].text==='let'){const name=rows[at+1];if(!ident(name)||['mut','ref','_'].includes(name.text)||!['=',':'].includes(rows[at+2]?.text)||names.has(name.text)||protectedNames.has(name.text)||++count>4096)return false;names.add(name.text);}return true;
+ return censusLocalAliasBindings(rows,parameters,{protectedNames:['std','core','crate','self','Self','translation_core','translation_primitive_option_core','translation_primitive_option_callbacks_core','translation_primitive_results_core','translation_owned_results_core','Option','Some','None','Result','Ok','Err','String','str','u64','i64','bool']}).reason===null;
 }
 function scalarOperand(rows,bindings,wanted){
  if(rows.length===1){const row=rows[0],known=ident(row)&&decodeCarrierRole(bindings.get(row.text));if(known)return {...known,binding:row.text};if(['true','false'].includes(row.text))return {kind:'payload',domain:'bool'};if(row.type==='string'&&/^(?:"|r#{0,255}")/u.test(row.text))return {kind:'payload',domain:'str'};}

@@ -640,3 +640,10 @@ four existing map/iteration adapters. Eight whole equations and unrun scope/
 callback/order/Unicode/bulk/receiving JS/strict TS/native-oracle cases are drafted.
 All wider source/native/production/sync/freshness/parity/delivery requirements
 remain unfinished.
+
+The [shared declaration draft](local-alias-binding-source-draft.md) copies one
+bounded census across families and masks unrelated mutable locals as unknown
+without discarding independent immutable aliases. Fourteen whole equations and
+unrun seven-tracker/source/caller/JS/strict TS/native-oracle cases are drafted.
+All broader source/native/production/sync/freshness/parity/delivery requirements
+remain unfinished.

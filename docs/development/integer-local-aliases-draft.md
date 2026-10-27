@@ -39,3 +39,8 @@ selected results, both actual adopters, the fixed bulk stage, whole receiving
 JavaScript and strict TypeScript behavior, unknown/Option/refusal controls and
 independent Rust boundaries. Every case and remaining source/native/production/
 sync/freshness/parity/delivery obligation remains unverified.
+
+The later [shared declaration draft](local-alias-binding-source-draft.md) keeps
+unrelated mutable locals opaque while preserving independent immutable alias
+facts. It supplies no mutable-value facts or type/owner/executable permission;
+all new cases and whole-project requirements remain unrun and unfinished.

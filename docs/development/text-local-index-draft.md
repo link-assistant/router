@@ -40,3 +40,8 @@ the fixed bulk stage, Unicode byte offsets, empty patterns, source/CST inverses,
 fresh receiving JS and strict TS, and original/adopted native boundaries. Every
 case and wider source/native/production/sync/freshness/parity/delivery requirement
 remains unverified.
+
+The later [shared declaration draft](local-alias-binding-source-draft.md) keeps
+unrelated mutable locals opaque while preserving independent immutable alias
+facts. It supplies no mutable-value facts or type/owner/executable permission;
+all new cases and whole-project requirements remain unrun and unfinished.

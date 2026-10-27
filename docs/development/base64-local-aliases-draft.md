@@ -45,3 +45,8 @@ stage, a fresh full-project JS/strict TS caller and shadow/type/refusal controls
 Native original/adopted alias and roundtrip oracles are written for later gated
 CI. Every new case and remaining source/native/production/sync/freshness/parity/
 delivery obligation remains unverified.
+
+The later [shared declaration draft](local-alias-binding-source-draft.md) keeps
+unrelated mutable locals opaque while preserving independent immutable alias
+facts. It supplies no mutable-value facts or type/owner/executable permission;
+all new cases and whole-project requirements remain unrun and unfinished.

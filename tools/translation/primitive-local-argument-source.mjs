@@ -1,6 +1,7 @@
 // One function's chronological source-selection DATA. No owner/type permit.
 import {primitiveBitwiseType,primitiveBitwiseLiteral} from './primitive-bitwise-types.mjs';
 import {createChronologicalLocalSource} from './chronological-local-source.mjs';
+import {censusLocalAliasBindings} from './local-alias-binding-source.mjs';
 const fail=message=>{throw new TypeError('Primitive local argument source: '+message);};
 export function createPrimitiveLocalArgumentSource(rows,parameters,allParameters=new Set(parameters.keys())){
  if(!rows.some(row=>row.text==='let')||!primitiveLocalCensus(rows,allParameters))return null;
@@ -9,8 +10,7 @@ export function createPrimitiveLocalArgumentSource(rows,parameters,allParameters
 
 const ident=token=>token?.type==='ident'&&/^[\p{ID_Start}_][\p{ID_Continue}_]*$/u.test(token.text);
 function primitiveLocalCensus(rows,parameters){
- if(rows.length>200000||rows.some(row=>['match','for'].includes(row.text)))return false;const names=new Set(parameters),protectedNames=new Set(['std','core','crate','self','Self','translation_core','translation_integer_core','Some','None','Option',...['u','i'].flatMap(prefix=>[8,16,32,64,128].map(bits=>prefix+bits))]);let count=0;
- for(let at=0;at<rows.length;at++)if(rows[at].text==='let'){const name=rows[at+1],next=rows[at+2];if(!ident(name)||['mut','ref','_'].includes(name.text)||!['=',':'].includes(next?.text)||names.has(name.text)||protectedNames.has(name.text)||++count>4096)return false;names.add(name.text);}return true;
+ return censusLocalAliasBindings(rows,parameters,{protectedNames:['std','core','crate','self','Self','translation_core','translation_integer_core','Some','None','Option',...['u','i'].flatMap(prefix=>[8,16,32,64,128].map(bits=>prefix+bits))]}).reason===null;
 }
 export function readPrimitiveAliasOperand(rows,bindings){
  if(rows.length===1&&ident(rows[0])&&primitiveBitwiseType(bindings.get(rows[0].text)))return {kind:bindings.get(rows[0].text),binding:rows[0].text};
