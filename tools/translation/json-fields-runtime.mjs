@@ -90,3 +90,20 @@ export const router_field_json_str_field4_nonempty=(value,key,second,third,fourt
 export const router_field_json_str_field4_nonempty_or_empty=(value,key,second,third,fourth,trimWhitespace)=>{const selected=nonemptyTextField(then(nestedFields(value,[key,second,third,fourth]),string),trimWhitespace);return selected.$==='Some'?selected.field0:'';};
 export const router_field_json_text_field4_nonempty=(value,key,second,third,fourth,trimWhitespace)=>nonemptyTextField(then(nestedFields(value,[key,second,third,fourth]),string),trimWhitespace);
 export const router_field_json_text_field4_nonempty_or_empty=(value,key,second,third,fourth,trimWhitespace)=>{const selected=nonemptyTextField(then(nestedFields(value,[key,second,third,fourth]),string),trimWhitespace);return selected.$==='Some'?selected.field0:'';};
+
+import {json_macro_value as copyJsonFieldValue,json_macro_null as nullJsonFieldValue} from './json-macro-runtime.mjs';
+export const router_field_json_index_or_null=(value,key)=>{const selected=index(value,key);return selected.$==='Some'?selected.field0:nullJsonFieldValue();};
+export const router_field_json_owned_index=(value,key)=>{const selected=index(value,key);return selected.$==='Some'?some(copyJsonFieldValue(selected.field0)):none;};
+export const router_field_json_owned_index_or_null=(value,key)=>{const selected=index(value,key);return selected.$==='Some'?copyJsonFieldValue(selected.field0):nullJsonFieldValue();};
+export const router_field_json_field_or_null=(value,key)=>{const selected=field(value,key);return selected.$==='Some'?selected.field0:nullJsonFieldValue();};
+export const router_field_json_owned_field=(value,key)=>{const selected=field(value,key);return selected.$==='Some'?some(copyJsonFieldValue(selected.field0)):none;};
+export const router_field_json_owned_field_or_null=(value,key)=>{const selected=field(value,key);return selected.$==='Some'?copyJsonFieldValue(selected.field0):nullJsonFieldValue();};
+export const router_field_json_field2_or_null=(value,key,second)=>{const selected=nestedFields(value,[key,second]);return selected.$==='Some'?selected.field0:nullJsonFieldValue();};
+export const router_field_json_owned_field2=(value,key,second)=>{const selected=nestedFields(value,[key,second]);return selected.$==='Some'?some(copyJsonFieldValue(selected.field0)):none;};
+export const router_field_json_owned_field2_or_null=(value,key,second)=>{const selected=nestedFields(value,[key,second]);return selected.$==='Some'?copyJsonFieldValue(selected.field0):nullJsonFieldValue();};
+export const router_field_json_field3_or_null=(value,key,second,third)=>{const selected=nestedFields(value,[key,second,third]);return selected.$==='Some'?selected.field0:nullJsonFieldValue();};
+export const router_field_json_owned_field3=(value,key,second,third)=>{const selected=nestedFields(value,[key,second,third]);return selected.$==='Some'?some(copyJsonFieldValue(selected.field0)):none;};
+export const router_field_json_owned_field3_or_null=(value,key,second,third)=>{const selected=nestedFields(value,[key,second,third]);return selected.$==='Some'?copyJsonFieldValue(selected.field0):nullJsonFieldValue();};
+export const router_field_json_field4_or_null=(value,key,second,third,fourth)=>{const selected=nestedFields(value,[key,second,third,fourth]);return selected.$==='Some'?selected.field0:nullJsonFieldValue();};
+export const router_field_json_owned_field4=(value,key,second,third,fourth)=>{const selected=nestedFields(value,[key,second,third,fourth]);return selected.$==='Some'?some(copyJsonFieldValue(selected.field0)):none;};
+export const router_field_json_owned_field4_or_null=(value,key,second,third,fourth)=>{const selected=nestedFields(value,[key,second,third,fourth]);return selected.$==='Some'?copyJsonFieldValue(selected.field0):nullJsonFieldValue();};

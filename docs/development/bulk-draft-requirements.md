@@ -821,3 +821,11 @@ histories. Eight compiler equations and independent unrun ABI/two-API/40-caller/
 bulk/JS/strict TS/two-reverse-lane/native storage/lifetime/export source are
 drafted. Every wider source/native/production/sync/freshness/parity/delivery
 requirement remains OPEN and all verification remains UNRUN.
+
+The [owned JSON value field draft](json-owned-value-field-source-draft.md) adds15
+paired copy/optional/null-default interfaces across keys, nested paths and
+indices, retains76-interface histories and composes selected local receivers
+within one source operation. Ten compiler equations and independent unrun ABI/
+two-API/bulk/JS/strict TS/two-reverse-lane/native storage/lifetime/export source
+are drafted. Every wider source/native/production/sync/freshness/parity/delivery
+requirement remains OPEN and all verification remains UNRUN.

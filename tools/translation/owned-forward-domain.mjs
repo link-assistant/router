@@ -63,6 +63,7 @@ export function checkForwardOwnedExtra(checker,node,env,path,expected,row,{canon
  else if(row.returns==='text-owned')type={...SOURCE_STRING,rustSourceType:true};
  else if(row.returns==='bool')type=BOOL;
  else if(['u64','i64'].includes(row.returns))type={...fixed(64,row.returns==='i64'),rustPrimitiveName:row.returns,rustSourceType:true};
+ else if(row.returns==='json-ref')type=sourceShared(json);
  else if(row.returns==='json')type=json;
  else if(row.returns==='json-text-result')type=checker.instantiations.result(json,{...SOURCE_STRING,rustSourceType:true},node.span);
  else if(row.returns==='json-owned-option')type=checker.instantiations.option(json,node.span);

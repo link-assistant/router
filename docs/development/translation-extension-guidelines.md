@@ -723,3 +723,12 @@ provenance only. Keep actual bool/key validation, original JSON string domains,
 borrowed root restrictions, owning type checks and both CST phases. Arbitrary
 callbacks/captures/effects remain separate obligations. See the
 [unrun filtered field draft](json-filtered-field-source-draft.md).
+
+Owned JSON selections must use the existing canonical deep copy and preserve
+Some(Null) versus None, every JSON kind, independent owned storage and original
+key/index/copy bounds. Borrowed Null fallbacks retain conservative input-root
+tracking and original selected storage. Schedule source-only local roles only
+for a complete direct initializer at its real semicolon, constrained by written
+types; do not admit arbitrary fallbacks or lifetime escapes. Retain every native
+history and both CST phases; see the
+[unrun owned value field draft](json-owned-value-field-source-draft.md).
