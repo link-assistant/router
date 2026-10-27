@@ -209,3 +209,8 @@ Builder suffix aliases must come from the original chronological reader after
 complete initializers and inside the actual lexical scope. Keep mutable builders
 unknown in that reader and refuse escaping/self-borrowed aliases as complete
 functions; see [the unrun suffix alias draft](text-builder-alias-source-draft.md).
+
+Generated consuming text call inverses must rejoin the complete current original
+library and actual relative named import, reject shadow/arity/owner ambiguity and
+retain whole-project checking/target reproduction. Reissue source only on use and
+before publication; see [the unrun call inverse draft](consuming-text-call-source-draft.md).

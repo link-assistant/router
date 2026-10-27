@@ -450,3 +450,10 @@ From values, retaining exact scopes and initializer evidence. Two equations and
 independent unrun two APIs/five callers/six edits/JS/strict TS/native/refusal/
 export source are drafted. Wider iteration/namespace/production/reverse/sync/
 freshness/parity/receiving/delivery requirements remain OPEN.
+
+The [whole-module consuming call inverse draft](consuming-text-call-source-draft.md)
+rejoins actual emitted append/clear/allocation imports to complete current pinned
+runtime/declaration/catalog source before qualified native proposals. Four compiler
+equations plus three library equations and independent unrun whole/mixed paired/
+physical-source/strict TS/owned-witness/refusal cases are drafted. Wider borrowing,
+namespace/production/reverse/sync/freshness/parity/receiving/delivery remain OPEN.
