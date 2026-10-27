@@ -1,5 +1,6 @@
 // Fresh forward-derived inverse proposals. No public source/hash/plan issues IR.
 import {types} from 'node:util';
+import {forwardConditionalSourceStatements,forwardConditionalComparisonSource} from './forward-conditional-source.mjs';
 import {translateProject} from './project.mjs';
 import {rustTokens,sourceItems} from './rust-structure.mjs';
 import {captureReturnArithmeticSource} from './return-arithmetic-source.mjs';
@@ -308,7 +309,7 @@ function lowerControlBody(change,parameters,arithmetic,calls){
    }
    need(index===statements.length-1,'scalar control statement requires its complete terminal position');
    if(ts.isReturnStatement(statement)){need(statement.expression,'complete scalar return value required');parts.push(expression(statement.expression,scope));continue;}
-   if(ts.isIfStatement(statement)){need(ts.isBlock(statement.thenStatement)&&statement.elseStatement&&ts.isBlock(statement.elseStatement),'complete actual value-returning if/else blocks required');parts.push('if '+expression(statement.expression,scope)+' {\n'+block([...statement.thenStatement.statements],scope,depth+1)+'\n} else {\n'+block([...statement.elseStatement.statements],scope,depth+1)+'\n}');continue;}
+   if(ts.isIfStatement(statement)){need(ts.isBlock(statement.thenStatement)&&statement.elseStatement&&(ts.isBlock(statement.elseStatement)||ts.isIfStatement(statement.elseStatement)),'complete actual value-returning if/else blocks required');parts.push('if '+expression(statement.expression,scope)+' {\n'+block([...statement.thenStatement.statements],scope,depth+1)+'\n} else {\n'+block(forwardConditionalSourceStatements(ts,statement.elseStatement),scope,depth+1)+'\n}');continue;}
    need(false,'scalar control body needs a separate checked statement rule');
   }
   return parts.join('\n');
@@ -321,6 +322,7 @@ function completeControlBodyChanges(before,after){
 }
 function controlBodySignature(node,ts,source,file,budget={cells:0},depth=0){
  need(++budget.cells<=100000&&depth<=160,'complete return syntax comparison bound');if(ts.isParenthesizedExpression(node))return controlBodySignature(node.expression,ts,source,file,budget,depth+1);
+ if(ts.isIfStatement(node)&&node.elseStatement)return [node.kind,controlBodySignature(node.expression,ts,source,file,budget,depth+1),controlBodySignature(node.thenStatement,ts,source,file,budget,depth+1),controlBodySignature(forwardConditionalComparisonSource(ts,node.elseStatement),ts,source,file,budget,depth+1)];
  if(ts.isTypeNode(node))return ['type',node.getText(file)];if(ts.isNumericLiteral(node))return ['number',node.getText(file)];if(ts.isVariableDeclarationList(node)){const children=[];ts.forEachChild(node,child=>children.push(controlBodySignature(child,ts,source,file,budget,depth+1)));return [node.kind,node.flags&ts.NodeFlags.BlockScoped,...children];}
  if(ts.isPrefixUnaryExpression(node))return [node.kind,node.operator,controlBodySignature(node.operand,ts,source,file,budget,depth+1)];
  if(ts.isBigIntLiteral(node))return ['integer',BigInt(source.slice(node.getStart(file),node.end).slice(0,-1).replace(/_/g,'')).toString()];
@@ -368,7 +370,7 @@ function lowerImperativeBody(change,parameters,arithmetic,calls,proof){
    if(ts.isReturnStatement(statement)){need(statement.expression,'complete scalar function return value');parts.push('return '+expression(statement.expression,scope)+';');terminated=true;continue;}
    if(ts.isBreakStatement(statement)||ts.isContinueStatement(statement)){need(loopDepth>0&&!statement.label,'unlabelled scalar control requires its actual loop');parts.push(ts.isBreakStatement(statement)?'break;':'continue;');terminated=true;continue;}
    if(ts.isIfStatement(statement)){
-    need(ts.isBlock(statement.thenStatement)&&(!statement.elseStatement||ts.isBlock(statement.elseStatement)),'native scalar conditional requires complete blocks');const yes=block([...statement.thenStatement.statements],scope,mutable,loopDepth,depth+1),no=statement.elseStatement?block([...statement.elseStatement.statements],scope,mutable,loopDepth,depth+1):{source:'',terminated:false};parts.push('if '+expression(statement.expression,scope)+' {\n'+yes.source+'\n} else {\n'+no.source+'\n}');terminated=yes.terminated&&no.terminated;continue;
+    need(ts.isBlock(statement.thenStatement)&&(!statement.elseStatement||ts.isBlock(statement.elseStatement)||ts.isIfStatement(statement.elseStatement)),'native scalar conditional requires complete blocks');const yes=block([...statement.thenStatement.statements],scope,mutable,loopDepth,depth+1),no=statement.elseStatement?block(forwardConditionalSourceStatements(ts,statement.elseStatement),scope,mutable,loopDepth,depth+1):{source:'',terminated:false};parts.push('if '+expression(statement.expression,scope)+' {\n'+yes.source+'\n} else {\n'+no.source+'\n}');terminated=yes.terminated&&no.terminated;continue;
    }
    if(ts.isWhileStatement(statement)){
     need(ts.isBlock(statement.statement),'native scalar while requires a complete block');const inner=block([...statement.statement.statements],scope,mutable,loopDepth+1,depth+1);parts.push((statement.expression.kind===ts.SyntaxKind.TrueKeyword?'loop':'while '+expression(statement.expression,scope))+' {\n'+inner.source+'\n}');continue;
@@ -381,7 +383,7 @@ function lowerImperativeBody(change,parameters,arithmetic,calls,proof){
 }
 function imperativeBodySignature(node,ts,source,file,budget={cells:0},depth=0){
  need(++budget.cells<=100000&&depth<=160,'complete return syntax comparison bound');if(ts.isParenthesizedExpression(node))return imperativeBodySignature(node.expression,ts,source,file,budget,depth+1);
- if(ts.isIfStatement(node)){const otherwise=node.elseStatement&&!(ts.isBlock(node.elseStatement)&&node.elseStatement.statements.length===0)?imperativeBodySignature(node.elseStatement,ts,source,file,budget,depth+1):null;return [node.kind,imperativeBodySignature(node.expression,ts,source,file,budget,depth+1),imperativeBodySignature(node.thenStatement,ts,source,file,budget,depth+1),otherwise];}
+ if(ts.isIfStatement(node)){const otherwise=node.elseStatement&&!(ts.isBlock(node.elseStatement)&&node.elseStatement.statements.length===0)?imperativeBodySignature(forwardConditionalComparisonSource(ts,node.elseStatement),ts,source,file,budget,depth+1):null;return [node.kind,imperativeBodySignature(node.expression,ts,source,file,budget,depth+1),imperativeBodySignature(node.thenStatement,ts,source,file,budget,depth+1),otherwise];}
  if(ts.isTypeNode(node))return ['type',node.getText(file)];if(ts.isNumericLiteral(node))return ['number',node.getText(file)];if(ts.isVariableDeclarationList(node)){const children=[];ts.forEachChild(node,child=>children.push(imperativeBodySignature(child,ts,source,file,budget,depth+1)));return [node.kind,node.flags&ts.NodeFlags.BlockScoped,...children];}
  if(ts.isPrefixUnaryExpression(node))return [node.kind,node.operator,imperativeBodySignature(node.operand,ts,source,file,budget,depth+1)];
  if(ts.isBigIntLiteral(node))return ['integer',BigInt(source.slice(node.getStart(file),node.end).slice(0,-1).replace(/_/g,'')).toString()];

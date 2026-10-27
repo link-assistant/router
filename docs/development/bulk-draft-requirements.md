@@ -503,3 +503,10 @@ call inverse. Four equations and independent unrun two-adopter/twelve-caller/
 twelve-edit/all-width/bool/JS/strict TS/paired inverse/native/refusal/export source
 are drafted. Namespace/production/wider mutation/reverse/sync/freshness/parity/
 receiving/delivery requirements remain OPEN.
+
+The [complete else-if inverse draft](forward-else-if-source-draft.md) extends the
+shared native branch reader across scalar/control/range/floating/owned paths and
+normalizes only exact otherwise singleton-if comparison wrappers. Eleven complete
+equations and independent unrun eight-API/two-language/truth-vector/native/source/
+refusal/export cases are drafted. Wider language/namespace/production/translation/
+sync/freshness/parity/receiving/delivery requirements remain OPEN.

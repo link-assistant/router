@@ -188,3 +188,5 @@ export {captureGeneratedHeaderExpressionSources} from './generated-header-expres
 export {readTextBuilderBorrowedOperandSource} from './text-builder-operand-source.mjs';
 
 export {proposeTextBuilderBorrowedOperandSource} from './text-builder-operand-source.mjs';
+
+export {forwardConditionalSourceStatements,forwardConditionalComparisonSource} from './forward-conditional-source.mjs';

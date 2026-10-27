@@ -252,3 +252,9 @@ inner history, refuse live-builder identifiers before consuming it and keep all
 macro/argument/trait/loan premises separate. Reverse borrowed-format construction
 must rejoin actual imports/library sources and fresh whole target reproduction.
 See [the unrun source draft](text-builder-display-source-draft.md).
+
+Else-if source lowering must reuse actual native nodes and original block scope,
+loop/termination and work guards. Normalize only an otherwise block containing
+exactly one if for complete source comparison; declarations and other statements
+keep their lexical wrapper. Retain fresh whole-project target reproduction and
+refuse unsupported unbraced bodies. See [the unrun draft](forward-else-if-source-draft.md).
