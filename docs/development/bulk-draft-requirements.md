@@ -888,3 +888,10 @@ JSON-to-integer restaging. Four compiler equations and independent unrun two-API
 Wider carrier aliases, compound/chained expressions and all source/native/
 production/sync/freshness/parity/delivery requirements remain OPEN; all
 verification remains UNRUN.
+
+The [local type alias draft](local-type-alias-source-draft.md) joins bounded
+ordinary alias headers to all three original import selectors, both literal
+paths and local declaration/re-export walking. Six full source equations and
+independent unrun source/private/refusal/JS/strict TS/native/export cases are
+drafted. Alias expansion, broader namespace/architecture/owner closure and every
+unfinished source/production/reverse/sync/freshness/delivery row remain OPEN.

@@ -148,7 +148,7 @@ function localRole(facts,module,segments,depth=0){
   const scope=facts.evidence.scopes.find(scope=>scope.file===owner.file&&same(scope.path,owner.path));
   if(!scope||!conditionalModuleNames(facts,owner))return null;
   const name=path.at(-1),items=originalSourceModuleItems(owner),heads=new Map(items.filter(item=>!item.comment).map(item=>[item,originalDeclarationHeader(item,owner.path)]));
-  const declared=items.filter(item=>heads.get(item)?.name===name&&nonTraits.has(heads.get(item)?.kind));
+  const declared=items.filter(item=>heads.get(item)?.name===name&&(nonTraits.has(heads.get(item)?.kind)||ordinaryTypeAliasDeclarationSource(item,owner.path)));
   const competing=[...heads.values()].some(head=>head?.kind==='trait'&&head.name===name);if(competing)return null;
   const roles=[];if(declared.length===1)roles.push({kind:declared[0].term,source:owner.file,sourceSha256:hash(owner.source),span:{start:declared[0].start,end:declared[0].end}});
   for(const item of items.filter(item=>item.term==='use'&&publicItem(item))){
@@ -166,8 +166,10 @@ export function originalNonTraitImportRole(facts,consumer,binding){
   if(binding.status==='ambiguous'||!binding.span||binding.source!==consumer.file)return null;
   const item=originalSourceModuleItems(consumer).find(item=>item.start===binding.span.start&&item.end===binding.span.end);if(!item)return null;
   const head=originalDeclarationHeader(item,consumer.path);
-  if(binding.via==='declaration'&&head?.name===binding.name&&head.kind===item.term&&nonTraits.has(head.kind))return {kind:head.kind,source:consumer.file,sourceSha256:hash(consumer.source),span:{start:item.start,end:item.end}};
+  if(binding.via==='declaration'&&head?.name===binding.name&&head.kind===item.term&&(nonTraits.has(head.kind)||ordinaryTypeAliasDeclarationSource(item,consumer.path)))return {kind:head.kind,source:consumer.file,sourceSha256:hash(consumer.source),span:{start:item.start,end:item.end}};
   if(item.term!=='use')return null;
   const candidates=originalUseDeclarationLeaves(item,consumer.path).filter(leaf=>!leaf.glob&&leaf.name===binding.name);if(candidates.length!==1)return null;
   const role=localRole(facts,consumer,candidates[0].segments);return role?{...role,originalImport:{source:consumer.file,sourceSha256:hash(consumer.source),span:{start:item.start,end:item.end},segments:candidates[0].segments},conditionalAvailabilityRetained:true,namespaceComplete:false,runtimeParity:false}:null;
 }
+
+import {ordinaryTypeAliasDeclarationSource} from '../local-type-alias-declaration-source.mjs';

@@ -91,7 +91,7 @@ export function finishCoreAdoptionProducerContext(context){
 export function createCoreAdoptionNonTraitImportSelector({modules,compilationProfile:inputProfile,context=null}){
  const state=context===null?null:stateOf(context),profile=compilationProfile(inputProfile);
  if(state&&(JSON.stringify(state.profile)!==JSON.stringify(profile)||state.modules.length!==modules.length||state.modules.some((module,at)=>module!==modules[at])))fail('nontrait context source/profile differs');
- const hash=source=>createHash('sha256').update(source).digest('hex'),nonTraits=new Set(['struct','enum','union','fn','const','static','mod']);
+ const hash=source=>createHash('sha256').update(source).digest('hex'),nonTraits=new Set(['struct','enum','union','fn','const','static','mod','type']);
  const inert=new Set(['cfg','doc','must_use','allow','warn','deny','forbid','expect','inline','cold','deprecated','track_caller']);
  const origins=modules.map(module=>({module,file:module.file,path:[...module.path],source:module.source,view:module.sourceView,condition:module.configurationCondition,profile:JSON.stringify(module.compilationProfile)}));
  const verify=()=>{if(modules.length!==origins.length||modules.some((module,at)=>module!==origins[at].module)||origins.some(row=>row.module.file!==row.file||row.module.source!==row.source||row.module.sourceView!==row.view||row.module.configurationCondition!==row.condition||JSON.stringify(row.module.compilationProfile)!==row.profile||!same(row.module.path,row.path)))fail('nontrait original graph changed');};
@@ -129,7 +129,7 @@ export function createCoreAdoptionNonTraitImportSelector({modules,compilationPro
   for(const binding of bindings){
    const declaration=binding.declaration,owners=modules.filter(owner=>owner.file===declaration.source&&same(['crate',...owner.path,binding.target.at(-1)],binding.target));
    if(owners.length!==1||!closedOwner(owners[0]))return null;const owner=owners[0];
-   const declared=originalSourceModuleItems(owner).filter(row=>row.start===declaration.span.start&&row.end===declaration.span.end&&row.term===binding.kind&&originalDeclarationHeader(row,owner.path)?.name===binding.target.at(-1));
+   const declared=originalSourceModuleItems(owner).filter(row=>row.start===declaration.span.start&&row.end===declaration.span.end&&row.term===binding.kind&&originalDeclarationHeader(row,owner.path)?.name===binding.target.at(-1)&&(row.term!=='type'||ordinaryTypeAliasDeclarationSource(row,owner.path)));
    if(declared.length!==1)return null;const selected=declared[0],condition=itemConfiguration(selected.tokens,profile);
    if(condition.status!=='active'||!attributesClosed(owner,selected,condition))return null;
    roles.push({kind:binding.kind,namespace:binding.namespace,target:[...binding.target],declaration:{file:owner.file,module:[...owner.path],sourceSha256:hash(owner.source),span:[selected.start,selected.end],original:owner.source.slice(selected.start,selected.end)},binding});
@@ -298,7 +298,7 @@ export function finishToolAwareCoreAdoptionProducerContext(context){
 export function createToolAwareCoreAdoptionNonTraitImportSelector({modules,compilationProfile:inputProfile,context=null}){
  const state=context===null?null:toolAwareCoreState(context),profile=compilationProfile(inputProfile);
  if(state&&(JSON.stringify(state.profile)!==JSON.stringify(profile)||state.modules.length!==modules.length||state.modules.some((module,at)=>module!==modules[at])))fail('nontrait context source/profile differs');
- const hash=source=>createHash('sha256').update(source).digest('hex'),nonTraits=new Set(['struct','enum','union','fn','const','static','mod']);
+ const hash=source=>createHash('sha256').update(source).digest('hex'),nonTraits=new Set(['struct','enum','union','fn','const','static','mod','type']);
  const inert=new Set(['cfg','doc','must_use','allow','warn','deny','forbid','expect','inline','cold','deprecated','track_caller']);
  const origins=modules.map(module=>({module,file:module.file,path:[...module.path],source:module.source,view:module.sourceView,condition:module.configurationCondition,profile:JSON.stringify(module.compilationProfile)}));
  const verify=()=>{if(state)toolAwareCoreState(context);if(modules.length!==origins.length||modules.some((module,at)=>module!==origins[at].module)||origins.some(row=>row.module.file!==row.file||row.module.source!==row.source||row.module.sourceView!==row.view||row.module.configurationCondition!==row.condition||JSON.stringify(row.module.compilationProfile)!==row.profile||!same(row.module.path,row.path)))fail('nontrait original graph changed');};
@@ -337,7 +337,7 @@ export function createToolAwareCoreAdoptionNonTraitImportSelector({modules,compi
   for(const binding of bindings){
    const declaration=binding.declaration,owners=modules.filter(owner=>owner.file===declaration.source&&same(['crate',...owner.path,binding.target.at(-1)],binding.target));
    if(owners.length!==1||!closedOwner(owners[0]))return null;const owner=owners[0];
-   const declared=originalSourceModuleItems(owner).filter(row=>row.start===declaration.span.start&&row.end===declaration.span.end&&row.term===binding.kind&&originalDeclarationHeader(row,owner.path)?.name===binding.target.at(-1));
+   const declared=originalSourceModuleItems(owner).filter(row=>row.start===declaration.span.start&&row.end===declaration.span.end&&row.term===binding.kind&&originalDeclarationHeader(row,owner.path)?.name===binding.target.at(-1)&&(row.term!=='type'||ordinaryTypeAliasDeclarationSource(row,owner.path)));
    if(declared.length!==1)return null;const selected=declared[0],condition=itemConfiguration(selected.tokens,profile);
    if(condition.status!=='active'||!attributesClosed(owner,selected,condition))return null;
    roles.push({kind:binding.kind,namespace:binding.namespace,target:[...binding.target],declaration:{file:owner.file,module:[...owner.path],sourceSha256:hash(owner.source),span:[selected.start,selected.end],original:owner.source.slice(selected.start,selected.end)},binding});
@@ -401,7 +401,7 @@ export function finishSourceBoundToolAwareCoreAdoptionProducerContext(context){
 export function createSourceBoundToolAwareCoreAdoptionNonTraitImportSelector({modules,compilationProfile:inputProfile,context=null}){
  const state=context===null?null:toolAwareCoreState(context),profile=compilationProfile(inputProfile);
  if(state&&(JSON.stringify(state.profile)!==JSON.stringify(profile)||state.modules.length!==modules.length||state.modules.some((module,at)=>module!==modules[at])))fail('nontrait context source/profile differs');
- const hash=source=>createHash('sha256').update(source).digest('hex'),nonTraits=new Set(['struct','enum','union','fn','const','static','mod']);
+ const hash=source=>createHash('sha256').update(source).digest('hex'),nonTraits=new Set(['struct','enum','union','fn','const','static','mod','type']);
  const inert=new Set(['cfg','doc','must_use','allow','warn','deny','forbid','expect','inline','cold','deprecated','track_caller']);
  const origins=modules.map(module=>({module,file:module.file,path:[...module.path],source:module.source,view:module.sourceView,condition:module.configurationCondition,profile:JSON.stringify(module.compilationProfile)}));
  const verify=()=>{if(state)toolAwareCoreState(context);if(modules.length!==origins.length||modules.some((module,at)=>module!==origins[at].module)||origins.some(row=>row.module.file!==row.file||row.module.source!==row.source||row.module.sourceView!==row.view||row.module.configurationCondition!==row.condition||JSON.stringify(row.module.compilationProfile)!==row.profile||!same(row.module.path,row.path)))fail('nontrait original graph changed');};
@@ -441,7 +441,7 @@ export function createSourceBoundToolAwareCoreAdoptionNonTraitImportSelector({mo
   for(const binding of bindings){
    const declaration=binding.declaration,owners=modules.filter(owner=>owner.file===declaration.source&&same(['crate',...owner.path,binding.target.at(-1)],binding.target));
    if(owners.length!==1||!closedOwner(owners[0]))return null;const owner=owners[0];
-   const declared=originalSourceModuleItems(owner).filter(row=>row.start===declaration.span.start&&row.end===declaration.span.end&&row.term===binding.kind&&originalDeclarationHeader(row,owner.path)?.name===binding.target.at(-1));
+   const declared=originalSourceModuleItems(owner).filter(row=>row.start===declaration.span.start&&row.end===declaration.span.end&&row.term===binding.kind&&originalDeclarationHeader(row,owner.path)?.name===binding.target.at(-1)&&(row.term!=='type'||ordinaryTypeAliasDeclarationSource(row,owner.path)));
    if(declared.length!==1)return null;const selected=declared[0],condition=itemConfiguration(selected.tokens,profile);
    if(condition.status!=='active'||!attributesClosed(owner,selected,condition))return null;
    roles.push({kind:binding.kind,namespace:binding.namespace,target:[...binding.target],declaration:{file:owner.file,module:[...owner.path],sourceSha256:hash(owner.source),span:[selected.start,selected.end],original:owner.source.slice(selected.start,selected.end)},binding});
@@ -450,3 +450,5 @@ export function createSourceBoundToolAwareCoreAdoptionNonTraitImportSelector({mo
  };
  return {select,verify};
 }
+
+import {ordinaryTypeAliasDeclarationSource} from './local-type-alias-declaration-source.mjs';

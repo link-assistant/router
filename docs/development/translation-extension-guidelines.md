@@ -787,3 +787,9 @@ and local semicolon scope; text, borrowed and unknown/effectful results remain
 unselected. Use bounded stage composition for later prerequisites and recheck
 whole functions. See the
 [unrun primitive core call draft](primitive-core-call-source-draft.md).
+
+Classify local ordinary aliases from their exact original declaration header,
+not from a written imported name. Retain actual binder/owner/attribute/condition
+joins and generic/default punctuation. A non-trait declaration candidate never
+expands an alias or grants trait, type or body authority. See the
+[unrun local type alias draft](local-type-alias-source-draft.md).
