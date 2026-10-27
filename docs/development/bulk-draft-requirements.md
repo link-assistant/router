@@ -574,3 +574,10 @@ consolidates the complete alias engine while preserving separate base64/integer
 operand, census and result rules. Four whole equations and unrun invocation/
 family-isolation/timing/source-history cases are drafted. Complete source/native/
 production/sync/freshness/parity/delivery obligations remain unfinished.
+
+The [text scope/index draft](text-local-index-draft.md) applies the shared
+chronological selector to text aliases/results and exact optional UTF-8 byte
+index projections in both existing adopters, preserving both source phases in
+the fixed bulk stage. Four whole equations and unrun Unicode/empty-pattern/
+scope/source/CST/strict TS/native oracle cases are drafted. Every wider source/
+native/production/sync/freshness/parity/delivery requirement remains unfinished.
