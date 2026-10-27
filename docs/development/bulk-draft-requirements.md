@@ -413,3 +413,11 @@ redistribution. Eight whole source equations and unrun width/restoration/strict
 TS/type-only/refusal/native oracle cases are drafted. Generic/optional native
 public aliases and every remaining source/native/production/sync/freshness/
 parity/delivery obligation remain unfinished.
+
+The [generic native alias draft](generic-native-aliases-draft.md) resolves actual
+parameter symbols, nested applications and ordered defaults, batches native
+bigint constraint arguments into one fresh complete source proposal, and limits
+legacy target helpers to their actual remaining closure. Six whole compiler
+source equations and unrun width/body/public-restoration/strict TS/refusal/native
+oracle cases are drafted. Optional native aliases and all remaining source/
+native/production/sync/freshness/parity/delivery obligations stay unfinished.
