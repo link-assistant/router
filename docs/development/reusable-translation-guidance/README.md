@@ -114,3 +114,9 @@ Record partial source coverage and unverified changes explicitly; neither a
 rule catalogue, an output proposal nor a source/CST inverse establishes runtime
 parity or full synchronization. Preserve the receiving user's local-tool and
 resource restrictions, including CI-only Rust when requested.
+
+The [shared local and compatibility substitution examples](local-source-substitutions.md)
+show how separate family rules can reuse bounded lexical source selection and
+real language/repository CST substitutions. Their receiving/export, target and
+native oracle cases are source drafted and unrun; they certify no receiving
+coverage, parity or complete synchronization.

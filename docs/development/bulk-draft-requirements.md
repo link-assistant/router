@@ -595,3 +595,9 @@ adapters, with actual neutral language calls then exact repository prefix
 substitutions. Ten whole equations and unrun nesting/Unicode/literal/trivia/
 source-refusal cases are drafted. All wider source/native/production/sync/
 freshness/parity/delivery requirements remain unfinished.
+
+Independent shared-adoption export/receiving source now covers complete helper/
+original/recipe inclusion and five actual public bulk stages in an isolated
+compiler tree. Reusable guidance describes the same bounded source/rule pattern.
+Every receiving, target, native, freshness and full-delivery result remains
+unrun/unverified; the complete requirement set remains unfinished.
