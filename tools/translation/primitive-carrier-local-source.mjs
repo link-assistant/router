@@ -28,7 +28,7 @@ function scalarOperand(rows,bindings,wanted){
  if(rows.length===5&&rows[1].text==='.'&&['to_owned','to_string'].includes(rows[2].text)&&rows[3].text==='('&&rows[4].text===')'){const value=scalarOperand(rows.slice(0,1),bindings,null);if(value?.kind==='payload'&&value.domain==='str')return {kind:'payload',domain:'text-owned'};}return null;
 }
 export function readCarrierAliasOperand(rows,bindings,wanted=null){
- if(!rows.length)return null;const core=readCoreCarrierCallSource(rows,{get:name=>decodeCarrierRole(bindings.get(name))});if(core)return core;const field=readJsonFieldCarrierCallSource(rows,bindings);if(field)return field;const numeric=readCarrierNumericExpressionSource(rows,bindings,wanted);if(numeric)return numeric;if(rows.length>256)return null;const scalar=scalarOperand(rows,bindings,wanted);if(scalar)return scalar;const integer=readIntegerCarrierCallSource(rows,bindings);if(integer)return integer;
+ if(!rows.length)return null;const callback=readPrimitiveOptionCallbackCallSource(rows,{get:name=>decodeCarrierRole(bindings.get(name))});if(callback)return callback;const core=readCoreCarrierCallSource(rows,{get:name=>decodeCarrierRole(bindings.get(name))});if(core)return core;const field=readJsonFieldCarrierCallSource(rows,bindings);if(field)return field;const numeric=readCarrierNumericExpressionSource(rows,bindings,wanted);if(numeric)return numeric;if(rows.length>256)return null;const scalar=scalarOperand(rows,bindings,wanted);if(scalar)return scalar;const integer=readIntegerCarrierCallSource(rows,bindings);if(integer)return integer;
  if(rows.length===5&&ident(rows[0])&&decodeCarrierRole(bindings.get(rows[0].text))?.kind==='json'&&rows[1].text==='.'&&rows[3].text==='('&&rows[4].text===')'){const domain={as_bool:'bool',as_u64:'u64',as_i64:'i64',as_str:'str'}[rows[2].text];if(domain)return {kind:'option',domain};}
  const text=rows.map(row=>row.text).join('');if(/^(?:(?:::)?(?:std|core)::option::Option::|Option::)?None$/u.test(text))return wanted?.kind==='option'?wanted:null;
  const open=rows.findIndex(row=>row.text==='(');if(open<1||rows.at(-1).text!==')')return null;const path=rows.slice(0,open).map(row=>row.text).join(''),constructor=/^(?:(?:::)?(?:std|core)::option::Option::|Option::)?Some$/u.test(path)?'Some':/^(?:(?:::)?(?:std|core)::result::Result::|Result::)?(Ok|Err)$/u.exec(path)?.[1];if(!constructor)return null;
@@ -57,3 +57,5 @@ import {readPrimitiveRoleExpressionSource} from './primitive-carrier-expression-
 export function readCarrierNumericExpressionSource(rows,bindings,wanted=null){
  return readPrimitiveRoleExpressionSource(rows,{get:name=>decodeCarrierRole(bindings.get(name))},wanted);
 }
+
+import {readPrimitiveOptionCallbackCallSource} from './primitive-option-callback-call-source.mjs';

@@ -37,3 +37,6 @@ export function readCoreCarrierCallSource(rows,bindings){
 }
 
 import {readCoreFormattingMacroSource} from './core-formatting-macro-source.mjs';
+
+// Closed declared ABI role DATA, not a source binding or semantic certificate.
+export function readCoreCarrierContractSourceRole(domain){return typeof domain==='string'?role(domain):null;}

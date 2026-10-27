@@ -842,3 +842,10 @@ explicit unchecked argument/owner flags and independent canonical/native/type/
 trait/effect/body checks. Unknown argument calls cannot gain executable authority
 from a formatting source role. See the
 [unrun canonical formatting role draft](core-formatting-role-source-draft.md).
+
+A declared callback-library return role is source DATA, not a checked callback
+or Try projection. Preserve actual receiver/arity/current-scope joins, explicit
+unchecked body/type/owner/Try flags and independent whole-function admission.
+Unknown callback bodies must remain nonexecutable after any source restaging.
+See the
+[unrun callback call role draft](callback-call-role-source-draft.md).

@@ -948,3 +948,11 @@ equations and independent unrun six-API/eight-caller/refusal/unknown-nonadmissio
 JS/strict TS/native/export cases are drafted. Original macro namespace closure
 and every unfinished production/reverse/sync/freshness/parity/delivery row remain
 OPEN; no actual owner, executable coverage or completion is claimed.
+
+The [callback call role draft](callback-call-role-source-draft.md) joins declared
+qualified callback return roles and Result try payload candidates to actual
+chronological/integer locals and written Option inputs in Result selectors. Seven
+equations and independent unrun eight-API/four-caller/refusal/restaging/JS/strict
+TS/invalid-nonadmission/native/export cases are drafted. Real callback/Try/type/
+owner checks remain separate; every unfinished namespace/production/reverse/
+sync/freshness/parity/delivery row stays OPEN.
