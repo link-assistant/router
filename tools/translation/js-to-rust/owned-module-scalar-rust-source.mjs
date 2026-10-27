@@ -6,6 +6,7 @@ import {sameRustSourceSyntax} from '../rust-syntax-cells.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 import {transportConcreteSourceEquations} from '../concrete-source-equations.mjs';
 import {createRulePipeline} from '../rule-pipeline.mjs';
+import {crateRelativeRustSourcePath} from '../repository-layout.mjs';
 import {RUST_SUPPORT} from './owned-outcome-operations.mjs';
 import {ownedCoreSourceData,requireOwnedCoreSourceCurrent,ownedSourcePath} from './owned-outcome-source.mjs';
 import {createOwnedStateContext,translateOwnedStateJavaScript} from './owned-outcome.mjs';
@@ -33,7 +34,8 @@ function pairPaths(path,data){
 }
 export function translateOwnedStateRust(source,{context,sourcePath,javascriptPath,typescriptOutputPath}={}){
  ownedSourcePath(sourcePath);ownedSourcePath(javascriptPath);if(!sourcePath.endsWith('.rs')||!javascriptPath.endsWith('.mjs'))fail('actual Rust and JavaScript source paths required');
- if(sourcePath==='src/lib.rs'||sourcePath.startsWith('src/translation_core')||sourcePath.startsWith('src/translation_collections_core')||sourcePath.startsWith('src/translation_state_core')||sourcePath.startsWith('src/translation_json_fields_core')||sourcePath.startsWith('src/translation_carriers_core')||sourcePath.startsWith('src/translation_integer_core')||sourcePath.startsWith('src/translation_stream_core')||sourcePath==='src/sse.rs')fail('canonical caller inverse cannot rewrite its native library');
+ const nativeLibraryPath=crateRelativeRustSourcePath(sourcePath);
+ if(nativeLibraryPath==='src/lib.rs'||nativeLibraryPath.startsWith('src/translation_core')||nativeLibraryPath.startsWith('src/translation_collections_core')||nativeLibraryPath.startsWith('src/translation_state_core')||nativeLibraryPath.startsWith('src/translation_json_fields_core')||nativeLibraryPath.startsWith('src/translation_carriers_core')||nativeLibraryPath.startsWith('src/translation_integer_core')||nativeLibraryPath.startsWith('src/translation_stream_core')||nativeLibraryPath==='src/sse.rs')fail('canonical caller inverse cannot rewrite its native library');
  if(typeof source!=='string'||source.length>2097152)fail('bounded complete Rust source required');
  const data=ownedCoreSourceData(context);if(data.files.find(row=>row.path===sourcePath)?.source!==source)fail('complete authoritative Rust source/path differs');
  const previousJavaScript=data.files.find(row=>row.path===javascriptPath)?.source??null,pairs=pairPaths(javascriptPath,data),previousPairs=data.files.filter(row=>pairs.includes(row.path));let originalConcrete,projection,derivedContext,envelope;

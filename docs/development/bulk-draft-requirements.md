@@ -682,3 +682,10 @@ reader, retaining actual selected-result facts and all original checks. Six
 complete equations and unrun eight-API/four-bulk-stage/JS/strict TS/export/native
 oracle source is drafted. All wider source/native/production/sync/freshness/
 parity/delivery requirements remain unfinished.
+
+The [physical inverse-layout draft](inverse-rust-layout-source-draft.md) shares
+one guard-only path label across five canonical inverse APIs while retaining
+actual physical source paths and all original native/source/semantic checks.
+Seven complete equations and unrun five-API/path/refusal/receiving JS/strict TS
+source is drafted. All wider source/native/production/sync/freshness/parity/
+delivery requirements remain unfinished.
