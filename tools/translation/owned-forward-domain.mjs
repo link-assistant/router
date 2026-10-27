@@ -43,10 +43,11 @@ export function checkForwardOwnedExtra(checker,node,env,path,expected,row,{canon
  if(row.family==='primitive-option')return checkForwardPrimitiveOption(checker,node,env,path,expected,row,{current,carrier:forwardOwnedCarrier});
  requireOriginalPrimitiveTryFromChecker(checker);current();if(node.args.length!==row.parameters.length)throw typeError('actual owned field/carrier arity differs',node.span);
  const args=node.args.map((syntax,index)=>{
-  const role=row.parameters[index],shared=role==='shared-json'||role==='shared-json-result'||role==='shared-json-option',borrow=shared&&syntax.k==='routerTextReference',primitive=(row.family==='integer'||['u64','i64'].includes(role))?primitiveBitwiseType(role):null,wanted=primitive?{...fixed(primitive.bits,primitive.signed),rustPrimitiveName:role,rustSourceType:true}:undefined,value=checker.expr(borrow?syntax.value:syntax,env,path,wanted);current();
+  const role=row.parameters[index],shared=role==='shared-json'||role==='shared-json-result'||role==='shared-json-option',borrow=shared&&syntax.k==='routerTextReference',primitive=(row.family==='integer'||['u64','i64'].includes(role))?primitiveBitwiseType(role):null,wanted=primitive?{...fixed(primitive.bits,primitive.signed),rustPrimitiveName:role,rustSourceType:true}:role==='bool'?BOOL:undefined,value=checker.expr(borrow?syntax.value:syntax,env,path,wanted);current();
   if(role==='shared-json'){canonical(checker,value.type,syntax.span,true);if(!borrow&&!value.type.rustReference)throw unsupported('owned field/carrier JSON input','requires the actual shared source borrow',syntax.span);}
   else if(role==='shared-json-result'||role==='shared-json-option')carrierInput(checker,value.type,role==='shared-json-result'?'Result':'Option',path,syntax.span,canonical,borrow);
   else if(role==='str'){requireBorrowedString(value.type,syntax.span);if(value.type.patternOwnershipRefusal)throw unsupported('owned field/carrier text','requires actual unrefused borrowed str',syntax.span);}
+  else if(role==='bool'){const type=value.type;if(type.kind!=='bool'||type.rustReference||type.rustOwnership||type.patternOwnershipRefusal||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)throw unsupported('owned JSON field fallback','requires actual by-value bool',syntax.span);checker.expectedOwnership(type,BOOL,path,syntax.span);}
   else if(primitive){const type=value.type;if(type.kind!=='fixed'||type.bits!==primitive.bits||type.signed!==primitive.signed||type.rustPrimitiveName!==role||type.rustReference||type.rustOwnership||type.patternOwnershipRefusal||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)throw unsupported('owned JSON field index','requires the actual matching by-value native fixed primitive',syntax.span);checker.expectedPrimitiveIdentity(type,wanted,path,syntax.span);}
   else throw typeError('unknown owned field/carrier argument domain',syntax.span);return value;
  });
@@ -59,6 +60,8 @@ export function checkForwardOwnedExtra(checker,node,env,path,expected,row,{canon
  }
  const json={...checker.hostType(JSON_TYPES.value,path,node.span),rustSourceType:true};canonical(checker,json,node.span,false);let type;
  if(row.returns==='str')type=SOURCE_STR;
+ else if(row.returns==='bool')type=BOOL;
+ else if(['u64','i64'].includes(row.returns))type={...fixed(64,row.returns==='i64'),rustPrimitiveName:row.returns,rustSourceType:true};
  else if(row.returns==='json')type=json;
  else if(row.returns==='json-text-result')type=checker.instantiations.result(json,{...SOURCE_STRING,rustSourceType:true},node.span);
  else if(row.returns==='json-owned-option')type=checker.instantiations.option(json,node.span);

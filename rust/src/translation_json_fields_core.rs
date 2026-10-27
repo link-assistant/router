@@ -55,3 +55,30 @@ pub fn json_str_field_or_empty<'a>(value: &'a Json, key: &str) -> &'a str {
     })
     .unwrap_or("")
 }
+
+#[must_use]
+pub fn json_bool_field_or(value: &Json, key: &str, other: bool) -> bool {
+    (match value.get(key) {
+        Some(value) => value.as_bool(),
+        None => None,
+    })
+    .unwrap_or(other)
+}
+
+#[must_use]
+pub fn json_u64_field_or(value: &Json, key: &str, other: u64) -> u64 {
+    (match value.get(key) {
+        Some(value) => value.as_u64(),
+        None => None,
+    })
+    .unwrap_or(other)
+}
+
+#[must_use]
+pub fn json_i64_field_or(value: &Json, key: &str, other: i64) -> i64 {
+    (match value.get(key) {
+        Some(value) => value.as_i64(),
+        None => None,
+    })
+    .unwrap_or(other)
+}

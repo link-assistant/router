@@ -742,3 +742,10 @@ bounded native Rust function-copy producer, eight JS/TS equations and independen
 unrun runtime/caller/bulk/JS/strict TS/reverse/freshness/export/pointer-oracle
 source are drafted. Every wider source/native/production/sync/freshness/parity/
 delivery requirement remains unfinished.
+
+The [JSON scalar default draft](json-scalar-default-source-draft.md) copies three
+native field readers and reuses actual Option validators for exact eager bool/
+u64/i64 fallbacks, preserving all10 field interfaces and the earlier borrowed
+reader history. Eleven JS/TS equations and independent unrun runtime/caller/
+bulk/JS/strict TS/reverse/history/export/native oracle source are drafted. Every
+wider source/native/production/sync/freshness/parity/delivery requirement stays open.

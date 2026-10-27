@@ -1,0 +1,1 @@
+- Draft copied JSON boolean/u64/i64 fallback interfaces with matching native/runtime/declaration rules, actual forward and three reverse checker paths, composed native CST source histories and independent unrun caller, JS/strict TS, reverse/export and native oracle source. Full translation and parity remain unfinished (#759, #772).

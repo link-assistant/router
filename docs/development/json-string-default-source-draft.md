@@ -4,6 +4,10 @@ All implementation and independent case source is drafted and unrun. Full
 translation, production coverage, native parity, synchronization, freshness and
 receiving qualification remain unfinished.
 
+The subsequent [scalar default draft](json-scalar-default-source-draft.md)
+extends the current field catalog to10 interfaces while preserving this entire
+borrowed-reader source history.
+
 Actual Router callers commonly read get(key).and_then(Value::as_str).unwrap_or("").
 The new finite json_str_field_or_empty boundary copies the complete existing
 native field reader, preserves its match and conditional scalar read, and returns

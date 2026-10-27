@@ -5,5 +5,8 @@ export declare function router_field_json_index(value:JsonValue,key:bigint): May
 export declare function router_field_json_str_field(value:JsonValue,key:string): Maybe<string>;
 export declare function router_field_json_str_field_or_empty(value:JsonValue,key:string): string;
 export declare function router_field_json_bool_field(value:JsonValue,key:string): Maybe<boolean>;
+export declare function router_field_json_bool_field_or(value:JsonValue,key:string,other:boolean): boolean;
 export declare function router_field_json_u64_field(value:JsonValue,key:string): Maybe<bigint>;
+export declare function router_field_json_u64_field_or(value:JsonValue,key:string,other:bigint): bigint;
 export declare function router_field_json_i64_field(value:JsonValue,key:string): Maybe<bigint>;
+export declare function router_field_json_i64_field_or(value:JsonValue,key:string,other:bigint): bigint;

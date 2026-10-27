@@ -73,3 +73,10 @@ full library inverse, current physical input and target-language CST. The
 result is source DATA; it cannot certify Rust grammar, dispatch, namespace,
 ownership or target behavior. Draft independent native and emitted-target cases
 for the whole caller instead of inferring parity from the copy operation.
+
+For adjacent native source families, preserve each intermediate full library and
+its inverse. Pin and freshly read earlier original boundaries; bind successors
+to the same exact native target and recheck every original at operation exit.
+Boundary CST equality remains DATA and grants no compiler or owner authority.
+For fused field defaults, admit a moved fallback only under the exact closed
+literal source rule; preserve arbitrary fallback expressions and their ordering.
