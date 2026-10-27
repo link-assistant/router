@@ -360,3 +360,9 @@ witnesses. Seven equations and independent unrun eight-caller paired/native,
 three-forward-formatter/JS/strict TS/oracle/refusal/export source are drafted.
 Mutable captures/borrowed outputs and every wider namespace/production/reverse/
 sync/freshness/parity/delivery requirement remain OPEN.
+
+The [all-width strict counter draft](resource-width-loops-source-draft.md) reuses
+original strict range and counter-unassigned rules across all ten native widths.
+Three equations and independent unrun30-caller/JS/strict TS/native inverse/oracle/
+refusal/export source are drafted. More general counters/captures and every wider
+namespace/production/reverse/sync/freshness/parity/delivery row remain OPEN.

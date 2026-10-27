@@ -147,3 +147,8 @@ Source expression invocations require their actual native AST/file, complete
 fresh body checks, read-only captures and child-return-safe native closures.
 Keep explicit checked text conversion witnesses and every unsupported capture/
 output refusal. See [the unrun expression block draft](source-expression-blocks-draft.md).
+
+All-width unit counters must preserve actual strict dominating bounds, immutable
+matching limits, full unassigned-body census and the current typed native update.
+Keep original loopback resource state and nearest continue/break order. See
+[the unrun counter draft](resource-width-loops-source-draft.md).
