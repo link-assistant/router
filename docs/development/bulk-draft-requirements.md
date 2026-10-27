@@ -331,3 +331,10 @@ upstream attached-bang lexer shape and adds a shared original-span source view
 across macro readers, six selectors and the copied CST macro lane. Eleven
 equations and independent unrun lexer/Unicode/mutation/core/callback/export source
 are drafted. Every wider namespace/production/reverse/sync/parity row stays OPEN.
+
+The [reverse primitive display draft](reverse-primitive-display-source-draft.md)
+adds actual scalar String/toString checking and the matching canonical core
+format macro inverse, retaining whole-source fresh reproduction and owned-text
+loans. Five equations and independent unrun nine-caller JS/strict TS/native/source/
+meta/refusal/export cases are drafted. Wider fixed-width reverse, formatting,
+namespace/production/sync/freshness/parity/delivery requirements remain OPEN.

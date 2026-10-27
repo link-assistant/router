@@ -964,3 +964,8 @@ Use the [native macro token source view](rust-macro-token-source-draft.md) when
 candidate readers expect separate bang punctuation: the retained actual lexer
 attaches it to identifiers. Preserve original slices/spans and keep native lexer,
 CST and semantic/owner checks intact. Normalized rows are DATA, never permissions.
+
+Reverse primitive formatting must check the actual original native AST/file and
+closed scalar argument, borrow owned text without moving it, and retain complete
+fresh JS/meta/Rust reproduction. Source metadata cannot replace callee/type/owner
+checks. See [the unrun reverse display draft](reverse-primitive-display-source-draft.md).

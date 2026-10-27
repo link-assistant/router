@@ -141,6 +141,7 @@ export function checkHttpResourceCallerFlow(ts,statements,parameters,imports,{la
   if(ts.isConditionalExpression(node)){
    const test=condition(node.condition,level+1),entry=new Map(snapshotIncoming()),yes=expression(node.whenTrue,{...flags,comparison:false,level:level+1}),yesState=new Map(snapshotIncoming());environment.clear();for(const [id,row]of entry)environment.set(id,{...row,roots:httpResourceValueRoots(row)});const no=expression(node.whenFalse,{...flags,comparison:false,level:level+1}),noState=new Map(snapshotIncoming());requireLoopState(yesState,noState);if(yes.type!==no.type)fail('every actual conditional value arm must retain its complete native domain');const roots=[...new Set([...httpResourceValueRoots(yes),...httpResourceValueRoots(no)])];return {kind:'conditional',condition:test,yes,no,type:yes.type,root:roots[0]??null,roots};
   }
+  const primitiveDisplay=observeHttpResourcePrimitiveDisplayCall(ts,node,{imports,moduleNames,environment,sourceFile:sourceAnnotations?.file,tick});if(primitiveDisplay){const value=expression(primitiveDisplay.argument,{level:level+1,comparison:true});if(!httpResourcePrimitiveDisplayDomain(value.type))fail('primitive display requires an actual closed bool integer or text argument');return {kind:'primitive-display',value,type:'text-owned',root:null,roots:[]};}
   if(ts.isCallExpression(node)||ts.isAwaitExpression(node))return call(node,flags);
   if(ts.isBinaryExpression(node)){
    const operators=new Map([[ts.SyntaxKind.EqualsEqualsEqualsToken,'=='],[ts.SyntaxKind.ExclamationEqualsEqualsToken,'!='],[ts.SyntaxKind.EqualsEqualsToken,'=='],[ts.SyntaxKind.ExclamationEqualsToken,'!='],[ts.SyntaxKind.LessThanToken,'<'],[ts.SyntaxKind.LessThanEqualsToken,'<='],[ts.SyntaxKind.GreaterThanToken,'>'],[ts.SyntaxKind.GreaterThanEqualsToken,'>=']]),operator=operators.get(node.operatorToken.kind);
@@ -298,6 +299,7 @@ export function emitHttpResourceCallerFlow(flow,{localFunctions=null,continueCon
   if(value.kind==='text-compare'){const side=row=>row.type==='text-owned'?'&*('+expression(row)+')':expression(row);return '('+side(value.left)+' '+value.operator+' '+side(value.right)+')';}
   if(value.kind==='compare')return '('+expression(value.left)+' '+value.operator+' '+expression(value.right)+')';
   if(value.kind==='not')return '(!'+expression(value.value)+')';if(value.kind==='and'||value.kind==='or')return '('+expression(value.left)+(value.kind==='and'?' && ':' || ')+expression(value.right)+')';
+  if(value.kind==='primitive-display'){if(!httpResourcePrimitiveDisplayDomain(value.value.type))fail('actual closed primitive display emission argument required');return 'crate::translation_core::format!("{}", '+expression(value.value)+')';}
   if(value.kind==='http-resource-call'){
    const operation=value.local?localFunctions?.get(value.operation):httpResourceCallerContract(value.operation);if(!operation)fail('unregistered complete emission operation');
    if(operation.nativeForm)return operation.rustPath+'('+(operation.nativeForm==='null'?'null':operation.nativeForm==='array'?'[]':expression(value.args[0]))+')';
@@ -350,3 +352,5 @@ import {httpResourceGenericCarrierPayload} from './http-resource-generic-carrier
 import {requireHttpResourceGenericLibraryOperation} from './http-resource-generic-library-calls.mjs';
 
 import {httpResourceGenericCallValueContext} from './http-resource-generic-call-annotations.mjs';
+
+import {observeHttpResourcePrimitiveDisplayCall,httpResourcePrimitiveDisplayDomain} from './http-resource-primitive-display.mjs';
