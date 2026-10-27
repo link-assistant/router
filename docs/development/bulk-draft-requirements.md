@@ -838,3 +838,12 @@ unrun runtime/two-API/bulk/JS/strict TS/resource-reverse/native/history/export
 source are drafted. Older restricted reverse lanes, wider callbacks/shared
 inspection and all source/native/production/sync/freshness/parity/delivery
 requirements remain OPEN; all verification remains UNRUN.
+
+The [shared core call draft](core-carrier-call-source-draft.md) separates bounded
+qualified-call language syntax from actual repository integer/text/Option operand
+and result rules, feeding both original Option and text adopters and fresh local
+trackers. Eight compiler equations plus independent unrun nested/source-domain/
+six-API/7-caller/consecutive-stage/JS/strict TS/resource-reverse/native/export
+source are drafted. No runtime ABI or semantic checker changed. Every wider
+source/native/production/sync/freshness/parity/delivery requirement remains OPEN;
+all verification remains UNRUN.

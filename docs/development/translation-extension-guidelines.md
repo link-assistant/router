@@ -741,3 +741,11 @@ complete moves/loans are implemented. Compose complete immutable generic library
 histories and unchanged identity bodies without replaying unrelated compiler
 modules or needing a Rust checkout for source DATA. See the
 [unrun optional text draft](optional-text-source-draft.md).
+
+Share bounded qualified-call source syntax independently of repository operation
+rules. Admit source roles only from exact known operands, matching literals,
+explicit borrow views and bounded nested known calls; retain arbitrary effects
+and unknown syntax. Recompute roles in the current chronological operation and
+recheck whole functions. Shared metadata grants no binding/type/ownership permit.
+Keep both CST phases and full inverses; see the
+[unrun shared core call draft](core-carrier-call-source-draft.md).
