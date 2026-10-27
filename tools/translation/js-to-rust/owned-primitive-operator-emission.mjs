@@ -3,6 +3,7 @@ import {primitiveBitwiseType,primitiveBitwiseCompatible} from '../primitive-bitw
 const fail=()=>{throw new TypeError('Owned primitive operator carrier differs');};
 export function ownedPrimitiveOperatorCallMetadata(value){
  const target=primitiveBitwiseType(value.type);if(!target||value.bits!==target.bits||value.signed!==target.signed||value.root!==null||!Array.isArray(value.args))fail();
+ if(value.kind==='primitive-arithmetic-call'){const operation=nativeIntegerArithmetic(value.operation);if(value.name!=='integerArithmetic'||!operation||value.args.length!==2||value.args.some(argument=>!primitiveBitwiseCompatible(argument.type,target.name)))fail();return {target,operation,after:[target.bits,target.signed,operation.name]};}
  if(value.kind==='primitive-method-call'){const method=nativeIntegerMethod(value.operation);if(value.name!=='primitiveIntegerMethod'||!method||value.args.length!==method.arity||value.args.some(argument=>!primitiveBitwiseCompatible(argument.type,target.name)))fail();return {target,method,after:[...(method.arity===2?[null]:[]),target.bits,target.signed,method.name]};}
  if(value.kind==='primitive-not-call'){if(value.name!=='primitiveNot'||value.args.length!==1||!primitiveBitwiseCompatible(value.args[0].type,target.name))fail();return {target,after:[target.bits,target.signed]};}
  if(value.kind==='primitive-cast-call'){
@@ -14,6 +15,7 @@ export function emitOwnedPrimitiveOperatorCall(value,{rust,expression,argumentNa
  const metadata=ownedPrimitiveOperatorCallMetadata(value),expressions=value.args.map(expression);
  if(!rust)return '__ro_'+value.name+'('+expressions.concat(metadata.after.map(value=>JSON.stringify(value))).join(', ')+')';
  const names=value.args.map(argumentName);if(names.some(name=>typeof name!=='string'||!/^__ro_arg_[0-9]+$/u.test(name))||new Set(names).size!==names.length)fail();const bindings=expressions.map((text,index)=>'let '+names[index]+' = '+text+';').join(' ');
+ if(value.kind==='primitive-arithmetic-call'){const guard=['div','rem'].includes(metadata.operation.name)?' assert!('+names[1]+' != 0_'+metadata.target.name+', '+JSON.stringify(zeroDivisorMessage(metadata.operation.name,{kind:'fixed'}))+');':'';return '{ '+bindings+guard+' ::core::option::Option::expect('+metadata.target.rust+'::'+metadata.operation.checked+'('+names.join(', ')+'), '+JSON.stringify(overflowMessage(metadata.operation.name))+') }';}
  if(value.kind==='primitive-method-call'){const callee=metadata.method.ordered?'::core::cmp::Ord::'+metadata.method.name:metadata.target.rust+'::'+metadata.method.name;return '{ '+bindings+' '+callee+'('+names.join(', ')+') }';}
  if(value.kind==='primitive-not-call')return '{ '+bindings+' (!'+names[0]+') }';
  if(value.kind==='primitive-cast-call')return '{ '+bindings+' '+(metadata.input.name===metadata.target.name?names[0]:'('+names[0]+' as '+metadata.target.rust+')')+' }';
@@ -27,3 +29,6 @@ export function evaluateOwnedPrimitiveOperatorCall(value,scope,get,module){
 }
 
 import {nativeIntegerMethod} from '../native-integer-methods.mjs';
+
+import {nativeIntegerArithmetic} from '../native-integer-arithmetic.mjs';
+import {overflowMessage,zeroDivisorMessage} from '../vendor/meta-language/translation/aborts.js';

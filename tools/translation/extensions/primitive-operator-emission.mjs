@@ -2,6 +2,9 @@
 // semantic-meta guards remain at every entry point.
 import {requirePrimitiveOperator,actualFixedOperand} from './primitive-operators.mjs';
 export function emitPrimitiveOperator(emitter,node){
+ if(node.k==='binary'&&nativeIntegerArithmetic(node.op)&&primitiveBitwiseType(node.type?.rustPrimitiveName)){
+  actualFixedOperand(node.type,node.span);actualFixedOperand(node.left?.type,node.span);actualFixedOperand(node.right?.type,node.span);if(node.semantics!=='checked'||node.left.type.rustPrimitiveName!==node.type.rustPrimitiveName||node.right.type.rustPrimitiveName!==node.type.rustPrimitiveName||['div','rem'].includes(node.op)&&(node.rounding!=='trunc'||node.byZero!=='abort'))throw new TypeError('Checked native integer arithmetic requires its original same-domain semantics');emitter.primitiveOperators=true;emitter.state.encode('rust-primitive-checked-integer-arithmetic','Exact by-value native fixed operands, checked-profile overflow, truncating division, dividend-signed remainder and fatal zero/minimum divided by minus one.');return 'ml_integer_arithmetic('+[emitter.expr(node.left),emitter.expr(node.right),node.type.bits,node.type.signed,JSON.stringify(node.op)].join(', ')+')';
+ }
     if(['routerPrimitiveIntegerCast','routerPrimitiveIntegerShift','routerPrimitiveScalarBitwise','routerPrimitiveIntegerNot'].includes(node.k)){
       const proof=requirePrimitiveOperator(node);emitter.primitiveOperators=true;
       emitter.state.encode('rust-primitive-integer-operators','Actual by-value primitive casts, shifts, fixed integer complement and eager bool/fixed-integer bitwise operations; exact BigInt ABI and checked counts; no trait or pointer authority.');
@@ -21,3 +24,5 @@ import {nativeIntegerMethod} from '../native-integer-methods.mjs';
 
 import {requireFixedWrappingMetadata} from './fixed-wrapping-source.mjs';
 export {withFixedWrappingSourceOperation} from './fixed-wrapping-source.mjs';
+
+import {nativeIntegerArithmetic} from '../native-integer-arithmetic.mjs';

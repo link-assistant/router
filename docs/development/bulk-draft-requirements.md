@@ -490,3 +490,11 @@ and original bounded evaluator. Two complete equations and unrun ten-domain
 constant/JS/strict TS/meta/source/private/budget/refusal/native oracle cases are
 drafted. All remaining source/native/production/sync/freshness/parity/delivery
 requirements remain unfinished.
+
+The [shared checked arithmetic draft](native-integer-arithmetic-draft.md) routes
+five actual fixed operations across ten widths through forward/meta/runtime,
+seven reverse source/emit/interpreter paths, qualified checked Rust inverses and
+complete project synchronization. Eighteen whole equations and unrun boundary/
+exact-error/order/strict TS/meta/inverse/sync/refusal/native oracle sources are
+drafted. Every remaining source/native/production/sync/freshness/parity/delivery
+requirement remains unfinished.
