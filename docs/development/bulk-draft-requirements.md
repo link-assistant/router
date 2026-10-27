@@ -872,3 +872,11 @@ parent inverses. Eight compiler equations and independent unrun four-API/
 13-caller/consecutive-bulk/JS/strict TS/resource-reverse/native/export source are
 drafted. Every wider source/native/production/sync/freshness/parity/delivery
 requirement remains OPEN and all verification remains UNRUN.
+
+The [bounded source composition draft](core-fixed-point-source-draft.md) adds a
+separate four-round streaming proposal API with fresh complete stage/source
+joins, unchanged-round receipts and refusal at the cap, preserving original
+one-pass APIs and CI commands. Three compiler equations and independent unrun
+control/real-adopter/packet-inverse/JS/strict TS/native/export source are drafted.
+Actual full-corpus performance/composition and every source/native/production/
+sync/freshness/parity/delivery requirement remain OPEN; all verification is UNRUN.

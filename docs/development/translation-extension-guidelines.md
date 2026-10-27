@@ -772,3 +772,11 @@ roles from current complete initializers. Keep qualified Result constructor
 inputs distinct from standard Ok/Err payload roles and require the full actual
 caller checks. Source wrappers and metadata grant no callee or ownership permit.
 See the [unrun Result callback draft](result-callback-text-source-draft.md).
+
+Repeat source families only through an explicit bounded protocol that retains
+all original guards and complete packet inverses. Require a full unchanged round
+before a stable receipt; refuse at the cap without one. Stability is no coverage
+or semantic permission. Stream complete packets, retain only current strings and
+bounded scalar receipts, preserve observer failures and every original resource
+limit. Keep old APIs/schemas and canonical commands intact until qualification.
+See the [unrun bounded composition draft](core-fixed-point-source-draft.md).
