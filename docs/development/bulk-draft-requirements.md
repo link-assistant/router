@@ -696,3 +696,10 @@ alias lane while preserving complete initializer bytes and all original checks.
 Four complete equations and unrun grammar/bounds/scope/two-API/bulk/JS/strict TS/
 export/native oracle source is drafted. Every wider source/native/production/
 sync/freshness/parity/delivery requirement remains unfinished.
+
+The [qualified integer source draft](qualified-integer-source-draft.md) shares
+existing written native domains across integer parameters and static bound
+operands, preserving actual spelling/trivia and all original semantic checks.
+Four complete equations and unrun domain/path/span/two-API/bulk/JS/strict TS/
+export/native oracle source is drafted. All wider source/native/production/
+sync/freshness/parity/delivery requirements remain unfinished.
