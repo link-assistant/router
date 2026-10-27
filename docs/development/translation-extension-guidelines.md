@@ -821,3 +821,10 @@ matching branch roles and actual complete delimiters; preserve source and
 independent move/borrow/effect checks. Never choose an apparently constant
 branch or promote source roles to semantic authority. See the
 [unrun carrier conditional draft](carrier-conditional-source-draft.md).
+
+Reuse actual chronological source scopes for branch locals. Require immutable
+concrete initializer evidence after the real semicolon, preserve written role
+constraints and separate branch scope, then classify the complete final
+expression. Unknown or mutable declarations grant no source role; real moves,
+borrows and effects remain checker obligations. See the
+[unrun branch-local draft](carrier-branch-local-source-draft.md).

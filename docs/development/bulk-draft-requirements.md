@@ -925,3 +925,10 @@ callback selectors. Five complete equations and independent unrun six-API/
 eight-caller/branch/owning/Unicode/refusal/JS/strict TS/paired reverse/native/export
 cases are drafted. Wider control and every unfinished namespace/production/
 reverse/sync/freshness/parity/delivery row remain OPEN; no coverage is claimed.
+
+The [carrier branch-local draft](carrier-branch-local-source-draft.md) joins
+immutable branch declarations and final expressions through the existing actual
+chronological reader. Six compiler equations and independent unrun six-API/
+seven-caller/annotation/refusal/owning/JS/strict TS/paired reverse/native/export
+cases are drafted. Wider locals/control and every unfinished namespace/
+production/reverse/sync/freshness/parity/delivery row remain OPEN.

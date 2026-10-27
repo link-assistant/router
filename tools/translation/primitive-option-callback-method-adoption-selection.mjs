@@ -30,7 +30,7 @@ export function selectPrimitiveOptionCallbackMethodAdoption(source,item,_scoped,
   if(piece.length===1&&piece[0].text==='None')return wanted?.kind==='option'?wanted:null;
   const core=readCoreCarrierCallSource(piece,scope);if(core)return core;
   if((work+=Math.min(piece.length,257))>200000)return null;const numeric=readPrimitiveRoleExpressionSource(piece,scope,wanted);if(numeric)return numeric;
-  const conditional=readCarrierConditionalSource(piece,scope,wanted,{readExpression:(part,expected)=>inferred(part,scope,expected,depth+1)});if(conditional)return conditional;
+  const conditional=readCarrierConditionalSource(piece,scope,wanted,{readExpression:(part,expected)=>inferred(part,scope,expected,depth+1),readBranch:(part,expected)=>readCarrierBranchLocalSource(part,scope,expected,{readExpression:(body,visible,output)=>inferred(body,visible,output,depth+1),readWrittenRole:tokens=>role(tokens,_scoped)})});if(conditional)return conditional;
   if(piece.length>4&&piece.at(-4).text==='.'&&['to_owned','to_string'].includes(piece.at(-3).text)&&piece.at(-2).text==='('&&piece.at(-1).text===')'){const base=inferred(piece.slice(0,-4),scope,null,depth+1);if(base?.kind==='payload'&&['str','text-owned'].includes(base.domain))return {kind:'payload',domain:'text-owned'};}
   return null;
  }
@@ -113,3 +113,5 @@ import {rustTokens} from './rust-structure.mjs';
 import {readPrimitiveRoleExpressionSource} from './primitive-carrier-expression-source.mjs';
 
 import {readCarrierConditionalSource} from './carrier-conditional-source.mjs';
+
+import {readCarrierBranchLocalSource} from './carrier-branch-local-source.mjs';
