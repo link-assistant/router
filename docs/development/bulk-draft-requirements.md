@@ -560,3 +560,11 @@ Four whole equations and unrun source-span/timing/scope/roundtrip/bulk/fresh-
 project/strict TS/refusal/native oracle cases are drafted. Original trait/global
 closure and every remaining source/native/production/sync/freshness/parity/
 delivery requirement stay open.
+
+The [chronological integer alias draft](integer-local-aliases-draft.md) copies
+the complete alias engine for native primitive DATA, closed suffixed literals
+and actual selected primitive results in both existing integer adopters. Five
+whole equations and unrun scope/timing/span/boundary/bulk/fresh-project/strict TS/
+refusal/native oracle sources are drafted. Both source substitution phases are
+active; complete source/native/production/sync/freshness/parity/delivery
+requirements remain unfinished.
