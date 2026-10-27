@@ -1,7 +1,7 @@
 // Proposal-only source substitutions. Installation requires every actual whole
 // function to pass the original type/ownership/source/emission checks afresh.
 import {primitiveOptionContract} from './primitive-option-contracts.mjs';
-import {createPrimitiveCarrierLocalSource} from './primitive-carrier-local-source.mjs';
+import {createPrimitiveCarrierLocalSource,readCarrierLocalInitializer} from './primitive-carrier-local-source.mjs';
 const methods=new Set(['is_some','is_none','unwrap_or','unwrap','expect','and','or']);
 const words=tokens=>tokens.map(token=>token.text+(token.text.startsWith("'")?' ':'')).join('');
 function scalarRole(source){source=source.replace(/&'[a-zA-Z_][a-zA-Z0-9_]*\s+/gu,'&').replace(/\s+/gu,'');if(['bool','u64','i64'].includes(source))return {kind:'payload',domain:source};if(['&str','&crate::translation_core::Str','&::std::primitive::str','&::core::primitive::str'].includes(source))return {kind:'payload',domain:'str'};return null;}
@@ -44,8 +44,7 @@ export function selectPrimitiveOptionMethodAdoption(source,item,_scoped,modulePa
  for(let at=body+1;at<tokens.length-1;at++){
   if(++work>200000)return result('complete source expression bound exceeded');env=localArguments.at(tokens[at].start);
   if(tokens[at].text==='let'){
-   const name=tokens[at+1].text;let equal=at+2,written=null;if(tokens[equal].text===':'){equal++;while(equal<tokens.length&&!['=',';','{','}'].includes(tokens[equal].text))equal++;written=role(tokens.slice(at+3,equal),_scoped);}
-   if(tokens[equal]?.text!=='=')continue;env=localArguments.at(tokens[equal+1]?.start);const value=expression(equal+1);if(value&&tokens[value.after]?.text===';'){if((!written||written.kind===value.kind&&written.domain===value.domain)&&value.operations.length)localArguments.selectedCall({span:[tokens[equal+1].start,tokens[value.after-1].end],terminator:tokens[value.after],operation:value.operations.at(-1),resultRole:{kind:value.kind,domain:value.domain}});append(equal+1,value);at=value.after-1;}else at=equal;continue;
+   const initializer=readCarrierLocalInitializer(tokens,at,part=>role(part,_scoped));if(!initializer)continue;const equal=initializer.start-1,written=initializer.written;env=localArguments.at(tokens[initializer.start]?.start);const value=expression(equal+1);if(value&&tokens[value.after]?.text===';'){if((!written||written.kind===value.kind&&written.domain===value.domain)&&value.operations.length)localArguments.selectedCall({span:[tokens[equal+1].start,tokens[value.after-1].end],terminator:tokens[value.after],operation:value.operations.at(-1),resultRole:{kind:value.kind,domain:value.domain}});append(equal+1,value);at=value.after-1;}else at=equal;continue;
   }
   if(['.','::'].includes(tokens[at-1]?.text))continue;const value=expression(at);if(value?.operations.length){append(at,value);at=value.after-1;}
  }return result(edits.length?null:'no closed primitive Option method expression');

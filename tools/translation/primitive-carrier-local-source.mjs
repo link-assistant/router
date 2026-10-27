@@ -1,7 +1,7 @@
 // One function's chronological source-selection DATA. No owner/type permit.
 import {readPrimitiveAliasOperand} from './primitive-local-argument-source.mjs';
 import {createChronologicalLocalSource} from './chronological-local-source.mjs';
-import {createWrittenLocalAliasRules} from './local-alias-written-source.mjs';
+import {createWrittenLocalAliasRules,readLocalAliasInitializer} from './local-alias-written-source.mjs';
 import {censusLocalAliasBindings} from './local-alias-binding-source.mjs';
 const fail=message=>{throw new TypeError('Primitive carrier local source: '+message);};
 export function createPrimitiveCarrierLocalSource(rows,parameters,allParameters,{readWrittenRole}){
@@ -32,3 +32,6 @@ export function readCarrierAliasOperand(rows,bindings,wanted=null){
  const value=scalarOperand(rows.slice(open+1,-1),bindings,constructor==='Err'?null:wanted&&{kind:'payload',domain:wanted.domain});if(constructor==='Err')return wanted?.kind==='result'&&value?.kind==='payload'&&value.domain==='text-owned'?wanted:null;
  return value?.kind==='payload'&&['bool','u64','i64','str','text-owned'].includes(value.domain)?{kind:constructor==='Some'?'option':'result',domain:constructor==='Ok'&&value.domain==='text-owned'?'text':value.domain}:null;
 }
+
+// A bounded source initializer projection, not a type or executable permit.
+export function readCarrierLocalInitializer(rows,at,readWrittenRole){const selected=readLocalAliasInitializer(rows,at,part=>encodeCarrierRole(readWrittenRole(part)));return selected?{start:selected.start,written:decodeCarrierRole(selected.domain)}:null;}

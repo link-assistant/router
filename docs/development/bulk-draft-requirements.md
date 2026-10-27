@@ -675,3 +675,10 @@ the forward-project API, retaining complete source retranslation and all
 conflict/apply guards. Five complete equations and unrun committed JS/TS/Rust/
 concurrency/deletion/stale/replacement-ref/JS/strict TS cases are drafted. Every
 wider source/native/production/sync/freshness/parity/delivery requirement stays open.
+
+The [written carrier initializer draft](carrier-written-initializer-source-draft.md)
+replaces four duplicated typed initializer scans with the shared bounded source
+reader, retaining actual selected-result facts and all original checks. Six
+complete equations and unrun eight-API/four-bulk-stage/JS/strict TS/export/native
+oracle source is drafted. All wider source/native/production/sync/freshness/
+parity/delivery requirements remain unfinished.
