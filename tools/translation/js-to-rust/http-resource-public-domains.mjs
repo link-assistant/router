@@ -11,9 +11,9 @@ function ownedValue(type,depth=0){
 }
 export function httpResourcePublicInputDomain(type,{guarded=false}={}){
  if(typeof type!=='string'||resourceInteger(type)&&!guarded)return false;
- // Wider numeric container entry guards retain a separate explicit refusal.
- if(type.includes(':')&&type.split(':').some(part=>resourceInteger(part)&&!['u64','i64'].includes(part)))return false;
- if(type.endsWith(':i64'))return guarded&&httpResourceNumericContainerGuardDomain(type)&&ownedValue(type)&&!httpResourceResultOwnsDisposal(type);
+ // Preserve the legacy u64-container domain; every other numeric payload
+ // requires its own complete original constructor-dominated ingress guard.
+ if(type.includes(':')&&resourceInteger(type.split(':').at(-1))&&!type.endsWith(':u64'))return guarded&&httpResourceNumericContainerGuardDomain(type)&&ownedValue(type)&&!httpResourceResultOwnsDisposal(type);
  if(resourceInteger(type)||['str','bool','u64','i64','cancel-ref','sender-ref','receiver-mut','http-client-ref','http-client-mut','http-stream-ref','http-stream-mut','json-ref','json-list-ref','bytes-ref'].includes(type))return true;
  return ownedValue(type)&&!httpResourceResultOwnsDisposal(type);
 }

@@ -345,3 +345,10 @@ constraints, literal bounds, operation signatures and native inverses. Seventeen
 equations and unrun23-caller/JS/strict TS/width/guard/refusal/native/export cases
 are drafted. Wider numeric container inputs/loops and every remaining namespace,
 production/reverse/sync/freshness/parity/delivery requirement remain OPEN.
+
+The [all-width container ingress draft](resource-container-domains-source-draft.md)
+requires original success-constructor dominance and exact payload bounds against
+the independently checked signature for all ten widths. Five equations and
+independent unrun30-caller/JS/strict TS/native inverse/oracle/mutation/refusal/export
+source are drafted. All wider loop/generic and unfinished namespace/production/
+reverse/sync/freshness/parity/delivery requirements remain OPEN.

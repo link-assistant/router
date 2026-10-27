@@ -975,3 +975,8 @@ error guards; written aliases and source hints cannot supply them. Settle actual
 binding/call/return constraints before negative defaults, keep shared whole-source
 bounds and fresh native inverses, and retain wider container/loop refusals until
 implemented. See [the unrun scalar domain draft](resource-integer-domains-source-draft.md).
+
+Every new numeric carrier ingress needs an original constructor-dominated exact
+payload guard tied to its independently checked full parameter type. Preserve
+legacy u64 behavior, all bounds, same-path checks and complete fresh inverses;
+messages and annotations prove nothing alone. See [the unrun ingress draft](resource-container-domains-source-draft.md).
