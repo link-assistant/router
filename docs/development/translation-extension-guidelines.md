@@ -814,3 +814,10 @@ execute/coerce operands or treat a literal as permission to ignore an unknown
 arm. Keep source work bounded and defer real operator/effect/ownership admission
 to the full checker. See the
 [unrun boolean expression draft](boolean-expression-source-draft.md).
+
+Infer complete conditional source branches independently under the current
+lexical scope and written result role. Require an existing boolean condition,
+matching branch roles and actual complete delimiters; preserve source and
+independent move/borrow/effect checks. Never choose an apparently constant
+branch or promote source roles to semantic authority. See the
+[unrun carrier conditional draft](carrier-conditional-source-draft.md).

@@ -918,3 +918,10 @@ callback inference. Three compiler equations and independent unrun six-API/
 seven-caller/truth/Unicode/refusal/bounds/JS/strict TS/paired reverse/native/export
 cases are drafted. Wider language and every unfinished namespace/production/
 reverse/sync/freshness/parity/delivery row remain OPEN; no coverage is claimed.
+
+The [carrier conditional draft](carrier-conditional-source-draft.md) shares
+ordinary if/else/else-if source role inference across Option and both Result
+callback selectors. Five complete equations and independent unrun six-API/
+eight-caller/branch/owning/Unicode/refusal/JS/strict TS/paired reverse/native/export
+cases are drafted. Wider control and every unfinished namespace/production/
+reverse/sync/freshness/parity/delivery row remain OPEN; no coverage is claimed.
