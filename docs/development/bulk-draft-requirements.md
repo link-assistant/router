@@ -847,3 +847,11 @@ six-API/7-caller/consecutive-stage/JS/strict TS/resource-reverse/native/export
 source are drafted. No runtime ABI or semantic checker changed. Every wider
 source/native/production/sync/freshness/parity/delivery requirement remains OPEN;
 all verification remains UNRUN.
+
+The [optional owning text callback draft](optional-text-callback-source-draft.md)
+adds18 paired map/chain/lazy recovery interfaces, retaining54 callback contracts
+and complete original native templates. Ten compiler equations and independent
+unrun18-ABI/two-API/18-caller/bulk/JS/strict TS/resource-reverse/native move/storage/
+export source are drafted. Captured owner transfer, older restricted reverse
+lanes, wider callback lowering and all source/native/production/sync/freshness/
+parity/delivery requirements remain OPEN. All verification remains UNRUN.

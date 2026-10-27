@@ -749,3 +749,11 @@ and unknown syntax. Recompute roles in the current chronological operation and
 recheck whole functions. Shared metadata grants no binding/type/ownership permit.
 Keep both CST phases and full inverses; see the
 [unrun shared core call draft](core-carrier-call-source-draft.md).
+
+Optional owning callbacks must retain actual FnOnce moves, standard Option/String
+identity, unselected-branch laziness, Some-empty, native bounds and full result
+checks. Use the complete resource lane and preserve captured-owner/parameter
+move restrictions; borrowed captures may produce independently owned copies.
+Keep new borrowed outputs from owned callback inputs outside this family, retain
+original native templates and both CST phases. See the
+[unrun owning callback draft](optional-text-callback-source-draft.md).

@@ -7,7 +7,7 @@ import {primitiveBitwiseType} from './primitive-bitwise-types.mjs';
 import {readPrimitiveWrittenAliasDomain} from './primitive-local-argument-source.mjs';
 import {createPrimitiveCarrierLocalSource,readCarrierLocalInitializer,readIntegerCarrierCallSource,encodeCarrierRole} from './primitive-carrier-local-source.mjs';
 import {primitiveOptionCallbackContract} from './primitive-option-callback-contracts.mjs';
-const methods=new Set(['filter','unwrap_or_default','is_some','is_none','unwrap_or','unwrap','expect','and','or','map','and_then','unwrap_or_else']);
+const methods=new Set(['filter','unwrap_or_default','is_some','is_none','unwrap_or','unwrap','expect','and','or','map','and_then','unwrap_or_else','or_else']);
 const words=tokens=>tokens.map(token=>token.text+(token.text.startsWith("'")?' ':'')).join('');
 function scalarRole(source){source=source.replace(/&'[a-zA-Z_][a-zA-Z0-9_]*\s+/gu,'&').replace(/\s+/gu,'');if(['String','std::string::String','::std::string::String'].includes(source))return {kind:'payload',domain:'text-owned'};if(source==='bool')return {kind:'payload',domain:source};const primitive=readPrimitiveWrittenAliasDomain([{text:source}]);if(primitive)return {kind:'payload',domain:primitive};if(['&str','&crate::translation_core::Str','&::std::primitive::str','&::core::primitive::str'].includes(source))return {kind:'payload',domain:'str'};return null;}
 function role(tokens,scoped){const source=words(tokens),optional=/^(?:(?:::)?(?:std|core)::option::Option|Option|crate::translation_core::Maybe)<([\s\S]+)>$/u.exec(source),payload=scalarRole(optional?optional[1]:source);if(payload)return {...payload,kind:optional?'option':'payload'};const normalized=source.replace(/&'[a-zA-Z_][a-zA-Z0-9_]*\s+/gu,'&').replace(/\s+/gu,'');if(!optional&&normalized.startsWith('&')&&(['crate::translation_core::Json','serde_json::Value','::serde_json::Value'].includes(normalized.slice(1))||scoped?.jsonNames.has(normalized.slice(1))))return {kind:'json',domain:'json'};return null;}
@@ -28,15 +28,17 @@ export function selectPrimitiveOptionCallbackMethodAdoption(source,item,_scoped,
   const literal=readFixedIntegerLiteralSource(piece,wanted?.kind==='payload'?wanted.domain:null);if(literal&&primitiveBitwiseType(literal.domain))return {kind:'payload',domain:literal.domain};
   if(piece[0].text==='Some'&&piece[1]?.text==='('&&close(piece,1)===piece.length-1){const value=inferred(piece.slice(2,-1),scope,wanted&&{kind:'payload',domain:wanted.domain},depth+1);return value?.kind==='payload'?{kind:'option',domain:value.domain}:null;}
   if(piece.length===1&&piece[0].text==='None')return wanted?.kind==='option'?wanted:null;
+  const core=readCoreCarrierCallSource(piece,scope);if(core)return core;
+  if(piece.length>4&&piece.at(-4).text==='.'&&['to_owned','to_string'].includes(piece.at(-3).text)&&piece.at(-2).text==='('&&piece.at(-1).text===')'){const base=inferred(piece.slice(0,-4),scope,null,depth+1);if(base?.kind==='payload'&&['str','text-owned'].includes(base.domain))return {kind:'payload',domain:'text-owned'};}
   return null;
  }
  function callbackOperand(piece,input,method){
   let at=piece[0]?.text==='move'?1:0,names=[];if(piece[at]?.text==='||')at++;else if(piece[at]?.text==='|'){
    const end=piece.findIndex((token,index)=>index>at&&token.text==='|');if(end<0)return null;const arguments_=split(piece.slice(at+1,end));if(arguments_.length!==1||!ident(arguments_[0][0])||arguments_[0].length>1&&arguments_[0][1].text!==':')return null;const argument=arguments_[0],written=argument.length>1?role(argument.slice(2),_scoped):null;if(argument.length>1&&(!written||written.kind!=='payload'||written.domain!==input))return null;names=[argument[0].text];at=end+1;
   }else return null;
-  if(names.length!==(method==='unwrap_or_else'?0:1)||names.some(name=>['Some','None','Option'].includes(name)))return null;
+  if(names.length!==(['unwrap_or_else','or_else'].includes(method)?0:1)||names.some(name=>['Some','None','Option'].includes(name)))return null;
   let written=null;if(piece[at]?.text==='->'){const start=at+1;at=start;while(at<piece.length&&piece[at].text!=='{')at++;written=role(piece.slice(start,at),_scoped);if(!written)return null;}
-  const scope=new Map(env);for(const name of names)scope.set(name,{kind:'payload',domain:input});const wanted=method==='unwrap_or_else'?{kind:'payload',domain:input}:written??(declaredOutput?.kind==='option'?{kind:method==='map'?'payload':'option',domain:declaredOutput.domain}:null);let value;
+  const scope=new Map(env);for(const name of names)scope.set(name,{kind:'payload',domain:input});const wanted=method==='or_else'?{kind:'option',domain:input}:method==='unwrap_or_else'?{kind:'payload',domain:input}:written??(declaredOutput?.kind==='option'?{kind:method==='map'?'payload':'option',domain:declaredOutput.domain}:null);let value;
   if(piece[at]?.text==='{'){
    if(close(piece,at)!==piece.length-1)return null;
    if(written)value=written;
@@ -47,8 +49,8 @@ export function selectPrimitiveOptionCallbackMethodAdoption(source,item,_scoped,
     const tail=body.slice(start);if(!returned.length)value=inferred(tail,scope,wanted);else if(returned.every(row=>row.kind===returned[0].kind&&row.domain===returned[0].domain)&&tail.every(token=>['}',';'].includes(token.text)))value=returned[0];
    }
   }else value=inferred(piece.slice(at),scope,wanted);
-  if(!value||written&&(value.kind!==written.kind||value.domain!==written.domain)||value.kind!==(method==='and_then'?'option':'payload'))return null;
-  if(method==='unwrap_or_else'&&value.domain!==input)return null;return {domain:value.domain,replacement:source.slice(piece[0].start,piece.at(-1).end)};
+  if(!value||written&&(value.kind!==written.kind||value.domain!==written.domain)||value.kind!==(['and_then','or_else'].includes(method)?'option':'payload'))return null;
+  if(['unwrap_or_else','or_else'].includes(method)&&value.domain!==input)return null;return {domain:value.domain,replacement:source.slice(piece[0].start,piece.at(-1).end)};
  }
 
  for(let at=body+1;at<tokens.length-1;at++){
@@ -71,10 +73,10 @@ export function selectPrimitiveOptionCallbackMethodAdoption(source,item,_scoped,
   }
   while(value.kind==='option'&&tokens[value.after]?.text==='.'&&ident(tokens[value.after+1])&&tokens[value.after+2]?.text==='('){
    if(++work>200000)return null;const cursor=value.after,method=tokens[cursor+1].text;if(!methods.has(method))break;if(method==='filter'&&['str','text-owned'].includes(value.domain)){const end=close(tokens,cursor+2),filter=end<0?null:readOptionalTextFilterSource(tokens.slice(cursor+3,end)),row=primitiveOptionContract((value.domain==='str'?'str':'text_owned')+'_filter_nonempty');if(!filter||!row)break;value={...value,replacement:row.rustPath+'('+value.replacement+', '+String(filter.trimWhitespace)+')',after:end+1,operations:[...value.operations,row.rustName]};continue;}const end=close(tokens,cursor+2);if(end<0)return null;let after=end+1;
-   if(['map','and_then','unwrap_or_else'].includes(method)){
+   if(['map','and_then','unwrap_or_else','or_else'].includes(method)){
     const pieces=split(tokens.slice(cursor+3,end));if(pieces.length!==1)break;const callback=callbackOperand(pieces[0],value.domain,method);if(!callback)break;
     if(value.domain==='str'&&method==='unwrap_or_else'){if(tokens[after]?.text!=='.'||!['to_owned','to_string'].includes(tokens[after+1]?.text)||tokens[after+2]?.text!=='('||tokens[after+3]?.text!==')')break;after+=4;}
-    const row=primitiveOptionCallbackContract(method==='unwrap_or_else'?value.domain+'_'+method:value.domain+'_to_'+callback.domain+'_'+method);if(!row)break;
+    const row=primitiveOptionCallbackContract(['unwrap_or_else','or_else'].includes(method)?value.domain.replace('-','_')+'_'+method:value.domain.replace('-','_')+'_to_'+callback.domain.replace('-','_')+'_'+method);if(!row)break;
     value={replacement:row.rustPath+'('+value.replacement+', '+callback.replacement+')',kind:method==='unwrap_or_else'?'payload':'option',domain:method==='unwrap_or_else'&&value.domain==='str'?'owned-str':callback.domain,after,operations:[...value.operations,row.rustName]};continue;
    }
    const row=primitiveOptionContract(value.domain.replace('-','_')+'_'+method);if(!row)break;

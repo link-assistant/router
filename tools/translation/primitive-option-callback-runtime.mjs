@@ -5,7 +5,7 @@ const proxy=types.isProxy,prototype=Object.getPrototypeOf,descriptors=Object.get
 const hostObject=Object,hostReflect=Reflect,hostRangeError=RangeError;
 function host(){if(Object!==hostObject||Reflect!==hostReflect||RangeError!==hostRangeError||types.isProxy!==proxy||Object.getPrototypeOf!==prototype||Object.getOwnPropertyDescriptors!==descriptors||Reflect.ownKeys!==keys||Object.hasOwn!==own||Object.freeze!==freeze||Reflect.apply!==apply)throw new TypeError('Original primitive Option host operations required');}
 function payload(value,domain){
- host();if(domain==='str'){textBytes(value);return value;}if(domain==='bool'){if(typeof value!=='boolean')throw new TypeError('Primitive Option bool required');return value;}
+ host();if(domain==='str'||domain==='text-owned'){textBytes(value);return value;}if(domain==='bool'){if(typeof value!=='boolean')throw new TypeError('Primitive Option bool required');return value;}
  if(typeof value!=='bigint'||value<(domain==='i64'?-9223372036854775808n:0n)||value>(domain==='i64'?9223372036854775807n:18446744073709551615n))throw new TypeError('Primitive Option '+domain+' required');return value;
 }
 function option(value,domain){
@@ -62,6 +62,7 @@ export const router_option_str_expect=(argument0,argument1)=>operate("str","expe
 // Direct ABI calls still validate every actual operand and callback result.
 function invokePrimitiveOptionCallback(value,callback,input,output,method){
  const observed=option(value,input);if(typeof callback!=='function'||apply(proxy,types,[callback]))throw new TypeError('Actual ordinary primitive Option callback required');
+ if(method==='or_else'){if(observed.some)return some(observed.value);const found=option(callback(),output);return found.some?some(found.value):none();}
  if(method==='unwrap_or_else')return observed.some?observed.value:payload(callback(),output);
  if(!observed.some)return none();const returned=callback(observed.value);
  if(method==='map')return some(payload(returned,output));const found=option(returned,output);return found.some?some(found.value):none();
@@ -102,3 +103,22 @@ export const router_option_callback_str_to_i64_and_then=(value,callback)=>invoke
 export const router_option_callback_str_to_str_map=(value,callback)=>invokePrimitiveOptionCallback(value,callback,"str","str","map");
 export const router_option_callback_str_to_str_and_then=(value,callback)=>invokePrimitiveOptionCallback(value,callback,"str","str","and_then");
 export const router_option_callback_str_unwrap_or_else=(value,callback)=>invokePrimitiveOptionCallback(value,callback,"str","str","unwrap_or_else");
+
+export const router_option_callback_bool_to_text_owned_map=(value,callback)=>invokePrimitiveOptionCallback(value,callback,"bool","text-owned","map");
+export const router_option_callback_bool_to_text_owned_and_then=(value,callback)=>invokePrimitiveOptionCallback(value,callback,"bool","text-owned","and_then");
+export const router_option_callback_u64_to_text_owned_map=(value,callback)=>invokePrimitiveOptionCallback(value,callback,"u64","text-owned","map");
+export const router_option_callback_u64_to_text_owned_and_then=(value,callback)=>invokePrimitiveOptionCallback(value,callback,"u64","text-owned","and_then");
+export const router_option_callback_i64_to_text_owned_map=(value,callback)=>invokePrimitiveOptionCallback(value,callback,"i64","text-owned","map");
+export const router_option_callback_i64_to_text_owned_and_then=(value,callback)=>invokePrimitiveOptionCallback(value,callback,"i64","text-owned","and_then");
+export const router_option_callback_str_to_text_owned_map=(value,callback)=>invokePrimitiveOptionCallback(value,callback,"str","text-owned","map");
+export const router_option_callback_str_to_text_owned_and_then=(value,callback)=>invokePrimitiveOptionCallback(value,callback,"str","text-owned","and_then");
+export const router_option_callback_text_owned_to_bool_map=(value,callback)=>invokePrimitiveOptionCallback(value,callback,"text-owned","bool","map");
+export const router_option_callback_text_owned_to_bool_and_then=(value,callback)=>invokePrimitiveOptionCallback(value,callback,"text-owned","bool","and_then");
+export const router_option_callback_text_owned_to_u64_map=(value,callback)=>invokePrimitiveOptionCallback(value,callback,"text-owned","u64","map");
+export const router_option_callback_text_owned_to_u64_and_then=(value,callback)=>invokePrimitiveOptionCallback(value,callback,"text-owned","u64","and_then");
+export const router_option_callback_text_owned_to_i64_map=(value,callback)=>invokePrimitiveOptionCallback(value,callback,"text-owned","i64","map");
+export const router_option_callback_text_owned_to_i64_and_then=(value,callback)=>invokePrimitiveOptionCallback(value,callback,"text-owned","i64","and_then");
+export const router_option_callback_text_owned_to_text_owned_map=(value,callback)=>invokePrimitiveOptionCallback(value,callback,"text-owned","text-owned","map");
+export const router_option_callback_text_owned_to_text_owned_and_then=(value,callback)=>invokePrimitiveOptionCallback(value,callback,"text-owned","text-owned","and_then");
+export const router_option_callback_text_owned_unwrap_or_else=(value,callback)=>invokePrimitiveOptionCallback(value,callback,"text-owned","text-owned","unwrap_or_else");
+export const router_option_callback_text_owned_or_else=(value,callback)=>invokePrimitiveOptionCallback(value,callback,"text-owned","text-owned","or_else");
