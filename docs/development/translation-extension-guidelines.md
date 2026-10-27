@@ -152,3 +152,7 @@ All-width unit counters must preserve actual strict dominating bounds, immutable
 matching limits, full unassigned-body census and the current typed native update.
 Keep original loopback resource state and nearest continue/break order. See
 [the unrun counter draft](resource-width-loops-source-draft.md).
+
+Source text concatenation requires two actual text operands; retain operand order,
+owner loans and exact checked primitive conversions. General coercion, format
+templates and metadata cannot supply admission. See [the unrun concatenation draft](source-text-concat-draft.md).

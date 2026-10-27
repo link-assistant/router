@@ -130,6 +130,7 @@ const __routerOriginalBirth286_FormatChecker=[FormatChecker,FormatChecker.protot
 export class FormatEmitter extends TupleEmitter {
   expr(node) {
     // Preserve an explicit owned-text conversion witness for source inversion.
+    if(node.k==='lit'&&node.type?.patternOwnershipRefusal==='owned String formatting')return `String(${JSON.stringify(node.value)})`;
     if(node.k==='toString'&&node.arg.type.kind==='string')return `String(${this.expr(node.arg)})`;
     if(node.k==='routerFormatString') {
       let text=this.expr(node.value);if(node.precision!==null)text=`Array.from(${text}).slice(0,${node.precision}).join("")`;

@@ -366,3 +366,10 @@ original strict range and counter-unassigned rules across all ten native widths.
 Three equations and independent unrun30-caller/JS/strict TS/native inverse/oracle/
 refusal/export source are drafted. More general counters/captures and every wider
 namespace/production/reverse/sync/freshness/parity/delivery row remain OPEN.
+
+The [checked text concatenation draft](source-text-concat-draft.md) adds actual
+text-only plus and matching canonical two-slot native formatting, with preserved
+operand order and owner loans. Five equations and independent unrun eight-paired/
+four-forward/JS/strict TS/native inverse/oracle/refusal/export cases are drafted.
+Generated modules/guards and every remaining namespace/production/reverse/sync/
+freshness/parity/delivery requirement remain OPEN.
