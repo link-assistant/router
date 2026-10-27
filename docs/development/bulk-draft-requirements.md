@@ -613,3 +613,10 @@ shared carrier and layered source engines in both owned String Result adapters.
 Five whole equations and unrun constructor/scope/capture/Unicode/bulk/receiving
 JS/strict TS/native-oracle cases are drafted. All wider source/native/production/
 sync/freshness/parity/delivery requirements remain unfinished.
+
+The [owned JSON local draft](owned-json-local-source-draft.md) reuses the
+chronological and layered source engines in both existing JSON carrier adopters,
+retaining their single-use/default/shared-receiver rules. Five whole equations
+and unrun scope/chain/Unicode/bulk/receiving JS/strict TS/native-oracle cases are
+drafted. All wider source/native/production/sync/freshness/parity/delivery
+requirements remain unfinished.
