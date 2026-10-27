@@ -487,3 +487,11 @@ parentheses and complete borrowed conditional suffixes while keeping the builder
 unknown. Four equations and independent unrun two-API/four-caller/five-edit/JS/
 strict TS/native/refusal/export source are drafted. Wider mutation/iteration,
 namespace/production/reverse/sync/freshness/parity/receiving/delivery remain OPEN.
+
+The [builder method operand draft](text-builder-method-operands-source-draft.md)
+reuses the original text substitution engine inside complete borrowed suffixes
+and From arguments, retaining nested whole source/CST mappings/inverses and
+combined per-function work bounds. Four equations and independent unrun two-API/
+seven-caller/eight-edit JS/strict TS/native/refusal/export source are drafted.
+Wider mutation/iteration/namespace/production/reverse/sync/freshness/parity/
+receiving/delivery requirements remain OPEN.

@@ -238,3 +238,10 @@ retain each complete source expression once and keep the mutable builder unknown
 in chronological alias selection. Shared views of separate owned parameters are
 source proposals, never loan/drop permission. Refuse unresolved/mixed/escaping/
 self-borrowing functions whole; see [the unrun operand draft](text-builder-operands-source-draft.md).
+
+Nested builder method operands must replay the original source-only text engine,
+then independently match a closed borrowed result. Retain the whole inner wrapper,
+source/CST mappings and inverse; bound cumulative nested work. Rewrite selected
+From initializer arguments explicitly, keep the builder unknown and do not treat
+temporary wrapper types as original loan/drop/binding permission. See
+[the unrun source draft](text-builder-method-operands-source-draft.md).

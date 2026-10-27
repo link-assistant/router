@@ -186,3 +186,5 @@ export {withSharedOriginalParsedBuiltinCallerSources} from './registered-builtin
 export {captureGeneratedHeaderExpressionSources} from './generated-header-expression-source.mjs';
 
 export {readTextBuilderBorrowedOperandSource} from './text-builder-operand-source.mjs';
+
+export {proposeTextBuilderBorrowedOperandSource} from './text-builder-operand-source.mjs';
