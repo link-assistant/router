@@ -2,6 +2,7 @@ import {crateModuleSourcePath} from './repository-layout.mjs';
 // Proposal only. The explicit native-library-unit ABI is a new compatibility
 // boundary, not permission for the old imported Engine/default-context route.
 import {types} from 'node:util';
+import {readConcreteBase64Argument,simpleBase64LocalBindings} from './base64-argument-source.mjs';
 import {createHash} from 'node:crypto';
 import {resolveModuleGraph} from './project.mjs';
 import {translationProgressReporter} from './translation-progress.mjs';
@@ -25,13 +26,7 @@ function close(rows,start){const pairs={'(':')','[':']','{':'}'},stack=[];for(le
 function split(rows){const out=[];let first=0,depth=0;for(let at=0;at<=rows.length;at++){const word=rows[at]?.text;if(at===rows.length||word===','&&!depth){if(at>first)out.push(rows.slice(first,at));first=at+1;}else if(['(','[','{','<'].includes(word))depth++;else if([')',']','}','>'].includes(word))depth--;else if(word==='>>')depth-=2;if(depth<0)return null;}return depth?null:out;}
 const sourceTypes=new Map([['&str','text'],['&crate::translation_core::Str','text'],['String','owned-text'],['::std::string::String','owned-text'],['crate::translation_core::Text','owned-text'],['&[u8]','bytes'],['Vec<u8>','owned-bytes'],['::std::vec::Vec<u8>','owned-bytes'],['[u8;32]','array32']]);
 function parameters(rows){const out=new Map();for(const part of split(rows)??[null]){if(!part||!ident(part[0])||part[1]?.text!==':'||out.has(part[0].text)||['base64','String','Vec','str'].includes(part[0].text))return null;const kind=sourceTypes.get(words(part.slice(2)));if(!kind)return null;out.set(part[0].text,kind);}return out;}
-function argument(rows,bindings){
- if(rows.length===1&&ident(rows[0])&&bindings.has(rows[0].text))return {kind:bindings.get(rows[0].text),binding:rows[0].text};
- // Literal content is left verbatim. The independent native CST classified
- // one Rust string token; byte/raw/C strings are not inferred from spelling.
- if(rows.length===1&&rows[0].type==='string'&&/^"(?:[^"\\]|\\.)*"$/su.test(rows[0].text))return {kind:'text',binding:null};
- return null;
-}
+function argument(rows,bindings){return readConcreteBase64Argument(rows,bindings);}
 function operation(config,method,kind){
  const family=config==='STANDARD'?'standard':config==='STANDARD_NO_PAD'?'standard_no_pad':config==='URL_SAFE_NO_PAD'?'url_no_pad':null;if(!family)return null;
  if(method==='decode')return ['text','owned-text'].includes(kind)&&!(family==='standard_no_pad'&&kind==='owned-text')?'base64_'+family+'_decode_'+kind.replace('-','_'):null;
@@ -72,7 +67,8 @@ function fileProposal(source,modules,all,profile,context,nonTrait,progress=null)
    const bindings=parameters(rows.slice(open+1,last));let body=last+1;while(body<rows.length&&rows[body].text!=='{')body++;if(!bindings||body>=rows.length||close(rows,body)!==rows.length-1){stop('complete concrete parameter and function body required');continue;}
    // A local item, closure or unexpanded macro can affect a name throughout
    // its scope. This finite lane does not infer its output or binding absence.
-   if(rows.slice(body+1,-1).some(row=>['let','fn','trait','impl','type','struct','enum','union','mod','use','extern','macro','macro_rules!','|','||','#'].includes(row.text)||row.text==='!'||row.text.endsWith('!'))){stop('local binding, pattern/closure or unexpanded macro frontier');continue;}
+   if(rows.slice(body+1,-1).some(row=>['fn','trait','impl','type','struct','enum','union','mod','use','extern','macro','macro_rules!','|','||','#'].includes(row.text)||row.text==='!'||row.text.endsWith('!'))){stop('local binding, pattern/closure or unexpanded macro frontier');continue;}
+   const localBindings=simpleBase64LocalBindings(rows.slice(body+1,-1),bindings);if(localBindings.reason){stop(localBindings.reason);continue;}
    for(let at=body+1;at<rows.length-1;at++){
     if(rows[at].text==='::'&&at>body+1&&['ident','number'].includes(rows[at-1]?.type))continue;
     if(rows[at].text==='base64'&&['::','.','#'].includes(rows[at-1]?.text))continue;
@@ -94,7 +90,9 @@ function fileProposal(source,modules,all,profile,context,nonTrait,progress=null)
  }
  edits.sort((a,b)=>a.span[0]-b.span[0]);for(let at=1;at<edits.length;at++)if(edits[at-1].span[1]>edits[at].span[0])fail('overlap');
  if(progress)progress({stage:'project-serialize',state:'start',source:file,phase:'base64-edited-CST-roundtrip'});
- const applied=applyConcreteSyntaxSubstitutions(before.document,{languageRules:[{id:'base64:concrete-native-unit-binding-and-once-only-argument',edits:[]}],repositoryRules:[{id:'router-core:adopt-qualified-owned-base64',edits}]}),after=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(applied.value)),mapping=[];let old=0,current=0;
+ const nativePrefix='::translation_compatibility_core::',repositoryPrefix='crate::translation_core::',languageEdits=edits.map(edit=>{if(!edit.replacement.startsWith(repositoryPrefix))fail('actual selected compatibility operation prefix differs');return {...edit,replacement:nativePrefix+edit.replacement.slice(repositoryPrefix.length)};}),repositoryEdits=[];let languageDelta=0;
+ for(let at=0;at<edits.length;at++){const original=edits[at],selected=languageEdits[at],start=original.span[0]+languageDelta;repositoryEdits.push({span:[start,start+nativePrefix.length],expected:nativePrefix,replacement:repositoryPrefix});languageDelta+=selected.replacement.length-(original.span[1]-original.span[0]);}
+ const applied=applyConcreteSyntaxSubstitutions(before.document,{languageRules:[{id:'base64:concrete-native-unit-binding-and-once-only-argument',edits:languageEdits}],repositoryRules:[{id:'router-core:adopt-qualified-owned-base64',edits:repositoryEdits}]}),after=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(applied.value)),mapping=[];let old=0,current=0;
  if(progress)progress({stage:'project-serialize',state:'end',source:file,phase:'base64-edited-CST-roundtrip'});
  if(progress)progress({stage:'project-serialize',state:'start',source:file,phase:'base64-whole-source-inverse'});
  for(const edit of edits){if(edit.span[0]>old){const length=edit.span[0]-old;mapping.push({kind:'unchanged',before:[old,edit.span[0]],after:[current,current+length]});current+=length;}mapping.push({kind:'substitution',before:edit.span,after:[current,current+edit.replacement.length],expected:edit.expected,replacement:edit.replacement});current+=edit.replacement.length;old=edit.span[1];}if(old<source.length)mapping.push({kind:'unchanged',before:[old,source.length],after:[current,current+source.length-old]});let restored=after.source;for(const row of [...mapping].reverse())if(row.kind==='substitution')restored=restored.slice(0,row.after[0])+row.expected+restored.slice(row.after[1]);if(restored!==source)fail('full inverse changed');

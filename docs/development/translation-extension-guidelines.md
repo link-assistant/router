@@ -634,3 +634,11 @@ Unconstrained slots cannot borrow global aliases. Rebind operation queries in
 constraints/defaults as well as the alias body after source-unit edits, then
 recheck the whole target. See the [bound/default draft](http-resource-type-bounds-draft.md);
 all new source/receiving qualification remains unrun.
+
+The [base64 local/borrowed-value draft](base64-local-values-draft.md) shares only
+source-selection DATA between the ordinary and source-bound adopters. Preserve
+the complete actual borrowed operand, use neutral language substitutions before
+repository facade binding, rebase every selected span and retain whole CST and
+inverses. Immutable local admission cannot infer a local alias type or close an
+unproved Engine namespace; complete native/package/producer/method and eventual
+whole-function checks remain. Every new receiving/native case remains unrun.

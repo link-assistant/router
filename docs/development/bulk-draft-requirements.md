@@ -544,3 +544,11 @@ complete native token reproduction. Four whole equations and unrun original
 Rust/Boolean/u64/cold cancellation/strict TS/meta/inverse/refusal/native oracle
 sources are drafted. Broader native printer/control forms and every remaining
 source/native/production/sync/freshness/parity/delivery requirement stay open.
+
+The [base64 local/borrowed-value draft](base64-local-values-draft.md) shares
+concrete operand selection and an immutable-local census across both existing
+adopters and the fixed bulk stage, with actual language then repository source
+substitutions. Four complete equations and unrun source/comment/Unicode/shadow/
+namespace/bulk/fresh-project/strict TS/native oracle cases are drafted. Legacy
+trait closure and every remaining source/native/production/sync/freshness/
+parity/delivery requirement stay open.
