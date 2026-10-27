@@ -190,3 +190,5 @@ export {readTextBuilderBorrowedOperandSource} from './text-builder-operand-sourc
 export {proposeTextBuilderBorrowedOperandSource} from './text-builder-operand-source.mjs';
 
 export {forwardConditionalSourceStatements,forwardConditionalComparisonSource} from './forward-conditional-source.mjs';
+
+export {readClosedMatchArmSourceBounds} from './match-arm-source.mjs';

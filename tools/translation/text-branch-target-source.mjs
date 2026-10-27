@@ -11,6 +11,7 @@ export function createTextBranchTargetSource(tokens,{close}){
   tick(depth);if(start>=end)return;const first=tokens[start]?.text;
   if(first==='{'&&close(tokens,start)===end-1){tail(start,end-1,depth+1);return;}
   if(first==='('&&close(tokens,start)===end-1){expression(start+1,end-1,depth+1);return;}
+  if(first==='match'){const match=readClosedMatchArmSourceBounds(tokens,start,end,{close});if(!match)return;work+=match.visited;tick(depth);for(const arm of match.arms)expression(arm.expressionStart,arm.expressionEnd,depth+1);return;}
   if(first==='if'){
    let open=start+1;for(;open<end&&tokens[open].text!=='{';open++){tick(depth);if(['(','['].includes(tokens[open].text)){const last=close(tokens,open);if(last<open||last>=end)return;open=last;}}
    const last=close(tokens,open);if(last<open||tokens[last+1]?.text!=='else')return;const alternative=last+2;
@@ -21,8 +22,10 @@ export function createTextBranchTargetSource(tokens,{close}){
   }
   // Source candidates must consume their exact whole expected expression.
   // An opaque producer/macro/closure never gains context through this record.
-  if(['|','||','move','async','match','return','let','fn'].includes(first))return;
+  if(['|','||','move','async','return','let','fn'].includes(first))return;
   targets.set(tokens[start].start,end);
  }
  return {block(open,end){tail(open,end,0);},expression(start,end){expression(start,end,0);},matches(start,end){return targets.get(start)===end;}};
 }
+
+import {readClosedMatchArmSourceBounds} from './match-arm-source.mjs';

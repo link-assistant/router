@@ -258,3 +258,9 @@ loop/termination and work guards. Normalize only an otherwise block containing
 exactly one if for complete source comparison; declarations and other statements
 keep their lexical wrapper. Retain fresh whole-project target reproduction and
 refuse unsupported unbraced bodies. See [the unrun draft](forward-else-if-source-draft.md).
+
+Match target contexts require complete arm boundaries before any arm publishes a
+candidate. Keep binding/constructor/guard/macros out of a nonbinding pattern lane;
+qualified spellings and result annotations prove neither pattern types nor Into
+ownership, exhaustiveness or namespace closure. Reuse full original caller checks
+and source/CST inverses. See [the unrun source draft](match-text-target-source-draft.md).

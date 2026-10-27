@@ -510,3 +510,10 @@ normalizes only exact otherwise singleton-if comparison wrappers. Eleven complet
 equations and independent unrun eight-API/two-language/truth-vector/native/source/
 refusal/export cases are drafted. Wider language/namespace/production/translation/
 sync/freshness/parity/receiving/delivery requirements remain OPEN.
+
+The [closed match owning-text draft](match-text-target-source-draft.md) propagates
+explicit String source context into complete nonbinding arm tails using reusable
+closed pattern/arm bounds and original conversion rules. Four equations and
+independent unrun two-API/six-caller/thirteen-edit JS/strict TS/native/scope/refusal/
+export cases are drafted. Pattern binding/guard and all wider language/namespace/
+production/reverse/sync/freshness/parity/receiving/delivery requirements remain OPEN.
