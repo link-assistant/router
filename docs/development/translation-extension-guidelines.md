@@ -708,3 +708,10 @@ results can outlive a local receiver only through the full owning type checks,
 while borrowed interfaces retain every loan/escape restriction. Preserve all
 original native histories and both CST phases; see the
 [unrun owned text field draft](json-owned-text-field-source-draft.md).
+
+When a shared lexer combines Rust Try/dot punctuation, normalize only a scoped
+candidate view after checking exact original token kinds, UTF-16 spans and source
+bytes. Keep authoritative tokens/CST, literal contents and shared lexer unchanged.
+Preserve original refusal/work bounds, source inverses and full semantic checks;
+a split token grants no grammar, trait, ownership or executable authority. See
+the [unrun scoped token draft](rust-try-token-source-draft.md).

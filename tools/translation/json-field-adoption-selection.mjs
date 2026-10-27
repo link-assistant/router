@@ -5,7 +5,7 @@ import {readNativeCountLiteralSource,readFixedIntegerLiteralSource} from './nati
 import {createJsonFieldLocalSource} from './json-field-local-source.mjs';
 import {readTextAliasOperand} from './text-local-argument-source.mjs';
 export function selectJsonFieldAdoption(source,item,scoped,modulePath,names,helpers){
- const {originalDeclarationHeader,close,split,text,ident,macroAt}=helpers,tokens=item.tokens.filter(token=>token.type!=='comment'),header=originalDeclarationHeader(item,modulePath),name=tokens.findIndex(token=>token.start===header?.nameSpan?.start),edits=[],selections=[],skipped=[];
+ const {originalDeclarationHeader,close,split,text,ident,macroAt}=helpers,tokens=splitRustTryDotSourceTokens(item.tokens.filter(token=>token.type!=='comment'),source),header=originalDeclarationHeader(item,modulePath),name=tokens.findIndex(token=>token.start===header?.nameSpan?.start),edits=[],selections=[],skipped=[];
  const result=reason=>({edits,selections,skipped:reason?[...skipped,{function:item.name,reason}]:skipped});if(name<0||tokens.length>200000)return result('bounded original function required');
  let open=name+1;
  if(tokens[open]?.text==='<'){let end=open+1;while(end<tokens.length&&tokens[end].text!=='>')end++;const lifetimes=split(tokens.slice(open+1,end));if(!lifetimes.length||lifetimes.some(row=>row.length!==1||row[0].type!=='char'||!/^'[A-Za-z_][A-Za-z0-9_]*$/u.test(row[0].text)))return result('only original named lifetime parameters are admitted');open=end+1;}
@@ -64,3 +64,5 @@ export function selectJsonFieldAdoption(source,item,scoped,modulePath,names,help
 }
 
 import {readJsonReceiverWrittenSourceRole} from './json-receiver-source.mjs';
+
+import {splitRustTryDotSourceTokens} from './rust-try-token-source.mjs';

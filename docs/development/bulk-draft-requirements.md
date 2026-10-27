@@ -806,3 +806,10 @@ compiler equations and independent unrun8-ABI/24-caller/two-API/bulk/JS/strict T
 two-reverse-lane/interpreter/native lifetime/export source are drafted. Wider
 mapper/trait/callback forms and every source/native/production/sync/freshness/
 parity/delivery requirement remain unfinished.
+
+The [scoped Rust Try-token draft](rust-try-token-source-draft.md) adapts the exact
+shared lexer ?. token to a separate source-only Try/dot view for field and text
+selectors, retaining original UTF-16 spans, lexer and authoritative CST. Four
+complete compiler equations and independent unrun lexical/span/two-API/bulk/
+JS/strict TS/history/export source are drafted. Every wider source/native/
+production/sync/freshness/parity/delivery requirement remains unfinished.
