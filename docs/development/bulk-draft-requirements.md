@@ -512,3 +512,9 @@ cold resource branches and canonical Rust inverses. Three whole equations and
 unrun truth-table/order/strict TS/cold cancellation/deadline/source/meta/inverse/
 refusal/native oracle sources are drafted. Every remaining source/native/
 production/sync/freshness/parity/delivery requirement remains unfinished.
+
+The wrapping operation error-exit successor retains original source-read and
+callback failures while still executing every final freshness fence and cleanup.
+Two complete equations and unrun receiving simultaneous-error/nested-poisoning/
+null-throw/source-history cases are drafted. Every remaining source/native/
+production/sync/freshness/parity/delivery requirement remains unfinished.

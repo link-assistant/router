@@ -53,3 +53,11 @@ boundaries, every width and signedness, source/license/manifest changes, final
 checks, caught nested failure, cleanup, depth, callback errors and non-execution
 of accessors. Every receiving case, original wrapping/forward/strict TypeScript
 case, source equation and performance obligation remains unrun.
+
+A separate two-equation source successor preserves the primary thrown value
+when a final source fence also fails. Every fence still runs and invalidates its
+root, and every reference is cleared. If the callback succeeded, a failed final
+fence still prevents its result from escaping. Null/undefined throws retain
+their identity through a distinct failure flag. Additional receiving source
+cases cover source-read reasons, simultaneous callback/fence failures and caught
+nested errors with restored bytes; all remain unrun.
