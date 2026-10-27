@@ -19,3 +19,11 @@ import {readCoreCallbackCallSource} from './core-callback-call-source.mjs';
 export function readPrimitiveSourceBindingRole(domain){
  if(primitiveBitwiseType(domain)||['str','text-owned','bool'].includes(domain))return {kind:'payload',domain};if(typeof domain!=='string')return null;const found=/^(option|result):([a-z0-9-]+)$/u.exec(domain);if(!found)return null;const [,kind,payload]=found;if(!primitiveBitwiseType(payload)&&!['bool','str','text-owned',...(kind==='result'?['text']:[])].includes(payload))return null;return {kind,domain:payload};
 }
+
+// Mixed immutable local source roles preserve prerequisites for scalar callers.
+// A role remains DATA and supplies no native/source/semantic permission.
+export function readPrimitiveCoreRoleSource(rows,bindings){
+ if(!Array.isArray(rows)||!rows.length||rows.length>128)return null;const scope={get:name=>readPrimitiveSourceBindingRole(bindings.get(name))};let selected=readCoreCarrierCallSource(rows,scope)??readCoreCallbackCallSource(rows,scope)??readJsonFieldCallSource(rows,bindings),binding=null;
+ if(!selected&&rows.length===1){const row=rows[0];if(row.type==='ident'){selected=scope.get(row.text);if(selected)binding=row.text;}if(!selected&&row.type==='string'&&/^(?:"|r#{0,255}")/u.test(row.text))selected={kind:'payload',domain:'str'};if(!selected&&['true','false'].includes(row.text))selected={kind:'payload',domain:'bool'};}
+ if(!selected)return null;const encoded=selected.kind==='payload'?selected.domain:['option','result'].includes(selected.kind)?selected.kind+':'+selected.domain:null;if(!readPrimitiveSourceBindingRole(encoded))return null;return {kind:encoded,binding:selected.binding??binding,operation:selected.operation??null,bridge:'complete-mixed-immutable-core-role-source',sourceAuthority:false,semanticAuthority:false,executableAdmission:false};
+}

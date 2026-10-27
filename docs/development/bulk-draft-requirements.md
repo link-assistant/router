@@ -256,3 +256,10 @@ text adopters and chronological locals. Five equations and independent unrun
 two-API/eight-caller/domain/refusal/JS/strict TS/native/export source are drafted.
 Actual type/binding/Try/ownership checks stay independent and all unfinished
 namespace/production/reverse/sync/freshness/parity/delivery rows remain OPEN.
+
+The [callback parameter draft](callback-source-parameters-draft.md) shares closed
+temporary wrapper declarations and preserves mixed immutable carrier/text roles
+needed by numeric source consumers. Six equations and independent unrun width/
+domain/refusal/six-API/three-caller/JS/strict TS/native/export source are drafted.
+Actual capture/binding/type/ownership checks remain independent; all unfinished
+namespace/production/reverse/sync/freshness/parity/delivery rows remain OPEN.

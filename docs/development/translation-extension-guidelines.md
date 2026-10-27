@@ -899,3 +899,9 @@ including actual carrier payloads and borrowed/owning distinctions. Keep every
 real type/binding/Try/ownership check independent and preserve callback partitions
 and original source inverses. See the
 [unrun text carrier join draft](text-carrier-join-source-draft.md).
+
+Temporary callback wrappers must share closed source-role declarations and retain
+mixed local prerequisites across text and numeric body engines. Unsupported
+source roles must not become synthetic types through inherited object keys.
+These declarations prove no original type, capture or owning move. See the
+[unrun callback parameter draft](callback-source-parameters-draft.md).

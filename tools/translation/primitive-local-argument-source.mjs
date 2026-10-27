@@ -8,7 +8,7 @@ import {censusLocalAliasBindings} from './local-alias-binding-source.mjs';
 const fail=message=>{throw new TypeError('Primitive local argument source: '+message);};
 export function createPrimitiveLocalArgumentSource(rows,parameters,allParameters=new Set(parameters.keys()),{opaqueRegions=[]}={}){
  if(!rows.some(row=>row.text==='let'||row.text==='for')||!primitiveLocalCensus(rows,allParameters,opaqueRegions))return null;
- return createChronologicalLocalSource(rows,parameters,{...createWrittenLocalAliasRules({readWrittenDomain:readPrimitiveWrittenAliasDomain,readOperand:(operand,bindings,declared)=>readPrimitiveCoreCallSource(operand,bindings)??readPrimitiveLocalExpression(operand,bindings,{readAtom:readPrimitiveAliasOperand,declared}),acceptResult:event=>primitiveBitwiseType(event.returnsKind)?.name??null}),initializerSizes:[1,2,3],initializerEnd:primitiveLocalInitializerEnd,aliasKind:'complete-immutable-primitive-alias',resultKind:'complete-selected-primitive-result-alias',opaqueRegions});
+ return createChronologicalLocalSource(rows,parameters,{...createWrittenLocalAliasRules({readWrittenDomain:operand=>readPrimitiveWrittenAliasDomain(operand)??readPrimitiveCoreParameterSourceRole(operand),readOperand:(operand,bindings,declared)=>readPrimitiveCoreRoleSource(operand,bindings)??readPrimitiveLocalExpression(operand,bindings,{readAtom:readPrimitiveAliasOperand,declared}),acceptResult:event=>primitiveBitwiseType(event.returnsKind)?.name??null}),initializerSizes:[1,2,3],initializerEnd:primitiveLocalInitializerEnd,aliasKind:'complete-immutable-primitive-alias',resultKind:'complete-selected-primitive-result-alias',opaqueRegions});
 }
 
 const ident=token=>token?.type==='ident'&&/^[\p{ID_Start}_][\p{ID_Continue}_]*$/u.test(token.text);
@@ -24,4 +24,4 @@ export function readPrimitiveAliasOperand(rows,bindings,written=null){
 
 export function readPrimitiveWrittenAliasDomain(rows){const match=/^(?:(?:::)?(?:std|core)::primitive::)?([iu](?:8|16|32|64|128))$/u.exec(rows.map(row=>row.text).join(''));return match&&primitiveBitwiseType(match[1])?match[1]:null;}
 
-import {readPrimitiveCoreCallSource} from './primitive-core-call-source.mjs';
+import {readPrimitiveCoreCallSource,readPrimitiveCoreParameterSourceRole,readPrimitiveCoreRoleSource} from './primitive-core-call-source.mjs';
