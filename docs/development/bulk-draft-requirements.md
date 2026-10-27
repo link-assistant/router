@@ -689,3 +689,10 @@ actual physical source paths and all original native/source/semantic checks.
 Seven complete equations and unrun five-API/path/refusal/receiving JS/strict TS
 source is drafted. All wider source/native/production/sync/freshness/parity/
 delivery requirements remain unfinished.
+
+The [primitive initializer expression draft](primitive-local-expression-source-draft.md)
+adds bounded matching-native-domain expression DATA to the existing integer
+alias lane while preserving complete initializer bytes and all original checks.
+Four complete equations and unrun grammar/bounds/scope/two-API/bulk/JS/strict TS/
+export/native oracle source is drafted. Every wider source/native/production/
+sync/freshness/parity/delivery requirement remains unfinished.
