@@ -372,7 +372,7 @@ fn __ro_with_field(base: &crate::translation_core::Json, key: &str, value: &crat
 /** Prepare only the actual registered module, after fresh complete source joins. */
 export async function prepareOwnedCoreRuntime(input){
  const program=checkOwnedCoreProgram(input),modules={update:await import('../json-update-runtime.mjs'),macro:await import('../json-macro-runtime.mjs')};
- if(program.some(item=>item.hostCalls.some(call=>ownedPrimitiveOperatorOperation(call.name))))modules.primitive=await import('../extensions/primitive-operator-runtime.mjs');
+ if(program.some(item=>item.sourceNativeOperators?.length||item.hostCalls.some(call=>ownedPrimitiveOperatorOperation(call.name))))modules.primitive=await import('../extensions/primitive-operator-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedIntegerOperation(call.name))))modules.integer=await import('../integer-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedSseOperation(call.name))))modules.sse=await import('../sse-runtime.mjs');
  if(program.some(item=>item.ownedTextCopies||item.hostCalls.some(call=>ownedTextOperation(call.name))))modules.text=await import('../text-runtime.mjs');

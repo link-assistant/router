@@ -458,7 +458,7 @@ function checkFunction(context,path,declaration,analysis){
   params.push({name:sourceName,rust:rustName(sourceName),type});
  }
  // The complete available pair was selected before parameter domains.
- const hostCalls=[],byteInputs=new Set();
+ const nativeOperatorHistory=createOwnedNativeBitwiseHistory(),sourceNativeOperators=nativeOperatorHistory.rows,hostCalls=[],byteInputs=new Set();
  const branchScope=scope=>new Map([...scope].map(([key,value])=>[key,ownedBase64Result(value.type)?{...value}:value]));
  const mergeMoves=(scope,yes,no)=>{for(const [key,value]of scope)if(ownedBase64Result(value.type))value.moved=!!yes.get(key)?.moved||!!no.get(key)?.moved;};
  const refine=(scope,condition,truth)=>{
@@ -601,6 +601,7 @@ function checkFunction(context,path,declaration,analysis){
    hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});
    return {kind:'owned-call',name:binding.name,args,type:op.ret,root};
   }
+  const nativeBitwise=readOwnedNativeBitwiseExpression(ts,node,argument=>expression(argument,scope,depth+1),{enabled:nativeScalars});if(nativeBitwise){nativeOperatorHistory.retain(node,file,nativeBitwise);return nativeBitwise;}
   if(ts.isConditionalExpression(node)){
    const cond=expression(node.condition,scope,depth+1),a=refine(branchScope(scope),cond,true),b=refine(branchScope(scope),cond,false),yes=expression(node.whenTrue,a,depth+1),no=expression(node.whenFalse,b,depth+1);
    const loan=yes.type==='str'&&no.type==='str'?meetStringLoans(stringLoan(yes),stringLoan(no)):undefined;
@@ -691,8 +692,8 @@ function checkFunction(context,path,declaration,analysis){
  }
  if(params.some(param=>param.type==='bytes-ref'&&!byteInputs.has(param.name)))fail('octet input requires an actual fixed base64 operand');
  if(params.some(param=>param.type==='json-option-input'&&!hostCalls.some(call=>ownedJsonOptionalReaderOperation(call.name)&&call.inputRoot===param.name)))fail('opaque optional Json input requires validation');
- if(!hostCalls.length)fail('no actual owned-core call');
- const item={kind:'owned-function',name,javascript:declaration.name.text,exported:!!declaration.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword),params,returns:resultType,resultRoot,body:checked.body,source:{path,source,span:[declaration.getStart(file),declaration.end]},hostCalls};
+ if(!hostCalls.length&&!sourceNativeOperators.length)fail('no actual owned-core call');
+ const item={kind:'owned-function',name,javascript:declaration.name.text,exported:!!declaration.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword),params,returns:resultType,resultRoot,body:checked.body,source:{path,source,span:[declaration.getStart(file),declaration.end]},...(sourceNativeOperators.length?{sourceNativeOperators}:{}),hostCalls};
  if(paired)item.pairedSource={path:paired.pair.typescript.path,source:paired.pair.typescript.source,span:paired.evidence.typescriptSpan,parameters:paired.evidence.parameters,locals:paired.evidence.locals,returnSpan:paired.evidence.returnSpan,erasure:paired.pair.erasure.edits};
  requireOwnedCoreSourceCurrent(context);return item;
 }
@@ -747,3 +748,5 @@ import {ownedParenthesizedType} from './owned-type-parentheses.mjs';
 import {ownedNativeScalarDeclaration} from './owned-native-scalar-declaration.mjs';
 
 import {ownedNativeIntegerDomain,joinOwnedNativeScalarOperands} from './owned-native-scalar-flow.mjs';
+
+import {readOwnedNativeBitwiseExpression,createOwnedNativeBitwiseHistory} from './owned-native-bitwise-source.mjs';

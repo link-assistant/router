@@ -452,3 +452,11 @@ inverses and whole-project synchronization. Seventeen source equations and unrun
 width/ordering/constant/meta/strict TS/inverse/sync/refusal/native oracle cases
 are drafted. All remaining source/native/production/sync/freshness/parity/delivery
 requirements remain unfinished.
+
+The [ordinary native bitwise draft](native-bitwise-expressions-draft.md) lowers
+actual source-bound fixed BigInt expressions in seven private checkers and
+compound assignments in three existing mutable profiles, without forging host
+imports. Sixteen compiler equations and unrun width/profile/boundary/alias/
+public-module/inverse/refusal/tamper sources are drafted. Native caller/global
+closure and all remaining source/production/sync/freshness/parity/delivery
+requirements remain unfinished.
