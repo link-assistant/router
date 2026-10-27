@@ -5,7 +5,7 @@ const fail=message=>{throw new TypeError('Resource original local annotation: '+
 function requireContext(node,context){if(!context||node.getSourceFile()!==context.file||!Array.isArray(context.erase))fail('complete original native annotation context required');}
 function read(ts,written,imports,context,tick,numericDomain){return createHttpResourceWrittenAnnotationReader(ts,imports,tick,{aliases:context.aliases,coldTypeCurrent:context.coldTypeCurrent,numericDomain})(written);}
 function requireType(ts,written,type,imports,context,tick){
- const resolved=resolveHttpResourceTypeAlias(ts,written,context.aliases,tick),primitive=resolved.kind===ts.SyntaxKind.StringKeyword?['str','text-owned'].includes(type):resolved.kind===ts.SyntaxKind.BigIntKeyword?['u64','i64'].includes(type):resolved.kind===ts.SyntaxKind.BooleanKeyword?type==='bool':ts.isLiteralTypeNode(resolved)&&resolved.literal.kind===ts.SyntaxKind.NullKeyword?type==='unit':false;
+ const resolved=resolveHttpResourceTypeAlias(ts,written,context.aliases,tick),primitive=resolved.kind===ts.SyntaxKind.StringKeyword?['str','text-owned'].includes(type):resolved.kind===ts.SyntaxKind.BigIntKeyword?resourceInteger(type):resolved.kind===ts.SyntaxKind.BooleanKeyword?type==='bool':ts.isLiteralTypeNode(resolved)&&resolved.literal.kind===ts.SyntaxKind.NullKeyword?type==='unit':false;
  if(primitive)return;const actual=read(ts,written,imports,context,tick,type);if(actual.kind!=='domain'||actual.type!==type)fail('written type must preserve the complete independently checked native value domain');
 }
 function docSource(ts,written,context){
@@ -14,7 +14,7 @@ function docSource(ts,written,context){
 }
 function retainDoc(ts,written,context){if(context.language!=='TypeScript'||!context.aliases?.size)return;const span=[written.getStart(context.file),written.end],replacement=docSource(ts,written,context),previous=context.erase.find(row=>row.span[0]===span[0]&&row.span[1]===span[1]);if(previous){if(previous.replacement!==replacement)fail('one original doc span cannot acquire differing target spellings');return;}context.erase.push({span,replacement});}
 export function httpResourceWrittenNumericDomain(ts,written,owner,imports,context,tick,fallback=null){
- if(!written)return fallback;requireContext(owner,context);const actual=read(ts,written,imports,context,tick,fallback);return actual.kind==='domain'&&['u64','i64'].includes(actual.type)?actual.type:fallback;
+ if(!written)return fallback;requireContext(owner,context);const actual=read(ts,written,imports,context,tick,fallback);return actual.kind==='domain'&&resourceInteger(actual.type)?actual.type:fallback;
 }
 export function httpResourceLocalNumericDomain(ts,declaration,imports,context,tick,fallback=null){return httpResourceWrittenNumericDomain(ts,declaration.type??ts.getJSDocType(declaration),declaration,imports,context,tick,fallback);}
 export function captureHttpResourceLocalAnnotation(ts,declaration,type,imports,context,tick){
@@ -40,3 +40,5 @@ export function captureHttpResourceTypeWrapper(ts,node,type,imports,context,tick
 
 // Shared source-obligation helpers; neither result is executable authority.
 export {requireType as requireHttpResourceWrittenValueType,docSource as httpResourceWrittenDocSource};
+
+import {resourceInteger} from './http-resource-integer-domains.mjs';

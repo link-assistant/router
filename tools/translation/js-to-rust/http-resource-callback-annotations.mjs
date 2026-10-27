@@ -23,7 +23,7 @@ export function createHttpResourceWrittenAnnotationReader(ts,imports,tick,{alias
  }
  function describe(type,depth=0,bindings=null){
   tick();if(!type||depth>32)fail('complete bounded original callback type required');if(ts.isParenthesizedTypeNode(type))return describe(type.type,depth+1,bindings);
-  const primitive=new Map([[ts.SyntaxKind.StringKeyword,'str'],[ts.SyntaxKind.BooleanKeyword,'bool'],[ts.SyntaxKind.BigIntKeyword,numericDomain==='i64'?'i64':'u64']]);if(primitive.has(type.kind))return domain(primitive.get(type.kind));
+  const primitive=new Map([[ts.SyntaxKind.StringKeyword,'str'],[ts.SyntaxKind.BooleanKeyword,'bool'],[ts.SyntaxKind.BigIntKeyword,resourceInteger(numericDomain)?numericDomain:'u64']]);if(primitive.has(type.kind))return domain(primitive.get(type.kind));
   if(ts.isLiteralTypeNode(type)&&type.literal.kind===ts.SyntaxKind.NullKeyword)return domain('unit');
   if(ts.isTypeReferenceNode(type)&&ts.isIdentifier(type.typeName)&&type.typeName.text==='Awaited'&&type.typeArguments?.length===1){const actual=describe(type.typeArguments[0],depth+1,bindings);if(!['future','native-promise','thenable'].includes(actual.kind)||actual.value?.kind!=='domain')fail('Awaited requires its actual imported operation future domain');return actual.value;}
   const slot=httpResourceTypeAliasSlot(ts,type,bindings);if(slot)return describe(slot.node,depth+1,slot.bindings);
@@ -58,3 +58,5 @@ import {httpResourceTypeAliasBindings,httpResourceTypeAliasSlot} from './http-re
 import {httpResourceOwnedSignatureDomain} from './http-resource-public-domains.mjs';
 
 import {httpResourceGenericCarrierByFamily,httpResourceGenericCarrierDomain} from './http-resource-generic-carriers.mjs';
+
+import {resourceInteger} from './http-resource-integer-domains.mjs';

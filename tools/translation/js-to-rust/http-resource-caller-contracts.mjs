@@ -43,9 +43,12 @@ export function httpResourceResultOwnsDisposal(type,depth=0){if(depth>8)throw ne
 export function httpResourceCallerRustType(type,{borrowedLifetime=false}={},depth=0){
  if(depth>8)throw new TypeError('Closed HTTP resource type nesting bound');if(type.startsWith('optional:'))return 'Option<'+httpResourceCallerRustType(type.slice(9),{borrowedLifetime},depth+1)+'>';const result=httpResourceResult(type);if(result)return 'Result<'+httpResourceCallerRustType(result.value,{borrowedLifetime},depth+1)+', '+(result.error==='control'?'crate::translation_async_control_core::ControlError':result.error==='io'?'::std::io::Error':'String')+'>';
  const lifetime=borrowedLifetime?"'a ":'',table={'cancel-owned':'crate::translation_async_control_core::Cancellation','cancel-ref':'&'+lifetime+'crate::translation_async_control_core::Cancellation','sender-owned':'crate::translation_async_control_core::Sender','sender-ref':'&'+lifetime+'crate::translation_async_control_core::Sender','receiver-owned':'crate::translation_async_control_core::Receiver','receiver-mut':'&'+lifetime+'mut crate::translation_async_control_core::Receiver','http-client-owned':'crate::translation_http_transport_core::Client','http-client-ref':'&'+lifetime+'crate::translation_http_transport_core::Client','http-client-mut':'&'+lifetime+'mut crate::translation_http_transport_core::Client','http-stream-owned':'crate::translation_http_transport_core::Stream','http-stream-ref':'&'+lifetime+'crate::translation_http_transport_core::Stream','http-stream-mut':'&'+lifetime+'mut crate::translation_http_transport_core::Stream',json:'crate::translation_core::Json','json-ref':'&'+lifetime+'crate::translation_core::Json','json-list-owned':'::std::vec::Vec<crate::translation_core::Json>','json-list-ref':'&'+lifetime+'[crate::translation_core::Json]','bytes-owned':'::std::vec::Vec<u8>','bytes-ref':'&'+lifetime+'[u8]','text-owned':'String','channel-pair':'(crate::translation_async_control_core::Sender, crate::translation_async_control_core::Receiver)','option-text':'Option<String>',unit:'()',bool:'bool',i64:'i64',str:'&'+lifetime+'str',u64:'u64'};
+ if(resourceInteger(type))return type;
  if(!Object.hasOwn(table,type))throw new TypeError('Unsupported HTTP resource type domain');return table[type];
 }
 
 import {GENERIC_OPTION_SIGNATURE_CONTRACT} from '../generic-option-source-fragments.mjs';
 
 import {GENERIC_TEXT_RESULT_SIGNATURE_CONTRACT} from '../generic-text-result-source-fragments.mjs';
+
+import {resourceInteger} from './http-resource-integer-domains.mjs';

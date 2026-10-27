@@ -3,13 +3,13 @@
 // and every actual operation, state and source binding still check afterward.
 const fail=message=>{throw new TypeError('Resource original numeric constraints: '+message);};
 export function collectHttpResourceNumericHints(ts,statements,{bindings,imports,localFunctions,contract,numericReturnDomain,tick,inlineExpression=null}){
- const hints=new Map(),edges=[],constraints=[];let nodes=0;
- for(const [name,row]of bindings)if(['u64','i64'].includes(row.type))hints.set(name,row.type);
+ const hints=new Map(),edges=[],constraints=[],defaults=[];let nodes=0;
+ for(const [name,row]of bindings)if(resourceInteger(row.type))hints.set(name,row.type);
  const unwrap=node=>{let depth=0;while(node&&ts.isParenthesizedExpression(node)){tick();if(++depth>160)fail('complete native grouping bound');node=node.expression;}return node;};
  const operation=node=>{node=unwrap(node);const callee=node&&ts.isCallExpression(node)?selectHttpResourceCallableSource(ts,node.expression,tick):null;return callee&&ts.isIdentifier(callee)?imports.has(callee.text)?contract(imports.get(callee.text)):localFunctions?.get(callee.text):null;};
- const numeric=type=>['u64','i64'].includes(type)?type:null;
+ const numeric=type=>resourceInteger(type)?type:null;
  function impose(node,type,depth=0){tick();if(depth>160)fail('complete conditional numeric constraint depth bound');node=unwrap(node);if(!numeric(type)||!node)return;if(ts.isIdentifier(node))constraints.push([node.text,type]);else if(ts.isConditionalExpression(node)){impose(node.whenTrue,type,depth+1);impose(node.whenFalse,type,depth+1);}}
- function connect(left,right){left=unwrap(left);right=unwrap(right);if(!left||!right)return;if(ts.isIdentifier(left)&&ts.isIdentifier(right))edges.push([left.text,right.text]);const row=operation(right);if(row)impose(left,row.ret);if(ts.isPrefixUnaryExpression(right)&&right.operator===ts.SyntaxKind.MinusToken&&ts.isBigIntLiteral(right.operand))impose(left,'i64');}
+ function connect(left,right){left=unwrap(left);right=unwrap(right);if(!left||!right)return;if(ts.isIdentifier(left)&&ts.isIdentifier(right))edges.push([left.text,right.text]);const row=operation(right);if(row)impose(left,row.ret);if(ts.isPrefixUnaryExpression(right)&&right.operator===ts.SyntaxKind.MinusToken&&ts.isBigIntLiteral(right.operand)){if(ts.isIdentifier(left))defaults.push([left.text,'i64']);}}
  function visit(node,depth=0){
   tick();if(++nodes>100000||depth>160)fail('complete original numeric constraint census bound');
   if(ts.isArrowFunction(node)||ts.isFunctionDeclaration(node)||ts.isFunctionExpression(node))return;
@@ -25,8 +25,10 @@ export function collectHttpResourceNumericHints(ts,statements,{bindings,imports,
  for(const statement of statements)visit(statement);if(inlineExpression){impose(inlineExpression,numericReturnDomain);visit(inlineExpression);}
  const assign=(name,type)=>{const previous=hints.get(name);if(previous&&previous!==type)fail('one actual lexical numeric binding cannot require conflicting native integer domains');if(previous)return false;hints.set(name,type);if(hints.size>8192)fail('complete numeric binding constraint bound');return true;};
  for(const [name,type]of constraints)assign(name,type);
- let changed=true,round=0;while(changed){tick();if(++round>8192)fail('complete finite numeric constraint convergence bound');changed=false;for(const [left,right]of edges){tick();if(hints.has(left))changed=assign(right,hints.get(left))||changed;if(hints.has(right))changed=assign(left,hints.get(right))||changed;}}
+ let round=0;function settle(){let changed=true;while(changed){tick();if(++round>8192)fail('complete finite numeric constraint convergence bound');changed=false;for(const [left,right]of edges){tick();if(hints.has(left))changed=assign(right,hints.get(left))||changed;if(hints.has(right))changed=assign(left,hints.get(right))||changed;}}}settle();let defaulted=false;for(const [name,type]of defaults)if(!hints.has(name))defaulted=assign(name,type)||defaulted;if(defaulted)settle();
  return hints;
 }
 
 import {selectHttpResourceCallableSource} from './http-resource-source-grouping.mjs';
+
+import {resourceInteger} from './http-resource-integer-domains.mjs';

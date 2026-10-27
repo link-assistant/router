@@ -94,10 +94,10 @@ export class HttpResourceRustReader {
   if(this.eat('||'))return {kind:'typed-lambda',parameters:[],body:this.block(environment,depth+1)};
   if(this.is('|')&&this.peek(1).type==='ident'&&this.is(':',2)){this.expect('|');const parameters=[];while(!this.eat('|')){const name=this.identifier();this.expect(':');const type=this.typeUntil([',','|']);parameters.push({name,type});if(!this.is('|'))this.expect(',');}const asynchronous=this.eat('async'),futureMoved=asynchronous&&this.eat('move');return {kind:asynchronous?'typed-async-lambda':'typed-lambda',parameters,...(asynchronous?{futureMoved}:{}),body:this.block(new Map(),depth+1)};}
   if(this.is('move')||this.is('|')){const moved=this.eat('move');this.expect('|');const parameters=[];while(!this.eat('|')){parameters.push(this.identifier());if(!this.is('|'))this.expect(',');}const asynchronous=this.eat('async'),futureMoved=asynchronous&&this.eat('move');return {kind:asynchronous?'async-lambda':'lambda',parameters,moved,futureMoved,body:this.block(environment,depth+1)};}
-  if(this.eat('-')){const token=this.next(),found=token.type==='number'&&/^(0|[1-9][0-9]{0,18})_i64$/u.exec(token.text);if(!found||BigInt(found[1])>9223372036854775808n)fail('canonical bounded negative i64 literal required');return {kind:'integer',value:(-BigInt(found[1])).toString(),type:'i64'};}
+  if(this.eat('-')){const token=this.next(),found=token.type==='number'&&/^(0|[1-9][0-9]{0,38})_([iu](?:8|16|32|64|128))$/u.exec(token.text),value=found?resourceIntegerLiteral(found[1]+'n',true,found[2]):null;if(value===null)fail('canonical bounded negative fixed-width literal required');return {kind:'integer',value,type:found[2]};}
   const token=this.peek();
   if(token.type==='string'){this.next();return {kind:'string',value:ownedRustString(token.text)};}
-  if(token.type==='number'){this.next();const found=/^(0|[1-9][0-9]*)_(u64|i64)$/u.exec(token.text);if(!found||found[1].length>20||BigInt(found[1])>(found[2]==='i64'?9223372036854775807n:18446744073709551615n))fail('canonical bounded suffixed integer required');return {kind:'integer',value:found[1],type:found[2]};}
+  if(token.type==='number'){this.next();const found=/^(0|[1-9][0-9]{0,38})_([iu](?:8|16|32|64|128))$/u.exec(token.text),value=found?resourceIntegerLiteral(found[1]+'n',false,found[2]):null;if(value===null)fail('canonical bounded suffixed integer required');return {kind:'integer',value,type:found[2]};}
   if(this.eat('true'))return {kind:'boolean',value:true};if(this.eat('false'))return {kind:'boolean',value:false};
   const path=this.path();
   if(path==='::std::vec!'){this.expect('[');if(this.peek().type==='number'&&/_u8$/u.test(this.peek().text)){const values=[];while(!this.eat(']')){this.tick(depth+1);if(values.length>=4096)fail('complete native octet literal element bound');const token=this.next(),found=token.type==='number'&&/^(0|[1-9][0-9]{0,2})_u8$/u.exec(token.text);if(!found||BigInt(found[1])>255n)fail('complete native canonical octet literal required');values.push(found[1]);if(!this.is(']'))this.expect(',');}return {kind:'bytes-literal',values};}const elements=[];while(!this.eat(']')){if(elements.length>=4096)fail('complete native owned JSON list element bound');elements.push(this.expression(environment,0,depth+1));if(!this.is(']'))this.expect(',');}return {kind:'json-list-literal',elements};}
@@ -115,3 +115,5 @@ export class HttpResourceRustReader {
  }
 }
 export function readHttpResourceRustFunction(source){if(typeof source!=='string'||source.length>2097152)fail('bounded complete original Rust function required');return new HttpResourceRustReader(rustTokens(source)).function();}
+
+import {resourceIntegerLiteral} from './http-resource-integer-domains.mjs';

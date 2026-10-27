@@ -338,3 +338,10 @@ format macro inverse, retaining whole-source fresh reproduction and owned-text
 loans. Five equations and independent unrun nine-caller JS/strict TS/native/source/
 meta/refusal/export cases are drafted. Wider fixed-width reverse, formatting,
 namespace/production/sync/freshness/parity/delivery requirements remain OPEN.
+
+The [resource scalar integer draft](resource-integer-domains-source-draft.md)
+shares all ten actual fixed-width scalar domains across original guards, source
+constraints, literal bounds, operation signatures and native inverses. Seventeen
+equations and unrun23-caller/JS/strict TS/width/guard/refusal/native/export cases
+are drafted. Wider numeric container inputs/loops and every remaining namespace,
+production/reverse/sync/freshness/parity/delivery requirement remain OPEN.

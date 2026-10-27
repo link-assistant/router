@@ -969,3 +969,9 @@ Reverse primitive formatting must check the actual original native AST/file and
 closed scalar argument, borrow owned text without moving it, and retain complete
 fresh JS/meta/Rust reproduction. Source metadata cannot replace callee/type/owner
 checks. See [the unrun reverse display draft](reverse-primitive-display-source-draft.md).
+
+All fixed-width reverse scalar domains require original exact native range and
+error guards; written aliases and source hints cannot supply them. Settle actual
+binding/call/return constraints before negative defaults, keep shared whole-source
+bounds and fresh native inverses, and retain wider container/loop refusals until
+implemented. See [the unrun scalar domain draft](resource-integer-domains-source-draft.md).

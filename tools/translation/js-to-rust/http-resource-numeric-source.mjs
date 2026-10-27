@@ -13,10 +13,10 @@ function originalGuards(ts,statements,file,parameters,parameterType=null){
   const primitive=unparenthesized(ts,left.left),lower=unparenthesized(ts,left.right),upper=right;
   if(!ts.isBinaryExpression(primitive)||primitive.operatorToken.kind!==ts.SyntaxKind.ExclamationEqualsEqualsToken||!ts.isTypeOfExpression(primitive.left)||!ts.isIdentifier(primitive.left.expression)||!ts.isStringLiteral(primitive.right)||primitive.right.text!=='bigint')break;
   const name=primitive.left.expression.text;
-  const signed=ts.isBinaryExpression(lower)&&ts.isPrefixUnaryExpression(lower.right)&&lower.right.operator===ts.SyntaxKind.MinusToken&&ts.isBigIntLiteral(lower.right.operand)&&lower.right.operand.text==='9223372036854775808n',type=signed?'i64':'u64',minimum=signed?'-9223372036854775808':'0',maximum=signed?'9223372036854775807':'18446744073709551615';
-  if(!parameters.has(name)||names.has(name)||!ts.isBinaryExpression(lower)||lower.operatorToken.kind!==ts.SyntaxKind.LessThanToken||!ts.isIdentifier(lower.left)||lower.left.text!==name||(!signed&&(!ts.isBigIntLiteral(lower.right)||lower.right.text!=='0n'))||!ts.isBinaryExpression(upper)||upper.operatorToken.kind!==ts.SyntaxKind.GreaterThanToken||!ts.isIdentifier(upper.left)||upper.left.text!==name||!ts.isBigIntLiteral(upper.right)||upper.right.text!==maximum+'n')fail('complete actual same-parameter native integer range condition required');
+  const range=observeResourceIntegerGuardBounds(ts,ts.isBinaryExpression(lower)?lower.right:null,ts.isBinaryExpression(upper)?upper.right:null),{type,minimum,maximum}=range;
+  if(!parameters.has(name)||names.has(name)||!ts.isBinaryExpression(lower)||lower.operatorToken.kind!==ts.SyntaxKind.LessThanToken||!ts.isIdentifier(lower.left)||lower.left.text!==name||!ts.isBinaryExpression(upper)||upper.operatorToken.kind!==ts.SyntaxKind.GreaterThanToken||!ts.isIdentifier(upper.left)||upper.left.text!==name||!ts.isBigIntLiteral(upper.right)||upper.right.text!==maximum+'n')fail('complete actual same-parameter native integer range condition required');
   const body=ts.isBlock(statement.thenStatement)?statement.thenStatement.statements:[statement.thenStatement];if(body.length!==1||!ts.isThrowStatement(body[0]))fail('one complete invalid-domain throw required');const error=body[0].expression;
-  if(!ts.isNewExpression(error)||!ts.isIdentifier(error.expression)||error.expression.text!=='RangeError'||error.typeArguments?.length||error.arguments?.length!==1||!ts.isStringLiteral(error.arguments[0])||error.arguments[0].text!==(type==='i64'?RESOURCE_I64_GUARD_MESSAGE:CONTROL_U64_GUARD_MESSAGE))fail('complete canonical u64 domain error required');
+  if(!ts.isNewExpression(error)||!ts.isIdentifier(error.expression)||error.expression.text!=='RangeError'||error.typeArguments?.length||error.arguments?.length!==1||!ts.isStringLiteral(error.arguments[0])||error.arguments[0].text!==range.message)fail('complete canonical u64 domain error required');
   const span={start:statement.getStart(file),end:statement.end};records.push({name,type,span,source:file.text.slice(span.start,span.end),minimum,maximum,sourceAuthority:false,semanticAuthority:false});names.add(name);
  }
  return {statements:statements.slice(at),records};
@@ -32,10 +32,12 @@ export function selectHttpResourceNumericCallerBody(ts,item,imports,file,contrac
  }
  if(new Set(records.map(row=>row.name)).size!==records.length)fail('one complete entry guard per numeric parameter');return {statements,lazy,allowColdTail,inputGuards:records};
 }
-export function emitHttpResourceNumericGuards(parameters){return parameters.map(({name,type})=>httpResourceNumericContainerGuardDomain(type)?emitHttpResourceNumericContainerGuard({name,type}):type==='i64'?'if (typeof '+name+' !== \"bigint\" || '+name+' < -9223372036854775808n || '+name+' > 9223372036854775807n) { throw new RangeError('+JSON.stringify(RESOURCE_I64_GUARD_MESSAGE)+'); }':'if (typeof '+name+' !== "bigint" || '+name+' < 0n || '+name+' > 18446744073709551615n) { throw new RangeError('+JSON.stringify(CONTROL_U64_GUARD_MESSAGE)+'); }').join('\n');}
+export function emitHttpResourceNumericGuards(parameters){return parameters.map(row=>httpResourceNumericContainerGuardDomain(row.type)?emitHttpResourceNumericContainerGuard(row):emitResourceIntegerGuard(row)).join('\n');}
 
 export const RESOURCE_I64_GUARD_MESSAGE='Resource i64 input outside native range';
 
 import {observeHttpResourceNumericContainerGuard,emitHttpResourceNumericContainerGuard,httpResourceNumericContainerGuardDomain} from './http-resource-container-guards.mjs';
 
 import {selectHttpResourceCallableSource} from './http-resource-source-grouping.mjs';
+
+import {observeResourceIntegerGuardBounds,emitResourceIntegerGuard} from './http-resource-integer-domains.mjs';
