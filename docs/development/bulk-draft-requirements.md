@@ -428,3 +428,10 @@ receiver order, same-local reinitialization and complete unsupported-function
 refusals. Three equations and independent unrun two APIs/five callers/nine edits/
 JS/strict TS/native/refusal/export source are drafted. Wider suffixes/aliases/
 capacity/owner closure, production, reverse/sync/freshness/parity/delivery remain OPEN.
+
+The [literal character builder draft](text-builder-character-source-draft.md)
+reuses the original Unicode scalar decoder and layered scalar/statement inverses
+for literal String push. Two equations and independent unrun two APIs/seven
+callers/JS/strict TS/native/scalar/refusal/export source are drafted. Character
+variables, wider builder and all namespace/production/reverse/sync/freshness/
+parity/receiving/delivery requirements remain OPEN.

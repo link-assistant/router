@@ -195,3 +195,7 @@ Mutable String builder proposals require a complete receiver-use census and
 whole-function refusal on unsupported aliases/mutations/suffixes. Preserve original
 order and false owner/drop flags; no allocator/capacity/runtime parity is implied.
 See [the unrun builder draft](text-builder-source-draft.md).
+
+Character builder substitutions must use the original scalar decoder and retain
+both literal normalization and whole statement inverses. Byte/variable/wrong-
+arity refusals remain; see [the unrun character builder draft](text-builder-character-source-draft.md).
