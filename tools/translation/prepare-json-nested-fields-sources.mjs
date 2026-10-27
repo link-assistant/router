@@ -2,9 +2,10 @@ import {fileURLToPath} from 'node:url';
 import {resolve} from 'node:path';
 import {prepareNativeSubstitutionCopy,writeNativeSubstitutionCopy,withNativeSubstitutionOperation,nativeSubstitutionCopyHasChanges} from './prepare-native-substitution-copy.mjs';
 import {prepareNativeRustFunctionCopies} from './native-rust-function-copies.mjs';
+import {prepareJsonOwnedTextFieldNativeSource} from './prepare-json-owned-text-field-sources.mjs';
 import {prepareJsonFieldStageJoinSources} from './prepare-json-field-stage-join-sources.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
-export function prepareJsonNestedFieldsNativeSource({root=ROOT}={}){return prepareNativeRustFunctionCopies({root,archive:'tools/translation/source-profiles/json-nested-fields-source/complete-native-template-rules.json.gz',pin:'1bd55eddda06be091a70c062761dc219a0eb450d4bfe2fdd535f231e8ee27c04',id:'router:json-nested-fields-native-function-copies-v1'});}
+export function prepareJsonNestedFieldsNativeSource({root=ROOT}={}){return prepareNativeRustFunctionCopies({root,archive:'tools/translation/source-profiles/json-nested-fields-source/complete-native-template-rules.json.gz',pin:'1bd55eddda06be091a70c062761dc219a0eb450d4bfe2fdd535f231e8ee27c04',id:'router:json-nested-fields-native-function-copies-v1',laterPlans:[prepareJsonOwnedTextFieldNativeSource({root})]});}
 export function prepareJsonNestedFieldsSources({root=ROOT}={}){
  return withNativeSubstitutionOperation(()=>prepareNativeSubstitutionCopy({root,archive:'tools/translation/source-profiles/json-nested-fields-source/complete-originals-and-rules.json.gz',pin:'efe4b97ab02be5649fd7e04a743cdc0bc64d1551e29dec90dd19880e1af81e29',id:'router:json-nested-fields-source-complete-source-substitutions-v1',laterPlans:[prepareJsonNestedFieldsNativeSource({root}),prepareJsonFieldStageJoinSources({root})]}));
 }

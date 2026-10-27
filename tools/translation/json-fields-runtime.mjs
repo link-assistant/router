@@ -57,3 +57,13 @@ export const router_field_json_u64_field4=(value,key,second,third,fourth)=>then(
 export const router_field_json_u64_field4_or=(value,key,second,third,fourth,other)=>option_u64_or(then(nestedFields(value,[key,second,third,fourth]),unsigned),other);
 export const router_field_json_i64_field4=(value,key,second,third,fourth)=>then(nestedFields(value,[key,second,third,fourth]),signed);
 export const router_field_json_i64_field4_or=(value,key,second,third,fourth,other)=>option_i64_or(then(nestedFields(value,[key,second,third,fourth]),signed),other);
+
+// Same immutable string ABI; native ownership comes from checked actual calls.
+export const router_field_json_text_field=(value,key)=>then(field(value,key),string);
+export const router_field_json_text_field_or_empty=(value,key)=>{const selected=then(field(value,key),string);return selected.$==='Some'?selected.field0:'';};
+export const router_field_json_text_field2=(value,key,second)=>then(nestedFields(value,[key,second]),string);
+export const router_field_json_text_field2_or_empty=(value,key,second)=>{const selected=then(nestedFields(value,[key,second]),string);return selected.$==='Some'?selected.field0:'';};
+export const router_field_json_text_field3=(value,key,second,third)=>then(nestedFields(value,[key,second,third]),string);
+export const router_field_json_text_field3_or_empty=(value,key,second,third)=>{const selected=then(nestedFields(value,[key,second,third]),string);return selected.$==='Some'?selected.field0:'';};
+export const router_field_json_text_field4=(value,key,second,third,fourth)=>then(nestedFields(value,[key,second,third,fourth]),string);
+export const router_field_json_text_field4_or_empty=(value,key,second,third,fourth)=>{const selected=then(nestedFields(value,[key,second,third,fourth]),string);return selected.$==='Some'?selected.field0:'';};

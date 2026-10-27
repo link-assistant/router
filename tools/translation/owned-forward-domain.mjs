@@ -60,13 +60,14 @@ export function checkForwardOwnedExtra(checker,node,env,path,expected,row,{canon
  }
  const json={...checker.hostType(JSON_TYPES.value,path,node.span),rustSourceType:true};canonical(checker,json,node.span,false);let type;
  if(row.returns==='str')type=SOURCE_STR;
+ else if(row.returns==='text-owned')type={...SOURCE_STRING,rustSourceType:true};
  else if(row.returns==='bool')type=BOOL;
  else if(['u64','i64'].includes(row.returns))type={...fixed(64,row.returns==='i64'),rustPrimitiveName:row.returns,rustSourceType:true};
  else if(row.returns==='json')type=json;
  else if(row.returns==='json-text-result')type=checker.instantiations.result(json,{...SOURCE_STRING,rustSourceType:true},node.span);
  else if(row.returns==='json-owned-option')type=checker.instantiations.option(json,node.span);
  else{
-  const scalars={'json-option-ref':sourceShared(json),'str-option-ref':SOURCE_STR,'bool-option':BOOL,'u64-option':{...fixed(64,false),rustPrimitiveName:'u64',rustSourceType:true},'i64-option':{...fixed(64,true),rustPrimitiveName:'i64',rustSourceType:true}},payload=scalars[row.returns];if(!payload)throw typeError('unknown owned field/carrier output domain',node.span);type=checker.instantiations.option(payload,node.span);
+  const scalars={'text-owned-option':{...SOURCE_STRING,rustSourceType:true},'json-option-ref':sourceShared(json),'str-option-ref':SOURCE_STR,'bool-option':BOOL,'u64-option':{...fixed(64,false),rustPrimitiveName:'u64',rustSourceType:true},'i64-option':{...fixed(64,true),rustPrimitiveName:'i64',rustSourceType:true}},payload=scalars[row.returns];if(!payload)throw typeError('unknown owned field/carrier output domain',node.span);type=checker.instantiations.option(payload,node.span);
  }
  if(expected)compatible(checker,type,expected,path,node.span);requireOriginalPrimitiveTryFromChecker(checker);current();return {k:'routerHostCall',id:row.javascriptName,args,type,span:node.span,constEligible:false};
 }

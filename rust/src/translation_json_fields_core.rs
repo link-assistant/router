@@ -301,3 +301,79 @@ pub fn json_i64_field4_or(value: &Json, key: &str, second: &str, third: &str, fo
     })
     .unwrap_or(other)
 }
+
+#[must_use]
+pub fn json_text_field(value: &Json, key: &str) -> Option<String> {
+    (match value.get(key) {
+        Some(value) => value.as_str(),
+        None => None,
+    })
+    .map(str::to_owned)
+}
+
+#[must_use]
+pub fn json_text_field_or_empty(value: &Json, key: &str) -> String {
+    (match value.get(key) {
+        Some(value) => value.as_str(),
+        None => None,
+    })
+    .unwrap_or("")
+    .to_owned()
+}
+
+#[must_use]
+pub fn json_text_field2(value: &Json, key: &str, second: &str) -> Option<String> {
+    (match value.get(key).and_then(|value| value.get(second)) {
+        Some(value) => value.as_str(),
+        None => None,
+    })
+    .map(str::to_owned)
+}
+
+#[must_use]
+pub fn json_text_field2_or_empty(value: &Json, key: &str, second: &str) -> String {
+    (match value.get(key).and_then(|value| value.get(second)) {
+        Some(value) => value.as_str(),
+        None => None,
+    })
+    .unwrap_or("")
+    .to_owned()
+}
+
+#[must_use]
+pub fn json_text_field3(value: &Json, key: &str, second: &str, third: &str) -> Option<String> {
+    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)) {
+        Some(value) => value.as_str(),
+        None => None,
+    })
+    .map(str::to_owned)
+}
+
+#[must_use]
+pub fn json_text_field3_or_empty(value: &Json, key: &str, second: &str, third: &str) -> String {
+    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)) {
+        Some(value) => value.as_str(),
+        None => None,
+    })
+    .unwrap_or("")
+    .to_owned()
+}
+
+#[must_use]
+pub fn json_text_field4(value: &Json, key: &str, second: &str, third: &str, fourth: &str) -> Option<String> {
+    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth)) {
+        Some(value) => value.as_str(),
+        None => None,
+    })
+    .map(str::to_owned)
+}
+
+#[must_use]
+pub fn json_text_field4_or_empty(value: &Json, key: &str, second: &str, third: &str, fourth: &str) -> String {
+    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth)) {
+        Some(value) => value.as_str(),
+        None => None,
+    })
+    .unwrap_or("")
+    .to_owned()
+}

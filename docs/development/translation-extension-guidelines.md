@@ -699,3 +699,12 @@ at operation exit; table metadata grants no permission. Preserve every local
 view escape, owner move/replacement, temporary and multi-root refusal. Keep all
 flat runtime imports exact and retain original closure bounds. See the
 [unrun resource field draft](http-resource-json-fields-source-draft.md).
+
+Owned JSON text interfaces must copy actual native String/Option<String> results
+and preserve canonical JSON string domains, Some-empty versus None, source
+lifetimes and unchanged borrowed operations. Match only closed recognized copy
+mappers/defaults; leave arbitrary callbacks and eager fallbacks in place. Owning
+results can outlive a local receiver only through the full owning type checks,
+while borrowed interfaces retain every loan/escape restriction. Preserve all
+original native histories and both CST phases; see the
+[unrun owned text field draft](json-owned-text-field-source-draft.md).

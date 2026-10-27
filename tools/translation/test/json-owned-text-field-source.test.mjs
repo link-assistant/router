@@ -1,0 +1,56 @@
+// Independent stage-to-stage composition SOURCE. Entire file UNRUN.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {readJsonFieldCallSource,readJsonFieldReferenceSourceRole} from '../json-field-call-source.mjs';
+import {rustTokens} from '../rust-structure.mjs';
+import {prepareJsonFieldStageJoinSources} from '../prepare-json-field-stage-join-sources.mjs';
+import {proposeCoreTextMethodCorpus as ordinaryText} from '../migrate-core-text-methods.mjs';
+import {proposeCoreTextMethodCorpus as boundText} from '../source-bound-owned-migrate-core-text-methods.mjs';
+import {proposeCorePrimitiveOptionMethodCorpus as ordinaryOption} from '../migrate-core-primitive-option-methods.mjs';
+import {proposeCorePrimitiveOptionMethodCorpus as boundOption} from '../source-bound-owned-migrate-core-primitive-option-methods.mjs';
+import {proposeCorePrimitiveOptionCallbackMethodCorpus as ordinaryCallback} from '../migrate-core-primitive-option-callback-methods.mjs';
+import {proposeCorePrimitiveOptionCallbackMethodCorpus as boundCallback} from '../source-bound-owned-migrate-core-primitive-option-callback-methods.mjs';
+import {proposeSourceBoundOwnedCoreStage} from '../source-bound-owned-core-bulk.mjs';
+import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE,ROUTER_CORE_RANGES_SOURCE,ROUTER_CORE_JSON_COLLECTIONS_SOURCE,ROUTER_CORE_BASE64_SOURCE} from '../router-core-source-data.mjs';
+import {JSON_FIELDS_NATIVE_SOURCE} from '../json-fields-native-source.mjs';
+import {TEXT_NATIVE_SOURCE} from '../text-native-source.mjs';
+import {PRIMITIVE_OPTION_NATIVE_SOURCE} from '../primitive-option-native-source.mjs';
+import {PRIMITIVE_OPTION_CALLBACK_NATIVE_SOURCE} from '../primitive-option-callback-native-source.mjs';
+import {INTEGER_NATIVE_SOURCE} from '../integer-native-source.mjs';
+import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
+import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
+import {translateProject} from '../project.mjs';
+import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
+import {verifyTypedTargets} from './text-typed-targets.mjs';
+import {repositorySourceURL} from './fixtures/repository-paths.mjs';
+import {json_macro_null as nil,json_macro_bool as bool,json_macro_string as text,json_macro_object as object,json_macro_u64 as unsigned,json_macro_i64 as signed} from '../json-macro-runtime.mjs';
+const limits={timeout:60000},root=new URL('../../../',import.meta.url),cargo={manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')},T='crate::translation_core::Json',F='crate::translation_json_fields_core::',tokens=source=>rustTokens(source).filter(row=>row.type!=='comment');
+import {proposeCoreJsonFieldCorpus as ordinary} from '../migrate-core-json-fields.mjs';
+import {proposeCoreJsonFieldCorpus as sourceBound} from '../source-bound-owned-migrate-core-json-fields.mjs';
+import {prepareJsonOwnedTextFieldSources,prepareJsonOwnedTextFieldNativeSource} from '../prepare-json-owned-text-field-sources.mjs';
+import {readJsonReceiverAliasSource,readJsonReceiverWrittenSourceRole} from '../json-receiver-source.mjs';
+import * as fieldRuntime from '../json-fields-runtime.mjs';
+import {JSON_FIELD_CONTRACTS,emitJsonFieldDeclarations} from '../json-field-contracts.mjs';
+import {JSON_FIELDS_RUNTIME_SOURCE,JSON_FIELDS_DECLARATIONS_SOURCE} from '../json-fields-native-source.mjs';
+import {prepareJsonNestedFieldsNativeSource} from '../prepare-json-nested-fields-sources.mjs';
+const keys=['0','a/b','~é😀','last'],some=field0=>({$:'Some',field0}),none={$:'None'},wrap=(depth,leaf)=>keys.slice(0,depth).reduceRight((value,key)=>object([[key,value]]),leaf);
+const operations=[['mapped','Option<String>','.map(str::to_owned)'],['stringified','Option<String>','.map(str::to_string)'],['closure','Option<String>','.map(|text|text.to_owned())'],['closed_default','String','.map(|value|{value.to_string()}).unwrap_or_default()'],['empty_owned','String','.unwrap_or_default().to_owned()'],['empty_string','String','.unwrap_or("").to_string()']];
+const bodies=[1,2,3,4].flatMap(depth=>operations.map(([name,ret,suffix])=>`pub fn ${name}${depth}(value:&${T})->${ret}{value.get("0")${keys.slice(1,depth).map(key=>'.and_then(|child|child.get('+JSON.stringify(key)+'))').join('')}.and_then(${T}::as_str)${suffix}}`)).join('\n');
+for(const depth of [1,2,3,4])test('depth '+depth+' native owned String results preserve Some empty Unicode null wrong-kind and exact literal keys',limits,()=>{
+ const name='router_field_json_text_field'+(depth===1?'':depth),args=keys.slice(0,depth);for(const value of ['', 'é😀','λ\0']){assert.deepEqual(fieldRuntime[name](wrap(depth,text(value)),...args),some(value));assert.equal(fieldRuntime[name+'_or_empty'](wrap(depth,text(value)),...args),value);}for(const value of [nil(),object([]),wrap(depth,nil()),wrap(depth,bool(false)),wrap(depth,unsigned(7n))]){assert.deepEqual(fieldRuntime[name](value,...args),none);assert.equal(fieldRuntime[name+'_or_empty'](value,...args),'');}let touched=0;const key={toString(){touched++;return '0';}};assert.throws(()=>fieldRuntime[name](nil(),key,...args.slice(1)));assert.equal(touched,0);
+});
+test('owned fields keep the existing canonical JSON string domain rather than introducing a new text-operation bound',limits,()=>{
+ const value='é'.repeat(524289),json=wrap(2,text(value));assert.deepEqual(fieldRuntime.router_field_json_text_field2(json,'0','a/b'),some(value));assert.equal(fieldRuntime.router_field_json_text_field2_or_empty(json,'0','a/b'),value);
+});
+for(const [label,propose]of [['ordinary',ordinary],['source-bound',sourceBound]])test(label+' recognizes all24 closed map/copy source forms with full original CST inverses',limits,()=>{
+ const request=input(),row=rejoin(propose(request),request.files['src/lib.rs']);assert.equal(row.edits.length,24);assert.deepEqual(row.selections.map(row=>row.operation),[1,2,3,4].flatMap(depth=>operations.map((_,index)=>'json_text_field'+(depth===1?'':depth)+(index>=3?'_or_empty':''))));for(const selection of row.selections){assert.equal(selection.oldTraitDispatchProved,false);assert.equal(selection.executableAdmission,false);}for(const mapper of ['String::from','custom','|text|effect(text)','|text|{effect();text.to_owned()}']){const request=input(`pub fn other(value:&${T})->Option<String>{value.get("name").and_then(${T}::as_str).map(${mapper})}`),row=rejoin(propose(request),request.files['src/lib.rs']);assert.equal(row.selections.some(row=>row.operation.startsWith('json_text_field')),false);assert.ok(row.after.source.includes('.map('+mapper+')'));}
+});
+test('fixed field bulk emission receives all owned String/Option<String> callers in independent JS and strict TS',limits,async()=>{
+ const request=input(),proposal=await proposeSourceBoundOwnedCoreStage('json-fields',request);assert.equal(rejoin(proposal,request.files['src/lib.rs']).edits.length,24);const files=proposal.after,result=translateProject({entry:request.entry,paths:Object.keys(files),readSource:path=>files[path],compilationProfile:PRODUCTION_PROFILE,cargoManifest:cargo.manifest,deriveDependencies:loadDeriveDependencyProof(cargo)});for(const depth of [1,2,3,4])for(const [name]of operations)assert.ok(result.meta.executable.some(row=>row.name===name+depth),JSON.stringify(result.meta.refused));await verifyTypedTargets(result,api=>{for(const depth of [1,2,3,4])for(let at=0;at<operations.length;at++){const name=operations[at][0]+depth;assert.deepEqual(api[name](wrap(depth,text('é😀'))),at<3?some('é😀'):'é😀');assert.deepEqual(api[name](wrap(depth,text(''))),at<3?some(''):'');assert.deepEqual(api[name](nil()),at<3?none:'');}},{childTimeoutMs:20000});
+});
+test('all45 current interfaces preserve every original37 and exact runtime/declaration/native histories',limits,()=>{
+ assert.equal(JSON_FIELD_CONTRACTS.length,45);assert.equal(JSON_FIELD_CONTRACTS.filter(row=>!row.rustName.startsWith('json_text_field')).length,37);assert.equal(JSON_FIELD_CONTRACTS.filter(row=>row.rustName.startsWith('json_text_field')).length,8);assert.equal(emitJsonFieldDeclarations(),JSON_FIELDS_DECLARATIONS_SOURCE);assert.equal(readFileSync(new URL('../json-fields-runtime.d.mts',import.meta.url),'utf8'),JSON_FIELDS_DECLARATIONS_SOURCE);assert.equal(readFileSync(new URL('../json-fields-runtime.mjs',import.meta.url),'utf8').replace("from './extensions/json-runtime.mjs'","from './json-runtime.mjs'").replace("from './extensions/json-values.mjs'","from './json-values.mjs'"),JSON_FIELDS_RUNTIME_SOURCE);assert.equal(readFileSync(repositorySourceURL('src/translation_json_fields_core.rs',root),'utf8'),JSON_FIELDS_NATIVE_SOURCE);const plan=prepareJsonOwnedTextFieldSources();assert.equal(plan.files.length,11);for(const row of plan.files){assert.equal(row.current,row.currentAfter);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}const own=prepareJsonOwnedTextFieldNativeSource().files[0],previous=prepareJsonNestedFieldsNativeSource().files[0];assert.equal(own.templateInputs.length,8);assert.equal(own.before,previous.after);assert.equal(own.after,JSON_FIELDS_NATIVE_SOURCE);assert.equal(previous.currentAfter,own.after);for(const row of [own,previous]){assert.equal(row.current,row.currentAfter);assert.equal(row.nativeRustGrammarChecked,false);assert.equal(row.inverse,row.before);for(const stage of row.stages)assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.phase==='language'?row.language:row.after);}assert.equal(plan.receivingExecuted,false);
+});
+function input(body=bodies){const modules={translation_json_fields_core:JSON_FIELDS_NATIVE_SOURCE,translation_text_core:TEXT_NATIVE_SOURCE,translation_primitive_option_core:PRIMITIVE_OPTION_NATIVE_SOURCE,translation_primitive_option_callbacks_core:PRIMITIVE_OPTION_CALLBACK_NATIVE_SOURCE,translation_integer_core:INTEGER_NATIVE_SOURCE},files={'src/lib.rs':'pub mod translation_core;\n'+Object.keys(modules).map(name=>'pub mod '+name+';').join('\n')+'\n// Ω😀 actual stage composition source\n'+body,'src/translation_core.rs':ROUTER_FORMATTING_FACADE_SOURCE,'src/translation_core/primitives.rs':ROUTER_CORE_PRIMITIVES_SOURCE,'src/translation_core/ranges.rs':ROUTER_CORE_RANGES_SOURCE,'src/translation_core/json_collections.rs':ROUTER_CORE_JSON_COLLECTIONS_SOURCE,'src/translation_core/base64.rs':ROUTER_CORE_BASE64_SOURCE};for(const [name,source]of Object.entries(modules))files['src/'+name+'.rs']=source;return {entry:'src/lib.rs',files,dependencyInputs:{...cargo},compilationProfile:PRODUCTION_PROFILE};}
+function rejoin(proposal,source){const row=proposal.proposals.find(row=>row.file==='src/lib.rs');assert.equal(transportConcreteSyntaxMeta(row.before.meta).source,source);assert.equal(transportConcreteSyntaxMeta(row.after.meta).source,row.after.source);let inverse=row.after.source;for(const part of [...row.mapping].reverse())if(part.kind==='substitution')inverse=inverse.slice(0,part.after[0])+part.expected+inverse.slice(part.after[1]);assert.equal(inverse,source);assert.deepEqual(row.trace.map(part=>part.phase),['language','repository']);assert.equal(proposal.executableAdmission,false);return row;}

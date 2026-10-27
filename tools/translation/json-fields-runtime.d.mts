@@ -37,3 +37,11 @@ export declare function router_field_json_u64_field4(value:JsonValue,key:string,
 export declare function router_field_json_u64_field4_or(value:JsonValue,key:string,second:string,third:string,fourth:string,other:bigint): bigint;
 export declare function router_field_json_i64_field4(value:JsonValue,key:string,second:string,third:string,fourth:string): Maybe<bigint>;
 export declare function router_field_json_i64_field4_or(value:JsonValue,key:string,second:string,third:string,fourth:string,other:bigint): bigint;
+export declare function router_field_json_text_field(value:JsonValue,key:string): Maybe<string>;
+export declare function router_field_json_text_field_or_empty(value:JsonValue,key:string): string;
+export declare function router_field_json_text_field2(value:JsonValue,key:string,second:string): Maybe<string>;
+export declare function router_field_json_text_field2_or_empty(value:JsonValue,key:string,second:string): string;
+export declare function router_field_json_text_field3(value:JsonValue,key:string,second:string,third:string): Maybe<string>;
+export declare function router_field_json_text_field3_or_empty(value:JsonValue,key:string,second:string,third:string): string;
+export declare function router_field_json_text_field4(value:JsonValue,key:string,second:string,third:string,fourth:string): Maybe<string>;
+export declare function router_field_json_text_field4_or_empty(value:JsonValue,key:string,second:string,third:string,fourth:string): string;

@@ -28,7 +28,7 @@ export function readTextAliasOperand(rows,bindings,written=null){
 export function readTextWrittenAliasDomain(rows){const value=rows.map(row=>row.text).join('');if(borrowedType(value))return 'str';if(/^(?:(?:::)?std::string::)?String$/u.test(value)||value==='crate::translation_core::Text')return 'text-owned';if(/^(?:(?:::)?(?:std|core)::primitive::)?usize$/u.test(value))return 'usize-count';return readJsonReceiverWrittenSourceRole(rows);}
 
 function readTextStageAliasOperand(rows,bindings,written=null,jsonNames=null){
- const original=readTextAliasOperand(rows,bindings,written);if(original)return original;const receiver=readJsonReceiverAliasSource(rows,bindings,{declared:written,jsonNames});if(receiver)return receiver;const field=readJsonFieldCallSource(rows,bindings);return field?.kind==='payload'&&field.domain==='str'?{kind:'str',binding:null,bridge:'complete-qualified-json-field-source'}:null;
+ const original=readTextAliasOperand(rows,bindings,written);if(original)return original;const receiver=readJsonReceiverAliasSource(rows,bindings,{declared:written,jsonNames});if(receiver)return receiver;const field=readJsonFieldCallSource(rows,bindings);return field?.kind==='payload'&&['str','text-owned'].includes(field.domain)?{kind:field.domain,binding:null,bridge:'complete-qualified-json-field-source'}:null;
 }
 import {readJsonFieldCallSource} from './json-field-call-source.mjs';
 import {readJsonReceiverAliasSource,readJsonReceiverWrittenSourceRole} from './json-receiver-source.mjs';

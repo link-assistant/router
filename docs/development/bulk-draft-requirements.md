@@ -798,3 +798,11 @@ complete compiler equations and independent unrun all-interface/JS/strict TS/
 full-native-inverse/local-view/escape/move/mutation/counterfeit/export source are
 drafted. The older restricted lanes retain their scope and every wider source/
 native/production/sync/freshness/parity/delivery requirement remains unfinished.
+
+The [owned JSON text field draft](json-owned-text-field-source-draft.md) copies8
+owning String/Option<String> interfaces from actual borrowed reader templates,
+retaining all45 field operations and current native histories. Eleven complete
+compiler equations and independent unrun8-ABI/24-caller/two-API/bulk/JS/strict TS/
+two-reverse-lane/interpreter/native lifetime/export source are drafted. Wider
+mapper/trait/callback forms and every source/native/production/sync/freshness/
+parity/delivery requirement remain unfinished.
