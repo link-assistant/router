@@ -75,7 +75,7 @@ export function selectTextMethodAdoption(source,item,_scoped,modulePath,_names,h
   if(++work>200000)return result('complete adoption expression scan bound exceeded');activeDomains=localArguments.at(tokens[at].start);
   if(tokens[at].text==='let'){
    const name=tokens[at+1].text;let equal=at+2;if(tokens[equal].text===':'){equal++;while(equal<tokens.length&&!['=',';','{','}'].includes(tokens[equal].text))equal++;if(!borrowed(text(tokens.slice(at+3,equal))))continue;}
-   if(tokens[equal]?.text!=='=')continue;activeDomains=localArguments.at(tokens[equal+1]?.start);const value=expression(equal+1);if(!value||tokens[value.after]?.text!==';')continue;if(value.operations.length)localArguments.selectedCall({span:[tokens[equal+1].start,tokens[value.after-1].end],terminator:tokens[value.after],operation:value.operations.at(-1),returnsKind:value.domain});append(equal+1,value);at=value.after-1;continue;
+   if(tokens[equal]?.text!=='=')continue;activeDomains=localArguments.at(tokens[equal+1]?.start);const value=expression(equal+1);if(!value||tokens[value.after]?.text!==';'){at=equal;continue;}if(value.operations.length)localArguments.selectedCall({span:[tokens[equal+1].start,tokens[value.after-1].end],terminator:tokens[value.after],operation:value.operations.at(-1),returnsKind:value.domain});append(equal+1,value);at=value.after-1;continue;
   }
   if(['.','::'].includes(tokens[at-1]?.text))continue;const value=expression(at);if(value?.operations.length){append(at,value);at=value.after-1;}
  }

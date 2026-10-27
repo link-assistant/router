@@ -581,3 +581,10 @@ index projections in both existing adopters, preserving both source phases in
 the fixed bulk stage. Four whole equations and unrun Unicode/empty-pattern/
 scope/source/CST/strict TS/native oracle cases are drafted. Every wider source/
 native/production/sync/freshness/parity/delivery requirement remains unfinished.
+
+The [shared carrier local draft](carrier-local-source-draft.md) extends the
+chronological engine across three Option/Result method/callback selectors and
+all six corresponding ordinary/source-bound APIs. Seven whole equations and unrun
+constructor/domain/scope/capture/bulk/receiving JS/strict TS/native-oracle cases
+are drafted. Every wider source/native/production/sync/freshness/parity/delivery
+requirement remains unfinished.

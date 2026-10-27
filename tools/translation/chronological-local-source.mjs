@@ -4,7 +4,9 @@ export function createChronologicalLocalSource(rows,parameters,{readOperand,acce
  if(rows.length>200000)fail('complete local token bound');const frames=[new Map()],activeFrames=new Set(frames),pending=new Map(),initializers=new Map();let cursor=0,last=-1,cells=0;
  const tick=()=>{if(++cells>200000)fail('complete local source cell bound');};
  function found(name){tick();for(let at=frames.length-1;at>=0;at--){tick();if(frames[at].has(name))return frames[at].get(name);}return parameters.has(name)?{kind:parameters.get(name),evidence:null}:null;}
- const bindings={has(name){return Boolean(found(name)?.kind);},get(name){return found(name)?.kind;}};
+ const bindings={has(name){return Boolean(found(name)?.kind);},get(name){return found(name)?.kind;},[Symbol.iterator](){
+  const visible=new Map();for(const [name,kind]of parameters){tick();visible.set(name,kind);}for(const frame of frames)for(const [name,value]of frame){tick();if(value.kind)visible.set(name,value.kind);else visible.delete(name);}return visible[Symbol.iterator]();
+ }};
  function enterLocal(at){
   const name=rows[at+1]?.text,frame=frames.at(-1);frame.set(name,{kind:null,evidence:null});
   const start=initializerStart?initializerStart(at,rows):rows[at+2]?.text==='='?at+3:null;if(!Number.isSafeInteger(start)||start<=at+2||start>=rows.length)return;const first=rows[start];let end=null;
