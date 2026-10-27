@@ -881,3 +881,9 @@ proving method dispatch. Keep full original bodies for actual lowering and
 independent checks; collapse contained scopes, reject crossing spans and preserve
 all outer binding refusals. See the
 [unrun carrier method scope draft](carrier-method-scope-source-draft.md).
+
+Reuse actual body substitution engines across callback families and retain each
+full intermediate source, child inverse, temporary wrapper and enclosing caller
+inverse. An unchanged source round grants no complete-language or semantic
+permission. Keep existing body/selector limits and fresh independent checks. See
+the [unrun shared callback body draft](callback-core-body-source-draft.md).

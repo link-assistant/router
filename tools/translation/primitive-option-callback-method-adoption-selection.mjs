@@ -40,7 +40,7 @@ export function selectPrimitiveOptionCallbackMethodAdoption(source,item,_scoped,
   }else return null;
   if(names.length!==(['unwrap_or_else','or_else','ok_or_else'].includes(method)?0:1)||names.some(name=>['Some','None','Option'].includes(name)))return null;
   let written=null;if(piece[at]?.text==='->'){const start=at+1;at=start;while(at<piece.length&&piece[at].text!=='{')at++;written=role(piece.slice(start,at),_scoped);if(!written)return null;}
-  if(!piece[at])return null;const scope=new Map(env);for(const name of names)scope.set(name,{kind:'payload',domain:input});const wanted=method==='ok_or_else'?{kind:'payload',domain:'text-owned'}:method==='or_else'?{kind:'option',domain:input}:method==='unwrap_or_else'?{kind:'payload',domain:input}:written??(declaredOutput?.kind==='option'?{kind:method==='map'?'payload':'option',domain:declaredOutput.domain}:null);let value,textSourceHistory=null,replacement=source.slice(piece[0].start,piece.at(-1).end),bodyTokens=piece.slice(at);if(callbackTextCount<32){const body=source.slice(piece[at].start,piece.at(-1).end),selected=proposeCallbackTextBodySource(body,scope);if(selected){callbackTextCount++;textSourceHistory=selected;replacement=source.slice(piece[0].start,piece[at].start)+selected.after.source;bodyTokens=rustTokens(selected.after.source).filter(row=>row.type!=='comment');}}
+  if(!piece[at])return null;const scope=new Map(env);for(const name of names)scope.set(name,{kind:'payload',domain:input});const wanted=method==='ok_or_else'?{kind:'payload',domain:'text-owned'}:method==='or_else'?{kind:'option',domain:input}:method==='unwrap_or_else'?{kind:'payload',domain:input}:written??(declaredOutput?.kind==='option'?{kind:method==='map'?'payload':'option',domain:declaredOutput.domain}:null);let value,textSourceHistory=null,replacement=source.slice(piece[0].start,piece.at(-1).end),bodyTokens=piece.slice(at);if(callbackTextCount<32){const body=source.slice(piece[at].start,piece.at(-1).end),selected=proposeCallbackCoreBodySource(body,scope);if(selected){callbackTextCount++;textSourceHistory=selected;replacement=source.slice(piece[0].start,piece[at].start)+selected.after.source;bodyTokens=rustTokens(selected.after.source).filter(row=>row.type!=='comment');}}
   if(bodyTokens[0]?.text==='{'){
    if(close(bodyTokens,0)!==bodyTokens.length-1)return null;
    if(written)value=written;
@@ -110,7 +110,7 @@ import {readJsonFieldCarrierCallSource} from './primitive-carrier-local-source.m
 
 import {readCoreCarrierCallSource} from './core-carrier-call-source.mjs';
 
-import {proposeCallbackTextBodySource} from './callback-text-body-source.mjs';
+import {proposeCallbackCoreBodySource} from './callback-core-body-source.mjs';
 import {rustTokens} from './rust-structure.mjs';
 
 import {readPrimitiveRoleExpressionSource} from './primitive-carrier-expression-source.mjs';

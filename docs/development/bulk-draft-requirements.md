@@ -234,3 +234,10 @@ callback-local bindings from leaking into outer source rules. Nine equations and
 independent unrun grammar/coordinates/shadow/refusal/eight-API/three-chain/JS/
 strict TS/invalid-type/native/export source are drafted. Every unfinished
 namespace/production/reverse/sync/freshness/parity/delivery row remains OPEN.
+
+The [shared callback body draft](callback-core-body-source-draft.md) reuses the
+actual integer engine with the existing text adapter across all three callback
+adopters, retaining complete child/source histories and unchanged-round bounds.
+Twelve equations and independent unrun ten-width/six-API/ten-caller/boundary/JS/
+strict TS/paired reverse/native/export source are drafted. Every unfinished
+namespace/production/reverse/sync/freshness/parity/delivery row remains OPEN.
