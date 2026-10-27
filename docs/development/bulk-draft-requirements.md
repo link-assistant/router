@@ -711,3 +711,10 @@ widths and guarded reverse paths. Ten JS/TS equations plus a full native source
 descendant and unrun runtime/bulk/JS/strict TS/reverse/export/native oracle source
 are drafted. Broader checked carriers and every wider source/native/production/
 sync/freshness/parity/delivery requirement remain unfinished.
+
+The [shared native integer literal draft](native-integer-literal-source-draft.md)
+reuses the actual Rust decoder across seven operation stages, preserving native
+widths, explicit count bounds, source spelling and original whole-function
+checks. Twelve complete compiler equations and independent unrun lexical,
+adopter/bulk/JS/strict TS/export/native oracle source are drafted. Every wider
+source/native/production/sync/freshness/parity/delivery requirement stays open.

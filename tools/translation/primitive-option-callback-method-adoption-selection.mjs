@@ -1,6 +1,7 @@
 // Proposal-only source substitutions. Installation requires every actual whole
 // function to pass the original type/ownership/source/emission checks afresh.
 import {primitiveOptionContract} from './primitive-option-contracts.mjs';
+import {readFixedIntegerLiteralSource} from './native-integer-literal-source.mjs';
 import {createPrimitiveCarrierLocalSource,readCarrierLocalInitializer} from './primitive-carrier-local-source.mjs';
 import {primitiveOptionCallbackContract} from './primitive-option-callback-contracts.mjs';
 const methods=new Set(['is_some','is_none','unwrap_or','unwrap','expect','and','or','map','and_then','unwrap_or_else']);
@@ -21,9 +22,7 @@ export function selectPrimitiveOptionCallbackMethodAdoption(source,item,_scoped,
   if(piece.length===1&&scope.has(piece[0].text))return scope.get(piece[0].text);
   if(piece.length===1&&['true','false'].includes(piece[0].text))return {kind:'payload',domain:'bool'};
   if(piece.length===1&&piece[0].type==='string')return {kind:'payload',domain:'str'};
-  const negative=piece[0].text==='-',number=piece[negative?1:0];if(piece.length===(negative?2:1)&&number?.type==='number'){
-   const match=/^(?:0|[1-9][0-9_]*)(?:_?(u64|i64))?$/u.exec(number.text),domain=match?.[1]??(wanted?.kind==='payload'?wanted.domain:null);if(match&&['u64','i64'].includes(domain)&&(!negative||domain==='i64'))return {kind:'payload',domain};
-  }
+  const literal=readFixedIntegerLiteralSource(piece,wanted?.kind==='payload'?wanted.domain:null);if(literal&&['u64','i64'].includes(literal.domain))return {kind:'payload',domain:literal.domain};
   if(piece[0].text==='Some'&&piece[1]?.text==='('&&close(piece,1)===piece.length-1){const value=inferred(piece.slice(2,-1),scope,wanted&&{kind:'payload',domain:wanted.domain},depth+1);return value?.kind==='payload'?{kind:'option',domain:value.domain}:null;}
   if(piece.length===1&&piece[0].text==='None')return wanted?.kind==='option'?wanted:null;
   return null;
@@ -60,7 +59,7 @@ export function selectPrimitiveOptionCallbackMethodAdoption(source,item,_scoped,
   if(wanted.kind!=='payload')return null;const raw=source.slice(piece[0].start,piece.at(-1).end);
   if(wanted.domain==='str'&&piece.length===1&&piece[0].type==='string'&&/^(?:"|r#{0,255}")/u.test(piece[0].text))return {replacement:raw,operations:[]};
   if(wanted.domain==='bool'&&piece.length===1&&['true','false'].includes(piece[0].text))return {replacement:raw,operations:[]};
-  if(!['u64','i64'].includes(wanted.domain))return null;const negative=piece[0]?.text==='-',literal=piece[negative?1:0];if(piece.length!==(negative?2:1)||literal?.type!=='number')return null;const match=/^(0|[1-9][0-9_]{0,25})(?:_?(u64|i64))?$/u.exec(literal.text);if(!match||match[2]&&match[2]!==wanted.domain||negative&&wanted.domain!=='i64')return null;const digits=match[1].replaceAll('_','');if(digits.length>20)return null;const number=BigInt(digits)*(negative?-1n:1n);if(number<(wanted.domain==='i64'?-9223372036854775808n:0n)||number>(wanted.domain==='i64'?9223372036854775807n:18446744073709551615n))return null;return {replacement:(negative?'-':'')+digits+'_'+wanted.domain,operations:[]};
+  if(!['u64','i64'].includes(wanted.domain))return null;const literal=readFixedIntegerLiteralSource(piece,wanted.domain);return literal?{replacement:literal.decimal+'_'+wanted.domain,operations:[]}:null;
  }
  function expression(at,depth=0){
   if(++work>200000||depth>64)return null;const token=tokens[at],known=env.get(token?.text);if(!known)return null;let value={...known,replacement:token.text,after:at+1,operations:[]};

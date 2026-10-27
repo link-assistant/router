@@ -21,7 +21,7 @@ function carrierLocalCensus(rows,parameters){
 }
 function scalarOperand(rows,bindings,wanted){
  if(rows.length===1){const row=rows[0],known=ident(row)&&decodeCarrierRole(bindings.get(row.text));if(known)return {...known,binding:row.text};if(['true','false'].includes(row.text))return {kind:'payload',domain:'bool'};if(row.type==='string'&&/^(?:"|r#{0,255}")/u.test(row.text))return {kind:'payload',domain:'str'};}
- let literal=readPrimitiveAliasOperand(rows,new Map());if(!literal&&wanted?.kind==='payload'&&['u64','i64'].includes(wanted.domain)){const negative=rows[0]?.text==='-',at=negative?1:0,row=rows[at];if(rows.length===(negative?2:1)&&row?.type==='number'&&/^[0-9][0-9_]{0,62}$/u.test(row.text)){const copied=rows.map((value,index)=>index===at?{...value,text:value.text+'_'+wanted.domain}:value);literal=readPrimitiveAliasOperand(copied,new Map());}}if(literal&&['u64','i64'].includes(literal.kind))return {kind:'payload',domain:literal.kind};
+ const literal=readPrimitiveAliasOperand(rows,new Map(),wanted?.kind==='payload'&&['u64','i64'].includes(wanted.domain)?wanted.domain:null);if(literal&&['u64','i64'].includes(literal.kind))return {kind:'payload',domain:literal.kind};
  if(rows.length===5&&rows[1].text==='.'&&['to_owned','to_string'].includes(rows[2].text)&&rows[3].text==='('&&rows[4].text===')'){const value=scalarOperand(rows.slice(0,1),bindings,null);if(value?.kind==='payload'&&value.domain==='str')return {kind:'payload',domain:'text-owned'};}return null;
 }
 export function readCarrierAliasOperand(rows,bindings,wanted=null){

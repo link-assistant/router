@@ -51,3 +51,10 @@ Ordinary for source can retain independent aliases only after the complete
 plain/wildcard pattern census excludes all real parameter/local/namespace
 shadowing. Keep iterator domains unknown and preserve actual body frames,
 mutation and exits. Never use a source census as checked loop/type/owner proof.
+
+Share one bounded native literal decoder across family selectors, with matching
+fixed-width identity and explicit per-caller count bounds. Retain radix spelling
+and signs as source DATA. An unsuffixed literal needs a concrete matching native
+context; a host's pointer width is no substitute. Draft independent nondecimal,
+signed MIN, overflow, malformed, typed-alias and full caller cases alongside
+both directions, then qualify them only when execution is authorized.

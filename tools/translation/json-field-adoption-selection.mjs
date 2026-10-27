@@ -1,6 +1,7 @@
 // Closed syntax candidates only. The receiver/source-role scope is captured by
 // the complete copied adopter; every resulting whole function must recheck.
 import {jsonFieldContract} from './json-field-contracts.mjs';
+import {readNativeCountLiteralSource} from './native-integer-literal-source.mjs';
 import {createJsonFieldLocalSource} from './json-field-local-source.mjs';
 import {readTextAliasOperand} from './text-local-argument-source.mjs';
 export function selectJsonFieldAdoption(source,item,scoped,modulePath,names,helpers){
@@ -32,10 +33,10 @@ export function selectJsonFieldAdoption(source,item,scoped,modulePath,names,help
  }
  for(let at=body+1;at<tokens.length;at++){
   if(!ident(tokens[at])||['.','::'].includes(tokens[at-1]?.text)||shadowed.has(tokens[at].text)||tokens[at+1]?.text!=='.'||tokens[at+2]?.text!=='get'||tokens[at+3]?.text!=='(')continue;const visible=localArguments?.at(tokens[at].start)??parameterDomains;if(visible.get(tokens[at].text)!=='json-reference')continue;
-  const getterEnd=close(tokens,at+3);if(getterEnd<0)continue;const argument=tokens.slice(at+4,getterEnd);if(argument.length!==1&&argument.length!==5)continue;const key=argument[0],keyOperand=readTextAliasOperand(argument,visible),literal=argument.length===1&&key.type==='string'&&/^(?:"|r#{0,255}")/u.test(key.text),borrowed=keyOperand?.kind==='str'&&!literal&&!shadowed.has(key.text),numericBinding=keyOperand?.kind==='usize-count'&&!shadowed.has(key.text),numericLiteral=argument.length===1&&key.type==='number'&&key.text.length<=10&&/^(0|[1-9][0-9]*)$/u.test(key.text)&&BigInt(key.text)<=4294967295n,numeric=numericBinding||numericLiteral;if(!literal&&!borrowed&&!numeric)continue;
+  const getterEnd=close(tokens,at+3);if(getterEnd<0)continue;const argument=tokens.slice(at+4,getterEnd);if(argument.length!==1&&argument.length!==5)continue;const key=argument[0],keyOperand=readTextAliasOperand(argument,visible),literal=argument.length===1&&key.type==='string'&&/^(?:"|r#{0,255}")/u.test(key.text),borrowed=keyOperand?.kind==='str'&&!literal&&!shadowed.has(key.text),numericBinding=keyOperand?.kind==='usize-count'&&!shadowed.has(key.text),numericLiteral=readNativeCountLiteralSource(argument,{suffixes:['','usize'],maximum:'4294967295'}),numeric=numericBinding||numericLiteral;if(!literal&&!borrowed&&!numeric)continue;
   let end=getterEnd+1,operation=numeric?'json_index':'json_field',member=null;
   if(!numeric&&tokens[end]?.text==='.'&&tokens[end+1]?.text==='and_then'&&tokens[end+2]?.text==='('){const closeThen=close(tokens,end+2),selected=closeThen<0?null:scalar(tokens.slice(end+3,closeThen));if(selected){operation=selected.operation;member=selected.member;end=closeThen+1;}}
-  const row=jsonFieldContract(operation);if(!row)continue;const keySource=source.slice(key.start,argument.at(-1).end),span=[tokens[at].start,tokens[end-1].end],receiver=tokens[at].text,replacement=row.rustPath+'('+receiver+', '+(numericBinding?'('+keySource+' as u64)':numericLiteral?keySource+'_u64':keySource)+')';
+  const row=jsonFieldContract(operation);if(!row)continue;const keySource=source.slice(key.start,argument.at(-1).end),span=[tokens[at].start,tokens[end-1].end],receiver=tokens[at].text,replacement=row.rustPath+'('+receiver+', '+(numericBinding?'('+keySource+' as u64)':numericLiteral?numericLiteral.magnitude+'_u64':keySource)+')';
   edits.push({span,expected:source.slice(...span),replacement});selections.push({function:item.name,functionSpan:[item.start,item.end],span,operation,receiver,keySource,member,keyKind:numericBinding?'native-usize-binding':numericLiteral?'closed-index-literal':borrowed?'shared-text-binding':'closed-text-literal',...(localArguments?.evidence(receiver)?{localReceiverSource:localArguments.evidence(receiver)}:{}),...(localArguments?.evidence(key.text)?{localKeySource:localArguments.evidence(key.text)}:{}),oldTraitDispatchProved:false,executableAdmission:false,evaluationOrder:['receiver-once','key-once','conditional-canonical-reader']});at=end-1;
  }
  return result(edits.length?null:'no closed canonical field/index reader source');

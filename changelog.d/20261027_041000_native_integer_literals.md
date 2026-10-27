@@ -1,0 +1,1 @@
+- Draft shared bounded native radix-literal source rules across integer, Option/Result, text counts and JSON indices, with original source equations and independent unrun caller, receiving JS/strict TS and Rust oracle case source. Full translation and parity remain unfinished (#759, #772).

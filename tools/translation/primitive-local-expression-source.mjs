@@ -1,5 +1,6 @@
 // Bounded original primitive expression/source DATA. No evaluation or permit.
 import {primitiveBitwiseType} from './primitive-bitwise-types.mjs';
+import {readNativeIntegerLiteralSource} from './native-integer-literal-source.mjs';
 const binary=new Map([['|',1],['^',2],['&',3],['<<',4],['>>',4],['+',5],['-',5],['*',6],['/',6],['%',6]]);
 // Select only a complete shallow initializer; closures/blocks stay on the
 // original separately selected result-call lane. Charge the enclosing budget.
@@ -11,7 +12,7 @@ export function primitiveLocalInitializerEnd(start,rows,tick){
 export function readPrimitiveLocalExpression(rows,bindings,{readAtom,declared=null}){
  if(!rows.length||rows.length>256)return null;let at=0,cells=0;const domains=new Set();if(declared!==null){if(!primitiveBitwiseType(declared))return null;domains.add(declared);}const tick=()=>++cells<=1024;
  function atom(part){
-  if(!tick())return null;const known=readAtom(part,bindings);if(known){domains.add(known.kind);return {kind:'atom',part,value:known};}const negative=part[0]?.text==='-',literal=part[negative?1:0];return part.length===(negative?2:1)&&literal?.type==='number'&&/^[0-9][0-9_]{0,62}$/u.test(literal.text)?{kind:'atom',part,value:null}:null;
+  if(!tick())return null;const known=readAtom(part,bindings);if(known){domains.add(known.kind);return {kind:'atom',part,value:known};}const literal=readNativeIntegerLiteralSource(part);return literal&&!literal.suffix?{kind:'atom',part,value:null}:null;
  }
  function unary(depth){
   if(!tick()||depth>64)return null;const word=rows[at]?.text;if(word==='('){at++;const value=expression(0,depth+1);if(!value||rows[at++]?.text!==')')return null;return {kind:'group',value};}

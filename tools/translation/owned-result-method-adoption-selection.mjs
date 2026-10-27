@@ -20,7 +20,7 @@ export function selectOwnedResultMethodAdoption(source,item,scoped,modulePath,_n
  function infer(piece,scope,wanted,depth=0){
   if(++work>200000||depth>64||!piece.length)return null;if(piece[0].text==='('&&close(piece,0)===piece.length-1)return infer(piece.slice(1,-1),scope,wanted,depth+1);
   if(piece.length===1&&scope.has(piece[0].text))return scope.get(piece[0].text);if(piece.length===1&&['true','false'].includes(piece[0].text))return {kind:'payload',domain:'bool'};if(piece.length===1&&piece[0].type==='string')return {kind:'payload',domain:'str'};
-  const negative=piece[0].text==='-',number=piece[negative?1:0];if(piece.length===(negative?2:1)&&number?.type==='number'){const match=/^(?:0|[1-9][0-9_]*)(?:_?(u64|i64))?$/u.exec(number.text),domain=match?.[1]??(wanted?.kind==='payload'?wanted.domain:null);if(match&&['u64','i64'].includes(domain)&&(!negative||domain==='i64'))return {kind:'payload',domain};}
+  const literal=readFixedIntegerLiteralSource(piece,wanted?.kind==='payload'?wanted.domain:null);if(literal&&['u64','i64'].includes(literal.domain))return {kind:'payload',domain:literal.domain};
   if(['Ok','Err'].includes(piece[0].text)&&piece[1]?.text==='('&&close(piece,1)===piece.length-1){const value=infer(piece.slice(2,-1),scope,piece[0].text==='Ok'&&wanted?{kind:'payload',domain:wanted.domain}:null,depth+1);if(piece[0].text==='Ok')return value?.kind==='payload'?{kind:'result',domain:value.domain==='text-owned'?'text':value.domain}:null;return value?.domain==='text-owned'&&wanted?.kind==='result'?wanted:null;}
   if(piece.length>4&&piece.at(-4).text==='.'&&['to_owned','to_string'].includes(piece.at(-3).text)&&piece.at(-2).text==='('&&piece.at(-1).text===')'){const value=infer(piece.slice(0,-4),scope,{kind:'payload',domain:'str'},depth+1);return ['str','text-owned'].includes(value?.domain)?{kind:'payload',domain:'text-owned'}:null;}return null;
  }
@@ -53,6 +53,7 @@ export function selectOwnedResultMethodAdoption(source,item,scoped,modulePath,_n
 }
 
 import {ownedResultContract} from './owned-result-contracts.mjs';
+import {readFixedIntegerLiteralSource} from './native-integer-literal-source.mjs';
 import {createPrimitiveCarrierLocalSource,readCarrierLocalInitializer} from './primitive-carrier-local-source.mjs';
 
 import {localAliasDeclaration} from './local-alias-binding-source.mjs';

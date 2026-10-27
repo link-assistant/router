@@ -1,6 +1,7 @@
 // Candidate source equations only. Every selected whole function must later
 // pass the original semantic, type, ownership, source and emission checks.
 import {textContract} from './text-contracts.mjs';
+import {readNativeCountLiteralSource} from './native-integer-literal-source.mjs';
 import {createTextLocalArgumentSource,readTextWrittenAliasDomain} from './text-local-argument-source.mjs';
 import {readLocalAliasInitializer} from './local-alias-written-source.mjs';
 const countMethods=new Map([['len','len_utf8'],['chars','len_chars'],['matches','matches_count']]);
@@ -42,7 +43,7 @@ export function selectTextMethodAdoption(source,item,_scoped,modulePath,_names,h
   const row=tokens[at],prefix=tokens[at-1];if(row&&prefix&&prefix.end===row.start&&['b','c'].includes(prefix.text))return null;if(characterPattern&&row?.type==='string'&&row.text.startsWith("'")){const scalar=decodeRustCharacter(row.text,{start:row.start,end:row.end});return {after:at+1,replacement:'"\\u{'+scalar.codePointAt(0).toString(16)+'}"',domain:'str',operations:[],characterPattern:true,languageEdits:[{span:[row.start,row.end],expected:row.text,replacement:'"\\u{'+scalar.codePointAt(0).toString(16)+'}"'}]};}return row?.type==='string'&&/^(?:"|r#{0,255}")/u.test(row.text)?{after:at+1,replacement:source.slice(row.start,row.end),domain:'str',operations:[]}:null;
  }
  function count(at){
-  const row=tokens[at];if(ident(row)&&activeDomains.get(row.text)==='usize-count')return {after:at+1,replacement:'('+row.text+' as u64)',domain:'u64',operations:[]};if(row?.type!=='number')return null;const match=/^(0|[1-9][0-9_]{0,25})(?:_?(?:usize|u64))?$/u.exec(row.text);if(!match)return null;const digits=match[1].replaceAll('_','');if(digits.length>20||BigInt(digits)>18446744073709551615n)return null;return {after:at+1,replacement:digits+'_u64',domain:'u64',operations:[]};
+  const row=tokens[at];if(ident(row)&&activeDomains.get(row.text)==='usize-count')return {after:at+1,replacement:'('+row.text+' as u64)',domain:'u64',operations:[]};const literal=readNativeCountLiteralSource(row?[row]:[]);return literal?{after:at+1,replacement:literal.magnitude+'_u64',domain:'u64',operations:[]}:null;
  }
  function expression(at,depth=0,characterPattern=false){
   if(++work>200000||depth>64)return null;const initial=tokens[at];const initialDomain=activeDomains.get(initial?.text);let value=['str','text-owned'].includes(initialDomain)?{after:at+1,replacement:initial.text,domain:initialDomain,operations:[]}:literal(at,characterPattern);if(!value)return null;if(value.characterPattern)return value;

@@ -1,5 +1,6 @@
 // One function's chronological source-selection DATA. No owner/type permit.
-import {primitiveBitwiseType,primitiveBitwiseLiteral} from './primitive-bitwise-types.mjs';
+import {primitiveBitwiseType} from './primitive-bitwise-types.mjs';
+import {readFixedIntegerLiteralSource} from './native-integer-literal-source.mjs';
 import {createChronologicalLocalSource} from './chronological-local-source.mjs';
 import {primitiveLocalInitializerEnd,readPrimitiveLocalExpression} from './primitive-local-expression-source.mjs';
 import {createWrittenLocalAliasRules} from './local-alias-written-source.mjs';
@@ -17,7 +18,7 @@ function primitiveLocalCensus(rows,parameters){
 export function readPrimitiveAliasOperand(rows,bindings,written=null){
  if(rows.length===1&&ident(rows[0])&&primitiveBitwiseType(bindings.get(rows[0].text)))return {kind:bindings.get(rows[0].text),binding:rows[0].text};
  if(rows.length>=3&&rows.at(-2)?.text==='::'&&['MIN','MAX'].includes(rows.at(-1)?.text)){const kind=readPrimitiveWrittenAliasDomain(rows.slice(0,-2));if(kind)return {kind,binding:null};}
- const negative=rows[0]?.text==='-',literal=rows[negative?1:0];if(rows.length!==(negative?2:1)||literal?.type!=='number'||literal.text.length>64)return null;if(written&&primitiveBitwiseType(written)&&/^[0-9][0-9_]{0,62}$/u.test(literal.text)){if(negative&&!primitiveBitwiseType(written).signed)return null;const digits=literal.text.replaceAll('_','');return primitiveBitwiseLiteral(digits+'n',negative,written)!==null?{kind:written,binding:null}:null;}const match=/^([0-9][0-9_]{0,62})([iu](?:8|16|32|64|128))$/u.exec(literal.text);if(!match)return null;const domain=primitiveBitwiseType(match[2]),digits=match[1].replaceAll('_','');if(!domain||negative&&!domain.signed||primitiveBitwiseLiteral(digits+'n',negative,domain.name)===null)return null;return {kind:domain.name,binding:null};
+ const literal=readFixedIntegerLiteralSource(rows,written);return literal?{kind:literal.domain,binding:null}:null;
 }
 
 export function readPrimitiveWrittenAliasDomain(rows){const match=/^(?:(?:::)?(?:std|core)::primitive::)?([iu](?:8|16|32|64|128))$/u.exec(rows.map(row=>row.text).join(''));return match&&primitiveBitwiseType(match[1])?match[1]:null;}
