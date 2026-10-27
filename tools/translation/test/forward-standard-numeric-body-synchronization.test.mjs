@@ -26,7 +26,7 @@ function copyBodies(result,key,operations){
 }
 for(const type of types)for(const key of ['javascript','typescript'])test(key+' batches original '+type+' numeric operations with exact primitive instantiations',limits,async()=>{
  const input=fixture(type),original=translateProject(input.options),proposal=proposeForwardStandardNumericBodySynchronization({...input.options,[key]:copyBodies(original,key,input.selected)});
- assert.equal(proposal.expressionEditCount,input.selected.length);assert.equal(proposal.standardRuntimeSourceInputs.bindings.length,input.selected.length);assert.equal(proposal.rustEdits[0].history.inverse,input.source);assert.equal(proposal.sourceAuthority,false);assert.equal(proposal.crossInvocationCache,false);
+ assert.equal(proposal.expressionEditCount,input.selected.length);assert.equal(proposal.standardRuntimeSourceInputs.bindings.length+(proposal.standardRuntimeSourceInputs.primitiveOperators?.calls.length??0),input.selected.length);assert.equal(proposal.rustEdits[0].history.inverse,input.source);assert.equal(proposal.sourceAuthority,false);assert.equal(proposal.crossInvocationCache,false);
  const bits=type.endsWith('size')?64:Number(type.slice(1)),signed=type.startsWith('i'),minimum=signed?-(2n**BigInt(bits-1)):0n,maximum=2n**BigInt(signed?bits-1:bits)-1n;
  await verifyTypedTargets({javascript:proposal.javascript,typescript:proposal.typescript,meta:{entry:'src/lib.rs'}},api=>{
   assert.equal(api.edited_saturating_add(maximum,1n),maximum);assert.equal(api.edited_saturating_sub(minimum,1n),minimum);assert.equal(api.edited_saturating_mul(maximum,2n),maximum);
@@ -38,11 +38,11 @@ for(const type of types)for(const key of ['javascript','typescript'])test(key+' 
  },{childTimeoutMs:20000});
 });
 test('numeric candidate observations require actual immutable original import and factory member',limits,()=>{
- const input=fixture('u8'),original=translateProject(input.options),row=parse(original,'javascript'),context=createStandardNumericCallSource({entry:input.options.entry,source:row.source,file:row.file}),helper=row.file.statements.filter(row.ts.isVariableStatement).flatMap(node=>[...node.declarationList.declarations]).find(node=>row.ts.isIdentifier(node.name)&&context.has(node.name.text));assert.ok(helper);const name=helper.name.text;
+ const input=fixture('usize'),original=translateProject(input.options),row=parse(original,'javascript'),context=createStandardNumericCallSource({entry:input.options.entry,source:row.source,file:row.file}),helper=row.file.statements.filter(row.ts.isVariableStatement).flatMap(node=>[...node.declarationList.declarations]).find(node=>row.ts.isIdentifier(node.name)&&context.has(node.name.text));assert.ok(helper);const name=helper.name.text;
  assert.ok(context.lower(name,['x','y']).includes('.'));assert.equal(context.evidence().semanticAuthority,false);assert.equal(context.evidence().bindings[0].originalInstantiation.source,row.source.slice(...context.evidence().bindings[0].originalInstantiation.span));assert.throws(()=>context.lower(name,[]),/arity/u);
  for(const text of [
   row.source.replace('fixed-integer-runtime.mjs','unregistered-numeric-runtime.mjs'),
-  row.source.replace('"bits":8','"bits":16'),
+  row.source.replace('"bits":64','"bits":32'),
   row.source.replace(/const (ml_host_rust_fixed_[A-Za-z0-9_]+) =/u,'let $1 ='),
  ]){assert.notEqual(text,row.source);const file=row.ts.createSourceFile('changed.mjs',text,row.ts.ScriptTarget.Latest,true,row.ts.ScriptKind.JS);try{assert.equal(createStandardNumericCallSource({entry:input.options.entry,source:text,file}).has(name),false);}catch(error){assert.ok(error instanceof TypeError);}}
  for(const text of ['{ const result='+name+'(x,y);const '+name+'=x;return result; }','{ const {'+name+'}=x;return y; }','{ function '+name+'(){} return x; }']){
@@ -51,7 +51,7 @@ test('numeric candidate observations require actual immutable original import an
  assert.throws(()=>context.assertFunctionScope({parameters:[name],expression:row.fn('edited_min').body}),/shadowed/u);
 });
 test('original numeric helper introduction cannot bypass missing declarations or wrong actual operand types',limits,()=>{
- const input=fixture('u8'),original=translateProject(input.options),changed=copyBodies(original,'javascript',input.selected);assert.throws(()=>proposeForwardStandardFloatingBodySynchronization({...input.options,javascript:changed}));
+ const input=fixture('usize'),original=translateProject(input.options),changed=copyBodies(original,'javascript',input.selected);assert.throws(()=>proposeForwardStandardFloatingBodySynchronization({...input.options,javascript:changed}));
  const row=parse(original,'javascript'),context=createStandardNumericCallSource({entry:input.options.entry,source:row.source,file:row.file}),name=row.file.statements.filter(row.ts.isVariableStatement).flatMap(node=>[...node.declarationList.declarations]).map(node=>node.name?.text).find(name=>context.has(name)),body=row.fn('edited_min').body;
  for(const expression of [name+'(x)',name+'(x,"wrong")','unregistered_numeric(x,y)']){const text=row.source.slice(0,body.getStart(row.file))+'{return '+expression+';}'+row.source.slice(body.end);assert.throws(()=>proposeForwardStandardNumericBodySynchronization({...input.options,javascript:text}));}
  const source='pub fn edited(x:u8,y:u8)->u8{x}',options={entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source},own=translateProject(options),native=parse(own,'javascript'),fn=native.fn('edited');assert.throws(()=>proposeForwardStandardNumericBodySynchronization({...options,javascript:native.source.slice(0,fn.body.getStart(native.file))+'{return '+name+'(x,y);}'+native.source.slice(fn.body.end)}));

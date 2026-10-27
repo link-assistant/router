@@ -3,7 +3,7 @@
 import {primitiveBitwiseMetadata,primitiveBitwiseLiteral,primitiveBitwiseCompatible} from '../primitive-bitwise-types.mjs';
 import {ownedBooleanBitwiseOperator} from './owned-boolean-bitwise-source.mjs';
 const fail=message=>{throw new TypeError('Owned primitive operator source: '+message);};
-export const ownedPrimitiveOperatorOperation=name=>typeof name==='string'&&['primitiveBitwise','integerCast','integerShift','primitiveNot'].includes(name);
+export const ownedPrimitiveOperatorOperation=name=>typeof name==='string'&&['primitiveBitwise','integerCast','integerShift','primitiveNot','primitiveIntegerMethod'].includes(name);
 export function readOwnedPrimitiveOperatorCall(ts,node,name,read){
  if(!ownedPrimitiveOperatorOperation(name)||node.typeArguments?.length)fail('unregistered or generic primitive operator');
  const width=(bits,signed)=>ts.isNumericLiteral(bits)&&[ts.SyntaxKind.TrueKeyword,ts.SyntaxKind.FalseKeyword].includes(signed.kind)?primitiveBitwiseMetadata(bits.text,signed.kind===ts.SyntaxKind.TrueKeyword):null;
@@ -15,6 +15,9 @@ export function readOwnedPrimitiveOperatorCall(ts,node,name,read){
   const boolean=node.arguments[3].kind===ts.SyntaxKind.NullKeyword&&node.arguments[4].kind===ts.SyntaxKind.NullKeyword,domain=boolean?null:width(node.arguments[3],node.arguments[4]);if(!boolean&&!domain)fail('literal registered fixed integer width/sign required');
   const args=node.arguments.slice(0,2).map(argument=>operand(argument,domain)),type=domain?.name??'bool';if(args.some(value=>!primitiveBitwiseCompatible(value.type,type)))fail('primitive bitwise operands require exact scalar domains');return {kind:'primitive-bitwise-call',name,args,operation:node.arguments[2].text,type,root:null,...(domain?{bits:domain.bits,signed:domain.signed}:{})};
  }
+ if(name==='primitiveIntegerMethod'){
+  if(node.arguments.length!==6||!ts.isStringLiteral(node.arguments[5]))fail('six exact native method operands required');const method=nativeIntegerMethod(node.arguments[5].text),input=width(node.arguments[3],node.arguments[4]);if(!method||!input||method.arity===2&&node.arguments[2].kind!==ts.SyntaxKind.NullKeyword)fail('literal registered native method domain and arity required');const args=node.arguments.slice(0,method.arity).map(argument=>operand(argument,input));if(args.some(value=>!primitiveBitwiseCompatible(value.type,input.name)))fail('native method operands differ from written domain');return {kind:'primitive-method-call',name,args,operation:method.name,type:input.name,bits:input.bits,signed:input.signed,root:null};
+ }
  if(name==='primitiveNot'){
   if(node.arguments.length!==3)fail('three exact complement arguments required');const input=width(node.arguments[1],node.arguments[2]);if(!input)fail('literal native complement domain required');const value=operand(node.arguments[0],input);if(!primitiveBitwiseCompatible(value.type,input.name))fail('complement operand differs from its written native domain');return {kind:'primitive-not-call',name,args:[value],type:input.name,bits:input.bits,signed:input.signed,root:null};
  }
@@ -25,3 +28,5 @@ export function readOwnedPrimitiveOperatorCall(ts,node,name,read){
  if(node.arguments.length!==7||!ts.isStringLiteral(node.arguments[6])||!['<<','>>'].includes(node.arguments[6].text))fail('seven exact shift arguments and a fixed operator required');const input=width(node.arguments[2],node.arguments[3]),count=width(node.arguments[4],node.arguments[5]);if(!input||!count)fail('literal native value and count shift domains required');const args=[operand(node.arguments[0],input),operand(node.arguments[1],count)];if(!primitiveBitwiseCompatible(args[0].type,input.name)||!primitiveBitwiseCompatible(args[1].type,count.name))fail('shift operands differ from their written native domains');
  return {kind:'primitive-shift-call',name,args,type:input.name,countType:count.name,operation:node.arguments[6].text,bits:input.bits,signed:input.signed,countBits:count.bits,countSigned:count.signed,root:null};
 }
+
+import {nativeIntegerMethod} from '../native-integer-methods.mjs';

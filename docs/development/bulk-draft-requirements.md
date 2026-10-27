@@ -467,3 +467,11 @@ comparisons in seven source checkers while retaining all whole-function and
 native ABI guards. Eighteen complete equations and unrun width/profile/order/
 copy/inverse/refusal/tamper cases are drafted. Every remaining source/native/
 production/sync/freshness/parity/delivery requirement remains unfinished.
+
+The [shared native integer method draft](native-integer-methods-draft.md) copies
+the existing fixed runtime and composes eight native value methods across ten
+widths through forward presentation, seven reverse profiles, qualified Rust
+inverses and whole-project synchronization. Eighteen whole source equations and
+unrun boundary/strict TS/meta/sync/inverse/legacy/refusal/native oracle cases are
+drafted. All remaining native owner/global closure, source/production/sync/
+freshness/parity/delivery requirements remain unfinished.

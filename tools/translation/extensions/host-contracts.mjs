@@ -918,6 +918,7 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
     if(node.k==='routerHostCall'&&jsonStateContract(node.id)){requireOriginalJsonProjectionEmission(this,node);this.jsonStates=true;return `ml_host_${node.id}(${node.args.map(argument=>this.expr(argument)).join(', ')})`;}if(node.k!=='routerHostCall')return super.expr(node);
     requireRouterCoreBase64Emission(this,node);requireOriginalJsonProjectionEmission(this,node);
     const contract=node.contract??HOST_CONTRACTS.find(contract=>contract.id===node.id);if(!contract)throw new Error('missing checked host contract');
+    const primitiveMethod=emitPrimitiveIntegerMethod(this,node,contract);if(primitiveMethod!==null)return primitiveMethod;
     if(contract.family==='vector') {
       const guard=this.valueGuard('values',contract.runtimeInstantiation.validatorType);
       this.instantiations.set(contract.id,`const ml_host_${contract.id} = ml_create_vector_runtime(values => ${guard}).${contract.jsExport};`);
@@ -929,7 +930,7 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
   }
   file() {
     const result=super.file(),preludes=[...result.preludes];
-    if(this.primitiveOperators)preludes.unshift(`import { integerCast as ml_integer_cast, integerShift as ml_integer_shift, primitiveBitwise as ml_primitive_bitwise, primitiveNot as ml_primitive_not } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'primitive-operator-runtime.mjs'))};`);
+    if(this.primitiveOperators)preludes.unshift(`import { integerCast as ml_integer_cast, integerShift as ml_integer_shift, primitiveBitwise as ml_primitive_bitwise, primitiveNot as ml_primitive_not, primitiveIntegerMethod as ml_primitive_integer_method } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'primitive-operator-runtime.mjs'))};`);
     if(this.primitiveBoolFrom)preludes.unshift(`import { primitiveBoolFrom as ml_primitive_bool_from } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'primitive-bool-from-runtime.mjs'))};`);
     if(this.stringIterators)preludes.unshift(`import { stringLines as ml_str_lines, stringWhitespace as ml_str_split_whitespace, stringNext as ml_str_next, stringJoin as ml_str_join } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'string-iterator-runtime.mjs'))};`);
     if(this.csvStrings)preludes.unshift(`import { stringSplitCharacter as ml_csv_split, stringSplitNext as ml_csv_split_next, allocateStringItem as ml_csv_allocate } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'csv-string-runtime.mjs'))};`);
@@ -994,4 +995,4 @@ export const checkProgram=(surface,{jsonParserProfile=DEFAULT_JSON_PARSER_PROFIL
 export const checkProjectProgram=(surface,{jsonParserProfile=DEFAULT_JSON_PARSER_PROFILE,collectIndependentBodies=false}={})=>{const checker=configureJsonCapabilities(new HostChecker(surface.language,surface.externals??[]),jsonParserProfile);const program=checkCollectedDeclarationTypes(checker,surface,{collectIndependentBodies});program.jsonParserProfile=jsonParserProfile;return program;};
 export const emitJavaScript=(program,{runtimeModule,reserved=[]}={})=>{let emitter;const result=emitWith(program,class extends HostEmitter{constructor(program,state){for(const name of reserved)state.reserved.add(name);super(program,state);this.runtimeModule=runtimeModule;this.checkedLocalBindings=[];emitter=this;}});return emitter.checkedLocalBindings.length?{...result,checkedLocalBindings:emitter.checkedLocalBindings}:result;};
 
-import {emitPrimitiveOperator} from './primitive-operator-emission.mjs';
+import {emitPrimitiveOperator,emitPrimitiveIntegerMethod} from './primitive-operator-emission.mjs';
