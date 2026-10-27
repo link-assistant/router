@@ -766,3 +766,11 @@ and independent unrun shared-reader/six-API/consecutive-stage/JS/strict TS/
 reverse/interpreter/history/export/native oracle source are drafted. Library
 ABIs and whole-function authority checks remain unchanged. Wider source/native/
 production/sync/freshness/parity/delivery requirements remain unfinished.
+
+The [JSON object-view bridge draft](json-object-bridge-source-draft.md) reuses
+existing field interfaces for root/nested canonical object projections and
+immutable shared key-input callbacks. Two complete compiler equations plus
+independent unrun two-API/bulk/JS/strict TS/consecutive-text/history/export/native
+pointer/lifetime oracle source are drafted. Unknown/effectful key and map forms
+remain unselected, and all wider source/native/production/sync/freshness/parity/
+delivery requirements stay unfinished.

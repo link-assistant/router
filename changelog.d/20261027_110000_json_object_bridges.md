@@ -1,0 +1,1 @@
+- Draft root/nested canonical JSON object-view and immutable shared-key substitutions through existing field APIs, with two complete compiler CST equations and independent unrun adopter, JS/strict TS, consecutive text and native pointer/lifetime cases. Full translation and parity remain unfinished (#759, #772).

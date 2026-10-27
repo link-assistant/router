@@ -668,3 +668,10 @@ local values. Delay alias facts until the full initializer semicolon and retain
 scope exits and full CST inverses. Reuse actual matching library abstractions
 and whole-function checks. See the
 [unrun stage-join draft](json-field-stage-joins-source-draft.md).
+
+Canonical JSON object-view normalization may reuse a string-key field operation
+only when as_object and get are recognized closed source steps. Shared key-input
+reads must be immutable, unshadowed and effect-free; keep arbitrary key
+expressions conditional. Preserve numeric string keys versus array indices,
+receiver-only lifetimes, full original CST inverses and independent whole
+function checks. See the [unrun object-view draft](json-object-bridge-source-draft.md).
