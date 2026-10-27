@@ -35,3 +35,11 @@ metadata tampering, fall-through/missing-tail/type/unreachable-source refusals.
 Native terminal-guard truth-table and u64 boundary oracles are drafted for later
 CI. Every case and remaining source/native/production/sync/freshness/parity/
 delivery requirement remains unverified.
+
+A separate two-equation resource successor bounds original decimal u64 literal
+text before normalization, removes its BigInt conversion and checks the complete
+20-digit decimal range lexically. Canonical native values and valid separators
+remain; oversized or overflowing text refuses. Independent source cases retain
+the actual native AST before observing that selection calls no host BigInt,
+alongside complete receiving/strict TS boundaries. These cases remain unrun.
+No measured performance result or raised source/flow bound is claimed.

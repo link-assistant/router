@@ -33,7 +33,7 @@ export function checkAsyncControlCallerFlow(ts,statements,parameters,imports,{la
    if(resultPayload(row.type)){if(row.used)fail('guarded control payload is used more than once');if(move)row.used=true;return {kind:'result-variable',name:node.text,type:row.type};}
    return {kind:'variable',name:node.text,type:row.type};
   }
-  if(ts.isBigIntLiteral(node)){const raw=node.text.replace(/_/gu,'');if(!/^[0-9]+n$/u.test(raw))fail('decimal closed unsigned literal required');const value=BigInt(raw.slice(0,-1));if(value>18446744073709551615n)fail('u64 literal overflow');return {kind:'integer',value:value.toString(),type:'u64'};}
+  if(ts.isBigIntLiteral(node)){if(typeof node.text!=='string'||node.text.length>40)fail('bounded complete decimal u64 literal required');const raw=node.text.replace(/_/gu,'');if(!/^(0|[1-9][0-9]{0,19})n$/u.test(raw))fail('decimal closed unsigned literal required');const value=raw.slice(0,-1);if(value.length===20&&value>'18446744073709551615')fail('u64 literal overflow');return {kind:'integer',value,type:'u64'};}
   if(ts.isStringLiteral(node)){if(/\p{Surrogate}/u.test(node.text))fail('well-formed scalar text required');return {kind:'string',value:node.text,type:'str'};}
   if(node.kind===ts.SyntaxKind.TrueKeyword||node.kind===ts.SyntaxKind.FalseKeyword)return {kind:'boolean',value:node.kind===ts.SyntaxKind.TrueKeyword,type:'bool'};
   if(node.kind===ts.SyntaxKind.NullKeyword)return {kind:'unit',type:'unit'};

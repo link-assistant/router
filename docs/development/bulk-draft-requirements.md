@@ -525,3 +525,9 @@ under the original resource/domain/cell/depth rules. Two complete equations and
 unrun truth-table/cleanup/cold cancellation/strict TS/meta/source/inverse/
 refusal/native oracle sources are drafted. Every remaining source/native/
 production/sync/freshness/parity/delivery requirement remains unfinished.
+
+The async u64 literal resource successor replaces unbounded pre-range BigInt
+conversion with bounded exact decimal selection. Two complete equations and
+unrun native-AST/host-conversion-observer/strict TS/boundary/refusal source cases
+are drafted. Every remaining source/native/production/sync/freshness/parity/
+delivery requirement remains unfinished.
