@@ -642,3 +642,10 @@ repository facade binding, rebase every selected span and retain whole CST and
 inverses. Immutable local admission cannot infer a local alias type or close an
 unproved Engine namespace; complete native/package/producer/method and eventual
 whole-function checks remain. Every new receiving/native case remains unrun.
+
+The [chronological base64 alias draft](base64-local-aliases-draft.md) retains
+actual initializer/semicolon events and lexical lifetimes when proposing local
+argument domains. Do not infer annotated/unknown initializers, expose a binding
+before its declaration, leak an ended scope or turn a selected return ABI into
+an original trait permit. Preserve whole source, real spans, current input and
+complete function/ownership checks. All new receiving/native cases are unrun.

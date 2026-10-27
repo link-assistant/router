@@ -17,7 +17,10 @@ text/String parameters, as_str on original owned String, and as_slice on origina
 owned Vec<u8>. Each complete original argument, including internal comments,
 remains byte-for-byte in the emitted call and evaluates once. No bridge is
 executed, erased or duplicated. Unproved temporaries, arbitrary methods, generic
-as_ref or local aliases are not inferred as a concrete ABI. Actual type/owner,
+as_ref are not inferred as a concrete ABI. The later
+[chronological alias draft](base64-local-aliases-draft.md) separately extends
+immutable local source facts under declaration-order and lexical-scope checks.
+Actual type/owner,
 borrow, complete function and remaining native method obligations still require
 the existing independent compiler checks.
 

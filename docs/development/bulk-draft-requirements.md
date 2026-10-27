@@ -552,3 +552,11 @@ substitutions. Four complete equations and unrun source/comment/Unicode/shadow/
 namespace/bulk/fresh-project/strict TS/native oracle cases are drafted. Legacy
 trait closure and every remaining source/native/production/sync/freshness/
 parity/delivery requirement stay open.
+
+The [chronological base64 alias draft](base64-local-aliases-draft.md) follows
+actual immutable argument/borrowed-view aliases and direct selected encode
+results within declaration order and lexical scope in both existing adopters.
+Four whole equations and unrun source-span/timing/scope/roundtrip/bulk/fresh-
+project/strict TS/refusal/native oracle cases are drafted. Original trait/global
+closure and every remaining source/native/production/sync/freshness/parity/
+delivery requirement stay open.

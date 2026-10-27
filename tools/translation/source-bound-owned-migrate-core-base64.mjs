@@ -3,6 +3,7 @@ import {crateModuleSourcePath} from './repository-layout.mjs';
 // boundary, not permission for the old imported Engine/default-context route.
 import {types} from 'node:util';
 import {readConcreteBase64Argument,simpleBase64LocalBindings} from './base64-argument-source.mjs';
+import {createBase64LocalArgumentSource} from './base64-local-argument-source.mjs';
 import {createHash} from 'node:crypto';
 import {resolveModuleGraph} from './project.mjs';
 import {translationProgressReporter} from './translation-progress.mjs';
@@ -69,6 +70,7 @@ function fileProposal(source,modules,all,profile,context,nonTrait,progress=null)
    // its scope. This finite lane does not infer its output or binding absence.
    if(rows.slice(body+1,-1).some(row=>['fn','trait','impl','type','struct','enum','union','mod','use','extern','macro','macro_rules!','|','||','#'].includes(row.text)||row.text==='!'||row.text.endsWith('!'))){stop('local binding, pattern/closure or unexpanded macro frontier');continue;}
    const localBindings=simpleBase64LocalBindings(rows.slice(body+1,-1),bindings);if(localBindings.reason){stop(localBindings.reason);continue;}
+   const localArguments=createBase64LocalArgumentSource(rows.slice(body+1,-1),bindings);
    for(let at=body+1;at<rows.length-1;at++){
     if(rows[at].text==='::'&&at>body+1&&['ident','number'].includes(rows[at-1]?.type))continue;
     if(rows[at].text==='base64'&&['::','.','#'].includes(rows[at-1]?.text))continue;
@@ -77,12 +79,13 @@ function fileProposal(source,modules,all,profile,context,nonTrait,progress=null)
     if(/^base64::Engine::(?:encode|decode)$/u.test(prefix)&&rows[end]?.text==='('){finish=close(rows,end);const args=finish<0?null:split(rows.slice(end+1,finish));if(args?.length!==2||args[0][0]?.text!=='&')continue;config=enginePath(args[0].slice(1));method=prefix.endsWith('encode')?'encode':'decode';argRows=args[1];syntax='explicit-UFCS-native-unit';}
     else if(rows[end]?.text==='.'&&['encode','decode'].includes(rows[end+1]?.text)&&rows[end+2]?.text==='('){config=enginePath(rows.slice(at,end));method=rows[end+1].text;finish=close(rows,end+2);const args=finish<0?null:split(rows.slice(end+3,finish));if(args?.length!==1)continue;argRows=args[0];syntax='closed-native-unit-method';if(owners.engineImports!==1||owners.methodProblems.length){skipped.push({...base,callSpan:[rows[first].start,rows[finish].end],reason:'actual method trait candidate set remains open'});continue;}}
     else continue;
-    if(!config||finish<0)continue;const operand=argument(argRows,bindings),selected=operand&&operation(config,method,operand.kind);if(!selected){skipped.push({...base,callSpan:[rows[first].start,rows[finish].end],reason:'generic/temporary/local operand is outside concrete owned ABI'});continue;}
+    if(!config||finish<0)continue;const operand=argument(argRows,localArguments.at(rows[first].start)),selected=operand&&operation(config,method,operand.kind);if(!selected){skipped.push({...base,callSpan:[rows[first].start,rows[finish].end],reason:'generic/temporary/local operand is outside concrete owned ABI'});continue;}
     const argumentStart=argRows[0].start,argumentEnd=argRows.at(-1).end,span=[rows[first].start,rows[finish].end],replacement='crate::translation_core::'+selected+'('+source.slice(argumentStart,argumentEnd)+')';
     // Trivia inside the argument is preserved. Other removed trivia must be
     // whitespace: comments are never silently discarded by a substitution.
     if(item.tokens.some(row=>row.type==='comment'&&row.start>=span[0]&&row.end<=span[1]&&!(row.start>=argumentStart&&row.end<=argumentEnd))){stop('receiver/UFCS trivia contains an original comment');continue;}
-    edits.push({span,expected:source.slice(...span),replacement});selections.push({...base,callSpan:span,configuration:config,nativeOperation:method,ownedOperation:selected,operand,syntax,libraryUnit:'base64-0.23.1-normal-dependency-ABI',originalTraitPermission:false});
+    const localArgumentSource=localArguments.evidence(operand.binding);localArguments.selectedCall({span,terminator:rows[finish+1],method,operation:selected});
+    edits.push({span,expected:source.slice(...span),replacement});selections.push({...base,callSpan:span,configuration:config,nativeOperation:method,ownedOperation:selected,operand,syntax,libraryUnit:'base64-0.23.1-normal-dependency-ABI',originalTraitPermission:false,...(localArgumentSource?{localArgumentSource}:{})});
     if(progress)progress({stage:'standalone',state:'advance',source:file,declaration:item.name,phase:'base64-candidate-lowering',completed:edits.length});
     at=finish;
    }
