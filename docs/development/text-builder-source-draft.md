@@ -33,3 +33,8 @@ suffixes, character push, aliases, capacity/pointer exposure, complete source
 owner/producer closure, production coverage, full reverse/sync/freshness, parity,
 receiving qualification and delivery remain OPEN. Preserve all eight same-SHA
 JavaScript gates before fatal CI-only Rust.
+
+The [consuming text successor](text-consuming-source-draft.md) now proposes the
+same-local append_owned/clear_owned calls and retains the original native buffer
+and capacity; the earlier formatting equations remain immutable source history.
+All current qualification and bounded-domain application parity remain OPEN.

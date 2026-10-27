@@ -95,3 +95,7 @@ export function router_text_rsplit_once_right_or_empty(value,pattern){const resu
 
 // Primitive immutable JS text is the value ABI of an independent native String.
 export function router_text_to_owned(value){string(value);return value;}
+
+// Consuming native String interfaces; JS retains the same primitive text ABI.
+export function router_text_append_owned(value,suffix){const left=string(value),right=string(suffix);if(left.bytes>LIMIT-right.bytes)throw new RangeError('text output bound');return value+suffix;}
+export function router_text_clear_owned(value){string(value);return '';}

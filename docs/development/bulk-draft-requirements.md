@@ -435,3 +435,11 @@ for literal String push. Two equations and independent unrun two APIs/seven
 callers/JS/strict TS/native/scalar/refusal/export source are drafted. Character
 variables, wider builder and all namespace/production/reverse/sync/freshness/
 parity/receiving/delivery requirements remain OPEN.
+
+The [consuming text core draft](text-consuming-source-draft.md) adds two paired
+owned String operations and uses them in builder source assignments to retain
+native buffer/capacity. Nine compiler equations plus separate complete native
+CST construction and independent unrun runtime/JS/strict TS/ownership/canonical
+inverse/native capacity/bounds/export sources are drafted. JS prefix validation
+cost and original unbounded application equivalence remain OPEN, along with all
+wider namespace/production/reverse/sync/freshness/parity/receiving/delivery rows.

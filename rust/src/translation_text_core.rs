@@ -309,3 +309,21 @@ pub fn to_owned(value: &str) -> String {
     checked(value);
     value.to_owned()
 }
+
+/// Consume and append while retaining the original String allocation.
+#[must_use]
+pub fn append_owned(mut value: String, suffix: &str) -> String {
+    checked(&value);
+    checked(suffix);
+    assert!(value.len() <= LIMIT - suffix.len(), "text output bound");
+    value.push_str(suffix);
+    value
+}
+
+/// Consume and clear while retaining the original String capacity.
+#[must_use]
+pub fn clear_owned(mut value: String) -> String {
+    checked(&value);
+    value.clear();
+    value
+}

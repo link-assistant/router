@@ -199,3 +199,8 @@ See [the unrun builder draft](text-builder-source-draft.md).
 Character builder substitutions must use the original scalar decoder and retain
 both literal normalization and whole statement inverses. Byte/variable/wrong-
 arity refusals remain; see [the unrun character builder draft](text-builder-character-source-draft.md).
+
+Consuming text calls require actual original owned String and fresh move/loan
+checks; a primitive JS string/annotation supplies no permission. Preserve native
+buffer/capacity and explicit UTF-8 bounds; qualify JS validation costs separately.
+See [the unrun consuming text draft](text-consuming-source-draft.md).
