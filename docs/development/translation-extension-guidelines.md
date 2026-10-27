@@ -270,3 +270,9 @@ Select explicit owning result contexts only inside the actual nonopaque function
 scan; preserve callback exclusions and reuse original branch/conversion rules.
 Count complete balanced operands against the shared work bound and retain whole
 source/CST inverses. See [the unrun draft](return-text-target-source-draft.md).
+
+Carrier owning payload targets require an actual complete written supported role
+and matching closed constructor position. Borrowed/scalar success payloads and
+unknown aliases retain original conversions; constructor spellings grant no
+binding/type/Into permission. Recognize complete else-if syntax independently of
+whether a text target was selected. See [the unrun draft](carrier-text-target-source-draft.md).

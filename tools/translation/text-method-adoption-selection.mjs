@@ -18,7 +18,7 @@ export function selectTextMethodAdoption(source,item,_scoped,modulePath,_names,h
  if(tokens[open]?.text!=='(')return result('complete written input list required');const endParameters=close(tokens,open);if(endParameters<0)return result('complete original inputs required');let body=endParameters+1;while(body<tokens.length&&tokens[body].text!=='{')body++;if(body>=tokens.length||close(tokens,body)!==tokens.length-1)return result('complete original function body required');
  if(tokens.some((row,index)=>row.text==='let'&&tokens[index+1]?.text==='mut'))return selectTextBuilderAdoption(source,item,tokens,{open,endParameters,body},helpers);
  const declaredTextOutput=tokens[endParameters+1]?.text==='->'?readTextWrittenAliasDomain(tokens.slice(endParameters+2,body)):null;
- const textTargets=createTextBranchTargetSource(tokens,{close});if(declaredTextOutput==='text-owned')textTargets.block(body,tokens.length-1);
+ const declaredTextContext=tokens[endParameters+1]?.text==='->'?readTextTargetSourceContext(tokens.slice(endParameters+2,body),_scoped):null;const textTargets=createTextBranchTargetSource(tokens,{close});if(declaredTextContext)textTargets.block(body,tokens.length-1,declaredTextContext);
  const domains=new Map(),parameters=new Set();for(const row of split(tokens.slice(open+1,endParameters))){if(!ident(row[0])||row[1]?.text!==':'||parameters.has(row[0].text))return result('distinct immutable input bindings required');parameters.add(row[0].text);if(borrowed(text(row.slice(2))))domains.set(row[0].text,'str');else if(text(row.slice(2))==='String')domains.set(row[0].text,'text-owned');else if(text(row.slice(2))==='usize')domains.set(row[0].text,'usize-count');else{const receiverRole=readJsonReceiverWrittenSourceRole(row.slice(2),_scoped??{})??readPrimitiveCoreParameterSourceRole(row.slice(2),_scoped);if(receiverRole)domains.set(row[0].text,receiverRole);}}
  const localNames=new Set(),projectionPipes=new Set();let work=0;
  // Only this complete destructuring identity closure can be substituted.
@@ -79,10 +79,10 @@ export function selectTextMethodAdoption(source,item,_scoped,modulePath,_names,h
  }
  for(let at=body+1;at<tokens.length-1;at++){const excluded=opaqueTokenEnds.get(at);if(excluded!==undefined){at=excluded-1;continue;}
   if(++work>200000)return result('complete adoption expression scan bound exceeded');activeDomains=localArguments.at(tokens[at].start);
-  if(tokens[at].text==='return'&&declaredTextOutput==='text-owned'){const operand=readReturnSourceOperandBounds(tokens,at,tokens.length-1,{close});if(operand){work+=operand.visited;if(work>200000)return result('complete owning return source scan bound exceeded');textTargets.expression(operand.start,operand.end);}}
+  if(tokens[at].text==='return'&&declaredTextContext!==null){const operand=readReturnSourceOperandBounds(tokens,at,tokens.length-1,{close});if(operand){work+=operand.visited;if(work>200000)return result('complete owning return source scan bound exceeded');textTargets.expression(operand.start,operand.end,declaredTextContext);}}
   if(tokens[at].text==='let'){
-   const initializer=readLocalAliasInitializer(tokens,at,readTextWrittenAliasDomain);if(!initializer)continue;const equal=initializer.start-1;
-   if(tokens[equal]?.text!=='=')continue;if(initializer.domain==='text-owned'){let last=equal+1;for(;last<tokens.length-1&&tokens[last].text!==';';last++){if(['(','[','{'].includes(tokens[last].text)){const end=close(tokens,last);if(end<last)break;last=end;}}if(tokens[last]?.text===';')textTargets.expression(equal+1,last);}activeDomains=localArguments.at(tokens[equal+1]?.start);const value=expression(equal+1,0,false,initializer.domain);if(!value||tokens[value.after]?.text!==';'){at=equal;continue;}if(value.operations.length)localArguments.selectedCall({span:[tokens[equal+1].start,tokens[value.after-1].end],terminator:tokens[value.after],operation:value.operations.at(-1),returnsKind:value.domain});append(equal+1,value);at=value.after-1;continue;
+   const initializer=readLocalAliasInitializer(tokens,at,rows=>readTextWrittenAliasDomain(rows)??readTextTargetSourceContext(rows,_scoped));if(!initializer)continue;const equal=initializer.start-1;
+   if(tokens[equal]?.text!=='=')continue;if(isTextTargetSourceContext(initializer.domain)){let last=equal+1;for(;last<tokens.length-1&&tokens[last].text!==';';last++){if(['(','[','{'].includes(tokens[last].text)){const end=close(tokens,last);if(end<last)break;last=end;}}if(tokens[last]?.text===';')textTargets.expression(equal+1,last,initializer.domain);}activeDomains=localArguments.at(tokens[equal+1]?.start);const value=expression(equal+1,0,false,initializer.domain);if(!value||tokens[value.after]?.text!==';'){at=equal;continue;}if(value.operations.length)localArguments.selectedCall({span:[tokens[equal+1].start,tokens[value.after-1].end],terminator:tokens[value.after],operation:value.operations.at(-1),returnsKind:value.domain});append(equal+1,value);at=value.after-1;continue;
   }
   if(['.','::'].includes(tokens[at-1]?.text))continue;const value=expression(at);if(value?.operations.length){append(at,value);at=value.after-1;}
  }
@@ -116,3 +116,5 @@ import {readTextConstructorSourcePrefix} from './text-constructor-source.mjs';
 import {selectTextBuilderAdoption} from './text-builder-adoption-selection.mjs';
 
 import {readReturnSourceOperandBounds} from './return-operand-source.mjs';
+
+import {isTextTargetSourceContext,readTextTargetSourceContext} from './carrier-text-target-source.mjs';

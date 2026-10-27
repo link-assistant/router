@@ -524,3 +524,10 @@ return-if/match/groups/early branches while keeping opaque callback targets
 separate. Four equations and independent unrun two-API/five-caller/ten-edit JS/
 strict TS/native/bounds/refusal/export source are drafted. Wider language/
 namespace/production/reverse/sync/freshness/parity/receiving/delivery remain OPEN.
+
+The [explicit carrier text target draft](carrier-text-target-source-draft.md)
+reuses original written Option/Result roles and matching constructor payload
+positions across branches/locals/returns/matches without inferred type or owner
+permission. Five equations and independent unrun two-API/eight-caller/eleven-edit
+JS/strict TS/native/bounds/refusal/export source are drafted. Wider generics/
+namespace/production/reverse/sync/freshness/parity/receiving/delivery remain OPEN.
