@@ -633,3 +633,10 @@ chronological and layered rules for receiver/text/owned-view/usize key aliases
 in both field adapters. Five whole equations and unrun shadow/scope/lookup/
 Unicode/bulk/receiving JS/strict TS/native-oracle cases are drafted. All wider
 source/native/production/sync/freshness/parity/delivery requirements stay open.
+
+The [shared JSON slice/vector draft](json-slice-local-source-draft.md) copies the
+whole collection selector once and reuses chronological/layered rules across
+four existing map/iteration adapters. Eight whole equations and unrun scope/
+callback/order/Unicode/bulk/receiving JS/strict TS/native-oracle cases are drafted.
+All wider source/native/production/sync/freshness/parity/delivery requirements
+remain unfinished.
