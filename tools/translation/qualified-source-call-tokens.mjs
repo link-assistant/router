@@ -25,3 +25,14 @@ export function readQualifiedSourceCallPrefixTokens(rows,start=0){
   const word=rows[at].text;if(pairs[word]){if(groups.length>=17)return null;groups.push(pairs[word]);}else if([')',']','}'].includes(word)){if(groups.pop()!==word)return null;if(!groups.length){const end=at+1,tokens=rows.slice(start,end),call=readQualifiedSourceCallTokens(tokens);return call?{start,end,tokens,call,sourceAuthority:false,semanticAuthority:false}:null;}}
  }return null;
 }
+
+// Generic complete qualified macro token-tree syntax only. Macro argument
+// grammar, hygiene, owner and return type are separate actual checker duties.
+export function readQualifiedSourceMacroTokens(rows){
+ if(!Array.isArray(rows)||rows.length<6||rows.length>256)return null;let at=0;const path=[];
+ for(;;){if(!ident(rows[at])||path.length>=8)return null;path.push(rows[at++].text);if(rows[at]?.text!=='::')break;at++;}
+ const pairs={'(':')','[':']','{':'}'};if(path.length<2||rows[at++]?.text!=='!'||!pairs[rows[at]?.text])return null;const open=at,delimiter=rows[at].text,groups=[];
+ for(;at<rows.length;at++){
+  const word=rows[at].text;if(pairs[word]){if(groups.length>=16)return null;groups.push(pairs[word]);}else if([')',']','}'].includes(word)){if(groups.pop()!==word)return null;if(!groups.length){if(at!==rows.length-1)return null;return {path,delimiter,open,body:rows.slice(open+1,at),macroOwnerProved:false,macroArgumentsChecked:false,sourceAuthority:false,semanticAuthority:false};}}
+ }return null;
+}

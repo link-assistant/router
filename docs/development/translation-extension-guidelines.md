@@ -835,3 +835,10 @@ validate its result only there. Build a genuine Result type, preserve Some false
 zero/empty payloads, source scopes, borrowing and trailing try flow; retain old
 restricted-lane refusals. See the
 [unrun lazy Option error draft](option-lazy-error-source-draft.md).
+
+Keep qualified macro token-tree syntax and source-result candidates separate
+from actual macro ownership and argument semantics. Preserve complete source,
+explicit unchecked argument/owner flags and independent canonical/native/type/
+trait/effect/body checks. Unknown argument calls cannot gain executable authority
+from a formatting source role. See the
+[unrun canonical formatting role draft](core-formatting-role-source-draft.md).

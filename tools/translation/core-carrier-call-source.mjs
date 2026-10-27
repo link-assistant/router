@@ -11,9 +11,10 @@ const role=domain=>domain.endsWith('-text-result')&&['bool','u64','i64','str','t
 const same=(a,b)=>!!a&&!!b&&a.kind===b.kind&&a.domain===b.domain;
 const ident=row=>row?.type==='ident'&&/^[\p{ID_Start}_][\p{ID_Continue}_]*$/u.test(row.text);
 export function readCoreCarrierCallSource(rows,bindings){
+ const formatting=readCoreFormattingMacroSource(rows);if(formatting)return formatting;
  let work=0;
  function operand(part,wanted,depth){
-  if(++work>256||depth>8||!part.length)return false;const first=part[0],known=part.length===1&&ident(first)?bindings.get(first.text):null;if(same(known,wanted))return true;const group=readParenthesizedSourceOperandTokens(part);if(group)return operand(group,wanted,depth+1);if(wanted.kind==='payload'&&wanted.domain==='str'&&part[0]?.text==='&')return operand(part.slice(1),{kind:'payload',domain:'text-owned'},depth+1);
+  if(++work>256||depth>8||!part.length)return false;const formatting=readCoreFormattingMacroSource(part);if(formatting)return same(formatting,wanted);const first=part[0],known=part.length===1&&ident(first)?bindings.get(first.text):null;if(same(known,wanted))return true;const group=readParenthesizedSourceOperandTokens(part);if(group)return operand(group,wanted,depth+1);if(wanted.kind==='payload'&&wanted.domain==='str'&&part[0]?.text==='&')return operand(part.slice(1),{kind:'payload',domain:'text-owned'},depth+1);
   if(wanted.kind==='payload'){
    if(wanted.domain==='str'){
     if(part.length===1&&first.type==='string'&&/^(?:"|r#{0,255}")/u.test(first.text))return true;
@@ -34,3 +35,5 @@ export function readCoreCarrierCallSource(rows,bindings){
  }
  return call(rows,0);
 }
+
+import {readCoreFormattingMacroSource} from './core-formatting-macro-source.mjs';

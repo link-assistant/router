@@ -940,3 +940,11 @@ callback/early-error/two-API/six-caller/JS/strict TS/paired reverse/native/expor
 cases are drafted. Broader domains, borrowed resource results, eager conversions,
 qualified callback local joins and every unfinished namespace/production/reverse/
 sync/freshness/parity/delivery row remain OPEN.
+
+The [canonical formatting role draft](core-formatting-role-source-draft.md)
+composes exact existing core format macro source through shared carrier/local/
+callback roles while leaving real owner/argument/trait checks independent. Four
+equations and independent unrun six-API/eight-caller/refusal/unknown-nonadmission/
+JS/strict TS/native/export cases are drafted. Original macro namespace closure
+and every unfinished production/reverse/sync/freshness/parity/delivery row remain
+OPEN; no actual owner, executable coverage or completion is claimed.
