@@ -30,7 +30,7 @@ export function projectAsyncControlRustFunctions(functions,{javascriptPath,runti
   if(node.kind==='unit')return 'null';if(node.kind==='integer'){if(node.type!=='u64')fail('closed unsigned control count required');return node.value+'n';}
   if(node.kind==='boolean')return String(node.value);if(node.kind==='string')return JSON.stringify(node.value);
   if(node.kind==='not')return '(!'+expression(node.value,locals,asynchronous,depth+1)+')';
-  if(node.kind==='binary'&&['&&','||'].includes(node.op))return '('+expression(node.left,locals,asynchronous,depth+1)+' '+node.op+' '+expression(node.right,locals,asynchronous,depth+1)+')';
+  if(node.kind==='binary'&&['&&','||','==','!=','<','<=','>','>='].includes(node.op))return '('+expression(node.left,locals,asynchronous,depth+1)+' '+({'==':'===','!=':'!=='}[node.op]??node.op)+' '+expression(node.right,locals,asynchronous,depth+1)+')';
   if(node.kind==='block'){if(node.statements.length||!node.tail)fail('only actual canonical capture-only blocks may be projected');return expression(node.tail,locals,asynchronous,depth+1);}
   if(node.kind==='async-lambda'){
    if(!node.moved||!node.futureMoved||node.parameters.length!==1)fail('complete canonical move/async/move deadline closure required');const child=name(node.parameters[0]);if(locals.has(child))fail('deadline child shadows an actual Result binding');return 'async ('+child+') => '+body(node.body,new Map(locals),true,depth+1);

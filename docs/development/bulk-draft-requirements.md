@@ -505,3 +505,10 @@ seven reverse profiles, exact checked Rust inverses and full-project sync. Ten
 whole equations and unrun boundary/exact-error/order/strict TS/inverse/source/
 refusal/native oracle cases are drafted. Every remaining source/native/
 production/sync/freshness/parity/delivery requirement remains unfinished.
+
+The [guarded async comparison draft](async-control-comparisons-draft.md) adds
+six source-guarded u64 comparisons and strict Boolean equality inside existing
+cold resource branches and canonical Rust inverses. Three whole equations and
+unrun truth-table/order/strict TS/cold cancellation/deadline/source/meta/inverse/
+refusal/native oracle sources are drafted. Every remaining source/native/
+production/sync/freshness/parity/delivery requirement remains unfinished.

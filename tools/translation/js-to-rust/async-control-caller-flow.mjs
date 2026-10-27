@@ -18,6 +18,7 @@ export function asyncControlCallerRustType(type,depth=0){
 export function checkAsyncControlCallerFlow(ts,statements,parameters,imports,{lazy=false,allowColdTail=false,bindings=null,moduleNames=new Set(),budget={cells:0},depth=0,tailOnly=false,childCancellation=null}={}){
  if(depth>64||!statements.length||statements.length>4096)fail('bounded complete resource flow required');
  const environment=bindings?new Map([...bindings].map(([key,row])=>[key,{...row}])):new Map(parameters.map(row=>[row.name,{type:row.type,input:true,moved:false,disposed:false}])),steps=[],captures=new Map();let tail=null,hadFailureReturn=false;
+ const comparisonOperations=new Map([[ts.SyntaxKind.EqualsEqualsEqualsToken,'==='],[ts.SyntaxKind.ExclamationEqualsEqualsToken,'!=='],[ts.SyntaxKind.LessThanToken,'<'],[ts.SyntaxKind.LessThanEqualsToken,'<='],[ts.SyntaxKind.GreaterThanToken,'>'],[ts.SyntaxKind.GreaterThanEqualsToken,'>=']]);
  const tick=()=>{if(++budget.cells>100000)fail('complete resource flow source-cell budget');};
  const binding=name=>{const row=environment.get(name);if(!row||row.moved)fail('unknown or moved actual control binding: '+name);if(row.capture)captures.set(name,{name,type:row.captureType});return row;};
  const newName=value=>{asyncControlCallerName(value);if(environment.has(value)||moduleNames.has(value))fail('ordinary unique resource local required');return value;};
@@ -65,11 +66,15 @@ export function checkAsyncControlCallerFlow(ts,statements,parameters,imports,{la
   if(operation.rustName==='dispose'){const row=environment.get(args[0].name);row.disposed=true;}
   return value;
  }
- function expression(node,flags={}){return ts.isCallExpression(node)||ts.isAwaitExpression(node)?call(node,flags):operand(node);}
+ function expression(node,flags={},level=0){tick();if(level+depth>160)fail('complete scalar expression depth budget');if(ts.isParenthesizedExpression(node))return expression(node.expression,flags,level+1);if(ts.isPrefixUnaryExpression(node)&&node.operator===ts.SyntaxKind.ExclamationToken||ts.isBinaryExpression(node)&&(comparisonOperations.has(node.operatorToken.kind)||[ts.SyntaxKind.AmpersandAmpersandToken,ts.SyntaxKind.BarBarToken].includes(node.operatorToken.kind)))return condition(node,level);return ts.isCallExpression(node)||ts.isAwaitExpression(node)?call(node,flags):operand(node);}
  function condition(node,level=0){
   tick();if(level+depth>160)fail('Boolean control condition depth budget');if(ts.isParenthesizedExpression(node))return condition(node.expression,level+1);
   if(ts.isPrefixUnaryExpression(node)&&node.operator===ts.SyntaxKind.ExclamationToken)return {kind:'not',value:condition(node.operand,level+1),type:'bool'};
   if(ts.isBinaryExpression(node)&&[ts.SyntaxKind.AmpersandAmpersandToken,ts.SyntaxKind.BarBarToken].includes(node.operatorToken.kind))return {kind:node.operatorToken.kind===ts.SyntaxKind.AmpersandAmpersandToken?'and':'or',left:condition(node.left,level+1),right:condition(node.right,level+1),type:'bool'};
+  if(ts.isBinaryExpression(node)){
+   const operation=comparisonOperations.get(node.operatorToken.kind);
+   if(operation){const left=expression(node.left,{},level+1),right=expression(node.right,{},level+1);if(left.type!==right.type||!['u64','bool'].includes(left.type)||left.type==='bool'&&!['===','!=='].includes(operation))fail('control comparisons require exact guarded u64 or primitive Boolean equality operands');return {kind:'comparison',operation,left,right,type:'bool'};}
+  }
   const value=expression(node);if(value.type!=='bool')fail('actual primitive Boolean branch condition required');return value;
  }
  function guard(node,id){
@@ -111,6 +116,7 @@ export function emitAsyncControlCallerFlow(flow,{rename=new Map(),state={sequenc
   if(value.kind==='result-variable')return 'Ok('+name(value.name)+')';
   if(value.kind==='borrow')return value.type==='receiver-mut'?(value.owned?'&mut '+name(value.name):'&mut *'+name(value.name)):(value.owned?'&':'')+name(value.name);
   if(value.kind==='integer')return value.value+'_u64';if(value.kind==='string')return rustString(value.value);if(value.kind==='boolean')return String(value.value);if(value.kind==='unit')return '()';
+  if(value.kind==='comparison')return '('+expression(value.left)+' '+({'===':'==','!==':'!='}[value.operation]??value.operation)+' '+expression(value.right)+')';
   if(value.kind==='not')return '(!'+expression(value.value)+')';if(value.kind==='and'||value.kind==='or')return '('+expression(value.left)+(value.kind==='and'?' && ':' || ')+expression(value.right)+')';
   if(value.kind==='control-call'){
    const operation=asyncControlCallerContract(value.operation),callback=value.args.find(row=>row.kind==='deadline-callback'),prelude=[],localRename=new Map(rename);
