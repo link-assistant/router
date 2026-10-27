@@ -627,3 +627,9 @@ once-only native core casts. Three whole equations and unrun bounds/annotation/
 scope/UTF-8/bulk/receiving JS/strict TS/native-oracle cases are drafted. Wider
 count forms and all source/native/production/sync/freshness/parity/delivery
 requirements remain unfinished.
+
+The [JSON field local draft](json-field-local-source-draft.md) reuses shared
+chronological and layered rules for receiver/text/owned-view/usize key aliases
+in both field adapters. Five whole equations and unrun shadow/scope/lookup/
+Unicode/bulk/receiving JS/strict TS/native-oracle cases are drafted. All wider
+source/native/production/sync/freshness/parity/delivery requirements stay open.

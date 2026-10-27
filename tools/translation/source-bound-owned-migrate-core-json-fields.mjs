@@ -15,7 +15,7 @@ import {createCoreAdoptionProducerContext,finishCoreAdoptionProducerContext,crea
 import {coreTypeProducerProblemsForModule} from './source-bound-owned-migrate-core-primitives.mjs';
 import {compilationProfile,itemConfiguration,PRODUCTION_PROFILE} from './cfg-profile.mjs';
 import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE,ROUTER_CORE_JSON_COLLECTIONS_SOURCE} from './router-core-source-data.mjs';
-import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions,serializeConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
+import {applyLayeredCoreAdoptionSource} from './layered-core-adoption-source.mjs';
 const C='crate::translation_core::',hash=source=>createHash('sha256').update(source).digest('hex');
 const fail=reason=>{throw new TypeError('Owned JSON field adoption: '+reason);};
 const ident=token=>token?.type==='ident'&&/^[\p{ID_Start}_][\p{ID_Continue}_]*$/u.test(token.text);
@@ -84,9 +84,7 @@ function select(source,item,scoped,modulePath,names){
  return selectJsonFieldAdoption(source,item,scoped,modulePath,names,{originalDeclarationHeader,close,split,text,ident,macroAt,createLegacyJsonReaderNormalizer,optionNormalizationProblem});
 }
 function apply(source,edits){
- const before=transportConcreteSyntaxSource(source,{language:'Rust'});edits.sort((a,b)=>a.span[0]-b.span[0]);for(let at=0;at<edits.length;at++)if(source.slice(...edits[at].span)!==edits[at].expected||at&&edits[at-1].span[1]>edits[at].span[0])fail('overlapping or changed exact edits');
- const changed=applyConcreteSyntaxSubstitutions(before.document,{languageRules:[{id:'json-fields:retain-complete-original-reader-and-evaluation-order',edits:[]}],repositoryRules:[{id:'router-core:adopt-qualified-typed-json-field-operations',edits}]}),after=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(changed.value)),mapping=[];let old=0,current=0;
- for(const edit of edits){if(old<edit.span[0]){const size=edit.span[0]-old;mapping.push({kind:'unchanged',before:[old,edit.span[0]],after:[current,current+size]});current+=size;}mapping.push({kind:'substitution',before:edit.span,after:[current,current+edit.replacement.length],expected:edit.expected,replacement:edit.replacement});old=edit.span[1];current+=edit.replacement.length;}if(old<source.length)mapping.push({kind:'unchanged',before:[old,source.length],after:[current,current+source.length-old]});let inverse=after.source;for(const row of [...mapping].reverse())if(row.kind==='substitution'){if(inverse.slice(...row.after)!==row.replacement)fail('inverse source differs');inverse=inverse.slice(0,row.after[0])+row.expected+inverse.slice(row.after[1]);}if(inverse!==source)fail('complete source inverse differs');return {before:{source,meta:before.meta,sha256:hash(source)},after:{source:after.source,meta:after.meta,sha256:hash(after.source)},edits,mapping,trace:changed.trace,executableAdmission:false};
+ return applyLayeredCoreAdoptionSource(source,edits,{languageRule:'json-fields:retain-complete-original-reader-and-evaluation-order',repositoryRule:'router-core:adopt-qualified-typed-json-field-operations',bindings:[{native:'crate::translation_json_fields_core::',neutral:'::translation_compatibility_json_fields::'}]});
 }
 export function proposeCoreJsonFieldCorpus(options={}){
  const supplied=record(options,['entry','files','compilationProfile','dependencyInputs'],4,'options'),{entry='src/lib.rs',files:input,compilationProfile:inputProfile=PRODUCTION_PROFILE,dependencyInputs:requestedDependencies}=supplied.value,captured=filesSnapshot(input),files=captured.value,profile=compilationProfile(inputProfile),dependencies=requestedDependencies===undefined?null:record(requestedDependencies,['manifest','lock'],2,'dependency inputs'),dependencyInputs=dependencies?.value;
