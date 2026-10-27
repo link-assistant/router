@@ -16,7 +16,7 @@ import {checkPinnedSharedBody,checkedSharedMatchPlace,requirePinnedSharedBody,or
 import {STANDARD_OPTION_COPY_SOURCE,SHARED_REFERENCE_COPY_SOURCE,sharedReferenceCopyIdentity,originalPrimitiveCopySource} from '../shared-reference-copy-source.mjs';
 import {pinnedPrimitiveIdentityFrom,parsePrimitiveIdentityFromBody,requirePrimitiveIdentityFromBody,requirePrimitiveIdentityFromEvidence} from './primitive-identity-from-source.mjs'; import {prepareOriginalPrimitiveIdentityBoundary,originalPrimitiveIdentityParameterGuard} from './primitive-identity-boundary.mjs';
 import {pinnedPrimitiveFrom,parsePrimitiveFromBody,requirePrimitiveFromBody,hasSourceFixedFrom} from './primitive-from-source.mjs';
-import {parsePrimitiveComparison,checkedPrimitiveCast,checkedPrimitiveShift,checkedPrimitiveBitwise,checkedPrimitiveNot,requirePrimitiveOperator} from './primitive-operators.mjs';
+import {parsePrimitiveComparison,checkedPrimitiveCast,checkedPrimitiveShift,checkedPrimitiveBitwise,checkedPrimitiveNot} from './primitive-operators.mjs';
 import {sourcePrimitiveAlias} from './primitive-type-aliases.mjs';
 import {capturePrimitiveBoolFromScope,requirePrimitiveBoolFromScope,pinnedPrimitiveBoolFrom,parsePrimitiveBoolFromBody,requirePrimitiveBoolFromBody} from './primitive-bool-from-source.mjs';
 import {captureSourceConversionScope} from './source-conversion-scope.mjs';
@@ -867,13 +867,7 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
     if(node.k==='routerPinnedSharedBody')return this.expr(requireOriginalSharedEmission(this,node));
     if(node.k==='routerStaticArrayElement'){const proof=requireStaticArrayElement(node,this.program,HostChecker);this.staticArrayElements=true;return `ml_static_array_element(${JSON.stringify(proof.storageKey)}, () => ${this.expr(node.array)}, ${this.expr(node.index)})`;}
     if(node.k==='routerSourceUnitEnumCast')return this.expr(requireUnitEnumCast(node,this.program,HostChecker));
-    if(['routerPrimitiveIntegerCast','routerPrimitiveIntegerShift','routerPrimitiveScalarBitwise','routerPrimitiveIntegerNot'].includes(node.k)){
-      const proof=requirePrimitiveOperator(node);this.primitiveOperators=true;
-      this.state.encode('rust-primitive-integer-operators','Actual by-value primitive casts, shifts, fixed integer complement and eager bool/fixed-integer bitwise operations; exact BigInt ABI and checked counts; no trait or pointer authority.');
-      if(node.k==='routerPrimitiveIntegerNot')return `ml_primitive_not(${this.expr(node.value)}, ${node.type.bits}, ${node.type.signed})`;
-      if(node.k==='routerPrimitiveScalarBitwise')return `ml_primitive_bitwise(${this.expr(node.left)}, ${this.expr(node.right)}, ${JSON.stringify(proof.operation)}, ${node.type.kind==='bool'?'null':node.type.bits}, ${node.type.kind==='bool'?'null':node.type.signed})`;if(node.k==='routerPrimitiveIntegerCast')return `ml_integer_cast(${this.expr(node.value)}, ${node.value.type.bits}, ${node.value.type.signed}, ${node.type.bits}, ${node.type.signed})`;
-      return `ml_integer_shift(${this.expr(node.left)}, ${this.expr(node.right)}, ${node.type.bits}, ${node.type.signed}, ${node.right.type.bits}, ${node.right.type.signed}, ${JSON.stringify(proof.operation)})`;
-    }
+    const primitive=emitPrimitiveOperator(this,node);if(primitive!==null)return primitive;
     if(node.k==='routerPinnedStandardBody'){requirePinnedStandardEmission(this,node,HostRustParser,HostChecker);return this.expr(node.body);}
     if(node.sourceByteLiteral)requireByteLiteral(node,true);
     if(node.k==='routerReverseSplitFind'){requireReverseStringProof(node);this.reverseStrings=true;return `ml_reverse_split_find(${this.expr(node.base.object)}, ${JSON.stringify(node.base.delimiter)}, Object.freeze([${node.maps.map(map=>this.expr(map)).join(', ')}]), ${this.expr(node.predicate)})`;}
@@ -999,3 +993,5 @@ export const parseRust=(source,{shadowedEffectRoots,shadowedPreludeTypes,macroEv
 export const checkProgram=(surface,{jsonParserProfile=DEFAULT_JSON_PARSER_PROFILE}={})=>{const checker=configureJsonCapabilities(new HostChecker(surface.language,surface.externals??[]),jsonParserProfile);const program=checker.program(surface);program.jsonParserProfile=jsonParserProfile;return program;};
 export const checkProjectProgram=(surface,{jsonParserProfile=DEFAULT_JSON_PARSER_PROFILE,collectIndependentBodies=false}={})=>{const checker=configureJsonCapabilities(new HostChecker(surface.language,surface.externals??[]),jsonParserProfile);const program=checkCollectedDeclarationTypes(checker,surface,{collectIndependentBodies});program.jsonParserProfile=jsonParserProfile;return program;};
 export const emitJavaScript=(program,{runtimeModule,reserved=[]}={})=>{let emitter;const result=emitWith(program,class extends HostEmitter{constructor(program,state){for(const name of reserved)state.reserved.add(name);super(program,state);this.runtimeModule=runtimeModule;this.checkedLocalBindings=[];emitter=this;}});return emitter.checkedLocalBindings.length?{...result,checkedLocalBindings:emitter.checkedLocalBindings}:result;};
+
+import {emitPrimitiveOperator} from './primitive-operator-emission.mjs';

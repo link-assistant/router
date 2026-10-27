@@ -674,7 +674,7 @@ function checkFunction(context,path,declaration,analysis){
    for(const [literal,other]of [[left,right],[right,left]])if(literal.kind==='integer'&&literal.type==='usize'&&['u64','i64'].includes(other.type)&&(other.type==='u64'||BigInt(literal.value)<=9223372036854775807n))literal.type=other.type;
    if(['<','<=','>','>='].includes(op)){if((!['usize','u64','i64'].includes(left.type)&&!ownedNativeIntegerDomain(left.type,nativeScalars))||left.type!==right.type)fail('ordered comparison requires identical checked integer domains');}
    else if(['&&','||'].includes(op)?left.type!=='bool'||right.type!=='bool':(!['bool','str','usize','u64','i64'].includes(left.type)&&!ownedNativeIntegerDomain(left.type,nativeScalars))||left.type!==right.type)fail('identity/coercion comparison outside owned profile');
-   return {kind:'binary',op,left,right,type:'bool',root:null};
+   const checked={kind:'binary',op,left,right,type:'bool',root:null};if(nativeScalars&&primitiveBitwiseType(left.type))nativeOperatorHistory.retain(node,file,checked);return checked;
   }
   fail('unimplemented expression '+ts.SyntaxKind[node.kind]);
  }
@@ -724,7 +724,7 @@ function checkFunction(context,path,declaration,analysis){
     const compound=assignment.operatorToken.kind!==ts.SyntaxKind.EqualsToken,value=compound?readOwnedNativeBitwiseExpression(ts,assignment,argument=>expression(argument,scope,depth+1),{enabled:nativeScalars,compound:true}):expression(assignment.right,scope,depth+1);if(!value)fail('compound assignment requires an actual native integer operation');if(compound)nativeOperatorHistory.retain(assignment,file,value);if(value.type!==entry.type||value.root!==null)fail('assigned owned domain or loan differs');
     body.push({kind:'assign',name:assignment.left.text,value});
    }else if(ts.isReturnStatement(statement)&&statement.expression){
-    const value=expression(statement.expression,scope,depth+1,false,writtenReturnDomain());
+    const value=expression(statement.expression,scope,depth+1,false,writtenReturnDomain());if(nativeScalars)nativeOperatorHistory.retainCopy(statement.expression,file,value);
     if(!['json','json-ref','bool','str','usize','text-owned','base64-result','u64','i64','json-list-owned'].includes(value.type)&&!ownedJsonOptionalPayload(value.type)&&!primitiveBitwiseType(value.type))fail('unsupported owned result');
     if(value.type==='json-ref'&&!params.some(param=>param.name===value.root&&['json-ref','map-ref','json-option-ref'].includes(param.type)))fail('returned local loan');
     if(ownedJsonBorrowed(value.type)&&value.root&&!params.some(param=>param.name===value.root&&(['json-ref','map-ref','str','json-option-input'].includes(param.type)||ownedJsonBorrowed(param.type))))fail('returned local optional loan');
@@ -758,6 +758,7 @@ function checkFunction(context,path,declaration,analysis){
  }
  if(params.some(param=>param.type==='bytes-ref'&&!byteInputs.has(param.name)))fail('octet input requires an actual fixed base64 operand');
  if(params.some(param=>param.type==='json-option-input'&&!hostCalls.some(call=>ownedJsonOptionalReaderOperation(call.name)&&call.inputRoot===param.name)))fail('opaque optional Json input requires validation');
+ if(!hostCalls.length&&!sourceNativeOperators.length)nativeOperatorHistory.adoptCopies();
  if(!hostCalls.length&&!sourceNativeOperators.length)fail('no actual owned-core call');
  const item={kind:'owned-function',name,javascript:declaration.name.text,exported:!!declaration.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword),params,returns:resultType,resultRoot,body:checked.body,source:{path,source,span:[declaration.getStart(file),declaration.end]},...(sourceNativeOperators.length?{sourceNativeOperators}:{}),hostCalls};
  if(paired)item.pairedSource={path:paired.pair.typescript.path,source:paired.pair.typescript.source,span:paired.evidence.typescriptSpan,parameters:paired.evidence.parameters,locals:paired.evidence.locals,returnSpan:paired.evidence.returnSpan,erasure:paired.pair.erasure.edits};

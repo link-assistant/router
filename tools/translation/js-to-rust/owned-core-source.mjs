@@ -613,7 +613,7 @@ function checkFunction(context,path,declaration,analysis){
    const left=expression(node.left,scope,depth+1),right=expression(node.right,scope,depth+1),op=node.operatorToken.getText(file);joinOwnedNativeScalarOperands(left,right,nativeScalars);
    if(['<','<=','>','>='].includes(op)){if((!['usize','u64','i64'].includes(left.type)&&!ownedNativeIntegerDomain(left.type,nativeScalars))||left.type!==right.type)fail('ordered comparison requires identical checked integer domains');}
    else if(['&&','||'].includes(op)?left.type!=='bool'||right.type!=='bool':(!['bool','str','usize'].includes(left.type)&&!ownedNativeIntegerDomain(left.type,nativeScalars))||left.type!==right.type)fail('identity/coercion comparison outside owned profile');
-   return {kind:'binary',op,left,right,type:'bool',root:null};
+   const checked={kind:'binary',op,left,right,type:'bool',root:null};if(nativeScalars&&primitiveBitwiseType(left.type))nativeOperatorHistory.retain(node,file,checked);return checked;
   }
   fail('unimplemented expression '+ts.SyntaxKind[node.kind]);
  }
@@ -658,7 +658,7 @@ function checkFunction(context,path,declaration,analysis){
      const name=bind(declaration.name,{type:value.type,root:value.root,...(asciiLoan?.root===null?{asciiStaticLoan:true}:{})},scope);body.push({kind:'let',name,value});
     }
    }else if(ts.isReturnStatement(statement)&&statement.expression){
-    const value=expression(statement.expression,scope,depth+1);
+    const value=expression(statement.expression,scope,depth+1);if(nativeScalars)nativeOperatorHistory.retainCopy(statement.expression,file,value);
     if(!['json','json-ref','bool','str','usize','text-owned','base64-result','u64','i64'].includes(value.type)&&!ownedJsonOptionalPayload(value.type)&&!primitiveBitwiseType(value.type))fail('unsupported owned result');
     if(value.type==='json-ref'&&!params.some(param=>param.name===value.root&&['json-ref','map-ref','json-option-ref'].includes(param.type)))fail('returned local loan');
     if(ownedJsonBorrowed(value.type)&&value.root&&!params.some(param=>param.name===value.root&&(['json-ref','map-ref','str','json-option-input'].includes(param.type)||ownedJsonBorrowed(param.type))))fail('returned local optional loan');
@@ -692,6 +692,7 @@ function checkFunction(context,path,declaration,analysis){
  }
  if(params.some(param=>param.type==='bytes-ref'&&!byteInputs.has(param.name)))fail('octet input requires an actual fixed base64 operand');
  if(params.some(param=>param.type==='json-option-input'&&!hostCalls.some(call=>ownedJsonOptionalReaderOperation(call.name)&&call.inputRoot===param.name)))fail('opaque optional Json input requires validation');
+ if(!hostCalls.length&&!sourceNativeOperators.length)nativeOperatorHistory.adoptCopies();
  if(!hostCalls.length&&!sourceNativeOperators.length)fail('no actual owned-core call');
  const item={kind:'owned-function',name,javascript:declaration.name.text,exported:!!declaration.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword),params,returns:resultType,resultRoot,body:checked.body,source:{path,source,span:[declaration.getStart(file),declaration.end]},...(sourceNativeOperators.length?{sourceNativeOperators}:{}),hostCalls};
  if(paired)item.pairedSource={path:paired.pair.typescript.path,source:paired.pair.typescript.source,span:paired.evidence.typescriptSpan,parameters:paired.evidence.parameters,locals:paired.evidence.locals,returnSpan:paired.evidence.returnSpan,erasure:paired.pair.erasure.edits};

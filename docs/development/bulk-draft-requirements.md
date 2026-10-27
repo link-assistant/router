@@ -460,3 +460,10 @@ imports. Sixteen compiler equations and unrun width/profile/boundary/alias/
 public-module/inverse/refusal/tamper sources are drafted. Native caller/global
 closure and all remaining source/production/sync/freshness/parity/delivery
 requirements remain unfinished.
+
+The [native copy/comparison draft](native-scalar-copy-comparisons-draft.md)
+qualifies actual fixed-domain standalone copies, conditional returns and exact
+comparisons in seven source checkers while retaining all whole-function and
+native ABI guards. Eighteen complete equations and unrun width/profile/order/
+copy/inverse/refusal/tamper cases are drafted. Every remaining source/native/
+production/sync/freshness/parity/delivery requirement remains unfinished.
