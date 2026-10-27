@@ -774,3 +774,11 @@ independent unrun two-API/bulk/JS/strict TS/consecutive-text/history/export/nati
 pointer/lifetime oracle source are drafted. Unknown/effectful key and map forms
 remain unselected, and all wider source/native/production/sync/freshness/parity/
 delivery requirements stay unfinished.
+
+The [JSON field Try-chain draft](json-field-try-source-draft.md) reuses existing
+field abstractions for pure string-key/scalar/object-view Option Try chains,
+retaining the final outer question mark and refusing non-Try successors. Four
+complete compiler equations plus independent unrun two-API/consecutive-stage/
+JS/strict TS/reverse-control/interpreter/native pointer/effect/export source are
+drafted. All wider source/native/production/sync/freshness/parity/delivery
+requirements remain unfinished.

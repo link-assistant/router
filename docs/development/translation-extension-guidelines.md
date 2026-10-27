@@ -675,3 +675,11 @@ reads must be immutable, unshadowed and effect-free; keep arbitrary key
 expressions conditional. Preserve numeric string keys versus array indices,
 receiver-only lifetimes, full original CST inverses and independent whole
 function checks. See the [unrun object-view draft](json-object-bridge-source-draft.md).
+
+When combining pure Option read failures, preserve the original final Try source
+and require every combined successor to carry its own question mark. A successor
+that merely produces a local None can still run later effects; never turn it into
+an early return. Lexical Option payload projection retains source question marks
+and grants no FromResidual/type/ownership authority. Use current full sources,
+both CST phases and independent native/effect cases; see the
+[unrun JSON Try draft](json-field-try-source-draft.md).
