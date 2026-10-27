@@ -588,3 +588,10 @@ all six corresponding ordinary/source-bound APIs. Seven whole equations and unru
 constructor/domain/scope/capture/bulk/receiving JS/strict TS/native-oracle cases
 are drafted. Every wider source/native/production/sync/freshness/parity/delivery
 requirement remains unfinished.
+
+The [shared layered core draft](layered-core-adoption-draft.md) copies one
+complete source/CST/inverse algorithm across eight integer/Option/Result
+adapters, with actual neutral language calls then exact repository prefix
+substitutions. Ten whole equations and unrun nesting/Unicode/literal/trivia/
+source-refusal cases are drafted. All wider source/native/production/sync/
+freshness/parity/delivery requirements remain unfinished.
