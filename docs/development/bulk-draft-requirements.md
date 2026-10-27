@@ -270,3 +270,10 @@ and evaluation order. Two equations and independent unrun six-API/five-caller/
 domain/refusal/JS/strict TS/invalid-body/native/export source are drafted. Actual
 body/type/source checks stay independent and all unfinished namespace/production/
 reverse/sync/freshness/parity/delivery rows remain OPEN.
+
+The [nested carrier body draft](callback-carrier-body-source-draft.md) composes
+all four existing carrier selectors inside shared callback text/integer body
+rules, with explicit depth/round/complete-proposal byte limits. Twelve equations
+and independent unrun four-adapter/six-API/six-caller/refusal/JS/strict TS/paired
+reverse/native/export source are drafted. Every unfinished namespace/production/
+reverse/sync/freshness/parity/delivery row remains OPEN.

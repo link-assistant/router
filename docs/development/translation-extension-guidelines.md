@@ -910,3 +910,9 @@ Compose known core/callback operand source roles without inventing caller locals
 or granting callback/body authority. Preserve complete original argument order,
 strict source-subexpression descent, reader limits and independent actual checks.
 See the [unrun operand draft](core-callback-operand-source-draft.md).
+
+Reuse actual carrier selectors for nested callback bodies with operation-local
+depth, bounded full child history and an unchanged source round. Preserve all
+actual core bindings in both phases and keep full original caller checks; stable
+source grants no complete-language or semantic permission. See the
+[unrun nested carrier body draft](callback-carrier-body-source-draft.md).
