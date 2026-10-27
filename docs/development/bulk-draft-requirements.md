@@ -911,3 +911,10 @@ independent unrun three-round/packet/forgery/transaction/concurrency/protocol/CL
 export cases are drafted. Full-corpus storage/performance, generated asset and
 reverse synchronization, namespace/production/freshness/parity and every
 unfinished source/verification/delivery row remain OPEN.
+
+The [boolean expression draft](boolean-expression-source-draft.md) composes
+original predicates, comparisons and logical source through shared carrier and
+callback inference. Three compiler equations and independent unrun six-API/
+seven-caller/truth/Unicode/refusal/bounds/JS/strict TS/paired reverse/native/export
+cases are drafted. Wider language and every unfinished namespace/production/
+reverse/sync/freshness/parity/delivery row remain OPEN; no coverage is claimed.

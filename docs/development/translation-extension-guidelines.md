@@ -807,3 +807,10 @@ proposers during readback and application planning. Preserve round identities,
 source/Cargo/Git guards, evidence/plan bounds and original rollback behavior.
 Stabilization never certifies coverage or reverse execution. See the
 [unrun fixed-point packet draft](fixed-point-packet-source-draft.md).
+
+Classify both logical source arms, preserve actual grouping and short-circuit
+order, and reuse the existing predicate and numeric comparison readers. Never
+execute/coerce operands or treat a literal as permission to ignore an unknown
+arm. Keep source work bounded and defer real operator/effect/ownership admission
+to the full checker. See the
+[unrun boolean expression draft](boolean-expression-source-draft.md).
