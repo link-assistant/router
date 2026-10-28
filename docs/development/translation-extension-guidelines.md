@@ -764,3 +764,8 @@ Standard JSON optional reader drafting reuses six existing qualified operations
 with fresh actual Option ABI joins, ordered argument evaluation and branch-local
 payloads. Complete source/CST inverses and all authority/guard batches are
 drafted but UNRUN; see [the source contract](vector-json-standard-options-source-draft.md).
+
+Optional array indexing and typed numeric composition are source drafted with
+actual constant-usize and existing checked dynamic-u64 field-library paths.
+Seven-function authority batches and complete two-phase/CST equations are UNRUN;
+see [the source contract](vector-json-optional-index-source-draft.md).

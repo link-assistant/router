@@ -428,7 +428,7 @@ function checkFunction(context,path,declaration,analysis){
     // profile were freshly joined by the genuine context. Rows are only DATA.
     requireOwnedCoreSourceCurrent(context);
     const args=node.arguments.map(argument=>expression(argument,scope,depth+1));
-    if(args.length!==reader.args.length||args.some((value,at)=>reader.args[at]==='json-ref'?!json(value.type):value.type!==reader.args[at]))fail('actual JSON reader operand domain differs');
+    if(args.length!==reader.args.length||args.some((value,at)=>reader.args[at]==='json-ref'?!json(value.type):value.type!==reader.args[at]&&!(jsonVectorProfile&&!nativeScalars&&reader.args[at]==='usize'&&value.type==='u64')))fail('actual JSON reader operand domain differs');
     const root=reader.root===null?null:args[reader.root].root;if(reader.root!==null&&!root)fail('JSON reader loan requires a live original input');
     hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});requireOwnedCoreSourceCurrent(context);
     return {kind:'json-reader-call',name:binding.name,args,type:reader.ret,root};
@@ -462,7 +462,7 @@ function checkFunction(context,path,declaration,analysis){
    if(!op||binding.target!==expected)fail('unregistered source operation');
    if(op.boundedJson){if(!jsonVectorProfile||binding.typeOnly)fail('bounded JSON runtime aliases require their actual canonical native vector source');requireOwnedCoreSourceCurrent(context);if(!boundedJsonBoundary){boundedJsonRuntimeRustEdge(traversals.get(analysis).state.files);boundedJsonBoundary=true;}}
    const args=node.arguments.map(argument=>expression(argument,scope,depth+1));
-   if(args.length!==op.args.length||args.some((argument,index)=>!compatible(argument.type,op.args[index])))fail('owned argument type differs');
+   if(args.length!==op.args.length||args.some((argument,index)=>!compatible(argument.type,op.args[index])&&!(jsonVectorProfile&&op.args[index]==='u64'&&argument.type==='u64')&&!(jsonVectorProfile&&!nativeScalars&&op.args[index]==='usize'&&argument.type==='u64')))fail('owned argument type differs');
    // Shared index loans from temporaries cannot outlive their owner. No alias
    // or public source flag changes the actual root identity.
    const root=op.root===undefined?null:args[op.root].root;
