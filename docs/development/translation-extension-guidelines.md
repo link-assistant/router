@@ -552,3 +552,8 @@ scalar const/IIFE source reading in the explicit reverse vector candidate. Six
 complete equations, independent JS/strict TS/reverse/native cases and export
 obligations remain UNRUN. Wider Clone/effects/count and full translation/sync/
 receiving/delivery requirements remain OPEN.
+
+The [fresh repeated-vector origin draft](vector-repeat-origin-source-draft.md)
+composes bounded immutable scalar seed bindings with the existing privately
+checked original array tail. Three complete source equations and independent
+reverse/type/refusal cases remain UNRUN; full translation and delivery stay OPEN.

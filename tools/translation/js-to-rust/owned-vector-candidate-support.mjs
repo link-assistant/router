@@ -38,8 +38,9 @@ export function captureOriginalOwnedVectorProfiles(data,path){
   // The original parser marks Vec as unsafe for ownership-erasing patterns.
   // This exact marker is supported only with the same checked owned-list body;
   // arbitrary refusal markers and every borrowed/fixed-array signature refuse.
-  if(own.ret?.kind!=='array'||own.ret.rustSourceType!==true||own.ret.rustOwnership?.kind!=='owned'||own.ret.rustOwnership.source!=='Vec'||own.ret.patternOwnershipRefusal!==ret.patternOwnershipRefusal||own.ret.rustFixedArray||own.ret.rustReference||own.ret.rustGenericIdentityUnresolved||own.ret.rustBorrowingUnresolved||own.body?.k!=='array'||own.body.compatibilityCore?.id!=='router-core-vector-list-v1'||own.body.type?.rustOwnership?.kind!=='owned'||own.body.type.rustOwnership.source!=='Vec'||own.body.type.patternOwnershipRefusal||own.body.type.rustReference||own.body.type.rustFixedArray||own.body.type.rustGenericIdentityUnresolved||own.body.type.rustBorrowingUnresolved||!sameType(own.ret,own.body.type))fail('actual accepted qualified owned-vector list body required');
-  const element=scalar(own.ret.element);if(JSON.stringify(scalar(ret.element))!==JSON.stringify(element)||JSON.stringify(scalar(own.body.type.element))!==JSON.stringify(element))fail('actual original primitive source/checked body differs');
+  const tail=checkedOwnedVectorTail(own,scalar);
+  if(own.ret?.kind!=='array'||own.ret.rustSourceType!==true||own.ret.rustOwnership?.kind!=='owned'||own.ret.rustOwnership.source!=='Vec'||own.ret.patternOwnershipRefusal!==ret.patternOwnershipRefusal||own.ret.rustFixedArray||own.ret.rustReference||own.ret.rustGenericIdentityUnresolved||own.ret.rustBorrowingUnresolved||tail?.k!=='array'||tail.compatibilityCore?.id!=='router-core-vector-list-v1'||tail.type?.rustOwnership?.kind!=='owned'||tail.type.rustOwnership.source!=='Vec'||tail.type.patternOwnershipRefusal||tail.type.rustReference||tail.type.rustFixedArray||tail.type.rustGenericIdentityUnresolved||tail.type.rustBorrowingUnresolved||!sameType(own.ret,tail.type))fail('actual accepted qualified owned-vector list body required');
+  const element=scalar(own.ret.element);if(JSON.stringify(scalar(ret.element))!==JSON.stringify(element)||JSON.stringify(scalar(tail.type.element))!==JSON.stringify(element))fail('actual original primitive source/checked body differs');
   const lowered=original.lower();if(lowered.own?.k!=='fn'||lowered.own.params.length||!sameType(lowered.own.ret,own.ret))fail('actual target lowering portable signature differs');
   // A physical file's locally rooted inline views omit its external-module
   // prefix. Use this SAME fresh forward invocation's genuine graph view and
@@ -77,3 +78,5 @@ export function emitOwnedVectorCandidateLiteral(value,rust){
 export function evaluateOwnedVectorCandidateLiteral(value){return value.items.map(item=>value.element.kind==='bool'?item.value:BigInt(boundedInteger(item.value,value.element)));}
 
 import {readOwnedVectorScalarConstruction} from './owned-vector-scalar-construction.mjs';
+
+import {checkedOwnedVectorTail} from './owned-vector-origin-tail.mjs';
