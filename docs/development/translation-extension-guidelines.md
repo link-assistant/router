@@ -625,3 +625,9 @@ fresh complete forward checking, exact selected-element reproduction and whole
 project executable/refusal/method census guards. Four source equations and all
 independent receiving/boundary/batch/refusal cases remain UNRUN. Native
 installation, broader domains and every remaining delivery requirement stay OPEN.
+
+The [conditional native vector draft](vector-native-control-source-draft.md)
+composes checked bool condition trees with every primitive return leaf and
+independently projects the fresh native tree before proposing source. Three
+source equations, independent receiving/refusal source and a CI-only Rust oracle
+are UNRUN. All broader synchronization and delivery requirements remain OPEN.
