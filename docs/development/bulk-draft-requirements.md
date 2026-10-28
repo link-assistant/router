@@ -944,3 +944,9 @@ Explicit native-only emission uses the existing private complete JSON program,
 bounded copy/update/validation calls, every-input checks before empty branches,
 and preserved local/constructor order. All cases/equations are UNRUN; native
 whole-body reproduction, synchronization and all delivery obligations remain OPEN.
+
+Canonical JSON original-local draft: [source boundary](vector-json-origin-locals-source-draft.md).
+Actual same-invocation canonical ABI capture selects the complete JSON-only tail
+copy for immutable owned-vector aliases and exact bounded validation locals.
+Primitive scope and whole linear-flow checks remain unchanged. All cases/equations
+are UNRUN; full native JSON synchronization and remaining requirements stay OPEN.
