@@ -72,7 +72,7 @@ import {emitOwnedVectorText} from './owned-vector-text-literal.mjs';
 // privately and obtain the native declaration from a fresh checkedSource/lower.
 const jsonFail=message=>{throw new TypeError('Owned vector native JSON control: '+message);};
 function jsonControlFrame(item){
- if(item.vectorOrigin?.kind!=='json-vector'||item.returns!=='json-list-owned'||item.params.some(row=>!['json','json-ref','bool'].includes(row.type)))jsonFail('actual canonical JSON vector profile required');
+ if(item.vectorOrigin?.kind!=='json-vector'||item.returns!=='json-list-owned'||item.params.some(row=>!['json','json-ref','bool','u64','i64'].includes(row.type)))jsonFail('actual canonical JSON vector profile required');
  let work=0,leaves=0;return {charge(depth=0){if(++work>100000||depth>64)jsonFail('bounded complete JSON body required');},leaf(){if(++leaves>64)jsonFail('bounded complete JSON branches required');}};
 }
 const jsonNot=value=>value?.[0]==='not'?value[1]:['not',value];function jsonChoose(condition,yes,no){if(condition?.[0]==='not'&&condition[1]?.[0]==='some'){condition=condition[1];[yes,no]=[no,yes];}return yes?.[0]==='bool'&&no?.[0]==='bool'&&yes[1]!==no[1]?(yes[1]?condition:jsonNot(condition)):['choose',condition,yes,no];}
@@ -85,6 +85,7 @@ function jsonNativeIndex(value,depth=0){
  // ordered effect and Some-payload origins remain present in the whole tree.
  if(value?.[0]==='effect'&&value.length===2&&Number.isSafeInteger(value[1])&&value[1]>=0)return value;
  if(value?.[0]==='payload'&&value.length===2)return value;
+ if(value?.[0]==='parameter'&&value.length===2&&Number.isSafeInteger(value[1])&&value[1]>=0)return value;
  if(value?.[0]==='choose'&&value.length===4)return ['choose',value[1],jsonNativeIndex(value[2],depth+1),jsonNativeIndex(value[3],depth+1)];
  jsonFail('only checked unsigned literal/conditional/reader/payload index values are drafted');
 }
@@ -114,7 +115,7 @@ function requestedJsonExpression(node,env,events,guard,borrow=false,depth=0){
 }
 export function requestedNativeJsonVectorTree(item){
  const guard=jsonControlFrame(item),env=new Map(item.params.map((param,index)=>[param.name,['parameter',index]])),events=[];
- for(let index=0;index<item.params.length;index++)if(item.params[index].type!=='bool')jsonEvent(events,'validate',[['parameter',index]]);
+ for(let index=0;index<item.params.length;index++)if(['json','json-ref'].includes(item.params[index].type))jsonEvent(events,'validate',[['parameter',index]]);
  function body(rows,names,effects,depth){
   guard.charge(depth);if(!Array.isArray(rows)||!rows.length)jsonFail('complete terminating receiving body required');
   for(let at=0;at<rows.length;at++){

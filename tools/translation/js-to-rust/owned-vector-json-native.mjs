@@ -38,8 +38,9 @@ export function originalJsonVectorDomain(own,lowered){
  const parameters=own.params.map((param,index)=>{
   const source=param.type,target=actual.params[index].type;
   if(source.kind==='bool'&&clean(source)&&!source.rustOwnership&&!source.patternOwnershipRefusal&&sameType(source,target))return {name:'bool',kind:'bool'};
+  if(source.kind==='fixed'&&['u64','i64'].includes(source.rustPrimitiveName)&&source.bits===64&&source.signed===(source.rustPrimitiveName==='i64')&&clean(source)&&!source.rustReference&&!source.rustOwnership&&!source.patternOwnershipRefusal&&target?.kind==='fixed'&&clean(target)&&!target.rustReference&&!target.rustOwnership&&!target.patternOwnershipRefusal&&sameType(source,target)&&['bits','signed','rustPrimitiveName','rustSourceType'].every(key=>source[key]===target[key]))return {name:source.rustPrimitiveName,kind:'integer'};
   const borrowed=source.rustReference?.kind==='shared',pointee=borrowed?source.rustReference.pointee:source,targetPointee=borrowed?target.rustReference?.pointee:target;
-  if(source.rustReference&&!borrowed||source.rustBorrowingUnresolved||source.rustGenericIdentityUnresolved||!clean(pointee)||pointee.kind!=='data'||pointee.rustOwnership||pointee.patternOwnershipRefusal||pointee.name!==originalElement.name||targetPointee?.name!==element.name||!!target.rustReference!==borrowed||borrowed&&target.rustReference.kind!=='shared')fail('only actual by-value/shared Json and bool input domains are drafted');
+  if(source.rustReference&&!borrowed||source.rustBorrowingUnresolved||source.rustGenericIdentityUnresolved||!clean(pointee)||pointee.kind!=='data'||pointee.rustOwnership||pointee.patternOwnershipRefusal||pointee.name!==originalElement.name||targetPointee?.name!==element.name||!!target.rustReference!==borrowed||borrowed&&target.rustReference.kind!=='shared')fail('only actual by-value/shared Json, bool and exact u64/i64 input domains are drafted');
   if(borrowed&&source.patternOwnershipRefusal!=='shared source reference'||!borrowed&&(source.rustOwnership||source.patternOwnershipRefusal))fail('original JSON input ownership differs');
   return {name:borrowed?'json-ref':'json',kind:'json'};
  });

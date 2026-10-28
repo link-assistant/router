@@ -3,17 +3,18 @@
 const fail=message=>{throw new TypeError('Owned reverse JSON vector boundary: '+message);};
 const isJson=type=>type==='json'||type==='json-ref';
 export const isJsonVector=item=>item.vectorOrigin?.kind==='json-vector';
+const scalarGuard=param=>vectorParameterPrelude({vectorOrigin:true,params:[param]},false).trimStart();
 const booleanGuard=name=>'if (typeof '+name+' !== "boolean") throw new TypeError("Owned vector argument differs from actual original scalar domain");';
 export function jsonVectorInputPrelude(item,rust,imports,{nativeJsonSource=false}={}){
  if(!isJsonVector(item))return '';
  return item.params.map((param,index)=>{
   if(isJson(param.type)){if(!rust)imports.add('router_core_json_copy');return rust?(nativeJsonSource?'    let __ro_json_guard_'+index+' = crate::translation_json_core::json_validate('+(param.type==='json'?'&':'')+param.rust+');':'    __ro_domain(&'+param.rust+');'):'    '+param.name+' = __ro_router_core_json_copy('+param.name+');';}
-  if(param.type!=='bool')fail('unregistered original input');return rust?'':'    '+booleanGuard(param.name);
+  if(!['bool','u64','i64'].includes(param.type))fail('unregistered original input');return rust?'':'    '+scalarGuard(param);
  }).filter(Boolean).join('\n');
 }
 export function validateJsonVectorInputs(item,scope,modules){
  if(!isJsonVector(item))return;
- for(const param of item.params){const value=scope.get(param.name);if(isJson(param.type))scope.set(param.name,modules.update.router_core_json_copy(value));else if(param.type!=='bool'||typeof value!=='boolean')fail('actual bool input required');}
+ for(const param of item.params){const value=scope.get(param.name);if(isJson(param.type))scope.set(param.name,modules.update.router_core_json_copy(value));else if(param.type==='bool'){if(typeof value!=='boolean')fail('actual bool input required');}else if(['u64','i64'].includes(param.type)){const bounds=vectorScalarBounds(param.type);if(typeof value!=='bigint'||value<bounds.minimum||value>bounds.maximum)fail('actual bounded integer input required');}else fail('unregistered actual JSON-vector input');}
 }
 export function consumeJsonVectorInputPrelude(analysis,declaration,params,resolveImport,profile){
  const {ts,checker,file}=analysis,body=declaration.body.statements;if(profile?.kind!=='json-vector'||!params.length||!body.length)return body;
@@ -23,13 +24,15 @@ export function consumeJsonVectorInputPrelude(analysis,declaration,params,resolv
   const original=declaration.parameters.find(row=>ts.isIdentifier(row.name)&&row.name.text===param.name),symbol=original&&checker.getSymbolAtLocation(original.name),binding=resolveImport(expr.right.expression);
   return !!symbol&&checker.getSymbolAtLocation(expr.left)===symbol&&checker.getSymbolAtLocation(expr.right.arguments[0])===symbol&&!binding.typeOnly&&binding.name==='router_core_json_copy'&&binding.target===analysis.runtimeRoot+'/json-update-runtime.mjs';
  };
- const bool=(statement,param)=>{
-  if(!statement||statement.getText(file)!==booleanGuard(param.name)||!ts.isIfStatement(statement))return false;
-  const condition=statement.expression,operand=ts.isBinaryExpression(condition)&&ts.isTypeOfExpression(condition.left)?condition.left.expression:null,original=declaration.parameters.find(row=>ts.isIdentifier(row.name)&&row.name.text===param.name),symbol=original&&checker.getSymbolAtLocation(original.name);
+ const scalar=(statement,param)=>{
+  if(!statement||statement.getText(file)!==scalarGuard(param)||!ts.isIfStatement(statement))return false;
+  const condition=statement.expression,original=declaration.parameters.find(row=>ts.isIdentifier(row.name)&&row.name.text===param.name),symbol=original&&checker.getSymbolAtLocation(original.name),operands=[];let foreign=false;const visit=node=>{if(ts.isIdentifier(node)){if(node.text!==param.name)foreign=true;else operands.push(checker.getSymbolAtLocation(node));}ts.forEachChild(node,visit);};visit(condition);
   const branch=statement.thenStatement,call=ts.isThrowStatement(branch)?branch.expression:null,constructor=call&&ts.isNewExpression(call)?call.expression:null,builtin=constructor&&checker.getSymbolAtLocation(constructor);
-  return !!symbol&&operand&&ts.isIdentifier(operand)&&checker.getSymbolAtLocation(operand)===symbol&&constructor&&ts.isIdentifier(constructor)&&constructor.text==='TypeError'&&(!builtin||!!builtin.declarations?.length&&builtin.declarations.every(row=>row.getSourceFile().isDeclarationFile&&/[/\\]lib\.[^/\\]+\.d\.ts$/u.test(row.getSourceFile().fileName)));
+  return !!symbol&&!foreign&&operands.length>0&&operands.every(value=>value===symbol)&&constructor&&ts.isIdentifier(constructor)&&constructor.text==='TypeError'&&(!builtin||!!builtin.declarations?.length&&builtin.declarations.every(row=>row.getSourceFile().isDeclarationFile&&/[/\\]lib\.[^/\\]+\.d\.ts$/u.test(row.getSourceFile().fileName)));
  };
- const first=params[0],starts=isJson(first.type)?assignment(body[0],first):bool(body[0],first);if(!starts)return body;
- for(let i=0;i<params.length;i++)if(!(isJson(params[i].type)?assignment(body[i],params[i]):bool(body[i],params[i])))fail('complete canonical original-symbol input prefix required');
+ const first=params[0],starts=isJson(first.type)?assignment(body[0],first):scalar(body[0],first);if(!starts)return body;
+ for(let i=0;i<params.length;i++)if(!(isJson(params[i].type)?assignment(body[i],params[i]):scalar(body[i],params[i])))fail('complete canonical original-symbol input prefix required');
  return body.slice(params.length);
 }
+
+import {vectorScalarBounds,vectorParameterPrelude} from './owned-vector-parameter-values.mjs';

@@ -63,3 +63,8 @@ Scalar optional conditional payloads and bounded numeric fallback narrowing
 are source drafted with arm-local binders/facts and exact restoration. Four
 domains/three guards/both authority cases remain UNRUN; see
 [the source contract](vector-json-option-conditionals-source-draft.md).
+
+JSON-vector u64/i64 parameters are source drafted through actual original/lowered
+ABI joins, copied primitive bound guards and source-symbol prefix consumption.
+Four-function authority/boundary batches and full equations remain UNRUN; see
+[the source contract](vector-json-integer-inputs-source-draft.md).
