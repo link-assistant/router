@@ -809,3 +809,9 @@ Immutable scalar literal aliases now have source-drafted return substitution via
 existing checked bounds, preserving all prior statements and unsigned uses.
 Six-form authority/effect/refusal and repeat-sync cases remain UNRUN; see
 [the source contract](scalar-return-literal-aliases-source-draft.md).
+
+Selected same-unit scalar source calls are drafted across private source checking,
+complete meta/program closure, native emission/comparison and bounded interpreter
+composition. Calls retain actual ABIs and original namespace/module boundaries;
+all graph/authority/refusal/repeat-sync cases remain UNRUN. See
+[the source contract](owned-source-scalar-calls-source-draft.md).

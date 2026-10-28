@@ -277,7 +277,7 @@ function rustName(name){
 const json=type=>type==='json'||type==='json-ref';
 const compatible=(actual,wanted)=>wanted==='json'?json(actual):wanted==='i64'?actual==='i64'||actual==='usize':wanted==='u64'?actual==='usize':actual===wanted;
 export function analyzeOriginalOwnedCoreSource(context,path){
- const analysis=originalOwnedCoreModule(context,path),{ts,file,source}=analysis,program=[],diagnostics=[],items=[];
+ const analysis=originalOwnedCoreModule(context,path),{ts,file,source}=analysis,program=[],diagnostics=[],items=[];let failed=false;
  try{
  const functions=file.statements.filter(ts.isFunctionDeclaration);
  // Top-level evaluation, namespace imports and unsupported exports are not
@@ -297,12 +297,15 @@ export function analyzeOriginalOwnedCoreSource(context,path){
   catch(error){if(!(error instanceof TypeError))throw error;const diagnostic={kind:'owned-core',name,span,message:error.message};diagnostics.push(diagnostic);items.push({name,span,status:'unsupported',diagnostic});}
  }
  requireOwnedCoreSourceCurrent(context);return {program,diagnostics,items,source,path};
- }finally{analysis.vectorProfiles?.clear();}
+ }catch(error){failed=true;throw error;}finally{const frame=traversals.get(analysis);let fenceFailed=false,fenceError;try{if(failed||frame?.scalarEdges)requireOwnedCoreSourceCurrent(context);}catch(error){fenceFailed=true;fenceError=error;}finally{analysis.vectorProfiles?.clear();frame?.scalarFunctions?.clear();frame?.scalarActive?.clear();}if(!failed&&fenceFailed)throw fenceError;}
 }
 function checkFunction(context,path,declaration,analysis){
+ const frame=traversals.get(analysis);if(!frame||frame.handle!==context||frame.paired)fail('actual same-invocation original function traversal required');frame.scalarFunctions??=new Map();frame.scalarActive??=new Set();if(frame.scalarFunctions.has(declaration))return frame.scalarFunctions.get(declaration);if(frame.scalarFunctions.size>=4096||frame.scalarActive.size>=32||frame.scalarActive.has(declaration))fail('bounded acyclic original source helper body required');frame.scalarActive.add(declaration);try{const item=checkFunctionBody(context,path,declaration,analysis);frame.scalarFunctions.set(declaration,item);return item;}finally{frame.scalarActive.delete(declaration);}
+}
+function checkFunctionBody(context,path,declaration,analysis){
  const {ts,file,source,checker}=analysis,nativeScalars=contexts.get(context).data.primitiveOperators===true;
  if(!declaration.name||!declaration.body||declaration.asteriskToken||declaration.typeParameters||declaration.modifiers?.some(mod=>mod.kind!==ts.SyntaxKind.ExportKeyword))fail('ordinary original named function required');
- const name=rustName(declaration.name.text),params=[],environment=new Map();let cells=0,paired=pairedFunction(context,path,declaration,analysis);
+ const name=rustName(declaration.name.text),params=[],sourceCalls=[],environment=new Map();let cells=0,paired=pairedFunction(context,path,declaration,analysis);
  const vectorCandidate=checkOriginalOwnedVectorFunction(path,declaration,analysis,paired,name,operand=>originalOwnedCoreImport(context,path,operand,analysis));if(vectorCandidate)return vectorCandidate;
  const vectorProfile=analysis.vectorProfiles?.get(declaration.name.text),jsonVectorProfile=['json-vector','json-value','json-scalar','primitive-scalar'].includes(vectorProfile?.kind)?vectorProfile:null;
  if(jsonVectorProfile?.kind==='primitive-scalar'&&nativeScalars)fail('closed primitive source units retain their separate non-operator input profile');
@@ -403,6 +406,9 @@ function checkFunction(context,path,declaration,analysis){
   }
   if(ts.isCallExpression(node)){
    if(node.questionDotToken||node.typeArguments?.length||node.arguments.some(ts.isSpreadElement))fail('optional/generic/spread call');
+   if(ts.isIdentifier(node.expression)){const symbol=checker.getSymbolAtLocation(node.expression),declarations=symbol?.declarations,target=declarations?.length===1?declarations[0]:null;if(target&&ts.isFunctionDeclaration(target)&&target.getSourceFile()===file&&file.statements.includes(target)){
+    if(!jsonVectorProfile||!target.name||analysis.vectorProfiles?.get(target.name.text)?.kind!=='primitive-scalar')fail('source calls require an actual selected closed primitive callee');const callee=checkFunction(context,path,target,analysis),origin=callee.vectorOrigin?.original;if(callee.vectorOrigin?.kind!=='primitive-scalar'||!origin||origin.qualifiedName.split('.').slice(0,-1).join('.')!==jsonVectorProfile.original.qualifiedName.split('.').slice(0,-1).join('.')||origin.qualifiedName.split('.').some(part=>! /^[A-Za-z_][A-Za-z0-9_]*$/u.test(part)||KEYS.has(part))||node.arguments.length!==callee.params.length)fail('actual ordinary primitive source callee/arity differs');const args=node.arguments.map((argument,index)=>{const role=callee.params[index].type;let value=expression(argument,scope,depth+1,false,role);if(['u64','i64'].includes(role)){value=scalarReturnLiteral(value,scope,depth+1);narrowOwnedNumericLiteral(value,role);}if(value.type!==role&&!(role==='u64'&&value.type==='usize'))fail('source callee argument differs from its actual native ABI');if(role==='str'&&value.root!==null&&!params.some(param=>param.name===value.root&&param.type==='str'))fail('JSON-derived text source calls need a separate readonly loan proof');return value;});const frame=traversals.get(analysis);frame.scalarEdges=(frame.scalarEdges??0)+1;if(frame.scalarEdges>16384)fail('bounded original source-call edges required');const selected={path,javascript:callee.javascript,rust:origin.qualifiedName,localRust:callee.name,parameters:callee.params.map(param=>param.type),returns:callee.returns,span:[...callee.source.span]};sourceCalls.push(selected);return {kind:'source-scalar-call',callee:selected,args,type:callee.returns,root:null};
+   }}
    const binding=originalOwnedCoreImport(context,path,node.expression,analysis),op=OPS[binding.name];
    if(ownedPrimitiveOperatorOperation(binding.name)&&binding.target===analysis.runtimeRoot+'/primitive-operator-runtime.mjs'){
     requireOwnedCoreSourceCurrent(context);if(binding.typeOnly)fail('primitive runtime call cannot use a type-only import');const value=readOwnedPrimitiveOperatorCall(ts,node,binding.name,argument=>expression(argument,scope,depth+1));hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});requireOwnedCoreSourceCurrent(context);return value;
@@ -569,7 +575,7 @@ function checkFunction(context,path,declaration,analysis){
  if(!hostCalls.length&&!sourceNativeOperators.length)nativeOperatorHistory.adoptCopies();
  if(jsonVectorProfile&&resultType!==jsonVectorProfile.type)fail('actual original native owned JSON return shape required');
  if(!hostCalls.length&&!sourceNativeOperators.length&&!params.some(param=>param.type==='base64-result')&&!jsonVectorProfile)fail('no actual owned-core call');
- const item={kind:'owned-function',name,javascript:declaration.name.text,exported:!!declaration.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword),params,returns:resultType,resultRoot,body:checked.body,source:{path,source,span:[declaration.getStart(file),declaration.end]},...(jsonVectorProfile?{vectorOrigin:jsonVectorProfile}:{}),...(sourceNativeOperators.length?{sourceNativeOperators}:{}),hostCalls};
+ const item={kind:'owned-function',name,...(sourceCalls.length?{sourceCalls}:{}),javascript:declaration.name.text,exported:!!declaration.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword),params,returns:resultType,resultRoot,body:checked.body,source:{path,source,span:[declaration.getStart(file),declaration.end]},...(jsonVectorProfile?{vectorOrigin:jsonVectorProfile}:{}),...(sourceNativeOperators.length?{sourceNativeOperators}:{}),hostCalls};
  if(paired)item.pairedSource={path:paired.pair.typescript.path,source:paired.pair.typescript.source,span:paired.evidence.typescriptSpan,parameters:paired.evidence.parameters,locals:paired.evidence.locals,returnSpan:paired.evidence.returnSpan,erasure:paired.pair.erasure.edits};
  if(vectorFieldBoundary)requireOwnedVectorJsonFieldSources(traversals.get(analysis).state.files,contexts.get(context).data);if(boundedJsonBoundary)boundedJsonRuntimeRustEdge(traversals.get(analysis).state.files);requireOwnedCoreSourceCurrent(context);return item;
 }

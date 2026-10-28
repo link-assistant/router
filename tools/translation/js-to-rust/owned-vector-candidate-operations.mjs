@@ -150,7 +150,7 @@ export function withOwnedCoreItemChecks(run){
  }
 }
 export function checkOwnedCoreProgram(program,context){
- if(!Array.isArray(program)||program.length>4096)fail('invalid program');const names=new Set();return withOwnedCoreItemChecks(check=>program.map(item=>{const result=check(item,context);if(names.has(result.name))fail('duplicate function');names.add(result.name);return result;}));
+ if(!Array.isArray(program)||program.length>4096)fail('invalid program');const names=new Set();return assertScalarSourceCallClosure(withOwnedCoreItemChecks(check=>program.map(item=>{const result=check(item,context);if(names.has(result.name))fail('duplicate function');names.add(result.name);return result;})));
 }
 export function ownedCoreContext(item){return issued.get(checkOwnedCoreItem(item))?.context;}
 const rustString=value=>'"'+value.replace(/[\\"\x00-\x1f\x7f]/gu,c=>({'\\':'\\\\','"':'\\"','\n':'\\n','\r':'\\r','\t':'\\t'}[c]??'\\u{'+c.codePointAt(0).toString(16)+'}'))+'"';
@@ -170,6 +170,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath,nativeJsonSource=f
  function expr(value,borrowOwned=false){
   switch(value.kind){
    case 'json-field-call':return emitOwnedVectorJsonFieldCall(value,{rust,expr,imports,sequence:()=>sequence++});
+   case 'source-scalar-call':return (rust?(nativeJsonSource?'crate::'+value.callee.rust.split('.').join('::'):value.callee.localRust):value.callee.javascript)+'('+value.args.map(argument=>expr(argument)).join(', ')+')';
    case 'owned-vector-list':return emitOwnedVectorCandidateLiteral(value,rust);
    case 'json-vector-literal':if(rust)return 'crate::translation_core::vec!['+value.items.map(child=>freshJson(child)?expr(child):copyExpression(child)).join(', ')+']';imports.add('router_core_json_copy');return '['+value.items.map(child=>freshJson(child)?expr(child):'__ro_router_core_json_copy('+expr(child)+')').join(', ')+']';
    case 'vector-condition-input':return rust?value.rust:value.name;
@@ -333,10 +334,12 @@ export async function prepareOwnedCoreRuntime(input){
 }
 export function evaluateOwnedCoreProgram(input,name,args,token){
  const program=checkOwnedCoreProgram(input),state=runtimes.get(token);if(!state||!isDeepStrictEqual(state.program,program))fail('unissued runtime/program');
- const item=program.find(item=>item.name===name||item.javascript===name);if(!item||!Array.isArray(args)||args.length!==item.params.length)fail('actual arguments differ');
+ const item=program.find(item=>item.name===name||item.javascript===name),hasCalls=hasScalarSourceCalls(program);if(!item||!Array.isArray(args)||args.length!==item.params.length)fail('actual arguments differ');const sourceItems=new Map(hasCalls?program.map(row=>[scalarSourceCallKey({path:row.source.path,javascript:row.javascript}),row]):[]);let evaluationNodes=0;
+ function execute(item,args,depth){if(depth>32||args.length!==item.params.length)fail('bounded actual source helper arguments required');
  const env=ownedBase64InputEnvironment(item.params,args,state.modules);if(isJsonVector(item))validateJsonVectorInputs(item,env,state.modules);else validateVectorParameters(item,env);
- const get=(value,scope)=>{
+ const get=(value,scope)=>{if(hasCalls&&++evaluationNodes>100000)fail('complete expanded source helper work bound');
   switch(value.kind){
+   case 'source-scalar-call':{const target=sourceItems.get(scalarSourceCallKey(value.callee));if(!target)fail('complete checked source helper closure required');return execute(target,value.args.map(argument=>get(argument,scope)),depth+1);}
    case 'json-field-call':return evaluateOwnedJsonFieldCall(value,{state,scope,get});
    case 'owned-vector-list':return evaluateOwnedVectorCandidateLiteral(value,scope);
    case 'json-vector-literal':return value.items.map(child=>{const result=get(child,scope);return child.type==='json'&&['owned-call','json-array','json-object','json-field-call'].includes(child.kind)?result:state.modules.update.router_core_json_copy(result);});
@@ -364,6 +367,8 @@ export function evaluateOwnedCoreProgram(input,name,args,token){
  };
  const run=(body,scope)=>{for(const statement of body){if(statement.kind==='let')scope.set(statement.name,get(statement.value,scope));else if(statement.kind==='effect')get(statement.value,scope);else if(statement.kind==='return')return get(statement.value,scope);else return run(get(statement.cond,scope)?statement.then:statement.else,new Map(scope));}fail('no return');};
  return run(item.body,env);
+ }
+ let failed=false;try{return execute(item,args,0);}catch(error){failed=true;throw error;}finally{sourceItems.clear();if(hasCalls)try{checkOwnedCoreProgram(program);}catch(error){if(!failed)throw error;}}
 }
 
 import {ownedBooleanBitwiseOperation,ownedBooleanBitwiseOperator,ownedBooleanBitwiseRustCall} from './owned-boolean-bitwise-source.mjs';
@@ -384,3 +389,5 @@ import {BOUNDED_JSON_RUNTIME_OPERATIONS} from './bounded-json-runtime-operations
 import {nativeJsonPredicateSource,nativeJsonOptionalReaderSource} from './owned-vector-json-predicate-native.mjs';
 
 import {ownedVectorJsonFieldOperation,emitOwnedVectorJsonFieldCall,evaluateOwnedJsonFieldCall,requireOwnedVectorJsonFieldSources} from './owned-vector-json-fields.mjs';
+
+import {assertScalarSourceCallClosure,scalarSourceCallKey,hasScalarSourceCalls} from './owned-source-scalar-calls.mjs';

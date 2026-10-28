@@ -93,6 +93,7 @@ const jsonEvent=(events,operation,args)=>{if(events.length>=16384)jsonFail('boun
 function requestedJsonExpression(node,env,events,guard,borrow=false,depth=0){
  guard.charge(depth);if(!node)jsonFail('complete checked receiving expression required');
  if(node.kind==='variable'){if(!env.has(node.name))jsonFail('actual lexical receiving binder required');const value=env.get(node.name);return node.type==='json'&&!borrow?jsonEvent(events,'copy',[value]):value;}
+ if(node.kind==='source-scalar-call'){if(!['bool','u64','i64'].includes(node.type)||node.type!==node.callee?.returns||node.args.length!==node.callee.parameters.length)jsonFail('actual checked primitive source call required');return ['source-call',node.callee.rust,node.args.map(argument=>requestedJsonExpression(argument,env,events,guard,false,depth+1))];}
  if(node.kind==='string'&&node.type==='str'&&typeof node.value==='string'&&!/\p{Surrogate}/u.test(node.value))return ['str',node.value];
  if(node.kind==='integer'&&typeof node.value==='string')return ['integer',node.type==='i64'?'i64':'u64',BigInt(node.value).toString()];
  if(node.kind==='bool'&&typeof node.value==='boolean')return ['bool',node.value];
@@ -132,9 +133,11 @@ export function requestedNativeJsonVectorTree(item){
 export function actualNativeJsonVectorTree(own,item,lowered){
  const guard=jsonControlFrame(item),domain=item.vectorOrigin?.kind==='primitive-scalar'?originalPrimitiveScalarDomain(own,lowered):item.vectorOrigin?.kind==='json-value'?originalJsonOwnedValueDomain(own,lowered):item.vectorOrigin?.kind==='json-scalar'?originalJsonScalarDomain(own,lowered):originalJsonVectorDomain(own,lowered);if(!domain||domain.type!==item.returns||own.k!=='fn'||own.async||own.params.length!==item.params.length||domain.parameters.some((param,index)=>param.name!==item.params[index].type)||own.params.some((param,index)=>param.name!==item.params[index].rust))jsonFail('actual canonical native signature differs');
  const jsonReturn=item.vectorOrigin.kind==='primitive-scalar'?null:item.vectorOrigin.kind==='json-scalar'?{kind:'data',name:domain.canonicalSourceName}:own.ret?.kind==='data'?own.ret:own.ret?.element,env=new Map(own.params.map((param,index)=>[param.name,['parameter',index]]));const fieldType=(type,wanted)=>{const option=ownedJsonOptionalPayload(wanted);if(option)return originalJsonVectorOptionPayload(own,lowered,type)===option;if(!type||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)return false;const pointee=type.rustReference?.kind==='shared'?type.rustReference.pointee:type,canonical=pointee?.kind==='data'&&pointee.name===jsonReturn.name&&!pointee.rustReference&&!pointee.rustOwnership&&!pointee.rustGenericIdentityUnresolved&&!pointee.rustBorrowingUnresolved;if(wanted==='json-ref')return canonical&&(!type.rustReference||type.rustReference.kind==='shared');if(wanted==='json')return canonical&&!type.rustReference;if(type.rustReference)return false;if(wanted==='str')return type.kind==='string'&&type.rustOwnership?.kind==='borrowed'&&type.rustOwnership.source==='str';if(type.rustOwnership)return false;if(wanted==='bool')return type.kind==='bool';return ['u64','i64'].includes(wanted)&&type.kind==='fixed'&&type.bits===64&&type.signed===(wanted==='i64')&&type.rustPrimitiveName===wanted;};
+ const sourceCallTargets=nativeScalarSourceCallIndex(item);
  let activeSomeFacts=new Set();const optionKey=value=>JSON.stringify(value);
  function expression(node,names,events,depth=0){
   guard.charge(depth);if(!node)jsonFail('complete actual native expression required');
+  if(node.k==='call'){const target=nativeScalarSourceCallTarget(node,sourceCallTargets,lowered);if(!target)jsonFail('actual native helper is outside the checked source closure');return ['source-call',target.rust,node.args.map(argument=>expression(argument,names,events,depth+1))];}
   if(node.k==='var'){if(!names.has(node.name))jsonFail('actual native lexical binder required');return names.get(node.name);}
   if(node.k==='routerPatternImmutable'){if(!originalJsonVectorOptionPayload(own,lowered,node.object?.type))jsonFail('actual standard Option immutable observation required');return ['immutable-option',expression(node.object,names,events,depth+1)];}
   if(node.k==='routerPatternTag'){if(!originalJsonVectorOptionPayload(own,lowered,node.object?.type)||node.data!==node.object.type.name||!['Some','None'].includes(node.ctor))jsonFail('actual standard Option constructor tag required');const value=['some',expression(node.object,names,events,depth+1)];return node.ctor==='Some'?value:jsonNot(value);}
@@ -167,7 +170,7 @@ export function actualNativeJsonVectorTree(own,item,lowered){
   if(node?.k==='if'){const condition=expression(node.cond,names,events,depth+1),yes=new Set(activeSomeFacts),no=new Set(activeSomeFacts);if(condition[0]==='some'){yes.add(optionKey(condition[1]));no.delete(optionKey(condition[1]));}else if(condition[0]==='not'&&condition[1]?.[0]==='some'){yes.delete(optionKey(condition[1][1]));no.add(optionKey(condition[1][1]));}return [events,['if',condition,body(node.then,new Map(names),[...events],depth+1,yes),body(node.else,new Map(names),[...events],depth+1,no)]];}
   guard.leaf();if(item.vectorOrigin.kind==='json-value'&&(!sameType(node?.type,own.ret)||node.type.rustReference||node.type.rustOwnership||node.type.patternOwnershipRefusal||node.type.rustGenericIdentityUnresolved||node.type.rustBorrowingUnresolved))jsonFail('actual canonical owned JSON scalar return required');if(['json-scalar','primitive-scalar'].includes(item.vectorOrigin.kind)&&!fieldType(node?.type,item.returns))jsonFail('actual original primitive return ABI differs');const result=expression(node,names,events,depth+1);if(item.vectorOrigin.kind==='json-vector'&&result?.[0]!=='vector')jsonFail('complete native owned vector return required');return [events,result];
  }finally{activeSomeFacts=prior;}}
- return body(own.body,env,[],0);
+ try{return body(own.body,env,[],0);}finally{sourceCallTargets.clear();}
 }
 export function emitNativeJsonVectorControlBody(item){
  requestedNativeJsonVectorTree(item);const source=emitOwnedCoreProgram([item],'rust',{nativeJsonSource:true}),tokens=rustTokens(source).filter(token=>token.type!=='comment');const fn=tokens.findIndex(token=>token.text==='fn'),start=tokens.findIndex((token,index)=>index>fn&&token.text==='{'),end=tokens.at(-1);if(fn<0||start<0||end?.text!=='}')jsonFail('complete emitted native JSON function body required');return source.slice(tokens[start].end,end.start).trimEnd();
@@ -190,3 +193,5 @@ import {JSON_FIELDS_NATIVE_SOURCE} from '../json-fields-native-source.mjs';
 import {createHash} from 'node:crypto';
 
 import {jsonScalarComparisonOperation,jsonScalarComparisonDomain} from './owned-vector-json-comparisons.mjs';
+
+import {nativeScalarSourceCallIndex,nativeScalarSourceCallTarget} from './owned-source-scalar-calls.mjs';
