@@ -162,3 +162,14 @@ function originalJsonCanonicalInput(own,lowered){
  for(let index=0;index<own.params.length;index++){const a=own.params[index].type,b=actual.params[index].type,source=a?.rustReference?.kind==='shared'?a.rustReference.pointee:a,target=b?.rustReference?.kind==='shared'?b.rustReference.pointee:b;if(source?.kind!=='data'||target?.kind!=='data'||flattened(source.name)!==target.name)continue;const owner=program.declarations.get(target.name);if(owner?.k==='data'&&owner.hostTypePath?.join('::')==='serde_json::Value')return {source,target};}
  return null;
 }
+
+// Closed primitive ABI DATA. The same complete source capture/forward issuer
+// remains required; unsupported inputs return no domain instead of borrowing a
+// canonical JSON owner from an unrelated dependency or source history.
+export function originalPrimitiveScalarDomain(own,lowered){
+ const role=(type,parameter=false)=>{if(type?.kind==='bool')return 'bool';if(type?.kind==='fixed'&&type.bits===64&&['u64','i64'].includes(type.rustPrimitiveName)&&type.signed===(type.rustPrimitiveName==='i64'))return type.rustPrimitiveName;if(parameter&&type?.kind==='string'&&type.rustOwnership?.kind==='borrowed'&&type.rustOwnership.source==='str')return 'str';return null;};
+ const result=role(own?.ret);if(!result||!Array.isArray(own.params)||own.params.some(param=>role(param.type,true)===null))return null;
+ const program=lowered?.program,actual=lowered?.own;if(!(program?.declarations instanceof Map)||own.k!=='fn'||own.async||actual?.k!=='fn'||actual.params.length!==own.params.length)fail('fresh complete actual primitive source/lowerer required');
+ function match(source,target,parameter=false){const value=role(source,parameter);if(!value||value!==role(target,parameter)||!clean(source)||!clean(target)||source.patternOwnershipRefusal||target.patternOwnershipRefusal||value!=='str'&&(source.rustOwnership||target.rustOwnership)||value==='str'&&JSON.stringify(source.rustOwnership)!==JSON.stringify(target.rustOwnership)||!sameType(source,target)||['bits','signed','rustPrimitiveName','rustSourceType'].some(key=>source[key]!==target[key]))fail('actual original/lowered closed primitive ABI differs');return {name:value,kind:value==='bool'?'bool':value==='str'?'borrowed-text':'integer',...(['u64','i64'].includes(value)?{bits:64,signed:value==='i64'}:{})};}
+ const element=match(own.ret,actual.ret),parameters=own.params.map((param,index)=>match(param.type,actual.params[index].type,true));return {kind:'primitive-scalar',parameters,type:result,element};
+}

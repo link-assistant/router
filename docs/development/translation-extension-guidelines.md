@@ -799,3 +799,8 @@ JSON-input bool/u64/i64 returns are source drafted using full canonical ABI/tail
 copies and independently checked primitive return domains. Twelve caller forms
 in six-function authority batches and repeated synchronization remain UNRUN; see
 [the source contract](vector-json-scalar-returns-source-draft.md).
+
+Closed primitive source units now have drafted ABI and whole-module synchronization
+rules independent of a JSON input owner, reusing scalar/Unicode boundaries and
+existing comparison/control rules. Twelve caller forms and seven equations remain
+UNRUN; see [the source contract](primitive-scalar-units-source-draft.md).
