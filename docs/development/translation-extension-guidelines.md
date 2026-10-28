@@ -563,3 +563,8 @@ the explicit reverse candidate to fresh Rust scalar arguments, exact JS/TS symbo
 pairs and emitted/evaluator bounds without implicit narrowing. Six complete
 compiler equations and independent source/type/strict TS/meta/refusal cases remain
 UNRUN. Broader translation, synchronization and all delivery rows stay OPEN.
+
+The [conditional primitive vector draft](vector-condition-source-draft.md) adds
+bounded bool if/else/else-if reverse flow and checks every actual original owned
+array tail. Five complete source equations and independent strict TS/reverse/
+native/guard/refusal source remain UNRUN. Full translation/sync/delivery stay OPEN.

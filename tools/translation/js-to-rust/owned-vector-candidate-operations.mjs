@@ -166,6 +166,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  function expr(value,borrowOwned=false){
   switch(value.kind){
    case 'owned-vector-list':return emitOwnedVectorCandidateLiteral(value,rust);
+   case 'vector-condition-input':return rust?value.rust:value.name;
    case 'variable':if(rust&&value.type==='text-owned')return borrowOwned?'&'+rustName(value.name):rustName(value.name)+'.to_owned()';return rust?(value.type==='json'?(borrowOwned?'&'+rustName(value.name):'__ro_copy(&'+rustName(value.name)+')'):rustName(value.name)):value.name;
    case 'string':return rust?rustString(value.value):JSON.stringify(value.value);
    case 'bool':return String(value.value);
@@ -315,6 +316,7 @@ export function evaluateOwnedCoreProgram(input,name,args,token){
  const get=(value,scope)=>{
   switch(value.kind){
    case 'owned-vector-list':return evaluateOwnedVectorCandidateLiteral(value,scope);
+   case 'vector-condition-input':return scope.get(value.name);
    case 'variable':return scope.get(value.name);
    case 'string':case 'bool':return value.value;
    case 'integer':return BigInt(value.value);

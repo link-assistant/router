@@ -69,9 +69,8 @@ export function checkOriginalOwnedVectorFunction(path,declaration,analysis,paire
  const symbol=checker.getSymbolAtLocation(declaration.name);if(!symbol||symbol.declarations?.length!==1||symbol.declarations[0]!==declaration)fail('actual original JavaScript function binding differs');
  if(!paired||!paired.declaration.type||declaration.typeParameters?.length||declaration.asteriskToken)fail('complete actual TypeScript pair required');arrayType(ts,paired.declaration.type,profile.element);
  const input=vectorSourceParameters({ts,checker,declaration,paired,profile});
- const items=readOwnedVectorScalarConstruction({ts,checker,inputs:input.inputs,statements:declaration.body.statements,readLiteral:node=>{if(profile.element.kind==='bool'){if(![ts.SyntaxKind.TrueKeyword,ts.SyntaxKind.FalseKeyword].includes(node.kind))fail('actual bool element requires bool literal');return {kind:'bool',value:node.kind===ts.SyntaxKind.TrueKeyword};}return {kind:'integer',value:boundedInteger(integerText(ts,node),profile.element)};}});
- for(const item of items)if(item.kind==='vector-input'&&item.type!==profile.element.name)fail('vector input element differs from actual returned scalar domain');
- return {kind:'owned-function',name,javascript:declaration.name.text,exported:!!declaration.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword),params:input.params,returns:profile.type,resultRoot:null,body:[{kind:'return',value:{kind:'owned-vector-list',type:profile.type,element:profile.element,items,root:null}}],source:{path,source,span:[declaration.getStart(file),declaration.end]},hostCalls:[],pairedSource:{path:paired.pair.typescript.path,source:paired.pair.typescript.source,span:paired.evidence.typescriptSpan,parameters:paired.evidence.parameters,locals:paired.evidence.locals,returnSpan:paired.evidence.returnSpan,erasure:paired.pair.erasure.edits},vectorOrigin:profile};
+ const body=readOwnedVectorConditionFlow({ts,checker,inputs:input.inputs,statements:declaration.body.statements,readLiteral:node=>{if(profile.element.kind==='bool'){if(![ts.SyntaxKind.TrueKeyword,ts.SyntaxKind.FalseKeyword].includes(node.kind))fail('actual bool element requires bool literal');return {kind:'bool',value:node.kind===ts.SyntaxKind.TrueKeyword};}return {kind:'integer',value:boundedInteger(integerText(ts,node),profile.element)};},makeReturn:items=>{for(const item of items)if(item.kind==='vector-input'&&item.type!==profile.element.name)fail('vector input element differs from actual returned scalar domain');return {kind:'owned-vector-list',type:profile.type,element:profile.element,items,root:null};}});
+ return {kind:'owned-function',name,javascript:declaration.name.text,exported:!!declaration.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword),params:input.params,returns:profile.type,resultRoot:null,body,source:{path,source,span:[declaration.getStart(file),declaration.end]},hostCalls:[],pairedSource:{path:paired.pair.typescript.path,source:paired.pair.typescript.source,span:paired.evidence.typescriptSpan,parameters:paired.evidence.parameters,locals:paired.evidence.locals,returnSpan:paired.evidence.returnSpan,erasure:paired.pair.erasure.edits},vectorOrigin:profile};
 }
 export function emitOwnedVectorCandidateLiteral(value,rust){
  if(value.kind!=='owned-vector-list'||value.type!=='vec:'+value.element.name||!names.includes(value.element.name)||!Array.isArray(value.items)||value.items.length>4096)fail('checked vector literal differs');
@@ -80,7 +79,7 @@ export function emitOwnedVectorCandidateLiteral(value,rust){
 }
 export function evaluateOwnedVectorCandidateLiteral(value,scope){return value.items.map(item=>item.kind==='vector-input'?scope.get(item.name):value.element.kind==='bool'?item.value:BigInt(boundedInteger(item.value,value.element)));}
 
-import {readOwnedVectorScalarConstruction} from './owned-vector-scalar-construction.mjs';
+import {readOwnedVectorConditionFlow} from './owned-vector-condition-flow.mjs';
 
 import {checkedOwnedVectorTail} from './owned-vector-origin-tail.mjs';
 
