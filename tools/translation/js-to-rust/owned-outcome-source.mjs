@@ -15,7 +15,7 @@ import {captureSourceModuleViews,originalModuleViewItems} from '../source-module
 import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE} from '../router-core-source-data.mjs';
 import {assertReverseConcreteSourceHost} from './concrete-source.mjs';
 import {ownedCorePairedTypePath,prepareOwnedCorePairedTypes} from './owned-state-paired-types.mjs';
-import {ownedBase64Operation,ownedBase64Compatible,ownedBase64ReadonlyOctets,ownedBase64Result} from './owned-base64-source.mjs';
+import {ownedBase64Operation,ownedBase64Compatible,ownedBase64ReadonlyOctets,ownedBase64Result,readOwnedBase64ResultImportType,consumeOwnedBase64InputPrelude} from './owned-base64-source.mjs';
 import {ROUTER_CORE_BASE64_SOURCE} from '../router-core-source-data.mjs';
 import {deriveDependencyProfile} from '../derive-dependencies.mjs';
 import {captureOriginalExternalTraitPackage,originalExternalTraitPackageInputs} from '../extensions/external-trait-sources.mjs';
@@ -374,7 +374,7 @@ function originalOwnedCoreType(handle,path,type,analysis){
  const stateType=ownedStateWrittenType(ts,type,analysis,node=>originalOwnedCoreImport(handle,path,node,analysis));if(stateType!==null)return stateType;
  if(type.kind===ts.SyntaxKind.StringKeyword)return 'str';
  if(type.kind===ts.SyntaxKind.BooleanKeyword)return 'bool';
- if(ownedBase64ReadonlyOctets(ts,type))return 'bytes-ref';
+ if(ownedBase64ReadonlyOctets(ts,type))return 'bytes-ref';const base64Input=readOwnedBase64ResultImportType(ts,type,specifier=>originalImportTarget(path,specifier,analysis,state),state.data.runtimeRoot);if(base64Input)return base64Input;
  const list=ts.isTypeOperatorNode(type)&&type.operator===ts.SyntaxKind.ReadonlyKeyword?type.type:type;
  if(ts.isArrayTypeNode(list)){const element=originalOwnedCoreType(handle,path,list.elementType,analysis);if(element==='json-ref')return 'json-list-ref';const slice=ownedPrimitiveSliceDomain(element);if(slice&&ts.isTypeOperatorNode(type)&&type.operator===ts.SyntaxKind.ReadonlyKeyword)return slice;}
 
@@ -503,7 +503,7 @@ function checkFunction(context,path,declaration,analysis){
    paired??=pairedFunction(context,path,declaration,analysis);
    type=paired?originalOwnedCoreType(context,paired.pair.typescript.path,paired.declaration.parameters[index].type,paired.analysis):originalOwnedCoreType(context,path,undefined,analysis);
   }
-  if(type==='base64-result')fail('native base64 result input control is not implemented');
+  if(type==='base64-result')base64Source(traversals.get(analysis).state.files);
   if(ownedPrimitiveResultType(type)||type==='text-owned-option'){if(!primitiveResultPublicInputs){const actual=ownedCoreSourceData(context);requireOwnedResultPublicInputSources(new Map(actual.files.map(row=>[row.path,row.source])),actual);primitiveResultPublicInputs=true;}}
   if(ownedJsonOptionalPayload(type)&&type!=='json-owned-option'&&type!=='text-owned-option'){if(ownedIntegerOptionalPayload(type)){if(!nativeScalars)fail('additional integer option inputs require the actual primitive profile');const actual=ownedCoreSourceData(context);requireOwnedIntegerSources(new Map(actual.files.map(row=>[row.path,row.source])),actual);}else{if(!['bool-option','u64-option','i64-option','str-option-ref'].includes(type))fail('optional public parameter needs its independent actual carrier boundary');if(!primitiveOptionPublicInputs){const actual=ownedCoreSourceData(context);requireOwnedPrimitiveOptionSources(new Map(actual.files.map(row=>[row.path,row.source])),actual);primitiveOptionPublicInputs=true;}}}
   // A real owned String input keeps its native by-value parameter domain.
@@ -879,7 +879,7 @@ function checkFunction(context,path,declaration,analysis){
   }
   return {body,terminated};
  }
- const checked=block(declaration.body.statements,environment,0);if(!checked.terminated)fail('missing return');
+ const checked=block(consumeOwnedBase64InputPrelude(analysis,declaration,params,operand=>originalOwnedCoreImport(context,path,operand,analysis)),environment,0);if(!checked.terminated)fail('missing return');
  if(paired)for(let index=0;index<params.length;index++){
   const actual=originalOwnedCoreType(context,paired.pair.typescript.path,paired.declaration.parameters[index].type,paired.analysis);
   if((actual==='text-owned'?'str':actual)!==params[index].type)fail('paired written parameter ABI differs');
@@ -898,7 +898,7 @@ function checkFunction(context,path,declaration,analysis){
  if(params.some(param=>param.type==='bytes-ref'&&!byteInputs.has(param.name)))fail('octet input requires an actual fixed base64 operand');
  if(params.some(param=>param.type==='json-option-input'&&!localValidatedInputs.has(param.name)&&!hostCalls.some(call=>ownedJsonOptionalReaderOperation(call.name)&&call.inputRoot===param.name)))fail('opaque optional Json input requires validation');
  if(!hostCalls.length&&!localCalls.length&&!sourceNativeOperators.length)nativeOperatorHistory.adoptCopies();
- if(!hostCalls.length&&!localCalls.length&&!sourceNativeOperators.length)fail('no actual owned-core or freshly checked local call');
+ if(!hostCalls.length&&!localCalls.length&&!sourceNativeOperators.length&&!params.some(param=>param.type==='base64-result'))fail('no actual owned-core or freshly checked local call');
  const item={ownedTextCopies:ownedTextCopies>0,staticResultBorrow:resultType==='str-text-result'&&scalarReturnValues.every(value=>staticResultLoan(value,environment)),staticOptionalBorrow:resultType==='str-option-ref'&&scalarReturnValues.every(value=>staticOptionalLoan(value,environment)),kind:'owned-function',name,javascript:declaration.name.text,exported:!!declaration.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword),params,returns:resultType,resultRoot,body:checked.body,source:{path,source,span:[declaration.getStart(file),declaration.end]},...(sourceNativeOperators.length?{sourceNativeOperators}:{}),hostCalls,...(localCalls.length?{localCalls}: {})};
  if(paired)item.pairedSource={path:paired.pair.typescript.path,source:paired.pair.typescript.source,span:paired.evidence.typescriptSpan,parameters:paired.evidence.parameters,locals:paired.evidence.locals,returnSpan:paired.evidence.returnSpan,erasure:paired.pair.erasure.edits};
  requireOwnedCoreSourceCurrent(context);return item;

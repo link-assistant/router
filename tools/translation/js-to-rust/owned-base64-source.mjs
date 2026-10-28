@@ -25,3 +25,5 @@ export function ownedBase64RustCall(name,argument){
  const value=op.copy==='to_vec'?argument+'.to_vec()':op.copy==='to_owned'?argument+'.to_owned()':op.copy==='array32'?'::core::convert::TryInto::<[u8; 32]>::try_into('+argument+').expect("owned reverse base64 array32 length")':argument;
  return '{ '+bound+'crate::translation_core::'+op.rust+'('+value+') }';
 }
+
+export {readOwnedBase64ResultImportType,consumeOwnedBase64InputPrelude,ownedBase64InputPrelude,ownedBase64InputEnvironment,hasOwnedBase64Input} from './owned-base64-inputs.mjs';

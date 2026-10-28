@@ -50,7 +50,7 @@ export function projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot,
  const tick=depth=>{if(++cells>100000||depth>160)fail('original owned projection node/depth budget exceeded');};
  const relative=name=>{const value=posix.relative(posix.dirname(javascriptPath),runtimeRoot+'/'+name+'-runtime.mjs');return value.startsWith('.')?value:'./'+value;};
  function imported(name,family){const key=family+':'+name;if(!imports.has(key))imports.set(key,{name,family,local:'original_'+name});return imports.get(key).local;}
- function type(text){
+ function type(text){if(text===OWNED_BASE64_RESULT_RUST_TYPE)return 'import('+JSON.stringify(relative('base64'))+').Base64Result';
   const scalar=primitiveOperators&&text.startsWith('::core::primitive::')?ownedRustPrimitiveType(text):null;if(scalar)return 'import('+JSON.stringify(relative('primitive-operator'))+').'+scalar.alias;
   text=text.replaceAll("&'a",'&');
   if(text==='&crate::translation_core::Json')return 'import('+JSON.stringify(relative('json-macro'))+').JsonValue';
@@ -62,7 +62,7 @@ export function projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot,
   if(text==='usize')return 'Parameters<typeof '+imported('router_core_json_index_usize','json-update')+'>[1]';
   fail('public Rust input needs a matching canonical owned ABI rule: '+text);
  }
- function returnType(text){
+ function returnType(text){if(text===OWNED_BASE64_RESULT_RUST_TYPE)return 'import('+JSON.stringify(relative('base64'))+').Base64Result';
   const scalar=primitiveOperators&&text.startsWith('::core::primitive::')?ownedRustPrimitiveType(text):null;if(scalar)return 'import('+JSON.stringify(relative('primitive-operator'))+').'+scalar.alias;
   const values={
    'crate::translation_core::Json':['router_core_json_find','json-iteration'],
@@ -160,3 +160,5 @@ export function projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot,
 }
 
 import {ownedRustPrimitiveType,projectOwnedRustPrimitiveObservation} from './owned-rust-primitive-projection.mjs';
+
+import {OWNED_BASE64_RESULT_RUST_TYPE} from './owned-base64-inputs.mjs';

@@ -363,3 +363,10 @@ retains every user alias scope guard while resolving its genuine qualified nativ
 terminal through the shared scalar library. Three equations and independent unrun
 all-domain/two-API/JS/strict TS/native/whole and mixed inverse/refusal/export cases
 are drafted. Namespace/production/sync/freshness/parity/receiving/delivery stay OPEN.
+
+The [owned Base64 Result input source draft](base64-result-input-source-draft.md)
+replaces one explicit refusal across seven reverse lanes through shared native
+input selection, snapshots, affine flow, TS/Rust emission, evaluator and canonical
+inverse controls. Twenty-two equations and independent unrun all-lane/value/
+observer/move/prefix/JS/strict TS/native/inverse/export cases are drafted. Wider
+namespace/production/sync/freshness/parity/receiving/delivery remain OPEN.
