@@ -760,3 +760,9 @@ adds one paired bounded supervisor with exact argv/environment, cancellation,
 owned-handle termination, independent streams and native exit statuses. Three
 source equations and independent JS/strict TS cases remain UNRUN; actual temporary
 with isolation/run-credential composition and broader requirements remain OPEN.
+
+The [temporary-client profile/settings draft](native-client-profile-source-draft.md)
+adds shared paired private profile lifetimes, Claude picker/model/privacy settings,
+Codex process catalog/provider overlays and existing provider-codec integration.
+Five equations and independent JS/strict TS/native source remain UNRUN. Actual
+run-credential/process dispatch and every broader delivery requirement stay OPEN.
