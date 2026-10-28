@@ -908,3 +908,9 @@ plan/apply transaction and CLI, with physical Rust/JS/TS mappings, actual runtim
 closure checks and fresh Git conflict selection. Four source equations and all
 independent transaction/refusal source remain UNRUN. Whole Router coverage,
 receiving/race qualification and every remaining delivery obligation stay OPEN.
+
+The [native binary64 vector draft](vector-native-f64-source-draft.md) extends the
+shared whole-source projection with actual f64 signatures and canonical finite
+literal strings, preserving signed zero and nonfinite input classifications.
+Two source equations and independent receiving/refusal/CI-only Rust source are
+UNRUN. All broader translation, synchronization and delivery obligations stay OPEN.

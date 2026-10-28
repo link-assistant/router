@@ -3,9 +3,9 @@
 import {emitOwnedVectorCandidateLiteral} from './owned-vector-candidate-support.mjs';
 const fail=message=>{throw new TypeError('Owned vector native control: '+message);};
 const integer=name=>typeof name==='string'&&/^[iu](?:8|16|32|64|128|size)$/u.test(name);
-const domain=type=>type?.kind==='bool'?'bool':type?.kind==='fixed'&&integer(type.rustPrimitiveName)?type.rustPrimitiveName:null;
+const domain=type=>observedSourceF64(type)?'f64':type?.kind==='bool'?'bool':type?.kind==='fixed'&&integer(type.rustPrimitiveName)?type.rustPrimitiveName:null;
 function frame(item){
- if(!item.vectorOrigin||!['bool','integer'].includes(item.vectorOrigin.element.kind)||!item.params.every(param=>param.type==='bool'||integer(param.type)))fail('actual primitive vector profile required');
+ if(!item.vectorOrigin||!['bool','integer','float'].includes(item.vectorOrigin.element.kind)||!item.params.every(param=>param.type==='bool'||param.type==='f64'||integer(param.type)))fail('actual primitive vector profile required');
  let work=0,leaves=0;return {charge(depth){if(++work>20000||depth>64)fail('bounded primitive vector tree required');},leaf(depth){if(depth>8||++leaves>64)fail('bounded complete primitive vector branches required');},boolean:name=>item.params.some(param=>param.rust===name&&param.type==='bool'),parameter:name=>item.params.some(param=>param.rust===name)};
 }
 function requestedCondition(node,guard,depth=0){
@@ -30,7 +30,7 @@ export function requestedNativeVectorTree(item){
   guard.charge(depth);if(!Array.isArray(rows)||rows.length!==1)fail('complete terminating vector branch required');const node=rows[0];
   if(node.kind==='if')return ['if',requestedCondition(node.cond,guard),body(node.then,depth+1),body(node.else,depth+1)];
   if(node.kind!=='return'||node.value.kind!=='owned-vector-list'||node.value.items.length>4096)fail('checked owned vector return leaf required');guard.leaf(depth);
-  return ['vector',node.value.items.map(value=>{guard.charge(depth);if(value.kind==='vector-input'&&guard.parameter(value.rust))return ['parameter',value.rust];if(value.kind==='bool'&&typeof value.value==='boolean')return ['bool',value.value];if(value.kind==='integer'&&typeof value.value==='string')return ['integer',value.value];fail('checked primitive vector element required');})];
+  return ['vector',node.value.items.map(value=>{guard.charge(depth);if(value.kind==='vector-input'&&guard.parameter(value.rust))return ['parameter',value.rust];if(value.kind==='bool'&&typeof value.value==='boolean')return ['bool',value.value];if(value.kind==='integer'&&typeof value.value==='string')return ['integer',value.value];if(value.kind==='float'){evaluateOwnedVectorF64(value);return ['float',value.value];}fail('checked primitive vector element required');})];
  }
  return body(item.body,0);
 }
@@ -39,7 +39,7 @@ export function actualNativeVectorTree(own,item){
  function body(node,depth){
   guard.charge(depth);if(node?.k==='if')return ['if',actualCondition(node.cond,guard),body(node.then,depth+1),body(node.else,depth+1)];
   if(node?.k!=='array'||node.items.length>4096||node.compatibilityCore?.id!=='router-core-vector-list-v1')fail('fresh qualified owned vector return required');guard.leaf(depth);
-  return ['vector',node.items.map(value=>{guard.charge(depth);if(value.k==='var'&&guard.parameter(value.name))return ['parameter',value.name];if(value.k==='lit'&&value.type?.kind==='bool'&&typeof value.value==='boolean')return ['bool',value.value];if(value.k==='lit'&&value.type?.kind==='fixed'&&(typeof value.value==='string'||typeof value.value==='bigint')){let integer;try{integer=BigInt(value.value).toString();}catch{fail('actual original native integer literal differs');}return ['integer',integer];}fail('fresh original vector element differs');})];
+  return ['vector',node.items.map(value=>{guard.charge(depth);if(value.k==='var'&&guard.parameter(value.name))return ['parameter',value.name];if(value.k==='lit'&&value.type?.kind==='bool'&&typeof value.value==='boolean')return ['bool',value.value];if(value.k==='lit'&&value.type?.kind==='float'&&!value.type.rustReference&&!value.type.rustGenericIdentityUnresolved&&!value.type.rustBorrowingUnresolved){const item={kind:'float',value:value.value};evaluateOwnedVectorF64(item);return ['float',item.value];}if(value.k==='lit'&&value.type?.kind==='fixed'&&(typeof value.value==='string'||typeof value.value==='bigint')){let integer;try{integer=BigInt(value.value).toString();}catch{fail('actual original native integer literal differs');}return ['integer',integer];}fail('fresh original vector element differs');})];
  }
  return body(own.body,0);
 }
@@ -51,3 +51,6 @@ export function emitNativeVectorControlBody(item){
  function body(rows,depth){const node=rows[0],pad=' '.repeat(depth*4);if(node.kind==='return')return pad+emitOwnedVectorCandidateLiteral(node.value,true);return pad+'if '+condition(node.cond)+' {\n'+body(node.then,depth+1)+'\n'+pad+'} else {\n'+body(node.else,depth+1)+'\n'+pad+'}';}
  return body(item.body,1);
 }
+
+import {observedSourceF64} from '../floating-scalar-source-data.mjs';
+import {evaluateOwnedVectorF64} from './owned-vector-f64-literal.mjs';
