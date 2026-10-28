@@ -1,0 +1,1 @@
+Draft shared bounded native source provenance reading, preserved original pins and final metadata receipts across six compiler constructors; eight full source equations and independent boundary cases remain unrun.

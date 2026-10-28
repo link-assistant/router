@@ -724,3 +724,9 @@ than bypassed source guards. Native Codex fresh-global validation/removal/undo a
 8MiB reads now have implementation and independent unrun oracle source. Generic
 histories grant no semantic/namespace/executable authority. Every broader source/
 translation/parity/platform/receiving/delivery requirement remains OPEN.
+
+The [native input provenance draft](native-input-provenance-draft.md) shares
+bounded complete metadata/source reading across six constructors, retaining each
+original pin and adding final complete metadata receipts after callbacks. Eight
+source equations and independent filesystem-change cases remain UNRUN. This
+adds no owner/semantic authority and closes no broader delivery requirement.

@@ -13,8 +13,6 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
-function readNativeInputs(root){
- const bytes=readFileSync(resolve(root,'tools/translation/source-profiles/native-global-repair/native-inputs.json'));if(createHash('sha256').update(bytes).digest('hex')!=='c2650f78e88280c9b1af8aba36a10dd7851148a5f804798d74486ef4a09895e8')throw new TypeError('Complete native client source provenance differs');const data=JSON.parse(bytes);return data.files.map(row=>{const originalSource=readFileSync(resolve(root,row.originalPath),'utf8');if(Buffer.byteLength(originalSource)!==row.bytes||createHash('sha256').update(originalSource).digest('hex')!==row.sha256)throw new TypeError('Actual complete native original input differs');const joined=currentNativeSourceProvenance(root,{...row,source:originalSource}),source=joined.source;const concrete=transportConcreteSyntaxSource(source,{language:joined.language});if(transportConcreteSyntaxMeta(concrete.meta).source!==source)throw new TypeError('Complete native client CST inverse differs');return {...row,...joined,originalBytes:row.bytes,originalSha256:row.sha256,bytes:Buffer.byteLength(source),sha256:createHash('sha256').update(source).digest('hex'),source,concreteSyntax:concrete.meta,sourceAuthority:false,semanticAuthority:false};});
-}
+function readNativeInputs(root){return readPinnedNativeSourceProvenanceInputs(root,{path:'tools/translation/source-profiles/native-global-repair/native-inputs.json',pin:'c2650f78e88280c9b1af8aba36a10dd7851148a5f804798d74486ef4a09895e8'});}
 
-import {currentNativeSourceProvenance,assertNativeSourceProvenanceCurrent} from './native-source-history.mjs';
+import {readPinnedNativeSourceProvenanceInputs,assertNativeSourceProvenanceCurrent} from './native-source-history.mjs';

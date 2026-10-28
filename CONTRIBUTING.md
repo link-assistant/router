@@ -53,6 +53,11 @@ see [paired alias retention](docs/development/http-resource-unit-type-aliases-dr
 Check written JavaScript returns and cold generic types through the complete
 original declaration and whole body; see [cold return types](docs/development/http-resource-cold-return-types-draft.md).
 New native oracle source joins the existing gated Rust discovery and must never execute locally.
+For native implementation copies, preserve original metadata pins and complete
+original/current histories through the shared
+[native input provenance reader](docs/development/native-input-provenance-draft.md).
+Recheck complete sources and metadata after construction callbacks; a hash, CST
+or public receipt is input DATA, never namespace or executable authority.
 
 The [native source-operation draft](docs/development/native-source-operation-draft.md)
 retains private syntax only inside one synchronous operation while every
