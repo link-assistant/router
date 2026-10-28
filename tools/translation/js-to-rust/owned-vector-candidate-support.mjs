@@ -8,14 +8,16 @@ import {createHash} from 'node:crypto';
 const fail=message=>{throw new TypeError('Owned reverse vector candidate: '+message);};
 const hash=source=>createHash('sha256').update(source).digest('hex');
 const exact=(row,names)=>{if(!row||typeof row!=='object'||Array.isArray(row)||JSON.stringify(Object.keys(row).sort())!==JSON.stringify([...names].sort()))fail('exact source binding fields required');};
-const names=['bool','u8','u16','u32','u64','u128','usize','i8','i16','i32','i64','i128','isize','f64'];
-export const ownedVectorCandidateRustTypes=Object.freeze(Object.fromEntries(names.map(name=>['vec:'+name,'::std::vec::Vec<'+name+'>'])));
-export const ownedVectorCandidateTypeScriptTypes=Object.freeze(Object.fromEntries(names.map(name=>['vec:'+name,'readonly '+(name==='bool'?'boolean':name==='f64'?'number':'bigint')+'[]'])));
+const names=['bool','u8','u16','u32','u64','u128','usize','i8','i16','i32','i64','i128','isize','f64','text-owned'];
+export const ownedVectorCandidateRustTypes=Object.freeze(Object.fromEntries(names.map(name=>['vec:'+name,'::std::vec::Vec<'+(name==='text-owned'?'::std::string::String':name)+'>'])));
+export const ownedVectorCandidateTypeScriptTypes=Object.freeze(Object.fromEntries(names.map(name=>['vec:'+name,'readonly '+(name==='bool'?'boolean':name==='f64'?'number':name==='text-owned'?'string':'bigint')+'[]'])));
 function scalar(type){
- if(!type||type.rustReference||type.patternOwnershipRefusal||type.rustBorrowingUnresolved||type.rustGenericIdentityUnresolved)fail('unresolved or borrowed vector element');
+ const ownedText=type?.kind==='string'&&type.rustSourceType===true&&type.rustOwnership?.kind==='owned'&&type.rustOwnership.source==='String';
+ if(!type||type.rustReference||type.patternOwnershipRefusal&&!(ownedText&&['ownership-bearing String type','owned String source type','owned String formatting','owned String construction','owned String conversion','owned String replacement'].includes(type.patternOwnershipRefusal))||type.rustBorrowingUnresolved||type.rustGenericIdentityUnresolved)fail('unresolved or borrowed vector element');
  if(type.kind==='bool')return {name:'bool',kind:'bool'};
+ if(type.kind==='string'&&type.rustSourceType===true&&type.rustOwnership?.kind==='owned'&&type.rustOwnership.source==='String')return {name:'text-owned',kind:'text'};
  if(type.kind==='float'&&type.rustPrimitiveName==='f64'&&type.rustSourceType===true&&!type.rustOwnership)return {name:'f64',kind:'float'};
- const name=type.rustPrimitiveName;if(type.kind!=='fixed'||!names.includes(name)||name==='bool'||![8,16,32,64,128].includes(type.bits)||typeof type.signed!=='boolean')fail('only genuine bool/integer/f64 elements are implemented; text remains refused');
+ const name=type.rustPrimitiveName;if(type.kind!=='fixed'||!names.includes(name)||name==='bool'||![8,16,32,64,128].includes(type.bits)||typeof type.signed!=='boolean')fail('only genuine bool/integer/f64 or actual owned String elements are implemented; borrowed text remains refused');
  const expected=name==='usize'||name==='isize'?64:Number(name.slice(1));if(type.bits!==expected||type.signed!==name.startsWith('i'))fail('actual original primitive width/signedness differs');return {name,kind:'integer',bits:type.bits,signed:type.signed};
 }
 function bindings(data,path){
@@ -70,15 +72,15 @@ export function checkOriginalOwnedVectorFunction(path,declaration,analysis,paire
  const symbol=checker.getSymbolAtLocation(declaration.name);if(!symbol||symbol.declarations?.length!==1||symbol.declarations[0]!==declaration)fail('actual original JavaScript function binding differs');
  if(!paired||!paired.declaration.type||declaration.typeParameters?.length||declaration.asteriskToken)fail('complete actual TypeScript pair required');arrayType(ts,paired.declaration.type,profile.element);
  const input=vectorSourceParameters({ts,checker,declaration,paired,profile});
- const body=readOwnedVectorConditionFlow({ts,checker,inputs:input.inputs,statements:declaration.body.statements,readLiteral:node=>{if(profile.element.kind==='float')return ownedVectorF64Literal(ts,node);if(profile.element.kind==='bool'){if(![ts.SyntaxKind.TrueKeyword,ts.SyntaxKind.FalseKeyword].includes(node.kind))fail('actual bool element requires bool literal');return {kind:'bool',value:node.kind===ts.SyntaxKind.TrueKeyword};}return {kind:'integer',value:boundedInteger(integerText(ts,node),profile.element)};},makeReturn:items=>{for(const item of items)if(item.kind==='vector-input'&&item.type!==profile.element.name)fail('vector input element differs from actual returned scalar domain');return {kind:'owned-vector-list',type:profile.type,element:profile.element,items,root:null};}});
+ const body=readOwnedVectorConditionFlow({ts,checker,inputs:input.inputs,statements:declaration.body.statements,readLiteral:node=>{if(profile.element.kind==='text')return ownedVectorTextLiteral(ts,node);if(profile.element.kind==='float')return ownedVectorF64Literal(ts,node);if(profile.element.kind==='bool'){if(![ts.SyntaxKind.TrueKeyword,ts.SyntaxKind.FalseKeyword].includes(node.kind))fail('actual bool element requires bool literal');return {kind:'bool',value:node.kind===ts.SyntaxKind.TrueKeyword};}return {kind:'integer',value:boundedInteger(integerText(ts,node),profile.element)};},makeReturn:items=>{for(const item of items)if(item.kind==='vector-input'&&item.type!==profile.element.name)fail('vector input element differs from actual returned scalar domain');return {kind:'owned-vector-list',type:profile.type,element:profile.element,items,root:null};}});
  return {kind:'owned-function',name,javascript:declaration.name.text,exported:!!declaration.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword),params:input.params,returns:profile.type,resultRoot:null,body,source:{path,source,span:[declaration.getStart(file),declaration.end]},hostCalls:[],pairedSource:{path:paired.pair.typescript.path,source:paired.pair.typescript.source,span:paired.evidence.typescriptSpan,parameters:paired.evidence.parameters,locals:paired.evidence.locals,returnSpan:paired.evidence.returnSpan,erasure:paired.pair.erasure.edits},vectorOrigin:profile};
 }
 export function emitOwnedVectorCandidateLiteral(value,rust){
  if(value.kind!=='owned-vector-list'||value.type!=='vec:'+value.element.name||!names.includes(value.element.name)||!Array.isArray(value.items)||value.items.length>4096)fail('checked vector literal differs');
- const items=value.items.map(item=>{if(item.kind==='vector-input'){if(item.type!==value.element.name||typeof item.name!=='string'||typeof item.rust!=='string')fail('checked vector input differs');return rust?item.rust:item.name;}if(value.element.kind==='float')return emitOwnedVectorF64(item,rust);if(value.element.kind==='bool'){if(item.kind!=='bool'||typeof item.value!=='boolean')fail('checked bool differs');return String(item.value);}if(item.kind!=='integer'||typeof item.value!=='string')fail('checked integer differs');const text=boundedInteger(item.value,value.element);return rust?text+'_'+value.element.name:text+'n';});
+ const items=value.items.map(item=>{if(item.kind==='vector-input'){if(item.type!==value.element.name||typeof item.name!=='string'||typeof item.rust!=='string')fail('checked vector input differs');return rust?(item.type==='text-owned'?'<::std::string::String as ::std::clone::Clone>::clone(&'+item.rust+')':item.rust):item.name;}if(value.element.kind==='text')return emitOwnedVectorText(item,rust);if(value.element.kind==='float')return emitOwnedVectorF64(item,rust);if(value.element.kind==='bool'){if(item.kind!=='bool'||typeof item.value!=='boolean')fail('checked bool differs');return String(item.value);}if(item.kind!=='integer'||typeof item.value!=='string')fail('checked integer differs');const text=boundedInteger(item.value,value.element);return rust?text+'_'+value.element.name:text+'n';});
  return (rust?'crate::translation_core::vec![':'[')+items.join(', ')+']';
 }
-export function evaluateOwnedVectorCandidateLiteral(value,scope){return value.items.map(item=>item.kind==='vector-input'?scope.get(item.name):value.element.kind==='float'?evaluateOwnedVectorF64(item):value.element.kind==='bool'?item.value:BigInt(boundedInteger(item.value,value.element)));}
+export function evaluateOwnedVectorCandidateLiteral(value,scope){return value.items.map(item=>item.kind==='vector-input'?scope.get(item.name):value.element.kind==='text'?ownedVectorTextValue(item):value.element.kind==='float'?evaluateOwnedVectorF64(item):value.element.kind==='bool'?item.value:BigInt(boundedInteger(item.value,value.element)));}
 
 import {readOwnedVectorConditionFlow} from './owned-vector-condition-flow.mjs';
 
@@ -87,3 +89,5 @@ import {checkedOwnedVectorTail} from './owned-vector-origin-tail.mjs';
 import {vectorSourceParameters} from './owned-vector-source-parameters.mjs';
 
 import {ownedVectorF64Literal,emitOwnedVectorF64,evaluateOwnedVectorF64} from './owned-vector-f64-literal.mjs';
+
+import {ownedVectorTextLiteral,emitOwnedVectorText,ownedVectorTextValue} from './owned-vector-text-literal.mjs';

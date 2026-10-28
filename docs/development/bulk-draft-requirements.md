@@ -838,3 +838,9 @@ through comma/repeated vectors and reverse literals/parameters/branches, preserv
 negative zero and normal IEEE argument classification. Eight source equations,
 independent strict TS/reverse/native/intrinsic/refusal source remain UNRUN. Wider
 production, synchronization, receiving and delivery requirements stay OPEN.
+
+The [owned String vector draft](vector-text-source-draft.md) adds native String
+ownership-aware reverse literals/arguments, explicit clones and Unicode guards
+with a complete candidate runtime closure. Nine complete source equations and
+independent strict TS/reverse/native/refusal source remain UNRUN. Current private
+copy production and all wider translation/sync/delivery rows remain OPEN.
