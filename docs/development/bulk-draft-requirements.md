@@ -554,3 +554,11 @@ or-pattern pipes from closures in text/integer/builder scans. Fifteen equations
 and independent unrun paired APIs/actual callers/all-reader/JS/strict TS/native/
 opaque/scope/refusal/export source are drafted. Wider pattern/namespace/production/
 reverse/sync/freshness/parity/receiving/delivery requirements remain OPEN.
+
+The [nested nonbinding pattern shape draft](nonbinding-pattern-shapes-source-draft.md)
+extends one shared grammar for ignored constructors/tuples/records/slices/
+references/ranges and nested alternatives across existing adopters and local
+readers. Two equations and independent unrun paired actual Option/Result callers/
+JS/strict TS/native/recursive scope/refusal/export source are drafted. Bindings/
+guards and all wider namespace/production/reverse/sync/freshness/parity/receiving/
+delivery requirements remain OPEN.

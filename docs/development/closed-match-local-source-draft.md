@@ -43,3 +43,8 @@ original native alias/wrapping behavior and export closure. Broader pattern/guar
 iterator/mutation constructs, namespace/producer proof, production coverage, full
 forward/reverse/sync/freshness/parity, receiving/performance qualification and
 delivery remain OPEN. No executable gain or verified completion is claimed.
+
+The [nested nonbinding pattern successor](nonbinding-pattern-shapes-source-draft.md)
+extends the original narrow pattern grammar to ignored constructor/container/
+reference/range shapes. Its child patterns must still introduce no binding; all
+original owner/type/drop/namespace and receiving obligations remain pending.

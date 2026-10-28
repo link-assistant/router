@@ -294,3 +294,9 @@ complete closed nonbinding arms with exact source pipe positions; retain unknown
 binding/guard/constructor/macro refusals and opaque callback boundaries. Fold
 fresh inventory work into actual scan budgets and never treat it as native scope,
 type or ownership authority. See [the unrun draft](closed-match-local-source-draft.md).
+
+Nested constructor/container patterns qualify a nonbinding source lane only if
+every child stays nonbinding. Keep bare unit names, shorthand/reference/payload
+bindings, at-patterns, guards and macros refused without their separate scope
+rules. Structural pattern spelling proves no actual variant/type/drop identity.
+See [the unrun source draft](nonbinding-pattern-shapes-source-draft.md).
