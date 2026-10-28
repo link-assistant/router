@@ -7,10 +7,10 @@ export function checkRouterCoreVector(checker, node, env, path, expected, allowL
   const repetition=node.value.k==='routerCoreVectorRepeat'?checkOwnedVectorRepeat(checker,node.value,env,path,expected,allowLiteral):null;
   const value = repetition?.array ?? checker.expr(node.value, env, path, expected, allowLiteral), type = value.type?.element;
   const scalar = type && !type.rustReference && !type.rustGenericIdentityUnresolved && !type.rustBorrowingUnresolved &&
-    (type.kind === 'bool' || type.kind === 'fixed' && typeof type.rustPrimitiveName === 'string' ||
+    (type.kind==='float'&&type.rustPrimitiveName==='f64'&&type.rustSourceType===true&&!type.rustOwnership&&!type.patternOwnershipRefusal || type.kind === 'bool' || type.kind === 'fixed' && typeof type.rustPrimitiveName === 'string' ||
       type.kind === 'string' && ['String', 'str'].includes(type.rustOwnership?.source));
   if (value.k !== 'array' || value.type?.kind !== 'array' || !scalar || value.type.rustOwnership?.kind !== 'owned' || value.type.rustOwnership.source !== 'Vec') {
-    throw unsupported('owned vector elements', 'requires checked primitive integers, bools, owned standard text or borrowed str; nominal, nested, mutable and erased elements remain refused', node.span);
+    throw unsupported('owned vector elements', 'requires checked primitive integers, f64, bools, owned standard text or borrowed str; nominal, nested, mutable and erased elements remain refused', node.span);
   }
   const proof = Object.freeze({profile: 'checked-router-owned-vector-list-v1'});
   const checkedVector={...value, constEligible: false, compatibilityCore: node.value.compatibilityCore, ownedVectorProof: proof};

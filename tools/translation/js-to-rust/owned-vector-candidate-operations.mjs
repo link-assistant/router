@@ -242,7 +242,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  const code=program.map(item=>{
   const borrowed=type=>['json-ref','map-ref','str','bytes-ref','base64-error-ref','json-option-input'].includes(type)||ownedJsonBorrowed(type),loan=borrowed(item.returns),explicit=loan&&item.resultRoot!==null&&item.params.filter(param=>borrowed(param.type)).length>1;
   const parameters=item.params.map(param=>{
-   const type=item.vectorOrigin?(rust?'::core::primitive::'+param.type:param.type==='bool'?'boolean':'bigint'):(rust?rustTypes[param.type].replace("'a ",explicit&&param.name===item.resultRoot?"'a ":''):publicTypeScriptType(param.type));
+   const type=item.vectorOrigin?(rust?'::core::primitive::'+param.type:param.type==='bool'?'boolean':param.type==='f64'?'number':'bigint'):(rust?rustTypes[param.type].replace("'a ",explicit&&param.name===item.resultRoot?"'a ":''):publicTypeScriptType(param.type));
    return (rust?param.rust:param.name)+': '+type;
   }).join(', ');
   const returns=rust?rustTypes[item.returns].replace("'a ",item.resultRoot===null?"'static ":explicit?"'a ":''):publicTypeScriptType(item.returns);

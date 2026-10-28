@@ -9,7 +9,7 @@ export function vectorSourceParameters({ts,checker,declaration,paired,profile}){
   if(!ts.isIdentifier(node.name)||!ts.isIdentifier(typed.name)||typed.name.text!==node.name.text||seen.has(node.name.text)||node.initializer||typed.initializer||node.dotDotDotToken||typed.dotDotDotToken||node.questionToken||typed.questionToken||node.modifiers?.length||typed.modifiers?.length)fail('plain distinct by-value parameters required');
   if(!/^[a-z][A-Za-z0-9_]*$/u.test(node.name.text)||['arguments','eval','await','yield'].includes(node.name.text))fail('portable ordinary scalar parameter name required');
   seen.add(node.name.text);let annotation=typed.type;while(annotation&&ts.isParenthesizedTypeNode(annotation))annotation=annotation.type;
-  if(annotation?.kind!==(domain.kind==='bool'?ts.SyntaxKind.BooleanKeyword:ts.SyntaxKind.BigIntKeyword))fail('actual paired scalar keyword type differs');
+  if(annotation?.kind!==(domain.kind==='bool'?ts.SyntaxKind.BooleanKeyword:domain.kind==='float'?ts.SyntaxKind.NumberKeyword:ts.SyntaxKind.BigIntKeyword))fail('actual paired scalar keyword type differs');
   const symbol=checker.getSymbolAtLocation(node.name);if(!symbol||symbol.declarations?.length!==1||symbol.declarations[0]!==node)fail('unique actual parameter symbol required');
   const value={kind:'vector-input',name:node.name.text,rust:'__ro_vector_input_'+at,type:domain.name};params.push({name:value.name,rust:value.rust,type:value.type});inputs.push([symbol,{declaration:node,value}]);
  }

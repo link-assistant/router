@@ -568,3 +568,9 @@ The [conditional primitive vector draft](vector-condition-source-draft.md) adds
 bounded bool if/else/else-if reverse flow and checks every actual original owned
 array tail. Five complete source equations and independent strict TS/reverse/
 native/guard/refusal source remain UNRUN. Full translation/sync/delivery stay OPEN.
+
+The [binary64 vector draft](vector-f64-source-draft.md) carries actual checked f64
+through comma/repeated vectors and reverse literals/parameters/branches, preserving
+negative zero and normal IEEE argument classification. Eight source equations,
+independent strict TS/reverse/native/intrinsic/refusal source remain UNRUN. Wider
+production, synchronization, receiving and delivery requirements stay OPEN.
