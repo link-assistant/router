@@ -42,3 +42,8 @@ is a draft, not qualified behavior. Wider source namespace/compiler forward/reve
 sync/freshness, full production parity, receiving and delivery remain OPEN. Rust
 remains CI only after all eight same-SHA JavaScript gates; local execution stays
 deferred until the user-authorized verification phase after complete drafting.
+
+The subsequent [native reset/session lock draft](native-reset-lock-source-draft.md)
+now provides the missing native reset lock through a full original/current source
+equation. Cross-engine registration/reset coordination has implementation source;
+its execution/timing and all other interoperability obligations remain unqualified.

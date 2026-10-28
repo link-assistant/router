@@ -791,3 +791,9 @@ verified regular-profile backups and transactional settings-only reset in the re
 launcher. Eleven complete equations and independent JS/strict TS/native source
 remain UNRUN. Link/restore/external inventory/platform/interoperability and every
 broader compiler/parity/receiving/delivery requirement remain OPEN.
+
+The [shared native reset/session lock draft](native-reset-lock-source-draft.md)
+adds the existing profile advisory lock around actual native Router-Claude reset,
+retaining one full native substitution, two compiler equations and nine history
+steps across eight paths. Native contention/byte-preservation and source/export
+cases remain UNRUN. Every wider qualification/delivery requirement stays OPEN.
