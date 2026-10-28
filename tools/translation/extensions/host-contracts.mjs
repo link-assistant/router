@@ -1,6 +1,6 @@
 import {parseRouterCoreMatches} from '../router-core-matches.mjs';import {parseRouterCoreVector,checkRouterCoreVector} from '../router-core-vectors.mjs';import {parseCharacterType,checkedCharacterType,assertCharacterBoundary,checkCharacterExpression,emitCharacterExpression,needsCharacterValueGuard} from './character-scalars.mjs';
 import {parseRouterCoreRangeCall,checkRouterCoreRangeCall,captureRouterCoreRangeCalls,ROUTER_CORE_RANGE_CONTRACT} from '../router-core-ranges.mjs';
-import {parseRouterCoreStrReference} from '../router-core-primitives.mjs';import {jsonIterationContract} from '../json-iteration-contracts.mjs';import {jsonStateContract,JSON_STATE_CONTRACTS,forwardOwnedImports} from '../owned-forward-contracts.mjs';
+import {parseRouterCoreStrReference,parseRouterCoreFixedType} from '../router-core-primitives.mjs';import {jsonIterationContract} from '../json-iteration-contracts.mjs';import {jsonStateContract,JSON_STATE_CONTRACTS,forwardOwnedImports} from '../owned-forward-contracts.mjs';
 import {parseRouterCoreFormatting,parseRouterCoreText} from '../router-core-formatting.mjs';
 import {withOriginalFormatDisplayParser,withOriginalFormatDisplayChecker} from './source-display-formatting.mjs';
 import {checkOriginalMappedBody,checkOriginalMappedApplication,prepareOriginalMappedBodies,requireOriginalMappedEmission,finalizeOriginalMappedBodies} from './standard-mapped-body.mjs';
@@ -272,7 +272,7 @@ export class HostRustParser extends withOriginalFormatDisplayParser(withJsonMacr
   hostTypeSyntax(){
     const base64=parseRouterCoreBase64Type(this);if(base64)return base64;const algebraic=parseRouterCoreAlgebraicType(this);if(algebraic)return algebraic;
     const coreText=parseRouterCoreText(this);if(coreText)return coreText;
-    const coreStr=parseRouterCoreStrReference(this);if(coreStr)return coreStr;
+    const coreFixed=parseRouterCoreFixedType(this);if(coreFixed)return coreFixed;const coreStr=parseRouterCoreStrReference(this);if(coreStr)return coreStr;
     const character=parseCharacterType(this);if(character)return character;
     const c=this.cursor,originalSelf=originalPrimitiveTryFromSelfType(this);if(originalSelf)return originalSelf;
     // && is one lexer token, but two borrows only in a source type position.

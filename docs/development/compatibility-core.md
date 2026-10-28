@@ -623,3 +623,9 @@ base64 internals outside application translation and the existing bounded scalar
 domain for translated callers. Shared fixed vectors, both translation directions
 and native edge-case oracle source are drafted and unrun; no caller, parity,
 runtime or receiving qualification follows from the additional catalog row.
+
+The [explicit scalar type core source draft](fixed-type-core-source-draft.md)
+provides protected U8–U128/I8–I128/Bool/F64 interfaces using the existing checked
+scalar domains. Native internals remain outside translation; genuine current
+module/scope/cursor/library checks are required. All receiving/native cases are
+UNRUN and source adoption/namespace/global parity obligations remain OPEN.

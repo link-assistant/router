@@ -562,3 +562,11 @@ readers. Two equations and independent unrun paired actual Option/Result callers
 JS/strict TS/native/recursive scope/refusal/export source are drafted. Bindings/
 guards and all wider namespace/production/reverse/sync/freshness/parity/receiving/
 delivery requirements remain OPEN.
+
+The [explicit paired scalar type core draft](fixed-type-core-source-draft.md)
+adds twelve protected native aliases mapped through genuine current module/scope/
+parser checks to existing fixed/bool/f64 meta types. Ten compiler equations and
+complete two-file native template/root construction plus independent unrun all-
+width/JS/strict TS/meta/paired inverse/native/refusal/export source are drafted.
+Broad source adoption and namespace/production/reverse/sync/freshness/parity/
+receiving/delivery requirements remain OPEN.

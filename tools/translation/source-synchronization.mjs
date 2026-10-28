@@ -200,3 +200,5 @@ export {isTextTargetSourceContext,readTextTargetSourceContext,readCarrierTextCon
 export {readTextBuilderAppendStatementSource} from './text-builder-append-statement-source.mjs';
 
 export {collectClosedMatchPatternSource} from './match-arm-source.mjs';
+
+export {FIXED_TYPE_CORE_NATIVE_SOURCE,FIXED_TYPE_CORE_ALIASES,readFixedTypeCoreSourceRole} from './fixed-type-core-source.mjs';

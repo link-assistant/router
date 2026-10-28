@@ -300,3 +300,9 @@ every child stays nonbinding. Keep bare unit names, shorthand/reference/payload
 bindings, at-patterns, guards and macros refused without their separate scope
 rules. Structural pattern spelling proves no actual variant/type/drop identity.
 See [the unrun source draft](nonbinding-pattern-shapes-source-draft.md).
+
+Explicit scalar core aliases must follow the original protected owned interface:
+genuine private parser/module/scope origin, exact active declaration/library,
+full CST/meta transport and post-callback source/cursor rejoin. Lexical names,
+source hashes or descriptors grant no primitive identity. Preserve all original
+source adoption obligations. See [the unrun draft](fixed-type-core-source-draft.md).
