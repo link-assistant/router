@@ -16,6 +16,10 @@ use tokio::sync::oneshot;
 use tokio_tungstenite::tungstenite;
 use tokio_tungstenite::tungstenite::client::IntoClientRequest as _;
 
+mod trust;
+
+const DAEMON_CA_ENV: &str = "LINK_ASSISTANT_ROUTER_INTERNAL_CODEX_BRIDGE_CA";
+
 const BACKEND_PATH: &str = "/api/services/codex/backend-api";
 const MAX_HTTP_BODY_BYTES: usize = 8 * 1024 * 1024;
 const MAX_WEBSOCKET_MESSAGE_BYTES: usize = 16 * 1024 * 1024;
@@ -38,6 +42,7 @@ struct BridgeState {
     upstream_origin: String,
     health_path: String,
     client: reqwest::Client,
+    ca_cert: Option<PathBuf>,
 }
 
 pub struct EphemeralBridge {
@@ -55,6 +60,8 @@ struct PersistentState {
     upstream_origin: String,
     loopback_origin: String,
     nonce: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    ca_cert: Option<PathBuf>,
 }
 
 pub struct PersistentBridge {
@@ -97,6 +104,7 @@ pub struct DaemonRequest {
     state_path: PathBuf,
     nonce: String,
     listen: std::net::SocketAddr,
+    ca_cert: Option<PathBuf>,
 }
 
 impl EphemeralBridge {
@@ -137,7 +145,12 @@ pub fn required(router_origin: &str) -> Result<bool, String> {
 }
 
 pub async fn start_ephemeral(upstream_origin: &str) -> Result<EphemeralBridge, String> {
+    start_ephemeral_with_ca(upstream_origin, None).await
+}
+
+pub async fn start_ephemeral_with_ca(upstream_origin: &str, ca_cert: Option<&Path>) -> Result<EphemeralBridge, String> {
     let upstream_origin = canonical_origin(upstream_origin)?;
+    let ca_cert = trust::selected_path(&upstream_origin, ca_cert)?;
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
         .await
         .map_err(|error| format!("could not bind the Codex loopback bridge: {error}"))?;
@@ -151,7 +164,8 @@ pub async fn start_ephemeral(upstream_origin: &str) -> Result<EphemeralBridge, S
     let state = BridgeState {
         upstream_origin,
         health_path,
-        client: reqwest::Client::new(),
+        client: trust::client(None)?,
+        ca_cert,
     };
     let app = axum::Router::new()
         .fallback(bridge_request)
@@ -197,6 +211,7 @@ pub fn daemon_request_from_env() -> Result<Option<DaemonRequest>, String> {
         state_path,
         nonce,
         listen,
+        ca_cert: crate::operation_context::var_os(DAEMON_CA_ENV).map(PathBuf::from),
     }))
 }
 
@@ -218,6 +233,7 @@ fn validate_nonce(nonce: &str) -> Result<(), String> {
 /// Serve one persistent child process created by [`ensure_persistent`].
 pub async fn run_persistent_daemon(request: DaemonRequest) -> Result<(), String> {
     let upstream_origin = canonical_origin(&request.upstream_origin)?;
+    let ca_cert = trust::selected_path(&upstream_origin, request.ca_cert.as_deref())?;
     let listener = tokio::net::TcpListener::bind(request.listen)
         .await
         .map_err(|error| format!("could not bind the persistent Codex bridge: {error}"))?;
@@ -232,6 +248,7 @@ pub async fn run_persistent_daemon(request: DaemonRequest) -> Result<(), String>
         upstream_origin: upstream_origin.clone(),
         loopback_origin,
         nonce: request.nonce,
+        ca_cert: ca_cert.clone(),
     };
     write_state(&request.state_path, &state)?;
     let app = axum::Router::new()
@@ -239,7 +256,8 @@ pub async fn run_persistent_daemon(request: DaemonRequest) -> Result<(), String>
         .with_state(BridgeState {
             upstream_origin,
             health_path,
-            client: reqwest::Client::new(),
+            client: trust::client(None)?,
+            ca_cert,
         });
     let result = axum::serve(listener, app)
         .with_graceful_shutdown(daemon_shutdown())
@@ -269,11 +287,17 @@ async fn daemon_shutdown() {
 }
 
 /// Start or reuse the owner-marked bridge for persistent Codex configuration.
-pub async fn ensure_persistent(
+pub async fn ensure_persistent(state_path: &Path, upstream_origin: &str) -> Result<PersistentBridge, String> {
+    ensure_persistent_with_ca(state_path, upstream_origin, None).await
+}
+
+pub async fn ensure_persistent_with_ca(
     state_path: &Path,
     upstream_origin: &str,
+    ca_cert: Option<&Path>,
 ) -> Result<PersistentBridge, String> {
     let upstream_origin = canonical_origin(upstream_origin)?;
+    let ca_cert = trust::selected_path(&upstream_origin, ca_cert)?;
     let lock = crate::durable_file::lock_exclusive_async(
         &append_suffix(state_path, ".lock"),
         START_TIMEOUT,
@@ -284,6 +308,7 @@ pub async fn ensure_persistent(
     if let Some(state) = previous.as_ref()
         && valid_state(state)
         && state.upstream_origin == upstream_origin
+        && state.ca_cert == ca_cert
         && healthy(state).await
     {
         return Ok(persistent_handle(state_path, state.clone(), false, lock));
@@ -300,9 +325,9 @@ pub async fn ensure_persistent(
     } else {
         remove_matching_or_invalid_state(state_path, previous.as_ref())?;
     }
-    let state = match spawn_daemon(state_path, &upstream_origin, preferred).await {
+    let state = match spawn_daemon(state_path, &upstream_origin, preferred, ca_cert.as_deref()).await {
         Ok(state) => state,
-        Err(first) if preferred.is_some() => spawn_daemon(state_path, &upstream_origin, None)
+        Err(first) if preferred.is_some() => spawn_daemon(state_path, &upstream_origin, None, ca_cert.as_deref())
             .await
             .map_err(|second| format!("{first}; retry on a new loopback port failed: {second}"))?,
         Err(error) => return Err(error),
@@ -348,6 +373,7 @@ async fn spawn_daemon(
     state_path: &Path,
     upstream_origin: &str,
     preferred: Option<std::net::SocketAddr>,
+    ca_cert: Option<&Path>,
 ) -> Result<PersistentState, String> {
     remove_file_if_present(state_path)?;
     let nonce = uuid::Uuid::new_v4().simple().to_string();
@@ -374,6 +400,7 @@ async fn spawn_daemon(
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::piped());
+    if let Some(path) = ca_cert { command.env(DAEMON_CA_ENV, path); }
     command.envs(runtime_environment);
     #[cfg(unix)]
     {
@@ -388,6 +415,7 @@ async fn spawn_daemon(
         if let Some(state) = read_state(state_path)?
             && state.nonce == nonce
             && state.pid == child.id()
+            && state.ca_cert.as_deref() == ca_cert
             && valid_state(&state)
             && healthy(&state).await
         {
@@ -535,6 +563,7 @@ fn health_path(nonce: &str) -> String {
 
 fn valid_state(state: &PersistentState) -> bool {
     state.version == STATE_VERSION
+        && state.ca_cert.as_ref().is_none_or(|path| path.is_absolute())
         && state.pid != 0
         && validate_nonce(&state.nonce).is_ok()
         && canonical_origin(&state.upstream_origin).as_deref() == Ok(&state.upstream_origin)
@@ -631,7 +660,15 @@ async fn bridge_request(State(state): State<BridgeState>, request: Request) -> R
         return StatusCode::NOT_FOUND.into_response();
     }
     let headers = request.headers().clone();
-    let target = bridge_target(&state, &headers, &uri);
+    let Ok(mut target) = bridge_target(&state, &headers, &uri) else {
+        return StatusCode::NOT_FOUND.into_response();
+    };
+    if let Some(path) = state.ca_cert.as_deref() {
+        match trust::client(Some(path)) {
+            Ok(client) => target.client = client,
+            Err(_) => return StatusCode::BAD_GATEWAY.into_response(),
+        }
+    }
     if is_websocket(&headers) {
         return upgrade_websocket(request, target).await;
     }
@@ -647,17 +684,23 @@ struct BridgeTarget {
     headers: HeaderMap,
 }
 
-fn bridge_target(state: &BridgeState, incoming: &HeaderMap, uri: &axum::http::Uri) -> BridgeTarget {
+fn bridge_target(state: &BridgeState, incoming: &HeaderMap, uri: &axum::http::Uri) -> Result<BridgeTarget, String> {
     let mut url = format!("{}{}", state.upstream_origin, uri.path());
     if let Some(query) = uri.query() {
         url.push('?');
         url.push_str(query);
     }
-    BridgeTarget {
-        client: state.client.clone(),
-        url,
-        headers: request_headers(incoming),
+    let parsed = reqwest::Url::parse(&url).map_err(|_| "invalid bridge target URL")?;
+    let base = reqwest::Url::parse(&state.upstream_origin).map_err(|_| "invalid bridge origin")?;
+    let namespace = format!("{}{BACKEND_PATH}/", base.path().trim_end_matches('/'));
+    if parsed.origin() != base.origin() || !parsed.path().starts_with(&namespace) {
+        return Err("bridge target leaves its backend namespace".into());
     }
+    Ok(BridgeTarget {
+        client: state.client.clone(),
+        url: parsed.to_string(),
+        headers: request_headers(incoming),
+    })
 }
 
 async fn relay_http(method: &Method, body: Bytes, target: BridgeTarget) -> Response {
@@ -752,7 +795,7 @@ async fn websocket_session(mut downstream: WebSocket, target: BridgeTarget) {
         close(&mut downstream, 1011, "invalid Router WebSocket URL").await;
         return;
     };
-    for (name, value) in target.headers {
+    for (name, value) in target.headers.clone() {
         if let Some(name) = name {
             request.headers_mut().append(name, value);
         }
@@ -763,10 +806,10 @@ async fn websocket_session(mut downstream: WebSocket, target: BridgeTarget) {
         .max_write_buffer_size(MAX_WEBSOCKET_MESSAGE_BYTES.saturating_mul(2));
     let connected = tokio::time::timeout(
         CONNECT_TIMEOUT,
-        tokio_tungstenite::connect_async_with_config(request, Some(config), false),
+        trust::connect_websocket(target.client, &target.url, request, config),
     )
     .await;
-    let Ok(Ok((mut upstream, _))) = connected else {
+    let Ok(Ok(mut upstream)) = connected else {
         close(&mut downstream, 1011, "Router WebSocket connection failed").await;
         return;
     };

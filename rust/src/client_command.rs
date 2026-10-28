@@ -207,9 +207,11 @@ pub(crate) async fn ensure_codex_bridge(
     if client != ClientKind::Codex || !crate::codex_loopback_bridge::required(base_url)? {
         return Ok(None);
     }
-    crate::codex_loopback_bridge::ensure_persistent(
+    let ca_cert = crate::managed_server::inference_ca_for_origin(base_url).map_err(|error| error.to_string())?;
+    crate::codex_loopback_bridge::ensure_persistent_with_ca(
         &manager.codex_loopback_bridge_state_path(),
         base_url,
+        ca_cert.as_deref(),
     )
     .await
     .map(Some)

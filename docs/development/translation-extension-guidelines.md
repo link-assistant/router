@@ -539,3 +539,9 @@ fresh HTTP/WS CA loading, normal TLS verification, actual temporary/persistent
 caller wiring and explicit advisory-lock budgets. Sixteen compiler equations,
 three-language complete histories and independent TLS/strict TS source remain
 UNRUN. Native bridge trust and every wider delivery requirement stay OPEN.
+
+The [native bridge trust draft](native-bridge-ca-source-draft.md) carries selected
+CA trust through six actual Rust callers/state paths and reuses verified HTTP
+upgrades for WebSockets without new dependencies. Two compiler equations, full
+native histories and independent trust/handshake cases are source-only and UNRUN.
+All end-to-end, reverse, synchronization and receiving requirements stay OPEN.

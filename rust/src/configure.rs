@@ -159,9 +159,10 @@ async fn configure_one(
         && crate::codex_loopback_bridge::required(&server.base_url)?
     {
         Some(
-            crate::codex_loopback_bridge::ensure_persistent(
+            crate::codex_loopback_bridge::ensure_persistent_with_ca(
                 &manager.codex_loopback_bridge_state_path(),
                 &server.base_url,
+                server.ca_cert.as_deref(),
             )
             .await?,
         )
