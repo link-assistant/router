@@ -473,6 +473,7 @@ function checkFunction(context,path,declaration,analysis){
   const nativeBitwise=readOwnedNativeBitwiseExpression(ts,node,argument=>expression(argument,scope,depth+1),{enabled:nativeScalars});if(nativeBitwise){nativeOperatorHistory.retain(node,file,nativeBitwise);return nativeBitwise;}
   if(ts.isConditionalExpression(node)){
    const cond=expression(node.condition,scope,depth+1),a=refine(branchScope(scope),cond,true),b=refine(branchScope(scope),cond,false),yes=expression(node.whenTrue,a,depth+1,false,numericDomain),no=expression(node.whenFalse,b,depth+1,false,numericDomain);
+   if(jsonVectorProfile&&!nativeScalars){if(['u64','i64'].includes(yes.type)&&no.kind==='integer'&&no.type==='usize')narrowOwnedNumericLiteral(no,yes.type);else if(['u64','i64'].includes(no.type)&&yes.kind==='integer'&&yes.type==='usize')narrowOwnedNumericLiteral(yes,no.type);}
    const loan=yes.type==='str'&&no.type==='str'?meetStringLoans(stringLoan(yes),stringLoan(no)):undefined;
    if(cond.type!=='bool'||yes.type!==no.type||yes.type==='str'&&!loan||yes.root!==no.root&&!loan&&yes.kind!=='option-none'&&no.kind!=='option-none')fail('conditional result or loan differs');mergeMoves(scope,a,b);return {kind:'choose',cond,then:yes,else:no,type:yes.type,root:loan?loan.root:yes.kind==='option-none'?no.root:yes.root};
   }

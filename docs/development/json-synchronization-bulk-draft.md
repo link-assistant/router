@@ -58,3 +58,8 @@ Optional array indexing and typed numeric composition are source drafted with
 actual constant-usize and existing checked dynamic-u64 field-library paths.
 Seven-function authority batches and complete two-phase/CST equations are UNRUN;
 see [the source contract](vector-json-optional-index-source-draft.md).
+
+Scalar optional conditional payloads and bounded numeric fallback narrowing
+are source drafted with arm-local binders/facts and exact restoration. Four
+domains/three guards/both authority cases remain UNRUN; see
+[the source contract](vector-json-option-conditionals-source-draft.md).
