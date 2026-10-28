@@ -37,3 +37,20 @@ export function checkedOwnedJsonValueTail(declaration,checkScalar){
  }
  visit(declaration.body,new Set(declaration.params.map(param=>param.name)),0);return first;
 }
+
+// Complete bounded immutable-tail copy with an actual primitive return.
+export function checkedOwnedJsonScalarTail(declaration,checkScalar,canonicalSourceName){
+ let work=0,bindings=0,leaves=0,first=null;
+ function visit(node,names,depth){
+  if(++work>4096||depth>64)throw new TypeError('JSON primitive return origin: bounded complete source control required');
+  while(node?.k==='let'){
+   if(++bindings>64||node.mutable||typeof node.name!=='string'||names.has(node.name)||!sameType(node.type,declaration.ret))throw new TypeError('JSON primitive return origin: actual immutable lexical binder required');
+   const valueType=node.value?.type,ownedJsonVector=valueType?.kind==='array'&&valueType.rustOwnership?.kind==='owned'&&valueType.rustOwnership.source==='Vec'&&!valueType.rustReference&&!valueType.rustFixedArray&&!valueType.rustGenericIdentityUnresolved&&!valueType.rustBorrowingUnresolved&&(!valueType.patternOwnershipRefusal||valueType.patternOwnershipRefusal==='ownership-bearing Vec type')&&valueType.element?.kind==='data'&&valueType.element.name===canonicalSourceName&&!valueType.element.rustReference&&!valueType.element.rustOwnership&&!valueType.element.patternOwnershipRefusal;
+   if(!ownedJsonVector)checkScalar(valueType,node.value);names.add(node.name);node=node.body;
+  }
+  if(node?.k==='if'){if(!sameType(node.type,declaration.ret)||node.cond?.type?.kind!=='bool'||node.cond.type.rustReference||node.cond.type.rustGenericIdentityUnresolved)throw new TypeError('JSON primitive return origin: actual checked Boolean branch required');visit(node.then,new Set(names),depth+1);visit(node.else,new Set(names),depth+1);return;}
+  const type=node?.type;if(!type||!['bool','fixed'].includes(type.kind)||!sameType(type,declaration.ret)||type.rustReference||type.rustOwnership||type.patternOwnershipRefusal||type.rustBorrowingUnresolved||type.rustGenericIdentityUnresolved||++leaves>64)throw new TypeError('JSON primitive return origin: actual owned canonical return required');
+  if(first===null)first=node;
+ }
+ visit(declaration.body,new Set(declaration.params.map(param=>param.name)),0);return first;
+}

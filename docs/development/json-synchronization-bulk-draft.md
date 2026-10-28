@@ -83,3 +83,8 @@ Owned canonical JSON value returns now have a source-drafted ABI/body profile
 reusing the full vector-family checker, runtime boundaries and ordered native
 synchronization. Constructor/composition batches and eight full equations remain
 UNRUN; see [the source contract](vector-json-owned-values-source-draft.md).
+
+JSON-input bool/u64/i64 returns are source drafted using full canonical ABI/tail
+copies and independently checked primitive return domains. Twelve caller forms
+in six-function authority batches and repeated synchronization remain UNRUN; see
+[the source contract](vector-json-scalar-returns-source-draft.md).

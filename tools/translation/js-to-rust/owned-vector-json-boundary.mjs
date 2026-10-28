@@ -2,7 +2,7 @@
 // by the private source traversal before these DATA operations are selected.
 const fail=message=>{throw new TypeError('Owned reverse JSON vector boundary: '+message);};
 const isJson=type=>type==='json'||type==='json-ref';
-export const isJsonVector=item=>['json-vector','json-value'].includes(item.vectorOrigin?.kind);
+export const isJsonVector=item=>['json-vector','json-value','json-scalar'].includes(item.vectorOrigin?.kind);
 const scalarGuard=param=>vectorParameterPrelude({vectorOrigin:true,params:[param]},false).trimStart();
 const booleanGuard=name=>'if (typeof '+name+' !== "boolean") throw new TypeError("Owned vector argument differs from actual original scalar domain");';
 export function jsonVectorInputPrelude(item,rust,imports,{nativeJsonSource=false}={}){
@@ -18,7 +18,7 @@ export function validateJsonVectorInputs(item,scope,modules){
  for(const param of item.params){const value=scope.get(param.name);if(isJson(param.type))scope.set(param.name,modules.update.router_core_json_copy(value));else if(param.type==='str'){requireScalarString(value);}else if(param.type==='bool'){if(typeof value!=='boolean')fail('actual bool input required');}else if(['u64','i64'].includes(param.type)){const bounds=vectorScalarBounds(param.type);if(typeof value!=='bigint'||value<bounds.minimum||value>bounds.maximum)fail('actual bounded integer input required');}else fail('unregistered actual JSON-vector input');}
 }
 export function consumeJsonVectorInputPrelude(analysis,declaration,params,resolveImport,profile){
- const {ts,checker,file}=analysis,body=declaration.body.statements;if(!['json-vector','json-value'].includes(profile?.kind)||!params.length||!body.length)return body;
+ const {ts,checker,file}=analysis,body=declaration.body.statements;if(!['json-vector','json-value','json-scalar'].includes(profile?.kind)||!params.length||!body.length)return body;
  const assignment=(statement,param)=>{
   const expr=statement&&ts.isExpressionStatement(statement)?statement.expression:null;
   if(!expr||!ts.isBinaryExpression(expr)||expr.operatorToken.kind!==ts.SyntaxKind.EqualsToken||!ts.isIdentifier(expr.left)||expr.left.text!==param.name||!ts.isCallExpression(expr.right)||expr.right.questionDotToken||expr.right.typeArguments?.length||expr.right.arguments.length!==1||!ts.isIdentifier(expr.right.arguments[0])||expr.right.arguments[0].text!==param.name)return false;
