@@ -180,6 +180,7 @@ pub mod token_reservation;
 pub mod token_secret;
 pub mod tokens_remote;
 pub mod translation_core;
+pub mod translation_json_core;
 pub mod verification;
 // Unix domain sockets do not exist on Windows, and `tokio::net::UnixListener`
 // is gated accordingly.

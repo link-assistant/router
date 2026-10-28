@@ -662,3 +662,9 @@ adds actual original qualified standard ownership calls, fresh standard-source
 inputs and unbounded owned String vector native projection. Four source equations
 and all independent source/ownership/receiving/CI-only native cases are UNRUN.
 Full namespace/trait/JSON/production qualification and broader delivery stay OPEN.
+
+The [bounded native JSON library draft](bounded-json-core-source-draft.md) adds
+matching canonical JSON validation/copy prerequisites without dropping input
+bounds. Five source equations, one full native root successor, a pinned native
+helper and all independent boundary/refusal/CI-only native source are UNRUN.
+Actual caller registration, JSON native synchronization and broader delivery stay OPEN.

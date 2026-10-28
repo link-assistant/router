@@ -29,3 +29,9 @@ export function router_core_json_map_index(value,key){
 const optional=result=>result.$==='Ok'?some(result.field0):NONE;
 export const router_core_json_parse=value=>optional(serde_json_roundtrip_from_str(value));
 export const router_core_json_parse_bytes=value=>optional(serde_json_roundtrip_from_slice(value));
+
+// Paired with the separate bounded native JSON library. Old exports keep their
+// existing contracts. Validation shares the same defensive canonical decoder.
+export const router_vector_json_copy=value=>json_macro_value(value);
+export function router_vector_json_validate(value){json_macro_value(value);}
+export const router_vector_json_with_field=router_core_json_with_field;
