@@ -708,3 +708,11 @@ credentials with post-repair rollback. Seven equations/three native inputs and
 independent unrun JS/transitive strict TS/native/CST/export cases are drafted.
 Broader managed repair/catalogue/discovery/lifecycle and all wider translation/
 parity/receiving/delivery requirements stay OPEN.
+
+The [Codex catalogue constraint draft](native-codex-catalog-source-draft.md) adds
+bounded real-file/schema validation before minting/process startup and shared
+lossless override removal inside exact global/repair transactions. Nine source
+equations/three native inputs and independent unrun JS/transitive strict TS/
+native/CST/export cases are drafted. Full native fresh-configure alignment,
+wider migration/discovery/lifecycle and every broader translation/delivery
+requirement remain OPEN; full source drafting and verification are not claimed.

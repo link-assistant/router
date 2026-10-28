@@ -493,3 +493,22 @@ fn source_draft_codex_global_repair_advances_undo_guard_without_replacing_initia
     crate::client_global::undo_with_manager(&manager, ClientKind::Codex).expect("advanced undo guard");
     assert_eq!(fs::read_to_string(&path).expect("restored"), before);
 }
+
+
+// Independent foreign catalogue schema oracle. UNRUN; gated Rust CI only.
+#[test]
+fn source_draft_catalog_constraint_models_array_is_validated_without_mutating_foreign_file() {
+    let home = tempfile::tempdir().expect("isolated home");
+    let manager = ClientManager::isolated(home.path());
+    let config = manager.config_path(ClientKind::Codex);
+    fs::create_dir_all(config.parent().expect("parent")).expect("directory");
+    let catalog = home.path().join("foreign-catalog.json");
+    let source = format!("# retain source\nmodel_catalog_json={:?}\ncustom='keep'\n", catalog.to_string_lossy());
+    fs::write(&config, &source).expect("config");
+    for (body, accepted) in [("{\"models\":[]}", true), ("{\"models\":null}", false), ("{}", false), ("not JSON", false)] {
+        fs::write(&catalog, body).expect("foreign catalogue");
+        assert_eq!(manager.validate_codex_catalog_constraint().is_ok(), accepted);
+        assert_eq!(fs::read_to_string(&config).expect("config"), source);
+        assert_eq!(fs::read_to_string(&catalog).expect("catalogue"), body);
+    }
+}
