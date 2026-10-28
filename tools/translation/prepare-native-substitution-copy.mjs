@@ -8,7 +8,7 @@ import {types} from 'node:util';
 import {createRulePipeline} from './rule-pipeline.mjs';
 import {transportConcreteSourceEquations} from './concrete-source-equations.mjs';
 import {verifyNativeCopiedSourceBindingBatch} from './source-copy-native-bindings.mjs';
-import {nativeSourceHistoryFiles,collectNativeSourceDescendants,nativeSourceHistoryOriginalGuards,nativeSourceHistoryOverlap} from './native-source-descendants.mjs';
+import {nativeSourceHistoryFiles,collectNativeSourceDescendants,nativeSourceHistoryOriginalGuards,nativeSourceHistoryOverlap,nativeSourceHistoryLanguage} from './native-source-descendants.mjs';
 
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const need=(value,message)=>{if(!value)throw new TypeError('Native substitution source copy: '+message);};
@@ -22,7 +22,7 @@ function parsed(ts,path,source){
  need(typeof source==='string'&&Buffer.byteLength(source)<=8388608,'bounded complete primitive source');
  need(source.split('\n').length-(source.endsWith('\n')?1:0)<1000,'original repository file-size convention');
  const operation=__nativeSourceOperation,reuse=originalNativeSourceOperationCurrent(operation,ts);let file=reuse?operation.files.get(path)?.get(source):null;
- if(!file)file=ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
+ if(!file)file=ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,nativeSourceHistoryLanguage(path)==='TypeScript'?ts.ScriptKind.TS:ts.ScriptKind.JS);
  need(!file.parseDiagnostics.length,'complete native source grammar');
  if(reuse&&!operation.files.get(path)?.has(source)){
   const bytes=Buffer.byteLength(source);if(bytes<=4194304){if(operation.entries>=64||operation.bytes+bytes>4194304){operation.files.clear();operation.entries=0;operation.bytes=0;}if(!operation.files.has(path))operation.files.set(path,new Map());operation.files.get(path).set(source,file);operation.entries++;operation.bytes+=bytes;}
@@ -66,7 +66,7 @@ export function prepareNativeSubstitutionCopy({root,archive,pin,id,laterPlans=[]
    {phase:'language',rules:[{id:'javascript:native-selected-source-copy-substitutions',apply:value=>{need(value===before,'whole original join');return language.after;}}]},
    {phase:'repository',rules:[{id:id+':repository-format-and-source-issuer-integration',apply:value=>{need(value===language.after,'whole language join');return after;}}]},
   ]).run(before);
-  const stages=transportConcreteSourceEquations([{before,after:language.after,language:'JavaScript'},{before:language.after,after,language:'JavaScript'}]).map((stage,index)=>({...stage,phase:index?'repository':'language'}));
+  const sourceLanguage=nativeSourceHistoryLanguage(row.path);need(sourceLanguage!=='Rust','native source copy requires JavaScript or TypeScript; Rust uses its separate native source path');const stages=transportConcreteSourceEquations([{before,after:language.after,language:sourceLanguage},{before:language.after,after,language:sourceLanguage}]).map((stage,index)=>({...stage,phase:index?'repository':'language'}));
   need(run.value===after&&stages[0].inverse===before&&stages[1].inverse===language.after,'full serialized/reparsed CST equations and inverses');
   let currentAfter=after;const laterHistories=[],parallelHistories=[];
   for(const later of laterPlans){
@@ -74,7 +74,7 @@ export function prepareNativeSubstitutionCopy({root,archive,pin,id,laterPlans=[]
    const candidates=nativeSourceHistoryFiles(later).filter(value=>value.path===row.path);need(candidates.length<=1,'unique later source equation');
    if(!candidates.length)continue;const next=candidates[0];if(next.before!==currentAfter){const overlap=nativeSourceHistoryOverlap({before,after,language:language.after,currentAfter,laterHistories,parallelHistories},next);need(overlap&&next.inverse===next.before,'complete adjacent or overlapping source history join');parsed(ts,path,next.currentAfter??next.after);parallelHistories.push({...next,overlapEquation:overlap.equation});continue;}need(next.inverse===next.before,'complete adjacent source history inverse');
    const end=next.currentAfter??next.after;parsed(ts,path,end);
-   const equation=transportConcreteSourceEquations([{before:currentAfter,after:end,language:'JavaScript'}])[0];need(equation.inverse===currentAfter,'complete later source inverse');
+   const equation=transportConcreteSourceEquations([{before:currentAfter,after:end,language:sourceLanguage}])[0];need(equation.inverse===currentAfter,'complete later source inverse');
    laterHistories.push({id:later.id,before:currentAfter,after:end,equation,stages:next.stages,laterHistories:next.laterHistories??[],parallelHistories:next.parallelHistories??[],sourceDependencies:next.sourceDependencies??[],path:next.path,...(next.originalPath?{originalPath:next.originalPath,originalSource:next.before}:{}),sourceAuthority:false,semanticAuthority:false});currentAfter=end;
   }
   const sourceDependencies=collectNativeCopiedFunctionDependencies(ts,root,path,after,row.completeSourceDependencies??[],originalGuards);

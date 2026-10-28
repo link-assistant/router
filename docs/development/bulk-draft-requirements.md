@@ -634,3 +634,9 @@ input selection, snapshots, affine flow, TS/Rust emission, evaluator and canonic
 inverse controls. Twenty-two equations and independent unrun all-lane/value/
 observer/move/prefix/JS/strict TS/native/inverse/export cases are drafted. Wider
 namespace/production/sync/freshness/parity/receiving/delivery remain OPEN.
+
+The [TypeScript native source construction draft](native-typescript-copy-source-draft.md)
+shares actual source-language selection across the existing native source-copy
+constructor, lexical binding checks and CST histories. Four equations and unrun
+JS/TS/MTS/CTS/Unicode/native-owner/inverse/export cases are drafted. Strict target
+checks, namespace/production/sync/parity/receiving/delivery remain OPEN.

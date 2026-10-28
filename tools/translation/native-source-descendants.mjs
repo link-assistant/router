@@ -52,4 +52,4 @@ export function nativeSourceHistoryOriginalGuards(plan){
  for(const value of nativeSourceHistoryFiles(plan))visit(value,0);return [...guards].map(([path,source])=>({path,source}));
 }
 
-function nativeSourceHistoryLanguage(path){return path.endsWith('.rs')?'Rust':/\.(?:ts|mts|cts)$/u.test(path)?'TypeScript':'JavaScript';}
+export function nativeSourceHistoryLanguage(path){return path.endsWith('.rs')?'Rust':/\.(?:ts|mts|cts)$/u.test(path)?'TypeScript':'JavaScript';}
