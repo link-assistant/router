@@ -932,3 +932,9 @@ matching canonical JSON validation/copy prerequisites without dropping input
 bounds. Five source equations, one full native root successor, a pinned native
 helper and all independent boundary/refusal/CI-only native source are UNRUN.
 Actual caller registration, JSON native synchronization and broader delivery stay OPEN.
+
+The [bounded JSON caller registration draft](bounded-json-calls-source-draft.md)
+adds actual module/view/binding and sealed dependency-feature joins, private
+canonical borrowed operand checking and linear-flow roles for bounded JSON calls.
+Four source equations and all independent caller/refusal/inverse source are
+UNRUN. Native JSON emission/synchronization and broader delivery remain OPEN.

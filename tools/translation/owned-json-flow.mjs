@@ -445,9 +445,11 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,ge
     if(!genuine(node,state.entry)||node.args.length!==1||!actual||canonical(actual.payload,node)!=='serde_json::Value'||kind!=='linear'||domain(node.args[0].type,node)!=='copy')refuse('optional parser needs its genuine owned canonical result and borrowed input',node);
     const input=read(node.args[0],'borrow');ensureRoots(input,state,node);return {loans:new Map(),tags:new Set(['Some','None'])};
    }
-   if(['router_core_json_copy','router_core_json_with_field'].includes(node.id)){
+   if(['router_core_json_copy','router_core_json_with_field','router_vector_json_copy','router_vector_json_validate','router_vector_json_with_field'].includes(node.id)){
     if(!genuine(node,state.entry))refuse('new operation has no private checked source receipt',node);
-    if(node.id==='router_core_json_copy'){if(node.args.length!==1)refuse('copy arity',node);read(node.args[0],'borrow');}
+    if(node.id==='router_vector_json_validate'){if(node.args.length!==1||node.type.kind!=='unit')refuse('bounded validation signature differs',node);read(node.args[0],'borrow');return empty();}
+    if(node.id==='router_vector_json_with_field'){if(node.args.length!==3)refuse('bounded update arity',node);for(const argument of node.args)read(argument,'borrow');}
+    else if(['router_core_json_copy','router_vector_json_copy'].includes(node.id)){if(node.args.length!==1)refuse('copy arity',node);read(node.args[0],'borrow');}
     else{if(node.args.length!==3)refuse('update arity',node);if(domain(node.args[0].type,node)!=='json'||domain(node.args[2].type,node)!=='json')refuse('an owned update cannot move a shared pointee',node);read(node.args[0]);read(node.args[1],'borrow');read(node.args[2]);}
     if(kind!=='json')refuse('new operation result is not canonical JSON',node);return empty();
    }
