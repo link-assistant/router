@@ -875,3 +875,10 @@ arrays, owned Rust/JS/TS/evaluator emission and complete input prefixes. Six
 source equations and independent owned/shared/alias/branch/boundary/refusal/native
 source cases are UNRUN. Full reinput, synchronization and all broader delivery
 requirements remain OPEN; no CI feedback was inspected.
+
+The [full vector module reinput draft](vector-module-reinput-source-draft.md)
+adds native AST-selected type erasure, original-symbol scalar prefix checks,
+whole-pair canonical fixed points, nonaccumulating JSON copies and closing source
+fences. Nine source equations and independent full-module source cases are
+UNRUN. Native installation, fresh project synchronization and every broader
+delivery requirement remain OPEN; no CI feedback was inspected.

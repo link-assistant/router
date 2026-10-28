@@ -298,7 +298,7 @@ function checkFunction(context,path,declaration,analysis){
  const {ts,file,source,checker}=analysis,nativeScalars=contexts.get(context).data.primitiveOperators===true;
  if(!declaration.name||!declaration.body||declaration.asteriskToken||declaration.typeParameters||declaration.modifiers?.some(mod=>mod.kind!==ts.SyntaxKind.ExportKeyword))fail('ordinary original named function required');
  const name=rustName(declaration.name.text),params=[],environment=new Map();let cells=0,paired=pairedFunction(context,path,declaration,analysis);
- const vectorCandidate=checkOriginalOwnedVectorFunction(path,declaration,analysis,paired,name);if(vectorCandidate)return vectorCandidate;
+ const vectorCandidate=checkOriginalOwnedVectorFunction(path,declaration,analysis,paired,name,operand=>originalOwnedCoreImport(context,path,operand,analysis));if(vectorCandidate)return vectorCandidate;
  const vectorProfile=analysis.vectorProfiles?.get(declaration.name.text),jsonVectorProfile=vectorProfile?.kind==='json-vector'?vectorProfile:null;
  if(jsonVectorProfile&&(!paired||declaration.parameters.length!==jsonVectorProfile.parameters.length||paired.declaration.parameters.length!==declaration.parameters.length))fail('actual original Json vector parameter arity differs');
  const writtenCompatible=(actual,written)=>jsonVectorProfile&&written==='json-list-ref'?actual==='json-list-owned':ownedBase64Compatible(actual,written);

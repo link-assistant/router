@@ -163,10 +163,12 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  let sequence=0;const imports=new Set(),primitiveTypeImports=new Set();
  function publicTypeScriptType(type){if(sourceData.primitiveOperators===true&&primitiveBitwiseType(type)){const row=primitiveBitwiseType(type);primitiveTypeImports.add(row.alias);return row.alias;}if(type==='json-option-input'){imports.add('router_core_json_option_as_str');return TS_TYPES[type];}const witness=ownedJsonReaderTypeWitness(type);if(witness){imports.add(witness);return 'ReturnType<typeof __ro_'+witness+'>';}return TS_TYPES[type];}
 
+ const freshJson=value=>value.type==='json'&&['owned-call','json-array','json-object'].includes(value.kind);
+ const copyExpression=child=>'__ro_copy('+(child.type==='json-ref'||child.kind==='variable'?expr(child,true):'&('+expr(child)+')')+')';
  function expr(value,borrowOwned=false){
   switch(value.kind){
    case 'owned-vector-list':return emitOwnedVectorCandidateLiteral(value,rust);
-   case 'json-vector-literal':if(rust)return 'crate::translation_core::vec!['+value.items.map(child=>'__ro_copy('+(child.type==='json-ref'||child.kind==='variable'?expr(child,true):'&('+expr(child)+')')+')').join(', ')+']';imports.add('router_core_json_copy');return '['+value.items.map(child=>'__ro_router_core_json_copy('+expr(child)+')').join(', ')+']';
+   case 'json-vector-literal':if(rust)return 'crate::translation_core::vec!['+value.items.map(child=>freshJson(child)?expr(child):copyExpression(child)).join(', ')+']';imports.add('router_core_json_copy');return '['+value.items.map(child=>freshJson(child)?expr(child):'__ro_router_core_json_copy('+expr(child)+')').join(', ')+']';
    case 'vector-condition-input':return rust?value.rust:value.name;
    case 'variable':if(rust&&value.type==='text-owned')return borrowOwned?'&'+rustName(value.name):rustName(value.name)+'.to_owned()';return rust?(value.type==='json'?(borrowOwned?'&'+rustName(value.name):'__ro_copy(&'+rustName(value.name)+')'):rustName(value.name)):value.name;
    case 'string':return rust?rustString(value.value):JSON.stringify(value.value);
@@ -210,6 +212,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
     return '{ let '+name+' = '+source+'; '+ownedBase64RustCall(value.name,name)+' }';
    }
    case 'owned-call':{
+    if(rust&&['router_core_json_copy','json_macro_value'].includes(value.name)&&value.type==='json'&&value.args.length===1&&json(value.args[0].type))return copyExpression(value.args[0]);
     const op=OPS[value.name];imports.add(value.name);
     if(!rust)return '__ro_'+value.name+'('+value.args.map(expr).join(', ')+')';
     const names=value.args.map(()=> '__ro_arg_'+sequence++),lines=value.args.map((argument,index)=>{
@@ -319,7 +322,7 @@ export function evaluateOwnedCoreProgram(input,name,args,token){
  const get=(value,scope)=>{
   switch(value.kind){
    case 'owned-vector-list':return evaluateOwnedVectorCandidateLiteral(value,scope);
-   case 'json-vector-literal':return value.items.map(child=>state.modules.update.router_core_json_copy(get(child,scope)));
+   case 'json-vector-literal':return value.items.map(child=>{const result=get(child,scope);return child.type==='json'&&['owned-call','json-array','json-object'].includes(child.kind)?result:state.modules.update.router_core_json_copy(result);});
    case 'vector-condition-input':return scope.get(value.name);
    case 'variable':return scope.get(value.name);
    case 'string':case 'bool':return value.value;

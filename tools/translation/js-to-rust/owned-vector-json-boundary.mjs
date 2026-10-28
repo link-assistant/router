@@ -27,7 +27,7 @@ export function consumeJsonVectorInputPrelude(analysis,declaration,params,resolv
   if(!statement||statement.getText(file)!==booleanGuard(param.name)||!ts.isIfStatement(statement))return false;
   const condition=statement.expression,operand=ts.isBinaryExpression(condition)&&ts.isTypeOfExpression(condition.left)?condition.left.expression:null,original=declaration.parameters.find(row=>ts.isIdentifier(row.name)&&row.name.text===param.name),symbol=original&&checker.getSymbolAtLocation(original.name);
   const branch=statement.thenStatement,call=ts.isThrowStatement(branch)?branch.expression:null,constructor=call&&ts.isNewExpression(call)?call.expression:null,builtin=constructor&&checker.getSymbolAtLocation(constructor);
-  return !!symbol&&operand&&ts.isIdentifier(operand)&&checker.getSymbolAtLocation(operand)===symbol&&!!builtin?.declarations?.length&&builtin.declarations.every(row=>row.getSourceFile().isDeclarationFile&&/[/\\]lib\.[^/\\]+\.d\.ts$/u.test(row.getSourceFile().fileName));
+  return !!symbol&&operand&&ts.isIdentifier(operand)&&checker.getSymbolAtLocation(operand)===symbol&&constructor&&ts.isIdentifier(constructor)&&constructor.text==='TypeError'&&(!builtin||!!builtin.declarations?.length&&builtin.declarations.every(row=>row.getSourceFile().isDeclarationFile&&/[/\\]lib\.[^/\\]+\.d\.ts$/u.test(row.getSourceFile().fileName)));
  };
  const first=params[0],starts=isJson(first.type)?assignment(body[0],first):bool(body[0],first);if(!starts)return body;
  for(let i=0;i<params.length;i++)if(!(isJson(params[i].type)?assignment(body[i],params[i]):bool(body[i],params[i])))fail('complete canonical original-symbol input prefix required');

@@ -63,19 +63,19 @@ export function captureOriginalOwnedVectorProfiles(data,path){
 }
 function arrayType(ts,type,element){
  if(ts.isTypeOperatorNode(type)&&type.operator===ts.SyntaxKind.ReadonlyKeyword)type=type.type;
- if(!ts.isArrayTypeNode(type)||type.elementType.kind!==(element.kind==='bool'?ts.SyntaxKind.BooleanKeyword:ts.SyntaxKind.BigIntKeyword))fail('actual paired primitive array return type differs');
+ if(!ts.isArrayTypeNode(type)||type.elementType.kind!==(element.kind==='bool'?ts.SyntaxKind.BooleanKeyword:element.kind==='float'?ts.SyntaxKind.NumberKeyword:['text','static-text'].includes(element.kind)?ts.SyntaxKind.StringKeyword:ts.SyntaxKind.BigIntKeyword))fail('actual paired primitive array return type differs');
 }
 function integerText(ts,node){
  let negative=false;if(ts.isPrefixUnaryExpression(node)&&node.operator===ts.SyntaxKind.MinusToken){negative=true;node=node.operand;}
  if(!ts.isBigIntLiteral(node))fail('only bool/integer literals are implemented');let value;try{value=BigInt(node.text.replace(/n$/u,'').replaceAll('_',''));}catch{fail('invalid literal integer');}if(negative)value=-value;return value.toString();
 }
 function boundedInteger(text,element){const value=BigInt(text),width=BigInt(element.bits),low=element.signed?-(1n<<(width-1n)):0n,high=(1n<<(element.signed?width-1n:width))-1n;if(value<low||value>high)fail('new JavaScript integer is outside actual original primitive bounds');return text;}
-export function checkOriginalOwnedVectorFunction(path,declaration,analysis,paired,name){
+export function checkOriginalOwnedVectorFunction(path,declaration,analysis,paired,name,resolveImport){
  const profile=analysis.vectorProfiles?.get(declaration.name?.text);if(!profile||profile.kind==='json-vector')return null;const {ts,file,checker,source}=analysis;
  const symbol=checker.getSymbolAtLocation(declaration.name);if(!symbol||symbol.declarations?.length!==1||symbol.declarations[0]!==declaration)fail('actual original JavaScript function binding differs');
  if(!paired||!paired.declaration.type||declaration.typeParameters?.length||declaration.asteriskToken)fail('complete actual TypeScript pair required');arrayType(ts,paired.declaration.type,profile.element);
  const input=vectorSourceParameters({ts,checker,declaration,paired,profile});
- const body=readOwnedVectorConditionFlow({ts,checker,inputs:input.inputs,statements:declaration.body.statements,readLiteral:node=>{if(['text','static-text'].includes(profile.element.kind))return ownedVectorTextLiteral(ts,node);if(profile.element.kind==='float')return ownedVectorF64Literal(ts,node);if(profile.element.kind==='bool'){if(![ts.SyntaxKind.TrueKeyword,ts.SyntaxKind.FalseKeyword].includes(node.kind))fail('actual bool element requires bool literal');return {kind:'bool',value:node.kind===ts.SyntaxKind.TrueKeyword};}return {kind:'integer',value:boundedInteger(integerText(ts,node),profile.element)};},makeReturn:items=>{for(const item of items)if(item.kind==='vector-input'&&item.type!==profile.element.name)fail('vector input element differs from actual returned scalar domain');return {kind:'owned-vector-list',type:profile.type,element:profile.element,items,root:null};}});
+ const body=readOwnedVectorConditionFlow({ts,checker,inputs:input.inputs,statements:consumeVectorParameterPrelude(analysis,declaration,input.params,resolveImport),readLiteral:node=>{if(['text','static-text'].includes(profile.element.kind))return ownedVectorTextLiteral(ts,node);if(profile.element.kind==='float')return ownedVectorF64Literal(ts,node);if(profile.element.kind==='bool'){if(![ts.SyntaxKind.TrueKeyword,ts.SyntaxKind.FalseKeyword].includes(node.kind))fail('actual bool element requires bool literal');return {kind:'bool',value:node.kind===ts.SyntaxKind.TrueKeyword};}return {kind:'integer',value:boundedInteger(integerText(ts,node),profile.element)};},makeReturn:items=>{for(const item of items)if(item.kind==='vector-input'&&item.type!==profile.element.name)fail('vector input element differs from actual returned scalar domain');return {kind:'owned-vector-list',type:profile.type,element:profile.element,items,root:null};}});
  return {kind:'owned-function',name,javascript:declaration.name.text,exported:!!declaration.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword),params:input.params,returns:profile.type,resultRoot:null,body,source:{path,source,span:[declaration.getStart(file),declaration.end]},hostCalls:[],pairedSource:{path:paired.pair.typescript.path,source:paired.pair.typescript.source,span:paired.evidence.typescriptSpan,parameters:paired.evidence.parameters,locals:paired.evidence.locals,returnSpan:paired.evidence.returnSpan,erasure:paired.pair.erasure.edits},vectorOrigin:profile};
 }
 export function emitOwnedVectorCandidateLiteral(value,rust){
@@ -98,3 +98,5 @@ import {ownedVectorTextLiteral,emitOwnedVectorText,ownedVectorTextValue} from '.
 import {originalJsonVectorDomain} from './owned-vector-json-native.mjs';
 import {jsonMacroDependencyProfile} from '../json-macro-inputs.mjs';
 import {deriveDependencyProfile} from '../derive-dependencies.mjs';
+
+import {consumeVectorParameterPrelude} from './owned-vector-reinput-prefix.mjs';

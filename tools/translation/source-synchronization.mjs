@@ -204,3 +204,5 @@ export {collectClosedMatchPatternSource} from './match-arm-source.mjs';
 export {FIXED_TYPE_CORE_NATIVE_SOURCE,FIXED_TYPE_CORE_ALIASES,readFixedTypeCoreSourceRole} from './fixed-type-core-source.mjs';
 
 export {proposeCoreFixedTypesCorpus} from './migrate-core-fixed-types.mjs';
+
+export {proposeOwnedVectorModuleReinput} from './js-to-rust/owned-vector-module-reinput.mjs';
