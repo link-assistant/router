@@ -228,7 +228,7 @@ function visitItems(source,items,profile,inherited,path,edits,selections,skipped
       }
       if(header.rawIdentifier)throw new Error('raw declaration identity requires separate integration');
       const selectType=(tokens,options={})=>typeEdits(tokens,{lifetimes:[...new Set([...lifetimes,...(options.lifetimes??[])])]});const selected=header.kind==='fn'?functionEdits(item,header,typeEdits,lifetimes):['const','static'].includes(header.kind)?constantEdits(item,header,selectType):fixedTypeDeclarationEdits(item,header,selectType,{lifetimes});
-      edits.push(...selected);selections.push({...record,edits:selected});
+      const bodySource=header.kind==='fn'?fixedConstantFunctionSourceEdits(item,header,{lifetimes}):null,complete=bodySource?[...selected,...bodySource.edits]:selected;edits.push(...complete);selections.push({...record,edits:complete,...(bodySource?{bodySource}:{})});
     }catch(error){skipped.push({...record,reason:error.message});}
   }
 }
@@ -288,3 +288,5 @@ export function proposeCoreFixedTypesCorpus({entry='src/lib.rs',files:input,comp
 import {fixedTypeDeclarationEdits} from './fixed-type-declaration-source.mjs';
 
 import {readLifetimeOnlySourceBinders,readLifetimeOnlyTypeOwnerSource,readLifetimeOnlyWhereSource,readLifetimeOnlySelfSource} from './lifetime-only-declaration-source.mjs';
+
+import {fixedConstantFunctionSourceEdits} from './fixed-constant-adoption-source.mjs';

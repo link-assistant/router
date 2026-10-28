@@ -345,3 +345,9 @@ shares genuine alias selection with exact MIN/MAX expressions through existing
 checked integer domains. Four equations and independent unrun twenty-function/
 JS/strict TS/whole and mixed inverse/native/refusal/export cases are drafted.
 Broader namespace/production/reverse/sync/freshness/parity/receiving/delivery stay OPEN.
+
+The [bare integer constant adoption source draft](fixed-constant-adoption-source-draft.md)
+shares bounded closed body scope before qualifying MIN/MAX owner tokens in both
+scalar adopters. Four equations and independent unrun forty-substitution/twenty-
+caller/JS/strict TS/native/shadow/refusal/inverse/export cases are drafted. Partial
+body refusals remain explicit; wider namespace/production/sync/parity/delivery stay OPEN.

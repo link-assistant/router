@@ -1,0 +1,1 @@
+Draft bounded bare integer MIN/MAX owner adoption into the genuine paired core, preserving closed-scope checks, explicit body refusals, source inverses and independently safe header proposals. New cases remain unrun; full translation is unfinished.
