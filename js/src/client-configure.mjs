@@ -17,14 +17,14 @@ async function undoOne(paths,context,output){
    try{await revokeRemoteClientCredential({...record,management_server:record.management_server??record.router},{config:context.core.config,env:context.env,invocation:context.invocation,fetch:context.fetch,suppliedToken:context.options.token});output.push('revoked token '+record.token_id+' on '+record.router);}catch{output.push('note: token '+record.token_id+' on '+record.router+' may remain live; revoke it on its issuing Router');}
   }
   await removeClientFile(txn.environment);await txn.advance([txn.environment]);await removeClientFile(txn.metadata);await txn.advance([txn.metadata]);await txn.checkpoint('metadata');
- }});if(result.restored)output.push('restored '+paths.config+' exactly');else if(hadCredential)output.push('removed the stored credential for '+paths.info.client);return result.restored||hadCredential;
+ }});await stopCodexNativeBridge(paths);if(result.restored)output.push('restored '+paths.config+' exactly');else if(hadCredential)output.push('removed the stored credential for '+paths.info.client);return result.restored||hadCredential;
 }
-async function configureOne(paths,target,context,output){
+async function configureOne(paths,target,context,output,backendBaseURL=null){
  const {options,core,env,invocation,fetch}=context,source=await optionalClientText(await preferredClientPath(paths.metadata,paths.legacyMetadata)),record=source===null?null:clientObject(source,'Ownership metadata'),environment=await preferredClientPath(paths.environment,paths.legacyEnvironment),token=readClientEnvironment(await optionalClientText(environment),paths.info.token),status=await nativeClientStatus(paths.info.client,{home:options.home,env,cwd:invocation.cwd}),saved=await readGlobalClientState(paths),remote={client:paths.info.client,origin:target.server,managementServer:target.managementServer,config:core.config,env,invocation,fetch};
- if(status.ownership_state==='managed-intact'&&(saved!==null||paths.info.client==='grok')&&token&&await reuseRemoteClientCredential(remote,record,token)){output.push(paths.info.client+' is already configured in '+paths.config);return;}
+ if(status.ownership_state==='managed-intact'&&(saved!==null||paths.info.client==='grok')&&token&&await codexNativeBackendMatches(paths,target.server,backendBaseURL)&&await reuseRemoteClientCredential(remote,record,token)){output.push(paths.info.client+' is already configured in '+paths.config);return;}
  if(saved!==null)throw clientFailure('Existing global configuration changed; undo or reconcile its original backup before reconfiguration');
  const supplied=options.token_stdin?String(invocation.stdin??'').trim():options.token??target.token,candidate=await prepareRemoteClientCredential({...remote,suppliedToken:supplied,ttlHours:options.ttl_hours??8760,nowUnix:core.clock()});
- try{await applyGlobalClientConfiguration(paths,target.server+paths.info.suffix,candidate.catalog,{checkpoint:context.checkpoint,afterConfigure:async(txn)=>{
+ try{await applyGlobalClientConfiguration(paths,target.server+paths.info.suffix,candidate.catalog,{backendBaseURL,checkpoint:context.checkpoint,afterConfigure:async(txn)=>{
   await txn.verify(txn.environment);await writeClientEnvironment(paths,target.server,candidate.token);await txn.advance([txn.environment]);await txn.checkpoint('environment');await txn.verify(txn.metadata);candidate.record.config_sha256=globalClientDigest(await optionalClientText(paths.config));await writeClientMarker(txn.metadata,candidate.record);await txn.advance([txn.metadata]);await txn.checkpoint('metadata');if(!await reuseRemoteClientCredential(remote,candidate.record,candidate.token))throw clientFailure('Post-configuration catalog authentication failed');
  }});}catch(error){try{await candidate.cleanup();}catch{throw clientFailure('Global configuration failed; its unused minted credential could not be revoked');}throw error;}
  output.push('configured '+paths.info.client+' in '+paths.config,'credentials: '+environment+' (mode 0600)','undo: router configure --undo '+paths.info.client);
@@ -37,8 +37,10 @@ export async function executeNativeConfigure({name='configure',options={},invoca
   const paths=clientPaths(info.client,{home:options.home,env,cwd:invocation.cwd});try{
    if(!options.undo&&options.all&&!(await nativeClientStatus(info.client,{home:options.home,env,cwd:invocation.cwd})).installed){output.push('skipped '+info.client+': not installed');continue;}
    if(options.undo){const changed=await undoOne(paths,context,output);if(!changed&&!options.all)throw clientFailure('No saved global configuration or credential exists for '+info.client);if(changed)completed++;}
-   else{await configureOne(paths,target,context,output);completed++;}
+   else{await withCodexNativeBridge(paths,target.server,backend=>configureOne(paths,target,context,output,backend));completed++;}
   }catch(error){if(!options.all)throw error;failures.push(info.client+': '+Object(error).message);}
  }
  if(options.all)output.push((options.undo?'restored ':'configured ')+completed+' client(s)');if(failures.length){const error=clientFailure('One or more client configurations failed');error.data={output:[...output,...failures.map(text=>'error: '+text)]};throw error;}return {output};
 }
+
+import {withCodexNativeBridge,stopCodexNativeBridge,codexNativeBackendMatches} from './codex-loopback.mjs';

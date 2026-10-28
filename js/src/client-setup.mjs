@@ -20,7 +20,7 @@ function decodedBinding(token,client) {
 function canonicalOrigin(value) {const origin=clientRouterOrigin(value),url=new URL(origin);if(url.pathname!=='/') throw clientFailure('Client setup requires a Router origin without a path');return origin;}
 function localOrigin(config) {let host=config.host ?? '127.0.0.1';if(host==='0.0.0.0') host='127.0.0.1';if(host==='::') host='::1';if(host.includes(':') && !host.startsWith('[')) host=`[${host}]`;return canonicalOrigin(`http://${host}:${config.port ?? 8080}`);}
 const metadataPath=paths=>preferredClientPath(paths.metadata,paths.legacyMetadata);
-export async function setupNativeClient({options,invocation={},core,env={},fetch,checkpoint}={}) {
+async function setupNativeClientWithoutCodexBridge({options,invocation={},core,env={},fetch,checkpoint,codexBackend=null}={}) {
   const paths=clientPaths(options.client,{home:options.home,env,cwd:invocation.cwd}),{info}=paths;
   if(info.unsupported) throw clientFailure(info.unsupported);
   if(!implementedClients.has(info.client)) throw clientFailure('This client does not support persistent Router configuration');
@@ -30,7 +30,7 @@ export async function setupNativeClient({options,invocation={},core,env={},fetch
   const origin=options.base_url ? canonicalOrigin(options.base_url) : localOrigin(core.config),context={home:options.home,env,cwd:invocation.cwd};
   const status=await nativeClientStatus(info.client,context),oldEnvironment=await preferredClientPath(paths.environment,paths.legacyEnvironment),oldMetadata=await optionalClientText(await metadataPath(paths));
   const oldToken=readClientEnvironment(await optionalClientText(oldEnvironment),info.token),oldRecord=oldMetadata===null ? null : clientObject(oldMetadata,'Ownership metadata');
-  if(status.ownership_state==='managed-intact' && oldRecord?.router===origin && oldToken) {
+  if(status.ownership_state==='managed-intact' && oldRecord?.router===origin && oldToken && await codexNativeBackendMatches(paths,origin,codexBackend)) {
     try {if(options.management_server){if(!await reuseRemoteClientCredential({client:info.client,origin,managementServer:options.management_server,config:core.config,env,invocation,fetch},oldRecord,oldToken))throw clientFailure('Remote credential requires replacement');}else completeBinding(await core.tokens.validate(oldToken),info.client);return {output:[`${info.client} is already configured in ${paths.config}`,`credentials: ${oldEnvironment} (mode 0600)`]};}catch{/* Replacement must verify a new complete credential below. */}
   }
   let token=options.token_stdin ? String(invocation.stdin ?? '').trim() : String(options.token ?? env.LINK_ASSISTANT_ROUTER_TOKEN ?? env.LINK_ASSISTANT_TOKEN ?? '').trim();
@@ -52,7 +52,7 @@ export async function setupNativeClient({options,invocation={},core,env={},fetch
     let backup;
     const result=await clientFileTransaction(paths,async txn=>{
       await txn.verify(paths.config);if(paths.marker) await txn.verify(paths.marker);
-      const configured=info.client==='grok' ? {path:paths.config,backup:null,changed:false} : await (['claude','codex'].includes(info.client)?setupPersistentClient:setupClientJSON)(paths,origin+info.suffix,catalog,{onWrite:async(path,result)=>{if(result?.backup) setupBackup=result.backup;await txn.advance([path]);}});backup=configured.backup;
+      const configured=info.client==='grok' ? {path:paths.config,backup:null,changed:false} : await (['claude','codex'].includes(info.client)?setupPersistentClient:setupClientJSON)(paths,origin+info.suffix,catalog,{backendBaseURL:codexBackend,onWrite:async(path,result)=>{if(result?.backup) setupBackup=result.backup;await txn.advance([path]);}});backup=configured.backup;
       await txn.checkpoint('config');await txn.verify(txn.environment);await writeClientEnvironment(paths,origin,token);await txn.advance([txn.environment]);
       await txn.checkpoint('environment');await txn.verify(txn.metadata);
       record.config_sha256=createHash('sha256').update(await optionalClientText(paths.config) ?? '').digest('hex');await writeClientMarker(txn.metadata,record);await txn.advance([txn.metadata]);await txn.checkpoint('metadata');return configured;
@@ -80,9 +80,18 @@ export async function removeNativeClient({options,invocation={},core,env={},chec
     await txn.checkpoint('config');await txn.verify(txn.environment);await removeClientFile(txn.environment);await txn.advance([txn.environment]);
     await txn.verify(txn.metadata);await removeClientFile(txn.metadata);await txn.advance([txn.metadata]);await txn.checkpoint('metadata');return removed;
   },{checkpoint});
+  await stopCodexNativeBridge(paths);
   return {output:[`Removed Router configuration for ${info.client}`,...(result.backup ? [`backup: ${result.backup}`] : [])]};
 }
 
 import {setupPersistentClient,removePersistentClient} from './client-persistent.mjs';
 
 import {prepareRemoteClientCredential,reuseRemoteClientCredential,revokeRemoteClientCredential} from './client-remote.mjs';
+
+export async function setupNativeClient(args={}){
+ const {options,invocation={},core,env={}}=args,paths=clientPaths(options.client,{home:options.home,env,cwd:invocation.cwd});
+ if(paths.info.client!=='codex'||await optionalClientText(paths.config+'.with-router-state.json')!==null)return setupNativeClientWithoutCodexBridge(args);
+ const origin=options.base_url?canonicalOrigin(options.base_url):localOrigin(core.config);return withCodexNativeBridge(paths,origin,backend=>setupNativeClientWithoutCodexBridge({...args,codexBackend:backend}));
+}
+
+import {withCodexNativeBridge,stopCodexNativeBridge,codexNativeBackendMatches} from './codex-loopback.mjs';

@@ -35,7 +35,7 @@ function localOrigin(config?: any): string { let host: any = config.host ?? '127
     (host as any) = '::1'; if (((host as any).includes as any)(':') && !((host as any).startsWith as any)('['))
     (host as any) = `[${host}]`; return canonicalOrigin(`http://${host}:${config.port ?? 8080}`); }
 const metadataPath: any = (paths?: any): any => preferredClientPath(paths.metadata, paths.legacyMetadata);
-export async function setupNativeClient({ options, invocation = {}, core, env = {}, fetch, checkpoint }: any = {}): Promise<any> {
+async function setupNativeClientWithoutCodexBridge({ options, invocation = {}, core, env = {}, fetch, checkpoint, codexBackend = null }: any = {}): Promise<any> {
     const paths: any = clientPaths(options.client, { home: options.home, env, cwd: invocation.cwd }), { info }: any = paths;
     if (info.unsupported)
         throw clientFailure(info.unsupported);
@@ -50,7 +50,7 @@ export async function setupNativeClient({ options, invocation = {}, core, env = 
     const origin: string = options.base_url ? canonicalOrigin(options.base_url) : localOrigin(core.config), context: any = { home: options.home, env, cwd: invocation.cwd };
     const status: any = await nativeClientStatus(info.client, context), oldEnvironment: any = await preferredClientPath(paths.environment, paths.legacyEnvironment), oldMetadata: any = await optionalClientText(await metadataPath(paths));
     const oldToken: any = readClientEnvironment(await optionalClientText(oldEnvironment), info.token), oldRecord: any = oldMetadata === null ? null : clientObject(oldMetadata, 'Ownership metadata');
-    if (status.ownership_state === 'managed-intact' && oldRecord?.router === origin && oldToken) {
+    if (status.ownership_state === 'managed-intact' && oldRecord?.router === origin && oldToken && await codexNativeBackendMatches(paths,origin,codexBackend)) {
         try {
             if(options.management_server){if(!await reuseRemoteClientCredential({client:info.client,origin,managementServer:options.management_server,config:core.config,env,invocation,fetch},oldRecord,oldToken))throw clientFailure('Remote credential requires replacement');}else completeBinding(await (core.tokens.validate as any)(oldToken), info.client);
             return { output: [`${info.client} is already configured in ${paths.config}`, `credentials: ${oldEnvironment} (mode 0600)`] };
@@ -89,7 +89,7 @@ export async function setupNativeClient({ options, invocation = {}, core, env = 
             await (txn.verify as any)(paths.config);
             if (paths.marker)
                 await (txn.verify as any)(paths.marker);
-            const configured: any = info.client === 'grok' ? { path: paths.config, backup: null, changed: false } : await (['claude','codex'].includes(info.client)?setupPersistentClient:setupClientJSON)(paths, origin + info.suffix, catalog, { onWrite: async (path?: any, result?: any): Promise<void> => { if (result?.backup)
+            const configured: any = info.client === 'grok' ? { path: paths.config, backup: null, changed: false } : await (['claude','codex'].includes(info.client)?setupPersistentClient:setupClientJSON)(paths, origin + info.suffix, catalog, { backendBaseURL:codexBackend, onWrite: async (path?: any, result?: any): Promise<void> => { if (result?.backup)
                     (setupBackup as any) = result.backup; await (txn.advance as any)([path]); } });
             (backup as any) = configured.backup;
             await (txn.checkpoint as any)('config');
@@ -150,9 +150,18 @@ export async function removeNativeClient({ options, invocation = {}, core, env =
         await (txn.checkpoint as any)('metadata');
         return removed;
     }, { checkpoint });
+    await stopCodexNativeBridge(paths);
     return { output: [`Removed Router configuration for ${info.client}`, ...(result.backup ? [`backup: ${result.backup}`] : [])] };
 }
 
 import {setupPersistentClient,removePersistentClient} from './client-persistent.js';
 
 import {prepareRemoteClientCredential,reuseRemoteClientCredential,revokeRemoteClientCredential} from './client-remote.js';
+
+export async function setupNativeClient(args:any={}):Promise<any>{
+ const {options,invocation={},core,env={}}=args,paths=clientPaths(options.client,{home:options.home,env,cwd:invocation.cwd});
+ if(paths.info.client!=='codex'||await optionalClientText(paths.config+'.with-router-state.json')!==null)return setupNativeClientWithoutCodexBridge(args);
+ const origin=options.base_url?canonicalOrigin(options.base_url):localOrigin(core.config);return withCodexNativeBridge(paths,origin,backend=>setupNativeClientWithoutCodexBridge({...args,codexBackend:backend}));
+}
+
+import {withCodexNativeBridge,stopCodexNativeBridge,codexNativeBackendMatches} from './codex-loopback.js';

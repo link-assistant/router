@@ -693,3 +693,10 @@ eleven complete equations/three native inputs and independent unrun JS/strict
 TS/native/CST/export cases. Local discovery/managed selection/global repair/
 Codex bridges/temporary launch and every wider translation/delivery requirement
 remain OPEN; complete source drafting and verification are not claimed.
+
+The [Codex loopback source draft](native-codex-bridge-source-draft.md) adds paired
+bounded HTTP/WS transport, private nonce-owned Node lifecycle, setup/configure
+backend integration and removal/undo cleanup, with nine source equations/three
+actual native/library inputs and independent unrun JS/transitive strict TS/native/
+CST/export cases. Global repair, catalog/discovery/managed lifecycle and all wider
+translation/parity/receiving/delivery requirements remain OPEN.
