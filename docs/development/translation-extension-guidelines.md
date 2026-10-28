@@ -716,3 +716,9 @@ Private reverse emission and ordered native comparison cover scalar, array and
 bulk object constructors with every child evaluated once and actual contextual
 Vec typing. Four complete source equations and all cases remain UNRUN. Dynamic
 signed conversion, readers, full source synchronization and delivery stay OPEN.
+
+Checked JSON signed-conversion draft: [source boundary](vector-native-json-signed-source-draft.md).
+A shared actual u64-to-i64 constructor retains checked failure bounds; pure scalar
+conditional locals compose with private native JSON comparison. Ten compiler
+source equations and a full native history successor preserve all pins. Every
+case/oracle is UNRUN; complete synchronization and remaining delivery stay OPEN.

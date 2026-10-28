@@ -119,3 +119,11 @@ pub fn json_build_fields(
     json_validate(&result);
     result
 }
+
+/// Preserve checked signed JSON construction from an actual unsigned source value.
+#[must_use]
+pub fn json_build_i64_unsigned(value: u64) -> ::serde_json::Value {
+    let signed = <i64 as ::std::convert::TryFrom<u64>>::try_from(value)
+        .expect("bounded signed JSON integer domain");
+    ::serde_json::Value::from(signed)
+}

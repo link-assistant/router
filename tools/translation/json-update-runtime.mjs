@@ -54,3 +54,7 @@ export function router_vector_json_build_fields(keys,values){
  }
  return json_macro_object(entries);
 }
+
+export function router_vector_json_build_i64_unsigned(value){
+ json_macro_u64(value);return json_macro_i64(value);
+}

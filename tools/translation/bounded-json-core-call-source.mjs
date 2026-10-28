@@ -54,6 +54,7 @@ const operations=freezeBoundedJsonCore([
  Object.freeze({name:'json_build_string',id:'router_vector_json_build_string',params:[SOURCE_STR],ret:JSON_TYPES.value}),
  Object.freeze({name:'json_build_u64',id:'router_vector_json_build_u64',params:[{...fixed(64,false),rustPrimitiveName:'u64',rustSourceType:true}],ret:JSON_TYPES.value}),
  Object.freeze({name:'json_build_i64',id:'router_vector_json_build_i64',params:[{...fixed(64,true),rustPrimitiveName:'i64',rustSourceType:true}],ret:JSON_TYPES.value}),
+ Object.freeze({name:'json_build_i64_unsigned',id:'router_vector_json_build_i64_unsigned',params:[{...fixed(64,false),rustPrimitiveName:'u64',rustSourceType:true}],ret:JSON_TYPES.value}),
  Object.freeze({name:'json_build_array',id:'router_vector_json_build_array',params:[sourceVector(JSON_TYPES.value)],ret:JSON_TYPES.value}),
  Object.freeze({name:'json_build_object',id:'router_vector_json_build_object',params:[],ret:JSON_TYPES.value}),
  Object.freeze({name:'json_build_fields',id:'router_vector_json_build_fields',params:[sourceShared(JSON_TYPES.value),sourceVector(JSON_TYPES.value)],ret:JSON_TYPES.value}),

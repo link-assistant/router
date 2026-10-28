@@ -225,7 +225,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath,nativeJsonSource=f
     // borrowed here; compensating copies happen only inside the fixed call.
     const args=names;
     let call;
-    if(nativeJsonSource&&['json_macro_null','json_macro_bool','json_macro_string','json_macro_u64','json_macro_i64'].includes(value.name)){const suffix=value.name.slice('json_macro_'.length);if(suffix==='i64'&&value.args[0].type!=='i64'){const value_=value.args[0];if(value_.kind!=='integer'||BigInt(value_.value)<0n||BigInt(value_.value)>9223372036854775807n)fail('native signed JSON construction from a dynamic unsigned value needs its checked conversion boundary');lines[0]='let '+names[0]+' = '+value_.value+'_i64;';}call='crate::translation_json_core::json_build_'+suffix+'('+args.join(', ')+')';}
+    if(nativeJsonSource&&['json_macro_null','json_macro_bool','json_macro_string','json_macro_u64','json_macro_i64'].includes(value.name)){const suffix=value.name==='json_macro_i64'&&value.args[0].type!=='i64'?'i64_unsigned':value.name.slice('json_macro_'.length);call='crate::translation_json_core::json_build_'+suffix+'('+args.join(', ')+')';}
     else if(value.name==='json_macro_null')call='::serde_json::Value::Null';
     else if(value.name==='json_macro_bool')call='::serde_json::Value::Bool('+args[0]+')';
     else if(value.name==='json_macro_string')call='::serde_json::Value::String('+args[0]+'.to_owned())';

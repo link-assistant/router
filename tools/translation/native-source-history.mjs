@@ -7,7 +7,7 @@ import {createHash} from 'node:crypto';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions,serializeConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
 import {transportConcreteSourceEquations} from './concrete-source-equations.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
-const ARCHIVE='tools/translation/source-profiles/bounded-json-object-fields/complete-native-history.json.gz',PIN='85ccda721748e8839288c3f2df8a1ba3a46efa29e6da281af27faaaea94914c1';
+const ARCHIVE='tools/translation/source-profiles/vector-native-json-signed/complete-native-history.json.gz',PIN='5dc32d61993494fb8d56abbd303d43986a22f15b34f238b7e4b5169aba33a172';
 const hash=value=>createHash('sha256').update(value).digest('hex'),need=(value,message)=>{if(!value)throw new TypeError('Native source history: '+message);};
 function local(root,path){need(typeof path==='string'&&path.length<=4096&&!path.startsWith('/')&&!path.includes('\\')&&!path.split('/').some(word=>!word||word==='.'||word==='..'),'repository-relative file required');return resolve(root,path);}
 function input(root,archive=ARCHIVE,pin=PIN){need(typeof pin==='string'&&/^[a-f0-9]{64}$/u.test(pin),'explicit archive pin required');const packed=readFileSync(local(root,archive));retainNativeSourceInputFence(local(root,archive),packed);need(packed.length<=8388608&&hash(packed)===pin,'complete pinned history archive differs');const data=JSON.parse(gunzipSync(packed,{maxOutputLength:16777216}).toString('utf8'));need(data.schema==='native-complete-source-history-v1'&&Array.isArray(data.files)&&data.files.length>0&&data.files.length<=64,'bounded complete history rows required');return {packed,data};}
