@@ -637,3 +637,10 @@ adds actual AST-selected header type transplantation, whole original pair
 rechecking and one explicit JS or TS authority through existing vector source
 proposals. Four source equations and independent authority/domain/header/import/
 refusal cases are UNRUN. Full native installation and broader delivery remain OPEN.
+
+The [physical vector source unit draft](vector-source-unit-source-draft.md)
+wraps checked JS/TS-authoritative primitive vector source in the copied bounded
+plan/apply transaction and CLI, with physical Rust/JS/TS mappings, actual runtime
+closure checks and fresh Git conflict selection. Four source equations and all
+independent transaction/refusal source remain UNRUN. Whole Router coverage,
+receiving/race qualification and every remaining delivery obligation stay OPEN.

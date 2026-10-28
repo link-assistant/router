@@ -210,3 +210,5 @@ export {proposeOwnedVectorModuleReinput} from './js-to-rust/owned-vector-module-
 export {proposeOwnedVectorNativeSynchronization} from './js-to-rust/owned-vector-native-synchronization.mjs';
 
 export {prepareOwnedVectorJavaScriptPair} from './js-to-rust/owned-vector-javascript-pair.mjs';
+
+export {planOwnedVectorUnitSynchronization,applyOwnedVectorUnitSynchronization} from './owned-vector-unit-synchronization.mjs';
