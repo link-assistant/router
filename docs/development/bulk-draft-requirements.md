@@ -882,3 +882,10 @@ whole-pair canonical fixed points, nonaccumulating JSON copies and closing sourc
 fences. Nine source equations and independent full-module source cases are
 UNRUN. Native installation, fresh project synchronization and every broader
 delivery requirement remain OPEN; no CI feedback was inspected.
+
+The [native primitive vector sync draft](vector-native-sync-source-draft.md)
+adds original-header/binder substitutions, grouped whole-function body edits,
+fresh complete forward checking, exact selected-element reproduction and whole
+project executable/refusal/method census guards. Four source equations and all
+independent receiving/boundary/batch/refusal cases remain UNRUN. Native
+installation, broader domains and every remaining delivery requirement stay OPEN.

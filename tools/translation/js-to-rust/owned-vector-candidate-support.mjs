@@ -35,6 +35,7 @@ export function captureOriginalOwnedVectorProfiles(data,path){
  // program and parsed signature. Target lowering supplies portable shape only.
  const dependencyInputs={manifest:files.get('Cargo.toml'),lock:files.get('Cargo.lock')},jsonMacroDependencies=jsonMacroDependencyProfile(dependencyInputs).proof,deriveDependencies=deriveDependencyProfile(dependencyInputs).proof;
  let result;try{result=translateProject({jsonMacroDependencies,deriveDependencies,entry:'src/lib.rs',paths,readSource:name=>{if(!files.has(name))fail('missing actual Rust source');return files.get(name);},compilationProfile:PRODUCTION_PROFILE,cargoManifest:files.get('Cargo.toml')});
+ const sourceCensus=ownedVectorOriginalProjectCensus(result);
  for(const binding of selected){
   const candidates=result.executableDeclarations.filter(row=>row.source===binding.rustPath&&row.qualifiedName===binding.rustName);if(candidates.length!==1)fail('actual original executable Rust function is absent or ambiguous');const original=candidates[0],source=files.get(original.source);if(typeof source!=='string'||original.sourceSha256!==hash(source)||typeof original.lower!=='function'||typeof original.checkedSource!=='function')fail('fresh actual original source/carrier differs');
   const captured=original.checkedSource(),own=captured?.declaration,written=captured?.sourceSignature,ret=written?.ret;
@@ -55,7 +56,7 @@ export function captureOriginalOwnedVectorProfiles(data,path){
   const modulePath=original.qualifiedName.split('.').slice(0,-1),scopes=result.sourceScopes.filter(scope=>scope.source===original.source&&JSON.stringify(scope.module)===JSON.stringify(modulePath));if(scopes.length!==1||scopes[0].sha256!==hash(source)||scopes[0].sourceView?.sourcePath!==original.source)fail('actual original Rust module view differs');
   const functions=originalModuleViewItems(scopes[0].sourceView,source).filter(item=>item.term==='fn'&&item.name===original.name&&item.start===captured.span.start&&item.end===captured.span.end);if(functions.length!==1)fail('actual original Rust function span differs');const fn=functions[0];
   const writtenReturn=JSON.parse(JSON.stringify(ret));
-  profiles.set(binding.javascriptName,{binding:{...binding},parameters,type:jsonDomain?.type??'vec:'+element.name,element,...(jsonDomain?{kind:jsonDomain.kind}:{}),original:{path:original.source,source,sha256:hash(source),qualifiedName:original.qualifiedName,carrierSpan:{...original.span},span:[fn.start,fn.end],functionSource:source.slice(fn.start,fn.end),signature:{params:JSON.parse(JSON.stringify(written.params)),returns:writtenReturn}},forward:{javascript:result.javascript,typescript:result.typescript,sourceScopes:result.sourceScopes.map(scope=>({source:scope.source,module:[...scope.module],sha256:scope.sha256}))}});
+  profiles.set(binding.javascriptName,{binding:{...binding},parameters,type:jsonDomain?.type??'vec:'+element.name,element,...(jsonDomain?{kind:jsonDomain.kind}:{}),original:{path:original.source,source,sha256:hash(source),qualifiedName:original.qualifiedName,carrierSpan:{...original.span},span:[fn.start,fn.end],functionSource:source.slice(fn.start,fn.end),signature:{params:JSON.parse(JSON.stringify(written.params)),returns:writtenReturn}},forward:{javascript:result.javascript,typescript:result.typescript,census:sourceCensus,sourceScopes:result.sourceScopes.map(scope=>({source:scope.source,module:[...scope.module],sha256:scope.sha256}))}});
  }
  // The map is confined to one native traversal, never retained in a context or
  // accepted from a caller. Source handles re-run this complete producer on read.
@@ -100,3 +101,9 @@ import {jsonMacroDependencyProfile} from '../json-macro-inputs.mjs';
 import {deriveDependencyProfile} from '../derive-dependencies.mjs';
 
 import {consumeVectorParameterPrelude} from './owned-vector-reinput-prefix.mjs';
+
+// Detached DATA from the same fresh full project invocation, shared only among
+// this invocation's candidate rows. Stored copies still require full reissue.
+export function ownedVectorOriginalProjectCensus(result){
+ const key=row=>JSON.stringify([row.source,row.name,row.term??'fn']);return {executable:result.meta.executable.map(key).sort(),refused:result.meta.refused.map(key).sort(),methods:(result.meta.checkedMethods??[]).map(key).sort(),generatedMethods:(result.meta.checkedGeneratedMethods??[]).map(key).sort()};
+}
