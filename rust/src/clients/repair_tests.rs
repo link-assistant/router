@@ -468,3 +468,28 @@ fn repair_refuses_symlink_targets() {
     assert!(error.to_string().contains("symlink"));
     assert_eq!(fs::read(&outside).unwrap(), b"outside");
 }
+
+
+// Independent global backend guard oracle source. UNRUN; gated Rust CI only.
+#[test]
+fn source_draft_codex_global_repair_advances_undo_guard_without_replacing_initial_backup() {
+    let home = tempfile::tempdir().expect("isolated home");
+    let manager = ClientManager::isolated(home.path());
+    let path = manager.config_path(ClientKind::Codex);
+    fs::create_dir_all(path.parent().expect("parent")).expect("directory");
+    let before = "# exact initial source\nmodel_provider=\"foreign\"\n";
+    fs::write(&path, before).expect("original");
+    let mut record = credential();
+    record.client = "codex".into();
+    record.router = Some("http://router.test:8080".into());
+    manager.apply_configure_transaction_with_codex_backend(
+        ClientKind::Codex, "http://router.test:8080", "la_sk_router_secret", &record, &[],
+        Some("http://127.0.0.1:1111/api/services/codex/backend-api"),
+    ).expect("global configure");
+    manager.apply_repair_with_codex_backend(
+        ClientKind::Codex, "http://router.test:8080", "la_sk_router_secret", &record, &[],
+        Some("http://127.0.0.1:2222/api/services/codex/backend-api"),
+    ).expect("global repair");
+    crate::client_global::undo_with_manager(&manager, ClientKind::Codex).expect("advanced undo guard");
+    assert_eq!(fs::read_to_string(&path).expect("restored"), before);
+}

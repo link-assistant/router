@@ -700,3 +700,11 @@ backend integration and removal/undo cleanup, with nine source equations/three
 actual native/library inputs and independent unrun JS/transitive strict TS/native/
 CST/export cases. Global repair, catalog/discovery/managed lifecycle and all wider
 translation/parity/receiving/delivery requirements remain OPEN.
+
+The [intact global backend repair draft](native-global-repair-source-draft.md)
+retains the first exact undo backup/modes while advancing only verified managed
+hashes, authenticates token/metadata association freshly and reuses current
+credentials with post-repair rollback. Seven equations/three native inputs and
+independent unrun JS/transitive strict TS/native/CST/export cases are drafted.
+Broader managed repair/catalogue/discovery/lifecycle and all wider translation/
+parity/receiving/delivery requirements stay OPEN.

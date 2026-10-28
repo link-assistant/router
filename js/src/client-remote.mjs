@@ -28,7 +28,7 @@ async function revoke(target,id,context){
 }
 export async function reuseRemoteClientCredential(context,record,token){
  if(record?.router!==normalizeManagedOrigin(context.origin)||record?.management_server!==normalizeManagedOrigin(context.managementServer))return false;
- try{remoteClientTokenBinding(token,context.client);const target=await remoteTarget({...context,suppliedToken:token});await catalog(context,target,token);return true;}catch(error){if(context.invocation?.signal?.aborted)throw error;return false;}
+ try{const actual=await authenticateRemoteClientCredential(context,token);return record.client===context.client&&record.token_id===actual.binding.token_id&&record.principal_id===actual.binding.principal_id;}catch(error){if(context.invocation?.signal?.aborted)throw error;return false;}
 }
 export async function prepareRemoteClientCredential(context){
  const target=await remoteTarget(context),ttl=context.ttlHours===undefined?24:Number(context.ttlHours);if(!Number.isSafeInteger(ttl)||ttl<1)throw clientFailure('Remote client TTL requires positive safe integer hours');await verifyRemoteClientHealth(context,target);let mint=false;
@@ -43,3 +43,7 @@ export async function revokeRemoteClientCredential(record,context){
 }
 
 import {verifyRemoteClientHealth} from './client-remote-health.mjs';
+
+export async function authenticateRemoteClientCredential(context,token){
+ const binding=remoteClientTokenBinding(token,context.client),target=await remoteTarget({...context,suppliedToken:token}),models=preferred(context.client,await catalog(context,target,token));return {binding,catalog:models};
+}
