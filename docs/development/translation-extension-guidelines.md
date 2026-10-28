@@ -586,3 +586,9 @@ adds five full equations for current private compiler modules and CLI wiring,
 with three unchanged actual owned-core input guards and a preserved historical
 producer. This explicit alternate copy profile grants no caller authority.
 Independent source/metadata/CLI/export cases remain UNRUN; all delivery rows OPEN.
+
+The [nested source input end-guard draft](native-input-fences-source-draft.md)
+rechecks captured archives/originals/current/native metadata at the end of one
+operation, clears all state, preserves primary failures and includes descendant
+compiler rows in the current copier. Six complete equations and independent
+source/byte/absence/nesting/failure/async cases remain UNRUN; delivery stays OPEN.

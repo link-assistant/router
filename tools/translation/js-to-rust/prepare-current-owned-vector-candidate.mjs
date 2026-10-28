@@ -4,5 +4,7 @@ const TARGETS=new Set(['tools/translation/js-to-rust/owned-vector-candidate-sour
 export function prepareCurrentOwnedVectorCandidateSources(options={}){
  const complete=prepareCurrentVectorCopySources(options),files=complete.files.filter(row=>TARGETS.has(row.path));
  if(files.length!==3)throw new TypeError('Current vector source requires all three complete private module copies');
- return {...complete,schema:'owned-vector-current-private-source-candidate-v1',inputs:complete.nativeInputs,files:files.map(row=>({...row,after:row.currentAfter,sequence:{languageRules:row.stages.filter(stage=>stage.phase==='language'),repositoryRules:row.stages.filter(stage=>stage.phase==='repository')}})),compilerFiles:complete.files,defaultAPIsUnchanged:true,productionSelected:false,runtimeParity:false,rustExecuted:false};
+ return {...complete,schema:'owned-vector-current-private-source-candidate-v1',inputs:complete.nativeInputs,files:files.map(row=>({...row,after:row.currentAfter,sequence:{languageRules:row.stages.filter(stage=>stage.phase==='language'),repositoryRules:row.stages.filter(stage=>stage.phase==='repository')}})),compilerFiles:nativeSourceHistoryFiles(complete),defaultAPIsUnchanged:true,productionSelected:false,runtimeParity:false,rustExecuted:false};
 }
+
+import {nativeSourceHistoryFiles} from '../native-source-descendants.mjs';

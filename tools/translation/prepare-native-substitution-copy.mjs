@@ -51,7 +51,7 @@ function substitute(ts,path,before,edits){
 /** Full inputs and rules are freshly read. A digest fixes a copy, not meaning. */
 export function prepareNativeSubstitutionCopy({root,archive,pin,id,laterPlans=[]}={}){
  if(!__nativeSourceOperation)return withNativeSubstitutionOperation(()=>prepareNativeSubstitutionCopy({root,archive,pin,id,laterPlans}));
- root=resolve(root);const archivePath=localPath(root,archive),packed=readFileSync(archivePath);
+ root=resolve(root);const archivePath=localPath(root,archive),packed=readFileSync(archivePath);retainNativeSourceInputFence(archivePath,packed);
  need(packed.length<=8388608&&hash(packed)===pin,'complete pinned original/rule archive');
  const original=JSON.parse(gunzipSync(packed,{maxOutputLength:16777216}));
  need(original.schema==='native-substitution-source-copy-v1'&&original.id===id&&Array.isArray(original.files)&&original.files.length>0&&original.files.length<=64,'whole source-copy family');
@@ -83,9 +83,10 @@ export function prepareNativeSubstitutionCopy({root,archive,pin,id,laterPlans=[]
  }
  const bindings=verifyNativeCopiedSourceBindingBatch(ts,files.map(row=>({path:resolve(root,row.path),source:row.currentAfter})));
  files.forEach((row,index)=>{row.nativeBindings=bindings[index];need(currentSource(resolve(root,row.path),Boolean(row.originalPath&&row.originalPath!==row.path))===row.current,'physical source changed during construction');});
- for(const original of originalGuards)need(readFileSync(original.path,'utf8')===original.source,'complete original implementation changed');
+ for(const original of originalGuards){need(readFileSync(original.path,'utf8')===original.source,'complete original implementation changed');retainNativeSourceInputFence(original.path,original.source);}
  for(const later of laterPlans)for(const row of nativeSourceHistoryFiles(later)){need(currentSource(localPath(root,row.path),Boolean(row.originalPath&&row.originalPath!==row.path))===row.current,'complete descendant physical source changed');if(row.originalPath&&row.originalPath!==row.path)need(currentSource(localPath(root,row.originalPath))===row.before,'complete descendant original implementation changed');}
  for(const later of laterPlans)for(const guard of nativeSourceHistoryOriginalGuards(later))need(currentSource(localPath(root,guard.path))===guard.source,'complete nested descendant original implementation changed');
+ for(const row of files)retainNativeSourceInputFence(localPath(root,row.path),row.current);for(const later of laterPlans)for(const row of nativeSourceHistoryFiles(later))retainNativeSourceInputFence(localPath(root,row.path),row.current);for(const later of laterPlans)for(const guard of nativeSourceHistoryOriginalGuards(later))retainNativeSourceInputFence(localPath(root,guard.path),guard.source);
  need(readFileSync(archivePath).equals(packed),'complete original/rule input changed');
  return {schema:'native-substitution-source-copy-plan-v1',id,files,descendantFiles,originalInputs:original.files,sourceAuthority:false,semanticAuthority:false,receivingExecuted:false};
 }
@@ -105,7 +106,7 @@ function originalNativeSourceOperationCurrent(operation,ts){
  if(operation.compiler&&operation.compiler!==ts||!ownershipCompilerRuntimeNativeCurrent(ts)){operation.files.clear();operation.entries=0;operation.bytes=0;operation.disabled=true;return false;}
  operation.compiler=ts;return true;
 }
-export function withNativeSubstitutionOperation(operation){
+function runNativeSubstitutionOperation(operation){
  need(typeof operation==='function'&&!types.isProxy(operation)&&!types.isAsyncFunction(operation),'one synchronous original source operation required');
  const previous=__nativeSourceOperation,frame=previous??{compiler:null,disabled:false,files:new Map(),entries:0,bytes:0,depth:0};need(frame.depth<256,'bounded complete nested source operation');frame.depth++;__nativeSourceOperation=frame;
  try{const result=operation();need(!types.isPromise(result)&&!(result&&typeof result==='object'&&types.isProxy(result)),'source operation must finish synchronously');if(result&&typeof result==='object'){const then=Object.getOwnPropertyDescriptor(result,'then');need(!then||Object.hasOwn(then,'value')&&typeof then.value!=='function','source operation cannot return an own thenable/accessor');}return result;}
@@ -122,3 +123,6 @@ function collectNativeCopiedFunctionDependencies(ts,root,path,after,dependencies
  for(const dependency of dependencies){need(dependency&&typeof dependency.source==='string'&&hash(dependency.source)===dependency.sha256&&['function','variable'].includes(dependency.owner?.kind)&&typeof dependency.owner.name==='string'&&typeof dependency.copiedSource==='string','complete selected original function dependency');const originalPath=localPath(root,dependency.path);need(readFileSync(originalPath,'utf8')===dependency.source,'complete copied function original differs');const original=parsed(ts,originalPath,dependency.source),select=file=>file.statements.filter(node=>dependency.owner.kind==='function'?ts.isFunctionDeclaration(node)&&node.name?.text===dependency.owner.name:ts.isVariableStatement(node)&&node.declarationList.declarations.length===1&&ts.isIdentifier(node.declarationList.declarations[0].name)&&node.declarationList.declarations[0].name.text===dependency.owner.name),sources=select(original),copies=select(target);need(sources.length===1&&copies.length===1&&sources[0].getText(original)===dependency.copiedSource&&copies[0].getText(target)===dependency.copiedSource,'whole actual copied function declarations differ');guards.push({path:originalPath,source:dependency.source});rows.push({path:dependency.path,source:dependency.source,owner:dependency.owner,copiedSource:dependency.copiedSource,sourceSpan:[sources[0].getStart(original),sources[0].end],targetSpan:[copies[0].getStart(target),copies[0].end],sourceAuthority:false,semanticAuthority:false});}
  const equations=transportConcreteSourceEquations(rows.map(row=>({before:row.source,after:row.source,language:'JavaScript'})));return rows.map((row,index)=>({...row,sourceEquation:equations[index]}));
 }
+
+import {retainNativeSourceInputFence,withNativeSourceInputFences} from './native-source-input-fences.mjs';
+export function withNativeSubstitutionOperation(operation){return withNativeSourceInputFences(()=>runNativeSubstitutionOperation(operation));}
