@@ -1,0 +1,1 @@
+Draft paired native configure/global undo dispatch, exact private backups and edit-aware restoration with credential/catalog transactions and offline reversal. Independent cases remain unrun; broader lifecycle and complete translation requirements remain open.

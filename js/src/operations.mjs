@@ -54,7 +54,7 @@ export const nativeOperationSupport = Object.freeze({
   ...Object.fromEntries(Object.entries(supportedResourceOperations).map(([name, support]) => [name, support.status])),
   ...Object.fromEntries(Object.keys(supportedManagedOperations).map(name => [name, 'partial'])),
   'auth.import': 'partial', 'auth.claude': 'partial', 'auth.codex': 'partial', 'auth.clear':'partial','auth.gh':'partial',
-  version: 'implemented', contracts: 'implemented',
+  version: 'implemented', contracts: 'implemented', configure:'partial',with:'partial',
   'accounts.list': 'partial', 'accounts.pause': 'partial', 'accounts.resume': 'partial', 'accounts.policy': 'partial',
   'tokens.issue': 'partial', 'tokens.list': 'partial', 'tokens.show': 'partial', 'tokens.revoke': 'partial',
   'tokens.import': 'partial', 'tokens.expire': 'partial', 'tokens.rotate': 'partial', 'tokens.recover-admin': 'partial',
@@ -163,6 +163,7 @@ async function dispatch(router, name, options, invocation) {
     core = (await (await import('./core.mjs')).createOperationContext(baseCore,{configOverrides,env,cwd:invocation.cwd,signal:invocation.signal})).core;
   }
   if (invocation.signal?.aborted) throw new NativeRouterError('Operation cancelled',{code:'cancelled'});
+  if(['configure','with'].includes(name)){localOnly(options,['client','all','undo','global','server','management_server','managed','token','token_stdin','ttl_hours','client_args']);return executeNativeConfigure({name,options,invocation,core,env,fetch:router.options.fetch});}
   if(['clients.setup','clients.remove'].includes(name)) {
     localOnly(options,name==='clients.setup' ? ['client','token','token_stdin','base_url','management_server','ttl_hours'] : ['client','revoke_supplied','force']);
     return (name==='clients.setup' ? setupNativeClient : removeNativeClient)({options,invocation,core,env,fetch:router.options.fetch});
@@ -365,3 +366,5 @@ export class NativeRouter {
   async close() { if (this.serverPromise) await (await this.serverPromise).close();for (const runtime of this.serverContexts?.values() ?? []) await (await runtime).close(); }
 }
 export const createNativeRouter = options => new NativeRouter(options);
+
+import {executeNativeConfigure} from './client-configure.mjs';

@@ -1,0 +1,19 @@
+/** Native-compatible reversible config state; all file destinations are derived. */
+import {createHash} from 'node:crypto';
+import {optionalClientText,clientFailure} from './client-files.mjs';
+import {decodeLino} from './storage.mjs';
+export const globalClientDigest=(source)=>createHash('sha256').update(source??'').digest('hex');
+export function globalClientPaths(paths){return {config:paths.config+'.with-router.bak',marker:paths.config+'.with-router-marker.bak',state:paths.config+'.with-router-state.json'};}
+export async function readGlobalClientState(paths){
+ const files=globalClientPaths(paths),source=await optionalClientText(files.state);if(source===null)return null;let state;
+ try{state=source.trimStart().startsWith('{')?JSON.parse(source):decodeLino(source);}catch{throw clientFailure('Global undo state is malformed');}
+ const fields=['config_existed','config_mode','config_hash_after_setup','marker_existed','marker_mode','marker_hash_after_setup','marker_path','setup_backup'];
+ if(!state||typeof state!=='object'||Array.isArray(state)||Object.keys(state).some(key=>!fields.includes(key))||typeof state.config_existed!=='boolean'||typeof state.marker_existed!=='boolean'||typeof state.config_hash_after_setup!=='string'||!/^[a-f0-9]{64}$/u.test(state.config_hash_after_setup))throw clientFailure('Global undo state fields are invalid');
+ for(const key of ['config_mode','marker_mode'])if(state[key]!==undefined&&state[key]!==null&&(!Number.isSafeInteger(state[key])||state[key]<0||state[key]>4294967295))throw clientFailure('Global undo file mode is invalid');
+ if(state.marker_path!==null&&state.marker_path!==paths.marker||state.marker_existed&&state.marker_path===null||state.marker_hash_after_setup!=null&&(typeof state.marker_hash_after_setup!=='string'||!/^[a-f0-9]{64}$/u.test(state.marker_hash_after_setup)))throw clientFailure('Global undo marker does not match this client');
+ if(state.setup_backup!=null){const prefix=paths.config+'.link-assistant-router.';if(typeof state.setup_backup!=='string'||!state.setup_backup.startsWith(prefix)||!/^\d+\.[a-f0-9]{32}\.bak$/u.test(state.setup_backup.slice(prefix.length)))throw clientFailure('Global undo backup is outside its owned filename namespace');}
+ return {source,state:{...state,config_mode:state.config_mode??null,marker_mode:state.marker_mode??null,marker_hash_after_setup:state.marker_hash_after_setup??null,setup_backup:state.setup_backup??null},files};
+}
+export async function globalClientTransactionFiles(paths){
+ const files=globalClientPaths(paths),saved=await readGlobalClientState(paths);return [files.config,files.marker,files.state,...(saved?.state.setup_backup?[saved.state.setup_backup]:[])];
+}

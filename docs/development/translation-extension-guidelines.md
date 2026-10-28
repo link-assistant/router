@@ -421,3 +421,11 @@ rules, keeps initializer producer checks and original hoisting/shadow boundaries
 and supplies three equations plus independent unrun both-API/JS/strict TS/native/
 CST/inverse/export cases. No constant evaluator or executable admission is
 replaced; all broader production/reverse/sync/parity/delivery requirements stay OPEN.
+
+The [global configuration/undo draft](native-client-global-source-draft.md) adds
+paired native operation dispatch, exact private backup/restoration/edit guards,
+credential/catalog transactions, offline undo and all-client continuation through
+eleven complete equations/three native inputs and independent unrun JS/strict
+TS/native/CST/export cases. Local discovery/managed selection/global repair/
+Codex bridges/temporary launch and every wider translation/delivery requirement
+remain OPEN; complete source drafting and verification are not claimed.

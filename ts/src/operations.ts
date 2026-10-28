@@ -1,5 +1,5 @@
-// GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=232eda1f4dff81ed1732be305e3b3e145ad2fb6612c42bfa78f9a19fd2062787; dynamic any annotations are explicit draft gaps.
+// SOURCE DRAFT: paired configure/global undo dispatch substitutions.
+// Canonical regeneration and all new verification remain UNRUN.
 import { readFileSync } from 'node:fs';
 import { executeCredentialOperation, credentialWithdrawal } from "./credential-operations.js";
 import { readNativeText } from "./operation-input.js";
@@ -62,7 +62,7 @@ export const nativeOperationSupport: any = (Object as any).freeze({
     ...(Object as any).fromEntries((Object as any).entries(supportedResourceOperations).map(([name, support]: any): any => [name, support.status])),
     ...(Object as any).fromEntries((Object as any).keys(supportedManagedOperations).map((name?: any): any => [name, 'partial'])),
     'auth.import': 'partial', 'auth.claude': 'partial', 'auth.codex': 'partial', 'auth.clear': 'partial', 'auth.gh': 'partial',
-    version: 'implemented', contracts: 'implemented',
+    version: 'implemented', contracts: 'implemented', configure:'partial',with:'partial',
     'accounts.list': 'partial', 'accounts.pause': 'partial', 'accounts.resume': 'partial', 'accounts.policy': 'partial',
     'tokens.issue': 'partial', 'tokens.list': 'partial', 'tokens.show': 'partial', 'tokens.revoke': 'partial',
     'tokens.import': 'partial', 'tokens.expire': 'partial', 'tokens.rotate': 'partial', 'tokens.recover-admin': 'partial',
@@ -212,6 +212,7 @@ async function dispatch(router?: any, name?: any, options?: any, invocation?: an
     }
     if (invocation.signal?.aborted)
         throw new (NativeRouterError as any)('Operation cancelled', { code: 'cancelled' });
+    if(['configure','with'].includes(name)){localOnly(options,['client','all','undo','global','server','management_server','managed','token','token_stdin','ttl_hours','client_args']);return executeNativeConfigure({name,options,invocation,core,env,fetch:router.options.fetch});}
     if (['clients.setup', 'clients.remove'].includes(name)) {
         localOnly(options, name === 'clients.setup' ? ['client', 'token', 'token_stdin', 'base_url', 'management_server', 'ttl_hours'] : ['client', 'revoke_supplied', 'force']);
         return (name === 'clients.setup' ? setupNativeClient : removeNativeClient)({ options, invocation, core, env, fetch: router.options.fetch });
@@ -471,3 +472,5 @@ export class NativeRouter {
         await (await runtime).close(); }
 }
 export const createNativeRouter: any = (options?: any): any => new (NativeRouter as any)(options);
+
+import {executeNativeConfigure} from './client-configure.js';
