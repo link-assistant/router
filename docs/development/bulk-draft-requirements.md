@@ -656,3 +656,11 @@ HTTP transport and separate selected CA roots. Seven equations/four native input
 and independent unrun JS/strict TS/native/export cases are drafted. Broader remote
 health/discovery/managed parity, global undo/loopback/catalog and every wider
 production translation/sync/freshness/receiving/delivery requirement remain OPEN.
+
+The [machine scalar facade draft](machine-scalar-core-source-draft.md) adds actual
+native Usize/Isize aliases and reuses existing 64-bit checked BigInt domains,
+ordinary/source-bound type/declaration/local/carrier/constant rules, strict
+source owners and explicit non-64-bit refusal. Five compiler equations plus
+native template construction and independent unrun JS/strict TS/native/CST/
+shadow/profile/export cases are drafted. Full production translation, broader
+reverse/target matrices and every wider delivery requirement remain OPEN.

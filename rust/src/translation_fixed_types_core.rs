@@ -13,3 +13,5 @@ pub type I64 = ::std::primitive::i64;
 pub type I128 = ::std::primitive::i128;
 pub type Bool = ::std::primitive::bool;
 pub type F64 = ::std::primitive::f64;
+pub type Usize = ::std::primitive::usize;
+pub type Isize = ::std::primitive::isize;

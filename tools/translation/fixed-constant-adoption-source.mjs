@@ -3,7 +3,7 @@
 import {censusLocalAliasBindings,localAliasDeclaration} from './local-alias-binding-source.mjs';
 import {readLifetimeOnlySourceBinders,readLifetimeOnlySelfSource} from './lifetime-only-declaration-source.mjs';
 import {FIXED_TYPE_CORE_ALIASES} from './fixed-type-core-source.mjs';
-const integer=word=>typeof word==='string'&&/^[iu](?:8|16|32|64|128)$/u.test(word);
+const integer=word=>typeof word==='string'&&/^[iu](?:8|16|32|64|128|size)$/u.test(word);
 const identifier=row=>row?.type==='ident'&&/^[\p{ID_Start}_][\p{ID_Continue}_]*$/u.test(row.text);
 function close(rows,start){const pairs={'(':')','[':']','{':'}'},stack=[];for(let at=start;at<rows.length;at++){const word=rows[at].text;if(pairs[word]){if(stack.length>=64)throw new TypeError('constant source depth bound');stack.push(pairs[word]);}else if([')',']','}'].includes(word)){if(stack.pop()!==word)throw new TypeError('constant source delimiter mismatch');if(!stack.length)return at;}}throw new TypeError('constant source delimiter unavailable');}
 export function fixedConstantFunctionSourceEdits(item,header,{lifetimes=[],parseType=null}={}){
