@@ -956,3 +956,9 @@ Both script authorities dispatch privately rechecked JSON vectors to fresh nativ
 ABI/signature and ordered validation/copy/branch comparison. Complete source-unit
 installation remains unchanged. All cases/equations are UNRUN; constructor/update/
 reader normalization and all full synchronization/delivery requirements stay OPEN.
+
+Native JSON field-update draft: [source boundary](vector-native-json-update-source-draft.md).
+Ordered complete-body comparison retains nested/unused bounded updates, actual
+borrowed Unicode keys and all arguments once in order. Existing private native
+ABI/source/census/CST checks remain necessary. All cases/equations are UNRUN;
+constructors/readers and all full synchronization/delivery requirements stay OPEN.
