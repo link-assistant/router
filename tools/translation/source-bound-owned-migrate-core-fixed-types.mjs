@@ -122,7 +122,7 @@ function split(tokens,separator){
   if(angle)throw new Error('unclosed type arguments');
   if(begin<tokens.length)result.push(tokens.slice(begin));return result;
 }
-function typeEdits(original){
+function typeEdits(original,{lifetimes=[]}={}){
   // Splitting >> is only a structural type-delimiter view. Original source
   // spans remain whole; only complete bare scalar type leaves are substituted.
   const tokens=original.flatMap(token=>token.text==='>>'?[{...token,text:'>',end:token.start+1},{...token,text:'>',start:token.start+1}]:[token]);
@@ -135,7 +135,7 @@ function typeEdits(original){
     if(eat('&')){
       const lifetime=tokens[at];
       if(lifetime?.text.startsWith("'")){
-        if(lifetime.text!=="'static")throw new Error('named or anonymous lifetime requires separate binder integration');at++;
+        if(lifetime.text!=="'static"&&!lifetimes.includes(lifetime.text))throw new Error('named lifetime lacks an original supported binder');at++;
       }
       eat('mut');type(depth+1);
       return;
@@ -166,9 +166,9 @@ function typeEdits(original){
   }
   type(0);if(at!==tokens.length)throw new Error('unconsumed source type syntax');return edits;
 }
-function functionEdits(item,header,parseType=typeEdits){
-  const rows=significant(item),name=rows.findIndex(token=>token.start===header.nameSpan.start),open=name+1;
-  if(rows[open]?.text!=='(')throw new Error('generic function binders require separate integration');
+function functionEdits(item,header,parseType=typeEdits,outerLifetimes=[]){
+  const rows=significant(item),name=rows.findIndex(token=>token.start===header.nameSpan.start),binders=readLifetimeOnlySourceBinders(rows,name+1,outerLifetimes),open=binders.after,selectType=tokens=>parseType(tokens,{lifetimes:binders.lifetimes});
+  if(rows[open]?.text!=='(')throw new Error('only lifetime function binders are supported');
   const close=matchesClose(rows,open),selected=[];
   for(const parameter of split(rows.slice(open+1,close),',')){
     if(!parameter.length)continue;
@@ -182,12 +182,12 @@ function functionEdits(item,header,parseType=typeEdits){
       throw new Error('parameter requires an actual type annotation');
     }
     if(!colon)throw new Error('missing parameter pattern');
-    selected.push(...parseType(parameter.slice(colon+1)));
+    selected.push(...selectType(parameter.slice(colon+1)));
   }
   let at=close+1;
   if(rows[at]?.text==='->'){
     const begin=++at;while(at<rows.length&&rows[at].text!=='{'&&rows[at].text!==';')at++;
-    selected.push(...parseType(rows.slice(begin,at)));
+    selected.push(...selectType(rows.slice(begin,at)));
   }
   if(rows[at]?.text!=='{'||matchesClose(rows,at)!==rows.length-1)throw new Error('function body or where grammar requires separate integration');
   return selected;
@@ -208,7 +208,7 @@ function itemBody(item){
   if(open<0||matchesClose(rows,open)!==rows.length-1)throw new Error('complete owner body unavailable');
   return {rows,open,start:rows[open].end,end:rows.at(-1).start};
 }
-function visitItems(source,items,profile,inherited,path,edits,selections,skipped,depth=0,modulePath=path,producer=null){
+function visitItems(source,items,profile,inherited,path,edits,selections,skipped,depth=0,modulePath=path,producer=null,lifetimes=[]){
   if(depth>MAX_DEPTH)fail('declaration owner nesting exceeds bound');
   const blockers=[...inherited,...scopeProblems(items,profile,modulePath,producer)];
   for(const item of items){
@@ -220,14 +220,13 @@ function visitItems(source,items,profile,inherited,path,edits,selections,skipped
     if(blockers.length){skipped.push({...record,reason:'source binding or producer uncertainty',blockers});continue;}
     try{
       if(header.kind==='impl'){
-        const body=itemBody(item),keyword=body.rows.findIndex(token=>token.start===header.keywordSpan.start),owner=body.rows.slice(keyword+1,body.open);
-        const names=owner[0]?.text==='::'?owner.slice(1):owner,unsupported=new Set(['for','where','as','dyn','impl','trait','const','unsafe','extern','async','default','mut','fn','pub','auto','type']);
-        if(!names.length||names.length%2!==1||names.some((token,index)=>index%2===0?!identifier(token)||unsupported.has(token.text):token.text!=='::'))throw new Error('trait, generic or conditional impl owner requires separate integration');
+        const body=itemBody(item),keyword=body.rows.findIndex(token=>token.start===header.keywordSpan.start),binders=readLifetimeOnlySourceBinders(body.rows,keyword+1,lifetimes),owner=body.rows.slice(binders.after,body.open);
+        readLifetimeOnlyTypeOwnerSource(owner,binders.lifetimes);
         const offset=body.start,nested=sourceItems(source.slice(body.start,body.end)).map(child=>({...child,start:child.start+offset,end:child.end+offset,tokens:child.tokens.map(token=>({...token,start:token.start+offset,end:token.end+offset}))}));
-        visitItems(source,nested,profile,blockers,[...path,'impl '+owner.map(token=>token.text).join('')],edits,selections,skipped,depth+1,modulePath,producer);continue;
+        visitItems(source,nested,profile,blockers,[...path,'impl '+owner.map(token=>token.text).join('')],edits,selections,skipped,depth+1,modulePath,producer,binders.lifetimes);continue;
       }
       if(header.rawIdentifier)throw new Error('raw declaration identity requires separate integration');
-      const selected=header.kind==='fn'?functionEdits(item,header):['const','static'].includes(header.kind)?constantEdits(item,header):fixedTypeDeclarationEdits(item,header,typeEdits);
+      const selectType=(tokens,options={})=>typeEdits(tokens,{lifetimes:[...new Set([...lifetimes,...(options.lifetimes??[])])]});const selected=header.kind==='fn'?functionEdits(item,header,typeEdits,lifetimes):['const','static'].includes(header.kind)?constantEdits(item,header,selectType):fixedTypeDeclarationEdits(item,header,selectType,{lifetimes});
       edits.push(...selected);selections.push({...record,edits:selected});
     }catch(error){skipped.push({...record,reason:error.message});}
   }
@@ -286,3 +285,5 @@ export function proposeCoreFixedTypesCorpus({entry='src/lib.rs',files:input,comp
 
 
 import {fixedTypeDeclarationEdits} from './fixed-type-declaration-source.mjs';
+
+import {readLifetimeOnlySourceBinders,readLifetimeOnlyTypeOwnerSource} from './lifetime-only-declaration-source.mjs';

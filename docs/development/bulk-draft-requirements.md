@@ -590,3 +590,9 @@ shares exact lexical aliases across nested parameter/local and four carrier
 method selectors. Eight equations and independent unrun paired APIs/eight
 callers/JS/strict TS/native/refusal/inverse/export cases are source drafted.
 Wider namespace/production/reverse/sync/freshness/parity/receiving/delivery stay OPEN.
+
+The [lifetime-only scalar source draft](fixed-type-lifetimes-source-draft.md)
+shares bounded original lifetime binders across signatures, declaration fields
+and plain impl owners. Five equations and independent unrun paired APIs/ten
+substitutions/native borrow/refusal/inverse/export cases are drafted. Type/const/
+where/local/namespace/production/reverse/sync/freshness/parity/delivery stay OPEN.

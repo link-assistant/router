@@ -25,25 +25,27 @@ function fields(rows,record,parseType){
  }
  return edits;
 }
-export function fixedTypeDeclarationEdits(item,header,parseType){
+export function fixedTypeDeclarationEdits(item,header,parseType,{lifetimes=[]}={}){
  if(typeof parseType!=='function')fail('whole source type selector required');
  const rows=item.tokens.filter(row=>row.type!=='comment');if(rows.length>200000)fail('declaration token count exceeds bound');
- const name=rows.findIndex(row=>row.start===header.nameSpan.start);if(name<0||!identifier(rows[name])||header.rawIdentifier)fail('actual ordinary declaration name required');const at=name+1;
+ const name=rows.findIndex(row=>row.start===header.nameSpan.start);if(name<0||!identifier(rows[name])||header.rawIdentifier)fail('actual ordinary declaration name required');const binders=readLifetimeOnlySourceBinders(rows,name+1,lifetimes),at=binders.after,selectType=tokens=>parseType(tokens,{lifetimes:binders.lifetimes});
  if(header.kind==='type'){
-  if(rows[at]?.text!=='='||rows.at(-1)?.text!==';')fail('generic or conditional alias requires separate binder integration');return parseType(rows.slice(at+1,-1));
+  if(rows[at]?.text!=='='||rows.at(-1)?.text!==';')fail('generic or conditional alias requires separate binder integration');return selectType(rows.slice(at+1,-1));
  }
  if(['struct','union'].includes(header.kind)){
   if(header.kind==='struct'&&rows[at]?.text===';'&&at===rows.length-1)return [];
   const group=rows[at]?.text;if(!['{','('].includes(group)||header.kind==='union'&&group!=='{')fail('generic or conditional field owner requires separate integration');
   const end=close(rows,at),trailing=rows.slice(end+1).map(row=>row.text).join('');if(group==='('?(trailing!==';'):trailing!=='')fail('complete field declaration terminator required');
-  return fields(rows.slice(at+1,end),group==='{',parseType);
+  return fields(rows.slice(at+1,end),group==='{',selectType);
  }
  if(header.kind!=='enum'||rows[at]?.text!=='{'||close(rows,at)!==rows.length-1)fail('monomorphic complete enum owner required');
  const edits=[],names=new Set();
  for(const variant of list(rows.slice(at+1,-1))){
   if(!identifier(variant[0])||names.has(variant[0].text))fail('complete unique unadorned variant required');names.add(variant[0].text);
   if(variant.length===1)continue;const group=variant[1]?.text;if(!['{','('].includes(group)||close(variant,1)!==variant.length-1)fail('variant attributes or discriminants require separate source integration');
-  edits.push(...fields(variant.slice(2,-1),group==='{',parseType));
+  edits.push(...fields(variant.slice(2,-1),group==='{',selectType));
  }
  return edits;
 }
+
+import {readLifetimeOnlySourceBinders} from './lifetime-only-declaration-source.mjs';

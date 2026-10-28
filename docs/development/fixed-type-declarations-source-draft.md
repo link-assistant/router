@@ -31,3 +31,7 @@ Lifetime/type/const generic binders, local annotations, associated value paths,
 conditional field producers, namespace closure, real production coverage and full
 forward/reverse/sync/freshness/parity/receiving/performance/delivery remain OPEN.
 No executable gain or verified-completion claim is made.
+
+The [lifetime-only owner successor](fixed-type-lifetimes-source-draft.md)
+now drafts explicit original region binders without granting type/const generic
+or executable authority. All execution and wider requirements remain OPEN.
