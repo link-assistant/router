@@ -48,3 +48,8 @@ library for unsigned literal/conditional values, with fresh opening/closing
 input joins and unchanged constant/standalone paths. Both authority cases,
 full original/CST inverses and two-phase equations are drafted but UNRUN;
 see [the source contract](vector-json-dynamic-index-source-draft.md).
+
+Standard JSON optional reader drafting reuses six existing qualified operations
+with fresh actual Option ABI joins, ordered argument evaluation and branch-local
+payloads. Complete source/CST inverses and all authority/guard batches are
+drafted but UNRUN; see [the source contract](vector-json-standard-options-source-draft.md).

@@ -45,3 +45,11 @@ export function nativeJsonPredicateSource(name,argument){
  const op=ownedJsonReaderOperation(name);if(!op||op.ret!=='bool'||op.args.length!==1||op.args[0]!=='json-ref'||op.root!==null||typeof argument!=='string'||!/^&?(?:[a-z][a-z0-9_]*|__ro_arg_[0-9]+)$/u.test(argument))throw new TypeError('Native JSON predicate requires the exact registered scalar operation and a checked emitted binder');
  return '::serde_json::Value::'+op.method+'('+argument+')';
 }
+
+// DATA-only rendering of fixed standard JSON reader signatures. The private
+// caller and fresh forward checker retain source, namespace and loan proof.
+export function nativeJsonOptionalReaderSource(name,args){
+ const op=ownedJsonReaderOperation(name),payload=op&&ownedJsonOptionalPayload(op.ret);
+ if(!op||!['json-ref','str','bool','u64','i64'].includes(payload)||!Array.isArray(args)||args.length!==op.args.length||op.args[0]!=='json-ref'||op.args.slice(1).some(role=>role!=='str')||args.some(value=>typeof value!=='string'||!/^&?(?:[a-z][a-z0-9_]*|__ro_arg_[0-9]+)$/u.test(value)))throw new TypeError('Native JSON optional reader requires an exact supported standard signature and checked emitted binders');
+ return '::serde_json::Value::'+op.method+'('+args.join(', ')+')';
+}
