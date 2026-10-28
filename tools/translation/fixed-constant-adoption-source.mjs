@@ -10,7 +10,7 @@ export function fixedConstantFunctionSourceEdits(item,header,{lifetimes=[],parse
  const refusal=reason=>({edits:[],reason,sourceAuthority:false,semanticAuthority:false,executableAdmission:false}),rows=item.tokens.filter(row=>row.type!=='comment');
  if(rows.length>200000)return refusal('complete constant source token bound');
  // No scope construction for functions without an actual candidate token triple.
- const candidates=[];for(let at=0;at+2<rows.length;at++)if(identifier(rows[at])&&integer(rows[at].text)&&rows[at+1].text==='::'&&['MIN','MAX'].includes(rows[at+2].text))candidates.push(at);
+ const candidates=[];for(let at=0;at+2<rows.length;at++)if(identifier(rows[at])&&integer(rows[at].text)&&rows[at+1].text==='::'&&['MIN','MAX','BITS'].includes(rows[at+2].text))candidates.push(at);
  const typedLocals=[];for(let at=0;at<rows.length;at++)if(rows[at].text==='let'){const declaration=localAliasDeclaration(rows,at);if(declaration&&rows[declaration.next]?.text===':')typedLocals.push({at,declaration});}
  const casts=bareSourceCastTypeLeaves(rows,FIXED_TYPE_CORE_ALIASES.map(row=>row.primitive));
  if(!candidates.length&&!typedLocals.length&&!casts.length&&!rows.some(row=>row.text==='const'))return refusal(null);

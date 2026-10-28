@@ -742,3 +742,9 @@ adds three full native substitutions and two compiler equations for lazy bounded
 Docker listing, exact loopback TCP candidates and finite real-health probes.
 Original metadata pins remain unchanged through five explicit complete histories.
 All independent source cases and every wider delivery obligation remain OPEN.
+
+The [integer BITS source draft](fixed-integer-bits-source-draft.md) adds twelve
+integer associated constants with native u32 result types through the shared
+ordinary/source-bound scalar adopter and genuine native-library parser. Three
+source equations and independent JS/strict TS/native cases remain UNRUN; all
+broader namespace/translation/reverse/sync/parity/delivery requirements remain OPEN.
