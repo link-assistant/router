@@ -580,3 +580,9 @@ ownership-aware reverse literals/arguments, explicit clones and Unicode guards
 with a complete candidate runtime closure. Nine complete source equations and
 independent strict TS/reverse/native/refusal source remain UNRUN. Current private
 copy production and all wider translation/sync/delivery rows remain OPEN.
+
+The [current complete vector source-copy draft](current-vector-copy-source-draft.md)
+adds five full equations for current private compiler modules and CLI wiring,
+with three unchanged actual owned-core input guards and a preserved historical
+producer. This explicit alternate copy profile grants no caller authority.
+Independent source/metadata/CLI/export cases remain UNRUN; all delivery rows OPEN.

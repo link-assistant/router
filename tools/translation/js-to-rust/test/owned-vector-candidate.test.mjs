@@ -8,7 +8,7 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 import {rustPackageSourcePath} from '../../repository-layout.mjs';
 import {ROUTER_FORMATTING_FACADE_SOURCE as facade,ROUTER_CORE_PRIMITIVES_SOURCE as primitives,ROUTER_CORE_RANGES_SOURCE as ranges,ROUTER_CORE_BASE64_SOURCE as base64,ROUTER_CORE_JSON_COLLECTIONS_SOURCE as collections} from '../../router-core-source-data.mjs';
 import {ownedCoreRuntimeSources} from '../owned-vector-candidate-source.mjs';
-import {prepareOwnedVectorCandidateSources} from '../prepare-owned-vector-candidate.mjs';
+import {prepareCurrentOwnedVectorCandidateSources as prepareOwnedVectorCandidateSources} from '../prepare-owned-vector-candidate.mjs';
 import {createOwnedVectorCandidateContext,translateOwnedVectorCandidate,parseOwnedVectorCandidateMeta,emitOwnedVectorCandidateRust,prepareOwnedVectorCandidateRuntime,evaluateOwnedVectorCandidate} from '../owned-vector-candidate.mjs';
 const ROOT=fileURLToPath(new URL('../../../../',import.meta.url)),JS='app/src/list.mjs',TS='typed/src/list.mts',limits={timeout:60000},C='crate::translation_core::';
 const original=path=>readFileSync(join(ROOT,rustPackageSourcePath(ROOT,path)),'utf8');
