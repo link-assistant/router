@@ -1,5 +1,5 @@
 // Bounded owned JSON updates. This is not generic IndexMut/Clone/Serialize.
-import {json_macro_value,json_macro_object} from './json-macro-runtime.mjs';
+import {json_macro_value,json_macro_object,json_macro_null,json_macro_bool,json_macro_string,json_macro_u64,json_macro_i64,json_macro_array} from './json-macro-runtime.mjs';
 import {string,validateJsonMap,some,NONE} from './extensions/json-values.mjs';
 import {serde_json_roundtrip_from_str,serde_json_roundtrip_from_slice} from './extensions/json-roundtrip-runtime.mjs';
 import {serde_json_value_index_string,serde_json_value_index_usize,serde_json_map_get} from './extensions/json-runtime.mjs';
@@ -35,3 +35,12 @@ export const router_core_json_parse_bytes=value=>optional(serde_json_roundtrip_f
 export const router_vector_json_copy=value=>json_macro_value(value);
 export function router_vector_json_validate(value){json_macro_value(value);}
 export const router_vector_json_with_field=router_core_json_with_field;
+
+// Canonical constructors paired with the same complete native library source.
+export const router_vector_json_build_null=()=>json_macro_null();
+export const router_vector_json_build_bool=value=>json_macro_bool(value);
+export const router_vector_json_build_string=value=>json_macro_string(value);
+export const router_vector_json_build_u64=value=>json_macro_u64(value);
+export const router_vector_json_build_i64=value=>json_macro_i64(value);
+export const router_vector_json_build_array=value=>json_macro_array(value);
+export const router_vector_json_build_object=()=>json_macro_object([]);

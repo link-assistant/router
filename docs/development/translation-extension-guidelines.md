@@ -698,3 +698,9 @@ Ordered complete-body comparison retains nested/unused bounded updates, actual
 borrowed Unicode keys and all arguments once in order. Existing private native
 ABI/source/census/CST checks remain necessary. All cases/equations are UNRUN;
 constructors/readers and all full synchronization/delivery requirements stay OPEN.
+
+Shared canonical JSON builder draft: [source boundary](bounded-json-builders-source-draft.md).
+Seven paired native/script constructors retain actual caller/module/feature/type
+joins and consume an owned JSON vector once. Eight compiler equations and one
+native helper history successor preserve all original pins. All cases/oracles are
+UNRUN; reverse constructor integration and all delivery obligations remain OPEN.

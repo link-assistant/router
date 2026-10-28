@@ -37,8 +37,8 @@ export function selectOriginalBoundedJsonCore({modules,sourceScopes,compilationP
 // Actual source-bound registration for the separate bounded native library.
 // The copied selector above keeps native module/view/scope/configuration joins.
 import {JSON_TYPES} from './extensions/json-contracts.mjs';
-import {sourceShared,SOURCE_STR} from './extensions/source-contract-types.mjs';
-import {UNIT} from './checked-types.mjs';
+import {sourceShared,sourceVector,SOURCE_STR} from './extensions/source-contract-types.mjs';
+import {UNIT,BOOL,fixed} from './checked-types.mjs';
 import {matchesParserFacts} from './matches-macro-context.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
 import {createRulePipeline} from './rule-pipeline.mjs';
@@ -49,6 +49,13 @@ import {createHash} from 'node:crypto';
 const freezeBoundedJsonCore=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freezeBoundedJsonCore(child);Object.freeze(value);}return value;};
 const operations=freezeBoundedJsonCore([
  Object.freeze({name:'json_validate',id:'router_vector_json_validate',params:[sourceShared(JSON_TYPES.value)],ret:UNIT}),
+ Object.freeze({name:'json_build_null',id:'router_vector_json_build_null',params:[],ret:JSON_TYPES.value}),
+ Object.freeze({name:'json_build_bool',id:'router_vector_json_build_bool',params:[BOOL],ret:JSON_TYPES.value}),
+ Object.freeze({name:'json_build_string',id:'router_vector_json_build_string',params:[SOURCE_STR],ret:JSON_TYPES.value}),
+ Object.freeze({name:'json_build_u64',id:'router_vector_json_build_u64',params:[{...fixed(64,false),rustPrimitiveName:'u64',rustSourceType:true}],ret:JSON_TYPES.value}),
+ Object.freeze({name:'json_build_i64',id:'router_vector_json_build_i64',params:[{...fixed(64,true),rustPrimitiveName:'i64',rustSourceType:true}],ret:JSON_TYPES.value}),
+ Object.freeze({name:'json_build_array',id:'router_vector_json_build_array',params:[sourceVector(JSON_TYPES.value)],ret:JSON_TYPES.value}),
+ Object.freeze({name:'json_build_object',id:'router_vector_json_build_object',params:[],ret:JSON_TYPES.value}),
  Object.freeze({name:'json_checked_copy',id:'router_vector_json_copy',params:[sourceShared(JSON_TYPES.value)],ret:JSON_TYPES.value}),
  Object.freeze({name:'json_checked_with_field',id:'router_vector_json_with_field',params:[sourceShared(JSON_TYPES.value),SOURCE_STR,sourceShared(JSON_TYPES.value)],ret:JSON_TYPES.value}),
 ]);
