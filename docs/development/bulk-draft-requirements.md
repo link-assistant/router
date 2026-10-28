@@ -716,3 +716,11 @@ equations/three native inputs and independent unrun JS/transitive strict TS/
 native/CST/export cases are drafted. Full native fresh-configure alignment,
 wider migration/discovery/lifecycle and every broader translation/delivery
 requirement remain OPEN; full source drafting and verification are not claimed.
+
+The [explicit native source history draft](native-source-history.md) adds seven
+compiler equations and two complete native Rust substitutions with immutable
+originals, current inputs, both CST phases/full inverses and fresh rechecks rather
+than bypassed source guards. Native Codex fresh-global validation/removal/undo and
+8MiB reads now have implementation and independent unrun oracle source. Generic
+histories grant no semantic/namespace/executable authority. Every broader source/
+translation/parity/platform/receiving/delivery requirement remains OPEN.

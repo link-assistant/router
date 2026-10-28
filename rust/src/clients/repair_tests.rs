@@ -512,3 +512,43 @@ fn source_draft_catalog_constraint_models_array_is_validated_without_mutating_fo
         assert_eq!(fs::read_to_string(&catalog).expect("catalogue"), body);
     }
 }
+
+
+// Independent fresh-native alignment oracles. UNRUN; gated Rust CI only.
+#[test]
+fn source_draft_fresh_global_codex_retires_catalogue_override_and_exact_undo_restores_it() {
+    let home = tempfile::tempdir().expect("isolated home");
+    let manager = ClientManager::isolated(home.path());
+    let config = manager.config_path(ClientKind::Codex);
+    fs::create_dir_all(config.parent().expect("parent")).expect("directory");
+    let catalog = home.path().join("foreign-catalog.json");
+    let external = "{\"models\":[]}";
+    fs::write(&catalog, external).expect("foreign catalogue");
+    let before = format!("# exact initial source\nmodel_catalog_json={:?}\ncustom='keep'\n", catalog.to_string_lossy());
+    fs::write(&config, &before).expect("original config");
+    let mut record = credential();
+    record.client = "codex".into();
+    manager.apply_configure_transaction_with_codex_backend(ClientKind::Codex, "http://router.test:8080", "la_sk_router_secret", &record, &[], None).expect("fresh global configure");
+    assert!(!fs::read_to_string(&config).expect("configured").contains("model_catalog_json"));
+    assert_eq!(fs::read_to_string(&catalog).expect("untouched catalogue"), external);
+    crate::client_global::undo_with_manager(&manager, ClientKind::Codex).expect("exact global undo");
+    assert_eq!(fs::read_to_string(&config).expect("restored config"), before);
+}
+#[test]
+fn source_draft_native_catalogue_limit_and_invalid_global_constraint_precede_artifact_creation() {
+    let home = tempfile::tempdir().expect("isolated home");
+    let manager = ClientManager::isolated(home.path());
+    let config = manager.config_path(ClientKind::Codex);
+    fs::create_dir_all(config.parent().expect("parent")).expect("directory");
+    let catalog = home.path().join("foreign-catalog.json");
+    let before = format!("model_catalog_json={:?}\n", catalog.to_string_lossy());
+    fs::write(&config, &before).expect("original config");
+    fs::write(&catalog, vec![b'x'; 8 * 1024 * 1024 + 1]).expect("oversize catalogue");
+    assert!(manager.validate_codex_catalog_constraint().is_err());
+    fs::write(&catalog, b"{\"models\":null}").expect("invalid constraint");
+    let mut record = credential();
+    record.client = "codex".into();
+    assert!(manager.apply_configure_transaction_with_codex_backend(ClientKind::Codex, "http://router.test:8080", "la_sk_router_secret", &record, &[], None).is_err());
+    assert_eq!(fs::read_to_string(&config).expect("untouched config"), before);
+    for path in crate::client_global::transaction_paths(&config) { assert!(!path.exists()); }
+}

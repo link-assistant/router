@@ -37,3 +37,8 @@ Wider native repair/legacy catalogue migration, local discovery/selection/daemon
 container/temporary launch/CA/platform lifecycle, all source namespace/production/
 reverse/sync/freshness/parity/performance/receiving/CI-repair/delivery obligations
 remain OPEN. No current executable coverage or complete source/verified claim.
+
+The subsequent [native source history draft](native-source-history.md) now supplies
+explicit Rust fresh-global validation/removal/rollback and bounded reader source
+through retained old/current CST equations. That alignment and every associated
+case remain unrun; platform/race/receiving and full parity are still OPEN.

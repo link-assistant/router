@@ -91,6 +91,9 @@ pub(crate) fn apply_with_manager_and_codex_backend(
         )
         .into());
     }
+    if client == ClientKind::Codex {
+        manager.validate_codex_catalog_constraint()?;
+    }
     let marker_path = manager.ownership_marker_path(client);
     let config_existed = config_path.exists();
     let marker_existed = marker_path.as_ref().is_some_and(|path| path.exists());
@@ -102,24 +105,28 @@ pub(crate) fn apply_with_manager_and_codex_backend(
     if let Some(marker) = marker_path.as_ref().filter(|_| marker_existed) {
         copy_private(marker, &paths.marker)?;
     }
-    let setup =
-        match manager.setup_with_codex_backend(client, base_url, models, codex_backend_base_url) {
-            Ok(result) => result,
-            Err(error) => {
-                rollback(
-                    &paths,
-                    &config_path,
-                    config_existed,
-                    config_mode,
-                    marker_path.as_deref(),
-                    marker_existed,
-                    marker_mode,
-                )?;
-                remove_if_present(&paths.config)?;
-                remove_if_present(&paths.marker)?;
-                return Err(error.into());
-            }
-        };
+    let setup = match (|| {
+        if client == ClientKind::Codex {
+            manager.remove_codex_catalog_constraint()?;
+        }
+        manager.setup_with_codex_backend(client, base_url, models, codex_backend_base_url)
+    })() {
+        Ok(result) => result,
+        Err(error) => {
+            rollback(
+                &paths,
+                &config_path,
+                config_existed,
+                config_mode,
+                marker_path.as_deref(),
+                marker_existed,
+                marker_mode,
+            )?;
+            remove_if_present(&paths.config)?;
+            remove_if_present(&paths.marker)?;
+            return Err(error.into());
+        }
+    };
     let configured_contents = fs::read(&config_path)?;
     let state = BackupState {
         config_existed,
