@@ -754,3 +754,9 @@ mechanically copies eight-client native inventories and launch mechanics into on
 paired JS/TS source template and wires blocked-request preflight before core
 construction. Seven complete equations and independent JS/strict TS/native cases
 remain UNRUN. Actual temporary process/isolation/credential lifecycle stays OPEN.
+
+The [owned temporary-client process draft](native-client-process-source-draft.md)
+adds one paired bounded supervisor with exact argv/environment, cancellation,
+owned-handle termination, independent streams and native exit statuses. Three
+source equations and independent JS/strict TS cases remain UNRUN; actual temporary
+with isolation/run-credential composition and broader requirements remain OPEN.

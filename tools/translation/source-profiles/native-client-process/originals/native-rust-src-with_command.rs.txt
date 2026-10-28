@@ -1,0 +1,969 @@
+//! Temporary-by-default launcher shared by `router with` and `with-router`.
+
+use std::ffi::OsString;
+use std::fs::{self, OpenOptions};
+use std::io::Write as _;
+use std::path::{Path, PathBuf};
+use std::process::{Command, ExitCode};
+
+use serde_json::json;
+
+use crate::cli::WithArgs;
+use crate::clients::{ClientIsolation, ClientKind, ClientManager, RouterModel};
+use crate::managed_server::{cleanup_run_credential, resolve};
+
+#[path = "with_command_sweep.rs"]
+mod sweep;
+use sweep::{DisposableRunDirectory, set_directory_owner_only};
+#[cfg(test)]
+use sweep::{owner_of, process_alive, sweep_stale_directories};
+
+#[path = "with_command_codex_catalog.rs"]
+mod codex_catalog;
+use codex_catalog::write_codex_model_catalog;
+
+#[path = "with_command_claude_settings.rs"]
+mod claude_settings;
+use claude_settings::{
+    ClaudeModelSelection, append_claude_model_picker, claude_launch_model_warning,
+    claude_saved_model_selection, unavailable_native_claude_model, validate_claude_model_selection,
+};
+
+#[path = "with_command_model_policy.rs"]
+mod model_policy;
+
+pub(crate) type AnyError = Box<dyn std::error::Error + Send + Sync>;
+
+const CLAUDE_PRIVACY_DEFAULT_ENV: [&str; 3] = [
+    "DISABLE_ERROR_REPORTING",
+    "DISABLE_AUTOUPDATER",
+    "DISABLE_FEEDBACK_COMMAND",
+];
+const CLAUDE_FEATURE_FLAG_BLOCKING_ENV: [&str; 3] = [
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
+    "DISABLE_TELEMETRY",
+    "DO_NOT_TRACK",
+];
+
+#[path = "with_command_run.rs"]
+mod launcher;
+use launcher::{confirm_claude_profile_reset, exit_code};
+pub use launcher::{run, run_with_logging};
+
+async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
+    // `--global` and `--undo` are permanent client setup, which now has its
+    // own name. Delegating rather than reimplementing is what keeps the two
+    // spellings from drifting apart again — the address, the credential, the
+    // reversal and the client list were four separate disagreements between
+    // them (issue #296).
+    if args.global || args.undo {
+        return Ok(crate::configure::run(&args.as_configure()).await);
+    }
+    if args.reset_to_default_configuration && args.client != ClientKind::ClaudeCode {
+        return Err("--reset-to-default-configuration is available only for Claude".into());
+    }
+    if args.reset_to_default_configuration && (args.isolated_config || args.extend_global_config) {
+        return Err("--reset-to-default-configuration requires the Router-owned Claude profile; omit --isolated-config and --extend-global-config".into());
+    }
+    if args.reset_to_default_configuration {
+        confirm_claude_profile_reset(args.yes)?;
+    }
+    if args.client.integration().isolation == ClientIsolation::Unsupported {
+        return Err(args
+            .client
+            .setup_limitation()
+            .unwrap_or("client integration is unsupported")
+            .into());
+    }
+    let model_request = model_policy::request(args)?;
+    if args.client == ClientKind::ClaudeCode {
+        crate::clients::require_claude_gateway_version()?;
+    }
+    if let Some(error) = crate::client_launch::unsupported_native_command(args) {
+        return Err(error.into());
+    }
+    let explicit_token = if args.token_stdin {
+        Some(crate::server_command::read_token()?)
+    } else {
+        args.token.clone()
+    };
+    crate::launcher_log::add_secret(explicit_token.as_deref());
+    crate::launcher_log::record(
+        "server_discovery",
+        "resolving selected Router and checking its connection",
+    );
+    let server = if args.local {
+        let mut server = crate::managed_server::discovered_local_router()
+            .await
+            .ok_or("no router is listening on this machine; start one with `router serve`, or drop --local to use the selected server")?;
+        if let Some(token) = explicit_token {
+            server.token = Some(token);
+        }
+        server
+    } else {
+        resolve(
+            args.server.as_deref(),
+            args.management_server.as_deref(),
+            explicit_token,
+            args.run_max_requests,
+            args.managed,
+        )
+        .await?
+    };
+    crate::launcher_log::add_secret(server.token.as_deref());
+    crate::launcher_log::record(
+        "server_resolved",
+        &format!("{} selected from {}", server.base_url, server.source),
+    );
+    crate::logging::event(format_args!(
+        "selected_endpoint endpoint={} source={}",
+        server.base_url, server.source
+    ));
+    // The label travels to the router and is stored there. It used to be the
+    // name of the directory the run was launched from, so a deployment — which
+    // may be someone else's machine, or a team's, or a provider's —
+    // accumulated a list of the projects its users work in. Directory names are
+    // usually project names (issue #316). The token id already identifies a
+    // run, so the label needs to carry nothing else.
+    let label = args
+        .label
+        .clone()
+        .unwrap_or_else(|| format!("with-{}-{}", args.client, run_suffix()));
+    crate::launcher_log::record(
+        "run_registration",
+        "checking authentication and authorized catalog before run registration",
+    );
+    let prepared = model_policy::prepare(args, &server, &label, model_request).await?;
+    let credential = prepared.credential;
+    let selected = prepared.selected;
+    crate::launcher_log::add_secret(Some(&credential.token));
+    crate::launcher_log::record(
+        "run_registered",
+        "run credential and authorized model catalog prepared",
+    );
+    // Decided before the client is prepared: whether the run is a session or
+    // a task also decides whether the router may answer the client's own
+    // prompts on the user's behalf (issue #310).
+    let plan = crate::client_launch::plan(
+        args,
+        selected.as_deref(),
+        crate::client_launch::attached_to_a_terminal(),
+    );
+    if let Some(note) = plan.note {
+        eprintln!("{note}");
+    }
+    let codex_reasoning_effort = if args.client == ClientKind::Codex && !args.isolated_config {
+        configured_codex_reasoning_effort()?
+    } else {
+        None
+    };
+    let codex_bridge = if args.client == ClientKind::Codex
+        && crate::codex_loopback_bridge::required(&server.base_url)?
+    {
+        Some(crate::codex_loopback_bridge::start_ephemeral(&server.base_url).await?)
+    } else {
+        None
+    };
+    let codex_backend_base_url = codex_bridge
+        .as_ref()
+        .map(crate::codex_loopback_bridge::EphemeralBridge::backend_base_url);
+    let mut claude_profile = if args.client == ClientKind::ClaudeCode
+        && !args.isolated_config
+        && !args.extend_global_config
+    {
+        if args.reset_to_default_configuration
+            && let Some(id) = crate::client_lifecycle::reset::reset_router_claude_for_with()?
+        {
+            crate::operation_output::write_result(
+                true,
+                format_args!("Router-owned Claude settings reset; verified backup: {id}\n"),
+            );
+        }
+        let path = persistent_profile_path(args.client, None)?;
+        match crate::claude_profile::ProfileSession::prepare(path.clone(), false).await {
+            Ok(profile) => {
+                debug_assert_eq!(profile.path(), path);
+                Some(profile)
+            }
+            Err(error) => {
+                model_policy::cleanup_after_setup_failure(credential).await;
+                return Err(error);
+            }
+        }
+    } else {
+        None
+    };
+    let user_claude_model = crate::operation_context::var("ANTHROPIC_MODEL")
+        .ok()
+        .filter(|value| !value.trim().is_empty());
+    let user_claude_settings = (args.client == ClientKind::ClaudeCode && args.extend_global_config)
+        .then(|| ClientManager::from_env().ok())
+        .flatten()
+        .map(|manager| manager.config_path(ClientKind::ClaudeCode));
+    let mut temporary = match TemporaryClient::prepare(&Preparation {
+        client: args.client,
+        base_url: &server.base_url,
+        token: &credential.token,
+        model_override: selected.as_deref(),
+        models: credential.models(),
+        isolated_config: args.isolated_config,
+        extend_user_configuration: args.extend_global_config,
+        one_shot: plan.one_shot,
+        // An empty value is not a selection: it is how a caller says "unset".
+        user_model_selection: user_claude_model.as_deref(),
+        profile_root: None,
+        codex_reasoning_effort: codex_reasoning_effort.as_deref(),
+        codex_backend_base_url,
+        ca_cert: server.ca_cert.as_deref(),
+        user_claude_settings: user_claude_settings.as_deref(),
+    }) {
+        Ok(temporary) => temporary,
+        Err(error) => {
+            model_policy::cleanup_after_setup_failure(credential).await;
+            return Err(error);
+        }
+    };
+    temporary.codex_bridge = codex_bridge;
+    let arguments = plan.arguments;
+    let run_lease = crate::managed_server::start_run_lease(&credential);
+    let launch = temporary.launch(&arguments, claude_profile.as_mut()).await;
+    drop(run_lease);
+    if launch.as_ref().is_ok_and(|status| !status.success())
+        && server.source == "managed local container"
+        && let Some(hint) = crate::managed_server::managed_failure_hint()
+    {
+        eprintln!("warning: {hint}");
+    }
+    let cleanup = cleanup_run_credential(credential).await;
+    let status = launch?;
+    if let Err(error) = cleanup {
+        eprintln!("warning: {error}; the short token TTL remains the cleanup backstop");
+    }
+    Ok(exit_code(status))
+}
+
+/// A short, non-identifying suffix distinguishing concurrent runs.
+///
+/// Derived from the process id, which the router already knows it is talking
+/// to and which says nothing about what the user is working on.
+fn run_suffix() -> String {
+    format!("{:04x}", std::process::id() & 0xffff)
+}
+
+struct TemporaryClient {
+    directory: RunDirectory,
+    command: Command,
+    codex_bridge: Option<crate::codex_loopback_bridge::EphemeralBridge>,
+}
+
+/// Where a run that cannot layer onto the user's configuration keeps its files.
+///
+/// Claude and clients that require Router-written files keep a dedicated
+/// profile under Router's configuration root. Persistence makes onboarding a
+/// one-time event and keeps Router sessions resumable, without importing any
+/// normal user profile contents (issues #298, #536).
+///
+/// Disposable is still right where it was asked for: `--isolated-config`, and
+/// the scratch directory an extending run never actually reads.
+enum RunDirectory {
+    Disposable(DisposableRunDirectory),
+    Persistent(PathBuf),
+}
+
+impl RunDirectory {
+    fn path(&self) -> &Path {
+        match self {
+            Self::Disposable(directory) => directory.path(),
+            Self::Persistent(path) => path,
+        }
+    }
+}
+
+/// The profile directory kept for a client that cannot be extended.
+///
+/// Under the router's own per-user directory, so it is neither the user's own
+/// client configuration — nothing about the #277 boundary changes — nor a
+/// shared `TMPDIR`, which removes the cross-user question issue #313 is about.
+fn persistent_profile_path(client: ClientKind, root: Option<&Path>) -> Result<PathBuf, AnyError> {
+    let root = match root {
+        Some(root) => root.to_path_buf(),
+        // An empty variable is unset, not configured (issue #340).
+        None => crate::env_paths::router_client_config_root()?,
+    };
+    Ok(root
+        .join("link-assistant-router/clients")
+        .join(client.canonical_name())
+        .join("home"))
+}
+
+fn persistent_profile(client: ClientKind, root: Option<&Path>) -> Result<PathBuf, AnyError> {
+    let path = persistent_profile_path(client, root)?;
+    fs::create_dir_all(&path)?;
+    set_directory_owner_only(&path)?;
+    Ok(path)
+}
+
+/// Whether this run layers the router's settings onto the user's normal
+/// configuration, rather than giving the client a directory of its own.
+///
+/// Claude now opts into extension explicitly. Its default is a persistent
+/// minimal Router profile so unrelated user settings cannot affect Router runs
+/// while onboarding and sessions still persist (issue #536).
+///
+/// A client the router can only point at the model by writing a file is
+/// isolated whatever was asked for, because the file is reachable only through
+/// the directory isolation provides. That is a fallback rather than an error:
+/// the user did not ask for isolation here, they asked to run a client, and
+/// this is the only way it can be run.
+///
+/// Two separate reasons a client cannot be extended, and both must be checked:
+/// it may set no connection variables at all, or it may set them and *still*
+/// need a router-written settings file — Gemini CLI does exactly that, so
+/// having both variables is not on its own enough to layer onto.
+const fn extends_user_configuration(
+    client: ClientKind,
+    isolated_config: bool,
+    extend_user_configuration: bool,
+) -> bool {
+    if isolated_config {
+        return false;
+    }
+    if matches!(client, ClientKind::ClaudeCode) {
+        return extend_user_configuration;
+    }
+    // Codex accepts repeatable global `-c key=TOML_VALUE` overlays before its
+    // subcommand. That gives it router connection settings while its real
+    // HOME/CODEX_HOME continues to supply sessions, MCP servers and preferences
+    // (issue #379), even though it has no base-url environment variable.
+    if matches!(client, ClientKind::Codex) {
+        return true;
+    }
+    if needs_a_written_configuration(client) {
+        return false;
+    }
+    let integration = client.integration();
+    integration.token_env.is_some() && integration.base_url_env.is_some()
+}
+
+/// Whether routing this client depends on a file the router writes.
+///
+/// Gemini CLI is pointed at the router by a `settings.json` selecting the
+/// API-key flow, which it resolves from `HOME`; without isolation that file is
+/// written where the client never looks, and the run silently keeps whatever
+/// the user's own settings said (issue #227).
+const fn needs_a_written_configuration(client: ClientKind) -> bool {
+    matches!(client, ClientKind::GeminiCli)
+}
+
+/// Everything one launch needs to be set up.
+///
+/// A struct rather than eight positional arguments: four of them are booleans
+/// and optional paths, and a caller swapping two would still compile.
+struct Preparation<'a> {
+    client: ClientKind,
+    base_url: &'a str,
+    token: &'a str,
+    model_override: Option<&'a str>,
+    models: &'a [RouterModel],
+    isolated_config: bool,
+    extend_user_configuration: bool,
+    one_shot: bool,
+    /// A Claude model the user chose in this environment, if they did.
+    ///
+    /// Resolved by the caller rather than read from the process environment
+    /// here, so a shell that exports `ANTHROPIC_MODEL` cannot change what a
+    /// test proves (issue #563).
+    user_model_selection: Option<&'a str>,
+    profile_root: Option<&'a Path>,
+    codex_reasoning_effort: Option<&'a str>,
+    codex_backend_base_url: Option<&'a str>,
+    ca_cert: Option<&'a Path>,
+    /// The settings file the user's own Claude reads, consulted for a saved
+    /// model only under `--extend-global-config`.
+    ///
+    /// Resolved by the caller for the same reason as `user_model_selection`:
+    /// read here, a unit test inherited the developer's real profile and its
+    /// saved model decided whether the test could pass (issue #613).
+    user_claude_settings: Option<&'a Path>,
+}
+
+impl TemporaryClient {
+    fn prepare(request: &Preparation<'_>) -> Result<Self, AnyError> {
+        let &Preparation {
+            client,
+            base_url,
+            token,
+            model_override,
+            models,
+            isolated_config,
+            extend_user_configuration,
+            one_shot,
+            user_model_selection,
+            profile_root,
+            codex_reasoning_effort,
+            codex_backend_base_url,
+            ca_cert,
+            user_claude_settings,
+        } = request;
+        // A client that can be extended never reads this directory — the
+        // router's whole contribution is two environment variables — so it is
+        // scratch and goes away. One that cannot is *living* here, and a
+        // directory thrown away after every run made every launch a first
+        // launch (issue #298).
+        let keeps_a_profile = !isolated_config
+            && !extends_user_configuration(client, false, extend_user_configuration);
+        if isolated_config && needs_a_written_configuration(client) {
+            // The flag changed nothing for this client: it is routed through a
+            // file the router writes and never uses the user's own directory.
+            // Accepting it silently left a script's author believing it had
+            // done something (issue #312).
+            eprintln!(
+                "note: {} is configured through a file the router writes, so it never uses your \
+                 own configuration directory; --isolated-config only makes its profile \
+                 disposable",
+                client.display_name()
+            );
+        }
+        let prefix = format!("link-assistant-router-with-{}-", std::process::id());
+        // The lease makes the cleanup decision independent of PID visibility:
+        // another concurrent wrapper cannot remove files this client has not
+        // opened yet, even in a restricted process environment.
+        let disposable = DisposableRunDirectory::create(&prefix)?;
+        let directory = if keeps_a_profile {
+            RunDirectory::Persistent(persistent_profile(client, profile_root)?)
+        } else {
+            RunDirectory::Disposable(disposable)
+        };
+        let manager = ClientManager::isolated(directory.path());
+        match client {
+            // A Router-directed Claude launch is configured entirely through its
+            // process environment and CLI settings. The profile belongs to
+            // Claude itself; Router creates only its directory (issue #536).
+            ClientKind::ClaudeCode => {}
+            ClientKind::GeminiCli => write_gemini_settings(&manager.config_path(client))?,
+            ClientKind::Cursor => {
+                return Err(client
+                    .setup_limitation()
+                    .unwrap_or("Cursor is unsupported")
+                    .into());
+            }
+            _ => {
+                manager.setup_with_codex_backend_and_model(
+                    client,
+                    base_url,
+                    models,
+                    codex_backend_base_url,
+                    model_override,
+                )?;
+            }
+        }
+        let integration = client.integration();
+        let mut command = crate::operation_context::command(integration.command);
+        if extends_user_configuration(client, isolated_config, extend_user_configuration) {
+            // Layer the router's connection settings on top of the user's own
+            // configuration rather than replacing it, so sessions and settings
+            // stay visible and a conversation started outside the router can be
+            // resumed through it (issue #233). For these clients the router's
+            // whole contribution is the two variables set below, so isolation
+            // was never needed for routing — only for isolation itself.
+        } else {
+            configure_isolation(&mut command, &manager, directory.path(), client, one_shot)?;
+        }
+        if let Some(token_env) = integration.token_env {
+            command.env(token_env, token);
+        }
+        if client == ClientKind::Codex
+            && let Some(alias) = crate::token::codex_token_alias(token)
+        {
+            command
+                .env("CODEX_ACCESS_TOKEN", &alias)
+                .env("CODEX_CONNECTORS_TOKEN", alias)
+                .env(
+                    "CODEX_AUTHAPI_BASE_URL",
+                    endpoint(base_url, "/api/services/codex"),
+                );
+        }
+        if let Some(base_env) = integration.base_url_env {
+            command.env(base_env, endpoint(base_url, integration.endpoint_suffix));
+        }
+        // Node augments its normal trust roots with this bundle and still
+        // performs the full certificate chain, validity, and SAN checks.
+        if let Some(ca_cert) = ca_cert {
+            command.env("NODE_EXTRA_CA_CERTS", ca_cert);
+        }
+        // How hard the client thinks is the user's setting, not the router's.
+        // A compile-time `xhigh` / `16384` applied to a user who never asked
+        // is not a neutral default — it is the most expensive one, chosen for
+        // someone who may be paying per token (issue #295). Setting nothing
+        // here leaves the client's own configuration in charge, and lets the
+        // user's `MAX_THINKING_TOKENS` or `OPENAI_REASONING_EFFORT` reach it
+        // through the inherited environment as it would without the router.
+        match client {
+            ClientKind::ClaudeCode => {
+                append_claude_model_picker(&mut command, models)?;
+                // Emptied rather than left alone: an inherited API key
+                // outranks the auth token, so the run would leave the router.
+                command
+                    .env("ANTHROPIC_API_KEY", "")
+                    .env("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1");
+                apply_claude_privacy_overlay(&mut command);
+                // Claude Code's built-in family aliases describe Anthropic
+                // models. A z.ai-only catalog pins the main/subagent pair and
+                // the families behind the Default row; the picker replaces its
+                // built-in family rows there, so no fake Opus/Sonnet/Haiku row
+                // is shown for the GLM id.
+                //
+                // A pin Router supplies is a *fallback* for a client that
+                // cannot resolve its own default, never an override of a choice
+                // the user made. `/model` is the documented way to choose a
+                // model, and a wrapper variable that outranked a saved
+                // selection was surprising in exactly the moment the user was
+                // being deliberate (issue #563). Both ways of having already
+                // chosen therefore suppress the pin: a value in this
+                // environment, and a default saved in the profile Claude reads.
+                let mut chosen_model = None;
+                let chosen_by_user = user_model_selection
+                    .map(|model| ClaudeModelSelection {
+                        model: model.to_string(),
+                        reason: format!("ANTHROPIC_MODEL={model}"),
+                    })
+                    .or_else(|| {
+                        // An invocation-level choice has already won before
+                        // preparation. The saved profile is authoritative only
+                        // when this invocation did not select a model (#585).
+                        if model_override.is_some() {
+                            return None;
+                        }
+                        claude_saved_model_selection(
+                            directory.path(),
+                            extends_user_configuration(
+                                client,
+                                isolated_config,
+                                extend_user_configuration,
+                            ),
+                            user_claude_settings,
+                        )
+                    })
+                    .inspect(|selection| chosen_model = Some(selection.model.clone()))
+                    .map(|selection| validate_claude_model_selection(selection, models))
+                    .transpose()?
+                    .flatten();
+                let gateway_model = crate::clients::claude_gateway_model(models, model_override);
+                let launched = chosen_model
+                    .as_deref()
+                    .or(model_override)
+                    .or(gateway_model.as_deref());
+                if let Some(warning) =
+                    claude_launch_model_warning(directory.path(), launched, models)
+                {
+                    eprintln!("{warning}");
+                }
+                // The picker's Default row is not the user's selection: Claude
+                // resolves it through its family variables, so an unpinned
+                // family on a z.ai-only catalog advertises an unauthorized
+                // Opus as the default (issue #630). It is pinned whether or
+                // not the user chose a model, and only to an authorized row.
+                // A catalog with Anthropic keeps the native family rows, so a
+                // GLM pin there would relabel one of them; it stays unpinned.
+                let replaces_family_rows = !models
+                    .iter()
+                    .any(|model| model.owned_by == crate::clients::ANTHROPIC_MODEL_OWNER);
+                if replaces_family_rows && let Some(gateway_model) = gateway_model.as_deref() {
+                    for key in crate::clients::CLAUDE_DEFAULT_ROW_ENV {
+                        let inherited = crate::operation_context::var(key).ok();
+                        let authorized = inherited
+                            .as_deref()
+                            .filter(|value| models.iter().any(|model| model.id == *value));
+                        command.env(key, authorized.unwrap_or(gateway_model));
+                    }
+                }
+                if let Some(reason) = chosen_by_user {
+                    eprintln!(
+                        "note: keeping your own Claude model selection ({reason}); Router is not \
+                         setting {}",
+                        crate::clients::CLAUDE_GATEWAY_TARGET_ENV.join(" or ")
+                    );
+                } else if let Some(gateway_model) = gateway_model {
+                    for key in crate::clients::CLAUDE_GATEWAY_TARGET_ENV {
+                        command.env(key, &gateway_model);
+                    }
+                }
+            }
+            ClientKind::GeminiCli => {
+                // `GEMINI_CLI_TRUST_WORKSPACE` is deliberately not set here.
+                // That prompt is the client's protection against being pointed
+                // at an unfamiliar checkout with file access, and answering it
+                // for a user who is sitting right there and could answer is
+                // not the router's call (issue #310). The non-interactive path
+                // sets it, because a batch run cannot answer a prompt.
+                command.env("GEMINI_DEFAULT_AUTH_TYPE", "gemini-api-key");
+            }
+            ClientKind::QwenCode => {
+                command.env("OPENAI_API_KEY", token).env(
+                    "OPENAI_BASE_URL",
+                    endpoint(base_url, integration.endpoint_suffix),
+                );
+                // Qwen Code reads its model from the environment and cannot
+                // start without one, so this is the client's requirement.
+                if let Some(model) = model_override {
+                    command.env("OPENAI_MODEL", model);
+                }
+            }
+            ClientKind::Codex => {
+                if !isolated_config {
+                    let catalog = write_codex_model_catalog(
+                        directory.path(),
+                        models,
+                        codex_reasoning_effort,
+                        model_override,
+                    )?;
+                    append_codex_router_overrides(
+                        &mut command,
+                        base_url,
+                        codex_backend_base_url,
+                        &catalog,
+                        crate::clients::codex_supports_websockets(models, model_override),
+                    )?;
+                }
+            }
+            ClientKind::GrokCli | ClientKind::Opencode | ClientKind::Agent | ClientKind::Cursor => {
+            }
+        }
+        Ok(Self {
+            directory,
+            command,
+            codex_bridge: None,
+        })
+    }
+
+    async fn launch(
+        mut self,
+        arguments: &[OsString],
+        profile: Option<&mut crate::claude_profile::ProfileSession>,
+    ) -> Result<std::process::ExitStatus, AnyError> {
+        let _codex_bridge = self.codex_bridge.take();
+        // Keep process-local configuration alive until the client has fully
+        // exited. Once `self.command` is moved into Tokio, the compiler may
+        // otherwise drop this now-unused field while the child is still
+        // starting and before it opens files such as Codex's model catalog.
+        let directory = self.directory;
+        debug_assert!(directory.path().is_dir());
+        self.command.args(arguments);
+        let program = self.command.get_program().to_string_lossy().into_owned();
+        crate::launcher_log::record(
+            "child_starting",
+            &format!("starting vendor executable {program}"),
+        );
+        crate::launcher_log::check()?;
+        crate::logging::event(format_args!("client_start program={program}"));
+        if let Some(context) = crate::operation_context::current() {
+            if let Some(profile) = profile {
+                profile.commit_launch(std::process::id())?;
+            }
+            crate::launcher_log::record(
+                "child_started",
+                "vendor handed to the structured process adapter",
+            );
+            let output = tokio::task::spawn_blocking(move || {
+                context.scope(|| {
+                    crate::operation_context::bounded_output(
+                        &mut self.command,
+                        context.process_deadline,
+                    )
+                })
+            })
+            .await??;
+            crate::logging::child_exit("client", None, output.status);
+            crate::operation_output::record(json!({
+                "client_exit_code": output.status.code(),
+                "stdout": String::from_utf8_lossy(&output.stdout),
+                "stderr": String::from_utf8_lossy(&output.stderr)
+            }));
+            crate::launcher_log::record(
+                "child_exited",
+                &format!("vendor exit status: {}", output.status),
+            );
+            drop(directory);
+            return Ok(output.status);
+        }
+        let shutdown = crate::shutdown::shutdown_signal();
+        let mut child = tokio::process::Command::from(self.command)
+            .kill_on_drop(true)
+            .spawn()
+            .map_err(|error| -> AnyError {
+            if error.kind() == std::io::ErrorKind::NotFound {
+                format!(
+                    "client executable `{program}` is not installed or not on PATH; install {program} and retry"
+                )
+                .into()
+            } else {
+                format!("could not launch {program}: {error}").into()
+            }
+        })?;
+        crate::launcher_log::record(
+            "child_started",
+            &format!("vendor process started: {:?}", child.id()),
+        );
+        if let Some(profile) = profile
+            && let Err(error) = profile.commit_launch(child.id().unwrap_or_else(std::process::id))
+        {
+            let _ = child.start_kill();
+            if let Ok(status) = child.wait().await {
+                crate::logging::child_exit("client", child.id(), status);
+            }
+            return Err(error);
+        }
+        let status = crate::logging::supervise(&mut child, shutdown).await;
+        match &status {
+            Ok(status) => crate::launcher_log::record(
+                "child_exited",
+                &format!("vendor exit status: {status}"),
+            ),
+            Err(error) => {
+                crate::launcher_log::record(
+                    "child_failed",
+                    &format!("vendor wait failed: {error}"),
+                );
+            }
+        }
+        drop(directory);
+        status
+    }
+}
+
+/// Apply privacy defaults that do not disable Claude Code's remote feature
+/// evaluation, while preserving every value the invoking user already owns.
+///
+/// The umbrella switch, `DISABLE_TELEMETRY`, and a truthy `DO_NOT_TRACK`
+/// disable the feature flags that gate tools such as `Monitor` in Claude Code
+/// 2.1.265. Router therefore never installs or clears them. The remaining
+/// controls are process-local defaults rather than persistent settings (issue
+/// #551).
+fn apply_claude_privacy_overlay(command: &mut Command) {
+    for key in CLAUDE_PRIVACY_DEFAULT_ENV {
+        if crate::operation_context::var_os(key).is_none() {
+            command.env(key, "1");
+        }
+    }
+
+    let blockers = CLAUDE_FEATURE_FLAG_BLOCKING_ENV
+        .into_iter()
+        .filter(|key| {
+            crate::operation_context::var_os(key).is_some_and(|value| {
+                if *key == "DO_NOT_TRACK" {
+                    value == "1" || value.eq_ignore_ascii_case("true")
+                } else {
+                    !value.is_empty()
+                }
+            })
+        })
+        .collect::<Vec<_>>();
+    if !blockers.is_empty() {
+        eprintln!(
+            "warning: inherited {} preserves your privacy choice but disables Claude Code \
+             feature-flag evaluation; feature-flag-gated tools such as `Monitor` may be \
+             unavailable; Router leaves the user-owned value unchanged",
+            blockers.join(" and ")
+        );
+    }
+}
+
+/// Overlay routing for an ordinary Codex run. Values after `-c` are TOML;
+/// JSON strings quote them safely while the token stays in the environment.
+fn append_codex_router_overrides(
+    command: &mut Command,
+    base_url: &str,
+    codex_backend_base_url: Option<&str>,
+    catalog: &Path,
+    supports_websockets: bool,
+) -> Result<(), AnyError> {
+    let provider_id = format!("link-assistant-run-{}", uuid::Uuid::new_v4().simple());
+    let provider_key = format!("model_providers.{provider_id}");
+    let provider_base_url = endpoint(
+        base_url,
+        crate::route_contract::service_base_path(crate::route_contract::ServiceKind::Codex),
+    );
+    let provider = format!(
+        "{{ name = {}, base_url = {}, wire_api = \"responses\", requires_openai_auth = true, \
+         supports_websockets = {supports_websockets}, supports_standalone_web_search = true }}",
+        serde_json::to_string("OpenAI")?,
+        serde_json::to_string(&provider_base_url)?,
+    );
+    for (key, value) in [
+        ("model_provider", provider_id),
+        ("model_catalog_json", catalog.to_string_lossy().into_owned()),
+        (provider_key.as_str(), provider),
+        (
+            "chatgpt_base_url",
+            codex_backend_base_url.map_or_else(
+                || endpoint(base_url, "/api/services/codex/backend-api"),
+                str::to_string,
+            ),
+        ),
+        (
+            "experimental_realtime_ws_base_url",
+            provider_base_url.clone(),
+        ),
+        (
+            "experimental_realtime_webrtc_call_base_url",
+            provider_base_url,
+        ),
+    ] {
+        let rendered = if key == provider_key.as_str() {
+            value
+        } else {
+            serde_json::to_string(&value)?
+        };
+        command.arg("-c").arg(format!("{key}={rendered}"));
+    }
+    Ok(())
+}
+
+/// Read the preference needed by Codex's process-local model picker without
+/// rewriting its real configuration.
+fn configured_codex_reasoning_effort() -> Result<Option<String>, AnyError> {
+    let path = ClientManager::from_env()?.config_path(ClientKind::Codex);
+    let source = match fs::read_to_string(&path) {
+        Ok(source) => source,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(error) => {
+            return Err(format!("could not read Codex config {}: {error}", path.display()).into());
+        }
+    };
+    let document = source.parse::<toml_edit::DocumentMut>().map_err(|error| {
+        format!(
+            "could not read `model_reasoning_effort` from Codex config {}: {error}",
+            path.display()
+        )
+    })?;
+    let Some(item) = document.get("model_reasoning_effort") else {
+        return Ok(None);
+    };
+    let effort = item
+        .as_str()
+        .filter(|effort| !effort.trim().is_empty())
+        .ok_or_else(|| {
+            format!(
+                "Codex config {} has a non-string or empty `model_reasoning_effort`",
+                path.display()
+            )
+        })?;
+    Ok(Some(effort.to_string()))
+}
+
+fn configure_isolation(
+    command: &mut Command,
+    manager: &ClientManager,
+    root: &Path,
+    client: ClientKind,
+    one_shot: bool,
+) -> Result<(), AnyError> {
+    match client.integration().isolation {
+        ClientIsolation::Home => {
+            command
+                .env("HOME", root)
+                .env_remove("CODEX_HOME")
+                .env_remove("QWEN_HOME");
+        }
+        ClientIsolation::ClaudeConfig => {
+            command.env("CLAUDE_CONFIG_DIR", root);
+        }
+        ClientIsolation::GeminiHome => {
+            // Gemini CLI resolves its settings as `<home>/.gemini/settings.json`,
+            // where `<home>` is `GEMINI_CLI_HOME` if set and `$HOME` otherwise.
+            // The router pointed `GEMINI_CLI_HOME` at the `.gemini` directory
+            // itself, so the CLI looked in `<root>/.gemini/.gemini/` — found no
+            // settings, fell back to the user's personal ones, and refused the
+            // run with `Invalid auth method selected.` (issue #227).
+            //
+            // Both variables therefore name the *root*, and `HOME` is overridden
+            // as well so nothing else the CLI stores escapes into the real home.
+            command.env("HOME", root).env("GEMINI_CLI_HOME", root);
+            // With auth fixed the next wall is the trusted-directory prompt,
+            // which a one-shot run cannot answer. That is the whole reason for
+            // pre-answering it — and the condition was never written into the
+            // code, so an interactive user, who is sitting right there and
+            // could answer, was answered for (issue #310).
+            if one_shot {
+                eprintln!(
+                    "note: answering Gemini CLI's workspace-trust prompt for this one-shot run; \
+                     an interactive run asks you instead"
+                );
+                command.env("GEMINI_CLI_TRUST_WORKSPACE", "true");
+            }
+        }
+        ClientIsolation::ConfigFile => {
+            let path = manager.config_path(client);
+            if client == ClientKind::Opencode {
+                command
+                    .env("OPENCODE_CONFIG", &path)
+                    .env("OPENCODE_CONFIG_DIR", path.parent().expect("config parent"));
+            } else {
+                command.env("HOME", root).env(
+                    "LINK_ASSISTANT_AGENT_CONFIG_CONTENT",
+                    fs::read_to_string(path)?,
+                );
+            }
+        }
+        ClientIsolation::Environment => {}
+        ClientIsolation::Unsupported => return Err("unsupported client isolation".into()),
+    }
+    Ok(())
+}
+
+fn endpoint(base_url: &str, suffix: &str) -> String {
+    format!("{}{}", base_url.trim_end_matches('/'), suffix)
+}
+
+fn write_gemini_settings(path: &Path) -> Result<(), AnyError> {
+    let contents = format!(
+        "{}\n",
+        serde_json::to_string_pretty(&json!({
+            "security": {"auth": {"selectedType": "gemini-api-key"}}
+        }))?
+    );
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    // Truncating, not `create_new`: an isolated run must be governed by the
+    // settings the router wrote. Deferring to a pre-existing file would let an
+    // inherited `oauth-personal` survive and fail the run (issue #227).
+    let mut options = OpenOptions::new();
+    options.create(true).truncate(true).write(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt as _;
+        options.mode(0o600);
+    }
+    let mut file = options.open(path)?;
+    file.write_all(contents.as_bytes())?;
+    Ok(())
+}
+
+#[cfg(test)]
+#[path = "with_command_tests.rs"]
+mod tests;
+
+#[cfg(test)]
+#[path = "with_command_presentation_tests.rs"]
+mod presentation_tests;
+
+#[cfg(test)]
+#[path = "with_command_codex_transport_tests.rs"]
+mod codex_transport_tests;
+
+#[cfg(test)]
+#[path = "with_command_codex_catalog_tests.rs"]
+mod codex_catalog_tests;
+
+#[cfg(test)]
+#[path = "with_command_ca_tests.rs"]
+mod ca_tests;
+
+#[cfg(test)]
+#[path = "with_command_profile_tests.rs"]
+mod profile_tests;
+
+#[cfg(test)]
+#[path = "with_command_sweep_tests.rs"]
+mod sweep_tests;
