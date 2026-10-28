@@ -42,3 +42,9 @@ ledger stays below the repository file-size limit.
   payloads, hygienic Some/None branches, scoped facts and seven full source equations.
   Catalog cases are drafted in units of at most six operations; all are UNRUN.
   Owned payloads, remaining readers/controls and all broader requirements stay OPEN.
+
+Dynamic JSON index source drafting reuses the existing source-checked field
+library for unsigned literal/conditional values, with fresh opening/closing
+input joins and unchanged constant/standalone paths. Both authority cases,
+full original/CST inverses and two-phase equations are drafted but UNRUN;
+see [the source contract](vector-json-dynamic-index-source-draft.md).

@@ -753,3 +753,9 @@ Join actual source/lowered standard Option owners and payload fields; a type nam
 or copied flag is DATA. Keep Some facts/payload bindings branch-local, preserve
 complete branch/effect order and reject unguarded extraction. Seven full source
 equations and all catalog batches are UNRUN; broader qualification remains OPEN.
+
+Dynamic JSON index source drafting reuses the existing source-checked field
+library for unsigned literal/conditional values, with fresh opening/closing
+input joins and unchanged constant/standalone paths. Both authority cases,
+full original/CST inverses and two-phase equations are drafted but UNRUN;
+see [the source contract](vector-json-dynamic-index-source-draft.md).

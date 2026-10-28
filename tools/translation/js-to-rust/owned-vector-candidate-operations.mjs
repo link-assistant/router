@@ -160,7 +160,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath,nativeJsonSource=f
  const program=checkOwnedCoreProgram(input),rust=target==='rust';if(!rust&&target!=='typescript')fail('unknown target');if(nativeJsonSource!==false&&nativeJsonSource!==true)fail('native JSON emission mode must be explicit boolean data');if(nativeJsonSource&&(!rust||!program.length||program.some(item=>!isJsonVector(item))))fail('native JSON emission requires a nonempty privately rechecked canonical JSON vector program');if(!program.length)return '';
  const context=issued.get(program[0]).context;requireOwnedCoreSourceCurrent(context);const sourceData=ownedCoreSourceData(context),rustTypes=sourceData.primitiveOperators===true?{...RUST_TYPES,...primitiveBitwiseRustTypes}:RUST_TYPES;
  if(program.some(item=>issued.get(item).context!==context))fail('mixed receiving contexts');
- let sequence=0;const imports=new Set(),primitiveTypeImports=new Set();
+ let sequence=0,nativeDynamicIndexFields=false;const imports=new Set(),primitiveTypeImports=new Set();
  const jsonCopy=nativeJsonSource?'crate::translation_json_core::json_checked_copy':'__ro_copy',jsonUpdate=nativeJsonSource?'crate::translation_json_core::json_checked_with_field':'__ro_with_field',jsonValidate=nativeJsonSource?'crate::translation_json_core::json_validate':'__ro_domain';
  function publicTypeScriptType(type){if(sourceData.primitiveOperators===true&&primitiveBitwiseType(type)){const row=primitiveBitwiseType(type);primitiveTypeImports.add(row.alias);return row.alias;}if(type==='json-option-input'){imports.add('router_core_json_option_as_str');return TS_TYPES[type];}const witness=ownedJsonReaderTypeWitness(type);if(witness){imports.add(witness);return 'ReturnType<typeof __ro_'+witness+'>';}return TS_TYPES[type];}
 
@@ -238,7 +238,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath,nativeJsonSource=f
     else if(value.name==='json_macro_i64')call='::serde_json::Value::from(i64::try_from('+args[0]+').expect("owned reverse i64 bound"))';
     else if(op.rust==='json_copy')call=jsonCopy+'('+args.join(', ')+')';
     else if(op.rust==='json_with_field')call=jsonUpdate+'('+args.join(', ')+')';
-    else if(nativeJsonSource&&op.rust==='json_index_usize'){const index=nativeIndexConstant(value.args[1]);if(index===null)fail('native JSON index requires its actual source-profile constant usize rule; dynamic conversion remains open');const binding=lines.findIndex(line=>line.startsWith('let '+names[1]+' = '));if(binding<0)fail('actual integer argument binding required');lines[binding]='let '+names[1]+' = '+index+'_usize;';call='crate::translation_core::json_index_usize('+args.join(', ')+')';}
+    else if(nativeJsonSource&&op.rust==='json_index_usize'){const index=nativeIndexConstant(value.args[1]);if(index===null){if(sourceData.primitiveOperators===true)fail('dynamic native usize primitive input requires its separately checked conversion rule');if(!nativeDynamicIndexFields){requireOwnedVectorJsonFieldSources(new Map(sourceData.files.map(row=>[row.path,row.source])),sourceData);nativeDynamicIndexFields=true;}call='crate::translation_json_fields_core::json_index_or_null('+args.join(', ')+')';}else{const binding=lines.findIndex(line=>line.startsWith('let '+names[1]+' = '));if(binding<0)fail('actual integer argument binding required');lines[binding]='let '+names[1]+' = '+index+'_usize;';call='crate::translation_core::json_index_usize('+args.join(', ')+')';}}
     else if(op.rust==='json_index_usize')call='match usize::try_from('+args[1]+') { Ok(index) => crate::translation_core::json_index_usize('+args[0]+', index), Err(_) => &::serde_json::Value::Null }';
     else call='crate::translation_core::'+op.rust+'('+args.join(', ')+')';
     return '{ '+lines.join(' ')+' '+call+' }';
@@ -266,6 +266,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath,nativeJsonSource=f
   return signature+parameters+')'+(rust?' -> ':': ')+returns+' {\n'+(ownedBase64InputPrelude(item,rust)?ownedBase64InputPrelude(item,rust)+'\n':'')+(isJsonVector(item)?jsonVectorInputPrelude(item,rust,imports,{nativeJsonSource})+'\n':vectorParameterPrelude(item,rust)?vectorParameterPrelude(item,rust)+'\n':'')+body(item.body,4)+'\n}';
  }).join('\n\n');
  requireOwnedCoreSourceCurrent(context);
+ if(nativeDynamicIndexFields)requireOwnedVectorJsonFieldSources(new Map(ownedCoreSourceData(context).files.map(row=>[row.path,row.source])),sourceData);
  if(rust)return (nativeJsonSource?'':RUST_SUPPORT+'\n\n')+code+'\n';
  const output=outputPath??program[0].source.path,relative=name=>{const path=posix.relative(posix.dirname(output),sourceData.runtimeRoot+'/'+name);return path.startsWith('.')?path:'./'+path;};
  const vectorText=program.some(item=>item.vectorOrigin&&item.params.some(param=>['text-owned','str-static'].includes(param.type)));
@@ -380,4 +381,4 @@ import {BOUNDED_JSON_RUNTIME_OPERATIONS} from './bounded-json-runtime-operations
 
 import {nativeJsonPredicateSource} from './owned-vector-json-predicate-native.mjs';
 
-import {ownedVectorJsonFieldOperation,emitOwnedVectorJsonFieldCall,evaluateOwnedJsonFieldCall} from './owned-vector-json-fields.mjs';
+import {ownedVectorJsonFieldOperation,emitOwnedVectorJsonFieldCall,evaluateOwnedJsonFieldCall,requireOwnedVectorJsonFieldSources} from './owned-vector-json-fields.mjs';
