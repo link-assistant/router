@@ -94,3 +94,28 @@ pub fn json_build_array(value: ::std::vec::Vec<::serde_json::Value>) -> ::serde_
 pub fn json_build_object() -> ::serde_json::Value {
     ::serde_json::Value::Object(::serde_json::Map::new())
 }
+
+/// Build an object in one insertion pass without repeated whole-object copies.
+#[must_use]
+pub fn json_build_fields(
+    keys: &::serde_json::Value,
+    values: ::std::vec::Vec<::serde_json::Value>,
+) -> ::serde_json::Value {
+    json_validate(keys);
+    let values = ::serde_json::Value::Array(values);
+    json_validate(&values);
+    let keys = keys.as_array().expect("canonical object keys must be an array");
+    let ::serde_json::Value::Array(values) = values else {
+        unreachable!("known canonical array constructor");
+    };
+    assert_eq!(keys.len(), values.len(), "canonical object field arity");
+    let mut result = ::serde_json::Map::new();
+    for (key, value) in keys.iter().zip(values) {
+        let key = key.as_str().expect("canonical object keys must be strings");
+        assert!(!result.contains_key(key), "duplicate canonical object key");
+        result.insert(::std::borrow::ToOwned::to_owned(key), value);
+    }
+    let result = ::serde_json::Value::Object(result);
+    json_validate(&result);
+    result
+}

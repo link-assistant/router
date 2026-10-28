@@ -44,3 +44,13 @@ export const router_vector_json_build_u64=value=>json_macro_u64(value);
 export const router_vector_json_build_i64=value=>json_macro_i64(value);
 export const router_vector_json_build_array=value=>json_macro_array(value);
 export const router_vector_json_build_object=()=>json_macro_object([]);
+
+// Bulk construction validates both complete inputs before checking field layout.
+export function router_vector_json_build_fields(keys,values){
+ const names=json_macro_value(keys),items=json_macro_array(values);
+ if(names.$!=='Array'||names.field0.length!==items.field0.length)throw new TypeError('Canonical object field arity differs');
+ const entries=[],seen=new Set();for(let index=0;index<names.field0.length;index++){
+  const key=names.field0[index];if(key.$!=='String'||seen.has(key.field0))throw new TypeError('Canonical object keys must be distinct strings');seen.add(key.field0);entries.push([key.field0,items.field0[index]]);
+ }
+ return json_macro_object(entries);
+}

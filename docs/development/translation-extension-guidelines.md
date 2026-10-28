@@ -704,3 +704,9 @@ Seven paired native/script constructors retain actual caller/module/feature/type
 joins and consume an owned JSON vector once. Eight compiler equations and one
 native helper history successor preserve all original pins. All cases/oracles are
 UNRUN; reverse constructor integration and all delivery obligations remain OPEN.
+
+Bulk canonical JSON object draft: [source boundary](bounded-json-object-fields-source-draft.md).
+A shared keys/owned values constructor builds each map once and preserves the full
+4095-field valid domain. Eight compiler equations and a full native helper history
+successor retain original pins. All cases/oracles remain UNRUN; reverse constructor
+integration, complete synchronization and all delivery requirements remain OPEN.

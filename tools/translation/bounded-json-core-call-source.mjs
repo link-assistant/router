@@ -56,6 +56,7 @@ const operations=freezeBoundedJsonCore([
  Object.freeze({name:'json_build_i64',id:'router_vector_json_build_i64',params:[{...fixed(64,true),rustPrimitiveName:'i64',rustSourceType:true}],ret:JSON_TYPES.value}),
  Object.freeze({name:'json_build_array',id:'router_vector_json_build_array',params:[sourceVector(JSON_TYPES.value)],ret:JSON_TYPES.value}),
  Object.freeze({name:'json_build_object',id:'router_vector_json_build_object',params:[],ret:JSON_TYPES.value}),
+ Object.freeze({name:'json_build_fields',id:'router_vector_json_build_fields',params:[sourceShared(JSON_TYPES.value),sourceVector(JSON_TYPES.value)],ret:JSON_TYPES.value}),
  Object.freeze({name:'json_checked_copy',id:'router_vector_json_copy',params:[sourceShared(JSON_TYPES.value)],ret:JSON_TYPES.value}),
  Object.freeze({name:'json_checked_with_field',id:'router_vector_json_with_field',params:[sourceShared(JSON_TYPES.value),SOURCE_STR,sourceShared(JSON_TYPES.value)],ret:JSON_TYPES.value}),
 ]);

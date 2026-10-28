@@ -19,3 +19,5 @@ export declare function router_vector_json_build_u64(value: bigint): JsonValue;
 export declare function router_vector_json_build_i64(value: bigint): JsonValue;
 export declare function router_vector_json_build_array(value: readonly JsonValue[]): JsonValue;
 export declare function router_vector_json_build_object(): JsonValue;
+
+export declare function router_vector_json_build_fields(keys: JsonValue,values: readonly JsonValue[]): JsonValue;
