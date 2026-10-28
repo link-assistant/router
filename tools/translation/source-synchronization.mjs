@@ -208,3 +208,5 @@ export {proposeCoreFixedTypesCorpus} from './migrate-core-fixed-types.mjs';
 export {proposeOwnedVectorModuleReinput} from './js-to-rust/owned-vector-module-reinput.mjs';
 
 export {proposeOwnedVectorNativeSynchronization} from './js-to-rust/owned-vector-native-synchronization.mjs';
+
+export {prepareOwnedVectorJavaScriptPair} from './js-to-rust/owned-vector-javascript-pair.mjs';

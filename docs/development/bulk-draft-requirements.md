@@ -895,3 +895,9 @@ composes checked bool condition trees with every primitive return leaf and
 independently projects the fresh native tree before proposing source. Three
 source equations, independent receiving/refusal source and a CI-only Rust oracle
 are UNRUN. All broader synchronization and delivery requirements remain OPEN.
+
+The [JavaScript-authority vector draft](vector-javascript-pair-source-draft.md)
+adds actual AST-selected header type transplantation, whole original pair
+rechecking and one explicit JS or TS authority through existing vector source
+proposals. Four source equations and independent authority/domain/header/import/
+refusal cases are UNRUN. Full native installation and broader delivery remain OPEN.
