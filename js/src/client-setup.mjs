@@ -6,7 +6,7 @@ import {setupClientJSON,removeClientJSON} from './client-json.mjs';
 import {nativeClientStatus} from './client-status.mjs';
 import {clientFileTransaction} from './client-transaction.mjs';
 import {selectedManagedTarget} from './managed-server.mjs';
-const implementedClients=new Set(['opencode','agent','qwen','grok']);
+const implementedClients=new Set(['opencode','agent','qwen','grok','claude','codex']);
 const completeBinding=(claims,client)=>{
   if(claims.client_kind!==client || typeof claims.principal_id!=='string' || !claims.principal_id.trim() || typeof claims.sub!=='string' || !claims.sub) throw clientFailure('Supplied token requires the exact canonical managed-client binding and subscriber principal');
   return {token_id:claims.sub,principal_id:claims.principal_id};
@@ -23,7 +23,7 @@ const metadataPath=paths=>preferredClientPath(paths.metadata,paths.legacyMetadat
 export async function setupNativeClient({options,invocation={},core,env={},fetch,checkpoint}={}) {
   const paths=clientPaths(options.client,{home:options.home,env,cwd:invocation.cwd}),{info}=paths;
   if(info.unsupported) throw clientFailure(info.unsupported);
-  if(!implementedClients.has(info.client)) throw clientFailure('Native Claude/Codex persistent writer contracts are not implemented');
+  if(!implementedClients.has(info.client)) throw clientFailure('This client does not support persistent Router configuration');
   if(await optionalClientText(paths.config+'.with-router-state.json')!==null) throw clientFailure('Reversible global client state requires the full undo-state contract; existing setup preserved');
   if(options.management_server) throw clientFailure('Native remote client issuance and proof-of-possession are not implemented');
   if(!options.base_url && await selectedManagedTarget({name:'clients.setup',config:core.config,env,cwd:invocation.cwd})) throw clientFailure('clients setup mints locally; a selected remote Router requires configure or an explicit base URL');
@@ -52,7 +52,7 @@ export async function setupNativeClient({options,invocation={},core,env={},fetch
     let backup;
     const result=await clientFileTransaction(paths,async txn=>{
       await txn.verify(paths.config);if(paths.marker) await txn.verify(paths.marker);
-      const configured=info.client==='grok' ? {path:paths.config,backup:null,changed:false} : await setupClientJSON(paths,origin+info.suffix,catalog,{onWrite:async(path,result)=>{if(result?.backup) setupBackup=result.backup;await txn.advance([path]);}});backup=configured.backup;
+      const configured=info.client==='grok' ? {path:paths.config,backup:null,changed:false} : await (['claude','codex'].includes(info.client)?setupPersistentClient:setupClientJSON)(paths,origin+info.suffix,catalog,{onWrite:async(path,result)=>{if(result?.backup) setupBackup=result.backup;await txn.advance([path]);}});backup=configured.backup;
       await txn.checkpoint('config');await txn.verify(txn.environment);await writeClientEnvironment(paths,origin,token);await txn.advance([txn.environment]);
       await txn.checkpoint('environment');await txn.verify(txn.metadata);
       record.config_sha256=createHash('sha256').update(await optionalClientText(paths.config) ?? '').digest('hex');await writeClientMarker(txn.metadata,record);await txn.advance([txn.metadata]);await txn.checkpoint('metadata');return configured;
@@ -62,7 +62,7 @@ export async function setupNativeClient({options,invocation={},core,env={},fetch
 }
 export async function removeNativeClient({options,invocation={},core,env={},checkpoint}={}) {
   const paths=clientPaths(options.client,{home:options.home,env,cwd:invocation.cwd}),{info}=paths;
-  if(!implementedClients.has(info.client)) throw clientFailure('Native persistent removal for this client is not implemented');
+  if(!implementedClients.has(info.client)) throw clientFailure('This client does not support persistent Router removal');
   if(await optionalClientText(paths.config+'.with-router-state.json')!==null) throw clientFailure('Reversible global client state requires the full undo-state contract; existing setup preserved');
   const path=await metadataPath(paths),source=await optionalClientText(path),record=source===null ? null : clientObject(source,'Ownership metadata');
   if(record && (![info.client,info.legacy].includes(record.client) || !['minted','supplied'].includes(record.source))) throw clientFailure('Invalid managed credential metadata');
@@ -76,9 +76,11 @@ export async function removeNativeClient({options,invocation={},core,env={},chec
     }
   }
   const result=await clientFileTransaction(paths,async txn=>{
-    const removed=info.client==='grok' ? {path:paths.config,backup:null,changed:false} : await removeClientJSON(paths,{onWrite:path=>txn.advance([path])});
+    const removed=info.client==='grok' ? {path:paths.config,backup:null,changed:false} : await (['claude','codex'].includes(info.client)?removePersistentClient:removeClientJSON)(paths,{onWrite:path=>txn.advance([path])});
     await txn.checkpoint('config');await txn.verify(txn.environment);await removeClientFile(txn.environment);await txn.advance([txn.environment]);
     await txn.verify(txn.metadata);await removeClientFile(txn.metadata);await txn.advance([txn.metadata]);await txn.checkpoint('metadata');return removed;
   },{checkpoint});
   return {output:[`Removed Router configuration for ${info.client}`,...(result.backup ? [`backup: ${result.backup}`] : [])]};
 }
+
+import {setupPersistentClient,removePersistentClient} from './client-persistent.mjs';

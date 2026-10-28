@@ -1,6 +1,6 @@
-// GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=54d74abe9c1a187693ee5776a2a0d061984b3757c9e44e9694d80056a5c6f543; dynamic any annotations are explicit draft gaps.
-import TOML from '@iarna/toml';
+// SOURCE DRAFT: paired client changes from complete substitution rules.
+// Canonical meta regeneration and all new verification remain deferred.
+import {parseClientTomlSource} from './client-toml-cst.js';
 import { clientPaths, optionalClientText, preferredClientPath, clientObject, readClientEnvironment, clientCommandExists, clientFailure } from "./client-files.js";
 const modelKeys: Array<string> = ['ANTHROPIC_MODEL', 'ANTHROPIC_DEFAULT_OPUS_MODEL', 'ANTHROPIC_DEFAULT_SONNET_MODEL', 'ANTHROPIC_DEFAULT_HAIKU_MODEL', 'CLAUDE_CODE_SUBAGENT_MODEL'];
 const claudePrecedence: Array<string> = ['ANTHROPIC_AUTH_TOKEN', 'ANTHROPIC_API_KEY', ...modelKeys, 'CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY', 'CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC'];
@@ -16,7 +16,7 @@ catch {
 function publicDocument(client?: any, source?: any): any {
     if (client === 'codex') {
         try {
-            return TOML.parse(source ?? '');
+            return parseClientTomlSource(source ?? '');
         }
         catch {
             throw clientFailure('Client configuration contains invalid TOML');
@@ -28,7 +28,7 @@ function publicBase(paths?: any, document?: any, environment?: any, env?: any): 
     switch (paths.info.client) {
         case 'codex': {
             const provider: any = document.model_providers?.['link-assistant'];
-            return document.model_provider === 'link-assistant' && provider?.wire_api === 'responses' && provider?.env_key === 'LINK_ASSISTANT_TOKEN' ? text(provider.base_url) : null;
+            return document.model_provider === 'link-assistant' && provider?.wire_api === 'responses' && (provider?.env_key === 'LINK_ASSISTANT_TOKEN'||provider?.requires_openai_auth === true) ? text(provider.base_url) : null;
         }
         case 'claude': return text(document.env?.ANTHROPIC_BASE_URL);
         case 'opencode':

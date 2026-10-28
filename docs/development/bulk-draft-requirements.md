@@ -640,3 +640,11 @@ shares actual source-language selection across the existing native source-copy
 constructor, lexical binding checks and CST histories. Four equations and unrun
 JS/TS/MTS/CTS/Unicode/native-owner/inverse/export cases are drafted. Strict target
 checks, namespace/production/sync/parity/receiving/delivery remain OPEN.
+
+The [persistent native client source draft](native-client-persistent-source-draft.md)
+adds actual paired Claude/Codex writers and conditional restoration through the
+existing private transaction, plus a lossless TOML CST field editor and canonical
+provider status. Nine source equations/four native implementation inputs and
+independent unrun JS/strict TS/native/ownership/rollback/CST/export cases are
+drafted. Remote/global undo/loopback/legacy catalog and wider native/translation/
+sync/freshness/parity/receiving/delivery requirements remain OPEN.

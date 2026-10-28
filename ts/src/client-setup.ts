@@ -1,5 +1,5 @@
-// GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=ba358b5f259a1ae3318537a771003f2c959e5931a904c2466668dc67c66d8614; dynamic any annotations are explicit draft gaps.
+// SOURCE DRAFT: paired client changes from complete substitution rules.
+// Canonical meta regeneration and all new verification remain deferred.
 import { createHash } from 'node:crypto';
 import { clientPaths, clientFailure, clientObject, optionalClientText, preferredClientPath, readClientEnvironment, writeClientEnvironment, writeClientMarker, removeClientFile } from "./client-files.js";
 import { fetchNativeClientCatalog, clientRouterOrigin } from "./client-catalog.js";
@@ -7,7 +7,7 @@ import { setupClientJSON, removeClientJSON } from "./client-json.js";
 import { nativeClientStatus } from "./client-status.js";
 import { clientFileTransaction } from "./client-transaction.js";
 import { selectedManagedTarget } from "./managed-server.js";
-const implementedClients: Set<string> = new (Set as any)(['opencode', 'agent', 'qwen', 'grok']);
+const implementedClients: Set<string> = new (Set as any)(['opencode', 'agent', 'qwen', 'grok', 'claude', 'codex']);
 const completeBinding: any = (claims?: any, client?: any): any => {
     if (claims.client_kind !== client || typeof claims.principal_id !== 'string' || !claims.principal_id.trim() || typeof claims.sub !== 'string' || !claims.sub)
         throw clientFailure('Supplied token requires the exact canonical managed-client binding and subscriber principal');
@@ -40,7 +40,7 @@ export async function setupNativeClient({ options, invocation = {}, core, env = 
     if (info.unsupported)
         throw clientFailure(info.unsupported);
     if (!implementedClients.has(info.client))
-        throw clientFailure('Native Claude/Codex persistent writer contracts are not implemented');
+        throw clientFailure('This client does not support persistent Router configuration');
     if (await optionalClientText(paths.config + '.with-router-state.json') !== null)
         throw clientFailure('Reversible global client state requires the full undo-state contract; existing setup preserved');
     if (options.management_server)
@@ -89,7 +89,7 @@ export async function setupNativeClient({ options, invocation = {}, core, env = 
             await (txn.verify as any)(paths.config);
             if (paths.marker)
                 await (txn.verify as any)(paths.marker);
-            const configured: any = info.client === 'grok' ? { path: paths.config, backup: null, changed: false } : await setupClientJSON(paths, origin + info.suffix, catalog, { onWrite: async (path?: any, result?: any): Promise<void> => { if (result?.backup)
+            const configured: any = info.client === 'grok' ? { path: paths.config, backup: null, changed: false } : await (['claude','codex'].includes(info.client)?setupPersistentClient:setupClientJSON)(paths, origin + info.suffix, catalog, { onWrite: async (path?: any, result?: any): Promise<void> => { if (result?.backup)
                     (setupBackup as any) = result.backup; await (txn.advance as any)([path]); } });
             (backup as any) = configured.backup;
             await (txn.checkpoint as any)('config');
@@ -117,7 +117,7 @@ export async function setupNativeClient({ options, invocation = {}, core, env = 
 export async function removeNativeClient({ options, invocation = {}, core, env = {}, checkpoint }: any = {}): Promise<any> {
     const paths: any = clientPaths(options.client, { home: options.home, env, cwd: invocation.cwd }), { info }: any = paths;
     if (!implementedClients.has(info.client))
-        throw clientFailure('Native persistent removal for this client is not implemented');
+        throw clientFailure('This client does not support persistent Router removal');
     if (await optionalClientText(paths.config + '.with-router-state.json') !== null)
         throw clientFailure('Reversible global client state requires the full undo-state contract; existing setup preserved');
     const path: any = await metadataPath(paths), source: any = await optionalClientText(path), record: any = source === null ? null : clientObject(source, 'Ownership metadata');
@@ -139,7 +139,7 @@ export async function removeNativeClient({ options, invocation = {}, core, env =
         }
     }
     const result: any = await clientFileTransaction(paths, async (txn?: any): Promise<any> => {
-        const removed: any = info.client === 'grok' ? { path: paths.config, backup: null, changed: false } : await removeClientJSON(paths, { onWrite: (path?: any): any => (txn.advance as any)([path]) });
+        const removed: any = info.client === 'grok' ? { path: paths.config, backup: null, changed: false } : await (['claude','codex'].includes(info.client)?removePersistentClient:removeClientJSON)(paths, { onWrite: (path?: any): any => (txn.advance as any)([path]) });
         await (txn.checkpoint as any)('config');
         await (txn.verify as any)(txn.environment);
         await removeClientFile(txn.environment);
@@ -152,3 +152,5 @@ export async function removeNativeClient({ options, invocation = {}, core, env =
     }, { checkpoint });
     return { output: [`Removed Router configuration for ${info.client}`, ...(result.backup ? [`backup: ${result.backup}`] : [])] };
 }
+
+import {setupPersistentClient,removePersistentClient} from './client-persistent.js';
