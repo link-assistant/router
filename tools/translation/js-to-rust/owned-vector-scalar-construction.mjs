@@ -1,6 +1,6 @@
 // Native AST source DATA only; the receiving checker retains every Rust origin,
 // paired TypeScript, integer-domain and fresh private reissuance obligation.
-export function readOwnedVectorScalarConstruction({ts,checker,statements,readLiteral}){
+export function readOwnedVectorScalarConstruction({ts,checker,statements,readLiteral,inputs=[]}){
  const fail=message=>{throw new TypeError('Owned reverse vector array-literal: '+message);};
  let work=0,bindings=0;const charge=()=>{if(++work>20000)fail('source work bound');};
  const unparen=node=>{let depth=0;while(ts.isParenthesizedExpression(node)){if(++depth>64)fail('source grouping bound');node=node.expression;}return node;};
@@ -23,5 +23,5 @@ export function readOwnedVectorScalarConstruction({ts,checker,statements,readLit
   }
   fail('complete final array-literal return required');
  }
- return body(statements,new Map(),0);
+ return body(statements,new Map(inputs),0);
 }

@@ -557,3 +557,9 @@ The [fresh repeated-vector origin draft](vector-repeat-origin-source-draft.md)
 composes bounded immutable scalar seed bindings with the existing privately
 checked original array tail. Three complete source equations and independent
 reverse/type/refusal cases remain UNRUN; full translation and delivery stay OPEN.
+
+The [primitive vector parameter draft](vector-parameters-source-draft.md) extends
+the explicit reverse candidate to fresh Rust scalar arguments, exact JS/TS symbol
+pairs and emitted/evaluator bounds without implicit narrowing. Six complete
+compiler equations and independent source/type/strict TS/meta/refusal cases remain
+UNRUN. Broader translation, synchronization and all delivery rows stay OPEN.

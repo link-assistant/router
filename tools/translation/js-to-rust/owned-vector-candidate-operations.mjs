@@ -241,12 +241,12 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  const code=program.map(item=>{
   const borrowed=type=>['json-ref','map-ref','str','bytes-ref','base64-error-ref','json-option-input'].includes(type)||ownedJsonBorrowed(type),loan=borrowed(item.returns),explicit=loan&&item.resultRoot!==null&&item.params.filter(param=>borrowed(param.type)).length>1;
   const parameters=item.params.map(param=>{
-   const type=rust?rustTypes[param.type].replace("'a ",explicit&&param.name===item.resultRoot?"'a ":''):publicTypeScriptType(param.type);
+   const type=item.vectorOrigin?(rust?'::core::primitive::'+param.type:param.type==='bool'?'boolean':'bigint'):(rust?rustTypes[param.type].replace("'a ",explicit&&param.name===item.resultRoot?"'a ":''):publicTypeScriptType(param.type));
    return (rust?param.rust:param.name)+': '+type;
   }).join(', ');
   const returns=rust?rustTypes[item.returns].replace("'a ",item.resultRoot===null?"'static ":explicit?"'a ":''):publicTypeScriptType(item.returns);
   const signature=rust?'#[must_use]\n#[rustfmt::skip]\n'+(item.exported?'pub ':'')+'fn '+item.name+(explicit?"<'a>":'')+'(':(item.exported?'export ':'')+'function '+item.javascript+'(';
-  return signature+parameters+')'+(rust?' -> ':': ')+returns+' {\n'+(ownedBase64InputPrelude(item,rust)?ownedBase64InputPrelude(item,rust)+'\n':'')+body(item.body,4)+'\n}';
+  return signature+parameters+')'+(rust?' -> ':': ')+returns+' {\n'+(ownedBase64InputPrelude(item,rust)?ownedBase64InputPrelude(item,rust)+'\n':'')+(vectorParameterPrelude(item,rust)?vectorParameterPrelude(item,rust)+'\n':'')+body(item.body,4)+'\n}';
  }).join('\n\n');
  requireOwnedCoreSourceCurrent(context);
  if(rust)return RUST_SUPPORT+'\n\n'+code+'\n';
@@ -311,10 +311,10 @@ export async function prepareOwnedCoreRuntime(input){
 export function evaluateOwnedCoreProgram(input,name,args,token){
  const program=checkOwnedCoreProgram(input),state=runtimes.get(token);if(!state||!isDeepStrictEqual(state.program,program))fail('unissued runtime/program');
  const item=program.find(item=>item.name===name||item.javascript===name);if(!item||!Array.isArray(args)||args.length!==item.params.length)fail('actual arguments differ');
- const env=ownedBase64InputEnvironment(item.params,args,state.modules);
+ const env=ownedBase64InputEnvironment(item.params,args,state.modules);validateVectorParameters(item,env);
  const get=(value,scope)=>{
   switch(value.kind){
-   case 'owned-vector-list':return evaluateOwnedVectorCandidateLiteral(value);
+   case 'owned-vector-list':return evaluateOwnedVectorCandidateLiteral(value,scope);
    case 'variable':return scope.get(value.name);
    case 'string':case 'bool':return value.value;
    case 'integer':return BigInt(value.value);
@@ -348,3 +348,5 @@ import {ownedPrimitiveOperatorOperation} from './owned-primitive-operator-source
 import {emitOwnedPrimitiveOperatorCall,evaluateOwnedPrimitiveOperatorCall} from './owned-primitive-operator-emission.mjs';
 
 import {ownedBase64InputPrelude,ownedBase64InputEnvironment,hasOwnedBase64Input} from './owned-base64-inputs.mjs';
+
+import {validateVectorParameters,vectorParameterPrelude} from './owned-vector-parameter-values.mjs';
