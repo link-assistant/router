@@ -73,19 +73,22 @@ import {emitOwnedVectorText} from './owned-vector-text-literal.mjs';
 const jsonFail=message=>{throw new TypeError('Owned vector native JSON control: '+message);};
 function jsonControlFrame(item){
  if(item.vectorOrigin?.kind!=='json-vector'||item.returns!=='json-list-owned'||item.params.some(row=>!['json','json-ref','bool'].includes(row.type)))jsonFail('actual canonical JSON vector profile required');
- let work=0,leaves=0;return {charge(depth=0){if(++work>20000||depth>64)jsonFail('bounded complete JSON body required');},leaf(){if(++leaves>64)jsonFail('bounded complete JSON branches required');}};
+ let work=0,leaves=0;return {charge(depth=0){if(++work>100000||depth>64)jsonFail('bounded complete JSON body required');},leaf(){if(++leaves>64)jsonFail('bounded complete JSON branches required');}};
 }
-const jsonEvent=(events,operation,args)=>{if(events.length>=4096)jsonFail('bounded ordered JSON effects required');const value=['effect',events.length];events.push([operation,args]);return value;};
+const jsonEvent=(events,operation,args)=>{if(events.length>=16384)jsonFail('bounded ordered JSON effects required');const value=['effect',events.length];events.push([operation,args]);return value;};
 function requestedJsonExpression(node,env,events,guard,borrow=false,depth=0){
  guard.charge(depth);if(!node)jsonFail('complete checked receiving expression required');
  if(node.kind==='variable'){if(!env.has(node.name))jsonFail('actual lexical receiving binder required');const value=env.get(node.name);return node.type==='json'&&!borrow?jsonEvent(events,'copy',[value]):value;}
  if(node.kind==='string'&&node.type==='str'&&typeof node.value==='string'&&!/\p{Surrogate}/u.test(node.value))return ['str',node.value];
+ if(node.kind==='integer'&&typeof node.value==='string')return ['integer',node.type==='i64'?'i64':'u64',BigInt(node.value).toString()];
  if(node.kind==='bool'&&typeof node.value==='boolean')return ['bool',node.value];
  if(node.kind==='not')return ['not',requestedJsonExpression(node.value,env,events,guard,false,depth+1)];
  if(node.kind==='binary'&&['&&','||'].includes(node.op))return [node.op==='&&'?'and':'or',requestedJsonExpression(node.left,env,events,guard,false,depth+1),requestedJsonExpression(node.right,env,events,guard,false,depth+1)];
  if(node.kind==='owned-call'&&['router_core_json_copy','json_macro_value'].includes(node.name)&&node.args.length===1)return jsonEvent(events,'copy',[requestedJsonExpression(node.args[0],env,events,guard,true,depth+1)]);
  if(node.kind==='owned-call'&&node.name==='router_core_json_with_field'&&node.args.length===3)return jsonEvent(events,'with-field',node.args.map(argument=>requestedJsonExpression(argument,env,events,guard,true,depth+1)));
- if(node.kind==='json-vector-literal'&&node.items.length<=4096)return ['vector',node.items.map(child=>child.kind==='owned-call'&&child.type==='json'?requestedJsonExpression(child,env,events,guard,false,depth+1):jsonEvent(events,'copy',[requestedJsonExpression(child,env,events,guard,true,depth+1)]))];
+ if(node.kind==='owned-call'&&['json_macro_null','json_macro_bool','json_macro_string','json_macro_u64','json_macro_i64'].includes(node.name)){const suffix=node.name.slice('json_macro_'.length),args=node.args.map(argument=>requestedJsonExpression(argument,env,events,guard,false,depth+1));if(suffix==='i64'&&node.args[0]?.type!=='i64'){const arg=node.args[0];if(arg?.kind!=='integer'||BigInt(arg.value)<0n||BigInt(arg.value)>9223372036854775807n)jsonFail('unsigned-to-signed JSON construction needs its complete checked conversion rule');args[0]=['integer','i64',BigInt(arg.value).toString()];}return jsonEvent(events,'build-'+suffix,args);}
+ if(['json-array','json-object'].includes(node.kind)){if(node.kind==='json-object'&&!node.entries.length)return jsonEvent(events,'build-object',[]);const children=node.kind==='json-array'?node.items:node.entries.map(entry=>entry.value),values=children.map(child=>child.type==='json'&&['owned-call','json-array','json-object'].includes(child.kind)?requestedJsonExpression(child,env,events,guard,false,depth+1):jsonEvent(events,'copy',[requestedJsonExpression(child,env,events,guard,true,depth+1)]));if(node.kind==='json-array')return jsonEvent(events,'build-array',[['vector',values]]);const keys=node.entries.map(entry=>jsonEvent(events,'build-string',[['str',entry.key]])),keyArray=jsonEvent(events,'build-array',[['vector',keys]]);return jsonEvent(events,'build-fields',[keyArray,['vector',values]]);}
+ if(node.kind==='json-vector-literal'&&node.items.length<=4096)return ['vector',node.items.map(child=>child.type==='json'&&['owned-call','json-array','json-object'].includes(child.kind)?requestedJsonExpression(child,env,events,guard,false,depth+1):jsonEvent(events,'copy',[requestedJsonExpression(child,env,events,guard,true,depth+1)]))];
  jsonFail('JSON constructor/update/reader expression needs its next source rule');
 }
 export function requestedNativeJsonVectorTree(item){
@@ -110,10 +113,12 @@ export function actualNativeJsonVectorTree(own,item,lowered){
   guard.charge(depth);if(!node)jsonFail('complete actual native expression required');
   if(node.k==='var'){if(!names.has(node.name))jsonFail('actual native lexical binder required');return names.get(node.name);}
   if(node.k==='lit'&&node.type?.kind==='string'&&!node.type.rustReference&&node.type.rustOwnership?.kind==='borrowed'&&node.type.rustOwnership.source==='str'&&typeof node.value==='string'&&!/\p{Surrogate}/u.test(node.value))return ['str',node.value];
+  if(node.k==='lit'&&node.type?.kind==='fixed'&&['u64','i64'].includes(node.type.rustPrimitiveName)&&!node.type.rustReference&&!node.type.rustGenericIdentityUnresolved&&!node.type.rustBorrowingUnresolved)return ['integer',node.type.rustPrimitiveName,BigInt(node.value).toString()];
   if(node.k==='lit'&&node.type?.kind==='bool'&&typeof node.value==='boolean')return ['bool',node.value];
   if(node.k==='unary'&&node.op==='not'&&node.type?.kind==='bool')return ['not',expression(node.arg,names,events,depth+1)];
   if(node.k==='binary'&&['and','or'].includes(node.op)&&node.type?.kind==='bool')return [node.op,expression(node.left,names,events,depth+1),expression(node.right,names,events,depth+1)];
   if(node.k==='let'){if(node.mutable||names.has(node.name))jsonFail('unique immutable actual native binder required');const value=expression(node.value,names,events,depth+1),local=new Map(names);local.set(node.name,value);return expression(node.body,local,events,depth+1);}
+  if(node.k==='routerHostCall'&&node.id.startsWith('router_vector_json_build_')){const suffix=node.id.slice('router_vector_json_build_'.length),operation=boundedJsonCoreOperation('json_build_'+suffix);if(!operation||operation.id!==node.id||operation.params.length!==node.args?.length||node.type?.name!==own.ret.element.name||node.compatibilityCore?.id!=='router-owned-json-update-v1'||node.compatibilityCore.sourceSha256!==BOUNDED_JSON_CORE_SHA256||node.compatibilityCore.symbol!=='crate::translation_json_core::json_build_'+suffix)jsonFail('actual canonical native builder source boundary differs');return jsonEvent(events,'build-'+suffix,node.args.map(argument=>expression(argument,names,events,depth+1)));}
   if(node.k==='routerHostCall'&&['router_vector_json_validate','router_vector_json_copy','router_vector_json_with_field'].includes(node.id)){
    const operation=node.id==='router_vector_json_validate'?'validate':node.id==='router_vector_json_copy'?'copy':'with-field',name=operation==='validate'?'json_validate':operation==='copy'?'json_checked_copy':'json_checked_with_field';
    if(node.args?.length!==(operation==='with-field'?3:1)||node.compatibilityCore?.id!=='router-owned-json-update-v1'||node.compatibilityCore.sourceSha256!==BOUNDED_JSON_CORE_SHA256||node.compatibilityCore.symbol!=='crate::translation_json_core::'+name||operation==='validate'&&node.type?.kind!=='unit'||operation!=='validate'&&node.type?.name!==own.ret.element.name)jsonFail('actual privately checked bounded native operation differs');
@@ -137,3 +142,5 @@ import {BOUNDED_JSON_CORE_SHA256} from '../bounded-json-core-source-data.mjs';
 import {sameType} from '../checked-types.mjs';
 import {emitOwnedCoreProgram} from './owned-vector-candidate-operations.mjs';
 import {rustTokens} from '../rust-structure.mjs';
+
+import {boundedJsonCoreOperation} from '../bounded-json-core-call-source.mjs';

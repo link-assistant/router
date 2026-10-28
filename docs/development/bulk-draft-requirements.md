@@ -974,3 +974,9 @@ A shared keys/owned values constructor builds each map once and preserves the fu
 4095-field valid domain. Eight compiler equations and a full native helper history
 successor retain original pins. All cases/oracles remain UNRUN; reverse constructor
 integration, complete synchronization and all delivery requirements remain OPEN.
+
+Native JSON constructor synchronization draft: [source boundary](vector-native-json-constructors-source-draft.md).
+Private reverse emission and ordered native comparison cover scalar, array and
+bulk object constructors with every child evaluated once and actual contextual
+Vec typing. Four complete source equations and all cases remain UNRUN. Dynamic
+signed conversion, readers, full source synchronization and delivery stay OPEN.

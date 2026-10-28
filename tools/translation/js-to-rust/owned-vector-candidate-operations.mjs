@@ -182,6 +182,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath,nativeJsonSource=f
     const name=value.kind==='json-array'?'json_macro_array':'json_macro_object';imports.add(name);
     const children=value.kind==='json-array'?value.items:value.entries.map(entry=>entry.value);
     if(!rust)return '__ro_'+name+'(['+(value.kind==='json-array'?children.map(child=>expr(child)):value.entries.map(entry=>'['+JSON.stringify(entry.key)+', '+expr(entry.value)+']')).join(', ')+'])';
+    if(nativeJsonSource){if(value.kind==='json-object'&&!children.length)return 'crate::translation_json_core::json_build_object()';const names=children.map(()=> '__ro_json_'+sequence++),bindings=children.map((child,index)=>'let '+names[index]+' = '+(freshJson(child)?expr(child):copyExpression(child))+';'),values='crate::translation_core::vec!['+names.join(', ')+']';if(value.kind==='json-array')return '{ '+bindings.join(' ')+' crate::translation_json_core::json_build_array('+values+') }';const keys='__ro_json_keys_'+sequence++,keyValues=value.entries.map(entry=>'crate::translation_json_core::json_build_string('+rustString(entry.key)+')');return '{ '+bindings.join(' ')+' let '+keys+' = crate::translation_json_core::json_build_array(crate::translation_core::vec!['+keyValues.join(', ')+']); crate::translation_json_core::json_build_fields(&'+keys+', '+values+') }';}
     const names=children.map(()=> '__ro_json_'+sequence++),bindings=children.map((child,index)=>'let '+names[index]+' = '+expr(child)+';');
     const literal=value.kind==='json-array'?'['+names.join(', ')+']':'{'+value.entries.map((entry,index)=>rustString(entry.key)+': '+names[index]).join(', ')+'}';
     return '{ '+bindings.join(' ')+' let __ro_result = crate::translation_core::json!('+literal+'); '+(nativeJsonSource?'let __ro_json_validation_'+sequence+++' = ':'')+jsonValidate+'(&__ro_result); __ro_result }';
@@ -224,7 +225,8 @@ export function emitOwnedCoreProgram(input,target,{outputPath,nativeJsonSource=f
     // borrowed here; compensating copies happen only inside the fixed call.
     const args=names;
     let call;
-    if(value.name==='json_macro_null')call='::serde_json::Value::Null';
+    if(nativeJsonSource&&['json_macro_null','json_macro_bool','json_macro_string','json_macro_u64','json_macro_i64'].includes(value.name)){const suffix=value.name.slice('json_macro_'.length);if(suffix==='i64'&&value.args[0].type!=='i64'){const value_=value.args[0];if(value_.kind!=='integer'||BigInt(value_.value)<0n||BigInt(value_.value)>9223372036854775807n)fail('native signed JSON construction from a dynamic unsigned value needs its checked conversion boundary');lines[0]='let '+names[0]+' = '+value_.value+'_i64;';}call='crate::translation_json_core::json_build_'+suffix+'('+args.join(', ')+')';}
+    else if(value.name==='json_macro_null')call='::serde_json::Value::Null';
     else if(value.name==='json_macro_bool')call='::serde_json::Value::Bool('+args[0]+')';
     else if(value.name==='json_macro_string')call='::serde_json::Value::String('+args[0]+'.to_owned())';
     else if(value.name==='json_macro_u64')call='::serde_json::Value::from('+args[0]+')';
