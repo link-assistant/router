@@ -84,6 +84,7 @@ export function withOwnershipParser(Base=TextRustParser) {
       return {k:'routerStringOwnership',operation:method.value,object,fallback:super.method(object,method,args,span),span};
     }
     primary(path,options) {
+      const qualified=parseOriginalQualifiedStringToOwned(this,path);if(qualified)return qualified;
       const c=this.cursor,first=c.peek(),constructor=['String','Vec'].includes(first.value)&&typeof this.builtinShadow==='function'&&!this.builtinShadow(first.value,path)&&c.is('::',1)&&c.is('new',2)&&c.is('(',3)&&c.is(')',4);
       const value=super.primary(path,options);
       if(!constructor)return value;
@@ -145,12 +146,14 @@ export function withOwnershipParser(Base=TextRustParser) {
 export function withOwnershipChecker(Base=TextChecker) {
   return class extends Base {
     program(surface) {
+      return withOriginalQualifiedStringToOwnedProgram(this,surface,()=>{
       const program=super.program(surface),context={declarations:program.declarations,resolveType:(type,path,span)=>this.resolveType(type,path,span)};
       for(const entry of program.declarations.values())if(entry.k==='fn') {
         for(const param of entry.params)requireResolvedOwnership(param.type,param.span??entry.span,context);
         requireResolvedOwnership(entry.ret,entry.span,context);
       }
       return program;
+      });
     }
     resolveType(type,path,span) {
       const resolved=super.resolveType(type,path,span);
@@ -210,6 +213,7 @@ export function withOwnershipChecker(Base=TextChecker) {
       return value;
     }
     expr(node,env,path,expected,allowLiteral=false) {
+      if(node.k==='routerQualifiedStringToOwned')return checkOriginalQualifiedStringToOwned(this,node,env,path,expected);
       if(node.k==='routerStringOwnership') {
         const object=this.expr(node.object,env,path),owner=ownership(object.type);
         // JSON and actual inherent methods keep their independently checked
@@ -239,3 +243,5 @@ export class OwnershipRustParser extends withOwnershipParser() {}
 export class OwnershipChecker extends withOwnershipChecker() {}
 export const withSourceOwnershipParser=withOwnershipParser;
 export const withSourceOwnershipChecker=withOwnershipChecker;
+
+import {parseOriginalQualifiedStringToOwned,withOriginalQualifiedStringToOwnedProgram,checkOriginalQualifiedStringToOwned} from '../qualified-string-owned-source.mjs';

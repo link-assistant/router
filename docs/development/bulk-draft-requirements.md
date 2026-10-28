@@ -920,3 +920,9 @@ adds original static str signatures and Unicode-scalar literal projection to the
 existing shared source synchronization paths. Two source equations and all
 independent receiving/lifetime/CI-only native oracle source are UNRUN. General
 borrowing, owned text/JSON and broader delivery requirements remain OPEN.
+
+The [qualified owned String vector draft](vector-native-owned-text-source-draft.md)
+adds actual original qualified standard ownership calls, fresh standard-source
+inputs and unbounded owned String vector native projection. Four source equations
+and all independent source/ownership/receiving/CI-only native cases are UNRUN.
+Full namespace/trait/JSON/production qualification and broader delivery stay OPEN.
