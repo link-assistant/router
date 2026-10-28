@@ -1,13 +1,16 @@
 /** Shared configure and legacy with --global workflow; all selection remains explicit. */
 import {clientIntegrations,clientIntegration,clientPaths,clientFailure,clientObject,optionalClientText,preferredClientPath,readClientEnvironment,writeClientEnvironment,writeClientMarker,removeClientFile} from './client-files.mjs';
 import {nativeClientStatus} from './client-status.mjs';
-import {selectedManagedTarget,normalizeManagedOrigin} from './managed-server.mjs';
+import {selectedManagedTarget,withNativeManagedConfigureTarget} from './managed-server.mjs';
 import {prepareRemoteClientCredential,reuseRemoteClientCredential,revokeRemoteClientCredential} from './client-remote.mjs';
 import {globalClientDigest,readGlobalClientState} from './client-global-state.mjs';
 import {applyGlobalClientConfiguration,undoGlobalClientConfiguration} from './client-global.mjs';
-function localOrigin(core){let host=core.config.host??'127.0.0.1';if(host==='0.0.0.0')host='127.0.0.1';if(host==='::')host='::1';if(host.includes(':')&&!host.startsWith('['))host='['+host+']';return normalizeManagedOrigin('http://'+host+':'+(core.config.port??8080));}
-async function selected(options,core,env,invocation){
- if(options.managed)throw clientFailure('Managed configure requires the remaining native daemon/discovery lifecycle');const target=await selectedManagedTarget({name:'configure',options,config:core.config,env,cwd:invocation.cwd});if(target)return target;const origin=localOrigin(core);return {server:origin,managementServer:origin,source:'explicit native listen configuration'};
+async function withSelectedConfigureTarget(options,core,env,invocation,fetch,operation){
+ if(options.managed&&(options.local||options.server||options.management_server))throw clientFailure('--managed conflicts with --local or explicit server origins');
+ if(!options.managed){const explicit=await selectedManagedTarget({name:'configure',options,config:core.config,env,cwd:invocation.cwd});if(explicit)return operation(explicit);}
+ const context={options,config:core.config,env,cwd:invocation.cwd},known=await withNativeManagedConfigureTarget(context,operation);if(known!==null)return known;
+ if(!options.managed){const discovered=await discoverLocalRouter({env,invocation,fetch});if(discovered)return operation(discovered);if(invocation.signal?.aborted)throw clientFailure('Local Router discovery was cancelled');if(options.local)throw clientFailure('--local requires an already-running local Router');}
+ return withNativeManagedConfigureTarget({...context,create:true},operation);
 }
 async function undoOne(paths,context,output){
  let hadCredential=false;const result=await undoGlobalClientConfiguration(paths,{checkpoint:context.checkpoint,afterRestore:async(txn)=>{
@@ -32,15 +35,15 @@ async function configureOne(paths,target,context,output,backendBaseURL=null){
  }});}catch(error){try{await candidate.cleanup();}catch{throw clientFailure('Global configuration failed; its unused minted credential could not be revoked');}throw error;}
  output.push('configured '+paths.info.client+' in '+paths.config,'credentials: '+environment+' (mode 0600)','undo: router configure --undo '+paths.info.client);
 }
-export async function executeNativeConfigure({name='configure',options={},invocation={},core,env={},fetch=globalThis.fetch,checkpoint}={}){
+async function executeNativeConfigureAtTarget({name='configure',options={},invocation={},core,env={},fetch=globalThis.fetch,checkpoint,target}={}){
  if(name==='with'&&!options.global&&!options.undo)throw clientFailure('Temporary client launch requires the remaining process/isolation lifecycle');if(!options.all&&!options.client)throw clientFailure('Configure requires a client or --all');if(options.all&&options.client)throw clientFailure('--all conflicts with a single client');
- const output=[],failures=[],clients=options.all?clientIntegrations:[clientIntegration(options.client)],context={options:{...options,ttl_hours:name==='with'?8760:options.ttl_hours},invocation,core,env,fetch,checkpoint},target=options.undo?null:await selected(options,core,env,invocation);let completed=0;
+ const output=[],failures=[],clients=options.all?clientIntegrations:[clientIntegration(options.client)],context={options:{...options,ttl_hours:name==='with'?8760:options.ttl_hours},invocation,core,env,fetch,checkpoint};let completed=0;
  for(const info of clients){
   if(info.unsupported){if(options.undo&&!options.all)throw clientFailure(info.unsupported);output.push('skipped '+info.client+': '+info.unsupported);continue;}
   const paths=clientPaths(info.client,{home:options.home,env,cwd:invocation.cwd});try{
    if(!options.undo&&options.all&&!(await nativeClientStatus(info.client,{home:options.home,env,cwd:invocation.cwd})).installed){output.push('skipped '+info.client+': not installed');continue;}
    if(options.undo){const changed=await undoOne(paths,context,output);if(!changed&&!options.all)throw clientFailure('No saved global configuration or credential exists for '+info.client);if(changed)completed++;}
-   else{await inspectCodexCatalogConstraint(paths,{cwd:invocation.cwd});await withCodexNativeBridge(paths,target.server,backend=>configureOne(paths,target,context,output,backend));completed++;}
+   else{await inspectCodexCatalogConstraint(paths,{cwd:invocation.cwd});await withCodexNativeBridge(paths,target.server,backend=>configureOne(paths,target,context,output,backend));completed++;target.retainManagedServer?.();}
   }catch(error){if(!options.all)throw error;failures.push(info.client+': '+Object(error).message);}
  }
  if(options.all)output.push((options.undo?'restored ':'configured ')+completed+' client(s)');if(failures.length){const error=clientFailure('One or more client configurations failed');error.data={output:[...output,...failures.map(text=>'error: '+text)]};throw error;}return {output};
@@ -52,3 +55,14 @@ import {authenticateRemoteClientCredential} from './client-remote.mjs';
 import {repairGlobalClientConfiguration} from './client-global-repair.mjs';
 
 import {inspectCodexCatalogConstraint} from './client-codex-catalog.mjs';
+
+export async function executeNativeConfigure(context={}){
+ const {options={},core,env={},invocation={},fetch=globalThis.fetch}=context;
+ if(context.name==='with'&&!options.global&&!options.undo)throw clientFailure('Temporary client launch requires the remaining process/isolation lifecycle');
+ if(!options.all&&!options.client)throw clientFailure('Configure requires a client or --all');if(options.all&&options.client)throw clientFailure('--all conflicts with a single client');
+ if(!options.all)clientIntegration(options.client);
+ if(options.undo)return executeNativeConfigureAtTarget(context);
+ return withSelectedConfigureTarget(options,core,env,invocation,fetch,target=>executeNativeConfigureAtTarget({...context,target}));
+}
+
+import {discoverLocalRouter} from './local-router-discovery.mjs';

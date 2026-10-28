@@ -730,3 +730,9 @@ bounded complete metadata/source reading across six constructors, retaining each
 original pin and adding final complete metadata receipts after callbacks. Eight
 source equations and independent filesystem-change cases remain UNRUN. This
 adds no owner/semantic authority and closes no broader delivery requirement.
+
+The [local Router discovery/configure draft](local-router-discovery-source-draft.md)
+adds nine full source equations for paired JS/TS TCP/health discovery, lazy bounded
+Docker listing and authenticated native managed references in actual configure.
+Independent runtime/strict TS/native oracle source remains UNRUN. Node/Docker/
+platform/crash and every wider translation/delivery requirement remain OPEN.

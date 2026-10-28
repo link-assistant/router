@@ -1,0 +1,1 @@
+Draft bounded TCP/Router-health discovery, lazy Docker candidate listing and verified native managed configure references with rollback and partial-success retention. Nine source equations and independent JS/strict TS/native cases remain unrun.

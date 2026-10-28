@@ -301,3 +301,13 @@ fn the_configured_router_port_leads_the_candidates() {
         );
     }
 }
+
+
+// Independent native candidate boundary oracle; UNRUN, gated CI only.
+#[test]
+fn source_draft_published_port_boundaries_and_duplicate_ipv6_bindings() {
+    assert_eq!(parse_published_ports("127.0.0.1:65535->8080/tcp, [::]:65535->8080/tcp, :18878->8080/tcp"), vec![65535, 18878]);
+    for source in ["127.0.0.1:0->8080/tcp", "127.0.0.1:65536->8080/tcp", "127.0.0.1:-1->8080/tcp", "192.0.2.1:18878->8080/tcp", "8080/tcp", "->8080/tcp"] {
+        assert!(parse_published_ports(source).is_empty(), "{source}");
+    }
+}
