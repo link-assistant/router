@@ -474,8 +474,8 @@ function checkFunction(context,path,declaration,analysis){
   }
   const nativeBitwise=readOwnedNativeBitwiseExpression(ts,node,argument=>expression(argument,scope,depth+1),{enabled:nativeScalars});if(nativeBitwise){nativeOperatorHistory.retain(node,file,nativeBitwise);return nativeBitwise;}
   if(ts.isConditionalExpression(node)){
-   const cond=expression(node.condition,scope,depth+1),a=refine(branchScope(scope),cond,true),b=refine(branchScope(scope),cond,false),yes=expression(node.whenTrue,a,depth+1,false,numericDomain),no=expression(node.whenFalse,b,depth+1,false,numericDomain);
-   if(jsonVectorProfile&&!nativeScalars){if(['u64','i64'].includes(yes.type)&&no.kind==='integer'&&no.type==='usize')narrowOwnedNumericLiteral(no,yes.type);else if(['u64','i64'].includes(no.type)&&yes.kind==='integer'&&yes.type==='usize')narrowOwnedNumericLiteral(yes,no.type);}
+   const cond=expression(node.condition,scope,depth+1),a=refine(branchScope(scope),cond,true),b=refine(branchScope(scope),cond,false);let yes=expression(node.whenTrue,a,depth+1,false,numericDomain),no=expression(node.whenFalse,b,depth+1,false,numericDomain);
+   if(jsonVectorProfile&&!nativeScalars){if(['u64','i64'].includes(yes.type)&&no.type==='usize'){no=scalarReturnLiteral(no,b,depth+1);narrowOwnedNumericLiteral(no,yes.type);}else if(['u64','i64'].includes(no.type)&&yes.type==='usize'){yes=scalarReturnLiteral(yes,a,depth+1);narrowOwnedNumericLiteral(yes,no.type);}}
    const loan=yes.type==='str'&&no.type==='str'?meetStringLoans(stringLoan(yes),stringLoan(no)):undefined;
    if(cond.type!=='bool'||yes.type!==no.type||yes.type==='str'&&!loan||yes.root!==no.root&&!loan&&yes.kind!=='option-none'&&no.kind!=='option-none')fail('conditional result or loan differs');mergeMoves(scope,a,b);return {kind:'choose',cond,then:yes,else:no,type:yes.type,root:loan?loan.root:yes.kind==='option-none'?no.root:yes.root};
   }
@@ -508,6 +508,7 @@ function checkFunction(context,path,declaration,analysis){
   }
  }
 
+ function scalarReturnLiteral(value,scope,depth){tick(depth);if(value.kind==='variable'){const constant=scope.get(value.name)?.constantInteger;if(typeof constant==='string')return {kind:'integer',value:constant,type:value.type,root:null};}if(value.kind==='choose')return {...value,then:scalarReturnLiteral(value.then,scope,depth+1),else:scalarReturnLiteral(value.else,scope,depth+1)};return value;}
  function block(statements,scope,depth){
   const body=[];let terminated=false;
   for(const statement of statements){
@@ -526,11 +527,11 @@ function checkFunction(context,path,declaration,analysis){
        if(written==='json-ref'?!json(value.type):!writtenCompatible(value.type,written))fail('paired written local ABI differs');
       }
      }
-     const name=bind(declaration.name,{type:value.type,root:value.root},scope);body.push({kind:'let',name,value});
+     const constantInteger=jsonVectorProfile&&!nativeScalars?(value.kind==='integer'?value.value:value.kind==='variable'?scope.get(value.name)?.constantInteger:undefined):undefined;const name=bind(declaration.name,{type:value.type,root:value.root,...(typeof constantInteger==='string'?{constantInteger}:{})},scope);body.push({kind:'let',name,value});
     }
    }else if(ts.isExpressionStatement(statement)){const value=expression(statement.expression,scope,depth+1);if(value.kind!=='owned-call'||value.name!=='router_vector_json_validate'||value.type!=='unit'||!boundedJsonBoundary)fail('only actual bounded JSON validation may be discarded');body.push({kind:'effect',value});
    }else if(ts.isReturnStatement(statement)&&statement.expression){
-    const value=expression(statement.expression,scope,depth+1);if(['json-scalar','primitive-scalar'].includes(jsonVectorProfile?.kind)&&!nativeScalars&&['u64','i64'].includes(jsonVectorProfile.type))narrowOwnedNumericLiteral(value,jsonVectorProfile.type);if(nativeScalars)nativeOperatorHistory.retainCopy(statement.expression,file,value);
+    let value=expression(statement.expression,scope,depth+1);if(['json-scalar','primitive-scalar'].includes(jsonVectorProfile?.kind)&&!nativeScalars&&['u64','i64'].includes(jsonVectorProfile.type)){value=scalarReturnLiteral(value,scope,depth+1);narrowOwnedNumericLiteral(value,jsonVectorProfile.type);}if(nativeScalars)nativeOperatorHistory.retainCopy(statement.expression,file,value);
     if(!(jsonVectorProfile&&value.type==='json-list-owned')&&!['json','json-ref','bool','str','usize','text-owned','base64-result','u64','i64'].includes(value.type)&&!ownedJsonOptionalPayload(value.type)&&!primitiveBitwiseType(value.type))fail('unsupported owned result');
     if(value.type==='json-ref'&&!params.some(param=>param.name===value.root&&['json-ref','map-ref','json-option-ref'].includes(param.type)))fail('returned local loan');
     if(ownedJsonBorrowed(value.type)&&value.root&&!params.some(param=>param.name===value.root&&(['json-ref','map-ref','str','json-option-input'].includes(param.type)||ownedJsonBorrowed(param.type))))fail('returned local optional loan');

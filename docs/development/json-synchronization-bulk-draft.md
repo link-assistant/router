@@ -93,3 +93,8 @@ Closed primitive source units now have drafted ABI and whole-module synchronizat
 rules independent of a JSON input owner, reusing scalar/Unicode boundaries and
 existing comparison/control rules. Twelve caller forms and seven equations remain
 UNRUN; see [the source contract](primitive-scalar-units-source-draft.md).
+
+Immutable scalar literal aliases now have source-drafted return substitution via
+existing checked bounds, preserving all prior statements and unsigned uses.
+Six-form authority/effect/refusal and repeat-sync cases remain UNRUN; see
+[the source contract](scalar-return-literal-aliases-source-draft.md).
