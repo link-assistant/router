@@ -570,3 +570,10 @@ complete two-file native template/root construction plus independent unrun all-
 width/JS/strict TS/meta/paired inverse/native/refusal/export source are drafted.
 Broad source adoption and namespace/production/reverse/sync/freshness/parity/
 receiving/delivery requirements remain OPEN.
+
+The [paired scalar type adoption source draft](fixed-type-adoption-source-draft.md)
+adds complete source proposals for twelve bare scalar type domains to both bulk
+adoption APIs, retaining protected native subtrees, fresh semantic checking and
+whole inverses. Six equations and independent JS/strict TS/native/refusal/bulk/
+fixed-point/export cases are SOURCE ONLY and UNRUN. Record/enum/local/generic/
+namespace/production/reverse/sync/freshness/parity/receiving/delivery stay OPEN.

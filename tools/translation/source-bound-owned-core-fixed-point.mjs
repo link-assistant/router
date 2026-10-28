@@ -3,7 +3,7 @@
 import {types} from 'node:util';
 import {compilationProfile,PRODUCTION_PROFILE} from './cfg-profile.mjs';
 import {formattingPacketIO as IO} from './formatting-packet-io.mjs';
-export const SOURCE_BOUND_OWNED_CORE_STAGES=Object.freeze(["algebraic","base64","integer-methods","json-collections","json-fields","json-iterations","json-loops","json-parse","json-readers","json-updates","json","literal-text","owned-carriers","owned-result-methods","primitive-option-callback-methods","primitive-option-methods","primitive-result-methods","primitives","text-methods","json-indices","json-copies"]);
+export const SOURCE_BOUND_OWNED_CORE_STAGES=Object.freeze(["algebraic","base64","integer-methods","json-collections","json-fields","json-iterations","json-loops","json-parse","json-readers","json-updates","json","literal-text","owned-carriers","owned-result-methods","primitive-option-callback-methods","primitive-option-methods","primitive-result-methods","primitives","text-methods","fixed-types","json-indices","json-copies"]);
 const fail=message=>{throw new TypeError('Source-bound owned core bulk: '+message);};
 const same=(a,b)=>a.length===b.length&&a.every((value,at)=>value===b[at]);
 function ownSnapshot(input,label,allowed=null,bound=1024){
@@ -44,6 +44,7 @@ export async function proposeSourceBoundOwnedCoreStage(stage,options){
  case "primitive-option-methods":return (await import("./source-bound-owned-migrate-core-primitive-option-methods.mjs"))["proposeCorePrimitiveOptionMethodCorpus"](options);
  case "primitive-result-methods":return (await import("./source-bound-owned-migrate-core-primitive-result-methods.mjs"))["proposeCorePrimitiveResultMethodCorpus"](options);
  case "primitives":return (await import("./source-bound-owned-migrate-core-primitives.mjs"))["proposeCorePrimitivesCorpus"](options);
+ case "fixed-types":return (await import("./source-bound-owned-migrate-core-fixed-types.mjs"))["proposeCoreFixedTypesCorpus"](options);
  case "text-methods":return (await import("./source-bound-owned-migrate-core-text-methods.mjs"))["proposeCoreTextMethodCorpus"](options);
  case "json-indices":return (await import("./source-bound-owned-migrate-core-json-indices.mjs"))["proposeCoreJsonIndicesCorpus"](options);
  case "json-copies":return (await import("./source-bound-owned-migrate-core-json-copies.mjs"))["proposeCoreJsonCopiesCorpus"](options);

@@ -47,3 +47,7 @@ bindings or certify their equivalence. Global namespace/macro/export/type-prefix
 closure remains OPEN; so do wider source constructs, actual production coverage,
 full forward/reverse/sync/freshness/parity, receiving/performance and delivery.
 No executable coverage gain or verified completion is claimed.
+
+The [paired scalar type adoption successor](fixed-type-adoption-source-draft.md)
+now drafts bounded signature/constant/plain-impl substitution proposals without
+executing them. It does not close the broader adoption or namespace requirements.

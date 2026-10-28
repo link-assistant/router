@@ -306,3 +306,10 @@ genuine private parser/module/scope origin, exact active declaration/library,
 full CST/meta transport and post-callback source/cursor rejoin. Lexical names,
 source hashes or descriptors grant no primitive identity. Preserve all original
 source adoption obligations. See [the unrun draft](fixed-type-core-source-draft.md).
+
+The [paired scalar type adoption source draft](fixed-type-adoption-source-draft.md)
+adds complete source proposals for twelve bare scalar type domains to both bulk
+adoption APIs, retaining protected native subtrees, fresh semantic checking and
+whole inverses. Six equations and independent JS/strict TS/native/refusal/bulk/
+fixed-point/export cases are SOURCE ONLY and UNRUN. Record/enum/local/generic/
+namespace/production/reverse/sync/freshness/parity/receiving/delivery stay OPEN.
