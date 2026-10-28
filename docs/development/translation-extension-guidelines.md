@@ -484,3 +484,9 @@ integer associated constants with native u32 result types through the shared
 ordinary/source-bound scalar adopter and genuine native-library parser. Three
 source equations and independent JS/strict TS/native cases remain UNRUN; all
 broader namespace/translation/reverse/sync/parity/delivery requirements remain OPEN.
+
+The [native launch policy/argv draft](native-client-launch-plan-source-draft.md)
+mechanically copies eight-client native inventories and launch mechanics into one
+paired JS/TS source template and wires blocked-request preflight before core
+construction. Seven complete equations and independent JS/strict TS/native cases
+remain UNRUN. Actual temporary process/isolation/credential lifecycle stays OPEN.

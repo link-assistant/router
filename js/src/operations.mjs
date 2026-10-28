@@ -157,6 +157,7 @@ async function dispatch(router, name, options, invocation) {
   for (const key of ['deadlineMs','maxOutputBytes']) if (invocation[key] !== undefined && name !== 'auth.codex') unsupported(`Native local per-invocation ${key} requires operation cancellation and output accounting`);
   const configOverrides = Object.fromEntries(Object.entries(options).filter(([key])=>sharedOptions.has(key)));
   for (const key of Object.keys(configOverrides)) if (!nativeConfigOptions.has(key)) unsupported(`Native configuration does not implement ${key}`);
+  if(name==='with'&&!options.global&&!options.undo)preflightNativeClientLaunch(options.client,options);
   const baseCore = await runtimeFor(router);let core = baseCore;
   if (Object.keys(configOverrides).length || invocation.env || invocation.cwd) {
     if (!baseCore.withConfig) unsupported('Injected runtime cannot apply an operation context');
@@ -368,3 +369,5 @@ export class NativeRouter {
 export const createNativeRouter = options => new NativeRouter(options);
 
 import {executeNativeConfigure} from './client-configure.mjs';
+
+import {preflightNativeClientLaunch} from './client-launch-plan.mjs';

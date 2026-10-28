@@ -58,7 +58,7 @@ import {inspectCodexCatalogConstraint} from './client-codex-catalog.mjs';
 
 export async function executeNativeConfigure(context={}){
  const {options={},core,env={},invocation={},fetch=globalThis.fetch}=context;
- if(context.name==='with'&&!options.global&&!options.undo)throw clientFailure('Temporary client launch requires the remaining process/isolation lifecycle');
+ if(context.name==='with'&&!options.global&&!options.undo){preflightNativeClientLaunch(options.client,options);throw clientFailure('Temporary client launch requires the remaining process/isolation lifecycle');}
  if(!options.all&&!options.client)throw clientFailure('Configure requires a client or --all');if(options.all&&options.client)throw clientFailure('--all conflicts with a single client');
  if(!options.all)clientIntegration(options.client);
  if(options.undo)return executeNativeConfigureAtTarget(context);
@@ -66,3 +66,5 @@ export async function executeNativeConfigure(context={}){
 }
 
 import {discoverLocalRouter} from './local-router-discovery.mjs';
+
+import {preflightNativeClientLaunch} from './client-launch-plan.mjs';

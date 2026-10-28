@@ -203,6 +203,7 @@ async function dispatch(router?: any, name?: any, options?: any, invocation?: an
     for (const key of (Object as any).keys(configOverrides) as any)
         if (!nativeConfigOptions.has(key))
             unsupported(`Native configuration does not implement ${key}`);
+  if(name==='with'&&!options.global&&!options.undo)preflightNativeClientLaunch(options.client,options);
     const baseCore: any = await runtimeFor(router);
     let core: any = baseCore;
     if ((Object as any).keys(configOverrides).length || invocation.env || invocation.cwd) {
@@ -474,3 +475,5 @@ export class NativeRouter {
 export const createNativeRouter: any = (options?: any): any => new (NativeRouter as any)(options);
 
 import {executeNativeConfigure} from './client-configure.js';
+
+import {preflightNativeClientLaunch} from './client-launch-plan.js';
