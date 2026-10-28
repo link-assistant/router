@@ -145,6 +145,7 @@ export async function sendRemoteManagement(target?: any, call?: any, { fetch = g
         const chunks: any = [];
         let bytes: any = 0;
         (reader as any) = response.body?.getReader();
+    if(call.response==='status-only')return {status:response.status};
         if (reader)
             while (true) {
                 const part: any = await within((reader as any).read());

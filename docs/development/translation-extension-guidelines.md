@@ -502,3 +502,9 @@ adds shared paired private profile lifetimes, Claude picker/model/privacy settin
 Codex process catalog/provider overlays and existing provider-codec integration.
 Five equations and independent JS/strict TS/native source remain UNRUN. Actual
 run-credential/process dispatch and every broader delivery requirement stay OPEN.
+
+The [per-run credential/model/lease draft](native-run-credential-source-draft.md)
+adds shared persistent/run remote preparation, exact model policy, narrowed picker
+grants, bounded lease status transport and operation-owned cleanup. Seven complete
+equations and independent JS/strict TS/native cases remain UNRUN. Actual temporary
+process/bridge dispatch and every broader delivery requirement remain OPEN.

@@ -105,6 +105,7 @@ export async function sendRemoteManagement(target,call,{fetch = globalThis.fetch
     const response = await within(target.managementCaCert ? trustedFetch(url,request,target.managementCaCert,cwd) : fetch(url,request));
     if (response.url && new URL(response.url).origin !== target.managementServer) throw error('Remote management response changed origin');
     const chunks = [];let bytes = 0;reader = response.body?.getReader();
+    if(call.response==='status-only')return {status:response.status};
     if (reader) while (true) {
       const part = await within(reader.read());if (part.done) break;bytes += part.value.byteLength;
       if (bytes > maxOutputBytes) throw error('Remote management response exceeds the output budget');chunks.push(part.value);
