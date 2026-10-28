@@ -728,3 +728,9 @@ Frozen operation tables are DATA; actual native module/view/feature and private
 canonical source checks remain required. Preserve discarded validation effects,
 unit annotations and separate branch moves. Five equations and every case are
 UNRUN; further drafting remains tracked in the [companion](json-synchronization-bulk-draft.md).
+
+JSON projection/predicate drafting: [source boundary](vector-json-projection-predicates-source-draft.md).
+Preserve actual projection source hashes/loans and registered scalar predicate
+owners. Owned JSON input roots are admitted only in the proven owned-vector
+result profile; standalone borrowed-result rules stay unchanged. Five source
+equations and all cases are UNRUN; optional/map/usize reader work remains OPEN.

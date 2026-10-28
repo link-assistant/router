@@ -323,7 +323,7 @@ function checkFunction(context,path,declaration,analysis){
   if(type==='text-owned')type='str';
   if(jsonVectorProfile){const native=jsonVectorProfile.parameters[index].name;if(type!==(native==='json'?'json-ref':native))fail('actual original native Json input domain differs');type=native;}
   const identifier=param.name;
-  const sourceName=bind(identifier,{type,root:['json-ref','map-ref','str','bytes-ref','base64-error-ref'].includes(type)||ownedJsonBorrowed(type)||type==='json-option-input'?identifier.text:null,input:true},environment);
+  const sourceName=bind(identifier,{type,root:jsonVectorProfile&&type==='json'||['json-ref','map-ref','str','bytes-ref','base64-error-ref'].includes(type)||ownedJsonBorrowed(type)||type==='json-option-input'?identifier.text:null,input:true},environment);
   params.push({name:sourceName,rust:rustName(sourceName),type});
  }
  // The complete available pair was selected before parameter domains.

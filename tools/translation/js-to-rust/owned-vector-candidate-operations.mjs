@@ -203,6 +203,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath,nativeJsonSource=f
    case 'json-reader-call':{
     const op=ownedJsonReaderOperation(value.name);if(!op||value.type!==op.ret||value.args.length!==op.args.length)fail('checked JSON reader contract differs');imports.add(value.name);
     if(!rust)return '__ro_'+value.name+'('+value.args.map(value=>expr(value)).join(', ')+')';
+    if(nativeJsonSource&&op.ret==='bool'){const argument=value.args[0];if(argument.kind==='variable')return nativeJsonPredicateSource(value.name,(argument.type==='json'?'&':'')+rustName(argument.name));const name='__ro_arg_'+sequence++;return '{ let '+name+' = '+expr(argument)+'; '+nativeJsonPredicateSource(value.name,(argument.type==='json'?'&':'')+name)+' }';}
     const names=value.args.map(()=> '__ro_arg_'+sequence++),bindings=value.args.map((argument,index)=>'let '+names[index]+' = '+(argument.type==='json'?(argument.kind==='variable'?expr(argument,true):'&'+expr(argument)):expr(argument))+';');
     return '{ '+bindings.join(' ')+' '+ownedJsonReaderRustCall(value.name,names)+' }';
    }
@@ -369,3 +370,5 @@ import {validateVectorParameters,vectorParameterPrelude} from './owned-vector-pa
 import {isJsonVector,jsonVectorInputPrelude,validateJsonVectorInputs} from './owned-vector-json-boundary.mjs';
 
 import {BOUNDED_JSON_RUNTIME_OPERATIONS} from './bounded-json-runtime-operations.mjs';
+
+import {nativeJsonPredicateSource} from './owned-vector-json-predicate-native.mjs';

@@ -20,3 +20,8 @@ complete requirement drafting or verified delivery. Every existing requirement,
 original deadline and eight same-SHA JavaScript gates before fatal CI-only Rust
 remain mandatory. Further JSON source batches extend this companion so the main
 ledger stays below the repository file-size limit.
+
+- [String-key projection and predicates](vector-json-projection-predicates-source-draft.md):
+  genuine canonical projection, all nine scalar predicates, live owned-input roots,
+  copied original renderer, ordered bodies and five complete source equations.
+  All cases are UNRUN; optional/map/usize readers and every broader obligation stay OPEN.
