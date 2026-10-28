@@ -779,3 +779,8 @@ JSON-vector u64/i64 parameters are source drafted through actual original/lowere
 ABI joins, copied primitive bound guards and source-symbol prefix consumption.
 Four-function authority/boundary batches and full equations remain UNRUN; see
 [the source contract](vector-json-integer-inputs-source-draft.md).
+
+Scalar comparison drafting copies the existing inverse operation table and keeps
+matching primitive domains in both whole-body trees. Six-operator numeric batches,
+bool/text payload equality and mixed-domain refusals remain UNRUN; see
+[the source contract](vector-json-scalar-comparisons-source-draft.md).
