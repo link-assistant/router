@@ -400,3 +400,10 @@ source owners and explicit non-64-bit refusal. Five compiler equations plus
 native template construction and independent unrun JS/strict TS/native/CST/
 shadow/profile/export cases are drafted. Full production translation, broader
 reverse/target matrices and every wider delivery requirement remain OPEN.
+
+The [closed cast target draft](fixed-cast-type-source-draft.md) adds reusable bare
+`as` type-position selection feeding existing guarded repository scalar/type
+rules for thirteen target domains. Three source equations plus independent unrun
+both-API/JS/strict TS/native/scope/Unicode/CST/inverse/export cases are drafted.
+All wider namespace/production/reverse/sync/parity/receiving/delivery requirements
+remain OPEN, with no current executable coverage claim.
