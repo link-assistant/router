@@ -39,3 +39,7 @@ not an implicit proof of standard-library behavior. Global namespace, source
 producers, production coverage, full forward/reverse/sync/freshness/parity,
 receiving, performance and delivery requirements remain OPEN. No measured
 coverage increase, verified parity or completion is claimed.
+
+The [declaration selector successor](fixed-type-declarations-source-draft.md)
+drafts monomorphic record/enum/union fields, type aliases and statics without
+executing adoption. Generic owners, locals and wider requirements remain OPEN.

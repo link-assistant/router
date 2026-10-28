@@ -313,3 +313,10 @@ adoption APIs, retaining protected native subtrees, fresh semantic checking and
 whole inverses. Six equations and independent JS/strict TS/native/refusal/bulk/
 fixed-point/export cases are SOURCE ONLY and UNRUN. Record/enum/local/generic/
 namespace/production/reverse/sync/freshness/parity/receiving/delivery stay OPEN.
+
+The [paired scalar declaration source draft](fixed-type-declarations-source-draft.md)
+extends both adopters through one shared complete field/type selector for
+monomorphic structs/tuples/enums/unions/aliases/statics. Four equations and
+independent unrun two-API/fifteen-edit/atomic refusal/inverse/native/export cases
+are source drafted. Generic/local/namespace/production/reverse/sync/freshness/
+parity/receiving/performance/delivery requirements remain OPEN.

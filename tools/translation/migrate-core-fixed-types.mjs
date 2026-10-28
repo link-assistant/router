@@ -214,7 +214,7 @@ function visitItems(source,items,profile,inherited,path,edits,selections,skipped
   for(const item of items){
     const condition=conditions(item,profile);let header;
     try{header=originalDeclarationHeader(item,modulePath);}catch(error){skipped.push({path:[...path],span:span(item),reason:error.message});continue;}
-    if(!header||!['fn','const','impl'].includes(header.kind))continue;
+    if(!header||!['fn','const','static','impl','struct','union','enum','type'].includes(header.kind))continue;
     const record={name:header.name,kind:header.kind,path:[...path],span:span(item)};
     if(condition.status!=='active'){skipped.push({...record,reason:'declaration configuration '+condition.status});continue;}
     if(blockers.length){skipped.push({...record,reason:'source binding or producer uncertainty',blockers});continue;}
@@ -227,7 +227,7 @@ function visitItems(source,items,profile,inherited,path,edits,selections,skipped
         visitItems(source,nested,profile,blockers,[...path,'impl '+owner.map(token=>token.text).join('')],edits,selections,skipped,depth+1,modulePath,producer);continue;
       }
       if(header.rawIdentifier)throw new Error('raw declaration identity requires separate integration');
-      const selected=header.kind==='fn'?functionEdits(item,header):constantEdits(item,header);
+      const selected=header.kind==='fn'?functionEdits(item,header):['const','static'].includes(header.kind)?constantEdits(item,header):fixedTypeDeclarationEdits(item,header,typeEdits);
       edits.push(...selected);selections.push({...record,edits:selected});
     }catch(error){skipped.push({...record,reason:error.message});}
   }
@@ -284,3 +284,5 @@ export function proposeCoreFixedTypesCorpus({entry='src/lib.rs',files:input,comp
   return {schema:'router-core-fixed-types-corpus-proposal-v1',entry,compilationProfile:profile,...(producerEffects?{producerEffects}:{}),before:{...files},after,inputs,moduleGraph:{modules:graph.modules,edges:graph.edges,diagnostics:graph.diagnostics,concreteSyntaxMeta:graph.concreteSyntaxMeta},proposals,skipped,migrationSemantics:'explicit-owned-API-adoption; every rewritten source requires fresh semantic checking',executableAdmission:false};
 }
 
+
+import {fixedTypeDeclarationEdits} from './fixed-type-declaration-source.mjs';
