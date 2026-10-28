@@ -914,3 +914,9 @@ shared whole-source projection with actual f64 signatures and canonical finite
 literal strings, preserving signed zero and nonfinite input classifications.
 Two source equations and independent receiving/refusal/CI-only Rust source are
 UNRUN. All broader translation, synchronization and delivery obligations stay OPEN.
+
+The [native static borrowed text draft](vector-native-static-text-source-draft.md)
+adds original static str signatures and Unicode-scalar literal projection to the
+existing shared source synchronization paths. Two source equations and all
+independent receiving/lifetime/CI-only native oracle source are UNRUN. General
+borrowing, owned text/JSON and broader delivery requirements remain OPEN.
