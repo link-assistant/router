@@ -678,3 +678,10 @@ retains separate CA roots and ordinary management JSON contracts, and supplies
 seven paired source equations plus independent unrun JS/strict-TS-transitive/
 native/identity/status/origin/byte/deadline/export cases. All broader managed,
 namespace/production/reverse/sync/parity/receiving/delivery requirements stay OPEN.
+
+The [local const type draft](local-constant-type-source-draft.md) adds complete
+initialized local declaration type selection through existing closed scalar
+rules, keeps initializer producer checks and original hoisting/shadow boundaries,
+and supplies three equations plus independent unrun both-API/JS/strict TS/native/
+CST/inverse/export cases. No constant evaluator or executable admission is
+replaced; all broader production/reverse/sync/parity/delivery requirements stay OPEN.

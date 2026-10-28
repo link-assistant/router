@@ -13,7 +13,7 @@ export function fixedConstantFunctionSourceEdits(item,header,{lifetimes=[],parse
  const candidates=[];for(let at=0;at+2<rows.length;at++)if(identifier(rows[at])&&integer(rows[at].text)&&rows[at+1].text==='::'&&['MIN','MAX'].includes(rows[at+2].text))candidates.push(at);
  const typedLocals=[];for(let at=0;at<rows.length;at++)if(rows[at].text==='let'){const declaration=localAliasDeclaration(rows,at);if(declaration&&rows[declaration.next]?.text===':')typedLocals.push({at,declaration});}
  const casts=bareSourceCastTypeLeaves(rows,FIXED_TYPE_CORE_ALIASES.map(row=>row.primitive));
- if(!candidates.length&&!typedLocals.length&&!casts.length)return refusal(null);
+ if(!candidates.length&&!typedLocals.length&&!casts.length&&!rows.some(row=>row.text==='const'))return refusal(null);
  try{
   const name=rows.findIndex(row=>row.start===header.nameSpan.start),binders=readLifetimeOnlySourceBinders(rows,name+1,lifetimes),open=binders.after;if(rows[open]?.text!=='(')return refusal('complete lifetime-only input owner required');const end=close(rows,open),parameters=new Set();let begin=open+1,angle=0;
   for(let at=begin;at<=end;at++){
@@ -22,9 +22,10 @@ export function fixedConstantFunctionSourceEdits(item,header,{lifetimes=[],parse
    const offset=parameter[0]?.text==='mut'?1:0;if(!identifier(parameter[offset])||parameter[offset+1]?.text!==':'||integer(parameter[offset].text)||parameters.has(parameter[offset].text))return refusal('closed distinct ordinary input patterns required for constant body scope');parameters.add(parameter[offset].text);
   }
   let body=end+1;while(body<rows.length&&rows[body].text!=='{')body++;if(body>=rows.length||close(rows,body)!==rows.length-1)return refusal('complete original function body required');
-  const bodyCandidates=candidates.filter(at=>at>body&&at<rows.length-1);const localCandidates=typedLocals.filter(row=>row.at>body&&row.at<rows.length-1);const bodyCasts=casts.filter(row=>row.index>body&&row.index<rows.length-1);if(!bodyCandidates.length&&!localCandidates.length&&!bodyCasts.length)return refusal(null);
-  const bodyRows=rows.slice(body+1,-1),producers=new Set(['type','struct','enum','union','trait','impl','mod','use','extern','macro','macro_rules','macro_rules!','fn','const','static','#','|','||']);if(bodyRows.some((row,at)=>producers.has(row.text)||row.text!=='!'&&row.text.endsWith('!')||row.text==='!'&&identifier(bodyRows[at-1])))return refusal('local type/declaration/attribute/macro/closure scope requires separate rules');
-  const census=censusLocalAliasBindings(bodyRows,parameters,{protectedNames:FIXED_TYPE_CORE_ALIASES.map(row=>row.primitive)});if(census.reason)return refusal('constant body scope: '+census.reason);
+  const bodyCandidates=candidates.filter(at=>at>body&&at<rows.length-1);const localCandidates=typedLocals.filter(row=>row.at>body&&row.at<rows.length-1);const bodyCasts=casts.filter(row=>row.index>body&&row.index<rows.length-1);const bodyRows=rows.slice(body+1,-1),localConstants=localSourceConstantDeclarations(bodyRows);if(!bodyCandidates.length&&!localCandidates.length&&!bodyCasts.length&&!localConstants.length)return refusal(null);
+  const constantKeywords=new Set(localConstants.map(row=>row.keyword)),constantNames=new Set(),protectedNames=FIXED_TYPE_CORE_ALIASES.map(row=>row.primitive);for(const row of localConstants){if(row.name==='_')continue;if(parameters.has(row.name)||protectedNames.includes(row.name)||constantNames.has(row.name))return refusal('local constant can shadow an original parameter or primitive namespace');constantNames.add(row.name);}
+  const producers=new Set(['type','struct','enum','union','trait','impl','mod','use','extern','macro','macro_rules','macro_rules!','fn','const','static','#','|','||']);if(bodyRows.some((row,at)=>(producers.has(row.text)&&!(row.text==='const'&&constantKeywords.has(row)))||row.text!=='!'&&row.text.endsWith('!')||row.text==='!'&&identifier(bodyRows[at-1])))return refusal('local type/declaration/attribute/macro/closure scope requires separate rules');
+  const census=censusLocalAliasBindings(bodyRows,new Set([...parameters,...constantNames]),{protectedNames});if(census.reason)return refusal('constant body scope: '+census.reason);
   const edits=[];for(const local of localCandidates){
    if(typeof parseType!=='function')return refusal('complete original type selector required for local annotations');let at=local.declaration.next+1,angle=0,steps=0;const begin=at;
    for(;at<rows.length-1;at++){
@@ -32,6 +33,7 @@ export function fixedConstantFunctionSourceEdits(item,header,{lifetimes=[],parse
    }
    if(rows[at]?.text!=='='||at===begin||angle)return refusal('complete local type initializer unavailable');try{edits.push(...parseType(rows.slice(begin,at),{lifetimes:binders.lifetimes}));}catch(error){if(!(error instanceof Error))throw error;return refusal('local type grammar: '+error.message);}
   }
+  for(const declaration of localConstants){if(typeof parseType!=='function')return refusal('complete original type selector required for local constants');try{edits.push(...parseType(declaration.typeRows,{lifetimes:binders.lifetimes}));}catch(error){if(!(error instanceof Error))throw error;return refusal('local constant type grammar: '+error.message);}}
   for(const cast of bodyCasts){if(typeof parseType!=='function')return refusal('complete original type selector required for cast targets');try{edits.push(...parseType([cast.token],{lifetimes:binders.lifetimes}));}catch(error){if(!(error instanceof Error))throw error;return refusal('cast type grammar: '+error.message);}}
   for(const at of bodyCandidates){const previous=rows[at-1]?.text,next=rows[at+3]?.text;if(['.','::'].includes(previous)||['(','<','::'].includes(next))continue;const selected=FIXED_TYPE_CORE_ALIASES.find(row=>row.primitive===rows[at].text);if(!selected)continue;const token=rows[at];edits.push({span:[token.start,token.end],expected:token.text,replacement:'crate::translation_fixed_types_core::'+selected.name});}
   return {edits,reason:null,sourceAuthority:false,semanticAuthority:false,executableAdmission:false};
@@ -39,3 +41,5 @@ export function fixedConstantFunctionSourceEdits(item,header,{lifetimes=[],parse
 }
 
 import {bareSourceCastTypeLeaves} from './bare-source-cast-type.mjs';
+
+import {localSourceConstantDeclarations} from './local-source-constant-type.mjs';
