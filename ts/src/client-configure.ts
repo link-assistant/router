@@ -43,7 +43,7 @@ async function executeNativeConfigureAtTarget({name='configure',options={},invoc
   const paths=clientPaths(info.client,{home:options.home,env,cwd:invocation.cwd});try{
    if(!options.undo&&options.all&&!(await nativeClientStatus(info.client,{home:options.home,env,cwd:invocation.cwd})).installed){output.push('skipped '+info.client+': not installed');continue;}
    if(options.undo){const changed=await undoOne(paths,context,output);if(!changed&&!options.all)throw clientFailure('No saved global configuration or credential exists for '+info.client);if(changed)completed++;}
-   else{await inspectCodexCatalogConstraint(paths,{cwd:invocation.cwd});await withCodexNativeBridge(paths,target.server,backend=>configureOne(paths,target,context,output,backend));completed++;target.retainManagedServer?.();}
+   else{await inspectCodexCatalogConstraint(paths,{cwd:invocation.cwd});await withCodexNativeBridge(paths,target.server,backend=>configureOne(paths,target,context,output,backend),{caCert:target.caCert,config:core.config,env,cwd:invocation.cwd});completed++;target.retainManagedServer?.();}
   }catch(error){if(!options.all)throw error;failures.push(info.client+': '+Object(error).message);}
  }
  if(options.all)output.push((options.undo?'restored ':'configured ')+completed+' client(s)');if(failures.length){const error:any=clientFailure('One or more client configurations failed');error.data={output:[...output,...failures.map(text=>'error: '+text)]};throw error;}return {output};

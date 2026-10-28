@@ -12,8 +12,8 @@ async function requireClaudeVersion(context){
  let answer;try{answer=await runOwnedClientProcess({command:'claude',args:['--version'],env:clientProcessEnvironment(context.env),cwd:resolve(context.invocation.cwd??process.cwd()),timeoutMs:5000,maxOutputBytes:1048576,signal:context.invocation.signal});}catch(error){if(context.invocation.signal?.aborted)throw error;return;}
  if(answer.client_exit_code!==0||!nativeClaudeGatewayVersionSupported(answer.stdout+answer.stderr))throw clientFailure('Claude Code '+minimumClaude.join('.')+' or newer is required for Router gateway discovery and alias resolution');
 }
-async function withProcessBridge(client,origin,operation){
- if(client!=='codex'||!codexLoopbackRequired(origin))return operation(null);const bridge=await startCodexLoopbackTransport({upstreamOrigin:origin,nonce:randomUUID().replaceAll('-','')});try{return await operation(bridge.backendBaseURL);}finally{await bridge.close();}
+async function withProcessBridge(client,origin,operation,caCert=null,cwd=process.cwd()){
+ if(client!=='codex'||!codexLoopbackRequired(origin))return operation(null);const bridge=await startCodexLoopbackTransport({upstreamOrigin:origin,nonce:randomUUID().replaceAll('-',''),upstreamCaCert:caCert,cwd});try{return await operation(bridge.backendBaseURL);}finally{await bridge.close();}
 }
 export async function executeNativeWith(context={}){
  const original=context.options??{},options={...original,client_args:Array.isArray(original.client_args)?[...original.client_args]:original.client_args??[],allowed_models:Array.isArray(original.allowed_models)?[...original.allowed_models]:original.allowed_models},env={...(context.env??{})},invocation={...(context.invocation??{})},info=clientIntegration(options.client);requestNativeRunModelPolicy(info.client,options);
@@ -27,7 +27,7 @@ export async function executeNativeWith(context={}){
    return withProcessBridge(info.client,target.server,backendBaseURL=>withClientProcessProfile({client:info.client,options,env,cwd:invocation.cwd??process.cwd(),origin:target.server,token:credential.token,catalog:credential.catalog,selectedModel:credential.selectedModel,oneShot:plan.one_shot,backendBaseURL,caCert:target.caCert},async profile=>{
     notes.push(...profile.notes);const child=await runOwnedClientProcess({command:profile.command,args:[...profile.argsPrefix,...plan.arguments],cwd:profile.cwd,env:profile.env,onSpawn:profile.commitLaunch,signal:invocation.signal,stdin:options.token_stdin?undefined:invocation.stdin,timeoutMs:invocation.deadlineMs??60000,maxOutputBytes:invocation.maxOutputBytes??8388608,interactive:attached&&!plan.one_shot&&invocation.stdin===undefined,forwardSignals:invocation.forwardSignals??attached}),result={...child,output:[...notes,...(child.stdout?[child.stdout]:[]) ]};
     if(child.client_exit_code!==0){const failure=clientFailure('Client exited with status '+child.client_exit_code);Object.assign(failure,{exitCode:child.client_exit_code,data:result});throw failure;}return result;
-   }));
+   }),target.caCert??null,invocation.cwd??process.cwd());
   });
  });
 }

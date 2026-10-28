@@ -1,0 +1,35 @@
+/** Actual temporary with composition: target -> credential -> bridge -> profile -> owned process. */
+import {clientIntegration,clientFailure} from './client-files.mjs';import {resolve} from 'node:path';import {randomUUID} from 'node:crypto';
+import {withSelectedNativeClientTarget} from './client-configure.mjs';import {requestNativeRunModelPolicy,withNativeRunCredential} from './client-run-credential.mjs';import {planNativeClientLaunch} from './client-launch-plan.mjs';
+import {withClientProcessProfile,clientProcessEnvironment} from './client-process-profile.mjs';import {runOwnedClientProcess} from './client-process.mjs';
+import {startCodexLoopbackTransport,codexLoopbackRequired} from './codex-loopback-transport.mjs';
+const minimumClaude=[2, 1, 255];
+export function nativeClaudeGatewayVersionSupported(output){
+ if(typeof output!=='string'||Buffer.byteLength(output)>2097152)return false;
+ for(const part of output.split(/[^0-9.]+/u)){const pieces=part.split('.').slice(0,3);if(pieces.length!==3||pieces.some(value=>!/^\d+$/u.test(value)))continue;const normalized=pieces.map(value=>value.replace(/^0+(?=\d)/u,''));if(normalized.some(value=>value.length>20))continue;const values=normalized.map(value=>BigInt(value));if(values.some(value=>value>18446744073709551615n))continue;for(let at=0;at<3;at++){if(values[at]>BigInt(minimumClaude[at]))return true;if(values[at]<BigInt(minimumClaude[at]))return false;}return true;}return false;
+}
+async function requireClaudeVersion(context){
+ let answer;try{answer=await runOwnedClientProcess({command:'claude',args:['--version'],env:clientProcessEnvironment(context.env),cwd:resolve(context.invocation.cwd??process.cwd()),timeoutMs:5000,maxOutputBytes:1048576,signal:context.invocation.signal});}catch(error){if(context.invocation.signal?.aborted)throw error;return;}
+ if(answer.client_exit_code!==0||!nativeClaudeGatewayVersionSupported(answer.stdout+answer.stderr))throw clientFailure('Claude Code '+minimumClaude.join('.')+' or newer is required for Router gateway discovery and alias resolution');
+}
+async function withProcessBridge(client,origin,operation){
+ if(client!=='codex'||!codexLoopbackRequired(origin))return operation(null);const bridge=await startCodexLoopbackTransport({upstreamOrigin:origin,nonce:randomUUID().replaceAll('-','')});try{return await operation(bridge.backendBaseURL);}finally{await bridge.close();}
+}
+export async function executeNativeWith(context={}){
+ const original=context.options??{},options={...original,client_args:Array.isArray(original.client_args)?[...original.client_args]:original.client_args??[],allowed_models:Array.isArray(original.allowed_models)?[...original.allowed_models]:original.allowed_models},env={...(context.env??{})},invocation={...(context.invocation??{})},info=clientIntegration(options.client);requestNativeRunModelPolicy(info.client,options);
+ if(options.global||options.undo)throw clientFailure('Temporary launch entry does not perform global configure or undo');if(options.all)throw clientFailure('Temporary launch requires one client');if(info.client==='cursor-agent')throw clientFailure(info.unsupported);
+ if(options.isolated_config&&options.extend_global_config)throw clientFailure('isolated_config conflicts with extend_global_config');if(options.reset_to_default_configuration&&info.client!=='claude')throw clientFailure('Profile reset is available only for Claude');if(options.reset_to_default_configuration&&(options.isolated_config||options.extend_global_config))throw clientFailure('Profile reset requires the Router-owned Claude profile');await confirmClaudeProcessReset(options,invocation);
+ const current={...context,options,env,invocation},notes=[];if(info.client==='claude'){await requireClaudeVersion(current);notes.push("released Claude Code (checked through 2.1.283) has no supported split-auth mechanism: Router inference and /v1/models discovery use only the Router token, while the stored Claude.ai login remains untouched; Claude.ai connectors, Remote Control and /remote-control, /schedule, notification preferences, cloud sessions (--cloud, --environment, --teleport, and ultrareview), remote managed settings, and organization policy are unavailable in this Router-directed process");}
+ return withSelectedNativeClientTarget({...current,retainOnSuccess:false},async target=>{
+  const suppliedToken=options.token_stdin?String(invocation.stdin??'').trim():options.token??target.token;if(typeof suppliedToken!=='string'||!suppliedToken.trim())throw clientFailure('Selected Router requires a token for temporary launch');
+  return withNativeRunCredential({client:info.client,options,origin:target.server,managementServer:target.managementServer,suppliedToken,config:context.core.config,env,invocation,fetch:context.fetch,notes},async credential=>{
+   const attached=invocation.attachedToTerminal??Boolean(process.stdin.isTTY&&process.stdout.isTTY),plan=planNativeClientLaunch(info.client,options,credential.selectedModel,attached);if(plan.note)notes.push(plan.note);
+   return withProcessBridge(info.client,target.server,backendBaseURL=>withClientProcessProfile({client:info.client,options,env,cwd:invocation.cwd??process.cwd(),origin:target.server,token:credential.token,catalog:credential.catalog,selectedModel:credential.selectedModel,oneShot:plan.one_shot,backendBaseURL,caCert:target.caCert},async profile=>{
+    notes.push(...profile.notes);const child=await runOwnedClientProcess({command:profile.command,args:[...profile.argsPrefix,...plan.arguments],cwd:profile.cwd,env:profile.env,onSpawn:profile.commitLaunch,signal:invocation.signal,stdin:options.token_stdin?undefined:invocation.stdin,timeoutMs:invocation.deadlineMs??60000,maxOutputBytes:invocation.maxOutputBytes??8388608,interactive:attached&&!plan.one_shot&&invocation.stdin===undefined,forwardSignals:invocation.forwardSignals??attached}),result={...child,output:[...notes,...(child.stdout?[child.stdout]:[]) ]};
+    if(child.client_exit_code!==0){const failure=clientFailure('Client exited with status '+child.client_exit_code);Object.assign(failure,{exitCode:child.client_exit_code,data:result});throw failure;}return result;
+   }));
+  });
+ });
+}
+
+import {confirmClaudeProcessReset} from './claude-process-session.mjs';

@@ -797,3 +797,9 @@ adds the existing profile advisory lock around actual native Router-Claude reset
 retaining one full native substitution, two compiler equations and nine history
 steps across eight paths. Native contention/byte-preservation and source/export
 cases remain UNRUN. Every wider qualification/delivery requirement stays OPEN.
+
+The [Codex bridge selected-CA draft](codex-bridge-trust-source-draft.md) adds shared
+fresh HTTP/WS CA loading, normal TLS verification, actual temporary/persistent
+caller wiring and explicit advisory-lock budgets. Sixteen compiler equations,
+three-language complete histories and independent TLS/strict TS source remain
+UNRUN. Native bridge trust and every wider delivery requirement stay OPEN.

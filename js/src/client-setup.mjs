@@ -91,7 +91,7 @@ import {prepareRemoteClientCredential,reuseRemoteClientCredential,revokeRemoteCl
 export async function setupNativeClient(args={}){
  const {options,invocation={},core,env={}}=args,paths=clientPaths(options.client,{home:options.home,env,cwd:invocation.cwd});
  if(paths.info.client!=='codex'||await optionalClientText(paths.config+'.with-router-state.json')!==null)return setupNativeClientWithoutCodexBridge(args);
- const origin=options.base_url?canonicalOrigin(options.base_url):localOrigin(core.config);return withCodexNativeBridge(paths,origin,backend=>setupNativeClientWithoutCodexBridge({...args,codexBackend:backend}));
+ const origin=options.base_url?canonicalOrigin(options.base_url):localOrigin(core.config);return withCodexNativeBridge(paths,origin,backend=>setupNativeClientWithoutCodexBridge({...args,codexBackend:backend}),{config:core.config,env,cwd:invocation.cwd});
 }
 
 import {withCodexNativeBridge,stopCodexNativeBridge,codexNativeBackendMatches} from './codex-loopback.mjs';
