@@ -172,6 +172,18 @@ pub fn command(program: impl AsRef<OsStr>) -> Command {
     command
 }
 
+/// Build a vendor-client command without Router administrative authority.
+/// Callers install only their freshly prepared client credential afterwards.
+/// The scoped operation environment itself remains unchanged for cleanup.
+pub fn client_command(program: impl AsRef<OsStr>) -> Command {
+    let mut command = command(program);
+    command
+        .env_remove("LINK_ASSISTANT_ROUTER_TOKEN")
+        .env_remove("LINK_ASSISTANT_TOKEN")
+        .env_remove("TOKEN_SECRET");
+    command
+}
+
 /// Execute an external dependency with the operation's finite deadline.
 pub fn process_output(command: &mut Command) -> std::io::Result<Output> {
     let deadline = current().map_or(Duration::from_secs(60), |context| context.process_deadline);

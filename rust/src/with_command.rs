@@ -458,7 +458,7 @@ impl TemporaryClient {
             }
         }
         let integration = client.integration();
-        let mut command = crate::operation_context::command(integration.command);
+        let mut command = crate::operation_context::client_command(integration.command);
         if extends_user_configuration(client, isolated_config, extend_user_configuration) {
             // Layer the router's connection settings on top of the user's own
             // configuration rather than replacing it, so sessions and settings

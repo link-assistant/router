@@ -42,3 +42,8 @@ bridge transport and complete terminal/CLI output parity remain OPEN. Broader
 source namespace, complete forward/reverse/sync/freshness, production parity,
 receiving qualification and delivery remain OPEN. Rust stays gated CI only after
 all eight same-SHA JavaScript stages; all local execution remains deferred.
+
+The subsequent [native child environment alignment](native-child-environment-source-draft.md)
+now drafts matching Rust client/version-command filtering through explicit complete
+native source history successors. That alignment remains unrun and does not qualify
+any other lifecycle, platform or executable translation requirement.

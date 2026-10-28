@@ -778,3 +778,9 @@ wires target/run grants/ephemeral bridge/private profile/argv/owned child into t
 real paired dispatcher. Thirteen complete equations and independent fake-vendor/
 strict TS cases remain UNRUN. Reset/migration/native environment/platform/terminal
 and every broader compiler/parity/receiving/delivery requirement remain OPEN.
+
+The [native child environment alignment draft](native-child-environment-source-draft.md)
+adds a reusable native client-command boundary at actual launch/version call sites.
+Three native substitutions and two compiler equations retain eight explicit history
+steps across seven paths; all old metadata pins remain intact. Independent source
+cases remain UNRUN, and wider reset/compiler/parity/delivery requirements stay OPEN.
