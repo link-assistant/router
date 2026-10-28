@@ -686,3 +686,9 @@ Actual same-invocation canonical ABI capture selects the complete JSON-only tail
 copy for immutable owned-vector aliases and exact bounded validation locals.
 Primitive scope and whole linear-flow checks remain unchanged. All cases/equations
 are UNRUN; full native JSON synchronization and remaining requirements stay OPEN.
+
+Native JSON copy/control draft: [source boundary](vector-native-json-control-source-draft.md).
+Both script authorities dispatch privately rechecked JSON vectors to fresh native
+ABI/signature and ordered validation/copy/branch comparison. Complete source-unit
+installation remains unchanged. All cases/equations are UNRUN; constructor/update/
+reader normalization and all full synchronization/delivery requirements stay OPEN.
