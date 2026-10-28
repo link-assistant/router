@@ -520,3 +520,10 @@ adds a reusable native client-command boundary at actual launch/version call sit
 Three native substitutions and two compiler equations retain eight explicit history
 steps across seven paths; all old metadata pins remain intact. Independent source
 cases remain UNRUN, and wider reset/compiler/parity/delivery requirements stay OPEN.
+
+The [Claude activity/session/reset draft](native-profile-session-source-draft.md)
+adds shared native-shaped active markers, actual child registration, bounded
+verified regular-profile backups and transactional settings-only reset in the real
+launcher. Eleven complete equations and independent JS/strict TS/native source
+remain UNRUN. Link/restore/external inventory/platform/interoperability and every
+broader compiler/parity/receiving/delivery requirement remain OPEN.

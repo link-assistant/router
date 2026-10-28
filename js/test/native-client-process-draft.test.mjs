@@ -27,3 +27,5 @@ test('parallel invocations keep child exit codes streams cancellation and deadli
 });
 
 test('captured stdin reaches only the owned child and preserves multibyte text',limits,async t=>{const input=await fixture(t),answer=await runOwnedClientProcess({...input,stdin:'exact stdin 🦀',args:['-e','process.stdin.setEncoding("utf8");let value="";process.stdin.on("data",part=>value+=part);process.stdin.on("end",()=>process.stdout.write(value));']});assert.equal(answer.stdout,'exact stdin 🦀');});
+
+test('actual spawned PID registration completes before the callback lifetime ends',limits,async t=>{const input=await fixture(t);let registered;const answer=await runOwnedClientProcess({...input,onSpawn:async pid=>{assert.equal(Number.isSafeInteger(pid),true);assert.ok(pid>0);registered=pid;},args:['-e','process.stdout.write("registered")']});assert.equal(answer.stdout,'registered');assert.ok(registered>0);});

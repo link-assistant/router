@@ -37,6 +37,7 @@ export async function runOwnedClientProcess(context:any):Promise<any>{
  child.stdin?.on('error',error=>{if(Object(error).code!=='EPIPE')stop('Client stdin could not be written');});if(input.stdin!==undefined)child.stdin?.end(input.stdin);
  deadline=setTimeout(()=>stop('Client execution deadline exceeded'),input.timeout);signal?.addEventListener('abort',cancel,{once:true});if(context.forwardSignals===true){process.on('SIGINT',interrupt);process.on('SIGTERM',terminate);}if(signal?.aborted)cancel();
  try{
+  if(typeof context.onSpawn==='function'&&typeof child.pid==='number')try{await context.onSpawn(child.pid);}catch{stop('Client profile launch registration failed');}
   await finished;const result={client_exit_code:code??(exitSignal?128+(Object( constants.signals )[exitSignal]??0):1),signal:exitSignal,stdout:Buffer.concat(stdout).toString('utf8'),stderr:Buffer.concat(stderr).toString('utf8')};
   if(failure){Object.assign(failure,{data:result});throw failure;}return result;
  }finally{clearTimeout(deadline);clearTimeout(grace);clearTimeout(drain);clearTimeout(lastResort);signal?.removeEventListener('abort',cancel);if(context.forwardSignals===true){process.off('SIGINT',interrupt);process.off('SIGTERM',terminate);}child.stdin?.destroy();child.stdout?.destroy();child.stderr?.destroy();}

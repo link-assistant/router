@@ -12,7 +12,7 @@ export function processExtendsUserConfiguration(client:string,options:any={}):bo
 async function prepare(context:any,directory:string,extendsUser:boolean):Promise<any>{
  const {options={},env={},cwd=process.cwd(),token,backendBaseURL=null,selectedModel=null,oneShot=false}=context,origin=normalizeManagedOrigin(context.origin),info=clientPaths(context.client,{home:options.home,env,cwd}).info,models=usableProcessModels(info.client,context.catalog),paths=clientPaths(info.client,{home:directory,env:{HOME:directory},cwd}),environment:Record<string,string>=clientProcessEnvironment(env),prefix:string[]=[],notes:string[]=[];
  if(typeof token!=='string'||!token.startsWith('la_sk_')||token.includes('\0'))throw clientFailure('Prepared process credential requires a Router token');
- if(info.client==='cursor-agent')throw clientFailure('Cursor process routing is unsupported');if(options.reset_to_default_configuration)throw clientFailure('Profile reset requires the remaining verified backup/reset lifecycle');
+ if(info.client==='cursor-agent')throw clientFailure('Cursor process routing is unsupported');
  if(!extendsUser){if(info.client==='claude')environment.CLAUDE_CONFIG_DIR=directory;else if(info.client==='gemini'){environment.HOME=directory;environment.GEMINI_CLI_HOME=directory;if(oneShot)environment.GEMINI_CLI_TRUST_WORKSPACE='true';}else if(info.client==='opencode'){environment.OPENCODE_CONFIG=paths.config;environment.OPENCODE_CONFIG_DIR=resolve(paths.config,'..');}else{environment.HOME=directory;delete environment.CODEX_HOME;delete environment.QWEN_HOME;}}
  if(info.token)environment[info.token]=token;if(info.base)environment[info.base]=origin+info.suffix;
  if(context.caCert){await readNativeText(context.caCert,{cwd,maxBytes:1048576});environment.NODE_EXTRA_CA_CERTS=resolve(cwd,context.caCert);}
@@ -36,8 +36,10 @@ async function disposableTreeBudget(directory:string):Promise<void>{
 }
 export async function withClientProcessProfile(context:any,operation:(profile:any)=>Promise<any>):Promise<any>{
  const options=context.options??{},cwd=context.cwd??process.cwd(),normal=clientPaths(context.client,{home:options.home,env:context.env,cwd}),client=normal.info.client,extendsUser=processExtendsUserConfiguration(client,options),persistent=!options.isolated_config&&!extendsUser;
+ if(options.reset_to_default_configuration&&(client!=='claude'||!persistent))throw clientFailure('Reset requires the persistent Router-owned Claude profile');
  if(client==='cursor-agent')throw clientFailure('Cursor process routing is unsupported');
  const run=async(directory:string):Promise<any>=>operation(await prepare({...context,client},directory,extendsUser));
+ if(persistent&&client==='claude'){const directory=join(normal.configHome,'link-assistant-router','clients',client,'home');return withClaudeProcessSession({configHome:normal.configHome,reset:options.reset_to_default_configuration===true,checkpoint:context.checkpoint},directory,async lease=>{const profile=await prepare({...context,client},directory,extendsUser);if(lease.backup)profile.notes.push('Router-owned Claude settings reset; verified backup: '+lease.backup);profile.commitLaunch=lease.commitLaunch;return operation(profile);});}
  if(persistent){const directory=join(normal.configHome,'link-assistant-router','clients',client,'home');await requireNativePath(directory);await mkdir(directory,{recursive:true,mode:0o700});await chmod(directory,0o700);return withNativeFileLock(directory,()=>run(directory),1000);}
  const base=context.temporaryRoot===undefined?await realpath(tmpdir()):resolve(context.temporaryRoot);await requireNativePath(base);const directory=await mkdtemp(join(base,'router-client-'+client+'-'));await chmod(directory,0o700);const original=await lstat(directory);
  try{return await run(directory);}finally{const current=await lstat(directory);await requireNativePath(directory);if(!current.isDirectory()||current.dev!==original.dev||current.ino!==original.ino)throw clientFailure('Disposable client profile identity changed; replacement preserved');await disposableTreeBudget(directory);await rm(directory,{recursive:true,force:true,maxRetries:2,retryDelay:100});}
@@ -46,3 +48,5 @@ export async function withClientProcessProfile(context:any,operation:(profile:an
 import {normalizeManagedOrigin} from './managed-server.js';
 
 export function clientProcessEnvironment(env:Record<string,string>):Record<string,string>{const result={...env};delete result.LINK_ASSISTANT_ROUTER_TOKEN;delete result.LINK_ASSISTANT_TOKEN;delete result.TOKEN_SECRET;return result;}
+
+import {withClaudeProcessSession} from './claude-process-session.js';
