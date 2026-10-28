@@ -164,7 +164,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath,nativeJsonSource=f
  const jsonCopy=nativeJsonSource?'crate::translation_json_core::json_checked_copy':'__ro_copy',jsonUpdate=nativeJsonSource?'crate::translation_json_core::json_checked_with_field':'__ro_with_field',jsonValidate=nativeJsonSource?'crate::translation_json_core::json_validate':'__ro_domain';
  function publicTypeScriptType(type){if(sourceData.primitiveOperators===true&&primitiveBitwiseType(type)){const row=primitiveBitwiseType(type);primitiveTypeImports.add(row.alias);return row.alias;}if(type==='json-option-input'){imports.add('router_core_json_option_as_str');return TS_TYPES[type];}const witness=ownedJsonReaderTypeWitness(type);if(witness){imports.add(witness);return 'ReturnType<typeof __ro_'+witness+'>';}return TS_TYPES[type];}
 
- let nativeIndexConstants=new Map();function nativeIndexConstant(value){if(!['usize','u64'].includes(value?.type))return null;const text=value.kind==='integer'?value.value:value.kind==='variable'?nativeIndexConstants.get(value.name):null;if(typeof text!=='string')return null;const integer=BigInt(text);return integer<0n||integer>18446744073709551615n?null:integer.toString();}
+ let nativeOptionPayloads=new Map(),nativeIndexConstants=new Map();function nativeIndexConstant(value){if(!['usize','u64'].includes(value?.type))return null;const text=value.kind==='integer'?value.value:value.kind==='variable'?nativeIndexConstants.get(value.name):null;if(typeof text!=='string')return null;const integer=BigInt(text);return integer<0n||integer>18446744073709551615n?null:integer.toString();}
  const freshJson=value=>value.type==='json'&&['owned-call','json-array','json-object','json-field-call'].includes(value.kind);
  const copyExpression=child=>jsonCopy+'('+(child.type==='json-ref'||child.kind==='variable'?expr(child,true):'&('+expr(child)+')')+')';
  function expr(value,borrowOwned=false){
@@ -191,8 +191,8 @@ export function emitOwnedCoreProgram(input,target,{outputPath,nativeJsonSource=f
    }
    case 'option-none':return rust?'None':"({$:'None'})";
    case 'option-some':return rust?'Some('+expr(value.value)+')':"({$:'Some',field0:"+expr(value.value)+'})';
-   case 'option-test':return rust?'('+expr(value.value)+').is_'+(value.some?'some':'none')+'()':'('+expr(value.value)+'.$ === '+JSON.stringify(value.some?'Some':'None')+')';
-   case 'option-field':return rust?'(match '+expr(value.value)+' { Some(value) => value, None => unreachable!("checked original Some branch") })':expr(value.value)+'.field0';
+   case 'option-test':if(nativeJsonSource)return '(if let ::std::option::Option::Some(_) = '+expr(value.value)+' { '+String(value.some)+' } else { '+String(!value.some)+' })';return rust?'('+expr(value.value)+').is_'+(value.some?'some':'none')+'()':'('+expr(value.value)+'.$ === '+JSON.stringify(value.some?'Some':'None')+')';
+   case 'option-field':if(nativeJsonSource){if(value.value.kind!=='variable'||!nativeOptionPayloads.has(value.value.name))fail('native Option payload needs its current dominating checked Some binder');return nativeOptionPayloads.get(value.value.name);}return rust?'(match '+expr(value.value)+' { Some(value) => value, None => unreachable!("checked original Some branch") })':expr(value.value)+'.field0';
    case 'primitive-arithmetic-call':case 'primitive-method-call':case 'primitive-not-call':case 'primitive-cast-call':case 'primitive-shift-call':imports.add(value.name);return emitOwnedPrimitiveOperatorCall(value,{rust,expression:argument=>expr(argument),argumentName:()=> '__ro_arg_'+sequence++});
    case 'primitive-bitwise-call':{
     const domain=primitiveBitwiseType(value.type),boolean=value.type==='bool';if(value.name!=='primitiveBitwise'||!boolean&&!domain||domain&&(value.bits!==domain.bits||value.signed!==domain.signed)||value.args.length!==2||value.args.some(argument=>!primitiveBitwiseCompatible(argument.type,value.type))||!ownedBooleanBitwiseOperator(value.operation))fail('checked primitive bitwise contract differs');imports.add(value.name);if(!rust)return '__ro_primitiveBitwise('+value.args.map(argument=>expr(argument)).join(', ')+', '+JSON.stringify(value.operation)+', '+(domain?domain.bits:'null')+', '+(domain?domain.signed:'null')+')';const names=value.args.map(()=> '__ro_arg_'+sequence++),bindings=value.args.map((argument,index)=>'let '+names[index]+' = '+expr(argument)+';');return '{ '+bindings.join(' ')+' '+ownedBooleanBitwiseRustCall(value.operation,names)+' }';
@@ -246,13 +246,15 @@ export function emitOwnedCoreProgram(input,target,{outputPath,nativeJsonSource=f
    default:fail('unissued expression kind');
   }
  }
- function body(statements,indent){const prior=nativeIndexConstants;nativeIndexConstants=new Map(prior);try{return statements.map(statement=>{
+ function optionCondition(value){if(value.kind==='not'){const inner=optionCondition(value.value);return inner?{...inner,some:!inner.some}:null;}return value.kind==='option-test'&&value.value.kind==='variable'&&['json-option-ref','str-option-ref','bool-option','u64-option','i64-option'].includes(value.value.type)?{name:value.value.name,some:value.some}:null;}
+ function body(statements,indent,payloads=nativeOptionPayloads){const prior=nativeIndexConstants,priorPayloads=nativeOptionPayloads;nativeIndexConstants=new Map(prior);nativeOptionPayloads=new Map(payloads);try{return statements.map(statement=>{
   const pad=' '.repeat(indent);
   if(statement.kind==='effect')return rust?pad+'let __ro_discard_'+sequence+++' = '+expr(statement.value)+';':pad+expr(statement.value)+';';
   if(statement.kind==='let'){const source=expr(statement.value);if(nativeJsonSource){const value=nativeIndexConstant(statement.value);if(value!==null)nativeIndexConstants.set(statement.name,value);else nativeIndexConstants.delete(statement.name);}return pad+(rust?'let ':'const ')+(rust?rustName(statement.name):statement.name)+' = '+source+';';}
   if(statement.kind==='return')return nativeJsonSource?pad+expr(statement.value):pad+'return '+expr(statement.value)+';';
+  if(nativeJsonSource){const condition=optionCondition(statement.cond);if(condition){const name='__ro_payload_'+sequence++,some=new Map(nativeOptionPayloads),none=new Map(nativeOptionPayloads);some.set(condition.name,name);none.delete(condition.name);return pad+'if let ::std::option::Option::Some('+name+') = '+rustName(condition.name)+' {\n'+body(condition.some?statement.then:statement.else,indent+4,some)+'\n'+pad+'} else {\n'+body(condition.some?statement.else:statement.then,indent+4,none)+'\n'+pad+'}';}}
   return pad+'if '+(rust?'':'(')+expr(statement.cond)+(rust?'':')')+' {\n'+body(statement.then,indent+4)+'\n'+pad+'} else {\n'+body(statement.else,indent+4)+'\n'+pad+'}';
- }).join('\n');}finally{nativeIndexConstants=prior;}}
+ }).join('\n');}finally{nativeIndexConstants=prior;nativeOptionPayloads=priorPayloads;}}
  const code=program.map(item=>{
   const borrowed=type=>['json-ref','map-ref','str','bytes-ref','base64-error-ref','json-option-input'].includes(type)||ownedJsonBorrowed(type),loan=borrowed(item.returns),explicit=loan&&item.resultRoot!==null&&item.params.filter(param=>borrowed(param.type)).length>1;
   const parameters=item.params.map(param=>{

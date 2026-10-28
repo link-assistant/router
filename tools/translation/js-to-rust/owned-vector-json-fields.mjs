@@ -63,7 +63,7 @@ export function evaluateOwnedJsonFieldCall(value,{state,scope,get}){const row=js
 
 // These rows are ABI DATA. The complete actual fixed field module, receiving
 // runtime/declarations and private original vector source still have to join.
-export const ownedVectorJsonFieldOperation=name=>{const row=jsonFieldContract(name);return row&&['json','json-ref','str','bool','u64','i64'].includes(row.ret)?row:null;};
+export const ownedVectorJsonFieldOperation=name=>{const row=jsonFieldContract(name);return row&&['json','json-ref','str','bool','u64','i64','json-option-ref','str-option-ref','bool-option','u64-option','i64-option'].includes(row.ret)?row:null;};
 export function requireOwnedVectorJsonFieldSources(files,options={}){
  const records=requireOwnedJsonFieldSources(files,options),modules=records.map(row=>{const capture=captureSourceModuleViews({source:row.source,sourcePath:row.path}),sourceView=capture.views[0];if(transportConcreteSyntaxMeta(row.concreteSyntax).source!==row.source)throw new TypeError('Full JSON field source CST inverse differs');return {file:row.path,path:row.path==='src/lib.rs'?[]:['translation_json_fields_core'],source:row.source,sourceView,configurationCondition:sourceView.configurationCondition};});
  const evidence=resolveModuleBindings({modules});selectOriginalVectorJsonFields({modules,sourceScopes:evidence.scopes,compilationProfile:evidence.compilationProfile});return records;

@@ -36,3 +36,9 @@ ledger stays below the repository file-size limit.
   nested/default operations, ordered bodies and seven complete source equations.
   Cases cover every supported catalog row in batches of at most eight functions;
   all remain UNRUN. Optional/owned-text and every broader requirement stay OPEN.
+
+- [Optional field controls](vector-json-option-control-source-draft.md): same-
+  invocation standard Option owner/constructor/payload joins, five shared/primitive
+  payloads, hygienic Some/None branches, scoped facts and seven full source equations.
+  Catalog cases are drafted in units of at most six operations; all are UNRUN.
+  Owned payloads, remaining readers/controls and all broader requirements stay OPEN.

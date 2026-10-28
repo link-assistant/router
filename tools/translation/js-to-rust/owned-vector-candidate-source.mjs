@@ -183,7 +183,7 @@ function originalOwnedCoreImport(handle,path,node,analysis){
  for(let depth=0;depth<32;depth++){
   const source=state.files.get(target);if(source===undefined)fail('import target missing');links.push({path:target,name,source,from:{path:ownerFile.fileName,span:[ownerDeclaration.getStart(ownerFile),ownerDeclaration.end]}});
   if(target===state.data.runtimeRoot+'/primitive-operator-runtime.mjs'||target===state.data.runtimeRoot+'/json-update-runtime.mjs'||target===state.data.runtimeRoot+'/json-macro-runtime.mjs'||target===state.data.runtimeRoot+'/base64-runtime.mjs'||target===state.data.runtimeRoot+'/json-runtime.mjs'||target===state.data.runtimeRoot+'/json-option-runtime.mjs'||target===state.data.runtimeRoot+'/json-fields-runtime.mjs'){
-   if(target===state.data.runtimeRoot+'/json-fields-runtime.mjs'){if(!ownedVectorJsonFieldOperation(name))fail('field optional/owned-text export remains outside the plain vector lane');requireOwnedVectorJsonFieldSources(state.files,state.data);}
+   if(target===state.data.runtimeRoot+'/json-fields-runtime.mjs'){if(!ownedVectorJsonFieldOperation(name))fail('field export requires a supported copied plain/shared/primitive payload domain');requireOwnedVectorJsonFieldSources(state.files,state.data);}
    if(target===state.data.runtimeRoot+'/primitive-operator-runtime.mjs'&&(state.data.primitiveOperators!==true||!ownedPrimitiveOperatorOperation(name)&&!((spec.isTypeOnly||declaration.importClause?.isTypeOnly)&&primitiveBitwiseAlias(name))))fail('unregistered primitive operator context or export');
    const typesOnly=spec.isTypeOnly||declaration.importClause?.isTypeOnly;
    const actual=typesOnly?syntax.get(state.data.declarationRoot+'/'+posix.basename(target).replace(/\.mjs$/u,'.d.mts')):syntax.get(target);
@@ -374,6 +374,7 @@ function checkFunction(context,path,declaration,analysis){
   }
   if(node.kind===ts.SyntaxKind.TrueKeyword||node.kind===ts.SyntaxKind.FalseKeyword)return {kind:'bool',value:node.kind===ts.SyntaxKind.TrueKeyword,type:'bool',root:null};
   if(['u64','i64'].includes(numericDomain)&&(ts.isBigIntLiteral(node)||ts.isPrefixUnaryExpression(node)&&node.operator===ts.SyntaxKind.MinusToken&&ts.isBigIntLiteral(node.operand))){const negative=ts.isPrefixUnaryExpression(node);return narrowOwnedNumericLiteral(ownedIntegerLiteral((negative?node.operand:node).text,{negative}),numericDomain);}
+  if(jsonVectorProfile&&ts.isPrefixUnaryExpression(node)&&node.operator===ts.SyntaxKind.MinusToken&&ts.isBigIntLiteral(node.operand))return ownedIntegerLiteral(node.operand.text,{negative:true});
   if(ts.isBigIntLiteral(node)){
    const text=node.text.replace(/n$/u,'').replaceAll('_','');let value;try{value=BigInt(text);}catch{fail('invalid integer');}
    if(value<0n||value>18446744073709551615n)fail('u64 literal bound');return {kind:'integer',value:value.toString(),type:'usize',root:null};

@@ -747,3 +747,9 @@ resolved scope, runtime/declaration and private canonical function joins. Batch
 independent catalog cases into bounded whole units rather than repeated one-call
 translations. Seven source equations and every batch are UNRUN; no coverage or
 performance gain is claimed before the complete draft and authorized verification.
+
+Optional field control drafting: [source boundary](vector-json-option-control-source-draft.md).
+Join actual source/lowered standard Option owners and payload fields; a type name
+or copied flag is DATA. Keep Some facts/payload bindings branch-local, preserve
+complete branch/effect order and reject unguarded extraction. Seven full source
+equations and all catalog batches are UNRUN; broader qualification remains OPEN.
