@@ -25,3 +25,8 @@ ledger stays below the repository file-size limit.
   genuine canonical projection, all nine scalar predicates, live owned-input roots,
   copied original renderer, ordered bodies and five complete source equations.
   All cases are UNRUN; optional/map/usize readers and every broader obligation stay OPEN.
+
+- [Constant array indices](vector-json-constant-index-source-draft.md): actual
+  64-bit usize literals, scoped immutable integer aliases, canonical borrowed
+  results, ordered source comparison and three complete source equations.
+  All cases are UNRUN; dynamic conversion and other pointer-width proofs stay OPEN.

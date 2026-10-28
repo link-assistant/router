@@ -164,6 +164,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath,nativeJsonSource=f
  const jsonCopy=nativeJsonSource?'crate::translation_json_core::json_checked_copy':'__ro_copy',jsonUpdate=nativeJsonSource?'crate::translation_json_core::json_checked_with_field':'__ro_with_field',jsonValidate=nativeJsonSource?'crate::translation_json_core::json_validate':'__ro_domain';
  function publicTypeScriptType(type){if(sourceData.primitiveOperators===true&&primitiveBitwiseType(type)){const row=primitiveBitwiseType(type);primitiveTypeImports.add(row.alias);return row.alias;}if(type==='json-option-input'){imports.add('router_core_json_option_as_str');return TS_TYPES[type];}const witness=ownedJsonReaderTypeWitness(type);if(witness){imports.add(witness);return 'ReturnType<typeof __ro_'+witness+'>';}return TS_TYPES[type];}
 
+ let nativeIndexConstants=new Map();function nativeIndexConstant(value){if(!['usize','u64'].includes(value?.type))return null;const text=value.kind==='integer'?value.value:value.kind==='variable'?nativeIndexConstants.get(value.name):null;if(typeof text!=='string')return null;const integer=BigInt(text);return integer<0n||integer>18446744073709551615n?null:integer.toString();}
  const freshJson=value=>value.type==='json'&&['owned-call','json-array','json-object'].includes(value.kind);
  const copyExpression=child=>jsonCopy+'('+(child.type==='json-ref'||child.kind==='variable'?expr(child,true):'&('+expr(child)+')')+')';
  function expr(value,borrowOwned=false){
@@ -236,6 +237,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath,nativeJsonSource=f
     else if(value.name==='json_macro_i64')call='::serde_json::Value::from(i64::try_from('+args[0]+').expect("owned reverse i64 bound"))';
     else if(op.rust==='json_copy')call=jsonCopy+'('+args.join(', ')+')';
     else if(op.rust==='json_with_field')call=jsonUpdate+'('+args.join(', ')+')';
+    else if(nativeJsonSource&&op.rust==='json_index_usize'){const index=nativeIndexConstant(value.args[1]);if(index===null)fail('native JSON index requires its actual source-profile constant usize rule; dynamic conversion remains open');const binding=lines.findIndex(line=>line.startsWith('let '+names[1]+' = '));if(binding<0)fail('actual integer argument binding required');lines[binding]='let '+names[1]+' = '+index+'_usize;';call='crate::translation_core::json_index_usize('+args.join(', ')+')';}
     else if(op.rust==='json_index_usize')call='match usize::try_from('+args[1]+') { Ok(index) => crate::translation_core::json_index_usize('+args[0]+', index), Err(_) => &::serde_json::Value::Null }';
     else call='crate::translation_core::'+op.rust+'('+args.join(', ')+')';
     return '{ '+lines.join(' ')+' '+call+' }';
@@ -243,13 +245,13 @@ export function emitOwnedCoreProgram(input,target,{outputPath,nativeJsonSource=f
    default:fail('unissued expression kind');
   }
  }
- function body(statements,indent){return statements.map(statement=>{
+ function body(statements,indent){const prior=nativeIndexConstants;nativeIndexConstants=new Map(prior);try{return statements.map(statement=>{
   const pad=' '.repeat(indent);
   if(statement.kind==='effect')return rust?pad+'let __ro_discard_'+sequence+++' = '+expr(statement.value)+';':pad+expr(statement.value)+';';
-  if(statement.kind==='let')return pad+(rust?'let ':'const ')+(rust?rustName(statement.name):statement.name)+' = '+expr(statement.value)+';';
+  if(statement.kind==='let'){const source=expr(statement.value);if(nativeJsonSource){const value=nativeIndexConstant(statement.value);if(value!==null)nativeIndexConstants.set(statement.name,value);else nativeIndexConstants.delete(statement.name);}return pad+(rust?'let ':'const ')+(rust?rustName(statement.name):statement.name)+' = '+source+';';}
   if(statement.kind==='return')return nativeJsonSource?pad+expr(statement.value):pad+'return '+expr(statement.value)+';';
   return pad+'if '+(rust?'':'(')+expr(statement.cond)+(rust?'':')')+' {\n'+body(statement.then,indent+4)+'\n'+pad+'} else {\n'+body(statement.else,indent+4)+'\n'+pad+'}';
- }).join('\n');}
+ }).join('\n');}finally{nativeIndexConstants=prior;}}
  const code=program.map(item=>{
   const borrowed=type=>['json-ref','map-ref','str','bytes-ref','base64-error-ref','json-option-input'].includes(type)||ownedJsonBorrowed(type),loan=borrowed(item.returns),explicit=loan&&item.resultRoot!==null&&item.params.filter(param=>borrowed(param.type)).length>1;
   const parameters=item.params.map(param=>{

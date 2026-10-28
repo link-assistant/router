@@ -734,3 +734,9 @@ Preserve actual projection source hashes/loans and registered scalar predicate
 owners. Owned JSON input roots are admitted only in the proven owned-vector
 result profile; standalone borrowed-result rules stay unchanged. Five source
 equations and all cases are UNRUN; optional/map/usize reader work remains OPEN.
+
+JSON constant-index drafting: [source boundary](vector-json-constant-index-source-draft.md).
+Only genuine current source-profile constants/immutable aliases receive a usize
+literal spelling. Keep branch constant maps operation-local, preserve original
+local evaluation, and require fresh actual projection/ABI/source checks. Three
+equations and every case remain UNRUN; dynamic conversion/platform work stays OPEN.
