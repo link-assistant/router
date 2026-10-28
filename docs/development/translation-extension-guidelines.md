@@ -339,3 +339,9 @@ across both scalar adopters and declaration selectors. Five equations and
 independent unrun paired APIs/nine substitutions/native/refusal/inverse/export
 cases are drafted. Generic/local/namespace/production/reverse/sync/freshness/
 parity/receiving/performance/delivery requirements remain OPEN.
+
+The [explicit paired integer constant source draft](fixed-type-constants-source-draft.md)
+shares genuine alias selection with exact MIN/MAX expressions through existing
+checked integer domains. Four equations and independent unrun twenty-function/
+JS/strict TS/whole and mixed inverse/native/refusal/export cases are drafted.
+Broader namespace/production/reverse/sync/freshness/parity/receiving/delivery stay OPEN.

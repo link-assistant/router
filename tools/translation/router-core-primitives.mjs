@@ -72,4 +72,4 @@ export function parseRouterCoreStrReference(parser){
   c.index=start+count;return output.value;
 }
 
-export {parseRouterCoreFixedType} from './fixed-type-core-parser.mjs';
+export {parseRouterCoreFixedType,parseRouterCoreFixedConstant} from './fixed-type-core-parser.mjs';

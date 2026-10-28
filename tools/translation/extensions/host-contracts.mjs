@@ -1,6 +1,6 @@
 import {parseRouterCoreMatches} from '../router-core-matches.mjs';import {parseRouterCoreVector,checkRouterCoreVector} from '../router-core-vectors.mjs';import {parseCharacterType,checkedCharacterType,assertCharacterBoundary,checkCharacterExpression,emitCharacterExpression,needsCharacterValueGuard} from './character-scalars.mjs';
 import {parseRouterCoreRangeCall,checkRouterCoreRangeCall,captureRouterCoreRangeCalls,ROUTER_CORE_RANGE_CONTRACT} from '../router-core-ranges.mjs';
-import {parseRouterCoreStrReference,parseRouterCoreFixedType} from '../router-core-primitives.mjs';import {jsonIterationContract} from '../json-iteration-contracts.mjs';import {jsonStateContract,JSON_STATE_CONTRACTS,forwardOwnedImports} from '../owned-forward-contracts.mjs';
+import {parseRouterCoreStrReference,parseRouterCoreFixedType,parseRouterCoreFixedConstant} from '../router-core-primitives.mjs';import {jsonIterationContract} from '../json-iteration-contracts.mjs';import {jsonStateContract,JSON_STATE_CONTRACTS,forwardOwnedImports} from '../owned-forward-contracts.mjs';
 import {parseRouterCoreFormatting,parseRouterCoreText} from '../router-core-formatting.mjs';
 import {withOriginalFormatDisplayParser,withOriginalFormatDisplayChecker} from './source-display-formatting.mjs';
 import {checkOriginalMappedBody,checkOriginalMappedApplication,prepareOriginalMappedBodies,requireOriginalMappedEmission,finalizeOriginalMappedBodies} from './standard-mapped-body.mjs';
@@ -334,7 +334,7 @@ export class HostRustParser extends withOriginalFormatDisplayParser(withJsonMacr
     };
     tree([]);c.expect(';','use');
   }
-  primary(path,options) {const coreMatches=parseRouterCoreMatches(this,path);if(coreMatches)return coreMatches;const coreVector=parseRouterCoreVector(this,path);if(coreVector)return coreVector;
+  primary(path,options) {const fixedConstant=parseRouterCoreFixedConstant(this);if(fixedConstant)return fixedConstant;const coreMatches=parseRouterCoreMatches(this,path);if(coreMatches)return coreMatches;const coreVector=parseRouterCoreVector(this,path);if(coreVector)return coreVector;
     const algebraic=parseRouterCoreAlgebraicExpression(this,path);if(algebraic)return algebraic;
     const coreScalar=parseRouterCoreScalarCall(this,path);if(coreScalar)return coreScalar;
     const coreBase64=parseRouterCoreBase64Call(this,path);if(coreBase64)return coreBase64;const coreRange=parseRouterCoreRangeCall(this,path);if(coreRange)return coreRange;
