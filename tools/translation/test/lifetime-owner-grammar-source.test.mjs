@@ -1,0 +1,25 @@
+// Independent complete lifetime owner grammar source. SOURCE ONLY; UNRUN.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {proposeCoreFixedTypesCorpus as ordinary} from '../migrate-core-fixed-types.mjs';
+import {proposeCoreFixedTypesCorpus as bound} from '../source-bound-owned-migrate-core-fixed-types.mjs';
+import {FIXED_TYPE_CORE_NATIVE_SOURCE} from '../fixed-type-core-source.mjs';
+import {readLifetimeOnlyWhereSource,readLifetimeOnlySelfSource} from '../lifetime-only-declaration-source.mjs';
+import {rustTokens} from '../rust-structure.mjs';
+import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
+import {prepareLifetimeOwnerGrammarSources} from '../prepare-lifetime-owner-grammar-sources.mjs';
+const limits={timeout:60000},C='crate::translation_fixed_types_core::';
+function fixture(source){return {entry:'src/lib.rs',files:{'src/lib.rs':'pub mod translation_fixed_types_core;\n'+source,'src/translation_fixed_types_core.rs':FIXED_TYPE_CORE_NATIVE_SOURCE}};}
+function inverse(result){for(const row of result.proposals){assert.equal(transportConcreteSyntaxMeta(row.before.meta).source,row.before.source);assert.equal(transportConcreteSyntaxMeta(row.after.meta).source,row.after.source);let source=row.after.source;for(const edit of [...row.mapping].reverse())if(edit.kind==='substitution'){assert.equal(source.slice(...edit.after),edit.replacement);source=source.slice(0,edit.after[0])+edit.expected+source.slice(edit.after[1]);}assert.equal(source,row.before.source);assert.deepEqual(row.trace.map(stage=>stage.phase),['language','repository']);assert.equal(row.executableAdmission,false);}}
+for(const [label,propose]of [['ordinary',ordinary],['source-bound',bound]]){
+ test(label+' lifetime where predicates and explicit receivers preserve nine complete substitutions across six owners',limits,()=>{
+  const source="pub struct Holder<'a> where 'a:'static {pub value:&'a u64}\npub struct Tuple<'a>(&'a i64) where 'a:'static;\npub enum Choice<'a> where 'a:'static {Empty,Some(&'a u32)}\npub type Ref<'a> where 'a:'static = &'a u16;\npub fn choose<'a>(value:&'a u64)->&'a u64 where 'a:'static {value}\nimpl<'a> Holder<'a> where 'a:'static {pub fn view(&'a self)->&'a u64{self.value}pub fn change(&'a mut self,value:&'a u8)->&'a u8 where 'a:'static {value}}",input=fixture(source),result=propose(input),text=result.after[input.entry];assert.equal(result.proposals.reduce((n,row)=>n+row.edits.length,0),9);assert.ok(text.includes("pub fn view(&'a self)->&'a "+C+'U64'));assert.ok(text.includes("pub fn change(&'a mut self,value:&'a "+C+'U8'));assert.ok(text.includes("where 'a:'static"));assert.ok(text.includes("Tuple<'a>(&'a "+C+"I64) where 'a:'static;"));inverse(result);assert.deepEqual(propose({...input,files:result.after}).after,result.after);assert.equal(result.executableAdmission,false);
+ });
+ test(label+' unknown regions type predicates and malformed receivers refuse complete owners without losing independent constants',limits,()=>{
+  for(const source of ["pub fn bad<'a>(value:u64)->u64 where 'missing:'a {value}","pub fn bad<'a>(value:u64)->u64 where 'a:'missing {value}","pub fn bad<'a>(value:u64)->u64 where Other:Trait {value}","pub struct Bad<'a> where 'a:Trait {value:&'a u64}","pub struct Bad<'a>(&'a u64) where Other:Trait;","pub struct Owner;impl<'a> Owner where Other:Trait {pub fn bad(value:u64)->u64{value}}","pub struct Owner;impl<'a> Owner {pub fn bad(&'missing self,value:u64)->u64{value}}"]){const input=fixture(source+'\npub const GOOD:u8 = 1;'),result=propose(input),text=result.after[input.entry];assert.ok(text.includes(source));assert.ok(text.includes('pub const GOOD:'+C+'U8 = 1;'));inverse(result);}
+ });
+}
+test('complete bounded lifetime predicates and receiver forms supply source syntax only',limits,()=>{
+ const lifetimes=["'a","'b"];for(const source of ["where 'a:'b", "where 'a:'b+'static,'b:'static,",'']){const rows=rustTokens(source);assert.equal(readLifetimeOnlyWhereSource(rows,0,rows.length,lifetimes),true);}for(const source of ['where',"where 'a:","where 'a:Other",'where T:Trait',"where 'missing:'a", "where 'a:'b,,"]){const rows=rustTokens(source);assert.throws(()=>readLifetimeOnlyWhereSource(rows,0,rows.length,lifetimes));}for(const source of ['self','mut self','&self','&mut self',"&'a self","&'a mut self","&'static self"])assert.equal(readLifetimeOnlySelfSource(rustTokens(source),lifetimes),true,source);for(const source of ["&'missing self",'&mut other','self other','mut &self',"&'_ self"])assert.equal(readLifetimeOnlySelfSource(rustTokens(source),lifetimes),false,source);
+});
+test('five complete compiler equations retain source owners CST phases and complete original inverses',limits,()=>{const plan=prepareLifetimeOwnerGrammarSources();assert.equal(plan.files.length,5);for(const row of plan.files){assert.equal(row.current,row.currentAfter);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}assert.equal(plan.receivingExecuted,false);});

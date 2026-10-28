@@ -27,3 +27,19 @@ export function readLifetimeOnlyTypeOwnerSource(rows,lifetimes=[]){
  }
  fail('missing impl owner');
 }
+
+export function readLifetimeOnlyWhereSource(rows,start,end,lifetimes=[]){
+ if(!Array.isArray(rows)||!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||end<start||end>rows.length||end-start>512||!Array.isArray(lifetimes)||lifetimes.length>64)fail('bounded complete lifetime predicate source required');
+ if(start===end)return true;if(rows[start]?.text!=='where')fail('only explicit lifetime where clauses are supported');const known=new Set(lifetimes);let at=start+1,predicates=0;
+ while(at<end){
+  if(++predicates>64||!known.has(rows[at++]?.text)||rows[at++]?.text!==':')fail('where predicate requires an original lifetime binder');let count=0;
+  while(true){if(++count>64)fail('lifetime predicate bound exceeded');const word=rows[at++]?.text;if(!lifetime(word)||word!=="'static"&&!known.has(word))fail('where type/const or unknown lifetime bound');if(rows[at]?.text!=='+')break;at++;}
+  if(at===end)return true;if(rows[at++]?.text!==',')fail('complete lifetime predicate separator required');
+ }
+ if(!predicates)fail('empty lifetime where clause');return true;
+}
+export function readLifetimeOnlySelfSource(rows,lifetimes=[]){
+ if(!Array.isArray(rows)||rows.length<1||rows.length>5||!Array.isArray(lifetimes)||lifetimes.length>64)return false;let at=0;
+ if(rows[at]?.text==='&'){at++;if(lifetime(rows[at]?.text)){const word=rows[at++].text;if(word!=="'static"&&!lifetimes.includes(word))return false;}}
+ if(rows[at]?.text==='mut')at++;return rows[at++]?.text==='self'&&at===rows.length;
+}

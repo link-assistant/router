@@ -178,7 +178,7 @@ function functionEdits(item,header,parseType=typeEdits,outerLifetimes=[]){
       if(parameter[at].text===':'){colon=at;break;}
     }
     if(colon<0){
-      if(parameter.map(token=>token.text).join('')==='self'||['&self',"&'staticself",'&mutself'].includes(parameter.map(token=>token.text).join('')))continue;
+      if(readLifetimeOnlySelfSource(parameter,binders.lifetimes))continue;
       throw new Error('parameter requires an actual type annotation');
     }
     if(!colon)throw new Error('missing parameter pattern');
@@ -186,10 +186,11 @@ function functionEdits(item,header,parseType=typeEdits,outerLifetimes=[]){
   }
   let at=close+1;
   if(rows[at]?.text==='->'){
-    const begin=++at;while(at<rows.length&&rows[at].text!=='{'&&rows[at].text!==';')at++;
+    const begin=++at;while(at<rows.length&&rows[at].text!=='{'&&rows[at].text!==';'&&rows[at].text!=='where')at++;
     selected.push(...selectType(rows.slice(begin,at)));
   }
-  if(rows[at]?.text!=='{'||matchesClose(rows,at)!==rows.length-1)throw new Error('function body or where grammar requires separate integration');
+  const predicates=at;while(at<rows.length&&rows[at].text!=='{'&&rows[at].text!==';')at++;readLifetimeOnlyWhereSource(rows,predicates,at,binders.lifetimes);
+  if(rows[at]?.text!=='{'||matchesClose(rows,at)!==rows.length-1)throw new Error('complete function body required');
   return selected;
 }
 function constantEdits(item,header,parseType=typeEdits){
@@ -220,8 +221,8 @@ function visitItems(source,items,profile,inherited,path,edits,selections,skipped
     if(blockers.length){skipped.push({...record,reason:'source binding or producer uncertainty',blockers});continue;}
     try{
       if(header.kind==='impl'){
-        const body=itemBody(item),keyword=body.rows.findIndex(token=>token.start===header.keywordSpan.start),binders=readLifetimeOnlySourceBinders(body.rows,keyword+1,lifetimes),owner=body.rows.slice(binders.after,body.open);
-        readLifetimeOnlyTypeOwnerSource(owner,binders.lifetimes);
+        const body=itemBody(item),keyword=body.rows.findIndex(token=>token.start===header.keywordSpan.start),binders=readLifetimeOnlySourceBinders(body.rows,keyword+1,lifetimes),where=body.rows.findIndex((token,at)=>at>=binders.after&&at<body.open&&token.text==='where'),ownerEnd=where<0?body.open:where,owner=body.rows.slice(binders.after,ownerEnd);
+        readLifetimeOnlyTypeOwnerSource(owner,binders.lifetimes);readLifetimeOnlyWhereSource(body.rows,ownerEnd,body.open,binders.lifetimes);
         const offset=body.start,nested=sourceItems(source.slice(body.start,body.end)).map(child=>({...child,start:child.start+offset,end:child.end+offset,tokens:child.tokens.map(token=>({...token,start:token.start+offset,end:token.end+offset}))}));
         visitItems(source,nested,profile,blockers,[...path,'impl '+owner.map(token=>token.text).join('')],edits,selections,skipped,depth+1,modulePath,producer,binders.lifetimes);continue;
       }
@@ -286,4 +287,4 @@ export function proposeCoreFixedTypesCorpus({entry='src/lib.rs',files:input,comp
 
 import {fixedTypeDeclarationEdits} from './fixed-type-declaration-source.mjs';
 
-import {readLifetimeOnlySourceBinders,readLifetimeOnlyTypeOwnerSource} from './lifetime-only-declaration-source.mjs';
+import {readLifetimeOnlySourceBinders,readLifetimeOnlyTypeOwnerSource,readLifetimeOnlyWhereSource,readLifetimeOnlySelfSource} from './lifetime-only-declaration-source.mjs';

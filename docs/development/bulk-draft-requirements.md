@@ -596,3 +596,10 @@ shares bounded original lifetime binders across signatures, declaration fields
 and plain impl owners. Five equations and independent unrun paired APIs/ten
 substitutions/native borrow/refusal/inverse/export cases are drafted. Type/const/
 where/local/namespace/production/reverse/sync/freshness/parity/delivery stay OPEN.
+
+The [lifetime owner grammar source draft](lifetime-owner-grammar-source-draft.md)
+shares complete closed outlives predicates and explicit self receiver syntax
+across both scalar adopters and declaration selectors. Five equations and
+independent unrun paired APIs/nine substitutions/native/refusal/inverse/export
+cases are drafted. Generic/local/namespace/production/reverse/sync/freshness/
+parity/receiving/performance/delivery requirements remain OPEN.

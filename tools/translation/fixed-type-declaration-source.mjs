@@ -28,14 +28,15 @@ function fields(rows,record,parseType){
 export function fixedTypeDeclarationEdits(item,header,parseType,{lifetimes=[]}={}){
  if(typeof parseType!=='function')fail('whole source type selector required');
  const rows=item.tokens.filter(row=>row.type!=='comment');if(rows.length>200000)fail('declaration token count exceeds bound');
- const name=rows.findIndex(row=>row.start===header.nameSpan.start);if(name<0||!identifier(rows[name])||header.rawIdentifier)fail('actual ordinary declaration name required');const binders=readLifetimeOnlySourceBinders(rows,name+1,lifetimes),at=binders.after,selectType=tokens=>parseType(tokens,{lifetimes:binders.lifetimes});
+ const name=rows.findIndex(row=>row.start===header.nameSpan.start);if(name<0||!identifier(rows[name])||header.rawIdentifier)fail('actual ordinary declaration name required');const binders=readLifetimeOnlySourceBinders(rows,name+1,lifetimes),selectType=tokens=>parseType(tokens,{lifetimes:binders.lifetimes});let at=binders.after;
+ if(rows[at]?.text==='where'){const begin=at;while(at<rows.length&&!['{',';','='].includes(rows[at].text))at++;readLifetimeOnlyWhereSource(rows,begin,at,binders.lifetimes);}
  if(header.kind==='type'){
   if(rows[at]?.text!=='='||rows.at(-1)?.text!==';')fail('generic or conditional alias requires separate binder integration');return selectType(rows.slice(at+1,-1));
  }
  if(['struct','union'].includes(header.kind)){
   if(header.kind==='struct'&&rows[at]?.text===';'&&at===rows.length-1)return [];
   const group=rows[at]?.text;if(!['{','('].includes(group)||header.kind==='union'&&group!=='{')fail('generic or conditional field owner requires separate integration');
-  const end=close(rows,at),trailing=rows.slice(end+1).map(row=>row.text).join('');if(group==='('?(trailing!==';'):trailing!=='')fail('complete field declaration terminator required');
+  const end=close(rows,at);if(group==='('){if(rows.at(-1)?.text!==';')fail('complete tuple declaration terminator required');readLifetimeOnlyWhereSource(rows,end+1,rows.length-1,binders.lifetimes);}else if(end!==rows.length-1)fail('complete field declaration terminator required');
   return fields(rows.slice(at+1,end),group==='{',selectType);
  }
  if(header.kind!=='enum'||rows[at]?.text!=='{'||close(rows,at)!==rows.length-1)fail('monomorphic complete enum owner required');
@@ -48,4 +49,4 @@ export function fixedTypeDeclarationEdits(item,header,parseType,{lifetimes=[]}={
  return edits;
 }
 
-import {readLifetimeOnlySourceBinders} from './lifetime-only-declaration-source.mjs';
+import {readLifetimeOnlySourceBinders,readLifetimeOnlyWhereSource} from './lifetime-only-declaration-source.mjs';

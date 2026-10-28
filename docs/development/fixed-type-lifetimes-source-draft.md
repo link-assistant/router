@@ -31,3 +31,7 @@ Type/const generics, lifetime where clauses, local positions, namespace closure,
 actual production coverage and full forward/reverse/sync/freshness/parity/
 receiving/performance/delivery remain OPEN. No executable coverage gain or
 verified completion is claimed.
+
+The [owner grammar successor](lifetime-owner-grammar-source-draft.md) drafts
+closed lifetime-only where predicates and explicit lifetime receivers. Trait/type/
+const predicates remain refused; all execution and wider requirements stay OPEN.
