@@ -38,7 +38,7 @@ export function describeOwnedJsonDifference(actual,expected,{propertyOrder=false
  };
  return visit(actual,expected,'',0);
 }
-export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,closedErrors=null,closedOption=null}) {
+export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,genuineVector=null,closedErrors=null,closedOption=null}) {
  const refuse=(detail,node,comparison=null)=>{const diagnostic=comparison??closedErrors?.diagnostic?.(node);throw unsupported('owned JSON flow',detail+(diagnostic?' [comparison '+JSON.stringify(diagnostic)+']':''),node?.span??entry.span);};
  const standardContext=closedErrors??closedOption;
  let cells=100000,callCount=0,selectedOptionTypes=null,optionalParseBoundary=null,ownedStateVectorBoundary=null;
@@ -49,7 +49,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
  };
  const hasOwnedStateVectorBoundary=()=>{
   if(ownedStateVectorBoundary!==null)return ownedStateVectorBoundary;
-  const visit=(node,depth=0)=>{if(!node||typeof node!=='object')return false;if(--cells<0||depth>160)refuse('owned state Vec source boundary bound',entry);const row=node.k==='routerHostCall'?jsonStateContract(node.id):null;if(row&&(row.returns==='owned-json-list'||row.parameters.includes('owned-json-list'))&&genuine(node,entry))return true;for(const [key,value]of Object.entries(node))if(!['type','span','compatibilityCore','pinnedStandardBodyProof','sourceFrameProof','originalCallbackProof','originalLoanProof','sharedBodyProof','sourceSharedPatternProof'].includes(key))for(const child of Array.isArray(value)?value:[value])if(visit(child,depth+1))return true;return false;};
+  const visit=(node,depth=0)=>{if(!node||typeof node!=='object')return false;if(--cells<0||depth>160)refuse('owned state Vec source boundary bound',entry);if(node.k==='array'&&genuineVector?.(node))return true;const row=node.k==='routerHostCall'?jsonStateContract(node.id):null;if(row&&(row.returns==='owned-json-list'||row.parameters.includes('owned-json-list'))&&genuine(node,entry))return true;for(const [key,value]of Object.entries(node))if(!['type','span','compatibilityCore','pinnedStandardBodyProof','sourceFrameProof','originalCallbackProof','originalLoanProof','sharedBodyProof','sourceSharedPatternProof'].includes(key))for(const child of Array.isArray(value)?value:[value])if(visit(child,depth+1))return true;return false;};
   return ownedStateVectorBoundary=visit(entry.body);
  };
  let ownedCarrierBoundary=null;
@@ -210,6 +210,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
   if(!node||typeof node!=='object')refuse('missing checked expression',entry);
   const read=(value,how='move')=>visit(value,state,how,depth+1);
   if(node.k==='var')return variable(node,state,mode);
+  if(node.k==='array'&&genuineVector?.(node)){if(domain(node.type,node)!=='json-vector')refuse('qualified JSON vector needs its actual owned collection domain',node);for(const element of node.items){if(domain(element.type,element)!=='json')refuse('qualified JSON vector element must be actual by-value canonical Json',element);const value=read(element,'move');if(value.loans.size)refuse('owned JSON vector cannot retain lexical loans',element);}return empty();}
   if(standardContext&&node.k==='routerOriginalCallbackLoan'){
    if(!state.standardScope||!hasOriginalCallbackLoan(node))refuse('callback loan lacks its selected private standard frame',node);const value=read(node.value,'borrow');
    if(node.type.rustReference?.pointee?.rustReference){if(!canonical(node.type.rustReference.pointee.rustReference.pointee,node))refuse('callback loan cannot widen a noncanonical aggregate',node);value.localLoanType=node.type;value.localLoanOrigin=node;}return value;

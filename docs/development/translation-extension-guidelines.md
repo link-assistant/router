@@ -598,3 +598,9 @@ str repetition with retained zero-seed lifetime checks and a strictly static
 reverse text domain. Eight source equations and independent lifetime/Unicode/
 strict TS/reverse/native source remain UNRUN. General borrowed reverse flow and
 all wider translation, synchronization and delivery requirements stay OPEN.
+
+The [canonical Json vector draft](vector-json-forward-source-draft.md) joins the
+actual registered JSON layout and private vector association to whole-function
+linear transfer, retaining source custody across deferred normalization. Four
+source equations and independent strict TS/meta/native/ownership source remain
+UNRUN. Reverse JSON vectors and every wider delivery requirement stay OPEN.
