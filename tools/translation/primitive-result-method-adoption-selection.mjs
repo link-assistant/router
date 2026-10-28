@@ -6,7 +6,7 @@ import {createPrimitiveCarrierLocalSource,readCarrierLocalInitializer} from './p
 
 const methods=new Set(['is_ok','is_err','unwrap_or','unwrap','expect','unwrap_err','expect_err','ok','err','map','and_then','map_err','or_else','unwrap_or_else']);
 const words=tokens=>tokens.map(token=>token.text+(token.text.startsWith("'")?' ':'')).join('');
-function scalarRole(source){source=source.replace(/&'[a-zA-Z_][a-zA-Z0-9_]*\s+/gu,'&').replace(/\s+/gu,'');if(['String','::std::string::String','std::string::String'].includes(source))return {kind:'payload',domain:'text-owned'};if(['bool','u64','i64'].includes(source))return {kind:'payload',domain:source};if(['&str','&crate::translation_core::Str','&::std::primitive::str','&::core::primitive::str'].includes(source))return {kind:'payload',domain:'str'};return null;}
+function scalarRole(source){source=source.replace(/&'[a-zA-Z_][a-zA-Z0-9_]*\s+/gu,'&').replace(/\s+/gu,'');const explicit=readFixedTypeCoreWrittenSourceRole(source);if(['bool','u64','i64'].includes(explicit))return {kind:'payload',domain:explicit};if(['String','::std::string::String','std::string::String'].includes(source))return {kind:'payload',domain:'text-owned'};if(['bool','u64','i64'].includes(source))return {kind:'payload',domain:source};if(['&str','&crate::translation_core::Str','&::std::primitive::str','&::core::primitive::str'].includes(source))return {kind:'payload',domain:'str'};return null;}
 function role(tokens,scoped){const source=words(tokens),normalized=source.replace(/&'[a-zA-Z_][a-zA-Z0-9_]*\s+/gu,'&').replace(/\s+/gu,''),result=/^(?:(?:::)?(?:std|core)::result::Result|Result)<([\s\S]+),(?:(?:::)?std::string::)?String>$/u.exec(normalized),optional=/^(?:(?:::)?(?:std|core)::option::Option|Option|crate::translation_core::Maybe)<([\s\S]+)>$/u.exec(normalized),payload=scalarRole(optional?optional[1]:result?result[1]:source);return payload&&(!result||payload.domain!=='text-owned')?{...payload,kind:optional?'option':result?'result':'payload'}:null;}
 export function selectPrimitiveResultMethodAdoption(source,item,scoped,modulePath,_names,helpers){
  const proposeCallbackBody=helpers.callbackBodyProposer??proposeCallbackCoreBodySource;
@@ -88,3 +88,5 @@ import {createQualifiedCallbackFunctionSource} from './qualified-callback-functi
 import {coreFormattingMacroSourceHeaders} from './core-formatting-macro-source.mjs';
 
 import {splitRustMacroBangSourceTokens} from './rust-macro-token-source.mjs';
+
+import {readFixedTypeCoreWrittenSourceRole} from './fixed-type-core-source.mjs';

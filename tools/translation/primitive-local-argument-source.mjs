@@ -22,8 +22,8 @@ export function readPrimitiveAliasOperand(rows,bindings,written=null){
  const literal=readFixedIntegerLiteralSource(rows,written);return literal?{kind:literal.domain,binding:null}:null;
 }
 
-export function readPrimitiveWrittenAliasDomain(rows){const explicit=readFixedTypeCoreSourceRole(rows);if(explicit&&primitiveBitwiseType(explicit))return explicit;const match=/^(?:(?:::)?(?:std|core)::primitive::)?([iu](?:8|16|32|64|128))$/u.exec(rows.map(row=>row.text).join(''));return match&&primitiveBitwiseType(match[1])?match[1]:null;}
+export function readPrimitiveWrittenAliasDomain(rows){const explicit=readFixedTypeCoreSourceRole(rows)??readFixedTypeCoreWrittenSourceRole(rows.map(row=>row.text).join(''));if(explicit&&primitiveBitwiseType(explicit))return explicit;const match=/^(?:(?:::)?(?:std|core)::primitive::)?([iu](?:8|16|32|64|128))$/u.exec(rows.map(row=>row.text).join(''));return match&&primitiveBitwiseType(match[1])?match[1]:null;}
 
 import {readPrimitiveCoreCallSource,readPrimitiveCoreParameterSourceRole,readPrimitiveCoreRoleSource} from './primitive-core-call-source.mjs';
 
-import {readFixedTypeCoreSourceRole} from './fixed-type-core-source.mjs';
+import {readFixedTypeCoreSourceRole,readFixedTypeCoreWrittenSourceRole} from './fixed-type-core-source.mjs';

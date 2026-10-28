@@ -4,3 +4,10 @@ export const FIXED_TYPE_CORE_ALIASES=Object.freeze([{"name":"U8","primitive":"u8
 export function readFixedTypeCoreSourceRole(rows){
  if(!Array.isArray(rows)||rows.length!==5||!['crate','::','translation_fixed_types_core','::'].every((word,at)=>rows[at]?.text===word)||rows[4]?.type!=='ident')return null;return FIXED_TYPE_CORE_ALIASES.find(row=>row.name===rows[4].text)?.primitive??null;
 }
+
+// Exact written source candidate, including callers holding a complete type
+// slice as one string. Neither this table nor a candidate is type permission.
+export function readFixedTypeCoreWrittenSourceRole(source){
+ if(typeof source!=='string'||source.length>128||!source.startsWith('crate::translation_fixed_types_core::'))return null;
+ const name=source.slice('crate::translation_fixed_types_core::'.length);return FIXED_TYPE_CORE_ALIASES.find(row=>row.name===name)?.primitive??null;
+}

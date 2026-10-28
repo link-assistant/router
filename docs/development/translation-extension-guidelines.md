@@ -320,3 +320,9 @@ monomorphic structs/tuples/enums/unions/aliases/statics. Four equations and
 independent unrun two-API/fifteen-edit/atomic refusal/inverse/native/export cases
 are source drafted. Generic/local/namespace/production/reverse/sync/freshness/
 parity/receiving/performance/delivery requirements remain OPEN.
+
+The [qualified scalar carrier source draft](fixed-type-carrier-source-draft.md)
+shares exact lexical aliases across nested parameter/local and four carrier
+method selectors. Eight equations and independent unrun paired APIs/eight
+callers/JS/strict TS/native/refusal/inverse/export cases are source drafted.
+Wider namespace/production/reverse/sync/freshness/parity/receiving/delivery stay OPEN.
