@@ -621,3 +621,9 @@ reuses complete type grammar and actual lifetime binders within closed body scop
 Four equations and independent unrun sixty-substitution/twenty-caller/Bool/F64/
 nested type/JS/strict TS/native/refusal/inverse/export cases are drafted. Partial
 body refusals and wider namespace/production/sync/parity/delivery remain OPEN.
+
+The [protected scalar alias endpoint source draft](fixed-type-alias-endpoint-source-draft.md)
+retains every user alias scope guard while resolving its genuine qualified native
+terminal through the shared scalar library. Three equations and independent unrun
+all-domain/two-API/JS/strict TS/native/whole and mixed inverse/refusal/export cases
+are drafted. Namespace/production/sync/freshness/parity/receiving/delivery stay OPEN.
