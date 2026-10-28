@@ -30,3 +30,9 @@ ledger stays below the repository file-size limit.
   64-bit usize literals, scoped immutable integer aliases, canonical borrowed
   results, ordered source comparison and three complete source equations.
   All cases are UNRUN; dynamic conversion and other pointer-width proofs stay OPEN.
+
+- [Batched field/default reuse](vector-json-field-defaults-source-draft.md):
+  complete original field/facade/asset copies, exact native/runtime roots, plain
+  nested/default operations, ordered bodies and seven complete source equations.
+  Cases cover every supported catalog row in batches of at most eight functions;
+  all remain UNRUN. Optional/owned-text and every broader requirement stay OPEN.

@@ -740,3 +740,10 @@ Only genuine current source-profile constants/immutable aliases receive a usize
 literal spelling. Keep branch constant maps operation-local, preserve original
 local evaluation, and require fresh actual projection/ABI/source checks. Three
 equations and every case remain UNRUN; dynamic conversion/platform work stays OPEN.
+
+Field/default family reuse: [source boundary](vector-json-field-defaults-source-draft.md).
+Copy the complete existing library/asset paths and keep actual native module,
+resolved scope, runtime/declaration and private canonical function joins. Batch
+independent catalog cases into bounded whole units rather than repeated one-call
+translations. Seven source equations and every batch are UNRUN; no coverage or
+performance gain is claimed before the complete draft and authorized verification.

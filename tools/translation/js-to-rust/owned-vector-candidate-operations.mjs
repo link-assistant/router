@@ -165,10 +165,11 @@ export function emitOwnedCoreProgram(input,target,{outputPath,nativeJsonSource=f
  function publicTypeScriptType(type){if(sourceData.primitiveOperators===true&&primitiveBitwiseType(type)){const row=primitiveBitwiseType(type);primitiveTypeImports.add(row.alias);return row.alias;}if(type==='json-option-input'){imports.add('router_core_json_option_as_str');return TS_TYPES[type];}const witness=ownedJsonReaderTypeWitness(type);if(witness){imports.add(witness);return 'ReturnType<typeof __ro_'+witness+'>';}return TS_TYPES[type];}
 
  let nativeIndexConstants=new Map();function nativeIndexConstant(value){if(!['usize','u64'].includes(value?.type))return null;const text=value.kind==='integer'?value.value:value.kind==='variable'?nativeIndexConstants.get(value.name):null;if(typeof text!=='string')return null;const integer=BigInt(text);return integer<0n||integer>18446744073709551615n?null:integer.toString();}
- const freshJson=value=>value.type==='json'&&['owned-call','json-array','json-object'].includes(value.kind);
+ const freshJson=value=>value.type==='json'&&['owned-call','json-array','json-object','json-field-call'].includes(value.kind);
  const copyExpression=child=>jsonCopy+'('+(child.type==='json-ref'||child.kind==='variable'?expr(child,true):'&('+expr(child)+')')+')';
  function expr(value,borrowOwned=false){
   switch(value.kind){
+   case 'json-field-call':return emitOwnedVectorJsonFieldCall(value,{rust,expr,imports,sequence:()=>sequence++});
    case 'owned-vector-list':return emitOwnedVectorCandidateLiteral(value,rust);
    case 'json-vector-literal':if(rust)return 'crate::translation_core::vec!['+value.items.map(child=>freshJson(child)?expr(child):copyExpression(child)).join(', ')+']';imports.add('router_core_json_copy');return '['+value.items.map(child=>freshJson(child)?expr(child):'__ro_router_core_json_copy('+expr(child)+')').join(', ')+']';
    case 'vector-condition-input':return rust?value.rust:value.name;
@@ -271,8 +272,8 @@ export function emitOwnedCoreProgram(input,target,{outputPath,nativeJsonSource=f
  if(primitiveTypeImports.size){const location=posix.relative(posix.dirname(output),(sourceData.declarationRoot??sourceData.runtimeRoot)+'/primitive-operator-runtime.mjs');lines.push('import type { '+[...primitiveTypeImports].join(', ')+' } from '+JSON.stringify(location.startsWith('.')?location:'./'+location)+';');}
  if(hasOwnedBase64Input(program)||[...imports].some(name=>ownedBase64Operation(name)))lines.push('import type {Base64Error,Base64Result} from '+JSON.stringify(relative('base64-runtime.mjs'))+';');
  if(hasOwnedBase64Input(program))lines.push('import {base64ResultInput as __ro_base64ResultInput} from '+JSON.stringify(relative('base64-runtime.mjs'))+';');
- for(const family of ['primitive-operator','json-update','json-macro','base64','json','json-option']){
-  const names=[...imports].filter(name=>(ownedPrimitiveOperatorOperation(name)?'primitive-operator':ownedJsonOptionalReaderOperation(name)?'json-option':ownedBase64Operation(name)?'base64':ownedJsonReaderOperation(name)?'json':name.startsWith('json_macro_')?'json-macro':'json-update')===family);
+ for(const family of ['primitive-operator','json-fields','json-update','json-macro','base64','json','json-option']){
+  const names=[...imports].filter(name=>(ownedPrimitiveOperatorOperation(name)?'primitive-operator':ownedVectorJsonFieldOperation(name)?'json-fields':ownedJsonOptionalReaderOperation(name)?'json-option':ownedBase64Operation(name)?'base64':ownedJsonReaderOperation(name)?'json':name.startsWith('json_macro_')?'json-macro':'json-update')===family);
   if(names.length)lines.push('import { '+names.map(name=>name+' as __ro_'+name).join(', ')+' } from '+JSON.stringify(relative(family+'-runtime.mjs'))+';');
  }
  return lines.join('\n')+'\n\n'+code+'\n';
@@ -319,6 +320,7 @@ fn __ro_with_field(base: &crate::translation_core::Json, key: &str, value: &crat
 export async function prepareOwnedCoreRuntime(input){
  const program=checkOwnedCoreProgram(input),modules={update:await import('../json-update-runtime.mjs'),macro:await import('../json-macro-runtime.mjs')};
  if(program.some(item=>item.sourceNativeOperators?.some(row=>row.kind==='native-fixed-bitwise')||item.hostCalls.some(call=>ownedPrimitiveOperatorOperation(call.name))))modules.primitive=await import('../extensions/primitive-operator-runtime.mjs');
+ if(program.some(item=>item.hostCalls.some(call=>ownedVectorJsonFieldOperation(call.name))))modules.fields=await import('../json-fields-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedJsonReaderOperation(call.name))))modules.json=await import('../extensions/json-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedJsonOptionalReaderOperation(call.name))))modules.optional=await import('../json-option-runtime.mjs');
  if(hasOwnedBase64Input(program)||program.some(item=>item.hostCalls.some(call=>ownedBase64Operation(call.name))))modules.base64=await import('../base64-runtime.mjs');
@@ -330,8 +332,9 @@ export function evaluateOwnedCoreProgram(input,name,args,token){
  const env=ownedBase64InputEnvironment(item.params,args,state.modules);if(isJsonVector(item))validateJsonVectorInputs(item,env,state.modules);else validateVectorParameters(item,env);
  const get=(value,scope)=>{
   switch(value.kind){
+   case 'json-field-call':return evaluateOwnedJsonFieldCall(value,{state,scope,get});
    case 'owned-vector-list':return evaluateOwnedVectorCandidateLiteral(value,scope);
-   case 'json-vector-literal':return value.items.map(child=>{const result=get(child,scope);return child.type==='json'&&['owned-call','json-array','json-object'].includes(child.kind)?result:state.modules.update.router_core_json_copy(result);});
+   case 'json-vector-literal':return value.items.map(child=>{const result=get(child,scope);return child.type==='json'&&['owned-call','json-array','json-object','json-field-call'].includes(child.kind)?result:state.modules.update.router_core_json_copy(result);});
    case 'vector-condition-input':return scope.get(value.name);
    case 'variable':return scope.get(value.name);
    case 'string':case 'bool':return value.value;
@@ -374,3 +377,5 @@ import {isJsonVector,jsonVectorInputPrelude,validateJsonVectorInputs} from './ow
 import {BOUNDED_JSON_RUNTIME_OPERATIONS} from './bounded-json-runtime-operations.mjs';
 
 import {nativeJsonPredicateSource} from './owned-vector-json-predicate-native.mjs';
+
+import {ownedVectorJsonFieldOperation,emitOwnedVectorJsonFieldCall,evaluateOwnedJsonFieldCall} from './owned-vector-json-fields.mjs';
