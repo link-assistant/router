@@ -40,6 +40,6 @@ test('owned String inputs remain validated when the selected branch produces no 
  const rust='pub fn values(flag:bool,seed:String)->Vec<String>{if flag{'+C+'vec![seed]}else{'+C+'vec![]}}',body='if(flag){return [seed];}else{return [];}',row=translate(rust,'export function values(flag,seed){'+body+'}','export function values(flag:boolean,seed:string):readonly string[]{'+body+'}'),runs=await targets(t,row);for(const run of runs){assert.deepEqual(run(true,'😀'),['😀']);assert.deepEqual(run(false,'😀'),[]);}for(const run of runs.slice(2))for(const value of [null,{},new String('x'),'\ud800','\udfff'])assert.throws(()=>run(false,value));
 });
 test('borrowed text numeric domains invalid Unicode and nonliteral construction remain distinct refusals',limits,()=>{
- const js='export function values(){return ["x"];}';assert.throws(()=>translate('pub fn values()->Vec<&\'static str>{'+C+'vec!["native"]}',js,'export function values():readonly string[]{return ["x"];}'));
+ const js='export function values(){return ["x"];}';assert.throws(()=>translate('pub fn values(seed:&str)->Vec<&str>{'+C+'vec![seed]}',js,'export function values():readonly string[]{return ["x"];}'));
  for(const body of ['return [1n];','return [new String("x")];','return ["\\ud800"];','return [`dynamic${external}`];'])assert.throws(()=>translate('pub fn values()->Vec<String>{'+C+'vec![String::from("native")]}','export function values(){'+body+'}','export function values():readonly string[]{'+body+'}'));
 });

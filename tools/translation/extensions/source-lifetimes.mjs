@@ -372,6 +372,9 @@ function origins(node,env,context,returns,depth=0) {
   }
   if(node.k==='array'&&hasCheckedRouterCoreVector(node)) {
     const values=node.items.map(value=>read(value));
+    // The private owned-vector proof covers the retained repeat seed as well.
+    // Zero stored elements cannot erase the original seed's borrow obligation.
+    if(node.items.length===0&&node.repeatSeed)values.push(read(node.repeatSeed));
     return borrowed?union(...values.map(value=>prefix(value,['element']))):new Set();
   }
   if(node.k==='array'&&node.type?.rustFixedArray&&node.fixedArrayProof?.verified) {

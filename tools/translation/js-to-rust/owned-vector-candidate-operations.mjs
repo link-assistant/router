@@ -242,7 +242,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  const code=program.map(item=>{
   const borrowed=type=>['json-ref','map-ref','str','bytes-ref','base64-error-ref','json-option-input'].includes(type)||ownedJsonBorrowed(type),loan=borrowed(item.returns),explicit=loan&&item.resultRoot!==null&&item.params.filter(param=>borrowed(param.type)).length>1;
   const parameters=item.params.map(param=>{
-   const type=item.vectorOrigin?(rust?(param.type==='text-owned'?'::std::string::String':'::core::primitive::'+param.type):param.type==='bool'?'boolean':param.type==='f64'?'number':param.type==='text-owned'?'string':'bigint'):(rust?rustTypes[param.type].replace("'a ",explicit&&param.name===item.resultRoot?"'a ":''):publicTypeScriptType(param.type));
+   const type=item.vectorOrigin?(rust?(param.type==='text-owned'?'::std::string::String':param.type==='str-static'?"&'static ::std::primitive::str":'::core::primitive::'+param.type):param.type==='bool'?'boolean':param.type==='f64'?'number':['text-owned','str-static'].includes(param.type)?'string':'bigint'):(rust?rustTypes[param.type].replace("'a ",explicit&&param.name===item.resultRoot?"'a ":''):publicTypeScriptType(param.type));
    return (rust?param.rust:param.name)+': '+type;
   }).join(', ');
   const returns=rust?rustTypes[item.returns].replace("'a ",item.resultRoot===null?"'static ":explicit?"'a ":''):publicTypeScriptType(item.returns);
@@ -252,7 +252,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  requireOwnedCoreSourceCurrent(context);
  if(rust)return RUST_SUPPORT+'\n\n'+code+'\n';
  const output=outputPath??program[0].source.path,relative=name=>{const path=posix.relative(posix.dirname(output),sourceData.runtimeRoot+'/'+name);return path.startsWith('.')?path:'./'+path;};
- const vectorText=program.some(item=>item.vectorOrigin&&item.params.some(param=>param.type==='text-owned'));
+ const vectorText=program.some(item=>item.vectorOrigin&&item.params.some(param=>['text-owned','str-static'].includes(param.type)));
  const lines=['import type {JsonValue} from '+JSON.stringify(relative('json-macro-runtime.mjs'))+';'];
  if(vectorText)lines.push('import {vectorTextInput as __ro_vectorTextInput} from '+JSON.stringify(relative('owned-vector-text-runtime.mjs'))+';');
  if(primitiveTypeImports.size){const location=posix.relative(posix.dirname(output),(sourceData.declarationRoot??sourceData.runtimeRoot)+'/primitive-operator-runtime.mjs');lines.push('import type { '+[...primitiveTypeImports].join(', ')+' } from '+JSON.stringify(location.startsWith('.')?location:'./'+location)+';');}

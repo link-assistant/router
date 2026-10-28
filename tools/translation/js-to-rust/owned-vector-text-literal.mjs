@@ -8,8 +8,9 @@ export function ownedVectorTextLiteral(ts,node){
 export function ownedVectorTextValue(item){
  assertReverseConcreteSourceHost();if(item.kind!=='text')throw new TypeError('Owned vector text literal DATA differs');const value=requireScalarString(item.value);assertReverseConcreteSourceHost();return value;
 }
-export function emitOwnedVectorText(item,rust){
+export function emitOwnedVectorText(item,rust,borrowedStatic=false){
  const value=ownedVectorTextValue(item);if(!rust)return JSON.stringify(value);
  const escaped=value.replace(/[\\"\x00-\x1f\x7f]/gu,letter=>({'\\':'\\\\','"':'\\"','\n':'\\n','\r':'\\r','\t':'\\t'}[letter]??'\\u{'+letter.codePointAt(0).toString(16)+'}'));
+ if(borrowedStatic)return '"'+escaped+'"';
  return '<::std::string::String as ::std::convert::From<&::std::primitive::str>>::from("'+escaped+'")';
 }

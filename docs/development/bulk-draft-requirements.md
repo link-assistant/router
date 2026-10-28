@@ -856,3 +856,9 @@ rechecks captured archives/originals/current/native metadata at the end of one
 operation, clears all state, preserves primary failures and includes descendant
 compiler rows in the current copier. Six complete equations and independent
 source/byte/absence/nesting/failure/async cases remain UNRUN; delivery stays OPEN.
+
+The [borrowed/static vector draft](vector-static-text-source-draft.md) adds Copy
+str repetition with retained zero-seed lifetime checks and a strictly static
+reverse text domain. Eight source equations and independent lifetime/Unicode/
+strict TS/reverse/native source remain UNRUN. General borrowed reverse flow and
+all wider translation, synchronization and delivery requirements stay OPEN.

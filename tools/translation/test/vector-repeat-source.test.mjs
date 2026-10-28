@@ -30,7 +30,7 @@ test('allocation bounds source usize Copy domains and genuine facade remain inde
  'pub fn bad()->Vec<u8>{'+C+'vec![1u16;2]}',
  'pub fn bad()->[u8;2]{'+C+'vec![1u8;2]}',
  'pub fn bad()->Vec<String>{'+C+'vec![String::from("owned");2]}',
- 'pub fn bad()->Vec<&\'static str>{'+C+'vec!["borrowed";2]}',
+ 'pub fn bad(seed:&str)->Vec<&\'static str>{'+C+'vec![seed;2]}',
  'pub fn bad()->Vec<[u8;2]>{'+C+'vec![[1u8,2u8];2]}',
  'pub fn bad()->Vec<u8>{'+C+'vec![return '+C+'vec![1u8];2]}',
  ])assert.equal(project(source).meta.executable.some(row=>row.name==='bad'),false,source);

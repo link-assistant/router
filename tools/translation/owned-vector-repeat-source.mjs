@@ -30,8 +30,8 @@ export function checkOwnedVectorRepeat(checker,node,env,path,expected,allowLiter
  const checked=checker.expr({...node,k:'routerFixedArrayRepeat'},env,path,hint,allowLiteral);
  if(checked.k!=='let'||checked.body?.k!=='array'||checked.body.items.length!==node.length)reject('requires the complete checked fixed-repeat operand lowering',node.span);
  const element=checked.body.type?.element;
- if(!element||element.rustReference||element.rustGenericIdentityUnresolved||element.rustBorrowingUnresolved||!(element.kind==='float'&&element.rustPrimitiveName==='f64'&&element.rustSourceType===true&&!element.rustOwnership&&!element.patternOwnershipRefusal||element.kind==='bool'||element.kind==='fixed'&&typeof element.rustPrimitiveName==='string'))reject('only checked Copy integer, f64 and bool elements are qualified; text, aggregate and custom Clone remain separate',node.span);
+ if(!element||element.rustReference||element.rustGenericIdentityUnresolved||element.rustBorrowingUnresolved||!(element.kind==='string'&&element.rustOwnership?.kind==='borrowed'&&element.rustOwnership.source==='str'||element.kind==='float'&&element.rustPrimitiveName==='f64'&&element.rustSourceType===true&&!element.rustOwnership&&!element.patternOwnershipRefusal||element.kind==='bool'||element.kind==='fixed'&&typeof element.rustPrimitiveName==='string'))reject('only checked Copy integer, f64, bool and borrowed str elements are qualified; owned text, aggregate and custom Clone remain separate',node.span);
  const array={...checked.body};delete array.fixedArrayProof;delete array.repeatSeed;
  const type={kind:'array',element,rustOwnership:{kind:'owned',source:'Vec'},rustSourceType:true};
- return {checked,array:{...array,type,sourceRustOwnership:{kind:'owned',source:'Vec'},constEligible:false}};
+ return {checked,array:{...array,type,sourceRustOwnership:{kind:'owned',source:'Vec'},repeatSeed:checked.body.repeatSeed,constEligible:false}};
 }

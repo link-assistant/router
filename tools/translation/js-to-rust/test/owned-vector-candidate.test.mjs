@@ -53,7 +53,7 @@ test('fixed arrays aliases mutation spread repetition borrowed text and mismatch
  const rust='pub fn values()->Vec<bool>{'+C+'vec![true]}',plain='export function values(){return [true];}',typed='export function values():readonly boolean[]{return [true];}';
  assert.throws(()=>translate('pub fn values()->[bool;1]{[true]}',plain,typed),/owned Vec signature/u);
  for(const body of ['const alias=[true];return alias;','const alias=[true];alias.push(false);return alias;','return [...[true]];','return Array(2).fill(true);'])assert.throws(()=>translate(rust,'export function values(){'+body+'}','export function values():readonly boolean[]{'+body+'}'),/array-literal|spread|sparse|call/u);
- assert.throws(()=>translate('pub fn values()->Vec<&\'static '+C+'Str>{'+C+'vec!["text"]}','export function values(){return ["text"];}','export function values():readonly string[]{return ["text"];}'),/borrowed vector element|text remains refused/u);
+ assert.throws(()=>translate('pub fn values(seed:&str)->Vec<&str>{'+C+'vec![seed]}','export function values(){return ["text"];}','export function values():readonly string[]{return ["text"];}'),/borrowed vector element|text remains refused/u);
  assert.throws(()=>translate(rust,plain,typed.replace('[true]','[false]')),/tokens|source/u);
 });
 
