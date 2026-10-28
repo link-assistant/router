@@ -66,9 +66,7 @@ export function checkOriginalOwnedVectorFunction(path,declaration,analysis,paire
  const profile=analysis.vectorProfiles?.get(declaration.name?.text);if(!profile)return null;const {ts,file,checker,source}=analysis;
  const symbol=checker.getSymbolAtLocation(declaration.name);if(!symbol||symbol.declarations?.length!==1||symbol.declarations[0]!==declaration)fail('actual original JavaScript function binding differs');
  if(!paired||declaration.parameters.length||paired.declaration.parameters.length||!paired.declaration.type||declaration.typeParameters?.length||declaration.asteriskToken)fail('complete zero-parameter actual TypeScript pair required');arrayType(ts,paired.declaration.type,profile.element);
- const statements=declaration.body.statements;if(statements.length!==1||!ts.isReturnStatement(statements[0])||!statements[0].expression||!ts.isArrayLiteralExpression(statements[0].expression))fail('complete direct array-literal return required; aliases/mutation/calls remain refused');
- const literal=statements[0].expression;if(literal.elements.length>4096)fail('dense owned vector list bound');const items=[];
- for(const node of literal.elements){if(ts.isSpreadElement(node)||ts.isOmittedExpression(node))fail('spread/sparse/repetition vector construction remains refused');if(profile.element.kind==='bool'){if(![ts.SyntaxKind.TrueKeyword,ts.SyntaxKind.FalseKeyword].includes(node.kind))fail('actual bool element requires bool literal');items.push({kind:'bool',value:node.kind===ts.SyntaxKind.TrueKeyword});}else items.push({kind:'integer',value:boundedInteger(integerText(ts,node),profile.element)});}
+ const items=readOwnedVectorScalarConstruction({ts,checker,statements:declaration.body.statements,readLiteral:node=>{if(profile.element.kind==='bool'){if(![ts.SyntaxKind.TrueKeyword,ts.SyntaxKind.FalseKeyword].includes(node.kind))fail('actual bool element requires bool literal');return {kind:'bool',value:node.kind===ts.SyntaxKind.TrueKeyword};}return {kind:'integer',value:boundedInteger(integerText(ts,node),profile.element)};}});
  return {kind:'owned-function',name,javascript:declaration.name.text,exported:!!declaration.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword),params:[],returns:profile.type,resultRoot:null,body:[{kind:'return',value:{kind:'owned-vector-list',type:profile.type,element:profile.element,items,root:null}}],source:{path,source,span:[declaration.getStart(file),declaration.end]},hostCalls:[],pairedSource:{path:paired.pair.typescript.path,source:paired.pair.typescript.source,span:paired.evidence.typescriptSpan,parameters:paired.evidence.parameters,locals:paired.evidence.locals,returnSpan:paired.evidence.returnSpan,erasure:paired.pair.erasure.edits},vectorOrigin:profile};
 }
 export function emitOwnedVectorCandidateLiteral(value,rust){
@@ -77,3 +75,5 @@ export function emitOwnedVectorCandidateLiteral(value,rust){
  return (rust?'crate::translation_core::vec![':'[')+items.join(', ')+']';
 }
 export function evaluateOwnedVectorCandidateLiteral(value){return value.items.map(item=>value.element.kind==='bool'?item.value:BigInt(boundedInteger(item.value,value.element)));}
+
+import {readOwnedVectorScalarConstruction} from './owned-vector-scalar-construction.mjs';

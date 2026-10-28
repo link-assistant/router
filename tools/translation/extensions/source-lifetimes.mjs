@@ -4,7 +4,8 @@ import {isDeepStrictEqual} from 'node:util';
 // Generated vector checker association and original lifetime equations.
 const checkedLists = new WeakMap();
 export function checkRouterCoreVector(checker, node, env, path, expected, allowLiteral) {
-  const value = checker.expr(node.value, env, path, expected, allowLiteral), type = value.type?.element;
+  const repetition=node.value.k==='routerCoreVectorRepeat'?checkOwnedVectorRepeat(checker,node.value,env,path,expected,allowLiteral):null;
+  const value = repetition?.array ?? checker.expr(node.value, env, path, expected, allowLiteral), type = value.type?.element;
   const scalar = type && !type.rustReference && !type.rustGenericIdentityUnresolved && !type.rustBorrowingUnresolved &&
     (type.kind === 'bool' || type.kind === 'fixed' && typeof type.rustPrimitiveName === 'string' ||
       type.kind === 'string' && ['String', 'str'].includes(type.rustOwnership?.source));
@@ -16,7 +17,7 @@ export function checkRouterCoreVector(checker, node, env, path, expected, allowL
   const frame=ownedVectorFrame;
   if(frame){if(frame.checker!==checker)throw unsupported('owned vector checker frame','requires the active same checker',node.span);if(!frame.originals){frame.originals=new WeakMap();frame.normalized=new WeakMap();}frame.originals.set(proof,{items: value.items, elements: [...value.items], elementType: value.type.element,checker,snapshot:ownedVectorSnapshot(checkedVector)});}
   else checkedLists.set(proof,{items: value.items, elements: [...value.items], elementType: value.type.element,node:checkedVector,synthetic:copyMetadata(checkedVector)});
-  return checkedVector;
+  return repetition ? {...repetition.checked,body:checkedVector,type:checkedVector.type,constEligible:false} : checkedVector;
 }
 export function hasCheckedRouterCoreVector(node) {
   const original = node && (ownedVectorFrame?ownedVectorFrame.originals:checkedLists)?.get(node.ownedVectorProof);
@@ -743,3 +744,5 @@ export function withSourceLifetimeChecker(Base) {
     }
   };
 }
+
+import {checkOwnedVectorRepeat} from '../owned-vector-repeat-source.mjs';

@@ -232,7 +232,7 @@ test('ordinary vector baselines remain unchanged while aliases forged facades re
   }
   for (const source of [
     `use crate::translation_core::vec as list;pub fn bad()->Vec<u8>{list![1u8]}`,
-    `pub fn bad()->Vec<u8>{${C}vec![1u8;2]}`,
+    `pub fn bad()->Vec<u8>{${C}vec![1u8;4097]}`,
     `pub fn bad()->Vec<Vec<u8>>{${C}vec![${C}vec![1u8]]}`,
     `pub fn bad(value:&u8)->Vec<&u8>{${C}vec![value]}`,
     `pub fn bad(value:&${C}Str)->Vec<&'static ${C}Str>{${C}vec![value]}`,

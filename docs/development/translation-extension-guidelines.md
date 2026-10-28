@@ -545,3 +545,10 @@ CA trust through six actual Rust callers/state paths and reuses verified HTTP
 upgrades for WebSockets without new dependencies. Two compiler equations, full
 native histories and independent trust/handshake cases are source-only and UNRUN.
 All end-to-end, reverse, synchronization and receiving requirements stay OPEN.
+
+The [bounded owned vector repetition draft](vector-repeat-source-draft.md) reuses
+existing Copy repeat checking for integer/bool vec seeds and adds native-symbol
+scalar const/IIFE source reading in the explicit reverse vector candidate. Six
+complete equations, independent JS/strict TS/reverse/native cases and export
+obligations remain UNRUN. Wider Clone/effects/count and full translation/sync/
+receiving/delivery requirements remain OPEN.
