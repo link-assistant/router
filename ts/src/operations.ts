@@ -197,13 +197,13 @@ async function dispatch(router?: any, name?: any, options?: any, invocation?: an
     if (!(nativeOperationSupport as any)[name])
         unsupported(`Native operation ${name} is not implemented in this draft; use the explicit Rust Router wrapper`);
     for (const key of ['deadlineMs', 'maxOutputBytes'] as any)
-        if ((invocation as any)[key] !== undefined && name !== 'auth.codex')
+        if ((invocation as any)[key] !== undefined && name !== 'auth.codex' && !(name==='with'&&!options.global&&!options.undo))
             unsupported(`Native local per-invocation ${key} requires operation cancellation and output accounting`);
     const configOverrides: any = (Object as any).fromEntries((Object as any).entries(options).filter(([key]: any): boolean => sharedOptions.has(key)));
     for (const key of (Object as any).keys(configOverrides) as any)
         if (!nativeConfigOptions.has(key))
             unsupported(`Native configuration does not implement ${key}`);
-  if(name==='with'&&!options.global&&!options.undo)preflightNativeClientLaunch(options.client,options);
+  if(name==='with'&&!options.global&&!options.undo)requestNativeRunModelPolicy(options.client,options);
     const baseCore: any = await runtimeFor(router);
     let core: any = baseCore;
     if ((Object as any).keys(configOverrides).length || invocation.env || invocation.cwd) {
@@ -213,7 +213,7 @@ async function dispatch(router?: any, name?: any, options?: any, invocation?: an
     }
     if (invocation.signal?.aborted)
         throw new (NativeRouterError as any)('Operation cancelled', { code: 'cancelled' });
-    if(['configure','with'].includes(name)){localOnly(options,['client','all','undo','global','server','management_server','managed','token','token_stdin','ttl_hours','client_args']);return executeNativeConfigure({name,options,invocation,core,env,fetch:router.options.fetch});}
+    if(['configure','with'].includes(name)){localOnly(options,['client','all','undo','global','server','management_server','managed','token','token_stdin','ttl_hours','client_args',...(name==='with'?['non_interactive','interactive','extend_global_config','isolated_config','reset_to_default_configuration','yes','pick_model','model','allowed_models','allow_model_substitution','label','run_ttl_hours','fixed_run_ttl','run_max_requests']:[])]);return executeNativeConfigure({name,options,invocation,core,env,fetch:router.options.fetch});}
     if (['clients.setup', 'clients.remove'].includes(name)) {
         localOnly(options, name === 'clients.setup' ? ['client', 'token', 'token_stdin', 'base_url', 'management_server', 'ttl_hours'] : ['client', 'revoke_supplied', 'force']);
         return (name === 'clients.setup' ? setupNativeClient : removeNativeClient)({ options, invocation, core, env, fetch: router.options.fetch });
@@ -477,3 +477,5 @@ export const createNativeRouter: any = (options?: any): any => new (NativeRouter
 import {executeNativeConfigure} from './client-configure.js';
 
 import {preflightNativeClientLaunch} from './client-launch-plan.js';
+
+import {requestNativeRunModelPolicy} from './client-run-credential.js';

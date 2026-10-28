@@ -40,6 +40,6 @@ test('partial --all success retains the managed Router needed by already configu
 test('pre-existing managed daemon and foreign registry are preserved on a failed operation',limits,async t=>{
  const input=await managed(t);await executeManagedOperation({name:'server.start',config:input.config});const before=JSON.parse(await readFile(input.state,'utf8'));await assert.rejects(withNativeManagedConfigureTarget(input,async()=>{throw Error('failed');}),/failed/);const after=JSON.parse(await readFile(input.state,'utf8'));assert.equal(after.pid,before.pid);assert.equal(after.keep_running,true);assert.deepEqual(after.references,[]);const bytes=await readFile(input.state);try{await writeFile(input.state,JSON.stringify({...after,schema:'foreign-engine'}));await assert.rejects(withNativeManagedConfigureTarget(input,async()=>assert.fail('must not adopt')),/another engine/);}finally{await writeFile(input.state,bytes);}
 });
-test('temporary-launch and contradictory managed targets refuse before selection or discovery',limits,async()=>{
- const core={config:{}};await assert.rejects(executeNativeConfigure({name:'with',options:{client:'claude'},core}),/process\/isolation/);await assert.rejects(executeNativeConfigure({options:{client:'claude',managed:true,server:'https://example.invalid'},core}),/conflicts/);
+test('contradictory temporary and managed targets refuse before selection or discovery',limits,async()=>{
+ const core={config:{}};await assert.rejects(executeNativeConfigure({name:'with',options:{client:'claude',isolated_config:true,extend_global_config:true},core}),/conflict/);await assert.rejects(executeNativeConfigure({options:{client:'claude',managed:true,server:'https://example.invalid'},core}),/conflicts/);
 });

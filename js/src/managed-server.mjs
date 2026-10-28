@@ -405,7 +405,7 @@ export async function withNativeManagedConfigureTarget(context,operation){
   const state=await loadState(p);if(!state||state.boot_id!==selected.boot)throw fail('Managed Router changed while configure held its reference; replacement state was preserved');
   if(!state.references.some((reference)=>reference.pid===process.pid&&reference.owner_boot===OWNER_BOOT&&reference.lease_id===lease))throw fail('Managed configure reference changed; state was preserved');
   state.references=state.references.filter((reference)=>!(reference.pid===process.pid&&reference.owner_boot===OWNER_BOOT&&reference.lease_id===lease));
-  if(succeeded||retained){await verified(state);state.keep_running=true;await writeJSON(p.state,state);}
+  if((succeeded||retained)&&context.retainOnSuccess!==false){await verified(state);state.keep_running=true;await writeJSON(p.state,state);}
   else if(selected.started&&!selected.keepRunning&&!state.keep_running&&!state.references.length)await stop(p,state);else await writeJSON(p.state,state);
  });}
 }

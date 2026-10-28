@@ -25,3 +25,5 @@ test('nonexistent executable and invalid launch limits are structured failures w
 test('parallel invocations keep child exit codes streams cancellation and deadlines separate',limits,async t=>{
  const input=await fixture(t),abort=new AbortController(),timer=setTimeout(()=>abort.abort(),100);try{const results=await Promise.allSettled([runOwnedClientProcess({...input,signal:abort.signal,args:['-e','setInterval(()=>{},1000)']}),runOwnedClientProcess({...input,args:['-e','process.stdout.write("independent");process.exitCode=23']})]);assert.equal(results[0].status,'rejected');assert.equal(results[1].status,'fulfilled');assert.equal(results[1].value.stdout,'independent');assert.equal(results[1].value.client_exit_code,23);}finally{clearTimeout(timer);}
 });
+
+test('captured stdin reaches only the owned child and preserves multibyte text',limits,async t=>{const input=await fixture(t),answer=await runOwnedClientProcess({...input,stdin:'exact stdin 🦀',args:['-e','process.stdin.setEncoding("utf8");let value="";process.stdin.on("data",part=>value+=part);process.stdin.on("end",()=>process.stdout.write(value));']});assert.equal(answer.stdout,'exact stdin 🦀');});

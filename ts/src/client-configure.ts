@@ -5,10 +5,10 @@ import {selectedManagedTarget,withNativeManagedConfigureTarget} from './managed-
 import {prepareRemoteClientCredential,reuseRemoteClientCredential,revokeRemoteClientCredential} from './client-remote.js';
 import {globalClientDigest,readGlobalClientState} from './client-global-state.js';
 import {applyGlobalClientConfiguration,undoGlobalClientConfiguration} from './client-global.js';
-async function withSelectedConfigureTarget(options:any,core:any,env:any,invocation:any,fetch:any,operation:(target:any)=>Promise<any>):Promise<any>{
+async function withSelectedConfigureTarget(options:any,core:any,env:any,invocation:any,fetch:any,operation:(target:any)=>Promise<any>,retainOnSuccess=true):Promise<any>{
  if(options.managed&&(options.local||options.server||options.management_server))throw clientFailure('--managed conflicts with --local or explicit server origins');
  if(!options.managed){const explicit=await selectedManagedTarget({name:'configure',options,config:core.config,env,cwd:invocation.cwd});if(explicit)return operation(explicit);}
- const context={options,config:core.config,env,cwd:invocation.cwd},known=await withNativeManagedConfigureTarget(context,operation);if(known!==null)return known;
+ const context={options,config:core.config,env,cwd:invocation.cwd,retainOnSuccess},known=await withNativeManagedConfigureTarget(context,operation);if(known!==null)return known;
  if(!options.managed){const discovered=await discoverLocalRouter({env,invocation,fetch});if(discovered)return operation(discovered);if(invocation.signal?.aborted)throw clientFailure('Local Router discovery was cancelled');if(options.local)throw clientFailure('--local requires an already-running local Router');}
  return withNativeManagedConfigureTarget({...context,create:true},operation);
 }
@@ -58,7 +58,7 @@ import {inspectCodexCatalogConstraint} from './client-codex-catalog.js';
 
 export async function executeNativeConfigure(context:any={}):Promise<any>{
  const {options={},core,env={},invocation={},fetch=globalThis.fetch}=context;
- if(context.name==='with'&&!options.global&&!options.undo){preflightNativeClientLaunch(options.client,options);throw clientFailure('Temporary client launch requires the remaining process/isolation lifecycle');}
+ if(context.name==='with'&&!options.global&&!options.undo)return (await import('./client-launch.js')).executeNativeWith(context);
  if(!options.all&&!options.client)throw clientFailure('Configure requires a client or --all');if(options.all&&options.client)throw clientFailure('--all conflicts with a single client');
  if(!options.all)clientIntegration(options.client);
  if(options.undo)return executeNativeConfigureAtTarget(context);
@@ -68,3 +68,5 @@ export async function executeNativeConfigure(context:any={}):Promise<any>{
 import {discoverLocalRouter} from './local-router-discovery.js';
 
 import {preflightNativeClientLaunch} from './client-launch-plan.js';
+
+export async function withSelectedNativeClientTarget(context:any,operation:(target:any)=>Promise<any>){return withSelectedConfigureTarget(context.options??{},context.core,context.env??{},context.invocation??{},context.fetch??globalThis.fetch,operation,context.retainOnSuccess!==false);}

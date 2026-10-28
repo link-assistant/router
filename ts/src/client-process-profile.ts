@@ -10,7 +10,7 @@ export function processExtendsUserConfiguration(client:string,options:any={}):bo
  if(options.isolated_config)return false;if(client==='claude')return options.extend_global_config===true;return ['codex','grok'].includes(client);
 }
 async function prepare(context:any,directory:string,extendsUser:boolean):Promise<any>{
- const {options={},env={},cwd=process.cwd(),token,backendBaseURL=null,selectedModel=null,oneShot=false}=context,origin=normalizeManagedOrigin(context.origin),info=clientPaths(context.client,{home:options.home,env,cwd}).info,models=usableProcessModels(info.client,context.catalog),paths=clientPaths(info.client,{home:directory,env:{HOME:directory},cwd}),environment:Record<string,string>={...env},prefix:string[]=[],notes:string[]=[];
+ const {options={},env={},cwd=process.cwd(),token,backendBaseURL=null,selectedModel=null,oneShot=false}=context,origin=normalizeManagedOrigin(context.origin),info=clientPaths(context.client,{home:options.home,env,cwd}).info,models=usableProcessModels(info.client,context.catalog),paths=clientPaths(info.client,{home:directory,env:{HOME:directory},cwd}),environment:Record<string,string>=clientProcessEnvironment(env),prefix:string[]=[],notes:string[]=[];
  if(typeof token!=='string'||!token.startsWith('la_sk_')||token.includes('\0'))throw clientFailure('Prepared process credential requires a Router token');
  if(info.client==='cursor-agent')throw clientFailure('Cursor process routing is unsupported');if(options.reset_to_default_configuration)throw clientFailure('Profile reset requires the remaining verified backup/reset lifecycle');
  if(!extendsUser){if(info.client==='claude')environment.CLAUDE_CONFIG_DIR=directory;else if(info.client==='gemini'){environment.HOME=directory;environment.GEMINI_CLI_HOME=directory;if(oneShot)environment.GEMINI_CLI_TRUST_WORKSPACE='true';}else if(info.client==='opencode'){environment.OPENCODE_CONFIG=paths.config;environment.OPENCODE_CONFIG_DIR=resolve(paths.config,'..');}else{environment.HOME=directory;delete environment.CODEX_HOME;delete environment.QWEN_HOME;}}
@@ -44,3 +44,5 @@ export async function withClientProcessProfile(context:any,operation:(profile:an
 }
 
 import {normalizeManagedOrigin} from './managed-server.js';
+
+export function clientProcessEnvironment(env:Record<string,string>):Record<string,string>{const result={...env};delete result.LINK_ASSISTANT_ROUTER_TOKEN;delete result.LINK_ASSISTANT_TOKEN;delete result.TOKEN_SECRET;return result;}

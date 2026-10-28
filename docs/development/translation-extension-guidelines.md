@@ -508,3 +508,9 @@ adds shared persistent/run remote preparation, exact model policy, narrowed pick
 grants, bounded lease status transport and operation-owned cleanup. Seven complete
 equations and independent JS/strict TS/native cases remain UNRUN. Actual temporary
 process/bridge dispatch and every broader delivery requirement remain OPEN.
+
+The [actual temporary with composition draft](native-client-launch-source-draft.md)
+wires target/run grants/ephemeral bridge/private profile/argv/owned child into the
+real paired dispatcher. Thirteen complete equations and independent fake-vendor/
+strict TS cases remain UNRUN. Reset/migration/native environment/platform/terminal
+and every broader compiler/parity/receiving/delivery requirement remain OPEN.
