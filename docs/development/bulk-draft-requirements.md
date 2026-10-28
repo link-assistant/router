@@ -736,3 +736,9 @@ adds nine full source equations for paired JS/TS TCP/health discovery, lazy boun
 Docker listing and authenticated native managed references in actual configure.
 Independent runtime/strict TS/native oracle source remains UNRUN. Node/Docker/
 platform/crash and every wider translation/delivery requirement remain OPEN.
+
+The [native discovery bounds draft](native-discovery-bounds-source-draft.md)
+adds three full native substitutions and two compiler equations for lazy bounded
+Docker listing, exact loopback TCP candidates and finite real-health probes.
+Original metadata pins remain unchanged through five explicit complete histories.
+All independent source cases and every wider delivery obligation remain OPEN.

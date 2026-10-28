@@ -187,6 +187,23 @@ pub fn bounded_output(command: &mut Command, deadline: Duration) -> std::io::Res
     }
 }
 
+/// Bound a small dependency response while retaining the injected operation runner.
+/// Native pipes retain at most maximum+1 bytes each; fixtures must obey their runner contract.
+pub fn bounded_output_limited(command: &mut Command, deadline: Duration, maximum: usize) -> std::io::Result<Output> {
+    if maximum == 0 || maximum > 8 * 1024 * 1024 {
+        return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "dependency byte cap must be within 1..=8 MiB"));
+    }
+    if let Some(runner) = current().and_then(|context| context.process_runner) {
+        let output = runner.output(command, deadline)?;
+        if output.stdout.len() > maximum || output.stderr.len() > maximum {
+            return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, "dependency output exceeds its explicit byte cap"));
+        }
+        Ok(output)
+    } else {
+        crate::bounded_process::output_limited(command, deadline, maximum)
+    }
+}
+
 /// Start a background dependency through the operation runner, preserving its pipes.
 pub fn spawn_process(command: &mut Command) -> std::io::Result<std::process::Child> {
     if let Some(runner) = current().and_then(|context| context.process_runner) {

@@ -44,3 +44,9 @@ no compiler or application process was run while drafting. Native Rust candidate
 edge-case oracle source is CI only after all eight same-SHA JavaScript gates.
 All broader translation, reverse, synchronization, production, platform, receiving
 qualification and delivery requirements remain OPEN.
+
+The subsequent [native discovery bounds draft](native-discovery-bounds-source-draft.md)
+adds explicit Rust original/current equations for exact TCP candidate hosts, lazy
+bounded Docker capture and a finite discovery/health budget. The former native
+substring/UDP divergence and default dependency deadline now have successor source;
+all execution, platform and full parity qualification remains deferred.
