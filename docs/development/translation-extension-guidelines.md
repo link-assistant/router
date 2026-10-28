@@ -722,3 +722,9 @@ A shared actual u64-to-i64 constructor retains checked failure bounds; pure scal
 conditional locals compose with private native JSON comparison. Ten compiler
 source equations and a full native history successor preserve all pins. Every
 case/oracle is UNRUN; complete synchronization and remaining delivery stay OPEN.
+
+Bounded JSON runtime re-entry: [source boundary](vector-json-runtime-reentry-source-draft.md).
+Frozen operation tables are DATA; actual native module/view/feature and private
+canonical source checks remain required. Preserve discarded validation effects,
+unit annotations and separate branch moves. Five equations and every case are
+UNRUN; further drafting remains tracked in the [companion](json-synchronization-bulk-draft.md).

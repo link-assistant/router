@@ -986,3 +986,9 @@ A shared actual u64-to-i64 constructor retains checked failure bounds; pure scal
 conditional locals compose with private native JSON comparison. Ten compiler
 source equations and a full native history successor preserve all pins. Every
 case/oracle is UNRUN; complete synchronization and remaining delivery stay OPEN.
+
+JSON synchronization drafting continues in the [companion ledger](json-synchronization-bulk-draft.md).
+Its runtime-export, validation-effect, owned-vector move and contextual-source
+entries remain UNRUN and OPEN. The companion retains every broader source,
+namespace/trait/effect/receiving/performance/CI requirement; no full-draft,
+coverage, freshness, parity or verified-delivery claim is made.

@@ -205,6 +205,7 @@ function originalOwnedCoreType(handle,path,type,analysis){
  if(!type)fail('written input domain required');type=ownedParenthesizedType(ts,type);
  if(type.kind===ts.SyntaxKind.StringKeyword)return 'str';
  if(type.kind===ts.SyntaxKind.BooleanKeyword)return 'bool';
+ if(type.kind===ts.SyntaxKind.VoidKeyword)return 'unit';
  const collection=ts.isTypeOperatorNode(type)&&type.operator===ts.SyntaxKind.ReadonlyKeyword?type.type:type;if(ts.isArrayTypeNode(collection)){if(originalOwnedCoreType(handle,path,collection.elementType,analysis)!=='json-ref')fail('actual imported JsonValue element required');return 'json-list-ref';}
  if(ownedBase64ReadonlyOctets(ts,type))return 'bytes-ref';const base64Input=readOwnedBase64ResultImportType(ts,type,specifier=>originalImportTarget(path,specifier,analysis,state),state.data.runtimeRoot);if(base64Input)return base64Input;
 
@@ -251,7 +252,7 @@ function originalOwnedCoreType(handle,path,type,analysis){
 
 // The compiler traversal is entirely private. Only detached source/body facts
 // leave this operation; every emission boundary reconstructs them afresh.
-const OPS=Object.freeze({
+const OPS=Object.freeze({...BOUNDED_JSON_RUNTIME_OPERATIONS,
  router_core_json_copy:{args:['json'],ret:'json',rust:'json_copy'},
  router_core_json_with_field:{args:['json','str','json'],ret:'json',rust:'json_with_field'},
  router_core_json_index_str:{args:['json','str'],ret:'json-ref',rust:'json_index_str',root:0},
@@ -326,9 +327,9 @@ function checkFunction(context,path,declaration,analysis){
   params.push({name:sourceName,rust:rustName(sourceName),type});
  }
  // The complete available pair was selected before parameter domains.
- const nativeOperatorHistory=createOwnedNativeBitwiseHistory(),sourceNativeOperators=nativeOperatorHistory.rows,hostCalls=[],byteInputs=new Set();
- const branchScope=scope=>new Map([...scope].map(([key,value])=>[key,ownedBase64Result(value.type)?{...value}:value]));
- const mergeMoves=(scope,yes,no)=>{for(const [key,value]of scope)if(ownedBase64Result(value.type))value.moved=!!yes.get(key)?.moved||!!no.get(key)?.moved;};
+ let boundedJsonBoundary=false;const nativeOperatorHistory=createOwnedNativeBitwiseHistory(),sourceNativeOperators=nativeOperatorHistory.rows,hostCalls=[],byteInputs=new Set();
+ const branchScope=scope=>new Map([...scope].map(([key,value])=>[key,ownedBase64Result(value.type)||value.type==='json-list-owned'?{...value}:value]));
+ const mergeMoves=(scope,yes,no)=>{for(const [key,value]of scope)if(ownedBase64Result(value.type)||value.type==='json-list-owned')value.moved=!!yes.get(key)?.moved||!!no.get(key)?.moved;};
  const refine=(scope,condition,truth)=>{
   if(condition.kind==='not')return refine(scope,condition.value,!truth);
   if(condition.kind!=='option-test')return scope;
@@ -390,7 +391,7 @@ function checkFunction(context,path,declaration,analysis){
   if(ts.isIdentifier(node)){
    const value=scope.get(node.text);if(!value||checker.getSymbolAtLocation(node)!==value.symbol)fail('unknown, shadowed or moved binding');
    if(value.type==='json-option-input'&&!opaqueOperand)fail('opaque optional Json input requires its actual checked operation');
-   if(ownedBase64Result(value.type)){if(value.moved)fail('native base64 result used after move');value.moved=true;}
+   if(ownedBase64Result(value.type)||value.type==='json-list-owned'){if(value.moved)fail('native base64 result used after move');value.moved=true;}
    return {kind:'variable',name:node.text,type:value.type,root:value.root};
   }
   if(ts.isCallExpression(node)){
@@ -446,6 +447,7 @@ function checkFunction(context,path,declaration,analysis){
     return binding.name==='json_macro_array'?{kind:'json-array',items:values,type:'json',root:null}:{kind:'json-object',entries:values,type:'json',root:null};
    }
    if(!op||binding.target!==expected)fail('unregistered source operation');
+   if(op.boundedJson){if(!jsonVectorProfile||binding.typeOnly)fail('bounded JSON runtime aliases require their actual canonical native vector source');requireOwnedCoreSourceCurrent(context);if(!boundedJsonBoundary){boundedJsonRuntimeRustEdge(traversals.get(analysis).state.files);boundedJsonBoundary=true;}}
    const args=node.arguments.map(argument=>expression(argument,scope,depth+1));
    if(args.length!==op.args.length||args.some((argument,index)=>!compatible(argument.type,op.args[index])))fail('owned argument type differs');
    // Shared index loans from temporaries cannot outlive their owner. No alias
@@ -510,6 +512,7 @@ function checkFunction(context,path,declaration,analysis){
      }
      const name=bind(declaration.name,{type:value.type,root:value.root},scope);body.push({kind:'let',name,value});
     }
+   }else if(ts.isExpressionStatement(statement)){const value=expression(statement.expression,scope,depth+1);if(value.kind!=='owned-call'||value.name!=='router_vector_json_validate'||value.type!=='unit'||!boundedJsonBoundary)fail('only actual bounded JSON validation may be discarded');body.push({kind:'effect',value});
    }else if(ts.isReturnStatement(statement)&&statement.expression){
     const value=expression(statement.expression,scope,depth+1);if(nativeScalars)nativeOperatorHistory.retainCopy(statement.expression,file,value);
     if(!(jsonVectorProfile&&value.type==='json-list-owned')&&!['json','json-ref','bool','str','usize','text-owned','base64-result','u64','i64'].includes(value.type)&&!ownedJsonOptionalPayload(value.type)&&!primitiveBitwiseType(value.type))fail('unsupported owned result');
@@ -550,7 +553,7 @@ function checkFunction(context,path,declaration,analysis){
  if(!hostCalls.length&&!sourceNativeOperators.length&&!params.some(param=>param.type==='base64-result')&&!jsonVectorProfile)fail('no actual owned-core call');
  const item={kind:'owned-function',name,javascript:declaration.name.text,exported:!!declaration.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword),params,returns:resultType,resultRoot,body:checked.body,source:{path,source,span:[declaration.getStart(file),declaration.end]},...(jsonVectorProfile?{vectorOrigin:jsonVectorProfile}:{}),...(sourceNativeOperators.length?{sourceNativeOperators}:{}),hostCalls};
  if(paired)item.pairedSource={path:paired.pair.typescript.path,source:paired.pair.typescript.source,span:paired.evidence.typescriptSpan,parameters:paired.evidence.parameters,locals:paired.evidence.locals,returnSpan:paired.evidence.returnSpan,erasure:paired.pair.erasure.edits};
- requireOwnedCoreSourceCurrent(context);return item;
+ if(boundedJsonBoundary)boundedJsonRuntimeRustEdge(traversals.get(analysis).state.files);requireOwnedCoreSourceCurrent(context);return item;
 }
 
 export function ownedPrimitiveOperatorRuntimeSources(runtimeRoot='runtime',declarationRoot=runtimeRoot){
@@ -581,3 +584,26 @@ import {ownedNativeIntegerDomain,joinOwnedNativeScalarOperands} from './owned-na
 import {readOwnedNativeBitwiseExpression,createOwnedNativeBitwiseHistory} from './owned-native-bitwise-source.mjs';
 
 import {consumeJsonVectorInputPrelude} from './owned-vector-json-boundary.mjs';
+
+function boundedJsonRuntimeRustEdge(files){
+ const source=files.get('src/lib.rs');if(typeof source!=='string')fail('complete actual Rust root required');
+ const views=captureSourceModuleViews({source,sourcePath:'src/lib.rs'}),items=originalModuleViewItems(views.views[0],source);
+ const declarations=items.filter(item=>item.term==='mod'&&item.name==='translation_json_core');
+ if(declarations.length!==1||source.slice(declarations[0].start,declarations[0].end).trim()!=='pub mod translation_json_core;')fail('actual public Rust facade edge required');
+ if(items.some(item=>item.term==='use'&&item.tokens.some(token=>token.text==='translation_json_core')))fail('competing Rust facade import');
+ if(files.get('src/translation_json_core.rs')!==BOUNDED_JSON_CORE_SOURCE)fail('complete bounded native JSON library differs');const concrete=transportConcreteSyntaxSource(BOUNDED_JSON_CORE_SOURCE,{language:'Rust'});if(transportConcreteSyntaxMeta(concrete.meta).source!==BOUNDED_JSON_CORE_SOURCE)fail('complete bounded native JSON library CST inverse differs');
+ if(typeof files.get('Cargo.toml')!=='string'||typeof files.get('Cargo.lock')!=='string')fail('complete receiving Cargo sources required');
+ const dependencies=jsonMacroDependencyProfile({manifest:files.get('Cargo.toml'),lock:files.get('Cargo.lock')}).proof;
+ if(!dependencies)fail('actual locked JSON source profile required');const features=proveJsonMacroFeatures(dependencies);
+ const modules=[{file:'src/lib.rs',path:[],source,sourceView:views.views[0],configurationCondition:views.views[0].configurationCondition}];
+ for(const [path,name]of [['src/translation_json_core.rs',['translation_json_core']]]){
+  const text=files.get(path),capture=captureSourceModuleViews({source:text,sourcePath:path}),sourceView=capture.views[0];
+  modules.push({file:path,path:name,source:text,sourceView,configurationCondition:sourceView.configurationCondition});
+ }
+ const evidence=resolveModuleBindings({modules}),selected=selectOriginalBoundedJsonCore({modules,sourceScopes:evidence.scopes,compilationProfile:evidence.compilationProfile});
+ return {path:selected.rootFile,span:[...selected.span],dependencyDigest:dependencies.digest,features:[...features.features],bindingDiagnostics:evidence.diagnostics};
+}
+import {BOUNDED_JSON_RUNTIME_OPERATIONS} from './bounded-json-runtime-operations.mjs';
+import {BOUNDED_JSON_CORE_SOURCE} from '../bounded-json-core-source-data.mjs';
+import {selectOriginalBoundedJsonCore} from '../bounded-json-core-call-source.mjs';
+import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';

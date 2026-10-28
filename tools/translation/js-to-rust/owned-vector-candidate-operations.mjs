@@ -10,7 +10,7 @@ import {ownedJsonReaderOperation,ownedJsonOptionalPayload,ownedJsonBorrowed,owne
 import {ownedJsonOptionalReaderOperation,ownedJsonOptionalReaderRustCall} from './owned-json-source.mjs';
 const issued=new WeakMap(),runtimes=new WeakMap();
 const fail=message=>{throw new TypeError('Owned reverse operation: '+message);};
-const OPS=Object.freeze({
+const OPS=Object.freeze({...BOUNDED_JSON_RUNTIME_OPERATIONS,
  router_core_json_copy:{args:['json'],ret:'json',rust:'json_copy'},
  router_core_json_with_field:{args:['json','str','json'],ret:'json',rust:'json_with_field'},
  router_core_json_index_str:{args:['json','str'],ret:'json-ref',rust:'json_index_str',root:0},
@@ -214,18 +214,20 @@ export function emitOwnedCoreProgram(input,target,{outputPath,nativeJsonSource=f
     return '{ let '+name+' = '+source+'; '+ownedBase64RustCall(value.name,name)+' }';
    }
    case 'owned-call':{
-    if(rust&&['router_core_json_copy','json_macro_value'].includes(value.name)&&value.type==='json'&&value.args.length===1&&json(value.args[0].type))return copyExpression(value.args[0]);
+    if(rust&&['router_core_json_copy','router_vector_json_copy','json_macro_value'].includes(value.name)&&value.type==='json'&&value.args.length===1&&json(value.args[0].type))return copyExpression(value.args[0]);
     const op=OPS[value.name];imports.add(value.name);
     if(!rust)return '__ro_'+value.name+'('+value.args.map(expr).join(', ')+')';
-    const names=value.args.map(()=> '__ro_arg_'+sequence++),lines=value.args.map((argument,index)=>{
-     const source=argument.type==='json'?(argument.kind==='variable'?expr(argument,true):'&'+expr(argument)):expr(argument);
-     return 'let '+names[index]+' = '+source+';';
-    });
+    const names=value.args.map(()=> '__ro_arg_'+sequence++),nativeArguments=nativeJsonSource||op.boundedJson,lines=value.args.map((argument,index)=>{
+     if(nativeArguments&&argument.kind==='variable'&&json(argument.type))return '';
+     const source=nativeArguments?expr(argument):argument.type==='json'?(argument.kind==='variable'?expr(argument,true):'&'+expr(argument)):expr(argument),annotation=nativeArguments&&argument.type==='json-list-owned'?': ::std::vec::Vec<crate::translation_core::Json>':'';
+     return 'let '+names[index]+annotation+' = '+source+';';
+    }).filter(Boolean);
     // All source arguments are bound in order. Owned local variables are
     // borrowed here; compensating copies happen only inside the fixed call.
-    const args=names;
+    const args=nativeArguments?value.args.map((argument,index)=>argument.kind==='variable'&&json(argument.type)?(argument.type==='json'?'&':'')+rustName(argument.name):argument.type==='json'?'&'+names[index]:names[index]):names;
     let call;
-    if(nativeJsonSource&&['json_macro_null','json_macro_bool','json_macro_string','json_macro_u64','json_macro_i64'].includes(value.name)){const suffix=value.name==='json_macro_i64'&&value.args[0].type!=='i64'?'i64_unsigned':value.name.slice('json_macro_'.length);call='crate::translation_json_core::json_build_'+suffix+'('+args.join(', ')+')';}
+    if(op.boundedJson){const name=op.rust==='json_build_i64'&&value.args[0].type!=='i64'?'json_build_i64_unsigned':op.rust;call='crate::translation_json_core::'+name+'('+args.join(', ')+')';}
+    else if(nativeJsonSource&&['json_macro_null','json_macro_bool','json_macro_string','json_macro_u64','json_macro_i64'].includes(value.name)){const suffix=value.name==='json_macro_i64'&&value.args[0].type!=='i64'?'i64_unsigned':value.name.slice('json_macro_'.length);call='crate::translation_json_core::json_build_'+suffix+'('+args.join(', ')+')';}
     else if(value.name==='json_macro_null')call='::serde_json::Value::Null';
     else if(value.name==='json_macro_bool')call='::serde_json::Value::Bool('+args[0]+')';
     else if(value.name==='json_macro_string')call='::serde_json::Value::String('+args[0]+'.to_owned())';
@@ -242,6 +244,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath,nativeJsonSource=f
  }
  function body(statements,indent){return statements.map(statement=>{
   const pad=' '.repeat(indent);
+  if(statement.kind==='effect')return rust?pad+'let __ro_discard_'+sequence+++' = '+expr(statement.value)+';':pad+expr(statement.value)+';';
   if(statement.kind==='let')return pad+(rust?'let ':'const ')+(rust?rustName(statement.name):statement.name)+' = '+expr(statement.value)+';';
   if(statement.kind==='return')return nativeJsonSource?pad+expr(statement.value):pad+'return '+expr(statement.value)+';';
   return pad+'if '+(rust?'':'(')+expr(statement.cond)+(rust?'':')')+' {\n'+body(statement.then,indent+4)+'\n'+pad+'} else {\n'+body(statement.else,indent+4)+'\n'+pad+'}';
@@ -348,7 +351,7 @@ export function evaluateOwnedCoreProgram(input,name,args,token){
    default:fail('unknown evaluated expression');
   }
  };
- const run=(body,scope)=>{for(const statement of body){if(statement.kind==='let')scope.set(statement.name,get(statement.value,scope));else if(statement.kind==='return')return get(statement.value,scope);else return run(get(statement.cond,scope)?statement.then:statement.else,new Map(scope));}fail('no return');};
+ const run=(body,scope)=>{for(const statement of body){if(statement.kind==='let')scope.set(statement.name,get(statement.value,scope));else if(statement.kind==='effect')get(statement.value,scope);else if(statement.kind==='return')return get(statement.value,scope);else return run(get(statement.cond,scope)?statement.then:statement.else,new Map(scope));}fail('no return');};
  return run(item.body,env);
 }
 
@@ -364,3 +367,5 @@ import {ownedBase64InputPrelude,ownedBase64InputEnvironment,hasOwnedBase64Input}
 import {validateVectorParameters,vectorParameterPrelude} from './owned-vector-parameter-values.mjs';
 
 import {isJsonVector,jsonVectorInputPrelude,validateJsonVectorInputs} from './owned-vector-json-boundary.mjs';
+
+import {BOUNDED_JSON_RUNTIME_OPERATIONS} from './bounded-json-runtime-operations.mjs';

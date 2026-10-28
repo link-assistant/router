@@ -85,6 +85,7 @@ function requestedJsonExpression(node,env,events,guard,borrow=false,depth=0){
  if(node.kind==='not')return ['not',requestedJsonExpression(node.value,env,events,guard,false,depth+1)];
  if(node.kind==='binary'&&['&&','||'].includes(node.op))return [node.op==='&&'?'and':'or',requestedJsonExpression(node.left,env,events,guard,false,depth+1),requestedJsonExpression(node.right,env,events,guard,false,depth+1)];
  if(node.kind==='choose'&&['bool','str','usize','u64','i64'].includes(node.type)){const before=events.length,condition=requestedJsonExpression(node.cond,env,events,guard,false,depth+1),yes=requestedJsonExpression(node.then,env,events,guard,false,depth+1),no=requestedJsonExpression(node.else,env,events,guard,false,depth+1);if(events.length!==before)jsonFail('primitive conditional must retain pure scalar arms');return ['choose',condition,yes,no];}
+ if(node.kind==='owned-call'&&Object.hasOwn(BOUNDED_JSON_RUNTIME_OPERATIONS,node.name)){const op=BOUNDED_JSON_RUNTIME_OPERATIONS[node.name];if(op.args.length!==node.args.length||op.ret!==node.type)jsonFail('actual bounded runtime operation signature differs');let name=op.rust==='json_checked_copy'?'copy':op.rust==='json_checked_with_field'?'with-field':op.rust==='json_validate'?'validate':'build-'+op.rust.slice('json_build_'.length);if(name==='build-i64'&&node.args[0].type!=='i64')name='build-i64_unsigned';return jsonEvent(events,name,node.args.map((argument,index)=>requestedJsonExpression(argument,env,events,guard,op.args[index]==='json',depth+1)));}
  if(node.kind==='owned-call'&&['router_core_json_copy','json_macro_value'].includes(node.name)&&node.args.length===1)return jsonEvent(events,'copy',[requestedJsonExpression(node.args[0],env,events,guard,true,depth+1)]);
  if(node.kind==='owned-call'&&node.name==='router_core_json_with_field'&&node.args.length===3)return jsonEvent(events,'with-field',node.args.map(argument=>requestedJsonExpression(argument,env,events,guard,true,depth+1)));
  if(node.kind==='owned-call'&&['json_macro_null','json_macro_bool','json_macro_string','json_macro_u64','json_macro_i64'].includes(node.name)){const suffix=node.name==='json_macro_i64'&&node.args[0].type!=='i64'?'i64_unsigned':node.name.slice('json_macro_'.length),args=node.args.map(argument=>requestedJsonExpression(argument,env,events,guard,false,depth+1));return jsonEvent(events,'build-'+suffix,args);}
@@ -98,7 +99,7 @@ export function requestedNativeJsonVectorTree(item){
  function body(rows,names,effects,depth){
   guard.charge(depth);if(!Array.isArray(rows)||!rows.length)jsonFail('complete terminating receiving body required');
   for(let at=0;at<rows.length;at++){
-   const node=rows[at];if(node.kind==='let'){if(names.has(node.name))jsonFail('unique immutable receiving binder required');names.set(node.name,requestedJsonExpression(node.value,names,effects,guard));continue;}
+   const node=rows[at];if(node.kind==='effect'){if(node.value?.kind!=='owned-call'||node.value.name!=='router_vector_json_validate'||node.value.type!=='unit')jsonFail('only privately issued validation effects may be discarded');requestedJsonExpression(node.value,names,effects,guard);continue;}if(node.kind==='let'){if(names.has(node.name))jsonFail('unique immutable receiving binder required');names.set(node.name,requestedJsonExpression(node.value,names,effects,guard));continue;}
    if(at!==rows.length-1)jsonFail('terminator must close the complete receiving body');
    if(node.kind==='return'){guard.leaf();return [effects,requestedJsonExpression(node.value,names,effects,guard)];}
    if(node.kind==='if'){const condition=requestedJsonExpression(node.cond,names,effects,guard);return [effects,['if',condition,body(node.then,new Map(names),[...effects],depth+1),body(node.else,new Map(names),[...effects],depth+1)]];}
@@ -146,3 +147,5 @@ import {emitOwnedCoreProgram} from './owned-vector-candidate-operations.mjs';
 import {rustTokens} from '../rust-structure.mjs';
 
 import {boundedJsonCoreOperation} from '../bounded-json-core-call-source.mjs';
+
+import {BOUNDED_JSON_RUNTIME_OPERATIONS} from './bounded-json-runtime-operations.mjs';
