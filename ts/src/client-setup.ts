@@ -43,8 +43,8 @@ export async function setupNativeClient({ options, invocation = {}, core, env = 
         throw clientFailure('This client does not support persistent Router configuration');
     if (await optionalClientText(paths.config + '.with-router-state.json') !== null)
         throw clientFailure('Reversible global client state requires the full undo-state contract; existing setup preserved');
-    if (options.management_server)
-        throw clientFailure('Native remote client issuance and proof-of-possession are not implemented');
+    if (options.management_server && !options.base_url)
+        throw clientFailure('--management-server requires an explicit Router base URL');
     if (!options.base_url && await selectedManagedTarget({ name: 'clients.setup', config: core.config, env, cwd: invocation.cwd }))
         throw clientFailure('clients setup mints locally; a selected remote Router requires configure or an explicit base URL');
     const origin: string = options.base_url ? canonicalOrigin(options.base_url) : localOrigin(core.config), context: any = { home: options.home, env, cwd: invocation.cwd };
@@ -52,15 +52,15 @@ export async function setupNativeClient({ options, invocation = {}, core, env = 
     const oldToken: any = readClientEnvironment(await optionalClientText(oldEnvironment), info.token), oldRecord: any = oldMetadata === null ? null : clientObject(oldMetadata, 'Ownership metadata');
     if (status.ownership_state === 'managed-intact' && oldRecord?.router === origin && oldToken) {
         try {
-            completeBinding(await (core.tokens.validate as any)(oldToken), info.client);
+            if(options.management_server){if(!await reuseRemoteClientCredential({client:info.client,origin,managementServer:options.management_server,config:core.config,env,invocation,fetch},oldRecord,oldToken))throw clientFailure('Remote credential requires replacement');}else completeBinding(await (core.tokens.validate as any)(oldToken), info.client);
             return { output: [`${info.client} is already configured in ${paths.config}`, `credentials: ${oldEnvironment} (mode 0600)`] };
         }
         catch { }
     }
     let token: any = options.token_stdin ? String(invocation.stdin ?? '').trim() : String(options.token ?? env.LINK_ASSISTANT_ROUTER_TOKEN ?? env.LINK_ASSISTANT_TOKEN ?? '').trim();
-    let record: any, minted: any = null, catalog: any, foreign: any = false, setupBackup: any = null;
+    let record: any, minted: any = null, catalog: any, foreign: any = false, setupBackup: any = null, remote: any = null;
     try {
-        if (token) {
+        if(options.management_server){remote=await prepareRemoteClientCredential({client:info.client,origin,managementServer:options.management_server,suppliedToken:token,ttlHours:options.ttl_hours,config:core.config,env,invocation,fetch,nowUnix:core.clock()});token=remote.token;record=remote.record;catalog=remote.catalog;}else if (token) {
             const decoded: any = decodedBinding(token, info.client);
             let local: any;
             try {
@@ -77,7 +77,7 @@ export async function setupNativeClient({ options, invocation = {}, core, env = 
             (minted as any) = issued.id;
             (record as any) = { client: info.client, source: 'minted', token_id: issued.id, label: `client-${info.client}`, issued_at: core.clock(), router: origin, principal_id: 'primary', config_sha256: null };
         }
-        if (info.client !== 'grok' || foreign) {
+        if(remote){catalog=remote.catalog;}else if (info.client !== 'grok' || foreign) {
             const all: any = await fetchNativeClientCatalog(info.client, origin, token, { fetch, signal: invocation.signal });
             const preferred: any = info.owners.flatMap((owner?: any): any => all.filter((row?: any): boolean => row.owned_by === owner));
             (catalog as any) = info.owners.length && (preferred.length || info.strict) ? preferred : all;
@@ -107,6 +107,7 @@ export async function setupNativeClient({ options, invocation = {}, core, env = 
         return { output: [info.client === 'grok' ? 'configured grok through its environment; its own config file was not changed' : `${result.changed ? 'configured' : 'already configured'} ${info.client} in ${paths.config}`, ...(backup ? [`backup: ${backup}`] : []), `credentials: ${await preferredClientPath(paths.environment, paths.legacyEnvironment)} (mode 0600)`, 'The token is not stored in the client config or printed to the terminal.'] };
     }
     catch (error: any) {
+        if(remote) await remote.cleanup();
         if (minted)
             await (core.tokens.revoke as any)(minted);
         if (setupBackup)
@@ -114,7 +115,7 @@ export async function setupNativeClient({ options, invocation = {}, core, env = 
         throw error;
     }
 }
-export async function removeNativeClient({ options, invocation = {}, core, env = {}, checkpoint }: any = {}): Promise<any> {
+export async function removeNativeClient({ options, invocation = {}, core, env = {}, checkpoint, fetch = globalThis.fetch }: any = {}): Promise<any> {
     const paths: any = clientPaths(options.client, { home: options.home, env, cwd: invocation.cwd }), { info }: any = paths;
     if (!implementedClients.has(info.client))
         throw clientFailure('This client does not support persistent Router removal');
@@ -124,12 +125,11 @@ export async function removeNativeClient({ options, invocation = {}, core, env =
     if (record && (![info.client, info.legacy].includes(record.client) || !['minted', 'supplied'].includes(record.source)))
         throw clientFailure('Invalid managed credential metadata');
     if (record && (record.source === 'minted' || options.revoke_supplied)) {
-        if (record.management_server)
-            throw clientFailure('Remote managed credential revocation is not implemented; configuration preserved');
         if (typeof record.token_id !== 'string' || !record.token_id) {
             if (!options.force)
                 throw clientFailure('Credential token ID is missing; configuration preserved');
         }
+        else if(record.management_server){await revokeRemoteClientCredential(record,{config:core.config,env,invocation,fetch});}
         else {
             const held: any = ((await core.tokens.list()).find as any)((token?: any): boolean => token.id === record.token_id);
             if (!held && !options.force)
@@ -154,3 +154,5 @@ export async function removeNativeClient({ options, invocation = {}, core, env =
 }
 
 import {setupPersistentClient,removePersistentClient} from './client-persistent.js';
+
+import {prepareRemoteClientCredential,reuseRemoteClientCredential,revokeRemoteClientCredential} from './client-remote.js';

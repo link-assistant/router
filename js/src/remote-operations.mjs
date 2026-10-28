@@ -100,7 +100,7 @@ export async function sendRemoteManagement(target,call,{fetch = globalThis.fetch
   try {
     const url = target.managementServer+call.path;
     const request = {method:call.method,redirect:'error',signal:combined,
-      headers:{accept:'application/json',...(target.token ? {authorization:`Bearer ${target.token}`} : {}),...(call.body !== undefined ? {'content-type':'application/json'} : {})},
+      headers:{accept:'application/json',...(call.client ? {'x-link-assistant-client':call.client} : {}),...(target.token ? {authorization:`Bearer ${target.token}`} : {}),...(call.body !== undefined ? {'content-type':'application/json'} : {})},
       ...(call.body !== undefined ? {body:JSON.stringify(call.body)} : {})};
     const response = await within(target.managementCaCert ? trustedFetch(url,request,target.managementCaCert,cwd) : fetch(url,request));
     if (response.url && new URL(response.url).origin !== target.managementServer) throw error('Remote management response changed origin');

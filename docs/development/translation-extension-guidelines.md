@@ -384,3 +384,11 @@ provider status. Nine source equations/four native implementation inputs and
 independent unrun JS/strict TS/native/ownership/rollback/CST/export cases are
 drafted. Remote/global undo/loopback/legacy catalog and wider native/translation/
 sync/freshness/parity/receiving/delivery requirements remain OPEN.
+
+The [persistent remote client source draft](native-client-remote-source-draft.md)
+adds paired live scope selection, exact client token mint/reuse, catalog authority,
+private persistence, remote revocation and setup rollback through existing bounded
+HTTP transport and separate selected CA roots. Seven equations/four native inputs
+and independent unrun JS/strict TS/native/export cases are drafted. Broader remote
+health/discovery/managed parity, global undo/loopback/catalog and every wider
+production translation/sync/freshness/receiving/delivery requirement remain OPEN.

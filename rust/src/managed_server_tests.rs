@@ -638,3 +638,22 @@ async fn selected_tls_trust_rejects_invalid_certificates() {
         );
     }
 }
+
+
+// Independent remote client binding oracle source. UNRUN; Rust stays gated CI only.
+#[test]
+fn source_draft_remote_client_binding_requires_canonical_client_and_principal() {
+    use base64::Engine as _;
+    let encoded = |claims: serde_json::Value| format!("la_sk_e30.{}.signature", base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(claims.to_string()));
+    let valid = encoded(serde_json::json!({"sub":"client-id","client_kind":"claude","principal_id":"subscriber"}));
+    assert_eq!(exact_token_binding(&valid, ClientKind::ClaudeCode).expect("exact binding"), "subscriber");
+    assert_eq!(token_subject(&valid).expect("durable subject"), "client-id");
+    for claims in [
+        serde_json::json!({"sub":"id","client_kind":"claude-code","principal_id":"subscriber"}),
+        serde_json::json!({"sub":"id","client_kind":"codex","principal_id":"subscriber"}),
+        serde_json::json!({"sub":"id","client_kind":"claude","principal_id":" "}),
+        serde_json::json!({"sub":"id","client_kind":"claude"}),
+    ] {
+        assert!(exact_token_binding(&encoded(claims), ClientKind::ClaudeCode).is_err());
+    }
+}
