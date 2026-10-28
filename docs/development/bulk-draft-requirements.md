@@ -615,3 +615,9 @@ shares bounded closed body scope before qualifying MIN/MAX owner tokens in both
 scalar adopters. Four equations and independent unrun forty-substitution/twenty-
 caller/JS/strict TS/native/shadow/refusal/inverse/export cases are drafted. Partial
 body refusals remain explicit; wider namespace/production/sync/parity/delivery stay OPEN.
+
+The [explicit scalar local annotation source draft](fixed-local-type-adoption-source-draft.md)
+reuses complete type grammar and actual lifetime binders within closed body scope.
+Four equations and independent unrun sixty-substitution/twenty-caller/Bool/F64/
+nested type/JS/strict TS/native/refusal/inverse/export cases are drafted. Partial
+body refusals and wider namespace/production/sync/parity/delivery remain OPEN.
