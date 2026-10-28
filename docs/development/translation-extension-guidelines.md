@@ -674,3 +674,9 @@ adds actual module/view/binding and sealed dependency-feature joins, private
 canonical borrowed operand checking and linear-flow roles for bounded JSON calls.
 Four source equations and all independent caller/refusal/inverse source are
 UNRUN. Native JSON emission/synchronization and broader delivery remain OPEN.
+
+Native JSON vector emitter draft: [source boundary](vector-native-json-emitter-source-draft.md).
+Explicit native-only emission uses the existing private complete JSON program,
+bounded copy/update/validation calls, every-input checks before empty branches,
+and preserved local/constructor order. All cases/equations are UNRUN; native
+whole-body reproduction, synchronization and all delivery obligations remain OPEN.

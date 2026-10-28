@@ -156,21 +156,22 @@ export function ownedCoreContext(item){return issued.get(checkOwnedCoreItem(item
 const rustString=value=>'"'+value.replace(/[\\"\x00-\x1f\x7f]/gu,c=>({'\\':'\\\\','"':'\\"','\n':'\\n','\r':'\\r','\t':'\\t'}[c]??'\\u{'+c.codePointAt(0).toString(16)+'}'))+'"';
 const TS_TYPES={...primitiveBitwiseTypeScriptTypes,...ownedVectorCandidateTypeScriptTypes,...ownedBase64TypeScriptTypes,...ownedJsonTypeScriptTypes,'json-option-input':'Parameters<typeof __ro_router_core_json_option_as_str>[0]','json-list-owned':'readonly JsonValue[]',json:'JsonValue','json-ref':'JsonValue','map-ref':"Extract<JsonValue,{readonly $:'Object'}>['field0']",str:'string',bool:'boolean',usize:'bigint'};
 const RUST_TYPES={...primitiveBitwiseRustTypes,...ownedVectorCandidateRustTypes,...ownedBase64RustTypes,...ownedJsonRustTypes,'json-option-input':"::std::option::Option<&'a crate::translation_core::Json>",'json-list-owned':'::std::vec::Vec<crate::translation_core::Json>',json:'crate::translation_core::Json','json-ref':"&'a crate::translation_core::Json",'map-ref':"&'a ::serde_json::Map<::std::string::String,crate::translation_core::Json>",str:"&'a str",bool:'bool',usize:'u64'};
-export function emitOwnedCoreProgram(input,target,{outputPath}={}){
- const program=checkOwnedCoreProgram(input),rust=target==='rust';if(!rust&&target!=='typescript')fail('unknown target');if(!program.length)return '';
+export function emitOwnedCoreProgram(input,target,{outputPath,nativeJsonSource=false}={}){
+ const program=checkOwnedCoreProgram(input),rust=target==='rust';if(!rust&&target!=='typescript')fail('unknown target');if(nativeJsonSource!==false&&nativeJsonSource!==true)fail('native JSON emission mode must be explicit boolean data');if(nativeJsonSource&&(!rust||!program.length||program.some(item=>!isJsonVector(item))))fail('native JSON emission requires a nonempty privately rechecked canonical JSON vector program');if(!program.length)return '';
  const context=issued.get(program[0]).context;requireOwnedCoreSourceCurrent(context);const sourceData=ownedCoreSourceData(context),rustTypes=sourceData.primitiveOperators===true?{...RUST_TYPES,...primitiveBitwiseRustTypes}:RUST_TYPES;
  if(program.some(item=>issued.get(item).context!==context))fail('mixed receiving contexts');
  let sequence=0;const imports=new Set(),primitiveTypeImports=new Set();
+ const jsonCopy=nativeJsonSource?'crate::translation_json_core::json_checked_copy':'__ro_copy',jsonUpdate=nativeJsonSource?'crate::translation_json_core::json_checked_with_field':'__ro_with_field',jsonValidate=nativeJsonSource?'crate::translation_json_core::json_validate':'__ro_domain';
  function publicTypeScriptType(type){if(sourceData.primitiveOperators===true&&primitiveBitwiseType(type)){const row=primitiveBitwiseType(type);primitiveTypeImports.add(row.alias);return row.alias;}if(type==='json-option-input'){imports.add('router_core_json_option_as_str');return TS_TYPES[type];}const witness=ownedJsonReaderTypeWitness(type);if(witness){imports.add(witness);return 'ReturnType<typeof __ro_'+witness+'>';}return TS_TYPES[type];}
 
  const freshJson=value=>value.type==='json'&&['owned-call','json-array','json-object'].includes(value.kind);
- const copyExpression=child=>'__ro_copy('+(child.type==='json-ref'||child.kind==='variable'?expr(child,true):'&('+expr(child)+')')+')';
+ const copyExpression=child=>jsonCopy+'('+(child.type==='json-ref'||child.kind==='variable'?expr(child,true):'&('+expr(child)+')')+')';
  function expr(value,borrowOwned=false){
   switch(value.kind){
    case 'owned-vector-list':return emitOwnedVectorCandidateLiteral(value,rust);
    case 'json-vector-literal':if(rust)return 'crate::translation_core::vec!['+value.items.map(child=>freshJson(child)?expr(child):copyExpression(child)).join(', ')+']';imports.add('router_core_json_copy');return '['+value.items.map(child=>freshJson(child)?expr(child):'__ro_router_core_json_copy('+expr(child)+')').join(', ')+']';
    case 'vector-condition-input':return rust?value.rust:value.name;
-   case 'variable':if(rust&&value.type==='text-owned')return borrowOwned?'&'+rustName(value.name):rustName(value.name)+'.to_owned()';return rust?(value.type==='json'?(borrowOwned?'&'+rustName(value.name):'__ro_copy(&'+rustName(value.name)+')'):rustName(value.name)):value.name;
+   case 'variable':if(rust&&value.type==='text-owned')return borrowOwned?'&'+rustName(value.name):rustName(value.name)+'.to_owned()';return rust?(value.type==='json'?(borrowOwned?'&'+rustName(value.name):jsonCopy+'(&'+rustName(value.name)+')'):rustName(value.name)):value.name;
    case 'string':return rust?rustString(value.value):JSON.stringify(value.value);
    case 'bool':return String(value.value);
    case 'integer':return rust?value.value+'_'+(primitiveBitwiseType(value.type)?.name??(value.type==='i64'?'i64':'u64')):value.value+'n';
@@ -183,7 +184,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
     if(!rust)return '__ro_'+name+'(['+(value.kind==='json-array'?children.map(child=>expr(child)):value.entries.map(entry=>'['+JSON.stringify(entry.key)+', '+expr(entry.value)+']')).join(', ')+'])';
     const names=children.map(()=> '__ro_json_'+sequence++),bindings=children.map((child,index)=>'let '+names[index]+' = '+expr(child)+';');
     const literal=value.kind==='json-array'?'['+names.join(', ')+']':'{'+value.entries.map((entry,index)=>rustString(entry.key)+': '+names[index]).join(', ')+'}';
-    return '{ '+bindings.join(' ')+' let __ro_result = crate::translation_core::json!('+literal+'); __ro_domain(&__ro_result); __ro_result }';
+    return '{ '+bindings.join(' ')+' let __ro_result = crate::translation_core::json!('+literal+'); '+(nativeJsonSource?'let __ro_json_validation_'+sequence+++' = ':'')+jsonValidate+'(&__ro_result); __ro_result }';
    }
    case 'option-none':return rust?'None':"({$:'None'})";
    case 'option-some':return rust?'Some('+expr(value.value)+')':"({$:'Some',field0:"+expr(value.value)+'})';
@@ -228,8 +229,8 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
     else if(value.name==='json_macro_string')call='::serde_json::Value::String('+args[0]+'.to_owned())';
     else if(value.name==='json_macro_u64')call='::serde_json::Value::from('+args[0]+')';
     else if(value.name==='json_macro_i64')call='::serde_json::Value::from(i64::try_from('+args[0]+').expect("owned reverse i64 bound"))';
-    else if(op.rust==='json_copy')call='__ro_copy('+args.join(', ')+')';
-    else if(op.rust==='json_with_field')call='__ro_with_field('+args.join(', ')+')';
+    else if(op.rust==='json_copy')call=jsonCopy+'('+args.join(', ')+')';
+    else if(op.rust==='json_with_field')call=jsonUpdate+'('+args.join(', ')+')';
     else if(op.rust==='json_index_usize')call='match usize::try_from('+args[1]+') { Ok(index) => crate::translation_core::json_index_usize('+args[0]+', index), Err(_) => &::serde_json::Value::Null }';
     else call='crate::translation_core::'+op.rust+'('+args.join(', ')+')';
     return '{ '+lines.join(' ')+' '+call+' }';
@@ -240,7 +241,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  function body(statements,indent){return statements.map(statement=>{
   const pad=' '.repeat(indent);
   if(statement.kind==='let')return pad+(rust?'let ':'const ')+(rust?rustName(statement.name):statement.name)+' = '+expr(statement.value)+';';
-  if(statement.kind==='return')return pad+'return '+expr(statement.value)+';';
+  if(statement.kind==='return')return nativeJsonSource?pad+expr(statement.value):pad+'return '+expr(statement.value)+';';
   return pad+'if '+(rust?'':'(')+expr(statement.cond)+(rust?'':')')+' {\n'+body(statement.then,indent+4)+'\n'+pad+'} else {\n'+body(statement.else,indent+4)+'\n'+pad+'}';
  }).join('\n');}
  const code=program.map(item=>{
@@ -251,10 +252,10 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
   }).join(', ');
   const returns=rust?rustTypes[item.returns].replace("'a ",item.resultRoot===null?"'static ":explicit?"'a ":''):publicTypeScriptType(item.returns);
   const signature=rust?'#[must_use]\n#[rustfmt::skip]\n'+(item.exported?'pub ':'')+'fn '+item.name+(explicit?"<'a>":'')+'(':(item.exported?'export ':'')+'function '+item.javascript+'(';
-  return signature+parameters+')'+(rust?' -> ':': ')+returns+' {\n'+(ownedBase64InputPrelude(item,rust)?ownedBase64InputPrelude(item,rust)+'\n':'')+(isJsonVector(item)?jsonVectorInputPrelude(item,rust,imports)+'\n':vectorParameterPrelude(item,rust)?vectorParameterPrelude(item,rust)+'\n':'')+body(item.body,4)+'\n}';
+  return signature+parameters+')'+(rust?' -> ':': ')+returns+' {\n'+(ownedBase64InputPrelude(item,rust)?ownedBase64InputPrelude(item,rust)+'\n':'')+(isJsonVector(item)?jsonVectorInputPrelude(item,rust,imports,{nativeJsonSource})+'\n':vectorParameterPrelude(item,rust)?vectorParameterPrelude(item,rust)+'\n':'')+body(item.body,4)+'\n}';
  }).join('\n\n');
  requireOwnedCoreSourceCurrent(context);
- if(rust)return RUST_SUPPORT+'\n\n'+code+'\n';
+ if(rust)return (nativeJsonSource?'':RUST_SUPPORT+'\n\n')+code+'\n';
  const output=outputPath??program[0].source.path,relative=name=>{const path=posix.relative(posix.dirname(output),sourceData.runtimeRoot+'/'+name);return path.startsWith('.')?path:'./'+path;};
  const vectorText=program.some(item=>item.vectorOrigin&&item.params.some(param=>['text-owned','str-static'].includes(param.type)));
  const lines=['import type {JsonValue} from '+JSON.stringify(relative('json-macro-runtime.mjs'))+';'];

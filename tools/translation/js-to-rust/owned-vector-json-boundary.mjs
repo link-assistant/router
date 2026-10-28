@@ -4,10 +4,10 @@ const fail=message=>{throw new TypeError('Owned reverse JSON vector boundary: '+
 const isJson=type=>type==='json'||type==='json-ref';
 export const isJsonVector=item=>item.vectorOrigin?.kind==='json-vector';
 const booleanGuard=name=>'if (typeof '+name+' !== "boolean") throw new TypeError("Owned vector argument differs from actual original scalar domain");';
-export function jsonVectorInputPrelude(item,rust,imports){
+export function jsonVectorInputPrelude(item,rust,imports,{nativeJsonSource=false}={}){
  if(!isJsonVector(item))return '';
- return item.params.map(param=>{
-  if(isJson(param.type)){if(!rust)imports.add('router_core_json_copy');return rust?'    __ro_domain(&'+param.rust+');':'    '+param.name+' = __ro_router_core_json_copy('+param.name+');';}
+ return item.params.map((param,index)=>{
+  if(isJson(param.type)){if(!rust)imports.add('router_core_json_copy');return rust?(nativeJsonSource?'    let __ro_json_guard_'+index+' = crate::translation_json_core::json_validate('+(param.type==='json'?'&':'')+param.rust+');':'    __ro_domain(&'+param.rust+');'):'    '+param.name+' = __ro_router_core_json_copy('+param.name+');';}
   if(param.type!=='bool')fail('unregistered original input');return rust?'':'    '+booleanGuard(param.name);
  }).filter(Boolean).join('\n');
 }
