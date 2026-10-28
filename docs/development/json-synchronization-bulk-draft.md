@@ -78,3 +78,8 @@ Borrowed string inputs are source drafted using the existing full Unicode-scalar
 validator and its actual named re-export chain, preserving original parameter
 symbols and native borrowed types. Six-function authority/boundary cases remain
 UNRUN; see [the source contract](vector-json-string-inputs-source-draft.md).
+
+Owned canonical JSON value returns now have a source-drafted ABI/body profile
+reusing the full vector-family checker, runtime boundaries and ordered native
+synchronization. Constructor/composition batches and eight full equations remain
+UNRUN; see [the source contract](vector-json-owned-values-source-draft.md).
