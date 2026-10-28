@@ -154,8 +154,8 @@ export function checkOwnedCoreProgram(program,context){
 }
 export function ownedCoreContext(item){return issued.get(checkOwnedCoreItem(item))?.context;}
 const rustString=value=>'"'+value.replace(/[\\"\x00-\x1f\x7f]/gu,c=>({'\\':'\\\\','"':'\\"','\n':'\\n','\r':'\\r','\t':'\\t'}[c]??'\\u{'+c.codePointAt(0).toString(16)+'}'))+'"';
-const TS_TYPES={...primitiveBitwiseTypeScriptTypes,...ownedVectorCandidateTypeScriptTypes,...ownedBase64TypeScriptTypes,...ownedJsonTypeScriptTypes,'json-option-input':'Parameters<typeof __ro_router_core_json_option_as_str>[0]',json:'JsonValue','json-ref':'JsonValue','map-ref':"Extract<JsonValue,{readonly $:'Object'}>['field0']",str:'string',bool:'boolean',usize:'bigint'};
-const RUST_TYPES={...primitiveBitwiseRustTypes,...ownedVectorCandidateRustTypes,...ownedBase64RustTypes,...ownedJsonRustTypes,'json-option-input':"::std::option::Option<&'a crate::translation_core::Json>",json:'crate::translation_core::Json','json-ref':"&'a crate::translation_core::Json",'map-ref':"&'a ::serde_json::Map<::std::string::String,crate::translation_core::Json>",str:"&'a str",bool:'bool',usize:'u64'};
+const TS_TYPES={...primitiveBitwiseTypeScriptTypes,...ownedVectorCandidateTypeScriptTypes,...ownedBase64TypeScriptTypes,...ownedJsonTypeScriptTypes,'json-option-input':'Parameters<typeof __ro_router_core_json_option_as_str>[0]','json-list-owned':'readonly JsonValue[]',json:'JsonValue','json-ref':'JsonValue','map-ref':"Extract<JsonValue,{readonly $:'Object'}>['field0']",str:'string',bool:'boolean',usize:'bigint'};
+const RUST_TYPES={...primitiveBitwiseRustTypes,...ownedVectorCandidateRustTypes,...ownedBase64RustTypes,...ownedJsonRustTypes,'json-option-input':"::std::option::Option<&'a crate::translation_core::Json>",'json-list-owned':'::std::vec::Vec<crate::translation_core::Json>',json:'crate::translation_core::Json','json-ref':"&'a crate::translation_core::Json",'map-ref':"&'a ::serde_json::Map<::std::string::String,crate::translation_core::Json>",str:"&'a str",bool:'bool',usize:'u64'};
 export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  const program=checkOwnedCoreProgram(input),rust=target==='rust';if(!rust&&target!=='typescript')fail('unknown target');if(!program.length)return '';
  const context=issued.get(program[0]).context;requireOwnedCoreSourceCurrent(context);const sourceData=ownedCoreSourceData(context),rustTypes=sourceData.primitiveOperators===true?{...RUST_TYPES,...primitiveBitwiseRustTypes}:RUST_TYPES;
@@ -166,6 +166,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  function expr(value,borrowOwned=false){
   switch(value.kind){
    case 'owned-vector-list':return emitOwnedVectorCandidateLiteral(value,rust);
+   case 'json-vector-literal':if(rust)return 'crate::translation_core::vec!['+value.items.map(child=>'__ro_copy('+(child.type==='json-ref'||child.kind==='variable'?expr(child,true):'&('+expr(child)+')')+')').join(', ')+']';imports.add('router_core_json_copy');return '['+value.items.map(child=>'__ro_router_core_json_copy('+expr(child)+')').join(', ')+']';
    case 'vector-condition-input':return rust?value.rust:value.name;
    case 'variable':if(rust&&value.type==='text-owned')return borrowOwned?'&'+rustName(value.name):rustName(value.name)+'.to_owned()';return rust?(value.type==='json'?(borrowOwned?'&'+rustName(value.name):'__ro_copy(&'+rustName(value.name)+')'):rustName(value.name)):value.name;
    case 'string':return rust?rustString(value.value):JSON.stringify(value.value);
@@ -242,12 +243,12 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  const code=program.map(item=>{
   const borrowed=type=>['json-ref','map-ref','str','bytes-ref','base64-error-ref','json-option-input'].includes(type)||ownedJsonBorrowed(type),loan=borrowed(item.returns),explicit=loan&&item.resultRoot!==null&&item.params.filter(param=>borrowed(param.type)).length>1;
   const parameters=item.params.map(param=>{
-   const type=item.vectorOrigin?(rust?(param.type==='text-owned'?'::std::string::String':param.type==='str-static'?"&'static ::std::primitive::str":'::core::primitive::'+param.type):param.type==='bool'?'boolean':param.type==='f64'?'number':['text-owned','str-static'].includes(param.type)?'string':'bigint'):(rust?rustTypes[param.type].replace("'a ",explicit&&param.name===item.resultRoot?"'a ":''):publicTypeScriptType(param.type));
+   const type=item.vectorOrigin&&!isJsonVector(item)?(rust?(param.type==='text-owned'?'::std::string::String':param.type==='str-static'?"&'static ::std::primitive::str":'::core::primitive::'+param.type):param.type==='bool'?'boolean':param.type==='f64'?'number':['text-owned','str-static'].includes(param.type)?'string':'bigint'):(rust?rustTypes[param.type].replace("'a ",explicit&&param.name===item.resultRoot?"'a ":''):publicTypeScriptType(param.type));
    return (rust?param.rust:param.name)+': '+type;
   }).join(', ');
   const returns=rust?rustTypes[item.returns].replace("'a ",item.resultRoot===null?"'static ":explicit?"'a ":''):publicTypeScriptType(item.returns);
   const signature=rust?'#[must_use]\n#[rustfmt::skip]\n'+(item.exported?'pub ':'')+'fn '+item.name+(explicit?"<'a>":'')+'(':(item.exported?'export ':'')+'function '+item.javascript+'(';
-  return signature+parameters+')'+(rust?' -> ':': ')+returns+' {\n'+(ownedBase64InputPrelude(item,rust)?ownedBase64InputPrelude(item,rust)+'\n':'')+(vectorParameterPrelude(item,rust)?vectorParameterPrelude(item,rust)+'\n':'')+body(item.body,4)+'\n}';
+  return signature+parameters+')'+(rust?' -> ':': ')+returns+' {\n'+(ownedBase64InputPrelude(item,rust)?ownedBase64InputPrelude(item,rust)+'\n':'')+(isJsonVector(item)?jsonVectorInputPrelude(item,rust,imports)+'\n':vectorParameterPrelude(item,rust)?vectorParameterPrelude(item,rust)+'\n':'')+body(item.body,4)+'\n}';
  }).join('\n\n');
  requireOwnedCoreSourceCurrent(context);
  if(rust)return RUST_SUPPORT+'\n\n'+code+'\n';
@@ -314,10 +315,11 @@ export async function prepareOwnedCoreRuntime(input){
 export function evaluateOwnedCoreProgram(input,name,args,token){
  const program=checkOwnedCoreProgram(input),state=runtimes.get(token);if(!state||!isDeepStrictEqual(state.program,program))fail('unissued runtime/program');
  const item=program.find(item=>item.name===name||item.javascript===name);if(!item||!Array.isArray(args)||args.length!==item.params.length)fail('actual arguments differ');
- const env=ownedBase64InputEnvironment(item.params,args,state.modules);validateVectorParameters(item,env);
+ const env=ownedBase64InputEnvironment(item.params,args,state.modules);if(isJsonVector(item))validateJsonVectorInputs(item,env,state.modules);else validateVectorParameters(item,env);
  const get=(value,scope)=>{
   switch(value.kind){
    case 'owned-vector-list':return evaluateOwnedVectorCandidateLiteral(value,scope);
+   case 'json-vector-literal':return value.items.map(child=>state.modules.update.router_core_json_copy(get(child,scope)));
    case 'vector-condition-input':return scope.get(value.name);
    case 'variable':return scope.get(value.name);
    case 'string':case 'bool':return value.value;
@@ -354,3 +356,5 @@ import {emitOwnedPrimitiveOperatorCall,evaluateOwnedPrimitiveOperatorCall} from 
 import {ownedBase64InputPrelude,ownedBase64InputEnvironment,hasOwnedBase64Input} from './owned-base64-inputs.mjs';
 
 import {validateVectorParameters,vectorParameterPrelude} from './owned-vector-parameter-values.mjs';
+
+import {isJsonVector,jsonVectorInputPrelude,validateJsonVectorInputs} from './owned-vector-json-boundary.mjs';

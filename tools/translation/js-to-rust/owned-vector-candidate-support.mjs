@@ -33,7 +33,8 @@ export function captureOriginalOwnedVectorProfiles(data,path){
  // No public saved checked/meta projection is read. The actual freshly returned
  // checkedSource closure closes over the original same-invocation checked
  // program and parsed signature. Target lowering supplies portable shape only.
- let result;try{result=translateProject({entry:'src/lib.rs',paths,readSource:name=>{if(!files.has(name))fail('missing actual Rust source');return files.get(name);},compilationProfile:PRODUCTION_PROFILE,cargoManifest:files.get('Cargo.toml')});
+ const dependencyInputs={manifest:files.get('Cargo.toml'),lock:files.get('Cargo.lock')},jsonMacroDependencies=jsonMacroDependencyProfile(dependencyInputs).proof,deriveDependencies=deriveDependencyProfile(dependencyInputs).proof;
+ let result;try{result=translateProject({jsonMacroDependencies,deriveDependencies,entry:'src/lib.rs',paths,readSource:name=>{if(!files.has(name))fail('missing actual Rust source');return files.get(name);},compilationProfile:PRODUCTION_PROFILE,cargoManifest:files.get('Cargo.toml')});
  for(const binding of selected){
   const candidates=result.executableDeclarations.filter(row=>row.source===binding.rustPath&&row.qualifiedName===binding.rustName);if(candidates.length!==1)fail('actual original executable Rust function is absent or ambiguous');const original=candidates[0],source=files.get(original.source);if(typeof source!=='string'||original.sourceSha256!==hash(source)||typeof original.lower!=='function'||typeof original.checkedSource!=='function')fail('fresh actual original source/carrier differs');
   const captured=original.checkedSource(),own=captured?.declaration,written=captured?.sourceSignature,ret=written?.ret;
@@ -42,18 +43,19 @@ export function captureOriginalOwnedVectorProfiles(data,path){
   // The original parser marks Vec as unsafe for ownership-erasing patterns.
   // This exact marker is supported only with the same checked owned-list body;
   // arbitrary refusal markers and every borrowed/fixed-array signature refuse.
-  const tail=checkedOwnedVectorTail(own,scalar);
+  const lowered=original.lower(),jsonDomain=originalJsonVectorDomain(own,lowered);
+  const tail=checkedOwnedVectorTail(own,type=>jsonDomain?(type?.kind==='bool'?scalar(type):type?.kind==='data'&&type.name===own.ret.element.name&&!type.rustReference?jsonDomain.element:fail('actual canonical Json local required')):scalar(type));
   if(own.ret?.kind!=='array'||own.ret.rustSourceType!==true||own.ret.rustOwnership?.kind!=='owned'||own.ret.rustOwnership.source!=='Vec'||own.ret.patternOwnershipRefusal!==ret.patternOwnershipRefusal||own.ret.rustFixedArray||own.ret.rustReference||own.ret.rustGenericIdentityUnresolved||own.ret.rustBorrowingUnresolved||tail?.k!=='array'||tail.compatibilityCore?.id!=='router-core-vector-list-v1'||tail.type?.rustOwnership?.kind!=='owned'||tail.type.rustOwnership.source!=='Vec'||tail.type.patternOwnershipRefusal||tail.type.rustReference||tail.type.rustFixedArray||tail.type.rustGenericIdentityUnresolved||tail.type.rustBorrowingUnresolved||!sameType(own.ret,tail.type))fail('actual accepted qualified owned-vector list body required');
-  const parameters=own.params.map((param,at)=>{if(!sameType(param.type,written.params[at].type))fail('actual source scalar parameter type differs');return scalar(param.type);});
-  const element=scalar(own.ret.element);if(JSON.stringify(scalar(ret.element))!==JSON.stringify(element)||JSON.stringify(scalar(tail.type.element))!==JSON.stringify(element))fail('actual original primitive source/checked body differs');
-  const lowered=original.lower();if(lowered.own?.k!=='fn'||lowered.own.params.length!==own.params.length||!sameType(lowered.own.ret,own.ret))fail('actual target lowering portable signature differs');
+  const parameters=jsonDomain?.parameters??own.params.map((param,at)=>{if(!sameType(param.type,written.params[at].type))fail('actual source scalar parameter type differs');return scalar(param.type);});
+  const element=jsonDomain?.element??scalar(own.ret.element);if(!jsonDomain&&(JSON.stringify(scalar(ret.element))!==JSON.stringify(element)||JSON.stringify(scalar(tail.type.element))!==JSON.stringify(element)))fail('actual original primitive source/checked body differs');
+  if(lowered.own?.k!=='fn'||lowered.own.params.length!==own.params.length||!jsonDomain&&!sameType(lowered.own.ret,own.ret))fail('actual target lowering portable signature differs');
   // A physical file's locally rooted inline views omit its external-module
   // prefix. Use this SAME fresh forward invocation's genuine graph view and
   // full module identity; reconstructing a guessed prefix would lose that join.
   const modulePath=original.qualifiedName.split('.').slice(0,-1),scopes=result.sourceScopes.filter(scope=>scope.source===original.source&&JSON.stringify(scope.module)===JSON.stringify(modulePath));if(scopes.length!==1||scopes[0].sha256!==hash(source)||scopes[0].sourceView?.sourcePath!==original.source)fail('actual original Rust module view differs');
   const functions=originalModuleViewItems(scopes[0].sourceView,source).filter(item=>item.term==='fn'&&item.name===original.name&&item.start===captured.span.start&&item.end===captured.span.end);if(functions.length!==1)fail('actual original Rust function span differs');const fn=functions[0];
   const writtenReturn=JSON.parse(JSON.stringify(ret));
-  profiles.set(binding.javascriptName,{binding:{...binding},parameters,type:'vec:'+element.name,element,original:{path:original.source,source,sha256:hash(source),qualifiedName:original.qualifiedName,carrierSpan:{...original.span},span:[fn.start,fn.end],functionSource:source.slice(fn.start,fn.end),signature:{params:JSON.parse(JSON.stringify(written.params)),returns:writtenReturn}},forward:{javascript:result.javascript,typescript:result.typescript,sourceScopes:result.sourceScopes.map(scope=>({source:scope.source,module:[...scope.module],sha256:scope.sha256}))}});
+  profiles.set(binding.javascriptName,{binding:{...binding},parameters,type:jsonDomain?.type??'vec:'+element.name,element,...(jsonDomain?{kind:jsonDomain.kind}:{}),original:{path:original.source,source,sha256:hash(source),qualifiedName:original.qualifiedName,carrierSpan:{...original.span},span:[fn.start,fn.end],functionSource:source.slice(fn.start,fn.end),signature:{params:JSON.parse(JSON.stringify(written.params)),returns:writtenReturn}},forward:{javascript:result.javascript,typescript:result.typescript,sourceScopes:result.sourceScopes.map(scope=>({source:scope.source,module:[...scope.module],sha256:scope.sha256}))}});
  }
  // The map is confined to one native traversal, never retained in a context or
  // accepted from a caller. Source handles re-run this complete producer on read.
@@ -69,7 +71,7 @@ function integerText(ts,node){
 }
 function boundedInteger(text,element){const value=BigInt(text),width=BigInt(element.bits),low=element.signed?-(1n<<(width-1n)):0n,high=(1n<<(element.signed?width-1n:width))-1n;if(value<low||value>high)fail('new JavaScript integer is outside actual original primitive bounds');return text;}
 export function checkOriginalOwnedVectorFunction(path,declaration,analysis,paired,name){
- const profile=analysis.vectorProfiles?.get(declaration.name?.text);if(!profile)return null;const {ts,file,checker,source}=analysis;
+ const profile=analysis.vectorProfiles?.get(declaration.name?.text);if(!profile||profile.kind==='json-vector')return null;const {ts,file,checker,source}=analysis;
  const symbol=checker.getSymbolAtLocation(declaration.name);if(!symbol||symbol.declarations?.length!==1||symbol.declarations[0]!==declaration)fail('actual original JavaScript function binding differs');
  if(!paired||!paired.declaration.type||declaration.typeParameters?.length||declaration.asteriskToken)fail('complete actual TypeScript pair required');arrayType(ts,paired.declaration.type,profile.element);
  const input=vectorSourceParameters({ts,checker,declaration,paired,profile});
@@ -92,3 +94,7 @@ import {vectorSourceParameters} from './owned-vector-source-parameters.mjs';
 import {ownedVectorF64Literal,emitOwnedVectorF64,evaluateOwnedVectorF64} from './owned-vector-f64-literal.mjs';
 
 import {ownedVectorTextLiteral,emitOwnedVectorText,ownedVectorTextValue} from './owned-vector-text-literal.mjs';
+
+import {originalJsonVectorDomain} from './owned-vector-json-native.mjs';
+import {jsonMacroDependencyProfile} from '../json-macro-inputs.mjs';
+import {deriveDependencyProfile} from '../derive-dependencies.mjs';

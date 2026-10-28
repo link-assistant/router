@@ -205,6 +205,7 @@ function originalOwnedCoreType(handle,path,type,analysis){
  if(!type)fail('written input domain required');type=ownedParenthesizedType(ts,type);
  if(type.kind===ts.SyntaxKind.StringKeyword)return 'str';
  if(type.kind===ts.SyntaxKind.BooleanKeyword)return 'bool';
+ const collection=ts.isTypeOperatorNode(type)&&type.operator===ts.SyntaxKind.ReadonlyKeyword?type.type:type;if(ts.isArrayTypeNode(collection)){if(originalOwnedCoreType(handle,path,collection.elementType,analysis)!=='json-ref')fail('actual imported JsonValue element required');return 'json-list-ref';}
  if(ownedBase64ReadonlyOctets(ts,type))return 'bytes-ref';const base64Input=readOwnedBase64ResultImportType(ts,type,specifier=>originalImportTarget(path,specifier,analysis,state),state.data.runtimeRoot);if(base64Input)return base64Input;
 
  if(ts.isTypeReferenceNode(type)&&ts.isIdentifier(type.typeName)&&type.typeName.text!=='ReturnType'){
@@ -298,6 +299,9 @@ function checkFunction(context,path,declaration,analysis){
  if(!declaration.name||!declaration.body||declaration.asteriskToken||declaration.typeParameters||declaration.modifiers?.some(mod=>mod.kind!==ts.SyntaxKind.ExportKeyword))fail('ordinary original named function required');
  const name=rustName(declaration.name.text),params=[],environment=new Map();let cells=0,paired=pairedFunction(context,path,declaration,analysis);
  const vectorCandidate=checkOriginalOwnedVectorFunction(path,declaration,analysis,paired,name);if(vectorCandidate)return vectorCandidate;
+ const vectorProfile=analysis.vectorProfiles?.get(declaration.name.text),jsonVectorProfile=vectorProfile?.kind==='json-vector'?vectorProfile:null;
+ if(jsonVectorProfile&&(!paired||declaration.parameters.length!==jsonVectorProfile.parameters.length||paired.declaration.parameters.length!==declaration.parameters.length))fail('actual original Json vector parameter arity differs');
+ const writtenCompatible=(actual,written)=>jsonVectorProfile&&written==='json-list-ref'?actual==='json-list-owned':ownedBase64Compatible(actual,written);
  const tick=depth=>{if(++cells>100000||depth>160)fail('whole function flow budget');};
  function bind(identifier,value,scope){
   if(!ts.isIdentifier(identifier)||scope.has(identifier.text)||identifier.text.startsWith('__ro'))fail('duplicate, reserved or nonidentifier binding');
@@ -316,6 +320,7 @@ function checkFunction(context,path,declaration,analysis){
   if(type==='base64-result')base64Source(traversals.get(analysis).state.files);
   if(ownedJsonOptionalPayload(type))fail('optional public parameters require an independently checked carrier boundary');
   if(type==='text-owned')type='str';
+  if(jsonVectorProfile){const native=jsonVectorProfile.parameters[index].name;if(type!==(native==='json'?'json-ref':native))fail('actual original native Json input domain differs');type=native;}
   const identifier=param.name;
   const sourceName=bind(identifier,{type,root:['json-ref','map-ref','str','bytes-ref','base64-error-ref'].includes(type)||ownedJsonBorrowed(type)||type==='json-option-input'?identifier.text:null,input:true},environment);
   params.push({name:sourceName,rust:rustName(sourceName),type});
@@ -359,6 +364,7 @@ function checkFunction(context,path,declaration,analysis){
 
  function expression(node,scope,depth,opaqueOperand=false){
   tick(depth);if(ts.isParenthesizedExpression(node))return expression(node.expression,scope,depth+1);
+  if(jsonVectorProfile&&ts.isArrayLiteralExpression(node)){if(node.elements.length>4096||node.elements.some(item=>ts.isOmittedExpression(item)||ts.isSpreadElement(item)))fail('bounded dense canonical Json vector required');const items=node.elements.map(item=>expression(item,scope,depth+1));if(items.some(item=>!json(item.type)))fail('actual canonical Json vector elements required');return {kind:'json-vector-literal',items,type:'json-list-owned',root:null};}
   if(ts.isStringLiteral(node)||ts.isNoSubstitutionTemplateLiteral(node)){
    if(/\p{Surrogate}/u.test(node.text))fail('unpaired UTF16 string');return {kind:'string',value:node.text,type:'str',root:null};
   }
@@ -499,14 +505,14 @@ function checkFunction(context,path,declaration,analysis){
        let actual;const find=node=>{if(ts.isVariableDeclaration(node)&&node.getStart(paired.analysis.file)===evidence[0].typescriptSpan[0]&&node.end===evidence[0].typescriptSpan[1])actual=node;ts.forEachChild(node,find);};find(paired.declaration.body);
        if(!actual?.type||actual.type.getStart(paired.analysis.file)!==span[0]||actual.type.end!==span[1])fail('actual paired local type differs');
        const written=originalOwnedCoreType(context,paired.pair.typescript.path,actual.type,paired.analysis);
-       if(written==='json-ref'?!json(value.type):!ownedBase64Compatible(value.type,written))fail('paired written local ABI differs');
+       if(written==='json-ref'?!json(value.type):!writtenCompatible(value.type,written))fail('paired written local ABI differs');
       }
      }
      const name=bind(declaration.name,{type:value.type,root:value.root},scope);body.push({kind:'let',name,value});
     }
    }else if(ts.isReturnStatement(statement)&&statement.expression){
     const value=expression(statement.expression,scope,depth+1);if(nativeScalars)nativeOperatorHistory.retainCopy(statement.expression,file,value);
-    if(!['json','json-ref','bool','str','usize','text-owned','base64-result','u64','i64'].includes(value.type)&&!ownedJsonOptionalPayload(value.type)&&!primitiveBitwiseType(value.type))fail('unsupported owned result');
+    if(!(jsonVectorProfile&&value.type==='json-list-owned')&&!['json','json-ref','bool','str','usize','text-owned','base64-result','u64','i64'].includes(value.type)&&!ownedJsonOptionalPayload(value.type)&&!primitiveBitwiseType(value.type))fail('unsupported owned result');
     if(value.type==='json-ref'&&!params.some(param=>param.name===value.root&&['json-ref','map-ref','json-option-ref'].includes(param.type)))fail('returned local loan');
     if(ownedJsonBorrowed(value.type)&&value.root&&!params.some(param=>param.name===value.root&&(['json-ref','map-ref','str','json-option-input'].includes(param.type)||ownedJsonBorrowed(param.type))))fail('returned local optional loan');
     joinI64LiteralReturn(value);
@@ -521,27 +527,28 @@ function checkFunction(context,path,declaration,analysis){
   }
   return {body,terminated};
  }
- const checked=block(consumeOwnedBase64InputPrelude(analysis,declaration,params,operand=>originalOwnedCoreImport(context,path,operand,analysis)),environment,0);if(!checked.terminated)fail('missing return');
+ const statements=jsonVectorProfile?consumeJsonVectorInputPrelude(analysis,declaration,params,operand=>originalOwnedCoreImport(context,path,operand,analysis),jsonVectorProfile):consumeOwnedBase64InputPrelude(analysis,declaration,params,operand=>originalOwnedCoreImport(context,path,operand,analysis));const checked=block(statements,environment,0);if(!checked.terminated)fail('missing return');
  if(paired)for(let index=0;index<params.length;index++){
   const actual=originalOwnedCoreType(context,paired.pair.typescript.path,paired.declaration.parameters[index].type,paired.analysis);
-  if((actual==='text-owned'?'str':actual)!==params[index].type)fail('paired written parameter ABI differs');
+  if((actual==='text-owned'?'str':actual)!==(jsonVectorProfile&&params[index].type==='json'?'json-ref':params[index].type))fail('paired written parameter ABI differs');
  }
  const writtenReturn=declaration.type??ts.getJSDocReturnType(declaration);
  if(writtenReturn){
   const written=originalOwnedCoreType(context,path,writtenReturn,analysis);
-  if(written==='json-ref'?!json(resultType):!ownedBase64Compatible(resultType,written))fail('written return ABI differs from original checked body');
+  if(written==='json-ref'?!json(resultType):!writtenCompatible(resultType,written))fail('written return ABI differs from original checked body');
   // A written Value domain accepts owned or borrowed results; it never
   // supplies or changes the independently checked loan/root identity.
  }
  if(paired?.declaration.type){
   const written=originalOwnedCoreType(context,paired.pair.typescript.path,paired.declaration.type,paired.analysis);
-  if(written==='json-ref'?!json(resultType):!ownedBase64Compatible(resultType,written))fail('paired written return ABI differs');
+  if(written==='json-ref'?!json(resultType):!writtenCompatible(resultType,written))fail('paired written return ABI differs');
  }
  if(params.some(param=>param.type==='bytes-ref'&&!byteInputs.has(param.name)))fail('octet input requires an actual fixed base64 operand');
  if(params.some(param=>param.type==='json-option-input'&&!hostCalls.some(call=>ownedJsonOptionalReaderOperation(call.name)&&call.inputRoot===param.name)))fail('opaque optional Json input requires validation');
  if(!hostCalls.length&&!sourceNativeOperators.length)nativeOperatorHistory.adoptCopies();
- if(!hostCalls.length&&!sourceNativeOperators.length&&!params.some(param=>param.type==='base64-result'))fail('no actual owned-core call');
- const item={kind:'owned-function',name,javascript:declaration.name.text,exported:!!declaration.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword),params,returns:resultType,resultRoot,body:checked.body,source:{path,source,span:[declaration.getStart(file),declaration.end]},...(sourceNativeOperators.length?{sourceNativeOperators}:{}),hostCalls};
+ if(jsonVectorProfile&&resultType!=='json-list-owned')fail('actual original native owned Json vector return required');
+ if(!hostCalls.length&&!sourceNativeOperators.length&&!params.some(param=>param.type==='base64-result')&&!jsonVectorProfile)fail('no actual owned-core call');
+ const item={kind:'owned-function',name,javascript:declaration.name.text,exported:!!declaration.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword),params,returns:resultType,resultRoot,body:checked.body,source:{path,source,span:[declaration.getStart(file),declaration.end]},...(jsonVectorProfile?{vectorOrigin:jsonVectorProfile}:{}),...(sourceNativeOperators.length?{sourceNativeOperators}:{}),hostCalls};
  if(paired)item.pairedSource={path:paired.pair.typescript.path,source:paired.pair.typescript.source,span:paired.evidence.typescriptSpan,parameters:paired.evidence.parameters,locals:paired.evidence.locals,returnSpan:paired.evidence.returnSpan,erasure:paired.pair.erasure.edits};
  requireOwnedCoreSourceCurrent(context);return item;
 }
@@ -572,3 +579,5 @@ import {ownedNativeScalarDeclaration} from './owned-native-scalar-declaration.mj
 import {ownedNativeIntegerDomain,joinOwnedNativeScalarOperands} from './owned-native-scalar-flow.mjs';
 
 import {readOwnedNativeBitwiseExpression,createOwnedNativeBitwiseHistory} from './owned-native-bitwise-source.mjs';
+
+import {consumeJsonVectorInputPrelude} from './owned-vector-json-boundary.mjs';

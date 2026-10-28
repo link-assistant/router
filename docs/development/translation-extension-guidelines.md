@@ -604,3 +604,10 @@ actual registered JSON layout and private vector association to whole-function
 linear transfer, retaining source custody across deferred normalization. Four
 source equations and independent strict TS/meta/native/ownership source remain
 UNRUN. Reverse JSON vectors and every wider delivery requirement stay OPEN.
+
+The [canonical Json vector reverse draft](vector-json-reverse-source-draft.md)
+adds actual fresh native-layout input/return joins, original-source dense JSON
+arrays, owned Rust/JS/TS/evaluator emission and complete input prefixes. Six
+source equations and independent owned/shared/alias/branch/boundary/refusal/native
+source cases are UNRUN. Full reinput, synchronization and all broader delivery
+requirements remain OPEN; no CI feedback was inspected.
