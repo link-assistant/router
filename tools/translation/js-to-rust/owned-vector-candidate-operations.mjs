@@ -271,7 +271,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath,nativeJsonSource=f
  if(nativeDynamicIndexFields)requireOwnedVectorJsonFieldSources(new Map(ownedCoreSourceData(context).files.map(row=>[row.path,row.source])),sourceData);
  if(rust)return (nativeJsonSource?'':RUST_SUPPORT+'\n\n')+code+'\n';
  const output=outputPath??program[0].source.path,relative=name=>{const path=posix.relative(posix.dirname(output),sourceData.runtimeRoot+'/'+name);return path.startsWith('.')?path:'./'+path;};
- const vectorText=program.some(item=>item.vectorOrigin&&item.params.some(param=>['text-owned','str-static'].includes(param.type)));
+ const vectorText=program.some(item=>item.vectorOrigin&&item.params.some(param=>['text-owned','str-static'].includes(param.type)||isJsonVector(item)&&param.type==='str'));
  const lines=['import type {JsonValue} from '+JSON.stringify(relative('json-macro-runtime.mjs'))+';'];
  if(vectorText)lines.push('import {vectorTextInput as __ro_vectorTextInput} from '+JSON.stringify(relative('owned-vector-text-runtime.mjs'))+';');
  if(primitiveTypeImports.size){const location=posix.relative(posix.dirname(output),(sourceData.declarationRoot??sourceData.runtimeRoot)+'/primitive-operator-runtime.mjs');lines.push('import type { '+[...primitiveTypeImports].join(', ')+' } from '+JSON.stringify(location.startsWith('.')?location:'./'+location)+';');}

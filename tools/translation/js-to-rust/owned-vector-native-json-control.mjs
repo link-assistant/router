@@ -72,7 +72,7 @@ import {emitOwnedVectorText} from './owned-vector-text-literal.mjs';
 // privately and obtain the native declaration from a fresh checkedSource/lower.
 const jsonFail=message=>{throw new TypeError('Owned vector native JSON control: '+message);};
 function jsonControlFrame(item){
- if(item.vectorOrigin?.kind!=='json-vector'||item.returns!=='json-list-owned'||item.params.some(row=>!['json','json-ref','bool','u64','i64'].includes(row.type)))jsonFail('actual canonical JSON vector profile required');
+ if(item.vectorOrigin?.kind!=='json-vector'||item.returns!=='json-list-owned'||item.params.some(row=>!['json','json-ref','bool','u64','i64','str'].includes(row.type)))jsonFail('actual canonical JSON vector profile required');
  let work=0,leaves=0;return {charge(depth=0){if(++work>100000||depth>64)jsonFail('bounded complete JSON body required');},leaf(){if(++leaves>64)jsonFail('bounded complete JSON branches required');}};
 }
 const jsonNot=value=>value?.[0]==='not'?value[1]:['not',value];function jsonChoose(condition,yes,no){if(condition?.[0]==='not'&&condition[1]?.[0]==='some'){condition=condition[1];[yes,no]=[no,yes];}return yes?.[0]==='bool'&&no?.[0]==='bool'&&yes[1]!==no[1]?(yes[1]?condition:jsonNot(condition)):['choose',condition,yes,no];}

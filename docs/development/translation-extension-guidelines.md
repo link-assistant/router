@@ -784,3 +784,8 @@ Scalar comparison drafting copies the existing inverse operation table and keeps
 matching primitive domains in both whole-body trees. Six-operator numeric batches,
 bool/text payload equality and mixed-domain refusals remain UNRUN; see
 [the source contract](vector-json-scalar-comparisons-source-draft.md).
+
+Borrowed string inputs are source drafted using the existing full Unicode-scalar
+validator and its actual named re-export chain, preserving original parameter
+symbols and native borrowed types. Six-function authority/boundary cases remain
+UNRUN; see [the source contract](vector-json-string-inputs-source-draft.md).
