@@ -158,7 +158,7 @@ export async function sendRemoteManagement(target?: any, call?: any, { fetch = g
         const text: string = new (TextDecoder as any)('utf-8', { fatal: true }).decode((Buffer as any).concat(chunks, bytes));
         let answer: any;
         try {
-            (answer as any) = text ? (JSON as any).parse(text) : {};
+            (answer as any) = call.response==='router-health'&&text.trim()==='ok' ? {status:'ok'} : text ? (JSON as any).parse(text) : {};
         }
         catch {
             throw error(`Selected router ${target.server} returned invalid JSON`);

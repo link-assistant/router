@@ -671,3 +671,10 @@ rules for thirteen target domains. Three source equations plus independent unrun
 both-API/JS/strict TS/native/scope/Unicode/CST/inverse/export cases are drafted.
 All wider namespace/production/reverse/sync/parity/receiving/delivery requirements
 remain OPEN, with no current executable coverage claim.
+
+The [remote health source draft](remote-client-health-source-draft.md) requires
+bounded anonymous inference identity before remote scope selection/minting,
+retains separate CA roots and ordinary management JSON contracts, and supplies
+seven paired source equations plus independent unrun JS/strict-TS-transitive/
+native/identity/status/origin/byte/deadline/export cases. All broader managed,
+namespace/production/reverse/sync/parity/receiving/delivery requirements stay OPEN.

@@ -31,7 +31,7 @@ export async function reuseRemoteClientCredential(context:any,record:any,token:s
  try{remoteClientTokenBinding(token,context.client);const target=await remoteTarget({...context,suppliedToken:token});await catalog(context,target,token);return true;}catch(error){if(context.invocation?.signal?.aborted)throw error;return false;}
 }
 export async function prepareRemoteClientCredential(context:any):Promise<any>{
- const target=await remoteTarget(context),ttl=context.ttlHours===undefined?24:Number(context.ttlHours);if(!Number.isSafeInteger(ttl)||ttl<1)throw clientFailure('Remote client TTL requires positive safe integer hours');let mint=false;
+ const target=await remoteTarget(context),ttl=context.ttlHours===undefined?24:Number(context.ttlHours);if(!Number.isSafeInteger(ttl)||ttl<1)throw clientFailure('Remote client TTL requires positive safe integer hours');await verifyRemoteClientHealth(context,target);let mint=false;
  try{await sendRemoteManagement(target,{method:'GET',path:'/api/management/tokens'},{fetch:context.fetch,signal:context.invocation?.signal,cwd:context.invocation?.cwd});mint=true;}catch(error){const status=Object(error).status;if(![401,403,404].includes(status))throw error;}
  let token=target.token,binding:any,minted=false;
  if(mint){const answer=await sendRemoteManagement(target,{method:'POST',path:'/api/management/tokens/client',body:{ttl_hours:ttl,label:'client-'+context.client,client_kind:context.client,max_requests:null,sliding_expiry:false,ephemeral:false,run_lease:false,allowed_models:[],allow_model_substitution:false,model_substitution_source:null}},{fetch:context.fetch,signal:context.invocation?.signal,cwd:context.invocation?.cwd});token=answer.token;const claims=tokenClaims(token);try{binding=remoteClientTokenBinding(token,context.client);}catch(error){try{await revoke(target,claims.sub,context);}catch{throw clientFailure('Remote mint returned an invalid client binding; revocation also failed');}throw error;}minted=true;}else binding=remoteClientTokenBinding(token,context.client);
@@ -41,3 +41,5 @@ export async function prepareRemoteClientCredential(context:any):Promise<any>{
 export async function revokeRemoteClientCredential(record:any,context:any):Promise<void>{
  const target=await remoteTarget({...context,origin:record.router,managementServer:record.management_server});await revoke(target,record.token_id,context);
 }
+
+import {verifyRemoteClientHealth} from './client-remote-health.js';

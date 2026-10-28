@@ -110,7 +110,7 @@ export async function sendRemoteManagement(target,call,{fetch = globalThis.fetch
       if (bytes > maxOutputBytes) throw error('Remote management response exceeds the output budget');chunks.push(part.value);
     }
     const text = new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks,bytes));
-    let answer;try {answer = text ? JSON.parse(text) : {};}catch {throw error(`Selected router ${target.server} returned invalid JSON`);}
+    let answer;try {answer = call.response==='router-health'&&text.trim()==='ok' ? {status:'ok'} : text ? JSON.parse(text) : {};}catch {throw error(`Selected router ${target.server} returned invalid JSON`);}
     if (!response.ok) {
       const failure = error(`Selected router ${target.server} returned HTTP ${response.status}`,response.status === 404 && call.method === 'GET' ? 2 : 1);
       failure.status = response.status;failure.remoteOutcome = answer?.error?.outcome;throw failure;

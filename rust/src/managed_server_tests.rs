@@ -657,3 +657,28 @@ fn source_draft_remote_client_binding_requires_canonical_client_and_principal() 
         assert!(exact_token_binding(&encoded(claims), ClientKind::ClaudeCode).is_err());
     }
 }
+
+
+// Independent health identity oracle source. UNRUN; gated Rust CI only.
+#[tokio::test]
+async fn source_draft_remote_health_keeps_native_identity_and_status_rules() {
+    for (status, body, accepted) in [
+        (200_u16, "ok", true),
+        (200, "{\"status\":\"ok\"}", true),
+        (200, "{\"version\":\"1.0.0\"}", true),
+        (200, "{\"status\":\"wrong\"}", false),
+        (200, "", false),
+        (503, "ok", false),
+    ] {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.expect("health listener");
+        let origin = format!("http://{}", listener.local_addr().expect("bound address"));
+        let application = axum::Router::new().route("/api/health", axum::routing::get(move |headers: axum::http::HeaderMap| async move {
+            assert!(!headers.contains_key(axum::http::header::AUTHORIZATION));
+            (axum::http::StatusCode::from_u16(status).expect("status"), body)
+        }));
+        let task = tokio::spawn(async move { axum::serve(listener, application).await.expect("health server"); });
+        let result = verify_health_with_client(&reqwest::Client::new(), &origin).await;
+        task.abort();
+        assert_eq!(result.is_ok(), accepted, "native health identity {status} {body}");
+    }
+}
