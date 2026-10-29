@@ -232,3 +232,5 @@ export {proposeOwnedPrimitiveVectorFunctionExtension,proposeOwnedPrimitiveVector
 export {proposeOwnedPrimitiveVectorUnitAdoption} from './js-to-rust/owned-primitive-vector-unit-adoption.mjs';
 
 export {emitOwnedPrimitiveValueDefinitionHeaders} from './js-to-rust/owned-vector-candidate-operations.mjs';
+
+export {checkedPrimitiveScalarVectorLocals,originalPrimitiveScalarVectorLocalDomain} from './js-to-rust/owned-primitive-scalar-vector-locals.mjs';

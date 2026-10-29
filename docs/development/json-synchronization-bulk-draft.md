@@ -652,3 +652,10 @@ for typed operation/vector/helper/return uses. Explicit local widths remain
 fixed; eager checked initializers remain evaluated. Two complete source equations
 and all-width/JS/refusal/ordering/CI-only Rust case sources are UNRUN. Full
 requirements, native owner closure, wider behavior and all qualification stay OPEN.
+
+The [native scalar/vector local observer draft](scalar-vector-local-observer-source-draft.md)
+adds complete native local ownership observation for scalar/unit returns while
+retaining original ABI APIs and bounds. Three source equations and actual-native/
+DATA-refusal/CI-only Rust oracle sources are UNRUN. Private receiving, discovery,
+comparison and helper-graph selection still need wiring; full drafting and every
+broader qualification requirement remain OPEN.
