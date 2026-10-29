@@ -115,9 +115,9 @@ test('different modules can independently remove and add functions in the same o
 test('already-edited authoritative source is not mistaken for a saved complete native verdict',limits,()=>{
  const input=bulkRemovalFixture(),source='export function existing(value){return value;}';input.files.find(row=>row.path===JS).source=source;const plan=proposeOwnedVectorBulkModuleSynchronization(input,[{sourcePath:JS,typescriptPath:TS,javascript:source}]);assert.equal(plan.modules[0].removedBindings.length,1);assert.equal(plan.outputs.find(row=>row.path===JS).before,source);assert.equal(plan.outputs.find(row=>row.path===JS).inverse,source);
 });
-test('bulk removal retains duplicate owner mixed-name and supplied-edit refusals',limits,()=>{
+test('bulk removal retains duplicate owner unsupported mixed-body and supplied-edit refusals',limits,()=>{
  const input=bulkRemovalFixture(),request={sourcePath:JS,typescriptPath:TS,typescript:'export function existing(value:boolean):boolean{return value;}'};
- assert.throws(()=>proposeOwnedVectorBulkModuleSynchronization(input,[request,request]));assert.throws(()=>proposeOwnedVectorBulkModuleSynchronization(input,[{...request,nativeChanges:[]}]));assert.throws(()=>proposeOwnedVectorBulkModuleSynchronization(input,[{...request,typescript:'export function added(value:boolean):boolean{return value;}'}]));
+ assert.throws(()=>proposeOwnedVectorBulkModuleSynchronization(input,[request,request]));assert.throws(()=>proposeOwnedVectorBulkModuleSynchronization(input,[{...request,nativeChanges:[]}]));assert.throws(()=>proposeOwnedVectorBulkModuleSynchronization(input,[{...request,typescript:'export function added(value:boolean):boolean{return added(value);}'}]));
 });
 test('four complete bulk removal source equations preserve actual inverses and fixed phases',limits,()=>{
  const plan=preparePrimitiveBulkRemovalSources();assert.equal(plan.files.length,4);for(const row of plan.files){assert.equal(row.current,row.currentAfter);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}assert.equal(plan.receivingExecuted,false);

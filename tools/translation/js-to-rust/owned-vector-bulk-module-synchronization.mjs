@@ -49,6 +49,10 @@ export function proposeOwnedVectorBulkModuleSynchronization(data,requests){
        }
        const proposal=proposeOwnedPrimitiveFunctionInsertion(original,request),native=proposal.outputs.filter(row=>row.path===proposal.nativeRoute.rustPath);if(native.length!==1)fail('one complete fresh primitive native insertion required');modules.push({id:'module_'+hash(sourcePath),rustSource:proposal.nativeRoute.rustPath,module:proposal.nativeRoute.module,javascriptPath:sourcePath,typescriptPath:request.typescriptPath,bindings:proposal.bindings,outputs:proposal.outputs.filter(row=>row.path!==proposal.nativeRoute.rustPath),nativeProposal:native,newNativeFunctions:true,nativeInsertion:proposal.nativeInsertion});continue;
       }
+
+      if(ownedPrimitiveFunctionReconciliationRequired(original,request)){
+       const proposal=proposeOwnedPrimitiveFunctionReconciliation(original,request),native=proposal.outputs.filter(row=>row.path===proposal.nativeRoute.rustPath);if(native.length!==1)fail('one complete fresh mixed native membership source required');modules.push({id:'module_'+hash(sourcePath),rustSource:proposal.nativeRoute.rustPath,module:proposal.nativeRoute.module,javascriptPath:sourcePath,typescriptPath:request.typescriptPath,bindings:proposal.bindings,addedBindings:proposal.addedBindings,removedBindings:proposal.removedBindings,outputs:proposal.outputs.filter(row=>row.path!==proposal.nativeRoute.rustPath),nativeProposal:native,nativeChanges:proposal.nativeChanges,newNativeFunctions:true,removedNativeFunctions:true});continue;
+      }
       if(ownedPrimitiveFunctionExtensionRequired(original,request)){
        const proposal=proposeOwnedPrimitiveFunctionExtension(original,request),native=proposal.outputs.filter(row=>row.path===proposal.nativeRoute.rustPath);if(native.length!==1)fail('one complete fresh native extension source required');modules.push({id:'module_'+hash(sourcePath),rustSource:proposal.nativeRoute.rustPath,module:proposal.nativeRoute.module,javascriptPath:sourcePath,typescriptPath:request.typescriptPath,bindings:proposal.bindings,addedBindings:proposal.addedBindings,outputs:proposal.outputs.filter(row=>row.path!==proposal.nativeRoute.rustPath),nativeProposal:native,nativeChanges:proposal.nativeChanges,newNativeFunctions:true});continue;
       }
@@ -138,3 +142,5 @@ import {ownedPrimitiveFunctionExtensionRequired,proposeOwnedPrimitiveFunctionExt
 import {ownedPrimitiveFunctionRemovalRequired,proposeOwnedPrimitiveFunctionRemoval} from './owned-primitive-function-removal.mjs';
 
 import {proposeOwnedPrimitiveUnitAdoption,requireOwnedPrimitiveAdoptionParent} from './owned-primitive-unit-adoption.mjs';
+
+import {ownedPrimitiveFunctionReconciliationRequired,proposeOwnedPrimitiveFunctionReconciliation} from './owned-primitive-function-reconciliation.mjs';

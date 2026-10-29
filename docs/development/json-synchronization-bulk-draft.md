@@ -413,3 +413,9 @@ now composes complete new inline native modules, actual source authority and
 null companion absences, then replaces the exact transient adoption marker
 with ordinary checked bindings. ALL UNRUN. Multiple sibling modules share one
 native output transaction; every broader draft and qualification remains OPEN.
+
+[Mixed function reconciliation](primitive-function-reconciliation-source-draft.md)
+now has a complete source API, bulk dispatch and physical regression-source
+draft for simultaneous additions/removals and retained-body updates. ALL UNRUN.
+It composes actual private source operations and reconstructs one exact original
+Rust file; new-to-existing helper bootstrap and full translation remain OPEN.
