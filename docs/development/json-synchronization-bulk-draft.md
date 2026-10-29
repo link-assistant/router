@@ -288,3 +288,10 @@ canonical JSON result profiles, including None/Some helper loan refinement, in
 [native-guard-continuation-source-draft.md](native-guard-continuation-source-draft.md).
 ALL UNRUN. Native statement-control and primitive-vector source readers retain
 separate requirements; full drafting and complete qualification remain OPEN.
+
+Original already checked Rust return/guard/qualified-validation continuations now
+have bounded observation substitutions in
+[native-function-control-source-draft.md](native-function-control-source-draft.md).
+ALL UNRUN. Reconstructed nodes are DATA, never original syntax at a semantic issuer.
+Nonterminating branches, unproved discards, dead tails and broader control/effect/
+ownership/module requirements plus full drafting/qualification remain OPEN.

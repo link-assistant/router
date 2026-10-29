@@ -2,6 +2,7 @@
 // DATA traversal. It does not issue source/type/namespace/execution authority.
 import {sameType} from '../checked-types.mjs';
 export function checkedOwnedJsonVectorTail(declaration,checkScalar){
+ declaration=observeNativeFunctionControl(declaration);
  let work=0,bindings=0;const tails=[];
  function visit(node,names,depth){
   if(++work>4096||depth>64)throw new TypeError('Owned reverse vector origin: bounded checked control required');
@@ -23,6 +24,7 @@ export function checkedOwnedJsonVectorTail(declaration,checkScalar){
 // Actual complete checked canonical value bodies only. This bounded DATA walk
 // never substitutes for the original function's ownership/effect checking.
 export function checkedOwnedJsonValueTail(declaration,checkScalar){
+ declaration=observeNativeFunctionControl(declaration);
  let work=0,bindings=0,leaves=0,first=null;
  function visit(node,names,depth){
   if(++work>4096||depth>64)throw new TypeError('Owned JSON value origin: bounded complete source control required');
@@ -40,6 +42,7 @@ export function checkedOwnedJsonValueTail(declaration,checkScalar){
 
 // Complete bounded immutable-tail copy with an actual primitive return.
 export function checkedOwnedJsonScalarTail(declaration,checkScalar,canonicalSourceName){
+ declaration=observeNativeFunctionControl(declaration);
  let work=0,bindings=0,leaves=0,first=null;
  function visit(node,names,depth){
   if(++work>4096||depth>64)throw new TypeError('JSON primitive return origin: bounded complete source control required');
@@ -54,3 +57,5 @@ export function checkedOwnedJsonScalarTail(declaration,checkScalar,canonicalSour
  }
  visit(declaration.body,new Set(declaration.params.map(param=>param.name)),0);return first;
 }
+
+import {observeNativeFunctionControl} from './owned-native-function-control.mjs';
