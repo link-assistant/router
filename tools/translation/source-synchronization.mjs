@@ -248,3 +248,5 @@ export {receivingPrimitiveValueDefinitionFamily} from './js-to-rust/owned-unit-d
 export {parseOriginalEmptyWrittenAttribute,captureOriginalEmptyWrittenAttribute,originalEmptyWrittenAttributeFacts,originalEmptyWrittenAttributeProgramSources} from './empty-written-attribute-grammar.mjs';
 export {captureReparsedEmptyAttributeHeaderSources} from './reparsed-item-header-grammar.mjs';
 export {proposeOriginalX86ReparsedAttributeGrammarSources} from './architecture-reparsed-attribute-grammar.mjs';
+
+export {proposeOwnedWideSliceInputBoundaries} from './js-to-rust/owned-wide-slice-input-proposals.mjs';

@@ -743,3 +743,10 @@ source input guards, emitted TypeScript, single/batch interpreters and canonical
 Rust source projection. The old three-domain API remains unchanged. Thirteen
 complete equations, independent receiving/refusal/long-input cases and CI-only
 Rust oracles are UNRUN. Full drafting and qualification remain OPEN.
+
+The [bulk slice input migration draft](wide-slice-input-proposals-source-draft.md)
+automates whole-module guard/import proposals for both owned families through
+CST substitutions and fresh complete private re-entry. Input-contract changes
+remain explicit; no source is installed or counted as coverage. Three complete
+equations and independent bulk/typed/idempotence/collision/refusal cases are
+UNRUN. Full drafting and all qualification remain OPEN.
