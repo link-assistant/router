@@ -37,6 +37,18 @@ function originalHelperCryptoUnchanged(){return nativeHelperCrypto&&createHash==
 // Eligibility only, never a source/caller proof. Other immutable-source
 // consumers can reuse this exact qualification instead of relaxing it.
 export const originalDeriveHelperCryptoUnchanged=originalHelperCryptoUnchanged;
+// Source-input integrity always performs every original hash. This identity
+// guard is separate from native-only optimization eligibility above and uses
+// the same original private bootstrap identities, including ordinary wrappers.
+const sourceCryptoTypes=types,sourceCryptoProxyField=helperDescriptor(types,'isProxy'),sourceCryptoProxy=helperData(sourceCryptoProxyField),sourceCryptoFunctionPrototype=Object.getPrototypeOf(helperFunctionText),sourceCryptoTextField=helperDescriptor(sourceCryptoFunctionPrototype,'toString');
+export function originalSourceCryptoIntrinsicsUnchanged(){
+ if(createHash!==helperCreateHash||Hash!==helperHash||types!==sourceCryptoTypes)return false;
+ function same(current,pin){return !!current&&!!pin&&helperOwn(current,'value')&&helperOwn(pin,'value')&&current.value===pin.value&&current.writable===pin.writable&&current.enumerable===pin.enumerable&&current.configurable===pin.configurable;}
+ if(!same(helperDescriptor(sourceCryptoTypes,'isProxy'),sourceCryptoProxyField)||typeof sourceCryptoProxy!=='function'||typeof helperCreateHash!=='function'||typeof helperHash!=='function'||sourceCryptoProxy(helperCreateHash)||sourceCryptoProxy(helperHash))return false;
+ const prototypeField=helperDescriptor(helperHash,'prototype');
+ return helperData(prototypeField)===helperHashPrototype&&typeof helperData(helperHashUpdate)==='function'&&typeof helperData(helperHashDigest)==='function'&&same(helperDescriptor(helperHashPrototype,'update'),helperHashUpdate)&&same(helperDescriptor(helperHashPrototype,'digest'),helperHashDigest)&&helperData(sourceCryptoTextField)===helperFunctionText&&same(helperDescriptor(sourceCryptoFunctionPrototype,'toString'),sourceCryptoTextField);
+}
+
 const originalContextMaps=new WeakMap(),fastHelperProofs=new WeakSet(),weakSetHas=WeakSet.prototype.has,weakSetAdd=WeakSet.prototype.add,mapPrototype=Map.prototype,mapEntries=Map.prototype.entries,mapNext=Object.getPrototypeOf(new Map().entries()).next,mapSize=Object.getOwnPropertyDescriptor(Map.prototype,'size').get,apply=Reflect.apply,descriptor=Object.getOwnPropertyDescriptor,hasOwn=Object.hasOwn;
 // Storage-only association for one issued immutable view/item. Every source,
 // profile and token check below still executes on each certificate read.

@@ -715,3 +715,10 @@ history collector records final live domains after inference. Four complete
 equations and independent JS/TS/all-width/default/helper/return/refusal/history/
 CI-only Rust sources are UNRUN. Broader language/owner behavior, full drafting
 and every qualification obligation remain OPEN.
+
+The [source crypto identity draft](source-crypto-identity-source-draft.md)
+separates full source hashing from native-only optimization eligibility across
+all three fresh-source readers. Original bootstrap identities/descriptors and
+every byte/hash/CST/closing fence remain mandatory. Five complete equations and
+independent wrapper/mutation/getter/fresh-source cases are UNRUN. Source/owner
+closure, full drafting and every qualification obligation remain OPEN.

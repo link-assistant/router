@@ -8,7 +8,7 @@ import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
 import {originalPrivateParserIngressUnchanged,originalStaticSourceIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
-import {originalDeriveHelperCryptoUnchanged} from './derive-footprints.mjs';
+import {originalSourceCryptoIntrinsicsUnchanged as originalDeriveHelperCryptoUnchanged} from './derive-footprints.mjs';
 import {originalLexingIntrinsicsUnchanged} from './original-lexing-intrinsics.mjs';
 const ROOT=fileURLToPath(new URL('./source-profiles/derive-ancestor-scope/',import.meta.url));
 const MANIFEST_BYTES=6307,MANIFEST_SHA256='9113a635e5534c083dbc3af97ef815040fc916548a245e5477941873f7dc62f5';
