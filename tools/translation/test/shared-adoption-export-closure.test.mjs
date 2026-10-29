@@ -168,6 +168,9 @@ test('complete committed export carries shared adoption implementations original
  assert.ok(paths.has('tools/translation/prepare-json-total-scalar-flow-sources.mjs'));
  assert.ok(paths.has('tools/translation/prepare-native-refresh-names-sources.mjs'));
  assert.ok(paths.has('tools/translation/prepare-native-ordered-scalars-sources.mjs'));
+ assert.ok(paths.has('tools/translation/prepare-native-scalar-constants-sources.mjs'));
+ assert.ok(paths.has('tools/translation/js-to-rust/owned-native-scalar-constants.mjs'));
+
  assert.ok(paths.has('tools/translation/js-to-rust/owned-native-ordered-scalars.mjs'));
 
 

@@ -252,3 +252,9 @@ rules and independent Rust oracle drafts in
 [native-ordered-scalars-source-draft.md](native-ordered-scalars-source-draft.md).
 ALL UNRUN. JSON-bearing/aggregate/borrowed match families, full drafting and complete
 coverage, parity, receiving, resource, platform and CI qualification remain OPEN.
+
+Fresh actual native primitive constant references and aliases now have bounded
+source-expansion drafts in
+[native-scalar-constants-source-draft.md](native-scalar-constants-source-draft.md).
+ALL UNRUN. No copied evaluator proof grants admission; static/borrowed/effectful
+or unsupported constant bodies and full drafting/qualification remain OPEN.
