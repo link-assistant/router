@@ -930,3 +930,10 @@ bulk synchronization in
 [native-total-methods-source-draft.md](native-total-methods-source-draft.md).
 ALL UNRUN. Clamp/checked arithmetic/shift failure ordering and full drafting,
 coverage, parity, receiving, resources, platforms and CI remain OPEN.
+
+Canonical JSON scalar/input ABI families now draft every registered fixed width
+while retaining the whole original/lowered recursive JSON layout and ownership
+joins in [json-wide-domains-source-draft.md](json-wide-domains-source-draft.md).
+ALL UNRUN. Standard optional reader payloads keep their actual domains; full
+drafting, effects/ownership/aggregate expansion and complete qualification remain
+OPEN. No coverage, parity, freshness or performance result is claimed.
