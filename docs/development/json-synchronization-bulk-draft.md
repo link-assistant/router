@@ -302,3 +302,9 @@ aliases now have source drafts in
 ALL UNRUN. All sixteen existing element families keep their original checks;
 broader operations, effects, module lifecycle and full drafting/qualification
 remain OPEN. No observation DATA grants new native semantic authority.
+
+Actual primitive constant comparisons, immutable locals, conditional selections
+and qualified total operator/method literal substitutions now have source drafts
+in [native-constant-values-source-draft.md](native-constant-values-source-draft.md).
+ALL UNRUN. Runtime arithmetic/effects, unsupported inactive constant branches,
+broader domains and complete drafting/qualification remain OPEN.

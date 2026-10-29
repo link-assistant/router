@@ -72,7 +72,12 @@ export function nativeScalarConstantObserver(lowered,guard){
   if(target.k!=='fn'||target.async||target.params?.length!==0||node.args?.length!==0||!role(target.ret)||role(target.ret)!==role(node.type)||!sameType(target.ret,node.type)||proof?.verified!==true||proof.sourceLinksVerified!==true||typeof proof.entry!=='string'||![node.fn,key,target.fullName].includes(proof.entry)&&![node.fn,key,target.fullName].includes(flatten(proof.entry)))fail('actual zero-argument checked primitive constant/source identity required');
   if(active.size>=32||active.has(key))fail('bounded acyclic actual constant dependency chain required');
   const before=events.length;active.add(key);
-  function expand(value,depth=0){guard.charge(depth);const arithmetic=observeNativeConstantArithmetic(value,child=>expand(child,depth+1));return arithmetic??read(value);}
+  function expand(value,depth=0,locals=new Map()){
+   guard.charge(depth);if(!value||typeof value!=='object')fail('complete actual constant node required');const child=(node,scope=locals)=>expand(node,depth+1,scope),domain=nativeConstantScalarRole(value.type);
+   const selection=observeNativeConstantSelection(value,child,locals);if(selection!==null)return requireNativeConstantLiteral(selection,domain);
+   const arithmetic=observeNativeConstantArithmetic(value,child);if(arithmetic!==null)return requireNativeConstantLiteral(arithmetic,domain);
+   const total=actualNativeTotalOperator(value,child);return requireNativeConstantLiteral(total===null?read(value):foldNativeConstantTotal(total),domain);
+  }
   try{const value=expand(target.body);if(events.length!==before)fail('constant expansion cannot invent runtime effects');return value;}finally{active.delete(key);}
  };
 }
@@ -91,3 +96,6 @@ function observeNativeConstantArithmetic(node,read){
  let value;switch(operation.name){case 'add':value=left+right;break;case 'sub':value=left-right;break;case 'mul':value=left*right;break;case 'div':value=left/right;break;case 'rem':value=left%right;break;case 'neg':value=-left;break;default:fail('unsupported constant arithmetic');}
  if(value<minimum||value>maximum)fail('constant result outside its actual primitive range');return ['integer',row.name,value.toString()];
 }
+
+import {nativeConstantScalarRole,requireNativeConstantLiteral,observeNativeConstantSelection,foldNativeConstantTotal} from './owned-native-constant-values.mjs';
+import {actualNativeTotalOperator} from './owned-native-total-operators.mjs';
