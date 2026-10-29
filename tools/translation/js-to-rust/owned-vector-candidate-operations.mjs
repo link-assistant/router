@@ -405,7 +405,7 @@ import {nativeJsonPredicateSource,nativeJsonOptionalReaderSource} from './owned-
 
 import {ownedVectorJsonFieldOperation,emitOwnedVectorJsonFieldCall,evaluateOwnedJsonFieldCall,requireOwnedVectorJsonFieldSources} from './owned-vector-json-fields.mjs';
 
-import {assertScalarSourceCallClosure,scalarSourceCallKey,hasScalarSourceCalls} from './owned-source-scalar-calls.mjs';
+import {assertScalarSourceCallClosure,scalarSourceCallKey,hasScalarSourceCalls} from './owned-source-value-calls.mjs';
 
 import {ownedVectorTextScalarOperation,ownedAsciiRustCall} from './owned-vector-text-scalars.mjs';
 

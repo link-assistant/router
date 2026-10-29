@@ -94,7 +94,7 @@ function requestedJsonExpression(node,env,events,guard,borrow=false,depth=0){
  guard.charge(depth);if(!node)jsonFail('complete checked receiving expression required');if(node.kind==='unit'&&node.type==='unit'&&node.root===null)return ['unit'];const failure=requestedNativeFailureOperator(node,arg=>requestedJsonExpression(arg,env,events,guard,false,depth+1),(operation,args)=>jsonEvent(events,operation,args));if(failure!==null)return failure;const total=requestedNativeTotalOperator(node,arg=>requestedJsonExpression(arg,env,events,guard,false,depth+1));if(total!==null)return total;
  if(node.kind==='variable'){if(!env.has(node.name))jsonFail('actual lexical receiving binder required');const value=env.get(node.name);return node.type==='json'&&!borrow?jsonEvent(events,'copy',[value]):value;}
  if(node.kind==='text-scalar-call'){const op=ownedVectorTextScalarOperation(node.name);if(!op||op.ret!==node.type||op.args.length!==node.args.length||node.args.some(argument=>argument.type!=='str'))jsonFail('actual fixed text scalar operands required');return jsonEvent(events,'text-scalar:'+node.name,node.args.map(argument=>requestedJsonExpression(argument,env,events,guard,false,depth+1)));}
- if(node.kind==='source-scalar-call'){if(node.type!=='bool'&&!primitiveBitwiseType(node.type)||node.type!==node.callee?.returns||node.args.length!==node.callee.parameters.length)jsonFail('actual checked primitive source call required');return jsonEvent(events,'source-call:'+node.callee.rust,node.args.map(argument=>requestedJsonExpression(argument,env,events,guard,false,depth+1)));}
+ if(node.kind==='source-scalar-call'){if(node.type!=='bool'&&!primitiveBitwiseType(node.type)&&!(primitiveVectorResultRole(node.type))||node.type!==node.callee?.returns||node.args.length!==node.callee.parameters.length)jsonFail('actual checked primitive source call required');return jsonEvent(events,'source-call:'+node.callee.rust,node.args.map(argument=>requestedJsonExpression(argument,env,events,guard,false,depth+1)));}
  if(node.kind==='string'&&node.type==='str'&&typeof node.value==='string'&&!/\p{Surrogate}/u.test(node.value))return ['str',node.value];
  if(node.kind==='integer'&&typeof node.value==='string')return ['integer',primitiveBitwiseType(node.type)?.name??'u64',BigInt(node.value).toString()];
  if(node.kind==='bool'&&typeof node.value==='boolean')return ['bool',node.value];
@@ -204,7 +204,7 @@ import {createHash} from 'node:crypto';
 
 import {jsonScalarComparisonOperation,jsonScalarComparisonDomain} from './owned-vector-json-comparisons.mjs';
 
-import {nativeScalarSourceCallIndex,nativeScalarSourceCallTarget} from './owned-source-scalar-calls.mjs';
+import {nativeScalarSourceCallIndex,nativeScalarSourceCallTarget} from './owned-source-value-calls.mjs';
 
 import {ownedVectorTextScalarOperation} from './owned-vector-text-scalars.mjs';
 
@@ -239,3 +239,5 @@ export function canonicalRequestedNativeJsonVectorTree(item){const tree=requeste
 export function canonicalActualNativeJsonVectorTree(own,item,lowered){const tree=actualNativeJsonVectorTree(own,item,lowered);return primitiveScalarModelEligible(item)?normalizePrimitiveScalarBodyTree(tree):tree;}
 
 import {originalPrimitiveExpressionVectorDomain,checkedPrimitiveExpressionVectorTail} from './owned-primitive-expression-vectors.mjs';
+
+import {primitiveVectorResultRole} from './owned-source-value-calls.mjs';

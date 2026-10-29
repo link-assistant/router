@@ -40,7 +40,7 @@ export function projectNativeTreeModule(input,options={}){
  }
  function operation(name){
   const failure=nativeFailureEventOperation(name);if(failure)return failure;
-  if(name.startsWith('source-call:')){const target=nativeTargets.get(name.slice('source-call:'.length));if(!target||target.kind!=='primitive-scalar'||target.returns!=='bool'&&!primitiveBitwiseType(target.returns))fail('actual complete primitive helper event target required');return {sourceCall:true,target,role:target.returns,arity:target.parameters.length};}
+  if(name.startsWith('source-call:')){const target=nativeTargets.get(name.slice('source-call:'.length));if(!target||!['primitive-scalar','primitive-expression-vector'].includes(target.kind)||target.returns!=='bool'&&!primitiveBitwiseType(target.returns)&&!(target.kind==='primitive-expression-vector'&&primitiveVectorResultRole(target.returns)))fail('actual complete primitive helper event target required');return {sourceCall:true,target,role:target.returns,arity:target.parameters.length};}
   for(const [key,row]of Object.entries(BOUNDED_JSON_RUNTIME_OPERATIONS)){
    const spelling=row.rust==='json_checked_copy'?'copy':row.rust==='json_checked_with_field'?'with-field':row.rust==='json_validate'?'validate':'build-'+row.rust.slice('json_build_'.length);
    if(name===spelling)return {name:key,family:'json-update',role:row.ret};
@@ -74,7 +74,7 @@ export function projectNativeTreeModule(input,options={}){
      if(names.has(a))return names.get(a);if(a<cursor||uses.get(a)!==1||!owned(descriptors[a]?.role))fail('owned effect requires one ordered source consumer');
      const output=call(a,level+1);if(cursor!==a)fail('nested owned operands must preserve every preceding effect');cursor++;return output;
     }
-    if(kind==='source-call'&&node.length===3){const target=nativeTargets.get(a);if(!target||target.kind!=='primitive-scalar'||!Array.isArray(b)||b.length!==target.parameters.length)fail('complete actual same-module helper source needed');return target.name+'('+b.map(value=>expression(value,level+1)).join(', ')+')';}
+    if(kind==='source-call'&&node.length===3){const target=nativeTargets.get(a);if(!target||!['primitive-scalar','primitive-expression-vector'].includes(target.kind)||!Array.isArray(b)||b.length!==target.parameters.length)fail('complete actual same-module helper source needed');return target.name+'('+b.map(value=>expression(value,level+1)).join(', ')+')';}
     if(kind==='not'&&node.length===2)return '(!'+expression(a,level+1)+')';
     if(['and','or'].includes(kind)&&node.length===3){const containsEffect=value=>Array.isArray(value)&&(value[0]==='effect'||value.slice(1).some(containsEffect));if(containsEffect(b))fail('conditional right effect placement needs an explicit control rule');return '('+expression(a,level+1)+(kind==='and'?' && ':' || ')+expression(b,level+1)+')';}
     if(kind==='compare'&&node.length===5){const op={eq:'===',ne:'!==',lt:'<',le:'<=',gt:'>',ge:'>='}[a];if(!op||!['bool','str'].includes(b)&&!primitiveBitwiseType(b))fail('explicit original comparison required');return '('+expression(c,level+1)+' '+op+' '+expression(d,level+1)+')';}
@@ -122,3 +122,5 @@ import {primitiveBitwiseType} from '../primitive-bitwise-types.mjs';
 import {projectNativeTotalOperator} from './owned-native-total-operators.mjs';
 
 import {nativeFailureEventOperation,projectNativeFailureCall} from './owned-native-closed-operators.mjs';
+
+import {primitiveVectorResultRole} from './owned-source-value-calls.mjs';

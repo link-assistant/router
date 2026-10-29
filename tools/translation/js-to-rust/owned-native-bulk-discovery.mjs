@@ -66,7 +66,7 @@ export function proposeOwnedNativeBulkDiscovery(data,options={}){
        const key=JSON.stringify([entry.source,actual.module]),id='module_'+hash(key),javascriptPath=javascriptRoot+'/'+id+'.mjs',typescriptPath=typescriptRoot+'/'+id+'.mts';ownedSourcePath(javascriptPath);ownedSourcePath(typescriptPath);
        if(!groups.has(key))groups.set(key,{id,key,source:entry.source,module:actual.module,javascriptPath,typescriptPath,units:[]});
        if(!targetGroups.has(key))targetGroups.set(key,new Map());
-       if(nativeDomain.kind==='primitive-scalar'){const descriptor={rust:entry.qualifiedName,parameters:nativeDomain.parameters.map(row=>row.name),returns:nativeDomain.type},targets=targetGroups.get(key);for(const name of [entry.qualifiedName,'rp_'+Buffer.from(entry.qualifiedName).toString('hex')]){if(targets.has(name))fail('ambiguous same-module native helper source');targets.set(name,descriptor);}}
+       if(['primitive-scalar','primitive-expression-vector'].includes(nativeDomain.kind)){const descriptor={rust:entry.qualifiedName,parameters:nativeDomain.parameters.map(row=>row.name),returns:nativeDomain.type},targets=targetGroups.get(key);for(const name of [entry.qualifiedName,'rp_'+Buffer.from(entry.qualifiedName).toString('hex')]){if(targets.has(name))fail('ambiguous same-module native helper source');targets.set(name,descriptor);}}
        candidates.push({entry,actual,own,nativeDomain,key,projectedParameters});
       }
       for(const {entry,own,nativeDomain,key,projectedParameters}of candidates){

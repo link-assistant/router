@@ -50,9 +50,13 @@ export function checkedPrimitiveExpressionVectorTail(declaration){
    for(const name of scope.keys())scope.set(name,yes.get(name)||no.get(name));return;
   }
   if(node.k==='var'){if(!scope.has(node.name)||scope.get(node.name))fail('foreign or already moved owned Vec');scope.set(node.name,true);return;}
+  if(node.k==='call'){if(++leaves>64)fail('bounded complete Vec helper results required');if(typeof node.fn!=='string'||!node.fn||!Array.isArray(node.args)||node.args.length>32||nativeSourceValueResultDomain(node.type)!=='vec:'+primitiveElement(own.ret.element))fail('actual typed owned primitive Vec helper result required');for(const arg of node.args)scalar(arg,scope,depth+1);arrays.push(node);return;}
   if(node.k!=='array'||node.compatibilityCore?.id!=='router-core-vector-list-v1'||!Array.isArray(node.items)||node.items.length>4096||node.type.rustReference||node.type.rustFixedArray||node.type.rustGenericIdentityUnresolved||node.type.rustBorrowingUnresolved)fail('actual qualified bounded owned Vec constructor required');
   if(++leaves>64)fail('bounded complete Vec constructors required');
   for(const item of node.items){if(!sameType(item.type,own.ret.element))fail('actual exact primitive element domain differs');scalar(item,scope,depth+1);}arrays.push(node);
  }
- consume(own.body,new Map(),0);if(!arrays.length)fail('actual local owned Vec construction required');return arrays[0];
+ consume(own.body,new Map(),0);if(!arrays.length)fail('actual owned Vec construction or actual source helper result required');return arrays[0];
 }
+
+import {nativeSourceValueResultDomain,jsonScalarComparisonDomain} from './owned-source-value-calls.mjs';
+const primitiveElement=type=>jsonScalarComparisonDomain(type,{native:true});

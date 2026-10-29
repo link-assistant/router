@@ -537,3 +537,11 @@ paired receiving source, reverse emission and the interpreter share the family.
 Finite local container moves and evaluated-but-unused element failures remain
 explicit. Fifteen complete source equations and independent paired/native case
 sources are UNRUN; general mutation, Vec helpers and full translation remain OPEN.
+
+The [same-module Vec helper draft](primitive-vector-helpers-source-draft.md)
+extends actual vector callers to independently reissued bool/fixed Vec helpers.
+The original scalar-only API remains unchanged; its complete source copy joins
+precise result domains, complete same-module graphs and actual native ABI checks.
+Ordered unused/guarded calls and immutable result moves remain explicit.
+Thirteen complete equations and all independent JS/TS/native cases are UNRUN.
+Vec inputs, cross-module/new Vec helpers and full translation remain OPEN.

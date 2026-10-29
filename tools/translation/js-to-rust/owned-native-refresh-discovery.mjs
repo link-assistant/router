@@ -72,7 +72,7 @@ export function proposeOwnedNativeRefreshDiscovery(data,routing,options={}){
        if(!existingRoute&&!groups.has(key)){for(const path of [javascriptPath,typescriptPath]){ownedSourcePath(path);if(targetPaths.has(path)||files.has(path))fail('new receiving modules require distinct absent targets');targetPaths.add(path);}}
        if(!groups.has(key)){if(groups.size>=256)fail('bounded complete native refresh module count required');groups.set(key,{id,key,source:entry.source,module:actual.module,javascriptPath,typescriptPath,newReceivingModule:!existingRoute,units:[]});}
        if(!targetGroups.has(key))targetGroups.set(key,new Map());
-       if(nativeDomain.kind==='primitive-scalar'){const descriptor={rust:entry.qualifiedName,parameters:nativeDomain.parameters.map(row=>row.name),returns:nativeDomain.type},targets=targetGroups.get(key);for(const name of [entry.qualifiedName,'rp_'+Buffer.from(entry.qualifiedName).toString('hex')]){if(targets.has(name))fail('ambiguous same-module native helper source');targets.set(name,descriptor);}}
+       if(['primitive-scalar','primitive-expression-vector'].includes(nativeDomain.kind)){const descriptor={rust:entry.qualifiedName,parameters:nativeDomain.parameters.map(row=>row.name),returns:nativeDomain.type},targets=targetGroups.get(key);for(const name of [entry.qualifiedName,'rp_'+Buffer.from(entry.qualifiedName).toString('hex')]){if(targets.has(name))fail('ambiguous same-module native helper source');targets.set(name,descriptor);}}
        candidates.push({entry,actual,own,nativeDomain,key,projectedParameters,receivingName,preserveReceivingName});
       }
       for(const {entry,own,nativeDomain,key,projectedParameters,receivingName,preserveReceivingName}of candidates){
