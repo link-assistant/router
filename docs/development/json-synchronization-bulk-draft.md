@@ -722,3 +722,10 @@ all three fresh-source readers. Original bootstrap identities/descriptors and
 every byte/hash/CST/closing fence remain mandatory. Five complete equations and
 independent wrapper/mutation/getter/fresh-source cases are UNRUN. Source/owner
 closure, full drafting and every qualification obligation remain OPEN.
+
+The [complete closing protocol draft](complete-source-closing-source-draft.md)
+shares all-input closing checks across fresh namespace/Copy readers and preserves
+original callback throws, including null/undefined, through cleanup failures.
+Ordinary synchronous callbacks/results and every original source/CST check remain
+required. Five complete equations and independent lifecycle/falsy-error/async/
+getter/actual-reader cases are UNRUN. Full drafting and qualification remain OPEN.

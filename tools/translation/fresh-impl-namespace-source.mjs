@@ -26,12 +26,13 @@ function read(path,size,digest){
 }
 /** The directory option supports independent DATA-reader fixtures only. */
 export function withFreshImplNamespaceSource(run,{directory=ROOT}={}){
- if(typeof run!=='function'||typeof directory!=='string'||directory.length>4096||directory.includes(String.fromCharCode(0)))fail('bounded source reader inputs required');guard();
+ if(typeof run!=='function'||typeof directory!=='string'||directory.length>4096||directory.includes(String.fromCharCode(0)))fail('bounded source reader inputs required');guard();requireSynchronousSourceCallback(run);
  const base=resolve(directory),manifest=join(base,'manifest.json'),archive=resolve(base,SOURCE.archive);if(relative(base,archive)!==SOURCE.archive)fail('source archive escapes its pinned profile');
  const profile=read(manifest,MANIFEST_BYTES,MANIFEST_SHA256),packed=read(archive,SOURCE.archiveBytes,SOURCE.archiveSha256);
  const current=JSON.parse(profile.toString('utf8')),selected=current.sources.filter(row=>row.path===SOURCE.path);if(selected.length!==1||JSON.stringify(selected[0])!==JSON.stringify(SOURCE))fail('complete manifest source owner differs');
  const raw=gunzipSync(packed,{maxOutputLength:SOURCE.bytes});if(raw.length!==SOURCE.bytes||hash(raw)!==SOURCE.sha256)fail('complete native source differs');
  const source=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(raw),concrete=transportConcreteSyntaxSource(source,{language:'Rust'}),reparsed=transportConcreteSyntaxMeta(concrete.meta);if(reparsed.source!==source||hash(source)!==SOURCE.sha256)fail('full original Rust CST round trip differs');
- guard();try{const result=run(Object.freeze({path:SOURCE.path,sha256:SOURCE.sha256,source:reparsed.source,profileSha256:MANIFEST_SHA256,sourceAuthority:false,namespaceAuthority:false,runtimeAuthority:false}));if(result&&typeof result==='object'&&typeof result.then==='function')fail('source reader callback must finish synchronously');return result;}
- finally{try{read(manifest,MANIFEST_BYTES,MANIFEST_SHA256);read(archive,SOURCE.archiveBytes,SOURCE.archiveSha256);}finally{guard();}}
+ guard();requireSynchronousSourceCallback(run);return withCompleteSourceClosingFence(()=>run(Object.freeze({path:SOURCE.path,sha256:SOURCE.sha256,source:reparsed.source,profileSha256:MANIFEST_SHA256,sourceAuthority:false,namespaceAuthority:false,runtimeAuthority:false})),[()=>read(manifest,MANIFEST_BYTES,MANIFEST_SHA256),()=>read(archive,SOURCE.archiveBytes,SOURCE.archiveSha256),guard]);
 }
+
+import {withCompleteSourceClosingFence,requireSynchronousSourceCallback} from './complete-source-closing-fence.mjs';
