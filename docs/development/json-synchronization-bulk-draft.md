@@ -757,3 +757,10 @@ and copied header/x86 proposal rules. Native caller, token lexing, type-prefix
 ownership and all producer/export closure remain separate. Five complete
 equations, independent grammar/refusal/request/proposal cases and CI-only native
 attribute/shadowing oracles are UNRUN. Full drafting remains OPEN.
+
+The [primitive sequence core draft](primitive-sequence-core-source-draft.md)
+bulk drafts 33 matching Rust/JavaScript length, emptiness and copied lookup
+operations, strict declarations and both rule sequences. Six complete equations
+and independent/CI-only native cases are UNRUN. Native root activation, private
+caller/loan integration, runtime registration and full translation remain OPEN;
+the core catalog alone grants no application admission or coverage.

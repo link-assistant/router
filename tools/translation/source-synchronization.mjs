@@ -254,3 +254,5 @@ export {proposeOwnedWideSliceInputBoundaries} from './js-to-rust/owned-wide-slic
 export {parseOriginalWrittenAttribute,captureOriginalWrittenAttribute,originalWrittenAttributeFacts,originalWrittenAttributeProgramSources} from './written-attribute-grammar.mjs';
 export {captureReparsedDelimitedAttributeHeaderSources} from './reparsed-delimited-item-header-grammar.mjs';
 export {proposeOriginalX86WrittenAttributeGrammarSources} from './architecture-written-attribute-grammar.mjs';
+
+export {PRIMITIVE_SEQUENCE_CONTRACTS,PRIMITIVE_SEQUENCE_RULE_SEQUENCES,primitiveSequenceContract} from './primitive-sequence-contracts.mjs';
