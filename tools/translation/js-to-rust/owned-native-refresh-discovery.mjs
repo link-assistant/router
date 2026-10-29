@@ -35,9 +35,10 @@ function domain(own,lowered){
  * proposals, even after independent checker/model/fixed-point comparisons.
  * Failures retain actual function identities and never become coverage counts.
  */
-export function proposeOwnedNativeRefreshDiscovery(data,routing){
+export function proposeOwnedNativeRefreshDiscovery(data,routing,options={}){
  return withOwnedNativeProjectOperation(()=>{
- const original=ownedPlainData(data),settings=ownedPlainData(routing),routes=new Map(),targetPaths=new Set();
+ const original=ownedPlainData(data),settings=ownedPlainData(routing),configuration=ownedPlainData(options),routes=new Map(),targetPaths=new Set();
+ if(Object.keys(configuration).some(key=>key!=='newModules'))fail('unknown native refresh discovery option');const newModules=configuration.newModules??null;if(newModules!==null){const keys=['javascriptRoot','typescriptRoot'];if(!newModules||typeof newModules!=='object'||Array.isArray(newModules)||Object.keys(newModules).length!==2||keys.some(key=>!Object.hasOwn(newModules,key)))fail('exact new module receiving roots required');for(const key of keys)ownedSourcePath(newModules[key]);if(newModules.javascriptRoot===newModules.typescriptRoot)fail('new receiving roots must be distinct');}
  if(!Array.isArray(settings)||!settings.length||settings.length>256)fail('bounded nonempty complete current module routes required');
  if(original.primitiveOperators===true)fail('separate primitive-operator refresh rules remain open');
  for(const route of settings){
@@ -66,8 +67,9 @@ export function proposeOwnedNativeRefreshDiscovery(data,routing){
       for(const entry of project.executableDeclarations){
        const actual=captured(entry),own=actual.declaration;let nativeDomain,projectedParameters,receivingName,preserveReceivingName=false;
        try{nativeDomain=domain(own,entry.lower());if(!nativeDomain)throw new UnsupportedNativeTreeProjection('native signature needs another source family');const priorKey=JSON.stringify([entry.source,entry.qualifiedName]),prior=priorBindings.get(priorKey);if(priorBindings.has(priorKey)&&!prior)fail('ambiguous previous native source ownership');receivingName=prior?prior.javascriptName:entry.name;preserveReceivingName=!!prior;if(!nativeProjectionIdentifier(receivingName))throw new UnsupportedNativeTreeProjection('existing receiving function needs an explicit hygienic spelling');let spelling=null;if(prior&&files.has(prior.javascriptPath)){if(!spellingModules.has(prior.javascriptPath))spellingModules.set(prior.javascriptPath,nativeProjectionParameterProposals(files.get(prior.javascriptPath),prior.javascriptPath));spelling=spellingModules.get(prior.javascriptPath).get(prior.javascriptName)??null;}projectedParameters=nativeProjectionParameters(own,nativeDomain,spelling);if(!nativeProjectionIdentifier(entry.name)||projectedParameters.some(row=>!nativeProjectionIdentifier(row.name)))throw new UnsupportedNativeTreeProjection('native bindings need a hygienic spelling rule');}catch(error){if(!(error instanceof TypeError))throw error;refusal(entry,'native-signature-projection',error);continue;}
-       const key=JSON.stringify([entry.source,actual.module]),route=routes.get(key);if(!route)continue;const id='module_'+hash(key),{javascriptPath,typescriptPath}=route;
-       if(!groups.has(key))groups.set(key,{id,key,source:entry.source,module:actual.module,javascriptPath,typescriptPath,units:[]});
+       const key=JSON.stringify([entry.source,actual.module]),existingRoute=routes.get(key);if(!existingRoute&&!newModules)continue;const id='module_'+hash(key),route=existingRoute??{javascriptPath:newModules.javascriptRoot+'/'+id+'.mjs',typescriptPath:newModules.typescriptRoot+'/'+id+'.mts'},{javascriptPath,typescriptPath}=route;
+       if(!existingRoute&&!groups.has(key)){for(const path of [javascriptPath,typescriptPath]){ownedSourcePath(path);if(targetPaths.has(path)||files.has(path))fail('new receiving modules require distinct absent targets');targetPaths.add(path);}}
+       if(!groups.has(key)){if(groups.size>=256)fail('bounded complete native refresh module count required');groups.set(key,{id,key,source:entry.source,module:actual.module,javascriptPath,typescriptPath,newReceivingModule:!existingRoute,units:[]});}
        if(!targetGroups.has(key))targetGroups.set(key,new Map());
        if(nativeDomain.kind==='primitive-scalar'){const descriptor={rust:entry.qualifiedName,parameters:nativeDomain.parameters.map(row=>row.name),returns:nativeDomain.type},targets=targetGroups.get(key);for(const name of [entry.qualifiedName,'rp_'+Buffer.from(entry.qualifiedName).toString('hex')]){if(targets.has(name))fail('ambiguous same-module native helper source');targets.set(name,descriptor);}}
        candidates.push({entry,actual,own,nativeDomain,key,projectedParameters,receivingName,preserveReceivingName});
@@ -92,10 +94,10 @@ export function proposeOwnedNativeRefreshDiscovery(data,routing){
     {id:'native-bulk:project-and-independently-recheck-whole-selected-modules',apply:()=>{
      for(const group of groups.values()){
       if(!group.units.length)continue;
-      if(!files.has(group.javascriptPath)||!files.has(group.typescriptPath))fail('complete existing receiving module pair required for Rust refresh');
+      if(group.newReceivingModule?files.has(group.javascriptPath)||files.has(group.typescriptPath):!files.has(group.javascriptPath)||!files.has(group.typescriptPath))fail('receiving module pair must match its existing or absent source baseline');
       let projected;try{projected=projectNativeTreeModule(group.units.map(({name,rust,kind,parameters,returns,element,tree})=>({name,rust,kind,parameters,returns,element,tree})),{javascriptPath:group.javascriptPath,typescriptPath:group.typescriptPath,runtimeRoot:original.runtimeRoot});}catch(error){if(!(error instanceof UnsupportedNativeTreeProjection))throw error;for(const unit of group.units)refusal(unit.entry,'module-source-projection',error);continue;}
       const pair=prepareOwnedVectorModulePair(group.javascriptPath,group.typescriptPath,projected.typescript),bindings=group.units.map(unit=>({javascriptPath:group.javascriptPath,javascriptName:unit.name,rustPath:unit.entry.source,rustName:unit.entry.qualifiedName}));
-      const input={...original,vectorBindings:[...original.vectorBindings.filter(row=>row.javascriptPath!==group.javascriptPath),...bindings],files:original.files.map(row=>row.path===group.javascriptPath?{...row,source:pair.javascript.source}:row.path===group.typescriptPath?{...row,source:pair.typescript.source}:row)};
+      const projectedFiles=new Map(original.files.map(row=>[row.path,row.source]));projectedFiles.set(group.javascriptPath,pair.javascript.source);projectedFiles.set(group.typescriptPath,pair.typescript.source);const input={...original,vectorBindings:[...original.vectorBindings.filter(row=>row.javascriptPath!==group.javascriptPath),...bindings],files:[...projectedFiles].map(([path,source])=>({path,source}))};projectedFiles.clear();
       const context=createOwnedVectorCandidateContext(input);contexts.push(context);
       // Genuine import symbols, source ABI, loans, complete CST/serialized meta
       // and all receiving function bodies are reconstructed by this checker.
@@ -104,18 +106,18 @@ export function proposeOwnedNativeRefreshDiscovery(data,routing){
       for(const item of checked.program){const units=group.units.filter(unit=>unit.name===item.javascript);if(units.length!==1||!equal(requestedNativeProjectionTree(item),units[0].tree))fail('receiving source changes an original ordered body or effect');}
       const synchronized=proposeOwnedVectorNativeSynchronization(input,{sourcePath:group.javascriptPath,typescriptPath:group.typescriptPath,typescript:checked.typescript});
       if(!equal(synchronized.selectedFunctions.map(row=>[row.path,row.name]).sort(),bindings.map(row=>[row.rustPath,row.rustName]).sort()))fail('fresh native selection differs');
-      const outputs=[{path:group.javascriptPath,before:files.get(group.javascriptPath),after:synchronized.javascript},{path:group.typescriptPath,before:files.get(group.typescriptPath),after:synchronized.typescript}];
+      const outputs=[{path:group.javascriptPath,before:files.get(group.javascriptPath)??null,after:synchronized.javascript},{path:group.typescriptPath,before:files.get(group.typescriptPath)??null,after:synchronized.typescript}];
       for(const output of outputs){const concrete=transportConcreteSyntaxSource(output.after,{language:output.path.endsWith('.mjs')?'JavaScript':'TypeScript'});if(transportConcreteSyntaxMeta(concrete.meta).source!==output.after)fail('new complete receiving CST inverse differs');output.concreteSyntax=concrete.meta;output.inverse=output.before;retainedBytes+=Buffer.byteLength(output.after);}
       const nativeEquations=transportConcreteSourceEquations(synchronized.rustEdits.map(row=>({before:row.before,after:row.after,language:'Rust'})));
       for(const row of synchronized.rustEdits)retainedBytes+=Buffer.byteLength(row.after);
       if(retainedBytes>16777216)fail('retained complete bulk source proposal byte budget');
-      projections.push({id:group.id,rustSource:group.source,module:group.module,javascriptPath:group.javascriptPath,typescriptPath:group.typescriptPath,bindings,outputs,nativeProposal:synchronized.rustEdits.map((row,index)=>({...row,history:nativeEquations[index]})),selectedNativeSourceRechecked:true,originalOrderedBodiesReproduced:true,nativeInstalled:false,receivingExecuted:false,runtimeParity:false});
+      projections.push({id:group.id,rustSource:group.source,module:group.module,javascriptPath:group.javascriptPath,typescriptPath:group.typescriptPath,newReceivingModule:group.newReceivingModule,bindings,outputs,nativeProposal:synchronized.rustEdits.map((row,index)=>({...row,history:nativeEquations[index]})),selectedNativeSourceRechecked:true,originalOrderedBodiesReproduced:true,nativeInstalled:false,receivingExecuted:false,runtimeParity:false});
      }
      for(const route of routes.values()){
       let modules=projections.filter(row=>row.rustSource===route.rustPath&&equal(row.module,route.module));
       if(modules.length===0){
        requireCurrentEmptyNativeModule(project,files,{rustPath:route.rustPath,module:route.module});if(!files.has(route.javascriptPath)||!files.has(route.typescriptPath))fail('complete existing empty receiving pair baselines required');const pair=prepareEmptyNativeModulePair(route.javascriptPath,route.typescriptPath),outputs=[{path:route.javascriptPath,before:files.get(route.javascriptPath),after:pair.javascript.source,concreteSyntax:pair.javascript.concreteSyntax},{path:route.typescriptPath,before:files.get(route.typescriptPath),after:pair.typescript.source,concreteSyntax:pair.typescript.concreteSyntax}];
-       for(const output of outputs){output.inverse=output.before;retainedBytes+=Buffer.byteLength(output.after);}if(retainedBytes>16777216)fail('retained complete empty source proposal byte budget');const empty={id:'module_'+hash(JSON.stringify([route.rustPath,route.module])),rustSource:route.rustPath,module:route.module,javascriptPath:route.javascriptPath,typescriptPath:route.typescriptPath,bindings:[],outputs,nativeProposal:[],emptyNativeModule:true,selectedNativeSourceRechecked:true,originalOrderedBodiesReproduced:true,nativeInstalled:false,receivingExecuted:false,runtimeParity:false};projections.push(empty);modules=[empty];
+       for(const output of outputs){output.inverse=output.before;retainedBytes+=Buffer.byteLength(output.after);}if(retainedBytes>16777216)fail('retained complete empty source proposal byte budget');const empty={id:'module_'+hash(JSON.stringify([route.rustPath,route.module])),rustSource:route.rustPath,module:route.module,javascriptPath:route.javascriptPath,typescriptPath:route.typescriptPath,newReceivingModule:false,bindings:[],outputs,nativeProposal:[],emptyNativeModule:true,selectedNativeSourceRechecked:true,originalOrderedBodiesReproduced:true,nativeInstalled:false,receivingExecuted:false,runtimeParity:false};projections.push(empty);modules=[empty];
       }
       if(modules.length!==1)fail('one complete current module projection required');
       if(modules[0].bindings.length===0){requireCurrentEmptyNativeModule(project,files,{rustPath:route.rustPath,module:route.module});continue;}
@@ -125,7 +127,7 @@ export function proposeOwnedNativeRefreshDiscovery(data,routing){
        const name=binding.rustName.split('.').at(-1);if(items.some(row=>row.term==='fn'&&row.name===name)&&!modules[0].bindings.some(row=>row.rustName===binding.rustName))fail('a present unsupported native function cannot silently disappear from an existing receiving module');
       }
      }
-     return projections;
+     if(projections.length>256)fail('complete refreshed and new module count exceeds original batch bound');return projections;
     }},
    ]},
    {phase:'repository',rules:[{id:'router:retain-source-preserved-refusals-and-uninstalled-js-ts-native-proposals',apply:()=>({schema:'router-owned-native-bulk-refresh-discovery-v1',sourceInputs:original.files,modules:projections,refusals,forwardCensus:ownedVectorOriginalProjectCensus(project),retainedSourceBytes:retainedBytes,sourceAuthority:false,semanticAuthority:false,productionSelected:false,nativeInstalled:false,nativeFreshnessQualified:false,receivingExecuted:false,runtimeParity:false,wholeRouterSynchronization:false,crossInvocationCache:false,rustExecuted:false})}]},

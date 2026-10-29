@@ -327,3 +327,9 @@ absence rules in
 ALL UNRUN. This explicitly supersedes the prior removed-inline-scope refusal;
 deleted physical native files, unrecorded modules, receiving insertion and full
 drafting/qualification remain OPEN.
+
+New native modules during Rust refresh now have automatic whole-function source
+adoption drafts, including paired files, unit manifests and physical bulk-index
+expansion, in [native-new-modules-source-draft.md](native-new-modules-source-draft.md).
+ALL UNRUN. Legacy explicit-route calls remain supported; deleted native files,
+receiving insertion from empty units and full drafting/qualification remain OPEN.

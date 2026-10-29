@@ -16,7 +16,7 @@ import {proposeOwnedNativeRefreshDiscovery} from './owned-native-refresh-discove
 const fail=message=>{throw new TypeError('Native bulk module refresh: '+message);};
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b),hash=source=>createHash('sha256').update(source).digest('hex');
 /** Recompute discovery and every complete source join; no proposal parameter. */
-export function proposeOwnedNativeBulkModuleRefresh(data,requests){
+export function proposeOwnedNativeBulkModuleRefresh(data,requests,options={}){
  return withOwnedNativeProjectOperation(()=>{
  const original=ownedPlainData(data),settings=ownedPlainData(requests),start=createOwnedCoreSourceContext(original),files=new Map(original.files.map(row=>[row.path,row.source])),after=new Map(files),contexts=[],edits=new Map(),generated=new Map();
  let discovered,beforeProject,afterProject,primaryFailed=false;
@@ -35,11 +35,11 @@ export function proposeOwnedNativeBulkModuleRefresh(data,requests){
       const bindings=original.vectorBindings.filter(row=>row.javascriptPath===request.sourcePath),explicit=Object.hasOwn(request,'nativeRoute')?nativeEmptyModuleRoute(request.nativeRoute):null;if(!bindings.length&&!explicit)fail('complete previous bindings or explicit empty native module route required');const rustPath=bindings[0]?.rustPath??explicit.rustPath,module=bindings.length?bindings[0].rustName.split('.').slice(0,-1):explicit.module;if(bindings.some(row=>row.rustPath!==rustPath||!same(row.rustName.split('.').slice(0,-1),module))||explicit&&(explicit.rustPath!==rustPath||!same(explicit.module,module)))fail('one actual native module required per receiving route');
       return {rustPath,module,javascriptPath:request.sourcePath,typescriptPath:request.typescriptPath};
      });
-     discovered=proposeOwnedNativeRefreshDiscovery(original,routes);beforeProject=compile(files);
+     discovered=proposeOwnedNativeRefreshDiscovery(original,routes,options);beforeProject=compile(files);
      if(!same(discovered.forwardCensus,ownedVectorOriginalProjectCensus(beforeProject)))fail('fresh discovery and original native census differ');
      const selected=new Set();
      for(const module of discovered.modules){
-      for(const output of module.outputs){if(files.get(output.path)!==output.before||output.inverse!==output.before||generated.has(output.path))fail('distinct complete current receiving source baselines required');generated.set(output.path,output);after.set(output.path,output.after);}
+      for(const output of module.outputs){if((files.get(output.path)??null)!==output.before||output.inverse!==output.before||generated.has(output.path))fail('distinct complete current receiving source baselines required');generated.set(output.path,output);after.set(output.path,output.after);}
       for(const binding of module.bindings){const key=JSON.stringify([binding.rustPath,binding.rustName]);if(selected.has(key))fail('native source functions cannot have overlapping module owners');selected.add(key);}
       for(const native of module.nativeProposal){
        if(files.get(native.path)!==native.before)fail('complete current native proposal baseline differs');
@@ -77,7 +77,7 @@ export function proposeOwnedNativeBulkModuleRefresh(data,requests){
    {phase:'repository',rules:[{id:'router:retain-one-composed-native-edit-per-file-and-absent-js-ts-targets',apply:()=>{
     const nativeEdits=[...edits].map(([path,rows])=>{const before=files.get(path),next=after.get(path),history=transportConcreteSourceEquations([{before,after:next,language:'Rust'}])[0];return {path,before,after:next,inverse:before,functions:rows.map(row=>({name:row.name,span:row.span})),history};}).filter(row=>row.before!==row.after);
     const retainedSourceBytes=original.files.reduce((sum,row)=>sum+Buffer.byteLength(row.source),0)+nativeEdits.reduce((sum,row)=>sum+Buffer.byteLength(row.before)+Buffer.byteLength(row.after),0)+[...generated.values()].reduce((sum,row)=>sum+Buffer.byteLength(row.after),0);if(retainedSourceBytes>33554432)fail('complete composed source proposal byte bound');
-    return {schema:'router-owned-native-bulk-module-refresh-v1',sourceInputs:original.files,nativeEdits,outputs:[...generated.values()],modules:discovered.modules.map(({id,rustSource,module,javascriptPath,typescriptPath,bindings})=>({id,rustSource,module,javascriptPath,typescriptPath,bindings})),refusals:discovered.refusals,forwardCensus:ownedVectorOriginalProjectCensus(afterProject),retainedSourceBytes,selectedNativeSourceRechecked:true,composedNativeSourceRechecked:true,sourceAuthority:false,semanticAuthority:false,productionSelected:false,nativeInstalled:false,nativeFreshnessQualified:false,receivingExecuted:false,runtimeParity:false,wholeRouterSynchronization:false,crossInvocationCache:false,rustExecuted:false};
+    return {schema:'router-owned-native-bulk-module-refresh-v1',sourceInputs:original.files,nativeEdits,outputs:[...generated.values()],modules:discovered.modules.map(({id,rustSource,module,javascriptPath,typescriptPath,newReceivingModule,bindings})=>({id,rustSource,module,javascriptPath,typescriptPath,newReceivingModule,bindings})),refusals:discovered.refusals,forwardCensus:ownedVectorOriginalProjectCensus(afterProject),retainedSourceBytes,selectedNativeSourceRechecked:true,composedNativeSourceRechecked:true,sourceAuthority:false,semanticAuthority:false,productionSelected:false,nativeInstalled:false,nativeFreshnessQualified:false,receivingExecuted:false,runtimeParity:false,wholeRouterSynchronization:false,crossInvocationCache:false,rustExecuted:false};
    }}]},
   ]).run(null);return {...run.value,trace:run.trace};
  }catch(error){primaryFailed=true;throw error;}finally{
