@@ -170,6 +170,8 @@ test('complete committed export carries shared adoption implementations original
  assert.ok(paths.has('tools/translation/prepare-native-ordered-scalars-sources.mjs'));
  assert.ok(paths.has('tools/translation/prepare-native-scalar-constants-sources.mjs'));
  assert.ok(paths.has('tools/translation/prepare-native-helper-loan-discovery-sources.mjs'));
+ assert.ok(paths.has('tools/translation/prepare-native-constant-arithmetic-sources.mjs'));
+
 
  assert.ok(paths.has('tools/translation/js-to-rust/owned-native-scalar-constants.mjs'));
 

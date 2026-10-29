@@ -263,3 +263,9 @@ Automatic module discovery now uses the independent readonly JSON text helper lo
 rules in [native-helper-loan-discovery-source-draft.md](native-helper-loan-discovery-source-draft.md).
 ALL UNRUN. Its symbolic source observations still grant no loan authority; broader
 module/effect/ownership requirements, full drafting and qualification remain OPEN.
+
+Checked primitive arithmetic inside actual source-linked constant bodies now has
+bounded literal-substitution drafts in
+[native-constant-arithmetic-source-draft.md](native-constant-arithmetic-source-draft.md).
+ALL UNRUN. Runtime arithmetic/failure ordering, broader constant parents and full
+drafting/qualification remain OPEN; no public evaluator proof grants permission.

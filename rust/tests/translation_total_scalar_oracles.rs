@@ -71,3 +71,21 @@ fn total_integer_methods_preserve_boundaries() {
     unsigned!(u8, u16, u32, u64, u128);
     signed!(i8, i16, i32, i64, i128);
 }
+
+#[test]
+fn checked_constant_arithmetic_has_no_runtime_wrapping_fallback() {
+    const CAPACITY: u128 = 64_u128 * 1024_u128;
+    const SIGNED_REMAINDER: i128 = -7_i128 % 3_i128;
+    assert_eq!(CAPACITY, 65536);
+    assert_eq!(SIGNED_REMAINDER, -1);
+    macro_rules! checked_signed {
+        ($($ty:ty),+ $(,)?) => {$(
+            assert_eq!(<$ty>::MIN.checked_div(-1), None);
+            assert_eq!(<$ty>::MIN.checked_rem(-1), None);
+            assert_eq!(<$ty>::MIN.checked_neg(), None);
+            assert_eq!(<$ty>::MAX.checked_add(1), None);
+            assert_eq!((1 as $ty).checked_div(0), None);
+        )+};
+    }
+    checked_signed!(i8, i16, i32, i64, i128);
+}

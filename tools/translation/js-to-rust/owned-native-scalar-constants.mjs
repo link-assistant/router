@@ -59,7 +59,7 @@ import {overflowMessage} from '../vendor/meta-language/translation/aborts.js';
 
 // DATA expansion from this invocation's genuine checked native dependency map.
 // No supplied proof, table, source hash or factory can issue semantic permission.
-export function nativeScalarConstantObserver(lowered){
+export function nativeScalarConstantObserver(lowered,guard){
  const program=lowered?.program,active=new Set(),flatten=name=>'rp_'+Buffer.from(name).toString('hex');
  return function observe(node,read,events){
   if(node.k!=='call'||!(program?.declarations instanceof Map))return null;
@@ -72,7 +72,22 @@ export function nativeScalarConstantObserver(lowered){
   if(target.k!=='fn'||target.async||target.params?.length!==0||node.args?.length!==0||!role(target.ret)||role(target.ret)!==role(node.type)||!sameType(target.ret,node.type)||proof?.verified!==true||proof.sourceLinksVerified!==true||typeof proof.entry!=='string'||![node.fn,key,target.fullName].includes(proof.entry)&&![node.fn,key,target.fullName].includes(flatten(proof.entry)))fail('actual zero-argument checked primitive constant/source identity required');
   if(active.size>=32||active.has(key))fail('bounded acyclic actual constant dependency chain required');
   const before=events.length;active.add(key);
-  try{const value=read(target.body);if(events.length!==before)fail('constant expansion cannot invent runtime effects');return value;}finally{active.delete(key);}
+  function expand(value,depth=0){guard.charge(depth);const arithmetic=observeNativeConstantArithmetic(value,child=>expand(child,depth+1));return arithmetic??read(value);}
+  try{const value=expand(target.body);if(events.length!==before)fail('constant expansion cannot invent runtime effects');return value;}finally{active.delete(key);}
  };
 }
 import {sameType} from '../checked-types.mjs';
+
+// Literal substitution inside an actual checked constant only. This is not a
+// runtime arithmetic rule or a replacement for original constant source links.
+function observeNativeConstantArithmetic(node,read){
+ const unary=node.k==='unary'&&node.op==='neg',binary=node.k==='binary',operation=nativeIntegerArithmetic(node.op);
+ if(!operation||(unary?operation.arity!==1:!binary||operation.arity!==2))return null;
+ const row=primitiveBitwiseType(node.type?.rustPrimitiveName),fail=message=>{throw new TypeError('Native constant arithmetic: '+message);};
+ if(!row||node.type.kind!=='fixed'||node.type.rustReference||node.type.rustOwnership||node.type.patternOwnershipRefusal||node.type.rustGenericIdentityUnresolved||node.type.rustBorrowingUnresolved||node.type.bits!==row.bits||node.type.signed!==row.signed||node.semantics!=='checked'||operation.signedOnly&&row.signed!==true||['div','rem'].includes(operation.name)&&(node.rounding!=='trunc'||node.byZero!=='abort'))fail('actual checked primitive arithmetic semantics required');
+ const nodes=unary?[node.arg]:[node.left,node.right],values=nodes.map(value=>{if(!sameType(value.type,node.type)||value.type.rustReference||value.type.rustOwnership||value.type.patternOwnershipRefusal||value.type.rustGenericIdentityUnresolved||value.type.rustBorrowingUnresolved||value.type.rustPrimitiveName!==row.name)fail('identical actual constant primitive operands required');const model=read(value);if(!Array.isArray(model)||model.length!==3||model[0]!=='integer'||model[1]!==row.name||typeof model[2]!=='string'||!/^[-]?(?:0|[1-9][0-9]{0,38})$/u.test(model[2]))fail('arithmetic constant operands need literal substitutions');return BigInt(model[2]);});
+ const minimum=row.signed?-BigInt(row.minimumAbs):0n,maximum=BigInt(row.maximum);if(values.some(value=>value<minimum||value>maximum))fail('constant operand outside its actual primitive range');const [left,right]=values;
+ if(['div','rem'].includes(operation.name)&&(right===0n||row.signed&&left===minimum&&right===-1n))fail('constant divisor zero or signed minimum overflow');
+ let value;switch(operation.name){case 'add':value=left+right;break;case 'sub':value=left-right;break;case 'mul':value=left*right;break;case 'div':value=left/right;break;case 'rem':value=left%right;break;case 'neg':value=-left;break;default:fail('unsupported constant arithmetic');}
+ if(value<minimum||value>maximum)fail('constant result outside its actual primitive range');return ['integer',row.name,value.toString()];
+}
