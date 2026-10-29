@@ -11,7 +11,7 @@ import {emitOwnedIterationCall,evaluateOwnedIterationCall} from './owned-iterati
 import {ownedStateOperation} from './owned-state-contracts.mjs';
 import {emitOwnedJsonLoop,hasOwnedJsonLoop} from './owned-json-loop-emission.mjs';
 import {emitOwnedCountedFor} from './owned-counted-for-emission.mjs';
-import {OWNED_PRIMITIVE_SLICE_RUST_TYPES,ownedPrimitiveSliceElement,emitOwnedPrimitiveSliceLoop} from './owned-scalar-slice-contracts.mjs';
+import {OWNED_PRIMITIVE_SLICE_RUST_TYPES,ownedPrimitiveSliceElement,emitOwnedPrimitiveSliceLoop} from './owned-wide-primitive-slice-contracts.mjs';
 import {ownedOutcomeOperation} from './owned-outcome-contracts.mjs';
 import {emitOwnedOutcomeCall,evaluateOwnedOutcomeCall} from './owned-outcome-emission.mjs';
 import {emitOwnedIntegerCall,evaluateOwnedIntegerCall} from './owned-integer-emission.mjs';
@@ -319,7 +319,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
   }).join(', ');
   const returns=rust?rustTypes[item.returns].replace("'a ",item.resultRoot===null?"'static ":explicit?"'a ":''):publicTypeScriptType(item.returns);
   const signature=rust?'#[must_use]\n#[rustfmt::skip]\n'+(item.exported?'pub ':'')+'fn '+item.name+(explicit?"<'a>":'')+'(':(item.exported?'export ':'')+'function '+item.javascript+'(';
-  return signature+parameters+')'+(rust?' -> ':': ')+returns+' {\n'+(ownedBase64InputPrelude(item,rust)?ownedBase64InputPrelude(item,rust)+'\n':'')+body(item.body,4)+'\n}';
+  return signature+parameters+')'+(rust?' -> ':': ')+returns+' {\n'+(ownedBase64InputPrelude(item,rust)?ownedBase64InputPrelude(item,rust)+'\n':'')+(widePrimitiveSliceInputPrelude(item,rust)?widePrimitiveSliceInputPrelude(item,rust)+'\n':'')+body(item.body,4)+'\n}';
  }).join('\n\n');
  requireOwnedCoreSourceCurrent(context);
  if(rust)return RUST_SUPPORT+'\n\n'+code+'\n';
@@ -327,6 +327,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  const lines=['import type {JsonValue} from '+JSON.stringify(relative('json-macro-runtime.mjs',[...imports].some(ownedAsciiOperation)?sourceData.declarationRoot:sourceData.runtimeRoot))+';'];
  if(primitiveTypeImports.size){const location=posix.relative(posix.dirname(output),(sourceData.declarationRoot??sourceData.runtimeRoot)+'/primitive-operator-runtime.mjs');lines.push('import type { '+[...primitiveTypeImports].join(', ')+' } from '+JSON.stringify(location.startsWith('.')?location:'./'+location)+';');}
  if(hasOwnedBase64Input(program)||[...imports].some(name=>ownedBase64Operation(name)))lines.push('import type {Base64Error,Base64Result} from '+JSON.stringify(relative('base64-runtime.mjs'))+';');
+ if(hasWidePrimitiveSliceInput(program))lines.push('import {primitiveSliceInput as __ro_primitiveSliceInput} from '+JSON.stringify(relative('primitive-operator-runtime.mjs'))+';');
  if(hasOwnedBase64Input(program))lines.push('import {base64ResultInput as __ro_base64ResultInput} from '+JSON.stringify(relative('base64-runtime.mjs'))+';');
  for(const family of ['primitive-operator','json-update','json-macro','base64','json','json-option','string-iterator','json-collections','json-iteration','json-state','json-fields','owned-outcome','integer','sse','text','primitive-option','primitive-option-callback','primitive-result','owned-result','http-protocol']){
   const names=[...imports].filter(name=>(ownedPrimitiveOperatorOperation(name)?'primitive-operator':ownedPrimitiveResultOperation(name)?ownedPrimitiveResultOperation(name).runtimeModule.slice(0,-12):ownedPrimitiveOptionCallbackOperation(name)?'primitive-option-callback':ownedPrimitiveOptionOperation(name)?'primitive-option':ownedTextOperation(name)?'text':ownedSseOperation(name)?'sse':ownedIntegerOperation(name)?'integer':ownedOutcomeOperation(name)?'owned-outcome':ownedJsonFieldOperation(name)?'json-fields':ownedStateOperation(name)?'json-state':ownedIterationOnlyOperation(name)?'json-iteration':ownedCollectionOperation(name)?'json-collections':ownedAsciiOperation(name)?'string-iterator':ownedJsonOptionalReaderOperation(name)?'json-option':ownedBase64Operation(name)?'base64':ownedJsonReaderOperation(name)?'json':name.startsWith('json_macro_')?'json-macro':'json-update')===family);
@@ -375,7 +376,7 @@ fn __ro_with_field(base: &crate::translation_core::Json, key: &str, value: &crat
 /** Prepare only the actual registered module, after fresh complete source joins. */
 export async function prepareOwnedCoreRuntime(input){
  const program=checkOwnedCoreProgram(input),modules={update:await import('../json-update-runtime.mjs'),macro:await import('../json-macro-runtime.mjs')};
- if(program.some(item=>item.sourceNativeOperators?.some(row=>row.kind==='native-fixed-bitwise')||item.hostCalls.some(call=>ownedPrimitiveOperatorOperation(call.name))))modules.primitive=await import('../extensions/primitive-operator-runtime.mjs');
+ if(hasWidePrimitiveSliceInput(program)||program.some(item=>item.sourceNativeOperators?.some(row=>row.kind==='native-fixed-bitwise')||item.hostCalls.some(call=>ownedPrimitiveOperatorOperation(call.name))))modules.primitive=await import('../extensions/primitive-operator-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedIntegerOperation(call.name))))modules.integer=await import('../integer-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedSseOperation(call.name))))modules.sse=await import('../sse-runtime.mjs');
  if(program.some(item=>item.ownedTextCopies||item.hostCalls.some(call=>ownedTextOperation(call.name))))modules.text=await import('../text-runtime.mjs');
@@ -398,7 +399,7 @@ export async function prepareOwnedCoreRuntime(input){
 export function evaluateOwnedCoreProgram(input,name,args,token){
  const program=checkOwnedCoreProgram(input),state=runtimes.get(token);if(!state||!isDeepStrictEqual(state.program,program))fail('unissued runtime/program');
  const item=program.find(item=>item.name===name||item.javascript===name);if(!item||!Array.isArray(args)||args.length!==item.params.length)fail('actual arguments differ');
- const env=ownedBase64InputEnvironment(item.params,args,state.modules);
+ const env=applyWidePrimitiveSliceInputs(item.params,ownedBase64InputEnvironment(item.params,args,state.modules),state.modules);
  const get=(value,scope)=>{
   switch(value.kind){
    case 'local-call':return evaluateOwnedCorePrepared(program,value.name,value.args.map(argument=>get(argument,scope)),state);
@@ -470,7 +471,7 @@ export function evaluateOwnedCoreProgram(input,name,args,token){
 // GENERATED: bounded independent owned-core batch evaluation.
 function evaluateOwnedCorePrepared(program,name,args,state){
  const item=program.find(item=>item.name===name||item.javascript===name);if(!item||!Array.isArray(args)||args.length!==item.params.length)fail('actual arguments differ');
- const env=ownedBase64InputEnvironment(item.params,args,state.modules);
+ const env=applyWidePrimitiveSliceInputs(item.params,ownedBase64InputEnvironment(item.params,args,state.modules),state.modules);
  const get=(value,scope)=>{
   switch(value.kind){
    case 'local-call':return evaluateOwnedCorePrepared(program,value.name,value.args.map(argument=>get(argument,scope)),state);
@@ -569,3 +570,5 @@ import {ownedPrimitiveOperatorOperation} from './owned-primitive-operator-source
 import {emitOwnedPrimitiveOperatorCall,evaluateOwnedPrimitiveOperatorCall} from './owned-primitive-operator-emission.mjs';
 
 import {ownedBase64InputPrelude,ownedBase64InputEnvironment,hasOwnedBase64Input} from './owned-base64-inputs.mjs';
+
+import {hasWidePrimitiveSliceInput,widePrimitiveSliceInputPrelude,applyWidePrimitiveSliceInputs} from './owned-wide-primitive-slice-inputs.mjs';

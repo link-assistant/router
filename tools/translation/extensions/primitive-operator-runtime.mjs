@@ -1,3 +1,4 @@
+import {types as primitiveSliceTypes} from 'node:util';
 const shape=(bits,signed)=>{
   if(![8,16,32,64,128].includes(bits)||typeof signed!=='boolean')throw new TypeError('Invalid Rust primitive integer domain');
 };
@@ -120,4 +121,17 @@ export function integerArithmetic(left,right,bits,signed,operation){
  if(['div','rem'].includes(operation)){if(right===0n)throw new RangeError(nativeArithmeticZeroDivisorMessage(operation,{kind:'fixed'}));if(signed&&left===minimum&&right===-1n)throw new RangeError(nativeArithmeticOverflowMessage(operation));}
  const value=operation==='add'?left+right:operation==='sub'?left-right:operation==='mul'?left*right:operation==='div'?left/right:left%right;
  if(value<minimum||value>=limit)throw new RangeError(nativeArithmeticOverflowMessage(operation));return value;
+}
+
+// Additive shared fixed-width slice boundary. No array/source/verdict cache.
+// Full linear validation occurs once per parameter, before any translated body.
+export function primitiveSliceInput(value,domain){
+ if(typeof domain!=='string')throw new TypeError('Exact fixed-width primitive slice domain required');const match=/^(u|i)(8|16|32|64|128)$/u.exec(domain);if(!match||match[0]!==domain)throw new TypeError('Exact fixed-width primitive slice domain required');
+ if(!value||typeof value!=='object'||primitiveSliceTypes.isProxy(value)||!Array.isArray(value)||Object.getPrototypeOf(value)!==Array.prototype||!Object.isFrozen(value))throw new TypeError('Frozen ordinary shared primitive slice required');
+ const length=Object.getOwnPropertyDescriptor(value,'length');if(!length||!Object.hasOwn(length,'value')||!Number.isSafeInteger(length.value)||length.value<0||length.writable||length.configurable)throw new TypeError('Immutable own primitive slice length required');
+ const keys=Reflect.ownKeys(value);if(keys.length!==length.value+1||keys[keys.length-1]!=='length')throw new TypeError('Exact dense primitive slice fields required');
+ const bits=Number(match[2]),signed=match[1]==='i';for(let index=0;index<length.value;index++){
+  if(keys[index]!==String(index))throw new TypeError('Exact dense primitive slice indices required');const field=Object.getOwnPropertyDescriptor(value,String(index));if(!field||!Object.hasOwn(field,'value')||!field.enumerable||field.writable||field.configurable)throw new TypeError('Immutable own primitive slice element required');bound(field.value,bits,signed);
+ }
+ return value;
 }

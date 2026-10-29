@@ -736,3 +736,10 @@ callback CST records and copied header/x86 proposal APIs. Original caller,
 namespace, type-prefix and producer/export obligations remain pending; no coverage
 gain is claimed. Five complete equations and independent grammar/refusal/private
 identity/operation/proposal cases are UNRUN. Full drafting remains OPEN.
+
+The [fixed-width shared slice draft](wide-primitive-slices-source-draft.md)
+adds the remaining integer domains through a copied contract, explicit immutable
+source input guards, emitted TypeScript, single/batch interpreters and canonical
+Rust source projection. The old three-domain API remains unchanged. Thirteen
+complete equations, independent receiving/refusal/long-input cases and CI-only
+Rust oracles are UNRUN. Full drafting and qualification remain OPEN.

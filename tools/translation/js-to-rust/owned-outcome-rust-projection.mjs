@@ -74,7 +74,7 @@ export function projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot,
   const scalar=primitiveOperators&&text.startsWith('::core::primitive::')?ownedRustPrimitiveType(text):null;if(scalar)return 'import('+JSON.stringify(relative('primitive-operator'))+').'+scalar.alias;
   text=text.replaceAll("&'a",'&');
   const integerOption=primitiveOperators?ownedRustIntegerOptionalType(text):null;if(integerOption)return 'ReturnType<typeof '+imported(ownedIntegerOptionalWitness(integerOption),'integer')+'>';
-  const scalarSlice=/^&\[(u64|i64|bool)\]$/u.exec(text);if(scalarSlice)return 'readonly ('+type(scalarSlice[1])+')[]';
+  const scalarSlice=/^&\[(?:(::core::primitive::)([ui](?:8|16|32|64|128))|(u64|i64|bool))\]$/u.exec(text);if(scalarSlice){if(scalarSlice[1]&&!primitiveOperators)fail('wide primitive slice needs the actual qualified primitive runtime');return 'readonly ('+type(scalarSlice[1]?scalarSlice[1]+scalarSlice[2]:scalarSlice[3])+')[]';}
   if(text==='&crate::translation_core::Json')return 'import('+JSON.stringify(relative('json-macro'))+').JsonValue';
   if(text==='&[crate::translation_core::Json]')return 'Parameters<typeof '+imported('router_state_json_values_copy','json-state')+'>[0]';
   if(text==='&::serde_json::Map<::std::string::String,crate::translation_core::Json>')return 'Parameters<typeof '+imported('router_core_json_map_index','json-update')+'>[0]';
@@ -189,7 +189,8 @@ export function projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot,
   if(!ordinary(name)||snake(name)!==fn.name)fail('function name proposal must reproduce its original Rust binding');
   for(const [rust,javascript]of names)if(!ordinary(javascript)||snake(javascript)!==rust)fail('paired spelling proposal differs');
   const docs=fn.parameters.map(parameter=>' * @param {'+type(parameter.type)+'} '+(names.get(parameter.name)??parameter.name)),returns=returnType(fn.returns);if(returns)docs.push(' * @returns {'+returns+'}');
-  return (docs.length?'/**\n'+docs.join('\n')+'\n */\n':'')+(fn.exported?'export ':'')+'function '+name+'('+fn.parameters.map(parameter=>names.get(parameter.name)??parameter.name).join(', ')+') '+block(fn.body,names);
+  const inputPrelude=fn.parameters.flatMap(parameter=>{const match=/^&\[(::core::primitive::)([ui](?:8|16|32|64|128))\]$/u.exec(parameter.type.replaceAll("&'a",'&'));if(!match||['u64','i64'].includes(match[2]))return [];const local=names.get(parameter.name)??parameter.name;return [local+' = '+imported('primitiveSliceInput','primitive-operator')+'('+local+', '+JSON.stringify(match[2])+');'];}),projected=block(fn.body,names),completeBody=inputPrelude.length?'{\n'+inputPrelude.join('\n')+projected.slice(1):projected;
+  return (docs.length?'/**\n'+docs.join('\n')+'\n */\n':'')+(fn.exported?'export ':'')+'function '+name+'('+fn.parameters.map(parameter=>names.get(parameter.name)??parameter.name).join(', ')+') '+completeBody;
  });
  const prelude=[...imports.values()].map(row=>'import { '+row.name+' as '+row.local+' } from '+JSON.stringify(relative(row.family))+';').join('\n');
  const javascript=prelude+'\n\n'+bodies.join('\n\n')+'\n';if(javascript.length>2097152)fail('whole JavaScript proposal exceeds original source bound');

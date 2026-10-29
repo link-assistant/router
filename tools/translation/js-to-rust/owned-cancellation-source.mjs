@@ -36,7 +36,7 @@ import {hasOwnedStaticOptionalLoan} from './owned-static-optional-loans.mjs';
 import {ownedPrimitiveResultOperation,ownedPrimitiveResultType,ownedPrimitiveResultPayload,ownedPrimitiveResultAbsent,ownedPrimitiveResultStaticLoan,requireOwnedPrimitiveResultSources} from './owned-primitive-result-contracts.mjs';
 import {checkOwnedPrimitiveResult} from './owned-primitive-result-source.mjs';
 import {checkOwnedCountedFor} from './owned-counted-for-source.mjs';
-import {ownedPrimitiveSliceElement,ownedPrimitiveSliceDomain} from './owned-scalar-slice-contracts.mjs';
+import {consumeWidePrimitiveSliceInputPrelude} from './owned-wide-primitive-slice-inputs.mjs'; import {ownedPrimitiveSliceElement,ownedPrimitiveSliceDomain} from './owned-wide-primitive-slice-contracts.mjs';
 import {requireOwnedResultSources} from './owned-result-source-contracts.mjs';
 import {requireOwnedResultPublicInputSources} from './owned-result-public-inputs.mjs';
 import {requireOwnedHttpProtocolSources} from './owned-http-protocol-contracts.mjs';
@@ -352,7 +352,7 @@ function originalOwnedCoreImport(handle,path,node,analysis){
    if(target===state.data.runtimeRoot+'/integer-runtime.mjs'){if(!ownedIntegerOperation(name))fail('unregistered actual integer operation');requireOwnedIntegerSources(state.files,state.data);}
    if(target===state.data.runtimeRoot+'/owned-outcome-runtime.mjs'){if(!ownedOutcomeOperation(name))fail('unregistered actual carrier operation');requireOwnedOutcomeSources(state.files,state.data);}
    if(target===state.data.runtimeRoot+'/json-fields-runtime.mjs'){if(!ownedJsonFieldOperation(name))fail('unregistered JSON field runtime export');requireOwnedJsonFieldSources(state.files,state.data);}
-   if(target===state.data.runtimeRoot+'/primitive-operator-runtime.mjs'&&(state.data.primitiveOperators!==true||!ownedPrimitiveOperatorOperation(name)&&!((spec.isTypeOnly||declaration.importClause?.isTypeOnly)&&primitiveBitwiseAlias(name))))fail('unregistered primitive operator context or export');
+   if(target===state.data.runtimeRoot+'/primitive-operator-runtime.mjs'&&(state.data.primitiveOperators!==true||!ownedPrimitiveOperatorOperation(name)&&name!=='primitiveSliceInput'&&!((spec.isTypeOnly||declaration.importClause?.isTypeOnly)&&primitiveBitwiseAlias(name))))fail('unregistered primitive operator context or export');
    const typesOnly=spec.isTypeOnly||declaration.importClause?.isTypeOnly;
    const actual=typesOnly?syntax.get(state.data.declarationRoot+'/'+posix.basename(target).replace(/\.mjs$/u,'.d.mts')):syntax.get(target);
    const exported=actual?.statements.some(item=>item.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword)&&((item.name?.text===name)||(ts.isVariableStatement(item)&&item.declarationList.declarations.some(node=>ts.isIdentifier(node.name)&&node.name.text===name))));
@@ -891,7 +891,7 @@ function checkFunction(context,path,declaration,analysis){
   }
   return {body,terminated};
  }
- const checked=block(consumeOwnedBase64InputPrelude(analysis,declaration,params,operand=>originalOwnedCoreImport(context,path,operand,analysis)),environment,0);if(!checked.terminated)fail('missing return');
+ const checked=block(consumeWidePrimitiveSliceInputPrelude(analysis,declaration,params,operand=>originalOwnedCoreImport(context,path,operand,analysis),consumeOwnedBase64InputPrelude(analysis,declaration,params,operand=>originalOwnedCoreImport(context,path,operand,analysis))),environment,0);if(!checked.terminated)fail('missing return');
  if(paired)for(let index=0;index<params.length;index++){
   const actual=originalOwnedCoreType(context,paired.pair.typescript.path,paired.declaration.parameters[index].type,paired.analysis);
   if((actual==='text-owned'?'str':actual)!==params[index].type)fail('paired written parameter ABI differs');

@@ -6,7 +6,7 @@ import {createOwnedStateContext,translateOwnedStateTypeScript} from './owned-out
 import {ownedCoreSourceData,requireOwnedCoreSourceCurrent} from './owned-outcome-source.mjs';
 import {transportConcreteSourceEquations} from '../concrete-source-equations.mjs';
 import {createRulePipeline} from '../rule-pipeline.mjs';
-import {ownedPrimitiveSliceElement} from './owned-scalar-slice-contracts.mjs';
+import {ownedPrimitiveSliceElement} from './owned-wide-primitive-slice-contracts.mjs';
 const fail=message=>{throw new TypeError('Owned state signature proposals: '+message);};
 export function projectOwnedStateUnitJavaScript(source,{context,sourcePath,pairedTypeScriptPath}={}){
  const data=ownedCoreSourceData(context);if(data.files.find(row=>row.path===sourcePath)?.source!==source)fail('complete original JavaScript/path differs');

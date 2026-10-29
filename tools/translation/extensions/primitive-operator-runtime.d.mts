@@ -24,3 +24,6 @@ export type RustIntegerArithmetic="add"|"sub"|"mul"|"div"|"rem"|"neg";
 export declare function integerArithmetic(left:bigint,right:bigint,bits:number,signed:boolean,operation:Exclude<RustIntegerArithmetic,"neg">):bigint;
 
 export declare function integerArithmetic(value:bigint,right:null,bits:number,signed:true,operation:"neg"):bigint;
+
+export type RustPrimitiveSliceDomain="u8"|"i8"|"u16"|"i16"|"u32"|"i32"|"u64"|"i64"|"u128"|"i128";
+export declare function primitiveSliceInput<T extends bigint>(value:readonly T[],domain:RustPrimitiveSliceDomain):readonly T[];
