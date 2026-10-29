@@ -25,7 +25,7 @@ const equal=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const fail=message=>{throw new TypeError('Native bulk refresh discovery: '+message);};
 function domain(own,lowered){
  const primitive=originalPrimitiveScalarDomain(own,lowered);if(primitive)return primitive;
- if(own.ret?.kind==='bool'||own.ret?.kind==='fixed')return originalJsonScalarDomain(own,lowered);
+ if(own.ret?.kind==='unit'||own.ret?.kind==='bool'||own.ret?.kind==='fixed')return originalJsonScalarDomain(own,lowered);
  if(own.ret?.kind==='data')return originalJsonOwnedValueDomain(own,lowered);
  if(own.ret?.kind==='array')return originalJsonVectorDomain(own,lowered)??observeNativePrimitiveVectorDomain(own,lowered);
  return null;

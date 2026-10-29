@@ -269,3 +269,9 @@ bounded literal-substitution drafts in
 [native-constant-arithmetic-source-draft.md](native-constant-arithmetic-source-draft.md).
 ALL UNRUN. Runtime arithmetic/failure ordering, broader constant parents and full
 drafting/qualification remain OPEN; no public evaluator proof grants permission.
+
+Actual native unit returns and receiving void source paths, including qualified
+validation-only JSON callers, are drafted in
+[native-unit-returns-source-draft.md](native-unit-returns-source-draft.md).
+ALL UNRUN. General fallthrough/unit-call effects and broader requirements remain
+OPEN; a void result grants no arbitrary effect or transfer permission.

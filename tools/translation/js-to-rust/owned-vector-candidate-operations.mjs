@@ -154,8 +154,8 @@ export function checkOwnedCoreProgram(program,context){
 }
 export function ownedCoreContext(item){return issued.get(checkOwnedCoreItem(item))?.context;}
 const rustString=value=>'"'+value.replace(/[\\"\x00-\x1f\x7f]/gu,c=>({'\\':'\\\\','"':'\\"','\n':'\\n','\r':'\\r','\t':'\\t'}[c]??'\\u{'+c.codePointAt(0).toString(16)+'}'))+'"';
-const TS_TYPES={...primitiveBitwiseTypeScriptTypes,...ownedVectorCandidateTypeScriptTypes,...ownedBase64TypeScriptTypes,...ownedJsonTypeScriptTypes,'json-option-input':'Parameters<typeof __ro_router_core_json_option_as_str>[0]','json-list-owned':'readonly JsonValue[]',json:'JsonValue','json-ref':'JsonValue','map-ref':"Extract<JsonValue,{readonly $:'Object'}>['field0']",str:'string',bool:'boolean',usize:'bigint'};
-const RUST_TYPES={...primitiveBitwiseRustTypes,...ownedVectorCandidateRustTypes,...ownedBase64RustTypes,...ownedJsonRustTypes,'json-option-input':"::std::option::Option<&'a crate::translation_core::Json>",'json-list-owned':'::std::vec::Vec<crate::translation_core::Json>',json:'crate::translation_core::Json','json-ref':"&'a crate::translation_core::Json",'map-ref':"&'a ::serde_json::Map<::std::string::String,crate::translation_core::Json>",str:"&'a str",bool:'bool',usize:'u64'};
+const TS_TYPES={unit:'void',...primitiveBitwiseTypeScriptTypes,...ownedVectorCandidateTypeScriptTypes,...ownedBase64TypeScriptTypes,...ownedJsonTypeScriptTypes,'json-option-input':'Parameters<typeof __ro_router_core_json_option_as_str>[0]','json-list-owned':'readonly JsonValue[]',json:'JsonValue','json-ref':'JsonValue','map-ref':"Extract<JsonValue,{readonly $:'Object'}>['field0']",str:'string',bool:'boolean',usize:'bigint'};
+const RUST_TYPES={unit:'()',...primitiveBitwiseRustTypes,...ownedVectorCandidateRustTypes,...ownedBase64RustTypes,...ownedJsonRustTypes,'json-option-input':"::std::option::Option<&'a crate::translation_core::Json>",'json-list-owned':'::std::vec::Vec<crate::translation_core::Json>',json:'crate::translation_core::Json','json-ref':"&'a crate::translation_core::Json",'map-ref':"&'a ::serde_json::Map<::std::string::String,crate::translation_core::Json>",str:"&'a str",bool:'bool',usize:'u64'};
 export function emitOwnedCoreProgram(input,target,options={}){
  return emitOwnedCoreCheckedProgram(checkOwnedCoreProgram(input),target,options);
 }
@@ -181,6 +181,7 @@ function emitOwnedCoreCheckedProgram(complete,target,{outputPath,nativeJsonSourc
    case 'json-vector-literal':if(rust)return 'crate::translation_core::vec!['+value.items.map(child=>freshJson(child)?expr(child):copyExpression(child)).join(', ')+']';imports.add('router_core_json_copy');return '['+value.items.map(child=>freshJson(child)?expr(child):'__ro_router_core_json_copy('+expr(child)+')').join(', ')+']';
    case 'vector-condition-input':return rust?value.rust:value.name;
    case 'variable':if(rust&&value.type==='text-owned')return borrowOwned?'&'+rustName(value.name):rustName(value.name)+'.to_owned()';return rust?(value.type==='json'?(borrowOwned?'&'+rustName(value.name):jsonCopy+'(&'+rustName(value.name)+')'):rustName(value.name)):value.name;
+   case 'unit':return rust?'()':'undefined';
    case 'string':return rust?rustString(value.value):JSON.stringify(value.value);
    case 'bool':return String(value.value);
    case 'integer':return rust?value.value+'_'+(primitiveBitwiseType(value.type)?.name??(value.type==='i64'?'i64':'u64')):value.value+'n';
@@ -260,6 +261,7 @@ function emitOwnedCoreCheckedProgram(complete,target,{outputPath,nativeJsonSourc
   const pad=' '.repeat(indent);
   if(statement.kind==='effect')return rust?pad+'let __ro_discard_'+sequence+++' = '+expr(statement.value)+';':pad+expr(statement.value)+';';
   if(statement.kind==='let'){const source=expr(statement.value);let annotation='';if(typedScalarLocals&&primitiveBitwiseType(statement.value.type)){if(['u64','i64'].includes(statement.value.type)){const witness='json_macro_'+statement.value.type;scalarLocalWitnesses.add(witness);annotation=': Parameters<typeof __ro_'+witness+'>[0]';}else{const row=primitiveBitwiseType(statement.value.type);primitiveTypeImports.add(row.alias);annotation=': '+row.alias;}}if(nativeJsonSource){const value=nativeIndexConstant(statement.value);if(value!==null)nativeIndexConstants.set(statement.name,value);else nativeIndexConstants.delete(statement.name);}return pad+(rust?'let ':'const ')+(rust?rustName(statement.name):statement.name)+annotation+' = '+source+';';}
+  if(statement.kind==='return'&&!rust&&statement.value.kind==='unit')return pad+'return;';
   if(statement.kind==='return')return nativeJsonSource?pad+expr(statement.value):pad+'return '+expr(statement.value)+';';
   if(nativeJsonSource){const condition=optionCondition(statement.cond);if(condition){const name='__ro_payload_'+sequence++,some=new Map(nativeOptionPayloads),none=new Map(nativeOptionPayloads);some.set(condition.name,name);none.delete(condition.name);return pad+'if let ::std::option::Option::Some('+name+') = '+rustName(condition.name)+' {\n'+body(condition.some?statement.then:statement.else,indent+4,some)+'\n'+pad+'} else {\n'+body(condition.some?statement.else:statement.then,indent+4,none)+'\n'+pad+'}';}}
   return pad+'if '+(rust?'':'(')+expr(statement.cond)+(rust?'':')')+' {\n'+body(statement.then,indent+4)+'\n'+pad+'} else {\n'+body(statement.else,indent+4)+'\n'+pad+'}';
@@ -354,6 +356,7 @@ export function evaluateOwnedCoreProgram(input,name,args,token){
    case 'json-vector-literal':return value.items.map(child=>{const result=get(child,scope);return child.type==='json'&&['owned-call','json-array','json-object','json-field-call'].includes(child.kind)?result:state.modules.update.router_core_json_copy(result);});
    case 'vector-condition-input':return scope.get(value.name);
    case 'variable':return scope.get(value.name);
+   case 'unit':return undefined;
    case 'string':case 'bool':return value.value;
    case 'integer':return BigInt(value.value);
    case 'not':return !get(value.value,scope);

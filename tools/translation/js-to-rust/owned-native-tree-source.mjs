@@ -32,7 +32,7 @@ export function projectNativeTreeModule(input,options={}){
  function type(role){
   if(['json','json-ref'].includes(role))return 'JsonValue';
   if(role==='json-list-owned')return 'readonly JsonValue[]';
-  if(role==='bool')return 'boolean';if(role==='str')return 'string';
+  if(role==='unit')return 'void';if(role==='bool')return 'boolean';if(role==='str')return 'string';
   if(['u64','i64'].includes(role))return 'Parameters<typeof '+imported('json_macro_'+role,'json-macro',true)+'>[0]';
   const row=primitiveBitwiseType(role);if(row){const local=imported(row.alias,'primitive-operator',true);return local;}
   fail('explicit qualified public ABI needed for '+role);
@@ -94,7 +94,7 @@ export function projectNativeTreeModule(input,options={}){
    if(terminal?.[0]==='if'){
     const condition=expression(terminal[1],depth+1);if(cursor!==events.length)fail('owned effects before a branch need a preserving local rule');
     const yes=body(terminal[2],events,names,depth+1),no=body(terminal[3],events,names,depth+1);lines.push('if ('+condition+') '+yes+' else '+no);
-   }else lines.push('return '+expression(terminal,depth+1)+';');
+   }else if(terminal?.[0]==='unit'&&terminal.length===1&&unit.returns==='unit')lines.push('return;');else lines.push('return '+expression(terminal,depth+1)+';');
    if(cursor!==events.length)fail('every ordered effect must have one source execution');names.clear();uses.clear();return '{\n'+[...literalDeclarations,...lines].map(line=>'  '+line).join('\n')+'\n}';
   }
   return 'export function '+unit.name+'('+parameters.join(', ')+'): '+type(unit.returns)+' '+body(unit.tree);
