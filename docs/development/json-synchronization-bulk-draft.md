@@ -691,3 +691,11 @@ syntax can select implicit unit only in new complete definition contexts; every
 body/callee/native check remains. Nine complete equations and independent
 JS/TS/all-width/lifecycle/adoption/refusal sources are UNRUN. Broader source
 families, full drafting and every qualification obligation remain OPEN.
+
+The [wide constant inference draft](wide-constant-inference-source-draft.md)
+selects a complete copied inference engine for untyped 128-bit literal aliases,
+inline choices and actual typed uses. Private identities and final unresolved
+refusals prevent value-based width guesses. Three complete equations and
+independent JS/TS/extrema/helper/refusal/CI-only Rust sources are UNRUN. Deferred
+scalar choice locals, wider source/owner behavior, full drafting and every
+qualification obligation remain OPEN.
