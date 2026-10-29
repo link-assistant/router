@@ -333,3 +333,10 @@ adoption drafts, including paired files, unit manifests and physical bulk-index
 expansion, in [native-new-modules-source-draft.md](native-new-modules-source-draft.md).
 ALL UNRUN. Legacy explicit-route calls remain supported; deleted native files,
 receiving insertion from empty units and full drafting/qualification remain OPEN.
+
+Deleted native-file lifecycle now has surviving-parent absence and explicit
+physical null-input source drafts in
+[native-deleted-files-source-draft.md](native-deleted-files-source-draft.md).
+ALL UNRUN. This supersedes the prior deleted-file refusal only for freshly proved
+absence; root deletion, ambiguous parents, receiving insertion from empty units
+and full drafting/qualification remain OPEN.

@@ -31,8 +31,16 @@ export function nativeEmptyModuleRoute(value){
 }
 export function requireCurrentEmptyNativeModule(project,files,route){
  const {rustPath,module}=nativeEmptyModuleRoute(route),source=files.get(rustPath),same=(a,b)=>JSON.stringify(a)===JSON.stringify(b),fail=message=>{throw new TypeError('Native empty module: '+message);};
- if(typeof source!=='string')fail('deleted native files require their separate removal rule');const scopes=project.sourceScopes.filter(row=>row.source===rustPath&&same(row.module,module));
- const prefix=(a,b)=>a.length<=b.length&&a.every((part,index)=>part===b[index]),digest=createHash('sha256').update(source).digest('hex');
+ const prefix=(a,b)=>a.length<=b.length&&a.every((part,index)=>part===b[index]);
+ if(typeof source!=='string'){
+  if(files.has(rustPath)||!module.length||project.sourceScopes.some(row=>row.source===rustPath||prefix(module,row.module))||project.executableDeclarations.some(row=>row.source===rustPath||prefix(module,row.qualifiedName.split('.').slice(0,-1))))fail('a deleted native file must have no current native scope or declaration');
+  const parents=project.sourceScopes.filter(row=>row.module.length<module.length&&prefix(row.module,module)).sort((a,b)=>b.module.length-a.module.length);if(!parents.length||parents.length>1&&parents[0].module.length===parents[1].module.length)fail('one actual surviving closest parent scope required');const parent=parents[0],parentSource=files.get(parent.source);
+  if(typeof parentSource!=='string'||parent.sha256!==createHash('sha256').update(parentSource).digest('hex')||parent.sourceView?.sourcePath!==parent.source||parent.sourceView.configurationCondition!=='active')fail('complete actual surviving active parent source required');const items=originalModuleViewItems(parent.sourceView,parentSource),next=module[parent.module.length];
+  if(items.some(row=>!['fn','mod','const','static','struct','enum','type','impl','trait'].includes(row.term)||row.tokens.some(token=>token.type!=='comment'&&token.text==='#')||row.term==='mod'&&row.name===next))fail('surviving parent retains a module declaration or unproved expansion/import/attribute');
+  return {rustPath,module,moduleRemoved:true,nativeFileAbsent:true,sourceAuthority:false,semanticAuthority:false};
+ }
+ const scopes=project.sourceScopes.filter(row=>row.source===rustPath&&same(row.module,module));
+ const digest=createHash('sha256').update(source).digest('hex');
  if(scopes.length===0){
   const parents=project.sourceScopes.filter(row=>row.source===rustPath&&row.module.length<module.length&&prefix(row.module,module)).sort((a,b)=>b.module.length-a.module.length);if(!parents.length||parents.length>1&&parents[0].module.length===parents[1].module.length)fail('one actual closest original parent module required');const parent=parents[0];
   if(parent.sha256!==digest||parent.sourceView?.sourcePath!==rustPath||parent.sourceView.configurationCondition!=='active')fail('actual active original parent source required');const items=originalModuleViewItems(parent.sourceView,source),next=module[parent.module.length];
