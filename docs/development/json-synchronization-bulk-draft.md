@@ -750,3 +750,10 @@ CST substitutions and fresh complete private re-entry. Input-contract changes
 remain explicit; no source is installed or counted as coverage. Three complete
 equations and independent bulk/typed/idempotence/collision/refusal cases are
 UNRUN. Full drafting and all qualification remain OPEN.
+
+The [written delimited attribute draft](written-attribute-grammar-source-draft.md)
+adds common nested argument forms, a thirteenth complete retained native callback
+and copied header/x86 proposal rules. Native caller, token lexing, type-prefix
+ownership and all producer/export closure remain separate. Five complete
+equations, independent grammar/refusal/request/proposal cases and CI-only native
+attribute/shadowing oracles are UNRUN. Full drafting remains OPEN.

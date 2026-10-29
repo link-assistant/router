@@ -250,3 +250,7 @@ export {captureReparsedEmptyAttributeHeaderSources} from './reparsed-item-header
 export {proposeOriginalX86ReparsedAttributeGrammarSources} from './architecture-reparsed-attribute-grammar.mjs';
 
 export {proposeOwnedWideSliceInputBoundaries} from './js-to-rust/owned-wide-slice-input-proposals.mjs';
+
+export {parseOriginalWrittenAttribute,captureOriginalWrittenAttribute,originalWrittenAttributeFacts,originalWrittenAttributeProgramSources} from './written-attribute-grammar.mjs';
+export {captureReparsedDelimitedAttributeHeaderSources} from './reparsed-delimited-item-header-grammar.mjs';
+export {proposeOriginalX86WrittenAttributeGrammarSources} from './architecture-written-attribute-grammar.mjs';
