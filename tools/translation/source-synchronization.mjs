@@ -256,3 +256,6 @@ export {captureReparsedDelimitedAttributeHeaderSources} from './reparsed-delimit
 export {proposeOriginalX86WrittenAttributeGrammarSources} from './architecture-written-attribute-grammar.mjs';
 
 export {PRIMITIVE_SEQUENCE_CONTRACTS,PRIMITIVE_SEQUENCE_RULE_SEQUENCES,primitiveSequenceContract} from './primitive-sequence-contracts.mjs';
+
+export {proposePrimitiveSequenceRootSource} from './primitive-sequence-root-source.mjs';
+export {observePrimitiveSequenceCoreSources} from './primitive-sequence-source-bindings.mjs';

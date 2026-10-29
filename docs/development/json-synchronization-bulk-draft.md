@@ -764,3 +764,10 @@ operations, strict declarations and both rule sequences. Six complete equations
 and independent/CI-only native cases are UNRUN. Native root activation, private
 caller/loan integration, runtime registration and full translation remain OPEN;
 the core catalog alone grants no application admission or coverage.
+
+The [primitive sequence binding source draft](primitive-sequence-bindings-source-draft.md)
+adds fresh six-input source/CST/closing fences, whole reversible receiving root
+and runtime/declaration proposals, and complete source/census observations.
+Five complete equations and independent tamper/lifecycle/mirroring/refusal cases
+are UNRUN. Private caller/ABI/loan checks, actual root activation and full
+translator/runtime registration remain OPEN; observations grant no authority.
