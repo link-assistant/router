@@ -821,3 +821,8 @@ shared scalar/JSON families, with fresh checker/caller-bound private receipts
 for consuming live JSON text loans and an exact 64-bit count conversion. All
 authority/Unicode/source/refusal/repeat-sync cases remain UNRUN; see
 [the source contract](vector-text-scalar-core-source-draft.md).
+
+Closed-family conditional text aliases now have source-drafted joins through
+actual immutable lexical facts and the original branch/root meet rule. All
+Unicode/JSON/authority/refusal/repeat-sync cases remain UNRUN; see
+[the source contract](scoped-static-text-source-draft.md).

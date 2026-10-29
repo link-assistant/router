@@ -485,7 +485,7 @@ function checkFunctionBody(context,path,declaration,analysis){
   if(ts.isConditionalExpression(node)){
    const cond=expression(node.condition,scope,depth+1),a=refine(branchScope(scope),cond,true),b=refine(branchScope(scope),cond,false);let yes=expression(node.whenTrue,a,depth+1,false,numericDomain),no=expression(node.whenFalse,b,depth+1,false,numericDomain);
    if(jsonVectorProfile&&!nativeScalars){if(['u64','i64'].includes(yes.type)&&no.type==='usize'){no=scalarReturnLiteral(no,b,depth+1);narrowOwnedNumericLiteral(no,yes.type);}else if(['u64','i64'].includes(no.type)&&yes.type==='usize'){yes=scalarReturnLiteral(yes,a,depth+1);narrowOwnedNumericLiteral(yes,no.type);}}
-   const loan=yes.type==='str'&&no.type==='str'?meetStringLoans(stringLoan(yes),stringLoan(no)):undefined;
+   const loan=yes.type==='str'&&no.type==='str'?meetStringLoans(jsonVectorProfile?asciiStringLoan(yes,a):stringLoan(yes),jsonVectorProfile?asciiStringLoan(no,b):stringLoan(no)):undefined;
    if(cond.type!=='bool'||yes.type!==no.type||yes.type==='str'&&!loan||yes.root!==no.root&&!loan&&yes.kind!=='option-none'&&no.kind!=='option-none')fail('conditional result or loan differs');mergeMoves(scope,a,b);return {kind:'choose',cond,then:yes,else:no,type:yes.type,root:loan?loan.root:yes.kind==='option-none'?no.root:yes.root};
   }
   if(ts.isPrefixUnaryExpression(node)&&node.operator===ts.SyntaxKind.ExclamationToken){const value=expression(node.operand,scope,depth+1);if(value.type!=='bool')fail('boolean negation only');return {kind:'not',value,type:'bool',root:null};}
