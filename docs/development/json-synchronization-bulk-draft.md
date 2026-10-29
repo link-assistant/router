@@ -282,3 +282,9 @@ branch refinement and ordered effects in
 ALL UNRUN. General native statement control/effects and full drafting/qualification
 remain OPEN. The main requirement and guideline files are near their line caps;
 continue detailed requirement entries in this companion ledger.
+
+Actual original-AST early-return continuations now draft the existing scalar and
+canonical JSON result profiles, including None/Some helper loan refinement, in
+[native-guard-continuation-source-draft.md](native-guard-continuation-source-draft.md).
+ALL UNRUN. Native statement-control and primitive-vector source readers retain
+separate requirements; full drafting and complete qualification remain OPEN.

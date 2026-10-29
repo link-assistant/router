@@ -173,6 +173,8 @@ test('complete committed export carries shared adoption implementations original
  assert.ok(paths.has('tools/translation/prepare-native-constant-arithmetic-sources.mjs'));
  assert.ok(paths.has('tools/translation/prepare-native-unit-returns-sources.mjs'));
  assert.ok(paths.has('tools/translation/prepare-unit-guard-continuation-sources.mjs'));
+ assert.ok(paths.has('tools/translation/prepare-native-guard-continuation-sources.mjs'));
+
 
 
 
