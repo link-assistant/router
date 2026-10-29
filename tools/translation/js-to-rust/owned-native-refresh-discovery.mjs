@@ -118,6 +118,7 @@ export function proposeOwnedNativeRefreshDiscovery(data,routing){
        for(const output of outputs){output.inverse=output.before;retainedBytes+=Buffer.byteLength(output.after);}if(retainedBytes>16777216)fail('retained complete empty source proposal byte budget');const empty={id:'module_'+hash(JSON.stringify([route.rustPath,route.module])),rustSource:route.rustPath,module:route.module,javascriptPath:route.javascriptPath,typescriptPath:route.typescriptPath,bindings:[],outputs,nativeProposal:[],emptyNativeModule:true,selectedNativeSourceRechecked:true,originalOrderedBodiesReproduced:true,nativeInstalled:false,receivingExecuted:false,runtimeParity:false};projections.push(empty);modules=[empty];
       }
       if(modules.length!==1)fail('one complete current module projection required');
+      if(modules[0].bindings.length===0){requireCurrentEmptyNativeModule(project,files,{rustPath:route.rustPath,module:route.module});continue;}
       const scopes=project.sourceScopes.filter(row=>row.source===route.rustPath&&equal(row.module,route.module));if(scopes.length!==1)fail('one actual current refresh module scope required');const items=originalModuleViewItems(scopes[0].sourceView,files.get(route.rustPath));
       for(const binding of original.vectorBindings.filter(row=>row.javascriptPath===route.javascriptPath)){
        if(binding.rustPath!==route.rustPath||!equal(binding.rustName.split('.').slice(0,-1),route.module))fail('old source binding does not belong to the current route');

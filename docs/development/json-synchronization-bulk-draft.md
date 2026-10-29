@@ -320,3 +320,10 @@ source drafts, including physical manifests and durable native route coordinates
 in [native-empty-modules-source-draft.md](native-empty-modules-source-draft.md).
 ALL UNRUN. Deleted or removed scopes, nonempty unsupported modules, receiving
 insertion from empty units and full drafting/qualification remain OPEN.
+
+Removed inline native module scopes now have bounded fresh closest-parent source
+absence rules in
+[native-removed-scopes-source-draft.md](native-removed-scopes-source-draft.md).
+ALL UNRUN. This explicitly supersedes the prior removed-inline-scope refusal;
+deleted physical native files, unrecorded modules, receiving insertion and full
+drafting/qualification remain OPEN.
