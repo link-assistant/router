@@ -495,3 +495,13 @@ Option semantics are preserved without inventing unsigned unary Rust behavior.
 All complete independent source cases and CI-only oracles are UNRUN. Constants,
 pointer/platform profiles, division/remainder and full application closure
 remain OPEN.
+
+A separate complete [contextual operand reader draft](primitive-operand-domains-source-draft.md)
+now carries exact primitive domains through conditional/parenthesized literals
+in seven actual source checker families. The original reader contract stays
+intact. Literal bounds include i128/u128 without first narrowing to the default
+literal range; actual variables, calls, ownership and loan identities are never
+coerced by this hint. Nine complete source equations and complete independent
+all-width paired/native, boundary refusal and insertion/helper case sources
+are UNRUN. Broader numeric expressions, division/remainder, constants and whole
+application translation remain OPEN.

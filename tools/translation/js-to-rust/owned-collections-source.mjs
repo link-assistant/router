@@ -532,12 +532,13 @@ function checkFunction(context,path,declaration,analysis){
   hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end],callbackSpan:[callback.getStart(file),callback.end]});requireOwnedCoreSourceCurrent(context);
   return {kind:'json-collection-call',name:binding.name,receiver,callback:{parameter:parameterName,returns:operation.returns,body:checked.body,span:[callback.getStart(file),callback.end]},type:'json-list-owned',root:null};
  }
- function expression(node,scope,depth,opaqueOperand=false){
-  tick(depth);if(ts.isParenthesizedExpression(node))return expression(node.expression,scope,depth+1);
+ function expression(node,scope,depth,opaqueOperand=false,numericDomain=null){
+  tick(depth);if(ts.isParenthesizedExpression(node))return expression(node.expression,scope,depth+1,opaqueOperand,numericDomain);
   if(ts.isStringLiteral(node)||ts.isNoSubstitutionTemplateLiteral(node)){
    if(/\p{Surrogate}/u.test(node.text))fail('unpaired UTF16 string');return {kind:'string',value:node.text,type:'str',root:null};
   }
   if(node.kind===ts.SyntaxKind.TrueKeyword||node.kind===ts.SyntaxKind.FalseKeyword)return {kind:'bool',value:node.kind===ts.SyntaxKind.TrueKeyword,type:'bool',root:null};
+  if(primitiveBitwiseType(numericDomain)&&(ts.isBigIntLiteral(node)||ts.isPrefixUnaryExpression(node)&&node.operator===ts.SyntaxKind.MinusToken&&ts.isBigIntLiteral(node.operand))){const negative=ts.isPrefixUnaryExpression(node);return ownedIntegerLiteral((negative?node.operand:node).text,{negative,domain:numericDomain});}
   if(ts.isBigIntLiteral(node)){
    const text=node.text.replace(/n$/u,'').replaceAll('_','');let value;try{value=BigInt(text);}catch{fail('invalid integer');}
    if(value<0n||value>18446744073709551615n)fail('u64 literal bound');return {kind:'integer',value:value.toString(),type:'usize',root:null};
@@ -575,7 +576,7 @@ function checkFunction(context,path,declaration,analysis){
     return {kind:'ascii-call',name:binding.name,args,type:ascii.ret,root:null};
    }
    if(ownedPrimitiveOperatorOperation(binding.name)&&binding.target===analysis.runtimeRoot+'/primitive-operator-runtime.mjs'){
-    requireOwnedCoreSourceCurrent(context);if(binding.typeOnly)fail('primitive runtime call cannot use a type-only import');const value=readOwnedPrimitiveOperatorCall(ts,node,binding.name,argument=>expression(argument,scope,depth+1));hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});requireOwnedCoreSourceCurrent(context);return value;
+    requireOwnedCoreSourceCurrent(context);if(binding.typeOnly)fail('primitive runtime call cannot use a type-only import');const value=readOwnedPrimitiveOperatorCall(ts,node,binding.name,(argument,domain)=>expression(argument,scope,depth+1,false,domain));hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});requireOwnedCoreSourceCurrent(context);return value;
    }
    const optional=ownedJsonOptionalReaderOperation(binding.name);
    if(optional&&binding.target===analysis.runtimeRoot+'/json-option-runtime.mjs'){
@@ -635,7 +636,7 @@ function checkFunction(context,path,declaration,analysis){
   }
   const nativeBitwise=readOwnedNativeBitwiseExpression(ts,node,argument=>expression(argument,scope,depth+1),{enabled:nativeScalars});if(nativeBitwise){nativeOperatorHistory.retain(node,file,nativeBitwise);return nativeBitwise;}
   if(ts.isConditionalExpression(node)){
-   const cond=expression(node.condition,scope,depth+1),a=refine(branchScope(scope),cond,true),b=refine(branchScope(scope),cond,false),yes=expression(node.whenTrue,a,depth+1),no=expression(node.whenFalse,b,depth+1);
+   const cond=expression(node.condition,scope,depth+1),a=refine(branchScope(scope),cond,true),b=refine(branchScope(scope),cond,false),yes=expression(node.whenTrue,a,depth+1,false,numericDomain),no=expression(node.whenFalse,b,depth+1,false,numericDomain);
    const loan=yes.type==='str'&&no.type==='str'?meetStringLoans(stringLoan(yes),stringLoan(no)):undefined;
    if(cond.type!=='bool'||yes.type!==no.type||yes.type==='str'&&!loan||yes.root!==no.root&&!loan&&yes.kind!=='option-none'&&no.kind!=='option-none')fail('conditional result or loan differs');mergeMoves(scope,a,b);return {kind:'choose',cond,then:yes,else:no,type:yes.type,root:loan?loan.root:yes.kind==='option-none'?no.root:yes.root};
   }
@@ -772,7 +773,7 @@ export function ownedPrimitiveOperatorRuntimeSources(runtimeRoot='runtime',decla
  }finally{runtimeImportEpochClose(__runtimeEpoch);}
 }
 import {primitiveOperatorRuntimeAssetPair} from '../primitive-operator-runtime-sources.mjs';
-import {ownedPrimitiveOperatorOperation,readOwnedPrimitiveOperatorCall} from './owned-primitive-operator-source.mjs';
+import {ownedPrimitiveOperatorOperation,readOwnedPrimitiveOperatorCallWithDomains as readOwnedPrimitiveOperatorCall} from './owned-primitive-operator-source.mjs';
 
 import {primitiveBitwiseType,primitiveBitwiseAlias} from '../primitive-bitwise-types.mjs';
 
@@ -783,3 +784,5 @@ import {ownedNativeScalarDeclaration} from './owned-native-scalar-declaration.mj
 import {ownedNativeIntegerDomain,joinOwnedNativeScalarOperands} from './owned-native-scalar-flow.mjs';
 
 import {readOwnedNativeBitwiseExpression,createOwnedNativeBitwiseHistory} from './owned-native-bitwise-source.mjs';
+
+import {ownedIntegerLiteral} from './owned-numeric-literals.mjs';

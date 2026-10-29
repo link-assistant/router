@@ -623,8 +623,8 @@ function checkFunction(context,path,declaration,analysis){
    if(/\p{Surrogate}/u.test(node.text))fail('unpaired UTF16 string');return {kind:'string',value:node.text,type:'str',root:null};
   }
   if(node.kind===ts.SyntaxKind.TrueKeyword||node.kind===ts.SyntaxKind.FalseKeyword)return {kind:'bool',value:node.kind===ts.SyntaxKind.TrueKeyword,type:'bool',root:null};
-  if(ts.isBigIntLiteral(node))return narrowOwnedNumericLiteral(ownedIntegerLiteral(node.text),numericDomain);
-  if(ts.isPrefixUnaryExpression(node)&&node.operator===ts.SyntaxKind.MinusToken&&ts.isBigIntLiteral(node.operand))return narrowOwnedNumericLiteral(ownedIntegerLiteral(node.operand.text,{negative:true}),numericDomain);
+  if(ts.isBigIntLiteral(node))return narrowOwnedNumericLiteral(ownedIntegerLiteral(node.text,{domain:primitiveBitwiseType(numericDomain)?.name??null}),numericDomain);
+  if(ts.isPrefixUnaryExpression(node)&&node.operator===ts.SyntaxKind.MinusToken&&ts.isBigIntLiteral(node.operand))return narrowOwnedNumericLiteral(ownedIntegerLiteral(node.operand.text,{negative:true,domain:primitiveBitwiseType(numericDomain)?.name??null}),numericDomain);
   if(ts.isObjectLiteralExpression(node)&&node.properties[0]?.name?.text==='$'&&ts.isStringLiteral(node.properties[0]?.initializer)&&['Ok','Err'].includes(node.properties[0].initializer.text)){
    const primitiveType=ownedPrimitiveResultType(numericDomain)?numericDomain:writtenReturnDomain(),primitivePayload=ownedPrimitiveResultPayload(primitiveType);
    if(primitivePayload){const fields=node.properties,tag=fields[0].initializer.text;if(fields.length!==2||fields.some(field=>!ts.isPropertyAssignment(field)||!ts.isIdentifier(field.name)&&!ts.isStringLiteral(field.name))||fields[1].name.text!=='field0')fail('actual closed primitive Result fields required');const wanted=tag==='Ok'?primitivePayload:'str';let value=expression(fields[1].initializer,scope,depth+1,false,wanted);if(wanted==='text-owned')value=ownedTextValue(value,scope);if(value.type!==wanted&&!(wanted==='str'&&value.type==='text-owned'&&tag==='Err'))fail('actual primitive Result payload differs');const loan=tag==='Ok'&&primitivePayload==='str'?asciiStringLoan(value,scope):null;if(tag==='Ok'&&primitivePayload==='str'&&!loan)fail('actual live or static borrowed success required');return {kind:tag==='Ok'?'primitive-result-ok':'primitive-result-err',value,type:primitiveType,root:loan?.root??null,staticResultBorrow:primitivePayload==='str'&&(tag==='Err'||loan?.root===null)};}
@@ -734,7 +734,7 @@ function checkFunction(context,path,declaration,analysis){
     return {kind:'ascii-call',name:binding.name,args,type:ascii.ret,root:null};
    }
    if(ownedPrimitiveOperatorOperation(binding.name)&&binding.target===analysis.runtimeRoot+'/primitive-operator-runtime.mjs'){
-    requireOwnedCoreSourceCurrent(context);if(binding.typeOnly)fail('primitive runtime call cannot use a type-only import');const value=readOwnedPrimitiveOperatorCall(ts,node,binding.name,argument=>expression(argument,scope,depth+1));hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});requireOwnedCoreSourceCurrent(context);return value;
+    requireOwnedCoreSourceCurrent(context);if(binding.typeOnly)fail('primitive runtime call cannot use a type-only import');const value=readOwnedPrimitiveOperatorCall(ts,node,binding.name,(argument,domain)=>expression(argument,scope,depth+1,false,domain));hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});requireOwnedCoreSourceCurrent(context);return value;
    }
    const optional=ownedJsonOptionalReaderOperation(binding.name);
    if(optional&&binding.target===analysis.runtimeRoot+'/json-option-runtime.mjs'){
@@ -978,7 +978,7 @@ export function ownedPrimitiveOperatorRuntimeSources(runtimeRoot='runtime',decla
  }finally{runtimeImportEpochClose(__runtimeEpoch);}
 }
 import {primitiveOperatorRuntimeAssetPair} from '../primitive-operator-runtime-sources.mjs';
-import {ownedPrimitiveOperatorOperation,readOwnedPrimitiveOperatorCall} from './owned-primitive-operator-source.mjs';
+import {ownedPrimitiveOperatorOperation,readOwnedPrimitiveOperatorCallWithDomains as readOwnedPrimitiveOperatorCall} from './owned-primitive-operator-source.mjs';
 
 import {primitiveBitwiseType,primitiveBitwiseAlias} from '../primitive-bitwise-types.mjs';
 

@@ -204,6 +204,7 @@ test('complete committed export carries shared adoption implementations original
  assert.ok(paths.has('tools/translation/prepare-ordered-primitive-failure-sources.mjs'));
  assert.ok(paths.has('tools/translation/prepare-guarded-primitive-failure-sources.mjs'));
  assert.ok(paths.has('tools/translation/prepare-checked-negation-sources.mjs'));
+ assert.ok(paths.has('tools/translation/prepare-primitive-operand-domain-sources.mjs'));
  assert.ok(paths.has('tools/translation/js-to-rust/owned-guarded-primitive-failures.mjs'));
  assert.ok(paths.has('tools/translation/extensions/primitive-failure-flow.mjs'));
  assert.ok(paths.has('tools/translation/js-to-rust/owned-native-closed-operators.mjs'));
