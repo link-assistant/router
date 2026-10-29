@@ -352,3 +352,10 @@ module now has a complete source API draft in
 [primitive-function-insertion-source-draft.md](primitive-function-insertion-source-draft.md).
 ALL UNRUN. Physical batch integration, nonempty/new-unit insertion, wider source
 families and full drafting/qualification remain OPEN.
+
+Primitive receiving-authoritative insertion now has composed native-file and
+physical bulk transaction source drafts in
+[primitive-bulk-insertion-source-draft.md](primitive-bulk-insertion-source-draft.md).
+ALL UNRUN. This supersedes the empty-unit physical insertion gap for its stated
+primitive family; nonempty/new-unit adoption, broader families and complete
+drafting/qualification remain OPEN.
