@@ -359,3 +359,9 @@ physical bulk transaction source drafts in
 ALL UNRUN. This supersedes the empty-unit physical insertion gap for its stated
 primitive family; nonempty/new-unit adoption, broader families and complete
 drafting/qualification remain OPEN.
+
+Primitive additions to nonempty receiving units now have a complete whole-unit
+source API draft in
+[primitive-function-extension-source-draft.md](primitive-function-extension-source-draft.md).
+ALL UNRUN. Source helper additions, deletion, wider families, physical integration
+and full drafting/qualification remain OPEN.
