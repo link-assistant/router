@@ -244,3 +244,7 @@ export {proposeOwnedPrimitiveEffectFunctionInsertion} from './js-to-rust/owned-p
 export {proposeOwnedPrimitiveEffectFunctionExtension,proposeOwnedPrimitiveEffectFunctionRemoval,proposeOwnedPrimitiveEffectFunctionReconciliation,prepareOwnedPrimitiveEffectExistingHelperSource} from './js-to-rust/owned-primitive-effect-definition-lifecycle.mjs';
 export {proposeOwnedPrimitiveEffectUnitAdoption} from './js-to-rust/owned-primitive-effect-unit-adoption.mjs';
 export {receivingPrimitiveValueDefinitionFamily} from './js-to-rust/owned-unit-definition-routing.mjs';
+
+export {parseOriginalEmptyWrittenAttribute,captureOriginalEmptyWrittenAttribute,originalEmptyWrittenAttributeFacts,originalEmptyWrittenAttributeProgramSources} from './empty-written-attribute-grammar.mjs';
+export {captureReparsedEmptyAttributeHeaderSources} from './reparsed-item-header-grammar.mjs';
+export {proposeOriginalX86ReparsedAttributeGrammarSources} from './architecture-reparsed-attribute-grammar.mjs';

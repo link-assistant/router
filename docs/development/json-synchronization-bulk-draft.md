@@ -729,3 +729,10 @@ original callback throws, including null/undefined, through cleanup failures.
 Ordinary synchronous callbacks/results and every original source/CST check remain
 required. Five complete equations and independent lifecycle/falsy-error/async/
 getter/actual-reader cases are UNRUN. Full drafting and qualification remain OPEN.
+
+The [empty written attribute grammar draft](empty-written-attribute-grammar-source-draft.md)
+adds bounded positive empty builtin/tool header models, complete retained parser
+callback CST records and copied header/x86 proposal APIs. Original caller,
+namespace, type-prefix and producer/export obligations remain pending; no coverage
+gain is claimed. Five complete equations and independent grammar/refusal/private
+identity/operation/proposal cases are UNRUN. Full drafting remains OPEN.
