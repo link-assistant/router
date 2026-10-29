@@ -452,3 +452,12 @@ qualified Ord on actual fixed by-value operands. Complete independent forward,
 strict paired, generated native insertion/helper/bulk and Rust oracle sources
 remain UNRUN. Namespace aliases, broader checked-failure body ordering and full
 application closure remain OPEN; this is no measured coverage or parity claim.
+
+Checked add/sub/multiply native re-entry now has a separate fresh-source
+[Option expect adapter draft](checked-option-expect-source-draft.md). It selects
+the complete actual pinned original match and failure helper with CST inverses,
+rechecks genuine standard Option and fixed contracts, and emits ordinary checked
+arithmetic only for exact canonical inert messages. Independent all-width paired
+behavior/refusal/source-freshness and CI-only Rust oracle sources are UNRUN.
+Other Option producers, division/zero ordering, negation, constants and native
+failure-trace comparison remain OPEN; no runtime or coverage claim is made.

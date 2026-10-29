@@ -1,3 +1,4 @@
+import {checkCurrentPrimitiveOptionExpect} from './checked-primitive-option-expect.mjs';
 // Genuine qualified primitive associated calls share the existing fixed contracts.
 // This parser selection is eligibility; the original caller and every by-value
 // argument are independently checked before the ordinary host-call IR is issued.
@@ -48,9 +49,9 @@ export function parsePrimitiveAssociatedCall(parser,path){
  segments.push(cursor.peek(at++).value);
  while(cursor.is('::',at)&&cursor.peek(at+1).kind==='identifier'){segments.push(cursor.peek(at+1).value);at+=2;}
  if(!cursor.is('(',at))return null;
- const method=segments.at(-1),owner=segments.slice(0,-1),plain=owner.length===1&&fixedName(owner[0])&&intrinsic.has(method),qualified=owner.length===3&&['std','core'].includes(owner[0])&&owner[1]==='primitive'&&fixedName(owner[2])&&intrinsic.has(method),ord=owner.length===3&&['std','core'].includes(owner[0])&&owner[1]==='cmp'&&owner[2]==='Ord'&&ordered.has(method);
- if(!plain&&!qualified&&!ord)return null;
- originalParser(parser);const frame=matchesParserFacts(parser),root=plain?null:owner[0],primitive=ord?null:owner.at(-1),range={start:first.start,end:cursor.peek(at).end};
+ const method=segments.at(-1),owner=segments.slice(0,-1),plain=owner.length===1&&fixedName(owner[0])&&intrinsic.has(method),qualified=owner.length===3&&['std','core'].includes(owner[0])&&owner[1]==='primitive'&&fixedName(owner[2])&&intrinsic.has(method),ord=owner.length===3&&['std','core'].includes(owner[0])&&owner[1]==='cmp'&&owner[2]==='Ord'&&ordered.has(method),optionExpect=owner.length===3&&['std','core'].includes(owner[0])&&owner[1]==='option'&&owner[2]==='Option'&&method==='expect';
+ if(!plain&&!qualified&&!ord&&!optionExpect)return null;
+ originalParser(parser);const frame=matchesParserFacts(parser),root=plain?null:owner[0],primitive=ord||optionExpect?null:owner.at(-1),range={start:first.start,end:cursor.peek(at).end};
  if(parser.unresolvedImportScope||[root,primitive].filter(Boolean).some(name=>parser.builtinShadow(name,path)||parser.shadowedEffectRoots?.has(name)||parser.shadowedPreludeTypes?.has(name)))fail('unresolved import or shadowed original owner',range);
  if(!same(parser.resolveSourceNamespace(owner,path,'type'),owner))fail('requires the original resolved primitive or fully qualified standard owner',range);
  if(!Number.isSafeInteger(first.start)||first.start<0||first.start>=frame.sourceLength||!frame.tokens.some(token=>token.start===first.start))fail('call begins outside its genuine original token stream',range);
@@ -58,13 +59,14 @@ export function parsePrimitiveAssociatedCall(parser,path){
  for(let index=0;index<at;index++)cursor.next();cursor.expect('(','primitive associated call');const args=[];
  while(!cursor.is(')')){args.push(parser.expr(path));if(!cursor.eat(','))break;}
  const close=cursor.expect(')','primitive associated call'),node={k:'routerPrimitiveAssociatedCall',owner:[...owner],method,args,span:{start:first.start,end:close.end}};
- originalParser(parser);calls.set(node,{inputs,primitive,ord,digest:metadataDigest(node)});return node;
+ originalParser(parser);calls.set(node,{inputs,primitive,ord,optionExpect,digest:metadataDigest(node)});return node;
 }
 export function checkPrimitiveAssociatedCall(checker,node,env,path,expected){
  if(!checker||nodeTypes.isProxy(checker)||Object.getPrototypeOf(checker)!==HostChecker.prototype||Object.hasOwn(checker,'expr'))fail('requires the actual original Host checker',node.span);
  requireOriginalPrimitiveTryFromChecker(checker);requireOriginalStandardCall(checker,node);
  const state=calls.get(node);if(!state||state.digest!==metadataDigest(node))fail('copied or changed caller has no private original namespace inputs',node.span);
  namespaceInputs(state.inputs);
+ if(state.optionExpect){const result=checkCurrentPrimitiveOptionExpect(checker,node,env,path,expected);namespaceInputs(state.inputs);requireOriginalStandardCall(checker,node);if(state.digest!==metadataDigest(node))fail('caller changed before the closing Option source fence',node.span);return result;}
  const arity=node.method==='clamp'?3:2;if(node.args.length!==arity)throw typeError('primitive associated operation expects '+arity+' arguments',node.span);
  const domain=state.primitive?{...rustFixedType(state.primitive),rustPrimitiveName:state.primitive}:expected?.kind==='fixed'?expected:undefined;
  const first=checker.expr(node.args[0],env,path,domain),actual=actualFixedOperand(first.type,node.span);
@@ -78,4 +80,8 @@ export function checkPrimitiveAssociatedCall(checker,node,env,path,expected){
  // Source checking above emits no runtime evaluation. hostCall retains the
  // original surface arguments once each, in their original left-to-right order.
  const result=checker.hostCall(contracts,node.args,env,path,expected,node.span);namespaceInputs(state.inputs);requireOriginalStandardCall(checker,node);if(state.digest!==metadataDigest(node))fail('caller changed before the closing source fence',node.span);return result;
+}
+
+export function requireOriginalPrimitiveAssociatedCall(checker,node){
+ if(!checker||nodeTypes.isProxy(checker)||Object.getPrototypeOf(checker)!==HostChecker.prototype||Object.hasOwn(checker,'expr'))fail('requires the actual original Host checker',node.span);requireOriginalPrimitiveTryFromChecker(checker);requireOriginalStandardCall(checker,node);const state=calls.get(node);if(!state||state.digest!==metadataDigest(node))fail('requires unchanged private original associated caller inputs',node.span);namespaceInputs(state.inputs);
 }
