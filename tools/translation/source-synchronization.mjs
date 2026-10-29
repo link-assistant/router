@@ -217,3 +217,5 @@ export {proposeOwnedNativeBulkDiscovery} from './js-to-rust/owned-native-bulk-di
 
 export {proposeOwnedNativeBulkSynchronization} from './js-to-rust/owned-native-bulk-composition.mjs';
 export {planOwnedNativeBulkUnitSynchronization,applyOwnedNativeBulkUnitSynchronization} from './owned-native-bulk-unit-synchronization.mjs';
+
+export {proposeOwnedVectorBulkModuleSynchronization} from './js-to-rust/owned-vector-bulk-module-synchronization.mjs';

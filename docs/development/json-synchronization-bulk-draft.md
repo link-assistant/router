@@ -144,3 +144,10 @@ drafted in [native-helper-closure-source-draft.md](native-helper-closure-source-
 ALL UNRUN. Same-module closed primitive helpers are the draft scope; cross-module
 visibility, JSON-derived text transfer, broader ABI/operators/effects and complete
 qualification remain OPEN. No saved inventory grants semantic authority.
+
+Repeated receiving-module bulk synchronization is drafted for both JS and TS
+authorities, complete native function/source joins, disjoint shared-file edits,
+fresh combined native/receiving rechecks and whole-source inverses in
+[vector-bulk-module-source-draft.md](vector-bulk-module-source-draft.md).
+ALL UNRUN. Generated synchronization manifests and combined physical repeat
+transactions, broader source families and full qualification remain OPEN.
