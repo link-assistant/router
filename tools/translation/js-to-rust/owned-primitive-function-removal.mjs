@@ -49,6 +49,7 @@ function appendPrimitiveFunctions(data,options){
   const compile=sources=>{const inputs={manifest:sources.get('Cargo.toml'),lock:sources.get('Cargo.lock')};return translateProject({entry:'src/lib.rs',paths:[...sources.keys()].filter(path=>path.endsWith('.rs')).sort(),readSource:path=>sources.get(path),compilationProfile:PRODUCTION_PROFILE,cargoManifest:inputs.manifest,jsonMacroDependencies:jsonMacroDependencyProfile(inputs).proof,deriveDependencies:deriveDependencyProfile(inputs).proof});};
   const role=type=>type==='bool'||type==='usize'||!!primitiveBitwiseType(type),same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);let work=0;
   function expression(value,depth){
+   if(value?.kind==='unit'&&value.type==='unit'&&value.root===null){if(++work>100000||depth>160)stop('bounded exact unit return required');return;}
    if(++work>100000||depth>160||!value||!role(value.type)||value.root!==null)stop('bounded plain primitive insertion expression required');
    if(value.kind==='bool'||value.kind==='integer'||value.kind==='variable')return;
    if(value.kind==='not'){expression(value.value,depth+1);return;}
@@ -70,7 +71,7 @@ function appendPrimitiveFunctions(data,options){
       // A missing companion during JS bootstrap cannot supply copied headers.
       // JSDoc and imports are checked directly by the original receiving issuer.
       const context=createOwnedVectorCandidateContext({...original,primitiveOperators:true,primitiveDefinitions:true,files:[...seedFiles].map(([path,source])=>({path,source}))});contexts.push(context);first=translateOwnedVectorCandidate(seedFiles.get(sourcePath),{context,sourcePath,typescriptOutputPath:typescriptPath});seedFiles.clear();
-      if(!first.program.length||first.program.length>4096)stop('bounded nonempty complete new function set required');for(const item of checkOwnedCoreProgram(first.program)){if(item.vectorOrigin||!item.exported||!role(item.returns)||item.resultRoot!==null||item.params.some(row=>!role(row.type))||!nativeProjectionIdentifier(item.name))stop('only exported closed primitive functions enter this insertion family');body(item.body);}
+      if(!first.program.length||first.program.length>4096)stop('bounded nonempty complete new function set required');for(const item of checkOwnedCoreProgram(first.program)){if(item.vectorOrigin||!item.exported||item.returns!=='unit'&&!role(item.returns)||item.resultRoot!==null||item.params.some(row=>!role(row.type))||!nativeProjectionIdentifier(item.name))stop('only exported closed primitive functions enter this insertion family');body(item.body);}
       pair=prepareOwnedVectorModulePair(sourcePath,typescriptPath,first.typescript);return {pair,scope:scopes[0]};
      }},
      {id:'rust:insert-complete-emitted-source-and-independently-recheck-new-native-functions',apply:({pair,scope})=>{

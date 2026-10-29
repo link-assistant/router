@@ -395,3 +395,9 @@ adds actual-symbol bounded acyclic Boolean/fixed helper groups to the explicit
 new-function bootstrap and both insertion consumers. ALL UNRUN. Existing native
 helper re-entry, complete checked meta and whole proposed-native checks remain
 mandatory. New-to-existing/cross-unit helpers and full translation remain OPEN.
+
+Actual written void/unit definitions now have a
+[unit definition source draft](primitive-unit-definitions-source-draft.md) for
+pure empty bodies, returns, complete branches and early guards in both bootstrap
+consumers. ALL UNRUN. General effects and inferred empty functions still refuse;
+the whole required draft and every qualification obligation remain OPEN.

@@ -77,6 +77,7 @@ export function assertOwnedPrimitiveDefinition({params,returns,resultRoot,body:s
  const stop=message=>{throw new TypeError('Owned primitive definition: '+message);};
   const role=type=>type==='bool'||type==='usize'||!!primitiveBitwiseType(type),same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);let work=0;
   function expression(value,depth){
+   if(value?.kind==='unit'&&value.type==='unit'&&value.root===null){if(++work>100000||depth>160)stop('bounded exact unit return required');return;}
    if(++work>100000||depth>160||!value||!role(value.type)||value.root!==null)stop('bounded plain primitive insertion expression required');
    if(value.kind==='bool'||value.kind==='integer'||value.kind==='variable')return;
    if(value.kind==='not'){expression(value.value,depth+1);return;}
@@ -89,7 +90,7 @@ export function assertOwnedPrimitiveDefinition({params,returns,resultRoot,body:s
   }
   function body(rows,depth=0){if(++work>100000||depth>160||!Array.isArray(rows)||!rows.length)stop('complete bounded primitive insertion body required');for(let index=0;index<rows.length;index++){const row=rows[index];if(row.kind==='let'){expression(row.value,depth+1);continue;}if(index!==rows.length-1)stop('new primitive function terminator must close its original body');if(row.kind==='return'){expression(row.value,depth+1);return;}if(row.kind==='if'){expression(row.cond,depth+1);body(row.then,depth+1);body(row.else,depth+1);return;}stop('new statement requires its separate insertion rule');}stop('complete primitive insertion return required');}
 
- if(!Array.isArray(params)||params.length>32||!role(returns)||resultRoot!==null||params.some(param=>!role(param.type))||!Array.isArray(hostCalls)||hostCalls.some(call=>!ownedNativeTotalOperator(call.name))||!Array.isArray(sourceCalls)||sourceCalls.length>16384)stop('closed primitive parameters result and separately qualified total operations required');
+ if(!Array.isArray(params)||params.length>32||returns!=='unit'&&!role(returns)||resultRoot!==null||params.some(param=>!role(param.type))||!Array.isArray(hostCalls)||hostCalls.some(call=>!ownedNativeTotalOperator(call.name))||!Array.isArray(sourceCalls)||sourceCalls.length>16384)stop('closed primitive parameters result and separately qualified total operations required');
  body(statements);return true;
 }
 import {ownedNativeTotalOperator,requireOwnedNativeTotalCall} from './owned-native-total-operators.mjs';
