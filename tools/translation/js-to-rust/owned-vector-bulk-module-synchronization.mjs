@@ -22,7 +22,12 @@ export function proposeOwnedVectorBulkModuleSynchronization(data,requests){
  let discovered,beforeProject,afterProject,primaryFailed=false;
  const compile=sources=>{const dependency={manifest:sources.get('Cargo.toml'),lock:sources.get('Cargo.lock')};return translateProject({entry:'src/lib.rs',paths:[...sources.keys()].filter(path=>path.endsWith('.rs')).sort(),readSource:path=>sources.get(path),compilationProfile:PRODUCTION_PROFILE,cargoManifest:dependency.manifest,jsonMacroDependencies:jsonMacroDependencyProfile(dependency).proof,deriveDependencies:deriveDependencyProfile(dependency).proof});};
  function substitute(source,rows){
-  const ordered=[...rows].sort((a,b)=>a.span[0]-b.span[0]);for(let index=0;index<ordered.length;index++){const row=ordered[index];if(!row.span.every(Number.isSafeInteger)||row.span[0]<0||row.span[1]<row.span[0]||row.span[1]===row.span[0]&&(row.kind!=='native-function-insertion'||row.expected!==''||typeof row.replacement!=='string'||!row.replacement)||row.span[1]>source.length||source.slice(...row.span)!==row.expected||index&&(ordered[index-1].span[1]>row.span[0]||ordered[index-1].span[0]===row.span[0]&&ordered[index-1].span[1]===row.span[1]))fail('distinct complete original function substitutions required');}
+  const insertion=row=>['native-function-insertion','native-module-insertion'].includes(row.kind),ordered=[...rows].sort((a,b)=>a.span[0]-b.span[0]);
+  for(let index=0;index<ordered.length;index++){
+   const row=ordered[index],previous=ordered[index-1],zero=row.span[0]===row.span[1];
+   if(!row.span.every(Number.isSafeInteger)||row.span[0]<0||row.span[1]<row.span[0]||zero&&(!insertion(row)||row.expected!==''||typeof row.replacement!=='string'||!row.replacement)||row.span[1]>source.length||source.slice(...row.span)!==row.expected)fail('complete actual original function/module substitutions required');
+   if(previous&&(previous.span[1]>row.span[0]||previous.span[0]===row.span[0]&&previous.span[1]===row.span[1]&&!(zero&&insertion(previous)&&insertion(row)&&(row.kind!=='native-module-insertion'||previous.kind!=='native-module-insertion'||row.moduleName!==previous.moduleName))))fail('distinct checked source substitutions or independent actual append fragments required');
+  }
   let result=source;for(const row of ordered.reverse())result=result.slice(0,row.span[0])+row.replacement+result.slice(row.span[1]);if(Buffer.byteLength(result)>8388608)fail('complete composed native file byte bound');return result;
  }
  try{
@@ -33,6 +38,10 @@ export function proposeOwnedVectorBulkModuleSynchronization(data,requests){
      beforeProject=compile(files);const requestedPaths=new Set(),modules=[];
      for(const request of settings){
       const sourcePath=request.sourcePath,bindings=original.vectorBindings.filter(row=>row.javascriptPath===sourcePath);if(requestedPaths.has(sourcePath))fail('distinct actual receiving module routes required');requestedPaths.add(sourcePath);
+
+      if(Object.hasOwn(request,'newNativeModule')){
+       if(request.newNativeModule!==true||bindings.length)fail('an explicit new native module requires an unrecorded receiving unit');const {newNativeModule,...options}=request,proposal=proposeOwnedPrimitiveUnitAdoption(original,options),native=proposal.outputs.filter(row=>row.path===proposal.nativeRoute.rustPath);if(native.length!==1||modules.some(row=>row.newNativeModule&&row.rustSource===proposal.nativeRoute.rustPath&&same(row.module,proposal.nativeRoute.module)))fail('one distinct complete actual new native unit source required');modules.push({id:'module_'+hash(sourcePath),rustSource:proposal.nativeRoute.rustPath,module:proposal.nativeRoute.module,javascriptPath:sourcePath,typescriptPath:request.typescriptPath,bindings:proposal.bindings,outputs:proposal.outputs.filter(row=>row.path!==proposal.nativeRoute.rustPath),nativeProposal:native,newNativeFunctions:true,newNativeModule:true,nativeModuleInsertion:proposal.nativeModuleInsertion});continue;
+      }
       if(!bindings.length){
        const authority=Object.hasOwn(request,'javascript')?'javascript':'typescript';
        if(request[authority]===''&&files.get(sourcePath)===''&&files.get(request.typescriptPath)===''){
@@ -53,10 +62,14 @@ export function proposeOwnedVectorBulkModuleSynchronization(data,requests){
      requestedPaths.clear();discovered={modules,refusals:[],forwardCensus:ownedVectorOriginalProjectCensus(beforeProject)};
      const selected=new Set();
      for(const module of discovered.modules){
-      for(const output of module.outputs){if(files.get(output.path)!==output.before||output.inverse!==output.before||generated.has(output.path))fail('distinct complete actual receiving source baselines required');generated.set(output.path,output);after.set(output.path,output.after);}
+      for(const output of module.outputs){if((files.get(output.path)??null)!==output.before||output.inverse!==output.before||generated.has(output.path))fail('distinct complete actual receiving source baselines required');generated.set(output.path,output);after.set(output.path,output.after);}
       for(const binding of [...module.bindings,...(module.removedBindings??[])]){const key=JSON.stringify([binding.rustPath,binding.rustName]);if(selected.has(key))fail('native source functions cannot have overlapping module owners');selected.add(key);}
       for(const native of module.nativeProposal){
        if(files.get(native.path)!==native.before)fail('complete current native proposal baseline differs');
+
+       if(module.newNativeModule){
+        const route={rustPath:module.rustSource,module:module.module},parent=requireOwnedPrimitiveAdoptionParent(beforeProject,files,route),insertion=module.nativeModuleInsertion;if(native.path!==route.rustPath||insertion.at!==parent.at||insertion.moduleName!==parent.name||insertion.expected!==''||typeof insertion.replacement!=='string'||!insertion.replacement)fail('actual new native module and parent boundary differ');const row={kind:'native-module-insertion',span:[parent.at,parent.at],expected:'',replacement:insertion.replacement,moduleName:parent.name,names:module.bindings.map(row=>row.rustName)};if(substitute(native.before,[row])!==native.after)fail('new native module changes bytes outside its original actual parent boundary');if(!edits.has(native.path))edits.set(native.path,[]);edits.get(native.path).push(row);continue;
+       }
        if(module.nativeChanges){
         const route={rustPath:module.rustSource,module:module.module},scopes=beforeProject.sourceScopes.filter(row=>row.source===route.rustPath&&same(row.module,route.module));if(scopes.length!==1||scopes[0].sha256!==hash(native.before)||scopes[0].sourceView?.sourcePath!==native.path||scopes[0].sourceView.configurationCondition!=='active'||native.path!==route.rustPath)fail('one actual original native extension scope required');originalModuleViewItems(scopes[0].sourceView,native.before);const added=new Set((module.addedBindings??[]).map(row=>row.rustName)),removed=new Set((module.removedBindings??[]).map(row=>row.rustName)),old=[...module.bindings.filter(row=>!added.has(row.rustName)),...(module.removedBindings??[])],seen=new Set(),rows=[];let appends=0;if([...added].some(name=>removed.has(name))||removed.size!==(module.removedBindings??[]).length)fail('distinct exact added and removed native functions required');
         for(const change of module.nativeChanges){
@@ -102,9 +115,9 @@ export function proposeOwnedVectorBulkModuleSynchronization(data,requests){
     }},
    ]},
    {phase:'repository',rules:[{id:'router:retain-one-composed-native-edit-per-file-and-complete-js-ts-inverses',apply:()=>{
-    const nativeEdits=[...edits].map(([path,rows])=>{const before=files.get(path),next=after.get(path),history=transportConcreteSourceEquations([{before,after:next,language:'Rust'}])[0];return {path,before,after:next,inverse:before,functions:rows.flatMap(row=>row.kind==='native-function-insertion'?row.names.map(name=>({name,span:row.span,inserted:true})):[{name:row.name,span:row.span,...(row.kind==='function-removal'?{removed:true}:{})}]),history};}).filter(row=>row.before!==row.after);
+    const nativeEdits=[...edits].map(([path,rows])=>{const before=files.get(path),next=after.get(path),history=transportConcreteSourceEquations([{before,after:next,language:'Rust'}])[0];return {path,before,after:next,inverse:before,functions:rows.flatMap(row=>['native-function-insertion','native-module-insertion'].includes(row.kind)?row.names.map(name=>({name,span:row.span,inserted:true,...(row.kind==='native-module-insertion'?{moduleInserted:true}:{})})):[{name:row.name,span:row.span,...(row.kind==='function-removal'?{removed:true}:{})}]),history};}).filter(row=>row.before!==row.after);
     const retainedSourceBytes=original.files.reduce((sum,row)=>sum+Buffer.byteLength(row.source),0)+nativeEdits.reduce((sum,row)=>sum+Buffer.byteLength(row.before)+Buffer.byteLength(row.after),0)+[...generated.values()].reduce((sum,row)=>sum+Buffer.byteLength(row.after),0);if(retainedSourceBytes>33554432)fail('complete composed source proposal byte bound');
-    return {schema:'router-owned-vector-bulk-module-sync-v1',sourceInputs:original.files,nativeEdits,outputs:[...generated.values()],modules:discovered.modules.map(({id,rustSource,module,javascriptPath,typescriptPath,newNativeFunctions,bindings,addedBindings,removedBindings})=>({id,rustSource,module,javascriptPath,typescriptPath,newNativeFunctions,bindings,...(addedBindings?{addedBindings}:{}),...(removedBindings?{removedBindings,removedNativeFunctions:true}:{})})),refusals:discovered.refusals,forwardCensus:ownedVectorOriginalProjectCensus(afterProject),retainedSourceBytes,selectedNativeSourceRechecked:true,composedNativeSourceRechecked:true,sourceAuthority:false,semanticAuthority:false,productionSelected:false,nativeInstalled:false,nativeFreshnessQualified:false,receivingExecuted:false,runtimeParity:false,wholeRouterSynchronization:false,crossInvocationCache:false,rustExecuted:false};
+    return {schema:'router-owned-vector-bulk-module-sync-v1',sourceInputs:original.files,nativeEdits,outputs:[...generated.values()],modules:discovered.modules.map(({id,rustSource,module,javascriptPath,typescriptPath,newNativeFunctions,bindings,addedBindings,removedBindings,newNativeModule})=>({id,rustSource,module,javascriptPath,typescriptPath,newNativeFunctions,bindings,...(newNativeModule?{newNativeModule:true}:{}),...(addedBindings?{addedBindings}:{}),...(removedBindings?{removedBindings,removedNativeFunctions:true}:{})})),refusals:discovered.refusals,forwardCensus:ownedVectorOriginalProjectCensus(afterProject),retainedSourceBytes,selectedNativeSourceRechecked:true,composedNativeSourceRechecked:true,sourceAuthority:false,semanticAuthority:false,productionSelected:false,nativeInstalled:false,nativeFreshnessQualified:false,receivingExecuted:false,runtimeParity:false,wholeRouterSynchronization:false,crossInvocationCache:false,rustExecuted:false};
    }}]},
   ]).run(null);return {...run.value,trace:run.trace};
  }catch(error){primaryFailed=true;throw error;}finally{
@@ -123,3 +136,5 @@ import {nativeEmptyModuleRoute,requireCurrentEmptyNativeModule,prepareEmptyNativ
 import {ownedPrimitiveFunctionExtensionRequired,proposeOwnedPrimitiveFunctionExtension} from './owned-primitive-function-extension.mjs';
 
 import {ownedPrimitiveFunctionRemovalRequired,proposeOwnedPrimitiveFunctionRemoval} from './owned-primitive-function-removal.mjs';
+
+import {proposeOwnedPrimitiveUnitAdoption,requireOwnedPrimitiveAdoptionParent} from './owned-primitive-unit-adoption.mjs';

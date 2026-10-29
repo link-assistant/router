@@ -38,7 +38,7 @@ Independent unrun cases draft both languages, existing authority versus both
 paths absent, strict paired helper/unit behavior, nested actual parent scope,
 competing namespaces and target files, malformed/forged requests, unsupported
 bodies and complete source-copy inverses. Two complete source equations retain
-language then repository phases. Bulk and physical adoption integration is the
-next source draft; full translation and coverage/parity/freshness/resources/
+language then repository phases. [Bulk and physical adoption integration](primitive-bulk-adoption-source-draft.md)
+is now source drafted and UNRUN; full translation and coverage/parity/freshness/resources/
 receiving export/platform/CI qualification remain OPEN. Rust stays CI-only after
 eight same-SHA JavaScript gates.

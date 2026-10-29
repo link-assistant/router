@@ -407,3 +407,9 @@ original-source API for absent receiving companions and a newly constructed
 direct inline native module. ALL UNRUN. It translates complete actual source
 without installed placeholders and retains null source-absence inverses.
 Bulk/physical integration and the full remaining draft remain OPEN.
+
+[Bulk/physical new unit adoption](primitive-bulk-adoption-source-draft.md)
+now composes complete new inline native modules, actual source authority and
+null companion absences, then replaces the exact transient adoption marker
+with ordinary checked bindings. ALL UNRUN. Multiple sibling modules share one
+native output transaction; every broader draft and qualification remains OPEN.
