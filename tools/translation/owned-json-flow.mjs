@@ -9,7 +9,7 @@ import {canonicalResult} from './extensions/result-iterators.mjs';
 import {isForwardOwnedCarrier} from './owned-forward-domain.mjs';
 import {hasOriginalCallbackLoan,hasOriginalSourceFrame,originalCallbackLoanInputMatches} from './extensions/standard-source-frame.mjs';
 import {hasOriginalSharedDomainGuard} from './extensions/standard-borrowed-body.mjs';
-import {sharedReferenceCopyIdentity} from './shared-reference-copy-source.mjs';
+import {currentSharedReferenceCopyIdentity as sharedReferenceCopyIdentity} from './current-standard-copy-source.mjs';
 import {actualPrimitiveSlice,checkPrimitiveSliceDereference} from './owned-scalar-slice-flow.mjs';
 import {unsupported} from './vendor/meta-language/translation/diagnostics.js';
 import {checkOwnedLoop,checkOwnedLoopExit,ownedLoopInput,unreachableOwnedFlowState} from './owned-json-loop-flow.mjs';

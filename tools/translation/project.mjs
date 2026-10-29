@@ -613,7 +613,7 @@ const projectTranslationRules=createRulePipeline([
   {phase:'repository',rules:[{id:'rust-project:exports-types-provenance',apply:finalize=>finalize()}]},
 ]);
 export function translateProject(options) {
-  return projectTranslationRules.run(options).value;
+  return withCurrentStandardCopySourceOperation(()=>projectTranslationRules.run(options).value);
 }
 
 import {prepareForwardOwnedDefinitions} from './forward-owned-definitions.mjs';
@@ -622,7 +622,7 @@ const ownedDefinitionProjectRules=createRulePipeline([
   {phase:'repository',rules:[{id:'rust-project-owned-definitions:closed-definition-sources',apply:finalize=>finalize()}]},
 ]);
 // An additional receiving corpus, never original module initialization parity.
-export function translateProjectOwnedDefinitions(options){return ownedDefinitionProjectRules.run(options).value;}
+export function translateProjectOwnedDefinitions(options){return withCurrentStandardCopySourceOperation(()=>ownedDefinitionProjectRules.run(options).value);}
 
 // Additive siblings select grouped token comparisons only; all current source,
 // parser/field/layout and private project-parent joins remain independent.
@@ -695,7 +695,7 @@ const coreReaderDefinitionRules=createRulePipeline([
  {phase:'language',rules:[{id:'rust-project-core-readers:fresh-checked-language',apply:options=>compileProjectLanguage(options,'core-json-readers')}]},
  {phase:'repository',rules:[{id:'rust-project-core-readers:explicit-owned-library-wrappers',apply:finalize=>finalize()}]},
 ]);
-export function translateProjectOwnedCoreReaderDefinitions(options){return coreReaderDefinitionRules.run(options).value;}
+export function translateProjectOwnedCoreReaderDefinitions(options){return withCurrentStandardCopySourceOperation(()=>coreReaderDefinitionRules.run(options).value);}
 
 // Explicit stock-native DATA storage; all original private issuers stay here.
 const flatSemanticProjectTranslationRules=createRulePipeline([
@@ -703,7 +703,7 @@ const flatSemanticProjectTranslationRules=createRulePipeline([
   {phase:'repository',rules:[{id:'rust-project:exports-types-provenance',apply:finalize=>finalize()}]},
 ]);
 export function translateProjectWithFlatSemanticMeta(options) {
-  return flatSemanticProjectTranslationRules.run(options).value;
+  return withCurrentStandardCopySourceOperation(()=>flatSemanticProjectTranslationRules.run(options).value);
 }
 
 const flatEnclosingSemanticProjectTranslationRules=createRulePipeline([
@@ -711,5 +711,7 @@ const flatEnclosingSemanticProjectTranslationRules=createRulePipeline([
   {phase:'repository',rules:[{id:'rust-project:exports-types-provenance',apply:finalize=>finalize()}]},
 ]);
 export function translateProjectWithFlatEnclosingSemanticMeta(options) {
-  return flatEnclosingSemanticProjectTranslationRules.run(options).value;
+  return withCurrentStandardCopySourceOperation(()=>flatEnclosingSemanticProjectTranslationRules.run(options).value);
 }
+
+import {withCurrentStandardCopySourceOperation} from './current-standard-copy-source.mjs';

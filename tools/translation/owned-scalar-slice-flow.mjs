@@ -1,7 +1,7 @@
 // Scalar slice helpers consume the actual privately checked body/type inputs.
 // A spelling, public profile or returned DATA object grants no admission.
 import {sameType} from './checked-types.mjs';
-import {originalPrimitiveCopySource} from './shared-reference-copy-source.mjs';
+import {currentPrimitiveCopySource as originalPrimitiveCopySource} from './current-standard-copy-source.mjs';
 export function actualPrimitiveSlice(checker,type,node){
  const point=type?.rustReference?.pointee,shape=value=>value?.kind==='array'&&value.rustSourceType===true&&value.rustOwnership?.kind==='borrowed'&&value.rustOwnership.source==='slice'&&!value.rustFixedArray&&!value.rustGenericIdentityUnresolved&&!value.rustBorrowingUnresolved;
  if(type?.rustReference?.kind!=='shared'||!shape(type)||!shape(point)||point.rustReference||point.patternOwnershipRefusal||type.patternOwnershipRefusal!=='shared source reference'||type.rustReference.tokens?.[0]?.value!=='&'||!Number.isInteger(type.rustReference.span?.start)||!Number.isInteger(type.rustReference.span?.end)||type.rustReference.span.start<0||type.rustReference.span.end<type.rustReference.span.start||!sameType(type.element,point.element)||!originalPrimitiveCopySource(type.element)||!originalPrimitiveCopySource(point.element))return null;

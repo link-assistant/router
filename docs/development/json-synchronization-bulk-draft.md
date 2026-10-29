@@ -667,3 +667,11 @@ Vec types are emitted explicitly for re-entry; every actual source/native fence
 remains required. Thirteen complete equations and JS/TS/all-width/native/bulk/
 refusal/CI-only Rust sources are UNRUN. Wider Vec operations, native owner
 closure, full drafting and all verification obligations remain OPEN.
+
+The [current standard Copy source draft](fresh-standard-copy-source-draft.md)
+replaces active cached source consumers with an operation-scoped complete copy,
+preserving old public APIs and all independent semantic checks. Seven pinned
+inputs, complete Rust CST transport, entry/closing fences and nested sharing
+are drafted without cross-operation caches. Twenty-four complete equations and
+independent source/refusal/lifetime cases are UNRUN. Performance, exported
+receiving, native owner closure, full drafting and qualification remain OPEN.

@@ -1,4 +1,4 @@
-import {sharedReferenceCopyIdentity,SHARED_REFERENCE_COPY_SOURCE,STANDARD_OPTION_COPY_SOURCE} from './shared-reference-copy-source.mjs';
+import {currentSharedReferenceCopyIdentity as sharedReferenceCopyIdentity,SHARED_REFERENCE_COPY_SOURCE,STANDARD_OPTION_COPY_SOURCE} from './current-standard-copy-source.mjs';
 // Source-coordinate implementation extraction for checked method lowering.
 // Extraction is structural evidence; only later checked bodies are executable.
 import {sourceItems} from './rust-structure.mjs';

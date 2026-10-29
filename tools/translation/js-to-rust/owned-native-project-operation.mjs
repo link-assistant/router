@@ -18,7 +18,8 @@ function dependencies(inputs){
  // These are newly issued original package-source proofs, never input digests.
  return {json,derive,signature:JSON.stringify([json?.digest??null,derive?.digest??null,PRODUCTION_PROFILE])};
 }
-export function withOwnedNativeProjectOperation(run){
+export function withOwnedNativeProjectOperation(run){return withCurrentStandardCopySourceOperation(()=>withOwnedNativeProjectOperationBody(run));}
+function withOwnedNativeProjectOperationBody(run){
  if(typeof run!=='function'||types.isProxy(run)||types.isAsyncFunction(run))fail('synchronous source operation callback required');
  assertReverseConcreteSourceHost();const frame=active??{depth:0,entry:null,compilations:0,reuses:0},owner=active===null;if(frame.depth>=64)fail('bounded nested source operation required');active=frame;frame.depth++;let primaryFailed=false;
  try{return synchronous(run());}catch(error){primaryFailed=true;throw error;}finally{
@@ -49,3 +50,5 @@ export function createOwnedNativeProjectReader(){const reader=Object.freeze({});
 export const readOwnedNativeProjectForSource=createOwnedNativeProjectReader();
 /** Diagnostic counters only. They grant no source or executable permission. */
 export function ownedNativeProjectOperationStatistics(){return active?{compilations:active.compilations,reuses:active.reuses,retainedProjects:active.entry?1:0,sourceAuthority:false,semanticAuthority:false,crossInvocationCache:false}:null;}
+
+import {withCurrentStandardCopySourceOperation} from '../current-standard-copy-source.mjs';

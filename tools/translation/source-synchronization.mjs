@@ -234,3 +234,6 @@ export {proposeOwnedPrimitiveVectorUnitAdoption} from './js-to-rust/owned-primit
 export {emitOwnedPrimitiveValueDefinitionHeaders} from './js-to-rust/owned-vector-candidate-operations.mjs';
 
 export {checkedPrimitiveScalarVectorLocals,originalPrimitiveScalarVectorLocalDomain} from './js-to-rust/owned-primitive-scalar-vector-locals.mjs';
+
+export {withFreshStandardCopyInputs} from './fresh-standard-copy-inputs.mjs';
+export {withCurrentStandardCopySourceOperation,currentPrimitiveCopySource,currentSharedReferenceCopyIdentity} from './current-standard-copy-source.mjs';

@@ -55,7 +55,7 @@ function bindNormalizedOwnedVectors(checker,program,surface){
 
 import {canonicalResult} from './result-iterators.mjs';
 import {JSON_DATA} from './json-contracts.mjs';
-import {sharedReferenceCopyIdentity} from '../shared-reference-copy-source.mjs';
+import {currentSharedReferenceCopyIdentity as sharedReferenceCopyIdentity} from '../current-standard-copy-source.mjs';
 import {hasOriginalRouterCoreJsonProjection,hasOriginalJsonStringErrorContext,hasOriginalPrimitiveOptionAbsentLoan} from '../router-core-json-updates.mjs';
 import {jsonIterationContract} from '../json-iteration-contracts.mjs';
 import {hasOriginalMappedOrigin} from './standard-mapped-body.mjs';
