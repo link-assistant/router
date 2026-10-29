@@ -910,3 +910,10 @@ comparisons, pure helper closure and qualified optional runtime declarations in
 Bulk runtime materialization records the additional source dependencies. Operator
 effects, pointer/float/aggregate/ownership extensions and complete receiving/
 resource/platform/CI qualification remain OPEN; no coverage result is claimed.
+
+Native bulk emission now drafts one private complete-program check within a bounded
+synchronous scope, with fresh per-emission/closing source fences and unchanged
+independent proposed-native forward checks, in
+[scoped-native-emission-source-draft.md](scoped-native-emission-source-draft.md).
+ALL UNRUN. Escaped callbacks and caught emission failures cannot reuse the private
+program. Timing, memory, full drafting and receiving/coverage/parity/CI remain OPEN.

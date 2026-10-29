@@ -156,8 +156,13 @@ export function ownedCoreContext(item){return issued.get(checkOwnedCoreItem(item
 const rustString=value=>'"'+value.replace(/[\\"\x00-\x1f\x7f]/gu,c=>({'\\':'\\\\','"':'\\"','\n':'\\n','\r':'\\r','\t':'\\t'}[c]??'\\u{'+c.codePointAt(0).toString(16)+'}'))+'"';
 const TS_TYPES={...primitiveBitwiseTypeScriptTypes,...ownedVectorCandidateTypeScriptTypes,...ownedBase64TypeScriptTypes,...ownedJsonTypeScriptTypes,'json-option-input':'Parameters<typeof __ro_router_core_json_option_as_str>[0]','json-list-owned':'readonly JsonValue[]',json:'JsonValue','json-ref':'JsonValue','map-ref':"Extract<JsonValue,{readonly $:'Object'}>['field0']",str:'string',bool:'boolean',usize:'bigint'};
 const RUST_TYPES={...primitiveBitwiseRustTypes,...ownedVectorCandidateRustTypes,...ownedBase64RustTypes,...ownedJsonRustTypes,'json-option-input':"::std::option::Option<&'a crate::translation_core::Json>",'json-list-owned':'::std::vec::Vec<crate::translation_core::Json>',json:'crate::translation_core::Json','json-ref':"&'a crate::translation_core::Json",'map-ref':"&'a ::serde_json::Map<::std::string::String,crate::translation_core::Json>",str:"&'a str",bool:'bool',usize:'u64'};
-export function emitOwnedCoreProgram(input,target,{outputPath,nativeJsonSource=false,selectedFunction=null}={}){
- const complete=checkOwnedCoreProgram(input),rust=target==='rust';if(!rust&&target!=='typescript')fail('unknown target');if(nativeJsonSource!==false&&nativeJsonSource!==true)fail('native JSON emission mode must be explicit boolean data');if(selectedFunction!==null&&(!rust||nativeJsonSource!==true||typeof selectedFunction!=='string'||!selectedFunction||selectedFunction.length>1024))fail('selected function emission requires an explicit native Rust function name');const program=selectedFunction===null?complete:complete.filter(item=>item.javascript===selectedFunction);if(selectedFunction!==null&&program.length!==1)fail('one complete privately checked selected source function required');if(nativeJsonSource&&(!rust||!program.length||program.some(item=>!isJsonVector(item))))fail('native JSON emission requires a nonempty privately rechecked canonical JSON vector program');if(!program.length)return '';
+export function emitOwnedCoreProgram(input,target,options={}){
+ return emitOwnedCoreCheckedProgram(checkOwnedCoreProgram(input),target,options);
+}
+// Only the private rechecker or the synchronous scope below can reach this
+// function. Never export it or accept a caller-supplied checked-program flag.
+function emitOwnedCoreCheckedProgram(complete,target,{outputPath,nativeJsonSource=false,selectedFunction=null}={}){
+ const rust=target==='rust';if(!rust&&target!=='typescript')fail('unknown target');if(nativeJsonSource!==false&&nativeJsonSource!==true)fail('native JSON emission mode must be explicit boolean data');if(selectedFunction!==null&&(!rust||nativeJsonSource!==true||typeof selectedFunction!=='string'||!selectedFunction||selectedFunction.length>1024))fail('selected function emission requires an explicit native Rust function name');const program=selectedFunction===null?complete:complete.filter(item=>item.javascript===selectedFunction);if(selectedFunction!==null&&program.length!==1)fail('one complete privately checked selected source function required');if(nativeJsonSource&&(!rust||!program.length||program.some(item=>!isJsonVector(item))))fail('native JSON emission requires a nonempty privately rechecked canonical JSON vector program');if(!program.length)return '';
  const context=issued.get(program[0]).context;requireOwnedCoreSourceCurrent(context);const sourceData=ownedCoreSourceData(context),rustTypes=sourceData.primitiveOperators===true?{...RUST_TYPES,...primitiveBitwiseRustTypes}:RUST_TYPES;
  if(complete.some(item=>issued.get(item).context!==context))fail('mixed receiving contexts');
  let sequence=0,nativeDynamicIndexFields=false,typedScalarLocals=false;const imports=new Set(),primitiveTypeImports=new Set(),scalarLocalWitnesses=new Set();
@@ -397,3 +402,35 @@ import {ownedVectorJsonFieldOperation,emitOwnedVectorJsonFieldCall,evaluateOwned
 import {assertScalarSourceCallClosure,scalarSourceCallKey,hasScalarSourceCalls} from './owned-source-scalar-calls.mjs';
 
 import {ownedVectorTextScalarOperation,ownedAsciiRustCall} from './owned-vector-text-scalars.mjs';
+
+// One complete private program per bounded synchronous native emission scope.
+// The callback sees source strings only, never issued rows or a source context.
+let nativeEmissionDepth=0;
+export function withOwnedNativeFunctionBodies(input,run){
+ if(typeof run!=='function'||types.isProxy(run)||types.isAsyncFunction(run))fail('synchronous native body callback required');
+ if(nativeEmissionDepth>=64)fail('bounded nested native body scope required');
+ nativeEmissionDepth++;let active=true,primaryFailed=false,program=null,context=null,emissionFailed=false,emissionError,count=0,units=0;
+ const emit=name=>{
+  if(!active)fail('native body emitter escaped its source operation');
+  if(emissionFailed)throw emissionError;
+  try{
+   if(++count>4096)fail('bounded selected native body requests required');
+   const source=emitOwnedCoreCheckedProgram(program,'rust',{nativeJsonSource:true,selectedFunction:name});
+   units+=source.length;if(units>16777216)fail('bounded total emitted native source required');return source;
+  }catch(error){emissionFailed=true;emissionError=error;throw error;}
+ };
+ try{
+  program=checkOwnedCoreProgram(input);if(!program.length)fail('nonempty complete native body source program required');
+  context=issued.get(program[0]).context;
+  if(program.some(item=>issued.get(item).context!==context))fail('mixed receiving contexts');
+  requireOwnedCoreSourceCurrent(context);
+  const result=run(emit);
+  if(types.isPromise(result)||types.isProxy(result))fail('synchronous ordinary native body result required');
+  if(result&&(typeof result==='object'||typeof result==='function')){const then=Object.getOwnPropertyDescriptor(result,'then');if(then&&(!Object.hasOwn(then,'value')||typeof then.value==='function'))fail('asynchronous native body result refused');}
+  if(emissionFailed)throw emissionError;return result;
+ }catch(error){primaryFailed=true;throw error;}finally{
+  active=false;let fenceFailed=false,fenceError;
+  try{if(context)requireOwnedCoreSourceCurrent(context);}catch(error){fenceFailed=true;fenceError=error;}finally{program=null;context=null;nativeEmissionDepth--;}
+  if(!primaryFailed&&fenceFailed)throw fenceError;
+ }
+}
