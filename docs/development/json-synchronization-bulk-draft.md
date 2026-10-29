@@ -637,3 +637,11 @@ selects it in both bootstrap families and keeps ordinary public emission and
 input validation unchanged. Five complete equations and JS/TS/full-extension/
 source-refusal cases are UNRUN. This corrects draft source wiring; complete
 translation, full drafting and every verification obligation remain OPEN.
+
+The [borrowed text new-definition draft](vector-borrowed-text-definitions-source-draft.md)
+reuses actual scalar-string loans and existing qualified text operations in new
+primitive Vec definitions, helper bootstrap and all copied lifecycle paths. Final
+public validation remains in the original actual native receiving profile. Seven
+complete equations and JS/TS/Unicode/lifetime/refusal/CI-only Rust sources are
+UNRUN. Returned text/aggregate/cross-module/native-owner and full-task obligations
+remain OPEN, together with every verification requirement.

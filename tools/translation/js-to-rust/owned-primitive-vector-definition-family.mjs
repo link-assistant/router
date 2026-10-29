@@ -75,25 +75,29 @@ import {totalNativeIntegerMethod} from './owned-native-division-operators.mjs';
 // this helper is never a source/type/namespace or executable permission token.
 export function assertOwnedPrimitiveVectorDefinition({params,returns,resultRoot,body:statements,hostCalls=[],sourceCalls=[]}){
  const stop=message=>{throw new TypeError('Owned primitive definition: '+message);};
-  const parameterRole=type=>type==='bool'||type==='usize'||!!primitiveBitwiseType(type),role=type=>parameterRole(type)||primitiveVectorResultRole(type),same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);let work=0;
+  const parameterRole=type=>type==='str'||type==='bool'||type==='usize'||!!primitiveBitwiseType(type),role=type=>type!=='str'&&parameterRole(type)||primitiveVectorResultRole(type),same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);let work=0;
   function expression(value,depth){
    if(value?.kind==='unit'&&value.type==='unit'&&value.root===null){if(++work>100000||depth>160)stop('bounded exact unit return required');return;}
+   if(value?.type==='str'){if(++work>100000||depth>160)stop('bounded original borrowed text operand required');if(value.kind==='string'&&value.root===null&&typeof value.value==='string'&&!/\p{Surrogate}/u.test(value.value))return;if(value.kind==='variable'&&params.some(param=>param.name===value.root&&param.type==='str'))return;if(value.kind==='choose'){expression(value.cond,depth+1);if(value.cond.type!=='bool'||value.then.type!=='str'||value.else.type!=='str')stop('actual borrowed text choice domains required');expression(value.then,depth+1);expression(value.else,depth+1);return;}stop('text operands require a live original parameter or scalar literal');}
    if(++work>100000||depth>160||!value||!role(value.type)||value.root!==null)stop('bounded plain primitive insertion expression required');
+   if(value.kind==='text-scalar-call'){const op=ownedVectorTextScalarOperation(value.name);if(!op||value.type!==op.ret||!Array.isArray(value.args)||value.args.length!==op.args.length||value.args.some((arg,index)=>arg.type!==op.args[index]))stop('actual fixed borrowed text operation domain required');for(const argument of value.args)expression(argument,depth+1);return;}
    if(value.kind==='primitive-vector-literal'){if(!primitiveVectorResultRole(value.type)||!Array.isArray(value.items)||value.items.length>4096||value.items.some(item=>item.type!==value.type.slice(4)))stop('exact bounded primitive vector items required');for(const item of value.items)expression(item,depth+1);return;}
    if(value.kind==='bool'||value.kind==='integer'||value.kind==='variable')return;
    if(value.kind==='not'){expression(value.value,depth+1);return;}
    if(value.kind==='binary'&&['&&','||','===','!==','<','<=','>','>='].includes(value.op)){expression(value.left,depth+1);expression(value.right,depth+1);return;}
 
-   if(value.kind==='source-scalar-call'){const callee=value.callee,closed=type=>type==='bool'||!!primitiveBitwiseType(type);if(!callee||callee.returns!==value.type||!closed(callee.returns)&&!(primitiveVectorResultRole(returns)&&primitiveVectorResultRole(callee.returns))||!Array.isArray(callee.parameters)||callee.parameters.some(type=>!closed(type))||!Array.isArray(value.args)||value.args.length!==callee.parameters.length)stop('actual complete closed primitive helper operands required');for(const argument of value.args)expression(argument,depth+1);return;}
+   if(value.kind==='source-scalar-call'){const callee=value.callee,closed=type=>type==='bool'||!!primitiveBitwiseType(type);if(!callee||callee.returns!==value.type||!closed(callee.returns)&&!(primitiveVectorResultRole(returns)&&primitiveVectorResultRole(callee.returns))||!Array.isArray(callee.parameters)||callee.parameters.some(type=>!closed(type)&&type!=='str')||!Array.isArray(value.args)||value.args.length!==callee.parameters.length)stop('actual complete closed primitive helper operands required');for(const argument of value.args)expression(argument,depth+1);return;}
    if(value.kind==='choose'){expression(value.cond,depth+1);expression(value.then,depth+1);expression(value.else,depth+1);return;}
    if(['primitive-bitwise-call','primitive-not-call','primitive-cast-call','primitive-method-call','primitive-arithmetic-call'].includes(value.kind)){requireOwnedNativeClosedCall(value);for(const argument of value.args)expression(argument,depth+1);return;}
    stop('new function needs its next explicit insertion operation/effect rule');
   }
   function body(rows,depth=0){if(++work>100000||depth>160||!Array.isArray(rows)||!rows.length)stop('complete bounded primitive insertion body required');for(let index=0;index<rows.length;index++){const row=rows[index];if(row.kind==='let'){expression(row.value,depth+1);continue;}if(index!==rows.length-1)stop('new primitive function terminator must close its original body');if(row.kind==='return'){expression(row.value,depth+1);return;}if(row.kind==='if'){expression(row.cond,depth+1);body(row.then,depth+1);body(row.else,depth+1);return;}stop('new statement requires its separate insertion rule');}stop('complete primitive insertion return required');}
 
- if(!Array.isArray(params)||params.length>32||returns!=='unit'&&!role(returns)||resultRoot!==null||params.some(param=>!parameterRole(param.type))||!Array.isArray(hostCalls)||hostCalls.some(call=>!ownedNativeClosedOperator(call.name))||!Array.isArray(sourceCalls)||sourceCalls.length>16384)stop('closed primitive parameters result and separately qualified total operations required');
+ if(!Array.isArray(params)||params.length>32||returns!=='unit'&&!role(returns)||resultRoot!==null||params.some(param=>!parameterRole(param.type))||!Array.isArray(hostCalls)||hostCalls.some(call=>!ownedNativeClosedOperator(call.name)&&!ownedVectorTextScalarOperation(call.name))||!Array.isArray(sourceCalls)||sourceCalls.length>16384)stop('closed primitive parameters result and separately qualified total operations required');
  body(statements);return true;
 }
 import {ownedNativeClosedOperator,requireOwnedNativeClosedCall} from './owned-native-division-operators.mjs';
 
 import {primitiveVectorResultRole} from './owned-source-value-calls.mjs';
+
+import {ownedVectorTextScalarOperation} from './owned-vector-text-scalars.mjs';
