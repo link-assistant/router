@@ -3,7 +3,7 @@
 import {ownedPlainData} from './owned-vector-candidate-source.mjs';
 import {primitiveBitwiseType} from '../primitive-bitwise-types.mjs';
 import {totalNativeIntegerMethod} from './owned-native-total-operators.mjs';
-export const primitiveScalarModelEligible=item=>item.vectorOrigin?.kind==='primitive-scalar'&&item.params.every(param=>['bool','str'].includes(param.type)||primitiveBitwiseType(param.type));
+export const primitiveScalarModelEligible=item=>['primitive-scalar','primitive-expression-vector'].includes(item.vectorOrigin?.kind)&&item.params.every(param=>['bool','str'].includes(param.type)||primitiveBitwiseType(param.type));
 export function normalizePrimitiveScalarBodyTree(input){
  const root=ownedPlainData(input);let work=0,leaves=0;
  const fail=message=>{throw new TypeError('Canonical primitive body comparison: '+message);};
@@ -11,6 +11,7 @@ export function normalizePrimitiveScalarBodyTree(input){
  const equal=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
  function pure(node,available,depth=0){
   charge(depth);if(!Array.isArray(node))return false;const [kind,a,b,c]=node;
+  if(kind==='vector')return node.length===2&&Array.isArray(a)&&a.length<=4096&&a.every(item=>pure(item,available,depth+1));
   if(kind==='unit')return node.length===1;
   if(kind==='bool')return node.length===2&&typeof a==='boolean';
   if(kind==='str')return node.length===2&&typeof a==='string';

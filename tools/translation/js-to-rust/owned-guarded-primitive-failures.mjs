@@ -10,6 +10,7 @@ function engine(native,read,guard,sourceCall=()=>true){
  const key=node=>native?node?.k:node?.kind;
  function children(node){
   const kind=key(node);
+  if(kind===(native?'array':'primitive-vector-literal'))return node.items.map((value,index)=>[['items',index],value]);
   if(kind==='binary'||native&&kind==='routerPrimitiveScalarBitwise')return [['left',node.left],['right',node.right]];
   if(native&&kind==='unary')return [['arg',node.arg]];
   if(!native&&kind==='not')return [['value',node.value]];
@@ -82,7 +83,7 @@ function engine(native,read,guard,sourceCall=()=>true){
   const parts=children(node);
   function operands(index,scope,prefix,values,level){
    charge(level);if(index<parts.length)return evaluate(parts[index][1],scope,prefix,(value,local,effects,at)=>operands(index+1,local,effects,[...values,value],level),level+1);
-   const local=new Map(scope),copy={...node};if(parts.some(([slot])=>Array.isArray(slot)))copy.args=[...node.args];
+   const local=new Map(scope),copy={...node};for(const [slot]of parts)if(Array.isArray(slot)&&copy[slot[0]]===node[slot[0]])copy[slot[0]]=[...node[slot[0]]];
    for(let at=0;at<parts.length;at++){
     const [slot,original]=parts[at],name=Symbol('guarded-scalar-model');local.set(name,values[at]);const variable=native?{k:'var',name,type:original.type}:{kind:'variable',name,type:original.type,root:null};
     if(Array.isArray(slot))copy[slot[0]][slot[1]]=variable;else copy[slot]=variable;
@@ -103,7 +104,7 @@ function engine(native,read,guard,sourceCall=()=>true){
  function receivingNeeds(rows,depth=0){charge(depth);if(!Array.isArray(rows))return false;return rows.some(node=>needs(node.kind==='if'?node.cond:node.value,depth+1)||node.kind==='if'&&(receivingNeeds(node.then,depth+1)||receivingNeeds(node.else,depth+1)));}
  return {needs,receivingNeeds,evaluate,receiving,terminal};
 }
-function eligible(item){return item.vectorOrigin?.kind==='primitive-scalar'&&item.params.every(param=>['bool','str'].includes(param.type)||primitiveBitwiseType(param.type));}
+function eligible(item){return ['primitive-scalar','primitive-expression-vector'].includes(item.vectorOrigin?.kind)&&item.params.every(param=>['bool','str'].includes(param.type)||primitiveBitwiseType(param.type));}
 export function observeRequestedGuardedPrimitiveBody(item,{read,guard,names,events}){
  if(!eligible(item))return null;const operation=engine(false,read,guard);if(!operation.receivingNeeds(item.body))return null;
  return operation.receiving(item.body,new Map(names),[...events]);

@@ -529,3 +529,11 @@ consumer now follows ordered helper events. Six complete source equations and
 all independent all-width paired/native, ordering, graph-refusal and CI-only Rust
 oracle sources are UNRUN. Nonlocal exits, terminal coverage beyond the checked
 wildcard lane, owned patterns, division/remainder and full closure remain OPEN.
+
+The [primitive vector expression family draft](primitive-expression-vectors-source-draft.md)
+joins actual bool/fixed-width Vec results to the shared scalar operators, helper
+events and guarded continuations. Both source-capture producers, native discovery,
+paired receiving source, reverse emission and the interpreter share the family.
+Finite local container moves and evaluated-but-unused element failures remain
+explicit. Fifteen complete source equations and independent paired/native case
+sources are UNRUN; general mutation, Vec helpers and full translation remain OPEN.

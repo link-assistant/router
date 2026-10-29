@@ -22,7 +22,8 @@ import {selectNativeProjectionClosure} from './owned-native-projection-closure.m
 const hash=source=>createHash('sha256').update(source).digest('hex');
 const equal=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const fail=message=>{throw new TypeError('Native bulk discovery: '+message);};
-function domain(own,lowered){
+function domain(own,lowered,extended){
+ if(extended){const vector=originalPrimitiveExpressionVectorDomain(own,lowered);if(vector){checkedPrimitiveExpressionVectorTail(own);return vector;}}
  const primitive=originalPrimitiveScalarDomain(own,lowered);if(primitive)return primitive;
  if(own.ret?.kind==='unit'||own.ret?.kind==='bool'||own.ret?.kind==='fixed')return originalJsonScalarDomain(own,lowered);
  if(own.ret?.kind==='data')return originalJsonOwnedValueDomain(own,lowered);
@@ -61,7 +62,7 @@ export function proposeOwnedNativeBulkDiscovery(data,options={}){
      try{
       for(const entry of project.executableDeclarations){
        const actual=captured(entry),own=actual.declaration;let nativeDomain,projectedParameters;
-       try{nativeDomain=domain(own,entry.lower());if(!nativeDomain)throw new UnsupportedNativeTreeProjection('native signature needs another source family');const prior=priorBindings.get(JSON.stringify([entry.source,entry.qualifiedName]));let spelling=null;if(prior&&files.has(prior.javascriptPath)){if(!spellingModules.has(prior.javascriptPath))spellingModules.set(prior.javascriptPath,nativeProjectionParameterProposals(files.get(prior.javascriptPath),prior.javascriptPath));spelling=spellingModules.get(prior.javascriptPath).get(prior.javascriptName)??null;}projectedParameters=nativeProjectionParameters(own,nativeDomain,spelling);if(!nativeProjectionIdentifier(entry.name)||projectedParameters.some(row=>!nativeProjectionIdentifier(row.name)))throw new UnsupportedNativeTreeProjection('native bindings need a hygienic spelling rule');}catch(error){if(!(error instanceof TypeError))throw error;refusal(entry,'native-signature-projection',error);continue;}
+       try{nativeDomain=domain(own,entry.lower(),hasPrimitiveExpressionVectorRuntime(files,original));if(!nativeDomain)throw new UnsupportedNativeTreeProjection('native signature needs another source family');const prior=priorBindings.get(JSON.stringify([entry.source,entry.qualifiedName]));let spelling=null;if(prior&&files.has(prior.javascriptPath)){if(!spellingModules.has(prior.javascriptPath))spellingModules.set(prior.javascriptPath,nativeProjectionParameterProposals(files.get(prior.javascriptPath),prior.javascriptPath));spelling=spellingModules.get(prior.javascriptPath).get(prior.javascriptName)??null;}projectedParameters=nativeProjectionParameters(own,nativeDomain,spelling);if(!nativeProjectionIdentifier(entry.name)||projectedParameters.some(row=>!nativeProjectionIdentifier(row.name)))throw new UnsupportedNativeTreeProjection('native bindings need a hygienic spelling rule');}catch(error){if(!(error instanceof TypeError))throw error;refusal(entry,'native-signature-projection',error);continue;}
        const key=JSON.stringify([entry.source,actual.module]),id='module_'+hash(key),javascriptPath=javascriptRoot+'/'+id+'.mjs',typescriptPath=typescriptRoot+'/'+id+'.mts';ownedSourcePath(javascriptPath);ownedSourcePath(typescriptPath);
        if(!groups.has(key))groups.set(key,{id,key,source:entry.source,module:actual.module,javascriptPath,typescriptPath,units:[]});
        if(!targetGroups.has(key))targetGroups.set(key,new Map());
@@ -70,7 +71,7 @@ export function proposeOwnedNativeBulkDiscovery(data,options={}){
       }
       for(const {entry,own,nativeDomain,key,projectedParameters}of candidates){
        try{
-        const observation={params:own.params.map((row,index)=>({name:row.name,rust:row.name,type:nativeDomain.parameters[index].name})),returns:nativeDomain.type,vectorOrigin:{kind:nativeDomain.kind,element:nativeDomain.element}},tree=observeNativeProjectionTree(own,observation,entry.lower(),targetGroups.get(key));
+        const observation={params:own.params.map((row,index)=>({name:row.name,rust:row.name,type:nativeDomain.parameters[index].name})),returns:nativeDomain.type,vectorOrigin:{kind:nativeDomain.kind,type:nativeDomain.type,element:nativeDomain.element}},tree=observeNativeProjectionTree(own,observation,entry.lower(),targetGroups.get(key));
         groups.get(key).units.push({entry,name:entry.name,rust:entry.qualifiedName,kind:nativeDomain.kind,parameters:projectedParameters,returns:nativeDomain.type,element:nativeDomain.element,tree});
        }catch(error){if(!(error instanceof TypeError))throw error;refusal(entry,'native-body-projection',error);}
       }
@@ -120,3 +121,5 @@ export function proposeOwnedNativeBulkDiscovery(data,options={}){
 }
 
 import {withOwnedNativeProjectOperation} from './owned-native-project-operation.mjs';
+
+import {hasPrimitiveExpressionVectorRuntime,originalPrimitiveExpressionVectorDomain,checkedPrimitiveExpressionVectorTail} from './owned-primitive-expression-vectors.mjs';

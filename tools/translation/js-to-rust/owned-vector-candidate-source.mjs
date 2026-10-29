@@ -208,7 +208,8 @@ function originalOwnedCoreType(handle,path,type,analysis){
  if(type.kind===ts.SyntaxKind.StringKeyword)return 'str';
  if(type.kind===ts.SyntaxKind.BooleanKeyword)return 'bool';
  if(type.kind===ts.SyntaxKind.VoidKeyword)return 'unit';
- const collection=ts.isTypeOperatorNode(type)&&type.operator===ts.SyntaxKind.ReadonlyKeyword?type.type:type;if(ts.isArrayTypeNode(collection)){if(originalOwnedCoreType(handle,path,collection.elementType,analysis)!=='json-ref')fail('actual imported JsonValue element required');return 'json-list-ref';}
+ if(type.kind===ts.SyntaxKind.BigIntKeyword)return 'usize';
+ const collection=ts.isTypeOperatorNode(type)&&type.operator===ts.SyntaxKind.ReadonlyKeyword?type.type:type;if(ts.isArrayTypeNode(collection)){const element=originalOwnedCoreType(handle,path,collection.elementType,analysis);if(element==='json-ref')return 'json-list-ref';if(element==='bool'||primitiveBitwiseType(element))return 'vec:'+element;fail('actual canonical JSON or closed primitive array element required');}
  if(ownedBase64ReadonlyOctets(ts,type))return 'bytes-ref';const base64Input=readOwnedBase64ResultImportType(ts,type,specifier=>originalImportTarget(path,specifier,analysis,state),state.data.runtimeRoot);if(base64Input)return base64Input;
 
  if(ts.isTypeReferenceNode(type)&&ts.isIdentifier(type.typeName)&&type.typeName.text!=='ReturnType'){
@@ -310,11 +311,12 @@ function checkFunctionBody(context,path,declaration,analysis){
  if(!declaration.name||!declaration.body||declaration.asteriskToken||declaration.typeParameters||declaration.modifiers?.some(mod=>mod.kind!==ts.SyntaxKind.ExportKeyword))fail('ordinary original named function required');
  const name=rustName(declaration.name.text),params=[],sourceCalls=[],environment=new Map();let cells=0,paired=pairedFunction(context,path,declaration,analysis);
  const vectorCandidate=checkOriginalOwnedVectorFunction(path,declaration,analysis,paired,name,operand=>originalOwnedCoreImport(context,path,operand,analysis));if(vectorCandidate)return vectorCandidate;
- const vectorProfile=analysis.vectorProfiles?.get(declaration.name.text),jsonVectorProfile=['json-vector','json-value','json-scalar','primitive-scalar'].includes(vectorProfile?.kind)?vectorProfile:null;
+ const vectorProfile=analysis.vectorProfiles?.get(declaration.name.text),jsonVectorProfile=['json-vector','json-value','json-scalar','primitive-scalar','primitive-expression-vector'].includes(vectorProfile?.kind)?vectorProfile:null;
  if(jsonVectorProfile?.kind==='primitive-scalar'&&nativeScalars)fail('closed primitive source units retain their separate non-operator input profile');
  if(jsonVectorProfile&&(!paired||declaration.parameters.length!==jsonVectorProfile.parameters.length||paired.declaration.parameters.length!==declaration.parameters.length))fail('actual original Json vector parameter arity differs');
  const definitionWrittenPair=paired?.declaration.type?paired:null,writtenDefinitionResult=definitionWrittenPair?.declaration.type??ts.getJSDocReturnType(declaration),definitionReturnType=primitiveDefinitions&&writtenDefinitionResult?originalOwnedCoreType(context,definitionWrittenPair?.pair.typescript.path??path,writtenDefinitionResult,definitionWrittenPair?.analysis??analysis):null,definitionUnit=definitionReturnType==='unit';
- const writtenCompatible=(actual,written)=>jsonVectorProfile&&written==='json-list-ref'?actual==='json-list-owned':['json-scalar','primitive-scalar'].includes(jsonVectorProfile?.kind)&&!nativeScalars&&primitiveBitwiseType(actual)&&written==='usize'||ownedBase64Compatible(actual,written);
+ const expressionVector=jsonVectorProfile?.kind==='primitive-expression-vector',moves=type=>ownedBase64Result(type)||type==='json-list-owned'||expressionVector&&type===jsonVectorProfile.type;
+ const writtenCompatible=(actual,written)=>expressionVector&&written==='vec:usize'&&typeof actual==='string'&&actual.startsWith('vec:')&&primitiveBitwiseType(actual.slice(4))?true:jsonVectorProfile&&written==='json-list-ref'?actual==='json-list-owned':['json-scalar','primitive-scalar'].includes(jsonVectorProfile?.kind)&&!nativeScalars&&primitiveBitwiseType(actual)&&written==='usize'||ownedBase64Compatible(actual,written);
  const tick=depth=>{if(++cells>100000||depth>160)fail('whole function flow budget');};
  function bind(identifier,value,scope){
   if(!ts.isIdentifier(identifier)||scope.has(identifier.text)||identifier.text.startsWith('__ro'))fail('duplicate, reserved or nonidentifier binding');
@@ -340,8 +342,8 @@ function checkFunctionBody(context,path,declaration,analysis){
  }
  // The complete available pair was selected before parameter domains.
  let boundedJsonBoundary=false,vectorFieldBoundary=false;const nativeOperatorHistory=createOwnedNativeBitwiseHistory(),sourceNativeOperators=nativeOperatorHistory.rows,hostCalls=[],byteInputs=new Set();
- const branchScope=scope=>new Map([...scope].map(([key,value])=>[key,ownedBase64Result(value.type)||value.type==='json-list-owned'?{...value}:value]));
- const mergeMoves=(scope,yes,no)=>{for(const [key,value]of scope)if(ownedBase64Result(value.type)||value.type==='json-list-owned')value.moved=!!yes.get(key)?.moved||!!no.get(key)?.moved;};
+ const branchScope=scope=>new Map([...scope].map(([key,value])=>[key,moves(value.type)?{...value}:value]));
+ const mergeMoves=(scope,yes,no)=>{for(const [key,value]of scope)if(moves(value.type))value.moved=!!yes.get(key)?.moved||!!no.get(key)?.moved;};
  const refine=(scope,condition,truth)=>{
   if(condition.kind==='not')return refine(scope,condition.value,!truth);
   if(condition.kind!=='option-test')return scope;
@@ -377,6 +379,12 @@ function checkFunctionBody(context,path,declaration,analysis){
 
  function expression(node,scope,depth,opaqueOperand=false,numericDomain=null){
   tick(depth);if(ts.isParenthesizedExpression(node))return expression(node.expression,scope,depth+1,opaqueOperand,numericDomain);
+  if(expressionVector&&ts.isArrayLiteralExpression(node)){
+   if(node.elements.length>4096||node.elements.some(item=>ts.isOmittedExpression(item)||ts.isSpreadElement(item)))fail('bounded dense primitive Vec elements required');
+   const element=jsonVectorProfile.element.name,items=node.elements.map(item=>expression(item,scope,depth+1,false,element));
+   if(items.some(item=>item.type!==element))fail('every actual vector item must retain the exact primitive domain');
+   return {kind:'primitive-vector-literal',items,type:jsonVectorProfile.type,root:null};
+  }
   if(jsonVectorProfile&&ts.isArrayLiteralExpression(node)){if(node.elements.length>4096||node.elements.some(item=>ts.isOmittedExpression(item)||ts.isSpreadElement(item)))fail('bounded dense canonical Json vector required');const items=node.elements.map(item=>expression(item,scope,depth+1));if(items.some(item=>!json(item.type)))fail('actual canonical Json vector elements required');return {kind:'json-vector-literal',items,type:'json-list-owned',root:null};}
   if(ts.isStringLiteral(node)||ts.isNoSubstitutionTemplateLiteral(node)){
    if(/\p{Surrogate}/u.test(node.text))fail('unpaired UTF16 string');return {kind:'string',value:node.text,type:'str',root:null};
@@ -405,7 +413,7 @@ function checkFunctionBody(context,path,declaration,analysis){
   if(ts.isIdentifier(node)){
    const value=scope.get(node.text);if(!value||checker.getSymbolAtLocation(node)!==value.symbol)fail('unknown, shadowed or moved binding');
    if(value.type==='json-option-input'&&!opaqueOperand)fail('opaque optional Json input requires its actual checked operation');
-   if(ownedBase64Result(value.type)||value.type==='json-list-owned'){if(value.moved)fail('native base64 result used after move');value.moved=true;}
+   if(moves(value.type)){if(value.moved)fail('native base64 result used after move');value.moved=true;}
    return {kind:'variable',name:node.text,type:value.type,root:value.root};
   }
   if(ts.isCallExpression(node)){
@@ -548,7 +556,7 @@ function checkFunctionBody(context,path,declaration,analysis){
     const value={kind:'unit',type:'unit',root:null};if(resultType!==null&&resultType!=='unit')fail('return domains differ');resultType='unit';resultRoot=null;scalarReturnValues.push(value);body.push({kind:'return',value});terminated=true;
    }else if(ts.isReturnStatement(statement)&&statement.expression){
     let value=expression(statement.expression,scope,depth+1,false,['json-scalar','primitive-scalar'].includes(jsonVectorProfile?.kind)&&!nativeScalars&&primitiveBitwiseType(jsonVectorProfile.type)?jsonVectorProfile.type:primitiveDefinitions&&primitiveBitwiseType(definitionReturnType)?definitionReturnType:null);if(['json-scalar','primitive-scalar'].includes(jsonVectorProfile?.kind)&&!nativeScalars&&primitiveBitwiseType(jsonVectorProfile.type)){value=scalarReturnLiteral(value,scope,depth+1);narrowOwnedNumericLiteral(value,jsonVectorProfile.type);}if(nativeScalars)nativeOperatorHistory.retainCopy(statement.expression,file,value);
-    if(!(jsonVectorProfile&&value.type==='json-list-owned')&&!['json','json-ref','bool','str','usize','text-owned','base64-result','u64','i64'].includes(value.type)&&!ownedJsonOptionalPayload(value.type)&&!primitiveBitwiseType(value.type))fail('unsupported owned result');
+    if(!(expressionVector&&value.type===jsonVectorProfile.type)&&!(jsonVectorProfile&&value.type==='json-list-owned')&&!['json','json-ref','bool','str','usize','text-owned','base64-result','u64','i64'].includes(value.type)&&!ownedJsonOptionalPayload(value.type)&&!primitiveBitwiseType(value.type))fail('unsupported owned result');
     if(value.type==='json-ref'&&!params.some(param=>param.name===value.root&&['json-ref','map-ref','json-option-ref'].includes(param.type)))fail('returned local loan');
     if(ownedJsonBorrowed(value.type)&&value.root&&!params.some(param=>param.name===value.root&&(['json-ref','map-ref','str','json-option-input'].includes(param.type)||ownedJsonBorrowed(param.type))))fail('returned local optional loan');
     joinI64LiteralReturn(value);

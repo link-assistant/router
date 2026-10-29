@@ -31,6 +31,7 @@ export function projectNativeTreeModule(input,options={}){
  const imported=(name,family,typeOnly=false)=>{const rows=typeOnly?typeImports:imports,key=family+':'+name;if(!rows.has(key))rows.set(key,{name,family,local:(imports.get(key)??typeImports.get(key))?.local??allocate('native_'+name)});return rows.get(key).local;};
  function type(role){
   if(['json','json-ref'].includes(role))return 'JsonValue';
+  if(typeof role==='string'&&role.startsWith('vec:')&&(role.slice(4)==='bool'||primitiveBitwiseType(role.slice(4))))return 'readonly '+type(role.slice(4))+'[]';
   if(role==='json-list-owned')return 'readonly JsonValue[]';
   if(role==='unit')return 'void';if(role==='bool')return 'boolean';if(role==='str')return 'string';
   if(['u64','i64'].includes(role))return 'Parameters<typeof '+imported('json_macro_'+role,'json-macro',true)+'>[0]';
