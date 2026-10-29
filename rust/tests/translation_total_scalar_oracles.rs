@@ -43,3 +43,31 @@ fn boolean_bitwise_evaluates_both_operands_in_order() {
     assert!(!value);
     assert_eq!(visits, vec![1]);
 }
+
+#[test]
+fn total_integer_methods_preserve_boundaries() {
+    macro_rules! unsigned {
+        ($($ty:ty),+ $(,)?) => {$(
+            assert_eq!(<$ty>::MAX.saturating_add(1), <$ty>::MAX);
+            assert_eq!((0 as $ty).saturating_sub(1), 0);
+            assert_eq!(<$ty>::MAX.saturating_mul(2), <$ty>::MAX);
+            assert_eq!(<$ty>::MAX.wrapping_add(1), 0);
+            assert_eq!((0 as $ty).wrapping_sub(1), <$ty>::MAX);
+            assert_eq!(<$ty>::MAX.min(0), 0);
+            assert_eq!(<$ty>::MAX.max(0), <$ty>::MAX);
+        )+};
+    }
+    macro_rules! signed {
+        ($($ty:ty),+ $(,)?) => {$(
+            assert_eq!(<$ty>::MAX.saturating_add(1), <$ty>::MAX);
+            assert_eq!(<$ty>::MIN.saturating_sub(1), <$ty>::MIN);
+            assert_eq!(<$ty>::MIN.saturating_mul(-1), <$ty>::MAX);
+            assert_eq!(<$ty>::MAX.wrapping_add(1), <$ty>::MIN);
+            assert_eq!(<$ty>::MIN.wrapping_sub(1), <$ty>::MAX);
+            assert_eq!(<$ty>::MIN.min(<$ty>::MAX), <$ty>::MIN);
+            assert_eq!(<$ty>::MIN.max(<$ty>::MAX), <$ty>::MAX);
+        )+};
+    }
+    unsigned!(u8, u16, u32, u64, u128);
+    signed!(i8, i16, i32, i64, i128);
+}

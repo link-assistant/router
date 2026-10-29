@@ -923,3 +923,10 @@ imports and wide-helper ABI joins are source drafted in
 [native-total-operators-source-draft.md](native-total-operators-source-draft.md).
 ALL UNRUN, including new Rust edge oracle source. Arithmetic/shift failure ordering,
 full drafting and complete coverage/receiving/resource/platform/CI remain OPEN.
+
+Seven total fixed-width integer method families now have source drafts for actual
+host-contract/source proof joins, qualified module projection and bidirectional
+bulk synchronization in
+[native-total-methods-source-draft.md](native-total-methods-source-draft.md).
+ALL UNRUN. Clamp/checked arithmetic/shift failure ordering and full drafting,
+coverage, parity, receiving, resources, platforms and CI remain OPEN.

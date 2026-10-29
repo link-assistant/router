@@ -38,8 +38,9 @@ import {nativeIntegerArithmetic} from '../native-integer-arithmetic.mjs';
 
 // Finite total scalar operations, DATA only. Actual source/private program
 // checks remain mandatory at every caller; operationProof is not an issuer.
-export const ownedNativeTotalOperator=name=>['primitiveBitwise','primitiveNot','integerCast'].includes(name);
+export const ownedNativeTotalOperator=name=>['primitiveBitwise','primitiveNot','integerCast','primitiveIntegerMethod'].includes(name);
 export function requestedNativeTotalOperator(node,read){
+ if(node.kind==='primitive-method-call'){const {target,method}=ownedPrimitiveOperatorCallMetadata(node);if(!totalNativeIntegerMethod(method.name))fail('native method needs its separate ordered failure rule');return ['fixed-method',method.name,target.name,node.args.map(read)];}
  if(node.kind==='primitive-bitwise-call'){
   const domain=node.type==='bool'?'bool':primitiveBitwiseType(node.type)?.name;
   if(node.name!=='primitiveBitwise'||!domain||!['&','|','^'].includes(node.operation)||node.args?.length!==2||node.root!==null||node.args.some(arg=>arg.type!==domain)||domain!=='bool'&&(node.bits!==primitiveBitwiseType(domain).bits||node.signed!==primitiveBitwiseType(domain).signed))fail('exact total bitwise operands required');
@@ -52,6 +53,7 @@ export function requestedNativeTotalOperator(node,read){
  return null;
 }
 export function actualNativeTotalOperator(node,read){
+ const method=actualNativeTotalIntegerMethod(node,read);if(method!==null)return method;
  if(!['routerPrimitiveScalarBitwise','routerPrimitiveIntegerNot','routerPrimitiveIntegerCast'].includes(node.k))return null;
  const proof=requirePrimitiveOperator(node);
  if(node.k==='routerPrimitiveScalarBitwise')return ['fixed-bitwise',proof.operation,proof.domain,[read(node.left),read(node.right)]];
@@ -62,6 +64,7 @@ export function projectNativeTotalOperator(node,{expression,imported}){
  if(!Array.isArray(node))return null;const [kind,a,b,c]=node;
  const domain=name=>name==='bool'?{name,bits:null,signed:null}:primitiveBitwiseType(name);
  const call=(name,args)=>imported(name,'primitive-operator')+'('+args.join(', ')+')';
+ if(kind==='fixed-method'){const row=primitiveBitwiseType(b),method=totalNativeIntegerMethod(a);if(node.length!==4||!row||!method||!Array.isArray(c)||c.length!==method.arity)fail('exact total method source projection required');return call('primitiveIntegerMethod',[...c.map(expression),'null',row.bits,row.signed,JSON.stringify(method.name)]);}
  if(kind==='fixed-bitwise'){
   const row=domain(b);if(node.length!==4||!row||!['&','|','^'].includes(a)||!Array.isArray(c)||c.length!==2)fail('exact bitwise source projection required');
   return call('primitiveBitwise',[...c.map(expression),JSON.stringify(a),JSON.stringify(row.bits),JSON.stringify(row.signed)]);
@@ -77,3 +80,21 @@ export function projectNativeTotalOperator(node,{expression,imported}){
 import {primitiveBitwiseType} from '../primitive-bitwise-types.mjs';
 import {ownedPrimitiveOperatorCallMetadata} from './owned-primitive-operator-emission.mjs';
 import {requirePrimitiveOperator} from '../extensions/primitive-operators.mjs';
+
+export const totalNativeIntegerMethod=name=>{const row=nativeIntegerMethod(name);return row&&row.name!=='clamp'?row:null;};
+export function requireOwnedNativeTotalCall(node){
+ if(!ownedNativeTotalOperator(node.name)||node.kind==='primitive-method-call'&&!totalNativeIntegerMethod(node.operation))fail('native call requires a total qualified scalar operation');return node;
+}
+function actualNativeTotalIntegerMethod(node,read){
+ if(node.k!=='routerHostCall'||node.contract?.family!=='fixed')return null;
+ const contract=node.contract,method=totalNativeIntegerMethod(contract.rustPath?.at(-1));if(!method)return null;
+ actualFixedOperand(node.type,node.span);const row=primitiveBitwiseType(node.type.rustPrimitiveName);
+ if(!row||contract.id!==node.id||contract.jsExport!=='rust_fixed_'+method.name||contract.kind!=='method'||contract.async!==false||contract.pure!==true||contract.rustPath.length!==2||contract.rustPath[0]!==row.name||contract.runtimeInstantiation?.factory!=='createFixedIntegerRuntime'||contract.runtimeInstantiation.type?.kind!=='fixed'||contract.runtimeInstantiation.type.bits!==row.bits||contract.runtimeInstantiation.type.signed!==row.signed||node.args?.length!==method.arity||contract.params?.length!==method.arity)fail('actual total native method contract differs');
+ for(let index=0;index<node.args.length;index++){actualFixedOperand(node.args[index].type,node.span);actualFixedOperand(contract.params[index],node.span);if(node.args[index].type.rustPrimitiveName!==row.name||contract.params[index].rustPrimitiveName!==row.name)fail('actual same-domain total method operands required');}
+ actualFixedOperand(contract.ret,node.span);actualFixedOperand(contract.receiver,node.span);actualFixedOperand(contract.instantiation,node.span);
+ if([contract.ret,contract.receiver,contract.instantiation].some(type=>type.rustPrimitiveName!==row.name)||method.ordered&&(contract.trait!=='std::cmp::Ord'||contract.traitImplementation!=='primitive-integer'))fail('actual total primitive method owner and return differ');
+ if(method.name.startsWith('wrapping_'))requireFixedWrappingMetadata(contract.sourceWrappingProof,contract.instantiation,method.name);
+ return ['fixed-method',method.name,row.name,node.args.map(read)];
+}
+import {actualFixedOperand} from '../extensions/primitive-operators.mjs';
+import {requireFixedWrappingMetadata} from '../extensions/fixed-wrapping-source.mjs';
