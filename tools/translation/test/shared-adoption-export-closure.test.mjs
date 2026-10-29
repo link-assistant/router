@@ -195,6 +195,7 @@ test('complete committed export carries shared adoption implementations original
  assert.ok(paths.has('tools/translation/prepare-primitive-unit-adoption-sources.mjs'));
  assert.ok(paths.has('tools/translation/prepare-primitive-bulk-adoption-sources.mjs'));
  assert.ok(paths.has('tools/translation/prepare-primitive-function-reconciliation-sources.mjs'));
+ assert.ok(paths.has('tools/translation/prepare-primitive-definition-headers-sources.mjs'));
  assert.ok(paths.has('tools/translation/js-to-rust/owned-primitive-function-reconciliation.mjs'));
  assert.ok(paths.has('tools/translation/js-to-rust/owned-primitive-unit-adoption.mjs'));
  assert.ok(paths.has('tools/translation/js-to-rust/owned-primitive-function-removal.mjs'));

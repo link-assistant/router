@@ -419,3 +419,9 @@ now has a complete source API, bulk dispatch and physical regression-source
 draft for simultaneous additions/removals and retained-body updates. ALL UNRUN.
 It composes actual private source operations and reconstructs one exact original
 Rust file; new-to-existing helper bootstrap and full translation remain OPEN.
+
+[Precise definition headers and fixed literal returns](primitive-definition-headers-source-draft.md)
+now have source and independent case drafts for all ten exact integer domains.
+ALL UNRUN. Actual private source types and native bodies remain required; these
+formatting/literal rules prepare the next existing-helper bootstrap consumer.
+Full translation, full drafting and every qualification obligation remain OPEN.
