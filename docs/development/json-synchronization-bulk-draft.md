@@ -389,3 +389,9 @@ receiving deletions to shared native-file composition and durable physical unit
 manifests. ALL UNRUN. Exact full-project insertion/removal deltas, empty unit
 repeat/restore and already-edited authority inputs are drafted; broader
 reconciliation, helper bootstrap and complete translation remain OPEN.
+
+The [definition helper source draft](primitive-definition-helpers-source-draft.md)
+adds actual-symbol bounded acyclic Boolean/fixed helper groups to the explicit
+new-function bootstrap and both insertion consumers. ALL UNRUN. Existing native
+helper re-entry, complete checked meta and whole proposed-native checks remain
+mandatory. New-to-existing/cross-unit helpers and full translation remain OPEN.

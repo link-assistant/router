@@ -53,6 +53,8 @@ export function proposeOwnedPrimitiveFunctionInsertion(data,options){
    if(value.kind==='bool'||value.kind==='integer'||value.kind==='variable')return;
    if(value.kind==='not'){expression(value.value,depth+1);return;}
    if(value.kind==='binary'&&['&&','||','===','!==','<','<=','>','>='].includes(value.op)){expression(value.left,depth+1);expression(value.right,depth+1);return;}
+
+   if(value.kind==='source-scalar-call'){const callee=value.callee,closed=type=>type==='bool'||!!primitiveBitwiseType(type);if(!callee||callee.returns!==value.type||!closed(callee.returns)||!Array.isArray(callee.parameters)||callee.parameters.some(type=>!closed(type))||!Array.isArray(value.args)||value.args.length!==callee.parameters.length)stop('actual complete closed primitive helper operands required');for(const argument of value.args)expression(argument,depth+1);return;}
    if(value.kind==='choose'){expression(value.cond,depth+1);expression(value.then,depth+1);expression(value.else,depth+1);return;}
    if(['primitive-bitwise-call','primitive-not-call','primitive-cast-call','primitive-method-call'].includes(value.kind)){requireOwnedNativeTotalCall(value);for(const argument of value.args)expression(argument,depth+1);return;}
    stop('new function needs its next explicit insertion operation/effect rule');
@@ -68,7 +70,7 @@ export function proposeOwnedPrimitiveFunctionInsertion(data,options){
       // A missing companion during JS bootstrap cannot supply copied headers.
       // JSDoc and imports are checked directly by the original receiving issuer.
       const context=createOwnedVectorCandidateContext({...original,primitiveOperators:true,primitiveDefinitions:true,files:[...seedFiles].map(([path,source])=>({path,source}))});contexts.push(context);first=translateOwnedVectorCandidate(seedFiles.get(sourcePath),{context,sourcePath,typescriptOutputPath:typescriptPath});seedFiles.clear();
-      if(!first.program.length||first.program.length>4096)stop('bounded nonempty complete new function set required');for(const item of checkOwnedCoreProgram(first.program)){if(item.vectorOrigin||!item.exported||!role(item.returns)||item.resultRoot!==null||item.params.some(row=>!role(row.type))||item.sourceCalls?.length||!nativeProjectionIdentifier(item.name))stop('only exported closed primitive functions enter this insertion family');body(item.body);}
+      if(!first.program.length||first.program.length>4096)stop('bounded nonempty complete new function set required');for(const item of checkOwnedCoreProgram(first.program)){if(item.vectorOrigin||!item.exported||!role(item.returns)||item.resultRoot!==null||item.params.some(row=>!role(row.type))||!nativeProjectionIdentifier(item.name))stop('only exported closed primitive functions enter this insertion family');body(item.body);}
       pair=prepareOwnedVectorModulePair(sourcePath,typescriptPath,first.typescript);return {pair,scope:scopes[0]};
      }},
      {id:'rust:insert-complete-emitted-source-and-independently-recheck-new-native-functions',apply:({pair,scope})=>{

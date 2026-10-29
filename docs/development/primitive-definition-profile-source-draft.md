@@ -17,6 +17,9 @@ fixed integer parameters/results and a complete bounded pure body. Qualified
 total operators retain their original actual import, metadata and operand checks.
 Borrowed/aggregate values, mutation, unit-return definitions, arbitrary helpers,
 effects, shifts and checked-failure calls retain separate refusal paths.
+The subsequent [definition helper draft](primitive-definition-helpers-source-draft.md)
+adds bounded acyclic same-source Boolean/fixed helper groups; broader helpers
+remain separately refused.
 
 The new profile retains exact fixed local aliases in emitted TypeScript, so its
 whole canonical source can recover the same scalar domains. Context mode data

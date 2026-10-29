@@ -90,7 +90,7 @@ async function insertionTargets(t,row){
 import {proposeOwnedPrimitiveFunctionExtension,inspectOwnedPrimitiveFunctionExtension} from '../owned-primitive-function-extension.mjs';
 import {preparePrimitiveFunctionExtensionSources} from '../../prepare-primitive-function-extension-sources.mjs';
 import {PRIMITIVE_BITWISE_TYPES} from '../../primitive-bitwise-types.mjs';
-import {proposeOwnedVectorNativeSynchronization} from '../owned-vector-native-synchronization.mjs';
+
 const extensionRoute={rustPath:'src/lib.rs',module:['target']};
 function fixture(native='bool'){const typed=native==='bool'?'export function existing(value:boolean):boolean{return value;}':'import type {RustU64} from "../runtime/primitive-operator-runtime.mjs";\nexport function existing(value:RustU64):RustU64{return value;}',input=data('pub fn untouched()->bool{false}\npub mod target {pub fn existing(value:'+native+')->'+native+'{value}}','export function existing(value){return value;}',typed);input.vectorBindings=[{javascriptPath:JS,javascriptName:'existing',rustPath:'src/lib.rs',rustName:'target.existing'}];return input;}
 function install(input,plan){const files=new Map(input.files.map(row=>[row.path,row.source]));for(const row of plan.outputs)files.set(row.path,row.after);return {...input,vectorBindings:[...input.vectorBindings.filter(row=>row.javascriptPath!==JS),...plan.bindings],files:[...files].map(([path,source])=>({path,source}))};}
