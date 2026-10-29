@@ -373,6 +373,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,ge
    for(const argument of totalOperands){if(domain(argument.type,argument)!=='copy')refuse('total primitive operation cannot hide owned JSON movement',argument);const value=read(argument);ensureRoots(value,state,argument);if(value.loans.size)refuse('total fixed primitive operation cannot retain a JSON text loan',argument);}return empty();
   }
   if(node.k==='routerHostCall'){
+   const sequence=primitiveSequenceOperationShape(node.id);if(sequence){if(!genuine(node,state.entry)||node.args.length!==sequence.parameters.length||kind!=='copy'||domain(node.args[0].type,node.args[0])!=='scalar-slice')refuse('primitive sequence needs its actual private readonly slice caller and copied output',node);const receiver=read(node.args[0],'borrow');ensureRoots(receiver,state,node);if(!receiver.loans.get(path([]))?.size)refuse('primitive sequence receiver lacks its live shared input root',node);if(sequence.operation==='get'){if(domain(node.args[1].type,node.args[1])!=='copy')refuse('primitive sequence index needs its actual Copy domain',node);const index=read(node.args[1],'copy');ensureRoots(index,state,node);if(index.loans.size)refuse('primitive sequence index cannot retain an input loan',node);}ensureRoots(receiver,state,node);return {loans:new Map(),tags:sequence.operation==='get'?new Set(['Some','None']):null};}
    if(['router_core_unicode_scalar_count','router_core_ascii_chars_in'].includes(node.id)){if(typeof genuineScalar!=='function'||genuineScalar(node,state.entry)!==true||kind!=='copy'||node.args.length!==(node.id==='router_core_unicode_scalar_count'?1:2)||node.args.some(argument=>argument.type?.kind!=='string'||argument.type.rustReference||argument.type.rustOwnership?.kind!=='borrowed'||argument.type.rustOwnership.source!=='str'||argument.type.patternOwnershipRefusal||domain(argument.type,argument)!=='copy'))refuse('text scalar operation requires its actual private original caller/library receipt',node);for(const argument of node.args)ensureRoots(read(argument,'borrow'),state,argument);return empty();}
    const stateOperation=jsonStateContract(node.id);
    if(['primitive-result','http-protocol'].includes(stateOperation?.family)){
@@ -526,3 +527,5 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,ge
 import {totalPrimitiveFlowOperands} from './extensions/total-primitive-flow.mjs';
 
 import {primitiveFailureFlowWithDivision as primitiveFailureFlow} from './extensions/primitive-failure-flow.mjs';
+
+import {primitiveSequenceOperationShape} from './primitive-sequence-call-shape.mjs';

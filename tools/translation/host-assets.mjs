@@ -84,6 +84,7 @@ ${['checked_add','checked_sub','checked_mul','checked_neg','wrapping_add','wrapp
     catch(error){if(error.code!=='ENOENT')throw error;}
   }
   for(const [path,content] of jsonRetentionRuntimeAssets())files.set(path,content);
+  for(const [name,source]of primitiveSequenceRuntimeAssetPair())files.set(name,source);
   return files;
 }
 
@@ -170,5 +171,8 @@ ${['checked_add','checked_sub','checked_mul','checked_neg','wrapping_add','wrapp
     catch(error){if(error.code!=='ENOENT')throw error;}
   }
   for(const [path,content] of jsonRetentionRuntimeAssets())files.set(path,content);
+  for(const [name,source]of primitiveSequenceRuntimeAssetPair())files.set(name,source);
   return files;
 }
+
+import {primitiveSequenceRuntimeAssetPair} from './primitive-sequence-runtime-sources.mjs';

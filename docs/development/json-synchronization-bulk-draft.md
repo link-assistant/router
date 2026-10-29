@@ -793,3 +793,10 @@ mapping, protected native library paths and complete privately rechecked Rust
 reproduction in both owned source families. Nine full equations and the complete
 receiving/candidate/refusal sources are UNRUN. Native forward/loan/asset
 integration, physical root/history activation and full translation remain OPEN.
+
+The [primitive sequence native forward draft](primitive-sequence-forward-source-draft.md)
+adds actual native source-scope/module joins, private caller issuance, scalar/
+Option type checks, receiver loan flow, emission frames and paired runtime
+assets. Seven full equations and independent all-domain receiving/refusal
+sources are UNRUN. Physical root/history activation, owned/mutable receiver
+families, actual application adoption and full synchronization remain OPEN.
