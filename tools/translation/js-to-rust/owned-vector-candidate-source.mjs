@@ -106,7 +106,7 @@ function base64Source(files){
 }
 /** Fresh source selection; no source/owner/verdict is shared across calls. */
 export function createOwnedCoreSourceContext(input){
- assertReverseConcreteSourceHost();const data=ownedPlainData(input);exactKeys(data,['files','runtimeRoot','declarationRoot','vectorBindings',...(Object.hasOwn(data,'primitiveOperators')?['primitiveOperators']:[])]);if(Object.hasOwn(data,'primitiveOperators')&&data.primitiveOperators!==true)fail('explicit primitive operator context requires true');ownedSourcePath(data.runtimeRoot);ownedSourcePath(data.declarationRoot);
+ assertReverseConcreteSourceHost();const data=ownedPlainData(input);exactKeys(data,['files','runtimeRoot','declarationRoot','vectorBindings',...(Object.hasOwn(data,'primitiveOperators')?['primitiveOperators']:[]),...(Object.hasOwn(data,'primitiveDefinitions')?['primitiveDefinitions']:[])]);if(Object.hasOwn(data,'primitiveOperators')&&data.primitiveOperators!==true)fail('explicit primitive operator context requires true');if(Object.hasOwn(data,'primitiveDefinitions')&&(data.primitiveDefinitions!==true||data.primitiveOperators!==true))fail('primitive definition profile requires explicit true and its complete primitive operator runtime');ownedSourcePath(data.runtimeRoot);ownedSourcePath(data.declarationRoot);
  if(!Array.isArray(data.files)||!data.files.length||data.files.length>4096)fail('complete files required');
  const files=new Map();let bytes=0;
  for(const row of data.files){exactKeys(row,['path','source']);ownedSourcePath(row.path);if(typeof row.source!=='string'||files.has(row.path))fail('duplicate or invalid source');bytes+=Buffer.byteLength(row.source);if(bytes>16777216)fail('complete input byte budget');files.set(row.path,row.source);}
@@ -306,7 +306,7 @@ function checkFunction(context,path,declaration,analysis){
  const frame=traversals.get(analysis);if(!frame||frame.handle!==context||frame.paired)fail('actual same-invocation original function traversal required');frame.scalarFunctions??=new Map();frame.scalarActive??=new Set();if(frame.scalarFunctions.has(declaration))return frame.scalarFunctions.get(declaration);if(frame.scalarFunctions.size>=4096||frame.scalarActive.size>=32||frame.scalarActive.has(declaration))fail('bounded acyclic original source helper body required');frame.scalarActive.add(declaration);try{const item=checkFunctionBody(context,path,declaration,analysis);frame.scalarFunctions.set(declaration,item);return item;}finally{frame.scalarActive.delete(declaration);}
 }
 function checkFunctionBody(context,path,declaration,analysis){
- const {ts,file,source,checker}=analysis,nativeScalars=contexts.get(context).data.primitiveOperators===true;
+ const {ts,file,source,checker}=analysis,nativeScalars=contexts.get(context).data.primitiveOperators===true,primitiveDefinitions=contexts.get(context).data.primitiveDefinitions===true;
  if(!declaration.name||!declaration.body||declaration.asteriskToken||declaration.typeParameters||declaration.modifiers?.some(mod=>mod.kind!==ts.SyntaxKind.ExportKeyword))fail('ordinary original named function required');
  const name=rustName(declaration.name.text),params=[],sourceCalls=[],environment=new Map();let cells=0,paired=pairedFunction(context,path,declaration,analysis);
  const vectorCandidate=checkOriginalOwnedVectorFunction(path,declaration,analysis,paired,name,operand=>originalOwnedCoreImport(context,path,operand,analysis));if(vectorCandidate)return vectorCandidate;
@@ -583,9 +583,10 @@ function checkFunctionBody(context,path,declaration,analysis){
  if(params.some(param=>param.type==='bytes-ref'&&!byteInputs.has(param.name)))fail('octet input requires an actual fixed base64 operand');
  if(params.some(param=>param.type==='json-option-input'&&!hostCalls.some(call=>ownedJsonOptionalReaderOperation(call.name)&&call.inputRoot===param.name)))fail('opaque optional Json input requires validation');
  if(jsonVectorProfile?.kind==='primitive-scalar'&&(hostCalls.some(call=>!ownedVectorTextScalarOperation(call.name)&&!ownedNativeTotalOperator(call.name))||sourceNativeOperators.length))fail('closed primitive source unit requires separately qualified call/effect rules');
+ if(primitiveDefinitions)assertOwnedPrimitiveDefinition({params,returns:resultType,resultRoot,body:checked.body,hostCalls,sourceCalls});
  if(!hostCalls.length&&!sourceNativeOperators.length)nativeOperatorHistory.adoptCopies();
  if(jsonVectorProfile&&resultType!==jsonVectorProfile.type)fail('actual original native owned JSON return shape required');
- if(!hostCalls.length&&!sourceNativeOperators.length&&!params.some(param=>param.type==='base64-result')&&!jsonVectorProfile)fail('no actual owned-core call');
+ if(!hostCalls.length&&!sourceNativeOperators.length&&!params.some(param=>param.type==='base64-result')&&!jsonVectorProfile&&!primitiveDefinitions)fail('no actual owned-core call');
  const item={kind:'owned-function',name,...(sourceCalls.length?{sourceCalls}:{}),javascript:declaration.name.text,exported:!!declaration.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword),params,returns:resultType,resultRoot,body:checked.body,source:{path,source,span:[declaration.getStart(file),declaration.end]},...(jsonVectorProfile?{vectorOrigin:jsonVectorProfile}:{}),...(sourceNativeOperators.length?{sourceNativeOperators}:{}),hostCalls};
  if(paired)item.pairedSource={path:paired.pair.typescript.path,source:paired.pair.typescript.source,span:paired.evidence.typescriptSpan,parameters:paired.evidence.parameters,locals:paired.evidence.locals,returnSpan:paired.evidence.returnSpan,erasure:paired.pair.erasure.edits};
  if(vectorFieldBoundary)requireOwnedVectorJsonFieldSources(traversals.get(analysis).state.files,contexts.get(context).data);if(boundedJsonBoundary)boundedJsonRuntimeRustEdge(traversals.get(analysis).state.files);requireOwnedCoreSourceCurrent(context);return item;
@@ -654,3 +655,5 @@ export function ownedBulkRuntimeSources(runtimeRoot='runtime',declarationRoot=ru
 }
 
 import {ownedNativeTotalOperator,requireOwnedNativeTotalCall} from './owned-native-total-operators.mjs';
+
+import {assertOwnedPrimitiveDefinition} from './owned-primitive-definition-family.mjs';

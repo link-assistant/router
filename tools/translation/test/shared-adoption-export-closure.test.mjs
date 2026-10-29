@@ -187,6 +187,8 @@ test('complete committed export carries shared adoption implementations original
  assert.ok(paths.has('tools/translation/prepare-primitive-bulk-insertion-sources.mjs'));
  assert.ok(paths.has('tools/translation/prepare-primitive-function-extension-sources.mjs'));
  assert.ok(paths.has('tools/translation/prepare-primitive-bulk-extension-sources.mjs'));
+ assert.ok(paths.has('tools/translation/prepare-primitive-definition-profile-sources.mjs'));
+ assert.ok(paths.has('tools/translation/js-to-rust/owned-primitive-definition-family.mjs'));
  assert.ok(paths.has('tools/translation/js-to-rust/owned-primitive-function-extension.mjs'));
  assert.ok(paths.has('tools/translation/js-to-rust/owned-primitive-function-insertion.mjs'));
  assert.ok(paths.has('tools/translation/js-to-rust/owned-native-empty-modules.mjs'));
