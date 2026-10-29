@@ -263,3 +263,5 @@ export {observePrimitiveSequenceCoreSources} from './primitive-sequence-source-b
 export {withOriginalPrimitiveSequenceSourceOperation,observeCurrentPrimitiveSequenceCoreSources,requireCurrentPrimitiveSequenceOperationSource} from './current-primitive-sequence-source.mjs';
 
 export {primitiveSequenceRuntimeSources} from './primitive-sequence-runtime-sources.mjs';
+
+export {proposeOwnedPrimitiveSliceEmptyCalls} from './js-to-rust/owned-primitive-slice-empty-proposals.mjs';

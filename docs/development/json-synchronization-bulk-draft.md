@@ -807,3 +807,10 @@ explicit known successor composition and a 22-equation/17-path default native
 history preserving the complete 21-row archive. Eleven full equations and
 independent constructor/history/export cases are UNRUN. Root source presence
 adds no measured coverage; full receiving/owner/parity qualification remains OPEN.
+
+The [bulk slice emptiness adoption draft](primitive-slice-empty-adoption-source-draft.md)
+proposes all strict zero-length comparisons on typed readonly slice parameters,
+composes written input guards and independently rechecks the whole module. Six
+full equations and independent all-domain JS/TS/interpreter/root/refusal cases
+are UNRUN. The changed input contract is explicit; production selection, original
+body equivalence, receiving qualification and full translation remain OPEN.
