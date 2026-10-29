@@ -484,3 +484,14 @@ paired, nested ordering, native insertion/helper/bulk, bound-refusal and CI-only
 Rust oracle cases remain UNRUN. Broader data/borrowed branches, ordered-match
 expressions, division/remainder, negation, shifts, constants and whole application
 translation remain OPEN.
+
+Checked negation now has a shared
+[unary source draft](checked-negation-source-draft.md): actual fixed Option
+contracts/runtime and unary declarations, associated/receiver/function-item
+arity, signed original Option expect lowering, reverse emission metadata and
+ordinary ordered/guarded failure events join the same pipeline. The pinned
+original signed/unsigned macro sources remain intact. Exact unsigned checked
+Option semantics are preserved without inventing unsigned unary Rust behavior.
+All complete independent source cases and CI-only oracles are UNRUN. Constants,
+pointer/platform profiles, division/remainder and full application closure
+remain OPEN.

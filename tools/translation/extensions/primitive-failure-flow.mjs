@@ -4,6 +4,7 @@ import {actualFixedOperand} from './primitive-operators.mjs';
 import {primitiveBitwiseType} from '../primitive-bitwise-types.mjs';
 const fail=message=>{throw new TypeError('Checked primitive failure flow: '+message);};
 export function primitiveFailureFlow(node){
+ if(node.k==='unary'&&node.op==='neg'&&node.type?.kind==='fixed'&&primitiveBitwiseType(node.type.rustPrimitiveName)){const type=actualFixedOperand(node.type,node.span);actualFixedOperand(node.arg?.type,node.span);if(type.signed!==true||node.semantics!=='checked'||node.arg.type.rustPrimitiveName!==type.rustPrimitiveName)fail('actual signed by-value checked negation required');return {kind:'arithmetic',operation:'neg',domain:type.rustPrimitiveName,args:[node.arg]};}
  if(node.k==='binary'&&['add','sub','mul'].includes(node.op)&&node.type?.kind==='fixed'&&primitiveBitwiseType(node.type.rustPrimitiveName)){
   const type=actualFixedOperand(node.type,node.span);actualFixedOperand(node.left?.type,node.span);actualFixedOperand(node.right?.type,node.span);
   if(node.semantics!=='checked'||node.left.type.rustPrimitiveName!==type.rustPrimitiveName||node.right.type.rustPrimitiveName!==type.rustPrimitiveName)fail('actual same-domain checked arithmetic operands required');

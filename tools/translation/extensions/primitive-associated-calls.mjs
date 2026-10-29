@@ -15,7 +15,7 @@ import {metadataDigest} from './source-links.mjs';
 import {rustFixedType} from '../checked-types.mjs';
 import {actualFixedOperand} from './primitive-operators.mjs';
 import {unsupported,typeError} from '../vendor/meta-language/translation/diagnostics.js';
-const intrinsic=new Set(['checked_add','checked_sub','checked_mul','wrapping_add','wrapping_sub','wrapping_mul','saturating_add','saturating_sub','saturating_mul']);
+const intrinsic=new Set(['checked_add','checked_sub','checked_mul','checked_neg','wrapping_add','wrapping_sub','wrapping_mul','saturating_add','saturating_sub','saturating_mul']);
 const ordered=new Set(['min','max','clamp']),calls=new WeakMap();
 const fixedName=name=>typeof name==='string'&&/^[iu](8|16|32|64|128)$/u.test(name);
 const same=(left,right)=>left.length===right.length&&left.every((part,index)=>part===right[index]);
@@ -67,7 +67,7 @@ export function checkPrimitiveAssociatedCall(checker,node,env,path,expected){
  const state=calls.get(node);if(!state||state.digest!==metadataDigest(node))fail('copied or changed caller has no private original namespace inputs',node.span);
  namespaceInputs(state.inputs);
  if(state.optionExpect){const result=checkCurrentPrimitiveOptionExpect(checker,node,env,path,expected);namespaceInputs(state.inputs);requireOriginalStandardCall(checker,node);if(state.digest!==metadataDigest(node))fail('caller changed before the closing Option source fence',node.span);return result;}
- const arity=node.method==='clamp'?3:2;if(node.args.length!==arity)throw typeError('primitive associated operation expects '+arity+' arguments',node.span);
+ const arity=node.method==='checked_neg'?1:node.method==='clamp'?3:2;if(node.args.length!==arity)throw typeError('primitive associated operation expects '+arity+' arguments',node.span);
  const domain=state.primitive?{...rustFixedType(state.primitive),rustPrimitiveName:state.primitive}:expected?.kind==='fixed'?expected:undefined;
  const first=checker.expr(node.args[0],env,path,domain),actual=actualFixedOperand(first.type,node.span);
  if(state.primitive&&actual.rustPrimitiveName!==state.primitive)throw typeError('associated primitive owner differs from its by-value first argument',node.span);

@@ -98,7 +98,7 @@ const pathKey=path=>path.filter((part,index)=>index!==0||part!=='crate').join(':
 const span=(start,end)=>({start:start.start,end:end.end});
 const runtimeValueType=type=>type.kind==='fixed'?{kind:'fixed',bits:type.bits,signed:type.signed}:type.kind==='array'?{kind:'array',element:runtimeValueType(type.element),...(type.rustFixedArray?{rustFixedArray:{length:type.rustFixedArray.length}}:{})}:type.kind==='named'?{kind:'data',name:(type.path[0]==='crate'?type.path.slice(1):type.path).join('.')}:type.kind==='data'?{kind:'data',name:type.name}:{kind:type.kind};
 const nonlocalDefault=node=>node&&typeof node==='object'&&(['routerReturn','routerBreak','routerContinue','routerTry','routerAwait'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(nonlocalDefault):nonlocalDefault(value))));
-const INHERENT_FIXED_COPY=new Set(['checked_add','checked_sub','checked_mul','wrapping_add','wrapping_sub','wrapping_mul','saturating_add','saturating_sub','saturating_mul']);
+const INHERENT_FIXED_COPY=new Set(['checked_add','checked_sub','checked_mul','checked_neg','wrapping_add','wrapping_sub','wrapping_mul','saturating_add','saturating_sub','saturating_mul']);
 // Built-in shared primitive reads copy an immutable BigInt value. Trait Deref,
 // raw pointers, aggregate copies and reference creation need separate proofs.
 export function sharedFixedPointee(type,range) {
@@ -452,7 +452,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
         requireBorrowedString(types[0],node.span);
         body={k:'routerStringOperation',op:node.method,object:args[0],args:[],span:node.span};
       } else {
-        if(types.length!==2||types.some(type=>type.rustReference||type.rustOwnership||type.rustPrimitiveName!==node.ownerType.rustPrimitiveName||!sameType(type,node.ownerType)))throw typeError('standard fixed method function item needs actual by-value primitive arguments',node.span);
+        if(types.length!==(node.method==='checked_neg'?1:2)||types.some(type=>type.rustReference||type.rustOwnership||type.rustPrimitiveName!==node.ownerType.rustPrimitiveName||!sameType(type,node.ownerType)))throw typeError('standard fixed method function item needs actual by-value primitive arguments',node.span);
         body={k:'routerDispatchMethod',method:node.method,object:args[0],args:args.slice(1),span:node.span};
       }
       return this.lambda({k:'routerLambda',params:names.map(name=>({name,span:node.span})),body,span:node.span},types,env,path,expected,context);
@@ -701,7 +701,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
       }
       const contracts=HOST_CONTRACTS.filter(contract=>contract.family!=='float'&&contract.kind==='method'&&contract.rustPath.at(-1)===method&&sameType(this.hostType(contract.receiver,path,node.span),receiver.type));
       if(contracts.length)return this.hostCall(contracts,[node.object,...node.args],env,path,expected,node.span);
-      if(receiver.type.kind==='fixed'&&['checked_add','checked_sub','checked_mul','wrapping_add','wrapping_sub','wrapping_mul','saturating_add','saturating_sub','saturating_mul','min','max','clamp'].includes(method)){
+      if(receiver.type.kind==='fixed'&&['checked_add','checked_sub','checked_mul','checked_neg','wrapping_add','wrapping_sub','wrapping_mul','saturating_add','saturating_sub','saturating_mul','min','max','clamp'].includes(method)){
         const borrowed=Boolean(receiver.type.rustReference);let type=receiver.type,object=node.object;
         if(borrowed&&!INHERENT_FIXED_COPY.has(method))throw unsupported('reference Ord method','reference trait selection is not primitive inherent autodereference',node.span);
         while(type.rustReference){type=sharedFixedPointee(type,node.span);object={k:'routerPrimitiveDereference',value:object,sourceFeature:'inherent-receiver-autoderef',span:node.object.span};}

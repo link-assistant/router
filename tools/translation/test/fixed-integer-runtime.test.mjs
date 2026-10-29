@@ -7,7 +7,7 @@ test('fixed arithmetic contracts require checked types, standard Option provenan
   const ids=new Set();
   for(const bits of [8,16,32,64,128])for(const signed of [false,true]){
     const result=fixedIntegerContracts(type(bits,signed));
-    assert.equal(result.contracts.length,12);assert.equal(result.data[0].standardGeneric.kind,'Option');
+    assert.equal(result.contracts.length,13);assert.equal(result.data[0].standardGeneric.kind,'Option');
     assert.deepEqual(result.data[0].standardGeneric.arguments,[type(bits,signed)]);
     for(const contract of result.contracts){assert.ok(!ids.has(contract.id));ids.add(contract.id);assert.equal(contract.runtimeInstantiation.factory,'createFixedIntegerRuntime');assert.deepEqual(contract.receiver,type(bits,signed));assert.ok(contract.pure);}
     for(const contract of result.contracts.filter(item=>['rust_fixed_min','rust_fixed_max','rust_fixed_clamp'].includes(item.jsExport))){assert.equal(contract.constEligible,false);assert.equal(contract.trait,'std::cmp::Ord');}
