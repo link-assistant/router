@@ -99,7 +99,7 @@ import {jsonMacroDependencyProfile} from '../json-macro-inputs.mjs';
 import {deriveDependencyProfile} from '../derive-dependencies.mjs';
 import {checkOwnedCoreProgram} from './owned-vector-candidate-operations.mjs';
 import {primitiveBitwiseType} from '../primitive-bitwise-types.mjs';
-import {requireOwnedNativeClosedCall} from './owned-native-closed-operators.mjs';
+import {requireOwnedNativeClosedCall} from './owned-native-division-operators.mjs';
 import {nativeProjectionIdentifier} from './owned-native-tree-source.mjs';
 import {captureSourceModuleViews,originalModuleViewItems} from '../source-module-views.mjs';
 import {rustTokens} from '../rust-structure.mjs';

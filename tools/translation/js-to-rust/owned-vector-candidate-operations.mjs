@@ -203,7 +203,7 @@ function emitOwnedCoreCheckedProgram(complete,target,{outputPath,nativeJsonSourc
    case 'option-some':return rust?'Some('+expr(value.value)+')':"({$:'Some',field0:"+expr(value.value)+'})';
    case 'option-test':if(nativeJsonSource)return '(if let ::std::option::Option::Some(_) = '+expr(value.value)+' { '+String(value.some)+' } else { '+String(!value.some)+' })';return rust?'('+expr(value.value)+').is_'+(value.some?'some':'none')+'()':'('+expr(value.value)+'.$ === '+JSON.stringify(value.some?'Some':'None')+')';
    case 'option-field':if(nativeJsonSource){if(value.value.kind!=='variable'||!nativeOptionPayloads.has(value.value.name))fail('native Option payload needs its current dominating checked Some binder');return nativeOptionPayloads.get(value.value.name);}return rust?'(match '+expr(value.value)+' { Some(value) => value, None => unreachable!("checked original Some branch") })':expr(value.value)+'.field0';
-   case 'primitive-arithmetic-call':case 'primitive-method-call':case 'primitive-not-call':case 'primitive-cast-call':case 'primitive-shift-call':imports.add(value.name);return emitOwnedPrimitiveOperatorCall(value,{rust,expression:argument=>expr(argument),argumentName:()=> '__ro_arg_'+sequence++});
+   case 'primitive-arithmetic-call':case 'primitive-method-call':case 'primitive-not-call':case 'primitive-cast-call':case 'primitive-shift-call':imports.add(value.name);return (nativeJsonSource||sourceData.primitiveDefinitions===true?emitOwnedNativePrimitiveOperatorCall:emitOwnedPrimitiveOperatorCall)(value,{rust,expression:argument=>expr(argument),argumentName:()=> '__ro_arg_'+sequence++});
    case 'primitive-bitwise-call':{
     const domain=primitiveBitwiseType(value.type),boolean=value.type==='bool';if(value.name!=='primitiveBitwise'||!boolean&&!domain||domain&&(value.bits!==domain.bits||value.signed!==domain.signed)||value.args.length!==2||value.args.some(argument=>!primitiveBitwiseCompatible(argument.type,value.type))||!ownedBooleanBitwiseOperator(value.operation))fail('checked primitive bitwise contract differs');imports.add(value.name);if(!rust)return '__ro_primitiveBitwise('+value.args.map(argument=>expr(argument)).join(', ')+', '+JSON.stringify(value.operation)+', '+(domain?domain.bits:'null')+', '+(domain?domain.signed:'null')+')';const names=value.args.map(()=> '__ro_arg_'+sequence++),bindings=value.args.map((argument,index)=>'let '+names[index]+' = '+expr(argument)+';');return '{ '+bindings.join(' ')+' '+ownedBooleanBitwiseRustCall(value.operation,names)+' }';
    }
@@ -391,7 +391,7 @@ import {ownedBooleanBitwiseOperation,ownedBooleanBitwiseOperator,ownedBooleanBit
 import {primitiveBitwiseType,primitiveBitwiseCompatible,primitiveBitwiseRustTypes,primitiveBitwiseTypeScriptTypes} from '../primitive-bitwise-types.mjs';
 
 import {ownedPrimitiveOperatorOperation} from './owned-primitive-operator-source.mjs';
-import {emitOwnedPrimitiveOperatorCall,evaluateOwnedPrimitiveOperatorCall} from './owned-primitive-operator-emission.mjs';
+import {emitOwnedPrimitiveOperatorCall,emitOwnedNativePrimitiveOperatorCall,evaluateOwnedPrimitiveOperatorCall} from './owned-primitive-operator-emission.mjs';
 
 import {ownedBase64InputPrelude,ownedBase64InputEnvironment,hasOwnedBase64Input} from './owned-base64-inputs.mjs';
 

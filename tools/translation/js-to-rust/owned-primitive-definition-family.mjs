@@ -69,7 +69,7 @@ export function foldNativeConstantTotal(model){
  constantFail('unsupported total constant model');
 }
 import {sameType} from '../checked-types.mjs';
-import {totalNativeIntegerMethod} from './owned-native-closed-operators.mjs';
+import {totalNativeIntegerMethod} from './owned-native-division-operators.mjs';
 
 // DATA validation only. Only the original source checker can issue a function;
 // this helper is never a source/type/namespace or executable permission token.
@@ -93,4 +93,4 @@ export function assertOwnedPrimitiveDefinition({params,returns,resultRoot,body:s
  if(!Array.isArray(params)||params.length>32||returns!=='unit'&&!role(returns)||resultRoot!==null||params.some(param=>!role(param.type))||!Array.isArray(hostCalls)||hostCalls.some(call=>!ownedNativeClosedOperator(call.name))||!Array.isArray(sourceCalls)||sourceCalls.length>16384)stop('closed primitive parameters result and separately qualified total operations required');
  body(statements);return true;
 }
-import {ownedNativeClosedOperator,requireOwnedNativeClosedCall} from './owned-native-closed-operators.mjs';
+import {ownedNativeClosedOperator,requireOwnedNativeClosedCall} from './owned-native-division-operators.mjs';

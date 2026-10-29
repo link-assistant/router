@@ -121,6 +121,6 @@ import {primitiveBitwiseType} from '../primitive-bitwise-types.mjs';
 
 import {projectNativeTotalOperator} from './owned-native-total-operators.mjs';
 
-import {nativeFailureEventOperation,projectNativeFailureCall} from './owned-native-closed-operators.mjs';
+import {nativeFailureEventOperation,projectNativeFailureCall} from './owned-native-division-operators.mjs';
 
 import {primitiveVectorResultRole} from './owned-source-value-calls.mjs';

@@ -32,3 +32,21 @@ import {nativeIntegerMethod} from '../native-integer-methods.mjs';
 
 import {nativeIntegerArithmetic} from '../native-integer-arithmetic.mjs';
 import {overflowMessage,zeroDivisorMessage} from '../vendor/meta-language/translation/aborts.js';
+
+// Additive source-roundtrip emitter. The original public emitter remains exact.
+// Actual fixed-width operands evaluate once, left to right; Rust division and
+// remainder retain native zero and signed MIN/-1 failures without a macro.
+export function emitOwnedNativePrimitiveOperatorCall(value,{rust,expression,argumentName}){
+ const metadata=ownedPrimitiveOperatorCallMetadata(value),expressions=value.args.map(expression);
+ if(!rust)return '__ro_'+value.name+'('+expressions.concat(metadata.after.map(value=>JSON.stringify(value))).join(', ')+')';
+ const names=value.args.map(argumentName);if(names.some(name=>typeof name!=='string'||!/^__ro_arg_[0-9]+$/u.test(name))||new Set(names).size!==names.length)fail();const bindings=expressions.map((text,index)=>'let '+names[index]+' = '+text+';').join(' ');
+ if(value.kind==='primitive-arithmetic-call'&&['div','rem'].includes(metadata.operation.name))return '{ '+bindings+' ('+names[0]+' '+metadata.operation.operator+' '+names[1]+') }';
+ if(value.kind==='primitive-arithmetic-call'){const guard=['div','rem'].includes(metadata.operation.name)?' assert!('+names[1]+' != 0_'+metadata.target.name+', '+JSON.stringify(zeroDivisorMessage(metadata.operation.name,{kind:'fixed'}))+');':'';return '{ '+bindings+guard+' ::core::option::Option::expect('+metadata.target.rust+'::'+metadata.operation.checked+'('+names.join(', ')+'), '+JSON.stringify(overflowMessage(metadata.operation.name))+') }';}
+ if(value.kind==='primitive-method-call'){const callee=metadata.method.ordered?'::core::cmp::Ord::'+metadata.method.name:metadata.target.rust+'::'+metadata.method.name;return '{ '+bindings+' '+callee+'('+names.join(', ')+') }';}
+ if(value.kind==='primitive-not-call')return '{ '+bindings+' (!'+names[0]+') }';
+ if(value.kind==='primitive-cast-call')return '{ '+bindings+' '+(metadata.input.name===metadata.target.name?names[0]:'('+names[0]+' as '+metadata.target.rust+')')+' }';
+ // Cast the already evaluated scalar count to u128. Every negative signed
+ // count becomes too large; all unsigned and i128 positive counts stay exact.
+ // This avoids narrowing the width literal to an i8 count domain at width 128.
+ const count=metadata.count.name==='u128'?names[1]:'('+names[1]+' as ::core::primitive::u128)';return '{ '+bindings+' assert!('+count+' < '+metadata.target.bits+'_u128, "Rust integer shift count overflow"); ('+names[0]+' '+value.operation+' '+names[1]+') }';
+}

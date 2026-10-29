@@ -25,7 +25,7 @@ function engine(native,read,guard,sourceCall=()=>true){
  function effect(node,depth=0){
   charge(depth);if(!node||typeof node!=='object')return false;if(effects.has(node))return effects.get(node);
   if(seen.has(node))fail('acyclic original scalar observation required');seen.add(node);
-  const kind=key(node),own=native?kind==='unary'&&node.op==='neg'||kind==='call'&&sourceCall(node)||kind==='binary'&&['add','sub','mul'].includes(node.op)||kind==='routerHostCall'&&(node.contract?.rustPath?.at(-1)==='clamp'||node.id==='router_core_unicode_scalar_count'||node.id==='router_core_ascii_chars_in'):kind==='primitive-arithmetic-call'||kind==='primitive-method-call'&&node.operation==='clamp'||kind==='source-scalar-call'||kind==='text-scalar-call';
+  const kind=key(node),own=native?kind==='unary'&&node.op==='neg'||kind==='call'&&sourceCall(node)||kind==='binary'&&['add','sub','mul','div','rem'].includes(node.op)||kind==='routerHostCall'&&(node.contract?.rustPath?.at(-1)==='clamp'||node.id==='router_core_unicode_scalar_count'||node.id==='router_core_ascii_chars_in'):kind==='primitive-arithmetic-call'||kind==='primitive-method-call'&&node.operation==='clamp'||kind==='source-scalar-call'||kind==='text-scalar-call';
   let result=own;for(const [,child]of children(node))if(effect(child,depth+1))result=true;seen.delete(node);effects.set(node,result);return result;
  }
  function needs(node,depth=0){

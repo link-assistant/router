@@ -525,4 +525,4 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,ge
 
 import {totalPrimitiveFlowOperands} from './extensions/total-primitive-flow.mjs';
 
-import {primitiveFailureFlow} from './extensions/primitive-failure-flow.mjs';
+import {primitiveFailureFlowWithDivision as primitiveFailureFlow} from './extensions/primitive-failure-flow.mjs';

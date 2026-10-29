@@ -230,7 +230,7 @@ function nativeVectorAlias(value,locals,guard,depth){
  if(!fixed&&!observedSourceF64(type)&&!originalStaticVectorText(type)&&!originalOwnedVectorText(type))fail('unsupported actual native scalar alias domain');const original=resolveNativeVectorLocal(value,locals,guard,depth);if(original?.k==='var'&&guard.parameter(original.name))return;if(original?.k==='lit'&&!originalOwnedVectorText(type))return;fail('native scalar alias requires a literal parameter or pure bool expression');
 }
 
-import {requestedNativeFailureOperator,actualNativeFailureOperator} from './owned-native-closed-operators.mjs';
+import {requestedNativeFailureOperator,actualNativeFailureOperator} from './owned-native-division-operators.mjs';
 
 import {observeRequestedGuardedPrimitiveBody,observeActualGuardedPrimitiveBody} from './owned-guarded-primitive-failures.mjs';
 

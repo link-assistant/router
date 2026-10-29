@@ -29,8 +29,10 @@ fn unused_primitive_vector_still_evaluates_its_items() {
 }
 #[test]
 fn boolean_vectors_keep_conditional_shape() {
+    let left = std::hint::black_box(true);
+    let right = std::hint::black_box(false);
     for flag in [false, true] {
-        let result = if flag {vec![true && !false, true == false]} else {vec![false]};
+        let result = if flag {vec![left && !right, left == right]} else {vec![right]};
         assert_eq!(result, if flag {vec![true, false]} else {vec![false]});
     }
 }

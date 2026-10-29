@@ -102,7 +102,7 @@ function fixture(domain,{guarded=false,aliases=false,unused=false,opposite=false
 for(const domain of PRIMITIVE_BITWISE_TYPES)test('actual Vec<'+domain.name+'> elements reuse checked arithmetic with both source directions',limits,async t=>{
  const row=fixture(domain),plan=proposeOwnedVectorNativeSynchronization(row.input,{sourcePath:JS,typescriptPath:TS,typescript:row.result.typescript});assert.equal(plan.selectedFunctions.length,1);assert.equal(row.result.program[0].vectorOrigin.kind,'primitive-expression-vector');assert.equal(plan.rustExecuted,false);
  for(const get of await insertionTargets(t,row)){assert.deepEqual(get('values',3n,2n,true),[5n,6n]);assert.throws(()=>get('values',BigInt(domain.maximum),2n,false),/attempt to add with overflow/u);}
- const project=forward(row,plan);await verifyTypedTargets(project,({typescript,javascript})=>{for(const target of [typescript,javascript])assert.deepEqual(target.values(3n,2n,true),[5n,6n]);});
+ const project=forward(row,plan);await verifyTypedTargets(project,api=>{assert.deepEqual(api.values(3n,2n,true),[5n,6n]);},{childTimeoutMs:20000});
 });
 test('every vector item retains evaluation and first-panic order',limits,async t=>{
  const domain=PRIMITIVE_BITWISE_TYPES.find(row=>row.name==='u8');

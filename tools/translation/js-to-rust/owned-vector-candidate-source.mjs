@@ -663,6 +663,6 @@ export function ownedBulkRuntimeSources(runtimeRoot='runtime',declarationRoot=ru
  const rows=new Map();for(const row of [...ownedCoreRuntimeSources(runtimeRoot,declarationRoot),...ownedPrimitiveOperatorRuntimeSources(runtimeRoot,declarationRoot)]){if(rows.has(row.path)&&rows.get(row.path).source!==row.source)fail('conflicting actual bulk runtime source');rows.set(row.path,row);}return [...rows.values()].sort((a,b)=>a.path.localeCompare(b.path));
 }
 
-import {ownedNativeClosedOperator,requireOwnedNativeClosedCall} from './owned-native-closed-operators.mjs';
+import {ownedNativeClosedOperator,requireOwnedNativeClosedCall} from './owned-native-division-operators.mjs';
 
 import {assertOwnedPrimitiveDefinition} from './owned-primitive-definition-family.mjs';

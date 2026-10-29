@@ -545,3 +545,11 @@ precise result domains, complete same-module graphs and actual native ABI checks
 Ordered unused/guarded calls and immutable result moves remain explicit.
 Thirteen complete equations and all independent JS/TS/native cases are UNRUN.
 Vec inputs, cross-module/new Vec helpers and full translation remain OPEN.
+
+The [division/remainder source draft](primitive-division-roundtrip-source-draft.md)
+adds a separate ordered finite-failure family and native binary round-trip
+emitter while preserving original public APIs/refusals. Complete active
+receiving/native consumers share zero, MIN/-1, operand-order and guarded
+continuations. Nineteen complete equations and independent all-width paired,
+bulk/discovery and CI-only Rust edge sources are UNRUN. Bare checked-Option
+expectation semantics remain distinct; full source drafting stays OPEN.
