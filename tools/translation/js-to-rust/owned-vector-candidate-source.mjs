@@ -393,7 +393,7 @@ function checkFunctionBody(context,path,declaration,analysis){
   }
   if(node.kind===ts.SyntaxKind.TrueKeyword||node.kind===ts.SyntaxKind.FalseKeyword)return {kind:'bool',value:node.kind===ts.SyntaxKind.TrueKeyword,type:'bool',root:null};
   if(primitiveBitwiseType(numericDomain)&&(ts.isBigIntLiteral(node)||ts.isPrefixUnaryExpression(node)&&node.operator===ts.SyntaxKind.MinusToken&&ts.isBigIntLiteral(node.operand))){const negative=ts.isPrefixUnaryExpression(node);return ownedIntegerLiteral((negative?node.operand:node).text,{negative,domain:numericDomain});}
-  if(jsonVectorProfile&&ts.isPrefixUnaryExpression(node)&&node.operator===ts.SyntaxKind.MinusToken&&ts.isBigIntLiteral(node.operand))return ownedIntegerLiteral(node.operand.text,{negative:true});
+  if((jsonVectorProfile||vectorDefinitions)&&ts.isPrefixUnaryExpression(node)&&node.operator===ts.SyntaxKind.MinusToken&&ts.isBigIntLiteral(node.operand)){const value=ownedIntegerLiteral(node.operand.text,{negative:true});if(vectorDefinitions&&value.value==='0')value.type='usize';return value;}
   if(ts.isBigIntLiteral(node)){
    const text=node.text.replace(/n$/u,'').replaceAll('_','');let value;try{value=BigInt(text);}catch{fail('invalid integer');}
    if(value<0n||value>18446744073709551615n)fail('u64 literal bound');return {kind:'integer',value:value.toString(),type:'usize',root:null};
@@ -498,7 +498,7 @@ function checkFunctionBody(context,path,declaration,analysis){
    const cond=expression(node.condition,scope,depth+1),a=refine(branchScope(scope),cond,true),b=refine(branchScope(scope),cond,false);let yes=expression(node.whenTrue,a,depth+1,false,numericDomain),no=expression(node.whenFalse,b,depth+1,false,numericDomain);
    if(jsonVectorProfile&&!nativeScalars){if(primitiveBitwiseType(yes.type)&&no.type==='usize'){no=scalarReturnLiteral(no,b,depth+1);narrowOwnedNumericLiteral(no,yes.type);}else if(primitiveBitwiseType(no.type)&&yes.type==='usize'){yes=scalarReturnLiteral(yes,a,depth+1);narrowOwnedNumericLiteral(yes,no.type);}}
    if(inference&&(inference.vector(yes.type)||inference.vector(no.type))){const joined=inference.join(yes.type,no.type);yes.type=joined;no.type=joined;}
-   const loan=yes.type==='str'&&no.type==='str'?meetStringLoans(jsonVectorProfile?asciiStringLoan(yes,a):stringLoan(yes),jsonVectorProfile?asciiStringLoan(no,b):stringLoan(no)):undefined;
+   if(nativeScalars){cells+=joinOwnedNativeScalarChoiceOperands(yes,no,true);tick(depth);}const loan=yes.type==='str'&&no.type==='str'?meetStringLoans(jsonVectorProfile?asciiStringLoan(yes,a):stringLoan(yes),jsonVectorProfile?asciiStringLoan(no,b):stringLoan(no)):undefined;
    if(cond.type!=='bool'||yes.type!==no.type||yes.type==='str'&&!loan||yes.root!==no.root&&!loan&&yes.kind!=='option-none'&&no.kind!=='option-none')fail('conditional result or loan differs');mergeMoves(scope,a,b);return {kind:'choose',cond,then:yes,else:no,type:yes.type,root:loan?loan.root:yes.kind==='option-none'?no.root:yes.root};
   }
   if(ts.isPrefixUnaryExpression(node)&&node.operator===ts.SyntaxKind.ExclamationToken){const value=expression(node.operand,scope,depth+1);if(value.type!=='bool')fail('boolean negation only');return {kind:'not',value,type:'bool',root:null};}
@@ -530,6 +530,7 @@ function checkFunctionBody(context,path,declaration,analysis){
   }
  }
 
+ function joinPrimitiveDefinitionLiteralReturns(value){if(!primitiveDefinitions||!nativeScalars||value.root!==null||!scalarReturnValues.length)return;for(const previous of scalarReturnValues){cells+=joinOwnedNativeScalarChoiceOperands(previous,value,true);tick(0);}if(scalarReturnValues.every(previous=>previous.type===value.type))resultType=value.type;}
  function asciiStringLoan(value,scope){const loan=stringLoan(value);if(loan)return loan;if(value.type==='str'&&value.kind==='choose')return meetStringLoans(asciiStringLoan(value.then,scope),asciiStringLoan(value.else,scope));return value.type==='str'&&value.kind==='variable'&&value.root===null&&scope.get(value.name)?.asciiStaticLoan===true?{root:null}:undefined;}
  function scalarReturnLiteral(value,scope,depth){tick(depth);if(value.kind==='variable'){const constant=scope.get(value.name)?.constantInteger;if(typeof constant==='string')return {kind:'integer',value:constant,type:value.type,root:null};}if(value.kind==='choose')return {...value,then:scalarReturnLiteral(value.then,scope,depth+1),else:scalarReturnLiteral(value.else,scope,depth+1)};return value;}
  function finishNativeUnitReturn(checked){if(!checked.terminated&&(['json-scalar','primitive-scalar'].includes(jsonVectorProfile?.kind)&&jsonVectorProfile.type==='unit'||definitionUnit)){const value={kind:'unit',type:'unit',root:null};if(resultType!==null&&resultType!=='unit')fail('return domains differ');resultType='unit';resultRoot=null;scalarReturnValues.push(value);checked.body.push({kind:'return',value});checked.terminated=true;}return checked;}
@@ -563,7 +564,7 @@ function checkFunctionBody(context,path,declaration,analysis){
     if(value.type==='json-ref'&&!params.some(param=>param.name===value.root&&['json-ref','map-ref','json-option-ref'].includes(param.type)))fail('returned local loan');
     if(ownedJsonBorrowed(value.type)&&value.root&&!params.some(param=>param.name===value.root&&(['json-ref','map-ref','str','json-option-input'].includes(param.type)||ownedJsonBorrowed(param.type))))fail('returned local optional loan');
     if(inference&&resultType!==null&&(inference.vector(resultType)||inference.vector(value.type))){resultType=inference.join(resultType,value.type);value.type=resultType;}
-    joinI64LiteralReturn(value);
+    joinI64LiteralReturn(value);joinPrimitiveDefinitionLiteralReturns(value);
     const loan=value.type==='str'?(stringResultLoan===null?stringLoan(value):meetStringLoans(stringResultLoan,stringLoan(value))):undefined,effectiveRoot=loan?loan.root:value.root;
     if(value.type==='str'&&!loan)fail('returned str requires an actual literal or live input origin');
     if(resultType!==null&&(resultType!==value.type||resultRoot!==effectiveRoot&&!(value.type==='str'&&loan)&&!(ownedJsonOptionalPayload(value.type)&&(value.kind==='option-none'||resultOnlyAbsent))))fail('return domains differ');resultType=value.type;if(value.kind!=='option-none'){resultRoot=effectiveRoot;resultOnlyAbsent=false;}if(value.type==='str')stringResultLoan=loan;scalarReturnValues.push(value);body.push({kind:'return',value});terminated=true;
@@ -630,7 +631,7 @@ import {ownedParenthesizedType} from './owned-type-parentheses.mjs';
 
 import {ownedNativeScalarDeclaration} from './owned-native-scalar-declaration.mjs';
 
-import {ownedNativeIntegerDomain,joinOwnedNativeScalarOperands} from './owned-native-scalar-flow.mjs';
+import {ownedNativeIntegerDomain,joinOwnedNativeScalarOperands,joinOwnedNativeScalarChoiceOperands} from './owned-native-scalar-flow.mjs';
 
 import {readOwnedNativeBitwiseExpression,createOwnedNativeBitwiseHistory} from './owned-native-bitwise-source.mjs';
 

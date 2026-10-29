@@ -2,12 +2,12 @@
 // No shared cache or public request type can create a pending variable here.
 // These DATA equations never issue source, namespace or compiler authority.
 import {PRIMITIVE_BITWISE_TYPES,primitiveBitwiseType} from '../primitive-bitwise-types.mjs';
-import {ownedSourceIntegerLiteral as ownedIntegerLiteral} from './owned-numeric-literals.mjs';
+import {ownedSourceIntegerLiteral as ownedIntegerLiteral,narrowOwnedNumericLiteral} from './owned-numeric-literals.mjs';
 import {primitiveVectorResultRole} from './owned-source-value-calls.mjs';
 const fail=message=>{throw new TypeError('Primitive Vec inference: '+message);};
 const domains=['bool',...PRIMITIVE_BITWISE_TYPES.map(row=>row.name)];
 export function createPrimitiveVectorInference(){
- const nodes=new Map(),literals=new WeakMap();let work=0;
+ const nodes=new Map(),literals=new WeakMap(),literalChoices=new WeakMap();let work=0;
  const tick=()=>{if(++work>100000)fail('complete function-local inference budget');};
  const pending=type=>typeof type==='string'&&nodes.has(type);
  const vector=type=>pending(type)||primitiveVectorResultRole(type);
@@ -24,9 +24,10 @@ export function createPrimitiveVectorInference(){
   const allowed=PRIMITIVE_BITWISE_TYPES.filter(row=>number>=(row.signed?-BigInt(row.minimumAbs):0n)&&number<=BigInt(row.maximum)).map(row=>row.name);if(!allowed.length)fail('literal outside every supported primitive domain');
   const value={kind:'integer',value:number.toString(),type:'@router-private-vector-literal',root:null};literals.set(value,{allowed,number});return value;
  }
+ function literalChoice(value){const values=[];function visit(node,depth){tick();if(depth>160)fail('bounded complete literal element choice');if(!node||node.root!==null)return false;if(node.kind==='integer'&&typeof node.value==='string'){values.push(BigInt(node.value));return true;}return node.kind==='choose'&&node.cond?.type==='bool'&&visit(node.then,depth+1)&&visit(node.else,depth+1);}return visit(value,0)?values:null;}
  function array(items,hint=null){
   const type=create();if(hint!==null){if(!primitiveVectorResultRole(hint))fail('actual primitive vector hint required');constrain(type,[hint.slice(4)],true);}
-  for(const item of items){tick();const deferred=literals.get(item);if(deferred){constrain(type,deferred.allowed);continue;}if(item.type!=='bool'&&!primitiveBitwiseType(item.type))fail('actual nonliteral vector item requires its precise primitive domain');constrain(type,[item.type],true);}
+  for(const item of items){tick();const deferred=literals.get(item);if(deferred){constrain(type,deferred.allowed);continue;}const choices=literalChoice(item);if(choices){const allowed=PRIMITIVE_BITWISE_TYPES.filter(row=>choices.every(number=>number>=(row.signed?-BigInt(row.minimumAbs):0n)&&number<=BigInt(row.maximum))).map(row=>row.name);constrain(type,allowed);literalChoices.set(item,allowed);continue;}if(item.type!=='bool'&&!primitiveBitwiseType(item.type))fail('actual nonliteral vector item requires its precise primitive domain');constrain(type,[item.type],true);}
   const value={kind:'primitive-vector-literal',items,type,root:null};return value;
  }
  function resolved(type){if(!pending(type))return type;const node=nodes.get(find(type));if(!node.anchored||node.allowed.size!==1)fail('ambiguous Vec result requires an actual typed value or written domain');return 'vec:'+node.allowed.values().next().value;}
@@ -34,7 +35,7 @@ export function createPrimitiveVectorInference(){
   // Resolve the whole current function only. Never traverse original source,
   // external checker objects or future invocations; all nodes are private IR.
   const seen=new Set();function visit(value,depth=0){tick();if(depth>160)fail('bounded complete inferred body');if(!value||typeof value!=='object'||seen.has(value))return;seen.add(value);if(typeof value.type==='string'&&pending(value.type))value.type=resolved(value.type);
-   if(value.kind==='primitive-vector-literal')for(const item of value.items){const deferred=literals.get(item);if(deferred){const domain=value.type.slice(4);if(!deferred.allowed.includes(domain))fail('literal exceeds inferred actual domain');Object.assign(item,ownedIntegerLiteral((deferred.number<0n?-deferred.number:deferred.number).toString()+'n',{negative:deferred.number<0n,domain}));}}
+   if(value.kind==='primitive-vector-literal')for(const item of value.items){const choices=literalChoices.get(item);if(choices){const domain=value.type.slice(4);if(!choices.includes(domain))fail('literal choice exceeds inferred actual domain');narrowOwnedNumericLiteral(item,domain);}const deferred=literals.get(item);if(deferred){const domain=value.type.slice(4);if(!deferred.allowed.includes(domain))fail('literal exceeds inferred actual domain');Object.assign(item,ownedIntegerLiteral((deferred.number<0n?-deferred.number:deferred.number).toString()+'n',{negative:deferred.number<0n,domain}));}}
    if(Array.isArray(value)){for(const item of value)visit(item,depth+1);return;}for(const key of ['items','value','args','left','right','cond','then','else','body'])if(Object.hasOwn(value,key))visit(value[key],depth+1);
   }visit(body);for(const key of nodes.keys())resolved(key);return resolved(result);
  }

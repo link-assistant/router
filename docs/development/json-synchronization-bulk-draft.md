@@ -623,3 +623,10 @@ spellings and selects it across eight source families. Original/default literal
 APIs retain their exact prior bounds. Ten complete equations and all-width radix,
 receiving/refusal and CI-only Rust oracle sources are UNRUN. Full drafting and
 all broader translation/verification obligations remain OPEN.
+
+The [primitive literal-choice draft](primitive-choice-domains-source-draft.md)
+adds bounded generic-literal choice joins across seven source families and new
+primitive return paths. Vec literal choices retain unanchored width constraints
+until actual typed values or written domains resolve them. Ten complete source
+equations and all-width/ordering/refusal/CI-only Rust case sources are UNRUN. Full
+drafting, native owner closure, broader behavior and all verification stay OPEN.
