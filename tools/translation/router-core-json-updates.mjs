@@ -397,7 +397,7 @@ export function visitRouterCoreJsonUpdateFunction(checker,item,path,entry,visit,
    if(!receipt.owns||receipt.errorLane||receipt.optionLane)return result;if(receipt.vectorLane){receipt.deferredOwnedVectorFlow=true;return result;}
    createRulePipeline([
     {phase:'language',rules:[{id:'owned-json-flow:check-whole-function-linear-state',apply:()=>{
-     validateOwnedJsonFlow(checker,entry,{genuine:node=>{const proof=issued.get(node.compatibilityCore);return proof?.checker===checker&&proof.frame===receipt&&proof.id===node.id&&same(node.args,proof.args);},genuineTextMatch:node=>receipt.textMatches?.some(record=>same(node,record.body)&&same(record.syntax,record.original))===true});
+     validateOwnedJsonFlow(checker,entry,{genuineScalar:(node,owner)=>isGenuineRouterCoreScalarCall(checker,node,owner),genuine:node=>{const proof=issued.get(node.compatibilityCore);return proof?.checker===checker&&proof.frame===receipt&&proof.id===node.id&&same(node.args,proof.args);},genuineTextMatch:node=>receipt.textMatches?.some(record=>same(node,record.body)&&same(record.syntax,record.original))===true});
      return null;
     }}]},
     {phase:'repository',rules:[{id:'router-core:rejoin-original-update-caller',apply:value=>{
@@ -426,7 +426,7 @@ export function finalizeOriginalJsonErrorFlow(checker,program,Parser,Checker,tai
   if(!fact.receipt.errorLane&&!fact.receipt.optionLane)continue;current(name);const dependencies=new Map();
   try{createRulePipeline([
    {phase:'language',rules:[{id:'owned-json-error-flow:check-current-linear-result-and-readonly-closure',apply:()=>{
-    validateOwnedJsonFlow(checker,fact.entry,{
+    validateOwnedJsonFlow(checker,fact.entry,{genuineScalar:(node,owner)=>isGenuineRouterCoreScalarCall(checker,node,owner),
      genuine:(node,entry)=>{const owner=records.get(entry.fullName),proof=issued.get(node.compatibilityCore);return proof?.checker===checker&&proof.frame===owner?.receipt&&proof.id===node.id&&same(node.args,proof.args);},
      genuineTextMatch:node=>fact.receipt.textMatches?.some(record=>same(node,record.body)&&same(record.syntax,record.original))===true,
      closedOption:fact.receipt.optionLane?closedOptionSource(checker,fact,current,Parser,Checker,program):null,
@@ -671,8 +671,10 @@ export function validateOriginalOwnedJsonVectorEntry(checker,entry){
  if(!selected&&!fact?.receipt.deferredOwnedVectorFlow)return false;
  if(!fact||fact.entry!==entry)throw unsupported('owned Json vector source','requires the completed actual original declaration',entry.span);
  currentFunction(checker,fact.item,fact.receipt);if(!same({params:entry.params,ret:entry.ret,body:entry.body},fact.snapshot))fail();
- validateOwnedJsonFlow(checker,entry,{genuineVector:vector,genuine:node=>{const proof=issued.get(node.compatibilityCore);return proof?.checker===checker&&proof.frame===fact.receipt&&proof.id===node.id&&same(node.args,proof.args);},genuineTextMatch:node=>fact.receipt.textMatches?.some(record=>same(node,record.body)&&same(record.syntax,record.original))===true});
+ validateOwnedJsonFlow(checker,entry,{genuineScalar:(node,owner)=>isGenuineRouterCoreScalarCall(checker,node,owner),genuineVector:vector,genuine:node=>{const proof=issued.get(node.compatibilityCore);return proof?.checker===checker&&proof.frame===fact.receipt&&proof.id===node.id&&same(node.args,proof.args);},genuineTextMatch:node=>fact.receipt.textMatches?.some(record=>same(node,record.body)&&same(record.syntax,record.original))===true});
  currentFunction(checker,fact.item,fact.receipt);if(!same({params:entry.params,ret:entry.ret,body:entry.body},fact.snapshot))fail();return true;
 }
 
 import {BOUNDED_JSON_CORE_CONTRACTS,BOUNDED_JSON_CORE_SHA256,boundedJsonCoreOperation,parseBoundedJsonCoreCall} from './bounded-json-core-call-source.mjs';
+
+import {isGenuineRouterCoreScalarCall} from './router-core-scalars.mjs';

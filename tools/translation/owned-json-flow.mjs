@@ -38,7 +38,7 @@ export function describeOwnedJsonDifference(actual,expected,{propertyOrder=false
  };
  return visit(actual,expected,'',0);
 }
-export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,genuineVector=null,closedErrors=null,closedOption=null}) {
+export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,genuineVector=null,genuineScalar=null,closedErrors=null,closedOption=null}) {
  const refuse=(detail,node,comparison=null)=>{const diagnostic=comparison??closedErrors?.diagnostic?.(node);throw unsupported('owned JSON flow',detail+(diagnostic?' [comparison '+JSON.stringify(diagnostic)+']':''),node?.span??entry.span);};
  const standardContext=closedErrors??closedOption;
  let cells=100000,callCount=0,selectedOptionTypes=null,optionalParseBoundary=null,ownedStateVectorBoundary=null;
@@ -367,6 +367,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,ge
    for(const argument of node.args){const value=argument.value;if(!value?.k)refuse('missing checked JSON interpolation',node);read(value,value.k==='var'?'borrow':'move');}return empty();
   }
   if(node.k==='routerHostCall'){
+   if(['router_core_unicode_scalar_count','router_core_ascii_chars_in'].includes(node.id)){if(typeof genuineScalar!=='function'||genuineScalar(node,state.entry)!==true||kind!=='copy'||node.args.length!==(node.id==='router_core_unicode_scalar_count'?1:2)||node.args.some(argument=>argument.type?.kind!=='string'||argument.type.rustReference||argument.type.rustOwnership?.kind!=='borrowed'||argument.type.rustOwnership.source!=='str'||argument.type.patternOwnershipRefusal||domain(argument.type,argument)!=='copy'))refuse('text scalar operation requires its actual private original caller/library receipt',node);for(const argument of node.args)ensureRoots(read(argument,'borrow'),state,argument);return empty();}
    const stateOperation=jsonStateContract(node.id);
    if(['primitive-result','http-protocol'].includes(stateOperation?.family)){
     const row=stateOperation,expected=row.returns==='text-owned'?'owned-text':row.returns.endsWith('-text-result')||row.returns==='text-owned-option'?'linear':'copy';if(!genuine(node,state.entry)||node.args.length!==row.parameters.length||kind!==expected)refuse('Result operation requires its complete actual native call and result domain',node);const observed=[];

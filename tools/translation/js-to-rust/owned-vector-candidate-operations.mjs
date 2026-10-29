@@ -170,6 +170,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath,nativeJsonSource=f
  function expr(value,borrowOwned=false){
   switch(value.kind){
    case 'json-field-call':return emitOwnedVectorJsonFieldCall(value,{rust,expr,imports,sequence:()=>sequence++});
+   case 'text-scalar-call':{const op=ownedVectorTextScalarOperation(value.name);if(!op||op.ret!==value.type||op.args.length!==value.args.length||value.args.some(argument=>argument.type!=='str'))fail('actual fixed text scalar signature differs');imports.add(value.name);if(!rust)return '__ro_'+value.name+'('+value.args.map(argument=>expr(argument)).join(', ')+')';const names=value.args.map(()=> '__ro_arg_'+sequence++),bindings=value.args.map((argument,index)=>'let '+names[index]+' = '+expr(argument)+';');return '{ '+bindings.join(' ')+' '+ownedAsciiRustCall(value.name,names)+' }';}
    case 'source-scalar-call':return (rust?(nativeJsonSource?'crate::'+value.callee.rust.split('.').join('::'):value.callee.localRust):value.callee.javascript)+'('+value.args.map(argument=>expr(argument)).join(', ')+')';
    case 'owned-vector-list':return emitOwnedVectorCandidateLiteral(value,rust);
    case 'json-vector-literal':if(rust)return 'crate::translation_core::vec!['+value.items.map(child=>freshJson(child)?expr(child):copyExpression(child)).join(', ')+']';imports.add('router_core_json_copy');return '['+value.items.map(child=>freshJson(child)?expr(child):'__ro_router_core_json_copy('+expr(child)+')').join(', ')+']';
@@ -278,8 +279,8 @@ export function emitOwnedCoreProgram(input,target,{outputPath,nativeJsonSource=f
  if(primitiveTypeImports.size){const location=posix.relative(posix.dirname(output),(sourceData.declarationRoot??sourceData.runtimeRoot)+'/primitive-operator-runtime.mjs');lines.push('import type { '+[...primitiveTypeImports].join(', ')+' } from '+JSON.stringify(location.startsWith('.')?location:'./'+location)+';');}
  if(hasOwnedBase64Input(program)||[...imports].some(name=>ownedBase64Operation(name)))lines.push('import type {Base64Error,Base64Result} from '+JSON.stringify(relative('base64-runtime.mjs'))+';');
  if(hasOwnedBase64Input(program))lines.push('import {base64ResultInput as __ro_base64ResultInput} from '+JSON.stringify(relative('base64-runtime.mjs'))+';');
- for(const family of ['primitive-operator','json-fields','json-update','json-macro','base64','json','json-option']){
-  const names=[...imports].filter(name=>(ownedPrimitiveOperatorOperation(name)?'primitive-operator':ownedVectorJsonFieldOperation(name)?'json-fields':ownedJsonOptionalReaderOperation(name)?'json-option':ownedBase64Operation(name)?'base64':ownedJsonReaderOperation(name)?'json':name.startsWith('json_macro_')?'json-macro':'json-update')===family);
+ for(const family of ['primitive-operator','string-iterator','json-fields','json-update','json-macro','base64','json','json-option']){
+  const names=[...imports].filter(name=>(ownedPrimitiveOperatorOperation(name)?'primitive-operator':ownedVectorTextScalarOperation(name)?'string-iterator':ownedVectorJsonFieldOperation(name)?'json-fields':ownedJsonOptionalReaderOperation(name)?'json-option':ownedBase64Operation(name)?'base64':ownedJsonReaderOperation(name)?'json':name.startsWith('json_macro_')?'json-macro':'json-update')===family);
   if(names.length)lines.push('import { '+names.map(name=>name+' as __ro_'+name).join(', ')+' } from '+JSON.stringify(relative(family+'-runtime.mjs'))+';');
  }
  return lines.join('\n')+'\n\n'+code+'\n';
@@ -327,6 +328,7 @@ export async function prepareOwnedCoreRuntime(input){
  const program=checkOwnedCoreProgram(input),modules={update:await import('../json-update-runtime.mjs'),macro:await import('../json-macro-runtime.mjs')};
  if(program.some(item=>item.sourceNativeOperators?.some(row=>row.kind==='native-fixed-bitwise')||item.hostCalls.some(call=>ownedPrimitiveOperatorOperation(call.name))))modules.primitive=await import('../extensions/primitive-operator-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedVectorJsonFieldOperation(call.name))))modules.fields=await import('../json-fields-runtime.mjs');
+ if(program.some(item=>item.hostCalls.some(call=>ownedVectorTextScalarOperation(call.name))))modules.textScalar=await import('../extensions/string-iterator-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedJsonReaderOperation(call.name))))modules.json=await import('../extensions/json-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedJsonOptionalReaderOperation(call.name))))modules.optional=await import('../json-option-runtime.mjs');
  if(hasOwnedBase64Input(program)||program.some(item=>item.hostCalls.some(call=>ownedBase64Operation(call.name))))modules.base64=await import('../base64-runtime.mjs');
@@ -339,6 +341,7 @@ export function evaluateOwnedCoreProgram(input,name,args,token){
  const env=ownedBase64InputEnvironment(item.params,args,state.modules);if(isJsonVector(item))validateJsonVectorInputs(item,env,state.modules);else validateVectorParameters(item,env);
  const get=(value,scope)=>{if(hasCalls&&++evaluationNodes>100000)fail('complete expanded source helper work bound');
   switch(value.kind){
+   case 'text-scalar-call':if(!state.modules.textScalar||!ownedVectorTextScalarOperation(value.name))fail('unissued text scalar runtime');return Reflect.apply(state.modules.textScalar[value.name],undefined,value.args.map(argument=>get(argument,scope)));
    case 'source-scalar-call':{const target=sourceItems.get(scalarSourceCallKey(value.callee));if(!target)fail('complete checked source helper closure required');return execute(target,value.args.map(argument=>get(argument,scope)),depth+1);}
    case 'json-field-call':return evaluateOwnedJsonFieldCall(value,{state,scope,get});
    case 'owned-vector-list':return evaluateOwnedVectorCandidateLiteral(value,scope);
@@ -391,3 +394,5 @@ import {nativeJsonPredicateSource,nativeJsonOptionalReaderSource} from './owned-
 import {ownedVectorJsonFieldOperation,emitOwnedVectorJsonFieldCall,evaluateOwnedJsonFieldCall,requireOwnedVectorJsonFieldSources} from './owned-vector-json-fields.mjs';
 
 import {assertScalarSourceCallClosure,scalarSourceCallKey,hasScalarSourceCalls} from './owned-source-scalar-calls.mjs';
+
+import {ownedVectorTextScalarOperation,ownedAsciiRustCall} from './owned-vector-text-scalars.mjs';

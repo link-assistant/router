@@ -183,7 +183,7 @@ function originalOwnedCoreImport(handle,path,node,analysis){
  for(let depth=0;depth<32;depth++){
   const source=state.files.get(target);if(source===undefined)fail('import target missing');links.push({path:target,name,source,from:{path:ownerFile.fileName,span:[ownerDeclaration.getStart(ownerFile),ownerDeclaration.end]}});
   if(target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'||target===state.data.runtimeRoot+'/primitive-operator-runtime.mjs'||target===state.data.runtimeRoot+'/json-update-runtime.mjs'||target===state.data.runtimeRoot+'/json-macro-runtime.mjs'||target===state.data.runtimeRoot+'/base64-runtime.mjs'||target===state.data.runtimeRoot+'/json-runtime.mjs'||target===state.data.runtimeRoot+'/json-option-runtime.mjs'||target===state.data.runtimeRoot+'/json-fields-runtime.mjs'){
-   if(target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'&&name!=='requireScalarString')fail('only the actual scalar string validator endpoint is registered');
+   if(target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'&&name!=='requireScalarString'&&!ownedVectorTextScalarOperation(name))fail('only actual scalar string validation and fixed text scalar exports are registered');
    if(target===state.data.runtimeRoot+'/json-fields-runtime.mjs'){if(!ownedVectorJsonFieldOperation(name))fail('field export requires a supported copied plain/shared/primitive payload domain');requireOwnedVectorJsonFieldSources(state.files,state.data);}
    if(target===state.data.runtimeRoot+'/primitive-operator-runtime.mjs'&&(state.data.primitiveOperators!==true||!ownedPrimitiveOperatorOperation(name)&&!((spec.isTypeOnly||declaration.importClause?.isTypeOnly)&&primitiveBitwiseAlias(name))))fail('unregistered primitive operator context or export');
    const typesOnly=spec.isTypeOnly||declaration.importClause?.isTypeOnly;
@@ -229,6 +229,7 @@ function originalOwnedCoreType(handle,path,type,analysis){
   const query=type.typeArguments[0];if(ts.isTypeQueryNode(query)&&ts.isIdentifier(query.exprName)){
    const binding=originalOwnedCoreImport(handle,path,query.exprName,analysis),op=ownedBase64Operation(binding.name);
    if(binding.target===state.data.runtimeRoot+'/base64-runtime.mjs'&&op)return op.ret;
+   const textScalar=ownedVectorTextScalarOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'&&textScalar)return textScalar.ret;
    const field=ownedVectorJsonFieldOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/json-fields-runtime.mjs'&&field)return field.ret;
    const reader=ownedJsonReaderOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/json-runtime.mjs'&&reader)return reader.ret;
    const optional=ownedJsonOptionalReaderOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/json-option-runtime.mjs'&&optional)return optional.ret;
@@ -243,6 +244,7 @@ function originalOwnedCoreType(handle,path,type,analysis){
   const query=type.objectType.typeArguments[0];
   if(ts.isTypeQueryNode(query)&&ts.isIdentifier(query.exprName)){
    const binding=originalOwnedCoreImport(handle,path,query.exprName,analysis);
+   const textScalar=ownedVectorTextScalarOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'&&textScalar&&Number(type.indexType.literal.text)<textScalar.args.length)return textScalar.args[Number(type.indexType.literal.text)];
    const base64=ownedBase64Operation(binding.name);if(binding.target===state.data.runtimeRoot+'/base64-runtime.mjs'&&base64&&type.indexType.literal.text==='0')return base64.input;
    const field=ownedVectorJsonFieldOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/json-fields-runtime.mjs'&&field&&Number(type.indexType.literal.text)<field.args.length)return field.args[Number(type.indexType.literal.text)];
    const reader=ownedJsonReaderOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/json-runtime.mjs'&&reader&&Number(type.indexType.literal.text)<reader.args.length)return reader.args[Number(type.indexType.literal.text)];
@@ -410,6 +412,7 @@ function checkFunctionBody(context,path,declaration,analysis){
     if(!jsonVectorProfile||!target.name||analysis.vectorProfiles?.get(target.name.text)?.kind!=='primitive-scalar')fail('source calls require an actual selected closed primitive callee');const callee=checkFunction(context,path,target,analysis),origin=callee.vectorOrigin?.original;if(callee.vectorOrigin?.kind!=='primitive-scalar'||!origin||origin.qualifiedName.split('.').slice(0,-1).join('.')!==jsonVectorProfile.original.qualifiedName.split('.').slice(0,-1).join('.')||origin.qualifiedName.split('.').some(part=>! /^[A-Za-z_][A-Za-z0-9_]*$/u.test(part)||KEYS.has(part))||node.arguments.length!==callee.params.length)fail('actual ordinary primitive source callee/arity differs');const args=node.arguments.map((argument,index)=>{const role=callee.params[index].type;let value=expression(argument,scope,depth+1,false,role);if(['u64','i64'].includes(role)){value=scalarReturnLiteral(value,scope,depth+1);narrowOwnedNumericLiteral(value,role);}if(value.type!==role&&!(role==='u64'&&value.type==='usize'))fail('source callee argument differs from its actual native ABI');if(role==='str'&&value.root!==null&&!params.some(param=>param.name===value.root&&param.type==='str'))fail('JSON-derived text source calls need a separate readonly loan proof');return value;});const frame=traversals.get(analysis);frame.scalarEdges=(frame.scalarEdges??0)+1;if(frame.scalarEdges>16384)fail('bounded original source-call edges required');const selected={path,javascript:callee.javascript,rust:origin.qualifiedName,localRust:callee.name,parameters:callee.params.map(param=>param.type),returns:callee.returns,span:[...callee.source.span]};sourceCalls.push(selected);return {kind:'source-scalar-call',callee:selected,args,type:callee.returns,root:null};
    }}
    const binding=originalOwnedCoreImport(context,path,node.expression,analysis),op=OPS[binding.name];
+   const textScalar=ownedVectorTextScalarOperation(binding.name);if(textScalar&&binding.target===analysis.runtimeRoot+'/string-iterator-runtime.mjs'){if(!jsonVectorProfile||binding.typeOnly||node.arguments.length!==textScalar.args.length)fail('fixed source-bound text scalar operation/arity required');requireOwnedCoreSourceCurrent(context);const args=node.arguments.map(argument=>expression(argument,scope,depth+1));if(args.some(value=>value.type!=='str'||!asciiStringLoan(value,scope)))fail('text scalar arguments need actual live borrowed/static text');hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});requireOwnedCoreSourceCurrent(context);return {kind:'text-scalar-call',name:binding.name,args,type:textScalar.ret,root:null};}
    if(ownedPrimitiveOperatorOperation(binding.name)&&binding.target===analysis.runtimeRoot+'/primitive-operator-runtime.mjs'){
     requireOwnedCoreSourceCurrent(context);if(binding.typeOnly)fail('primitive runtime call cannot use a type-only import');const value=readOwnedPrimitiveOperatorCall(ts,node,binding.name,argument=>expression(argument,scope,depth+1));hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});requireOwnedCoreSourceCurrent(context);return value;
    }
@@ -514,6 +517,7 @@ function checkFunctionBody(context,path,declaration,analysis){
   }
  }
 
+ function asciiStringLoan(value,scope){const loan=stringLoan(value);if(loan)return loan;if(value.type==='str'&&value.kind==='choose')return meetStringLoans(asciiStringLoan(value.then,scope),asciiStringLoan(value.else,scope));return value.type==='str'&&value.kind==='variable'&&value.root===null&&scope.get(value.name)?.asciiStaticLoan===true?{root:null}:undefined;}
  function scalarReturnLiteral(value,scope,depth){tick(depth);if(value.kind==='variable'){const constant=scope.get(value.name)?.constantInteger;if(typeof constant==='string')return {kind:'integer',value:constant,type:value.type,root:null};}if(value.kind==='choose')return {...value,then:scalarReturnLiteral(value.then,scope,depth+1),else:scalarReturnLiteral(value.else,scope,depth+1)};return value;}
  function block(statements,scope,depth){
   const body=[];let terminated=false;
@@ -533,7 +537,7 @@ function checkFunctionBody(context,path,declaration,analysis){
        if(written==='json-ref'?!json(value.type):!writtenCompatible(value.type,written))fail('paired written local ABI differs');
       }
      }
-     const constantInteger=jsonVectorProfile&&!nativeScalars?(value.kind==='integer'?value.value:value.kind==='variable'?scope.get(value.name)?.constantInteger:undefined):undefined;const name=bind(declaration.name,{type:value.type,root:value.root,...(typeof constantInteger==='string'?{constantInteger}:{})},scope);body.push({kind:'let',name,value});
+     const constantInteger=jsonVectorProfile&&!nativeScalars?(value.kind==='integer'?value.value:value.kind==='variable'?scope.get(value.name)?.constantInteger:undefined):undefined;const staticTextLoan=jsonVectorProfile&&value.type==='str'?asciiStringLoan(value,scope):undefined;const name=bind(declaration.name,{type:value.type,root:value.root,...(typeof constantInteger==='string'?{constantInteger}:{}),...(staticTextLoan?.root===null?{asciiStaticLoan:true}:{})},scope);body.push({kind:'let',name,value});
     }
    }else if(ts.isExpressionStatement(statement)){const value=expression(statement.expression,scope,depth+1);if(value.kind!=='owned-call'||value.name!=='router_vector_json_validate'||value.type!=='unit'||!boundedJsonBoundary)fail('only actual bounded JSON validation may be discarded');body.push({kind:'effect',value});
    }else if(ts.isReturnStatement(statement)&&statement.expression){
@@ -571,7 +575,7 @@ function checkFunctionBody(context,path,declaration,analysis){
  }
  if(params.some(param=>param.type==='bytes-ref'&&!byteInputs.has(param.name)))fail('octet input requires an actual fixed base64 operand');
  if(params.some(param=>param.type==='json-option-input'&&!hostCalls.some(call=>ownedJsonOptionalReaderOperation(call.name)&&call.inputRoot===param.name)))fail('opaque optional Json input requires validation');
- if(jsonVectorProfile?.kind==='primitive-scalar'&&(hostCalls.length||sourceNativeOperators.length))fail('closed primitive source unit requires separately qualified call/effect rules');
+ if(jsonVectorProfile?.kind==='primitive-scalar'&&(hostCalls.some(call=>!ownedVectorTextScalarOperation(call.name))||sourceNativeOperators.length))fail('closed primitive source unit requires separately qualified call/effect rules');
  if(!hostCalls.length&&!sourceNativeOperators.length)nativeOperatorHistory.adoptCopies();
  if(jsonVectorProfile&&resultType!==jsonVectorProfile.type)fail('actual original native owned JSON return shape required');
  if(!hostCalls.length&&!sourceNativeOperators.length&&!params.some(param=>param.type==='base64-result')&&!jsonVectorProfile)fail('no actual owned-core call');
@@ -634,3 +638,5 @@ import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 
 import {ownedVectorJsonFieldOperation,requireOwnedVectorJsonFieldSources} from './owned-vector-json-fields.mjs';
 import {ownedIntegerLiteral,narrowOwnedNumericLiteral} from './owned-numeric-literals.mjs';
+
+import {ownedVectorTextScalarOperation} from './owned-vector-text-scalars.mjs';

@@ -93,6 +93,7 @@ const jsonEvent=(events,operation,args)=>{if(events.length>=16384)jsonFail('boun
 function requestedJsonExpression(node,env,events,guard,borrow=false,depth=0){
  guard.charge(depth);if(!node)jsonFail('complete checked receiving expression required');
  if(node.kind==='variable'){if(!env.has(node.name))jsonFail('actual lexical receiving binder required');const value=env.get(node.name);return node.type==='json'&&!borrow?jsonEvent(events,'copy',[value]):value;}
+ if(node.kind==='text-scalar-call'){const op=ownedVectorTextScalarOperation(node.name);if(!op||op.ret!==node.type||op.args.length!==node.args.length||node.args.some(argument=>argument.type!=='str'))jsonFail('actual fixed text scalar operands required');return jsonEvent(events,'text-scalar:'+node.name,node.args.map(argument=>requestedJsonExpression(argument,env,events,guard,false,depth+1)));}
  if(node.kind==='source-scalar-call'){if(!['bool','u64','i64'].includes(node.type)||node.type!==node.callee?.returns||node.args.length!==node.callee.parameters.length)jsonFail('actual checked primitive source call required');return ['source-call',node.callee.rust,node.args.map(argument=>requestedJsonExpression(argument,env,events,guard,false,depth+1))];}
  if(node.kind==='string'&&node.type==='str'&&typeof node.value==='string'&&!/\p{Surrogate}/u.test(node.value))return ['str',node.value];
  if(node.kind==='integer'&&typeof node.value==='string')return ['integer',node.type==='i64'?'i64':'u64',BigInt(node.value).toString()];
@@ -137,6 +138,8 @@ export function actualNativeJsonVectorTree(own,item,lowered){
  let activeSomeFacts=new Set();const optionKey=value=>JSON.stringify(value);
  function expression(node,names,events,depth=0){
   guard.charge(depth);if(!node)jsonFail('complete actual native expression required');
+  if(node.k==='cast'&&node.arg?.k==='routerHostCall'&&node.arg.id==='router_core_unicode_scalar_count'){const source=node.arg.type;if(!fieldType(node.type,'u64')||source?.kind!=='fixed'||source.rustPrimitiveName!=='usize'||source.bits!==64||source.signed!==false||source.rustReference||source.rustOwnership||source.patternOwnershipRefusal||source.rustGenericIdentityUnresolved||source.rustBorrowingUnresolved)jsonFail('only actual lossless 64-bit scalar-count usize to u64 is drafted');return expression(node.arg,names,events,depth+1);}
+  if(node.k==='routerHostCall'&&ownedVectorTextScalarOperation(node.id)){const op=ownedVectorTextScalarOperation(node.id),count=node.id==='router_core_unicode_scalar_count',result=count?node.type?.kind==='fixed'&&node.type.rustPrimitiveName==='usize'&&node.type.bits===64&&node.type.signed===false&&!node.type.rustReference&&!node.type.rustOwnership&&!node.type.patternOwnershipRefusal&&!node.type.rustGenericIdentityUnresolved&&!node.type.rustBorrowingUnresolved:fieldType(node.type,'bool');if(!result||node.args?.length!==op.args.length||node.args.some(argument=>!fieldType(argument.type,'str'))||node.compatibilityCore?.id!==(count?'router-owned-unicode-scalar-count-v1':'router-owned-ascii-chars-in-v1')||node.compatibilityCore.symbol!=='crate::translation_core::'+op.rust||node.compatibilityCore.sourceSha256!==ROUTER_CORE_PRIMITIVES_SHA256)jsonFail('actual source-bound text scalar ABI/library differs');return jsonEvent(events,'text-scalar:'+node.id,node.args.map(argument=>expression(argument,names,events,depth+1)));}
   if(node.k==='call'){const target=nativeScalarSourceCallTarget(node,sourceCallTargets,lowered);if(!target)jsonFail('actual native helper is outside the checked source closure');return ['source-call',target.rust,node.args.map(argument=>expression(argument,names,events,depth+1))];}
   if(node.k==='var'){if(!names.has(node.name))jsonFail('actual native lexical binder required');return names.get(node.name);}
   if(node.k==='routerPatternImmutable'){if(!originalJsonVectorOptionPayload(own,lowered,node.object?.type))jsonFail('actual standard Option immutable observation required');return ['immutable-option',expression(node.object,names,events,depth+1)];}
@@ -195,3 +198,5 @@ import {createHash} from 'node:crypto';
 import {jsonScalarComparisonOperation,jsonScalarComparisonDomain} from './owned-vector-json-comparisons.mjs';
 
 import {nativeScalarSourceCallIndex,nativeScalarSourceCallTarget} from './owned-source-scalar-calls.mjs';
+
+import {ownedVectorTextScalarOperation} from './owned-vector-text-scalars.mjs';

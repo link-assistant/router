@@ -815,3 +815,9 @@ complete meta/program closure, native emission/comparison and bounded interprete
 composition. Calls retain actual ABIs and original namespace/module boundaries;
 all graph/authority/refusal/repeat-sync cases remain UNRUN. See
 [the source contract](owned-source-scalar-calls-source-draft.md).
+
+Existing Unicode scalar count and ASCII membership are source drafted for the
+shared scalar/JSON families, with fresh checker/caller-bound private receipts
+for consuming live JSON text loans and an exact 64-bit count conversion. All
+authority/Unicode/source/refusal/repeat-sync cases remain UNRUN; see
+[the source contract](vector-text-scalar-core-source-draft.md).
