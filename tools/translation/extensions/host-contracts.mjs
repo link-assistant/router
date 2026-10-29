@@ -1,3 +1,4 @@
+import {parsePrimitiveAssociatedCall,checkPrimitiveAssociatedCall} from './primitive-associated-calls.mjs';
 import {parseRouterCoreMatches} from '../router-core-matches.mjs';import {parseRouterCoreVector,checkRouterCoreVector} from '../router-core-vectors.mjs';import {parseCharacterType,checkedCharacterType,assertCharacterBoundary,checkCharacterExpression,emitCharacterExpression,needsCharacterValueGuard} from './character-scalars.mjs';
 import {parseRouterCoreRangeCall,checkRouterCoreRangeCall,captureRouterCoreRangeCalls,ROUTER_CORE_RANGE_CONTRACT} from '../router-core-ranges.mjs';
 import {parseRouterCoreStrReference,parseRouterCoreFixedType,parseRouterCoreFixedConstant} from '../router-core-primitives.mjs';import {jsonIterationContract} from '../json-iteration-contracts.mjs';import {jsonStateContract,JSON_STATE_CONTRACTS,forwardOwnedImports} from '../owned-forward-contracts.mjs';
@@ -334,7 +335,7 @@ export class HostRustParser extends withOriginalFormatDisplayParser(withJsonMacr
     };
     tree([]);c.expect(';','use');
   }
-  primary(path,options) {const fixedConstant=parseRouterCoreFixedConstant(this);if(fixedConstant)return fixedConstant;const coreMatches=parseRouterCoreMatches(this,path);if(coreMatches)return coreMatches;const coreVector=parseRouterCoreVector(this,path);if(coreVector)return coreVector;
+  primary(path,options) {const associated=parsePrimitiveAssociatedCall(this,path);if(associated)return associated;const fixedConstant=parseRouterCoreFixedConstant(this);if(fixedConstant)return fixedConstant;const coreMatches=parseRouterCoreMatches(this,path);if(coreMatches)return coreMatches;const coreVector=parseRouterCoreVector(this,path);if(coreVector)return coreVector;
     const algebraic=parseRouterCoreAlgebraicExpression(this,path);if(algebraic)return algebraic;
     const coreScalar=parseRouterCoreScalarCall(this,path);if(coreScalar)return coreScalar;
     const coreBase64=parseRouterCoreBase64Call(this,path);if(coreBase64)return coreBase64;const coreRange=parseRouterCoreRangeCall(this,path);if(coreRange)return coreRange;
@@ -540,7 +541,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
     assertCharacterBoundary(actual,expected,range);
     assertRustPrimitiveIdentity(actual,expected,range,{declarations:this.items,resolveType:(type,scope,span)=>this.resolveType(type,scope??path,span)});
   }
-  hostExpression(node,env,path,expected,allowLiteral=false) {if(node.k==='routerCoreVector')return checkRouterCoreVector(this,node,env,path,expected,allowLiteral);
+  hostExpression(node,env,path,expected,allowLiteral=false) {if(node.k==='routerPrimitiveAssociatedCall')return checkPrimitiveAssociatedCall(this,node,env,path,expected);if(node.k==='routerCoreVector')return checkRouterCoreVector(this,node,env,path,expected,allowLiteral);
     const mutableJson=checkRouterCoreJsonMutableLet(this,node,env,path,expected,allowLiteral);if(mutableJson)return mutableJson;
     const character=checkCharacterExpression(this,node,env,path,expected);if(character)return character;
     if(node.k==='routerTextPattern'&&['contains','starts_with'].includes(node.op)&&node.args?.length===1&&node.args[0].k==='routerTextReference'&&node.args[0].sourceAmpersand)return super.expr(this.prepareOriginalStringPatternBorrow(node,env,path),env,path,expected,allowLiteral);

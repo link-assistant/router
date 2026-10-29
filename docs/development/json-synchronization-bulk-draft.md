@@ -443,3 +443,12 @@ shared-rule source drafts across actual archived native intrinsic proof, all ten
 fixed widths, runtime/constant folding, forward/reverse and source sync consumers.
 ALL UNRUN. Fifteen source equations retain two phases and original archives;
 broader arithmetic/ownership/effects and full translation remain OPEN.
+
+Associated primitive calls are source drafted in
+[the associated-call companion](primitive-associated-call-source-draft.md).
+The original Host frontend, private source capture and existing dynamic fixed
+contracts now have source rules for generated qualified inherent calls and
+qualified Ord on actual fixed by-value operands. Complete independent forward,
+strict paired, generated native insertion/helper/bulk and Rust oracle sources
+remain UNRUN. Namespace aliases, broader checked-failure body ordering and full
+application closure remain OPEN; this is no measured coverage or parity claim.

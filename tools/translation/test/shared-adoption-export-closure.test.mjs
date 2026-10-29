@@ -199,6 +199,8 @@ test('complete committed export carries shared adoption implementations original
  assert.ok(paths.has('tools/translation/prepare-existing-helper-bootstrap-sources.mjs'));
  assert.ok(paths.has('tools/translation/prepare-existing-helper-append-sources.mjs'));
  assert.ok(paths.has('tools/translation/prepare-wrapping-multiply-sources.mjs'));
+ assert.ok(paths.has('tools/translation/prepare-primitive-associated-call-sources.mjs'));
+ assert.ok(paths.has('tools/translation/extensions/primitive-associated-calls.mjs'));
  assert.ok(paths.has('tools/translation/js-to-rust/owned-primitive-helper-extension.mjs'));
  assert.ok(paths.has('tools/translation/js-to-rust/owned-existing-helper-bootstrap.mjs'));
  assert.ok(paths.has('tools/translation/js-to-rust/owned-primitive-function-reconciliation.mjs'));
