@@ -343,7 +343,7 @@ function checkFunctionBody(context,path,declaration,analysis){
   params.push({name:sourceName,rust:rustName(sourceName),type});
  }
  // The complete available pair was selected before parameter domains.
- let boundedJsonBoundary=false,vectorFieldBoundary=false;const nativeOperatorHistory=createOwnedNativeBitwiseHistory(),sourceNativeOperators=nativeOperatorHistory.rows,hostCalls=[],byteInputs=new Set();
+ let boundedJsonBoundary=false,vectorFieldBoundary=false;const nativeOperatorHistory=(inference?createOwnedContextualBitwiseHistory:createOwnedNativeBitwiseHistory)(),sourceNativeOperators=nativeOperatorHistory.rows,hostCalls=[],byteInputs=new Set();
  const branchScope=scope=>new Map([...scope].map(([key,value])=>[key,moves(value.type)?{...value}:value]));
  const mergeMoves=(scope,yes,no)=>{for(const [key,value]of scope)if(moves(value.type))value.moved=!!yes.get(key)?.moved||!!no.get(key)?.moved;};
  const refine=(scope,condition,truth)=>{
@@ -418,6 +418,7 @@ function checkFunctionBody(context,path,declaration,analysis){
    const value=scope.get(node.text);if(!value||checker.getSymbolAtLocation(node)!==value.symbol)fail('unknown, shadowed or moved binding');
    if(value.type==='json-option-input'&&!opaqueOperand)fail('opaque optional Json input requires its actual checked operation');
    if(inference&&primitiveLiteralBinding(value)){const literal=primitiveLiteralBinding(value);if(primitiveBitwiseType(numericDomain)){const negative=literal.value.startsWith('-');return ownedIntegerLiteral((negative?literal.value.slice(1):literal.value)+'n',{negative,domain:numericDomain});}if(literal.deferred)return inference.copyLiteral(literal.deferred);return {kind:'integer',value:literal.value,type:literal.type,root:null};}
+   if(inference&&Object.hasOwn(value,'primitiveChoiceCandidate'))return inference.choiceReference(value.primitiveChoiceCandidate,{kind:'variable',name:node.text,type:value.type,root:value.root},numericDomain);
    if(inference?.scalarPending(value.type))return inference.scalarReference(value.type,{kind:'variable',name:node.text,type:value.type,root:value.root},numericDomain);
    if(moves(value.type)){if(value.moved)fail('native base64 result used after move');value.moved=true;}
    return {kind:'variable',name:node.text,type:value.type,root:value.root};
@@ -497,7 +498,7 @@ function checkFunctionBody(context,path,declaration,analysis){
    hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});
    return {kind:'owned-call',name:binding.name,args,type:op.ret,root};
   }
-  const nativeBitwise=readOwnedNativeBitwiseExpression(ts,node,argument=>expression(argument,scope,depth+1),{enabled:nativeScalars});if(nativeBitwise){nativeOperatorHistory.retain(node,file,nativeBitwise);return nativeBitwise;}
+  const nativeBitwise=(inference?readOwnedContextualBitwiseExpression:readOwnedNativeBitwiseExpression)(ts,node,argument=>expression(argument,scope,depth+1),{enabled:nativeScalars,...(inference?{join:inference.joinScalarLiterals}:{})});if(nativeBitwise){nativeOperatorHistory.retain(node,file,nativeBitwise);return nativeBitwise;}
   if(ts.isConditionalExpression(node)){
    const cond=expression(node.condition,scope,depth+1),a=refine(branchScope(scope),cond,true),b=refine(branchScope(scope),cond,false);let yes=expression(node.whenTrue,a,depth+1,false,numericDomain),no=expression(node.whenFalse,b,depth+1,false,numericDomain);
    if(jsonVectorProfile&&!nativeScalars){if(primitiveBitwiseType(yes.type)&&no.type==='usize'){no=scalarReturnLiteral(no,b,depth+1);narrowOwnedNumericLiteral(no,yes.type);}else if(primitiveBitwiseType(no.type)&&yes.type==='usize'){yes=scalarReturnLiteral(yes,a,depth+1);narrowOwnedNumericLiteral(yes,no.type);}}
@@ -559,7 +560,7 @@ function checkFunctionBody(context,path,declaration,analysis){
      }
      let value=expression(declaration.initializer,scope,depth+1,false,primitiveBitwiseType(written)||inference&&primitiveVectorResultRole(written)?written:null);if(inference&&(value.kind==='choose'||inference.scalarPending(value.type)))value=inference.scalar(value);if(written!==null){if(jsonVectorProfile&&!nativeScalars&&primitiveBitwiseType(written)){value=scalarReturnLiteral(value,scope,depth+1);narrowOwnedNumericLiteral(value,written);}if(written==='json-ref'?!json(value.type):!writtenCompatible(value.type,written))fail('paired written local ABI differs');}
      const inferredPrimitiveLiteral=inference&&written===null&&!ts.getJSDocType(declaration)?inference.deferredLiteral(value)?{type:value.type,value:value.value,deferred:value}:value.kind==='integer'&&value.root===null&&(value.type==='usize'||value.type==='i64')?{type:value.type,value:value.value}:value.kind==='variable'?primitiveLiteralBinding(scope.get(value.name)):undefined:undefined;
-     const constantInteger=jsonVectorProfile&&!nativeScalars?(value.kind==='integer'?value.value:value.kind==='variable'?scope.get(value.name)?.constantInteger:undefined):undefined;const staticTextLoan=jsonVectorProfile&&value.type==='str'?asciiStringLoan(value,scope):undefined;const name=bind(declaration.name,{type:value.type,root:value.root,...(inferredPrimitiveLiteral?{inferredPrimitiveLiteral}:{}),...(typeof constantInteger==='string'?{constantInteger}:{}),...(staticTextLoan?.root===null?{asciiStaticLoan:true}:{})},scope);if(!inferredPrimitiveLiteral)body.push({kind:'let',name,value});
+     const primitiveChoiceCandidate=inference?inference.choiceCandidate(value):null;const constantInteger=jsonVectorProfile&&!nativeScalars?(value.kind==='integer'?value.value:value.kind==='variable'?scope.get(value.name)?.constantInteger:undefined):undefined;const staticTextLoan=jsonVectorProfile&&value.type==='str'?asciiStringLoan(value,scope):undefined;const name=bind(declaration.name,{type:value.type,root:value.root,...(primitiveChoiceCandidate?{primitiveChoiceCandidate}:{}),...(inferredPrimitiveLiteral?{inferredPrimitiveLiteral}:{}),...(typeof constantInteger==='string'?{constantInteger}:{}),...(staticTextLoan?.root===null?{asciiStaticLoan:true}:{})},scope);if(!inferredPrimitiveLiteral)body.push({kind:'let',name,value});
     }
    }else if(ts.isExpressionStatement(statement)){const value=expression(statement.expression,scope,depth+1);if(value.type!=='unit'||!(value.kind==='owned-call'&&value.name==='router_vector_json_validate'&&boundedJsonBoundary||value.kind==='source-scalar-call'&&(vectorDefinitions||jsonVectorProfile?.kind==='primitive-scalar'||jsonVectorProfile?.kind==='primitive-expression-vector')))fail('only complete primitive source-unit calls or actual bounded JSON validation may be discarded');body.push({kind:'effect',value});
    }else if(ts.isReturnStatement(statement)&&!statement.expression&&(['json-scalar','primitive-scalar'].includes(jsonVectorProfile?.kind)&&jsonVectorProfile.type==='unit'||definitionUnit)){
@@ -585,7 +586,7 @@ function checkFunctionBody(context,path,declaration,analysis){
   return {body,terminated};
  }
  const statements=jsonVectorProfile?consumeJsonVectorInputPrelude(analysis,declaration,params,operand=>originalOwnedCoreImport(context,path,operand,analysis),jsonVectorProfile):consumeOwnedBase64InputPrelude(analysis,declaration,params,operand=>originalOwnedCoreImport(context,path,operand,analysis));const checked=finishNativeUnitReturn(block(statements,environment,0));if(!checked.terminated)fail('missing return');
- if(inference){const expected=jsonVectorProfile?.kind==='primitive-expression-vector'?jsonVectorProfile.type:definitionReturnType;if(inference.pending(resultType)&&primitiveVectorResultRole(expected))inference.compatible(resultType,expected);resultType=inference.finish(checked.body,resultType);}
+ if(inference){const expected=jsonVectorProfile?.kind==='primitive-expression-vector'?jsonVectorProfile.type:definitionReturnType;if(inference.pending(resultType)&&primitiveVectorResultRole(expected))inference.compatible(resultType,expected);resultType=inference.finish(checked.body,resultType);nativeOperatorHistory.finalize();}
  if(paired)for(let index=0;index<params.length;index++){
   const actual=originalOwnedCoreType(context,paired.pair.typescript.path,paired.declaration.parameters[index].type,paired.analysis);
   if((actual==='text-owned'?'str':actual)!==(jsonVectorProfile&&params[index].type==='json'?'json-ref':params[index].type)&&!(jsonVectorProfile&&!nativeScalars&&primitiveBitwiseType(params[index].type)&&actual==='usize'))fail('paired written parameter ABI differs');
@@ -683,6 +684,8 @@ import {assertOwnedPrimitiveDefinition} from './owned-primitive-definition-famil
 import {primitiveVectorResultRole} from './owned-source-effect-calls.mjs';
 import {assertOwnedPrimitiveVectorDefinition} from './owned-primitive-vector-definition-family.mjs';
 
-import {createPrimitiveScalarInference as createPrimitiveVectorInference} from './owned-primitive-scalar-inference.mjs';
+import {createPrimitiveContextualInference as createPrimitiveVectorInference} from './owned-primitive-contextual-inference.mjs';
 
 import {primitiveUnitReturnSyntax} from './owned-unit-return-syntax.mjs';
+
+import {createOwnedContextualBitwiseHistory,readOwnedContextualBitwiseExpression} from './owned-native-contextual-history.mjs';

@@ -707,3 +707,11 @@ retain original bounds and reject private types before emission. Three complete
 equations and independent JS/TS/alias/helper/return/order/refusal/CI-only Rust
 sources are UNRUN. Broader inference, source/owner behavior, full drafting and
 every qualification obligation remain OPEN.
+
+The [contextual scalar choice draft](contextual-choice-inference-source-draft.md)
+promotes common default-sized conditional locals only at actual typed uses,
+retaining old default behavior and single initialization. A complete copied
+history collector records final live domains after inference. Four complete
+equations and independent JS/TS/all-width/default/helper/return/refusal/history/
+CI-only Rust sources are UNRUN. Broader language/owner behavior, full drafting
+and every qualification obligation remain OPEN.
