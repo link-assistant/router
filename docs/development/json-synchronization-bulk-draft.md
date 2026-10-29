@@ -136,3 +136,11 @@ plan/apply CLI are drafted in
 ALL UNRUN. This adds draft composition/initial adoption beyond the earlier
 per-module discovery proposal; it does not qualify execution, freshness, coverage,
 existing receiving-module sync, source-call discovery or broader source families.
+
+Automatic scalar helper discovery: current original/lowered callee inventory,
+copied native call observation, bounded complete graph selection, preserving
+receiving source substitutions and independent final source-call checks are
+drafted in [native-helper-closure-source-draft.md](native-helper-closure-source-draft.md).
+ALL UNRUN. Same-module closed primitive helpers are the draft scope; cross-module
+visibility, JSON-derived text transfer, broader ABI/operators/effects and complete
+qualification remain OPEN. No saved inventory grants semantic authority.

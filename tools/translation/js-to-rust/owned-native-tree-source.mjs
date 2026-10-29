@@ -11,7 +11,9 @@ export class UnsupportedNativeTreeProjection extends TypeError {
  constructor(message){super('Native source projection: '+message);this.name='UnsupportedNativeTreeProjection';}
 }
 const fail=message=>{throw new UnsupportedNativeTreeProjection(message);};
+const nativeRustKeywords=new Set('as async await break const continue crate default do dyn else enum export extern false fn for function if impl import in let loop match mod move mut new null pub ref return self static struct super switch this throw trait true try type typeof undefined unsafe use var void where while with yield abstract become box final gen macro override priv unsized virtual'.split(' '));
 const keywords=new Set('await break case catch class const continue debugger default delete do else enum export extends false finally for function if implements import in instanceof interface let new null package private protected public return static super switch this throw true try typeof var void while with yield'.split(' '));
+for(const name of nativeRustKeywords)keywords.add(name);
 export const nativeProjectionIdentifier=name=>typeof name==='string'&&/^[a-z][a-z0-9_]*$/u.test(name)&&!name.startsWith('__ro')&&!keywords.has(name);
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const owned=role=>role==='json'||role==='json-list-owned';
@@ -21,7 +23,7 @@ export function projectNativeTreeModule(input,options={}){
  if(Object.keys(settings).sort().join('|')!=='javascriptPath|runtimeRoot|typescriptPath')fail('explicit complete projection paths required');
  for(const path of [javascriptPath,typescriptPath,runtimeRoot])ownedSourcePath(path);
  if(!javascriptPath.endsWith('.mjs')||!typescriptPath.endsWith('.mts'))fail('paired JavaScript and TypeScript module paths required');
- const imports=new Map(),typeImports=new Map(),allocated=new Set();let cells=0,sequence=0;
+ const imports=new Map(),typeImports=new Map(),allocated=new Set(),nativeTargets=new Map();let cells=0,sequence=0;
  const allocate=stem=>{let name=stem;while(allocated.has(name))name=stem+'_'+sequence++;allocated.add(name);return name;};
  const tick=depth=>{if(++cells>100000||depth>64)fail('complete module node/depth budget');};
  const relative=family=>{const path=posix.relative(posix.dirname(typescriptPath),runtimeRoot+'/'+family+'-runtime.mjs');return path.startsWith('.')?path:'./'+path;};
@@ -66,6 +68,7 @@ export function projectNativeTreeModule(input,options={}){
      if(names.has(a))return names.get(a);if(a<cursor||uses.get(a)!==1||!owned(descriptors[a]?.role))fail('owned effect requires one ordered source consumer');
      const output=call(a,level+1);if(cursor!==a)fail('nested owned operands must preserve every preceding effect');cursor++;return output;
     }
+    if(kind==='source-call'&&node.length===3){const target=nativeTargets.get(a);if(!target||target.kind!=='primitive-scalar'||!Array.isArray(b)||b.length!==target.parameters.length)fail('complete actual same-module helper source needed');return target.name+'('+b.map(value=>expression(value,level+1)).join(', ')+')';}
     if(kind==='not'&&node.length===2)return '(!'+expression(a,level+1)+')';
     if(['and','or'].includes(kind)&&node.length===3){const containsEffect=value=>Array.isArray(value)&&(value[0]==='effect'||value.slice(1).some(containsEffect));if(containsEffect(a)||containsEffect(b))fail('conditional effect placement needs an explicit control rule');return '('+expression(a,level+1)+(kind==='and'?' && ':' || ')+expression(b,level+1)+')';}
     if(kind==='compare'&&node.length===5){const op={eq:'===',ne:'!==',lt:'<',le:'<=',gt:'>',ge:'>='}[a];if(!op||!['bool','str','u64','i64'].includes(b))fail('explicit original comparison required');return '('+expression(c,level+1)+' '+op+' '+expression(d,level+1)+')';}
@@ -95,7 +98,7 @@ export function projectNativeTreeModule(input,options={}){
  }
  try{
   if(!Array.isArray(units)||!units.length||units.length>4096)fail('bounded nonempty native units required');
-  for(const unit of units){allocated.add(unit.name);if(Array.isArray(unit.parameters))for(const parameter of unit.parameters)allocated.add(parameter.name);}
+  for(const unit of units){allocated.add(unit.name);if(unit.rust!==undefined){if(typeof unit.rust!=='string'||nativeTargets.has(unit.rust))fail('distinct actual native helper identity required');nativeTargets.set(unit.rust,unit);}if(Array.isArray(unit.parameters))for(const parameter of unit.parameters)allocated.add(parameter.name);}
   const run=createRulePipeline([
    {phase:'language',rules:[{id:'native-tree:substitute-complete-ordered-scalar-json-control-source',apply:()=>units.map(functionSource).join('\n\n')}]},
    {phase:'repository',rules:[{id:'router:place-qualified-runtime-domains-in-paired-source-module',apply:body=>{
@@ -105,5 +108,5 @@ export function projectNativeTreeModule(input,options={}){
     const typescript=prelude.join('\n')+'\n\n'+body+'\n';if(Buffer.byteLength(typescript)>2097152)fail('complete source module byte bound');return {typescript,javascriptPath,typescriptPath,sourceAuthority:false,semanticAuthority:false,receivingExecuted:false,runtimeParity:false};
    }}]},
   ]).run(null);return {...run.value,trace:run.trace};
- }finally{imports.clear();typeImports.clear();allocated.clear();}
+ }finally{imports.clear();typeImports.clear();allocated.clear();nativeTargets.clear();}
 }

@@ -17,6 +17,8 @@ import {ownedVectorOriginalProjectCensus} from './owned-vector-candidate-support
 import {originalJsonVectorDomain,originalJsonOwnedValueDomain,originalJsonScalarDomain,originalPrimitiveScalarDomain} from './owned-vector-json-native.mjs';
 import {actualNativeJsonVectorTree,requestedNativeJsonVectorTree} from './owned-vector-native-json-control.mjs';
 import {projectNativeTreeModule,nativeProjectionIdentifier,UnsupportedNativeTreeProjection} from './owned-native-tree-source.mjs';
+import {observedNativeJsonVectorTree} from './owned-native-discovery-control.mjs';
+import {selectNativeProjectionClosure} from './owned-native-projection-closure.mjs';
 const hash=source=>createHash('sha256').update(source).digest('hex');
 const equal=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const fail=message=>{throw new TypeError('Native bulk discovery: '+message);};
@@ -54,27 +56,38 @@ export function proposeOwnedNativeBulkDiscovery(data,options={}){
      const inputs={manifest:files.get('Cargo.toml'),lock:files.get('Cargo.lock')};
      project=translateProject({entry:'src/lib.rs',paths:[...files.keys()].filter(path=>path.endsWith('.rs')).sort(),readSource:path=>files.get(path),compilationProfile:PRODUCTION_PROFILE,cargoManifest:inputs.manifest,jsonMacroDependencies:jsonMacroDependencyProfile(inputs).proof,deriveDependencies:deriveDependencyProfile(inputs).proof});
      if(project.executableDeclarations.length>4096)fail('bounded actual declaration census required');
-     for(const entry of project.executableDeclarations){
-      // Carrier/source joins fail the entire operation, never a best-effort row.
-      const actual=captured(entry),own=actual.declaration;
-      let nativeDomain,tree;try{
-       const lowered=entry.lower();nativeDomain=domain(own,lowered);if(!nativeDomain)throw new UnsupportedNativeTreeProjection('native signature needs another source family');
-       if(!nativeProjectionIdentifier(entry.name)||own.params.some(row=>!nativeProjectionIdentifier(row.name)))throw new UnsupportedNativeTreeProjection('native bindings need a hygienic spelling rule');
-       const observation={params:own.params.map((row,index)=>({name:row.name,rust:row.name,type:nativeDomain.parameters[index].name})),returns:nativeDomain.type,vectorOrigin:{kind:nativeDomain.kind}};
-       // This observation is DATA, not an issued receiving item. The next rules
-       // independently reconstruct actual private items from generated SOURCE.
-       tree=actualNativeJsonVectorTree(own,observation,lowered);
-      }catch(error){if(!(error instanceof TypeError))throw error;refusal(entry,'native-body-projection',error);continue;}
-      const key=JSON.stringify([entry.source,actual.module]),id='module_'+hash(key),javascriptPath=javascriptRoot+'/'+id+'.mjs',typescriptPath=typescriptRoot+'/'+id+'.mts';ownedSourcePath(javascriptPath);ownedSourcePath(typescriptPath);
-      if(!groups.has(key))groups.set(key,{id,key,source:entry.source,module:actual.module,javascriptPath,typescriptPath,units:[]});
-      groups.get(key).units.push({entry,name:entry.name,parameters:own.params.map((row,index)=>({name:row.name,type:nativeDomain.parameters[index].name})),returns:nativeDomain.type,tree});
-     }
+     const candidates=[],targetGroups=new Map();
+     try{
+      for(const entry of project.executableDeclarations){
+       const actual=captured(entry),own=actual.declaration;let nativeDomain;
+       try{nativeDomain=domain(own,entry.lower());if(!nativeDomain)throw new UnsupportedNativeTreeProjection('native signature needs another source family');if(!nativeProjectionIdentifier(entry.name)||own.params.some(row=>!nativeProjectionIdentifier(row.name)))throw new UnsupportedNativeTreeProjection('native bindings need a hygienic spelling rule');}catch(error){if(!(error instanceof TypeError))throw error;refusal(entry,'native-signature-projection',error);continue;}
+       const key=JSON.stringify([entry.source,actual.module]),id='module_'+hash(key),javascriptPath=javascriptRoot+'/'+id+'.mjs',typescriptPath=typescriptRoot+'/'+id+'.mts';ownedSourcePath(javascriptPath);ownedSourcePath(typescriptPath);
+       if(!groups.has(key))groups.set(key,{id,key,source:entry.source,module:actual.module,javascriptPath,typescriptPath,units:[]});
+       if(!targetGroups.has(key))targetGroups.set(key,new Map());
+       if(nativeDomain.kind==='primitive-scalar'){const descriptor={rust:entry.qualifiedName,parameters:nativeDomain.parameters.map(row=>row.name),returns:nativeDomain.type},targets=targetGroups.get(key);for(const name of [entry.qualifiedName,'rp_'+Buffer.from(entry.qualifiedName).toString('hex')]){if(targets.has(name))fail('ambiguous same-module native helper source');targets.set(name,descriptor);}}
+       candidates.push({entry,actual,own,nativeDomain,key});
+      }
+      for(const {entry,own,nativeDomain,key}of candidates){
+       try{
+        const observation={params:own.params.map((row,index)=>({name:row.name,rust:row.name,type:nativeDomain.parameters[index].name})),returns:nativeDomain.type,vectorOrigin:{kind:nativeDomain.kind}},tree=observedNativeJsonVectorTree(own,observation,entry.lower(),targetGroups.get(key));
+        groups.get(key).units.push({entry,name:entry.name,rust:entry.qualifiedName,kind:nativeDomain.kind,parameters:own.params.map((row,index)=>({name:row.name,type:nativeDomain.parameters[index].name})),returns:nativeDomain.type,tree});
+       }catch(error){if(!(error instanceof TypeError))throw error;refusal(entry,'native-body-projection',error);}
+      }
+      for(const group of groups.values()){
+       const parameterNames=new Set(group.units.flatMap(unit=>unit.parameters.map(row=>row.name))),occupied=new Set([...parameterNames,...group.units.map(unit=>unit.name)]);let aliasSequence=0;
+       for(const unit of group.units)if(parameterNames.has(unit.name)){let alias='native_function_'+unit.name;while(occupied.has(alias))alias='native_function_'+unit.name+'_'+aliasSequence++;occupied.add(alias);unit.name=alias;}parameterNames.clear();occupied.clear();
+       const closure=selectNativeProjectionClosure(group.units.map(({name,rust,kind,parameters,returns,tree})=>({name,rust,kind,parameters,returns,tree}))),admitted=new Set(closure.admitted);
+       for(const row of closure.refusals){const units=group.units.filter(unit=>unit.rust===row.rust);if(units.length!==1)fail('one complete actual refused helper source required');refusal(units[0].entry,'native-helper-closure',row.reason);}
+       group.units=group.units.filter(unit=>admitted.has(unit.name));admitted.clear();
+      }
+     }finally{candidates.length=0;for(const targets of targetGroups.values())targets.clear();targetGroups.clear();}
      return groups;
     }},
     {id:'native-bulk:project-and-independently-recheck-whole-selected-modules',apply:()=>{
      for(const group of groups.values()){
+      if(!group.units.length)continue;
       if(files.has(group.javascriptPath)||files.has(group.typescriptPath))fail('existing receiving source requires explicit synchronization, never discovery overwrite');
-      let projected;try{projected=projectNativeTreeModule(group.units.map(({name,parameters,returns,tree})=>({name,parameters,returns,tree})),{javascriptPath:group.javascriptPath,typescriptPath:group.typescriptPath,runtimeRoot:original.runtimeRoot});}catch(error){if(!(error instanceof UnsupportedNativeTreeProjection))throw error;for(const unit of group.units)refusal(unit.entry,'module-source-projection',error);continue;}
+      let projected;try{projected=projectNativeTreeModule(group.units.map(({name,rust,kind,parameters,returns,tree})=>({name,rust,kind,parameters,returns,tree})),{javascriptPath:group.javascriptPath,typescriptPath:group.typescriptPath,runtimeRoot:original.runtimeRoot});}catch(error){if(!(error instanceof UnsupportedNativeTreeProjection))throw error;for(const unit of group.units)refusal(unit.entry,'module-source-projection',error);continue;}
       const pair=prepareOwnedVectorModulePair(group.javascriptPath,group.typescriptPath,projected.typescript),bindings=group.units.map(unit=>({javascriptPath:group.javascriptPath,javascriptName:unit.name,rustPath:unit.entry.source,rustName:unit.entry.qualifiedName}));
       const input={...original,vectorBindings:[...original.vectorBindings,...bindings],files:[...original.files,{path:group.javascriptPath,source:pair.javascript.source},{path:group.typescriptPath,source:pair.typescript.source}]};
       const context=createOwnedVectorCandidateContext(input);contexts.push(context);
