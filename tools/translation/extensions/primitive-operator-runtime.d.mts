@@ -17,7 +17,7 @@ export type RustI128=bigint;
 
 export declare function primitiveNot(value:bigint,bits:number,signed:boolean):bigint;
 
-export type RustIntegerMethod="saturating_add"|"saturating_sub"|"saturating_mul"|"wrapping_add"|"wrapping_sub"|"min"|"max"|"clamp";
+export type RustIntegerMethod="saturating_add"|"saturating_sub"|"saturating_mul"|"wrapping_add"|"wrapping_sub"|"wrapping_mul"|"min"|"max"|"clamp";
 export declare function primitiveIntegerMethod(value:bigint,other:bigint,upper:bigint|null,bits:number,signed:boolean,method:RustIntegerMethod):bigint;
 
 export type RustIntegerArithmetic="add"|"sub"|"mul"|"div"|"rem"|"neg";

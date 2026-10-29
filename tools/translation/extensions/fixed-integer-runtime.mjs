@@ -18,6 +18,7 @@ export function createFixedIntegerRuntime(type) {
     rust_fixed_checked_mul:(left,right)=>checked(multiply(left,right)),
     rust_fixed_wrapping_add:(left,right)=>wrapped(add(left,right)),
     rust_fixed_wrapping_sub:(left,right)=>wrapped(subtract(left,right)),
+    rust_fixed_wrapping_mul:(left,right)=>wrapped(multiply(left,right)),
     rust_fixed_saturating_add:(left,right)=>saturated(add(left,right)),
     rust_fixed_saturating_sub:(left,right)=>saturated(subtract(left,right)),
     rust_fixed_saturating_mul:(left,right)=>saturated(multiply(left,right)),

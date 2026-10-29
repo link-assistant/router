@@ -36,7 +36,7 @@ test('copied source proofs forged widths and unsupported methods cannot acquire 
   assert.throws(()=>requireFixedWrappingProof(structuredClone(proof),fixed,'wrapping_add'),/private original/);
   assert.throws(()=>requireFixedWrappingProof(proof,type(32,false),'wrapping_add'),/private original/);
   for(const bad of [{...fixed,rustPrimitiveName:'i64'},{...fixed,rustPrimitiveName:'Custom'},{...fixed,rustPrimitiveName:'usize'},{...fixed,bits:7},{kind:'float'}])assert.throws(()=>pinnedFixedWrapping(bad,'wrapping_add'));
-  assert.throws(()=>pinnedFixedWrapping(fixed,'wrapping_mul'));
+  assert.throws(()=>pinnedFixedWrapping(fixed,'wrapping_div'));
   // Existing pointer-width arithmetic still works; the new feature refuses it.
   const pointer=fixedIntegerContracts({...fixed,rustPrimitiveName:'usize'});assert.equal(pointer.contracts.some(entry=>entry.rustPath.at(-1)==='checked_add'),true);assert.equal(pointer.contracts.some(entry=>entry.rustPath.at(-1)==='wrapping_add'),false);
 });

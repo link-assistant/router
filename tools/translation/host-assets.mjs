@@ -65,7 +65,7 @@ export declare function createVectorRuntime(validate: (value: unknown) => true):
 `);
   files.set('fixed-integer-runtime.d.mts',`type RustOption<T> = Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>;
 export declare function createFixedIntegerRuntime(type: Readonly<{kind:'fixed';bits:8|16|32|64|128;signed:boolean}>): Readonly<{
-${['checked_add','checked_sub','checked_mul','wrapping_add','wrapping_sub','saturating_add','saturating_sub','saturating_mul','min','max','clamp'].map(method=>`rust_fixed_${method}(left:bigint,right:bigint${method==='clamp'?',upper:bigint':''}): ${method.startsWith('checked_')?'RustOption<bigint>':'bigint'};`).join('\n')}
+${['checked_add','checked_sub','checked_mul','wrapping_add','wrapping_sub','wrapping_mul','saturating_add','saturating_sub','saturating_mul','min','max','clamp'].map(method=>`rust_fixed_${method}(left:bigint,right:bigint${method==='clamp'?',upper:bigint':''}): ${method.startsWith('checked_')?'RustOption<bigint>':'bigint'};`).join('\n')}
 }>;\n`);
   files.set('type-layout-runtime.mjs',readFileSync(new URL('./type-layout-runtime.mjs',import.meta.url),'utf8'));
   files.set('json-values.d.mts','export declare function validateJsonNumber(value: unknown): unknown;\nexport declare function validateJsonMap(value: unknown): unknown;\n');
@@ -151,7 +151,7 @@ export declare function createVectorRuntime(validate: (value: unknown) => true):
 `);
   files.set('fixed-integer-runtime.d.mts',`type RustOption<T> = Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>;
 export declare function createFixedIntegerRuntime(type: Readonly<{kind:'fixed';bits:8|16|32|64|128;signed:boolean}>): Readonly<{
-${['checked_add','checked_sub','checked_mul','wrapping_add','wrapping_sub','saturating_add','saturating_sub','saturating_mul','min','max','clamp'].map(method=>`rust_fixed_${method}(left:bigint,right:bigint${method==='clamp'?',upper:bigint':''}): ${method.startsWith('checked_')?'RustOption<bigint>':'bigint'};`).join('\n')}
+${['checked_add','checked_sub','checked_mul','wrapping_add','wrapping_sub','wrapping_mul','saturating_add','saturating_sub','saturating_mul','min','max','clamp'].map(method=>`rust_fixed_${method}(left:bigint,right:bigint${method==='clamp'?',upper:bigint':''}): ${method.startsWith('checked_')?'RustOption<bigint>':'bigint'};`).join('\n')}
 }>;\n`);
   files.set('type-layout-runtime.mjs',readFileSync(new URL('./type-layout-runtime.mjs',import.meta.url),'utf8'));
   files.set('json-values.d.mts','export declare function validateJsonNumber(value: unknown): unknown;\nexport declare function validateJsonMap(value: unknown): unknown;\n');

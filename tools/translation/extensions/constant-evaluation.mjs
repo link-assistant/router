@@ -8,7 +8,7 @@ import {requirePrimitiveOperator} from './primitive-operators.mjs';
 
 export const CONSTANT_EVALUATION_PROFILE=Object.freeze({schemaVersion:1,rustVersion:'1.89.0',pointerBits:64,
   arithmetic:'checked fixed integers',casts:'value-preserving fixed ranges and checked primitive two-complement as',shifts:'checked actual primitive shifts with count overflow',
-  wrappingSourceProfileSha256:FIXED_WRAPPING_SOURCE_PROFILE.manifestSha256,wrappingMethods:Object.freeze(['wrapping_add','wrapping_sub']),
+  wrappingSourceProfileSha256:FIXED_WRAPPING_SOURCE_PROFILE.manifestSha256,wrappingMethods:Object.freeze(['wrapping_add','wrapping_sub','wrapping_mul']),
   arithmeticSource:'https://github.com/rust-lang/rust/blob/1.89.0/library/core/src/ops/arith.rs',
   arithmeticSha256:'3a4a38939d509b4df7b5942a5e7fc7e1bd60e7d122b0ee48eda3b650b462d09b',
   timeSource:'https://github.com/rust-lang/rust/blob/1.89.0/library/core/src/time.rs',
@@ -301,7 +301,7 @@ class Evaluator {
     if(contract?.family!=='fixed')return {kind:'time',...this.timeContract(node)};
     this.serialize(contract,true);const operation=contract.rustPath?.at(-1),type=contract.instantiation;
     const actual=actual=>actual?.kind==='fixed'&&actual.bits===type?.bits&&actual.signed===type?.signed&&actual.rustPrimitiveName===type?.rustPrimitiveName&&!actual.rustReference&&!actual.rustOwnership&&!actual.rustGenericIdentityUnresolved&&!actual.rustBorrowingUnresolved&&!actual.patternOwnershipRefusal;
-    if(!['wrapping_add','wrapping_sub'].includes(operation)||type?.kind!=='fixed'||!/^[iu](8|16|32|64|128)$/u.test(type.rustPrimitiveName??'')||!actual(type))refuse('constant fixed host operation requires its actual by-value original wrapping primitive',node);
+    if(!['wrapping_add','wrapping_sub','wrapping_mul'].includes(operation)||type?.kind!=='fixed'||!/^[iu](8|16|32|64|128)$/u.test(type.rustPrimitiveName??'')||!actual(type))refuse('constant fixed host operation requires its actual by-value original wrapping primitive',node);
     bounds(type);
     if(contract.id!==node.id||contract.id!=='rust_fixed_'+operation+'_'+encodeMonomorphicType(type)||contract.jsExport!=='rust_fixed_'+operation||contract.kind!=='method'||contract.constEligible!==true||contract.constSince!=='1.32.0'||contract.async!==false||contract.pure!==true||contract.rustPath.length!==2||contract.rustPath[0]!==type.rustPrimitiveName||!actual(contract.receiver)||!actual(contract.ret)||!actual(node.type)||contract.params?.length!==2||!contract.params.every(actual)||node.args?.length!==2||!node.args.every(arg=>actual(arg.type))||contract.runtimeInstantiation?.factory!=='createFixedIntegerRuntime'||contract.runtimeInstantiation.type?.kind!=='fixed'||contract.runtimeInstantiation.type.bits!==type.bits||contract.runtimeInstantiation.type.signed!==type.signed)refuse('constant wrapping contract, operands or source const identity differ',node);
     let source;try{source=requireFixedWrappingMetadata(contract.sourceWrappingProof,type,operation);}catch(error){if(error instanceof TypeError&&error.message.startsWith('Wrapping metadata differs'))refuse(error.message,node);throw error;}
@@ -311,7 +311,7 @@ class Evaluator {
   host(node,args) {
     const selected=this.hostContract(node);if(selected.kind==='time')return this.time(node,args);const {contract,operation,source}=selected;
     if(args.length!==2||args.some((arg,index)=>!sameType(arg.type,contract.params[index])))refuse('constant wrapping evaluated arguments differ from actual checked parameters',node);
-    for(const arg of args)this.exactInteger(arg.value,arg.type,node);const value=operation==='wrapping_add'?args[0].value+args[1].value:args[0].value-args[1].value;
+    for(const arg of args)this.exactInteger(arg.value,arg.type,node);const value=operation==='wrapping_add'?args[0].value+args[1].value:operation==='wrapping_sub'?args[0].value-args[1].value:args[0].value*args[1].value;
     const result=node.type.signed?BigInt.asIntN(node.type.bits,value):BigInt.asUintN(node.type.bits,value);
     this.trace.push({kind:'host',id:node.id,operation,sourceProfileSha256:source.profileSha256,sourceSha256:source.originalMember.sourceSha256,memberSha256:source.originalMember.sha256,intrinsicSha256:source.intrinsic.sha256,span:node.span});return this.cell(node.type,result,node);
   }

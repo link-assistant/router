@@ -26,7 +26,7 @@ export function fixedIntegerContracts(type,declarations=new Map(),{span={start:0
   const data=existing?[]:[{k:'data',name,ctors,span,generated:'router-fixed-integer-contract',standardGeneric:{kind:'Option',arguments:[fixed]}}];
   const owner=fixed.rustPrimitiveName??(fixed.signed?'i':'u')+fixed.bits,encoding=encodeMonomorphicType(fixed);
   const methods=['checked_add','checked_sub','checked_mul','saturating_add','saturating_sub','saturating_mul','min','max','clamp'];
-  if(/^[iu](8|16|32|64|128)$/u.test(owner))methods.splice(3,0,'wrapping_add','wrapping_sub');
+  if(/^[iu](8|16|32|64|128)$/u.test(owner))methods.splice(3,0,'wrapping_add','wrapping_sub','wrapping_mul');
   const contracts=methods.map(method=>{
     const ordered=['min','max','clamp'].includes(method),wrapping=method.startsWith('wrapping_'),sourceWrappingProof=wrapping?pinnedFixedWrapping(fixed,method):null;
     if(wrapping)requireFixedWrappingProof(sourceWrappingProof,fixed,method);

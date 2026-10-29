@@ -49,6 +49,7 @@ function createPrimitiveIntegerMethodRuntime(type) {
     rust_fixed_checked_mul:(left,right)=>checked(multiply(left,right)),
     rust_fixed_wrapping_add:(left,right)=>wrapped(add(left,right)),
     rust_fixed_wrapping_sub:(left,right)=>wrapped(subtract(left,right)),
+    rust_fixed_wrapping_mul:(left,right)=>wrapped(multiply(left,right)),
     rust_fixed_saturating_add:(left,right)=>saturated(add(left,right)),
     rust_fixed_saturating_sub:(left,right)=>saturated(subtract(left,right)),
     rust_fixed_saturating_mul:(left,right)=>saturated(multiply(left,right)),
@@ -64,7 +65,7 @@ function createPrimitiveIntegerMethodRuntime(type) {
 
 const PRIMITIVE_INTEGER_METHOD_RUNTIMES=Object.freeze([8,16,32,64,128].flatMap(bits=>[false,true].map(signed=>Object.freeze({bits,signed,operations:createPrimitiveIntegerMethodRuntime({kind:'fixed',bits,signed})}))));
 export function primitiveIntegerMethod(value,other,upper,bits,signed,method){
- shape(bits,signed);if(!["saturating_add","saturating_sub","saturating_mul","wrapping_add","wrapping_sub","min","max","clamp"].includes(method)||method!=='clamp'&&upper!==null)throw new TypeError('Invalid Rust native integer method');const runtime=PRIMITIVE_INTEGER_METHOD_RUNTIMES.find(row=>row.bits===bits&&row.signed===signed).operations,args=method==='clamp'?[value,other,upper]:[value,other];return Reflect.apply(runtime['rust_fixed_'+method],undefined,args);
+ shape(bits,signed);if(!["saturating_add","saturating_sub","saturating_mul","wrapping_add","wrapping_sub","wrapping_mul","min","max","clamp"].includes(method)||method!=='clamp'&&upper!==null)throw new TypeError('Invalid Rust native integer method');const runtime=PRIMITIVE_INTEGER_METHOD_RUNTIMES.find(row=>row.bits===bits&&row.signed===signed).operations,args=method==='clamp'?[value,other,upper]:[value,other];return Reflect.apply(runtime['rust_fixed_'+method],undefined,args);
 }
 
 // Complete local copy of original panic messages.

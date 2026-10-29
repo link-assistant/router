@@ -64,7 +64,7 @@ export function foldNativeConstantTotal(model){
  if(kind==='fixed-cast'){if(model.length!==4)constantFail('exact constant cast required');return constantInteger(b,width(b,constantValue(c,a)));}
  if(kind==='fixed-method'){
   const row=primitiveBitwiseType(b),method=totalNativeIntegerMethod(a);if(model.length!==4||!row||!method||!Array.isArray(c)||c.length!==method.arity||method.arity!==2)constantFail('qualified total constant method required');const left=constantValue(c[0],b),right=constantValue(c[1],b),low=row.signed?-BigInt(row.minimumAbs):0n,high=BigInt(row.maximum);let value;
-  switch(a){case 'min':value=left<right?left:right;break;case 'max':value=left>right?left:right;break;case 'wrapping_add':value=width(b,left+right);break;case 'wrapping_sub':value=width(b,left-right);break;case 'saturating_add':value=left+right;break;case 'saturating_sub':value=left-right;break;case 'saturating_mul':value=left*right;break;default:constantFail('unsupported total constant method');}if(a.startsWith('saturating_'))value=value<low?low:value>high?high:value;return constantInteger(b,value);
+  switch(a){case 'min':value=left<right?left:right;break;case 'max':value=left>right?left:right;break;case 'wrapping_add':value=width(b,left+right);break;case 'wrapping_sub':value=width(b,left-right);break;case 'wrapping_mul':value=width(b,left*right);break;case 'saturating_add':value=left+right;break;case 'saturating_sub':value=left-right;break;case 'saturating_mul':value=left*right;break;default:constantFail('unsupported total constant method');}if(a.startsWith('saturating_'))value=value<low?low:value>high?high:value;return constantInteger(b,value);
  }
  constantFail('unsupported total constant model');
 }

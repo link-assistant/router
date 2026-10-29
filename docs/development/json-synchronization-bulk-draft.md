@@ -437,3 +437,9 @@ active extension and mixed-consumer source integration. Only new functions are
 inserted; original helper bodies/ABI and final complete native/receiving units
 are independently rechecked. ALL UNRUN. Bulk/physical case sources are drafted;
 aliases, cross-unit helpers and the complete remaining translation draft stay OPEN.
+
+[Wrapping multiplication](wrapping-multiply-source-draft.md) now has complete
+shared-rule source drafts across actual archived native intrinsic proof, all ten
+fixed widths, runtime/constant folding, forward/reverse and source sync consumers.
+ALL UNRUN. Fifteen source equations retain two phases and original archives;
+broader arithmetic/ownership/effects and full translation remain OPEN.
