@@ -13,7 +13,8 @@ export function receivingPrimitiveVectorDefinitionsRequested(request){
  const concrete=transportConcreteSyntaxSource(source,{language});if(transportConcreteSyntaxMeta(concrete.meta).source!==source)fail('complete actual receiving spelling CST differs');
  const ts=ownershipCompiler(),file=ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,authority==='javascript'?ts.ScriptKind.JS:ts.ScriptKind.TS);if(file.parseDiagnostics.length)fail('actual receiving spelling syntax required');if(!ownershipCompilerRuntimeNativeCurrent(ts))fail('original installed compiler source changed');let result=false;
  function vector(type){type=ownedParenthesizedType(ts,type);if(type&&ts.isTypeOperatorNode(type)&&type.operator===ts.SyntaxKind.ReadonlyKeyword)type=ownedParenthesizedType(ts,type.type);return !!type&&ts.isArrayTypeNode(type);}
- for(const node of file.statements)if(ts.isFunctionDeclaration(node)&&node.name&&vector(node.type??ts.getJSDocReturnType(node)))result=true;
+ function arrayBody(body){let work=0,found=false;function visit(node,depth=0){if(++work>100000||depth>160)fail('bounded actual vector eligibility body');if(node!==body&&(ts.isFunctionLike(node)||ts.isClassLike(node)))return;if(ts.isArrayLiteralExpression(node))found=true;ts.forEachChild(node,child=>visit(child,depth+1));}visit(body);return found;}
+ for(const node of file.statements)if(ts.isFunctionDeclaration(node)&&node.name&&(vector(node.type??ts.getJSDocReturnType(node))||node.body&&arrayBody(node.body)))result=true;
  if(!ownershipCompilerRuntimeNativeCurrent(ts))fail('actual compiler source changed during eligibility read');
 
  return result;

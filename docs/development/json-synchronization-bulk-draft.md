@@ -593,3 +593,10 @@ fence remains in the selected independent insertion procedure. Three complete
 equations and JS/TS/mixed/physical/repeated/concurrent-source refusal cases are
 UNRUN. Unwritten result inference, nonempty/module-creation Vec lifecycles and
 all wider translation/verification requirements remain OPEN.
+
+The [actual-value Vec inference draft](primitive-vector-return-inference-source-draft.md)
+extends the new-definition profile with private function-local constraints for
+empty arrays, exact integer literals, typed anchors, aliases, helper returns and
+branch joins. Bulk routing detects actual array bodies. Four complete source
+equations and independent JS/TS/native/CI-only Rust cases are UNRUN. Ambiguous
+widths remain refusals; nonempty Vec lifecycle and the whole task stay OPEN.
