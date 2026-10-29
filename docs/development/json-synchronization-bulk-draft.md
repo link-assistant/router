@@ -630,3 +630,10 @@ primitive return paths. Vec literal choices retain unanchored width constraints
 until actual typed values or written domains resolve them. Ten complete source
 equations and all-width/ordering/refusal/CI-only Rust case sources are UNRUN. Full
 drafting, native owner closure, broader behavior and all verification stay OPEN.
+
+The [native value definition header draft](primitive-value-headers-source-draft.md)
+copies the complete private emitter for actual scalar/Vec helper source headers,
+selects it in both bootstrap families and keeps ordinary public emission and
+input validation unchanged. Five complete equations and JS/TS/full-extension/
+source-refusal cases are UNRUN. This corrects draft source wiring; complete
+translation, full drafting and every verification obligation remain OPEN.

@@ -440,3 +440,145 @@ export function withOwnedNativeFunctionBodies(input,run){
   if(!primaryFailed&&fenceFailed)throw fenceError;
  }
 }
+
+// Source-construction headers only. Final public outputs still use the original
+// emitter and complete canonical argument validation. Original APIs stay intact.
+export function emitOwnedPrimitiveValueDefinitionHeaders(input,{outputPath}={}){
+ return emitOwnedPrimitiveValueHeaderCheckedProgram(checkOwnedCoreProgram(input),'typescript',{outputPath,primitiveDefinitionHeaders:true});
+}
+function emitOwnedPrimitiveValueHeaderCheckedProgram(complete,target,{outputPath,nativeJsonSource=false,selectedFunction=null,primitiveDefinitionHeaders=false}={}){
+ const rust=target==='rust';if(!rust&&target!=='typescript')fail('unknown target');if(nativeJsonSource!==false&&nativeJsonSource!==true)fail('native JSON emission mode must be explicit boolean data');if(selectedFunction!==null&&(!rust||nativeJsonSource!==true||typeof selectedFunction!=='string'||!selectedFunction||selectedFunction.length>1024))fail('selected function emission requires an explicit native Rust function name');const program=selectedFunction===null?complete:complete.filter(item=>item.javascript===selectedFunction);if(selectedFunction!==null&&program.length!==1)fail('one complete privately checked selected source function required');if(nativeJsonSource&&(!rust||!program.length||program.some(item=>!isJsonVector(item))))fail('native JSON emission requires a nonempty privately rechecked canonical JSON vector program');if(!program.length){if(primitiveDefinitionHeaders!==false)fail('precise native primitive value headers require a nonempty actual native scalar program');return '';}
+ if(primitiveDefinitionHeaders!==false&&primitiveDefinitionHeaders!==true||primitiveDefinitionHeaders&&(rust||nativeJsonSource||selectedFunction!==null||program.some(item=>!['primitive-scalar','primitive-expression-vector'].includes(item.vectorOrigin?.kind)||item.resultRoot!==null||item.returns!=='unit'&&item.returns!=='bool'&&!primitiveBitwiseType(item.returns)&&!primitiveVectorResultRole(item.returns)||item.params.some(param=>param.type!=='bool'&&!primitiveBitwiseType(param.type)))))fail('precise native primitive value headers require an actual complete checked native primitive value program and TypeScript output');
+ const context=issued.get(program[0]).context;requireOwnedCoreSourceCurrent(context);const sourceData=ownedCoreSourceData(context),rustTypes=sourceData.primitiveOperators===true?{...RUST_TYPES,...primitiveBitwiseRustTypes}:RUST_TYPES;
+ if(complete.some(item=>issued.get(item).context!==context))fail('mixed receiving contexts');
+ let sequence=0,nativeDynamicIndexFields=false,typedScalarLocals=false;const imports=new Set(),primitiveTypeImports=new Set(),scalarLocalWitnesses=new Set();
+ const jsonCopy=nativeJsonSource?'crate::translation_json_core::json_checked_copy':'__ro_copy',jsonUpdate=nativeJsonSource?'crate::translation_json_core::json_checked_with_field':'__ro_with_field',jsonValidate=nativeJsonSource?'crate::translation_json_core::json_validate':'__ro_domain';
+ function publicTypeScriptType(type){if(typeof type==='string'&&type.startsWith('vec:')&&(type.slice(4)==='bool'||primitiveBitwiseType(type.slice(4)))){const role=type.slice(4);if(role==='bool')return 'readonly boolean[]';const row=primitiveBitwiseType(role);primitiveTypeImports.add(row.alias);return 'readonly '+row.alias+'[]';}if((sourceData.primitiveOperators===true||primitiveDefinitionHeaders)&&primitiveBitwiseType(type)){const row=primitiveBitwiseType(type);primitiveTypeImports.add(row.alias);return row.alias;}if(type==='json-option-input'){imports.add('router_core_json_option_as_str');return TS_TYPES[type];}const witness=ownedJsonReaderTypeWitness(type);if(witness){imports.add(witness);return 'ReturnType<typeof __ro_'+witness+'>';}return TS_TYPES[type];}
+
+ let nativeOptionPayloads=new Map(),nativeIndexConstants=new Map();function nativeIndexConstant(value){if(!['usize','u64'].includes(value?.type))return null;const text=value.kind==='integer'?value.value:value.kind==='variable'?nativeIndexConstants.get(value.name):null;if(typeof text!=='string')return null;const integer=BigInt(text);return integer<0n||integer>18446744073709551615n?null:integer.toString();}
+ const freshJson=value=>value.type==='json'&&['owned-call','json-array','json-object','json-field-call'].includes(value.kind);
+ const copyExpression=child=>jsonCopy+'('+(child.type==='json-ref'||child.kind==='variable'?expr(child,true):'&('+expr(child)+')')+')';
+ function expr(value,borrowOwned=false){
+  switch(value.kind){
+   case 'json-field-call':return emitOwnedVectorJsonFieldCall(value,{rust,expr,imports,sequence:()=>sequence++});
+   case 'text-scalar-call':{const op=ownedVectorTextScalarOperation(value.name);if(!op||op.ret!==value.type||op.args.length!==value.args.length||value.args.some(argument=>argument.type!=='str'))fail('actual fixed text scalar signature differs');imports.add(value.name);if(!rust)return '__ro_'+value.name+'('+value.args.map(argument=>expr(argument)).join(', ')+')';const names=value.args.map(()=> '__ro_arg_'+sequence++),bindings=value.args.map((argument,index)=>'let '+names[index]+' = '+expr(argument)+';');return '{ '+bindings.join(' ')+' '+ownedAsciiRustCall(value.name,names)+' }';}
+   case 'source-scalar-call':return (rust?(nativeJsonSource?'crate::'+value.callee.rust.split('.').join('::'):value.callee.localRust):value.callee.javascript)+'('+value.args.map(argument=>expr(argument)).join(', ')+')';
+   case 'owned-vector-list':return emitOwnedVectorCandidateLiteral(value,rust);
+   case 'primitive-vector-literal':return (rust?'crate::translation_core::vec![':'[')+value.items.map(child=>expr(child)).join(', ')+']';
+   case 'json-vector-literal':if(rust)return 'crate::translation_core::vec!['+value.items.map(child=>freshJson(child)?expr(child):copyExpression(child)).join(', ')+']';imports.add('router_core_json_copy');return '['+value.items.map(child=>freshJson(child)?expr(child):'__ro_router_core_json_copy('+expr(child)+')').join(', ')+']';
+   case 'vector-condition-input':return rust?value.rust:value.name;
+   case 'variable':if(rust&&value.type==='text-owned')return borrowOwned?'&'+rustName(value.name):rustName(value.name)+'.to_owned()';return rust?(value.type==='json'?(borrowOwned?'&'+rustName(value.name):jsonCopy+'(&'+rustName(value.name)+')'):rustName(value.name)):value.name;
+   case 'unit':return rust?'()':'undefined';
+   case 'string':return rust?rustString(value.value):JSON.stringify(value.value);
+   case 'bool':return String(value.value);
+   case 'integer':return rust?value.value+'_'+(primitiveBitwiseType(value.type)?.name??(value.type==='i64'?'i64':'u64')):value.value+'n';
+   case 'not':return '(!'+expr(value.value)+')';
+   case 'binary':return '('+expr(value.left)+' '+(rust?({'===':'==','!==':'!='}[value.op]??value.op):value.op)+' '+expr(value.right)+')';
+   case 'choose':if(nativeJsonSource){const condition=optionCondition(value.cond);if(condition){if(!['bool','str','usize'].includes(value.type)&&!primitiveBitwiseType(value.type))fail('native optional conditional requires its checked scalar result');const name='__ro_payload_'+sequence++,prior=nativeOptionPayloads,some=new Map(prior),none=new Map(prior);some.set(condition.name,name);none.delete(condition.name);let yes,no;try{nativeOptionPayloads=some;yes=expr(condition.some?value.then:value.else);nativeOptionPayloads=none;no=expr(condition.some?value.else:value.then);}finally{nativeOptionPayloads=prior;}return '(if let ::std::option::Option::Some('+name+') = '+rustName(condition.name)+' { '+yes+' } else { '+no+' })';}}return rust?'(if '+expr(value.cond)+' { '+expr(value.then)+' } else { '+expr(value.else)+' })':'('+expr(value.cond)+' ? '+expr(value.then)+' : '+expr(value.else)+')';
+   case 'json-array':case 'json-object':{
+    const name=value.kind==='json-array'?'json_macro_array':'json_macro_object';imports.add(name);
+    const children=value.kind==='json-array'?value.items:value.entries.map(entry=>entry.value);
+    if(!rust)return '__ro_'+name+'(['+(value.kind==='json-array'?children.map(child=>expr(child)):value.entries.map(entry=>'['+JSON.stringify(entry.key)+', '+expr(entry.value)+']')).join(', ')+'])';
+    if(nativeJsonSource){if(value.kind==='json-object'&&!children.length)return 'crate::translation_json_core::json_build_object()';const names=children.map(()=> '__ro_json_'+sequence++),bindings=children.map((child,index)=>'let '+names[index]+' = '+(freshJson(child)?expr(child):copyExpression(child))+';'),values='crate::translation_core::vec!['+names.join(', ')+']';if(value.kind==='json-array')return '{ '+bindings.join(' ')+' crate::translation_json_core::json_build_array('+values+') }';const keys='__ro_json_keys_'+sequence++,keyValues=value.entries.map(entry=>'crate::translation_json_core::json_build_string('+rustString(entry.key)+')');return '{ '+bindings.join(' ')+' let '+keys+' = crate::translation_json_core::json_build_array(crate::translation_core::vec!['+keyValues.join(', ')+']); crate::translation_json_core::json_build_fields(&'+keys+', '+values+') }';}
+    const names=children.map(()=> '__ro_json_'+sequence++),bindings=children.map((child,index)=>'let '+names[index]+' = '+expr(child)+';');
+    const literal=value.kind==='json-array'?'['+names.join(', ')+']':'{'+value.entries.map((entry,index)=>rustString(entry.key)+': '+names[index]).join(', ')+'}';
+    return '{ '+bindings.join(' ')+' let __ro_result = crate::translation_core::json!('+literal+'); '+(nativeJsonSource?'let __ro_json_validation_'+sequence+++' = ':'')+jsonValidate+'(&__ro_result); __ro_result }';
+   }
+   case 'option-none':return rust?'None':"({$:'None'})";
+   case 'option-some':return rust?'Some('+expr(value.value)+')':"({$:'Some',field0:"+expr(value.value)+'})';
+   case 'option-test':if(nativeJsonSource)return '(if let ::std::option::Option::Some(_) = '+expr(value.value)+' { '+String(value.some)+' } else { '+String(!value.some)+' })';return rust?'('+expr(value.value)+').is_'+(value.some?'some':'none')+'()':'('+expr(value.value)+'.$ === '+JSON.stringify(value.some?'Some':'None')+')';
+   case 'option-field':if(nativeJsonSource){if(value.value.kind!=='variable'||!nativeOptionPayloads.has(value.value.name))fail('native Option payload needs its current dominating checked Some binder');return nativeOptionPayloads.get(value.value.name);}return rust?'(match '+expr(value.value)+' { Some(value) => value, None => unreachable!("checked original Some branch") })':expr(value.value)+'.field0';
+   case 'primitive-arithmetic-call':case 'primitive-method-call':case 'primitive-not-call':case 'primitive-cast-call':case 'primitive-shift-call':imports.add(value.name);return (nativeJsonSource||sourceData.primitiveDefinitions===true?emitOwnedNativePrimitiveOperatorCall:emitOwnedPrimitiveOperatorCall)(value,{rust,expression:argument=>expr(argument),argumentName:()=> '__ro_arg_'+sequence++});
+   case 'primitive-bitwise-call':{
+    const domain=primitiveBitwiseType(value.type),boolean=value.type==='bool';if(value.name!=='primitiveBitwise'||!boolean&&!domain||domain&&(value.bits!==domain.bits||value.signed!==domain.signed)||value.args.length!==2||value.args.some(argument=>!primitiveBitwiseCompatible(argument.type,value.type))||!ownedBooleanBitwiseOperator(value.operation))fail('checked primitive bitwise contract differs');imports.add(value.name);if(!rust)return '__ro_primitiveBitwise('+value.args.map(argument=>expr(argument)).join(', ')+', '+JSON.stringify(value.operation)+', '+(domain?domain.bits:'null')+', '+(domain?domain.signed:'null')+')';const names=value.args.map(()=> '__ro_arg_'+sequence++),bindings=value.args.map((argument,index)=>'let '+names[index]+' = '+expr(argument)+';');return '{ '+bindings.join(' ')+' '+ownedBooleanBitwiseRustCall(value.operation,names)+' }';
+   }
+   case 'json-option-call':{
+    const op=ownedJsonOptionalReaderOperation(value.name);if(!op||value.type!==op.ret||value.args.length!==1||value.args[0].type!==op.input)fail('checked optional Json operation differs');imports.add(value.name);
+    if(!rust)return '__ro_'+value.name+'('+expr(value.args[0])+')';
+    const name='__ro_arg_'+sequence++;return '{ let '+name+' = '+expr(value.args[0])+'; '+ownedJsonOptionalReaderRustCall(value.name,name)+' }';
+   }
+   case 'json-reader-call':{
+    const op=ownedJsonReaderOperation(value.name);if(!op||value.type!==op.ret||value.args.length!==op.args.length)fail('checked JSON reader contract differs');imports.add(value.name);
+    if(!rust)return '__ro_'+value.name+'('+value.args.map(value=>expr(value)).join(', ')+')';
+    if(nativeJsonSource&&op.ret==='bool'){const argument=value.args[0];if(argument.kind==='variable')return nativeJsonPredicateSource(value.name,(argument.type==='json'?'&':'')+rustName(argument.name));const name='__ro_arg_'+sequence++;return '{ let '+name+' = '+expr(argument)+'; '+nativeJsonPredicateSource(value.name,(argument.type==='json'?'&':'')+name)+' }';}
+    if(nativeJsonSource&&value.name==='serde_json_value_get_usize'){const names=value.args.map(()=> '__ro_arg_'+sequence++),index=nativeIndexConstant(value.args[1]),bindings=value.args.flatMap((argument,at)=>argument.kind==='variable'&&json(argument.type)?[]:['let '+names[at]+' = '+(at===1&&index!==null?index+'_usize':expr(argument))+';']),args=value.args.map((argument,at)=>argument.kind==='variable'&&json(argument.type)?(argument.type==='json'?'&':'')+rustName(argument.name):(argument.type==='json'?'&':'')+names[at]);let call;if(index!==null)call='::serde_json::Value::get('+args.join(', ')+')';else{if(sourceData.primitiveOperators===true)fail('dynamic native usize reader requires its separate checked primitive conversion');if(!nativeDynamicIndexFields){requireOwnedVectorJsonFieldSources(new Map(sourceData.files.map(row=>[row.path,row.source])),sourceData);nativeDynamicIndexFields=true;}call='crate::translation_json_fields_core::json_index('+args.join(', ')+')';}return '{ '+bindings.join(' ')+' '+call+' }';}
+    if(nativeJsonSource&&['json-ref','str','bool','u64','i64'].includes(ownedJsonOptionalPayload(op.ret))&&op.args.slice(1).every(role=>role==='str')){const names=value.args.map(()=> '__ro_arg_'+sequence++),bindings=value.args.flatMap((argument,index)=>argument.kind==='variable'&&json(argument.type)?[]:['let '+names[index]+' = '+expr(argument)+';']),args=value.args.map((argument,index)=>argument.kind==='variable'&&json(argument.type)?(argument.type==='json'?'&':'')+rustName(argument.name):(argument.type==='json'?'&':'')+names[index]);return '{ '+bindings.join(' ')+' '+nativeJsonOptionalReaderSource(value.name,args)+' }';}
+    const names=value.args.map(()=> '__ro_arg_'+sequence++),bindings=value.args.map((argument,index)=>'let '+names[index]+' = '+(argument.type==='json'?(argument.kind==='variable'?expr(argument,true):'&'+expr(argument)):expr(argument))+';');
+    return '{ '+bindings.join(' ')+' '+ownedJsonReaderRustCall(value.name,names)+' }';
+   }
+   case 'base64-call':{
+    const op=ownedBase64Operation(value.name);if(!op||value.args.length!==1||value.copy!==op.copy||value.type!==op.ret)fail('checked base64 contract differs');imports.add(value.name);
+    if(!rust)return '__ro_'+value.name+'('+expr(value.args[0])+')';
+    const argument=value.args[0],name='__ro_arg_'+sequence++;
+    const source=argument.type==='text-owned'?(argument.kind==='variable'?expr(argument,true):'&'+expr(argument)):expr(argument);
+    return '{ let '+name+' = '+source+'; '+ownedBase64RustCall(value.name,name)+' }';
+   }
+   case 'owned-call':{
+    if(rust&&['router_core_json_copy','router_vector_json_copy','json_macro_value'].includes(value.name)&&value.type==='json'&&value.args.length===1&&json(value.args[0].type))return copyExpression(value.args[0]);
+    const op=OPS[value.name];imports.add(value.name);
+    if(!rust)return '__ro_'+value.name+'('+value.args.map(expr).join(', ')+')';
+    const names=value.args.map(()=> '__ro_arg_'+sequence++),nativeArguments=nativeJsonSource||op.boundedJson,lines=value.args.map((argument,index)=>{
+     if(nativeArguments&&argument.kind==='variable'&&json(argument.type))return '';
+     const source=nativeArguments?expr(argument):argument.type==='json'?(argument.kind==='variable'?expr(argument,true):'&'+expr(argument)):expr(argument),annotation=nativeArguments&&argument.type==='json-list-owned'?': ::std::vec::Vec<crate::translation_core::Json>':'';
+     return 'let '+names[index]+annotation+' = '+source+';';
+    }).filter(Boolean);
+    // All source arguments are bound in order. Owned local variables are
+    // borrowed here; compensating copies happen only inside the fixed call.
+    const args=nativeArguments?value.args.map((argument,index)=>argument.kind==='variable'&&json(argument.type)?(argument.type==='json'?'&':'')+rustName(argument.name):argument.type==='json'?'&'+names[index]:names[index]):names;
+    let call;
+    if(op.boundedJson){const name=op.rust==='json_build_i64'&&value.args[0].type!=='i64'?'json_build_i64_unsigned':op.rust;call='crate::translation_json_core::'+name+'('+args.join(', ')+')';}
+    else if(nativeJsonSource&&['json_macro_null','json_macro_bool','json_macro_string','json_macro_u64','json_macro_i64'].includes(value.name)){const suffix=value.name==='json_macro_i64'&&value.args[0].type!=='i64'?'i64_unsigned':value.name.slice('json_macro_'.length);call='crate::translation_json_core::json_build_'+suffix+'('+args.join(', ')+')';}
+    else if(value.name==='json_macro_null')call='::serde_json::Value::Null';
+    else if(value.name==='json_macro_bool')call='::serde_json::Value::Bool('+args[0]+')';
+    else if(value.name==='json_macro_string')call='::serde_json::Value::String('+args[0]+'.to_owned())';
+    else if(value.name==='json_macro_u64')call='::serde_json::Value::from('+args[0]+')';
+    else if(value.name==='json_macro_i64')call='::serde_json::Value::from(i64::try_from('+args[0]+').expect("owned reverse i64 bound"))';
+    else if(op.rust==='json_copy')call=jsonCopy+'('+args.join(', ')+')';
+    else if(op.rust==='json_with_field')call=jsonUpdate+'('+args.join(', ')+')';
+    else if(nativeJsonSource&&op.rust==='json_index_usize'){const index=nativeIndexConstant(value.args[1]);if(index===null){if(sourceData.primitiveOperators===true)fail('dynamic native usize primitive input requires its separately checked conversion rule');if(!nativeDynamicIndexFields){requireOwnedVectorJsonFieldSources(new Map(sourceData.files.map(row=>[row.path,row.source])),sourceData);nativeDynamicIndexFields=true;}call='crate::translation_json_fields_core::json_index_or_null('+args.join(', ')+')';}else{const binding=lines.findIndex(line=>line.startsWith('let '+names[1]+' = '));if(binding<0)fail('actual integer argument binding required');lines[binding]='let '+names[1]+' = '+index+'_usize;';call='crate::translation_core::json_index_usize('+args.join(', ')+')';}}
+    else if(op.rust==='json_index_usize')call='match usize::try_from('+args[1]+') { Ok(index) => crate::translation_core::json_index_usize('+args[0]+', index), Err(_) => &::serde_json::Value::Null }';
+    else call='crate::translation_core::'+op.rust+'('+args.join(', ')+')';
+    return '{ '+lines.join(' ')+' '+call+' }';
+   }
+   default:fail('unissued expression kind');
+  }
+ }
+ function optionCondition(value){if(value.kind==='not'){const inner=optionCondition(value.value);return inner?{...inner,some:!inner.some}:null;}return value.kind==='option-test'&&value.value.kind==='variable'&&['json-option-ref','str-option-ref','bool-option','u64-option','i64-option'].includes(value.value.type)?{name:value.value.name,some:value.some}:null;}
+ function body(statements,indent,payloads=nativeOptionPayloads){const prior=nativeIndexConstants,priorPayloads=nativeOptionPayloads;nativeIndexConstants=new Map(prior);nativeOptionPayloads=new Map(payloads);try{return statements.map(statement=>{
+  const pad=' '.repeat(indent);
+  if(statement.kind==='effect')return rust?pad+'let __ro_discard_'+sequence+++' = '+expr(statement.value)+';':pad+expr(statement.value)+';';
+  if(statement.kind==='let'){const source=expr(statement.value);let annotation='';if(typedScalarLocals&&primitiveBitwiseType(statement.value.type)){if(['u64','i64'].includes(statement.value.type)&&sourceData.primitiveDefinitions!==true&&!primitiveDefinitionHeaders){const witness='json_macro_'+statement.value.type;scalarLocalWitnesses.add(witness);annotation=': Parameters<typeof __ro_'+witness+'>[0]';}else{const row=primitiveBitwiseType(statement.value.type);primitiveTypeImports.add(row.alias);annotation=': '+row.alias;}}if(nativeJsonSource){const value=nativeIndexConstant(statement.value);if(value!==null)nativeIndexConstants.set(statement.name,value);else nativeIndexConstants.delete(statement.name);}return pad+(rust?'let ':'const ')+(rust?rustName(statement.name):statement.name)+annotation+' = '+source+';';}
+  if(statement.kind==='return'&&!rust&&statement.value.kind==='unit')return pad+'return;';
+  if(statement.kind==='return')return nativeJsonSource?pad+expr(statement.value):pad+'return '+expr(statement.value)+';';
+  if(nativeJsonSource){const condition=optionCondition(statement.cond);if(condition){const name='__ro_payload_'+sequence++,some=new Map(nativeOptionPayloads),none=new Map(nativeOptionPayloads);some.set(condition.name,name);none.delete(condition.name);return pad+'if let ::std::option::Option::Some('+name+') = '+rustName(condition.name)+' {\n'+body(condition.some?statement.then:statement.else,indent+4,some)+'\n'+pad+'} else {\n'+body(condition.some?statement.else:statement.then,indent+4,none)+'\n'+pad+'}';}}
+  return pad+'if '+(rust?'':'(')+expr(statement.cond)+(rust?'':')')+' {\n'+body(statement.then,indent+4)+'\n'+pad+'} else {\n'+body(statement.else,indent+4)+'\n'+pad+'}';
+ }).join('\n');}finally{nativeIndexConstants=prior;nativeOptionPayloads=priorPayloads;}}
+ const code=program.map(item=>{typedScalarLocals=!rust&&(isJsonVector(item)&&sourceData.primitiveOperators!==true||sourceData.primitiveDefinitions===true||primitiveDefinitionHeaders);
+  const borrowed=type=>['json-ref','map-ref','str','bytes-ref','base64-error-ref','json-option-input'].includes(type)||ownedJsonBorrowed(type),loan=borrowed(item.returns),explicit=loan&&item.resultRoot!==null&&item.params.filter(param=>borrowed(param.type)).length>1;
+  const parameters=item.params.map(param=>{
+   const type=item.vectorOrigin&&!isJsonVector(item)?(rust?(param.type==='text-owned'?'::std::string::String':param.type==='str-static'?"&'static ::std::primitive::str":'::core::primitive::'+param.type):param.type==='bool'?'boolean':param.type==='f64'?'number':['text-owned','str-static'].includes(param.type)?'string':'bigint'):(rust?rustTypes[param.type].replace("'a ",explicit&&param.name===item.resultRoot?"'a ":''):publicTypeScriptType(param.type));
+   return (rust?param.rust:param.name)+': '+type;
+  }).join(', ');
+  const returns=rust?rustTypes[item.returns].replace("'a ",item.resultRoot===null?"'static ":explicit?"'a ":''):publicTypeScriptType(item.returns);
+  const signature=rust?'#[must_use]\n#[rustfmt::skip]\n'+(item.exported?'pub ':'')+'fn '+item.name+(explicit?"<'a>":'')+'(':(item.exported?'export ':'')+'function '+item.javascript+'(';
+  return signature+parameters+')'+(rust?' -> ':': ')+returns+' {\n'+(ownedBase64InputPrelude(item,rust)?ownedBase64InputPrelude(item,rust)+'\n':'')+(primitiveDefinitionHeaders?'':isJsonVector(item)?jsonVectorInputPrelude(item,rust,imports,{nativeJsonSource})+'\n':vectorParameterPrelude(item,rust)?vectorParameterPrelude(item,rust)+'\n':'')+body(item.body,4)+'\n}';
+ }).join('\n\n');
+ requireOwnedCoreSourceCurrent(context);
+ if(nativeDynamicIndexFields)requireOwnedVectorJsonFieldSources(new Map(ownedCoreSourceData(context).files.map(row=>[row.path,row.source])),sourceData);
+ if(rust)return (nativeJsonSource?'':RUST_SUPPORT+'\n\n')+code+'\n';
+ const output=outputPath??program[0].source.path,relative=name=>{const path=posix.relative(posix.dirname(output),sourceData.runtimeRoot+'/'+name);return path.startsWith('.')?path:'./'+path;};
+ const vectorText=program.some(item=>item.vectorOrigin&&item.params.some(param=>['text-owned','str-static'].includes(param.type)||isJsonVector(item)&&param.type==='str'));
+ const lines=['import type {JsonValue} from '+JSON.stringify(relative('json-macro-runtime.mjs'))+';'];
+ const typeOnlyScalars=[...scalarLocalWitnesses].filter(name=>!imports.has(name));if(typeOnlyScalars.length)lines.push('import type { '+typeOnlyScalars.map(name=>name+' as __ro_'+name).join(', ')+' } from '+JSON.stringify(relative('json-macro-runtime.mjs'))+';');
+ if(vectorText)lines.push('import {vectorTextInput as __ro_vectorTextInput} from '+JSON.stringify(relative('owned-vector-text-runtime.mjs'))+';');
+ if(primitiveTypeImports.size){const location=posix.relative(posix.dirname(output),(sourceData.declarationRoot??sourceData.runtimeRoot)+'/primitive-operator-runtime.mjs');lines.push('import type { '+[...primitiveTypeImports].join(', ')+' } from '+JSON.stringify(location.startsWith('.')?location:'./'+location)+';');}
+ if(hasOwnedBase64Input(program)||[...imports].some(name=>ownedBase64Operation(name)))lines.push('import type {Base64Error,Base64Result} from '+JSON.stringify(relative('base64-runtime.mjs'))+';');
+ if(hasOwnedBase64Input(program))lines.push('import {base64ResultInput as __ro_base64ResultInput} from '+JSON.stringify(relative('base64-runtime.mjs'))+';');
+ for(const family of ['primitive-operator','string-iterator','json-fields','json-update','json-macro','base64','json','json-option']){
+  const names=[...imports].filter(name=>(ownedPrimitiveOperatorOperation(name)?'primitive-operator':ownedVectorTextScalarOperation(name)?'string-iterator':ownedVectorJsonFieldOperation(name)?'json-fields':ownedJsonOptionalReaderOperation(name)?'json-option':ownedBase64Operation(name)?'base64':ownedJsonReaderOperation(name)?'json':name.startsWith('json_macro_')?'json-macro':'json-update')===family);
+  if(names.length)lines.push('import { '+names.map(name=>name+' as __ro_'+name).join(', ')+' } from '+JSON.stringify(relative(family+'-runtime.mjs'))+';');
+ }
+ return lines.join('\n')+'\n\n'+code+'\n';
+}
+
+import {primitiveVectorResultRole} from './owned-source-value-calls.mjs';

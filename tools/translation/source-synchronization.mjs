@@ -230,3 +230,5 @@ export {proposeOwnedPrimitiveVectorFunctionInsertion} from './js-to-rust/owned-p
 
 export {proposeOwnedPrimitiveVectorFunctionExtension,proposeOwnedPrimitiveVectorFunctionRemoval,proposeOwnedPrimitiveVectorFunctionReconciliation,prepareOwnedPrimitiveVectorExistingHelperSource} from './js-to-rust/owned-primitive-vector-definition-lifecycle.mjs';
 export {proposeOwnedPrimitiveVectorUnitAdoption} from './js-to-rust/owned-primitive-vector-unit-adoption.mjs';
+
+export {emitOwnedPrimitiveValueDefinitionHeaders} from './js-to-rust/owned-vector-candidate-operations.mjs';
