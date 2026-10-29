@@ -214,3 +214,6 @@ export {prepareOwnedVectorJavaScriptPair} from './js-to-rust/owned-vector-javasc
 export {planOwnedVectorUnitSynchronization,applyOwnedVectorUnitSynchronization} from './owned-vector-unit-synchronization.mjs';
 
 export {proposeOwnedNativeBulkDiscovery} from './js-to-rust/owned-native-bulk-discovery.mjs';
+
+export {proposeOwnedNativeBulkSynchronization} from './js-to-rust/owned-native-bulk-composition.mjs';
+export {planOwnedNativeBulkUnitSynchronization,applyOwnedNativeBulkUnitSynchronization} from './owned-native-bulk-unit-synchronization.mjs';

@@ -128,3 +128,11 @@ js/src + ts/src module proposals are drafted in
 [native-bulk-discovery-source-draft.md](native-bulk-discovery-source-draft.md).
 ALL UNRUN. Shared-file batch composition, atomic adoption, source-call discovery,
 broader ABI/control/ownership families and full qualification remain OPEN.
+
+Shared-file bulk adoption successor: complete-function substitutions, one native
+edit per file, fresh combined project/body checks and a copied bounded physical
+plan/apply CLI are drafted in
+[native-bulk-composition-source-draft.md](native-bulk-composition-source-draft.md).
+ALL UNRUN. This adds draft composition/initial adoption beyond the earlier
+per-module discovery proposal; it does not qualify execution, freshness, coverage,
+existing receiving-module sync, source-call discovery or broader source families.
