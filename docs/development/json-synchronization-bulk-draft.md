@@ -683,3 +683,11 @@ independent whole-callee checks through receiving, native graphs, projection and
 copied definition lifecycle. Twenty-two complete equations and JS/TS/all-width/
 native/refusal/CI-only Rust sources are UNRUN. Full drafting, collection/source
 owner requirements and all qualification obligations remain OPEN.
+
+The [standalone unit definition draft](unit-definition-routing-source-draft.md)
+adds copied scalar/unit helper insertion, lifecycle and absent-module adoption
+with automatic bulk dispatch, without requiring a Vec. Bounded no-valued-return
+syntax can select implicit unit only in new complete definition contexts; every
+body/callee/native check remains. Nine complete equations and independent
+JS/TS/all-width/lifecycle/adoption/refusal sources are UNRUN. Broader source
+families, full drafting and every qualification obligation remain OPEN.

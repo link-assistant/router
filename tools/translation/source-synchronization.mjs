@@ -239,3 +239,8 @@ export {withFreshStandardCopyInputs} from './fresh-standard-copy-inputs.mjs';
 export {withCurrentStandardCopySourceOperation,currentPrimitiveCopySource,currentSharedReferenceCopyIdentity} from './current-standard-copy-source.mjs';
 
 export {observeNativeSourceCallControl} from './js-to-rust/owned-native-source-call-control.mjs';
+
+export {proposeOwnedPrimitiveEffectFunctionInsertion} from './js-to-rust/owned-primitive-effect-function-insertion.mjs';
+export {proposeOwnedPrimitiveEffectFunctionExtension,proposeOwnedPrimitiveEffectFunctionRemoval,proposeOwnedPrimitiveEffectFunctionReconciliation,prepareOwnedPrimitiveEffectExistingHelperSource} from './js-to-rust/owned-primitive-effect-definition-lifecycle.mjs';
+export {proposeOwnedPrimitiveEffectUnitAdoption} from './js-to-rust/owned-primitive-effect-unit-adoption.mjs';
+export {receivingPrimitiveValueDefinitionFamily} from './js-to-rust/owned-unit-definition-routing.mjs';

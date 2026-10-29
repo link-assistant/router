@@ -314,7 +314,7 @@ function checkFunctionBody(context,path,declaration,analysis){
  const vectorProfile=analysis.vectorProfiles?.get(declaration.name.text),jsonVectorProfile=['json-vector','json-value','json-scalar','primitive-scalar','primitive-expression-vector'].includes(vectorProfile?.kind)?vectorProfile:null;
  if(jsonVectorProfile?.kind==='primitive-scalar'&&nativeScalars&&jsonVectorProfile.vectorLocals!==true)fail('closed primitive source units retain their separate non-operator input profile');
  if(jsonVectorProfile&&(!paired||declaration.parameters.length!==jsonVectorProfile.parameters.length||paired.declaration.parameters.length!==declaration.parameters.length))fail('actual original Json vector parameter arity differs');
- const definitionWrittenPair=paired?.declaration.type?paired:null,writtenDefinitionResult=definitionWrittenPair?.declaration.type??ts.getJSDocReturnType(declaration),definitionReturnType=primitiveDefinitions&&writtenDefinitionResult?originalOwnedCoreType(context,definitionWrittenPair?.pair.typescript.path??path,writtenDefinitionResult,definitionWrittenPair?.analysis??analysis):null,definitionUnit=definitionReturnType==='unit';
+ const definitionWrittenPair=paired?.declaration.type?paired:null,writtenDefinitionResult=definitionWrittenPair?.declaration.type??ts.getJSDocReturnType(declaration),definitionReturnType=primitiveDefinitions?(writtenDefinitionResult?originalOwnedCoreType(context,definitionWrittenPair?.pair.typescript.path??path,writtenDefinitionResult,definitionWrittenPair?.analysis??analysis):vectorDefinitions&&primitiveUnitReturnSyntax(ts,declaration.body)?'unit':null):null,definitionUnit=definitionReturnType==='unit';
  const inference=vectorDefinitions||jsonVectorProfile?.kind==='primitive-expression-vector'||jsonVectorProfile?.vectorLocals===true?createPrimitiveVectorInference():null;let primitiveDefinitionLocals=0;
  const newVectorDefinition=vectorDefinitions&&primitiveVectorResultRole(definitionReturnType),expressionVector=jsonVectorProfile?.kind==='primitive-expression-vector'||jsonVectorProfile?.vectorLocals===true||vectorDefinitions,expressionVectorType=jsonVectorProfile?.type??definitionReturnType,expressionVectorElement=jsonVectorProfile?.element?.name??(newVectorDefinition?definitionReturnType.slice(4):null),moves=type=>ownedBase64Result(type)||type==='json-list-owned'||expressionVector&&(primitiveVectorResultRole(type)||inference?.pending(type));
  const primitiveLiteralBinding=entry=>entry&&Object.hasOwn(entry,'inferredPrimitiveLiteral')?entry.inferredPrimitiveLiteral:null;
@@ -682,3 +682,5 @@ import {primitiveVectorResultRole} from './owned-source-effect-calls.mjs';
 import {assertOwnedPrimitiveVectorDefinition} from './owned-primitive-vector-definition-family.mjs';
 
 import {createPrimitiveVectorInference} from './owned-primitive-vector-inference.mjs';
+
+import {primitiveUnitReturnSyntax} from './owned-unit-return-syntax.mjs';
