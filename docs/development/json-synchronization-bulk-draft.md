@@ -425,3 +425,9 @@ now have source and independent case drafts for all ten exact integer domains.
 ALL UNRUN. Actual private source types and native bodies remain required; these
 formatting/literal rules prepare the next existing-helper bootstrap consumer.
 Full translation, full drafting and every qualification obligation remain OPEN.
+
+[Existing helper source bootstrap](existing-helper-bootstrap-source-draft.md)
+now reconstructs only fresh actual transitive native bodies, precise typed/JSDoc
+source and a complete privately rechecked helper/new definition program.
+ALL UNRUN. Extracting only new native functions while retaining old helper bytes
+and finishing bulk append integration remain OPEN; full translation is unfinished.
