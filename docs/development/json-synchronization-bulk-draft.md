@@ -431,3 +431,9 @@ now reconstructs only fresh actual transitive native bodies, precise typed/JSDoc
 source and a complete privately rechecked helper/new definition program.
 ALL UNRUN. Extracting only new native functions while retaining old helper bytes
 and finishing bulk append integration remain OPEN; full translation is unfinished.
+
+[Existing-helper native append](existing-helper-append-source-draft.md) now has
+active extension and mixed-consumer source integration. Only new functions are
+inserted; original helper bodies/ABI and final complete native/receiving units
+are independently rechecked. ALL UNRUN. Bulk/physical case sources are drafted;
+aliases, cross-unit helpers and the complete remaining translation draft stay OPEN.

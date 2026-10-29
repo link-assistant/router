@@ -137,7 +137,7 @@ function mergeExtensionTypeHeaders(oldSource,newSource,path,oldNames,newNames){
  }
  if(seen.size!==oldNames.length+newNames.length||[...oldNames,...newNames].some(name=>!seen.has(name)))extensionFail('complete merged type-header function set differs');const imports=[...groups.values()].filter(row=>row.items.length).map(row=>'import '+(row.typeOnly?'type ':'')+'{ '+row.items.map(item=>item.imported+(item.imported===item.name?'':' as '+item.name)).join(', ')+' } from '+JSON.stringify(row.target)+';').join('\n'),source=imports+'\n'+functions.join('\n')+'\n';prepareOwnedVectorModulePair(path.replace(/[.](?:mts|ts)$/u,'.mjs'),path,source);locals.clear();groups.clear();seen.clear();return {source,history:transportConcreteSourceEquations([{before:oldSource+'\n'+newSource,after:source,language:'TypeScript'}])[0],sourceAuthority:false,semanticAuthority:false};
 }
-export function proposeOwnedPrimitiveFunctionExtension(data,options){
+function proposeOwnedPrimitiveFunctionExtensionWithoutExistingHelperBootstrap(data,options){
  return withOwnedNativeProjectOperation(()=>{
   const {original,request,authority,bindings:oldBindings,route}=extensionRequest(data,options),files=new Map(original.files.map(row=>[row.path,row.source])),contexts=[];let failed=false,baseline,addition,finalProject;
   const compile=sources=>{const inputs={manifest:sources.get('Cargo.toml'),lock:sources.get('Cargo.lock')};return translateProject({entry:'src/lib.rs',paths:[...sources.keys()].filter(path=>path.endsWith('.rs')).sort(),readSource:path=>sources.get(path),compilationProfile:PRODUCTION_PROFILE,cargoManifest:inputs.manifest,jsonMacroDependencies:jsonMacroDependencyProfile(inputs).proof,deriveDependencies:deriveDependencyProfile(inputs).proof});};
@@ -177,3 +177,5 @@ export function ownedPrimitiveFunctionExtensionRequired(data,options){
  const {request,authority,bindings}=extensionRequest(data,options),ts=ownershipCompiler(),file=ts.createSourceFile(authority==='javascript'?request.sourcePath:request.typescriptPath,request[authority],ts.ScriptTarget.Latest,true,authority==='javascript'?ts.ScriptKind.JS:ts.ScriptKind.TS);if(file.parseDiagnostics.length)extensionFail('actual complete receiving syntax required');const known=new Set(bindings.map(row=>row.javascriptName));let functions=0,added=false;
  for(const row of file.statements)if(ts.isFunctionDeclaration(row)){if(!row.name||++functions>4096)extensionFail('bounded named source function census required');if(!known.has(row.name.text))added=true;}known.clear();return added;
 }
+
+export {proposeOwnedPrimitiveFunctionExtension} from './owned-primitive-helper-extension.mjs';

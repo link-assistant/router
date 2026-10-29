@@ -2,7 +2,8 @@
 
 SOURCE ONLY. Construction, source/meta, behavior, strict paired, source-history
 and refusal case sources are UNRUN. Whole drafting and all qualification remain
-OPEN. Native append integration for these dependencies is still unfinished.
+OPEN. [Native append integration](existing-helper-append-source-draft.md) is now
+source drafted and remains entirely unrun.
 
 The new source operation reconstructs actual existing native helper bodies for
 new-only JavaScript or TypeScript functions that call them. Actual native
@@ -31,15 +32,15 @@ Every context closes on success and failure. Public helper names, summaries,
 source equations, returned programs and mode fields grant no semantic, namespace,
 installation or execution permission; subsequent consumers must reissue actual
 source and native checks. No native source is changed or installed by this
-operation. The later append consumer must extract only new emitted functions,
-retain existing helper source bytes, bind the actual old native names, and
-independently recheck the complete proposed native project.
+operation. The subsequent source-drafted append consumer extracts only new emitted functions,
+and must still qualify its preservation of existing helper source bytes,
+binding of actual old native names, and independent recheck of the complete proposed native project.
 
 Two complete source equations retain originals/inverses under language then
 repository. Independent unrun cases draft both languages, transitive selection,
 all ten fixed helper domains, real declaration/JSDoc source, strict paired and
 interpreter behavior, no placeholder candidate, shadowed/missing/forged sources,
 ABI and effect refusals, alias limitations and complete source-history inverses.
-Native consumer integration and full translation remain OPEN, together with
+Native consumer qualification and full translation remain OPEN, together with
 coverage/parity/freshness/resources/receiving export/platform/CI qualification.
 Rust remains CI-only after eight same-SHA JavaScript gates.
