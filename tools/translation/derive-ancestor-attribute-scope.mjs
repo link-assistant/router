@@ -342,3 +342,35 @@ export function originalNormalUngatedBuiltinAttributeRegistrations(){
  if(!readFileSync(new URL('manifest.json',root)).equals(manifest)||!readFileSync(archiveURL).equals(packed))fail('complete builtin attribute inputs changed during source proof');check();
  return freeze({schema:'original-normal-ungated-builtin-attribute-registrations-v1',path,source,sourceSha256:pin.sha256,manifestSha256:hash(manifest),concreteSyntax:concrete.meta,inverse:source,registrations,unselected,wholeRegistryInspected:true,normalUngatedConstructorsOnly:true,unsafeConstructorsQualified:false,gatedConstructorsQualified:false,attributeLegalityQualified:false,globalExportsClosed:false,sourceAuthority:false,namespaceAuthority:false,runtimeAuthority:false,callerOwnerResolved:false,attributeBehaviorExecuted:false,crossInvocationCache:false});
 }
+
+// Fresh full-source constructor; old public cached witness API stays exact.
+import {withFreshImplNamespaceSource} from './fresh-impl-namespace-source.mjs';
+export function freshOriginalImplNamespaceSourcePlan(){
+ return withFreshImplNamespaceSource(frame=>{
+ const originals=new Map([[frame.path,{sha256:frame.sha256,source:frame.source}]]);
+const functionInputs=new Map([...originals].filter(([path])=>path.endsWith('.rs')).map(([path,origin])=>{
+ const found=[];
+ function scan(items,offset,owner){for(const item of items){
+  const tokens=significant(item.tokens);if(item.term==='fn')found.push({item,offset,owner});
+  if(item.term==='impl'){const open=tokens.find(token=>token.text==='{'),close=tokens.at(-1);if(open&&close?.text==='}')scan(sourceItems(origin.source.slice(offset+open.end,offset+close.start)),offset+open.end,words(origin.source.slice(offset+item.start,offset+open.start)));}
+ }}scan(sourceItems(origin.source),0,null);
+ return [path,freeze(found)];
+}));
+function originalFunction(path,name,ownerPart=null){
+ const origin=originals.get(path),found=functionInputs.get(path).filter(row=>row.item.name===name&&(!ownerPart||row.owner?.includes(ownerPart)));
+ if(found.length!==1)fail('original callback absent/ambiguous: '+path+'::'+name);
+ const {item,offset,owner}=found[0],span={start:offset+item.start,end:offset+item.end};return freeze({path,sourceSha256:origin.sha256,name,owner,span,original:origin.source.slice(span.start,span.end)});
+}
+
+ // Build selections from complete current source in this invocation.
+ const graph='compiler/rustc_resolve/src/build_reduced_graph.rs';
+ const selections={item:originalFunction(graph,'build_reduced_graph_for_item','BuildReducedGraphVisitor'),associated:originalFunction(graph,'visit_assoc_item','Visitor'),block:originalFunction(graph,'visit_block','Visitor')};
+ const recipes=[
+  recipe(selections.item,`ItemKind::Impl(box Impl { of_trait: Some(..), .. }) | ItemKind::Impl { .. } | ItemKind::ForeignMod(..) | ItemKind::GlobalAsm(..) => {}`,'actual Impl alternatives add no enclosing module names'),
+  recipe(selections.item,`ItemKind::Const(box ConstItem { ident, .. }) | ItemKind::Delegation(box Delegation { ident, .. }) | ItemKind::Static(box StaticItem { ident, .. }) => { self.r.define(parent, ident, ValueNS, (res, vis, sp, expansion)); }`,'a const declares only its actual identifier in ValueNS'),
+  recipe(selections.associated,`if ctxt == AssocCtxt::Trait { let parent = self.parent_scope.module; let expansion = self.parent_scope.expansion; self.r.define(parent, ident, ns, (self.res(def_id), vis, item.span, expansion)); } else if !matches!(&item.kind, AssocItemKind::Delegation(deleg) if deleg.from_glob) { let impl_def_id = self.r.tcx.local_parent(local_def_id); let key = BindingKey::new(ident.normalize_to_macros_2_0(), ns); self.r.impl_binding_keys.entry(impl_def_id).or_default().insert(key); }`,'actual impl associated names stay in impl_binding_keys rather than enclosing module'),
+  recipe(selections.block,`let orig_current_module = self.parent_scope.module; let orig_current_macro_rules_scope = self.parent_scope.macro_rules; self.build_reduced_graph_for_block(block); visit::walk_block(self, block); self.parent_scope.module = orig_current_module; self.parent_scope.macro_rules = orig_current_macro_rules_scope;`,'actual block restores enclosing module and textual macro scope'),
+ ];
+ const value=freeze({schema:'original-impl-enclosing-namespace-source-plan-v1',profileSha256:frame.profileSha256,selections,recipes,wholeCompilerExecuted:false,namespaceAuthority:false,runtimeAuthority:false});implPlans.add(value);return value;
+ });
+}

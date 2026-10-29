@@ -553,3 +553,11 @@ receiving/native consumers share zero, MIN/-1, operand-order and guarded
 continuations. Nineteen complete equations and independent all-width paired,
 bulk/discovery and CI-only Rust edge sources are UNRUN. Bare checked-Option
 expectation semantics remain distinct; full source drafting stays OPEN.
+
+The [fresh native impl source witness draft](fresh-impl-namespace-source-draft.md)
+rebuilds the existing complete native resolver selections from actual pinned
+source/CST and closes every invocation with fresh full-byte fences. Current
+original and whole-owner/proof-byte source-plan consumers use the additive
+constructor; the original public cached witness API is unchanged. Fifteen
+complete equations and all independent source/refusal cases are UNRUN.
+Type-prefix/Span/visitor/export closure, performance and full drafting stay OPEN.
