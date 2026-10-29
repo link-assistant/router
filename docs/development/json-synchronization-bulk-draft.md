@@ -401,3 +401,9 @@ Actual written void/unit definitions now have a
 pure empty bodies, returns, complete branches and early guards in both bootstrap
 consumers. ALL UNRUN. General effects and inferred empty functions still refuse;
 the whole required draft and every qualification obligation remain OPEN.
+
+[New unit adoption](primitive-unit-adoption-source-draft.md) now has an
+original-source API for absent receiving companions and a newly constructed
+direct inline native module. ALL UNRUN. It translates complete actual source
+without installed placeholders and retains null source-absence inverses.
+Bulk/physical integration and the full remaining draft remain OPEN.
