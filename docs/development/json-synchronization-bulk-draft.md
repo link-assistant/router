@@ -246,3 +246,9 @@ hygienic names for new collisions and actual .ts/.mts path preservation in
 [native-refresh-names-source-draft.md](native-refresh-names-source-draft.md).
 ALL UNRUN. Established-export/parameter collisions require explicit reconciliation.
 Full module lifecycle, API consumers and complete drafting/qualification remain OPEN.
+
+Pure scalar ordered fallback matches now have tail/expression source-normalization
+rules and independent Rust oracle drafts in
+[native-ordered-scalars-source-draft.md](native-ordered-scalars-source-draft.md).
+ALL UNRUN. JSON-bearing/aggregate/borrowed match families, full drafting and complete
+coverage, parity, receiving, resource, platform and CI qualification remain OPEN.
