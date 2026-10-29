@@ -222,8 +222,10 @@ export function proposeOwnedPrimitiveFunctionRemoval(data,options){
   try{
    if(!files.has(request.sourcePath)||!files.has(request.typescriptPath))removalFail('complete actual original receiving pair required');
    const start=createOwnedVectorCandidateContext(original);contexts.push(start);baseline=compile(files);
-   const originalProgram=translateOwnedVectorCandidate(files.get(request.sourcePath),{context:start,sourcePath:request.sourcePath,typescriptOutputPath:request.typescriptPath});
-   if(!extensionSame(originalProgram.program.map(item=>[item.vectorOrigin.original.path,item.vectorOrigin.original.qualifiedName]).sort(),oldBindings.map(row=>[row.rustPath,row.rustName]).sort()))removalFail('complete original receiving/native binding census differs');
+   // The authoritative physical JS/TS file may already contain the deletion.
+   // Require every original native carrier/body afresh, rather than demanding
+   // a deleted receiving declaration or accepting a saved earlier verdict.
+   for(const binding of oldBindings)actualRemovalEntry(baseline,files,binding,route).carrier.lower();
    const run=createRulePipeline([
     {phase:'language',rules:[
      {id:'receiving:partition-retained-functions-and-recheck-their-complete-proposed-bodies',apply:()=>{

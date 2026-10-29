@@ -383,3 +383,9 @@ Receiving-function deletion has an original-source API and regression source
 draft in [primitive-function-removal-source-draft.md](primitive-function-removal-source-draft.md).
 ALL UNRUN. Retained callers update before exact native removals. Bulk/physical
 integration, mixed reconciliation and full translation remain OPEN.
+
+The [bulk removal source draft](primitive-bulk-removal-source-draft.md) connects
+receiving deletions to shared native-file composition and durable physical unit
+manifests. ALL UNRUN. Exact full-project insertion/removal deltas, empty unit
+repeat/restore and already-edited authority inputs are drafted; broader
+reconciliation, helper bootstrap and complete translation remain OPEN.

@@ -10,7 +10,10 @@ application body is hand edited and no receiving source executes during drafting
 
 The request supplies one actual complete JavaScript or TypeScript unit. Actual
 native AST/CST partitioning requires a strict subset of the recorded original
-names. All original receiving functions first enter the actual private checker.
+names. Every original selected native function first re-enters the actual private
+whole-project issuer, so an already-edited authoritative JS/TS source need not
+retain a declaration the user has explicitly removed. Retained receiving
+functions independently enter the complete actual private source checker.
 JavaScript authority retains actual type headers for the surviving functions;
 TypeScript supplies its complete current headers. Retained bodies update before
 the removed Rust functions disappear, permitting a retained caller to stop using
@@ -33,7 +36,8 @@ unsupported items and noncanonical empty requests cannot disappear through that
 case. The durable native route permits a later independently checked insertion.
 Mixed additions/removals, coordinated cross-unit caller deletion, broader trivia
 ownership and zero-function modules with retained native items require further
-drafts. This API is not yet connected to bulk composition or physical planning.
+drafts. Bulk composition and physical planning now select this API through the
+[bulk removal source draft](primitive-bulk-removal-source-draft.md), all unrun.
 
 No proposal installs files or grants semantic, namespace, execution or freshness
 authority. Every source context closes with fresh source fences on success and
