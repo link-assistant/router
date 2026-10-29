@@ -261,3 +261,5 @@ export {proposePrimitiveSequenceRootSource} from './primitive-sequence-root-sour
 export {observePrimitiveSequenceCoreSources} from './primitive-sequence-source-bindings.mjs';
 
 export {withOriginalPrimitiveSequenceSourceOperation,observeCurrentPrimitiveSequenceCoreSources,requireCurrentPrimitiveSequenceOperationSource} from './current-primitive-sequence-source.mjs';
+
+export {primitiveSequenceRuntimeSources} from './primitive-sequence-runtime-sources.mjs';

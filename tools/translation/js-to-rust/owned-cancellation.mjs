@@ -8,7 +8,7 @@ import {posix} from 'node:path';
 import {projectOwnedCollectionsTypeScript} from './owned-collections-typed-source.mjs';
 export {createOwnedCoreSourceContext as createOwnedCollectionsContext,ownedCoreRuntimeSources as ownedCollectionsRuntimeSources,prepareOwnedCoreRuntime as prepareOwnedCollectionsRuntime,evaluateOwnedCoreProgram as evaluateOwnedCollections,evaluateOwnedCoreBatch as evaluateOwnedCollectionsBatch,readOwnedCoreDocument as readOwnedCollectionsMeta};
 export const emitOwnedCollectionsRust=program=>emitOwnedCoreProgram(program,'rust');
-function translate(stage,{context,sourcePath,typescriptOutputPath}={}){
+function translate(stage,{context,sourcePath,typescriptOutputPath}={}){const sequenceData=ownedCoreSourceData(context),execute=()=>{
  if(ownedCoreSourceData(context).files.find(row=>row.path===sourcePath)?.source!==stage.source)throw new TypeError('Owned collection complete original source/path differs');
  const run=createRulePipeline([
   {phase:'language',rules:[
@@ -18,7 +18,8 @@ function translate(stage,{context,sourcePath,typescriptOutputPath}={}){
   ]},
   {phase:'repository',rules:[{id:'router:retain-original-collection-source-and-explicit-parity-obligations',apply:value=>({...value,javascript:stage.source,concreteSyntax:stage.concreteSyntax,profile:'router-owned-synchronous-cancellation-v1',runtimeParity:false,wholeRouterSynchronization:false,rustExecuted:false})}]},
  ]).run(null);requireOwnedCoreSourceCurrent(context);return {...run.value,trace:run.trace};
-}
+};return sequenceData.files.some(row=>row.path===sequenceData.runtimeRoot+'/primitive-sequence-runtime.mjs')?withOriginalPrimitiveSequenceSourceOperation(execute):execute();}
+
 export function translateOwnedCollectionsJavaScript(source,options){return translate(prepareReverseConcreteSource(source),options);}
 export function translateOwnedCollectionsConcreteSyntaxMeta(meta,options){return translate(parseReverseConcreteSource(meta),options);}
 export function translateOwnedCollectionsTypeScript(source,{context,sourcePath,typescriptOutputPath}={}){
@@ -45,3 +46,5 @@ export {translateOwnedCollectionsJavaScript as translateOwnedOutcomeJavaScript,t
 
 export {createOwnedCoreSourceContext as createOwnedCancellationContext,ownedCoreRuntimeSources as ownedCancellationRuntimeSources,prepareOwnedCoreRuntime as prepareOwnedCancellationRuntime,evaluateOwnedCoreProgram as evaluateOwnedCancellation,evaluateOwnedCoreBatch as evaluateOwnedCancellationBatch,readOwnedCoreDocument as readOwnedCancellationMeta};
 export {translateOwnedCollectionsJavaScript as translateOwnedCancellationJavaScript,translateOwnedCollectionsTypeScript as translateOwnedCancellationTypeScript,translateOwnedCollectionsConcreteSyntaxMeta as translateOwnedCancellationConcreteSyntaxMeta,emitOwnedCollectionsRust as emitOwnedCancellationRust};
+
+import {withOriginalPrimitiveSequenceSourceOperation} from '../current-primitive-sequence-source.mjs';

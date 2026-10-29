@@ -14,7 +14,7 @@ const header="import {json_macro_null as nil,json_macro_array as array} from './
 const functions=domains.map(([name,alias])=>`/** @param {readonly import('./runtime/primitive-operator-runtime.mjs').${alias}[]} values */
 export function check${name}(values){for(const item of values){if(item!==0n){return nil();}}return array([]);}`).join('\n');
 function data(source,family='outcome',path='caller.mjs'){
- const input=(family==='outcome'?ownedStateReceivingData:ownedCancellationReceivingData)([{path,source}]);input.primitiveOperators=true;input.files=input.files.filter(row=>!row.path.startsWith('runtime/')).concat((family==='outcome'?ownedOutcomeRuntimeSources:ownedCancellationRuntimeSources)());return input;
+ const input=(family==='outcome'?ownedStateReceivingData:ownedCancellationReceivingData)([{path,source}]);input.primitiveOperators=true;input.files=input.files.filter(row=>!row.path.startsWith('runtime/')).concat((family==='outcome'?ownedOutcomeRuntimeSources:ownedCancellationRuntimeSources)());input.files=withCompletePrimitiveRuntimeSources(input.files);return input;
 }
 for(const family of ['outcome','cancellation'])test(family+' bulk proposal adds every new fixed-width input guard and freshly reissues the complete module',limits,()=>{
  const source=header+functions,input=data(source,family),before=structuredClone(input),row=propose(input,{sourcePath:'caller.mjs',family});assert.deepEqual(input,before);assert.equal(row.addedGuards,8);assert.equal(row.existingGuards,0);assert.equal(row.functions.length,8);assert.equal(row.program.length,8);assert.equal(row.files.length,1);assert.equal(row.files[0].before,source);assert.equal(row.files[0].inverse,source);assert.equal(row.files[0].history.inverse,source);assert.equal(row.inputEnvelopeChanged,true);assert.equal(row.originalInputContractEquivalent,false);
@@ -42,3 +42,5 @@ test('foreign type hints missing contracts mixed prefixes unsupported effects an
 test('three complete compiler equations retain original source owners inverses and declared rule phases',limits,()=>{
  const plan=prepareWideSliceInputProposalsSources();assert.equal(plan.files.length,3);for(const row of plan.files){assert.equal(row.current,row.currentAfter);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}assert.equal(plan.receivingExecuted,false);
 });
+
+import {withCompletePrimitiveRuntimeSources} from './complete-primitive-runtime-fixture.mjs';

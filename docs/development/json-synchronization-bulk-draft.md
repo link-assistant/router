@@ -778,3 +778,11 @@ actual JavaScript wrappers to their native function signatures and bodies.
 Three complete equations and independent all-operation/source/refusal/lifecycle
 cases are UNRUN. Actual caller/type/owner/loan admission and all integration
 remain OPEN; source observations are never executable permits.
+
+The [owned primitive sequence caller draft](owned-primitive-sequence-calls-source-draft.md)
+adds complete private source-bound reverse calls, target emission, both
+interpreters, runtime/declaration closure and optional type witnesses for 33
+operations in both outcome/cancellation families. Seventeen full equations and
+independent receiving/refusal/mirroring source cases are UNRUN. Native forward
+caller/loan integration, canonical Rust inverse, physical root activation,
+receiving/performance qualification and full translation remain OPEN.
