@@ -699,3 +699,11 @@ refusals prevent value-based width guesses. Three complete equations and
 independent JS/TS/extrema/helper/refusal/CI-only Rust sources are UNRUN. Deferred
 scalar choice locals, wider source/owner behavior, full drafting and every
 qualification obligation remain OPEN.
+
+The [scalar choice inference draft](scalar-choice-inference-source-draft.md)
+retains wide conditional locals and aliases as monomorphic lets and joins wide
+scalar return paths only through actual typed anchors. Shared finite constraints
+retain original bounds and reject private types before emission. Three complete
+equations and independent JS/TS/alias/helper/return/order/refusal/CI-only Rust
+sources are UNRUN. Broader inference, source/owner behavior, full drafting and
+every qualification obligation remain OPEN.
