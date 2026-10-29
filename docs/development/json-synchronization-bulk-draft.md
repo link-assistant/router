@@ -569,3 +569,11 @@ alternative, global export obligation, private identity and public API. Portable
 profile confinement, full CST and fresh selected-input fences have independent
 unrun case source. Seven complete equations are drafted; full owner/type-prefix/
 Span/visitor/export closure and every wider verification obligation remain OPEN.
+
+The [qualified vector/associated namespace draft](vector-associated-namespace-source-draft.md)
+composes actual source-qualified Router allocation with checked primitive calls.
+The additive parser reissues the genuine facade and original parser/module
+joins at parse/semantic fences; unknown macros and local declarations stay
+refused. Three complete source equations and all-width paired/native, ordering,
+guard/source refusal and CI-only Rust case sources are UNRUN. General macro/
+Span/visitor/type-prefix/export closure and full translation remain OPEN.

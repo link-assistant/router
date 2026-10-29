@@ -1,4 +1,4 @@
-import {parsePrimitiveAssociatedCall,checkPrimitiveAssociatedCall} from './primitive-associated-calls.mjs';
+import {parsePrimitiveAssociatedVectorCall as parsePrimitiveAssociatedCall,checkPrimitiveAssociatedCall} from './primitive-associated-calls.mjs';
 import {parseRouterCoreMatches} from '../router-core-matches.mjs';import {parseRouterCoreVector,checkRouterCoreVector} from '../router-core-vectors.mjs';import {parseCharacterType,checkedCharacterType,assertCharacterBoundary,checkCharacterExpression,emitCharacterExpression,needsCharacterValueGuard} from './character-scalars.mjs';
 import {parseRouterCoreRangeCall,checkRouterCoreRangeCall,captureRouterCoreRangeCalls,ROUTER_CORE_RANGE_CONTRACT} from '../router-core-ranges.mjs';
 import {parseRouterCoreStrReference,parseRouterCoreFixedType,parseRouterCoreFixedConstant} from '../router-core-primitives.mjs';import {jsonIterationContract} from '../json-iteration-contracts.mjs';import {jsonStateContract,JSON_STATE_CONTRACTS,forwardOwnedImports} from '../owned-forward-contracts.mjs';
