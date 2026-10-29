@@ -862,3 +862,11 @@ fresh combined native/receiving rechecks and whole-source inverses in
 [vector-bulk-module-source-draft.md](vector-bulk-module-source-draft.md).
 ALL UNRUN. Generated synchronization manifests and combined physical repeat
 transactions, broader source families and full qualification remain OPEN.
+
+Generated source-unit manifests and a JS-first bulk index, Router physical-root
+configuration and complete repeated physical JS/TS transactions are drafted in
+[vector-bulk-unit-source-draft.md](vector-bulk-unit-source-draft.md). ALL UNRUN.
+Initial adoption records bindings automatically; repeat planning reloads actual
+source, manifests, runtime and Git baselines before private semantic rechecks.
+Rust-authoritative refresh of existing modules, wider source families and complete
+receiving/performance/platform/CI qualification remain OPEN.
