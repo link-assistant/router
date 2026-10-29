@@ -7,6 +7,7 @@ import {ownedJsonReaderOperation} from './owned-json-source.mjs';
 import {ownedVectorJsonFieldOperation} from './owned-vector-json-fields.mjs';
 import {ownedVectorTextScalarOperation} from './owned-vector-text-scalars.mjs';
 import {ownedPlainData,ownedSourcePath} from './owned-vector-candidate-source.mjs';
+import {projectNativePrimitiveVectorFunction} from './owned-native-vector-families.mjs';
 export class UnsupportedNativeTreeProjection extends TypeError {
  constructor(message){super('Native source projection: '+message);this.name='UnsupportedNativeTreeProjection';}
 }
@@ -48,6 +49,7 @@ export function projectNativeTreeModule(input,options={}){
  }
  function functionSource(unit){
   if(!nativeProjectionIdentifier(unit.name)||!Array.isArray(unit.parameters)||unit.parameters.length>32||unit.parameters.some(row=>!nativeProjectionIdentifier(row.name))||new Set(unit.parameters.map(row=>row.name)).size!==unit.parameters.length)fail('ordinary distinct actual parameter/function names required');
+  if(unit.kind==='primitive-vector'){try{return projectNativePrimitiveVectorFunction(unit);}catch(error){if(error instanceof TypeError)fail(error.message);throw error;}}
   const parameters=unit.parameters.map(row=>row.name+': '+type(row.type));
   const initial=unit.parameters.flatMap((row,index)=>['json','json-ref'].includes(row.type)?[['validate',[['parameter',index]]]]:[]);
   function body(tree,inherited=[],known=new Map(),depth=0){

@@ -11,7 +11,7 @@ import {deriveDependencyProfile} from '../derive-dependencies.mjs';
 import {ownedPlainData,createOwnedCoreSourceContext,requireOwnedCoreSourceCurrent} from './owned-vector-candidate-source.mjs';
 import {createOwnedVectorCandidateContext,translateOwnedVectorCandidate} from './owned-vector-candidate.mjs';
 import {ownedVectorOriginalProjectCensus} from './owned-vector-candidate-support.mjs';
-import {actualNativeJsonVectorTree,requestedNativeJsonVectorTree} from './owned-vector-native-json-control.mjs';
+import {actualNativeProjectionTree,requestedNativeProjectionTree} from './owned-native-vector-families.mjs';
 import {proposeOwnedNativeRefreshDiscovery} from './owned-native-refresh-discovery.mjs';
 const fail=message=>{throw new TypeError('Native bulk module refresh: '+message);};
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b),hash=source=>createHash('sha256').update(source).digest('hex');
@@ -67,7 +67,7 @@ export function proposeOwnedNativeBulkModuleRefresh(data,requests){
      for(const module of discovered.modules){
       const javascript=module.outputs.find(row=>row.path.endsWith('.mjs')),typescript=module.outputs.find(row=>/\.(?:mts|ts)$/u.test(row.path));if(!javascript||!typescript)fail('complete paired module outputs required');
       const result=translateOwnedVectorCandidate(javascript.after,{context,sourcePath:javascript.path,typescriptOutputPath:typescript.path});if(result.typescript!==typescript.after||result.program.length!==module.bindings.length)fail('composed receiving module does not reproduce its full canonical output');
-      for(const item of result.program){const native=item.vectorOrigin.original,carriers=afterProject.executableDeclarations.filter(row=>row.source===native.path&&row.qualifiedName===native.qualifiedName);if(carriers.length!==1)fail('composed native selected function is absent or ambiguous');const carrier=carriers[0],actual=carrier.checkedSource();if(actual.sourceSha256!==hash(after.get(native.path))||!same(actualNativeJsonVectorTree(actual.declaration,item,carrier.lower()),requestedNativeJsonVectorTree(item)))fail('composed native whole body differs from its fresh receiving source');}
+      for(const item of result.program){const native=item.vectorOrigin.original,carriers=afterProject.executableDeclarations.filter(row=>row.source===native.path&&row.qualifiedName===native.qualifiedName);if(carriers.length!==1)fail('composed native selected function is absent or ambiguous');const carrier=carriers[0],actual=carrier.checkedSource();if(actual.sourceSha256!==hash(after.get(native.path))||!same(actualNativeProjectionTree(actual.declaration,item,carrier.lower()),requestedNativeProjectionTree(item)))fail('composed native whole body differs from its fresh receiving source');}
      }
      return afterProject;
     }},

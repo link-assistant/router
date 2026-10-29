@@ -878,3 +878,11 @@ shared-file composition and physical binding-manifest updates in
 ALL UNRUN. Present unsupported functions cannot silently disappear; empty or
 removed whole modules refuse. Whole-route additions/removals, broader source
 families, actual coverage and complete qualification remain OPEN.
+
+Existing primitive vector families are drafted in automatic discovery and all
+repeat/native refresh paths through copied actual scalar/Vec checks, bounded
+positional body comparisons and genuine receiving source reconstruction in
+[native-vector-families-source-draft.md](native-vector-families-source-draft.md).
+Prior argument spellings are CST/AST proposals only. ALL UNRUN. Wider source,
+control/operator/ABI/ownership families and complete receiving/performance/CI
+qualification remain OPEN; no actual coverage or parity is claimed.
