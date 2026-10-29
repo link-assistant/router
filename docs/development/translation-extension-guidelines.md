@@ -969,3 +969,8 @@ source-expansion drafts in
 [native-scalar-constants-source-draft.md](native-scalar-constants-source-draft.md).
 ALL UNRUN. No copied evaluator proof grants admission; static/borrowed/effectful
 or unsupported constant bodies and full drafting/qualification remain OPEN.
+
+Automatic module discovery now uses the independent readonly JSON text helper loan
+rules in [native-helper-loan-discovery-source-draft.md](native-helper-loan-discovery-source-draft.md).
+ALL UNRUN. Its symbolic source observations still grant no loan authority; broader
+module/effect/ownership requirements, full drafting and qualification remain OPEN.
