@@ -346,3 +346,9 @@ compatibility and exact binding joins in
 [native-route-compatibility-source-draft.md](native-route-compatibility-source-draft.md).
 ALL UNRUN. Empty receiving insertion, broader source families and complete
 drafting/qualification remain OPEN; route equality grants no semantic permission.
+
+Receiving-authoritative primitive function insertion into an existing empty native
+module now has a complete source API draft in
+[primitive-function-insertion-source-draft.md](primitive-function-insertion-source-draft.md).
+ALL UNRUN. Physical batch integration, nonempty/new-unit insertion, wider source
+families and full drafting/qualification remain OPEN.

@@ -183,6 +183,8 @@ test('complete committed export carries shared adoption implementations original
  assert.ok(paths.has('tools/translation/prepare-native-new-modules-sources.mjs'));
  assert.ok(paths.has('tools/translation/prepare-native-deleted-files-sources.mjs'));
  assert.ok(paths.has('tools/translation/prepare-native-route-compatibility-sources.mjs'));
+ assert.ok(paths.has('tools/translation/prepare-primitive-function-insertion-sources.mjs'));
+ assert.ok(paths.has('tools/translation/js-to-rust/owned-primitive-function-insertion.mjs'));
  assert.ok(paths.has('tools/translation/js-to-rust/owned-native-empty-modules.mjs'));
  assert.ok(paths.has('tools/translation/js-to-rust/owned-native-constant-values.mjs'));
  assert.ok(paths.has('tools/translation/js-to-rust/owned-native-function-control.mjs'));
