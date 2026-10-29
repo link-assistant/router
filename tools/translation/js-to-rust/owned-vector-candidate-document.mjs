@@ -141,4 +141,4 @@ export function readOwnedCoreDocument(text,{context}={}){
  if(!isDeepStrictEqual(paths,[...required]))fail('unreferenced or reordered CST');assertScalarSourceCallClosure(program);requireOwnedCoreSourceCurrent(context);assertReverseConcreteSourceHost();return program;
 }
 
-import {hasScalarSourceCalls,scalarSourceCallSummary,assertScalarSourceCallSummaries,assertScalarSourceCallClosure} from './owned-source-value-calls.mjs';
+import {hasScalarSourceCalls,scalarSourceCallSummary,assertScalarSourceCallSummaries,assertScalarSourceCallClosure} from './owned-source-effect-calls.mjs';

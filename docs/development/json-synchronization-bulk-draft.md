@@ -675,3 +675,11 @@ inputs, complete Rust CST transport, entry/closing fences and nested sharing
 are drafted without cross-operation caches. Twenty-four complete equations and
 independent source/refusal/lifetime cases are UNRUN. Performance, exported
 receiving, native owner closure, full drafting and qualification remain OPEN.
+
+The [unit helper call draft](unit-helper-calls-source-draft.md) selects complete
+copied source-call, native continuation and guarded-failure rules for genuine
+same-module unit results. Discard/local/tail uses retain ordered events and
+independent whole-callee checks through receiving, native graphs, projection and
+copied definition lifecycle. Twenty-two complete equations and JS/TS/all-width/
+native/refusal/CI-only Rust sources are UNRUN. Full drafting, collection/source
+owner requirements and all qualification obligations remain OPEN.

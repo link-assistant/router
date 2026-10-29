@@ -58,7 +58,7 @@ export function checkedPrimitiveExpressionVectorTail(declaration){
  consume(own.body,new Map(),0);if(!arrays.length)fail('actual owned Vec construction or actual source helper result required');return arrays[0];
 }
 
-import {nativeSourceValueResultDomain,jsonScalarComparisonDomain} from './owned-source-value-calls.mjs';
+import {nativeSourceValueResultDomain,jsonScalarComparisonDomain} from './owned-source-effect-calls.mjs';
 const primitiveElement=type=>jsonScalarComparisonDomain(type,{native:true});
 
 // Additive independent local Vec domains; original same-result observer above stays unchanged.
@@ -97,12 +97,12 @@ export function checkedPrimitiveExpressionVectorLocals(declaration){
  consume(own.body,new Map(),0);if(!arrays.length)fail('actual owned Vec construction or actual source helper result required');return own.body;
 }
 
-import {primitiveVectorResultRole} from './owned-source-value-calls.mjs';
+import {primitiveVectorResultRole} from './owned-source-effect-calls.mjs';
 
 // Native-only scalar/vector observation prerequisite. All results are DATA;
 // actual receiving/body/native/source issuers still own every admission decision.
 export function checkedPrimitiveScalarVectorLocals(declaration){
- const own=observeNativeFunctionControl(declaration);if(!['bool','unit'].includes(own.ret?.kind)&&!primitiveBitwiseType(primitiveElement(own.ret))||own.ret?.rustReference||own.ret?.rustOwnership||own.ret?.patternOwnershipRefusal||own.ret?.rustGenericIdentityUnresolved||own.ret?.rustBorrowingUnresolved)fail('actual closed scalar return domain required');let work=0,leaves=0,bindings=0;const arrays=[];
+ const own=observeNativeSourceCallControl(declaration);if(!['bool','unit'].includes(own.ret?.kind)&&!primitiveBitwiseType(primitiveElement(own.ret))||own.ret?.rustReference||own.ret?.rustOwnership||own.ret?.patternOwnershipRefusal||own.ret?.rustGenericIdentityUnresolved||own.ret?.rustBorrowingUnresolved)fail('actual closed scalar return domain required');let work=0,leaves=0,bindings=0;const arrays=[];
  const tick=depth=>{if(++work>100000||depth>64)fail('bounded complete Vec flow required');};
  const isVector=type=>type?.kind==='array'&&type.rustOwnership?.source==='Vec';
  function scalar(node,scope,depth){
@@ -139,8 +139,10 @@ export function checkedPrimitiveScalarVectorLocals(declaration){
 
 export function originalPrimitiveScalarVectorLocalDomain(own,lowered){
  const domain=originalPrimitiveScalarDomain(own,lowered);if(!domain)return null;
- const observed=observeNativeFunctionControl(own),seen=new Set();let work=0,found=false;
+ const observed=observeNativeSourceCallControl(own),seen=new Set();let work=0,found=false;
  function visit(node,depth=0){if(++work>100000||depth>64)fail('bounded complete scalar container census required');if(!node||typeof node!=='object'||seen.has(node))return;seen.add(node);if(node.type?.kind==='array'&&node.type.rustOwnership?.source==='Vec')found=true;if(Array.isArray(node)){for(const child of node)visit(child,depth+1);return;}for(const [key,child]of Object.entries(node))if(!['type','span','contract','compatibilityCore','sourceOwnershipOperation'].includes(key))visit(child,depth+1);}
  visit(observed.body);if(!found)return domain;checkedPrimitiveScalarVectorLocals(own);return {...domain,vectorLocals:true};
 }
 import {originalPrimitiveScalarDomain} from './owned-vector-json-native.mjs';
+
+import {observeNativeSourceCallControl} from './owned-native-source-call-control.mjs';

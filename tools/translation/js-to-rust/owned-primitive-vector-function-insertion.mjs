@@ -94,9 +94,9 @@ import {proposeOwnedNativeBulkModuleRefresh} from './owned-native-bulk-module-re
 
 import {originalPrimitiveScalarDomain} from './owned-vector-json-native.mjs';
 
-import {primitiveVectorResultRole} from './owned-source-value-calls.mjs';
+import {primitiveVectorResultRole} from './owned-source-effect-calls.mjs';
 import {originalPrimitiveExpressionVectorDomain} from './owned-primitive-expression-vectors.mjs';
 
 import {assertOwnedPrimitiveVectorDefinition} from './owned-primitive-vector-definition-family.mjs';
 
-import {scalarSourceCallSummary} from './owned-source-value-calls.mjs';
+import {scalarSourceCallSummary} from './owned-source-effect-calls.mjs';

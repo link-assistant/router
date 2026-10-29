@@ -3,7 +3,7 @@
 // These DATA equations never issue source, namespace or compiler authority.
 import {PRIMITIVE_BITWISE_TYPES,primitiveBitwiseType} from '../primitive-bitwise-types.mjs';
 import {ownedSourceIntegerLiteral as ownedIntegerLiteral,narrowOwnedNumericLiteral} from './owned-numeric-literals.mjs';
-import {primitiveVectorResultRole} from './owned-source-value-calls.mjs';
+import {primitiveVectorResultRole} from './owned-source-effect-calls.mjs';
 const fail=message=>{throw new TypeError('Primitive Vec inference: '+message);};
 const domains=['bool',...PRIMITIVE_BITWISE_TYPES.map(row=>row.name)];
 export function createPrimitiveVectorInference(){

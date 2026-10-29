@@ -58,12 +58,12 @@ export function checkedPrimitiveExpressionVectorTail(declaration){
  consume(own.body,new Map(),0);if(!arrays.length)fail('actual owned Vec construction or actual source helper result required');return arrays[0];
 }
 
-import {nativeSourceValueResultDomain,jsonScalarComparisonDomain} from './owned-source-value-calls.mjs';
+import {nativeSourceValueResultDomain,jsonScalarComparisonDomain} from './owned-source-effect-calls.mjs';
 const primitiveElement=type=>jsonScalarComparisonDomain(type,{native:true});
 
 // Additive independent local Vec domains; original same-result observer above stays unchanged.
 export function checkedPrimitiveExpressionVectorLocals(declaration){
- const own=observeNativeFunctionControl(declaration);let work=0,leaves=0,bindings=0;const arrays=[];
+ const own=observeNativeSourceCallControl(declaration);let work=0,leaves=0,bindings=0;const arrays=[];
  const tick=depth=>{if(++work>100000||depth>64)fail('bounded complete Vec flow required');};
  const isVector=type=>type?.kind==='array'&&type.rustOwnership?.source==='Vec';
  function scalar(node,scope,depth){
@@ -97,4 +97,6 @@ export function checkedPrimitiveExpressionVectorLocals(declaration){
  consume(own.body,new Map(),0);if(!arrays.length)fail('actual owned Vec construction or actual source helper result required');return own.body;
 }
 
-import {primitiveVectorResultRole} from './owned-source-value-calls.mjs';
+import {primitiveVectorResultRole} from './owned-source-effect-calls.mjs';
+
+import {observeNativeSourceCallControl} from './owned-native-source-call-control.mjs';

@@ -237,3 +237,5 @@ export {checkedPrimitiveScalarVectorLocals,originalPrimitiveScalarVectorLocalDom
 
 export {withFreshStandardCopyInputs} from './fresh-standard-copy-inputs.mjs';
 export {withCurrentStandardCopySourceOperation,currentPrimitiveCopySource,currentSharedReferenceCopyIdentity} from './current-standard-copy-source.mjs';
+
+export {observeNativeSourceCallControl} from './js-to-rust/owned-native-source-call-control.mjs';

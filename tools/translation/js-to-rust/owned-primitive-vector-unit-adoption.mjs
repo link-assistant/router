@@ -141,7 +141,7 @@ export function proposeOwnedPrimitiveVectorUnitAdoption(data,options){
 }
 import {createHash} from 'node:crypto';
 
-import {primitiveVectorResultRole} from './owned-source-value-calls.mjs';
+import {primitiveVectorResultRole} from './owned-source-effect-calls.mjs';
 import {originalPrimitiveExpressionVectorDomain} from './owned-primitive-expression-vectors.mjs';
 
 import {assertOwnedPrimitiveVectorDefinition} from './owned-primitive-vector-definition-family.mjs';

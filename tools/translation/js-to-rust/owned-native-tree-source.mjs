@@ -40,7 +40,7 @@ export function projectNativeTreeModule(input,options={}){
  }
  function operation(name){
   const failure=nativeFailureEventOperation(name);if(failure)return failure;
-  if(name.startsWith('source-call:')){const target=nativeTargets.get(name.slice('source-call:'.length));if(!target||!['primitive-scalar','primitive-expression-vector'].includes(target.kind)||target.returns!=='bool'&&!primitiveBitwiseType(target.returns)&&!(target.kind==='primitive-expression-vector'&&primitiveVectorResultRole(target.returns)))fail('actual complete primitive helper event target required');return {sourceCall:true,target,role:target.returns,arity:target.parameters.length};}
+  if(name.startsWith('source-call:')){const target=nativeTargets.get(name.slice('source-call:'.length));if(!target||!['primitive-scalar','primitive-expression-vector'].includes(target.kind)||target.returns!=='unit'&&target.returns!=='bool'&&!primitiveBitwiseType(target.returns)&&!(target.kind==='primitive-expression-vector'&&primitiveVectorResultRole(target.returns)))fail('actual complete primitive helper event target required');return {sourceCall:true,target,role:target.returns,arity:target.parameters.length};}
   for(const [key,row]of Object.entries(BOUNDED_JSON_RUNTIME_OPERATIONS)){
    const spelling=row.rust==='json_checked_copy'?'copy':row.rust==='json_checked_with_field'?'with-field':row.rust==='json_validate'?'validate':'build-'+row.rust.slice('json_build_'.length);
    if(name===spelling)return {name:key,family:'json-update',role:row.ret};
@@ -123,4 +123,4 @@ import {projectNativeTotalOperator} from './owned-native-total-operators.mjs';
 
 import {nativeFailureEventOperation,projectNativeFailureCall} from './owned-native-division-operators.mjs';
 
-import {primitiveVectorResultRole} from './owned-source-value-calls.mjs';
+import {primitiveVectorResultRole} from './owned-source-effect-calls.mjs';

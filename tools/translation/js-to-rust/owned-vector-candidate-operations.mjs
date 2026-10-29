@@ -405,7 +405,7 @@ import {nativeJsonPredicateSource,nativeJsonOptionalReaderSource} from './owned-
 
 import {ownedVectorJsonFieldOperation,emitOwnedVectorJsonFieldCall,evaluateOwnedJsonFieldCall,requireOwnedVectorJsonFieldSources} from './owned-vector-json-fields.mjs';
 
-import {assertScalarSourceCallClosure,scalarSourceCallKey,hasScalarSourceCalls} from './owned-source-value-calls.mjs';
+import {assertScalarSourceCallClosure,scalarSourceCallKey,hasScalarSourceCalls} from './owned-source-effect-calls.mjs';
 
 import {ownedVectorTextScalarOperation,ownedAsciiRustCall} from './owned-vector-text-scalars.mjs';
 
@@ -581,4 +581,4 @@ function emitOwnedPrimitiveValueHeaderCheckedProgram(complete,target,{outputPath
  return lines.join('\n')+'\n\n'+code+'\n';
 }
 
-import {primitiveVectorResultRole} from './owned-source-value-calls.mjs';
+import {primitiveVectorResultRole} from './owned-source-effect-calls.mjs';
