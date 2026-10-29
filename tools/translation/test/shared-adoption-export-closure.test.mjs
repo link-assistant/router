@@ -166,6 +166,8 @@ test('complete committed export carries shared adoption implementations original
  assert.ok(paths.has('tools/translation/prepare-json-wide-domains-sources.mjs'));
  assert.ok(paths.has('tools/translation/prepare-readonly-text-helpers-sources.mjs'));
  assert.ok(paths.has('tools/translation/prepare-json-total-scalar-flow-sources.mjs'));
+ assert.ok(paths.has('tools/translation/prepare-native-refresh-names-sources.mjs'));
+
  assert.ok(paths.has('tools/translation/extensions/total-primitive-flow.mjs'));
 
 

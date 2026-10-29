@@ -951,3 +951,9 @@ existing source proofs, in
 [json-total-scalar-flow-source-draft.md](json-total-scalar-flow-source-draft.md).
 ALL UNRUN. Failure-order families and broader effects/ownership/aggregate/route
 work, full drafting and complete receiving/coverage/parity/CI remain OPEN.
+
+Rust refresh now source drafts stable existing receiving export spellings,
+hygienic names for new collisions and actual .ts/.mts path preservation in
+[native-refresh-names-source-draft.md](native-refresh-names-source-draft.md).
+ALL UNRUN. Established-export/parameter collisions require explicit reconciliation.
+Full module lifecycle, API consumers and complete drafting/qualification remain OPEN.

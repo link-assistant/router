@@ -23,7 +23,7 @@ export function projectNativeTreeModule(input,options={}){
  const units=ownedPlainData(input),settings=ownedPlainData(options),{javascriptPath,typescriptPath,runtimeRoot}=settings;
  if(Object.keys(settings).sort().join('|')!=='javascriptPath|runtimeRoot|typescriptPath')fail('explicit complete projection paths required');
  for(const path of [javascriptPath,typescriptPath,runtimeRoot])ownedSourcePath(path);
- if(!javascriptPath.endsWith('.mjs')||!typescriptPath.endsWith('.mts'))fail('paired JavaScript and TypeScript module paths required');
+ if(!javascriptPath.endsWith('.mjs')||!/\.(?:mts|ts)$/u.test(typescriptPath))fail('paired JavaScript and TypeScript module paths required');
  const imports=new Map(),typeImports=new Map(),allocated=new Set(),nativeTargets=new Map();let cells=0,sequence=0;
  const allocate=stem=>{let name=stem;while(allocated.has(name))name=stem+'_'+sequence++;allocated.add(name);return name;};
  const tick=depth=>{if(++cells>100000||depth>64)fail('complete module node/depth budget');};
