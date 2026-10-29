@@ -232,3 +232,7 @@ function nativeVectorAlias(value,locals,guard,depth){
 import {requestedNativeFailureOperator,actualNativeFailureOperator} from './owned-native-closed-operators.mjs';
 
 import {observeRequestedGuardedPrimitiveBody,observeActualGuardedPrimitiveBody} from './owned-guarded-primitive-failures.mjs';
+
+import {primitiveScalarModelEligible,normalizePrimitiveScalarBodyTree} from './owned-primitive-body-normalization.mjs';
+export function canonicalRequestedNativeJsonVectorTree(item){const tree=requestedNativeJsonVectorTree(item);return primitiveScalarModelEligible(item)?normalizePrimitiveScalarBodyTree(tree):tree;}
+export function canonicalActualNativeJsonVectorTree(own,item,lowered){const tree=actualNativeJsonVectorTree(own,item,lowered);return primitiveScalarModelEligible(item)?normalizePrimitiveScalarBodyTree(tree):tree;}

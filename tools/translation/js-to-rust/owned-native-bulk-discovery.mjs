@@ -15,7 +15,7 @@ import {prepareOwnedVectorModulePair} from './owned-vector-module-pair.mjs';
 import {proposeOwnedVectorNativeSynchronization} from './owned-vector-native-synchronization.mjs';
 import {ownedVectorOriginalProjectCensus} from './owned-vector-candidate-support.mjs';
 import {originalJsonVectorDomain,originalJsonOwnedValueDomain,originalJsonScalarDomain,originalPrimitiveScalarDomain} from './owned-vector-json-native.mjs';
-import {actualNativeJsonVectorTree,requestedNativeJsonVectorTree} from './owned-vector-native-json-control.mjs';
+import {canonicalActualNativeJsonVectorTree as actualNativeJsonVectorTree,canonicalRequestedNativeJsonVectorTree as requestedNativeJsonVectorTree} from './owned-vector-native-json-control.mjs';
 import {projectNativeTreeModule,nativeProjectionIdentifier,UnsupportedNativeTreeProjection} from './owned-native-tree-source.mjs';
 import {observeNativePrimitiveVectorDomain,observeNativeProjectionTree,requestedNativeProjectionTree,nativeProjectionParameters,nativeProjectionParameterProposals} from './owned-native-vector-families.mjs';
 import {selectNativeProjectionClosure} from './owned-native-projection-closure.mjs';

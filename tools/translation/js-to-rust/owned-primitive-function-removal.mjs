@@ -168,7 +168,7 @@ import {prepareReverseConcreteSource} from './concrete-source.mjs';
 import {ownershipCompiler} from './vendor/module-syntax.mjs';
 import {createHash} from 'node:crypto';
 import {proposeOwnedVectorNativeSynchronization} from './owned-vector-native-synchronization.mjs';
-import {actualNativeJsonVectorTree,requestedNativeJsonVectorTree} from './owned-vector-native-json-control.mjs';
+import {canonicalActualNativeJsonVectorTree as actualNativeJsonVectorTree,canonicalRequestedNativeJsonVectorTree as requestedNativeJsonVectorTree} from './owned-vector-native-json-control.mjs';
 import {originalPrimitiveScalarDomain} from './owned-vector-json-native.mjs';
 
 // Syntactic dispatch only: no source is transformed and no function admitted.

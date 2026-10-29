@@ -160,8 +160,8 @@ export function projectNativePrimitiveVectorFunction(unit){
  function body(node,depth){tick(depth);if(node?.[0]==='if')return '{\nif ('+condition(node[1],depth+1)+') '+body(node[2],depth+1)+' else '+body(node[3],depth+1)+'\n}';if(node?.[0]!=='vector'||!Array.isArray(node[1])||node[1].length>4096||++leaves>64)fail('complete bounded primitive vector return required');return '{ return ['+node[1].map(row=>element(row,depth+1)).join(', ')+']; }';}
  return 'export function '+unit.name+'('+unit.parameters.map(row=>row.name+': '+type(row.type)).join(', ')+'): readonly '+type(unit.element.name)+'[] '+body(unit.tree,0);
 }
-import {observedNativeJsonVectorTree} from './owned-native-discovery-control.mjs';
-import {actualNativeJsonVectorTree,requestedNativeJsonVectorTree} from './owned-vector-native-json-control.mjs';
+import {canonicalObservedNativeJsonVectorTree as observedNativeJsonVectorTree} from './owned-native-discovery-control.mjs';
+import {canonicalActualNativeJsonVectorTree as actualNativeJsonVectorTree,canonicalRequestedNativeJsonVectorTree as requestedNativeJsonVectorTree} from './owned-vector-native-json-control.mjs';
 import {actualNativeVectorTree,requestedNativeVectorTree} from './owned-vector-native-control.mjs';
 import {vectorScalarBounds} from './owned-vector-parameter-values.mjs';
 import {ownershipCompiler} from './vendor/module-syntax.mjs';

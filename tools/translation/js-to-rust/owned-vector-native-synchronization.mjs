@@ -49,6 +49,6 @@ export function proposeOwnedVectorNativeSynchronization(data,options){
 
 import {requestedNativeVectorTree,actualNativeVectorTree,emitNativeVectorControlBody} from './owned-vector-native-control.mjs';
 
-import {requestedNativeJsonVectorTree,actualNativeJsonVectorTree,nativeJsonFunctionSourceBody} from './owned-vector-native-json-control.mjs';
+import {canonicalRequestedNativeJsonVectorTree as requestedNativeJsonVectorTree,canonicalActualNativeJsonVectorTree as actualNativeJsonVectorTree,nativeJsonFunctionSourceBody} from './owned-vector-native-json-control.mjs';
 
 import {withOwnedNativeProjectOperation} from './owned-native-project-operation.mjs';

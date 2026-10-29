@@ -505,3 +505,15 @@ coerced by this hint. Nine complete source equations and complete independent
 all-width paired/native, boundary refusal and insertion/helper case sources
 are UNRUN. Broader numeric expressions, division/remainder, constants and whole
 application translation remain OPEN.
+
+Pure scalar branch spellings now have a shared
+[canonical comparison source draft](primitive-body-normalization-source-draft.md).
+Additive model wrappers join pure if/ternary/Boolean forms only when complete
+ordered prefixes stay identical and branches add no effects. Earlier failures
+and all newly effectful branches remain ordered. Original model APIs stay
+intact; nine current synchronization/discovery/helper/adoption consumers select
+the new wrappers while retaining every private source/type/loan/meta/CST and
+fresh native check. Thirteen complete source equations and all independent
+kernel, strict paired, receiving/helper/bulk case sources are UNRUN. General
+owned branches, ordered matches, division/remainder, constants and full
+application closure remain OPEN.
