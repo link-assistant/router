@@ -24,7 +24,7 @@ const equal=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const fail=message=>{throw new TypeError('Native bulk discovery: '+message);};
 function domain(own,lowered,extended){
  if(extended){const vector=originalPrimitiveExpressionVectorDomain(own,lowered);if(vector){checkedPrimitiveExpressionVectorTail(own);return vector;}}
- const primitive=originalPrimitiveScalarDomain(own,lowered);if(primitive)return primitive;
+ const primitive=(extended?originalPrimitiveScalarVectorLocalDomain:originalPrimitiveScalarDomain)(own,lowered);if(primitive)return primitive;
  if(own.ret?.kind==='unit'||own.ret?.kind==='bool'||own.ret?.kind==='fixed')return originalJsonScalarDomain(own,lowered);
  if(own.ret?.kind==='data')return originalJsonOwnedValueDomain(own,lowered);
  if(own.ret?.kind==='array')return originalJsonVectorDomain(own,lowered)??observeNativePrimitiveVectorDomain(own,lowered);
@@ -71,14 +71,14 @@ export function proposeOwnedNativeBulkDiscovery(data,options={}){
       }
       for(const {entry,own,nativeDomain,key,projectedParameters}of candidates){
        try{
-        const observation={params:own.params.map((row,index)=>({name:row.name,rust:row.name,type:nativeDomain.parameters[index].name})),returns:nativeDomain.type,vectorOrigin:{kind:nativeDomain.kind,type:nativeDomain.type,element:nativeDomain.element}},tree=observeNativeProjectionTree(own,observation,entry.lower(),targetGroups.get(key));
-        groups.get(key).units.push({entry,name:entry.name,rust:entry.qualifiedName,kind:nativeDomain.kind,parameters:projectedParameters,returns:nativeDomain.type,element:nativeDomain.element,tree});
+        const observation={params:own.params.map((row,index)=>({name:row.name,rust:row.name,type:nativeDomain.parameters[index].name})),returns:nativeDomain.type,vectorOrigin:{kind:nativeDomain.kind,type:nativeDomain.type,element:nativeDomain.element,...(nativeDomain.vectorLocals===true?{vectorLocals:true}:{})}},tree=observeNativeProjectionTree(own,observation,entry.lower(),targetGroups.get(key));
+        groups.get(key).units.push({entry,name:entry.name,rust:entry.qualifiedName,kind:nativeDomain.kind,parameters:projectedParameters,returns:nativeDomain.type,element:nativeDomain.element,...(nativeDomain.vectorLocals===true?{vectorLocals:true}:{}),tree});
        }catch(error){if(!(error instanceof TypeError))throw error;refusal(entry,'native-body-projection',error);}
       }
       for(const group of groups.values()){
        const parameterNames=new Set(group.units.flatMap(unit=>unit.parameters.map(row=>row.name))),occupied=new Set([...parameterNames,...group.units.map(unit=>unit.name)]);let aliasSequence=0;
        for(const unit of group.units)if(parameterNames.has(unit.name)){let alias='native_function_'+unit.name;while(occupied.has(alias))alias='native_function_'+unit.name+'_'+aliasSequence++;occupied.add(alias);unit.name=alias;}parameterNames.clear();occupied.clear();
-       const closure=selectNativeProjectionClosure(group.units.map(({name,rust,kind,parameters,returns,element,tree})=>({name,rust,kind,parameters,returns,element,tree}))),admitted=new Set(closure.admitted);
+       const closure=selectNativeProjectionClosure(group.units.map(({name,rust,kind,parameters,returns,element,tree,vectorLocals})=>({name,rust,kind,parameters,returns,element,tree,...(vectorLocals===true?{vectorLocals:true}:{})}))),admitted=new Set(closure.admitted);
        for(const row of closure.refusals){const units=group.units.filter(unit=>unit.rust===row.rust);if(units.length!==1)fail('one complete actual refused helper source required');refusal(units[0].entry,'native-helper-closure',row.reason);}
        group.units=group.units.filter(unit=>admitted.has(unit.name));admitted.clear();
       }
@@ -89,7 +89,7 @@ export function proposeOwnedNativeBulkDiscovery(data,options={}){
      for(const group of groups.values()){
       if(!group.units.length)continue;
       if(files.has(group.javascriptPath)||files.has(group.typescriptPath))fail('existing receiving source requires explicit synchronization, never discovery overwrite');
-      let projected;try{projected=projectNativeTreeModule(group.units.map(({name,rust,kind,parameters,returns,element,tree})=>({name,rust,kind,parameters,returns,element,tree})),{javascriptPath:group.javascriptPath,typescriptPath:group.typescriptPath,runtimeRoot:original.runtimeRoot});}catch(error){if(!(error instanceof UnsupportedNativeTreeProjection))throw error;for(const unit of group.units)refusal(unit.entry,'module-source-projection',error);continue;}
+      let projected;try{projected=projectNativeTreeModule(group.units.map(({name,rust,kind,parameters,returns,element,tree,vectorLocals})=>({name,rust,kind,parameters,returns,element,tree,...(vectorLocals===true?{vectorLocals:true}:{})})),{javascriptPath:group.javascriptPath,typescriptPath:group.typescriptPath,runtimeRoot:original.runtimeRoot});}catch(error){if(!(error instanceof UnsupportedNativeTreeProjection))throw error;for(const unit of group.units)refusal(unit.entry,'module-source-projection',error);continue;}
       const pair=prepareOwnedVectorModulePair(group.javascriptPath,group.typescriptPath,projected.typescript),bindings=group.units.map(unit=>({javascriptPath:group.javascriptPath,javascriptName:unit.name,rustPath:unit.entry.source,rustName:unit.entry.qualifiedName}));
       const input={...original,vectorBindings:[...original.vectorBindings,...bindings],files:[...original.files,{path:group.javascriptPath,source:pair.javascript.source},{path:group.typescriptPath,source:pair.typescript.source}]};
       const context=createOwnedVectorCandidateContext(input);contexts.push(context);
@@ -123,3 +123,5 @@ export function proposeOwnedNativeBulkDiscovery(data,options={}){
 import {withOwnedNativeProjectOperation} from './owned-native-project-operation.mjs';
 
 import {hasPrimitiveExpressionVectorRuntime,originalPrimitiveExpressionVectorDomain,checkedPrimitiveExpressionVectorLocals as checkedPrimitiveExpressionVectorTail} from './owned-primitive-expression-vectors.mjs';
+
+import {originalPrimitiveScalarVectorLocalDomain} from './owned-primitive-scalar-vector-locals.mjs';

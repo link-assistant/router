@@ -25,7 +25,7 @@ const equal=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const fail=message=>{throw new TypeError('Native bulk refresh discovery: '+message);};
 function domain(own,lowered,extended){
  if(extended){const vector=originalPrimitiveExpressionVectorDomain(own,lowered);if(vector){checkedPrimitiveExpressionVectorTail(own);return vector;}}
- const primitive=originalPrimitiveScalarDomain(own,lowered);if(primitive)return primitive;
+ const primitive=(extended?originalPrimitiveScalarVectorLocalDomain:originalPrimitiveScalarDomain)(own,lowered);if(primitive)return primitive;
  if(own.ret?.kind==='unit'||own.ret?.kind==='bool'||own.ret?.kind==='fixed')return originalJsonScalarDomain(own,lowered);
  if(own.ret?.kind==='data')return originalJsonOwnedValueDomain(own,lowered);
  if(own.ret?.kind==='array')return originalJsonVectorDomain(own,lowered)??observeNativePrimitiveVectorDomain(own,lowered);
@@ -77,15 +77,15 @@ export function proposeOwnedNativeRefreshDiscovery(data,routing,options={}){
       }
       for(const {entry,own,nativeDomain,key,projectedParameters,receivingName,preserveReceivingName}of candidates){
        try{
-        const observation={params:own.params.map((row,index)=>({name:row.name,rust:row.name,type:nativeDomain.parameters[index].name})),returns:nativeDomain.type,vectorOrigin:{kind:nativeDomain.kind,type:nativeDomain.type,element:nativeDomain.element}},tree=observeNativeProjectionTree(own,observation,entry.lower(),targetGroups.get(key));
-        groups.get(key).units.push({entry,name:receivingName,preserveReceivingName,rust:entry.qualifiedName,kind:nativeDomain.kind,parameters:projectedParameters,returns:nativeDomain.type,element:nativeDomain.element,tree});
+        const observation={params:own.params.map((row,index)=>({name:row.name,rust:row.name,type:nativeDomain.parameters[index].name})),returns:nativeDomain.type,vectorOrigin:{kind:nativeDomain.kind,type:nativeDomain.type,element:nativeDomain.element,...(nativeDomain.vectorLocals===true?{vectorLocals:true}:{})}},tree=observeNativeProjectionTree(own,observation,entry.lower(),targetGroups.get(key));
+        groups.get(key).units.push({entry,name:receivingName,preserveReceivingName,rust:entry.qualifiedName,kind:nativeDomain.kind,parameters:projectedParameters,returns:nativeDomain.type,element:nativeDomain.element,...(nativeDomain.vectorLocals===true?{vectorLocals:true}:{}),tree});
        }catch(error){if(!(error instanceof TypeError))throw error;refusal(entry,'native-body-projection',error);}
       }
       for(const group of groups.values()){
        const parameterNames=new Set(group.units.flatMap(unit=>unit.parameters.map(row=>row.name))),occupied=new Set([...parameterNames,...group.units.map(unit=>unit.name)]),preserved=new Set();let aliasSequence=0;
        for(const unit of group.units)if(unit.preserveReceivingName){if(preserved.has(unit.name)||parameterNames.has(unit.name))fail('existing receiving export collides with current module bindings; explicit reconciliation required');preserved.add(unit.name);}
        for(const unit of group.units)if(!unit.preserveReceivingName&&(parameterNames.has(unit.name)||preserved.has(unit.name))){let alias='native_function_'+unit.name;while(occupied.has(alias))alias='native_function_'+unit.name+'_'+aliasSequence++;occupied.add(alias);unit.name=alias;}parameterNames.clear();occupied.clear();preserved.clear();
-       const closure=selectNativeProjectionClosure(group.units.map(({name,rust,kind,parameters,returns,element,tree})=>({name,rust,kind,parameters,returns,element,tree}))),admitted=new Set(closure.admitted);
+       const closure=selectNativeProjectionClosure(group.units.map(({name,rust,kind,parameters,returns,element,tree,vectorLocals})=>({name,rust,kind,parameters,returns,element,tree,...(vectorLocals===true?{vectorLocals:true}:{})}))),admitted=new Set(closure.admitted);
        for(const row of closure.refusals){const units=group.units.filter(unit=>unit.rust===row.rust);if(units.length!==1)fail('one complete actual refused helper source required');refusal(units[0].entry,'native-helper-closure',row.reason);}
        group.units=group.units.filter(unit=>admitted.has(unit.name));admitted.clear();
       }
@@ -96,7 +96,7 @@ export function proposeOwnedNativeRefreshDiscovery(data,routing,options={}){
      for(const group of groups.values()){
       if(!group.units.length)continue;
       if(group.newReceivingModule?files.has(group.javascriptPath)||files.has(group.typescriptPath):!files.has(group.javascriptPath)||!files.has(group.typescriptPath))fail('receiving module pair must match its existing or absent source baseline');
-      let projected;try{projected=projectNativeTreeModule(group.units.map(({name,rust,kind,parameters,returns,element,tree})=>({name,rust,kind,parameters,returns,element,tree})),{javascriptPath:group.javascriptPath,typescriptPath:group.typescriptPath,runtimeRoot:original.runtimeRoot});}catch(error){if(!(error instanceof UnsupportedNativeTreeProjection))throw error;for(const unit of group.units)refusal(unit.entry,'module-source-projection',error);continue;}
+      let projected;try{projected=projectNativeTreeModule(group.units.map(({name,rust,kind,parameters,returns,element,tree,vectorLocals})=>({name,rust,kind,parameters,returns,element,tree,...(vectorLocals===true?{vectorLocals:true}:{})})),{javascriptPath:group.javascriptPath,typescriptPath:group.typescriptPath,runtimeRoot:original.runtimeRoot});}catch(error){if(!(error instanceof UnsupportedNativeTreeProjection))throw error;for(const unit of group.units)refusal(unit.entry,'module-source-projection',error);continue;}
       const pair=prepareOwnedVectorModulePair(group.javascriptPath,group.typescriptPath,projected.typescript),bindings=group.units.map(unit=>({javascriptPath:group.javascriptPath,javascriptName:unit.name,rustPath:unit.entry.source,rustName:unit.entry.qualifiedName}));
       const projectedFiles=new Map(original.files.map(row=>[row.path,row.source]));projectedFiles.set(group.javascriptPath,pair.javascript.source);projectedFiles.set(group.typescriptPath,pair.typescript.source);const input={...original,vectorBindings:[...original.vectorBindings.filter(row=>row.javascriptPath!==group.javascriptPath),...bindings],files:[...projectedFiles].map(([path,source])=>({path,source}))};projectedFiles.clear();
       const context=createOwnedVectorCandidateContext(input);contexts.push(context);
@@ -146,3 +146,5 @@ import {withOwnedNativeProjectOperation} from './owned-native-project-operation.
 import {requireCurrentEmptyNativeModule,prepareEmptyNativeModulePair} from './owned-native-empty-modules.mjs';
 
 import {hasPrimitiveExpressionVectorRuntime,originalPrimitiveExpressionVectorDomain,checkedPrimitiveExpressionVectorLocals as checkedPrimitiveExpressionVectorTail} from './owned-primitive-expression-vectors.mjs';
+
+import {originalPrimitiveScalarVectorLocalDomain} from './owned-primitive-scalar-vector-locals.mjs';

@@ -659,3 +659,11 @@ retaining original ABI APIs and bounds. Three source equations and actual-native
 DATA-refusal/CI-only Rust oracle sources are UNRUN. Private receiving, discovery,
 comparison and helper-graph selection still need wiring; full drafting and every
 broader qualification requirement remain OPEN.
+
+The [scalar-return container wiring draft](scalar-vector-local-wiring-source-draft.md)
+selects the bounded native observer in both private captures, discovery/refresh,
+receiving, complete comparisons and source/native helper graphs. Checked local
+Vec types are emitted explicitly for re-entry; every actual source/native fence
+remains required. Thirteen complete equations and JS/TS/all-width/native/bulk/
+refusal/CI-only Rust sources are UNRUN. Wider Vec operations, native owner
+closure, full drafting and all verification obligations remain OPEN.

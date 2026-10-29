@@ -58,7 +58,7 @@ export function proposeOwnedPrimitiveVectorFunctionInsertion(data,options){
       // A missing companion during JS bootstrap cannot supply copied headers.
       // JSDoc and imports are checked directly by the original receiving issuer.
       const context=createOwnedVectorCandidateContext({...original,primitiveOperators:true,primitiveDefinitions:true,primitiveVectorDefinitions:true,files:[...seedFiles].map(([path,source])=>({path,source}))});contexts.push(context);first=translateOwnedVectorCandidate(seedFiles.get(sourcePath),{context,sourcePath,typescriptOutputPath:typescriptPath});seedFiles.clear();
-      if(!first.program.length||first.program.length>4096||!first.program.some(item=>primitiveVectorResultRole(item.returns)))stop('bounded nonempty complete new function set required');for(const item of checkOwnedCoreProgram(first.program)){if(item.vectorOrigin||!item.exported||item.returns!=='unit'&&!role(item.returns)||item.resultRoot!==null||item.params.some(row=>!parameterRole(row.type))||!nativeProjectionIdentifier(item.name))stop('only exported closed primitive functions enter this insertion family');assertOwnedPrimitiveVectorDefinition({params:item.params,returns:item.returns,resultRoot:item.resultRoot,body:item.body,hostCalls:item.hostCalls,sourceCalls:item.sourceCalls});}
+      if(!first.program.length||first.program.length>4096||!first.program.some(item=>primitiveVectorResultRole(item.returns)||scalarSourceCallSummary(item).vectorLocals===true))stop('bounded nonempty complete new function set required');for(const item of checkOwnedCoreProgram(first.program)){if(item.vectorOrigin||!item.exported||item.returns!=='unit'&&!role(item.returns)||item.resultRoot!==null||item.params.some(row=>!parameterRole(row.type))||!nativeProjectionIdentifier(item.name))stop('only exported closed primitive functions enter this insertion family');assertOwnedPrimitiveVectorDefinition({params:item.params,returns:item.returns,resultRoot:item.resultRoot,body:item.body,hostCalls:item.hostCalls,sourceCalls:item.sourceCalls});}
       pair=prepareOwnedVectorModulePair(sourcePath,typescriptPath,first.typescript);return {pair,scope:scopes[0]};
      }},
      {id:'rust:insert-complete-emitted-source-and-independently-recheck-new-native-functions',apply:({pair,scope})=>{
@@ -98,3 +98,5 @@ import {primitiveVectorResultRole} from './owned-source-value-calls.mjs';
 import {originalPrimitiveExpressionVectorDomain} from './owned-primitive-expression-vectors.mjs';
 
 import {assertOwnedPrimitiveVectorDefinition} from './owned-primitive-vector-definition-family.mjs';
+
+import {scalarSourceCallSummary} from './owned-source-value-calls.mjs';
