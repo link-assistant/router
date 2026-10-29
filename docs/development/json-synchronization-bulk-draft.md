@@ -461,3 +461,14 @@ arithmetic only for exact canonical inert messages. Independent all-width paired
 behavior/refusal/source-freshness and CI-only Rust oracle sources are UNRUN.
 Other Option producers, division/zero ordering, negation, constants and native
 failure-trace comparison remain OPEN; no runtime or coverage claim is made.
+
+Ordered primitive failure comparison is source drafted in
+[the failure companion](ordered-primitive-failures-source-draft.md). A separate
+closed-operation family admits checked add/sub/multiply and primitive clamp into
+the existing private receiving and native checks. Both actual native body
+consumers retain ordered failure events and all helper calls, including unused
+results; projection and helper closure follow the same events. Whole source,
+runtime, loan, meta/CST and fresh native comparisons remain required. Complete
+independent paired, insertion/helper/bulk, refusal and Rust oracle cases are
+UNRUN. Guarded expression arms, division/remainder, negation, shifts, constants
+and full application closure remain OPEN; no coverage increase is measured.

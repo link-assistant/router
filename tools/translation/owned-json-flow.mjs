@@ -366,6 +366,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,ge
    if(kind!=='json')refuse('JSON construction requires its actual canonical result',node);
    for(const argument of node.args){const value=argument.value;if(!value?.k)refuse('missing checked JSON interpolation',node);read(value,value.k==='var'?'borrow':'move');}return empty();
   }
+  const failure=primitiveFailureFlow(node);if(failure!==null){if(kind!=='copy')refuse('checked primitive failure operation requires its actual Copy result',node);for(const argument of failure.args){if(domain(argument.type,argument)!=='copy')refuse('checked primitive failure cannot hide an owned move',argument);const value=read(argument);ensureRoots(value,state,argument);if(value.loans.size)refuse('checked primitive failure cannot retain a JSON text loan',argument);}return empty();}
   const totalOperands=totalPrimitiveFlowOperands(node);
   if(totalOperands!==null){
    if(kind!=='copy')refuse('total primitive operation needs an actual Copy result',node);
@@ -523,3 +524,5 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,ge
 }
 
 import {totalPrimitiveFlowOperands} from './extensions/total-primitive-flow.mjs';
+
+import {primitiveFailureFlow} from './extensions/primitive-failure-flow.mjs';

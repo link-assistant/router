@@ -185,7 +185,7 @@ function originalOwnedCoreImport(handle,path,node,analysis){
   if(target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'||target===state.data.runtimeRoot+'/primitive-operator-runtime.mjs'||target===state.data.runtimeRoot+'/json-update-runtime.mjs'||target===state.data.runtimeRoot+'/json-macro-runtime.mjs'||target===state.data.runtimeRoot+'/base64-runtime.mjs'||target===state.data.runtimeRoot+'/json-runtime.mjs'||target===state.data.runtimeRoot+'/json-option-runtime.mjs'||target===state.data.runtimeRoot+'/json-fields-runtime.mjs'){
    if(target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'&&name!=='requireScalarString'&&!ownedVectorTextScalarOperation(name))fail('only actual scalar string validation and fixed text scalar exports are registered');
    if(target===state.data.runtimeRoot+'/json-fields-runtime.mjs'){if(!ownedVectorJsonFieldOperation(name))fail('field export requires a supported copied plain/shared/primitive payload domain');requireOwnedVectorJsonFieldSources(state.files,state.data);}
-   if(target===state.data.runtimeRoot+'/primitive-operator-runtime.mjs'&&(!ownedPrimitiveOperatorOperation(name)&&!((spec.isTypeOnly||declaration.importClause?.isTypeOnly)&&primitiveBitwiseAlias(name))||state.data.primitiveOperators!==true&&!ownedNativeTotalOperator(name)&&!((spec.isTypeOnly||declaration.importClause?.isTypeOnly)&&primitiveBitwiseAlias(name))))fail('unregistered primitive operator context or export');
+   if(target===state.data.runtimeRoot+'/primitive-operator-runtime.mjs'&&(!ownedPrimitiveOperatorOperation(name)&&!((spec.isTypeOnly||declaration.importClause?.isTypeOnly)&&primitiveBitwiseAlias(name))||state.data.primitiveOperators!==true&&!ownedNativeClosedOperator(name)&&!((spec.isTypeOnly||declaration.importClause?.isTypeOnly)&&primitiveBitwiseAlias(name))))fail('unregistered primitive operator context or export');
    const typesOnly=spec.isTypeOnly||declaration.importClause?.isTypeOnly;
    const actual=typesOnly?syntax.get(state.data.declarationRoot+'/'+posix.basename(target).replace(/\.mjs$/u,'.d.mts')):syntax.get(target);
    const exported=actual?.statements.some(item=>item.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword)&&((item.name?.text===name)||(ts.isVariableStatement(item)&&item.declarationList.declarations.some(node=>ts.isIdentifier(node.name)&&node.name.text===name))));
@@ -416,7 +416,7 @@ function checkFunctionBody(context,path,declaration,analysis){
    const binding=originalOwnedCoreImport(context,path,node.expression,analysis),op=OPS[binding.name];
    const textScalar=ownedVectorTextScalarOperation(binding.name);if(textScalar&&binding.target===analysis.runtimeRoot+'/string-iterator-runtime.mjs'){if(!jsonVectorProfile||binding.typeOnly||node.arguments.length!==textScalar.args.length)fail('fixed source-bound text scalar operation/arity required');requireOwnedCoreSourceCurrent(context);const args=node.arguments.map(argument=>expression(argument,scope,depth+1));if(args.some(value=>value.type!=='str'||!asciiStringLoan(value,scope)))fail('text scalar arguments need actual live borrowed/static text');hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});requireOwnedCoreSourceCurrent(context);return {kind:'text-scalar-call',name:binding.name,args,type:textScalar.ret,root:null};}
    if(ownedPrimitiveOperatorOperation(binding.name)&&binding.target===analysis.runtimeRoot+'/primitive-operator-runtime.mjs'){
-    requireOwnedCoreSourceCurrent(context);if(!nativeScalars&&(!jsonVectorProfile||!ownedNativeTotalOperator(binding.name)))fail('non-operator source units require a qualified total operation');if(binding.typeOnly)fail('primitive runtime call cannot use a type-only import');const value=readOwnedPrimitiveOperatorCall(ts,node,binding.name,argument=>expression(argument,scope,depth+1));if(!nativeScalars)requireOwnedNativeTotalCall(value);hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});requireOwnedCoreSourceCurrent(context);return value;
+    requireOwnedCoreSourceCurrent(context);if(!nativeScalars&&(!jsonVectorProfile||!ownedNativeClosedOperator(binding.name)))fail('non-operator source units require a qualified total operation');if(binding.typeOnly)fail('primitive runtime call cannot use a type-only import');const value=readOwnedPrimitiveOperatorCall(ts,node,binding.name,argument=>expression(argument,scope,depth+1));if(!nativeScalars)requireOwnedNativeClosedCall(value);hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});requireOwnedCoreSourceCurrent(context);return value;
    }
    const optional=ownedJsonOptionalReaderOperation(binding.name);
    if(optional&&binding.target===analysis.runtimeRoot+'/json-option-runtime.mjs'){
@@ -583,7 +583,7 @@ function checkFunctionBody(context,path,declaration,analysis){
  }
  if(params.some(param=>param.type==='bytes-ref'&&!byteInputs.has(param.name)))fail('octet input requires an actual fixed base64 operand');
  if(params.some(param=>param.type==='json-option-input'&&!hostCalls.some(call=>ownedJsonOptionalReaderOperation(call.name)&&call.inputRoot===param.name)))fail('opaque optional Json input requires validation');
- if(jsonVectorProfile?.kind==='primitive-scalar'&&(hostCalls.some(call=>!ownedVectorTextScalarOperation(call.name)&&!ownedNativeTotalOperator(call.name))||sourceNativeOperators.length))fail('closed primitive source unit requires separately qualified call/effect rules');
+ if(jsonVectorProfile?.kind==='primitive-scalar'&&(hostCalls.some(call=>!ownedVectorTextScalarOperation(call.name)&&!ownedNativeClosedOperator(call.name))||sourceNativeOperators.length))fail('closed primitive source unit requires separately qualified call/effect rules');
  if(primitiveDefinitions)assertOwnedPrimitiveDefinition({params,returns:resultType,resultRoot,body:checked.body,hostCalls,sourceCalls});
  if(!hostCalls.length&&!sourceNativeOperators.length)nativeOperatorHistory.adoptCopies();
  if(jsonVectorProfile&&resultType!==jsonVectorProfile.type)fail('actual original native owned JSON return shape required');
@@ -655,6 +655,6 @@ export function ownedBulkRuntimeSources(runtimeRoot='runtime',declarationRoot=ru
  const rows=new Map();for(const row of [...ownedCoreRuntimeSources(runtimeRoot,declarationRoot),...ownedPrimitiveOperatorRuntimeSources(runtimeRoot,declarationRoot)]){if(rows.has(row.path)&&rows.get(row.path).source!==row.source)fail('conflicting actual bulk runtime source');rows.set(row.path,row);}return [...rows.values()].sort((a,b)=>a.path.localeCompare(b.path));
 }
 
-import {ownedNativeTotalOperator,requireOwnedNativeTotalCall} from './owned-native-total-operators.mjs';
+import {ownedNativeClosedOperator,requireOwnedNativeClosedCall} from './owned-native-closed-operators.mjs';
 
 import {assertOwnedPrimitiveDefinition} from './owned-primitive-definition-family.mjs';

@@ -11,6 +11,7 @@ export function selectNativeProjectionClosure(input){
    const calls=[];let cells=0;
    function visit(value,depth){
     if(++cells>100000||depth>160)fail('bounded complete ordered native tree required');if(!Array.isArray(value))return;
+    if(typeof value[0]==='string'&&value[0].startsWith('source-call:')){if(value.length!==2||!Array.isArray(value[1]))fail('complete ordered source helper event required');if(++edges>16384)fail('complete direct helper edge budget exceeded');calls.push({rust:value[0].slice('source-call:'.length),arity:value[1].length});}
     if(value[0]==='source-call'){if(value.length!==3||typeof value[1]!=='string'||!Array.isArray(value[2]))fail('complete source call observation required');if(++edges>16384)fail('complete direct helper edge budget exceeded');calls.push({rust:value[1],arity:value[2].length});}
     for(const child of value)if(Array.isArray(child))visit(child,depth+1);
    }

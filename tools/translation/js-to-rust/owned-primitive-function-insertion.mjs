@@ -57,7 +57,7 @@ export function proposeOwnedPrimitiveFunctionInsertion(data,options){
 
    if(value.kind==='source-scalar-call'){const callee=value.callee,closed=type=>type==='bool'||!!primitiveBitwiseType(type);if(!callee||callee.returns!==value.type||!closed(callee.returns)||!Array.isArray(callee.parameters)||callee.parameters.some(type=>!closed(type))||!Array.isArray(value.args)||value.args.length!==callee.parameters.length)stop('actual complete closed primitive helper operands required');for(const argument of value.args)expression(argument,depth+1);return;}
    if(value.kind==='choose'){expression(value.cond,depth+1);expression(value.then,depth+1);expression(value.else,depth+1);return;}
-   if(['primitive-bitwise-call','primitive-not-call','primitive-cast-call','primitive-method-call'].includes(value.kind)){requireOwnedNativeTotalCall(value);for(const argument of value.args)expression(argument,depth+1);return;}
+   if(['primitive-bitwise-call','primitive-not-call','primitive-cast-call','primitive-method-call','primitive-arithmetic-call'].includes(value.kind)){requireOwnedNativeClosedCall(value);for(const argument of value.args)expression(argument,depth+1);return;}
    stop('new function needs its next explicit insertion operation/effect rule');
   }
   function body(rows,depth=0){if(++work>100000||depth>160||!Array.isArray(rows)||!rows.length)stop('complete bounded primitive insertion body required');for(let index=0;index<rows.length;index++){const row=rows[index];if(row.kind==='let'){expression(row.value,depth+1);continue;}if(index!==rows.length-1)stop('new primitive function terminator must close its original body');if(row.kind==='return'){expression(row.value,depth+1);return;}if(row.kind==='if'){expression(row.cond,depth+1);body(row.then,depth+1);body(row.else,depth+1);return;}stop('new statement requires its separate insertion rule');}stop('complete primitive insertion return required');}
@@ -99,7 +99,7 @@ import {jsonMacroDependencyProfile} from '../json-macro-inputs.mjs';
 import {deriveDependencyProfile} from '../derive-dependencies.mjs';
 import {checkOwnedCoreProgram} from './owned-vector-candidate-operations.mjs';
 import {primitiveBitwiseType} from '../primitive-bitwise-types.mjs';
-import {requireOwnedNativeTotalCall} from './owned-native-total-operators.mjs';
+import {requireOwnedNativeClosedCall} from './owned-native-closed-operators.mjs';
 import {nativeProjectionIdentifier} from './owned-native-tree-source.mjs';
 import {captureSourceModuleViews,originalModuleViewItems} from '../source-module-views.mjs';
 import {rustTokens} from '../rust-structure.mjs';

@@ -38,6 +38,8 @@ export function projectNativeTreeModule(input,options={}){
   fail('explicit qualified public ABI needed for '+role);
  }
  function operation(name){
+  const failure=nativeFailureEventOperation(name);if(failure)return failure;
+  if(name.startsWith('source-call:')){const target=nativeTargets.get(name.slice('source-call:'.length));if(!target||target.kind!=='primitive-scalar'||target.returns!=='bool'&&!primitiveBitwiseType(target.returns))fail('actual complete primitive helper event target required');return {sourceCall:true,target,role:target.returns,arity:target.parameters.length};}
   for(const [key,row]of Object.entries(BOUNDED_JSON_RUNTIME_OPERATIONS)){
    const spelling=row.rust==='json_checked_copy'?'copy':row.rust==='json_checked_with_field'?'with-field':row.rust==='json_validate'?'validate':'build-'+row.rust.slice('json_build_'.length);
    if(name===spelling)return {name:key,family:'json-update',role:row.ret};
@@ -73,7 +75,7 @@ export function projectNativeTreeModule(input,options={}){
     }
     if(kind==='source-call'&&node.length===3){const target=nativeTargets.get(a);if(!target||target.kind!=='primitive-scalar'||!Array.isArray(b)||b.length!==target.parameters.length)fail('complete actual same-module helper source needed');return target.name+'('+b.map(value=>expression(value,level+1)).join(', ')+')';}
     if(kind==='not'&&node.length===2)return '(!'+expression(a,level+1)+')';
-    if(['and','or'].includes(kind)&&node.length===3){const containsEffect=value=>Array.isArray(value)&&(value[0]==='effect'||value.slice(1).some(containsEffect));if(containsEffect(a)||containsEffect(b))fail('conditional effect placement needs an explicit control rule');return '('+expression(a,level+1)+(kind==='and'?' && ':' || ')+expression(b,level+1)+')';}
+    if(['and','or'].includes(kind)&&node.length===3){const containsEffect=value=>Array.isArray(value)&&(value[0]==='effect'||value.slice(1).some(containsEffect));if(containsEffect(b))fail('conditional right effect placement needs an explicit control rule');return '('+expression(a,level+1)+(kind==='and'?' && ':' || ')+expression(b,level+1)+')';}
     if(kind==='compare'&&node.length===5){const op={eq:'===',ne:'!==',lt:'<',le:'<=',gt:'>',ge:'>='}[a];if(!op||!['bool','str'].includes(b)&&!primitiveBitwiseType(b))fail('explicit original comparison required');return '('+expression(c,level+1)+' '+op+' '+expression(d,level+1)+')';}
     if(kind==='choose'&&node.length===4)return '('+expression(a,level+1)+' ? '+expression(b,level+1)+' : '+expression(c,level+1)+')';
     if(kind==='some'&&node.length===2)return '('+expression(a,level+1)+'.$ === "Some")';
@@ -81,7 +83,7 @@ export function projectNativeTreeModule(input,options={}){
     if(kind==='vector'&&node.length===2&&Array.isArray(a)&&a.length<=4096)return '['+a.map(value=>expression(value,level+1)).join(', ')+']';
     fail('next native symbolic expression rule needed: '+kind);
    }
-   function call(index,level){const descriptor=descriptors[index],args=events[index][1].map(value=>expression(value,level+1));return imported(descriptor.name,descriptor.family)+'('+args.join(', ')+')';}
+   function call(index,level){const descriptor=descriptors[index],args=events[index][1].map(value=>expression(value,level+1));if(descriptor.failure)return projectNativeFailureCall(descriptor,args,{imported});if(descriptor.sourceCall){if(args.length!==descriptor.arity)fail('complete original helper event arity required');return descriptor.target.name+'('+args.join(', ')+')';}return imported(descriptor.name,descriptor.family)+'('+args.join(', ')+')';}
    const lines=[];
    if(depth===0){if(!same(events.slice(0,initial.length),initial))fail('actual JSON input validation prefix must match the receiving boundary');cursor=initial.length;}
    // Owned values remain inline so receiving variable-copy rules cannot invent
@@ -117,3 +119,5 @@ export function projectNativeTreeModule(input,options={}){
 import {primitiveBitwiseType} from '../primitive-bitwise-types.mjs';
 
 import {projectNativeTotalOperator} from './owned-native-total-operators.mjs';
+
+import {nativeFailureEventOperation,projectNativeFailureCall} from './owned-native-closed-operators.mjs';
