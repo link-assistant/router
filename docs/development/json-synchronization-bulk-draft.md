@@ -517,3 +517,15 @@ fresh native check. Thirteen complete source equations and all independent
 kernel, strict paired, receiving/helper/bulk case sources are UNRUN. General
 owned branches, ordered matches, division/remainder, constants and full
 application closure remain OPEN.
+
+Ordered scalar match expressions now have a
+[continuation source draft](ordered-primitive-matches-source-draft.md). Actual
+checked wrappers, immutable pattern bindings and optional guards feed the shared
+bounded observer; guard failure retries the next row, selected values continue
+through enclosing operations, and pure matches remain value expressions. Finite
+Boolean predicate joins and statically unreachable comparison traces retain all
+evaluated prefixes and validate both branches first. The actual discovery graph
+consumer now follows ordered helper events. Six complete source equations and
+all independent all-width paired/native, ordering, graph-refusal and CI-only Rust
+oracle sources are UNRUN. Nonlocal exits, terminal coverage beyond the checked
+wildcard lane, owned patterns, division/remainder and full closure remain OPEN.

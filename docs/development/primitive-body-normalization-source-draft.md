@@ -41,3 +41,8 @@ Thirteen complete original-source equations preserve exact inverses and the
 fixed language then repository phases. General JSON ownership/borrow branches,
 ordered-match expressions, division/remainder, constants and full application
 translation remain separate unfinished requirements.
+
+The subsequent [ordered-match continuation draft](ordered-primitive-matches-source-draft.md)
+adds finite Boolean predicate joins and constant-condition trace selection after
+both complete branch/prefix checks. Unknown conditions and dynamically selected
+effectful branches keep their original ordered traces. That follow-up is UNRUN.

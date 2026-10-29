@@ -1,3 +1,4 @@
+import {guardedNativeOrderedScalarRows} from './owned-native-ordered-scalars.mjs';
 // Bounded continuation observations of already independently checked scalar
 // source. Synthetic variables are private model substitutions only; neither
 // these reconstructed nodes nor their public result enter a semantic issuer.
@@ -17,6 +18,7 @@ function engine(native,read,guard,sourceCall=()=>true){
   if(native&&['routerHostCall','call'].includes(kind)||!native&&['primitive-arithmetic-call','primitive-method-call','primitive-bitwise-call','primitive-not-call','primitive-cast-call','source-scalar-call','text-scalar-call'].includes(kind))return node.args.map((value,index)=>[['args',index],value]);
   if(kind===(native?'if':'choose'))return [['cond',node.cond],['then',node.then],['else',node.else]];
   if(native&&kind==='let')return [['value',node.value],['body',node.body]];
+  if(native&&kind==='routerOrderedMatchArms')return guardedNativeOrderedScalarRows(node).flatMap((row,index)=>[[['branches',index,'cond'],row.cond],...row.bindings.map((binding,at)=>[['bindings',index,at],binding.value]),...(row.guard?[[['branches',index,'guard'],row.guard]]:[]),[['branches',index,'body'],row.body]]);
   return [];
  }
  function effect(node,depth=0){
@@ -29,7 +31,7 @@ function engine(native,read,guard,sourceCall=()=>true){
   charge(depth);if(!node||typeof node!=='object')return false;if(guarded.has(node))return guarded.get(node);
   if(seen.has(node))fail('acyclic original guarded observation required');seen.add(node);
   const kind=key(node),conditional=kind===(native?'if':'choose'),logic=kind==='binary'&&(native?['and','or']:['&&','||']).includes(node.op);
-  let result=conditional&&(effect(node.then,depth+1)||effect(node.else,depth+1))||logic&&effect(node.right,depth+1);
+  let result=native&&kind==='routerOrderedMatchArms'||conditional&&(effect(node.then,depth+1)||effect(node.else,depth+1))||logic&&effect(node.right,depth+1);
   for(const [,child]of children(node))if(needs(child,depth+1))result=true;seen.delete(node);guarded.set(node,result);return result;
  }
  function branch(condition,names,events,yes,no,depth){
@@ -44,6 +46,35 @@ function engine(native,read,guard,sourceCall=()=>true){
    const right=(local,effects,at)=>evaluate(node.right,local,effects,next,at),constant=value=>(local,effects,at)=>next(boolean(value),local,effects,at);
    return node.op==='&&'||node.op==='and'?branch(condition,scope,prefix,right,constant(false),level):branch(condition,scope,prefix,constant(true),right,level);
   },depth+1);
+  if(native&&kind==='routerOrderedMatchArms'){
+   const rows=guardedNativeOrderedScalarRows(node);
+   if(!rows.some(row=>effect(row.cond,depth+1)||row.bindings.some(binding=>effect(binding.value,depth+1))||row.guard&&effect(row.guard,depth+1)||effect(row.body,depth+1))){
+    const start=events.length,records=[];
+    function row(index,level){
+     charge(level);if(index===rows.length){let value=records.at(-1).body;for(let at=records.length-2;at>=0;at--){const current=records[at],selected=current.guard?['choose',current.guard,current.body,value]:current.body;value=['choose',current.cond,selected,value];}return next(value,names,events,depth+1);}
+     const current=rows[index];return evaluate(current.cond,new Map(names),events,(condition,scope,prefix,at)=>{
+      function bind(position,local,effects,level){
+       charge(level);if(position<current.bindings.length){const binding=current.bindings[position];if(local.has(binding.name))fail('pure ordered match binding shadows its original model scope');return evaluate(binding.value,local,effects,(value,scope,events,at)=>{const bound=new Map(scope);bound.set(binding.name,value);return bind(position+1,bound,events,at+1);},level+1);}
+       const finish=(guard,scope,prefix,level)=>evaluate(current.body,scope,prefix,(body,scope,prefix,at)=>{if(prefix.length!==start)fail('pure ordered match produced an ordered event');records.push({cond:condition,guard,body});return row(index+1,depth+1);},level+1);
+       return current.guard?evaluate(current.guard,local,effects,finish,level+1):finish(null,local,effects,level+1);
+      }return bind(0,new Map(scope),prefix,at+1);
+     },level+1);
+    }return row(0,depth+1);
+   }
+   function attempt(index,scope,prefix,level){
+    const row=rows[index];function bind(at,local,events,depth){
+     charge(depth);if(at<row.bindings.length){const binding=row.bindings[at];if(local.has(binding.name))fail('ordered match binding shadows its original model scope');return evaluate(binding.value,local,events,(value,current,effects,level)=>{const names=new Map(current);names.set(binding.name,value);return bind(at+1,names,effects,level+1);},depth+1);}
+     if(!row.guard)return evaluate(row.body,local,events,next,depth+1);
+     if(index===rows.length-1)fail('final ordered fallback cannot have a guard');
+     return evaluate(row.guard,local,events,(condition,current,effects,level)=>branch(condition,current,effects,(names,prefix,at)=>evaluate(row.body,names,prefix,next,at),(names,prefix,at)=>select(index+1,new Map(scope),prefix,at),level),depth+1);
+    }return bind(0,new Map(scope),prefix,level+1);
+   }
+   function select(index,scope,prefix,level){
+    charge(level);if(index===rows.length-1)return attempt(index,scope,prefix,level+1);
+    return evaluate(rows[index].cond,scope,prefix,(condition,current,events,at)=>branch(condition,current,events,(local,effects,depth)=>attempt(index,local,effects,depth),(local,effects,depth)=>select(index+1,local,effects,depth),at),level+1);
+   }
+   return select(0,names,events,depth+1);
+  }
   if(native&&kind==='let'){
    if(node.mutable||names.has(node.name))fail('distinct immutable original scalar local required');
    return evaluate(node.value,names,events,(value,scope,prefix,level)=>{const local=new Map(scope);local.set(node.name,value);return evaluate(node.body,local,prefix,(result,inner,current,at)=>next(result,scope,current,at),level+1);},depth+1);

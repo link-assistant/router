@@ -11,6 +11,7 @@ export function selectNativeProjectionClosure(input){
    const calls=[];let cells=0;
    function visit(value,depth){
     if(++cells>100000||depth>160)fail('bounded complete ordered native tree required');if(!Array.isArray(value))return;
+    if(typeof value[0]==='string'&&value[0].startsWith('source-call:')){if(value.length!==2||!Array.isArray(value[1]))fail('complete ordered source helper event required');if(++edges>16384)fail('complete direct helper edge budget exceeded');calls.push({rust:value[0].slice('source-call:'.length),arity:value[1].length});}
     if(value[0]==='source-call'){if(value.length!==3||typeof value[1]!=='string'||!Array.isArray(value[2]))fail('complete source call observation required');if(++edges>16384)fail('complete direct helper edge budget exceeded');calls.push({rust:value[1],arity:value[2].length});}
     for(const child of value)if(Array.isArray(child))visit(child,depth+1);
    }
@@ -53,4 +54,21 @@ export function observeNativeOrderedScalarExpression(node,{guard,names,events,de
  const rows=orderedScalarRows(node),before=events.length;
  function branch(index,level){guard.charge(level);if(index===rows.length-1)return expression(rows[index].body,new Map(names),events,level+1);const condition=expression(rows[index].cond,new Map(names),events,level+1),yes=expression(rows[index].body,new Map(names),events,level+1),no=branch(index+1,level+1);return choose(condition,yes,no);}
  const value=branch(0,depth);if(events.length!==before)throw new TypeError('Expression-position ordered matches require pure scalar alternatives');return value;
+}
+
+import {sameType} from '../checked-types.mjs';
+
+// Additive actual-IR row observation for guarded continuation consumers.
+// This DATA row check cannot authenticate patterns, exhaustiveness or owners.
+export function guardedNativeOrderedScalarRows(node){
+ const rows=node.branches;if(!Array.isArray(rows)||!rows.length||rows.length>64||!node.type||node.type.rustReference||node.type.rustOwnership||node.type.patternOwnershipRefusal||node.type.rustGenericIdentityUnresolved||node.type.rustBorrowingUnresolved||node.type.kind!=='bool'&&!(node.type.kind==='fixed'&&primitiveBitwiseType(node.type.rustPrimitiveName)))throw new TypeError('Native ordered scalar match requires a bounded exact primitive result');
+ for(let index=0;index<rows.length;index++){const row=rows[index],condition=row?.cond,type=condition?.type;if(!row?.body||!type||type.kind!=='bool'||type.rustReference||type.rustOwnership||type.patternOwnershipRefusal||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)throw new TypeError('Native ordered scalar match requires actual bool conditions');const fallback=condition.k==='lit'&&condition.value===true;if(index===rows.length-1&&!fallback)throw new TypeError('Native ordered scalar match needs one final unconditional fallback');}
+ return rows.map((row,index)=>{
+  const bindings=[],names=new Set();let arm=row.body;
+  while(arm?.k==='let'){if(arm.mutable||typeof arm.name!=='string'||names.has(arm.name)||bindings.length>=64)throw new TypeError('Guarded ordered scalar rows require bounded distinct immutable original pattern bindings');names.add(arm.name);bindings.push({name:arm.name,value:arm.value});arm=arm.body;}
+  if(arm?.k!=='routerOrderedArm'||!sameType(arm.type,node.type)||!sameType(arm.body?.type,node.type))throw new TypeError('Guarded ordered scalar rows require the actual checked arm wrapper and result');
+  const guard=arm.guard??null,type=guard?.type;if(guard&&(!type||type.kind!=='bool'||type.rustReference||type.rustOwnership||type.patternOwnershipRefusal||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved))throw new TypeError('Guarded ordered scalar rows require an actual by-value Boolean guard');
+  if(index===rows.length-1&&guard)throw new TypeError('Guarded ordered scalar rows require one final unguarded fallback');
+  return {...row,bindings,guard,body:arm.body};
+ });
 }

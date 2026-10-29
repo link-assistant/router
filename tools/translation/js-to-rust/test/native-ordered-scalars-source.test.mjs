@@ -51,7 +51,7 @@ import {prepareVectorJsonOriginLocalsSources} from '../../prepare-vector-json-or
 const B='crate::translation_json_core::';
 function nativePair(rust,body,{args='',typedArgs='',imports=''}={}){const source=imports+'export function values('+args+'){'+body+'}',typed=typeImport+imports+'export function values('+typedArgs+'):readonly JsonValue[]{'+body+'}',input=data(rust,source,typed);input.files.find(row=>row.path==='src/lib.rs').source='pub mod translation_json_core;\n'+input.files.find(row=>row.path==='src/lib.rs').source;input.files.push({path:'src/translation_json_core.rs',source:BOUNDED_JSON_CORE_SOURCE});const context=createOwnedVectorCandidateContext(input),result=translateOwnedVectorCandidate(source,{context,sourcePath:JS,typescriptOutputPath:'typed/src/reverse.mts'});return {input,context,result};}
 import {proposeOwnedVectorNativeSynchronization} from '../owned-vector-native-synchronization.mjs';
-import {requestedNativeJsonVectorTree,actualNativeJsonVectorTree} from '../owned-vector-native-json-control.mjs';
+import {canonicalRequestedNativeJsonVectorTree as requestedNativeJsonVectorTree,canonicalActualNativeJsonVectorTree as actualNativeJsonVectorTree} from '../owned-vector-native-json-control.mjs';
 import {prepareVectorNativeJsonControlSources} from '../../prepare-vector-native-json-control-sources.mjs';
 import {translateProject} from '../../project.mjs';
 import {PRODUCTION_PROFILE} from '../../cfg-profile.mjs';

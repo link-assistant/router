@@ -32,7 +32,11 @@ export function normalizePrimitiveScalarBodyTree(input){
  const not=node=>node?.[0]==='not'?node[1]:isBool(node,true)?['bool',false]:isBool(node,false)?['bool',true]:['not',node];
  function choose(condition,yes,no,available,depth){
   charge(depth);if(!pure(condition,available,depth+1)||!pure(yes,available,depth+1)||!pure(no,available,depth+1))return ['choose',condition,yes,no];
+  if(condition[0]==='not'){condition=condition[1];[yes,no]=[no,yes];}
+  if(isBool(condition,true))return yes;if(isBool(condition,false))return no;
   if(equal(yes,no))return yes;
+  if(yes[0]==='choose'&&equal(yes[3],no))return choose(['and',condition,yes[1]],yes[2],no,available,depth+1);
+  if(no[0]==='choose'&&equal(no[2],yes))return choose(['or',condition,no[1]],yes,no[3],available,depth+1);
   if(isBool(yes,true)&&isBool(no,false))return condition;
   if(isBool(yes,false)&&isBool(no,true))return not(condition);
   if(isBool(yes,true))return ['or',condition,no];
@@ -43,6 +47,7 @@ export function normalizePrimitiveScalarBodyTree(input){
  }
  function expression(node,available,depth=0){
   charge(depth);if(!Array.isArray(node))return node;const result=node.map(value=>Array.isArray(value)?expression(value,available,depth+1):value);
+  if(result[0]==='compare'&&result.length===5&&['eq','ne'].includes(result[1])&&result[2]==='bool'&&pure(result[3],available,depth+1)&&pure(result[4],available,depth+1)){const left=result[3],right=result[4],literal=left[0]==='bool'?left:right[0]==='bool'?right:null;if(literal){const value=literal===left?right:left;return (result[1]==='eq')===literal[1]?value:not(value);}}
   if(result[0]==='choose'&&result.length===4)return choose(result[1],result[2],result[3],available,depth+1);
   if(result[0]==='not'&&result.length===2&&pure(result[1],available,depth+1))return not(result[1]);
   return result;
@@ -53,7 +58,9 @@ export function normalizePrimitiveScalarBodyTree(input){
   if(events.length<inherited.length||!events.slice(0,inherited.length).every((row,index)=>equal(row,inherited[index])))fail('branch cannot change its complete ordered prefix');
   const terminal=tree[1];
   if(terminal?.[0]==='if'){
-   if(terminal.length!==4)fail('complete conditional body branches required');const condition=expression(terminal[1],events.length,depth+1),yes=body(terminal[2],events,depth+1),no=body(terminal[3],events,depth+1);
+   if(terminal.length!==4)fail('complete conditional body branches required');let condition=expression(terminal[1],events.length,depth+1),yes=body(terminal[2],events,depth+1),no=body(terminal[3],events,depth+1);
+   if(condition?.[0]==='not'&&pure(condition,events.length,depth+1)){condition=condition[1];[yes,no]=[no,yes];}
+   if(isBool(condition,true))return yes;if(isBool(condition,false))return no;
    if(yes[0].length===events.length&&no[0].length===events.length&&pure(yes[1],events.length,depth+1)&&pure(no[1],events.length,depth+1))return [events,choose(condition,yes[1],no[1],events.length,depth+1)];
    return [events,['if',condition,yes,no]];
   }
