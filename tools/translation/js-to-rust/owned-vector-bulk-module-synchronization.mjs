@@ -47,7 +47,7 @@ export function proposeOwnedVectorBulkModuleSynchronization(data,requests){
        if(request[authority]===''&&files.get(sourcePath)===''&&files.get(request.typescriptPath)===''){
         const keys=['sourcePath','typescriptPath','nativeRoute',authority];if(Object.keys(request).length!==keys.length||keys.some(key=>!Object.hasOwn(request,key)))fail('exact canonical empty receiving request required');const route=nativeEmptyModuleRoute(request.nativeRoute);requireCurrentEmptyNativeModule(beforeProject,files,route);const pair=prepareEmptyNativeModulePair(sourcePath,request.typescriptPath),outputs=[{path:sourcePath,before:'',after:'',inverse:'',concreteSyntax:pair.javascript.concreteSyntax},{path:request.typescriptPath,before:'',after:'',inverse:'',concreteSyntax:pair.typescript.concreteSyntax}];modules.push({id:'module_'+hash(sourcePath),rustSource:route.rustPath,module:route.module,javascriptPath:sourcePath,typescriptPath:request.typescriptPath,bindings:[],outputs,nativeProposal:[],newNativeFunctions:false});continue;
        }
-       const proposal=proposeOwnedPrimitiveFunctionInsertion(original,request),native=proposal.outputs.filter(row=>row.path===proposal.nativeRoute.rustPath);if(native.length!==1)fail('one complete fresh primitive native insertion required');modules.push({id:'module_'+hash(sourcePath),rustSource:proposal.nativeRoute.rustPath,module:proposal.nativeRoute.module,javascriptPath:sourcePath,typescriptPath:request.typescriptPath,bindings:proposal.bindings,outputs:proposal.outputs.filter(row=>row.path!==proposal.nativeRoute.rustPath),nativeProposal:native,newNativeFunctions:true,nativeInsertion:proposal.nativeInsertion});continue;
+       const proposal=(receivingPrimitiveVectorDefinitionsRequested(request)?proposeOwnedPrimitiveVectorFunctionInsertion:proposeOwnedPrimitiveFunctionInsertion)(original,request),native=proposal.outputs.filter(row=>row.path===proposal.nativeRoute.rustPath);if(native.length!==1)fail('one complete fresh primitive native insertion required');modules.push({id:'module_'+hash(sourcePath),rustSource:proposal.nativeRoute.rustPath,module:proposal.nativeRoute.module,javascriptPath:sourcePath,typescriptPath:request.typescriptPath,bindings:proposal.bindings,outputs:proposal.outputs.filter(row=>row.path!==proposal.nativeRoute.rustPath),nativeProposal:native,newNativeFunctions:true,nativeInsertion:proposal.nativeInsertion});continue;
       }
 
       if(ownedPrimitiveFunctionReconciliationRequired(original,request)){
@@ -144,3 +144,6 @@ import {ownedPrimitiveFunctionRemovalRequired,proposeOwnedPrimitiveFunctionRemov
 import {proposeOwnedPrimitiveUnitAdoption,requireOwnedPrimitiveAdoptionParent} from './owned-primitive-unit-adoption.mjs';
 
 import {ownedPrimitiveFunctionReconciliationRequired,proposeOwnedPrimitiveFunctionReconciliation} from './owned-primitive-function-reconciliation.mjs';
+
+import {receivingPrimitiveVectorDefinitionsRequested} from './owned-vector-definition-routing.mjs';
+import {proposeOwnedPrimitiveVectorFunctionInsertion} from './owned-primitive-vector-function-insertion.mjs';

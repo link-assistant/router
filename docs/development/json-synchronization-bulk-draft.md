@@ -585,3 +585,11 @@ graphs, every Vec move, actual native ABI/census and full refresh stay mandatory
 The primary synchronization export includes the new closure. Six complete
 equations and independent JS/TS/native bulk/refusal cases are UNRUN. Nonempty
 extensions, Vec inputs/mutation/cross-module calls and full drafting remain OPEN.
+
+The [automatic Vec insertion routing draft](vector-insertion-routing-source-draft.md)
+connects complete actual JS/TS result eligibility to the bulk synchronizer and
+its physical unit planner. Every semantic/native ABI/census and atomic input
+fence remains in the selected independent insertion procedure. Three complete
+equations and JS/TS/mixed/physical/repeated/concurrent-source refusal cases are
+UNRUN. Unwritten result inference, nonempty/module-creation Vec lifecycles and
+all wider translation/verification requirements remain OPEN.
