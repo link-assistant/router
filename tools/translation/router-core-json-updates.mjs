@@ -394,7 +394,7 @@ export function visitRouterCoreJsonUpdateFunction(checker,item,path,entry,visit,
    const result=visit(...args),body=copyMetadata(entry.body);
    currentFunction(checker,item,receipt);if(!same(entry.body,body))fail();
    const completed={item,receipt,entry,snapshot:copyMetadata({params:entry.params,ret:entry.ret,body:entry.body})};completedFunctions.get(checker).set(name,completed);
-   if(!receipt.owns||receipt.errorLane||receipt.optionLane)return result;if(receipt.vectorLane){receipt.deferredOwnedVectorFlow=true;return result;}
+   if(receipt.owns&&hasReadonlyScalarCallCandidate(entry.body))receipt.readonlyScalarLane=true;if(!receipt.owns||receipt.errorLane||receipt.optionLane||receipt.readonlyScalarLane)return result;if(receipt.vectorLane){receipt.deferredOwnedVectorFlow=true;return result;}
    createRulePipeline([
     {phase:'language',rules:[{id:'owned-json-flow:check-whole-function-linear-state',apply:()=>{
      validateOwnedJsonFlow(checker,entry,{genuineScalar:(node,owner)=>isGenuineRouterCoreScalarCall(checker,node,owner),genuine:node=>{const proof=issued.get(node.compatibilityCore);return proof?.checker===checker&&proof.frame===receipt&&proof.id===node.id&&same(node.args,proof.args);},genuineTextMatch:node=>receipt.textMatches?.some(record=>same(node,record.body)&&same(record.syntax,record.original))===true});
@@ -423,10 +423,10 @@ export function finalizeOriginalJsonErrorFlow(checker,program,Parser,Checker,tai
   currentFunction(checker,fact.item,fact.receipt);if(!same({params:fact.entry.params,ret:fact.entry.ret,body:fact.entry.body},fact.snapshot))fail();return fact;
  };
  for(const [name,fact]of records){
-  if(!fact.receipt.errorLane&&!fact.receipt.optionLane)continue;current(name);const dependencies=new Map();
+  if(!fact.receipt.errorLane&&!fact.receipt.optionLane&&!fact.receipt.readonlyScalarLane)continue;current(name);const dependencies=new Map();
   try{createRulePipeline([
    {phase:'language',rules:[{id:'owned-json-error-flow:check-current-linear-result-and-readonly-closure',apply:()=>{
-    validateOwnedJsonFlow(checker,fact.entry,{genuineScalar:(node,owner)=>isGenuineRouterCoreScalarCall(checker,node,owner),
+    validateOwnedJsonFlow(checker,fact.entry,{readonlyScalar:(node,owner)=>{const entry=currentReadonlyScalarCallee(checker,node,owner),target=current(node.fn);dependencies.set(node.fn,{name:node.fn,...target.snapshot});return entry;},genuineVector:node=>hasCheckedRouterCoreVector(node)&&isCanonicalOwnedJsonVectorElement(checker,node.type?.element,node.span),genuineScalar:(node,owner)=>isGenuineRouterCoreScalarCall(checker,node,owner),
      genuine:(node,entry)=>{const owner=records.get(entry.fullName),proof=issued.get(node.compatibilityCore);return proof?.checker===checker&&proof.frame===owner?.receipt&&proof.id===node.id&&same(node.args,proof.args);},
      genuineTextMatch:node=>fact.receipt.textMatches?.some(record=>same(node,record.body)&&same(record.syntax,record.original))===true,
      closedOption:fact.receipt.optionLane?closedOptionSource(checker,fact,current,Parser,Checker,program):null,
@@ -665,16 +665,36 @@ export function isCanonicalOwnedJsonVectorElement(checker,type,span){
  projectionOwner(checker,type,span,false);requireOriginalPrimitiveTryFromChecker(checker);return true;
 }
 export function validateOriginalOwnedJsonVectorEntry(checker,entry){
- let cells=100000;const vector=node=>hasCheckedRouterCoreVector(node)&&isCanonicalOwnedJsonVectorElement(checker,node.type?.element,node.span);
+ let cells=100000;const scalarDependencies=[];const vector=node=>hasCheckedRouterCoreVector(node)&&isCanonicalOwnedJsonVectorElement(checker,node.type?.element,node.span);
  const visit=(node,depth=0)=>{if(!node||typeof node!=='object')return false;if(--cells<0||depth>160)throw unsupported('owned Json vector source','complete source boundary bound',entry.span);if(node.k==='array'&&vector(node))return true;for(const [key,value] of Object.entries(node))if(!['type','span','compatibilityCore','ownedVectorProof'].includes(key)){if(Array.isArray(value)){for(const child of value)if(visit(child,depth+1))return true;}else if(visit(value,depth+1))return true;}return false;};
  const fact=completedFunctions.get(checker)?.get(entry.fullName),selected=visit(entry.body);
  if(!selected&&!fact?.receipt.deferredOwnedVectorFlow)return false;
  if(!fact||fact.entry!==entry)throw unsupported('owned Json vector source','requires the completed actual original declaration',entry.span);
  currentFunction(checker,fact.item,fact.receipt);if(!same({params:entry.params,ret:entry.ret,body:entry.body},fact.snapshot))fail();
- validateOwnedJsonFlow(checker,entry,{genuineScalar:(node,owner)=>isGenuineRouterCoreScalarCall(checker,node,owner),genuineVector:vector,genuine:node=>{const proof=issued.get(node.compatibilityCore);return proof?.checker===checker&&proof.frame===fact.receipt&&proof.id===node.id&&same(node.args,proof.args);},genuineTextMatch:node=>fact.receipt.textMatches?.some(record=>same(node,record.body)&&same(record.syntax,record.original))===true});
- currentFunction(checker,fact.item,fact.receipt);if(!same({params:entry.params,ret:entry.ret,body:entry.body},fact.snapshot))fail();return true;
+ validateOwnedJsonFlow(checker,entry,{readonlyScalar:(node,owner)=>{const target=currentReadonlyScalarCallee(checker,node,owner);if(scalarDependencies.length>=256)fail();scalarDependencies.push({node,owner});return target;},genuineScalar:(node,owner)=>isGenuineRouterCoreScalarCall(checker,node,owner),genuineVector:vector,genuine:node=>{const proof=issued.get(node.compatibilityCore);return proof?.checker===checker&&proof.frame===fact.receipt&&proof.id===node.id&&same(node.args,proof.args);},genuineTextMatch:node=>fact.receipt.textMatches?.some(record=>same(node,record.body)&&same(record.syntax,record.original))===true});
+ for(const {node,owner}of scalarDependencies)currentReadonlyScalarCallee(checker,node,owner);scalarDependencies.length=0;currentFunction(checker,fact.item,fact.receipt);if(!same({params:entry.params,ret:entry.ret,body:entry.body},fact.snapshot))fail();return true;
 }
 
 import {BOUNDED_JSON_CORE_CONTRACTS,BOUNDED_JSON_CORE_SHA256,boundedJsonCoreOperation,parseBoundedJsonCoreCall} from './bounded-json-core-call-source.mjs';
 
 import {isGenuineRouterCoreScalarCall} from './router-core-scalars.mjs';
+
+// Selection only defers a potentially borrowing call to the existing complete
+// program finalizer. No raw/checked shape admits that call on its own.
+function hasReadonlyScalarCallCandidate(root){
+ let cells=100000;
+ const visit=(node,depth=0)=>{if(!node||typeof node!=='object')return false;if(--cells<0||depth>160)fail();if(node.k==='call'&&node.args?.some(argument=>argument.type?.kind==='string'&&argument.type.rustOwnership?.kind==='borrowed'&&argument.type.rustOwnership.source==='str'))return true;for(const [key,value]of Object.entries(node))if(!['type','span','compatibilityCore','sourceFunctionItem'].includes(key))for(const child of Array.isArray(value)?value:[value])if(visit(child,depth+1))return true;return false;};return visit(root);
+}
+function currentReadonlyScalarCallee(checker,node,owner){
+ const records=completedFunctions.get(checker),target=records?.get(node.fn),caller=records?.get(owner.fullName);
+ if(!target||!caller||caller.entry!==owner||checker.items.get(owner.fullName)!==owner||checker.items.get(node.fn)!==target.entry)throw unsupported('readonly scalar helper','requires complete current original caller and callee bodies',node.span);
+ for(const fact of [caller,target]){currentFunction(checker,fact.item,fact.receipt);if(!same({params:fact.entry.params,ret:fact.entry.ret,body:fact.entry.body},fact.snapshot))fail();}
+ const row=target.entry,role=(type,parameter=false)=>{
+  if(!type||type.rustReference||type.patternOwnershipRefusal||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)return null;
+  if(type.kind==='bool'&&!type.rustOwnership)return 'bool';const primitive=primitiveBitwiseType(type.rustPrimitiveName);if(type.kind==='fixed'&&!type.rustOwnership&&primitive&&type.bits===primitive.bits&&type.signed===primitive.signed)return primitive.name;
+  return parameter&&type.kind==='string'&&type.rustOwnership?.kind==='borrowed'&&type.rustOwnership.source==='str'?'str':null;
+ };
+ if(row.k!=='fn'||row.async||row.params?.length!==node.args.length||!role(row.ret)||!sameType(row.ret,node.type)||row.params.some((param,index)=>!role(param.type,true)||role(param.type,true)!==role(node.args[index].type,true)))throw unsupported('readonly scalar helper','requires actual primitive return and exact by-value scalar/shared-text arguments',node.span);
+ return row;
+}
+import {primitiveBitwiseType} from './primitive-bitwise-types.mjs';

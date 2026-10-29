@@ -937,3 +937,10 @@ joins in [json-wide-domains-source-draft.md](json-wide-domains-source-draft.md).
 ALL UNRUN. Standard optional reader payloads keep their actual domains; full
 drafting, effects/ownership/aggregate expansion and complete qualification remain
 OPEN. No coverage, parity, freshness or performance result is claimed.
+
+Live JSON-derived borrowed text now has a source draft through complete readonly
+primitive helper bodies, private caller/callee source receipts and fresh closing
+dependency joins in
+[readonly-text-helpers-source-draft.md](readonly-text-helpers-source-draft.md).
+ALL UNRUN. Guarded payload/loan roots remain mandatory. Cross-module/effect/
+ownership/aggregate expansion and full drafting/qualification remain OPEN.

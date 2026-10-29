@@ -164,6 +164,8 @@ test('complete committed export carries shared adoption implementations original
  assert.ok(paths.has('tools/translation/prepare-native-total-operators-sources.mjs'));
  assert.ok(paths.has('tools/translation/prepare-native-total-methods-sources.mjs'));
  assert.ok(paths.has('tools/translation/prepare-json-wide-domains-sources.mjs'));
+ assert.ok(paths.has('tools/translation/prepare-readonly-text-helpers-sources.mjs'));
+
 
 
  assert.ok(paths.has('tools/translation/js-to-rust/owned-native-total-operators.mjs'));

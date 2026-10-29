@@ -38,7 +38,7 @@ export function describeOwnedJsonDifference(actual,expected,{propertyOrder=false
  };
  return visit(actual,expected,'',0);
 }
-export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,genuineVector=null,genuineScalar=null,closedErrors=null,closedOption=null}) {
+export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,genuineVector=null,genuineScalar=null,readonlyScalar=null,closedErrors=null,closedOption=null}) {
  const refuse=(detail,node,comparison=null)=>{const diagnostic=comparison??closedErrors?.diagnostic?.(node);throw unsupported('owned JSON flow',detail+(diagnostic?' [comparison '+JSON.stringify(diagnostic)+']':''),node?.span??entry.span);};
  const standardContext=closedErrors??closedOption;
  let cells=100000,callCount=0,selectedOptionTypes=null,optionalParseBoundary=null,ownedStateVectorBoundary=null;
@@ -488,6 +488,12 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,ge
     const target=closedErrors.callee(node,state.entry);if(!target||target.params.length!==node.args.length||++callCount>128||state.callPath.length>=32||state.callPath.includes(target.fullName))refuse('readonly helper needs a fresh bounded acyclic original body',node);
     const arguments_=[];for(const [at,arg]of node.args.entries()){const wanted=target.params[at].type,part=domain(arg.type,arg),expected=domain(wanted,arg);if(!['copy','borrow','loan-option'].includes(part)||part!==expected||!sameType(arg.type,wanted))refuse('helper arguments may not transfer owned or mutable storage',node);checker.expectedOwnership(arg.type,wanted,target.modulePath,node.span);checker.expectedPrimitiveIdentity(arg.type,wanted,target.modulePath,node.span);arguments_.push(read(arg,'borrow'));}
     const child=createState(target,arguments_,new Set(arguments_.flatMap(value=>[...roots(value)])),[...state.callPath,target.fullName]),previousSelected=selectedOptionTypes;let value;selectedOptionTypes=null;try{value=visit(target.body,child,'move',depth+1);}finally{selectedOptionTypes=previousSelected;}for(const returned of child.functionReturns)value=union(value,returned);returnRoots(value,node,child);closedErrors.callee(node,state.entry);ensureRoots(value,state,node);return value;
+   }
+   if(typeof readonlyScalar==='function'&&node.args.some(argument=>argument.type?.kind==='string'&&argument.type.rustOwnership?.kind==='borrowed'&&argument.type.rustOwnership.source==='str')){
+    const target=readonlyScalar(node,state.entry);if(!target||kind!=='copy'||++callCount>128||state.callPath.length>=32||state.callPath.includes(target.fullName))refuse('readonly scalar helper requires a complete fresh bounded source body',node);
+    const arguments_=[];for(let index=0;index<node.args.length;index++){const argument=node.args[index],wanted=target.params[index].type;if(domain(argument.type,argument)!=='copy'||domain(wanted,argument)!=='copy'||!sameType(argument.type,wanted))refuse('readonly scalar helper arguments require identical primitive or borrowed-text domains',argument);checker.expectedOwnership(argument.type,wanted,target.modulePath,node.span);checker.expectedPrimitiveIdentity(argument.type,wanted,target.modulePath,node.span);const value=read(argument,'borrow');ensureRoots(value,state,argument);arguments_.push(value);}
+    const child=createState(target,arguments_,new Set(arguments_.flatMap(value=>[...roots(value)])),[...state.callPath,target.fullName]);let value=visit(target.body,child,'move',depth+1);for(const returned of child.functionReturns)value=union(value,returned);
+    if(value.loans.size)refuse('primitive scalar helper result cannot retain a source loan',node);returnRoots(value,node,child);readonlyScalar(node,state.entry);ensureRoots(value,state,node);return empty();
    }
    const target=checker.items.get(node.fn);
    if(!target?.params||target.params.length!==node.args.length||linear(kind)||kind==='borrow'||kind==='loan-option')refuse('source call needs a separate JSON transfer/return proof',node);
