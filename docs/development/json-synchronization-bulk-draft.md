@@ -800,3 +800,10 @@ Option type checks, receiver loan flow, emission frames and paired runtime
 assets. Seven full equations and independent all-domain receiving/refusal
 sources are UNRUN. Physical root/history activation, owned/mutable receiver
 families, actual application adoption and full synchronization remain OPEN.
+
+The [primitive sequence root/provenance source draft](primitive-sequence-root-activation-source-draft.md)
+adds the actual public root edge, a fully pinned reversible original-root plan,
+explicit known successor composition and a 22-equation/17-path default native
+history preserving the complete 21-row archive. Eleven full equations and
+independent constructor/history/export cases are UNRUN. Root source presence
+adds no measured coverage; full receiving/owner/parity qualification remains OPEN.
