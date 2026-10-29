@@ -119,6 +119,7 @@ function requestedJsonExpression(node,env,events,guard,borrow=false,depth=0){
 export function requestedNativeJsonVectorTree(item){
  const guard=jsonControlFrame(item),env=new Map(item.params.map((param,index)=>[param.name,['parameter',index]])),events=[];
  for(let index=0;index<item.params.length;index++)if(['json','json-ref'].includes(item.params[index].type))jsonEvent(events,'validate',[['parameter',index]]);
+ const guarded=observeRequestedGuardedPrimitiveBody(item,{read:(node,names,events,depth)=>requestedJsonExpression(node,names,events,guard,false,depth),guard,names:env,events});if(guarded!==null)return guarded;
  function body(rows,names,effects,depth){
   guard.charge(depth);if(!Array.isArray(rows)||!rows.length)jsonFail('complete terminating receiving body required');
   for(let at=0;at<rows.length;at++){
@@ -174,7 +175,7 @@ export function actualNativeJsonVectorTree(own,item,lowered){
   if(node?.k==='if'){const condition=expression(node.cond,names,events,depth+1),yes=new Set(activeSomeFacts),no=new Set(activeSomeFacts);if(condition[0]==='some'){yes.add(optionKey(condition[1]));no.delete(optionKey(condition[1]));}else if(condition[0]==='not'&&condition[1]?.[0]==='some'){yes.delete(optionKey(condition[1][1]));no.add(optionKey(condition[1][1]));}return [events,['if',condition,body(node.then,new Map(names),[...events],depth+1,yes),body(node.else,new Map(names),[...events],depth+1,no)]];}
   guard.leaf();if(item.vectorOrigin.kind==='json-value'&&(!sameType(node?.type,own.ret)||node.type.rustReference||node.type.rustOwnership||node.type.patternOwnershipRefusal||node.type.rustGenericIdentityUnresolved||node.type.rustBorrowingUnresolved))jsonFail('actual canonical owned JSON scalar return required');if(['json-scalar','primitive-scalar'].includes(item.vectorOrigin.kind)&&!fieldType(node?.type,item.returns))jsonFail('actual original primitive return ABI differs');const result=expression(node,names,events,depth+1);if(item.vectorOrigin.kind==='json-vector'&&result?.[0]!=='vector')jsonFail('complete native owned vector return required');return [events,result];
  }finally{activeSomeFacts=prior;}}
- try{return body(own.body,env,[],0);}finally{sourceCallTargets.clear();}
+ try{const guarded=observeActualGuardedPrimitiveBody(own,item,{read:expression,guard,names:env,sourceCall:node=>nativeScalarSourceCallTarget(node,sourceCallTargets,lowered)!==null});return guarded??body(own.body,env,[],0);}finally{sourceCallTargets.clear();}
 }
 export function emitNativeJsonVectorControlBody(item,input=[item]){
  const wanted=checkOwnedCoreItem(item),program=checkOwnedCoreProgram(input),selected=program.filter(row=>row.source.path===wanted.source.path&&row.javascript===wanted.javascript);if(selected.length!==1||ownedCoreContext(selected[0])!==ownedCoreContext(wanted)||JSON.stringify(requestedNativeJsonVectorTree(selected[0]))!==JSON.stringify(requestedNativeJsonVectorTree(wanted)))jsonFail('selected native body requires its complete genuine source program');return nativeJsonFunctionSourceBody(emitOwnedCoreProgram(program,'rust',{nativeJsonSource:true,selectedFunction:wanted.javascript}));
@@ -229,3 +230,5 @@ function nativeVectorAlias(value,locals,guard,depth){
 }
 
 import {requestedNativeFailureOperator,actualNativeFailureOperator} from './owned-native-closed-operators.mjs';
+
+import {observeRequestedGuardedPrimitiveBody,observeActualGuardedPrimitiveBody} from './owned-guarded-primitive-failures.mjs';

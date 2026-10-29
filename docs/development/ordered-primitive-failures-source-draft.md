@@ -42,3 +42,8 @@ The preparer retains seventeen complete original-source equations with exact
 inverses and language then repository phases. It joins the current source-copy
 history after the fresh Option expect adapter. No parser, translator, preparer,
 regeneration, runtime, test or Rust tool was executed locally.
+
+The subsequent [guarded continuation draft](guarded-primitive-failures-source-draft.md)
+now supplies the separate scalar ternary/short-circuit source rule described
+above. Its complete cases are also UNRUN; broader guarded transfers and full
+qualification remain OPEN.

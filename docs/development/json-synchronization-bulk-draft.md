@@ -472,3 +472,15 @@ runtime, loan, meta/CST and fresh native comparisons remain required. Complete
 independent paired, insertion/helper/bulk, refusal and Rust oracle cases are
 UNRUN. Guarded expression arms, division/remainder, negation, shifts, constants
 and full application closure remain OPEN; no coverage increase is measured.
+
+Guarded scalar expressions now have a bounded
+[continuation source draft](guarded-primitive-failures-source-draft.md). Both
+receiving and fresh native observations retain earlier operands, selected-arm
+failure/helper events and later immutable continuations as complete branch
+models. Synthetic model bindings supply no semantic authority. Shared native
+body consumers and paired projection retain the original private source,
+CST/meta, signature, loan, closure and fixed-point checks. Complete all-width
+paired, nested ordering, native insertion/helper/bulk, bound-refusal and CI-only
+Rust oracle cases remain UNRUN. Broader data/borrowed branches, ordered-match
+expressions, division/remainder, negation, shifts, constants and whole application
+translation remain OPEN.
