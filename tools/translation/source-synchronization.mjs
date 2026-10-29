@@ -227,3 +227,6 @@ export {proposeOwnedNativeBulkModuleRefresh} from './js-to-rust/owned-native-bul
 export {ownedBulkRuntimeSources} from './js-to-rust/owned-vector-candidate-source.mjs';
 
 export {proposeOwnedPrimitiveVectorFunctionInsertion} from './js-to-rust/owned-primitive-vector-function-insertion.mjs';
+
+export {proposeOwnedPrimitiveVectorFunctionExtension,proposeOwnedPrimitiveVectorFunctionRemoval,proposeOwnedPrimitiveVectorFunctionReconciliation,prepareOwnedPrimitiveVectorExistingHelperSource} from './js-to-rust/owned-primitive-vector-definition-lifecycle.mjs';
+export {proposeOwnedPrimitiveVectorUnitAdoption} from './js-to-rust/owned-primitive-vector-unit-adoption.mjs';

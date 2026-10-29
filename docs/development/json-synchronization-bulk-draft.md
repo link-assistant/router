@@ -600,3 +600,11 @@ empty arrays, exact integer literals, typed anchors, aliases, helper returns and
 branch joins. Bulk routing detects actual array bodies. Four complete source
 equations and independent JS/TS/native/CI-only Rust cases are UNRUN. Ambiguous
 widths remain refusals; nonempty Vec lifecycle and the whole task stay OPEN.
+
+The [finite vector lifecycle draft](primitive-vector-definition-lifecycle-source-draft.md)
+copies complete nonempty helper extension/removal/reconciliation and native unit
+adoption, selects them in bulk source routing and exports their closures. Fresh
+actual helper bodies, native ABI/census, source inverses and receiving fences stay
+mandatory. Five complete equations and JS/TS/bulk/all-width/refusal/CI-only Rust
+case sources are UNRUN. Full drafting, Vec input/mutation/iteration/cross-module
+behavior, native owner closure and every verification obligation remain OPEN.
