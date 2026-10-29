@@ -616,3 +616,10 @@ observers select the additive bounded checker. Ten complete equations and paired
 all-width, source-refusal and CI-only Rust cases are UNRUN. Scalar functions with
 Vec locals, input/mutation/iteration/cross-module support and the whole task stay
 OPEN, as does all verification.
+
+The [exact primitive literal draft](exact-primitive-literals-source-draft.md)
+copies the bounded constructor for genuine fixed domains, supports 128-bit binary
+spellings and selects it across eight source families. Original/default literal
+APIs retain their exact prior bounds. Ten complete equations and all-width radix,
+receiving/refusal and CI-only Rust oracle sources are UNRUN. Full drafting and
+all broader translation/verification obligations remain OPEN.

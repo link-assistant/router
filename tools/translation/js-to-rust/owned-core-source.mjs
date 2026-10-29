@@ -753,4 +753,4 @@ import {ownedNativeIntegerDomain,joinOwnedNativeScalarOperands} from './owned-na
 
 import {readOwnedNativeBitwiseExpression,createOwnedNativeBitwiseHistory} from './owned-native-bitwise-source.mjs';
 
-import {ownedIntegerLiteral} from './owned-numeric-literals.mjs';
+import {ownedSourceIntegerLiteral as ownedIntegerLiteral} from './owned-numeric-literals.mjs';

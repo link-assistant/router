@@ -2,7 +2,7 @@
 // No shared cache or public request type can create a pending variable here.
 // These DATA equations never issue source, namespace or compiler authority.
 import {PRIMITIVE_BITWISE_TYPES,primitiveBitwiseType} from '../primitive-bitwise-types.mjs';
-import {ownedIntegerLiteral} from './owned-numeric-literals.mjs';
+import {ownedSourceIntegerLiteral as ownedIntegerLiteral} from './owned-numeric-literals.mjs';
 import {primitiveVectorResultRole} from './owned-source-value-calls.mjs';
 const fail=message=>{throw new TypeError('Primitive Vec inference: '+message);};
 const domains=['bool',...PRIMITIVE_BITWISE_TYPES.map(row=>row.name)];

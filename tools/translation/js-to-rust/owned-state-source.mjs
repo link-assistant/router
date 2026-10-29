@@ -22,7 +22,7 @@ import {captureOriginalExternalTraitPackage,originalExternalTraitPackageInputs} 
 import {transportConcreteSyntaxSource} from '../concrete-syntax-meta.mjs';
 import {ownedJsonReaderOperation,ownedJsonBorrowed} from './owned-json-source.mjs';
 import {ownedIterationOperation as ownedCollectionOperation,ownedIterationOnlyOperation,ownedCollectionOptionalPayload as ownedJsonOptionalPayload} from './owned-iteration-contracts.mjs';
-import {ownedIntegerLiteral,narrowOwnedNumericLiteral} from './owned-numeric-literals.mjs';
+import {ownedSourceIntegerLiteral as ownedIntegerLiteral,narrowOwnedNumericLiteral} from './owned-numeric-literals.mjs';
 import {ownedStateOperation,ownedStateCompatible,ownedStateWrittenType,requireOwnedStateSources as requireOwnedCollectionLeaf} from './owned-state-contracts.mjs';
 import {ownedJsonFieldOperation,requireOwnedJsonFieldSources} from './owned-json-fields.mjs';
 import {pairedCollectionCallback} from './owned-collections-paired.mjs';

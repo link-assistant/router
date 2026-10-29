@@ -660,7 +660,7 @@ import {selectOriginalBoundedJsonCore} from '../bounded-json-core-call-source.mj
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 
 import {ownedVectorJsonFieldOperation,requireOwnedVectorJsonFieldSources} from './owned-vector-json-fields.mjs';
-import {ownedIntegerLiteral,narrowOwnedNumericLiteral} from './owned-numeric-literals.mjs';
+import {ownedSourceIntegerLiteral as ownedIntegerLiteral,narrowOwnedNumericLiteral} from './owned-numeric-literals.mjs';
 
 import {ownedVectorTextScalarOperation} from './owned-vector-text-scalars.mjs';
 
