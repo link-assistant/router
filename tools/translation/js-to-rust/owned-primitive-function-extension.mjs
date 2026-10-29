@@ -167,3 +167,10 @@ import {createHash} from 'node:crypto';
 import {proposeOwnedVectorNativeSynchronization} from './owned-vector-native-synchronization.mjs';
 import {actualNativeJsonVectorTree,requestedNativeJsonVectorTree} from './owned-vector-native-json-control.mjs';
 import {originalPrimitiveScalarDomain} from './owned-vector-json-native.mjs';
+
+// Syntactic dispatch only: no source is transformed and no function admitted.
+// The selected path still performs the whole original CST/private/meta checks.
+export function ownedPrimitiveFunctionExtensionRequired(data,options){
+ const {request,authority,bindings}=extensionRequest(data,options),ts=ownershipCompiler(),file=ts.createSourceFile(authority==='javascript'?request.sourcePath:request.typescriptPath,request[authority],ts.ScriptTarget.Latest,true,authority==='javascript'?ts.ScriptKind.JS:ts.ScriptKind.TS);if(file.parseDiagnostics.length)extensionFail('actual complete receiving syntax required');const known=new Set(bindings.map(row=>row.javascriptName));let functions=0,added=false;
+ for(const row of file.statements)if(ts.isFunctionDeclaration(row)){if(!row.name||++functions>4096)extensionFail('bounded named source function census required');if(!known.has(row.name.text))added=true;}known.clear();return added;
+}

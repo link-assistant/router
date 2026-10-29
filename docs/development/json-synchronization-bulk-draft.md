@@ -365,3 +365,10 @@ source API draft in
 [primitive-function-extension-source-draft.md](primitive-function-extension-source-draft.md).
 ALL UNRUN. Source helper additions, deletion, wider families, physical integration
 and full drafting/qualification remain OPEN.
+
+Nonempty receiving primitive additions now have composed/physical synchronization
+source drafts in
+[primitive-bulk-extension-source-draft.md](primitive-bulk-extension-source-draft.md).
+ALL UNRUN. This supersedes the nonempty-unit physical addition gap for its stated
+primitive family; deletion, helper additions, broader source and complete
+drafting/qualification remain OPEN.
