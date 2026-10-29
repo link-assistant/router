@@ -308,3 +308,9 @@ and qualified total operator/method literal substitutions now have source drafts
 in [native-constant-values-source-draft.md](native-constant-values-source-draft.md).
 ALL UNRUN. Runtime arithmetic/effects, unsupported inactive constant branches,
 broader domains and complete drafting/qualification remain OPEN.
+
+Actual native branches where both arms fall through now have bounded shared
+continuation source substitutions in
+[native-fallthrough-control-source-draft.md](native-fallthrough-control-source-draft.md).
+ALL UNRUN. This explicitly supersedes the earlier blanket falling-branch refusal;
+arbitrary effects, mutation, loops and full drafting/qualification remain OPEN.

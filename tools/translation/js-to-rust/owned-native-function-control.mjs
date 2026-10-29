@@ -76,7 +76,7 @@ export function observeNativeFunctionControl(declaration){
   charge(depth);if(!node||typeof node!=='object')fail('complete original native control node required');
   if(node.k==='routerReturn'){if(!unit(node.body)||!sameType(node.value?.type,declaration.ret))fail('explicit function return requires the actual result and neutral unreachable tail');return node.value;}
   if(node.k==='routerIf'){
-   const yesTerminal=terminal(node.then,depth+1),noTerminal=terminal(node.else,depth+1);if(!yesTerminal&&!noTerminal)fail('statement if requires a genuine terminating branch');
+   const yesTerminal=terminal(node.then,depth+1),noTerminal=terminal(node.else,depth+1);
    if(yesTerminal&&noTerminal){if(!unit(node.body))fail('both returning branches require a neutral unreachable continuation');return conditional(node,lower(node.then,null,depth+1),lower(node.else,null,depth+1));}
    const continuation=lower(node.body,next,depth+1);return conditional(node,lower(node.then,continuation,depth+1),lower(node.else,continuation,depth+1));
   }
