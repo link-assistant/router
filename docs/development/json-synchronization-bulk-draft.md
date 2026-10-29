@@ -645,3 +645,10 @@ public validation remains in the original actual native receiving profile. Seven
 complete equations and JS/TS/Unicode/lifetime/refusal/CI-only Rust sources are
 UNRUN. Returned text/aggregate/cross-module/native-owner and full-task obligations
 remain OPEN, together with every verification requirement.
+
+The [immutable literal alias draft](vector-literal-aliases-source-draft.md)
+uses only actual unqualified immutable bindings in the private source traversal
+for typed operation/vector/helper/return uses. Explicit local widths remain
+fixed; eager checked initializers remain evaluated. Two complete source equations
+and all-width/JS/refusal/ordering/CI-only Rust case sources are UNRUN. Full
+requirements, native owner closure, wider behavior and all qualification stay OPEN.
