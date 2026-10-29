@@ -183,3 +183,11 @@ fresh source/dependency closing fences and no retained cross-operation state in
 ALL UNRUN. Independent receiving/meta checks and fresh proposed-native checks
 remain required. Timing, memory, receiving qualification and all broader source
 requirements remain OPEN; counters are diagnostic DATA, never admission evidence.
+
+Per-function native body emission now drafts complete program/closure/context
+validation before selecting one JSON/scalar function, including modules with
+unrelated primitive vectors, in
+[selected-native-body-source-draft.md](selected-native-body-source-draft.md).
+ALL UNRUN. Missing callees and unselected mixed contexts remain refused. Broader
+source families and complete receiving/resource/platform/CI qualification remain
+OPEN; no runtime parity or executable coverage is claimed.

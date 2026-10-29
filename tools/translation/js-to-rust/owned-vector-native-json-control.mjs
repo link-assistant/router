@@ -175,13 +175,13 @@ export function actualNativeJsonVectorTree(own,item,lowered){
  }finally{activeSomeFacts=prior;}}
  try{return body(own.body,env,[],0);}finally{sourceCallTargets.clear();}
 }
-export function emitNativeJsonVectorControlBody(item){
- requestedNativeJsonVectorTree(item);const source=emitOwnedCoreProgram([item],'rust',{nativeJsonSource:true}),tokens=rustTokens(source).filter(token=>token.type!=='comment');const fn=tokens.findIndex(token=>token.text==='fn'),start=tokens.findIndex((token,index)=>index>fn&&token.text==='{'),end=tokens.at(-1);if(fn<0||start<0||end?.text!=='}')jsonFail('complete emitted native JSON function body required');return source.slice(tokens[start].end,end.start).trimEnd();
+export function emitNativeJsonVectorControlBody(item,input=[item]){
+ const wanted=checkOwnedCoreItem(item),program=checkOwnedCoreProgram(input),selected=program.filter(row=>row.source.path===wanted.source.path&&row.javascript===wanted.javascript);if(selected.length!==1||ownedCoreContext(selected[0])!==ownedCoreContext(wanted)||JSON.stringify(requestedNativeJsonVectorTree(selected[0]))!==JSON.stringify(requestedNativeJsonVectorTree(wanted)))jsonFail('selected native body requires its complete genuine source program');const source=emitOwnedCoreProgram(program,'rust',{nativeJsonSource:true,selectedFunction:wanted.javascript}),tokens=rustTokens(source).filter(token=>token.type!=='comment');const fn=tokens.findIndex(token=>token.text==='fn'),start=tokens.findIndex((token,index)=>index>fn&&token.text==='{'),end=tokens.at(-1);if(fn<0||start<0||end?.text!=='}')jsonFail('complete emitted native JSON function body required');return source.slice(tokens[start].end,end.start).trimEnd();
 }
 import {originalJsonVectorDomain,originalJsonOwnedValueDomain,originalJsonScalarDomain,originalPrimitiveScalarDomain,originalJsonVectorOptionPayload} from './owned-vector-json-native.mjs';
 import {BOUNDED_JSON_CORE_SHA256} from '../bounded-json-core-source-data.mjs';
 import {sameType} from '../checked-types.mjs';
-import {emitOwnedCoreProgram} from './owned-vector-candidate-operations.mjs';
+import {emitOwnedCoreProgram,checkOwnedCoreItem,checkOwnedCoreProgram,ownedCoreContext} from './owned-vector-candidate-operations.mjs';
 import {rustTokens} from '../rust-structure.mjs';
 
 import {boundedJsonCoreOperation} from '../bounded-json-core-call-source.mjs';
