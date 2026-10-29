@@ -175,6 +175,7 @@ test('complete committed export carries shared adoption implementations original
  assert.ok(paths.has('tools/translation/prepare-unit-guard-continuation-sources.mjs'));
  assert.ok(paths.has('tools/translation/prepare-native-guard-continuation-sources.mjs'));
  assert.ok(paths.has('tools/translation/prepare-native-function-control-sources.mjs'));
+ assert.ok(paths.has('tools/translation/prepare-primitive-vector-guards-sources.mjs'));
  assert.ok(paths.has('tools/translation/js-to-rust/owned-native-function-control.mjs'));
 
 

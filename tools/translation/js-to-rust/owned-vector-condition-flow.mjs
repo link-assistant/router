@@ -19,12 +19,16 @@ export function readOwnedVectorConditionFlow(options){
   if(ts.isBinaryExpression(node)&&[ts.SyntaxKind.AmpersandAmpersandToken,ts.SyntaxKind.BarBarToken].includes(node.operatorToken.kind))return {kind:'binary',op:node.operatorToken.kind===ts.SyntaxKind.AmpersandAmpersandToken?'&&':'||',left:condition(node.left,aliases,active,depth+1),right:condition(node.right,aliases,active,depth+1),type:'bool',root:null};
   fail('only actual bool source values and short-circuit logical conditions are qualified');
  }
+ function prefixAliases(preceding){const aliases=new Map();
+  for(const row of preceding){if(!ts.isVariableStatement(row)||row.modifiers?.length||row.declarationList.flags!==ts.NodeFlags.Const||row.declarationList.declarations.length!==1)fail('only immutable scalar prefixes before branches are qualified');const declaration=row.declarationList.declarations[0];if(!ts.isIdentifier(declaration.name)||!declaration.initializer)fail('plain scalar prefix required');const symbol=checker.getSymbolAtLocation(declaration.name);if(!symbol||aliases.has(symbol))fail('unique actual prefix symbol required');aliases.set(symbol,declaration);}return aliases;
+ }
  function statements(rows,prefix=[],depth=0){
   charge();if(depth>8||prefix.length+rows.length>65||!rows.length)fail('bounded complete branch source required');
+  const guardAt=rows.findIndex(row=>ts.isIfStatement(row)&&!row.elseStatement);
+  if(guardAt>=0){const guard=rows[guardAt];if(!ts.isBlock(guard.thenStatement)||guardAt===rows.length-1)fail('actual guard block and complete vector continuation required');const preceding=[...prefix,...rows.slice(0,guardAt)],aliases=prefixAliases(preceding);return [{kind:'if',cond:condition(guard.expression,aliases),then:statements(guard.thenStatement.statements,preceding,depth+1),else:statements(rows.slice(guardAt+1),preceding,depth+1)}];}
   const last=rows[rows.length-1];
   if(!ts.isIfStatement(last)){if(++leaves>64)fail('branch leaf bound');const items=readOwnedVectorScalarConstruction({...options,statements:[...prefix,...rows],readLiteral});work+=items.length+prefix.length+rows.length;if(work>20000)fail('complete branch work bound');return [{kind:'return',value:makeReturn(items)}];}
-  const preceding=[...prefix,...rows.slice(0,-1)],aliases=new Map();
-  for(const row of preceding){if(!ts.isVariableStatement(row)||row.modifiers?.length||row.declarationList.flags!==ts.NodeFlags.Const||row.declarationList.declarations.length!==1)fail('only immutable scalar prefixes before branches are qualified');const declaration=row.declarationList.declarations[0];if(!ts.isIdentifier(declaration.name)||!declaration.initializer)fail('plain scalar prefix required');const symbol=checker.getSymbolAtLocation(declaration.name);if(!symbol||aliases.has(symbol))fail('unique actual prefix symbol required');aliases.set(symbol,declaration);}
+  const preceding=[...prefix,...rows.slice(0,-1)],aliases=prefixAliases(preceding);
   if(!ts.isBlock(last.thenStatement)||!last.elseStatement||!ts.isBlock(last.elseStatement)&&!ts.isIfStatement(last.elseStatement))fail('complete block branches and final else required');
   return [{kind:'if',cond:condition(last.expression,aliases),then:statements(last.thenStatement.statements,preceding,depth+1),else:statements(ts.isBlock(last.elseStatement)?last.elseStatement.statements:[last.elseStatement],preceding,depth+1)}];
  }

@@ -295,3 +295,10 @@ have bounded observation substitutions in
 ALL UNRUN. Reconstructed nodes are DATA, never original syntax at a semantic issuer.
 Nonterminating branches, unproved discards, dead tails and broader control/effect/
 ownership/module requirements plus full drafting/qualification remain OPEN.
+
+Primitive vector original-AST guard continuations and bounded native immutable
+aliases now have source drafts in
+[primitive-vector-guards-source-draft.md](primitive-vector-guards-source-draft.md).
+ALL UNRUN. All sixteen existing element families keep their original checks;
+broader operations, effects, module lifecycle and full drafting/qualification
+remain OPEN. No observation DATA grants new native semantic authority.

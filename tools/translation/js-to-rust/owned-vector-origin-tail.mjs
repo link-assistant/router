@@ -2,6 +2,7 @@
 // DATA traversal. It does not issue source/type/namespace/execution authority.
 import {sameType} from '../checked-types.mjs';
 export function checkedOwnedVectorTail(declaration,checkScalar){
+ declaration=observeNativeFunctionControl(declaration);
  let work=0,bindings=0;const tails=[];
  function visit(node,names,depth){
   if(++work>4096||depth>64)throw new TypeError('Owned reverse vector origin: bounded checked control required');
@@ -18,3 +19,5 @@ export function checkedOwnedVectorTail(declaration,checkScalar){
  }
  visit(declaration.body,new Set(),0);return tails[0];
 }
+
+import {observeNativeFunctionControl} from './owned-native-function-control.mjs';

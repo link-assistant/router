@@ -16,12 +16,12 @@ function requestedCondition(node,guard,depth=0){
  if(node.kind==='binary'&&['&&','||'].includes(node.op))return [node.op==='&&'?'and':'or',requestedCondition(node.left,guard,depth+1),requestedCondition(node.right,guard,depth+1)];
  fail('only closed original bool conditions are drafted');
 }
-function actualCondition(node,guard,depth=0){
- guard.charge(depth);if(node?.type?.kind!=='bool'||node.type.rustReference||node.type.rustGenericIdentityUnresolved)fail('actual native bool condition required');
+function actualCondition(node,guard,depth=0,locals=new Map()){
+ node=resolveNativeVectorLocal(node,locals,guard,depth);guard.charge(depth);if(node?.type?.kind!=='bool'||node.type.rustReference||node.type.rustGenericIdentityUnresolved)fail('actual native bool condition required');
  if(node.k==='lit'&&typeof node.value==='boolean')return ['bool',node.value];
  if(node.k==='var'&&guard.boolean(node.name))return ['parameter',node.name];
- if(node.k==='unary'&&node.op==='not')return ['not',actualCondition(node.arg,guard,depth+1)];
- if(node.k==='binary'&&['and','or'].includes(node.op))return [node.op,actualCondition(node.left,guard,depth+1),actualCondition(node.right,guard,depth+1)];
+ if(node.k==='unary'&&node.op==='not')return ['not',actualCondition(node.arg,guard,depth+1,locals)];
+ if(node.k==='binary'&&['and','or'].includes(node.op))return [node.op,actualCondition(node.left,guard,depth+1,locals),actualCondition(node.right,guard,depth+1,locals)];
  fail('fresh actual condition differs from the closed bool projection');
 }
 export function requestedOriginalPrimitiveVectorTree(item){
@@ -35,11 +35,11 @@ export function requestedOriginalPrimitiveVectorTree(item){
  return body(item.body,0);
 }
 export function actualOriginalPrimitiveVectorTree(own,item){
- const guard=frame(item);if(own?.k!=='fn'||own.async||own.params.length!==item.params.length||own.ret?.kind!=='array'||own.ret.rustOwnership?.kind!=='owned'||own.ret.rustOwnership.source!=='Vec'||domain(own.ret.element)!==item.vectorOrigin.element.name||own.params.some((param,index)=>param.name!==item.params[index].rust||domain(param.type)!==item.params[index].type))fail('fresh actual native signature differs');
- function body(node,depth){
-  guard.charge(depth);if(node?.k==='if')return ['if',actualCondition(node.cond,guard),body(node.then,depth+1),body(node.else,depth+1)];
+ const guard=frame(item);if(own?.k!=='fn'||own.async||own.params.length!==item.params.length||own.ret?.kind!=='array'||own.ret.rustOwnership?.kind!=='owned'||own.ret.rustOwnership.source!=='Vec'||domain(own.ret.element)!==item.vectorOrigin.element.name||own.params.some((param,index)=>param.name!==item.params[index].rust||domain(param.type)!==item.params[index].type))fail('fresh actual native signature differs');own=observeNativeFunctionControl(own);
+ function body(node,depth,locals=new Map()){
+  guard.charge(depth);while(node?.k==='let'){if(node.mutable||guard.parameter(node.name)||locals.has(node.name)||locals.size>=64)fail('bounded distinct immutable native vector prefixes required');nativeVectorAlias(node.value,locals,guard,depth+1);locals.set(node.name,node.value);node=node.body;}if(node?.k==='if')return ['if',actualCondition(node.cond,guard,depth+1,locals),body(node.then,depth+1,new Map(locals)),body(node.else,depth+1,new Map(locals))];
   if(node?.k!=='array'||node.items.length>4096||node.compatibilityCore?.id!=='router-core-vector-list-v1')fail('fresh qualified owned vector return required');guard.leaf(depth);
-  return ['vector',node.items.map(value=>{guard.charge(depth);if(value.k==='var'&&guard.parameter(value.name))return ['parameter',value.name];if(value.k==='toString'&&value.sourceOwnershipOperation?.profile==='checked-standard-string-ownership-v1'&&value.sourceOwnershipOperation.operation==='to_owned'&&value.sourceOwnershipOperation.qualifiedPath==='::std::borrow::ToOwned::to_owned'&&originalOwnedVectorText(value.type)){const arg=value.arg;if(arg?.k==='var'&&item.params.some(param=>param.rust===arg.name&&param.type==='text-owned'))return ['parameter',arg.name];if(arg?.k==='lit'&&arg.type?.kind==='string')return ['text',ownedVectorTextValue({kind:'text',value:arg.value})];fail('actual original standard String copy operand differs');}if(value.k==='lit'&&value.type?.kind==='bool'&&typeof value.value==='boolean')return ['bool',value.value];if(value.k==='lit'&&value.type?.kind==='float'&&!value.type.rustReference&&!value.type.rustGenericIdentityUnresolved&&!value.type.rustBorrowingUnresolved){const item={kind:'float',value:value.value};evaluateOwnedVectorF64(item);return ['float',item.value];}if(value.k==='lit'&&value.type?.kind==='string'&&!value.type.rustReference)return ['text',ownedVectorTextValue({kind:'text',value:value.value})];if(value.k==='lit'&&value.type?.kind==='fixed'&&(typeof value.value==='string'||typeof value.value==='bigint')){let integer;try{integer=BigInt(value.value).toString();}catch{fail('actual original native integer literal differs');}return ['integer',integer];}fail('fresh original vector element differs');})];
+  return ['vector',node.items.map(value=>{value=resolveNativeVectorLocal(value,locals,guard,depth+1);guard.charge(depth);if(value.k==='var'&&guard.parameter(value.name))return ['parameter',value.name];if(value.k==='toString'&&value.sourceOwnershipOperation?.profile==='checked-standard-string-ownership-v1'&&value.sourceOwnershipOperation.operation==='to_owned'&&value.sourceOwnershipOperation.qualifiedPath==='::std::borrow::ToOwned::to_owned'&&originalOwnedVectorText(value.type)){const arg=resolveNativeVectorLocal(value.arg,locals,guard,depth+1);if(arg?.k==='var'&&item.params.some(param=>param.rust===arg.name&&param.type==='text-owned'))return ['parameter',arg.name];if(arg?.k==='lit'&&arg.type?.kind==='string')return ['text',ownedVectorTextValue({kind:'text',value:arg.value})];fail('actual original standard String copy operand differs');}if(value.k==='lit'&&value.type?.kind==='bool'&&typeof value.value==='boolean')return ['bool',value.value];if(value.k==='lit'&&value.type?.kind==='float'&&!value.type.rustReference&&!value.type.rustGenericIdentityUnresolved&&!value.type.rustBorrowingUnresolved){const item={kind:'float',value:value.value};evaluateOwnedVectorF64(item);return ['float',item.value];}if(value.k==='lit'&&value.type?.kind==='string'&&!value.type.rustReference)return ['text',ownedVectorTextValue({kind:'text',value:value.value})];if(value.k==='lit'&&value.type?.kind==='fixed'&&(typeof value.value==='string'||typeof value.value==='bigint')){let integer;try{integer=BigInt(value.value).toString();}catch{fail('actual original native integer literal differs');}return ['integer',integer];}fail('fresh original vector element differs');})];
  }
  return body(own.body,0);
 }
@@ -215,3 +215,15 @@ import {observeNativeOrderedScalarBody,observeNativeOrderedScalarExpression} fro
 import {nativeScalarConstantObserver} from './owned-native-scalar-constants.mjs';
 
 import {observeNativeFunctionControl} from './owned-native-function-control.mjs';
+
+// Lexical alias DATA from the current genuine native function only. No namespace
+// or type permission is issued by resolution; all original guards still apply.
+function resolveNativeVectorLocal(node,locals,guard,depth=0,active=new Set()){
+ if(node?.k!=='var'||!locals.has(node.name))return node;guard.charge(depth);if(active.has(node.name)||active.size>=64)fail('bounded acyclic actual native scalar aliases required');active.add(node.name);try{return resolveNativeVectorLocal(locals.get(node.name),locals,guard,depth+1,active);}finally{active.delete(node.name);}
+}
+function nativeVectorAlias(value,locals,guard,depth){
+ const type=value?.type;if(!type||type.rustReference||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)fail('actual plain immutable scalar alias required');
+ if(type.kind==='bool'){actualCondition(value,guard,depth,locals);return;}
+ const fixed=type.kind==='fixed'&&integer(type.rustPrimitiveName)&&!type.rustOwnership&&!type.patternOwnershipRefusal;
+ if(!fixed&&!observedSourceF64(type)&&!originalStaticVectorText(type)&&!originalOwnedVectorText(type))fail('unsupported actual native scalar alias domain');const original=resolveNativeVectorLocal(value,locals,guard,depth);if(original?.k==='var'&&guard.parameter(original.name))return;if(original?.k==='lit'&&!originalOwnedVectorText(type))return;fail('native scalar alias requires a literal parameter or pure bool expression');
+}
