@@ -340,3 +340,9 @@ physical null-input source drafts in
 ALL UNRUN. This supersedes the prior deleted-file refusal only for freshly proved
 absence; root deletion, ambiguous parents, receiving insertion from empty units
 and full drafting/qualification remain OPEN.
+
+Bulk-generated route metadata now has complete main/retained single-unit planner
+compatibility and exact binding joins in
+[native-route-compatibility-source-draft.md](native-route-compatibility-source-draft.md).
+ALL UNRUN. Empty receiving insertion, broader source families and complete
+drafting/qualification remain OPEN; route equality grants no semantic permission.

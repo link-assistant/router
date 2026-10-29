@@ -69,6 +69,7 @@ export function planOwnedVectorUnitSynchronization({root,manifestPath}={}){
  if(!unit||typeof unit!=='object'||Array.isArray(unit)||Object.keys(unit).length!==keys.length||keys.some(key=>!Object.hasOwn(unit,key))||unit.schema!=='router-owned-vector-unit-v1'||typeof unit.id!=='string'||!/^[_a-zA-Z0-9-]{1,96}$/u.test(unit.id)||!['JavaScript','TypeScript'].includes(unit.authority))vectorUnitFailure('explicit complete vector unit and one JS/TS authority required');
  for(const key of ['javascript','typescript','runtimeRoot','declarationRoot','meta'])relative(unit[key]);if(!unit.javascript.endsWith('.mjs')||!/\.(?:mts|ts)$/u.test(unit.typescript)||!unit.meta.endsWith('.json')||new Set([manifestPath,unit.javascript,unit.typescript,unit.meta]).size!==4||!Array.isArray(unit.bindings)||!unit.bindings.length||unit.bindings.length>4096||!Array.isArray(unit.dependencies)||unit.dependencies.length>256||new Set(unit.dependencies).size!==unit.dependencies.length)vectorUnitFailure('distinct actual paired paths and bounded explicit native bindings/dependencies required');
  for(const path of unit.dependencies)if(!/\.(?:mjs|mts|ts)$/u.test(relative(path)))vectorUnitFailure('actual script source dependencies required');
+ if(Object.hasOwn(unit,'nativeRoute'))assertNativeModuleRouteBindings(unit.nativeRoute,unit.bindings);
  const original=IO.snapshot(root),cargo=IO.sequenceDependencies(root),revision=head(root),layout=repositoryRustLayout(root);if(!cargo.inputs||cargo.rows.some(row=>row.absent))vectorUnitFailure('complete actual native Cargo inputs required');
  const physicalInputs=new Map(),logicalInputs=new Map(),physicalToLogical=new Map();let retained=0;
  const physical=(path,source)=>{relative(path);if(physicalInputs.has(path)){if(physicalInputs.get(path)!==source)vectorUnitFailure('conflicting actual physical input snapshots');return;}if(typeof source!=='string'||Buffer.byteLength(source)>FILE_LIMIT)vectorUnitFailure('complete bounded physical source input required');physicalInputs.set(path,source);retained+=Buffer.byteLength(source);if(retained>LIMIT)vectorUnitFailure('complete vector source input budget exceeded');};
@@ -151,3 +152,5 @@ export function applyOwnedNativeBulkUnitSynchronization(serialized,options){retu
 import {proposeOwnedNativeBulkSynchronization} from './js-to-rust/owned-native-bulk-composition.mjs';
 
 import {ownedCorePairedTypePath} from './js-to-rust/owned-vector-module-pair.mjs';
+
+import {assertNativeModuleRouteBindings} from './js-to-rust/owned-native-empty-modules.mjs';

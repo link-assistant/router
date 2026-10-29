@@ -61,3 +61,15 @@ import {ownedSourcePath} from './owned-vector-candidate-source.mjs';
 import {originalModuleViewItems} from '../source-module-views.mjs';
 import {prepareOwnedCorePairedTypes} from './owned-core-paired-types.mjs';
 import {createHash} from 'node:crypto';
+
+// Stored coordinates must agree with every recorded function, even when the
+// selected source authority does not otherwise consume a native route.
+export function assertNativeModuleRouteBindings(value,bindings){
+ const route=nativeEmptyModuleRoute(value),fail=message=>{throw new TypeError('Native module route bindings: '+message);};
+ if(!Array.isArray(bindings)||bindings.length>4096||Object.keys(bindings).length!==bindings.length)fail('bounded dense complete binding list required');
+ for(const row of bindings){
+  const keys=['javascriptName','rustPath','rustName'];if(!row||typeof row!=='object'||Array.isArray(row)||Object.keys(row).length!==3||keys.some(key=>!Object.hasOwn(row,key)||typeof row[key]!=='string'||!row[key]))fail('exact complete native function binding required');
+  const parts=row.rustName.split('.');if(parts.length!==route.module.length+1||parts.some(name=>!/^[A-Za-z_][A-Za-z0-9_]*$/u.test(name))||row.rustPath!==route.rustPath||route.module.some((name,index)=>name!==parts[index]))fail('stored native route disagrees with an actual recorded binding');
+ }
+ return route;
+}
