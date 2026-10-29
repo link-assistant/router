@@ -520,9 +520,10 @@ function checkFunctionBody(context,path,declaration,analysis){
 
  function asciiStringLoan(value,scope){const loan=stringLoan(value);if(loan)return loan;if(value.type==='str'&&value.kind==='choose')return meetStringLoans(asciiStringLoan(value.then,scope),asciiStringLoan(value.else,scope));return value.type==='str'&&value.kind==='variable'&&value.root===null&&scope.get(value.name)?.asciiStaticLoan===true?{root:null}:undefined;}
  function scalarReturnLiteral(value,scope,depth){tick(depth);if(value.kind==='variable'){const constant=scope.get(value.name)?.constantInteger;if(typeof constant==='string')return {kind:'integer',value:constant,type:value.type,root:null};}if(value.kind==='choose')return {...value,then:scalarReturnLiteral(value.then,scope,depth+1),else:scalarReturnLiteral(value.else,scope,depth+1)};return value;}
+ function finishNativeUnitReturn(checked){if(!checked.terminated&&['json-scalar','primitive-scalar'].includes(jsonVectorProfile?.kind)&&jsonVectorProfile.type==='unit'){const value={kind:'unit',type:'unit',root:null};if(resultType!==null&&resultType!=='unit')fail('return domains differ');resultType='unit';resultRoot=null;scalarReturnValues.push(value);checked.body.push({kind:'return',value});checked.terminated=true;}return checked;}
  function block(statements,scope,depth){
   const body=[];let terminated=false;
-  for(const statement of statements){
+  for(let statementIndex=0;statementIndex<statements.length;statementIndex++){const statement=statements[statementIndex];
    tick(depth);if(terminated)fail('statement after terminating return');
    if(ts.isVariableStatement(statement)){
     if(statement.modifiers?.length||(statement.declarationList.flags&ts.NodeFlags.BlockScoped)!==ts.NodeFlags.Const)fail('only fresh immutable local declarations');
@@ -553,6 +554,8 @@ function checkFunctionBody(context,path,declaration,analysis){
     const loan=value.type==='str'?(stringResultLoan===null?stringLoan(value):meetStringLoans(stringResultLoan,stringLoan(value))):undefined,effectiveRoot=loan?loan.root:value.root;
     if(value.type==='str'&&!loan)fail('returned str requires an actual literal or live input origin');
     if(resultType!==null&&(resultType!==value.type||resultRoot!==effectiveRoot&&!(value.type==='str'&&loan)&&!(ownedJsonOptionalPayload(value.type)&&(value.kind==='option-none'||resultOnlyAbsent))))fail('return domains differ');resultType=value.type;if(value.kind!=='option-none'){resultRoot=effectiveRoot;resultOnlyAbsent=false;}if(value.type==='str')stringResultLoan=loan;scalarReturnValues.push(value);body.push({kind:'return',value});terminated=true;
+   }else if(ts.isIfStatement(statement)&&ts.isBlock(statement.thenStatement)&&!statement.elseStatement&&['json-scalar','primitive-scalar'].includes(jsonVectorProfile?.kind)&&jsonVectorProfile.type==='unit'){
+    const cond=expression(statement.expression,scope,depth+1);if(cond.type!=='bool')fail('nonboolean guard condition');const a=refine(branchScope(scope),cond,true),b=refine(branchScope(scope),cond,false),yes=block(statement.thenStatement.statements,a,depth+1);if(!yes.terminated)fail('unit guard then branch must actually terminate');const no=finishNativeUnitReturn(block(statements.slice(statementIndex+1),b,depth+1));if(!no.terminated)fail('complete unit guard continuation required');mergeMoves(scope,a,b);body.push({kind:'if',cond,then:yes.body,else:no.body});terminated=true;break;
    }else if(ts.isIfStatement(statement)&&ts.isBlock(statement.thenStatement)&&statement.elseStatement&&ts.isBlock(statement.elseStatement)){
     const cond=expression(statement.expression,scope,depth+1);if(cond.type!=='bool')fail('nonboolean condition');
     const a=refine(branchScope(scope),cond,true),b=refine(branchScope(scope),cond,false),yes=block(statement.thenStatement.statements,a,depth+1),no=block(statement.elseStatement.statements,b,depth+1);
@@ -561,7 +564,7 @@ function checkFunctionBody(context,path,declaration,analysis){
   }
   return {body,terminated};
  }
- const statements=jsonVectorProfile?consumeJsonVectorInputPrelude(analysis,declaration,params,operand=>originalOwnedCoreImport(context,path,operand,analysis),jsonVectorProfile):consumeOwnedBase64InputPrelude(analysis,declaration,params,operand=>originalOwnedCoreImport(context,path,operand,analysis));const checked=block(statements,environment,0);if(!checked.terminated&&['json-scalar','primitive-scalar'].includes(jsonVectorProfile?.kind)&&jsonVectorProfile.type==='unit'){const value={kind:'unit',type:'unit',root:null};if(resultType!==null&&resultType!=='unit')fail('return domains differ');resultType='unit';resultRoot=null;scalarReturnValues.push(value);checked.body.push({kind:'return',value});checked.terminated=true;}if(!checked.terminated)fail('missing return');
+ const statements=jsonVectorProfile?consumeJsonVectorInputPrelude(analysis,declaration,params,operand=>originalOwnedCoreImport(context,path,operand,analysis),jsonVectorProfile):consumeOwnedBase64InputPrelude(analysis,declaration,params,operand=>originalOwnedCoreImport(context,path,operand,analysis));const checked=finishNativeUnitReturn(block(statements,environment,0));if(!checked.terminated)fail('missing return');
  if(paired)for(let index=0;index<params.length;index++){
   const actual=originalOwnedCoreType(context,paired.pair.typescript.path,paired.declaration.parameters[index].type,paired.analysis);
   if((actual==='text-owned'?'str':actual)!==(jsonVectorProfile&&params[index].type==='json'?'json-ref':params[index].type)&&!(jsonVectorProfile&&!nativeScalars&&primitiveBitwiseType(params[index].type)&&actual==='usize'))fail('paired written parameter ABI differs');

@@ -275,3 +275,10 @@ validation-only JSON callers, are drafted in
 [native-unit-returns-source-draft.md](native-unit-returns-source-draft.md).
 ALL UNRUN. General fallthrough/unit-call effects and broader requirements remain
 OPEN; a void result grants no arbitrary effect or transfer permission.
+
+Actual original-AST unit guard continuations now have source drafts with complete
+branch refinement and ordered effects in
+[unit-guard-continuation-source-draft.md](unit-guard-continuation-source-draft.md).
+ALL UNRUN. General native statement control/effects and full drafting/qualification
+remain OPEN. The main requirement and guideline files are near their line caps;
+continue detailed requirement entries in this companion ledger.
