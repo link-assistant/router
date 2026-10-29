@@ -6,7 +6,7 @@ import {createHash} from 'node:crypto';
 import {originalMacroTrees} from './macro-token-trees.mjs';
 import {rustTokens} from './rust-structure.mjs';
 import * as containmentNative from './original-json-intrinsics.mjs';
-import {originalConditionalAncestorSourcePlan,requireOriginalConditionalAncestorSourcePlan} from './derive-ancestor-attribute-scope.mjs';
+import {freshOriginalConditionalAncestorSourcePlan as originalConditionalAncestorSourcePlan,requireOriginalConditionalAncestorSourcePlan} from './derive-ancestor-attribute-scope.mjs';
 const plans=new WeakSet(),hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;};
 const fail=message=>{throw new TypeError('Original namespace parser source: '+message);};

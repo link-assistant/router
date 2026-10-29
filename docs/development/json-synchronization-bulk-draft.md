@@ -561,3 +561,11 @@ original and whole-owner/proof-byte source-plan consumers use the additive
 constructor; the original public cached witness API is unchanged. Fifteen
 complete equations and all independent source/refusal cases are UNRUN.
 Type-prefix/Span/visitor/export closure, performance and full drafting stay OPEN.
+
+The [fresh conditional/enum source draft](fresh-ancestor-namespace-source-draft.md)
+extends the same native witness work to seven complete original compiler sources
+and current enum resolution. It preserves every original recipe, conditional
+alternative, global export obligation, private identity and public API. Portable
+profile confinement, full CST and fresh selected-input fences have independent
+unrun case source. Seven complete equations are drafted; full owner/type-prefix/
+Span/visitor/export closure and every wider verification obligation remain OPEN.

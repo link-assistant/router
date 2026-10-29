@@ -374,3 +374,65 @@ function originalFunction(path,name,ownerPart=null){
  const value=freeze({schema:'original-impl-enclosing-namespace-source-plan-v1',profileSha256:frame.profileSha256,selections,recipes,wholeCompilerExecuted:false,namespaceAuthority:false,runtimeAuthority:false});implPlans.add(value);return value;
  });
 }
+
+import {withFreshAncestorNamespaceSources} from './fresh-ancestor-namespace-source.mjs';
+function withFreshNativeNamespaceSelections(paths,run){
+ return withFreshAncestorNamespaceSources(paths,frame=>{
+ const originals=new Map(frame.sources.map(row=>[row.path,row]));
+const functionInputs=new Map([...originals].filter(([path])=>path.endsWith('.rs')).map(([path,origin])=>{
+ const found=[];
+ function scan(items,offset,owner){for(const item of items){
+  const tokens=significant(item.tokens);if(item.term==='fn')found.push({item,offset,owner});
+  if(item.term==='impl'){const open=tokens.find(token=>token.text==='{'),close=tokens.at(-1);if(open&&close?.text==='}')scan(sourceItems(origin.source.slice(offset+open.end,offset+close.start)),offset+open.end,words(origin.source.slice(offset+item.start,offset+open.start)));}
+ }}scan(sourceItems(origin.source),0,null);
+ return [path,freeze(found)];
+}));
+function originalFunction(path,name,ownerPart=null){
+ const origin=originals.get(path),found=functionInputs.get(path).filter(row=>row.item.name===name&&(!ownerPart||row.owner?.includes(ownerPart)));
+ if(found.length!==1)fail('original callback absent/ambiguous: '+path+'::'+name);
+ const {item,offset,owner}=found[0],span={start:offset+item.start,end:offset+item.end};return freeze({path,sourceSha256:origin.sha256,name,owner,span,original:origin.source.slice(span.start,span.end)});
+}
+ return run({...frame,originalFunction});
+ });
+}
+export function freshOriginalConditionalAncestorSourcePlan(){
+ return withFreshNativeNamespaceSelections(["compiler/rustc_resolve/src/build_reduced_graph.rs","compiler/rustc_resolve/src/def_collector.rs","compiler/rustc_resolve/src/macros.rs","compiler/rustc_expand/src/mbe/macro_rules.rs","compiler/rustc_expand/src/base.rs","compiler/rustc_expand/src/config.rs","compiler/rustc_parse/src/parser/item.rs"],frame=>{
+ const {originalFunction}=frame;
+ const graph='compiler/rustc_resolve/src/build_reduced_graph.rs',macros='compiler/rustc_resolve/src/macros.rs',config='compiler/rustc_expand/src/config.rs';
+ const selections={module:originalFunction(graph,'build_reduced_graph_for_item','BuildReducedGraphVisitor'),visit:originalFunction(graph,'visit_item','Visitor'),defineMacro:originalFunction(graph,'define_macro','BuildReducedGraphVisitor'),define:originalFunction(graph,'define','Resolver'),collector:originalFunction('compiler/rustc_resolve/src/def_collector.rs','visit_item','Visitor'),compileMacro:originalFunction(macros,'compile_macro','Resolver'),compileDeclarative:originalFunction('compiler/rustc_expand/src/mbe/macro_rules.rs','compile_declarative_macro'),macroKind:originalFunction('compiler/rustc_expand/src/base.rs','macro_kind','SyntaxExtension'),subnamespace:originalFunction(macros,'sub_namespace_match'),configure:originalFunction(config,'configure','StripUnconfigured'),inCfg:originalFunction(config,'in_cfg','StripUnconfigured'),parser:originalFunction('compiler/rustc_parse/src/parser/item.rs','parse_item_mod','Parser')};
+ const recipes=[
+  recipe(selections.module,`let parent_scope = &self.parent_scope; let parent = parent_scope.module;`,'actual original parent binding'),
+  recipe(selections.module,`ItemKind::Mod(_, ident, ref mod_kind) => { let module = self.r.new_module(Some(parent), ModuleKind::Def(def_kind, def_id, Some(ident.name)), expansion.to_expn_id(), item.span, parent.no_implicit_prelude || ast::attr::contains_name(&item.attrs, sym::no_implicit_prelude),); self.r.define(parent, ident, TypeNS, (module, vis, sp, expansion)); if let ast::ModKind::Loaded(_, _, _, Err(_)) = mod_kind { self.r.mods_with_parse_errors.insert(def_id); } self.parent_scope.module = module; }`,'one parent module-name TypeNS binding; child body scope'),
+  recipe(selections.visit,`let orig_module_scope = self.parent_scope.module;`,'actual original parent save'),
+  recipe(selections.visit,`match item.kind { ItemKind::Mod(..) if self.contains_macro_use(&item.attrs) => { self.parent_scope.macro_rules } _ => orig_macro_rules_scope, }`,'original macro-use exception and ordinary textual scope restoration'),
+  recipe(selections.visit,`self.parent_scope.module = orig_module_scope;`,'original parent module restoration'),
+  recipe(selections.defineMacro,`self.r.define(self.r.graph_root, ident, MacroNS, import_binding);`,'global exported macro binding retained'),
+  recipe(selections.defineMacro,`self.r.define(module, ident, MacroNS, (res, vis, span, expansion));`,'ordinary macro namespace remains in original child module'),
+  recipe(selections.collector,`let macro_data = self.resolver.compile_macro(def, *ident, &attrs, i.span, i.id, edition); let macro_kind = macro_data.ext.macro_kind(); opt_macro_data = Some(macro_data); DefKind::Macro(macro_kind)`,'original definition kind from complete compiler source'),
+  recipe(selections.compileMacro,`let (mut ext, mut rule_spans) = compile_declarative_macro(self.tcx.sess, self.tcx.features(), macro_def, ident, attrs, span, node_id, edition,);`,'original resolver delegates the complete original definition to its declarative compiler'),
+  recipe(selections.compileMacro,`MacroData { ext: Arc::new(ext), rule_spans, macro_rules: macro_def.macro_rules }`,'original returned syntax extension determines the definition kind'),
+  recipe(selections.compileDeclarative,`SyntaxExtensionKind::LegacyBang(expander)`,'original declarative macro successful/dummy backend kind'),
+  recipe(selections.macroKind,`SyntaxExtensionKind::Bang(..) | SyntaxExtensionKind::LegacyBang(..) | SyntaxExtensionKind::GlobDelegation(..) => MacroKind::Bang,`,'original Bang kind'),
+  recipe(selections.subnamespace,`MacroKind::Bang => SubNS::Bang, MacroKind::Attr | MacroKind::Derive => SubNS::AttrLike,`,'original Bang versus requested AttrLike subnamespace'),
+  recipe(selections.configure,`self.process_cfg_attrs(&mut node); self.in_cfg(node.attrs()).then(|| { self.try_configure_tokens(&mut node); node })`,'original absent or unchanged-present node; no cfg branch selected'),
+  recipe(selections.inCfg,`attrs.iter().all(|attr| !is_cfg(attr) || self.cfg_true(attr).0)`,'original node configuration predicate'),
+  recipe(selections.parser,`let ident = self.parse_ident()?; let mod_kind = if self.eat(exp!(Semi)) { ModKind::Unloaded } else { self.expect(exp!(OpenBrace))?; let (inner_attrs, items, inner_span) = self.parse_mod(exp!(CloseBrace))?; attrs.extend(inner_attrs); ModKind::Loaded(items, Inline::Yes, inner_span, Ok(())) }; Ok(ItemKind::Mod(safety, ident, mod_kind))`,'original module identifier and external/inline AST branches'),
+ ];
+ const value=freeze({schema:'original-conditional-ancestor-source-plan-v1',profileSha256:frame.profileSha256,sourceInputs:frame.sourceInputs,selections,recipes,cfgBranches:['absent','unchanged original present module'],retainedUncompiledBranches:['compile_macro builtin replacement','proc_macro_stub','unknown child contents','unknown global bang exports','conditional availability','compiler error routes'],namespaceAuthority:false,runtimeAuthority:false,wholeCompilerExecuted:false});plans.add(value);return value;
+ });
+}
+export function freshOriginalEnumNamespaceSourcePlan(){
+ return withFreshNativeNamespaceSelections(["compiler/rustc_resolve/src/build_reduced_graph.rs"],frame=>{
+ const {originalFunction}=frame;
+ const path='compiler/rustc_resolve/src/build_reduced_graph.rs';
+ const selections={item:originalFunction(path,'build_reduced_graph_for_item','BuildReducedGraphVisitor'),variant:originalFunction(path,'visit_variant','Visitor'),visit:originalFunction(path,'visit_item','Visitor')};
+ const recipes=[
+  recipe(selections.item,`ItemKind::Enum(ident, _, _) | ItemKind::Trait(box ast::Trait { ident, .. }) => { let module = self.r.new_module(Some(parent), ModuleKind::Def(def_kind, def_id, Some(ident.name)), expansion.to_expn_id(), item.span, parent.no_implicit_prelude,); self.r.define(parent, ident, TypeNS, (module, vis, sp, expansion)); self.parent_scope.module = module; }`,'original generic parameters do not alter the enclosing enum TypeNS binding'),
+  recipe(selections.variant,`if variant.is_placeholder { self.visit_invoc_in_module(variant.id); return; }`,'unexpanded variants remain independent obligations'),
+  recipe(selections.variant,`self.r.define(parent, ident, TypeNS, (self.res(def_id), vis, variant.span, expn_id));`,'original variant type name in its actual enum namespace'),
+  recipe(selections.variant,`if let Some(ctor_node_id) = variant.data.ctor_node_id() { let feed = self.r.feed(ctor_node_id); let ctor_def_id = feed.key(); let ctor_res = self.res(ctor_def_id); self.r.define(parent, ident, ValueNS, (ctor_res, ctor_vis, variant.span, expn_id)); self.r.feed_visibility(feed, ctor_vis); }`,'only actual tuple/unit constructors bind the value namespace'),
+  recipe(selections.visit,`self.parent_scope.module = orig_module_scope;`,'original enum visitor restores the enclosing parent namespace'),
+ ];
+ const value=freeze({schema:'original-enum-namespace-source-plan-v1',profileSha256:frame.profileSha256,selections,recipes,namespaceAuthority:false,runtimeAuthority:false,genericTypeValidity:false,wholeCompilerExecuted:false});enumPlans.add(value);return value;
+ });
+}

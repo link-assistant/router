@@ -1,6 +1,6 @@
 // Syntax DATA only. The original resolver still issues every namespace scope.
-import {originalEnumNamespaceSourcePlan,requireOriginalEnumNamespaceSourcePlan} from './derive-ancestor-attribute-scope.mjs';
-export {originalEnumNamespaceSourcePlan} from './derive-ancestor-attribute-scope.mjs';
+import {freshOriginalEnumNamespaceSourcePlan as originalEnumNamespaceSourcePlan,requireOriginalEnumNamespaceSourcePlan} from './derive-ancestor-attribute-scope.mjs';
+export {originalEnumNamespaceSourcePlan,freshOriginalEnumNamespaceSourcePlan} from './derive-ancestor-attribute-scope.mjs';
 const fail=message=>{throw new TypeError('Original enum namespace header: '+message);};
 export function enumNamespaceBody(tokens,keyword,sourcePlan=null){
  if(!Array.isArray(tokens)||tokens.length>200000||!Number.isSafeInteger(keyword)||keyword<0||tokens[keyword]?.text!=='enum'||tokens[keyword+1]?.type!=='ident')fail('complete original named enum token selection required');

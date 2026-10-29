@@ -2,7 +2,7 @@
 // The private source-plan constructor supplies its own fixed default root.
 // SOURCE ONLY; all behavior, performance and receiving qualification UNRUN.
 import {openSync,closeSync,fstatSync,readSync,constants} from 'node:fs';
-import {resolve,join} from 'node:path';
+import {resolve,join,relative} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
@@ -27,7 +27,7 @@ function read(path,size,digest){
 /** The directory option supports independent DATA-reader fixtures only. */
 export function withFreshImplNamespaceSource(run,{directory=ROOT}={}){
  if(typeof run!=='function'||typeof directory!=='string'||directory.length>4096||directory.includes(String.fromCharCode(0)))fail('bounded source reader inputs required');guard();
- const base=resolve(directory),manifest=join(base,'manifest.json'),archive=resolve(base,SOURCE.archive);if(!archive.startsWith(base+'/'))fail('source archive escapes its pinned profile');
+ const base=resolve(directory),manifest=join(base,'manifest.json'),archive=resolve(base,SOURCE.archive);if(relative(base,archive)!==SOURCE.archive)fail('source archive escapes its pinned profile');
  const profile=read(manifest,MANIFEST_BYTES,MANIFEST_SHA256),packed=read(archive,SOURCE.archiveBytes,SOURCE.archiveSha256);
  const current=JSON.parse(profile.toString('utf8')),selected=current.sources.filter(row=>row.path===SOURCE.path);if(selected.length!==1||JSON.stringify(selected[0])!==JSON.stringify(SOURCE))fail('complete manifest source owner differs');
  const raw=gunzipSync(packed,{maxOutputLength:SOURCE.bytes});if(raw.length!==SOURCE.bytes||hash(raw)!==SOURCE.sha256)fail('complete native source differs');

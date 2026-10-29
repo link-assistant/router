@@ -487,7 +487,7 @@ export function resolveModuleBindings({modules,externalModules=new Map(),compila
 
 // Explicit dimension format; every legacy resolver/default byte above remains exact.
 import {isDeriveEnclosingNamespaceContext,deriveEnclosingNamespaceModules,deriveEnclosingNamespaceOutputAt,deriveEnclosingNamespaceHelperAttributeAt,proveDeriveEnclosingNamespaceEffect,deriveEnclosingNamespaceEffectFacts} from './derive-enclosing-namespace-context.mjs';
-import {enumNamespaceBody,originalEnumNamespaceSourcePlan} from './enum-namespace-header.mjs';
+import {enumNamespaceBody,freshOriginalEnumNamespaceSourcePlan as originalEnumNamespaceSourcePlan} from './enum-namespace-header.mjs';
 function resolveRegisteredBuiltinEnclosingSourceBindings({modules,externalModules=new Map(),compilationProfile:profileInput=null,deriveContext=null,deriveBangContext=null,toolContext=null}={},registeredAttributes=false,configuredVariants=false) {
   if(!Array.isArray(modules) || !(externalModules instanceof Map))throw new TypeError('Binding resolution requires tracked modules and explicit external tables');
   if(deriveContext&&!isDeriveFootprintContext(deriveContext))throw new TypeError('Unsealed derive footprint context');
