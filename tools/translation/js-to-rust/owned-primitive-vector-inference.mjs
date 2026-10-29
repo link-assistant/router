@@ -16,7 +16,7 @@ export function createPrimitiveVectorInference(){
  function constrain(type,allowed,anchored=false){const node=nodes.get(find(type)),next=new Set([...node.allowed].filter(item=>allowed.includes(item)));if(!next.size)fail('actual Vec element domains conflict');node.allowed=next;node.anchored||=anchored;return type;}
  function reference(type){return pending(type)?type:primitiveVectorResultRole(type)?create([type.slice(4)],true):fail('actual primitive Vec domain required');}
  function join(left,right){if(!vector(left)||!vector(right))fail('Vec and non-Vec branches cannot join');const a=find(reference(left)),b=find(reference(right));if(a!==b){const first=nodes.get(a),second=nodes.get(b);constrain(a,[...second.allowed],second.anchored);second.parent=a;}return a;}
- function compatible(actual,written){if(!pending(actual))return actual===written;if(!primitiveVectorResultRole(written))return false;constrain(actual,[written.slice(4)],true);return true;}
+ function compatible(actual,written){if(!pending(actual))return actual===written;if(written==='vec:usize'){constrain(actual,PRIMITIVE_BITWISE_TYPES.map(row=>row.name));return true;}if(!primitiveVectorResultRole(written))return false;constrain(actual,[written.slice(4)],true);return true;}
  function literal(ts,node){
   tick();let depth=0;while(ts.isParenthesizedExpression(node)){if(++depth>160)fail('bounded literal parentheses');node=node.expression;}
   const negative=ts.isPrefixUnaryExpression(node)&&node.operator===ts.SyntaxKind.MinusToken,operand=negative?node.operand:node;if(!ts.isBigIntLiteral(operand))return null;

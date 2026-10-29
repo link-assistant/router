@@ -60,3 +60,41 @@ export function checkedPrimitiveExpressionVectorTail(declaration){
 
 import {nativeSourceValueResultDomain,jsonScalarComparisonDomain} from './owned-source-value-calls.mjs';
 const primitiveElement=type=>jsonScalarComparisonDomain(type,{native:true});
+
+// Additive independent local Vec domains; original same-result observer above stays unchanged.
+export function checkedPrimitiveExpressionVectorLocals(declaration){
+ const own=observeNativeFunctionControl(declaration);let work=0,leaves=0,bindings=0;const arrays=[];
+ const tick=depth=>{if(++work>100000||depth>64)fail('bounded complete Vec flow required');};
+ const isVector=type=>type?.kind==='array'&&type.rustOwnership?.source==='Vec';
+ function scalar(node,scope,depth){
+  tick(depth);if(!node||typeof node!=='object')return;
+  if(isVector(node.type)||node.k==='array'||node.k==='var'&&scope.has(node.name))fail('owned Vec cannot hide in a scalar expression or borrowed operation');
+  for(const [key,value]of Object.entries(node)){
+   if(['type','span','contract','compatibilityCore','sourceOwnershipOperation'].includes(key))continue;
+   if(Array.isArray(value)){for(const child of value)if(child&&typeof child==='object')scalar(child,scope,depth+1);}
+   else if(value&&typeof value==='object')scalar(value,scope,depth+1);
+  }
+ }
+ function consume(node,scope,depth,expected=own.ret){
+  tick(depth);if(!node||!primitiveVectorResultRole(nativeSourceValueResultDomain(node.type))||!sameType(node.type,expected))fail('actual exact owned primitive Vec expression domain required');
+  if(node.k==='let'){
+   if(node.mutable||typeof node.name!=='string'||scope.has(node.name)||++bindings>64)fail('bounded immutable distinct native Vec locals required');
+   if(isVector(node.value?.type)){consume(node.value,scope,depth+1,node.value.type);scope.set(node.name,{type:node.value.type,moved:false});}
+   else scalar(node.value,scope,depth+1);
+   return consume(node.body,scope,depth+1,expected);
+  }
+  if(node.k==='if'){
+   if(node.cond?.type?.kind!=='bool')fail('actual Boolean Vec branch required');scalar(node.cond,scope,depth+1);
+   const clone=()=>new Map([...scope].map(([name,row])=>[name,{...row}])),yes=clone(),no=clone();consume(node.then,yes,depth+1,expected);consume(node.else,no,depth+1,expected);
+   for(const [name,row]of scope)row.moved=!!yes.get(name)?.moved||!!no.get(name)?.moved;return;
+  }
+  if(node.k==='var'){const row=scope.get(node.name);if(!row||row.moved||!sameType(row.type,node.type))fail('foreign mismatched or already moved owned Vec');row.moved=true;return;}
+  if(node.k==='call'){if(++leaves>64)fail('bounded complete Vec helper results required');if(typeof node.fn!=='string'||!node.fn||!Array.isArray(node.args)||node.args.length>32||nativeSourceValueResultDomain(node.type)!=='vec:'+primitiveElement(expected.element))fail('actual typed owned primitive Vec helper result required');for(const arg of node.args)scalar(arg,scope,depth+1);arrays.push(node);return;}
+  if(node.k!=='array'||node.compatibilityCore?.id!=='router-core-vector-list-v1'||!Array.isArray(node.items)||node.items.length>4096||node.type.rustReference||node.type.rustFixedArray||node.type.rustGenericIdentityUnresolved||node.type.rustBorrowingUnresolved)fail('actual qualified bounded owned Vec constructor required');
+  if(++leaves>64)fail('bounded complete Vec constructors required');
+  for(const item of node.items){if(!sameType(item.type,expected.element))fail('actual exact primitive element domain differs');scalar(item,scope,depth+1);}arrays.push(node);
+ }
+ consume(own.body,new Map(),0);if(!arrays.length)fail('actual owned Vec construction or actual source helper result required');return own.body;
+}
+
+import {primitiveVectorResultRole} from './owned-source-value-calls.mjs';

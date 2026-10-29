@@ -118,4 +118,4 @@ const readOwnedNativeProjectForSource=createOwnedNativeProjectReader();
 
 import {primitiveBitwiseType} from '../primitive-bitwise-types.mjs';
 
-import {hasPrimitiveExpressionVectorRuntime,originalPrimitiveExpressionVectorDomain,checkedPrimitiveExpressionVectorTail} from './owned-primitive-expression-vectors.mjs';
+import {hasPrimitiveExpressionVectorRuntime,originalPrimitiveExpressionVectorDomain,checkedPrimitiveExpressionVectorLocals as checkedPrimitiveExpressionVectorTail} from './owned-primitive-expression-vectors.mjs';

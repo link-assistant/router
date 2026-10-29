@@ -145,4 +145,4 @@ import {withOwnedNativeProjectOperation} from './owned-native-project-operation.
 
 import {requireCurrentEmptyNativeModule,prepareEmptyNativeModulePair} from './owned-native-empty-modules.mjs';
 
-import {hasPrimitiveExpressionVectorRuntime,originalPrimitiveExpressionVectorDomain,checkedPrimitiveExpressionVectorTail} from './owned-primitive-expression-vectors.mjs';
+import {hasPrimitiveExpressionVectorRuntime,originalPrimitiveExpressionVectorDomain,checkedPrimitiveExpressionVectorLocals as checkedPrimitiveExpressionVectorTail} from './owned-primitive-expression-vectors.mjs';

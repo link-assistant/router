@@ -608,3 +608,11 @@ actual helper bodies, native ABI/census, source inverses and receiving fences st
 mandatory. Five complete equations and JS/TS/bulk/all-width/refusal/CI-only Rust
 case sources are UNRUN. Full drafting, Vec input/mutation/iteration/cross-module
 behavior, native owner closure and every verification obligation remain OPEN.
+
+The [independent vector local domain draft](primitive-vector-local-domains-source-draft.md)
+keeps each immutable local/helper Vec width separate from the actual returned Vec
+ABI and retains all move/eager-failure rules. Actual receiving and both native
+observers select the additive bounded checker. Ten complete equations and paired,
+all-width, source-refusal and CI-only Rust cases are UNRUN. Scalar functions with
+Vec locals, input/mutation/iteration/cross-module support and the whole task stay
+OPEN, as does all verification.

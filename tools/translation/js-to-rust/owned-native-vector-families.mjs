@@ -167,4 +167,4 @@ import {vectorScalarBounds} from './owned-vector-parameter-values.mjs';
 import {ownershipCompiler} from './vendor/module-syntax.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 
-import {hasPrimitiveExpressionVectorRuntime,originalPrimitiveExpressionVectorDomain,checkedPrimitiveExpressionVectorTail} from './owned-primitive-expression-vectors.mjs';
+import {hasPrimitiveExpressionVectorRuntime,originalPrimitiveExpressionVectorDomain,checkedPrimitiveExpressionVectorLocals as checkedPrimitiveExpressionVectorTail} from './owned-primitive-expression-vectors.mjs';
