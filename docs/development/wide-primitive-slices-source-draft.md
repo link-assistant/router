@@ -54,3 +54,11 @@ remain unqualified. This draft provides no current coverage percentage or claim
 that readonly arrays in arbitrary source translate without a written contract.
 No tests, compiler, parser, preparer, translator or generation ran. CI feedback
 remains uninspected until the entire requirement set is drafted.
+
+The independent `primitive-slice-input-composition-source.test.mjs` now also
+drafts complete mixed Base64/slice caller cases in both owned families. It
+retains Base64 validation before the slice guard, complete original/emitted
+targets, both interpreters, canonical Rust inversion and automatic migration
+after existing Base64 prefixes. A cancellation caller checks that invalid slice
+input cannot signal a resource before validation. These cases are UNRUN;
+their presence provides no mixed-input, receiving or effect-order qualification.
