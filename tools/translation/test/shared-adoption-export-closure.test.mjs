@@ -161,6 +161,9 @@ test('complete committed export carries shared adoption implementations original
  assert.ok(paths.has('tools/translation/prepare-scalar-local-domains-sources.mjs'));
  assert.ok(paths.has('tools/translation/prepare-wide-scalar-units-sources.mjs'));
  assert.ok(paths.has('tools/translation/prepare-scoped-native-emission-sources.mjs'));
+ assert.ok(paths.has('tools/translation/prepare-native-total-operators-sources.mjs'));
+ assert.ok(paths.has('tools/translation/js-to-rust/owned-native-total-operators.mjs'));
+
 
 
  assert.ok(paths.has('tools/translation/prepare-selected-native-body-sources.mjs'));

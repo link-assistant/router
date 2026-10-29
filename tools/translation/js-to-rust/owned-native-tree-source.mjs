@@ -58,11 +58,11 @@ export function projectNativeTreeModule(input,options={}){
    const [events,terminal]=tree,prefix=inherited.length;
    if(events.length<prefix||!same(events.slice(0,prefix),inherited))fail('branch must retain its complete ordered effect prefix');
    let cursor=prefix;const names=new Map(known),uses=new Map(),literalDeclarations=[],descriptors=events.map(row=>{if(!Array.isArray(row)||row.length!==2||typeof row[0]!=='string'||!Array.isArray(row[1]))fail('exact native operation and argument list required');return operation(row[0]);});
-   function references(node,atDepth=0){tick(atDepth);if(!Array.isArray(node))fail('closed symbolic expression required');if(node[0]==='effect'){if(node.length!==2||!Number.isSafeInteger(node[1])||node[1]<0||node[1]>=events.length)fail('in-range native effect origin required');uses.set(node[1],(uses.get(node[1])??0)+1);return;}if(node[0]==='if')return;for(let index=1;index<node.length;index++){const child=node[index];if(Array.isArray(child)){if(['vector','source-call'].includes(node[0])&&index===(node[0]==='vector'?1:2))for(const entry of child)references(entry,atDepth+1);else references(child,atDepth+1);}}}
+   function references(node,atDepth=0){tick(atDepth);if(!Array.isArray(node))fail('closed symbolic expression required');if(node[0]==='effect'){if(node.length!==2||!Number.isSafeInteger(node[1])||node[1]<0||node[1]>=events.length)fail('in-range native effect origin required');uses.set(node[1],(uses.get(node[1])??0)+1);return;}if(node[0]==='if')return;for(let index=1;index<node.length;index++){const child=node[index];if(Array.isArray(child)){if(['vector','source-call','fixed-bitwise'].includes(node[0])&&index===({vector:1,'source-call':2,'fixed-bitwise':3}[node[0]]))for(const entry of child)references(entry,atDepth+1);else references(child,atDepth+1);}}}
    for(let index=prefix;index<events.length;index++)for(const value of events[index][1])references(value);
    if(terminal?.[0]==='if')references(terminal[1]);else references(terminal);
    function expression(node,level=0){
-    tick(level);if(!Array.isArray(node))fail('bounded symbolic expression required');const [kind,a,b,c,d]=node;
+    tick(level);if(!Array.isArray(node))fail('bounded symbolic expression required');const [kind,a,b,c,d]=node;const total=projectNativeTotalOperator(node,{expression:value=>expression(value,level+1),imported});if(total!==null)return total;
     if(kind==='parameter'){if(node.length!==2||!Number.isSafeInteger(a)||!unit.parameters[a])fail('actual parameter index required');return unit.parameters[a].name;}
     if(kind==='bool'&&typeof a==='boolean'&&node.length===2)return String(a);
     if(kind==='str'&&typeof a==='string'&&node.length===2&&!/\p{Surrogate}/u.test(a))return JSON.stringify(a);
@@ -115,3 +115,5 @@ export function projectNativeTreeModule(input,options={}){
 }
 
 import {primitiveBitwiseType} from '../primitive-bitwise-types.mjs';
+
+import {projectNativeTotalOperator} from './owned-native-total-operators.mjs';

@@ -917,3 +917,9 @@ independent proposed-native forward checks, in
 [scoped-native-emission-source-draft.md](scoped-native-emission-source-draft.md).
 ALL UNRUN. Escaped callbacks and caught emission failures cannot reuse the private
 program. Timing, memory, full drafting and receiving/coverage/parity/CI remain OPEN.
+
+Total fixed-width bitwise/complement/cast bulk rules, exact qualified scalar
+imports and wide-helper ABI joins are source drafted in
+[native-total-operators-source-draft.md](native-total-operators-source-draft.md).
+ALL UNRUN, including new Rust edge oracle source. Arithmetic/shift failure ordering,
+full drafting and complete coverage/receiving/resource/platform/CI remain OPEN.

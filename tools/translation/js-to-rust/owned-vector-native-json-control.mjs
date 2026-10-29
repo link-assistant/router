@@ -91,7 +91,7 @@ function jsonNativeIndex(value,depth=0){
 }
 const jsonEvent=(events,operation,args)=>{if(events.length>=16384)jsonFail('bounded ordered JSON effects required');const value=['effect',events.length];events.push([operation,args]);return value;};
 function requestedJsonExpression(node,env,events,guard,borrow=false,depth=0){
- guard.charge(depth);if(!node)jsonFail('complete checked receiving expression required');
+ guard.charge(depth);if(!node)jsonFail('complete checked receiving expression required');const total=requestedNativeTotalOperator(node,arg=>requestedJsonExpression(arg,env,events,guard,false,depth+1));if(total!==null)return total;
  if(node.kind==='variable'){if(!env.has(node.name))jsonFail('actual lexical receiving binder required');const value=env.get(node.name);return node.type==='json'&&!borrow?jsonEvent(events,'copy',[value]):value;}
  if(node.kind==='text-scalar-call'){const op=ownedVectorTextScalarOperation(node.name);if(!op||op.ret!==node.type||op.args.length!==node.args.length||node.args.some(argument=>argument.type!=='str'))jsonFail('actual fixed text scalar operands required');return jsonEvent(events,'text-scalar:'+node.name,node.args.map(argument=>requestedJsonExpression(argument,env,events,guard,false,depth+1)));}
  if(node.kind==='source-scalar-call'){if(node.type!=='bool'&&!primitiveBitwiseType(node.type)||node.type!==node.callee?.returns||node.args.length!==node.callee.parameters.length)jsonFail('actual checked primitive source call required');return ['source-call',node.callee.rust,node.args.map(argument=>requestedJsonExpression(argument,env,events,guard,false,depth+1))];}
@@ -137,7 +137,7 @@ export function actualNativeJsonVectorTree(own,item,lowered){
  const sourceCallTargets=nativeScalarSourceCallIndex(item);
  let activeSomeFacts=new Set();const optionKey=value=>JSON.stringify(value);
  function expression(node,names,events,depth=0){
-  guard.charge(depth);if(!node)jsonFail('complete actual native expression required');
+  guard.charge(depth);if(!node)jsonFail('complete actual native expression required');const total=actualNativeTotalOperator(node,arg=>expression(arg,names,events,depth+1));if(total!==null)return total;
   if(node.k==='cast'&&node.arg?.k==='routerHostCall'&&node.arg.id==='router_core_unicode_scalar_count'){const source=node.arg.type;if(!fieldType(node.type,'u64')||source?.kind!=='fixed'||source.rustPrimitiveName!=='usize'||source.bits!==64||source.signed!==false||source.rustReference||source.rustOwnership||source.patternOwnershipRefusal||source.rustGenericIdentityUnresolved||source.rustBorrowingUnresolved)jsonFail('only actual lossless 64-bit scalar-count usize to u64 is drafted');return expression(node.arg,names,events,depth+1);}
   if(node.k==='routerHostCall'&&ownedVectorTextScalarOperation(node.id)){const op=ownedVectorTextScalarOperation(node.id),count=node.id==='router_core_unicode_scalar_count',result=count?node.type?.kind==='fixed'&&node.type.rustPrimitiveName==='usize'&&node.type.bits===64&&node.type.signed===false&&!node.type.rustReference&&!node.type.rustOwnership&&!node.type.patternOwnershipRefusal&&!node.type.rustGenericIdentityUnresolved&&!node.type.rustBorrowingUnresolved:fieldType(node.type,'bool');if(!result||node.args?.length!==op.args.length||node.args.some(argument=>!fieldType(argument.type,'str'))||node.compatibilityCore?.id!==(count?'router-owned-unicode-scalar-count-v1':'router-owned-ascii-chars-in-v1')||node.compatibilityCore.symbol!=='crate::translation_core::'+op.rust||node.compatibilityCore.sourceSha256!==ROUTER_CORE_PRIMITIVES_SHA256)jsonFail('actual source-bound text scalar ABI/library differs');return jsonEvent(events,'text-scalar:'+node.id,node.args.map(argument=>expression(argument,names,events,depth+1)));}
   if(node.k==='call'){const target=nativeScalarSourceCallTarget(node,sourceCallTargets,lowered);if(!target)jsonFail('actual native helper is outside the checked source closure');return ['source-call',target.rust,node.args.map(argument=>expression(argument,names,events,depth+1))];}
@@ -206,3 +206,5 @@ import {nativeScalarSourceCallIndex,nativeScalarSourceCallTarget} from './owned-
 import {ownedVectorTextScalarOperation} from './owned-vector-text-scalars.mjs';
 
 import {primitiveBitwiseType} from '../primitive-bitwise-types.mjs';
+
+import {requestedNativeTotalOperator,actualNativeTotalOperator} from './owned-native-total-operators.mjs';
