@@ -786,3 +786,10 @@ operations in both outcome/cancellation families. Seventeen full equations and
 independent receiving/refusal/mirroring source cases are UNRUN. Native forward
 caller/loan integration, canonical Rust inverse, physical root activation,
 receiving/performance qualification and full translation remain OPEN.
+
+The [primitive sequence canonical Rust inverse draft](primitive-sequence-rust-inverse-source-draft.md)
+adds finite original-native call/type proposals, strict receiving-root import
+mapping, protected native library paths and complete privately rechecked Rust
+reproduction in both owned source families. Nine full equations and the complete
+receiving/candidate/refusal sources are UNRUN. Native forward/loan/asset
+integration, physical root/history activation and full translation remain OPEN.

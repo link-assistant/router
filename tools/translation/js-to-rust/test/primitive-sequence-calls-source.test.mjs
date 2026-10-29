@@ -6,6 +6,8 @@ import {join,dirname} from 'node:path';
 import {tmpdir} from 'node:os';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {execFileSync} from 'node:child_process';
+import {translateOwnedOutcomeRust} from '../owned-outcome-rust.mjs';
+import {translateOwnedCancellationRust} from '../owned-cancellation-rust.mjs';
 import * as outcome from '../owned-outcome.mjs';
 import * as cancellation from '../owned-cancellation.mjs';
 import {ownedStateReceivingData} from './owned-state-receiving-data.mjs';
@@ -39,6 +41,7 @@ for(const family of Object.keys(families))for(const [domain,minimum,maximum]of d
  for(const module of modules){assert.throws(()=>module.count([minimum]));for(const index of [-1n,18446744073709551616n,0,NaN])assert.throws(()=>module.element(Object.freeze([minimum]),index));}
  const reissued=api.readOwnedOutcomeMeta(result.meta,{context});assert.equal(api.emitOwnedOutcomeRust(reissued),result.rust);const concrete=api.translateOwnedOutcomeConcreteSyntaxMeta(result.concreteSyntax.meta,{context,sourcePath:'caller.mjs'});assert.equal(concrete.rust,result.rust);
  const typed=api.translateOwnedOutcomeTypeScript(result.typescript,{context:api.createOwnedOutcomeContext(primitiveSequenceReceivingData(family,result.typescript,'caller.mts')),sourcePath:'caller.mts'});assert.ok(sameRustSourceSyntax(typed.rust,result.rust));assert.match(result.rust,/crate::translation_primitive_sequences_core::/u);assert.equal(result.runtimeParity,false);
+ const inverse=(family==='outcome'?translateOwnedOutcomeRust:translateOwnedCancellationRust)(result.rust,{context:api.createOwnedOutcomeContext({...data,files:[...data.files,{path:'caller.rs',source:result.rust}]}),sourcePath:'caller.rs',javascriptPath:'caller.mjs'});assert.ok(sameRustSourceSyntax(result.rust,inverse.rust));assert.equal(inverse.ownedRustSourceHistory.equation.inverse,result.rust);assert.equal(inverse.wholeRouterSynchronization,false);
 });
 for(const family of Object.keys(families))test(family+' original source joins refuse missing root/runtime/declarations, changed wrappers, false profile, wrong domains and unrooted receivers',limits,()=>{
  const api=families[family].api,text=source('u8'),translate=data=>api.translateOwnedOutcomeJavaScript(data.files.find(row=>row.path==='caller.mjs').source,{context:api.createOwnedOutcomeContext(data),sourcePath:'caller.mjs'});
