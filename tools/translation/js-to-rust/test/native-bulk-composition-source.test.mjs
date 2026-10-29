@@ -81,7 +81,7 @@ test('two actual inline modules compose disjoint whole functions into one native
  const outputPaths=plan.outputs.map(row=>row.path);assert.equal(new Set(outputPaths).size,outputPaths.length);for(const module of modules){assert.equal(module.bindings.length,1);assert.equal(module.bindings[0].javascriptName,'pick');}
 });
 test('composed source keeps unsupported siblings and refuses namespace or source changes',limits,()=>{
- const input=data('pub mod good { pub fn answer()->bool { true } }\npub mod retained { pub fn needs_more(value:u32)->u32 { value } }','','');input.vectorBindings=[];const plan=proposeOwnedNativeBulkSynchronization(input);assert.ok(plan.refusals.some(row=>row.name==='retained.needs_more'));const edit=plan.nativeEdits.find(row=>row.path==='src/lib.rs');assert.ok(edit.after.includes('pub fn needs_more(value:u32)->u32 { value }'));
+ const input=data('pub mod good { pub fn answer()->bool { true } }\npub mod retained { pub fn needs_more(value:f64)->f64 { value } }','','');input.vectorBindings=[];const plan=proposeOwnedNativeBulkSynchronization(input);assert.ok(plan.refusals.some(row=>row.name==='retained.needs_more'));const edit=plan.nativeEdits.find(row=>row.path==='src/lib.rs');assert.ok(edit.after.includes('pub fn needs_more(value:f64)->f64 { value }'));
  const changed=structuredClone(input);changed.files.find(row=>row.path==='src/translation_core.rs').source+='\n// changed owner';assert.throws(()=>proposeOwnedNativeBulkSynchronization(changed));assert.throws(()=>proposeOwnedNativeBulkSynchronization(input,{savedProposal:plan}));
 });
 test('complete composed proposals repeat and source equations retain both original phases',limits,()=>{

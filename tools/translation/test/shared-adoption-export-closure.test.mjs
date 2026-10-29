@@ -159,6 +159,8 @@ test('complete committed export carries shared adoption implementations original
  assert.ok(paths.has('tools/translation/prepare-vector-text-scalar-core-sources.mjs'));
  assert.ok(paths.has('tools/translation/prepare-scoped-static-text-sources.mjs'));
  assert.ok(paths.has('tools/translation/prepare-scalar-local-domains-sources.mjs'));
+ assert.ok(paths.has('tools/translation/prepare-wide-scalar-units-sources.mjs'));
+
  assert.ok(paths.has('tools/translation/prepare-selected-native-body-sources.mjs'));
 
  for(const name of ['prepare-native-project-operation-sources.mjs','js-to-rust/owned-native-project-operation.mjs'])assert.ok(paths.has('tools/translation/'+name));

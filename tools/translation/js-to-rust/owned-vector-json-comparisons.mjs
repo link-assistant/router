@@ -6,10 +6,12 @@ const PREDICATE_INVERSE_OPERATIONS=Object.freeze([
 ]);
 export function jsonScalarComparisonOperation(op,{native=false}={}){return PREDICATE_INVERSE_OPERATIONS.find(row=>row.kind!=='logic'&&(native?row.op===op:row.target===op))??null;}
 export function jsonScalarComparisonDomain(type,{native=false}={}){
- if(!native)return ['u64','usize'].includes(type)?'u64':['i64','bool','str'].includes(type)?type:null;
+ if(!native)return type==='usize'?'u64':primitiveBitwiseType(type)?.name??(['bool','str'].includes(type)?type:null);
  if(!type||type.rustReference||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved||type.patternOwnershipRefusal)return null;
  if(type.kind==='bool'&&!type.rustOwnership)return 'bool';
  if(type.kind==='string'&&type.rustOwnership?.kind==='borrowed'&&type.rustOwnership.source==='str')return 'str';
- if(type.kind==='fixed'&&!type.rustOwnership&&['u64','i64'].includes(type.rustPrimitiveName)&&type.bits===64&&type.signed===(type.rustPrimitiveName==='i64'))return type.rustPrimitiveName;
+ const row=primitiveBitwiseType(type.rustPrimitiveName);if(type.kind==='fixed'&&!type.rustOwnership&&row&&type.bits===row.bits&&type.signed===row.signed)return row.name;
  return null;
 }
+
+import {primitiveBitwiseType} from '../primitive-bitwise-types.mjs';

@@ -97,7 +97,7 @@ export function planOwnedVectorUnitSynchronization({root,manifestPath}={}){
 }
 export function applyOwnedVectorUnitSynchronization(serialized,options){return installFreshSourceProposal(serialized,()=>planOwnedVectorUnitSynchronization(options));}
 
-import {ownedCoreRuntimeSources as ownedVectorRuntimeSources} from './js-to-rust/owned-vector-candidate-source.mjs';
+import {ownedBulkRuntimeSources as ownedVectorRuntimeSources} from './js-to-rust/owned-vector-candidate-source.mjs';
 import {proposeOwnedVectorNativeSynchronization} from './js-to-rust/owned-vector-native-synchronization.mjs';
 import {captureSourceUnitGitBaseline,chooseSourceUnitAuthority} from './source-unit-git-baseline.mjs';
 
@@ -133,7 +133,7 @@ export function planOwnedNativeBulkUnitSynchronization({root,manifestPath}={}){
     for(const module of value.modules){
      const javascript=module.bindings[0]?.javascriptPath,typescript=ownedCorePairedTypePath(javascript,receivingPaths,unit.runtimeRoot,unit.declarationRoot);if(!javascript||!typescript||module.bindings.some(row=>row.javascriptPath!==javascript))vectorUnitFailure('complete actual discovered module pair required');
      const path=prefix+'units/'+module.id+'.unit.json',meta=prefix+'units/'+module.id+'.review.json';for(const reserved of [path,meta]){if(physicalInputs.has(reserved)||paths.has(reserved)||outputBefore(root,reserved)!==null)vectorUnitFailure('generated synchronization manifests/reviews require distinct absent targets');physical(reserved,null);inputs.push({path:reserved,source:null});}
-     const descriptor={schema:'router-owned-vector-unit-v1',id:module.id,authority:'JavaScript',javascript,typescript,runtimeRoot:unit.runtimeRoot,declarationRoot:unit.declarationRoot,bindings:module.bindings.map(row=>({javascriptName:row.javascriptName,rustPath:layout.root==='.'?row.rustPath:layout.root+'/'+row.rustPath,rustName:row.rustName})),dependencies:[],meta};add(path,null,JSON.stringify(descriptor)+'\n','generated-source-unit-manifest');unitManifests.push(path);
+     const descriptor={schema:'router-owned-vector-unit-v1',id:module.id,authority:'JavaScript',javascript,typescript,runtimeRoot:unit.runtimeRoot,declarationRoot:unit.declarationRoot,bindings:module.bindings.map(row=>({javascriptName:row.javascriptName,rustPath:layout.root==='.'?row.rustPath:layout.root+'/'+row.rustPath,rustName:row.rustName})),dependencies:[unit.runtimeRoot+'/primitive-operator-runtime.mjs',unit.declarationRoot+'/primitive-operator-runtime.d.mts'],meta};add(path,null,JSON.stringify(descriptor)+'\n','generated-source-unit-manifest');unitManifests.push(path);
     }
     const bulkPath=prefix+'native-bulk-sync.units.json',bulkMeta=prefix+'native-bulk-sync.review.json';for(const reserved of [bulkPath,bulkMeta]){if(physicalInputs.has(reserved)||paths.has(reserved)||outputBefore(root,reserved)!==null)vectorUnitFailure('generated bulk synchronization index/review targets must be distinct and absent');physical(reserved,null);inputs.push({path:reserved,source:null});}
     add(bulkPath,null,JSON.stringify({schema:'router-owned-vector-bulk-unit-v1',id:unit.id,authority:'JavaScript',units:unitManifests,meta:bulkMeta})+'\n','generated-bulk-unit-manifest');

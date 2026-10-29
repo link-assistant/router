@@ -97,7 +97,7 @@ export function planOwnedVectorUnitSynchronization({root,manifestPath}={}){
 }
 export function applyOwnedVectorUnitSynchronization(serialized,options){return installFreshSourceProposal(serialized,()=>planOwnedVectorUnitSynchronization(options));}
 
-import {ownedCoreRuntimeSources as ownedVectorRuntimeSources} from './js-to-rust/owned-vector-candidate-source.mjs';
+import {ownedBulkRuntimeSources as ownedVectorRuntimeSources} from './js-to-rust/owned-vector-candidate-source.mjs';
 import {proposeOwnedVectorNativeSynchronization} from './js-to-rust/owned-vector-native-synchronization.mjs';
 import {captureSourceUnitGitBaseline,chooseSourceUnitAuthority} from './source-unit-git-baseline.mjs';
 

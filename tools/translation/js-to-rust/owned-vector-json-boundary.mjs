@@ -10,12 +10,12 @@ export function jsonVectorInputPrelude(item,rust,imports,{nativeJsonSource=false
  return item.params.map((param,index)=>{
   if(isJson(param.type)){if(!rust)imports.add('router_core_json_copy');return rust?(nativeJsonSource?'    let __ro_json_guard_'+index+' = crate::translation_json_core::json_validate('+(param.type==='json'?'&':'')+param.rust+');':'    __ro_domain(&'+param.rust+');'):'    '+param.name+' = __ro_router_core_json_copy('+param.name+');';}
   if(param.type==='str')return rust?'':'    __ro_vectorTextInput('+param.name+');';
-  if(!['bool','u64','i64'].includes(param.type))fail('unregistered original input');return rust?'':'    '+scalarGuard(param);
+  if(param.type!=='bool'&&!primitiveBitwiseType(param.type))fail('unregistered original input');return rust?'':'    '+scalarGuard(param);
  }).filter(Boolean).join('\n');
 }
 export function validateJsonVectorInputs(item,scope,modules){
  if(!isJsonVector(item))return;
- for(const param of item.params){const value=scope.get(param.name);if(isJson(param.type))scope.set(param.name,modules.update.router_core_json_copy(value));else if(param.type==='str'){requireScalarString(value);}else if(param.type==='bool'){if(typeof value!=='boolean')fail('actual bool input required');}else if(['u64','i64'].includes(param.type)){const bounds=vectorScalarBounds(param.type);if(typeof value!=='bigint'||value<bounds.minimum||value>bounds.maximum)fail('actual bounded integer input required');}else fail('unregistered actual JSON-vector input');}
+ for(const param of item.params){const value=scope.get(param.name);if(isJson(param.type))scope.set(param.name,modules.update.router_core_json_copy(value));else if(param.type==='str'){requireScalarString(value);}else if(param.type==='bool'){if(typeof value!=='boolean')fail('actual bool input required');}else if(primitiveBitwiseType(param.type)){const bounds=vectorScalarBounds(param.type);if(typeof value!=='bigint'||value<bounds.minimum||value>bounds.maximum)fail('actual bounded integer input required');}else fail('unregistered actual JSON-vector input');}
 }
 export function consumeJsonVectorInputPrelude(analysis,declaration,params,resolveImport,profile){
  const {ts,checker,file}=analysis,body=declaration.body.statements;if(!['json-vector','json-value','json-scalar','primitive-scalar'].includes(profile?.kind)||!params.length||!body.length)return body;
@@ -41,3 +41,5 @@ export function consumeJsonVectorInputPrelude(analysis,declaration,params,resolv
 import {vectorScalarBounds,vectorParameterPrelude} from './owned-vector-parameter-values.mjs';
 
 import {requireScalarString} from '../extensions/string-iterator-runtime.mjs';
+
+import {primitiveBitwiseType} from '../primitive-bitwise-types.mjs';

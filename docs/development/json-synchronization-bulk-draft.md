@@ -191,3 +191,11 @@ unrelated primitive vectors, in
 ALL UNRUN. Missing callees and unselected mixed contexts remain refused. Broader
 source families and complete receiving/resource/platform/CI qualification remain
 OPEN; no runtime parity or executable coverage is claimed.
+
+All registered by-value fixed-width pure scalar domains are drafted through
+actual original/lowered ABI joins, contextual bounded literals, locals, exact
+comparisons, pure helper closure and qualified optional runtime declarations in
+[wide-scalar-units-source-draft.md](wide-scalar-units-source-draft.md). ALL UNRUN.
+Bulk runtime materialization records the additional source dependencies. Operator
+effects, pointer/float/aggregate/ownership extensions and complete receiving/
+resource/platform/CI qualification remain OPEN; no coverage result is claimed.

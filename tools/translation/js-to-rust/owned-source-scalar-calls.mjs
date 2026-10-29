@@ -25,7 +25,7 @@ export function scalarSourceCallSummary(item){
   if(++cells>100000||depth>160)callFail('bounded complete source-call tree required');if(!value||typeof value!=='object')return;
   if(Array.isArray(value)){for(const child of value)visit(child,depth+1);return;}
   if(value.kind==='source-scalar-call'){
-   const callee=value.callee,keys=['path','javascript','rust','localRust','parameters','returns','span'];if(!callee||Object.keys(callee).length!==keys.length||keys.some(key=>!Object.hasOwn(callee,key))||callee.path!==item.source.path||typeof callee.javascript!=='string'||typeof callee.rust!=='string'||typeof callee.localRust!=='string'||!Array.isArray(callee.parameters)||callee.parameters.length>32||callee.parameters.some(type=>!['bool','u64','i64','str'].includes(type))||!['bool','u64','i64'].includes(callee.returns)||!Array.isArray(callee.span)||callee.span.length!==2||!callee.span.every(Number.isSafeInteger)||!Array.isArray(value.args)||value.args.length!==callee.parameters.length||value.type!==callee.returns||value.root!==null||calls.length>=16384)callFail('complete exact primitive source-call descriptor required');calls.push(callee);
+   const callee=value.callee,keys=['path','javascript','rust','localRust','parameters','returns','span'];if(!callee||Object.keys(callee).length!==keys.length||keys.some(key=>!Object.hasOwn(callee,key))||callee.path!==item.source.path||typeof callee.javascript!=='string'||typeof callee.rust!=='string'||typeof callee.localRust!=='string'||!Array.isArray(callee.parameters)||callee.parameters.length>32||callee.parameters.some(type=>!['bool','str'].includes(type)&&!primitiveBitwiseType(type))||callee.returns!=='bool'&&!primitiveBitwiseType(callee.returns)||!Array.isArray(callee.span)||callee.span.length!==2||!callee.span.every(Number.isSafeInteger)||!Array.isArray(value.args)||value.args.length!==callee.parameters.length||value.type!==callee.returns||value.root!==null||calls.length>=16384)callFail('complete exact primitive source-call descriptor required');calls.push(callee);
   }
   for(const [key,child]of Object.entries(value))if(key!=='callee')visit(child,depth+1);
  }
@@ -45,3 +45,5 @@ export function nativeScalarSourceCallTarget(node,index,lowered){
  if(node.k!=='call'||target?.k!=='fn'||target.async||target.params?.length!==callee.parameters.length||node.args?.length!==callee.parameters.length||jsonScalarComparisonDomain(node.type,{native:true})!==callee.returns||jsonScalarComparisonDomain(target.ret,{native:true})!==callee.returns||callee.parameters.some((type,index)=>jsonScalarComparisonDomain(node.args[index].type,{native:true})!==type||jsonScalarComparisonDomain(target.params[index].type,{native:true})!==type))callFail('actual resolved native source callee/argument/return ABI differs');return callee;
 }
 import {types} from 'node:util';
+
+import {primitiveBitwiseType} from '../primitive-bitwise-types.mjs';

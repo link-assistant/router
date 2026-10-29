@@ -23,7 +23,7 @@ export function selectNativeProjectionClosure(input){
    try{
     for(const call of row.calls){
      const target=rows.get(call.rust);
-     if(!target||target.unit.kind!=='primitive-scalar'||!['bool','u64','i64'].includes(target.unit.returns)||target.unit.parameters.length!==call.arity)fail('complete same-module primitive helper source is absent');
+     if(!target||target.unit.kind!=='primitive-scalar'||target.unit.returns!=='bool'&&!primitiveBitwiseType(target.unit.returns)||target.unit.parameters.length!==call.arity)fail('complete same-module primitive helper source is absent');
      const child=cost(target,depth+1);cells+=child.cells;height=Math.max(height,child.height+1);if(cells>100000||depth+height>31)fail('expanded helper work or depth budget exceeded');
     }
     const result={cells,height};costs.set(key,result);return result;
@@ -34,3 +34,5 @@ export function selectNativeProjectionClosure(input){
   return {admitted,refusals,sourceAuthority:false,semanticAuthority:false,crossInvocationCache:false};
  }finally{index.clear();rows.clear();active.clear();costs.clear();}
 }
+
+import {primitiveBitwiseType} from '../primitive-bitwise-types.mjs';

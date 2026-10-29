@@ -34,6 +34,7 @@ export function projectNativeTreeModule(input,options={}){
   if(role==='json-list-owned')return 'readonly JsonValue[]';
   if(role==='bool')return 'boolean';if(role==='str')return 'string';
   if(['u64','i64'].includes(role))return 'Parameters<typeof '+imported('json_macro_'+role,'json-macro',true)+'>[0]';
+  const row=primitiveBitwiseType(role);if(row){const local=imported(row.alias,'primitive-operator',true);return local;}
   fail('explicit qualified public ABI needed for '+role);
  }
  function operation(name){
@@ -65,7 +66,7 @@ export function projectNativeTreeModule(input,options={}){
     if(kind==='parameter'){if(node.length!==2||!Number.isSafeInteger(a)||!unit.parameters[a])fail('actual parameter index required');return unit.parameters[a].name;}
     if(kind==='bool'&&typeof a==='boolean'&&node.length===2)return String(a);
     if(kind==='str'&&typeof a==='string'&&node.length===2&&!/\p{Surrogate}/u.test(a))return JSON.stringify(a);
-    if(kind==='integer'&&['u64','i64'].includes(a)&&typeof b==='string'&&/^-?(?:0|[1-9][0-9]{0,19})$/u.test(b)&&node.length===3){const value=BigInt(b);if(value<(a==='u64'?0n:-9223372036854775808n)||value>(a==='u64'?18446744073709551615n:9223372036854775807n))fail('integer outside original bounds');if(a==='i64'&&value>=0n){const name=allocate('native_scalar_'+sequence++);literalDeclarations.push('const '+name+': '+type('i64')+' = '+b+'n;');return name;}return b+'n';}
+    if(kind==='integer'&&primitiveBitwiseType(a)&&typeof b==='string'&&/^-?(?:0|[1-9][0-9]{0,38})$/u.test(b)&&node.length===3){const value=BigInt(b),row=primitiveBitwiseType(a);if(value<(row.signed?-BigInt(row.minimumAbs):0n)||value>BigInt(row.maximum))fail('integer outside original bounds');if(a!=='u64'){const name=allocate('native_scalar_'+sequence++);literalDeclarations.push('const '+name+': '+type(a)+' = '+b+'n;');return name;}return b+'n';}
     if(kind==='effect'){
      if(names.has(a))return names.get(a);if(a<cursor||uses.get(a)!==1||!owned(descriptors[a]?.role))fail('owned effect requires one ordered source consumer');
      const output=call(a,level+1);if(cursor!==a)fail('nested owned operands must preserve every preceding effect');cursor++;return output;
@@ -73,7 +74,7 @@ export function projectNativeTreeModule(input,options={}){
     if(kind==='source-call'&&node.length===3){const target=nativeTargets.get(a);if(!target||target.kind!=='primitive-scalar'||!Array.isArray(b)||b.length!==target.parameters.length)fail('complete actual same-module helper source needed');return target.name+'('+b.map(value=>expression(value,level+1)).join(', ')+')';}
     if(kind==='not'&&node.length===2)return '(!'+expression(a,level+1)+')';
     if(['and','or'].includes(kind)&&node.length===3){const containsEffect=value=>Array.isArray(value)&&(value[0]==='effect'||value.slice(1).some(containsEffect));if(containsEffect(a)||containsEffect(b))fail('conditional effect placement needs an explicit control rule');return '('+expression(a,level+1)+(kind==='and'?' && ':' || ')+expression(b,level+1)+')';}
-    if(kind==='compare'&&node.length===5){const op={eq:'===',ne:'!==',lt:'<',le:'<=',gt:'>',ge:'>='}[a];if(!op||!['bool','str','u64','i64'].includes(b))fail('explicit original comparison required');return '('+expression(c,level+1)+' '+op+' '+expression(d,level+1)+')';}
+    if(kind==='compare'&&node.length===5){const op={eq:'===',ne:'!==',lt:'<',le:'<=',gt:'>',ge:'>='}[a];if(!op||!['bool','str'].includes(b)&&!primitiveBitwiseType(b))fail('explicit original comparison required');return '('+expression(c,level+1)+' '+op+' '+expression(d,level+1)+')';}
     if(kind==='choose'&&node.length===4)return '('+expression(a,level+1)+' ? '+expression(b,level+1)+' : '+expression(c,level+1)+')';
     if(kind==='some'&&node.length===2)return '('+expression(a,level+1)+'.$ === "Some")';
     if(kind==='payload'&&node.length===2)return expression(a,level+1)+'.field0';
@@ -88,7 +89,7 @@ export function projectNativeTreeModule(input,options={}){
    for(let index=cursor;index<events.length;index++){
     const descriptor=descriptors[index];if(owned(descriptor.role))continue;
     const output=call(index,depth+1);if(cursor!==index)fail('source emission would reorder a native effect');cursor++;
-    if(descriptor.role==='unit')lines.push(output+';');else{const name=allocate('native_effect_'+sequence++),annotation=['u64','i64'].includes(descriptor.role)?': '+type(descriptor.role):'';names.set(index,name);lines.push('const '+name+annotation+' = '+output+';');}
+    if(descriptor.role==='unit')lines.push(output+';');else{const name=allocate('native_effect_'+sequence++),annotation=primitiveBitwiseType(descriptor.role)?': '+type(descriptor.role):'';names.set(index,name);lines.push('const '+name+annotation+' = '+output+';');}
    }
    if(terminal?.[0]==='if'){
     const condition=expression(terminal[1],depth+1);if(cursor!==events.length)fail('owned effects before a branch need a preserving local rule');
@@ -112,3 +113,5 @@ export function projectNativeTreeModule(input,options={}){
   ]).run(null);return {...run.value,trace:run.trace};
  }finally{imports.clear();typeImports.clear();allocated.clear();nativeTargets.clear();}
 }
+
+import {primitiveBitwiseType} from '../primitive-bitwise-types.mjs';
