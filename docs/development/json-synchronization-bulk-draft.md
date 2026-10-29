@@ -120,3 +120,11 @@ Qualified scalar local domains and type-only emission witnesses are source
 drafted to preserve u64/i64 locals across canonical receiving cycles. All six
 form authority/boundary/symbol/refusal/repeat-sync cases remain UNRUN; see
 [the source contract](scalar-local-domains-source-draft.md).
+
+Automatic native module discovery source draft: fresh actual source/declaration
+joins, finite ordered-body source substitutions, qualified signed literal locals,
+complete receiving/meta/native rechecks, preserved refusals and uninstalled
+js/src + ts/src module proposals are drafted in
+[native-bulk-discovery-source-draft.md](native-bulk-discovery-source-draft.md).
+ALL UNRUN. Shared-file batch composition, atomic adoption, source-call discovery,
+broader ABI/control/ownership families and full qualification remain OPEN.

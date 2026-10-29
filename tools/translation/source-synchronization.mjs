@@ -212,3 +212,5 @@ export {proposeOwnedVectorNativeSynchronization} from './js-to-rust/owned-vector
 export {prepareOwnedVectorJavaScriptPair} from './js-to-rust/owned-vector-javascript-pair.mjs';
 
 export {planOwnedVectorUnitSynchronization,applyOwnedVectorUnitSynchronization} from './owned-vector-unit-synchronization.mjs';
+
+export {proposeOwnedNativeBulkDiscovery} from './js-to-rust/owned-native-bulk-discovery.mjs';

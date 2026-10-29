@@ -159,6 +159,7 @@ test('complete committed export carries shared adoption implementations original
  assert.ok(paths.has('tools/translation/prepare-vector-text-scalar-core-sources.mjs'));
  assert.ok(paths.has('tools/translation/prepare-scoped-static-text-sources.mjs'));
  assert.ok(paths.has('tools/translation/prepare-scalar-local-domains-sources.mjs'));
+ for(const name of ['prepare-native-bulk-discovery-sources.mjs','js-to-rust/owned-native-tree-source.mjs','js-to-rust/owned-native-bulk-discovery.mjs'])assert.ok(paths.has('tools/translation/'+name));
  assert.ok(paths.has('tools/translation/js-to-rust/owned-vector-text-scalars.mjs'));
  assert.ok(paths.has('tools/translation/js-to-rust/owned-source-scalar-calls.mjs'));
  assert.ok(paths.has('tools/translation/js-to-rust/owned-vector-json-comparisons.mjs'));
@@ -222,3 +223,5 @@ test('complete committed export carries shared adoption implementations original
  const receiver=join(directory,'receiving');mkdirSync(join(receiver,'js'),{recursive:true});const require=createRequire(join(root,'js/package.json'));symlinkSync(join(require.resolve('typescript/package.json'),'../..'),join(receiver,'js/node_modules'),'dir');writeFileSync(join(receiver,'Cargo.toml'),readFileSync(repositorySourceURL('Cargo.toml',new URL('../../../',import.meta.url))));writeFileSync(join(receiver,'Cargo.lock'),readFileSync(repositorySourceURL('Cargo.lock',new URL('../../../',import.meta.url))));const probe=join(receiver,'probe.mjs');writeFileSync(probe,readFileSync(new URL('./fixtures/receiving-shared-adoption.mjs',import.meta.url)));
  const actual=JSON.parse(execFileSync(process.execPath,['--max-old-space-size=1792',probe,bundle.destination,receiver],{cwd:receiver,env:{...process.env,ROUTER_NATIVE_TS_SOURCE_ROOT:receiver},encoding:'utf8',timeout:30000,maxBuffer:1024*1024}));assert.equal(actual.schema,'shared-adoption-receiving-source-v1');assert.deepEqual(actual.receipts.map(row=>[row.stage,row.edits]),[['integer-methods',2],['text-methods',1],['primitive-option-methods',1],['primitive-option-callback-methods',2],['primitive-result-methods',2],['owned-result-methods',2],['json-loops',1]]);for(const row of actual.receipts){assert.equal(row.wholeSourceInverse,true);assert.equal(row.concreteSourceRoundtrip,true);assert.equal(row.sourceAuthority,false);assert.equal(row.semanticAuthority,false);assert.equal(row.executableAdmission,false);}assert.equal(actual.runtimeParity,false);assert.equal(actual.wholeRouterSynchronization,false);
 });
+
+// Bulk discovery producer/receiver closure remains UNRUN.
