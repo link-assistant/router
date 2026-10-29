@@ -771,3 +771,10 @@ and runtime/declaration proposals, and complete source/census observations.
 Five complete equations and independent tamper/lifecycle/mirroring/refusal cases
 are UNRUN. Private caller/ABI/loan checks, actual root activation and full
 translator/runtime registration remain OPEN; observations grant no authority.
+
+The [current primitive sequence source draft](current-primitive-sequence-source-draft.md)
+shares fresh source parsing inside one bounded operation and joins complete
+actual JavaScript wrappers to their native function signatures and bodies.
+Three complete equations and independent all-operation/source/refusal/lifecycle
+cases are UNRUN. Actual caller/type/owner/loan admission and all integration
+remain OPEN; source observations are never executable permits.
