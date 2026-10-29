@@ -244,6 +244,7 @@ function originalOwnedCoreType(handle,path,type,analysis){
   const query=type.objectType.typeArguments[0];
   if(ts.isTypeQueryNode(query)&&ts.isIdentifier(query.exprName)){
    const binding=originalOwnedCoreImport(handle,path,query.exprName,analysis);
+   const scalarConstructor=OPS[binding.name];if(binding.target===state.data.runtimeRoot+'/json-macro-runtime.mjs'&&['json_macro_bool','json_macro_string','json_macro_u64','json_macro_i64'].includes(binding.name)&&scalarConstructor&&Number(type.indexType.literal.text)<scalarConstructor.args.length)return scalarConstructor.args[Number(type.indexType.literal.text)];
    const textScalar=ownedVectorTextScalarOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'&&textScalar&&Number(type.indexType.literal.text)<textScalar.args.length)return textScalar.args[Number(type.indexType.literal.text)];
    const base64=ownedBase64Operation(binding.name);if(binding.target===state.data.runtimeRoot+'/base64-runtime.mjs'&&base64&&type.indexType.literal.text==='0')return base64.input;
    const field=ownedVectorJsonFieldOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/json-fields-runtime.mjs'&&field&&Number(type.indexType.literal.text)<field.args.length)return field.args[Number(type.indexType.literal.text)];
@@ -526,7 +527,7 @@ function checkFunctionBody(context,path,declaration,analysis){
    if(ts.isVariableStatement(statement)){
     if(statement.modifiers?.length||(statement.declarationList.flags&ts.NodeFlags.BlockScoped)!==ts.NodeFlags.Const)fail('only fresh immutable local declarations');
     for(const declaration of statement.declarationList.declarations){
-     if(!declaration.initializer||declaration.exclamationToken||declaration.type)fail('unsupported local declaration');const value=expression(declaration.initializer,scope,depth+1);
+     if(!declaration.initializer||declaration.exclamationToken||declaration.type)fail('unsupported local declaration');let value=expression(declaration.initializer,scope,depth+1);
      if(paired){
       const evidence=paired.evidence.locals.filter(item=>item.javascriptSpan[0]===declaration.getStart(file)&&item.javascriptSpan[1]===declaration.end);if(evidence.length!==1)fail('actual paired local span differs');
       const span=evidence[0].typeSpan;
@@ -534,6 +535,7 @@ function checkFunctionBody(context,path,declaration,analysis){
        let actual;const find=node=>{if(ts.isVariableDeclaration(node)&&node.getStart(paired.analysis.file)===evidence[0].typescriptSpan[0]&&node.end===evidence[0].typescriptSpan[1])actual=node;ts.forEachChild(node,find);};find(paired.declaration.body);
        if(!actual?.type||actual.type.getStart(paired.analysis.file)!==span[0]||actual.type.end!==span[1])fail('actual paired local type differs');
        const written=originalOwnedCoreType(context,paired.pair.typescript.path,actual.type,paired.analysis);
+       if(jsonVectorProfile&&!nativeScalars&&['u64','i64'].includes(written)){value=scalarReturnLiteral(value,scope,depth+1);narrowOwnedNumericLiteral(value,written);}
        if(written==='json-ref'?!json(value.type):!writtenCompatible(value.type,written))fail('paired written local ABI differs');
       }
      }

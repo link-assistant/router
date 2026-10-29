@@ -115,3 +115,8 @@ Closed-family conditional text aliases now have source-drafted joins through
 actual immutable lexical facts and the original branch/root meet rule. All
 Unicode/JSON/authority/refusal/repeat-sync cases remain UNRUN; see
 [the source contract](scoped-static-text-source-draft.md).
+
+Qualified scalar local domains and type-only emission witnesses are source
+drafted to preserve u64/i64 locals across canonical receiving cycles. All six
+form authority/boundary/symbol/refusal/repeat-sync cases remain UNRUN; see
+[the source contract](scalar-local-domains-source-draft.md).
