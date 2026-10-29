@@ -366,6 +366,11 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,ge
    if(kind!=='json')refuse('JSON construction requires its actual canonical result',node);
    for(const argument of node.args){const value=argument.value;if(!value?.k)refuse('missing checked JSON interpolation',node);read(value,value.k==='var'?'borrow':'move');}return empty();
   }
+  const totalOperands=totalPrimitiveFlowOperands(node);
+  if(totalOperands!==null){
+   if(kind!=='copy')refuse('total primitive operation needs an actual Copy result',node);
+   for(const argument of totalOperands){if(domain(argument.type,argument)!=='copy')refuse('total primitive operation cannot hide owned JSON movement',argument);const value=read(argument);ensureRoots(value,state,argument);if(value.loans.size)refuse('total fixed primitive operation cannot retain a JSON text loan',argument);}return empty();
+  }
   if(node.k==='routerHostCall'){
    if(['router_core_unicode_scalar_count','router_core_ascii_chars_in'].includes(node.id)){if(typeof genuineScalar!=='function'||genuineScalar(node,state.entry)!==true||kind!=='copy'||node.args.length!==(node.id==='router_core_unicode_scalar_count'?1:2)||node.args.some(argument=>argument.type?.kind!=='string'||argument.type.rustReference||argument.type.rustOwnership?.kind!=='borrowed'||argument.type.rustOwnership.source!=='str'||argument.type.patternOwnershipRefusal||domain(argument.type,argument)!=='copy'))refuse('text scalar operation requires its actual private original caller/library receipt',node);for(const argument of node.args)ensureRoots(read(argument,'borrow'),state,argument);return empty();}
    const stateOperation=jsonStateContract(node.id);
@@ -516,3 +521,5 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,ge
  };
  let result=visit(entry.body,state);for(const returned of state.functionReturns)result=union(result,returned);returnRoots(result,entry,state);return result;
 }
+
+import {totalPrimitiveFlowOperands} from './extensions/total-primitive-flow.mjs';

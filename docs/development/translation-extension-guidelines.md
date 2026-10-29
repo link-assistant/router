@@ -944,3 +944,10 @@ dependency joins in
 [readonly-text-helpers-source-draft.md](readonly-text-helpers-source-draft.md).
 ALL UNRUN. Guarded payload/loan roots remain mandatory. Cross-module/effect/
 ownership/aggregate expansion and full drafting/qualification remain OPEN.
+
+The actual native JSON ownership walk now has source rules for total fixed scalar
+operators and methods, retaining eager Copy-only operands, live-root checks and
+existing source proofs, in
+[json-total-scalar-flow-source-draft.md](json-total-scalar-flow-source-draft.md).
+ALL UNRUN. Failure-order families and broader effects/ownership/aggregate/route
+work, full drafting and complete receiving/coverage/parity/CI remain OPEN.
