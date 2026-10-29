@@ -36,6 +36,7 @@ function domain(own,lowered){
  * Failures retain actual function identities and never become coverage counts.
  */
 export function proposeOwnedNativeRefreshDiscovery(data,routing){
+ return withOwnedNativeProjectOperation(()=>{
  const original=ownedPlainData(data),settings=ownedPlainData(routing),routes=new Map(),targetPaths=new Set();
  if(!Array.isArray(settings)||!settings.length||settings.length>256)fail('bounded nonempty complete current module routes required');
  if(original.primitiveOperators===true)fail('separate primitive-operator refresh rules remain open');
@@ -126,4 +127,8 @@ export function proposeOwnedNativeRefreshDiscovery(data,routing){
   let fenceError,failed=false;for(const context of [start,...contexts])try{requireOwnedCoreSourceCurrent(context);}catch(error){if(!failed){failed=true;fenceError=error;}}
   files.clear();groups.clear();routes.clear();targetPaths.clear();contexts.length=0;project=null;if(!primaryFailed&&failed)throw fenceError;
  }
+
+ });
 }
+
+import {withOwnedNativeProjectOperation} from './owned-native-project-operation.mjs';

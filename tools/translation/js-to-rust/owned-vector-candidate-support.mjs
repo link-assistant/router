@@ -33,8 +33,7 @@ export function captureOriginalOwnedVectorProfiles(data,path){
  // No public saved checked/meta projection is read. The actual freshly returned
  // checkedSource closure closes over the original same-invocation checked
  // program and parsed signature. Target lowering supplies portable shape only.
- const dependencyInputs={manifest:files.get('Cargo.toml'),lock:files.get('Cargo.lock')},jsonMacroDependencies=jsonMacroDependencyProfile(dependencyInputs).proof,deriveDependencies=deriveDependencyProfile(dependencyInputs).proof;
- let result;try{result=translateProject({jsonMacroDependencies,deriveDependencies,entry:'src/lib.rs',paths,readSource:name=>{if(!files.has(name))fail('missing actual Rust source');return files.get(name);},compilationProfile:PRODUCTION_PROFILE,cargoManifest:files.get('Cargo.toml')});
+ let result;try{result=readOwnedNativeProjectForSource(data.files);
  const sourceCensus=ownedVectorOriginalProjectCensus(result);
  for(const binding of selected){
   const candidates=result.executableDeclarations.filter(row=>row.source===binding.rustPath&&row.qualifiedName===binding.rustName);if(candidates.length!==1)fail('actual original executable Rust function is absent or ambiguous');const original=candidates[0],source=files.get(original.source);if(typeof source!=='string'||original.sourceSha256!==hash(source)||typeof original.lower!=='function'||typeof original.checkedSource!=='function')fail('fresh actual original source/carrier differs');
@@ -112,3 +111,6 @@ export function ownedVectorOriginalProjectCensus(result){
 
 import {checkedOwnedJsonVectorTail,checkedOwnedJsonValueTail,checkedOwnedJsonScalarTail} from './owned-vector-json-origin-tail.mjs';
 import {BOUNDED_JSON_CORE_SHA256} from '../bounded-json-core-source-data.mjs';
+
+import {createOwnedNativeProjectReader} from './owned-native-project-operation.mjs';
+const readOwnedNativeProjectForSource=createOwnedNativeProjectReader();

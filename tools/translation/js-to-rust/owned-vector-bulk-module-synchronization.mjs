@@ -17,6 +17,7 @@ const fail=message=>{throw new TypeError('Receiving bulk composition: '+message)
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b),hash=source=>createHash('sha256').update(source).digest('hex');
 /** Recompute discovery and every complete source join; no proposal parameter. */
 export function proposeOwnedVectorBulkModuleSynchronization(data,requests){
+ return withOwnedNativeProjectOperation(()=>{
  const original=ownedPlainData(data),settings=ownedPlainData(requests),start=createOwnedCoreSourceContext(original),files=new Map(original.files.map(row=>[row.path,row.source])),after=new Map(files),contexts=[],edits=new Map(),generated=new Map();
  let discovered,beforeProject,afterProject,primaryFailed=false;
  const compile=sources=>{const dependency={manifest:sources.get('Cargo.toml'),lock:sources.get('Cargo.lock')};return translateProject({entry:'src/lib.rs',paths:[...sources.keys()].filter(path=>path.endsWith('.rs')).sort(),readSource:path=>sources.get(path),compilationProfile:PRODUCTION_PROFILE,cargoManifest:dependency.manifest,jsonMacroDependencies:jsonMacroDependencyProfile(dependency).proof,deriveDependencies:deriveDependencyProfile(dependency).proof});};
@@ -83,4 +84,8 @@ export function proposeOwnedVectorBulkModuleSynchronization(data,requests){
   let failed=false,fenceError;for(const context of [start,...contexts])try{requireOwnedCoreSourceCurrent(context);}catch(error){if(!failed){failed=true;fenceError=error;}}
   files.clear();after.clear();edits.clear();generated.clear();contexts.length=0;discovered=null;beforeProject=null;afterProject=null;if(!primaryFailed&&failed)throw fenceError;
  }
+
+ });
 }
+
+import {withOwnedNativeProjectOperation} from './owned-native-project-operation.mjs';

@@ -30,6 +30,7 @@ function originalHeader(item){
 }
 const requestedItems=item=>['json-vector','json-value','json-scalar','primitive-scalar'].includes(item.vectorOrigin?.kind)?requestedNativeJsonVectorTree(item):requestedNativeVectorTree(item),actualItems=(own,item,lowered)=>['json-vector','json-value','json-scalar','primitive-scalar'].includes(item.vectorOrigin?.kind)?actualNativeJsonVectorTree(own,item,lowered):actualNativeVectorTree(own,item),nativeBody=item=>['json-vector','json-value','json-scalar','primitive-scalar'].includes(item.vectorOrigin?.kind)?emitNativeJsonVectorControlBody(item):emitNativeVectorControlBody(item);
 export function proposeOwnedVectorNativeSynchronization(data,options){
+ return withOwnedNativeProjectOperation(()=>{
  const original=ownedPlainData(data),start=createOwnedCoreSourceContext(original),files=new Map(original.files.map(row=>[row.path,row.source]));let primaryFailed=false,proposal,program,after,checked;
  try{
   const run=createRulePipeline([
@@ -42,8 +43,12 @@ export function proposeOwnedVectorNativeSynchronization(data,options){
  }catch(error){primaryFailed=true;throw error;}finally{
   let failed=false,error;try{requireOwnedCoreSourceCurrent(start);}catch(value){failed=true;error=value;}finally{files.clear();after?.clear();program=null;checked=null;proposal=null;}if(!primaryFailed&&failed)throw error;
  }
+
+ });
 }
 
 import {requestedNativeVectorTree,actualNativeVectorTree,emitNativeVectorControlBody} from './owned-vector-native-control.mjs';
 
 import {requestedNativeJsonVectorTree,actualNativeJsonVectorTree,emitNativeJsonVectorControlBody} from './owned-vector-native-json-control.mjs';
+
+import {withOwnedNativeProjectOperation} from './owned-native-project-operation.mjs';

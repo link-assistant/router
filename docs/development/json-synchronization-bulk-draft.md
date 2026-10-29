@@ -175,3 +175,11 @@ positional body comparisons and genuine receiving source reconstruction in
 Prior argument spellings are CST/AST proposals only. ALL UNRUN. Wider source,
 control/operator/ABI/ownership families and complete receiving/performance/CI
 qualification remain OPEN; no actual coverage or parity is claimed.
+
+Bounded original-native-project sharing inside one synchronous operation is
+drafted with consumer-private reader identities, exact byte/profile/proof joins,
+fresh source/dependency closing fences and no retained cross-operation state in
+[native-project-operation-source-draft.md](native-project-operation-source-draft.md).
+ALL UNRUN. Independent receiving/meta checks and fresh proposed-native checks
+remain required. Timing, memory, receiving qualification and all broader source
+requirements remain OPEN; counters are diagnostic DATA, never admission evidence.

@@ -35,6 +35,7 @@ function domain(own,lowered){
  * Failures retain actual function identities and never become coverage counts.
  */
 export function proposeOwnedNativeBulkDiscovery(data,options={}){
+ return withOwnedNativeProjectOperation(()=>{
  const original=ownedPlainData(data),settings=ownedPlainData(options),allowed=['javascriptRoot','typescriptRoot'];
  if(Object.keys(settings).some(key=>!allowed.includes(key)))fail('unknown discovery option');
  if(original.primitiveOperators===true)fail('separate primitive-operator discovery rules remain open');
@@ -114,4 +115,8 @@ export function proposeOwnedNativeBulkDiscovery(data,options={}){
   let fenceError,failed=false;for(const context of [start,...contexts])try{requireOwnedCoreSourceCurrent(context);}catch(error){if(!failed){failed=true;fenceError=error;}}
   files.clear();groups.clear();contexts.length=0;project=null;if(!primaryFailed&&failed)throw fenceError;
  }
+
+ });
 }
+
+import {withOwnedNativeProjectOperation} from './owned-native-project-operation.mjs';
