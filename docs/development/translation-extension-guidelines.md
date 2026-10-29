@@ -870,3 +870,11 @@ Initial adoption records bindings automatically; repeat planning reloads actual
 source, manifests, runtime and Git baselines before private semantic rechecks.
 Rust-authoritative refresh of existing modules, wider source families and complete
 receiving/performance/platform/CI qualification remain OPEN.
+
+Existing-module Rust-authoritative refresh is drafted through fresh actual
+source/signature/body discovery, receiving/meta/native rechecks, both TS suffixes,
+shared-file composition and physical binding-manifest updates in
+[native-bulk-refresh-source-draft.md](native-bulk-refresh-source-draft.md).
+ALL UNRUN. Present unsupported functions cannot silently disappear; empty or
+removed whole modules refuse. Whole-route additions/removals, broader source
+families, actual coverage and complete qualification remain OPEN.

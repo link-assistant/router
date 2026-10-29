@@ -159,6 +159,7 @@ test('complete committed export carries shared adoption implementations original
  assert.ok(paths.has('tools/translation/prepare-vector-text-scalar-core-sources.mjs'));
  assert.ok(paths.has('tools/translation/prepare-scoped-static-text-sources.mjs'));
  assert.ok(paths.has('tools/translation/prepare-scalar-local-domains-sources.mjs'));
+ for(const name of ['prepare-native-bulk-refresh-sources.mjs','js-to-rust/owned-native-refresh-discovery.mjs','js-to-rust/owned-native-bulk-module-refresh.mjs'])assert.ok(paths.has('tools/translation/'+name));
  for(const name of ['prepare-vector-bulk-unit-sources.mjs','owned-vector-bulk-unit-synchronization.mjs','source-units/native-bulk.json'])assert.ok(paths.has('tools/translation/'+name));
  assert.ok(paths.has('scripts/sync-router-vector-bulk.mjs'));
  for(const name of ['prepare-vector-bulk-module-sources.mjs','js-to-rust/owned-vector-bulk-module-synchronization.mjs'])assert.ok(paths.has('tools/translation/'+name));
