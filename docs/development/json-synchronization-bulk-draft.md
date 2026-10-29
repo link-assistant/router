@@ -378,3 +378,8 @@ primitive definition source-family draft in
 [primitive-definition-profile-source-draft.md](primitive-definition-profile-source-draft.md).
 ALL UNRUN. Both new-function consumers select it; the mode is never an issuer
 or source/type permission. Defaults and full drafting/qualification remain OPEN.
+
+Receiving-function deletion has an original-source API and regression source
+draft in [primitive-function-removal-source-draft.md](primitive-function-removal-source-draft.md).
+ALL UNRUN. Retained callers update before exact native removals. Bulk/physical
+integration, mixed reconciliation and full translation remain OPEN.
