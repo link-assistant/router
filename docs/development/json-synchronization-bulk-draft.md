@@ -314,3 +314,9 @@ continuation source substitutions in
 [native-fallthrough-control-source-draft.md](native-fallthrough-control-source-draft.md).
 ALL UNRUN. This explicitly supersedes the earlier blanket falling-branch refusal;
 arbitrary effects, mutation, loops and full drafting/qualification remain OPEN.
+
+Genuinely empty active Rust modules now have paired receiving clear/repeat/restore
+source drafts, including physical manifests and durable native route coordinates,
+in [native-empty-modules-source-draft.md](native-empty-modules-source-draft.md).
+ALL UNRUN. Deleted or removed scopes, nonempty unsupported modules, receiving
+insertion from empty units and full drafting/qualification remain OPEN.

@@ -109,10 +109,15 @@ export function proposeOwnedNativeRefreshDiscovery(data,routing){
       const nativeEquations=transportConcreteSourceEquations(synchronized.rustEdits.map(row=>({before:row.before,after:row.after,language:'Rust'})));
       for(const row of synchronized.rustEdits)retainedBytes+=Buffer.byteLength(row.after);
       if(retainedBytes>16777216)fail('retained complete bulk source proposal byte budget');
-      projections.push({id:group.id,rustSource:group.source,module:group.module,bindings,outputs,nativeProposal:synchronized.rustEdits.map((row,index)=>({...row,history:nativeEquations[index]})),selectedNativeSourceRechecked:true,originalOrderedBodiesReproduced:true,nativeInstalled:false,receivingExecuted:false,runtimeParity:false});
+      projections.push({id:group.id,rustSource:group.source,module:group.module,javascriptPath:group.javascriptPath,typescriptPath:group.typescriptPath,bindings,outputs,nativeProposal:synchronized.rustEdits.map((row,index)=>({...row,history:nativeEquations[index]})),selectedNativeSourceRechecked:true,originalOrderedBodiesReproduced:true,nativeInstalled:false,receivingExecuted:false,runtimeParity:false});
      }
      for(const route of routes.values()){
-      const modules=projections.filter(row=>row.rustSource===route.rustPath&&equal(row.module,route.module));if(modules.length!==1)fail('an empty removed or wholly unsupported existing module requires explicit source removal handling');
+      let modules=projections.filter(row=>row.rustSource===route.rustPath&&equal(row.module,route.module));
+      if(modules.length===0){
+       requireCurrentEmptyNativeModule(project,files,{rustPath:route.rustPath,module:route.module});if(!files.has(route.javascriptPath)||!files.has(route.typescriptPath))fail('complete existing empty receiving pair baselines required');const pair=prepareEmptyNativeModulePair(route.javascriptPath,route.typescriptPath),outputs=[{path:route.javascriptPath,before:files.get(route.javascriptPath),after:pair.javascript.source,concreteSyntax:pair.javascript.concreteSyntax},{path:route.typescriptPath,before:files.get(route.typescriptPath),after:pair.typescript.source,concreteSyntax:pair.typescript.concreteSyntax}];
+       for(const output of outputs){output.inverse=output.before;retainedBytes+=Buffer.byteLength(output.after);}if(retainedBytes>16777216)fail('retained complete empty source proposal byte budget');const empty={id:'module_'+hash(JSON.stringify([route.rustPath,route.module])),rustSource:route.rustPath,module:route.module,javascriptPath:route.javascriptPath,typescriptPath:route.typescriptPath,bindings:[],outputs,nativeProposal:[],emptyNativeModule:true,selectedNativeSourceRechecked:true,originalOrderedBodiesReproduced:true,nativeInstalled:false,receivingExecuted:false,runtimeParity:false};projections.push(empty);modules=[empty];
+      }
+      if(modules.length!==1)fail('one complete current module projection required');
       const scopes=project.sourceScopes.filter(row=>row.source===route.rustPath&&equal(row.module,route.module));if(scopes.length!==1)fail('one actual current refresh module scope required');const items=originalModuleViewItems(scopes[0].sourceView,files.get(route.rustPath));
       for(const binding of original.vectorBindings.filter(row=>row.javascriptPath===route.javascriptPath)){
        if(binding.rustPath!==route.rustPath||!equal(binding.rustName.split('.').slice(0,-1),route.module))fail('old source binding does not belong to the current route');
@@ -133,3 +138,5 @@ export function proposeOwnedNativeRefreshDiscovery(data,routing){
 }
 
 import {withOwnedNativeProjectOperation} from './owned-native-project-operation.mjs';
+
+import {requireCurrentEmptyNativeModule,prepareEmptyNativeModulePair} from './owned-native-empty-modules.mjs';

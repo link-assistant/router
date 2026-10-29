@@ -178,6 +178,8 @@ test('complete committed export carries shared adoption implementations original
  assert.ok(paths.has('tools/translation/prepare-primitive-vector-guards-sources.mjs'));
  assert.ok(paths.has('tools/translation/prepare-native-constant-values-sources.mjs'));
  assert.ok(paths.has('tools/translation/prepare-native-fallthrough-control-sources.mjs'));
+ assert.ok(paths.has('tools/translation/prepare-native-empty-modules-sources.mjs'));
+ assert.ok(paths.has('tools/translation/js-to-rust/owned-native-empty-modules.mjs'));
  assert.ok(paths.has('tools/translation/js-to-rust/owned-native-constant-values.mjs'));
  assert.ok(paths.has('tools/translation/js-to-rust/owned-native-function-control.mjs'));
 
