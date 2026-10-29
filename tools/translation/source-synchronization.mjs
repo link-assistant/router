@@ -225,3 +225,5 @@ export {planOwnedVectorBulkUnitSynchronization,applyOwnedVectorBulkUnitSynchroni
 export {proposeOwnedNativeBulkModuleRefresh} from './js-to-rust/owned-native-bulk-module-refresh.mjs';
 
 export {ownedBulkRuntimeSources} from './js-to-rust/owned-vector-candidate-source.mjs';
+
+export {proposeOwnedPrimitiveVectorFunctionInsertion} from './js-to-rust/owned-primitive-vector-function-insertion.mjs';

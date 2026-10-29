@@ -577,3 +577,11 @@ joins at parse/semantic fences; unknown macros and local declarations stay
 refused. Three complete source equations and all-width paired/native, ordering,
 guard/source refusal and CI-only Rust case sources are UNRUN. General macro/
 Span/visitor/type-prefix/export closure and full translation remain OPEN.
+
+The [receiving-first primitive Vec definition draft](primitive-vector-definitions-source-draft.md)
+adds an explicit source profile and separate insertion API for actual typed/JS
+JSDoc arrays in a current empty native module. Precise aliases, complete callee
+graphs, every Vec move, actual native ABI/census and full refresh stay mandatory.
+The primary synchronization export includes the new closure. Six complete
+equations and independent JS/TS/native bulk/refusal cases are UNRUN. Nonempty
+extensions, Vec inputs/mutation/cross-module calls and full drafting remain OPEN.
