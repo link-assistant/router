@@ -271,3 +271,5 @@ export {proposeOwnedPrimitiveSlicePresenceCalls} from './js-to-rust/owned-primit
 export {PRIMITIVE_OWNED_VECTOR_CONTRACTS,PRIMITIVE_OWNED_VECTOR_RULE_SEQUENCES} from './primitive-owned-vector-contracts.mjs';
 
 export {proposePrimitiveOwnedVectorRootSource} from './primitive-owned-vector-root-source.mjs';
+
+export {observeCurrentPrimitiveOwnedVectorCoreSources,requireCurrentPrimitiveOwnedVectorOperationSource,withOriginalPrimitiveOwnedVectorSourceOperation} from './current-primitive-owned-vector-source.mjs';

@@ -842,3 +842,10 @@ roots and runtime/declaration mirrors, and actual 88-function source observation
 Six complete equations and independent lifecycle/tamper/root/refusal source cases
 are UNRUN. All private native caller/type/move/loan, root/history, forward/reverse,
 production and full synchronization obligations remain OPEN.
+
+The [current owned vector operation source draft](current-primitive-owned-vector-source-draft.md)
+joins every actual runtime/native wrapper, argument order/domain and both
+resource-bound declarations while sharing complete parsing inside one bounded
+operation. Three complete equations and independent all-operation/receiving/
+refusal/lifecycle case source are UNRUN. Source facts issue no real caller,
+move/borrow or namespace permission; private integration and full sync remain OPEN.
