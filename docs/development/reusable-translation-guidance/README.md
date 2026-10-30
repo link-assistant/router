@@ -120,3 +120,10 @@ show how separate family rules can reuse bounded lexical source selection and
 real language/repository CST substitutions. Their receiving/export, target and
 native oracle cases are source drafted and unrun; they certify no receiving
 coverage, parity or complete synchronization.
+
+
+The [primitive collection rule contracts](primitive-collection-rules.md) cover
+paired core/literal boundaries, nested original-span templates, complete
+ordinary helpers, synchronous argument loans, operation-local source indexes
+and separate receiving/verification obligations. These source drafts remain
+unrun and do not qualify full synchronization in a receiving repository.

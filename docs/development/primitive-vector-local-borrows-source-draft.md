@@ -26,6 +26,6 @@ All cases, freshness/performance/receiving qualification and Rust CI are UNRUN.
 
 The canonical owned Rust inverse uses the existing ordinary-call borrow
 adapter and must still reproduce the complete authoritative input after fresh
-private JS checking. Native forward ordinary explicit &owned helper argument
-typing and its call-interval lexical flow are separate OPEN source work; this
-reverse draft does not claim that forward path or full synchronization.
+private JS checking. Native forward ordinary explicit &owned helper argument typing and its
+call-interval lexical flow have a subsequent [source draft](primitive-vector-native-borrows-source-draft.md).
+Both directions remain unverified; neither draft qualifies full synchronization.

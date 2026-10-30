@@ -840,3 +840,47 @@ evaluation must keep source-proved const eligibility, evaluation order and all
 original budgets; runtime purity alone grants no Rust const permission. These
 new wrapping operation/constant paths and their receiving sources remain unrun
 throughout the active bulk drafting phase.
+
+
+### Primitive collection source-rule contributions
+
+Continue [the primitive collection source ledger](docs/development/primitive-collection-synchronization-bulk-draft.md).
+The paired bounded Vec core, literal runtime and ordinary owned/shared/mutable
+helper paths are source drafts. Keep every new test, freshness, performance,
+receiving and Rust result UNRUN until it actually executes under the authorized
+post-draft workflow. No interface count or source-copy equation is an executable
+coverage percentage. Broader original namespace/producer closure and complete
+production translation remain separate unfinished requirements.
+
+Keep complete native/JS/declaration source joins and fresh closing fences for
+actual callers. A literal wrapper's 64-operand source grammar differs from the
+paired runtime's 4,096-value bound. Raw mutable arrays, frozen owned carriers
+and bigint length results have different input contracts; bulk migrations must
+retain explicit false original-equivalence and installation fields until their
+independent obligations are met. Never modify a copied proof or owns flag to
+permit a previously unsupported source path.
+
+Use [retained original-span templates](docs/development/primitive-vector-literal-bulk-source-draft.md)
+for nested source substitutions. A nested edit must occur exactly once within
+a retained original reference; reject crossing, stale, duplicate or dropped
+edits. Then apply actual serialized/reparsed CST substitutions under language
+and repository phases and privately recheck the complete proposed module.
+Do not replace this with manually edited generated output or expected hashes.
+
+A mutable helper signature only selects temporary checking work. The complete
+actual caller/callee graph, entry guards, moves, loops, current source bodies
+and emission dependencies remain mandatory. Explicit shared helper operands
+must rejoin the original parser borrow and parent, actual resolved parameter
+and checked pointee. Keep [call-interval loans](docs/development/primitive-vector-native-borrows-source-draft.md)
+through later argument evaluation and branches: moving and then reinitializing
+a root cannot erase a conflict. Release intervals in finally on every exit.
+Source-parent indexes may live within one active function check and must clear
+on exit; no source, owner, hash, verdict or result cache may cross invocations.
+
+Preserve the old JS/TS-only source preparer. Opt in to the separate mixed source
+copy adapter for Rust rows; its full Rust CST records do not certify grammar,
+namespace, semantic scope or compilation. Extend existing public-core Rust
+oracle sources when practical to avoid duplicate implementation copies or
+extra test crates. Never invoke Rust, hooks or tests locally in this source-only
+phase. The [reusable contract](docs/development/reusable-translation-guidance/primitive-collection-rules.md)
+records these choices separately from the compiler export and its qualification.
