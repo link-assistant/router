@@ -165,3 +165,13 @@ Independent valid/legacy/physical/archive/pin/cross-family/closing/primary and
 fresh-operation cases are UNRUN. Broader source, namespace, receiving, parity,
 synchronization and delivery requirements remain OPEN. See
 [the preparer contract](native-preparer-failure-source-draft.md).
+
+## Copied compiler source-protocol receiving case (2026-10-30)
+
+An independent UNRUN receiving case requires exact copied bytes for the new
+public JSON reader/discovery/type-witness/failure modules and pinned profiles,
+then imports the copied public synchronizer in an isolated child. It requires
+complete reader CST/history construction and shared caught-failure invalidation
+without granting body equivalence or runtime parity. All existing export count,
+byte and deadline bounds stay intact; actual export/receiving qualification,
+broader production translation and every delivery requirement remain OPEN.
