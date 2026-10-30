@@ -307,3 +307,9 @@ export {ownedTextVectorRuntimeSources} from './owned-text-vector-runtime-sources
 
 export {withOriginalOwnedTextVectorSourceOperation,observeCurrentOwnedTextVectorCoreSources,requireCurrentOwnedTextVectorOperationSource,requireCurrentOwnedTextVectorOriginalOperationSource} from './current-owned-text-vector-source.mjs';
 export {proposeOwnedTextVectorRootSource} from './owned-text-vector-root-source.mjs';
+
+// Separate explicit private issuers; original cloning profiles remain unchanged.
+export * as ownedTextVectorOutcome from './js-to-rust/owned-text-vector-outcome.mjs';
+export * as ownedTextVectorCancellation from './js-to-rust/owned-text-vector-cancellation.mjs';
+export {translateOwnedOutcomeRust as translateOwnedTextVectorOutcomeRust} from './js-to-rust/owned-text-vector-outcome-rust.mjs';
+export {translateOwnedCancellationRust as translateOwnedTextVectorCancellationRust} from './js-to-rust/owned-text-vector-cancellation-rust.mjs';

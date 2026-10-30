@@ -225,3 +225,21 @@ composition/eight-ABI/source-inverse cases and all compiler/freshness execution
 remain UNRUN. Original root/caller/type qualification, both caller directions,
 helpers/loops/inverse/adoption and all delivery obligations stay OPEN. See
 [the root source contract](owned-text-vector-root-activation-source-draft.md).
+
+## Additive owned String/vector caller batch (2026-10-30)
+
+The new explicit outcome/cancellation profile copies now draft actual JS/TS
+import/type/source checking, complete-function move/loan replay, distinct private
+issuers and meta codecs, both interpreters, runtime preparation, qualified Rust
+and strict TypeScript emission. String/vector/optional-String moves, cloned
+lookup results, shared and slice input guards, checked helpers, branch exits,
+loop backedges and call-duration loans have source implementations. The original
+cloning profiles and primitive Copy classifier remain unchanged. Additive Rust
+inverse copies retain full CST serialization/reparse, private source reissue and
+complete authoritative Rust reproduction. Complete source substitution DATA and
+independent JS/TS/meta/inverse/refusal/Rust oracle cases are drafted, all UNRUN.
+No parser, translator, preparer, test or Rust tool was executed. No CI/review
+feedback was inspected. This is no measured coverage or qualified caller owner.
+Broader original Rust lowering/adoption, captures/aggregates/references, all
+remaining requirements, receiving/freshness/performance and full synchronization
+remain OPEN. See [the caller source contract](owned-text-vector-callers-source-draft.md).

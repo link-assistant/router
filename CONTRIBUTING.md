@@ -913,3 +913,11 @@ Keep native members inside the existing committed-input, partition and byte
 budgets, and preserve old exporter API domains through additive implementations.
 Draft copied-reader/ABI and copied-file-tamper cases before claiming delivery;
 see [the paired exporter draft](docs/development/paired-core-compiler-export-source-draft.md).
+
+Keep native String and Vec-of-String moves distinct from primitive Copy. An
+additive caller profile must freshly check complete source, retain actual
+argument-duration loans, join continuing branches and validate loop backedges
+before issuing executable IR. Charge cloned/joined ownership state against its
+operation budget. Preserve original cloning APIs and refusals, retain strict
+paired type witnesses and require complete canonical Rust reproduction in the
+inverse; see [the caller source draft](docs/development/owned-text-vector-callers-source-draft.md).
