@@ -316,3 +316,21 @@ Original/current coordinates and unsupported candidates remain explicit; source,
 parser, inverse and resource failures stay fatal. Both discovery counts and
 String-domain hints grant no executable authority. Independent discovery and
 fresh source-equation case sources remain UNRUN; full requirements remain OPEN.
+
+## Scoped original native String-vector adoption (2026-10-30)
+
+Additive copies now draft constructor/push/length adoption across lexical blocks,
+branches, loops and unit match arms. Fresh operand blocks preserve once-only
+ordering before receiver moves; original/current CST, comments, nested edits,
+whole sources and inverses remain explicit. Block boundaries, shadowing,
+selected capture/alias/index/borrow/consumed-result refusals remain bounded.
+Automatic scoped discovery composes the fixed proposer without manufacturing
+binding or executable authority. Independent JS source cases and CI-only Rust
+oracles remain UNRUN. Original namespace/ownership/control-flow/body equivalence,
+all receiving/performance/freshness and full parity remain OPEN. See
+[the scoped source contract](scoped-owned-text-vector-adoption-source-draft.md).
+
+The scoped batch also drafts `is_empty` via bounded length comparison and
+`clear` via truncate-zero, retaining boolean results and explicit open allocator/
+capacity and resource equivalence. A separate block stack keeps the scope census
+linear. Additional independent source and Rust oracle cases remain UNRUN.
