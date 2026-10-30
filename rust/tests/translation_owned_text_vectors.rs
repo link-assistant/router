@@ -1,7 +1,6 @@
 //! Independent paired owned String Vec oracle SOURCE. CI only, UNRUN.
-//! The public crate edge and private caller registrations are still a draft.
-#[path = "../src/translation_owned_text_vectors_core.rs"]
-mod core;
+//! The actual public crate edge is used; all execution remains UNRUN.
+use link_assistant_router::translation_owned_text_vectors_core as core;
 
 #[test]
 fn owned_text_operations_match_independent_standard_vec_results() {

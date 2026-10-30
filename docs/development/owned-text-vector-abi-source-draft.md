@@ -3,9 +3,10 @@
 Five complete source equations add the owned-text-vector current source scope,
 descriptor-safe receiving configuration, receiving-root proposal and public
 exports. These build on the paired eight-operation core; every implementation,
-case and freshness result remains UNRUN. The actual Router native root and its
-23-equation history remain unchanged. Production caller and delivery work is
-still OPEN.
+case and freshness result remains UNRUN. The follow-up
+[root activation draft](owned-text-vector-root-activation-source-draft.md) adds
+the actual module edge under an exact 24-equation history; it supplies no native
+type/caller/namespace qualification. Production caller and delivery work is OPEN.
 
 The scope freshly joins all eight original native/runtime/declaration/validator
 inputs and their closing fences. The complete native program must have eight
@@ -62,7 +63,7 @@ restoration, primary identities, depth limits, forged metadata and descriptor
 hazards. No case has run. The profile retains full original source, both fixed
 phases, current sources and exact inverses through an additive preparer successor.
 
-Next obligations are actual native root history publication; genuine caller,
+Next obligations are native root compilation/qualification; genuine caller,
 standard String/Vec/Option type and ownership registration in both directions;
 helper/mutation/loop/call-interval flow; canonical inverse and bulk adoption;
 copied-compiler native-core dependency delivery; original producer/namespace

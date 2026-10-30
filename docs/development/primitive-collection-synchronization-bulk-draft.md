@@ -212,3 +212,16 @@ No compilation, namespace, caller or parity permission follows from copied
 bytes. Every broader receiving, translation, synchronization and delivery
 requirement remains OPEN. See
 [the exporter contract](paired-core-compiler-export-source-draft.md).
+
+## Actual owned String native root source history (2026-10-30)
+
+Twelve mixed source equations draft the actual public owned-text core edge and
+advance default native history to 24 equations over 17 paths. The full earlier
+21/22/23-step archives and original refusal domains remain explicit; the older
+root constructors compose only the exact recorded successor. Current-default
+cases are updated while unrelated helper/historical chains remain unchanged.
+The native oracle uses the real public crate edge. All root/prefix/unknown/
+composition/eight-ABI/source-inverse cases and all compiler/freshness execution
+remain UNRUN. Original root/caller/type qualification, both caller directions,
+helpers/loops/inverse/adoption and all delivery obligations stay OPEN. See
+[the root source contract](owned-text-vector-root-activation-source-draft.md).

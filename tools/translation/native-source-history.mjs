@@ -7,7 +7,7 @@ import {createHash} from 'node:crypto';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions,serializeConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
 import {transportConcreteSourceEquations} from './concrete-source-equations.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
-const ARCHIVE='tools/translation/source-profiles/primitive-owned-vector-root-activation/complete-native-history.json.gz',PIN='f6c1320202f07e2b5015351501183aafc1d8d41cdc1e170066c835b1f014c7b2';
+const ARCHIVE='tools/translation/source-profiles/owned-text-vector-root-activation/complete-native-history.json.gz',PIN='ab5907ad61c45b4ac50aae99d321b85f361f5bb3ab6e04a5a998505d91050b1a';
 const hash=value=>createHash('sha256').update(value).digest('hex'),need=(value,message)=>{if(!value)throw new TypeError('Native source history: '+message);};
 function local(root,path){need(typeof path==='string'&&path.length<=4096&&!path.startsWith('/')&&!path.includes('\\')&&!path.split('/').some(word=>!word||word==='.'||word==='..'),'repository-relative file required');return resolve(root,path);}
 function input(root,archive=ARCHIVE,pin=PIN){need(typeof pin==='string'&&/^[a-f0-9]{64}$/u.test(pin),'explicit archive pin required');const packed=readFileSync(local(root,archive));retainNativeSourceInputFence(local(root,archive),packed);need(packed.length<=8388608&&hash(packed)===pin,'complete pinned history archive differs');const data=JSON.parse(gunzipSync(packed,{maxOutputLength:16777216}).toString('utf8'));need(data.schema==='native-complete-source-history-v1'&&Array.isArray(data.files)&&data.files.length>0&&data.files.length<=64,'bounded complete history rows required');return {packed,data};}
@@ -55,3 +55,6 @@ export function proposeRecordedNativeSourceSuccessors({root=ROOT,path,before,arc
 
 // Retain the complete immediately preceding native root profile as DATA.
 export const PRIMITIVE_SEQUENCE_NATIVE_SOURCE_HISTORY_PROFILE=Object.freeze({archive:"tools/translation/source-profiles/primitive-sequence-root-activation/complete-native-history.json.gz",pin:'e4db44d0d7a9a2d771559892b856fb19e1d092c1cf68aede333b8453c95bd6b3'});
+
+// Exact 23-step historical DATA profile; unrecorded later roots still refuse.
+export const PRIMITIVE_OWNED_VECTOR_NATIVE_SOURCE_HISTORY_PROFILE=Object.freeze({archive:"tools/translation/source-profiles/primitive-owned-vector-root-activation/complete-native-history.json.gz",pin:'f6c1320202f07e2b5015351501183aafc1d8d41cdc1e170066c835b1f014c7b2'});

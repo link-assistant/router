@@ -61,11 +61,13 @@ source equations. Independent gated Rust source uses the actual physical core
 file and standard Vec/String expectations, including cloned ownership after
 replacement, integer extrema and all bound panics. No Rust tool has run locally.
 
-Native root publication, complete current ABI/source-operation joins, actual
-Rust/JS/TS caller registration, linear text-vector and optional-string flow,
+Follow-up drafts add complete current ABI/source-operation joins and the actual
+public native module edge with its 24-step history; see the
+[ABI contract](owned-text-vector-abi-source-draft.md) and
+[root source contract](owned-text-vector-root-activation-source-draft.md).
+Actual Rust/JS/TS caller registration, linear text-vector and optional-string flow,
 helper/loop/borrow/mutation integration, canonical inverse, bulk source adoption
-and original production equivalence are still OPEN. The existing native-root
-history is unchanged. The test oracle temporarily includes the actual core file
-directly until the genuine public edge is drafted; it does not copy its body.
+and original production equivalence are still OPEN. The test oracle now uses
+the actual public crate edge; it does not copy the core implementation body.
 Receiving/export qualification, freshness, actual application coverage, parity,
 all eight same-SHA JavaScript gates and fatal gated Rust CI remain OPEN.

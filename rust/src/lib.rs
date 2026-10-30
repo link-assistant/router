@@ -324,3 +324,5 @@ pub mod translation_http_deadline_results_core;
 pub mod translation_primitive_sequences_core;
 
 pub mod translation_primitive_vectors_core;
+
+pub mod translation_owned_text_vectors_core;
