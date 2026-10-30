@@ -120,3 +120,12 @@ actual catalog error reader supplies a source case; no production body is
 installed or qualified. Independent kind/depth/order/fallback/hygiene/batch/data
 cases and original native catalog edge oracles are UNRUN. Full private original
 reissue and all receiving/parity/freshness/delivery remain OPEN. See [the contract](native-json-literal-path-search-source-draft.md).
+
+## Actual owned field optional-text type witnesses (2026-10-30)
+
+Eight source equations draft field-only optional String type witnesses in both
+owned lanes and canonical inverse projection, with complete actual field ABI
+joins and original fallback/default projection behavior retained. Selection is
+operation-local, conditional and DATA only; full private caller/Rust reproduction
+stays mandatory. Independent field-only JS/strict/meta/interpreter/inverse and
+source/default/forgery cases are UNRUN. See [the contract](owned-field-option-type-witness-source-draft.md).

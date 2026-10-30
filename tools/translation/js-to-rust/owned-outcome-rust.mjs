@@ -14,6 +14,7 @@ import {UnsupportedOwnedRustSource} from './owned-outcome-rust-syntax.mjs';
 import {readOwnedRustFunction} from './owned-primitive-vector-rust-syntax.mjs';
 import {projectOwnedRustFunctions,ownedRustNameProposals} from './owned-outcome-rust-projection.mjs';
 import {requireOwnedResultSources} from './owned-result-source-contracts.mjs';
+import {ownedFieldTextOptionTypeLibrary} from './owned-field-option-type-witness.mjs';
 export {UnsupportedOwnedRustSource};
 const fail=message=>{throw new UnsupportedOwnedRustSource(message);};
 function originalFunctions(source,{primitiveOperators=false}={}){
@@ -36,12 +37,12 @@ export function translateOwnedStateRust(source,{context,sourcePath,javascriptPat
  if(nativeLibraryPath==='src/lib.rs'||nativeLibraryPath.startsWith('src/translation_core')||nativeLibraryPath.startsWith('src/translation_collections_core')||nativeLibraryPath.startsWith('src/translation_state_core')||nativeLibraryPath.startsWith('src/translation_json_fields_core')||nativeLibraryPath.startsWith('src/translation_carriers_core')||['translation_primitive_vectors_core','translation_primitive_sequences_core','translation_integer_core','translation_stream_core','translation_text_core','translation_primitive_option_core','translation_primitive_option_callbacks_core','translation_primitive_results_core','translation_owned_results_core','translation_async_control_core'].some(name=>nativeLibraryPath==='src/'+name+'.rs'))fail('canonical caller inverse cannot rewrite its native library');
  if(typeof source!=='string'||source.length>2097152)fail('bounded complete Rust source required');
  const data=ownedCoreSourceData(context);if(data.files.find(row=>row.path===sourcePath)?.source!==source)fail('complete authoritative Rust source/path differs');
- let resultTypeLibrary='primitive-result';try{requireOwnedResultSources(new Map(data.files.map(row=>[row.path,row.source])),data);resultTypeLibrary='owned-result';}catch{}
+ let resultTypeLibrary='primitive-result';try{requireOwnedResultSources(new Map(data.files.map(row=>[row.path,row.source])),data);resultTypeLibrary='owned-result';}catch{}let textOptionTypeLibrary=null;
  const previousJavaScript=data.files.find(row=>row.path===javascriptPath)?.source??null,pairs=pairPaths(javascriptPath,data),previousPairs=data.files.filter(row=>pairs.includes(row.path));let originalConcrete,projection,derivedContext;
  const run=createRulePipeline([
   {phase:'language',rules:[
    {id:'rust:serialize-reparse-complete-original-owned-source-CST',apply:()=>{originalConcrete=transportConcreteSyntaxSource(source,{language:'Rust'});if(transportConcreteSyntaxMeta(originalConcrete.meta).source!==source)fail('whole original Rust CST differs');return originalFunctions(originalConcrete.source,{primitiveOperators:data.primitiveOperators===true});}},
-   {id:'rust:substitute-canonical-owned-calls-types-and-control-into-JavaScript-proposals',apply:functions=>{projection=projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot:data.runtimeRoot,primitiveOperators:data.primitiveOperators===true,resultTypeLibrary,nameProposals:ownedRustNameProposals(previousJavaScript,javascriptPath)});return projection.javascript;}},
+   {id:'rust:substitute-canonical-owned-calls-types-and-control-into-JavaScript-proposals',apply:functions=>{if(functions.some(fn=>fn.returns==='::std::option::Option<::std::string::String>'||fn.parameters.some(parameter=>parameter.type==='::std::option::Option<::std::string::String>')))try{textOptionTypeLibrary=ownedFieldTextOptionTypeLibrary(new Map(data.files.map(row=>[row.path,row.source])),data);}catch{}projection=projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot:data.runtimeRoot,primitiveOperators:data.primitiveOperators===true,resultTypeLibrary,textOptionTypeLibrary,nameProposals:ownedRustNameProposals(previousJavaScript,javascriptPath)});return projection.javascript;}},
    {id:'meta:fresh-private-owned-source-check-serialize-reparse-and-reissue',apply:javascript=>{
     const files=data.files.filter(row=>row.path!==javascriptPath&&!pairs.includes(row.path)).concat([{path:javascriptPath,source:javascript}]);
     derivedContext=createOwnedStateContext({...data,files});return translateOwnedStateJavaScript(javascript,{context:derivedContext,sourcePath:javascriptPath,typescriptOutputPath});

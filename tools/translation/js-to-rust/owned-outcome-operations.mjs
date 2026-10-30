@@ -32,6 +32,7 @@ import {emitOwnedHttpProtocolCall} from './owned-http-protocol-emission.mjs';
 import {emitOwnedPrimitiveOptionCall,evaluateOwnedPrimitiveOptionCall} from './owned-primitive-option-emission.mjs';
 import {emitOwnedTextCall,evaluateOwnedTextCall} from './owned-text-emission.mjs';
 import {ownedJsonFieldOperation,emitOwnedJsonFieldCall,evaluateOwnedJsonFieldCall} from './owned-json-fields.mjs';
+import {ownedFieldTextOptionTypeWitness} from './owned-field-option-type-witness.mjs';
 import {emitOwnedStateCall,evaluateOwnedStateCall} from './owned-state-emission.mjs';
 import {ownedJsonOptionalReaderOperation,ownedJsonOptionalReaderRustCall} from './owned-json-source.mjs';
 import {ownedAsciiOperation,ownedAsciiRustCall} from './owned-ascii-source.mjs';
@@ -189,7 +190,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){return withPr
  const context=issued.get(program[0]).context;requireOwnedCoreSourceCurrent(context);const sourceData=ownedCoreSourceData(context),rustTypes=sourceData.primitiveOperators===true?{...RUST_TYPES,...primitiveBitwiseRustTypes}:RUST_TYPES;
  if(program.some(item=>issued.get(item).context!==context))fail('mixed receiving contexts');
  let sequence=0;const imports=new Set(),primitiveTypeImports=new Set();let resultTypePrefix=null;const resultTypeNamespace=()=>{if(resultTypePrefix!==null)return resultTypePrefix;if(!sourceData.files.some(row=>row.path==='src/translation_owned_results_core.rs'))return resultTypePrefix='router_result_';try{requireOwnedResultSources(new Map(sourceData.files.map(row=>[row.path,row.source])),sourceData);resultTypePrefix='router_owned_result_';}catch{resultTypePrefix='router_result_';}return resultTypePrefix;};
- const vectorTypes=program.some(item=>item.hostCalls.some(call=>primitiveOwnedVectorOperationShape(call.name)||primitiveVectorLiteralOperationShape(call.name,0)));
+ const vectorTypes=program.some(item=>item.hostCalls.some(call=>primitiveOwnedVectorOperationShape(call.name)||primitiveVectorLiteralOperationShape(call.name,0)));const needsFieldOptionType=!rust&&program.some(item=>item.returns==='text-owned-option'||item.params.some(parameter=>parameter.type==='text-owned-option')),fieldTextOptionWitness=needsFieldOptionType?ownedFieldTextOptionTypeWitness(program,sourceData):null;
  const sequenceTypes=program.some(item=>item.hostCalls.some(call=>primitiveSequenceOperationShape(call.name)));
  function publicTypeScriptType(type,parameter=false){if(sourceData.primitiveOperators===true&&primitiveBitwiseType(type)){const row=primitiveBitwiseType(type);primitiveTypeImports.add(row.alias);return row.alias;}
   const sharedVector=ownedPrimitiveVectorSharedElement(type);if(sharedVector){const name='router_vec_'+sharedVector+'_len';imports.add(name);return 'Parameters<typeof __ro_'+name+'>[0]';}const vectorWitness=primitiveOwnedVectorTypeWitness(type)??(vectorTypes?primitiveOwnedVectorOptionalWitness(type):null);if(vectorWitness){imports.add(vectorWitness);return 'ReturnType<typeof __ro_'+vectorWitness+'>';}
@@ -199,7 +200,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){return withPr
   const slice=ownedPrimitiveSliceElement(type);if(slice)return 'readonly ('+publicTypeScriptType(slice,true)+')[]';
   if(parameter&&type==='text-owned'){imports.add('router_owned_result_text_ok');return 'Parameters<typeof __ro_router_owned_result_text_ok>[0]';}
   if(ownedPrimitiveResultType(type)){const name=type==='text-text-result'?'router_owned_result_text_ok':resultTypeNamespace()+ownedPrimitiveResultPayload(type)+'_ok';imports.add(name);return 'ReturnType<typeof __ro_'+name+'>'; }
-  if(type==='text-owned-option'){const name=resultTypeNamespace()+'bool_err_option';imports.add(name);return 'ReturnType<typeof __ro_'+name+'>';}
+  if(type==='text-owned-option'){const name=fieldTextOptionWitness??resultTypeNamespace()+'bool_err_option';imports.add(name);return 'ReturnType<typeof __ro_'+name+'>';}
   const options={'json-option-ref':'serde_json_value_get_string','str-option-ref':'serde_json_value_as_str','bool-option':'serde_json_value_as_bool','u64-option':'serde_json_value_as_u64','i64-option':'serde_json_value_as_i64','json-owned-option':'router_core_json_find'};
   if(Object.hasOwn(options,type)){const name=options[type];imports.add(name);return 'ReturnType<typeof __ro_'+name+'>';}
   const witness=ownedJsonReaderTypeWitness(type);if(witness){imports.add(witness);return 'ReturnType<typeof __ro_'+witness+'>';}
