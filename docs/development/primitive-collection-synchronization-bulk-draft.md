@@ -40,3 +40,13 @@ See [the preparation contract](mixed-native-source-copy-source-draft.md).
 
 Literal caller/reverse integration, original namespace/producer closure and
 full coverage/freshness/parity/receiving/delivery remain OPEN.
+
+## Actual native literal callers (2026-10-30)
+
+Five complete source equations draft qualified from_slice temporary primitive
+array callers, individual argument checks, linear ownership flow, private
+emission routing and separate literal imports. Independent all-domain native
+caller/target/refusal cases remain UNRUN. The existing core resource envelope
+and private source/namespace/caller prerequisites remain intact; no array
+promotion proof is fabricated. See [the caller draft](primitive-vector-literal-forward-source-draft.md).
+Reverse caller/inverse integration and full receiving/parity/freshness remain OPEN.

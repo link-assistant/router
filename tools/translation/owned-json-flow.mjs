@@ -103,7 +103,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,ge
   return {owner,payload,type:type.rustStandardGeneric?type:{...type,rustStandardGeneric:{kind:'Option',arguments:[payload]}}};
  };
  let primitiveVectorBoundary=null;
- const hasPrimitiveVectorBoundary=()=>{if(primitiveVectorBoundary!==null)return primitiveVectorBoundary;let budget=100000;const visit=(node,depth=0)=>{if(!node||typeof node!=='object')return false;if(--budget<0||depth>160)refuse('primitive vector complete source census bound',entry);if(node.k==='routerHostCall'&&primitiveOwnedVectorOperationShape(node.id)&&genuine(node,entry))return true;if(node.k==='call'&&(node.type?.kind==='array'&&node.type.rustOwnership?.source==='Vec'||node.args?.some(value=>value.type?.kind==='array'&&value.type.rustOwnership?.source==='Vec'))&&typeof ownedPrimitiveVectorCallee==='function'){ownedPrimitiveVectorCallee(node,entry);return true;}for(const [key,value]of Object.entries(node))if(!['type','span','compatibilityCore','pinnedStandardBodyProof','sourceFrameProof','originalCallbackProof','originalLoanProof','sharedBodyProof','sourceSharedPatternProof'].includes(key))for(const child of Array.isArray(value)?value:[value])if(visit(child,depth+1))return true;return false;};return primitiveVectorBoundary=visit(entry.body);};
+ const hasPrimitiveVectorBoundary=()=>{if(primitiveVectorBoundary!==null)return primitiveVectorBoundary;let budget=100000;const visit=(node,depth=0)=>{if(!node||typeof node!=='object')return false;if(--budget<0||depth>160)refuse('primitive vector complete source census bound',entry);if(node.k==='routerHostCall'&&(primitiveOwnedVectorOperationShape(node.id)||primitiveVectorLiteralOperationShape(node.id,node.args?.length))&&genuine(node,entry))return true;if(node.k==='call'&&(node.type?.kind==='array'&&node.type.rustOwnership?.source==='Vec'||node.args?.some(value=>value.type?.kind==='array'&&value.type.rustOwnership?.source==='Vec'))&&typeof ownedPrimitiveVectorCallee==='function'){ownedPrimitiveVectorCallee(node,entry);return true;}for(const [key,value]of Object.entries(node))if(!['type','span','compatibilityCore','pinnedStandardBodyProof','sourceFrameProof','originalCallbackProof','originalLoanProof','sharedBodyProof','sourceSharedPatternProof'].includes(key))for(const child of Array.isArray(value)?value:[value])if(visit(child,depth+1))return true;return false;};return primitiveVectorBoundary=visit(entry.body);};
  const domain=(type,node,active=new Set())=>{
   if(!type||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)refuse('requires resolved source types',node);
   if(type.rustReference){
@@ -380,7 +380,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,ge
    for(const argument of totalOperands){if(domain(argument.type,argument)!=='copy')refuse('total primitive operation cannot hide owned JSON movement',argument);const value=read(argument);ensureRoots(value,state,argument);if(value.loans.size)refuse('total fixed primitive operation cannot retain a JSON text loan',argument);}return empty();
   }
   if(node.k==='routerHostCall'){
-   const vector=primitiveOwnedVectorOperationShape(node.id);if(vector){
+   const vector=primitiveOwnedVectorOperationShape(node.id)??primitiveVectorLiteralOperationShape(node.id,node.args?.length);if(vector){
     const output=vector.returns.startsWith('vec:')?'scalar-vector':'copy';if(!genuine(node,state.entry)||node.args.length!==vector.parameters.length||kind!==output||state.callbackCaptures)refuse('primitive vector requires its actual complete private caller outside callbacks',node);const observed=[];
     for(let index=0;index<vector.parameters.length;index++){const role=vector.parameters[index],argument=node.args[index],actual=domain(argument.type,argument),owned=role==='vec:'+vector.domain,shared=role==='vec:'+vector.domain+'-ref',slice=role===vector.domain+'-list-ref';if(shared?!['scalar-vector','scalar-vector-ref'].includes(actual):actual!==(owned?'scalar-vector':slice?'scalar-slice':'copy'))refuse('primitive vector actual operand ownership differs',argument);const fact=read(argument,owned?'move':shared||slice?'borrow':'copy');ensureRoots(fact,state,argument);if(slice&&!fact.loans.get(path([]))?.size)refuse('primitive vector slice requires its live shared input root',argument);observed.push(fact);}
     for(const fact of observed)ensureRoots(fact,state,node);return {loans:new Map(),tags:vector.operation==='get'?new Set(['Some','None']):null};
@@ -548,6 +548,7 @@ import {primitiveFailureFlowWithDivision as primitiveFailureFlow} from './extens
 import {primitiveSequenceOperationShape} from './primitive-sequence-call-shape.mjs';
 
 import {primitiveOwnedVectorOperationShape} from './primitive-owned-vector-call-shape.mjs';
+import {primitiveVectorLiteralOperationShape} from './primitive-vector-literal-call-shape.mjs';
 import {actualOwnedPrimitiveVector} from './primitive-owned-vector-forward-domain.mjs';
 
 import {hasBoundedPrimitiveVectorEntry} from './owned-primitive-vector-entry-source.mjs';
