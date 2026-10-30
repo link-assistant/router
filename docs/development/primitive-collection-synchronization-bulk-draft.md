@@ -129,3 +129,16 @@ joins and original fallback/default projection behavior retained. Selection is
 operation-local, conditional and DATA only; full private caller/Rust reproduction
 stays mandatory. Independent field-only JS/strict/meta/interpreter/inverse and
 source/default/forgery cases are UNRUN. See [the contract](owned-field-option-type-witness-source-draft.md).
+
+## Complete optional JSON path reader source composition (2026-10-30)
+
+Three source equations compose the existing path proposal with optional parse
+and required literal-child rules through separate language/repository pipelines,
+retaining all original/intermediate/final CST history and explicit source bounds.
+The actual catalog function supplies source and receiving-kernel cases; no
+production implementation or authority flag changes. Independent four-family,
+borrow-chain, batch, refusal, JS/strict-TS kernel and original-vs-core Rust oracle
+cases are UNRUN. The catalog edge oracle is split into its own module to keep
+the existing test file below 1,000 lines. Full private original reissue,
+installation, parity, freshness and delivery remain OPEN. See
+[the source contract](native-json-optional-path-reader-source-draft.md).

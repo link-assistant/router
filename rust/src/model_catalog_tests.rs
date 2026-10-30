@@ -987,25 +987,5 @@ fn successful_catalogs_persist_losslessly_but_restart_fail_closed() {
 }
 
 
-#[test]
-fn resource_error_code_keeps_priority_empty_strings_and_typed_fallbacks() {
-    let cases = [
-        (r#"{"error":{"details":{"error_code":"nested"},"error_code":"flat","code":"last"}}"#, Some("nested")),
-        (r#"{"error":{"details":{"error_code":""},"error_code":"flat"}}"#, Some("")),
-        (r#"{"error":{"details":{"error_code":" "},"code":"last"}}"#, Some(" ")),
-        (r#"{"error":{"details":{"error_code":false},"error_code":"flat"}}"#, Some("flat")),
-        (r#"{"error":{"details":{"error_code":0},"error_code":false,"code":"last"}}"#, Some("last")),
-        (r#"{"error":{"details":null,"code":"last"}}"#, Some("last")),
-        (r#"{"error":{"details":{"error_code":["wrong type"]},"code":"last"}}"#, Some("last")),
-        (r#"{"error":{"details":{"error_code":"λ😀"}}}"#, Some("λ😀")),
-        (r#"{"error":{"code":"first","code":"last"}}"#, Some("last")),
-        (r#"{"error":{"error_code":null,"code":false}}"#, None),
-        (r#"{"error":null}"#, None),
-        (r#"{"error":[]}"#, None),
-        (r#"{}"#, None),
-        ("not json", None),
-    ];
-    for (body, expected) in cases {
-        assert_eq!(resource_error_code(body).as_deref(), expected, "{body}");
-    }
-}
+#[path = "model_catalog_translation_tests.rs"]
+mod translation_reader_cases;
