@@ -884,3 +884,24 @@ oracle sources when practical to avoid duplicate implementation copies or
 extra test crates. Never invoke Rust, hooks or tests locally in this source-only
 phase. The [reusable contract](docs/development/reusable-translation-guidance/primitive-collection-rules.md)
 records these choices separately from the compiler export and its qualification.
+
+Automatic source discovery must retain unsupported candidates and complete
+original modules, with original coordinates separate from coordinates after
+earlier edits. Candidate and proposal counts are not executable coverage.
+Composed pipelines each retain their actual language/repository chronology,
+serialized/reparsed CST and inverses. Never flatten intermediate chronology or
+install a lexical rewrite without whole original semantic qualification. The
+[JSON reader composition](docs/development/native-json-optional-path-reader-source-draft.md)
+and [automatic discovery](docs/development/native-json-reader-discovery-source-draft.md)
+remain unverified source drafts with false installation/equivalence fields.
+
+Use failure-aware source operations when observing trusted source validation.
+A caught failure must revoke active scopes even if bytes are restored or an
+application exception hides a closing error. Continue every closing check and
+preserve exact application-primary identity; ordinary application exceptions
+alone must not be classified as source failures. Additive
+[native preparer copies](docs/development/native-preparer-failure-source-draft.md)
+retain the original public APIs, distinct Rust CST path and operation-local
+syntax sharing. Their aggregate relay frames consume the existing shared depth
+allowance; neither these copies nor their source equations establish measured
+performance, receiving parity or broader production translation.

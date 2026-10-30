@@ -46,6 +46,10 @@ I/O, exact arbitrary primary identity, hidden source failures, ordinary callback
 exceptions, result/descriptor hazards and fresh later operations. The pinned
 source profile retains complete originals, nine ordered two-phase equations
 and every inverse; predecessor preparation composes this additive successor.
+An isolated child-process case instruments the two selected physical reads,
+requires both to run after the first throws, and independently checks exact
+application primary identity. Its filesystem binding changes remain confined
+to that future child process. The case has not been executed.
 
 This closes a drafted nested-failure protocol for the explicitly selected
 preparers. It does not retrofit every historical preparer, prove production

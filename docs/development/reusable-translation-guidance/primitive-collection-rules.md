@@ -79,6 +79,23 @@ and invalidate caught source failures. Introduce no across-operation source,
 hash, owner, verdict, encoded-result or input cache. Keep original workloads,
 deadlines, disk/evidence bounds and all required gates unchanged.
 
+Automatic source discovery should reuse the actual substitution constructor,
+retain unsupported observations and complete untouched modules, and distinguish
+original coordinates from each current step's coordinates. Source-candidate
+and proposal counts are not executable coverage. Compose full child pipelines
+in their actual chronology; every child retains language then repository rules,
+serialized/reparsed CST and complete inverses. Source installation and original
+equivalence stay false until whole original semantic qualification exists.
+
+Classify trusted source checks separately from application callbacks. Observed
+input failures must invalidate every active source operation despite catch and
+restoration, including closing failures hidden by an application primary.
+Continue all closing checks while preserving exact primary identity, even for
+null, undefined and symbols. Retain legacy API behavior through additive copies
+when stronger failure/depth contracts would change the old callback domain.
+Document shared aggregate frame limits and defer resource/performance claims
+until measured qualification; no across-operation failure cache is allowed.
+
 ## Independent qualification
 
 Draft independent extrema, empty/nonempty, ordering, alias/move, branch/loop,

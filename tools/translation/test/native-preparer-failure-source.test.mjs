@@ -1,7 +1,8 @@
 // Independent receiving/source-failure case SOURCE. All execution UNRUN.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync,mkdirSync,writeFileSync,rmSync,readFileSync} from 'node:fs';
+import {mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {gzipSync} from 'node:zlib';
@@ -69,7 +70,26 @@ test('unsupported callback/result forms fail without invoking async proxy or the
  let calls=0;assert.throws(()=>current.withNativeSubstitutionOperation(async()=>{calls++;}));assert.throws(()=>mixed.withMixedNativeSubstitutionOperation(new Proxy(()=>{calls++;},{})));
  const result={get then(){calls++;return ()=>{};}};assert.throws(()=>current.withNativeSubstitutionOperation(()=>result));assert.equal(calls,0);
 });
-test('nine full source equations preserve originals old APIs declaration binding and all closing loops',limits,()=>{
+test('every physical closing read runs after a prior failure with exact primary preservation in an isolated process',limits,()=>{
+ const moduleURL=new URL('../failure-aware-native-source-input-fences.mjs',import.meta.url).href;
+ const script=`
+ import assert from 'node:assert/strict';
+ import fs from 'node:fs';
+ import {syncBuiltinESMExports} from 'node:module';
+ const original=fs.readFileSync,first='/router-source-fence-isolated/a',second='/router-source-fence-isolated/b',calls=[],sourceError=new Error('first closing source read');
+ fs.readFileSync=function(path,...args){if(path===first){calls.push(path);throw sourceError;}if(path===second){calls.push(path);return 'different second source';}return Reflect.apply(original,fs,[path,...args]);};
+ syncBuiltinESMExports();
+ try{
+  const fences=await import(${JSON.stringify(moduleURL)});
+  const expected=[first,second];
+  const capture=()=>{fences.retainNativeSourceInputFence(first,'expected first source');fences.retainNativeSourceInputFence(second,'expected second source');};
+  let caught=false;try{fences.withNativeSourceInputFences(()=>{capture();return 42;});}catch(error){caught=true;assert.strictEqual(error,sourceError);}assert.equal(caught,true);assert.deepEqual(calls.splice(0),expected);
+  for(const primary of [null,undefined,Symbol('primary'),new Error('application primary')]){caught=false;try{fences.withNativeSourceInputFences(()=>{capture();throw primary;});}catch(error){caught=true;assert.strictEqual(error,primary);}assert.equal(caught,true);assert.deepEqual(calls.splice(0),expected);}
+  process.stdout.write('all closing reads and primary identities retained');
+ }finally{fs.readFileSync=original;syncBuiltinESMExports();}
+ `;
+ assert.equal(execFileSync(process.execPath,['--input-type=module','-e',script],{encoding:'utf8',timeout:20000,maxBuffer:65536}),'all closing reads and primary identities retained');
+});
+test('nine full source equations preserve originals old APIs declaration binding and complete inverses',limits,()=>{
  const plan=prepareNativePreparerFailureSources();assert.equal(plan.files.length,9);assert.equal(plan.receivingExecuted,false);for(const row of plan.files){assert.equal(row.current,row.currentAfter);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);assert.ok(row.after.split('\n').length-1<1000);}
- const source=readFileSync(new URL('../failure-aware-native-source-input-fences.mjs',import.meta.url),'utf8');assert.ok(source.includes('for(const [path,row] of frame.files)'));assert.ok(source.includes('if(!failed&&fenceFailed)throw firstError;'));
 });
