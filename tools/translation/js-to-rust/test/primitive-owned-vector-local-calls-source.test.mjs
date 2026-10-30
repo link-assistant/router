@@ -6,6 +6,8 @@ import {join,dirname} from 'node:path';
 import {tmpdir} from 'node:os';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {execFileSync} from 'node:child_process';
+import {translateOwnedOutcomeRust} from '../owned-outcome-rust.mjs';
+import {translateOwnedCancellationRust} from '../owned-cancellation-rust.mjs';
 import * as outcome from '../owned-outcome.mjs';
 import * as cancellation from '../owned-cancellation.mjs';
 import {primitiveOwnedVectorReceivingData} from './primitive-owned-vector-receiving-data.mjs';
@@ -32,6 +34,7 @@ for(const family of ['outcome','cancellation'])for(const [domain,minimum,maximum
  for(const value of [minimum,maximum]){const input=Object.freeze([minimum,maximum]),calls=[['build',[value]],['count',[value]],['read',[value,0n]],['read',[value,1n]],['read',[value,18446744073709551615n]],['clone',[input]]],expected=[[value],1n,{$:'Some',field0:value},{$:'None'},{$:'None'},[minimum,maximum]];for(const module of modules)for(let index=0;index<calls.length;index++)assert.deepEqual(module[calls[index][0]](...calls[index][1]),expected[index]);for(let index=0;index<calls.length;index++)assert.deepEqual(api.evaluateOwnedOutcome(result.program,...calls[index],token),expected[index]);assert.deepEqual(api.evaluateOwnedOutcomeBatch(result.program,calls,token),expected);}
  for(const module of modules){assert.ok(Object.isFrozen(module.build(minimum)));assert.throws(()=>module.clone([minimum]));assert.throws(()=>module.clone(Object.freeze(Array(4097).fill(minimum))));assert.throws(()=>module.read(minimum,-1n));assert.throws(()=>module.read(minimum,0));}
  const reissued=api.readOwnedOutcomeMeta(result.meta,{context});assert.equal(api.emitOwnedOutcomeRust(reissued),result.rust);const concrete=api.translateOwnedOutcomeConcreteSyntaxMeta(result.concreteSyntax.meta,{context,sourcePath:'caller.mjs'});assert.equal(concrete.rust,result.rust);const typed=api.translateOwnedOutcomeTypeScript(result.typescript,{context:api.createOwnedOutcomeContext(primitiveOwnedVectorReceivingData(family,result.typescript,'caller.mts')),sourcePath:'caller.mts'});assert.ok(sameRustSourceSyntax(typed.rust,result.rust));assert.match(result.rust,/crate::translation_primitive_vectors_core::/u);assert.equal(result.runtimeParity,false);
+ const inverse=(family==='outcome'?translateOwnedOutcomeRust:translateOwnedCancellationRust)(result.rust,{context:api.createOwnedOutcomeContext({...data,files:[...data.files,{path:'caller.rs',source:result.rust}]}),sourcePath:'caller.rs',javascriptPath:'caller.mjs'});assert.ok(sameRustSourceSyntax(inverse.rust,result.rust));assert.equal(inverse.ownedRustSourceHistory.equation.inverse,result.rust);assert.equal(inverse.wholeRouterSynchronization,false);
 });
 for(const family of ['outcome','cancellation'])test(family+' moves, duplicates, later-argument loans, public Vec parameters and mutation remain checked original-source refusals',limits,()=>{
  const api=family==='outcome'?outcome:cancellation,base=source('u8'),header=base.slice(0,base.indexOf('/**')),doc="/** @param {import('./runtime/primitive-operator-runtime.mjs').RustU8} value */\n",run=text=>api.translateOwnedOutcomeJavaScript(text,{context:api.createOwnedOutcomeContext(primitiveOwnedVectorReceivingData(family,text)),sourcePath:'caller.mjs'});

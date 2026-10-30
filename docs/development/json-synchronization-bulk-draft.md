@@ -856,3 +856,10 @@ loans in both reverse families, with targets, both interpreters, meta reissue an
 runtime assets. Seventeen full equations and independent complete caller/refusal
 source are UNRUN. Public inputs, mutation/iteration/captures, canonical inverse,
 native forward/root/history, adoption and full synchronization remain OPEN.
+
+The [canonical owned vector inverse draft](primitive-owned-vector-rust-inverse-source-draft.md)
+adds actual native call/type proposals plus complete scalar/reader copies,
+retaining original APIs, shared error identity and full privately rechecked Rust
+reproduction in both source families. Nine full equations and independent full
+round-trip/candidate/refusal sources are UNRUN. Native forward/root, public inputs,
+mutation/iteration/captures, adoption and full synchronization remain OPEN.
