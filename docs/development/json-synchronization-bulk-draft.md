@@ -920,3 +920,13 @@ invariants. Native rebinds use the existing complete loop fixed point. Independe
 all-domain emitted JS/strict-TS, interpreter/CST and Rust oracle case sources
 remain UNRUN. See [the loop contract](primitive-owned-vector-loop-state-source-draft.md).
 Broader helper/public Vec inputs and full synchronization remain OPEN.
+
+### Explicit owned primitive vector entry input draft (2026-10-30)
+
+Five complete source equations use actual leading truncate(input, u64::MAX)
+owned results as the bounded public entry contract in both owned JS/TS families
+and native complete lexical flow. The existing core and native history stay
+unchanged. Actual import/ABI/symbol guards precede ordinary work and moved-input
+checks remain required. Eleven-domain emitted/typed/meta/inverse/interpreter and
+Rust oracle case sources remain UNRUN. See [the input contract](primitive-owned-vector-entry-inputs-source-draft.md).
+Shared Vec inputs, owned Vec helper inputs and full synchronization remain OPEN.
