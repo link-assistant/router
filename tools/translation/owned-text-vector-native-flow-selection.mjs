@@ -1,7 +1,7 @@
 // Source-bound family selection only; the original/copy complete flow checker
 // retains its actual caller/type/ownership obligations and refuses unsupported IR.
 import {validateOwnedJsonFlow as originalFlow} from './owned-json-flow.mjs';
-import {validateOwnedTextVectorFlow} from './owned-text-vector-native-flow.mjs';
+import {validateOwnedTextVectorReadonlyFlow as validateOwnedTextVectorFlow} from './owned-text-vector-readonly-native-flow.mjs';
 import {ownedTextVectorOperationShape} from './owned-text-vector-call-shape.mjs';
 import {ownedTextVectorHelperCallCandidate} from './owned-text-vector-native-call-candidate.mjs';
 export function validateOwnedJsonFlow(checker,entry,options){

@@ -395,3 +395,14 @@ interpreter/meta/inverse/batch/refusal/nested/boundary cases and CI-only native
 oracle additions remain UNRUN. Whole Rust project forward recognition and all
 broader receiving/freshness/performance/owner/namespace/platform/parity work stay
 OPEN. See [the adoption source contract](owned-text-vector-kernel-adoption-source-draft.md).
+
+## Original native readonly text helper inputs (2026-10-30)
+
+An additive private qualifier retains complete original caller/callee/receipt/
+body/type/guard checks while admitting resolved readonly str parameters. A full
+copied vector flow holds copied text-reference loans through later arguments,
+rejecting move/restore loopholes. Original qualifier/direct flow bodies, helper
+and loan bounds and dependency publication remain exact. Independent native/
+JS/strict TS/guard/source/loan/refusal and CI-only Rust oracle cases are drafted,
+all UNRUN. Native kernel backend routing and all broader source/receiving/
+performance/freshness/platform/parity work remain OPEN. See [the readonly input contract](owned-text-vector-native-readonly-text-source-draft.md).

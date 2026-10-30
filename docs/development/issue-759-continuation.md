@@ -1,5 +1,7 @@
 # Continue the JavaScript-first translation work
 
+See [the current paused checkpoint handoff](issue-759-handoff.md) for the latest source-only state, remaining work and resume constraints.
+
 The active continuation is [issue #772](https://github.com/link-assistant/router/issues/772).
 It preserves every requirement of [#759](https://github.com/link-assistant/router/issues/759)
 after the meaningful checkpoint in [#771](https://github.com/link-assistant/router/pull/771),
