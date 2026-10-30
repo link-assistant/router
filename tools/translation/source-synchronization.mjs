@@ -313,3 +313,6 @@ export * as ownedTextVectorOutcome from './js-to-rust/owned-text-vector-outcome.
 export * as ownedTextVectorCancellation from './js-to-rust/owned-text-vector-cancellation.mjs';
 export {translateOwnedOutcomeRust as translateOwnedTextVectorOutcomeRust} from './js-to-rust/owned-text-vector-outcome-rust.mjs';
 export {translateOwnedCancellationRust as translateOwnedTextVectorCancellationRust} from './js-to-rust/owned-text-vector-cancellation-rust.mjs';
+
+export {parseForwardOwnedTextVector,checkForwardOwnedTextVector,emitForwardOwnedTextVector,ownedTextVectorForwardRuntimeAssets} from './owned-text-vector-forward-domain.mjs';
+export {translateProjectOwnedTextVectors,translateProjectWithFlatEnclosingSemanticMetaOwnedTextVectors} from './owned-text-vector-project.mjs';

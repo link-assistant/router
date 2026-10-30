@@ -921,3 +921,10 @@ before issuing executable IR. Charge cloned/joined ownership state against its
 operation budget. Preserve original cloning APIs and refusals, retain strict
 paired type witnesses and require complete canonical Rust reproduction in the
 inverse; see [the caller source draft](docs/development/owned-text-vector-callers-source-draft.md).
+
+For native String-vector extensions, retain actual active module/scope/type
+checks and private whole-function emission reissue. Keep distinct owned/shared/
+slice domains and reuse transient call loans; shared-reference Copy never makes
+String Copy. Share fresh sources only within a complete operation, charge state
+copies before allocation and retain original entry-point APIs. See
+[the native source draft](docs/development/owned-text-vector-forward-source-draft.md).

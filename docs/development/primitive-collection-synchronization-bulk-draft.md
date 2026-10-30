@@ -243,3 +243,20 @@ feedback was inspected. This is no measured coverage or qualified caller owner.
 Broader original Rust lowering/adoption, captures/aggregates/references, all
 remaining requirements, receiving/freshness/performance and full synchronization
 remain OPEN. See [the caller source contract](owned-text-vector-callers-source-draft.md).
+
+## Original Rust String-vector forward batch (2026-10-30)
+
+The original Rust path now has drafted actual active module/scope/native ABI
+joins, qualified core parsing, actual String/Vec/shared/slice/u64/Option checking,
+private parent caller/emission dispatch, JS/TS paired imports and complete host
+assets. Distinct String-vector flow domains copy the complete original ownership
+checker with actual public input guards, same-module helper rechecks, mutable
+initialization, shared helper arguments, loop/branch and call-duration loan
+rules. Existing primitive APIs/flow remain unchanged. State copies are charged
+before allocation; the existing per-operation raw operand index is reused.
+Additive whole-project source scopes share fresh reads within one operation.
+Independent original Rust/JS/strict-TS/private/source/refusal and CI-only Rust
+helper/loop oracle case sources and complete substitutions are drafted, all
+UNRUN. No CI feedback was inspected. Production adoption, String literals,
+original owner qualification, remaining coverage, receiving/freshness/performance
+and full synchronization stay OPEN. See [the native source contract](owned-text-vector-forward-source-draft.md).

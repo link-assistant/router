@@ -33,3 +33,32 @@ fn reassignment_restores_owned_vector_at_each_loop_backedge() {
     assert_eq!(core::vec_text_len(&values), 3);
     assert_eq!(core::vec_text_get(&values, 2), Some("x".to_owned()));
 }
+
+fn add_input(values: Vec<String>, text: String) -> Vec<String> {
+    let checked = core::vec_text_truncate(values, u64::MAX);
+    core::vec_text_push(checked, text)
+}
+fn count_input(values: &Vec<String>) -> u64 {
+    let _checked = core::vec_text_len(values);
+    core::vec_text_len(values)
+}
+
+#[test]
+fn complete_owned_and_shared_helper_inputs_use_actual_entry_guards() {
+    let values = add_input(core::vec_text_new(), "🦀".to_owned());
+    assert_eq!(count_input(&values), 1);
+    assert_eq!(core::vec_text_get(&values, 0), Some("🦀".to_owned()));
+}
+
+#[test]
+fn loop_accumulation_clones_shared_slice_without_moving_its_strings() {
+    let input = ["é".to_owned(), String::new()];
+    let mut values = core::vec_text_new();
+    for _index in 0..3 {
+        let fresh = core::vec_text_from_slice(&input);
+        values = core::vec_text_append(values, fresh);
+    }
+    assert_eq!(core::vec_text_len(&values), 6);
+    assert_eq!(core::vec_text_get(&values, 4), Some("é".to_owned()));
+    assert_eq!(input[0], "é");
+}

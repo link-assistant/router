@@ -87,6 +87,7 @@ ${['checked_add','checked_sub','checked_mul','checked_neg','wrapping_add','wrapp
   for(const [name,source]of primitiveSequenceRuntimeAssetPair())files.set(name,source);
   for(const [name,source]of primitiveOwnedVectorRuntimeAssetPair())files.set(name,source);
   for(const [name,source]of primitiveVectorLiteralRuntimeAssetPair())files.set(name,source);
+  for(const [name,source]of ownedTextVectorForwardRuntimeAssets()){if(files.has(name)&&files.get(name)!==source)throw new TypeError('Conflicting complete owned text vector runtime asset');files.set(name,source);}
   return files;
 }
 
@@ -176,6 +177,7 @@ ${['checked_add','checked_sub','checked_mul','checked_neg','wrapping_add','wrapp
   for(const [name,source]of primitiveSequenceRuntimeAssetPair())files.set(name,source);
   for(const [name,source]of primitiveOwnedVectorRuntimeAssetPair())files.set(name,source);
   for(const [name,source]of primitiveVectorLiteralRuntimeAssetPair())files.set(name,source);
+  for(const [name,source]of ownedTextVectorForwardRuntimeAssets()){if(files.has(name)&&files.get(name)!==source)throw new TypeError('Conflicting complete owned text vector runtime asset');files.set(name,source);}
   return files;
 }
 
@@ -184,3 +186,5 @@ import {primitiveSequenceRuntimeAssetPair} from './primitive-sequence-runtime-so
 import {primitiveOwnedVectorRuntimeAssetPair} from './primitive-owned-vector-runtime-sources.mjs';
 
 import {primitiveVectorLiteralRuntimeAssetPair} from './primitive-vector-literal-runtime-sources.mjs';
+
+import {ownedTextVectorForwardRuntimeAssets} from './owned-text-vector-forward-domain.mjs';
