@@ -21,6 +21,19 @@ push and stop. Work is paused. Do not resume automatically.
 
 ## Objective and honest status
 
+The [countable draft checklist](issue-759-draft-checklist.md) now splits the
+14 broad ledger areas into 70 stable source-draft acceptance bundles. Initial
+accounting is **0/70 closed with complete source-review receipts; 70/70 OPEN**.
+This is a conservative tracking baseline, not 0% implementation: existing
+partial source work is substantial and has not been audited against the new
+closure criteria. No honest drafted-effort percentage is available yet.
+On a future explicit resume, first close L01/L02 by mapping actual production
+source and unresolved features to the numbered rows. Then record concrete
+implementation, both-direction/CST/meta and independent case-source evidence
+before closing each row; keep all execution evidence separate. The checklist
+defines dependency order, count updates and scope-change handling. Its creation
+does not resume implementation or lift the no-execution policy.
+
 The objective remains full automated Rust ↔ serialized/reparsed CST/meta ↔
 JavaScript and TypeScript translation and synchronization for Router, with
 physical `rust/src`, `js/src` and `ts/src` trees, reusable compatibility cores,
@@ -166,6 +179,7 @@ and sufficient without those local files.
 
 ## Ledgers
 
+- [Countable draft checklist: 70 acceptance bundles](issue-759-draft-checklist.md)
 - [Full requirements](bulk-draft-requirements.md)
 - [Collection continuation](primitive-collection-synchronization-bulk-draft.md)
 - [Readonly helper contract](owned-text-vector-native-readonly-text-source-draft.md)

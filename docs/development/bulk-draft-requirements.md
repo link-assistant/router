@@ -1,5 +1,9 @@
 # Complete requirement draft for issues #759 and #772
 
+Use the [70-item source-draft checklist](issue-759-draft-checklist.md) for
+countable closure tracking and source evidence. This ledger retains the full
+historical obligations; narrative source batches do not close checklist rows.
+
 The user requires all remaining implementation work to be drafted before any
 further tests or experiments. Source review and source editing continue; all
 new runtime, rule, test and workflow changes remain unverified. Do not start
