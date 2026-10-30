@@ -289,3 +289,11 @@ source references. This DATA-only composition grants no owner/type/namespace
 authority; still apply the real serialized/reparsed CST substitution and full
 private caller checker. Use the fixed language/repository phases. Dropped or
 duplicated nested edits refuse. See [the source contract](primitive-vector-literal-bulk-source-draft.md).
+
+For selected compound primitive source operations, use the additive
+[failure-aware source APIs](primitive-source-failure-source-draft.md). Classify
+private source-input validation separately from application callbacks. Caught
+source failures invalidate every active selected scope; restoring bytes does
+not recover a cached verdict. Still execute every complete closing validator
+and preserve the primary thrown value. Keep legacy APIs available and introduce
+no across-operation source/owner/hash/verdict/result/failure cache.

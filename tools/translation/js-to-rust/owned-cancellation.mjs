@@ -47,6 +47,6 @@ export {translateOwnedCollectionsJavaScript as translateOwnedOutcomeJavaScript,t
 export {createOwnedCoreSourceContext as createOwnedCancellationContext,ownedCoreRuntimeSources as ownedCancellationRuntimeSources,prepareOwnedCoreRuntime as prepareOwnedCancellationRuntime,evaluateOwnedCoreProgram as evaluateOwnedCancellation,evaluateOwnedCoreBatch as evaluateOwnedCancellationBatch,readOwnedCoreDocument as readOwnedCancellationMeta};
 export {translateOwnedCollectionsJavaScript as translateOwnedCancellationJavaScript,translateOwnedCollectionsTypeScript as translateOwnedCancellationTypeScript,translateOwnedCollectionsConcreteSyntaxMeta as translateOwnedCancellationConcreteSyntaxMeta,emitOwnedCollectionsRust as emitOwnedCancellationRust};
 
-import {withOriginalPrimitiveSequenceSourceOperation} from '../current-primitive-sequence-source.mjs';
+import {withOriginalPrimitiveSequenceSourceOperation} from '../failure-aware-primitive-sequence-source.mjs';
 
-import {withOriginalPrimitiveOwnedVectorSourceOperation} from '../current-primitive-owned-vector-source.mjs';
+import {withOriginalPrimitiveOwnedVectorSourceOperation} from '../failure-aware-primitive-owned-vector-source.mjs';

@@ -1,6 +1,6 @@
 // Literal call proposals only. The parent rechecks the complete original
 // source/import symbols, owned flow and serialized/reparsed semantic boundary.
-import {withOriginalPrimitiveVectorLiteralSourceOperation,requireCurrentPrimitiveVectorLiteralOperationSource} from '../current-primitive-vector-literal-source.mjs';
+import {withOriginalPrimitiveVectorLiteralSourceOperation,requireCurrentPrimitiveVectorLiteralOperationSource} from '../failure-aware-primitive-vector-literal-source.mjs';
 const fail=message=>{throw new TypeError('Primitive vector literal call: '+message);};
 export function checkPrimitiveVectorLiteralCall(node,binding,scope,depth,helpers){
  if(binding.target!==helpers.runtimeRoot+'/primitive-vector-literal-runtime.mjs')return null;

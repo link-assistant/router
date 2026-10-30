@@ -1,5 +1,5 @@
 // Only the parent complete private source issuer can admit this candidate IR.
-import {requireCurrentPrimitiveSequenceOperationSource} from '../current-primitive-sequence-source.mjs';
+import {requireCurrentPrimitiveSequenceOperationSource} from '../failure-aware-primitive-sequence-source.mjs';
 const fail=message=>{throw new TypeError('Owned primitive sequence call: '+message);};
 export function checkOwnedPrimitiveSequenceCall(node,binding,scope,depth,helpers){
  const {ts,file}=helpers;if(binding.target!==helpers.runtimeRoot+'/primitive-sequence-runtime.mjs')return null;helpers.current();const data=helpers.data();if(data.primitiveOperators!==true||binding.typeOnly||node.questionDotToken||node.typeArguments?.length||node.arguments.some(argument=>ts.isSpreadElement(argument)))fail('actual primitive profile and ordinary value import/call required');

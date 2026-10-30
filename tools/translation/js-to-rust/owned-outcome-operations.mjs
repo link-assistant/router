@@ -592,12 +592,12 @@ import {hasWidePrimitiveSliceInput,widePrimitiveSliceInputPrelude,applyWidePrimi
 
 import {primitiveSequenceOperationShape,primitiveSequenceOptionalWitness} from '../primitive-sequence-call-shape.mjs';
 import {emitOwnedPrimitiveSequenceCall,evaluateOwnedPrimitiveSequenceCall} from './owned-primitive-sequence-emission.mjs';
-import {withOriginalPrimitiveSequenceSourceOperation} from '../current-primitive-sequence-source.mjs';
+import {withOriginalPrimitiveSequenceSourceOperation} from '../failure-aware-primitive-sequence-source.mjs';
 function withPrimitiveSequenceProgramSource(program,run){const snapshot=ownedPlainData(program),needed=Array.isArray(snapshot)&&snapshot.some(item=>Array.isArray(item?.hostCalls)&&item.hostCalls.some(call=>primitiveSequenceOperationShape(call.name)));const execute=()=>needed?withOriginalPrimitiveSequenceSourceOperation(run):run(),vectors=Array.isArray(snapshot)&&snapshot.some(item=>Array.isArray(item?.hostCalls)&&item.hostCalls.some(call=>primitiveOwnedVectorOperationShape(call.name)));const literals=Array.isArray(snapshot)&&snapshot.some(item=>Array.isArray(item?.hostCalls)&&item.hostCalls.some(call=>primitiveVectorLiteralOperationShape(call.name,0)));return literals?withOriginalPrimitiveVectorLiteralSourceOperation(execute):vectors?withOriginalPrimitiveOwnedVectorSourceOperation(execute):execute();}
 
 import {SHARED_PRIMITIVE_VECTOR_RUST_TYPES,ownedPrimitiveVectorSharedElement,OWNED_PRIMITIVE_VECTOR_RUST_TYPES,primitiveOwnedVectorOperationShape,primitiveOwnedVectorTypeWitness,primitiveOwnedVectorOptionalWitness} from '../primitive-owned-vector-call-shape.mjs';
 import {emitOwnedPrimitiveVectorCall,evaluateOwnedPrimitiveVectorCall} from './owned-primitive-vector-emission.mjs';
-import {withOriginalPrimitiveOwnedVectorSourceOperation} from '../current-primitive-owned-vector-source.mjs';
-import {withOriginalPrimitiveVectorLiteralSourceOperation} from '../current-primitive-vector-literal-source.mjs';
+import {withOriginalPrimitiveOwnedVectorSourceOperation} from '../failure-aware-primitive-owned-vector-source.mjs';
+import {withOriginalPrimitiveVectorLiteralSourceOperation} from '../failure-aware-primitive-vector-literal-source.mjs';
 import {primitiveVectorLiteralOperationShape} from '../primitive-vector-literal-call-shape.mjs';
 import {emitPrimitiveVectorLiteralCall,evaluatePrimitiveVectorLiteralCall} from './primitive-vector-literal-emission.mjs';

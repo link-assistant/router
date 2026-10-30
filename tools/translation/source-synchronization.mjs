@@ -285,3 +285,9 @@ export {withOriginalPrimitiveVectorLiteralSourceOperation,requireCurrentPrimitiv
 
 export {proposePrimitiveVectorLiteralCalls} from './js-to-rust/primitive-vector-literal-proposals.mjs';
 export {composeConcreteSourceEditTemplates} from './concrete-source-edit-templates.mjs';
+
+export {withOriginalPrimitiveSequenceSourceOperation as withFailureAwarePrimitiveSequenceSourceOperation,requireCurrentPrimitiveSequenceOperationSource as requireFailureAwarePrimitiveSequenceOperationSource} from './failure-aware-primitive-sequence-source.mjs';
+
+export {withOriginalPrimitiveOwnedVectorSourceOperation as withFailureAwarePrimitiveOwnedVectorSourceOperation,requireCurrentPrimitiveOwnedVectorOperationSource as requireFailureAwarePrimitiveOwnedVectorOperationSource} from './failure-aware-primitive-owned-vector-source.mjs';
+
+export {withOriginalPrimitiveVectorLiteralSourceOperation as withFailureAwarePrimitiveVectorLiteralSourceOperation,requireCurrentPrimitiveVectorLiteralOperationSource as requireFailureAwarePrimitiveVectorLiteralOperationSource} from './failure-aware-primitive-vector-literal-source.mjs';

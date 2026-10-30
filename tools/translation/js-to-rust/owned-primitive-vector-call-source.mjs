@@ -1,6 +1,6 @@
 // Candidate construction only. Only the parent's actual complete original
 // source checker may issue code after independently replaying these moves/loans.
-import {requireCurrentPrimitiveOwnedVectorOperationSource} from '../current-primitive-owned-vector-source.mjs';
+import {requireCurrentPrimitiveOwnedVectorOperationSource} from '../failure-aware-primitive-owned-vector-source.mjs';
 import {ownedPrimitiveVectorElement,ownedPrimitiveVectorSharedElement} from '../primitive-owned-vector-call-shape.mjs';
 const fail=message=>{throw new TypeError('Owned primitive vector call: '+message);};
 export function checkOwnedPrimitiveVectorCall(node,binding,scope,depth,helpers){

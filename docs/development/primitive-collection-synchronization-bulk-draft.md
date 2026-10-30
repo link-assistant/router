@@ -100,3 +100,13 @@ write checks prevent reinitialization from erasing a borrow conflict. Existing
 core shared arguments use the same intervals. Eleven-domain native/target,
 conflict/source/refusal cases and extended Rust oracle source are UNRUN.
 See [the native contract](primitive-vector-native-borrows-source-draft.md).
+
+## Nested source failure invalidation (2026-10-30)
+
+Twenty-five source equations draft additive failure-aware readers/operations
+and sixteen actual semantic consumer routes, preserving all legacy APIs. A
+private source-input failure revokes every active selected scope; restoration
+and caught errors cannot revive cached facts. Ordinary callback errors remain
+separate. Complete closing validators still all run and preserve primary error
+identity. Independent valid/legacy/map/physical/cross-family/closing/depth and
+source inverse cases are UNRUN. See [the contract](primitive-source-failure-source-draft.md).

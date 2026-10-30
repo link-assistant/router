@@ -44,6 +44,6 @@ export {translateOwnedCollectionsJavaScript as translateOwnedStateJavaScript,tra
 export {createOwnedCoreSourceContext as createOwnedOutcomeContext,ownedCoreRuntimeSources as ownedOutcomeRuntimeSources,prepareOwnedCoreRuntime as prepareOwnedOutcomeRuntime,evaluateOwnedCoreProgram as evaluateOwnedOutcome,evaluateOwnedCoreBatch as evaluateOwnedOutcomeBatch,readOwnedCoreDocument as readOwnedOutcomeMeta};
 export {translateOwnedCollectionsJavaScript as translateOwnedOutcomeJavaScript,translateOwnedCollectionsTypeScript as translateOwnedOutcomeTypeScript,translateOwnedCollectionsConcreteSyntaxMeta as translateOwnedOutcomeConcreteSyntaxMeta,emitOwnedCollectionsRust as emitOwnedOutcomeRust};
 
-import {withOriginalPrimitiveSequenceSourceOperation} from '../current-primitive-sequence-source.mjs';
+import {withOriginalPrimitiveSequenceSourceOperation} from '../failure-aware-primitive-sequence-source.mjs';
 
-import {withOriginalPrimitiveOwnedVectorSourceOperation} from '../current-primitive-owned-vector-source.mjs';
+import {withOriginalPrimitiveOwnedVectorSourceOperation} from '../failure-aware-primitive-owned-vector-source.mjs';

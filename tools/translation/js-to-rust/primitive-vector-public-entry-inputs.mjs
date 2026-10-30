@@ -1,7 +1,7 @@
 // Mixed entry-prefix checking within the actual original complete JS/TS
 // caller issuer. Candidate type/symbol records alone grant no permission.
 import {ownedPrimitiveVectorElement,ownedPrimitiveVectorSharedElement} from '../primitive-owned-vector-call-shape.mjs';
-import {requireCurrentPrimitiveOwnedVectorOperationSource} from '../current-primitive-owned-vector-source.mjs';
+import {requireCurrentPrimitiveOwnedVectorOperationSource} from '../failure-aware-primitive-owned-vector-source.mjs';
 export function requirePrimitiveVectorPublicEntryInput(declaration,parameter,type,{ts,file,checker,data,resolveImport,fail}){
  const owned=ownedPrimitiveVectorElement(type),shared=ownedPrimitiveVectorSharedElement(type),domain=owned??shared;if(!domain||!ts.isIdentifier(parameter.name)||!declaration.body||!ts.isBlock(declaration.body))fail('vector public parameters require their actual bounded entry prefix');const symbol=checker.getSymbolAtLocation(parameter.name),names=new Set(declaration.parameters.filter(row=>ts.isIdentifier(row.name)).map(row=>row.name.text));if(!symbol)fail('vector public parameters need their actual original binding');
  for(const statement of declaration.body.statements.slice(0,declaration.parameters.length)){

@@ -1,0 +1,1 @@
+Draft additive failure-aware primitive source readers/operations and actual compiler consumer routes. Preserve legacy APIs, complete closing checks and ordinary callback error identity; caught source failures remain fatal after restoration. Add independent map/physical/cross-family/legacy/fence/depth source cases. All execution remains unrun and full translation unfinished.

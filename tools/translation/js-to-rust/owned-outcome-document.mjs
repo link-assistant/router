@@ -141,6 +141,6 @@ export function readOwnedCoreDocument(text,{context}={}){
  if(!isDeepStrictEqual(paths,[...required]))fail('unreferenced or reordered CST');requireOwnedCoreSourceCurrent(context);assertReverseConcreteSourceHost();return requireOwnedLocalCallClosure(program);
 }
 
-import {withOriginalPrimitiveOwnedVectorSourceOperation} from '../current-primitive-owned-vector-source.mjs';
-import {withOriginalPrimitiveVectorLiteralSourceOperation} from '../current-primitive-vector-literal-source.mjs';
+import {withOriginalPrimitiveOwnedVectorSourceOperation} from '../failure-aware-primitive-owned-vector-source.mjs';
+import {withOriginalPrimitiveVectorLiteralSourceOperation} from '../failure-aware-primitive-vector-literal-source.mjs';
 function withPrimitiveOwnedVectorDocumentSource(data,run){if(data.files.some(row=>row.path===data.runtimeRoot+'/primitive-vector-literal-runtime.mjs'))return withOriginalPrimitiveVectorLiteralSourceOperation(run);return data.files.some(row=>row.path===data.runtimeRoot+'/primitive-owned-vector-runtime.mjs')?withOriginalPrimitiveOwnedVectorSourceOperation(run):run();}

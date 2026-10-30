@@ -1,7 +1,7 @@
 // Entry-prefix checking inside the original complete caller issuer only.
 // Scope spelling, parameter metadata and this DATA helper confer no permission.
 import {ownedPrimitiveVectorElement} from '../primitive-owned-vector-call-shape.mjs';
-import {requireCurrentPrimitiveOwnedVectorOperationSource} from '../current-primitive-owned-vector-source.mjs';
+import {requireCurrentPrimitiveOwnedVectorOperationSource} from '../failure-aware-primitive-owned-vector-source.mjs';
 export function requireOwnedPrimitiveVectorEntryInput(declaration,parameter,type,{ts,file,checker,data,resolveImport,fail}){
  const domain=ownedPrimitiveVectorElement(type);if(!domain||!ts.isIdentifier(parameter.name)||!declaration.body||!ts.isBlock(declaration.body))fail('owned vector public parameters require their actual bounded entry prefix');const symbol=checker.getSymbolAtLocation(parameter.name),names=new Set(declaration.parameters.filter(row=>ts.isIdentifier(row.name)).map(row=>row.name.text));if(!symbol)fail('owned vector public parameters need their actual original binding');
  for(const statement of declaration.body.statements.slice(0,declaration.parameters.length)){

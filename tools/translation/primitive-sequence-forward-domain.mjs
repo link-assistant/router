@@ -8,7 +8,7 @@ import {isResolvedSourceScopeSet,assertResolvedSourceScopeOrigin} from './module
 import {requireRouterCoreFacade,requireRouterCoreFacadeCurrent} from './router-core-formatting.mjs';
 import {originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
 import {requireOriginalPrimitiveTryFromChecker} from './extensions/host-contracts.mjs';
-import {requireCurrentPrimitiveSequenceNativeOperationSource,requireCurrentPrimitiveSequenceOriginalOperationSource,withOriginalPrimitiveSequenceSourceOperation} from './current-primitive-sequence-source.mjs';
+import {requireCurrentPrimitiveSequenceNativeOperationSource,requireCurrentPrimitiveSequenceOriginalOperationSource,withOriginalPrimitiveSequenceSourceOperation} from './failure-aware-primitive-sequence-source.mjs';
 import {primitiveSequenceOperationShape} from './primitive-sequence-call-shape.mjs';
 import {actualPrimitiveSlice} from './owned-scalar-slice-flow.mjs';
 import {BOOL,rustFixedType,sameType} from './checked-types.mjs';

@@ -8,10 +8,10 @@ import {isResolvedSourceScopeSet,assertResolvedSourceScopeOrigin} from './module
 import {requireRouterCoreFacade,requireRouterCoreFacadeCurrent} from './router-core-formatting.mjs';
 import {originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
 import {requireOriginalPrimitiveTryFromChecker} from './extensions/host-contracts.mjs';
-import {requireCurrentPrimitiveOwnedVectorNativeOperationSource,requireCurrentPrimitiveOwnedVectorOriginalOperationSource,withOriginalPrimitiveOwnedVectorSourceOperation} from './current-primitive-owned-vector-source.mjs';
+import {requireCurrentPrimitiveOwnedVectorNativeOperationSource,requireCurrentPrimitiveOwnedVectorOriginalOperationSource,withOriginalPrimitiveOwnedVectorSourceOperation} from './failure-aware-primitive-owned-vector-source.mjs';
 import {primitiveOwnedVectorOperationShape} from './primitive-owned-vector-call-shape.mjs';
 import {primitiveVectorLiteralOperationShape} from './primitive-vector-literal-call-shape.mjs';
-import {requireCurrentPrimitiveVectorLiteralOriginalOperationSource,withOriginalPrimitiveVectorLiteralSourceOperation} from './current-primitive-vector-literal-source.mjs';
+import {requireCurrentPrimitiveVectorLiteralOriginalOperationSource,withOriginalPrimitiveVectorLiteralSourceOperation} from './failure-aware-primitive-vector-literal-source.mjs';
 import {actualPrimitiveSlice} from './owned-scalar-slice-flow.mjs';
 import {BOOL,rustFixedType,sameType} from './checked-types.mjs';
 import {forwardOwnedCarrier} from './owned-forward-domain.mjs';

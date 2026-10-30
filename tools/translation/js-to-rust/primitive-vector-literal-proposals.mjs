@@ -10,7 +10,7 @@ import * as cancellation from './owned-cancellation.mjs';
 import {proposeOwnedWideSliceInputBoundaries} from './owned-wide-slice-input-proposals.mjs';
 import {createRulePipeline} from '../rule-pipeline.mjs';
 import {composeConcreteSourceEditTemplates} from '../concrete-source-edit-templates.mjs';
-import {withOriginalPrimitiveVectorLiteralSourceOperation} from '../current-primitive-vector-literal-source.mjs';
+import {withOriginalPrimitiveVectorLiteralSourceOperation} from '../failure-aware-primitive-vector-literal-source.mjs';
 import {withCompleteSourceClosingFence} from '../complete-source-closing-fence.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from '../concrete-syntax-meta.mjs';
 import {transportConcreteSourceEquations} from '../concrete-source-equations.mjs';
