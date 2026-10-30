@@ -821,3 +821,10 @@ history, preserving strict current-source acceptance separately from inert
 successor proposals. Six full equations and independent full-history/tamper/
 unknown-current cases are UNRUN. Proposal DATA grants no installation or native
 caller authority; full receiving and synchronization remain OPEN.
+
+The [bulk slice presence draft](primitive-slice-presence-adoption-source-draft.md)
+copies the complete original emptiness proposer into an additive finite selector
+covering common comparisons, negations and Boolean conditions. Six full equations
+and independent fourteen-form/all-domain JS/TS/interpreter/refusal cases are
+UNRUN. Input-contract migration is explicit; original API refusals, complete
+private reissue and all full synchronization obligations remain required.
