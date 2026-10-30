@@ -928,3 +928,10 @@ slice domains and reuse transient call loans; shared-reference Copy never makes
 String Copy. Share fresh sources only within a complete operation, charge state
 copies before allocation and retain original entry-point APIs. See
 [the native source draft](docs/development/owned-text-vector-forward-source-draft.md).
+
+String literal temporaries must move actual String operands and use the paired
+clone-from-slice boundary; do not grant primitive Copy or array-promotion proof.
+Keep the source-arity bound separate from runtime capacity. Preserve original
+reader refusals through additive syntax APIs, retain full canonical reproduction
+and protect invocation-local source observations from public mutation. See
+[the literal source draft](docs/development/owned-text-vector-literal-source-draft.md).

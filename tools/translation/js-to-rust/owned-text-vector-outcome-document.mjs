@@ -146,4 +146,6 @@ import {withOriginalPrimitiveVectorLiteralSourceOperation} from '../failure-awar
 function originalPrimitiveOwnedVectorDocumentSource(data,run){if(data.files.some(row=>row.path===data.runtimeRoot+'/primitive-vector-literal-runtime.mjs'))return withOriginalPrimitiveVectorLiteralSourceOperation(run);return data.files.some(row=>row.path===data.runtimeRoot+'/primitive-owned-vector-runtime.mjs')?withOriginalPrimitiveOwnedVectorSourceOperation(run):run();}
 
 import {withOriginalOwnedTextVectorSourceOperation} from '../current-owned-text-vector-source.mjs';
-function withPrimitiveOwnedVectorDocumentSource(data,run){return withOriginalOwnedTextVectorSourceOperation(()=>originalPrimitiveOwnedVectorDocumentSource(data,run));}
+function withPrimitiveOwnedVectorDocumentSource(data,run){return withOriginalOwnedTextVectorSourceOperation(()=>withOwnedTextVectorLiteralReceivingSource(data,()=>originalPrimitiveOwnedVectorDocumentSource(data,run)));}
+
+import {withOwnedTextVectorLiteralReceivingSource} from '../current-owned-text-vector-literal-source.mjs';

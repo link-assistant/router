@@ -49,5 +49,7 @@ import {withOriginalPrimitiveSequenceSourceOperation} from '../failure-aware-pri
 import {withOriginalPrimitiveOwnedVectorSourceOperation} from '../failure-aware-primitive-owned-vector-source.mjs';
 
 import {withOriginalOwnedTextVectorSourceOperation} from '../current-owned-text-vector-source.mjs';
-function translate(stage,options){return withOriginalOwnedTextVectorSourceOperation(()=>translateInner(stage,options));}
-export function translateOwnedCollectionsTypeScript(source,options){return withOriginalOwnedTextVectorSourceOperation(()=>translateOwnedCollectionsTypeScriptInner(source,options));}
+function translate(stage,options){return withOriginalOwnedTextVectorSourceOperation(()=>withOwnedTextVectorLiteralReceivingSource(ownedCoreSourceData(options.context),()=>translateInner(stage,options)));}
+export function translateOwnedCollectionsTypeScript(source,options){return withOriginalOwnedTextVectorSourceOperation(()=>withOwnedTextVectorLiteralReceivingSource(ownedCoreSourceData(options.context),()=>translateOwnedCollectionsTypeScriptInner(source,options)));}
+
+import {withOwnedTextVectorLiteralReceivingSource} from '../current-owned-text-vector-literal-source.mjs';

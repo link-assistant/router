@@ -77,6 +77,7 @@ export class OwnedRustReader {
  arguments(environment,depth){const args=[];while(!this.eat(')')){args.push(this.expression(environment,0,depth+1));if(!this.is(')'))this.expect(',');}return args;}
  primary(environment,depth){
   this.tick(depth);
+  if(this.is('[')){if(!this.primitiveOperators)fail('explicit native literal source profile required');this.expect('[');const elements=[];while(!this.eat(']')){if(elements.length>=64)fail('canonical temporary literal source bound');elements.push(this.expression(environment,0,depth+1));if(!this.is(']'))this.expect(',');}return {kind:'json-array',elements};}
   if(this.eat('&'))return {kind:'borrow',value:this.expression(environment,10,depth+1)};
   if(this.eat('!'))return {kind:'not',value:this.expression(environment,10,depth+1)};
   if(this.eat('(')){const value=this.expression(environment,0,depth+1);this.expect(')');return value;}

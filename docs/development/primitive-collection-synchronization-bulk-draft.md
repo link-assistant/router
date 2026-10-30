@@ -260,3 +260,21 @@ helper/loop oracle case sources and complete substitutions are drafted, all
 UNRUN. No CI feedback was inspected. Production adoption, String literals,
 original owner qualification, remaining coverage, receiving/freshness/performance
 and full synchronization stay OPEN. See [the native source contract](owned-text-vector-forward-source-draft.md).
+
+## Owned String-vector literal batch (2026-10-30)
+
+A singleton variadic wrapper now has drafted JS/strict declarations, two fresh
+failure-aware physical inputs, complete ABI/receiving/mirror checks and both
+caller profiles, interpreters, emitters and canonical inverse. Native actual
+from_slice(&[String]) lowers a checked closed temporary with ordered String
+moves and clone results; String never becomes primitive Copy. Source operands
+cap at 64 while runtime capacity remains 4,096. Readonly str uses the existing
+explicit source-qualified text copy contract. Public observation caches are
+immutable; operation scopes alone share fresh source work. Source review found
+the missing canonical primary-array rule: an additive bounded reader preserves
+the old primitive reader and inverse consumers opt into the new literal reader.
+Independent runtime/strict-TS/JS/meta/inverse/native/source/private/refusal and
+CI-only Rust oracle case sources plus complete source equations are drafted,
+all UNRUN. No CI feedback was inspected. Adoption and all broader requirements,
+original owner qualification, receiving/freshness/performance and full parity
+remain OPEN. See [the literal source contract](owned-text-vector-literal-source-draft.md).

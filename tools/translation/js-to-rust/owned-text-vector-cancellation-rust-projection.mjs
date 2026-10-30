@@ -108,7 +108,7 @@ export function projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot,
   const next=(value,lower=false)=>expression(value,names,depth+1,lower);
   const args=(values,roles=[])=>values.map((value,index)=>next(adapter(value,roles[index]))).join(', ');
   const call=(name,family,values,roles)=>imported(name,family)+'('+args(values,roles)+')';
-  const textVector=ownedRustTextVectorCall(node);if(textVector)return call(textVector.javascriptName,'owned-text-vector',node.args,textVector.parameters); const primitive=projectOwnedRustPrimitiveObservation(node,{enabled:primitiveOperators,imported,expression:next});if(primitive!==null)return primitive;
+  const textLiteral=ownedRustTextVectorLiteralCall(node);if(textLiteral)return call(textLiteral.javascriptName,'owned-text-vector-literal',textLiteral.args,textLiteral.parameters); const textVector=ownedRustTextVectorCall(node);if(textVector)return call(textVector.javascriptName,'owned-text-vector',node.args,textVector.parameters); const primitive=projectOwnedRustPrimitiveObservation(node,{enabled:primitiveOperators,imported,expression:next});if(primitive!==null)return primitive;
   switch(node.kind){
    case 'temporary':return next(node.value,lowering);
    case 'borrow':return next(node.value,lowering);
@@ -214,3 +214,5 @@ import {ownedRustSharedPrimitiveVectorWitness,ownedRustPrimitiveVectorCall,owned
 import {ownedRustPrimitiveVectorLiteralCall} from './owned-rust-primitive-vector-literal-projection.mjs';
 
 import {ownedRustTextVectorTypeWitness,ownedRustTextVectorCall} from './owned-text-vector-rust-proposals.mjs';
+
+import {ownedRustTextVectorLiteralCall} from './owned-text-vector-rust-literal-proposals.mjs';

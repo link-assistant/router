@@ -316,3 +316,7 @@ export {translateOwnedCancellationRust as translateOwnedTextVectorCancellationRu
 
 export {parseForwardOwnedTextVector,checkForwardOwnedTextVector,emitForwardOwnedTextVector,ownedTextVectorForwardRuntimeAssets} from './owned-text-vector-forward-domain.mjs';
 export {translateProjectOwnedTextVectors,translateProjectWithFlatEnclosingSemanticMetaOwnedTextVectors} from './owned-text-vector-project.mjs';
+
+export {ownedTextVectorLiteralRuntimeSources} from './owned-text-vector-literal-runtime-sources.mjs';
+export {withFreshOwnedTextVectorLiteralInputs} from './fresh-owned-text-vector-literal-inputs.mjs';
+export {withOriginalOwnedTextVectorLiteralSourceOperation,requireCurrentOwnedTextVectorLiteralOperationSource,requireCurrentOwnedTextVectorLiteralOriginalOperationSource} from './current-owned-text-vector-literal-source.mjs';

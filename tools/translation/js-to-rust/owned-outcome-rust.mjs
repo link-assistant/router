@@ -11,7 +11,7 @@ import {RUST_SUPPORT} from './owned-outcome-operations.mjs';
 import {ownedCoreSourceData,requireOwnedCoreSourceCurrent,ownedSourcePath} from './owned-outcome-source.mjs';
 import {createOwnedStateContext,translateOwnedStateJavaScript} from './owned-outcome.mjs';
 import {UnsupportedOwnedRustSource} from './owned-outcome-rust-syntax.mjs';
-import {readOwnedRustFunction} from './owned-primitive-vector-rust-syntax.mjs';
+import {readOwnedRustFunction} from './owned-primitive-vector-literal-rust-syntax.mjs';
 import {projectOwnedRustFunctions,ownedRustNameProposals} from './owned-outcome-rust-projection.mjs';
 import {requireOwnedResultSources} from './owned-result-source-contracts.mjs';
 import {ownedFieldTextOptionTypeLibrary} from './owned-field-option-type-witness.mjs';

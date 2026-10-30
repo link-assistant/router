@@ -223,6 +223,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){return withPr
    case 'primitive-option-callback-call':return emitOwnedPrimitiveOptionCallback(value,{rust,expr,body,rustName,imports,typeScriptType:publicTypeScriptType});
    case 'primitive-vector-literal-call':return emitPrimitiveVectorLiteralCall(value,{rust,expr,imports});
    case 'primitive-owned-vector-call':return emitOwnedPrimitiveVectorCall(value,{rust,expr,imports});
+   case 'owned-text-vector-literal-call':return emitOwnedTextVectorLiteralCall(value,{rust,expr,imports});
    case 'owned-text-vector-call':return emitOwnedTextVectorCall(value,{rust,expr,imports});
    case 'primitive-sequence-call':return emitOwnedPrimitiveSequenceCall(value,{rust,expr,imports});
    case 'primitive-option-call':return emitOwnedPrimitiveOptionCall(value,{rust,expr,imports});
@@ -339,8 +340,8 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){return withPr
  if(hasOwnedBase64Input(program)||[...imports].some(name=>ownedBase64Operation(name)))lines.push('import type {Base64Error,Base64Result} from '+JSON.stringify(relative('base64-runtime.mjs'))+';');
  if(hasWidePrimitiveSliceInput(program))lines.push('import {primitiveSliceInput as __ro_primitiveSliceInput} from '+JSON.stringify(relative('primitive-operator-runtime.mjs'))+';');
  if(hasOwnedBase64Input(program))lines.push('import {base64ResultInput as __ro_base64ResultInput} from '+JSON.stringify(relative('base64-runtime.mjs'))+';');
- for(const family of ['owned-text-vector','primitive-vector-literal','primitive-owned-vector','primitive-sequence','primitive-operator','json-update','json-macro','base64','json','json-option','string-iterator','json-collections','json-iteration','json-state','json-fields','owned-outcome','integer','sse','text','primitive-option','primitive-option-callback','primitive-result','owned-result','http-protocol']){
-  const names=[...imports].filter(name=>(ownedTextVectorOperationShape(name)?'owned-text-vector':primitiveVectorLiteralOperationShape(name,0)?'primitive-vector-literal':primitiveOwnedVectorOperationShape(name)?'primitive-owned-vector':primitiveSequenceOperationShape(name)?'primitive-sequence':ownedPrimitiveOperatorOperation(name)?'primitive-operator':ownedPrimitiveResultOperation(name)?ownedPrimitiveResultOperation(name).runtimeModule.slice(0,-12):ownedPrimitiveOptionCallbackOperation(name)?'primitive-option-callback':ownedPrimitiveOptionOperation(name)?'primitive-option':ownedTextOperation(name)?'text':ownedSseOperation(name)?'sse':ownedIntegerOperation(name)?'integer':ownedOutcomeOperation(name)?'owned-outcome':ownedJsonFieldOperation(name)?'json-fields':ownedStateOperation(name)?'json-state':ownedIterationOnlyOperation(name)?'json-iteration':ownedCollectionOperation(name)?'json-collections':ownedAsciiOperation(name)?'string-iterator':ownedJsonOptionalReaderOperation(name)?'json-option':ownedBase64Operation(name)?'base64':ownedJsonReaderOperation(name)?'json':name.startsWith('json_macro_')?'json-macro':'json-update')===family);
+ for(const family of ['owned-text-vector-literal','owned-text-vector','primitive-vector-literal','primitive-owned-vector','primitive-sequence','primitive-operator','json-update','json-macro','base64','json','json-option','string-iterator','json-collections','json-iteration','json-state','json-fields','owned-outcome','integer','sse','text','primitive-option','primitive-option-callback','primitive-result','owned-result','http-protocol']){
+  const names=[...imports].filter(name=>(ownedTextVectorLiteralOperationShape(name,0)?'owned-text-vector-literal':ownedTextVectorOperationShape(name)?'owned-text-vector':primitiveVectorLiteralOperationShape(name,0)?'primitive-vector-literal':primitiveOwnedVectorOperationShape(name)?'primitive-owned-vector':primitiveSequenceOperationShape(name)?'primitive-sequence':ownedPrimitiveOperatorOperation(name)?'primitive-operator':ownedPrimitiveResultOperation(name)?ownedPrimitiveResultOperation(name).runtimeModule.slice(0,-12):ownedPrimitiveOptionCallbackOperation(name)?'primitive-option-callback':ownedPrimitiveOptionOperation(name)?'primitive-option':ownedTextOperation(name)?'text':ownedSseOperation(name)?'sse':ownedIntegerOperation(name)?'integer':ownedOutcomeOperation(name)?'owned-outcome':ownedJsonFieldOperation(name)?'json-fields':ownedStateOperation(name)?'json-state':ownedIterationOnlyOperation(name)?'json-iteration':ownedCollectionOperation(name)?'json-collections':ownedAsciiOperation(name)?'string-iterator':ownedJsonOptionalReaderOperation(name)?'json-option':ownedBase64Operation(name)?'base64':ownedJsonReaderOperation(name)?'json':name.startsWith('json_macro_')?'json-macro':'json-update')===family);
   if(names.length)lines.push('import { '+names.map(name=>name+' as __ro_'+name).join(', ')+' } from '+JSON.stringify(relative(family+'-runtime.mjs'))+';');
  }
  return lines.join('\n')+'\n\n'+code+'\n';
@@ -390,6 +391,7 @@ export async function prepareOwnedCoreRuntime(input){
  if(program.some(item=>item.hostCalls.some(call=>ownedIntegerOperation(call.name))))modules.integer=await import('../integer-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedSseOperation(call.name))))modules.sse=await import('../sse-runtime.mjs');
  if(program.some(item=>item.ownedTextCopies||item.hostCalls.some(call=>ownedTextOperation(call.name))))modules.text=await import('../text-runtime.mjs');
+ if(program.some(item=>item.hostCalls.some(call=>ownedTextVectorLiteralOperationShape(call.name,0))))modules.ownedTextVectorLiteral=await import('../extensions/owned-text-vector-literal-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedTextVectorOperationShape(call.name))))modules.ownedTextVector=await import('../extensions/owned-text-vector-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>primitiveOwnedVectorOperationShape(call.name))))modules.primitiveOwnedVector=await import('../extensions/primitive-owned-vector-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>primitiveVectorLiteralOperationShape(call.name,0))))modules.primitiveVectorLiteral=await import('../extensions/primitive-vector-literal-runtime.mjs');
@@ -425,6 +427,7 @@ export function evaluateOwnedCoreProgram(input,name,args,token){
    case 'primitive-option-callback-call':return evaluateOwnedPrimitiveOptionCallback(value,{state,scope,get,run});
    case 'primitive-vector-literal-call':return evaluatePrimitiveVectorLiteralCall(value,{state,scope,get});
    case 'primitive-owned-vector-call':return evaluateOwnedPrimitiveVectorCall(value,{state,scope,get});
+   case 'owned-text-vector-literal-call':return evaluateOwnedTextVectorLiteralCall(value,{state,scope,get});
    case 'owned-text-vector-call':return evaluateOwnedTextVectorCall(value,{state,scope,get});
    case 'primitive-sequence-call':return evaluateOwnedPrimitiveSequenceCall(value,{state,scope,get});
    case 'primitive-option-call':return evaluateOwnedPrimitiveOptionCall(value,{state,scope,get});
@@ -501,6 +504,7 @@ function evaluateOwnedCorePrepared(program,name,args,state){
    case 'primitive-option-callback-call':return evaluateOwnedPrimitiveOptionCallback(value,{state,scope,get,run});
    case 'primitive-vector-literal-call':return evaluatePrimitiveVectorLiteralCall(value,{state,scope,get});
    case 'primitive-owned-vector-call':return evaluateOwnedPrimitiveVectorCall(value,{state,scope,get});
+   case 'owned-text-vector-literal-call':return evaluateOwnedTextVectorLiteralCall(value,{state,scope,get});
    case 'owned-text-vector-call':return evaluateOwnedTextVectorCall(value,{state,scope,get});
    case 'primitive-sequence-call':return evaluateOwnedPrimitiveSequenceCall(value,{state,scope,get});
    case 'primitive-option-call':return evaluateOwnedPrimitiveOptionCall(value,{state,scope,get});
@@ -609,4 +613,6 @@ import {emitPrimitiveVectorLiteralCall,evaluatePrimitiveVectorLiteralCall} from 
 
 import {OWNED_TEXT_VECTOR_RUST_TYPES,ownedTextVectorOperationShape,ownedTextVectorTypeWitness} from '../owned-text-vector-call-shape.mjs';import {ownedPrimitiveVectorSharedElement} from './owned-text-vector-domains.mjs';import {emitOwnedTextVectorCall,evaluateOwnedTextVectorCall} from './owned-text-vector-emission.mjs';
 import {withOriginalOwnedTextVectorSourceOperation} from '../current-owned-text-vector-source.mjs';
-function withPrimitiveSequenceProgramSource(program,run){return withOriginalOwnedTextVectorSourceOperation(()=>originalPrimitiveSequenceProgramSource(program,run));}
+function withPrimitiveSequenceProgramSource(program,run){const snapshot=ownedPlainData(program),execute=()=>withOriginalOwnedTextVectorSourceOperation(()=>originalPrimitiveSequenceProgramSource(program,run));return Array.isArray(snapshot)&&snapshot.some(item=>Array.isArray(item?.hostCalls)&&item.hostCalls.some(call=>ownedTextVectorLiteralOperationShape(call.name,0)))?withOriginalOwnedTextVectorLiteralSourceOperation(execute):execute();}
+
+import {ownedTextVectorLiteralOperationShape} from '../owned-text-vector-literal-call-shape.mjs';import {withOriginalOwnedTextVectorLiteralSourceOperation} from '../current-owned-text-vector-literal-source.mjs';import {emitOwnedTextVectorLiteralCall,evaluateOwnedTextVectorLiteralCall} from './owned-text-vector-literal-emission.mjs';

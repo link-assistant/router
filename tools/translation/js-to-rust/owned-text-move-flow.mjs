@@ -14,7 +14,7 @@ import {ownedStateOperation} from './owned-state-contracts.mjs';
 const CORE_ROLES=Object.freeze({router_core_json_copy:['json'],router_core_json_with_field:['json','str','json'],router_core_json_index_str:['json','str'],router_core_json_index_usize:['json','usize'],router_core_json_map_index:['map-ref','str'],json_macro_value:['json'],json_macro_null:[],json_macro_bool:['bool'],json_macro_string:['str'],json_macro_u64:['u64'],json_macro_i64:['i64']});
 const linear=type=>['text-owned','text-owned-option','vec:text-owned'].includes(type);
 const borrowed=type=>type==='str'||type==='str-text-result'||typeof type==='string'&&type.endsWith('-ref');
-function contract(value){
+function contract(value){if(value.kind==='owned-text-vector-literal-call')return ownedTextVectorLiteralOperationShape(value.name,value.args?.length);
  const select={'owned-text-vector-call':ownedTextVectorOperationShape,'primitive-owned-vector-call':primitiveOwnedVectorOperationShape,'primitive-sequence-call':primitiveSequenceOperationShape,'text-call':ownedTextOperation,'json-field-call':ownedJsonFieldOperation,'json-state-call':ownedStateOperation,'integer-call':ownedIntegerOperation,'sse-call':ownedSseOperation,'outcome-call':ownedOutcomeOperation,'primitive-option-call':ownedPrimitiveOptionOperation,'primitive-result-call':ownedPrimitiveResultOperation}[value.kind];return select?.(value.name)??null;
 }
 /** No cached verdict or input survives this invocation. */
@@ -100,3 +100,5 @@ export function verifyOwnedTextFunctionMoves(item){
  try{const state=fresh();for(const parameter of item.params)bind(state,parameter.name,parameter.type);const exits=block(state,item.body);if(exits.some(row=>row.kind!=='return'))fail('complete function requires actual return paths');}
  finally{version=0;work=0;}
 }
+
+import {ownedTextVectorLiteralOperationShape} from '../owned-text-vector-literal-call-shape.mjs';
