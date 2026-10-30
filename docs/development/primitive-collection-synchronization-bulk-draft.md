@@ -346,3 +346,16 @@ interpreter/inverse/refusal and CI-only standard Rust oracle cases. All UNRUN.
 Original method/namespace/type/effect/body equivalence, ordinary Array coercion,
 construction/adoption composition, receiving/freshness/performance and all
 broader parity requirements remain OPEN. See [the join source contract](owned-text-vector-join-source-draft.md).
+
+## Ordinary-array and join bulk composition (2026-10-30)
+
+A single source request now composes original array construction, discarded
+pushes/lengths and join-helper substitutions before whole private after-module
+reissue. Automatic module discovery and a complete copied paired JS/TS path
+retain every full original/intermediate/final history and explicit unsupported
+syntax; even construction-only changed modules require private checks. Original
+namespace/domain/ownership/Array coercion and full parity stay unqualified.
+Independent both-family targets/interpreters/meta/inverse/default/batch/pair/
+conflict/data/resource/source cases and CI-only Rust oracles remain UNRUN.
+All broader requirements and the portable join performance gap remain OPEN.
+See [the composition source contract](owned-text-vector-array-join-composition-source-draft.md).

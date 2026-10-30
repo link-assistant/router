@@ -951,3 +951,11 @@ receiver moves. Standard-looking names, changed-expression counts and complete
 source inverses grant no original namespace, String domain, ownership or
 body-equivalence authority. Record clone, u64-length and bounded-capacity
 changes and retain whole-module original semantic qualification obligations.
+
+
+For combined array construction and join adoption, use the complete composed
+[source path](docs/development/owned-text-vector-array-join-composition-source-draft.md).
+Keep syntax-only intermediates separate from the final complete private module
+check; preserve whole-module inverses, exact paired projection conflicts and
+explicit unsupported observations. Candidate or checked-module counts do not
+establish original domain equivalence, executable coverage or full parity.

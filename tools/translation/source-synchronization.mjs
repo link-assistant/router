@@ -336,3 +336,6 @@ export {proposeNativeJoiningOwnedTextVector,proposeNativeJoiningOwnedTextVectors
 export {proposeNativeJoiningOwnedTextVectorDiscovery} from './native-joining-owned-text-vector-discovery.mjs';
 export {proposeOwnedTextVectorJoins} from './js-to-rust/owned-text-vector-join-proposals.mjs';
 export {ownedTextVectorJoinHelperSources} from './owned-text-vector-join-helper-sources.mjs';
+
+export {proposeOwnedTextVectorArrayJoins,proposeOwnedTextVectorArrayJoinDiscovery} from './js-to-rust/owned-text-vector-array-join-proposals.mjs';
+export {proposeOwnedTextVectorPairedArrayJoins} from './js-to-rust/owned-text-vector-paired-array-join-proposals.mjs';
