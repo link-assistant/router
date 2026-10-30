@@ -300,3 +300,7 @@ export {proposeNativeJsonOptionalPathReaderDiscovery} from './native-json-option
 
 export {withNativeSubstitutionOperation as withFailureAwareNativeSubstitutionOperation,prepareNativeSubstitutionCopy as prepareFailureAwareNativeSubstitutionCopy} from './failure-aware-native-substitution-copy.mjs';
 export {withMixedNativeSubstitutionOperation as withFailureAwareMixedNativeSubstitutionOperation,prepareMixedNativeSubstitutionCopy as prepareFailureAwareMixedNativeSubstitutionCopy} from './failure-aware-mixed-native-substitution-copy.mjs';
+
+export {OWNED_TEXT_VECTOR_CONTRACTS,OWNED_TEXT_VECTOR_RULE_SEQUENCES} from './owned-text-vector-contracts.mjs';
+export {withFreshOwnedTextVectorInputs} from './fresh-owned-text-vector-inputs.mjs';
+export {ownedTextVectorRuntimeSources} from './owned-text-vector-runtime-sources.mjs';

@@ -175,3 +175,15 @@ complete reader CST/history construction and shared caught-failure invalidation
 without granting body equivalence or runtime parity. All existing export count,
 byte and deadline bounds stay intact; actual export/receiving qualification,
 broader production translation and every delivery requirement remain OPEN.
+
+## Owned String vector paired core (2026-10-30)
+
+Eight source equations draft eight native/runtime/strict-declaration String
+vector operations, explicit consumed/shared/owned-clone roles, eight fresh
+whole paired inputs and complete mirrored assets. The native body derives by
+substitution from the full retained primitive core; String never gains Copy.
+Independent JS/strict/pin/descriptor/resource/clone/native oracle sources are
+UNRUN. Native root publication, whole current ABI joins, both caller directions,
+helpers/loops/loans, bulk adoption/inverse and all production/freshness/parity/
+receiving/delivery requirements remain OPEN. See
+[the family contract](owned-text-vector-core-source-draft.md).
