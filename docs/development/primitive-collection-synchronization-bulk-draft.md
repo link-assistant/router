@@ -371,3 +371,15 @@ strict TS/source/revocation cases and existing CI-only native oracle additions
 are UNRUN. Private caller/emitter/interpreter/inverse integration remains source
 work; existing generated folds are not made faster by an unused kernel alone.
 All broader requirements stay OPEN. See [the kernel source contract](owned-text-vector-join-kernel-source-draft.md).
+
+## Actual kernel caller, interpreter and inverse source integration (2026-10-30)
+
+Complete additive outcome/cancellation copies draft actual kernel source/import/
+type queries, whole private function issuance and ownership replay, distinct meta
+codecs, fresh native helper emission, strict TS, both fast-kernel interpreters,
+registered runtime preparation and full canonical Rust helper inverse/reproduction.
+Original profiles and all resource/deadline/native-leaf restrictions stay intact.
+Independent full-bound, target, meta/inverse, helper/source/private/ownership
+refusal cases are drafted, all UNRUN. Native whole-project forward recognition,
+ordinary-array adoption wiring and all broader receiving/freshness/performance/
+platform/parity requirements remain OPEN. See [the caller source contract](owned-text-vector-join-callers-source-draft.md).

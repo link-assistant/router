@@ -959,3 +959,10 @@ Keep syntax-only intermediates separate from the final complete private module
 check; preserve whole-module inverses, exact paired projection conflicts and
 explicit unsupported observations. Candidate or checked-module counts do not
 establish original domain equivalence, executable coverage or full parity.
+
+
+The [join caller profiles](docs/development/owned-text-vector-join-callers-source-draft.md)
+retain original APIs through complete additive copies. Keep actual private
+source/type/move checks before kernel emission; a helper name, matched source
+or public ABI observation grants no caller authority. Preserve the complete
+Rust helper inverse, exact whole-module reproduction and original case deadlines.

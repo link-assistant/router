@@ -342,3 +342,8 @@ export {proposeOwnedTextVectorPairedArrayJoins} from './js-to-rust/owned-text-ve
 
 export {ownedTextVectorJoinRuntimeSources,ownedTextVectorJoinRuntimeAssetPair} from './owned-text-vector-join-runtime-sources.mjs';
 export {withOriginalOwnedTextVectorJoinSourceOperation,requireCurrentOwnedTextVectorJoinOriginalOperationSource,requireCurrentOwnedTextVectorJoinOperationSource} from './current-owned-text-vector-join-source.mjs';
+
+export * as ownedTextVectorJoinOutcome from './js-to-rust/owned-text-vector-join-outcome.mjs';
+export * as ownedTextVectorJoinCancellation from './js-to-rust/owned-text-vector-join-cancellation.mjs';
+export {translateOwnedOutcomeRust as translateOwnedTextVectorJoinOutcomeRust} from './js-to-rust/owned-text-vector-join-outcome-rust.mjs';
+export {translateOwnedCancellationRust as translateOwnedTextVectorJoinCancellationRust} from './js-to-rust/owned-text-vector-join-cancellation-rust.mjs';
