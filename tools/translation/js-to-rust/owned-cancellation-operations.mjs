@@ -17,7 +17,8 @@ import {emitOwnedOutcomeCall,evaluateOwnedOutcomeCall} from './owned-outcome-emi
 import {emitOwnedIntegerCall,evaluateOwnedIntegerCall} from './owned-integer-emission.mjs';
 import {emitOwnedSseCall,evaluateOwnedSseCall} from './owned-sse-emission.mjs';
 import {ownedSseOperation} from './owned-sse-contracts.mjs';
-import {requireOwnedLocalCallClosure,emitOwnedLocalCall} from './owned-local-function-calls.mjs';
+import {requireOwnedLocalCallClosure} from './owned-local-function-calls.mjs';
+import {emitPrimitiveVectorLocalCall as emitOwnedLocalCall} from './primitive-vector-local-borrows.mjs';
 import {ownedIntegerOperation} from './owned-integer-contracts.mjs';
 import {ownedIntegerOptionalWitness} from './owned-integer-optional-types.mjs';
 import {ownedTextOperation} from './owned-text-contracts.mjs';

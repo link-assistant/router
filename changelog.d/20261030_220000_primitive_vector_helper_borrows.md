@@ -1,0 +1,1 @@
+Draft synchronous owned-to-shared primitive Vec helper arguments in both reverse source lanes, retaining full callee/source checks and later-argument move refusals. Add all-domain target/interpreter/inverse/refusal case source. All execution is unrun; forward explicit helper borrows and full synchronization remain open.

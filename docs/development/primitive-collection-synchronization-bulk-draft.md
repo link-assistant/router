@@ -80,3 +80,12 @@ existing full private helper graph must still qualify every body, argument,
 entry guard, loop, loan and move before issue. Eleven-domain native/target and
 refusal case source is UNRUN. See [the helper contract](primitive-vector-mutable-helpers-source-draft.md).
 Full namespace/production/receiving/parity/freshness and delivery stay OPEN.
+
+## Reverse ordinary shared-helper arguments (2026-10-30)
+
+Six source equations draft actual local-call owned-to-shared primitive Vec
+arguments, final later-argument move rechecks and Rust borrow emission in both
+reverse lanes. Existing public local-call APIs stay unchanged and complete
+callee/body/entry/private/CST checks remain mandatory. Eleven-domain caller,
+strict target, interpreter, meta/inverse and move/guard refusal case source
+is UNRUN. Native forward explicit helper borrows remain OPEN. See [the contract](primitive-vector-local-borrows-source-draft.md).
