@@ -266,6 +266,9 @@ test('complete committed export carries shared adoption implementations original
  assert.ok(paths.has('tools/translation/js-to-rust/bounded-json-runtime-operations.mjs'));
  assert.ok(paths.has('tools/translation/source-profiles/vector-native-json-signed/complete-native-history.json.gz'));
  assert.ok(paths.has('tools/translation/source-profiles/primitive-sequence-root-activation/complete-native-history.json.gz'));
+ assert.ok(paths.has('tools/translation/source-profiles/primitive-owned-vector-root-activation/complete-native-history.json.gz'));
+ assert.ok(paths.has('rust/src/translation_primitive_vectors_core.rs'));
+ assert.ok(paths.has('tools/translation/prepare-primitive-owned-vector-root-activation.mjs'));
  assert.ok(paths.has('rust/src/translation_primitive_sequences_core.rs'));
  assert.ok(paths.has('tools/translation/prepare-primitive-sequence-root-activation.mjs'));
  assert.ok(paths.has('tools/translation/source-profiles/bounded-json-object-fields/complete-native-history.json.gz'));

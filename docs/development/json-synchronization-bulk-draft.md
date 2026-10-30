@@ -872,3 +872,13 @@ operations. Independent all-domain JS/strict-TS and refusal case source is
 UNRUN. See [the source contract](primitive-owned-vector-forward-source-draft.md).
 Physical activation, native history, broader public/mutable/helper contracts and
 full synchronization remain OPEN. No tests, compilation or CI feedback used.
+
+### Owned primitive vector root/history draft (2026-10-30)
+
+Eleven complete source equations install the explicit native vector module
+edge and compose its adjacent successor through the full recorded native
+history: 23 equations, 17 paths, all 21/22-step originals retained. Independent
+root/history/88-operation source-join receiving cases remain UNRUN. See [the
+source contract](primitive-owned-vector-root-source-draft.md). Physical source
+reachability grants no executable coverage; broader contracts and full sync
+remain OPEN. No tests, local compilation or CI feedback were used.
