@@ -930,3 +930,12 @@ unchanged. Actual import/ABI/symbol guards precede ordinary work and moved-input
 checks remain required. Eleven-domain emitted/typed/meta/inverse/interpreter and
 Rust oracle case sources remain UNRUN. See [the input contract](primitive-owned-vector-entry-inputs-source-draft.md).
 Shared Vec inputs, owned Vec helper inputs and full synchronization remain OPEN.
+
+### Guarded owned primitive vector helper input draft (2026-10-30)
+
+Four complete source equations reuse the actual explicit entry contract for
+owned helper parameters and complete native graph/move flow, including vector,
+scalar and copied standard-Option results. Original JS/TS local-call issuing
+remains in place. Eleven-domain emitted/typed/interpreter/CST/inverse and native
+helper receiving case sources remain UNRUN. See [the helper input contract](primitive-owned-vector-helper-inputs-source-draft.md).
+Shared Vec inputs, broader/native adoption and full synchronization remain OPEN.
