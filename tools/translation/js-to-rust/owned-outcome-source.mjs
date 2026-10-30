@@ -35,7 +35,7 @@ import {checkOwnedPrimitiveOptionCallback} from './owned-primitive-option-callba
 import {hasOwnedStaticOptionalLoan} from './owned-static-optional-loans.mjs';
 import {ownedPrimitiveResultOperation,ownedPrimitiveResultType,ownedPrimitiveResultPayload,ownedPrimitiveResultAbsent,ownedPrimitiveResultStaticLoan,requireOwnedPrimitiveResultSources} from './owned-primitive-result-contracts.mjs';
 import {checkOwnedPrimitiveResult} from './owned-primitive-result-source.mjs';
-import {checkOwnedCountedFor} from './owned-counted-for-source.mjs';
+import {checkOwnedCountedFor} from './owned-counted-for-source.mjs';import {createOwnedPrimitiveVectorLoopState} from './owned-primitive-vector-loop-state.mjs';
 import {checkOwnedPrimitiveVectorCall} from './owned-primitive-vector-call-source.mjs';import {primitiveOwnedVectorOperationShape,ownedPrimitiveVectorElement,ownedPrimitiveVectorSharedElement} from '../primitive-owned-vector-call-shape.mjs';import {requireCurrentPrimitiveOwnedVectorOperationSource} from '../current-primitive-owned-vector-source.mjs';import {checkOwnedPrimitiveSequenceCall} from './owned-primitive-sequence-call-source.mjs'; import {primitiveSequenceOperationShape} from '../primitive-sequence-call-shape.mjs'; import {requireCurrentPrimitiveSequenceOperationSource} from '../current-primitive-sequence-source.mjs'; import {consumeWidePrimitiveSliceInputPrelude} from './owned-wide-primitive-slice-inputs.mjs'; import {ownedPrimitiveSliceElement,ownedPrimitiveSliceDomain} from './owned-wide-primitive-slice-contracts.mjs';
 import {requireOwnedResultSources} from './owned-result-source-contracts.mjs';
 import {requireOwnedResultPublicInputSources} from './owned-result-public-inputs.mjs';
@@ -513,7 +513,7 @@ function checkFunction(context,path,declaration,analysis){
  }
  // The complete available pair was selected before parameter domains.
  const nativeOperatorHistory=createOwnedNativeBitwiseHistory(),sourceNativeOperators=nativeOperatorHistory.rows,hostCalls=[],localCalls=[],byteInputs=new Set(),localValidatedInputs=new Set();let collectionReturn=null,collectionDeclaration=declaration;
- const branchScope=scope=>new Map([...scope].map(([key,value])=>[key,ownedBase64Result(value.type)||ownedPrimitiveVectorElement(value.type)?{...value}:value]));
+ const vectorLoopState=createOwnedPrimitiveVectorLoopState(fail);const branchScope=scope=>new Map([...scope].map(([key,value])=>[key,ownedBase64Result(value.type)||ownedPrimitiveVectorElement(value.type)?{...value}:value]));
  const mergeMoves=(scope,yes,no)=>{for(const [key,value]of scope){if(ownedBase64Result(value.type)||ownedPrimitiveVectorElement(value.type))value.moved=!!yes.get(key)?.moved||!!no.get(key)?.moved;if(value.mutable&&(yes.get(key)?.variant!==value.variant||no.get(key)?.variant!==value.variant||yes.get(key)?.some!==value.some||no.get(key)?.some!==value.some))scope.set(key,{...value,variant:undefined,some:undefined});}};
  const refine=(scope,condition,truth)=>{
   if(condition.kind==='not')return refine(scope,condition.value,!truth);
@@ -824,20 +824,20 @@ function checkFunction(context,path,declaration,analysis){
   for(const statement of statements){
    tick(depth);if(terminated)fail('statement after terminating return');
    if(ts.isBreakStatement(statement)||ts.isContinueStatement(statement)){
-    if(statement.label||loopDepth===0)fail('unlabeled control requires an actual enclosing loop in this function');body.push({kind:ts.isBreakStatement(statement)?'break':'continue'});terminated=true;
+    if(statement.label||loopDepth===0)fail('unlabeled control requires an actual enclosing loop in this function');vectorLoopState.boundary(scope);body.push({kind:ts.isBreakStatement(statement)?'break':'continue'});terminated=true;
    }else if(ts.isWhileStatement(statement)){
-    if(!ts.isBlock(statement.statement))fail('ordinary Boolean while block required');const local=branchScope(scope);for(const [name,value]of local){if(ownedBase64Result(value.type)||ownedPrimitiveVectorElement(value.type))local.delete(name);else if(value.mutable)local.set(name,{...value,variant:undefined,some:undefined});}
-    const cond=expression(statement.expression,local,depth+1);if(cond.type!=='bool')fail('actual primitive Boolean loop condition required');const checked=block(statement.statement.statements,refine(local,cond,true),depth+1,loopDepth+1);
+    if(!ts.isBlock(statement.statement))fail('ordinary Boolean while block required');const local=branchScope(scope);for(const [name,value]of local){if(ownedBase64Result(value.type))local.delete(name);else if(value.mutable)local.set(name,{...value,variant:undefined,some:undefined});}
+    const {cond,checked}=vectorLoopState.run(local,()=>{const cond=expression(statement.expression,local,depth+1);if(cond.type!=='bool')fail('actual primitive Boolean loop condition required');vectorLoopState.boundary(local);const checked=block(statement.statement.statements,refine(local,cond,true),depth+1,loopDepth+1);return {cond,checked};});
     for(const [name,value]of scope)if(value.mutable)scope.set(name,{...value,variant:undefined,some:undefined});body.push({kind:'while',cond,body:checked.body});
    }else if(ts.isForStatement(statement)){
-    const checked=checkOwnedCountedFor(statement,scope,{ts,file,checker,paired,depth,loopDepth,expression,branchScope,bind,block,fail,ownedBase64Result:type=>ownedBase64Result(type)||!!ownedPrimitiveVectorElement(type)});mergeMoves(scope,branchScope(scope),checked.scope);for(const [name,value]of scope)if(value.mutable)scope.set(name,{...value,variant:undefined,some:undefined});body.push(checked.statement);
+    const checked=vectorLoopState.run(scope,()=>checkOwnedCountedFor(statement,scope,{ts,file,checker,paired,depth,loopDepth,expression,branchScope,bind,block,fail,ownedBase64Result}),result=>result.scope);mergeMoves(scope,branchScope(scope),checked.scope);for(const [name,value]of scope)if(value.mutable)scope.set(name,{...value,variant:undefined,some:undefined});body.push(checked.statement);
    }else if(ts.isForOfStatement(statement)){
     const declarationList=statement.initializer;if(statement.awaitModifier||!ts.isVariableDeclarationList(declarationList)||(declarationList.flags&ts.NodeFlags.BlockScoped)!==ts.NodeFlags.Const||declarationList.declarations.length!==1||!ts.isBlock(statement.statement))fail('ordinary const JSON for-of block required');
     const declaration=declarationList.declarations[0];if(!ts.isIdentifier(declaration.name)||declaration.type||declaration.initializer||declaration.exclamationToken||declaration.name.text.startsWith('__ro'))fail('ordinary inferred immutable loop binding required');
     if(paired){const matches=paired.evidence.locals.filter(row=>row.javascriptSpan[0]===declaration.getStart(file)&&row.javascriptSpan[1]===declaration.end);if(matches.length!==1||matches[0].typeSpan)fail('paired loop input requires its original inferred native declaration');}
     const value=expression(statement.expression,scope,depth+1);if(!['json-list-ref','json-list-owned'].includes(value.type)&&!ownedPrimitiveSliceElement(value.type))fail('actual canonical JSON or primitive shared slice iteration required');
-    const local=branchScope(scope);for(const [name,value]of local){if(ownedBase64Result(value.type)||ownedPrimitiveVectorElement(value.type))local.delete(name);else if(value.mutable)local.set(name,{...value,variant:undefined,some:undefined});}local.delete(declaration.name.text);
-    const primitive=ownedPrimitiveSliceElement(value.type),name=bind(declaration.name,{type:primitive??'json-ref',root:primitive?null:'__ro_loop_root_'+declaration.getStart(file),input:false},local),checked=block(statement.statement.statements,local,depth+1,loopDepth+1);
+    const local=branchScope(scope);for(const [name,value]of local){if(ownedBase64Result(value.type))local.delete(name);else if(value.mutable)local.set(name,{...value,variant:undefined,some:undefined});}local.delete(declaration.name.text);
+    const primitive=ownedPrimitiveSliceElement(value.type),name=bind(declaration.name,{type:primitive??'json-ref',root:primitive?null:'__ro_loop_root_'+declaration.getStart(file),input:false},local),checked=vectorLoopState.run(local,()=>block(statement.statement.statements,local,depth+1,loopDepth+1));
     mergeMoves(scope,branchScope(scope),local);for(const [name,value]of scope)if(value.mutable)scope.set(name,{...value,variant:undefined,some:undefined});body.push({kind:primitive?'for-scalar':'for-json',name,value,body:checked.body});
    }else if(ts.isVariableStatement(statement)){
 

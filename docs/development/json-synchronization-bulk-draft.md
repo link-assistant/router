@@ -911,3 +911,12 @@ equivalence and production installation remain false. Eleven-domain JS/typed
 source, both emitted targets/interpreters and refusal cases remain UNRUN. See
 [the adoption contract](primitive-owned-vector-bulk-adoption-source-draft.md).
 Broader/native adoption and full synchronization remain OPEN.
+
+### Owned primitive vector loop state draft (2026-10-30)
+
+Five complete source equations retain actual outer vector slots across while,
+counted-for and shared-slice for-of loops with condition/backedge/break/continue
+invariants. Native rebinds use the existing complete loop fixed point. Independent
+all-domain emitted JS/strict-TS, interpreter/CST and Rust oracle case sources
+remain UNRUN. See [the loop contract](primitive-owned-vector-loop-state-source-draft.md).
+Broader helper/public Vec inputs and full synchronization remain OPEN.
