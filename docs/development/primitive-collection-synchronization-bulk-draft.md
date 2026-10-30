@@ -71,3 +71,12 @@ private source reissue. Existing APIs/refusals remain intact. Explicit migration
 contract changes and false original equivalence/installation flags remain.
 All-domain both-lane and generic nested CST/data/budget/refusal cases are UNRUN.
 See [the bulk contract](primitive-vector-literal-bulk-source-draft.md).
+
+## Mutable helper-produced primitive vectors (2026-10-30)
+
+Three source equations draft a separate actual original mutable let/helper
+route, retaining original core-initializer API and owns/refusal flags. The
+existing full private helper graph must still qualify every body, argument,
+entry guard, loop, loan and move before issue. Eleven-domain native/target and
+refusal case source is UNRUN. See [the helper contract](primitive-vector-mutable-helpers-source-draft.md).
+Full namespace/production/receiving/parity/freshness and delivery stay OPEN.

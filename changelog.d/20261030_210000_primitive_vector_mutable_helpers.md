@@ -1,0 +1,1 @@
+Draft actual mutable primitive Vec local initialization from same-module helpers, preserving full source/helper graph and linear ownership checks. Add independent eleven-domain native/target and refusal case source. All execution remains unrun; full translation and synchronization remain unfinished.

@@ -734,3 +734,23 @@ import {actualPrimitiveSlice} from './owned-scalar-slice-flow.mjs';
 import {hasBoundedPrimitiveVectorEntry} from './owned-primitive-vector-entry-source.mjs';
 import {actualSharedPrimitiveVector} from './shared-primitive-vector-native-type.mjs';
 import {forwardOwnedCarrier} from './owned-forward-domain.mjs';
+
+// A mutable helper initializer is only a temporary checking route. The actual
+// complete caller/callee graph, moves, loops, root loans and bounded entry guards
+// must still pass currentOwnedPrimitiveVectorCallee and full flow before issue.
+// The original core-initializer API and its owns/refusal flags stay unchanged.
+export function checkRouterPrimitiveVectorMutableHelperLet(checker,node,env,path,expected,allowLiteral){
+ const receipt=activeFunctions.get(checker);if(node?.k!=='let'||node.mutable!==true||!receipt?.members.has(node)||node.value?.k!=='app'||node.value.fn?.k!=='name')return null;
+ requireOriginalPrimitiveTryFromChecker(checker);currentFunction(checker,receipt.activeItem,receipt);const syntax=copyMetadata(node),target=checker.lookup(node.value.fn.path,path,node.value.span??node.span);
+ if(target?.k!=='fn'||target.async||!same(target.modulePath,path)||!actualOwnedPrimitiveVector(checker,target.ret,node,path))return null;const signature=copyMetadata({params:target.params,ret:target.ret,modulePath:target.modulePath,async:target.async});
+ const origin=originalParsedSyntaxNode(receipt.activeItem,node);if(origin?.actual!==node||!same(node,origin.relocated))fail();
+ if(containsExit(node.value))throw unsupported('control in mutable primitive vector helper initializer','nonlocal exits need their separate checked statement lowering',node.value.span);
+ env=checker.contextEnvironment(node,env,expected);const declared=node.type?checker.resolveType(node.type,path,node.span):undefined;
+ let value=checker.expr(node.value,env,path,declared);if(declared)value=coerce(value,declared,checker.language,node.span);
+ if(value.k!=='call'||value.fn!==target.fullName||checker.items.get(value.fn)!==target||!actualOwnedPrimitiveVector(checker,value.type,node,path)||!sameType(value.type,target.ret))throw unsupported('mutable primitive vector helper initializer','requires its actual resolved same-module owned Vec call',node.span);
+ // No completed helper verdict is inferred here. The unchanged whole-function
+ // pass discovers this actual typed call and rechecks every dependency body.
+ let inner=checker.bindingEnvironment(env,node.name,value.type,true);inner=checker.bindingConstructorEnvironment?.(inner,node.name,value,true)??inner;
+ const body=checker.expr(node.body,inner,path,expected,allowLiteral);requireOriginalPrimitiveTryFromChecker(checker);currentFunction(checker,receipt.activeItem,receipt);const current=originalParsedSyntaxNode(receipt.activeItem,node);if(activeFunctions.get(checker)!==receipt||!same(node,syntax)||current?.actual!==node||current.original!==origin.original||current.parser!==origin.parser||!same(node,current.relocated)||checker.items.get(target.fullName)!==target||!same({params:target.params,ret:target.ret,modulePath:target.modulePath,async:target.async},signature))fail();
+ return {k:'let',name:node.name,value,body,mutable:true,type:body.type,span:node.span};
+}
