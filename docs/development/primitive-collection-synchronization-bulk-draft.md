@@ -89,3 +89,14 @@ reverse lanes. Existing public local-call APIs stay unchanged and complete
 callee/body/entry/private/CST checks remain mandatory. Eleven-domain caller,
 strict target, interpreter, meta/inverse and move/guard refusal case source
 is UNRUN. Native forward explicit helper borrows remain OPEN. See [the contract](primitive-vector-local-borrows-source-draft.md).
+
+## Native explicit shared helper arguments and call intervals (2026-10-30)
+
+Four source equations draft actual original borrow/parent/signature and pointee
+joins, an additive independently source-qualified result route, and bounded
+call-interval loans through later arguments/branches. The generic ownership
+qualifier/refusals and full original helper graph stay intact. Immediate move/
+write checks prevent reinitialization from erasing a borrow conflict. Existing
+core shared arguments use the same intervals. Eleven-domain native/target,
+conflict/source/refusal cases and extended Rust oracle source are UNRUN.
+See [the native contract](primitive-vector-native-borrows-source-draft.md).

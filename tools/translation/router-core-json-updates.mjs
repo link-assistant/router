@@ -410,7 +410,7 @@ export function visitRouterCoreJsonUpdateFunction(checker,item,path,entry,visit,
    ]).run(null);
    publishProjectionContexts(receipt,entry);
    return result;
-  }finally{delete receipt.activeItem;delete receipt.readers;activeFunctions.delete(checker);}
+  }finally{receipt.primitiveBorrowParents?.clear();delete receipt.primitiveBorrowParents;delete receipt.activeItem;delete receipt.readers;activeFunctions.delete(checker);}
  };
 }
 // Membership is conjunctive with the lifetime walk's current Result/layout checks.
@@ -754,3 +754,30 @@ export function checkRouterPrimitiveVectorMutableHelperLet(checker,node,env,path
  const body=checker.expr(node.body,inner,path,expected,allowLiteral);requireOriginalPrimitiveTryFromChecker(checker);currentFunction(checker,receipt.activeItem,receipt);const current=originalParsedSyntaxNode(receipt.activeItem,node);if(activeFunctions.get(checker)!==receipt||!same(node,syntax)||current?.actual!==node||current.original!==origin.original||current.parser!==origin.parser||!same(node,current.relocated)||checker.items.get(target.fullName)!==target||!same({params:target.params,ret:target.ret,modulePath:target.modulePath,async:target.async},signature))fail();
  return {k:'let',name:node.name,value,body,mutable:true,type:body.type,span:node.span};
 }
+
+// Written shared Vec arguments only, inside an actual original ordinary call.
+// The whole caller/callee graph still checks bodies and entry/loan obligations.
+export function checkRouterPrimitiveVectorSharedHelperBorrow(checker,node,env,path,expected){
+ const frame=activeFunctions.get(checker);if(!frame||node?.k!=='routerTextReference'||!expected?.rustReference||!actualSharedPrimitiveVector(checker,expected,node,path))return null;
+ requireOriginalPrimitiveTryFromChecker(checker);currentFunction(checker,frame.activeItem,frame);const origin=originalParsedSyntaxNode(frame.activeItem,node),syntax=copyMetadata(node),parents=originalPrimitiveVectorBorrowParents(frame,node);
+ if(origin?.actual!==node||!same(node,origin.relocated)||parents.length!==1)throw unsupported('shared primitive vector helper argument','requires its actual original direct call operand',node.span);const parent=parents[0],parentOrigin=originalParsedSyntaxNode(frame.activeItem,parent),index=parent.args.indexOf(node),target=checker.lookup(parent.fn.path,path,parent.span);
+ if(parentOrigin?.actual!==parent||!same(parent,parentOrigin.relocated)||parent.args.filter(value=>value===node).length!==1||target?.k!=='fn'||target.async||!same(target.modulePath,path)||target.params?.length!==parent.args.length||target.params[index]?.type!==expected)throw unsupported('shared primitive vector helper target','requires its actual same-module resolved parameter signature',node.span);
+ const token=node.sourceBorrowToken;if(token?.value!=='&'||token.span?.end-token.span?.start!==1||node.value?.k==='routerTextReference')throw unsupported('shared primitive vector helper syntax','requires its actual single immutable ampersand',node.span);const signature=copyMetadata({params:target.params,ret:target.ret,modulePath:target.modulePath,async:target.async}),value=checker.expr(node.value,env,path),domain=actualOwnedPrimitiveVector(checker,value.type,node,path);
+ if(!domain||actualSharedPrimitiveVector(checker,expected,node,path)!==domain)throw unsupported('shared primitive vector helper pointee','requires an actual owned Vec in the exact primitive domain',node.span);
+ const type={...value.type,rustOwnership:{...expected.rustOwnership},patternOwnershipRefusal:'shared source reference',rustReference:{kind:'shared',pointee:value.type,span:{...node.span},tokens:[{kind:'operator',value:'&',span:{...token.span}}]}};
+ if(actualSharedPrimitiveVector(checker,type,node,path)!==domain||!sameType(type,expected))fail();checker.expectedOwnership(type,expected,path,node.span);checker.expectedPrimitiveIdentity(type,expected,path,node.span);
+ requireOriginalPrimitiveTryFromChecker(checker);currentFunction(checker,frame.activeItem,frame);const current=originalParsedSyntaxNode(frame.activeItem,node),currentParent=originalParsedSyntaxNode(frame.activeItem,parent);if(activeFunctions.get(checker)!==frame||!same(node,syntax)||current?.actual!==node||current.original!==origin.original||current.parser!==origin.parser||!same(node,current.relocated)||currentParent?.actual!==parent||currentParent.original!==parentOrigin.original||currentParent.parser!==parentOrigin.parser||!same(parent,currentParent.relocated)||checker.items.get(target.fullName)!==target||!same({params:target.params,ret:target.ret,modulePath:target.modulePath,async:target.async},signature))fail();
+ return {...node,value,type};
+}
+// A separate source-qualified result route preserves the original generic
+// ownership qualifier and its array-borrow refusals. It rejoins the actual raw
+// borrow, parent call and parameter slot instead of trusting a marker/flag.
+export function qualifyRouterPrimitiveVectorSharedHelperBorrow(checker,node,value,expected,path){
+ const frame=activeFunctions.get(checker);if(!frame||node?.k!=='routerTextReference'||value?.k!=='routerTextReference'||!expected?.rustReference||!actualSharedPrimitiveVector(checker,expected,node,path))return null;
+ requireOriginalPrimitiveTryFromChecker(checker);currentFunction(checker,frame.activeItem,frame);const origin=originalParsedSyntaxNode(frame.activeItem,node),parents=originalPrimitiveVectorBorrowParents(frame,node);if(origin?.actual!==node||!same(node,origin.relocated)||parents.length!==1)fail();const parent=parents[0],parentOrigin=originalParsedSyntaxNode(frame.activeItem,parent),index=parent.args.indexOf(node),target=checker.lookup(parent.fn.path,path,parent.span),point=value.type?.rustReference?.pointee;
+ if(parentOrigin?.actual!==parent||!same(parent,parentOrigin.relocated)||parent.args.filter(argument=>argument===node).length!==1||target?.k!=='fn'||target.async||!same(target.modulePath,path)||target.params?.length!==parent.args.length||target.params[index]?.type!==expected||checker.items.get(target.fullName)!==target||value.sourceBorrowToken!==node.sourceBorrowToken||value.span!==node.span||point!==value.value?.type||node.sourceBorrowToken?.value!=='&'||node.sourceBorrowToken.span?.end-node.sourceBorrowToken.span?.start!==1||!same(value.type.rustReference.span,node.span)||value.type.rustReference.tokens?.length!==1||!same(value.type.rustReference.tokens[0].span,node.sourceBorrowToken.span))fail();
+ const domain=actualOwnedPrimitiveVector(checker,point,node,path);if(!domain||actualSharedPrimitiveVector(checker,value.type,node,path)!==domain||actualSharedPrimitiveVector(checker,expected,node,path)!==domain||!sameType(value.type,expected))fail();checker.expectedOwnership(value.type,expected,path,node.span);checker.expectedPrimitiveIdentity(value.type,expected,path,node.span);currentFunction(checker,frame.activeItem,frame);requireOriginalPrimitiveTryFromChecker(checker);return value;
+}
+// One raw-node index per active original function check, never a type/owner
+// verdict. Every use still rejoins the whole source; finally clears all nodes.
+function originalPrimitiveVectorBorrowParents(frame,operand){if(!frame.primitiveBorrowParents){let cells=100000;const index=new Map();function visit(node,depth=0){if(!node||typeof node!=='object')return;if(--cells<0||depth>160)fail();if(node.k==='app'&&node.fn?.k==='name')for(const argument of node.args??[])if(argument?.k==='routerTextReference'){if(!index.has(argument))index.set(argument,[]);index.get(argument).push(node);}for(const [key,value]of Object.entries(node))if(!['type','span','compatibilityCore','sourceFunctionItem'].includes(key))for(const child of Array.isArray(value)?value:[value])visit(child,depth+1);}visit(frame.activeItem.body);frame.primitiveBorrowParents=index;}return frame.primitiveBorrowParents.get(operand)??[];}

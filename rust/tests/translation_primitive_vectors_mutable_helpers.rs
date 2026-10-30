@@ -15,6 +15,18 @@ macro_rules! helper_case {
             fn unchanged(value: $domain) -> Vec<$domain> {
                 seed(value)
             }
+            // The paired abstraction explicitly uses a shared Vec reference.
+            #[allow(clippy::ptr_arg)]
+            fn shared_count(values: &Vec<$domain>) -> u64 {
+                let _checked = vectors::$length(values);
+                vectors::$length(values)
+            }
+            #[allow(clippy::ptr_arg)]
+            fn shared_pair(left: &Vec<$domain>, right: &Vec<$domain>) -> u64 {
+                let first_checked = vectors::$length(left);
+                let second_checked = vectors::$length(right);
+                first_checked + second_checked
+            }
             fn accumulate(value: $domain, limit: u64) -> Vec<$domain> {
                 let mut values = bounded(seed(value));
                 for _index in 0..limit {
@@ -32,6 +44,11 @@ macro_rules! helper_case {
             assert_eq!(vectors::$get(&values, 0), Some(minimum));
             assert_eq!(vectors::$get(&values, 1), Some(maximum));
             assert_eq!(vectors::$get(&values, 2), None);
+            assert_eq!(shared_count(&values), 2);
+            assert_eq!(shared_pair(&values, &values), 4);
+            assert_eq!(shared_count(&seed(minimum)), 1);
+            values = vectors::$push(values, maximum);
+            assert_eq!(values, vec![minimum, maximum, maximum]);
             for limit in [0_u64, 1, 3] {
                 assert_eq!(accumulate(maximum, limit), vec![maximum; 1 + limit as usize]);
             }
