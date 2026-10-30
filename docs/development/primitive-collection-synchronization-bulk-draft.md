@@ -142,3 +142,14 @@ cases are UNRUN. The catalog edge oracle is split into its own module to keep
 the existing test file below 1,000 lines. Full private original reissue,
 installation, parity, freshness and delivery remain OPEN. See
 [the source contract](native-json-optional-path-reader-source-draft.md).
+
+## Automatic optional JSON reader discovery (2026-10-30)
+
+Three source equations draft automatic bounded complete-module discovery and
+composition through the existing reader pipelines, retaining original/current
+coordinates, every source inverse and explicit unsupported observations. Source
+candidates and source proposals grant no executable coverage or original owner
+authority. The actual catalog and mixed/batch/refusal/resource/descriptor/fresh
+operation cases are UNRUN; broader namespace, adoption, parity, synchronization,
+receiving and delivery remain OPEN. See
+[the discovery contract](native-json-reader-discovery-source-draft.md).

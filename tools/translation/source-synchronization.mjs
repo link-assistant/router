@@ -295,3 +295,5 @@ export {withOriginalPrimitiveVectorLiteralSourceOperation as withFailureAwarePri
 export {proposeNativeJsonLiteralPathSearch,proposeNativeJsonLiteralPathSearches} from './native-json-literal-path-search-proposals.mjs';
 
 export {proposeNativeJsonOptionalPathReader,proposeNativeJsonOptionalPathReaders} from './native-json-optional-path-reader-proposals.mjs';
+
+export {proposeNativeJsonOptionalPathReaderDiscovery} from './native-json-optional-path-reader-discovery.mjs';
