@@ -86,6 +86,7 @@ ${['checked_add','checked_sub','checked_mul','checked_neg','wrapping_add','wrapp
   for(const [path,content] of jsonRetentionRuntimeAssets())files.set(path,content);
   for(const [name,source]of primitiveSequenceRuntimeAssetPair())files.set(name,source);
   for(const [name,source]of primitiveOwnedVectorRuntimeAssetPair())files.set(name,source);
+  for(const [name,source]of primitiveVectorLiteralRuntimeAssetPair())files.set(name,source);
   return files;
 }
 
@@ -174,9 +175,12 @@ ${['checked_add','checked_sub','checked_mul','checked_neg','wrapping_add','wrapp
   for(const [path,content] of jsonRetentionRuntimeAssets())files.set(path,content);
   for(const [name,source]of primitiveSequenceRuntimeAssetPair())files.set(name,source);
   for(const [name,source]of primitiveOwnedVectorRuntimeAssetPair())files.set(name,source);
+  for(const [name,source]of primitiveVectorLiteralRuntimeAssetPair())files.set(name,source);
   return files;
 }
 
 import {primitiveSequenceRuntimeAssetPair} from './primitive-sequence-runtime-sources.mjs';
 
 import {primitiveOwnedVectorRuntimeAssetPair} from './primitive-owned-vector-runtime-sources.mjs';
+
+import {primitiveVectorLiteralRuntimeAssetPair} from './primitive-vector-literal-runtime-sources.mjs';

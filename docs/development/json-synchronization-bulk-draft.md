@@ -959,3 +959,5 @@ Carrier/length/resource contract changes stay explicit and original equivalence
 remains false. Eleven-domain JS/typed input, emitted/strict/interpreter and
 native inverse case sources remain UNRUN. See [the literal contract](primitive-owned-vector-literal-adoption-source-draft.md).
 Native original-owner adoption and full synchronization remain OPEN.
+
+Further source-family work continues in [the primitive collection companion](primitive-collection-synchronization-bulk-draft.md). All full-ledger obligations remain OPEN.
