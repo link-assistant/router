@@ -900,3 +900,14 @@ right-hand movement, exact type/root checks and branch availability. All-domain
 existing complete receiving sources now include rebinding; independent branch,
 alias and partial-reinitialization cases remain UNRUN. See [the local contract](primitive-owned-vector-local-rebind-source-draft.md).
 Loop mutation, public Vec inputs and full translation remain OPEN.
+
+### Bulk ordinary vector source adoption draft (2026-10-30)
+
+Three complete source equations add additive whole-module proposals for
+selected empty local arrays, discarded pushes and length reads, using CST
+substitutions, collision-free imports, exact inverses and private after-source
+checking. Resource/length/mutability contract changes stay explicit; original
+equivalence and production installation remain false. Eleven-domain JS/typed
+source, both emitted targets/interpreters and refusal cases remain UNRUN. See
+[the adoption contract](primitive-owned-vector-bulk-adoption-source-draft.md).
+Broader/native adoption and full synchronization remain OPEN.
