@@ -334,3 +334,15 @@ The scoped batch also drafts `is_empty` via bounded length comparison and
 `clear` via truncate-zero, retaining boolean results and explicit open allocator/
 capacity and resource equivalence. A separate block stack keeps the scope census
 linear. Additional independent source and Rust oracle cases remain UNRUN.
+
+## String-vector join helper lowering (2026-10-30)
+
+Complete same-module Rust/JS/strict TS helpers lower selected join expressions
+through existing bounded vector len/get and owned-text append calls, preserving
+shared receivers and explicit String clones. Native scoped/batch/discovery and
+whole JS/TS private after-module/meta/emission paths are source drafted, with
+complete CST/inverses, collision-free identifiers and independent source/target/
+interpreter/inverse/refusal and CI-only standard Rust oracle cases. All UNRUN.
+Original method/namespace/type/effect/body equivalence, ordinary Array coercion,
+construction/adoption composition, receiving/freshness/performance and all
+broader parity requirements remain OPEN. See [the join source contract](owned-text-vector-join-source-draft.md).

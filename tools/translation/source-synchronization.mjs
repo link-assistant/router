@@ -331,3 +331,8 @@ export {proposeNativeOwnedTextVectorDiscovery} from './native-owned-text-vector-
 
 export {proposeNativeScopedOwnedTextVector,proposeNativeScopedOwnedTextVectors} from './native-scoped-owned-text-vector-proposals.mjs';
 export {proposeNativeScopedOwnedTextVectorDiscovery} from './native-scoped-owned-text-vector-discovery.mjs';
+
+export {proposeNativeJoiningOwnedTextVector,proposeNativeJoiningOwnedTextVectors} from './native-joining-owned-text-vector-proposals.mjs';
+export {proposeNativeJoiningOwnedTextVectorDiscovery} from './native-joining-owned-text-vector-discovery.mjs';
+export {proposeOwnedTextVectorJoins} from './js-to-rust/owned-text-vector-join-proposals.mjs';
+export {ownedTextVectorJoinHelperSources} from './owned-text-vector-join-helper-sources.mjs';
