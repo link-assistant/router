@@ -187,3 +187,15 @@ UNRUN. Native root publication, whole current ABI joins, both caller directions,
 helpers/loops/loans, bulk adoption/inverse and all production/freshness/parity/
 receiving/delivery requirements remain OPEN. See
 [the family contract](owned-text-vector-core-source-draft.md).
+
+## Owned String vector current ABI/root source (2026-10-30)
+
+Five source equations draft complete current native/runtime/strict declaration
+joins, Clone/cloned helper checks, owned argument/result roles and reversible
+receiving-root construction in flat/nested layouts. Roots and descriptors retain
+complete originals, fixed phases, inverses and false owner/caller/installation
+flags. All independent eight-ABI/layout/row/tamper/descriptor/primary/depth cases
+are UNRUN. Actual native-root history, original producer/type/caller qualification,
+both caller directions, helpers/loops/inverse/adoption, copied native-core delivery
+and every parity/freshness/receiving requirement stay OPEN. See
+[the current-source contract](owned-text-vector-abi-source-draft.md).

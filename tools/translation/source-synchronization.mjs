@@ -304,3 +304,6 @@ export {withMixedNativeSubstitutionOperation as withFailureAwareMixedNativeSubst
 export {OWNED_TEXT_VECTOR_CONTRACTS,OWNED_TEXT_VECTOR_RULE_SEQUENCES} from './owned-text-vector-contracts.mjs';
 export {withFreshOwnedTextVectorInputs} from './fresh-owned-text-vector-inputs.mjs';
 export {ownedTextVectorRuntimeSources} from './owned-text-vector-runtime-sources.mjs';
+
+export {withOriginalOwnedTextVectorSourceOperation,observeCurrentOwnedTextVectorCoreSources,requireCurrentOwnedTextVectorOperationSource,requireCurrentOwnedTextVectorOriginalOperationSource} from './current-owned-text-vector-source.mjs';
+export {proposeOwnedTextVectorRootSource} from './owned-text-vector-root-source.mjs';
