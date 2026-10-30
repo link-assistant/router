@@ -359,3 +359,15 @@ Independent both-family targets/interpreters/meta/inverse/default/batch/pair/
 conflict/data/resource/source cases and CI-only Rust oracles remain UNRUN.
 All broader requirements and the portable join performance gap remain OPEN.
 See [the composition source contract](owned-text-vector-array-join-composition-source-draft.md).
+
+## Single-validation String-vector join runtime (2026-10-30)
+
+A separate paired kernel/declaration now drafts one dense descriptor/scalar UTF8
+budget pass before output allocation, with unchanged 4,096-element/1 MiB limits
+and no value/source/result/failure cache. Four freshly pinned inputs, complete
+JS/native-helper/declaration ABI and receiving/text/mirror checks retain original
+source/failure/closing protections. Independent full-bound/raw-deadline/runtime/
+strict TS/source/revocation cases and existing CI-only native oracle additions
+are UNRUN. Private caller/emitter/interpreter/inverse integration remains source
+work; existing generated folds are not made faster by an unused kernel alone.
+All broader requirements stay OPEN. See [the kernel source contract](owned-text-vector-join-kernel-source-draft.md).

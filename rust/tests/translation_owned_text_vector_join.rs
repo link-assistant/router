@@ -374,3 +374,14 @@ fn vector_text_and_final_output_bounds_remain_explicit() {
     assert_eq!(router_rule_owned_text_join(&vec!["é".repeat(524288)],""),"é".repeat(524288));
     assert!(std::panic::catch_unwind(||router_rule_owned_text_join(&vec!["é".repeat(524288),String::from("x")],"")).is_err());
 }
+
+#[test]
+fn single_validation_kernel_shared_scalar_and_exact_utf8_boundary_oracles() {
+    let scalar_values = vec![String::from("\0"),String::from("é"),String::from("🦀"),String::from("文")];
+    for separator in ["",",","\n\n","文"] {
+        assert_eq!(router_rule_owned_text_join(&scalar_values,separator),scalar_values.join(separator));
+    }
+    let full = vec!["é".repeat(128);4096];
+    assert_eq!(router_rule_owned_text_join(&full,""),"é".repeat(524288));
+    assert!(std::panic::catch_unwind(||router_rule_owned_text_join(&full,"x")).is_err());
+}

@@ -339,3 +339,6 @@ export {ownedTextVectorJoinHelperSources} from './owned-text-vector-join-helper-
 
 export {proposeOwnedTextVectorArrayJoins,proposeOwnedTextVectorArrayJoinDiscovery} from './js-to-rust/owned-text-vector-array-join-proposals.mjs';
 export {proposeOwnedTextVectorPairedArrayJoins} from './js-to-rust/owned-text-vector-paired-array-join-proposals.mjs';
+
+export {ownedTextVectorJoinRuntimeSources,ownedTextVectorJoinRuntimeAssetPair} from './owned-text-vector-join-runtime-sources.mjs';
+export {withOriginalOwnedTextVectorJoinSourceOperation,requireCurrentOwnedTextVectorJoinOriginalOperationSource,requireCurrentOwnedTextVectorJoinOperationSource} from './current-owned-text-vector-join-source.mjs';

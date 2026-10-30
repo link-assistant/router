@@ -1,0 +1,7 @@
+// Complete freshly read kernel assets; observations grant no native authority.
+import {withFreshOwnedTextVectorJoinInputs} from './fresh-owned-text-vector-join-inputs.mjs';
+import {ownedTextVectorLiteralRuntimeSources} from './owned-text-vector-literal-runtime-sources.mjs';
+const fail=message=>{throw new TypeError('Owned text vector join assets: '+message);};
+function root(value){if(typeof value!=='string'||!value||value.length>4096||value.startsWith('/')||/[\\:\x00-\x1f\x7f]/u.test(value)||value.split('/').some(part=>!part||part==='.'||part==='..'))fail('canonical bounded receiving root required');return value;}
+export function ownedTextVectorJoinRuntimeAssetPair(){return withFreshOwnedTextVectorJoinInputs(frame=>new Map(frame.sources.filter(row=>row.path==='owned-text-vector-join-runtime.mjs'||row.path==='owned-text-vector-join-runtime.d.mts').map(row=>[row.path,row.source])));}
+export function ownedTextVectorJoinRuntimeSources(runtimeRoot,declarationRoot=runtimeRoot){root(runtimeRoot);root(declarationRoot);const files=ownedTextVectorLiteralRuntimeSources(runtimeRoot,declarationRoot),seen=new Set(files.map(row=>row.path));for(const [path,source]of ownedTextVectorJoinRuntimeAssetPair())for(const directory of new Set([runtimeRoot,declarationRoot])){const target=directory+'/'+path;if(seen.has(target))fail('duplicate receiving kernel source path');seen.add(target);files.push({path:target,source});}return files;}
