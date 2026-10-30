@@ -814,3 +814,10 @@ composes written input guards and independently rechecks the whole module. Six
 full equations and independent all-domain JS/TS/interpreter/root/refusal cases
 are UNRUN. The changed input contract is explicit; production selection, original
 body equivalence, receiving qualification and full translation remain OPEN.
+
+The [complete native root successor draft](native-root-successor-composition-source-draft.md)
+composes the actual deadline/fixed-type/bounded-JSON/primitive-sequence root
+history, preserving strict current-source acceptance separately from inert
+successor proposals. Six full equations and independent full-history/tamper/
+unknown-current cases are UNRUN. Proposal DATA grants no installation or native
+caller authority; full receiving and synchronization remain OPEN.

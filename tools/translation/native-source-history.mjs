@@ -45,3 +45,10 @@ import {retainNativeSourceInputFence} from './native-source-input-fences.mjs';
 
 // Explicit historical DATA profile retains the original archive/API inputs.
 export const ORIGINAL_NATIVE_SOURCE_HISTORY_PROFILE=Object.freeze({archive:"tools/translation/source-profiles/vector-native-json-signed/complete-native-history.json.gz",pin:'5dc32d61993494fb8d56abbd303d43986a22f15b34f238b7e4b5169aba33a172'});
+
+// A whole recorded successor proposal is DATA, not acceptance of the observed
+// current bytes. Every consumer must enforce its own complete current-source
+// alternatives before installation/admission. Original strict APIs are intact.
+export function proposeRecordedNativeSourceSuccessors({root=ROOT,path,before,archive=ARCHIVE,pin=PIN}={}){
+ root=resolve(root);local(root,path);need(typeof before==='string'&&Buffer.byteLength(before)<=2097152,'complete original successor source required');const {packed,data}=input(root,archive,pin),selected=data.files.filter(row=>row.path===path);need(selected.length>0,'one recorded native successor path required');const rows=selected.map(row=>equation(root,row)),complete=compose(rows,before),start=complete.versions.indexOf(before);need(start>=0&&start<complete.historyChain.length,'strict recorded native source successor required');const joined=compose(complete.historyChain.slice(start),before),current=readFileSync(local(root,path),'utf8');need(Buffer.byteLength(current)<=2097152,'bounded current native source observation required');retainNativeSourceInputFence(local(root,path),current);need(readFileSync(local(root,archive)).equals(packed),'complete successor archive changed');for(const row of rows)need(readFileSync(local(root,row.originalPath),'utf8')===row.before,'complete successor original changed');need(readFileSync(local(root,path),'utf8')===current,'complete observed successor source changed');return {schema:'recorded-native-successor-proposal-v1',files:[{...joined,current,currentAfter:joined.after}],sourceAuthority:false,semanticAuthority:false,namespaceAuthority:false,currentSourceAccepted:false,sourceInstalled:false,sourceCache:false,receivingExecuted:false,rustExecuted:false};
+}
