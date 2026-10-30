@@ -282,3 +282,10 @@ only. Never parse a Rust row as a TypeScript SourceFile or infer Rust grammar,
 semantic scope, namespace or compilation from a source-copy result. Dedicated
 native scalar/base64 paths stay separate. All new mixed receiving/freshness
 checks remain UNRUN, and fatal Rust CI still follows all eight same-SHA JS gates.
+
+Nested source rules can use `composeConcreteSourceEditTemplates` to build
+nonoverlapping root edits from exact original spans and explicit retained
+source references. This DATA-only composition grants no owner/type/namespace
+authority; still apply the real serialized/reparsed CST substitution and full
+private caller checker. Use the fixed language/repository phases. Dropped or
+duplicated nested edits refuse. See [the source contract](primitive-vector-literal-bulk-source-draft.md).

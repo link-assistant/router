@@ -282,3 +282,6 @@ export {proposeOwnedPrimitiveVectorLiteralCalls} from './js-to-rust/owned-primit
 
 export {primitiveVectorLiteralRuntimeSources} from './primitive-vector-literal-runtime-sources.mjs';
 export {withOriginalPrimitiveVectorLiteralSourceOperation,requireCurrentPrimitiveVectorLiteralOperationSource,requireCurrentPrimitiveVectorLiteralOriginalOperationSource} from './current-primitive-vector-literal-source.mjs';
+
+export {proposePrimitiveVectorLiteralCalls} from './js-to-rust/primitive-vector-literal-proposals.mjs';
+export {composeConcreteSourceEditTemplates} from './concrete-source-edit-templates.mjs';

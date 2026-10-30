@@ -61,3 +61,13 @@ reproduction stay mandatory. Independent all-domain receiving/target/CST/meta/
 inverse and malformed/source/move cases are UNRUN. See [the reverse contract](primitive-vector-literal-reverse-source-draft.md).
 This closes the literal caller integration source-draft item, not its execution
 or global production/namespace/freshness/parity/export requirements.
+
+## Bulk literal templates and nested edits (2026-10-30)
+
+Four source equations draft one-call paired literal migration and a reusable
+original-span template composer. Cross-local length edits now compose inside
+another selected initializer or push operand before CST substitution and full
+private source reissue. Existing APIs/refusals remain intact. Explicit migration
+contract changes and false original equivalence/installation flags remain.
+All-domain both-lane and generic nested CST/data/budget/refusal cases are UNRUN.
+See [the bulk contract](primitive-vector-literal-bulk-source-draft.md).
