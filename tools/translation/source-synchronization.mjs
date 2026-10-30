@@ -277,3 +277,5 @@ export {observeCurrentPrimitiveOwnedVectorCoreSources,requireCurrentPrimitiveOwn
 export {primitiveOwnedVectorRuntimeSources} from './primitive-owned-vector-runtime-sources.mjs';
 
 export {proposeOwnedPrimitiveVectorCalls} from './js-to-rust/owned-primitive-vector-proposals.mjs';
+
+export {proposeOwnedPrimitiveVectorLiteralCalls} from './js-to-rust/owned-primitive-vector-literal-proposals.mjs';

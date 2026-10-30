@@ -949,3 +949,13 @@ private caller/flow/emission checks. The original paired core stays unchanged.
 Independent all-domain emitted/typed/interpreter/CST/inverse/native and Rust
 oracle case sources remain UNRUN. See [the shared contract](primitive-shared-vector-inputs-source-draft.md).
 Escaping shared-vector results, broader adoption and full synchronization remain OPEN.
+
+### Bulk dense primitive vector literal adoption draft (2026-10-30)
+
+Three complete source equations add zero-to-64-element dense local literal
+migration proposals, ordered existing core constructors and private complete
+module reissue. The original empty-only proposer retains its API/refusals.
+Carrier/length/resource contract changes stay explicit and original equivalence
+remains false. Eleven-domain JS/typed input, emitted/strict/interpreter and
+native inverse case sources remain UNRUN. See [the literal contract](primitive-owned-vector-literal-adoption-source-draft.md).
+Native original-owner adoption and full synchronization remain OPEN.
