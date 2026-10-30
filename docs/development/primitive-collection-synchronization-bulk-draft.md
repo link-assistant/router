@@ -110,3 +110,13 @@ and caught errors cannot revive cached facts. Ordinary callback errors remain
 separate. Complete closing validators still all run and preserve primary error
 identity. Independent valid/legacy/map/physical/cross-family/closing/depth and
 source inverse cases are UNRUN. See [the contract](primitive-source-failure-source-draft.md).
+
+## Finite literal JSON path search source adoption (2026-10-30)
+
+Three source equations draft selected-function/multi-module finite literal
+path expansion for five existing field domains, with ordered language/repository
+CST substitutions, hygienic names, unchanged literals and full inverses. The
+actual catalog error reader supplies a source case; no production body is
+installed or qualified. Independent kind/depth/order/fallback/hygiene/batch/data
+cases and original native catalog edge oracles are UNRUN. Full private original
+reissue and all receiving/parity/freshness/delivery remain OPEN. See [the contract](native-json-literal-path-search-source-draft.md).
