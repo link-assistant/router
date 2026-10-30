@@ -94,7 +94,7 @@ export class FormatChecker extends TupleChecker {
       if(metadataDigest(execution)!==metadataDigest(receipt)||metadataDigest(pieces)!==metadataDigest(node.pieces)||node.args.length)throw unsupported('source format template proof','requires the original executed capture pieces',node.span);
     }
     const bindings=[],captures=new Map(),displayClosures=[];
-    const bind=value=>{let name;do{name=this.freshName('ml_fmt_');}while(env.has(name));bindings.push({name,value});return {k:'var',name,type:value.type,span:node.span};};
+    const stableArgumentSources=node.args.every(arg=>['name','str','num','bool'].includes(arg.value.k));const bind=value=>{const primitive=['fixed','bool'].includes(value.type.kind)&&!value.type.rustOwnership&&!value.type.rustReference&&!value.type.patternOwnershipRefusal,borrowedText=value.type.kind==='string'&&!value.type.rustReference&&!value.type.patternOwnershipRefusal&&(!value.type.rustOwnership||value.type.rustOwnership.kind==='borrowed'&&value.type.rustOwnership.source==='str');if(stableArgumentSources&&['var','lit'].includes(value.k)&&(primitive||borrowedText))return value;let name;do{name=this.freshName('ml_fmt_');}while(env.has(name));bindings.push({name,value});return {k:'var',name,type:value.type,span:node.span};};
     const arguments_=node.args.map(arg=>{if(control(arg.value))throw unsupported('format argument control','nonlocal exits require statement lowering',arg.value.span);return bind(this.expr(arg.value,env,path));});
     const values=node.pieces.map(piece=>{
       if(Object.hasOwn(piece,'text'))return {k:'lit',value:piece.text,type:STRING,span:node.span};
@@ -129,6 +129,9 @@ const __routerOriginalBirth286_FormatChecker=[FormatChecker,FormatChecker.protot
 
 export class FormatEmitter extends TupleEmitter {
   expr(node) {
+    // Preserve an explicit owned-text conversion witness for source inversion.
+    if(node.k==='lit'&&['owned String formatting','owned String construction'].includes(node.type?.patternOwnershipRefusal))return `String(${JSON.stringify(node.value)})`;
+    if(node.k==='toString'&&node.arg.type.kind==='string')return `String(${this.expr(node.arg)})`;
     if(node.k==='routerFormatString') {
       let text=this.expr(node.value);if(node.precision!==null)text=`Array.from(${text}).slice(0,${node.precision}).join("")`;
       const count=`Math.max(0,${node.width}-Array.from(${text}).length)`,fill=JSON.stringify(node.fill);

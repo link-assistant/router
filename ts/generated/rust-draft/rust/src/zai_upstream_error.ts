@@ -1,5 +1,5 @@
 
-// Generated draft from rust/src/zai_upstream_error.rs; sha256=fdc914e832962276489f28e8a36dab69d59859e798c63ec7ed733337b848362c
+// Generated draft from rust/src/zai_upstream_error.rs; sha256=7e6a6660e913605733e084cd045f2f9a78ffa1de0b92228428854f05b61f0012
 // Carried constructs are data, never runtime parity evidence.
 function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
   if (value < min || value > max) throw new RangeError(message);
@@ -19,4 +19,4 @@ function rp_7a61695f757073747265616d5f6572726f722e53544154455f46494c45(): string
 }
 
 export const translated: { "EXHAUSTED_CODES": ReadonlyArray<bigint>; "MAX_CLASSIFIED_BODY": bigint; "STATE_FILE": string } = { ["EXHAUSTED_CODES"]: rp_7a61695f757073747265616d5f6572726f722e4558484155535445445f434f444553(), ["MAX_CLASSIFIED_BODY"]: rp_7a61695f757073747265616d5f6572726f722e4d41585f434c41535349464945445f424f4459(), ["STATE_FILE"]: rp_7a61695f757073747265616d5f6572726f722e53544154455f46494c45() };
-export const provenance = {"sourcePath":"rust/src/zai_upstream_error.rs","sourceSha256":"fdc914e832962276489f28e8a36dab69d59859e798c63ec7ed733337b848362c","executable":3,"executableFunctions":0,"executableConstants":3,"executableTypes":0,"executableConstructors":0,"carried":19,"preserved":23,"runtimeParity":false};
+export const provenance = {"sourcePath":"rust/src/zai_upstream_error.rs","sourceSha256":"7e6a6660e913605733e084cd045f2f9a78ffa1de0b92228428854f05b61f0012","executable":3,"executableFunctions":0,"executableConstants":3,"executableTypes":0,"executableConstructors":0,"carried":19,"preserved":23,"runtimeParity":false};

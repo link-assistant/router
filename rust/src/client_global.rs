@@ -91,6 +91,9 @@ pub(crate) fn apply_with_manager_and_codex_backend(
         )
         .into());
     }
+    if client == ClientKind::Codex {
+        manager.validate_codex_catalog_constraint()?;
+    }
     let marker_path = manager.ownership_marker_path(client);
     let config_existed = config_path.exists();
     let marker_existed = marker_path.as_ref().is_some_and(|path| path.exists());
@@ -102,24 +105,28 @@ pub(crate) fn apply_with_manager_and_codex_backend(
     if let Some(marker) = marker_path.as_ref().filter(|_| marker_existed) {
         copy_private(marker, &paths.marker)?;
     }
-    let setup =
-        match manager.setup_with_codex_backend(client, base_url, models, codex_backend_base_url) {
-            Ok(result) => result,
-            Err(error) => {
-                rollback(
-                    &paths,
-                    &config_path,
-                    config_existed,
-                    config_mode,
-                    marker_path.as_deref(),
-                    marker_existed,
-                    marker_mode,
-                )?;
-                remove_if_present(&paths.config)?;
-                remove_if_present(&paths.marker)?;
-                return Err(error.into());
-            }
-        };
+    let setup = match (|| {
+        if client == ClientKind::Codex {
+            manager.remove_codex_catalog_constraint()?;
+        }
+        manager.setup_with_codex_backend(client, base_url, models, codex_backend_base_url)
+    })() {
+        Ok(result) => result,
+        Err(error) => {
+            rollback(
+                &paths,
+                &config_path,
+                config_existed,
+                config_mode,
+                marker_path.as_deref(),
+                marker_existed,
+                marker_mode,
+            )?;
+            remove_if_present(&paths.config)?;
+            remove_if_present(&paths.marker)?;
+            return Err(error.into());
+        }
+    };
     let configured_contents = fs::read(&config_path)?;
     let state = BackupState {
         config_existed,
@@ -511,5 +518,36 @@ mod tests {
         std::fs::write(&path, b"x").expect("seed");
         set_file_mode(&path, None).expect("no mode is fine");
         assert_eq!(std::fs::read(&path).expect("read"), b"x");
+    }
+
+    // Independent JS/TS global restoration oracle source. UNRUN; gated CI only.
+    #[test]
+    fn source_draft_global_exact_bytes_and_modes_for_both_native_codecs() {
+        for (client, before) in [(ClientKind::ClaudeCode, "{ \"custom\": 42 }\n"), (ClientKind::Codex, "# exact original\nmodel_provider = \"foreign\"\n")] {
+            let home = tempfile::tempdir().expect("isolated home");
+            let manager = ClientManager::isolated(home.path());
+            let path = manager.config_path(client);
+            std::fs::create_dir_all(path.parent().expect("parent")).expect("directory");
+            std::fs::write(&path, before).expect("config");
+            set_file_mode(&path, Some(0o640)).expect("mode");
+            apply_with_manager_and_codex_backend(&manager, client, "http://127.0.0.1:8080", &[], None).expect("global configure");
+            undo_with_manager(&manager, client).expect("global undo");
+            assert_eq!(std::fs::read_to_string(&path).expect("config"), before);
+            #[cfg(unix)]
+            assert_eq!(file_mode(&path).map(|mode| mode & 0o777), Some(0o640));
+            assert!(!backup_paths(&path).state.exists());
+        }
+    }
+    #[test]
+    fn source_draft_global_undo_keeps_edited_config_and_its_backup() {
+        let home = tempfile::tempdir().expect("isolated home");
+        let manager = ClientManager::isolated(home.path());
+        let path = manager.config_path(ClientKind::ClaudeCode);
+        apply_with_manager_and_codex_backend(&manager, ClientKind::ClaudeCode, "http://127.0.0.1:8080", &[], None).expect("configure");
+        let edited = format!("{}\n", std::fs::read_to_string(&path).expect("config"));
+        std::fs::write(&path, &edited).expect("edit");
+        assert!(undo_with_manager(&manager, ClientKind::ClaudeCode).is_err());
+        assert_eq!(std::fs::read_to_string(&path).expect("preserved edit"), edited);
+        assert!(backup_paths(&path).state.exists());
     }
 }

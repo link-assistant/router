@@ -1,0 +1,1 @@
+Draft shared paired temporary-client profiles and process-local Claude/Codex settings, private cleanup identities, native privacy defaults and provider codecs. Independent cases remain unrun; run credential and process dispatch integration remains open.

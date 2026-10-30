@@ -19,9 +19,10 @@ export const PIN = 'e46e196db5ec34bf13a73b8645aa38d409737e60';
 export const sha256 = text => createHash('sha256').update(text).digest('hex');
 export const json = value => JSON.stringify(value, (_, item) => typeof item === 'bigint' ? { $bigint: item.toString() } : item instanceof Map ? Object.fromEntries(item) : item) + '\n';
 export const typeParameterName = (name, index) => /^[A-Za-z_$][A-Za-z0-9_$]*$/u.test(name) && !new Set('break case catch class const continue debugger default delete do else enum export extends false finally for function if import in instanceof new null return super switch this throw true try typeof var void while with yield await let static implements interface package private protected public arguments eval'.split(' ')).has(name) ? name : `arg${index}`;
-export const tsType = (type, dataTypes = []) => {
-  if (type.kind === 'routerFuture') return `PromiseLike<${tsType(type.value, dataTypes)}>`;
-  if (['array','data','named'].includes(type.kind))return typeScriptType(type,new Map(dataTypes.map(entry=>[entry.fullName,entry])));
+export const tsType = (type, dataTypes = [], {nativeScalarModule=null}={}) => {
+  if (type.kind === 'routerFuture') return `PromiseLike<${tsType(type.value, dataTypes,{nativeScalarModule})}>`;
+  if (['array','data','named'].includes(type.kind))return typeScriptType(type,new Map(dataTypes.map(entry=>[entry.fullName,entry])),{nativeScalarModule});
+  const scalar=nativeScalarTypeScriptType(type,nativeScalarModule);if(scalar!==null)return scalar;
   return ({ fixed: 'bigint', nat: 'bigint', int: 'bigint', bool: 'boolean', string: 'string', char: 'string', unit: 'null', float: 'number' })[type.kind] ?? 'unknown';
 };
 
@@ -64,7 +65,7 @@ export function translateSourceConcreteSyntaxMeta(serialized,path='input.rs',opt
   return translateConcreteSyntaxStage(readRustConcreteSyntaxMeta(serialized),path,options);
 }
 
-function translateConcreteSyntaxStage({source,document}, path, { projectDeclarations = [],projectSourceScopes=[],jsonParserProfile:parserProfile,cargoManifest } = {}) {
+function translateConcreteSyntaxStage({source,document}, path, { projectDeclarations = [],projectSourceScopes=[],jsonParserProfile:parserProfile,cargoManifest } = {}, reuseProjectChecks=false) {
   const macroEvidence=macroProvenance(source),sourceHash=sha256(source);
   const matchingScopes=projectSourceScopes.filter(entry=>entry.source===path&&entry.sha256===sourceHash&&(!entry.sourceView||entry.sourceView.modulePath.length===0));
   const sourceScope=matchingScopes.length===1?matchingScopes[0]:null;
@@ -188,6 +189,9 @@ function translateConcreteSyntaxStage({source,document}, path, { projectDeclarat
     }
   }
   for (const item of candidates.values()) {
+    // Only skip a result the unchanged final project join replaces.
+    if(reuseProjectChecks&&sourceScope){const contexts = projectDeclarations.filter(entry => entry.source === path && entry.sourceSha256 === sourceHash && entry.name === item.name && entry.span.start === item.span.start && entry.span.end === item.span.end);if(contexts.length===1&&contexts[0].project===sourceScope.project)continue;}
+
     try {
       const group = closure(item);
       const supportTypes = [...new Map([...group.flatMap(entry => entry.supportTypes), ...layoutClosure(group.map(entry => entry.surface))].map(type => [type.name, type])).values()];
@@ -250,22 +254,24 @@ function translateConcreteSyntaxStage({source,document}, path, { projectDeclarat
   });
   const runtime = `${header}${body}\n\nexport const translated = { ${runtimeEntries.join(', ')} };\nexport const provenance = ${JSON.stringify({ sourcePath: path, sourceSha256: ir.sourceSha256, ...ir.counts, runtimeParity: false })};\n`;
   const dataTypes = [...new Map(executable.flatMap(item => item.semantic.dataTypes.map(entry => [entry.fullName, entry]))).values()];
-  const signature = (params, returns) => `(${params.map((param, index) => `${typeParameterName(param.name, index)}: ${tsType(param.type, dataTypes)}`).join(', ')}) => ${tsType(returns, dataTypes)}`;
-  const types = executable.map((item, index) => `${JSON.stringify(entries[index])}: ${item.semantic.constructors ? item.term === 'struct' ? signature(item.semantic.constructors[0].params, item.semantic.returns) : `Readonly<{ ${item.semantic.constructors.map((ctor, index) => `${JSON.stringify(item.semantic.checkedIR.ctors[index].name)}: ${signature(ctor.params, item.semantic.returns)}`).join('; ')} }>` : item.term === 'const' ? tsType(item.semantic.returns, dataTypes) : signature(item.semantic.params, item.semantic.returns)}`).join('; ');
+  const scalarTypes={nativeScalarModule:(runtimeModule.startsWith('.')?runtimeModule:'./'+runtimeModule).replace(/effects\.mjs$/u,'primitive-operator-runtime.mjs')};
+  const signature = (params, returns) => `(${params.map((param, index) => `${typeParameterName(param.name, index)}: ${tsType(param.type, dataTypes,scalarTypes)}`).join(', ')}) => ${tsType(returns, dataTypes,scalarTypes)}`;
+  const types = executable.map((item, index) => `${JSON.stringify(entries[index])}: ${item.semantic.constructors ? item.term === 'struct' ? signature(item.semantic.constructors[0].params, item.semantic.returns) : `Readonly<{ ${item.semantic.constructors.map((ctor, index) => `${JSON.stringify(item.semantic.checkedIR.ctors[index].name)}: ${signature(ctor.params, item.semantic.returns)}`).join('; ')} }>` : item.term === 'const' ? tsType(item.semantic.returns, dataTypes,scalarTypes) : signature(item.semantic.params, item.semantic.returns)}`).join('; ');
   const parameterTypes = new Map(executable.flatMap(item => item.semantic.constructors ? item.semantic.constructors.map(ctor => [constructorTarget(item, ctor), ctor.params]) : item.semantic.mappings.filter(mapping => mapping.source === item.name).map(mapping => [mapping.target, item.semantic.params])));
   const returnTypes = new Map();
   for (const item of executable) for (const signature of emissions.get(item).signatures ?? []) { if (signature.target) { parameterTypes.set(signature.target, signature.params); returnTypes.set(signature.target, signature.ret); } }
-  const typedRuntime = annotateRuntimeTypes(runtime, parameterTypes, dataTypes, returnTypes, executable.flatMap(item=>emissions.get(item).checkedLocalBindings??[]));
+  const typedRuntime = annotateRuntimeTypes(runtime, parameterTypes, dataTypes, returnTypes, executable.flatMap(item=>emissions.get(item).checkedLocalBindings??[]),scalarTypes);
   const typescript = typedRuntime.replace('export const translated =', `export const translated: { ${types} } =`);
   ir.concreteSyntaxMeta=document;
   return { ir, javascript: runtime, typescript };
 }
 
-export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTypes = [], returnTypes = new Map(), checkedLocalBindings = []) {
+export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTypes = [], returnTypes = new Map(), checkedLocalBindings = [], {nativeScalarModule=null}={}) {
+  nativeScalarTypeScriptModule(nativeScalarModule);
   const tokens = tokenize(runtime, 'JavaScript').tokens;
   const annotations = [];
   const bindingTypes=new Map();
-  for(const binding of checkedLocalBindings){const key=JSON.stringify([binding.function,binding.name]),type=tsType(binding.type,dataTypes);if(bindingTypes.has(key)&&bindingTypes.get(key)!==type)throw new Error('Ambiguous checked local binding type');bindingTypes.set(key,type);}
+  for(const binding of checkedLocalBindings){const key=JSON.stringify([binding.function,binding.name]),type=tsType(binding.type,dataTypes,{nativeScalarModule});if(bindingTypes.has(key)&&bindingTypes.get(key)!==type)throw new Error('Ambiguous checked local binding type');bindingTypes.set(key,type);}
   const functionRanges=[];
   const helperTypes = {
     ml_natSub: ['bigint', 'bigint'],
@@ -348,7 +354,7 @@ export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTy
     let index = 0;
     for (let parameter = nameAt + 2; tokens[parameter]?.value !== ')'; parameter++) {
       if (tokens[parameter].kind !== 'identifier') continue;
-      annotations.push({ offset: tokens[parameter].end, text: `: ${known?.[index] ? tsType(known[index].type, dataTypes) : helper?.[index] ?? 'any'}` });
+      annotations.push({ offset: tokens[parameter].end, text: `: ${known?.[index] ? tsType(known[index].type, dataTypes,{nativeScalarModule}) : helper?.[index] ?? 'any'}` });
       index++;
     }
     if(name==='ml_host_option_map_or'){const close=tokens.find((token,index)=>index>nameAt+1&&token.value===')');annotations.push({offset:close.end,text:': U'});}
@@ -364,7 +370,7 @@ export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTy
     if(name==='ml_static_array_element'){const close=tokens.find((token,index)=>index>nameAt+1&&token.value===')');annotations.push({offset:close.end,text:': T'});}
     if (returnTypes.has(name)) {
       const close = tokens.find((token, index) => index > nameAt + 1 && token.value === ')');
-      annotations.push({ offset: close.end, text: `: ${tsType(returnTypes.get(name), dataTypes)}` });
+      annotations.push({ offset: close.end, text: `: ${tsType(returnTypes.get(name), dataTypes,{nativeScalarModule})}` });
     }
     if (['ml_abort', 'ml_router_unexpected'].includes(name)) {
       const close = tokens.find((token, index) => index > at + 2 && token.value === ')');
@@ -392,5 +398,13 @@ export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTy
   }
   let typedRuntime = runtime;
   for (const { offset, text } of annotations.sort((a, b) => b.offset - a.offset)) typedRuntime = typedRuntime.slice(0, offset) + text + typedRuntime.slice(offset);
-  return typeScriptAliases(new Map(dataTypes.map(entry=>[entry.fullName,entry])))+'\n'+typedRuntime;
+  return typeScriptAliases(new Map(dataTypes.map(entry=>[entry.fullName,entry])),{nativeScalarModule})+'\n'+typedRuntime;
 }
+
+// Explicit project-body reuse; ordinary public source entries retain their original checks.
+export function translateSourceWithProjectBodies(source,path='input.rs',{projectDeclarations=[],projectSourceScopes=[],jsonParserProfile:parserProfile,cargoManifest}={}) {
+  // Preserve the original four option reads/defaults before any source work.
+  return translateConcreteSyntaxStage(createRustConcreteSyntaxStage(source),path,{projectDeclarations,projectSourceScopes,jsonParserProfile:parserProfile,cargoManifest}, true);
+}
+
+import {nativeScalarTypeScriptModule,nativeScalarTypeScriptType} from './native-scalar-typescript.mjs';

@@ -1,3 +1,4 @@
+import {guardedProofConsumerHistory} from './guarded-proof-consumer-history.mjs';
 // Complete original source and native AST copies; DATA transformations only.
 import {readFileSync,writeFileSync,mkdirSync,existsSync} from 'node:fs';
 import {gunzipSync,gzipSync} from 'node:zlib';
@@ -80,12 +81,12 @@ function prepareBuiltinSourceMetaStringKeysPlan(){
  }
  const bytes=gunzipSync(readFileSync(new URL('./source-profiles/builtin-source-meta-string-keys/complete-original-private-native-proof-json.mjs.gz',import.meta.url)),{maxOutputLength:65536});
  if(bytes.length!==23641||hash(bytes)!=='b02892e676b928339f15d2a529d0467dfd60efedbe8e991df0910400289db338')fail('complete original scanner source differs');
- const original=bytes.toString('utf8'),current=support[1].source,oldSyntax=ts.createSourceFile('private-native-proof-json.mjs',original,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS),newSyntax=ts.createSourceFile('private-native-proof-json.mjs',current,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
+ const original=bytes.toString('utf8'),current=support[1].source,historicalCurrent=guardedProofConsumerHistory(current,'tools/translation/private-native-proof-json.mjs',{root}).historical,oldSyntax=ts.createSourceFile('private-native-proof-json.mjs',original,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS),newSyntax=ts.createSourceFile('private-native-proof-json.mjs',historicalCurrent,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
  const additions=newSyntax.statements.filter(node=>ts.isFunctionDeclaration(node)&&node.name?.text==='privateNativeProofJsonDataWithinBudget');if(additions.length!==1)fail('one native stateless scan export required');
  const restored=ts.factory.updateSourceFile(newSyntax,newSyntax.statements.filter(node=>node!==additions[0])),printer=ts.createPrinter({newLine:ts.NewLineKind.LineFeed,removeComments:true});
  if(printer.printFile(restored)!==printer.printFile(oldSyntax))fail('an original scanner API changed');
- const scannerStages=[stage(original,current,'language','javascript:expose-existing-stateless-DATA-census'),stage(current,current,'repository','router:retain-original-proof-serializer-APIs')];
- return {schema:'builtin-source-meta-string-keys-source-v1',path,productionPath,defaultCodecUnchanged:true,productionSelection:false,defaultRestorationStages:[stage(after,before,'language','javascript:restore-complete-original-codec-after-unqualified-performance'),stage(before,before,'repository','router:retain-explicit-experimental-candidate')],before,after,beforeSha256:hash(before),afterSha256:hash(after),native,stages,support,scannerStages,originalSerializerAPIsUnchanged:true,acrossInvocationCaches:false,sourceAuthority:false,namespaceAuthority:false,runtimeAuthority:false,performanceQualified:false};
+ const scannerReceivingHistory=stage(historicalCurrent,current,'repository','router:retain-exact-later-guarded-lexing-import'),scannerStages=[stage(original,historicalCurrent,'language','javascript:expose-existing-stateless-DATA-census'),stage(historicalCurrent,current,'repository','router:retain-original-proof-serializer-APIs')];
+ return {schema:'builtin-source-meta-string-keys-source-v1',path,productionPath,defaultCodecUnchanged:true,productionSelection:false,defaultRestorationStages:[stage(after,before,'language','javascript:restore-complete-original-codec-after-unqualified-performance'),stage(before,before,'repository','router:retain-explicit-experimental-candidate')],before,after,beforeSha256:hash(before),afterSha256:hash(after),native,stages,support,scannerStages,scannerReceivingHistory,originalSerializerAPIsUnchanged:true,acrossInvocationCaches:false,sourceAuthority:false,namespaceAuthority:false,runtimeAuthority:false,performanceQualified:false};
 }
 
 /** Qualify the explicit experiment while keeping the default codec exact. */

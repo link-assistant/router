@@ -985,3 +985,7 @@ fn successful_catalogs_persist_losslessly_but_restart_fail_closed() {
         "persisted models remain unavailable until this process authenticates them"
     );
 }
+
+
+#[path = "model_catalog_translation_tests.rs"]
+mod translation_reader_cases;

@@ -1,0 +1,1119 @@
+{
+  "schema": "complete-invocation-source-check-evidence-v1",
+  "sourceHeadBefore": "61a3f586fd152b6c10a6909c63e10b0bf5446755",
+  "entries": [
+    {
+      "path": "ci-5a19746ac-complete-cycle-collection.json.gz",
+      "bytes": 4352,
+      "sha256": "4e8b9134bb4e125888ac6beacd0a224532a98a513ea563987fa55c49250bd68a",
+      "originalPath": "/private/tmp/router-issue772-delivery-20261023/ci-5a19746ac-complete-cycle-collection.json"
+    },
+    {
+      "path": "ci-5a19746ac-complete-run-job-metadata.json.gz",
+      "bytes": 13694,
+      "sha256": "d08d4f36be72b98c1b2a3238989a159858d797fc747a307f12b55197f16e74bf",
+      "originalPath": "/private/tmp/router-issue772-delivery-20261023/ci-5a19746ac-complete-run-job-metadata.json"
+    },
+    {
+      "path": "ci-5a19746ac-artifact-receipts.json.gz",
+      "bytes": 3020,
+      "sha256": "a06ffcaebed92d25e25f240bf5e469f71df5309604756150faf03c52dbef4628",
+      "originalPath": "/private/tmp/router-issue772-delivery-20261023/ci-5a19746ac-artifact-receipts.json"
+    },
+    {
+      "path": "ci-5a19746ac-complete-forward-raw-failure-blocks.txt.gz",
+      "bytes": 3454,
+      "sha256": "f90ff6b2f9c7a90058d3c75ed4cf6af92cf469fdb4d499a7dbd41ff7bc5848a5",
+      "originalPath": "/private/tmp/router-issue772-delivery-20261023/ci-5a19746ac-complete-forward-raw-failure-blocks.txt"
+    },
+    {
+      "path": "ci-5a19746ac-over60s-original-source-joins.json.gz",
+      "bytes": 1261,
+      "sha256": "d650a00984942d57431ea6d59d776a2819072c3544a6d7d22a5baa99ba8962e1",
+      "originalPath": "/private/tmp/router-issue772-delivery-20261023/ci-5a19746ac-over60s-original-source-joins.json"
+    },
+    {
+      "path": "ci-5a19746ac-translation-observed-failures.json.gz",
+      "bytes": 892,
+      "sha256": "03e397c72a2d5f8f0cc6ceb57fd314605f4b56f43149ad4804bc907be3ac04c8",
+      "originalPath": "/private/tmp/router-issue772-delivery-20261023/ci-5a19746ac-translation-observed-failures.json"
+    },
+    {
+      "path": "ci-5a19746ac-finished-case-audits.json.gz",
+      "bytes": 557,
+      "sha256": "715cfb8edb78df95183203d414327003ee46ce65642fe3d695f413df511fe5af",
+      "originalPath": "/private/tmp/router-issue772-delivery-20261023/ci-5a19746ac-finished-case-audits.json"
+    },
+    {
+      "path": "complete-ci/ci-5a19746ac-bun-tests-complete.log.gz",
+      "bytes": 20552,
+      "sha256": "19e001c0c53daa7bb14344c364de4e0db1603afe563d039be0c4136e7c74cea9",
+      "originalPath": "/private/tmp/router-issue772-delivery-20261023/ci-5a19746ac-bun-tests-complete.log.gz"
+    },
+    {
+      "path": "complete-ci/ci-5a19746ac-canonical-complete.log.gz",
+      "bytes": 7426,
+      "sha256": "5bcae11dd6ac81d6e2d9160464b2688507cfcb1438e7ebb0e27b4f33247d307b",
+      "originalPath": "/private/tmp/router-issue772-delivery-20261023/ci-5a19746ac-canonical-complete.log.gz"
+    },
+    {
+      "path": "complete-ci/ci-5a19746ac-canonical-profile-matrix-complete.log.gz",
+      "bytes": 6375,
+      "sha256": "f76e26086c1be7760676fb4869ac1ec93f3ef360ef9d90d40c9c72e0a310a8f5",
+      "originalPath": "/private/tmp/router-issue772-delivery-20261023/ci-5a19746ac-canonical-profile-matrix-complete.log.gz"
+    },
+    {
+      "path": "complete-ci/ci-5a19746ac-javascript-aggregate-complete.log.gz",
+      "bytes": 1641,
+      "sha256": "0d4cf7479d6e6e88c6cedbaf9409dae63ed8eb054b2df778d16774c558992c31",
+      "originalPath": "/private/tmp/router-issue772-delivery-20261023/ci-5a19746ac-javascript-aggregate-complete.log.gz"
+    },
+    {
+      "path": "complete-ci/ci-5a19746ac-lint-complete.log.gz",
+      "bytes": 13711,
+      "sha256": "f353ff9d313d853e1deda2f93fb2d3cb6ecb86763a61fab5efdebea370a5fee9",
+      "originalPath": "/private/tmp/router-issue772-delivery-20261023/ci-5a19746ac-lint-complete.log.gz"
+    },
+    {
+      "path": "complete-ci/ci-5a19746ac-node-tests-complete.log.gz",
+      "bytes": 27457,
+      "sha256": "7629ce95d28d00c5a4017879db011f840b139bdf223db440bbbd8833274c8b63",
+      "originalPath": "/private/tmp/router-issue772-delivery-20261023/ci-5a19746ac-node-tests-complete.log.gz"
+    },
+    {
+      "path": "complete-ci/ci-5a19746ac-owned-definitions-complete.log.gz",
+      "bytes": 7401,
+      "sha256": "844da8f5e53fd84cb52ae63e8b2c36b9ea8e739b56072f6ab92045b3ef8717a8",
+      "originalPath": "/private/tmp/router-issue772-delivery-20261023/ci-5a19746ac-owned-definitions-complete.log.gz"
+    },
+    {
+      "path": "complete-ci/ci-5a19746ac-owned-profile-matrix-complete.log.gz",
+      "bytes": 7213,
+      "sha256": "180b0dc982167b3216a59e5325ba60cb21186a3996a1b72c5c78134d07315311",
+      "originalPath": "/private/tmp/router-issue772-delivery-20261023/ci-5a19746ac-owned-profile-matrix-complete.log.gz"
+    },
+    {
+      "path": "complete-ci/ci-5a19746ac-parity-complete.log.gz",
+      "bytes": 19147,
+      "sha256": "06f2e182f8d7324cc934ff947474c92fa88dfb5e2283e8d55da2ac480654ec44",
+      "originalPath": "/private/tmp/router-issue772-delivery-20261023/ci-5a19746ac-parity-complete.log.gz"
+    },
+    {
+      "path": "complete-ci/ci-5a19746ac-reverse-translation-complete.log.gz",
+      "bytes": 15437,
+      "sha256": "d8f4075c5ebabd7819f5f1d8ef477372c1c1b625ab325100d83976cd21af29f5",
+      "originalPath": "/private/tmp/router-issue772-delivery-20261023/ci-5a19746ac-reverse-translation-complete.log.gz"
+    },
+    {
+      "path": "complete-ci/ci-5a19746ac-translation-tests-complete.log.gz",
+      "bytes": 245399,
+      "sha256": "c14ceb763e48d7b855473c08cbcd2a07dc70fe92e81f907fa61c19e915cd027b",
+      "originalPath": "/private/tmp/router-issue772-delivery-20261023/ci-5a19746ac-translation-tests-complete.log.gz"
+    },
+    {
+      "path": "complete-ci/ci-5a19746ac-typescript-complete.log.gz",
+      "bytes": 11000,
+      "sha256": "18a38e7495f0f9dcb4facd550affce0a38d0e85c83ed5a621672ba5dc714431a",
+      "originalPath": "/private/tmp/router-issue772-delivery-20261023/ci-5a19746ac-typescript-complete.log.gz"
+    },
+    {
+      "path": "complete-ci/ci-5a19746ac-node-case-deadlines-reverse-translation.zip",
+      "bytes": 234814,
+      "sha256": "55b9653c376e59a5596ea53805eb5430df5fcf747a1dcad3a3ba35c88bd8c8f2",
+      "originalPath": "/private/tmp/router-issue772-delivery-20261023/ci-5a19746ac-node-case-deadlines-reverse-translation.zip"
+    },
+    {
+      "path": "complete-ci/ci-5a19746ac-node-case-deadlines-translation.zip",
+      "bytes": 3125679,
+      "sha256": "e57baed058245e74b53956132d8809486aaf39111cd5124229dd4876c7c9ea85",
+      "originalPath": "/private/tmp/router-issue772-delivery-20261023/ci-5a19746ac-node-case-deadlines-translation.zip"
+    },
+    {
+      "path": "complete-ci/ci-5a19746ac-node-case-deadlines-typescript.zip",
+      "bytes": 142627,
+      "sha256": "033d9c655e0f44b6b1aae6b8b07d32455d88c88acf19e80c36499cefdbbe85b8",
+      "originalPath": "/private/tmp/router-issue772-delivery-20261023/ci-5a19746ac-node-case-deadlines-typescript.zip"
+    },
+    {
+      "path": "issue772-invocation-cst-reuse-source-v1/command.json.gz",
+      "bytes": 280,
+      "sha256": "64f9c6c875b85579a967ca42c9c939d4312713fcd8933420830be092d8dc1849",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-reuse-source-v1/command.json"
+    },
+    {
+      "path": "issue772-invocation-cst-reuse-source-v1/receipt.json.gz",
+      "bytes": 193,
+      "sha256": "b03636c64ca5dc39124fee343aea77ee234e83b91da0295ece7c1d29b5334dd9",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-reuse-source-v1/receipt.json"
+    },
+    {
+      "path": "issue772-invocation-cst-reuse-source-v1/resources.jsonl.gz",
+      "bytes": 212,
+      "sha256": "e2cc55b6cf71ce1633f1df171c42d9e711c16f7ed382b9ce55783386cf20e7e8",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-reuse-source-v1/resources.jsonl"
+    },
+    {
+      "path": "issue772-invocation-cst-reuse-source-v1/stdout.log.gz",
+      "bytes": 221,
+      "sha256": "9edf3c5a8e5b811d7b4c1bf92ac43e04eb85ae1e2241c4df157c6c291ba3bde4",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-reuse-source-v1/stdout.log.gz"
+    },
+    {
+      "path": "issue772-invocation-cst-reuse-source-v1/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-reuse-source-v1/stderr.log.gz"
+    },
+    {
+      "path": "issue772-invocation-cst-reuse-source-v1/temporary/complete-invocation-cst-reuse-proposal.json.gz",
+      "bytes": 374895,
+      "sha256": "05d6c81ef74ffc7bd7daf0f0f2b6a911c20762f2c10906fa9c2eafae37b2cd71",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-reuse-source-v1/temporary/complete-invocation-cst-reuse-proposal.json.gz"
+    },
+    {
+      "path": "issue772-invocation-cst-reuse-review-v1/command.json.gz",
+      "bytes": 280,
+      "sha256": "faba5f5487323a1c1be466dbc439a07389f36cdfda5d5beeeaf7471c67ee24e7",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-reuse-review-v1/command.json"
+    },
+    {
+      "path": "issue772-invocation-cst-reuse-review-v1/receipt.json.gz",
+      "bytes": 193,
+      "sha256": "a178fc2b351069ce6f7b53d1bbe3a0539fcd86e55de35d335d3b735ad09ee28f",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-reuse-review-v1/receipt.json"
+    },
+    {
+      "path": "issue772-invocation-cst-reuse-review-v1/resources.jsonl.gz",
+      "bytes": 130,
+      "sha256": "41f47db737a52e2b80be2da99222b7b83a4848d6cb55c241e44d661cefe44c08",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-reuse-review-v1/resources.jsonl"
+    },
+    {
+      "path": "issue772-invocation-cst-reuse-review-v1/stdout.log.gz",
+      "bytes": 184,
+      "sha256": "819b13d2c51200329c33f8104ef43445e79e667790a07d4e0e9318f146b122c0",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-reuse-review-v1/stdout.log.gz"
+    },
+    {
+      "path": "issue772-invocation-cst-reuse-review-v1/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-reuse-review-v1/stderr.log.gz"
+    },
+    {
+      "path": "issue772-native-binding-batch-source-v1/command.json.gz",
+      "bytes": 282,
+      "sha256": "53e98da6e8b5f5c5258e44f710c96197602685b57a1dc60a30a8df0db842b8a0",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-binding-batch-source-v1/command.json"
+    },
+    {
+      "path": "issue772-native-binding-batch-source-v1/receipt.json.gz",
+      "bytes": 192,
+      "sha256": "30350ca5261a9695256542bec83cd79945bf90f82e9f29c0f8e6d8af0b51261d",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-binding-batch-source-v1/receipt.json"
+    },
+    {
+      "path": "issue772-native-binding-batch-source-v1/resources.jsonl.gz",
+      "bytes": 165,
+      "sha256": "de160ebcd9196a6083f5cf1c76700036461e73e5b1c3c4a504589a3d681f5d53",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-binding-batch-source-v1/resources.jsonl"
+    },
+    {
+      "path": "issue772-native-binding-batch-source-v1/stdout.log.gz",
+      "bytes": 173,
+      "sha256": "49ea6fcc6dddb0611ed6c245684d55fe9e27cb6f4108ec2ff656cacf8a414164",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-binding-batch-source-v1/stdout.log.gz"
+    },
+    {
+      "path": "issue772-native-binding-batch-source-v1/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-binding-batch-source-v1/stderr.log.gz"
+    },
+    {
+      "path": "issue772-native-binding-batch-source-v1/temporary/complete-native-binding-batch-proposal.json.gz",
+      "bytes": 299109,
+      "sha256": "329dd176f441a34428f5469039392ab836f837074bf33f4feea1df1c797a7bbf",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-binding-batch-source-v1/temporary/complete-native-binding-batch-proposal.json.gz"
+    },
+    {
+      "path": "issue772-native-binding-batch-source-v2/command.json.gz",
+      "bytes": 282,
+      "sha256": "53e98da6e8b5f5c5258e44f710c96197602685b57a1dc60a30a8df0db842b8a0",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-binding-batch-source-v2/command.json"
+    },
+    {
+      "path": "issue772-native-binding-batch-source-v2/receipt.json.gz",
+      "bytes": 193,
+      "sha256": "092d136557ef30c592051b7fcc29326123fcb5ce9895a3b2c26592d49076b943",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-binding-batch-source-v2/receipt.json"
+    },
+    {
+      "path": "issue772-native-binding-batch-source-v2/resources.jsonl.gz",
+      "bytes": 170,
+      "sha256": "19c6529a479d5ed3886f29475991f1bf34d106903dc472c56c83d410e4d01001",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-binding-batch-source-v2/resources.jsonl"
+    },
+    {
+      "path": "issue772-native-binding-batch-source-v2/stdout.log.gz",
+      "bytes": 173,
+      "sha256": "49ea6fcc6dddb0611ed6c245684d55fe9e27cb6f4108ec2ff656cacf8a414164",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-binding-batch-source-v2/stdout.log.gz"
+    },
+    {
+      "path": "issue772-native-binding-batch-source-v2/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-binding-batch-source-v2/stderr.log.gz"
+    },
+    {
+      "path": "issue772-native-binding-batch-source-v2/temporary/complete-native-binding-batch-proposal.json.gz",
+      "bytes": 299194,
+      "sha256": "a0e6da3c5c370e80296816a1dda6b9b9200a11124aaef8ab81a048cc8ba1ccf4",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-binding-batch-source-v2/temporary/complete-native-binding-batch-proposal.json.gz"
+    },
+    {
+      "path": "issue772-native-binding-batch-review-v1/command.json.gz",
+      "bytes": 281,
+      "sha256": "291e7e9c349dca3fdc45e28079af78d21f7995a0aac3692c2cdd648b0b1d3a8c",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-binding-batch-review-v1/command.json"
+    },
+    {
+      "path": "issue772-native-binding-batch-review-v1/receipt.json.gz",
+      "bytes": 192,
+      "sha256": "ebfb1a062d307caafd2c9589780bbed2c7eb5d04ed72d13cfae89485e7599f90",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-binding-batch-review-v1/receipt.json"
+    },
+    {
+      "path": "issue772-native-binding-batch-review-v1/resources.jsonl.gz",
+      "bytes": 199,
+      "sha256": "9f3cb0c9f3a22cf6c4730c78deaa2f51acc0e500a5bdfcb64eb1dedb6449f3cf",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-binding-batch-review-v1/resources.jsonl"
+    },
+    {
+      "path": "issue772-native-binding-batch-review-v1/stdout.log.gz",
+      "bytes": 184,
+      "sha256": "893d33fb7593af0284e2a25f391380b76977a8ed23a6999fe64b4dfa8470be96",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-binding-batch-review-v1/stdout.log.gz"
+    },
+    {
+      "path": "issue772-native-binding-batch-review-v1/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-binding-batch-review-v1/stderr.log.gz"
+    },
+    {
+      "path": "issue772-native-binding-batch-review-v2/command.json.gz",
+      "bytes": 281,
+      "sha256": "49218aa2597e46408aad39c28f7359fff316bdea03a5b1b6fe2eaca205899bf4",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-binding-batch-review-v2/command.json"
+    },
+    {
+      "path": "issue772-native-binding-batch-review-v2/receipt.json.gz",
+      "bytes": 193,
+      "sha256": "795cb9f805e57cfeb3d514baee3a9eadd69f86f7f346a5cfe6d3a6b0331fb208",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-binding-batch-review-v2/receipt.json"
+    },
+    {
+      "path": "issue772-native-binding-batch-review-v2/resources.jsonl.gz",
+      "bytes": 199,
+      "sha256": "5e9918b5965fe94186640253dafef4df5d6877d154e2f8860231ecd44c32c59e",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-binding-batch-review-v2/resources.jsonl"
+    },
+    {
+      "path": "issue772-native-binding-batch-review-v2/stdout.log.gz",
+      "bytes": 184,
+      "sha256": "893d33fb7593af0284e2a25f391380b76977a8ed23a6999fe64b4dfa8470be96",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-binding-batch-review-v2/stdout.log.gz"
+    },
+    {
+      "path": "issue772-native-binding-batch-review-v2/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-native-binding-batch-review-v2/stderr.log.gz"
+    },
+    {
+      "path": "issue772-source-phase-transports-source-v1/command.json.gz",
+      "bytes": 283,
+      "sha256": "61402438ae96e92e01d3aa5a29caf626737d056e8f61e3c857aecf978967b6ad",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-source-v1/command.json"
+    },
+    {
+      "path": "issue772-source-phase-transports-source-v1/receipt.json.gz",
+      "bytes": 194,
+      "sha256": "8e9ef9cc8e832d6fb6656e03014d6f3b6b2c0cac7f2d79e3d56ff171304e4611",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-source-v1/receipt.json"
+    },
+    {
+      "path": "issue772-source-phase-transports-source-v1/resources.jsonl.gz",
+      "bytes": 192,
+      "sha256": "19cf9aa80dc340a2212785835e60b2ca6bb536912d11ee0b4e74e774807c32e9",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-source-v1/resources.jsonl"
+    },
+    {
+      "path": "issue772-source-phase-transports-source-v1/stdout.log.gz",
+      "bytes": 164,
+      "sha256": "446108873b76c43a3806f710ffd365fbe12985435d3d803d8ebeffd1cca1a408",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-source-v1/stdout.log.gz"
+    },
+    {
+      "path": "issue772-source-phase-transports-source-v1/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-source-v1/stderr.log.gz"
+    },
+    {
+      "path": "issue772-source-phase-transports-source-v1/temporary/complete-source-phase-transports-proposal.json.gz",
+      "bytes": 386876,
+      "sha256": "2179804397b563b2ea67367aefa605360673b7f82b5b0fe16c3d1a4a6284f3ee",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-source-v1/temporary/complete-source-phase-transports-proposal.json.gz"
+    },
+    {
+      "path": "issue772-source-phase-transports-source-v2/command.json.gz",
+      "bytes": 283,
+      "sha256": "61402438ae96e92e01d3aa5a29caf626737d056e8f61e3c857aecf978967b6ad",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-source-v2/command.json"
+    },
+    {
+      "path": "issue772-source-phase-transports-source-v2/receipt.json.gz",
+      "bytes": 192,
+      "sha256": "6bc474ca542fbddfd57598bf2e7d49264b2cce9d212036953cde1b350cfeba2f",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-source-v2/receipt.json"
+    },
+    {
+      "path": "issue772-source-phase-transports-source-v2/resources.jsonl.gz",
+      "bytes": 200,
+      "sha256": "b5f860fab32c6e248b062b3a70766ec0c8c55a6d30e6a1576e3098544d8bdb1d",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-source-v2/resources.jsonl"
+    },
+    {
+      "path": "issue772-source-phase-transports-source-v2/stdout.log.gz",
+      "bytes": 164,
+      "sha256": "446108873b76c43a3806f710ffd365fbe12985435d3d803d8ebeffd1cca1a408",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-source-v2/stdout.log.gz"
+    },
+    {
+      "path": "issue772-source-phase-transports-source-v2/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-source-v2/stderr.log.gz"
+    },
+    {
+      "path": "issue772-source-phase-transports-source-v2/temporary/complete-source-phase-transports-proposal.json.gz",
+      "bytes": 386711,
+      "sha256": "dab378462b02e04955820e5c0578e474ab9ad2e3371181967a60c814fc7d5d9b",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-source-v2/temporary/complete-source-phase-transports-proposal.json.gz"
+    },
+    {
+      "path": "issue772-source-phase-transports-review-v1/command.json.gz",
+      "bytes": 283,
+      "sha256": "1d82f9d6c46a1385fa10fada6e42203b3f09eddd28336ccbe773d41c1dd29bb8",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-review-v1/command.json"
+    },
+    {
+      "path": "issue772-source-phase-transports-review-v1/receipt.json.gz",
+      "bytes": 193,
+      "sha256": "872947ca16a396d24b2234a19a2718b19473601a75fe948674a854b684a0f0e5",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-review-v1/receipt.json"
+    },
+    {
+      "path": "issue772-source-phase-transports-review-v1/resources.jsonl.gz",
+      "bytes": 133,
+      "sha256": "9603cb21e9046a9e8f256c251345a81991135c496e3109f72198dd4d9afa11bf",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-review-v1/resources.jsonl"
+    },
+    {
+      "path": "issue772-source-phase-transports-review-v1/stdout.log.gz",
+      "bytes": 167,
+      "sha256": "31ff7af91b1431ad26229ec62a8ffa7234a50e1898092a98e82b4ccf8f57f66a",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-review-v1/stdout.log.gz"
+    },
+    {
+      "path": "issue772-source-phase-transports-review-v1/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-review-v1/stderr.log.gz"
+    },
+    {
+      "path": "issue772-source-phase-transports-review-v2/command.json.gz",
+      "bytes": 283,
+      "sha256": "b9fee99c67f010ba65f94a40f3ccca4e1a39555cf926201de7ee9b2b09182d27",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-review-v2/command.json"
+    },
+    {
+      "path": "issue772-source-phase-transports-review-v2/receipt.json.gz",
+      "bytes": 193,
+      "sha256": "cecde3105b62423330bd69df11dcfe4e4c268b268348cd71fcfd23c63575fb9d",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-review-v2/receipt.json"
+    },
+    {
+      "path": "issue772-source-phase-transports-review-v2/resources.jsonl.gz",
+      "bytes": 131,
+      "sha256": "5a2b0f59392c61433f626b81e50c712282031a396f42b84d1b24e11d82f508c6",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-review-v2/resources.jsonl"
+    },
+    {
+      "path": "issue772-source-phase-transports-review-v2/stdout.log.gz",
+      "bytes": 167,
+      "sha256": "31ff7af91b1431ad26229ec62a8ffa7234a50e1898092a98e82b4ccf8f57f66a",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-review-v2/stdout.log.gz"
+    },
+    {
+      "path": "issue772-source-phase-transports-review-v2/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-review-v2/stderr.log.gz"
+    },
+    {
+      "path": "issue772-invocation-cst-provider-regeneration-v1/command.json.gz",
+      "bytes": 279,
+      "sha256": "e962c5bdcb774da163533a18e6e75ba6c34299cf17f940f86cfe996d4ebbfd45",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-provider-regeneration-v1/command.json"
+    },
+    {
+      "path": "issue772-invocation-cst-provider-regeneration-v1/receipt.json.gz",
+      "bytes": 192,
+      "sha256": "ee9a302a766a5f474a3b099787462e7cbec1cfda5275563565060769c9e470c9",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-provider-regeneration-v1/receipt.json"
+    },
+    {
+      "path": "issue772-invocation-cst-provider-regeneration-v1/resources.jsonl.gz",
+      "bytes": 597,
+      "sha256": "2b745c51dbfccfd123d3c52b004bd64dcd35cd23f02281c9c3a26f92b7b80f9b",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-provider-regeneration-v1/resources.jsonl"
+    },
+    {
+      "path": "issue772-invocation-cst-provider-regeneration-v1/stdout.log.gz",
+      "bytes": 214,
+      "sha256": "64a989b16505a3d4d6dc248290c4043dd55469a8e2b9443b7d6f6861d43b08e7",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-provider-regeneration-v1/stdout.log.gz"
+    },
+    {
+      "path": "issue772-invocation-cst-provider-regeneration-v1/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-provider-regeneration-v1/stderr.log.gz"
+    },
+    {
+      "path": "issue772-invocation-cst-provider-regeneration-v1/temporary/complete-current-provider-proposal.json.gz",
+      "bytes": 911058,
+      "sha256": "0fde62066da352de28c917a62c6ca60b02c706965cf3cdc4d600a704ffa3bd77",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-provider-regeneration-v1/temporary/complete-current-provider-proposal.json.gz"
+    },
+    {
+      "path": "issue772-invocation-cst-provider-regeneration-v2/command.json.gz",
+      "bytes": 279,
+      "sha256": "e962c5bdcb774da163533a18e6e75ba6c34299cf17f940f86cfe996d4ebbfd45",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-provider-regeneration-v2/command.json"
+    },
+    {
+      "path": "issue772-invocation-cst-provider-regeneration-v2/receipt.json.gz",
+      "bytes": 193,
+      "sha256": "99c462ee228e0cd9a10c42dda53fbce036f670786f5274590acd3bd095bdb5c0",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-provider-regeneration-v2/receipt.json"
+    },
+    {
+      "path": "issue772-invocation-cst-provider-regeneration-v2/resources.jsonl.gz",
+      "bytes": 844,
+      "sha256": "c365dacc75fb19b261913864c22745648a8b7e7477dbcda8773fe433b9fbfab4",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-provider-regeneration-v2/resources.jsonl"
+    },
+    {
+      "path": "issue772-invocation-cst-provider-regeneration-v2/stdout.log.gz",
+      "bytes": 214,
+      "sha256": "64a989b16505a3d4d6dc248290c4043dd55469a8e2b9443b7d6f6861d43b08e7",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-provider-regeneration-v2/stdout.log.gz"
+    },
+    {
+      "path": "issue772-invocation-cst-provider-regeneration-v2/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-provider-regeneration-v2/stderr.log.gz"
+    },
+    {
+      "path": "issue772-invocation-cst-provider-regeneration-v2/temporary/complete-current-provider-proposal.json.gz",
+      "bytes": 922319,
+      "sha256": "e5f20773a5a6a1d8a4409fc6d427f9ec1bbe1a2f3a77db69b1b2c754d1d943e7",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-provider-regeneration-v2/temporary/complete-current-provider-proposal.json.gz"
+    },
+    {
+      "path": "issue772-invocation-cst-provider-regeneration-v3/command.json.gz",
+      "bytes": 279,
+      "sha256": "e962c5bdcb774da163533a18e6e75ba6c34299cf17f940f86cfe996d4ebbfd45",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-provider-regeneration-v3/command.json"
+    },
+    {
+      "path": "issue772-invocation-cst-provider-regeneration-v3/receipt.json.gz",
+      "bytes": 179,
+      "sha256": "9ac5dab72f9bb400ed7695f7b0c0b9b74e0c5901485bf76944272374f0bfe02e",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-provider-regeneration-v3/receipt.json"
+    },
+    {
+      "path": "issue772-invocation-cst-provider-regeneration-v3/resources.jsonl.gz",
+      "bytes": 97,
+      "sha256": "6745e264e196ba65769b36193659324f7c4af48aa48f3bb6f1e7a7f07f17347b",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-provider-regeneration-v3/resources.jsonl"
+    },
+    {
+      "path": "issue772-invocation-cst-provider-regeneration-v3/stdout.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-provider-regeneration-v3/stdout.log.gz"
+    },
+    {
+      "path": "issue772-invocation-cst-provider-regeneration-v3/stderr.log.gz",
+      "bytes": 580,
+      "sha256": "56ddd4d44ccc8e91679ac1cf4433af36501299a316aa05b4020d765a466b5068",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-provider-regeneration-v3/stderr.log.gz"
+    },
+    {
+      "path": "issue772-invocation-cst-provider-regeneration-v4/command.json.gz",
+      "bytes": 279,
+      "sha256": "e962c5bdcb774da163533a18e6e75ba6c34299cf17f940f86cfe996d4ebbfd45",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-provider-regeneration-v4/command.json"
+    },
+    {
+      "path": "issue772-invocation-cst-provider-regeneration-v4/receipt.json.gz",
+      "bytes": 192,
+      "sha256": "3194d3454759c026673676b556a341ddeba687de2871a5ed6a20dee797e24669",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-provider-regeneration-v4/receipt.json"
+    },
+    {
+      "path": "issue772-invocation-cst-provider-regeneration-v4/resources.jsonl.gz",
+      "bytes": 537,
+      "sha256": "3c9f99393b4fc256f5991521737b0a5541d08be95123c1cda1d903adc30a007c",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-provider-regeneration-v4/resources.jsonl"
+    },
+    {
+      "path": "issue772-invocation-cst-provider-regeneration-v4/stdout.log.gz",
+      "bytes": 214,
+      "sha256": "64a989b16505a3d4d6dc248290c4043dd55469a8e2b9443b7d6f6861d43b08e7",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-provider-regeneration-v4/stdout.log.gz"
+    },
+    {
+      "path": "issue772-invocation-cst-provider-regeneration-v4/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-provider-regeneration-v4/stderr.log.gz"
+    },
+    {
+      "path": "issue772-invocation-cst-provider-regeneration-v4/temporary/complete-current-provider-proposal.json.gz",
+      "bytes": 928295,
+      "sha256": "2bb1b7831447526ff76fd72b3aa409005760a9aad1d20cc6979c0cd90af31a55",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-provider-regeneration-v4/temporary/complete-current-provider-proposal.json.gz"
+    },
+    {
+      "path": "issue772-invocation-cst-reuse-whole-Node-v1/command.json.gz",
+      "bytes": 355,
+      "sha256": "a08ff02059a4b79e03f1b197f15340767fc1d5ad0ddec81e8e97957f3d2bc4a4",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-reuse-whole-Node-v1/command.json"
+    },
+    {
+      "path": "issue772-invocation-cst-reuse-whole-Node-v1/receipt.json.gz",
+      "bytes": 179,
+      "sha256": "4525ce75d01b709b05363c973974ddde5312c14f26aa1d5e99c5f8f40ec4efbc",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-reuse-whole-Node-v1/receipt.json"
+    },
+    {
+      "path": "issue772-invocation-cst-reuse-whole-Node-v1/resources.jsonl.gz",
+      "bytes": 20688,
+      "sha256": "282d24740634a47df18744ebd601476837bafe074401445920f81b638023a015",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-reuse-whole-Node-v1/resources.jsonl"
+    },
+    {
+      "path": "issue772-invocation-cst-reuse-whole-Node-v1/stdout.log.gz",
+      "bytes": 2164,
+      "sha256": "03f7d4e6e15ce025f4c7c1d6f32ef66c3222f6e12820cca5d30606e7d1bd239a",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-reuse-whole-Node-v1/stdout.log.gz"
+    },
+    {
+      "path": "issue772-invocation-cst-reuse-whole-Node-v1/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-reuse-whole-Node-v1/stderr.log.gz"
+    },
+    {
+      "path": "issue772-invocation-cst-reuse-whole-Node-v1/temporary/complete-Node-deadlines/case-deadlines.json.gz",
+      "bytes": 11390,
+      "sha256": "04019538dd02c10e1b8c2c33d4f4fe60783aaa4c493a9ece16029895b4400dca",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-reuse-whole-Node-v1/temporary/complete-Node-deadlines/case-deadlines.json"
+    },
+    {
+      "path": "issue772-invocation-cst-reuse-whole-Node-v1/temporary/complete-Node-deadlines/command.json.gz",
+      "bytes": 18941,
+      "sha256": "e55397801e6f97b137157b71454ec7ca415e72caddb5b6f154dd90cd53115cbd",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-reuse-whole-Node-v1/temporary/complete-Node-deadlines/command.json"
+    },
+    {
+      "path": "issue772-invocation-cst-reuse-whole-Node-v1/temporary/complete-Node-deadlines/request.json.gz",
+      "bytes": 334,
+      "sha256": "6771374bfb6f060b50bbc6fb1822aa3fcd50fd236fcf9bec96ca0e7285f28a39",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-reuse-whole-Node-v1/temporary/complete-Node-deadlines/request.json"
+    },
+    {
+      "path": "issue772-invocation-cst-reuse-whole-Node-v1/temporary/complete-Node-deadlines/stderr.raw.log.gz",
+      "bytes": 20,
+      "sha256": "abfbb86f9f5ddfbd9fc1a72c43ab384702ce8bae86b60f3324748485e235e61e",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-reuse-whole-Node-v1/temporary/complete-Node-deadlines/stderr.raw.log"
+    },
+    {
+      "path": "issue772-invocation-cst-reuse-whole-Node-v1/temporary/complete-Node-deadlines/stdout.raw.tap.gz",
+      "bytes": 1580,
+      "sha256": "f495279c7bdbe860d611d8ee8f03ce515dc98ac5eb23abf974fbdcb30a8fc4a1",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-reuse-whole-Node-v1/temporary/complete-Node-deadlines/stdout.raw.tap"
+    },
+    {
+      "path": "issue772-invocation-cst-and-native-batch-whole-Node-v2/command.json.gz",
+      "bytes": 369,
+      "sha256": "71da30e1f4afea5b10b2cf4a28600a0e3944c3e069900a78c06d239799d9ae96",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-and-native-batch-whole-Node-v2/command.json"
+    },
+    {
+      "path": "issue772-invocation-cst-and-native-batch-whole-Node-v2/receipt.json.gz",
+      "bytes": 178,
+      "sha256": "9ba66e487028e5c528bc3dc3a49f75994c0076ee957a08aeef2c6d962048c4d4",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-and-native-batch-whole-Node-v2/receipt.json"
+    },
+    {
+      "path": "issue772-invocation-cst-and-native-batch-whole-Node-v2/resources.jsonl.gz",
+      "bytes": 18269,
+      "sha256": "ff9f4b0dfdd22258c8a0ccea3bffa8846741b077984d0f542080ee7cd275e376",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-and-native-batch-whole-Node-v2/resources.jsonl"
+    },
+    {
+      "path": "issue772-invocation-cst-and-native-batch-whole-Node-v2/stdout.log.gz",
+      "bytes": 2270,
+      "sha256": "30264ef3ac949d2dae4b82b630bebe797c1ab377cdee58dcf489bb2b8c16c118",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-and-native-batch-whole-Node-v2/stdout.log.gz"
+    },
+    {
+      "path": "issue772-invocation-cst-and-native-batch-whole-Node-v2/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-and-native-batch-whole-Node-v2/stderr.log.gz"
+    },
+    {
+      "path": "issue772-invocation-cst-and-native-batch-whole-Node-v2/temporary/complete-Node-deadlines/case-deadlines.json.gz",
+      "bytes": 12450,
+      "sha256": "51dd164a5c646a07f1468728df97c1035670de76440fd8aa7f251e31cb758f8f",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-and-native-batch-whole-Node-v2/temporary/complete-Node-deadlines/case-deadlines.json"
+    },
+    {
+      "path": "issue772-invocation-cst-and-native-batch-whole-Node-v2/temporary/complete-Node-deadlines/command.json.gz",
+      "bytes": 19741,
+      "sha256": "91be665aac45e6c7712b703200616e3b5bbe41bc0cf004afadd2d213473f3b6e",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-and-native-batch-whole-Node-v2/temporary/complete-Node-deadlines/command.json"
+    },
+    {
+      "path": "issue772-invocation-cst-and-native-batch-whole-Node-v2/temporary/complete-Node-deadlines/request.json.gz",
+      "bytes": 358,
+      "sha256": "337f43bc94a4fbb00b10e2ac6dc3c0405ac2a1df4efa601f8e00b22c48c840ac",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-and-native-batch-whole-Node-v2/temporary/complete-Node-deadlines/request.json"
+    },
+    {
+      "path": "issue772-invocation-cst-and-native-batch-whole-Node-v2/temporary/complete-Node-deadlines/stderr.raw.log.gz",
+      "bytes": 20,
+      "sha256": "abfbb86f9f5ddfbd9fc1a72c43ab384702ce8bae86b60f3324748485e235e61e",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-and-native-batch-whole-Node-v2/temporary/complete-Node-deadlines/stderr.raw.log"
+    },
+    {
+      "path": "issue772-invocation-cst-and-native-batch-whole-Node-v2/temporary/complete-Node-deadlines/stdout.raw.tap.gz",
+      "bytes": 1745,
+      "sha256": "602cdfa7041ede47aca1a79650e39730cbd0ac0256ddc43f0dae70dcf68ca68b",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-and-native-batch-whole-Node-v2/temporary/complete-Node-deadlines/stdout.raw.tap"
+    },
+    {
+      "path": "issue772-invocation-phase-and-native-batch-whole-Node-v3/command.json.gz",
+      "bytes": 369,
+      "sha256": "71da30e1f4afea5b10b2cf4a28600a0e3944c3e069900a78c06d239799d9ae96",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-phase-and-native-batch-whole-Node-v3/command.json"
+    },
+    {
+      "path": "issue772-invocation-phase-and-native-batch-whole-Node-v3/receipt.json.gz",
+      "bytes": 180,
+      "sha256": "1cca424d7c8fa7dd0149c91b8daeb5e1dac7cdc66d384e00a1fbbc73d77f4960",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-phase-and-native-batch-whole-Node-v3/receipt.json"
+    },
+    {
+      "path": "issue772-invocation-phase-and-native-batch-whole-Node-v3/resources.jsonl.gz",
+      "bytes": 17791,
+      "sha256": "35f181be129cc593b68eda4276ffa29f70b53427212f1cf429fa3276a736fd4f",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-phase-and-native-batch-whole-Node-v3/resources.jsonl"
+    },
+    {
+      "path": "issue772-invocation-phase-and-native-batch-whole-Node-v3/stdout.log.gz",
+      "bytes": 2334,
+      "sha256": "1fda7349cbf0023787021c36473b974f01dec67fa01dd792b259a7044c6538fd",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-phase-and-native-batch-whole-Node-v3/stdout.log.gz"
+    },
+    {
+      "path": "issue772-invocation-phase-and-native-batch-whole-Node-v3/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-phase-and-native-batch-whole-Node-v3/stderr.log.gz"
+    },
+    {
+      "path": "issue772-invocation-phase-and-native-batch-whole-Node-v3/temporary/complete-Node-deadlines/case-deadlines.json.gz",
+      "bytes": 12593,
+      "sha256": "96fd8e589ef6a80f02ea35ebc485780da1d0572f1d6a77362aabd3f0741cd529",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-phase-and-native-batch-whole-Node-v3/temporary/complete-Node-deadlines/case-deadlines.json"
+    },
+    {
+      "path": "issue772-invocation-phase-and-native-batch-whole-Node-v3/temporary/complete-Node-deadlines/command.json.gz",
+      "bytes": 19833,
+      "sha256": "390eed7599952abe720e3009118e3dd283743bbe45f5a95fa42e15e9a7bd88d4",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-phase-and-native-batch-whole-Node-v3/temporary/complete-Node-deadlines/command.json"
+    },
+    {
+      "path": "issue772-invocation-phase-and-native-batch-whole-Node-v3/temporary/complete-Node-deadlines/request.json.gz",
+      "bytes": 362,
+      "sha256": "695ce2db82fdce65b1a01d79b2eb4a3f8b818d06849db707e8f28910869ec115",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-phase-and-native-batch-whole-Node-v3/temporary/complete-Node-deadlines/request.json"
+    },
+    {
+      "path": "issue772-invocation-phase-and-native-batch-whole-Node-v3/temporary/complete-Node-deadlines/stderr.raw.log.gz",
+      "bytes": 20,
+      "sha256": "abfbb86f9f5ddfbd9fc1a72c43ab384702ce8bae86b60f3324748485e235e61e",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-phase-and-native-batch-whole-Node-v3/temporary/complete-Node-deadlines/stderr.raw.log"
+    },
+    {
+      "path": "issue772-invocation-phase-and-native-batch-whole-Node-v3/temporary/complete-Node-deadlines/stdout.raw.tap.gz",
+      "bytes": 1796,
+      "sha256": "899860db4f30d893adc0f92a38208343b9e9702be7bba23abe47c8625bb7997b",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-phase-and-native-batch-whole-Node-v3/temporary/complete-Node-deadlines/stdout.raw.tap"
+    },
+    {
+      "path": "issue772-invocation-phase-and-native-batch-whole-Bun-v3/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-phase-and-native-batch-whole-Bun-v3/stderr.log.gz"
+    },
+    {
+      "path": "issue772-invocation-phase-and-native-batch-whole-Bun-v3/stdout.log.gz",
+      "bytes": 218,
+      "sha256": "516a4c9eaced494d09133d9391a506b28c8f16a64e39690ee49519c15d866932",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-phase-and-native-batch-whole-Bun-v3/stdout.log.gz"
+    },
+    {
+      "path": "issue772-invocation-phase-and-native-batch-whole-Bun-v3/command.json.gz",
+      "bytes": 446,
+      "sha256": "0b94d5dce5846aa1e18057b8960e8c4b53c089aecf88d4e2d22456e2133e2f9b",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-phase-and-native-batch-whole-Bun-v3/command.json"
+    },
+    {
+      "path": "issue772-invocation-phase-and-native-batch-whole-Bun-v3/resources.jsonl.gz",
+      "bytes": 13738,
+      "sha256": "33d3ac5374397d557fae651a6762ce4c3443ea84eed2e4e5b9d38062aab2e3f4",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-phase-and-native-batch-whole-Bun-v3/resources.jsonl"
+    },
+    {
+      "path": "issue772-invocation-phase-and-native-batch-whole-Bun-v3/receipt.json.gz",
+      "bytes": 193,
+      "sha256": "719f0bec100337ffcfb8ffbcca0e0acaaef9ee130e110841ad6cedc5cf22fc2a",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-phase-and-native-batch-whole-Bun-v3/receipt.json"
+    },
+    {
+      "path": "issue772-invocation-phase-and-native-batch-whole-Bun-v3/temporary/complete-focused-Bun-source-call-joins/receipt.json.gz",
+      "bytes": 359,
+      "sha256": "2f21f2596c9eafbab23cd1ab1af73fbcbc4739faf7c72eae7ad6c304c6c6e2de",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-phase-and-native-batch-whole-Bun-v3/temporary/complete-focused-Bun-source-call-joins/receipt.json"
+    },
+    {
+      "path": "issue772-invocation-phase-and-native-batch-whole-Bun-v3/temporary/complete-focused-Bun-source-call-joins/0/request.json.gz",
+      "bytes": 326,
+      "sha256": "ea205be314b23e4ca2201247d8906fc2aaa3f660814029a0b8e79455f0ad00bd",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-phase-and-native-batch-whole-Bun-v3/temporary/complete-focused-Bun-source-call-joins/0/request.json"
+    },
+    {
+      "path": "issue772-invocation-phase-and-native-batch-whole-Bun-v3/temporary/complete-focused-Bun-source-call-joins/0/stderr.raw.log.gz",
+      "bytes": 363,
+      "sha256": "b75fe70175517ae005b496edf1f46bbbb201558916092bd30ccb4219b046ae84",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-phase-and-native-batch-whole-Bun-v3/temporary/complete-focused-Bun-source-call-joins/0/stderr.raw.log"
+    },
+    {
+      "path": "issue772-invocation-phase-and-native-batch-whole-Bun-v3/temporary/complete-focused-Bun-source-call-joins/1/request.json.gz",
+      "bytes": 330,
+      "sha256": "922f9159b30f72eae531a17d2cf6f89454e11bc3c7f0ce7792291aa28cf842ff",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-phase-and-native-batch-whole-Bun-v3/temporary/complete-focused-Bun-source-call-joins/1/request.json"
+    },
+    {
+      "path": "issue772-invocation-phase-and-native-batch-whole-Bun-v3/temporary/complete-focused-Bun-source-call-joins/1/stderr.raw.log.gz",
+      "bytes": 306,
+      "sha256": "4a2aa65407812a82b9a3fe9729f5c4f887ba49c0e729a6dc7e747076983b92a9",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-phase-and-native-batch-whole-Bun-v3/temporary/complete-focused-Bun-source-call-joins/1/stderr.raw.log"
+    },
+    {
+      "path": "issue772-invocation-phase-and-native-batch-whole-Bun-v3/temporary/complete-focused-Bun-source-call-joins/4/request.json.gz",
+      "bytes": 338,
+      "sha256": "6e0d8d0b9b4abca7bdd63b36b021fd5d08a0b556c3e2cd7b3ce941ebfa45e8bd",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-phase-and-native-batch-whole-Bun-v3/temporary/complete-focused-Bun-source-call-joins/4/request.json"
+    },
+    {
+      "path": "issue772-invocation-phase-and-native-batch-whole-Bun-v3/temporary/complete-focused-Bun-source-call-joins/4/stderr.raw.log.gz",
+      "bytes": 579,
+      "sha256": "87118ae79978b677c949b83b893b5776a1a918c3e7e5cbe1d56bd5b5dbf72895",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-phase-and-native-batch-whole-Bun-v3/temporary/complete-focused-Bun-source-call-joins/4/stderr.raw.log"
+    },
+    {
+      "path": "issue772-invocation-phase-and-native-batch-whole-Bun-v3/temporary/complete-focused-Bun-source-call-joins/3/request.json.gz",
+      "bytes": 338,
+      "sha256": "ebb9cb7d7d8533be7c5d49af903ca0bcc738216aaba34d2b1224ce8188e5bf13",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-phase-and-native-batch-whole-Bun-v3/temporary/complete-focused-Bun-source-call-joins/3/request.json"
+    },
+    {
+      "path": "issue772-invocation-phase-and-native-batch-whole-Bun-v3/temporary/complete-focused-Bun-source-call-joins/3/stderr.raw.log.gz",
+      "bytes": 425,
+      "sha256": "fac5e50702dee16c37f7d601a3aa0aa13b5a4383f5e84ac6f36dfb4809e52983",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-phase-and-native-batch-whole-Bun-v3/temporary/complete-focused-Bun-source-call-joins/3/stderr.raw.log"
+    },
+    {
+      "path": "issue772-invocation-phase-and-native-batch-whole-Bun-v3/temporary/complete-focused-Bun-source-call-joins/2/request.json.gz",
+      "bytes": 342,
+      "sha256": "149232a18cf4aced243ab01387d402b3992d02a12ba35e5803a631dec4e1adbb",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-phase-and-native-batch-whole-Bun-v3/temporary/complete-focused-Bun-source-call-joins/2/request.json"
+    },
+    {
+      "path": "issue772-invocation-phase-and-native-batch-whole-Bun-v3/temporary/complete-focused-Bun-source-call-joins/2/stderr.raw.log.gz",
+      "bytes": 561,
+      "sha256": "027ae4fee78bb096eb41231bbb25ed2267675e204187c92b9d4dc86eec828214",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-phase-and-native-batch-whole-Bun-v3/temporary/complete-focused-Bun-source-call-joins/2/stderr.raw.log"
+    },
+    {
+      "path": "issue772-source-phase-transports-source-v3/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-source-v3/stderr.log.gz"
+    },
+    {
+      "path": "issue772-source-phase-transports-source-v3/stdout.log.gz",
+      "bytes": 164,
+      "sha256": "446108873b76c43a3806f710ffd365fbe12985435d3d803d8ebeffd1cca1a408",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-source-v3/stdout.log.gz"
+    },
+    {
+      "path": "issue772-source-phase-transports-source-v3/command.json.gz",
+      "bytes": 283,
+      "sha256": "61402438ae96e92e01d3aa5a29caf626737d056e8f61e3c857aecf978967b6ad",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-source-v3/command.json"
+    },
+    {
+      "path": "issue772-source-phase-transports-source-v3/resources.jsonl.gz",
+      "bytes": 164,
+      "sha256": "6806db094360a7289ea48d0d5a173fddc98af47d904e9a3e5a879fcf70cd00ed",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-source-v3/resources.jsonl"
+    },
+    {
+      "path": "issue772-source-phase-transports-source-v3/receipt.json.gz",
+      "bytes": 193,
+      "sha256": "81f79be7dc1873dd61fc89b6bc62323b29ddd05f44c9daa5607175e059d5fd61",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-source-v3/receipt.json"
+    },
+    {
+      "path": "issue772-source-phase-transports-source-v3/temporary/complete-source-phase-transports-proposal.json.gz",
+      "bytes": 386628,
+      "sha256": "f3eecc7bef59a3e37bc325eaa81ab978641483fda7a2fc1af7d4a29d2522b667",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-source-v3/temporary/complete-source-phase-transports-proposal.json.gz"
+    },
+    {
+      "path": "issue772-source-phase-transports-review-v3/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-review-v3/stderr.log.gz"
+    },
+    {
+      "path": "issue772-source-phase-transports-review-v3/stdout.log.gz",
+      "bytes": 167,
+      "sha256": "31ff7af91b1431ad26229ec62a8ffa7234a50e1898092a98e82b4ccf8f57f66a",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-review-v3/stdout.log.gz"
+    },
+    {
+      "path": "issue772-source-phase-transports-review-v3/command.json.gz",
+      "bytes": 283,
+      "sha256": "1a95ab833f19389b4a7862a56f3dea4197b14220e1fd1cf36f72839e0fbf2240",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-review-v3/command.json"
+    },
+    {
+      "path": "issue772-source-phase-transports-review-v3/resources.jsonl.gz",
+      "bytes": 174,
+      "sha256": "d69eed6d55a555f17b375253b6079a3f6ec8644d5cfbcfa3a4912280272a03d2",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-review-v3/resources.jsonl"
+    },
+    {
+      "path": "issue772-source-phase-transports-review-v3/receipt.json.gz",
+      "bytes": 192,
+      "sha256": "722f496b8c322d168084d6f18236baf4c7586e67ee9745377231a1e8d54151ea",
+      "originalPath": "/private/tmp/router-layout-check-issue772-source-phase-transports-review-v3/receipt.json"
+    },
+    {
+      "path": "issue772-invocation-cst-provider-regeneration-v5/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-provider-regeneration-v5/stderr.log.gz"
+    },
+    {
+      "path": "issue772-invocation-cst-provider-regeneration-v5/stdout.log.gz",
+      "bytes": 214,
+      "sha256": "64a989b16505a3d4d6dc248290c4043dd55469a8e2b9443b7d6f6861d43b08e7",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-provider-regeneration-v5/stdout.log.gz"
+    },
+    {
+      "path": "issue772-invocation-cst-provider-regeneration-v5/command.json.gz",
+      "bytes": 279,
+      "sha256": "e962c5bdcb774da163533a18e6e75ba6c34299cf17f940f86cfe996d4ebbfd45",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-provider-regeneration-v5/command.json"
+    },
+    {
+      "path": "issue772-invocation-cst-provider-regeneration-v5/resources.jsonl.gz",
+      "bytes": 703,
+      "sha256": "61c272cff71d7dfc3475124a0f1a3809fdbd11c7a73de0fc338cc5010b580f4c",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-provider-regeneration-v5/resources.jsonl"
+    },
+    {
+      "path": "issue772-invocation-cst-provider-regeneration-v5/receipt.json.gz",
+      "bytes": 191,
+      "sha256": "b5f6286b644e5a89b0e15cae4fb9ec18de03edfba932f2ed627afe0ef9a5e948",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-provider-regeneration-v5/receipt.json"
+    },
+    {
+      "path": "issue772-invocation-cst-provider-regeneration-v5/temporary/complete-current-provider-proposal.json.gz",
+      "bytes": 927897,
+      "sha256": "96dda988befa2f6936f1bf42b849a9ec15c52198fff6b488fa4083657281c069",
+      "originalPath": "/private/tmp/router-layout-check-issue772-invocation-cst-provider-regeneration-v5/temporary/complete-current-provider-proposal.json.gz"
+    },
+    {
+      "path": "issue772-final-invocation-source-controls-whole-Node-v1/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-final-invocation-source-controls-whole-Node-v1/stderr.log.gz"
+    },
+    {
+      "path": "issue772-final-invocation-source-controls-whole-Node-v1/stdout.log.gz",
+      "bytes": 802,
+      "sha256": "d89b80b19a4e2458a6a57280a6a1bbb6e7a4312d40146735685bd8e42b373114",
+      "originalPath": "/private/tmp/router-layout-check-issue772-final-invocation-source-controls-whole-Node-v1/stdout.log.gz"
+    },
+    {
+      "path": "issue772-final-invocation-source-controls-whole-Node-v1/command.json.gz",
+      "bytes": 314,
+      "sha256": "0018be56180bba8f226ebee7f9b5c3ca636956d5f6988a4c2df37596f35a5334",
+      "originalPath": "/private/tmp/router-layout-check-issue772-final-invocation-source-controls-whole-Node-v1/command.json"
+    },
+    {
+      "path": "issue772-final-invocation-source-controls-whole-Node-v1/resources.jsonl.gz",
+      "bytes": 1137,
+      "sha256": "b92af51dc4c9f7ea08ad21cb53a3664e00138b207ccf34f4e09326d4682d632f",
+      "originalPath": "/private/tmp/router-layout-check-issue772-final-invocation-source-controls-whole-Node-v1/resources.jsonl"
+    },
+    {
+      "path": "issue772-final-invocation-source-controls-whole-Node-v1/receipt.json.gz",
+      "bytes": 192,
+      "sha256": "702b5730e24e6d0e598b85c5179e59efaae5711df10d202b452af4c76b496563",
+      "originalPath": "/private/tmp/router-layout-check-issue772-final-invocation-source-controls-whole-Node-v1/receipt.json"
+    },
+    {
+      "path": "issue772-final-invocation-source-controls-whole-Node-v1/temporary/complete-Node-deadlines/request.json.gz",
+      "bytes": 307,
+      "sha256": "f4c6615a69f6d8da779ebb93d82fa1a05fdc5876dec6029dfec62131dc6e873e",
+      "originalPath": "/private/tmp/router-layout-check-issue772-final-invocation-source-controls-whole-Node-v1/temporary/complete-Node-deadlines/request.json"
+    },
+    {
+      "path": "issue772-final-invocation-source-controls-whole-Node-v1/temporary/complete-Node-deadlines/stderr.raw.log.gz",
+      "bytes": 20,
+      "sha256": "abfbb86f9f5ddfbd9fc1a72c43ab384702ce8bae86b60f3324748485e235e61e",
+      "originalPath": "/private/tmp/router-layout-check-issue772-final-invocation-source-controls-whole-Node-v1/temporary/complete-Node-deadlines/stderr.raw.log"
+    },
+    {
+      "path": "issue772-final-invocation-source-controls-whole-Node-v1/temporary/complete-Node-deadlines/case-deadlines.json.gz",
+      "bytes": 3807,
+      "sha256": "eb9ee60dc7b0604eb78171163b38c627ada851e7d5b54c66e473b0b53f90bffe",
+      "originalPath": "/private/tmp/router-layout-check-issue772-final-invocation-source-controls-whole-Node-v1/temporary/complete-Node-deadlines/case-deadlines.json"
+    },
+    {
+      "path": "issue772-final-invocation-source-controls-whole-Node-v1/temporary/complete-Node-deadlines/command.json.gz",
+      "bytes": 12832,
+      "sha256": "1801a15a6aedd9143918f57dd827a87c58631198958a1eadf65cc8f01c538ffb",
+      "originalPath": "/private/tmp/router-layout-check-issue772-final-invocation-source-controls-whole-Node-v1/temporary/complete-Node-deadlines/command.json"
+    },
+    {
+      "path": "issue772-final-invocation-source-controls-whole-Node-v1/temporary/complete-Node-deadlines/stdout.raw.tap.gz",
+      "bytes": 607,
+      "sha256": "e85ed4ce81b8e4c98a8f75cd24310ff69cde1cb841bf7de44120451dd7e3aed6",
+      "originalPath": "/private/tmp/router-layout-check-issue772-final-invocation-source-controls-whole-Node-v1/temporary/complete-Node-deadlines/stdout.raw.tap"
+    },
+    {
+      "path": "issue772-final-invocation-source-controls-whole-Bun-v1/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-final-invocation-source-controls-whole-Bun-v1/stderr.log.gz"
+    },
+    {
+      "path": "issue772-final-invocation-source-controls-whole-Bun-v1/stdout.log.gz",
+      "bytes": 148,
+      "sha256": "8b5ba6cc6a70f53537c7ffcf8fe45128dc2a4cdc26e5ce560c7e6097277458dd",
+      "originalPath": "/private/tmp/router-layout-check-issue772-final-invocation-source-controls-whole-Bun-v1/stdout.log.gz"
+    },
+    {
+      "path": "issue772-final-invocation-source-controls-whole-Bun-v1/command.json.gz",
+      "bytes": 389,
+      "sha256": "c87fa731c6056bfae28fbccd1c23f735b6a0c7911eec70542b917d9a2ed7cae9",
+      "originalPath": "/private/tmp/router-layout-check-issue772-final-invocation-source-controls-whole-Bun-v1/command.json"
+    },
+    {
+      "path": "issue772-final-invocation-source-controls-whole-Bun-v1/resources.jsonl.gz",
+      "bytes": 1132,
+      "sha256": "5a86adc4a21ba912523effcb22babe62980f2a85fb707a2426c20801abb6eee0",
+      "originalPath": "/private/tmp/router-layout-check-issue772-final-invocation-source-controls-whole-Bun-v1/resources.jsonl"
+    },
+    {
+      "path": "issue772-final-invocation-source-controls-whole-Bun-v1/receipt.json.gz",
+      "bytes": 193,
+      "sha256": "e9563422dd738f4f79ebf843ac2dd632dd4e6f42db4a0bb3aeebf9b2394e5a95",
+      "originalPath": "/private/tmp/router-layout-check-issue772-final-invocation-source-controls-whole-Bun-v1/receipt.json"
+    },
+    {
+      "path": "issue772-final-invocation-source-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/receipt.json.gz",
+      "bytes": 281,
+      "sha256": "baadcff5ff58726ffc9e0c342aa4a3c21e3a5018419031d394337ed9d6324e61",
+      "originalPath": "/private/tmp/router-layout-check-issue772-final-invocation-source-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/receipt.json"
+    },
+    {
+      "path": "issue772-final-invocation-source-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/0/request.json.gz",
+      "bytes": 323,
+      "sha256": "82129e0419655b1bb7631b12fe7658ea618e51ee699a974eefd0351c627b3734",
+      "originalPath": "/private/tmp/router-layout-check-issue772-final-invocation-source-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/0/request.json"
+    },
+    {
+      "path": "issue772-final-invocation-source-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/0/stderr.raw.log.gz",
+      "bytes": 364,
+      "sha256": "b450fcfcd18015a36a6b6d09d5f3f063480ee857502701981e4ed9a345ed70a2",
+      "originalPath": "/private/tmp/router-layout-check-issue772-final-invocation-source-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/0/stderr.raw.log"
+    },
+    {
+      "path": "issue772-final-invocation-source-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/1/request.json.gz",
+      "bytes": 329,
+      "sha256": "7e9a55991d35a73b3eb5a277c793ed811556345e755d192a0035813e46d99ebb",
+      "originalPath": "/private/tmp/router-layout-check-issue772-final-invocation-source-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/1/request.json"
+    },
+    {
+      "path": "issue772-final-invocation-source-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/1/stderr.raw.log.gz",
+      "bytes": 306,
+      "sha256": "1119924687254488bf37cd0b485a1566526233b7d9a354a857a3d48cfa282740",
+      "originalPath": "/private/tmp/router-layout-check-issue772-final-invocation-source-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/1/stderr.raw.log"
+    }
+  ],
+  "completeCiCycleCollected": true,
+  "nodeLatestFunctionalCases": 25,
+  "nodeLatestDeadlineBreaches": 1,
+  "bunLatestPending": false,
+  "fullGenerationQualifiedForCurrentCompiler": false,
+  "runtimeParity": false,
+  "rustExecuted": false,
+  "bunLatestFunctionalCases": 25,
+  "bunLatestDeadlineBreaches": 0,
+  "finalTriviaSourceControls": {
+    "node": 7,
+    "bun": 7,
+    "allPassed": true
+  },
+  "wholeFileTimingComparisonsAreControlledBenchmarks": false
+}

@@ -12,6 +12,7 @@ use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
+#[cfg(test)]
 use base64::Engine as _;
 use link_assistant_router::deploy_config::{
     Merged, ResolvedDeploy, SshSettings, env_fingerprint, value_fingerprint,
@@ -24,7 +25,7 @@ pub const DEADLINE_EXIT: u8 = 12;
 pub const EVENT_PREFIX: &crate::translation_core::Str = "ROUTER_DEPLOY_EVENT ";
 
 fn encode(value: &crate::translation_core::Str) -> String {
-    base64::engine::general_purpose::STANDARD.encode(value)
+    crate::translation_core::base64_standard_encode_text(value)
 }
 
 /// Extra OpenSSH options, inserted before `--`. Empty without settings.
@@ -37,15 +38,15 @@ pub fn ssh_options(ssh: &SshSettings, known_hosts: crate::translation_core::Mayb
     if let Some(path) = known_hosts {
         // Pinned keys only: neither the user's nor the global file can vouch
         // for the host, and StrictHostKeyChecking=yes refuses anything else.
-        option(format!("UserKnownHostsFile={}", path.display()));
+        option(crate::translation_core::format!("UserKnownHostsFile={}", path.display()));
         option("GlobalKnownHostsFile=/dev/null".to_string());
     }
     if let Some(seconds) = ssh.keepalive_secs {
-        option(format!("ServerAliveInterval={seconds}"));
+        option(crate::translation_core::format!("ServerAliveInterval={seconds}"));
         option("ServerAliveCountMax=3".to_string());
     }
     if let Some(deadline) = ssh.deadline_secs {
-        option(format!("ConnectTimeout={}", deadline.clamp(1, 30)));
+        option(crate::translation_core::format!("ConnectTimeout={}", deadline.clamp(1, 30)));
     }
     if ssh.identity_file.is_some() {
         option("IdentitiesOnly=yes".to_string());
@@ -85,20 +86,20 @@ pub fn payload(
 ) -> crate::translation_core::Maybe<String> {
     let mut lines: Vec<String> = Vec::new();
     if let Some(instance) = &merged.instance {
-        lines.push(format!("instance {instance}"));
+        lines.push(crate::translation_core::format!("instance {instance}"));
     }
     if json {
         lines.push("json 1".to_string());
     }
     if let Some(values) = values {
         for (name, value) in &values.env {
-            lines.push(format!("env {name} {}", encode(value)));
+            lines.push(crate::translation_core::format!("env {name} {}", encode(value)));
         }
         if let Some(fingerprint) = env_fingerprint(token_secret, &values.env) {
-            lines.push(format!("env-fingerprint {fingerprint}"));
+            lines.push(crate::translation_core::format!("env-fingerprint {fingerprint}"));
         }
         for key in &values.provider_keys {
-            lines.push(format!(
+            lines.push(crate::translation_core::format!(
                 "key {} {} {} {}",
                 key.name,
                 key.mode.as_str(),
@@ -107,23 +108,23 @@ pub fn payload(
             ));
             if let Some(template) = &key.template {
                 let text = serde_json::to_string(template).unwrap_or_default();
-                lines.push(format!("template {} {}", key.name, encode(&text)));
+                lines.push(crate::translation_core::format!("template {} {}", key.name, encode(&text)));
             }
         }
         if let Some(profile) = &values.verification {
             let text = serde_json::to_string(profile).unwrap_or_default();
-            lines.push(format!("profile {}", encode(&text)));
+            lines.push(crate::translation_core::format!("profile {}", encode(&text)));
         }
         if values.tokens.is_limited() {
             lines.push("tokens 1".to_string());
             for argument in values.tokens.issue_arguments() {
-                lines.push(format!("token-arg {}", encode(&argument)));
+                lines.push(crate::translation_core::format!("token-arg {}", encode(&argument)));
             }
         }
     }
     for seed in seeds {
         // The document is a secret: it rides the payload on stdin, never argv.
-        lines.push(format!(
+        lines.push(crate::translation_core::format!(
             "seed {} {} {}",
             seed.provider.as_str(),
             encode(&seed.document),

@@ -1,3 +1,4 @@
+import {qualifyDefaultBytePrerequisites,qualifyDefaultByteSourceSuccessors,tryDefaultByteSourceEquation} from './default-byte-source-successors.mjs';
 // Explicit source proposal for the existing default issuers, not new issuers.
 import {readFileSync,writeFileSync,existsSync,lstatSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
@@ -43,8 +44,8 @@ function boundCall(ts,path,file,call,name){const declaration=one(functions(ts,fi
 function hashCalls(ts,path,source){const rows=[];function visit(node){if(ts.isCallExpression(node)&&ts.isPropertyAccessExpression(node.expression)&&['update','digest'].includes(node.expression.name.text))rows.push(node.getText());ts.forEachChild(node,visit);}visit(parse(ts,path,source));return rows;}
 const rule=(before,after,id)=>({id,edits:[{span:[0,before.length],expected:before,replacement:after}]});
 function equation(ts,root,path,before,language,after,nativeSelections){
- const sequence={languageRules:[rule(before,language,'javascript:retain-existing-issuer-and-compose-only-proof-DATA-bytes')],repositoryRules:[rule(language,after,'router:bind-existing-operation-byte-bridge-and-internal-scope')]},first=transportConcreteSyntaxSource(before,{language:'JavaScript'}),stages=[];let document=first.document;
- for(const phase of ['language','repository']){
+ const sequence={languageRules:[rule(before,language,'javascript:retain-existing-issuer-and-compose-only-proof-DATA-bytes')],repositoryRules:[rule(language,after,'router:bind-existing-operation-byte-bridge-and-internal-scope')]},currentEquation=tryDefaultByteSourceEquation(before,language,after,sequence),first=currentEquation?{meta:currentEquation.beforeMeta,document:null}:transportConcreteSyntaxSource(before,{language:'JavaScript'}),stages=currentEquation?currentEquation.stages:[];let document=first.document;
+ if(!currentEquation)for(const phase of ['language','repository']){
   const from=phase==='language'?before:language,to=phase==='language'?language:after,beforeMeta=serializeConcreteSyntaxMeta(document),fresh=transportConcreteSyntaxMeta(beforeMeta);if(fresh.source!==from)fail('complete phase input differs');
   const run=applyConcreteSyntaxSubstitutions(fresh.document,{languageRules:phase==='language'?sequence.languageRules:[],repositoryRules:phase==='repository'?sequence.repositoryRules:[]}),afterMeta=serializeConcreteSyntaxMeta(run.value),readback=transportConcreteSyntaxMeta(afterMeta);if(readback.source!==to)fail('complete phase output differs');
   const inverse=applyConcreteSyntaxSubstitutions(readback.document,{languageRules:phase==='language'?[rule(to,from,'javascript:restore-complete-original-issuer-source')]:[],repositoryRules:phase==='repository'?[rule(to,from,'router:restore-complete-original-import-and-entry')]:[]});if(transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(inverse.value)).source!==from)fail('complete phase inverse differs');
@@ -52,7 +53,7 @@ function equation(ts,root,path,before,language,after,nativeSelections){
  }
  if(after.split('\n').length>=1000)fail('complete output must remain below1000lines');
  const originalHashCalls=hashCalls(ts,path,before);if(JSON.stringify(originalHashCalls)!==JSON.stringify(hashCalls(ts,path,after)))fail('original Hash.update/digest call source differs');
- return {path,before,language,after,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta:first.meta,afterMeta:serializeConcreteSyntaxMeta(document),inverse:before,sequence,stages,trace:stages.flatMap(stage=>stage.trace),nativeSelections,nativeCopies:[nativeCopy(ts,path,before),nativeCopy(ts,path,after)],nativeBindings:verifyNativeCopiedSourceBindings(ts,resolve(root,path),after),originalHashCalls,semanticAuthority:false};
+ return {path,before,language,after,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta:first.meta,afterMeta:currentEquation?currentEquation.afterMeta:serializeConcreteSyntaxMeta(document),inverse:before,sequence,stages,trace:stages.flatMap(stage=>stage.trace),nativeSelections,nativeCopies:[nativeCopy(ts,path,before),nativeCopy(ts,path,after)],nativeBindings:verifyNativeCopiedSourceBindings(ts,resolve(root,path),after),originalHashCalls,semanticAuthority:false};
 }
 function consumer(ts,path,before){
  const file=parse(ts,path,before),imports=file.statements.filter(node=>ts.isImportDeclaration(node)&&ts.isStringLiteral(node.moduleSpecifier)&&['./private-native-proof-json.mjs','./private-frozen-json.mjs'].includes(node.moduleSpecifier.text)&&node.importClause?.namedBindings&&ts.isNamedImports(node.importClause.namedBindings)&&node.importClause.namedBindings.elements.some(row=>['createScopedPrivateNativeProofJsonSerializer','createPrivateFrozenJsonComposer'].includes((row.propertyName??row.name).text))),owner=one(imports,path),bindings=owner.importClause.namedBindings.elements;
@@ -71,7 +72,7 @@ function producer(ts,path,before){
 export function prepareDefaultProofByteAdoption({root=ROOT}={}){
  root=resolve(root);const ts=compiler(root);
  const {archive,originals}=originalInputs(root);
- const prerequisiteInputs=PREREQUISITES.map(name=>{const row=originals.get(BASE+name);if(!row||sourceAt(root,row.path)!==row.source)fail('complete actual byte bridge prerequisite differs');return row;});
+ const prerequisiteInputs=qualifyDefaultBytePrerequisites(root,originals,PREREQUISITES);
  const fragment=readFileSync(resolve(root,FRAGMENT),'utf8');if(hash(fragment)!==FRAGMENT_PIN)fail('complete authored internal adapter differs');parse(ts,HELPER,fragment);
  const schemars=prepareSchemarsEnclosingAdoption({root}),schemarsRow=one(schemars.files.filter(row=>row.path===ENCLOSING),'complete Schemars import predecessor');if(schemarsRow.before!==originals.get(ENCLOSING).source)fail('complete original Schemars birth differs');
  const files=[];for(const name of CONSUMERS){const path=BASE+name,before=originals.get(path).source,result=consumer(ts,path,before);files.push({...equation(ts,root,path,before,result.language,result.language,result.edits),serializerBindings:result.bindings});}
@@ -80,7 +81,12 @@ export function prepareDefaultProofByteAdoption({root=ROOT}={}){
  }
  files.push(equation(ts,root,HELPER,'',fragment,fragment,[{kind:'complete-authored-internal-byte-scope',span:[0,0],expected:'',replacement:fragment}]));
  const producerBefore=originals.get(PRODUCER).source,updatedProducer=producer(ts,PRODUCER,producerBefore);files.push(equation(ts,root,PRODUCER,producerBefore,updatedProducer.language,updatedProducer.language,updatedProducer.edits));
- for(const row of files){row.current=sourceAt(root,row.path);const allowed=[row.before,row.after];if(row.path===ENCLOSING)allowed.push(schemarsRow.before);if(row.path===HELPER)allowed.push(null);if(!allowed.includes(row.current))fail('complete physical source differs from explicit historical/final layers: '+row.path);}
+ {const successors=qualifyDefaultByteSourceSuccessors({root,files});
+for(const row of files){
+ const successor=successors.get(row.path);
+ if(successor){const historicalAfter=row.after;Object.assign(row,equation(ts,root,row.path,row.before,row.language,successor.source,row.nativeSelections),{historicalAfter,knownSourceHistory:successor.history});}
+row.current=sourceAt(root,row.path);const allowed=[row.before,row.after];if(row.path===ENCLOSING)allowed.push(schemarsRow.before);if(row.path===HELPER)allowed.push(null);if(!allowed.includes(row.current))fail('complete physical source differs from explicit historical/final layers: '+row.path);
+}}
  if(hash(readFileSync(resolve(root,ARCHIVE)))!==ARCHIVE_PIN||readFileSync(resolve(root,FRAGMENT),'utf8')!==fragment)fail('complete source inputs changed during operation');for(const row of prerequisiteInputs)if(sourceAt(root,row.path)!==row.source)fail('complete byte bridge source changed during operation');for(const row of files)if(sourceAt(root,row.path)!==row.current)fail('complete target source changed during operation');
  return {schema:'default-operation-proof-byte-adoption-v1',typescriptVersion:ts.version,historicalLayers:[schemars],inputs:archive.files,prerequisiteInputs,fragment:{path:FRAGMENT,source:fragment,sha256:FRAGMENT_PIN},files,sameOriginalPrivateIssuers:true,classicCreatorUnchanged:true,originalSourceOwnerAndHashCallsUnchanged:true,originalJsonBytesAndFallbacksRequired:true,diagnosticWarmingCountersMayDiffer:true,newAcrossInvocationEncodedCache:false,semanticAuthority:false,performanceQualified:false,runtimeExecuted:false,requiredRegeneration:['prepare-batched-proof-byte-source-candidate.mjs','current-whole-owner-proof-byte-provider.mjs complete candidate closure'],defaultAdoptionProposed:true};
 }
@@ -89,7 +95,7 @@ export function prepareDefaultProofByteAdoption({root=ROOT}={}){
 export function prepareDefaultProofByteEnclosingHistory({root=ROOT}={}){
  root=resolve(root);const ts=compiler(root),{archive,originals}=originalInputs(root),schemars=prepareSchemarsEnclosingAdoption({root}),birth=one(schemars.files.filter(row=>row.path===ENCLOSING),'complete Schemars history predecessor');if(birth.before!==originals.get(ENCLOSING).source)fail('complete original Schemars birth differs');
  const fragment=readFileSync(resolve(root,FRAGMENT),'utf8');if(hash(fragment)!==FRAGMENT_PIN)fail('complete authored internal adapter differs');const helper=sourceAt(root,HELPER);if(helper!==null&&helper!==fragment)fail('complete current internal adapter differs');
- const prerequisiteInputs=PREREQUISITES.map(name=>{const row=originals.get(BASE+name);if(!row||sourceAt(root,row.path)!==row.source)fail('complete current byte bridge prerequisite differs');return row;});
+ const prerequisiteInputs=qualifyDefaultBytePrerequisites(root,originals,PREREQUISITES);
  const result=entry(ts,root,ENCLOSING,birth.after,'createDeriveEnclosingNamespaceContext','createUnscopedDeriveEnclosingNamespaceContext','createUnscopedDeriveEnclosingNamespaceContext({deriveContext})'),row={...equation(ts,root,ENCLOSING,birth.after,result.language,result.after,result.edits),repositorySelections:result.repositoryEdits,originalEntry:result.originalEntry,originalCall:result.originalCall,current:sourceAt(root,ENCLOSING)};
  if(![birth.before,row.before,row.after].includes(row.current))fail('complete physical enclosing source differs from exact import/wrapper history');if(row.current===row.after&&helper!==fragment)fail('complete installed byte wrapper helper is absent');if(row.inverse!==birth.after)fail('complete wrapper inverse differs from import predecessor');
  if(hash(readFileSync(resolve(root,ARCHIVE)))!==ARCHIVE_PIN||readFileSync(resolve(root,FRAGMENT),'utf8')!==fragment||sourceAt(root,HELPER)!==helper||sourceAt(root,ENCLOSING)!==row.current)fail('complete enclosing history inputs changed');for(const input of prerequisiteInputs)if(sourceAt(root,input.path)!==input.source)fail('complete enclosing history byte bridge changed');

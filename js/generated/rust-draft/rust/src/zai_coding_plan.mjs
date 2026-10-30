@@ -1,4 +1,4 @@
-// Generated draft from rust/src/zai_coding_plan.rs; sha256=ad0f12dbbde8c611a161bff6a1c84e69fedbf92877080f57aca4db2b62248918
+// Generated draft from rust/src/zai_coding_plan.rs; sha256=4bdaf82e6b2f0ebb039128c3e2b186dedbecb4822e2d6a03f9a9901a0362fd8b
 // Carried constructs are data, never runtime parity evidence.
 import { std_time_duration_from_secs as ml_host_std_time_duration_from_secs } from "../../runtime/time-runtime.mjs";
 
@@ -99,4 +99,4 @@ function ml_make_ZaiProbeFailure_ZaiProbeFailure(kind, message) {
 }
 
 export const translated = { ["ANTHROPIC_BASE_PATH"]: rp_7a61695f636f64696e675f706c616e2e414e5448524f5049435f424153455f50415448(), ["CHAT_BASE_PATH"]: rp_7a61695f636f64696e675f706c616e2e434841545f424153455f50415448(), ["RESPONSES_BASE_PATH"]: rp_7a61695f636f64696e675f706c616e2e524553504f4e5345535f424153455f50415448(), ["HEALTH_PATH"]: rp_7a61695f636f64696e675f706c616e2e4845414c54485f50415448(), ["CATALOG_PATH"]: rp_7a61695f636f64696e675f706c616e2e434154414c4f475f50415448(), ["CATALOG_TTL"]: rp_7a61695f636f64696e675f706c616e2e434154414c4f475f54544c(), ["FAILED_REFRESH_RETRY"]: rp_7a61695f636f64696e675f706c616e2e4641494c45445f524546524553485f5245545259(), ["MAX_CATALOG_BODY"]: rp_7a61695f636f64696e675f706c616e2e4d41585f434154414c4f475f424f4459(), ["ZaiProbeFailureKind"]: Object.freeze({ ["CredentialRejected"]: ml_make_ZaiProbeFailureKind_CredentialRejected, ["RateLimited"]: ml_make_ZaiProbeFailureKind_RateLimited, ["Unverified"]: ml_make_ZaiProbeFailureKind_Unverified }), ["ZaiProbeFailure"]: ml_make_ZaiProbeFailure_ZaiProbeFailure };
-export const provenance = {"sourcePath":"rust/src/zai_coding_plan.rs","sourceSha256":"ad0f12dbbde8c611a161bff6a1c84e69fedbf92877080f57aca4db2b62248918","executable":10,"executableFunctions":0,"executableConstants":8,"executableTypes":2,"executableConstructors":4,"carried":38,"preserved":49,"runtimeParity":false};
+export const provenance = {"sourcePath":"rust/src/zai_coding_plan.rs","sourceSha256":"4bdaf82e6b2f0ebb039128c3e2b186dedbecb4822e2d6a03f9a9901a0362fd8b","executable":10,"executableFunctions":0,"executableConstants":8,"executableTypes":2,"executableConstructors":4,"carried":38,"preserved":49,"runtimeParity":false};

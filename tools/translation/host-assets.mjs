@@ -1,5 +1,6 @@
 import {jsonRetentionRuntimeAssets} from './json-retention-runtime-assets.mjs';
 import {readFileSync} from 'node:fs';
+import {primitiveOperatorDeclarationSource} from './primitive-operator-runtime-sources.mjs';
 import {hostData,HostChecker,HOST_CONTRACTS} from './extensions/host-contracts.mjs';
 import {typeScriptAliases,typeScriptType} from './type-layout.mjs';
 export function hostRuntimeAssets() {
@@ -17,12 +18,23 @@ export function hostRuntimeAssets() {
   files.set('csv-string-runtime.mjs',readFileSync(new URL('./extensions/csv-string-runtime.mjs',import.meta.url),'utf8'));
   files.set('csv-string-runtime.d.mts',"type RustOption<T> = Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>;\nexport declare function stringSplitCharacter(value: string, delimiter: string): IterableIterator<string>;\nexport declare function stringSplitNext(value: IterableIterator<string>): RustOption<string>;\nexport declare function allocateStringItem(value: string): string;\n");
   files.set('string-iterator-runtime.mjs',readFileSync(new URL('./extensions/string-iterator-runtime.mjs',import.meta.url),'utf8'));
+  files.set('owned-vector-text-runtime.mjs',readFileSync(new URL('./extensions/owned-vector-text-runtime.mjs',import.meta.url),'utf8'));
+  files.set('owned-vector-text-runtime.d.mts','export declare function vectorTextInput(value: string): string;\n');
   files.set('whitespace-data.mjs',readFileSync(new URL('./extensions/whitespace-data.mjs',import.meta.url),'utf8'));
   files.set('string-iterator-runtime.d.mts',"type RustOption<T> = Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>;\nexport declare function stringLines(value: string): IterableIterator<string>;\nexport declare function stringWhitespace(value: string): IterableIterator<string>;\nexport declare function stringNext(value: IterableIterator<string>): RustOption<string>;\nexport declare function stringJoin(values: readonly string[], separator: string): string;\nexport declare function router_core_unicode_scalar_count(value: string): bigint;\nexport declare function router_core_ascii_chars_in(value: string, alphabet: string): boolean;\n");
   files.set('json-macro-runtime.mjs',readFileSync(new URL('./json-macro-runtime.mjs',import.meta.url),'utf8').replaceAll("'./extensions/json-values.mjs'","'./json-values.mjs'").replaceAll("'./extensions/json-numbers.mjs'","'./json-numbers.mjs'"));
   files.set('json-macro-runtime.d.mts',readFileSync(new URL('./json-macro-runtime.d.mts',import.meta.url),'utf8'));
   files.set('json-update-runtime.mjs',readFileSync(new URL('./json-update-runtime.mjs',import.meta.url),'utf8').replace("'./extensions/json-roundtrip-runtime.mjs'","'./json-roundtrip-runtime.mjs'").replace("'./extensions/json-values.mjs'","'./json-values.mjs'").replace("'./extensions/json-runtime.mjs'","'./json-runtime.mjs'"));
   files.set('json-update-runtime.d.mts',readFileSync(new URL('./json-update-runtime.d.mts',import.meta.url),'utf8'));
+  files.set('owned-outcome-runtime.mjs',readFileSync(new URL('./owned-outcome-runtime.mjs',import.meta.url),'utf8'));
+  for(const name of ['integer-runtime.mjs','integer-runtime.d.mts','sse-runtime.mjs','sse-runtime.d.mts'])files.set(name,readFileSync(new URL('./'+name,import.meta.url),'utf8'));
+  files.set('owned-outcome-runtime.d.mts',readFileSync(new URL('./owned-outcome-runtime.d.mts',import.meta.url),'utf8'));
+  files.set('json-fields-runtime.mjs',readFileSync(new URL('./json-fields-runtime.mjs',import.meta.url),'utf8').replace("'./extensions/json-runtime.mjs'","'./json-runtime.mjs'").replace("'./extensions/json-values.mjs'","'./json-values.mjs'"));
+  files.set('json-fields-runtime.d.mts',readFileSync(new URL('./json-fields-runtime.d.mts',import.meta.url),'utf8'));
+  files.set('json-state-runtime.mjs',readFileSync(new URL('./json-state-runtime.mjs',import.meta.url),'utf8').replace("'./extensions/iterator-runtime.mjs'","'./iterator-runtime.mjs'"));
+  files.set('json-state-runtime.d.mts',readFileSync(new URL('./json-state-runtime.d.mts',import.meta.url),'utf8'));
+  files.set('json-iteration-runtime.mjs',readFileSync(new URL('./json-iteration-runtime.mjs',import.meta.url),'utf8').replace("'./extensions/iterator-runtime.mjs'","'./iterator-runtime.mjs'"));
+  files.set('json-iteration-runtime.d.mts',readFileSync(new URL('./json-iteration-runtime.d.mts',import.meta.url),'utf8'));
   files.set('json-collections-runtime.mjs',readFileSync(new URL('./json-collections-runtime.mjs',import.meta.url),'utf8').replace("'./extensions/iterator-runtime.mjs'","'./iterator-runtime.mjs'"));
   files.set('json-collections-runtime.d.mts',readFileSync(new URL('./json-collections-runtime.d.mts',import.meta.url),'utf8'));
   for(const file of ['base64-runtime.mjs','base64-runtime.d.mts','json-option-runtime.mjs','json-option-runtime.d.mts'])files.set(file,readFileSync(new URL('./'+file,import.meta.url),'utf8'));
@@ -39,7 +51,7 @@ export function hostRuntimeAssets() {
   files.set('primitive-bool-from-runtime.mjs',readFileSync(new URL('./extensions/primitive-bool-from-runtime.mjs',import.meta.url),'utf8'));
   files.set('primitive-bool-from-runtime.d.mts','export declare function primitiveBoolFrom(value:boolean): bigint;\n');
   files.set('primitive-operator-runtime.mjs',readFileSync(new URL('./extensions/primitive-operator-runtime.mjs',import.meta.url),'utf8'));
-  files.set('primitive-operator-runtime.d.mts','export declare function integerCast(value:bigint,inputBits:number,inputSigned:boolean,targetBits:number,targetSigned:boolean):bigint;\nexport declare function integerShift(value:bigint,count:bigint,bits:number,signed:boolean,countBits:number,countSigned:boolean,operation:string):bigint;\n');
+  files.set('primitive-operator-runtime.d.mts',primitiveOperatorDeclarationSource());
   files.set('fixed-array-runtime.d.mts',"export declare function copyFixedArray<T, N extends number>(value: ReadonlyArray<T>, type: Readonly<{kind:'array';rustFixedArray:Readonly<{length:N}>;element:unknown}>): ReadonlyArray<T> & { readonly length:N };\n");
   files.set('copy-runtime.d.mts','export declare function assertImmutableCopy(value: unknown): true;\n');
   files.set('constructor-value-runtime.mjs',readFileSync(new URL('./extensions/constructor-value-runtime.mjs',import.meta.url),'utf8'));
@@ -53,7 +65,7 @@ export declare function createVectorRuntime(validate: (value: unknown) => true):
 `);
   files.set('fixed-integer-runtime.d.mts',`type RustOption<T> = Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>;
 export declare function createFixedIntegerRuntime(type: Readonly<{kind:'fixed';bits:8|16|32|64|128;signed:boolean}>): Readonly<{
-${['checked_add','checked_sub','checked_mul','wrapping_add','wrapping_sub','saturating_add','saturating_sub','saturating_mul','min','max','clamp'].map(method=>`rust_fixed_${method}(left:bigint,right:bigint${method==='clamp'?',upper:bigint':''}): ${method.startsWith('checked_')?'RustOption<bigint>':'bigint'};`).join('\n')}
+${['checked_add','checked_sub','checked_mul','checked_neg','wrapping_add','wrapping_sub','wrapping_mul','saturating_add','saturating_sub','saturating_mul','min','max','clamp'].map(method=>`rust_fixed_${method}(left:bigint${method==='checked_neg'?'':',right:bigint'}${method==='clamp'?',upper:bigint':''}): ${method.startsWith('checked_')?'RustOption<bigint>':'bigint'};`).join('\n')}
 }>;\n`);
   files.set('type-layout-runtime.mjs',readFileSync(new URL('./type-layout-runtime.mjs',import.meta.url),'utf8'));
   files.set('json-values.d.mts','export declare function validateJsonNumber(value: unknown): unknown;\nexport declare function validateJsonMap(value: unknown): unknown;\n');
@@ -72,6 +84,10 @@ ${['checked_add','checked_sub','checked_mul','wrapping_add','wrapping_sub','satu
     catch(error){if(error.code!=='ENOENT')throw error;}
   }
   for(const [path,content] of jsonRetentionRuntimeAssets())files.set(path,content);
+  for(const [name,source]of primitiveSequenceRuntimeAssetPair())files.set(name,source);
+  for(const [name,source]of primitiveOwnedVectorRuntimeAssetPair())files.set(name,source);
+  for(const [name,source]of primitiveVectorLiteralRuntimeAssetPair())files.set(name,source);
+  for(const [name,source]of ownedTextVectorForwardRuntimeAssets()){if(files.has(name)&&files.get(name)!==source)throw new TypeError('Conflicting complete owned text vector runtime asset');files.set(name,source);}
   return files;
 }
 
@@ -92,12 +108,23 @@ export function hostRuntimeAssetsNamedDataAliases() {
   files.set('csv-string-runtime.mjs',readFileSync(new URL('./extensions/csv-string-runtime.mjs',import.meta.url),'utf8'));
   files.set('csv-string-runtime.d.mts',"type RustOption<T> = Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>;\nexport declare function stringSplitCharacter(value: string, delimiter: string): IterableIterator<string>;\nexport declare function stringSplitNext(value: IterableIterator<string>): RustOption<string>;\nexport declare function allocateStringItem(value: string): string;\n");
   files.set('string-iterator-runtime.mjs',readFileSync(new URL('./extensions/string-iterator-runtime.mjs',import.meta.url),'utf8'));
+  files.set('owned-vector-text-runtime.mjs',readFileSync(new URL('./extensions/owned-vector-text-runtime.mjs',import.meta.url),'utf8'));
+  files.set('owned-vector-text-runtime.d.mts','export declare function vectorTextInput(value: string): string;\n');
   files.set('whitespace-data.mjs',readFileSync(new URL('./extensions/whitespace-data.mjs',import.meta.url),'utf8'));
   files.set('string-iterator-runtime.d.mts',"type RustOption<T> = Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>;\nexport declare function stringLines(value: string): IterableIterator<string>;\nexport declare function stringWhitespace(value: string): IterableIterator<string>;\nexport declare function stringNext(value: IterableIterator<string>): RustOption<string>;\nexport declare function stringJoin(values: readonly string[], separator: string): string;\nexport declare function router_core_unicode_scalar_count(value: string): bigint;\nexport declare function router_core_ascii_chars_in(value: string, alphabet: string): boolean;\n");
   files.set('json-macro-runtime.mjs',readFileSync(new URL('./json-macro-runtime.mjs',import.meta.url),'utf8').replaceAll("'./extensions/json-values.mjs'","'./json-values.mjs'").replaceAll("'./extensions/json-numbers.mjs'","'./json-numbers.mjs'"));
   files.set('json-macro-runtime.d.mts',readFileSync(new URL('./json-macro-runtime.d.mts',import.meta.url),'utf8'));
   files.set('json-update-runtime.mjs',readFileSync(new URL('./json-update-runtime.mjs',import.meta.url),'utf8').replace("'./extensions/json-roundtrip-runtime.mjs'","'./json-roundtrip-runtime.mjs'").replace("'./extensions/json-values.mjs'","'./json-values.mjs'").replace("'./extensions/json-runtime.mjs'","'./json-runtime.mjs'"));
   files.set('json-update-runtime.d.mts',readFileSync(new URL('./json-update-runtime.d.mts',import.meta.url),'utf8'));
+  files.set('owned-outcome-runtime.mjs',readFileSync(new URL('./owned-outcome-runtime.mjs',import.meta.url),'utf8'));
+  for(const name of ['integer-runtime.mjs','integer-runtime.d.mts','sse-runtime.mjs','sse-runtime.d.mts'])files.set(name,readFileSync(new URL('./'+name,import.meta.url),'utf8'));
+  files.set('owned-outcome-runtime.d.mts',readFileSync(new URL('./owned-outcome-runtime.d.mts',import.meta.url),'utf8'));
+  files.set('json-fields-runtime.mjs',readFileSync(new URL('./json-fields-runtime.mjs',import.meta.url),'utf8').replace("'./extensions/json-runtime.mjs'","'./json-runtime.mjs'"));
+  files.set('json-fields-runtime.d.mts',readFileSync(new URL('./json-fields-runtime.d.mts',import.meta.url),'utf8'));
+  files.set('json-state-runtime.mjs',readFileSync(new URL('./json-state-runtime.mjs',import.meta.url),'utf8').replace("'./extensions/iterator-runtime.mjs'","'./iterator-runtime.mjs'"));
+  files.set('json-state-runtime.d.mts',readFileSync(new URL('./json-state-runtime.d.mts',import.meta.url),'utf8'));
+  files.set('json-iteration-runtime.mjs',readFileSync(new URL('./json-iteration-runtime.mjs',import.meta.url),'utf8').replace("'./extensions/iterator-runtime.mjs'","'./iterator-runtime.mjs'"));
+  files.set('json-iteration-runtime.d.mts',readFileSync(new URL('./json-iteration-runtime.d.mts',import.meta.url),'utf8'));
   files.set('json-collections-runtime.mjs',readFileSync(new URL('./json-collections-runtime.mjs',import.meta.url),'utf8').replace("'./extensions/iterator-runtime.mjs'","'./iterator-runtime.mjs'"));
   files.set('json-collections-runtime.d.mts',readFileSync(new URL('./json-collections-runtime.d.mts',import.meta.url),'utf8'));
   for(const file of ['base64-runtime.mjs','base64-runtime.d.mts','json-option-runtime.mjs','json-option-runtime.d.mts'])files.set(file,readFileSync(new URL('./'+file,import.meta.url),'utf8'));
@@ -114,7 +141,7 @@ export function hostRuntimeAssetsNamedDataAliases() {
   files.set('primitive-bool-from-runtime.mjs',readFileSync(new URL('./extensions/primitive-bool-from-runtime.mjs',import.meta.url),'utf8'));
   files.set('primitive-bool-from-runtime.d.mts','export declare function primitiveBoolFrom(value:boolean): bigint;\n');
   files.set('primitive-operator-runtime.mjs',readFileSync(new URL('./extensions/primitive-operator-runtime.mjs',import.meta.url),'utf8'));
-  files.set('primitive-operator-runtime.d.mts','export declare function integerCast(value:bigint,inputBits:number,inputSigned:boolean,targetBits:number,targetSigned:boolean):bigint;\nexport declare function integerShift(value:bigint,count:bigint,bits:number,signed:boolean,countBits:number,countSigned:boolean,operation:string):bigint;\n');
+  files.set('primitive-operator-runtime.d.mts',primitiveOperatorDeclarationSource());
   files.set('fixed-array-runtime.d.mts',"export declare function copyFixedArray<T, N extends number>(value: ReadonlyArray<T>, type: Readonly<{kind:'array';rustFixedArray:Readonly<{length:N}>;element:unknown}>): ReadonlyArray<T> & { readonly length:N };\n");
   files.set('copy-runtime.d.mts','export declare function assertImmutableCopy(value: unknown): true;\n');
   files.set('constructor-value-runtime.mjs',readFileSync(new URL('./extensions/constructor-value-runtime.mjs',import.meta.url),'utf8'));
@@ -128,7 +155,7 @@ export declare function createVectorRuntime(validate: (value: unknown) => true):
 `);
   files.set('fixed-integer-runtime.d.mts',`type RustOption<T> = Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>;
 export declare function createFixedIntegerRuntime(type: Readonly<{kind:'fixed';bits:8|16|32|64|128;signed:boolean}>): Readonly<{
-${['checked_add','checked_sub','checked_mul','wrapping_add','wrapping_sub','saturating_add','saturating_sub','saturating_mul','min','max','clamp'].map(method=>`rust_fixed_${method}(left:bigint,right:bigint${method==='clamp'?',upper:bigint':''}): ${method.startsWith('checked_')?'RustOption<bigint>':'bigint'};`).join('\n')}
+${['checked_add','checked_sub','checked_mul','checked_neg','wrapping_add','wrapping_sub','wrapping_mul','saturating_add','saturating_sub','saturating_mul','min','max','clamp'].map(method=>`rust_fixed_${method}(left:bigint${method==='checked_neg'?'':',right:bigint'}${method==='clamp'?',upper:bigint':''}): ${method.startsWith('checked_')?'RustOption<bigint>':'bigint'};`).join('\n')}
 }>;\n`);
   files.set('type-layout-runtime.mjs',readFileSync(new URL('./type-layout-runtime.mjs',import.meta.url),'utf8'));
   files.set('json-values.d.mts','export declare function validateJsonNumber(value: unknown): unknown;\nexport declare function validateJsonMap(value: unknown): unknown;\n');
@@ -147,5 +174,17 @@ ${['checked_add','checked_sub','checked_mul','wrapping_add','wrapping_sub','satu
     catch(error){if(error.code!=='ENOENT')throw error;}
   }
   for(const [path,content] of jsonRetentionRuntimeAssets())files.set(path,content);
+  for(const [name,source]of primitiveSequenceRuntimeAssetPair())files.set(name,source);
+  for(const [name,source]of primitiveOwnedVectorRuntimeAssetPair())files.set(name,source);
+  for(const [name,source]of primitiveVectorLiteralRuntimeAssetPair())files.set(name,source);
+  for(const [name,source]of ownedTextVectorForwardRuntimeAssets()){if(files.has(name)&&files.get(name)!==source)throw new TypeError('Conflicting complete owned text vector runtime asset');files.set(name,source);}
   return files;
 }
+
+import {primitiveSequenceRuntimeAssetPair} from './primitive-sequence-runtime-sources.mjs';
+
+import {primitiveOwnedVectorRuntimeAssetPair} from './primitive-owned-vector-runtime-sources.mjs';
+
+import {primitiveVectorLiteralRuntimeAssetPair} from './primitive-vector-literal-runtime-sources.mjs';
+
+import {ownedTextVectorForwardRuntimeAssets} from './owned-text-vector-forward-domain.mjs';

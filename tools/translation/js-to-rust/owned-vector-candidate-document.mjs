@@ -115,11 +115,12 @@ function checkCst(row,files){
 }
 /** New explicit storage profile. No legacy serializer is redirected here. */
 export function serializeOwnedCoreDocument(program,{context}={}){
- assertReverseConcreteSourceHost();requireOwnedCoreSourceCurrent(context);const data=ownedCoreSourceData(context),files=sources(data),names=new Set(),paths=new Set(),output=writer();
+ assertReverseConcreteSourceHost();requireOwnedCoreSourceCurrent(context);const data=ownedCoreSourceData(context),files=sources(data),names=new Set(),paths=new Set(),output=writer(),originalItems=inputItems(program),summaries=hasScalarSourceCalls(originalItems)?[]:null;
  // Reserve the header and each checked compact row before retaining anything
- // proportional to the number of items. Only bounded encoded lines accumulate.
+ // proportional to complete checked bodies. Bounded encoded lines and, only for source calls, small graph summaries accumulate.
  output.add('owned-source-document',{profile:PROFILE,context:data});
- withOwnedCoreItemChecks(check=>{for(const original of inputItems(program)){const item=check(original,context);if(names.has(item.name))fail('duplicate function');names.add(item.name);output.add('owned-source-item',compact(item,files));for(const path of referenced(item))paths.add(path);}});
+ withOwnedCoreItemChecks(check=>{for(const original of originalItems){const item=check(original,context);if(summaries)summaries.push(scalarSourceCallSummary(item));if(names.has(item.name))fail('duplicate function');names.add(item.name);output.add('owned-source-item',compact(item,files));for(const path of referenced(item))paths.add(path);}});
+ if(summaries)assertScalarSourceCallSummaries(summaries);
  // Existing CST transport has its own source/node bounds. Its stored word must
  // fit the SAME remaining document budget before JSON/percent serialization.
  for(const path of paths)output.add('owned-source-cst',cstRow(path,files));
@@ -137,5 +138,7 @@ export function readOwnedCoreDocument(text,{context}={}){
  }
  const names=new Set(),required=new Set(),pairs=new Map(),program=[];
  withOwnedCoreItemChecks(check=>{for(const item of items){for(const path of referenced(item)){if(!paths.includes(path))fail('CST source missing');required.add(path);}const checked=check(expand(item,data,files,pairs),context);if(names.has(checked.name))fail('duplicate function');names.add(checked.name);if(JSON.stringify(compact(checked,files))!==JSON.stringify(item))fail('noncanonical checked item');program.push(checked);}});
- if(!isDeepStrictEqual(paths,[...required]))fail('unreferenced or reordered CST');requireOwnedCoreSourceCurrent(context);assertReverseConcreteSourceHost();return program;
+ if(!isDeepStrictEqual(paths,[...required]))fail('unreferenced or reordered CST');assertScalarSourceCallClosure(program);requireOwnedCoreSourceCurrent(context);assertReverseConcreteSourceHost();return program;
 }
+
+import {hasScalarSourceCalls,scalarSourceCallSummary,assertScalarSourceCallSummaries,assertScalarSourceCallClosure} from './owned-source-effect-calls.mjs';

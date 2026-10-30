@@ -172,6 +172,18 @@ pub fn command(program: impl AsRef<OsStr>) -> Command {
     command
 }
 
+/// Build a vendor-client command without Router administrative authority.
+/// Callers install only their freshly prepared client credential afterwards.
+/// The scoped operation environment itself remains unchanged for cleanup.
+pub fn client_command(program: impl AsRef<OsStr>) -> Command {
+    let mut command = command(program);
+    command
+        .env_remove("LINK_ASSISTANT_ROUTER_TOKEN")
+        .env_remove("LINK_ASSISTANT_TOKEN")
+        .env_remove("TOKEN_SECRET");
+    command
+}
+
 /// Execute an external dependency with the operation's finite deadline.
 pub fn process_output(command: &mut Command) -> std::io::Result<Output> {
     let deadline = current().map_or(Duration::from_secs(60), |context| context.process_deadline);
@@ -184,6 +196,23 @@ pub fn bounded_output(command: &mut Command, deadline: Duration) -> std::io::Res
         runner.output(command, deadline)
     } else {
         crate::bounded_process::output(command, deadline)
+    }
+}
+
+/// Bound a small dependency response while retaining the injected operation runner.
+/// Native pipes retain at most maximum+1 bytes each; fixtures must obey their runner contract.
+pub fn bounded_output_limited(command: &mut Command, deadline: Duration, maximum: usize) -> std::io::Result<Output> {
+    if maximum == 0 || maximum > 8 * 1024 * 1024 {
+        return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "dependency byte cap must be within 1..=8 MiB"));
+    }
+    if let Some(runner) = current().and_then(|context| context.process_runner) {
+        let output = runner.output(command, deadline)?;
+        if output.stdout.len() > maximum || output.stderr.len() > maximum {
+            return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, "dependency output exceeds its explicit byte cap"));
+        }
+        Ok(output)
+    } else {
+        crate::bounded_process::output_limited(command, deadline, maximum)
     }
 }
 

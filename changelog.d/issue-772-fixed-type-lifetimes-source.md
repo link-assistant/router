@@ -1,0 +1,1 @@
+Draft bounded lifetime-only scalar source adoption across signatures, fields, aliases and plain impl owners with explicit reference regions and whole-owner refusals. New cases remain unrun and full translation is unfinished.

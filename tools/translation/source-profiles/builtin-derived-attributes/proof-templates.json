@@ -1,0 +1,80 @@
+{
+  "attributeIdent": {
+    "path": "compiler/rustc_ast/src/attr/mod.rs",
+    "name": "ident",
+    "original": "fn ident(&self) -> Option<Ident> {\n        match &self.kind {\n            AttrKind::Normal(normal) => {\n                if let [ident] = &*normal.item.path.segments {\n                    Some(ident.ident)\n                } else {\n                    None\n                }\n            }\n            AttrKind::DocComment(..) => None,\n        }\n    }"
+  },
+  "hasNameDefault": {
+    "path": "compiler/rustc_ast/src/attr/mod.rs",
+    "name": "has_name",
+    "original": "fn has_name(&self, name: Symbol) -> bool {\n        self.ident().map(|x| x.name == name).unwrap_or(false)\n    }"
+  },
+  "hasAnyNameDefault": {
+    "path": "compiler/rustc_ast/src/attr/mod.rs",
+    "name": "has_any_name",
+    "original": "fn has_any_name(&self, names: &[Symbol]) -> bool {\n        names.iter().any(|&name| self.has_name(name))\n    }"
+  },
+  "hasNameInherent": {
+    "path": "compiler/rustc_ast/src/attr/mod.rs",
+    "name": "has_name",
+    "original": "fn has_name(&self, name: Symbol) -> bool {\n        AttributeExt::has_name(self, name)\n    }"
+  },
+  "hasAnyNameInherent": {
+    "path": "compiler/rustc_ast/src/attr/mod.rs",
+    "name": "has_any_name",
+    "original": "fn has_any_name(&self, names: &[Symbol]) -> bool {\n        AttributeExt::has_any_name(self, names)\n    }"
+  },
+  "attrWord": {
+    "path": "compiler/rustc_expand/src/build.rs",
+    "name": "attr_word",
+    "original": "fn attr_word(&self, name: Symbol, span: Span) -> ast::Attribute {\n        let g = &self.sess.psess.attr_id_generator;\n        attr::mk_attr_word(g, ast::AttrStyle::Outer, ast::Safety::Default, name, span)\n    }"
+  },
+  "mkAttrWord": {
+    "path": "compiler/rustc_ast/src/attr/mod.rs",
+    "name": "mk_attr_word",
+    "original": "fn mk_attr_word(\n    g: &AttrIdGenerator,\n    style: AttrStyle,\n    unsafety: Safety,\n    name: Symbol,\n    span: Span,\n) -> Attribute {\n    let path = Path::from_ident(Ident::new(name, span));\n    let args = AttrArgs::Empty;\n    mk_attr(g, style, unsafety, path, args, span)\n}"
+  },
+  "mkAttr": {
+    "path": "compiler/rustc_ast/src/attr/mod.rs",
+    "name": "mk_attr",
+    "original": "fn mk_attr(\n    g: &AttrIdGenerator,\n    style: AttrStyle,\n    unsafety: Safety,\n    path: Path,\n    args: AttrArgs,\n    span: Span,\n) -> Attribute {\n    mk_attr_from_item(g, AttrItem { unsafety, path, args, tokens: None }, None, style, span)\n}"
+  },
+  "mkAttrFromItem": {
+    "path": "compiler/rustc_ast/src/attr/mod.rs",
+    "name": "mk_attr_from_item",
+    "original": "fn mk_attr_from_item(\n    g: &AttrIdGenerator,\n    item: AttrItem,\n    tokens: Option<LazyAttrTokenStream>,\n    style: AttrStyle,\n    span: Span,\n) -> Attribute {\n    Attribute {\n        kind: AttrKind::Normal(P(NormalAttr { item, tokens })),\n        id: g.mk_attr_id(),\n        style,\n        span,\n    }\n}"
+  },
+  "pathFromIdent": {
+    "path": "compiler/rustc_ast/src/ast.rs",
+    "name": "from_ident",
+    "original": "fn from_ident(ident: Ident) -> Path {\n        Path { segments: thin_vec![PathSegment::from_ident(ident)], span: ident.span, tokens: None }\n    }"
+  },
+  "segmentFromIdent": {
+    "path": "compiler/rustc_ast/src/ast.rs",
+    "name": "from_ident",
+    "original": "fn from_ident(ident: Ident) -> Self {\n        PathSegment { ident, id: DUMMY_NODE_ID, args: None }\n    }"
+  },
+  "identNew": {
+    "path": "compiler/rustc_span/src/symbol.rs",
+    "name": "new",
+    "original": "fn new(name: Symbol, span: Span) -> Ident {\n        debug_assert_ne!(name, sym::empty);\n        Ident { name, span }\n    }"
+  },
+  "builtinNameLookup": {
+    "path": "compiler/rustc_feature/src/builtin_attrs.rs",
+    "name": "is_builtin_attr_name",
+    "original": "fn is_builtin_attr_name(name: Symbol) -> bool {\n    BUILTIN_ATTRIBUTE_MAP.get(&name).is_some()\n}"
+  },
+  "collectAttribute": {
+    "path": "compiler/rustc_expand/src/expand.rs",
+    "name": "take_first_attr",
+    "original": "fn take_first_attr(\n        &self,\n        item: &mut impl HasAttrs,\n    ) -> Option<(ast::Attribute, usize, Vec<ast::Path>)> {\n        let mut attr = None;\n\n        let mut cfg_pos = None;\n        let mut attr_pos = None;\n        for (pos, attr) in item.attrs().iter().enumerate() {\n            if !attr.is_doc_comment() && !self.cx.expanded_inert_attrs.is_marked(attr) {\n                let name = attr.ident().map(|ident| ident.name);\n                if name == Some(sym::cfg) || name == Some(sym::cfg_attr) {\n                    cfg_pos = Some(pos); // a cfg attr found, no need to search anymore\n                    break;\n                } else if attr_pos.is_none()\n                    && !name.is_some_and(rustc_feature::is_builtin_attr_name)\n                {\n                    attr_pos = Some(pos); // a non-cfg attr found, still may find a cfg attr\n                }\n            }\n        }\n\n        item.visit_attrs(|attrs| {\n            attr = Some(match (cfg_pos, attr_pos) {\n                (Some(pos), _) => (attrs.remove(pos), pos, Vec::new()),\n                (_, Some(pos)) => {\n                    let attr = attrs.remove(pos);\n                    let following_derives = attrs[pos..]\n                        .iter()\n                        .filter(|a| a.has_name(sym::derive))\n                        .flat_map(|a| a.meta_item_list().unwrap_or_default())\n                        .filter_map(|meta_item_inner| match meta_item_inner {\n                            MetaItemInner::MetaItem(ast::MetaItem {\n                                kind: MetaItemKind::Word,\n                                path,\n                                ..\n                            }) => Some(path),\n                            _ => None,\n                        })\n                        .collect();\n\n                    (attr, pos, following_derives)\n                }\n                _ => return,\n            });\n        });\n\n        attr\n    }"
+  },
+  "createSuffix": {
+    "path": "compiler/rustc_builtin_macros/src/deriving/generic/mod.rs",
+    "original": "let attrs = thin_vec![cx.attr_word(sym::automatically_derived, self.span),];\n        let opt_trait_ref = Some(trait_ref);\n\n        cx.item(\n            self.span,\n            attrs,\n            ast::ItemKind::Impl(Box::new(ast::Impl {\n                safety: ast::Safety::Default,\n                polarity: ast::ImplPolarity::Positive,\n                defaultness: ast::Defaultness::Final,\n                constness: if self.is_const { ast::Const::Yes(DUMMY_SP) } else { ast::Const::No },\n                generics: trait_generics,\n                of_trait: opt_trait_ref,\n                self_ty: self_type,\n                items: methods.into_iter().chain(associated_types).collect(),\n            })),\n        )\n    }"
+  },
+  "builtinMap": {
+    "path": "compiler/rustc_feature/src/builtin_attrs.rs",
+    "original": "pub static BUILTIN_ATTRIBUTE_MAP: LazyLock<FxHashMap<Symbol, &BuiltinAttribute>> =\n    LazyLock::new(|| {\n        let mut map = FxHashMap::default();\n        for attr in BUILTIN_ATTRIBUTES.iter() {\n            if map.insert(attr.name, attr).is_some() {\n                panic!(\"duplicate builtin attribute `{}`\", attr.name);\n            }\n        }\n        map\n    });"
+  }
+}

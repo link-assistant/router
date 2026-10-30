@@ -16,7 +16,7 @@ const LOOP = Symbol('loop depth');
 // join. Nested operands, subjects, guards and value matches get no permission.
 const statementMatches = new WeakSet();
 export const checkingStatementMatch = node => statementMatches.has(node);
-const compound = { '+=': 'add', '-=': 'sub', '*=': 'mul', '/=': 'div', '%=': 'rem' };
+const compound = { '+=': 'add', '-=': 'sub', '*=': 'mul', '/=': 'div', '%=': 'rem', '&=':'&', '|=':'|', '^=':'^', '<<=':'<<', '>>=':'>>' };
 const range = (start, end) => ({ start: start.start, end: end.end });
 // The Host frontend qualifies actual Rust f64 types before this layer. Its
 // by-value primitive has no aggregate alias/storage obligation; plain portable
@@ -108,7 +108,7 @@ export class ControlRustParser extends StringRustParser {
         if (expr.k !== 'name' || expr.path.length !== 1) throw unsupported('assignment target', 'only scalar local bindings are assignable', expr.span);
         const op = c.next().value;
         const right = this.expr(path);
-        const value = op === '=' ? right : { k: 'binary', op: compound[op], left: expr, right, span: range(start, c.peek()) };
+        const operation=compound[op],value=op==='='?right:['&','|','^'].includes(operation)?{k:'routerPrimitiveBitwise',operation,left:expr,right,span:range(start,c.peek())}:['<<','>>'].includes(operation)?{k:'routerPrimitiveShift',operation,left:expr,right,span:range(start,c.peek())}:{k:'binary',op:operation,left:expr,right,span:range(start,c.peek())};
         c.expect(';', 'assignment');
         statements.push({ k: 'routerSet', target: expr, value, span: range(start, c.peek()) });
         continue;
@@ -182,8 +182,11 @@ export class ControlChecker extends StringChecker {
     if (!env.has(RETURN) && expected) {
       // Fresh binders belong to one function's lexical scope. Their names must
       // not depend on which sibling bodies happened to check before this one.
-      this.fresh = 0;
-      const mutable = this.mutableParameters.get(node) ?? [];
+      const parameters = this.mutableParameters.get(node);
+      // Independently checked standard-library bodies share the caller's
+      // allocator. Only an actual program function starts a new name scope.
+      if (parameters !== undefined) this.fresh = 0;
+      const mutable = parameters ?? [];
       if (mutable.some(name => !scalar(env.get(name)))) throw unsupported('mutable aggregate parameter', 'aggregate ownership and aliases require a separate runtime contract', node.span);
       env = new Map(env).set(RETURN, expected).set(MUTABLE, new Set(mutable));
     }

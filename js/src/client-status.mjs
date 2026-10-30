@@ -1,5 +1,5 @@
 /** Secret-free observations and routing precedence for all eight client integrations. */
-import TOML from '@iarna/toml';
+import {parseClientTomlSource} from './client-toml-cst.mjs';
 import {clientPaths,optionalClientText,preferredClientPath,clientObject,readClientEnvironment,clientCommandExists,clientFailure} from './client-files.mjs';
 const modelKeys=['ANTHROPIC_MODEL','ANTHROPIC_DEFAULT_OPUS_MODEL','ANTHROPIC_DEFAULT_SONNET_MODEL','ANTHROPIC_DEFAULT_HAIKU_MODEL','CLAUDE_CODE_SUBAGENT_MODEL'];
 const claudePrecedence=['ANTHROPIC_AUTH_TOKEN','ANTHROPIC_API_KEY',...modelKeys,'CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY','CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC'];
@@ -7,14 +7,14 @@ const strip=value=>value?.replace(/\/+$/,'');
 const text=value=>typeof value==='string' ? value : null;
 const safeOrigin=value=>{try {const url=new URL(value);return ['http:','https:'].includes(url.protocol) ? url.origin : null;}catch{return null;}};
 function publicDocument(client,source) {
-  if(client==='codex') {try{return TOML.parse(source ?? '');}catch{throw clientFailure('Client configuration contains invalid TOML');}}
+  if(client==='codex') {try{return parseClientTomlSource(source ?? '');}catch{throw clientFailure('Client configuration contains invalid TOML');}}
   return clientObject(source);
 }
 function publicBase(paths,document,environment,env) {
   switch(paths.info.client) {
     case 'codex': {
       const provider=document.model_providers?.['link-assistant'];
-      return document.model_provider==='link-assistant' && provider?.wire_api==='responses' && provider?.env_key==='LINK_ASSISTANT_TOKEN' ? text(provider.base_url) : null;
+      return document.model_provider==='link-assistant' && provider?.wire_api==='responses' && (provider?.env_key==='LINK_ASSISTANT_TOKEN'||provider?.requires_openai_auth===true) ? text(provider.base_url) : null;
     }
     case 'claude':return text(document.env?.ANTHROPIC_BASE_URL);
     case 'opencode':case 'agent':return text(document.provider?.['link-assistant']?.options?.baseURL);

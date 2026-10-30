@@ -40,7 +40,7 @@ type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$"
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
-// Generated draft from rust/src/lefine.rs; sha256=954a097f721bc7da43be058ab3122d791b074da16d0bf75507870d8811463ec2
+// Generated draft from rust/src/lefine.rs; sha256=585ff6270beaaf1829a5e3ec0df2378fe2eb595b4056f3bb86378e274204acad
 // Carried constructs are data, never runtime parity evidence.
 import { copyFixedArray as ml_copy_fixed_array } from "../../runtime/fixed-array-runtime.mjs";
 
@@ -126,6 +126,26 @@ function ml_make_CatalogFailure_CatalogFailure(kind: Readonly<{ readonly "$": "C
   return ml_snapshot_constructor_value(Object.freeze({ $: "CatalogFailure", ["kind"]: kind, ["message"]: message }), {"kind":"data","name":"CatalogFailure"}, ml_constructor_value_schema_0aa93e5d633574f999fe947977ddf000065c7cc75b54ea51ce7f859e24b104a5);
 }
 
+function rp_6c6566696e652e636174616c6f675f75726c(base_url: string): string {
+  if (!(typeof base_url === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(base_url))) throw new TypeError('argument outside supported Rust value domain');
+  const base = ((text, pattern) => { const chars=Array.from(text); let start=0, end=chars.length; while(end>start&&pattern.includes(chars[end-1]))end--;return chars.slice(start,end).join(''); })(base_url, Object.freeze(["/"]));
+  if ((() => {
+    const ml_text_1 = base;
+    const ml_text_2 = "/v1";
+    return ml_text_1.endsWith(ml_text_2);
+  })()) {
+    return (() => {
+    const ml_fmt_3 = base;
+    return (ml_fmt_3 + "/models");
+  })();
+  } else {
+    return (() => {
+    const ml_fmt_4 = base;
+    return (ml_fmt_4 + "/v1/models");
+  })();
+  }
+}
+
 function rp_6c6566696e652e756e617661696c61626c65(message: string): Readonly<{ readonly "$": "CatalogFailure"; readonly "kind": Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unavailable" }>; readonly "message": string }> {
   if (!(typeof message === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(message))) throw new TypeError('argument outside supported Rust value domain');
   return rp_6c6566696e652e6d6c5f696d706c5f3633373236313734363532653663363536363639366536353265343336313734363136633666363734363631363936633735373236355f366536353737(Object.freeze({ $: 'Unavailable' }), message);
@@ -139,5 +159,5 @@ function rp_6c6566696e652e6d6c5f696d706c5f36333732363137343635326536633635363636
   return ml_snapshot_constructor_value(Object.freeze({ $: "CatalogFailure", ["kind"]: ml_record1, ["message"]: ml_record2 }), {"kind":"data","name":"rp_6c6566696e652e436174616c6f674661696c757265"}, ml_constructor_value_schema_b1dcba45f86d22f78d36c4524144916181cc22ccbffdf6cbc00b60de8b22a990);
 }
 
-export const translated: { "BASE_URL": string; "COMPATIBLE_CLIENTS": ReadonlyArray<string> & { readonly length: 3 }; "MAX_CATALOG_BODY": bigint; "CatalogFailureKind": Readonly<{ "CredentialRejected": () => Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unavailable" }>; "RateLimited": () => Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unavailable" }>; "Unavailable": () => Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unavailable" }> }>; "CatalogFailure": (kind: Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unavailable" }>, message: string) => Readonly<{ readonly "$": "CatalogFailure"; readonly "kind": Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unavailable" }>; readonly "message": string }>; "unavailable": (message: string) => Readonly<{ readonly "$": "CatalogFailure"; readonly "kind": Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unavailable" }>; readonly "message": string }> } = { ["BASE_URL"]: rp_6c6566696e652e424153455f55524c(), ["COMPATIBLE_CLIENTS"]: rp_6c6566696e652e434f4d50415449424c455f434c49454e5453(), ["MAX_CATALOG_BODY"]: rp_6c6566696e652e4d41585f434154414c4f475f424f4459(), ["CatalogFailureKind"]: Object.freeze({ ["CredentialRejected"]: ml_make_CatalogFailureKind_CredentialRejected, ["RateLimited"]: ml_make_CatalogFailureKind_RateLimited, ["Unavailable"]: ml_make_CatalogFailureKind_Unavailable }), ["CatalogFailure"]: ml_make_CatalogFailure_CatalogFailure, ["unavailable"]: rp_6c6566696e652e756e617661696c61626c65 };
-export const provenance = {"sourcePath":"rust/src/lefine.rs","sourceSha256":"954a097f721bc7da43be058ab3122d791b074da16d0bf75507870d8811463ec2","executable":6,"executableFunctions":1,"executableConstants":3,"executableTypes":2,"executableConstructors":4,"carried":11,"preserved":18,"runtimeParity":false};
+export const translated: { "BASE_URL": string; "COMPATIBLE_CLIENTS": ReadonlyArray<string> & { readonly length: 3 }; "MAX_CATALOG_BODY": bigint; "CatalogFailureKind": Readonly<{ "CredentialRejected": () => Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unavailable" }>; "RateLimited": () => Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unavailable" }>; "Unavailable": () => Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unavailable" }> }>; "CatalogFailure": (kind: Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unavailable" }>, message: string) => Readonly<{ readonly "$": "CatalogFailure"; readonly "kind": Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unavailable" }>; readonly "message": string }>; "catalog_url": (base_url: string) => string; "unavailable": (message: string) => Readonly<{ readonly "$": "CatalogFailure"; readonly "kind": Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unavailable" }>; readonly "message": string }> } = { ["BASE_URL"]: rp_6c6566696e652e424153455f55524c(), ["COMPATIBLE_CLIENTS"]: rp_6c6566696e652e434f4d50415449424c455f434c49454e5453(), ["MAX_CATALOG_BODY"]: rp_6c6566696e652e4d41585f434154414c4f475f424f4459(), ["CatalogFailureKind"]: Object.freeze({ ["CredentialRejected"]: ml_make_CatalogFailureKind_CredentialRejected, ["RateLimited"]: ml_make_CatalogFailureKind_RateLimited, ["Unavailable"]: ml_make_CatalogFailureKind_Unavailable }), ["CatalogFailure"]: ml_make_CatalogFailure_CatalogFailure, ["catalog_url"]: rp_6c6566696e652e636174616c6f675f75726c, ["unavailable"]: rp_6c6566696e652e756e617661696c61626c65 };
+export const provenance = {"sourcePath":"rust/src/lefine.rs","sourceSha256":"585ff6270beaaf1829a5e3ec0df2378fe2eb595b4056f3bb86378e274204acad","executable":7,"executableFunctions":2,"executableConstants":3,"executableTypes":2,"executableConstructors":4,"carried":10,"preserved":18,"runtimeParity":false};

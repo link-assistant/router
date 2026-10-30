@@ -1,0 +1,10 @@
+{
+  "schema": "rust-scalar-boundary-original-index-v1",
+  "archive": "complete-originals-and-rules.json.gz",
+  "sha256": "bec04c63d7401a83a7a184013f5495730d906028f55314bf2fee583e20f90747",
+  "bytes": 7761,
+  "sources": [
+    "rust/src/subscription_usage_normalize.rs",
+    "tools/translation/test/json-source-f64-original-root.test.mjs"
+  ]
+}

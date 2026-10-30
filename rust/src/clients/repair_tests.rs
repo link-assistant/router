@@ -468,3 +468,87 @@ fn repair_refuses_symlink_targets() {
     assert!(error.to_string().contains("symlink"));
     assert_eq!(fs::read(&outside).unwrap(), b"outside");
 }
+
+
+// Independent global backend guard oracle source. UNRUN; gated Rust CI only.
+#[test]
+fn source_draft_codex_global_repair_advances_undo_guard_without_replacing_initial_backup() {
+    let home = tempfile::tempdir().expect("isolated home");
+    let manager = ClientManager::isolated(home.path());
+    let path = manager.config_path(ClientKind::Codex);
+    fs::create_dir_all(path.parent().expect("parent")).expect("directory");
+    let before = "# exact initial source\nmodel_provider=\"foreign\"\n";
+    fs::write(&path, before).expect("original");
+    let mut record = credential();
+    record.client = "codex".into();
+    record.router = Some("http://router.test:8080".into());
+    manager.apply_configure_transaction_with_codex_backend(
+        ClientKind::Codex, "http://router.test:8080", "la_sk_router_secret", &record, &[],
+        Some("http://127.0.0.1:1111/api/services/codex/backend-api"),
+    ).expect("global configure");
+    manager.apply_repair_with_codex_backend(
+        ClientKind::Codex, "http://router.test:8080", "la_sk_router_secret", &record, &[],
+        Some("http://127.0.0.1:2222/api/services/codex/backend-api"),
+    ).expect("global repair");
+    crate::client_global::undo_with_manager(&manager, ClientKind::Codex).expect("advanced undo guard");
+    assert_eq!(fs::read_to_string(&path).expect("restored"), before);
+}
+
+
+// Independent foreign catalogue schema oracle. UNRUN; gated Rust CI only.
+#[test]
+fn source_draft_catalog_constraint_models_array_is_validated_without_mutating_foreign_file() {
+    let home = tempfile::tempdir().expect("isolated home");
+    let manager = ClientManager::isolated(home.path());
+    let config = manager.config_path(ClientKind::Codex);
+    fs::create_dir_all(config.parent().expect("parent")).expect("directory");
+    let catalog = home.path().join("foreign-catalog.json");
+    let source = format!("# retain source\nmodel_catalog_json={:?}\ncustom='keep'\n", catalog.to_string_lossy());
+    fs::write(&config, &source).expect("config");
+    for (body, accepted) in [("{\"models\":[]}", true), ("{\"models\":null}", false), ("{}", false), ("not JSON", false)] {
+        fs::write(&catalog, body).expect("foreign catalogue");
+        assert_eq!(manager.validate_codex_catalog_constraint().is_ok(), accepted);
+        assert_eq!(fs::read_to_string(&config).expect("config"), source);
+        assert_eq!(fs::read_to_string(&catalog).expect("catalogue"), body);
+    }
+}
+
+
+// Independent fresh-native alignment oracles. UNRUN; gated Rust CI only.
+#[test]
+fn source_draft_fresh_global_codex_retires_catalogue_override_and_exact_undo_restores_it() {
+    let home = tempfile::tempdir().expect("isolated home");
+    let manager = ClientManager::isolated(home.path());
+    let config = manager.config_path(ClientKind::Codex);
+    fs::create_dir_all(config.parent().expect("parent")).expect("directory");
+    let catalog = home.path().join("foreign-catalog.json");
+    let external = "{\"models\":[]}";
+    fs::write(&catalog, external).expect("foreign catalogue");
+    let before = format!("# exact initial source\nmodel_catalog_json={:?}\ncustom='keep'\n", catalog.to_string_lossy());
+    fs::write(&config, &before).expect("original config");
+    let mut record = credential();
+    record.client = "codex".into();
+    manager.apply_configure_transaction_with_codex_backend(ClientKind::Codex, "http://router.test:8080", "la_sk_router_secret", &record, &[], None).expect("fresh global configure");
+    assert!(!fs::read_to_string(&config).expect("configured").contains("model_catalog_json"));
+    assert_eq!(fs::read_to_string(&catalog).expect("untouched catalogue"), external);
+    crate::client_global::undo_with_manager(&manager, ClientKind::Codex).expect("exact global undo");
+    assert_eq!(fs::read_to_string(&config).expect("restored config"), before);
+}
+#[test]
+fn source_draft_native_catalogue_limit_and_invalid_global_constraint_precede_artifact_creation() {
+    let home = tempfile::tempdir().expect("isolated home");
+    let manager = ClientManager::isolated(home.path());
+    let config = manager.config_path(ClientKind::Codex);
+    fs::create_dir_all(config.parent().expect("parent")).expect("directory");
+    let catalog = home.path().join("foreign-catalog.json");
+    let before = format!("model_catalog_json={:?}\n", catalog.to_string_lossy());
+    fs::write(&config, &before).expect("original config");
+    fs::write(&catalog, vec![b'x'; 8 * 1024 * 1024 + 1]).expect("oversize catalogue");
+    assert!(manager.validate_codex_catalog_constraint().is_err());
+    fs::write(&catalog, b"{\"models\":null}").expect("invalid constraint");
+    let mut record = credential();
+    record.client = "codex".into();
+    assert!(manager.apply_configure_transaction_with_codex_backend(ClientKind::Codex, "http://router.test:8080", "la_sk_router_secret", &record, &[], None).is_err());
+    assert_eq!(fs::read_to_string(&config).expect("untouched config"), before);
+    for path in crate::client_global::transaction_paths(&config) { assert!(!path.exists()); }
+}

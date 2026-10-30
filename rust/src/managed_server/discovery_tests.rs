@@ -301,3 +301,34 @@ fn the_configured_router_port_leads_the_candidates() {
         );
     }
 }
+
+
+// Independent native candidate boundary oracle; UNRUN, gated CI only.
+#[test]
+fn source_draft_published_port_boundaries_and_duplicate_ipv6_bindings() {
+    assert_eq!(parse_published_ports("127.0.0.1:65535->8080/tcp, [::]:65535->8080/tcp, :18878->8080/tcp"), vec![65535, 18878]);
+    for source in ["127.0.0.1:0->8080/tcp", "127.0.0.1:65536->8080/tcp", "127.0.0.1:-1->8080/tcp", "192.0.2.1:18878->8080/tcp", "8080/tcp", "->8080/tcp"] {
+        assert!(parse_published_ports(source).is_empty(), "{source}");
+    }
+}
+
+
+// Independent strict candidate/resource boundaries. UNRUN; gated CI only.
+#[test]
+fn source_draft_candidate_hosts_protocol_and_retained_listing_are_bounded() {
+    for source in ["evil127.0.0.1:42->8080/tcp", "127.0.0.1.evil:42->8080/tcp", "127.0.0.1:42->8080/udp"] {
+        assert!(parse_published_ports(source).is_empty(), "{source}");
+    }
+    let listing = (10000..10080).map(|port| format!("127.0.0.1:{port}->8080/tcp")).collect::<Vec<_>>().join(",");
+    assert_eq!(parse_published_ports(&listing).len(), 64);
+    assert!(parse_published_ports(&" ".repeat(65_537)).is_empty());
+}
+
+#[tokio::test]
+async fn source_draft_expired_probe_cannot_adopt_and_open_tcp_still_requires_router_identity() {
+    let port = serve_health("not-a-router", "HTTP/1.1 200 OK").await;
+    assert!(probe_local_router(port, std::time::Instant::now()).await.is_none());
+    assert!(probe_local_router(port, std::time::Instant::now() + Duration::from_secs(1)).await.is_none());
+    let valid = serve_health(r#"{"status":"ok"}"#, "HTTP/1.1 200 OK").await;
+    assert_eq!(probe_local_router(valid, std::time::Instant::now() + Duration::from_secs(1)).await, Some(format!("http://127.0.0.1:{valid}")));
+}

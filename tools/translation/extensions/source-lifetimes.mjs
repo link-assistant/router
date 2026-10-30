@@ -1,21 +1,23 @@
 import {checkSourceLifetimeRefusals} from './declaration-refusals.mjs';
+import {originalPrimitiveOptionCallbackProjection,originalPrimitiveResultProjection} from '../router-core-json-updates.mjs';
 import {isDeepStrictEqual} from 'node:util';
 // Generated vector checker association and original lifetime equations.
 const checkedLists = new WeakMap();
 export function checkRouterCoreVector(checker, node, env, path, expected, allowLiteral) {
-  const value = checker.expr(node.value, env, path, expected, allowLiteral), type = value.type?.element;
+  const repetition=node.value.k==='routerCoreVectorRepeat'?checkOwnedVectorRepeat(checker,node.value,env,path,expected,allowLiteral):null;
+  const value = repetition?.array ?? checker.expr(node.value, env, path, expected, allowLiteral), type = value.type?.element;
   const scalar = type && !type.rustReference && !type.rustGenericIdentityUnresolved && !type.rustBorrowingUnresolved &&
-    (type.kind === 'bool' || type.kind === 'fixed' && typeof type.rustPrimitiveName === 'string' ||
+    (isCanonicalOwnedJsonVectorElement(checker,type,node.span) || type.kind==='float'&&type.rustPrimitiveName==='f64'&&type.rustSourceType===true&&!type.rustOwnership&&!type.patternOwnershipRefusal || type.kind === 'bool' || type.kind === 'fixed' && typeof type.rustPrimitiveName === 'string' ||
       type.kind === 'string' && ['String', 'str'].includes(type.rustOwnership?.source));
   if (value.k !== 'array' || value.type?.kind !== 'array' || !scalar || value.type.rustOwnership?.kind !== 'owned' || value.type.rustOwnership.source !== 'Vec') {
-    throw unsupported('owned vector elements', 'requires checked primitive integers, bools, owned standard text or borrowed str; nominal, nested, mutable and erased elements remain refused', node.span);
+    throw unsupported('owned vector elements', 'requires canonical owned Json, checked primitive integers, f64, bools, owned standard text or borrowed str; nominal, nested, mutable and erased elements remain refused', node.span);
   }
   const proof = Object.freeze({profile: 'checked-router-owned-vector-list-v1'});
   const checkedVector={...value, constEligible: false, compatibilityCore: node.value.compatibilityCore, ownedVectorProof: proof};
   const frame=ownedVectorFrame;
   if(frame){if(frame.checker!==checker)throw unsupported('owned vector checker frame','requires the active same checker',node.span);if(!frame.originals){frame.originals=new WeakMap();frame.normalized=new WeakMap();}frame.originals.set(proof,{items: value.items, elements: [...value.items], elementType: value.type.element,checker,snapshot:ownedVectorSnapshot(checkedVector)});}
   else checkedLists.set(proof,{items: value.items, elements: [...value.items], elementType: value.type.element,node:checkedVector,synthetic:copyMetadata(checkedVector)});
-  return checkedVector;
+  return repetition ? {...repetition.checked,body:checkedVector,type:checkedVector.type,constEligible:false} : checkedVector;
 }
 export function hasCheckedRouterCoreVector(node) {
   const original = node && (ownedVectorFrame?ownedVectorFrame.originals:checkedLists)?.get(node.ownedVectorProof);
@@ -53,8 +55,9 @@ function bindNormalizedOwnedVectors(checker,program,surface){
 
 import {canonicalResult} from './result-iterators.mjs';
 import {JSON_DATA} from './json-contracts.mjs';
-import {sharedReferenceCopyIdentity} from '../shared-reference-copy-source.mjs';
-import {hasOriginalRouterCoreJsonProjection,hasOriginalJsonStringErrorContext} from '../router-core-json-updates.mjs';
+import {currentSharedReferenceCopyIdentity as sharedReferenceCopyIdentity} from '../current-standard-copy-source.mjs';
+import {hasOriginalRouterCoreJsonProjection,hasOriginalJsonStringErrorContext,hasOriginalPrimitiveOptionAbsentLoan} from '../router-core-json-updates.mjs';
+import {jsonIterationContract} from '../json-iteration-contracts.mjs';
 import {hasOriginalMappedOrigin} from './standard-mapped-body.mjs';
 import {sameType} from '../checked-types.mjs';
 import {originalCloneReceiverOrigin} from './clone-source-body.mjs';
@@ -295,6 +298,15 @@ function origins(node,env,context,returns,depth=0) {
     read(node.separator);return new Set(); // join allocates an owned String.
   }
   if(node.k==='routerCoreJsonCollection'){
+    const iteration=jsonIterationContract(node.id);
+    if(iteration){
+      const callback=node.args.at(-1);if(!hasOriginalRouterCoreJsonProjection(node)||node.args.length!==iteration.parameters.length||callback?.k!=='routerLambda'||callback.arity!==iteration.callbackParameters.length)throw unsupported('owned iteration borrow origin','requires its actual private checked function and call',node.span);
+      const input=read(node.args[0]),item=node.args[0].type.rustReference?.pointee?.element;if(!item)throw unsupported('owned iteration source type','requires its actual shared Json slice',node.span);
+      if(iteration.parameters.length===3&&read(node.args[1]).size)throw unsupported('owned fold accumulator','cannot retain a borrowed source origin',node.span);
+      readCallback(callback.binding,iteration.callbackParameters.map(role=>role==='owned-json'?new Set():uniformOrigins({...item,rustReference:{kind:'shared',pointee:item}},at(input,[]),context)));
+      return new Set();
+    }
+
     if(!hasOriginalRouterCoreJsonProjection(node)||node.args.length!==2||node.args[1].k!=='routerLambda'||node.args[1].arity!==1)throw unsupported('owned collection borrow origin','requires its actual private checked function/call context',node.span);
     const input=read(node.args[0]),item=node.args[0].type.rustReference?.pointee?.element;
     if(!item||node.type.kind!=='array'||node.type.rustOwnership?.kind!=='owned'||node.type.rustOwnership.source!=='Vec')throw unsupported('owned collection source type','requires actual shared input and owned output',node.span);
@@ -360,6 +372,9 @@ function origins(node,env,context,returns,depth=0) {
   }
   if(node.k==='array'&&hasCheckedRouterCoreVector(node)) {
     const values=node.items.map(value=>read(value));
+    // The private owned-vector proof covers the retained repeat seed as well.
+    // Zero stored elements cannot erase the original seed's borrow obligation.
+    if(node.items.length===0&&node.repeatSeed)values.push(read(node.repeatSeed));
     return borrowed?union(...values.map(value=>prefix(value,['element']))):new Set();
   }
   if(node.k==='array'&&node.type?.rustFixedArray&&node.fixedArrayProof?.verified) {
@@ -512,8 +527,19 @@ function origins(node,env,context,returns,depth=0) {
       return [key(region.path),origin];
     })));
   }
+  if(node.k==='routerHostCall'&&originalPrimitiveResultProjection(node)){
+    const row=originalPrimitiveResultProjection(node),arguments_=node.args.map((value,index)=>row.parameters[index]==='callback'?null:read(value));let called=new Set();
+    if(row.parameters.includes('callback')){const callback=node.args[1];if(callback?.k!=='routerLambda'||callback.arity!==row.callbackParameters.length)throw unsupported('primitive Result callback origins','requires its actual complete qualified callback',node.span);const callbackReturns=[],tail=origins(callback.binding,new Map(env),{...context,lambdaInputs:row.callbackParameters.map(domain=>domain==='text-owned'?new Set():project(arguments_[0],['argument',0])),mutableBorrowLocals:new Map(context.mutableBorrowLocals),callbackCapturedBorrowLocals:new Set(context.mutableBorrowLocals.values()),loopExitStates:[]},callbackReturns,depth+1);called=union(tail,...callbackReturns.map(row=>row.value));}
+    if(!borrowed)return new Set();if(row.family==='http-protocol'&&row.root!==null)return uniformOrigins(node.type,at(arguments_[row.root],[]),context);if(row.method==='ok')return prefix(arguments_[0],['argument',0]);if(row.method==='err')return new Set();if(row.method==='ok_option'||row.method==='map_err')return arguments_[0];if(row.method==='map')return prefix(called,['argument',0]);if(row.method==='and_then')return called;if(row.method==='or_else')return union(arguments_[0],called);throw unsupported('primitive Result borrowed output','requires a complete declared native borrow equation',node.span);
+  }
+  if(node.k==='routerHostCall'&&originalPrimitiveOptionCallbackProjection(node)){
+    const row=originalPrimitiveOptionCallbackProjection(node),callback=node.args[1];if(node.args.length!==2||callback?.k!=='routerLambda'||callback.arity!==row.callbackParameters.length)throw unsupported('primitive Option callback origins','requires its actual complete qualified callback',node.span);
+    const receiver=read(node.args[0]),callbackReturns=[],tail=origins(callback.binding,new Map(env),{...context,lambdaInputs:callback.arity?[project(receiver,['argument',0])]:[],mutableBorrowLocals:new Map(context.mutableBorrowLocals),callbackCapturedBorrowLocals:new Set(context.mutableBorrowLocals.values()),loopExitStates:[]},callbackReturns,depth+1),called=union(tail,...callbackReturns.map(row=>row.value));
+    if(!borrowed)return new Set();return row.method==='map'?prefix(called,['argument',0]):row.method==='and_then'?called:new Set();
+  }
   if(node.k==='routerHostCall') {
     const arguments_=node.args.map(value=>read(value));
+    if(borrowed&&hasOriginalPrimitiveOptionAbsentLoan(node))return new Set();
     if(borrowed&&hasOriginalRouterCoreJsonProjection(node))return uniformOrigins(node.type,at(arguments_[0]??new Set([UNKNOWN]),[]),context);
     // Registered shared receiver methods borrow from that receiver; no
     // lifetime permission is inferred for free functions or owned receivers.
@@ -701,7 +727,7 @@ export function withSourceLifetimeChecker(Base) {
       const collect=(items,path=[])=>{for(const item of items)if(item.k==='module')collect(item.items,[...path,item.name]);else if(item.k==='fn')mutableParameters.set([...path,item.name].join('.'),item.params.filter(param=>param.mutable).map(param=>param.name));};
       collect(surface.items);
       const program=super.program(surface),context={checker:this,sourceSharedPatternReader:node=>this.sourceSharedPatternProofOrigin?.(node),declarations:program.declarations,resolveType:(type,path,span)=>this.resolveType(type,path,span)};
-      if(vectorFrame.originals&&this.language==='Rust')bindNormalizedOwnedVectors(this,program,surface);
+      if(vectorFrame.originals&&this.language==='Rust'){bindNormalizedOwnedVectors(this,program,surface);checkSourceLifetimeRefusals(this,program,'owned-json-vector-transfer',entry=>validateOriginalOwnedJsonVectorEntry(this,entry));}
       const signatures=new Map();
       checkSourceLifetimeRefusals(this,program,'source-lifetime-signatures',entry=>{signatures.set(entry.fullName,functionLifetimeSignature(entry,context));});
       checkSourceLifetimeRefusals(this,program,'source-lifetime-bodies',entry=>{
@@ -721,3 +747,7 @@ export function withSourceLifetimeChecker(Base) {
     }
   };
 }
+
+import {checkOwnedVectorRepeat} from '../owned-vector-repeat-source.mjs';
+
+import {isCanonicalOwnedJsonVectorElement,validateOriginalOwnedJsonVectorEntry} from '../router-core-json-updates.mjs';

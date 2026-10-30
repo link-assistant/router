@@ -1,0 +1,1 @@
+Draft paired Codex loopback HTTP/WebSocket transport and private nonce-owned Node daemon lifecycle through actual setup/configure/remove/undo paths. All process, runtime, TS and native verification remains unrun; broader lifecycle and translation requirements remain unfinished.

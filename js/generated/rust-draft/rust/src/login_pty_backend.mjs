@@ -1,4 +1,4 @@
-// Generated draft from rust/src/login_pty_backend.rs; sha256=4bbd4ada62ed32e94145c779718668aea2e65ca7ebeb5e36d6047604d4d4e3df
+// Generated draft from rust/src/login_pty_backend.rs; sha256=0a7505cbae0116a99159a61e8af9216f9efe5c2439d17208bdf868cab897af38
 // Carried constructs are data, never runtime parity evidence.
 import { validateRustValue as ml_validate_rust_value } from "../../runtime/type-layout-runtime.mjs";
 
@@ -86,4 +86,4 @@ function rp_6c6f67696e5f7074795f6261636b656e642e636f6e7461696e735f6d61726b6572(c
 }
 
 export const translated = { ["TuiProgress"]: ml_make_TuiProgress_TuiProgress, ["TuiAction"]: Object.freeze({ ["AcceptTheme"]: ml_make_TuiAction_AcceptTheme, ["AcceptWorkspaceTrust"]: ml_make_TuiAction_AcceptWorkspaceTrust, ["SendLogin"]: ml_make_TuiAction_SendLogin, ["SelectLoginMethod"]: ml_make_TuiAction_SelectLoginMethod }), ["contains_marker"]: rp_6c6f67696e5f7074795f6261636b656e642e636f6e7461696e735f6d61726b6572 };
-export const provenance = {"sourcePath":"rust/src/login_pty_backend.rs","sourceSha256":"4bbd4ada62ed32e94145c779718668aea2e65ca7ebeb5e36d6047604d4d4e3df","executable":3,"executableFunctions":1,"executableConstants":0,"executableTypes":2,"executableConstructors":5,"carried":16,"preserved":20,"runtimeParity":false};
+export const provenance = {"sourcePath":"rust/src/login_pty_backend.rs","sourceSha256":"0a7505cbae0116a99159a61e8af9216f9efe5c2439d17208bdf868cab897af38","executable":3,"executableFunctions":1,"executableConstants":0,"executableTypes":2,"executableConstructors":5,"carried":16,"preserved":20,"runtimeParity":false};

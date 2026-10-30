@@ -56,21 +56,21 @@ pub fn row(record: &crate::translation_core::Json) -> crate::translation_core::T
     let number = |key: &str| record.get(key).and_then(Value::as_u64);
     let used_over_max = |used: &str, max: &str| {
         let used = number(used).unwrap_or(0);
-        number(max).map_or_else(|| format!("{used}/-"), |max| format!("{used}/{max}"))
+        number(max).map_or_else(|| crate::translation_core::format!("{used}/-"), |max| crate::translation_core::format!("{used}/{max}"))
     };
 
-    let scope = record
+    let scope = { let __router_json_reader_0 = record
         .get("scope")
-        .and_then(Value::as_str)
+        ; if let crate::translation_core::Maybe::Some(__router_json_reader_1) = __router_json_reader_0 { crate::translation_core::Json::as_str(__router_json_reader_1) } else { crate::translation_core::Maybe::None } }
         .filter(|scope| !scope.is_empty())
         .unwrap_or("client");
     let rpm = number("rate_limit_per_minute").map_or_else(|| crate::translation_core::format!("{}", "-"), |v| v.to_string());
-    let revoked = record
+    let revoked = { let __router_json_reader_2 = record
         .get("revoked")
-        .and_then(Value::as_bool)
+        ; if let crate::translation_core::Maybe::Some(__router_json_reader_3) = __router_json_reader_2 { crate::translation_core::Json::as_bool(__router_json_reader_3) } else { crate::translation_core::Maybe::None } }
         .unwrap_or(false);
 
-    format!(
+    crate::translation_core::format!(
         "{:<36}  {:<10}  {:<10}  {:<8}  {:<13}  {:<15}  {:<9}  {:<8}  {scope:<6}  {}",
         text("id"),
         number("issued_at").unwrap_or(0),

@@ -17,8 +17,8 @@ use link_assistant_router::deploy_config::{Merged, merge};
 /// A deployment of a *different* version than the CLI driving it is the exact
 /// disagreement the immutable-reference rule exists to prevent, so the default is
 /// pinned to the version that is running rather than to a moving tag.
-fn default_image() -> String {
-    format!(
+fn default_image() -> crate::translation_core::Text {
+    crate::translation_core::format!(
         "ghcr.io/link-assistant/router:{}",
         link_assistant_router::VERSION
     )
@@ -43,7 +43,7 @@ fn resolved_root(args: &DeployArgs, data_dir: &Path) -> crate::translation_core:
     } else {
         crate::operation_context::current_dir()
             .map(|directory| directory.join(root))
-            .map_err(|error| format!("could not resolve deployment root: {error}"))
+            .map_err(|error| crate::translation_core::format!("could not resolve deployment root: {error}"))
     }
 }
 
@@ -62,7 +62,7 @@ fn secret_refusal(token_secret: &crate::translation_core::Str, does_not_sign: bo
     link_assistant_router::token_secret::ensure_real(token_secret)
         .err()
         .map(|error| {
-            format!(
+            crate::translation_core::format!(
                 "error: {error}\nnote: the deployment signs its own tokens, so pass \
                  TOKEN_SECRET in the environment."
             )
@@ -95,7 +95,7 @@ fn apply_section(args: &mut DeployArgs, merged: &Merged, remote: bool) -> Result
             && let Some(mode) = &section.mode
         {
             args.mode = Some(DeployMode::from_str(mode, true).map_err(|_| {
-                format!("--config: mode must be `container` or `host`, not `{mode}`")
+                crate::translation_core::format!("--config: mode must be `container` or `host`, not `{mode}`")
             })?);
         }
         if args.claude_credentials.is_none()
@@ -104,7 +104,7 @@ fn apply_section(args: &mut DeployArgs, merged: &Merged, remote: bool) -> Result
         {
             args.claude_credentials =
                 Some(ClaudeCredentials::from_str(value, true).map_err(|_| {
-                    format!(
+                    crate::translation_core::format!(
                         "--config: claude_credentials must be `isolated` or `share`, not `{value}`"
                     )
                 })?);

@@ -95,3 +95,35 @@ receiving environment, then execute the emitted JavaScript and strict-compiled
 TypeScript. A concrete tree proves source fidelity only; it cannot supply missing
 grammar, types, ownership or runtime parity. Copying the compiler does not establish
 that the receiving repository's complete code can be translated.
+
+## Respect an explicit bulk-draft phase
+
+When the user requires the entire source batch before testing, keep a complete
+requirement ledger and draft implementations, forward/reverse mappings, runtime
+declarations, regression source and documentation together. Automated source
+writing may construct draft files; it does not qualify them. Defer tests,
+benchmarks, verification compiler runs, exploratory execution, freshness
+regeneration until that complete draft exists. Treat publication authorization
+separately: when the receiving user explicitly permits periodic source pushes
+while deferring feedback, publish only coherent checkpoints at their cadence
+and do not inspect CI status, logs, artifacts or review feedback or begin CI
+repairs until the complete draft exists. Do not infer this exception for a
+receiving project. Preserve every same-SHA JavaScript gate before fatal Rust CI.
+Keep all original verification obligations and deadlines for the later phase.
+Record partial source coverage and unverified changes explicitly; neither a
+rule catalogue, an output proposal nor a source/CST inverse establishes runtime
+parity or full synchronization. Preserve the receiving user's local-tool and
+resource restrictions, including CI-only Rust when requested.
+
+The [shared local and compatibility substitution examples](local-source-substitutions.md)
+show how separate family rules can reuse bounded lexical source selection and
+real language/repository CST substitutions. Their receiving/export, target and
+native oracle cases are source drafted and unrun; they certify no receiving
+coverage, parity or complete synchronization.
+
+
+The [primitive collection rule contracts](primitive-collection-rules.md) cover
+paired core/literal boundaries, nested original-span templates, complete
+ordinary helpers, synchronous argument loans, operation-local source indexes
+and separate receiving/verification obligations. These source drafts remain
+unrun and do not qualify full synchronization in a receiving repository.

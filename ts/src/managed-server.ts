@@ -605,3 +605,31 @@ async function daemon(): Promise<void> {
 }
 if (((process as any).argv as any)[1] === SELF && ((process as any).argv as any)[2] === '--daemon')
     daemon();
+
+// Private lifecycle helpers below use the existing authenticated daemon proof.
+export async function withNativeManagedConfigureTarget(context:any,operation:(target:any)=>Promise<any>):Promise<any>{
+ const {config={},options={},env={},cwd=process.cwd(),create=false}=context,p=paths(resolve(cwd,options.data_dir??config.data_dir??config.dataDir??env.DATA_DIR??'.router'));
+ const initial=await loadState(p);if(!initial&&!create)return null;
+ const lease=nonce();let selected:any;
+ await locked(p,async()=>{
+  let state=await loadState(p);if(!state&&!create)return;
+  const wasRunning=!!state?.pid&&alive(state.pid),keepRunning=state?.keep_running===true;
+  if(options.local&&!wasRunning)throw fail('--local requires an already-running owned Router');
+  if(!wasRunning){validateOptions('server.start',{},config);state=await start(p,state,config,false);}
+  try{
+   const identity=await verified(state,!state.claimed);let token=env.LINK_ASSISTANT_ROUTER_TOKEN??env.LINK_ASSISTANT_TOKEN;
+   if(token===undefined&&!state.claimed){if(!identity.bootstrap_valid||typeof state.bootstrap_token!=='string'||identity.bootstrap_fingerprint!==fingerprint(state.bootstrap_token))throw fail('Managed bootstrap administrator is unavailable or expired');token=state.bootstrap_token;}
+   if(token!==undefined&&(typeof token!=='string'||!token.trim()||/[\r\n]/u.test(token)))throw fail('Selected Router credential is invalid');
+   if(state.references.length>=10000)throw fail('Managed reference budget exhausted');state.references.push({pid:process.pid,owner_boot:OWNER_BOOT,lease_id:lease});validateState(state);await writeJSON(p.state,state);selected={boot:state.boot_id,started:!wasRunning,keepRunning,server:'http://127.0.0.1:'+state.port,token};
+  }catch(error){state.references=state.references.filter((reference:any)=>reference.lease_id!==lease);if(!wasRunning&&!keepRunning&&!state.references.length)await stop(p,state);throw error;}
+ });
+ if(!selected)return null;let succeeded=false,retained=false;
+ try{const value=await operation({server:selected.server,managementServer:selected.server,source:'managed native Node server',retainManagedServer:()=>{retained=true;},...(selected.token?{token:selected.token}:{})});succeeded=true;return value;}
+ finally{await locked(p,async()=>{
+  const state=await loadState(p);if(!state||state.boot_id!==selected.boot)throw fail('Managed Router changed while configure held its reference; replacement state was preserved');
+  if(!state.references.some((reference:any)=>reference.pid===process.pid&&reference.owner_boot===OWNER_BOOT&&reference.lease_id===lease))throw fail('Managed configure reference changed; state was preserved');
+  state.references=state.references.filter((reference:any)=>!(reference.pid===process.pid&&reference.owner_boot===OWNER_BOOT&&reference.lease_id===lease));
+  if((succeeded||retained)&&context.retainOnSuccess!==false){await verified(state);state.keep_running=true;await writeJSON(p.state,state);}
+  else if(selected.started&&!selected.keepRunning&&!state.keep_running&&!state.references.length)await stop(p,state);else await writeJSON(p.state,state);
+ });}
+}

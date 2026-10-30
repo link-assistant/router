@@ -1,0 +1,63 @@
+// One function's chronological source-selection DATA. No owner/type permit.
+import {readPrimitiveAliasOperand} from './primitive-local-argument-source.mjs';
+import {primitiveBitwiseType} from './primitive-bitwise-types.mjs';
+import {integerContract} from './integer-contracts.mjs';
+import {createChronologicalLocalSource} from './chronological-local-source.mjs';
+import {createWrittenLocalAliasRules,readLocalAliasInitializer} from './local-alias-written-source.mjs';
+import {censusLocalAliasBindings} from './local-alias-binding-source.mjs';
+const fail=message=>{throw new TypeError('Primitive carrier local source: '+message);};
+export function createPrimitiveCarrierLocalSource(rows,parameters,allParameters,{readWrittenRole,opaqueRegions=null}){
+ if(opaqueRegions===null)opaqueRegions=coreCarrierCallbackSourceRegions(rows);
+ if(!rows.some(row=>row.text==='let'||row.text==='for'||row.text==='match'))return {at(){return parameters;},evidence(){return null;},selectedCall(){}};
+ if(!carrierLocalCensus(rows,allParameters,opaqueRegions))return null;const initial=new Map([...parameters].flatMap(([name,role])=>{const domain=encodeCarrierRole(role);return domain?[[name,domain]]:[];}));
+ const source=createChronologicalLocalSource(rows,initial,{...createWrittenLocalAliasRules({readWrittenDomain:operand=>encodeCarrierRole(readWrittenRole(operand)),readOperand:(operand,bindings,declared)=>{const value=readCarrierAliasOperand(operand,bindings,decodeCarrierRole(declared));return value?{kind:encodeCarrierRole(value),binding:value.binding??null}:null;},acceptResult:event=>encodeCarrierRole(event.resultRole)}),initializerSizes:[1,2,3,4,5,6,7,8,9,10,11,12],initializerEnd:primitiveLocalInitializerEnd,aliasKind:'complete-immutable-carrier-alias',resultKind:'complete-selected-carrier-result-alias',opaqueRegions});let current=null;
+ const visible={has(name){return decodeCarrierRole(current.get(name))!==null;},get(name){return decodeCarrierRole(current.get(name))??undefined;},*[Symbol.iterator](){for(const [name,domain]of current){const role=decodeCarrierRole(domain);if(role)yield [name,role];}}};
+ return {at(position){current=source.at(position);return visible;},evidence:name=>source.evidence(name),selectedCall:event=>source.selectedCall(event)};
+}
+
+const ident=token=>token?.type==='ident'&&/^[\p{ID_Start}_][\p{ID_Continue}_]*$/u.test(token.text);
+const carrierDomain=/^(?:payload:(?:bool|[ui](?:8|16|32|64|128)|str|text-owned|owned-str)|option:(?:bool|[ui](?:8|16|32|64|128)|str|text-owned)|result:(?:bool|u64|i64|str|text)|json:json)$/u;
+export function encodeCarrierRole(role){const value=role&&role.kind+':'+role.domain;return typeof value==='string'&&carrierDomain.test(value)?value:null;}
+export function decodeCarrierRole(value){if(typeof value!=='string'||!carrierDomain.test(value))return null;const [kind,domain]=value.split(':');return {kind,domain};}
+function carrierLocalCensus(rows,parameters,opaqueRegions=[]){
+ return censusLocalAliasBindings(rows,parameters,{opaqueRegions,protectedNames:['std','core','crate','self','Self','translation_core','translation_json_fields_core','translation_integer_core','translation_primitive_option_core','translation_primitive_option_callbacks_core','translation_primitive_results_core','translation_owned_results_core','Option','Some','None','Result','Ok','Err','String','str','u64','i64','bool',...['u','i'].flatMap(prefix=>[8,16,32,64,128].map(bits=>prefix+bits))]}).reason===null;
+}
+function scalarOperand(rows,bindings,wanted){
+ const numeric=readCarrierNumericExpressionSource(rows,bindings,wanted);if(numeric)return numeric;
+ if(rows.length===1){const row=rows[0],known=ident(row)&&decodeCarrierRole(bindings.get(row.text));if(known)return {...known,binding:row.text};if(['true','false'].includes(row.text))return {kind:'payload',domain:'bool'};if(row.type==='string'&&/^(?:"|r#{0,255}")/u.test(row.text))return {kind:'payload',domain:'str'};}
+ const literal=readPrimitiveAliasOperand(rows,new Map(),wanted?.kind==='payload'&&primitiveBitwiseType(wanted.domain)?wanted.domain:null);if(literal&&primitiveBitwiseType(literal.kind))return {kind:'payload',domain:literal.kind};
+ if(rows.length===5&&rows[1].text==='.'&&['to_owned','to_string'].includes(rows[2].text)&&rows[3].text==='('&&rows[4].text===')'){const value=scalarOperand(rows.slice(0,1),bindings,null);if(value?.kind==='payload'&&value.domain==='str')return {kind:'payload',domain:'text-owned'};}return null;
+}
+export function readCarrierAliasOperand(rows,bindings,wanted=null){
+ if(!rows.length)return null;const callback=readCoreCallbackCallSource(rows,{get:name=>decodeCarrierRole(bindings.get(name))});if(callback)return callback;const core=readCoreCarrierCallSource(rows,{get:name=>decodeCarrierRole(bindings.get(name))});if(core)return core;const field=readJsonFieldCarrierCallSource(rows,bindings);if(field)return field;const numeric=readCarrierNumericExpressionSource(rows,bindings,wanted);if(numeric)return numeric;if(rows.length>256)return null;const scalar=scalarOperand(rows,bindings,wanted);if(scalar)return scalar;const integer=readIntegerCarrierCallSource(rows,bindings);if(integer)return integer;
+ if(rows.length===5&&ident(rows[0])&&decodeCarrierRole(bindings.get(rows[0].text))?.kind==='json'&&rows[1].text==='.'&&rows[3].text==='('&&rows[4].text===')'){const domain={as_bool:'bool',as_u64:'u64',as_i64:'i64',as_str:'str'}[rows[2].text];if(domain)return {kind:'option',domain};}
+ const text=rows.map(row=>row.text).join('');if(/^(?:(?:::)?(?:std|core)::option::Option::|Option::)?None$/u.test(text))return wanted?.kind==='option'?wanted:null;
+ const open=rows.findIndex(row=>row.text==='(');if(open<1||rows.at(-1).text!==')')return null;const path=rows.slice(0,open).map(row=>row.text).join(''),constructor=/^(?:(?:::)?(?:std|core)::option::Option::|Option::)?Some$/u.test(path)?'Some':/^(?:(?:::)?(?:std|core)::result::Result::|Result::)?(Ok|Err)$/u.exec(path)?.[1];if(!constructor)return null;
+ const value=scalarOperand(rows.slice(open+1,-1),bindings,constructor==='Err'?null:wanted&&{kind:'payload',domain:wanted.domain});if(constructor==='Err')return wanted?.kind==='result'&&value?.kind==='payload'&&value.domain==='text-owned'?wanted:null;
+ return value?.kind==='payload'&&(primitiveBitwiseType(value.domain)||['bool','str','text-owned'].includes(value.domain))&&(constructor==='Some'||['bool','u64','i64','str','text-owned'].includes(value.domain))?{kind:constructor==='Some'?'option':'result',domain:constructor==='Ok'&&value.domain==='text-owned'?'text':value.domain}:null;
+}
+
+// A bounded source initializer projection, not a type or executable permit.
+export function readCarrierLocalInitializer(rows,at,readWrittenRole){const selected=readLocalAliasInitializer(rows,at,part=>encodeCarrierRole(readWrittenRole(part)));return selected?{start:selected.start,written:decodeCarrierRole(selected.domain)}:null;}
+
+// Qualified native compatibility calls are source DATA, freshly derived for
+// this local initializer. The complete whole-function checker still runs.
+export function readIntegerCarrierCallSource(rows,bindings){
+ if(!Array.isArray(rows)||rows.length<8||rows.length>12||rows[0].text!=='crate'||rows[1].text!=='::'||rows[2].text!=='translation_integer_core'||rows[3].text!=='::'||rows[5]?.text!=='('||rows.at(-1).text!==')')return null;const row=integerContract(rows[4].text);if(!row)return null;const args=[];let start=6;for(let at=6;at<rows.length;at++)if(rows[at].text===','||at===rows.length-1){const value=scalarOperand(rows.slice(start,at),bindings,{kind:'payload',domain:row.parameters[args.length]});if(!value||value.kind!=='payload'||value.domain!==row.parameters[args.length])return null;args.push(value);start=at+1;}if(args.length!==row.parameters.length)return null;const optional=row.returns.endsWith('-option'),domain=optional?row.returns.slice(0,-7):row.returns;return primitiveBitwiseType(domain)?{kind:optional?'option':'payload',domain}:null;
+}
+
+// Decode only this invocation's lexical roles; no checked result is cached.
+export function readJsonFieldCarrierCallSource(rows,bindings){return readJsonFieldCallSource(rows,{get(name){const role=decodeCarrierRole(bindings.get(name));return role?.kind==='json'?'json-reference':role?.kind==='payload'?role.domain:null;}});}
+import {readJsonFieldCallSource} from './json-field-call-source.mjs';
+import {primitiveLocalInitializerEnd} from './primitive-local-expression-source.mjs';
+
+import {readCoreCarrierCallSource} from './core-carrier-call-source.mjs';
+
+import {readPrimitiveRoleExpressionSource} from './primitive-carrier-expression-source.mjs';
+// Decode only this operation's own lexical roles. No result is cached.
+export function readCarrierNumericExpressionSource(rows,bindings,wanted=null){
+ return readPrimitiveRoleExpressionSource(rows,{get:name=>decodeCarrierRole(bindings.get(name))},wanted);
+}
+
+import {readCoreCallbackCallSource} from './core-callback-call-source.mjs';
+import {coreCarrierCallbackSourceRegions} from './core-carrier-callback-source-regions.mjs';

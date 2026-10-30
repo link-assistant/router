@@ -30,6 +30,7 @@ function protectedInput(name) {
   if(/^(?:rust\/)?src\/generated_js_first\/(?:policy|mod)\.rs$/u.test(name)
     ||name==='tools/translation/js-to-rust/generated/owned-core-witness.rs'
     ||name==='tools/translation/js-to-rust/generated/owned-base64-witness.rs'
+    ||name==='tools/translation/js-to-rust/generated/owned-ascii-witness.rs'
     ||name===affinityDescriptor)return false;
   return name.endsWith('.rs')||/(^|\/)Cargo\.(?:toml|lock)$/u.test(name)
     ||name.startsWith('js/src/')
@@ -185,7 +186,7 @@ export function synchronizationSteps({root,direction='both',check=false,profiles
     steps.push({id:'javascript-meta-typescript',timeoutMs:300_000,args:producer('tools/translation/js-to-rust/native-typescript.mjs',`const result=producer.regenerateNativeTypeScript(root,{sourceRoot:root,check});console.log(JSON.stringify(result));if(check&&(result.changed.length||result.unexpected.length))process.exitCode=1;`,root,check)});
   }
   if(direction!=='javascript-to-rust') {
-    const base=[path.join(implementationRoot,'scripts/translate-router.mjs'),'--root',root,'--progress',...(check?['--check']:[])];
+    const base=[path.join(implementationRoot,"scripts/translate-router-flat-native-owned-field-meta.mjs"),'--retain-output-text','--root',root,'--progress',...(check?['--check']:[])];
     steps.push({id:'rust-meta-javascript-typescript',timeoutMs:2_400_000,args:base});
     if(profiles)steps.push({id:'rust-platform-matrix',timeoutMs:3_600_000,args:[...base,'--profile-matrix']});
     steps.push({id:'original-serialization-registry',timeoutMs:600_000,args:producer('tools/translation/serialization-schema/bulk.mjs',`console.log(JSON.stringify(producer.produceBulkSerialization({root,write:!check})));`,root,check)});

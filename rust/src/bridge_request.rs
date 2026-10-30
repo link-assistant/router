@@ -1,6 +1,5 @@
 //! Fail-closed request translation between `Anthropic` and `OpenAI` dialects.
 
-use base64::Engine as _;
 use serde_json::{Value, json};
 
 #[path = "bridge_request_tools.rs"]
@@ -554,8 +553,7 @@ fn responses_file_to_anthropic(part: &Value, path: &str) -> Result<Value, String
                 json!({"type": "base64", "media_type": media_type, "data": data})
             }
             "text/plain" => {
-                let bytes = base64::engine::general_purpose::STANDARD
-                    .decode(data)
+                let bytes = crate::translation_core::base64_standard_decode_text(data)
                     .map_err(|error| format!("{path}.file_data is invalid base64: {error}"))?;
                 let text = String::from_utf8(bytes)
                     .map_err(|_| format!("{path}.file_data is not UTF-8 plain text"))?;
@@ -683,7 +681,7 @@ fn document_to_responses(block: &Value, path: &str) -> Result<Value, String> {
                 ));
             }
             let data = require_string(source, "data", &format!("{path}.source"))?;
-            let encoded = base64::engine::general_purpose::STANDARD.encode(data.as_bytes());
+            let encoded = crate::translation_core::base64_standard_encode_bytes(data.as_bytes());
             json!({"type": "input_file", "file_data": format!("data:text/plain;base64,{encoded}")})
         }
         Some("file") => json!({

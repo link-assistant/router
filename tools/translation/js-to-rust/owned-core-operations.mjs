@@ -2,10 +2,10 @@
 // The body is always reconstructed from the current complete original source.
 import {isDeepStrictEqual,types} from 'node:util';
 import {posix} from 'node:path';
-import {analyzeOriginalOwnedCoreSource,requireOwnedCoreSourceCurrent,ownedPlainData,ownedCoreSourceData} from './owned-core-source.mjs';
+import {analyzeOriginalOwnedCoreSource,requireOwnedCoreSourceCurrent,ownedPlainData,ownedCoreSourceData,withOwnedRuntimeImportEdges} from './owned-core-source.mjs';
 import {originalNamespaceTraversalIntrinsicsUnchanged,originalStaticSourceIntrinsicsUnchanged} from '../original-json-intrinsics.mjs';
 import {ownedBase64Operation,ownedBase64RustCall,ownedBase64RustTypes,ownedBase64TypeScriptTypes} from './owned-base64-source.mjs';
-import {ownedJsonReaderOperation,ownedJsonOptionalPayload,ownedJsonBorrowed,ownedJsonRustTypes,ownedJsonTypeScriptTypes,ownedJsonReaderRustCall} from './owned-json-source.mjs';
+import {ownedJsonReaderOperation,ownedJsonOptionalPayload,ownedJsonBorrowed,ownedJsonRustTypes,ownedJsonTypeScriptTypes,ownedJsonReaderRustCall,ownedJsonReaderTypeWitness} from './owned-json-source.mjs';
 import {ownedJsonOptionalReaderOperation,ownedJsonOptionalReaderRustCall} from './owned-json-source.mjs';
 import {ownedAsciiOperation,ownedAsciiRustCall} from './owned-ascii-source.mjs';
 const issued=new WeakMap(),runtimes=new WeakMap();
@@ -150,23 +150,25 @@ export function withOwnedCoreItemChecks(run){
  }
 }
 export function checkOwnedCoreProgram(program,context){
- if(!Array.isArray(program)||program.length>4096)fail('invalid program');const names=new Set();return withOwnedCoreItemChecks(check=>program.map(item=>{const result=check(item,context);if(names.has(result.name))fail('duplicate function');names.add(result.name);return result;}));
+ if(!Array.isArray(program)||program.length>4096)fail('invalid program');const names=new Set();return withOwnedRuntimeImportEdges(()=>withOwnedCoreItemChecks(check=>program.map(item=>{const result=check(item,context);if(names.has(result.name))fail('duplicate function');names.add(result.name);return result;})));
 }
 export function ownedCoreContext(item){return issued.get(checkOwnedCoreItem(item))?.context;}
 const rustString=value=>'"'+value.replace(/[\\"\x00-\x1f\x7f]/gu,c=>({'\\':'\\\\','"':'\\"','\n':'\\n','\r':'\\r','\t':'\\t'}[c]??'\\u{'+c.codePointAt(0).toString(16)+'}'))+'"';
-const TS_TYPES={...ownedBase64TypeScriptTypes,...ownedJsonTypeScriptTypes,'json-option-input':'Parameters<typeof __ro_router_core_json_option_as_str>[0]',json:'JsonValue','json-ref':'JsonValue','map-ref':"Extract<JsonValue,{readonly $:'Object'}>['field0']",str:'string',bool:'boolean',usize:'bigint'};
-const RUST_TYPES={...ownedBase64RustTypes,...ownedJsonRustTypes,'json-option-input':"::std::option::Option<&'a crate::translation_core::Json>",json:'crate::translation_core::Json','json-ref':"&'a crate::translation_core::Json",'map-ref':"&'a ::serde_json::Map<::std::string::String,crate::translation_core::Json>",str:"&'a str",bool:'bool',usize:'u64'};
+const TS_TYPES={...primitiveBitwiseTypeScriptTypes,...ownedBase64TypeScriptTypes,...ownedJsonTypeScriptTypes,'json-option-input':'Parameters<typeof __ro_router_core_json_option_as_str>[0]',json:'JsonValue','json-ref':'JsonValue','map-ref':"Extract<JsonValue,{readonly $:'Object'}>['field0']",str:'string',bool:'boolean',usize:'bigint'};
+const RUST_TYPES={...primitiveBitwiseRustTypes,...ownedBase64RustTypes,...ownedJsonRustTypes,'json-option-input':"::std::option::Option<&'a crate::translation_core::Json>",json:'crate::translation_core::Json','json-ref':"&'a crate::translation_core::Json",'map-ref':"&'a ::serde_json::Map<::std::string::String,crate::translation_core::Json>",str:"&'a str",bool:'bool',usize:'u64'};
 export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  const program=checkOwnedCoreProgram(input),rust=target==='rust';if(!rust&&target!=='typescript')fail('unknown target');if(!program.length)return '';
- const context=issued.get(program[0]).context;requireOwnedCoreSourceCurrent(context);const sourceData=ownedCoreSourceData(context);
+ const context=issued.get(program[0]).context;requireOwnedCoreSourceCurrent(context);const sourceData=ownedCoreSourceData(context),rustTypes=sourceData.primitiveOperators===true?{...RUST_TYPES,...primitiveBitwiseRustTypes}:RUST_TYPES;
  if(program.some(item=>issued.get(item).context!==context))fail('mixed receiving contexts');
- let sequence=0;const imports=new Set();
+ let sequence=0;const imports=new Set(),primitiveTypeImports=new Set();
+ function publicTypeScriptType(type){if(sourceData.primitiveOperators===true&&primitiveBitwiseType(type)){const row=primitiveBitwiseType(type);primitiveTypeImports.add(row.alias);return row.alias;}if(type==='json-option-input'){imports.add('router_core_json_option_as_str');return TS_TYPES[type];}const witness=ownedJsonReaderTypeWitness(type);if(witness){imports.add(witness);return 'ReturnType<typeof __ro_'+witness+'>';}return TS_TYPES[type];}
+
  function expr(value,borrowOwned=false){
   switch(value.kind){
    case 'variable':if(rust&&value.type==='text-owned')return borrowOwned?'&'+rustName(value.name):rustName(value.name)+'.to_owned()';return rust?(value.type==='json'?(borrowOwned?'&'+rustName(value.name):'__ro_copy(&'+rustName(value.name)+')'):rustName(value.name)):value.name;
    case 'string':return rust?rustString(value.value):JSON.stringify(value.value);
    case 'bool':return String(value.value);
-   case 'integer':return rust?value.value+(value.type==='i64'?'_i64':'_u64'):value.value+'n';
+   case 'integer':return rust?value.value+'_'+(primitiveBitwiseType(value.type)?.name??(value.type==='i64'?'i64':'u64')):value.value+'n';
    case 'not':return '(!'+expr(value.value)+')';
    case 'binary':return '('+expr(value.left)+' '+(rust?({'===':'==','!==':'!='}[value.op]??value.op):value.op)+' '+expr(value.right)+')';
    case 'choose':return rust?'(if '+expr(value.cond)+' { '+expr(value.then)+' } else { '+expr(value.else)+' })':'('+expr(value.cond)+' ? '+expr(value.then)+' : '+expr(value.else)+')';
@@ -182,6 +184,10 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
    case 'option-some':return rust?'Some('+expr(value.value)+')':"({$:'Some',field0:"+expr(value.value)+'})';
    case 'option-test':return rust?'('+expr(value.value)+').is_'+(value.some?'some':'none')+'()':'('+expr(value.value)+'.$ === '+JSON.stringify(value.some?'Some':'None')+')';
    case 'option-field':return rust?'(match '+expr(value.value)+' { Some(value) => value, None => unreachable!("checked original Some branch") })':expr(value.value)+'.field0';
+   case 'primitive-arithmetic-call':case 'primitive-method-call':case 'primitive-not-call':case 'primitive-cast-call':case 'primitive-shift-call':imports.add(value.name);return emitOwnedPrimitiveOperatorCall(value,{rust,expression:argument=>expr(argument),argumentName:()=> '__ro_arg_'+sequence++});
+   case 'primitive-bitwise-call':{
+    const domain=primitiveBitwiseType(value.type),boolean=value.type==='bool';if(value.name!=='primitiveBitwise'||!boolean&&!domain||domain&&(value.bits!==domain.bits||value.signed!==domain.signed)||value.args.length!==2||value.args.some(argument=>!primitiveBitwiseCompatible(argument.type,value.type))||!ownedBooleanBitwiseOperator(value.operation))fail('checked primitive bitwise contract differs');imports.add(value.name);if(!rust)return '__ro_primitiveBitwise('+value.args.map(argument=>expr(argument)).join(', ')+', '+JSON.stringify(value.operation)+', '+(domain?domain.bits:'null')+', '+(domain?domain.signed:'null')+')';const names=value.args.map(()=> '__ro_arg_'+sequence++),bindings=value.args.map((argument,index)=>'let '+names[index]+' = '+expr(argument)+';');return '{ '+bindings.join(' ')+' '+ownedBooleanBitwiseRustCall(value.operation,names)+' }';
+   }
    case 'json-option-call':{
     const op=ownedJsonOptionalReaderOperation(value.name);if(!op||value.type!==op.ret||value.args.length!==1||value.args[0].type!==op.input)fail('checked optional Json operation differs');imports.add(value.name);
     if(!rust)return '__ro_'+value.name+'('+expr(value.args[0])+')';
@@ -194,7 +200,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
     return '{ '+bindings.join(' ')+' '+ownedJsonReaderRustCall(value.name,names)+' }';
    }
    case 'ascii-call':{
-    const op=ownedAsciiOperation(value.name);if(!op||value.type!==op.ret||value.args.length!==2||value.args.some(argument=>argument.type!=='str'))fail('checked ASCII contract differs');imports.add(value.name);
+    const op=ownedAsciiOperation(value.name);if(!op||value.type!==op.ret||value.args.length!==op.args.length||value.args.some(argument=>argument.type!=='str'))fail('checked ASCII contract differs');imports.add(value.name);
     if(!rust)return '__ro_'+value.name+'('+value.args.map(argument=>expr(argument)).join(', ')+')';
     const names=value.args.map(()=> '__ro_arg_'+sequence++),bindings=value.args.map((argument,index)=>'let '+names[index]+' = '+expr(argument)+';');
     return '{ '+bindings.join(' ')+' '+ownedAsciiRustCall(value.name,names)+' }';
@@ -241,20 +247,22 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
   const rustTypes=item.hostCalls.some(call=>ownedAsciiOperation(call.name))?{...RUST_TYPES,str:"&'a crate::translation_core::Str"}:RUST_TYPES;
   const borrowed=type=>['json-ref','map-ref','str','bytes-ref','base64-error-ref','json-option-input'].includes(type)||ownedJsonBorrowed(type),loan=borrowed(item.returns),explicit=loan&&item.resultRoot!==null&&item.params.filter(param=>borrowed(param.type)).length>1;
   const parameters=item.params.map(param=>{
-   const type=rust?rustTypes[param.type].replace("'a ",explicit&&param.name===item.resultRoot?"'a ":''):TS_TYPES[param.type];
+   const type=rust?rustTypes[param.type].replace("'a ",explicit&&param.name===item.resultRoot?"'a ":''):publicTypeScriptType(param.type);
    return (rust?param.rust:param.name)+': '+type;
   }).join(', ');
-  const returns=rust?rustTypes[item.returns].replace("'a ",item.resultRoot===null?"'static ":explicit?"'a ":''):TS_TYPES[item.returns];
+  const returns=rust?rustTypes[item.returns].replace("'a ",item.resultRoot===null?"'static ":explicit?"'a ":''):publicTypeScriptType(item.returns);
   const signature=rust?'#[must_use]\n#[rustfmt::skip]\n'+(item.exported?'pub ':'')+'fn '+item.name+(explicit?"<'a>":'')+'(':(item.exported?'export ':'')+'function '+item.javascript+'(';
-  return signature+parameters+')'+(rust?' -> ':': ')+returns+' {\n'+body(item.body,4)+'\n}';
+  return signature+parameters+')'+(rust?' -> ':': ')+returns+' {\n'+(ownedBase64InputPrelude(item,rust)?ownedBase64InputPrelude(item,rust)+'\n':'')+body(item.body,4)+'\n}';
  }).join('\n\n');
  requireOwnedCoreSourceCurrent(context);
  if(rust)return RUST_SUPPORT+'\n\n'+code+'\n';
  const output=outputPath??program[0].source.path,relative=(name,base=sourceData.runtimeRoot)=>{const path=posix.relative(posix.dirname(output),base+'/'+name);return path.startsWith('.')?path:'./'+path;};
  const lines=['import type {JsonValue} from '+JSON.stringify(relative('json-macro-runtime.mjs',[...imports].some(ownedAsciiOperation)?sourceData.declarationRoot:sourceData.runtimeRoot))+';'];
- if([...imports].some(name=>ownedBase64Operation(name)))lines.push('import type {Base64Error,Base64Result} from '+JSON.stringify(relative('base64-runtime.mjs'))+';');
- for(const family of ['json-update','json-macro','base64','json','json-option','string-iterator']){
-  const names=[...imports].filter(name=>(ownedAsciiOperation(name)?'string-iterator':ownedJsonOptionalReaderOperation(name)?'json-option':ownedBase64Operation(name)?'base64':ownedJsonReaderOperation(name)?'json':name.startsWith('json_macro_')?'json-macro':'json-update')===family);
+ if(primitiveTypeImports.size){const location=posix.relative(posix.dirname(output),(sourceData.declarationRoot??sourceData.runtimeRoot)+'/primitive-operator-runtime.mjs');lines.push('import type { '+[...primitiveTypeImports].join(', ')+' } from '+JSON.stringify(location.startsWith('.')?location:'./'+location)+';');}
+ if(hasOwnedBase64Input(program)||[...imports].some(name=>ownedBase64Operation(name)))lines.push('import type {Base64Error,Base64Result} from '+JSON.stringify(relative('base64-runtime.mjs'))+';');
+ if(hasOwnedBase64Input(program))lines.push('import {base64ResultInput as __ro_base64ResultInput} from '+JSON.stringify(relative('base64-runtime.mjs'))+';');
+ for(const family of ['primitive-operator','json-update','json-macro','base64','json','json-option','string-iterator']){
+  const names=[...imports].filter(name=>(ownedPrimitiveOperatorOperation(name)?'primitive-operator':ownedAsciiOperation(name)?'string-iterator':ownedJsonOptionalReaderOperation(name)?'json-option':ownedBase64Operation(name)?'base64':ownedJsonReaderOperation(name)?'json':name.startsWith('json_macro_')?'json-macro':'json-update')===family);
   if(names.length)lines.push('import { '+names.map(name=>name+' as __ro_'+name).join(', ')+' } from '+JSON.stringify(relative(family+'-runtime.mjs'))+';');
  }
  return lines.join('\n')+'\n\n'+code+'\n';
@@ -300,16 +308,17 @@ fn __ro_with_field(base: &crate::translation_core::Json, key: &str, value: &crat
 /** Prepare only the actual registered module, after fresh complete source joins. */
 export async function prepareOwnedCoreRuntime(input){
  const program=checkOwnedCoreProgram(input),modules={update:await import('../json-update-runtime.mjs'),macro:await import('../json-macro-runtime.mjs')};
+ if(program.some(item=>item.sourceNativeOperators?.some(row=>row.kind==='native-fixed-bitwise')||item.hostCalls.some(call=>ownedPrimitiveOperatorOperation(call.name))))modules.primitive=await import('../extensions/primitive-operator-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedJsonReaderOperation(call.name))))modules.json=await import('../extensions/json-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedJsonOptionalReaderOperation(call.name))))modules.optional=await import('../json-option-runtime.mjs');
- if(program.some(item=>item.hostCalls.some(call=>ownedBase64Operation(call.name))))modules.base64=await import('../base64-runtime.mjs');
+ if(hasOwnedBase64Input(program)||program.some(item=>item.hostCalls.some(call=>ownedBase64Operation(call.name))))modules.base64=await import('../base64-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedAsciiOperation(call.name))))modules.ascii=await import('../extensions/string-iterator-runtime.mjs');
  checkOwnedCoreProgram(program);const token=Object.freeze({schema:'owned-core-runtime-v1'});runtimes.set(token,{program,modules});return token;
 }
 export function evaluateOwnedCoreProgram(input,name,args,token){
  const program=checkOwnedCoreProgram(input),state=runtimes.get(token);if(!state||!isDeepStrictEqual(state.program,program))fail('unissued runtime/program');
  const item=program.find(item=>item.name===name||item.javascript===name);if(!item||!Array.isArray(args)||args.length!==item.params.length)fail('actual arguments differ');
- const env=new Map(item.params.map((param,index)=>[param.name,args[index]]));
+ const env=ownedBase64InputEnvironment(item.params,args,state.modules);
  const get=(value,scope)=>{
   switch(value.kind){
    case 'variable':return scope.get(value.name);
@@ -317,7 +326,7 @@ export function evaluateOwnedCoreProgram(input,name,args,token){
    case 'integer':return BigInt(value.value);
    case 'not':return !get(value.value,scope);
    case 'choose':return get(value.cond,scope)?get(value.then,scope):get(value.else,scope);
-   case 'binary':{const left=get(value.left,scope);if(value.op==='&&')return left&&get(value.right,scope);if(value.op==='||')return left||get(value.right,scope);const right=get(value.right,scope);return value.op==='==='?left===right:left!==right;}
+   case 'binary':{const left=get(value.left,scope);if(value.op==='&&')return left&&get(value.right,scope);if(value.op==='||')return left||get(value.right,scope);const right=get(value.right,scope);switch(value.op){case '===':return left===right;case '!==':return left!==right;case '<':return left<right;case '<=':return left<=right;case '>':return left>right;case '>=':return left>=right;default:fail('unissued checked binary operator');}}
    case 'json-array':return state.modules.macro.json_macro_array(value.items.map(child=>get(child,scope)));
    case 'json-object':return state.modules.macro.json_macro_object(value.entries.map(entry=>[entry.key,get(entry.value,scope)]));
    case 'ascii-call':{if(!state.modules.ascii||!ownedAsciiOperation(value.name))fail('unissued ASCII runtime');return Reflect.apply(state.modules.ascii[value.name],undefined,value.args.map(value=>get(value,scope)));}
@@ -326,6 +335,8 @@ export function evaluateOwnedCoreProgram(input,name,args,token){
    case 'option-some':return {$:'Some',field0:get(value.value,scope)};
    case 'option-test':return get(value.value,scope).$===(value.some?'Some':'None');
    case 'option-field':return get(value.value,scope).field0;
+   case 'primitive-arithmetic-call':case 'primitive-method-call':case 'primitive-not-call':case 'primitive-cast-call':case 'primitive-shift-call':return evaluateOwnedPrimitiveOperatorCall(value,scope,get,state.modules.primitive);
+   case 'primitive-bitwise-call':{if(!state.modules.primitive||!ownedBooleanBitwiseOperation(value.name)||!ownedBooleanBitwiseOperator(value.operation))fail('unissued boolean primitive runtime');const domain=primitiveBitwiseType(value.type);return Reflect.apply(state.modules.primitive.primitiveBitwise,undefined,[get(value.args[0],scope),get(value.args[1],scope),value.operation,domain?.bits??null,domain?.signed??null]);}
    case 'json-option-call':{if(!state.modules.optional||!ownedJsonOptionalReaderOperation(value.name))fail('unissued optional Json runtime');return Reflect.apply(state.modules.optional[value.name],undefined,[get(value.args[0],scope)]); }
    case 'json-reader-call':return Reflect.apply(state.modules.json[value.name],undefined,value.args.map(value=>get(value,scope)));
    case 'owned-call':{const module=value.name.startsWith('json_macro_')?state.modules.macro:state.modules.update;return Reflect.apply(module[value.name],undefined,value.args.map(value=>get(value,scope)));}
@@ -335,3 +346,66 @@ export function evaluateOwnedCoreProgram(input,name,args,token){
  const run=(body,scope)=>{for(const statement of body){if(statement.kind==='let')scope.set(statement.name,get(statement.value,scope));else if(statement.kind==='return')return get(statement.value,scope);else return run(get(statement.cond,scope)?statement.then:statement.else,new Map(scope));}fail('no return');};
  return run(item.body,env);
 }
+
+// GENERATED: bounded independent owned-core batch evaluation.
+function evaluateOwnedCorePrepared(program,name,args,state){
+ const item=program.find(item=>item.name===name||item.javascript===name);if(!item||!Array.isArray(args)||args.length!==item.params.length)fail('actual arguments differ');
+ const env=ownedBase64InputEnvironment(item.params,args,state.modules);
+ const get=(value,scope)=>{
+  switch(value.kind){
+   case 'variable':return scope.get(value.name);
+   case 'string':case 'bool':return value.value;
+   case 'integer':return BigInt(value.value);
+   case 'not':return !get(value.value,scope);
+   case 'choose':return get(value.cond,scope)?get(value.then,scope):get(value.else,scope);
+   case 'binary':{const left=get(value.left,scope);if(value.op==='&&')return left&&get(value.right,scope);if(value.op==='||')return left||get(value.right,scope);const right=get(value.right,scope);switch(value.op){case '===':return left===right;case '!==':return left!==right;case '<':return left<right;case '<=':return left<=right;case '>':return left>right;case '>=':return left>=right;default:fail('unissued checked binary operator');}}
+   case 'json-array':return state.modules.macro.json_macro_array(value.items.map(child=>get(child,scope)));
+   case 'json-object':return state.modules.macro.json_macro_object(value.entries.map(entry=>[entry.key,get(entry.value,scope)]));
+   case 'ascii-call':{if(!state.modules.ascii||!ownedAsciiOperation(value.name))fail('unissued ASCII runtime');return Reflect.apply(state.modules.ascii[value.name],undefined,value.args.map(value=>get(value,scope)));}
+   case 'base64-call':{const op=ownedBase64Operation(value.name);if(!op||!state.modules.base64)fail('unissued base64 runtime');return Reflect.apply(state.modules.base64[value.name],undefined,value.args.map(value=>get(value,scope)));}
+   case 'option-none':return {$:'None'};
+   case 'option-some':return {$:'Some',field0:get(value.value,scope)};
+   case 'option-test':return get(value.value,scope).$===(value.some?'Some':'None');
+   case 'option-field':return get(value.value,scope).field0;
+   case 'primitive-arithmetic-call':case 'primitive-method-call':case 'primitive-not-call':case 'primitive-cast-call':case 'primitive-shift-call':return evaluateOwnedPrimitiveOperatorCall(value,scope,get,state.modules.primitive);
+   case 'primitive-bitwise-call':{if(!state.modules.primitive||!ownedBooleanBitwiseOperation(value.name)||!ownedBooleanBitwiseOperator(value.operation))fail('unissued boolean primitive runtime');const domain=primitiveBitwiseType(value.type);return Reflect.apply(state.modules.primitive.primitiveBitwise,undefined,[get(value.args[0],scope),get(value.args[1],scope),value.operation,domain?.bits??null,domain?.signed??null]);}
+   case 'json-option-call':{if(!state.modules.optional||!ownedJsonOptionalReaderOperation(value.name))fail('unissued optional Json runtime');return Reflect.apply(state.modules.optional[value.name],undefined,[get(value.args[0],scope)]); }
+   case 'json-reader-call':return Reflect.apply(state.modules.json[value.name],undefined,value.args.map(value=>get(value,scope)));
+   case 'owned-call':{const module=value.name.startsWith('json_macro_')?state.modules.macro:state.modules.update;return Reflect.apply(module[value.name],undefined,value.args.map(value=>get(value,scope)));}
+   default:fail('unknown evaluated expression');
+  }
+ };
+ const run=(body,scope)=>{for(const statement of body){if(statement.kind==='let')scope.set(statement.name,get(statement.value,scope));else if(statement.kind==='return')return get(statement.value,scope);else return run(get(statement.cond,scope)?statement.then:statement.else,new Map(scope));}fail('no return');};
+ return run(item.body,env);
+}
+
+export function evaluateOwnedCoreBatch(input,calls,token){
+ if(!originalNamespaceTraversalIntrinsicsUnchanged()||!originalStaticSourceIntrinsicsUnchanged())fail('batch requires original host operations');
+ const program=checkOwnedCoreProgram(input),state=runtimes.get(token);
+ if(!state||!isDeepStrictEqual(state.program,program))fail('unissued runtime/program');
+ if(!program.length)fail('batch requires an issued nonempty program');
+ const array=(value,bound)=>{
+  if(types.isProxy(value)||!Array.isArray(value)||Object.getPrototypeOf(value)!==Array.prototype)fail('batch requires ordinary dense arrays');
+  const fields=Object.getOwnPropertyDescriptors(value),length=fields.length;
+  if(!length||!Object.hasOwn(length,'value')||!Number.isSafeInteger(length.value)||length.value<0||length.value>bound||Reflect.ownKeys(fields).length!==length.value+1)fail('batch array bound or fields differ');
+  const result=[];for(let at=0;at<length.value;at++){const field=fields[at];if(!field||!Object.hasOwn(field,'value')||!field.enumerable)fail('batch array data differs');result.push(field.value);}return result;
+ };
+ const requests=array(calls,4096).map(value=>{const pair=array(value,2);if(pair.length!==2||typeof pair[0]!=='string'||pair[0].length>128)fail('batch call pair differs');return [pair[0],array(pair[1],64)];});
+ const context=issued.get(program[0]).context,results=[];
+ for(const [name,args]of requests){
+  requireOwnedCoreSourceCurrent(context);let failed=false;
+  try{results.push(evaluateOwnedCorePrepared(program,name,args,state));}
+  catch(error){failed=true;throw error;}
+  finally{try{requireOwnedCoreSourceCurrent(context);}catch(error){if(!failed)throw error;}}
+ }
+ return results;
+}
+
+import {ownedBooleanBitwiseOperation,ownedBooleanBitwiseOperator,ownedBooleanBitwiseRustCall} from './owned-boolean-bitwise-source.mjs';
+
+import {primitiveBitwiseType,primitiveBitwiseCompatible,primitiveBitwiseRustTypes,primitiveBitwiseTypeScriptTypes} from '../primitive-bitwise-types.mjs';
+
+import {ownedPrimitiveOperatorOperation} from './owned-primitive-operator-source.mjs';
+import {emitOwnedPrimitiveOperatorCall,evaluateOwnedPrimitiveOperatorCall} from './owned-primitive-operator-emission.mjs';
+
+import {ownedBase64InputPrelude,ownedBase64InputEnvironment,hasOwnedBase64Input} from './owned-base64-inputs.mjs';

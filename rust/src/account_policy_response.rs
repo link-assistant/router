@@ -107,7 +107,7 @@ pub async fn rewrite(response: Response, upstream: &crate::translation_core::Str
     Response::from_parts(parts, Body::from_stream(stream))
 }
 
-fn rewrite_block(block: &crate::translation_core::Str, upstream: &crate::translation_core::Str, visible: &crate::translation_core::Str) -> String {
+fn rewrite_block(block: &crate::translation_core::Str, upstream: &crate::translation_core::Str, visible: &crate::translation_core::Str) -> crate::translation_core::Text {
     let data = block
         .lines()
         .filter_map(|line| line.strip_prefix("data:"))
@@ -127,7 +127,7 @@ fn rewrite_block(block: &crate::translation_core::Str, upstream: &crate::transla
                     None
                 } else {
                     emitted = true;
-                    Some(format!("data: {value}"))
+                    Some(crate::translation_core::format!("data: {value}"))
                 }
             } else {
                 Some(line.to_string())

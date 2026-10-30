@@ -1,0 +1,16 @@
+// Complete native implementation copy; source preparation grants no execution.
+import {readFileSync} from 'node:fs';
+import {gunzipSync} from 'node:zlib';
+import {createHash} from 'node:crypto';
+import {fileURLToPath} from 'node:url';
+import {resolve} from 'node:path';
+import {createRulePipeline} from './rule-pipeline.mjs';
+import {transportConcreteSourceEquations} from './concrete-source-equations.mjs';
+const ROOT=fileURLToPath(new URL('../../',import.meta.url)),ARCHIVE='tools/translation/source-profiles/owned-result-native-copy/complete-original-and-proposal.json.gz',PIN='dfe2da2394b68510d6e51f047dece70652a4bb61203213ce5ae0f9864573c37f';
+const hash=value=>createHash('sha256').update(value).digest('hex'),need=(value,message)=>{if(!value)throw new TypeError('Owned Result native source copy: '+message);};
+export function prepareOwnedResultNativeCopy({root=ROOT}={}){
+ const packed=readFileSync(resolve(root,ARCHIVE));need(hash(packed)===PIN,'complete source archive changed');const row=JSON.parse(gunzipSync(packed,{maxOutputLength:1048576}));need(row.schema==='owned-result-complete-native-copy-v1'&&Buffer.byteLength(row.source)===row.bytes&&hash(row.source)===row.sha256,'complete original source equation required');const before=readFileSync(resolve(root,row.originalPath),'utf8');need(before===row.source&&row.after.startsWith(before+'\n'),'actual complete old native implementation must remain intact');
+ const stage=createRulePipeline([{phase:'language',rules:[{id:'rust:retain-complete-primitive-Result-implementation-and-add-owned-success-interfaces',apply:value=>{need(value===before,'complete old source join');return row.after;}}]},{phase:'repository',rules:[{id:'router:publish-owned-Result-native-copy-in-a-separate-module',apply:value=>value}]}]).run(before),after=stage.value,current=readFileSync(resolve(root,row.path),'utf8'),stages=transportConcreteSourceEquations([{before,after,language:'Rust'},{before:after,after,language:'Rust'}]).map((stage,index)=>({...stage,phase:index?'repository':'language'}));const later=prepareGenericTextResultLibrary({root}).files.find(file=>file.path===row.path);need(later?.before===after,'complete original owned Result source must join generic suffix');const currentAfter=later.after,laterStages=transportConcreteSourceEquations([{before:after,after:currentAfter,language:'Rust'},{before:currentAfter,after:currentAfter,language:'Rust'}]).map((stage,index)=>({...stage,phase:index?'repository':'language'}));need(current===currentAfter&&stages[0].inverse===before&&stages[1].inverse===after,'whole installed source and inverse differ');need(readFileSync(resolve(root,row.originalPath),'utf8')===before&&readFileSync(resolve(root,ARCHIVE)).equals(packed),'actual source inputs changed');return {schema:row.schema,files:[{path:row.path,originalPath:row.originalPath,before,language:after,after,current,currentAfter,laterHistories:[{id:'generic-text-result:complete-native-library-suffix',before:after,after:currentAfter,equation:later.equation,stages:laterStages,sourceAuthority:false,semanticAuthority:false}],inverse:before,stages,trace:stage.trace,nativeRustGrammarChecked:false}],sourceAuthority:false,semanticAuthority:false,receivingExecuted:false,rustExecuted:false};
+}
+
+import {prepareGenericTextResultLibrary} from './prepare-generic-text-result-library.mjs';

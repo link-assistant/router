@@ -1,3 +1,4 @@
+import {preparePrimitiveMetadataCopy} from '../prepare-primitive-metadata-copy.mjs';
 // Receiving history DATA only. Every current digest operation still executes
 // the actual complete module; this capture grants no compiler or source permit.
 import {types} from 'node:util';
@@ -13,6 +14,7 @@ export function internalDigestAdoptionHistory(input){
  const keys=Reflect.ownKeys(input),fields=Object.getOwnPropertyDescriptors(input),sources={};
  if(keys.length!==3||keys.some(path=>!PRIVATE_METADATA_DIGEST_SOURCE_PATHS.includes(path)))fail('exact complete source set required');
  for(const path of PRIVATE_METADATA_DIGEST_SOURCE_PATHS){const field=fields[path];if(!field||!Object.hasOwn(field,'value')||!field.enumerable||typeof field.value!=='string'||field.value.length>524288)fail('bounded primitive source fields required');sources[path]=field.value;}
+ const currentSources={...sources},primitive=preparePrimitiveMetadataCopy(),laterSourceLayers=[];for(const row of primitive.files){if(Object.hasOwn(sources,row.path)&&sources[row.path]===row.after){sources[row.path]=row.before;laterSourceLayers.push(row);}}
  const path=PRIVATE_METADATA_DIGEST_SOURCE_PATHS[0],source=sources[path],ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('installed TypeScript 5.9.3 required');
  const pipeline=createRulePipeline([
   {phase:'language',rules:[{id:'history:native-complete-adopted-kernel',apply:()=>{
@@ -25,8 +27,8 @@ export function internalDigestAdoptionHistory(input){
   }}]},
   {phase:'repository',rules:[{id:'history:retain-every-later-source-byte-and-inverse',apply:row=>{
    const adoptionSource=row.adoptionSources[path],restored=adoptionSource+row.suffix;if(restored!==source)fail('whole current source inverse differs');
-   const documents=Object.entries(sources).map(([path,source])=>({path,source,meta:concrete(source)}));
-   return {...row,documents,adoptionMeta:concrete(adoptionSource),inverse:restored,compilerAuthority:false,scope:'Exact original adoption equation plus every later appended source byte; current runtime tests execute the complete actual module.'};
+   const documents=Object.entries(currentSources).map(([path,source])=>({path,source,meta:concrete(source)}));
+   return {...row,documents,currentSources,laterSourceLayers,adoptionMeta:concrete(adoptionSource),inverse:restored,compilerAuthority:false,scope:'Exact original adoption, every appended byte and the complete native import evolution; runtime tests execute actual current modules.'};
   }}]},
  ]);
  const result=pipeline.run(null);return {...result.value,trace:result.trace};

@@ -13,6 +13,16 @@ const compile=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],
 function find(tree,predicate){if(!tree||typeof tree!=='object')return null;if(predicate(tree))return tree;for(const child of Object.values(tree))for(const value of Array.isArray(child)?child:[child]){const result=find(value,predicate);if(result)return result;}return null;}
 const refuse=source=>{const result=compile(source);assert.equal(result.meta.executable.some(entry=>entry.name==='bad'),false,source);assert.ok(result.meta.refused.length,source);};
 const specs=[['into','into','fninto(self)->U','{U::from(self)}'],['identity','from','fnfrom(t:T)->T','{t}'],['string','from','fnfrom(s:&str)->String','{s.to_owned()}']];
+test('nested original String and primitive conversions preserve every surrounding record field and caller binding',{timeout:60000},async()=>{
+  const source='struct Packet{before:u64,label:String,flag:bool,identity:u64,after:u64,copied_flag:bool}pub fn packet(before:u64,flag:bool,after:u64,value:&str)->Packet{Packet{before,label:value.into(),flag,identity:before.into(),after,copied_flag:bool::from(flag)}}';
+  const result=compile(source);assert.deepEqual(result.meta.refused,[]);
+  await verifyTypedTargets(result,api=>{
+    for(const before of [0n,7n,18446744073709551615n])for(const flag of [false,true])for(const value of ['','ascii','É😀','\0']){
+      const after=before===0n?18446744073709551615n:0n,actual=api.packet(before,flag,after,value);
+      assert.deepEqual(actual,{$:'Packet',before,label:value,flag,identity:before,after,copied_flag:flag});assert.ok(Object.isFrozen(actual));
+    }
+  },{childTimeoutMs:30000});
+});
 test('complete original source selection preserves all three actual members traits attrs and allocation boundary',()=>{
   const plan=originalConversionPlan(),files=originalConversionInputs();assert.equal(files.size,5);files.clear();assert.equal(originalConversionInputs().size,5);
   for(const [key]of specs){const member=plan[key],source=originalConversionInputs().get(member.path).source;assert.equal(member.memberOriginalSource,source.slice(member.memberOriginalSpan.start,member.memberOriginalSpan.end));assert.equal(member.implOriginalSource,source.slice(member.implOriginalSpan.start,member.implOriginalSpan.end));assert.equal(member.bodySource,source.slice(member.bodyOriginalSpan.start,member.bodyOriginalSpan.end));assert.strictEqual(requireOriginalConversionMember(member),member);assert.throws(()=>requireOriginalConversionMember(structuredClone(member)),/copied or unselected/);}

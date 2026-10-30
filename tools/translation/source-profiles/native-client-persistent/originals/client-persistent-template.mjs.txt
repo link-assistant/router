@@ -1,0 +1,66 @@
+/** Persistent client codecs share the native ownership/restore contracts. */
+import {clientObject,objectProperty,clientFailure,optionalClientText,renderClientJSON,writeClientFile,writeClientMarker,removeClientFile,sameClientValue} from './client-files.mjs';
+import {nativeClientModelAuthorized} from './client-catalog.mjs';
+import {editClientTomlSource,parseClientTomlSource} from './client-toml-cst.mjs';
+const MODEL_KEYS=['ANTHROPIC_MODEL','ANTHROPIC_DEFAULT_OPUS_MODEL','ANTHROPIC_DEFAULT_SONNET_MODEL','ANTHROPIC_DEFAULT_HAIKU_MODEL','CLAUDE_CODE_SUBAGENT_MODEL'];
+const TARGET_KEYS=['ANTHROPIC_MODEL','CLAUDE_CODE_SUBAGENT_MODEL'];
+const text=(value/*:any*/)/*:any*/=>typeof value==='string'?value:null;
+const has=(value/*:any*/,key/*:string*/)/*:boolean*/=>Object.hasOwn(value,key);
+const set=(object/*:any*/,key/*:string*/,value/*:any*/)/*:void*/=>{if(value===null)delete object[key];else Object.defineProperty(object,key,{value,writable:true,enumerable:true,configurable:true});};
+function ownership(source/*:any*/,client/*:string*/)/*:any*/{
+ const marker=source===null?null:clientObject(source,'Ownership marker');if(marker===null)return null;
+ if(client==='claude'){
+  if(typeof marker.anthropic_base_url!=='string')throw clientFailure('Claude ownership marker has no managed endpoint');
+  const entries=marker.gateway_env??{};if(!entries||typeof entries!=='object'||Array.isArray(entries))throw clientFailure('Claude ownership marker has invalid environment entries');
+  for(const key of Object.keys(entries)){const row=entries[key];if(!row||typeof row!=='object'||Array.isArray(row)||!['string','undefined'].includes(typeof row.managed)&&row.managed!==null||!['string','undefined'].includes(typeof row.previous)&&row.previous!==null)throw clientFailure('Claude ownership marker has invalid environment values');}
+ }
+ return marker;
+}
+export function persistentClaudeGatewayModel(catalog/*:any[]*/)/*:any*/{
+ if(catalog.some(row=>row.owned_by==='anthropic'))return null;
+ const rows=catalog.filter(row=>row.owned_by==='z.ai');const flagship=rows.find(row=>row.id==='glm-5.3'&&row.router_unavailable_reason==null);if(flagship)return flagship.id;
+ return rows.sort((left,right)=>Number(left.router_unavailable_reason==null)-Number(right.router_unavailable_reason==null)||(left.provider_created_at??-1)-(right.provider_created_at??-1)||(left.id<right.id?-1:left.id>right.id?1:0)).at(-1)?.id??null;
+}
+function claudePlan(source/*:any*/,markerSource/*:any*/,endpoint/*:string*/,catalog/*:any[]*/)/*:any*/{
+ const document=clientObject(source),marker=ownership(markerSource,'claude'),saved=text(document.model),semanticDefault=saved!==null&&saved.trim().toLowerCase()==='default',anthropic=catalog.some(row=>row.owned_by==='anthropic');
+ if(saved!==null&&!semanticDefault&&!nativeClientModelAuthorized('claude',catalog,saved.trim())&&!(anthropic&&['opus','sonnet','haiku'].includes(saved.trim().split('[')[0].toLowerCase())))throw clientFailure('The saved Claude model is no longer authorized; choose an advertised model explicitly');
+ const env=objectProperty(document,'env'),old=marker?.gateway_env??{},legacy=old.CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC;if(legacy?.managed==='0'&&env.CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC==='0')set(env,'CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC',text(legacy.previous));
+ const previous=marker!==null?text(marker.previous_anthropic_base_url):text(env.ANTHROPIC_BASE_URL)!==endpoint?text(env.ANTHROPIC_BASE_URL):null;
+ const users=MODEL_KEYS.filter(key=>has(env,key)&&!(has(old,key)&&typeof old[key].managed==='string'&&env[key]===old[key].managed)),gateway/*:any*/={};
+ const manage=(key/*:string*/,value/*:any*/)/*:void*/=>{const previous=has(old,key)?text(old[key].previous):text(env[key]);set(env,key,value);Object.defineProperty(gateway,key,{value:{managed:value,previous},enumerable:true,writable:true,configurable:true});};
+ set(env,'ANTHROPIC_BASE_URL',endpoint);manage('CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY','1');manage('ANTHROPIC_AUTH_TOKEN',null);manage('ANTHROPIC_API_KEY',null);
+ const model=persistentClaudeGatewayModel(catalog);for(const key of MODEL_KEYS)if(!users.includes(key))manage(key,saved!==null&&!semanticDefault?null:TARGET_KEYS.includes(key)?model:null);
+ return {contents:renderClientJSON(document),marker:{anthropic_base_url:endpoint,previous_anthropic_base_url:previous,gateway_env:gateway,user_model_keys:users}};
+}
+function codexDocument(source/*:any*/)/*:any*/{try{return parseClientTomlSource(source??'');}catch{throw clientFailure('Client configuration contains invalid TOML');}}
+function table(document/*:any*/,key/*:string*/)/*:any*/{const value=document[key];if(value!==undefined&&(!value||typeof value!=='object'||Array.isArray(value)||value instanceof Date))throw clientFailure('Codex provider configuration requires a TOML table');return value??{};}
+function codexPlan(source/*:any*/,markerSource/*:any*/,endpoint/*:string*/,catalog/*:any[]*/,options/*:any*/)/*:any*/{
+ const document=codexDocument(source),marker=ownership(markerSource,'codex'),providers=table(document,'model_providers');table(providers,'link-assistant');
+ const backend=options.backendBaseURL??endpoint.replace(/\/v1$/u,'')+'/backend-api',selected=options.model,websockets=selected?catalog.some(row=>row.id===selected&&row.owned_by!=='z.ai'):!catalog.some(row=>row.owned_by==='z.ai');
+ const changes/*:any[]*/=[{path:['model_provider'],action:'set',value:'link-assistant'},{path:['chatgpt_base_url'],action:'set',value:backend},{path:['experimental_realtime_ws_base_url'],action:'set',value:endpoint},{path:['experimental_realtime_webrtc_call_base_url'],action:'set',value:endpoint}];
+ const fields/*:any*/={name:'OpenAI',base_url:endpoint,wire_api:'responses',requires_openai_auth:true,supports_websockets:websockets,supports_standalone_web_search:true};for(const key of Object.keys(fields))changes.push({path:['model_providers','link-assistant',key],action:'set',value:fields[key]});changes.push({path:['model_providers','link-assistant','env_key'],action:'delete'});
+ const previous=(key/*:string*/,managed/*:string*/,prior/*:string*/)/*:any*/=>marker&&text(document[key])===text(marker[managed])?text(marker[prior]):text(document[key]);
+ return {contents:editClientTomlSource(source??'',changes).after,marker:{previous_provider:marker?text(marker.previous_provider):document.model_provider==='link-assistant'?null:text(document.model_provider),managed_chatgpt_base_url:backend,previous_chatgpt_base_url:previous('chatgpt_base_url','managed_chatgpt_base_url','previous_chatgpt_base_url'),managed_realtime_base_url:endpoint,previous_realtime_ws_base_url:previous('experimental_realtime_ws_base_url','managed_realtime_base_url','previous_realtime_ws_base_url'),previous_realtime_call_base_url:previous('experimental_realtime_webrtc_call_base_url','managed_realtime_base_url','previous_realtime_call_base_url')}};
+}
+export function planPersistentClient(client/*:string*/,source/*:any*/,markerSource/*:any*/,endpoint/*:string*/,catalog/*:any[]*/,options/*:any*/={})/*:any*/{
+ if(!['claude','codex'].includes(client))throw clientFailure('Persistent codec requires Claude or Codex');if(typeof endpoint!=='string'||!Array.isArray(catalog))throw clientFailure('Persistent client requires an endpoint and live catalog');return client==='claude'?claudePlan(source,markerSource,endpoint,catalog):codexPlan(source,markerSource,endpoint,catalog,options);
+}
+export function planRemovePersistentClient(client/*:string*/,source/*:any*/,markerSource/*:any*/)/*:any*/{
+ if(source===null||!source.trim()||markerSource===null||!markerSource.trim())return {contents:source,removeMarker:false};const marker=ownership(markerSource,client);
+ if(client==='claude'){
+  const document=clientObject(source),env=document.env;if(env&&typeof env==='object'&&!Array.isArray(env)){
+   if(env.ANTHROPIC_BASE_URL===marker.anthropic_base_url)set(env,'ANTHROPIC_BASE_URL',text(marker.previous_anthropic_base_url));
+   for(const key of Object.keys(marker.gateway_env??{})){const row=marker.gateway_env[key],managed=text(row.managed),owns=managed===null?!has(env,key):env[key]===managed;if(owns)set(env,key,text(row.previous));}
+  }return {contents:renderClientJSON(document),removeMarker:true};
+ }
+ if(client!=='codex')throw clientFailure('Persistent codec requires Claude or Codex');const document=codexDocument(source),changes/*:any[]*/=[];
+ const restore=(key/*:string*/,managed/*:any*/,previous/*:any*/)/*:void*/=>{if(text(document[key])===text(managed))changes.push(previous===null?{path:[key],action:'delete'}:{path:[key],action:'set',value:previous});};
+ restore('model_provider','link-assistant',text(marker.previous_provider));restore('chatgpt_base_url',marker.managed_chatgpt_base_url,text(marker.previous_chatgpt_base_url));restore('experimental_realtime_ws_base_url',marker.managed_realtime_base_url,text(marker.previous_realtime_ws_base_url));restore('experimental_realtime_webrtc_call_base_url',marker.managed_realtime_base_url,text(marker.previous_realtime_call_base_url));changes.push({path:['model_providers','link-assistant'],action:'delete'});return {contents:editClientTomlSource(source,changes).after,removeMarker:true};
+}
+export async function setupPersistentClient(paths/*:any*/,endpoint/*:string*/,catalog/*:any[]*/,options/*:any*/={})/*:Promise<any>*/{
+ const source=await optionalClientText(paths.config),before=await optionalClientText(paths.marker),plan=planPersistentClient(paths.info.client,source,before,endpoint,catalog,options),onWrite=options.onWrite??(async()=>{});
+ const result=await writeClientFile(paths.config,source,plan.contents);await onWrite(paths.config,result);if(before===null||!sameClientValue(clientObject(before,'Ownership marker'),plan.marker)){await writeClientMarker(paths.marker,plan.marker);await onWrite(paths.marker);}return result;
+}
+export async function removePersistentClient(paths/*:any*/,options/*:any*/={})/*:Promise<any>*/{
+ const source=await optionalClientText(paths.config),marker=await optionalClientText(paths.marker),plan=planRemovePersistentClient(paths.info.client,source,marker),onWrite=options.onWrite??(async()=>{});const result=plan.contents===source?{path:paths.config,backup:null,changed:false}:await writeClientFile(paths.config,source,plan.contents);if(result.changed)await onWrite(paths.config,result);if(plan.removeMarker){await removeClientFile(paths.marker);await onWrite(paths.marker);}return result;
+}

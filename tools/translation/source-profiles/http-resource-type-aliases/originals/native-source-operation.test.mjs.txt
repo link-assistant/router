@@ -1,0 +1,42 @@
+// Independent source-operation regression SOURCE. All cases remain unrun.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {gzipSync} from 'node:zlib';
+import {createHash} from 'node:crypto';
+import {prepareNativeSubstitutionCopy,withNativeSubstitutionOperation,nativeSubstitutionCopyHasChanges} from '../prepare-native-substitution-copy.mjs';
+import {prepareNativeTypedSubstitutionCopy} from '../prepare-native-typed-substitution-copy.mjs';
+import {collectNativeSourceDescendants,nativeSourceHistoryFiles,nativeSourceHistoryOriginalGuards} from '../native-source-descendants.mjs';
+import {prepareNativeSourceOperationPart1} from '../prepare-native-source-operation-part-1.mjs';
+const limits={timeout:60000},hash=value=>createHash('sha256').update(value).digest('hex'),source=value=>'export function value(){return '+value+';}\n';
+function fixture(t){
+ const root=mkdtempSync(join(tmpdir(),'router-native-source-operation-'));t.after(()=>rmSync(root,{recursive:true,force:true}));mkdirSync(join(root,'profiles'));const write=(path,value)=>writeFileSync(join(root,path),value);
+ function recipe(id,path,before,after,{originalPath,typed=false}={}){const original=source(before),expected='return '+before+';',replacement='return '+after+';',row={path,source:original,bytes:Buffer.byteLength(original),sha256:hash(original),languageEdits:[{start:original.indexOf(expected),end:original.indexOf(expected)+expected.length,expected,replacement,owner:{kind:'function',name:'value'}}],repositoryEdits:[]};if(originalPath){row.originalPath=originalPath;write(originalPath,original);}const packed=gzipSync(JSON.stringify({schema:'native-substitution-source-copy-v1',id,files:[row]})),archive='profiles/'+id+'.json.gz';write(archive,packed);return(laterPlans=[]) => (typed?prepareNativeTypedSubstitutionCopy:prepareNativeSubstitutionCopy)({root,archive,pin:hash(packed),id,laterPlans});}
+ return {root,write,recipe};
+}
+test('one complete synchronous operation keeps independent source plans serializable and preserves nested scope results',limits,t=>{
+ const api=fixture(t);api.write('value.mjs',source(2));const plan=api.recipe('plain','value.mjs',1,2);const result=withNativeSubstitutionOperation(()=>{const first=plan(),second=withNativeSubstitutionOperation(()=>plan());assert.deepEqual(first,second);assert.equal(nativeSubstitutionCopyHasChanges(first),false);assert.doesNotThrow(()=>JSON.stringify(first));return second;});assert.equal(result.receivingExecuted,false);assert.equal(result.semanticAuthority,false);assert.deepEqual(plan(),result);
+});
+test('repeated syntax cannot cache physical source archive grammar or original-source verdicts',limits,t=>{
+ const api=fixture(t);api.write('value.mjs',source(2));const plan=api.recipe('fresh','value.mjs',1,2,{originalPath:'original.mjs.txt'});withNativeSubstitutionOperation(()=>{plan();api.write('value.mjs',source(3));assert.throws(()=>plan(),/unknown physical/u);api.write('value.mjs',source(2));plan();api.write('original.mjs.txt',source(9));assert.throws(()=>plan(),/original implementation differs/u);});api.write('original.mjs.txt',source(1));assert.equal(nativeSubstitutionCopyHasChanges(plan()),false);
+ const broken=api.recipe('broken','value.mjs',1,'{');assert.throws(()=>withNativeSubstitutionOperation(()=>broken()),/native source grammar/u);assert.equal(nativeSubstitutionCopyHasChanges(plan()),false);
+});
+test('exception async proxy and own-thenable exits clear operation scope without invoking accessors',limits,t=>{
+ const api=fixture(t);api.write('value.mjs',source(2));const plan=api.recipe('cleanup','value.mjs',1,2),error=new Error('original operation failed');assert.throws(()=>withNativeSubstitutionOperation(()=>{plan();throw error;}),value=>value===error);let calls=0;assert.throws(()=>withNativeSubstitutionOperation(async()=>{calls++;return plan();}),/synchronous/u);assert.equal(calls,0);const value={};Object.defineProperty(value,'then',{get(){calls++;return ()=>{};}});assert.throws(()=>withNativeSubstitutionOperation(()=>value),/thenable/u);assert.equal(calls,0);assert.throws(()=>withNativeSubstitutionOperation(new Proxy(()=>plan(),{})),/synchronous/u);assert.equal(nativeSubstitutionCopyHasChanges(plan()),false);
+});
+test('overlapping complete histories retain every original and reject unknown boundaries or nested getter data',limits,t=>{
+ const api=fixture(t);api.write('value.mjs',source(3));api.write('outer.mjs',source(1));const leaf=api.recipe('leaf','value.mjs',2,3,{originalPath:'leaf-original.txt'})(),parent=api.recipe('parent','value.mjs',1,2,{originalPath:'parent-original.txt'})([leaf]),rows=collectNativeSourceDescendants([parent,leaf],new Set()),merged={...parent,files:rows,descendantFiles:[]};assert.equal(rows.length,1);assert.equal(rows[0].before,source(1));assert.equal(rows[0].currentAfter,source(3));assert.equal(rows[0].parallelHistories.length,1);assert.deepEqual(nativeSourceHistoryOriginalGuards(merged).map(row=>row.path).sort(),['leaf-original.txt','parent-original.txt']);const outer=api.recipe('outer','outer.mjs',0,1);outer([merged]);api.write('leaf-original.txt',source(8));assert.throws(()=>outer([merged]),/nested descendant original/u);api.write('leaf-original.txt',source(2));const unknown=api.recipe('unknown','value.mjs',0,3)();assert.throws(()=>collectNativeSourceDescendants([parent,unknown],new Set()),/adjacent descendant/u);
+ const direct=api.recipe('direct-overlap','value.mjs',0,1)([parent,leaf]);assert.equal(direct.files[0].currentAfter,source(3));assert.equal(direct.files[0].parallelHistories.length,1);assert.equal(direct.files[0].inverse,source(0));assert.equal(nativeSubstitutionCopyHasChanges(direct),false);
+ let calls=0;const forged=structuredClone(leaf);forged.files[0].stages[0].nested={};Object.defineProperty(forged.files[0].stages[0].nested,'toJSON',{get(){calls++;return ()=>null;}});assert.throws(()=>collectNativeSourceDescendants([leaf,forged],new Set()),/adjacent descendant/u);assert.equal(calls,0);
+});
+test('the separate typed producer forwards whole descendant histories and rechecks nested originals',limits,t=>{
+ const api=fixture(t);api.write('value.mjs',source(3));api.write('typed.mts',source(1));const leaf=api.recipe('typed-leaf','value.mjs',2,3,{originalPath:'typed-leaf-original.txt'})(),typed=api.recipe('typed-parent','typed.mts',0,1,{typed:true})([leaf]);assert.equal(typed.files.length,1);assert.equal(typed.descendantFiles.length,1);assert.equal(nativeSubstitutionCopyHasChanges(typed),false);assert.deepEqual(nativeSourceHistoryOriginalGuards(typed).map(row=>row.path),['typed-leaf-original.txt']);
+});
+test('source status includes complete descendants while preserving every direct file membership',limits,t=>{
+ const api=fixture(t);api.write('value.mjs',source(2));api.write('outer.mjs',source(1));const leaf=api.recipe('status-leaf','value.mjs',1,2)(),outer=api.recipe('status-parent','outer.mjs',0,1)([leaf]);assert.equal(outer.files.length,1);assert.equal(outer.descendantFiles.length,1);assert.equal(nativeSubstitutionCopyHasChanges(outer),false);const stale=structuredClone(outer);stale.descendantFiles[0].current=source(1);assert.equal(nativeSubstitutionCopyHasChanges(stale),true);
+});
+test('all three bounded complete-original groups retain every original driver copy and both source inverses',limits,()=>{
+ const plan=prepareNativeSourceOperationPart1(),rows=nativeSourceHistoryFiles(plan);assert.equal(plan.files.length,64);assert.equal(rows.length,149);assert.ok(rows.some(row=>row.path.endsWith('/prepare-native-typed-substitution-copy.mjs')));assert.equal(nativeSubstitutionCopyHasChanges(plan),false);for(const row of rows){assert.equal(row.current,row.currentAfter);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}assert.equal(plan.sourceAuthority,false);assert.equal(plan.semanticAuthority,false);assert.equal(plan.receivingExecuted,false);
+});

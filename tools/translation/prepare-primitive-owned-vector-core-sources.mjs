@@ -1,0 +1,11 @@
+import {fileURLToPath} from 'node:url';
+import {resolve} from 'node:path';
+import {prepareMixedNativeSubstitutionCopy as prepareNativeSubstitutionCopy,writeMixedNativeSubstitutionCopy as writeNativeSubstitutionCopy,withMixedNativeSubstitutionOperation as withNativeSubstitutionOperation,mixedNativeSubstitutionCopyHasChanges as nativeSubstitutionCopyHasChanges} from './failure-aware-mixed-native-substitution-copy.mjs';
+import {preparePrimitiveOwnedVectorBindingsSources} from './prepare-primitive-owned-vector-bindings-sources.mjs';
+const ROOT=fileURLToPath(new URL('../../',import.meta.url));
+export function preparePrimitiveOwnedVectorCoreSources({root=ROOT}={}){
+ return withNativeSubstitutionOperation(()=>prepareNativeSubstitutionCopy({root,archive:'tools/translation/source-profiles/primitive-owned-vector-core/complete-originals-and-rules.json.gz',pin:'a0c82cd51d3b0474be2317f0ca4078dc7af1f280dc991643633cd85879161543',id:'router:primitive-owned-vector-core-complete-source-substitutions-v1',laterPlans:[preparePrimitiveOwnedVectorBindingsSources({root})]}));
+}
+if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
+ const args=process.argv.slice(2);if(args.length!==1||!['--emit','--write','--check'].includes(args[0]))throw new TypeError('Use --emit|--write|--check');const plan=preparePrimitiveOwnedVectorCoreSources();if(args[0]==='--write')writeNativeSubstitutionCopy(plan,{root:ROOT});if(args[0]==='--check'&&nativeSubstitutionCopyHasChanges(plan))throw new TypeError('Primitive owned vector core source differs');console.log(JSON.stringify(args[0]==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),receivingExecuted:false}));
+}

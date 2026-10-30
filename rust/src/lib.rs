@@ -180,6 +180,7 @@ pub mod token_reservation;
 pub mod token_secret;
 pub mod tokens_remote;
 pub mod translation_core;
+pub mod translation_json_core;
 pub mod verification;
 // Unix domain sockets do not exist on Windows, and `tokio::net::UnixListener`
 // is gated accordingly.
@@ -283,3 +284,45 @@ mod config_error;
 pub mod management_access;
 pub mod management_config;
 pub mod management_middleware;
+
+#[cfg(test)]
+mod translation_filesystem_tests;
+
+pub mod translation_collections_core;
+
+pub mod translation_state_core;
+
+pub mod translation_json_fields_core;
+
+pub mod translation_carriers_core;
+
+pub mod translation_integer_core;
+pub mod translation_fixed_types_core;
+
+pub mod translation_stream_core;
+
+pub mod translation_text_core;
+
+pub mod translation_primitive_option_core;
+
+pub mod translation_primitive_option_callbacks_core;
+
+pub mod translation_primitive_results_core;
+
+pub mod translation_async_control_core;
+
+pub mod translation_owned_results_core;
+
+pub mod translation_http_protocol_core;
+
+pub mod translation_http_transport_core;
+
+pub mod translation_http_deadline_core;
+
+pub mod translation_http_deadline_results_core;
+
+pub mod translation_primitive_sequences_core;
+
+pub mod translation_primitive_vectors_core;
+
+pub mod translation_owned_text_vectors_core;

@@ -64,3 +64,21 @@ pub fn guard<'a>(value: &'a crate::translation_core::Str, alphabet: &crate::tran
         return "";
     }
 }
+
+#[must_use]
+#[rustfmt::skip]
+pub fn scalar_length(value: &crate::translation_core::Str) -> u64 {
+    return { let __ro_arg_8 = value; (crate::translation_core::unicode_scalar_count(__ro_arg_8) as u64) };
+}
+
+#[must_use]
+#[rustfmt::skip]
+pub fn scalar_limit(value: &crate::translation_core::Str) -> bool {
+    return ({ let __ro_arg_9 = value; (crate::translation_core::unicode_scalar_count(__ro_arg_9) as u64) } <= 64_u64);
+}
+
+#[must_use]
+#[rustfmt::skip]
+pub fn selected_count(value: &crate::translation_core::Str, yes: bool) -> u64 {
+    return (if yes { { let __ro_arg_10 = value; (crate::translation_core::unicode_scalar_count(__ro_arg_10) as u64) } } else { 0_u64 });
+}

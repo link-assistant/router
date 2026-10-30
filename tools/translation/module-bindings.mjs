@@ -9,8 +9,8 @@ import {macroBindingAffects} from './macro-subnamespaces.mjs';
 import {deriveFootprintAt,deriveFootprintHelperAttributeAt,isDeriveFootprintContext} from './derive-footprints.mjs';
 import {deriveBangModules,deriveBangOutputAt,deriveBangHelperAttributeAt,isDeriveBangContext} from './derive-bang-context.mjs';
 import {proveDeriveEmptyEnclosingEffect,deriveEmptyEnclosingEffectFacts} from './derive-output-effects.mjs';
-import {toolAttributeAt,isToolAttributeContext,inertInnerLintItem} from './tool-attributes.mjs';
-import {builtinInnerSourceItem} from './inner-source-attributes.mjs';
+import {toolAttributeAt,isToolAttributeContext,assertToolAttributeContextInputs,inertInnerLintItem} from './tool-attributes.mjs';
+import {builtinStructuredDocumentationInnerSourceItem as builtinInnerSourceItem} from './inner-source-attributes.mjs';
 const namespaces=['type','value','macro'];
 const identifier=token=>token?.type==='ident' && /^[\p{L}_][\p{L}\p{N}_]*$/u.test(token.text);
 const key=path=>path.join('::');
@@ -143,7 +143,7 @@ const standardDerives=new Set(['Clone','Copy','Debug','Default','PartialEq','Eq'
 function uncertainty(attributes,{moduleAttribute=false}={}) {
   // Built-in #[path = "..."] selects a module file, never arbitrary item
   // expansion. The tracked graph still owns that file and cfg resolution.
-  const unknown=attributes.some(attribute=>!harmless.has(attribute.name) && !['cfg','derive','macro_export','macro_use'].includes(attribute.name) && !(attribute.name==='path' && moduleAttribute && attribute.pathLiteral) || attribute.name==='derive' && attribute.tokens.filter(token=>/^[\p{L}_][\p{L}\p{N}_]*$/u.test(token)).slice(1).some(name=>!standardDerives.has(name)));
+  const unknown=attributes.some(attribute=>attribute.tokens?.[1]==='::'||!harmless.has(attribute.name) && !['cfg','derive','macro_export','macro_use'].includes(attribute.name) && !(attribute.name==='path' && moduleAttribute && attribute.pathLiteral) || attribute.name==='derive' && attribute.tokens.filter(token=>/^[\p{L}_][\p{L}\p{N}_]*$/u.test(token)).slice(1).some(name=>!standardDerives.has(name)));
   return {type:unknown,bang:unknown || attributes.some(attribute=>attribute.name==='macro_use'),attribute:unknown,macro:unknown || attributes.some(attribute=>attribute.name==='macro_use'),conditional:attributes.some(attribute=>['cfg','cfg_attr'].includes(attribute.name))};
 }
 function nestedExportUncertainty(tokens,start,profile,helperAttributeClosed=()=>false) {
@@ -156,6 +156,7 @@ function nestedExportUncertainty(tokens,start,profile,helperAttributeClosed=()=>
     const end=close(tokens,bracket),body=tokens.slice(bracket+1,end);
     const original=itemConfiguration(tokens.slice(at,end+1),profile).attributes[0];
     if(isInertConditionalAttribute(original)){at=end;continue;}
+    if(documentationArgumentMayExportMacros({name:body[0]?.text,tokens:body.map(token=>token.text)}))return {start:tokens[at].start,end:tokens[end].end};
     if(helperAttributeClosed({start:tokens[at].start,end:tokens[end].end})){at=end;continue;}
     if(body.some(token=>identifier(token)&&token.text==='macro_export')||uncertainty([{name:body[0]?.text,tokens:body.map(token=>token.text)}]).macro)return {start:tokens[at].start,end:tokens[end].end};
     at=end;
@@ -194,6 +195,7 @@ export function resolveUnscopedModuleBindings({modules,externalModules=new Map()
   if(deriveBangContext){if(!isDeriveBangContext(deriveBangContext))throw new TypeError('Unsealed derive bang output context');modules=deriveBangModules(deriveBangContext,{deriveContext,modules,externalModules,compilationProfile:profileInput});}
   if(toolContext&&!isToolAttributeContext(toolContext))throw new TypeError('Unsealed tool attribute context');
   const profile=compilationProfile(profileInput);
+  if(toolContext)assertToolAttributeContextInputs(toolContext,{modules,externalModules,compilationProfile:profile});
   const scopes=new Map(),containers=new Map(),tasks=[],macroUses=[],diagnostics=[];
   const diagnostic=(scope,message,span,extra={})=>{const value={kind:'module-binding',message,source:scope.file,module:[...scope.path],span,...extra};diagnostics.push(value);return value;};
   for(const module of modules) {
@@ -485,12 +487,16 @@ export function resolveModuleBindings({modules,externalModules=new Map(),compila
 
 // Explicit dimension format; every legacy resolver/default byte above remains exact.
 import {isDeriveEnclosingNamespaceContext,deriveEnclosingNamespaceModules,deriveEnclosingNamespaceOutputAt,deriveEnclosingNamespaceHelperAttributeAt,proveDeriveEnclosingNamespaceEffect,deriveEnclosingNamespaceEffectFacts} from './derive-enclosing-namespace-context.mjs';
-export function resolveEnclosingNamespaceModuleBindings({modules,externalModules=new Map(),compilationProfile:profileInput=null,deriveContext=null,deriveBangContext=null,toolContext=null}={}) {
+import {enumNamespaceBody,freshOriginalEnumNamespaceSourcePlan as originalEnumNamespaceSourcePlan} from './enum-namespace-header.mjs';
+function resolveRegisteredBuiltinEnclosingSourceBindings({modules,externalModules=new Map(),compilationProfile:profileInput=null,deriveContext=null,deriveBangContext=null,toolContext=null}={},registeredAttributes=false,configuredVariants=false) {
   if(!Array.isArray(modules) || !(externalModules instanceof Map))throw new TypeError('Binding resolution requires tracked modules and explicit external tables');
   if(deriveContext&&!isDeriveFootprintContext(deriveContext))throw new TypeError('Unsealed derive footprint context');
   if(deriveBangContext){if(!isDeriveEnclosingNamespaceContext(deriveBangContext))throw new TypeError('Unsealed derive bang output context');modules=deriveEnclosingNamespaceModules(deriveBangContext,{deriveContext,modules,externalModules,compilationProfile:profileInput});}
   if(toolContext&&!isToolAttributeContext(toolContext))throw new TypeError('Unsealed tool attribute context');
-  const profile=compilationProfile(profileInput);
+  if(registeredAttributes)modules=modules.map(module=>{const all=originalSourceModuleItems(module);return {...module,items:all,allItems:all};});
+  const registered=registeredAttributes?(configuredVariants?createTokenBoundRegisteredBuiltinCallerAttributeScope():createOriginalRegisteredBuiltinCallerAttributeScope()):null,profile=compilationProfile(profileInput);
+  if(toolContext)assertToolAttributeContextInputs(toolContext,{modules,externalModules,compilationProfile:profile});
+  let enumNamespacePlan=null;
   const scopes=new Map(),containers=new Map(),tasks=[],macroUses=[],diagnostics=[];
   const diagnostic=(scope,message,span,extra={})=>{const value={kind:'module-binding',message,source:scope.file,module:[...scope.path],span,...extra};diagnostics.push(value);return value;};
   for(const module of modules) {
@@ -520,14 +526,16 @@ export function resolveEnclosingNamespaceModuleBindings({modules,externalModules
       if(tokensOf(item)[1]?.text==='!'&&condition.status==='active'&&condition.attributes.every(attribute=>attribute.name==='cfg'||isInertConditionalAttribute(attribute)))continue;
       const innerLint=inertInnerLintItem(item,module.source,module.sourceView,profile);
       if(innerLint){scope.innerBuiltinNames.push(...innerLint.attributes.map(attribute=>({name:attribute.name,span:attribute.span})));continue;}
+      const documentationMacroFrontier=condition.attributes.find(documentationArgumentMayExportMacros);if(documentationMacroFrontier){scope.baseMacro=scope.baseBang=scope.baseAttribute=true;const root=scopes.get('crate');if(root)root.baseMacro=root.baseBang=root.baseAttribute=true;diagnostic(scope,'documentation equality expression may introduce crate-root macros; original argument expansion remains unresolved',documentationMacroFrontier.span,{globalMacroKindUnresolved:true});}
       const innerBuiltin=builtinInnerSourceItem(item,module.source,module.sourceView,profile);
       if(innerBuiltin){scope.innerBuiltinNames.push({name:innerBuiltin.name,span:innerBuiltin.span});continue;}
       try {
         const tokens=tokensOf(item),head=header(tokens,scope.path),moduleAttribute=tokens[head.at]?.text==='mod';
-        const nestedExport=nestedExportUncertainty(tokens,head.at,profile,span=>deriveContext&&deriveFootprintHelperAttributeAt(deriveContext,module,item,span)||deriveBangContext&&deriveEnclosingNamespaceHelperAttributeAt(deriveBangContext,deriveContext,module,item,span));
-        if(nestedExport){scope.baseMacro=scope.baseBang=true;diagnostic(scope,'nested source attribute can introduce crate-root exported macros; expansion remains unresolved',nestedExport);}
+        
+        const nestedExport=nestedExportUncertainty(tokens,head.at,profile,span=>deriveContext&&deriveFootprintHelperAttributeAt(deriveContext,module,item,span)||deriveBangContext&&deriveEnclosingNamespaceHelperAttributeAt(deriveBangContext,deriveContext,module,item,span)||registered&&registered.at(module,item,{name:module.source.slice(span.start,span.end).match(/^#\s*\[\s*([A-Za-z_][A-Za-z0-9_]*)/u)?.[1],span}));
+        if(nestedExport){scope.baseMacro=scope.baseBang=scope.baseAttribute=true;const root=scopes.get('crate');if(root)root.baseMacro=root.baseBang=root.baseAttribute=true;diagnostic(scope,'nested source attribute can introduce crate-root exported macros; expansion remains unresolved',nestedExport);}
         const macroUse=moduleAttribute&&head.attributes.some(attribute=>attribute.name==='macro_use'&&attribute.tokens.length===1)&&condition.status==='active'&&scope.configurationCondition==='active';
-        const effectiveAttributes=head.attributes.filter(attribute=>!isInertConditionalAttribute(condition.attributes.find(original=>original.span.start===attribute.span.start))&&!(attribute.name==='cfg'&&condition.attributes.find(original=>original.span.start===attribute.span.start)?.evaluation?.value===true)&&!(macroUse&&attribute.name==='macro_use'&&attribute.tokens.length===1)&&!(toolContext&&toolAttributeAt(toolContext,module,item,attribute))),uncertain=uncertainty(effectiveAttributes,{moduleAttribute});
+        const effectiveAttributes=head.attributes.filter(attribute=>!isInertConditionalAttribute(condition.attributes.find(original=>original.span.start===attribute.span.start))&&!(attribute.name==='cfg'&&condition.attributes.find(original=>original.span.start===attribute.span.start)?.evaluation?.value===true)&&!(macroUse&&attribute.name==='macro_use'&&attribute.tokens.length===1)&&!(toolContext&&toolAttributeAt(toolContext,module,item,attribute))&&!(registered&&registered.at(module,item,attribute))),uncertain=uncertainty(effectiveAttributes,{moduleAttribute});
         const deriveCertificate=deriveContext&&['struct','enum'].includes(item.term)?deriveFootprintAt(deriveContext,module,item):null;
         if(deriveCertificate) {
           // Only the original invocation is narrowed. The sealed expansion
@@ -617,15 +625,15 @@ export function resolveEnclosingNamespaceModuleBindings({modules,externalModules
           } else if(tokens[at]?.text===';')add(scope,declaration,name,'value',head.visibility,extra);
         }
         if(term==='enum') {
-          if(tokens[keyword+2]?.text==='<')throw new Error('generic enum variant namespace requires a checked declaration plan');
-          const open=tokens.findIndex((token,index)=>index>keyword && token.text==='{');
+          const open=enumNamespaceBody(tokens,keyword,enumNamespacePlan??=originalEnumNamespaceSourcePlan());
           if(open<0)throw new Error('enum namespace has no body');
           const enumScope={file:scope.file,path:[...scope.path,name],seeds:[],bindings:[],unknownType:uncertain.type,unknownMacro:uncertain.macro,unknownBang:uncertain.bang,unknownAttribute:uncertain.attribute,baseType:uncertain.type,baseMacro:uncertain.macro,baseBang:uncertain.bang,baseAttribute:uncertain.attribute};
           containers.set(key(canonical(enumScope.path)),enumScope);
           for(const variant of parts(tokens.slice(open+1,close(tokens,open)))) {
+            const variantConfiguration=configuredVariants?itemConfiguration(variant,profile):null;if(variantConfiguration?.status==='inactive')continue;
             const variantHead=header(variant,scope.path),token=variant[variantHead.at];
             if(!identifier(token))throw new Error('enum variant namespace needs source expansion');
-            const variantUncertain=uncertainty(variantHead.attributes),variantItem={...item,term:'variant',start:token.start,end:variant.at(-1).end},variantExtra=uncertain.type || uncertain.conditional || variantUncertain.type || variantUncertain.conditional?{status:'unresolved',target:null}:{};
+            const variantUncertain=uncertainty(configuredVariants?variantHead.attributes.filter(attribute=>!isInertConditionalAttribute(variantConfiguration.attributes.find(original=>original.span.start===attribute.span.start))&&!(attribute.name==='cfg'&&variantConfiguration.attributes.find(original=>original.span.start===attribute.span.start)?.evaluation?.value===true)&&!(registered&&registered.at(module,item,attribute))):variantHead.attributes),variantItem={...item,term:'variant',start:token.start,end:variant.at(-1).end},variantExtra=uncertain.type || uncertain.conditional || variantUncertain.type || variantUncertain.conditional?{status:'unresolved',target:null}:{};
             enumScope.baseType ||= variantUncertain.type;enumScope.baseMacro ||= variantUncertain.macro;enumScope.baseBang ||= variantUncertain.bang;enumScope.baseAttribute ||= variantUncertain.attribute;
             add(enumScope,variantItem,token.text,'type',head.visibility,variantExtra);
             if(variant[variantHead.at+1]?.text!=='{')add(enumScope,variantItem,token.text,'value',head.visibility,variantExtra);
@@ -765,8 +773,21 @@ export function resolveEnclosingNamespaceModuleBindings({modules,externalModules
     if(result.error || task.conditional || !task.glob && result.bindings?.some(binding=>binding.status!=='resolved') || task.glob && (!result.container || result.container===task.scope || result.container.unknownType || result.container.unknownMacro))diagnostic(task.scope,result.error??'use scope completeness, target or compilation condition remains unresolved',task.span,{name:task.name??null,glob:!!task.glob});
     if(!task.glob && result.bindings?.some(binding=>!narrower(task.visibility,binding.visibility)))diagnostic(task.scope,'reexport visibility exceeds the checked target visibility',task.span,{name:task.name});
   }
-  const result=frozen(structuredClone({version:1,compilationProfile:profile,editionProfile:'2018+',externPrelude,scopes:[...scopes.values()].map(scope=>({file:scope.file,path:scope.path,compilationProfile:profile,configurationCondition:scope.configurationCondition,bindings:scope.bindings,unresolvedImports:diagnostics.filter(diagnostic=>diagnostic.source===scope.file && key(diagnostic.module)===key(scope.path)),unresolvedTypeScope:scope.unknownType,unresolvedMacroScope:scope.unknownMacro,unresolvedBangMacroScope:scope.unknownBang,unresolvedAttributeMacroScope:scope.unknownAttribute})),diagnostics}));
+  const registeredSource=registered?.finish();
+  const result=frozen(structuredClone({...(registeredSource?{registeredBuiltinAttributeSource:registeredSource}:{}),version:1,compilationProfile:profile,editionProfile:'2018+',externPrelude,scopes:[...scopes.values()].map(scope=>({file:scope.file,path:scope.path,compilationProfile:profile,configurationCondition:scope.configurationCondition,bindings:scope.bindings,unresolvedImports:diagnostics.filter(diagnostic=>diagnostic.source===scope.file && key(diagnostic.module)===key(scope.path)),unresolvedTypeScope:scope.unknownType,unresolvedMacroScope:scope.unknownMacro,unresolvedBangMacroScope:scope.unknownBang,unresolvedAttributeMacroScope:scope.unknownAttribute})),diagnostics}));
   resolvedSourceScopeSets.add(result.scopes);
   resolvedSourceScopeOrigins.set(result.scopes,frozen({compilationProfile:profile,modules:modules.map(module=>({file:module.file,path:[...module.path],source:module.source,hasSourceView:Object.hasOwn(module,'sourceView'),sourceView:module.sourceView,hasCompilationProfile:Object.hasOwn(module,'compilationProfile'),moduleCompilationProfile:compilationProfile(module.compilationProfile),hasConfigurationCondition:Object.hasOwn(module,'configurationCondition'),configurationCondition:module.configurationCondition}))}));
   return result;
 }
+
+// Original enclosing API retains its exact prior domain. The explicit successor
+// creates every registered source frame itself; options cannot supply one.
+export function resolveEnclosingNamespaceModuleBindings(options={}){return resolveRegisteredBuiltinEnclosingSourceBindings(options,false);}
+export function resolveRegisteredBuiltinEnclosingNamespaceModuleBindings(options={}){return resolveRegisteredBuiltinEnclosingSourceBindings(options,true);}
+
+import {createOriginalRegisteredBuiltinCallerAttributeScope,createSourceMetadataBuiltinCallerAttributeScope as createTokenBoundRegisteredBuiltinCallerAttributeScope} from './registered-builtin-caller-attribute-source.mjs';
+
+// Explicit configured-variant successor; old public resolver domains remain.
+export function resolveConfiguredVariantEnclosingNamespaceModuleBindings(options={}){return resolveRegisteredBuiltinEnclosingSourceBindings(options,true,true);}
+
+import {documentationArgumentMayExportMacros} from './documentation-argument-uncertainty.mjs';

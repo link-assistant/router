@@ -1,0 +1,1 @@
+Draft complete current vector compiler source copying from unchanged actual core modules with separate private import substitutions, complete CLI checks, preserved historical producer and independent unrun provenance cases.

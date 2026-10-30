@@ -1,0 +1,3 @@
+// Finite interface DATA; original source/type/owner checks remain mandatory.
+export const NATIVE_INTEGER_METHODS=Object.freeze([{"name":"saturating_add","arity":2,"ordered":false},{"name":"saturating_sub","arity":2,"ordered":false},{"name":"saturating_mul","arity":2,"ordered":false},{"name":"wrapping_add","arity":2,"ordered":false},{"name":"wrapping_sub","arity":2,"ordered":false},{"name":"wrapping_mul","arity":2,"ordered":false},{"name":"min","arity":2,"ordered":true},{"name":"max","arity":2,"ordered":true},{"name":"clamp","arity":3,"ordered":true}].map(row=>Object.freeze(row)));
+export const nativeIntegerMethod=name=>typeof name==='string'?NATIVE_INTEGER_METHODS.find(row=>row.name===name)??null:null;

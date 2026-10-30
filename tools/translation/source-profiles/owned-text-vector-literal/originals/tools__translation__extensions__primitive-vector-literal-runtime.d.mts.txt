@@ -1,0 +1,13 @@
+import type {PrimitiveOwnedVector} from './primitive-owned-vector-runtime.mjs';
+import type {RustU8, RustI8, RustU16, RustI16, RustU32, RustI32, RustU64, RustI64, RustU128, RustI128} from './primitive-operator-runtime.mjs';
+export declare function router_vec_bool_literal(...values: boolean[]): PrimitiveOwnedVector<boolean>;
+export declare function router_vec_u8_literal(...values: RustU8[]): PrimitiveOwnedVector<RustU8>;
+export declare function router_vec_i8_literal(...values: RustI8[]): PrimitiveOwnedVector<RustI8>;
+export declare function router_vec_u16_literal(...values: RustU16[]): PrimitiveOwnedVector<RustU16>;
+export declare function router_vec_i16_literal(...values: RustI16[]): PrimitiveOwnedVector<RustI16>;
+export declare function router_vec_u32_literal(...values: RustU32[]): PrimitiveOwnedVector<RustU32>;
+export declare function router_vec_i32_literal(...values: RustI32[]): PrimitiveOwnedVector<RustI32>;
+export declare function router_vec_u64_literal(...values: RustU64[]): PrimitiveOwnedVector<RustU64>;
+export declare function router_vec_i64_literal(...values: RustI64[]): PrimitiveOwnedVector<RustI64>;
+export declare function router_vec_u128_literal(...values: RustU128[]): PrimitiveOwnedVector<RustU128>;
+export declare function router_vec_i128_literal(...values: RustI128[]): PrimitiveOwnedVector<RustI128>;

@@ -1,0 +1,36 @@
+// Wrapping multiplication source/forward/constant/inverse case drafts. ALL UNRUN.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {primitiveIntegerMethod} from '../extensions/primitive-operator-runtime.mjs';
+import {createFixedIntegerRuntime} from '../extensions/fixed-integer-runtime.mjs';
+import {fixedIntegerContracts} from '../extensions/fixed-integer-contracts.mjs';
+import {pinnedFixedWrapping,requireFixedWrappingMetadata,requireFixedWrappingProof} from '../extensions/fixed-wrapping-source.mjs';
+import {translateProject} from '../project.mjs';
+import {parseProgram,serializeProgram} from '../semantic-meta.mjs';
+import {PRIMITIVE_BITWISE_TYPES} from '../primitive-bitwise-types.mjs';
+import {verifyTypedTargets} from './typed-targets.mjs';
+import {proposeForwardStandardNumericBodySynchronization} from '../forward-standard-numeric-body-synchronization.mjs';
+import {ownershipCompiler} from '../js-to-rust/vendor/module-syntax.mjs';
+import {prepareWrappingMultiplySources} from '../prepare-wrapping-multiply-sources.mjs';
+const limits={timeout:60000};
+function samples(domain){const maximum=BigInt(domain.maximum),minimum=domain.signed?-BigInt(domain.minimumAbs):0n;return [[0n,maximum,0n],[maximum,0n,0n],[maximum,1n,maximum],[maximum,maximum,1n],[maximum,2n,domain.signed?-2n:maximum-1n],[13n,7n,91n],...(domain.signed?[[minimum,-1n,minimum],[minimum,minimum,0n],[-13n,7n,-91n]]:[])];}
+for(const domain of PRIMITIVE_BITWISE_TYPES)test(domain.name+' wrapping multiply retains actual original intrinsic source and independent edge identities',limits,()=>{
+ const fixed={kind:'fixed',bits:domain.bits,signed:domain.signed,rustPrimitiveName:domain.name},proof=pinnedFixedWrapping(fixed,'wrapping_mul');assert.equal(proof.checkedBody.operator,'*');assert.equal(proof.checkedBody.width,domain.bits);assert.ok(proof.originalMember.source.includes('intrinsics::wrapping_mul(self, rhs)'));assert.ok(proof.intrinsic.source.includes('fn wrapping_mul'));assert.equal(requireFixedWrappingProof(proof,fixed,'wrapping_mul'),proof);assert.throws(()=>requireFixedWrappingProof(structuredClone(proof),fixed,'wrapping_mul'));const altered=structuredClone(proof);altered.checkedBody.operator='+';assert.throws(()=>requireFixedWrappingMetadata(altered,fixed,'wrapping_mul'));
+ const runtime=createFixedIntegerRuntime(fixed),contract=fixedIntegerContracts(fixed).contracts.find(row=>row.rustPath.at(-1)==='wrapping_mul');assert.ok(contract);assert.equal(contract.constEligible,true);for(const [left,right,expected]of samples(domain)){assert.equal(runtime.rust_fixed_wrapping_mul(left,right),expected);assert.equal(primitiveIntegerMethod(left,right,null,domain.bits,domain.signed,'wrapping_mul'),expected);}assert.throws(()=>primitiveIntegerMethod(1n,1n,0n,domain.bits,domain.signed,'wrapping_mul'));for(const value of [BigInt(domain.maximum)+1n,domain.signed?-BigInt(domain.minimumAbs)-1n:-1n,1,'1',null])assert.throws(()=>runtime.rust_fixed_wrapping_mul(value,1n));let reads=0;assert.throws(()=>runtime.rust_fixed_wrapping_mul({valueOf(){reads++;return 1n;}},1n));assert.equal(reads,0);
+});
+function project(source){return translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});}
+for(const domain of PRIMITIVE_BITWISE_TYPES)test(domain.name+' wrapping multiplication lowers runtime and constants through complete meta and strict JavaScript/TypeScript',limits,async()=>{
+ const source='const EDGE:'+domain.name+'='+domain.maximum+'_'+domain.name+'.wrapping_mul('+domain.maximum+'_'+domain.name+');pub fn product(left:'+domain.name+',right:'+domain.name+')->'+domain.name+'{left.wrapping_mul(right)}pub fn edge()->'+domain.name+'{EDGE}',result=project(source);assert.deepEqual(result.meta.refused,[]);assert.equal(serializeProgram(parseProgram(JSON.stringify(result.meta.targetSemanticProgram))),JSON.stringify(result.meta.targetSemanticProgram));await verifyTypedTargets(result,api=>{for(const [left,right,expected]of samples(domain))assert.equal(api.product(left,right),expected);assert.equal(api.edge(),1n);},{childTimeoutMs:20000});
+});
+for(const authority of ['javascript','typescript'])test(authority+' forward source synchronization selects the actual wrapped multiply body and no unchecked arithmetic substitute',limits,async()=>{
+ const source='pub fn original(left:u8,right:u8)->u8{left.wrapping_mul(right)}pub fn edited(left:u8,right:u8)->u8{left}',initial=project(source),ts=ownershipCompiler(),file=ts.createSourceFile('proposal.'+(authority==='javascript'?'mjs':'mts'),initial[authority],ts.ScriptTarget.Latest,true,authority==='javascript'?ts.ScriptKind.JS:ts.ScriptKind.TS),names=new Map(initial.executableDeclarations.map(row=>[row.qualifiedName,row.targetBinding().javascriptName])),node=name=>file.statements.find(row=>ts.isFunctionDeclaration(row)&&row.name?.text===names.get(name)),before=node('edited'),after=node('original');assert.ok(before?.body&&after?.body);const requested=initial[authority].slice(0,before.body.getStart(file))+after.body.getText(file)+initial[authority].slice(before.body.end),proposal=proposeForwardStandardNumericBodySynchronization({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,[authority]:requested});assert.equal(proposal.expressionEditCount,1);assert.ok(proposal.rustEdits[0].after.includes('wrapping_mul'));assert.equal(proposal.rustEdits[0].history.inverse,source);await verifyTypedTargets({javascript:proposal.javascript,typescript:proposal.typescript,meta:{entry:'src/lib.rs'}},api=>assert.equal(api.edited(255n,255n),1n),{childTimeoutMs:20000});assert.equal(proposal.sourceAuthority,false);
+});
+test('unsupported wrapping division pointer ownership and forged intrinsic metadata retain refusals',limits,()=>{
+ assert.throws(()=>pinnedFixedWrapping({kind:'fixed',bits:64,signed:false,rustPrimitiveName:'usize'},'wrapping_mul'));assert.throws(()=>pinnedFixedWrapping({kind:'fixed',bits:8,signed:false,rustPrimitiveName:'u8'},'wrapping_div'));const result=project('pub struct Word;impl Word {pub fn wrapping_mul(self,other:Self)->Self{self}}pub fn custom(left:Word,right:Word)->Word{left.wrapping_mul(right)}');assert.equal(result.javascript.includes('ml_primitive_integer_method'),false);assert.equal(JSON.stringify(result.meta.targetSemanticProgram).includes('rust_fixed_wrapping_mul'),false);assert.throws(()=>pinnedFixedWrapping({kind:'data',name:'Word'},'wrapping_mul'));
+});
+test('inherent wrapping multiply retains original shared Copy autodereference without generalized reference Ord admission',limits,async()=>{
+ const result=project('pub fn shared(value:&u8,other:u8)->u8{value.wrapping_mul(other)}pub fn nested(value:&&u8,other:u8)->u8{value.wrapping_mul(other)}');assert.deepEqual(result.meta.refused,[]);await verifyTypedTargets(result,api=>{assert.equal(api.shared(255n,255n),1n);assert.equal(api.nested(255n,2n),254n);},{childTimeoutMs:20000});
+});
+test('fifteen complete wrapped multiply source equations retain actual originals inverses and fixed phases',limits,()=>{
+ const plan=prepareWrappingMultiplySources();assert.equal(plan.files.length,15);for(const row of plan.files){assert.equal(row.current,row.currentAfter);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}assert.equal(plan.receivingExecuted,false);
+});

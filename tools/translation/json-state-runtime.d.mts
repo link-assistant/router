@@ -1,0 +1,13 @@
+import type {JsonValue} from './json-macro-runtime.mjs';
+export declare function router_state_json_with_index(argument0:JsonValue,argument1:bigint,argument2:JsonValue): JsonValue;
+export declare function router_state_json_append(argument0:JsonValue,argument1:JsonValue): JsonValue;
+export declare function router_state_json_extend(argument0:JsonValue,argument1:readonly JsonValue[]): JsonValue;
+export declare function router_state_json_extend_owned(argument0:JsonValue,argument1:readonly JsonValue[]): JsonValue;
+export declare function router_state_json_from_values(argument0:readonly JsonValue[]): JsonValue;
+export declare function router_state_json_values_copy(argument0:readonly JsonValue[]): readonly JsonValue[];
+export declare function router_state_json_into_values(argument0:JsonValue): readonly JsonValue[];
+export declare function router_state_json_without_field(argument0:JsonValue,argument1:string): JsonValue;
+export declare function router_state_json_merge(argument0:JsonValue,argument1:JsonValue): JsonValue;
+export declare function router_state_json_object_keys(argument0:JsonValue): JsonValue;
+export declare function router_state_json_array_len(argument0:JsonValue): bigint;
+export declare function router_state_json_object_has(argument0:JsonValue,argument1:string): boolean;

@@ -9,7 +9,7 @@ import {parsedPinnedBodyEvidence,pinnedOptionPartialEqBody} from './standard-bod
 import {freeNames,optionPayload} from './standard-body-checker.mjs';
 import {originalStandardCallContext} from './original-standard-calls.mjs';
 import {checkOriginalSourceFrame,hasOriginalCallbackLoan} from './standard-source-frame.mjs';
-import {SHARED_REFERENCE_COPY_SOURCE,sharedReferenceCopyIdentity} from '../shared-reference-copy-source.mjs';
+import {SHARED_REFERENCE_COPY_SOURCE,currentSharedReferenceCopyIdentity as sharedReferenceCopyIdentity} from '../current-standard-copy-source.mjs';
 const active=new WeakMap(),contexts=new WeakMap();
 const fail=message=>{throw new TypeError('Original standard borrowed method: '+message);};
 const freeze=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;};

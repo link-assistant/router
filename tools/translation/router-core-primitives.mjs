@@ -71,3 +71,5 @@ export function parseRouterCoreStrReference(parser){
   },location);
   c.index=start+count;return output.value;
 }
+
+export {parseRouterCoreFixedType,parseRouterCoreFixedConstant} from './fixed-type-core-parser.mjs';

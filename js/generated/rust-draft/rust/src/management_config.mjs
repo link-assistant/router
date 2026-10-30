@@ -1,4 +1,4 @@
-// Generated draft from rust/src/management_config.rs; sha256=a29884b105e413edc8aa89a4d326204918311a489ed3e83ffa93842b15ce3e4b
+// Generated draft from rust/src/management_config.rs; sha256=847910a505d1cf74fd0643307e1e53d767f50ff5ae86af4e1a9776177bc0e30a
 // Carried constructs are data, never runtime parity evidence.
 function ml_fixed(value, min, max, message) {
   if (value < min || value > max) throw new RangeError(message);
@@ -46,4 +46,4 @@ const serde_json = {
 };
 
 export const translated = { ["ManagementConfig"]: ml_make_ManagementConfig_ManagementConfig };
-export const provenance = {"sourcePath":"rust/src/management_config.rs","sourceSha256":"a29884b105e413edc8aa89a4d326204918311a489ed3e83ffa93842b15ce3e4b","executable":1,"executableFunctions":0,"executableConstants":0,"executableTypes":1,"executableConstructors":1,"carried":6,"preserved":8,"runtimeParity":false};
+export const provenance = {"sourcePath":"rust/src/management_config.rs","sourceSha256":"847910a505d1cf74fd0643307e1e53d767f50ff5ae86af4e1a9776177bc0e30a","executable":1,"executableFunctions":0,"executableConstants":0,"executableTypes":1,"executableConstructors":1,"carried":6,"preserved":8,"runtimeParity":false};

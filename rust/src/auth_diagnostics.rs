@@ -199,12 +199,11 @@ pub fn first_outcome_in_request() -> bool {
 /// UUID-shaped id is kept, so an attacker-supplied payload cannot write
 /// arbitrary text into the diagnostics.
 fn unverified_subject(token: &str) -> Option<String> {
-    use base64::Engine;
     let jwt = crate::token::token_jwt(token)?;
     let payload = jwt.split('.').nth(1)?;
-    let bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD
-        .decode(payload.trim_end_matches('='))
-        .ok()?;
+    let bytes =
+        crate::translation_core::base64_url_no_pad_decode_text(payload.trim_end_matches('='))
+            .ok()?;
     let value: serde_json::Value = serde_json::from_slice(&bytes).ok()?;
     let sub = value.get("sub")?.as_str()?;
     uuid::Uuid::parse_str(sub).ok().map(|id| id.to_string())

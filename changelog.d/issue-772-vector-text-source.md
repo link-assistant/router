@@ -1,0 +1,1 @@
+Draft actual owned String vector reverse literals/parameters, explicit native clones, Unicode-scalar guards and candidate runtime closure. Preserve complete source/CST equations and independent unrun strict TS/native regression source.

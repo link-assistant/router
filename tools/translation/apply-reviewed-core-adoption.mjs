@@ -9,6 +9,7 @@ import {fileURLToPath} from 'node:url';
 import {openCoreAdoptionGzipPackets} from './core-adoption-packet-storage.mjs';
 import {transportConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
 import {createRulePipeline} from './rule-pipeline.mjs';
+import {repositoryRustLayout} from './repository-layout.mjs';
 
 const M=1024**2,MAX=384*M,STATE='reviewed-core-adoption-state-v1';
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -163,7 +164,7 @@ return new Set(actual.document.nodes.flatMap(node=>[node[2],node[3]]));
 }
 async function joinInputs(root,run,captured,head,replacements=new Map()){
  need(git(root,['rev-parse','HEAD']).toString().trim()===head,'current source HEAD');
-const names=git(root,['ls-files','-z','--','*.rs','Cargo.toml','rust/Cargo.toml','Cargo.lock','tools/translation','scripts']).toString().split('\0').filter(p=>p&&(p.endsWith('.rs')||!p.startsWith('tools/translation/meta/')&&!p.startsWith('tools/translation/projects/')&&!p.startsWith('tools/translation/js-to-rust/generated/'))).sort();
+const names=git(root,['ls-files','-z','--','*.rs','Cargo.toml','rust/Cargo.toml','Cargo.lock','**/Cargo.toml','**/Cargo.lock','tools/translation','scripts']).toString().split('\0').filter(p=>p&&(p.endsWith('.rs')||!p.startsWith('tools/translation/meta/')&&!p.startsWith('tools/translation/projects/')&&!p.startsWith('tools/translation/js-to-rust/generated/'))).sort();
  const prefix='js/node_modules/typescript/',nonTs=captured.filter(r=>!r.path.startsWith(prefix));
 need(wire(names)===wire(nonTs.map(r=>r.path).sort()),'entire captured tracked source census');
 const tsRoot=file(root,prefix.slice(0,-1)),tsFiles=[];
@@ -238,7 +239,7 @@ need(s.isDirectory()||s.isFile(),'source tree regular nodes');
 rows.push({path,kind:s.isDirectory()?'directory':'file',dev:s.dev,ino:s.ino,mode:s.mode});
 need(rows.length<=20000,'original source census bound');
 if(s.isDirectory())for(const child of fs.readdirSync(full).sort())visit(path+'/'+child);
-}visit('src');
+}visit(repositoryRustLayout(root).productionPrefix.slice(0,-1));
 return rows;
 }
 function sameCensus(expected,current,changed=new Set()){need(expected.length===current.length,'complete source census size');
@@ -269,7 +270,7 @@ need(doc.files.every(r=>typeof r.physicalPresent==='boolean'),'complete physical
 const observed=doc.files.map(r=>r.physicalPresent);need(presence===null||wire(presence)===wire(observed),'before/after full physical presence');presence=observed;
 const rust=read(file(o.run,'all-rust-cargo-'+suffix+'.json'));
 need(hash(rust)===report.value.retainedSnapshotDigests['rust-'+suffix],'full Rust/Cargo snapshot report join');
-need(wire(JSON.parse(rust).files)===wire(doc.files.filter(r=>r.path.endsWith('.rs')||['Cargo.toml','rust/Cargo.toml','Cargo.lock'].includes(r.path))),'all Rust/Cargo rows');
+need(wire(JSON.parse(rust).files)===wire(doc.files.filter(r=>r.path.endsWith('.rs')||['Cargo.toml','Cargo.lock'].includes(posix.basename(r.path)))),'all Rust/Cargo rows');
 }need(wire(json(file(o.run,'proposal.inputs-after.json')).value)===wire(captured.value),'actual complete producer after inputs');
 return {captured:rows.map((row,at)=>({...row,physicalPresent:presence[at]})),report:report.value,plan:plan.value};
 }
@@ -307,7 +308,7 @@ if(row.before.source!==row.after.source){for(const step of [a,b]){const left=nat
 }
  const changes=new Map();
 for(const changed of index.changes){name(changed.path);
-need(changed.path.startsWith('src/')&&changed.path.endsWith('.rs')&&!changes.has(changed.path)&&proposals.has(changed.path),'existing unique Rust target only');
+need(changed.path.startsWith(repositoryRustLayout(o.root).productionPrefix)&&changed.path.endsWith('.rs')&&!changes.has(changed.path)&&proposals.has(changed.path),'existing unique Rust target only');
 const a=before.get(changed.path),b=after.get(changed.path);
 need(a!==b&&hash(a)===changed.beforeSha256&&hash(b)===changed.afterSha256&&changed.source.kind==='rust-source'&&load(changed.source)===b,'complete final source packet');
 changes.set(changed.path,{before:a,after:b,beforeSha256:hash(a),afterSha256:hash(b),logicalPacket:changed.source});

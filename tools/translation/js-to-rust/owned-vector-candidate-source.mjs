@@ -7,14 +7,14 @@ import {posix} from 'node:path';
 import {ownershipCompiler} from './vendor/module-syntax.mjs';
 import {jsonMacroDependencyProfile} from '../json-macro-inputs.mjs';
 import {proveJsonMacroFeatures} from '../json-macro-features.mjs';
-import {hostRuntimeAssetsNamedDataAliases as hostRuntimeAssets} from '../host-assets.mjs';
+import {ownedVectorJsonFieldRuntimeAssets as hostRuntimeAssets} from '../vector-json-field-runtime-assets.mjs';
 import {resolveModuleBindings} from '../module-bindings.mjs';
 import {selectOriginalRouterCoreFacade} from '../router-core-facade-source.mjs';
 import {captureSourceModuleViews,originalModuleViewItems} from '../source-module-views.mjs';
 import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE} from '../router-core-source-data.mjs';
 import {assertReverseConcreteSourceHost} from './concrete-source.mjs';
 import {ownedCorePairedTypePath,prepareOwnedCorePairedTypes} from './owned-core-paired-types.mjs';
-import {ownedBase64Operation,ownedBase64Compatible,ownedBase64ReadonlyOctets,ownedBase64Result} from './owned-base64-source.mjs';
+import {ownedBase64Operation,ownedBase64Compatible,ownedBase64ReadonlyOctets,ownedBase64Result,readOwnedBase64ResultImportType,consumeOwnedBase64InputPrelude} from './owned-base64-source.mjs';
 import {ROUTER_CORE_BASE64_SOURCE} from '../router-core-source-data.mjs';
 import {deriveDependencyProfile} from '../derive-dependencies.mjs';
 import {captureOriginalExternalTraitPackage,originalExternalTraitPackageInputs} from '../extensions/external-trait-sources.mjs';
@@ -68,7 +68,7 @@ export function ownedCoreRuntimeSources(runtimeRoot='runtime',declarationRoot=ru
    const target=relative(path,specifier);if(posix.dirname(target)!==base)fail('runtime closure escape');visit(posix.basename(target));
   }
  }
- for(const name of ['json-update-runtime.mjs','json-update-runtime.d.mts','json-macro-runtime.mjs','json-macro-runtime.d.mts','base64-runtime.mjs','base64-runtime.d.mts','json-runtime.d.mts','json-option-runtime.mjs','json-option-runtime.d.mts'])visit(name);
+ for(const name of ['owned-vector-text-runtime.mjs','owned-vector-text-runtime.d.mts','json-fields-runtime.mjs','json-fields-runtime.d.mts','json-update-runtime.mjs','json-update-runtime.d.mts','json-macro-runtime.mjs','json-macro-runtime.d.mts','base64-runtime.mjs','base64-runtime.d.mts','json-runtime.d.mts','json-option-runtime.mjs','json-option-runtime.d.mts'])visit(name);
  for(const [name,source]of assets)if(/LICENSE|NOTICE/iu.test(name))rows.push({path:runtimeRoot+'/'+name,source});
  assertReverseConcreteSourceHost();return rows.sort((a,b)=>a.path.localeCompare(b.path));
 }
@@ -106,12 +106,13 @@ function base64Source(files){
 }
 /** Fresh source selection; no source/owner/verdict is shared across calls. */
 export function createOwnedCoreSourceContext(input){
- assertReverseConcreteSourceHost();const data=ownedPlainData(input);exactKeys(data,['files','runtimeRoot','declarationRoot','vectorBindings']);ownedSourcePath(data.runtimeRoot);ownedSourcePath(data.declarationRoot);
+ assertReverseConcreteSourceHost();const data=ownedPlainData(input);exactKeys(data,['files','runtimeRoot','declarationRoot','vectorBindings',...(Object.hasOwn(data,'primitiveOperators')?['primitiveOperators']:[]),...(Object.hasOwn(data,'primitiveDefinitions')?['primitiveDefinitions']:[]),...(Object.hasOwn(data,'primitiveVectorDefinitions')?['primitiveVectorDefinitions']:[])]);if(Object.hasOwn(data,'primitiveOperators')&&data.primitiveOperators!==true)fail('explicit primitive operator context requires true');if(Object.hasOwn(data,'primitiveDefinitions')&&(data.primitiveDefinitions!==true||data.primitiveOperators!==true))fail('primitive definition profile requires explicit true and its complete primitive operator runtime');if(Object.hasOwn(data,'primitiveVectorDefinitions')&&(data.primitiveVectorDefinitions!==true||data.primitiveDefinitions!==true||data.primitiveOperators!==true))fail('vector definitions require the explicit complete primitive definition/operator source profile');ownedSourcePath(data.runtimeRoot);ownedSourcePath(data.declarationRoot);
  if(!Array.isArray(data.files)||!data.files.length||data.files.length>4096)fail('complete files required');
  const files=new Map();let bytes=0;
  for(const row of data.files){exactKeys(row,['path','source']);ownedSourcePath(row.path);if(typeof row.source!=='string'||files.has(row.path))fail('duplicate or invalid source');bytes+=Buffer.byteLength(row.source);if(bytes>16777216)fail('complete input byte budget');files.set(row.path,row.source);}
  const expected=ownedCoreRuntimeSources(data.runtimeRoot,data.declarationRoot);
  for(const row of expected)if(files.get(row.path)!==row.source)fail('registered materialized runtime differs: '+row.path);
+ if(data.primitiveOperators===true||files.has(data.runtimeRoot+'/primitive-operator-runtime.mjs')||files.has(data.declarationRoot+'/primitive-operator-runtime.d.mts'))for(const row of ownedPrimitiveOperatorRuntimeSources(data.runtimeRoot,data.declarationRoot))if(files.get(row.path)!==row.source)fail('complete primitive operator runtime differs');
  const edge=rustEdge(files);
  const receipts=data.files.map(row=>({path:row.path,source:row.source,sha256:digest(row.source)}));
  const handle=Object.freeze({schema:'owned-core-source-context-v1'});
@@ -119,6 +120,7 @@ export function createOwnedCoreSourceContext(input){
 }
 export function requireOwnedCoreSourceCurrent(handle){
  assertReverseConcreteSourceHost();const state=contexts.get(handle);if(!state)fail('unissued source context');
+ if(state.data.primitiveOperators===true||state.files.has(state.data.runtimeRoot+'/primitive-operator-runtime.mjs')||state.files.has(state.data.declarationRoot+'/primitive-operator-runtime.d.mts'))for(const row of ownedPrimitiveOperatorRuntimeSources(state.data.runtimeRoot,state.data.declarationRoot))if(state.files.get(row.path)!==row.source)fail('current primitive operator runtime differs');
  for(const row of state.receipts)if(digest(row.source)!==row.sha256||state.files.get(row.path)!==row.source)fail('source receipt differs');
  for(const row of ownedCoreRuntimeSources(state.data.runtimeRoot,state.data.declarationRoot))if(state.files.get(row.path)!==row.source)fail('current runtime differs');
  rustEdge(state.files);if(state.files.has('src/translation_core/base64.rs')&&state.files.get('src/translation_core/base64.rs')!==ROUTER_CORE_BASE64_SOURCE)fail('current base64 leaf differs');assertReverseConcreteSourceHost();
@@ -162,7 +164,7 @@ function originalImportTarget(from,specifier,analysis,state){
  const target=relative(from,specifier);
  // A paired TS import resolves its genuine .d.mts in declarationRoot. Its
  // fixed runtime counterpart remains the independently checked JS callee.
- if(traversals.get(analysis)?.paired&&posix.dirname(target)===state.data.declarationRoot&&['json-update-runtime.mjs','json-macro-runtime.mjs','base64-runtime.mjs','json-runtime.mjs','json-option-runtime.mjs'].includes(posix.basename(target))){
+ if(traversals.get(analysis)?.paired&&posix.dirname(target)===state.data.declarationRoot&&['primitive-operator-runtime.mjs','json-update-runtime.mjs','json-macro-runtime.mjs','base64-runtime.mjs','json-runtime.mjs','json-option-runtime.mjs'].includes(posix.basename(target))){
   const runtime=state.data.runtimeRoot+'/'+posix.basename(target);
   if(state.files.has(target)&&state.files.get(target)!==state.files.get(runtime))fail('paired runtime counterpart differs');return runtime;
  }
@@ -180,11 +182,15 @@ function originalOwnedCoreImport(handle,path,node,analysis){
  let target=originalImportTarget(path,declaration.moduleSpecifier.text,analysis,state),name=(spec.propertyName??spec.name).text,ownerFile=file,ownerDeclaration=declaration;const links=[];
  for(let depth=0;depth<32;depth++){
   const source=state.files.get(target);if(source===undefined)fail('import target missing');links.push({path:target,name,source,from:{path:ownerFile.fileName,span:[ownerDeclaration.getStart(ownerFile),ownerDeclaration.end]}});
-  if(target===state.data.runtimeRoot+'/json-update-runtime.mjs'||target===state.data.runtimeRoot+'/json-macro-runtime.mjs'||target===state.data.runtimeRoot+'/base64-runtime.mjs'||target===state.data.runtimeRoot+'/json-runtime.mjs'||target===state.data.runtimeRoot+'/json-option-runtime.mjs'){
+  if(target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'||target===state.data.runtimeRoot+'/primitive-operator-runtime.mjs'||target===state.data.runtimeRoot+'/json-update-runtime.mjs'||target===state.data.runtimeRoot+'/json-macro-runtime.mjs'||target===state.data.runtimeRoot+'/base64-runtime.mjs'||target===state.data.runtimeRoot+'/json-runtime.mjs'||target===state.data.runtimeRoot+'/json-option-runtime.mjs'||target===state.data.runtimeRoot+'/json-fields-runtime.mjs'){
+   if(target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'&&name!=='requireScalarString'&&!ownedVectorTextScalarOperation(name))fail('only actual scalar string validation and fixed text scalar exports are registered');
+   if(target===state.data.runtimeRoot+'/json-fields-runtime.mjs'){if(!ownedVectorJsonFieldOperation(name))fail('field export requires a supported copied plain/shared/primitive payload domain');requireOwnedVectorJsonFieldSources(state.files,state.data);}
+   if(target===state.data.runtimeRoot+'/primitive-operator-runtime.mjs'&&(!ownedPrimitiveOperatorOperation(name)&&!((spec.isTypeOnly||declaration.importClause?.isTypeOnly)&&primitiveBitwiseAlias(name))||state.data.primitiveOperators!==true&&!ownedNativeClosedOperator(name)&&!((spec.isTypeOnly||declaration.importClause?.isTypeOnly)&&primitiveBitwiseAlias(name))))fail('unregistered primitive operator context or export');
    const typesOnly=spec.isTypeOnly||declaration.importClause?.isTypeOnly;
    const actual=typesOnly?syntax.get(state.data.declarationRoot+'/'+posix.basename(target).replace(/\.mjs$/u,'.d.mts')):syntax.get(target);
    const exported=actual?.statements.some(item=>item.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword)&&((item.name?.text===name)||(ts.isVariableStatement(item)&&item.declarationList.declarations.some(node=>ts.isIdentifier(node.name)&&node.name.text===name))));
-   if(!exported)fail('original runtime has no such export');return {target,name,links,local:node.text};
+   if(typesOnly&&target===state.data.runtimeRoot+'/primitive-operator-runtime.mjs'&&primitiveBitwiseAlias(name)&&!ownedNativeScalarDeclaration(ts,checker,syntax,state.files,{canonicalPath:state.data.declarationRoot+'/primitive-operator-runtime.d.mts',mirrorPath:state.data.runtimeRoot+'/primitive-operator-runtime.d.mts',name,symbol}))fail('native scalar named import requires its actual current declaration symbol');
+   if(!exported)fail('original runtime has no such export');return {target,name,links,local:node.text,typeOnly:!!typesOnly};
   }
   const next=syntax.get(target);if(!next||next.statements.length!==1)fail('only a single transparent reexport declaration');let selected=null;
   for(const item of next.statements){
@@ -198,15 +204,23 @@ function originalOwnedCoreImport(handle,path,node,analysis){
 
 function originalOwnedCoreType(handle,path,type,analysis){
  const {ts,file}=analysis,privateState=traversals.get(analysis);if(privateState?.handle!==handle)fail('foreign type traversal');const state=privateState.state;
- if(!type)fail('written input domain required');
+ if(!type)fail('written input domain required');type=ownedParenthesizedType(ts,type);
  if(type.kind===ts.SyntaxKind.StringKeyword)return 'str';
  if(type.kind===ts.SyntaxKind.BooleanKeyword)return 'bool';
- if(ownedBase64ReadonlyOctets(ts,type))return 'bytes-ref';
+ if(type.kind===ts.SyntaxKind.VoidKeyword)return 'unit';
+ if(type.kind===ts.SyntaxKind.BigIntKeyword)return 'usize';
+ const collection=ts.isTypeOperatorNode(type)&&type.operator===ts.SyntaxKind.ReadonlyKeyword?type.type:type;if(ts.isArrayTypeNode(collection)){const element=originalOwnedCoreType(handle,path,collection.elementType,analysis);if(element==='json-ref')return 'json-list-ref';if(element==='bool'||primitiveBitwiseType(element))return 'vec:'+element;fail('actual canonical JSON or closed primitive array element required');}
+ if(ownedBase64ReadonlyOctets(ts,type))return 'bytes-ref';const base64Input=readOwnedBase64ResultImportType(ts,type,specifier=>originalImportTarget(path,specifier,analysis,state),state.data.runtimeRoot);if(base64Input)return base64Input;
 
  if(ts.isTypeReferenceNode(type)&&ts.isIdentifier(type.typeName)&&type.typeName.text!=='ReturnType'){
   const binding=originalOwnedCoreImport(handle,path,type.typeName,analysis);
+  if(binding.target===state.data.runtimeRoot+'/primitive-operator-runtime.mjs'&&primitiveBitwiseAlias(binding.name)&&!type.typeArguments)return primitiveBitwiseAlias(binding.name).name;
   if(binding.target===state.data.runtimeRoot+'/json-macro-runtime.mjs'&&binding.name==='JsonValue'&&!type.typeArguments)return 'json-ref';
   if(binding.target===state.data.runtimeRoot+'/base64-runtime.mjs'&&!type.typeArguments){if(binding.name==='Base64Error')return 'base64-error-ref';if(binding.name==='Base64Result')return 'base64-result';}
+ }
+ if(ts.isImportTypeNode(type)&&!type.isTypeOf&&ts.isLiteralTypeNode(type.argument)&&ts.isStringLiteral(type.argument.literal)&&type.qualifier&&ts.isIdentifier(type.qualifier)&&primitiveBitwiseAlias(type.qualifier.text)&&!type.typeArguments&&!type.attributes){
+  requireOwnedCoreSourceCurrent(handle);const row=primitiveBitwiseAlias(type.qualifier.text),target=relative(path,type.argument.literal.text),runtime=state.data.runtimeRoot+'/primitive-operator-runtime.mjs',declaration=state.data.declarationRoot+'/primitive-operator-runtime.d.mts';if(![runtime,state.data.declarationRoot+'/primitive-operator-runtime.mjs'].includes(target))fail('unregistered native scalar type import');
+  const selected=ownedNativeScalarDeclaration(ts,analysis.checker,analysis.syntax,state.files,{canonicalPath:declaration,mirrorPath:state.data.runtimeRoot+'/primitive-operator-runtime.d.mts',name:row.alias,symbol:analysis.checker.getSymbolAtLocation(type.qualifier)});if(!selected)fail('native scalar type import requires its actual current canonical or byte-equal mirrored declaration symbol');requireOwnedCoreSourceCurrent(handle);return row.name;
  }
  if(ts.isImportTypeNode(type)&&!type.isTypeOf&&ts.isLiteralTypeNode(type.argument)&&ts.isStringLiteral(type.argument.literal)&&type.qualifier?.text==='JsonValue'&&!type.typeArguments){
   if(originalImportTarget(path,type.argument.literal.text,analysis,state)!==state.data.runtimeRoot+'/json-macro-runtime.mjs')fail('unregistered type import');return 'json-ref';
@@ -216,6 +230,8 @@ function originalOwnedCoreType(handle,path,type,analysis){
   const query=type.typeArguments[0];if(ts.isTypeQueryNode(query)&&ts.isIdentifier(query.exprName)){
    const binding=originalOwnedCoreImport(handle,path,query.exprName,analysis),op=ownedBase64Operation(binding.name);
    if(binding.target===state.data.runtimeRoot+'/base64-runtime.mjs'&&op)return op.ret;
+   const textScalar=ownedVectorTextScalarOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'&&textScalar)return textScalar.ret;
+   const field=ownedVectorJsonFieldOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/json-fields-runtime.mjs'&&field)return field.ret;
    const reader=ownedJsonReaderOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/json-runtime.mjs'&&reader)return reader.ret;
    const optional=ownedJsonOptionalReaderOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/json-option-runtime.mjs'&&optional)return optional.ret;
    // Written output domain only; source-symbol and whole-body checks stay independent.
@@ -229,7 +245,10 @@ function originalOwnedCoreType(handle,path,type,analysis){
   const query=type.objectType.typeArguments[0];
   if(ts.isTypeQueryNode(query)&&ts.isIdentifier(query.exprName)){
    const binding=originalOwnedCoreImport(handle,path,query.exprName,analysis);
+   const scalarConstructor=OPS[binding.name];if(binding.target===state.data.runtimeRoot+'/json-macro-runtime.mjs'&&['json_macro_bool','json_macro_string','json_macro_u64','json_macro_i64'].includes(binding.name)&&scalarConstructor&&Number(type.indexType.literal.text)<scalarConstructor.args.length)return scalarConstructor.args[Number(type.indexType.literal.text)];
+   const textScalar=ownedVectorTextScalarOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'&&textScalar&&Number(type.indexType.literal.text)<textScalar.args.length)return textScalar.args[Number(type.indexType.literal.text)];
    const base64=ownedBase64Operation(binding.name);if(binding.target===state.data.runtimeRoot+'/base64-runtime.mjs'&&base64&&type.indexType.literal.text==='0')return base64.input;
+   const field=ownedVectorJsonFieldOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/json-fields-runtime.mjs'&&field&&Number(type.indexType.literal.text)<field.args.length)return field.args[Number(type.indexType.literal.text)];
    const reader=ownedJsonReaderOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/json-runtime.mjs'&&reader&&Number(type.indexType.literal.text)<reader.args.length)return reader.args[Number(type.indexType.literal.text)];
    const optional=ownedJsonOptionalReaderOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/json-option-runtime.mjs'&&optional&&type.indexType.literal.text==='0')return optional.input;
    if(binding.target===state.data.runtimeRoot+'/json-update-runtime.mjs'&&binding.name==='router_core_json_map_index'&&type.indexType.literal.text==='0')return 'map-ref';
@@ -241,7 +260,7 @@ function originalOwnedCoreType(handle,path,type,analysis){
 
 // The compiler traversal is entirely private. Only detached source/body facts
 // leave this operation; every emission boundary reconstructs them afresh.
-const OPS=Object.freeze({
+const OPS=Object.freeze({...BOUNDED_JSON_RUNTIME_OPERATIONS,
  router_core_json_copy:{args:['json'],ret:'json',rust:'json_copy'},
  router_core_json_with_field:{args:['json','str','json'],ret:'json',rust:'json_with_field'},
  router_core_json_index_str:{args:['json','str'],ret:'json-ref',rust:'json_index_str',root:0},
@@ -262,7 +281,7 @@ function rustName(name){
 const json=type=>type==='json'||type==='json-ref';
 const compatible=(actual,wanted)=>wanted==='json'?json(actual):wanted==='i64'?actual==='i64'||actual==='usize':wanted==='u64'?actual==='usize':actual===wanted;
 export function analyzeOriginalOwnedCoreSource(context,path){
- const analysis=originalOwnedCoreModule(context,path),{ts,file,source}=analysis,program=[],diagnostics=[],items=[];
+ const analysis=originalOwnedCoreModule(context,path),{ts,file,source}=analysis,program=[],diagnostics=[],items=[];let failed=false;
  try{
  const functions=file.statements.filter(ts.isFunctionDeclaration);
  // Top-level evaluation, namespace imports and unsupported exports are not
@@ -282,13 +301,24 @@ export function analyzeOriginalOwnedCoreSource(context,path){
   catch(error){if(!(error instanceof TypeError))throw error;const diagnostic={kind:'owned-core',name,span,message:error.message};diagnostics.push(diagnostic);items.push({name,span,status:'unsupported',diagnostic});}
  }
  requireOwnedCoreSourceCurrent(context);return {program,diagnostics,items,source,path};
- }finally{analysis.vectorProfiles?.clear();}
+ }catch(error){failed=true;throw error;}finally{const frame=traversals.get(analysis);let fenceFailed=false,fenceError;try{if(failed||frame?.scalarEdges)requireOwnedCoreSourceCurrent(context);}catch(error){fenceFailed=true;fenceError=error;}finally{analysis.vectorProfiles?.clear();frame?.scalarFunctions?.clear();frame?.scalarActive?.clear();}if(!failed&&fenceFailed)throw fenceError;}
 }
 function checkFunction(context,path,declaration,analysis){
- const {ts,file,source,checker}=analysis;
+ const frame=traversals.get(analysis);if(!frame||frame.handle!==context||frame.paired)fail('actual same-invocation original function traversal required');frame.scalarFunctions??=new Map();frame.scalarActive??=new Set();if(frame.scalarFunctions.has(declaration))return frame.scalarFunctions.get(declaration);if(frame.scalarFunctions.size>=4096||frame.scalarActive.size>=32||frame.scalarActive.has(declaration))fail('bounded acyclic original source helper body required');frame.scalarActive.add(declaration);try{const item=checkFunctionBody(context,path,declaration,analysis);frame.scalarFunctions.set(declaration,item);return item;}finally{frame.scalarActive.delete(declaration);}
+}
+function checkFunctionBody(context,path,declaration,analysis){
+ const {ts,file,source,checker}=analysis,nativeScalars=contexts.get(context).data.primitiveOperators===true,primitiveDefinitions=contexts.get(context).data.primitiveDefinitions===true,vectorDefinitions=contexts.get(context).data.primitiveVectorDefinitions===true;
  if(!declaration.name||!declaration.body||declaration.asteriskToken||declaration.typeParameters||declaration.modifiers?.some(mod=>mod.kind!==ts.SyntaxKind.ExportKeyword))fail('ordinary original named function required');
- const name=rustName(declaration.name.text),params=[],environment=new Map();let cells=0,paired=pairedFunction(context,path,declaration,analysis);
- const vectorCandidate=checkOriginalOwnedVectorFunction(path,declaration,analysis,paired,name);if(vectorCandidate)return vectorCandidate;
+ const name=rustName(declaration.name.text),params=[],sourceCalls=[],environment=new Map();let cells=0,paired=pairedFunction(context,path,declaration,analysis);
+ const vectorCandidate=checkOriginalOwnedVectorFunction(path,declaration,analysis,paired,name,operand=>originalOwnedCoreImport(context,path,operand,analysis));if(vectorCandidate)return vectorCandidate;
+ const vectorProfile=analysis.vectorProfiles?.get(declaration.name.text),jsonVectorProfile=['json-vector','json-value','json-scalar','primitive-scalar','primitive-expression-vector'].includes(vectorProfile?.kind)?vectorProfile:null;
+ if(jsonVectorProfile?.kind==='primitive-scalar'&&nativeScalars&&jsonVectorProfile.vectorLocals!==true)fail('closed primitive source units retain their separate non-operator input profile');
+ if(jsonVectorProfile&&(!paired||declaration.parameters.length!==jsonVectorProfile.parameters.length||paired.declaration.parameters.length!==declaration.parameters.length))fail('actual original Json vector parameter arity differs');
+ const definitionWrittenPair=paired?.declaration.type?paired:null,writtenDefinitionResult=definitionWrittenPair?.declaration.type??ts.getJSDocReturnType(declaration),definitionReturnType=primitiveDefinitions?(writtenDefinitionResult?originalOwnedCoreType(context,definitionWrittenPair?.pair.typescript.path??path,writtenDefinitionResult,definitionWrittenPair?.analysis??analysis):vectorDefinitions&&primitiveUnitReturnSyntax(ts,declaration.body)?'unit':null):null,definitionUnit=definitionReturnType==='unit';
+ const inference=vectorDefinitions||jsonVectorProfile?.kind==='primitive-expression-vector'||jsonVectorProfile?.vectorLocals===true?createPrimitiveVectorInference():null;let primitiveDefinitionLocals=0;
+ const newVectorDefinition=vectorDefinitions&&primitiveVectorResultRole(definitionReturnType),expressionVector=jsonVectorProfile?.kind==='primitive-expression-vector'||jsonVectorProfile?.vectorLocals===true||vectorDefinitions,expressionVectorType=jsonVectorProfile?.type??definitionReturnType,expressionVectorElement=jsonVectorProfile?.element?.name??(newVectorDefinition?definitionReturnType.slice(4):null),moves=type=>ownedBase64Result(type)||type==='json-list-owned'||expressionVector&&(primitiveVectorResultRole(type)||inference?.pending(type));
+ const primitiveLiteralBinding=entry=>entry&&Object.hasOwn(entry,'inferredPrimitiveLiteral')?entry.inferredPrimitiveLiteral:null;
+ const writtenCompatible=(actual,written)=>inference?.pending(actual)?inference.compatible(actual,written):expressionVector&&written==='vec:usize'&&typeof actual==='string'&&actual.startsWith('vec:')&&primitiveBitwiseType(actual.slice(4))?true:jsonVectorProfile&&written==='json-list-ref'?actual==='json-list-owned':['json-scalar','primitive-scalar'].includes(jsonVectorProfile?.kind)&&!nativeScalars&&primitiveBitwiseType(actual)&&written==='usize'||ownedBase64Compatible(actual,written);
  const tick=depth=>{if(++cells>100000||depth>160)fail('whole function flow budget');};
  function bind(identifier,value,scope){
   if(!ts.isIdentifier(identifier)||scope.has(identifier.text)||identifier.text.startsWith('__ro'))fail('duplicate, reserved or nonidentifier binding');
@@ -304,17 +334,18 @@ function checkFunction(context,path,declaration,analysis){
    paired??=pairedFunction(context,path,declaration,analysis);
    type=paired?originalOwnedCoreType(context,paired.pair.typescript.path,paired.declaration.parameters[index].type,paired.analysis):originalOwnedCoreType(context,path,undefined,analysis);
   }
-  if(type==='base64-result')fail('native base64 result input control is not implemented');
+  if(type==='base64-result')base64Source(traversals.get(analysis).state.files);
   if(ownedJsonOptionalPayload(type))fail('optional public parameters require an independently checked carrier boundary');
   if(type==='text-owned')type='str';
+  if(jsonVectorProfile){const native=jsonVectorProfile.parameters[index].name;if(type!==(native==='json'?'json-ref':native)&&!(!nativeScalars&&primitiveBitwiseType(native)&&type==='usize'))fail('actual original native Json input domain differs');type=native;}
   const identifier=param.name;
-  const sourceName=bind(identifier,{type,root:['json-ref','map-ref','str','bytes-ref','base64-error-ref'].includes(type)||ownedJsonBorrowed(type)||type==='json-option-input'?identifier.text:null,input:true},environment);
+  const sourceName=bind(identifier,{type,root:jsonVectorProfile&&type==='json'||['json-ref','map-ref','str','bytes-ref','base64-error-ref'].includes(type)||ownedJsonBorrowed(type)||type==='json-option-input'?identifier.text:null,input:true},environment);
   params.push({name:sourceName,rust:rustName(sourceName),type});
  }
  // The complete available pair was selected before parameter domains.
- const hostCalls=[],byteInputs=new Set();
- const branchScope=scope=>new Map([...scope].map(([key,value])=>[key,ownedBase64Result(value.type)?{...value}:value]));
- const mergeMoves=(scope,yes,no)=>{for(const [key,value]of scope)if(ownedBase64Result(value.type))value.moved=!!yes.get(key)?.moved||!!no.get(key)?.moved;};
+ let boundedJsonBoundary=false,vectorFieldBoundary=false;const nativeOperatorHistory=(inference?createOwnedContextualBitwiseHistory:createOwnedNativeBitwiseHistory)(),sourceNativeOperators=nativeOperatorHistory.rows,hostCalls=[],byteInputs=new Set();
+ const branchScope=scope=>new Map([...scope].map(([key,value])=>[key,moves(value.type)?{...value}:value]));
+ const mergeMoves=(scope,yes,no)=>{for(const [key,value]of scope)if(moves(value.type))value.moved=!!yes.get(key)?.moved||!!no.get(key)?.moved;};
  const refine=(scope,condition,truth)=>{
   if(condition.kind==='not')return refine(scope,condition.value,!truth);
   if(condition.kind!=='option-test')return scope;
@@ -336,7 +367,7 @@ function checkFunction(context,path,declaration,analysis){
   // an actual literal (or both independently checked literal alternatives) is.
   function stringLoan(value){
    if(value.type!=='str')return undefined;
-   if(value.root!==null)return params.some(param=>param.name===value.root&&(['json-ref','map-ref','str','json-option-input'].includes(param.type)||ownedJsonBorrowed(param.type)))?{root:value.root}:undefined;
+   if(value.root!==null)return params.some(param=>param.name===value.root&&(['json-ref','map-ref','str','json-option-input'].includes(param.type)||jsonVectorProfile&&param.type==='json'||ownedJsonBorrowed(param.type)))?{root:value.root}:undefined;
    if(value.kind==='string')return {root:null};
    if(value.kind==='choose')return meetStringLoans(stringLoan(value.then),stringLoan(value.else));
    return undefined;
@@ -348,12 +379,23 @@ function checkFunction(context,path,declaration,analysis){
    return undefined;
   }
 
- function expression(node,scope,depth,opaqueOperand=false){
-  tick(depth);if(ts.isParenthesizedExpression(node))return expression(node.expression,scope,depth+1);
+ function expression(node,scope,depth,opaqueOperand=false,numericDomain=null){
+  tick(depth);if(ts.isParenthesizedExpression(node))return expression(node.expression,scope,depth+1,opaqueOperand,numericDomain);
+  if(expressionVector&&ts.isArrayLiteralExpression(node)){
+   if(node.elements.length>4096||node.elements.some(item=>ts.isOmittedExpression(item)||ts.isSpreadElement(item)))fail('bounded dense primitive Vec elements required');
+   if(inference){const hint=primitiveVectorResultRole(numericDomain)?numericDomain:null,element=hint?.slice(4)??null,items=node.elements.map(item=>inference.literal(ts,item)??expression(item,scope,depth+1,false,element));return inference.array(items,hint);}
+   const element=expressionVectorElement,items=node.elements.map(item=>expression(item,scope,depth+1,false,element));
+   if(items.some(item=>item.type!==element))fail('every actual vector item must retain the exact primitive domain');
+   return {kind:'primitive-vector-literal',items,type:expressionVectorType,root:null};
+  }
+  if(jsonVectorProfile&&ts.isArrayLiteralExpression(node)){if(node.elements.length>4096||node.elements.some(item=>ts.isOmittedExpression(item)||ts.isSpreadElement(item)))fail('bounded dense canonical Json vector required');const items=node.elements.map(item=>expression(item,scope,depth+1));if(items.some(item=>!json(item.type)))fail('actual canonical Json vector elements required');return {kind:'json-vector-literal',items,type:'json-list-owned',root:null};}
   if(ts.isStringLiteral(node)||ts.isNoSubstitutionTemplateLiteral(node)){
    if(/\p{Surrogate}/u.test(node.text))fail('unpaired UTF16 string');return {kind:'string',value:node.text,type:'str',root:null};
   }
   if(node.kind===ts.SyntaxKind.TrueKeyword||node.kind===ts.SyntaxKind.FalseKeyword)return {kind:'bool',value:node.kind===ts.SyntaxKind.TrueKeyword,type:'bool',root:null};
+  if(primitiveBitwiseType(numericDomain)&&(ts.isBigIntLiteral(node)||ts.isPrefixUnaryExpression(node)&&node.operator===ts.SyntaxKind.MinusToken&&ts.isBigIntLiteral(node.operand))){const negative=ts.isPrefixUnaryExpression(node);return ownedIntegerLiteral((negative?node.operand:node).text,{negative,domain:numericDomain});}
+  if(inference&&!primitiveBitwiseType(numericDomain)){const deferred=inference.wideLiteral(ts,node);if(deferred)return deferred;}
+  if((jsonVectorProfile||vectorDefinitions)&&ts.isPrefixUnaryExpression(node)&&node.operator===ts.SyntaxKind.MinusToken&&ts.isBigIntLiteral(node.operand)){const value=ownedIntegerLiteral(node.operand.text,{negative:true});if(vectorDefinitions&&value.value==='0')value.type='usize';return value;}
   if(ts.isBigIntLiteral(node)){
    const text=node.text.replace(/n$/u,'').replaceAll('_','');let value;try{value=BigInt(text);}catch{fail('invalid integer');}
    if(value<0n||value>18446744073709551615n)fail('u64 literal bound');return {kind:'integer',value:value.toString(),type:'usize',root:null};
@@ -375,12 +417,22 @@ function checkFunction(context,path,declaration,analysis){
   if(ts.isIdentifier(node)){
    const value=scope.get(node.text);if(!value||checker.getSymbolAtLocation(node)!==value.symbol)fail('unknown, shadowed or moved binding');
    if(value.type==='json-option-input'&&!opaqueOperand)fail('opaque optional Json input requires its actual checked operation');
-   if(ownedBase64Result(value.type)){if(value.moved)fail('native base64 result used after move');value.moved=true;}
+   if(inference&&primitiveLiteralBinding(value)){const literal=primitiveLiteralBinding(value);if(primitiveBitwiseType(numericDomain)){const negative=literal.value.startsWith('-');return ownedIntegerLiteral((negative?literal.value.slice(1):literal.value)+'n',{negative,domain:numericDomain});}if(literal.deferred)return inference.copyLiteral(literal.deferred);return {kind:'integer',value:literal.value,type:literal.type,root:null};}
+   if(inference&&Object.hasOwn(value,'primitiveChoiceCandidate'))return inference.choiceReference(value.primitiveChoiceCandidate,{kind:'variable',name:node.text,type:value.type,root:value.root},numericDomain);
+   if(inference?.scalarPending(value.type))return inference.scalarReference(value.type,{kind:'variable',name:node.text,type:value.type,root:value.root},numericDomain);
+   if(moves(value.type)){if(value.moved)fail('native base64 result used after move');value.moved=true;}
    return {kind:'variable',name:node.text,type:value.type,root:value.root};
   }
   if(ts.isCallExpression(node)){
    if(node.questionDotToken||node.typeArguments?.length||node.arguments.some(ts.isSpreadElement))fail('optional/generic/spread call');
+   if(ts.isIdentifier(node.expression)){const symbol=checker.getSymbolAtLocation(node.expression),declarations=symbol?.declarations,target=declarations?.length===1?declarations[0]:null;if(target&&ts.isFunctionDeclaration(target)&&target.getSourceFile()===file&&file.statements.includes(target)){
+    if(!target.name||!primitiveDefinitions&&(!jsonVectorProfile||!['primitive-scalar',...(expressionVector?['primitive-expression-vector']:[])].includes(analysis.vectorProfiles?.get(target.name.text)?.kind)))fail('source calls require a complete actual closed primitive callee');const callee=checkFunction(context,path,target,analysis),origin=callee.vectorOrigin?.original,definitionRole=type=>type==='bool'||!!primitiveBitwiseType(type);if(primitiveDefinitions?(!!origin||!definitionRole(callee.returns)&&!(vectorDefinitions&&(callee.returns==='unit'||primitiveVectorResultRole(callee.returns)))||callee.params.some(param=>!definitionRole(param.type)&&!(vectorDefinitions&&param.type==='str'))||node.arguments.length!==callee.params.length):(!['primitive-scalar',...(expressionVector?['primitive-expression-vector']:[])].includes(callee.vectorOrigin?.kind)||!origin||origin.qualifiedName.split('.').slice(0,-1).join('.')!==jsonVectorProfile.original.qualifiedName.split('.').slice(0,-1).join('.')||origin.qualifiedName.split('.').some(part=>! /^[A-Za-z_][A-Za-z0-9_]*$/u.test(part)||KEYS.has(part))||node.arguments.length!==callee.params.length))fail('actual ordinary primitive source callee/arity differs');const args=node.arguments.map((argument,index)=>{const role=callee.params[index].type;let value=expression(argument,scope,depth+1,false,role);if(primitiveBitwiseType(role)){value=scalarReturnLiteral(value,scope,depth+1);narrowOwnedNumericLiteral(value,role);}if(value.type!==role&&!(role==='u64'&&value.type==='usize'))fail('source callee argument differs from its actual native ABI');if(role==='str'&&!asciiStringLoan(value,scope))fail('source helper text requires an actual live borrowed/static loan');return value;});const frame=traversals.get(analysis);frame.scalarEdges=(frame.scalarEdges??0)+1;if(frame.scalarEdges>16384)fail('bounded original source-call edges required');const selected={path,javascript:callee.javascript,rust:origin?.qualifiedName??callee.name,localRust:callee.name,parameters:callee.params.map(param=>param.type),returns:callee.returns,span:[...callee.source.span]};sourceCalls.push(selected);return {kind:'source-scalar-call',callee:selected,args,type:callee.returns,root:null};
+   }}
    const binding=originalOwnedCoreImport(context,path,node.expression,analysis),op=OPS[binding.name];
+   const textScalar=ownedVectorTextScalarOperation(binding.name);if(textScalar&&binding.target===analysis.runtimeRoot+'/string-iterator-runtime.mjs'){if(!jsonVectorProfile&&!vectorDefinitions||binding.typeOnly||node.arguments.length!==textScalar.args.length)fail('fixed source-bound text scalar operation/arity required');requireOwnedCoreSourceCurrent(context);const args=node.arguments.map(argument=>expression(argument,scope,depth+1));if(args.some(value=>value.type!=='str'||!asciiStringLoan(value,scope)))fail('text scalar arguments need actual live borrowed/static text');hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});requireOwnedCoreSourceCurrent(context);return {kind:'text-scalar-call',name:binding.name,args,type:textScalar.ret,root:null};}
+   if(ownedPrimitiveOperatorOperation(binding.name)&&binding.target===analysis.runtimeRoot+'/primitive-operator-runtime.mjs'){
+    requireOwnedCoreSourceCurrent(context);if(!nativeScalars&&(!jsonVectorProfile||!ownedNativeClosedOperator(binding.name)))fail('non-operator source units require a qualified total operation');if(binding.typeOnly)fail('primitive runtime call cannot use a type-only import');const value=readOwnedPrimitiveOperatorCall(ts,node,binding.name,(argument,domain)=>expression(argument,scope,depth+1,false,domain));if(!nativeScalars)requireOwnedNativeClosedCall(value);hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});requireOwnedCoreSourceCurrent(context);return value;
+   }
    const optional=ownedJsonOptionalReaderOperation(binding.name);
    if(optional&&binding.target===analysis.runtimeRoot+'/json-option-runtime.mjs'){
     requireOwnedCoreSourceCurrent(context);
@@ -388,7 +440,15 @@ function checkFunction(context,path,declaration,analysis){
     const argument=expression(node.arguments[0],scope,depth+1,true);
     if(argument.type!==optional.input||!params.some(param=>param.type===optional.input&&param.name===argument.root))fail('opaque optional Json root differs');
     hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end],inputRoot:argument.root});requireOwnedCoreSourceCurrent(context);
-    return {kind:'json-option-call',name:binding.name,args:[argument],type:optional.ret,root:argument.root};
+    return {kind:'json-option-call',name:binding.name,args:[argument],type:optional.ret,root:optional.root===null?null:argument.root};
+   }
+   const fieldOperation=ownedVectorJsonFieldOperation(binding.name);
+   if(fieldOperation&&binding.target===analysis.runtimeRoot+'/json-fields-runtime.mjs'){
+    if(!jsonVectorProfile||binding.typeOnly)fail('field/default operations require their actual owned JSON vector source profile');vectorFieldBoundary=true;requireOwnedCoreSourceCurrent(context);const args=node.arguments.map((argument,index)=>expression(argument,scope,depth+1,false,fieldOperation.args[index]));
+    if(args.length!==fieldOperation.args.length||!json(args[0].type)||(fieldOperation.args[1]==='str'?args[1].type!=='str':!['u64','usize'].includes(args[1].type))||fieldOperation.args.slice(2).some((role,index)=>role==='str'?args[index+2].type!=='str':args[index+2].type!==role))fail('actual JSON field operand domains differ');
+    const root=fieldOperation.root===null?null:args[0].root;if(fieldOperation.root!==null&&!root)fail('borrowed JSON field requires a live actual input root');
+    hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});requireOwnedCoreSourceCurrent(context);
+    return {kind:'json-field-call',name:binding.name,args,type:fieldOperation.ret,root};
    }
    const reader=ownedJsonReaderOperation(binding.name);
    if(reader&&binding.target===analysis.runtimeRoot+'/json-runtime.mjs'){
@@ -396,7 +456,7 @@ function checkFunction(context,path,declaration,analysis){
     // profile were freshly joined by the genuine context. Rows are only DATA.
     requireOwnedCoreSourceCurrent(context);
     const args=node.arguments.map(argument=>expression(argument,scope,depth+1));
-    if(args.length!==reader.args.length||args.some((value,at)=>reader.args[at]==='json-ref'?!json(value.type):value.type!==reader.args[at]))fail('actual JSON reader operand domain differs');
+    if(args.length!==reader.args.length||args.some((value,at)=>reader.args[at]==='json-ref'?!json(value.type):value.type!==reader.args[at]&&!(jsonVectorProfile&&!nativeScalars&&reader.args[at]==='usize'&&value.type==='u64')))fail('actual JSON reader operand domain differs');
     const root=reader.root===null?null:args[reader.root].root;if(reader.root!==null&&!root)fail('JSON reader loan requires a live original input');
     hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});requireOwnedCoreSourceCurrent(context);
     return {kind:'json-reader-call',name:binding.name,args,type:reader.ret,root};
@@ -428,8 +488,9 @@ function checkFunction(context,path,declaration,analysis){
     return binding.name==='json_macro_array'?{kind:'json-array',items:values,type:'json',root:null}:{kind:'json-object',entries:values,type:'json',root:null};
    }
    if(!op||binding.target!==expected)fail('unregistered source operation');
+   if(op.boundedJson){if(!jsonVectorProfile||binding.typeOnly)fail('bounded JSON runtime aliases require their actual canonical native vector source');requireOwnedCoreSourceCurrent(context);if(!boundedJsonBoundary){boundedJsonRuntimeRustEdge(traversals.get(analysis).state.files);boundedJsonBoundary=true;}}
    const args=node.arguments.map(argument=>expression(argument,scope,depth+1));
-   if(args.length!==op.args.length||args.some((argument,index)=>!compatible(argument.type,op.args[index])))fail('owned argument type differs');
+   if(args.length!==op.args.length||args.some((argument,index)=>!compatible(argument.type,op.args[index])&&!(jsonVectorProfile&&op.args[index]==='u64'&&argument.type==='u64')&&!(jsonVectorProfile&&!nativeScalars&&op.args[index]==='usize'&&argument.type==='u64')))fail('owned argument type differs');
    // Shared index loans from temporaries cannot outlive their owner. No alias
    // or public source flag changes the actual root identity.
    const root=op.root===undefined?null:args[op.root].root;
@@ -437,17 +498,21 @@ function checkFunction(context,path,declaration,analysis){
    hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});
    return {kind:'owned-call',name:binding.name,args,type:op.ret,root};
   }
+  const nativeBitwise=(inference?readOwnedContextualBitwiseExpression:readOwnedNativeBitwiseExpression)(ts,node,argument=>expression(argument,scope,depth+1),{enabled:nativeScalars,...(inference?{join:inference.joinScalarLiterals}:{})});if(nativeBitwise){nativeOperatorHistory.retain(node,file,nativeBitwise);return nativeBitwise;}
   if(ts.isConditionalExpression(node)){
-   const cond=expression(node.condition,scope,depth+1),a=refine(branchScope(scope),cond,true),b=refine(branchScope(scope),cond,false),yes=expression(node.whenTrue,a,depth+1),no=expression(node.whenFalse,b,depth+1);
-   const loan=yes.type==='str'&&no.type==='str'?meetStringLoans(stringLoan(yes),stringLoan(no)):undefined;
+   const cond=expression(node.condition,scope,depth+1),a=refine(branchScope(scope),cond,true),b=refine(branchScope(scope),cond,false);let yes=expression(node.whenTrue,a,depth+1,false,numericDomain),no=expression(node.whenFalse,b,depth+1,false,numericDomain);
+   if(jsonVectorProfile&&!nativeScalars){if(primitiveBitwiseType(yes.type)&&no.type==='usize'){no=scalarReturnLiteral(no,b,depth+1);narrowOwnedNumericLiteral(no,yes.type);}else if(primitiveBitwiseType(no.type)&&yes.type==='usize'){yes=scalarReturnLiteral(yes,a,depth+1);narrowOwnedNumericLiteral(yes,no.type);}}
+   if(inference&&(inference.vector(yes.type)||inference.vector(no.type))){const joined=inference.join(yes.type,no.type);yes.type=joined;no.type=joined;}
+   if(inference)inference.joinScalarLiterals(yes,no);if(nativeScalars){cells+=joinOwnedNativeScalarChoiceOperands(yes,no,true);tick(depth);}const loan=yes.type==='str'&&no.type==='str'?meetStringLoans(jsonVectorProfile?asciiStringLoan(yes,a):stringLoan(yes),jsonVectorProfile?asciiStringLoan(no,b):stringLoan(no)):undefined;
    if(cond.type!=='bool'||yes.type!==no.type||yes.type==='str'&&!loan||yes.root!==no.root&&!loan&&yes.kind!=='option-none'&&no.kind!=='option-none')fail('conditional result or loan differs');mergeMoves(scope,a,b);return {kind:'choose',cond,then:yes,else:no,type:yes.type,root:loan?loan.root:yes.kind==='option-none'?no.root:yes.root};
   }
   if(ts.isPrefixUnaryExpression(node)&&node.operator===ts.SyntaxKind.ExclamationToken){const value=expression(node.operand,scope,depth+1);if(value.type!=='bool')fail('boolean negation only');return {kind:'not',value,type:'bool',root:null};}
-  if(ts.isBinaryExpression(node)&&[ts.SyntaxKind.AmpersandAmpersandToken,ts.SyntaxKind.BarBarToken,ts.SyntaxKind.EqualsEqualsEqualsToken,ts.SyntaxKind.ExclamationEqualsEqualsToken].includes(node.operatorToken.kind)){
+  if(ts.isBinaryExpression(node)&&[ts.SyntaxKind.AmpersandAmpersandToken,ts.SyntaxKind.BarBarToken,ts.SyntaxKind.EqualsEqualsEqualsToken,ts.SyntaxKind.ExclamationEqualsEqualsToken,ts.SyntaxKind.LessThanToken,ts.SyntaxKind.LessThanEqualsToken,ts.SyntaxKind.GreaterThanToken,ts.SyntaxKind.GreaterThanEqualsToken].includes(node.operatorToken.kind)){
    const optional=optionTest(node,scope,depth);if(optional)return optional;
-   const left=expression(node.left,scope,depth+1),right=expression(node.right,scope,depth+1),op=node.operatorToken.getText(file);
-   if(['&&','||'].includes(op)?left.type!=='bool'||right.type!=='bool':!['bool','str','usize'].includes(left.type)||left.type!==right.type)fail('identity/coercion comparison outside owned profile');
-   return {kind:'binary',op,left,right,type:'bool',root:null};
+   const left=expression(node.left,scope,depth+1),right=expression(node.right,scope,depth+1),op=node.operatorToken.getText(file);if(inference)inference.joinScalarLiterals(left,right);joinOwnedNativeScalarOperands(left,right,nativeScalars);if(jsonVectorProfile&&!nativeScalars){for(const [literal,other]of [[left,right],[right,left]])if(literal.kind==='integer'&&literal.type==='usize'&&primitiveBitwiseType(other.type))narrowOwnedNumericLiteral(literal,other.type);}
+   if(['<','<=','>','>='].includes(op)){if(!(ownedNativeIntegerDomain(left.type,nativeScalars)||jsonVectorProfile&&primitiveBitwiseType(left.type))||left.type!==right.type)fail('ordered comparison requires identical checked integer domains');}
+   else if(['&&','||'].includes(op)?left.type!=='bool'||right.type!=='bool':(!['bool','str','usize'].includes(left.type)&&!ownedNativeIntegerDomain(left.type,nativeScalars)&&!(jsonVectorProfile&&primitiveBitwiseType(left.type)))||left.type!==right.type)fail('identity/coercion comparison outside owned profile');
+   const checked={kind:'binary',op,left,right,type:'bool',root:null};if(nativeScalars&&primitiveBitwiseType(left.type))nativeOperatorHistory.retain(node,file,checked);return checked;
   }
   fail('unimplemented expression '+ts.SyntaxKind[node.kind]);
  }
@@ -470,35 +535,48 @@ function checkFunction(context,path,declaration,analysis){
   }
  }
 
+ function joinPrimitiveDefinitionLiteralReturns(value){if(!primitiveDefinitions||!nativeScalars||value.root!==null||!scalarReturnValues.length)return;for(const previous of scalarReturnValues){if(inference)inference.joinScalarLiterals(previous,value);cells+=joinOwnedNativeScalarChoiceOperands(previous,value,true);tick(0);}if(scalarReturnValues.every(previous=>previous.type===value.type))resultType=value.type;}
+ function asciiStringLoan(value,scope){const loan=stringLoan(value);if(loan)return loan;if(value.type==='str'&&value.kind==='choose')return meetStringLoans(asciiStringLoan(value.then,scope),asciiStringLoan(value.else,scope));return value.type==='str'&&value.kind==='variable'&&value.root===null&&scope.get(value.name)?.asciiStaticLoan===true?{root:null}:undefined;}
+ function scalarReturnLiteral(value,scope,depth){tick(depth);if(value.kind==='variable'){const constant=inference?primitiveLiteralBinding(scope.get(value.name))?.value:scope.get(value.name)?.constantInteger;if(typeof constant==='string')return {kind:'integer',value:constant,type:value.type,root:null};}if(value.kind==='choose')return {...value,then:scalarReturnLiteral(value.then,scope,depth+1),else:scalarReturnLiteral(value.else,scope,depth+1)};return value;}
+ function finishNativeUnitReturn(checked){if(!checked.terminated&&(['json-scalar','primitive-scalar'].includes(jsonVectorProfile?.kind)&&jsonVectorProfile.type==='unit'||definitionUnit)){const value={kind:'unit',type:'unit',root:null};if(resultType!==null&&resultType!=='unit')fail('return domains differ');resultType='unit';resultRoot=null;scalarReturnValues.push(value);checked.body.push({kind:'return',value});checked.terminated=true;}return checked;}
  function block(statements,scope,depth){
   const body=[];let terminated=false;
-  for(const statement of statements){
+  for(let statementIndex=0;statementIndex<statements.length;statementIndex++){const statement=statements[statementIndex];
    tick(depth);if(terminated)fail('statement after terminating return');
    if(ts.isVariableStatement(statement)){
     if(statement.modifiers?.length||(statement.declarationList.flags&ts.NodeFlags.BlockScoped)!==ts.NodeFlags.Const)fail('only fresh immutable local declarations');
     for(const declaration of statement.declarationList.declarations){
-     if(!declaration.initializer||declaration.exclamationToken||declaration.type)fail('unsupported local declaration');const value=expression(declaration.initializer,scope,depth+1);
+     if(inference&&++primitiveDefinitionLocals>64)fail('bounded complete primitive local census required');
+     if(!declaration.initializer||declaration.exclamationToken||declaration.type)fail('unsupported local declaration');let written=null;
      if(paired){
       const evidence=paired.evidence.locals.filter(item=>item.javascriptSpan[0]===declaration.getStart(file)&&item.javascriptSpan[1]===declaration.end);if(evidence.length!==1)fail('actual paired local span differs');
       const span=evidence[0].typeSpan;
       if(span){
        let actual;const find=node=>{if(ts.isVariableDeclaration(node)&&node.getStart(paired.analysis.file)===evidence[0].typescriptSpan[0]&&node.end===evidence[0].typescriptSpan[1])actual=node;ts.forEachChild(node,find);};find(paired.declaration.body);
        if(!actual?.type||actual.type.getStart(paired.analysis.file)!==span[0]||actual.type.end!==span[1])fail('actual paired local type differs');
-       const written=originalOwnedCoreType(context,paired.pair.typescript.path,actual.type,paired.analysis);
-       if(written==='json-ref'?!json(value.type):!ownedBase64Compatible(value.type,written))fail('paired written local ABI differs');
+       written=originalOwnedCoreType(context,paired.pair.typescript.path,actual.type,paired.analysis);
+
       }
      }
-     const name=bind(declaration.name,{type:value.type,root:value.root},scope);body.push({kind:'let',name,value});
+     let value=expression(declaration.initializer,scope,depth+1,false,primitiveBitwiseType(written)||inference&&primitiveVectorResultRole(written)?written:null);if(inference&&(value.kind==='choose'||inference.scalarPending(value.type)))value=inference.scalar(value);if(written!==null){if(jsonVectorProfile&&!nativeScalars&&primitiveBitwiseType(written)){value=scalarReturnLiteral(value,scope,depth+1);narrowOwnedNumericLiteral(value,written);}if(written==='json-ref'?!json(value.type):!writtenCompatible(value.type,written))fail('paired written local ABI differs');}
+     const inferredPrimitiveLiteral=inference&&written===null&&!ts.getJSDocType(declaration)?inference.deferredLiteral(value)?{type:value.type,value:value.value,deferred:value}:value.kind==='integer'&&value.root===null&&(value.type==='usize'||value.type==='i64')?{type:value.type,value:value.value}:value.kind==='variable'?primitiveLiteralBinding(scope.get(value.name)):undefined:undefined;
+     const primitiveChoiceCandidate=inference?inference.choiceCandidate(value):null;const constantInteger=jsonVectorProfile&&!nativeScalars?(value.kind==='integer'?value.value:value.kind==='variable'?scope.get(value.name)?.constantInteger:undefined):undefined;const staticTextLoan=jsonVectorProfile&&value.type==='str'?asciiStringLoan(value,scope):undefined;const name=bind(declaration.name,{type:value.type,root:value.root,...(primitiveChoiceCandidate?{primitiveChoiceCandidate}:{}),...(inferredPrimitiveLiteral?{inferredPrimitiveLiteral}:{}),...(typeof constantInteger==='string'?{constantInteger}:{}),...(staticTextLoan?.root===null?{asciiStaticLoan:true}:{})},scope);if(!inferredPrimitiveLiteral)body.push({kind:'let',name,value});
     }
+   }else if(ts.isExpressionStatement(statement)){const value=expression(statement.expression,scope,depth+1);if(value.type!=='unit'||!(value.kind==='owned-call'&&value.name==='router_vector_json_validate'&&boundedJsonBoundary||value.kind==='source-scalar-call'&&(vectorDefinitions||jsonVectorProfile?.kind==='primitive-scalar'||jsonVectorProfile?.kind==='primitive-expression-vector')))fail('only complete primitive source-unit calls or actual bounded JSON validation may be discarded');body.push({kind:'effect',value});
+   }else if(ts.isReturnStatement(statement)&&!statement.expression&&(['json-scalar','primitive-scalar'].includes(jsonVectorProfile?.kind)&&jsonVectorProfile.type==='unit'||definitionUnit)){
+    const value={kind:'unit',type:'unit',root:null};if(resultType!==null&&resultType!=='unit')fail('return domains differ');resultType='unit';resultRoot=null;scalarReturnValues.push(value);body.push({kind:'return',value});terminated=true;
    }else if(ts.isReturnStatement(statement)&&statement.expression){
-    const value=expression(statement.expression,scope,depth+1);
-    if(!['json','json-ref','bool','str','usize','text-owned','base64-result','u64','i64'].includes(value.type)&&!ownedJsonOptionalPayload(value.type))fail('unsupported owned result');
+    let value=expression(statement.expression,scope,depth+1,false,['json-scalar','primitive-scalar'].includes(jsonVectorProfile?.kind)&&!nativeScalars&&primitiveBitwiseType(jsonVectorProfile.type)?jsonVectorProfile.type:inference&&jsonVectorProfile?.kind==='primitive-expression-vector'?jsonVectorProfile.type:primitiveDefinitions&&(primitiveBitwiseType(definitionReturnType)||inference&&primitiveVectorResultRole(definitionReturnType))?definitionReturnType:null);if(['json-scalar','primitive-scalar'].includes(jsonVectorProfile?.kind)&&!nativeScalars&&primitiveBitwiseType(jsonVectorProfile.type)){value=scalarReturnLiteral(value,scope,depth+1);narrowOwnedNumericLiteral(value,jsonVectorProfile.type);}if(nativeScalars)nativeOperatorHistory.retainCopy(statement.expression,file,value);
+    if(inference)value=inference.scalar(value);if(!(inference&&inference.scalarPending(value.type))&&!(inference&&inference.vector(value.type))&&!(expressionVector&&value.type===expressionVectorType)&&!(jsonVectorProfile&&value.type==='json-list-owned')&&!(value.type==='unit'&&(definitionUnit||jsonVectorProfile?.kind==='primitive-scalar'&&jsonVectorProfile.type==='unit'))&&!['json','json-ref','bool','str','usize','text-owned','base64-result','u64','i64'].includes(value.type)&&!ownedJsonOptionalPayload(value.type)&&!primitiveBitwiseType(value.type))fail('unsupported owned result');
     if(value.type==='json-ref'&&!params.some(param=>param.name===value.root&&['json-ref','map-ref','json-option-ref'].includes(param.type)))fail('returned local loan');
     if(ownedJsonBorrowed(value.type)&&value.root&&!params.some(param=>param.name===value.root&&(['json-ref','map-ref','str','json-option-input'].includes(param.type)||ownedJsonBorrowed(param.type))))fail('returned local optional loan');
-    joinI64LiteralReturn(value);
+    if(inference&&resultType!==null&&(inference.vector(resultType)||inference.vector(value.type))){resultType=inference.join(resultType,value.type);value.type=resultType;}
+    joinI64LiteralReturn(value);joinPrimitiveDefinitionLiteralReturns(value);
     const loan=value.type==='str'?(stringResultLoan===null?stringLoan(value):meetStringLoans(stringResultLoan,stringLoan(value))):undefined,effectiveRoot=loan?loan.root:value.root;
     if(value.type==='str'&&!loan)fail('returned str requires an actual literal or live input origin');
     if(resultType!==null&&(resultType!==value.type||resultRoot!==effectiveRoot&&!(value.type==='str'&&loan)&&!(ownedJsonOptionalPayload(value.type)&&(value.kind==='option-none'||resultOnlyAbsent))))fail('return domains differ');resultType=value.type;if(value.kind!=='option-none'){resultRoot=effectiveRoot;resultOnlyAbsent=false;}if(value.type==='str')stringResultLoan=loan;scalarReturnValues.push(value);body.push({kind:'return',value});terminated=true;
+   }else if(ts.isIfStatement(statement)&&ts.isBlock(statement.thenStatement)&&!statement.elseStatement&&(jsonVectorProfile||primitiveDefinitions)){
+    const cond=expression(statement.expression,scope,depth+1);if(cond.type!=='bool')fail('nonboolean guard condition');const a=refine(branchScope(scope),cond,true),b=refine(branchScope(scope),cond,false),yes=block(statement.thenStatement.statements,a,depth+1);if(!yes.terminated)fail('guard then branch must actually terminate');const no=finishNativeUnitReturn(block(statements.slice(statementIndex+1),b,depth+1));if(!no.terminated)fail('complete source guard continuation required');mergeMoves(scope,a,b);body.push({kind:'if',cond,then:yes.body,else:no.body});terminated=true;break;
    }else if(ts.isIfStatement(statement)&&ts.isBlock(statement.thenStatement)&&statement.elseStatement&&ts.isBlock(statement.elseStatement)){
     const cond=expression(statement.expression,scope,depth+1);if(cond.type!=='bool')fail('nonboolean condition');
     const a=refine(branchScope(scope),cond,true),b=refine(branchScope(scope),cond,false),yes=block(statement.thenStatement.statements,a,depth+1),no=block(statement.elseStatement.statements,b,depth+1);
@@ -507,26 +585,107 @@ function checkFunction(context,path,declaration,analysis){
   }
   return {body,terminated};
  }
- const checked=block(declaration.body.statements,environment,0);if(!checked.terminated)fail('missing return');
+ const statements=jsonVectorProfile?consumeJsonVectorInputPrelude(analysis,declaration,params,operand=>originalOwnedCoreImport(context,path,operand,analysis),jsonVectorProfile):consumeOwnedBase64InputPrelude(analysis,declaration,params,operand=>originalOwnedCoreImport(context,path,operand,analysis));const checked=finishNativeUnitReturn(block(statements,environment,0));if(!checked.terminated)fail('missing return');
+ if(inference){const expected=jsonVectorProfile?.kind==='primitive-expression-vector'?jsonVectorProfile.type:definitionReturnType;if(inference.pending(resultType)&&primitiveVectorResultRole(expected))inference.compatible(resultType,expected);resultType=inference.finish(checked.body,resultType);nativeOperatorHistory.finalize();}
  if(paired)for(let index=0;index<params.length;index++){
   const actual=originalOwnedCoreType(context,paired.pair.typescript.path,paired.declaration.parameters[index].type,paired.analysis);
-  if((actual==='text-owned'?'str':actual)!==params[index].type)fail('paired written parameter ABI differs');
+  if((actual==='text-owned'?'str':actual)!==(jsonVectorProfile&&params[index].type==='json'?'json-ref':params[index].type)&&!(jsonVectorProfile&&!nativeScalars&&primitiveBitwiseType(params[index].type)&&actual==='usize'))fail('paired written parameter ABI differs');
  }
  const writtenReturn=declaration.type??ts.getJSDocReturnType(declaration);
  if(writtenReturn){
   const written=originalOwnedCoreType(context,path,writtenReturn,analysis);
-  if(written==='json-ref'?!json(resultType):!ownedBase64Compatible(resultType,written))fail('written return ABI differs from original checked body');
+  if(written==='json-ref'?!json(resultType):!writtenCompatible(resultType,written))fail('written return ABI differs from original checked body');
   // A written Value domain accepts owned or borrowed results; it never
   // supplies or changes the independently checked loan/root identity.
  }
  if(paired?.declaration.type){
   const written=originalOwnedCoreType(context,paired.pair.typescript.path,paired.declaration.type,paired.analysis);
-  if(written==='json-ref'?!json(resultType):!ownedBase64Compatible(resultType,written))fail('paired written return ABI differs');
+  if(written==='json-ref'?!json(resultType):!writtenCompatible(resultType,written))fail('paired written return ABI differs');
  }
  if(params.some(param=>param.type==='bytes-ref'&&!byteInputs.has(param.name)))fail('octet input requires an actual fixed base64 operand');
  if(params.some(param=>param.type==='json-option-input'&&!hostCalls.some(call=>ownedJsonOptionalReaderOperation(call.name)&&call.inputRoot===param.name)))fail('opaque optional Json input requires validation');
- if(!hostCalls.length)fail('no actual owned-core call');
- const item={kind:'owned-function',name,javascript:declaration.name.text,exported:!!declaration.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword),params,returns:resultType,resultRoot,body:checked.body,source:{path,source,span:[declaration.getStart(file),declaration.end]},hostCalls};
+ if(jsonVectorProfile?.kind==='primitive-scalar'&&(hostCalls.some(call=>!ownedVectorTextScalarOperation(call.name)&&!ownedNativeClosedOperator(call.name))||sourceNativeOperators.length))fail('closed primitive source unit requires separately qualified call/effect rules');
+ if(primitiveDefinitions)(vectorDefinitions?assertOwnedPrimitiveVectorDefinition:assertOwnedPrimitiveDefinition)({params,returns:resultType,resultRoot,body:checked.body,hostCalls,sourceCalls});
+ if(newVectorDefinition&&resultType!==definitionReturnType)fail('actual written primitive vector definition return differs');
+ if(!hostCalls.length&&!sourceNativeOperators.length)nativeOperatorHistory.adoptCopies();
+ if(jsonVectorProfile&&resultType!==jsonVectorProfile.type)fail('actual original native owned JSON return shape required');
+ if(!hostCalls.length&&!sourceNativeOperators.length&&!params.some(param=>param.type==='base64-result')&&!jsonVectorProfile&&!primitiveDefinitions)fail('no actual owned-core call');
+ const item={kind:'owned-function',name,...(sourceCalls.length?{sourceCalls}:{}),javascript:declaration.name.text,exported:!!declaration.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword),params,returns:resultType,resultRoot,body:checked.body,source:{path,source,span:[declaration.getStart(file),declaration.end]},...(jsonVectorProfile?{vectorOrigin:jsonVectorProfile}:{}),...(sourceNativeOperators.length?{sourceNativeOperators}:{}),hostCalls};
  if(paired)item.pairedSource={path:paired.pair.typescript.path,source:paired.pair.typescript.source,span:paired.evidence.typescriptSpan,parameters:paired.evidence.parameters,locals:paired.evidence.locals,returnSpan:paired.evidence.returnSpan,erasure:paired.pair.erasure.edits};
- requireOwnedCoreSourceCurrent(context);return item;
+ if(vectorFieldBoundary)requireOwnedVectorJsonFieldSources(traversals.get(analysis).state.files,contexts.get(context).data);if(boundedJsonBoundary)boundedJsonRuntimeRustEdge(traversals.get(analysis).state.files);requireOwnedCoreSourceCurrent(context);return item;
 }
+
+export function ownedPrimitiveOperatorRuntimeSources(runtimeRoot='runtime',declarationRoot=runtimeRoot){
+ ownedSourcePath(runtimeRoot);ownedSourcePath(declarationRoot);assertReverseConcreteSourceHost();const ts=ownershipCompiler(),assets=primitiveOperatorRuntimeAssetPair(),rows=[],seen=new Set();
+ function visit(name){
+  if(seen.has(name))return;if(seen.size>=128||name.includes('/')||!name.endsWith('.mjs')&&!name.endsWith('.mts'))fail('runtime closure bounds');seen.add(name);
+  const source=assets.get(name);if(typeof source!=='string')fail('unregistered materialized asset: '+name);const base=name.endsWith('.mts')?declarationRoot:runtimeRoot,path=base+'/'+name,file=parsed(ts,path,source);rows.push({path,source});
+  for(const node of file.statements)if((ts.isImportDeclaration(node)||ts.isExportDeclaration(node))&&node.moduleSpecifier){
+   const specifier=node.moduleSpecifier.text;if(specifier==='node:util'||specifier==='node:crypto')continue;
+   const target=relative(path,specifier);if(posix.dirname(target)!==base)fail('runtime closure escape');visit(posix.basename(target));
+  }
+ }
+ for(const name of ['primitive-operator-runtime.mjs','primitive-operator-runtime.d.mts'])visit(name);
+ for(const [name,source]of assets)if(/LICENSE|NOTICE/iu.test(name))rows.push({path:runtimeRoot+'/'+name,source});
+ assertReverseConcreteSourceHost();return rows.sort((a,b)=>a.path.localeCompare(b.path));
+}
+import {primitiveOperatorRuntimeAssetPair} from '../primitive-operator-runtime-sources.mjs';
+import {ownedPrimitiveOperatorOperation,readOwnedPrimitiveOperatorCallWithDomains as readOwnedPrimitiveOperatorCall} from './owned-primitive-operator-source.mjs';
+
+import {primitiveBitwiseType,primitiveBitwiseAlias} from '../primitive-bitwise-types.mjs';
+
+import {ownedParenthesizedType} from './owned-type-parentheses.mjs';
+
+import {ownedNativeScalarDeclaration} from './owned-native-scalar-declaration.mjs';
+
+import {ownedNativeIntegerDomain,joinOwnedNativeScalarOperands,joinOwnedNativeScalarChoiceOperands} from './owned-native-scalar-flow.mjs';
+
+import {readOwnedNativeBitwiseExpression,createOwnedNativeBitwiseHistory} from './owned-native-bitwise-source.mjs';
+
+import {consumeJsonVectorInputPrelude} from './owned-vector-json-boundary.mjs';
+
+function boundedJsonRuntimeRustEdge(files){
+ const source=files.get('src/lib.rs');if(typeof source!=='string')fail('complete actual Rust root required');
+ const views=captureSourceModuleViews({source,sourcePath:'src/lib.rs'}),items=originalModuleViewItems(views.views[0],source);
+ const declarations=items.filter(item=>item.term==='mod'&&item.name==='translation_json_core');
+ if(declarations.length!==1||source.slice(declarations[0].start,declarations[0].end).trim()!=='pub mod translation_json_core;')fail('actual public Rust facade edge required');
+ if(items.some(item=>item.term==='use'&&item.tokens.some(token=>token.text==='translation_json_core')))fail('competing Rust facade import');
+ if(files.get('src/translation_json_core.rs')!==BOUNDED_JSON_CORE_SOURCE)fail('complete bounded native JSON library differs');const concrete=transportConcreteSyntaxSource(BOUNDED_JSON_CORE_SOURCE,{language:'Rust'});if(transportConcreteSyntaxMeta(concrete.meta).source!==BOUNDED_JSON_CORE_SOURCE)fail('complete bounded native JSON library CST inverse differs');
+ if(typeof files.get('Cargo.toml')!=='string'||typeof files.get('Cargo.lock')!=='string')fail('complete receiving Cargo sources required');
+ const dependencies=jsonMacroDependencyProfile({manifest:files.get('Cargo.toml'),lock:files.get('Cargo.lock')}).proof;
+ if(!dependencies)fail('actual locked JSON source profile required');const features=proveJsonMacroFeatures(dependencies);
+ const modules=[{file:'src/lib.rs',path:[],source,sourceView:views.views[0],configurationCondition:views.views[0].configurationCondition}];
+ for(const [path,name]of [['src/translation_json_core.rs',['translation_json_core']]]){
+  const text=files.get(path),capture=captureSourceModuleViews({source:text,sourcePath:path}),sourceView=capture.views[0];
+  modules.push({file:path,path:name,source:text,sourceView,configurationCondition:sourceView.configurationCondition});
+ }
+ const evidence=resolveModuleBindings({modules}),selected=selectOriginalBoundedJsonCore({modules,sourceScopes:evidence.scopes,compilationProfile:evidence.compilationProfile});
+ return {path:selected.rootFile,span:[...selected.span],dependencyDigest:dependencies.digest,features:[...features.features],bindingDiagnostics:evidence.diagnostics};
+}
+import {BOUNDED_JSON_RUNTIME_OPERATIONS} from './bounded-json-runtime-operations.mjs';
+import {BOUNDED_JSON_CORE_SOURCE} from '../bounded-json-core-source-data.mjs';
+import {selectOriginalBoundedJsonCore} from '../bounded-json-core-call-source.mjs';
+import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
+
+import {ownedVectorJsonFieldOperation,requireOwnedVectorJsonFieldSources} from './owned-vector-json-fields.mjs';
+import {ownedSourceIntegerLiteral as ownedIntegerLiteral,narrowOwnedNumericLiteral} from './owned-numeric-literals.mjs';
+
+import {ownedVectorTextScalarOperation} from './owned-vector-text-scalars.mjs';
+
+// Additive runtime closure for bulk fixed-width scalar source families.
+export function ownedBulkRuntimeSources(runtimeRoot='runtime',declarationRoot=runtimeRoot){
+ const rows=new Map();for(const row of [...ownedCoreRuntimeSources(runtimeRoot,declarationRoot),...ownedPrimitiveOperatorRuntimeSources(runtimeRoot,declarationRoot)]){if(rows.has(row.path)&&rows.get(row.path).source!==row.source)fail('conflicting actual bulk runtime source');rows.set(row.path,row);}return [...rows.values()].sort((a,b)=>a.path.localeCompare(b.path));
+}
+
+import {ownedNativeClosedOperator,requireOwnedNativeClosedCall} from './owned-native-division-operators.mjs';
+
+import {assertOwnedPrimitiveDefinition} from './owned-primitive-definition-family.mjs';
+
+import {primitiveVectorResultRole} from './owned-source-effect-calls.mjs';
+import {assertOwnedPrimitiveVectorDefinition} from './owned-primitive-vector-definition-family.mjs';
+
+import {createPrimitiveContextualInference as createPrimitiveVectorInference} from './owned-primitive-contextual-inference.mjs';
+
+import {primitiveUnitReturnSyntax} from './owned-unit-return-syntax.mjs';
+
+import {createOwnedContextualBitwiseHistory,readOwnedContextualBitwiseExpression} from './owned-native-contextual-history.mjs';

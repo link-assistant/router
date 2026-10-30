@@ -9,7 +9,8 @@ import {createHash} from 'node:crypto';
 import {gzipSync,gunzipSync} from 'node:zlib';
 import {encodeStaticSourceStorage,decodeStaticSourceStorage} from '../static-source-storage-codec.mjs';
 import {readStaticSourceLifecycle,staticSourceLifecycleContext} from './real-source-fixtures.mjs';
-import {exportTranslatorBundle,TRANSLATOR_EXPORT_LIMITS} from '../export-bundle.mjs';
+import {TRANSLATOR_EXPORT_LIMITS} from '../export-bundle.mjs';
+import {exportPartitionedTranslatorBundle} from '../partitioned-export-bundle.mjs';
 const ROOT=fileURLToPath(new URL('../../../',import.meta.url)),ASSETS=fileURLToPath(new URL('../source-profiles/static-source-lifecycle/',import.meta.url));
 const hash=value=>createHash('sha256').update(value).digest('hex'),json=JSON.stringify,clone=value=>JSON.parse(json(value));
 const moduleSource=readFileSync(new URL('../static-source-storage-codec.mjs',import.meta.url),'utf8');
@@ -122,7 +123,7 @@ test('complete current bank logical bytes and every canonical survive actual bou
 });
 
 test('actual committed export retains complete compact bank closure under original budgets',{timeout:60000},t=>{
- const directory=mkdtempSync(join(tmpdir(),'router-storage-export-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));const result=exportTranslatorBundle({sourceRoot:ROOT,output:join(directory,'compiler')}),prefix='tools/translation/source-profiles/static-source-lifecycle/',rows=result.manifest.inputs.filter(row=>row.path.startsWith(prefix));assert.deepEqual(rows.map(row=>row.path.slice(prefix.length)).sort(),['NOTICE.md','manifest.json','originals.json.gz']);
+ const directory=mkdtempSync(join(tmpdir(),'router-storage-export-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));const result=exportPartitionedTranslatorBundle({sourceRoot:ROOT,output:join(directory,'compiler')}),prefix='tools/translation/source-profiles/static-source-lifecycle/',rows=result.manifest.inputs.filter(row=>row.path.startsWith(prefix));assert.deepEqual(rows.map(row=>row.path.slice(prefix.length)).sort(),['NOTICE.md','manifest.json','originals.json.gz']);
  for(const row of result.manifest.inputs){assert.ok(row.bytes<=TRANSLATOR_EXPORT_LIMITS.fileBytes);const actual=readFileSync(join(result.destination,row.path));assert.equal(actual.length,row.bytes);assert.equal(hash(actual),row.sha256);}assert.ok(result.manifest.totalSourceBytes<=TRANSLATOR_EXPORT_LIMITS.totalBytes);
  const current=staticSourceLifecycleContext('fixed-arrays.test.mjs');assert.deepEqual(current.inputs.sources.length,806);const bank=rows.find(row=>row.path.endsWith('/originals.json.gz'));assert.ok(bank.bytes<=4*1024*1024);retain('08-complete-export-and-freshness',{manifest:result.manifest,currentSourceHead:current.inputs.sourceHead,bank});
 });

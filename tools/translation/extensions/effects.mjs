@@ -1,7 +1,7 @@
 // Typed host effects and lazy Rust futures. Contracts describe standard-library
 // operations; repository bodies still pass through the checker and semantic IR.
 import { IteratorRustParser, IteratorChecker, IteratorEmitter } from './iterators.mjs';
-import { EFFECT_DATA, EFFECT_CONTRACTS, effectContract } from './effects-contracts.mjs';
+import { FILESYSTEM_EFFECT_DATA as EFFECT_DATA, FILESYSTEM_EFFECT_CONTRACTS as EFFECT_CONTRACTS, filesystemEffectContract as effectContract } from './filesystem-effects-contracts.mjs';
 import { emitWith } from './core.mjs';
 import { tokenizeRust } from './lexical.mjs';
 import { sameType } from '../checked-types.mjs';

@@ -1,4 +1,8 @@
+import {roundTripProgram as roundTripFlatProgram,serializeProgram as serializeFlatProgram} from './semantic-meta-flat.mjs';
+const originalProjectSemanticStorage={roundTripProgram,serializeProgram};
+const flatProjectSemanticStorage={roundTripProgram:roundTripFlatProgram,serializeProgram:serializeFlatProgram};
 import {createRulePipeline} from './rule-pipeline.mjs';
+import {observedSourceF64} from './floating-scalar-source-data.mjs';
 import {createRustConcreteSyntaxStage} from './forward-concrete-syntax.mjs';
 import {associateOriginalSharedPatternDependencies} from './extensions/shared-source-patterns.mjs';
 import {compilationProfile,itemConfiguration,isInertConditionalAttribute} from './cfg-profile.mjs';
@@ -37,13 +41,13 @@ import {parseOriginalMethodTransform,parseOriginalMethodTransformGrouped,origina
 import {originalMethodSemantic,originalMethodSemanticGrouped,relocateOriginalMethodSemantic,relocateOriginalMethodSemanticGrouped,originalMethodRefusalRange,originalMethodRefusalRangeGrouped,isOriginalMethodSemanticSource} from './source-method-admission.mjs';
 import {originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
 import {freezeMacroTree} from './macro-token-trees.mjs';
-import {createDeriveFootprintContext,deriveFootprintAt,deriveFootprintExternalModules} from './derive-footprints.mjs';
+import {createDeriveFootprintContext,createToolAwareDeriveFootprintContext,deriveFootprintAt,deriveFootprintExternalModules} from './derive-footprints.mjs';
 import {configureDeriveLayout} from './derive-layout.mjs';
-import {createToolAttributeContext} from './tool-attributes.mjs';
+import {createToolAttributeContext,createConfiguredVariantEnclosingToolAttributeContext as createEnclosingToolAttributeContext} from './tool-attributes.mjs';
 import {configureToolAttributes} from './tool-attribute-layout.mjs';
 import {actualJsonCapabilityProfile} from './json-capabilities.mjs';
 import {createJsonMacroContext,configureJsonMacroParser} from './json-macro-context.mjs';
-import {createMatchesMacroContext,configureMatchesMacroParser,originalMatchesNamespaceBindings,OriginalMethodOwnerUnproved} from './matches-macro-context.mjs';
+import {createMatchesMacroContext,createMatchesEnclosingMacroContext,configureMatchesMacroParser,originalMatchesNamespaceBindings,OriginalMethodOwnerUnproved} from './matches-macro-context.mjs';
 import {captureOriginalCargoEdition,originalCargoEditionEvidence} from './cargo-edition-context.mjs';
 
 // Only the actual original-source project pipeline can issue this identity.
@@ -262,7 +266,7 @@ function captureGenericDeclarations(declarations,parser,module,globalSpan,offset
   }
 }
 
-function flatten(program) {
+function flatten(program, semanticStorage = originalProjectSemanticStorage) {
   const names = new Map([...program.declarations.keys()].map(name => [name, `rp_${Buffer.from(name).toString('hex')}`]));
   const visit = node => {
     if (Array.isArray(node)) return node.map(visit);
@@ -278,10 +282,10 @@ function flatten(program) {
     const target = names.get(name);
     return [target, { ...visit(entry), name: target, fullName: target, modulePath: [], generated: 'router-project-flattened' }];
   }));
-  return { names, program: roundTripProgram({ ...program, declarations, items: [...declarations.values()] }) };
+  return { names, program: semanticStorage.roundTripProgram({ ...program, declarations, items: [...declarations.values()] }) };
 }
 
-function declarationProgram(program, root) {
+function declarationProgram(program, root, semanticStorage = originalProjectSemanticStorage) {
   const needed = new Set();
   const visit = (node, path) => {
     if (!node || typeof node !== 'object') return;
@@ -300,17 +304,17 @@ function declarationProgram(program, root) {
   };
   include(root, 'root');
   const declarations = new Map([...program.declarations].filter(([name]) => needed.has(name)));
-  return roundTripProgram({ ...program, declarations, items: [...declarations.values()], main: null });
+  return semanticStorage.roundTripProgram({ ...program, declarations, items: [...declarations.values()], main: null });
 }
 
-function compileProjectLanguage(options, ownedDefinitionMode=false) {
+function compileProjectLanguage(options, ownedDefinitionMode=false, semanticStorage = originalProjectSemanticStorage) {
   const progress=translationProgressReporter(options.progress);
   progress({stage:'project-graph',state:'start',entry:options.entry});
   const cargoEditionContext=options.cargoManifest===undefined||options.cargoManifest===null?null:captureOriginalCargoEdition(options.cargoManifest,{sourcePath:options.cargoManifestPath??'Cargo.toml'});
   const graph = resolveModuleGraph(options);
   progress({stage:'project-graph',state:'end',entry:options.entry,total:graph.modules.length});
   progress({stage:'namespace',state:'start',entry:options.entry});
-  const enclosingNamespace=ownedDefinitionMode===true||ownedDefinitionMode==='core-json-readers';
+  const enclosingNamespace=ownedDefinitionMode===true||ownedDefinitionMode==='core-json-readers'||ownedDefinitionMode==='flat-enclosing';
   const namespaceProgress=phase=>{if(enclosingNamespace)progress({stage:'namespace',state:'advance',entry:options.entry,phase});};
   namespaceProgress('json-context');
   const jsonParserProfile=options.jsonParserProfile??actualJsonCapabilityProfile();
@@ -319,7 +323,7 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
   namespaceProgress('external-bindings');
   const externalModules=registeredStandardHostBindings([...originalMatchesNamespaceBindings(),...lockedTomlValueNamespaceBindings(options.deriveDependencies)]);
   namespaceProgress('derive-inputs');
-  const deriveContext=options.deriveDependencies?createDeriveFootprintContext({modules:graph.modules,dependencies:options.deriveDependencies,externalModules,compilationProfile:graph.compilationProfile}):null;
+  const deriveContext=options.deriveDependencies?(enclosingNamespace?createToolAwareDeriveFootprintContext:createDeriveFootprintContext)({modules:graph.modules,dependencies:options.deriveDependencies,externalModules,compilationProfile:graph.compilationProfile}):null;
   // Construct the genuine enclosing issuer once for this project and pass it
   // explicitly through the independent Default/Clone and binding consumers.
   let deriveBangContext=null;
@@ -335,7 +339,7 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
   const cloneContext=deriveContext&&hasCloneDeclarations?(enclosingNamespace?createCloneEnclosingSourceContext(deriveContext,{deriveBangContext,defaultContext:defaultContext??undefined}):createCloneSourceContext(deriveContext)):null;
   namespaceProgress('tool-attributes');
   const resolvedExternal=deriveContext?deriveFootprintExternalModules(deriveContext):externalModules;
-  const toolContext=createToolAttributeContext({modules:graph.modules,externalModules:resolvedExternal,deriveContext,compilationProfile:graph.compilationProfile});
+  const toolContext=enclosingNamespace?createEnclosingToolAttributeContext({modules:graph.modules,externalModules:resolvedExternal,deriveContext,deriveBangContext,compilationProfile:graph.compilationProfile}):createToolAttributeContext({modules:graph.modules,externalModules:resolvedExternal,deriveContext,compilationProfile:graph.compilationProfile});
   // This consumer needs enclosing bindings. Runtime/ownership and generated
   // Default/Clone checking retain their separate original source contexts.
   if(!enclosingNamespace)deriveBangContext=deriveContext?createDeriveBangContext({deriveContext}):null;
@@ -343,7 +347,7 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
   const bindingEvidence=(enclosingNamespace?resolveEnclosingNamespaceModuleBindings:resolveModuleBindings)({modules:graph.modules,externalModules:resolvedExternal,deriveContext,deriveBangContext,toolContext,compilationProfile:graph.compilationProfile});
   const scopes=new Map(bindingEvidence.scopes.map(scope=>[moduleScopeKey(scope),scope]));
   const configureSourceScope=(parser,module)=>configureParserSourceScope(requestImmutableNamespaceTargets(parser),scopes.get(moduleScopeKey(module)),bindingEvidence.scopes,module.path);
-  const matchesMacroContext=createMatchesMacroContext({modules:graph.modules,compilationProfile:graph.compilationProfile,deriveDependencies:options.deriveDependencies??null,cargoEditionContext});
+  const matchesMacroContext=(enclosingNamespace?createMatchesEnclosingMacroContext:createMatchesMacroContext)({modules:graph.modules,compilationProfile:graph.compilationProfile,deriveDependencies:options.deriveDependencies??null,cargoEditionContext});
   progress({stage:'namespace',state:'end',entry:options.entry,total:bindingEvidence.scopes.length});
   const declarations = [], refused = [], imports = [], unloweredItems = [], moduleAliases = new Map();
   let completedModules=0,completedMethods=0;
@@ -517,7 +521,7 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
   progress({stage:'semantic-check',state:'start',entry:options.entry,remaining:active.length});
   for (let attempts = 0; attempts <= declarations.length; attempts++) {
     progress({stage:'semantic-check',state:'advance',entry:options.entry,attempt:attempts,remaining:active.length});
-    try { const surface={ language: 'Rust', items: [...tree(active), ...admittedHostData(effectData(),tree(active))], main: null };associateOriginalSharedPatternDependencies(surface,options.jsonMacroDependencies);const nativeChecked=withSourceLifetimeRefusals(surface,options.collectIndependentSourceLifetimes??(options.collectIndependentBodies??true),()=>checkProjectProgram(surface,{jsonParserProfile,collectIndependentBodies:options.collectIndependentBodies??true}));checked=roundTripProgram(nativeChecked);if(ownedDefinitionMode==='core-json-readers')genuineOrigin=nativeChecked;break; }
+    try { const surface={ language: 'Rust', items: [...tree(active), ...admittedHostData(effectData(),tree(active))], main: null };associateOriginalSharedPatternDependencies(surface,options.jsonMacroDependencies);const nativeChecked=withSourceLifetimeRefusals(surface,options.collectIndependentSourceLifetimes??(options.collectIndependentBodies??true),()=>checkProjectProgram(surface,{jsonParserProfile,collectIndependentBodies:options.collectIndependentBodies??true}));checked=semanticStorage.roundTripProgram(nativeChecked);if(ownedDefinitionMode==='core-json-readers')genuineOrigin=nativeChecked;break; }
     catch (error) {
       const failures=declarationRefusals(error)??(error instanceof TranslationError?[{error}]:null);
       if(!failures)throw error;
@@ -536,7 +540,7 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
   if (!checked) throw new Error('project declaration checking did not converge');
   progress({stage:'semantic-check',state:'end',entry:options.entry,remaining:active.length});
   progress({stage:'target-emit',state:'start',entry:options.entry});
-  const target = flatten(checked);
+  const target = flatten(checked, semanticStorage);
   const runtimeModule = posix.relative(posix.dirname(options.entry.replace(/\.rs$/u,'.mjs')), 'runtime/effects.mjs');
   const emitted = emitJavaScript(target.program, { runtimeModule: runtimeModule.startsWith('.') ? runtimeModule : './' + runtimeModule });
   // This private closure retains the same checked program and original issuers.
@@ -549,17 +553,18 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
   const exports = entries.map(declaration => `[${JSON.stringify(declaration.name)}]: ${targetName(declaration.name)}${declaration.term === 'const' ? '()' : ''}`).join(', ');
   const javascript = `${emitted.text}\nexport const translated = Object.freeze({ ${exports} });\nexport const provenance = ${JSON.stringify({ entry: options.entry, runtimeParity: false, moduleCount: graph.modules.length, executableFunctions: entries.filter(entry => entry.term === 'fn').length, executableConstants: entries.filter(entry => entry.term === 'const').length })};\n`;
   const dataTypes = [...target.program.declarations.values()].filter(declaration => declaration.k === 'data');
+  const scalarTypes={nativeScalarModule:(runtimeModule.startsWith('.')?runtimeModule:'./'+runtimeModule).replace(/effects\.mjs$/u,'primitive-operator-runtime.mjs')};
   const functionSignatures = [...target.program.declarations.values()].filter(entry => entry.k === 'fn').map(entry => ({target: emitted.mappings.find(mapping => mapping.source === entry.fullName)?.target,params:entry.params,ret:entry.async?{kind:'routerFuture',value:entry.ret}:entry.ret}));
   const parameterTypes = new Map(functionSignatures.map(entry=>[entry.target,entry.params]));
   const returnTypes = new Map(functionSignatures.map(entry=>[entry.target,entry.ret]));
   const types = entries.map(entry => {
     const own = target.program.declarations.get(target.names.get(entry.name));
-    return `${JSON.stringify(entry.name)}: ${entry.term === 'const' ? tsType(own.async ? {kind:'routerFuture',value:own.ret} : own.ret, dataTypes) : `(${own.params.map((param,index) => `${typeParameterName(param.name,index)}: ${tsType(param.type, dataTypes)}`).join(', ')}) => ${tsType(own.async ? {kind:'routerFuture',value:own.ret} : own.ret, dataTypes)}`}`;
+    return `${JSON.stringify(entry.name)}: ${entry.term === 'const' ? tsType(own.async ? {kind:'routerFuture',value:own.ret} : own.ret, dataTypes,scalarTypes) : `(${own.params.map((param,index) => `${typeParameterName(param.name,index)}: ${tsType(param.type, dataTypes,scalarTypes)}`).join(', ')}) => ${tsType(own.async ? {kind:'routerFuture',value:own.ret} : own.ret, dataTypes,scalarTypes)}`}`;
   }).join('; ');
-  const typescript = annotateRuntimeTypes(javascript, parameterTypes, dataTypes, returnTypes, emitted.checkedLocalBindings??[]).replace('export const translated =', `export const translated: Readonly<{ ${types} }> =`);
+  const typescript = annotateRuntimeTypes(javascript, parameterTypes, dataTypes, returnTypes, emitted.checkedLocalBindings??[],scalarTypes).replace('export const translated =', `export const translated: Readonly<{ ${types} }> =`);
   progress({stage:'target-emit',state:'end',entry:options.entry});
   progress({stage:'project-serialize',state:'start',entry:options.entry});
-  const meta = { schema: 'tracked-rust-project-semantic-meta-v1', compilationProfile:graph.compilationProfile, standardNamespaceCensus:STANDARD_NAMESPACE_EVIDENCE, configurationEvidence:graph.modules.map(module=>({source:module.file,condition:module.configurationCondition,items:module.configurationEvidence})), status: 'partial', entry: options.entry, runtimeParity: false, sources: graph.modules.map(module => ({ source: module.file, sha256: sha256(module.source), module: module.path })), moduleEdges: graph.edges, imports, moduleDiagnostics: graph.diagnostics, bindingEvidence, refused, unloweredItems, executable: entries.map(entry => ({ source: entry.file, name: entry.name, term: entry.term, span: entry.span })), checkedSemanticProgram: JSON.parse(serializeProgram(checked)), targetSemanticProgram: JSON.parse(serializeProgram(target.program)), checkedMethods: methods.map(entry=>({source:entry.file,name:entry.displayName,span:entry.span,receiver:entry.surface.impl.receiver,...(entry.defaultSourceAdmission?{defaultSourceAdmission:entry.defaultSourceAdmission}:{})})), encodings: emitted.encodings, assumptions: emitted.assumptions };
+  const meta = { schema: 'tracked-rust-project-semantic-meta-v1', compilationProfile:graph.compilationProfile, standardNamespaceCensus:STANDARD_NAMESPACE_EVIDENCE, configurationEvidence:graph.modules.map(module=>({source:module.file,condition:module.configurationCondition,items:module.configurationEvidence})), status: 'partial', entry: options.entry, runtimeParity: false, sources: graph.modules.map(module => ({ source: module.file, sha256: sha256(module.source), module: module.path })), moduleEdges: graph.edges, imports, moduleDiagnostics: graph.diagnostics, bindingEvidence, refused, unloweredItems, executable: entries.map(entry => ({ source: entry.file, name: entry.name, term: entry.term, span: entry.span })), checkedSemanticProgram: JSON.parse(semanticStorage.serializeProgram(checked)), targetSemanticProgram: JSON.parse(semanticStorage.serializeProgram(target.program)), checkedMethods: methods.map(entry=>({source:entry.file,name:entry.displayName,span:entry.span,receiver:entry.surface.impl.receiver,...(entry.defaultSourceAdmission?{defaultSourceAdmission:entry.defaultSourceAdmission}:{})})), encodings: emitted.encodings, assumptions: emitted.assumptions };
   meta.concreteSyntaxMeta=graph.concreteSyntaxMeta;
   if(deriveContext)meta.deriveNamespaceFootprints=deriveContext;
   if(generatedMethods.length)meta.checkedGeneratedMethods=generatedMethods.map(entry=>({source:entry.file,name:entry.displayName,term:'generated-method',origin:'derive-invocation',originalDeclarationTerm:entry.originalDeclarationTerm,generator:entry.surface.impl.cloneSourceProof?'core::clone::Clone':'core::default::Default',span:entry.span,receiver:entry.surface.impl.receiver,semanticBodyChecked:true,...(entry.surface.impl.cloneSourceProof?{cloneSourceProof:entry.surface.impl.cloneSourceProof}:{defaultSourceProof:entry.surface.impl.defaultSourceProof})}));
@@ -571,13 +576,13 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
   meta.originalCargoEditionInput=originalCargoEditionEvidence(cargoEditionContext);
   const sourceScopes=graph.modules.map(module=>Object.freeze({source:module.file,module:[...module.path],sourceView:module.sourceView,sha256:sha256(module.source),project:options.entry,compilationProfile:graph.compilationProfile,configurationCondition:module.configurationCondition,configurationEvidence:Object.freeze([...module.configurationEvidence]),scope:scopes.get(moduleScopeKey(module)),scopes:bindingEvidence.scopes,jsonParserProfile,matchesMacroContext}));
   const lowerDeclaration=(entry,name)=>function(lowerOptions={}) {
-    const program=declarationProgram(target.program,target.names.get(entry.name));
+    const program=declarationProgram(target.program,target.names.get(entry.name), semanticStorage);
     const emitted=emitJavaScript(program,lowerOptions),own=program.declarations.get(target.names.get(entry.name));
     const targetMapping=emitted.mappings.find(mapping=>mapping.source===own.fullName);
     const signatures=[...program.declarations.values()].filter(entry=>entry.k==='fn').map(entry=>({target:emitted.mappings.find(mapping=>mapping.source===entry.fullName)?.target,params:entry.params,ret:entry.async?{kind:'routerFuture',value:entry.ret}:entry.ret}));
     return {own,program,emitted:{...emitted,signatures,mappings:[...emitted.mappings,{...targetMapping,source:name}]}};
   };
-  const executableDeclarations=entries.map(entry=>({source:entry.file,sourceSha256:sha256(graph.modules.find(module=>module.file===entry.file).source),name:entry.name.split('.').at(-1),span:entry.span,project:options.entry,qualifiedName:entry.name,lower:lowerDeclaration(entry,entry.name.split('.').at(-1)),checkedSource:()=>{
+  const executableDeclarations=entries.map(entry=>({source:entry.file,sourceSha256:sha256(graph.modules.find(module=>module.file===entry.file).source),name:entry.name.split('.').at(-1),span:entry.span,project:options.entry,qualifiedName:entry.name,targetBinding:(includeSignature=false)=>Object.freeze({schema:'original-checked-project-target-binding-v1',source:entry.file,qualifiedName:entry.name,javascriptName:targetName(entry.name),...(includeSignature===true||includeSignature==='floating-scalars'?{...(includeSignature==='floating-scalars'?{signatureFormat:'floating-scalars-v1'}:{}),signature:entry.term==='fn'&&[...checked.declarations.get(entry.name).params.map(param=>param.type),checked.declarations.get(entry.name).ret].every(type=>['bool','fixed','string'].includes(type.kind)||includeSignature==='floating-scalars'&&observedSourceF64(type))?freezeMacroTree(structuredClone({params:checked.declarations.get(entry.name).params,ret:checked.declarations.get(entry.name).ret})):null}:{}),sourceAuthority:false,semanticAuthority:false}),lower:lowerDeclaration(entry,entry.name.split('.').at(-1)),checkedSource:()=>{
     const own=checked.declarations.get(entry.name),modules=graph.modules.filter(module=>module.file===entry.file&&JSON.stringify(module.path)===JSON.stringify(entry.path));
     const origin=originalParsedDeclarationEvidence(entry.surface),module=modules.length===1?modules[0]:null;
     if(entry.term!=='fn'||own?.k!=='fn'||own.fullName!==entry.name||!origin||!module||origin.sourcePath!==entry.file||origin.sourceSha256!==sha256(module.source)||origin.declarationSpan.start!==entry.span.start||origin.declarationSpan.end!==entry.span.end||origin.checkedSpan.start!==entry.surface.span.start||origin.checkedSpan.end!==entry.surface.span.end||own.span.start!==entry.surface.span.start||own.span.end!==entry.surface.span.end)throw new TypeError('Original executable checked source association differs');
@@ -608,7 +613,7 @@ const projectTranslationRules=createRulePipeline([
   {phase:'repository',rules:[{id:'rust-project:exports-types-provenance',apply:finalize=>finalize()}]},
 ]);
 export function translateProject(options) {
-  return projectTranslationRules.run(options).value;
+  return withCurrentStandardCopySourceOperation(()=>projectTranslationRules.run(options).value);
 }
 
 import {prepareForwardOwnedDefinitions} from './forward-owned-definitions.mjs';
@@ -617,7 +622,7 @@ const ownedDefinitionProjectRules=createRulePipeline([
   {phase:'repository',rules:[{id:'rust-project-owned-definitions:closed-definition-sources',apply:finalize=>finalize()}]},
 ]);
 // An additional receiving corpus, never original module initialization parity.
-export function translateProjectOwnedDefinitions(options){return ownedDefinitionProjectRules.run(options).value;}
+export function translateProjectOwnedDefinitions(options){return withCurrentStandardCopySourceOperation(()=>ownedDefinitionProjectRules.run(options).value);}
 
 // Additive siblings select grouped token comparisons only; all current source,
 // parser/field/layout and private project-parent joins remain independent.
@@ -690,4 +695,23 @@ const coreReaderDefinitionRules=createRulePipeline([
  {phase:'language',rules:[{id:'rust-project-core-readers:fresh-checked-language',apply:options=>compileProjectLanguage(options,'core-json-readers')}]},
  {phase:'repository',rules:[{id:'rust-project-core-readers:explicit-owned-library-wrappers',apply:finalize=>finalize()}]},
 ]);
-export function translateProjectOwnedCoreReaderDefinitions(options){return coreReaderDefinitionRules.run(options).value;}
+export function translateProjectOwnedCoreReaderDefinitions(options){return withCurrentStandardCopySourceOperation(()=>coreReaderDefinitionRules.run(options).value);}
+
+// Explicit stock-native DATA storage; all original private issuers stay here.
+const flatSemanticProjectTranslationRules=createRulePipeline([
+  {phase:'language',rules:[{id:'rust-project:checked-language',apply:options=>compileProjectLanguage(options,false,flatProjectSemanticStorage)}]},
+  {phase:'repository',rules:[{id:'rust-project:exports-types-provenance',apply:finalize=>finalize()}]},
+]);
+export function translateProjectWithFlatSemanticMeta(options) {
+  return withCurrentStandardCopySourceOperation(()=>flatSemanticProjectTranslationRules.run(options).value);
+}
+
+const flatEnclosingSemanticProjectTranslationRules=createRulePipeline([
+  {phase:'language',rules:[{id:'rust-project:checked-language',apply:options=>compileProjectLanguage(options,'flat-enclosing',flatProjectSemanticStorage)}]},
+  {phase:'repository',rules:[{id:'rust-project:exports-types-provenance',apply:finalize=>finalize()}]},
+]);
+export function translateProjectWithFlatEnclosingSemanticMeta(options) {
+  return withCurrentStandardCopySourceOperation(()=>flatEnclosingSemanticProjectTranslationRules.run(options).value);
+}
+
+import {withCurrentStandardCopySourceOperation} from './current-standard-copy-source.mjs';

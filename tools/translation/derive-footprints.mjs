@@ -2,13 +2,13 @@ import {createHash,Hash} from 'node:crypto';
 import {createPrivateFrozenJsonCache} from './private-frozen-json.mjs';
 import {types} from 'node:util';
 import {originalJsonIntrinsicsUnchanged,originalPathMembershipIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
-import {resolveModuleBindings} from './module-bindings.mjs';
+import {resolveModuleBindings,resolveConfiguredVariantEnclosingNamespaceModuleBindings as resolveRegisteredBuiltinEnclosingNamespaceModuleBindings} from './module-bindings.mjs';
 import {compilationProfile,itemConfiguration,isInertConditionalAttribute} from './cfg-profile.mjs';
 import {sourceItems} from './rust-structure.mjs';
 import {originalSourceModuleItems,moduleScopeKey,isSourceModuleView} from './source-module-views.mjs';
 import {createDeriveDependencyProof,deriveExternalModules,isDeriveDependencyProof} from './derive-dependencies.mjs';
 import {inspectDeriveInput,STANDARD_LAYOUT_DERIVES} from './derive-inputs.mjs';
-import {inertInnerLintItem} from './tool-attributes.mjs';
+import {inertInnerLintItem,createToolAttributeContext,createConfiguredVariantToolAttributeContext as createRegisteredBuiltinToolAttributeContext,toolAttributeAt} from './tool-attributes.mjs';
 import {builtinDefaultDependencyProof} from './derive-builtin-default.mjs';
 import {proveSchemarsWithTypeConfinement} from './derive-schemars-with.mjs';
 import {proveClapValueEnumSourceOutput} from './derive-clap-value-enum.mjs';
@@ -37,6 +37,18 @@ function originalHelperCryptoUnchanged(){return nativeHelperCrypto&&createHash==
 // Eligibility only, never a source/caller proof. Other immutable-source
 // consumers can reuse this exact qualification instead of relaxing it.
 export const originalDeriveHelperCryptoUnchanged=originalHelperCryptoUnchanged;
+// Source-input integrity always performs every original hash. This identity
+// guard is separate from native-only optimization eligibility above and uses
+// the same original private bootstrap identities, including ordinary wrappers.
+const sourceCryptoTypes=types,sourceCryptoProxyField=helperDescriptor(types,'isProxy'),sourceCryptoProxy=helperData(sourceCryptoProxyField),sourceCryptoFunctionPrototype=Object.getPrototypeOf(helperFunctionText),sourceCryptoTextField=helperDescriptor(sourceCryptoFunctionPrototype,'toString');
+export function originalSourceCryptoIntrinsicsUnchanged(){
+ if(createHash!==helperCreateHash||Hash!==helperHash||types!==sourceCryptoTypes)return false;
+ function same(current,pin){return !!current&&!!pin&&helperOwn(current,'value')&&helperOwn(pin,'value')&&current.value===pin.value&&current.writable===pin.writable&&current.enumerable===pin.enumerable&&current.configurable===pin.configurable;}
+ if(!same(helperDescriptor(sourceCryptoTypes,'isProxy'),sourceCryptoProxyField)||typeof sourceCryptoProxy!=='function'||typeof helperCreateHash!=='function'||typeof helperHash!=='function'||sourceCryptoProxy(helperCreateHash)||sourceCryptoProxy(helperHash))return false;
+ const prototypeField=helperDescriptor(helperHash,'prototype');
+ return helperData(prototypeField)===helperHashPrototype&&typeof helperData(helperHashUpdate)==='function'&&typeof helperData(helperHashDigest)==='function'&&same(helperDescriptor(helperHashPrototype,'update'),helperHashUpdate)&&same(helperDescriptor(helperHashPrototype,'digest'),helperHashDigest)&&helperData(sourceCryptoTextField)===helperFunctionText&&same(helperDescriptor(sourceCryptoFunctionPrototype,'toString'),sourceCryptoTextField);
+}
+
 const originalContextMaps=new WeakMap(),fastHelperProofs=new WeakSet(),weakSetHas=WeakSet.prototype.has,weakSetAdd=WeakSet.prototype.add,mapPrototype=Map.prototype,mapEntries=Map.prototype.entries,mapNext=Object.getPrototypeOf(new Map().entries()).next,mapSize=Object.getOwnPropertyDescriptor(Map.prototype,'size').get,apply=Reflect.apply,descriptor=Object.getOwnPropertyDescriptor,hasOwn=Object.hasOwn;
 // Storage-only association for one issued immutable view/item. Every source,
 // profile and token check below still executes on each certificate read.
@@ -456,3 +468,207 @@ export function deriveFootprintConcatSourceProofs(context,certificate){deriveFoo
 
 export function deriveFootprintClapArgsSourceOutput(context,certificate){deriveFootprintOriginalContext(context,certificate);const state=certificates.get(certificate);if(!state?.clapArgsOutput)throw new TypeError('Original Args output requires its genuine private invocation');return state.clapArgsOutput;}
 export function deriveFootprintClapValueEnumSourceOutput(context,certificate){deriveFootprintOriginalContext(context,certificate);const state=certificates.get(certificate);if(!state?.clapValueEnumOutput)throw new TypeError('Original ValueEnum output requires its genuine private invocation');return state.clapValueEnumOutput;}
+
+// Additive input composition consumes only independently genuine tool proofs.
+export function createToolAwareDeriveFootprintContext({modules,dependencies,compilationProfile:profileInput=null,externalModules=new Map(),toolContext:inputToolContext=undefined}={}) {
+  if(!isDeriveDependencyProof(dependencies)||!Array.isArray(modules)||!(externalModules instanceof Map))throw new TypeError('Derive context requires sealed dependencies and original tracked modules');
+  if(inputToolContext!==undefined)throw new TypeError('Derive input tool proofs are freshly recomputed from complete original inputs');
+  const profile=compilationProfile(profileInput),external=new Map(externalModules);
+  for(const table of external.values())if(table.bindings?.some(binding=>binding.deriveDependencyDigest||['serde','schemars','clap'].includes(binding.target?.[0])))throw new TypeError('Derive dependency paths require privately verified registry inputs, not caller external aliases');
+  modules=modules.map(module=>{let items;const original={...module,items:(items=originalSourceModuleItems(module)).filter(item=>itemConfiguration(item.tokens,profile).status!=='inactive')};if(itemScanNative)captureOriginalItemArray(original,items);return original;});
+  for(const [path,table]of deriveExternalModules(dependencies)) {
+    const existing=external.get(path);
+    if(existing?.bindings.some(binding=>table.bindings.some(derived=>derived.namespace===binding.namespace&&derived.name===binding.name)))throw new TypeError('Registered derive namespace collides with another external table');
+    external.set(path,{...table,bindings:[...(existing?.bindings??[]),...table.bindings],complete:false});
+  }
+  const toolContext=createRegisteredBuiltinToolAttributeContext({modules,externalModules:external,compilationProfile:profile});
+  // Resolve aliases against actual source before applying any certificates.
+  // Unknown imports, duplicate slots and local package shadows remain visible.
+  const baseline=resolveRegisteredBuiltinEnclosingNamespaceModuleBindings({modules,externalModules:external,toolContext,compilationProfile:profile}),scopes=new Map(baseline.scopes.map(scope=>[key(['crate',...scope.path]),scope]));
+  const attributeClosure=new Map(),clapSourceOutputs=new Map(),clapSourceRefusals=new Map(),moduleInputs=new Map(),scalarConcatCandidates=[];
+  for(const module of modules) {
+    const scope=scopes.get(key(['crate',...module.path])),inputs=new Map();
+    for(const candidate of module.items.filter(item=>['struct','enum'].includes(item.term)&&item.tokens.some(token=>token.text==='derive')))try{inputs.set(candidate.start,inspectDeriveInput(candidate,profile));}catch{}
+    moduleInputs.set(moduleScopeKey(module),inputs);
+    attributeClosure.set(moduleScopeKey(module),scope.configurationCondition==='active'&&module.items.every(candidate=>{
+      const condition=itemConfiguration(candidate.tokens,profile);if(condition.status!=='active')return false;
+      if(inputs.has(candidate.start)) {
+        const input=inputs.get(candidate.start),owners=input.derives.map(invocation=>standardOwner(invocation.path,scope)?true:actualOwner(invocation.path,scope,scopes,external,dependencies));
+        if(owners.some(owner=>!owner))return false;
+        try {
+          const output={};
+          if(owners.some(owner=>owner!==true&&owner.target[0]==='clap')) {
+            const ancestors=[...scopes.values()].filter(candidate=>candidate.path.every((name,index)=>scope.path[index]===name));
+            if(ancestors.some(candidate=>candidate.bindings.some(binding=>['allow','automatically_derived'].includes(binding.name)&&macroBindingAffects(binding,'attribute'))))throw new TypeError('Sibling Clap generated attributes are shadowed in an original ancestor');
+            if(owners.some(owner=>owner!==true&&owner.target.join('::')==='clap::Args')&&ancestors.some(candidate=>candidate.bindings.some(binding=>binding.namespace==='type'&&binding.name==='clap'&&(binding.status!=='resolved'||JSON.stringify(binding.target)!==JSON.stringify(['clap'])))))throw new TypeError('Sibling Args generated Clap macro path is shadowed in an original ancestor');
+          }
+          if(owners.some(owner=>owner!==true&&owner.target.join('::')==='clap::ValueEnum'))output.valueEnum=proveClapValueEnumSourceOutput({dependencies,source:module.source.slice(candidate.start,candidate.end)});
+          if(owners.some(owner=>owner!==true&&owner.target.join('::')==='clap::Args')) {
+            output.args=proveClapArgsSourceOutput({dependencies,source:module.source,span:{start:candidate.start,end:candidate.end}});
+            if(output.args.outputs.some(branch=>branch.concatExpansions.length))scalarConcatCandidates.push({module,candidate,scope,output});
+          }
+          if(Object.keys(output).length)clapSourceOutputs.set(invocationId(module,candidate),output);
+          return true;
+        }catch(error){clapSourceRefusals.set(invocationId(module,candidate),error.message);return false;}
+      }
+      return condition.attributes.every(attribute=>isInertConditionalAttribute(attribute)||toolContext&&toolAttributeAt(toolContext,module,candidate,attribute)||originalSourceMetadataBuiltinCallerAttributeAt(module,candidate,attribute)||['cfg','path','doc','allow','warn','deny','forbid','must_use','inline','cold','deprecated','repr','non_exhaustive','track_caller','macro_use','macro_export'].includes(attribute.name))&&!scope.bindings.some(binding=>binding.namespace==='macro'&&binding.macroKind!=='bang'&&condition.attributes.some(attribute=>!isInertConditionalAttribute(attribute)&&attribute.name===binding.name))&&originalDeclarationHeader(candidate,condition,module,scope);
+    })&&!scope.unresolvedImports.some(entry=>entry.glob));
+  }
+  // Preserve the old module-wide closure above. Only an actual owner request
+  // may join a source-proved unrelated conditional module declaration below.
+  let ancestorSourceContext=null;
+  const ownerRequests=(input,names=[])=>{
+    const attributes=[...new Set(['cfg','derive',...input.attributes.map(attribute=>attribute.name),...input.derives.map(invocation=>invocation.path.at(-1)),...names])],types=[...new Set(['core','std',...input.derives.flatMap(invocation=>invocation.path.length>1?[invocation.path[0]]:[invocation.path[0]]),...attributes])];
+    return [...attributes.map(name=>({namespace:'attribute',name})),...types.map(name=>({namespace:'type',name}))];
+  };
+  const activeOriginalItemClosed=(module,scope,candidate,projection=null)=>{
+    const condition=itemConfiguration(candidate.tokens,profile);if(condition.status!=='active')return false;
+    const input=moduleInputs.get(moduleScopeKey(module)).get(candidate.start);
+    if(input){const owners=input.derives.map(invocation=>standardOwner(invocation.path,scope)?true:actualOwner(invocation.path,scope,scopes,external,dependencies));if(owners.some(owner=>!owner)||clapSourceRefusals.has(invocationId(module,candidate)))return false;for(const owner of owners.filter(owner=>owner!==true&&owner.target[0]==='clap')){const output=clapSourceOutputs.get(invocationId(module,candidate));if(owner.target.join('::')==='clap::ValueEnum'&&!output?.valueEnum||owner.target.join('::')==='clap::Args'&&!output?.args)return false;}return true;}
+    return condition.attributes.every(attribute=>isInertConditionalAttribute(attribute)||toolContext&&toolAttributeAt(toolContext,module,candidate,attribute)||originalSourceMetadataBuiltinCallerAttributeAt(module,candidate,attribute)||['cfg','path','doc','allow','warn','deny','forbid','must_use','inline','cold','deprecated','repr','non_exhaustive','track_caller','macro_use','macro_export'].includes(attribute.name))&&!requestedBindingCollision(scope,condition,projection)&&originalDeclarationHeader(candidate,condition,module,scope);
+  };
+  const requestedAttributeClosure=(scope,caller,requests)=>{
+    const module=modules.find(module=>moduleScopeKey(module)===moduleScopeKey(scope));if(!module||scope.configurationCondition!=='active'||caller.configurationCondition==='unknown'||caller.configurationCondition==='inactive')return null;
+    if(attributeClosure.get(moduleScopeKey(scope)))return {originalAttributeFootprintClosed:true,conditionalSiblingProofs:[]};
+    const names=new Set(requests.map(request=>request.name));if(scope.unresolvedImports.some(entry=>entry.glob||names.has(entry.name))||scope.bindings.some(binding=>names.has(binding.name)&&macroBindingAffects(binding,'attribute')))return null;
+    const projection=requestedBindingProjection(scope);
+    const conditionalSiblingProofs=[];for(const candidate of module.items){const condition=itemConfiguration(candidate.tokens,profile);if(condition.status==='active'){if(!activeOriginalItemClosed(module,scope,candidate,projection))return null;continue;}
+      try{ancestorSourceContext??=createOriginalAncestorAttributeScopeContext({modules,binding:baseline,dependencies});conditionalSiblingProofs.push(proveOriginalConditionalSiblingScope({context:ancestorSourceContext,module,item:candidate,caller,requests}));}catch{return null;}
+    }
+    return conditionalSiblingProofs.length?{originalAttributeFootprintClosed:false,conditionalSiblingProofs}:null;
+  };
+  // Stage complete successful output grammars independently of caller lookup.
+  // This discharges the original owner/helper export obligations before resolving
+  // the expression-only concat sink. A source quote cannot supply its own owner.
+  for(const pending of scalarConcatCandidates.sort((a,b)=>a.module.path.length-b.module.path.length))try{
+    const ancestors=[...scopes.values()].filter(candidate=>candidate.path.every((name,index)=>pending.scope.path[index]===name)),closedOwners=[],originalScopes=[],sourceProofs=[];
+    const inert=new Set(['doc','allow','warn','deny','forbid','must_use','inline','cold','deprecated','track_caller','non_exhaustive']);
+    for(const scope of scopes.values()){
+      const isAncestor=ancestors.includes(scope),module=modules.find(value=>value.file===scope.file&&JSON.stringify(value.path)===JSON.stringify(scope.path));
+      if(!module||scope.configurationCondition!=='active'||!attributeClosure.get(moduleScopeKey(module)))throw new TypeError('Generated Args concat requires complete original attribute/owner ancestor closure');
+      if(scope.bindings.some(binding=>binding.name==='concat'&&macroBindingAffects(binding,'bang')||binding.namespace==='type'&&['std','core'].includes(binding.name))||scope.unresolvedImports.some(entry=>entry.glob||['concat','std','core',...inert].includes(entry.name)))throw new TypeError('Generated Args concat has an original ancestor shadow or unresolved relevant import');
+      if(scope.bindings.some(binding=>inert.has(binding.name)&&macroBindingAffects(binding,'attribute')))throw new TypeError('Generated Args concat ancestor builtin attributes are shadowed');
+      const inputs=moduleInputs.get(moduleScopeKey(module));
+      for(const item of module.items){
+        const input=inputs.get(item.start),written=module.source.slice(item.start,item.end),trees=originalMacroTrees(written);
+        function scan(nodes){for(let at=0;at<nodes.length;at++){
+          if(nodes[at].text==='!'&&nodes[at-1]?.text!=='#')throw new TypeError('Generated Args concat ancestor retains an original bang invocation or macro definition');
+          if(nodes[at].text==='#'){let next=at+1;if(nodes[next]?.text==='!')next++;const group=nodes[next];if(group?.delimiter!=='[')throw new TypeError('Generated Args concat ancestor attribute syntax remains unproved');const attr=group.children[0]?.text;
+            if(!inert.has(attr)&&!(input&&['derive','arg'].includes(attr)))throw new TypeError('Generated Args concat ancestor retains an unproved attribute or prelude switch: '+attr);at=next;continue;
+          }
+          if(nodes[at].kind==='group'){if(item.term==='mod'&&nodes[at]===trees.at(-1)&&nodes[at].delimiter==='{'){const child=modules.find(value=>value.file===module.file&&JSON.stringify(value.path)===JSON.stringify([...module.path,item.name])&&value.sourceView?.declaration?.span.start===item.start&&value.sourceView?.declaration?.span.end===item.end);if(!child)throw new TypeError('Generated Args concat requires the genuine complete inline child source view');}else scan(nodes[at].children);}
+        }}scan(trees);
+        if(!input)continue;
+        const output=clapSourceOutputs.get(invocationId(module,item));
+        for(const invocation of input.derives){
+          if(standardOwner(invocation.path,scope)){
+            if(!['Clone','Debug','Default'].includes(invocation.path[0]))throw new TypeError('Generated Args concat retains an independent builtin output owner: '+invocation.path.join('::'));
+            const proof=proveBuiltinScalarSourceOutput({dependencies,source:module.source,span:{start:item.start,end:item.end},owner:invocation.path[0]});
+            if(proof.input.fields.some(field=>field.attributes.some(attr=>attr.children[0]?.text==='arg'))&&!output?.args)throw new TypeError('Generated Args concat ancestor has an unowned original arg helper');
+            sourceProofs.push(proof);closedOwners.push({source:module.file,module:module.path,span:proof.span,target:['core',invocation.path[0]],proof:{schema:proof.schema,digest:proof.digest,plan:proof.plan,branchDigests:proof.branches.map(branch=>({feature:branch.feature,digest:hash(JSON.stringify(branch))})),positiveOutputGrammarComplete:proof.positiveOutputGrammarComplete}});
+          }else{
+            const owner=actualOwner(invocation.path,scope,scopes,external,dependencies);
+            if(owner?.target.join('::')!=='clap::Args'||!output?.args)throw new TypeError('Generated Args concat retains an independent original derive owner: '+invocation.path.join('::'));
+            closedOwners.push({source:module.file,module:module.path,span:{start:item.start,end:item.end},target:owner.target,proofDigest:output.args.digest,expressionSinks:output.args.outputs.map(branch=>({feature:branch.feature,concat:branch.concatExpansions.map(proof=>proof.digest),valueParsers:output.args.valueParserExpansions.map(proof=>proof.expansionDigest)}))});
+          }
+        }
+      }
+      originalScopes.push({source:module.file,module:module.path,sourceSha256:hash(module.source),sourceViewDigest:module.sourceView?.digest??null,resolverScopeSha256:hash(originalJson(scope)),isAncestor,configurationCondition:scope.configurationCondition,unresolvedImports:scope.unresolvedImports});
+    }
+    const expansions=pending.output.args.outputs.flatMap(branch=>branch.concatExpansions);
+    if(!expansions.length||expansions.some(proof=>proof.meta.expression.kind!=='Lit'||proof.meta.attrs.length||proof.plan.rules.filter(rule=>['original-builtin-registration','original-core-builtin-owner'].includes(rule.role)).length!==2))throw new TypeError('Generated Args concat lacks its independent original builtin literal sink');
+    const evidence={schema:'original-scalar-args-concat-caller-v1',source:pending.module.file,sourceSha256:hash(pending.module.source),span:{start:pending.candidate.start,end:pending.candidate.end},dependenciesDigest:dependencies.digest,compilationProfile:profile,resolved:['core','concat'],originalScopes,closedOwners,crateExportProducingInputsComplete:true,expansionDigests:expansions.map(proof=>proof.digest),builtinRegistration:expansions[0].plan.rules.filter(rule=>['original-builtin-registration','original-core-builtin-owner'].includes(rule.role)),macroOwnerResolved:true,scopeWideCompleteness:false,generatedImplBehavior:false};
+    pending.output.concatCaller=freeze({...evidence,digest:hash(JSON.stringify(evidence))});concatCallerSources.set(pending.output.concatCaller,freeze(sourceProofs));
+  }catch(error){attributeClosure.set(moduleScopeKey(pending.module),false);clapSourceOutputs.delete(invocationId(pending.module,pending.candidate));clapSourceRefusals.set(invocationId(pending.module,pending.candidate),error.message);}
+  const root=scopes.get('crate');
+  // A root derive cannot bootstrap its own proof from a spelling. Its entire
+  // original attribute footprint must independently match locked owners first.
+  const coreOwner=root&&root.configurationCondition==='active'&&(!root.unresolvedAttributeMacroScope||attributeClosure.get(moduleScopeKey(root)))&&!root.bindings.some(binding=>binding.namespace==='type'&&binding.name==='core')&&!root.unresolvedImports.some(entry=>entry.glob||entry.name==='core');
+  const byId=new Map(),diagnostics=[],moduleHashes=[];
+  for(const module of modules) {
+    if(typeof module.source!=='string'||typeof module.file!=='string')throw new TypeError('Missing original derive source');
+    const sourceSha256=hash(module.source);moduleHashes.push({source:module.file,module:[...module.path],sha256:sourceSha256});
+    const scope=scopes.get(key(['crate',...module.path]));
+    const attributesClosed=attributeClosure.get(moduleScopeKey(module));
+    for(const item of (module.items??sourceItems(module.source)).filter(item=>['struct','enum'].includes(item.term))) {
+      if(!item.tokens.some(token=>token.text==='derive'))continue;
+      try {
+        const input=inspectDeriveInput(item,profile),owners=[];
+        if(clapSourceRefusals.has(invocationId(module,item)))throw new TypeError(clapSourceRefusals.get(invocationId(module,item)));
+        if(!attributesClosed)throw new TypeError('Sibling attribute, conditional item, glob or item expansion retains derive owner uncertainty');
+        for(const invocation of input.derives) {
+          if(invocation.path.length===1&&STANDARD_LAYOUT_DERIVES.has(invocation.path[0])) {
+            if(!standardOwner(invocation.path,scope))throw new TypeError('Standard derive owner is shadowed');
+            continue;
+          }
+          const owner=actualOwner(invocation.path,scope,scopes,external,dependencies);
+          if(!owner)throw new TypeError('Derive invocation lacks actual locked macro binding: '+key(invocation.path));
+          owners.push({...owner,attributeSpan:invocation.attributeSpan});
+        }
+        let standardInput=null,standardRegistry=null;
+        if(!owners.length&&!input.builtinDefault){
+          if(input.genericParameters||input.lifetimeParameters||input.absentConditionalAttributes.length||input.inertConditionalAttributes.length||input.attributes.some(attribute=>attribute.helpers||!['derive','doc','allow','warn','deny','forbid','must_use'].includes(attribute.name)))throw new TypeError('Standard-only input retains a generic, helper, configuration or layout obligation');
+          const ancestors=[...scopes.values()].filter(candidate=>candidate.path.every((name,index)=>scope.path[index]===name)),names=new Set(['core','std',...input.attributes.map(attribute=>attribute.name),...input.derives.map(invocation=>invocation.path[0])]);
+          const requested=ownerRequests(input),closures=ancestors.map(candidate=>requestedAttributeClosure(candidate,module,requested));
+          let modulePaths=standardModulePathIndex(modules,ancestors);
+          const missingModule=binding=>{
+            if(binding.namespace!=='type'||binding.kind!=='mod')return false;
+            if(binding.status!=='resolved'){modulePaths=null;return true;}
+            if(binding.via!=='declaration'||binding.target?.[0]!=='crate')return false;
+            const present=modulePaths?modulePaths.has(JSON.stringify(binding.target)):modules.some(module=>JSON.stringify(['crate',...module.path])===JSON.stringify(binding.target));
+            if(!present)modulePaths=null;
+            return !present;
+          };
+          if(!ancestors.length||ancestors.some((candidate,index)=>candidate.configurationCondition!=='active'||!closures[index]||candidate.bindings.some(binding=>missingModule(binding)&&!closures[index].conditionalSiblingProofs.some(proof=>JSON.stringify(proof.originalBinding)===JSON.stringify(binding))||names.has(binding.name)&&macroBindingAffects(binding,'attribute')||binding.namespace==='type'&&['core','std'].includes(binding.name))||candidate.unresolvedImports.some(entry=>entry.glob||names.has(entry.name))))throw new TypeError('Standard-only input has an unresolved original ancestor, prelude root or attribute owner');
+          standardRegistry=builtinStandardDeriveRegistry(dependencies);
+          const standardOwners=input.derives.map(invocation=>{const owner=builtinStandardDeriveSourceOwner(standardRegistry,dependencies,invocation.path[0]);return {invocation,target:owner.target,declaration:owner.declaration,symbol:owner.symbol,registration:{name:owner.registration.name,callback:owner.registration.callback,deriveModule:owner.registration.deriveModule},corePrelude:owner.corePrelude,stdPrelude:owner.stdPrelude,callbackBodyCompiled:false};});
+          standardInput={schema:'original-standard-only-derive-input-v1',registryDigest:standardRegistry.digest,sourceProfileSha256:standardRegistry.sourceProfileSha256,completeRegistrationEntries:standardRegistry.registration.completeEntries.length,owners:standardOwners,originalScopes:ancestors.map((candidate,index)=>({source:candidate.file,module:candidate.path,configurationCondition:candidate.configurationCondition,resolverScopeSha256:hash(originalJson(candidate)),originalAttributeFootprintClosed:closures[index].originalAttributeFootprintClosed,...(closures[index].conditionalSiblingProofs.length?{requestedOwnersClosed:true,conditionalSiblingScopeProofs:closures[index].conditionalSiblingProofs}:{}),unresolvedImports:candidate.unresolvedImports})),namespaceAuthority:false,runtimeAuthority:false,generatedImplBehavior:false};
+        }
+        if(!coreOwner)throw new TypeError('Derive error branch has no checked standard core owner');
+        let builtinDefault=null;
+        if(input.builtinDefault) {
+          const ancestors=[...scopes.values()].filter(candidate=>candidate.path.every((name,index)=>scope.path[index]===name));
+          if(ancestors.some(candidate=>candidate.bindings.some(binding=>binding.namespace==='macro'&&binding.macroKind!=='bang'&&['Default','default'].includes(binding.name)))||root.bindings.some(binding=>binding.namespace==='type'&&binding.name==='std'))throw new TypeError('Builtin Default attribute or standard owner is shadowed');
+          const proof=builtinDefaultDependencyProof(dependencies);
+          builtinDefault={...input.builtinDefault,owner:{target:['core','default','Default'],resolution:'closed-standard-attribute-prelude',sourceProfileDigest:proof.digest},dependencyProof:proof};
+        }
+        const clapOwner=owners.find(owner=>owner.target.join('::')==='clap::ValueEnum');
+        const clapValueEnumOutput=clapOwner?clapSourceOutputs.get(invocationId(module,item))?.valueEnum:null;
+        const clapArgsOwner=owners.find(owner=>owner.target.join('::')==='clap::Args');
+        const clapArgsOutput=clapArgsOwner?clapSourceOutputs.get(invocationId(module,item))?.args:null;
+        if(clapOwner&&!clapValueEnumOutput||clapArgsOwner&&!clapArgsOutput)throw new TypeError('Clap source output lacks its exact original cached invocation');
+        let clapGeneratedAttributeOwners=null;
+        if(clapValueEnumOutput||clapArgsOutput) {
+          const ancestors=[...scopes.values()].filter(candidate=>candidate.path.every((name,index)=>scope.path[index]===name));
+          const requested=ownerRequests(input,['allow','automatically_derived']),closures=ancestors.map(candidate=>requestedAttributeClosure(candidate,module,requested));
+          if(ancestors.some((candidate,index)=>!closures[index]||candidate.bindings.some(binding=>['allow','automatically_derived'].includes(binding.name)&&macroBindingAffects(binding,'attribute'))))throw new TypeError('Generated Clap builtin attributes have an unresolved or shadowed original ancestor');
+          if(clapArgsOutput&&ancestors.some(candidate=>candidate.bindings.some(binding=>binding.namespace==='type'&&binding.name==='clap'&&(binding.status!=='resolved'||JSON.stringify(binding.target)!==JSON.stringify(['clap'])))))throw new TypeError('Generated Args Clap macro path is shadowed in an original ancestor');
+          clapGeneratedAttributeOwners={names:['allow','automatically_derived'],scopes:ancestors.map((candidate,index)=>({source:candidate.file,module:candidate.path,originalAttributeFootprintClosed:closures[index].originalAttributeFootprintClosed,...(closures[index].conditionalSiblingProofs.length?{requestedOwnersClosed:true,conditionalSiblingScopeProofs:closures[index].conditionalSiblingProofs}:{} )})),bindingsDigest:hash(originalJson(baseline)),generatedAttributeOwnersResolved:true};
+        }
+        for(const helper of input.attributes.filter(attribute=>attribute.helpers)) {
+          if(helper.name==='schemars'&&!owners.some(owner=>owner.target[0]==='schemars')||helper.name==='serde'&&!owners.some(owner=>['serde','schemars'].includes(owner.target[0])))throw new TypeError('Helper attribute lacks an actual declaring derive owner');
+          if(helper.name==='value'&&!clapOwner)throw new TypeError('Value helper lacks an actual declaring Clap ValueEnum owner');
+          if(helper.name==='arg'&&!clapArgsOwner)throw new TypeError('Arg helper lacks an actual declaring Clap Args owner');
+          if(helper.name==='schemars')for(const entry of helper.helpers.filter(entry=>entry.key==='with')) {
+            entry.namespaceInput={...entry.namespaceInput,outputConfinement:proveSchemarsWithTypeConfinement({dependencies,value:entry.value,position:helper.position})};
+          }
+        }
+        const evidence={schema:'derive-namespace-footprint-v1',source:module.file,module:[...module.path],sourceViewDigest:module.sourceView?.digest??null,sourceSha256,span:{start:item.start,end:item.end},itemSha256:hash(module.source.slice(item.start,item.end)),kind:input.kind,name:input.name,compilationProfile:profile,condition:input.condition,owners,attributes:input.attributes,...(clapValueEnumOutput?{clapValueEnumOutput,clapGeneratedAttributeOwners}:{}),...(clapArgsOutput?{...(clapSourceOutputs.get(invocationId(module,item))?.concatCaller?{clapArgsOutputStorage:encodeBuiltinSourceMeta(clapArgsOutput),clapConcatCaller:clapSourceOutputs.get(invocationId(module,item)).concatCaller}:{clapArgsOutput}),clapGeneratedAttributeOwners}:{}),...(input.lifetimeParameters?{lifetimeParameters:input.lifetimeParameters}:{}),...(input.genericParameters?{genericParameters:input.genericParameters}:{}),...(builtinDefault?{builtinDefault}:{}),dependenciesDigest:dependencies.digest,coreOwner:{target:['core','compile_error'],source:dependencies.standardCore},dimensions:{typeNamespaceComplete:true,valueNamespaceComplete:true,attributeMacroComplete:true,bangMacroComplete:false},generatedImplBehavior:false,obligations:['generated trait implementations are not lowered','fixed successful-expansion bang macro closure remains unproved'],confinement:builtinDefault&&!owners.length?'Pinned builtin Default emits one trait impl. Other original derive behavior remains unsupported; original unit-variant layout and helper tokens are retained.':'Successful outputs retain anonymous const groups or a source-proved Clap trait impl; original data and inert helper syntax remain unchanged. Unsupported output branches retain independent obligations.'};
+        if(standardInput){evidence.standardInput=standardInput;evidence.dimensions.typeNamespaceComplete=false;evidence.dimensions.valueNamespaceComplete=false;evidence.obligations.push('standard-only registered input requires independent complete output grammar for every actual owner');evidence.confinement='Actual standard declarations, preludes and complete compiler registration identify inputs only. Generated layouts, namespace outputs and trait bodies retain separate obligations.';}
+        const certificate=freeze({...evidence,digest:hash(JSON.stringify(evidence))});if(certificate.clapArgsOutputStorage&&JSON.stringify(decodeBuiltinSourceMeta(certificate.clapArgsOutputStorage))!==JSON.stringify(clapArgsOutput))throw new TypeError('Original scalar Args storage roundtrip changed');captureOriginalItemLookup(certificate,module,item);certificates.set(certificate,{dependencies,input,source:module.source,sourceView:module.sourceView,clapArgsOutput,clapValueEnumOutput,standardRegistry});byId.set(invocationId(module,item),certificate);
+      } catch(error){diagnostics.push({source:module.file,span:{start:item.start,end:item.end},name:item.name,message:error.message});}
+    }
+  }
+  const evidence={schema:'derive-footprint-context-v1',dependenciesDigest:dependencies.digest,compilationProfile:profile,sources:moduleHashes,certificates:[...byId.values()],diagnostics,...(toolContext?{originalToolContext:{digest:toolContext.digest,certificates:toolContext.certificates.map(certificate=>({digest:certificate.digest,source:certificate.source,itemSpan:certificate.itemSpan,attributeSpan:certificate.attribute.span})),sourceAuthority:false,semanticAuthority:false}}:{})};
+  const context=freeze({...evidence,digest:hash(JSON.stringify(evidence))});
+  const originalModules=freeze(modules.map(module=>{
+    const allItems=originalSourceModuleItems(module),items=module.configurationCondition==='inactive'?[]:allItems.filter(item=>itemConfiguration(item.tokens,profile).status!=='inactive');
+    return {file:module.file,path:[...module.path],moduleScopeKey:moduleScopeKey(module),source:module.source,compilationProfile:profile,items,allItems,
+      ...(Object.hasOwn(module,'sourceView')?{sourceView:module.sourceView}:{}),...(module.configurationCondition?{configurationCondition:module.configurationCondition}:{})};
+  }));
+  const originalExternal=new Map([...external].map(([path,table])=>[path,freeze(structuredClone(table))]));
+  const moduleIndices=originalJsonIntrinsicsUnchanged()?{paths:new Set(originalModules.map(module=>JSON.stringify(['crate',...module.path]))),scopes:new Map(originalModules.map(module=>[moduleScopeKey(module),module]))}:null;
+  contexts.set(context,{byId,external:originalExternal,dependencies,originalModules,moduleIndices,helperScopes:baseline.scopes,attributeClosure,requestedAttributeClosure,ownerRequests,toolContext});return context;
+}
+
+import {originalSourceMetadataBuiltinCallerAttributeAt} from './registered-builtin-caller-attribute-source.mjs';

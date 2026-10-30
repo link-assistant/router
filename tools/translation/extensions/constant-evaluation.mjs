@@ -8,6 +8,7 @@ import {requirePrimitiveOperator} from './primitive-operators.mjs';
 
 export const CONSTANT_EVALUATION_PROFILE=Object.freeze({schemaVersion:1,rustVersion:'1.89.0',pointerBits:64,
   arithmetic:'checked fixed integers',casts:'value-preserving fixed ranges and checked primitive two-complement as',shifts:'checked actual primitive shifts with count overflow',
+  wrappingSourceProfileSha256:FIXED_WRAPPING_SOURCE_PROFILE.manifestSha256,wrappingMethods:Object.freeze(['wrapping_add','wrapping_sub','wrapping_mul']),
   arithmeticSource:'https://github.com/rust-lang/rust/blob/1.89.0/library/core/src/ops/arith.rs',
   arithmeticSha256:'3a4a38939d509b4df7b5942a5e7fc7e1bd60e7d122b0ee48eda3b650b462d09b',
   timeSource:'https://github.com/rust-lang/rust/blob/1.89.0/library/core/src/time.rs',
@@ -66,8 +67,8 @@ function children(node) {
     case 'let':return [node.value,node.body];
     case 'if':return [node.cond,node.then,node.else];
     case 'binary':return [node.left,node.right];
-    case 'routerPrimitiveIntegerShift':return [node.left,node.right];
-    case 'routerPrimitiveIntegerCast':return [node.value];
+    case 'routerPrimitiveIntegerShift':case 'routerPrimitiveScalarBitwise':return [node.left,node.right];
+    case 'routerPrimitiveIntegerCast':case 'routerPrimitiveIntegerNot':return [node.value];
     case 'unary':case 'cast':return [node.arg];
     case 'ctor':case 'call':case 'routerHostCall':return node.args;
     case 'array':return node.items;
@@ -152,7 +153,7 @@ class Evaluator {
     this.step(node);if(!node||depth>this.limits.nodeDepth)throw new Refusal('budget-exhausted','constant IR depth budget exhausted',node);
     if(node.constEligible===false||node.mutable||node.patternControl)refuse('constant control or operation is outside the bounded checked profile',node);
     if(node.k==='call')this.eligibleDeclaration(node.fn);
-    if(node.k==='routerHostCall')this.timeContract(node);
+    if(node.k==='routerHostCall')this.hostContract(node);
     if(node.k==='binary'&&!['add','sub','mul','div','rem','eq','ne','lt','le','gt','ge','and','or'].includes(node.op))refuse('constant binary operator has no pinned evaluation profile',node);
     if(node.k==='binary'&&['eq','ne','lt','le','gt','ge'].includes(node.op)&&!['fixed','bool'].includes(node.left?.type?.kind))refuse('constant comparisons require primitive const permission; string/aggregate traits are unproved',node);
     if(node.k==='unary'&&!['not','neg'].includes(node.op))refuse('constant unary operator has no pinned evaluation profile',node);
@@ -163,7 +164,7 @@ class Evaluator {
       if(arm.pattern.k==='ctor'){this.layout(arm.pattern.data);if(node.scrutinee?.type?.name!==arm.pattern.data)refuse('constant match constructor owner differs from its checked subject',node);}
     }
     if(node.k==='routerSharedArrayLiteral'&&!node.arrayBorrowProof?.verified)refuse('constant array reference requires its separate source borrow proof',node);
-    if(['routerPrimitiveIntegerCast','routerPrimitiveIntegerShift'].includes(node.k))requirePrimitiveOperator(node);
+    if(['routerPrimitiveIntegerCast','routerPrimitiveIntegerShift','routerPrimitiveScalarBitwise','routerPrimitiveIntegerNot'].includes(node.k))requirePrimitiveOperator(node);
     const operands=children(node);if(!Array.isArray(operands))refuse('constant operands must be a checked array',node);
     for(const operand of operands)this.eligibleNode(operand,depth+1);
   }
@@ -216,6 +217,14 @@ class Evaluator {
         refuse('constant unary operation has no checked scalar semantics',node);break;
       }
       case 'binary':return this.binary(node,env,depth);
+      case 'routerPrimitiveScalarBitwise':{
+        const proof=requirePrimitiveOperator(node),left=this.evaluate(node.left,env,depth+1),right=this.evaluate(node.right,env,depth+1);
+        if(proof.domain==='bool')return result(proof.operation==='&'?left.value&&right.value:proof.operation==='|'?left.value||right.value:left.value!==right.value);
+        return result(this.exactInteger(proof.operation==='&'?left.value&right.value:proof.operation==='|'?left.value|right.value:left.value^right.value,node.type,node));
+      }
+      case 'routerPrimitiveIntegerNot':{
+        requirePrimitiveOperator(node);const value=this.evaluate(node.value,env,depth+1),bits=~value.value;return result(node.type.signed?BigInt.asIntN(node.type.bits,bits):BigInt.asUintN(node.type.bits,bits));
+      }
       case 'routerPrimitiveIntegerCast':{
         requirePrimitiveOperator(node);const value=this.evaluate(node.value,env,depth+1);
         return result(node.type.signed?BigInt.asIntN(node.type.bits,value.value):BigInt.asUintN(node.type.bits,value.value));
@@ -259,7 +268,7 @@ class Evaluator {
         refuse('constant match has no selected checked arm',node);break;
       }
       case 'call':return this.call(node.fn,node.args.map(arg=>this.evaluate(arg,env,depth+1)),node);
-      case 'routerHostCall':return this.time(node,node.args.map(arg=>this.evaluate(arg,env,depth+1)));
+      case 'routerHostCall':return this.host(node,node.args.map(arg=>this.evaluate(arg,env,depth+1)));
       case 'abort':panic('selected constant panic: '+node.message,node);break;
       default:refuse('constant operation is unsupported: '+node.k,node);
     }
@@ -286,6 +295,25 @@ class Evaluator {
     const value=node.op==='add'?a+b:node.op==='sub'?a-b:node.op==='mul'?a*b:null;
     if(value===null)refuse('constant fixed operator has no pinned implementation: '+node.op,node);
     return result(this.exactInteger(value,node.type,node,true));
+  }
+  hostContract(node) {
+    const raw=node.contract??this.contracts.get(node.id),contract=raw?copyMetadata(raw):null;
+    if(contract?.family!=='fixed')return {kind:'time',...this.timeContract(node)};
+    this.serialize(contract,true);const operation=contract.rustPath?.at(-1),type=contract.instantiation;
+    const actual=actual=>actual?.kind==='fixed'&&actual.bits===type?.bits&&actual.signed===type?.signed&&actual.rustPrimitiveName===type?.rustPrimitiveName&&!actual.rustReference&&!actual.rustOwnership&&!actual.rustGenericIdentityUnresolved&&!actual.rustBorrowingUnresolved&&!actual.patternOwnershipRefusal;
+    if(!['wrapping_add','wrapping_sub','wrapping_mul'].includes(operation)||type?.kind!=='fixed'||!/^[iu](8|16|32|64|128)$/u.test(type.rustPrimitiveName??'')||!actual(type))refuse('constant fixed host operation requires its actual by-value original wrapping primitive',node);
+    bounds(type);
+    if(contract.id!==node.id||contract.id!=='rust_fixed_'+operation+'_'+encodeMonomorphicType(type)||contract.jsExport!=='rust_fixed_'+operation||contract.kind!=='method'||contract.constEligible!==true||contract.constSince!=='1.32.0'||contract.async!==false||contract.pure!==true||contract.rustPath.length!==2||contract.rustPath[0]!==type.rustPrimitiveName||!actual(contract.receiver)||!actual(contract.ret)||!actual(node.type)||contract.params?.length!==2||!contract.params.every(actual)||node.args?.length!==2||!node.args.every(arg=>actual(arg.type))||contract.runtimeInstantiation?.factory!=='createFixedIntegerRuntime'||contract.runtimeInstantiation.type?.kind!=='fixed'||contract.runtimeInstantiation.type.bits!==type.bits||contract.runtimeInstantiation.type.signed!==type.signed)refuse('constant wrapping contract, operands or source const identity differ',node);
+    let source;try{source=requireFixedWrappingMetadata(contract.sourceWrappingProof,type,operation);}catch(error){if(error instanceof TypeError&&error.message.startsWith('Wrapping metadata differs'))refuse(error.message,node);throw error;}
+    if(contract.constSince!==source.constSince)refuse('constant wrapping stability differs from its actual original member',node);
+    return {kind:'wrapping',contract,operation,source};
+  }
+  host(node,args) {
+    const selected=this.hostContract(node);if(selected.kind==='time')return this.time(node,args);const {contract,operation,source}=selected;
+    if(args.length!==2||args.some((arg,index)=>!sameType(arg.type,contract.params[index])))refuse('constant wrapping evaluated arguments differ from actual checked parameters',node);
+    for(const arg of args)this.exactInteger(arg.value,arg.type,node);const value=operation==='wrapping_add'?args[0].value+args[1].value:operation==='wrapping_sub'?args[0].value-args[1].value:args[0].value*args[1].value;
+    const result=node.type.signed?BigInt.asIntN(node.type.bits,value):BigInt.asUintN(node.type.bits,value);
+    this.trace.push({kind:'host',id:node.id,operation,sourceProfileSha256:source.profileSha256,sourceSha256:source.originalMember.sourceSha256,memberSha256:source.originalMember.sha256,intrinsicSha256:source.intrinsic.sha256,span:node.span});return this.cell(node.type,result,node);
   }
   timeContract(node) {
     const raw=this.contracts.get(node.id),contract=raw?copyMetadata(raw):null,operation=TIME_OPERATIONS.get(node.id),parameters=operation==='new'?['u64','u32']:['u64'];
@@ -317,6 +345,9 @@ class Evaluator {
   }
 }
 export function evaluateCheckedConstant(program,name,options={}) {
-  try{return new Evaluator(program,options).run(name);}
-  catch(error){if(error instanceof TypeError&&error.message.startsWith('source links:'))return frozen({status:error.message.includes('budget exhausted')?'budget-exhausted':'unsupported',diagnostic:{reason:error.message}});if(!(error instanceof Refusal))throw error;return frozen({status:error.status,diagnostic:{reason:error.message,...(error.span?{span:error.span}:{})}});}
+  return withFixedWrappingSourceOperation(()=>{try{return new Evaluator(program,options).run(name);}
+  catch(error){if(error instanceof TypeError&&error.message.startsWith('source links:'))return frozen({status:error.message.includes('budget exhausted')?'budget-exhausted':'unsupported',diagnostic:{reason:error.message}});if(!(error instanceof Refusal))throw error;return frozen({status:error.status,diagnostic:{reason:error.message,...(error.span?{span:error.span}:{})}});}});
 }
+
+import {requireFixedWrappingMetadata,withFixedWrappingSourceOperation,FIXED_WRAPPING_SOURCE_PROFILE} from './fixed-wrapping-source.mjs';
+import {encodeMonomorphicType} from '../monomorphic.mjs';

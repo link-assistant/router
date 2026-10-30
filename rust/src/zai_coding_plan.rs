@@ -169,7 +169,7 @@ pub fn registry_for_client(
         }
         ClientKind::GeminiCli => ClientProtocol::GeminiNative,
         ClientKind::Cursor | ClientKind::Agent => {
-            return Err(format!(
+            return Err(crate::translation_core::format!(
                 "{} has no z.ai Coding Plan adapter",
                 client.canonical_name()
             ));
@@ -185,7 +185,7 @@ pub fn registry_for_client(
             exposed_id: canonical.to_string(),
             canonical_id: canonical.to_string(),
             owner: "z.ai",
-            display_name: Some(format!("z.ai Coding Plan — {canonical}")),
+            display_name: Some(crate::translation_core::format!("z.ai Coding Plan — {canonical}")),
             protocol,
         });
     }
@@ -560,7 +560,7 @@ pub(crate) fn unproven_request_for_listed_model(
         return None;
     }
     let client = client.canonical_name();
-    Some(format!(
+    Some(crate::translation_core::format!(
         "model '{model}' is served by the z.ai Coding Plan, which Router uses only for requests \
          whose headers match the token's {client} client binding and subscriber; this request \
          did not, so it was not sent to z.ai. Send it from that client (for example through \
@@ -628,11 +628,11 @@ fn authorize_client_request<'a>(
     claims: &'a crate::token::TokenClaims,
     headers: &axum::http::HeaderMap,
     protocol: ClientProtocol,
-    path: &str,
+    path: &crate::translation_core::Str,
 ) -> Result<(ClientKind, &'a str, bool), String> {
     let (client, principal) = client_claims(claims)?;
     if !crate::client_policy::request_evidence(client, protocol, path, headers) {
-        return Err(format!(
+        return Err(crate::translation_core::format!(
             "request evidence does not match the token's {} client binding",
             client.canonical_name()
         ));
@@ -670,7 +670,7 @@ pub(crate) fn authorize_model(
     let mapping = live_registry_for_client(client, live_models)?
         .into_iter()
         .find(|entry| entry.exposed_id == exposed_id && entry.protocol == protocol)
-        .ok_or_else(|| format!("model '{exposed_id}' is not permitted for {client}"))?;
+        .ok_or_else(|| crate::translation_core::format!("model '{exposed_id}' is not permitted for {client}"))?;
     Ok((client, mapping, overridden))
 }
 

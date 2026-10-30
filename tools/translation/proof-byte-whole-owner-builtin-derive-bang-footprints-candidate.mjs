@@ -222,7 +222,7 @@ export function originalBuiltinDefaultBangOutput({context,certificate,invocation
 import {types} from 'node:util';
 import {compileBuiltinDebugEnclosingNamespaceModel} from "./proof-byte-whole-owner-builtin-debug-ast-route.mjs";
 import {originalDataFreezeIntrinsicsUnchanged as enclosingNativeUnchanged,originalCapturedFunctionSource} from './original-json-intrinsics.mjs';
-import {originalImplNamespaceSourcePlan,requireOriginalImplNamespaceSourcePlan} from './derive-ancestor-attribute-scope.mjs';
+import {freshOriginalImplNamespaceSourcePlan as originalImplNamespaceSourcePlan,requireOriginalImplNamespaceSourcePlan} from './derive-ancestor-attribute-scope.mjs';
 let debugEnclosingIssued=null,enclosingProxyOperation=null;
 const enclosingTypeOwner=types;
 // The first explicit operation may refuse after an observed capture. No capture

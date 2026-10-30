@@ -84,14 +84,14 @@ function importedJsonTargets(modules,profile,context){
 const words=tokens=>tokens.map(token=>token.text).join('');
 function parametersOf(tokens,start,end,scoped,imports,module){
  const parameters=new Map(),keys=new Set();
- const json=type=>type===C+'Json'||type==='serde_json::Value'||ident({type:'ident',text:type})&&scoped.jsonNames.has(type)&&imports.select(module,type)!==null;
+ const json=type=>type===C+'Json'||['serde_json::Value','::serde_json::Value'].includes(type)||ident({type:'ident',text:type})&&scoped.jsonNames.has(type)&&imports.select(module,type)!==null;
  for(const row of split(tokens.slice(start,end))){
   if(row.length<3||!ident(row[0])||row[1].text!==':'||parameters.has(row[0].text))return null;
-  const type=words(row.slice(2));let role=null;
-  if(type.startsWith('&')&&json(type.slice(1)))role='json';
-  else if(type.startsWith(C+'Maybe<&')&&type.endsWith('>')&&json(type.slice((C+'Maybe<&').length,-1)))role='optional-json';
-  if(type==='&'+C+'Str')keys.add(row[0].text);
-  parameters.set(row[0].text,{role,type,span:[row[0].start,row.at(-1).end],sourceName:row[0].text});
+  const originalType=row.slice(2).map(token=>token.text+(token.type==='char'&&token.text.startsWith("'")?' ':'')).join(''),type=originalType.replace(/&'[\p{ID_Start}_][\p{ID_Continue}_]*\s+/gu,'&').replace(/\s+/gu,''),optional=/^(?:(?:::)?(?:std|core)::option::Option|Option|crate::translation_core::Maybe)<([\s\S]+)>$/u.exec(type),payload=optional?optional[1]:type;let role=null;
+  if(payload.startsWith('&')&&json(payload.slice(1)))role=optional?'optional-json':'json';
+  if(!optional&&['&str','&'+C+'Str','&::std::primitive::str','&::core::primitive::str','&std::primitive::str','&core::primitive::str'].includes(type))keys.add(row[0].text);
+  if(!optional&&['usize','::std::primitive::usize','::core::primitive::usize'].includes(type))keys.add(row[0].text);
+  parameters.set(row[0].text,{role,type,originalType,keyRole:keys.has(row[0].text)?(type.startsWith('&')?'str':'usize'):null,span:[row[0].start,row.at(-1).end],sourceName:row[0].text});
  }
  return {parameters,keys};
 }
@@ -109,7 +109,9 @@ function shadowProblem(tokens,body,parameters,owners){
   }
   if(word==='let'){
    let end=at+1;while(end<tokens.length&&!['=',';'].includes(tokens[end].text))end++;
-   if(tokens.slice(at+1,end).some(token=>ident(token)&&reserved.has(token.text)))return 'formal or canonical owner shadowed by local pattern';
+   const pattern=tokens.slice(at+1,end),ordinary=['{',';','}'].includes(tokens[at-1]?.text),plain=ident(pattern[0])&&pattern[0].text!=='mut'&&(pattern.length===1||pattern[1]?.text===':'),canonical=new Set([...owners,'serde_json','core','crate','translation_core']);
+   const binders=plain?pattern.slice(0,1):pattern;
+   if(binders.some(token=>ident(token)&&canonical.has(token.text))||(!ordinary||!plain)&&binders.some(token=>ident(token)&&reserved.has(token.text)))return 'formal or canonical owner shadowed by local pattern';
   }
   if(word==='|'&&['=','(',',','return','{','=>'].includes(tokens[at-1]?.text)){
    let end=at+1;while(end<tokens.length&&tokens[end].text!=='|')end++;
@@ -118,44 +120,12 @@ function shadowProblem(tokens,body,parameters,owners){
  }
  return null;
 }
-function selectReaders(source,item,module,scoped,imports,names){
- const tokens=item.tokens.filter(token=>token.type!=='comment'),header=originalDeclarationHeader(item,module.path),name=tokens.findIndex(token=>token.start===header?.nameSpan?.start),edits=[],selections=[];
- const skip=reason=>({edits,selections,preserved:[{function:item.name,span:[item.start,item.end],reason}]});
- if(name<0||tokens[name+1]?.text!=='(')return skip('complete ordinary nongeneric function required');
- const endParams=close(tokens,name+1);let body=endParams+1;while(body<tokens.length&&tokens[body].text!=='{')body++;
- if(endParams<0||body>=tokens.length||close(tokens,body)!==tokens.length-1||tokens.length>200000||tokens.slice(0,name).some(token=>['async','unsafe','extern','const'].includes(token.text))||tokens.slice(endParams+1,body).some(token=>token.text==='where'||token.text.startsWith("'")))return skip('bounded complete ordinary function with elided source lifetimes required');
- const parsed=parametersOf(tokens,name+2,endParams,scoped,imports,module);if(!parsed)return skip('simple distinct immutable source formal parameters required');
- const {parameters,keys}=parsed,owners=new Set([...scoped.jsonNames]);
- const problem=shadowProblem(tokens,body,parameters,owners);if(problem)return skip(problem);
- let serial=0;const fresh=()=>{let value;do{if(serial>=200000)fail('hygiene bound');value='__router_json_reader_'+serial++;}while(names.has(value));names.add(value);return value;};
- function owner(args){
-  const member=args.at(-1)?.text;if(!canonicalJsonReaderMember(member)||args.at(-2)?.text!=='::')return null;
-  const prefix=words(args.slice(0,-2));if(prefix===C+'Json'||prefix==='serde_json::Value')return {member,qualified:prefix,import:null};
-  if(args.length!==3||!ident(args[0]))return null;const selected=imports.select(module,args[0].text);return selected?{member,qualified:prefix,import:selected}:null;
- }
- for(let at=body+1;at<tokens.length-1;at++){
-  const macro=macroAt(tokens,at,'json')??macroAt(tokens,at,'format');if(macro){at=macro.end;continue;}
-  const first=tokens[at],parameter=parameters.get(first.text);if(!parameter?.role||['.','::'].includes(tokens[at-1]?.text))continue;
-  let cursor=at+1,role=parameter.role;
-  while(cursor<tokens.length-1&&tokens[cursor]?.text==='.'&&ident(tokens[cursor+1])&&tokens[cursor+2]?.text==='('){
-   const end=close(tokens,cursor+2);if(end<0)break;const method=tokens[cursor+1].text,args=tokens.slice(cursor+3,end);
-   if(method==='get'&&role==='json'&&args.length===1&&(args[0].type==='string'||ident(args[0])&&keys.has(args[0].text))){role='optional-json';cursor=end+1;continue;}
-   if(method==='unwrap_or'&&role==='optional-json'&&args.length===1&&parameters.get(args[0].text)?.role==='json'){role='json';cursor=end+1;continue;}
-   if(method!=='and_then'||role!=='optional-json')break;const selected=owner(args);if(!selected)break;
-   const span=[first.start,tokens[end].end],receiverSpan=[first.start,tokens[cursor].start];
-   if(item.tokens.some(token=>token.type==='comment'&&token.start>=tokens[cursor].start&&token.end<=span[1]))break;
-   const receiver=source.slice(...receiverSpan),input=fresh(),payload=fresh(),expanded=expandCanonicalJsonReader(receiver,selected.member,input,payload);
-   edits.push({span,expected:source.slice(...span),replacement:expanded.source,repository:expanded.repository,generatedPaths:expanded.paths});
-   selections.push({function:item.name,functionSpan:[item.start,item.end],span,receiver:{span:receiverSpan,source:receiver,formal:parameter},member:selected.member,owner:selected,locals:[input,payload],nativeEquation:'canonical Option<&Json>::and_then with one inert canonical JSON reader function item',executableAdmission:false,loanBoundary:'same shared input root; no owned temporary introduced'});at=end;break;
-  }
- }
- return {edits,selections,preserved:selections.length?[]:[{function:item.name,span:[item.start,item.end],reason:'no closed canonical shared Json Option reader function item'}]};
-}
+function selectReaders(source,item,module,scoped,imports,names){return selectCanonicalJsonReaderSourceCandidates(source,item,module,scoped,imports,names);}
 function mapping(source,after,edits){
  const rows=[];let old=0,current=0;
  for(const edit of edits){if(old<edit.span[0]){const size=edit.span[0]-old;rows.push({kind:'unchanged',before:[old,edit.span[0]],after:[current,current+size]});current+=size;}rows.push({kind:'substitution',before:[...edit.span],after:[current,current+edit.replacement.length],expected:edit.expected,replacement:edit.replacement});old=edit.span[1];current+=edit.replacement.length;}
  if(old<source.length)rows.push({kind:'unchanged',before:[old,source.length],after:[current,current+source.length-old]});
- let inverse=after;for(const row of [...rows].reverse())if(row.kind==='substitution'){if(inverse.slice(...row.after)!==row.replacement)fail('full source inverse expected differs');inverse=inverse.slice(0,row.after[0])+row.expected+inverse.slice(row.after[1]);}if(inverse!==source)fail('full source inverse differs');return rows;
+ const pieces=[];let cursor=0;for(const row of rows)if(row.kind==='substitution'){if(after.slice(...row.after)!==row.replacement)fail('full source inverse expected differs');pieces.push(after.slice(cursor,row.after[0]),row.expected);cursor=row.after[1];}pieces.push(after.slice(cursor));const inverse=pieces.join('');if(inverse!==source)fail('full source inverse differs');return rows;
 }
 function stage(source,document,edits,phase,id){
  for(let at=0;at<edits.length;at++)if(source.slice(...edits[at].span)!==edits[at].expected||at&&edits[at-1].span[1]>edits[at].span[0])fail('overlapping or changed exact reader span');
@@ -165,7 +135,7 @@ function stage(source,document,edits,phase,id){
 function apply(source,selected){
  const before=transportConcreteSyntaxSource(source,{language:'Rust'}),edits=[...selected].sort((a,b)=>a.span[0]-b.span[0]),languageId='canonical-json-readers:expand-option-and-then-on-shared-root',repositoryId='router-core:bind-generated-json-reader-paths';
  const operation=createRulePipeline([{phase:'language',rules:[{id:languageId,apply:()=>stage(source,before.document,edits.map(({span,expected,replacement})=>({span,expected,replacement})),'language',languageId)}]},{phase:'repository',rules:[{id:repositoryId,apply:first=>{
-  const paths=[];for(let at=0;at<edits.length;at++){const row=first.mapping.filter(row=>row.kind==='substitution')[at];if(!row||row.expected!==edits[at].expected||row.replacement!==edits[at].replacement)fail('actual intermediate reader mapping differs');for(const path of edits[at].generatedPaths)paths.push({span:path.span.map(offset=>offset+row.after[0]),expected:path.expected,replacement:path.replacement});}
+  const substitutions=first.mapping.filter(row=>row.kind==='substitution');if(substitutions.length!==edits.length)fail('complete intermediate reader substitution count differs');const paths=[];for(let at=0;at<edits.length;at++){const row=substitutions[at];if(!row||row.expected!==edits[at].expected||row.replacement!==edits[at].replacement)fail('actual intermediate reader mapping differs');for(const path of edits[at].generatedPaths)paths.push({span:path.span.map(offset=>offset+row.after[0]),expected:path.expected,replacement:path.replacement});}
   const second=stage(first.after.source,transportConcreteSyntaxMeta(first.after.meta).document,paths,'repository',repositoryId),composed=edits.map(row=>({span:row.span,expected:row.expected,replacement:row.repository}));
   return {before:first.before,intermediate:first.after,after:second.after,edits:composed,mapping:mapping(source,second.after.source,composed),stages:[{name:'canonical-option-equation',...first},{name:'owned-generated-path-binding',...second}],completeInverse:true,executableAdmission:false};
  }}]}]).run(null);return {...operation.value,trace:operation.trace};
@@ -255,3 +225,17 @@ export function iterateCoreJsonReadersCorpusPackets(options={}){
  const iterator=packets();
  return {next:()=>iterator.next(),return:()=>iterator.return(),verify(){if(!finished)fail('unfinished packet stream');verifyOriginal();}};
 }
+
+import {expandCanonicalJsonReaderDefault} from './canonical-json-reader-default-normalization.mjs';
+
+import {createJsonReaderSourceAliasWalk} from './json-reader-source-aliases.mjs';
+
+import {expandCanonicalJsonOptionTerminal,expandCanonicalJsonReaderClosure} from './canonical-json-option-terminal-normalization.mjs';
+import {isPlainSourceIdentifier} from './module-paths.mjs';
+
+import {canonicalJsonPredicateMember} from './json-value-predicates.mjs';
+import {expandCanonicalJsonOptionPredicate} from './canonical-json-option-terminal-normalization.mjs';
+
+import {expandCanonicalJsonOptionFilter} from './canonical-json-option-terminal-normalization.mjs';
+
+import {selectCanonicalJsonReaderSourceCandidates} from './canonical-json-reader-source-selection.mjs';

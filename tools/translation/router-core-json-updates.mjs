@@ -1,4 +1,7 @@
 import {crateModuleSourcePath} from './repository-layout.mjs';
+import {forwardJsonIterationContract} from './json-iteration-forward-domain.mjs';
+import {parseRouterCoreJsonState,checkForwardJsonState,forwardJsonStateContract} from './json-state-forward-domain.mjs';
+import {jsonStateContract} from './owned-forward-contracts.mjs';
 // Only source-bound owned JSON operations enter this language rule. The Rust
 // library bodies remain untranslated; no general Clone/IndexMut is admitted.
 import {types} from 'node:util';
@@ -20,7 +23,7 @@ import {alphaTree,retargetCheckedCallback,requirePinnedStandardBody,nonlocal} fr
 import {captureBorrowedLayouts,requireBorrowedLayouts} from './extensions/standard-borrowed-body.mjs';
 import {renameFunction,renameExpr,Scope} from './vendor/meta-language/translation/ir.js';
 import {coerce} from './checked-coercions.mjs';
-import {validateOwnedJsonFlow,describeOwnedJsonDifference} from './owned-json-flow.mjs';
+import {describeOwnedJsonDifference} from './owned-json-flow.mjs';import {validateOwnedJsonFlow} from './owned-text-vector-native-flow-selection.mjs';
 import {SOURCE_STR,sourceShared} from './extensions/source-contract-types.mjs';
 import {requireBorrowedString} from './extensions/string-iterators.mjs';
 import {matchesParserFacts} from './matches-macro-context.mjs';
@@ -43,10 +46,10 @@ const updateContracts=['json_copy','json_with_field'].map(name=>({
   'Deep copies and final results retain existing 4096-node/depth32/dense4096 bounds and Unicode/UTF8 map ordering.',
   'Null promotes to an object; other non-object bases panic. Allocation/OOM/allocator and payload Drop internals remain outside the bounded successful-resource projection.'],
 }));
-export const ROUTER_CORE_JSON_UPDATE_CONTRACTS=freeze([...ROUTER_CORE_JSON_PARSE_CONTRACTS,...updateContracts,...['json_index_str','json_index_usize','json_map_index'].map(name=>({id:'router_core_'+name,jsExport:'router_core_'+name,rustPath:['crate','translation_core',name],kind:'function',family:'json-update',params:[sourceShared(name==='json_map_index'?JSON_TYPES.map:JSON_TYPES.value),name==='json_index_usize'?{kind:'fixed',bits:64,signed:false,rustSourceType:true,rustPrimitiveName:'usize'}:SOURCE_STR],ret:sourceShared(JSON_TYPES.value),async:false,pure:true,constEligible:false,requiresRefinement:'genuine-router-owned-json-projection',assumptions:['Actual complete facade/primitive sources bind this shared projection.','Result borrows only argument zero; the key grants no lifetime.','Value missing/wrong-kind returns canonical Null; Map missing entry panics.','Existing canonical JSON bounds apply; no Index/IndexMut/Copy/Drop or arbitrary borrowing authority.']}))]);
+export const ROUTER_CORE_JSON_UPDATE_CONTRACTS=freeze([...BOUNDED_JSON_CORE_CONTRACTS,...ROUTER_CORE_JSON_PARSE_CONTRACTS,...updateContracts,...['json_index_str','json_index_usize','json_map_index'].map(name=>({id:'router_core_'+name,jsExport:'router_core_'+name,rustPath:['crate','translation_core',name],kind:'function',family:'json-update',params:[sourceShared(name==='json_map_index'?JSON_TYPES.map:JSON_TYPES.value),name==='json_index_usize'?{kind:'fixed',bits:64,signed:false,rustSourceType:true,rustPrimitiveName:'usize'}:SOURCE_STR],ret:sourceShared(JSON_TYPES.value),async:false,pure:true,constEligible:false,requiresRefinement:'genuine-router-owned-json-projection',assumptions:['Actual complete facade/primitive sources bind this shared projection.','Result borrows only argument zero; the key grants no lifetime.','Value missing/wrong-kind returns canonical Null; Map missing entry panics.','Existing canonical JSON bounds apply; no Index/IndexMut/Copy/Drop or arbitrary borrowing authority.']}))]);
 const projectionNames=new Set(['json_index_str','json_index_usize','json_map_index']),projectionContexts=new Map(),emissionFrames=new WeakMap();
 const projectionDefinitions={"json_index_str":"pub fn json_index_str<'a>(value: &'a Json, key: &Str) -> &'a Json {\n    &value[key]\n}","json_index_usize":"pub fn json_index_usize<'a>(value: &'a Json, index: usize) -> &'a Json {\n    &value[index]\n}","json_map_index":"pub fn json_map_index<'a>(\n    value: &'a ::serde_json::Map<::std::string::String, Json>,\n    key: &Str,\n) -> &'a Json {\n    &value[key]\n}"};
-const projectionId=id=>typeof id==='string'&&id.startsWith('router_core_')&&(projectionNames.has(id.replace(/^router_core_/u,''))||isRouterCoreJsonCollection(id.replace(/^router_core_/u,'')));
+const projectionId=id=>typeof id==='string'&&(Boolean(ownedTextVectorLiteralOperationShape(id,0))||Boolean(ownedTextVectorOperationShape(id))||Boolean(primitiveOwnedVectorOperationShape(id))||Boolean(primitiveVectorLiteralOperationShape(id,0))||Boolean(primitiveSequenceOperationShape(id))||Boolean(jsonStateContract(id))||id.startsWith('router_core_')&&(projectionNames.has(id.replace(/^router_core_/u,''))||isRouterCoreJsonCollection(id.replace(/^router_core_/u,''))));
 const fail=()=>{throw new TypeError('Owned JSON update requires its actual complete source binding');};
 function sourceContract(run,span){try{return run();}catch(error){if(!(error instanceof TypeError))throw error;throw unsupported('Router owned JSON update source',error.message,span);}}
 function leaf(state){const rows=state.facts.modules.filter(module=>module.path.join('::')==='translation_core::primitives');if(rows.length!==1||rows[0].file!==crateModuleSourcePath(state.facts.modules,'src/translation_core/primitives.rs')||rows[0].source!==ROUTER_CORE_PRIMITIVES_SOURCE||rows[0].configurationCondition!=='active'||!rows[0].sourceView)fail();originalSourceModuleItems(rows[0]);return rows[0];}
@@ -69,7 +72,7 @@ function parsedCallReceipt(origin){
  const syntax={...original.syntax,block:true};return same(node,syntax)?{...original,syntax}:null;
 }
 export function parseRouterCoreJsonUpdate(parser,path){
- const collection=sourceContract(()=>parseRouterCoreJsonParse(parser,path)??parseRouterCoreJsonCollection(parser,path),parser.cursor.peek());if(collection){const node=collection.node,receipt={parser,syntax:copyMetadata(node),trace:collection.trace,...(collection.numericProfile?{numericProfile:copyMetadata(collection.numericProfile)}:{})};calls.set(node,receipt);rawArgumentCalls.set(node.args,receipt);return node;}
+ const collection=sourceContract(()=>parseForwardOwnedTextVector(parser,path)??parseForwardPrimitiveOwnedVector(parser,path)??parseForwardPrimitiveSequence(parser,path)??parseBoundedJsonCoreCall(parser,path)??parseRouterCoreJsonParse(parser,path)??parseRouterCoreJsonCollection(parser,path)??parseRouterCoreJsonState(parser,path),parser.cursor.peek());if(collection){const node=collection.node,receipt={parser,syntax:copyMetadata(node),trace:collection.trace,...(collection.numericProfile?{numericProfile:copyMetadata(collection.numericProfile)}:{})};calls.set(node,receipt);rawArgumentCalls.set(node.args,receipt);return node;}
  const c=parser.cursor;if(!['crate','::','translation_core','::'].every((word,at)=>c.is(word,at))||[0,2,4].some(at=>c.peek(at).kind!=='identifier'))return null;
  const operation=c.peek(4).value;if(!['json_copy','json_with_field'].includes(operation)&&!projectionNames.has(operation))return null;
  const first=c.peek(),location={start:first.start,end:c.peek(4).end},tokens=c.tokens,start=c.index;
@@ -91,11 +94,11 @@ export function parseRouterCoreJsonUpdate(parser,path){
 export function captureRouterCoreJsonUpdates(checker,surface){
  if(!qualified||!originalJsonCaptureCheckerEligible(checker))return;const nodes=new WeakMap(),entries=new WeakMap();let guarded=false;
  const declaration=entry=>{
-  let candidates=null,cells=200000;const members=new WeakMap(),matches=new WeakMap(),formats=new WeakMap();
-  const visit=(node,depth=0)=>{if(--cells<0||depth>160||!node||typeof node!=='object'||isProxy(node))return;const parent=prototype(node);if(parent!==plainPrototype&&parent!==null&&parent!==arrayPrototype)return;const names=keys(node);for(let at=0;at<names.length;at++)if(names[at]==='stack')return;const kind=descriptor(node,'k');if(kind&&own(kind,'value')&&kind.value==='let')members.set(node,true);if(kind&&own(kind,'value')&&kind.value==='routerOrderedMatch')matches.set(node,copyMetadata(node));if(kind&&own(kind,'value')&&kind.value==='routerConstObligation'){const feature=descriptor(node,'sourceFeature');if(feature&&own(feature,'value')&&feature.value==='router-core-format')formats.set(node,copyMetadata(node));}if(kind&&own(kind,'value')&&kind.value==='routerCoreJsonUpdateCall')candidates={node,next:candidates};for(let at=0;at<names.length;at++){const key=names[at];if(typeof key!=='string'||key==='type'||key==='span'||key==='length')continue;const field=descriptor(node,key);if(field&&own(field,'value'))visit(field.value,depth+1);}};visit(entry);
+  let candidates=null,cells=200000;const vectorCandidates=[];const members=new WeakMap(),matches=new WeakMap(),formats=new WeakMap();
+  const visit=(node,depth=0)=>{if(--cells<0||depth>160||!node||typeof node!=='object'||isProxy(node))return;const parent=prototype(node);if(parent!==plainPrototype&&parent!==null&&parent!==arrayPrototype)return;const names=keys(node);for(let at=0;at<names.length;at++)if(names[at]==='stack')return;const kind=descriptor(node,'k');if(kind&&own(kind,'value')&&kind.value==='let')members.set(node,true);if(kind&&own(kind,'value')&&kind.value==='routerOrderedMatch')matches.set(node,copyMetadata(node));if(kind&&own(kind,'value')&&kind.value==='routerConstObligation'){const feature=descriptor(node,'sourceFeature');if(feature&&own(feature,'value')&&feature.value==='router-core-format')formats.set(node,copyMetadata(node));}if(kind&&own(kind,'value')&&kind.value==='routerCoreVector')vectorCandidates.push(node);if(kind&&own(kind,'value')&&kind.value==='routerCoreJsonUpdateCall')candidates={node,next:candidates};for(let at=0;at<names.length;at++){const key=names[at];if(typeof key!=='string'||key==='type'||key==='span'||key==='length')continue;const field=descriptor(node,key);if(field&&own(field,'value'))visit(field.value,depth+1);}};visit(entry);
   if(!qualified||!originalDataFreezeIntrinsicsUnchanged())fail();if(!guarded){requireOriginalPrimitiveTryFromChecker(checker);guarded=true;}if(!originalParsedDeclarationEvidence(entry))return;
   let captured=false;while(candidates){const node=candidates.node,origin=originalParsedSyntaxNode(entry,node),receipt=origin&&parsedCallReceipt(origin);if(origin?.actual===node&&receipt?.parser===origin.parser){const snapshot=copyMetadata(node);requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged())fail();const current=originalParsedSyntaxNode(entry,node);requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged())fail();if(current?.actual===node&&current.original===origin.original&&current.parser===receipt.parser&&same(origin.original,receipt.syntax)&&same(node,origin.relocated)&&same(node,snapshot)){nodes.set(node,{receipt,syntax:snapshot});captured=true;}}candidates=candidates.next;}
-  {const syntax=copyMetadata(entry);requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged()||!originalParsedDeclarationEvidence(entry)||!same(entry,syntax))fail();entries.set(entry,{syntax,members,matches,formats,owns:captured});}
+  {const syntax=copyMetadata(entry);requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged()||!originalParsedDeclarationEvidence(entry)||!same(entry,syntax))fail();const vectorLane=vectorCandidates.some(node=>{const origin=originalParsedSyntaxNode(entry,node);if(origin?.actual!==node)return false;const before=copyMetadata(node);requireOriginalPrimitiveTryFromChecker(checker);const current=originalParsedSyntaxNode(entry,node);return current?.actual===node&&current.original===origin.original&&current.parser===origin.parser&&same(node,current.relocated)&&same(node,before);});requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged()||!originalParsedDeclarationEvidence(entry)||!same(entry,syntax))fail();entries.set(entry,{syntax,members,matches,formats,owns:captured,vectorLane});}
  };
  let itemCells=200000;
  const items=(list,depth=0)=>{if(--itemCells<0||depth>160||!list||typeof list!=='object'||isProxy(list)||!isArray(list)||prototype(list)!==arrayPrototype)return;const length=descriptor(list,'length');if(!length||!own(length,'value')||length.value>200000)return;for(let at=0;at<length.value;at++){const field=descriptor(list,at),entry=field&&own(field,'value')?field.value:null;if(!entry||typeof entry!=='object'||isProxy(entry))continue;const names=keys(entry);let stack=false;for(let index=0;index<names.length;index++)if(names[index]==='stack')stack=true;if(stack)continue;const kind=descriptor(entry,'k');if(!kind||!own(kind,'value'))continue;if(kind.value==='fn')declaration(entry);else if(kind.value==='module'){const child=descriptor(entry,'items');if(child&&own(child,'value'))items(child.value,depth+1);}}};
@@ -111,21 +114,27 @@ function canonical(checker,type,span,shared){
 export function checkRouterCoreJsonUpdate(checker,node,env,path,expected){
  if(!qualified||!originalDataFreezeIntrinsicsUnchanged())fail();const capture=checkedCalls.get(checker)?.get(node);if(!capture||!same(node,capture.syntax))throw typeError('owned JSON update lacks its actual qualified source call',node.span);
  requireOriginalPrimitiveTryFromChecker(checker);if(!activeFunctions.has(checker))throw unsupported('owned JSON flow','requires its active original function body',node.span);
+ if(ownedTextVectorOperationShape(node.operation))return checkedOwnedTextVector(checker,node,capture,env,path,expected);
+ if(primitiveOwnedVectorOperationShape(node.operation))return checkedPrimitiveOwnedVector(checker,node,capture,env,path,expected);
+ if(primitiveSequenceOperationShape(node.operation))return checkedPrimitiveSequence(checker,node,capture,env,path,expected);
+ if(jsonStateContract(node.operation))return checkedState(checker,node,capture,env,path,expected);
  if(isRouterCoreJsonCollection(node.operation))return checkedCollection(checker,node,capture,env,path,expected);
  const contract=ROUTER_CORE_JSON_UPDATE_CONTRACTS.find(row=>row.rustPath.at(-1)===node.operation);if(!contract||node.args.length!==contract.params.length)throw typeError('owned JSON update argument count',node.span);
  const stage=createRulePipeline([
   {phase:'language',rules:[{id:'owned-json-update:check-canonical-ownership-and-operands',apply:()=>{
    if(isRouterCoreJsonParse(node.operation))return checkRouterCoreJsonParse(checker,node,env,path,expected);
-   let args;const evaluate=syntax=>{requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged())fail();const value=checker.expr(syntax,env,path);requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged())fail();return value;};
-   if(projectionNames.has(node.operation)){args=projectionArguments(checker,node,env,path,evaluate);}
+   let args;const evaluate=(syntax,expectedType)=>{requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged())fail();const value=checker.expr(syntax,env,path,expectedType);requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged())fail();return value;};
+   const builder=boundedJsonCoreOperation(node.operation);if(builder?.name.startsWith('json_build_')){args=node.args.map((syntax,index)=>{if(builder.name==='json_build_fields'&&index===0){const borrow=syntax.k==='routerTextReference',value=evaluate(borrow?syntax.value:syntax);canonical(checker,value.type,syntax.span,true);if(!borrow&&!value.type.rustReference)throw unsupported('bounded object keys','requires an explicit shared canonical Json borrow',syntax.span);return value;}const wanted=builder.params[index],vector=builder.name==='json_build_array'||builder.name==='json_build_fields'&&index===1,value=evaluate(syntax,vector?checker.hostType(wanted,path,syntax.span):undefined),type=value.type;if(vector){if(type.kind!=='array'||type.rustSourceType!==true||type.rustOwnership?.kind!=='owned'||type.rustOwnership.source!=='Vec'||type.rustReference||type.rustFixedArray||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved||type.patternOwnershipRefusal&&!['ownership-bearing Vec type'].includes(type.patternOwnershipRefusal))throw unsupported('bounded JSON array builder','requires an actual owned canonical JSON Vec',syntax.span);canonical(checker,type.element,syntax.span,false);}else if(builder.name==='json_build_string'){if(type.kind!=='string'||type.rustReference||type.rustOwnership?.kind!=='borrowed'||type.rustOwnership.source!=='str'||type.patternOwnershipRefusal||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)throw unsupported('bounded JSON string builder','requires actual shared scalar str',syntax.span);}else{if(!sameType(type,wanted)||type.rustReference||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)throw unsupported('bounded JSON scalar builder','actual primitive width and signedness required',syntax.span);if(wanted.kind==='fixed')checker.expectedPrimitiveIdentity(type,wanted,path,syntax.span);}return value;});}
+   else if(boundedJsonCoreOperation(node.operation)){args=node.args.map((syntax,index)=>{if(node.operation==='json_checked_with_field'&&index===1){const value=evaluate(syntax),type=value.type;if(type.kind!=='string'||type.rustReference||type.rustOwnership?.kind!=='borrowed'||type.rustOwnership.source!=='str'||type.patternOwnershipRefusal||type.rustBorrowingUnresolved||type.rustGenericIdentityUnresolved)throw unsupported('bounded JSON update key','requires actual borrowed scalar str',syntax.span);return value;}const borrow=syntax.k==='routerTextReference',value=evaluate(borrow?syntax.value:syntax);canonical(checker,value.type,syntax.span,true);if(!borrow&&!value.type.rustReference)throw unsupported('bounded JSON input borrow','requires explicit shared borrow or actual shared Json parameter',syntax.span);return value;});}
+   else if(projectionNames.has(node.operation)){args=projectionArguments(checker,node,env,path,evaluate);}
    else if(node.operation==='json_copy'){
     const written=node.args[0],borrow=written.k==='routerTextReference',value=evaluate(borrow?written.value:written);canonical(checker,value.type,written.span,true);if(!borrow&&!value.type.rustReference)throw unsupported('owned JSON copy argument','requires an explicit shared borrow or actual shared Json parameter',written.span);args=[value];
    }else{
     args=node.args.map(evaluate);canonical(checker,args[0].type,node.args[0].span,false);canonical(checker,args[2].type,node.args[2].span,false);const key=args[1].type;if(key.kind!=='string'||key.rustReference||key.rustOwnership?.kind!=='borrowed'||key.rustOwnership.source!=='str'||key.patternOwnershipRefusal||key.rustBorrowingUnresolved||key.rustGenericIdentityUnresolved)throw unsupported('owned JSON update key','requires checked borrowed scalar text',node.args[1].span);
    }
-   const type=projectionNames.has(node.operation)?{...sourceShared(checker.hostType(JSON_TYPES.value,path,node.span)),rustSourceType:true}:{...checker.hostType(JSON_TYPES.value,path,node.span),rustSourceType:true};if(expected&&!sameType(type,expected))throw typeError('owned JSON update result type differs',node.span);if(expected)checker.expectedOwnership?.(type,expected,path,node.span);requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged()||!same(node,capture.syntax))throw typeError('owned JSON update changed during checking',node.span);return {k:'routerHostCall',id:contract.id,args,type,span:node.span,constEligible:false};
+   const type=node.operation==='json_validate'?{kind:'unit'}:projectionNames.has(node.operation)?{...sourceShared(checker.hostType(JSON_TYPES.value,path,node.span)),rustSourceType:true}:{...checker.hostType(JSON_TYPES.value,path,node.span),rustSourceType:true};if(expected&&!sameType(type,expected))throw typeError('owned JSON update result type differs',node.span);if(expected)checker.expectedOwnership?.(type,expected,path,node.span);requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged()||!same(node,capture.syntax))throw typeError('owned JSON update changed during checking',node.span);return {k:'routerHostCall',id:contract.id,args,type,span:node.span,constEligible:false};
   }}]},
-  {phase:'repository',rules:[{id:'router-core:retain-owned-json-update-boundary',apply:call=>({...call,compatibilityCore:{id:'router-owned-json-update-v1',symbol:contract.rustPath.join('::'),sourceSha256:ROUTER_CORE_PRIMITIVES_SHA256,sourceTrace:capture.receipt.trace,...(capture.receipt.numericProfile?{numericProfile:capture.receipt.numericProfile}:{}),libraryImplementation:'untranslated-owned-rust-library',boundedProjection:true,runtimeParity:false}})}]},
+  {phase:'repository',rules:[{id:'router-core:retain-owned-json-update-boundary',apply:call=>({...call,compatibilityCore:{id:'router-owned-json-update-v1',symbol:contract.rustPath.join('::'),sourceSha256:boundedJsonCoreOperation(node.operation)?BOUNDED_JSON_CORE_SHA256:ROUTER_CORE_PRIMITIVES_SHA256,sourceTrace:capture.receipt.trace,...(capture.receipt.numericProfile?{numericProfile:capture.receipt.numericProfile}:{}),libraryImplementation:'untranslated-owned-rust-library',boundedProjection:true,runtimeParity:false}})}]},
  ]);const value=stage.run(null).value,record={checker,frame:activeFunctions.get(checker),id:value.id,args:copyMetadata(value.args)};
  if(isRouterCoreJsonParse(node.operation))record.typeIdentity=value.type;
  if(projectionNames.has(node.operation)||isRouterCoreJsonParse(node.operation)||record.frame.errorLane||record.frame.optionLane){
@@ -140,10 +149,11 @@ export function checkRouterCoreJsonUpdate(checker,node,env,path,expected){
 // The same private caller issuer handles both fixed JSON families. Collection
 // contexts retain detached data only; checking frame/Checker never escapes.
 function checkedCollection(checker,node,capture,env,path,expected){
- const stage=createRulePipeline([{phase:'language',rules:[{id:'owned-json-collections:check-shared-input-and-local-callback',apply:()=>checkRouterCoreJsonCollection(checker,node,env,path,expected)}]},{phase:'repository',rules:[{id:'router-core:retain-actual-eager-collection',apply:call=>({...call,compatibilityCore:{id:'router-owned-json-collections-v1',symbol:'crate::translation_core::'+node.operation,sourceSha256:routerCoreJsonCollectionSourceHash,sourceTrace:capture.receipt.trace,libraryImplementation:'untranslated-owned-rust-library',boundedProjection:true,runtimeParity:false}})}]}]).run(null);
+ const iteration=forwardJsonIterationContract(node.operation);
+ const stage=createRulePipeline([{phase:'language',rules:[{id:'owned-json-collections:check-shared-input-and-local-callback',apply:()=>checkRouterCoreJsonCollection(checker,node,env,path,expected)}]},{phase:'repository',rules:[{id:'router-core:retain-actual-eager-collection',apply:call=>({...call,compatibilityCore:{id:'router-owned-json-collections-v1',symbol:'crate::'+(iteration?.namespace??'translation_core')+'::'+node.operation,sourceSha256:iteration?.sourceSha256??routerCoreJsonCollectionSourceHash,sourceTrace:capture.receipt.trace,libraryImplementation:'untranslated-owned-rust-library',boundedProjection:true,runtimeParity:false}})}]}]).run(null);
  const value=stage.value,record={checker,frame:activeFunctions.get(checker),id:value.id,args:copyMetadata(value.args)};
  requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged()||!same(node,capture.syntax))fail();
- const roots=[value.args[0].type,value.type,value.args[1].type.result];record.layouts=copyMetadata(captureBorrowedLayouts(checker,roots));record.roots=copyMetadata(roots);
+ const roots=[...value.args.slice(0,-1).map(argument=>argument.type),value.type,value.args.at(-1).type.result];record.layouts=copyMetadata(captureBorrowedLayouts(checker,roots));record.roots=copyMetadata(roots);
  record.key=metadataDigest({functionName:record.frame.functionName,source:record.frame.syntax,call:value,layouts:record.layouts});value.compatibilityCore.sourceProjectionKey=record.key;record.call=copyMetadata(value);
  (record.frame.projections??=new Set()).add(record);issued.set(value.compatibilityCore,record);return value;
 }
@@ -223,7 +233,7 @@ function closedOptionSource(checker,fact,current,Parser,Checker,program){
 function publishProjectionContexts(receipt,entry,dependencies=[],checker=null){
  if(!receipt.projections)return;
  const functionContext=freeze(copyMetadata({name:entry.fullName,params:entry.params,ret:entry.ret,body:entry.body,...(dependencies.length?{dependencies}:{} )}));
- const extraRoots=receipt.errorLane||receipt.optionLane?[...entry.params.map(param=>param.type),entry.ret,...dependencies.flatMap(item=>[...item.params.map(param=>param.type),item.ret])]:[],extraLayouts=extraRoots.length?freeze(copyMetadata(captureBorrowedLayouts(checker,extraRoots))):[];
+ const extraRoots=receipt.errorLane||receipt.optionLane||receipt.primitiveVectorHelperLane?[...entry.params.map(param=>param.type),entry.ret,...dependencies.flatMap(item=>[...item.params.map(param=>param.type),item.ret])]:[],extraLayouts=extraRoots.length?freeze(copyMetadata(captureBorrowedLayouts(checker,extraRoots))):[];
  for(const projection of receipt.projections)projectionContexts.set(projection.key,freeze({id:projection.id,call:projection.call,layouts:extraLayouts.length?[...projection.layouts,...extraLayouts]:projection.layouts,roots:extraRoots.length?[...projection.roots,...extraRoots]:projection.roots,functionContext}));
 }
 
@@ -387,10 +397,11 @@ export function visitRouterCoreJsonUpdateFunction(checker,item,path,entry,visit,
    const result=visit(...args),body=copyMetadata(entry.body);
    currentFunction(checker,item,receipt);if(!same(entry.body,body))fail();
    const completed={item,receipt,entry,snapshot:copyMetadata({params:entry.params,ret:entry.ret,body:entry.body})};completedFunctions.get(checker).set(name,completed);
-   if(!receipt.owns||receipt.errorLane||receipt.optionLane)return result;
+   if(hasOwnedPrimitiveVectorHelperCandidate(entry.body))receipt.primitiveVectorHelperLane=true;if(receipt.primitiveVectorHelperLane)return result;
+   if(receipt.owns&&hasReadonlyScalarCallCandidate(entry.body))receipt.readonlyScalarLane=true;if(!receipt.owns||receipt.errorLane||receipt.optionLane||receipt.readonlyScalarLane)return result;if(receipt.vectorLane){receipt.deferredOwnedVectorFlow=true;return result;}
    createRulePipeline([
     {phase:'language',rules:[{id:'owned-json-flow:check-whole-function-linear-state',apply:()=>{
-     validateOwnedJsonFlow(checker,entry,{genuine:node=>{const proof=issued.get(node.compatibilityCore);return proof?.checker===checker&&proof.frame===receipt&&proof.id===node.id&&same(node.args,proof.args);},genuineTextMatch:node=>receipt.textMatches?.some(record=>same(node,record.body)&&same(record.syntax,record.original))===true});
+     validateOwnedJsonFlow(checker,entry,{genuineScalar:(node,owner)=>isGenuineRouterCoreScalarCall(checker,node,owner),genuine:node=>{const proof=issued.get(node.compatibilityCore);return proof?.checker===checker&&proof.frame===receipt&&proof.id===node.id&&same(node.args,proof.args);},genuineTextMatch:node=>receipt.textMatches?.some(record=>same(node,record.body)&&same(record.syntax,record.original))===true});
      return null;
     }}]},
     {phase:'repository',rules:[{id:'router-core:rejoin-original-update-caller',apply:value=>{
@@ -400,7 +411,7 @@ export function visitRouterCoreJsonUpdateFunction(checker,item,path,entry,visit,
    ]).run(null);
    publishProjectionContexts(receipt,entry);
    return result;
-  }finally{delete receipt.activeItem;delete receipt.readers;activeFunctions.delete(checker);}
+  }finally{receipt.primitiveBorrowParents?.clear();delete receipt.primitiveBorrowParents;delete receipt.activeItem;delete receipt.readers;activeFunctions.delete(checker);}
  };
 }
 // Membership is conjunctive with the lifetime walk's current Result/layout checks.
@@ -416,10 +427,10 @@ export function finalizeOriginalJsonErrorFlow(checker,program,Parser,Checker,tai
   currentFunction(checker,fact.item,fact.receipt);if(!same({params:fact.entry.params,ret:fact.entry.ret,body:fact.entry.body},fact.snapshot))fail();return fact;
  };
  for(const [name,fact]of records){
-  if(!fact.receipt.errorLane&&!fact.receipt.optionLane)continue;current(name);const dependencies=new Map();
+  if(!fact.receipt.errorLane&&!fact.receipt.optionLane&&!fact.receipt.readonlyScalarLane&&!fact.receipt.primitiveVectorHelperLane)continue;current(name);const dependencies=new Map();
   try{createRulePipeline([
    {phase:'language',rules:[{id:'owned-json-error-flow:check-current-linear-result-and-readonly-closure',apply:()=>{
-    validateOwnedJsonFlow(checker,fact.entry,{
+    validateOwnedJsonFlow(checker,fact.entry,{ownedTextVectorCallee:(node,owner)=>{const entry=(borrowedScalarTextHelperCandidate(completedFunctions.get(checker)?.get(node.fn)?.entry)?currentOwnedTextVectorReadonlyCallee:currentOwnedTextVectorCallee)(checker,node,owner),target=current(node.fn);dependencies.set(node.fn,{name:node.fn,...target.snapshot});return entry;},ownedPrimitiveVectorCallee:(node,owner)=>{const entry=currentOwnedPrimitiveVectorCallee(checker,node,owner),target=current(node.fn);dependencies.set(node.fn,{name:node.fn,...target.snapshot});return entry;},readonlyScalar:(node,owner)=>{const entry=currentReadonlyScalarCallee(checker,node,owner),target=current(node.fn);dependencies.set(node.fn,{name:node.fn,...target.snapshot});return entry;},genuineVector:node=>hasCheckedRouterCoreVector(node)&&isCanonicalOwnedJsonVectorElement(checker,node.type?.element,node.span),genuineScalar:(node,owner)=>isGenuineRouterCoreScalarCall(checker,node,owner),
      genuine:(node,entry)=>{const owner=records.get(entry.fullName),proof=issued.get(node.compatibilityCore);return proof?.checker===checker&&proof.frame===owner?.receipt&&proof.id===node.id&&same(node.args,proof.args);},
      genuineTextMatch:node=>fact.receipt.textMatches?.some(record=>same(node,record.body)&&same(record.syntax,record.original))===true,
      closedOption:fact.receipt.optionLane?closedOptionSource(checker,fact,current,Parser,Checker,program):null,
@@ -481,7 +492,7 @@ export function checkRouterCoreJsonMutableLet(checker,node,env,path,expected,all
  if(node.k!=='let'||!node.mutable||!receipt?.owns||!receipt.members.has(node)||!['routerCoreJsonCall','routerJsonMacro','routerCoreJsonUpdateCall'].includes(node.value?.k))return null;
  if(containsExit(node.value))throw unsupported('control in value expression','nonlocal exits cannot be lowered through a value IIFE',node.value.span);
  env=checker.contextEnvironment(node,env,expected);const declared=node.type?checker.resolveType(node.type,path,node.span):undefined;
- let value=checker.expr(node.value,env,path,declared);if(declared)value=coerce(value,declared,checker.language,node.span);canonical(checker,value.type,node.span,false);
+ let value=checker.expr(node.value,env,path,declared);if(declared)value=coerce(value,declared,checker.language,node.span);if(primitiveOwnedVectorOperationShape(node.value.operation)){const proof=issued.get(value.compatibilityCore);if(!proof||proof.checker!==checker||proof.frame!==receipt||proof.id!==value.id||!same(value.args,proof.args)||!actualOwnedPrimitiveVector(checker,value.type,node,path))throw unsupported('mutable primitive vector initializer','requires its actual fresh private owned core call',node.span);}else canonical(checker,value.type,node.span,false);
  let inner=checker.bindingEnvironment(env,node.name,value.type,true);inner=checker.bindingConstructorEnvironment?.(inner,node.name,value,true)??inner;
  const body=checker.expr(node.body,inner,path,expected,allowLiteral);
  return {k:'let',name:node.name,value,body,mutable:true,type:body.type,span:node.span};
@@ -628,3 +639,244 @@ export function requireOriginalJsonProjectionEmission(emitter,node){
  if(!emissionCall(node))return;
  if(!emissionFrames.get(emitter)?.includes(metadataDigest(alphaTree(node))))throw new Error('Owned JSON projection changed from its rechecked actual source function');
 }
+
+function checkedState(checker,node,capture,env,path,expected){
+ const row=forwardJsonStateContract(node.operation),frame=activeFunctions.get(checker);if(!row||!frame)fail();
+ const current=()=>{requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged()||activeFunctions.get(checker)!==frame||!same(node,capture.syntax))fail();};current();
+ const stage=createRulePipeline([
+  {phase:'language',rules:[{id:'owned-json-state:check-all-actual-source-operands-and-ownership',apply:()=>checkForwardJsonState(checker,node,env,path,expected,{canonical,current})}]},
+  {phase:'repository',rules:[{id:'router:retain-qualified-owned-state-native-boundary',apply:call=>({...call,compatibilityCore:{id:'router-owned-json-'+row.family+'-v1',symbol:row.rustPath,sourceSha256:row.sourceSha256,sourceTrace:capture.receipt.trace,libraryImplementation:'untranslated-owned-rust-library',boundedProjection:true,runtimeParity:false}})}]},
+ ]).run(null);
+ const value=stage.value,record={checker,frame,id:value.id,args:copyMetadata(value.args)},roots=row.parameters.includes('callback')?[value.args[0].type,value.args[1].type.result,value.type]:[...value.args.map(argument=>argument.type),value.type];
+ record.layouts=copyMetadata(captureBorrowedLayouts(checker,roots));record.roots=copyMetadata(roots);record.key=metadataDigest({functionName:frame.functionName,source:frame.syntax,call:value,layouts:record.layouts});value.compatibilityCore.sourceProjectionKey=record.key;record.call=copyMetadata(value);
+ (frame.projections??=new Set()).add(record);issued.set(value.compatibilityCore,record);current();return value;
+}
+
+// Absence theorem for the actual qualified native str_none body only.
+export function hasOriginalPrimitiveOptionAbsentLoan(node){const record=projectionRecord(node),row=record&&jsonStateContract(record.id);return Boolean(record&&row?.family==='primitive-option'&&row.method==='none'&&row.returns==='str-option-ref'&&node.args.length===0);}
+
+// Membership is rejoined to the private current original caller and callback.
+export function originalPrimitiveOptionCallbackProjection(node){const record=projectionRecord(node),row=record&&jsonStateContract(record.id);return record&&row?.family==='primitive-option-callback'?row:null;}
+
+// Actual private current whole-call membership, never public row metadata.
+export function originalPrimitiveResultProjection(node){const record=projectionRecord(node),row=record&&jsonStateContract(record.id);return record&&['primitive-result','http-protocol'].includes(row?.family)?row:null;}
+
+import {hasCheckedRouterCoreVector} from './extensions/source-lifetimes.mjs';
+// Canonical owner/layout checks only. Public names and copied flags grant none.
+export function isCanonicalOwnedJsonVectorElement(checker,type,span){
+ if(type?.kind!=='data')return false;requireOriginalPrimitiveTryFromChecker(checker);const owner=checker.items.get(type.name);
+ if(owner?.hostTypePath?.join('::')!=='serde_json::Value')return false;
+ projectionOwner(checker,type,span,false);requireOriginalPrimitiveTryFromChecker(checker);return true;
+}
+export function validateOriginalOwnedJsonVectorEntry(checker,entry){
+ let cells=100000;const scalarDependencies=[];const vector=node=>hasCheckedRouterCoreVector(node)&&isCanonicalOwnedJsonVectorElement(checker,node.type?.element,node.span);
+ const visit=(node,depth=0)=>{if(!node||typeof node!=='object')return false;if(--cells<0||depth>160)throw unsupported('owned Json vector source','complete source boundary bound',entry.span);if(node.k==='array'&&vector(node))return true;for(const [key,value] of Object.entries(node))if(!['type','span','compatibilityCore','ownedVectorProof'].includes(key)){if(Array.isArray(value)){for(const child of value)if(visit(child,depth+1))return true;}else if(visit(value,depth+1))return true;}return false;};
+ const fact=completedFunctions.get(checker)?.get(entry.fullName),selected=visit(entry.body);
+ if(!selected&&!fact?.receipt.deferredOwnedVectorFlow)return false;
+ if(!fact||fact.entry!==entry)throw unsupported('owned Json vector source','requires the completed actual original declaration',entry.span);
+ currentFunction(checker,fact.item,fact.receipt);if(!same({params:entry.params,ret:entry.ret,body:entry.body},fact.snapshot))fail();
+ validateOwnedJsonFlow(checker,entry,{readonlyScalar:(node,owner)=>{const target=currentReadonlyScalarCallee(checker,node,owner);if(scalarDependencies.length>=256)fail();scalarDependencies.push({node,owner});return target;},genuineScalar:(node,owner)=>isGenuineRouterCoreScalarCall(checker,node,owner),genuineVector:vector,genuine:node=>{const proof=issued.get(node.compatibilityCore);return proof?.checker===checker&&proof.frame===fact.receipt&&proof.id===node.id&&same(node.args,proof.args);},genuineTextMatch:node=>fact.receipt.textMatches?.some(record=>same(node,record.body)&&same(record.syntax,record.original))===true});
+ for(const {node,owner}of scalarDependencies)currentReadonlyScalarCallee(checker,node,owner);scalarDependencies.length=0;currentFunction(checker,fact.item,fact.receipt);if(!same({params:entry.params,ret:entry.ret,body:entry.body},fact.snapshot))fail();return true;
+}
+
+import {BOUNDED_JSON_CORE_CONTRACTS,BOUNDED_JSON_CORE_SHA256,boundedJsonCoreOperation,parseBoundedJsonCoreCall} from './bounded-json-core-call-source.mjs';
+
+import {isGenuineRouterCoreScalarCall} from './router-core-scalars.mjs';
+
+// Selection only defers a potentially borrowing call to the existing complete
+// program finalizer. No raw/checked shape admits that call on its own.
+function hasReadonlyScalarCallCandidate(root){
+ let cells=100000;
+ const visit=(node,depth=0)=>{if(!node||typeof node!=='object')return false;if(--cells<0||depth>160)fail();if(node.k==='call'&&node.args?.some(argument=>argument.type?.kind==='string'&&argument.type.rustOwnership?.kind==='borrowed'&&argument.type.rustOwnership.source==='str'))return true;for(const [key,value]of Object.entries(node))if(!['type','span','compatibilityCore','sourceFunctionItem'].includes(key))for(const child of Array.isArray(value)?value:[value])if(visit(child,depth+1))return true;return false;};return visit(root);
+}
+function currentReadonlyScalarCallee(checker,node,owner){
+ const records=completedFunctions.get(checker),target=records?.get(node.fn),caller=records?.get(owner.fullName);
+ if(!target||!caller||caller.entry!==owner||checker.items.get(owner.fullName)!==owner||checker.items.get(node.fn)!==target.entry)throw unsupported('readonly scalar helper','requires complete current original caller and callee bodies',node.span);
+ for(const fact of [caller,target]){currentFunction(checker,fact.item,fact.receipt);if(!same({params:fact.entry.params,ret:fact.entry.ret,body:fact.entry.body},fact.snapshot))fail();}
+ const row=target.entry,role=(type,parameter=false)=>{
+  if(!type||type.rustReference||type.patternOwnershipRefusal||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)return null;
+  if(type.kind==='bool'&&!type.rustOwnership)return 'bool';const primitive=primitiveBitwiseType(type.rustPrimitiveName);if(type.kind==='fixed'&&!type.rustOwnership&&primitive&&type.bits===primitive.bits&&type.signed===primitive.signed)return primitive.name;
+  return parameter&&type.kind==='string'&&type.rustOwnership?.kind==='borrowed'&&type.rustOwnership.source==='str'?'str':null;
+ };
+ if(row.k!=='fn'||row.async||row.params?.length!==node.args.length||!role(row.ret)||!sameType(row.ret,node.type)||row.params.some((param,index)=>!role(param.type,true)||role(param.type,true)!==role(node.args[index].type,true)))throw unsupported('readonly scalar helper','requires actual primitive return and exact by-value scalar/shared-text arguments',node.span);
+ return row;
+}
+import {primitiveBitwiseType} from './primitive-bitwise-types.mjs';
+
+import {parseForwardPrimitiveSequence,checkForwardPrimitiveSequence} from './primitive-sequence-forward-domain.mjs';
+import {primitiveSequenceOperationShape} from './primitive-sequence-call-shape.mjs';
+function checkedPrimitiveSequence(checker,node,capture,env,path,expected){
+ const row=primitiveSequenceOperationShape(node.operation),frame=activeFunctions.get(checker);if(!row||!frame)fail();const current=()=>{requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged()||activeFunctions.get(checker)!==frame||!same(node,capture.syntax))fail();};current();
+ const stage=createRulePipeline([{phase:'language',rules:[{id:'primitive-sequence:check-actual-slice-scalar-and-option-ownership',apply:()=>checkForwardPrimitiveSequence(checker,node,env,path,expected,{current})}]},{phase:'repository',rules:[{id:'router:retain-private-paired-sequence-caller',apply:call=>({...call,compatibilityCore:{id:'router-primitive-sequence-v1',symbol:row.rustPath,sourceTrace:capture.receipt.trace,libraryImplementation:'untranslated-owned-rust-library',boundedProjection:true,runtimeParity:false}})}]}]).run(null),value=stage.value,record={checker,frame,id:value.id,args:copyMetadata(value.args)},roots=[...value.args.map(argument=>argument.type),value.type];record.layouts=copyMetadata(captureBorrowedLayouts(checker,roots));record.roots=copyMetadata(roots);record.key=metadataDigest({functionName:frame.functionName,source:frame.syntax,call:value,layouts:record.layouts});value.compatibilityCore.sourceProjectionKey=record.key;record.call=copyMetadata(value);(frame.projections??=new Set()).add(record);issued.set(value.compatibilityCore,record);current();return value;
+}
+
+import {parseForwardPrimitiveOwnedVector,checkForwardPrimitiveOwnedVector} from './primitive-owned-vector-forward-domain.mjs';
+import {primitiveOwnedVectorOperationShape} from './primitive-owned-vector-call-shape.mjs';
+import {primitiveVectorLiteralOperationShape} from './primitive-vector-literal-call-shape.mjs';
+function checkedPrimitiveOwnedVector(checker,node,capture,env,path,expected){
+ const row=primitiveOwnedVectorOperationShape(node.operation),frame=activeFunctions.get(checker);if(!row||!frame)fail();const current=()=>{requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged()||activeFunctions.get(checker)!==frame||!same(node,capture.syntax))fail();};current();
+ const stage=createRulePipeline([{phase:'language',rules:[{id:'primitive-owned-vector:check-actual-vector-move-shared-scalar-and-option-ownership',apply:()=>checkForwardPrimitiveOwnedVector(checker,node,env,path,expected,{current})}]},{phase:'repository',rules:[{id:'router:retain-private-paired-owned-vector-caller',apply:call=>({...call,compatibilityCore:{id:'router-primitive-owned-vector-v1',symbol:row.rustPath,sourceTrace:capture.receipt.trace,libraryImplementation:'untranslated-owned-rust-library',boundedProjection:true,runtimeParity:false}})}]}]).run(null),value=stage.value,record={checker,frame,id:value.id,args:copyMetadata(value.args)},roots=[...value.args.map(argument=>argument.type),value.type];record.layouts=copyMetadata(captureBorrowedLayouts(checker,roots));record.roots=copyMetadata(roots);record.key=metadataDigest({functionName:frame.functionName,source:frame.syntax,call:value,layouts:record.layouts});value.compatibilityCore.sourceProjectionKey=record.key;record.call=copyMetadata(value);(frame.projections??=new Set()).add(record);issued.set(value.compatibilityCore,record);current();return value;
+}
+
+// Selection DATA only; no candidate flag or source type admits a helper.
+function hasOwnedPrimitiveVectorHelperCandidate(root){let budget=100000;const visit=(node,depth=0)=>{if(!node||typeof node!=='object')return false;if(--budget<0||depth>160)fail();if(ownedTextVectorHelperCallCandidate(node)||node.k==='call'&&(node.type?.kind==='array'&&node.type.rustOwnership?.source==='Vec'||node.args?.some(value=>value.type?.kind==='array'&&value.type.rustOwnership?.source==='Vec')))return true;for(const [key,value]of Object.entries(node))if(!['type','span','compatibilityCore','sourceFunctionItem'].includes(key))for(const child of Array.isArray(value)?value:[value])if(visit(child,depth+1))return true;return false;};return visit(root);}
+function currentOwnedPrimitiveVectorCallee(checker,node,owner){
+ requireOriginalPrimitiveTryFromChecker(checker);const records=completedFunctions.get(checker),target=records?.get(node.fn),caller=records?.get(owner.fullName);if(!target||!caller||caller.entry!==owner||checker.items.get(owner.fullName)!==owner||checker.items.get(node.fn)!==target.entry)throw unsupported('owned primitive vector helper','requires complete current original caller and callee bodies',node.span);
+ for(const fact of [caller,target]){currentFunction(checker,fact.item,fact.receipt);if(!same({params:fact.entry.params,ret:fact.entry.ret,body:fact.entry.body},fact.snapshot))fail();}
+ const row=target.entry,path=row.modulePath??[],domain=actualOwnedPrimitiveVector(checker,row.ret,node,path);if(row.k!=='fn'||row.async||!same(row.modulePath,owner.modulePath)||!sameType(row.ret,node.type)||row.params?.length!==node.args.length)throw unsupported('owned primitive vector helper','requires its actual same-module result and exact operand count',node.span);
+ const copy=type=>{if(!type||type.rustReference||type.rustOwnership||type.patternOwnershipRefusal||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)return false;if(type.kind==='bool')return true;const fixed=primitiveBitwiseType(type.rustPrimitiveName);return type.kind==='fixed'&&fixed&&type.bits===fixed.bits&&type.signed===fixed.signed;};if(domain){if(actualOwnedPrimitiveVector(checker,node.type,node,path)!==domain)throw unsupported('owned primitive vector helper result','actual owned result primitive identity differs',node.span);}else if(!copy(row.ret)){forwardOwnedCarrier(checker,row.ret,'Option',path,node.span,(_checker,payload,span)=>{if(!copy(payload))throw unsupported('owned primitive vector helper Option','requires actual copied primitive payload',span);});}
+ const genuine=(call,current)=>{const fact=records.get(current.fullName),proof=issued.get(call.compatibilityCore);return proof?.checker===checker&&proof.frame===fact?.receipt&&proof.id===call.id&&same(call.args,proof.args);};
+ const role=type=>{const vector=actualOwnedPrimitiveVector(checker,type,node,path);if(vector)return 'vec:'+vector;const shared=actualSharedPrimitiveVector(checker,type,node,path);if(shared)return 'vec-ref:'+shared;if(type?.rustReference)return actualPrimitiveSlice(checker,type,node)?'slice':null;if(!type||type.rustOwnership||type.patternOwnershipRefusal||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)return null;if(type.kind==='bool')return 'bool';const fixed=primitiveBitwiseType(type.rustPrimitiveName);return type.kind==='fixed'&&fixed&&type.bits===fixed.bits&&type.signed===fixed.signed?fixed.name:null;};
+ for(let index=0;index<row.params.length;index++){const actual=node.args[index].type,wanted=row.params[index].type;if(!role(actual)||role(actual)!==role(wanted)||!sameType(actual,wanted))throw unsupported('owned primitive vector helper input','requires identical actual owned vectors, Copy primitives or shared primitive slices',node.span);if((role(wanted).startsWith('vec:')||role(wanted).startsWith('vec-ref:'))&&!hasBoundedPrimitiveVectorEntry(row,row.params[index].name,role(wanted).startsWith('vec-ref:'),genuine))throw unsupported('owned primitive vector helper entry','requires its actual leading owned truncate or shared len guard',node.span);checker.expectedOwnership(actual,wanted,path,node.span);checker.expectedPrimitiveIdentity(actual,wanted,path,node.span);}checker.expectedOwnership(row.ret,node.type,path,node.span);checker.expectedPrimitiveIdentity(row.ret,node.type,path,node.span);requireOriginalPrimitiveTryFromChecker(checker);return row;
+}
+import {actualOwnedPrimitiveVector} from './primitive-owned-vector-forward-domain.mjs';
+import {actualPrimitiveSlice} from './owned-scalar-slice-flow.mjs';
+
+import {hasBoundedPrimitiveVectorEntry} from './owned-primitive-vector-entry-source.mjs';
+import {actualSharedPrimitiveVector} from './shared-primitive-vector-native-type.mjs';
+import {forwardOwnedCarrier} from './owned-forward-domain.mjs';
+
+// A mutable helper initializer is only a temporary checking route. The actual
+// complete caller/callee graph, moves, loops, root loans and bounded entry guards
+// must still pass currentOwnedPrimitiveVectorCallee and full flow before issue.
+// The original core-initializer API and its owns/refusal flags stay unchanged.
+export function checkRouterPrimitiveVectorMutableHelperLet(checker,node,env,path,expected,allowLiteral){
+ const receipt=activeFunctions.get(checker);if(node?.k!=='let'||node.mutable!==true||!receipt?.members.has(node)||node.value?.k!=='app'||node.value.fn?.k!=='name')return null;
+ requireOriginalPrimitiveTryFromChecker(checker);currentFunction(checker,receipt.activeItem,receipt);const syntax=copyMetadata(node),target=checker.lookup(node.value.fn.path,path,node.value.span??node.span);
+ if(target?.k!=='fn'||target.async||!same(target.modulePath,path)||!actualOwnedPrimitiveVector(checker,target.ret,node,path))return null;const signature=copyMetadata({params:target.params,ret:target.ret,modulePath:target.modulePath,async:target.async});
+ const origin=originalParsedSyntaxNode(receipt.activeItem,node);if(origin?.actual!==node||!same(node,origin.relocated))fail();
+ if(containsExit(node.value))throw unsupported('control in mutable primitive vector helper initializer','nonlocal exits need their separate checked statement lowering',node.value.span);
+ env=checker.contextEnvironment(node,env,expected);const declared=node.type?checker.resolveType(node.type,path,node.span):undefined;
+ let value=checker.expr(node.value,env,path,declared);if(declared)value=coerce(value,declared,checker.language,node.span);
+ if(value.k!=='call'||value.fn!==target.fullName||checker.items.get(value.fn)!==target||!actualOwnedPrimitiveVector(checker,value.type,node,path)||!sameType(value.type,target.ret))throw unsupported('mutable primitive vector helper initializer','requires its actual resolved same-module owned Vec call',node.span);
+ // No completed helper verdict is inferred here. The unchanged whole-function
+ // pass discovers this actual typed call and rechecks every dependency body.
+ let inner=checker.bindingEnvironment(env,node.name,value.type,true);inner=checker.bindingConstructorEnvironment?.(inner,node.name,value,true)??inner;
+ const body=checker.expr(node.body,inner,path,expected,allowLiteral);requireOriginalPrimitiveTryFromChecker(checker);currentFunction(checker,receipt.activeItem,receipt);const current=originalParsedSyntaxNode(receipt.activeItem,node);if(activeFunctions.get(checker)!==receipt||!same(node,syntax)||current?.actual!==node||current.original!==origin.original||current.parser!==origin.parser||!same(node,current.relocated)||checker.items.get(target.fullName)!==target||!same({params:target.params,ret:target.ret,modulePath:target.modulePath,async:target.async},signature))fail();
+ return {k:'let',name:node.name,value,body,mutable:true,type:body.type,span:node.span};
+}
+
+// Written shared Vec arguments only, inside an actual original ordinary call.
+// The whole caller/callee graph still checks bodies and entry/loan obligations.
+export function checkRouterPrimitiveVectorSharedHelperBorrow(checker,node,env,path,expected){
+ const frame=activeFunctions.get(checker);if(!frame||node?.k!=='routerTextReference'||!expected?.rustReference||!actualSharedPrimitiveVector(checker,expected,node,path))return null;
+ requireOriginalPrimitiveTryFromChecker(checker);currentFunction(checker,frame.activeItem,frame);const origin=originalParsedSyntaxNode(frame.activeItem,node),syntax=copyMetadata(node),parents=originalPrimitiveVectorBorrowParents(frame,node);
+ if(origin?.actual!==node||!same(node,origin.relocated)||parents.length!==1)throw unsupported('shared primitive vector helper argument','requires its actual original direct call operand',node.span);const parent=parents[0],parentOrigin=originalParsedSyntaxNode(frame.activeItem,parent),index=parent.args.indexOf(node),target=checker.lookup(parent.fn.path,path,parent.span);
+ if(parentOrigin?.actual!==parent||!same(parent,parentOrigin.relocated)||parent.args.filter(value=>value===node).length!==1||target?.k!=='fn'||target.async||!same(target.modulePath,path)||target.params?.length!==parent.args.length||target.params[index]?.type!==expected)throw unsupported('shared primitive vector helper target','requires its actual same-module resolved parameter signature',node.span);
+ const token=node.sourceBorrowToken;if(token?.value!=='&'||token.span?.end-token.span?.start!==1||node.value?.k==='routerTextReference')throw unsupported('shared primitive vector helper syntax','requires its actual single immutable ampersand',node.span);const signature=copyMetadata({params:target.params,ret:target.ret,modulePath:target.modulePath,async:target.async}),value=checker.expr(node.value,env,path),domain=actualOwnedPrimitiveVector(checker,value.type,node,path);
+ if(!domain||actualSharedPrimitiveVector(checker,expected,node,path)!==domain)throw unsupported('shared primitive vector helper pointee','requires an actual owned Vec in the exact primitive domain',node.span);
+ const type={...value.type,rustOwnership:{...expected.rustOwnership},patternOwnershipRefusal:'shared source reference',rustReference:{kind:'shared',pointee:value.type,span:{...node.span},tokens:[{kind:'operator',value:'&',span:{...token.span}}]}};
+ if(actualSharedPrimitiveVector(checker,type,node,path)!==domain||!sameType(type,expected))fail();checker.expectedOwnership(type,expected,path,node.span);checker.expectedPrimitiveIdentity(type,expected,path,node.span);
+ requireOriginalPrimitiveTryFromChecker(checker);currentFunction(checker,frame.activeItem,frame);const current=originalParsedSyntaxNode(frame.activeItem,node),currentParent=originalParsedSyntaxNode(frame.activeItem,parent);if(activeFunctions.get(checker)!==frame||!same(node,syntax)||current?.actual!==node||current.original!==origin.original||current.parser!==origin.parser||!same(node,current.relocated)||currentParent?.actual!==parent||currentParent.original!==parentOrigin.original||currentParent.parser!==parentOrigin.parser||!same(parent,currentParent.relocated)||checker.items.get(target.fullName)!==target||!same({params:target.params,ret:target.ret,modulePath:target.modulePath,async:target.async},signature))fail();
+ return {...node,value,type};
+}
+// A separate source-qualified result route preserves the original generic
+// ownership qualifier and its array-borrow refusals. It rejoins the actual raw
+// borrow, parent call and parameter slot instead of trusting a marker/flag.
+export function qualifyRouterPrimitiveVectorSharedHelperBorrow(checker,node,value,expected,path){
+ const frame=activeFunctions.get(checker);if(!frame||node?.k!=='routerTextReference'||value?.k!=='routerTextReference'||!expected?.rustReference||!actualSharedPrimitiveVector(checker,expected,node,path))return null;
+ requireOriginalPrimitiveTryFromChecker(checker);currentFunction(checker,frame.activeItem,frame);const origin=originalParsedSyntaxNode(frame.activeItem,node),parents=originalPrimitiveVectorBorrowParents(frame,node);if(origin?.actual!==node||!same(node,origin.relocated)||parents.length!==1)fail();const parent=parents[0],parentOrigin=originalParsedSyntaxNode(frame.activeItem,parent),index=parent.args.indexOf(node),target=checker.lookup(parent.fn.path,path,parent.span),point=value.type?.rustReference?.pointee;
+ if(parentOrigin?.actual!==parent||!same(parent,parentOrigin.relocated)||parent.args.filter(argument=>argument===node).length!==1||target?.k!=='fn'||target.async||!same(target.modulePath,path)||target.params?.length!==parent.args.length||target.params[index]?.type!==expected||checker.items.get(target.fullName)!==target||value.sourceBorrowToken!==node.sourceBorrowToken||value.span!==node.span||point!==value.value?.type||node.sourceBorrowToken?.value!=='&'||node.sourceBorrowToken.span?.end-node.sourceBorrowToken.span?.start!==1||!same(value.type.rustReference.span,node.span)||value.type.rustReference.tokens?.length!==1||!same(value.type.rustReference.tokens[0].span,node.sourceBorrowToken.span))fail();
+ const domain=actualOwnedPrimitiveVector(checker,point,node,path);if(!domain||actualSharedPrimitiveVector(checker,value.type,node,path)!==domain||actualSharedPrimitiveVector(checker,expected,node,path)!==domain||!sameType(value.type,expected))fail();checker.expectedOwnership(value.type,expected,path,node.span);checker.expectedPrimitiveIdentity(value.type,expected,path,node.span);currentFunction(checker,frame.activeItem,frame);requireOriginalPrimitiveTryFromChecker(checker);return value;
+}
+// One raw-node index per active original function check, never a type/owner
+// verdict. Every use still rejoins the whole source; finally clears all nodes.
+function originalPrimitiveVectorBorrowParents(frame,operand){if(!frame.primitiveBorrowParents){let cells=100000;const index=new Map();function visit(node,depth=0){if(!node||typeof node!=='object')return;if(--cells<0||depth>160)fail();if(node.k==='app'&&node.fn?.k==='name')for(const argument of node.args??[])if(argument?.k==='routerTextReference'){if(!index.has(argument))index.set(argument,[]);index.get(argument).push(node);}for(const [key,value]of Object.entries(node))if(!['type','span','compatibilityCore','sourceFunctionItem'].includes(key))for(const child of Array.isArray(value)?value:[value])visit(child,depth+1);}visit(frame.activeItem.body);frame.primitiveBorrowParents=index;}return frame.primitiveBorrowParents.get(operand)??[];}
+
+function checkedOwnedTextVector(checker,node,capture,env,path,expected){
+ const row=ownedTextVectorOperationShape(node.operation),frame=activeFunctions.get(checker);if(!row||!frame)fail();const current=()=>{requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged()||activeFunctions.get(checker)!==frame||!same(node,capture.syntax))fail();};current();
+ const stage=createRulePipeline([{phase:'language',rules:[{id:'owned-text-vector:check-actual-vector-move-shared-scalar-and-option-ownership',apply:()=>checkForwardOwnedTextVector(checker,node,env,path,expected,{current})}]},{phase:'repository',rules:[{id:'router:retain-private-paired-owned-vector-caller',apply:call=>({...call,compatibilityCore:{id:'router-owned-text-vector-v1',symbol:row.rustPath,sourceTrace:capture.receipt.trace,libraryImplementation:'untranslated-owned-rust-library',boundedProjection:true,runtimeParity:false}})}]}]).run(null),value=stage.value,record={checker,frame,id:value.id,args:copyMetadata(value.args)},roots=[...value.args.map(argument=>argument.type),value.type];record.layouts=copyMetadata(captureBorrowedLayouts(checker,roots));record.roots=copyMetadata(roots);record.key=metadataDigest({functionName:frame.functionName,source:frame.syntax,call:value,layouts:record.layouts});value.compatibilityCore.sourceProjectionKey=record.key;record.call=copyMetadata(value);(frame.projections??=new Set()).add(record);issued.set(value.compatibilityCore,record);current();return value;
+}
+
+
+export function checkRouterOwnedTextVectorMutableLet(checker,node,env,path,expected,allowLiteral){
+ const receipt=activeFunctions.get(checker);
+ // This is a temporary checking permission for a genuine fresh JSON producer;
+ // the entire checked body must subsequently pass the linear state analysis.
+ if(node.k!=='let'||!node.mutable||!receipt?.owns||!receipt.members.has(node)||node.value?.k!=='routerCoreJsonUpdateCall'||ownedTextVectorOperationShape(node.value.operation)?.returns!=='vec:text-owned')return null;
+ if(containsExit(node.value))throw unsupported('control in value expression','nonlocal exits cannot be lowered through a value IIFE',node.value.span);
+ env=checker.contextEnvironment(node,env,expected);const declared=node.type?checker.resolveType(node.type,path,node.span):undefined;
+ let value=checker.expr(node.value,env,path,declared);if(declared)value=coerce(value,declared,checker.language,node.span);if(ownedTextVectorOperationShape(node.value.operation)){const proof=issued.get(value.compatibilityCore);if(!proof||proof.checker!==checker||proof.frame!==receipt||proof.id!==value.id||!same(value.args,proof.args)||!actualOwnedTextVector(checker,value.type,node,path))throw unsupported('mutable owned text vector initializer','requires its actual fresh private owned core call',node.span);}else canonical(checker,value.type,node.span,false);
+ let inner=checker.bindingEnvironment(env,node.name,value.type,true);inner=checker.bindingConstructorEnvironment?.(inner,node.name,value,true)??inner;
+ const body=checker.expr(node.body,inner,path,expected,allowLiteral);
+ return {k:'let',name:node.name,value,body,mutable:true,type:body.type,span:node.span};
+}
+
+export function checkRouterOwnedTextVectorMutableHelperLet(checker,node,env,path,expected,allowLiteral){
+ const receipt=activeFunctions.get(checker);if(node?.k!=='let'||node.mutable!==true||!receipt?.members.has(node)||node.value?.k!=='app'||node.value.fn?.k!=='name')return null;
+ requireOriginalPrimitiveTryFromChecker(checker);currentFunction(checker,receipt.activeItem,receipt);const syntax=copyMetadata(node),target=checker.lookup(node.value.fn.path,path,node.value.span??node.span);
+ if(target?.k!=='fn'||target.async||!same(target.modulePath,path)||!actualOwnedTextVector(checker,target.ret,node,path))return null;const signature=copyMetadata({params:target.params,ret:target.ret,modulePath:target.modulePath,async:target.async});
+ const origin=originalParsedSyntaxNode(receipt.activeItem,node);if(origin?.actual!==node||!same(node,origin.relocated))fail();
+ if(containsExit(node.value))throw unsupported('control in mutable owned text vector helper initializer','nonlocal exits need their separate checked statement lowering',node.value.span);
+ env=checker.contextEnvironment(node,env,expected);const declared=node.type?checker.resolveType(node.type,path,node.span):undefined;
+ let value=checker.expr(node.value,env,path,declared);if(declared)value=coerce(value,declared,checker.language,node.span);
+ if(value.k!=='call'||value.fn!==target.fullName||checker.items.get(value.fn)!==target||!actualOwnedTextVector(checker,value.type,node,path)||!sameType(value.type,target.ret))throw unsupported('mutable owned text vector helper initializer','requires its actual resolved same-module owned Vec call',node.span);
+ // No completed helper verdict is inferred here. The unchanged whole-function
+ // pass discovers this actual typed call and rechecks every dependency body.
+ let inner=checker.bindingEnvironment(env,node.name,value.type,true);inner=checker.bindingConstructorEnvironment?.(inner,node.name,value,true)??inner;
+ const body=checker.expr(node.body,inner,path,expected,allowLiteral);requireOriginalPrimitiveTryFromChecker(checker);currentFunction(checker,receipt.activeItem,receipt);const current=originalParsedSyntaxNode(receipt.activeItem,node);if(activeFunctions.get(checker)!==receipt||!same(node,syntax)||current?.actual!==node||current.original!==origin.original||current.parser!==origin.parser||!same(node,current.relocated)||checker.items.get(target.fullName)!==target||!same({params:target.params,ret:target.ret,modulePath:target.modulePath,async:target.async},signature))fail();
+ return {k:'let',name:node.name,value,body,mutable:true,type:body.type,span:node.span};
+}
+
+// Written shared Vec arguments only, inside an actual original ordinary call.
+// The whole caller/callee graph still checks bodies and entry/loan obligations.
+
+export function checkRouterOwnedTextVectorSharedHelperBorrow(checker,node,env,path,expected){
+ const frame=activeFunctions.get(checker);if(!frame||node?.k!=='routerTextReference'||!expected?.rustReference||!actualSharedTextVector(checker,expected,node,path))return null;
+ requireOriginalPrimitiveTryFromChecker(checker);currentFunction(checker,frame.activeItem,frame);const origin=originalParsedSyntaxNode(frame.activeItem,node),syntax=copyMetadata(node),parents=originalPrimitiveVectorBorrowParents(frame,node);
+ if(origin?.actual!==node||!same(node,origin.relocated)||parents.length!==1)throw unsupported('shared owned text vector helper argument','requires its actual original direct call operand',node.span);const parent=parents[0],parentOrigin=originalParsedSyntaxNode(frame.activeItem,parent),index=parent.args.indexOf(node),target=checker.lookup(parent.fn.path,path,parent.span);
+ if(parentOrigin?.actual!==parent||!same(parent,parentOrigin.relocated)||parent.args.filter(value=>value===node).length!==1||target?.k!=='fn'||target.async||!same(target.modulePath,path)||target.params?.length!==parent.args.length||target.params[index]?.type!==expected)throw unsupported('shared owned text vector helper target','requires its actual same-module resolved parameter signature',node.span);
+ const token=node.sourceBorrowToken;if(token?.value!=='&'||token.span?.end-token.span?.start!==1||node.value?.k==='routerTextReference')throw unsupported('shared owned text vector helper syntax','requires its actual single immutable ampersand',node.span);const signature=copyMetadata({params:target.params,ret:target.ret,modulePath:target.modulePath,async:target.async}),value=checker.expr(node.value,env,path),domain=actualOwnedTextVector(checker,value.type,node,path);
+ if(!domain||actualSharedTextVector(checker,expected,node,path)!==domain)throw unsupported('shared owned text vector helper pointee','requires an actual owned Vec in the exact primitive domain',node.span);
+ const type={...value.type,rustOwnership:{...expected.rustOwnership},patternOwnershipRefusal:'shared source reference',rustReference:{kind:'shared',pointee:value.type,span:{...node.span},tokens:[{kind:'operator',value:'&',span:{...token.span}}]}};
+ if(actualSharedTextVector(checker,type,node,path)!==domain||!sameType(type,expected))fail();checker.expectedOwnership(type,expected,path,node.span);checker.expectedPrimitiveIdentity(type,expected,path,node.span);
+ requireOriginalPrimitiveTryFromChecker(checker);currentFunction(checker,frame.activeItem,frame);const current=originalParsedSyntaxNode(frame.activeItem,node),currentParent=originalParsedSyntaxNode(frame.activeItem,parent);if(activeFunctions.get(checker)!==frame||!same(node,syntax)||current?.actual!==node||current.original!==origin.original||current.parser!==origin.parser||!same(node,current.relocated)||currentParent?.actual!==parent||currentParent.original!==parentOrigin.original||currentParent.parser!==parentOrigin.parser||!same(parent,currentParent.relocated)||checker.items.get(target.fullName)!==target||!same({params:target.params,ret:target.ret,modulePath:target.modulePath,async:target.async},signature))fail();
+ return {...node,value,type};
+}
+// A separate source-qualified result route preserves the original generic
+// ownership qualifier and its array-borrow refusals. It rejoins the actual raw
+// borrow, parent call and parameter slot instead of trusting a marker/flag.
+export function qualifyRouterOwnedTextVectorSharedHelperBorrow(checker,node,value,expected,path){
+ const frame=activeFunctions.get(checker);if(!frame||node?.k!=='routerTextReference'||value?.k!=='routerTextReference'||!expected?.rustReference||!actualSharedTextVector(checker,expected,node,path))return null;
+ requireOriginalPrimitiveTryFromChecker(checker);currentFunction(checker,frame.activeItem,frame);const origin=originalParsedSyntaxNode(frame.activeItem,node),parents=originalPrimitiveVectorBorrowParents(frame,node);if(origin?.actual!==node||!same(node,origin.relocated)||parents.length!==1)fail();const parent=parents[0],parentOrigin=originalParsedSyntaxNode(frame.activeItem,parent),index=parent.args.indexOf(node),target=checker.lookup(parent.fn.path,path,parent.span),point=value.type?.rustReference?.pointee;
+ if(parentOrigin?.actual!==parent||!same(parent,parentOrigin.relocated)||parent.args.filter(argument=>argument===node).length!==1||target?.k!=='fn'||target.async||!same(target.modulePath,path)||target.params?.length!==parent.args.length||target.params[index]?.type!==expected||checker.items.get(target.fullName)!==target||value.sourceBorrowToken!==node.sourceBorrowToken||value.span!==node.span||point!==value.value?.type||node.sourceBorrowToken?.value!=='&'||node.sourceBorrowToken.span?.end-node.sourceBorrowToken.span?.start!==1||!same(value.type.rustReference.span,node.span)||value.type.rustReference.tokens?.length!==1||!same(value.type.rustReference.tokens[0].span,node.sourceBorrowToken.span))fail();
+ const domain=actualOwnedTextVector(checker,point,node,path);if(!domain||actualSharedTextVector(checker,value.type,node,path)!==domain||actualSharedTextVector(checker,expected,node,path)!==domain||!sameType(value.type,expected))fail();checker.expectedOwnership(value.type,expected,path,node.span);checker.expectedPrimitiveIdentity(value.type,expected,path,node.span);currentFunction(checker,frame.activeItem,frame);requireOriginalPrimitiveTryFromChecker(checker);return value;
+}
+
+function currentOwnedTextVectorCallee(checker,node,owner){
+ requireOriginalPrimitiveTryFromChecker(checker);const records=completedFunctions.get(checker),target=records?.get(node.fn),caller=records?.get(owner.fullName);if(!target||!caller||caller.entry!==owner||checker.items.get(owner.fullName)!==owner||checker.items.get(node.fn)!==target.entry)throw unsupported('owned text vector helper','requires complete current original caller and callee bodies',node.span);
+ for(const fact of [caller,target]){currentFunction(checker,fact.item,fact.receipt);if(!same({params:fact.entry.params,ret:fact.entry.ret,body:fact.entry.body},fact.snapshot))fail();}
+ const row=target.entry,path=row.modulePath??[];if(row.k!=='fn'||row.async||!same(row.modulePath,owner.modulePath)||!sameType(row.ret,node.type)||row.params?.length!==node.args.length)throw unsupported('owned text vector helper','requires actual same-module native result and exact argument count',node.span);
+ const scalar=type=>{if(!type||type.rustReference||type.rustOwnership||type.patternOwnershipRefusal||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)return null;if(type.kind==='bool')return 'bool';const fixed=primitiveBitwiseType(type.rustPrimitiveName);return type.kind==='fixed'&&fixed&&type.bits===fixed.bits&&type.signed===fixed.signed?fixed.name:null;};
+ const text=type=>{if(!forwardOwnedString(type))return false;checker.expectedOwnership(type,SOURCE_STRING,path,node.span);return true;};
+ const role=type=>actualOwnedTextVector(checker,type,node,path)?'text-vector':actualSharedTextVector(checker,type,node,path)?'text-vector-ref':actualOwnedTextSlice(checker,type,node,path)?'text-slice':text(type)?'owned-text':scalar(type);
+ if(!actualOwnedTextVector(checker,row.ret,node,path)&&!text(row.ret)&&!scalar(row.ret))forwardOwnedCarrier(checker,row.ret,'Option',path,node.span,(_checker,payload,span)=>{if(!text(payload))throw unsupported('owned text vector helper Option','requires actual owned standard String payload',span);});
+ const genuine=(call,current)=>{const fact=records.get(current.fullName),proof=issued.get(call.compatibilityCore);return proof?.checker===checker&&proof.frame===fact?.receipt&&proof.id===call.id&&same(call.args,proof.args);};
+ for(let at=0;at<row.params.length;at++){const actual=node.args[at].type,wanted=row.params[at].type,kind=role(wanted);if(!kind||role(actual)!==kind||!sameType(actual,wanted))throw unsupported('owned text vector helper input','requires identical actual native domains',node.span);if(['text-vector','text-vector-ref','text-slice'].includes(kind)&&!hasBoundedOwnedTextVectorEntry(row,row.params[at].name,kind,genuine))throw unsupported('owned text vector helper entry','requires actual leading owned/shared/slice validation',node.span);checker.expectedOwnership(actual,wanted,path,node.span);checker.expectedPrimitiveIdentity(actual,wanted,path,node.span);}
+ checker.expectedOwnership(row.ret,node.type,path,node.span);checker.expectedPrimitiveIdentity(row.ret,node.type,path,node.span);requireOriginalPrimitiveTryFromChecker(checker);return row;
+}
+import {parseForwardOwnedTextVector,checkForwardOwnedTextVector} from './owned-text-vector-forward-domain.mjs';
+import {ownedTextVectorOperationShape} from './owned-text-vector-call-shape.mjs';
+import {actualOwnedTextVector,actualSharedTextVector,actualOwnedTextSlice} from './owned-text-vector-native-types.mjs';
+import {hasBoundedOwnedTextVectorEntry} from './owned-text-vector-native-entry.mjs';
+import {ownedTextVectorHelperCallCandidate} from './owned-text-vector-native-call-candidate.mjs';
+import {forwardOwnedString} from './owned-forward-domain.mjs';
+import {SOURCE_STRING} from './extensions/source-contract-types.mjs';
+
+import {ownedTextVectorLiteralOperationShape} from './owned-text-vector-literal-call-shape.mjs';
+
+function currentOwnedTextVectorReadonlyCallee(checker,node,owner){
+ requireOriginalPrimitiveTryFromChecker(checker);const records=completedFunctions.get(checker),target=records?.get(node.fn),caller=records?.get(owner.fullName);if(!target||!caller||caller.entry!==owner||checker.items.get(owner.fullName)!==owner||checker.items.get(node.fn)!==target.entry)throw unsupported('owned text vector helper','requires complete current original caller and callee bodies',node.span);
+ for(const fact of [caller,target]){currentFunction(checker,fact.item,fact.receipt);if(!same({params:fact.entry.params,ret:fact.entry.ret,body:fact.entry.body},fact.snapshot))fail();}
+ const row=target.entry,path=row.modulePath??[];if(row.k!=='fn'||row.async||!same(row.modulePath,owner.modulePath)||!sameType(row.ret,node.type)||row.params?.length!==node.args.length)throw unsupported('owned text vector helper','requires actual same-module native result and exact argument count',node.span);
+ const scalar=type=>{if(!type||type.rustReference||type.rustOwnership||type.patternOwnershipRefusal||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)return null;if(type.kind==='bool')return 'bool';const fixed=primitiveBitwiseType(type.rustPrimitiveName);return type.kind==='fixed'&&fixed&&type.bits===fixed.bits&&type.signed===fixed.signed?fixed.name:null;};
+ const text=type=>{if(!forwardOwnedString(type))return false;checker.expectedOwnership(type,SOURCE_STRING,path,node.span);return true;};
+ const readonly=type=>{if(!borrowedScalarTextCandidate(type))return false;checker.expectedOwnership(type,SOURCE_STR,path,node.span);checker.expectedPrimitiveIdentity(type,SOURCE_STR,path,node.span);return true;};
+ const role=type=>actualOwnedTextVector(checker,type,node,path)?'text-vector':actualSharedTextVector(checker,type,node,path)?'text-vector-ref':actualOwnedTextSlice(checker,type,node,path)?'text-slice':text(type)?'owned-text':readonly(type)?'borrowed-text':scalar(type);
+ if(!actualOwnedTextVector(checker,row.ret,node,path)&&!text(row.ret)&&!scalar(row.ret))forwardOwnedCarrier(checker,row.ret,'Option',path,node.span,(_checker,payload,span)=>{if(!text(payload))throw unsupported('owned text vector helper Option','requires actual owned standard String payload',span);});
+ const genuine=(call,current)=>{const fact=records.get(current.fullName),proof=issued.get(call.compatibilityCore);return proof?.checker===checker&&proof.frame===fact?.receipt&&proof.id===call.id&&same(call.args,proof.args);};
+ for(let at=0;at<row.params.length;at++){const actual=node.args[at].type,wanted=row.params[at].type,kind=role(wanted);if(!kind||role(actual)!==kind||!sameType(actual,wanted))throw unsupported('owned text vector helper input','requires identical actual native domains',node.span);if(['text-vector','text-vector-ref','text-slice'].includes(kind)&&!hasBoundedOwnedTextVectorEntry(row,row.params[at].name,kind,genuine))throw unsupported('owned text vector helper entry','requires actual leading owned/shared/slice validation',node.span);checker.expectedOwnership(actual,wanted,path,node.span);checker.expectedPrimitiveIdentity(actual,wanted,path,node.span);}
+ checker.expectedOwnership(row.ret,node.type,path,node.span);checker.expectedPrimitiveIdentity(row.ret,node.type,path,node.span);requireOriginalPrimitiveTryFromChecker(checker);return row;
+}
+
+import {borrowedScalarTextCandidate,borrowedScalarTextHelperCandidate} from './owned-text-vector-readonly-text-candidate.mjs';

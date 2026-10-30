@@ -1,0 +1,1 @@
+- Draft shared physical rust/src native-library guard mapping across five canonical inverse APIs, preserving original source identities, every existing refusal and full source equations, with independent unrun path/receiving/JS/strict TypeScript cases. Full translation, synchronization, freshness, parity and CI qualification remain unfinished (#759, #772).

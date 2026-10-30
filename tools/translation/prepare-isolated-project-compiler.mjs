@@ -1,3 +1,4 @@
+import {TRANSLATOR_ENTRYPOINTS} from './translator-entrypoints.mjs';
 // Deterministic proposal builder. It never changes registered runtime trust or
 // source files in place; complete proposals require source review before use.
 import fs from 'node:fs';
@@ -8,7 +9,7 @@ import {fileURLToPath} from 'node:url';
 import {isCompilerSourceInputPath} from './compiler-source-inputs.mjs';
 import {createRulePipeline,exactSubstitutionRule} from './rule-pipeline.mjs';
 
-const EXTRA=['scripts/translate-router.mjs','scripts/export-router-translator.mjs','scripts/regenerate-js-first.mjs','scripts/regenerate-native-typescript.mjs','scripts/sync-router.mjs','LICENSE','js/package.json','js/package-lock.json'];
+const EXTRA=[...TRANSLATOR_ENTRYPOINTS,"LICENSE","js/package.json","js/package-lock.json"];
 const EXCLUDED=['tools/translation/isolated-project-batch.mjs','tools/translation/isolated-project-driver.mjs','tools/translation/prepare-isolated-project-compiler.mjs','tools/translation/source-profiles/isolated-project-compiler/'];
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const safe=path=>/^[A-Za-z0-9_./@+-]{1,240}$/u.test(path)&&path.split('/').every(part=>part&&part!=='.'&&part!=='..');

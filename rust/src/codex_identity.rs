@@ -35,9 +35,9 @@ where
     read(name).filter(|value| !value.trim().is_empty())
 }
 
-fn versioned(name: &crate::translation_core::Str, version: crate::translation_core::Maybe<String>) -> String {
+fn versioned(name: &crate::translation_core::Str, version: crate::translation_core::Maybe<String>) -> crate::translation_core::Text {
     sanitized_token(
-        &version.map_or_else(|| name.to_string(), |version| format!("{name}/{version}")),
+        &version.map_or_else(|| name.to_string(), |version| crate::translation_core::format!("{name}/{version}")),
     )
 }
 
@@ -129,8 +129,8 @@ fn terminal_user_agent() -> String {
     )
 }
 
-fn user_agent_for(os_type: &crate::translation_core::Str, os_version: &crate::translation_core::Str, architecture: &crate::translation_core::Str, terminal: &crate::translation_core::Str) -> String {
-    format!(
+fn user_agent_for(os_type: &crate::translation_core::Str, os_version: &crate::translation_core::Str, architecture: &crate::translation_core::Str, terminal: &crate::translation_core::Str) -> crate::translation_core::Text {
+    crate::translation_core::format!(
         "{ORIGINATOR}/{} ({os_type} {os_version}; {architecture}) {terminal}",
         client_version()
     )

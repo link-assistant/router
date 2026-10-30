@@ -1,0 +1,11 @@
+import {fileURLToPath} from 'node:url';
+import {resolve} from 'node:path';
+import {prepareNativeSubstitutionCopy,writeNativeSubstitutionCopy,withNativeSubstitutionOperation} from './prepare-native-substitution-copy.mjs';
+import {prepareFixedWrappingOperationSources} from './prepare-fixed-wrapping-operation-sources.mjs';
+const ROOT=fileURLToPath(new URL('../../',import.meta.url));
+export function prepareNativeIntegerMethodSources({root=ROOT}={}){
+ return withNativeSubstitutionOperation(()=>prepareNativeSubstitutionCopy({root,archive:'tools/translation/source-profiles/native-integer-methods/complete-originals-and-rules.json.gz',pin:'396768592636ea538636162de543ee89042aefaf99045fb8415a1287649bb010',id:'router:native-integer-methods-complete-source-substitutions-v1',laterPlans:[prepareFixedWrappingOperationSources({root})]}));
+}
+if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
+ const args=process.argv.slice(2);if(args.length!==1||!['--emit','--write','--check'].includes(args[0]))throw new TypeError('Use --emit|--write|--check');const plan=prepareNativeIntegerMethodSources();if(args[0]==='--write')writeNativeSubstitutionCopy(plan,{root:ROOT});if(args[0]==='--check'&&plan.files.some(row=>row.current!==row.currentAfter))throw new TypeError('Native integer methods source copy differs');console.log(JSON.stringify(args[0]==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),receivingExecuted:false}));
+}
