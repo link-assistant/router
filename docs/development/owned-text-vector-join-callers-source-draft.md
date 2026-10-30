@@ -46,5 +46,9 @@ case sources are drafted. Every new case is UNRUN. No tests, compiler/parser/
 translator/preparer/benchmark or trial execution occurred locally; CI/review
 feedback remains uninspected. This is integration source, not receiving or
 performance evidence. Original whole Rust forward private caller recognition,
-ordinary-array adoption wiring into these profiles, receiving/freshness/platform
+receiving/freshness/platform
 qualification, wider production families and full synchronization remain OPEN.
+
+Automatic ordinary-array adoption into these profiles is now source drafted in
+[the additive kernel adoption paths](owned-text-vector-kernel-adoption-source-draft.md).
+That closes the specific wiring source item, not its unrun qualification cases.

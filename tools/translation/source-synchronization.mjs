@@ -347,3 +347,7 @@ export * as ownedTextVectorJoinOutcome from './js-to-rust/owned-text-vector-join
 export * as ownedTextVectorJoinCancellation from './js-to-rust/owned-text-vector-join-cancellation.mjs';
 export {translateOwnedOutcomeRust as translateOwnedTextVectorJoinOutcomeRust} from './js-to-rust/owned-text-vector-join-outcome-rust.mjs';
 export {translateOwnedCancellationRust as translateOwnedTextVectorJoinCancellationRust} from './js-to-rust/owned-text-vector-join-cancellation-rust.mjs';
+
+export {proposeOwnedTextVectorKernelJoins} from './js-to-rust/owned-text-vector-kernel-join-proposals.mjs';
+export {proposeOwnedTextVectorKernelArrayJoins,proposeOwnedTextVectorKernelArrayJoinDiscovery} from './js-to-rust/owned-text-vector-kernel-array-join-proposals.mjs';
+export {proposeOwnedTextVectorPairedKernelArrayJoins} from './js-to-rust/owned-text-vector-paired-kernel-array-join-proposals.mjs';

@@ -966,3 +966,9 @@ retain original APIs through complete additive copies. Keep actual private
 source/type/move checks before kernel emission; a helper name, matched source
 or public ABI observation grants no caller authority. Preserve the complete
 Rust helper inverse, exact whole-module reproduction and original case deadlines.
+
+
+Use the explicit [kernel adoption paths](docs/development/owned-text-vector-kernel-adoption-source-draft.md)
+for combined array/push/join drafting. Retain complete original/intermediate/
+final inverses and strict final private reissue. Report the actual lockfile
+TypeScript version without removing any strict target or case deadline.

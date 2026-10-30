@@ -26,3 +26,24 @@ fn independent_multiple_local_constructions_do_not_alias_mutated_vectors() {
     assert_eq!(second.join("|"),"second");
     assert_eq!(core::vec_text_len(&first),1);
 }
+
+#[test]
+fn nested_shared_joins_keep_the_original_vector_and_owned_separator_available() {
+    for input in ["", "é", "🦀\0"] {
+        let values = vec![String::from("é"),String::from(input)];
+        let before = values.clone();
+        let separator = values.join("");
+        let outer = values.join(&separator);
+        assert_eq!(outer,format!("é{}{}",separator,input));
+        assert_eq!(values,before);
+        assert_eq!(separator,before.join(""));
+    }
+}
+#[test]
+fn repeated_scalar_inputs_define_the_exact_source_literal_utf8_boundary() {
+    let input = "é".repeat(8192);
+    let values = vec![input.clone();64];
+    assert_eq!(values.join("").len(),1_048_576);
+    assert_eq!(values.join(""),"é".repeat(524288));
+    assert_eq!(input.len(),16_384);
+}

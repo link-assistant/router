@@ -38,9 +38,11 @@ native standard-library oracle source gains matching full-capacity cases.
 All are UNRUN. No tests, benchmark, parser/translator/preparer/compiler or trial
 execution occurred locally, and CI/review feedback remains uninspected.
 
-Compiler caller mapping, emission, interpreters and canonical inverse integration
-of this kernel remain source work. Current generated join folds continue through
-the original operations until that full integration is drafted and qualified;
-this runtime draft alone does not make those paths faster. Original source/body
-equivalence, all performance/receiving/freshness/platform/production parity and
-full synchronization requirements remain OPEN.
+Compiler caller mapping, emitters, interpreters and canonical inverse now have
+[complete additive source profiles](owned-text-vector-join-callers-source-draft.md).
+[Automatic kernel adoption](owned-text-vector-kernel-adoption-source-draft.md)
+also has explicit direct/composed/discovery/paired paths. Original fold APIs
+remain unchanged. All these new paths are UNRUN; they establish no receiving or
+performance result. Original whole-Rust project forward recognition, body/
+namespace/owner qualification, freshness, every platform, production parity and
+full synchronization remain OPEN.

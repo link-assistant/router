@@ -8,7 +8,7 @@ import * as originalCancellation from '../owned-text-vector-cancellation.mjs';
 import {translateOwnedOutcomeRust as inverseOutcome} from '../owned-text-vector-join-outcome-rust.mjs';
 import {translateOwnedCancellationRust as inverseCancellation} from '../owned-text-vector-join-cancellation-rust.mjs';
 import {ownedTextVectorJoinReceivingData as receiving} from './owned-text-vector-join-receiving-data.mjs';
-import {targets} from './primitive-slice-adoption-targets.mjs';
+import {targets} from './owned-text-vector-kernel-adoption-targets.mjs';
 import {sameRustSourceSyntax} from '../../rust-syntax-cells.mjs';
 import {prepareOwnedTextVectorJoinCallerSources} from '../../prepare-owned-text-vector-join-caller-sources.mjs';
 const limits={timeout:60000};

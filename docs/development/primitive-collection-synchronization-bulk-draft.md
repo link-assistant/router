@@ -383,3 +383,15 @@ Independent full-bound, target, meta/inverse, helper/source/private/ownership
 refusal cases are drafted, all UNRUN. Native whole-project forward recognition,
 ordinary-array adoption wiring and all broader receiving/freshness/performance/
 platform/parity requirements remain OPEN. See [the caller source contract](owned-text-vector-join-callers-source-draft.md).
+
+## Automatic array/push/join kernel adoption (2026-10-30)
+
+Complete additive direct/composed/discovery/paired source paths now draft direct
+checked kernel imports and final private join-profile reissue, retaining all
+original/intermediate/final CST/inverses and exact paired conflicts. Original
+fold APIs stay exact. New target harness preserves strict workloads/deadlines
+and records the actual TypeScript5.9.3 version. Independent both-family target/
+interpreter/meta/inverse/batch/refusal/nested/boundary cases and CI-only native
+oracle additions remain UNRUN. Whole Rust project forward recognition and all
+broader receiving/freshness/performance/owner/namespace/platform/parity work stay
+OPEN. See [the adoption source contract](owned-text-vector-kernel-adoption-source-draft.md).
