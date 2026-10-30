@@ -835,3 +835,10 @@ across eleven domains. Six complete equations, strict declarations, independent
 JavaScript boundary cases and CI-only native oracles are UNRUN. Private caller/
 move/loan integration, native source/root/history, forward/reverse/assets and
 production adoption remain OPEN; library rows supply no coverage or authority.
+
+The [owned primitive vector binding draft](primitive-owned-vector-bindings-source-draft.md)
+adds fresh ten-input source/CST/closing fences, complete reversible receiving
+roots and runtime/declaration mirrors, and actual 88-function source observations.
+Six complete equations and independent lifecycle/tamper/root/refusal source cases
+are UNRUN. All private native caller/type/move/loan, root/history, forward/reverse,
+production and full synchronization obligations remain OPEN.
