@@ -296,3 +296,15 @@ JS/TS/interpreter/meta/inverse/refusal/resource/discovery/paired cases and sourc
 equations are drafted, all UNRUN. No CI feedback was inspected. Original Rust
 adoption, broader requirements, all owner qualification, receiving/freshness/
 performance and full parity remain OPEN. See [the adoption source contract](owned-text-vector-adoption-source-draft.md).
+
+## Original native String-vector adoption (2026-10-30)
+
+Drafted bounded original Rust constructor/list-macro, discarded push and length
+CST substitution sequences plus whole-module batch inverses. Fresh operand
+locals preserve evaluate-once ordering before the receiver move, including
+nested selected length edits. Repository rules bind actual paired native exports.
+Original namespace/domain/ownership and whole-body equivalence stay unqualified;
+String clone, u64 length and bounded resource differences are explicit. Independent
+source cases and CI-only Rust oracle cases are drafted, all UNRUN. Broader
+requirements, receiving/freshness/performance and full parity remain OPEN. See
+[the native adoption contract](owned-text-vector-native-adoption-source-draft.md).

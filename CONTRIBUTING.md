@@ -942,3 +942,12 @@ concurrent source conflicts before deriving a replacement. Syntax-only discovery
 counts are not executable coverage and cannot skip complete private reissuance.
 Keep source/host/resource failures fatal and all installation/equivalence claims
 open until qualified; see [the adoption source draft](docs/development/owned-text-vector-adoption-source-draft.md).
+
+
+Native String-vector source adoption remains explicit CST proposal data; see
+[its source contract](docs/development/owned-text-vector-native-adoption-source-draft.md).
+Fresh push-operand temporaries preserve evaluation order before functional
+receiver moves. Standard-looking names, changed-expression counts and complete
+source inverses grant no original namespace, String domain, ownership or
+body-equivalence authority. Record clone, u64-length and bounded-capacity
+changes and retain whole-module original semantic qualification obligations.
