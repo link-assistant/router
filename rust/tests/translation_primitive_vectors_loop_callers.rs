@@ -1,7 +1,6 @@
 // Independent native caller oracle SOURCE. Run only in CI after all eight
 // same-SHA JavaScript gates; never compile locally during bulk drafting.
-#[path = "../src/translation_primitive_vectors_core.rs"]
-mod core_vectors;
+use link_assistant_router::translation_primitive_vectors_core as core_vectors;
 macro_rules! accumulation {
     ($name:ident, $ty:ty, $value:expr, $new:path, $push:path, $len:path) => {
         #[test]

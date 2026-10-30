@@ -1,6 +1,5 @@
 // Independent native compatibility oracle source. CI only after all JS gates.
-#[path = "../src/translation_primitive_vectors_core.rs"]
-mod vectors;
+use link_assistant_router::translation_primitive_vectors_core as vectors;
 
 #[test]
 fn owned_bool_operations_retain_values_and_return_no_element_loan() {

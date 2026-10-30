@@ -1,7 +1,6 @@
 // Independent shared-reference caller oracle SOURCE. CI only after all eight
 // same-SHA JavaScript gates. No local Rust tool invocation is authorized.
-#[path = "../src/translation_primitive_vectors_core.rs"]
-mod core_vectors;
+use link_assistant_router::translation_primitive_vectors_core as core_vectors;
 macro_rules! shared_input {
     ($name:ident, $ty:ty, $value:expr, $len:path, $get:path) => {
         #[test]

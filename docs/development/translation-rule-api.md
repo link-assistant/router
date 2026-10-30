@@ -273,3 +273,12 @@ fresh source evidence and grants no executable authority. No source/token/item/
 verdict/result map crosses operations. Complete SourceFile recipe selection is
 native source construction DATA under the unchanged span/CST/inverse guards.
 All new lifecycle, source-history and receiving cases are source drafted, unrun.
+
+
+The additive [mixed source preparer](mixed-native-source-copy-source-draft.md)
+routes whole Rust files through Rust CST serialization/reparsing and exact
+whole-file substitutions. The original native source-copy API remains JS/TS
+only. Never parse a Rust row as a TypeScript SourceFile or infer Rust grammar,
+semantic scope, namespace or compilation from a source-copy result. Dedicated
+native scalar/base64 paths stay separate. All new mixed receiving/freshness
+checks remain UNRUN, and fatal Rust CI still follows all eight same-SHA JS gates.

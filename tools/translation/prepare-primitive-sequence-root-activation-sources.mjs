@@ -1,6 +1,6 @@
 import {fileURLToPath} from 'node:url';
 import {resolve} from 'node:path';
-import {prepareNativeSubstitutionCopy,writeNativeSubstitutionCopy,withNativeSubstitutionOperation,nativeSubstitutionCopyHasChanges} from './prepare-native-substitution-copy.mjs';
+import {prepareMixedNativeSubstitutionCopy as prepareNativeSubstitutionCopy,writeMixedNativeSubstitutionCopy as writeNativeSubstitutionCopy,withMixedNativeSubstitutionOperation as withNativeSubstitutionOperation,mixedNativeSubstitutionCopyHasChanges as nativeSubstitutionCopyHasChanges} from './prepare-mixed-native-substitution-copy.mjs';
 import {preparePrimitiveSliceEmptyAdoptionSources} from './prepare-primitive-slice-empty-adoption-sources.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 export function preparePrimitiveSequenceRootActivationSources({root=ROOT}={}){
