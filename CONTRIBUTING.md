@@ -905,3 +905,11 @@ retain the original public APIs, distinct Rust CST path and operation-local
 syntax sharing. Their aggregate relay frames consume the existing shared depth
 allowance; neither these copies nor their source equations establish measured
 performance, receiving parity or broader production translation.
+
+Compiler export must include the physical native inputs that fresh paired
+readers actually open, plus complete project/vendor license bytes. Source
+archives and a successful import alone do not exercise those dependencies.
+Keep native members inside the existing committed-input, partition and byte
+budgets, and preserve old exporter API domains through additive implementations.
+Draft copied-reader/ABI and copied-file-tamper cases before claiming delivery;
+see [the paired exporter draft](docs/development/paired-core-compiler-export-source-draft.md).

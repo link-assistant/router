@@ -199,3 +199,16 @@ are UNRUN. Actual native-root history, original producer/type/caller qualificati
 both caller directions, helpers/loops/inverse/adoption, copied native-core delivery
 and every parity/freshness/receiving requirement stay OPEN. See
 [the current-source contract](owned-text-vector-abi-source-draft.md).
+
+## Copied compiler physical native input delivery (2026-10-30)
+
+Three source equations draft an additive complete partitioned exporter that
+includes the three physical native cores opened by fresh sequence/vector
+readers. They join the original committed index/blob/mode/count/byte/partition
+and complete closing checks; old exporter APIs remain unchanged. The existing
+CLI selects the additive exporter. Exact/legacy/missing/dirty/staged/link/CLI/
+partition and real copied fresh-reader/owned-text ABI/tamper cases are UNRUN.
+No compilation, namespace, caller or parity permission follows from copied
+bytes. Every broader receiving, translation, synchronization and delivery
+requirement remains OPEN. See
+[the exporter contract](paired-core-compiler-export-source-draft.md).

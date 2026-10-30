@@ -96,6 +96,14 @@ when stronger failure/depth contracts would change the old callback domain.
 Document shared aggregate frame limits and defer resource/performance claims
 until measured qualification; no across-operation failure cache is allowed.
 
+Export actual physical dependencies of fresh source readers, including paired
+native core bytes and their complete license inputs. A copied profile/archive
+or import-only case does not establish that a runtime source URL is satisfied.
+Keep every input inside the original committed-index/blob/mode, partition,
+byte and closing checks. Preserve legacy exporter domains and draft receiving
+cases that open copied native inputs and reject copied-file tampering. Exported
+bytes grant no original type/owner, compilation, caller or runtime permission.
+
 ## Independent qualification
 
 Draft independent extrema, empty/nonempty, ordering, alias/move, branch/loop,
