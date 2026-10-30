@@ -828,3 +828,10 @@ covering common comparisons, negations and Boolean conditions. Six full equation
 and independent fourteen-form/all-domain JS/TS/interpreter/refusal cases are
 UNRUN. Input-contract migration is explicit; original API refusals, complete
 private reissue and all full synchronization obligations remain required.
+
+The [owned primitive vector core draft](primitive-owned-vector-core-source-draft.md)
+adds 88 matching bounded constructors, consuming updates and nonescaping reads
+across eleven domains. Six complete equations, strict declarations, independent
+JavaScript boundary cases and CI-only native oracles are UNRUN. Private caller/
+move/loan integration, native source/root/history, forward/reverse/assets and
+production adoption remain OPEN; library rows supply no coverage or authority.

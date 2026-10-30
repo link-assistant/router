@@ -267,3 +267,5 @@ export {primitiveSequenceRuntimeSources} from './primitive-sequence-runtime-sour
 export {proposeOwnedPrimitiveSliceEmptyCalls} from './js-to-rust/owned-primitive-slice-empty-proposals.mjs';
 
 export {proposeOwnedPrimitiveSlicePresenceCalls} from './js-to-rust/owned-primitive-slice-presence-proposals.mjs';
+
+export {PRIMITIVE_OWNED_VECTOR_CONTRACTS,PRIMITIVE_OWNED_VECTOR_RULE_SEQUENCES} from './primitive-owned-vector-contracts.mjs';
