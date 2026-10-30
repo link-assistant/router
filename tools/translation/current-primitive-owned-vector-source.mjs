@@ -47,3 +47,7 @@ function operationSources(name){
 }
 export function requireCurrentPrimitiveOwnedVectorOperationSource(files,configuration,name){return withOriginalPrimitiveOwnedVectorSourceOperation(()=>{const observed=observe(files,configuration),operation=operationSources(name);return {...operation,sourceRecords:observed.records};});}
 
+// Source DATA only. Actual native module bindings and complete private caller
+// checking remain separate. All ten paired inputs close before return.
+export function requireCurrentPrimitiveOwnedVectorNativeOperationSource(rootSource,nativeSource,sequenceSource,name){return withOriginalPrimitiveOwnedVectorSourceOperation(()=>{const files=new Map([['src/lib.rs',rootSource],['src/translation_primitive_vectors_core.rs',nativeSource],['src/translation_primitive_sequences_core.rs',sequenceSource]]);for(const row of active.inputs.sources){if(row.language==='Rust'||row.path.endsWith('-contracts.mjs'))continue;files.set('runtime/'+row.path,row.source);}return requireCurrentPrimitiveOwnedVectorOperationSource(files,{runtimeRoot:'runtime',declarationRoot:'runtime'},name);});}
+export function requireCurrentPrimitiveOwnedVectorOriginalOperationSource(name){return withOriginalPrimitiveOwnedVectorSourceOperation(()=>({...operationSources(name)}));}

@@ -863,3 +863,12 @@ retaining original APIs, shared error identity and full privately rechecked Rust
 reproduction in both source families. Nine full equations and independent full
 round-trip/candidate/refusal sources are UNRUN. Native forward/root, public inputs,
 mutation/iteration/captures, adoption and full synchronization remain OPEN.
+
+### Native owned primitive vector forward caller draft (2026-10-30)
+
+Six complete source equations add actual root/vector/sequence binding joins,
+private whole-caller emission and owned move/shared-loan flow for all 88 bounded
+operations. Independent all-domain JS/strict-TS and refusal case source is
+UNRUN. See [the source contract](primitive-owned-vector-forward-source-draft.md).
+Physical activation, native history, broader public/mutable/helper contracts and
+full synchronization remain OPEN. No tests, compilation or CI feedback used.

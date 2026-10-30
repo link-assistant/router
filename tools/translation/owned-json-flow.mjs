@@ -13,7 +13,7 @@ import {currentSharedReferenceCopyIdentity as sharedReferenceCopyIdentity} from 
 import {actualPrimitiveSlice,checkPrimitiveSliceDereference} from './owned-scalar-slice-flow.mjs';
 import {unsupported} from './vendor/meta-language/translation/diagnostics.js';
 import {checkOwnedLoop,checkOwnedLoopExit,ownedLoopInput,unreachableOwnedFlowState} from './owned-json-loop-flow.mjs';
-const linear=kind=>kind==='json'||kind==='linear'||kind==='json-vector'||kind==='owned-text'||kind==='loan-result',path=parts=>JSON.stringify(parts);
+const linear=kind=>kind==='json'||kind==='linear'||kind==='json-vector'||kind==='scalar-vector'||kind==='owned-text'||kind==='loan-result',path=parts=>JSON.stringify(parts);
 const empty=()=>({loans:new Map(),tags:null});
 const copy=value=>({loans:new Map([...value.loans].map(([key,roots])=>[key,new Set(roots)])),tags:value.tags&&new Set(value.tags),...(value.localLoanType?{localLoanType:value.localLoanType,localLoanOrigin:value.localLoanOrigin}:{})});
 function union(left,right){const result=copy(left);for(const [key,roots]of right.loans)result.loans.set(key,new Set([...(result.loans.get(key)??[]),...roots]));result.tags=left.tags&&right.tags?new Set([...left.tags,...right.tags]):null;return result;}
@@ -102,6 +102,8 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,ge
   for(const written of [owner.standardGeneric.arguments[0],some.fields[0].type]){const actual=checker.resolveType(written,owner.modulePath,node?.span??entry.span);if(!sameType(payload,actual))return null;checker.expectedOwnership(actual,payload,owner.modulePath,node?.span??entry.span);}
   return {owner,payload,type:type.rustStandardGeneric?type:{...type,rustStandardGeneric:{kind:'Option',arguments:[payload]}}};
  };
+ let primitiveVectorBoundary=null;
+ const hasPrimitiveVectorBoundary=()=>{if(primitiveVectorBoundary!==null)return primitiveVectorBoundary;let budget=100000;const visit=(node,depth=0)=>{if(!node||typeof node!=='object')return false;if(--budget<0||depth>160)refuse('primitive vector complete source census bound',entry);if(node.k==='routerHostCall'&&primitiveOwnedVectorOperationShape(node.id)&&genuine(node,entry))return true;for(const [key,value]of Object.entries(node))if(!['type','span','compatibilityCore','pinnedStandardBodyProof','sourceFrameProof','originalCallbackProof','originalLoanProof','sharedBodyProof','sourceSharedPatternProof'].includes(key))for(const child of Array.isArray(value)?value:[value])if(visit(child,depth+1))return true;return false;};return primitiveVectorBoundary=visit(entry.body);};
  const domain=(type,node,active=new Set())=>{
   if(!type||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)refuse('requires resolved source types',node);
   if(type.rustReference){
@@ -120,6 +122,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,ge
    refuse('aggregate reference requires a separate loan proof',node);
   }
   if(type.kind==='array'){
+   if(hasPrimitiveVectorBoundary()&&actualOwnedPrimitiveVector(checker,type,node??entry,entry.modulePath??[]))return 'scalar-vector';
    if(!type.rustReference&&!type.rustFixedArray&&type.rustOwnership?.kind==='owned'&&type.rustOwnership.source==='Vec'&&(!type.patternOwnershipRefusal||type.rustSourceType===true&&type.patternOwnershipRefusal==='ownership-bearing Vec type'&&hasOwnedStateVectorBoundary())&&canonical(type.element,node)==='serde_json::Value')return 'json-vector';
    refuse('array ownership needs the exact owned Json collection contract',node);
   }
@@ -158,11 +161,12 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,ge
   return generic.arguments.some(argument=>retainsLoan(checker.resolveType(argument,owner.modulePath,entry.span),inner));
  };
  const clone=state=>({names:new Map(state.names),available:new Map(state.available),values:new Map([...state.values].map(([slot,value])=>[slot,copy(value)])),alive:state.alive,callbackCaptures:state.callbackCaptures,lambdaInputs:state.lambdaInputs,iterationOwnedInputs:state.iterationOwnedInputs,optionCallback:state.optionCallback,primitiveOptionCallback:state.primitiveOptionCallback,primitiveResultCallback:state.primitiveResultCallback,iteratorCallback:state.iteratorCallback,standardScope:state.standardScope,localReturns:state.localReturns,tailNode:state.tailNode,entry:state.entry,external:state.external,callPath:state.callPath,functionReturns:state.functionReturns,loopFrame:state.loopFrame});
- const bind=(state,name,type,mutable,node,value=empty(),input=false)=>{const local=value.localLoanType;if(local&&JSON.stringify(local)!==JSON.stringify(type))refuse('original callback loan type changed',node);const kind=local?'borrow':domain(type,node);if(kind==='loan-result')refuse('stored borrowed Result requires a separate retained-carrier proof',node);const slot={name,kind,type,mutable,input,...(local?{localLoanType:local,localLoanOrigin:value.localLoanOrigin}:{})};state.names.set(name,slot);state.available.set(slot,true);state.values.set(slot,copy(value));return slot;};
+ const bind=(state,name,type,mutable,node,value=empty(),input=false)=>{const local=value.localLoanType;if(local&&JSON.stringify(local)!==JSON.stringify(type))refuse('original callback loan type changed',node);const kind=local?'borrow':domain(type,node);if(kind==='scalar-vector'&&mutable)refuse('mutable primitive vectors require a separate assignment proof',node);if(kind==='loan-result')refuse('stored borrowed Result requires a separate retained-carrier proof',node);const slot={name,kind,type,mutable,input,...(local?{localLoanType:local,localLoanOrigin:value.localLoanOrigin}:{})};state.names.set(name,slot);state.available.set(slot,true);state.values.set(slot,copy(value));return slot;};
  const createState=(current,arguments_=null,external=new Set(),callPath=[])=>{
   const state={names:new Map(),available:new Map(),values:new Map(),alive:true,entry:current,external,callPath,functionReturns:[]};
   for(const [at,param]of current.params.entries()){
    const initial=arguments_?.[at]??empty(),slot=bind(state,param.name,param.type,false,current,initial),fact=state.values.get(slot);
+   if(!arguments_&&slot.kind==='scalar-vector')refuse('public primitive Vec inputs require a separate bounded source input contract',current);
    slot.input=slot.kind==='borrow'||slot.kind==='loan-option'||slot.kind==='slice'||slot.kind==='scalar-slice';
    if(!arguments_){if(slot.kind==='borrow'||slot.kind==='slice'||slot.kind==='scalar-slice')fact.loans.set(path([]),new Set([slot]));if(slot.kind==='loan-option'){fact.loans.set(path(['field0']),new Set([slot]));fact.tags=new Set(['Some','None']);}}
   }
@@ -188,7 +192,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,ge
    checker.expectedOwnership(node.type,slot.localLoanType,state.entry.modulePath,node.span);checker.expectedPrimitiveIdentity(node.type,slot.localLoanType,state.entry.modulePath,node.span);
   }
   const value=copy(state.values.get(slot));ensureRoots(value,state,node);
-  if(mode==='borrow'&&['json','json-vector'].includes(slot.kind))value.loans.set(path([]),new Set([slot]));
+  if(mode==='borrow'&&['json','json-vector','scalar-vector'].includes(slot.kind))value.loans.set(path([]),new Set([slot]));
   if(mode!=='borrow'&&linear(slot.kind)){if(live(state,slot))refuse('moving an owned JSON root with a live lexical loan: '+slot.name,node);state.available.set(slot,false);}
   // Copying a genuine shared reference does not move its pointee. A by-value
   // operation still needs the separate canonical-ownership checker above us.
@@ -373,6 +377,11 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,ge
    for(const argument of totalOperands){if(domain(argument.type,argument)!=='copy')refuse('total primitive operation cannot hide owned JSON movement',argument);const value=read(argument);ensureRoots(value,state,argument);if(value.loans.size)refuse('total fixed primitive operation cannot retain a JSON text loan',argument);}return empty();
   }
   if(node.k==='routerHostCall'){
+   const vector=primitiveOwnedVectorOperationShape(node.id);if(vector){
+    const output=vector.returns.startsWith('vec:')?'scalar-vector':'copy';if(!genuine(node,state.entry)||node.args.length!==vector.parameters.length||kind!==output||state.callbackCaptures)refuse('primitive vector requires its actual complete private caller outside callbacks',node);const observed=[];
+    for(let index=0;index<vector.parameters.length;index++){const role=vector.parameters[index],argument=node.args[index],actual=domain(argument.type,argument),owned=role==='vec:'+vector.domain,shared=role==='vec:'+vector.domain+'-ref',slice=role===vector.domain+'-list-ref';if(actual!==(owned||shared?'scalar-vector':slice?'scalar-slice':'copy'))refuse('primitive vector actual operand ownership differs',argument);const fact=read(argument,owned?'move':shared||slice?'borrow':'copy');ensureRoots(fact,state,argument);if(slice&&!fact.loans.get(path([]))?.size)refuse('primitive vector slice requires its live shared input root',argument);observed.push(fact);}
+    for(const fact of observed)ensureRoots(fact,state,node);return {loans:new Map(),tags:vector.operation==='get'?new Set(['Some','None']):null};
+   }
    const sequence=primitiveSequenceOperationShape(node.id);if(sequence){if(!genuine(node,state.entry)||node.args.length!==sequence.parameters.length||kind!=='copy'||domain(node.args[0].type,node.args[0])!=='scalar-slice')refuse('primitive sequence needs its actual private readonly slice caller and copied output',node);const receiver=read(node.args[0],'borrow');ensureRoots(receiver,state,node);if(!receiver.loans.get(path([]))?.size)refuse('primitive sequence receiver lacks its live shared input root',node);if(sequence.operation==='get'){if(domain(node.args[1].type,node.args[1])!=='copy')refuse('primitive sequence index needs its actual Copy domain',node);const index=read(node.args[1],'copy');ensureRoots(index,state,node);if(index.loans.size)refuse('primitive sequence index cannot retain an input loan',node);}ensureRoots(receiver,state,node);return {loans:new Map(),tags:sequence.operation==='get'?new Set(['Some','None']):null};}
    if(['router_core_unicode_scalar_count','router_core_ascii_chars_in'].includes(node.id)){if(typeof genuineScalar!=='function'||genuineScalar(node,state.entry)!==true||kind!=='copy'||node.args.length!==(node.id==='router_core_unicode_scalar_count'?1:2)||node.args.some(argument=>argument.type?.kind!=='string'||argument.type.rustReference||argument.type.rustOwnership?.kind!=='borrowed'||argument.type.rustOwnership.source!=='str'||argument.type.patternOwnershipRefusal||domain(argument.type,argument)!=='copy'))refuse('text scalar operation requires its actual private original caller/library receipt',node);for(const argument of node.args)ensureRoots(read(argument,'borrow'),state,argument);return empty();}
    const stateOperation=jsonStateContract(node.id);
@@ -529,3 +538,6 @@ import {totalPrimitiveFlowOperands} from './extensions/total-primitive-flow.mjs'
 import {primitiveFailureFlowWithDivision as primitiveFailureFlow} from './extensions/primitive-failure-flow.mjs';
 
 import {primitiveSequenceOperationShape} from './primitive-sequence-call-shape.mjs';
+
+import {primitiveOwnedVectorOperationShape} from './primitive-owned-vector-call-shape.mjs';
+import {actualOwnedPrimitiveVector} from './primitive-owned-vector-forward-domain.mjs';
