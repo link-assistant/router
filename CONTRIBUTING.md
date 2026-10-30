@@ -935,3 +935,10 @@ Keep the source-arity bound separate from runtime capacity. Preserve original
 reader refusals through additive syntax APIs, retain full canonical reproduction
 and protect invocation-local source observations from public mutation. See
 [the literal source draft](docs/development/owned-text-vector-literal-source-draft.md).
+
+Adoption must make String copies and resource changes explicit in the proposed
+source. Preserve original spans/trivia and both paired JS/TS inverses; resolve
+concurrent source conflicts before deriving a replacement. Syntax-only discovery
+counts are not executable coverage and cannot skip complete private reissuance.
+Keep source/host/resource failures fatal and all installation/equivalence claims
+open until qualified; see [the adoption source draft](docs/development/owned-text-vector-adoption-source-draft.md).

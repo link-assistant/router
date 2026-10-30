@@ -1,0 +1,36 @@
+// Automatic complete-module syntax proposals only. Counts are not coverage or
+// type/ownership qualification; use the full proposer for private reissuance.
+import {types} from 'node:util';
+import {ownershipCompiler} from './vendor/module-syntax.mjs';
+import {ownedPlainData,ownedSourcePath} from './owned-text-vector-outcome-source.mjs';
+import {proposeOwnedTextVectorSyntax} from './owned-text-vector-proposals.mjs';
+import {withOriginalOwnedTextVectorLiteralSourceOperation} from '../current-owned-text-vector-literal-source.mjs';
+import {createRulePipeline} from '../rule-pipeline.mjs';
+const fail=message=>{throw new TypeError('Owned String vector discovery: '+message);};
+function unsupported(error){
+ if(types.isProxy(error)||!(error instanceof TypeError))throw error;const field=Object.getOwnPropertyDescriptor(error,'message');if(!field||!Object.hasOwn(field,'value')||typeof field.value!=='string'||!field.value.startsWith('Owned String vector adoption: ')||/host|budget|bound|metadata|CST|inverse|source differs|original source|native syntax/iu.test(field.value))throw error;return field.value;
+}
+function units(value){const pending=[{value,depth:0}];let cells=0,text=0;while(pending.length){const row=pending.pop();if(++cells>200000||row.depth>192)fail('retained metadata cell/depth bound');if(typeof row.value==='string'){text+=row.value.length;if(text>16777216)fail('individual retained metadata text bound');}else if(row.value&&typeof row.value==='object')for(const [name,child]of Object.entries(row.value)){text+=name.length;pending.push({value:child,depth:row.depth+1});}}return text;}
+export function proposeOwnedTextVectorDiscovery(data,options){
+ const original=ownedPlainData(data),request=ownedPlainData(options);if(Object.keys(request).length!==2||!['outcome','cancellation'].includes(request.family)||!Array.isArray(request.sourcePaths)||!request.sourcePaths.length||request.sourcePaths.length>32||new Set(request.sourcePaths).size!==request.sourcePaths.length||original.primitiveOperators!==true)fail('exact family and one through 32 complete source paths required');
+ const files=[],observations=[],proposals=[];let budget=200000,inventory=0,candidates=0,bytes=0,retained=0;
+ return withOriginalOwnedTextVectorLiteralSourceOperation(()=>{
+  const run=createRulePipeline([{phase:'language',rules:[{id:'language:discover-ordinary-String-vector-candidates-and-compose-complete-module-syntax-proposals',apply:()=>{
+   for(const path of request.sourcePaths){ownedSourcePath(path);if(!/\.(?:mjs|mts|ts)$/u.test(path))fail('complete JS/TS source path required');const rows=original.files.filter(row=>row.path===path);if(rows.length!==1||typeof rows[0].source!=='string'||Buffer.byteLength(rows[0].source)>2097152||rows[0].source.split('\n').length-(rows[0].source.endsWith('\n')?1:0)>=1000)fail('complete bounded module source required');const source=rows[0].source;bytes+=Buffer.byteLength(source);if(bytes>8388608)fail('aggregate original source bound');
+    const ts=ownershipCompiler(),file=ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,path.endsWith('.mjs')?ts.ScriptKind.JS:ts.ScriptKind.TS),selections=[],localObservations=[];if(file.parseDiagnostics.length)fail('whole original native syntax required');
+    const census=(node,depth=0)=>{if(--budget<0||depth>160)fail('complete source census bound');ts.forEachChild(node,child=>census(child,depth+1));};census(file);
+    for(const declaration of file.statements){if(++inventory>4096)fail('complete item inventory bound');if(!ts.isFunctionDeclaration(declaration)||!declaration.name||!declaration.body)continue;
+     for(const statement of declaration.body.statements){if(!ts.isVariableStatement(statement))continue;for(const binding of statement.declarationList.declarations){if(!ts.isIdentifier(binding.name)||!binding.initializer||!ts.isArrayLiteralExpression(binding.initializer))continue;if(++candidates>4096)fail('candidate selection bound');const observation={sourcePath:path,function:declaration.name.text,local:binding.name.text,originalSpan:[binding.initializer.getStart(file),binding.initializer.end],coordinates:'original-complete-module',domainHint:'text-owned',sourceAuthority:false,semanticAuthority:false,requiresOriginalDomainCheck:true},dense=binding.initializer.elements.length<=64&&!binding.initializer.elements.some(element=>ts.isSpreadElement(element)||ts.isOmittedExpression(element));
+      if(!dense){observations.push({...observation,status:'unsupported-syntax',message:'dense literal of at most64 ordinary operands required'});continue;}localObservations.push(observation);selections.push({function:declaration.name.text,local:binding.name.text,domain:'text-owned'});
+     }}
+    }
+    let proposal=null;if(selections.length){try{proposal=proposeOwnedTextVectorSyntax(original,{family:request.family,sourcePath:path,vectors:selections});}catch(error){const message=unsupported(error);for(const row of localObservations)observations.push({...row,status:'unsupported-syntax',message});}
+     if(proposal){retained+=units(proposal);if(retained>33554432)fail('aggregate retained source metadata bound');const index=proposals.length;proposals.push(proposal);for(const row of localObservations)observations.push({...row,status:'syntax-proposed',proposal:index,semanticReissueQualified:false});}
+    }
+    files.push({path,before:source,after:proposal?.files[0].after??source,inverse:source,sourceAuthority:false,semanticAuthority:false});
+   }return null;
+  }}]},{phase:'repository',rules:[{id:'router:retain-bulk-candidates-complete-originals-and-open-semantic-qualification',apply:()=>{
+   retained+=units(files)+units(observations);if(retained>33554432)fail('aggregate final metadata bound');return {schema:'owned-text-vector-discovery-v1',family:request.family,files,proposals,observations,originalItems:inventory,lexicalCandidates:candidates,syntaxProposals:proposals.length,unsupportedCandidates:observations.filter(row=>row.status==='unsupported-syntax').length,changedFiles:files.filter(row=>row.before!==row.after).length,metadataTextUnits:retained,requiresWholeOriginalSemanticReissue:true,requiresOriginalDomainCheck:true,originalBodyEquivalenceQualified:false,semanticReissueQualified:false,sourceInstalled:false,nativeInstalled:false,productionSelected:false,sourceAuthority:false,semanticAuthority:false,runtimeAuthority:false,receivingQualified:false,runtimeParity:false,wholeRouterSynchronization:false,runtimeExecuted:false,rustExecuted:false,crossInvocationCache:false};
+  }}]}]).run(null);return {...run.value,ruleTrace:run.trace};
+ });
+}

@@ -278,3 +278,21 @@ CI-only Rust oracle case sources plus complete source equations are drafted,
 all UNRUN. No CI feedback was inspected. Adoption and all broader requirements,
 original owner qualification, receiving/freshness/performance and full parity
 remain OPEN. See [the literal source contract](owned-text-vector-literal-source-draft.md).
+
+## String-vector source adoption and paired discovery (2026-10-30)
+
+Complete module proposals now draft ordinary dense/empty local arrays,
+discarded pushes and length reads through actual String-vector/core imports,
+explicit bounded text copies, original-span nested CST templates and complete
+private after-source/meta reissue. Written String-array locals/results and
+direct numeric length results receive actual paired utility types. A paired
+API derives matching JS from changed TS and retains both originals/inverses;
+concurrent differing JS remains a conflict. Original primitive APIs stay exact.
+Automatic bounded module discovery emits syntax-only candidates with explicit
+open original-domain/whole-module qualification; counts are not coverage and
+source/parser/host/resource/inverse failures remain fatal. Comments, original
+source and changed/unchanged inverses are retained. Independent both-family
+JS/TS/interpreter/meta/inverse/refusal/resource/discovery/paired cases and source
+equations are drafted, all UNRUN. No CI feedback was inspected. Original Rust
+adoption, broader requirements, all owner qualification, receiving/freshness/
+performance and full parity remain OPEN. See [the adoption source contract](owned-text-vector-adoption-source-draft.md).

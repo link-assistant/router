@@ -320,3 +320,7 @@ export {translateProjectOwnedTextVectors,translateProjectWithFlatEnclosingSemant
 export {ownedTextVectorLiteralRuntimeSources} from './owned-text-vector-literal-runtime-sources.mjs';
 export {withFreshOwnedTextVectorLiteralInputs} from './fresh-owned-text-vector-literal-inputs.mjs';
 export {withOriginalOwnedTextVectorLiteralSourceOperation,requireCurrentOwnedTextVectorLiteralOperationSource,requireCurrentOwnedTextVectorLiteralOriginalOperationSource} from './current-owned-text-vector-literal-source.mjs';
+
+export {proposeOwnedTextVectorCalls,proposeOwnedTextVectorSyntax} from './js-to-rust/owned-text-vector-proposals.mjs';
+export {proposeOwnedTextVectorDiscovery} from './js-to-rust/owned-text-vector-discovery.mjs';
+export {proposeOwnedTextVectorPairedCalls} from './js-to-rust/owned-text-vector-paired-proposals.mjs';
