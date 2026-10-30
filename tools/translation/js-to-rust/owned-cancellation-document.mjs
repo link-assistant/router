@@ -142,4 +142,5 @@ export function readOwnedCoreDocument(text,{context}={}){
 }
 
 import {withOriginalPrimitiveOwnedVectorSourceOperation} from '../current-primitive-owned-vector-source.mjs';
-function withPrimitiveOwnedVectorDocumentSource(data,run){return data.files.some(row=>row.path===data.runtimeRoot+'/primitive-owned-vector-runtime.mjs')?withOriginalPrimitiveOwnedVectorSourceOperation(run):run();}
+import {withOriginalPrimitiveVectorLiteralSourceOperation} from '../current-primitive-vector-literal-source.mjs';
+function withPrimitiveOwnedVectorDocumentSource(data,run){if(data.files.some(row=>row.path===data.runtimeRoot+'/primitive-vector-literal-runtime.mjs'))return withOriginalPrimitiveVectorLiteralSourceOperation(run);return data.files.some(row=>row.path===data.runtimeRoot+'/primitive-owned-vector-runtime.mjs')?withOriginalPrimitiveOwnedVectorSourceOperation(run):run();}

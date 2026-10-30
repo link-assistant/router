@@ -50,3 +50,14 @@ caller/target/refusal cases remain UNRUN. The existing core resource envelope
 and private source/namespace/caller prerequisites remain intact; no array
 promotion proof is fabricated. See [the caller draft](primitive-vector-literal-forward-source-draft.md).
 Reverse caller/inverse integration and full receiving/parity/freshness remain OPEN.
+
+## Literal reverse callers and canonical inverse (2026-10-30)
+
+Twelve complete source equations draft actual literal imports/type witnesses,
+scalar calls, Rust/TypeScript emission, both interpreters, runtime preparation,
+source scopes and canonical from_slice shared-array inverse proposals in both
+owned lanes. Whole fresh private caller reissue and complete original Rust
+reproduction stay mandatory. Independent all-domain receiving/target/CST/meta/
+inverse and malformed/source/move cases are UNRUN. See [the reverse contract](primitive-vector-literal-reverse-source-draft.md).
+This closes the literal caller integration source-draft item, not its execution
+or global production/namespace/freshness/parity/export requirements.

@@ -149,6 +149,7 @@ export function projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot,
     fail('Rust match requires a canonical guarded carrier rule');break;
    }
    case 'call':{
+    const literal=primitiveOperators?ownedRustPrimitiveVectorLiteralCall(node):null;if(literal)return call(literal.javascriptName,'primitive-vector-literal',literal.args,literal.parameters);
     const vector=primitiveOperators?ownedRustPrimitiveVectorCall(node):null;if(vector)return call(vector.javascriptName,'primitive-owned-vector',node.args,vector.parameters);
     const sequence=primitiveOperators?ownedRustPrimitiveSequenceCall(node):null;if(sequence)return call(sequence.javascriptName,'primitive-sequence',node.args,sequence.parameters);
     if(localNames.has(node.path))return localNames.get(node.path)+'('+args(node.args)+')';
@@ -209,3 +210,5 @@ import {OWNED_BASE64_RESULT_RUST_TYPE} from './owned-base64-inputs.mjs';
 import {ownedRustPrimitiveSequenceCall,ownedRustPrimitiveSequencePresence,ownedRustPrimitiveSequenceOptionalWitness} from './owned-rust-primitive-sequence-projection.mjs';
 
 import {ownedRustSharedPrimitiveVectorWitness,ownedRustPrimitiveVectorCall,ownedRustPrimitiveVectorPresence,ownedRustPrimitiveVectorReturnWitness,ownedRustPrimitiveVectorOptionalWitness} from './owned-rust-primitive-vector-projection.mjs';
+
+import {ownedRustPrimitiveVectorLiteralCall} from './owned-rust-primitive-vector-literal-projection.mjs';
