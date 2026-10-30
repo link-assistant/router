@@ -491,7 +491,7 @@ export function checkRouterCoreJsonMutableLet(checker,node,env,path,expected,all
  if(node.k!=='let'||!node.mutable||!receipt?.owns||!receipt.members.has(node)||!['routerCoreJsonCall','routerJsonMacro','routerCoreJsonUpdateCall'].includes(node.value?.k))return null;
  if(containsExit(node.value))throw unsupported('control in value expression','nonlocal exits cannot be lowered through a value IIFE',node.value.span);
  env=checker.contextEnvironment(node,env,expected);const declared=node.type?checker.resolveType(node.type,path,node.span):undefined;
- let value=checker.expr(node.value,env,path,declared);if(declared)value=coerce(value,declared,checker.language,node.span);canonical(checker,value.type,node.span,false);
+ let value=checker.expr(node.value,env,path,declared);if(declared)value=coerce(value,declared,checker.language,node.span);if(primitiveOwnedVectorOperationShape(node.value.operation)){const proof=issued.get(value.compatibilityCore);if(!proof||proof.checker!==checker||proof.frame!==receipt||proof.id!==value.id||!same(value.args,proof.args)||!actualOwnedPrimitiveVector(checker,value.type,node,path))throw unsupported('mutable primitive vector initializer','requires its actual fresh private owned core call',node.span);}else canonical(checker,value.type,node.span,false);
  let inner=checker.bindingEnvironment(env,node.name,value.type,true);inner=checker.bindingConstructorEnvironment?.(inner,node.name,value,true)??inner;
  const body=checker.expr(node.body,inner,path,expected,allowLiteral);
  return {k:'let',name:node.name,value,body,mutable:true,type:body.type,span:node.span};

@@ -891,3 +891,12 @@ joins, ordered copied/shared inputs, bounded acyclic flow and full dependency
 rejoins. Eleven-domain emitted JS/strict-TS and recursion/foreign/move refusal
 case sources remain UNRUN. See [the helper contract](primitive-owned-vector-native-helpers-source-draft.md).
 Broader Vec inputs, mutation and full synchronization remain OPEN.
+
+### Owned primitive vector local move/rebind draft (2026-10-30)
+
+Eight complete source equations draft mutable local functional updates in
+both owned JS/TS caller families and actual native core callers, preserving
+right-hand movement, exact type/root checks and branch availability. All-domain
+existing complete receiving sources now include rebinding; independent branch,
+alias and partial-reinitialization cases remain UNRUN. See [the local contract](primitive-owned-vector-local-rebind-source-draft.md).
+Loop mutation, public Vec inputs and full translation remain OPEN.
