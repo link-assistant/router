@@ -33,3 +33,17 @@ evaluate-once ordering, collision, batch, namespace non-authority, refusal and
 resource case sources are drafted, along with independent CI-only Rust oracle
 source. All are UNRUN. No tests, compiler, parser, translator, preparer or trial
 regeneration were executed locally, and CI feedback was not inspected.
+
+## Automatic native discovery
+
+`proposeNativeOwnedTextVectorDiscovery` copies the complete existing native JSON
+reader discovery guards, whole-module chronology, CST inverses and fatal source
+failure policy. It scans ordinary function-local constructor tokens in supplied
+modules, composes the fixed native vector proposer and retains unsupported
+structural observations. Exactly enumerated structural refusals are reportable;
+unknown, host, parser, inverse, census and resource failures stay fatal. Original
+and current-step coordinates remain distinct. Limits are 32 complete modules,
+128 constructor candidates, 4,096 original items, 200,000 census token visits,
+8 MiB aggregate source and 32 MiB retained metadata. Counts are syntax inventory,
+not executable coverage. Independent census, composition, unchanged-module,
+refusal, domain non-authority, bounds and descriptor cases are drafted, all UNRUN.

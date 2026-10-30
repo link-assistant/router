@@ -326,3 +326,5 @@ export {proposeOwnedTextVectorDiscovery} from './js-to-rust/owned-text-vector-di
 export {proposeOwnedTextVectorPairedCalls} from './js-to-rust/owned-text-vector-paired-proposals.mjs';
 
 export {proposeNativeOwnedTextVector,proposeNativeOwnedTextVectors} from './native-owned-text-vector-proposals.mjs';
+
+export {proposeNativeOwnedTextVectorDiscovery} from './native-owned-text-vector-discovery.mjs';

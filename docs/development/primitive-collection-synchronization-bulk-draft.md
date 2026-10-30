@@ -308,3 +308,11 @@ String clone, u64 length and bounded resource differences are explicit. Independ
 source cases and CI-only Rust oracle cases are drafted, all UNRUN. Broader
 requirements, receiving/freshness/performance and full parity remain OPEN. See
 [the native adoption contract](owned-text-vector-native-adoption-source-draft.md).
+
+Automatic native String-vector discovery is also source drafted: copied complete
+native JSON discovery protections, fixed bounded constructor census, chronological
+whole-module proposals/inverses and exact structural-only refusal reporting.
+Original/current coordinates and unsupported candidates remain explicit; source,
+parser, inverse and resource failures stay fatal. Both discovery counts and
+String-domain hints grant no executable authority. Independent discovery and
+fresh source-equation case sources remain UNRUN; full requirements remain OPEN.
