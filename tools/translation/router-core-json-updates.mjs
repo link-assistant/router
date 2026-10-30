@@ -232,7 +232,7 @@ function closedOptionSource(checker,fact,current,Parser,Checker,program){
 function publishProjectionContexts(receipt,entry,dependencies=[],checker=null){
  if(!receipt.projections)return;
  const functionContext=freeze(copyMetadata({name:entry.fullName,params:entry.params,ret:entry.ret,body:entry.body,...(dependencies.length?{dependencies}:{} )}));
- const extraRoots=receipt.errorLane||receipt.optionLane?[...entry.params.map(param=>param.type),entry.ret,...dependencies.flatMap(item=>[...item.params.map(param=>param.type),item.ret])]:[],extraLayouts=extraRoots.length?freeze(copyMetadata(captureBorrowedLayouts(checker,extraRoots))):[];
+ const extraRoots=receipt.errorLane||receipt.optionLane||receipt.primitiveVectorHelperLane?[...entry.params.map(param=>param.type),entry.ret,...dependencies.flatMap(item=>[...item.params.map(param=>param.type),item.ret])]:[],extraLayouts=extraRoots.length?freeze(copyMetadata(captureBorrowedLayouts(checker,extraRoots))):[];
  for(const projection of receipt.projections)projectionContexts.set(projection.key,freeze({id:projection.id,call:projection.call,layouts:extraLayouts.length?[...projection.layouts,...extraLayouts]:projection.layouts,roots:extraRoots.length?[...projection.roots,...extraRoots]:projection.roots,functionContext}));
 }
 
@@ -396,6 +396,7 @@ export function visitRouterCoreJsonUpdateFunction(checker,item,path,entry,visit,
    const result=visit(...args),body=copyMetadata(entry.body);
    currentFunction(checker,item,receipt);if(!same(entry.body,body))fail();
    const completed={item,receipt,entry,snapshot:copyMetadata({params:entry.params,ret:entry.ret,body:entry.body})};completedFunctions.get(checker).set(name,completed);
+   if(hasOwnedPrimitiveVectorHelperCandidate(entry.body))receipt.primitiveVectorHelperLane=true;if(receipt.primitiveVectorHelperLane)return result;
    if(receipt.owns&&hasReadonlyScalarCallCandidate(entry.body))receipt.readonlyScalarLane=true;if(!receipt.owns||receipt.errorLane||receipt.optionLane||receipt.readonlyScalarLane)return result;if(receipt.vectorLane){receipt.deferredOwnedVectorFlow=true;return result;}
    createRulePipeline([
     {phase:'language',rules:[{id:'owned-json-flow:check-whole-function-linear-state',apply:()=>{
@@ -425,10 +426,10 @@ export function finalizeOriginalJsonErrorFlow(checker,program,Parser,Checker,tai
   currentFunction(checker,fact.item,fact.receipt);if(!same({params:fact.entry.params,ret:fact.entry.ret,body:fact.entry.body},fact.snapshot))fail();return fact;
  };
  for(const [name,fact]of records){
-  if(!fact.receipt.errorLane&&!fact.receipt.optionLane&&!fact.receipt.readonlyScalarLane)continue;current(name);const dependencies=new Map();
+  if(!fact.receipt.errorLane&&!fact.receipt.optionLane&&!fact.receipt.readonlyScalarLane&&!fact.receipt.primitiveVectorHelperLane)continue;current(name);const dependencies=new Map();
   try{createRulePipeline([
    {phase:'language',rules:[{id:'owned-json-error-flow:check-current-linear-result-and-readonly-closure',apply:()=>{
-    validateOwnedJsonFlow(checker,fact.entry,{readonlyScalar:(node,owner)=>{const entry=currentReadonlyScalarCallee(checker,node,owner),target=current(node.fn);dependencies.set(node.fn,{name:node.fn,...target.snapshot});return entry;},genuineVector:node=>hasCheckedRouterCoreVector(node)&&isCanonicalOwnedJsonVectorElement(checker,node.type?.element,node.span),genuineScalar:(node,owner)=>isGenuineRouterCoreScalarCall(checker,node,owner),
+    validateOwnedJsonFlow(checker,fact.entry,{ownedPrimitiveVectorCallee:(node,owner)=>{const entry=currentOwnedPrimitiveVectorCallee(checker,node,owner),target=current(node.fn);dependencies.set(node.fn,{name:node.fn,...target.snapshot});return entry;},readonlyScalar:(node,owner)=>{const entry=currentReadonlyScalarCallee(checker,node,owner),target=current(node.fn);dependencies.set(node.fn,{name:node.fn,...target.snapshot});return entry;},genuineVector:node=>hasCheckedRouterCoreVector(node)&&isCanonicalOwnedJsonVectorElement(checker,node.type?.element,node.span),genuineScalar:(node,owner)=>isGenuineRouterCoreScalarCall(checker,node,owner),
      genuine:(node,entry)=>{const owner=records.get(entry.fullName),proof=issued.get(node.compatibilityCore);return proof?.checker===checker&&proof.frame===owner?.receipt&&proof.id===node.id&&same(node.args,proof.args);},
      genuineTextMatch:node=>fact.receipt.textMatches?.some(record=>same(node,record.body)&&same(record.syntax,record.original))===true,
      closedOption:fact.receipt.optionLane?closedOptionSource(checker,fact,current,Parser,Checker,program):null,
@@ -714,3 +715,15 @@ function checkedPrimitiveOwnedVector(checker,node,capture,env,path,expected){
  const row=primitiveOwnedVectorOperationShape(node.operation),frame=activeFunctions.get(checker);if(!row||!frame)fail();const current=()=>{requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged()||activeFunctions.get(checker)!==frame||!same(node,capture.syntax))fail();};current();
  const stage=createRulePipeline([{phase:'language',rules:[{id:'primitive-owned-vector:check-actual-vector-move-shared-scalar-and-option-ownership',apply:()=>checkForwardPrimitiveOwnedVector(checker,node,env,path,expected,{current})}]},{phase:'repository',rules:[{id:'router:retain-private-paired-owned-vector-caller',apply:call=>({...call,compatibilityCore:{id:'router-primitive-owned-vector-v1',symbol:row.rustPath,sourceTrace:capture.receipt.trace,libraryImplementation:'untranslated-owned-rust-library',boundedProjection:true,runtimeParity:false}})}]}]).run(null),value=stage.value,record={checker,frame,id:value.id,args:copyMetadata(value.args)},roots=[...value.args.map(argument=>argument.type),value.type];record.layouts=copyMetadata(captureBorrowedLayouts(checker,roots));record.roots=copyMetadata(roots);record.key=metadataDigest({functionName:frame.functionName,source:frame.syntax,call:value,layouts:record.layouts});value.compatibilityCore.sourceProjectionKey=record.key;record.call=copyMetadata(value);(frame.projections??=new Set()).add(record);issued.set(value.compatibilityCore,record);current();return value;
 }
+
+// Selection DATA only; no candidate flag or source type admits a helper.
+function hasOwnedPrimitiveVectorHelperCandidate(root){let budget=100000;const visit=(node,depth=0)=>{if(!node||typeof node!=='object')return false;if(--budget<0||depth>160)fail();if(node.k==='call'&&node.type?.kind==='array'&&node.type.rustOwnership?.source==='Vec')return true;for(const [key,value]of Object.entries(node))if(!['type','span','compatibilityCore','sourceFunctionItem'].includes(key))for(const child of Array.isArray(value)?value:[value])if(visit(child,depth+1))return true;return false;};return visit(root);}
+function currentOwnedPrimitiveVectorCallee(checker,node,owner){
+ requireOriginalPrimitiveTryFromChecker(checker);const records=completedFunctions.get(checker),target=records?.get(node.fn),caller=records?.get(owner.fullName);if(!target||!caller||caller.entry!==owner||checker.items.get(owner.fullName)!==owner||checker.items.get(node.fn)!==target.entry)throw unsupported('owned primitive vector helper','requires complete current original caller and callee bodies',node.span);
+ for(const fact of [caller,target]){currentFunction(checker,fact.item,fact.receipt);if(!same({params:fact.entry.params,ret:fact.entry.ret,body:fact.entry.body},fact.snapshot))fail();}
+ const row=target.entry,path=row.modulePath??[],domain=actualOwnedPrimitiveVector(checker,row.ret,node,path);if(row.k!=='fn'||row.async||!same(row.modulePath,owner.modulePath)||!domain||actualOwnedPrimitiveVector(checker,node.type,node,path)!==domain||!sameType(row.ret,node.type)||row.params?.length!==node.args.length)throw unsupported('owned primitive vector helper','requires its actual same-module owned primitive Vec return and exact operand count',node.span);
+ const role=type=>{if(type?.rustReference)return actualPrimitiveSlice(checker,type,node)?'slice':null;if(!type||type.rustOwnership||type.patternOwnershipRefusal||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)return null;if(type.kind==='bool')return 'bool';const fixed=primitiveBitwiseType(type.rustPrimitiveName);return type.kind==='fixed'&&fixed&&type.bits===fixed.bits&&type.signed===fixed.signed?fixed.name:null;};
+ for(let index=0;index<row.params.length;index++){const actual=node.args[index].type,wanted=row.params[index].type;if(!role(actual)||role(actual)!==role(wanted)||!sameType(actual,wanted))throw unsupported('owned primitive vector helper input','requires identical actual Copy primitives or shared primitive slices; owned Vec parameters need their own boundary',node.span);checker.expectedOwnership(actual,wanted,path,node.span);checker.expectedPrimitiveIdentity(actual,wanted,path,node.span);}checker.expectedOwnership(row.ret,node.type,path,node.span);checker.expectedPrimitiveIdentity(row.ret,node.type,path,node.span);requireOriginalPrimitiveTryFromChecker(checker);return row;
+}
+import {actualOwnedPrimitiveVector} from './primitive-owned-vector-forward-domain.mjs';
+import {actualPrimitiveSlice} from './owned-scalar-slice-flow.mjs';

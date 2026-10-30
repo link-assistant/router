@@ -882,3 +882,12 @@ root/history/88-operation source-join receiving cases remain UNRUN. See [the
 source contract](primitive-owned-vector-root-source-draft.md). Physical source
 reachability grants no executable coverage; broader contracts and full sync
 remain OPEN. No tests, local compilation or CI feedback were used.
+
+### Native owned primitive vector helper graph draft (2026-10-30)
+
+Four complete source equations add same-module construction/helper closures
+returning owned primitive vectors, with existing completed-body/private caller
+joins, ordered copied/shared inputs, bounded acyclic flow and full dependency
+rejoins. Eleven-domain emitted JS/strict-TS and recursion/foreign/move refusal
+case sources remain UNRUN. See [the helper contract](primitive-owned-vector-native-helpers-source-draft.md).
+Broader Vec inputs, mutation and full synchronization remain OPEN.
