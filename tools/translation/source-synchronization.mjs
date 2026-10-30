@@ -297,3 +297,6 @@ export {proposeNativeJsonLiteralPathSearch,proposeNativeJsonLiteralPathSearches}
 export {proposeNativeJsonOptionalPathReader,proposeNativeJsonOptionalPathReaders} from './native-json-optional-path-reader-proposals.mjs';
 
 export {proposeNativeJsonOptionalPathReaderDiscovery} from './native-json-optional-path-reader-discovery.mjs';
+
+export {withNativeSubstitutionOperation as withFailureAwareNativeSubstitutionOperation,prepareNativeSubstitutionCopy as prepareFailureAwareNativeSubstitutionCopy} from './failure-aware-native-substitution-copy.mjs';
+export {withMixedNativeSubstitutionOperation as withFailureAwareMixedNativeSubstitutionOperation,prepareMixedNativeSubstitutionCopy as prepareFailureAwareMixedNativeSubstitutionCopy} from './failure-aware-mixed-native-substitution-copy.mjs';

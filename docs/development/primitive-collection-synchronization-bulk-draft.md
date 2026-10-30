@@ -153,3 +153,15 @@ authority. The actual catalog and mixed/batch/refusal/resource/descriptor/fresh
 operation cases are UNRUN; broader namespace, adoption, parity, synchronization,
 receiving and delivery remain OPEN. See
 [the discovery contract](native-json-reader-discovery-source-draft.md).
+
+## Failure-aware source preparer copies (2026-10-30)
+
+Nine source equations copy the original JS/TS and separate mixed Rust-CST
+preparers and physical source fences into additive failure-aware modules. Four
+primitive core/root drivers and the latest JSON source driver select them. All
+old public APIs and complete closing loops remain; caught observed source
+failures revoke active scopes without classifying ordinary application errors.
+Independent valid/legacy/physical/archive/pin/cross-family/closing/primary and
+fresh-operation cases are UNRUN. Broader source, namespace, receiving, parity,
+synchronization and delivery requirements remain OPEN. See
+[the preparer contract](native-preparer-failure-source-draft.md).
