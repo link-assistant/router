@@ -116,7 +116,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,ge
    const byte=t=>t?.kind==='fixed'&&t.bits===8&&t.signed===false&&t.rustPrimitiveName==='u8'&&t.rustSourceType===true&&!t.rustReference&&!t.rustOwnership&&!t.patternOwnershipRefusal&&!t.rustBorrowingUnresolved&&!t.rustGenericIdentityUnresolved;
    const bytes=t=>t?.kind==='array'&&t.rustSourceType===true&&t.rustOwnership?.kind==='borrowed'&&t.rustOwnership.source==='slice'&&!t.rustFixedArray&&!t.rustBorrowingUnresolved&&!t.rustGenericIdentityUnresolved&&byte(t.element);
    if(bytes(type)&&bytes(pointee)&&!pointee.rustReference&&!pointee.patternOwnershipRefusal&&type.patternOwnershipRefusal==='shared source reference'&&type.rustReference.tokens?.[0]?.value==='&'&&sameType(type.element,pointee.element)&&hasOptionalParse()){checker.expectedOwnership(type.element,pointee.element,entry.modulePath??[],node?.span??entry.span);checker.expectedPrimitiveIdentity(type.element,pointee.element,entry.modulePath??[],node?.span??entry.span);return 'copy';}
-   if(actualPrimitiveSlice(checker,type,node))return 'scalar-slice';
+   if(actualSharedPrimitiveVector(checker,type,node??entry,entry.modulePath??[])&&hasPrimitiveVectorBoundary())return 'scalar-vector-ref';if(actualPrimitiveSlice(checker,type,node))return 'scalar-slice';
    if(hasOwnedCarrierBoundary()&&carrierType(pointee,node))return 'borrow';
    if(domain(type.rustReference.pointee,node,active)==='copy')return 'copy';
    refuse('aggregate reference requires a separate loan proof',node);
@@ -166,9 +166,9 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,ge
   const state={names:new Map(),available:new Map(),values:new Map(),alive:true,entry:current,external,callPath,functionReturns:[]};
   for(const [at,param]of current.params.entries()){
    const initial=arguments_?.[at]??empty(),slot=bind(state,param.name,param.type,false,current,initial),fact=state.values.get(slot);
-   if(!arguments_&&slot.kind==='scalar-vector'&&!hasBoundedOwnedPrimitiveVectorEntry(current,param.name,genuine))refuse('public primitive Vec inputs require their actual leading bounded owned truncate(input, u64::MAX) result',current);
-   slot.input=slot.kind==='borrow'||slot.kind==='loan-option'||slot.kind==='slice'||slot.kind==='scalar-slice';
-   if(!arguments_){if(slot.kind==='borrow'||slot.kind==='slice'||slot.kind==='scalar-slice')fact.loans.set(path([]),new Set([slot]));if(slot.kind==='loan-option'){fact.loans.set(path(['field0']),new Set([slot]));fact.tags=new Set(['Some','None']);}}
+   if(!arguments_&&slot.kind==='scalar-vector'&&!hasBoundedPrimitiveVectorEntry(current,param.name,false,genuine))refuse('public primitive Vec inputs require their actual leading bounded owned truncate(input, u64::MAX) result',current);
+   if(!arguments_&&slot.kind==='scalar-vector-ref'&&!hasBoundedPrimitiveVectorEntry(current,param.name,true,genuine))refuse('shared Vec input requires its actual leading bounded len(input) result',current);slot.input=slot.kind==='scalar-vector-ref'||slot.kind==='borrow'||slot.kind==='loan-option'||slot.kind==='slice'||slot.kind==='scalar-slice';
+   if(!arguments_){if(slot.kind==='borrow'||slot.kind==='slice'||slot.kind==='scalar-slice'||slot.kind==='scalar-vector-ref')fact.loans.set(path([]),new Set([slot]));if(slot.kind==='loan-option'){fact.loans.set(path(['field0']),new Set([slot]));fact.tags=new Set(['Some','None']);}}
   }
   return state;
  };
@@ -382,7 +382,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,ge
   if(node.k==='routerHostCall'){
    const vector=primitiveOwnedVectorOperationShape(node.id);if(vector){
     const output=vector.returns.startsWith('vec:')?'scalar-vector':'copy';if(!genuine(node,state.entry)||node.args.length!==vector.parameters.length||kind!==output||state.callbackCaptures)refuse('primitive vector requires its actual complete private caller outside callbacks',node);const observed=[];
-    for(let index=0;index<vector.parameters.length;index++){const role=vector.parameters[index],argument=node.args[index],actual=domain(argument.type,argument),owned=role==='vec:'+vector.domain,shared=role==='vec:'+vector.domain+'-ref',slice=role===vector.domain+'-list-ref';if(actual!==(owned||shared?'scalar-vector':slice?'scalar-slice':'copy'))refuse('primitive vector actual operand ownership differs',argument);const fact=read(argument,owned?'move':shared||slice?'borrow':'copy');ensureRoots(fact,state,argument);if(slice&&!fact.loans.get(path([]))?.size)refuse('primitive vector slice requires its live shared input root',argument);observed.push(fact);}
+    for(let index=0;index<vector.parameters.length;index++){const role=vector.parameters[index],argument=node.args[index],actual=domain(argument.type,argument),owned=role==='vec:'+vector.domain,shared=role==='vec:'+vector.domain+'-ref',slice=role===vector.domain+'-list-ref';if(shared?!['scalar-vector','scalar-vector-ref'].includes(actual):actual!==(owned?'scalar-vector':slice?'scalar-slice':'copy'))refuse('primitive vector actual operand ownership differs',argument);const fact=read(argument,owned?'move':shared||slice?'borrow':'copy');ensureRoots(fact,state,argument);if(slice&&!fact.loans.get(path([]))?.size)refuse('primitive vector slice requires its live shared input root',argument);observed.push(fact);}
     for(const fact of observed)ensureRoots(fact,state,node);return {loans:new Map(),tags:vector.operation==='get'?new Set(['Some','None']):null};
    }
    const sequence=primitiveSequenceOperationShape(node.id);if(sequence){if(!genuine(node,state.entry)||node.args.length!==sequence.parameters.length||kind!=='copy'||domain(node.args[0].type,node.args[0])!=='scalar-slice')refuse('primitive sequence needs its actual private readonly slice caller and copied output',node);const receiver=read(node.args[0],'borrow');ensureRoots(receiver,state,node);if(!receiver.loans.get(path([]))?.size)refuse('primitive sequence receiver lacks its live shared input root',node);if(sequence.operation==='get'){if(domain(node.args[1].type,node.args[1])!=='copy')refuse('primitive sequence index needs its actual Copy domain',node);const index=read(node.args[1],'copy');ensureRoots(index,state,node);if(index.loans.size)refuse('primitive sequence index cannot retain an input loan',node);}ensureRoots(receiver,state,node);return {loans:new Map(),tags:sequence.operation==='get'?new Set(['Some','None']):null};}
@@ -505,7 +505,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,ge
   if(node.k==='call'){
    if((node.type?.kind==='array'&&node.type.rustOwnership?.source==='Vec'||node.args?.some(value=>value.type?.kind==='array'&&value.type.rustOwnership?.source==='Vec'))&&typeof ownedPrimitiveVectorCallee==='function'){
     const target=ownedPrimitiveVectorCallee(node,state.entry);if(!target||!['scalar-vector','copy'].includes(kind)||state.callbackCaptures||++callCount>128||state.callPath.length>=32||state.callPath.includes(target.fullName))refuse('owned primitive vector helper needs a complete bounded acyclic original body outside callbacks',node);
-    const arguments_=[];for(let index=0;index<node.args.length;index++){const argument=node.args[index],wanted=target.params[index].type,actual=domain(argument.type,argument);if(!['copy','scalar-slice','scalar-vector'].includes(actual)||actual!==domain(wanted,argument)||!sameType(argument.type,wanted))refuse('owned primitive vector helper requires matching actual owned vector, copied primitive or shared slice inputs',argument);checker.expectedOwnership(argument.type,wanted,target.modulePath,node.span);checker.expectedPrimitiveIdentity(argument.type,wanted,target.modulePath,node.span);const fact=read(argument,actual==='scalar-vector'?'move':actual==='scalar-slice'?'borrow':'copy');ensureRoots(fact,state,argument);arguments_.push(fact);}
+    const arguments_=[];for(let index=0;index<node.args.length;index++){const argument=node.args[index],wanted=target.params[index].type,actual=domain(argument.type,argument);if(!['copy','scalar-slice','scalar-vector','scalar-vector-ref'].includes(actual)||actual!==domain(wanted,argument)||!sameType(argument.type,wanted))refuse('owned primitive vector helper requires matching actual owned vector, copied primitive or shared slice inputs',argument);checker.expectedOwnership(argument.type,wanted,target.modulePath,node.span);checker.expectedPrimitiveIdentity(argument.type,wanted,target.modulePath,node.span);const fact=read(argument,actual==='scalar-vector'?'move':actual==='scalar-slice'||actual==='scalar-vector-ref'?'borrow':'copy');ensureRoots(fact,state,argument);arguments_.push(fact);}
     for(const fact of arguments_)ensureRoots(fact,state,node);const child=createState(target,arguments_,new Set(arguments_.flatMap(value=>[...roots(value)])),[...state.callPath,target.fullName]),previous=selectedOptionTypes;let value;selectedOptionTypes=null;try{value=visit(target.body,child,'move',depth+1);}finally{selectedOptionTypes=previous;}for(const returned of child.functionReturns)value=union(value,returned);if(value.loans.size)refuse('owned primitive vector helper cannot return a source loan',node);returnRoots(value,node,child);ownedPrimitiveVectorCallee(node,state.entry);ensureRoots(value,state,node);return empty();
    }
    if(closedErrors){
@@ -538,7 +538,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,ge
   }
   refuse('unsupported control/escape node '+node.k,node);
  };
- let result=visit(entry.body,state);for(const returned of state.functionReturns)result=union(result,returned);returnRoots(result,entry,state);return result;
+ let result=visit(entry.body,state);for(const returned of state.functionReturns)result=union(result,returned);if(actualSharedPrimitiveVector(checker,entry.ret,entry,entry.modulePath??[]))refuse('escaping shared vector results require their separate complete return contract',entry);returnRoots(result,entry,state);return result;
 }
 
 import {totalPrimitiveFlowOperands} from './extensions/total-primitive-flow.mjs';
@@ -550,4 +550,5 @@ import {primitiveSequenceOperationShape} from './primitive-sequence-call-shape.m
 import {primitiveOwnedVectorOperationShape} from './primitive-owned-vector-call-shape.mjs';
 import {actualOwnedPrimitiveVector} from './primitive-owned-vector-forward-domain.mjs';
 
-import {hasBoundedOwnedPrimitiveVectorEntry} from './owned-primitive-vector-entry-source.mjs';
+import {hasBoundedPrimitiveVectorEntry} from './owned-primitive-vector-entry-source.mjs';
+import {actualSharedPrimitiveVector} from './shared-primitive-vector-native-type.mjs';

@@ -939,3 +939,13 @@ scalar and copied standard-Option results. Original JS/TS local-call issuing
 remains in place. Eleven-domain emitted/typed/interpreter/CST/inverse and native
 helper receiving case sources remain UNRUN. See [the helper input contract](primitive-owned-vector-helper-inputs-source-draft.md).
 Shared Vec inputs, broader/native adoption and full synchronization remain OPEN.
+
+### Guarded shared primitive vector input draft (2026-10-30)
+
+Seventeen complete source equations add actual leading len(input) guards,
+shared JS/TS parameter witnesses/live roots and native single-reference/Copy
+source checks. Mixed prefixes, helper reads and copied outputs retain complete
+private caller/flow/emission checks. The original paired core stays unchanged.
+Independent all-domain emitted/typed/interpreter/CST/inverse/native and Rust
+oracle case sources remain UNRUN. See [the shared contract](primitive-shared-vector-inputs-source-draft.md).
+Escaping shared-vector results, broader adoption and full synchronization remain OPEN.

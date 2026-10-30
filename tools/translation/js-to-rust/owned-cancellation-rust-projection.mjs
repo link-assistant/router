@@ -74,7 +74,7 @@ export function projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot,
  const tick=depth=>{if(++cells>100000||depth>160)fail('original owned projection node/depth budget exceeded');};
  const relative=name=>{const value=posix.relative(posix.dirname(javascriptPath),runtimeRoot+'/'+name+'-runtime.mjs');return value.startsWith('.')?value:'./'+value;};
  function imported(name,family){const key=family+':'+name;if(!imports.has(key))imports.set(key,{name,family,local:'original_'+name});return imports.get(key).local;}
- function type(text){const vectorWitness=vectorTypes?(ownedRustPrimitiveVectorReturnWitness(text)??ownedRustPrimitiveVectorOptionalWitness(text)):null;if(vectorWitness)return 'ReturnType<typeof '+imported(vectorWitness,'primitive-owned-vector')+'>';const sequenceWitness=sequenceTypes?ownedRustPrimitiveSequenceOptionalWitness(text):null;if(sequenceWitness)return 'ReturnType<typeof '+imported(sequenceWitness,'primitive-sequence')+'>';if(text===OWNED_BASE64_RESULT_RUST_TYPE)return 'import('+JSON.stringify(relative('base64'))+').Base64Result';
+ function type(text){const sharedVector=vectorTypes?ownedRustSharedPrimitiveVectorWitness(text):null;if(sharedVector)return 'Parameters<typeof '+imported(sharedVector,'primitive-owned-vector')+'>[0]';const vectorWitness=vectorTypes?(ownedRustPrimitiveVectorReturnWitness(text)??ownedRustPrimitiveVectorOptionalWitness(text)):null;if(vectorWitness)return 'ReturnType<typeof '+imported(vectorWitness,'primitive-owned-vector')+'>';const sequenceWitness=sequenceTypes?ownedRustPrimitiveSequenceOptionalWitness(text):null;if(sequenceWitness)return 'ReturnType<typeof '+imported(sequenceWitness,'primitive-sequence')+'>';if(text===OWNED_BASE64_RESULT_RUST_TYPE)return 'import('+JSON.stringify(relative('base64'))+').Base64Result';
   const scalar=primitiveOperators&&text.startsWith('::core::primitive::')?ownedRustPrimitiveType(text):null;if(scalar)return 'import('+JSON.stringify(relative('primitive-operator'))+').'+scalar.alias;
   text=text.replaceAll("&'a",'&');
   if(text==='&crate::translation_async_control_core::Cancellation')return 'Parameters<typeof '+imported('router_cancel_is_set','async-control')+'>[0]';
@@ -208,4 +208,4 @@ import {OWNED_BASE64_RESULT_RUST_TYPE} from './owned-base64-inputs.mjs';
 
 import {ownedRustPrimitiveSequenceCall,ownedRustPrimitiveSequencePresence,ownedRustPrimitiveSequenceOptionalWitness} from './owned-rust-primitive-sequence-projection.mjs';
 
-import {ownedRustPrimitiveVectorCall,ownedRustPrimitiveVectorPresence,ownedRustPrimitiveVectorReturnWitness,ownedRustPrimitiveVectorOptionalWitness} from './owned-rust-primitive-vector-projection.mjs';
+import {ownedRustSharedPrimitiveVectorWitness,ownedRustPrimitiveVectorCall,ownedRustPrimitiveVectorPresence,ownedRustPrimitiveVectorReturnWitness,ownedRustPrimitiveVectorOptionalWitness} from './owned-rust-primitive-vector-projection.mjs';
