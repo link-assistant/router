@@ -849,3 +849,10 @@ resource-bound declarations while sharing complete parsing inside one bounded
 operation. Three complete equations and independent all-operation/receiving/
 refusal/lifecycle case source are UNRUN. Source facts issue no real caller,
 move/borrow or namespace permission; private integration and full sync remain OPEN.
+
+The [local owned vector caller draft](owned-primitive-vector-local-calls-source-draft.md)
+adds actual import/ABI/type checks, local consuming moves and call-duration shared
+loans in both reverse families, with targets, both interpreters, meta reissue and
+runtime assets. Seventeen full equations and independent complete caller/refusal
+source are UNRUN. Public inputs, mutation/iteration/captures, canonical inverse,
+native forward/root/history, adoption and full synchronization remain OPEN.

@@ -18,7 +18,7 @@ function translate(stage,{context,sourcePath,typescriptOutputPath}={}){const seq
   ]},
   {phase:'repository',rules:[{id:'router:retain-original-collection-source-and-explicit-parity-obligations',apply:value=>({...value,javascript:stage.source,concreteSyntax:stage.concreteSyntax,profile:'router-owned-json-outcome-v1',runtimeParity:false,wholeRouterSynchronization:false,rustExecuted:false})}]},
  ]).run(null);requireOwnedCoreSourceCurrent(context);return {...run.value,trace:run.trace};
-};return sequenceData.files.some(row=>row.path===sequenceData.runtimeRoot+'/primitive-sequence-runtime.mjs')?withOriginalPrimitiveSequenceSourceOperation(execute):execute();}
+};const run=()=>sequenceData.files.some(row=>row.path===sequenceData.runtimeRoot+'/primitive-sequence-runtime.mjs')?withOriginalPrimitiveSequenceSourceOperation(execute):execute();return sequenceData.files.some(row=>row.path===sequenceData.runtimeRoot+'/primitive-owned-vector-runtime.mjs')?withOriginalPrimitiveOwnedVectorSourceOperation(run):run();}
 
 export function translateOwnedCollectionsJavaScript(source,options){return translate(prepareReverseConcreteSource(source),options);}
 export function translateOwnedCollectionsConcreteSyntaxMeta(meta,options){return translate(parseReverseConcreteSource(meta),options);}
@@ -45,3 +45,5 @@ export {createOwnedCoreSourceContext as createOwnedOutcomeContext,ownedCoreRunti
 export {translateOwnedCollectionsJavaScript as translateOwnedOutcomeJavaScript,translateOwnedCollectionsTypeScript as translateOwnedOutcomeTypeScript,translateOwnedCollectionsConcreteSyntaxMeta as translateOwnedOutcomeConcreteSyntaxMeta,emitOwnedCollectionsRust as emitOwnedOutcomeRust};
 
 import {withOriginalPrimitiveSequenceSourceOperation} from '../current-primitive-sequence-source.mjs';
+
+import {withOriginalPrimitiveOwnedVectorSourceOperation} from '../current-primitive-owned-vector-source.mjs';

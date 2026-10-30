@@ -182,14 +182,16 @@ export function checkOwnedCoreProgram(program,context){return withPrimitiveSeque
 export function ownedCoreContext(item){return issued.get(checkOwnedCoreItem(item))?.context;}
 const rustString=value=>'"'+value.replace(/[\\"\x00-\x1f\x7f]/gu,c=>({'\\':'\\\\','"':'\\"','\n':'\\n','\r':'\\r','\t':'\\t'}[c]??'\\u{'+c.codePointAt(0).toString(16)+'}'))+'"';
 const TS_TYPES={...primitiveBitwiseTypeScriptTypes,...ownedCollectionTypeScriptTypes,...ownedBase64TypeScriptTypes,...ownedJsonTypeScriptTypes,'json-option-input':'Parameters<typeof __ro_router_core_json_option_as_str>[0]','json-text-result':'ReturnType<typeof __ro_router_carrier_json_ok>',json:'JsonValue','json-ref':'JsonValue','map-ref':"Extract<JsonValue,{readonly $:'Object'}>['field0']",str:'string',bool:'boolean',usize:'bigint'};
-const RUST_TYPES={...primitiveBitwiseRustTypes,...OWNED_PRIMITIVE_SLICE_RUST_TYPES,...ownedPrimitiveResultRustTypes,...ownedCollectionRustTypes,...ownedBase64RustTypes,...ownedJsonRustTypes,'json-option-input':"::std::option::Option<&'a crate::translation_core::Json>",'json-text-result':'::std::result::Result<crate::translation_core::Json,::std::string::String>',json:'crate::translation_core::Json','json-ref':"&'a crate::translation_core::Json",'map-ref':"&'a ::serde_json::Map<::std::string::String,crate::translation_core::Json>",str:"&'a str",bool:'bool',usize:'u64'};
+const RUST_TYPES={...OWNED_PRIMITIVE_VECTOR_RUST_TYPES,...primitiveBitwiseRustTypes,...OWNED_PRIMITIVE_SLICE_RUST_TYPES,...ownedPrimitiveResultRustTypes,...ownedCollectionRustTypes,...ownedBase64RustTypes,...ownedJsonRustTypes,'json-option-input':"::std::option::Option<&'a crate::translation_core::Json>",'json-text-result':'::std::result::Result<crate::translation_core::Json,::std::string::String>',json:'crate::translation_core::Json','json-ref':"&'a crate::translation_core::Json",'map-ref':"&'a ::serde_json::Map<::std::string::String,crate::translation_core::Json>",str:"&'a str",bool:'bool',usize:'u64'};
 export function emitOwnedCoreProgram(input,target,{outputPath}={}){return withPrimitiveSequenceProgramSource(input,()=>{
  const program=checkOwnedCoreProgram(input),rust=target==='rust';if(!rust&&target!=='typescript')fail('unknown target');if(!program.length)return '';
  const context=issued.get(program[0]).context;requireOwnedCoreSourceCurrent(context);const sourceData=ownedCoreSourceData(context),rustTypes=sourceData.primitiveOperators===true?{...RUST_TYPES,...primitiveBitwiseRustTypes}:RUST_TYPES;
  if(program.some(item=>issued.get(item).context!==context))fail('mixed receiving contexts');
  let sequence=0;const imports=new Set(),primitiveTypeImports=new Set();let resultTypePrefix=null;const resultTypeNamespace=()=>{if(resultTypePrefix!==null)return resultTypePrefix;if(!sourceData.files.some(row=>row.path==='src/translation_owned_results_core.rs'))return resultTypePrefix='router_result_';try{requireOwnedResultSources(new Map(sourceData.files.map(row=>[row.path,row.source])),sourceData);resultTypePrefix='router_owned_result_';}catch{resultTypePrefix='router_result_';}return resultTypePrefix;};
+ const vectorTypes=program.some(item=>item.hostCalls.some(call=>primitiveOwnedVectorOperationShape(call.name)));
  const sequenceTypes=program.some(item=>item.hostCalls.some(call=>primitiveSequenceOperationShape(call.name)));
  function publicTypeScriptType(type,parameter=false){if(sourceData.primitiveOperators===true&&primitiveBitwiseType(type)){const row=primitiveBitwiseType(type);primitiveTypeImports.add(row.alias);return row.alias;}
+  const vectorWitness=primitiveOwnedVectorTypeWitness(type)??(vectorTypes?primitiveOwnedVectorOptionalWitness(type):null);if(vectorWitness){imports.add(vectorWitness);return 'ReturnType<typeof __ro_'+vectorWitness+'>';}
   const sequenceWitness=sequenceTypes?primitiveSequenceOptionalWitness(type):null;if(sequenceWitness){imports.add(sequenceWitness);return 'ReturnType<typeof __ro_'+sequenceWitness+'>';}
   const integerOption=sourceData.primitiveOperators===true?ownedIntegerOptionalWitness(type):null;if(integerOption){imports.add(integerOption);return 'ReturnType<typeof __ro_'+integerOption+'>';}
   if(type==='json-option-input'){imports.add('router_core_json_option_as_str');return TS_TYPES[type];}
@@ -217,6 +219,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){return withPr
    case 'primitive-result-ok':return rust?'Ok('+expr(value.value)+')':"({$:'Ok',field0:"+expr(value.value)+'})';
    case 'primitive-result-err':return rust?'Err('+expr(value.value)+'.to_owned())':"({$:'Err',field0:"+expr(value.value)+'})';
    case 'primitive-option-callback-call':return emitOwnedPrimitiveOptionCallback(value,{rust,expr,body,rustName,imports,typeScriptType:publicTypeScriptType});
+   case 'primitive-owned-vector-call':return emitOwnedPrimitiveVectorCall(value,{rust,expr,imports});
    case 'primitive-sequence-call':return emitOwnedPrimitiveSequenceCall(value,{rust,expr,imports});
    case 'primitive-option-call':return emitOwnedPrimitiveOptionCall(value,{rust,expr,imports});
    case 'text-call':return emitOwnedTextCall(value,{rust,expr,imports});
@@ -332,8 +335,8 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){return withPr
  if(hasOwnedBase64Input(program)||[...imports].some(name=>ownedBase64Operation(name)))lines.push('import type {Base64Error,Base64Result} from '+JSON.stringify(relative('base64-runtime.mjs'))+';');
  if(hasWidePrimitiveSliceInput(program))lines.push('import {primitiveSliceInput as __ro_primitiveSliceInput} from '+JSON.stringify(relative('primitive-operator-runtime.mjs'))+';');
  if(hasOwnedBase64Input(program))lines.push('import {base64ResultInput as __ro_base64ResultInput} from '+JSON.stringify(relative('base64-runtime.mjs'))+';');
- for(const family of ['primitive-sequence','primitive-operator','json-update','json-macro','base64','json','json-option','string-iterator','json-collections','json-iteration','json-state','json-fields','owned-outcome','integer','sse','text','primitive-option','primitive-option-callback','primitive-result','owned-result','http-protocol']){
-  const names=[...imports].filter(name=>(primitiveSequenceOperationShape(name)?'primitive-sequence':ownedPrimitiveOperatorOperation(name)?'primitive-operator':ownedPrimitiveResultOperation(name)?ownedPrimitiveResultOperation(name).runtimeModule.slice(0,-12):ownedPrimitiveOptionCallbackOperation(name)?'primitive-option-callback':ownedPrimitiveOptionOperation(name)?'primitive-option':ownedTextOperation(name)?'text':ownedSseOperation(name)?'sse':ownedIntegerOperation(name)?'integer':ownedOutcomeOperation(name)?'owned-outcome':ownedJsonFieldOperation(name)?'json-fields':ownedStateOperation(name)?'json-state':ownedIterationOnlyOperation(name)?'json-iteration':ownedCollectionOperation(name)?'json-collections':ownedAsciiOperation(name)?'string-iterator':ownedJsonOptionalReaderOperation(name)?'json-option':ownedBase64Operation(name)?'base64':ownedJsonReaderOperation(name)?'json':name.startsWith('json_macro_')?'json-macro':'json-update')===family);
+ for(const family of ['primitive-owned-vector','primitive-sequence','primitive-operator','json-update','json-macro','base64','json','json-option','string-iterator','json-collections','json-iteration','json-state','json-fields','owned-outcome','integer','sse','text','primitive-option','primitive-option-callback','primitive-result','owned-result','http-protocol']){
+  const names=[...imports].filter(name=>(primitiveOwnedVectorOperationShape(name)?'primitive-owned-vector':primitiveSequenceOperationShape(name)?'primitive-sequence':ownedPrimitiveOperatorOperation(name)?'primitive-operator':ownedPrimitiveResultOperation(name)?ownedPrimitiveResultOperation(name).runtimeModule.slice(0,-12):ownedPrimitiveOptionCallbackOperation(name)?'primitive-option-callback':ownedPrimitiveOptionOperation(name)?'primitive-option':ownedTextOperation(name)?'text':ownedSseOperation(name)?'sse':ownedIntegerOperation(name)?'integer':ownedOutcomeOperation(name)?'owned-outcome':ownedJsonFieldOperation(name)?'json-fields':ownedStateOperation(name)?'json-state':ownedIterationOnlyOperation(name)?'json-iteration':ownedCollectionOperation(name)?'json-collections':ownedAsciiOperation(name)?'string-iterator':ownedJsonOptionalReaderOperation(name)?'json-option':ownedBase64Operation(name)?'base64':ownedJsonReaderOperation(name)?'json':name.startsWith('json_macro_')?'json-macro':'json-update')===family);
   if(names.length)lines.push('import { '+names.map(name=>name+' as __ro_'+name).join(', ')+' } from '+JSON.stringify(relative(family+'-runtime.mjs'))+';');
  }
  return lines.join('\n')+'\n\n'+code+'\n';
@@ -383,6 +386,7 @@ export async function prepareOwnedCoreRuntime(input){
  if(program.some(item=>item.hostCalls.some(call=>ownedIntegerOperation(call.name))))modules.integer=await import('../integer-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedSseOperation(call.name))))modules.sse=await import('../sse-runtime.mjs');
  if(program.some(item=>item.ownedTextCopies||item.hostCalls.some(call=>ownedTextOperation(call.name))))modules.text=await import('../text-runtime.mjs');
+ if(program.some(item=>item.hostCalls.some(call=>primitiveOwnedVectorOperationShape(call.name))))modules.primitiveOwnedVector=await import('../extensions/primitive-owned-vector-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>primitiveSequenceOperationShape(call.name))))modules.primitiveSequence=await import('../extensions/primitive-sequence-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedPrimitiveOptionOperation(call.name))))modules.primitiveOption=await import('../primitive-option-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedPrimitiveResultOperation(call.name)?.runtimeModule==='primitive-result-runtime.mjs')))modules.primitiveResult=await import('../primitive-result-runtime.mjs');
@@ -413,6 +417,7 @@ export function evaluateOwnedCoreProgram(input,name,args,token){
    case 'primitive-result-ok':return Object.freeze({$:'Ok',field0:get(value.value,scope)});
    case 'primitive-result-err':return Object.freeze({$:'Err',field0:get(value.value,scope)});
    case 'primitive-option-callback-call':return evaluateOwnedPrimitiveOptionCallback(value,{state,scope,get,run});
+   case 'primitive-owned-vector-call':return evaluateOwnedPrimitiveVectorCall(value,{state,scope,get});
    case 'primitive-sequence-call':return evaluateOwnedPrimitiveSequenceCall(value,{state,scope,get});
    case 'primitive-option-call':return evaluateOwnedPrimitiveOptionCall(value,{state,scope,get});
    case 'text-call':return evaluateOwnedTextCall(value,{state,scope,get});
@@ -486,6 +491,7 @@ function evaluateOwnedCorePrepared(program,name,args,state){
    case 'primitive-result-ok':return Object.freeze({$:'Ok',field0:get(value.value,scope)});
    case 'primitive-result-err':return Object.freeze({$:'Err',field0:get(value.value,scope)});
    case 'primitive-option-callback-call':return evaluateOwnedPrimitiveOptionCallback(value,{state,scope,get,run});
+   case 'primitive-owned-vector-call':return evaluateOwnedPrimitiveVectorCall(value,{state,scope,get});
    case 'primitive-sequence-call':return evaluateOwnedPrimitiveSequenceCall(value,{state,scope,get});
    case 'primitive-option-call':return evaluateOwnedPrimitiveOptionCall(value,{state,scope,get});
    case 'text-call':return evaluateOwnedTextCall(value,{state,scope,get});
@@ -582,4 +588,8 @@ import {hasWidePrimitiveSliceInput,widePrimitiveSliceInputPrelude,applyWidePrimi
 import {primitiveSequenceOperationShape,primitiveSequenceOptionalWitness} from '../primitive-sequence-call-shape.mjs';
 import {emitOwnedPrimitiveSequenceCall,evaluateOwnedPrimitiveSequenceCall} from './owned-primitive-sequence-emission.mjs';
 import {withOriginalPrimitiveSequenceSourceOperation} from '../current-primitive-sequence-source.mjs';
-function withPrimitiveSequenceProgramSource(program,run){const snapshot=ownedPlainData(program),needed=Array.isArray(snapshot)&&snapshot.some(item=>Array.isArray(item?.hostCalls)&&item.hostCalls.some(call=>primitiveSequenceOperationShape(call.name)));return needed?withOriginalPrimitiveSequenceSourceOperation(run):run();}
+function withPrimitiveSequenceProgramSource(program,run){const snapshot=ownedPlainData(program),needed=Array.isArray(snapshot)&&snapshot.some(item=>Array.isArray(item?.hostCalls)&&item.hostCalls.some(call=>primitiveSequenceOperationShape(call.name)));const execute=()=>needed?withOriginalPrimitiveSequenceSourceOperation(run):run(),vectors=Array.isArray(snapshot)&&snapshot.some(item=>Array.isArray(item?.hostCalls)&&item.hostCalls.some(call=>primitiveOwnedVectorOperationShape(call.name)));return vectors?withOriginalPrimitiveOwnedVectorSourceOperation(execute):execute();}
+
+import {OWNED_PRIMITIVE_VECTOR_RUST_TYPES,primitiveOwnedVectorOperationShape,primitiveOwnedVectorTypeWitness,primitiveOwnedVectorOptionalWitness} from '../primitive-owned-vector-call-shape.mjs';
+import {emitOwnedPrimitiveVectorCall,evaluateOwnedPrimitiveVectorCall} from './owned-primitive-vector-emission.mjs';
+import {withOriginalPrimitiveOwnedVectorSourceOperation} from '../current-primitive-owned-vector-source.mjs';

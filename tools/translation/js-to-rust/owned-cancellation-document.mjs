@@ -120,7 +120,7 @@ export function serializeOwnedCoreDocument(program,{context}={}){
  // Reserve the header and each checked compact row before retaining anything
  // proportional to the number of items. Only bounded encoded lines accumulate.
  output.add('owned-source-document',{profile:PROFILE,context:data});
- withOwnedCoreItemChecks(check=>{const complete=inputItems(program).map(original=>check(original,context));requireOwnedLocalCallClosure(complete);for(const item of complete){if(names.has(item.name))fail('duplicate function');names.add(item.name);output.add('owned-source-item',compact(item,files));for(const path of referenced(item))paths.add(path);}});
+ withPrimitiveOwnedVectorDocumentSource(data,()=>withOwnedCoreItemChecks(check=>{const complete=inputItems(program).map(original=>check(original,context));requireOwnedLocalCallClosure(complete);for(const item of complete){if(names.has(item.name))fail('duplicate function');names.add(item.name);output.add('owned-source-item',compact(item,files));for(const path of referenced(item))paths.add(path);}}));
  // Existing CST transport has its own source/node bounds. Its stored word must
  // fit the SAME remaining document budget before JSON/percent serialization.
  for(const path of paths)output.add('owned-source-cst',cstRow(path,files));
@@ -137,6 +137,9 @@ export function readOwnedCoreDocument(text,{context}={}){
   else fail('row order differs');
  }
  const names=new Set(),required=new Set(),pairs=new Map(),program=[];
- withOwnedCoreItemChecks(check=>{for(const item of items){for(const path of referenced(item)){if(!paths.includes(path))fail('CST source missing');required.add(path);}const checked=check(expand(item,data,files,pairs),context);if(names.has(checked.name))fail('duplicate function');names.add(checked.name);if(JSON.stringify(compact(checked,files))!==JSON.stringify(item))fail('noncanonical checked item');program.push(checked);}});
+ withPrimitiveOwnedVectorDocumentSource(data,()=>withOwnedCoreItemChecks(check=>{for(const item of items){for(const path of referenced(item)){if(!paths.includes(path))fail('CST source missing');required.add(path);}const checked=check(expand(item,data,files,pairs),context);if(names.has(checked.name))fail('duplicate function');names.add(checked.name);if(JSON.stringify(compact(checked,files))!==JSON.stringify(item))fail('noncanonical checked item');program.push(checked);}}));
  if(!isDeepStrictEqual(paths,[...required]))fail('unreferenced or reordered CST');requireOwnedCoreSourceCurrent(context);assertReverseConcreteSourceHost();return requireOwnedLocalCallClosure(program);
 }
+
+import {withOriginalPrimitiveOwnedVectorSourceOperation} from '../current-primitive-owned-vector-source.mjs';
+function withPrimitiveOwnedVectorDocumentSource(data,run){return data.files.some(row=>row.path===data.runtimeRoot+'/primitive-owned-vector-runtime.mjs')?withOriginalPrimitiveOwnedVectorSourceOperation(run):run();}
