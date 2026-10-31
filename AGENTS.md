@@ -39,6 +39,15 @@ Local commit hooks must not invoke Rust tools or automatically remove build cach
 
 ## Coordination and publication
 
+For the 2026-11-01 bulk-draft resume, the user explicitly authorizes up to three
+new GPT-6.1-sol subagents at medium effort for separate source-drafting batches.
+This supersedes the older work-alone restriction below; do not restart the
+historical workers. No agent may run tests, compilers, translation/preparation
+experiments or CPU-intensive workloads. The coordinator serializes commits,
+integrates complete source batches and remains the sole push/PR publisher.
+All other source-only, disk, private semantic, two-rule-sequence and JavaScript-
+first constraints persist unchanged.
+
 Workers use isolated worktrees and draft commits only in their own worktrees. The integration coordinator combines and checks their complete batch. Only the designated push gate owner may push a branch or create/update its pull request. Outside the active source-only publication exception above, that owner collects the entire completed CI failure set before dispatching one coordinated repair batch. Do not push speculative follow-ups, cancel an existing CI run, or bypass a failed JavaScript gate to start Rust.
 
 While issue #759 is actively being developed, create reviewable checkpoint commits at least once every six hours. Commit coherent source changes while broader translation, generation or parity work remains unfinished, and record passed, failed and unrun checks accurately. Workers commit in their assigned worktrees; the coordinator integrates completed changes. The checkpoint cadence does not waive the existing publication or same-commit JavaScript-first CI requirements.

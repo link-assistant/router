@@ -6,7 +6,11 @@ coherent checkpoint about every three hours during active work. This overrides
 the earlier requirement to defer CI-triggering pushes and to collect/repair the
 published head's complete CI cycle before another drafting push.
 
-The coordinator works alone and remains the only publisher. Review the complete
+The coordinator remains the only publisher. The user's 2026-11-01 update allows
+up to three new GPT-6.1-sol medium subagents for disjoint source-only drafting;
+do not restart historical workers or run CPU-intensive work. Serialize commits
+and preserve the no-execution/no-feedback-inspection policy for every agent.
+Review the complete
 source batch, its original source/rule histories and requirement ledger before
 committing. Disable conflicting execution hooks for commits and pushes under the
 existing user authorization. No local tests, compilation, verification parsers,

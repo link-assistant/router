@@ -15,6 +15,7 @@ import {sameType,rustFixedType} from './checked-types.mjs';
 import {forwardOwnedCarrier,forwardOwnedString} from './owned-forward-domain.mjs';
 import {sourceVector,SOURCE_STRING} from './extensions/source-contract-types.mjs';
 import {ownedTextVectorRuntimeSources} from './owned-text-vector-runtime-sources.mjs';
+import {ownedTextVectorJoinRuntimeAssetPair} from './owned-text-vector-join-runtime-sources.mjs';
 import {createRulePipeline} from './rule-pipeline.mjs';
 import {unsupported,typeError} from './vendor/meta-language/translation/diagnostics.js';
 const fail=()=>{throw new TypeError('Owned text vector requires the actual active original module and resolved source binding');};
@@ -51,6 +52,6 @@ export function checkForwardOwnedTextVector(checker,node,env,path,expected,{curr
 });}
 export function emitForwardOwnedTextVector(emitter,node){if(ownedTextVectorLiteralOperationShape(node.id,node.args?.length))return emitForwardOwnedTextVectorLiteral(emitter,node);return withOriginalOwnedTextVectorSourceOperation(()=>{const row=ownedTextVectorOperationShape(node.id);if(node.k!=='routerHostCall'||!row||node.args.length!==row.parameters.length)fail();requireCurrentOwnedTextVectorOriginalOperationSource(row.javascriptName);(emitter.ownedTextVectors??=new Set()).add(row.javascriptName);return 'ml_host_'+row.javascriptName+'('+node.args.map(argument=>emitter.expr(argument)).join(', ')+')';});}
 export function ownedTextVectorForwardImports(names,runtimeModule='./runtime/effects.mjs'){if(!names?.size)return [];const imports=[...names].sort();for(const name of imports)if(ownedTextVectorOperationShape(name)?.javascriptName!==name)fail();return ['import { '+imports.map(name=>name+' as ml_host_'+name).join(', ')+' } from '+JSON.stringify(runtimeModule.replace(/effects\.mjs$/u,'owned-text-vector-runtime.mjs'))+';'];}
-export function ownedTextVectorForwardRuntimeAssets(){const files=new Map(ownedTextVectorRuntimeSources('runtime').map(row=>[row.path.slice('runtime/'.length),row.source]));for(const [name,source]of ownedTextVectorLiteralRuntimeAssetPair())files.set(name,source);return files;}
+export function ownedTextVectorForwardRuntimeAssets(){const files=new Map(ownedTextVectorRuntimeSources('runtime').map(row=>[row.path.slice('runtime/'.length),row.source]));for(const pair of [ownedTextVectorLiteralRuntimeAssetPair(),ownedTextVectorJoinRuntimeAssetPair()])for(const [name,source]of pair)files.set(name,source);return files;}
 
 import {ownedTextVectorLiteralOperationShape} from './owned-text-vector-literal-call-shape.mjs';import {checkForwardOwnedTextVectorLiteral,emitForwardOwnedTextVectorLiteral} from './owned-text-vector-literal-forward.mjs';import {ownedTextVectorLiteralRuntimeAssetPair} from './owned-text-vector-literal-runtime-sources.mjs';

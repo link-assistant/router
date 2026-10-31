@@ -1,7 +1,8 @@
 # Issues #759 / #772: checkpoint handoff
 
-Updated 2026-10-31 (Asia/Ho_Chi_Minh), at the user's explicit request to commit,
-push and stop. Work is paused. Do not resume automatically.
+Updated 2026-11-01 (Asia/Ho_Chi_Minh). The user explicitly resumed bulk drafting
+after the 2026-10-31 paused checkpoint. Work continues source-only;
+no tests, compilation, trial translation or CI-feedback inspection are authorized.
 
 ## Repository and publication
 
@@ -16,14 +17,15 @@ push and stop. Work is paused. Do not resume automatically.
 - This handoff's commit also includes the native readonly-text helper input
   draft described below. The final checkpoint SHA is the commit containing
   this document; the final user reply and PR description identify that SHA.
-- Push this complete branch and update the PR description, then stop. No merge
-  is requested for this stop checkpoint. Keep #759 and #772 open.
+- The paused implementation checkpoint `b9e239a5b` and documentation checkpoint
+  `9d29e99dc` were committed/pushed to #775. The 2026-11-01 resume supersedes the
+  earlier stop instruction. Keep #759 and #772 open; no new merge is requested.
 
 ## Objective and honest status
 
 The [countable draft checklist](issue-759-draft-checklist.md) now splits the
 14 broad ledger areas into 70 stable source-draft acceptance bundles. Initial
-accounting is **0/70 closed with complete source-review receipts; 70/70 OPEN**.
+accounting was **0/70 closed with complete source-review receipts; 70/70 OPEN**.
 This is a conservative tracking baseline, not 0% implementation: existing
 partial source work is substantial and has not been audited against the new
 closure criteria. No honest drafted-effort percentage is available yet.
@@ -32,7 +34,18 @@ source and unresolved features to the numbered rows. Then record concrete
 implementation, both-direction/CST/meta and independent case-source evidence
 before closing each row; keep all execution evidence separate. The checklist
 defines dependency order, count updates and scope-change handling. Its creation
-does not resume implementation or lift the no-execution policy.
+did not itself resume implementation or lift the no-execution policy. The user's
+2026-11-01 instruction now resumes source drafting; all execution stays deferred.
+
+The [source scope inventory](draft-inventory/README.md) starts L01/L02 with
+1,512 committed source/test/build/package path records at `9d29e99dc`. A bounded
+reconciliation library/CLI and independent case source are drafted, all UNRUN.
+Exact functions, producer/configuration scope and actual caller/feature mapping
+remain OPEN. The lexical review anchors are not a new function denominator.
+Source review closes D01/D02/D03/D05 policy source and the new Q03 native join
+emission source: **5/70 DRAFTED, 65/70 OPEN**, an unweighted requirement count,
+not code coverage or verification.
+All new inventory tooling/case source remains UNRUN and L01/L02 stay OPEN.
 
 The objective remains full automated Rust ↔ serialized/reparsed CST/meta ↔
 JavaScript and TypeScript translation and synchronization for Router, with
@@ -50,8 +63,10 @@ Historical evidence in older ledgers does not qualify this head.
 
 ## Instructions that persist on a future explicit resume
 
-1. Work alone; the latest applicable AGENTS.md instruction says all workers have
-   finished and forbids spawning/restarting them.
+1. The user's later 2026-11-01 instruction authorizes up to three new
+   GPT-6.1-sol medium agents for disjoint source-draft batches. Historical
+   workers remain finished. The coordinator serializes commits and remains
+   the only publisher. No tests, experiments or CPU-intensive workloads.
 2. Continue bulk drafting every requirement before testing or experiments.
    Do not inspect CI statuses/logs/artifacts/review feedback or make CI-driven
    repairs before the complete draft exists. Preserve all later verification
@@ -130,39 +145,41 @@ ordinary readonly helpers, nested/shared/owned vector helpers, a complete join
 fold, guard/source/body refusal, a positive owning-String/as_str baseline and a
 later-argument move/restore rejection. Every case remains UNRUN.
 
-## Next work on explicit resume
+## Native join emission draft and next dependency work
 
-Native whole-project emission still executes the checked fold; the next step is
-private backend routing of a genuine complete join helper to the fast kernel.
-Do not optimize by function name or public metadata alone. Useful existing
-boundaries are:
+The [native join emission contract](owned-text-vector-native-join-emission-source-draft.md)
+records the new Q03 source implementation and limitations. A complete canonical
+native helper can now select a kernel call in target emission after existing
+whole-flow/source/type/helper/dependency checks and exact renamed-body matching.
+Altered helpers retain their original emission. All of this remains UNRUN;
+there is no measured receiving, performance, coverage or parity claim.
 
-- `completedFunctions` and `currentFunction` in `router-core-json-updates.mjs`
-  protect actual caller/callee receipts and typed body snapshots.
-- `publishProjectionContexts`, `prepareOriginalJsonProjectionEmission` and
-  `requireOriginalJsonProjectionEmission` retain complete function/dependency
-  and source-span/layout checks during emission.
-- `HostEmitter.fn` in `extensions/host-contracts.mjs` establishes/restores those
-  emission frames; it is a possible integration point without changing IR.
-- `originalParsedDeclarationEvidence` / `originalParsedSyntaxNode` in
-  `extensions/source-links.mjs` use existing private parser associations.
-  Evidence includes source/declaration/body spans and hashes, not source bytes.
-  Recovering source must use the genuine parser association, never a supplied
-  source string/hash or new persistent proof cache.
+Key additions: private `originalParsedDeclarationSource` over existing parser
+associations; a DATA-only exact source matcher; post-flow private function-context
+selection; exact complete-body selection inside the existing emission frame;
+HostEmitter statement/prelude routing; complete fresh runtime/declaration assets.
+No new source/verdict cache, public permit or native ABI is added. The seven
+source equations preserve language/repository phases, full CST/inverses and
+physical originals, with the readonly profile composing the new leaf.
 
-The current native readonly batch closes only the str-input source prerequisite.
-Backend optimization, actual source receiving qualification and performance are
-not proven. Wider iterators/collections/captures/references/aggregates,
-async/network/state, complete original namespace/producer/owner closure,
-production adoption, export receiving, every platform, deterministic forward/
-reverse freshness, runtime parity and full two-way synchronization remain open.
+Independent forward project/JS/strict TS source covers full 4,096-value/1 MiB
+boundaries, raw elapsed/original deadline, altered-source fallback and stale or
+forged inputs. `rust/tests/translation_owned_text_vector_native_join_kernel.rs`
+provides independent standard-library expectations in gated CI only.
+
+Continue L01/L02 exact function/configuration/producer review from the inventory,
+then shared B/R/C and O-family caller batches with both-direction/sync/case/export
+source. Wider iterators/collections/captures/references/aggregates, async/network/
+state, complete namespace/producer/owner closure, production adoption, receiving,
+all platforms, forward/reverse freshness and runtime parity remain OPEN.
+Do not execute the new inventory CLI, preparers or cases while bulk drafting.
 
 ## Source regeneration and recovery
 
 Current leaf:
-`tools/translation/prepare-owned-text-vector-native-readonly-text-sources.mjs`.
-Its predecessor `prepare-owned-text-vector-kernel-adoption-sources.mjs` composes
-it; earlier join-caller, kernel, composition, literal and native source profiles
+`tools/translation/prepare-owned-text-vector-native-join-emission-sources.mjs`.
+Its predecessor `prepare-owned-text-vector-native-readonly-text-sources.mjs`
+composes it; the kernel-adoption predecessor composes that readonly profile; earlier join-caller, kernel, composition, literal and native source profiles
 retain their explicit chronology. Complete source-equation archives and physical
 original snapshots are committed under `tools/translation/source-profiles/`.
 The native root history remains 24 equations / 17 paths. Kernel source pins and
@@ -182,10 +199,11 @@ and sufficient without those local files.
 - [Countable draft checklist: 70 acceptance bundles](issue-759-draft-checklist.md)
 - [Full requirements](bulk-draft-requirements.md)
 - [Collection continuation](primitive-collection-synchronization-bulk-draft.md)
+- [Native join emission source contract](owned-text-vector-native-join-emission-source-draft.md)
 - [Readonly helper contract](owned-text-vector-native-readonly-text-source-draft.md)
 - [Kernel adoption](owned-text-vector-kernel-adoption-source-draft.md)
 - [Caller profiles](owned-text-vector-join-callers-source-draft.md)
 - [Publication policy](bulk-draft-publication.md)
 
-Stop after the checkpoint is committed/pushed and the PR metadata is updated.
-The full objective must remain paused and incomplete until the user resumes it.
+Continue the numbered dependency batches under the explicit source-only resume.
+The full objective and all unclosed source requirements remain incomplete.

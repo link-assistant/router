@@ -9,7 +9,8 @@ import {parseRouterCoreJsonParse,checkRouterCoreJsonParse,isRouterCoreJsonParse,
 import {parseRouterCoreJsonCollection,checkRouterCoreJsonCollection,isRouterCoreJsonCollection,routerCoreJsonCollectionSourceHash} from './router-core-json-collections.mjs';
 import {requireOriginalPrimitiveTryFromChecker,originalJsonCaptureCheckerEligible} from './extensions/host-contracts.mjs';
 import {originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
-import {copyMetadata,metadataDigest,originalParsedDeclarationEvidence,originalParsedSyntaxNode} from './extensions/source-links.mjs';
+import {copyMetadata,metadataDigest,originalParsedDeclarationEvidence,originalParsedDeclarationSource,originalParsedSyntaxNode} from './extensions/source-links.mjs';
+import {nativeOwnedTextJoinSourceMatches,nativeOwnedTextJoinStatements} from './native-owned-text-join-emission.mjs';
 import {JSON_TYPES,JSON_DATA} from './extensions/json-contracts.mjs';
 import {BOOL,UNIT,sameType} from './checked-types.mjs';
 import {planPattern} from './pattern-bindings.mjs';
@@ -232,7 +233,15 @@ function closedOptionSource(checker,fact,current,Parser,Checker,program){
 }
 function publishProjectionContexts(receipt,entry,dependencies=[],checker=null){
  if(!receipt.projections)return;
- const functionContext=freeze(copyMetadata({name:entry.fullName,params:entry.params,ret:entry.ret,body:entry.body,...(dependencies.length?{dependencies}:{} )}));
+ // Only the post-whole-flow call provides a genuine checker. A matching source
+ // template alone never authorizes optimization or bypasses helper ownership.
+ const fact=checker&&completedFunctions.get(checker)?.get(entry.fullName);
+ let nativeTextJoinKernel=false;
+ if(fact&&fact.entry===entry&&fact.receipt===receipt&&checker.items.get(entry.fullName)===entry){
+  currentFunction(checker,fact.item,receipt);if(!same({params:entry.params,ret:entry.ret,body:entry.body},fact.snapshot))fail();
+  nativeTextJoinKernel=nativeOwnedTextJoinSourceMatches(originalParsedDeclarationSource(fact.item),fact.item.name);
+ }
+ const functionContext=freeze(copyMetadata({name:entry.fullName,params:entry.params,ret:entry.ret,body:entry.body,...(dependencies.length?{dependencies}:{} ),...(nativeTextJoinKernel?{nativeTextJoinKernel:true}:{})}));
  const extraRoots=receipt.errorLane||receipt.optionLane||receipt.primitiveVectorHelperLane?[...entry.params.map(param=>param.type),entry.ret,...dependencies.flatMap(item=>[...item.params.map(param=>param.type),item.ret])]:[],extraLayouts=extraRoots.length?freeze(copyMetadata(captureBorrowedLayouts(checker,extraRoots))):[];
  for(const projection of receipt.projections)projectionContexts.set(projection.key,freeze({id:projection.id,call:projection.call,layouts:extraLayouts.length?[...projection.layouts,...extraLayouts]:projection.layouts,roots:extraRoots.length?[...projection.roots,...extraRoots]:projection.roots,functionContext}));
 }
@@ -568,7 +577,16 @@ export function prepareOriginalJsonProjectionEmission(emitter,entry,Checker){
   for(const dependency of fn.dependencies??[]){const wanted=retargetCheckedCallback(dependency,emitter.program),name=emitter.program.declarations.has(dependency.name)?dependency.name:'rp_'+Buffer.from(dependency.name).toString('hex'),actual=emitter.program.declarations.get(name);if(!actual||!projectionSemanticSame({params:actual.params,ret:actual.ret,body:actual.body},{params:wanted.params,ret:wanted.ret,body:wanted.body}))throw new Error('Owned JSON readonly helper changed from its actual checked source body [comparison '+JSON.stringify({helper:name.slice(0,120),difference:actual?describeOwnedJsonDifference(alphaTree({params:actual.params,ret:actual.ret,body:actual.body}),alphaTree({params:wanted.params,ret:wanted.ret,body:wanted.body})):{reason:'actual helper absent'}})+']');if(!projectionSpansSame({params:actual.params,ret:actual.ret,body:actual.body},{params:wanted.params,ret:wanted.ret,body:wanted.body}))throw new Error('Owned JSON readonly helper source spans changed from its actual checked body [comparison '+JSON.stringify(projectionSpanDiagnostic([{join:'helper',actual:{params:actual.params,ret:actual.ret,body:actual.body},expected:{params:wanted.params,ret:wanted.ret,body:wanted.body}}]))+']');}
   requireOriginalPrimitiveTryFromChecker(checker);
  }
- const previous=emissionFrames.get(emitter),renamed=renameFunction(entry,emitter.state.ident,emitter.state.localReserved());emissionFrames.set(emitter,projectionNodes(renamed.body).map(node=>metadataDigest(alphaTree(node))));return ()=>{if(previous)emissionFrames.set(emitter,previous);else emissionFrames.delete(emitter);};
+ const previous=emissionFrames.get(emitter),renamed=renameFunction(entry,emitter.state.ident,emitter.state.localReserved()),frame=projectionNodes(renamed.body).map(node=>metadataDigest(alphaTree(node)));
+ if(nodes.every(node=>projectionContexts.get(node.compatibilityCore?.sourceProjectionKey)?.functionContext?.nativeTextJoinKernel===true))frame.nativeTextJoin=freeze(copyMetadata({params:renamed.params,body:renamed.body}));
+ emissionFrames.set(emitter,frame);return ()=>{if(previous)emissionFrames.set(emitter,previous);else emissionFrames.delete(emitter);};
+}
+// Only the exact complete renamed body in an active private emission frame is
+// eligible. Individual calls, public flags, forged contexts and partial bodies
+// remain on their original checked paths. The frame is restored in fn.finally.
+export function emitOriginalNativeTextJoinStatements(emitter,node){
+ const frame=emissionFrames.get(emitter)?.nativeTextJoin;if(!frame||!same(node,frame.body))return null;
+ const statements=nativeOwnedTextJoinStatements(frame.params);emitter.nativeTextJoinKernel=true;return statements;
 }
 // Alpha equivalence deliberately erases diagnostics. Source-bound emission
 // also rejoins every complete span at its actual path in the private envelope.

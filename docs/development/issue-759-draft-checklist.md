@@ -1,7 +1,8 @@
 # Countable source-draft checklist for issues #759 and #772
 
 Tracking baseline: implementation checkpoint `b9e239a5b`, 2026-10-31.
-This documentation update does not resume implementation. Work remains paused.
+Implementation resumed on 2026-11-01 at the user's explicit instruction to
+continue bulk drafting. Execution and CI-feedback inspection remain deferred.
 The [handoff](issue-759-handoff.md) records publication and resume constraints.
 
 ## Scope, counts and evidence
@@ -19,6 +20,14 @@ written or an estimate of remaining engineering effort. Do not report this as
 0% implementation or translation coverage. No numeric estimate of partially
 drafted work is supported. Every initial status is `OPEN`; existing evidence
 links are review starting points, not closure receipts.
+
+Current source-review accounting (2026-11-01): **5/70 DRAFTED, 65/70 OPEN**.
+The closed IDs are D01/D02/D03/D05 (existing durable policy/guidance), plus
+Q03 (new native join emission implementation and case source). This is an
+unweighted bundle count, not a code-completion or executable-translation
+percentage. L01/L02 inventory source is partly drafted. All new behavior,
+receiving and performance remain unverified. Four policy receipts do not
+represent newly implemented translation capabilities.
 
 Use only these source statuses:
 
@@ -198,7 +207,7 @@ Do not inspect new CI feedback during drafting.
 | --- | --- | --- |
 | Q01 | OPEN | Draft shared-source-history/fixture/native-parser/derive/binding repairs for recorded failure classes and independent regressions; preserve full originals and provenance. |
 | Q02 | OPEN | Draft invocation-local allocation/CPU/lifecycle improvements for recorded metadata/retained-storage/source-check bottlenecks; preserve guards and avoid persistent source/owner/verdict caches. |
-| Q03 | OPEN | Draft complete actual native join-helper→kernel emission routing through genuine private checked body/caller evidence, plus full-capacity independent cases without reducing original bounds/deadlines. |
+| Q03 | [DRAFTED](#q03-native-join-emission-source-receipt--2026-11-01) | Draft complete actual native join-helper→kernel emission routing through genuine private checked body/caller evidence, plus full-capacity independent cases without reducing original bounds/deadlines. |
 | Q04 | OPEN | Draft canonical/platform/owned/reverse/export freshness and strict TypeScript repair paths with complete source equations, original producers and all unchanged commands. |
 | Q05 | OPEN | Draft a later complete-cycle failure collector/classifier and repair worklist preserving raw failures and SHA/workloads; newly discovered failures reopen affected rows instead of being hidden or assumed repaired. |
 
@@ -236,11 +245,11 @@ guidance/tooling; future compliance and successful runs remain separate evidence
 
 | ID | Status | Source-draft closure criterion |
 | --- | --- | --- |
-| D01 | OPEN | Preserve source-only drafting/no experiments/no CI-feedback inspection policy until complete bulk draft, continued prohibition of local tests/compilation until authorized, and no local Rust tools in any phase. |
-| D02 | OPEN | Record single coordinator/publisher, no restarted workers, hook disabling for conflicting Rust tools, standing push authorization and coherent checkpoint cadence without weakening JS-first CI. |
-| D03 | OPEN | Document bounded disk/memory/time/evidence handling, one heavy workload, no unnecessary dependency trees/clones, precise Router-owned cleanup and preservation of others' active work. |
+| D01 | [DRAFTED](#d01-d02-d03-d05-policy-source-receipts--2026-11-01) | Preserve source-only drafting/no experiments/no CI-feedback inspection policy until complete bulk draft, continued prohibition of local tests/compilation until authorized, and no local Rust tools in any phase. |
+| D02 | [DRAFTED](#d01-d02-d03-d05-policy-source-receipts--2026-11-01) | Record single coordinator/publisher, no restarted workers, hook disabling for conflicting Rust tools, standing push authorization and coherent checkpoint cadence without weakening JS-first CI. |
+| D03 | [DRAFTED](#d01-d02-d03-d05-policy-source-receipts--2026-11-01) | Document bounded disk/memory/time/evidence handling, one heavy workload, no unnecessary dependency trees/clones, precise Router-owned cleanup and preservation of others' active work. |
 | D04 | OPEN | Complete checkpoint/handoff/PR templates recording exact source SHA, open IDs, unrun/failed/passed scope, reproduction paths, cleanup and explicit paused/resume status. |
-| D05 | OPEN | Define truthful final delivery: all 70 source receipts before draft-complete claim; independently completed coverage/parity/freshness/receiving/performance and same-SHA JS→Rust CI evidence before verified completion or release claims. |
+| D05 | [DRAFTED](#d01-d02-d03-d05-policy-source-receipts--2026-11-01) | Define truthful final delivery: all 70 source receipts before draft-complete claim; independently completed coverage/parity/freshness/receiving/performance and same-SHA JS→Rust CI evidence before verified completion or release claims. |
 
 ## Work order on a later explicit resume
 
@@ -280,6 +289,76 @@ Report 14/14 areas partial only as a broad summary, not as 100% draft progress.
 
 ## Closure receipts
 
-None recorded at this documentation checkpoint. All 70 rows remain OPEN for
-evidence review and missing implementation. Work remains paused; this checklist
-and handoff update authorize no automatic implementation or test execution.
+Four policy receipts and one implementation-source receipt follow.
+All other 65 rows remain OPEN for evidence
+review and missing implementation. The source-only resume authorizes no tests.
+
+### D01 D02 D03 D05 policy source receipts — 2026-11-01
+
+Evidence baseline: `9d29e99dce4874a9c646e19db30f83fd04ee516c`, with the later
+2026-11-01 worker authorization recorded in this checkpoint's AGENTS/handoff
+and publication-policy update. Source review
+read the complete root `AGENTS.md`, publication policy, checklist and handoff.
+These rows require durable written constraints, not runtime implementation.
+They apply to the full inventory and any added source, not one operation family.
+
+| ID | Complete source evidence | Scope and remaining obligations |
+| --- | --- | --- |
+| D01 | `AGENTS.md`, Checks and generation / Repository conventions; `bulk-draft-publication.md`, entire document; handoff resume constraints 2 and 9. | All local tests/experiments/translation/compilation and CI-feedback inspection remain deferred; no local Rust tools at any phase. Future enforcement/compliance is not claimed. |
+| D02 | `AGENTS.md`, Coordination and publication; publication policy; handoff constraints 1 and 9. | One publisher; later 2026-11-01 user authorization allows three new GPT-6.1-sol medium source-only workers, without restarting historical workers. Serialize commits, disable conflicting hooks, preserve standing push authorization, checkpoint cadence and same-SHA JS-first gate. Actual future publication/CI outcomes remain unverified. |
+| D03 | `AGENTS.md`, final Coordination and publication paragraph; publication policy bounded-source/SCM handling; handoff constraints 6–8. | One heavy workload, memory/disk/time/evidence limits retained, evidence below 500 MB, no unnecessary dependency trees/clones, only identified inactive Router-owned cleanup, preserve others' active data. Actual workload performance remains OPEN under Q02/Q03. |
+| D05 | Checklist Scope/counts/evidence and Work order sections; `translation-throughput-plan.md`, Current acceptance boundary; publication policy final two paragraphs. | All current source acceptance rows need receipts, inventory scope changes must remain counted; full current coverage/parity/freshness/receiving/performance and all eight same-SHA JS stages before fatal Rust CI are separate completion obligations. No success/release claim is made. |
+
+For these documentation-only policy rows, language/repository substitutions,
+CST/meta admission, forward/reverse emission, synchronization implementations,
+production callers and semantic oracle cases are inapplicable: no language or
+runtime behavior is implemented by written policy. Those implementations and
+independent cases remain in R/C/F/V/S/T/J and must not be closed by these receipts.
+No runtime/CI proof was executed or inspected. Execution evidence remains UNRUN;
+the receipts certify only complete drafting of these four policy requirements.
+
+### L01/L02 partial source evidence — 2026-11-01
+
+The [scope inventory](draft-inventory/README.md) now retains 1,512 committed
+source/test/build/package path records at `9d29e99dc`, lexical review anchors,
+explicit unreviewed assignments and unresolved producer/function reviews.
+`tools/translation/draft-inventory-reconciliation.mjs` and
+`scripts/report-router-draft-inventory.mjs` draft bounded path-difference and
+unassigned/unresolved reports with independent case source. All are UNRUN.
+L01/L02 remain OPEN: exact production items, cfg/feature/producer scope and
+actual per-function caller/feature mapping are not yet complete. Path rows,
+lexical anchors and Git fingerprints grant no executable or percentage credit.
+
+
+### Q03 native join emission source receipt — 2026-11-01
+
+Commit: the source checkpoint containing this receipt; original implementation
+baseline `9d29e99dc`. The [full source contract](owned-text-vector-native-join-emission-source-draft.md)
+records implementation and limitations plus seven complete source equations.
+
+- Implementation: `originalParsedDeclarationSource` in `extensions/source-links.mjs`;
+  private post-flow `publishProjectionContexts`, complete projection emission
+  preparation and active-frame `emitOriginalNativeTextJoinStatements` in
+  `router-core-json-updates.mjs`; `native-owned-text-join-emission.mjs`; existing
+  HostEmitter statement/prelude dispatch and complete forward runtime assets.
+- Actual source boundary: canonical native helper produced by
+  `owned-text-vector-join-helper-sources.mjs` and the existing native join
+  proposal/discovery paths; independently written original helper/caller project
+  sources in the new forward test file. The inventoried native vector/text core
+  implementations stay unchanged. Full production adoption mapping remains
+  L02/F05/P05 work; this receipt does not claim an executed production gain.
+- Rule/CST/meta/reverse: seven language/repository source equations retain full
+  CST/inverses; normal checked semantic/source/caller admission stays mandatory.
+  Original native fold meta/interpreters/inverse stay unchanged. Existing paired
+  join reverse profiles reproduce that fold. No new Rust ABI or synchronization
+  direction is introduced by this target emission specialization.
+- Independent source: `test/forward-owned-text-vector-native-join-emission.test.mjs`
+  covers actual JS/strict TS emission, full boundaries, elapsed evidence/deadline,
+  changed-body fallback and forged/stale source refusals;
+  `rust/tests/translation_owned_text_vector_native_join_kernel.rs` supplies
+  independent native standard-library expectations under gated CI only.
+- Limitations/evidence: canonical complete helper source only, original resource
+  limits/deadlines retained. All new execution is UNRUN. Receiving, performance,
+  platform, namespace, production, reverse/freshness/export and parity evidence
+  remain separate OPEN obligations. No full native-body equivalence is claimed
+  outside the previously declared successful-resource compatibility projection.

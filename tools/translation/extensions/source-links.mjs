@@ -293,6 +293,23 @@ export function originalParsedDeclarationEvidence(entry) {
   if(evidence.parsedSurfaceSha256!==metadataDigestForInternalSources(entry))fail('original parsed declaration changed after source capture');
   return evidence;
 }
+// Recover complete declaration bytes only from the already retained genuine
+// parser association. Public evidence or caller-selected spans cannot create
+// it. No extra parser/source cache is installed; unknown relocations refuse.
+export function originalParsedDeclarationSource(entry) {
+  const evidence=originalParsedDeclarationEvidence(entry),association=syntaxOrigins.get(entry);
+  if(!evidence||!association)return null;
+  const origin=verifyParserTokens(association.parser);
+  if(!origin)return null;
+  const record=parsed.get(association.parser)?.find(row=>row.entry===association.syntax);
+  if(!record||record.syntaxSha256!==metadataDigest(parsedSyntax(association.syntax)))return null;
+  const displacement=association.offset-evidence.sourceOffset;
+  const start=evidence.declarationSpan.start-displacement,end=evidence.declarationSpan.end-displacement;
+  if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||end<start||end>origin.source.length)return null;
+  const source=origin.source.slice(start,end);
+  if(hash(source)!==evidence.declarationSha256)return null;
+  return source;
+}
 // Recover a node only through an existing genuine, unchanged parent link.
 // The private origin was retained at its approved relocation boundary; public
 // clones, checksums and caller-selected offsets cannot create this association.
