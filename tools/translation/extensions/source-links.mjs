@@ -179,8 +179,8 @@ function verifyRelocatedSyntax(entry,semantic,offset) {
   if(!Number.isSafeInteger(offset)||offset<0)fail('source relocation requires an exact nonnegative offset');
   if(metadataDigest(relocatedSyntax(copyMetadata(entry),offset))!==metadataDigest(semantic))fail('semantic declaration differs from the exact source relocation');
 }
-// Keep exact object correspondence for selected owned calls and let-else. This
-// eligibility scan grants nothing and retains no parser for old declarations.
+// Keep exact correspondence for selected calls, bindings, borrows and vectors.
+// This grants no semantics; custody follows the original declaration lifetime.
 function rangeSyntaxOrigin(parser,syntax,semantic,offset){
   if(!originalDataFreezeIntrinsicsUnchanged())return null;
   let nodes=null,cells=200000;const path=[];
@@ -189,7 +189,7 @@ function rangeSyntaxOrigin(parser,syntax,semantic,offset){
     const kind=Object.getOwnPropertyDescriptor(original,'k');
     const readerKey=kind&&Object.hasOwn(kind,'value')?(kind.value==='routerStringOwnership'?'operation':kind.value==='routerDispatchMethod'?'method':null):null,readerField=readerKey?Object.getOwnPropertyDescriptor(original,readerKey):null;
     if(readerField&&Object.hasOwn(readerField,'value')&&readerField.value==='as_str'){nodes??=new WeakMap();nodes.set(actual,{original,path:[...path]});}
-    if(kind&&Object.hasOwn(kind,'value')&&(kind.value==='routerCoreBase64Call'||kind.value==='routerCoreF64InclusiveCall'||kind.value==='routerCoreScalarCountCall'||kind.value==='routerCoreJsonCall'||kind.value==='routerJsonMacro'||kind.value==='routerCoreJsonUpdateCall'||kind.value==='routerLetElse'||kind.value==='routerOrderedMatch')){nodes??=new WeakMap();nodes.set(actual,{original,path:[...path]});}
+    if(kind&&Object.hasOwn(kind,'value')&&(kind.value==='routerCoreBase64Call'||kind.value==='routerCoreF64InclusiveCall'||kind.value==='routerCoreScalarCountCall'||kind.value==='routerCoreJsonCall'||kind.value==='routerJsonMacro'||kind.value==='routerCoreJsonUpdateCall'||kind.value==='routerLetElse'||kind.value==='routerOrderedMatch'||kind.value==='let'||kind.value==='app'||kind.value==='routerTextReference'||kind.value==='routerCoreVector')){nodes??=new WeakMap();nodes.set(actual,{original,path:[...path]});}
     for(const key of Reflect.ownKeys(original))if(typeof key==='string'&&!['type','span','length'].includes(key)){
       const left=Object.getOwnPropertyDescriptor(original,key),right=Object.getOwnPropertyDescriptor(actual,key);
       if(left&&right&&Object.hasOwn(left,'value')&&Object.hasOwn(right,'value')){path.push(key);visit(left.value,right.value,depth+1);path.pop();}

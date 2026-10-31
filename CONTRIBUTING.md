@@ -36,6 +36,12 @@ draft is not a passing gate, a coverage result or completed delivery. Preserve
 the existing checks and deadlines for the later verification phase, and never
 run Rust tools locally for this task.
 
+Use [the numbered checklist](docs/development/issue-759-draft-checklist.md) and
+[handoff](docs/development/issue-759-handoff.md) for source closure receipts;
+partial family drafts and lexical anchors are not completed requirements.
+The user's 2026-11-01 update allows three GPT-6.1-sol medium drafting agents;
+serialize commits, keep one publisher and run no CPU-intensive local workloads.
+
 Current source-only resource extensions include shared collection iteration,
 read-only captures, owning and settled signatures, actual standard filesystem
 and byte operations, complete Result fallbacks, Option loop/stream exits and

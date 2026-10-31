@@ -178,9 +178,11 @@ Do not execute the new inventory CLI, preparers or cases while bulk drafting.
 ## Source regeneration and recovery
 
 Current leaf:
-`tools/translation/prepare-owned-text-vector-native-join-emission-sources.mjs`.
-Its predecessor `prepare-owned-text-vector-native-readonly-text-sources.mjs`
-composes it; the kernel-adoption predecessor composes that readonly profile; earlier join-caller, kernel, composition, literal and native source profiles
+`tools/translation/prepare-native-helper-syntax-origin-sources.mjs`.
+Its predecessor `prepare-owned-text-vector-native-join-emission-sources.mjs`
+composes it. The readonly-text predecessor composes join emission, and kernel
+adoption composes readonly-text. Earlier join-caller, kernel, composition,
+literal and native source profiles
 retain their explicit chronology. Complete source-equation archives and physical
 original snapshots are committed under `tools/translation/source-profiles/`.
 The native root history remains 24 equations / 17 paths. Kernel source pins and
@@ -215,11 +217,52 @@ UNRUN; broad rows remain OPEN and the count stays **5/70 DRAFTED, 65/70 OPEN**.
   Concurrent different-language and topology changes remain fail-closed; full
   reconciliation/recovery remains OPEN.
 
-Three authorized workers are drafting the next disjoint batches: actual scalar
-map/filter callback collection lowering; genuine shared source binding closure;
-and fresh concurrent canonical JS/TS reconciliation against native baselines.
-The coordinator reviews complete sources, serializes commits and alone pushes.
-Do not start tests, translation/preparation runs or CI-feedback inspection.
+Second-cycle source commits are also complete locally, all UNRUN:
+
+- `c0e24e2fe`: actual native-CST-selected capture-free scalar map/filter
+  initializer lowering to checked eager loops and owned vectors, paired source
+  histories/meta/native reproduction, independent case source and Cargo-discovered
+  `rust/tests/collection_callback_bulk_20261101.rs`. Original Array method-owner
+  and body/input equivalence remain explicitly unqualified.
+- `193a4baa3`: one genuine complete physical source/module/private-binding
+  closure with `configureMany` batch setup, bounded exact-size reads, scoped
+  root/ancestor/directory/file identities, full names and shared failure
+  poisoning/closing. Namespace setup grants no callable or executable authority.
+- `c4c5ef425`: canonical concurrent paired JS/TS reconciliation through all 13
+  existing fresh inverse families, complete unchanged native/Cargo baseline,
+  identical native/target candidates, third forward reproduction and exact
+  authored physical peer preservation. Topology/owned-unit/general normalization
+  remain refused; production-wide synchronization is not claimed.
+
+Third-cycle source commits are complete locally, still all UNRUN:
+
+- `fed657e77`: eager scalar callback chains and one shared checked expression
+  lowering helper. Also repairs the previous callback lane's raw arithmetic
+  admission gap without reducing its existing cases. Separate input/output
+  candidate domains are rechecked privately; every chain stage materializes.
+- `6ecd995d3`: actual complete named/multi-hop transparent reexport expansion
+  for checked HTTP/control callers, dependency loading order, full original
+  source/meta/native inverse and paired rechecks, complete output budget and
+  strict diagnostic/loopback/refusal/oracle source. Native reqwest production
+  streaming/settlement migration remains OPEN.
+- `dee9b227c` / `36d074fa1`: additive canonical paired bulk dispatch and shared
+  cross-unit dependency after-byte consistency, including a fix to the original
+  bulk planner. Conflicting/stale consuming units refuse. Four exact original
+  snapshots now live under standard source-profiles so copied compiler exports
+  carry them; source equations and all old cases remain intact.
+
+The stable family entrypoint includes all these APIs. Coordinator source review
+also found and drafted missing private origin associations for original let/app/
+borrow/vector nodes required by earlier helper adapters. The
+[native helper origin repair](native-helper-syntax-origin-source-draft.md)
+retains all original type/owner/flow guards, old full case files, two complete
+source equations and new independent original-node/native-caller cases. UNRUN.
+
+The remaining source worker is drafting actual emitted JS/strict TS receiving
+case source for the vector/callback/chain families, complementing their existing
+interpreter/native inverse cases. No receiving code or compiler is being run.
+The coordinator reviews sources, serializes commits and alone pushes; all broad
+source rows remain OPEN except the five recorded receipts. Do not inspect CI.
 
 ## Ledgers
 
@@ -227,6 +270,7 @@ Do not start tests, translation/preparation runs or CI-feedback inspection.
 - [Bulk family integration](bulk-source-family-proposals.md)
 - [Full requirements](bulk-draft-requirements.md)
 - [Collection continuation](primitive-collection-synchronization-bulk-draft.md)
+- [Native helper origin repair](native-helper-syntax-origin-source-draft.md)
 - [Native join emission source contract](owned-text-vector-native-join-emission-source-draft.md)
 - [Readonly helper contract](owned-text-vector-native-readonly-text-source-draft.md)
 - [Kernel adoption](owned-text-vector-kernel-adoption-source-draft.md)

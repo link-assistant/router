@@ -379,3 +379,34 @@ mapping has source evidence. All new implementation/case execution is UNRUN.
 
 No new interpreter, compiler, test, preparer, diagnostic or source inventory
 report was executed to create these receipts. They record source review only.
+
+
+### Second-cycle partial source receipts — 2026-11-01
+
+The count remains **5/70 DRAFTED, 65/70 OPEN**. These child tasks are not counted
+again as parent completions; production mapping and every unfulfilled parent
+clause remain visible.
+
+| Child work item | Concrete source receipt | Open scope |
+| --- | --- | --- |
+| O02.1: actual capture-free scalar callback initializer lowering | `c0e24e2fe`; `collection-callback-bulk-20261101.mjs`, independent complete JS/TS/meta/native reproduction cases and Cargo-discovered `rust/tests/collection_callback_bulk_20261101.rs`. Original native CST spans, hygienic eager loops, both rule phases and full histories. | No original Array-owner/equivalence grant; captures, indices, chains, lazy/reference callbacks and arbitrary original Rust callback bodies remain open. Full O02/R/F/V/T production scope not closed. |
+| B01.1: genuine shared module-binding/parser setup operation | `193a4baa3`; `source-binding-bulk-20261101.mjs`, independent multi-file alias/configuration/failure/identity/expiry/batch case source and full contract. Original module graph/private scope issuer and per-parser checks; bounded complete source closure; no cross-operation cache. | Source-directory scope only; full Cargo/dependency/attribute/producer ownership and production driver adoption remain open. No callable/type/effect/executable authority follows from configured namespaces. |
+| S02.1: canonical concurrent paired-edit reconciliation | `c4c5ef425`; `paired-sync-reconcile-20261101.mjs`, source support/case/contract modules. Independent original JS/TS inverse producers, complete canonical native/target agreement, third forward reproduction, exact authored peer preservation and original guarded installer. | Canonical pairs and existing 13 forward inverse families only; owned units, topology, broader semantic normalization, coordinated bulk dispatch, full recovery/export/production remain open. |
+
+All new source remains UNRUN. These receipts do not certify native or target
+behavior, performance, export/receiving closure, freshness or successful CI.
+
+
+### Third-cycle partial source receipts — 2026-11-01
+
+Counts remain **5/70 DRAFTED, 65/70 OPEN**. All new sources/cases are UNRUN.
+
+| Child work item | Source evidence | Remaining parent clauses |
+| --- | --- | --- |
+| O02.2: eager scalar map/filter chains and checked expressions | `fed657e77`; `scalar-chain-bulk-20261101*`, independent cases/native oracle and exact original callback source equations. Repairs the earlier callback arithmetic source gap; separate input/output candidates and stage materialization retain checked core operations and failure order. | Captures, reductions, lazy/reference callbacks, arbitrary authored Rust chains and actual production adoption remain OPEN. |
+| B01.2 / O04.2: transparent named HTTP/control module forwarding | `6ecd995d3`; `network-control-bulk-20261101.mjs`, complete original/fresh source/meta/paired/native inverse checks, bounded whole output accounting, strict diagnostic/loopback/refusal/native oracle case source. | This expands import syntax, not production reqwest streaming/state settlement. Full network/state/type/producer/caller scope stays OPEN. |
+| S02.2 / S03.2: canonical paired dispatch across bulk units | `dee9b227c`, source-profile relocation `36d074fa1`; complete additive bulk copy, shared child after-byte guard, original-bulk repair, immutable originals and full source equations. Every consuming child must independently agree to a shared changed input. | Topology, noncanonical normalization, owned-unit pairs, durable recovery and full production synchronization remain OPEN. |
+| C04.1: private structural origins for native helper syntax | [Source repair](native-helper-syntax-origin-source-draft.md), in the checkpoint containing this receipt. Existing linker adds exact let/app/borrow/vector correspondence only; original semantic/caller/owner/loan checks and 11-domain case files remain unchanged. Two full source equations and independent cases retain all original limits. | Structural linkage proves no type or executable admission. Remaining source/native/production/CST/meta/receiving/freshness/parity evidence stays OPEN. |
+
+The earlier callback/source-helper gaps were found by reading source, without
+running cases or consulting CI. Source fixes do not claim those cases now pass.
