@@ -18,6 +18,20 @@ qualification has not been executed. This entrypoint broadens no semantic domain
 | `translateNetworkControlBulkJavaScript(source, input)` / `translateNetworkControlBulkTypeScript(source, input)` | Complete named/multi-hop transparent reexport resolution, preserved runtime dependency loading order and original whole HTTP caller/meta/JS/TS/native inverse checks, with bounded complete output accounting and closing. | Genuine reqwest streaming/settlement migration, arbitrary barrel side effects/exports, general network/state and production integration remain open. |
 | `inspectPairedSyncDispatchEdits` / `planPairedSyncDispatch` / `applyPairedSyncDispatch` | Additive full bulk copy dispatches explicitly selected canonical pair edits to the fresh reconciler. Both original and new bulk planners now require identical native after-bytes from every child consuming a modified shared input. Complete original snapshots/equations retained. | General topology, noncanonical conflict normalization, owned-unit paired reconciliation and crash-durable recovery remain open. |
 
+
+| `planTripleSyncReconciliation` / `applyTripleSyncReconciliation` | Concurrent native plus JS, TS or both edits require each changed peer's original inverse to reproduce the entire actual native source map, followed by exact current-native reproduction of authored targets. Only unchanged peers and metadata may be written. | Canonical unchanged-topology projects only; Cargo edits, general semantic conflict normalization and production adoption remain open. |
+| `translateHttpHelperBulkJavaScript` / `translateHttpHelperBulkTypeScript` | Pure scalar-result synchronous leaf helpers can expand terminal conditional continuations, retaining actual helper effects, branch order, complete original/expanded module checks and both target/native inverses. Unused arguments retain independent type checks. | Async inlining, captures, mutable/reference arguments, recursion, broad HTTP/state effects and production adoption remain open. |
+| `proposeScalarLinearKernel` / `readScalarLinearKernelMeta` / `translateScalarLinearKernelProjection` | Fresh whole checked stage-only functions specialize to eager map/filter kernels with validated scalar domains, original checked operators and complete native/source/meta inverses. The projection inverse accepts exact untouched canonical output only. | Edited projections need the separate edited inverse; general loops, captures, production dispatch and measured performance remain open. |
+| `evaluateScalarLinearKernel` / `evaluateScalarLinearKernelBatch` | Each call freshly reissues the original whole-function specialization before evaluation; no verdict survives the invocation. Existing bounds and complete source closing remain. | Runtime/receiving execution and performance qualification remain unrun; these APIs alone do not qualify generated source. |
+| `inspectCompletePeerDispatchEdits` / `planCompletePeerDispatch` / `applyCompletePeerDispatch` | Explicit complete forward-project units dispatch all seven nonempty combinations of Rust/JS/TS edits to original single, paired or triple planners. Authored sources, dependency after-byte agreement and guarded installation are preserved. | Topology, noncanonical edits, owned-unit concurrent edits and complete recovery remain open. |
+| `translateCrossModuleHelperBulkProject` / `withCrossModuleHelperBulkSourceOperation` | Opt-in native vector helper calls join actual caller namespace lookup, original declarations/signatures, completed private owner checks and whole operation closing. Default refusals remain. | General methods/generics, async ownership and whole Router adoption remain open; source receipt flags are never callable authority. |
+
+
+| `translateEditedScalarLinearKernel` / `readEditedScalarLinearKernelMeta` | Canonical edited JS/TS scalar callback bodies join actual native import and parameter symbols, reconstruct ordinary source through CST, rerun full original private source/type/ownership/meta/native checks and exactly regenerate the authoritative edited target. | One unchanged stage/import/signature/domain skeleton only; broader edited projections and default driver adoption remain open. |
+
+
+| `planNativeLeafModuleMove` / `applyNativeLeafModuleMove` | A genuine root and one external function-only scalar leaf may relocate within the same source directory while retaining its logical module name. Both complete projects must privately admit every original function and exactly reproduce JS/TS; native path/header/meta changes use guarded no-overwrite installation and rollback. | Nested/general moves, source deletion/addition, arbitrary owners/producers and durable interrupted-transaction recovery remain open. |
+
 Each family retains its separately declared `language` then `repository`
 sequences and serialized/reparsed CST/meta/source checks. Operation descriptions,
 proposal flags, matching names and source hashes cannot substitute for private
@@ -35,6 +49,14 @@ Review the complete family contracts and independent case sources:
 - [Eager scalar chains and checked expression repair](scalar-chain-bulk-20261101.md).
 - [Transparent network/control imports](network-control-bulk-20261101.md).
 - [Canonical paired bulk dispatch](paired-sync-dispatch-20261101.md).
+- [Concurrent native and target reconciliation](triple-sync-reconcile-20261101.md).
+- [Outcome-sensitive HTTP helper expansion](http-helper-bulk-20261101.md).
+- [Checked scalar linear kernels](scalar-linear-kernel-20261101.md).
+- [Canonical edited specialized-target inverse](scalar-linear-edit-20261101.md).
+- [All edit-language combinations](complete-peer-dispatch-20261101.md).
+- [Original-source cross-module helpers](cross-module-helper-bulk-20261101.md).
+- [Guarded native leaf relocation](native-module-move-20261101.md).
+- [Complete trace assertion source histories](bulk-rule-trace-20261101.md).
 
 The existing compiler export selector includes eligible top-level translation
 modules and their declared sources, but actual copied-repository completeness,

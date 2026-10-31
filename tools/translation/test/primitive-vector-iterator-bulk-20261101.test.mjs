@@ -45,7 +45,7 @@ function options(family,path='caller.mjs'){
 for(const family of ['outcome','cancellation'])for(const typed of [false,true])test(family+' complete '+(typed?'TypeScript':'JavaScript')+' copied/filter/early-stop collection callers compose with both canonical directions',limits,async()=>{
  const path=typed?'caller.mts':'caller.mjs',text=caller(typed),data=receiving(family,text,path),proposal=propose(data,options(family,path));
  assert.equal(data.files.find(row=>row.path===path).source,text);
- assert.deepEqual(proposal.ruleTrace.map(row=>row.phase),['language','repository']);
+ assert.deepEqual(proposal.ruleTrace.map(row=>[row.phase,row.id]),[["language","primitive-vector-iterator-bulk:compose-complete-existing-caller-substitutions"],["language","primitive-vector-iterator-bulk:reissue-strict-typed-projections-and-complete-native-inverses"],["repository","router:retain-complete-batch-inverses-and-unqualified-runtime-obligations"]]);
  assert.equal(proposal.modules.length,1);
  const module=proposal.modules[0],api=family==='outcome'?outcome:cancellation,token=await api.prepareOwnedOutcomeRuntime(module.program);
  const inputs=[Object.freeze([]),Object.freeze([0n]),Object.freeze([0n,2n,18446744073709551615n])];

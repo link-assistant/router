@@ -12,3 +12,11 @@ export {planPairedSyncReconciliation,applyPairedSyncReconciliation} from './pair
 export {proposeScalarChainBulk} from './scalar-chain-bulk-20261101.mjs';
 export {translateNetworkControlBulkJavaScript,translateNetworkControlBulkTypeScript} from './network-control-bulk-20261101.mjs';
 export {inspectPairedSyncDispatchEdits,planPairedSyncDispatch,applyPairedSyncDispatch} from './paired-sync-dispatch-20261101.mjs';
+export {planTripleSyncReconciliation,applyTripleSyncReconciliation} from './triple-sync-reconcile-20261101.mjs';
+export {translateHttpHelperBulkJavaScript,translateHttpHelperBulkTypeScript} from './http-helper-bulk-20261101.mjs';
+export {proposeScalarLinearKernel,readScalarLinearKernelMeta,translateScalarLinearKernelProjection,
+  evaluateScalarLinearKernel,evaluateScalarLinearKernelBatch} from './scalar-linear-kernel-20261101.mjs';
+export {inspectCompletePeerDispatchEdits,planCompletePeerDispatch,applyCompletePeerDispatch} from './complete-peer-dispatch-20261101.mjs';
+export {translateCrossModuleHelperBulkProject,withCrossModuleHelperBulkSourceOperation} from './cross-module-helper-bulk-20261101.mjs';
+export {translateEditedScalarLinearKernel,readEditedScalarLinearKernelMeta} from './scalar-linear-edit-20261101.mjs';
+export {planNativeLeafModuleMove,applyNativeLeafModuleMove} from './native-module-move-20261101.mjs';

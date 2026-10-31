@@ -10,7 +10,7 @@ no tests, compilation, trial translation or CI-feedback inspection are authorize
 - Draft PR: https://github.com/link-assistant/router/pull/775
 - Branch: `issue-772-translator-throughput`
 - Integration worktree: `.worktrees/issue-759-storage-repair-20261021`
-- Current published source checkpoint: `853223d53` (native kernel emission and scope tracking).
+- Current published source checkpoint: `6b0000a42` (actual emitted target receiving source and dependency handoff).
 - Earlier published checkpoint before the stop/resume cycle: `19074cc30`.
 - Subsequent checkpoints included in this handoff: `4895f51aa` (join kernel),
   `db901a224` (complete additive caller/interpreter/inverse profiles), and
@@ -46,6 +46,10 @@ remain OPEN. The lexical review anchors are not a new function denominator.
 Source review closes D01/D02/D03/D05 policy source and the new Q03 native join
 emission source: **5/70 DRAFTED, 65/70 OPEN**, an unweighted requirement count,
 not code coverage or verification.
+A later source-only review of existing workflow/partition/audit-case code
+closes J01/J05 too: current accounting is **7/70 DRAFTED, 63/70 OPEN**.
+The earlier 5/70 cycle records are historical; no CI run or policy test was
+executed/inspected to credit these existing source implementations.
 All new inventory tooling/case source remains UNRUN and L01/L02 stay OPEN.
 
 The objective remains full automated Rust ↔ serialized/reparsed CST/meta ↔
@@ -266,12 +270,46 @@ compiler refusal diagnostics and finally cleanup. All UNRUN. Source inspection
 still shows quadratic functional pushes and repeated full-vector get validation;
 original 60-second cases/20-second children remain unchanged.
 
-The next authorized source-only worker cycle drafts linear scalar collection
-kernels with full paired/checker integration; outcome-sensitive HTTP helper
-expansion; and concurrent native+target/all-three reconciliation. The coordinator
-continues reviewing/integrating complete sources and is the only publisher.
+The subsequent local source drafts add the following complete narrow lanes:
+
+- `c8507bf34`: native plus JS, TS or both concurrent reconciliation through
+  independent original inverses and exact authoritative target reproduction.
+- `885e2b4b6`: outcome-sensitive synchronous HTTP leaf-helper expansion with
+  whole original/expanded caller checks, type checks for unused arguments,
+  retained effects/branch order and paired/native inverses.
+- `db6dd90af`: whole checked eager scalar stage specialization, linear kernel
+  runtime/type source and actual paired receiving/native oracle case source.
+  Linear complexity is source inspection only; runtime cost is unmeasured.
+- `6fffa8653`: complete peer bulk dispatch for all seven nonempty combinations
+  of native/JS/TS edits, preserving authored sources and dependency agreement.
+- `3921ca706`: explicit original-source cross-module vector-helper proof scope,
+  genuine caller namespace/signature/finalized ownership joins and closing.
+  The `20b6c9962` successor limits strong retention to actual proof attempts;
+  unused capture indexes/finalized entries are weak and all checks persist.
+- `cad64a292`: actual canonical scalar callback edits in emitted JS or TS
+  reconstruct ordinary source, rerun original private admission/native inverse
+  and exactly regenerate the entire authoritative edited target.
+- `9e403ab55`: root-owned same-directory scalar leaf relocation through the
+  genuine source graph, complete private before/after compilation and exact
+  target reproduction, with no-overwrite destination creation, retained source
+  backups and guarded rollback. General topology remains unsupported.
+
+The stable family entrypoint now exposes these operations. They are additive
+opt-in lanes; general source domains, default production dispatch, exported
+receiving qualification and complete synchronization remain open. A source
+review found regression assertions counting phases rather than all rules.
+The edited-inverse assertion correction is queued with its owner. Root also
+drafts [three earlier trace assertion corrections](bulk-rule-trace-20261101.md)
+with complete immutable originals and explicit old-producer successor equations;
+no case was executed and every behavioral obligation remains unchanged.
+
+The current workers draft conservative native iterator source adoption,
+owned-definition cross-module composition, and durable interrupted leaf-move
+recovery. The prior retention and initial relocation drafts are committed.
+Root serializes commits, reviews integrations and remains the sole publisher.
 No tests, source preparation, compilation or CI-feedback inspection may run.
-The count remains 5/70; partial batches never close broader requirements.
+The current count is 7/70 after the existing CI-source review; partial
+translation batches never close broader requirements.
 
 ## Ledgers
 

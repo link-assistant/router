@@ -20,7 +20,7 @@ const options=(family,path='caller.mjs',callbacks=selections)=>({family,modules:
 for(const family of ['outcome','cancellation'])for(const typed of [false,true])test(family+' real scalar map/filter lowering from '+(typed?'TypeScript':'JavaScript')+' passes complete checked canonical directions',limits,async()=>{
  const path=typed?'caller.mts':'caller.mjs',text=source(typed),data=receiving(family,text,path),result=propose(data,options(family,path)),module=result.modules[0],checked=module.checked,
   api=family==='outcome'?outcome:cancellation,token=await api.prepareOwnedOutcomeRuntime(checked.program);
- assert.deepEqual(result.ruleTrace.map(row=>row.phase),['language','repository']);
+ assert.deepEqual(result.ruleTrace.map(row=>[row.phase,row.id]),[["language","collection-callback:lower-capture-free-scalar-map-filter-through-complete-CST"],["language","collection-callback:reissue-complete-scalar-loops-owned-vectors-meta-types-and-native-inverse"],["repository","router:retain-original-callback-equations-and-explicit-input-contract-change"]]);
  assert.deepEqual(module.callbacks.map(row=>row.operation),['map','filter','map','filter']);
  const vectors=[['mapped',Object.freeze([]),[]],['mapped',Object.freeze([0n,1n,10n]),[2n,3n,12n]],
   ['selected',Object.freeze([0n,2n,1n,18446744073709551615n]),[2n,18446744073709551615n]],

@@ -21,13 +21,13 @@ written or an estimate of remaining engineering effort. Do not report this as
 drafted work is supported. Every initial status is `OPEN`; existing evidence
 links are review starting points, not closure receipts.
 
-Current source-review accounting (2026-11-01): **5/70 DRAFTED, 65/70 OPEN**.
-The closed IDs are D01/D02/D03/D05 (existing durable policy/guidance), plus
-Q03 (new native join emission implementation and case source). This is an
-unweighted bundle count, not a code-completion or executable-translation
-percentage. L01/L02 inventory source is partly drafted. All new behavior,
-receiving and performance remain unverified. Four policy receipts do not
-represent newly implemented translation capabilities.
+Current source-review accounting (2026-11-01): **7/70 DRAFTED, 63/70 OPEN**.
+Closed IDs: D01/D02/D03/D05 (written policy), J01/J05 (existing workflow,
+partition and independent audit-case sources), and Q03 (native join emission
+implementation/case source). This is an unweighted acceptance-bundle count,
+not a code-completion or executable-translation percentage. All current
+verification remains UNRUN/uninspected. Earlier 5/70 entries below record
+historical source checkpoints; the new CI-source receipts follow at the end.
 
 Use only these source statuses:
 
@@ -218,11 +218,11 @@ Starting evidence: [CI partition contract](parallel-javascript-gate.md),
 
 | ID | Status | Source-draft closure criterion |
 | --- | --- | --- |
-| J01 | OPEN | Account for all eight unchanged JavaScript stage IDs/commands and every original matrix member/profile/engine, preserving fail-fast false, deadlines and raw test evidence. |
+| J01 | [DRAFTED](#j01j05-existing-ci-source-receipts--2026-11-01) | Account for all eight unchanged JavaScript stage IDs/commands and every original matrix member/profile/engine, preserving fail-fast false, deadlines and raw test evidence. |
 | J02 | OPEN | Require success for all JavaScript stages at the same immutable SHA before any Rust job executes; skipped/cancelled/missing work cannot unlock Rust. |
 | J03 | OPEN | Keep all required Rust CI checks fatal after the JS gate, with native edge/oracle coverage and explicit skipped-work handling; no local Rust invocation or commit-hook Rust tool. |
 | J04 | OPEN | Connect complete forward/reverse/freshness/strict parity/export/receiving and production-case jobs to the original partitions, preserving credentials/platform boundaries and bounded resources. |
-| J05 | OPEN | Draft workflow/source-equation/partition audits and positive/negative gate cases for failed/missing/mismatched-SHA JS stages and fatal Rust outcomes; workflow presence alone is not verification. |
+| J05 | [DRAFTED](#j01j05-existing-ci-source-receipts--2026-11-01) | Draft workflow/source-equation/partition audits and positive/negative gate cases for failed/missing/mismatched-SHA JS stages and fatal Rust outcomes; workflow presence alone is not verification. |
 
 ## 13 — Reusable delivery and adoption (ledger area 13)
 
@@ -289,8 +289,8 @@ Report 14/14 areas partial only as a broad summary, not as 100% draft progress.
 
 ## Closure receipts
 
-Four policy receipts and one implementation-source receipt follow.
-All other 65 rows remain OPEN for evidence
+Four policy, one implementation and two existing CI-source receipts follow.
+All other 63 rows remain OPEN for evidence
 review and missing implementation. The source-only resume authorizes no tests.
 
 ### D01 D02 D03 D05 policy source receipts — 2026-11-01
@@ -425,3 +425,25 @@ includes the new whole case file; no workflow command or matrix was changed.
 All execution remains UNRUN. Static quadratic push/get costs remain OPEN with
 original 60-second/20-second deadlines intact. T05 remains OPEN for every other
 operation/caller/platform/CI requirement; counts stay 5/70 DRAFTED, 65/70 OPEN.
+
+
+### J01/J05 existing CI source receipts — 2026-11-01
+
+Evidence baseline: published source `6b0000a42`. This is read-only review of
+checked-in workflow/auditor/producer/case source, not a workflow audit execution
+and not CI run/status/log/artifact/review feedback inspection. No workflow or
+command was changed for these receipts.
+
+| ID | Complete source evidence | Deferred evidence and scope |
+| --- | --- | --- |
+| J01 | `.github/workflows/javascript-first.yml`: exact eight job IDs, per-member immutable `inputs.sha` checkout/verifier, fixed full translation/profile command partitions, `fail-fast: false`, original case/job windows and always-uploaded test raw/deadline evidence. `scripts/check-js-first-workflows.mjs` declares the same stage list/complete required command table and rejects missing/extra/conditional/ignored members. `scripts/test/parallel-js-gate.test.mjs` independently enumerates all five partition commands, exact members, noncancellation, evidence rules and original deadlines. | Source clauses are drafted. No claim that any stage executes/passes, artifacts exist, a SHA is green, or Rust is unlocked. Full current runs and all new source freshness remain UNRUN/uninspected. |
+| J05 | `scripts/check-js-first-workflows.mjs` structural YAML audit and fixed reviewed program comparisons; `scripts/prepare-parallel-js-gate.mjs` language/repository native YAML/CST source equations and full inverse; `scripts/test/check-js-first-workflows.test.mjs` original positive/mutated cases for missing/failed/skipped/cancelled stages, mandatory commands, SHA drift/base worktrees, fatal Rust job/step errors and bypasses; complete partition/source-history/producer/local-alignment cases in `scripts/test/parallel-js-gate.test.mjs`. | This certifies drafted audit/control source only. No policy test/generator was run, no live scheduling result or fatal Rust outcome observed. Full actual workflow/receiving/current-SHA proof remains required. |
+
+These rows apply to the complete gate/command matrix, including all new case
+files selected by its unchanged whole-file glob. They are CI tooling, so Rust↔
+JS application caller/inverse lanes and native behavior oracles are inapplicable.
+Their own required ordered YAML source-substitution/CST/inverse path and
+independent positive/refusal cases are listed above; no row is closed just
+because a workflow file exists. J02/J03/J04 remain OPEN for complete current
+caller/Rust/matrix integration obligations and evidence review. No new translator
+coverage, runtime behavior or performance follows from crediting existing code.

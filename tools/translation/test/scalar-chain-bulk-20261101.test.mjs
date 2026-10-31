@@ -28,7 +28,7 @@ for(const family of ['outcome','cancellation'])for(const typed of [false,true])t
  assert.equal(module.chains[0].stages[0].local==='routerChainValues0',false);
  assert.equal(module.histories[0].inverse,text);assert.equal(module.histories[1].inverse,module.lowered);assert.equal(module.histories[2].inverse,text);
  assert.ok(sameRustSourceSyntax(checked.canonicalRust,checked.equations[1].after));
- assert.deepEqual(result.ruleTrace.map(row=>row.phase),['language','repository']);
+ assert.deepEqual(result.ruleTrace.map(row=>[row.phase,row.id]),[["language","scalar-chain:materialize-every-original-callback-stage-in-source-order-through-CST"],["language","scalar-chain:reissue-all-stage-types-ownership-meta-and-both-canonical-directions"],["repository","router:retain-complete-original-chain-inverses-and-input-contract-obligations"]]);
  assert.equal(data.files.find(row=>row.path===path).source,text);
  assert.equal(result.originalArrayMethodOwnerQualified,false);assert.equal(result.originalBodyEquivalenceQualified,false);
 });
