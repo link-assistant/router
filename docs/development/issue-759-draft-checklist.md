@@ -410,3 +410,18 @@ Counts remain **5/70 DRAFTED, 65/70 OPEN**. All new sources/cases are UNRUN.
 
 The earlier callback/source-helper gaps were found by reading source, without
 running cases or consulting CI. Source fixes do not claim those cases now pass.
+
+
+### T05.1 emitted scalar receiving source — 2026-11-01
+
+`5ac039ce1` adds `test/scalar-target-receiving-20261101.mjs`, its complete
+independent case file and [receiving contract](scalar-target-receiving-20261101.md).
+It drafts actual emitted JS and separately strict TypeScript target execution,
+not interpreter results as a target oracle. Twelve full 4,096-value cases retain
+both families/source languages; installed+lockfile/actual compiler 5.9.3, raw
+stdout/stderr/status/signal/timing, strict compile failures and cleanup are
+recorded by the deferred harness. The existing complete forward Node glob
+includes the new whole case file; no workflow command or matrix was changed.
+All execution remains UNRUN. Static quadratic push/get costs remain OPEN with
+original 60-second/20-second deadlines intact. T05 remains OPEN for every other
+operation/caller/platform/CI requirement; counts stay 5/70 DRAFTED, 65/70 OPEN.

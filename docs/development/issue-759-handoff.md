@@ -258,11 +258,20 @@ borrow/vector nodes required by earlier helper adapters. The
 retains all original type/owner/flow guards, old full case files, two complete
 source equations and new independent original-node/native-caller cases. UNRUN.
 
-The remaining source worker is drafting actual emitted JS/strict TS receiving
-case source for the vector/callback/chain families, complementing their existing
-interpreter/native inverse cases. No receiving code or compiler is being run.
-The coordinator reviews sources, serializes commits and alone pushes; all broad
-source rows remain OPEN except the five recorded receipts. Do not inspect CI.
+`5ac039ce1` adds actual emitted JS and separately strict-compiled TS receiving
+case source for vector/callback/chain proposals: 12 full 4,096-value cases across
+both families/source languages, actual installed/lockfile/version TypeScript
+5.9.3 receipts, fresh current-engine children, complete raw output/status/timing,
+compiler refusal diagnostics and finally cleanup. All UNRUN. Source inspection
+still shows quadratic functional pushes and repeated full-vector get validation;
+original 60-second cases/20-second children remain unchanged.
+
+The next authorized source-only worker cycle drafts linear scalar collection
+kernels with full paired/checker integration; outcome-sensitive HTTP helper
+expansion; and concurrent native+target/all-three reconciliation. The coordinator
+continues reviewing/integrating complete sources and is the only publisher.
+No tests, source preparation, compilation or CI-feedback inspection may run.
+The count remains 5/70; partial batches never close broader requirements.
 
 ## Ledgers
 
