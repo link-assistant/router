@@ -108,3 +108,10 @@ configuration closure, generic/method/async/mutable-borrow helper domains, all
 whole production functions and all execution/throughput evidence remain OPEN.
 This provides draft receipts toward B01/B04/F02/F03 only. It closes no broad row
 and never unlocks Rust CI before all eight same-SHA JavaScript gates pass.
+
+The [retention successor](cross-module-retention-20261101.md) preserves these
+immutable historical source bytes. Current operation capture/finalization indexes
+are weak; only bounded actual proof-attempt checkers and observations are retained
+for closing. The standard predecessor chain and legacy profile reader compose the
+complete known descendant. All acceptance/refusal and execution obligations above
+remain unchanged and UNRUN.

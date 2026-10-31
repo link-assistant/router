@@ -83,5 +83,5 @@ test('standard source archive successor composes after native helper syntax orig
  const current=prepareCrossModuleHelperBulkSources();assert.equal(current.files.length,3);assert.equal(current.sourceAuthority,false);assert.equal(current.semanticAuthority,false);
  for(const row of current.files){assert.equal(row.current,row.currentAfter);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);assert.ok(row.originalPath.startsWith('tools/translation/source-profiles/cross-module-helper-bulk-20261101/originals/'));}
  const ancestor=prepareNativeHelperSyntaxOriginSources(),root=ancestor.files.find(row=>row.path==='tools/translation/router-core-json-updates.mjs');
- const successor=current.files.find(row=>row.path===root.path);assert.equal(root.currentAfter,successor.after);assert.ok(root.laterHistories.some(row=>row.id==='router:cross-module-helper-bulk-20261101-complete-source-substitutions-v1'));
+ const successor=current.files.find(row=>row.path===root.path);assert.equal(root.currentAfter,successor.currentAfter);assert.ok(root.laterHistories.some(row=>row.id==='router:cross-module-helper-bulk-20261101-complete-source-substitutions-v1'));
 });
