@@ -89,12 +89,13 @@ agreeing to its after bytes, the complete batch refuses without writing.
 
 ## Complete original source preservation and equations
 
-These complete pre-fix immutable snapshots are retained as plain source DATA:
+These complete pre-fix immutable snapshots are retained as plain source DATA
+under `tools/translation/source-profiles/paired-sync-dispatch-20261101/originals/`:
 
-- `paired-sync-dispatch-20261101-original-bulk.mjs.txt`
-- `paired-sync-dispatch-20261101-original-bulk-cases.mjs.txt`
-- `paired-sync-dispatch-20261101-original-bulk-doc.md.txt`
-- `paired-sync-dispatch-20261101-original-dispatch.mjs.txt`
+- `original-bulk.mjs.txt`
+- `original-bulk-cases.mjs.txt`
+- `original-bulk-doc.md.txt`
+- `original-dispatch.mjs.txt`
 
 The original dispatch snapshot is the entire newly authored additive copy before
 sharing the after-byte helper; it already contains explicit paired dispatch.
@@ -140,9 +141,10 @@ No original command, deadline, file or matrix member was replaced.
 
 The coordinator may add these exports and their complete unchanged dependency
 closure to the established facade/entrypoint/export source equations. No such
-shared root integration is performed by this worker. The source-equation helper
-and all four snapshots also require export/freshness accounting if published as
-part of a standalone compiler delivery. A later profile must preserve these
+shared root integration is performed by this worker. The standard `source-profiles`
+location carries these snapshots through the existing compiler/export source
+selectors. No general selector or text-file bypass is introduced. Full
+export/freshness qualification remains UNRUN. A later profile must preserve these
 originals and extend their equation if actual source evolves; do not replace
 expected hashes or snapshots to manufacture freshness.
 

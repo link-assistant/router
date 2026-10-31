@@ -27,7 +27,7 @@ export function preparePairedSyncDispatchSourceEquations({root=ROOT}={}){
  const capture=createReconcileSourceCapture(root),rows=[];let primary,failed=false;
  try{
   for(const [suffix,target,transform]of [['original-bulk.mjs.txt','tools/translation/paired-sync-bulk-20261101.mjs',bulkAfter],['original-dispatch.mjs.txt','tools/translation/paired-sync-dispatch-20261101.mjs',dispatchAfter]]){
-   const snapshot='tools/translation/paired-sync-dispatch-20261101-'+suffix,before=capture.capture(snapshot).source,current=capture.capture(target).source;need(before!==null&&current!==null,'complete immutable snapshot and actual source required');const after=transform(before);need(current===after,'complete actual source differs from original recipe');
+   const snapshot='tools/translation/source-profiles/paired-sync-dispatch-20261101/originals/'+suffix,before=capture.capture(snapshot).source,current=capture.capture(target).source;need(before!==null&&current!==null,'complete immutable snapshot and actual source required');const after=transform(before);need(current===after,'complete actual source differs from original recipe');
    const concrete=transportConcreteSyntaxSource(before,{language:'JavaScript'});need(transportConcreteSyntaxMeta(concrete.meta).source===before,'complete original snapshot CST inverse differs');
    const substitution=applyConcreteSyntaxSubstitutions(concrete.meta,{languageRules:[{id:'javascript:retain-complete-original-planner-source',edits:[{span:[0,before.length],expected:before,replacement:before}]}],repositoryRules:[{id:'router:share-complete-child-after-byte-guard',edits:[{span:[0,before.length],expected:before,replacement:after}]}]});
    need(substitution.value.source===current,'complete checked source substitution differs');const history=transportConcreteSourceEquations([{before,after,language:'JavaScript'}])[0];need(history.inverse===before,'complete original planner source inverse differs');
@@ -36,7 +36,7 @@ export function preparePairedSyncDispatchSourceEquations({root=ROOT}={}){
   // Keep the complete pre-fix independent case/doc sources too. Their only
   // change is an append-only new source receipt/regression batch below.
   const preserved=[];
-  for(const [snapshot,target]of [['tools/translation/paired-sync-dispatch-20261101-original-bulk-cases.mjs.txt','tools/translation/test/paired-sync-bulk-20261101.test.mjs'],['tools/translation/paired-sync-dispatch-20261101-original-bulk-doc.md.txt','docs/development/paired-sync-bulk-20261101.md']]){
+  for(const [snapshot,target]of [['tools/translation/source-profiles/paired-sync-dispatch-20261101/originals/original-bulk-cases.mjs.txt','tools/translation/test/paired-sync-bulk-20261101.test.mjs'],['tools/translation/source-profiles/paired-sync-dispatch-20261101/originals/original-bulk-doc.md.txt','docs/development/paired-sync-bulk-20261101.md']]){
    const before=capture.capture(snapshot).source,current=capture.capture(target).source;need(before!==null&&current!==null&&current.startsWith(before),'complete old case/doc source must remain an exact prefix');preserved.push({path:target,snapshot,before,after:current,inverse:before,appended:current.slice(before.length),sourceAuthority:false});
   }
   const result={schema:'router-paired-sync-dispatch-source-equations-20261101-v1',files:rows,preserved,sourceAuthority:false,semanticAuthority:false,runtimeParity:false,receivingExecuted:false};boundedReconcileWireBytes(result);capture.close();return result;
