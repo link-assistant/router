@@ -362,3 +362,20 @@ records implementation and limitations plus seven complete source equations.
   platform, namespace, production, reverse/freshness/export and parity evidence
   remain separate OPEN obligations. No full native-body equivalence is claimed
   outside the previously declared successful-resource compatibility projection.
+
+
+### Additional partial family receipts — 2026-11-01
+
+These completed source sub-batches are not additional numerator entries in the
+70-row count. Parent requirements remain OPEN until every clause and inventory
+mapping has source evidence. All new implementation/case execution is UNRUN.
+
+| Child work item | Source-draft evidence | Parent limitations |
+| --- | --- | --- |
+| R05.1: bounded multi-module scalar-loop/vector proposal transaction | `48544f7f5`, complete accounting follow-up `b92b1d47b`; `primitive-vector-iterator-bulk-20261101.mjs`, accounting helper, independent case source and family contract. Actual TS, canonical Rust and meta reissue; full inverses/closing fences; no installation. | Existing supported scalar loops only; wider lazy/captured iterator language, all production callers, export and synchronization remain OPEN under O02/R05/F/V/S/E. |
+| O04.1: paired async control caller-description automation | `cfa015618`; `async-control-bulk-20261101.mjs`, five shared descriptions, full existing checker/meta/native inverse/reverse rechecks, independent JS/TS/refusal and Rust oracle source, strict version-pinned harness. | Channel/cancellation subset; production migration, network/HTTP/state/platform scope and whole dependency closure remain OPEN under O04/F03/V03/T04. |
+| S03.1: guarded complete bulk planner composition | `e0a1dbe75`; `paired-sync-bulk-20261101.mjs`, independent case source and full contract. Exact bytes/modes/baselines, original actual planner/installer paths, complete inverses and source/identity/directory closing checks. | Bookkeeping no-op grants no semantic coverage; concurrent JS/TS and topology installation remain refused. Complete conflict/recovery/whole-project scope stays OPEN under S01/S02/S03/S05. |
+| E04.1: stable additive family import surface | `bulk-source-family-proposals.mjs` and [integration contract](bulk-source-family-proposals.md), in the checkpoint containing this receipt. Direct reexports preserve the original checked APIs. | Full copied-compiler closure, receiving, limits and production/gate integration still require E01/E03/E04/J evidence. No runtime/semantic authority is granted by reexporting functions. |
+
+No new interpreter, compiler, test, preparer, diagnostic or source inventory
+report was executed to create these receipts. They record source review only.

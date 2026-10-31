@@ -10,7 +10,8 @@ no tests, compilation, trial translation or CI-feedback inspection are authorize
 - Draft PR: https://github.com/link-assistant/router/pull/775
 - Branch: `issue-772-translator-throughput`
 - Integration worktree: `.worktrees/issue-759-storage-repair-20261021`
-- Latest previously published checkpoint: `19074cc30`.
+- Current published source checkpoint: `853223d53` (native kernel emission and scope tracking).
+- Earlier published checkpoint before the stop/resume cycle: `19074cc30`.
 - Subsequent checkpoints included in this handoff: `4895f51aa` (join kernel),
   `db901a224` (complete additive caller/interpreter/inverse profiles), and
   `dbbbc9b12` (automatic array/push/join kernel adoption).
@@ -29,7 +30,7 @@ accounting was **0/70 closed with complete source-review receipts; 70/70 OPEN**.
 This is a conservative tracking baseline, not 0% implementation: existing
 partial source work is substantial and has not been audited against the new
 closure criteria. No honest drafted-effort percentage is available yet.
-On a future explicit resume, first close L01/L02 by mapping actual production
+Continue L01/L02 by mapping actual production
 source and unresolved features to the numbered rows. Then record concrete
 implementation, both-direction/CST/meta and independent case-source evidence
 before closing each row; keep all execution evidence separate. The checklist
@@ -61,7 +62,7 @@ Python literal/regex/JSON/gzip source authors and ordinary source/SCM operations
 were used. CI/review feedback for these checkpoints remains uninspected.
 Historical evidence in older ledgers does not qualify this head.
 
-## Instructions that persist on a future explicit resume
+## Current source-drafting constraints
 
 1. The user's later 2026-11-01 instruction authorizes up to three new
    GPT-6.1-sol medium agents for disjoint source-draft batches. Historical
@@ -84,7 +85,7 @@ Historical evidence in older ledgers does not qualify this head.
 7. Keep files below 1,000 lines. `extensions/host-contracts.mjs` is 999 lines;
    use external modules or changes within existing dispatch/import lines.
    CONTRIBUTING.md is near its limit. Do not append to the old main bulk ledger.
-8. Be careful with disk. Last observation was about 26 GiB free (95% used).
+8. Be careful with disk. Last observation on this resume was about 16 GiB free (97% used).
    No installations/builds/clones are needed for drafting. Clean task temporaries.
    Only identified Router-owned inactive caches/build directories are authorized
    for cleanup; preserve other work.
@@ -194,9 +195,36 @@ Local ignored `.router-source-draft-resume.local` and `.router-source-authors.lo
 are optional recovery notes; this committed handoff and ledgers are authoritative
 and sufficient without those local files.
 
+## Coordinated family drafts — 2026-11-01
+
+The [stable family import surface](bulk-source-family-proposals.md) integrates
+three additional source-only automation batches. All implementations/cases are
+UNRUN; broad rows remain OPEN and the count stays **5/70 DRAFTED, 65/70 OPEN**.
+
+- `48544f7f5` / `b92b1d47b`: complete multi-module primitive vector/scalar-loop
+  proposals, actual TS projection, canonical Rust inverse/meta reissue, original
+  closing fences and complete UTF16/UTF8 DATA occurrence accounting. Wider lazy
+  iterators/captures and production adoption remain OPEN.
+- `cfa015618`: five paired async channel/cancellation/deadline caller descriptions,
+  original fresh JS/TS/meta/native inverse/reverse rechecks, exact paired paths,
+  lockfile TypeScript 5.9.3 diagnostic/receiving harness and CI-only Rust oracle.
+  Arbitrary application async/state/network coverage and dispatch/adoption remain OPEN.
+- `e0a1dbe75`: fresh existing owned/forward bulk synchronization planners, exact
+  baseline/source/mode comparisons, raw no-op/conflict/rename/deletion review,
+  original guarded installer and complete source/directory/root closing checks.
+  Concurrent different-language and topology changes remain fail-closed; full
+  reconciliation/recovery remains OPEN.
+
+Three authorized workers are drafting the next disjoint batches: actual scalar
+map/filter callback collection lowering; genuine shared source binding closure;
+and fresh concurrent canonical JS/TS reconciliation against native baselines.
+The coordinator reviews complete sources, serializes commits and alone pushes.
+Do not start tests, translation/preparation runs or CI-feedback inspection.
+
 ## Ledgers
 
 - [Countable draft checklist: 70 acceptance bundles](issue-759-draft-checklist.md)
+- [Bulk family integration](bulk-source-family-proposals.md)
 - [Full requirements](bulk-draft-requirements.md)
 - [Collection continuation](primitive-collection-synchronization-bulk-draft.md)
 - [Native join emission source contract](owned-text-vector-native-join-emission-source-draft.md)
