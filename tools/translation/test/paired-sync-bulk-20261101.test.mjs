@@ -99,3 +99,19 @@ test('missing declared dependency, omitted Cargo input and linked native census 
  api.bulk.units[0].watched=api.bulk.units[0].watched.filter(row=>row.path!=='Cargo.lock');api.write('bulk.json',JSON.stringify(api.bulk));assert.throws(()=>api.plan(),/Cargo\/workspace dependency omitted/u);
  api.bulk.units[0].watched.push({path:'Cargo.lock',language:'Rust'});api.write('bulk.json',JSON.stringify(api.bulk));api.write('outside.rs','// external');symlinkSync(join(api.root,'outside.rs'),join(api.root,'rust/src/linked.rs'));assert.throws(()=>api.plan(),/linked native tree/u);
 });
+
+// Additive independent cross-unit regression SOURCE. All preceding cases are
+// preserved byte-for-byte in the retained complete pre-fix source snapshot.
+function secondBulkUnit(api){
+ const unit={...api.unit,id:'second',javascript:'js/src/second.mjs',typescript:'ts/src/second.mts',meta:'translation/second.json'},manifestPath='second-unit.json';
+ api.write(manifestPath,JSON.stringify(unit));const options={root:api.root,manifestPath};applyForwardProjectUnitSynchronization(JSON.stringify(planForwardProjectUnitSynchronization(options)),options);
+ api.bulk.units.push({id:'second',planner:'forward-project',manifestPath,nativeRoot:'rust/src',watched:[{path:unit.entry,language:'Rust'},{path:unit.javascript,language:'JavaScript'},{path:unit.typescript,language:'TypeScript'},...['Cargo.toml','rust/Cargo.toml','Cargo.lock'].map(path=>({path,language:'Rust'}))]});api.write('bulk.json',JSON.stringify(api.bulk));api.commit();return unit;
+}
+test('original bulk no-op consumer cannot silently retain a stale native dependency',limits,t=>{
+ const api=fixture(t),second=secondBulkUnit(api),untouched=api.read(second.javascript);api.write(api.unit.javascript,api.read(api.unit.javascript).replace('before_bulk_雪','first_only_😀'));
+ assert.throws(()=>api.plan(),/cross-unit dependency output lacks independently agreed/u);assert.equal(api.read(second.javascript),untouched);assert.ok(api.read(api.unit.entry).includes('before_bulk_雪'));
+});
+test('original bulk still merges shared native output when both real single-authority producers agree',limits,async t=>{
+ const api=fixture(t),second=secondBulkUnit(api);for(const unit of [api.unit,second])api.write(unit.javascript,api.read(unit.javascript).replace('before_bulk_雪','both_agreed_😀'));
+ const plan=api.plan();assert.equal(plan.outputs.filter(row=>row.path===api.unit.entry).length,1);await api.apply(plan);for(const unit of [api.unit,second])assert.ok(api.read(unit.typescript).includes('both_agreed_😀'));assert.ok(api.read(api.unit.entry).includes('both_agreed_😀'));
+});

@@ -11,6 +11,7 @@ import {readCurrentSourceProposalFile, installFreshAsyncSourceProposal} from './
 import {transportConcreteSourceEquations} from './concrete-source-equations.mjs';
 import {transportConcreteSyntaxSource, transportConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
 import {repositoryRustLayout} from './repository-layout.mjs';
+import {assertPairedSyncChildAfterAgreement} from './paired-sync-dispatch-20261101-after-agreement.mjs';
 
 const SCHEMA='router-paired-sync-bulk-20261101-v1';
 const LANGUAGES=['Rust','JavaScript','TypeScript'];
@@ -158,7 +159,7 @@ function requiredSources(unit,actual){
 /** Fresh bulk planning. No-op certifies only declared byte/mode equality. */
 export function planPairedSyncBulk({root,manifestPath}={}){
  root=resolve(root);need(fs.lstatSync(root).isDirectory()&&!fs.lstatSync(root).isSymbolicLink(),'ordinary project root required');root=fs.realpathSync(root);path(manifestPath);
- const rootIdentity=directoryStamp(checkedDirectory(root,'')),revision=gitHead(root),captures=new Map(),inputs=new Map(),outputs=new Map(),trees=[],reviews=[],authored=new Set();let retained=0,primary,failed=false,result;
+ const rootIdentity=directoryStamp(checkedDirectory(root,'')),revision=gitHead(root),captures=new Map(),inputs=new Map(),outputs=new Map(),trees=[],reviews=[],authored=new Set(),children=[];let retained=0,primary,failed=false,result;
  const capture=name=>{
   path(name);if(captures.has(name))return captures.get(name);
   need(captures.size<COUNT,'complete source capture count bound');
@@ -189,6 +190,7 @@ export function planPairedSyncBulk({root,manifestPath}={}){
    const rows=[...watched].map(([name,language])=>{const previous=baseline.get(name),current=capture(name);return {path:name,language,baseline:{source:previous?.source??null,mode:previous?.mode??null},current:{source:current.source,mode:current.mode}};});
    for(const row of rows)need(row.baseline.source!==null||row.current.source!==null,'watched input is missing from baseline and current source: '+row.path);
    const review=inspectPairedSyncEdits(rows);reviews.push({id:unit.id,...review});
+   const child={id:unit.id,inputs:new Map(rows.map(row=>[row.path,row.current.source])),outputs:new Map()};children.push(child);
    for(const row of review.edits)authored.add(row.path);
    if(['topology-reconciliation','concurrent-reconciliation'].includes(review.disposition)){
     const error=new TypeError('Paired sync bulk: unit '+unit.id+' requires '+review.disposition+'; originals retained');
@@ -197,13 +199,14 @@ export function planPairedSyncBulk({root,manifestPath}={}){
    if(review.disposition==='no-op')continue;
    const plan=(unit.planner==='owned'?planUnitSynchronization:planForwardProjectUnitSynchronization)({root,manifestPath:unit.manifestPath});
    need(plan.root===root&&plan.baseRevision===revision&&plan.sourceBaselineRevision===baselineRevision,'fresh child root/revision/baseline differs');
-   for(const row of plan.inputs){need(capture(row.path).source===row.source,'complete fresh child input differs');}
-   for(const row of plan.outputs)output(row);
+   for(const row of plan.inputs){need(capture(row.path).source===row.source,'complete fresh child input differs');child.inputs.set(row.path,row.source);}
+   for(const row of plan.outputs){output(row);child.outputs.set(row.path,row);}
   }
   // A generated output may not overwrite the enclosing coordination manifest.
   need(!outputs.has(manifestPath),'bulk manifest cannot be an output');
   for(const unit of description.units)need(!outputs.has(unit.manifestPath),'unit manifest cannot be an output');
   for(const name of authored)if(outputs.has(name))need(outputs.get(name).after===capture(name).source,'bulk output would overwrite an independently authored source: '+name);
+  assertPairedSyncChildAfterAgreement(children,outputs);
   // Preserve full source equations even where the existing planner's review is
   // metadata-only. Initialization retains explicit absence and a full CST.
   const equations=[];

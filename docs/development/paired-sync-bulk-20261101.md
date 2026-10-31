@@ -208,3 +208,23 @@ qualification, platform/runtime freshness, strict TypeScript evidence,
 production adoption counts, all inventoried caller families and the complete
 eight-stage gate remain OPEN. No drafted-row count or coverage denominator is
 changed by this partial contribution. Execution remains UNRUN throughout.
+
+## Additive cross-unit dependency source repair — 2026-11-01
+
+Source review found that separately fresh child plans could share a captured
+native/dependency path while only one child proposed its changed output. The
+other child could then retain a stale paired target. The source draft now keeps
+every child's complete observed input bytes, including bookkeeping no-op
+watchers, and requires every child consuming a changed output to independently
+propose exactly the same complete before/after bytes and mode. Otherwise the
+whole batch refuses before installation. Exact identical shared outputs still
+merge; no arbitrary disjoint native edit composition is introduced.
+
+The original bulk public functions, manifest schema, planner kinds and all
+earlier cases remain unchanged. The new DATA-only shared helper is
+`tools/translation/paired-sync-dispatch-20261101-after-agreement.mjs`; the new
+dispatch copy uses the same helper. Complete pre-fix module/case/doc snapshots
+and an exact CST source-equation author are retained under that prefix. New
+independent original-bulk source covers an unchanged dependent consumer refusal
+and two genuinely agreeing single-authority producers. All execution remains
+UNRUN; this source repair closes no broad synchronization row.
