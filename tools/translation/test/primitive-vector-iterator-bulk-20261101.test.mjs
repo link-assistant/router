@@ -6,8 +6,31 @@ import {primitiveVectorLiteralReceivingData as receiving} from '../js-to-rust/te
 import * as outcome from '../js-to-rust/owned-outcome.mjs';
 import * as cancellation from '../js-to-rust/owned-cancellation.mjs';
 import {sameRustSourceSyntax} from '../rust-syntax-cells.mjs';
+import {accountPrimitiveVectorIteratorBulkData as account} from '../primitive-vector-iterator-bulk-20261101-accounting.mjs';
 const limits={timeout:60000};
 const u64="import('./runtime/primitive-operator-runtime.mjs').RustU64";
+test('complete DATA accounting counts Unicode keys payloads and every alias occurrence',limits,()=>{
+ const shared={x:'😀'},receipt=account({a:shared,b:shared});
+ assert.equal(receipt.utf16Units,8);assert.equal(receipt.utf8Bytes,12);
+ assert.equal(receipt.cells,9);
+ const once=account({migration:{program:{literal:'kept'},meta:'kept'},equations:[{before:'old',after:'new',inverse:'old'}]});
+ const twice=account({migration:{program:{literal:'kept'},meta:'kept'},equations:[{before:'old',after:'new',inverse:'old'}],program:{literal:'kept'},meta:'kept'});
+ assert.ok(twice.utf16Units>once.utf16Units);assert.ok(twice.utf8Bytes>once.utf8Bytes);
+ // Lone surrogates retain their distinct UTF16 and UTF8 replacement cost.
+ assert.equal(account('\ud800').utf16Units,1);assert.equal(account('\ud800').utf8Bytes,3);
+});
+test('accounting refuses hidden retained overflow cycles accessors proxies and expanding alias paths',limits,()=>{
+ assert.throws(()=>account({migration:{meta:'x'.repeat(16777217)}}),/UTF16/);
+ assert.throws(()=>account({equations:[{inverse:'\u0800'.repeat(Math.floor(16777216/3)+1)}]}),/UTF8/);
+ const cyclic={};cyclic.child=cyclic;assert.throws(()=>account(cyclic),/cyclic/);
+ let reads=0;const getter={};Object.defineProperty(getter,'secret',{get(){reads++;throw Error('must not run');}});
+ assert.throws(()=>account(getter),/accessors/);assert.equal(reads,0);
+ assert.throws(()=>account(new Proxy({},{ownKeys(){reads++;throw Error('must not run');}})),/ordinary DATA/);assert.equal(reads,0);
+ let aliases={leaf:'x'};for(let index=0;index<21;index++)aliases={left:aliases,right:aliases};
+ assert.throws(()=>account(aliases),/budget/);
+ assert.throws(()=>account([,1]),/dense|hole/);
+ assert.throws(()=>account({integer:1n<<129n}),/bounded primitive/);
+});
 function caller(typed=false){
  const doc=typed?'':'/** @param {readonly ('+u64+')[]} input */\n';
  const parameter=typed?'input: readonly ('+u64+')[]':'input';

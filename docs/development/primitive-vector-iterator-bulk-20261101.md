@@ -37,9 +37,19 @@ it must not silently replace an authored application file.
 Requests allow at most 16 independent modules and 256 explicit vector selections
 per module. Existing complete-source, native syntax/meta, ownership and input
 budgets remain mandatory, including 64 literal elements and 4,096 vector values.
-The artifact accounting additionally caps complete retained original/edited
-source and emitted artifact source/CST at 16 MiB. Source-equation and underlying
-semantic structures keep their own original bounds. All contexts are fresh and
+`primitive-vector-iterator-bulk-20261101-accounting.mjs` walks the complete
+returned DATA before return, including every migration proposal, equation,
+program, semantic meta, artifact, canonical source, inverse history, duplicate
+file record and final rule trace. It caps text at both 16,777,216 UTF16 units and
+16,777,216 UTF8 bytes, counting every own string key and scalar representation;
+these are distinct units. It also caps traversal at 2,000,000 cells and depth
+160. Every aliased occurrence is traversed and counted again, with an active
+ancestor set used only to reject cycles. It does not stringify a complete object,
+invoke accessors or retain a cross-operation cache. Non-data/proxy/accessor,
+sparse-array, nonfinite-number and out-of-domain BigInt payloads are refused.
+Refusal occurs as soon as any bound is exceeded. The count bounds complete DATA
+payload occurrences, not physical heap bytes or allocator overhead. Existing
+source-equation and semantic limits remain independently mandatory. All contexts are fresh and
 closed, including when a later module fails. The first failure stays primary;
 every retained context's closing check is attempted. State is invocation-local
 and no source, owner, result, failure or verdict cache survives the call.
@@ -48,6 +58,9 @@ The independently authored unrun cases cover complete copied/filter/early-stop
 collection callers in both families and both source languages, two-module
 ordering, original inverses, canonical reproduction, late failure, accessors,
 paired edits, forged operand types, unsigned limits and full 4,096-value input.
+Accounting cases separately cover Unicode and lone-surrogate units, repeated
+aliases, hidden migration/meta and inverse overflow, cycles, getters/proxies,
+holes, expanding alias paths and primitive-integer bounds.
 They invoke the existing interpreters when later authorized; no compiler,
 interpreter, parser, translator, preparer or case was executed while drafting.
 

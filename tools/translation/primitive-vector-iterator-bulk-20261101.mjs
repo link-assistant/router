@@ -14,6 +14,7 @@ import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta} from './concr
 import {transportConcreteSourceEquations} from './concrete-source-equations.mjs';
 import {sameRustSourceSyntax} from './rust-syntax-cells.mjs';
 import {withCompleteSourceClosingFence} from './complete-source-closing-fence.mjs';
+import {accountPrimitiveVectorIteratorBulkData} from './primitive-vector-iterator-bulk-20261101-accounting.mjs';
 const fail=message=>{throw new TypeError('Primitive vector iterator bulk: '+message);};
 const families={
  outcome:{api:outcome,current:outcomeCurrent,inverse:translateOwnedOutcomeRust},
@@ -105,7 +106,6 @@ export function proposePrimitiveVectorIteratorBulk(data,options){
     }},
    ]},
    {phase:'repository',rules:[{id:'router:retain-complete-batch-inverses-and-unqualified-runtime-obligations',apply:rows=>{
-    let retained=0;
     const modules=rows.map(({plan,proposal,checked,inverse,reissued})=>{
      const after=proposal.files[0].after,language=plan.sourcePath.endsWith('.mjs')?'JavaScript':'TypeScript';
      const equations=transportConcreteSourceEquations([
@@ -119,8 +119,6 @@ export function proposePrimitiveVectorIteratorBulk(data,options){
       {path:plan.pair.typescript,language:'TypeScript',source:checked.typescript},
       {path:plan.pair.javascript,language:'JavaScript',source:inverse.javascript},
      ].map(file=>({...file,concreteSyntax:concrete(file.source,file.language),inverse:file.source}));
-     retained+=Buffer.byteLength(plan.before)+Buffer.byteLength(after)+artifacts.reduce((total,file)=>total+Buffer.byteLength(file.source)+Buffer.byteLength(file.concreteSyntax),0);
-     if(retained>16777216)fail('complete batch retained source/meta budget');
      return {sourcePath:plan.sourcePath,rustPath:plan.rustPath,before:plan.before,after,inverse:plan.before,equations,artifacts,migration:proposal,program:checked.program,meta:checked.meta,canonicalRust:checked.rust,typescript:checked.typescript,canonicalJavaScript:inverse.javascript,canonicalReproductionSyntaxMatched:true};
     });
     return {schema:'primitive-vector-iterator-bulk-source-proposal-v1',family:request.family,modules,
@@ -134,6 +132,10 @@ export function proposePrimitiveVectorIteratorBulk(data,options){
      crossInvocationCache:false};
    }}]},
   ]).run(null);
-  return {...run.value,ruleTrace:run.trace};
+  const result={...run.value,ruleTrace:run.trace};
+  // Account every retained field, including migration histories, source
+  // equations, semantic programs/meta and all aliases, before publication.
+  accountPrimitiveVectorIteratorBulkData(result);
+  return result;
  },[close,()=>{contexts.length=0;results.length=0;}]);
 }
