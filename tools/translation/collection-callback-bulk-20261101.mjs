@@ -1,5 +1,7 @@
 // Additive scalar collection callback lowering. Syntax selection is DATA only;
 // complete native source/type/ownership/meta reissue grants target admission.
+import {posix} from 'node:path';
+import {candidateScalarSliceParameterDomain,lowerScalarCallbackExpression} from './scalar-chain-bulk-20261101-expression.mjs';
 import {ownershipCompiler,ownershipCompilerRuntimeNativeCurrent} from './js-to-rust/vendor/module-syntax.mjs';
 import {ownedPlainData,ownedSourcePath,requireOwnedCoreSourceCurrent as outcomeCurrent} from './js-to-rust/owned-outcome-source.mjs';
 import {requireOwnedCoreSourceCurrent as cancellationCurrent} from './js-to-rust/owned-cancellation-source.mjs';
@@ -16,24 +18,14 @@ const families={outcome:{api:outcome,current:outcomeCurrent},cancellation:{api:c
 const domains=new Set(['bool','u8','i8','u16','i16','u32','i32','u64','i64','u128','i128']);
 const name=value=>typeof value==='string'&&/^[_A-Za-z][_A-Za-z0-9]*$/u.test(value)&&!value.startsWith('__ro');
 function exact(value,keys){if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).length!==keys.length||keys.some(key=>!Object.hasOwn(value,key)))fail('exact request DATA fields required');}
-function syntaxPlan(source,path,callbacks){
+function syntaxPlan(source,path,root,callbacks){
  const ts=ownershipCompiler();if(!ownershipCompilerRuntimeNativeCurrent(ts))fail('original native compiler runtime changed');
  const file=ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,path.endsWith('.mjs')?ts.ScriptKind.JS:ts.ScriptKind.TS);
  if(file.parseDiagnostics.length)fail('complete original native source grammar required');
  let remaining=100000;const tick=depth=>{if(--remaining<0||depth>160)fail('complete callback syntax cell/depth budget');};
- const census=(node,depth=0)=>{tick(depth);ts.forEachChild(node,child=>census(child,depth+1));};census(file);
- const binary=new Set(['+','-','*','/','%','<','<=','>','>=','===','!==','&&','||','&','|','^','<<','>>']);
- const unary=new Set([ts.SyntaxKind.MinusToken,ts.SyntaxKind.PlusToken,ts.SyntaxKind.ExclamationToken,ts.SyntaxKind.TildeToken]);
- function expression(node,parameter,depth=0){
-  tick(depth);
-  if(ts.isIdentifier(node)){if(node.text!==parameter)fail('callback captures require their separate actual ownership profile');return;}
-  if(ts.isNumericLiteral(node)||ts.isBigIntLiteral(node)||node.kind===ts.SyntaxKind.TrueKeyword||node.kind===ts.SyntaxKind.FalseKeyword)return;
-  if(ts.isParenthesizedExpression(node)){expression(node.expression,parameter,depth+1);return;}
-  if(ts.isPrefixUnaryExpression(node)&&unary.has(node.operator)){expression(node.operand,parameter,depth+1);return;}
-  if(ts.isBinaryExpression(node)&&binary.has(node.operatorToken.getText(file))){expression(node.left,parameter,depth+1);expression(node.right,parameter,depth+1);return;}
-  if(ts.isConditionalExpression(node)){expression(node.condition,parameter,depth+1);expression(node.whenTrue,parameter,depth+1);expression(node.whenFalse,parameter,depth+1);return;}
-  fail('callback requires a capture-free scalar expression without calls writes references or suspension');
- }
+ const names=new Set(),operatorImports=new Map();let sequence=0;
+ const census=(node,depth=0)=>{tick(depth);if(ts.isIdentifier(node))names.add(node.text);ts.forEachChild(node,child=>census(child,depth+1));};census(file);
+ const imported=name=>{if(!operatorImports.has(name)){let local;do{if(sequence>=4096)fail('bounded hygienic operator alias');local='routerCallbackOperator'+sequence++;}while(names.has(local));names.add(local);operatorImports.set(name,local);}return operatorImports.get(name);};
  const edits=[],vectors=[],rows=[],seen=new Set();
  for(const request of callbacks){
   exact(request,['function','local','domain']);if(!name(request.function)||!name(request.local)||!domains.has(request.domain))fail('explicit portable callback/local/domain selection required');
@@ -52,20 +44,23 @@ function syntaxPlan(source,path,callbacks){
   if(!ts.isArrowFunction(arrow)||arrow.modifiers?.length||arrow.typeParameters?.length||arrow.type||arrow.parameters.length!==1||ts.isBlock(arrow.body))fail('one synchronous scalar expression arrow required');
   const parameter=arrow.parameters[0];
   if(!ts.isIdentifier(parameter.name)||parameter.type||parameter.initializer||parameter.dotDotDotToken||parameter.questionToken||parameter.modifiers?.length||!name(parameter.name.text)||[receiver,request.local].includes(parameter.name.text))fail('one inferred independent immutable scalar callback parameter required');
-  const item=parameter.name.text;expression(arrow.body,item);
+  const item=parameter.name.text,inputDomainCandidate=candidateScalarSliceParameterDomain(ts,parameters[0]),loweredBody=lowerScalarCallbackExpression(arrow.body,{ts,file,parameter:item,inputDomain:inputDomainCandidate,outputDomain:request.domain,imported,tick});
   // Receiver reassignment before the selected statement would make a spelling
   // selector ambiguous. The complete target checker still owns every binding.
   const before=fn.body.statements.slice(0,fn.body.statements.indexOf(statement));
   const inspect=(node,depth=0)=>{tick(depth);if(ts.isIdentifier(node)&&node.text===receiver)fail('callback receiver must remain an original unused input before collection');ts.forEachChild(node,child=>inspect(child,depth+1));};
   for(const node of before)inspect(node);
-  const body=source.slice(arrow.body.getStart(file),arrow.body.end),operation=call.expression.name.text;
+  const body=loweredBody,operation=call.expression.name.text;
   const loop=operation==='map'?request.local+'.push(('+body+'\n));':'if(('+body+'\n)){'+request.local+'.push('+item+');}';
   const replacement='const '+request.local+'=[];\nfor(const '+item+' of '+receiver+'){'+loop+'}\n';
   edits.push({span:[statement.getStart(file),statement.end],expected:source.slice(statement.getStart(file),statement.end),replacement});
-  vectors.push(request);rows.push({function:request.function,local:request.local,domain:request.domain,operation,receiver,parameter:item,span:[statement.getStart(file),statement.end],callbackSpan:[arrow.getStart(file),arrow.end],callbackOriginal:source.slice(arrow.getStart(file),arrow.end),captureFreeSyntax:true,scalarTypesQualified:false,sourceAuthority:false,semanticAuthority:false});
+  vectors.push(request);rows.push({function:request.function,local:request.local,domain:request.domain,operation,receiver,parameter:item,span:[statement.getStart(file),statement.end],callbackSpan:[arrow.getStart(file),arrow.end],callbackOriginal:source.slice(arrow.getStart(file),arrow.end),inputDomainCandidate,loweredBody,captureFreeSyntax:true,scalarTypesQualified:false,sourceAuthority:false,semanticAuthority:false});
  }
  if(!ownershipCompilerRuntimeNativeCurrent(ts))fail('original native compiler runtime changed');
- return {edits,vectors,callbacks:rows};
+ let at=source.charCodeAt(0)===0xfeff?1:0;if(source.startsWith('#!',at)){const end=source.indexOf('\n',at);if(end<0)fail('complete hashbang line required');at=end+1;}
+ const relative=posix.relative(posix.dirname(path),root+'/primitive-operator-runtime.mjs'),specifier=relative.startsWith('.')?relative:'./'+relative;
+ const importEdits=operatorImports.size?[{span:[at,at],expected:'',replacement:'import { '+[...operatorImports].map(([name,local])=>name+' as '+local).join(', ')+' } from '+JSON.stringify(specifier)+';\n'}]:[];
+ return {edits,vectors,callbacks:rows,importEdits};
 }
 /** Explicit input-contract migration; no original Array method authority. */
 export function proposeCollectionCallbackBulk(data,options){
@@ -82,9 +77,9 @@ export function proposeCollectionCallbackBulk(data,options){
       exact(module,['sourcePath','rustPath','callbacks']);ownedSourcePath(module.sourcePath);ownedSourcePath(module.rustPath);
       if(seen.has(module.sourcePath)||!Array.isArray(module.callbacks)||!module.callbacks.length||module.callbacks.length>128||! /\.(?:mjs|mts|ts)$/u.test(module.sourcePath))fail('independent bounded original callback module selections required');seen.add(module.sourcePath);
       const sources=original.files.filter(row=>row.path===module.sourcePath);if(sources.length!==1||typeof sources[0].source!=='string'||Buffer.byteLength(sources[0].source)>2097152)fail('one complete bounded original callback source required');
-      const before=sources[0].source,language=module.sourcePath.endsWith('.mjs')?'JavaScript':'TypeScript',plan=syntaxPlan(before,module.sourcePath,module.callbacks),concrete=transportConcreteSyntaxSource(before,{language});
+      const before=sources[0].source,language=module.sourcePath.endsWith('.mjs')?'JavaScript':'TypeScript',plan=syntaxPlan(before,module.sourcePath,language==='TypeScript'?original.declarationRoot:original.runtimeRoot,module.callbacks),concrete=transportConcreteSyntaxSource(before,{language});
       if(transportConcreteSyntaxMeta(concrete.meta).source!==before)fail('complete original callback CST inverse differs');
-      const transformed=applyConcreteSyntaxSubstitutions(concrete.document,{languageRules:[{id:'language:lower-selected-capture-free-scalar-callbacks-to-eager-loops',edits:plan.edits}],repositoryRules:[{id:'router:retain-existing-primitive-vector-collection-profile',edits:[]}]});
+      const transformed=applyConcreteSyntaxSubstitutions(concrete.document,{languageRules:[{id:'language:lower-selected-capture-free-scalar-callbacks-to-eager-loops',edits:plan.edits}],repositoryRules:[{id:'router:retain-existing-primitive-vector-collection-profile',edits:plan.importEdits}]});
       const after=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(transformed.value)).source;
       stages.push({sourcePath:module.sourcePath,rustPath:module.rustPath,before,lowered:after,inverse:before,callbacks:plan.callbacks,vectors:plan.vectors,trace:transformed.trace});
       lowered={...lowered,files:lowered.files.map(row=>row.path===module.sourcePath?{...row,source:after}:row)};

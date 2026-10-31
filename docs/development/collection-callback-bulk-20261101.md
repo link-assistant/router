@@ -32,6 +32,18 @@ this, references, suspension, index/array callback parameters, thisArg, optional
 calls and chains remain refused. A finite whole-module node/depth census and
 native compiler identity checks bound and close syntax selection.
 
+The shared `scalar-chain-bulk-20261101-expression.mjs` planner lowers arithmetic,
+complement and shifts to genuine existing `integerArithmetic`, `primitiveNot`
+and `integerShift` calls, with hygienic actual imports. It also routes eager
+bitwise operations through `primitiveBitwise`. Raw arithmetic is not passed to
+an owned source checker that does not admit it. Written parameter syntax supplies
+an input-domain candidate separately from the selected output domain. Thus a
+u64 comparison can map into bool, and a bool conditional can map into u64.
+Those syntax candidates grant no type identity; the complete actual checker
+reissues every input operand, result, import and literal width. Dynamic Number
+literals and unary coercion are refused. Complete immutable before/after source
+equations for this source repair are retained in the new chain source profile.
+
 The actual language substitution runs on complete serialized/reparsed CST,
 retains original spans and callback source, and composes the resulting complete
 module into the existing literal/vector-loop automation. That compiler performs

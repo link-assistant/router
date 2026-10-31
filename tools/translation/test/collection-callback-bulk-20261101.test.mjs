@@ -42,6 +42,17 @@ test('existing literal-only proposer still refuses actual map/filter initializer
  assert.throws(()=>oldProposal(data,{family:'outcome',sourcePath:'caller.mjs',vectors:selections}));
  assert.equal(propose(data,options('outcome')).modules[0].callbacks.length,4);
 });
+for(const family of ['outcome','cancellation'])for(const typed of [false,true])test(family+' separate written input and selected output domains lower actual checked arithmetic',limits,async()=>{
+ const path=typed?'caller.mts':'caller.mjs',numeric=typed?'export function compared(input: readonly ('+u64+')[])':'/** @param {readonly ('+u64+')[]} input */\nexport function compared(input)',
+  boolean=typed?'export function chosen(input: readonly boolean[])':'/** @param {readonly boolean[]} input */\nexport function chosen(input)',
+  text=numeric+'{const values=input.map(item=>item+1n>2n);return values;}\n'+boolean+'{const values=input.map(flag=>flag?2n+3n:7n);return values;}\n',
+  result=propose(receiving(family,text,path),options(family,path,[{function:'compared',local:'values',domain:'bool'},{function:'chosen',local:'values',domain:'u64'}])),checked=result.modules[0].checked,
+  api=family==='outcome'?outcome:cancellation,token=await api.prepareOwnedOutcomeRuntime(checked.program);
+ assert.deepEqual(api.evaluateOwnedOutcome(checked.program,'compared',[Object.freeze([0n,2n,1n])],token),[false,true,false]);
+ assert.deepEqual(api.evaluateOwnedOutcome(checked.program,'chosen',[Object.freeze([false,true,false])],token),[7n,5n,7n]);
+ assert.deepEqual(result.modules[0].callbacks.map(row=>row.inputDomainCandidate),['u64','bool']);
+ assert.match(result.modules[0].lowered,/integerArithmetic/);
+});
 test('capture callbacks writes effects thisArg index callbacks mutable references and lazy chains remain refused',limits,()=>{
  const prefix='/** @param {readonly ('+u64+')[]} input @param {'+u64+'} captured */\nexport function bad(input,captured){',
   request=options('outcome','caller.mjs',[{function:'bad',local:'values',domain:'u64'}]);
