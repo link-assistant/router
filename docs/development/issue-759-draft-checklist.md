@@ -28,10 +28,10 @@ written or an estimate of remaining engineering effort. Do not report this as
 drafted work is supported. Every initial status is `OPEN`; existing evidence
 links are review starting points, not closure receipts.
 
-Current source-review accounting (2026-11-02 local): **10/70 DRAFTED, 60/70 OPEN**.
+Current source-review accounting (2026-11-02 local): **11/70 DRAFTED, 59/70 OPEN**.
 Closed IDs: D01/D02/D03/D05 (written policy), J01/J05 (existing workflow,
 partition and independent audit-case sources), Q03 (native join emission
-implementation/case source), D04 (checkpoint/handoff/PR template source), J02 (same-SHA gate with actual-program outcome case source), and Q05 (deferred complete-cycle failure collector/classifier and reopening proposal). This is an unweighted acceptance-bundle count,
+implementation/case source), D04 (checkpoint/handoff/PR template source), J02 (same-SHA gate with actual-program outcome case source), Q05 (deferred complete-cycle failure collector/classifier and reopening proposal), and J03 (existing fatal Rust CI/native-oracle/hook source). This is an unweighted acceptance-bundle count,
 not a code-completion or executable-translation percentage. All current
 verification remains UNRUN/uninspected. Earlier 5/70 and 7/70 entries record
 historical checkpoints; CI-source and delivery-template receipts follow below.
@@ -227,7 +227,7 @@ Starting evidence: [CI partition contract](parallel-javascript-gate.md),
 | --- | --- | --- |
 | J01 | [DRAFTED](#j01j05-existing-ci-source-receipts--2026-11-01) | Account for all eight unchanged JavaScript stage IDs/commands and every original matrix member/profile/engine, preserving fail-fast false, deadlines and raw test evidence. |
 | J02 | [DRAFTED](#j02-same-sha-gate-and-actual-program-case-source-receipt--2026-11-01) | Require success for all JavaScript stages at the same immutable SHA before any Rust job executes; skipped/cancelled/missing work cannot unlock Rust. |
-| J03 | OPEN | Keep all required Rust CI checks fatal after the JS gate, with native edge/oracle coverage and explicit skipped-work handling; no local Rust invocation or commit-hook Rust tool. |
+| J03 | [DRAFTED](#j03-fatal-rust-ci-and-native-case-source-receipt--2026-11-02) | Keep all required Rust CI checks fatal after the JS gate, with native edge/oracle coverage and explicit skipped-work handling; no local Rust invocation or commit-hook Rust tool. |
 | J04 | OPEN | Connect complete forward/reverse/freshness/strict parity/export/receiving and production-case jobs to the original partitions, preserving credentials/platform boundaries and bounded resources. |
 | J05 | [DRAFTED](#j01j05-existing-ci-source-receipts--2026-11-01) | Draft workflow/source-equation/partition audits and positive/negative gate cases for failed/missing/mismatched-SHA JS stages and fatal Rust outcomes; workflow presence alone is not verification. |
 
@@ -746,3 +746,36 @@ reopening; source review and deliberate installation remain required. Existing
 same-SHA verifiers/eight stages still control all Rust CI. Current API/collector,
 all seven cases and all broader verification remain UNRUN/uninspected. This closes
 only Q05 source clauses: **10/70 DRAFTED,60/70 OPEN**, not execution or coverage.
+
+
+### J03 fatal Rust CI and native-case source receipt — 2026-11-02
+
+Reviewed existing implementation at1390d9270 and committed with this receipt.
+The [complete source packet](rust-ci-fatal-source-20261102/README.md) contains all
+14 workflows plus18 exact auditor/runner/case/hook/native edge sources. The
+actual auditor iterates every downstream job and refuses ignored failures and
+missing successful same-SHA JavaScript dependencies. Existing full positive/
+negative workflow cases and the native YAML CST/source-equation cases preserve
+fatal controls, all OS matrix members, original commands and deadlines.
+
+Native Linux/macOS all-feature execution and Windows complete metadata/suffix
+sweeps retain nonzero/timeout propagation and no silently omitted target. The
+hosted-only private native-profile gate/runner records all unsafe/skipped work
+as incomplete, retains full process/resource/evidence outcomes and rethrows
+failures. No public eligibility record authorizes Rust. Existing local/forged
+refusal cases block subprocesses. Predicate/arithmetic signed/unsigned/Unicode/
+short-circuit/order edge oracles are normal discovered native targets; all
+original provider/profile/native case source remains scheduled unchanged.
+
+The checked-in hook config/policy cases prohibit Rust and automatic sweeping;
+this task's commits use the explicitly authorized hooks-disabled path. No local
+Rust command ran or is authorized. Optional platform/credential/draft boundaries
+and deferred Q05 skipped-work handling remain explicit. No CI result was read
+and no command changed to make this receipt. Workflow/native-case source controls
+are in scope; application translation, semantic meta, forward/reverse behavior
+and native parity remain separate rows. Existing YAML CST/two-phase histories
+retain whole source/inverses, with no compiler authority from these DATA records.
+
+All audit/case/native/runtime/strict TS/CI evidence remains UNRUN/uninspected.
+J04 and every broader application/export/parity obligation stay OPEN. Current
+source receipt accounting: **11/70 DRAFTED,59/70 OPEN**, not verified coverage.

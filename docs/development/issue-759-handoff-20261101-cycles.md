@@ -2,7 +2,7 @@
 
 Current publication: `28d3bf11b1ec066c79daa967aba67d7d520667e2`, pushed to
 PR775 at approximately17:42 UTC on2026-11-01, with the source-only description
-updated. Current source receipt count:10/70 DRAFTED,60 OPEN. Root alone
+updated. Published source receipt count:10/70 DRAFTED,60 OPEN; local J03 review brings current source accounting to11/70 DRAFTED,59 OPEN. Root alone
 continues; no execution or CI feedback inspection. Earlier journal entries below
 retain their historical SHAs/counts. The next normal publication is around20:40
 UTC, after a coherent batch; source commits remain no more than six hours apart.
@@ -663,3 +663,23 @@ is223,909 decoded/33,531 packed bytes. All current and parent source/CST/inverse
 case closure remains explicit. Original bounds and eight same-SHA JS gates
 remain unchanged. Nothing was executed;10/70 DRAFTED,60 OPEN remains current.
 Latest observed free disk was72GiB; no dependencies/builds/worktrees were added.
+
+
+## J03 existing fatal native source review
+
+After1390d9270, Root source-reviewed existing fatal Rust CI and native case/hook
+controls. The [32-path complete packet](rust-ci-fatal-source-20261102/README.md)
+retains14 full workflows and18 complete implementation/case/hook/oracle files.
+All required downstream failures remain fatal after successful same-SHA JS;
+Windows keeps complete bounded metadata target discovery, and unsafe native
+profiles record incomplete work and rethrow. Existing independent policy/YAML/
+private-gate/source cases remain in original full commands. New predicate and
+arithmetic native targets are covered by existing all-feature/suffix discovery.
+No workflow, command, deadline or hook configuration changed for this receipt.
+
+J03's source clauses now close: **11/70 DRAFTED,59 OPEN**. The packetSHA256 is
+35ca3c223cef9b780bf5aff54d7828f347d768d0ff7c080fb4030723a33f501c
+(312,916 decoded/68,944 packed bytes). All execution and CI-feedback inspection
+remain deferred; this is no runtime/gate success or function-coverage claim.
+Root alone continues. Latest remote remains28d3bf11b, with a normal source push
+around20:40 UTC. No builds, dependencies, tests, compilers or Rust ran locally.
