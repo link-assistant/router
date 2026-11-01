@@ -170,3 +170,6 @@ mod credential_expiry_edges_20261101;
 
 #[path = "oracles/owned-peer-reconcile-20261101.rs"]
 mod owned_peer_reconcile_20261101;
+
+#[path = "oracles/policy_decision_matrix_20261101.rs"]
+mod policy_decision_matrix_20261101;

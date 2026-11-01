@@ -558,3 +558,10 @@ in a separate fixture, never as full production admission. R01/R02/C05/O02/B03/
 F01/V02/V04/T01/T02/E03/Q02 and broader parent clauses remain OPEN for full
 production, source installation, all receiving/native/fit/deadline/freshness
 evidence. All execution is UNRUN; accounting remains8/70 DRAFTED,62 OPEN.
+
+Actual-policy oracle child source receipt: `policy-decision-matrix-20261101.md`
+adds independently explicit160 policy cells,480 default/empty/full observations,
+32 parse pairs and full12-record ordering/dedup/detachment assertions in the
+existing native integration target. All execution remains UNRUN. Real translated
+policy methods, complete source/type/producer/self/set/sort admission and shared
+JS/strict TS receiving are still required; no parent closes and8/70,62OPEN stays.

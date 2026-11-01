@@ -555,3 +555,15 @@ No dependency copies, tests, compiler/parser/translator trials, benchmarks or
 CI/review inspection are authorized. All new source work remains UNRUN; the
 requirement count remains8/70 DRAFTED,62 OPEN. The last published source SHA
 remains9de01240ea2cd588c337ed12d93484fb3b4ff0e8 until the next checkpoint.
+
+Independent actual-policy native oracle child draft:
+[complete decision table and collection contract](policy-decision-matrix-20261101.md).
+The authored160-cell matrix covers all8 actual clients,5 protocols,4 providers
+for default/empty/full policies (480 observations), missing-client denial,
+all32 parse acceptance pairs and all12 accepted records' sorted detached outputs.
+Rotations/reversals and nonadjacent duplicates exercise real policy HashSet
+methods. The existing Rust integration target includes both new cases without
+a new binary. Original production methods run only when later gated CI executes
+them; all new execution remains UNRUN. This fixture is future actual translated
+method evidence, not a handwritten JS substitute or new coverage permission.
+No parent requirement closes; accounting remains8/70 DRAFTED,62 OPEN.
