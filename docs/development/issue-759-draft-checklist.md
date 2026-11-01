@@ -598,3 +598,20 @@ selector path plus actual Cargo residual-target discovery, and full YAML CST
 source/inverse history. This is UNRUN, with known fatal Windows visitor flags,
 source projection and dynamic-resource gaps. No parent closure or execution
 evidence; see native-profile-oracles-20261101-ci.md and materialize guide.
+
+## Additional native cases and selected-input transport source checkpoints
+
+`783933c60` adds seven independent in-memory native-resource selection case
+sources. `8ab0ea2db` adds six independent native helper/library-baseline cases
+and whole original/current Rust case histories through CST/reparse/inverses;
+the new oracle uses the existing dynamic binary. Native-only library baselines
+are not credited as supported JS application behavior. All execution is UNRUN.
+
+`32552733430337426b934f1eb4d631de79006d93` adds13 versioned reader/index/
+metadata/history/snapshot/case/doc paths. It replaces a new unrelated Rust-row
+census in this successor with batched exact rows and a private index image,
+retains original whole bytes/ref/namespace closing, and reports retained unknown
+recovery DATA without replacing falsy/frozen primaries. The old reader/corpus and
+portable source histories stay unchanged. Actual forward/corpus/discovery/
+preparer integration, fit and runtime behavior remain OPEN. These child source
+checkpoints close no parent row; accounting stays8/70 DRAFTED,62 OPEN.

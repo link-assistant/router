@@ -56,3 +56,4 @@ export {proposeGeneralizedPrimitiveOutputProductionAdoption} from './generalized
 export {visitPortablePersistentOutputSourceEquations,proposePortablePersistentOutputSource} from './persistent-output-portable-source-20261101.mjs';
 export {visitPortableDynamicOutputSourceEquations,proposePortableDynamicOutputSource} from './dynamic-output-portable-source-20261101.mjs';
 export {visitNativeJsonOutputOracleSourceEquations} from './native-profile-oracles-20261101-json-oracle-history.mjs';
+export {proposeSelectedSourceReaderHistory} from './selected-source-reader-20261101-history.mjs';

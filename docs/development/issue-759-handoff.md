@@ -852,3 +852,23 @@ original generalized bytes, CST/reparse/two-phase traces and whole inverses.
 No old archive/control/history module changed. This is an independent native
 case checkpoint; the JSON compiler successor remains uncommitted/in progress.
 All checks UNRUN, CI/review uninspected;8/70 DRAFTED,62 OPEN remains unchanged.
+
+Selected reader checkpoint `32552733430337426b934f1eb4d631de79006d93` now commits
+exactly13 NEW source/history/snapshot/case/doc paths (1,509 insertions). Whole
+source review covered index copying/flattening, batching, literal stage/skip
+rows, metadata/ref closure, async private handles and fixed original queries.
+A caught-falsy/frozen acquisition/scope failure now reports bounded recovery
+DATA without replacing its primary; unknown own files remain. Final index pin
+is `4b63bf487ceda851292f698c4ec284bff9fa6ba5498c68baeadd797135a2afb2`.
+No old reader/corpus/portable bytes changed, no implementation was executed,
+and full native/constructor/corpus/discovery/preparer integration remains OPEN.
+
+Coordinator added the selected-history proposal to the stable API and kept
+all source-family table rows contiguous, including the separate native-case
+history API. Existing language/repository and genuine semantic boundaries stay.
+The completed reader worker is reviewing the ownership worker's flat source
+installer READ-ONLY; there are still at most three GPT-6.1-sol medium workers.
+Native checkpoint `8ab0ea2db` and resource-case checkpoint `783933c60` are local
+source commits after the07:09 publication of724a1426. Next coherent periodic
+push is still pending; CI/review remains uninspected and every new check UNRUN.
+Source accounting remains8/70 DRAFTED,62 OPEN; full translation is unfinished.
