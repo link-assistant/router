@@ -120,3 +120,9 @@ export {visitOpaqueBodyNumericSourceEquations} from './opaque-body-numeric-20261
 export {proposeOpaquePairedBindingRenameInverse,proposeOpaqueTargetBindingRenameData,proposeOpaqueNativeBindingRenameData,prepareOpaqueBindingRenameReceivingSample} from './opaque-body-binding-rename-20261102.mjs';
 export {proposeOpaqueBindingRenameReceiverSource} from './opaque-body-binding-rename-20261102-receiver-source.mjs';
 export {createCompactSourceVault,withCompactSourceVault,inspectCompactSourceVault,writeCompactSourceVaultDirectory,readCompactSourceVaultDirectory,exportCompactCommittedSourceVault,materializeCompactSourceSelection,indexCompactMaterializedSourceSelection,exportCompactInstalledTypeScriptVault,createCompactSparseGitSourceBank} from './compact-source-transfer-sparse-20261102.mjs';
+
+export {inspectOpaqueFunctions,inspectOpaqueFunctionsWithContext} from './opaque-body-functions-20261102.mjs';
+export {captureOpaqueFunctionsProject,captureOpaqueFunctionsProjectWithContext} from './opaque-body-functions-20261102-capture.mjs';
+export {proposeOpaqueFunctionAssociationSourceCopies} from './opaque-body-functions-20261102-source.mjs';
+export {proposeOpaqueFunctionAssociationReceiverSource} from './opaque-body-functions-20261102-receiver-source.mjs';
+export {countedLiteralSubstitutionRule} from './counted-literal-substitution-20261102.mjs';

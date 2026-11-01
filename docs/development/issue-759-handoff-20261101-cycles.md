@@ -838,3 +838,19 @@ positive case sources, with all initial archives unchanged. PacketSHA2564c9db0eb
 is21159 decoded/4085 packed bytes. No test/CI failure was inspected,
 and every execution remains UNRUN. The temporary full preimages were removed.
 This is independent source drafting, not a CI-driven repair.11/70 DRAFTED,59 OPEN.
+
+## Literal-independent whole checked function association draft
+
+After0cc6b591f, Root drafted a separate numeric corpus/result/driver/capture copy
+that records every actual selected checked fn association, even without literals.
+The [function contract](opaque-body-functions-20261102.md) records DATA-only bounded
+signature hints, explicit unknown/generated/physical-owner fields, unchanged real
+private checks, four full native-span/CST source copies and the fifth complete
+receiving copy. A required-message exact-count general source rule keeps the old
+unique constructor unchanged. Nine independent whole case sources remain UNRUN.
+The full14-file/six-equation packetSHA2563446ad91b7a49614882aa0e82f2b2cb92427faf40b6658f1cc0c8a563b0aba00 is253876 decoded/45441
+packed bytes. Existing numeric/binding/source archives stay intact; no semantic
+admission or original function denominator is inferred. Wider callee edits and
+actual production mapping remain to draft.11/70 DRAFTED,59 OPEN. Root continues
+alone; latest remote remainsb23c63ca0, next normal push around23:20 UTC. The task's
+single temporary hub preimage was removed after packet writing.

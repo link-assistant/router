@@ -243,3 +243,13 @@ They grant no compiler/source/type verdict. Explicit new decoded/census contract
 do not change old API limits; actual input artifacts and all receiver state must
 still fit the original aggregate. Full dependency/bootstrap/receiving qualification
 remains OPEN/UNRUN. Reexporting these helpers does not close E01/E03.
+
+`inspectOpaqueFunctions` and its fixed context/capture siblings retain the entire
+numeric lane and add DATA associations for every actually selected checked fn,
+including bodies without literals. Signature hints and generated/source labels
+grant no type/physical-owner authority or complete function denominator. The
+[function association contract](opaque-body-functions-20261102.md) retains four
+complete source copies, actual matching imports, full receiving source and nine
+independent case sources. Whole Node/Bun execution and coverage remain UNRUN.
+`countedLiteralSubstitutionRule` is an additive exact-count DATA rule with a
+required message and explicit bounds; it does not weaken the old unique rule.
