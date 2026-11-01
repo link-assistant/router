@@ -1,0 +1,13 @@
+{
+  "schema": "generalized-eager-output-complete-source-successor-v1",
+  "archive": "complete-sources.json.gz",
+  "sha256": "57c54e54b3693328597c9433b83bace69ebf2e231df8c703977d2cc5de24b7df",
+  "rawBytes": 3951894,
+  "packedBytes": 823917,
+  "rows": 31,
+  "additions": 58,
+  "resources": 3,
+  "versions": 138,
+  "sourceInstalled": false,
+  "runtimeExecuted": false
+}
