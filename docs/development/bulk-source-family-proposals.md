@@ -217,3 +217,11 @@ The [checked arithmetic sibling](opaque-body-arithmetic-20261102.md) adds
 dependent generated overflow-message projections; both must agree on one exact
 native source operator before full fresh reproduction. Inconsistent/partial
 projections refuse. All new complete cases and qualification remain UNRUN.
+
+The [checked numeric sibling](opaque-body-numeric-20261102.md) adds
+`inspectOpaqueBodyNumeric`, `proposeOpaqueBodyNumericInverse`,
+`proposeOpaquePairedBodyNumericInverse` and
+`visitOpaqueBodyNumericSourceEquations`. Division/remainder marker, zero-message
+and overflow-message projections must select one agreeing physical native edit;
+full fresh paired target reproduction and all original bounds remain. All new
+case sources and qualification are UNRUN; larger reverse/sync domains stay OPEN.

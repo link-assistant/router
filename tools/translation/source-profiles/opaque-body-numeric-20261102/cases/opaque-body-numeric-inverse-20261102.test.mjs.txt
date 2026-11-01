@@ -1,0 +1,8 @@
+// Actual whole receiving source. No tests, compiler or translator was run.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {performance} from 'node:perf_hooks';
+import {receiveOpaqueBoundedBodyNumeric} from '../opaque-receiving-bounded-numeric-20261102.mjs';
+const limits={timeout:60000,concurrency:false};
+for(const language of ['JavaScript','TypeScript'])test('three dependent division projections join one actual Rust edit using '+language,limits,t=>{const value=receiveOpaqueBoundedBodyNumeric(t,{operation:'division-sample',language},{startedAt:performance.now()});assert.equal(value.packet.ok,true,JSON.stringify(value.packet.error));const result=value.packet.result,sample=result.receivingDivisionSample;assert.ok(['/','%'].includes(sample.before));assert.notEqual(sample.before,sample.after);assert.equal(result.pairedTargetAgreement,true);assert.equal(result.projectAttemptCount,6);assert.equal(result.receivingTotalProjectAttemptCount,9);assert.equal(result.nativeEdits.length,1);assert.ok(result.selections.filter(row=>row.literalKind==='division').length>=3);for(const row of result.rustEdits)assert.equal(row.history.inverse,row.before);assert.equal(result.sourceInstalled,false);assert.equal(result.semanticAuthority,false);assert.equal(value.report.cleanupSucceeded,true);});
+for(const sampleVariant of ['marker-only','zero-only','overflow-only','conflicting','stale-peer'])test('actual complete numeric inverse refuses incomplete dependent projection '+sampleVariant,limits,t=>{const value=receiveOpaqueBoundedBodyNumeric(t,{operation:'division-sample',language:'JavaScript',sampleVariant},{startedAt:performance.now()});assert.equal(value.packet.ok,false);assert.equal(value.report.cleanupSucceeded,true);});

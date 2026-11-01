@@ -111,3 +111,8 @@ export {inspectOpaqueBodyArithmetic} from './opaque-body-arithmetic-20261102.mjs
 export {proposeOpaqueBodyArithmeticInverse} from './opaque-body-arithmetic-20261102-inverse.mjs';
 export {proposeOpaquePairedBodyArithmeticInverse} from './opaque-paired-body-arithmetic-inverse-20261102.mjs';
 export {visitOpaqueBodyArithmeticSourceEquations} from './opaque-body-arithmetic-20261102-history.mjs';
+
+export {inspectOpaqueBodyNumeric} from './opaque-body-numeric-20261102.mjs';
+export {proposeOpaqueBodyNumericInverse} from './opaque-body-numeric-20261102-inverse.mjs';
+export {proposeOpaquePairedBodyNumericInverse} from './opaque-paired-body-numeric-inverse-20261102.mjs';
+export {visitOpaqueBodyNumericSourceEquations} from './opaque-body-numeric-20261102-history.mjs';

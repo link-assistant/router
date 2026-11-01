@@ -683,3 +683,21 @@ J03's source clauses now close: **11/70 DRAFTED,59 OPEN**. The packetSHA256 is
 remain deferred; this is no runtime/gate success or function-coverage claim.
 Root alone continues. Latest remote remains28d3bf11b, with a normal source push
 around20:40 UTC. No builds, dependencies, tests, compilers or Rust ran locally.
+
+## Division/remainder dependent projection source batch
+
+Root drafted complete numeric siblings retaining scalar/predicate/arithmetic
+support and adding checked fixed / and %. Genuine checked source origins require
+matching primitive domains, truncating rounding and aborting zero division. The
+three actual target projections—remainder marker, zero message and overflow
+message—must agree on one original native operator. Partial/conflicting/stale
+projections refuse; original six inverse attempts and exact full paired output
+reproduction remain. The fixed sampler separately records nine total attempts.
+
+The [numeric contract](opaque-body-numeric-20261102.md) records12 JS case sources
+and three native zero/overflow/rounding oracles under existing complete discovery.
+The nine-copy/one-addition/two-native archiveb84a1d08367721392349f36c596ffa1e0311ea810e6d47e7c428318c3c93291a
+is229,038 decoded/33,707 packed bytes. All original/current source, CST/inverses
+and transitive case closure are retained. No original API/target/pin/command or
+resource bound changed. Every execution remains UNRUN;11/70 DRAFTED,59 OPEN.
+Root alone continues into standalone export/resource closure source work.
