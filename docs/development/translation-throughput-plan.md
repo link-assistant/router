@@ -165,7 +165,8 @@ later work. It cannot unlock Rust or establish translator coverage.
 
 ## Source-only common-family priorities, 2026-11-01
 
-A bounded textual search over current `rust/src` Rust files, excluding filenames
+A bounded textual search over current worktree `rust/src` Rust files (including
+the in-progress persistent native leaf), excluding filenames
 matching `*test*`, found the following source occurrences. Comments, cfg-disabled
 code and inline tests remain possible. No parser, translator, diagnostic, test,
 compiler or benchmark ran; these counts are neither current function inventory

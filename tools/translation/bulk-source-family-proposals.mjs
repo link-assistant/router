@@ -40,3 +40,7 @@ export {proposeOutputLiteralProductionAdoption} from './output-literal-core-2026
 export {proposeAggregateCopyProfile,visitAggregateCopySourceEquations} from './aggregate-copy-collection-20261101-profile.mjs';
 export {prepareAggregateCopyCollections,translateEditedAggregateCopyTarget,invertExactAggregateCopyTarget,readAggregateCopyMeta,readEditedAggregateCopyMeta} from './aggregate-copy-collection-20261101.mjs';
 export {proposeCredentialTokenScannerSource} from './persistent-credential-token-scan-20261101-source.mjs';
+export {proposePersistentOutputProfile,visitPersistentOutputSourceEquations} from './persistent-output-backend-20261101-profile.mjs';
+export {translatePersistentOutputProject,compilePersistentBackendProject,readPersistentBackendMeta,invertPersistentBackendTarget} from './persistent-output-backend-20261101-project.mjs';
+export {proposePersistentOutputProductionAdoption} from './persistent-output-backend-20261101-production.mjs';
+export {proposeBoundedSourceReaderHistory} from './forward-output-ownership-20261101-reader-history.mjs';

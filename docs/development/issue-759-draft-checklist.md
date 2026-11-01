@@ -580,3 +580,13 @@ predecessor bytes/CST inverse and17 literal cases plus original-module compariso
 The final copied backend's actual native, JS/strict-TS, feature/source/runtime
 asset/domain and receiving work remains OPEN. No benchmark or measured speed
 gain, current coverage or parent closure is inferred;8/70,62OPEN stays.
+
+Persistent/reader source receipts `be9d019e5` and `cadea50b6`: complete new
+persistent source/native-hook/runtime/provider/receiving case sources and
+independent bounded reader/old opaque issuer histories are integrated. See
+`persistent-output-backend-20261101.md` and
+`forward-output-ownership-20261101-bounded-reader.md`. Full installed-native
+oracle scheduling, global tracing/host/platform/provider/parity, broader caller
+admission, direct/matrix writer custody and original resource/freshness/export
+qualification remain OPEN. All execution is UNRUN; no whole parent closes.
+8/70 DRAFTED,62 OPEN remains the unweighted source-review count.

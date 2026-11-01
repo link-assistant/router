@@ -609,3 +609,35 @@ is1.98.1. The backend worker read the corresponding upstream fs/ExitCode
 implementations in addition to historical1.89 source: platform sync paths and
 ExitCode shape are source-supported, while actual native/provider/platform
 qualification remains UNRUN/OPEN. Old1.89 source captures stay immutable.
+
+Completed child source checkpoints now integrated in the stable family API:
+
+- `be9d019e575f3f1e60b95d3259e9359989e11b48`: real persistent backend/profile,
+  archive `987bf66da673c7b8de990ffa9ba9aff5fa6711e8be3259f061dba7f723046642`,
+  with30 complete source rows,42 additions,3 untranslated raw resources and110
+  full source versions. Four approved native append hooks delegate original
+  logger/global/writer objects. Actual checked static output callers use real
+  persistence in authored JS/strict-TS receiving cases. Setup remains an explicit
+  untranslated library boundary. Global tracing/filter/reload, general URL/IDNA/
+  numbers/env origin, provider/platform/error/locale and broad application parity
+  remain OPEN. Its native oracle is deliberately NOT included in the default
+  Rust target because the exact copied native facade must first be installed.
+  Root is drafting that CI-only post-eight-JS-gates orchestration separately.
+- `cadea50b6fdd81539f70e0a64816c9572de8aa2b`: independent bounded reader plus
+  ONLY the original corpus's reader delegation, with the actual old WeakMap
+  issuer untouched. Full original/authored snapshots, CST inverses, precise
+  device/inode/ns clocks, caught-source poisoning, exact callback primaries,
+  private nested baselines and detached observer data are retained. Windows
+  ordinary reads remain supported under the stated cooperating-path boundary.
+  Generic/direct operations do not inherit the optional corpus64Mi/20k domain.
+  No full forward custody, global memory bound or hostile reparse guarantee
+  is inferred. Existing original corpus cases stay mandatory via unchanged globs.
+
+All execution remains UNRUN and CI/review remains uninspected. Accounting stays
+8/70 DRAFTED,62 OPEN; no current function coverage or whole translation claim.
+The actual-policy worker freezes against these two committed prerequisites;
+the forward writer worker continues its per-profile/shared-root/index banks and
+separate original direct/corpus input domains. The third worker now drafts
+primitive dynamic owned-text output after987, with fresh format ownership and
+explicit eager-allocation migration; no literal emptyDrop permission is reused.
+The coordinator alone publishes. No local Rust or verification execution.
