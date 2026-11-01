@@ -741,3 +741,16 @@ receiving limit is replaced. Full compiler fit, SDK/fixture/module closure and
 actual receiving adoption remain OPEN. PacketSHA25646cceb37536af1253e417607f1166a61b6e66f859c06a411393f35cb5bcfd914 is16163 decoded/
 5511 packed bytes. All execution remains UNRUN;11/70 DRAFTED,59 OPEN.
 Root alone continues, without local Rust or CI-feedback inspection.
+
+## Complete pinned SDK source transfer draft
+
+After97d3ea1f3, Root drafted whole actual installed TypeScript5.9.3 package
+collection with original selected package/lock scope, exact whole SDK source/
+mode/census/identity closing, every license/notice/declaration/resource and a
+portable false-authority receipt. The [SDK contract](compact-typescript-source-20261102/README.md)
+explicitly refuses a tarball-integrity or compiler-equivalence claim from installed
+metadata. Three independent full case sources are storage-only; actual SDK
+qualification remains separate. The optional CLI and SDK facade execute nothing
+on import. PacketSHA256be0c9f0d760e5da1b17d7affc7445c5d34587e4c2c871c4b4e33697f5c964654 is15488 decoded/5309 packed bytes.
+All execution/installs/CI-feedback inspection remain deferred;11/70 DRAFTED,
+59 OPEN. Aggregate multi-bank/bootstrap/receiving integration remains OPEN.
