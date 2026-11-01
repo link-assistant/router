@@ -714,3 +714,17 @@ covers partial writes; closing checks and exact falsy primaries remain required.
 The immutable full-source packet SHA256dc492bd613c98338f92221a88b4c70386f34074d5e32b979d99cbe66da373547 is36849 decoded/10379
 packed bytes. All execution is UNRUN. Export provenance, materialization and
 actual receiving adoption remain undrafted/open;11/70 DRAFTED,59 OPEN persists.
+
+## Committed compact transfer/materialization source batch
+
+After34672134c, Root connected compact storage to the actual original committed
+production selection and an explicit physical-file materializer. The
+[transfer contract](compact-source-transfer-20261102/README.md) records complete
+HEAD/tree/index/blob/mode joins, original physical closing, portable full inventory
+DATA and exact explicit extra paths. All eight independent case sources remain
+UNRUN. Materialization creates no Git or compiler authority; receiving dependency/
+SDK/test-fixture closure and actual compiler/index adoption remain OPEN. New
+raw-selection bound64MiB is explicit and changes no old receiving requirement.
+PacketSHA2566070f108e7788c08aeb5ab07d225c7574a9d4a0efb42012b75f20a89fd1eef93 retains all five full sources (25889 decoded/7796
+packed bytes). No tests, compilers, codecs, exports or CI feedback were executed
+or inspected.11/70 DRAFTED,59 OPEN; Root alone continues.
