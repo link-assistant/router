@@ -209,3 +209,11 @@ project attempts, original-context joins and exact paired target reproduction.
 The bounded receiving sampler adds three explicitly counted source attempts.
 Every new case and compiler/receiving/freshness result remains UNRUN; no current
 coverage, complete translation or full synchronization claim follows.
+
+The [checked arithmetic sibling](opaque-body-arithmetic-20261102.md) adds
+`inspectOpaqueBodyArithmetic`, `proposeOpaqueBodyArithmeticInverse`,
+`proposeOpaquePairedBodyArithmeticInverse` and
+`visitOpaqueBodyArithmeticSourceEquations`. Fixed +, - and * edits retain their
+dependent generated overflow-message projections; both must agree on one exact
+native source operator before full fresh reproduction. Inconsistent/partial
+projections refuse. All new complete cases and qualification remain UNRUN.

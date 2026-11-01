@@ -106,3 +106,8 @@ export {inspectOpaqueBodyScalars} from './opaque-body-scalar-20261102.mjs';
 export {proposeOpaqueBodyScalarInverse} from './opaque-body-scalar-20261102-inverse.mjs';
 export {proposeOpaquePairedBodyScalarInverse} from './opaque-paired-body-scalar-inverse-20261102.mjs';
 export {visitOpaqueBodyScalarSourceEquations} from './opaque-body-scalar-20261102-history.mjs';
+
+export {inspectOpaqueBodyArithmetic} from './opaque-body-arithmetic-20261102.mjs';
+export {proposeOpaqueBodyArithmeticInverse} from './opaque-body-arithmetic-20261102-inverse.mjs';
+export {proposeOpaquePairedBodyArithmeticInverse} from './opaque-paired-body-arithmetic-inverse-20261102.mjs';
+export {visitOpaqueBodyArithmeticSourceEquations} from './opaque-body-arithmetic-20261102-history.mjs';

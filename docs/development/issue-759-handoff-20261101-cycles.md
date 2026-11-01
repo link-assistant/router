@@ -644,3 +644,22 @@ inverse evolution, the previous source-author image and the fourth whole case
 file. SHA256127fb1a5a57d9692aa97e3315cb0e0f89d0ee570904f45cdbe60ec0aadb9a5cc
 is290,541 decoded/42,963 packed bytes. Counts remain10/70 DRAFTED,60 OPEN;
 15 JS case sources and three native oracle cases are UNRUN. Root alone continues.
+
+## Checked arithmetic/dependent projection source batch
+
+After7f182c6f9, Root drafted the complete arithmetic siblings of the scalar
+project/capture/inverse/paired/receiving lane. The shared operation data adds
+checked fixed +, - and * with actual operand/result domains. Generated overflow
+messages are separate dependent target cells, tied to the same physical native
+operator. Operator/message disagreement or incomplete projection refuses; full
+fresh project/census/paired target reproduction stays mandatory. Context reuse
+keeps an explicit original-export alias, avoiding the earlier import-copy error.
+
+The [arithmetic contract](opaque-body-arithmetic-20261102.md) records12 JS case
+sources and three native oracles. Native tests have a separate ordinary target;
+all older targets/pins/cases remain intact. The full eight-copy/two-addition/
+two-native archive684c078ee6f990a4425c37e51f5e9a21eef897a49905cb728f01742167460a16
+is223,909 decoded/33,531 packed bytes. All current and parent source/CST/inverse/
+case closure remains explicit. Original bounds and eight same-SHA JS gates
+remain unchanged. Nothing was executed;10/70 DRAFTED,60 OPEN remains current.
+Latest observed free disk was72GiB; no dependencies/builds/worktrees were added.
