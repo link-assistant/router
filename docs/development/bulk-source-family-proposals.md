@@ -253,3 +253,13 @@ complete source copies, actual matching imports, full receiving source and nine
 independent case sources. Whole Node/Bun execution and coverage remain UNRUN.
 `countedLiteralSubstitutionRule` is an additive exact-count DATA rule with a
 required message and explicit bounds; it does not weaken the old unique rule.
+
+`proposeOpaquePairedCalleeInverse` adds complete same-file/same-module direct
+helper substitutions using the checked function-association capture. Complete
+original/adopted/native graphs, identical written native headers, target/reference
+multiplicity and both authored projections remain mandatory. It accepts no
+public capture/verifier. Independent source proposals, actual whole receiving,
+strict baseline/edited compilation and CI-only value/error/order oracles are in
+[the callee contract](opaque-body-callee-20261102.md). Signature hints merely
+prioritize DATA candidates. Cross-module/generic/adapted-argument cases and full
+edited-caller behavior/resource/coverage qualification remain OPEN/UNRUN.

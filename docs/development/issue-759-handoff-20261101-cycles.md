@@ -854,3 +854,21 @@ admission or original function denominator is inferred. Wider callee edits and
 actual production mapping remain to draft.11/70 DRAFTED,59 OPEN. Root continues
 alone; latest remote remainsb23c63ca0, next normal push around23:20 UTC. The task's
 single temporary hub preimage was removed after packet writing.
+
+## Whole same-module callee inverse source batch
+
+After02807be22, Root drafted fixed paired existing-helper substitutions with real
+function-association capture, exact physical same-file/module owners, full written
+ABI-header and original/adopted/target occurrence guards, disjoint swaps, six real
+project checks and both complete authored projections. The
+[callee contract](opaque-body-callee-20261102.md) records18 independent JS cases,
+two CI-only native value/error/order oracles and three complete original/current
+inverse/verifier/receiver copies plus the full hub equation. Typed hints are DATA,
+not type proof. The original nine edge vectors remain on their baseline; both
+baseline/edited TS compile/import cases are drafted, with edited caller behavior
+explicitly unqualified rather than demanding unchanged behavior after a real edit.
+PacketSHA25670c00a451f79ec131ff8cfc7fc952bd3185a0d953005af8191e861b013991520 retains13 complete files/four equations (200103 decoded/
+42321 packed bytes). All execution remains UNRUN. Wider calls, actual
+edited-caller vectors and whole resource/receiving coverage remain OPEN.11/70
+DRAFTED,59 OPEN. Root alone continues; remote b23c63ca0 and next23:20 UTC source
+push remain current. The temporary hub preimage was removed after source writing.

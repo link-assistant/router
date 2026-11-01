@@ -126,3 +126,5 @@ export {captureOpaqueFunctionsProject,captureOpaqueFunctionsProjectWithContext} 
 export {proposeOpaqueFunctionAssociationSourceCopies} from './opaque-body-functions-20261102-source.mjs';
 export {proposeOpaqueFunctionAssociationReceiverSource} from './opaque-body-functions-20261102-receiver-source.mjs';
 export {countedLiteralSubstitutionRule} from './counted-literal-substitution-20261102.mjs';
+
+export {proposeOpaquePairedCalleeInverse,proposeOpaqueTargetCalleeData,proposeOpaqueNativeCalleeData,prepareOpaqueCalleeReceivingSample,proposeOpaqueCalleeSourceCopies} from './opaque-body-callee-20261102.mjs';
