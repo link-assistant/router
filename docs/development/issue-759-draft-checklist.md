@@ -625,3 +625,36 @@ readers/Option/static-index/row prerequisites and whole-corpus semantic inverse
 remain OPEN. Fixture and independent native baseline source does not establish
 production admission, parity, fit or a new function-coverage denominator. All
 execution is UNRUN; no parent closure or8/70 numerator change is inferred.
+
+## Qualified scalar and constant prerequisite source checkpoints
+
+`6325195740861e9dc561ead109e90bebe21bad30` commits20 new scalar-reader
+paths, seven whole virtual successors and170 complete chronological source
+versions. Four actual qualified native/JS/strict-TS value readers, genuine
+field/finite callback receipts, whole early owned-flow validation and final
+whole-project/emission joins are drafted. Captured local closure proof,
+lazy two-arm Option adoption and complete actual token-row translation remain
+OPEN. No public operation descriptor supplies private admission.
+
+`684845832993fb96583b7fae780a44a61dfbb6c6` commits the8-path native-only
+portable scalar copy. `474f35dcb5b8eb78596ceaa74b59fe1cb3008b5b`, published
+on PR775, integrates its actual closed third native workload, complete parent
+archive traversal and seven whole operational successor source histories,
+preserving the immutable earlier histories and all original cases/commands/
+deadlines. The actual new leaf overlay is source-scheduled only after all eight
+same-SHA JavaScript gates. Scheduling is not runtime evidence.
+
+`1115846eb27a21ffc9c39ee2b0006968b0e6c697` and the following native scheduling
+commit draft the genuine constant-index helper and independent native baseline.
+The separate [constant profile plan](constant-index-profile-plan-20261101.md)
+now authorizes source construction of exact seven virtual rows over scalar170;
+the new production kernel/projection/inverse remains under development. The
+committed original helper and all parent archives remain immutable.
+
+Four further independent native token-row case sources cover nine inputs, with
+matching paired-runtime expectation source; see
+[caller edges](token-report-translation-edges-20261101.md). The paired whole-row
+helper is not yet scheduled. Native cases and candidate proposals are not
+counted as executable application translation. No tests, compiler, parser,
+translator, preparer or CI-feedback inspection was performed. None of these
+child source checkpoints closes a whole parent bundle:8/70 DRAFTED,62 OPEN.

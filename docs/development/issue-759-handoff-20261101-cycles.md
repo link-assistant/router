@@ -2,7 +2,9 @@
 
 The main [handoff](issue-759-handoff.md) retains all earlier instructions and
 checkpoints. This continuation keeps both files below 1,000 lines. The latest
-published SHA is `bcbf96dcc009c8c844a21375678c6cc89d86ee9f` on draft PR775.
+published SHA is `474f35dcb5b8eb78596ceaa74b59fe1cb3008b5b` on draft PR775,
+pushed at approximately10:02 UTC with its source-only PR description updated.
+The prior08:57 checkpoint remains in the complete Git history.
 Source accounting remains8/70 DRAFTED,62 OPEN; function coverage is unmeasured.
 Every new test/compilation/translation/preparation/receiving/performance result
 is UNRUN. CI/review statuses, logs, artifacts and feedback remain uninspected.
@@ -11,7 +13,7 @@ index-image operation is authorized. Only source writing and SCM continue.
 
 Three GPT-6.1-sol medium workers have disjoint source scopes. Root remains the
 sole push/PR owner and serializes exact-path commits. Next normal source push
-is approximately11:45 UTC or an earlier coherent batch. The last filesystem
+is approximately13:00 UTC or an earlier coherent batch. The earlier filesystem
 observation reported3.1GiB free at08:54 UTC; keep source snapshots small and
 perform no build, dependency or receiving-workspace copies during drafting.
 
@@ -94,3 +96,21 @@ Iterator is reviewing these changes without running them. Actual captured
 local closure proof and two-arm adoption remain separately OPEN; Async drafts
 candidate-only source substitutions with explicit residuals and no compiler
 permission. No new acceptance bundle is closed by these source checkpoints.
+
+Following this push, Root authored four independent actual token-row Rust test
+sources spanning nine boundary inputs, and matching JS/strict-TS expectation
+DATA/helper source. See [token row edges](token-report-translation-edges-20261101.md).
+Rust's normal existing integration sweep schedules its new `*_test.rs` target
+after the same JavaScript gates; the actual translated whole-row receiving
+helper remains UNSCHEDULED until full caller adoption. Native-only source does
+not qualify translation. All new execution remains UNRUN.
+
+Root approved the [constant profile's exact plan](constant-index-profile-plan-20261101.md):
+seven virtual successors over scalar170 and six NEW implementation paths,
+plus new-prefix cases/docs/snapshots. The iterator worker now drafts the real
+profile, a no-Host-import private kernel, actual Host-born original issuer,
+mandatory early/late seals and complete project/standalone projection and paired
+edited-target inverse. Original helper/profile/archive bytes remain unchanged;
+no hook outside the approved census is authorized by this plan. Source review
+identified the eager Host import cycle before construction. This approval is
+not an implementation, runtime or coverage receipt.
