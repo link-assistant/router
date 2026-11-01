@@ -1,9 +1,18 @@
 # Continuation source journal after the 08:57 UTC checkpoint
 
+Current publication: `28d3bf11b1ec066c79daa967aba67d7d520667e2`, pushed to
+PR775 at approximately17:42 UTC on2026-11-01, with the source-only description
+updated. Current source receipt count:10/70 DRAFTED,60 OPEN. Root alone
+continues; no execution or CI feedback inspection. Earlier journal entries below
+retain their historical SHAs/counts. The next normal publication is around20:40
+UTC, after a coherent batch; source commits remain no more than six hours apart.
+
+## Earlier cycles and retained observations
+
 The main [handoff](issue-759-handoff.md) retains all earlier instructions and
-checkpoints. This continuation keeps both files below 1,000 lines. The latest
-published SHA is `3c861efe8fececb0b78bfd07b069c3a14441aacf` on draft PR775,
-pushed at approximately12:42 UTC with its source-only PR description updated.
+checkpoints. This continuation keeps both files below 1,000 lines. The12:42 UTC
+checkpoint was `3c861efe8fececb0b78bfd07b069c3a14441aacf` on draft PR775,
+with its source-only PR description updated.
 The prior08:57 checkpoint remains in the complete Git history.
 Source accounting remains8/70 DRAFTED,62 OPEN; function coverage is unmeasured.
 Every new test/compilation/translation/preparation/receiving/performance result
@@ -559,3 +568,22 @@ count is unweighted and supplies no current function percentage or delivery ETA.
 All translation, receiving, strict TS, freshness, parity and native qualification
 still require their own evidence after the complete source draft. Root alone
 continues; no workers, tests, compilers or dependency installs were started.
+
+
+## Dependent source-rule batch
+
+After the17:42 publication, Root drafted an extensible dependency scheduler and
+its complete-source Rust/JS/TS batch consumer. It keeps language/repository
+phases, stable dependency order, pre-execution cycle/conflict refusal and each
+original edit preimage. Nested templates compose before actual CST substitution,
+serialization/reparse and complete inverses. Full current before/after matching
+permits idempotence; no output file is installed and no semantic authority is
+issued. The actual tracked-source preparer uses original selected-source closing.
+
+The [source packet](dependent-source-batch-20261102/README.md) contains all five
+whole additions and the original/current export hub. Nine complete case sources
+are scheduled by existing forward discovery/globs, all UNRUN. Source review
+replaced repeated dependency scans with one visit per edge and bounded ordered
+queues, without running a benchmark or experiment. R01–R05 remain OPEN for full
+application registration/adoption; count remains10/70 DRAFTED,60 OPEN. All
+workers remain finished; no dependencies, tests, compilers or Rust were started.

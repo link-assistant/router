@@ -98,3 +98,6 @@ export {visitOpaqueBodyLiteralSourceEquations} from './opaque-body-literal-20261
 export {proposeOpaquePairedBodyLiteralInverse} from './opaque-paired-body-literal-inverse-20261101.mjs';
 
 export {visitOpaqueReceivingResourceSourceEquations} from './opaque-receiving-resource-20261101-history.mjs';
+
+export {createDependentRulePipeline} from './dependent-rule-pipeline.mjs';
+export {proposeDependentConcreteSourceBatch} from './dependent-concrete-source-batch.mjs';

@@ -10,7 +10,7 @@ no tests, compilation, trial translation or CI-feedback inspection are authorize
 - Draft PR: https://github.com/link-assistant/router/pull/775
 - Branch: `issue-772-translator-throughput`
 - Integration worktree: `.worktrees/issue-759-storage-repair-20261021`
-- Current published source checkpoint: `6c3fbfa2d` (integrated inverse/sync/relocation lanes and immutable trace corrections).
+- Current published source checkpoint: `28d3bf11b1ec066c79daa967aba67d7d520667e2` (whole body inverses, bounded receiving and deferred failure collector; source only).
 - Earlier published checkpoint before the stop/resume cycle: `19074cc30`.
 - Subsequent checkpoints included in this handoff: `4895f51aa` (join kernel),
   `db901a224` (complete additive caller/interpreter/inverse profiles), and
