@@ -51,6 +51,7 @@ source/type/ownership/effect/caller checks. Stable reexports introduce no altern
 parser/checker or relaxed admission path.
 
 Review the complete family contracts and independent case sources:
+| `proposePolicyNominalProfile` / `visitPolicyNominalSourceEquations` / `preparePolicyNominalProducer` / `inspectPolicyNominalProducer` / `translateEditedPolicyNominalTarget` | Complete actual policy/client/provider owners and real derives/reexports enter the original private nominal producer; five appended pure probes preserve whole-owner residuals. Whole target field edits reconstruct and freshly check Rust through the serialized/reparsed CST boundary. | Complete source profile remains uninstalled. Actual policy set/self/EqHash/sort/Display bodies and static borrowed integration metadata remain OPEN. Receiving/strict-TS/native cases are UNRUN; probes do not certify original method coverage. |
 
 - [Primitive vectors and scalar loops](primitive-vector-iterator-bulk-20261101.md).
 - [Channel/cancellation callers](async-control-bulk-20261101.md).
@@ -99,3 +100,5 @@ feedback was executed/inspected while drafting this entrypoint. Later verificati
 must keep whole files, actual lockfile TypeScript 5.9.3, original deadlines and
 all eight same-SHA JS gates before fatal Rust CI. Do not execute any example or
 installation during the current bulk-drafting phase.
+
+Actual-policy source details: [policy nominal producer](policy-nominal-producer-20261101.md).

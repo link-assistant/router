@@ -176,3 +176,6 @@ mod policy_decision_matrix_20261101;
 
 #[path = "oracles/url_host_edges_20261101.rs"]
 mod url_host_edges_20261101;
+
+#[path = "oracles/policy_nominal_producer_20261101.rs"]
+mod policy_nominal_producer_20261101;

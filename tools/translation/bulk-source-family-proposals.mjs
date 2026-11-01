@@ -44,3 +44,5 @@ export {proposePersistentOutputProfile,visitPersistentOutputSourceEquations} fro
 export {translatePersistentOutputProject,compilePersistentBackendProject,readPersistentBackendMeta,invertPersistentBackendTarget} from './persistent-output-backend-20261101-project.mjs';
 export {proposePersistentOutputProductionAdoption} from './persistent-output-backend-20261101-production.mjs';
 export {proposeBoundedSourceReaderHistory} from './forward-output-ownership-20261101-reader-history.mjs';
+export {proposePolicyNominalProfile,visitPolicyNominalSourceEquations} from './policy-nominal-producer-20261101-profile.mjs';
+export {preparePolicyNominalProducer,invertExactPolicyNominalTarget,translateEditedPolicyNominalTarget,readPolicyNominalMeta,requireUnchangedPolicyProjection,inspectPolicyNominalProducer} from './policy-nominal-producer-20261101.mjs';

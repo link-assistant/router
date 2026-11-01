@@ -641,3 +641,25 @@ separate original direct/corpus input domains. The third worker now drafts
 primitive dynamic owned-text output after987, with fresh format ownership and
 explicit eager-allocation migration; no literal emptyDrop permission is reused.
 The coordinator alone publishes. No local Rust or verification execution.
+
+Source checkpoint publication confirmed: normal push of
+`60e47dedb44bd7a053c43488983172ff637408b0` at 2026-11-01 04:38 UTC,
+with PR775 description updated to that SHA. No CI/review feedback inspected.
+
+Child commit `555655da8576252152fb0ea2b53a4ee87ec2c49e` adds the actual
+policy nominal producer: full lib/client/subscription/types/reexport owners,
+original private nominal/derive compiler and five source-appended pure probes.
+Archive pin `209554ec417cb4ea42e1c01bf5f241f07833d314a3ba72c05b749e04f0178b05`
+retains every predecessor source and complete CST equations/inverses. Stable
+family exports now expose its producer/profile/inspection and target inverse.
+Its independent native oracle is included in the existing policy integration
+target; no new binary or local Rust command. The original policy methods,
+set/self/sort/Display, borrowed integration metadata and all execution/fit remain
+OPEN/UNRUN. Source probes are not actual-method coverage.
+
+The CI-only copied native-profile materializer is drafted independently, with
+complete tracked Cargo/Rust resource selection and Rust-only overlay; root
+orchestration is still being authored. Genuine persistent visitor POSIX flags
+still make Windows qualification an explicit fatal OPEN gap. No skip or public
+metadata bypass is authorized. All new source remains unverified. Counts remain
+8/70 DRAFTED, 62 OPEN; no current executable coverage percentage is established.
