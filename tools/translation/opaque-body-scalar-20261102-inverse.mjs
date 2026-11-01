@@ -1,5 +1,5 @@
 import {OPAQUE_BODY_PREDICATES} from './opaque-body-scalar-origins-20261102.mjs';
-import {withOpaqueBodyScalarSourceContext} from './opaque-body-literal-context-20261101.mjs';
+import {withOpaqueBodyScalarSourceContext} from './opaque-body-scalar-context-20261102.mjs';
 // Complete copied inverse, generalized to one bounded batch of literal edits. SOURCE / UNRUN.
 import {types} from 'node:util';
 import {captureOpaqueBodyScalarProjectWithContext} from './opaque-body-scalar-20261102-capture.mjs';

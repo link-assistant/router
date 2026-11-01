@@ -629,3 +629,18 @@ case closure, Rust/JS CST serialization/reparse and inverses remain explicit.
 No parser/compiler/translator/test, install, benchmark or Rust tool was run.
 CI/review feedback remains uninspected. Root alone continues, with10/70 DRAFTED,
 60 OPEN and current function coverage unmeasured.
+
+## Scalar context import closure source correction
+
+Source reading after3a96f9fe8 found a copied inverse import renamed without its
+external context module. Root drafted the full scalar-context helper and six-case
+copy, corrected the import and preserved both original whole source images.
+No import probe, parser, test, compiler or CI feedback was used to find/fix it.
+
+The [import contract](source-copy-import-closure.md) records the general lesson
+and is linked from AGENTS/CONTRIBUTING. The original scalar source archive/author
+remain unchanged; a complete successor adds two context/case copies, the full
+inverse evolution, the previous source-author image and the fourth whole case
+file. SHA256127fb1a5a57d9692aa97e3315cb0e0f89d0ee570904f45cdbe60ec0aadb9a5cc
+is290,541 decoded/42,963 packed bytes. Counts remain10/70 DRAFTED,60 OPEN;
+15 JS case sources and three native oracle cases are UNRUN. Root alone continues.

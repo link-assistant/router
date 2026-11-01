@@ -84,3 +84,11 @@ Counts remain10/70 DRAFTED,60 OPEN. This advances V02/V04/F05/O01/T01/T02/E03
 source clauses without closing their whole application domains. Whole translation,
 general reverse edits, atomic synchronization, resource qualification, current
 freshness and complete native/runtime parity remain unfinished and unverified.
+
+A later source-only review found a renamed context import still pointing to its
+older module. The [explicit context successor](source-copy-import-closure.md)
+adds full helper/case copies and corrects the inverse import while retaining this
+initial archive unchanged. It adds six independent context cases, including an
+actual operator-span/refusal vector, for15 JS cases plus three native oracles.
+All remain UNRUN. Current source visitor uses the successor archive documented
+there; the initial archive above remains its complete predecessor.

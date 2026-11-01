@@ -93,3 +93,7 @@ Use the concrete syntax tree (CST) extension to meta-language in the actual forw
 Use the term **links network**, or **network** where context makes it clear, for Router's token structure. Follow the detailed terminology rule in CONTRIBUTING.md in identifiers and all human languages. Keep files below 1000 lines. Preserve the testing tiers, credential requirements and changelog fragment process. Add targeted behavioral tests for changes, preserve public contracts and document limitations without treating unimplemented behavior as complete.
 
 When transferring the workflow, copy [the reusable guidance](docs/development/reusable-translation-guidance/README.md) separately from the compiler closure and qualify the receiving repository. Preserve upstream pins, notices and licenses, local conventions, explicit user constraints and all missing parity obligations.
+
+Bulk source copies must retain each external import's actual exported binding;
+rename a binding only with its copied module or an explicit original-import alias.
+Preserve complete source/case ancestry; see [import closure](docs/development/source-copy-import-closure.md).
