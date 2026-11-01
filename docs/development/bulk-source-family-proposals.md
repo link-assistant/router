@@ -55,6 +55,17 @@ qualification has not been executed. This entrypoint broadens no semantic domain
 | `proposeForwardOutputOwnershipSourceHistory` | Complete98 runtime,13 case and two proposal-case roles preserve source ancestry for eight actual bulk producers,16 collectors, four sessions, fixed preparers, selected-input bridging, flat source transactions and actual TypeScript loader origin. Current source/CST/inverse banks remain distinct from all retained historical producer coordinates. | SOURCE/UNRUN; no compiler or ownership admission from this DATA API. Cooperating writer/platform, original unbounded resource domains, migration availability, partial late recovery, all receiving/freshness and whole synchronization qualification remain OPEN. |
 | `proposeLocalClosureOptionCandidates` | Complete whole-module language then repository source candidates expand finite lexically bound local closures and simple lazy Option arms with complete source/CST inverses; actual scalar170 whole-original and candidate checks retain hard diagnostics and every module. | Candidate-only migration: original typed capture/closure/standard-owner equivalence is false. Captured two-arm lowering, full actual row, semantic edited inverse and complete receiving remain OPEN. An uninstalled profile still hard-refuses. |
 
+Additional stable source entries preserve the earlier candidate API:
+
+| Export | Complete operation and retained limits | Open integration |
+| --- | --- | --- |
+| `proposeCapturedLocalClosureOptionCandidates` / `visitCapturedOptionSourceHistory` | Opt-in captured/block-receiver successor retains complete original modules, lexical capture DATA, lazy arm source, all parent/copy CST equations and independent whole-original/candidate checker results. | Original typed capture/closure ownership and semantic edited-definition inverse remain unproved. Actual row admission and receiving remain OPEN/UNRUN. The earlier `proposeLocalClosureOptionCandidates` still selects its original implementation. |
+| `proposeConstantIndexProfile` / `visitConstantIndexProfileSourceEquations` / `withConstantIndexProfileInstalledSources` | Complete188-source profile retains all170 predecessors plus18 versions, genuine Host-born constant checking, mandatory early/late seals and original source closure. Installation is an exact source precondition, never a public type permit. | Full flat-corpus adapter, production row adoption, source/receiver resource fit and runtime parity remain OPEN/UNRUN. |
+| `translateConstantIndexProfileProject` / `compileConstantIndexProfileProject` / `readConstantIndexProfileMeta` / `invertConstantIndexProfileTarget` | Actual whole-project projection and one literal const-cell or literal-index target edit require fresh original native checking, genuine emitted origin relations, complete target reproduction and the paired target. All existing source and DATA bounds remain. | Arbitrary target edits, full-corpus semantic inverse and complete Router synchronization remain OPEN/UNRUN. This entry is not the opaque-corpus API. |
+
+Contracts: [captured source candidates](local-closure-option-captured-20261101.md)
+and [constant-index profile](constant-index-profile-20261101.md).
+
 Applicable translation/source-preparation families retain their declared
 `language` then `repository`
 sequences and serialized/reparsed CST/meta/source checks. Operation descriptions,

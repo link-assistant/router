@@ -2,8 +2,8 @@
 
 The main [handoff](issue-759-handoff.md) retains all earlier instructions and
 checkpoints. This continuation keeps both files below 1,000 lines. The latest
-published SHA is `474f35dcb5b8eb78596ceaa74b59fe1cb3008b5b` on draft PR775,
-pushed at approximately10:02 UTC with its source-only PR description updated.
+published SHA is `1c830933ff769ab4ebf46e2593ad3353c8646d62` on draft PR775,
+pushed at approximately11:12 UTC with its source-only PR description updated.
 The prior08:57 checkpoint remains in the complete Git history.
 Source accounting remains8/70 DRAFTED,62 OPEN; function coverage is unmeasured.
 Every new test/compilation/translation/preparation/receiving/performance result
@@ -13,7 +13,7 @@ index-image operation is authorized. Only source writing and SCM continue.
 
 Three GPT-6.1-sol medium workers have disjoint source scopes. Root remains the
 sole push/PR owner and serializes exact-path commits. Next normal source push
-is approximately13:00 UTC or an earlier coherent batch. The earlier filesystem
+is approximately14:00 UTC or an earlier coherent batch. The earlier filesystem
 observation reported3.1GiB free at08:54 UTC; keep source snapshots small and
 perform no build, dependency or receiving-workspace copies during drafting.
 
@@ -168,3 +168,25 @@ receiving cases. Async has a source-ready7-path scoped-carrier helper/history
 and3-path exact canonical JSON-reader-fold batch, with no consumer hooks yet;
 Root review is pending. Async now drafts a read-only consumer integration plan.
 No additional worker or dependency/build copy was created.
+
+## Worker wind-down and next integration
+
+The user's latest instruction asks the three current workers to finish their
+assigned source batches, then Root continues alone. Do not spawn, replace or
+restart workers after those batches. Root owns integration and all publication.
+The current assignments are the seven scoped selector/stage consumers, their
+integration into the existing uncommitted opaque driver, and the constant188
+flat corpus/receiving adapter. No optimization successor is authorized yet.
+Keep old standalone selector interfaces and full source/inverse histories.
+
+Constant profile checkpoint `76e9227671d3682ebc4216db7b8f28918b4b3644`
+commits31 NEW paths and exact188 source versions; its delta archive SHA256 is
+`b7413d607a8dfdf4babac347f358e53211d3a5ec627ab1fd27865422175ca857`.
+Its actual private Host checker, whole-project projections and single edited
+literal inverse are source drafted. Whole-corpus ingress is a separate current
+batch; it is not qualified by the fixture API. Root adds stable constant exports
+and a distinct captured-candidate alias without replacing the old candidate API.
+The audit remains frozen at its documented earlier baseline; do not silently
+update its measured Git population. All current tests/compilation/translation,
+receiving, freshness and fit remain UNRUN; CI/review remains uninspected.
+No acceptance row closes:8/70 DRAFTED,62 OPEN; no current function percentage.

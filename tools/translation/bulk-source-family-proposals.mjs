@@ -70,3 +70,8 @@ export {visitPortableJsonScalarReadersSourceEquations,proposePortableJsonScalarR
 export {visitNativeScalarOperationalSourceEquations} from './native-profile-oracles-20261101-scalar-history.mjs';
 export {proposeForwardOutputOwnershipSourceHistory} from './forward-output-ownership-20261101-source-history.mjs';
 export {proposeLocalClosureOptionCandidates} from './local-closure-option-candidate-20261101.mjs';
+export {proposeLocalClosureOptionCandidates as proposeCapturedLocalClosureOptionCandidates} from './local-closure-option-captured-20261101.mjs';
+export {visitCapturedOptionSourceHistory} from './local-closure-option-captured-20261101-source-history.mjs';
+export {proposeConstantIndexProfile,visitConstantIndexProfileSourceEquations,withConstantIndexProfileInstalledSources} from './constant-index-profile-20261101-profile.mjs';
+export {translateConstantIndexProfileProject,compileConstantIndexProfileProject,readConstantIndexProfileMeta} from './constant-index-profile-20261101-project.mjs';
+export {invertConstantIndexProfileTarget} from './constant-index-profile-20261101-inverse.mjs';
