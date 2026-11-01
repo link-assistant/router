@@ -1,17 +1,20 @@
 // Independent complete workflow source/CST cases. UNRUN. The child-process
-// guard forbids Cargo and every other child even when these tests later run.
+// guard permits only actual bounded source-fence Git reads; Cargo and every
+// other child remain forbidden even when these tests later run.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {fileURLToPath} from 'node:url';
 import {join} from 'node:path';
 import {gunzipSync} from 'node:zlib';
+import childProcess from 'node:child_process';
 import {prepareNativeProfileOracleWorkflow} from '../../../scripts/prepare-native-profile-oracles-20261101.mjs';
 import {readBoundedTrackedSourceBytes,withBoundedTrackedSourceOperation} from '../forward-output-ownership-20261101-bounded-bytes.mjs';
-import {withoutNativeOracleSubprocesses} from './native-profile-oracles-20261101-fixture.mjs';
+import {withNativeOracleReadOnlySourceGit} from './native-profile-oracles-20261101-fixture.mjs';
 const options={timeout:60000,concurrency:false},root=fileURLToPath(new URL('../../../',import.meta.url));
-function sourceCase(run){return withoutNativeOracleSubprocesses(()=>withBoundedTrackedSourceOperation(root,()=>{const require=createRequire(join(root,'scripts/ci/package.json')),yaml=require('yaml');assert.equal(require('yaml/package.json').version,'2.9.1');const packet=JSON.parse(new TextDecoder('utf8',{fatal:true}).decode(gunzipSync(readBoundedTrackedSourceBytes(root,'tools/translation/source-profiles/native-profile-oracles-20261101/complete-workflow.json.gz',{maxBytes:524288}),{maxOutputLength:1048576}))),proposal=prepareNativeProfileOracleWorkflow({root});return run({yaml,packet,proposal});}));}
+function sourceCase(run){return withNativeOracleReadOnlySourceGit(root,()=>withBoundedTrackedSourceOperation(root,()=>{const require=createRequire(join(root,'scripts/ci/package.json')),yaml=require('yaml');assert.equal(require('yaml/package.json').version,'2.9.1');const packet=JSON.parse(new TextDecoder('utf8',{fatal:true}).decode(gunzipSync(readBoundedTrackedSourceBytes(root,'tools/translation/source-profiles/native-profile-oracles-20261101/complete-workflow.json.gz',{maxBytes:524288}),{maxOutputLength:1048576}))),proposal=prepareNativeProfileOracleWorkflow({root});return run({yaml,packet,proposal});}));}
 function parse(yaml,source){const document=yaml.parseDocument(source,{version:'1.2',uniqueKeys:true,keepSourceTokens:true});assert.deepEqual(document.errors,[]);return document.toJS();}
+test('workflow fixture permits genuine bounded Git source reads but blocks Cargo, asynchronous Git and write commands',options,()=>withNativeOracleReadOnlySourceGit(root,()=>{assert.throws(()=>childProcess.spawn('cargo',['test']),/forbids/);assert.throws(()=>childProcess.execFileSync('cargo',['test'],{}),/forbids/);assert.throws(()=>childProcess.spawnSync(process.platform==='win32'?'git':'/usr/bin/git',['status']),/forbids/);assert.throws(()=>childProcess.execFileSync(process.platform==='win32'?'git':'/usr/bin/git',['-C',root,'reset','--hard'],{timeout:30000,maxBuffer:1024,env:{}}),/forbids/);}));
 test('complete before/language/after native YAML source histories serialize/reparse and reconstruct exact full bytes and both inverses',options,()=>sourceCase(({yaml,packet,proposal})=>{
  assert.equal(proposal.before,packet.before);assert.equal(proposal.language,packet.language);assert.equal(proposal.after,packet.after);assert.equal(proposal.current,proposal.after);assert.equal(proposal.inverse,packet.before);assert.equal(proposal.rustAuthority,false);assert.equal(proposal.semanticAuthority,false);assert.equal(proposal.execution,'UNRUN');assert.deepEqual(proposal.trace.map(row=>row.phase),['language','repository']);assert.deepEqual(proposal.trace.map(row=>row.id),['yaml:cargo-complete-default-workspace-test-target-census','router:defer-complete-native-provider-oracles-until-eight-js-stages']);
  for(const [source,meta]of [[proposal.before,proposal.beforeMeta],[proposal.language,proposal.languageMeta],[proposal.after,proposal.afterMeta]]){const wire=JSON.parse(meta);assert.equal(wire.schema,'native-profile-yaml-CST-v1');assert.equal(wire.source,source);assert.equal(wire.tokens.map(token=>yaml.CST.stringify(token)).join(''),source);assert.equal([...new yaml.Parser().parse(source)].map(token=>yaml.CST.stringify(token)).join(''),source);}
