@@ -141,3 +141,30 @@ successor now assigned to Async. Sync drafts the concrete opaque full-production
 adoption plan; its complete20k/8MiB/64MiB corpus cannot be replaced by the
 candidate's128-file/4MiB fixture lane. No old cap is raised or source receipt
 manufactured. Acceptance accounting remains8/70 DRAFTED,62 OPEN.
+
+Root completed the user-requested [development delivery audit](../case-studies/issue-759/current/translation-delivery-audit-20261101/README.md)
+against frozen head ba7b1d9f99f9be16628fe433a097b1b8ff036f43. It retains
+2,726 post-issue reachable Git records,817 first-parent records,813 current
+continuation commits, all70 original criteria and both original issue bodies.
+November1 has67 commits through10:32:21UTC, with median gap5m44.5s; this is
+commit cadence, not feature throughput. The report maps all9 original umbrella
+requirements,34 later nuances and6 new audit outputs. No acceptance count is
+inflated by writing the report:8/70 DRAFTED,62 OPEN; current function coverage
+remains unknown. Its low-confidence6–16 active-team-week working forecast is
+a transparent work-package scenario, not a promise or measured finish rate.
+All current execution and CI/review feedback remain UNRUN/uninspected.
+
+Captured Option successor ba7b1d9f99f9be16628fe433a097b1b8ff036f43 commits
+exact8 new paths and complete parent/copy archive SHA256
+80b12771aeb89c8ab55179eeb0933dcdbc0f34135255952d46bd7a0b096c54c6.
+Actual row source cases draft3 local closures and3 two-arm sites; remaining
+field/block/filter/text/constant/output composition and all actual caller
+admission remain unqualified. Stable API integration follows separately.
+
+While Root writes the audit, Sync continues the opaque producer/view/4kernel/
+2layered/local-selector/chunk-event/full-flat-result source batch; iterator
+continues constant profile/actualprivateHost/whole-projection/inverse/history/
+receiving cases. Async has a source-ready7-path scoped-carrier helper/history
+and3-path exact canonical JSON-reader-fold batch, with no consumer hooks yet;
+Root review is pending. Async now drafts a read-only consumer integration plan.
+No additional worker or dependency/build copy was created.

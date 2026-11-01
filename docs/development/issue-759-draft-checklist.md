@@ -5,6 +5,13 @@ Implementation resumed on 2026-11-01 at the user's explicit instruction to
 continue bulk drafting. Execution and CI-feedback inspection remain deferred.
 The [handoff](issue-759-handoff.md) records publication and resume constraints.
 
+The [delivery audit](../case-studies/issue-759/current/translation-delivery-audit-20261101/README.md)
+maps all nine original issue requirements, these70 local source criteria and
+later user constraints, with actual commit cadence and an explicitly uncertain
+forecast. The70-row source count is not a complete issue-level delivery or
+executable-function percentage; upstream adoption and measured outcomes remain
+subject to the original issue acceptance ledger as well.
+
 ## Scope, counts and evidence
 
 The 14 areas in [the requirements ledger](bulk-draft-requirements.md) are split

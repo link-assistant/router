@@ -1,0 +1,359 @@
+{
+  "schema": "router-technical-source-requirements-audit-baseline-v1",
+  "frozenHead": "ba7b1d9f99f9be16628fe433a097b1b8ff036f43",
+  "criteria": [
+    {
+      "id": "L01",
+      "status": "OPEN",
+      "closureCriterion": "Record a committed, source-reviewed inventory of production modules/functions, entrypoints, Cargo features and platform variants. Classify tests, generated files, application code and explicitly untranslated dependency internals separately. Retain baseline paths/revision; do not reuse an old function denominator."
+    },
+    {
+      "id": "L02",
+      "status": "OPEN",
+      "closureCriterion": "Assign every production inventory entry to one or more numbered rows and a real implementation/adoption path; list each unresolved construct, binding and feature gap. Draft an inventory reconciliation mechanism so unassigned/new entries cannot silently disappear."
+    },
+    {
+      "id": "L03",
+      "status": "OPEN",
+      "closureCriterion": "Finish layout-aware imports, package/build/publish entrypoints, CLI/tool paths and documentation for all three physical source trees; eliminate active assumptions that application source is root `src`."
+    },
+    {
+      "id": "L04",
+      "status": "OPEN",
+      "closureCriterion": "Declare authored versus generated ownership for all three trees and meta/source assets, generation destinations and overwrite protections; draft stale/missing/wrong-root cases."
+    },
+    {
+      "id": "L05",
+      "status": "OPEN",
+      "closureCriterion": "Draft copied-repository layout/adoption instructions and independent relocation/package/import cases that exercise actual `js/src`, `ts/src`, `rust/src` and translator paths without depending on the original checkout."
+    },
+    {
+      "id": "R01",
+      "status": "OPEN",
+      "closureCriterion": "Register every application syntax/operation family from L01/L02 in extensible rule tables, using exactly language then repository sequences; each missing registration is assigned, never silently carried."
+    },
+    {
+      "id": "R02",
+      "status": "OPEN",
+      "closureCriterion": "Implement shared language substitutions for inventoried expressions, declarations, control flow and type/ownership/effect constraints, with inverse/refusal source cases; repository spelling cannot grant semantic authority."
+    },
+    {
+      "id": "R03",
+      "status": "OPEN",
+      "closureCriterion": "Implement repository bindings, facade adoption, imports, hygiene, formatting and output conventions for those families, separate from language semantics; include shadowing/ambiguity/conflicting-name cases."
+    },
+    {
+      "id": "R04",
+      "status": "OPEN",
+      "closureCriterion": "Drive applicable forward/reverse registrations, target declarations and bulk caller proposals from shared operation descriptions or source-derived templates; preserve independent oracle expectations and original APIs."
+    },
+    {
+      "id": "R05",
+      "status": "OPEN",
+      "closureCriterion": "Draft complete rule-composition/discovery orchestration and dependency/conflict handling, including nested original-span edits, idempotence, complete inverses and bounded refusal; one rule must not erase another's needed source evidence."
+    },
+    {
+      "id": "C01",
+      "status": "OPEN",
+      "closureCriterion": "Carry original Rust source through lossless CST serialization/reparse on every forward lane, retaining tokens/trivia/delimiters/spans and malformed-input refusal."
+    },
+    {
+      "id": "C02",
+      "status": "OPEN",
+      "closureCriterion": "Carry original JS and TS source through the same lossless boundary on every reverse lane, including written type syntax, comments, templates and complete module source."
+    },
+    {
+      "id": "C03",
+      "status": "OPEN",
+      "closureCriterion": "Define/extend checked semantic meta schemas, serializers/reparsers, independent checkers and both interpreters for every new operation; distinguish transported source from semantic authority."
+    },
+    {
+      "id": "C04",
+      "status": "OPEN",
+      "closureCriterion": "Retain genuine private parser/source/type/caller receipts through emission and closing checks; draft stale/forged/mutated/caught-failure cases, with no authority from public flags, names or hashes and no new persistent verdict caches."
+    },
+    {
+      "id": "C05",
+      "status": "OPEN",
+      "closureCriterion": "Draft exact source-inverse and complete canonical reproduction paths for all lanes and composed histories, including mixed Rust/JS/TS source equations and source/export dependency pins."
+    },
+    {
+      "id": "O01",
+      "status": "OPEN",
+      "closureCriterion": "Complete inventoried scalar/text/formatting/JSON/codec operations with matching native/JS implementations, strict TS declarations, errors, numeric/Unicode semantics and actual caller mappings."
+    },
+    {
+      "id": "O02",
+      "status": "OPEN",
+      "closureCriterion": "Complete inventoried collection/iterator operations: construction, mutation, lookup/order, nested aggregates, callbacks/captures and borrowed results. Finish genuine native join-kernel routing, preserving ownership and resource behavior."
+    },
+    {
+      "id": "O03",
+      "status": "OPEN",
+      "closureCriterion": "Complete inventoried Option/Result/early-return/Try/error-conversion operations and callback/local/branch/loop composition, retaining evaluation order, move/loan lifetimes and explicit error variants."
+    },
+    {
+      "id": "O04",
+      "status": "OPEN",
+      "closureCriterion": "Complete inventoried shared-state/async/network/HTTP/stream contracts with matching cancellation, ordering, backpressure, termination and error semantics; framework internals may remain behind qualified facades."
+    },
+    {
+      "id": "O05",
+      "status": "OPEN",
+      "closureCriterion": "Complete inventoried filesystem/process/environment/time/platform operations with matching resource lifecycle and failure contracts; list native implementation boundaries and application domains explicitly."
+    },
+    {
+      "id": "B01",
+      "status": "OPEN",
+      "closureCriterion": "Resolve original modules/imports/reexports/aliases/visibility and qualified function/type references across the inventoried source set; preserve ambiguity and shadowing refusals."
+    },
+    {
+      "id": "B02",
+      "status": "OPEN",
+      "closureCriterion": "Resolve actual attributes/cfg/features/platform selections and macro/derive/include producers used by that set, retaining original generated-source provenance rather than guessed expansions."
+    },
+    {
+      "id": "B03",
+      "status": "OPEN",
+      "closureCriterion": "Resolve actual type/trait/impl/method/generic/default-context ownership needed by callers; qualified facade bindings must be joined to their actual implementation and dependency configuration."
+    },
+    {
+      "id": "B04",
+      "status": "OPEN",
+      "closureCriterion": "Close cross-module helper/caller/result/field/constructor relationships, including nonasync and async effects, argument-duration borrows, reference lifetimes and whole-body ownership checks."
+    },
+    {
+      "id": "B05",
+      "status": "OPEN",
+      "closureCriterion": "Draft complete-scope unresolved-binding diagnostics and source/adoption refusal cases; every unresolved producer/owner maps back to L02 instead of blanket namespace admission."
+    },
+    {
+      "id": "F01",
+      "status": "OPEN",
+      "closureCriterion": "Lower all inventoried expressions, statements, branches/loops/matches, returns and helper calls through checked meta to executable JS and strict TS; preserve effects and refusal domains."
+    },
+    {
+      "id": "F02",
+      "status": "OPEN",
+      "closureCriterion": "Lower inventoried records/enums/constructors/fields/generics/traits and aggregate/reference ownership through matching target abstractions, including mutation and drop/resource obligations."
+    },
+    {
+      "id": "F03",
+      "status": "OPEN",
+      "closureCriterion": "Lower inventoried async/state/network/streaming application callers through O04/O05 contracts with complete control flow, cancellation and error paths."
+    },
+    {
+      "id": "F04",
+      "status": "OPEN",
+      "closureCriterion": "Draft complete project-driver/dependency/import/runtime packaging for canonical and neutral/Unix/Windows outputs, owned definitions and all production entrypoints; do not manually patch generated outputs."
+    },
+    {
+      "id": "F05",
+      "status": "OPEN",
+      "closureCriterion": "Provide actual whole-function/module production source cases for all inventoried families plus a future census mechanism distinguishing executable, partial, refused and carried bodies with reasons."
+    },
+    {
+      "id": "V01",
+      "status": "OPEN",
+      "closureCriterion": "Define the editable JS/TS application subset from L01, including JS type witnesses and written TS types; retain dynamic/coercion/unknown-source refusals and useful diagnostics."
+    },
+    {
+      "id": "V02",
+      "status": "OPEN",
+      "closureCriterion": "Map all corresponding scalar/core/collection/error/aggregate operations through checked meta and ownership replay into Rust and strict TS, across every active reverse lane."
+    },
+    {
+      "id": "V03",
+      "status": "OPEN",
+      "closureCriterion": "Map corresponding async/state/network/resource operations and whole production callers back to Rust, with complete dependency/type/import emission and native contracts."
+    },
+    {
+      "id": "V04",
+      "status": "OPEN",
+      "closureCriterion": "Implement both paired-target edit directions, canonical Rust reproduction and JS↔TS projection consistency; distinguish canonical source changes from exact restoration of untouched source/trivia."
+    },
+    {
+      "id": "V05",
+      "status": "OPEN",
+      "closureCriterion": "Draft independent whole-module reverse cases for all inventoried families, including unsupported JS/TS, ownership conflicts, tampered witnesses and roundtrip error/effect preservation."
+    },
+    {
+      "id": "S01",
+      "status": "OPEN",
+      "closureCriterion": "Complete actual Rust-edited and JS/TS-edited synchronization entrypoints through CST/meta and both rule sequences; retain authored-source overwrite protections."
+    },
+    {
+      "id": "S02",
+      "status": "OPEN",
+      "closureCriterion": "Complete exact baseline/direction/conflict handling for independent, identical and concurrent differing changes, including paired JS/TS conflicts, renames/deletions and dependency edits."
+    },
+    {
+      "id": "S03",
+      "status": "OPEN",
+      "closureCriterion": "Complete source-reader/closing/failure protocols and bounded atomic installation/rollback/recovery; stale/restored/caught-failure inputs must invalidate private facts and preserve primary errors."
+    },
+    {
+      "id": "S04",
+      "status": "OPEN",
+      "closureCriterion": "Draft deterministic fresh output orchestration for source banks, canonical/platform/owned/reverse assets, runtime/type mirrors, meta and export profiles; no manual expected-hash replacement or stale generated acceptance."
+    },
+    {
+      "id": "S05",
+      "status": "OPEN",
+      "closureCriterion": "Draft end-to-end copied-project edit/sync/second-edit/conflict/recovery cases in both directions and no-op/idempotence checks, without relying on original checkout caches."
+    },
+    {
+      "id": "P01",
+      "status": "OPEN",
+      "closureCriterion": "Map every inventoried CLI/configuration/account/authentication/credential/provider/model-selection operation to matching target behavior and independent production contract cases."
+    },
+    {
+      "id": "P02",
+      "status": "OPEN",
+      "closureCriterion": "Map every inventoried endpoint/routing/proxy/header/protocol/error/stream feature to matching target behavior, including cancellation, termination, ordering and platform variants."
+    },
+    {
+      "id": "P03",
+      "status": "OPEN",
+      "closureCriterion": "Map every inventoried storage/network-token operation, policy/authorization/quota/usage/subscription/lifecycle/state behavior to matching target implementations and failure cases."
+    },
+    {
+      "id": "P04",
+      "status": "OPEN",
+      "closureCriterion": "Map every inventoried client/session/login/process/tunnel/deploy/service/logging/telemetry capability to matching target behavior, explicit external boundaries and platform cases."
+    },
+    {
+      "id": "P05",
+      "status": "OPEN",
+      "closureCriterion": "Reconcile the complete feature/route/entrypoint manifest against L01/L02 and all historical parity gaps; every application gap needs implementation/case source, with no unsupported feature counted as parity."
+    },
+    {
+      "id": "T01",
+      "status": "OPEN",
+      "closureCriterion": "Draft independently expected semantic vectors for every inventoried operation and complete production caller family, shared across JS/TS and native oracle source without generating expectations from implementation tables."
+    },
+    {
+      "id": "T02",
+      "status": "OPEN",
+      "closureCriterion": "Draft boundary/error/refusal vectors for Unicode, numeric limits, malformed input, source identities, stale/forged receipts, coercion, resource caps and unsupported domains."
+    },
+    {
+      "id": "T03",
+      "status": "OPEN",
+      "closureCriterion": "Draft ownership/evaluation-order/lifetime/mutation/branch/loop/callback/alias cases, including later-argument move/restore and nested borrowed results in real callers."
+    },
+    {
+      "id": "T04",
+      "status": "OPEN",
+      "closureCriterion": "Draft async/cancellation/stream/order/state/platform and resource-cleanup cases, including independent real route/CLI/storage contracts and controlled external-service fixtures."
+    },
+    {
+      "id": "T05",
+      "status": "OPEN",
+      "closureCriterion": "Draft complete Node/Bun/strict lockfile TypeScript and CI-only Rust harness coverage mapping, whole-file scheduling, original deadlines/raw evidence and explicit skipped-work accounting."
+    },
+    {
+      "id": "Q01",
+      "status": "OPEN",
+      "closureCriterion": "Draft shared-source-history/fixture/native-parser/derive/binding repairs for recorded failure classes and independent regressions; preserve full originals and provenance."
+    },
+    {
+      "id": "Q02",
+      "status": "OPEN",
+      "closureCriterion": "Draft invocation-local allocation/CPU/lifecycle improvements for recorded metadata/retained-storage/source-check bottlenecks; preserve guards and avoid persistent source/owner/verdict caches."
+    },
+    {
+      "id": "Q03",
+      "status": "DRAFTED",
+      "closureCriterion": "Draft complete actual native join-helper→kernel emission routing through genuine private checked body/caller evidence, plus full-capacity independent cases without reducing original bounds/deadlines."
+    },
+    {
+      "id": "Q04",
+      "status": "OPEN",
+      "closureCriterion": "Draft canonical/platform/owned/reverse/export freshness and strict TypeScript repair paths with complete source equations, original producers and all unchanged commands."
+    },
+    {
+      "id": "Q05",
+      "status": "OPEN",
+      "closureCriterion": "Draft a later complete-cycle failure collector/classifier and repair worklist preserving raw failures and SHA/workloads; newly discovered failures reopen affected rows instead of being hidden or assumed repaired."
+    },
+    {
+      "id": "J01",
+      "status": "DRAFTED",
+      "closureCriterion": "Account for all eight unchanged JavaScript stage IDs/commands and every original matrix member/profile/engine, preserving fail-fast false, deadlines and raw test evidence."
+    },
+    {
+      "id": "J02",
+      "status": "OPEN",
+      "closureCriterion": "Require success for all JavaScript stages at the same immutable SHA before any Rust job executes; skipped/cancelled/missing work cannot unlock Rust."
+    },
+    {
+      "id": "J03",
+      "status": "OPEN",
+      "closureCriterion": "Keep all required Rust CI checks fatal after the JS gate, with native edge/oracle coverage and explicit skipped-work handling; no local Rust invocation or commit-hook Rust tool."
+    },
+    {
+      "id": "J04",
+      "status": "OPEN",
+      "closureCriterion": "Connect complete forward/reverse/freshness/strict parity/export/receiving and production-case jobs to the original partitions, preserving credentials/platform boundaries and bounded resources."
+    },
+    {
+      "id": "J05",
+      "status": "DRAFTED",
+      "closureCriterion": "Draft workflow/source-equation/partition audits and positive/negative gate cases for failed/missing/mismatched-SHA JS stages and fatal Rust outcomes; workflow presence alone is not verification."
+    },
+    {
+      "id": "E01",
+      "status": "OPEN",
+      "closureCriterion": "Include the full compiler/rule/CST/meta/parser/schema/runtime/type/source-profile dependency closure in a standalone export with explicit source provenance and unchanged size/resource limits."
+    },
+    {
+      "id": "E02",
+      "status": "OPEN",
+      "closureCriterion": "Carry upstream reference/pin/license/notice obligations for copied approaches and dependencies; document local changes and distinguish reused source from reimplementation."
+    },
+    {
+      "id": "E03",
+      "status": "OPEN",
+      "closureCriterion": "Draft independent receiving-repository cases that import the full compiler, translate real source in both directions, synchronize edits, and retain semantic/source/failure checks without original checkout access."
+    },
+    {
+      "id": "E04",
+      "status": "OPEN",
+      "closureCriterion": "Draft reusable installation/layout/core-binding/extension/adoption instructions and automation; make repository-specific rules replaceable without weakening reusable language rules."
+    },
+    {
+      "id": "E05",
+      "status": "OPEN",
+      "closureCriterion": "Draft receiving closure/freshness/platform/resource diagnostics and limitations, plus contribution guidance covering layered rules, independent cases, JS-first gating and no unsupported full-sync claim."
+    },
+    {
+      "id": "D01",
+      "status": "DRAFTED",
+      "closureCriterion": "Preserve source-only drafting/no experiments/no CI-feedback inspection policy until complete bulk draft, continued prohibition of local tests/compilation until authorized, and no local Rust tools in any phase."
+    },
+    {
+      "id": "D02",
+      "status": "DRAFTED",
+      "closureCriterion": "Record single coordinator/publisher, no restarted workers, hook disabling for conflicting Rust tools, standing push authorization and coherent checkpoint cadence without weakening JS-first CI."
+    },
+    {
+      "id": "D03",
+      "status": "DRAFTED",
+      "closureCriterion": "Document bounded disk/memory/time/evidence handling, one heavy workload, no unnecessary dependency trees/clones, precise Router-owned cleanup and preservation of others' active work."
+    },
+    {
+      "id": "D04",
+      "status": "DRAFTED",
+      "closureCriterion": "Complete checkpoint/handoff/PR templates recording exact source SHA, open IDs, unrun/failed/passed scope, reproduction paths, cleanup and explicit paused/resume status."
+    },
+    {
+      "id": "D05",
+      "status": "DRAFTED",
+      "closureCriterion": "Define truthful final delivery: all 70 source receipts before draft-complete claim; independently completed coverage/parity/freshness/receiving/performance and same-SHA JS→Rust CI evidence before verified completion or release claims."
+    }
+  ],
+  "scope": "Original70 technical/local-policy acceptance bundles; separate original-issue obligations are mapped in the report.",
+  "verification": "UNRUN",
+  "codeCompletionPercent": null
+}

@@ -5,6 +5,15 @@ Continue [#772](https://github.com/link-assistant/router/issues/772) and
 executable production functions and complete synchronization, rather than lines
 generated, proposed substitutions or the number of small tests passing.
 
+During the current source-only phase, the user's prohibition on tests,
+translation/preparation experiments and CI/review inspection overrides the
+verification steps below until the phase and execution authorization change.
+Follow the current AGENTS worker limit and sole-publisher policy. See the
+[delivery audit](../case-studies/issue-759/current/translation-delivery-audit-20261101/README.md)
+for frozen commit cadence, the complete known requirement mapping and explicit
+forecast uncertainty. Historical acceptance figures below are not a current
+production census and must not be used as today's completion percentage.
+
 ## Change shared contracts, then regenerate the whole family
 
 Use the smallest checked application language that can express Router's logic.
@@ -96,14 +105,14 @@ After a published head finishes, collect every job and full failed/cancelled
 stream once, group failures by shared cause, and draft one coordinated repair
 batch. Keep independent source work moving while CI runs. Commit coherent
 checkpoints at least every six hours during active work; publish only through
-the sole coordinator with accurate failed/unrun evidence. Continue alone under
-the user's current instruction and never invoke a local Rust tool.
+the sole coordinator with accurate failed/unrun evidence. Follow the latest
+explicit worker authorization and never invoke a local Rust tool.
 
-## Current acceptance boundary
+## Last measured acceptance boundary before source-only drafting
 
-The complete 863-source canonical generation now fits its unchanged resource
-bounds and both canonical TypeScript trees pass strict checking. The current
-production census admits 163/2,570 functions (6.34%), with independent Node/Bun
+For its historical source cohort, the complete 863-source canonical generation fit its unchanged resource
+bounds and both canonical TypeScript trees passed strict checking. That historical
+production census admitted 163/2,570 functions (6.34%), with independent Node/Bun
 execution of all six newly admitted functions. Profile generation still needs
 qualification; TypeScript cannot check absent neutral output trees. The prior
 strict parity result records 441 genuine draft gaps; reverse CI has incomplete

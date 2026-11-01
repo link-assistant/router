@@ -988,3 +988,8 @@ Use the explicit [kernel adoption paths](docs/development/owned-text-vector-kern
 for combined array/push/join drafting. Retain complete original/intermediate/
 final inverses and strict final private reissue. Report the actual lockfile
 TypeScript version without removing any strict target or case deadline.
+
+For issue #759 forecasts, distinguish commit cadence, source acceptance and
+qualified application behavior. Preserve dated denominators and explicit
+scenario assumptions; never infer completion from commit/profile counts.
+See the [delivery audit](docs/case-studies/issue-759/current/translation-delivery-audit-20261101/README.md).
