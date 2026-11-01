@@ -40,3 +40,7 @@ test('runtime mode keeps the existing worker resource limits and complete source
  const args=sourceUnitArguments(['--manifest','units.json','--plan','runtime.json','--runtime-only']);assert.equal(args.runtimeOnly,true);assert.throws(()=>sourceUnitArguments(['--manifest','units.json','--plan','runtime.json','--runtime-only','--runtime-only']),/Repeated/);
  const proposal=prepareUnitRuntimeMaterialization();assert.equal(proposal.files.length,2);for(const row of proposal.files){assert.equal(row.current,row.currentAfter);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}assert.equal(proposal.receivingExecuted,false);
 });
+
+test('shared guarded installer supports exact deletion with complete before images',limits,async t=>{
+ const {installFreshSourceProposal}=await import('../unit-runtime-materialization.mjs'),api=fixture(t),name='js/runtime/retired.mjs',before='// exact retired runtime\n';api.write(name,before);const proposal={schema:'independent-guarded-delete',root:api.root,baseRevision:null,inputs:[{path:name,source:before}],outputs:[{path:name,before,after:null,inverse:before,mode:0o644}]};assert.equal(installFreshSourceProposal(JSON.stringify(proposal),()=>proposal).changed[0],name);assert.equal(existsSync(join(api.root,name)),false);
+});

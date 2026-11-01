@@ -30,8 +30,8 @@ function relative(value){if(typeof value!=='string'||!value||value.length>4096||
 function physical(root,name){relative(name);let parent=root;const parts=name.split('/');for(const part of parts.slice(0,-1)){parent=resolve(parent,part);try{const row=fs.lstatSync(parent);if(!row.isDirectory()||row.isSymbolicLink())fail('linked or non-directory source parent');}catch(error){if(error.code!=='ENOENT')throw error;}}return resolve(root,name);}
 function source(root,name){
  const full=physical(root,name);let row;try{row=fs.lstatSync(full);}catch(error){if(error.code==='ENOENT')return null;throw error;}
- if(!row.isFile()||row.isSymbolicLink()||row.size>FILE_LIMIT)fail('bounded ordinary source file required');const fd=fs.openSync(full,fs.constants.O_RDONLY|fs.constants.O_NOFOLLOW);
- try{const before=fs.fstatSync(fd),chunks=[];let total=0;for(;;){const bytes=Buffer.alloc(Math.min(65536,FILE_LIMIT-total+1)),count=fs.readSync(fd,bytes,0,bytes.length,null);if(!count)break;total+=count;if(total>FILE_LIMIT)fail('source grew beyond its byte bound');chunks.push(bytes.subarray(0,count));}const raw=Buffer.concat(chunks,total),after=fs.fstatSync(fd),named=fs.lstatSync(full);if(!before.isFile()||row.dev!==before.dev||row.ino!==before.ino||before.dev!==after.dev||before.ino!==after.ino||before.size!==raw.length||before.size!==after.size||before.mtimeMs!==after.mtimeMs||before.ctimeMs!==after.ctimeMs||before.dev!==named.dev||before.ino!==named.ino||before.mode!==named.mode||after.size!==named.size||after.mtimeMs!==named.mtimeMs||after.ctimeMs!==named.ctimeMs)fail('complete source changed during capture');const text=raw.toString('utf8');if(!Buffer.from(text).equals(raw))fail('source must retain exact UTF8 bytes');return text;}finally{fs.closeSync(fd);}
+ if(!row.isFile()||row.isSymbolicLink()||row.size>FILE_LIMIT)fail('bounded ordinary source file required');const fd=fs.openSync(full,fs.constants.O_RDONLY|fs.constants.O_NOFOLLOW);let readFailed=false;
+ try{const before=fs.fstatSync(fd),chunks=[];let total=0;for(;;){const bytes=Buffer.alloc(Math.min(65536,FILE_LIMIT-total+1)),count=fs.readSync(fd,bytes,0,bytes.length,null);if(!count)break;total+=count;if(total>FILE_LIMIT)fail('source grew beyond its byte bound');chunks.push(bytes.subarray(0,count));}const raw=Buffer.concat(chunks,total),after=fs.fstatSync(fd),named=fs.lstatSync(full);if(!before.isFile()||row.dev!==before.dev||row.ino!==before.ino||before.dev!==after.dev||before.ino!==after.ino||before.size!==raw.length||before.size!==after.size||before.mtimeMs!==after.mtimeMs||before.ctimeMs!==after.ctimeMs||before.dev!==named.dev||before.ino!==named.ino||before.mode!==named.mode||after.size!==named.size||after.mtimeMs!==named.mtimeMs||after.ctimeMs!==named.ctimeMs)fail('complete source changed during capture');const text=raw.toString('utf8');if(!Buffer.from(text).equals(raw))fail('source must retain exact UTF8 bytes');return text;}catch(error){readFailed=true;throw error;}finally{try{fs.closeSync(fd);}catch(error){if(!readFailed)throw error;}}
 }
 function gitEnvironment(){const env=Object.fromEntries(Object.entries(process.env).filter(([name])=>!name.startsWith('GIT_'))),empty=process.platform==='win32'?'NUL':'/dev/null';return {...env,GIT_CONFIG_NOSYSTEM:'1',GIT_CONFIG_GLOBAL:empty,GIT_CONFIG_SYSTEM:empty};}
 const gitExecutable=()=>process.platform==='win32'?'git':'/usr/bin/git';
@@ -119,17 +119,73 @@ export function planUnitSynchronization({root,manifestPath}={}){
  for(const row of inputs)if(source(root,row.path)!==row.source)fail('source changed during complete planning');if(git(root,['rev-parse','HEAD']).trim()!==revision)fail('Git baseline changed');
  return {schema:SCHEMA,root,manifestPath,baseRevision:revision,manifestSource,units,inputs,outputs:[...outputs.values()],retainedSourceBytes:retained,sourceAuthority:false,runtimeParity:false,wholeRouterSynchronization:false,crossInvocationCache:false,rustExecuted:false};
 }
-function installFreshUnitProposal(serialized,produce){
- if(typeof serialized!=='string'||Buffer.byteLength(serialized)>LIMIT*3)fail('bounded serialized complete proposal required');const received=JSON.parse(serialized),fresh=produce();if(JSON.stringify(received)!==JSON.stringify(fresh))fail('proposal differs from complete fresh source translation');
- const changed=fresh.outputs.filter(row=>row.before!==row.after),written=[],installed=new Map(),originals=new Map();for(const row of fresh.inputs){if(originals.has(row.path)&&originals.get(row.path)!==row.source)fail('inconsistent original input snapshots');originals.set(row.path,row.source);}
- const guardOriginals=()=>{for(const [path,before]of originals)if(source(fresh.root,path)!==(installed.has(path)?installed.get(path):before))fail('original source changed during installation');};
- guardOriginals();for(const row of fresh.outputs)if(source(fresh.root,row.path)!==row.before)fail('complete output set changed before installation');
+// Shared guarded source installer. Node offers no conditional inode CAS: callers
+// require exclusive/cooperating writers. Unknown captured replacements are kept.
+function sourceInstallation(fresh,{checkHead=false}={}){
+ const root=fs.realpathSync(resolve(fresh.root)),rows=fresh.outputs,originals=new Map(),states=new Map(),written=[],installed=new Map(),artifacts=new Map(),external=[],unknownQuarantines=new Set();let directory=null,directoryIdentity=null,total=0;
+ const id=stat=>[stat.dev,stat.ino,stat.mode],same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+ const current=name=>{const before=source(root,name);if(before===null)return null;const stat=fs.lstatSync(physical(root,name));if(source(root,name)!==before)fail('source changed during installer identity capture');return {source:before,mode:stat.mode&0o777,identity:id(stat)};};
+ const matches=(actual,expected)=>actual===null||expected===null?actual===expected:actual.source===expected.source&&actual.mode===expected.mode&&same(actual.identity,expected.identity);
+ const exact=(name,expected)=>{if(!matches(current(name),expected))fail('source identity/bytes/mode changed: '+name);};
+ const ownDirectory=()=>{const stat=fs.lstatSync(directory);if(!stat.isDirectory()||stat.isSymbolicLink()||!same(id(stat),directoryIdentity))fail('owned installation directory changed');};
+ const privateRead=name=>{ownDirectory();return current(name);};
+ const externalCheck=row=>{if(source(row.root,row.path)!==row.source)fail('external receiving producer source changed');const stat=row.source===null?null:fs.lstatSync(physical(row.root,row.path));if(stat&&!same(id(stat),row.identity))fail('external receiving producer source identity/mode changed');};
+ const originalCheck=()=>{if(checkHead&&git(root,['rev-parse','HEAD']).trim()!==fresh.baseRevision)fail('Git baseline changed during source installation');for(const [name,expected]of originals)exact(name,installed.has(name)?installed.get(name):expected);for(const row of external)externalCheck(row);};
+ if(!Array.isArray(rows)||rows.length>4096||!Array.isArray(fresh.inputs)||fresh.inputs.length>4096)fail('bounded complete source installation required');
+ for(const row of fresh.inputs){relative(row.path);const actual=current(row.path);if((actual?.source??null)!==row.source||originals.has(row.path)&&!matches(originals.get(row.path),actual))fail('inconsistent original source snapshots');originals.set(row.path,actual);total+=Buffer.byteLength(row.source??'');}
+ for(const group of fresh.externalInputs??[]){if(!group||typeof group.root!=='string'||!Array.isArray(group.inputs)||external.length+group.inputs.length>4096)fail('bounded complete receiving source groups required');for(const row of group.inputs){relative(row.path);const sourceRoot=resolve(group.root),value=source(sourceRoot,row.path);if(value!==row.source)fail('external receiving source baseline differs');const stat=value===null?null:fs.lstatSync(physical(sourceRoot,row.path));if((stat?stat.mode&0o777:null)!==row.mode)fail('external receiving source mode differs');external.push({root:sourceRoot,path:row.path,source:value,identity:stat?id(stat):null});total+=Buffer.byteLength(value??'');}}
+ for(const row of rows){relative(row.path);if(states.has(row.path)||row.after!==null&&typeof row.after!=='string'||row.before!==null&&typeof row.before!=='string'||!Number.isInteger(row.mode)||row.mode<0||row.mode>0o777||row.after===null&&(row.before===null||row.inverse!==row.before))fail('complete unique output source/mode operation required');const actual=current(row.path);if((actual?.source??null)!==row.before||actual&&actual.mode!==row.mode)fail('complete original output bytes/mode differ');if(row.after!==null&&Buffer.byteLength(row.after)>FILE_LIMIT)fail('generated output source bound');states.set(row.path,{row,before:actual,after:null});total+=Buffer.byteLength(row.before??'')+Buffer.byteLength(row.after??'');}if(total>LIMIT)fail('whole guarded installation source byte bound');
+ const changed=[...states.values()].filter(state=>state.row.before!==state.row.after);originalCheck();for(const state of states.values())exact(state.row.path,state.before);if(!changed.length)return {schema:fresh.schema,baseRevision:fresh.baseRevision,changed:[],sourceAuthority:false,runtimeParity:false,rustExecuted:false};
+ const privateName=name=>relative(fsRelative(directory)+'/'+name),fsRelative=full=>{const value=full.slice(root.length+1);relative(value);return value;};
+ const remember=(name,expected)=>{artifacts.set(name,expected);exact(name,expected);};
+ const removePrivate=name=>{ownDirectory();const expected=artifacts.get(name);if(!expected)fail('unknown private installation artifact');exact(name,expected);fs.unlinkSync(physical(root,name));artifacts.delete(name);};
+ const capturePublic=(state,suffix)=>{
+  ownDirectory();const name=privateName(suffix);if(current(name)!==null)fail('quarantine slot unexpectedly exists');fs.renameSync(physical(root,state.row.path),physical(root,name));unknownQuarantines.add(name);const actual=privateRead(name);
+  if(!matches(actual,state.before)&&!matches(actual,state.after)){
+   // Restore only by no-overwrite link; unexpected captured data stays retained.
+   if(actual)try{fs.linkSync(physical(root,name),physical(root,state.row.path));}catch{}fail('unexpected public replacement captured and retained');
+  }artifacts.set(name,actual);unknownQuarantines.delete(name);return name;
+ };
+ let primary,failed=false;const secondary=[];
  try{
-  for(const row of changed){if(source(fresh.root,row.path)!==row.before)fail('target changed before installation');const full=physical(fresh.root,row.path);fs.mkdirSync(dirname(full),{recursive:true});const temporary=full+'.router-unit-'+randomUUID();try{fs.writeFileSync(temporary,row.after,{flag:'wx',mode:row.mode});if(row.before!==null)fs.chmodSync(temporary,row.mode);if(source(fresh.root,row.path)!==row.before)fail('target changed before atomic replacement');fs.renameSync(temporary,full);}finally{if(fs.existsSync(temporary))fs.unlinkSync(temporary);}written.push(row);installed.set(row.path,row.after);}
-  guardOriginals();for(const row of fresh.outputs)if(source(fresh.root,row.path)!==row.after)fail('complete target readback differs');
- }catch(error){const rollback=[];for(const row of [...written].reverse())try{if(source(fresh.root,row.path)!==row.after){rollback.push(row.path+': external change retained');continue;}if(row.before===null)fs.unlinkSync(physical(fresh.root,row.path));else fs.writeFileSync(physical(fresh.root,row.path),row.before);}catch(caught){rollback.push(row.path+': '+caught.message);}error.rollbackFailures=rollback;throw error;}
- return {schema:fresh.schema,baseRevision:fresh.baseRevision,changed:changed.map(row=>row.path),sourceAuthority:false,runtimeParity:false,rustExecuted:false};
+  directory=resolve(root,'.router-source-install-'+randomUUID());fs.mkdirSync(directory,{mode:0o700});directoryIdentity=id(fs.lstatSync(directory));
+  for(let index=0;index<changed.length;index++){
+   const state=changed[index],row=state.row;ownDirectory();fs.mkdirSync(dirname(physical(root,row.path)),{recursive:true});exact(row.path,state.before);
+   if(state.before){const backup=privateName('backup-'+index);fs.linkSync(physical(root,row.path),physical(root,backup));state.backup=backup;remember(backup,state.before);}
+   if(row.after!==null){const stage=privateName('stage-'+index);fs.writeFileSync(physical(root,stage),row.after,{flag:'wx',mode:row.mode});fs.chmodSync(physical(root,stage),row.mode);state.stage=stage;state.after=privateRead(stage);if(state.after.source!==row.after||state.after.mode!==row.mode)fail('complete prepared output readback differs');remember(stage,state.after);}
+  }
+  originalCheck();for(const state of states.values())exact(state.row.path,state.before);
+  for(let index=0;index<changed.length;index++){
+   const state=changed[index],row=state.row;originalCheck();exact(row.path,state.before);written.push(state);
+   if(state.before){state.quarantine=capturePublic(state,'quarantine-'+index);installed.set(row.path,null);}
+   if(row.after!==null){ownDirectory();fs.linkSync(physical(root,state.stage),physical(root,row.path));installed.set(row.path,state.after);}else installed.set(row.path,null);
+   exact(row.path,state.after);originalCheck();
+  }
+  originalCheck();for(const state of states.values())exact(state.row.path,state.row.before===state.row.after?state.before:state.after);
+ }catch(error){failed=true;primary=error;
+  for(let index=written.length-1;index>=0;index--)try{
+   const state=written[index],row=state.row,actual=current(row.path);ownDirectory();
+   if(matches(actual,state.before)){installed.set(row.path,state.before);continue;}
+   if(actual!==null){if(!matches(actual,state.after))fail('external output replacement retained during rollback');capturePublic(state,'rollback-'+index);}
+   if(state.before){exact(state.backup,state.before);fs.linkSync(physical(root,state.backup),physical(root,row.path));exact(row.path,state.before);}else exact(row.path,null);installed.set(row.path,state.before);
+  }catch(error){secondary.push(error);}
+ }
+ // Attempt every source closer even when one input changed or failure is falsy.
+ for(const [name,expected]of originals)try{exact(name,installed.has(name)?installed.get(name):expected);}catch(error){secondary.push(error);}
+ for(const row of external)try{externalCheck(row);}catch(error){secondary.push(error);}
+ for(const state of states.values())try{exact(state.row.path,installed.has(state.row.path)?installed.get(state.row.path):state.before);}catch(error){secondary.push(error);}
+ if(directory){for(const name of [...artifacts.keys()])try{
+   // Keep recovery bytes whenever rollback/closing could not restore originals.
+   if(secondary.length||unknownQuarantines.size)continue;removePrivate(name);
+  }catch(error){secondary.push(error);}try{ownDirectory();if(fs.readdirSync(directory).length===0)fs.rmdirSync(directory);}catch(error){secondary.push(error);}}
+ const recoveryPaths=[];if(directory)try{if(fs.existsSync(directory))recoveryPaths.push(directory);}catch(error){secondary.push(error);}
+ if(failed){let attached=false;if(primary&&typeof primary==='object')try{Object.defineProperties(primary,{rollbackFailures:{value:secondary,enumerable:true},recoveryPaths:{value:recoveryPaths,enumerable:true}});attached=true;}catch{}if(recoveryPaths.length&&!attached)try{process.stderr.write(JSON.stringify({schema:'router-source-installation-recovery-paths-v1',recoveryPaths})+'\n');}catch{}throw primary;}
+ if(secondary.length){const error=new AggregateError(secondary,'Guarded source installation closing/cleanup failures');error.recoveryPaths=recoveryPaths;throw error;}return {schema:fresh.schema,baseRevision:fresh.baseRevision,changed:changed.map(state=>state.row.path),sourceAuthority:false,runtimeParity:false,rustExecuted:false};
 }
+function installFreshUnitProposal(serialized,produce){
+ if(typeof serialized!=='string'||Buffer.byteLength(serialized)>LIMIT*3)fail('bounded serialized complete proposal required');const received=JSON.parse(serialized),fresh=produce();if(JSON.stringify(received)!==JSON.stringify(fresh))fail('proposal differs from complete fresh source translation');return sourceInstallation(fresh);
+}
+
 export function applyUnitSynchronization(serialized,{root,manifestPath}={}){
  return installFreshUnitProposal(serialized,()=>planUnitSynchronization({root,manifestPath}));
 }
@@ -167,15 +223,7 @@ export {installFreshUnitProposal as installFreshSourceProposal,source as readCur
 
 // Separate complete asynchronous fresh-producer transaction. Legacy sync API stays intact.
 export async function installFreshAsyncSourceProposal(serialized,produce){
- if(typeof serialized!=='string'||Buffer.byteLength(serialized)>LIMIT*3)fail('bounded serialized complete proposal required');const received=JSON.parse(serialized),fresh=await produce();if(JSON.stringify(received)!==JSON.stringify(fresh))fail('proposal differs from complete fresh source translation');
- const changed=fresh.outputs.filter(row=>row.before!==row.after),written=[],installed=new Map(),originals=new Map();for(const row of fresh.inputs){if(originals.has(row.path)&&originals.get(row.path)!==row.source)fail('inconsistent original input snapshots');originals.set(row.path,row.source);}
- const guardOriginals=()=>{if(git(fresh.root,['rev-parse','HEAD']).trim()!==fresh.baseRevision)fail('Git baseline changed during source installation');for(const [path,before]of originals)if(source(fresh.root,path)!==(installed.has(path)?installed.get(path):before))fail('original source changed during installation');};
- guardOriginals();for(const row of fresh.outputs)if(source(fresh.root,row.path)!==row.before)fail('complete output set changed before installation');
- try{
-  for(const row of changed){if(source(fresh.root,row.path)!==row.before)fail('target changed before installation');const full=physical(fresh.root,row.path);fs.mkdirSync(dirname(full),{recursive:true});const temporary=full+'.router-unit-'+randomUUID();try{fs.writeFileSync(temporary,row.after,{flag:'wx',mode:row.mode});if(row.before!==null)fs.chmodSync(temporary,row.mode);if(source(fresh.root,row.path)!==row.before)fail('target changed before atomic replacement');fs.renameSync(temporary,full);}finally{if(fs.existsSync(temporary))fs.unlinkSync(temporary);}written.push(row);installed.set(row.path,row.after);}
-  guardOriginals();for(const row of fresh.outputs)if(source(fresh.root,row.path)!==row.after)fail('complete target readback differs');
- }catch(error){const rollback=[];for(const row of [...written].reverse())try{if(source(fresh.root,row.path)!==row.after){rollback.push(row.path+': external change retained');continue;}if(row.before===null)fs.unlinkSync(physical(fresh.root,row.path));else fs.writeFileSync(physical(fresh.root,row.path),row.before);}catch(caught){rollback.push(row.path+': '+caught.message);}error.rollbackFailures=rollback;throw error;}
- return {schema:fresh.schema,baseRevision:fresh.baseRevision,changed:changed.map(row=>row.path),sourceAuthority:false,runtimeParity:false,rustExecuted:false};
+ if(typeof serialized!=='string'||Buffer.byteLength(serialized)>LIMIT*3)fail('bounded serialized complete proposal required');const received=JSON.parse(serialized),fresh=await produce();if(JSON.stringify(received)!==JSON.stringify(fresh))fail('proposal differs from complete fresh source translation');return sourceInstallation(fresh,{checkHead:true});
 }
 
 import {sourceUnitPrimitiveOperators} from './primitive-source-unit-options.mjs';

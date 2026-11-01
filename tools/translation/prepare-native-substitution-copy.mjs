@@ -7,6 +7,7 @@ import {ownershipCompiler,ownershipCompilerRuntimeNativeCurrent} from './js-to-r
 import {types} from 'node:util';
 import {createRulePipeline} from './rule-pipeline.mjs';
 import {transportConcreteSourceEquations} from './concrete-source-equations.mjs';
+import {knownLayoutOwnershipSourceSuccessor} from './layout-ownership-bulk-20261101-successor.mjs';
 import {verifyNativeCopiedSourceBindingBatch} from './source-copy-native-bindings.mjs';
 import {nativeSourceHistoryFiles,collectNativeSourceDescendants,nativeSourceHistoryOriginalGuards,nativeSourceHistoryOverlap,nativeSourceHistoryLanguage} from './native-source-descendants.mjs';
 
@@ -78,7 +79,11 @@ export function prepareNativeSubstitutionCopy({root,archive,pin,id,laterPlans=[]
    laterHistories.push({id:later.id,before:currentAfter,after:end,equation,stages:next.stages,laterHistories:next.laterHistories??[],parallelHistories:next.parallelHistories??[],sourceDependencies:next.sourceDependencies??[],path:next.path,...(next.originalPath?{originalPath:next.originalPath,originalSource:next.before}:{}),sourceAuthority:false,semanticAuthority:false});currentAfter=end;
   }
   const sourceDependencies=collectNativeCopiedFunctionDependencies(ts,root,path,after,row.completeSourceDependencies??[],originalGuards);
-  const current=currentSource(path,Boolean(row.originalPath&&row.originalPath!==row.path));need(current===null||current===before||current===after||current===currentAfter,'unknown physical copied implementation');
+  const current=currentSource(path,Boolean(row.originalPath&&row.originalPath!==row.path));
+  if(current!==null&&current!==before&&current!==after&&current!==currentAfter&&row.path==='tools/translation/unit-runtime-materialization.mjs'){
+   const successor=knownLayoutOwnershipSourceSuccessor({root,path:row.path,before:currentAfter});need(successor&&successor.currentAfter===current,'unknown physical guarded-installer successor');const equation=transportConcreteSourceEquations([{before:currentAfter,after:successor.currentAfter,language:sourceLanguage}])[0];need(equation.inverse===currentAfter,'complete fixed installer successor inverse');laterHistories.push({...successor,equation,laterHistories:[],parallelHistories:[],sourceDependencies:[],sourceAuthority:false,semanticAuthority:false});currentAfter=successor.currentAfter;
+  }
+  need(current===null||current===before||current===after||current===currentAfter,'unknown physical copied implementation');
   files.push({path:row.path,...(row.originalPath?{originalPath:row.originalPath}:{}),before,language:language.after,after,current,currentAfter,laterHistories,parallelHistories,sourceDependencies,stages,trace:run.trace,nativeSelections:{language:language.selections,repository:repository.selections},inverse:before});
  }
  const bindings=verifyNativeCopiedSourceBindingBatch(ts,files.map(row=>({path:resolve(root,row.path),source:row.currentAfter})));

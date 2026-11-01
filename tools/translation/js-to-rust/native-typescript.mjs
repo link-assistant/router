@@ -1,10 +1,11 @@
+import {captureProducerInputs,planExactProducerOutputs,installExactProducerOutputs} from '../layout-ownership-bulk-20261101.mjs';
 import {ownershipCompilerRuntimeLoad} from './vendor/module-syntax.mjs';
 // Full JavaScript/TypeScript identity lowering through a structured syntax AST.
 // Each meta node records SyntaxKind and children. Only lexical leaf tokens
 // contain text; no source file or function body is an opaque source carrier.
 import { createRequire } from 'node:module';
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, readdirSync, mkdirSync, writeFileSync, rmSync, symlinkSync, cpSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, mkdirSync, lstatSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { inferenceProgram, returnHint, localHint, typeNode, dynamicIndex } from './native-inference.mjs';
 import {createRulePipeline} from '../rule-pipeline.mjs';
@@ -15,7 +16,7 @@ const walkFiles = (root, directory) => existsSync(join(root, directory)) ? readd
 export function loadTypeScript(sourceRoot) { return ownershipCompilerRuntimeLoad(sourceRoot); }
 
 export function sourceModules(root) {
-  return [...walkFiles(root, 'js/src'), ...walkFiles(root, 'js/portable'), 'js/index.js', 'js/testing.js'].filter((path) => /\.(?:mjs|js)$/u.test(path)).sort();
+  return [...walkFiles(root, 'js/src'), ...walkFiles(root, 'js/portable'), ...walkFiles(root,'js/runtime'), 'js/index.js', 'js/testing.js'].filter((path) => /\.(?:mjs|js)$/u.test(path)).sort();
 }
 
 function serialize(ts, sourceFile, checker) {
@@ -402,8 +403,8 @@ export function buildNativeTypeScript(sourceRoot) {
   const loadedDeclarations = new Set(inference.program.getSourceFiles().filter(file => file.isDeclarationFile).map(file => resolve(file.fileName)));
   const inferenceInputs = ['js/package.json', ...readdirSync(join(sourceRoot, 'js')).filter(name => name.endsWith('.d.ts')).sort().map(name => `js/${name}`)].map(path => ({ path, sha256: hash(readFileSync(join(sourceRoot, path))), role: path.endsWith('.d.ts') ? 'public-declaration' : 'package-resolution', resolvedByCompiler: path.endsWith('.d.ts') ? loadedDeclarations.has(resolve(sourceRoot, path)) : true }));
   const sourcePackage = JSON.parse(readFileSync(join(sourceRoot, 'js/package.json'), 'utf8'));
-  artifacts.set('ts/package.json', `${JSON.stringify({ name: '@link-assistant/router-typescript-draft', version: sourcePackage.version, private: true, type: 'module', engines: sourcePackage.engines, exports: { '.': './dist/index.js', './native': './dist/src/index.js', './testing': './dist/testing.js' }, scripts: { build: 'node ../scripts/check-native-typescript.mjs --out-dir ts/dist' }, dependencies: sourcePackage.dependencies, devDependencies: sourcePackage.devDependencies }, null, 2)}\n`);
-  artifacts.set('ts/tsconfig.native.json', `${JSON.stringify({ compilerOptions: { strict: true, target: 'ES2022', module: 'NodeNext', moduleResolution: 'NodeNext', skipLibCheck: true, useDefineForClassFields: false, verbatimModuleSyntax: true, outDir: 'dist', rootDir: '.', declaration: true }, include: ['index.ts', 'testing.ts', 'src/**/*.ts', 'portable/**/*.ts'] }, null, 2)}\n`);
+  artifacts.set('ts/package.json', `${JSON.stringify({ name: '@link-assistant/router-typescript-draft', version: sourcePackage.version, private: true, type: 'module', engines: sourcePackage.engines, exports: { '.': './dist/index.js', './native': './dist/src/index.js', './testing': './dist/testing.js' }, bin:{'router-native':'dist/src/cli.js'}, files:['dist'], scripts: { build: 'node ../scripts/check-native-typescript.mjs --root .. --source-root .. --out-dir ts/dist' }, dependencies: sourcePackage.dependencies, devDependencies: sourcePackage.devDependencies }, null, 2)}\n`);
+  artifacts.set('ts/tsconfig.native.json', `${JSON.stringify({ compilerOptions: { strict: true, target: 'ES2022', module: 'NodeNext', moduleResolution: 'NodeNext', skipLibCheck: true, useDefineForClassFields: false, verbatimModuleSyntax: true, outDir: 'dist', rootDir: '.', declaration: true }, include: ['index.ts', 'testing.ts', 'src/**/*.ts', 'portable/**/*.ts', 'runtime/**/*.ts'] }, null, 2)}\n`);
   artifacts.set('ts/.gitignore', 'node_modules\n/dist/\n');
   // Public embedded assets have byte-level HTTP contracts. Keep their exact
   // payload alongside the independently checked TypeScript syntax targets.
@@ -413,47 +414,36 @@ export function buildNativeTypeScript(sourceRoot) {
 }
 
 export function regenerateNativeTypeScript(outputRoot, { sourceRoot = outputRoot, check = false } = {}) {
-  const artifacts = buildNativeTypeScript(sourceRoot);
-  const changed = [];
-  const managed = [
-    ...(existsSync(join(outputRoot, 'ts')) ? readdirSync(join(outputRoot, 'ts'), { withFileTypes: true }).filter((entry) => entry.isFile() && /\.(?:ts|json)$/u.test(entry.name) && entry.name !== 'package-lock.json').map((entry) => `ts/${entry.name}`) : []),
-    ...walkFiles(outputRoot, 'tools/translation/js-to-rust/generated/native-typescript'),
-    ...walkFiles(outputRoot, 'ts/schemas'),
-    ...walkFiles(outputRoot, 'ts/src').filter((path) => !path.endsWith('/js-first-policy.ts')
-      && !path.startsWith('ts/src/portable-draft/')),
-    ...walkFiles(outputRoot, 'ts/portable'),
-  ];
-  const unexpected = managed.filter((path) => !artifacts.has(path));
-  for (const path of unexpected) if (!check) rmSync(join(outputRoot, path));
-  for (const [path, value] of artifacts) {
-    const file = join(outputRoot, path);
-    if (existsSync(file) && Buffer.from(readFileSync(file)).equals(Buffer.from(value))) continue;
-    changed.push(path);
-    if (!check) { mkdirSync(dirname(file), { recursive: true }); writeFileSync(file, value); }
-  }
-  return { changed, unexpected, bytes: [...artifacts.values()].reduce((sum, value) => sum + Buffer.byteLength(value), 0) };
+  outputRoot=resolve(outputRoot);sourceRoot=resolve(sourceRoot);
+  const produce=()=>{
+    const capture=captureProducerInputs(sourceRoot,{trees:['js/src','js/portable','js/runtime','js/schemas'],files:['js/package.json','js/index.js','js/testing.js','js/catalog.json',...readdirSync(join(sourceRoot,'js')).filter(name=>name.endsWith('.d.ts')).map(name=>'js/'+name)]});let value,primary,failed=false;
+    try{const artifacts=buildNativeTypeScript(sourceRoot);value=planExactProducerOutputs({root:outputRoot,replayRoot:sourceRoot,producer:'native-typescript',receiptPath:'tools/translation/js-to-rust/generated/native-typescript/ownership-20261101.json',artifacts,inputs:resolve(sourceRoot)===resolve(outputRoot)?capture.inputs().filter(row=>!artifacts.has(row.path)):[],externalInputs:resolve(sourceRoot)===resolve(outputRoot)?[]:[{root:capture.root,inputs:capture.inputs()}]});}catch(error){failed=true;primary=error;}try{capture.close();}catch(error){if(!failed)throw error;}if(failed)throw primary;return value;
+  };
+  const proposal=produce();if(!check)installExactProducerOutputs(proposal,produce);
+  return {changed:proposal.changed,unexpected:proposal.unexpected,identicalUnowned:proposal.identicalUnowned,bytes:proposal.artifactBytes};
 }
 
-export function compileNativeTypeScript(outputRoot, { sourceRoot = outputRoot, outDir, emit = false } = {}) {
-  const ts = loadTypeScript(sourceRoot);
-  const dependencyRoot = join(sourceRoot, 'js/node_modules');
-  const packageRoot = join(outputRoot, 'ts');
-  const nodeModules = join(packageRoot, 'node_modules');
-  if (!existsSync(nodeModules)) symlinkSync(dependencyRoot, nodeModules, 'dir');
-  const files = ['index.ts', 'testing.ts', ...walkFiles(outputRoot, 'ts/src').map((path) => path.slice('ts/'.length)), ...walkFiles(outputRoot, 'ts/portable').map((path) => path.slice('ts/'.length))].filter((path) => path.endsWith('.ts')).map((path) => join(packageRoot, path));
-  const options = { strict: true, target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.NodeNext, moduleResolution: ts.ModuleResolutionKind.NodeNext, skipLibCheck: true, useDefineForClassFields: false, verbatimModuleSyntax: true, declaration: true, rootDir: packageRoot, outDir, noEmit: !emit, typeRoots: [join(dependencyRoot, '@types')] };
-  const program = ts.createProgram(files, options);
-  const diagnostics = ts.getPreEmitDiagnostics(program);
-  if (diagnostics.length) throw new Error(ts.formatDiagnosticsWithColorAndContext(diagnostics, { getCurrentDirectory: () => outputRoot, getCanonicalFileName: (name) => name, getNewLine: () => '\n' }));
-  if (emit) {
-    program.emit();
-    writeFileSync(join(outDir, 'package.json'), '{"type":"module"}\n');
-    cpSync(join(packageRoot, 'catalog.json'), join(outDir, 'catalog.json'));
-    cpSync(join(packageRoot, 'schemas'), join(outDir, 'schemas'), { recursive: true });
-    for(const path of walkFiles(outputRoot,'ts/src/assets/admin').filter(path=>!path.endsWith('.ts'))) {
-      const target=join(outDir,path.slice('ts/'.length));mkdirSync(dirname(target),{recursive:true});cpSync(join(outputRoot,path),target);
-    }
-    if (!existsSync(join(outDir, 'node_modules'))) symlinkSync(dependencyRoot, join(outDir, 'node_modules'), 'dir');
+function buildNativeCompilation(outputRoot,{sourceRoot,outDir,emit}){
+ const ts=loadTypeScript(sourceRoot),dependencyRoot=join(sourceRoot,'js/node_modules'),packageRoot=join(outputRoot,'ts'),files=['index.ts','testing.ts',...walkFiles(outputRoot,'ts/src').map(path=>path.slice(3)),...walkFiles(outputRoot,'ts/portable').map(path=>path.slice(3)),...walkFiles(outputRoot,'ts/runtime').map(path=>path.slice(3))].filter(path=>/\.(?:ts|mts)$/u.test(path)).map(path=>join(packageRoot,path));
+ const capture=captureProducerInputs(outputRoot,{trees:['ts/src','ts/portable','ts/runtime','ts/schemas'],files:['ts/package.json','ts/catalog.json',...files.map(path=>path.slice(resolve(outputRoot).length+1))]});let result,primary,failed=false;
+ try{
+  const options={strict:true,target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.NodeNext,moduleResolution:ts.ModuleResolutionKind.NodeNext,skipLibCheck:true,useDefineForClassFields:false,verbatimModuleSyntax:true,declaration:true,rootDir:packageRoot,outDir,noEmit:!emit,typeRoots:[join(dependencyRoot,'@types')]},host=ts.createCompilerHost(options);
+  host.resolveModuleNames=(names,containing)=>names.map(name=>ts.resolveModuleName(name,containing,options,host).resolvedModule??(!name.startsWith('.')&&!name.startsWith('/')?ts.resolveModuleName(name,join(sourceRoot,'js/index.js'),options,host).resolvedModule:undefined));
+  const program=ts.createProgram(files,options,host),diagnostics=ts.getPreEmitDiagnostics(program);if(diagnostics.length)throw new Error(ts.formatDiagnosticsWithColorAndContext(diagnostics,{getCurrentDirectory:()=>outputRoot,getCanonicalFileName:name=>name,getNewLine:()=>"\n"}));
+  const artifacts=new Map();if(emit){
+   const destination=resolve(outDir),originals=new Set(files.map(path=>resolve(path))),emitted=program.emit(undefined,(name,value)=>{const full=resolve(name);if(originals.has(full)||!full.startsWith(destination+'/'))throw Error('Compiler output overlaps source or escapes declared destination');artifacts.set(full.slice(destination.length+1),value);});if(emitted.emitSkipped||emitted.diagnostics.length)throw Error('Complete strict native TypeScript emit refused');
+   artifacts.set('package.json','{"type":"module"}\n');artifacts.set('catalog.json',readFileSync(join(packageRoot,'catalog.json')));for(const name of [...walkFiles(outputRoot,'ts/schemas'),...walkFiles(outputRoot,'ts/src/assets/admin').filter(path=>!path.endsWith('.ts'))])artifacts.set(name.slice(3),readFileSync(join(outputRoot,name)));
   }
-  return { files: files.length, compiler: ts.version };
+  result={files:files.length,compiler:ts.version,artifacts,inputs:capture.inputs()};
+ }catch(error){failed=true;primary=error;}try{capture.close();}catch(error){if(!failed)throw error;}if(failed)throw primary;return result;
+}
+export function compileNativeTypeScript(outputRoot,{sourceRoot=outputRoot,outDir,emit=false}={}){
+ outputRoot=resolve(outputRoot);sourceRoot=resolve(sourceRoot);
+ if(emit&&(typeof outDir!=='string'||!outDir))throw Error('Explicit compiled output directory required');const initial=buildNativeCompilation(outputRoot,{sourceRoot,outDir,emit});
+ if(emit){
+  const destination=resolve(outDir),parents=[];let current=destination;while(!existsSync(current)){parents.push(current);const parent=dirname(current);if(parent===current)throw Error('Missing physical output filesystem root');current=parent;}for(let parent=current;;parent=dirname(parent)){const stat=lstatSync(parent);if(!stat.isDirectory()||stat.isSymbolicLink())throw Error('Linked compiled-output ancestor refused');if(dirname(parent)===parent)break;}for(const name of parents.reverse())mkdirSync(name);
+  const proposalFor=result=>planExactProducerOutputs({root:destination,producer:'native-typescript-emit',receiptPath:'.router-typescript-emit-ownership-20261101.json',artifacts:result.artifacts,externalInputs:[{root:resolve(outputRoot),inputs:result.inputs}]}),produce=()=>proposalFor(buildNativeCompilation(outputRoot,{sourceRoot,outDir,emit}));
+  installExactProducerOutputs(proposalFor(initial),produce);
+ }
+ return {files:initial.files,compiler:initial.compiler};
 }

@@ -6,6 +6,8 @@ export const TRANSLATOR_ENTRYPOINTS=Object.freeze([
  'scripts/export-router-translator.mjs',
  'scripts/regenerate-js-first.mjs',
  'scripts/regenerate-native-typescript.mjs',
+ 'scripts/check-native-typescript.mjs',
+ 'scripts/layout-ownership-bulk-20261101-original-js-first.mjs',
  'scripts/sync-router.mjs',
  'scripts/sync-router-units.mjs',
  'scripts/sync-router-owned-project-units.mjs',

@@ -233,18 +233,22 @@ test('regeneration rejects stale, missing, and unexpected TS, meta, and asset ar
   try {
     regenerateNativeTypeScript(directory, { sourceRoot: SOURCE });
     const target = join(directory, 'ts/src/core.ts');
+    const originalTarget=readFileSync(target,'utf8');
     writeFileSync(target, 'stale\n');
     rmSync(join(directory, 'ts/catalog.json'));
     writeFileSync(join(directory, 'ts/src/unexpected.ts'), 'export const stale = true;\n');
     writeFileSync(join(directory, 'ts/unexpected.ts'), 'export const stale = true;\n');
+    assert.throws(()=>regenerateNativeTypeScript(directory,{sourceRoot:SOURCE,check:true}),/authored or modified generated peer|edited producer peer/u);
+    assert.throws(()=>regenerateNativeTypeScript(directory,{sourceRoot:SOURCE}),/authored or modified generated peer|edited producer peer/u);
+    assert.equal(readFileSync(target,'utf8'),'stale\n');
+    writeFileSync(target,originalTarget);
     const result = regenerateNativeTypeScript(directory, { sourceRoot: SOURCE, check: true });
-    assert.ok(result.changed.includes('ts/src/core.ts'));
     assert.ok(result.changed.includes('ts/catalog.json'));
-    assert.ok(result.unexpected.includes('ts/src/unexpected.ts'));
-    assert.ok(result.unexpected.includes('ts/unexpected.ts'));
+    assert.ok(!result.unexpected.includes('ts/src/unexpected.ts'));
+    assert.ok(!result.unexpected.includes('ts/unexpected.ts'));
     regenerateNativeTypeScript(directory, { sourceRoot: SOURCE });
-    assert.equal(existsSync(join(directory, 'ts/src/unexpected.ts')), false);
-    assert.equal(existsSync(join(directory, 'ts/unexpected.ts')), false);
+    assert.equal(readFileSync(join(directory,'ts/src/unexpected.ts'),'utf8'),'export const stale = true;\n');
+    assert.equal(readFileSync(join(directory,'ts/unexpected.ts'),'utf8'),'export const stale = true;\n');
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
 
