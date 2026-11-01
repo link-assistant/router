@@ -162,3 +162,61 @@ Do not run it during drafting. It preserves full raw streams, original workflow
 sources, all discovered attempts and explicit gaps instead of selecting one
 failure; complete raw/deadline interpretation and shared-cause diagnosis remain
 later work. It cannot unlock Rust or establish translator coverage.
+
+## Source-only common-family priorities, 2026-11-01
+
+A bounded textual search over current `rust/src` Rust files, excluding filenames
+matching `*test*`, found the following source occurrences. Comments, cfg-disabled
+code and inline tests remain possible. No parser, translator, diagnostic, test,
+compiler or benchmark ran; these counts are neither current function inventory
+nor executable coverage and predict no coverage percentage.
+
+| Family | Files with a lexical match | Occurrences |
+| --- | ---: | ---: |
+| Formatting/output macro names | 289 | 3062 |
+| Async keyword or await spelling | 154 | 1998 |
+| HashSet/HashMap/BTreeSet/BTreeMap names | 80 | 340 |
+| Sort method spellings | 35 | 51 |
+
+The searches count `format`, `format_args`, `eprintln`, `println`, `print`,
+`eprint`, `write` and `writeln` followed by `!`; `async` or `.await`; the four
+collection type names; and ordinary/by/key/unstable sort calls. Source spellings
+are a worklist only. Private actual-owner resolution and every whole-body
+prerequisite still decide what a reusable rule can admit.
+
+Finish the current coherent real persistent-backend, bounded-reader/forward
+ownership and complete actual-policy producer batches first. Keep all original
+inputs, rules, source histories, matrices and deadlines. Do not split partial
+imports into a published checkpoint or replace those batches with new plans.
+
+After those source checkpoints, consider these shared prerequisites:
+
+1. Reuse the existing checked primitive formatting core for dynamic argument
+   transport at actual application output calls. Preserve original argument
+   evaluation once and in order, formatter timing relative to capture/quiet,
+   lifetimes, failure behavior and resource domains. An owned text/argument
+   compatibility core may keep native library internals untranslated, but must
+   have matching JS behavior, actual source binding, CST/meta and both edit
+   directions. New allocation or eager-formatting behavior is an explicit
+   unresolved migration, not original formatter equivalence. Custom Display,
+   builtin macro ownership and tracing producers cannot be inferred from names.
+2. Inspect already existing Copy/source/lifetime proof support for genuine
+   shared static record fields: actual ClientIntegration contains static str,
+   optional static str and static slices. A separate successor could connect
+   its real static-array projection to canonical_name and other actual methods.
+   Keep the current finite owned-record lane's refusals unchanged. Nonstatic
+   loans, owned String, unknown generic fields and omitted fields grant no
+   shortcut; source-qualified immutable representations need full boundaries.
+3. Qualify set/self/order and actual sort-key behavior through shared collection
+   abstractions. Preserve nominal Eq/Hash/Copy ownership, duplicate and alias
+   behavior, detached outputs, native unspecified set iteration and equal-key
+   sorting semantics. A structural key table or deterministic target order is
+   not an original trait or stable-sort proof. Actual complete policy methods
+   remain separate from newly appended pure probe callers.
+
+For each batch, draft actual source callers, both ordered substitution sequences,
+complete CST/semantic roundtrips, native/JS/strict-TS cases, reverse reproduction,
+receiving paths and every remaining refusal together. Later authorized
+verification must recheck the complete original functions after all shared
+prerequisites are present. Do not convert occurrence totals, removed first
+refusals, preserved bodies or source flags into executable-coverage credit.

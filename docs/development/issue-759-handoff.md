@@ -592,3 +592,20 @@ Native Rust stays unchanged; its actual sanitize oracle and full compiled
 JS/strict-TS profile integration remain assigned to the backend worker. No
 execution, measured speed gain, private semantic permission or requirement
 closure is claimed. Counts remain8/70 DRAFTED,62 OPEN.
+
+Source-only priority review found formatting/output macro spellings in289 files
+(3062 occurrences), async/await in154 (1998), four hash/tree collection names
+in80 (340) and sort calls in35 (51), excluding `*test*` filenames. Comments/cfg
+and inline tests can remain; these are text-search worklist counts, never
+function/coverage or performance evidence. The throughput plan records shared
+primitive dynamic argument transport, actual static borrowed-record fields,
+and genuine set/self/sort contracts as next candidates AFTER the current three
+coherent batches. Existing formatting/type/source rules should be reused.
+Every whole original function and unresolved binding remains a separate gate.
+No test/compiler/translator experiment was executed for this source review.
+
+Static workflow source inspection also found the actual Rust CI toolchain pin
+is1.98.1. The backend worker read the corresponding upstream fs/ExitCode
+implementations in addition to historical1.89 source: platform sync paths and
+ExitCode shape are source-supported, while actual native/provider/platform
+qualification remains UNRUN/OPEN. Old1.89 source captures stay immutable.
