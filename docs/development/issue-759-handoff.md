@@ -760,3 +760,41 @@ All verification remains UNRUN and CI/review remains uninspected. Accounting
 stays8/70 DRAFTED,62 OPEN; no present executable function-coverage percentage.
 At2026-11-01 06:49 UTC the filesystem reported5.2GiB free. Only small source/SCM
 writes occurred; no local build/install/test/copy workload was started.
+
+Publication confirmed at2026-11-01 07:09 UTC: normal push of
+`724a14266262d7f7bd3ec1c8685c050a74c18fce` to draft PR775; its description
+was updated to that exact SHA with8/70 DRAFTED,62 OPEN, all new verification
+UNRUN and CI/review uninspected. The published tree includes coordinator
+`eda2e44d2` and the independent history case `724a1426`. No Rust/build/install/
+test/parser/translator/preparer/runtime experiment or CI feedback inspection
+was executed. Source-only work continues after publication.
+
+Pending uncommitted worker batches remain separate: owned JSON helper/output
+closure after generalized57c54e uses fresh immutable parent+bounded delta and
+full147-version resolution (all138 parent versions retained); all-writer forward
+ownership still must complete exact optional generated-target bootstrap roles,
+active-AFTER production guards, safe flat --write integration and full original/
+current source histories/cases. A third worker is reviewing the unrelated
+whole-Git-index16MiB refusal introduced by the bounded reader before proposing
+a selected-input successor; existing reader/corpus/portable snapshots stay
+unchanged. No new scope, status or executable-coverage closure is inferred.
+
+Source-only continuation at2026-11-01 07:20 UTC: three current GPT-6.1-sol
+medium workers remain the only delegated workers. The selected-input reader
+proposal is approved for NEW implementation/history/case paths; no physical
+published corpus/reader/portable snapshot changes are approved. Its scope must
+preserve explicit/empty/dirty/untracked selection, genuine original corpus
+limits, default discovery, selected stage/skip bytes and worktree/split-index/
+ref metadata closure. The ownership worker coordinates its actual hook census.
+Both new unconditional whole-Rust16MiB censuses must be addressed together;
+the two older owned-definition censuses remain original constraints.
+
+Coordinator independently authored seven additional in-memory native resource
+selection cases in `native-profile-oracles-20261101-resources.test.mjs`, covering
+inactive cfg inputs, target-only packages, Cargo config, external targets,
+manifest-dependent shared includes, cyclic resource graphs, literal paths and
+fatal unresolved-resource refusal. These are source cases only, not executed
+Git/Rust/parser/translator experiments. No existing case or deadline changed.
+All new verification stays UNRUN; CI/review remains uninspected;8/70 DRAFTED,
+62 OPEN remains unchanged. JSON output and forward ownership batches are still
+being drafted and must not be advertised as complete or source-frozen yet.

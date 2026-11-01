@@ -36,3 +36,14 @@ source transport is a new UNRUN draft, not platform qualification. The clock
 lowering API can only restrict an allocated workspace to an earlier start.
 Native runtime temp/log evidence lives outside the strict source workspace;
 unknown files inside workspace.tmpRoot still refuse and remain retained.
+
+The independent `native-profile-oracles-20261101-resources.test.mjs` adds
+in-memory receiving cases for inactive cfg branches, target-only local packages,
+all tracked Cargo configuration, external target siblings and byte payloads,
+the same include under two actual manifest directories, cyclic dependency
+resource discovery, literal/trivia/raw-string paths, missing embedded cohorts,
+and unresolved producers/globs. Expected resources are authored independently;
+no test fixture creates a repository or invokes a subprocess. Resource discovery
+of a cyclic graph is DATA and does not claim Cargo accepts that graph. All these
+new case sources remain UNRUN. They join the existing complete translation-test
+wildcard; no original command, workload or deadline is removed or shortened.
