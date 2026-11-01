@@ -163,3 +163,7 @@ fn actual_duration_formatter_retains_i64_extrema_and_integer_day_boundaries() {
         assert_eq!(link_assistant_router::auth_import::humanize_minutes(minutes), expected);
     }
 }
+
+// Reuse this existing integration target rather than linking another binary.
+#[path = "oracles/credential_expiry_edges_20261101.rs"]
+mod credential_expiry_edges_20261101;

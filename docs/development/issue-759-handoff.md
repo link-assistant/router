@@ -411,3 +411,11 @@ Q05/T05/J04 remain OPEN for actual raw/deadline interpretation, shared-cause
 classification and full present-SHA verification. Accounting stays 8/70 DRAFTED,
 62 OPEN; the next main dependency batches remain literal owned arguments,
 composed nominal edited-target inversion and layout/ownership migration.
+
+Additional independent native oracle source covers actual credential expiry
+formatting and nested injected-clock restoration, without adding another Cargo
+integration target. See [the fixed boundary contract](credential-expiry-edges-20261101.md).
+Its decimal-string fixtures pin signed millisecond truncation, equality at expiry,
+Option-presence versus JS truthiness, exact text and secret-free reports. All
+execution is UNRUN; O01/O05/P01/T01/T02/T03/T04 remain OPEN, with no new executable
+translation credit or claim about extreme timestamp subtraction overflow.
