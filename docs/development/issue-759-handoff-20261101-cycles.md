@@ -754,3 +754,18 @@ qualification remains separate. The optional CLI and SDK facade execute nothing
 on import. PacketSHA256be0c9f0d760e5da1b17d7affc7445c5d34587e4c2c871c4b4e33697f5c964654 is15488 decoded/5309 packed bytes.
 All execution/installs/CI-feedback inspection remain deferred;11/70 DRAFTED,
 59 OPEN. Aggregate multi-bank/bootstrap/receiving integration remains OPEN.
+
+## Complete sparse source Git bank draft
+
+After9f8af7ee9, Root drafted a genuine committed compiler-DATA Git bank with full
+cold blobs, actual skip flags and explicit hot source files. The
+[sparse-bank contract](compact-sparse-source-bank-20261102/README.md) records complete
+actual blob readback, exact raw mode/byte writes, current index/HEAD/census closure,
+deterministic bank-only dates, simultaneous input+bank64MiB accounting and20s/
+10s deadlines. Original application HEAD and private compiler authority remain
+separate. Eight complete independent case sources include the actual existing
+selected-reader sparse fallback; none ran. Primary Git manuals were source-read,
+with no local command experiment. PacketSHA256d3421a418de00c116022b5485a5b9b653e92b297c6b0086f4baac5a1137e7288 is25580 decoded/
+8373 packed bytes. Receiving import/profile/native/SDK/sync closure, actual
+aggregate fit and all execution remain OPEN/UNRUN;11/70 DRAFTED,59 OPEN. Root
+alone continues. No builds, installs, tests, Rust or CI-feedback inspection.
