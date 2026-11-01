@@ -395,3 +395,19 @@ No local Rust tools, formatter, tests or Unicode experiments ran.
 
 Continue the numbered dependency batches under the explicit source-only resume.
 The full objective and all unclosed source requirements remain incomplete.
+
+## Deferred CI feedback acquisition source, 2026-11-01
+
+The checkpoint containing this entry adds `scripts/ci-feedback-cycle.mjs`, its
+opt-in GitHub CLI and independent complete test source. The
+[contract](ci-feedback-cycle-source-draft-20261101.md) describes exact-SHA/full
+attempt acquisition, all discovered completed workflows, raw logs/ZIPs and
+workflow source, double metadata fences, explicit expiry/access gaps, bounded
+streaming and partial-evidence retention. Its conservative worklist requires
+explicit audited eleven-member bindings and proposes affected requirement IDs
+for later source review; it never changes the checklist or grants Rust admission.
+All collector, network and case execution is UNRUN and forbidden in this phase.
+Q05/T05/J04 remain OPEN for actual raw/deadline interpretation, shared-cause
+classification and full present-SHA verification. Accounting stays 8/70 DRAFTED,
+62 OPEN; the next main dependency batches remain literal owned arguments,
+composed nominal edited-target inversion and layout/ownership migration.

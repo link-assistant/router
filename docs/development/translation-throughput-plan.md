@@ -155,3 +155,10 @@ counts, complete scope inventories, new diagnostics or runtime evidence. All
 current new implementation/case source remains UNRUN. Keep source-reviewed
 bundles, actually qualified functions, full native feature parity, freshness,
 receiving and measured performance as separate dimensions.
+
+The [deferred CI evidence collector](ci-feedback-cycle-source-draft-20261101.md)
+now has bounded exact-SHA acquisition and conservative repair-worklist source.
+Do not run it during drafting. It preserves full raw streams, original workflow
+sources, all discovered attempts and explicit gaps instead of selecting one
+failure; complete raw/deadline interpretation and shared-cause diagnosis remain
+later work. It cannot unlock Rust or establish translator coverage.

@@ -10,3 +10,4 @@
 - Add independent JavaScript/strict TypeScript and CI-only Rust oracle source, retaining CST/meta roundtrips, ordered substitution phases, full inverses, source/ownership checks and original resource limits.
 
 All new implementation and case sources remain unrun. Full production translation, synchronization, parity, freshness and receiving qualification remain unfinished; this fragment claims no verified behavior or performance gain.
+- Draft bounded exact-SHA CI evidence acquisition and explicit fixed-member repair worklists for the later feedback phase; retain complete raw streams, artifacts, source workflows, missing evidence and incomplete captures. Execution and CI inspection remain deferred.
