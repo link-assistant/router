@@ -118,3 +118,11 @@ Both source-profile successors retain immutable earlier archives and authored
 images plus full source-author, runtime and case predecessor/successor equations.
 All cases, source-frame behavior, native admission and resource costs remain
 UNRUN. These source drafts close no further whole acceptance bundle.
+
+`proposeOpaquePairedBodyLiteralInverse` is a complete copied fixed paired adapter
+for this body/constant lane. Both authored JS and TS projections must agree with
+one actual inverse emission; it grants no merge or installation authority.
+Independent receiving source covers both selected languages, Unicode defaults,
+conflicting values and stale peers. All new scope is unverified, and the
+[static resource review](receiving-resource-closure-20261101.md) explicitly
+keeps whole receiving/resource qualification open.

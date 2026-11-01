@@ -485,3 +485,36 @@ Both preserve published archives and all full original/authored snapshots;
 changed runtime/case and source-author evolution is explicit. All new scope is
 SOURCE/UNRUN and CI/review feedback stays uninspected. Checklist remains
 9/70 DRAFTED,61 OPEN; no current function percentage or resource-fit claim.
+
+## Paired body source cycle and static resource inventory
+
+The31-path repeated-literal/output-parent source batch is committed as
+`7526e1209`. Root continued alone. A complete fixed paired adapter now drafts
+JS/TS body/constant projection agreement with one actual fresh inverse and all
+six project attempts. Both authored files must match exactly; original paired
+constant APIs remain unchanged. Four whole receiving case sources cover either
+selected language, Unicode defaults, different values and stale peers. The body
+receiver has a fixed operation dispatch; no compiler/origin callback is accepted.
+
+The new body source archive SHA256 is
+`777fa7f97e03cdfe4a09488f6aef1b19998aa00617f4376ba748553011d56349`
+(324,179 raw/50,344 packed bytes), source-author hash
+`09ee3a3da05cdd7c18d513bc2afa6e9202e999aebd6390bac2b1b103353157f0`.
+All earlier archives/authored images remain intact and checked, with full source
+author ancestors and runtime/case evolution. Counts remain9/70 DRAFTED,61 OPEN;
+all execution and current receiving/strict TS/native/freshness/parity remain UNRUN.
+
+Read-only SCM/path-size review found a concrete packaging blocker: the blind
+copier's compiler/profile minimum is8,500 files/196,019,758 bytes against its
+8,192-file/64MiB case bounds. The full native corpus adds1,295 paths/11,011,521
+bytes. The old all-blob Git reservation also cannot fit even compiler/native
+inputs without profiles. No parser, translator, test, compiler or CI feedback
+was used for this finding. Exact static scope/limits and remaining source work
+are in [the resource review](receiving-resource-closure-20261101.md).
+
+A full cohort implementation copy with bounded real-Git object batches and
+explicit metadata reservations is being source drafted separately. Actual
+resource dependency acquisition and complete receiving integration still need
+implementation/qualification; do not claim that this helper alone fixes the
+64MiB case. Latest filesystem metadata showed71GiB free, but no local execution
+was authorized and no dependency/build tree was created.

@@ -94,3 +94,5 @@ export {visitOpaquePairedLiteralSourceEquations} from './opaque-paired-literal-2
 export {inspectOpaqueBodyLiterals} from './opaque-body-literal-20261101.mjs';
 export {proposeOpaqueBodyLiteralInverse} from './opaque-body-literal-20261101-inverse.mjs';
 export {visitOpaqueBodyLiteralSourceEquations} from './opaque-body-literal-20261101-history.mjs';
+
+export {proposeOpaquePairedBodyLiteralInverse} from './opaque-paired-body-literal-inverse-20261101.mjs';

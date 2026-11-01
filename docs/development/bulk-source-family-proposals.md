@@ -186,3 +186,10 @@ original/adopted source-context alignment. Source tables live only in one
 synchronous operation and exact complete changed-target reproduction remains
 mandatory. The shared receiving cohort precreates its artifact parent before
 source frames begin. All new cases remain UNRUN; no whole sync claim is made.
+
+`proposeOpaquePairedBodyLiteralInverse` requires both complete desired JS/TS
+projections to equal one actual fresh body/constant inverse result. It supports
+either selected changed language and preserves source histories, all six project
+attempts and strict conflict/stale-peer refusal. Actual receiving remains UNRUN;
+the [static resource review](receiving-resource-closure-20261101.md) records
+why the old blind resource copier and aggregate Git reservation cannot fit.
