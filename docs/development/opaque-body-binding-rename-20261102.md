@@ -96,3 +96,7 @@ older archive/author remain intact. Every new check and receiving workload is
 UNRUN; no translation, parser, compiler, test or preparation experiment was run.
 Current accounting remains11/70 DRAFTED,59 OPEN. V01–V05/C01–C05/R01–R05/S01–S05
 and full caller/receiving/parity/resource requirements retain their broader gaps.
+
+The current source producer includes the explicit
+[required-constructor successor](source-constructor-successor-20261102/README.md);
+the initial full source archive remains unchanged.

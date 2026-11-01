@@ -30,3 +30,11 @@ and one full inverse-import evolution to the original eight-copy/one-addition/
 two-native cohort, with four current whole case files. All code/cases remain
 UNRUN. Matching import spellings are necessary packaging evidence; they grant
 no source/type/ownership/executable authority or complete translation coverage.
+
+Shared constructors also retain their full original argument/guard contract.
+`exactLiteralSubstitutionRule(id, before, after, message)` requires the fourth
+error-message string; it preserves `exactSubstitutionRule`'s unique-anchor guard.
+Read the actual constructor before authoring a copy producer. Do not infer an
+options-object overload or optional argument from a similarly named helper.
+Preserve every earlier full producer image when correcting a draft, then use
+the existing complete original/current source-copy cases for later verification.

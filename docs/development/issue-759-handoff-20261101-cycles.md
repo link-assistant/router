@@ -825,3 +825,16 @@ issue-completion percentage. Full inventory/family/adoption/reverse/sync/portabl
 receiving/resource closure remains unfinished. A metadata-only disk observation
 at publication preparation reported72GiB free. No dependencies, build trees or
 worktrees were created; the sole temporary hub preimage was already removed.
+
+## Required constructor source correction after publication
+
+Source review afterb23c63ca0 found missing fourth message arguments in both new
+receiving source producers. The original constructor requires that argument;
+three-argument calls would refuse before generation. Both current producers now
+supply it, preserving the actual required guard and every source anchor/output.
+The [explicit successor](source-constructor-successor-20261102/README.md) retains
+both full before/after producers, original constructors and complete existing
+positive case sources, with all initial archives unchanged. PacketSHA2564c9db0ebbaa0df963a8828c26c744fd041fbc20094037bb8ccb8549544e35542
+is21159 decoded/4085 packed bytes. No test/CI failure was inspected,
+and every execution remains UNRUN. The temporary full preimages were removed.
+This is independent source drafting, not a CI-driven repair.11/70 DRAFTED,59 OPEN.

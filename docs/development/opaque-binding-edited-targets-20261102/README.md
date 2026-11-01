@@ -51,3 +51,7 @@ The earlier binding document now states the precise16MiB result versus8MiB IO
 limits; implementation limits were never changed. Full coverage, copied sparse
 bank/profile/SDK integration, freshness and gate qualification remain OPEN.
 Current source count:11/70 DRAFTED,59 OPEN. This is no full translation receipt.
+
+The current producer includes the explicit
+[required-constructor successor](../source-constructor-successor-20261102/README.md).
+The initial complete packet remains unchanged and is not a current freshness receipt.
