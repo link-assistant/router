@@ -716,3 +716,47 @@ actual whole-owner adoption still preserves residuals and zero claimed coverage.
 Worker now drafts actual full-scope ClientKind static accessors using the already
 existing original static-array/CTFE/method rules and original opaque corpus.
 No scope extraction, manual enum table or new Host admission is authorized.
+
+Further child source commits (all UNRUN, no CI/review feedback inspected):
+
+- `8a035d379de1f7a2cd1baf1c381678f18e29a23f`: eight complete persistent987
+  native-only portable-source files, retaining original bodies/custody/equations.
+- `39c8343bc8e0f1cc998547f7999c8241fa8aa03d`: seven actual ClientKind static
+  producer/case/oracle files; original209/corpus/compiler APIs unchanged. Nine
+  whole-scope accessor probes retain every actual residual, no manual enum table.
+- `6b86d51eef92f135d98a429923dbc03a32733a9d`: eight corresponding complete
+  native-only dynamic4d3 portable-source files. Old POSIX-only source stays intact.
+- `970651fbdfef0bb54053bee932a38b2cf039b8af`: two independent virtual-filesystem
+  native resource/evidence cases; no Rust/ps/PowerShell/monitor child executes.
+- `d894a0c10db94db687bcdb9832b91d7c6368107d`: generalized primitive output in
+  multiple calls, lexical locals, if/return/finite range/while/break/continue;
+  archive57c54e54b3693328597c9433b83bace69ebf2e231df8c703977d2cc5de24b7df
+  retains all131 older versions plus7 complete successors (138 total). Exactly
+  two virtual imports/observer hooks; no native/runtime or physical old edits.
+  Mutable parameters, ordered matches, JSON row/helper/static-index prerequisites
+  and general async remain explicit gaps. JSON helper successor is now drafting.
+
+Coordinator integration adds stable APIs and the ClientKind oracle to the
+existing policy target. The closed native driver selects both genuine complete
+portable visitors; the unchanged dynamic Rust image also includes every new
+generalized-control native case in the same binary. Native-only source transport
+no longer has the old mandatory POSIX-flag check; ordinary Windows behavior
+is source drafted, unverified, and LF/cooperating-path scoped. CRLF/filter,
+sparse/link/submodule/dynamic-producer/platform qualification gaps remain.
+
+Native temp/log evidence now has exclusive external runtime roots retained in
+artifacts, leaving strict source workspace unknown-member refusal intact. Both
+profiles share raw budgets and the original lowered20-minute clock. Runtime
+roots pin immutable dev/ino/mode/uid/gid (not child-count-changing nlink); raw
+files retain strict nlink. Sampling tolerates only observed disappearing runtime
+descendants, marks unknown peak, never traverses runtime links, and keeps every
+root/outer/source identity refusal. Unsafe preparation/evidence/closing states
+poison the gate; fully closed managed nonzero Cargo exits remain fatal while
+allowing independent diagnostic collection. Cases and source review cover these
+contracts, without executing them. Checkout exact-byte environment is separately
+source-substituted with full immutable workflow ancestry and original commands.
+
+All verification remains UNRUN and CI/review remains uninspected. Accounting
+stays8/70 DRAFTED,62 OPEN; no present executable function-coverage percentage.
+At2026-11-01 06:49 UTC the filesystem reported5.2GiB free. Only small source/SCM
+writes occurred; no local build/install/test/copy workload was started.

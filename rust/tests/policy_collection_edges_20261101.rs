@@ -179,3 +179,6 @@ mod url_host_edges_20261101;
 
 #[path = "oracles/policy_nominal_producer_20261101.rs"]
 mod policy_nominal_producer_20261101;
+
+#[path = "oracles/client_static_producer_20261101.rs"]
+mod client_static_producer_20261101;

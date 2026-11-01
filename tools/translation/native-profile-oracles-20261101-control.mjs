@@ -11,10 +11,23 @@ export const NATIVE_PROFILE_ORACLES=Object.freeze([Object.freeze({
  id:'persistent-output-20261101',
  module:'./persistent-output-backend-20261101-profile.mjs',
  visitor:'visitPersistentOutputSourceEquations',
+ nativeSourceModule:'./persistent-output-portable-source-20261101.mjs',
+ nativeSourceVisitor:'visitPortablePersistentOutputSourceEquations',
  archive:'tools/translation/source-profiles/persistent-output-backend-20261101/complete-sources.json.gz',
  archiveSha256:'987bf66da673c7b8de990ffa9ba9aff5fa6711e8be3259f061dba7f723046642',
  oracle:'rust/tests/oracles/persistent_output_backend_20261101.rs',
  target:'persistent_output_profile_oracle_20261101',
+}),Object.freeze({
+ id:'dynamic-primitive-output-20261101',
+ module:'./dynamic-primitive-output-20261101-profile.mjs',
+ visitor:'visitDynamicOutputSourceEquations',
+ nativeSourceModule:'./dynamic-output-portable-source-20261101.mjs',
+ nativeSourceVisitor:'visitPortableDynamicOutputSourceEquations',
+ archive:'tools/translation/source-profiles/dynamic-primitive-output-20261101/complete-sources.json.gz',
+ archiveSha256:'4d3d5f4ff3bceb05378f85f08993fea89170380c39c71134b0ac5a34fc8f57a3',
+ oracle:'rust/tests/oracles/dynamic_primitive_output_20261101.rs',
+ extraOracles:Object.freeze(['rust/tests/oracles/generalized_primitive_output_20261101.rs']),
+ target:'dynamic_primitive_output_profile_oracle_20261101',
 })]);
 const fail=message=>{throw new TypeError('Deferred native profile CI: '+message);};
 function data(value,names){
@@ -42,5 +55,5 @@ export function nativeProfileOracleCommand(profileId){
 export function nativeProfileOracleTargetSource(profileId){
  const profile=NATIVE_PROFILE_ORACLES.find(row=>row.id===profileId);if(!profile)fail('unknown fixed native oracle');
  const leaf=profile.oracle.slice('rust/tests/'.length);
- return '//! Installed-profile native oracle; only after all eight same-SHA JS gates.\n#[path = '+JSON.stringify(leaf)+']\nmod installed_profile_oracle;\n';
+ let source='//! Installed-profile native oracle; only after all eight same-SHA JS gates.\n#[path = '+JSON.stringify(leaf)+']\nmod installed_profile_oracle;\n';for(const [at,path]of (profile.extraOracles??[]).entries()){if(!/^rust\/tests\/oracles\/[a-z0-9_]+\.rs$/u.test(path)||path===profile.oracle)fail('exact distinct closed additional native oracle required');source+='#[path = '+JSON.stringify(path.slice('rust/tests/'.length))+']\nmod installed_extra_oracle_'+at+';\n';}return source;
 }

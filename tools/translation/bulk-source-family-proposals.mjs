@@ -46,3 +46,12 @@ export {proposePersistentOutputProductionAdoption} from './persistent-output-bac
 export {proposeBoundedSourceReaderHistory} from './forward-output-ownership-20261101-reader-history.mjs';
 export {proposePolicyNominalProfile,visitPolicyNominalSourceEquations} from './policy-nominal-producer-20261101-profile.mjs';
 export {preparePolicyNominalProducer,invertExactPolicyNominalTarget,translateEditedPolicyNominalTarget,readPolicyNominalMeta,requireUnchangedPolicyProjection,inspectPolicyNominalProducer} from './policy-nominal-producer-20261101.mjs';
+export {proposeDynamicOutputProfile,visitDynamicOutputSourceEquations} from './dynamic-primitive-output-20261101-profile.mjs';
+export {translateDynamicPrimitiveOutputProject,compileDynamicPrimitiveOutputProject,readDynamicPrimitiveOutputMeta,invertDynamicPrimitiveOutputTarget,invertDynamicOutputFormatTarget} from './dynamic-primitive-output-20261101-project.mjs';
+export {proposeDynamicPrimitiveOutputProductionAdoption} from './dynamic-primitive-output-20261101-production.mjs';
+export {inspectClientStaticProducer,prepareClientStaticProducer,invertExactClientStaticTarget,translateEditedClientStaticTarget,readClientStaticMeta} from './client-static-producer-20261101.mjs';
+export {proposeGeneralizedOutputProfile,visitGeneralizedOutputSourceEquations} from './generalized-primitive-output-20261101-profile.mjs';
+export {translateGeneralizedPrimitiveOutputProject,compileGeneralizedPrimitiveOutputProject,readGeneralizedPrimitiveOutputMeta,invertGeneralizedPrimitiveOutputTarget,invertGeneralizedOutputFormatTarget} from './generalized-primitive-output-20261101-project.mjs';
+export {proposeGeneralizedPrimitiveOutputProductionAdoption} from './generalized-primitive-output-20261101-production.mjs';
+export {visitPortablePersistentOutputSourceEquations,proposePortablePersistentOutputSource} from './persistent-output-portable-source-20261101.mjs';
+export {visitPortableDynamicOutputSourceEquations,proposePortableDynamicOutputSource} from './dynamic-output-portable-source-20261101.mjs';
