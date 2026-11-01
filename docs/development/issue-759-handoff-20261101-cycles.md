@@ -872,3 +872,23 @@ PacketSHA25670c00a451f79ec131ff8cfc7fc952bd3185a0d953005af8191e861b013991520 ret
 edited-caller vectors and whole resource/receiving coverage remain OPEN.11/70
 DRAFTED,59 OPEN. Root alone continues; remote b23c63ca0 and next23:20 UTC source
 push remain current. The temporary hub preimage was removed after source writing.
+
+## Opaque ordered text-map compatibility source batch
+
+Afterd0c9435ec, Root drafted a real private-field native BTreeMap library and
+matching immutable JavaScript/strict TypeScript ABI, ten shared descriptors and
+a declaration emitter. Complete input/result entry/UTF-8 bounds, duplicate
+replacement, scalar key ordering, no-coercion carriers, independent storage and
+map-root borrowed results are explicit. A whole original fixed-type selector
+copy retains genuine namespace/source closing joins; the actual root module
+edge and both complete CST/rule/inverse equations are retained. See
+[the map contract](ordered-text-map-20261102.md). Eleven JS cases, one strict
+TypeScript source file and ten native cases remain UNRUN; no compiler/translator,
+parser trial, runtime test, Rust tool or CI feedback was used. The packet SHA256
+a5028ebb4b62360871ca0e892ccf07c3e010c305c2c5a2b8e03c15225b35d29b is127225 decoded/29108 packed bytes. Three unchanged complete application source files are
+review targets only. Actual opaque type/caller/meta/forward/reverse registration,
+production adoption, receiving, freshness and synchronization remain OPEN.
+The new root edge does not qualify historical bank pins. CONTRIBUTING now
+explicitly requires independent edited-behavior expectations, retaining original
+vectors on their baseline.11/70 DRAFTED,59 OPEN; no coverage increment claimed.
+Root remains alone. Remote b23c63ca0 and next normal23:20 UTC push persist.

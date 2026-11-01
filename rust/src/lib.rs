@@ -326,3 +326,5 @@ pub mod translation_primitive_sequences_core;
 pub mod translation_primitive_vectors_core;
 
 pub mod translation_owned_text_vectors_core;
+
+pub mod translation_ordered_text_map_core;
