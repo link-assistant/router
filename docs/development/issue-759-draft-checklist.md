@@ -572,3 +572,11 @@ retain exact outputs, canonical/error observations and explicit narrower target
 refusals (`persistent-url-host-boundaries-20261101.md`). Whole compiled
 JS/strict-TS/native logger/profile receiving and full URL/IDNA behavior remain
 OPEN. All execution remains UNRUN; accounting stays8/70 DRAFTED,62 OPEN.
+
+Persistent pure-helper/scan child source receipts:35d7ebb supplies self-contained
+text/URL/time helpers and their case source. The whole-source monotonic scanner
+proposal (`persistent-credential-token-scan-20261101.md`) retains complete35
+predecessor bytes/CST inverse and17 literal cases plus original-module comparison.
+The final copied backend's actual native, JS/strict-TS, feature/source/runtime
+asset/domain and receiving work remains OPEN. No benchmark or measured speed
+gain, current coverage or parent closure is inferred;8/70,62OPEN stays.

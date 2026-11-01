@@ -579,3 +579,16 @@ oracle joins the existing integration binary; complete Node/Bun-discovered pure
 helper cases retain60-second deadlines. Every new case is UNRUN. Compiled whole
 targets, native loggers, strict TS, full URL domains and source/profile receiving
 remain separate worker obligations. No requirement count or coverage changes.
+
+Pure persistent text/URL/time source checkpoint
+`35d7ebb8986c6d647a990b0c5b3117a4fcb432d9` now supplies the committed helpers
+used by4222 URL cases; those imports are complete. The full provider/native/
+profile batch remains in progress. A separate
+[monotonic credential scanner source proposal](persistent-credential-token-scan-20261101.md)
+retains the whole35 text module and exact virtual successor/CST inverse, avoids
+repeated suffix scans using invocation-local token positions/dot counts, and
+adds17 independent expectations plus a complete predecessor-module comparison.
+Native Rust stays unchanged; its actual sanitize oracle and full compiled
+JS/strict-TS profile integration remain assigned to the backend worker. No
+execution, measured speed gain, private semantic permission or requirement
+closure is claimed. Counts remain8/70 DRAFTED,62 OPEN.
