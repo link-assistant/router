@@ -786,3 +786,17 @@ helpers, with explicit whole hub before/after custody. No function-coverage or
 full inverse claim: originless/mangled/method/wider edits and whole receiving fit
 remain OPEN.11/70 DRAFTED,59 OPEN; Root alone continues without execution or CI
 feedback. The task-owned temporary hub preimage was removed after packet writing.
+
+## Actual edited strict/runtime receiving source batch
+
+Aftera22c1feff, Root drafted a full receiving successor that strict-compiles edited
+TS5.9.3 and runs every original nine-vector token-row case against both edited JS
+and compiled TS. The [contract](opaque-binding-edited-targets-20261102/README.md)
+retains full parent/verifier/vector sources and a four-rule two-sequence source
+producer. Wrong requests refuse before child project attempts. The original
+receivers/producers/cases remain unchanged; all original deadlines/storage/raw/
+source-closing controls remain. The binding document corrects only its wording
+to16MiB result JSON versus8MiB aggregate IO, with no code-limit change. Four new
+whole JS case sources remain UNRUN. PacketSHA256c0ad5550613a644e8c9ec4fb1404dbf162f4a1bc0e3b2aba0871de732fcc2f83 retains five new full files
+plus full parent/verifier/vector sources (120726 decoded/29536 packed
+bytes).11/70 DRAFTED,59 OPEN; no local execution or CI-feedback inspection.

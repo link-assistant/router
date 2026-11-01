@@ -69,7 +69,8 @@ serialized/reparsed CST inverse. Every external unchanged import retains its
 original exported binding; no global rename assumes a missing copied helper.
 
 Original64MiB/8192-file case storage,60-second cases,20-second child attempts,
-8MiB result/raw output,16 acquisition attempts and source/capture bounds remain.
+16MiB complete result JSON,8MiB aggregate child raw IO and separate8MiB
+failed acquisition packets,16 acquisition attempts and source/capture bounds remain.
 The new fixed inverse additionally reserves at most256Mi original retained UTF8/
 UTF16 occurrences and512Mi combined captures. Peak RSS/CPU/private checker memory,
 whole receiving fit and all performance behavior remain UNQUALIFIED. The legacy
