@@ -395,3 +395,52 @@ are retained in `token-report-native-oracle-20261101/complete-source-copies.json
 SHA256 `6d008060d1efb9de5849bed2fe14d326ea1d33a0fe8172dd1c2b7215c4511ce4` (16,255 raw/3,549 packed bytes).
 All native/JS/TS behavior, full freshness, resource and parity obligations remain
 UNRUN; no whole parent requirement closes and9/70 DRAFTED,61 OPEN stays.
+
+## Checked body literal origin and inherited custody source cycle
+
+Native oracle source is committed as `3134a0949`; latest published checkpoint
+remains `76933e1f4` with9/70 DRAFTED,61 OPEN. Root continues alone without any
+execution or CI-feedback inspection.
+
+The new complete corpus/adapter/driver/capture/inverse/receiver copies collect
+actual ordinary function checked-source/target-binding relations while genuine
+constant188 frames are live. Per-file lexical indexing is shared only within
+that operation; each function reader reissues. Only scalar literal relation
+DATA escapes. The inverse scopes body edits to unique actual emitted literal,
+unique original physical top-level owner/token, native primitive bounds and one
+fresh changed-project capture, with complete target reproduction, identical
+census and full physical Rust/paired-target CST/inverses. Constant rules remain
+available in the same batch. Every added bound/refusal is explicit; no native
+migration equivalence, arbitrary-body support, installation or RSS fit is claimed.
+
+Independent case source covers actual JS/TS row-default Unicode edits, a mixed
+header/body batch, injected origin-DATA refusal, source-token mismatch, exact
+primaries and invocation-local indexing. Source profile archive SHA256 is
+`f901f3452d34e92ad0bde7adb3bb767b597f8a087de9880867b91938bde869a7`
+(176,418 raw/27,845 packed bytes), source-author hash
+`b745bd846f85e4417763b827ba81e5f9339aec184759f7f55b1933e341011350`.
+Six complete original/successor implementations, one helper, two prerequisite
+case sources and three current case files remain complete.
+
+Static review caught missing inherited case custody in earlier bulk/paired
+receiving copies. Their visitors now include full genuine parent history and
+all parent source/case images, deduplicating only identical path+bytes and
+refusing conflicts. Published archives/authored images are preserved. Bulk
+successor archive SHA256 is
+`7f6ce385b7a9a0b6c3b7b626f7bd3cc28a053dc5e73266ddddbc54982ed0ec4f`
+(17,538 packed bytes), source-author hash
+`eba01764aed5c68f288e93c7e0f1afffc8ac3f888bfb7a3caad4effbdfc3763c`.
+Paired successor archive SHA256 is
+`0a00bd93f87cb275f97b74ec965bb5a67d3812f4f0d895d6d6c513009e6c9ce7`
+(12,182 packed bytes), source-author hash
+`1f2a10df0b0d08aced4a58cc11ffba21302d7394796208cce34c62f2868bc658`.
+Independent closure cases enumerate the eleven inherited case sources and the
+paired case against complete current bytes. The body sibling includes this
+closure. No case filters, deadlines, guard removal or execution were used.
+
+All new scope is SOURCE/UNRUN. Body-origin availability, all target admissions,
+private-heap/time fit, full coverage/parity/freshness/export/native outcomes
+remain unresolved pending completion of source drafting and later authorized
+verification. Checklist stays9/70 DRAFTED,61 OPEN. See
+[the contract](opaque-body-literal-20261101.md). Removed three completed task
+staging lists only (8,927 bytes); no dependency tree, build or other work deleted.

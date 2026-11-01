@@ -172,3 +172,11 @@ The [paired literal inverse](opaque-paired-literal-20261101.md) exports
 `visitOpaquePairedLiteralSourceEquations`. One fresh bulk inverse must reproduce
 both submitted complete authored targets exactly. Conflicting/stale peers refuse;
 this grants no automatic merge or installation. All cases remain UNRUN.
+
+The [whole-corpus body literal sibling](opaque-body-literal-20261101.md) exports
+`inspectOpaqueBodyLiterals`, `proposeOpaqueBodyLiteralInverse` and
+`visitOpaqueBodyLiteralSourceEquations`. Actual checked body readers provide
+ordinary source relation DATA while the compiler frame is live; scoped literal
+edits still require fresh complete modified-project checking and exact full-target
+reproduction. Complete inherited receiving-case custody is retained. All source,
+receiving and resource outcomes remain UNRUN and general synchronization OPEN.

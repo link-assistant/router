@@ -90,3 +90,7 @@ export {visitOpaqueBulkLiteralSourceEquations} from './opaque-bulk-literal-20261
 
 export {proposeOpaqueCorpusPairedLiteralInverse} from './opaque-paired-literal-inverse-20261101.mjs';
 export {visitOpaquePairedLiteralSourceEquations} from './opaque-paired-literal-20261101-history.mjs';
+
+export {inspectOpaqueBodyLiterals} from './opaque-body-literal-20261101.mjs';
+export {proposeOpaqueBodyLiteralInverse} from './opaque-body-literal-20261101-inverse.mjs';
+export {visitOpaqueBodyLiteralSourceEquations} from './opaque-body-literal-20261101-history.mjs';
