@@ -518,3 +518,24 @@ resource dependency acquisition and complete receiving integration still need
 implementation/qualification; do not claim that this helper alone fixes the
 64MiB case. Latest filesystem metadata showed71GiB free, but no local execution
 was authorized and no dependency/build tree was created.
+
+
+## Bounded receiving source cohort
+
+Root alone drafted a separate complete receiving implementation with bounded
+real Git object writes/index reservations, actual profile-preflight input census,
+explicit source-byte sharing and fresh-process missing-resource acquisition.
+The new API keeps original60s/20s deadlines,8192 files,64MiB retained/disk bounds,
+8MiB aggregate child streams, full original native corpus and read-only lockfile
+TypeScript. It retains byte/identity/time closing and every genuine compiler
+issuer; no public metadata grants admission. The old APIs remain unchanged.
+
+The [resource contract](receiving-resource-closure-20261101.md) records exact
+storage differences and open integration/qualification obligations. Six whole
+case files and a complete parent/current source-history visitor are drafted.
+The receiver now copies its own current history/case closure, rather than only
+its parent body source. Archive55df36d1dfed80133daf0705f512beb13f70b3f51f22ba8db76fbbe72f74458e
+is174,511 decoded/27,740 packed bytes; no test/compiler/translator was executed.
+Counts remain9/70 DRAFTED,61 OPEN. This batch advances Q02/E01/E03/T05 source
+clauses without claiming their complete closure or current function coverage.
+CI/review feedback remains uninspected. No dependency or build tree was created.

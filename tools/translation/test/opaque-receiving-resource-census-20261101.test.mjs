@@ -1,0 +1,17 @@
+// Independent actual selected-reader resource DATA lifecycle cases. UNRUN.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
+import {join,dirname} from 'node:path';
+import {tmpdir} from 'node:os';
+import {performance} from 'node:perf_hooks';
+import {createHash} from 'node:crypto';
+import {initializePolicyNativeCohort,commitOpaqueCompilerSourceCohortInBatches} from '../opaque-receiving-cohort-batches-20261101.mjs';
+import {readSelectedTrackedSourceBytes} from '../selected-source-reader-20261101.mjs';
+import {withOpaqueReceivingResourceCensus as census} from '../opaque-receiving-resource-census-20261101.mjs';
+const limits={timeout:60000,concurrency:false},resource='tools/translation/source-profiles/example/input.json';
+function fixture(){const root=mkdtempSync(join(tmpdir(),'router-resource-census-source-')),files=new Map([['Cargo.toml','[workspace]\n'],['Cargo.lock','version = 4\n'],['rust/src/lib.rs',''],[resource,'{}']]),options={startedAt:performance.now(),reserveGit:()=>{},record:()=>{}};for(const [path,source]of files){mkdirSync(dirname(join(root,path)),{recursive:true});writeFileSync(join(root,path),source);}initializePolicyNativeCohort(root,['Cargo.toml','Cargo.lock','rust/src/lib.rs'],options);commitOpaqueCompilerSourceCohortInBatches(root,[...files.keys()],options);return root;}
+const descriptor=()=>({path:resource,bytes:2,sha256:createHash('sha256').update('{}').digest('hex'),sourceAuthority:false,semanticAuthority:false});
+test('actual observed and direct-preflight inputs deduplicate only equal complete resource DATA',limits,()=>{const root=fixture();try{const result=census(root,register=>{const first=readSelectedTrackedSourceBytes(root,resource,{maxBytes:1024}),second=readSelectedTrackedSourceBytes(root,resource,{maxBytes:1024});assert.equal(first.toString(),'{}');assert.equal(second.toString(),'{}');register([descriptor()]);return {complete:false};});assert.equal(result.resources.length,1);assert.equal(result.resources[0].observedReads,2);assert.equal(result.resources[0].declaredByPreflight,true);assert.equal(result.resourceBytes,2);assert.equal(result.sourceAuthority,false);assert.equal(result.semanticAuthority,false);assert.equal(result.censusGrantsCompilerAuthority,false);assert.equal(result.callerExecutionQualified,false);assert.match(result.scope,/not whole compiler runtime closure/u);}finally{rmSync(root,{recursive:true,force:true});}});
+test('caught conflicting input declarations still fail the census and callbacks expire',limits,()=>{const root=fixture();try{let escaped,caught;assert.throws(()=>census(root,register=>{escaped=register;readSelectedTrackedSourceBytes(root,resource,{maxBytes:1024});try{register([{...descriptor(),bytes:3}]);}catch(error){caught=error;}return null;}),error=>error===caught);assert.throws(()=>escaped([]),/expired/u);}finally{rmSync(root,{recursive:true,force:true});}});
+test('promises and exact thrown primaries close the resource scope without accepting a verdict',limits,()=>{const root=fixture();try{let escaped;assert.throws(()=>census(root,register=>{escaped=register;return Promise.resolve(1);}));assert.throws(()=>escaped([]),/expired/u);for(const primary of [undefined,null,false,0,'',Error('primary')]){let caught=false;try{census(root,register=>{escaped=register;throw primary;});}catch(error){caught=true;assert.strictEqual(error,primary);}assert.equal(caught,true);assert.throws(()=>escaped([]),/expired/u);}}finally{rmSync(root,{recursive:true,force:true});}});

@@ -1,0 +1,7 @@
+// Actual source-profile read-census case source; no compiler execution. UNRUN.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {visitConstantIndexProfileSourceEquations} from '../opaque-receiving-resource-profile-20261101.mjs';
+test('complete original profile equations and every actual preflight input remain explicit DATA',{timeout:60000,concurrency:false},()=>{let events=0;const value=visitConstantIndexProfileSourceEquations(event=>{events++;if(event.history)assert.equal(event.history.inverse,event.history.before);return null;});assert.ok(events>0);assert.equal(value.sources.length,188);assert.equal(value.localCustody.length,11);assert.equal(value.allFullEquationsDelivered,true);assert.ok(value.physicalInputs.length>0);assert.equal(new Set(value.physicalInputs.map(row=>row.path)).size,value.physicalInputs.length);assert.ok(value.physicalInputs.some(row=>row.path==='tools/translation/source-profiles/constant-index-profile-20261101/delta-sources.json.gz'));for(const row of value.physicalInputs){const bytes=readFileSync(new URL('../../../'+row.path,import.meta.url));assert.equal(bytes.length,row.bytes,row.path);assert.equal(createHash('sha256').update(bytes).digest('hex'),row.sha256,row.path);assert.equal(row.sourceAuthority,false);assert.equal(row.semanticAuthority,false);}assert.equal(value.sourceInstalled,false);assert.equal(value.semanticAuthority,false);assert.match(value.physicalInputScope,/preflight reads only/u);});

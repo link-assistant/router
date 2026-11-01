@@ -21,7 +21,7 @@ all-at-once Git reservation cannot fit64MiB. Free host disk does not change that
 case-local bound. Raising limits or excluding real compiler/native input work
 is not the proposed remedy.
 
-## Source work being drafted
+## Additive receiving source draft
 
 A separate full cohort implementation copy adds bounded real-Git object batches
 and explicit path-based index/tree reservation. Each batch reserves its own
@@ -31,14 +31,43 @@ cohort. File identity/time checks bracket preparation. This is operational input
 packaging, not source/type/ownership permission; original APIs stay available.
 All Git calls and lifecycle/resource observations remain UNRUN.
 
-The complete receiver also needs an explicit actual resource closure rather than
-copying all historical profiles, with full dependency provenance, complete raw
-failed-attempt receipts, fresh process/issuer frames after missing-resource
-acquisition and unchanged source/file/disk/deadline guards. Invocation-local
-input-byte sharing must retain separate path identities and complete closing
-checks. Read-only TypeScript still needs its entire actual package/lock cohort.
-These integration/qualification obligations remain OPEN; the batched Git helper
-alone does not make a receiver fit or qualify translator export.
+The additive `receiveOpaqueBoundedBodyLiterals` now contains the receiving
+integration source. It copies every compiler-fingerprint input and actual native
+source before selecting profile resources from current preflight reads and full
+source-copy custody. Missing original profile resources can be acquired only
+from a fresh source-phase ENOENT hint. Every acquisition starts a new process;
+no private issuer graph or compiler verdict survives. The aggregate is bounded
+at16 attempts,8MiB raw child output,8MiB failed packets,60s whole case and20s
+per child. Already copied missing inputs, runtime failures and paths outside the
+fixed source-profile directory cannot trigger recovery. The intentionally
+untracked native-leaf refusal is preserved across recommits.
+
+The new storage API counts unique retained source buffers against64MiB, with
+separate file identities, read-occurrence accounting and complete closing reads.
+It checks byte equality before sharing any buffer; a matching hash alone grants
+nothing. This is an explicit new storage contract: the original APIs keep their
+cumulative read accounting. A reused64KiB comparison buffer limits duplicate
+read allocations. Whole closing reads and compiler data can still add transient
+memory; neither an RSS fit nor a successful complete receiving run is claimed.
+The entire actual read-only TypeScript package and5.9.3 lock cohort remain
+required, with no dependency installation authorized in this phase.
+
+Six whole case files are drafted for Git batches, profile inputs, resource
+census lifecycle, failure-hint refusals, full receiving and complete source
+history. All remain UNRUN. The full source-copy archive preserves three complete
+predecessors/successors, three additions, two prerequisite case files and all
+six current case files. Its visitor consumes the parent body history and unions
+the complete parent case custody with conflict refusal, serialized/reparsed CST
+and full inverse images under exactly language/repository sequences.
+
+Archive SHA256: `55df36d1dfed80133daf0705f512beb13f70b3f51f22ba8db76fbbe72f74458e`
+(174,511 decoded/27,740 packed bytes); authored visitor SHA256:
+`6790918afd9af18ce9e57fe160cc52ea53e5a575281200f78617601f515d453f`.
+
+Original receiving APIs have not been migrated to the new storage contract;
+their complete old cases and every resource/performance/strict TS/parity/freshness
+obligation remain required. No profile-size inventory or helper source draft
+qualifies a receiving repository or closes E01/E03/Q02/T05.
 
 This finding is separate from the frozen delivery audit and its commit timings.
 Commit intervals and source receipts are not executable-function throughput.

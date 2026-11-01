@@ -1,0 +1,9 @@
+// Actual complete receiving source. No test/compiler/translation has run.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {performance} from 'node:perf_hooks';
+import {receiveOpaqueBoundedBodyLiterals} from '../opaque-receiving-bounded-body-20261101.mjs';
+const limits={timeout:60000,concurrency:false};
+test('selected actual resource custody and batched real Git retain all three complete project attempts',limits,t=>{const value=receiveOpaqueBoundedBodyLiterals(t,{operation:'inspect'},{startedAt:performance.now()});assert.equal(value.packet.ok,true,JSON.stringify(value.packet.error));assert.equal(value.report.cleanupSucceeded,true);assert.ok(value.report.resourceCensus.files>0);assert.match(value.report.resourceCensus.scope,/not whole compiler runtime closure/u);assert.match(value.report.sourceStorageContract,/unique retained buffers/u);assert.ok(value.report.sourceBytes<=67108864);assert.ok(value.report.sourceFiles<=8192);assert.ok(value.report.compilerSourceCohort.objectBatches>0);assert.ok(value.report.attempts.length>=1&&value.report.attempts.length<=16);assert.deepEqual(value.packet.result.targetPhases.map(row=>row.phase),['original-project','native-candidate-project','adopted-project']);assert.equal(value.packet.result.productionCoverageQualified,false);assert.equal(value.packet.result.sourceInstalled,false);});
+test('bounded resource acquisition never repairs an intentionally untracked native leaf',limits,t=>{const value=receiveOpaqueBoundedBodyLiterals(t,{omitInstalledNativeLeaf:true},{startedAt:performance.now()});assert.equal(value.packet.ok,false);assert.equal(value.report.cleanupSucceeded,true);});
+test('source-caught restoration failures stay fatal in the complete fresh copied cohort',limits,t=>{const value=receiveOpaqueBoundedBodyLiterals(t,{operation:'source-caught'},{startedAt:performance.now()});assert.equal(value.packet.ok,false);assert.equal(value.report.cleanupSucceeded,true);});
