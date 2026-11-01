@@ -313,3 +313,6 @@ test('the fixed draft event model refuses missing malformed payloads and treats 
 test('unknown complete workflow source and a corrupted review archive cannot supply the fixed exception',{timeout:60000},()=>{
  const packet=readFixedNineDraftWorkflowSources(),root=fs.mkdtempSync(path.join(os.tmpdir(),'fixed-nine-workflow-source-'));try{for(const row of packet.files){const target=path.join(root,row.path);fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,row.after??row.before);}const archive=path.join(root,'scripts/ci/fixed-nine-draft-workflow-sources.json.gz');fs.mkdirSync(path.dirname(archive),{recursive:true});fs.copyFileSync(new URL('../ci/fixed-nine-draft-workflow-sources.json.gz',import.meta.url),archive);const target=path.join(root,'.github/workflows/benchmarks.yml');fs.appendFileSync(target,'\n# source not in reviewed equation\n');assert.throws(()=>prepareDraftSupplementalWorkflows({root}),/physical workflow differs/);const bytes=fs.readFileSync(archive);bytes[bytes.length-1]^=1;fs.writeFileSync(archive,bytes);assert.throws(()=>readFixedNineDraftWorkflowSources({root}),/source archive differs/);}finally{fs.rmSync(root,{recursive:true,force:true});}
 });
+
+// Whole native-profile workflow cases run where locked YAML is installed.
+import '../../tools/translation/test/native-profile-oracles-20261101-workflow-cases.mjs';

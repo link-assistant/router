@@ -92,3 +92,11 @@ implements statfs using GetDiskFreeSpaceW and exposes free clusters through
 f_bavail. This is a historical source reference, not execution evidence or a
 claim about the exact rolling Node20 CI patch. The separate genuine visitor
 POSIX-open refusal remains OPEN on Windows.
+
+The complete workflow case file is imported by the existing mandatory lint
+parent scripts/test/check-js-first-workflows.test.mjs, where scripts/ci's
+locked YAML dependency is installed. It is not independently scheduled in the
+translation job, which installs only JS dependencies. Full original parent
+source, appended import, JS CST/inverse and unchanged case deadlines are
+retained in the complete workflow archive/proposal. No test body is removed
+and no new gate command or partition is required. All remain UNRUN.

@@ -692,3 +692,27 @@ successor must retain every original equation/resource and use real bounded
 ordinary Windows reads before the coordinator can wire that visitor. Dynamic
 formatted-output and all-writer forward custody workers continue independently.
 No parent is closed:8/70 DRAFTED,62 OPEN; no current coverage percentage.
+
+Coordinator native-CI integration commit:
+`c7959d1b6a275eb265ec66f31dd80fe2040cba19`. Subsequent SOURCE dependency
+review found YAML is installed in lint, not translation. The entire new workflow
+case file is therefore renamed to workflow-cases.mjs and imported by the existing
+mandatory check-js-first-workflows.test.mjs command. All original parent cases
+and new cases/deadlines remain. Full parent before/after/CST inverse is in the
+separate complete-workflow-with-test-hook archive; the earlier committed complete
+workflow archive stays byte-for-byte immutable. No new gate command, conditional
+partition, dependency install or test omission is introduced. All UNRUN.
+
+Dynamic output child committed16 NEW paths at
+`ac80d0f30ed5545bd55a1d7b11391a21a005928c`, archive
+`4d3d5f4ff3bceb05378f85f08993fea89170380c39c71134b0ac5a34fc8f57a3`
+(31 rows,53 additions,3 raw resources,131 complete versions). Actual String
+ownership, shared synchronous backend, eager formatting migration and original
+private parser/project/emitter rejoin are explicit. Whole primitive/template
+semantic inverses freshly reproduce exact requested and paired output bytes.
+No literal emptyDrop permission, custom trait producer or builtin equivalence
+is claimed. Native scheduling and stable API integration follow separately;
+actual whole-owner adoption still preserves residuals and zero claimed coverage.
+Worker now drafts actual full-scope ClientKind static accessors using the already
+existing original static-array/CTFE/method rules and original opaque corpus.
+No scope extraction, manual enum table or new Host admission is authorized.
