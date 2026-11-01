@@ -1,0 +1,1 @@
+Draft hosted-only native profile oracle orchestration after the unchanged eight-stage JavaScript gate, complete source/CST workflow history, bounded evidence handling, and full Cargo-discovered Windows test scheduling. All new behavior remains unverified.

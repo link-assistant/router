@@ -663,3 +663,32 @@ orchestration is still being authored. Genuine persistent visitor POSIX flags
 still make Windows qualification an explicit fatal OPEN gap. No skip or public
 metadata bypass is authorized. All new source remains unverified. Counts remain
 8/70 DRAFTED, 62 OPEN; no current executable coverage percentage is established.
+
+Native-CI child checkpoints: `2606d012efb8fd90f3f7f5a7d7b3399f64dc7bad`
+(10 source/helper/case/doc paths), then
+`701b65508114e70014c490092babf23cc02908af` (three-path independent workflow
+case guard correction). Coordinator integration adds the hosted-only private
+gate, bounded raw/process/disk monitoring, source-only CLI and complete YAML
+CST source producer/history. Existing release test matrix, eight-stage same-SHA
+JS dependency, original full commands,45-minute job and180-second Windows case
+deadlines are preserved. Windows selects rust/tests and supplements the original
+*_test.rs sweep with actual Cargo default-workspace test-target metadata.
+Native-only profile987 is copied with complete original Cargo/Rust/resources
+and genuine full CST equations, then compiled/tested only inside gated CI.
+No local Rust, parser/compiler/preparer/translator/test execution occurred.
+
+Source review fixed bounded child shutdown/unknown descendants, source-read
+closing, active copying/execution disk census including unknown TMPDIR output,
+all raw-path closer attempts, observed-memory unknown semantics and linear-time
+process-tree accounting. Independent source cases never allow Rust: workflow
+cases permit only the genuine bounded reader's exact read-only Git operations,
+without faking HEAD/state. All source and cases remain UNRUN; no actual fit,
+performance, source completeness, native behavior or receiving qualification.
+
+Portable Windows profile reading is the newly assigned separate child batch.
+The original immutable profile still requires POSIX flags and remains a fatal
+OPEN path; current CI draft does not hide it. A separate complete source-copy
+successor must retain every original equation/resource and use real bounded
+ordinary Windows reads before the coordinator can wire that visitor. Dynamic
+formatted-output and all-writer forward custody workers continue independently.
+No parent is closed:8/70 DRAFTED,62 OPEN; no current coverage percentage.

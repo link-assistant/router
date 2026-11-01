@@ -590,3 +590,11 @@ oracle scheduling, global tracing/host/platform/provider/parity, broader caller
 admission, direct/matrix writer custody and original resource/freshness/export
 qualification remain OPEN. All execution is UNRUN; no whole parent closes.
 8/70 DRAFTED,62 OPEN remains the unweighted source-review count.
+
+Native-only oracle CI child source is being integrated: closed registry987,
+private hosted same-SHA/eight-stage workflow guard, bounded Rust-only source
+materializer, complete raw output/process/resource handling, original Windows
+selector path plus actual Cargo residual-target discovery, and full YAML CST
+source/inverse history. This is UNRUN, with known fatal Windows visitor flags,
+source projection and dynamic-resource gaps. No parent closure or execution
+evidence; see native-profile-oracles-20261101-ci.md and materialize guide.
