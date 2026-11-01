@@ -16,7 +16,7 @@ function sameIdentity(a,b){return Object.keys(a).every(key=>a[key]===b[key]);}
 function boundedRead(path,limit,retain=()=>{}){
  const before=lstatSync(path,{bigint:true});if(before.isSymbolicLink()||!before.isFile())throw new TypeError('Ordinary physical production source required');if(before.size<0n||before.size>BigInt(limit))throw new RangeError('Production source byte bound');
  const record={path,limit,identity:identity(before),source:null};retain(record);
- const fd=openSync(path,constants.O_RDONLY|(constants.O_NOFOLLOW??0)|(constants.O_NONBLOCK??0));
+ const fd=openSync(path,constants.O_RDONLY|(constants.O_NOFOLLOW??0)|(constants.O_NONBLOCK??0));let primaryReadFailed=false;
  try{
   const opened=fstatSync(fd,{bigint:true});if(!opened.isFile()||opened.size<0n||opened.size>BigInt(limit)||!sameIdentity(record.identity,identity(opened)))throw new TypeError('Physical production source changed before bounded read');
   const size=Number(opened.size),buffer=Buffer.alloc(size+1);let count=0;
@@ -24,7 +24,7 @@ function boundedRead(path,limit,retain=()=>{}){
   if(count!==size)throw new TypeError('Physical production source grew or reached early EOF');
   const after=fstatSync(fd,{bigint:true}),current=lstatSync(path,{bigint:true});if(!after.isFile()||!current.isFile()||current.isSymbolicLink()||!sameIdentity(record.identity,identity(after))||!sameIdentity(record.identity,identity(current)))throw new TypeError('Physical production source identity changed during bounded read');
   const bytes=buffer.subarray(0,count),source=bytes.toString('utf8');if(!Buffer.from(source,'utf8').equals(bytes))throw new TypeError('Production source must be exact UTF8');record.source=source;return record;
- }finally{closeSync(fd);}
+ }catch(error){primaryReadFailed=true;throw error;}finally{try{closeSync(fd);}catch(error){if(!primaryReadFailed)throw error;}}
 }
 
 export function captureCrossModuleOwnedProjectionProductionOwners({root=ROOT}={}){return withSourceFailureOperation(()=>withSourceInputValidation(()=>{

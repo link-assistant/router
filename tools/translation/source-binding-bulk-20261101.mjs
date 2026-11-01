@@ -51,9 +51,9 @@ function census(root,directory,declaredRoot){
  function visit(path,depth){
   if(depth>LIMITS.directoryDepth)fail('complete source directory depth bound');const physical=join(root,path),before=lstatSync(physical,{bigint:true});
   if(before.isSymbolicLink()||!before.isDirectory())fail('source directories must retain their physical identity');
-  const names=[],handle=opendirSync(physical);
+  const names=[],handle=opendirSync(physical);let primaryDirectoryFailed=false;
   try{for(let child;(child=handle.readSync())!==null;){if(++entries>LIMITS.directoryEntries)fail('complete source directory entry bound');names.push(child.name);}}
-  finally{handle.closeSync();}
+  catch(error){primaryDirectoryFailed=true;throw error;}finally{try{handle.closeSync();}catch(error){if(!primaryDirectoryFailed)throw error;}}
   names.sort();directories.push({path,identity:identity(before),names});
   for(const name of names){const child=path+'/'+name,leaf=join(root,child),stat=lstatSync(leaf,{bigint:true}),original=identity(stat);
    if(stat.isSymbolicLink())fail('symlinked source-directory entries require a separate proof');
@@ -63,7 +63,7 @@ function census(root,directory,declaredRoot){
    if(!name.endsWith('.rs')){exactIdentity(original,identity(lstatSync(leaf,{bigint:true})));continue;}
    if(!stat.isFile())fail('Rust source inputs must be ordinary files');
    if(rows.length>=LIMITS.files||stat.size>BigInt(LIMITS.fileBytes))fail('complete Rust source count/byte bound');
-   const fd=openSync(leaf,constants.O_RDONLY|constants.O_NOFOLLOW);let raw;
+   const fd=openSync(leaf,constants.O_RDONLY|constants.O_NOFOLLOW);let raw,primaryReadFailed=false;
    try{
     const opened=fstatSync(fd,{bigint:true});if(!opened.isFile())fail('Rust source descriptor must remain an ordinary file');exactIdentity(original,identity(opened));
     if(opened.size<0n||opened.size>BigInt(LIMITS.fileBytes))fail('complete Rust source byte bound');
@@ -71,7 +71,7 @@ function census(root,directory,declaredRoot){
     while(count<buffer.length){const read=readSync(fd,buffer,count,Math.min(65536,buffer.length-count),null);if(read===0)break;count+=read;}
     if(count!==expected)fail('physical Rust source grew or reached early EOF');raw=buffer.subarray(0,count);
     exactIdentity(original,identity(fstatSync(fd,{bigint:true})));exactIdentity(original,identity(lstatSync(leaf,{bigint:true})));
-   }finally{closeSync(fd);}
+   }catch(error){primaryReadFailed=true;throw error;}finally{try{closeSync(fd);}catch(error){if(!primaryReadFailed)throw error;}}
    const source=raw.toString('utf8');if(!Buffer.from(source,'utf8').equals(raw))fail('physical Rust source must be exact UTF8');
    bytes+=raw.length;if(bytes>LIMITS.sourceBytes)fail('combined complete Rust source byte bound');rows.push({path:child,source});
   }

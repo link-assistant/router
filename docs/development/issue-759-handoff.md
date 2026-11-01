@@ -419,3 +419,10 @@ Its decimal-string fixtures pin signed millisecond truncation, equality at expir
 Option-presence versus JS truthiness, exact text and secret-free reports. All
 execution is UNRUN; O01/O05/P01/T01/T02/T03/T04 remain OPEN, with no new executable
 translation credit or claim about extreme timestamp subtraction overflow.
+
+Source review also repaired five read/census close sites across four earlier
+completed family modules. [Complete before/after source history and fault cases](source-read-close-primary-20261101.md)
+retain original failures when a descriptor/directory close also throws, including
+falsy/frozen primaries; sole close failures remain fatal. All prior source/type,
+identity, poisoning, limits and complete cases stay intact. This is partial
+Q01/S03/C04 source evidence only, with every new case UNRUN and no CI inspection.
