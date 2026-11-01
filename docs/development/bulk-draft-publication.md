@@ -6,15 +6,12 @@ coherent checkpoint about every three hours during active work. This overrides
 the earlier requirement to defer CI-triggering pushes and to collect/repair the
 published head's complete CI cycle before another drafting push.
 
-The coordinator remains the only publisher. The user's 2026-11-01 update allows
-up to three new GPT-6.1-sol medium subagents for disjoint source-only drafting;
-do not restart historical workers or run CPU-intensive work. Serialize commits
-and preserve the no-execution/no-feedback-inspection policy for every agent.
-To conserve disk, this resume may use disjoint assigned paths in the existing
-integration worktree rather than additional checkouts. Changes are immediately
-shared; one explicit staging/commit slot and the sole coordinator publisher
-remain mandatory. Resume a finished ready worker with a follow-up task before
-expecting it to act on a commit message.
+The coordinator remains the only publisher. The user's latest wind-down
+instruction allows the existing workers to finish, then requires Root to work
+alone. All three workers have finished. Do not spawn, replace or restart workers
+without a new explicit instruction. This supersedes the earlier2026-11-01
+three-worker drafting allowance. Preserve serialized commits, careful disk use
+and the source-only/no-feedback phase. Root now owns all source work and publishing.
 Review the complete
 source batch, its original source/rule histories and requirement ledger before
 committing. Disable conflicting execution hooks for commits and pushes under the

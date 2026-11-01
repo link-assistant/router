@@ -1,6 +1,6 @@
 # Issues #759 / #772: checkpoint handoff
 
-Updated 2026-11-01 (Asia/Ho_Chi_Minh). The user explicitly resumed bulk drafting
+Updated 2026-11-02 (Asia/Ho_Chi_Minh). The user explicitly resumed bulk drafting
 after the 2026-10-31 paused checkpoint. Work continues source-only;
 no tests, compilation, trial translation or CI-feedback inspection are authorized.
 
@@ -10,7 +10,8 @@ no tests, compilation, trial translation or CI-feedback inspection are authorize
 - Draft PR: https://github.com/link-assistant/router/pull/775
 - Branch: `issue-772-translator-throughput`
 - Integration worktree: `.worktrees/issue-759-storage-repair-20261021`
-- Current published source checkpoint: `28d3bf11b1ec066c79daa967aba67d7d520667e2` (whole body inverses, bounded receiving and deferred failure collector; source only).
+- Current coordinated source checkpoint: the commit containing this handoff; implementation baseline `89f1bc3aec686fd13bbc4516006f2d1fe522c7f0`. The PR description records the exact pushed HEAD.
+- Previous published checkpoint: `28d3bf11b1ec066c79daa967aba67d7d520667e2`, approximately17:42 UTC on2026-11-01. The current source push is prepared around20:20 UTC.
 - Earlier published checkpoint before the stop/resume cycle: `19074cc30`.
 - Subsequent checkpoints included in this handoff: `4895f51aa` (join kernel),
   `db901a224` (complete additive caller/interpreter/inverse profiles), and
