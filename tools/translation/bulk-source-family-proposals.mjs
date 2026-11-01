@@ -101,3 +101,8 @@ export {visitOpaqueReceivingResourceSourceEquations} from './opaque-receiving-re
 
 export {createDependentRulePipeline} from './dependent-rule-pipeline.mjs';
 export {proposeDependentConcreteSourceBatch} from './dependent-concrete-source-batch.mjs';
+
+export {inspectOpaqueBodyScalars} from './opaque-body-scalar-20261102.mjs';
+export {proposeOpaqueBodyScalarInverse} from './opaque-body-scalar-20261102-inverse.mjs';
+export {proposeOpaquePairedBodyScalarInverse} from './opaque-paired-body-scalar-inverse-20261102.mjs';
+export {visitOpaqueBodyScalarSourceEquations} from './opaque-body-scalar-20261102-history.mjs';

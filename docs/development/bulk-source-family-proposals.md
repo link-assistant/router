@@ -193,3 +193,19 @@ either selected changed language and preserves source histories, all six project
 attempts and strict conflict/stale-peer refusal. Actual receiving remains UNRUN;
 the [static resource review](receiving-resource-closure-20261101.md) records
 why the old blind resource copier and aggregate Git reservation cannot fit.
+
+The [dependent source batch](dependent-source-batch-20261102/README.md) adds
+`createDependentRulePipeline` and `proposeDependentConcreteSourceBatch` for
+explicit rule dependency/conflict discovery and complete nested source proposals.
+The actual tracked-source preparer emits whole inverses without installation.
+These are source DATA/orchestration, not semantic admission.
+
+The [scalar/predicate sibling](opaque-body-scalars-20261102.md) exposes
+`inspectOpaqueBodyScalars`, `proposeOpaqueBodyScalarInverse`,
+`proposeOpaquePairedBodyScalarInverse` and
+`visitOpaqueBodyScalarSourceEquations`. It extends fresh whole-body origins to
+eight common predicate operators while preserving literal edits, all six inverse
+project attempts, original-context joins and exact paired target reproduction.
+The bounded receiving sampler adds three explicitly counted source attempts.
+Every new case and compiler/receiving/freshness result remains UNRUN; no current
+coverage, complete translation or full synchronization claim follows.

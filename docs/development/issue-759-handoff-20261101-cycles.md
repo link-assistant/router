@@ -605,3 +605,27 @@ immutable predecessor and complete successor archive1d642d453c2797394359c7baeac7
 current custody deduplicates equal path/full-source rows and refuses conflicts.
 No source, owner or compiler verdict is cached. Everything remains UNRUN and
 CI/review feedback uninspected;10/70 DRAFTED,60 OPEN remains unchanged.
+
+## Whole-corpus predicate inverse source batch
+
+Root drafted complete scalar/predicate siblings of the body corpus, driver,
+capture, inverse, paired adapter and bounded receiver. One shared checked-body
+traversal collects literal and predicate origin DATA. Eight common equality,
+comparison and Boolean operators retain actual native token/type/owner joins;
+all six inverse project attempts and exact full paired target reproduction stay.
+No supplied metadata grants permission and no original API or case was weakened.
+
+The [source contract](opaque-body-scalars-20261102.md) records nine independent
+JS case sources and three CI-only Rust oracle cases. A new ordinary native test
+target preserves the earlier policy target and its pinned case bytes. The fixed
+actual receiving sampler has nine total source attempts, explicitly counting its
+three sampling attempts separately from six inverse attempts. No attempt was
+executed or claimed to fit; original64MiB/8192-file/60s/20s bounds remain.
+
+The complete eight-copy/one-addition/two-native archive is
+2af184cdfb5a82c6d2de2fdf2e4f3fc47cc37c9b127a5324c348b70ca0c71d73
+(218,435 decoded/32,671 packed bytes). Full predecessor/current source, parent
+case closure, Rust/JS CST serialization/reparse and inverses remain explicit.
+No parser/compiler/translator/test, install, benchmark or Rust tool was run.
+CI/review feedback remains uninspected. Root alone continues, with10/70 DRAFTED,
+60 OPEN and current function coverage unmeasured.
