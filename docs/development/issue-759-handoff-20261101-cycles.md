@@ -728,3 +728,16 @@ raw-selection bound64MiB is explicit and changes no old receiving requirement.
 PacketSHA2566070f108e7788c08aeb5ab07d225c7574a9d4a0efb42012b75f20a89fd1eef93 retains all five full sources (25889 decoded/7796
 packed bytes). No tests, compilers, codecs, exports or CI feedback were executed
 or inspected.11/70 DRAFTED,59 OPEN; Root alone continues.
+
+## Compact physical Git enumeration source batch
+
+After2d4a141e3, Root drafted a real fresh unborn compiler-DATA Git index for exact
+materialized source selections. The [source contract](compact-source-git-enumeration-20261102/README.md)
+records complete physical bytes/modes/census, bounded128-path no-filter object
+batches, exact raw index closure, no source HEAD, aggregate64MiB reservation/actual
+size and20-second operation/10-second child limits. A stable additive transfer
+facade and four independent whole case sources are included. No old API or
+receiving limit is replaced. Full compiler fit, SDK/fixture/module closure and
+actual receiving adoption remain OPEN. PacketSHA25646cceb37536af1253e417607f1166a61b6e66f859c06a411393f35cb5bcfd914 is16163 decoded/
+5511 packed bytes. All execution remains UNRUN;11/70 DRAFTED,59 OPEN.
+Root alone continues, without local Rust or CI-feedback inspection.
