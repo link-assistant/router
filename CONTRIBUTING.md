@@ -65,6 +65,16 @@ original/current histories through the shared
 Recheck complete sources and metadata after construction callbacks; a hash, CST
 or public receipt is input DATA, never namespace or executable authority.
 
+Native parser source fences must observe the actual privately captured loader
+origin and complete source cohort; current environment paths, sys metadata and
+public cache entries cannot stand in for that origin. Keep shared external
+TypeScript installations usable without inventing a second required install.
+Generated-output source checks include cleanup: advance only exact privately
+owned transitions, attempt every closing check, preserve the original thrown
+value and report partial recovery honestly. Git split-index reads can mutate
+shared timestamps; isolate owned read images and retain complete original
+bytes/namespace checks. See [the selected-reader contract](docs/development/selected-source-reader-20261101.md).
+
 The [native source-operation draft](docs/development/native-source-operation-draft.md)
 retains private syntax only inside one synchronous operation while every
 semantic/binding/source check stays fresh. Its complete original histories and

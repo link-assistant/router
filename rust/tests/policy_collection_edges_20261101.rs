@@ -182,3 +182,7 @@ mod policy_nominal_producer_20261101;
 
 #[path = "oracles/client_static_producer_20261101.rs"]
 mod client_static_producer_20261101;
+
+// Exact independent constant-index baseline; reuse this existing integration target.
+#[path = "oracles/constant_index_format_20261101.rs"]
+mod constant_index_format_20261101;

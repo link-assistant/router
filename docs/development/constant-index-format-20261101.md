@@ -67,3 +67,13 @@ No hook above has been installed. Parent sequencing is after the async JSON-scal
 New cases must use genuinely parsed/checked programs and independently expected values, including renamed arrays, Unicode/empty strings, repeated cells, usize constants, suffix mismatches, local shadows, out-of-range/overflow, stale/raw/meta/source forgery, body restore after caught failure, complete before/after CST inverses and both JS/strictTS receiving. Native source baselines remain actual Rust arrays/formatter semantics; no JS case spawns Rust. Full emitted-target→changed-native inverse cases remain blocked on the reviewed inverse/profile bridge above; unchanged native restoration is not semantic bidirectional translation.
 
 Even a qualified header operand lane does not translate all `print_table`: actual `println!` adoption/namespace, its JSON shared-slice loop, `row(record)` producer and row's closures/Option/JSON formatting remain separate prerequisites. They must retain precise original refusal receipts. No production-unlock count, runtime parity, fit, throughput improvement or completed translation is claimed.
+
+The whole independent native baseline is now byte-copied to
+`rust/tests/oracles/constant_index_format_20261101.rs` and included by the
+existing `policy_collection_edges_20261101` integration target. This adds no
+Cargo target or local execution. A separate immutable three-row history retains
+the original baseline, exact copy and entire original/append-only policy source;
+`constant-index-native-history-20261101.test.mjs` drafts full Rust CST/reparse/
+inverse expectations. Native execution remains UNRUN and gated by all eight
+same-SHA JS stages. This scheduling does not qualify the new production hooks,
+flattening, edited-target inverse or complete token-table owner.

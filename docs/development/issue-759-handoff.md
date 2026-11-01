@@ -933,3 +933,19 @@ translator/preparer/index-image execution occurred. Source writing, small
 snapshots and SCM are the only task-owned writes. The push/PR description must
 record the exact published SHA afterward; CI/review stays uninspected. All new
 verification UNRUN,8/70 DRAFTED,62 OPEN, no functional-coverage claim.
+
+Publication confirmed at2026-11-01 08:57 UTC: normal push and PR775 description
+update succeeded for `bcbf96dcc009c8c844a21375678c6cc89d86ee9f`. It includes
+all seven committed source checkpoints after724a1426 (resource cases, native
+helper oracle/history, selected reader, owned-JSON helper profile and API/docs/
+handoff integration). New scalar169-version work, constant-index helpers and
+all-writer ownership remain in-progress uncommitted drafts. No tests/Rust/
+compiler/translator/preparer/index-image execution or CI/review inspection was
+performed. All verification UNRUN;8/70 DRAFTED,62 OPEN. Source work continues;
+next routine source publication is approximately11:45 UTC or an earlier
+coherent completed batch. Do not inspect CI feedback during drafting.
+
+Further source-cycle notes continue in
+[the November1 continuation journal](issue-759-handoff-20261101-cycles.md),
+keeping this main handoff below1,000 lines. Current publication/counts and all
+source-only/no-local-Rust/three-worker/single-publisher constraints persist.
