@@ -872,3 +872,27 @@ Native checkpoint `8ab0ea2db` and resource-case checkpoint `783933c60` are local
 source commits after the07:09 publication of724a1426. Next coherent periodic
 push is still pending; CI/review remains uninspected and every new check UNRUN.
 Source accounting remains8/70 DRAFTED,62 OPEN; full translation is unfinished.
+
+Owned-JSON/helper checkpoint committed as
+`9bb830b156b8baff8083e9673787cca16dd52d32`: exact13 NEW paths, no physical
+predecessor/native changes. Final delta SHA256
+`86da3f00604825cfde50162ad3ab8d53c65c37189863ff818925428caf3fff1a`,
+542,148 raw/114,495 packed bytes; profile SHA256
+`c72e706a69ac2adc6602684d1ff9150e8f5f4a4554a5d5fa29d0ef6bc027f3ba`;
+manifest238fba72a0f173ff1ad54e7d3ee4b7d7e75a2afbe0ef1e47c5ceccc254f56754.
+All138 immutable parent versions plus10 new remain (148); exactly3 virtual
+paths/six additions/three resources. Earlier13ed is withdrawn;86da is the final delta paired with the recorded
+final module/manifest pins.
+Source review corrected actual WeakMap capture and project name flattening;
+no implementation ran. Stable APIs now include whole-corpus inspection and
+fixture paired inverses, with complete owner/residual preservation. Actual
+standard readers, Option/static-index/token rows and full parity remain OPEN.
+
+At08:20 UTC source-only work continues with at most3 sol/medium workers:
+JSON scalar-reader successor design/drafting follows frozen86da; constant-index
+formatter design/NEW helpers investigate genuine existing CTFE/source receipts;
+forward ownership finalizes copied corpus/discovery/owned-definition transport,
+flat write cleanup closing, exact never-indexed owned bootstrap and fatal UTF8
+listing refusals. The read-only flat review findings are tracked with its owner.
+No tests, local Rust/compilers/translator/preparer experiments or CI feedback
+inspection are authorized/executed. Accounting remains8/70 DRAFTED,62 OPEN.

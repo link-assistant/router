@@ -57,3 +57,7 @@ export {visitPortablePersistentOutputSourceEquations,proposePortablePersistentOu
 export {visitPortableDynamicOutputSourceEquations,proposePortableDynamicOutputSource} from './dynamic-output-portable-source-20261101.mjs';
 export {visitNativeJsonOutputOracleSourceEquations} from './native-profile-oracles-20261101-json-oracle-history.mjs';
 export {proposeSelectedSourceReaderHistory} from './selected-source-reader-20261101-history.mjs';
+export {proposeOwnedJsonOutputProfile,visitOwnedJsonOutputSourceEquations,withOwnedJsonOutputInstalledSources} from './owned-json-output-20261101-profile.mjs';
+export {translateOwnedJsonOutputProject,compileOwnedJsonOutputProject,readOwnedJsonOutputMeta,invertOwnedJsonOutputTarget,invertOwnedJsonOutputFormatTarget} from './owned-json-output-20261101-project.mjs';
+export {withOwnedJsonOutputCompilerFrames,translateOwnedJsonOutputFlatProject,inspectOwnedJsonOutputCorpus} from './owned-json-output-20261101-corpus.mjs';
+export {prepareOwnedJsonOutputProductionAdoption,proposeOwnedJsonOutputProductionAdoption,proposeOwnedJsonOutputWholeOwners} from './owned-json-output-20261101-production.mjs';
