@@ -20,3 +20,5 @@ export {inspectCompletePeerDispatchEdits,planCompletePeerDispatch,applyCompleteP
 export {translateCrossModuleHelperBulkProject,withCrossModuleHelperBulkSourceOperation} from './cross-module-helper-bulk-20261101.mjs';
 export {translateEditedScalarLinearKernel,readEditedScalarLinearKernelMeta} from './scalar-linear-edit-20261101.mjs';
 export {planNativeLeafModuleMove,applyNativeLeafModuleMove} from './native-module-move-20261101.mjs';
+export {translateCrossModuleOwnedProjectionProject,translateCrossModuleOwnedCoreReaderProjectionProject} from './cross-module-owned-projection-20261101.mjs';
+export {proposeNativeIteratorAdoption} from './native-iterator-adoption-20261101.mjs';

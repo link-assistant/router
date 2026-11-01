@@ -32,6 +32,12 @@ qualification has not been executed. This entrypoint broadens no semantic domain
 
 | `planNativeLeafModuleMove` / `applyNativeLeafModuleMove` | A genuine root and one external function-only scalar leaf may relocate within the same source directory while retaining its logical module name. Both complete projects must privately admit every original function and exactly reproduce JS/TS; native path/header/meta changes use guarded no-overwrite installation and rollback. | Nested/general moves, source deletion/addition, arbitrary owners/producers and durable interrupted-transaction recovery remain open. |
 
+
+| `translateCrossModuleOwnedProjectionProject` / `translateCrossModuleOwnedCoreReaderProjectionProject` | Keep the genuine opt-in cross-module helper operation active around the complete original owned-definition/core-reader project APIs, including synchronous lowering and private constructor issuance; return exact original results and unsupported rows. | Executable Vec callers may still have unsupported owned definitions. The actual whole auth_remote/auth_import production attempt and all receiving cases are source only; self-crate/async/source/projection prerequisites remain explicit. |
+
+
+| `proposeNativeIteratorAdoption` | Complete conservative Rust scalar-slice function modules with identity collect or capture-free copied map/filter chains become one fused lazy-per-element checked scalar loop. Retains full original Rust/CST and canonical native/paired inverses through the genuine private bridge compiler. | This is an explicit bounded-contract migration: original std/Vec/primitive/Iterator/Copy/borrowed/crate owners and release-arithmetic equivalence are unqualified. Actual policy methods still require nominal aggregates, set/self, producer, trait-sort and caller closure; no production coverage is credited. |
+
 Each family retains its separately declared `language` then `repository`
 sequences and serialized/reparsed CST/meta/source checks. Operation descriptions,
 proposal flags, matching names and source hashes cannot substitute for private
@@ -56,6 +62,8 @@ Review the complete family contracts and independent case sources:
 - [All edit-language combinations](complete-peer-dispatch-20261101.md).
 - [Original-source cross-module helpers](cross-module-helper-bulk-20261101.md).
 - [Guarded native leaf relocation](native-module-move-20261101.md).
+- [Cross-module owned/core-reader composition](cross-module-owned-projection-20261101.md).
+- [Rust-origin scalar iterator contract adoption](native-iterator-adoption-20261101.md).
 - [Complete trace assertion source histories](bulk-rule-trace-20261101.md).
 
 The existing compiler export selector includes eligible top-level translation

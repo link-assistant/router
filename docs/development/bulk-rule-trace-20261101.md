@@ -13,7 +13,9 @@ complete original/current files: three whole case files and the older callback
 arithmetic source-equation producer. The new
 `bulk-rule-trace-20261101-source-equations.mjs` implementation drafts complete
 CST/source equations, exact physical-source joins and complete closing of all
-opened original profile/source inputs. The phases remain `language`, then
+opened original profile/source inputs. File kind/size/identity guards precede
+size-plus-one reads; nonblocking/no-follow open flags prevent a swapped special
+file from turning this source reader into an unbounded wait. The phases remain `language`, then
 `repository`; no application parser or private semantic issuer is replaced.
 Archive hashes authenticate transported bytes only and grant no source or
 semantic authority. There is no persistent decoded snapshot or verdict cache.

@@ -17,7 +17,7 @@ const hash=value=>createHash('sha256').update(value).digest('hex');
 const stamp=row=>[row.dev,row.ino,row.mode,row.size,row.mtimeMs,row.ctimeMs];
 function read(url,limit){
  const initial=fs.lstatSync(url);if(!initial.isFile()||initial.isSymbolicLink()||initial.size>limit)fail('bounded ordinary complete source input required');
- const fd=fs.openSync(url,fs.constants.O_RDONLY|fs.constants.O_NOFOLLOW);
+ const fd=fs.openSync(url,fs.constants.O_RDONLY|(fs.constants.O_NOFOLLOW??0)|(fs.constants.O_NONBLOCK??0));
  try{
   const actual=fs.fstatSync(fd);if(JSON.stringify(stamp(actual))!==JSON.stringify(stamp(initial)))fail('source input replaced before read');
   const bytes=Buffer.alloc(actual.size+1);let count=0;

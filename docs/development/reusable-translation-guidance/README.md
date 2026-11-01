@@ -127,3 +127,13 @@ paired core/literal boundaries, nested original-span templates, complete
 ordinary helpers, synchronous argument loans, operation-local source indexes
 and separate receiving/verification obligations. These source drafts remain
 unrun and do not qualify full synchronization in a receiving repository.
+
+
+## Source checkpoints and continuation
+
+Use the [checkpoint and resume handoff templates](checkpoint-handoff.template.md)
+and [pull request description template](pull-request.template.md) to retain
+exact local/published commits, complete remaining requirement IDs, source versus
+execution receipts, cleanup/recovery paths and explicit pause/resume state.
+These are reusable policy documents, not compiler/runtime assets or receiving
+publication permissions. All implementation and verification obligations persist.

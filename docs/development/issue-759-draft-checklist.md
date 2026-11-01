@@ -21,13 +21,13 @@ written or an estimate of remaining engineering effort. Do not report this as
 drafted work is supported. Every initial status is `OPEN`; existing evidence
 links are review starting points, not closure receipts.
 
-Current source-review accounting (2026-11-01): **7/70 DRAFTED, 63/70 OPEN**.
+Current source-review accounting (2026-11-01): **8/70 DRAFTED, 62/70 OPEN**.
 Closed IDs: D01/D02/D03/D05 (written policy), J01/J05 (existing workflow,
-partition and independent audit-case sources), and Q03 (native join emission
-implementation/case source). This is an unweighted acceptance-bundle count,
+partition and independent audit-case sources), Q03 (native join emission
+implementation/case source), and D04 (checkpoint/handoff/PR template source). This is an unweighted acceptance-bundle count,
 not a code-completion or executable-translation percentage. All current
-verification remains UNRUN/uninspected. Earlier 5/70 entries below record
-historical source checkpoints; the new CI-source receipts follow at the end.
+verification remains UNRUN/uninspected. Earlier 5/70 and 7/70 entries record
+historical checkpoints; CI-source and delivery-template receipts follow below.
 
 Use only these source statuses:
 
@@ -248,7 +248,7 @@ guidance/tooling; future compliance and successful runs remain separate evidence
 | D01 | [DRAFTED](#d01-d02-d03-d05-policy-source-receipts--2026-11-01) | Preserve source-only drafting/no experiments/no CI-feedback inspection policy until complete bulk draft, continued prohibition of local tests/compilation until authorized, and no local Rust tools in any phase. |
 | D02 | [DRAFTED](#d01-d02-d03-d05-policy-source-receipts--2026-11-01) | Record single coordinator/publisher, no restarted workers, hook disabling for conflicting Rust tools, standing push authorization and coherent checkpoint cadence without weakening JS-first CI. |
 | D03 | [DRAFTED](#d01-d02-d03-d05-policy-source-receipts--2026-11-01) | Document bounded disk/memory/time/evidence handling, one heavy workload, no unnecessary dependency trees/clones, precise Router-owned cleanup and preservation of others' active work. |
-| D04 | OPEN | Complete checkpoint/handoff/PR templates recording exact source SHA, open IDs, unrun/failed/passed scope, reproduction paths, cleanup and explicit paused/resume status. |
+| D04 | [DRAFTED](#d04-checkpoint-handoff-and-pr-template-source-receipt--2026-11-01) | Complete checkpoint/handoff/PR templates recording exact source SHA, open IDs, unrun/failed/passed scope, reproduction paths, cleanup and explicit paused/resume status. |
 | D05 | [DRAFTED](#d01-d02-d03-d05-policy-source-receipts--2026-11-01) | Define truthful final delivery: all 70 source receipts before draft-complete claim; independently completed coverage/parity/freshness/receiving/performance and same-SHA JS→Rust CI evidence before verified completion or release claims. |
 
 ## Work order on a later explicit resume
@@ -289,8 +289,8 @@ Report 14/14 areas partial only as a broad summary, not as 100% draft progress.
 
 ## Closure receipts
 
-Four policy, one implementation and two existing CI-source receipts follow.
-All other 63 rows remain OPEN for evidence
+Four policy, one implementation, two existing CI-source and one delivery-template receipts follow.
+All other 62 rows remain OPEN for evidence
 review and missing implementation. The source-only resume authorizes no tests.
 
 ### D01 D02 D03 D05 policy source receipts — 2026-11-01
@@ -447,3 +447,32 @@ independent positive/refusal cases are listed above; no row is closed just
 because a workflow file exists. J02/J03/J04 remain OPEN for complete current
 caller/Rust/matrix integration obligations and evidence review. No new translator
 coverage, runtime behavior or performance follows from crediting existing code.
+
+
+### D04 checkpoint handoff and PR template source receipt — 2026-11-01
+
+The complete new reusable documents are
+`reusable-translation-guidance/checkpoint-handoff.template.md` and
+`reusable-translation-guidance/pull-request.template.md`, linked from their
+README. They contain distinct checkpoint, resume handoff and PR forms covering
+full local/published SHA and source scope, destination/time/sole publisher,
+active worker/path ownership and serialized commit slot, complete open IDs and
+stable denominator/scope changes, separate drafted/partial and
+passed/failed/UNRUN/uninspected evidence, exact deferred reproduction commands,
+compiler/runtime/deadline/raw receipt fields, task-owned resource/cleanup and
+recovery records, and explicit controlling user pause/resume state. They retain
+the original objective and prohibit treating a checkpoint or template as full
+translation, verified delivery, inherited publication permission or native-CI
+unlock. Missing/skipped/cancelled/mismatched same-SHA JS work remains failure.
+
+These are normative policy/template source, so application Rust/JS callers,
+semantic meta/inverse, native oracle and compiler receiving execution lanes do
+not apply. Source review covers every D04 clause in the complete documents;
+no template renderer, test, compiler, translator or CI feedback was run/read.
+The current Router handoff, stable ledger links and published PR775 description
+already record concrete exact source checkpoints and ongoing/unverified status;
+future template users must fill actual values without importing those results.
+
+D04 closes at source level only. Current accounting is **8/70 DRAFTED, 62/70
+OPEN**, an unweighted requirement count. All implementation/verification and
+scope obligations in the other rows remain; no executable coverage follows.

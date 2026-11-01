@@ -10,7 +10,7 @@ no tests, compilation, trial translation or CI-feedback inspection are authorize
 - Draft PR: https://github.com/link-assistant/router/pull/775
 - Branch: `issue-772-translator-throughput`
 - Integration worktree: `.worktrees/issue-759-storage-repair-20261021`
-- Current published source checkpoint: `6b0000a42` (actual emitted target receiving source and dependency handoff).
+- Current published source checkpoint: `6c3fbfa2d` (integrated inverse/sync/relocation lanes and immutable trace corrections).
 - Earlier published checkpoint before the stop/resume cycle: `19074cc30`.
 - Subsequent checkpoints included in this handoff: `4895f51aa` (join kernel),
   `db901a224` (complete additive caller/interpreter/inverse profiles), and
@@ -50,6 +50,10 @@ A later source-only review of existing workflow/partition/audit-case code
 closes J01/J05 too: current accounting is **7/70 DRAFTED, 63/70 OPEN**.
 The earlier 5/70 cycle records are historical; no CI run or policy test was
 executed/inspected to credit these existing source implementations.
+The subsequent D04 template source review closes reusable checkpoint, resume
+handoff and PR forms: current accounting is **8/70 DRAFTED, 62/70 OPEN**.
+This adds written delivery tracking only; it does not credit application coverage
+or any execution. Earlier 5/70 and 7/70 records remain historical.
 All new inventory tooling/case source remains UNRUN and L01/L02 stay OPEN.
 
 The objective remains full automated Rust ↔ serialized/reparsed CST/meta ↔
@@ -293,22 +297,37 @@ The subsequent local source drafts add the following complete narrow lanes:
   genuine source graph, complete private before/after compilation and exact
   target reproduction, with no-overwrite destination creation, retained source
   backups and guarded rollback. General topology remains unsupported.
+- `6ce5a9504`: opt-in cross-module composition with both actual owned-definition
+  and core-reader project APIs; exact original results/unsupported definitions
+  and private constructor issuers remain intact. Whole actual auth_remote/
+  auth_import/lib owners, bounded complete identity/byte closing and a real
+  production-bound attempt are source drafted, never executed or credited as
+  production admission. The original crate self-alias stays explicit.
+- `8a2fd419d`: complete Rust-origin scalar identity/map/filter iterator
+  contract migration into a fused lazy-per-element checked loop, canonical
+  paired/native inverses, full original source/CST and 4,096-value receiving/
+  native oracle case source. Original nominal/std/Iterator/borrow/type/crate
+  owner and checked-versus-release arithmetic equivalence remain unqualified;
+  no actual production function is credited. Actual policy record/enum/set/self/
+  sort dependencies stay explicit. The edited scalar inverse's four-rule
+  trace assertion is corrected without execution.
 
 The stable family entrypoint now exposes these operations. They are additive
 opt-in lanes; general source domains, default production dispatch, exported
 receiving qualification and complete synchronization remain open. A source
 review found regression assertions counting phases rather than all rules.
-The edited-inverse assertion correction is queued with its owner. Root also
-drafts [three earlier trace assertion corrections](bulk-rule-trace-20261101.md)
+The edited-inverse assertion correction is committed in `8a2fd419d`. Root also
+commits [three earlier trace assertion corrections](bulk-rule-trace-20261101.md)
 with complete immutable originals and explicit old-producer successor equations;
 no case was executed and every behavioral obligation remains unchanged.
 
-The current workers draft conservative native iterator source adoption,
-owned-definition cross-module composition, and durable interrupted leaf-move
-recovery. The prior retention and initial relocation drafts are committed.
+The current workers draft genuine nominal Copy collection prerequisites,
+review actual self-crate alias resolution, and draft durable interrupted leaf-move
+recovery. Initial iterator migration and owned cross-module composition are
+committed; no worker may execute or publish.
 Root serializes commits, reviews integrations and remains the sole publisher.
 No tests, source preparation, compilation or CI-feedback inspection may run.
-The current count is 7/70 after the existing CI-source review; partial
+The current count is 8/70 after CI-source and delivery-template review; partial
 translation batches never close broader requirements.
 
 ## Ledgers
