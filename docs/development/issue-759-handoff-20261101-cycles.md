@@ -372,3 +372,26 @@ The source receipt closes J02 only; current source accounting is now
 CI/review feedback remains uninspected. J03/J04 and all broader implementation,
 receiving, native outcome, parity, freshness and performance obligations stay
 OPEN. No current executable-function percentage has been measured.
+
+## Publication and native row oracle source cycle
+
+Published `76933e1f4abeb5562f864d3c18df2e56658ea7b5` to the existing PR775
+branch and updated its description with9/70 DRAFTED,61 OPEN and all new scope
+UNRUN. Push transport/ref and PR write only were observed; no CI/review feedback
+was inspected. Root remains sole worker/publisher. A14:52UTC filesystem read
+showed4.8GiB free; all new work remains small source/archive files, no dependency
+installation, build, translator trial or other heavy workload.
+
+Continued drafting actual Rust `token_report` oracle sources: all nine existing
+independent JS row vectors now have exact native expected-field coverage,
+including JSON kind/defaults, float rejection, u64 precision, Unicode widths,
+long columns and label newlines. A separate native case checks all nine private
+header cells and their actual literal indices. The original six native cases
+remain unchanged; two new functions are scheduled by the existing test module.
+No Rust command ran. CI-only execution still requires all eight same-SHA JS gates.
+
+The complete original/changed native source and unchanged full JS vector source
+are retained in `token-report-native-oracle-20261101/complete-source-copies.json.gz`,
+SHA256 `6d008060d1efb9de5849bed2fe14d326ea1d33a0fe8172dd1c2b7215c4511ce4` (16,255 raw/3,549 packed bytes).
+All native/JS/TS behavior, full freshness, resource and parity obligations remain
+UNRUN; no whole parent requirement closes and9/70 DRAFTED,61 OPEN stays.
