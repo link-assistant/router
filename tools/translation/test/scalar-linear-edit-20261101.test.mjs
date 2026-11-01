@@ -31,7 +31,7 @@ for(const family of ['outcome','cancellation'])for(const language of ['JavaScrip
  assert.equal(result.authoritativeTargetExactlyReproduced,true);assert.equal(result.nativeImportSymbolsJoined,true);
  assert.match(result.rust,/checked_mul/);assert.notEqual(result.rust,input.baseline.modules[0].canonicalRust);
  assert.equal(result.source,edit.source);assert.equal(result.histories[0].inverse,edit.artifact.source);assert.equal(result.histories[1].inverse,input.text);
- assert.deepEqual(result.ruleTrace.map(row=>row.phase),['language','repository']);
+ assert.deepEqual(result.ruleTrace.map(row=>row.phase),['language','language','language','repository']);
  const report=await verifyScalarReceivingTargets(t,result.proposal.receivingData,result.proposal,{verifySource:verifyArithmetic,startedAt});
  assert.equal(report.compilerVersion,'Version 5.9.3');assert.equal(report.targets.length,2);assert.equal(report.cleanupSucceeded,true);
  assert.equal(input.data.files.find(row=>row.path===input.path).source,input.text);assert.equal(result.newNativeAbi,false);assert.equal(result.runtimeExecuted,false);
