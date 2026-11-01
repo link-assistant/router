@@ -567,3 +567,15 @@ a new binary. Original production methods run only when later gated CI executes
 them; all new execution remains UNRUN. This fixture is future actual translated
 method evidence, not a handwritten JS substitute or new coverage permission.
 No parent requirement closes; accounting remains8/70 DRAFTED,62 OPEN.
+
+The persistent backend's independent
+[host-boundary fixture/oracle sources](persistent-url-host-boundaries-20261101.md)
+now retain18 complete native URL canonical/error expectations alongside exact
+portable launcher/operational outputs or explicit narrower-domain refusals.
+They cover terminal numeric DNS/hex/octal/short IPv4, IDNA/backslash refusal,
+operational IPv6/mapped hex words, default ports, decoded secret query names,
+raw unchanged spelling and message boundaries. Actual locked url2.5.8 parser
+oracle joins the existing integration binary; complete Node/Bun-discovered pure
+helper cases retain60-second deadlines. Every new case is UNRUN. Compiled whole
+targets, native loggers, strict TS, full URL domains and source/profile receiving
+remain separate worker obligations. No requirement count or coverage changes.

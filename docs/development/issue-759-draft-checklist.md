@@ -565,3 +565,10 @@ adds independently explicit160 policy cells,480 default/empty/full observations,
 existing native integration target. All execution remains UNRUN. Real translated
 policy methods, complete source/type/producer/self/set/sort admission and shared
 JS/strict TS receiving are still required; no parent closes and8/70,62OPEN stays.
+
+Persistent URL boundary child source receipt: shared18-row independent fixture,
+actual locked native URL parser oracle and complete paired pure-helper cases
+retain exact outputs, canonical/error observations and explicit narrower target
+refusals (`persistent-url-host-boundaries-20261101.md`). Whole compiled
+JS/strict-TS/native logger/profile receiving and full URL/IDNA behavior remain
+OPEN. All execution remains UNRUN; accounting stays8/70 DRAFTED,62 OPEN.
