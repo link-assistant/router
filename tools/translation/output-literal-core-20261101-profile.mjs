@@ -50,7 +50,7 @@ function operation(installed,run){
  try{return withCompleteSourceClosingFence(()=>{check(()=>verify(frame,installed));const result=run(load(frame));if(frame.failed)throw frame.error;return result;},[()=>check(()=>{let failed=false,error;try{verify(frame,installed);}catch(thrown){failed=true;error=thrown;}try{close(frame);}catch(thrown){if(!failed){failed=true;error=thrown;}}if(frame.failed)throw frame.error;if(failed)throw error;})]);}finally{sourceFrame=previous;if(!previous){frame.files.clear();frame.directories.clear();frame.profile=null;}}
  });
 }
-export const withOutputLiteralInstalledSources=run=>operation(true,()=>run());
+export const withOutputLiteralInstalledSources=run=>{requireSynchronousSourceCallback(run);return operation(true,()=>run());};
 function history(profile,row,left,right){const before=profile.sources[left],after=profile.sources[right],value=transportConcreteSourceEquations([{before,after,language:row.language}])[0];if(value.inverse!==before||transportConcreteSyntaxMeta(value.beforeMeta).source!==before||transportConcreteSyntaxMeta(value.afterMeta).source!==after)fail('complete source/CST/inverse differs');return value;}
 function eachEquation(profile,run){
  for(const row of profile.rows){if(row.stages.length===1)run(row,row.stages[0].version,row.stages[0].version,[row.stages[0].profile,row.stages[0].profile]);else for(let at=1;at<row.stages.length;at++)run(row,row.stages[at-1].version,row.stages[at].version,[row.stages[at-1].profile,row.stages[at].profile]);}
