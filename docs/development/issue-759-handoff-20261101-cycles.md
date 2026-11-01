@@ -353,3 +353,22 @@ Archive SHA256 is
 Original modules/archives are unchanged. No resource/speed or complete-sync
 qualification; checklist remains8/70 DRAFTED,62 OPEN. See
 [the source contract](opaque-paired-literal-20261101.md).
+
+## J02 gate-program source case and closure cycle
+
+From `d1d3c96aa`, Root source-reviewed the reusable eight-stage aggregate,
+per-stage checkout/full-SHA verifiers, all13 caller bindings and the existing
+complete structural/mutation cases. Added one complete independent case file
+for the actual aggregate outcomes and all eight actual immutable-SHA programs,
+using an isolated tiny Git cohort, sequential bounded Node children and cleanup.
+The original workflow-policy test file imports it, preserving the original full
+mandatory CI command. No workflow/check/deadline was changed or executed.
+
+Full original/current harness, new case and all14 workflows are retained in
+`source-gate-outcomes-20261101/complete-source-copies.json.gz`, SHA256
+`1b2b1188b9655f77cb5e5ed4f1606413269fa6e00b4292c7954bcff4dc465576` (230,333 raw/46,789 packed bytes).
+The source receipt closes J02 only; current source accounting is now
+**9/70 DRAFTED,61 OPEN**. All tests/programs/Git fixtures remain UNRUN and
+CI/review feedback remains uninspected. J03/J04 and all broader implementation,
+receiving, native outcome, parity, freshness and performance obligations stay
+OPEN. No current executable-function percentage has been measured.

@@ -50,9 +50,9 @@ A later source-only review of existing workflow/partition/audit-case code
 closes J01/J05 too: current accounting is **7/70 DRAFTED, 63/70 OPEN**.
 The earlier 5/70 cycle records are historical; no CI run or policy test was
 executed/inspected to credit these existing source implementations.
-The subsequent D04 template source review closes reusable checkpoint, resume
-handoff and PR forms: current accounting is **8/70 DRAFTED, 62/70 OPEN**.
-This adds written delivery tracking only; it does not credit application coverage
+The subsequent D04 template review and J02 gate-program case-source receipt bring
+current accounting to **9/70 DRAFTED, 61/70 OPEN**; see the checklist and cycle journal.
+These source receipts do not credit application coverage
 or any execution. Earlier 5/70 and 7/70 records remain historical.
 All new inventory tooling/case source remains UNRUN and L01/L02 stay OPEN.
 

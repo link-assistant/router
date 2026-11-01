@@ -28,10 +28,10 @@ written or an estimate of remaining engineering effort. Do not report this as
 drafted work is supported. Every initial status is `OPEN`; existing evidence
 links are review starting points, not closure receipts.
 
-Current source-review accounting (2026-11-01): **8/70 DRAFTED, 62/70 OPEN**.
+Current source-review accounting (2026-11-01): **9/70 DRAFTED, 61/70 OPEN**.
 Closed IDs: D01/D02/D03/D05 (written policy), J01/J05 (existing workflow,
 partition and independent audit-case sources), Q03 (native join emission
-implementation/case source), and D04 (checkpoint/handoff/PR template source). This is an unweighted acceptance-bundle count,
+implementation/case source), D04 (checkpoint/handoff/PR template source), and J02 (same-SHA gate with actual-program outcome case source). This is an unweighted acceptance-bundle count,
 not a code-completion or executable-translation percentage. All current
 verification remains UNRUN/uninspected. Earlier 5/70 and 7/70 entries record
 historical checkpoints; CI-source and delivery-template receipts follow below.
@@ -226,7 +226,7 @@ Starting evidence: [CI partition contract](parallel-javascript-gate.md),
 | ID | Status | Source-draft closure criterion |
 | --- | --- | --- |
 | J01 | [DRAFTED](#j01j05-existing-ci-source-receipts--2026-11-01) | Account for all eight unchanged JavaScript stage IDs/commands and every original matrix member/profile/engine, preserving fail-fast false, deadlines and raw test evidence. |
-| J02 | OPEN | Require success for all JavaScript stages at the same immutable SHA before any Rust job executes; skipped/cancelled/missing work cannot unlock Rust. |
+| J02 | [DRAFTED](#j02-same-sha-gate-and-actual-program-case-source-receipt--2026-11-01) | Require success for all JavaScript stages at the same immutable SHA before any Rust job executes; skipped/cancelled/missing work cannot unlock Rust. |
 | J03 | OPEN | Keep all required Rust CI checks fatal after the JS gate, with native edge/oracle coverage and explicit skipped-work handling; no local Rust invocation or commit-hook Rust tool. |
 | J04 | OPEN | Connect complete forward/reverse/freshness/strict parity/export/receiving and production-case jobs to the original partitions, preserving credentials/platform boundaries and bounded resources. |
 | J05 | [DRAFTED](#j01j05-existing-ci-source-receipts--2026-11-01) | Draft workflow/source-equation/partition audits and positive/negative gate cases for failed/missing/mismatched-SHA JS stages and fatal Rust outcomes; workflow presence alone is not verification. |
@@ -665,3 +665,54 @@ helper is not yet scheduled. Native cases and candidate proposals are not
 counted as executable application translation. No tests, compiler, parser,
 translator, preparer or CI-feedback inspection was performed. None of these
 child source checkpoints closes a whole parent bundle:8/70 DRAFTED,62 OPEN.
+
+
+### J02 same-SHA gate and actual-program case source receipt — 2026-11-01
+
+Source-review baseline: `d1d3c96aa` plus the actual-program cases and complete
+source-copy packet committed with this receipt. Source clauses are DRAFTED;
+all execution remains UNRUN. This is no CI result or Rust-unlock claim.
+
+The scope is all14 current workflow sources: the reusable `javascript-first.yml`
+and its13 callers (`benchmarks`, `bindings`, `delivery`, `docker-build`, `fuzz`,
+`live-tier`, `macos-keychain`, `mutants`, `real-clients`, `release`, `soak`,
+`upgrade-matrix`, `verify-releases`). The gate's exact eight stages each check
+out `inputs.sha` and run the reviewed full-SHA/actual-HEAD verifier. The complete
+aggregate depends on all eight unchanged IDs, runs under `always()` and rejects
+any non-success or missing member. Translation/profile partitions retain their
+full matrices and fail-fast false. Every downstream runner requires the reusable
+JavaScript job and an explicit positive success conjunct. A skipped fixed-nine
+draft caller cannot unlock a downstream runner. Release/base SHA changes require
+a separate complete reusable gate for that exact resolved immutable source.
+
+Concrete implementations: `.github/workflows/javascript-first.yml` and every
+caller above; `scripts/check-js-first-workflows.mjs` (`STAGES`, reviewed
+`shaVerifier`/`aggregateVerifier`, `guarded`/`nestedGuard`, `auditWorkflows`,
+fixed partitions and checkout/source-change checks). Original independent
+mutated-source cases in `scripts/test/check-js-first-workflows.test.mjs` cover
+missing/ignored gates, failure/skipped/cancelled/always bypasses, altered
+aggregate membership, mutable checkout refs and release/base gate drift.
+
+The new complete `scripts/test/js-first-outcome-source.test.mjs` additionally
+drafts execution of the actual checked-in aggregate program against independently
+enumerated eight-stage expectations: all success, every stage's failed,
+cancelled, skipped, timed-out, pending/malformed result, missing stage/result,
+extra stage and malformed JSON. An independent tiny Git cohort drafts positive
+actual-HEAD and missing/malformed/mismatched-SHA cases for each of the eight
+actual verifier programs, including exact checkout and environment bindings.
+All children are sequential, bounded and cleaned; no Rust tool is used. The
+original full workflow case file imports this complete file, so its existing
+mandatory CI command schedules these cases without filtering or changing commands.
+
+Ordered YAML language/repository source substitutions, serialized/reparsed
+CST and complete source inverses remain in the unchanged
+`scripts/prepare-parallel-js-gate.mjs` and its complete independent cases.
+No workflow source was changed for this receipt. The program-case packet retains
+complete original/current harness, full new case and all14 current workflows.
+Application Rust↔JS/TS operation lanes and native behavior oracle source are
+inapplicable to this gate-control row; they remain required by the other rows.
+
+Actual GitHub scheduling, successful full matrices, current freshness, native
+outcomes, branch/ruleset reads and every new case remain deferred. J03/J04 and
+all broader translation/delivery obligations remain OPEN. Current unweighted
+source accounting: **9/70 DRAFTED,61/70 OPEN**. No function coverage follows.

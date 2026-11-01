@@ -1,4 +1,5 @@
 import test from 'node:test';
+import './js-first-outcome-source.test.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
