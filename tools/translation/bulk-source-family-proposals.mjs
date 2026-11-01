@@ -84,3 +84,6 @@ export {visitOpaqueConstantAdoptionSourceEquations} from './opaque-constant-adop
 export {inspectOpaqueNativeCandidates} from './opaque-native-candidates-20261101.mjs';
 export {proposeOpaqueCorpusLiteralInverse} from './opaque-corpus-literal-inverse-20261101.mjs';
 export {visitOpaqueNativeCandidateSourceEquations} from './opaque-native-candidates-20261101-history.mjs';
+
+export {proposeOpaqueCorpusBulkLiteralInverse} from './opaque-corpus-bulk-literal-inverse-20261101.mjs';
+export {visitOpaqueBulkLiteralSourceEquations} from './opaque-bulk-literal-20261101-history.mjs';

@@ -301,3 +301,31 @@ TS, native, freshness and resource qualification remain UNRUN. Six full project
 attempts and complete inverse/CST/copy work may exceed existing deadlines; no
 limit is raised and no speed/fit claim is made. Current source counts remain
 8/70 DRAFTED,62 OPEN; no executable-function percentage has been measured.
+
+## Batched corpus literal inverse source cycle
+
+The previous52-path native candidate/inverse draft is committed as `4dec5eca6`.
+Root continues alone. A complete copied inverse now handles 1–4096 changed
+constant-cell/index target literals in one source operation. Each independently
+joins to actual adopted origin and original physical Rust token. Same-slot
+agreement deduplicates; conflicts/overlap/ambiguous or stale source refuse.
+One original capture plus one changed capture retains six complete project
+attempts, exact whole-target reproduction, unchanged actual census identities
+and full physical Rust/paired target CST/inverses. This is an unmeasured source
+call structure, not a speed qualification.
+
+The full copied receiving harness keeps the original60s/20s deadlines,
+64MiB disk, complete Git/compiler/native cohort, raw streams and closing/cleanup.
+Independent full case source covers two cells in both JS and TS, all nine
+header cells in JS, and unchanged/unrelated target refusals. No original API,
+case, archive or snapshot was replaced.
+
+The complete new source-copy archive is97,825 raw/15,834 packed bytes, SHA256
+`85934b9e283b1f6398e3e5233a655903b2a4a9b71059d34f15bf016a0585cbb0`;
+its source-author hash is
+`4a9eb3e94ef0469e9e7a4a69113c36ef27dfad79856d21e60b43c28847c15f1f`.
+Two original/successor implementations, four full prerequisite cases and the
+full new case are retained. All execution remains UNRUN, CI feedback uninspected;
+no maximum-batch RSS/deadline fit claim, no arbitrary-edit or full-sync claim.
+Checklist remains8/70 DRAFTED,62 OPEN. See
+[the source contract](opaque-bulk-literal-20261101.md).

@@ -1,0 +1,25 @@
+// Complete copied receiving cases extended with independent multi-cell expectations. UNRUN.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {performance} from 'node:perf_hooks';
+import {receiveOpaqueBulkLiterals} from '../opaque-bulk-literal-20261101-receiving.mjs';
+import {ownershipCompiler} from '../js-to-rust/vendor/module-syntax.mjs';
+const limits={timeout:60000,concurrency:false};
+const headers=['id','issued_at','expires_at','revoked','requests','tokens','reserved','rpm','scope'];
+function wholeHeaderCells(source,language,values){
+ const ts=ownershipCompiler(),file=ts.createSourceFile(language==='TypeScript'?'whole.mts':'whole.mjs',source,ts.ScriptTarget.Latest,true,language==='TypeScript'?ts.ScriptKind.TS:ts.ScriptKind.JS),found=[];assert.equal(file.parseDiagnostics.length,0);
+ function visit(node){if(ts.isArrayLiteralExpression(node)&&node.elements.length===headers.length&&node.elements.every((row,at)=>ts.isStringLiteral(row)&&row.text===headers[at]))found.push(node);ts.forEachChild(node,visit);}visit(file);assert.equal(found.length,1,'one actual complete emitted header array required');const array=found[0];let changed=source;for(const [ordinal,value]of [...values].sort((a,b)=>b[0]-a[0])){const node=array.elements[ordinal];changed=changed.slice(0,node.getStart(file))+JSON.stringify(value)+changed.slice(node.end);}return changed;
+}
+for(const language of ['JavaScript','TypeScript'])test('actual full '+language+' two distinct header cells map back to physical Rust and reproduces both complete targets',limits,t=>{
+ const startedAt=performance.now(),first=receiveOpaqueBulkLiterals(t,{operation:'inspect'},{startedAt});assert.equal(first.report.cleanupSucceeded,true);assert.equal(first.packet.ok,true,JSON.stringify(first.packet.error));const baseline=first.packet.result.targetPhases.find(row=>row.phase==='adopted-project'),key=language==='JavaScript'?'javascript':'typescript',source=wholeHeaderCells(baseline[key],language,[[0,'identifier'],[8,'permission']]),second=receiveOpaqueBulkLiterals(t,{operation:'bulk-literal-inverse',submitted:{language,source}},{startedAt});assert.equal(second.report.cleanupSucceeded,true);assert.equal(second.packet.ok,true,JSON.stringify(second.packet.error));const result=second.packet.result;
+ assert.equal(result[key],source);assert.equal(result.selections.length,2);assert.equal(result.nativeEdits.length,2);assert.ok(result.selections.every(row=>row.kind==='actual-constant-initializer-cell'));assert.equal(result.rustEdits.length,1);const native=result.rustEdits[0];assert.equal(native.path,'rust/src/token_report.rs');assert.ok(native.after.includes('"identifier"'));assert.ok(native.after.includes('"permission"'));assert.equal(native.history.inverse,native.before);assert.equal(result.projectAttemptCount,6);assert.equal(result.baselinePasses,1);assert.equal(result.changedPasses,1);assert.equal(result.sourceInstalled,false);assert.equal(result.runtimeExecuted,false);assert.equal(result.arbitraryEditedTargetsSupported,false);assert.deepEqual(result.ruleTrace.map(row=>row.phase),['language','language','repository']);assert.equal(result.originalWholeProject.sourceFiles,result.changedWholeProject.sourceFiles);
+});
+test('unrelated target structure and unchanged-target inverses are actual receiving failures',limits,t=>{
+ const startedAt=performance.now(),first=receiveOpaqueBulkLiterals(t,{operation:'inspect'},{startedAt});assert.equal(first.packet.ok,true,JSON.stringify(first.packet.error));const source=first.packet.result.targetPhases.find(row=>row.phase==='adopted-project').javascript;
+ const same=receiveOpaqueBulkLiterals(t,{operation:'bulk-literal-inverse',submitted:{language:'JavaScript',source}},{startedAt});assert.equal(same.packet.ok,false);
+ const changed=receiveOpaqueBulkLiterals(t,{operation:'bulk-literal-inverse',submitted:{language:'JavaScript',source:source+'\nexport const unrelated=1;\n'}},{startedAt});assert.equal(changed.packet.ok,false);
+});
+
+test('all nine header cells share one pair of fresh complete project passes',limits,t=>{
+ const startedAt=performance.now(),first=receiveOpaqueBulkLiterals(t,{operation:'inspect'},{startedAt});assert.equal(first.packet.ok,true,JSON.stringify(first.packet.error));const baseline=first.packet.result.targetPhases.find(row=>row.phase==='adopted-project').javascript,labels=['identifier','issued','expires','is_revoked','request_count','token_count','reservation','per_minute','permission'],source=wholeHeaderCells(baseline,'JavaScript',labels.map((value,at)=>[at,value])),second=receiveOpaqueBulkLiterals(t,{operation:'bulk-literal-inverse',submitted:{language:'JavaScript',source}},{startedAt});assert.equal(second.packet.ok,true,JSON.stringify(second.packet.error));const result=second.packet.result;assert.equal(result.javascript,source);assert.equal(result.nativeEdits.length,9);assert.equal(result.rustEdits.length,1);assert.equal(result.projectAttemptCount,6);for(const label of labels)assert.ok(result.rustEdits[0].after.includes(JSON.stringify(label)));assert.equal(second.report.cleanupSucceeded,true);
+});

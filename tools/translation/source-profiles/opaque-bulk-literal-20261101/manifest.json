@@ -1,0 +1,14 @@
+{
+  "schema": "opaque-bulk-literal-source-checkpoint-v1",
+  "archive": "tools/translation/source-profiles/opaque-bulk-literal-20261101/complete-source-copies.json.gz",
+  "sha256": "85934b9e283b1f6398e3e5233a655903b2a4a9b71059d34f15bf016a0585cbb0",
+  "rawBytes": 97825,
+  "packedBytes": 15834,
+  "copyRows": 2,
+  "currentCases": 1,
+  "prerequisites": 4,
+  "sourceHistorySha256": "4a9eb3e94ef0469e9e7a4a69113c36ef27dfad79856d21e60b43c28847c15f1f",
+  "executionEvidence": "UNRUN",
+  "sourceAuthority": false,
+  "semanticAuthority": false
+}

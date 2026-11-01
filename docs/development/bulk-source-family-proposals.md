@@ -159,3 +159,10 @@ all eight same-SHA JS gates before fatal Rust CI. Do not execute any example or
 installation during the current bulk-drafting phase.
 
 Actual-policy source details: [policy nominal producer](policy-nominal-producer-20261101.md).
+
+The [batched whole-corpus literal inverse](opaque-bulk-literal-20261101.md)
+exports `proposeOpaqueCorpusBulkLiteralInverse` and
+`visitOpaqueBulkLiteralSourceEquations`. It composes all selected physical native
+literal edits before one fresh complete changed-project capture, retaining exact
+whole-target reproduction and both target inverses. Original single-edit APIs
+remain unchanged. All receiving and resource qualification remains UNRUN.
