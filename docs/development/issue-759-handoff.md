@@ -490,3 +490,34 @@ large temporary compiler tree. The strict old replay/pure sources stay byte-exac
 Complete full-source histories and actual changed-source/second-edit/stale/refusal
 case sources are drafted, all UNRUN. Lazy discovery, old Git/archive availability,
 compiled-output/general legacy adoption and receiving remain OPEN.
+
+Next complete source batches after published9de01240e:
+
+- `c79ff31bf2514ccb713c900f50d3e64e9a416ec2`: complete streamed CST profile
+  visitor and actual receiving copy. All62 original equations/inverses/traces
+  reach the consumer; bounded source images/indices remain. Materialization
+  follows full proof consumption and closing. Fit/throughput/receiving UNRUN.
+- `c296143b3d5e058a8416cfdae6237d57addce943`: concurrent actual owned-outcome
+  peers, independent original inverses/native/canonical reissues, authored-peer
+  protection and fresh installer. One whole unit/no application dependencies;
+  broader projects/topology/native conflicts stay OPEN. The independent native
+  oracle is included in the existing policy integration target, not a new binary.
+- `8ca35946ef71f0558b937a1e3a5d1ffcc03f2319`: qualified static output routing,
+  same-store carrier consumption, explicit synchronous backend/memory adapters,
+  full source/caller proposal and changed-target inverse. Profile archive pin
+  `4b68940b98a9a6cca1e988ebee7e65a1058367df04d870492e07f972eca63848`.
+  Persistent production host logging/locks/redaction/rotation and full original
+  async/stdin caller admission remain OPEN. `0034fdd21f5bef5dda097c5d0ba7095a26b41ce2`
+  adds pre-invocation async/proxy callback refusal without changing its archive.
+- `06c7ec13d`: historical generated ownership across changed current source,
+  exact known-stale quarantine and authored/unknown preservation, plus preflight
+  compressed dependencies and full original/copy histories.
+
+These batches are integrated through the stable family API. All execution is
+UNRUN, no new coverage percentage is available, and source accounting stays
+8/70 DRAFTED,62 OPEN. Active next workers: copied record collections/owned field
+inverse; complete streaming forward/matrix output ownership under original
+512MiB/1GiB/count domains; real persistent logger backend using the already
+existing Python3 OS-lock dependency. Root remains sole publisher and owns the
+serialized commit slot. No local Rust, tests, compiler/translator/preparer trials
+or CI/review feedback inspection is authorized.

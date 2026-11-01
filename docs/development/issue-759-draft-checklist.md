@@ -530,3 +530,18 @@ receiving/freshness scope remain OPEN under L04/S03/S04/Q02/E03. No Rust applica
 semantics changed, so a separate native behavior oracle is inapplicable to this
 ownership orchestration; actual old/current producer cases remain required.
 Accounting remains8/70 DRAFTED,62 OPEN.
+
+Stream/owned-peer/output child source receipts: `c79ff31bf` supplies the complete
+CST-equation stream and actual post-closing receiving installer without dropping
+source/inverse/trace payloads; `c296143b3` supplies real independent owned-outcome
+peer reconciliation and fresh installer with whole native/runtime/Cargo/baseline
+closures; `8ca35946e` supplies qualified same-store static output routing and
+actual changed-target inverse under explicit matching synchronous backends.
+`0034fdd21` preserves that public callback's pre-invocation refusal. Their complete
+contracts/cases are `source-profile-visitor-20261101.md`,
+`owned-peer-reconcile-20261101.md` and `output-literal-core-20261101.md`.
+Q02/E03/C05/S01/S02/S03/O04/F03/V03/T04 and all broader parent clauses stay OPEN,
+including native logger/platform/provider behavior, source envelope qualification,
+production adoption, multiunit/other profiles and full freshness. All execution
+remains UNRUN. The owned native oracle joins an existing integration binary;
+no original case/command/workload/deadline is reduced. Counts stay8/70 and62OPEN.

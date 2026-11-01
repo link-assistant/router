@@ -167,3 +167,6 @@ fn actual_duration_formatter_retains_i64_extrema_and_integer_day_boundaries() {
 // Reuse this existing integration target rather than linking another binary.
 #[path = "oracles/credential_expiry_edges_20261101.rs"]
 mod credential_expiry_edges_20261101;
+
+#[path = "oracles/owned-peer-reconcile-20261101.rs"]
+mod owned_peer_reconcile_20261101;
