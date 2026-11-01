@@ -426,3 +426,16 @@ retain original failures when a descriptor/directory close also throws, includin
 falsy/frozen primaries; sole close failures remain fatal. All prior source/type,
 identity, poisoning, limits and complete cases stay intact. This is partial
 Q01/S03/C04 source evidence only, with every new case UNRUN and no CI inspection.
+
+The layout/ownership batch is committed at
+`f673ea659cb73f357230258b8368f0097f26b820` (36 reviewed paths). Native TS and
+JS-first generators now use fresh exact producer ownership and preserve unknown
+quarantines, including rollback races and primitive/frozen primary failures.
+The fixed legacy replay includes integrity-pinned offline dependency source;
+actual source/output-root CLIs, runtime packaging and strict TS compile closure
+are drafted. See [the full limits](layout-ownership-bulk-20261101.md), including
+fixed Git/archive/consumed-cohort requirements and unrun copied packed receiving.
+The stable family hub exposes the exact plan/install APIs. All broad layout,
+ownership, synchronization and export requirements remain OPEN. The same worker
+is drafting a separate positive owned-unit concurrent-peer reconciliation next;
+no other worker may commit until explicitly assigned the serialized slot.

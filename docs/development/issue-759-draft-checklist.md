@@ -476,3 +476,20 @@ future template users must fill actual values without importing those results.
 D04 closes at source level only. Current accounting is **8/70 DRAFTED, 62/70
 OPEN**, an unweighted requirement count. All implementation/verification and
 scope obligations in the other rows remain; no executable coverage follows.
+
+### Later source-review batches — 2026-11-01
+
+The count remains **8/70 DRAFTED, 62/70 OPEN**. These are concrete child receipts;
+no whole requirement is closed by a narrow operation family or tooling API.
+
+| Child source scope | Complete draft evidence | Remaining parent scope |
+| --- | --- | --- |
+| Exact producer-owned layout/runtime/package outputs | `f673ea659`; actual native TS and JS-first generators, closed ownership domains, fresh original-byte/mode installers and unknown-quarantine retention, fixed-cohort replay, receiving-root CLI/package/runtime closure, complete original and new case sources in `layout-ownership-bulk-20261101.md`. | L03/L04/L05/S03/S04/E03 still require all producers/entrypoints, complete original source histories, copied packed receiving/resource/platform/current-output qualification. Fixed old source/archive requirements may refuse legacy migration; no universal adoption or durable atomic visibility is claimed. |
+| Deferred complete-cycle feedback reporting | `6ac4d749f`, `275ca7e2f`; collector, actual GitHub adapter, every observed rerun attempt, complete raw logs/ZIP/source workflows, stable closing captures and explicit eleven-member repair-worklist mapping; full independent cases and source contract. | Q05/J04/T05 stay OPEN for all actual workflow inventories/workloads/artifact domains, complete raw/deadline interpretation, shared-cause diagnosis and current-SHA receiving. No API/CI response or collector was executed. |
+| Actual credential expiry/scoped-clock oracle | `65bb797f2`; independent decimal-string fixture and actual production function calls, absent/empty/nonempty refresh token distinctions, signed millisecond boundaries and nested normal/unwind clock restoration, included in the existing native integration target. | O01/O05/P01/T01/T02/T03/T04 remain OPEN; actual emitted JS/TS/core/meta/native inverse adoption and extreme timestamp arithmetic still need implementation/evidence. No extra Rust target or new executable credit. |
+| Five source close-primary repairs | `74d9a2469`; complete four-file source history, original and current full CSTs/inverses, exact preservation of primitive/frozen primaries, actual descriptor/directory fault-case source. | Q01/S03/C04 remain OPEN across remaining source/caller/parser/closing/receiving domains. Original source guards and whole cases/limits remain; all new cases are UNRUN. |
+
+Source review, immutable byte histories and case declarations establish no runtime
+or translation percentage. All newly drafted execution remains UNRUN; CI feedback
+is not inspected during drafting. Newly added paths must join the inventory's
+future reconciliation instead of inheriting the 1,512-path baseline's review.

@@ -97,3 +97,10 @@ no repository CI response accessed: [workflow run filters and attempts](https://
 [attempt-scoped jobs and plain log redirects](https://docs.github.com/en/rest/actions/workflow-jobs),
 and [artifact metadata and ZIP download](https://docs.github.com/en/rest/actions/artifacts).
 This documentation review is not a live API or receiving test.
+
+`tools/translation/test/ci-feedback-cycle-20261101.test.mjs` imports the entire
+independent control file, preserving every case under both unchanged complete
+forward Node/Bun schedules. Each control has a 60-second case deadline. It uses
+in-memory adapters only; importing the CLI does not invoke it or access CI.
+No workflow command, member or selection was changed. Scheduling source is not
+evidence that either engine has executed or passed the cases.

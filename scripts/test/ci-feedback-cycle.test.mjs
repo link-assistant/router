@@ -25,7 +25,7 @@ function fixture(){
   };
   return {run,job,artifact,api,calls,options:{repository:'link-assistant/router',sha,workflowIds:[3],api}};
 }
-test('retains complete raw bytes, both metadata fences, actual attempt and all failed steps',async()=>{
+test('retains complete raw bytes, both metadata fences, actual attempt and all failed steps',{timeout:60000},async()=>{
   const f=fixture(),retained=new Map();
   const result=await collectFeedbackCycle({...f.options,onEvidence(name,bytes){retained.set(name,bytes);}});
   assert.equal(result.manifest.completeEvidence,true);
@@ -41,11 +41,11 @@ test('retains complete raw bytes, both metadata fences, actual attempt and all f
   assert.deepEqual([...retained.keys()],[...result.files.keys()]);
   for(const [,args]of f.calls)assert.ok(args.signal instanceof AbortSignal);
 });
-test('attempt-scoped jobs need no undocumented run_attempt response field',async()=>{
+test('attempt-scoped jobs need no undocumented run_attempt response field',{timeout:60000},async()=>{
   const f=fixture();delete f.job.run_attempt;
   const {manifest}=await collectFeedbackCycle(f.options);assert.equal(manifest.runs[0].attempt,1);
 });
-test('all old attempts and failed streams remain captured after a successful rerun',async()=>{
+test('all old attempts and failed streams remain captured after a successful rerun',{timeout:60000},async()=>{
   const f=fixture();f.run.run_attempt=2;f.run.conclusion='success';
   f.api.runAttempt=async args=>({...clone(f.run),run_attempt:args.attempt,conclusion:args.attempt===1?'failure':'success'});
   f.api.listJobs=async args=>({total_count:1,jobs:[{...clone(f.job),id:50+args.attempt,run_attempt:args.attempt,conclusion:args.attempt===1?'failure':'success'}]});
@@ -54,26 +54,26 @@ test('all old attempts and failed streams remain captured after a successful rer
   assert.ok(files.has('runs/17/attempt-1/jobs/51.log'));assert.ok(files.has('runs/17/attempt-2/jobs/52.log'));
   assert.equal(manifest.failures[0].attempt,1);
 });
-test('failed, cancelled and skipped jobs are retained instead of silently successful',async()=>{
+test('failed, cancelled and skipped jobs are retained instead of silently successful',{timeout:60000},async()=>{
   for(const conclusion of ['failure','cancelled','skipped','timed_out','action_required','neutral']){
     const f=fixture();f.job.conclusion=conclusion;
     const {manifest}=await collectFeedbackCycle(f.options);
     assert.equal(manifest.failures[0].conclusion,conclusion);
   }
 });
-test('unfinished or missing expected workflows refuse without cancelling anything',async()=>{
+test('unfinished or missing expected workflows refuse without cancelling anything',{timeout:60000},async()=>{
   const f=fixture();f.run.status='in_progress';f.run.conclusion=null;
   await assert.rejects(collectFeedbackCycle(f.options),/every discovered workflow/);
   const g=fixture();g.options.workflowIds=[999];
   await assert.rejects(collectFeedbackCycle(g.options),/Missing workflow 999/);
 });
-test('SHA and attempt drift refuse before an apparently green job can qualify',async()=>{
+test('SHA and attempt drift refuse before an apparently green job can qualify',{timeout:60000},async()=>{
   const f=fixture();f.job.head_sha='0'.repeat(40);
   await assert.rejects(collectFeedbackCycle(f.options),/Job identity/);
   const g=fixture();g.job.run_attempt=2;
   await assert.rejects(collectFeedbackCycle(g.options),/Job identity/);
 });
-test('closing rerun, job or artifact changes refuse and already retained evidence survives',async()=>{
+test('closing rerun, job or artifact changes refuse and already retained evidence survives',{timeout:60000},async()=>{
   for(const kind of ['runs','jobs','artifacts']){
     const f=fixture(),seen=[];let count=0;
     const method={runs:'listRuns',jobs:'listJobs',artifacts:'listArtifacts'}[kind];
@@ -87,7 +87,7 @@ test('closing rerun, job or artifact changes refuse and already retained evidenc
     assert.ok(seen.includes('runs/17/attempt-1/jobs/51.log'));
   }
 });
-test('expired and inaccessible evidence is explicitly missing and does not abort remaining downloads',async()=>{
+test('expired and inaccessible evidence is explicitly missing and does not abort remaining downloads',{timeout:60000},async()=>{
   const f=fixture();f.artifact.expired=true;
   f.api.jobLog=async()=>{const error=new Error('Access denied');error.status=403;throw error;};
   const {manifest}=await collectFeedbackCycle(f.options);
@@ -95,13 +95,13 @@ test('expired and inaccessible evidence is explicitly missing and does not abort
   assert.ok(manifest.missing.some(row=>row.status===403));
   assert.ok(manifest.missing.some(row=>row.reason==='Expired artifact'));
 });
-test('byte bounds and unexpected download errors stay fatal, preserving exact primary object',async()=>{
+test('byte bounds and unexpected download errors stay fatal, preserving exact primary object',{timeout:60000},async()=>{
   const f=fixture(),primary={message:'transport failed'};f.api.jobLog=async()=>{throw primary;};
   await assert.rejects(collectFeedbackCycle(f.options),error=>error===primary);
   const g=fixture();g.artifact.size_in_bytes=64*1024*1024+1;
   await assert.rejects(collectFeedbackCycle(g.options),/Advertised artifact exceeds/);
 });
-test('pagination refuses inconsistent counts, duplicates and short incomplete pages',async()=>{
+test('pagination refuses inconsistent counts, duplicates and short incomplete pages',{timeout:60000},async()=>{
   for(const shape of ['duplicate','short','count']){
     const f=fixture();
     f.api.listJobs=async()=>({total_count:shape==='count'?-1:2,
@@ -109,7 +109,7 @@ test('pagination refuses inconsistent counts, duplicates and short incomplete pa
     await assert.rejects(collectFeedbackCycle(f.options),/Duplicate|truncated|Malformed/);
   }
 });
-test('external abort and synchronous evidence-write errors preserve their primary reason',async()=>{
+test('external abort and synchronous evidence-write errors preserve their primary reason',{timeout:60000},async()=>{
   const f=fixture(),controller=new AbortController(),reason=new Error('Operator interruption');controller.abort(reason);
   await assert.rejects(collectFeedbackCycle({...f.options,signal:controller.signal}),error=>error===reason);
   const primary=Object.freeze({why:'disk unavailable'});
@@ -126,7 +126,7 @@ function completeManifest(){
   return {bindings,manifest:{schema:'router-ci-feedback-cycle-v1',sha,
     runs:[{runId:17,attempt:2,jobs}],failures:[],missing:[]}};
 }
-test('all eleven fixed stage members are needed and a report never grants Rust admission',()=>{
+test('all eleven fixed stage members are needed and a report never grants Rust admission',{timeout:60000},()=>{
   const f=completeManifest();assert.equal(f.bindings.length,11);
   const report=classifyFeedbackCycle(f.manifest,f.bindings);
   assert.deepEqual(report.absent,[]);assert.equal(report.allExpectedMembersCaptured,true);
@@ -135,7 +135,7 @@ test('all eleven fixed stage members are needed and a report never grants Rust a
   assert.deepEqual(incomplete.absent,[{stage:'lint',member:null}]);
   assert.ok(incomplete.reopenRequirementIds.includes('J01'));
 });
-test('explicit failed-member grouping reopens affected requirements and preserves raw references',()=>{
+test('explicit failed-member grouping reopens affected requirements and preserves raw references',{timeout:60000},()=>{
   const f=completeManifest(),binding=f.bindings.find(row=>row.stage==='translation'&&row.member==='tests');
   f.manifest.runs[0].jobs.find(row=>row.id===binding.jobId).conclusion='cancelled';
   const failure={jobId:binding.jobId,rawLog:'runs/17/attempt-1/jobs/123.log'};f.manifest.failures.push(failure);
@@ -144,14 +144,14 @@ test('explicit failed-member grouping reopens affected requirements and preserve
   assert.ok(report.reopenRequirementIds.includes('F01'));
   assert.match(report.groups[0].cause,/unclassified/);
 });
-test('unbound failures and missing logs remain visible, even with otherwise green gate bindings',()=>{
+test('unbound failures and missing logs remain visible, even with otherwise green gate bindings',{timeout:60000},()=>{
   const f=completeManifest();f.manifest.failures.push({jobId:999,conclusion:'failure'});
   f.manifest.missing.push({path:'missing.zip'});
   const report=classifyFeedbackCycle(f.manifest,f.bindings);
   assert.equal(report.unassignedFailures.length,1);assert.equal(report.evidenceGaps.length,1);
   assert.ok(report.reopenRequirementIds.includes('T05'));
 });
-test('duplicated job, matrix member and mismatched attempt bindings refuse',()=>{
+test('duplicated job, matrix member and mismatched attempt bindings refuse',{timeout:60000},()=>{
   const f=completeManifest();
   assert.throws(()=>classifyFeedbackCycle(f.manifest,[...f.bindings,f.bindings[0]]),/Duplicate stage/);
   const reused=clone(f.bindings);reused[1].jobId=reused[0].jobId;
@@ -159,7 +159,7 @@ test('duplicated job, matrix member and mismatched attempt bindings refuse',()=>
   const drift=clone(f.bindings);drift[0].attempt=1;
   assert.throws(()=>classifyFeedbackCycle(f.manifest,drift),/Uncaptured gate job/);
 });
-test('download redirect strips credentials and preserves bytes, refusing unreviewed hosts',async()=>{
+test('download redirect strips credentials and preserves bytes, refusing unreviewed hosts',{timeout:60000},async()=>{
   const calls=[],adapter=createGitHubFeedbackAdapter({token:'private-test-token',fetchImpl:async(url,options)=>{
     calls.push({url:String(url),options});return calls.length===1?
       new Response(null,{status:302,headers:{location:'https://example.blob.core.windows.net/logs/signature'}}):
@@ -172,7 +172,7 @@ test('download redirect strips credentials and preserves bytes, refusing unrevie
     {status:302,headers:{location:'https://unreviewed.invalid/logs'}})});
   await assert.rejects(forbidden.jobLog({repository:'owner/repo',jobId:1,maxBytes:1024}),/Unrecognized/);
 });
-test('stream byte bounds are enforced even if content length is absent',async()=>{
+test('stream byte bounds are enforced even if content length is absent',{timeout:60000},async()=>{
   const adapter=createGitHubFeedbackAdapter({token:'x',fetchImpl:async()=>new Response('12345')});
   await assert.rejects(adapter.jobLog({repository:'owner/repo',jobId:1,maxBytes:4}),/Response byte bound/);
 });

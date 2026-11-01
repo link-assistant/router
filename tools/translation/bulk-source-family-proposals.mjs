@@ -27,3 +27,4 @@ export {withForwardedFormatArgumentsCustody,forwardedFormatArgumentsCustodyFacts
 export {proposeNominalCopyCollectionProfile} from './nominal-copy-collection-20261101-profile.mjs';
 export {compileNominalCopyCollections,readNominalCopyCollectionMeta,invertNominalCopyCollectionTarget} from './nominal-copy-collection-20261101.mjs';
 export {planDurableNativeLeafMove,applyDurableNativeLeafMove,recoverDurableNativeLeafMove} from './native-leaf-move-recovery-20261101.mjs';
+export {planExactProducerOutputs,installExactProducerOutputs} from './layout-ownership-bulk-20261101.mjs';
