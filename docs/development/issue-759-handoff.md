@@ -10,8 +10,8 @@ no tests, compilation, trial translation or CI-feedback inspection are authorize
 - Draft PR: https://github.com/link-assistant/router/pull/775
 - Branch: `issue-772-translator-throughput`
 - Integration worktree: `.worktrees/issue-759-storage-repair-20261021`
-- Current coordinated source checkpoint: the commit containing this handoff; implementation baseline `89f1bc3aec686fd13bbc4516006f2d1fe522c7f0`. The PR description records the exact pushed HEAD.
-- Previous published checkpoint: `28d3bf11b1ec066c79daa967aba67d7d520667e2`, approximately17:42 UTC on2026-11-01. The current source push is prepared around20:20 UTC.
+- Current coordinated source checkpoint: the commit containing this handoff; implementation baseline `2c3995c574a1182e81995802b7b186837329ba75`. The PR description records the exact pushed HEAD.
+- Previous published checkpoint: `b23c63ca0cd4f5d0de8aaab11f83ad425a48be6b`, approximately20:17 UTC on2026-11-01. The current source push is prepared around22:10 UTC.
 - Earlier published checkpoint before the stop/resume cycle: `19074cc30`.
 - Subsequent checkpoints included in this handoff: `4895f51aa` (join kernel),
   `db901a224` (complete additive caller/interpreter/inverse profiles), and
@@ -61,7 +61,7 @@ The objective remains full automated Rust ↔ serialized/reparsed CST/meta ↔
 JavaScript and TypeScript translation and synchronization for Router, with
 physical `rust/src`, `js/src` and `ts/src` trees, reusable compatibility cores,
 ordered extensible substitution rules and JavaScript-first CI. It is unfinished.
-The complete bulk source draft is also unfinished. No current executable
+The latest [ordered-map core](ordered-text-map-20261102.md), [identifier composition](opaque-composed-identifiers-20261102.md) and [mixed numeric inverse](opaque-mixed-edits-20261102.md) add unverified implementation and independent case source; their explicit remaining caller/owner/behavior obligations stay OPEN. The complete bulk source draft is also unfinished. No current executable
 coverage percentage or full parity claim is supported.
 
 All implementation/case additions in these latest source batches are UNRUN.

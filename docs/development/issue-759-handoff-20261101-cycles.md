@@ -1,13 +1,13 @@
 # Continuation source journal after the 08:57 UTC checkpoint
 
 Current coordinated publication: the commit containing this section, with
-implementation baseline `89f1bc3aec686fd13bbc4516006f2d1fe522c7f0`, prepared
-around20:20 UTC on2026-11-01. The PR description records the exact pushed HEAD.
-Previous published checkpoint `28d3bf11b1ec066c79daa967aba67d7d520667e2` was
-pushed around17:42 UTC. Current source accounting: **11/70 DRAFTED,59 OPEN**.
+implementation baseline `2c3995c574a1182e81995802b7b186837329ba75`, prepared
+around22:10 UTC on2026-11-01. The PR description records the exact pushed HEAD.
+Previous published checkpoint `b23c63ca0cd4f5d0de8aaab11f83ad425a48be6b` was
+pushed around20:17 UTC. Current source accounting: **11/70 DRAFTED,59 OPEN**.
 Root alone continues; no execution or CI feedback inspection. Earlier journal
 entries retain their historical SHAs/counts. Next normal publication is around
-23:20 UTC, after a coherent batch; source commits remain no more than six hours
+01:10 UTC on2026-11-02, after a coherent batch; source commits remain no more than six hours
 apart.
 
 ## Earlier cycles and retained observations
@@ -909,3 +909,20 @@ inverses. Packet SHA25653c3d3625cf896f97aaf012275812838bddbdb0b97524d8c85ee4d44e
 no measured speedup, coverage or synchronization completion is claimed. Numeric
 composition and full production/owner/behavior/freshness/receiving scope remain
 OPEN.11/70 DRAFTED,59 OPEN; Root alone. Normal source push remains around23:20UTC.
+
+## Whole mixed identifier/numeric source inverse batch
+
+After2c3995c57, Root drafted identifier/literal/operator factoring and native
+source composition for any nonempty subset of binding, helper and supported
+numeric edits. An exact complete original numeric inverse copy adds DATA-only
+span/candidate exports and reuses its full first-stage selection body. Four
+whole source copies retain both phases, current actual imports and all inverses;
+the fixed actual whole-program path still uses six projects, with nine for the
+three-family actual sample. Existing arithmetic/division pairing, source poison,
+closers, deadlines and resource limits remain. See
+[the mixed contract](opaque-mixed-edits-20261102.md). Twelve JS and two native
+cases remain UNRUN, including strict/import and stale-peer source. Edited
+behavior stays explicitly unqualified. Packet SHA256619f8bd4526b42fb5b865818c6dbaa4d4c2e39eff5bee53f811d68bc234de112 retains324655 decoded/55043 packed bytes. No parser/translator/preparer, compiler,
+test, benchmark, Rust tool or CI feedback execution was used. Earlier archives
+and public hub remain unchanged. Full production/type/owner/behavior/freshness/
+receiving/synchronization scope remains OPEN.11/70 DRAFTED,59 OPEN; Root alone.
