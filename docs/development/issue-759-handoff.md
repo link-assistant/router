@@ -896,3 +896,40 @@ flat write cleanup closing, exact never-indexed owned bootstrap and fatal UTF8
 listing refusals. The read-only flat review findings are tracked with its owner.
 No tests, local Rust/compilers/translator/preparer experiments or CI feedback
 inspection are authorized/executed. Accounting remains8/70 DRAFTED,62 OPEN.
+
+Next approved source scopes (all uncommitted/UNRUN): scalar successor changes
+exactly seven VIRTUAL paths: translation_json_fields_core.rs, matching native
+source/contracts/runtime/.d.mts, Root singleton binding, and owned-json-flow.
+Existing qualified native field/Option/callback receipts are reused; four real
+value-level wrappers replace no standard-owner proof. Early owning-field flow
+still checks the entire function under the actual completed private receipt,
+then rejoins the genuine complete program before emission. Actual token-row
+local closures and lazy two-arm Option lowering remain separately designed.
+The changed Rust leaf needs its own CI native overlay/oracle qualification.
+
+Constant-index work is NEW helper/case/design only. Its proposed split is an
+actual typed Copy footprint during body checking, real sourceLinks/CTFE value
+proof at Host775 before Root779, and independent late close after CTFE/static
+finalization798 before returning a checked program. Root per-body flow runs
+even earlier; no pending-membership bypass may replace its footprint checks.
+Full nativeChecked-to-roundTrip/flatten bridging must be exact. Virtual hook
+census/profile construction is not yet approved; physical modules stay intact.
+
+The forward ownership batch additionally may change exactly the physical
+vendor/module-syntax.mjs loader to expose private actual-load-origin DATA with
+complete original/authored source history. Captured resolver/CJS origin and
+actual TypeScript source identity must replace guessed current-env/sys paths;
+metadata failure leaves old compiler API behavior unchanged but cannot silently
+qualify a default root. Shared external TS roots remain allowed without a
+second receiving install. No other vendor/private edit is authorized. The four
+flat source-review fixes and complete generic post-cleanup source closing are
+being drafted; partial late recovery must never be reported as full rollback.
+
+Next periodic publication is prepared from committed source through780e9914e
+plus this handoff update. It includes the six reviewed checkpoint commits after
+724a1426, while in-progress forward/scalar/constant drafts remain unstaged.
+At08:54 UTC the filesystem reported3.1GiB free; no local build/install/test/
+translator/preparer/index-image execution occurred. Source writing, small
+snapshots and SCM are the only task-owned writes. The push/PR description must
+record the exact published SHA afterward; CI/review stays uninspected. All new
+verification UNRUN,8/70 DRAFTED,62 OPEN, no functional-coverage claim.
