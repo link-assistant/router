@@ -1,0 +1,21 @@
+{
+  "schema": "literal-arguments-core-combined0713-source-profile-v1",
+  "archive": "complete-sources-and-successors.json.gz",
+  "archiveSha256": "24bc915925554b70238503d98354016720152530b2cb9fa7cf9667e3bd7a5785",
+  "archiveBytes": 656934,
+  "rawBytes": 2556470,
+  "paths": [
+    "tools/translation/extensions/iterators.mjs",
+    "tools/translation/extensions/clone-source-body.mjs",
+    "tools/translation/extensions/host-contracts.mjs",
+    "tools/translation/project.mjs",
+    "rust/src/translation_core.rs",
+    "tools/translation/router-core-source-data.mjs",
+    "tools/translation/extensions/source-links.mjs",
+    "tools/translation/owned-json-flow.mjs",
+    "tools/translation/text-host-assets.mjs",
+    "tools/translation/type-layout.mjs",
+    "tools/translation/nominal-copy-collection-20261101.mjs",
+    "tools/translation/literal-arguments-core-20261101-inverse.mjs"
+  ]
+}
