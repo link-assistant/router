@@ -39,6 +39,12 @@ Local commit hooks must not invoke Rust tools or automatically remove build cach
 
 ## Coordination and publication
 
+The latest 2026-11-01 instruction winds down the three current drafting workers.
+All three have finished and handed off; Root now continues alone. Do not spawn,
+replace or restart workers without a new explicit user instruction. This
+supersedes the earlier three-worker allowance below. Keep source-only drafting,
+serialized commits, one publisher, no local execution and careful disk use.
+
 For the 2026-11-01 bulk-draft resume, the user explicitly authorizes up to three
 new GPT-6.1-sol subagents at medium effort for separate source-drafting batches.
 This supersedes the older work-alone restriction below; do not restart the

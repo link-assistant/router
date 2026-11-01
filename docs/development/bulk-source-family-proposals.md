@@ -77,6 +77,17 @@ See [corpus contract](constant-index-corpus-20261101.md) and
 [scoped consumer contract](scoped-carrier-adoption-20261101.md). The two compiler
 profiles are still separate; exporting both does not compose or qualify them.
 
+The subsequent `inspectOpaqueConstantProductionAdoption` explicitly composes
+the complete nine-stage opaque driver with the genuine constant188 flat
+compiler, leaving both preceding APIs unchanged.
+`visitOpaqueConstantAdoptionSourceEquations` retains five complete driver/
+result/receiver/target-checker/Git-helper copy equations and six whole case/
+vector prerequisites. Its receiving case source now requires the actual whole
+row export against all nine vectors in JavaScript and separately strict TS.
+See [combined source contract](opaque-constant-adoption-20261101.md).
+Everything remains UNRUN; full coverage, fit and whole-corpus edited inverse
+remain open. This composition is not an installation or parity receipt.
+
 Applicable translation/source-preparation families retain their declared
 `language` then `repository`
 sequences and serialized/reparsed CST/meta/source checks. Operation descriptions,

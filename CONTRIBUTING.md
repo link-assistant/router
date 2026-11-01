@@ -39,8 +39,8 @@ run Rust tools locally for this task.
 Use [the numbered checklist](docs/development/issue-759-draft-checklist.md) and
 [handoff](docs/development/issue-759-handoff.md) for source closure receipts;
 partial family drafts and lexical anchors are not completed requirements.
-The user's 2026-11-01 update allows three GPT-6.1-sol medium drafting agents;
-serialize commits, keep one publisher and run no CPU-intensive local workloads.
+The latest 2026-11-01 update winds down all three workers; they have finished.
+Root continues alone: do not restart workers; keep one publisher and no local execution.
 
 Current source-only resource extensions include shared collection iteration,
 read-only captures, owning and settled signatures, actual standard filesystem

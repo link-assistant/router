@@ -3,7 +3,10 @@
 Root's subsequent [scoped consumer integration](scoped-carrier-adoption-20261101.md)
 now implements the seven consumer modules and nine-stage source sequence. The
 current source archive and pin are recorded in
-`tools/translation/source-profiles/opaque-production-adoption-20261101/manifest.json`.
+`tools/translation/source-profiles/opaque-production-adoption-20261101/case-custody-successor-manifest-20261101.json`.
+The preceding `manifest.json` and its complete333b3c46 source archive remain
+immutable. The successor checks actual case files through a separate ordinary
+file/source lease, preserving the compiler observer's exclusion of test input.
 The body below preserves the complete initial worker checkpoint and its handoff
 as historical context. Its seven-stage status, path count, pins and authoring
 recipe are not the current integration census. All execution remains UNRUN.

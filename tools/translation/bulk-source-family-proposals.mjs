@@ -79,3 +79,5 @@ export {translateConstantIndexCorpusFlatProject,inspectConstantIndexCorpus} from
 export {visitConstantIndexCorpusSourceEquations} from './constant-index-corpus-20261101-history.mjs';
 export {inspectOpaqueProductionAdoption} from './opaque-production-adoption-20261101.mjs';
 export {visitOpaqueAdoptionSourceHistory} from './opaque-production-adoption-20261101-source-history.mjs';
+export {inspectOpaqueConstantProductionAdoption} from './opaque-constant-adoption-20261101.mjs';
+export {visitOpaqueConstantAdoptionSourceEquations} from './opaque-constant-adoption-20261101-history.mjs';

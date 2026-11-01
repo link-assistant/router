@@ -2,8 +2,8 @@
 
 The main [handoff](issue-759-handoff.md) retains all earlier instructions and
 checkpoints. This continuation keeps both files below 1,000 lines. The latest
-published SHA is `1c830933ff769ab4ebf46e2593ad3353c8646d62` on draft PR775,
-pushed at approximately11:12 UTC with its source-only PR description updated.
+published SHA is `3c861efe8fececb0b78bfd07b069c3a14441aacf` on draft PR775,
+pushed at approximately12:42 UTC with its source-only PR description updated.
 The prior08:57 checkpoint remains in the complete Git history.
 Source accounting remains8/70 DRAFTED,62 OPEN; function coverage is unmeasured.
 Every new test/compilation/translation/preparation/receiving/performance result
@@ -11,13 +11,14 @@ is UNRUN. CI/review statuses, logs, artifacts and feedback remain uninspected.
 No local Rust command, parser/translator experiment, dependency installation or
 index-image operation is authorized. Only source writing and SCM continue.
 
-Three GPT-6.1-sol medium workers have disjoint source scopes. Root remains the
-sole push/PR owner and serializes exact-path commits. Next normal source push
-is approximately14:00 UTC or an earlier coherent batch. The earlier filesystem
+All three GPT-6.1-sol medium workers finished their current source scopes.
+Root now continues alone and remains the sole push/PR owner, serializing exact
+path commits. Do not restart workers. Next normal source push
+is approximately15:40 UTC or an earlier coherent batch. The earlier filesystem
 observation reported3.1GiB free at08:54 UTC; keep source snapshots small and
 perform no build, dependency or receiving-workspace copies during drafting.
 
-Active source batches (committed receipts below remain authoritative):
+Earlier worker scopes (later committed receipts below remain authoritative):
 
 - Forward ownership: active writers/collectors/sessions/preparers, complete
   original/current equations and optional bootstrap, selected-reader/corpus/
@@ -220,3 +221,40 @@ helper entry; unknown locals never inherit parameter roles. JSON selection
 skips complete excluded callback regions before querying the outer ledger.
 All source/CST inverses, whole caller/runtime behavior and resource fit still
 require deferred execution. No successful current-function count is asserted.
+
+## Subsequent single-coordinator composition
+
+Root drafted the new `opaque-constant-adoption-20261101` lane as five complete
+source copies over the committed nine-stage driver/result, constant receiver/
+target checker and original native Git helper. It uses the actual genuine constant188 flat compiler for both
+original/adopted attempts, with all old scalar and constant APIs preserved.
+The receiving target checker now invokes the independent nine-vector helper on
+the actual whole `token_report.row` module export in JS and separately strict
+TS. Missing targets/row or unsupported inputs cannot become a passing case.
+The new archive SHA256 is
+`d98c06090ea51e32cc17f5aaba34dfd1891214146663007b757d92484e9a1b8b`,
+139,900 raw/23,974 packed bytes. Its source-author hash is
+`308c3a0e0b013a074e742f1823598f2fa47d253237d046e2bfa4f9cf06f44077`.
+See the [combined contract](opaque-constant-adoption-20261101.md). Complete
+source/CST/inverse history and original limits remain; all behavior/fit/native/
+strict-TS/receiving/freshness is UNRUN. Whole-corpus edited inverse, full runtime
+and current inventory remain open; no acceptance count changes.
+
+Source review found the receiving fixture needed a complete compiler/profile
+Git cohort in addition to the original native-only cohort. The new helper adds
+that exact complete source commit before the child starts, preserving original
+native-only APIs, commands/deadlines and all disk reservations. Six complete
+case/vector prerequisites are copied; their source bytes are checked through
+a separate read-only case-source lease, since the real compiler input observer
+deliberately excludes tests. Native/compiler input domains are not widened.
+The older opaque source author now uses that lease via a complete successor
+archive SHA256
+`726cb9f3011e480ac0dcbc82aecff538de606340b571613650751b0a4a0ec3fe`
+(2,063,649 bytes), preserving the complete333b3c46 archive/self and initial
+seven-stage history. Current source-author hash is
+`45480003ac99b42788e3ee4c6cd6ea0d112d0e9275985add8bc5a7a6f4c07727`.
+The41-path current source checkpoint includes independent custody cases and
+the current solo-work instruction in AGENTS.md/CONTRIBUTING.md; no
+test/compiler/parser/translator/receiving process ran. All workers remain done;
+Root continues alone. The latest published SHA remains3c861efe8 until the next
+coherent source push; do not inspect CI/review feedback during drafting.
