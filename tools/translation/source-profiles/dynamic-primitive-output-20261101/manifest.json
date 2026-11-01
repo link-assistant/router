@@ -1,0 +1,13 @@
+{
+  "schema": "owned-eager-primitive-output-complete-successor-v1",
+  "archive": "complete-sources.json.gz",
+  "sha256": "4d3d5f4ff3bceb05378f85f08993fea89170380c39c71134b0ac5a34fc8f57a3",
+  "rawBytes": 3623000,
+  "packedBytes": 751860,
+  "rows": 31,
+  "additions": 53,
+  "resources": 3,
+  "versions": 131,
+  "sourceInstalled": false,
+  "runtimeExecuted": false
+}
