@@ -587,3 +587,21 @@ replaced repeated dependency scans with one visit per edge and bounded ordered
 queues, without running a benchmark or experiment. R01–R05 remain OPEN for full
 application registration/adoption; count remains10/70 DRAFTED,60 OPEN. All
 workers remain finished; no dependencies, tests, compilers or Rust were started.
+
+
+## Boolean inverse/adoption domain alignment
+
+Root source review found that checked body-literal inverse candidates included
+Booleans while the optional output-owner adopter rejected them. The shared
+adapter now permits only true/false token variations with the complete same
+skeleton. Boolean variants stay outside migration literal pairing because the
+backend itself adds false flags. The strict original-owner API is unchanged.
+Two separate whole case sources exercise actual token-row/account defaults,
+complete source inverses, unchanged backend flags and identifier refusal.
+
+The [source receipt](opaque-boolean-owner-adoption-20261102.md) records the
+immutable predecessor and complete successor archive1d642d453c2797394359c7baeac77b0aef7c0933b6b3dedec6a6c320034579ab
+(209,364 decoded/37,288 packed bytes). All earlier cases/snapshots are intact;
+current custody deduplicates equal path/full-source rows and refuses conflicts.
+No source, owner or compiler verdict is cached. Everything remains UNRUN and
+CI/review feedback uninspected;10/70 DRAFTED,60 OPEN remains unchanged.
