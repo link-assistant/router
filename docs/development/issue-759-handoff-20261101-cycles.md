@@ -892,3 +892,20 @@ The new root edge does not qualify historical bank pins. CONTRIBUTING now
 explicitly requires independent edited-behavior expectations, retaining original
 vectors on their baseline.11/70 DRAFTED,59 OPEN; no coverage increment claimed.
 Root remains alone. Remote b23c63ca0 and next normal23:20 UTC push persist.
+
+## Composed binding/callee source inverse batch
+
+After83d0a526f, Root drafted full paired identifier factoring, unchanged original
+family validators, literal-independent actual fn owner data for native binding
+candidates, disjoint original Rust span composition and the fixed six-project
+whole inverse. Both authored projections must regenerate exactly; overlapping
+claims and non-identifier changes refuse. A full nine-attempt sampling/receiving
+copy retains original limits, deadlines, closers and private checks. The strict
+verifier keeps original vectors on the baseline; edited behavior stays unqualified.
+See [the composition contract](opaque-composed-identifiers-20261102.md). Thirteen
+JS and two native case sources are UNRUN. Six complete source equations retain
+original candidate/inverse/verifier/receiver/whole-case/hub copies and full CST
+inverses. Packet SHA25653c3d3625cf896f97aaf012275812838bddbdb0b97524d8c85ee4d44edb4fdd0 retains219824 decoded/43976 packed bytes. No execution or CI feedback inspection was used;
+no measured speedup, coverage or synchronization completion is claimed. Numeric
+composition and full production/owner/behavior/freshness/receiving scope remain
+OPEN.11/70 DRAFTED,59 OPEN; Root alone. Normal source push remains around23:20UTC.

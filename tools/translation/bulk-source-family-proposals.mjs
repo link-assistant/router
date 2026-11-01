@@ -128,3 +128,6 @@ export {proposeOpaqueFunctionAssociationReceiverSource} from './opaque-body-func
 export {countedLiteralSubstitutionRule} from './counted-literal-substitution-20261102.mjs';
 
 export {proposeOpaquePairedCalleeInverse,proposeOpaqueTargetCalleeData,proposeOpaqueNativeCalleeData,prepareOpaqueCalleeReceivingSample,proposeOpaqueCalleeSourceCopies} from './opaque-body-callee-20261102.mjs';
+export {proposeOpaquePairedComposedIdentifierInverse,proposeOpaqueComposedIdentifierTargetData,proposeOpaqueComposedIdentifierNativeData,prepareOpaqueComposedIdentifierReceivingSample,proposeOpaqueComposedIdentifierSourceCopies} from './opaque-composed-identifiers-20261102.mjs';
+export {proposeOrderedTextMapSourceCopies} from './ordered-text-map-20261102-source-copies.mjs';
+export {ORDERED_TEXT_MAP_CONTRACTS,emitOrderedTextMapDeclarations} from './ordered-text-map-20261102-contracts.mjs';
