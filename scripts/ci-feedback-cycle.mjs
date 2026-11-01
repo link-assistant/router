@@ -40,7 +40,7 @@ export async function collectFeedbackCycle({repository,sha,workflowIds,api,signa
   requireValue(SHA.test(sha),'An exact full SHA is required');
   requireValue(Array.isArray(workflowIds)&&workflowIds.length>0&&workflowIds.length<=64&&
     workflowIds.every(positive)&&new Set(workflowIds).size===workflowIds.length,'Explicit unique workflow IDs are required');
-  for(const method of ['listRuns','listJobs','listArtifacts','jobLog','artifact','workflowSource'])
+  for(const method of ['listRuns','listJobs','listArtifacts','jobLog','artifact','workflowSource','runAttempt'])
     requireValue(typeof api?.[method]==='function',`Missing adapter ${method}`);
   requireValue(typeof onEvidence==='function','Evidence writer must be callable');
   const started=now(),controller=new AbortController(),files=new Map(),missing=[],failures=[];
@@ -97,7 +97,7 @@ export async function collectFeedbackCycle({repository,sha,workflowIds,api,signa
     const rows=await list('listJobs',{repository,runId:run.id,attempt:run.run_attempt},
       'jobs',LIMITS.jobs,label);
     for(const row of rows)requireValue(row.run_id===run.id&&row.head_sha===sha&&
-      row.run_attempt===run.run_attempt&&row.status==='completed'&&TERMINAL.has(row.conclusion)&&
+      (row.run_attempt===undefined||row.run_attempt===run.run_attempt)&&row.status==='completed'&&TERMINAL.has(row.conclusion)&&
       typeof row.name==='string'&&Array.isArray(row.steps),'Job identity/attempt/completion differs');
     return rows;
   }
@@ -123,37 +123,54 @@ export async function collectFeedbackCycle({repository,sha,workflowIds,api,signa
     const initial=await runs('opening/runs'),runReceipts=[];
     const sourcePaths=new Set(['.github/workflows/javascript-first.yml',...initial.map(run=>run.path)]);
     for(const sourcePath of sourcePaths)await download('workflowSource',{sha,sourcePath},`source/${sourcePath}`);
+    let attempts=0;
     for(const run of initial){
-      const prefix=`runs/${run.id}/attempt-${run.run_attempt}`;
-      const firstJobs=await jobs(run,`${prefix}/opening/jobs`);
-      const firstArtifacts=await artifacts(run,`${prefix}/opening/artifacts`);
-      for(const job of firstJobs){
-        await download('jobLog',{jobId:job.id},`${prefix}/jobs/${job.id}.log`);
-        if(job.conclusion!=='success')failures.push({runId:run.id,attempt:run.run_attempt,
-          jobId:job.id,name:job.name,conclusion:job.conclusion,
-          failedSteps:job.steps.filter(step=>step.conclusion&&step.conclusion!=='success').map(step=>({...step})),
-          rawLog:`${prefix}/jobs/${job.id}.log`});
-      }
+      requireValue(run.run_attempt<=256&&attempts+run.run_attempt<=256,'Complete attempt count bound exceeded');
+      attempts+=run.run_attempt;
+      const artifactPrefix=`runs/${run.id}`;
+      const firstArtifacts=await artifacts(run,`${artifactPrefix}/opening/artifacts`);
       for(const artifact of firstArtifacts){
-        const target=`${prefix}/artifacts/${artifact.id}.zip`;
+        const target=`${artifactPrefix}/artifacts/${artifact.id}.zip`;
         if(artifact.expired){missing.push({path:target,reason:'Expired artifact'});continue;}
         requireValue(artifact.size_in_bytes<=LIMITS.blobBytes,'Advertised artifact exceeds bound');
         await download('artifact',{artifactId:artifact.id},target);
       }
-      const lastJobs=await jobs(run,`${prefix}/closing/jobs`);
-      const lastArtifacts=await artifacts(run,`${prefix}/closing/artifacts`);
-      requireValue(same(sortedJobs(firstJobs),sortedJobs(lastJobs)),'Jobs changed during capture');
+      for(let attempt=1;attempt<=run.run_attempt;attempt++){
+        const prefix=`runs/${run.id}/attempt-${attempt}`;
+        async function attemptState(label){
+          current();const raw=await api.runAttempt({repository,runId:run.id,attempt,signal:controller.signal});
+          retain(`${prefix}/${label}/attempt.json`,textBytes(raw));
+          requireValue(raw.id===run.id&&raw.head_sha===sha&&raw.workflow_id===run.workflow_id&&
+            raw.run_attempt===attempt&&raw.path===run.path&&raw.status==='completed'&&
+            TERMINAL.has(raw.conclusion),'Original workflow attempt identity/completion differs');return raw;
+        }
+        const openingAttempt=await attemptState('opening');
+        const firstJobs=await jobs(openingAttempt,`${prefix}/opening/jobs`);
+        for(const job of firstJobs){
+          await download('jobLog',{jobId:job.id},`${prefix}/jobs/${job.id}.log`);
+          if(job.conclusion!=='success')failures.push({runId:run.id,attempt,
+            jobId:job.id,name:job.name,conclusion:job.conclusion,
+            failedSteps:job.steps.filter(step=>step.conclusion&&step.conclusion!=='success').map(step=>({...step})),
+            rawLog:`${prefix}/jobs/${job.id}.log`});
+        }
+        const lastJobs=await jobs(openingAttempt,`${prefix}/closing/jobs`);
+        const closingAttempt=await attemptState('closing');
+        requireValue(same(sortedJobs(firstJobs),sortedJobs(lastJobs)),'Jobs changed during capture');
+        requireValue(same(sortedRuns([openingAttempt]),sortedRuns([closingAttempt])),'Attempt changed during capture');
+        runReceipts.push({runId:run.id,attempt,workflowId:run.workflow_id,
+          conclusion:openingAttempt.conclusion,jobs:firstJobs.map(job=>({id:job.id,name:job.name,conclusion:job.conclusion})),
+          artifacts:firstArtifacts.map(artifact=>({id:artifact.id,name:artifact.name,expired:artifact.expired}))});
+      }
+      const lastArtifacts=await artifacts(run,`${artifactPrefix}/closing/artifacts`);
       requireValue(same(sortedArtifacts(firstArtifacts),sortedArtifacts(lastArtifacts)),'Artifacts changed during capture');
-      runReceipts.push({runId:run.id,attempt:run.run_attempt,workflowId:run.workflow_id,
-        conclusion:run.conclusion,jobs:firstJobs.map(job=>({id:job.id,name:job.name,conclusion:job.conclusion})),
-        artifacts:firstArtifacts.map(artifact=>({id:artifact.id,name:artifact.name,expired:artifact.expired}))});
     }
     const closing=await runs('closing/runs');
     requireValue(same(sortedRuns(initial),sortedRuns(closing)),'Runs changed during capture');
     const manifest={schema:'router-ci-feedback-cycle-v1',repository,sha,
       expectedWorkflowIds:[...workflowIds],capturedAt:new Date(now()).toISOString(),
       observedWindowMs:now()-started,runs:runReceipts,failures,missing,
-      completeEvidence:missing.length===0,allRunsSuccessful:initial.every(run=>run.conclusion==='success'),
+      completeEvidence:missing.length===0,allCapturedAttemptsSuccessful:runReceipts.every(row=>row.conclusion==='success'),
+      allRunsSuccessful:initial.every(run=>run.conclusion==='success'),
       // Deliberately false: a generic reporter cannot authenticate stage jobs,
       // effective workflow source, receipts or actual mandatory command execution.
       rustAdmission:false,verificationQualified:false,

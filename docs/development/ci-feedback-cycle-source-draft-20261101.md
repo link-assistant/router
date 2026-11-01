@@ -20,13 +20,21 @@ Collection retains unmodified paginated API responses, exact-SHA workflow YAML
 (including the reusable JavaScript gate), complete job log bytes and artifact
 ZIP bytes. All opening/closing run metadata, actual run attempts, job metadata,
 step outcomes, artifact identities/expiry and complete raw bytes are kept.
+Every numbered attempt from one through the observed latest attempt is captured
+through its attempt-specific REST endpoint, including earlier failed attempts
+after a successful rerun. Opening/closing attempt metadata is retained too.
+The job response need not contain a `run_attempt` field: the requested attempt
+endpoint supplies that context, and any field present must agree. Older failed
+streams remain visible as historical unassigned failures when current gate
+bindings identify the latest attempt; a reviewer explicitly reconciles their
+resolution rather than silently dropping them.
 Pagination validates advertised totals, duplicates, short pages and count bounds.
 A closing capture must reproduce the opening run/job/artifact identity and
 status vector. A new run, rerun, status change or artifact replacement refuses.
 This is an observed stable interval, not a promise that a future workflow cannot
 start after capture. Recollect a new cycle after publishing a new SHA or rerun.
 
-The capture limit is five minutes, 100 pages per list, 256 runs, 4,096 jobs and
+The capture limit is five minutes, 100 pages per list, 256 runs and 256 total attempts, 4,096 jobs and
 4,096 artifacts per run, 64 MiB per raw component and 128 MiB aggregate, counting
 both metadata fences and the final manifest. Crossing a bound refuses rather
 than truncating or omitting evidence. Expired artifacts and HTTP 403/404/410
@@ -83,3 +91,9 @@ abort reasons, explicit eleven-member mapping, duplicate jobs, missing members,
 unassigned failures, credential-free redirects and streamed byte bounds. All
 cases are UNRUN; no network request, fixture, Node/Bun process, parser, compiler,
 translator, preparer or CI read was executed to draft these files.
+
+API contracts were reviewed against the public GitHub REST documentation, with
+no repository CI response accessed: [workflow run filters and attempts](https://docs.github.com/en/rest/actions/workflow-runs),
+[attempt-scoped jobs and plain log redirects](https://docs.github.com/en/rest/actions/workflow-jobs),
+and [artifact metadata and ZIP download](https://docs.github.com/en/rest/actions/artifacts).
+This documentation review is not a live API or receiving test.

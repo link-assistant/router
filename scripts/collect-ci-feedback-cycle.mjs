@@ -59,6 +59,7 @@ export function createGitHubFeedbackAdapter({token,fetchImpl=fetch}={}){
       need(bytes.length===result.size&&bytes.toString('base64')===encoded,'Truncated workflow source');
       return bytes;
     },
+    runAttempt(args){return request(`${repo(args.repository)}/actions/runs/${id(args.runId)}/attempts/${id(args.attempt)}`,args);},
     listRuns(args){need(/^[a-f0-9]{40}$/.test(args.sha),'Invalid SHA');return request(`${repo(args.repository)}/actions/runs?head_sha=${args.sha}&${pagination(args)}`,args);},
     listJobs(args){return request(`${repo(args.repository)}/actions/runs/${id(args.runId)}/attempts/${id(args.attempt)}/jobs?${pagination(args)}`,args);},
     listArtifacts(args){return request(`${repo(args.repository)}/actions/runs/${id(args.runId)}/artifacts?${pagination(args)}`,args);},
