@@ -1,0 +1,9 @@
+{
+  "schema": "router-independent-policy-collection-cases-v1",
+  "overrideAliases": ["codex:claude", "CLAUDE-CODE:CHATGPT", "CODEX:ANTHROPIC", "claude:openai-codex", "\u0085CODEX : ANTHROPIC\u0085"],
+  "sortedOverrides": ["claude:codex", "codex:claude"],
+  "invalidOverrides": ["", "codex:", ":claude", " :claude", "codex:claude:extra", "codex:*", "*:claude", "cursor-agent:claude", "agent:codex", "grok:qwen", "qwen-code:gemini"],
+  "proxyAccepted": ["codex", " CODEX ", "\u0085CODEX\u0085", "\u2003codex\u00a0"],
+  "sortedProxies": ["codex"],
+  "invalidProxies": ["", "*", "agent", "claude-code", "cursor", "codex:claude", "ＣＯＤＥＸ", "\ufeffcodex", "\u180ecodex"]
+}

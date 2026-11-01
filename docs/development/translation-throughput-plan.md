@@ -117,3 +117,41 @@ deterministic forward/reverse freshness, receiving-export qualification and
 all same-SHA JavaScript stages followed by fatal Rust CI. The practical route is
 to extend and qualify a shared family once, generate all of its uses and both
 directions, and measure complete callers before selecting the next family.
+
+
+## Source-only prioritization after the 2026-11-01 batches
+
+The current user instruction defers tests, compiler/parser/translator/preparer
+execution, experiments and CI-feedback inspection until the complete source
+draft exists. The earlier execution advice in this document is deferred, not
+permission to run a diagnostic during drafting. Keep all full cases/deadlines
+and measurement requirements for the later authorized phase.
+
+Source inspection establishes the next prerequisite order without a new
+executable coverage claim:
+
+- Self-crate alias resolution already exists in both genuine binding resolver
+  variants, with original origins, ordered visibility, inherited extern prelude,
+  shadows and cfg/unknown refusals. Existing self-alias source cases and owned
+  migration selectors cover it. The observed `link_assistant_router::` spellings
+  in 47 source files prioritize checking reuse, not rewriting alias admission.
+- Scoped `println!`/`eprintln!`/`print!` spellings occur in 64 source files.
+  Original `operation_output` definitions and root `#[macro_use]` order matter.
+  Existing root-invocation expansion does not complete function-body ownership,
+  hygiene or output transport. Draft actual scoped body expansion while keeping
+  `format_args!`, `Arguments` lifetimes and scoped write/logging state explicit.
+- Scalar Rust iterator migration is drafted, but inspected real policy usages
+  depend on nominal Copy enums/records, set-backed self fields and trait/method
+  sorting. Reuse actual DataChecker/Copy certification source owners next.
+  `SubscriptionOverride` is a record containing two enums, not a unit enum;
+  `ClientKind` and `SubscriptionProvider` also carry separate producer duties.
+- Initial exact leaf relocation is drafted. Crash recovery must freshly derive
+  before/after semantics from committed inputs, durably order source changes
+  and retain unknown replacements. Recovery receipts classify source state;
+  they cannot become saved semantic or artifact ownership verdicts.
+
+These counts are lexical source prioritization observations, not function
+counts, complete scope inventories, new diagnostics or runtime evidence. All
+current new implementation/case source remains UNRUN. Keep source-reviewed
+bundles, actually qualified functions, full native feature parity, freshness,
+receiving and measured performance as separate dimensions.

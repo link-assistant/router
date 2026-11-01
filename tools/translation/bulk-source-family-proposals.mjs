@@ -22,3 +22,4 @@ export {translateEditedScalarLinearKernel,readEditedScalarLinearKernelMeta} from
 export {planNativeLeafModuleMove,applyNativeLeafModuleMove} from './native-module-move-20261101.mjs';
 export {translateCrossModuleOwnedProjectionProject,translateCrossModuleOwnedCoreReaderProjectionProject} from './cross-module-owned-projection-20261101.mjs';
 export {proposeNativeIteratorAdoption} from './native-iterator-adoption-20261101.mjs';
+export {proposeScopedOutputBindingSources,translateScopedOutputBindingProject,synchronizeScopedOutputBindingExpandedProject} from './scoped-output-binding-20261101.mjs';

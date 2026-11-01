@@ -38,6 +38,9 @@ qualification has not been executed. This entrypoint broadens no semantic domain
 
 | `proposeNativeIteratorAdoption` | Complete conservative Rust scalar-slice function modules with identity collect or capture-free copied map/filter chains become one fused lazy-per-element checked scalar loop. Retains full original Rust/CST and canonical native/paired inverses through the genuine private bridge compiler. | This is an explicit bounded-contract migration: original std/Vec/primitive/Iterator/Copy/borrowed/crate owners and release-arithmetic equivalence are unqualified. Actual policy methods still require nominal aggregates, set/self, producer, trait-sort and caller closure; no production coverage is credited. |
 
+
+| `proposeScopedOutputBindingSources` / `translateScopedOutputBindingProject` / `synchronizeScopedOutputBindingExpandedProject` | Fresh whole-source graph/views and ordered textual macros select genuine original function-body invocations. Complete original/expanded CST equations precede original project meta/paired emission. Explicit edited targets use the original whole-project expression inverse over the expanded source universe. | Unknown namespace/configuration/producers, generated root effects, function-local or introduced-name hygiene and nested format_args refuse. Source restoration is distinct from expanded-domain semantic inverse; original macro argument/definition inverse and production output transport remain unsupported. |
+
 Each family retains its separately declared `language` then `repository`
 sequences and serialized/reparsed CST/meta/source checks. Operation descriptions,
 proposal flags, matching names and source hashes cannot substitute for private
@@ -64,6 +67,7 @@ Review the complete family contracts and independent case sources:
 - [Guarded native leaf relocation](native-module-move-20261101.md).
 - [Cross-module owned/core-reader composition](cross-module-owned-projection-20261101.md).
 - [Rust-origin scalar iterator contract adoption](native-iterator-adoption-20261101.md).
+- [Original scoped body macro proposals](scoped-output-binding-20261101.md).
 - [Complete trace assertion source histories](bulk-rule-trace-20261101.md).
 
 The existing compiler export selector includes eligible top-level translation

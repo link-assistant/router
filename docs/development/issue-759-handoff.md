@@ -311,6 +311,11 @@ The subsequent local source drafts add the following complete narrow lanes:
   no actual production function is credited. Actual policy record/enum/set/self/
   sort dependencies stay explicit. The edited scalar inverse's four-rule
   trace assertion is corrected without execution.
+- `627757cf7`: additive ordered function-body macro source proposals, original
+  graph/view/raw invocation custody, whole source/CST histories and expanded
+  project checks. Explicit JS/TS edits compose the existing real expression
+  inverse over expanded Rust source; original macro-argument/definition inverse
+  and production format_args/Arguments/output transport stay unsupported.
 
 The stable family entrypoint now exposes these operations. They are additive
 opt-in lanes; general source domains, default production dispatch, exported
@@ -322,13 +327,28 @@ with complete immutable originals and explicit old-producer successor equations;
 no case was executed and every behavioral obligation remains unchanged.
 
 The current workers draft genuine nominal Copy collection prerequisites,
-review actual self-crate alias resolution, and draft durable interrupted leaf-move
-recovery. Initial iterator migration and owned cross-module composition are
+private original-AST custody through nested format argument forwarding, and
+durable interrupted leaf-move recovery. Initial iterator migration and owned cross-module composition are
 committed; no worker may execute or publish.
+Source inspection confirmed existing genuine self-crate alias support, so that
+worker completed the scoped body-macro foundation instead of duplicating alias
+admission, and now drafts genuine original-AST format forwarding custody. The [throughput plan](translation-throughput-plan.md)
+records the actual 47-file alias and 64-file output candidate observations as
+prioritization only. Nominal Copy, macro/output semantics and durable recovery
+remain separate source prerequisites, never a current production gain.
 Root serializes commits, reviews integrations and remains the sole publisher.
 No tests, source preparation, compilation or CI-feedback inspection may run.
 The current count is 8/70 after CI-source and delivery-template review; partial
 translation batches never close broader requirements.
+
+
+Root also drafts [actual policy collection edge oracle source](production-policy-collection-edges-20261101.md)
+against real SubscriptionEntitlementPolicy APIs, plus reusable independently
+expected native-package JSON vectors. These cover alias deduplication, order,
+owned Vec/Copy result independence, Unicode whitespace, invalid later rows and
+protocol precedence. They are CI-only native source and do not qualify JS/TS
+policy translation; T01/T02/T03/P03 and nominal/collection rows remain OPEN.
+No local Rust tools, formatter, tests or Unicode experiments ran.
 
 ## Ledgers
 
