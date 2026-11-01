@@ -190,3 +190,33 @@ The audit remains frozen at its documented earlier baseline; do not silently
 update its measured Git population. All current tests/compilation/translation,
 receiving, freshness and fit remain UNRUN; CI/review remains uninspected.
 No acceptance row closes:8/70 DRAFTED,62 OPEN; no current function percentage.
+
+All three current workers finished and handed over their complete source scopes.
+Root now works alone; do not restart workers. Root committed the stable constant/
+captured APIs as `a11e38eed`, the10 scoped-helper/canonical files as `6d5d2d808`
+and the13-path constant corpus/receiving adapter as `1754d29c4`. The latter
+archive SHA256 is `82df0991d3138788debf9e207626097657baa6b07c2e77cfff409b2706d9f516`.
+Root then authored the seven scoped consumers, four opaque-only selector call
+changes and explicit nine-stage view/driver ordering. See the
+[current integration contract](scoped-carrier-adoption-20261101.md).
+Complete initial seven-stage source images/history are preserved alongside
+the current source equations; do not overwrite a predecessor with new bytes.
+The current opaque lane still compiles scalar170; composition with the separately
+drafted constant188 corpus adapter remains open. No actual row/runtime/strict-TS
+vector, full inverse, synchronization or export qualification has executed.
+The latest bounded filesystem read at12:30UTC reported9.3GiB available; no build,
+dependency or receiving-workspace copy was created. All execution remains UNRUN.
+
+The coherent scoped/opaque integration source batch has90 exact checkpoint
+paths,20 current runtime/prerequisite source rows including its self-author,
+five independent case/support sources, six retained captured-parent raw fields
+and16 complete initial checkpoint equations. Its full source archive is
+1,019,661 bytes, SHA256
+`333b3c46bba39ec7e681f87c6bb54f700cd53a2874a6ddb5bed90ff36ddbf33e`;
+the current source-history module SHA256 is
+`85a4ff8e71d6c3f35afa178bc4467e25f41563326c41461a0264cda2dff96b22`.
+Known unsupported scoped syntax delegates to original selector domains before
+helper entry; unknown locals never inherit parameter roles. JSON selection
+skips complete excluded callback regions before querying the outer ledger.
+All source/CST inverses, whole caller/runtime behavior and resource fit still
+require deferred execution. No successful current-function count is asserted.

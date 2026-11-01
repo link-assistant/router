@@ -75,3 +75,7 @@ export {visitCapturedOptionSourceHistory} from './local-closure-option-captured-
 export {proposeConstantIndexProfile,visitConstantIndexProfileSourceEquations,withConstantIndexProfileInstalledSources} from './constant-index-profile-20261101-profile.mjs';
 export {translateConstantIndexProfileProject,compileConstantIndexProfileProject,readConstantIndexProfileMeta} from './constant-index-profile-20261101-project.mjs';
 export {invertConstantIndexProfileTarget} from './constant-index-profile-20261101-inverse.mjs';
+export {translateConstantIndexCorpusFlatProject,inspectConstantIndexCorpus} from './constant-index-corpus-20261101.mjs';
+export {visitConstantIndexCorpusSourceEquations} from './constant-index-corpus-20261101-history.mjs';
+export {inspectOpaqueProductionAdoption} from './opaque-production-adoption-20261101.mjs';
+export {visitOpaqueAdoptionSourceHistory} from './opaque-production-adoption-20261101-source-history.mjs';

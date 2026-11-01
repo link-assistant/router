@@ -66,6 +66,17 @@ Additional stable source entries preserve the earlier candidate API:
 Contracts: [captured source candidates](local-closure-option-captured-20261101.md)
 and [constant-index profile](constant-index-profile-20261101.md).
 
+`translateConstantIndexCorpusFlatProject`, `inspectConstantIndexCorpus` and
+`visitConstantIndexCorpusSourceEquations` expose the separate genuine constant188
+flat corpus/copy lane. `inspectOpaqueProductionAdoption` and
+`visitOpaqueAdoptionSourceHistory` expose the complete original/adopted scalar170
+lane with the explicit nine-stage scoped source composition. Both preserve
+whole source/meta/refusals; neither is an installer, complete corpus edited
+inverse, verified production coverage or proof that the original envelopes fit.
+See [corpus contract](constant-index-corpus-20261101.md) and
+[scoped consumer contract](scoped-carrier-adoption-20261101.md). The two compiler
+profiles are still separate; exporting both does not compose or qualify them.
+
 Applicable translation/source-preparation families retain their declared
 `language` then `repository`
 sequences and serialized/reparsed CST/meta/source checks. Operation descriptions,
