@@ -28,3 +28,7 @@ export {proposeNominalCopyCollectionProfile} from './nominal-copy-collection-202
 export {compileNominalCopyCollections,readNominalCopyCollectionMeta,invertNominalCopyCollectionTarget} from './nominal-copy-collection-20261101.mjs';
 export {planDurableNativeLeafMove,applyDurableNativeLeafMove,recoverDurableNativeLeafMove} from './native-leaf-move-recovery-20261101.mjs';
 export {planExactProducerOutputs,installExactProducerOutputs} from './layout-ownership-bulk-20261101.mjs';
+export {proposeLiteralArgumentsCoreProfile,visitLiteralArgumentsCoreSourceEquations} from './literal-arguments-core-20261101-profile.mjs';
+export {compileLiteralArgumentsCoreProject,readLiteralArgumentsCoreMeta,invertLiteralArgumentsCoreTarget} from './literal-arguments-core-20261101-project.mjs';
+export {proposeNominalEditedProfile} from './nominal-edited-target-20261101-profile.mjs';
+export {prepareNominalEditedTarget,translateEditedNominalTarget,readEditedNominalTargetMeta} from './nominal-edited-target-20261101.mjs';

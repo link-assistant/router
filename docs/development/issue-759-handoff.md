@@ -439,3 +439,37 @@ The stable family hub exposes the exact plan/install APIs. All broad layout,
 ownership, synchronization and export requirements remain OPEN. The same worker
 is drafting a separate positive owned-unit concurrent-peer reconciliation next;
 no other worker may commit until explicitly assigned the serialized slot.
+
+The owned static-literal argument batch is committed at
+`f75dc960a8a4328c9c24f345d76047f699ac5de7` (51 new reviewed paths).
+Its final complete source archive pin is
+`24bc915925554b70238503d98354016720152530b2cb9fa7cf9667e3bd7a5785`.
+The [full contract](literal-arguments-core-20261101.md) covers zero/one static
+literal, move-only/empty-Drop coherence, private constructor/inspection custody,
+strict TS opaque typing, linear consumption, fixedu64 counts and actual edited
+JS/TS literal-to-native inverse. Complete native and target CST histories and
+source/close/refusal/mixed-nominal cases are drafted. All execution is UNRUN;
+the copied profile is uninstalled and canonical roots/0713 remain unchanged.
+The stable family hub exposes proposal/visitor/project/meta/inverse APIs.
+Owned output/capture/logging transport is the same worker's next explicit
+qualified-core batch; no std Arguments/builtin or production admission is claimed.
+
+The actual nominal edited-target semantic inverse is committed at
+`d56125d308b6c1401b9d750080a6f6c93cb5a5ca` (10 new reviewed paths), composed
+archive pin `2184352592f6399cd984f537cbd6f2f1ae75aefabc0bf81c1dd17bc4cadd0e8c`
+over the final literal profile. The [full contract](nominal-edited-target-20261101.md)
+records actual whole JS/TS AST/symbol selection, changed Rust body emission,
+complete private native recheck, full type/ownership/lifetime shape agreement,
+second native emission from fresh checked snapshots and exact whole target
+reproduction. This goes beyond0713's unchanged-source restoration. Unit maps and
+owned Boolean matches only; captures, records, borrowed filters and real policy
+owners remain unsupported. The target4096 resource/input migration is explicit;
+no unbounded native equivalence is claimed. All execution is UNRUN.
+
+The complete materialized source/CST profile may refuse the original16Mi limit;
+positive availability has not been established by source review. The iterator
+worker's next assigned source batch is a synchronous complete-CST visitor plus
+bounded full source-image/chronology projection and an actual receiving harness
+using it, preserving every proof/inverse, initial/closing check and original cap.
+It must not execute a size experiment, omit proof payloads or increase limits.
+After that, the identified record Copy/field/set/sort prerequisites remain next.

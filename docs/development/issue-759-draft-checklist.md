@@ -493,3 +493,26 @@ Source review, immutable byte histories and case declarations establish no runti
 or translation percentage. All newly drafted execution remains UNRUN; CI feedback
 is not inspected during drafting. Newly added paths must join the inventory's
 future reconciliation instead of inheriting the 1,512-path baseline's review.
+
+Owned static-literal child receipt: `f75dc960a` adds the complete qualified
+`LiteralArguments` source/profile/runtime/strict declarations, real linear source
+checks, full native/target CST histories and actual edited JS/TS literal-to-native
+inverse plus independent source/refusal/native/mixed-nominal receiving cases.
+All original canonical/0713 sources remain; no generic zero-field constructor
+or external Drop impl can grant checked caller custody. The complete contract
+is `literal-arguments-core-20261101.md`. O01/B02/B03/F01/V02/V04/C04/T01/T02
+remain OPEN for their full inventory, wider formatting/effects/lifetimes and
+production/receiving scope. All new behavior is UNRUN and the profile remains
+uninstalled. Counting stays 8/70 DRAFTED, 62 OPEN.
+
+Nominal edited-target child receipt: `d56125d30` adds actual authoritative whole
+JS/TS AST/symbol leaf selection, changed canonical Rust bodies, independent fresh
+whole native checking, complete selected type/ownership/lifetime shape comparison,
+second Rust emission from freshly checked snapshots and exact whole target
+reproduction. Full source/CST chains preserve0713 and the owned literal profile.
+`nominal-edited-target-20261101.md` records full cases/native oracle and limits.
+F01/V02/V04/C05/O02/B03/T01/T02/E03/Q02 remain OPEN for their full scope and the
+explicit unresolved materialized-profile/resource/receiving/domain obligations.
+The4096 target migration and unbounded native-carrier distinction are retained;
+no full policy or runtime gain is claimed. All execution is UNRUN; 8/70 DRAFTED,
+62 OPEN remains the source-review count.
