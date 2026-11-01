@@ -126,10 +126,13 @@ actual source equations, the original checker and runtime assets. Original
 
 `rust/tests/oracles/json_scalar_readers_20261101.rs` contains independent real
 native scalar/field/Option library expectations and an actual token-report
-baseline. It requires the **new native leaf overlay**. It is **UNSCHEDULED**;
-the old dynamic native oracle binary cannot qualify the new exports. The
-coordinator must schedule it only in CI after all eight same-SHA JavaScript
-gates. No Rust, JavaScript, TypeScript, parser, producer, compiler, translator,
+baseline. It requires the **new native leaf overlay**. The original scalar
+checkpoint manifest records its then-unscheduled state. The later
+[native scalar integration](native-scalar-oracle-integration-20261101.md)
+source-schedules a separate closed native workload with the new overlay, only
+after all eight same-SHA JavaScript gates. The old dynamic oracle binary cannot
+qualify these new exports. Scheduling remains UNRUN and grants no local Rust
+permission. No Rust, JavaScript, TypeScript, parser, producer, compiler, translator,
 preparer, runtime, test or experiment was executed for this draft.
 
 ## Remaining actual caller prerequisites

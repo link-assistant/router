@@ -28,6 +28,16 @@ export const NATIVE_PROFILE_ORACLES=Object.freeze([Object.freeze({
  oracle:'rust/tests/oracles/dynamic_primitive_output_20261101.rs',
  extraOracles:Object.freeze(['rust/tests/oracles/generalized_primitive_output_20261101.rs']),
  target:'dynamic_primitive_output_profile_oracle_20261101',
+}),Object.freeze({
+ id:'json-scalar-readers-20261101',
+ module:'./json-scalar-readers-20261101-profile.mjs',
+ visitor:'visitJsonScalarReadersSourceEquations',
+ nativeSourceModule:'./json-scalar-readers-portable-source-20261101.mjs',
+ nativeSourceVisitor:'visitPortableJsonScalarReadersSourceEquations',
+ archive:'tools/translation/source-profiles/json-scalar-readers-20261101/delta-sources.json.gz',
+ archiveSha256:'8a6de0143294b737f6e52f8ec01b513379810d32366a66eebf4a9a92352d8388',
+ oracle:'rust/tests/oracles/json_scalar_readers_20261101.rs',
+ target:'json_scalar_readers_profile_oracle_20261101',
 })]);
 const fail=message=>{throw new TypeError('Deferred native profile CI: '+message);};
 function data(value,names){

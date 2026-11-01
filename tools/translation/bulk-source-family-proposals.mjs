@@ -61,3 +61,10 @@ export {proposeOwnedJsonOutputProfile,visitOwnedJsonOutputSourceEquations,withOw
 export {translateOwnedJsonOutputProject,compileOwnedJsonOutputProject,readOwnedJsonOutputMeta,invertOwnedJsonOutputTarget,invertOwnedJsonOutputFormatTarget} from './owned-json-output-20261101-project.mjs';
 export {withOwnedJsonOutputCompilerFrames,translateOwnedJsonOutputFlatProject,inspectOwnedJsonOutputCorpus} from './owned-json-output-20261101-corpus.mjs';
 export {prepareOwnedJsonOutputProductionAdoption,proposeOwnedJsonOutputProductionAdoption,proposeOwnedJsonOutputWholeOwners} from './owned-json-output-20261101-production.mjs';
+export {proposeJsonScalarReadersProfile,visitJsonScalarReadersSourceEquations,withJsonScalarReadersInstalledSources} from './json-scalar-readers-20261101-profile.mjs';
+export {translateJsonScalarReadersProject,compileJsonScalarReadersProject,readJsonScalarReadersMeta,invertJsonScalarReadersTarget,invertJsonScalarReadersFormatTarget} from './json-scalar-readers-20261101-project.mjs';
+export {withJsonScalarReadersCompilerFrames,translateJsonScalarReadersFlatProject,inspectJsonScalarReadersCorpus} from './json-scalar-readers-20261101-corpus.mjs';
+export {prepareJsonScalarReadersProductionAdoption,proposeJsonScalarReadersProductionAdoption,proposeJsonScalarReadersWholeOwners} from './json-scalar-readers-20261101-production.mjs';
+export {proposeJsonScalarReaderAdoption} from './json-scalar-readers-20261101-adoption.mjs';
+export {visitPortableJsonScalarReadersSourceEquations,proposePortableJsonScalarReadersSource} from './json-scalar-readers-portable-source-20261101.mjs';
+export {visitNativeScalarOperationalSourceEquations} from './native-profile-oracles-20261101-scalar-history.mjs';

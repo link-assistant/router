@@ -67,7 +67,7 @@ test('whole original generalized workload stays byte-exact and new cases join th
       '\n// Additional independently authored helper/JSON-borrow cases; same native binary.\n' +
       '#[path = "owned_json_output_20261101.rs"]\nmod owned_json_output_20261101;\n');
     assert.equal(added.before, added.after);
-    assert.equal(NATIVE_PROFILE_ORACLES.length, 2);
+    assert.equal(NATIVE_PROFILE_ORACLES.length, 3);
     assert.deepEqual(NATIVE_PROFILE_ORACLES[1].extraOracles,
       ['rust/tests/oracles/generalized_primitive_output_20261101.rs']);
     const source = nativeProfileOracleTargetSource('dynamic-primitive-output-20261101');

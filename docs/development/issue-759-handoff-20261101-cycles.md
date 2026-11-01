@@ -15,7 +15,7 @@ is approximately11:45 UTC or an earlier coherent batch. The last filesystem
 observation reported3.1GiB free at08:54 UTC; keep source snapshots small and
 perform no build, dependency or receiving-workspace copies during drafting.
 
-Current uncommitted batches:
+Active source batches (committed receipts below remain authoritative):
 
 - Forward ownership: active writers/collectors/sessions/preparers, complete
   original/current equations and optional bootstrap, selected-reader/corpus/
@@ -27,10 +27,15 @@ Current uncommitted batches:
   wrappers plus existing field/Option/callback receipts, a complete closure
   sibling, original whole early-flow checking and final genuine-program join.
   Exactly seven virtual paths are approved. All148 earlier source versions stay;
-  a provisional169-version source image is not yet frozen or published. This
+  the frozen170-version image uses delta SHA256
+  `8a6de0143294b737f6e52f8ec01b513379810d32366a66eebf4a9a92352d8388`.
+  Root and the iterator worker reviewed actual private Root/closure/flow hooks
+  without executing them. The exact20 new paths are committed as
+  `6325195740861e9dc561ead109e90bebe21bad30`; this is not runtime
+  qualification or coverage. This
   native leaf needs its newer CI overlay. Actual token-row nonescaping closures
   and lazy two-arm Option lowering are separately designed before adoption.
-- Constant indexed formatting: NEW helper/case/design sources only; no virtual
+- Constant indexed formatting: helper/case/design sources committed below; no virtual
   profile hooks are approved yet. Body-time actual typed Copy footprint differs
   from full CTFE/value proof at Host775 and mandatory late seal after798. Root
   per-body flow executes before775; no pending-membership bypass is allowed.
@@ -62,3 +67,30 @@ sources are drafted; no new Cargo compile target/command/deadline is added.
 All new checks and native behavior remain UNRUN;8/70 DRAFTED,62 OPEN unchanged.
 Contributing guidance now also records actual private parser origin, optional
 shared TS installation, complete cleanup/source closing and split-index custody.
+
+Root drafted additive stable scalar profile/project/corpus/production/adoption
+exports and the corresponding source-family API row. The exact8-path native-only
+portable complete scalar copy is committed as
+`684845832993fb96583b7fae780a44a61dfbb6c6`, retaining all170 versions and
+leaving original compiler bodies private. Async owns a separate concrete local-closure/two-arm
+Option source design, with implementation/adoption still open. Forward owns
+its final complete source chronology, cleanup and actual loader-origin batch.
+No additional workers or receiving/build directories were created. Latest
+bounded filesystem observation reports5.1GiB free; other activity can change it.
+Acceptance counts remain8/70 DRAFTED and62 OPEN, with no measured new function
+coverage and every new verification obligation UNRUN.
+
+Root's following source draft registers the actual closed third scalar native
+workload, selects its genuine portable visitor and resolves parent archives in
+the materializer. Original two workloads, commands/deadlines and eight same-SHA
+JS prerequisites remain. The immutable older seven-row operational archive is
+preserved, with a separate seven-row complete successor archive SHA256
+`b2714b6aa8deea9636acb7f038d301cd0b03ec51f83ed2c4ccee10e7f2cf2de6`
+(151,131 raw/27,919 packed bytes), a fresh whole-image join and independent
+case sources. See [native scalar scheduling](native-scalar-oracle-integration-20261101.md).
+The historical scalar manifest's unscheduled flag remains its original source
+checkpoint fact; later source scheduling still carries no execution result.
+Iterator is reviewing these changes without running them. Actual captured
+local closure proof and two-arm adoption remain separately OPEN; Async drafts
+candidate-only source substitutions with explicit residuals and no compiler
+permission. No new acceptance bundle is closed by these source checkpoints.
