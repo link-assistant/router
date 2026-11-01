@@ -516,3 +516,17 @@ explicit unresolved materialized-profile/resource/receiving/domain obligations.
 The4096 target migration and unbounded native-carrier distinction are retained;
 no full policy or runtime gain is claimed. All execution is UNRUN; 8/70 DRAFTED,
 62 OPEN remains the source-review count.
+
+Historical-ownership/current-edit child source receipt: the checkpoint containing
+`legacy-source-edits-20261101.md` preserves the full fixed old producer universe
+and private one-use output observation, removes only old/current application
+cohort equality, retains all actual fresh current producer/input/ownership fences,
+and enrolls exact historical stale outputs for the existing guarded installer.
+Unknown modified and explicitly authored neighbors remain preserved. Compressed
+dependency validation precedes temporary compiler-tree creation. Complete source
+histories and changed-source/second-edit/stale/refusal cases are UNRUN; lazy
+first-adoption discovery, compiled-output legacy support, resource/deadline and
+receiving/freshness scope remain OPEN under L04/S03/S04/Q02/E03. No Rust application
+semantics changed, so a separate native behavior oracle is inapplicable to this
+ownership orchestration; actual old/current producer cases remain required.
+Accounting remains8/70 DRAFTED,62 OPEN.

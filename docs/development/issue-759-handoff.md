@@ -473,3 +473,20 @@ bounded full source-image/chronology projection and an actual receiving harness
 using it, preserving every proof/inverse, initial/closing check and original cap.
 It must not execute a size experiment, omit proof payloads or increase limits.
 After that, the identified record Copy/field/set/sort prerequisites remain next.
+
+Publication confirmed at 2026-11-01 02:12–02:13 UTC: the sole publisher pushed
+`9de01240ea2cd588c337ed12d93484fb3b4ff0e8` normally to the existing PR775 branch
+and updated its description to8/70 DRAFTED,62 OPEN. Only transport/ref and PR
+metadata were accessed; CI/review feedback remains uninspected. Worker drafts
+continued after that published source SHA, without local execution.
+
+A source-reviewed historical ownership successor now allows changed current
+application inputs while replaying only the complete fixed old universe.
+See [the full contract](legacy-source-edits-20261101.md): actual fresh current
+producer/input/policy/output fences remain; exact historical stale outputs may
+be guarded removals, modified unknown and explicitly authored neighbors stay
+unowned, and old compressed dependency archives are checked before creating the
+large temporary compiler tree. The strict old replay/pure sources stay byte-exact.
+Complete full-source histories and actual changed-source/second-edit/stale/refusal
+case sources are drafted, all UNRUN. Lazy discovery, old Git/archive availability,
+compiled-output/general legacy adoption and receiving remain OPEN.
