@@ -258,3 +258,46 @@ the current solo-work instruction in AGENTS.md/CONTRIBUTING.md; no
 test/compiler/parser/translator/receiving process ran. All workers remain done;
 Root continues alone. The latest published SHA remains3c861efe8 until the next
 coherent source push; do not inspect CI/review feedback during drafting.
+
+## Native candidate and corpus literal inverse source cycle
+
+Root continued alone from `b093d22ead02f652e3b55a3e94034ff447ca8c4b`.
+The new native-candidate source constructor uses actual opaque source paths,
+ordinary exact splices and full Rust CST/inverses, with atomic overlay publication
+after all source/observer checks. The driver freshly checks physical original,
+native candidate and adopted graphs; its actual-context entry keeps one original
+input epoch open across independent inverse compilations, never a cached verdict.
+
+A complete producer copy adds literal-only current-owner output adoption while
+the old strict owner API remains unchanged. It retains original statement/token
+skeletons and transfers edited constants/indices/format literals into the real
+owned output calls. Source review found duplicate trailing private declarations
+in the copied opaque splice module; the duplicates were removed with complete
+before/after history, preserving the original standalone API.
+
+The corpus literal inverse is now SOURCE drafted for one emitted const-cell or
+literal index edit in JS or TS. Real whole targets/origins/census are captured;
+adopted slots must join uniquely to original physical literals. Fresh complete
+changed-source checks, unchanged admission identities and exact whole-target
+reproduction are mandatory. Full physical Rust and paired target inverses are
+retained. This does not support arbitrary edits or close V04/S01 as whole bundles.
+See [the contract](opaque-native-candidates-20261101.md).
+
+The native source-copy archive SHA256 is
+`c3c0d415c4bab21d9fffad67bf9ad3446e5221a1861e37b683e76887e186168b`
+(171,675 raw/31,443 packed bytes), with source-author hash
+`acf9e77d83173429e8318bf73dfd0a6e964339dca77b4c31bbbca16c2a9e4458`.
+Four complete copies, two new helpers, six old case/vector prerequisites and
+four independent current case files are retained. The updated opaque source
+custody archive SHA256 is
+`81f8be6dd95930ef84f9c3bc46c3c906d3002503c96773cfc0d95c855a0bd87c`
+(2,163,788 raw/271,931 packed bytes), with source-author hash
+`4580854abd2bfad866889bb59e6aff5a55c493d0a519abd976bb98d013321f8a`.
+Both complete older archives and their authored images remain intact; full
+source-author and view/splice successor histories are retained separately.
+
+All tests, grammar/compiler/translation execution, receiving, runtime, strict
+TS, native, freshness and resource qualification remain UNRUN. Six full project
+attempts and complete inverse/CST/copy work may exceed existing deadlines; no
+limit is raised and no speed/fit claim is made. Current source counts remain
+8/70 DRAFTED,62 OPEN; no executable-function percentage has been measured.

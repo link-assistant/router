@@ -16,6 +16,9 @@ import {takeOpaqueCanonicalReaderResult} from './scoped-carrier-adoption-2026110
 import {takeOpaqueQualifiedCallbackBodyResult} from './scoped-carrier-adoption-20261101-callback-bodies.mjs';
 import {requireSynchronousSourceCallback,withCompleteSourceClosingFence} from './complete-source-closing-fence.mjs';
 import {accountPrimitiveVectorIteratorBulkData as accountData} from './primitive-vector-iterator-bulk-20261101-accounting.mjs';
+import {copyMetadata} from './extensions/source-links.mjs';
+import {proposeWholeNativeSourceCandidates} from './opaque-native-source-candidates-20261101.mjs';
+import {proposeLiteralEditedWholeOwners} from './opaque-literal-owner-adoption-20261101.mjs';
 const NativeWeakMap=WeakMap,nativePrototype=NativeWeakMap.prototype,nativeGet=Object.getOwnPropertyDescriptor(nativePrototype,'get').value,nativeSet=Object.getOwnPropertyDescriptor(nativePrototype,'set').value,nativeDelete=Object.getOwnPropertyDescriptor(nativePrototype,'delete').value,nativeApply=Reflect.apply,nativeDescriptor=Object.getOwnPropertyDescriptor;
 const privateBirth=originalDataFreezeIntrinsicsUnchanged()&&originalStaticSourceIntrinsicsUnchanged()&&originalPrivateParserNumericCommonIntrinsicsUnchanged()&&originalCapturedFunctionSource(NativeWeakMap)==='function WeakMap() { [native code] }'&&originalCapturedFunctionSource(nativeDelete)==='function delete() { [native code] }';
 export function opaquePrivateStateOperationsCurrent(){return privateBirth&&originalDataFreezeIntrinsicsUnchanged()&&originalStaticSourceIntrinsicsUnchanged()&&originalPrivateParserNumericCommonIntrinsicsUnchanged()&&nativeDescriptor(globalThis,'WeakMap')?.value===NativeWeakMap&&nativeDescriptor(nativePrototype,'get')?.value===nativeGet&&nativeDescriptor(nativePrototype,'set')?.value===nativeSet&&nativeDescriptor(nativePrototype,'delete')?.value===nativeDelete&&nativeDescriptor(Reflect,'apply')?.value===nativeApply;}
@@ -32,6 +35,17 @@ export function createOpaqueAdoptionView(original,consume){
  if(!opaquePrivateStateOperationsCurrent())fail('original private state operations changed during capture');writePrivate(states,handle,{original,entry,originalSourceUtf8Bytes,pathUtf8Occurrences,paths:Object.freeze(paths),names:new Set(paths),cargo,consume,overlays:new Map(),closed:false,stage:0,revision:0,streams:0,events:0,deliveredUtf8Occurrences:0,deliveredUtf16Occurrences:0,callbackUtf8Occurrences:0,callbackUtf16Occurrences:0,callbackUtf8OccurrencePeak:0});return handle;
 }
 export function assertOpaqueAdoptionView(handle){current(handle);}
+// An additive source-candidate constructor. Every actual whole changed program
+// still enters fresh independent checking; this never advances a kernel stage.
+export function createOpaqueAdoptionViewWithNativeCandidates(original,edits,consume){
+ const inputAccounting=accountData(edits),captured=copyMetadata(edits);if(!Array.isArray(captured)||captured.length>4096)fail('bounded native candidate source edits required');const capturedAccounting=accountData(captured),view=createOpaqueAdoptionView(original,consume);
+ try{const state=current(view),revision=state.revision,grouped=new Map(),updates=[];let changedBytes=state.originalSourceUtf8Bytes,preparedAfterBytes=0;
+  for(const row of captured){if(!row||Object.keys(row).sort().join(',')!=='expected,path,replacement,span'||typeof row.path!=='string'||!state.names.has(row.path)||!row.path.endsWith('.rs'))fail('actual complete captured native path required');if(!grouped.has(row.path))grouped.set(row.path,[]);grouped.get(row.path).push({span:row.span,expected:row.expected,replacement:row.replacement});}
+  for(const [path,rows]of grouped){const before=opaqueAdoptionSource(view,path),proposal=proposeWholeNativeSourceCandidates(before,rows),after=proposal.after.source;const size=Buffer.byteLength(after);changedBytes+=size-Buffer.byteLength(before);if(size>8388608||(preparedAfterBytes+=size)>67108864)fail('original native per-file/prepared source domain exceeded');if(!emitOpaqueSourcePair(view,{path,phase:'native-source-candidates',before,after}).cstProduced)fail('whole native candidate source equation required');emitOpaqueStructuredData(view,{path,phase:'native-source-candidates',role:'complete-candidate-source-proposal'},proposal);updates.push({path,before,after});}
+  if(changedBytes>67108864)fail('original complete edited native aggregate domain exceeded');assertOpaqueAdoptionRevision(view,revision);if(state.stage!==0)fail('native preparation must precede all fixed adoption stages');for(const row of updates)state.overlays.set(row.path,row.after);if(updates.length)state.revision++;
+  return Object.freeze({view,summary:Object.freeze({phase:'native-source-candidates',changedFiles:updates.filter(row=>row.before!==row.after).length,patches:captured.length,inputAndCapturedUtf8Occurrences:inputAccounting.utf8Bytes+capturedAccounting.utf8Bytes,completeChangedNativeUtf8Bytes:changedBytes,sourceAuthority:false,semanticAuthority:false,executableAdmission:false})});
+ }catch(error){return withCompleteSourceClosingFence(()=>{throw error;},[()=>closeOpaqueAdoptionView(view)]);}
+}
 export function beginOpaqueAdoptionStream(handle){const state=current(handle);if(!Number.isSafeInteger(++state.streams))fail('representable complete source stream coordinate required');return state.streams;}
 export function opaqueAdoptionRevision(handle){return current(handle).revision;}
 export function assertOpaqueAdoptionRevision(handle,revision){if(current(handle).revision!==revision)fail('complete produced view revision changed');}
@@ -47,9 +61,11 @@ export function emitOpaqueAdoptionEvent(handle,event){
  state.events++;state.deliveredUtf8Occurrences+=count.utf8Bytes;state.deliveredUtf16Occurrences+=count.utf16Units;if(!Number.isSafeInteger(state.deliveredUtf8Occurrences)||!Number.isSafeInteger(state.deliveredUtf16Occurrences))fail('representable complete delivery accounting required');
  }catch(error){if(!state.failed){state.failed=true;state.primary=error;}throw error;}
 }
-export function adoptOpaqueOriginalOutputOwners(handle){
+export function adoptOpaqueOriginalOutputOwners(handle){return adoptOpaqueOutputOwners(handle,proposeJsonScalarReadersWholeOwners);}
+export function adoptOpaqueLiteralEditedOutputOwners(handle){return adoptOpaqueOutputOwners(handle,proposeLiteralEditedWholeOwners);}
+function adoptOpaqueOutputOwners(handle,propose){
  const state=current(handle),revision=state.revision;if(order[state.stage]!=='output-owners')fail('fixed complete original output stage required');const prefix=state.entry.slice(0,-'lib.rs'.length),owners=DYNAMIC_OUTPUT_PRODUCTION_OWNERS.filter(row=>row.path!=='src/lib.rs'),rows=owners.map(row=>({path:prefix+row.path.slice(4),source:opaqueAdoptionSource(handle,prefix+row.path.slice(4))}));
- const proposal=proposeJsonScalarReadersWholeOwners(rows);for(const row of proposal.equations){if(!state.names.has(row.path)||row.before!==opaqueAdoptionSource(handle,row.path))fail('actual original output owner preimage differs');if(!emitOpaqueSourcePair(handle,{path:row.path,phase:'output-owners',before:row.before,after:row.after}).cstProduced)fail('complete original output source equation refused');emitOpaqueStructuredData(handle,{path:row.path,phase:'output-owners',role:'actual-original-output-proposal'},row);}
+ const proposal=propose(rows);for(const row of proposal.equations){if(!state.names.has(row.path)||row.before!==opaqueAdoptionSource(handle,row.path))fail('actual original output owner preimage differs');if(!emitOpaqueSourcePair(handle,{path:row.path,phase:'output-owners',before:row.before,after:row.after}).cstProduced)fail('complete original output source equation refused');emitOpaqueStructuredData(handle,{path:row.path,phase:'output-owners',role:'actual-original-output-proposal'},row);}
  assertOpaqueAdoptionRevision(handle,revision);for(const row of proposal.equations)state.overlays.set(row.path,row.after);state.stage++;state.revision++;return Object.freeze({stage:'output-owners',changedFiles:proposal.equations.length,sourceAuthority:false,semanticAuthority:false,executableAdmission:false,originalBuiltinEquivalent:false,eagerFormattingMigration:true});
 }
 

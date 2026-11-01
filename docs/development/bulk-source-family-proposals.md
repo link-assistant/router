@@ -88,6 +88,18 @@ See [combined source contract](opaque-constant-adoption-20261101.md).
 Everything remains UNRUN; full coverage, fit and whole-corpus edited inverse
 remain open. This composition is not an installation or parity receipt.
 
+The next source family adds `inspectOpaqueNativeCandidates` and
+`proposeOpaqueCorpusLiteralInverse`. It prepares real native edits before the
+existing stages and freshly checks original/native/adopted graphs. Its inverse
+supports one actual emitted constant cell/index edit, joins back to one physical
+native literal, preserves a single real original input epoch and exactly
+reproduces the requested complete target plus the paired output.
+`visitOpaqueNativeCandidateSourceEquations` retains complete source copies,
+new helpers and independent case source. See the
+[native candidate/inverse contract](opaque-native-candidates-20261101.md).
+Arbitrary whole-corpus edits, wider synchronization and all execution/fit
+qualification remain open. Original APIs, archives and refusal domains remain.
+
 Applicable translation/source-preparation families retain their declared
 `language` then `repository`
 sequences and serialized/reparsed CST/meta/source checks. Operation descriptions,

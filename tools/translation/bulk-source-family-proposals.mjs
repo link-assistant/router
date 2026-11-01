@@ -81,3 +81,6 @@ export {inspectOpaqueProductionAdoption} from './opaque-production-adoption-2026
 export {visitOpaqueAdoptionSourceHistory} from './opaque-production-adoption-20261101-source-history.mjs';
 export {inspectOpaqueConstantProductionAdoption} from './opaque-constant-adoption-20261101.mjs';
 export {visitOpaqueConstantAdoptionSourceEquations} from './opaque-constant-adoption-20261101-history.mjs';
+export {inspectOpaqueNativeCandidates} from './opaque-native-candidates-20261101.mjs';
+export {proposeOpaqueCorpusLiteralInverse} from './opaque-corpus-literal-inverse-20261101.mjs';
+export {visitOpaqueNativeCandidateSourceEquations} from './opaque-native-candidates-20261101-history.mjs';
