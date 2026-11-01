@@ -180,3 +180,9 @@ ordinary source relation DATA while the compiler frame is live; scoped literal
 edits still require fresh complete modified-project checking and exact full-target
 reproduction. Complete inherited receiving-case custody is retained. All source,
 receiving and resource outcomes remain UNRUN and general synchronization OPEN.
+
+The body-literal sibling also drafts repeated occurrence groups and bounded
+original/adopted source-context alignment. Source tables live only in one
+synchronous operation and exact complete changed-target reproduction remains
+mandatory. The shared receiving cohort precreates its artifact parent before
+source frames begin. All new cases remain UNRUN; no whole sync claim is made.

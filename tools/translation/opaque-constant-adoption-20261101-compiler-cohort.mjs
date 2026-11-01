@@ -42,12 +42,18 @@ export function readPolicyNativeCohort(directory,paths,options){
 
 // Additional receiving-only step AFTER the original native cohort is complete.
 // The original native-only APIs above retain their exact census/refusals.
+// Prepare the only artifact parent before source frames capture root identity.
+// Later writes inside this directory cannot create a new child of that root.
+export function prepareOpaqueReceivingOutputDirectory(directory){
+ const root=resolve(directory),rootInfo=lstatSync(root);if(!rootInfo.isDirectory()||rootInfo.isSymbolicLink())fail('ordinary receiving root required');const target=join(root,'received');let created=false,info;try{info=lstatSync(target);}catch(error){if(error?.code!=='ENOENT')throw error;mkdirSync(target);created=true;info=lstatSync(target);}if(!info.isDirectory()||info.isSymbolicLink())fail('ordinary owned receiving output directory required');return {path:target,created,sourceAuthority:false,semanticAuthority:false};
+}
 export function commitOpaqueCompilerSourceCohort(directory,paths,options){
  accountData(paths);if(!Array.isArray(paths)||!paths.length||paths.length>8192||new Set(paths).size!==paths.length||paths.some(path=>!safe(path)))fail('complete bounded copied compiler/native cohort required');
  const root=resolve(directory),names=[...paths].sort();let bytes=0;
  for(const path of names){const stat=lstatSync(join(root,path));if(!stat.isFile()||stat.isSymbolicLink()||stat.size>33554432||(bytes+=stat.size)>67108864)fail('original receiving complete file/byte domain exceeded');}
  const input=names.join('\0')+'\0',pathBytes=Buffer.byteLength(input);if(pathBytes>1048576||typeof options?.reserveGit!=='function')fail('original source-list/reservation domain required');
  options.reserveGit(Math.ceil(bytes*1.25)+pathBytes*64+names.length*512+4*1024*1024);
+ prepareOpaqueReceivingOutputDirectory(root);
  const record=options.record,actual={...options,record:receipt=>record?.({...receipt,stage:'temporary-complete-compiler-source-git'})};
  command(root,['add','--sparse','--pathspec-from-file=-','--pathspec-file-nul'],{...actual,input});command(root,['commit','--quiet','--allow-empty','--no-verify','-m','complete copied compiler profiles and native receiving cohort'],actual);
  const head=command(root,['rev-parse','--verify','HEAD'],actual).trim(),raw=command(root,['ls-files','--stage','-z'],actual),records=raw.split('\0').filter(Boolean).map(row=>{const at=row.indexOf('\t'),fields=row.slice(0,at).split(' ');if(at<0||!['100644','100755'].includes(fields[0])||!/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/u.test(fields[1])||fields[2]!=='0')fail('complete ordinary compiler/source index required');return {path:row.slice(at+1),mode:fields[0],object:fields[1],stage:0};});

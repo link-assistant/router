@@ -444,3 +444,44 @@ remain unresolved pending completion of source drafting and later authorized
 verification. Checklist stays9/70 DRAFTED,61 OPEN. See
 [the contract](opaque-body-literal-20261101.md). Removed three completed task
 staging lists only (8,927 bytes); no dependency tree, build or other work deleted.
+
+## Repeated literal/context and receiving output-parent source cycle
+
+The47-path checked-body/inherited-custody batch is committed as `0e8e4ac14`.
+Root continued source drafting alone. Body literal rules now correlate actual
+checked origin groups with complete emitted occurrence counts and exact ordinals,
+then map physical originals through unique unchanged string anchors and exact
+bounded-context token multiplicity. A shared single native origin may support
+multiple emitted uses only if the full requested target reproduces exactly;
+conflicting replacements still refuse. Nested/ambiguous owners, rewritten tokens,
+reversed anchors and mismatched multiplicities refuse without guessed permission.
+
+Source indexes are built once per source callback, with per-owner tables, one
+source context live per inverse group and complete all-exit cleanup/expiry.
+No source/owner/verdict/result cache crosses operations. New independent source
+cases cover repeated numbers/strings, removed unrelated defaults before stable
+keys, comment exclusion, stale/missing/reordered/ambiguous contexts and exact
+primary/expired callbacks. A complete actual-row receiving case drafts one
+repeated-zero edit. No case, parser or compiler was executed.
+
+Static review also found first observer output could create `received` under an
+already captured immutable receiving root. The one shared compiler-cohort helper
+now prepares that ordinary artifact parent before child source frames start,
+covering all five current copied receivers without changing native-only cohort
+APIs or weakening root identity checks. New cases require stable root identity/
+time across descendant writes and rejection of files/symlink roots/parents.
+The old complete combined source case retains every original assertion and now
+requires the exact15 visited equations,13 distinct paths and2 evolution rows.
+
+The body context successor archive SHA256 is
+`6db68c15092919032e0c95c735a76fe3353b78004011a0aa84eb3096819d57d9`
+(248,801 raw/39,799 packed bytes), source-author hash
+`be83c9bc5d29ba3d8d9c2aef1cfc1a76b78ddc46ced3aeb6ef094db9cda695b5`.
+The combined receiving output-parent successor archive SHA256 is
+`e6e908cb227f295b0960d2928274cb1bf73d38739fa283e393f1c46d033cb4d9`
+(186,609 raw/30,714 packed bytes), source-author hash
+`14318c132e6a69249e2eb78576e61b461d75336c4a78644a5aeca72602b241dd`.
+Both preserve published archives and all full original/authored snapshots;
+changed runtime/case and source-author evolution is explicit. All new scope is
+SOURCE/UNRUN and CI/review feedback stays uninspected. Checklist remains
+9/70 DRAFTED,61 OPEN; no current function percentage or resource-fit claim.

@@ -36,11 +36,15 @@ CPU cost are unqualified. No persistent source/owner/verdict/result cache exists
 actual baseline and submitted complete JS or TS target with the installed native
 parser and retains both lossless CST boundaries. It supports one bounded batch
 of constant cells/indices and independently associated checked body literals.
-The existing constant relation rules retain priority. Body edits currently
-require one emitted literal of that kind/value in its actual target function,
-and one exact corresponding token in one original physical top-level Rust
-function. Repeated values, nested/ambiguous owners and rewritten source tokens
-refuse; no guessed function name or lexical token grants admission.
+The existing constant relation rules retain priority. Body edits require an actual checked origin group in one emitted function.
+When multiple checked native origins have the same value, their complete
+multiplicity must match the emitted group and select an exact occurrence.
+A single origin may feed several emitted uses only when the requested complete
+changed target is exactly reproduced. Different requested values for one native
+slot still conflict. Original physical top-level tokens are aligned using unique
+unchanged string anchors, exact bounded-context multiplicity and occurrence.
+Reordered anchors, inconsistent multiplicities, nested/ambiguous owners and
+rewritten tokens refuse. No lexical anchor or ordinal grants admission.
 
 All original Rust candidates enter one fresh complete changed capture. The
 whole selected target must reproduce exactly and the actual executable/refusal/
@@ -86,3 +90,31 @@ semantic check while omitting unused body-origin DATA. Only the adopted phase
 collects those origins, twice for one inverse rather than on all six project
 attempts. Both full project captures/checks remain; no source/type verdict or
 projection is reused. This is an unmeasured allocation/work reduction in source.
+
+## Repeated literal and receiving-parent source successors
+
+The context alignment operation tokenizes each original/adopted source once per
+synchronous callback, and shares per-owner token/anchor tables. The inverse groups
+edits by actual source, retains one source context at a time and clears all indexes
+on every exit. Escaped alignment callbacks refuse after closure, including exact
+primary exceptions. There is no source/owner/verdict cache across operations.
+Independent source cases cover unrelated literal removal before stable JSON-key
+anchors, repeated numeric/string tokens, comment exclusion, stale spans, absent
+owners, reordered anchors, changed multiplicity and context expiry. A complete
+actual-row receiving case drafts changing one repeated zero default.
+
+The shared compiler-cohort helper now prepares the ordinary `received` directory
+before any child source frame captures its root identity. All five current
+receiver copies use that helper. Creating the directory for the first time during
+a compile observer would change the captured root directory time; descendant
+artifact writes now stay under the prepared parent. Linked roots/parents and
+existing non-directory targets refuse, and no existing artifact is removed.
+Original native-only cohort APIs, complete source capture, bounds and returned
+compiler-cohort records are unchanged. Independent filesystem case source and the
+complete old combined case file cover this change; the latter now requires exact
+additional source-evolution/current-case counts while retaining every old assertion.
+
+Both source-profile successors retain immutable earlier archives and authored
+images plus full source-author, runtime and case predecessor/successor equations.
+All cases, source-frame behavior, native admission and resource costs remain
+UNRUN. These source drafts close no further whole acceptance bundle.
