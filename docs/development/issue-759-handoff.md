@@ -798,3 +798,57 @@ Git/Rust/parser/translator experiments. No existing case or deadline changed.
 All new verification stays UNRUN; CI/review remains uninspected;8/70 DRAFTED,
 62 OPEN remains unchanged. JSON output and forward ownership batches are still
 being drafted and must not be advertised as complete or source-frozen yet.
+
+Coordinator pending integration draft (not committed/frozen): the new JSON
+oracle will join the existing dynamic binary through an append-only module
+include in `generalized_primitive_output_20261101.rs`. That file is not in the
+frozen generalized compiler profile's rows/additions/resources, confirmed by a
+source-data read. The original full generalized Rust case body is retained.
+A separate full Rust source/CST/inverse history helper and independent case
+source are drafted; their archive/pin must be frozen only after the JSON worker
+freezes the entire new native oracle. Do not commit the temporary pin marker or
+publish this pending integration alone. The immutable seven-row portable
+operational archive/control registry is unchanged. No third native Cargo
+compile is added, and all new execution remains UNRUN.
+
+Source-review dependency discovered during the selected-reader draft: Git's
+split-index reads freshen shared-index timestamps, so a strict original-index
+stamp fence cannot surround unchanged old Git read calls. The approved NEW
+reader transports exact index/shared images into an exclusively owned temporary
+Git directory, disables original hooks for private flattening, retains original
+bytes/ns closure and uses the private flat image for genuine Git DATA queries.
+This implementation is not executed or qualified. An explicit private handle
+lifecycle is approved for async preparer lifetimes; no active context spans an
+await, no operation cache or semantic permission is introduced.
+
+The original corpus and tracked compiler/profile/owned-definition discovery
+also issue old Git reads. Their full active-forward consumer closure must be
+accounted for before claiming split-index support. A NEW copied corpus with a
+private read-DATA issuer/bridge is approved: incoming old corpus tokens remain
+joined through the ORIGINAL private getter APIs and fresh whole actual bytes,
+never copied public descriptions or old recapture inside the new index fence.
+This revises the earlier no-second-map proposal for a versioned successor;
+the published original corpus/reader/portable bytes stay unchanged. New fixed
+query adapters require the exact actual consumer/query census; arbitrary Git
+argument dispatch and broad physical import rewrites are not authorized.
+The two original owned-definition global censuses/limits remain intact. These
+integration dependencies are OPEN, not completed by the reader API alone.
+
+Native case integration source frozen at2026-11-01 07:53 UTC (execution UNRUN):
+root accepted ownership of `owned_json_output_20261101.rs` and authored six
+independent native cases. They cover exact two-record/empty shared-input output,
+nested owned-Text helpers/u64 extrema, actual accounts header literal/newline,
+real String drop/clone/native-only mutation, earlier output before later divide
+failure, and native standard JSON baselines explicitly still refused by the new
+JS profile. The whole file joins the unchanged dynamic target via the appended
+generalized-oracle sibling module. No extra Cargo compile target is added.
+
+The NEW `json-oracle-integration.json.gz` case history is now frozen, replacing
+the pending marker described above: SHA256
+`d79b39e0fbb3e0d21a2f270fde9f5c777102e3a96f670ed6b71398265f1e4b19`,
+22,339 raw bytes/3,557 packed bytes, two complete original/current Rust rows.
+The new history helper/independent case sources/stable export retain full
+original generalized bytes, CST/reparse/two-phase traces and whole inverses.
+No old archive/control/history module changed. This is an independent native
+case checkpoint; the JSON compiler successor remains uncommitted/in progress.
+All checks UNRUN, CI/review uninspected;8/70 DRAFTED,62 OPEN remains unchanged.

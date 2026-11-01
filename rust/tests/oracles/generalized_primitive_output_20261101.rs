@@ -91,3 +91,7 @@ fn real_launcher_capture_does_not_become_a_generic_console_transport() {
     assert_eq!(rows[3]["message"], "ITER=2;");
     std::fs::remove_dir_all(directory).unwrap();
 }
+
+// Additional independently authored helper/JSON-borrow cases; same native binary.
+#[path = "owned_json_output_20261101.rs"]
+mod owned_json_output_20261101;

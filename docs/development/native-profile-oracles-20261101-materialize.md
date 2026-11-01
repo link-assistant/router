@@ -47,3 +47,16 @@ no test fixture creates a repository or invokes a subprocess. Resource discovery
 of a cyclic graph is DATA and does not claim Cargo accepts that graph. All these
 new case sources remain UNRUN. They join the existing complete translation-test
 wildcard; no original command, workload or deadline is removed or shortened.
+
+The owned-JSON output successor keeps the same Rust String/backend/facade image.
+Its independent `owned_json_output_20261101.rs` oracle is therefore included as
+a sibling module by the already selected generalized oracle, inside the existing
+dynamic binary. No third Cargo target or extra Cargo invocation is introduced.
+The coordinator's new `native-profile-oracles-20261101-json-oracle-history.mjs`
+transports the entire original generalized source and its append-only successor,
+plus the entire independently authored new oracle, through Rust CST
+serialization/reparse and complete inverses. Its separate immutable archive
+leaves the earlier seven-row operational history and published archives intact.
+The source-history receipt grants no native gate or semantic authority. New
+native cases, receiving histories and all execution remain UNRUN; standard JSON
+readers/Option closures/static indexing and full application parity stay open.
