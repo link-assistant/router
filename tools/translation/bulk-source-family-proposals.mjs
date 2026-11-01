@@ -23,3 +23,7 @@ export {planNativeLeafModuleMove,applyNativeLeafModuleMove} from './native-modul
 export {translateCrossModuleOwnedProjectionProject,translateCrossModuleOwnedCoreReaderProjectionProject} from './cross-module-owned-projection-20261101.mjs';
 export {proposeNativeIteratorAdoption} from './native-iterator-adoption-20261101.mjs';
 export {proposeScopedOutputBindingSources,translateScopedOutputBindingProject,synchronizeScopedOutputBindingExpandedProject} from './scoped-output-binding-20261101.mjs';
+export {withForwardedFormatArgumentsCustody,forwardedFormatArgumentsCustodyFacts,captureForwardedFormatArgumentsCustody} from './forwarded-format-arguments-20261101.mjs';
+export {proposeNominalCopyCollectionProfile} from './nominal-copy-collection-20261101-profile.mjs';
+export {compileNominalCopyCollections,readNominalCopyCollectionMeta,invertNominalCopyCollectionTarget} from './nominal-copy-collection-20261101.mjs';
+export {planDurableNativeLeafMove,applyDurableNativeLeafMove,recoverDurableNativeLeafMove} from './native-leaf-move-recovery-20261101.mjs';

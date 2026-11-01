@@ -41,6 +41,14 @@ qualification has not been executed. This entrypoint broadens no semantic domain
 
 | `proposeScopedOutputBindingSources` / `translateScopedOutputBindingProject` / `synchronizeScopedOutputBindingExpandedProject` | Fresh whole-source graph/views and ordered textual macros select genuine original function-body invocations. Complete original/expanded CST equations precede original project meta/paired emission. Explicit edited targets use the original whole-project expression inverse over the expanded source universe. | Unknown namespace/configuration/producers, generated root effects, function-local or introduced-name hygiene and nested format_args refuse. Source restoration is distinct from expanded-domain semantic inverse; original macro argument/definition inverse and production output transport remain unsupported. |
 
+
+| `withForwardedFormatArgumentsCustody` / `forwardedFormatArgumentsCustodyFacts` / `captureForwardedFormatArgumentsCustody` | A complete additive engine copy joins same-engine private expansion/input/nested occurrence and actual original literal token identities to a genuine original parser/function interval. Definition-origin tokens remain separate, requests expire, full source equations and failure closing persist. | Custody only. Builtin/mixed-site ownership, Arguments construction/evaluation/borrow lifetimes, output transport, paired execution and semantic reverse are unsupported. This is never an output admission API. |
+| `proposeNominalCopyCollectionProfile` | Complete immutable four-source compiler copy/equations propose private generated Clone/Copy owner, independent no-Drop/coherence/layout joins and profile-only bounded carrier guards. Existing compiler predecessors stay unchanged. | Installation and all receiving evidence are unrun; this proposal alone cannot qualify the production compiler or a policy function. |
+| `compileNominalCopyCollections` / `readNominalCopyCollectionMeta` / `invertNominalCopyCollectionTarget` | In a completely installed copied profile, fresh original whole-project checks admit only genuinely proved nullary nominal copied/derived-cloned identity collections. Complete meta/targets and source histories are reissued; exact untouched targets can restore original native input. | Requires the complete copied source profile; default checkout calls refuse. The 4096 input/resource migration is explicit. Exact original source restoration is not canonical native emission or edited-target semantic inverse. Records, producer-heavy enum owners, self/sets/trait sorting and whole policy admission remain open. |
+
+
+| `planDurableNativeLeafMove` / `applyDurableNativeLeafMove` / `recoverDurableNativeLeafMove` | Exact current-HEAD pure-scalar leaf projects use a durable parent intent, prepared data, source-state classification and guarded finish/rollback. Every recovery reloads committed before/after universes and repeats actual graph/private/source/Cargo/target checks; copied private TOML parsing rejects unsupported build producers. | Qualified Linux/macOS same-filesystem fsync/hard-link/safe-inode and cooperating-writer domain only. Unknown preparation artifacts stay retained. No saved receipt grants semantic authority, no adversarial atomic-CAS or actual power-cut qualification is claimed; general topology remains open. |
+
 Each family retains its separately declared `language` then `repository`
 sequences and serialized/reparsed CST/meta/source checks. Operation descriptions,
 proposal flags, matching names and source hashes cannot substitute for private
@@ -68,6 +76,10 @@ Review the complete family contracts and independent case sources:
 - [Cross-module owned/core-reader composition](cross-module-owned-projection-20261101.md).
 - [Rust-origin scalar iterator contract adoption](native-iterator-adoption-20261101.md).
 - [Original scoped body macro proposals](scoped-output-binding-20261101.md).
+- [Original literal custody through nested formatting](forwarded-format-arguments-20261101.md).
+- [Original nominal Copy collection source profile](nominal-copy-collection-20261101.md).
+- [Durable interrupted native leaf recovery](native-leaf-move-recovery-20261101.md).
+- [Original raw-string custody correction](forwarded-format-arguments-str-20261101.md).
 - [Complete trace assertion source histories](bulk-rule-trace-20261101.md).
 
 The existing compiler export selector includes eligible top-level translation

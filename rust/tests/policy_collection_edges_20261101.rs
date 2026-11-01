@@ -141,3 +141,25 @@ fn explicit_bridges_do_not_override_protocol_identity_or_an_absent_signed_client
         }
     }
 }
+
+#[test]
+fn actual_duration_formatter_retains_i64_extrema_and_integer_day_boundaries() {
+    // Same integration binary as the policy oracles: no extra Cargo target.
+    // Inputs are decimal strings so the receiving JS cases must not round them
+    // through Number. The two large adjacent values straddle a day boundary
+    // above 2^53, where a float-based translation can give the wrong day.
+    let cases: Value = serde_json::from_str(include_str!(
+        "fixtures/scalar-format-edges-20261101.json"
+    ))
+    .expect("independent signed formatting vectors");
+    assert_eq!(cases["integerEncoding"], "signed-decimal-string");
+    for row in cases["cases"].as_array().expect("format case array") {
+        let minutes = row["minutes"]
+            .as_str()
+            .expect("exact decimal input")
+            .parse::<i64>()
+            .expect("native i64 input");
+        let expected = row["expected"].as_str().expect("independent expected text");
+        assert_eq!(link_assistant_router::auth_import::humanize_minutes(minutes), expected);
+    }
+}

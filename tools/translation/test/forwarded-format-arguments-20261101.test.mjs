@@ -10,6 +10,7 @@ import {captureForwardedFormatArgumentsCustody,withForwardedFormatArgumentsCusto
 import {captureScopedOutputBindingProductionOwners} from '../scoped-output-binding-20261101-production-sources.mjs';
 import {prepareForwardedFormatArgumentsSources} from '../forwarded-format-arguments-20261101-prepare.mjs';
 import {withSourceFailureOperation} from '../source-failure-operations.mjs';
+import {prepareForwardedFormatArgumentsStrSourceEquations} from '../forwarded-format-arguments-str-20261101-source-equations.mjs';
 const limits={timeout:60000};
 const definition='macro_rules! send {()=>{sink!("\\n")}; ($($arg:tt)*)=>{sink!("{}\\n",inner!($($arg)*))}}';
 function setup(call='send!("東京")',declaration=definition){
@@ -21,7 +22,7 @@ function engineSetup(declaration='macro_rules! send {($x:tt)=>{sink!($x)}}',call
 }
 test('zero-argument and literal-only actual raw source keep declaration and caller intervals distinct',limits,()=>{
  const empty=setup('send!()'),zero=captureForwardedFormatArgumentsCustody(empty.options).value;assert.equal(zero.leafCustody.kind,'definition-only');assert.equal(zero.originalLiteral,null);assert.ok(zero.leafCustody.rows.every(row=>row.origin==='original-definition-token'));
- const row=setup(),result=captureForwardedFormatArgumentsCustody(row.options).value;assert.equal(result.leafCustody.kind,'literal-only');assert.equal(result.originalLiteral.ast.value,'東京');assert.equal(row.files['src/caller.rs'].slice(result.originalLiteral.span.start,result.originalLiteral.span.end),'"東京"');assert.equal(result.leafCustody.rows.filter(row=>row.origin==='original-caller-literal').length,1);assert.ok(result.leafCustody.rows.some(row=>row.origin==='original-definition-token'&&row.text==='inner'));
+ const row=setup(),result=captureForwardedFormatArgumentsCustody(row.options).value;assert.equal(result.leafCustody.kind,'literal-only');assert.equal(result.originalLiteral.ast.k,'str');assert.equal(result.originalLiteral.ast.value,'東京');assert.equal(row.files['src/caller.rs'].slice(result.originalLiteral.span.start,result.originalLiteral.span.end),'"東京"');assert.equal(result.leafCustody.rows.filter(row=>row.origin==='original-caller-literal').length,1);assert.ok(result.leafCustody.rows.some(row=>row.origin==='original-definition-token'&&row.text==='inner'));
  for(const key of ['macroOwnerResolved','definitionSiteBindingsResolved','mixedSiteHygieneResolved','builtinFormatArgsOwnerResolved','evaluationOrderVerified','argumentsConstructed','borrowLifetimeVerified','transportAdmitted','originalSourceEquivalenceQualified'])assert.equal(result[key],false,key);
  for(const [at,equation]of result.sourceEquations.entries())assert.equal(equation.inverse,Object.values(row.files)[at]);assert.equal(row.parser.cursor.index,0);
 });
@@ -69,4 +70,14 @@ test('complete actual output definition and auth_remote caller retain custody wi
 });
 test('complete original/current engine source equations retain ordered phases and full source inverse',limits,()=>{
  const plan=prepareForwardedFormatArgumentsSources();assert.equal(plan.files.length,1);const row=plan.files[0];assert.equal(row.current,row.currentAfter);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);assert.equal(plan.semanticAuthority,false);
+});
+
+// The original source AST is distinct from checked semantic lit nodes.
+test('raw string custody correction retains whole original source and engine histories',limits,()=>{
+ const correction=prepareForwardedFormatArgumentsStrSourceEquations();assert.equal(correction.files.length,2);
+ for(const row of correction.files){assert.equal(row.history.before,row.before);assert.equal(row.history.after,row.after);assert.equal(row.history.inverse,row.before);assert.equal(row.inverse,row.before);}
+ const wrapper=correction.files[0];assert.ok(wrapper.before.includes("ast.k==='lit'"));assert.ok(wrapper.after.includes("ast.k==='str'"));
+ assert.deepEqual(correction.trace.map(row=>row.phase),['language','repository']);
+ assert.equal(correction.sourceInstalled,false);assert.equal(correction.sourceAuthority,false);assert.equal(correction.semanticAuthority,false);assert.equal(correction.freshnessQualified,false);
+ const engine=prepareForwardedFormatArgumentsSources();assert.equal(engine.files[0].inverse,engine.files[0].before);
 });

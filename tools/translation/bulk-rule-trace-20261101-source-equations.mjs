@@ -18,13 +18,13 @@ const stamp=row=>[row.dev,row.ino,row.mode,row.size,row.mtimeMs,row.ctimeMs];
 function read(url,limit){
  const initial=fs.lstatSync(url);if(!initial.isFile()||initial.isSymbolicLink()||initial.size>limit)fail('bounded ordinary complete source input required');
  const fd=fs.openSync(url,fs.constants.O_RDONLY|(fs.constants.O_NOFOLLOW??0)|(fs.constants.O_NONBLOCK??0));
- try{
+ return withCompleteSourceClosingFence(()=>{
   const actual=fs.fstatSync(fd);if(JSON.stringify(stamp(actual))!==JSON.stringify(stamp(initial)))fail('source input replaced before read');
   const bytes=Buffer.alloc(actual.size+1);let count=0;
   while(count<bytes.length){const next=fs.readSync(fd,bytes,count,bytes.length-count,null);if(!next)break;count+=next;}
   if(count!==actual.size||JSON.stringify(stamp(fs.fstatSync(fd)))!==JSON.stringify(stamp(initial))||JSON.stringify(stamp(fs.lstatSync(url)))!==JSON.stringify(stamp(initial)))fail('complete source input changed during read');
   return {url,limit,bytes:bytes.subarray(0,count),identity:stamp(initial)};
- }finally{fs.closeSync(fd);}
+ },[()=>fs.closeSync(fd)]);
 }
 function close(rows){let failed=false,primary;for(const row of rows)try{const current=read(row.url,row.limit);if(JSON.stringify(current.identity)!==JSON.stringify(row.identity)||!current.bytes.equals(row.bytes))fail('complete source input changed at closing');}catch(error){if(!failed){failed=true;primary=error;}}if(failed)throw primary;}
 export function prepareBulkRuleTraceSourceEquations(){

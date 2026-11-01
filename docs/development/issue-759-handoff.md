@@ -316,6 +316,31 @@ The subsequent local source drafts add the following complete narrow lanes:
   project checks. Explicit JS/TS edits compose the existing real expression
   inverse over expanded Rust source; original macro-argument/definition inverse
   and production format_args/Arguments/output transport stay unsupported.
+- `adc10f066`: a complete additive declarative engine copy privately traces
+  original empty/literal inputs through genuine nested expansion occurrences
+  to actual original parser/AST intervals. Definition literals stay separate;
+  all builtin/Arguments/lifetime/transport authority and semantic target lanes
+  remain unsupported. Source review corrected nonempty syntactic owner inputs
+  without relaxing the original engine's validation.
+- `0713f3eea`: complete four-source nominal Copy compiler-copy profile. Actual
+  generated Clone/Copy owner and independent private no-Drop/coherence/layout
+  proofs qualify nullary enum identity collection in that copied domain.
+  Profile-only 4096 input/resource changes, exact-original restoration only,
+  fresh meta reissue, bounded source/receiver/accounting and every-exit failure
+  handling remain explicit. No default installation, arbitrary edited-target
+  inverse, record/producer/policy admission or performance is established.
+- `cb759aab0`: durable pure-scalar native leaf-move recovery, with a parent
+  anchor surviving private cleanup, all fresh committed-source/compiler/Cargo
+  proofs, conservative phase/rollback classification and guarded quarantine.
+  The private Cargo parser copy refuses explicit/custom build producers too;
+  source closing and malformed-plus-closing failure cases retain primary errors.
+  Qualified filesystem/cooperating-writer and unknown-preparation limits remain.
+
+Root source review also corrects the forwarded literal wrapper's raw AST kind
+from checked-IR `lit` to actual parser `str`. Full wrapper/case originals and
+CST successor equations live in the new [raw-string correction](forwarded-format-arguments-str-20261101.md)
+profile. Original engine snapshots and all ownership/lifetime/transport refusal
+flags stay unchanged; no parser or case was run to identify/check this fix.
 
 The stable family entrypoint now exposes these operations. They are additive
 opt-in lanes; general source domains, default production dispatch, exported
@@ -326,9 +351,11 @@ commits [three earlier trace assertion corrections](bulk-rule-trace-20261101.md)
 with complete immutable originals and explicit old-producer successor equations;
 no case was executed and every behavioral obligation remains unchanged.
 
-The current workers draft genuine nominal Copy collection prerequisites,
-private original-AST custody through nested format argument forwarding, and
-durable interrupted leaf-move recovery. Initial iterator migration and owned cross-module composition are
+The current workers draft genuine edited nominal-target semantic lowering,
+a qualified borrowed literal-format-arguments compatibility boundary composed
+with the nominal profile, and actual generation ownership/physical package/root
+repairs. Durable leaf recovery is committed. The nominal and formatting-custody
+foundations remain unverified; no std builtin/sysroot proof is inferred. Initial iterator migration and owned cross-module composition are
 committed; no worker may execute or publish.
 Source inspection confirmed existing genuine self-crate alias support, so that
 worker completed the scoped body-macro foundation instead of duplicating alias
@@ -346,8 +373,11 @@ Root also drafts [actual policy collection edge oracle source](production-policy
 against real SubscriptionEntitlementPolicy APIs, plus reusable independently
 expected native-package JSON vectors. These cover alias deduplication, order,
 owned Vec/Copy result independence, Unicode whitespace, invalid later rows and
-protocol precedence. They are CI-only native source and do not qualify JS/TS
-policy translation; T01/T02/T03/P03 and nominal/collection rows remain OPEN.
+protocol precedence. The same native integration binary also tests original
+humanize_minutes with independent signed-decimal fixtures for i64 extrema and
+adjacent day boundaries above 2^53, preserving integer precision without adding
+a Cargo target. They are CI-only native source and do not qualify JS/TS
+policy/formatter translation; T01/T02/T03/P03 and nominal/collection rows remain OPEN.
 No local Rust tools, formatter, tests or Unicode experiments ran.
 
 ## Ledgers
