@@ -114,3 +114,30 @@ edited-target inverse. Original helper/profile/archive bytes remain unchanged;
 no hook outside the approved census is authorized by this plan. Source review
 identified the eager Host import cycle before construction. This approval is
 not an implementation, runtime or coverage receipt.
+
+Forward ownership source checkpoint
+`1ffa47320b817ec827941447efbf13de57300be3` commits the exact301-path reviewed
+batch, including48 changed existing sources and complete whole before/after
+snapshots. The source profile has98 runtime rows,13 complete case rows and two
+proposal-only preparer case roles; full JSON2,856,467 bytes, SHA256
+`a01bf900a0c86ee7d14d38dda3484fcef693a6fa74063f963b69de9247408139`.
+Its source-history module SHA256 is
+`3504f3be9138f9628e3014360ec6c65a03efbddbab1344573f072f5471421551`.
+Actual current source banks/equations are authoritative for producers; every
+older stage remains explicit. Original reader/corpus/portable source images
+stay unchanged. All execution/fit/platform/freshness is UNRUN. Original
+unbounded domains and late cleanup partial recovery stay explicit limitations.
+
+Local closure candidate source checkpoint
+`327fa26b76a2a0ef2465115ce1d4d5e04b45344e` commits exact6 NEW paths. It
+drafts whole-module lexical closure expansion and simple two-arm Option source
+migration plus independent cases/full inverses, keeping genuine complete
+original/candidate checker results separate from candidate DATA. Root source
+review found nested-scope and later callback/pattern shadow gaps; their source
+guards and refusal cases were drafted before commit, without execution. No
+original typed closure or standard-owner equivalence is claimed. The actual
+row's captured/block-receiver Option candidates are a separate NEW-prefix
+successor now assigned to Async. Sync drafts the concrete opaque full-production
+adoption plan; its complete20k/8MiB/64MiB corpus cannot be replaced by the
+candidate's128-file/4MiB fixture lane. No old cap is raised or source receipt
+manufactured. Acceptance accounting remains8/70 DRAFTED,62 OPEN.

@@ -68,3 +68,5 @@ export {prepareJsonScalarReadersProductionAdoption,proposeJsonScalarReadersProdu
 export {proposeJsonScalarReaderAdoption} from './json-scalar-readers-20261101-adoption.mjs';
 export {visitPortableJsonScalarReadersSourceEquations,proposePortableJsonScalarReadersSource} from './json-scalar-readers-portable-source-20261101.mjs';
 export {visitNativeScalarOperationalSourceEquations} from './native-profile-oracles-20261101-scalar-history.mjs';
+export {proposeForwardOutputOwnershipSourceHistory} from './forward-output-ownership-20261101-source-history.mjs';
+export {proposeLocalClosureOptionCandidates} from './local-closure-option-candidate-20261101.mjs';

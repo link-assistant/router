@@ -39,7 +39,7 @@ present; verification and delivery remain separate later obligations.
 | CI repairs | Collected whole published cycle; selected local repairs | Draft the remaining source-history, native parser, timing, profile freshness, reverse freshness and strict parity repairs without changing workloads or deadlines. |
 | JavaScript-first CI | All required same-SHA JS stages gate fatal Rust jobs | Preserve all eight stages, complete matrix membership, original commands and deadlines; no Rust bypass or swallowed failures. |
 | Reusable delivery | Exported compiler, source provenance and adoption tooling | Include every new runtime/rule/source dependency, notices and receiving instructions; no qualification claim from an export alone. |
-| Resource and publication discipline | Single publisher; coordinator works alone | Continue alone, avoid extra dependency trees, commit without execution hooks, push source checkpoints every few hours, and defer CI inspection/repairs until drafting is complete. |
+| Resource and publication discipline | Single publisher; up to three explicitly authorized source-only workers | Keep disjoint scopes and serialized commits, avoid extra dependency trees, commit without execution hooks, push source checkpoints every few hours, and defer all execution and CI inspection/repairs until drafting is complete. |
 
 Complete source-family records and their open limitations are retained in
 [history part one](bulk-draft-source-history-1.md) and
