@@ -225,3 +225,21 @@ The [checked numeric sibling](opaque-body-numeric-20261102.md) adds
 and overflow-message projections must select one agreeing physical native edit;
 full fresh paired target reproduction and all original bounds remain. All new
 case sources and qualification are UNRUN; larger reverse/sync domains stay OPEN.
+
+The additive binding family exposes `proposeOpaquePairedBindingRenameInverse`,
+its explicit DATA candidate/sampling helpers and the pinned whole receiver source
+producer. It supports closed unshadowed local/parameter renames through fresh
+whole original/native/adopted checking and exact complete authored JS/TS output.
+It installs nothing and grants no authority from candidate spellings. The
+[binding contract](opaque-body-binding-rename-20261102.md) records the narrow
+supported subset, full original/copy ancestry, native oracle source and receiving
+limits. Whole synchronization and all execution remain OPEN/UNRUN.
+
+Compact DATA transfer helpers also expose the separate codec/store, committed
+collector, raw materializer, unborn index, complete pinned SDK collector and real
+sparse source-bank creator. See the
+[sparse transfer contract](compact-sparse-source-bank-20261102/README.md).
+They grant no compiler/source/type verdict. Explicit new decoded/census contracts
+do not change old API limits; actual input artifacts and all receiver state must
+still fit the original aggregate. Full dependency/bootstrap/receiving qualification
+remains OPEN/UNRUN. Reexporting these helpers does not close E01/E03.

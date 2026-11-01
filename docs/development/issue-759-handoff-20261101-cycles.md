@@ -769,3 +769,20 @@ with no local command experiment. PacketSHA256d3421a418de00c116022b5485a5b9b653e
 8373 packed bytes. Receiving import/profile/native/SDK/sync closure, actual
 aggregate fit and all execution remain OPEN/UNRUN;11/70 DRAFTED,59 OPEN. Root
 alone continues. No builds, installs, tests, Rust or CI-feedback inspection.
+
+## Whole paired binding-rename inverse source batch
+
+After4a6d754e0, Root drafted a fixed whole-project paired local/parameter binding
+rename inverse, syntax/native DATA candidates, actual referenced-local sampler,
+complete receiving copy and pinned ordered-substitution source producer. The
+[binding contract](opaque-body-binding-rename-20261102.md) records six fresh actual
+project attempts, both complete authored targets, whole source/census checks,
+lossless CST/inverses, no injected captures/verifiers and narrow shadowing/
+property/capture/closure refusal. Twelve independent JS cases and two CI-only
+native oracle sources remain UNRUN; old APIs/archives/cases/limits stay intact.
+The full12-file/two-equation packetSHA256004243ab475dec3292c972ff7d27ea076eed4a0a2b0bc51b091255c77319e1e8 is162102 decoded/30673
+packed bytes. Stable family exports include these APIs and the compact transfer
+helpers, with explicit whole hub before/after custody. No function-coverage or
+full inverse claim: originless/mangled/method/wider edits and whole receiving fit
+remain OPEN.11/70 DRAFTED,59 OPEN; Root alone continues without execution or CI
+feedback. The task-owned temporary hub preimage was removed after packet writing.

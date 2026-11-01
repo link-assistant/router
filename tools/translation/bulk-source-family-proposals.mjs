@@ -116,3 +116,7 @@ export {inspectOpaqueBodyNumeric} from './opaque-body-numeric-20261102.mjs';
 export {proposeOpaqueBodyNumericInverse} from './opaque-body-numeric-20261102-inverse.mjs';
 export {proposeOpaquePairedBodyNumericInverse} from './opaque-paired-body-numeric-inverse-20261102.mjs';
 export {visitOpaqueBodyNumericSourceEquations} from './opaque-body-numeric-20261102-history.mjs';
+
+export {proposeOpaquePairedBindingRenameInverse,proposeOpaqueTargetBindingRenameData,proposeOpaqueNativeBindingRenameData,prepareOpaqueBindingRenameReceivingSample} from './opaque-body-binding-rename-20261102.mjs';
+export {proposeOpaqueBindingRenameReceiverSource} from './opaque-body-binding-rename-20261102-receiver-source.mjs';
+export {createCompactSourceVault,withCompactSourceVault,inspectCompactSourceVault,writeCompactSourceVaultDirectory,readCompactSourceVaultDirectory,exportCompactCommittedSourceVault,materializeCompactSourceSelection,indexCompactMaterializedSourceSelection,exportCompactInstalledTypeScriptVault,createCompactSparseGitSourceBank} from './compact-source-transfer-sparse-20261102.mjs';
