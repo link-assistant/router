@@ -87,3 +87,6 @@ export {visitOpaqueNativeCandidateSourceEquations} from './opaque-native-candida
 
 export {proposeOpaqueCorpusBulkLiteralInverse} from './opaque-corpus-bulk-literal-inverse-20261101.mjs';
 export {visitOpaqueBulkLiteralSourceEquations} from './opaque-bulk-literal-20261101-history.mjs';
+
+export {proposeOpaqueCorpusPairedLiteralInverse} from './opaque-paired-literal-inverse-20261101.mjs';
+export {visitOpaquePairedLiteralSourceEquations} from './opaque-paired-literal-20261101-history.mjs';

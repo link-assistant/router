@@ -166,3 +166,9 @@ exports `proposeOpaqueCorpusBulkLiteralInverse` and
 literal edits before one fresh complete changed-project capture, retaining exact
 whole-target reproduction and both target inverses. Original single-edit APIs
 remain unchanged. All receiving and resource qualification remains UNRUN.
+
+The [paired literal inverse](opaque-paired-literal-20261101.md) exports
+`proposeOpaqueCorpusPairedLiteralInverse` and
+`visitOpaquePairedLiteralSourceEquations`. One fresh bulk inverse must reproduce
+both submitted complete authored targets exactly. Conflicting/stale peers refuse;
+this grants no automatic merge or installation. All cases remain UNRUN.

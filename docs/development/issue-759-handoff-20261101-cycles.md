@@ -329,3 +329,27 @@ full new case are retained. All execution remains UNRUN, CI feedback uninspected
 no maximum-batch RSS/deadline fit claim, no arbitrary-edit or full-sync claim.
 Checklist remains8/70 DRAFTED,62 OPEN. See
 [the source contract](opaque-bulk-literal-20261101.md).
+
+## Paired corpus literal inverse source cycle
+
+The previous21-path bulk literal draft is committed as `0f4047e8d`.
+Root continues alone. A new fixed adapter takes both complete authored JS/TS
+targets and an actually changed selected language. Both CST equations are retained;
+one actual fresh bulk inverse must emit both complete desired targets exactly.
+No duplicate inverse is needed for the other already emitted projection, and
+no saved/injected candidate or public permission is accepted. The adapter keeps
+full physical native/paired target histories and both complete rule traces.
+Different values, stale peers and unrelated TS source refuse without writes.
+
+The complete copied receiving harness retains every bound, source/closing,
+Git cohort, raw evidence and cleanup rule. Five independent complete cases cover
+JS/TS-selected agreement and three conflicting/stale/unrelated peer domains.
+All are UNRUN. The source profile retains1 complete original/successor receiver,
+1 new module,1 prior case and1 current full case plus source-author snapshots.
+Archive SHA256 is
+`2da581ead96de2304c95e8aae584a1aabbbdc107bfd7eb3d550312d789a0b589`
+(62,297 raw/10,583 packed bytes); source-author hash is
+`fd13aee0117c30f23e31b58c8738362cf46838f9558ecdab61d8e2298b8c2eb4`.
+Original modules/archives are unchanged. No resource/speed or complete-sync
+qualification; checklist remains8/70 DRAFTED,62 OPEN. See
+[the source contract](opaque-paired-literal-20261101.md).
