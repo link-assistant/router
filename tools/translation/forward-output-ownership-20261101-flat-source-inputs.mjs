@@ -1,0 +1,66 @@
+import {ownershipCompiler,ownershipCompilerRuntimeOriginData} from './js-to-rust/vendor/module-syntax.mjs';
+import {verifyOwnershipRuntimeOriginCurrent,captureOwnershipRuntimeSelectors} from './forward-output-ownership-20261101-native-origin.mjs';
+// Flat preparer installation inputs, not a compiler/owner issuer.
+// SOURCE ONLY / UNRUN. This module is operational DATA. The ONLY installer
+// caller independently invokes the actual full flat predecessor producer.
+import fs from 'node:fs';
+import {resolve,dirname,join} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {withSelectedSourceIndexImage,readSelectedSourceInputListing} from './selected-source-reader-20261101-index.mjs';
+import {isCompilerSourceInputPath,COMPILER_SOURCE_INPUT_LIMITS} from './compiler-source-inputs.mjs';
+import {SOURCE_PROFILE_INPUT_LIMITS} from './source-profile-inputs.mjs';
+import {withFixedForwardWriterSources} from './forward-output-ownership-20261101-source-history.mjs';
+import {captureForwardIndexNamespaceData} from './forward-output-ownership-20261101-inputs.mjs';
+import {createForwardSourceDirectoryLedger} from './forward-output-ownership-20261101-directories.mjs';
+import {forwardCustodyFilesystemData as io} from './forward-output-ownership-20261101.mjs';
+const ROOT=fileURLToPath(new URL('../../',import.meta.url)),MiB=1024*1024;
+const need=(yes,message)=>{if(!yes)throw TypeError('Flat source installation input DATA: '+message);};
+const full=stat=>io.complete(stat),same=io.same,decode=bytes=>new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes);
+function absent(file){try{return io.statFile(file);}catch(error){if(io.errorField(error,'code')==='ENOENT')return null;throw error;}}
+function capture(root,name,max,ledger){
+ const file=io.physical(root,name),before=absent(file);let parent=root;
+ for(const part of ['',...name.split('/').slice(0,-1)]){if(part)parent=join(parent,part);const stat=io.statFile(parent);need(stat.isDirectory()&&!stat.isSymbolicLink(),'complete existing original output/input ancestor required');ledger.observe([{path:parent,identity:full(stat).map(String)}]);}
+ if(before===null)return {root,name,file,missing:true,bytes:0,stamp:null,chunks:null};
+ const reader=io.openRead(file);
+ return io.closing(()=>{need(reader.before.size<=max,'original per-file compiler/profile/TypeScript bound');const chunks=[];let at=0;while(at<reader.before.size){const bytes=Buffer.alloc(Math.min(65536,reader.before.size-at));let offset=0;while(offset<bytes.length){const count=fs.readSync(reader.fd,bytes,offset,bytes.length-offset,at+offset);need(count>0,'complete initial input truncated');offset+=count;}chunks.push(bytes);at+=bytes.length;}need(fs.readSync(reader.fd,Buffer.alloc(1),0,1,at)===0,'initial input grew');return {root,name,file,missing:false,bytes:at,stamp:full(reader.before),chunks};},[()=>io.closeRead(reader)]);
+}
+function compare(row){
+ if(row.missing){need(absent(row.file)===null,'absent original compiler source appeared');return;}
+ const reader=io.openRead(row.file);return io.closing(()=>{need(same(full(reader.before),row.stamp),'complete original input identity/time changed');let position=0;const bytes=Buffer.alloc(65536);for(const chunk of row.chunks){let at=0;while(at<chunk.length){const count=fs.readSync(reader.fd,bytes,at,chunk.length-at,position+at);need(count>0,'original compiler input truncated');at+=count;}need(bytes.subarray(0,at).equals(chunk),'full original compiler/profile/TypeScript bytes changed');position+=at;}need(position===reader.before.size&&fs.readSync(reader.fd,bytes,0,1,position)===0,'complete original input grew');},[()=>io.closeRead(reader)]);
+}
+function modeAndText(row){
+ if(row.missing)return null;const bytes=Buffer.concat(row.chunks,row.bytes),source=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes);return {source,mode:Number(row.stamp[2])&0o777,identity:row.stamp.slice(0,3)};
+}
+function fixedRoles(root){return withFixedForwardWriterSources(root,history=>new Map(history.rows().map(row=>[row.path,{before:row.before,after:row.after,optionalGeneratedTarget:row.optionalGeneratedTarget}])));}
+// No caller-supplied permission map/callback can enter the private flat writer.
+// This exported helper alone grants no semantic/source installation authority.
+export function captureFlatSourceInstallationInputs(requested=ROOT){
+ const root=fs.realpathSync(resolve(requested)),compiler=fs.realpathSync(ROOT),ledger=createForwardSourceDirectoryLedger(),originals=new Map(),namespaces=[],outputExpected=new Map(),typeDirectories=[],typeRoots=[],counts=[],censuses=[];
+ const roles=fixedRoles(root),cohorts=root===compiler?[root]:[root,compiler];let released=false;
+ const remember=(base,name,max)=>{const key=base+'\0'+name;if(originals.has(key))return originals.get(key);const row=capture(base,name,max,ledger);originals.set(key,row);return row;};
+ const listing=(base,kind)=>withSelectedSourceIndexImage(base,()=>readSelectedSourceInputListing(base,kind));
+ for(const base of cohorts){
+  const baseRoles=base===root?roles:fixedRoles(base);
+  namespaces.push(captureForwardIndexNamespaceData(base,ledger));
+  for(const [kind,prefix,select,bounds]of [['compiler','tools/translation/',isCompilerSourceInputPath,COMPILER_SOURCE_INPUT_LIMITS],['profile','tools/translation/source-profiles/',()=>true,SOURCE_PROFILE_INPUT_LIMITS]]){
+   const untracked=decode(listing(base,kind+'-others')).split('\0').filter(Boolean);need(!untracked.some(select),'untracked compiler/profile input must be frozen');
+   const initialStage=listing(base,kind+'-stage'),raw=decode(initialStage).split('\0').filter(Boolean);censuses.push({base,kind,select,initialStage});need(raw.length<=100000,'original raw stage row bound');let paths=0,bytes=0;const seen=new Set();
+   for(const encoded of raw){const match=/^([0-7]{6}) ([a-f0-9]{40}|[a-f0-9]{64}) ([0-3])\t([\s\S]*)$/u.exec(encoded);need(match,'complete original stage row required');const name=match[4];if(!select(name))continue;need(name.startsWith(prefix)&&['100644','100755'].includes(match[1])&&match[3]==='0'&&!seen.has(name),'original selected stage/mode/path ownership required');seen.add(name);need(++paths<=bounds.files,'original per-family input count');const row=remember(base,name,bounds.fileBytes);
+    if(row.missing)need(baseRoles.get(name)?.optionalGeneratedTarget===true,'only fixed proposal generated-target absence allowed');else{bytes+=row.bytes;need(bytes<=bounds.totalBytes,'original independent compiler/profile total bound');}
+   }
+   need(paths>0,'original nonempty input family required');counts.push({root:base,kind,paths,bytes,limits:bounds});
+  }
+ }
+ const nativeOrigin=ownershipCompilerRuntimeOriginData(ownershipCompiler());need(nativeOrigin&&nativeOrigin.schema==='actual-private-native-compiler-origin-data-20261101','actual private loaded compiler origin unavailable');const typeCohorts=new Set([nativeOrigin.packageRoot]);
+ for(const base of cohorts){const requested=join(base,'js/node_modules/typescript'),stat=absent(requested);if(stat===null)typeRoots.push({requested,typescript:null,identity:null,link:null});else{const typescript=fs.realpathSync(requested);typeRoots.push({requested,typescript,identity:full(stat),link:stat.isSymbolicLink()?fs.readlinkSync(requested):null});typeCohorts.add(typescript);}}
+ for(const typescript of typeCohorts){let files=0,total=0;const visit=name=>{const directory=name?io.physical(typescript,name):typescript,before=io.statFile(directory);need(before.isDirectory()&&!before.isSymbolicLink(),'ordinary installed TypeScript directory required');const names=fs.readdirSync(directory).sort();need(same(full(before),full(io.statFile(directory))),'installed compiler directory changed during census');typeDirectories.push({directory,identity:full(before),names});for(const child of names){const relative=name?name+'/'+child:child,stat=io.statFile(io.physical(typescript,relative));if(stat.isDirectory())visit(relative);else{need(++files<=512,'original independent installed TypeScript file bound');const row=remember(typescript,relative,32*MiB);need(!row.missing,'complete installed compiler file required');total+=row.bytes;need(total<=64*MiB,'original independent installed TypeScript total bound');if(typescript===nativeOrigin.packageRoot){const birth=nativeOrigin.files.find(value=>value.path===row.file);need(birth&&same(birth.identity,row.stamp.map(String)),'actual loaded compiler birth/source identity differs');}}}};visit('');counts.push({root:typescript,kind:'installed-typescript',paths:files,bytes:total});}
+ const selectorPaths=[...nativeOrigin.selectors.map(row=>row.path),...cohorts.flatMap(base=>[join(base,'js/package.json'),join(base,'package.json'),join(base,'js/node_modules/typescript/package.json')])],nativeSelectors=captureOwnershipRuntimeSelectors(selectorPaths,[nativeOrigin.selectorRoot,...cohorts]);ledger.observe(nativeSelectors.parents);counts.push({kind:'current-package-selectors',bytes:nativeSelectors.retainedRawByteOccurrences});
+ const caseInput='tools/translation/test/native-output-text-retention.test.mjs',caseOutput='tools/translation/test/flat-native-output-text-retention.test.mjs',caseSource=roles.get(caseInput);need(caseSource&&!caseSource.optionalGeneratedTarget,'fixed full original preparer testcase input required');const inputRow=remember(root,caseInput,32*MiB),expectedCase=Buffer.from(caseSource.after,'utf8');need(!inputRow.missing&&inputRow.bytes===expectedCase.length,'complete original native testcase input required');let caseOffset=0;for(const chunk of inputRow.chunks){need(chunk.equals(expectedCase.subarray(caseOffset,caseOffset+chunk.length)),'fixed original native testcase bytes changed');caseOffset+=chunk.length;}remember(root,caseOutput,32*MiB);
+ const outputRow=name=>{io.path(name);const key=root+'\0'+name;let row=originals.get(key);if(!row){row=remember(root,name,32*MiB);need(roles.get(name)?.optionalGeneratedTarget===true,'fixed actual flat generated target required');}return row;};
+ const current=name=>{const file=io.physical(root,name),stat=absent(file);if(stat===null)return null;const source=io.readSmall(file,32*MiB);need(same(full(stat),full(io.statFile(file))),'source changed during complete output identity capture');return {source,mode:stat.mode&0o777,identity:io.identity(stat)};};
+ const matches=(a,b)=>a===null||b===null?a===b:a.source===b.source&&a.mode===b.mode&&same(a.identity,b.identity);
+ const verify=()=>{need(!released,'live flat source installation input scope required');const checks=[()=>ledger.verify(),...namespaces.map(namespace=>()=>namespace.verify())];for(const census of censuses)checks.push(()=>{const stage=listing(census.base,census.kind+'-stage');need(stage.equals(census.initialStage)&&decode(stage).split('\0').filter(Boolean).length<=100000,'complete original compiler/profile stage census changed');for(const name of decode(listing(census.base,census.kind+'-others')).split('\0').filter(Boolean).filter(census.select)){const expected=census.base===root?outputExpected.get(name):undefined;need(expected!==undefined&&expected!==null&&matches(current(name),expected),'new untracked selectable compiler/profile input is not an exact private published flat output');}});for(const row of originals.values())checks.push(()=>{const expected=row.root===root?outputExpected.get(row.name):undefined;if(expected!==undefined){need(matches(current(row.name),expected),'expected private source-output bytes/mode/inode changed');if(expected!==null)need(same(full(io.statFile(row.file)),row.expectedStamp),'expected source-output full identity/time changed');}else compare(row);});checks.push(()=>verifyOwnershipRuntimeOriginCurrent(nativeOrigin),()=>nativeSelectors.verify());for(const row of typeRoots)checks.push(()=>{const stat=absent(row.requested);if(row.typescript===null)need(stat===null,'absent optional receiving compiler dependency appeared');else need(stat&&same(full(stat),row.identity)&&fs.realpathSync(row.requested)===row.typescript&&(stat.isSymbolicLink()?fs.readlinkSync(row.requested):null)===row.link,'receiving installed compiler root selection changed');});for(const row of typeDirectories)checks.push(()=>need(same(full(io.statFile(row.directory)),row.identity)&&same(fs.readdirSync(row.directory).sort(),row.names),'complete installed compiler directory changed'));io.closing(()=>{},checks);};
+ const registerOutput=(name,before)=>{need(!released&&!outputExpected.has(name),'one private output registration required');const row=outputRow(name),actual=modeAndText(row);need(matches(actual,before),'fixed original output data differs');outputExpected.set(name,before);row.expectedStamp=row.stamp;};
+ const advance=(name,expected)=>{need(outputExpected.has(name),'unknown output transition refused');need(matches(current(name),expected),'exact own source-output transition differs');outputExpected.set(name,expected);outputRow(name).expectedStamp=expected===null?null:full(io.statFile(io.physical(root,name)));};
+ return Object.freeze({root,counts:Object.freeze(counts),verify,current,registerOutput,advance,mutate:(names,run)=>ledger.mutate(names.map(name=>io.physical(root,name)),run),release(){released=true;nativeSelectors.release();ledger.release();originals.clear();outputExpected.clear();}});
+}

@@ -1,3 +1,6 @@
+import {retainForwardSourceProposalAccounting} from './forward-output-ownership-20261101-source-accounting.mjs';
+import {installFreshFlatNativeOutputTextRetention} from './forward-output-ownership-20261101-flat-source-install.mjs';
+import {withFixedForwardWriterSourcesAsync} from './forward-output-ownership-20261101-source-history.mjs';
 // Copy the actual byte detacher into the complete native retention closure.
 // Source proposals are DATA; native guards, bounds and semantic checks remain.
 import {readFileSync,writeFileSync,existsSync} from 'node:fs';
@@ -87,16 +90,16 @@ function releaseOwnedProjectContexts(ts,path,source,translator){
  }ts.forEachChild(node,consumerVisit);}consumerVisit(consumer);if(uses.length!==13)fail('complete original consumer context reference census differs');
  const selections=[{span:[end.end,end.end],expected:'',replacement:'\n  projectDeclarations.length=0;projectSourceScopes.length=0;'}];return {source:edits(source,selections),selections,bindings,consumerUses:uses,onlyAfterLastStandaloneUse:true,noInputArrayEscapes:true,allOriginalCapsAndAPIsUnchanged:true};
 }
-export async function prepareFlatNativeOutputTextRetention({root=ROOT}={}){
+async function prepareFlatNativeOutputTextRetentionOriginal({root=ROOT}={},history){
  root=resolve(root);const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('actual TypeScript5.9.3 required');
  const inputs=[],read=path=>{const source=readFileSync(resolve(root,path),'utf8');inputs.push({path,source,sha256:hash(source)});return source;};
  read(P+'prepare-flat-native-output-text-retention.mjs');
- const native=await prepareNativeOutputTextRetention({root});for(const row of native.files)if(read(row.path)!==row.after)fail('actual complete native prerequisite stale: '+row.path);
+ const native=await prepareNativeOutputTextRetention({root});for(const row of native.files){history.verifyCurrent(row,'after');const actual=history.producedInput(row.path,row.after);inputs.push({path:row.path,source:actual.source,sha256:actual.source===null?null:hash(actual.source),present:actual.present});}
  const codec=native.files[0],byte=deriveByteOutputTextSource(codec.before);
  if(read(P+'private-byte-output-text.mjs')!==byte.text||byte.inverse!==codec.before)fail('actual original byte producer/inverse differs');
  const detacher=copiedDetacher(ts,byte.text,codec.after),files=[];
  for(const row of native.files){
-  const before=row.after,path=renamed(row.path);if(path===row.path)fail('every actual native output requires a declared route');
+  const before=history.before(row.path,row.after),path=renamed(row.path);if(path===row.path)fail('every actual native output requires a declared route');
   let language=row===codec?edits(before,[{span:detacher.targetSpan,expected:detacher.targetBody,replacement:detacher.body}]):before;
   const ownership=row.path===P+'native-retained-owned-field-bulk.mjs'?releaseOwnedProjectStorage(ts,path,language):null;if(ownership)language=ownership.source;
   const contexts=ownership?releaseOwnedProjectContexts(ts,resolve(root,path),language,read(P+'translate.mjs')):null;if(contexts)language=contexts.source;
@@ -111,10 +114,12 @@ export async function prepareFlatNativeOutputTextRetention({root=ROOT}={}){
  const testAfter=header+"import {prepareFlatNativeOutputTextRetention} from '../prepare-flat-native-output-text-retention.mjs';\n"+testLanguage+extra;
  const testCurrent=existsSync(resolve(root,testTarget))?readFileSync(resolve(root,testTarget),'utf8'):null;
  files.push(equation(ts,resolve(root,testTarget),testBefore,testLanguage,testAfter,testCurrent,{literalRoutes:testEdits,completeOriginalSevenCasesCopied:true}));files.at(-1).path=testTarget;
- for(const row of inputs)if(readFileSync(resolve(root,row.path),'utf8')!==row.source)fail('complete original input changed');
+ for(let index=0;index<files.length;index++)files[index]=history.compose(files[index],'after');
+ for(const row of inputs){if(row.present===false){if(existsSync(resolve(root,row.path)))fail('absent original native prerequisite appeared');}else if(readFileSync(resolve(root,row.path),'utf8')!==row.source)fail('complete original input changed');}
  assertNativeOutputTextInputsFresh(native);
  return {schema:'flat-native-output-retention-source-v1',files,inputs,nativePrerequisites:native,bytePrerequisite:byte,detacher,originalAPIsUnchanged:true,limitsUnchanged:true,newAcrossInvocationCache:false,rustExecuted:false,performanceQualified:false,semanticAuthority:false};
 }
+export async function prepareFlatNativeOutputTextRetention({root=ROOT}={}){return withFixedForwardWriterSourcesAsync(root,async history=>retainForwardSourceProposalAccounting(await prepareFlatNativeOutputTextRetentionOriginal({root},history)));}
 function flatTests(){return '\n'+[
  "test('flat storage copies the actual byte detacher and retains every complete native source inverse',async()=>{",
  " const plan=await prepareFlatNativeOutputTextRetention({root:ROOT});assert.equal(plan.files.length,8);assert.equal(plan.detacher.substitutions.length,7);assert.equal(plan.originalAPIsUnchanged,true);assert.equal(plan.limitsUnchanged,true);assert.equal(plan.newAcrossInvocationCache,false);",
@@ -131,9 +136,8 @@ function flatTests(){return '\n'+[
  ].join('\n')+'\n';}
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const [mode,...rest]=process.argv.slice(2);if(rest.length||!['--write','--check'].includes(mode))fail('use --write|--check');
- const plan=await prepareFlatNativeOutputTextRetention();
- for(const row of plan.files)if((existsSync(resolve(ROOT,row.path))?readFileSync(resolve(ROOT,row.path),'utf8'):null)!==row.current)fail('current complete output changed');
- if(mode==='--check'&&plan.files.some(row=>row.current!==row.after))fail('complete generated flat output is stale');
- if(mode==='--write')for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);
+ let plan;
+ if(mode==='--write'){const installed=await installFreshFlatNativeOutputTextRetention({root:ROOT});plan={schema:installed.producerSchema,files:installed.files.map(path=>({path}))};}
+ else{plan=await prepareFlatNativeOutputTextRetention();for(const row of plan.files)if((existsSync(resolve(ROOT,row.path))?readFileSync(resolve(ROOT,row.path),'utf8'):null)!==row.current)fail('current complete output changed');if(plan.files.some(row=>row.current!==row.after))fail('complete generated flat output is stale');}
  console.log(JSON.stringify({schema:plan.schema,files:plan.files.map(row=>row.path),originalAPIsUnchanged:true,limitsUnchanged:true,rustExecuted:false}));
 }

@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import {forwardFailureField} from './forward-output-ownership-20261101-failure.mjs';
+import {retainForwardSourceProposalAccounting} from './forward-output-ownership-20261101-source-accounting.mjs';
+import {withFixedForwardWriterSources} from './forward-output-ownership-20261101-source-history.mjs';
 // Explicit complete-project field storage; original public entry points stay intact.
 import {readFileSync,lstatSync,mkdirSync,writeFileSync} from 'node:fs';
 import {resolve,relative,sep,dirname} from 'node:path';
@@ -9,6 +12,7 @@ import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {createRulePipeline} from './rule-pipeline.mjs';
 import {transportConcreteSyntaxSource,serializeConcreteSyntaxMeta,transportConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
 import {deriveRetainedBulkSources} from './prepare-retained-bulk.mjs';
+import {deriveIsolatedMatrixSource} from './prepare-isolated-matrix.mjs';
 import {deriveProjectMetaUtf8StorageSources} from './prepare-project-meta-utf8-storage.mjs';
 import {deriveCompressedProjectMetaStorageSource} from './prepare-compressed-project-meta-storage.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
@@ -68,7 +72,7 @@ function literalRoutes(source,path,mapping){
  return derive(source,path,({ts,file,nodes})=>Object.entries(mapping).map(([before,after])=>edit(file,one(nodes.filter(node=>ts.isStringLiteral(node)&&node.text===before),'native route '+before),JSON.stringify(after),'route:'+before)),s=>withHeader(source,s,[]));
 }
 function withHeader(source,{file},rows){const at=source.startsWith('#!')?source.indexOf('\n')+1:0;return [...rows,span(source,at,at,header,'owned-field:header')];}
-export function deriveOwnedFieldBulkSource(source,path='tools/translation/owned-field-bulk.mjs'){
+function deriveOwnedFieldBulkSourceOriginal(source,path='tools/translation/owned-field-bulk.mjs'){
  const beforeBinding=nativeBinding(source,path,'planProjectMetaStorage','planCompressedProjectMetaStorage');
  const row=derive(source,path,({ts,file,nodes})=>{
   const declaration=imported({ts,file},'./project-meta-compressed-storage.mjs'),specifier=one(declaration.importClause.namedBindings.elements.filter(node=>node.name.text==='planProjectMetaStorage'),'storage import');
@@ -106,13 +110,21 @@ function processBoundary(source,path,session){return derive(source,path,({ts,fil
  },s=>withHeader(s.file.text,s,[]));}
 const sourceNames=['bulk.mjs','retained-bulk.mjs','matrix-bulk.mjs','retained-matrix-bulk.mjs','isolated-matrix-bulk.mjs','isolated-retained-matrix-bulk.mjs','isolated-matrix-session.mjs','isolated-matrix-profile.mjs','project-meta-storage.mjs','project-meta-utf8-storage.mjs','project-meta-compressed-storage.mjs','project-meta-field-json.mjs','translate.mjs','project.mjs','private-output-text.mjs'];
 const prerequisites=['prepare-owned-field-bulk.mjs','prepare-retained-bulk.mjs','prepare-project-meta-utf8-storage.mjs','prepare-compressed-project-meta-storage.mjs','rule-pipeline.mjs','concrete-syntax-meta.mjs','literal-substitution-rule.mjs','js-to-rust/vendor/module-syntax.mjs'];
-export function prepareOwnedFieldBulkSources({root=resolve(dirname(fileURLToPath(import.meta.url)),'../..')}={}){
- root=resolve(root);const inputs=[],read=path=>{const full=resolve(root,path),stat=lstatSync(full);if(!stat.isFile()||stat.isSymbolicLink()||stat.size>1048576)fail('ordinary bounded physical source required: '+path);const bytes=readFileSync(full),source=bytes.toString('utf8');if(!Buffer.from(source).equals(bytes))fail('physical UTF8 differs');inputs.push({path,source,bytes:bytes.length,sha256:hash(bytes)});return source;};
- const sources=Object.fromEntries(sourceNames.map(name=>[name,read(prefix+name)])),cli=read('scripts/translate-router.mjs');for(const name of prerequisites)read(prefix+name);
+export function deriveOwnedFieldBulkSource(source,path='tools/translation/owned-field-bulk.mjs'){
+ return withFixedForwardWriterSources(undefined,history=>{const inputPath=path.includes('retained-owned-field')?'tools/translation/retained-bulk.mjs':'tools/translation/bulk.mjs',historical=history.before(inputPath,source);return retainForwardSourceProposalAccounting({...history.compose(deriveOwnedFieldBulkSourceOriginal(historical,path),'text'),currentInputSourceEquation:{current:source,historical,inverse:source}});});
+}
+function prepareOwnedFieldBulkSourcesOriginal({root=resolve(dirname(fileURLToPath(import.meta.url)),'../..')}={},history){
+ root=resolve(root);const inputs=[],producedInputs=new Map(),read=path=>{if(producedInputs.has(path)){const row=producedInputs.get(path);inputs.push({path,source:row.source,bytes:row.source===null?0:Buffer.byteLength(row.source),sha256:row.source===null?null:hash(row.source),present:row.present});return row.producedSource;}const full=resolve(root,path),stat=lstatSync(full);if(!stat.isFile()||stat.isSymbolicLink()||stat.size>1048576)fail('ordinary bounded physical source required: '+path);const bytes=readFileSync(full),source=bytes.toString('utf8');if(!Buffer.from(source).equals(bytes))fail('physical UTF8 differs');inputs.push({path,source,bytes:bytes.length,sha256:hash(bytes)});return source;};
+ // These local DATA substitutions come ONLY from actual freshly invoked
+ // original predecessor producers; physical absent/B/C states close separately.
+ const bootstrapRetained=deriveRetainedBulkSources({bulk:read(prefix+'bulk.mjs'),matrix:read(prefix+'matrix-bulk.mjs')}),bootstrapIsolated=[];
+ for(const row of [bootstrapRetained.bulk,bootstrapRetained.matrix]){history.verifyCurrent(row,'text');producedInputs.set(row.path,history.producedInput(row.path,row.text));}
+ for(const [name,source]of [['matrix-bulk.mjs',read(prefix+'matrix-bulk.mjs')],['retained-matrix-bulk.mjs',bootstrapRetained.matrix.text]]){const row=deriveIsolatedMatrixSource(source,prefix+'isolated-'+name);history.verifyCurrent(row,'text');bootstrapIsolated.push(row);producedInputs.set(row.path,history.producedInput(row.path,row.text));}
+ const sources=Object.fromEntries(sourceNames.map(name=>[name,history.before(prefix+name,read(prefix+name))])),cli=history.before('scripts/translate-router.mjs',read('scripts/translate-router.mjs'));for(const name of prerequisites)read(prefix+name);
  // Reproduce existing qualified complete helper equations, rather than treating
  // a helper name or public schema as evidence that its source is current.
  const retained=deriveRetainedBulkSources({bulk:sources['bulk.mjs'],matrix:sources['matrix-bulk.mjs']});
- if(retained.bulk.text!==sources['retained-bulk.mjs']||retained.matrix.text!==sources['retained-matrix-bulk.mjs'])fail('complete retained prerequisite is stale');
+ if(history.before('tools/translation/retained-bulk.mjs',retained.bulk.text)!==sources['retained-bulk.mjs']||history.before('tools/translation/retained-matrix-bulk.mjs',retained.matrix.text)!==sources['retained-matrix-bulk.mjs'])fail('complete retained prerequisite is stale');
  const utf8=deriveProjectMetaUtf8StorageSources({storage:sources['project-meta-storage.mjs'],translate:sources['translate.mjs']});for(const row of utf8.files)if(row.text!==sources[row.path.slice(prefix.length)])fail('complete owned UTF8 helper is stale');
  const compressed=deriveCompressedProjectMetaStorageSource(sources['project-meta-utf8-storage.mjs']);if(compressed.text!==sources['project-meta-compressed-storage.mjs'])fail('complete compressed helper is stale');
  const files=[];for(const [before,after]of pairs)files.push(deriveOwnedFieldBulkSource(sources[before],prefix+after));
@@ -128,12 +140,14 @@ export function prepareOwnedFieldBulkSources({root=resolve(dirname(fileURLToPath
   'isolated-matrix-bulk.mjs':'isolated-owned-field-matrix-bulk.mjs','isolated-retained-matrix-bulk.mjs':'isolated-retained-owned-field-matrix-bulk.mjs',
   '../tools/translation/retained-bulk.mjs':'../tools/translation/retained-owned-field-bulk.mjs','../tools/translation/retained-matrix-bulk.mjs':'../tools/translation/retained-owned-field-matrix-bulk.mjs',
  }));
- assertOwnedFieldBulkInputsFresh({root,inputs});return {schema:'complete-owned-field-bulk-source-proposal-v1',root,files,inputs,prerequisites:{retained,utf8,compressed},originalAPIsUnchanged:true,arbitraryObserverEquivalent:false,storageLimitsUnchanged:true,semanticAuthority:false,performanceQualified:false};
+ for(let index=0;index<files.length;index++)files[index]=history.compose(files[index],'text');
+ assertOwnedFieldBulkInputsFresh({root,inputs});return {schema:'complete-owned-field-bulk-source-proposal-v1',root,files,inputs,prerequisites:{retained,utf8,compressed,bootstrapOriginals:{retained:bootstrapRetained,isolated:bootstrapIsolated}},originalAPIsUnchanged:true,arbitraryObserverEquivalent:false,storageLimitsUnchanged:true,semanticAuthority:false,performanceQualified:false};
 }
-export function assertOwnedFieldBulkInputsFresh({root,inputs}){for(const row of inputs){const path=resolve(root,row.path),stat=lstatSync(path),bytes=readFileSync(path);if(!stat.isFile()||stat.isSymbolicLink()||bytes.length!==row.bytes||hash(bytes)!==row.sha256||bytes.toString('utf8')!==row.source)fail('physical input changed: '+row.path);}return true;}
+export function prepareOwnedFieldBulkSources({root=resolve(dirname(fileURLToPath(import.meta.url)),'../..')}={}){return withFixedForwardWriterSources(root,history=>retainForwardSourceProposalAccounting(prepareOwnedFieldBulkSourcesOriginal({root},history)));}
+export function assertOwnedFieldBulkInputsFresh({root,inputs}){for(const row of inputs){const path=resolve(root,row.path);if(row.present===false){try{lstatSync(path);fail('absent original produced input appeared: '+row.path);}catch(error){if(forwardFailureField(error,'code')!=='ENOENT')throw error;}continue;}const stat=lstatSync(path),bytes=readFileSync(path);if(!stat.isFile()||stat.isSymbolicLink()||bytes.length!==row.bytes||hash(bytes)!==row.sha256||bytes.toString('utf8')!==row.source)fail('physical input changed: '+row.path);}return true;}
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const args=process.argv.slice(2),root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');if(!(args.length===1&&args[0]==='--check'||args.length===2&&args[0]==='--emit'))fail('Use --check | --emit FRESH_OUTSIDE_DIRECTORY');
  const proposal=prepareOwnedFieldBulkSources({root});
  if(args[0]==='--check'){for(const row of proposal.files)if(readFileSync(resolve(root,row.path),'utf8')!==row.text)fail('candidate complete source is stale: '+row.path);assertOwnedFieldBulkInputsFresh(proposal);console.log(JSON.stringify({fresh:true,files:proposal.files.map(({path,sha256})=>({path,sha256})),qualified:false}));}
- else{const output=resolve(args[1]);if(!relative(root,output).startsWith('..'+sep)||!relative(output,root).startsWith('..'+sep))fail('fresh outside directory required');mkdirSync(output);const bytes=Buffer.from(JSON.stringify(proposal)+'\n');if(bytes.length>64*1024*1024)fail('complete source proposal byte bound');assertOwnedFieldBulkInputsFresh(proposal);const path=resolve(output,'complete-owned-field-source-proposal.json.gz');writeFileSync(path,gzipSync(bytes),{flag:'wx'});if(!gunzipSync(readFileSync(path),{maxOutputLength:64*1024*1024}).equals(bytes))fail('complete proposal readback differs');assertOwnedFieldBulkInputsFresh(proposal);console.log(JSON.stringify({proposal:path,installed:false,qualified:false,files:proposal.files.map(({path,sha256})=>({path,sha256}))}));}
+ else{const output=resolve(args[1]);if(!relative(root,output).startsWith('..'+sep)||!relative(output,root).startsWith('..'+sep))fail('fresh outside directory required');if(proposal.completeSourceDataAccounting.jsonUtf8Bytes+1>64*1024*1024)fail('complete source proposal byte bound');mkdirSync(output);const bytes=Buffer.from(JSON.stringify(proposal)+'\n');if(bytes.length>64*1024*1024)fail('complete source proposal byte bound');assertOwnedFieldBulkInputsFresh(proposal);const path=resolve(output,'complete-owned-field-source-proposal.json.gz');writeFileSync(path,gzipSync(bytes),{flag:'wx'});if(!gunzipSync(readFileSync(path),{maxOutputLength:64*1024*1024}).equals(bytes))fail('complete proposal readback differs');assertOwnedFieldBulkInputsFresh(proposal);console.log(JSON.stringify({proposal:path,installed:false,qualified:false,files:proposal.files.map(({path,sha256})=>({path,sha256}))}));}
 }

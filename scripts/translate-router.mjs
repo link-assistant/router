@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {assertActiveForwardCompilerSources} from '../tools/translation/forward-output-ownership-20261101-source-history.mjs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { regenerate } from '../tools/translation/bulk.mjs';
@@ -7,6 +8,7 @@ import {createCompilationMatrix,DECLARED_FAMILY_PROFILES} from '../tools/transla
 
 const args = process.argv.slice(2);
 let root = resolve(dirname(fileURLToPath(import.meta.url)), '..'), check = false,profileMatrix=false,progress=false,retainOutputText=false,ownedCoreDefinitions=false;
+let outputRoot;
 const entries = [];
 for (let index = 0; index < args.length; index++) {
   const argument = args[index];
@@ -15,13 +17,14 @@ for (let index = 0; index < args.length; index++) {
   else if(argument==='--progress')progress=true;
   else if(argument==='--retain-output-text')retainOutputText=true;
   else if(argument==='--owned-core-definitions')ownedCoreDefinitions=true;
-  else if (['--root', '--entry'].includes(argument) && args[index + 1] && !args[index + 1].startsWith('--')) {
+  else if (['--root','--output-root', '--entry'].includes(argument) && args[index + 1] && !args[index + 1].startsWith('--')) {
     const value = args[++index];
-    if (argument === '--root') root = resolve(value); else entries.push(value);
-  } else throw new Error('Usage: node scripts/translate-router.mjs [--check] [--progress] [--profile-matrix] [--retain-output-text] [--owned-core-definitions] [--root REPOSITORY] [--entry TRACKED_RS]');
+    if (argument === '--root') root = resolve(value); else if(argument==='--output-root')outputRoot=resolve(value);else entries.push(value);
+  } else throw new Error('Usage: node scripts/translate-router.mjs [--check] [--progress] [--profile-matrix] [--retain-output-text] [--owned-core-definitions] [--root REPOSITORY] [--output-root RECEIVING] [--entry TRACKED_RS]');
 }
+assertActiveForwardCompilerSources(resolve(dirname(fileURLToPath(import.meta.url)), '..'));
 const progressStarted=process.hrtime.bigint();
-const options={root,check,entries:entries.length?entries:undefined,progress:progress?record=>process.stderr.write(JSON.stringify({...record,elapsedMilliseconds:Number((process.hrtime.bigint()-progressStarted)/1_000_000n)})+'\n'):undefined};
+const options={root,outputRoot:outputRoot??root,check,entries:entries.length?entries:undefined,progress:progress?record=>process.stderr.write(JSON.stringify({...record,elapsedMilliseconds:Number((process.hrtime.bigint()-progressStarted)/1_000_000n)})+'\n'):undefined};
 // Complete matrix CLI: sequential source-derived process lifetime.
 if(profileMatrix){
   const name=ownedCoreDefinitions?(retainOutputText?'isolated-retained-owned-definitions-matrix-bulk.mjs':'isolated-owned-definitions-matrix-bulk.mjs'):(retainOutputText?'isolated-retained-matrix-bulk.mjs':'isolated-matrix-bulk.mjs');

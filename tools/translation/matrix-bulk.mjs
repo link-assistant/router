@@ -1,3 +1,6 @@
+import {forwardFailureField} from './forward-output-ownership-20261101-failure.mjs';
+import {discoverDefaultRustSourcePaths} from './forward-output-ownership-20261101-corpus.mjs';
+import {applyForwardMatrixCollection} from './forward-output-ownership-20261101-matrix.mjs';
 import {repositoryRustLayout} from './repository-layout.mjs';
 // Independent full-corpus compilation for explicitly selected profiles. The
 // neutral baseline keeps its ordinary outputs; no common executable is minted.
@@ -6,8 +9,8 @@ import {existsSync,lstatSync,mkdirSync,readFileSync,writeFileSync} from 'node:fs
 import {join,resolve} from 'node:path';
 import {types as utilTypes} from 'node:util';
 import {compilationMatrixDescription} from './compilation-matrix.mjs';
-import {captureSourceCorpus,sourceCorpusPaths,assertSourceCorpusSelection} from './source-corpus.mjs';
-import {planRegeneration,validateRegenerationPlan,applyRegenerationPlan} from './bulk.mjs';
+import {captureSourceCorpus,sourceCorpusPaths,assertSourceCorpusSelection} from './forward-output-ownership-20261101-corpus.mjs';
+import {planRegeneration,validateRegenerationPlan,applyRegenerationPlan,forwardRegenerationSourceEntries,verifyForwardRegenerationSourceInputs,mutateForwardRegenerationOutputDirectories,discardForwardRegenerationPlan} from './bulk.mjs';
 import {json,sha256} from './translate.mjs';
 import {translationProgressReporter} from './translation-progress.mjs';
 export const MATRIX_BULK_LIMITS=Object.freeze({entries:16,expectedBytes:1024*1024*1024});
@@ -30,19 +33,20 @@ function manifestPath(root,matrix){
   const relative=`profiles/matrix-${matrix.sha256}.json`;
   for(const path of ['profiles',relative]){
     try{if(lstatSync(join(root,path)).isSymbolicLink())throw new TypeError('matrix manifest cannot follow a symbolic link');}
-    catch(error){if(error.code!=='ENOENT')throw error;}
+    catch(error){if(forwardFailureField(error,'code')!=='ENOENT')throw error;}
   }
   return relative;
 }
-export function regenerateCompilationMatrix({root,matrix,check=false,sources,entries,sourceCorpus,progress:progressInput}={}){
+function collectCompilationMatrix({root,outputRoot=root,matrix,check=false,sources,entries,sourceCorpus,originalDeadline,progress:progressInput}={}){
   root=resolve(root);
   const progress=translationProgressReporter(progressInput);
   const description=compilationMatrixDescription(matrix);
-  const corpus=sourceCorpus??captureSourceCorpus({root,paths:sources??execFileSync('git',['ls-files','-z','--','*.rs'],{cwd:root,encoding:'utf8'}).split('\0').filter(Boolean)});
+  const corpus=sourceCorpus??captureSourceCorpus({root,paths:sources??discoverDefaultRustSourcePaths(root).split('\0').filter(Boolean)});
   const paths=sourceCorpusPaths(corpus,root),tracked=new Set(paths);
   if(sourceCorpus&&sources!==undefined)assertSourceCorpusSelection(corpus,root,sources);
   entries=entryPaths(entries??repositoryRustLayout(root).entries.filter(path=>tracked.has(path)),tracked);
-  const outputPlans=[];let expectedBytes=0;
+  const outputPlans=[];let expectedBytes=0;let collectionClosed=false;
+  try{
   // Every profile constructs fresh invocation, binding, type and effect
   // contexts. All plans finish and all output paths validate before any write.
   for(const member of description.profiles){
@@ -55,18 +59,18 @@ export function regenerateCompilationMatrix({root,matrix,check=false,sources,ent
   }
   const implementations=new Set(outputPlans.map(({plan})=>sha256(json(plan.manifest.implementationHashes))));
   if(implementations.size!==1)throw new TypeError('translator implementation changed between matrix profile plans');
-  const relative=manifestPath(root,matrix);
+  const relative=manifestPath(outputRoot,matrix);
   outputPlans.forEach(({plan})=>validateRegenerationPlan(plan));
   const manifest={schema:'independent-profile-bulk-inventory-v1',matrixSha256:matrix.sha256,requiredProfiles:description.requiredProfiles,sourceSetSha256:corpus.sourceSetSha256,sources:corpus.sources,cargo:corpus.cargo,translatorImplementationSha256:[...implementations][0],entries,expectedBytes,limits:MATRIX_BULK_LIMITS,
     profiles:outputPlans.map(({member,plan})=>({name:member.name,profileSha256:member.sha256,compilationProfile:member.compilationProfile,directory:member.directory,inventory:`${member.directory}/parity/rust-source-inventory.json`,outputPlanSha256:sha256(json(plan.outputs)),outputFiles:plan.outputs.length,expectedBytes:plan.expectedBytes,totals:plan.manifest.totals,functionCoverage:plan.manifest.functionCoverage,projects:plan.manifest.projects,runtimeParity:false})),
     canonicalNeutralOutputsChanged:false,platformDomainComplete:false,commonExecutableOutput:false,runtimeParity:false,
     obligations:[{kind:'profile-domain-incomplete',message:'Explicit profiles do not cover all Rust targets, Cargo features, build modes or residual platform families.'},{kind:'native-parity-unproved',message:'Independent draft outputs preserve all refusals and do not establish complete native behavior.'},{kind:'common-executable-unproved',message:'No merged output or profile-independent executable is emitted.'}]};
-  const failures=[];
-  for(const {plan}of outputPlans)failures.push(...applyRegenerationPlan(plan,{check}).failures);
-  const target=join(root,relative),content=json(manifest);
-  if(check){
-    if(!existsSync(target))failures.push(`missing: ${relative}`);
-    else if(readFileSync(target,'utf8')!==content)failures.push(`stale: ${relative}`);
-  }else{mkdirSync(join(root,'profiles'),{recursive:true});writeFileSync(target,content);}
-  return {manifest,failures};
+  const selected=outputPlans.map(({plan})=>plan);
+  const extraPaths=[relative];const extras=[[relative,json(manifest)]];
+  return {root,outputRoot:resolve(outputRoot),producer:'bulk.mjs',prefixes:description.profiles.map(member=>member.directory),extraPaths,manifest,entries:()=> (function*(){for(const plan of selected)yield*forwardRegenerationSourceEntries(plan);yield*extras;})(),verify:()=>{for(const plan of selected)verifyForwardRegenerationSourceInputs(plan);},mutateOutputDirectories:(targets,operation)=>{let run=operation;for(const plan of selected){const inner=run;run=()=>mutateForwardRegenerationOutputDirectories(plan,targets,inner);}return run();},close:()=>{if(collectionClosed)return;collectionClosed=true;let failed=false,primary;for(const plan of selected)try{discardForwardRegenerationPlan(plan);}catch(error){if(!failed){failed=true;primary=error;}}if(failed)throw primary;}};
+  }catch(error){for(const {plan}of outputPlans)try{discardForwardRegenerationPlan(plan);}catch{}throw error;}
+}
+export function regenerateCompilationMatrix(options={}){
+ const request={...options,sources:options.sources===undefined?undefined:Object.freeze([...options.sources]),entries:options.entries===undefined?undefined:Object.freeze([...options.entries])};
+ return applyForwardMatrixCollection(collectCompilationMatrix,request,{check:options.check??false});
 }

@@ -1,0 +1,27 @@
+// Sequential CLI worker: full original source capture, original private planner,
+// full output validation and application only inside its caller-owned mirror.
+import {readFileSync} from 'node:fs';
+import {resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {createCompilationMatrix,compilationMatrixDescription} from './compilation-matrix.mjs';
+import {captureSourceCorpus} from './source-corpus.mjs';
+const allowed=new Set(['bulk.mjs','retained-bulk.mjs','owned-definitions-bulk.mjs','retained-owned-definitions-bulk.mjs']);
+export async function materializeIsolatedProfile(request){
+ if(!request||request.schema!=='router-isolated-profile-request-v1'||!allowed.has(request.plannerModule))throw TypeError('Unknown complete profile request');
+ const root=resolve(request.root),matrix=createCompilationMatrix(request.selection),members=compilationMatrixDescription(matrix).profiles,member=members.find(row=>row.name===request.name);
+ if(!member||matrix.sha256!==request.matrixSha256||member.directory!==request.directory)throw TypeError('Original matrix profile identity differs');
+ const corpus=captureSourceCorpus({root,paths:request.paths});
+ if(JSON.stringify(corpus)!==JSON.stringify(request.corpus))throw TypeError('Complete mirrored source corpus differs');
+ const planner=await import('./'+request.plannerModule),plan=planner.planRegeneration({root,sources:request.paths,entries:request.entries,compilationProfile:member.compilationProfile,outputPrefix:member.directory,sourceCorpus:corpus,matrix,progress:request.progress?record=>process.stderr.write(JSON.stringify(record)+'\n'):undefined});
+ planner.validateRegenerationPlan(plan);
+ const applied=planner.applyRegenerationPlan(plan);
+ if(applied.failures.length)throw Error('Original profile application refused: '+JSON.stringify(applied.failures));
+
+ return {schema:'router-isolated-profile-output-v1',root,sourceSetSha256:corpus.sourceSetSha256,matrixSha256:matrix.sha256,name:member.name,directory:member.directory,plan:{schema:plan.schema,outputPrefix:plan.outputPrefix,outputRoots:plan.outputRoots,expectedBytes:plan.expectedBytes,outputs:plan.outputs,manifest:plan.manifest},semanticAuthority:false,runtimeParity:false,rustExecuted:false};
+}
+if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
+ if(process.argv.length!==2)throw Error('The fixed profile worker receives one complete JSON request on stdin');
+ const bytes=readFileSync(0);if(bytes.length>16*1024*1024)throw RangeError('Complete profile request bound');
+ const request=JSON.parse(bytes.toString('utf8')),result=await materializeIsolatedProfile(request);
+ process.stdout.write(JSON.stringify(result)+'\n');
+}

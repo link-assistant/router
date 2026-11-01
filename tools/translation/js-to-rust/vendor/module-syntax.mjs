@@ -1,3 +1,4 @@
+import {captureOwnershipRuntimeOriginBefore,verifyOwnershipRuntimeOriginLoadWindow,verifyOwnershipRuntimeOriginCurrent,detachOwnershipRuntimeOriginData} from '../../forward-output-ownership-20261101-native-origin.mjs';
 import { createRequire,Module } from 'node:module';
 import {types as ownershipNativeTypes} from 'node:util';
 import * as ownershipNativeFs from 'node:fs';
@@ -29,6 +30,9 @@ const ownershipRuntimeLoader={globalSelf:ownershipRuntimeOps.get(ownershipRuntim
 const ownershipRuntimeFs=(()=>{const o=ownershipRuntimeOps,field=o.get(ownershipNativeFs,'default'),owners=[ownershipNativeFs],rows=[];if(field&&o.own(field,'value')&&field.value)o.define(owners,'1',{value:field.value,writable:true,enumerable:true,configurable:true});for(let at=0;at<owners.length;at++){const owner=owners[at];if(o.proxy(owner))return null;const names=o.keys(owner),fields=[];for(let index=0;index<names.length;index++)o.define(fields,''+fields.length,{value:o.get(owner,names[index]),writable:true,enumerable:true,configurable:true});o.define(rows,''+rows.length,{value:{owner,names,fields},writable:true,enumerable:true,configurable:true});}return rows;})();
 const ownershipRuntimeExtensions=(()=>{const o=ownershipRuntimeOps,field=ownershipRuntimeLoader.extensions;if(!field||!o.own(field,'value')||!field.value||o.proxy(field.value))return null;const names=o.keys(field.value),rows=[];for(let at=0;at<names.length;at++)o.define(rows,''+rows.length,{value:[names[at],o.get(field.value,names[at])],writable:true,enumerable:true,configurable:true});return rows;})();
 let ownershipRuntimeNative=null,ownershipRuntimeAttempted=false;
+// Origin is detached filesystem DATA only. Metadata failure never changes
+// the original compiler return/throw; qualified consumers observe it explicitly.
+let ownershipRuntimeOrigin=null,ownershipRuntimeOriginAssociation=null,ownershipRuntimeOriginValue=null,ownershipRuntimeOriginValueCaptured=false,ownershipRuntimeOriginFailed=false,ownershipRuntimeOriginFailure;
 function ownershipRuntimeSame(a,b){const o=ownershipRuntimeOps;if(!a||!b)return a===b;const names=['value','get','set','writable','enumerable','configurable'];for(let at=0;at<names.length;at++){const key=names[at];if(o.own(a,key)!==o.own(b,key)||o.own(a,key)&&a[key]!==b[key])return false;}return true;}
 function ownershipRuntimeLoadersCurrent(){
  const o=ownershipRuntimeOps,l=ownershipRuntimeLoader;if(!ownershipRuntimeSame(o.get(ownershipRuntimeRoot,'globalThis'),l.globalSelf))return false;const globals=['Object','Array','Reflect'];for(let at=0;at<globals.length;at++)if(!ownershipRuntimeSame(o.get(ownershipRuntimeRoot,globals[at]),l.globals[at]))return false;
@@ -57,9 +61,11 @@ function ownershipRuntimeCapture(value){
 function ownershipRuntimeRequire(load,root=sourceRoot){
  const o=ownershipRuntimeOps;let before=null,cache=null;
  if(!ownershipRuntimeAttempted&&root===sourceRoot){ownershipRuntimeAttempted=true;try{if(ownershipRuntimeLoadersCurrent()){const field=ownershipRuntimeLoader.cache;cache=field&&o.own(field,'value')?field.value:null;if(cache&&!o.proxy(cache)){before=o.keys(cache);if(before.length>8192)before=null;}}}catch{before=null;}}
- const value=load('typescript');
+ let originBefore=null,originTried=false;
+ if(before&&root===sourceRoot)try{originTried=true;if(!ownershipRuntimeLoadersCurrent())throw TypeError('Original native loader source guards unavailable');const resolver=o.get(load,'resolve');if(!resolver||!o.own(resolver,'value')||typeof resolver.value!=='function'||o.proxy(resolver.value))throw TypeError('Actual private native resolver unavailable');const filename=o.apply(resolver.value,load,['typescript']),packageJson=o.apply(resolver.value,load,['typescript/package.json']);originBefore=captureOwnershipRuntimeOriginBefore(root,filename,packageJson);if(!ownershipRuntimeLoadersCurrent())throw TypeError('Original native loader changed during origin acquisition');}catch(error){ownershipRuntimeOriginFailed=true;ownershipRuntimeOriginFailure=error;}
+ const value=load('typescript');if(originTried){ownershipRuntimeOriginValue=value;ownershipRuntimeOriginValueCaptured=true;}
  if(before)try{const names=o.keys(cache);if(names.length>8192)return value;let matched=null;for(let at=0;at<names.length;at++){let old=false;for(let index=0;index<before.length;index++)if(names[at]===before[index]){old=true;break;}if(old)continue;const field=o.get(cache,names[at]),module=field&&o.own(field,'value')?field.value:null;if(!module||o.proxy(module))continue;const exported=o.get(module,'exports'),loaded=o.get(module,'loaded'),filename=o.get(module,'filename');if(exported&&o.own(exported,'value')&&exported.value===value&&loaded&&o.own(loaded,'value')&&loaded.value===true&&filename&&o.own(filename,'value')&&typeof filename.value==='string'&&filename.value===names[at]){if(matched){matched=null;break;}matched=module;}}
-  if(matched&&ownershipRuntimeLoadersCurrent())ownershipRuntimeNative=ownershipRuntimeCapture(value);
+  if(matched&&ownershipRuntimeLoadersCurrent()){ownershipRuntimeNative=ownershipRuntimeCapture(value);if(originBefore&&!ownershipRuntimeOriginFailed)try{const filename=o.get(matched,'filename');if(!filename||!o.own(filename,'value')||filename.value!==originBefore.resolvedFilename)throw TypeError('Unique actual native module/resolver coordinate differs');const known=path=>{for(let index=0;index<originBefore.files.length;index++)if(originBefore.files[index].path===path)return true;return false;};for(let index=0;index<names.length;index++){let existed=false;for(let prior=0;prior<before.length;prior++)if(before[prior]===names[index]){existed=true;break;}if(existed)continue;const field=o.get(cache,names[index]),module=field&&o.own(field,'value')?field.value:null;if(!module||o.proxy(module))throw TypeError('Unknown newly loaded native module');const path=o.get(module,'filename'),loaded=o.get(module,'loaded');if(!path||!o.own(path,'value')||typeof path.value!=='string'||!loaded||!o.own(loaded,'value')||loaded.value!==true||!known(ownershipNativeFs.realpathSync(path.value)))throw TypeError('Loaded native dependency outside original captured cohort');}verifyOwnershipRuntimeOriginLoadWindow(originBefore);if(!ownershipRuntimeLoadersCurrent())throw TypeError('Original native loader changed during origin closing');ownershipRuntimeOrigin=originBefore;ownershipRuntimeOriginAssociation={module:matched,cache,filename:filename.value,exports:o.get(matched,'exports'),loaded:o.get(matched,'loaded'),file:o.get(matched,'filename')};}catch(error){ownershipRuntimeOriginFailed=true;ownershipRuntimeOriginFailure=error;}}
  }catch{ownershipRuntimeNative=null;}
  return value;
 }
@@ -72,4 +78,15 @@ export function ownershipCompilerRuntimeNativeCurrent(value){
 export function ownershipCompilerRuntimeLoad(sourceRoot) {
   const require = createRequire(join(sourceRoot, 'js/package.json'));
   return ownershipRuntimeRequire(require,sourceRoot);
+}
+
+// This getter grants NO native/source/type/owner permission. Only the original
+// private fresh-loader association can supply its actual physical origin DATA.
+// Unknown/preloaded values cannot gain authority from public paths/sys fields.
+export function ownershipCompilerRuntimeOriginData(value){
+ if(!ownershipRuntimeOriginValueCaptured||value!==ownershipRuntimeOriginValue)return null;
+ if(ownershipRuntimeOriginFailed)throw ownershipRuntimeOriginFailure;
+ if(!ownershipCompilerRuntimeNativeCurrent(value)||!ownershipRuntimeOrigin||!ownershipRuntimeOriginAssociation)return null;
+ const association=ownershipRuntimeOriginAssociation,o=ownershipRuntimeOps,current=o.get(association.cache,association.filename);if(!current||!o.own(current,'value')||current.value!==association.module||!ownershipRuntimeSame(o.get(association.module,'exports'),association.exports)||!ownershipRuntimeSame(o.get(association.module,'loaded'),association.loaded)||!ownershipRuntimeSame(o.get(association.module,'filename'),association.file))throw TypeError('Actual original native module cache association changed');
+ verifyOwnershipRuntimeOriginCurrent(ownershipRuntimeOrigin);return detachOwnershipRuntimeOriginData(ownershipRuntimeOrigin);
 }

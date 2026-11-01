@@ -1,3 +1,8 @@
+import {forwardFailureField} from './forward-output-ownership-20261101-failure.mjs';
+import {readForwardCustodyText} from './forward-output-ownership-20261101.mjs';
+import {captureForwardProducerFence} from './forward-output-ownership-20261101-inputs.mjs';
+import {applyForwardMatrixParts} from './forward-output-ownership-20261101-matrix.mjs';
+import {createForwardStagingClosure} from './forward-output-ownership-20261101-staging.mjs';
 // Process lifetime and DATA custody only. Original compilers still perform all
 // CST/meta, source, owner, type and body checks in each fresh sequential worker.
 import stockFs from 'node:fs';
@@ -7,11 +12,11 @@ import {types} from 'node:util';
 import {assertPrivateParserExecution} from './private-parser-execution.mjs';
 import {execFileSync,spawnSync} from 'node:child_process';
 import {existsSync,lstatSync,mkdirSync,mkdtempSync,readFileSync,readdirSync,rmSync,writeFileSync} from 'node:fs';
-import {dirname,join,relative,resolve} from 'node:path';
+import {dirname,join,relative,resolve,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {compilationMatrixDescription} from './compilation-matrix.mjs';
-import {captureSourceCorpus,sourceCorpusPaths,sourceCorpusText} from './source-corpus.mjs';
+import {captureSourceCorpus,sourceCorpusPaths,sourceCorpusText} from './forward-output-ownership-20261101-corpus.mjs';
 import {discoverCompilerSourceInputs} from './compiler-source-inputs.mjs';
 import {discoverSourceProfileInputs} from './source-profile-inputs.mjs';
 import {translationProgressReporter} from './translation-progress.mjs';
@@ -32,7 +37,7 @@ function stockHost(){
  for(const {owner,key,field}of hostPins){const actual=hostDescriptor(owner,key);if(!actual||!field||actual.value!==field.value||actual.get!==field.get||actual.set!==field.set||actual.writable!==field.writable||actual.enumerable!==field.enumerable||actual.configurable!==field.configurable)fail('stock host operation changed: '+key);}
  assertPrivateParserExecution();
 }
-function physical(root,name){let path=root;for(const part of safe(name).split('/')){path=join(path,part);try{if(lstatSync(path).isSymbolicLink())fail('symbolic source/output path');}catch(error){if(error.code!=='ENOENT')throw error;}}return path;}
+function physical(root,name){let path=root;for(const part of safe(name).split('/')){path=join(path,part);try{if(lstatSync(path).isSymbolicLink())fail('symbolic source/output path');}catch(error){if(forwardFailureField(error,'code')!=='ENOENT')throw error;}}return path;}
 function files(root,name){const path=physical(root,name);if(!existsSync(path))return [];const stat=lstatSync(path);if(!stat.isDirectory())fail('output root must be an ordinary directory');return readdirSync(path,{withFileTypes:true}).flatMap(entry=>entry.isDirectory()?files(root,name+'/'+entry.name):entry.isFile()?[safe(name+'/'+entry.name)]:fail('nonregular output child')).sort();}
 function freeze(value){if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;}
 function installedTypes(){
@@ -40,30 +45,32 @@ function installedTypes(){
  function walk(path){for(const entry of readdirSync(path,{withFileTypes:true})){const full=join(path,entry.name),stat=lstatSync(full);if(stat.isSymbolicLink())fail('linked installed TypeScript source');if(stat.isDirectory())walk(full);else{if(!stat.isFile()||stat.size>32*1024*1024||rows.length>=512)fail('installed TypeScript file bound');const bytes=readFileSync(full);total+=bytes.length;if(total>64*1024*1024)fail('installed TypeScript aggregate bound');rows.push({path:relative(base,full),bytes:bytes.length,sha256:hash(bytes)});}}}
  walk(base);rows.sort((a,b)=>a.path<b.path?-1:a.path>b.path?1:0);return rows;
 }
-export function createIsolatedMatrixSession({root,matrix,corpus,paths,entries,plannerModule}={}){
+export function createIsolatedMatrixSession({root,matrix,corpus,paths,entries,plannerModule,originalDeadline=Infinity}={}){
  root=resolve(root);const description=compilationMatrixDescription(matrix),selectedPaths=sourceCorpusPaths(corpus,root);
  if(!allowed.has(plannerModule)||JSON.stringify(paths)!==JSON.stringify(selectedPaths))fail('genuine complete source selection required');
  const owned=plannerModule.includes('owned-definitions'),outputRoots=owned?[...roots,...ownedRoots]:roots;
  const git=(...args)=>execFileSync('git',args,{cwd:root,encoding:'utf8',maxBuffer:16*1024*1024,timeout:30000});
  let gitDirectory=null;
  if(existsSync(join(root,'.git')))gitDirectory=git('rev-parse','--absolute-git-dir').trim();
- function head(){if(!gitDirectory)return null;try{return git('rev-parse','--verify','--quiet','HEAD').trim();}catch(error){if(error.status!==1)throw error;return {unborn:true,branch:git('symbolic-ref','--quiet','HEAD').trim()};}}
+ function head(){if(!gitDirectory)return null;try{return git('rev-parse','--verify','--quiet','HEAD').trim();}catch(error){if(forwardFailureField(error,'status')!==1)throw error;return {unborn:true,branch:git('symbolic-ref','--quiet','HEAD').trim()};}}
  const state=()=>({head:head(),tracked:gitDirectory?git('ls-files','-z','--','*.rs').split('\0').filter(Boolean).sort():null,compiler:discoverCompilerSourceInputs({root:compilerRoot}),profiles:discoverSourceProfileInputs({root:compilerRoot}),typescript:installedTypes()});
+ const originalFence=captureForwardProducerFence({root,sources:selectedPaths,sourceCorpus:corpus});
  const before=state(),selection={profiles:description.profiles.map(({name,compilationProfile})=>({name,compilationProfile})),requiredProfiles:description.requiredProfiles},records=new WeakMap();
  // Generated staging output obeys the original per-profile/aggregate bounds;
  // it is temporary generated storage, not an expanded verification archive.
- const staging=mkdtempSync(join(root,'.router-isolated-matrix-')),started=performance.now();let closed=false,total=0;
- function open(){stockHost();if(closed||lstatSync(staging).isSymbolicLink())fail('closed or replaced staging session');}
+ const ownedStage=originalFence.createOwnedStage(),staging=ownedStage.path,started=performance.now(),deadline=Math.min(originalDeadline,started+3600000);let closed=false,mirrorClosed=false,total=0;
+ const mirror=createForwardStagingClosure(staging);
+ function open(){stockHost();mirror.assertRoot();if(closed||lstatSync(staging).isSymbolicLink())fail('closed or replaced staging session');}
  function current(){
-  open();const fresh=captureSourceCorpus({root,paths:selectedPaths});
+  open();originalFence.verify();const fresh=captureSourceCorpus({root,paths:selectedPaths});
   if(JSON.stringify(fresh)!==JSON.stringify(corpus)||JSON.stringify(state())!==JSON.stringify(before))fail('complete original source/compiler/TypeScript/Git inputs changed');
   for(const path of [...selectedPaths,...corpus.cargo.filter(row=>row.available).map(row=>row.source)])if(sourceCorpusText(fresh,root,path)!==sourceCorpusText(corpus,root,path))fail('complete original source text changed');
  }
  try{
-  writeFileSync(join(staging,'.router-stage-owner.json'),json({schema:'router-private-matrix-staging-owner-v1',pid:process.pid,sourceRoot:root,staging,sourceSetSha256:corpus.sourceSetSha256,head:before.head,createdAt:new Date().toISOString(),rustExecuted:false}),{flag:'wx'});
-  for(const path of [...selectedPaths,...corpus.cargo.filter(row=>row.available).map(row=>row.source)]){const target=physical(staging,path);mkdirSync(dirname(target),{recursive:true});writeFileSync(target,sourceCorpusText(corpus,root,path),{flag:'wx'});}
-  if(gitDirectory)writeFileSync(join(staging,'.git'),'gitdir: '+gitDirectory+'\n',{flag:'wx',mode:0o444});
- }catch(error){rmSync(staging,{recursive:true,force:true});throw error;}
+  writeFileSync(join(staging,'.router-stage-owner.json'),json({schema:'router-private-matrix-staging-owner-v1',pid:process.pid,sourceRoot:root,staging,sourceSetSha256:corpus.sourceSetSha256,head:before.head,createdAt:new Date().toISOString(),rustExecuted:false}),{flag:'wx'});mirror.original('.router-stage-owner.json',readFileSync(join(staging,'.router-stage-owner.json'),'utf8'));
+  for(const path of [...selectedPaths,...corpus.cargo.filter(row=>row.available).map(row=>row.source)]){const target=physical(staging,path);mkdirSync(dirname(target),{recursive:true});writeFileSync(target,sourceCorpusText(corpus,root,path),{flag:'wx'});mirror.original(path,sourceCorpusText(corpus,root,path));}
+  if(gitDirectory){writeFileSync(join(staging,'.git'),'gitdir: '+gitDirectory+'\n',{flag:'wx',mode:0o444});mirror.original('.git','gitdir: '+gitDirectory+'\n');}
+ }catch(error){for(const cleanup of [()=>{mirror.close({removeRoot:false});mirrorClosed=true;},()=>ownedStage.close()])try{cleanup();}catch{try{process.stderr.write(JSON.stringify({schema:'router-forward-private-mirror-retained-v1',path:staging})+'\n');}catch{}}throw error;}
  function validate(plan){
   open();const record=records.get(plan);if(!record)fail('unissued staged byte plan');
   for(const output of plan.outputs){const path=physical(staging,output.path),stat=lstatSync(path);if(!stat.isFile()||stat.size!==output.bytes)fail('complete staged output byte size differs');const bytes=readFileSync(path);if(hash(bytes)!==output.sha256)fail('complete staged output bytes differ');physical(root,output.path);}
@@ -73,7 +80,7 @@ export function createIsolatedMatrixSession({root,matrix,corpus,paths,entries,pl
  function plan(options){
   open();if(options.root!==root||options.matrix!==matrix||options.sourceCorpus!==corpus||JSON.stringify(options.sources)!==JSON.stringify(selectedPaths)||JSON.stringify(options.entries)!==JSON.stringify(entries))fail('foreign source/matrix selection');
   const member=description.profiles.find(row=>row.directory===options.outputPrefix);if(!member||JSON.stringify(member.compilationProfile)!==JSON.stringify(options.compilationProfile))fail('foreign complete profile');
-  current();const timeout=Math.floor(3600000-(performance.now()-started));if(timeout<1)fail('original complete matrix deadline');
+  current();const timeout=Math.floor(deadline-performance.now());if(timeout<1)fail('original complete matrix deadline');
   const request={schema:'router-isolated-profile-request-v1',root:staging,plannerModule,selection,matrixSha256:matrix.sha256,name:member.name,directory:member.directory,paths:selectedPaths,entries,corpus,progress:options.progress!==undefined&&options.progress!==null};
   const child=spawnSync(process.execPath,[worker],{cwd:staging,input:json(request),encoding:'utf8',maxBuffer:16*1024*1024,timeout,killSignal:'SIGTERM',env:{...process.env,NODE_OPTIONS:'--max-old-space-size=2048',GIT_CONFIG_COUNT:'1',GIT_CONFIG_KEY_0:'core.hooksPath',GIT_CONFIG_VALUE_0:'/dev/null'}});
   if(child.status!==0||child.signal||child.error)throw Error('Fresh complete profile '+member.name+' failed: '+json({status:child.status,signal:child.signal,error:child.error?.message,stdout:child.stdout,stderr:child.stderr}));
@@ -84,15 +91,11 @@ export function createIsolatedMatrixSession({root,matrix,corpus,paths,entries,pl
   if(bytes!==value.expectedBytes||!value.manifest?.originalSourceCorpus||JSON.stringify(value.manifest.originalSourceCorpus.sources)!==JSON.stringify(corpus.sources)||JSON.stringify(value.manifest.originalSourceCorpus.cargo)!==JSON.stringify(corpus.cargo)||value.manifest.originalSourceCorpus.sourceSetSha256!==corpus.sourceSetSha256||JSON.stringify(value.manifest.compilationProfile)!==JSON.stringify(member.compilationProfile))fail('complete original profile/source manifest differs');
   total+=bytes;if(total>1024*1024*1024)fail('original complete matrix byte budget');
 
-  const issued=freeze({...value,root});records.set(issued,{member});return issued;
+  const issued=freeze({...value,root});mirror.output(issued,result.materializationCustody,plannerModule);records.set(issued,{member,options:{...options,progress:undefined}});return issued;
  }
- function applyBytes(plan,{check=false}={}){
-  open();const failures=[];
-  for(const output of plan.outputs){const bytes=readFileSync(physical(staging,output.path)),target=physical(root,output.path);if(hash(bytes)!==output.sha256||bytes.length!==output.bytes)fail('staged bytes changed immediately before application');if(check){if(!existsSync(target))failures.push('missing: '+output.path);else if(!readFileSync(target).equals(bytes))failures.push('stale: '+output.path);}else{mkdirSync(dirname(target),{recursive:true});writeFileSync(target,bytes);}}
-  const expected=new Set(plan.outputs.map(row=>row.path));for(const name of plan.outputRoots)for(const path of files(root,name))if(!expected.has(path)){if(check)failures.push('unexpected: '+path);else rmSync(physical(root,path));}
-  return {manifest:plan.manifest,failures};
- }
- function applyAll(input,{check=false}={}){
+ function *sourceEntries(plan){validate(plan);current();for(const output of plan.outputs){const text=readForwardCustodyText(physical(staging,output.path),64*1024*1024);if(Buffer.byteLength(text)!==output.bytes||hash(text)!==output.sha256)fail('staged full output differs');yield [output.path,text];}current();}
+
+ function checkedPlans(input){
   open();if(!Array.isArray(input)||types.isProxy(input)||Object.getPrototypeOf(input)!==Array.prototype)fail('complete ordinary selected profile array required');
   const fields=Object.getOwnPropertyDescriptors(input),length=fields.length;
   if(!length||!Object.hasOwn(length,'value')||length.value!==description.profiles.length||Reflect.ownKeys(fields).length!==length.value+1)fail('complete selected profile set required');
@@ -101,9 +104,18 @@ export function createIsolatedMatrixSession({root,matrix,corpus,paths,entries,pl
   // Every worker already ran its genuine original private-plan guards.
   for(const plan of plans)validate(plan);
   current();
-  const failures=[];for(const plan of plans)failures.push(...applyBytes(plan,{check}).failures);
-  return failures;
+  return plans;
  }
- function close(){if(!closed){closed=true;rmSync(staging,{recursive:true,force:true});}}
- return Object.freeze({plan,validate,applyAll,close});
+ function mutateOutputDirectories(targets,operation,{outputRoot=root}={}){
+  open();if(!Array.isArray(targets)||typeof operation!=='function')fail('exact original receiving mutation required');
+  const receiving=stockFs.realpathSync(resolve(outputRoot)),domains=['.router-forward-output-ownership','profiles/matrix-'+matrix.sha256+'.json'];
+  for(const member of description.profiles){for(const name of outputRoots)domains.push(member.directory+'/'+name);domains.push(member.directory+'/parity/rust-source-inventory.json');}
+  if(outputRoots.includes('tools/translation/generated/owned-definitions'))domains.push('profiles/owned-definitions-matrix-'+matrix.sha256+'.json');
+  for(const target of targets){if(typeof target!=='string'||resolve(target)!==target)fail('absolute actual receiving target required');const name=relative(receiving,target).split(sep).join('/');if(!name||name==='..'||name.startsWith('../')||!domains.some(domain=>name===domain||name.startsWith(domain+'/')||domain.startsWith(name+'/')))fail('mutation escapes original private session output domain');}
+  return originalFence.mutateOutputDirectories(targets,operation);
+ }
+ function applyAll(input,{check=false,outputRoot=root}={}){const plans=checkedPlans(input);const mutation=(targets,run)=>mutateOutputDirectories(targets,run,{outputRoot});return applyForwardMatrixParts({plans,check,sourceEntries,current,root,outputRoot,plannerModule,originalDeadline:deadline,mutateOutputDirectories:mutation,reissue:()=>{const originalTotal=total;total=0;try{return plans.map(value=>plan(records.get(value).options));}finally{total=originalTotal;}}});
+ }
+ function close(){if(!closed){if(!mirrorClosed){mirror.close({removeRoot:false});mirrorClosed=true;}ownedStage.close();originalFence.release();closed=true;}}
+ return Object.freeze({plan,validate,checkedPlans,applyAll,sourceEntries,current,mutateOutputDirectories,close,deadline,recoveryPath:staging});
 }

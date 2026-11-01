@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import {retainForwardSourceProposalAccounting} from './forward-output-ownership-20261101-source-accounting.mjs';
+import {withFixedForwardWriterSources} from './forward-output-ownership-20261101-source-history.mjs';
 // Actual original-source producer. Generated module bytes require review/install.
 import {readFileSync} from 'node:fs';
 import {resolve,dirname,join} from 'node:path';
@@ -35,7 +37,7 @@ function derive(source,languageRows,repositoryRows){
  const rules=rows=>rows.map(([id,before,after])=>exactSubstitutionRule('owned-definition:'+id,before,after,'Original complete source unique anchor changed: '+id));
  const pipeline=createRulePipeline([{phase:'language',rules:rules(languageRows)},{phase:'repository',rules:rules(repositoryRows)}]),result=pipeline.run(source);let undo=result.value;
  for(const [id,before,after]of [...languageRows,...repositoryRows].reverse()){if(undo.split(after).length!==2)throw Error('Complete source inverse anchor changed: '+id);undo=undo.replace(after,before);}if(undo!==source)throw Error('Complete source inverse differs');
- return {text:HEADER+result.value,sourceSha256:hash(source),sha256:hash(HEADER+result.value),edits:[...languageRows,...repositoryRows].map(([id,before,after])=>({id,before,after})),trace:result.trace,wholeUndo:true};
+ return {source,inverse:source,text:HEADER+result.value,sourceSha256:hash(source),sha256:hash(HEADER+result.value),edits:[...languageRows,...repositoryRows].map(([id,before,after])=>({id,before,after})),trace:result.trace,wholeUndo:true};
 }
 function matrix(source,planner){
  const repo=[
@@ -46,7 +48,7 @@ function matrix(source,planner){
  ['apply-extra','  return {manifest,failures};',"  if(check){if(!existsSync(ownedTarget))failures.push(`missing: ${ownedRelative}`);else if(readFileSync(ownedTarget,'utf8')!==ownedContent)failures.push(`stale: ${ownedRelative}`);}\n  else writeFileSync(ownedTarget,ownedContent);\n  return {manifest,failures};"],
  ];return derive(source,[],repo);
 }
-export function deriveOwnedDefinitionBulkSources({bulk,matrix:originalMatrix}){
+function deriveOwnedDefinitionBulkSourcesOriginal({bulk,matrix:originalMatrix},history){
  const retained=deriveRetainedBulkSources({bulk,matrix:originalMatrix});
  const byteRetention=['byte-retained-owned-storage',"import {createPrivateOutputPlanStore,createPrivateOutputTextMap} from './private-output-text.mjs';","import {createPrivateOutputPlanStore} from './private-output-text.mjs';\nimport {createPrivateByteOutputTextMap as createPrivateOutputTextMap} from './private-byte-output-text.mjs';"];
  const describedRetention=[
@@ -56,11 +58,14 @@ export function deriveOwnedDefinitionBulkSources({bulk,matrix:originalMatrix}){
  ];
  const files=[
   ['owned-definitions-bulk.mjs',derive(bulk,language,repository)],
-  ['retained-owned-definitions-bulk.mjs',derive(retained.bulk.text,language,[...repository,byteRetention,...describedRetention])],
+  ['retained-owned-definitions-bulk.mjs',derive(history.before('tools/translation/retained-bulk.mjs',retained.bulk.text),language,[...repository,byteRetention,...describedRetention])],
   ['owned-definitions-matrix-bulk.mjs',matrix(originalMatrix,'owned-definitions-bulk.mjs')],
   ['retained-owned-definitions-matrix-bulk.mjs',matrix(originalMatrix,'retained-owned-definitions-bulk.mjs')],
  ].map(([name,row])=>({path:'tools/translation/'+name,...row}));
  return {schema:'owned-definition-bulk-source-proposal-v1',files,retainedOriginal:retained,semanticAuthority:false,wholeModuleEquivalent:false};
+}
+export function deriveOwnedDefinitionBulkSources({bulk,matrix}){
+ return withFixedForwardWriterSources(undefined,history=>{const result=deriveOwnedDefinitionBulkSourcesOriginal({bulk:history.before('tools/translation/bulk.mjs',bulk),matrix:history.before('tools/translation/matrix-bulk.mjs',matrix)},history);result.files=result.files.map(row=>history.compose(row,'text'));result.currentInputSourceEquations={bulk:{current:bulk,historical:history.before('tools/translation/bulk.mjs',bulk),inverse:bulk},matrix:{current:matrix,historical:history.before('tools/translation/matrix-bulk.mjs',matrix),inverse:matrix}};return retainForwardSourceProposalAccounting(result);});
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  let root=resolve(dirname(fileURLToPath(import.meta.url)),'../..'),emit=false;const args=process.argv.slice(2);
