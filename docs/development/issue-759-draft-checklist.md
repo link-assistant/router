@@ -28,10 +28,10 @@ written or an estimate of remaining engineering effort. Do not report this as
 drafted work is supported. Every initial status is `OPEN`; existing evidence
 links are review starting points, not closure receipts.
 
-Current source-review accounting (2026-11-01): **9/70 DRAFTED, 61/70 OPEN**.
+Current source-review accounting (2026-11-02 local): **10/70 DRAFTED, 60/70 OPEN**.
 Closed IDs: D01/D02/D03/D05 (written policy), J01/J05 (existing workflow,
 partition and independent audit-case sources), Q03 (native join emission
-implementation/case source), D04 (checkpoint/handoff/PR template source), and J02 (same-SHA gate with actual-program outcome case source). This is an unweighted acceptance-bundle count,
+implementation/case source), D04 (checkpoint/handoff/PR template source), J02 (same-SHA gate with actual-program outcome case source), and Q05 (deferred complete-cycle failure collector/classifier and reopening proposal). This is an unweighted acceptance-bundle count,
 not a code-completion or executable-translation percentage. All current
 verification remains UNRUN/uninspected. Earlier 5/70 and 7/70 entries record
 historical checkpoints; CI-source and delivery-template receipts follow below.
@@ -216,7 +216,7 @@ Do not inspect new CI feedback during drafting.
 | Q02 | OPEN | Draft invocation-local allocation/CPU/lifecycle improvements for recorded metadata/retained-storage/source-check bottlenecks; preserve guards and avoid persistent source/owner/verdict caches. |
 | Q03 | [DRAFTED](#q03-native-join-emission-source-receipt--2026-11-01) | Draft complete actual native join-helper→kernel emission routing through genuine private checked body/caller evidence, plus full-capacity independent cases without reducing original bounds/deadlines. |
 | Q04 | OPEN | Draft canonical/platform/owned/reverse/export freshness and strict TypeScript repair paths with complete source equations, original producers and all unchanged commands. |
-| Q05 | OPEN | Draft a later complete-cycle failure collector/classifier and repair worklist preserving raw failures and SHA/workloads; newly discovered failures reopen affected rows instead of being hidden or assumed repaired. |
+| Q05 | [DRAFTED](#q05-deferred-complete-cycle-failure-source-receipt--2026-11-02) | Draft a later complete-cycle failure collector/classifier and repair worklist preserving raw failures and SHA/workloads; newly discovered failures reopen affected rows instead of being hidden or assumed repaired. |
 
 ## 12 — JavaScript-first CI (ledger area 12)
 
@@ -716,3 +716,33 @@ Actual GitHub scheduling, successful full matrices, current freshness, native
 outcomes, branch/ruleset reads and every new case remain deferred. J03/J04 and
 all broader translation/delivery obligations remain OPEN. Current unweighted
 source accounting: **9/70 DRAFTED,61/70 OPEN**. No function coverage follows.
+
+
+### Q05 deferred complete-cycle failure source receipt — 2026-11-02
+
+Source-reviewed in the commit containing this receipt. The complete source
+inventory for this bookkeeping scope is the three additions and one whole test
+harness evolution in [the source packet](deferred-ci-cycle-source-20261101/README.md).
+`proposeDeferredCiFailureCycle`, `proposeReopenedDraftChecklist` and the actual
+future `collectDeferredCiCycle` CLI cover collection, complete-cycle checks,
+classification, full raw failure retention, SHA/run/attempt/workload joins and
+explicit reopening of affected source rows. All rerun failures remain visible;
+unknown failures retain a fallback assignment. Missing/moving/pending/truncated
+cycles are refused as complete evidence. Whole case source is scheduled through
+the unchanged complete policy test command, preserving existing cases.
+
+Seven independent case sources cover these positive/error/refusal/lifecycle
+contracts. The collector refuses network reads until every numbered source row
+is DRAFTED; it was not run to author this receipt. No application translation or
+native behavior is involved in this bookkeeping scope, so language/repository
+translation, CST/meta compiler proof, JS/TS/Rust semantic comparisons and native
+oracle lanes are inapplicable. The full source archive retains original/current
+harness bytes and inverses; it grants no translation or Rust-gate permission.
+
+Limits and the distinction between workflow API head SHA and tested source SHA
+are explicit. Raw evidence is bounded and failures preserve partial evidence;
+no bound permits incomplete-cycle success. The report only proposes checklist
+reopening; source review and deliberate installation remain required. Existing
+same-SHA verifiers/eight stages still control all Rust CI. Current API/collector,
+all seven cases and all broader verification remain UNRUN/uninspected. This closes
+only Q05 source clauses: **10/70 DRAFTED,60/70 OPEN**, not execution or coverage.
