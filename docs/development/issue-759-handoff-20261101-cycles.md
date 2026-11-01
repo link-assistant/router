@@ -701,3 +701,16 @@ is229,038 decoded/33,707 packed bytes. All original/current source, CST/inverses
 and transitive case closure are retained. No original API/target/pin/command or
 resource bound changed. Every execution remains UNRUN;11/70 DRAFTED,59 OPEN.
 Root alone continues into standalone export/resource closure source work.
+
+## Compact source DATA storage foundation
+
+After17c42167e, Root drafted the additive four-file compact codec/store and
+complete independent cases. The [source contract](compact-source-vault-20261102/README.md)
+retains whole bytes and complete path/mode metadata with64MiB encoded storage,
+explicit256MiB logical/16384-path new limits and64MiB decode occurrences.
+The original standalone/export/receiving APIs and limits are unchanged. No fit,
+speed, platform or executable authority is inferred. Descriptor ownership now
+covers partial writes; closing checks and exact falsy primaries remain required.
+The immutable full-source packet SHA256dc492bd613c98338f92221a88b4c70386f34074d5e32b979d99cbe66da373547 is36849 decoded/10379
+packed bytes. All execution is UNRUN. Export provenance, materialization and
+actual receiving adoption remain undrafted/open;11/70 DRAFTED,59 OPEN persists.
