@@ -37,3 +37,5 @@ export {planOwnedPeerReconciliation,applyOwnedPeerReconciliation} from './owned-
 export {proposeOutputLiteralProfile,visitOutputLiteralSourceEquations} from './output-literal-core-20261101-profile.mjs';
 export {translateOutputLiteralProject,compileOutputLiteralProject,readOutputLiteralMeta,invertOutputLiteralTarget} from './output-literal-core-20261101-project.mjs';
 export {proposeOutputLiteralProductionAdoption} from './output-literal-core-20261101-production.mjs';
+export {proposeAggregateCopyProfile,visitAggregateCopySourceEquations} from './aggregate-copy-collection-20261101-profile.mjs';
+export {prepareAggregateCopyCollections,translateEditedAggregateCopyTarget,invertExactAggregateCopyTarget,readAggregateCopyMeta,readEditedAggregateCopyMeta} from './aggregate-copy-collection-20261101.mjs';

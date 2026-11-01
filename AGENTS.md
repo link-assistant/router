@@ -48,6 +48,18 @@ integrates complete source batches and remains the sole push/PR publisher.
 All other source-only, disk, private semantic, two-rule-sequence and JavaScript-
 first constraints persist unchanged.
 
+During this constrained source-only resume, the coordinator may keep disjoint
+worker paths in the existing integration worktree to avoid additional checkout
+and dependency copies. This task-local exception overrides the generic isolated
+worktree instruction below. Changes are immediately shared: assign exact path
+ownership, coordinate complete virtual predecessor/successor versions, and grant
+only one explicit index/commit slot at a time. Every worker stages only its own
+reviewed coherent paths and never pushes. The coordinator integrates public APIs,
+native oracle scheduling, complete source histories and truthful handoff counts.
+A ready worker that has ended its turn must be resumed with a follow-up task;
+a queued message alone does not resume its work. Do not leave ready commits
+waiting accidentally or restart historical workers.
+
 Workers use isolated worktrees and draft commits only in their own worktrees. The integration coordinator combines and checks their complete batch. Only the designated push gate owner may push a branch or create/update its pull request. Outside the active source-only publication exception above, that owner collects the entire completed CI failure set before dispatching one coordinated repair batch. Do not push speculative follow-ups, cancel an existing CI run, or bypass a failed JavaScript gate to start Rust.
 
 While issue #759 is actively being developed, create reviewable checkpoint commits at least once every six hours. Commit coherent source changes while broader translation, generation or parity work remains unfinished, and record passed, failed and unrun checks accurately. Workers commit in their assigned worktrees; the coordinator integrates completed changes. The checkpoint cadence does not waive the existing publication or same-commit JavaScript-first CI requirements.

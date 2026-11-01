@@ -521,3 +521,37 @@ inverse; complete streaming forward/matrix output ownership under original
 existing Python3 OS-lock dependency. Root remains sole publisher and owns the
 serialized commit slot. No local Rust, tests, compiler/translator/preparer trials
 or CI/review feedback inspection is authorized.
+
+Copied-record source checkpoint `6d2769999cc4b2e131596e55054d3bc2518274a2`
+is integrated through the stable family API. The complete successor archive pin
+is `9053da2e6514f1ca85065f48d1a7d5dd6d3889cc777f87571da04c3eb9261b12`.
+Actual private original recursive Copy/Clone owner/layout/no-Drop joins and the
+complete nested declaration census guard every admitted copied-record function.
+Same-typed owned field edits from actual whole JS/TS reconstruct changed Rust,
+receive fresh whole-native checks and exactly reproduce the authoritative target.
+The native oracle and all original receiving/refusal/4096-bound cases are source
+only. Real auth_import owner excerpts retain all fields/attributes but are a
+separate fixture scope; neither original auth_import nor policy bodies are
+admitted. The fixed primitive spelling participates in field type equality.
+See [the complete contract](aggregate-copy-collection-20261101.md).
+
+The next policy batch reuses existing genuine enum-to-usize, static-array and
+flat enclosing derive/producer rules rather than duplicating them. Its assigned
+source scope retains actual clients/subscription/client_policy owners, complete
+configuration, attributes, reexports and residuals. A new bounded adapter may
+reuse the existing20,000-path/8MiB-file/64MiB source-corpus and512MiB field-storage
+domains; this does not enlarge the separate128-file/4MiB fixture domain or any
+receiving limit. Selected snapshot DATA must be read inside original fresh
+private compiler frames. Whole production fit and function admission are unknown.
+Actual SubscriptionOverride fields have different types, so changing client to
+provider must refuse rather than serve as a positive field-edit case. Real set,
+self, Display/sort and all original policy body prerequisites remain explicit.
+
+The three active workers own disjoint source paths in this existing integration
+worktree under the documented disk-saving task exception. The coordinator
+serializes exact-path commits, coordinates complete virtual source versions and
+is the sole publisher. Finished workers receive follow-up tasks to resume.
+No dependency copies, tests, compiler/parser/translator trials, benchmarks or
+CI/review inspection are authorized. All new source work remains UNRUN; the
+requirement count remains8/70 DRAFTED,62 OPEN. The last published source SHA
+remains9de01240ea2cd588c337ed12d93484fb3b4ff0e8 until the next checkpoint.

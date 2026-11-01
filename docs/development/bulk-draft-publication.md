@@ -10,6 +10,11 @@ The coordinator remains the only publisher. The user's 2026-11-01 update allows
 up to three new GPT-6.1-sol medium subagents for disjoint source-only drafting;
 do not restart historical workers or run CPU-intensive work. Serialize commits
 and preserve the no-execution/no-feedback-inspection policy for every agent.
+To conserve disk, this resume may use disjoint assigned paths in the existing
+integration worktree rather than additional checkouts. Changes are immediately
+shared; one explicit staging/commit slot and the sole coordinator publisher
+remain mandatory. Resume a finished ready worker with a follow-up task before
+expecting it to act on a commit message.
 Review the complete
 source batch, its original source/rule histories and requirement ledger before
 committing. Disable conflicting execution hooks for commits and pushes under the

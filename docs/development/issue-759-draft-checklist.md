@@ -545,3 +545,16 @@ including native logger/platform/provider behavior, source envelope qualificatio
 production adoption, multiunit/other profiles and full freshness. All execution
 remains UNRUN. The owned native oracle joins an existing integration binary;
 no original case/command/workload/deadline is reduced. Counts stay8/70 and62OPEN.
+
+Copied-record child source receipt `6d2769999`: original recursive Copy/Clone
+producer/layout/no-Drop evidence, complete nested whole-function finalization,
+finite field-map collections, actual changed whole JS/TS field inverses and
+second fresh checked-native/target reproduction are drafted. The complete
+source successor and independent cases/native oracle are documented in
+`aggregate-copy-collection-20261101.md`. Original4096 receiving/resource boundaries
+remain explicit; no generic/ref/String/array/payload fields or executable record
+Clone are added. Original auth_import owners appear only as full declarations
+in a separate fixture, never as full production admission. R01/R02/C05/O02/B03/
+F01/V02/V04/T01/T02/E03/Q02 and broader parent clauses remain OPEN for full
+production, source installation, all receiving/native/fit/deadline/freshness
+evidence. All execution is UNRUN; accounting remains8/70 DRAFTED,62 OPEN.
