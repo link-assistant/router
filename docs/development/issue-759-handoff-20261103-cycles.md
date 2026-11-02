@@ -151,3 +151,21 @@ All parser/capture/CLI/operational/receiving/resource qualification remains
 UNRUN; no local execution or CI feedback inspection occurred. Async/general
 lease, delegated/physical-trial/wider forward custody and full sink coverage
 remain OPEN. Counts stay11/70 DRAFTED,59 OPEN.
+
+## Actual copied SDK receiving driver
+
+Root source-reviewed and installed the complete dedicated driver and source
+archive successors from the frozen SDK companion packet. Both original tsc
+commands and every original receiving case retain strictness/deadlines; children
+select the complete copied SDK and bounded owned temporary roots. The actual
+SDK/native-birth receiving helper is included as source, indexed and committed
+in the exported compiler. Old main archive and whole before/after/inverses stay
+available. Complete ancestry and the two separate rule phases remain.
+
+This is an actual source integration, not resource qualification. Current hot
+source trees cannot fit the mandatory nested workload in384MiB; conservative
+preflight therefore refuses before SDK copying. Compressed read-only profile
+storage and full receiving adoption remain separately OPEN. No workload or cap
+was reduced. Tests/compilers/translation UNRUN; CI NOT_INSPECTED. Counts remain
+11/70 DRAFTED,59 OPEN. The frozen companion document describes pre-integration
+proposal status; this journal records installation.
