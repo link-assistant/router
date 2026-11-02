@@ -353,3 +353,43 @@ fresh compiler-cohort launcher and default synchronization integration; candidat
 profile support alone is not canonical activation. The other worker completes
 the active writer census. Counts remain11/70 DRAFTED,59 OPEN, with no verified
 function denominator. No tests, compilation or CI feedback were inspected.
+
+## Thirteen actual core CLI writers and partial source census
+
+Root integrated thirteen complete core CLI afterimages: text/SSE/async control,
+owned/primitive result, primitive Option/callback, owned outcome, HTTP protocol/
+transport and JSON state/field/iteration source producers. Only actual --write
+branches enter protection before the original producer. Read-only APIs and
+emit/check modes retain their original source. Exact original all-row stale
+checks precede one capture of path/current/currentAfter; same captured rows and
+payloads feed all-destination admission and canonical primitive callbacks.
+Promise/thenable stale work refuses inside the actual admission scope. Original
+iterative/partial-write behavior is retained; no global rollback is claimed.
+
+The full13-parent/five-authored-source integration packet is218831 decoded/
+12525 compressed bytes, SHA256
+`dc9abe36d1a5c20a7adf2353bd7fbea9614131e8d7146b4aa3f0ca0089bc5dd7`.
+See [the CLI writer contract](protected-core-cli-writers-20261102.md). Full
+source/CST inverses and independent cases are UNRUN. The finite CLI source
+successor is not yet joined to every historical/canonical compressed source
+bank; exhaustive source-copy/profile ancestry integration remains immediate
+OPEN work. Unchanged producer bodies alone are not freshness evidence.
+
+The [partial source writer census](source-writer-census-20261102.md) retains103
+whole original modules with physical/Git origins and actual sink clauses. Its
+83 additional CLI source-writer files,13 proposed/integrated CLI repairs and
+seven other records are reviewed file groups, not a complete writer/function
+denominator. Dynamic output paths and discovery/configuration gaps remain OPEN.
+The [reviewed-adoption handoff](source-writer-census-20261102-reviewed-adoption-handoff.md)
+identifies actual async apply/recovery renames requiring policy before awaits
+while preserving existing durable journals, modes, budgets and manual recovery.
+The next simple CLI cluster is being drafted by the second worker. Broad forward
+custody has an older wider200000-name/16MiB policy domain; substituting the common
+smaller profile would incorrectly narrow its supported domain.
+
+Root's fresh canonical compiler-cohort and default synchronization edits remain
+uncommitted until the map worker's three-parent canonical profile is complete.
+These use one scoped full source package per sync, fresh producer processes,
+unchanged workload IDs/flags and original deadlines including setup/closure.
+No launcher, parser, child, test, compiler or CI feedback has been executed.
+Acceptance-bundle counts remain11/70 DRAFTED,59 OPEN; work continues.

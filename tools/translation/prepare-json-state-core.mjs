@@ -1,3 +1,4 @@
+import {writeProtectedCoreCliPlan} from './protected-core-cli-writers-20261102.mjs';
 // Source-only native module preparation. Rust grammar verification is CI-only.
 import {readFileSync,writeFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
@@ -26,7 +27,7 @@ export function prepareJsonStateCore({root=ROOT}={}){
  return {schema:'owned-json-state-native-root-source-plan-v1',id:'router:owned-json-state-native-root-source-v1',files:[{path:row.path,before,language,after,current,...history,stages,trace:run.trace,inverse:before,nativeRustGrammarChecked:false}],sourceAuthority:false,semanticAuthority:false,rustExecuted:false,receivingExecuted:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const args=process.argv.slice(2);need(args.length===1&&['--emit','--write','--check'].includes(args[0]),'use --emit|--write|--check');const plan=prepareJsonStateCore();
- if(args[0]==='--write'){for(const row of plan.files)need(readFileSync(resolve(ROOT,row.path),'utf8')===row.current,'stale complete root proposal');for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.currentAfter);}
+ const args=process.argv.slice(2);need(args.length===1&&['--emit','--write','--check'].includes(args[0]),'use --emit|--write|--check');const plan=args[0]==='--write'?writeProtectedCoreCliPlan(ROOT,()=>prepareJsonStateCore(),plan=>{for(const row of plan.files)need(readFileSync(resolve(ROOT,row.path),'utf8')===row.current,'stale complete root proposal');}):prepareJsonStateCore();
+ 
  if(args[0]==='--check')need(plan.files.every(row=>row.current===row.currentAfter),'native root source proposal is stale');console.log(JSON.stringify(args[0]==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),rustExecuted:false,receivingExecuted:false}));
 }

@@ -1,3 +1,4 @@
+import {writeProtectedCoreCliPlan} from './protected-core-cli-writers-20261102.mjs';
 // Source preparation only. Rust grammar and execution belong to gated CI.
 import {readFileSync,writeFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
@@ -20,7 +21,7 @@ export function prepareAsyncControlCore({root=ROOT}={}){
  return {schema:'async-control-native-source-plan-v1',id:'router:async-control-native-source-v1',files:[{path:row.path,before,language,after,current,currentAfter,laterHistories:[{id:'router:owned-result-native-source-v1',before:after,after:currentAfter,equation,stages:later.stages,sourceAuthority:false,semanticAuthority:false}],stages,trace:run.trace,inverse:before,nativeRustGrammarChecked:false}],sourceAuthority:false,semanticAuthority:false,rustExecuted:false,receivingExecuted:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const args=process.argv.slice(2);need(args.length===1&&['--emit','--write','--check'].includes(args[0]),'use --emit|--write|--check');const plan=prepareSseCore();if(args[0]==='--write'){for(const row of plan.files)need(readFileSync(resolve(ROOT,row.path),'utf8')===row.current,'stale root');for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.currentAfter);}if(args[0]==='--check')need(plan.files.every(row=>row.current===row.currentAfter),'stale source');console.log(JSON.stringify(args[0]==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),rustExecuted:false,receivingExecuted:false}));
+ const args=process.argv.slice(2);need(args.length===1&&['--emit','--write','--check'].includes(args[0]),'use --emit|--write|--check');const plan=args[0]==='--write'?writeProtectedCoreCliPlan(ROOT,()=>prepareSseCore(),plan=>{for(const row of plan.files)need(readFileSync(resolve(ROOT,row.path),'utf8')===row.current,'stale root');}):prepareSseCore();if(args[0]==='--check')need(plan.files.every(row=>row.current===row.currentAfter),'stale source');console.log(JSON.stringify(args[0]==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),rustExecuted:false,receivingExecuted:false}));
 }
 
 function prepareSseCore(options){return prepareTextCore(options);}
