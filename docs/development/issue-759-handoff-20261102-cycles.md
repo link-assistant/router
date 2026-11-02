@@ -783,3 +783,18 @@ No parser, producer, test or compiler ran; CI NOT_INSPECTED. Residual special
 external-output/Bun coordinator sinks are a separate in-progress source batch.
 Complete source/namespace/native/receiving qualification remains UNRUN;11/70
 acceptance bundles DRAFTED,59 OPEN.
+
+## Unrestricted original shared map type helper
+
+Root drafted private parsing/type identity, type-key, genuine source-link
+relocation capture and checker resolution for the original shared standard
+BTreeMap<String,String> boundary. Actual caller module/producer scopes and
+resolved aliases/standard String owners rejoin the separate scoped native
+source ABI; copied public records do not supply a type. All reuses freshly
+recheck original sources, and per-operation checker captures close/expire.
+This helper has not yet been registered in the actual Host/source-link/checked
+meta/ownership/target/reverse parents. Whole positive production/lifecycle and
+receiving cases remain OPEN; the new source cases cover foreign/fake boundaries.
+See [the private type helper source contract](borrowed-standard-map-native-types-20261103.md).
+No tests or source code ran; verification UNRUN, CI NOT_INSPECTED;11/70 DRAFTED,
+59 OPEN and no translated-function denominator or coverage claim.

@@ -1,0 +1,15 @@
+{
+  "schema": "borrowed-standard-map-native-types-source-draft-20261103-v1",
+  "decodedBytes": 44436,
+  "packedBytes": 12558,
+  "sha256": "9de2da6abb001cd40c1e94e98a7d77ae55548dd87902881cdd6fa228c712bea9",
+  "authoredPaths": [
+    "tools/translation/borrowed-standard-map-20261103-native-types.mjs",
+    "tools/translation/test/borrowed-standard-map-20261103-native-types.test.mjs",
+    "docs/development/borrowed-standard-map-native-types-20261103.md"
+  ],
+  "verification": "UNRUN",
+  "ci": "NOT_INSPECTED",
+  "originalParentHooksInstalled": false,
+  "applicationTranslationQualified": false
+}
