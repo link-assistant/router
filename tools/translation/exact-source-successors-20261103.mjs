@@ -1,7 +1,7 @@
 // Fixed reviewed repository histories. Returns CST/source proposals, never owners.
 import {fileURLToPath} from 'node:url';
 import {resolve,join} from 'node:path';
-import {lstatSync,realpathSync} from 'node:fs';
+import {lstatSync,realpathSync} from 'node:fs';import {captureReadonlySourceProfile} from './ordered-text-map-callers-20261102-source-storage.mjs';
 import {createHash} from 'node:crypto';
 import {createOrderedMapCanonicalSourceCustody} from './ordered-text-map-callers-20261102-canonical-source-custody.mjs';
 import {readCompactSparsePhysicalFile,sameCompactPhysicalSourceStamp} from './compact-sparse-git-io-20261102.mjs';
@@ -24,12 +24,12 @@ function retain(frame,bytes){if(!Number.isSafeInteger(bytes)||bytes<0||retainedS
 function fixedPath(path){return typeof path==='string'&&path.length<=4096&&!/[\x00-\x1f\x7f\\:]/u.test(path)&&!path.startsWith('/')&&!path.split('/').some(part=>!part||part==='.'||part==='..');}
 function text(raw){const value=raw.toString('utf8');if(!Buffer.from(value).equals(raw))fail('whole strict UTF8 source required');return value;}
 function read(frame,path,maximum){
- const actual=join(frame.root,path),stat=lstatSync(actual,{bigint:true}),raw=frame.custody.readBytes(actual,maximum),source=text(raw),old=frame.snapshots.get(path);
+ const stored=path!==INDEX?captureReadonlySourceProfile(join(frame.root,path),{maximum}):null;if(stored){const source=text(stored.bytes),old=frame.snapshots.get(path);if(old){if(!old.stored||old.source!==source)fail('actual logical source snapshot changed');old.stored.requireCurrent();}else{retain(frame,stored.bytes.length);frame.snapshots.set(path,{source,stored});}return source;}const actual=join(frame.root,path),stat=lstatSync(actual,{bigint:true}),raw=frame.custody.readBytes(actual,maximum),source=text(raw),old=frame.snapshots.get(path);
  if(!sameCompactPhysicalSourceStamp(stat,lstatSync(actual,{bigint:true}))||old&&(!sameCompactPhysicalSourceStamp(old.stat,stat)||old.source!==source))fail('actual whole source snapshot changed');
  if(!old){retain(frame,raw.length);frame.snapshots.set(path,{path:actual,stat,source});}return source;
 }
 function close(frame){return withSourceInputValidation(()=>withCompleteSourceClosingFence(()=>null,[
- ...[...frame.snapshots.values()].map(row=>()=>{if(!readCompactSparsePhysicalFile(row).equals(Buffer.from(row.source)))fail('complete closing source bytes differ');}),
+ ...[...frame.snapshots.values()].map(row=>()=>{if(row.stored)row.stored.requireCurrent();else if(!readCompactSparsePhysicalFile(row).equals(Buffer.from(row.source)))fail('complete closing source bytes differ');}),
  frame.custody.close,
 ]));}
 function sourceIndex(frame){

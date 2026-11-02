@@ -2,7 +2,7 @@
 // std -> alloc -> core reexports. Every external table remains incomplete.
 import {originalOrderedTextMapStandardSources,requireOriginalOrderedTextMapStandardSources} from './ordered-text-map-callers-20261102-standard-source.mjs';
 import {createHash} from 'node:crypto';
-import {readFileSync} from 'node:fs';
+import {readSourceProfileFileSync as readFileSync} from './ordered-text-map-callers-20261102-source-storage.mjs';
 import {gunzipSync} from 'node:zlib';
 import {COPY_TRAIT_OWNER_PROFILE,COPY_NAMESPACE_BINDINGS} from './copy-trait-owners.mjs';
 import {stablePublicTypeCandidates,stablePublicReexportCandidates,originalPublicModuleCandidate,originalExternAliasCandidate} from './namespace-census.mjs';

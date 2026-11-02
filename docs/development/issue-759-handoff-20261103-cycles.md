@@ -201,3 +201,27 @@ status; this journal records installation. Actual physical-trial/vector adapters
 and delegated child-process sink coverage remain separately OPEN. No parent
 wrapper qualifies child writes. Every verification UNRUN; CI NOT_INSPECTED;
 checklist remains11/70 DRAFTED,59 OPEN.
+
+## Actual read-only compressed profile reader branches
+
+Root reviewed the frozen14 source-storage paths and installed all13 exact
+original reader successors. Complete logical profiles retain actual Git objects,
+HEAD/index/mode/blob/skip-worktree origins and real compressed descriptor/part/
+ancestor custody; code, Rust, SDK and index127 remain physical. Seven registry
+readers, tracked input discovery, source operation scope, strong map/ABI readers,
+the shared source custody and exact history image reads now have explicit cold
+branches. No NodeStats, native/type/body permit or across-operation verdict is
+fabricated. Complete compiler bank/export/producer and receiving source remain
+new explicit APIs; the original full receiving driver is not yet cold-adopted.
+
+Source review identified followup obligations: complete closer arrays must be
+charged/grouped under the original4096 fence bound; all reused/absent synchronous
+callback branches need result rejection; compressed FS option fields need own
+DATA capture; physical and cold custody entries must share the original32768
+complete observation bound. A separate source correction epoch is being drafted,
+along with original producer re-export/main/unit/SDK receiving routing. No
+qualification claim is made for this intermediate checkpoint. Existing original
+physical API domains and full workloads remain; resource/receiving qualification
+UNRUN, all local execution UNRUN and CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.
+The frozen storage document records pre-installation proposal status; this
+journal records the thirteen actual source integrations.

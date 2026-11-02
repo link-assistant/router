@@ -1,6 +1,6 @@
 // Private pinned standard-library source units. This selects source-model
 // inputs; it never authenticates an installed sysroot or compiled metadata.
-import {readFileSync} from 'node:fs';
+import {readSourceProfileFileSync as readFileSync} from './ordered-text-map-callers-20261102-source-storage.mjs';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {deriveDependencyOriginalInputs} from './derive-dependencies.mjs';

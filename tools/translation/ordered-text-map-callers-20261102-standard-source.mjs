@@ -1,6 +1,6 @@
 // Fixed original Rust source selections. Public descriptors never accept an
 // arbitrary host/type owner; fresh source receipts retain all complete inputs.
-import {lstatSync} from 'node:fs';
+import {lstatSync} from 'node:fs';import {captureReadonlySourceProfile} from './ordered-text-map-callers-20261102-source-storage.mjs';
 import {types} from 'node:util';
 import {originalPrivateParserIngressUnchanged,originalStaticSourceIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged,originalCapturedFunctionSource} from './original-json-intrinsics.mjs';
 import {dirname} from 'node:path';
@@ -46,14 +46,14 @@ function protect(custody,run){
 }
 function reclose(custody){
  let failed=false,primary;const check=run=>{try{run();}catch(error){if(!failed){failed=true;primary=error;}}};check(requireOrderedMapSourceDataIngress);
- for(const row of custody.files)check(()=>{if(!readCompactSparsePhysicalFile(row).equals(row.raw))fail('whole original source custody bytes changed');});
+ for(const row of custody.stored)check(row.requireCurrent);for(const row of custody.files)check(()=>{if(!readCompactSparsePhysicalFile(row).equals(row.raw))fail('whole original source custody bytes changed');});
  for(const row of custody.directories)check(()=>{const current=lstatSync(row.path,{bigint:true});if(!current.isDirectory()||current.isSymbolicLink()||!sameDirectory(row,current))fail('original source ancestor identity changed');});
  if(failed){if(!custody.failed){custody.failed=true;custody.primary=primary;}throw primary;}
  if(custody.failed)throw custody.primary;
 }
 function regular(url,max,custody){
  return protect(custody,()=>withCompleteSourceClosingFence(()=>{
-  const path=fileURLToPath(url),ancestors=[];let parent=dirname(path);
+  const stored=captureReadonlySourceProfile(url,{maximum:max});if(stored){custody.stored.push(stored);if(custody.stored.length+custody.files.length>15)fail('source custody census bound');return stored.bytes;}const path=fileURLToPath(url),ancestors=[];let parent=dirname(path);
   while(true){ancestors.push(parent);const next=dirname(parent);if(next===parent)break;parent=next;if(ancestors.length>128)fail('source ancestor bound');}
   for(const name of ancestors.reverse()){const stat=lstatSync(name,{bigint:true});if(!stat.isDirectory()||stat.isSymbolicLink())fail('ordinary original source ancestor required');const previous=custody.directories.find(row=>row.path===name);if(previous){if(!sameDirectory(previous,stat))fail('source ancestor replaced');}else custody.directories.push({path:name,stat});}
   const stat=lstatSync(path,{bigint:true});if(!stat.isFile()||stat.isSymbolicLink()||stat.size<0n||stat.size>BigInt(max))fail('bounded regular source input required');
@@ -109,7 +109,7 @@ function injection(source){
 }
 export function originalOrderedTextMapStandardSources(){return withSourceFailureOperation(()=>captureStandardSources());}
 function captureStandardSources(){
- const custody={files:[],directories:[],failed:false,primary:undefined},captured=protect(custody,()=>withCompleteSourceClosingFence(()=>inputs(custody),[()=>reclose(custody)])),source=path=>one(captured.sources.filter(row=>row.path===path),path),close=()=>reclose(custody);
+ const custody={files:[],directories:[],stored:[],failed:false,primary:undefined},captured=protect(custody,()=>withCompleteSourceClosingFence(()=>inputs(custody),[()=>reclose(custody)])),source=path=>one(captured.sources.filter(row=>row.path===path),path),close=()=>reclose(custody);
  return protect(custody,()=>withCompleteSourceClosingFence(()=>createRulePipeline([{phase:'language',rules:[{id:'ordered-map:original-selected-standard-source-and-lossless-CST',apply:()=>{
   const snapshots=captured.sources.map(row=>{if(!row.path.endsWith('.rs'))return {...row,concreteMeta:null,privateOriginalCargoParserRequired:true};const concrete=transportConcreteSyntaxSource(row.source,{language:'Rust'});if(concrete.source!==row.source||transportConcreteSyntaxMeta(concrete.meta).source!==row.source)fail('serialized/reparsed full standard CST differs');return {...row,concreteMeta:concrete.meta};});
   const std=source('library/std/src/lib.rs'),alloc=source('library/alloc/src/lib.rs'),stdCollections=source('library/std/src/collections/mod.rs'),allocCollections=source('library/alloc/src/collections/mod.rs'),btree=source('library/alloc/src/collections/btree/mod.rs'),map=source('library/alloc/src/collections/btree/map.rs'),string=source('library/alloc/src/string.rs');

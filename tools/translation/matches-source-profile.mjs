@@ -1,5 +1,5 @@
 // Original standard macro data, not a macro-owner or runtime admission grant.
-import {readFileSync} from 'node:fs';
+import {readSourceProfileFileSync as readFileSync} from './ordered-text-map-callers-20261102-source-storage.mjs';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {sourceItems} from './rust-structure.mjs';
