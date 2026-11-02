@@ -141,3 +141,27 @@ test('real reverse pair callers freshly reissue native source types meta and bot
  const alias=`import {router_text_map_pairs as pairs} from './runtime/ordered-text-map-20261102-runtime.mjs';export function alias(map:Parameters<typeof pairs>[0]):ReturnType<typeof pairs>{const values=pairs(map);return values;}`;assert.equal(analyzeOrderedTextMapReverseModule(reverseInput('',alias),'caller.mts').program.length,0);
  const structural=`import {router_text_map_from_pairs as fromPairs} from './runtime/ordered-text-map-20261102-runtime.mjs';export function structural(value:readonly (readonly [string,string])[]):ReturnType<typeof fromPairs>{return fromPairs(value);}`;assert.equal(analyzeOrderedTextMapReverseModule(reverseInput('',structural),'caller.mts').program.length,0);
 });
+
+test('original reverse const-owned-map locals retain genuine lexical roots and cannot return local loans',limits,async()=>{
+ const imports=`import {router_text_map_new as empty,router_text_map_insert as insert,router_text_map_contains as contains,router_text_map_get as get} from './runtime/ordered-text-map-20261102-runtime.mjs';`;
+ const typescript=imports+`
+ export function localContains(key:string):boolean{const original=empty();const updated=insert(original,'stream','true');return contains(updated,key);}
+ export function localTruth(key:string):boolean{const map=insert(empty(),'stream','true');const value=get(map,key);return value.$==='Some'&&(value.field0==='true'||value.field0==='1');}
+ export function localOutput():ReturnType<typeof empty>{const map=empty();return map;}`;
+ const javascript=imports+`
+ export function localContains(key){const original=empty();const updated=insert(original,'stream','true');return contains(updated,key);}
+ export function localTruth(key){const map=insert(empty(),'stream','true');const value=get(map,key);return value.$==='Some'&&(value.field0==='true'||value.field0==='1');}
+ export function localOutput(){const map=empty();return map;}`;
+ const input=reverseInput(javascript,typescript),analysis=analyzeOrderedTextMapReverseModule(input,'caller.mjs');assert.equal(analysis.program.length,3,JSON.stringify(analysis.diagnostics));
+ const decoded=readOrderedTextMapReverseMeta(serializeOrderedTextMapReverseMeta(analysis.program),{input,path:'caller.mjs'}),token=await prepareOrderedTextMapReverseRuntime(decoded),written=emitOrderedTextMapReverseProgram(decoded,'typescript',{outputPath:'caller.mts'}),rust=emitOrderedTextMapReverseProgram(decoded,'rust'),name=javascript=>decoded.find(row=>row.javascript===javascript).name;
+ assert.match(rust,/let __ro_arg_[0-9]+ = &map/u);assert.match(rust,/text_map_copy\(__ro_arg_/u);assert.match(rust,/text_map_get\(__ro_arg_/u);assert.equal(rust.includes("'ro_map"),false);
+ for(const [key,expected]of [['stream',true],['missing',false]]){assert.equal(evaluateOrderedTextMapReverseProgram(decoded,name('localContains'),[key],token),expected);assert.equal(evaluateOrderedTextMapReverseProgram(decoded,name('localTruth'),[key],token),expected);}
+ const runtime=await import('../ordered-text-map-20261102-runtime.mjs');assert.equal(runtime.router_text_map_len(evaluateOrderedTextMapReverseProgram(decoded,name('localOutput'),[],token)),0n);
+ await targets(javascript,written,'caller',(js,ts)=>{for(const module of [js,ts]){assert.equal(module.localContains('stream'),true);assert.equal(module.localContains('missing'),false);assert.equal(module.localTruth('stream'),true);assert.equal(module.localTruth('missing'),false);assert.equal(runtime.router_text_map_len(module.localOutput()),0n);}});
+ assert.equal(analyzeOrderedTextMapReverseModule(reverseInput('',written),'caller.mts').program.length,3);
+ for(const body of [
+  `export function alias():ReturnType<typeof empty>{const map=empty();const second=map;return second;}`,
+  `export function escaping():ReturnType<typeof get>{const map=empty();return get(map,'stream');}`,
+  `export function mutable():ReturnType<typeof empty>{let map=empty();return map;}`,
+ ])assert.equal(analyzeOrderedTextMapReverseModule(reverseInput('',imports+body),'caller.mts').program.length,0);
+});

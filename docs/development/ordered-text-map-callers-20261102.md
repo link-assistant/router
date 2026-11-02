@@ -197,7 +197,7 @@ private parser entry accepts only the genuine fixed alloc source receipt and
 parses the complete original alloc manifest. The std-to-alloc-to-core Cargo path
 edges and ordinary library unit identities are separately joined.
 
-The fixed standard source reader retains thirteen complete original Rust1.89 files
+The fixed standard source reader retains fourteen complete original Rust1.89 files
 and the complete original alloc Cargo manifest: four newly pinned files and ten
 reused originals. It reconstructs std-to-alloc BTreeMap/String routes, the
 selected private btree-map glob, std/core2024 preludes and original compiler
@@ -286,12 +286,13 @@ entries validate through the unchanged strict raw constructor. No arbitrary
 array annotation, tagged product or tuple literal issues that native domain.
 All corresponding cases and resource qualification remain UNRUN. Inferred
 pair results without signature context, general tuple locals/literals,
-and map locals/aliases in the reverse source checker, mutable bindings/assignments, loops, helper graphs,
+and general map aliases in the reverse source checker, mutable bindings/assignments, loops, helper graphs,
 record/tuple/serde fields, borrowed map return values, and generalized shared-map
 Copy/lifetime patterns remain refused or OPEN. Ordinary forward owned map locals
 and the closed Some/None consumer are drafted; this is lexical ownership, not
-complete Rust non-lexical lifetime analysis. Get in reverse needs an actual map
-input root; returning a loan from a new/local map refuses.
+complete Rust non-lexical lifetime analysis. Returned lookup loans in reverse
+still require an actual input map root; local map loans may only be consumed
+inside the function. Returning a loan from a new/local map refuses.
 
 The source-drafted cold capsule reconstructs the genuine whole original graph
 before accepting semantic meta and is scheduled by the explicit receiving
@@ -315,3 +316,25 @@ standard-map owner resolution/adapters, request/catalog domains, RejectionFile
 serde/field ownership, nested deployment maps and every complete production
 caller migration remain OPEN. Authored caller cases and API rows are not newly
 executable application-function counts. No acceptance row is closed here.
+
+
+## Narrow reverse owned local scope
+
+The proposed original private source checker now admits immutable locals only
+when initialized by a genuine current ordered-map operation returning owned
+map. A per-function private association rejoins the actual original const
+binding and native TypeScript symbol; a root string or caller DATA cannot
+establish that association. Ordinary variable aliases of owned or input maps
+remain refused. The original native emitter now borrows genuine checked owned-map variable
+operands before binding argument temporaries, retaining the actual local owner
+through lookup use. Owned expression temporaries retain their original path.
+It copies before consuming updates, preserving JavaScript reuse without assigning
+application Copy or general Clone to map.
+
+Lookup may borrow a live local map for consumption inside the original checked
+function. The final existing returned-loan rule still requires an actual input
+root: local map text never escapes through returned Option or payload. Scope
+membership, original source/native symbols, whole source/meta reconstruction
+and current source closers remain required. No local receipt is serialized.
+Original target emission and runtime interpretation handle the accepted const
+nodes; independent receiving and native oracle case source remains UNRUN.

@@ -103,3 +103,23 @@ fn borrowed_pair_copy_boundary_preserves_source_and_counts_duplicate_bytes() {
     let rejected = vec![("x".to_owned(), "a".repeat(524_288)), ("x".to_owned(), "b".repeat(524_288))];
     assert!(std::panic::catch_unwind(|| from_borrowed_pairs(&rejected)).is_err());
 }
+
+fn local_query_truth(key: &str) -> bool {
+    let original = maps::text_map_new();
+    let updated = maps::text_map_insert(maps::text_map_copy(&original), "stream".to_owned(), "true".to_owned());
+    let found = { let borrowed = &updated; maps::text_map_get(borrowed, key) };
+    assert_eq!(maps::text_map_len(&original), 0);
+    matches!(found, Some("true" | "1"))
+}
+
+#[test]
+fn owned_const_map_local_is_the_lookup_loan_owner_and_update_input_stays_live() {
+    assert!(local_query_truth("stream"));
+    assert!(!local_query_truth("missing"));
+    let original = maps::text_map_new();
+    let found = { let borrowed = &original; maps::text_map_get(borrowed, "stream") };
+    let updated = maps::text_map_insert(maps::text_map_copy(&original), "stream".to_owned(), "true".to_owned());
+    assert_eq!(found, None);
+    assert_eq!(maps::text_map_get(&updated, "stream"), Some("true"));
+    assert_eq!(maps::text_map_len(&original), 0);
+}

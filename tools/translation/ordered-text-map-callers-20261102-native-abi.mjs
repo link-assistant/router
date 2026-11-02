@@ -25,7 +25,7 @@ const fail=message=>{throw TypeError('Ordered-map monomorphic native source ABI:
 const freeze=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;};
 const words=item=>item.tokens.filter(token=>token.type!=='comment').map(token=>token.text).join('');
 const originals=new URL('./source-profiles/ordered-text-map-callers-20261102-standard/ordered-text-map-callers-20261102-native-abi-originals.json.gz',import.meta.url);
-const originalPin='355077b2c055dd37a6e4213452ac32191bbbcfb1b7b9deaab9e1b3b60e1609d4',originalDecodedPin='7d4d78461f59b1bdf5c3f12f8c5984c66d2fad2a9ea3ee6d99b32ab1fde8efe3';
+const originalPin='0485df04246d0e19f1505a29586361aa94f506f846a58b1d833bbd8d3aa0684e',originalDecodedPin='0035430298bbd2355338fdc5699deadbc2ad682419b465784ed315af954d0532';
 const selectedSourceRoots=['./','../../rust/src/','../../rust/tests/'].map(path=>fileURLToPath(new URL(path,import.meta.url))),stableDirectory=(left,right)=>['dev','ino','mode','uid','gid'].every(key=>left[key]===right[key]);
 const sameDirectory=(row,next)=>selectedSourceRoots.some(root=>row.path===root.slice(0,-1)||row.path.startsWith(root))?sameCompactPhysicalSourceStamp(row.stat,next):stableDirectory(row.stat,next);
 function artifacts(){
