@@ -1,3 +1,4 @@
+import {knownExactSourceSuccessor} from './exact-source-successors-20261103.mjs';
 import {copyMetadata} from './extensions/source-links.mjs';
 import {accountPrimitiveVectorIteratorBulkData as account} from './primitive-vector-iterator-bulk-20261101-accounting.mjs';
 // Complete named source equations DATA. Never native or mutation permission.
@@ -22,7 +23,7 @@ export function proposeProtectedPrivateCliLineageSources(input,{root=ROOT}={}){
 }
 export function knownProtectedPrivateCliLineageSuccessor({root=ROOT,path,before}={}){
  const name=FILES.find(name=>path==='tools/translation/'+name.name);if(!name)return null;const capture=createReconcileSourceCapture(root);let result,primary,failed=false;
- try{const pair=images(capture,name),current=capture.capture(path).source;need(current===pair.after,'actual full private-cli-lineage source successor differs');result=before===pair.before?equation(name,pair.before,pair.after):null;if(result)boundedReconcileWireBytes(result);}catch(error){failed=true;primary=error;}
+ try{const pair=images(capture,name),current=capture.capture(path).source,continuation=current===pair.after?null:knownExactSourceSuccessor({path,before:pair.after},{root});if(continuation&&continuation.chain.length){const later={...equation(name,pair.after,continuation.currentAfter),sourceSuccessorChain:continuation};result=before===pair.before?{...equation(name,pair.before,pair.after),current,currentAfter:continuation.currentAfter,laterHistories:[later]}:before===pair.after?later:null;}else{need(current===pair.after,'actual full private-cli-lineage source successor differs');result=before===pair.before?equation(name,pair.before,pair.after):null;}if(result)boundedReconcileWireBytes(result);}catch(error){failed=true;primary=error;}
  try{capture.close();}catch(error){if(!failed)throw error;}if(failed)throw primary;return result;
 }
 

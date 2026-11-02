@@ -9,7 +9,7 @@ import {fileURLToPath} from 'node:url';
 import {composeExactSourceSuccessorData as compose} from '../exact-source-successor-data-20261103.mjs';
 import {prepareExactSourceSuccessor,knownExactSourceSuccessor,withExactSourceHistoryDataOperation} from '../exact-source-successors-20261103.mjs';
 const ROOT=fileURLToPath(new URL('../../../',import.meta.url));
-const INDEX='tools/translation/source-profiles/exact-source-successors-20261103/index.json';
+const INDEX='tools/translation/source-profiles/exact-source-successor-adoption-20261103/index.json';
 const edge=(id,before,after)=>({id,language:'JavaScript',before,after});
 test('unique complete histories compose and deduplicate identical equations without rewriting dollar or Unicode DATA',()=>{
  const a='const café="$&";\n',b='const café="e\u0301";\n',c='const café="é";\n';

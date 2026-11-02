@@ -1,0 +1,43 @@
+{
+  "schema": "exact-source-successor-consumer-adoption-20261103-v1",
+  "indexRows": 127,
+  "distinctPaths": 119,
+  "decodedBytes": 255231,
+  "packedBytes": 33118,
+  "sha256": "44df4a9cf5eb9b77046a5ba997a2066636cee89b69db3d810b6df3f63b810498",
+  "files": [
+    {
+      "role": "adapter",
+      "path": "tools/translation/prepare-private-parser-data-current-sources.mjs",
+      "before": "adapter.before.txt",
+      "after": "adapter.after.txt"
+    },
+    {
+      "role": "consumer",
+      "path": "tools/translation/private-parser-data-current-sources.mjs",
+      "before": "consumer.before.txt",
+      "after": "consumer.after.txt"
+    },
+    {
+      "role": "history",
+      "path": "tools/translation/protected-private-cli-lineage-20261103-history.mjs",
+      "before": "history.before.txt",
+      "after": "history.after.txt"
+    },
+    {
+      "role": "engine",
+      "path": "tools/translation/exact-source-successors-20261103.mjs",
+      "before": "engine.before.txt",
+      "after": "engine.after.txt"
+    },
+    {
+      "role": "cases",
+      "path": "tools/translation/test/exact-source-successors-20261103.test.mjs",
+      "before": "cases.before.txt",
+      "after": "cases.after.txt"
+    }
+  ],
+  "verification": "UNRUN",
+  "ci": "NOT_INSPECTED",
+  "semanticAuthority": false
+}

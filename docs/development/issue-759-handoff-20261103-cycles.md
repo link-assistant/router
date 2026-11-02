@@ -112,3 +112,22 @@ See [the shared history contract](exact-source-successors-20261103.md).
 Actual producer adoption is the next source step; no native/library refusal,
 complete ancestry or checklist bundle is closed by a DATA lookup.
 Counts stay11/70 DRAFTED,59 OPEN; CI NOT_INSPECTED.
+
+## Actual private DATA producer uses shared exact-history automation
+
+Root integrated the shared resolver into the actual native private DATA adapter
+and its current consumer. Complete original generated after/stages/inverses stay
+separate from later targets; each continuation receives the original two-phase
+source-history shape and retains the full generic intermediate chain. Original
+unknown-source admission, native current bindings and whole-byte closers remain.
+The old ten-source history API now recognizes only exact new physical terminal
+afterimages through the shared catalogue, preserving all unchanged old cases
+and historical afterimages. No caught failure is treated as permission.
+
+A separate index127/119 epoch retains the original124 index and every prior
+artifact, adding three exact actual source successors. The engine is not indexed
+into its own checksum. Five complete parent before/after/inverses and actual
+whole-producer/finite-current/CST/empty-source case source are retained.
+See [the actual adoption contract](exact-source-successor-adoption-20261103.md).
+No source/namespace/type/body authority comes from this automation. All
+execution UNRUN and CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.
