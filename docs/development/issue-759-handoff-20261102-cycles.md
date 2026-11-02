@@ -864,3 +864,24 @@ See [the ordinary source profile](protected-ordinary-cli-writers-20261103.md).
 Remaining historical compressed-bank ancestry and residual complex writers
 stay explicit OPEN work. Verification UNRUN, CI NOT_INSPECTED;11/70 DRAFTED,
 59 OPEN; source-writer counts are not production-function coverage.
+
+## Actual synchronous absolute mutation bridge and two special CLIs
+
+Root integrated five exact parent successors and18 authored source/profile/
+case/document paths. The additive synchronous absolute bridge snapshots all
+primitive addresses once and admits against every active private root policy.
+Every active policy verifies before/after mutation; actual source-validator
+failures poison frames using their own first source failure identity, while
+ordinary falsy/frozen callback primaries remain the returned primary. Ordinary
+callback errors alone do not poison source frames. Existing relative/contained
+APIs retain their original domains. Source history composes finite named epochs.
+
+The actual builtin candidate/default restoration and external gzip emit sinks
+are guarded. Raw nonrecursive mkdir keeps its original syscall spelling while
+separately retaining canonical parent dev/ino/mode and cwd fences. The actual
+Bun coordinator preserves unchanged-row no-op and original read/write/error
+interleaving. Independent nested-root, source-cause/primary, actual isolated
+Bun CLI and whole-source/CST cases remain UNRUN; no child was executed.
+See [the synchronous native contract](protected-sync-native-cli-20261103.md).
+Residual complex writers/native race/platform qualification remain OPEN;
+verification UNRUN, CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.

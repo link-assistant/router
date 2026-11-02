@@ -1,3 +1,4 @@
+import {captureAbsoluteNativeMutationTargets} from './protected-external-mutations-20261102-addresses.mjs';
 // Operational source-mutation veto only. Never parser/compiler/type/owner proof.
 import fs from 'node:fs';
 import {resolve} from 'node:path';
@@ -86,3 +87,31 @@ export function mutateProtectedNativeContainedDirectWriter(root,targets,operatio
  try{return invoke(()=>operation(captured));}catch(error){failed=true;primary=error;throw error;}
  finally{try{healthyNativeSourceFrame(current);}catch(error){if(failed)secondary(primary,error);else throw error;}}
 }
+
+// Additive synchronous bridge to the same fixed private policy. Ordinary and
+// contained source APIs above keep their complete original value contracts.
+function admitProtectedNativeAbsolute(root,targets,direct){return withProtectedNativeSourceAdmission(root,()=>{
+ const selected=frame(root),addresses=captureAbsoluteNativeMutationTargets({requestedRoot:root,canonicalRoot:selected.root,targets}),stable=Object.freeze(addresses.map(row=>row.canonicalTarget));let result,failed=false,primary;
+ // Native absolute targets can reach another active root. Every active policy
+ // is an operational veto, including outer roots; none grants permission.
+ for(let current=active;current;current=current.parent)try{const captured=direct?current.policy.allowNativeDirectWrites({root:current.root,targets:stable}):current.policy.allowNativeMutationPaths({root:current.root,targets:stable});if(current===selected)result=captured;}catch(error){if(!failed){failed=true;primary=error;}else secondary(primary,error);}
+ if(failed)throw primary;return result;
+});}
+export function allowProtectedNativeAbsoluteDirectWrites(root,targets){return admitProtectedNativeAbsolute(root,targets,true);}
+export function allowProtectedNativeAbsoluteMutationPaths(root,targets){return admitProtectedNativeAbsolute(root,targets,false);}
+function observeProtectedNativeAbsoluteFrames(failed=false,primary){
+ let sourceFailed=false,sourcePrimary;
+ for(let current=active;current;current=current.parent)for(const check of [()=>{if(current.sourceFailed)throw current.sourcePrimary;},()=>current.policy.verify()])try{check();}catch(error){if(!sourceFailed){sourceFailed=true;sourcePrimary=error;}if(!failed){failed=true;primary=error;}else secondary(primary,error);}
+ // The immediate callback primary and retained source-veto cause are distinct.
+ // Catching an ordinary FS error cannot replace a later actual source failure.
+ if(sourceFailed)for(let current=active;current;current=current.parent)if(!current.sourceFailed){current.sourceFailed=true;current.sourcePrimary=sourcePrimary;}
+ return {failed,primary};
+}
+function mutateProtectedNativeAbsolute(root,targets,operation,admit){
+ need(typeof operation==='function'&&!types.isProxy(operation)&&!types.isAsyncFunction(operation),'synchronous fixed absolute target operation required');
+ const captured=admit(root,targets),before=observeProtectedNativeAbsoluteFrames();if(before.failed)throw before.primary;let result,failed=false,primary;
+ try{result=invoke(()=>operation(captured));}catch(error){failed=true;primary=error;}
+ const after=observeProtectedNativeAbsoluteFrames(failed,primary);if(after.failed)throw after.primary;return result;
+}
+export function mutateProtectedNativeAbsoluteDirectWriter(root,targets,operation){return mutateProtectedNativeAbsolute(root,targets,operation,allowProtectedNativeAbsoluteDirectWrites);}
+export function mutateProtectedNativeAbsoluteEntries(root,targets,operation){return mutateProtectedNativeAbsolute(root,targets,operation,allowProtectedNativeAbsoluteMutationPaths);}

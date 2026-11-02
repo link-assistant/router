@@ -1,3 +1,5 @@
+import {withProtectedNativeWriter,allowProtectedNativeAbsoluteDirectWrites,mutateProtectedNativeAbsoluteDirectWriter} from './protected-native-writers-20261102.mjs';
+import {createProtectedRawCliDirectory} from './protected-sync-native-cli-20261103-mkdir.mjs';
 import {guardedProofConsumerHistory} from './guarded-proof-consumer-history.mjs';
 // Complete original source and native AST copies; DATA transformations only.
 import {readFileSync,writeFileSync,mkdirSync,existsSync} from 'node:fs';
@@ -99,12 +101,13 @@ export function prepareBuiltinSourceMetaStringKeys(){
 function main(){
  const args=process.argv.slice(2);if(args.length!==1&&! (args.length===2&&args[0]==='--emit'))fail('use --check, --write or --emit DIRECTORY');
  if(args[0]==='--check'&&args.length===1){const row=prepareBuiltinSourceMetaStringKeys();console.log(JSON.stringify({path:row.path,defaultCodecUnchanged:true,performanceQualified:false}));return;}
- const row=prepareBuiltinSourceMetaStringKeysPlan();
- if(args[0]==='--emit'&&args.length===2){mkdirSync(args[1],{recursive:false});const raw=Buffer.from(JSON.stringify(row)+'\n'),encoded=gzipSync(raw);if(!gunzipSync(encoded).equals(raw))fail('full proposal recovery differs');writeFileSync(resolve(args[1],'complete-source-proposal.json.gz'),encoded,{flag:'wx'});return;}
+ const operation=()=>{const row=prepareBuiltinSourceMetaStringKeysPlan();
+ if(args[0]==='--emit'&&args.length===2){allowProtectedNativeAbsoluteDirectWrites(root,[resolve(args[1],'complete-source-proposal.json.gz')]);createProtectedRawCliDirectory(root,args[1]);const raw=Buffer.from(JSON.stringify(row)+'\n'),encoded=gzipSync(raw);if(!gunzipSync(encoded).equals(raw))fail('full proposal recovery differs');mutateProtectedNativeAbsoluteDirectWriter(root,[resolve(args[1],'complete-source-proposal.json.gz')],captured=>writeFileSync(captured[0].canonicalTarget,encoded,{flag:'wx'}));return;}
  if(args[0]!=='--write'||args.length!==1)fail('use --check, --write or --emit DIRECTORY');
  const actual=readFileSync(resolve(root,productionPath),'utf8');if(actual!==row.before&&actual!==row.after)fail('default source differs from both complete original and exact candidate');
  if(existsSync(resolve(root,path))&&readFileSync(resolve(root,path),'utf8')!==row.after)fail('existing candidate differs');
- writeFileSync(resolve(root,path),row.after);writeFileSync(resolve(root,productionPath),row.before);
- prepareBuiltinSourceMetaStringKeys();console.log(JSON.stringify({candidate:path,defaultCodecUnchanged:true,performanceQualified:false}));
+ allowProtectedNativeAbsoluteDirectWrites(root,[resolve(root,path),resolve(root,productionPath)]);mutateProtectedNativeAbsoluteDirectWriter(root,[resolve(root,path)],captured=>writeFileSync(captured[0].canonicalTarget,row.after));mutateProtectedNativeAbsoluteDirectWriter(root,[resolve(root,productionPath)],captured=>writeFileSync(captured[0].canonicalTarget,row.before));
+ prepareBuiltinSourceMetaStringKeys();console.log(JSON.stringify({candidate:path,defaultCodecUnchanged:true,performanceQualified:false}));};
+ return args[0]==='--write'&&args.length===1||args[0]==='--emit'&&args.length===2?withProtectedNativeWriter(root,operation):operation();
 }
 if(process.argv[1]&&pathToFileURL(resolve(process.argv[1])).href===import.meta.url)main();

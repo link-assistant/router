@@ -1,3 +1,4 @@
+import {knownProtectedSyncNativeCliSuccessor} from './protected-sync-native-cli-20261103-history.mjs';
 // Complete named source equations DATA. Never native or mutation permission.
 import {fileURLToPath} from 'node:url';
 import {createReconcileSourceCapture,boundedReconcileWireBytes,requireReconcile as need} from './paired-sync-reconcile-20261101-support.mjs';
@@ -19,6 +20,6 @@ export function proposeProtectedExternalMutationSources(input,{root=ROOT}={}){
 }
 export function knownProtectedExternalMutationSuccessor({root=ROOT,path,before}={}){
  const name=FILES.find(name=>path==='tools/translation/'+name.name);if(!name)return null;const capture=createReconcileSourceCapture(root);let result,primary,failed=false;
- try{const pair=images(capture,name),current=capture.capture(path).source;need(current===pair.after,'actual full external-mutation source successor differs');result=before===pair.before?equation(name,pair.before,pair.after):null;if(result)boundedReconcileWireBytes(result);}catch(error){failed=true;primary=error;}
+ try{const pair=images(capture,name),current=capture.capture(path).source,later=current===pair.after?null:knownProtectedSyncNativeCliSuccessor({root,path,before:pair.after});need(current===pair.after||later&&later.currentAfter===current,'actual full external-mutation/sync-native source successor differs');result=before===pair.before?{...equation(name,pair.before,pair.after),current,currentAfter:current,laterHistories:later?[later]:[]}:before===pair.after?later:null;if(result)boundedReconcileWireBytes(result);}catch(error){failed=true;primary=error;}
  try{capture.close();}catch(error){if(!failed)throw error;}if(failed)throw primary;return result;
 }
