@@ -1,5 +1,6 @@
 // Register only source-derived named type facts, through the original explicit
 // std -> alloc -> core reexports. Every external table remains incomplete.
+import {originalOrderedTextMapStandardSources,requireOriginalOrderedTextMapStandardSources} from './ordered-text-map-callers-20261102-standard-source.mjs';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
@@ -57,6 +58,8 @@ for(const reexport of stablePublicReexportCandidates(allocFmt)){
     namespace:'type',namespaceComplete:false,layoutAuthority:false,constructorAuthority:false,globAuthority:false,runtimeAuthority:false};
   const proof=freeze({...evidence,digest:hash(JSON.stringify(evidence))});proofs.add(proof);facts.push(proof);
 }
+const mapStandardSources=originalOrderedTextMapStandardSources();requireOriginalOrderedTextMapStandardSources(mapStandardSources);
+for(const proof of mapStandardSources.facts){proofs.add(proof);facts.push(proof);}
 if(new Set(facts.map(fact=>fact.name)).size!==facts.length)throw new TypeError('Standard namespace original exports have conflicting candidate owners');
 export const STANDARD_NAMESPACE_EVIDENCE=freeze({schema:'original-standard-namespace-census-v1',profile:STANDARD_NAMESPACE_PROFILE,
   sourcesVerified:true,facts,namespaceComplete:false,runtimeAuthority:false});

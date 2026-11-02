@@ -1,3 +1,4 @@
+import {requireOrderedTextMapOpaqueType,preserveOrderedTextMapOpaqueResult} from '../ordered-text-map-callers-20261102-native-types.mjs';
 // Source ownership qualifiers are distinct from equal portable value domains.
 // No borrow, move, dereference or allocation is fabricated by this adapter.
 import {TextRustParser,TextChecker} from './text.mjs';
@@ -11,7 +12,7 @@ const OWNED_VEC=Object.freeze({kind:'owned',source:'Vec'});
 const BORROWED_SLICE=Object.freeze({kind:'borrowed',source:'slice'});
 const location=(first,last)=>({start:first.start,end:last.end});
 const canonical=owner=>owner&&(owner.kind==='owned'&&['String','Vec'].includes(owner.source)||owner.kind==='borrowed'&&['String','str','Vec','slice'].includes(owner.source)||owner.kind==='value'&&owner.source==='array');
-function ownership(type) {
+function ownership(type) {if(type?.kind==='routerOrderedTextMap'){requireOrderedTextMapOpaqueType(type,{shared:Boolean(type.rustReference)});return type.rustOwnership;}
   if(type?.rustOwnership) {
     if(!canonical(type.rustOwnership))throw new TypeError('Malformed checked Rust ownership qualifier');
     return type.rustOwnership;
@@ -22,7 +23,7 @@ function ownership(type) {
   return null;
 }
 function requireResolvedOwnership(type,span,{declarations,resolveType=type=>type},active=new Set()) {
-  if(!type)return;
+  if(!type)return;if(type.kind==='routerOrderedTextMap'){requireOrderedTextMapOpaqueType(type,{shared:Boolean(type.rustReference)});return;}
   if(type.rustSourceType!==undefined&&type.rustSourceType!==true)throw unsupported('source type ownership proof','requires an actual checked source type marker',span);
   if(type.rustGenericIdentityUnresolved)throw unsupported('erased Rust ownership generic','requires an actual checked source layout and ownership contract',span);
   if(type.kind==='array')requireResolvedOwnership(type.element,span,{declarations,resolveType},active);
@@ -162,7 +163,7 @@ export function withOwnershipChecker(Base=TextChecker) {
     expectedOwnership(actual,expected,path,span) {
       assertRustOwnership(actual,expected,span,{declarations:this.items,resolveType:(type,scope,range)=>this.resolveType(type,scope??path,range)});
     }
-    qualifyOwnershipResult(node,value,expected,path) {
+    qualifyOwnershipResult(node,value,expected,path) {const opaque=preserveOrderedTextMapOpaqueResult(value);if(opaque)return opaque;
       let owner=ownership(value.type);
       if(node.k==='routerTextReference'&&['string','array'].includes(value.type.kind))throw unsupported('explicit ownership borrow','requires a checked lifetime and borrowing contract',node.span);
       if(['str','lit'].includes(node.k)&&typeof node.value==='string')owner=BORROWED_STR;

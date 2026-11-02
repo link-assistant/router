@@ -444,3 +444,77 @@ reviewed-adoption journals and pending+target renames without weakening prior
 ordinary APIs or losing complete native history. Root's canonical17 active
 integration and source-checked no-copy normal path remain in progress.
 All verification is UNRUN, CI NOT_INSPECTED, counts11/70 DRAFTED and59 OPEN.
+
+## Source publication at15:47 UTC
+
+Root pushed exact source checkpoint
+`861c380c4a038144907766f344e3e5645019439f` to draft PR775 and updated its
+description to that SHA. The remote update succeeded. Returned PR/CI metadata
+was not inspected; no CI status/log/artifact/review feedback was read. All
+verification stays UNRUN and all counts remain11/70 DRAFTED,59 OPEN. The next
+ordinary source publication target is18:47 UTC; coherent source commits continue
+at least within the six-hour requirement. This publication includes committed
+map pairs/locals, serialization, native-path and33 CLI writer batches, not the
+working canonical activation/default-sync or external/adoption proposals.
+
+Root source-only disk observation showed about62GiB available. Four small
+task-owned temporary SCM path lists were removed after their exact commits.
+No dependency install, worktree/build creation, parser/translator/preparer run,
+test/compilation, Rust tool or commit-hook execution occurred.
+
+Source review also identified a pre-existing deferred A1 class-birth entry pin:
+the exact120652-byte Host image is retained in Git
+`8ce6bc5ea5da5911fae5606b709447cef83a0647`; the current map predecessor differs.
+The immutable program also mismatches current control/formatting/effects module
+images. These guards remain intact. Actual normal map/core routes use the two
+raw vendor-source helpers, not the uncalled deferred A1 capture/authenticate
+entry. No hash-only repair, A1 qualification or265/body permission is claimed.
+Complete named source/program successors remain later drafting work.
+
+## Active seventeen-parent canonical map source integration
+
+`d8e37fd93de0101652094e018a27071b439bec99` commits the canonical three-parent
+source profile, DATA-only selectors, complete source custody/native reclose,
+full original/installed source-package producer and canonical case sources.
+Final map14 archive SHA256 is
+`9e15850e13ba03f700f9e69d0aeae6d3b3e7a05baab511c76a7fcb5ab525fbd3`;
+canonical3 is
+`3fd41833bf9a223083b2de90aa7d8e84a4cec9c82b7b0b5a869653fdb44ae151`.
+The unchanged old4MiB map packet bound has about23KiB headroom; retain old epochs
+in separately pinned complete history archives before further growth.
+
+Root copied every reviewed fourteen-plus-three afterimage into the active
+original compiler as source authoring, retaining all before/inverse packets.
+No tool, parser or compiler executed that copy. Both sets are disjoint from the
+original fixed98 forward source epochs. Normal forward/canonical reverse imports
+now name these actual source implementations; this is activation drafting,
+not evidence that the translated application or whole gate passes.
+
+Root's normal sync path checks exact17 installed source bytes/file epochs and
+ancestor identity while retaining all original private issuers. It uses the
+active compiler directly, avoiding a200MiB copy on each ordinary call. A fixed
+fresh full-source fallback/receiving path composes all17 original source equations,
+starts fresh producer processes and preserves original roots/flags/workloads.
+Setup, per-step checks and complete log retention share existing deadlines.
+All closers run after failure; receipts record closing and original/executed
+commands. Unknown/mixed epochs cannot select normal execution through flags.
+
+The actual canonical source/corpus keeps original runtime-import-edge, private
+context/item/native, source reconstruction and paired target checks. Extra map
+inputs are selected through actual application/type/reexport/runtime dependency
+observations; unused assets alone do not force native prerequisites. Active
+native graph selection keeps original512-input/8MiB and context/corpus limits.
+Original complete-byte requireCurrent rereads remain, with an invocation-local
+source DATA index and batched complete closing that avoids quadratic all-prior-
+files checks on every read. No source/hash/body/owner verdict cache is introduced.
+
+See [the active/cohort source contract](ordered-map-canonical-cohort-20261102.md).
+Complete18-parent (17 compiler plus sync) equations, full before/after sources,
+all Root helper/case sources and both underlying map packets are retained. The
+Root source proposer keeps exactly language/repository sequences and original
+lossless CST/inverses. Independent installed-state/falsy/restored/mixed/expiry,
+full-source receiving/mapping and source proposal cases are drafted, UNRUN.
+Receiving resource/platform fit, strict TS/runtime/native results, all actual
+project/owned-unit routes, unrestricted BTreeMap application adoption and whole
+program coverage remain OPEN. The deferred A1 gaps remain unchanged and do not
+grant265 or body authority. Counts remain11/70 DRAFTED,59 OPEN; CI NOT_INSPECTED.

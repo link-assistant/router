@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 // Drive the existing checked translators sequentially. A successful draft
 // synchronization never certifies whole-source behavior or unlocks Rust CI.
+import {canonicalMapCompilerStep,verifyCanonicalMapCompilerCohort} from '../tools/translation/ordered-map-canonical-cohort-20261102.mjs';
+import {withCurrentCanonicalMapCompiler} from '../tools/translation/ordered-map-canonical-activation-20261102.mjs';
+import {ownSourceFailureField} from '../tools/translation/source-error-fields-20261102.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -9,6 +12,7 @@ import {spawnSync} from 'node:child_process';
 import {createRequire} from 'node:module';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 
+let activeCanonicalCompiler=null;
 const implementationRoot=fileURLToPath(new URL('../',import.meta.url));
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const directions=new Set(['both','javascript-to-rust','rust-to-javascript']);
@@ -207,20 +211,49 @@ export function runSynchronizationProducer({root,step,outputDirectory,index=0}={
     ||typeof step.id!=='string'||!/^[a-z0-9-]+$/u.test(step.id)
     ||!Number.isSafeInteger(step.timeoutMs)||step.timeoutMs<1||step.timeoutMs>3_600_000
     ||!Number.isSafeInteger(index)||index<0||index>32768)throw Error('Invalid synchronization producer');
-  const started=performance.now(),created=[],fds=[];let result,runnerError;
+  const started=performance.now(),created=[],fds=[],cohort=activeCanonicalCompiler;let result,runnerError,runnerFailed=false,executedStep=step,childTimeoutMs=step.timeoutMs;
+  const chargedSetupMs=cohort&&!cohort.setupCharged?performance.now()-cohort.started:0;
+  if(cohort)cohort.setupCharged=true;
   try {
     originalFileStatus(root,affinityDescriptor);
     for(const stream of ['stdout','stderr']) {
       const filename=String(index).padStart(2,'0')+'-'+step.id+'.'+stream+'.raw.log';
       const fd=fs.openSync(path.join(outputDirectory,filename),'wx');fds.push(fd);created.push(filename);
     }
-    result=spawnSync(process.execPath,step.args,{cwd:root,env:{...process.env,ROUTER_NATIVE_TS_SOURCE_ROOT:root},timeout:step.timeoutMs,stdio:['ignore',...fds]});
-  } catch(error){runnerError=error;}
-  finally {for(const fd of fds)fs.closeSync(fd);}
+    if(cohort)executedStep=canonicalMapCompilerStep(cohort.token,step);
+    childTimeoutMs=Math.floor(step.timeoutMs-chargedSetupMs-(performance.now()-started));
+    if(childTimeoutMs<1)throw Error('Original synchronization producer deadline exhausted before child execution');
+    result=spawnSync(process.execPath,executedStep.args,{cwd:root,env:{...process.env,ROUTER_NATIVE_TS_SOURCE_ROOT:root},timeout:childTimeoutMs,stdio:['ignore',...fds]});
+  } catch(error){runnerFailed=true;runnerError=error;}
+  finally {
+    for(const fd of fds)try{fs.closeSync(fd);}catch(error){if(!runnerFailed){runnerFailed=true;runnerError=error;}}
+    if(cohort)try{verifyCanonicalMapCompilerCohort(cohort.token);}catch(error){if(!runnerFailed){runnerFailed=true;runnerError=error;}}
+    if(chargedSetupMs+performance.now()-started>step.timeoutMs&&!runnerFailed){runnerFailed=true;runnerError=Error('Original synchronization producer deadline exceeded including setup and closing');}
+  }
   const logs=created.map(filename=>({path:filename,...retainedLog(path.join(outputDirectory,filename))}));
-  return {id:step.id,mandatory:true,status:result?.status===0&&!result.error&&!runnerError?'passed':'failed',command:[process.execPath,...step.args],exitCode:result?.status??null,signal:result?.signal??null,error:runnerError?.message??result?.error?.message??null,timeoutMs:step.timeoutMs,elapsedSeconds:(performance.now()-started)/1000,logs};
+  if(chargedSetupMs+performance.now()-started>step.timeoutMs&&!runnerFailed){runnerFailed=true;runnerError=Error('Original synchronization producer deadline exceeded including complete raw-log retention');}
+  const failureMessage=runnerFailed?(ownSourceFailureField(runnerError,'message')??'Opaque synchronization producer failure ('+typeof runnerError+')'):null;
+  return {id:step.id,mandatory:true,status:result?.status===0&&!result.error&&!runnerFailed?'passed':'failed',command:[process.execPath,...executedStep.args],originalCommand:[process.execPath,...step.args],compilerSourceCohort:cohort?'fresh-original-map-canonical-v1':null,exitCode:result?.status??null,signal:result?.signal??null,error:failureMessage??result?.error?.message??null,timeoutMs:step.timeoutMs,childTimeoutMs,compilerSetupChargedMs:chargedSetupMs,elapsedSeconds:(performance.now()-started)/1000,logs};
 }
-export function syncRouter({root=implementationRoot,direction='both',check=false,profiles=true,outputDirectory,onProgress}={}) {
+export function syncRouter(options={}) {
+  const root=fs.realpathSync(path.resolve(options.root??implementationRoot));
+  const steps=synchronizationSteps({...options,root}),started=performance.now();
+  if(!steps.length)throw Error('Complete synchronization requires an original producer');
+  let receipt;
+  try{
+    const result=withCurrentCanonicalMapCompiler({sourceRoot:implementationRoot,deadline:started+steps[0].timeoutMs},token=>{
+      const prior=activeCanonicalCompiler;activeCanonicalCompiler=token?{token,started,setupCharged:false}:null;
+      try{receipt=syncRouterInCanonicalCohort({...options,root});return receipt;}finally{activeCanonicalCompiler=prior;}
+    });
+    result.compilerCohortClosing='passed';result.elapsedSeconds=(performance.now()-started)/1000;
+    fs.writeFileSync(path.join(result.directory,'receipt.json'),JSON.stringify(result,null,2)+'\n');return result;
+  }catch(error){
+    if(receipt){receipt.compilerCohortClosing='failed';receipt.exitCode=1;receipt.artifactsCurrent=false;
+      try{fs.writeFileSync(path.join(receipt.directory,'receipt.json'),JSON.stringify(receipt,null,2)+'\n');}catch{}}
+    throw error;
+  }
+}
+function syncRouterInCanonicalCohort({root=implementationRoot,direction='both',check=false,profiles=true,outputDirectory,onProgress}={}) {
   root=fs.realpathSync(path.resolve(root));
   const steps=synchronizationSteps({root,direction,check,profiles});
   const output=outputDirectory?path.resolve(outputDirectory):fs.mkdtempSync(path.join(os.tmpdir(),'router-sync-'));
@@ -246,7 +279,7 @@ export function syncRouter({root=implementationRoot,direction='both',check=false
   let after,inputError=null;
   try{after=captureSyncInputs(root);}catch(error){inputError=error.message;}
   const inputsUnchanged=after!==undefined&&JSON.stringify(before)===JSON.stringify(after);
-  const receipt={schema:'router-translation-sync-v1',root,direction,mode:check?'check':'write',profiles,directory:output,records,originalInputsUnchanged:inputsUnchanged,inputError,elapsedSeconds:(performance.now()-started)/1000,exitCode:failed||!inputsUnchanged?1:0,artifactsCurrent:check&&!failed&&inputsUnchanged,ownedCoreProfile:'router-owned-core-reverse-v1; actual generated application discovery with full per-operation input reread and refusal inventory',scope:'Checked translator drafts; explicit refusals and handwritten original bodies remain. This receipt does not certify whole-source synchronization.',runtimeParity:false,wholeSourceSynchronization:false,fullGatePass:false,rustExecuted:false};
+  const receipt={schema:'router-translation-sync-v1',root,direction,mode:check?'check':'write',profiles,directory:output,records,originalInputsUnchanged:inputsUnchanged,inputError,elapsedSeconds:(performance.now()-started)/1000,exitCode:failed||!inputsUnchanged?1:0,artifactsCurrent:check&&!failed&&inputsUnchanged,ownedCoreProfile:'router-owned-core-reverse-v1; actual generated application discovery with full per-operation input reread and refusal inventory',compilerCohortClosing:'pending',scope:'Checked translator drafts; explicit refusals and handwritten original bodies remain. This receipt does not certify whole-source synchronization.',runtimeParity:false,wholeSourceSynchronization:false,fullGatePass:false,rustExecuted:false};
   if(after)fs.writeFileSync(path.join(output,'inputs-after.json'),JSON.stringify(after,null,2)+'\n');
   fs.writeFileSync(path.join(output,'receipt.json'),JSON.stringify(receipt,null,2)+'\n',{flag:'wx'});
   return receipt;

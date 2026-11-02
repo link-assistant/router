@@ -1,3 +1,4 @@
+import {reissueOrderedTextMapProgram} from './ordered-text-map-callers-20261102-native-types.mjs';
 // Targets consume serialized semantic nodes, never a source-bearing envelope.
 // Map entries are explicit links; the tagged encoding cannot collide with a
 // Rust literal object because literals occur only in typed semantic nodes.
@@ -25,7 +26,7 @@ export function parseProgram(text) {
     if(entry.constantEvaluationProof)freezeEvidence(entry.constantEvaluationProof);
   }
   if (serializeProgram(document.program) !== text) throw new Error('noncanonical checked Rust semantic meta');
-  return document.program;
+  return reissueOrderedTextMapProgram(document.program);
 }
 
 export const roundTripProgram = program => parseProgram(serializeProgram(program));
