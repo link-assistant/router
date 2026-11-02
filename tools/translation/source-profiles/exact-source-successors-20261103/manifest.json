@@ -1,0 +1,12 @@
+{
+  "schema": "exact-reviewed-source-successors-complete-source-20261103-v1",
+  "indexRows": 124,
+  "distinctOriginalPaths": 118,
+  "decodedBytes": 111062,
+  "packedBytes": 22680,
+  "sha256": "9aa7aeb40e461d02c102c0a30a45ff72985a71209f0a4042e6f215ac4bfb638d",
+  "indexSha256": "56b7e9d21a3a9f04f6106b6b88bb5e1037c94e079d3d4f5537476912ab42fca4",
+  "verification": "UNRUN",
+  "ci": "NOT_INSPECTED",
+  "consumerAdoptionInstalled": false
+}

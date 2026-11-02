@@ -73,3 +73,42 @@ Complete13 before/after/inverse images and whole contracts remain UNRUN.
 See [the residual source profile](protected-residual-cli-writers-20261103.md).
 Complex mkdir/receipt/async/delegated/wider forward writers and compressed-bank
 ancestry remain OPEN. CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.
+
+## Source checkpoint published,2026-11-02 18:11 UTC
+
+Root pushed exact source checkpoint
+`3d159dbb9c8bdc4794d93b7a409a3df86fcd000d` to draft PR775 and updated its
+description. Publication and metadata operations succeeded. No CI/status/log/
+artifact or review feedback was inspected; all verification remains UNRUN.
+Counts stay11/70 DRAFTED,59 OPEN; drafting continues with exactly two workers.
+The next ordinary source checkpoint target is21:11 UTC. The15:47/18:47
+publication/target paragraph above remains the historical opening state.
+
+Root is drafting a reusable finite exact-whole-source successor DATA index
+from already reviewed writer source profiles. It must compose full before/
+after/CST/inverse chains without prefix matching, hash-only semantic permission,
+unknown-source fallback or weakened original native/body/type checks. This
+should reduce repeated one-off ancestry joins; it does not close old producers
+until their actual consumers retain fresh independent current-source checks.
+
+## Shared exact source-history algebra and fixed catalogue
+
+Root drafted a reusable source-history composer and repository adapter over
+124 reviewed whole-source equations/118 original paths from14 existing writer
+profiles. It references existing complete artifacts, deduplicates only identical
+equations, refuses forks/cycles, and replays full counted substitutions through
+exact language/repository stages and every whole CST/inverse. A prepared target
+is DATA and never approves unrelated physical source; a known current target
+requires exact complete physical terminal bytes. Original consumer source and
+native/body/type guards remain mandatory and unchanged by this batch.
+
+Source/index/current text DATA share only one synchronous bounded operation.
+Canonical physical roots, complete independent no-follow FD byte rereads and
+all file/ancestor closers retain actual source epochs; caught source failures
+invalidate the active operation and falsy/frozen callback primaries remain
+primary. The fixed catalogue is partial, not a complete source/function census.
+The independent cases and actual native-writer CST/source chain remain UNRUN.
+See [the shared history contract](exact-source-successors-20261103.md).
+Actual producer adoption is the next source step; no native/library refusal,
+complete ancestry or checklist bundle is closed by a DATA lookup.
+Counts stay11/70 DRAFTED,59 OPEN; CI NOT_INSPECTED.
