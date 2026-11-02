@@ -1,4 +1,7 @@
 // Reusable source construction, never a semantic or original-owner issuer.
+import {withProtectedPreparerWriter,allowPreparerSourceWrites,writePreparerSource} from './protected-preparer-writers-20261102.mjs';
+import {knownProtectedPreparerDirectPolicySuccessor} from './protected-preparer-writers-20261102-direct-history.mjs';
+import {knownProtectedPreparerWriterSuccessor} from './protected-preparer-writers-20261102-history.mjs';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {resolve,relative,isAbsolute} from 'node:path';
 import {gunzipSync} from 'node:zlib';
@@ -81,7 +84,10 @@ export function prepareNativeSubstitutionCopy({root,archive,pin,id,laterPlans=[]
   const sourceDependencies=collectNativeCopiedFunctionDependencies(ts,root,path,after,row.completeSourceDependencies??[],originalGuards);
   const current=currentSource(path,Boolean(row.originalPath&&row.originalPath!==row.path));
   if(current!==null&&current!==before&&current!==after&&current!==currentAfter&&row.path==='tools/translation/unit-runtime-materialization.mjs'){
-   const successor=knownLayoutOwnershipSourceSuccessor({root,path:row.path,before:currentAfter});need(successor&&successor.currentAfter===current,'unknown physical guarded-installer successor');const equation=transportConcreteSourceEquations([{before:currentAfter,after:successor.currentAfter,language:sourceLanguage}])[0];need(equation.inverse===currentAfter,'complete fixed installer successor inverse');laterHistories.push({...successor,equation,laterHistories:successor.laterHistories??[],parallelHistories:[],sourceDependencies:[],sourceAuthority:false,semanticAuthority:false});currentAfter=successor.currentAfter;
+   const successor=knownLayoutOwnershipSourceSuccessor({root,path:row.path,before:currentAfter})??knownProtectedPreparerDirectPolicySuccessor({root,path:row.path,before:currentAfter});need(successor&&successor.currentAfter===current,'unknown physical guarded-installer successor');const equation=transportConcreteSourceEquations([{before:currentAfter,after:successor.currentAfter,language:sourceLanguage}])[0];need(equation.inverse===currentAfter,'complete fixed installer successor inverse');laterHistories.push({...successor,equation,laterHistories:successor.laterHistories??[],parallelHistories:[],sourceDependencies:[],sourceAuthority:false,semanticAuthority:false});currentAfter=successor.currentAfter;
+  }
+  if(current!==null&&current!==before&&current!==after&&current!==currentAfter){
+   const successor=knownProtectedPreparerWriterSuccessor({root,path:row.path,before:currentAfter});if(successor){need(successor.currentAfter===current,'unknown physical preparer policy successor');const equation=transportConcreteSourceEquations([{before:currentAfter,after:successor.currentAfter,language:sourceLanguage}])[0];need(equation.inverse===currentAfter,'complete named preparer successor inverse');laterHistories.push({...successor,equation,laterHistories:successor.laterHistories??[],parallelHistories:[],sourceDependencies:[],sourceAuthority:false,semanticAuthority:false});currentAfter=successor.currentAfter;}
   }
   need(current===null||current===before||current===after||current===currentAfter,'unknown physical copied implementation');
   files.push({path:row.path,...(row.originalPath?{originalPath:row.originalPath}:{}),before,language:language.after,after,current,currentAfter,laterHistories,parallelHistories,sourceDependencies,stages,trace:run.trace,nativeSelections:{language:language.selections,repository:repository.selections},inverse:before});
@@ -99,8 +105,13 @@ export function prepareNativeSubstitutionCopy({root,archive,pin,id,laterPlans=[]
 export function writeNativeSubstitutionCopy(plan,{root}={}){
  // The producer must be called again by the caller immediately before applying.
  // This low-level writer is a development operation; it issues no gate stamp.
- root=resolve(root);for(const row of plan.files)need(currentSource(localPath(root,row.path),Boolean(row.originalPath&&row.originalPath!==row.path))===row.current,'stale copy proposal');
- for(const row of plan.files)writeFileSync(localPath(root,row.path),row.currentAfter??row.after);
+ return withProtectedPreparerWriter(root,()=>{root=resolve(root);for(const row of plan.files)need(currentSource(localPath(root,row.path),Boolean(row.originalPath&&row.originalPath!==row.path))===row.current,'stale copy proposal');
+ const writes=Array.from(plan.files,row=>({path:relative(root,localPath(root,row.path)),before:row.current,after:row.currentAfter??row.after}));allowPreparerSourceWrites(root,writes);
+ // Recheck actual path/physical aliases for each write. Keep the original all-row
+ // source check above: repeating it after our own writes would reject original
+ // duplicate-path and unprotected hard-link row sequences.
+ for(const row of writes)writePreparerSource(root,row,()=>writeFileSync(localPath(root,row.path),row.after));
+ });
 }
 
 // Private syntax trees live only inside one complete synchronous source
