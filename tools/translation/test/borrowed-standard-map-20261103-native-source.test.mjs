@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs';
 import {proposeBorrowedStandardMapNativeContext} from '../borrowed-standard-map-20261103-native-context-source.mjs';
 import {withBorrowedStandardMapNativeSourceABI,requireBorrowedStandardMapNativeSourceABI} from '../borrowed-standard-map-20261103-native-abi.mjs';
 import {requireBorrowedStandardMapNativeSourceContext} from '../borrowed-standard-map-20261103-native-context.mjs';
+import {proposeFixedBorrowedStandardMapNativeAbi} from '../borrowed-standard-map-20261103-fixed-abi-source.mjs';
 const read=path=>readFileSync(new URL('../../../'+path,import.meta.url),'utf8');
 test('the distinct native context is a complete counted source copy with a Rust-helper-specific owner',{timeout:60000},()=>{
  const result=proposeBorrowedStandardMapNativeContext();
@@ -25,4 +26,11 @@ test('copied ABI records and public source/type qualifiers cannot issue original
 test('an object-shaped parser or asynchronous callback never enters the native operation',()=>{
  let called=false;assert.throws(()=>withBorrowedStandardMapNativeSourceABI({facts:{}},()=>{called=true;}));assert.equal(called,false);
  assert.throws(()=>withBorrowedStandardMapNativeSourceABI({},async()=>{}),/synchronously/u);
+});
+test('fixed native compatibility identities retain the preceding whole ABI and its inverse',{timeout:60000},()=>{
+ const result=proposeFixedBorrowedStandardMapNativeAbi();
+ assert.equal(result.after,read(result.path));assert.equal(result.history.inverse,result.before);assert.equal(result.inverse,result.before);
+ assert.deepEqual(result.trace.map(step=>step.phase),['language','repository']);
+ assert.ok(result.after.includes('sourcePins[path]'));assert.ok(result.after.includes('binding.declaration?.source!==leaf.file'));
+ assert.equal(result.semanticAuthority,false);
 });

@@ -33,3 +33,12 @@ checked-meta reissue, forward JS/TS emission, reverse emission, interpreters,
 and full production positive receiving/lifecycle cases remain drafting work.
 The source-copy and foreign-receipt cases do not substitute for those cases.
 No acceptance bundle or production-function coverage count closes here.
+
+The later fixed-ABI source equation retains the full preceding ABI and adds
+immutable identities for all four complete original compatibility sources plus
+the actual function declaration association. Changing both an editable original
+profile and its matching current module cannot silently select a new native
+contract. These fingerprints only select full audited source inputs; original
+private source/Cargo/std/member proofs and whole CST checks still run. The
+initial complete-source archive remains its immutable earlier epoch, with the
+manifest naming this later full inverse. All execution remains UNRUN.

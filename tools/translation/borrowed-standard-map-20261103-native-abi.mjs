@@ -1,6 +1,7 @@
 // A synchronous private SOURCE ABI for one unrestricted borrowed map predicate.
 // No opaque map issuer, container-size restriction or observed rustc claim.
 import {fileURLToPath} from 'node:url';
+import {createHash} from 'node:crypto';
 import {matchesParserFacts,originalMatchesDependencyProof} from './matches-macro-context.mjs';
 import {requireOriginalFromNamespaceCallbacks} from './extensions/host-contracts.mjs';
 import {STANDARD_NAMESPACE_EVIDENCE,isStandardNamespaceEvidence} from './namespace-standard.mjs';
@@ -20,6 +21,8 @@ const assets=[
  ['tools/translation/borrowed-standard-map-20261102-runtime.d.mts','runtime.d.mts.txt','TypeScript'],
  ['rust/tests/borrowed_standard_map_20261102_test.rs','oracle.rs.txt','Rust'],
 ];
+// Fixed source identities select the audited compatibility boundary; never a caller permit.
+const sourcePins=Object.freeze({"rust/src/borrowed_standard_map_20261102.rs":"4e06baf086fae91afff38ff6a59688e5efb65a1a75011b9065d69bf654b03eb0","tools/translation/borrowed-standard-map-20261102-runtime.mjs":"45b70e3a010aa53e53e61b7779f515e1bccd8852c817a7922064fbe7c937804f","tools/translation/borrowed-standard-map-20261102-runtime.d.mts":"6246d5ce4131dd5047aed75505f81f06facbe268abb511304ea448158b158e19","rust/tests/borrowed_standard_map_20261102_test.rs":"7c5883d40a2b46dc7aa51fab6da86d3a8f149325151fe1349a1bfd6cf02d2dca"});
 const issued=new WeakMap(),fail=message=>{throw TypeError('Borrowed standard-map native source ABI: '+message);};
 const path='crate::borrowed_standard_map_20261102::borrowed_text_map_matches_literals';
 const signature='pubfnborrowed_text_map_matches_literals(map:&::std::collections::BTreeMap<::std::string::String,::std::string::String>,key:&str,literals:&[&str],)->bool';
@@ -35,7 +38,7 @@ function actualMember(modules,sourceScopes,kernel){
  const bindings=scopes[0].bindings.filter(binding=>binding.namespace==='value'&&binding.name===member.name);
  if(bindings.length!==1)fail('one original native function binding required');
  const binding=bindings[0];
- if(binding.status!=='resolved'||binding.kind!=='fn'||binding.via!=='declaration'||binding.source!==leaf.file||binding.target?.join('::')!==path||binding.span?.start!==member.start||binding.span?.end!==member.end)fail('actual function declaration binding differs');
+ if(binding.status!=='resolved'||binding.kind!=='fn'||binding.via!=='declaration'||binding.source!==leaf.file||binding.target?.join('::')!==path||binding.span?.start!==member.start||binding.span?.end!==member.end||binding.declaration?.source!==leaf.file||binding.declaration.span?.start!==member.start||binding.declaration.span?.end!==member.end)fail('actual function declaration binding differs');
  return {leaf,member,binding,scope:scopes[0]};
 }
 function standardOwners(sources){
@@ -65,7 +68,7 @@ export function withBorrowedStandardMapNativeSourceABI(parser,run){
   try{return withCompleteSourceClosingFence(()=>{
    const selected=withSourceInputValidation(()=>createRulePipeline([{phase:'language',rules:[{id:'language:actual-standard-map-source-and-kernel-CST',apply:()=>{
     current();return assets.map(([path,original,language])=>{
-     const expected=capture.capture(BASE+original).source,source=capture.capture(path).source;need(typeof expected==='string'&&source===expected,'complete original borrowed-map ABI source differs');
+     const expected=capture.capture(BASE+original).source,source=capture.capture(path).source;need(typeof expected==='string'&&source===expected&&createHash('sha256').update(expected).digest('hex')===sourcePins[path],'complete fixed original borrowed-map ABI source differs');
      const concrete=transportConcreteSyntaxSource(source,{language});if(concrete.source!==source||transportConcreteSyntaxMeta(concrete.meta).source!==source)fail('complete ABI source CST roundtrip differs');
      return Object.freeze({path,source,language,concreteMeta:concrete.meta});
     });

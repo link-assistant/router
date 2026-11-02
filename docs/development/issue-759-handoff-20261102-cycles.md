@@ -713,3 +713,9 @@ workloads and deadlines remain. See [the lineage contract](protected-cli-source-
 The separate private-parser-data-current-sources adapter still needs its own
 finite historical-CLI successor batch, now in progress. All verification UNRUN,
 CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.
+
+The distinct borrowed native ABI now also fixes all four complete original
+compatibility source identities and actual member declaration association.
+Its full preceding source/inverse and later two-phase CST source proposer are
+retained separately from the immutable initial packet. Fingerprints select
+source identity; they do not qualify caller semantics or observed Rust.
