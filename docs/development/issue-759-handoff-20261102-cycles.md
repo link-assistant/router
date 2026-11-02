@@ -417,3 +417,30 @@ and recovery with complete old durable journals, source checks and mode/budget
 behavior. Root continues fixed canonical activation with the other worker's
 three original reverse parents. All verification stays UNRUN/NOT_INSPECTED;
 source-bundle accounting remains11/70 DRAFTED,59 OPEN.
+
+## Nine special CLI source-writer contracts integrated
+
+Root source-integrated the nine previously deferred special CLI writer variants.
+A separate target-only adapter retains their original producer, per-row stale,
+extension and payload evaluation order. Fixed OUTPUT, installationSource,
+missing-to-empty and no-current/no-old-output-read domains are kept explicitly.
+The two vector producers keep their sequential behavior and report order; their
+complete six-target union is preflighted before the first producer. Actual
+targets must be declared and are independently re-admitted before every write.
+The private intent Set expires and clears on all exits. A previous escaped
+writer cannot inherit a new same-root operation, while its expiry refusal does
+not poison that new genuine writer. Original iterative partial failure behavior
+remains; no global transaction or rollback is claimed.
+
+See [the special writer source contract](protected-special-cli-writers-20261102.md).
+Complete9-parent before/after/inverses, five authored helper/history/case/doc
+sources and the compressed integration packet are retained. Tests, CST/rule
+proposal execution and every native/platform/resource observation are UNRUN.
+This brings the two simple CLI batches plus this batch to33 actual CLI source
+writer modules integrated, not33 acceptance bundles or complete sink coverage.
+The wider103-module reviewed census and dynamic/remaining sink closure remain
+OPEN. The worker now extends actual policy alias/entry/FD admission for external
+reviewed-adoption journals and pending+target renames without weakening prior
+ordinary APIs or losing complete native history. Root's canonical17 active
+integration and source-checked no-copy normal path remain in progress.
+All verification is UNRUN, CI NOT_INSPECTED, counts11/70 DRAFTED and59 OPEN.

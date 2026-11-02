@@ -1,3 +1,4 @@
+import {withProtectedSpecialCliWriter} from './protected-special-cli-writers-20261102.mjs';
 // Copy the actual private metadata kernel and specialize primitive argument flow.
 // Full original validation, native operations and fallback body remain present.
 import {readFileSync,writeFileSync,existsSync} from 'node:fs';
@@ -46,5 +47,5 @@ export function composePrimitiveMetadataCopy(prior,options={}){
  return {sources,layers:[plan]};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const args=process.argv.slice(2);if(args.length!==1||!['--emit','--write','--check'].includes(args[0]))fail('use --emit|--write|--check');const plan=preparePrimitiveMetadataCopy();if(args[0]==='--write'){for(const row of plan.files)if((existsSync(resolve(ROOT,row.path))?readFileSync(resolve(ROOT,row.path),'utf8'):'')!==row.current)fail('physical input changed before write');for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);}else if(args[0]==='--check'){if(plan.files.some(row=>row.current!==row.after))fail('complete source copies are stale');console.log('Complete specialized copier and native import selection are current; no semantic authority.');}else console.log(JSON.stringify(plan));
+ const args=process.argv.slice(2);if(args.length!==1||!['--emit','--write','--check'].includes(args[0]))fail('use --emit|--write|--check');const plan=args[0]==='--write'?withProtectedSpecialCliWriter(ROOT,writer=>{const plan=preparePrimitiveMetadataCopy();writer.preflight(plan.files.map(row=>row.path));for(const row of plan.files)if((existsSync(resolve(ROOT,row.path))?readFileSync(resolve(ROOT,row.path),'utf8'):'')!==row.current)fail('physical input changed before write');for(const row of plan.files)writer.write(row.path,row.after);return plan;}):preparePrimitiveMetadataCopy();if(args[0]==='--check'){if(plan.files.some(row=>row.current!==row.after))fail('complete source copies are stale');console.log('Complete specialized copier and native import selection are current; no semantic authority.');}else if(args[0]==='--emit')console.log(JSON.stringify(plan));
 }

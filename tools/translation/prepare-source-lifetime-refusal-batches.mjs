@@ -1,3 +1,4 @@
+import {withProtectedSpecialCliWriter} from './protected-special-cli-writers-20261102.mjs';
 import {composeOwnedRuntimeImportEdges} from './prepare-owned-runtime-import-edges.mjs';
 import {composeOwnedCorePrivateAnalysisRetention} from './prepare-owned-core-private-analysis-retention.mjs';
 import {composeCoreUnitMatches} from './prepare-core-unit-matches.mjs';
@@ -138,11 +139,10 @@ export function prepareCurrentSourceLifetimeRefusalBatches(options = {}) {
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const [mode] = process.argv.slice(2); if (process.argv.length !== 3 || !['--check', '--write'].includes(mode)) fail('usage: --check|--write');
-  const plan = prepareCurrentSourceLifetimeRefusalBatches();
-  if (mode === '--write') {
+  const plan=mode === '--write'?withProtectedSpecialCliWriter(ROOT,writer=>{const plan=prepareCurrentSourceLifetimeRefusalBatches();writer.preflight(plan.files.map(row=>row.path));
     for (const row of plan.files) if (!plan.layers.flatMap(layer => layer.files.filter(part => part.path === row.path).flatMap(part => [part.before,part.after])).includes(row.current)) fail('current source differs from both complete original and generated source: '+row.path);
-    for (const row of plan.files) { if (readFileSync(resolve(ROOT,row.path),'utf8') !== row.current) fail('current source changed before publication'); writeFileSync(resolve(ROOT, row.path), row.after); }
-  }
-  else if (plan.files.some(row => row.current !== row.after)) fail('complete generated lifetime collection source is stale');
+    for (const row of plan.files) { if (readFileSync(resolve(ROOT,row.path),'utf8') !== row.current) fail('current source changed before publication'); writer.write(row.path, row.after); }
+  return plan;}):prepareCurrentSourceLifetimeRefusalBatches();
+  if (mode === '--check' && plan.files.some(row => row.current !== row.after)) fail('complete generated lifetime collection source is stale');
   console.log(JSON.stringify({schema: plan.schema, files: plan.files.map(row => row.path), semanticAuthority: false}));
 }

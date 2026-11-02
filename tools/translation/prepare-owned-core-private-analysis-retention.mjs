@@ -1,3 +1,4 @@
+import {withProtectedSpecialCliWriter} from './protected-special-cli-writers-20261102.mjs';
 // Default source proposal: retain an already private, detached analysis once.
 import {readFileSync,writeFileSync} from 'node:fs';
 import {restoreOwnedStringOperations,extendOwnedStringOperations} from './owned-string-operation-rules.mjs';
@@ -87,8 +88,7 @@ export function composeOwnedCorePrivateAnalysisRetention(prior,options={}){
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const args=process.argv.slice(2);if(args.length!==1||!['--emit','--write','--check'].includes(args[0]))fail('usage: --emit|--write|--check');
- const plan=prepareOwnedCorePrivateAnalysisRetention();
+ const plan=args[0]==='--write'?withProtectedSpecialCliWriter(ROOT,writer=>{const plan=prepareOwnedCorePrivateAnalysisRetention();writer.preflight(plan.files.map(row=>row.path));for(const row of plan.files)if(readFileSync(resolve(ROOT,row.path),'utf8')!==row.current)fail('physical source changed before write');for(const row of plan.files)writer.write(row.path,extendOwnedStringOperations(row.path,row.after));return plan;}):prepareOwnedCorePrivateAnalysisRetention();
  if(args[0]==='--emit')console.log(JSON.stringify(plan));
- else if(args[0]==='--write'){for(const row of plan.files)if(readFileSync(resolve(ROOT,row.path),'utf8')!==row.current)fail('physical source changed before write');for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),extendOwnedStringOperations(row.path,row.after));}
- else if(plan.files.some(row=>restoreOwnedStringOperations(row.path,row.current)!==row.after))fail('complete default operations source is stale');
+ else if(args[0]==='--check'&&plan.files.some(row=>restoreOwnedStringOperations(row.path,row.current)!==row.after))fail('complete default operations source is stale');
 }
