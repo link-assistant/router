@@ -1,3 +1,4 @@
+import {knownReadonlySourceUnitStreamSuccessor} from './ordered-text-map-callers-20261102-source-storage-reconcile-stream-current.mjs';
 import {copyMetadata} from './extensions/source-links.mjs';
 import {accountPrimitiveVectorIteratorBulkData as account} from './primitive-vector-iterator-bulk-20261101-accounting.mjs';
 // Complete named source equations DATA. Never native or mutation permission.
@@ -22,6 +23,6 @@ export function proposeProtectedNativeStreamFdSources(input,{root=ROOT}={}){
 }
 export function knownProtectedNativeStreamFdSuccessor({root=ROOT,path,before}={}){
  const name=FILES.find(name=>path===name.name);if(!name)return null;const capture=createReconcileSourceCapture(root);let result,primary,failed=false;
- try{const pair=images(capture,name),current=capture.capture(path).source;need(current===pair.after,'actual full native-stream-fd source successor differs');result=before===pair.before?equation(name,pair.before,pair.after):null;if(result)boundedReconcileWireBytes(result);}catch(error){failed=true;primary=error;}
+ try{const pair=images(capture,name),current=capture.capture(path).source,later=current===pair.after?null:knownReadonlySourceUnitStreamSuccessor({root,path,before:pair.after});need(current===pair.after||later&&later.currentAfter===current,'actual full native-stream/composed-unit source successor differs');result=before===pair.before?{...equation(name,pair.before,pair.after),current,currentAfter:current,laterHistories:later?[later]:[]}:before===pair.after?later:null;if(result)boundedReconcileWireBytes(result);}catch(error){failed=true;primary=error;}
  try{capture.close();}catch(error){if(!failed)throw error;}if(failed)throw primary;return result;
 }

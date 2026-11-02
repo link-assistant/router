@@ -4,7 +4,7 @@ import {captureContainedNativeDirectTargets} from './protected-contained-direct-
 // No persisted source/hash/verdict cache supplies a translation decision.
 import * as fs from 'node:fs';
 import {assertProtectedMutationPaths,directMutationOutputPaths,assertProtectedDirectWriteTargets,assertProtectedStagedMutationTargets,assertProtectedNativeStagedMutationTargets,assertProtectedNativeDirectWriteTargets,assertProtectedNativeStreamWriteDescriptors} from './protected-preparer-writers-20261102-alias.mjs';
-import {ownSourceFailureField} from './source-error-fields-20261102.mjs';
+import {ownSourceFailureField} from './source-error-fields-20261102.mjs';import {captureReadonlySourceProfile} from './ordered-text-map-callers-20261102-source-storage.mjs';
 import {resolve,dirname,posix} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {createHash,randomUUID} from 'node:crypto';
@@ -33,7 +33,7 @@ const fail=message=>{throw new TypeError('Source unit synchronization: '+message
 function relative(value){if(typeof value!=='string'||!value||value.length>4096||value.startsWith('/')||value.includes('\\')||/[\0\r\n:]/u.test(value)||value.split('/').some(part=>!part||part==='.'||part==='..'))fail('ordinary repository-relative path required');return value;}
 function physical(root,name){relative(name);let parent=root;const parts=name.split('/');for(const part of parts.slice(0,-1)){parent=resolve(parent,part);try{const row=fs.lstatSync(parent);if(!row.isDirectory()||row.isSymbolicLink())fail('linked or non-directory source parent');}catch(error){if(ownSourceFailureField(error,'code')!=='ENOENT')throw error;}}return resolve(root,name);}
 function source(root,name){
- const full=physical(root,name);let row;try{row=fs.lstatSync(full);}catch(error){if(ownSourceFailureField(error,'code')==='ENOENT')return null;throw error;}
+ relative(name);const stored=captureReadonlySourceProfile(resolve(root,name),{maximum:FILE_LIMIT,retainBytes:false});if(stored){const raw=stored.read(),text=raw.toString('utf8');if(!Buffer.from(text).equals(raw))fail('source must retain exact UTF8 bytes');stored.requireCurrent();return text;}const full=physical(root,name);let row;try{row=fs.lstatSync(full);}catch(error){if(ownSourceFailureField(error,'code')==='ENOENT')return null;throw error;}
  if(!row.isFile()||row.isSymbolicLink()||row.size>FILE_LIMIT)fail('bounded ordinary source file required');const fd=fs.openSync(full,fs.constants.O_RDONLY|fs.constants.O_NOFOLLOW);let readFailed=false;
  try{const before=fs.fstatSync(fd),chunks=[];let total=0;for(;;){const bytes=Buffer.alloc(Math.min(65536,FILE_LIMIT-total+1)),count=fs.readSync(fd,bytes,0,bytes.length,null);if(!count)break;total+=count;if(total>FILE_LIMIT)fail('source grew beyond its byte bound');chunks.push(bytes.subarray(0,count));}const raw=Buffer.concat(chunks,total),after=fs.fstatSync(fd),named=fs.lstatSync(full);if(!before.isFile()||row.dev!==before.dev||row.ino!==before.ino||before.dev!==after.dev||before.ino!==after.ino||before.size!==raw.length||before.size!==after.size||before.mtimeMs!==after.mtimeMs||before.ctimeMs!==after.ctimeMs||before.dev!==named.dev||before.ino!==named.ino||before.mode!==named.mode||after.size!==named.size||after.mtimeMs!==named.mtimeMs||after.ctimeMs!==named.ctimeMs)fail('complete source changed during capture');const text=raw.toString('utf8');if(!Buffer.from(text).equals(raw))fail('source must retain exact UTF8 bytes');return text;}catch(error){readFailed=true;throw error;}finally{try{fs.closeSync(fd);}catch(error){if(!readFailed)throw error;}}
 }

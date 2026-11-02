@@ -3,7 +3,7 @@ import * as fs from 'node:fs';
 import {resolve} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {types} from 'node:util';
-import {readCurrentSourceProposalFile} from './unit-runtime-materialization.mjs';
+import {readCurrentSourceProposalFile} from './unit-runtime-materialization.mjs';import {captureReadonlySourceProfile} from './ordered-text-map-callers-20261102-source-storage.mjs';
 export const RECONCILE_LIMITS=Object.freeze({file:8*1024*1024,raw:64*1024*1024,wire:192*1024*1024,count:4096});
 const L=RECONCILE_LIMITS;
 export const requireReconcile=(condition,message)=>{if(!condition)throw new TypeError('Paired source reconciliation: '+message);};
@@ -18,7 +18,7 @@ const stamp=row=>[row.dev,row.ino,row.mode,row.size,row.mtimeMs,row.ctimeMs];
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 export function createReconcileSourceCapture(requested){
  const initial=fs.lstatSync(resolve(requested));need(initial.isDirectory()&&!initial.isSymbolicLink(),'ordinary project root required');
- const root=fs.realpathSync(resolve(requested)),files=new Map(),directories=new Map();let retained=0,failed=false;
+ const root=fs.realpathSync(resolve(requested)),files=new Map(),directories=new Map(),storedFiles=new Map();let retained=0,failed=false;
  const charged=text=>{need(typeof text==='string'&&Buffer.byteLength(text)<=L.file,'bounded complete source required');retained+=Buffer.byteLength(text);need(retained<=L.raw,'whole retained raw source bound');return text;};
  const directory=name=>{
   let full=root;const pieces=name?relativeReconcilePath(name).split('/'):[];
@@ -33,10 +33,11 @@ export function createReconcileSourceCapture(requested){
   if(missing)return null;let row;try{row=fs.lstatSync(resolve(root,name));}catch(error){if(error.code==='ENOENT')return null;throw error;}
   need(row.isFile()&&!row.isSymbolicLink()&&row.size<=L.file,'ordinary bounded source file required');need([0o644,0o755].includes(row.mode&0o777),'ordinary source mode required');return stamp(row);
  };
+ const storedText=stored=>{const raw=stored.read(),source=raw.toString('utf8');need(Buffer.from(source).equals(raw)&&raw.length<=L.file,'complete bounded lossless UTF8 stored source required');return source;};
  const capture=name=>{
   try{
    relativeReconcilePath(name);if(files.has(name))return files.get(name);
-   need(files.size<L.count,'whole captured file count bound');const before=fileStamp(name),source=readCurrentSourceProposalFile(root,name),after=fileStamp(name);need(same(before,after),'source identity changed during capture');
+   need(files.size<L.count,'whole captured file count bound');const stored=captureReadonlySourceProfile(resolve(root,name),{maximum:L.file,retainBytes:false});if(stored){need(['100644','100755'].includes(stored.mode),'actual original logical Git source mode required');const source=charged(storedText(stored)),row={path:name,source,mode:stored.mode==='100755'?0o755:0o644};stored.requireCurrent();storedFiles.set(name,stored);files.set(name,row);return row;}const before=fileStamp(name),source=readCurrentSourceProposalFile(root,name),after=fileStamp(name);need(same(before,after),'source identity changed during capture');
    if(source!==null)charged(source);const row={path:name,source,mode:after===null?null:after[2]&0o777,identity:after};files.set(name,row);return row;
   }catch(error){failed=true;throw error;}
  };
@@ -55,7 +56,7 @@ export function createReconcileSourceCapture(requested){
   inputs(){return [...files.values()].map(({path,source})=>({path,source})).sort((a,b)=>ordinal(a.path,b.path));},
   close(tree){
    const errors=[];
-   for(const [name,row]of files)try{need(readCurrentSourceProposalFile(root,name)===row.source&&same(fileStamp(name),row.identity),'complete source changed during closing: '+name);}catch(error){errors.push(error);}
+   for(const [name,row]of files)try{const stored=storedFiles.get(name);if(stored){need(storedText(stored)===row.source&&(stored.mode==='100755'?0o755:0o644)===row.mode,'complete retained logical source changed during closing: '+name);stored.requireCurrent();}else need(readCurrentSourceProposalFile(root,name)===row.source&&same(fileStamp(name),row.identity),'complete source changed during closing: '+name);}catch(error){errors.push(error);}
    // Evaluate every directory identity independently, preserving failures even
    // when a preceding parent or source cannot be read.
    for(const [name,identity]of directories)try{const stat=fs.lstatSync(name?resolve(root,name):root);need(stat.isDirectory()&&!stat.isSymbolicLink()&&same(stamp(stat),identity),'directory identity changed during closing: '+name);}catch(error){errors.push(error);}

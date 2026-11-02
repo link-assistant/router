@@ -432,3 +432,7 @@ stream traffic needs the identified additive identity correction. Native
 mkdtemp pre-creation negative-name proof, builtin TAP consumer, Python and
 arbitrary children remain OPEN. No wrapper or successful process exit qualifies
 those domains. All verification UNRUN; CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.
+
+## Source checkpoint: shared reconcile and stream composition
+
+Installed the shared reconcile reader and byte-only unit reader, preserving the existing native stream policy API. Retained both frozen predecessor branches and complete joins, plus the named finite current-source continuation used by stream-history reconstruction. Original physical mutation identity checks remain separate from cold source bytes. All new cases and receiving programs remain UNRUN; CI NOT_INSPECTED. Acceptance remains 11/70 DRAFTED, 59 OPEN; executable translation coverage UNKNOWN.
