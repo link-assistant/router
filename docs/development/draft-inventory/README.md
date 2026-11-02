@@ -97,3 +97,15 @@ The inventory/reconciler source draft removes the lack of a concrete worklist.
 It does not remove original namespace/type/ownership prerequisites or prove full
 source scope. No tests, translation, regeneration, compiler diagnostics,
 benchmarks, CI statuses/logs/artifacts or review feedback were executed/read.
+
+## Additive current source scope (2026-11-02)
+
+The [current source scope draft](../draft-scope-20261102.md) retains a separate
+`2e56446e4256d97bc5ec21867d3f6dadbb99dde9` archive across the complete physical
+Rust/JS/TS trees and package assets. It preserves this original 1,512-path
+snapshot unchanged, current-byte-joined stored-meta observations and stale-meta
+diagnostics, a small actual manual trait/impl/inline-test/nested-test/closure/
+entrypoint/generated-producer review, and detailed adoption reconciliation.
+The deferred CLI refuses acceptance while changes, unassigned entries or any
+source/producer/adoption gap remain. The original production-function denominator
+remains UNKNOWN; L01/L02 remain OPEN and all new verification is UNRUN.
